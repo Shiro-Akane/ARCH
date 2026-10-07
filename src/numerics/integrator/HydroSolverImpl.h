@@ -10,6 +10,7 @@
 #pragma once
 
 #include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/HydroBoundaryAuthority.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace Numerics {
@@ -45,8 +46,17 @@ public:
                                 std::vector<FluidVector>& dU, std::vector<double>& d_spec,
                                 const Physical::Gravity::IGravityPolicy* gravity,
                                 const NumericsConfig& num_cfg, double flux_weight = 1.0,
-                                void* execution_stream = nullptr) const override
+                                void* execution_stream = nullptr,
+                                const arch::boundary::HostHydroBoundaryAuthority* boundary = nullptr) const override
     {
+        // Authenticate the exact borrowed BC/slot/ghost frame before outputs,
+        // cache allocation, or EOS work. The empty mathematical path is used
+        // by direct numerical leaves; production native integrators bind it.
+        const auto walls=boundary
+            ? boundary->require_view(amr_ctrl,block_id,state,grid)
+            : arch::boundary::HydroBoundaryView{};
+        if(boundary&&semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::invalid_argument("Native wall authority used by another Hydro chart");
         int total_size = grid.GetTotalSize();
         int n_spec = state.GetNumSpecies();
 
@@ -57,7 +67,7 @@ public:
             TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
                 amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec,
                 flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed, semantics_,
-                {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
+                {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint},walls);
         };
         if constexpr (requires { typename EosType::HostHydroScope; }) {
             // The EOS owns the complete key. Storage is local to this worker

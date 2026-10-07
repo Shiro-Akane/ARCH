@@ -35,7 +35,12 @@
 
 namespace RzViscousStress {
 /** Phi traction in torque normalization and paired area work density. */
-struct FaceFlux { double momentum=0.,energy=0.; bool valid=false; };
+struct FaceFlux {
+    double momentum=0.,energy=0.; bool valid=false;
+    // Work conjugate to this face's torque-normalized momentum flux.
+    // Defined even for zero traction; it is never recovered as energy/momentum.
+    double work_velocity=0.;
+};
 
 /** Shared density cell plus the temporary angular velocity; no new state.
  * density is p(t), t=(r-origin)/spacing. C=int rho*r^3 dr is signed in a
@@ -135,6 +140,7 @@ ARCH_INLINE FaceFlux azimuthal_face(const AngularCell& left,const AngularCell& r
         const double velocity=radial_face*omega;
         if(!std::isfinite(tau)||!std::isfinite(omega)||!std::isfinite(velocity))return result;
         result.momentum=-tau;result.energy=-velocity*tau;
+        result.work_velocity=velocity;
     } else {
         if(!detail::axial_pair(left,right))return result;
         const double capacity=.5*left.capacity+.5*right.capacity;
@@ -148,8 +154,13 @@ ARCH_INLINE FaceFlux azimuthal_face(const AngularCell& left,const AngularCell& r
         const double area_denominator[]{normal_spacing,width,left.upper,.5*(1.+ratio)};
         result.momentum=detail::scaled_value(numerator,3,torque_denominator,5);
         result.energy=detail::scaled_value(energy_numerator,4,area_denominator,4);
+        // psi=<Omega> int(r^2 dr)/int(r dr) pairs W traction with V work.
+        const double work_numerator[]{mean_omega,left.upper,(1.+ratio+ratio*ratio)/3.};
+        const double work_denominator[]{.5*(1.+ratio)};
+        result.work_velocity=detail::scaled_value(work_numerator,3,work_denominator,1);
     }
-    result.valid=std::isfinite(result.momentum)&&std::isfinite(result.energy);return result;
+    result.valid=std::isfinite(result.momentum)&&std::isfinite(result.energy)
+        &&std::isfinite(result.work_velocity);return result;
 }
 
 /** Nonnegative row contribution from the same actual frozen face connection.

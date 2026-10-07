@@ -692,7 +692,7 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
     }
     control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
     control.flux_register.Clear();
-    BCHandler boundary(config,rz);
+    BCHandler boundary(config,rz);boundary.bind(eos,species);
     for(int id:active) {
         auto& block=control.pool->GetBlock(id);
         boundary.apply(block.fluid_state,block.grid);
@@ -776,7 +776,8 @@ public:
         std::vector<FluidVector>& dU,std::vector<double>& ds,
         const Physical::Gravity::IGravityPolicy* gravity,
         const NumericsConfig& cfg,double stage_weight=1.,
-        void* stream=nullptr) const override
+        void* stream=nullptr,
+        const arch::boundary::HostHydroBoundaryAuthority* boundary=nullptr) const override
     {
         std::array<long double,5> local{};
         long double unweighted_torque=0.,patch_torque=0.,same_torque=0.,mixed_torque=0.;
@@ -784,6 +785,7 @@ public:
         means.reset(grid.GetTotalSize());means.roe_wave_speed=cfg.hll_roe_wave_speed;
         means.geometry_semantics=owner_.geometry_semantics();
         means.physical_bounds={cfg.sml_rho,cfg.min_eint,cfg.max_eint};
+        if(boundary)means.hydro_boundary=boundary->require_view(control,block_id,state,grid);
         std::vector<FluidVector> flux(grid.GetTotalSize());
         std::vector<double> species_flux(state.GetNumSpecies()*grid.GetTotalSize());
         const auto& block=control->pool->GetBlock(block_id);
@@ -842,7 +844,7 @@ public:
                 }
         }
         owner_.evaluate_patch(control,block_id,state,grid,dt,dU,ds,
-            gravity,cfg,stage_weight,stream);
+            gravity,cfg,stage_weight,stream,boundary);
         long double patch_delta=0.;
         for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
             const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
@@ -964,7 +966,7 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
     }
     control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
     control.flux_register.Clear();
-    BCHandler boundary(config,rz);
+    BCHandler boundary(config,rz);boundary.bind(eos,species);
     for(int id:active) {
         auto& block=control.pool->GetBlock(id);
         boundary.apply(block.fluid_state,block.grid);
@@ -1066,6 +1068,15 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
         const auto now=totals();
         const auto out=observer.outward();
         const auto applied=observer.applied();
+        if(!open) {
+            // A closed stationary wall has no mass, total-energy, angular or
+            // species transport. Accounting for a nonzero measured outflow
+            // cannot establish this stronger physical boundary condition.
+            const long double scale[5]{before[0],before[1],before[3],before[4],before[5]};
+            for(int field=0;field<5;++field)
+                if(std::abs(out[field])>1.e-12L*scale[field])
+                    throw std::runtime_error("RZ reflected physical wall transported a conserved quantity");
+        }
         const long double jerror=std::abs(now[2]-before[2]+out[2]-applied[2])
             /(before[3]+std::abs(out[2])+std::abs(applied[2]));
         const long double merror=std::abs(now[0]-before[0]+out[0])
@@ -1188,7 +1199,7 @@ void test_rz_scheduled_hydro(int direction,double inner) {
     }
     control.BindActiveHandles(handles);control.flux_register.EnsureSpecies(2);
     control.flux_register.Clear();
-    BCHandler boundary(config,rz);
+    BCHandler boundary(config,rz);boundary.bind(eos,species);
     for(int id:active) {
         auto& block=control.pool->GetBlock(id);
         boundary.apply(block.fluid_state,block.grid);
@@ -1620,6 +1631,12 @@ int main(int argc,char** argv)
     }
     if(argc==2 && std::string(argv[1])=="rz-equilibrium-audit")
         return audit_rz_rotating_equilibrium();
+    if(argc==2 && std::string(argv[1])=="rz-ppm-equilibrium-audit")
+        return audit_rz_rotating_equilibrium<PPMReconstruction>("PPM");
+    // Both selected policies use the independent native polynomial reference,
+    // seven unchanged residual norms and the original rounding/order gates.
+    if(audit_rz_rotating_equilibrium()!=0
+        ||audit_rz_rotating_equilibrium<PPMReconstruction>("PPM")!=0) return 2;
     test_rz_selected_face_bundles();
     test_rz_selected_pcm_axial_flux();
     test_rz_angular_measures();

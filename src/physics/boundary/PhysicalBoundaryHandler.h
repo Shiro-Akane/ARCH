@@ -4,9 +4,10 @@
  *
  * Workflow:
  * 1. Compile the existing logical plan, retaining its built-in fast path.
- * 2. Bind the chosen EOS and immutable case callback once per simulation.
+ * 2. Bind the chosen EOS for callback-free native reflecting point laws and
+ *    the optional immutable case callback once per simulation.
  * 3. For native RZ, domain ownership separates builtin/exchange seed,
- *    immutable ordered surface preparation, validation and no-throw scatter.
+ *    immutable builtin/user layers per axis, validation and no-throw scatter.
  * 4. Complete shared axis parity; the Runtime checks final actual EOS before
  *    scheduler GhostValid. Existing and device gather/scatter retain their path.
  */
@@ -25,6 +26,7 @@
 
 #include "amr/exchange/HostBoundaryPlan.h"
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "physics/boundary/NativeRzBoundary.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/UserBoundary.h"
@@ -36,21 +38,31 @@ struct BCHandler {
     explicit BCHandler(const SimConfig& config,
         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
     GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return semantics_; }
-    /** Bind shared EOS conversion without multiplying the integrator matrix. */
+    /** Bind native point EOS even when the simulation has no user callback.
+     * Workflow: invalidate prior native EOS leases -> bind the callback-free
+     * reflector -> preserve the existing optional user conversion path.
+     */
     template<class Eos> void bind(const Eos& eos, const SpeciesManager& species) {
-        if (!callback_) return;
         if (semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
             if (binding_revision_ == std::numeric_limits<std::uint64_t>::max())
                 throw std::overflow_error("Native boundary binding revision exhausted");
             // A new borrowed EOS lifetime invalidates every prepared surface.
             ++binding_revision_;
-            native_evaluate_ = [this, &eos, &species](const Grid& grid,
+            native_reflecting_evaluate_ = [this, &eos, &species](const Grid& grid,
                 const arch::boundary::NativeRzBoundaryRequest& request,
                 const NativeConservedReader& read, const NativeFractionReader& fraction) {
-                return arch::boundary::EvaluateNativeRzBoundaryCell(grid, request,
-                    *config_, species, eos, callback_, read, fraction);
+                return arch::boundary::EvaluateNativeRzReflectingCell(grid, request,
+                    *config_, species, eos, read, fraction);
             };
+            if (callback_)
+                native_evaluate_ = [this, &eos, &species](const Grid& grid,
+                    const arch::boundary::NativeRzBoundaryRequest& request,
+                    const NativeConservedReader& read, const NativeFractionReader& fraction) {
+                    return arch::boundary::EvaluateNativeRzBoundaryCell(grid, request,
+                        *config_, species, eos, callback_, read, fraction);
+                };
         }
+        if (!callback_) return;
         evaluate_ = [this, &eos, &species](const arch::boundary::BoundaryCoordinates& coordinates,
             const FluidVector& interior, std::span<const double> composition,
             const FluidVector* inherited, std::span<const double> inherited_composition) {
@@ -102,6 +114,7 @@ struct BCHandler {
         std::array<const double*,7> pointers_{};
         std::array<std::size_t,7> sizes_{};
         std::array<std::uint64_t,20> geometry_{};
+        std::array<std::uint64_t,7> root_context_{};
         std::uint64_t revision_ = 0, time_bits_ = 0;
         int species_ = 0;
         arch::boundary::BoundaryPurpose purpose_ = arch::boundary::BoundaryPurpose::Hydro;
@@ -115,6 +128,16 @@ struct BCHandler {
         NativeCandidate(const NativeCandidate&) = delete;
         NativeCandidate& operator=(const NativeCandidate&) = delete;
     };
+    /** Capture an empty opaque Hydro frame, borrowing no numerical array copy.
+     * Exact time/purpose, native EOS binding and all original storage leases
+     * must already belong to the real completed input boundary publication.
+     */
+    NativeCandidate capture_native_hydro_frame(const FluidState&,const Grid&,double expected_time) const;
+    /** Revalidate that same opaque frame and return only genuine root wall flags.
+     * Successful calls perform no allocation, EOS evaluation or field writes.
+     */
+    arch::boundary::HydroBoundaryView native_hydro_boundary_view(
+        const NativeCandidate&,const FluidState&,const Grid&,double expected_time) const;
     /** Fill only the original logical seeds; scientific acceptance stays pending. */
     void apply_builtin(FluidState& state, const Grid& grid) const;
     /** Prepare ordered x1/x2 surface values from immutable seed/candidate views. */
@@ -144,15 +167,26 @@ private:
     };
     static arch::boundary::BoundaryPlan make_logical_plan(const SimConfig&);
     std::vector<Ghost> ghosts(const Grid&) const;
+    /** Shared allocation-free selection of authenticated physical reflecting faces. */
+    arch::boundary::HydroBoundaryView native_reflecting_faces(const Grid&) const;
+    /** Enumerate only genuine positive Native physical reflecting surfaces. */
+    std::vector<Ghost> reflecting_ghosts(const Grid&) const;
+    /** Recheck the actual root/config context before surface preparation/publication. */
+    void require_native_root_frame(const Grid&) const;
     std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> make_diffusion_storage(const Grid&, int) const;
     void store_conditions(arch::boundary::DiffusionBoundaryStorage&, const Ghost&,
                           const arch::boundary::PhysicalBoundaryData&, int) const;
     void capture_native_frame(NativeCandidate&,const FluidState&,const Grid&) const;
+    /** Common immutable frame validation; final candidate entries stay separate. */
+    void validate_native_frame(const NativeCandidate&,const FluidState&,const Grid&) const;
     using NativeConservedReader = std::function<FluidVector(int)>;
     using NativeFractionReader = std::function<double(int,int)>;
     std::function<arch::boundary::PhysicalBoundaryEvaluation(const Grid&,
         const arch::boundary::NativeRzBoundaryRequest&,
         const NativeConservedReader&,const NativeFractionReader&)> native_evaluate_;
+    std::function<arch::boundary::PhysicalBoundaryEvaluation(const Grid&,
+        const arch::boundary::NativeRzBoundaryRequest&,
+        const NativeConservedReader&,const NativeFractionReader&)> native_reflecting_evaluate_;
     const SimConfig* config_;
     GridMetrics::GeometrySemantics semantics_;
     arch::boundary::BoundaryPlan logical_plan_;

@@ -4,7 +4,8 @@
 // The production reconstruction is used only for its output, never as an oracle.
 using RzMetricCases::mean_power;
 
-inline int audit_rz_rotating_equilibrium()
+template<class Reconstruction=MusclReconstruction<McLimiter>>
+inline int audit_rz_rotating_equilibrium(const char* method="MUSCL_MC")
 {
     SpeciesManager species;species.add_species("gas",1.,1.,1.4,3.);
     IdealGas eos(1.4,species);
@@ -31,6 +32,18 @@ inline int audit_rz_rotating_equilibrium()
                 Grid g(amr::MAX_NG,inner+static_cast<double>(block)/roots,
                     inner+static_cast<double>(block+1)/roots,-.125,.125,0.,1.);
                 g.dim=2;g.geometry="cylindrical";g.InitializeTopology(rz);
+                // Authenticate this actual uniform root before borrowing its
+                // native geometry: exact bounds/spacing, root counts, logical
+                // block identity and every real canonical interior/ghost cell.
+                g.nblockx1=roots;g.nblockx2=1;
+                g.dyadic_identity.bound=true;
+                g.dyadic_identity.root_lower={inner,-.125};
+                g.dyadic_identity.root_upper={inner+1.,.125};
+                g.dyadic_identity.root_blocks={roots,1};
+                g.dyadic_identity.level=0;
+                g.dyadic_identity.logical={static_cast<std::uint32_t>(block),0};
+                g.dyadic_identity.periodic_axial=false;
+                g.InitializeTopology(rz);
                 const auto geometry=GridMetrics::make_geometry_view(g,rz);
                 FluidState state;state.Preallocate(g.GetTotalSize());state.InitSpecies(1);
                 for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
@@ -47,7 +60,7 @@ inline int audit_rz_rotating_equilibrium()
                 const int size=g.GetTotalSize();
                 std::vector<FluidVector> delta(size),flux(size);
                 std::vector<double> ds(size),sf(size);
-                TimeIntegration::evaluate_all_dimensions<FluxHLLC<MusclReconstruction<McLimiter>>>(
+                TimeIntegration::evaluate_all_dimensions<FluxHLLC<Reconstruction>>(
                     nullptr,-1,state,eos,g,1.,delta,ds,flux,sf,nullptr,0.,1.,true,rz);
                 const long double pi=std::acos(-1.L);
                 for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
@@ -97,7 +110,7 @@ inline int audit_rz_rotating_equilibrium()
             const long double jerror=std::abs(J-analytic_J)/std::abs(analytic_J);
             if(!std::isfinite(jerror)||jerror>1.e-12L)row_pass=false;
             passed=passed&&row_pass;
-            std::cout<<"RZ_EQUILIBRIUM inner="<<inner<<" Omega="<<omega<<" cubic="<<cubic
+            std::cout<<"RZ_EQUILIBRIUM method="<<method<<" inner="<<inner<<" Omega="<<omega<<" cubic="<<cubic
                 <<" cells="<<roots*amr::BLOCK_NX<<" L1="<<static_cast<double>(errors[0])
                 <<" rms="<<static_cast<double>(errors[1])<<" Linf="<<static_cast<double>(errors[2])
                 <<" first_two_Linf="<<static_cast<double>(errors[3])
@@ -113,6 +126,6 @@ inline int audit_rz_rotating_equilibrium()
             previous=errors;
         }
     }
-    std::cout<<"RZ_EQUILIBRIUM_SPATIAL_GATE="<<(passed?"PASS":"NOT_CLEARED")<<'\n';
+    std::cout<<"RZ_EQUILIBRIUM_SPATIAL_GATE method="<<method<<" status="<<(passed?"PASS":"NOT_CLEARED")<<'\n';
     return passed?0:2;
 }

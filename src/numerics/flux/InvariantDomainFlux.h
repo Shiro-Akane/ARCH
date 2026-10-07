@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "grid/GridGeometryView.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "numerics/flux/FluxFunctions.h"
 
 // Conservative convex limiting against a local Lax-Friedrichs bar state.
@@ -173,11 +174,13 @@ struct MeanThermoCache {
     GridMetrics::GeometrySemantics geometry_semantics=GridMetrics::GeometrySemantics::Existing;
     bool roe_wave_speed = true;
     arch::state::Bounds physical_bounds{}; // Actual numerics bounds, not a GUI policy.
+    arch::boundary::HydroBoundaryView hydro_boundary{}; // Scoped mathematical view; owner authenticates it.
     std::vector<double> pressure;
     std::vector<double> sound_speed;
     std::vector<unsigned char> ready;
 
     void reset(int cells) {
+        hydro_boundary={}; // Never carry wall authority into another patch/stage.
         pressure.resize(cells);
         sound_speed.resize(cells);
         ready.assign(cells, 0);

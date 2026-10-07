@@ -18,6 +18,8 @@
 #include "grid/Grid.h"
 #include "physics/gravity/IGravityPolicy.h"
 
+namespace arch::boundary { class HostHydroBoundaryAuthority; }
+
 namespace Numerics {
 
 /** Internal Host storage promise; unavailable bindings fail before a guarded step. */
@@ -52,6 +54,7 @@ public:
      * @param dU The accumulator for conservative variable changes.
      * @param d_spec The accumulator for conserved species-density changes (rho*X).
      * @param gravity The gravity policy interface.
+     * @param boundary Scoped Host wall authority; scheduler callers bind real BC/slot/ghost provenance.
      * @param execution_stream Reserved opaque execution context; the Host binding ignores it.
      */
     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
@@ -59,7 +62,8 @@ public:
                                 std::vector<FluidVector>& dU, std::vector<double>& d_spec,
                                 const Physical::Gravity::IGravityPolicy* gravity,
                                 const NumericsConfig& num_cfg, double flux_weight = 1.0,
-                                void* execution_stream = nullptr) const = 0;
+                                void* execution_stream = nullptr,
+                                const arch::boundary::HostHydroBoundaryAuthority* boundary = nullptr) const = 0;
 
     /**
      * @brief Performs the Runge-Kutta stage update combining old, current, and flux divergence states.

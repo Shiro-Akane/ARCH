@@ -5,14 +5,17 @@
  * Workflow:
  * 1. Borrow the actual GridMetrics radial-Gauss4/axial-Gauss2 samples and
  *    immutable, already point-EOS-validated conserved states/composition.
- * 2. Accumulate rho/m_r/m_z/E with V weights and m_phi with W weights.
+ * 2. Multiply/accumulate rho/m_r/m_z/E with V weights and m_phi with
+ *    W weights, rejecting nonfinite or completely lost nonzero products.
  * 3. Form Xi means with separate exponent-scaled species and total masses.
  * 4. Return explicit mathematical status; the Host owner handles exceptions
  *    and the actual stage/ghost/EOS publication contract.
  *
  * No quadrature, EOS, floor, normalization or evolved field is duplicated.
- * Validity below certifies finite numerical integration only. The caller
- * supplies the native sample rule and owns cell support and scientific checks.
+ * Validity below certifies finite numerical integration and detects a nonzero
+ * point contribution completely rounded to zero. It does not certify exact
+ * signed summation, cancellation accuracy or all subnormal precision. The
+ * caller supplies the native sample rule, support and scientific checks.
  */
 #pragma once
 
@@ -57,10 +60,22 @@ struct FractionMean {
     ARCH_INLINE bool valid() const {return status==Status::valid;}
 };
 
+/** Check one already-computed original weighted component without correcting it.
+ * For w>0 and finite u, a nonzero u with fl(w*u)==0 has lost the entire
+ * contribution. Nonzero subnormal products and genuine u=0 remain allowed;
+ * exact cancellation of representable contributions belongs to accumulation.
+ */
+ARCH_INLINE bool representable_contribution(double point,double weighted) {
+    return std::isfinite(weighted)&&(point==0.||weighted!=0.);
+}
+
 /** Integrate validated point states in the existing sample order.
  * <U>_V=sum(w_V U) except m_phi=<rho*u_phi>_W=sum(w_W rho*u_phi).
  * Radius/weights must belong to the caller's positive native cell rule;
  * this function neither infers bounds nor invents a weight-sum tolerance.
+ * Each original product is formed once and checked before its original add.
+ * No floor, weight rescaling, extended precision or compensated sum is used.
+ * Failed products return the existing unrepresentable status and unusable NaNs.
  * The immutable index reader must be device-callable and must not throw.
  */
 template<std::size_t Samples,class StateReader>
@@ -83,11 +98,26 @@ ARCH_INLINE ConservedMean conserved_mean(
            ||!std::isfinite(point.eng))
             return ConservedMean(Status::nonfinite_state);
         if(!(point.rho>0.))return ConservedMean(Status::invalid_density);
-        mean.rho+=q.volume_weight*point.rho;
-        mean.mom_u+=q.volume_weight*point.mom_u;
-        mean.mom_v+=q.volume_weight*point.mom_v;
-        mean.mom_w+=q.angular_weight*point.mom_w;
-        mean.eng+=q.volume_weight*point.eng;
+        const double weighted_rho=q.volume_weight*point.rho;
+        if(!representable_contribution(point.rho,weighted_rho))
+            return ConservedMean(Status::unrepresentable);
+        mean.rho+=weighted_rho;
+        const double weighted_mom_u=q.volume_weight*point.mom_u;
+        if(!representable_contribution(point.mom_u,weighted_mom_u))
+            return ConservedMean(Status::unrepresentable);
+        mean.mom_u+=weighted_mom_u;
+        const double weighted_mom_v=q.volume_weight*point.mom_v;
+        if(!representable_contribution(point.mom_v,weighted_mom_v))
+            return ConservedMean(Status::unrepresentable);
+        mean.mom_v+=weighted_mom_v;
+        const double weighted_mom_w=q.angular_weight*point.mom_w;
+        if(!representable_contribution(point.mom_w,weighted_mom_w))
+            return ConservedMean(Status::unrepresentable);
+        mean.mom_w+=weighted_mom_w;
+        const double weighted_eng=q.volume_weight*point.eng;
+        if(!representable_contribution(point.eng,weighted_eng))
+            return ConservedMean(Status::unrepresentable);
+        mean.eng+=weighted_eng;
     }
     if(!std::isfinite(mean.rho)||!(mean.rho>0.)
        ||!std::isfinite(mean.mom_u)||!std::isfinite(mean.mom_v)

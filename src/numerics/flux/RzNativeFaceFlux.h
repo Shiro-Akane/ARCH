@@ -5,7 +5,7 @@
  * Workflow:
  * 1. Require the actual selected donor bundles and their physical EOS states.
  * 2. Evaluate the configured Riemann policy at one radial face or four axial
- *    radial Gauss nodes; immutable physical B supplies the LLF baseline.
+ *    radial Gauss nodes; scoped walls mirror H/B separately, and B supplies LLF.
  * 3. Take ONE minimum point factor over the whole face, including rhoX.
  * 4. Integrate rho/mr/mz/E/rhoX with |r| and mphi with r^2 on axial faces.
  * 5. Blend the two integrated fluxes once and return one publishable face.
@@ -22,11 +22,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 
+#include "amr/exchange/BoundaryPlan.h"
 #include "core/ArchPortability.h"
 #include "numerics/flux/InvariantDomainFlux.h"
 #include "numerics/reconstruction/RzSelectedReconstruction.h"
+#include "physics/boundary/BoundaryFlux.h"
 
 namespace RzNativeFaceFlux {
 /** Caller-owned scratch; no fixed species ceiling or persistent second state. */
@@ -72,6 +75,23 @@ ARCH_INLINE bool axial_weights(const GridMetrics::GeometryView& geometry,int i,
         &&std::isfinite(angular_weight)&&angular_weight>0.;
 }
 
+/** Mirror only physical normal momentum with the existing sign owner.
+ * rho/E/tangential components are copied exactly; mphi is tangential to both
+ * RZ wall directions. This is not the regular axis's two-odd-component parity.
+ * Current face entry and BoundaryPlan::reflection_sign are both Host inline;
+ * mechanical reuse grants no new device-kernel qualification.
+ */
+inline FluidVector reflected_point(const FluidVector& interior,int direction) {
+    auto result=interior;
+    const auto axis=static_cast<arch::boundary::BoundaryAxis>(direction);
+    const auto field=direction==0?arch::boundary::BoundaryFieldClass::MomentumX:
+        arch::boundary::BoundaryFieldClass::MomentumY;
+    const double sign=arch::boundary::reflection_sign(axis,
+        arch::boundary::BoundaryType::Reflecting,field);
+    if(direction==0)result.mom_u*=sign;else result.mom_v*=sign;
+    return result;
+}
+
 /** One actual selected face, returned atomically through unpublished scratch.
  * Output arrays must not alias any scratch range; scratch bytes are always
  * provisional. Required B EOS errors propagate. Only documented trial EOS failures can
@@ -82,9 +102,35 @@ template<class FluxPolicy,class ReconstructPolicy,class StateReader,class Fracti
 inline arch::state::Status compute(const StateReader& read,const FractionReader& fraction,
     const RzSelectedReconstruction::Context& context,const Eos& eos,double coefficient,
     const FluxAdmissibility::MeanThermoView* means,int left_cell,int right_cell,
-    Scratch scratch,FluidVector& output,double* output_species) {
+    Scratch scratch,FluidVector& output,double* output_species,
+    const arch::boundary::HydroBoundaryView& boundary={}) {
     using Status=arch::state::Status;
     const int species=context.species;
+    // Empty/default views are dormant. Nonempty Native 2D flags must name an
+    // actual normal face; only the upstream frame proves boundary authority.
+    int wall_side=-1;
+    if(!boundary.empty()) {
+        const auto ng=std::int64_t(context.geometry.ng);
+        const auto upper=context.direction==0?std::int64_t(context.logical_nx)-ng:
+            std::int64_t(context.logical_ny)-ng;
+        const auto logical_face=context.direction==0?std::int64_t(context.face_i)+1:
+            std::int64_t(context.face_j)+1;
+        if((context.direction!=0&&context.direction!=1)||ng<1
+            ||boundary.reflecting[4]||boundary.reflecting[5]||upper<=ng
+            ||upper>std::numeric_limits<int>::max()||logical_face<ng||logical_face>upper
+            ||!boundary.reflecting_side(context.direction,static_cast<int>(logical_face),
+                static_cast<int>(ng),static_cast<int>(upper),wall_side))
+            return Status::invalid_thermodynamics;
+        if(wall_side>=0) {
+            const auto tangent=context.direction==0?std::int64_t(context.face_j):
+                std::int64_t(context.face_i);
+            const auto tangent_upper=context.direction==0?std::int64_t(context.logical_ny)-ng:
+                std::int64_t(context.logical_nx)-ng;
+            if(tangent<ng||tangent>=tangent_upper
+                ||(means&&means->geometry_semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz))
+                return Status::invalid_thermodynamics;
+        }
+    }
     if(species<0||(species&&(!scratch.x_left||!scratch.x_right
         ||!scratch.candidate_species||!scratch.high_sum||!scratch.low_sum||!output_species)))
         return Status::invalid_composition;
@@ -97,10 +143,10 @@ inline arch::state::Status compute(const StateReader& read,const FractionReader&
     for(int n=0;n<points;++n) {
         const int left_node=context.direction==0?1:4+n;
         const int right_node=context.direction==0?0:n;
-        const auto& high_left=face.donor[0].point[left_node];
-        const auto& high_right=face.donor[1].point[right_node];
-        const auto& base_left=face.donor[0].baseline[left_node];
-        const auto& base_right=face.donor[1].baseline[right_node];
+        auto high_left=face.donor[0].point[left_node];
+        auto high_right=face.donor[1].point[right_node];
+        auto base_left=face.donor[0].baseline[left_node];
+        auto base_right=face.donor[1].baseline[right_node];
         for(int s=0;s<species;++s) {
             if(!RzSelectedReconstruction::detail::quotient(
                 scratch.rhoX[std::size_t(left_node)*species+s],high_left.rho,scratch.x_left[s])
@@ -108,14 +154,37 @@ inline arch::state::Status compute(const StateReader& read,const FractionReader&
                 scratch.rhoX[std::size_t(8+right_node)*species+s],high_right.rho,scratch.x_right[s]))
                 return Status::invalid_composition;
         }
+        // Lower wall borrows the right interior; upper wall the left.
+        // H and immutable B are reflected separately. H Xi has already been
+        // recovered from each selected rhoX/rho and is copied from interior.
+        if(wall_side==0) {
+            high_left=reflected_point(high_right,context.direction);
+            base_left=reflected_point(base_right,context.direction);
+            for(int s=0;s<species;++s)scratch.x_left[s]=scratch.x_right[s];
+        } else if(wall_side==1) {
+            high_right=reflected_point(high_left,context.direction);
+            base_right=reflected_point(base_left,context.direction);
+            for(int s=0;s<species;++s)scratch.x_right[s]=scratch.x_left[s];
+        }
         FluidVector high;
         FluxAdmissibility::compute_candidate([&] {
             FluxPolicy::compute_face_flux(high_left,high_right,scratch.x_left,scratch.x_right,
                 species,eos,context.direction,coefficient,high,scratch.candidate_species,
                 means,left_cell,right_cell);
         },high,scratch.candidate_species,species);
-        for(int s=0;s<species;++s) {
-            scratch.x_left[s]=fraction(s,left_cell);scratch.x_right[s]=fraction(s,right_cell);
+        // B composition is the actual interior cell Xi, independent of H.
+        if(wall_side==0) {
+            for(int s=0;s<species;++s) {
+                scratch.x_right[s]=fraction(s,right_cell);scratch.x_left[s]=scratch.x_right[s];
+            }
+        } else if(wall_side==1) {
+            for(int s=0;s<species;++s) {
+                scratch.x_left[s]=fraction(s,left_cell);scratch.x_right[s]=scratch.x_left[s];
+            }
+        } else {
+            for(int s=0;s<species;++s) {
+                scratch.x_left[s]=fraction(s,left_cell);scratch.x_right[s]=fraction(s,right_cell);
+            }
         }
         double pl=0.,cl=0.,pr=0.,cr=0.;
         FluxAdmissibility::required_mean_thermo(base_left,scratch.x_left,eos,pl,cl);

@@ -388,7 +388,7 @@ namespace DiffFlux
     template<class StateReader>
     ARCH_INLINE bool replace_rz_azimuthal_flux(const StateReader& read,
         int right_cell,const GridMetrics::GeometryView& grid,int direction,int i,
-        double spacing,double nu,FluidVector& flux)
+        double spacing,double nu,FluidVector& flux,double* work_velocity=nullptr)
     {
         if(!GridMetrics::is_axisymmetric_rz(grid))return true;
         // Density capacities use three V means. Two halo cells cover the
@@ -408,6 +408,7 @@ namespace DiffFlux
         const double energy=flux.eng-flux.mom_w*old_velocity+replacement.energy;
         if(!std::isfinite(energy))return false;
         flux.mom_w=replacement.momentum;flux.eng=energy;
+        if(work_velocity)*work_velocity=replacement.work_velocity;
         return true;
     }
 
@@ -622,11 +623,13 @@ namespace DiffFlux
 inline void capture_diffusion_surface_flux(
     const FluidState& state, const Grid& grid, int dir,
     const std::vector<FluidVector>& flux_buffer,
-    const std::vector<double>& spec_flux_buffer)
+    const std::vector<double>& spec_flux_buffer,
+    GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing)
 {
     const auto storage = state.boundary_flux_capture;
     if (!storage) return;
     const arch::boundary::BoundaryFluxCaptureView view = storage->view();
+    const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
     const int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
     const int species = state.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
@@ -647,10 +650,22 @@ inline void capture_diffusion_surface_flux(
                     + (side == 1 ? stride : 0);
                 const FluidVector& lef = state.get(index - stride);
                 const FluidVector& rig = state.get(index);
-                const double velocity[3]{
+                double velocity[3]{
                     .5 * (lef.mom_u / lef.rho + rig.mom_u / rig.rho),
                     .5 * (lef.mom_v / lef.rho + rig.mom_v / rig.rho),
                     .5 * (lef.mom_w / lef.rho + rig.mom_w / rig.rho)};
+                if(GridMetrics::is_axisymmetric_rz(geometry)) {
+                    // The observer shares the producer's geometry/omega work
+                    // coefficient, including zero traction; no E/F quotient.
+                    const auto read=[&state](int c){return state.get(c);};
+                    const auto low=RzViscousStress::angular_cell(read,index-stride,
+                        geometry,face[0]-(dir==0?1:0));
+                    const auto high=RzViscousStress::angular_cell(read,index,geometry,face[0]);
+                    const auto work=RzViscousStress::azimuthal_face(low,high,dir,
+                        diffusion_face_spacing(geometry,dir,face[0],face[1]),0.,geometry.GetFacePosL(face[0]));
+                    if(!work.valid)throw std::runtime_error("Invalid native diffusion boundary work observation");
+                    velocity[2]=work.work_velocity;
+                }
                 const FluidVector& flux = flux_buffer[index];
                 const double heat = flux.eng - flux.mom_u * velocity[0]
                     - flux.mom_v * velocity[1] - flux.mom_w * velocity[2];
@@ -746,18 +761,26 @@ inline void capture_diffusion_surface_flux(
                                 throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
                             }
                             if (!status.active) continue;
-                            if(do_viscous && !replace_rz_azimuthal_flux(
-                                [&state](int cell){return state.get(cell);},
-                                idx_R,geometry_view,dir,i,spacing,
-                                properties.coefficients.nu_visc,F_diff))
+                            const auto* controls=state.diffusion_boundary
+                                ?state.diffusion_boundary->view().at(dir,i,j,k,
+                                    grid.Is(),grid.Ie(),grid.Js(),grid.Je(),grid.Ks(),grid.Ke(),n_species):nullptr;
+                            const bool native=GridMetrics::is_axisymmetric_rz(geometry_view);
+                            double work_velocity[3]{.5*(U_L.mom_u/U_L.rho+U_R.mom_u/U_R.rho),
+                                .5*(U_L.mom_v/U_L.rho+U_R.mom_v/U_R.rho),0.};
+                            // Prescribed traction needs its physical work coefficient
+                            // even if viscosity is disabled. nu=0 preserves the
+                            // original thermal/species flux before boundary control.
+                            if((do_viscous||(native&&controls)) && !replace_rz_azimuthal_flux(
+                                [&state](int cell){return state.get(cell);},idx_R,
+                                geometry_view,dir,i,spacing,do_viscous?properties.coefficients.nu_visc:0.,F_diff,
+                                native?&work_velocity[2]:nullptr))
                                 throw std::runtime_error("Invalid RZ azimuthal shear profile or work flux");
-                            if (state.diffusion_boundary) {
-                                const auto* controls = state.diffusion_boundary->view().at(dir, i, j, k,
-                                    grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(), n_species);
+                            if (controls) {
                                 const int coordinate[3]{i,j,k}, lower[3]{grid.Is(),grid.Js(),grid.Ks()};
                                 arch::boundary::ApplyDiffusionBoundaryFlux(controls,
                                     coordinate[dir] == lower[dir] ? -1. : 1., U_L, U_R, F_diff,
-                                    n_species ? spec_flux_out.data() + idx_R : nullptr, n_species, grid.GetTotalSize());
+                                    n_species ? spec_flux_out.data() + idx_R : nullptr, n_species, grid.GetTotalSize(),
+                                    native?work_velocity:nullptr);
                             }
                             flux_out[idx_R] = F_diff;
                         }
@@ -768,7 +791,7 @@ inline void capture_diffusion_surface_flux(
         }
 
         failure.rethrow();
-        if (capture_budget) capture_diffusion_surface_flux(state, grid, dir, flux_out, spec_flux_out);
+        if (capture_budget) capture_diffusion_surface_flux(state, grid, dir, flux_out, spec_flux_out,semantics);
     }
 
     // 3. Geometric Source Terms

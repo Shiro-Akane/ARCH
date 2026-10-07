@@ -27,6 +27,34 @@ struct ScalarBoundaryCondition {
     double value = 0.;
 };
 
+/** Flat mathematical wall flags borrowed from one trusted boundary frame.
+ * No FluidState pointer, allocation or serialized scientific state is carried.
+ * The upstream builder authenticates actual BC/topology/time and excludes the
+ * native regular axis; these mathematical flags do not prove that authority.
+ */
+struct HydroBoundaryView {
+    std::array<bool,6> reflecting{};
+
+    /** An empty default preserves the existing non-wall arithmetic path. */
+    ARCH_INLINE bool empty() const {
+        for(bool wall:reflecting)if(wall)return false;
+        return true;
+    }
+
+    /** Checked actual face lookup; false leaves side unchanged on malformed
+     * direction/extents/range. Successful side=-1 is internal/unmarked, 0 is
+     * lower, 1 upper. An internal face never inherits a boundary flag.
+     */
+    ARCH_INLINE bool reflecting_side(int direction,int face,int active_lower,
+        int active_upper,int& side) const {
+        if(direction<0||direction>=3||active_lower<0||active_upper<=active_lower
+            ||face<active_lower||face>active_upper)return false;
+        const int candidate=face==active_lower?0:face==active_upper?1:-1;
+        side=candidate>=0&&reflecting[2*direction+candidate]?candidate:-1;
+        return true;
+    }
+};
+
 /** Non-owning face planes: temperature, three velocities, then species. */
 struct DiffusionBoundaryView {
     std::array<const ScalarBoundaryCondition*, 6> faces{};
@@ -55,15 +83,20 @@ struct DiffusionBoundaryStorage {
     }
 };
 
-/** Preserve transport work while imposing native outward flux components. */
+/** Preserve transport work while imposing outward flux components.
+ * Native mixed-measure producers supply their matching work velocities; the
+ * default retains ordinary mean-velocity arithmetic. No E/F division is used.
+ */
 template<class State, class Flux>
 ARCH_INLINE void ApplyDiffusionBoundaryFlux(const ScalarBoundaryCondition* controls,
     double outward_sign, const State& left, const State& right, Flux& flux,
-    double* species_flux, int species_count, int species_stride) {
+    double* species_flux, int species_count, int species_stride,
+    const double* matched_work_velocity=nullptr) {
     if (!controls) return;
-    const double velocity[3]{.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
-        .5 * (left.mom_v / left.rho + right.mom_v / right.rho),
-        .5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
+    const double velocity[3]{
+        matched_work_velocity?matched_work_velocity[0]:.5*(left.mom_u/left.rho+right.mom_u/right.rho),
+        matched_work_velocity?matched_work_velocity[1]:.5*(left.mom_v/left.rho+right.mom_v/right.rho),
+        matched_work_velocity?matched_work_velocity[2]:.5*(left.mom_w/left.rho+right.mom_w/right.rho)};
     // F_E = q + tau_i*v_i. Replace q/tau without discarding mechanical work.
     double heat = flux.eng - flux.mom_u * velocity[0]
         - flux.mom_v * velocity[1] - flux.mom_w * velocity[2];

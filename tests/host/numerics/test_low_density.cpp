@@ -17,6 +17,7 @@
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/state/RzNativeClosure.h"
+#include "numerics/state/RzCellAverage.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "fixtures/hydro/MeanThermoCases.h"
@@ -698,7 +699,134 @@ void native_rz_actual_diffusion_distances()
     std::cout<<"RZ_ACTUAL_DIFFUSION_DISTANCE_PASS actual_flux_and_thermal_dt=true axial_angular_rows=true whole_tensor_qualified=false\n";
 }
 
+/**
+ * Actual native representation refusal at huge radius.
+ * Workflow: construct a real three-cell constant-density support, independently
+ * integrate V/W/I, then check the shared thermal and viscous angular consumers.
+ * This is a scalar representation test, not a complete Hydro/diffusion stage.
+ */
+void native_rz_angular_velocity_underflow()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    Grid grid(amr::MAX_NG,0.,16.*1.e70,-.5,.5,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+    FluidState field;field.Preallocate(grid.GetTotalSize());field.InitSpecies(1);
+    constexpr double tiny_angular_mean=1.e-280;
+    for(int cell=0;cell<grid.GetTotalSize();++cell) {
+        field.set(cell,{1.,0.,0.,tiny_angular_mean,1.});
+        field.enuc_rate[cell]=0.;field.X(0,cell)=1.;
+    }
+    const auto geometry=GridMetrics::make_geometry_view(grid,rz);
+    const auto read=[&](int cell){return field.get(cell);};
+    const int i=grid.Is(),index=grid.GetIndex(i,grid.Js(),0);
+    const long double lower=grid.GetFacePosL(i),upper=grid.GetFacePosR(i);
+    require(lower==0.L&&upper>0.L,"underflow witness is not the real first annulus");
+    const long double volume=(upper*upper-lower*lower)/2.L;
+    const long double angular_measure=(upper*upper*upper-lower*lower*lower)/3.L;
+    const long double inertia=(upper*upper*upper*upper-lower*lower*lower*lower)/4.L;
+    const long double expected_omega=static_cast<long double>(tiny_angular_mean)*angular_measure/inertia;
+    const long double physical_point_momentum=expected_omega*upper;
+    require(std::isfinite(expected_omega)&&expected_omega>0.L
+        &&static_cast<double>(expected_omega)==0.,
+        "independent required nonzero omega does not actually underflow double");
+    require(std::isfinite(static_cast<double>(inertia))&&inertia>0.L
+        &&std::isfinite(static_cast<double>(physical_point_momentum))
+        &&static_cast<double>(physical_point_momentum)>0.,
+        "angular underflow witness lost its real finite inertia/point momentum");
+    const auto relative=[](double actual,long double expected,const char* message) {
+        require(std::isfinite(actual)&&std::isfinite(expected)
+            &&std::abs(static_cast<long double>(actual)-expected)
+                <=64.L*std::numeric_limits<double>::epsilon()*std::abs(expected),message);
+    };
+    // Independent first-annulus identities: omega=4*j/(3*rho*h),
+    // rho*omega*h=4*j/3. The nonzero momentum must not be silently discarded.
+    relative(static_cast<double>(physical_point_momentum),
+        4.L*static_cast<long double>(tiny_angular_mean)/3.L,
+        "independent tiny point momentum antiderivatives disagree");
+    relative(static_cast<double>(volume),upper*upper/2.L,
+        "independent first-annulus volume antiderivative disagrees");
+    const auto density=RzDensity::density_cell(read,index,geometry,i);
+    require(density.valid&&RzDensity::detail::cell_valid(density),
+        "actual huge-radius constant-density owner is invalid");
+    relative(density.capacity,inertia,"actual constant-density inertia differs from independent integral");
+
+    const auto arrays=[&]() {
+        return std::array<const std::vector<double>*,7>{&field.rho,&field.mom_u,&field.mom_v,
+            &field.mom_w,&field.eng,&field.enuc_rate,&field.mass_fractions};
+    };
+    const auto pin_arrays=[&]() {
+        std::array<std::vector<double>,7> snapshot;
+        const auto current=arrays();
+        for(int n=0;n<7;++n)snapshot[n]=*current[n];
+        return snapshot;
+    };
+    const auto pin_addresses=[&]() {
+        std::array<const double*,7> addresses{};const auto current=arrays();
+        for(int n=0;n<7;++n)addresses[n]=current[n]->data();
+        return addresses;
+    };
+    const auto unchanged=[&](const auto& snapshot,const auto& addresses) {
+        const auto current=arrays();
+        for(int n=0;n<7;++n) {
+            require(current[n]->data()==addresses[n]&&current[n]->size()==snapshot[n].size(),
+                "angular representation check changed source array ownership");
+            for(std::size_t k=0;k<snapshot[n].size();++k)
+                require(std::bit_cast<std::uint64_t>((*current[n])[k])
+                    ==std::bit_cast<std::uint64_t>(snapshot[n][k]),
+                    "angular representation check modified a source array bit");
+        }
+    };
+    const auto tiny_snapshot=pin_arrays();const auto tiny_addresses=pin_addresses();
+    require(std::isnan(RzDensity::angular_velocity(tiny_angular_mean,density)),
+        "unrepresentable nonzero required omega was silently converted to zero");
+    const auto closure=RzThermodynamics::from_density(read(index),density);
+    require(!closure.valid()&&!closure.inertia_mapping_valid&&std::isnan(closure.omega),
+        "thermal native consumer accepted an unrepresentable nonzero omega");
+    const auto base=RzThermodynamics::base_point(closure,static_cast<double>(upper));
+    require(!std::isfinite(base.rho)&&!std::isfinite(base.mom_w),
+        "invalid required angular representation produced a usable physical baseline");
+    const auto angular=RzViscousStress::angular_cell(read,index,geometry,i);
+    require(!angular.valid&&std::isnan(angular.omega),
+        "viscous native consumer accepted an unrepresentable nonzero omega");
+    require(!RzViscousStress::azimuthal_face(angular,angular,1,grid.dx2,1.,
+        static_cast<double>(upper)).valid,
+        "invalid angular representation produced a usable viscous traction");
+    unchanged(tiny_snapshot,tiny_addresses);
+
+    // A genuinely zero J has exactly zero omega and remains a valid baseline.
+    field.set(index,{1.,0.,0.,0.,1.});
+    const auto zero_snapshot=pin_arrays();const auto zero_addresses=pin_addresses();
+    const auto zero=RzThermodynamics::from_density(read(index),density);
+    const auto zero_angular=RzViscousStress::angular_cell(read,index,geometry,i);
+    require(RzDensity::angular_velocity(0.,density)==0.&&zero.valid()&&zero.omega==0.
+        &&zero.internal==1.&&zero_angular.valid&&zero_angular.omega==0.,
+        "true zero angular momentum was rejected or changed");
+    const auto zero_face=RzViscousStress::azimuthal_face(zero_angular,zero_angular,
+        1,grid.dx2,1.,static_cast<double>(upper));
+    require(zero_face.valid&&zero_face.momentum==0.&&zero_face.energy==0.,
+        "true zero angular momentum changed the original zero traction/work");
+    unchanged(zero_snapshot,zero_addresses);
+
+    // Represented omega=1/h, rho=1, e=1 gives j=3/4 and E=5/4.
+    // This exact native first-annulus reference stays valid on the same Grid.
+    field.set(index,{1.,0.,0.,.75,1.25});
+    const auto normal_snapshot=pin_arrays();const auto normal_addresses=pin_addresses();
+    const auto represented=RzThermodynamics::from_density(read(index),density);
+    const auto represented_angular=RzViscousStress::angular_cell(read,index,geometry,i);
+    require(represented.valid()&&represented_angular.valid&&represented.omega>0.
+        &&represented_angular.omega>0.,"represented native omega baseline was rejected");
+    const long double represented_omega=.75L*angular_measure/inertia;
+    relative(represented.omega,represented_omega,"represented thermal omega changed");
+    relative(represented_angular.omega,represented_omega,"represented viscous omega changed");
+    relative(represented.internal,1.L,"represented native thermal baseline changed");
+    relative(RzThermodynamics::base_point(represented,static_cast<double>(upper)).mom_w,
+        represented_omega*upper,"represented native point momentum changed");
+    unchanged(normal_snapshot,normal_addresses);
+    std::cout<<"RZ_ANGULAR_REPRESENTATION_PASS nonzero_underflow_rejected=true zero_and_represented_preserved=true whole_stage_qualified=false\n";
+}
+
 void leaves() {
+    native_rz_angular_velocity_underflow();
     native_rz_stage_prechecks();
     native_rz_diffusion_thermodynamics();
     native_rz_actual_diffusion_distances();
@@ -776,5 +904,64 @@ void leaves() {
     close(mixture[0]+mixture[1],1.,"composition normalization");
 }
 }
-int main() { try { leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
+
+/** Real native weights must not silently erase a nonzero represented point
+ * momentum. The constant has a represented exact integral, but all actual
+ * Gauss products round to zero; this unsupported direct arithmetic is rejected.
+ */
+void check_native_weighted_component_underflow()
+{
+    SpeciesManager species;species.add_species("weighted-range",1.,1.,1.4,2.);
+    IdealGas eos(1.4,species);
+    const arch::state::Bounds bounds{1.e-14,0.,10.};
+    const double xi[]{1.};
+    Grid grid(amr::MAX_NG,0.,16.,-.125,.125,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    grid.InitializeTopology(rz);
+    const auto samples=GridMetrics::Rz::CellAverageSamples(
+        grid.GetFacePosL(grid.Is()),grid.GetFacePosR(grid.Is()),
+        grid.x2_min,grid.x2_min+grid.dx2);
+    const double tiny=std::numeric_limits<double>::denorm_min();
+    for(int field:{1,2,3})for(double sign:{-1.,1.}) {
+        std::array<FluidVector,8> points;
+        long double exact=0.L;
+        for(std::size_t k=0;k<samples.size();++k) {
+            points[k]={1.,0.,0.,0.,1.};
+            double* component=field==1?&points[k].mom_u:field==2?&points[k].mom_v:&points[k].mom_w;
+            *component=sign*tiny;
+            const double weight=field==3?samples[k].angular_weight:samples[k].volume_weight;
+            require(weight>0.&&weight<.5&&weight*(*component)==0.,
+                "actual native Gauss witness does not lose its nonzero product");
+            exact+=static_cast<long double>(weight)*(*component);
+            require(arch::state::validate_eos(points[k],xi,1,bounds,eos)==arch::state::Status::valid,
+                "weighted component witness is not a real selected EOS point");
+        }
+        require(static_cast<double>(exact)==sign*tiny,
+            "constant native component's independent integral is not representable");
+        const auto frozen=points;
+        const auto result=RzCellAverage::conserved_mean(samples,[&](std::size_t k){return points[k];});
+        require(!result.valid()&&result.status==RzCellAverage::Status::unrepresentable,
+            "native weighted mean quietly erased a represented nonzero point component");
+        for(std::size_t k=0;k<points.size();++k)
+            for (const auto member:{&FluidVector::rho,&FluidVector::mom_u,&FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+                require(std::bit_cast<std::uint64_t>(points[k].*member)==std::bit_cast<std::uint64_t>(frozen[k].*member),
+                    "weighted rejection changed immutable point input");
+    }
+    // A legitimate zero and ordinary tiny normal products keep the original
+    // arithmetic; no floor, normalisation or conservative correction is added.
+    for(double angular:{0.,1.e-280,-1.e-280}) {
+        const FluidVector point{1.,0.,0.,angular,1.};
+        const auto result=RzCellAverage::conserved_mean(samples,[&](std::size_t){return point;});
+        require(result.valid(),"native weighted range guard rejected a represented original product");
+        long double reference=0.L;
+        for(const auto& sample:samples)reference+=static_cast<long double>(sample.angular_weight)*angular;
+        if(angular==0.)require(result.value.mom_w==0.,"native weighted zero acquired a floor");
+        else require(std::abs((static_cast<long double>(result.value.mom_w)-reference)/reference)
+            <=64.L*std::numeric_limits<double>::epsilon(),"native weighted normal arithmetic changed");
+    }
+}
+
+int main() {
+    try { check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
  catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; } }

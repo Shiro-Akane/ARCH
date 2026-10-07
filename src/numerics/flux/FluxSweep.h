@@ -151,10 +151,10 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
                         const auto status=AMRInterfaceReconstruction::needs_tvd_interface_reconstruction<ReconstructPolicy>(grid,dir,i,j,k)
                             ?RzNativeFaceFlux::compute<FluxPolicy,MusclReconstruction<MinMod>>(
                                 read,fraction,context,eos,coefficient,&mean_view,idx,idx+stride,
-                                scratch,native_flux,face_species_flux.data())
+                                scratch,native_flux,face_species_flux.data(),mean_cache->hydro_boundary)
                             :RzNativeFaceFlux::compute<FluxPolicy,ReconstructPolicy>(
                                 read,fraction,context,eos,coefficient,&mean_view,idx,idx+stride,
-                                scratch,native_flux,face_species_flux.data());
+                                scratch,native_flux,face_species_flux.data(),mean_cache->hydro_boundary);
                         if(status!=arch::state::Status::valid)
                             throw std::runtime_error("Native selected physical face failed required geometry/state/EOS acceptance");
                         flux_out[idx+stride]=native_flux;

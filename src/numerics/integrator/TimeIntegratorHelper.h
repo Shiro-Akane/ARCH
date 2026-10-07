@@ -788,7 +788,8 @@ namespace TimeIntegration
         const Physical::Gravity::IGravityPolicy* gravity,
         double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true,
         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-        arch::state::Bounds physical_bounds = {})
+        arch::state::Bounds physical_bounds = {},
+        const arch::boundary::HydroBoundaryView& hydro_boundary = {})
     {
         // Validate the chart and reject consumers not yet migrated before any
         // output/cache mutation. Runtime Grid still uses its existing chart.
@@ -808,6 +809,7 @@ namespace TimeIntegration
         mean_cache.roe_wave_speed = roe_wave_speed;
         mean_cache.geometry_semantics = semantics;
         mean_cache.physical_bounds = physical_bounds;
+        mean_cache.hydro_boundary = hydro_boundary;
 
         for (int dir = 0; dir < grid.dim; ++dir)
         {

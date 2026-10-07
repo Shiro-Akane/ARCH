@@ -5,7 +5,7 @@
  * Workflow:
  * 1. Borrow an explicit actual logical stage geometry, U/X readers and bounds.
  * 2. Require all selected stencil inputs and their genuine density closures/EOS.
- * 3. Build selected weighted radial or ordinary physical-node axial profiles.
+ * 3. Build selected weighted/axis-parity radial or physical-node axial profiles.
  * 4. Reconstruct N-1 rhoX fields; the largest central fraction closes the sum.
  * 5. Contract each donor's complete fluid/rhoX bundle by ONE finite theta.
  * 6. Return physical points and conservative rhoX, without publishing a flux.
@@ -29,6 +29,7 @@
 #include "data/FluidState.h"
 #include "grid/GridMetrics.h"
 #include "numerics/reconstruction/Reconstruction.h"
+#include "numerics/reconstruction/RzParityReconstruction.h"
 #include "numerics/reconstruction/RzWeightedReconstruction.h"
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
@@ -212,6 +213,141 @@ ARCH_INLINE Status finish_donor(Donor& base,FluidVector* high,double* q,const do
     }
     return Status::valid;
 }
+/** Authenticate the entire bound native axis domain, never a local cutoff.
+ * context_valid has already checked chart, actual extents, bounds and identity;
+ * exact root_lower==0 selects one consistent policy for all connected cells.
+ */
+ARCH_INLINE bool axis_muscl_domain(const Context& c) {
+    return c.direction==0&&c.geometry.dyadic_identity.bound
+        &&c.geometry.dyadic_identity.root_lower[0]==0.
+        &&GridMetrics::matches_identity(c.geometry);
+}
+
+/** Actual same-sign support ordered by increasing absolute radius.
+ * G0/-1 use their genuine first three cells; every other donor uses centered
+ * three cells. Selection depends on the owning global cell, not queried face.
+ */
+struct AxisSupport {
+    std::array<int,3> index{};
+    std::array<RzReconstruction::parity::Cell,3> cell{};
+    int target=0;
+};
+
+/** Resolve checked global G and real signed faces before any state read.
+ * Positive: G0 -> {i,i+1,i+2}, else {i-1,i,i+1}.
+ * Negative: G=-1 -> {i,i-1,i-2}, else {i+1,i,i-1}.
+ * No source is synthesized or clamped; missing actual logical halo rejects.
+ */
+ARCH_INLINE bool axis_support(const Context& c,int i,AxisSupport& output) {
+    if(!axis_muscl_domain(c)||i<0||i>=c.logical_nx)return false;
+    std::int64_t global=0;
+    if(!GridMetrics::global_cell(c.geometry.dyadic_identity,0,
+        std::int64_t(i)-c.geometry.ng,global))return false;
+    const int target=(global==0||global==-1)?0:1;
+    const int first=global==0?0:global>0?-1:global==-1?0:1;
+    const int increment=global>=0?1:-1;
+    AxisSupport result;result.target=target;
+    for(int k=0;k<3;++k) {
+        const std::int64_t candidate=std::int64_t(i)+first+increment*k;
+        if(candidate<0||candidate>=c.logical_nx)return false;
+        result.index[k]=static_cast<int>(candidate);
+        result.cell[k]={c.geometry.GetFacePosL(result.index[k]),
+            c.geometry.GetFacePosR(result.index[k])};
+    }
+    output=result;return true;
+}
+
+/** Build both axis-regular selected MUSCL donors from immutable real sources.
+ * Workflow: authenticate each own support; require all genuine source B/EOS;
+ * fit eta=r^2 profiles (even V, odd V/W); close N-1 rhoX by original alpha;
+ * contract each complete six-node bundle through the existing common ladder;
+ * publish 16*S rhoX only after BOTH donors pass. Physical baseline/scaled-omega,
+ * upstream signed ghost parity and final Runtime acceptance remain their owners.
+ * Even H=qbar+s*(t_eta-mu); odd H=(r/R)*(gbar+s*(t_eta-mu)).
+ */
+template<class Limiter,class StateReader,class FractionReader,class Eos>
+ARCH_INLINE FaceBundles axis_muscl_donors(const StateReader& read,
+    const FractionReader& fraction,const Context& c,const Eos& eos,
+    double* output_rhoX,double* workspace) {
+    FaceBundles result;
+    FluidVector high[2][8]{};
+    double* q=workspace;
+    double* own=c.species?workspace+16*std::size_t(c.species):nullptr;
+    double* scratch=c.species?workspace+18*std::size_t(c.species):nullptr;
+    for(int d=0;d<2;++d)for(int n=0;n<8;++n)for(int s=0;s<c.species;++s)
+        q[std::size_t(d*8+n)*c.species+s]=0.;
+    for(int d=0;d<2;++d) {
+        const std::int64_t owning=std::int64_t(c.face_i)+d;
+        if(owning<0||owning>=c.logical_nx)return result;
+        AxisSupport support;
+        if(!axis_support(c,static_cast<int>(owning),support))return result;
+        std::array<FluidVector,3> native;
+        std::array<RzThermodynamics::Cell,3> source;
+        for(int k=0;k<3;++k) {
+            const auto status=require_cell(read,fraction,c,support.index[k],
+                c.face_j,eos,scratch,source[k]);
+            if(status!=Status::valid){result.status=status;return result;}
+            native[k]=read(c.geometry.GetIndex(support.index[k],c.face_j));
+        }
+        const int own_index=c.geometry.GetIndex(static_cast<int>(owning),c.face_j);
+        for(int s=0;s<c.species;++s)own[std::size_t(d)*c.species+s]=fraction(s,own_index);
+        auto& donor=result.donor[d];const auto& baseline=source[support.target];
+        donor.node_count=6;
+        for(int n=0;n<6;++n) {
+            donor.radius[n]=RzThermodynamics::physical_node_radius(baseline,n);
+            donor.point[n]=RzThermodynamics::base_point(baseline,donor.radius[n]);
+            donor.baseline[n]=donor.point[n];high[d][n]=donor.point[n];
+        }
+        for(int f=0;f<5;++f) {
+            std::array<double,3> values;
+            for(int k=0;k<3;++k)values[k]=component(native[k],f);
+            const auto measure=f==1?RzReconstruction::parity::Measure::OddV:
+                f==3?RzReconstruction::parity::Measure::OddW:
+                     RzReconstruction::parity::Measure::EvenV;
+            RzReconstruction::parity::Profile profile;
+            if(!RzReconstruction::parity::reconstruct<Limiter>(values,
+                support.cell,support.target,measure,profile))
+                {result.status=Status::nonfinite;return result;}
+            for(int n=0;n<6;++n) {
+                const double value=profile.at(donor.radius[n]);
+                if(!std::isfinite(value)){result.status=Status::nonfinite;return result;}
+                component(high[d][n],f,value);
+            }
+        }
+        double alpha=0.;
+        const int closure=closure_species(c.species?own+std::size_t(d)*c.species:nullptr,
+            c.species,alpha);
+        for(int s=0;s<c.species;++s)if(s!=closure) {
+            std::array<double,3> values;
+            for(int k=0;k<3;++k) {
+                const int index=c.geometry.GetIndex(support.index[k],c.face_j);
+                if(!product(native[k].rho,fraction(s,index),values[k]))
+                    {result.status=Status::invalid_composition;return result;}
+            }
+            RzReconstruction::parity::Profile profile;
+            if(!RzReconstruction::parity::reconstruct<Limiter>(values,support.cell,
+                support.target,RzReconstruction::parity::Measure::EvenV,profile))
+                {result.status=Status::nonfinite;return result;}
+            for(int n=0;n<6;++n) {
+                const double value=profile.at(donor.radius[n]);
+                if(!std::isfinite(value)){result.status=Status::nonfinite;return result;}
+                q[std::size_t(d*8+n)*c.species+s]=value;
+            }
+        }
+        if(c.species&&!close_species(donor,high[d],q+std::size_t(d)*8*c.species,
+            c.species,closure,alpha))
+            {result.status=Status::invalid_composition;return result;}
+    }
+    for(int d=0;d<2;++d) {
+        const auto status=finish_donor(result.donor[d],high[d],
+            c.species?q+std::size_t(d)*8*c.species:nullptr,
+            c.species?own+std::size_t(d)*c.species:nullptr,c,eos,scratch);
+        if(status!=Status::valid){result.status=status;return result;}
+    }
+    for(std::size_t k=0;k<16*std::size_t(c.species);++k)output_rhoX[k]=q[k];
+    result.status=Status::valid;return result;
+}
+
 /** Required point projection of one source closure at one actual radial node. */
 ARCH_INLINE FluidVector source_point(const RzThermodynamics::Cell& cell,double radius) {
     return RzThermodynamics::base_point(cell,radius);
@@ -229,6 +365,13 @@ ARCH_INLINE FaceBundles reconstruct_face(const StateReader& read,const FractionR
     const Context& c,const Eos& eos,double* output_rhoX,double* workspace,std::size_t workspace_count) {
     FaceBundles result;
     if(!detail::context_valid(c,workspace_count,output_rhoX,workspace))return result;
+    // Authenticate the whole bound axis domain BEFORE the original N4 gather:
+    // each owning donor has its own genuine three-source parity support.
+    if constexpr(PolicyTraits<Policy>::kind==1) {
+        if(detail::axis_muscl_domain(c))
+            return detail::axis_muscl_donors<typename PolicyTraits<Policy>::limiter>(
+                read,fraction,c,eos,output_rhoX,workspace);
+    }
     if constexpr(PolicyTraits<Policy>::kind<0)return result;
     else {
         constexpr int kind=PolicyTraits<Policy>::kind;

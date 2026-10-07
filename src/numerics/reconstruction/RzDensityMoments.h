@@ -147,15 +147,21 @@ ARCH_INLINE bool cell_valid(const Cell& cell)
 } // namespace detail
 
 /** Temporary omega=J/(2*pi*dz*C) from the sole stored m_phi=J/W.
- * Reuses the same exponent-scaled product/quotient as the original angular
- * cell, so rounding and finiteness behavior are unchanged. The caller owns the
- * finite-m_phi policy: this leaf never reads a momentum state.
+ * Workflow: use the existing scaled quotient unchanged, then reject a nonzero
+ * stored moment whose required coefficient rounds to zero. Returning NaN lets
+ * existing closure/viscous finite guards reject instead of publishing lost J.
+ * Representable omega and genuine zero m_phi retain their original arithmetic.
+ * This coefficient-range guard does not implement a scaled physical profile or
+ * admit an otherwise representable point state outside the current omega range.
+ * The caller owns finite-m_phi/cell validation; no floor or momentum is changed.
  */
 ARCH_INLINE double angular_velocity(double m_phi,const Cell& cell)
 {
     const double numerator[]{m_phi,cell.weighted_two};
     const double denominator[]{cell.density_scale,cell.radius_scale,cell.weighted_three};
-    return detail::scaled_value(numerator,2,denominator,3);
+    const double omega=detail::scaled_value(numerator,2,denominator,3);
+    if(m_phi!=0.&&omega==0.)return std::numeric_limits<double>::quiet_NaN();
+    return omega;
 }
 
 /** Fit density on exactly three real same-row cells containing the target.

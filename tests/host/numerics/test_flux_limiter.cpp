@@ -12,16 +12,24 @@
  * The shared 64-epsilon trace band is unchanged. Reflections exchange the cells
  * and reverse normal velocity, rather than merely swapping the input states.
  */
+#include "grid/Grid.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/flux/RzNativeFaceFlux.h"
 #include "physics/eos/IdealGas.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "numerics/flux/InvariantDomainFlux.h"
 #include "numerics/state/StateAdmissibility.h"
 
 #include <algorithm>
+#include <array>
+#include <bit>
 #include <cmath>
 #include <cstdio>
+#include <cstdint>
 #include <iostream>
 #include <limits>
+#include <memory>
+#include <vector>
 
 namespace {
 
@@ -193,6 +201,352 @@ void check_fluid_blend(const Face& f, const FluidVector& high, double theta,
 }
 
 const char* kConePlus = "shifted cone bar + theta*C";
+
+// Independent native wall mathematics on a bound annulus. These exact V/W
+// ghost integrals are prescribed fixture data; no BCHandler, scheduler or
+// Runtime authority is mocked or certified by the flat mathematical flags.
+struct NativeWallFixture {
+    static constexpr auto semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    static constexpr long double internal=1.L/64.L;
+    SpeciesManager species;
+    IdealGas eos;
+    Grid grid{amr::MAX_NG,1.,3.,-.5,.5,0.,1.};
+    FluidState state;
+    arch::state::Bounds bounds{1.e-14,0.,1.};
+
+    static SpeciesManager materials() {
+        SpeciesManager result;
+        result.add_species("wall_a",1.,1.,1.4,2.);
+        result.add_species("wall_b",4.,2.,1.4,2.);
+        return result;
+    }
+    // Integrate (c+d*r) and its square with the actual W/V measures. The
+    // physical tangential velocity reflects across a radial wall without
+    // changing its sign; radial/axial normal velocities are genuinely zero.
+    static FluidVector integral(double lower,double upper,long double c,long double d) {
+        const long double a=lower,b=upper;
+        const long double volume=(b*b-a*a)/2.L;
+        const long double angular=(b*b*b-a*a*a)/3.L;
+        const long double mphi=(c*(b*b*b-a*a*a)/3.L
+            +d*(b*b*b*b-a*a*a*a)/4.L)/angular;
+        const long double squared=(c*c*(b*b-a*a)/2.L
+            +2.L*c*d*(b*b*b-a*a*a)/3.L
+            +d*d*(b*b*b*b-a*a*a*a)/4.L)/volume;
+        return {1.,0.,0.,double(mphi),double(internal+.5L*squared)};
+    }
+    NativeWallFixture():species(materials()),eos(1.4,species) {
+        grid.dim=2;grid.geometry="cylindrical";
+        grid.InitializeTopology(semantics);
+        grid.dyadic_identity.bound=true;
+        grid.dyadic_identity.root_lower={1.,-.5};
+        grid.dyadic_identity.root_upper={3.,.5};
+        grid.dyadic_identity.root_blocks={1,1};
+        grid.dyadic_identity.level=0;grid.dyadic_identity.logical={0,0};
+        grid.InitializeTopology(semantics);
+        check(GridMetrics::matches_identity(GridMetrics::make_geometry_view(grid,semantics)),
+            "native wall fixture authenticates its actual bound annular grid");
+        state.Preallocate(grid.GetTotalSize());state.InitSpecies(kSpecies);
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            long double c=0.L,d=1.L;
+            if(i<grid.Is()){c=2.L*grid.x1_min;d=-1.L;}
+            else if(i>=grid.Ie()){c=2.L*grid.x1_max;d=-1.L;}
+            const int index=grid.GetIndex(i,j);
+            state.set(index,integral(grid.GetFacePosL(i),grid.GetFacePosR(i),c,d));
+            state.X(0,index)=.75;state.X(1,index)=.25;state.enuc_rate[index]=0.;
+        }
+    }
+    arch::boundary::HydroBoundaryView walls() const {
+        arch::boundary::HydroBoundaryView result;
+        result.reflecting={true,true,true,true,false,false};return result;
+    }
+    RzSelectedReconstruction::Context context(int direction,int side) const {
+        const int i=direction==0?(side?grid.Ie()-1:grid.Is()-1):grid.Is()+3;
+        const int j=direction==1?(side?grid.Je()-1:grid.Js()-1):grid.Js()+3;
+        return {GridMetrics::make_geometry_view(grid,semantics),grid.GetTotalX(),
+            grid.GetTotalY(),i,j,direction,kSpecies,bounds};
+    }
+};
+
+// The whole logical fixture, including real endpoint halos, is checked with
+// the actual selected IdealGas at all six shared baseline physical points.
+void check_native_wall_required_eos(const NativeWallFixture& fixture) {
+    const auto geometry=GridMetrics::make_geometry_view(fixture.grid,NativeWallFixture::semantics);
+    const auto read=[&](int index){return fixture.state.get(index);};
+    const double xi[kSpecies]{.75,.25};
+    for(int j=0;j<fixture.grid.GetTotalY();++j)for(int i=0;i<fixture.grid.GetTotalX();++i) {
+        int begin=i-1;begin=std::max(0,std::min(begin,fixture.grid.GetTotalX()-3));
+        const int index=fixture.grid.GetIndex(i,j);
+        const auto cell=RzThermodynamics::make_cell_supported(read,index,geometry,i,begin,fixture.bounds);
+        check(cell.valid(),"independent wall halo has a valid real density/inertia closure");
+        if(!cell.valid())continue;
+        for(int n=0;n<6;++n)
+            check(arch::state::validate_eos(RzThermodynamics::base_point(cell,
+                RzThermodynamics::physical_node_radius(cell,n)),xi,kSpecies,fixture.bounds,fixture.eos)
+                ==arch::state::Status::valid,"every actual wall-halo baseline point passes real IdealGas/bounds");
+    }
+}
+
+// Borrow only real state readers and caller-owned, non-overlapping workspaces.
+// The view has Native semantics so all physical points query the actual EOS;
+// its Roe-wave option remains explicit rather than being lost through nullptr.
+template<class Reconstruction>
+arch::state::Status native_wall_compute(const NativeWallFixture& fixture,
+    const RzSelectedReconstruction::Context& context,
+    const arch::boundary::HydroBoundaryView* boundary,FluidVector& flux,
+    std::array<double,kSpecies>& species_flux,
+    GridMetrics::GeometrySemantics mean_semantics=NativeWallFixture::semantics) {
+    std::array<double,16*kSpecies> rhoX{};
+    std::array<double,19*kSpecies> reconstruction{};
+    std::array<double,kSpecies> left{},right{},candidate{},high{},low{};
+    RzNativeFaceFlux::Scratch scratch{rhoX.data(),reconstruction.data(),reconstruction.size(),
+        left.data(),right.data(),candidate.data(),high.data(),low.data()};
+    FluxAdmissibility::MeanThermoView means;means.geometry_semantics=mean_semantics;
+    means.roe_wave_speed=false;
+    const auto read=[&](int index){return fixture.state.get(index);};
+    const auto fraction=[&](int s,int index){return fixture.state.X(s,index);};
+    const int left_cell=context.geometry.GetIndex(context.face_i,context.face_j);
+    const int right_cell=left_cell+(context.direction==0?1:context.geometry.stride_y);
+    if(boundary)return RzNativeFaceFlux::compute<FluxHLLC<Reconstruction>,Reconstruction>(
+        read,fraction,context,fixture.eos,0.,&means,left_cell,right_cell,scratch,flux,
+        species_flux.data(),*boundary);
+    return RzNativeFaceFlux::compute<FluxHLLC<Reconstruction>,Reconstruction>(
+        read,fraction,context,fixture.eos,0.,&means,left_cell,right_cell,scratch,flux,species_flux.data());
+}
+
+// Zero normal velocity is chosen deliberately: independent wall mass/work and
+// tangential advective/species fluxes are zero. Normal pressure traction stays
+// positive; it is not forcibly equated to the mean pressure for high profiles.
+template<class Reconstruction>
+void check_native_wall_face(const NativeWallFixture& fixture,int direction,int side,bool pcm_pressure) {
+    const auto context=fixture.context(direction,side);const auto wall=fixture.walls();
+    FluidVector flux;std::array<double,kSpecies> species_flux{};
+    const auto status=native_wall_compute<Reconstruction>(fixture,context,&wall,flux,species_flux);
+    check(status==arch::state::Status::valid&&finite_state(flux),
+        "actual native reflected face returns a finite publishable mathematical flux");
+    if(status!=arch::state::Status::valid)return;
+    const double traction=direction==0?flux.mom_u:flux.mom_v;
+    const double tangent=direction==0?flux.mom_v:flux.mom_u;
+    // Reuse the original 64-epsilon band, in this fixture's unit-scale flux.
+    const double roundoff=kBand*std::max(1.,std::abs(traction));
+    check(traction>0.,"reflecting wall retains positive normal pressure traction");
+    check(std::abs(flux.rho)<=roundoff&&std::abs(flux.eng)<=roundoff
+        &&std::abs(flux.mom_w)<=roundoff&&std::abs(tangent)<=roundoff,
+        "four-wall cold rotation has zero mass/work/angular/tangent advective flux");
+    check(std::abs(species_flux[0])<=roundoff&&std::abs(species_flux[1])<=roundoff,
+        "reflecting wall does not transport either actual species");
+    if(pcm_pressure) {
+        const long double expected=(1.4L-1.L)*NativeWallFixture::internal;
+        const int interior=context.geometry.GetIndex(context.face_i+(direction==0&&!side?1:0),
+            context.face_j+(direction==1&&!side?1:0));
+        // Independent antiderivative E includes the rotational cancellation
+        // scale. The same original 64eps budget covers represented EOS energy.
+        const double scale=std::max(std::abs(double(expected)),std::abs(fixture.state.get(interior).eng));
+        check(std::abs(traction-double(expected))<=kBand*scale,
+            "PCM no-normal-flow wall traction matches independent constant internal-energy pressure");
+    }
+}
+
+void test_native_reflecting_face_math() {
+    NativeWallFixture fixture;check_native_wall_required_eos(fixture);
+    const auto source_rho=fixture.state.rho,source_u=fixture.state.mom_u,
+        source_v=fixture.state.mom_v,source_w=fixture.state.mom_w,
+        source_e=fixture.state.eng,source_x=fixture.state.mass_fractions;
+    for(int direction=0;direction<2;++direction)for(int side=0;side<2;++side) {
+        check_native_wall_face<MusclReconstruction<McLimiter>>(fixture,direction,side,false);
+        check_native_wall_face<PCMReconstruction>(fixture,direction,side,true);
+    }
+    check_native_wall_face<PPMReconstruction>(fixture,1,0,false);
+
+    const arch::boundary::HydroBoundaryView empty{};const auto wall=fixture.walls();
+    auto internal=fixture.context(0,0);internal.face_i=fixture.grid.Is()+5;
+    FluidVector omitted{},explicit_empty{},flagged_internal{};
+    std::array<double,kSpecies> omitted_x{},empty_x{},internal_x{};
+    const auto a=native_wall_compute<PCMReconstruction>(fixture,internal,nullptr,omitted,omitted_x);
+    const auto b=native_wall_compute<PCMReconstruction>(fixture,internal,&empty,explicit_empty,empty_x);
+    const auto c=native_wall_compute<PCMReconstruction>(fixture,internal,&wall,flagged_internal,internal_x);
+    check(a==arch::state::Status::valid&&b==a&&c==a
+        &&max_abs_diff(omitted,explicit_empty)==0.&&max_abs_diff(omitted,flagged_internal)==0.
+        &&omitted_x==empty_x&&omitted_x==internal_x,
+        "empty/default wall view and dormant internal-face flags preserve exact original face results");
+
+    const FluidVector sentinel{123.,-456.,789.,-321.,654.};
+    const std::array<double,kSpecies> sentinel_x{17.,19.};
+    auto reject=[&](RzSelectedReconstruction::Context context,arch::boundary::HydroBoundaryView view,
+        GridMetrics::GeometrySemantics semantics,const char* message) {
+        auto flux=sentinel;auto species_flux=sentinel_x;
+        const auto status=native_wall_compute<PCMReconstruction>(fixture,context,&view,flux,species_flux,semantics);
+        check(status!=arch::state::Status::valid&&max_abs_diff(flux,sentinel)==0.&&species_flux==sentinel_x,message);
+    };
+    auto bad_direction=fixture.context(0,0);bad_direction.direction=2;
+    reject(bad_direction,wall,NativeWallFixture::semantics,"malformed native wall direction rejects without publishing");
+    auto x3=wall;x3.reflecting[4]=true;
+    reject(fixture.context(0,0),x3,NativeWallFixture::semantics,"native 2D x3 wall flags reject without publishing");
+    auto bad_normal=fixture.context(0,0);bad_normal.face_i=fixture.grid.Is()-2;
+    reject(bad_normal,wall,NativeWallFixture::semantics,"wall face outside actual active normal bounds rejects without publishing");
+    auto bad_tangent=fixture.context(0,0);bad_tangent.face_j=fixture.grid.Js()-1;
+    reject(bad_tangent,wall,NativeWallFixture::semantics,"wall tangent ghost-plane request rejects without publishing");
+    reject(fixture.context(0,0),wall,GridMetrics::GeometrySemantics::Existing,
+        "foreign ordinary mean cache cannot certify mirrored native physical points");
+
+    int side=91;
+    check(!wall.reflecting_side(-1,4,4,20,side)&&side==91,
+        "flat view checked lookup rejects invalid direction without changing output");
+    check(!wall.reflecting_side(0,4,20,4,side)&&side==91,
+        "flat view checked lookup rejects reversed active bounds");
+    check(wall.reflecting_side(0,5,4,20,side)&&side==-1,
+        "flat view internal face has no physical wall authority");
+
+    // Preserve the independent cold raw-mean counterexample: physical wall
+    // points do not make raw mixed-measure U a legal generic point LLF state.
+    const FluidVector raw{1.,0.,0.,3./4.,17./64.};
+    const double xi[kSpecies]{.75,.25};const double p=(1.4-1.)/64.;
+    const double sound=std::sqrt(1.4*p);
+    check(arch::state::recover(raw).status==arch::state::Status::unresolved_energy,
+        "cold raw native mean remains outside the generic point thermal domain");
+    const FluidVector high{0.,p,0.,0.,0.};const double species_high[kSpecies]{0.,0.};
+    const auto factor=FluxAdmissibility::point_face_blend_with_thermo(raw,raw,xi,xi,kSpecies,
+        p,sound,p,sound,0,high,species_high);
+    check(!factor.valid,"raw cold mean generic LLF remains rejected independently of physical-wall face success");
+    check(fixture.state.rho==source_rho&&fixture.state.mom_u==source_u
+        &&fixture.state.mom_v==source_v&&fixture.state.mom_w==source_w
+        &&fixture.state.eng==source_e&&fixture.state.mass_fractions==source_x,
+        "all native wall face and failure requests preserve actual source arrays");
+}
+
+
+// Actual native axial producer -> actual physical-face override. Independent
+// V/W antiderivatives own the expected mechanical work; there is no mocked
+// Native frame or Runtime acceptance, and no full-tensor physics assertion.
+void test_native_diffusion_boundary_work()
+{
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SpeciesManager species;species.add_species("work_a",1.,1.,1.4,2.);
+    species.add_species("work_b",4.,2.,1.4,2.);
+    IdealGas eos(1.4,species);
+    Grid grid(amr::MAX_NG,4.,20.,-.5,.5,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(native);
+    grid.dyadic_identity.bound=true;grid.dyadic_identity.root_lower={4.,-.5};
+    grid.dyadic_identity.root_upper={20.,.5};grid.dyadic_identity.root_blocks={1,1};
+    grid.dyadic_identity.level=0;grid.dyadic_identity.logical={0,0};
+    grid.InitializeTopology(native);
+    check(GridMetrics::matches_identity(GridMetrics::make_geometry_view(grid,native)),
+        "native viscous work fixture has actual bound root geometry");
+    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(kSpecies);
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+        const long double capacity=(b*b*b*b-a*a*a*a)/4.L;
+        const long double torque_measure=(b*b*b-a*a*a)/3.L;
+        const long double omega=j<grid.Js()?1.L:2.L;
+        const int index=grid.GetIndex(i,j);
+        state.set(index,{1.,0.,0.,double(omega*capacity/torque_measure),10000.});
+        state.X(0,index)=.75;state.X(1,index)=.25;state.enuc_rate[index]=0.;
+    }
+    const std::array<std::vector<double>,7> inputs{state.rho,state.mom_u,state.mom_v,
+        state.mom_w,state.eng,state.enuc_rate,state.mass_fractions};
+    const std::array<const double*,7> pointers{state.rho.data(),state.mom_u.data(),
+        state.mom_v.data(),state.mom_w.data(),state.eng.data(),state.enuc_rate.data(),
+        state.mass_fractions.data()};
+    SimConfig config;config.physics.diffusion.use_diffusion=true;
+    config.physics.diffusion.use_viscous_diffusion=true;
+    // The heat-flux channel is genuinely enabled, with zero conductivity.
+    // This permits its zero prescription under the actual callback contract.
+    config.physics.diffusion.use_thermal_diffusion=true;
+    config.physics.diffusion.alpha_therm=0.;
+    config.physics.diffusion.use_species_diffusion=false;
+    constexpr double nu=.01;config.physics.diffusion.nu_visc=nu;
+    const int i=grid.Is()+1,j=grid.Js(),face=grid.GetIndex(i,j);
+    check(grid.GetFacePosL(i)==5.&&grid.GetFacePosR(i)==6.,
+        "native viscous work independent reference uses real cell [5,6]");
+    // For rho=1 on [5,6]: C=int r^3 dr=671/4, M2=int r^2 dr=91/3,
+    // M1=int r dr=11/2. Across this actual axial face Omega_L=1,Omega_R=2.
+    // F_phi=-nu*C*(Omega_R-Omega_L)/(dz*M2); F_E/F_phi=1.5*M2/M1=91/11.
+    // Raw average (J/W)/rho instead gives 1.5*C/M2=6039/728; the exact
+    // difference is 181/8008. This reference never divides production E/F.
+    constexpr long double capacity=671.L/4.L,torque_measure=91.L/3.L;
+    constexpr long double volume_measure=11.L/2.L;
+    constexpr long double work_velocity=91.L/11.L,raw_velocity=6039.L/728.L;
+    check(close_rel(double(raw_velocity-work_velocity),double(181.L/8008.L)),
+        "native work witness separates raw velocity from independent physical work");
+    const long double spacing=grid.GetAxialFacePosR(j)-grid.GetAxialFacePosL(j);
+    const double expected_phi=double(-static_cast<long double>(nu)*capacity/(spacing*torque_measure));
+    const double expected_energy=double(-static_cast<long double>(nu)*capacity*1.5L/(spacing*volume_measure));
+    std::vector<FluidVector> flux(grid.GetTotalSize());
+    std::vector<double> species_flux(grid.GetTotalSize()*kSpecies,0.);
+    DiffFlux::compute_fluxes(state,eos,grid,config,flux,species_flux,1,false,native);
+    const FluidVector baseline=flux[face];
+    check(close_rel(baseline.mom_w,expected_phi)&&close_rel(baseline.eng,expected_energy),
+        "actual native axial stress and area work match independent C/M2/M1");
+    check(close_rel(baseline.eng,double(static_cast<long double>(baseline.mom_w)*work_velocity)),
+        "actual native axial face work uses independent 91/11 carrier");
+    for(int mode=0;mode<4;++mode) {
+        auto controls=std::make_shared<arch::boundary::DiffusionBoundaryStorage>();
+        controls->faces[2].resize((grid.Ie()-grid.Is())*(4+kSpecies));
+        for(int plane=0;plane<grid.Ie()-grid.Is();++plane) {
+            auto* values=controls->faces[2].data()+plane*(4+kSpecies);
+            if(mode&1)values[0]={arch::boundary::ScalarBoundaryKind::OutwardFlux,0.};
+            if(mode&2)values[3]={arch::boundary::ScalarBoundaryKind::OutwardFlux,0.};
+        }
+        const auto saved_controls=controls->faces[2];
+        state.diffusion_boundary=controls;
+        // Real observer storage, owned exactly as a physical lower-Y plane.
+        // Its default weight=1/initial_weight=0 captures the published face,
+        // and NaN sentinels make an unexecuted observer impossible to pass.
+        auto capture=std::make_shared<arch::boundary::BoundaryFluxCaptureStorage>();
+        constexpr int captured_fields=6+kSpecies;
+        capture->stage[2].assign((grid.Ie()-grid.Is())*captured_fields,
+            std::numeric_limits<double>::quiet_NaN());
+        state.boundary_flux_capture=capture;
+        std::fill(flux.begin(),flux.end(),FluidVector{});
+        std::fill(species_flux.begin(),species_flux.end(),0.);
+        DiffFlux::compute_fluxes(state,eos,grid,config,flux,species_flux,1,true,native);
+        const auto result=flux[face];
+        const double* observed=capture->stage[2].data()+(i-grid.Is())*captured_fields;
+        check(std::isfinite(observed[captured_fields-1])
+            &&std::abs(observed[captured_fields-1])<=band_of(baseline.eng,expected_energy),
+            "actual native observer captures zero heat with the original reference-scaled band");
+        check(observed[0]==result.rho&&observed[1]==result.mom_u
+            &&observed[2]==result.mom_v&&observed[3]==result.mom_w
+            &&observed[4]==result.eng,
+            "actual native observer traction and total energy agree with the published face");
+        for(int sp=0;sp<kSpecies;++sp)
+            check(observed[5+sp]==species_flux[sp*grid.GetTotalSize()+face],
+                "actual native observer keeps each emitted species flux in its real field");
+        check(finite_state(result)&&result.rho==0.&&result.mom_u==0.&&result.mom_v==0.,
+            "native controlled work preserves absent transport components");
+        if(mode&2) {
+            check(result.mom_w==0.,"native zero prescribed phi traction is realized");
+            // With no thermal diffusion, changing phi traction to zero must
+            // remove all its work, rather than reclassify a residual as heat.
+            check(std::abs(result.eng)<=band_of(baseline.eng,expected_energy),
+                "native zero phi traction leaves zero area work and zero heat");
+        } else {
+            check(close_rel(result.mom_w,expected_phi)&&close_rel(result.eng,expected_energy),
+                "native zero heat or inherited controls preserve actual paired mechanical work");
+        }
+        for(int sp=0;sp<kSpecies;++sp)
+            check(species_flux[sp*grid.GetTotalSize()+face]==0.,
+                "native work controls preserve zero species diffusion");
+        bool controls_unchanged=controls->faces[2].size()==saved_controls.size();
+        for(std::size_t n=0;n<saved_controls.size();++n)
+            controls_unchanged=controls_unchanged
+                &&controls->faces[2][n].kind==saved_controls[n].kind
+                &&std::bit_cast<std::uint64_t>(controls->faces[2][n].value)
+                    ==std::bit_cast<std::uint64_t>(saved_controls[n].value);
+        check(controls_unchanged,"actual native boundary producer leaves callback controls immutable");
+    }
+    const std::array<const std::vector<double>*,7> fields{&state.rho,&state.mom_u,&state.mom_v,
+        &state.mom_w,&state.eng,&state.enuc_rate,&state.mass_fractions};
+    bool immutable=true;
+    for(std::size_t field=0;field<fields.size();++field) {
+        immutable=immutable&&fields[field]->data()==pointers[field]
+            &&fields[field]->size()==inputs[field].size();
+        for(std::size_t n=0;n<inputs[field].size();++n)
+            immutable=immutable&&std::bit_cast<std::uint64_t>((*fields[field])[n])
+                ==std::bit_cast<std::uint64_t>(inputs[field][n]);
+    }
+    check(immutable,"all native diffusion face/control requests preserve seven real input arrays and leases");
+    std::cout<<"RZ_NATIVE_DIFFUSION_BOUNDARY_WORK modes=4 PASS_IF_ALL_CHECKS\n";
+}
 
 } // namespace
 
@@ -421,6 +775,9 @@ int main()
                         scale, theta, limited.rho, scale * limited_base.rho);
         }
     }
+
+    test_native_reflecting_face_math();
+    test_native_diffusion_boundary_work();
 
     ok = failures == 0;
     std::printf("checks=%d failures=%d result=%s\n", checks, failures,

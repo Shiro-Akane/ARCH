@@ -9,6 +9,7 @@
 // reconstruction input; every tolerance is a floating-point rounding allowance
 // and carries no physical units.
 #include "numerics/reconstruction/Reconstruction.h"
+#include "numerics/reconstruction/RzParityReconstruction.h"
 #include "numerics/reconstruction/RzWeightedReconstruction.h"
 
 #include <algorithm>
@@ -645,6 +646,294 @@ void run()
 }
 } // namespace native_scalar_checks
 
+/**
+ * Independent scalar parity-leaf witnesses.
+ *
+ * Workflow: form exact polynomial cell means by long-double antiderivatives,
+ * call the selected production limiter, and independently integrate/evaluate
+ * its public profile. These checks grant neither a full EOS nor AMR method.
+ * Radius normalization keeps the large-radius/small-amplitude witness real;
+ * the oracle never divides a double-precision angular mean by a huge radius.
+ */
+namespace native_parity_checks {
+namespace p = RzReconstruction::parity;
+
+long double power(long double value, int exponent)
+{
+    long double result = 1.L;
+    for (int n = 0; n < exponent; ++n) result *= value;
+    return result;
+}
+
+long double primitive_difference(long double lower, long double upper, int exponent)
+{
+    return (power(upper, exponent + 1) - power(lower, exponent + 1)) /
+           static_cast<long double>(exponent + 1);
+}
+
+int weight_power(p::Measure measure)
+{
+    return measure == p::Measure::OddW ? 2 : 1;
+}
+
+bool odd(p::Measure measure)
+{
+    return measure != p::Measure::EvenV;
+}
+
+/** Integrate q=A[a+b(r/R)^2] or q=A(r/R)[a+b(r/R)^2]. */
+long double polynomial_mean(const p::Cell& cell, p::Measure measure,
+                            long double a, long double b,
+                            long double radius_scale = 1.L,
+                            long double amplitude = 1.L)
+{
+    const long double lower = static_cast<long double>(cell.lower) / radius_scale;
+    const long double upper = static_cast<long double>(cell.upper) / radius_scale;
+    const int exponent = weight_power(measure);
+    const int parity_power = odd(measure) ? 1 : 0;
+    // The common minus sign of |r| on a reflected cell cancels in this ratio.
+    return amplitude *
+           (a * primitive_difference(lower, upper, exponent + parity_power) +
+            b * primitive_difference(lower, upper, exponent + parity_power + 2)) /
+           primitive_difference(lower, upper, exponent);
+}
+
+long double polynomial_value(long double radius, p::Measure measure,
+                             long double a, long double b,
+                             long double radius_scale = 1.L,
+                             long double amplitude = 1.L)
+{
+    const long double t = radius / radius_scale;
+    return amplitude * (odd(measure) ? t : 1.L) * (a + b * t * t);
+}
+
+void close(double actual, long double expected, const char* message)
+{
+    // Keep the existing native scalar 64-epsilon relative budget, without a
+    // max(1,scale) that would hide a nonzero subnormal-scale profile.
+    const long double scale = std::max(std::fabs(static_cast<long double>(actual)),
+                                       std::fabs(expected));
+    require(std::isfinite(actual) && std::isfinite(expected) &&
+            std::fabs(static_cast<long double>(actual) - expected) <=
+                64.L * static_cast<long double>(kEps) * scale, message);
+}
+
+std::array<p::Cell, 3> support(bool nonuniform, bool reflected,
+                             double radius_scale = 1.)
+{
+    const std::array<double, 4> faces = nonuniform
+        ? std::array<double, 4>{0., .375, 1.25, 3.}
+        : std::array<double, 4>{0., 1., 2., 3.};
+    std::array<p::Cell, 3> result{};
+    for (int n = 0; n < 3; ++n) {
+        const double lower = faces[n] * radius_scale;
+        const double upper = faces[n + 1] * radius_scale;
+        result[n] = reflected ? p::Cell{-upper, -lower} : p::Cell{lower, upper};
+    }
+    return result;
+}
+
+/** Exact Gauss-4 integration of this quadratic/cubic public scalar profile. */
+long double profile_mean(const p::Profile& profile, const p::Cell& cell,
+                         p::Measure measure)
+{
+    constexpr std::array<long double, 4> nodes{
+        -.861136311594052575223946488893L, -.339981043584856264802665759103L,
+         .339981043584856264802665759103L,  .861136311594052575223946488893L};
+    constexpr std::array<long double, 4> weights{
+        .347854845137453857373063949222L, .652145154862546142626936050778L,
+        .652145154862546142626936050778L, .347854845137453857373063949222L};
+    const long double lower = cell.lower, upper = cell.upper;
+    const long double radial_scale = std::max(std::fabs(lower), std::fabs(upper));
+    long double numerator = 0.L, denominator = 0.L;
+    for (int n = 0; n < 4; ++n) {
+        const long double radius = .5L * ((1.L - nodes[n]) * lower +
+                                        (1.L + nodes[n]) * upper);
+        const long double t = radius / radial_scale;
+        const long double measure_weight = weight_power(measure) == 1
+            ? std::fabs(t) : t * t;
+        const double value = profile.at(static_cast<double>(radius));
+        require(std::isfinite(value), "parity public profile is nonfinite at Gauss node");
+        numerator += weights[n] * measure_weight * static_cast<long double>(value);
+        denominator += weights[n] * measure_weight;
+    }
+    return numerator / denominator;
+}
+
+/** True eta-affine fields must retain both signed traces and their own means. */
+template<class Limiter>
+void polynomial_cases()
+{
+    constexpr std::array<p::Measure, 3> measures{
+        p::Measure::EvenV, p::Measure::OddV, p::Measure::OddW};
+    for (bool nonuniform : {false, true}) for (bool reflected : {false, true}) {
+        const auto geometry = support(nonuniform, reflected);
+        for (const auto measure : measures) {
+            std::array<double, 3> means{};
+            for (int n = 0; n < 3; ++n)
+                means[n] = static_cast<double>(polynomial_mean(geometry[n], measure, 1.25L, .125L));
+            for (int target : {0, 1}) {
+                p::Profile profile{};
+                require(p::reconstruct<Limiter>(means, geometry, target, measure, profile) && profile.valid,
+                        "legal signed parity polynomial was rejected");
+                const auto& cell = geometry[target];
+                close(static_cast<double>(profile_mean(profile, cell, measure)), means[target],
+                      "parity profile did not conserve its own V/W native mean");
+                for (long double fraction : {0.L, .069431844202973712388026755554L,
+                                              .330009478207571867598667120449L,
+                                              .669990521792428132401332879551L,
+                                              .930568155797026287611973244446L, 1.L}) {
+                    const long double radius = (1.L - fraction) * cell.lower + fraction * cell.upper;
+                    const double value = profile.at(static_cast<double>(radius));
+                    close(value, polynomial_value(radius, measure, 1.25L, .125L),
+                          "parity eta-affine trace/Gauss value differs from independent polynomial");
+                }
+                if (odd(measure) && target == 0)
+                    require(profile.at(0.) == 0., "odd parity profile is nonzero at the axis");
+            }
+        }
+    }
+}
+
+/** Independent physical centroids generate a nonlinear limiter-identity case. */
+void selected_limiter_identity()
+{
+    for (bool reflected : {false, true}) {
+        const auto geometry = support(true, reflected);
+        for (const auto measure : {p::Measure::EvenV, p::Measure::OddV, p::Measure::OddW}) {
+            std::array<long double, 3> centroids{};
+            for (int n = 0; n < 3; ++n) {
+                const int exponent = weight_power(measure) + (odd(measure) ? 1 : 0);
+                centroids[n] = primitive_difference(geometry[n].lower, geometry[n].upper, exponent + 2) /
+                               primitive_difference(geometry[n].lower, geometry[n].upper, exponent);
+            }
+            // Piecewise constant a (or q=r*a) has independently exact means.
+            // The two positive gradients have ratio 1/2 in their true centroid
+            // coordinates; this is deliberately separate from affine exactness.
+            const std::array<long double, 3> amplitudes{
+                1.L, 2.L, 2.L + 2.L * (centroids[2] - centroids[1]) /
+                                            (centroids[1] - centroids[0])};
+            std::array<double, 3> means{};
+            for (int n = 0; n < 3; ++n)
+                means[n] = static_cast<double>(polynomial_mean(geometry[n], measure, amplitudes[n], 0.L));
+            p::Profile minmod{}, mc{}, superbee{};
+            require(p::reconstruct<MinMod>(means, geometry, 1, measure, minmod) &&
+                    p::reconstruct<McLimiter>(means, geometry, 1, measure, mc) &&
+                    p::reconstruct<SuperBee>(means, geometry, 1, measure, superbee) &&
+                    minmod.valid && mc.valid && superbee.valid,
+                    "selected nonlinear parity witness was rejected");
+            for (const p::Profile* profile : {&minmod, &mc, &superbee})
+                close(static_cast<double>(profile_mean(*profile, geometry[1], measure)), means[1],
+                      "selected limiter changed the native parity cell mean");
+            const double outer_radius = reflected ? geometry[1].lower : geometry[1].upper;
+            const double sign = odd(measure) && reflected ? -1. : 1.;
+            const double mm = sign * minmod.at(outer_radius);
+            const double central = sign * mc.at(outer_radius);
+            const double sb = sign * superbee.at(outer_radius);
+            require(std::isfinite(mm) && std::isfinite(central) && std::isfinite(sb) &&
+                    mm < central && central < sb,
+                    "native nonlinear reconstruction lost actual MinMod/MC/SuperBee distinction");
+        }
+    }
+}
+
+/** A representable tiny mean must survive a huge radius without j/r loss. */
+void scaled_nonzero_amplitude()
+{
+    const long double field_scale = 3.e100L, amplitude = 1.e-250L;
+    for (bool reflected : {false, true}) {
+    const auto geometry = support(false, reflected, 1.e100);
+    for (const auto measure : {p::Measure::OddV, p::Measure::OddW}) {
+        std::array<double, 3> means{};
+        for (int n = 0; n < 3; ++n) {
+            means[n] = static_cast<double>(polynomial_mean(geometry[n], measure, 1.L, .25L,
+                                                          field_scale, amplitude));
+            require(std::isfinite(means[n]) && (reflected ? -means[n] : means[n]) > 0.,
+                    "independent tiny parity mean is not representable");
+            require(means[n] / 3.e100 == 0.,
+                    "large-radius witness does not actually expose double j/r underflow");
+        }
+        for (int target : {0, 1}) {
+            p::Profile profile{};
+            require(p::reconstruct<McLimiter>(means, geometry, target, measure, profile) && profile.valid,
+                    "large-radius representable parity profile was rejected");
+            const double radius = reflected ? geometry[target].lower : geometry[target].upper;
+            require((reflected ? -profile.at(radius) : profile.at(radius)) > 0.,
+                    "parity leaf silently zeroed representable tiny amplitude");
+            close(profile.at(radius), polynomial_value(radius, measure, 1.L, .25L,
+                                                        field_scale, amplitude),
+                  "scaled tiny parity trace differs from independent polynomial");
+            close(static_cast<double>(profile_mean(profile, geometry[target], measure)), means[target],
+                  "scaled tiny parity native mean was not preserved");
+            if (target == 0)
+                require(profile.at(0.) == 0., "scaled first-donor odd profile violates axis regularity");
+            else
+                require(!std::isfinite(profile.at(0.)),
+                        "scaled centered parity profile evaluated outside its actual donor");
+        }
+    }
+    }
+}
+
+bool same_observable_profile(const p::Profile& first, const p::Profile& second)
+{
+    if (first.valid != second.valid) return false;
+    for (double radius : {1., 1.125, 1.5, 2.})
+        if (std::bit_cast<std::uint64_t>(first.at(radius)) !=
+            std::bit_cast<std::uint64_t>(second.at(radius))) return false;
+    return true;
+}
+
+/** Illegal support must fail without publishing even an observable profile. */
+void rejection_atomicity()
+{
+    const auto original_geometry = support(false, false);
+    const std::array<double, 3> original_means{1., 2., 3.};
+    p::Profile sentinel{};
+    require(p::reconstruct<McLimiter>(original_means, original_geometry, 1,
+                                     p::Measure::EvenV, sentinel) && sentinel.valid,
+            "parity rejection sentinel could not be formed");
+    for (int fault = 0; fault < 14; ++fault) {
+        auto geometry = original_geometry;
+        auto means = original_means;
+        int target = 1;
+        auto measure = p::Measure::EvenV;
+        switch (fault) {
+        case 0: means[1] = std::numeric_limits<double>::quiet_NaN(); break;
+        case 1: means[2] = std::numeric_limits<double>::infinity(); break;
+        case 2: geometry[1].lower = std::numeric_limits<double>::infinity(); break;
+        case 3: geometry[2].upper = geometry[2].lower; break; // Only two real cells.
+        case 4: geometry[1].lower += .125; break; // Actual gap.
+        case 5: geometry[1].lower -= .125; break; // Actual overlap.
+        case 6: geometry[0].lower = -.125; break; // Axis-straddling cell.
+        case 7: geometry[2] = {-3., -2.}; break; // Mixed signs.
+        case 8: geometry[1] = {2., 1.}; break; // Reversed physical endpoints.
+        case 9: std::swap(geometry[0], geometry[2]); break; // Wrong |r| order.
+        case 10: target = 2; break;
+        case 11: target = -1; break;
+        case 12: measure = static_cast<p::Measure>(255); break;
+        case 13: geometry[0] = {0., 0.}; break;
+        }
+        p::Profile output = sentinel;
+        require(!p::reconstruct<McLimiter>(means, geometry, target, measure, output),
+                "illegal parity support/measure/target was accepted");
+        require(same_observable_profile(output, sentinel),
+                "rejected parity leaf published a partial observable profile");
+    }
+}
+
+void run()
+{
+    polynomial_cases<MinMod>();
+    polynomial_cases<McLimiter>();
+    polynomial_cases<SuperBee>();
+    selected_limiter_identity();
+    scaled_nonzero_amplitude();
+    rejection_atomicity();
+    std::cout << "Native scalar parity independent polynomial checks passed (64 eps; no full method grant)\n";
+}
+} // namespace native_parity_checks
+
 } // namespace
 
 int main()
@@ -659,6 +948,7 @@ int main()
         perturbation_witnesses();
         perturbation_sweep();
         native_scalar_checks::run();
+        native_parity_checks::run();
         std::cout << "PPM curvature limiter checks passed (C=1.25, 64 eps witness band)\n";
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

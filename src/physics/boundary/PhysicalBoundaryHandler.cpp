@@ -5,9 +5,9 @@
  * Workflow:
  * 1. Apply the unchanged logical built-in boundary plan.
  * 2. Identify only the physical faces owned by the current AMR leaf.
- * 3. Existing callbacks retain their x1/x2/x3 ordering. Native RZ prepares
- *    true point-EOS/V/W surface candidates over immutable seeds and completed
- *    x1 prefixes, then authenticates all frames before any callback scatter.
+ * 3. Existing callbacks retain their x1/x2/x3 ordering. Native RZ gathers
+ *    true point-EOS/V/W reflecting seeds and immutable user siblings per axis,
+ *    completing x1 before x2 and authenticating all frames before scatter.
  * 4. Scatter provisional native ghosts and separate face-center transport
  *    controls; complete only shared axis parity after final domain exchange.
  *    Runtime actual completed-ghost EOS precedes scheduler GhostValid.
@@ -58,6 +58,19 @@ std::array<std::uint64_t,20> native_grid_identity(const Grid& grid) {
     const auto provenance=GridMetrics::identity_words(grid.dyadic_identity);
     std::copy(provenance.begin(),provenance.end(),result.begin()+9);
     return result;
+}
+/** Freeze the configured native root values, including unbound fixture context.
+ * Only immutable identity is recorded: no configured value is replaced/defaulted.
+ */
+std::array<std::uint64_t,7> native_config_root_identity(const SimConfig& config) {
+    return {std::bit_cast<std::uint64_t>(config.grid.x1_min),
+        std::bit_cast<std::uint64_t>(config.grid.x1_max),
+        std::bit_cast<std::uint64_t>(config.grid.x2_min),
+        std::bit_cast<std::uint64_t>(config.grid.x2_max),
+        static_cast<std::uint64_t>(config.grid.nblockx1),
+        static_cast<std::uint64_t>(config.grid.nblockx2),
+        static_cast<std::uint64_t>(config.grid.x2l_boundary_type=="periodic"
+            &&config.grid.x2r_boundary_type=="periodic")};
 }
 /** Physical Neumann denotes the existing zero-normal-gradient hydro boundary. */
 arch::boundary::BoundaryType logical_type(std::string_view token) {
@@ -196,6 +209,114 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
     return result;
 }
 
+
+/** Authenticate exact configured root provenance without allocation or EOS.
+ * The real Tree copies these root endpoints/counts verbatim into each bound
+ * Native Block. Rechecking before final candidate publication also rejects a
+ * callback that changed configuration root context while preserving Grid bytes.
+ */
+void BCHandler::require_native_root_frame(const Grid& grid) const {
+    if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::logic_error("Native reflecting projection requires the explicit RZ chart");
+    (void)logical_plan(grid);
+    (void)GridMetrics::make_geometry_view(grid,semantics_);
+    if(config_->grid.dim!=2||config_->grid.geometry!="cylindrical")
+        throw std::invalid_argument("Native reflecting root configuration changed chart");
+    const auto& identity=grid.dyadic_identity;
+    const double domain_lower[2]{config_->grid.x1_min,config_->grid.x2_min};
+    const double domain_upper[2]{config_->grid.x1_max,config_->grid.x2_max};
+    if(identity.bound) {
+        for(int axis=0;axis<2;++axis)
+            if(std::bit_cast<std::uint64_t>(identity.root_lower[axis])
+                    !=std::bit_cast<std::uint64_t>(domain_lower[axis])
+                ||std::bit_cast<std::uint64_t>(identity.root_upper[axis])
+                    !=std::bit_cast<std::uint64_t>(domain_upper[axis])
+                ||identity.root_blocks[axis]!=(axis==0?config_->grid.nblockx1:config_->grid.nblockx2))
+                throw std::invalid_argument("Native reflecting Grid root identity does not match the actual configuration");
+        const bool periodic_axial=config_->grid.x2l_boundary_type=="periodic"
+            &&config_->grid.x2r_boundary_type=="periodic";
+        if(identity.periodic_axial!=periodic_axial)
+            throw std::invalid_argument("Native reflecting Grid periodic root rule changed");
+    }
+}
+
+/** Select only configured Reflecting faces of this actual root-domain patch.
+ * Workflow: authenticate Grid/config/plan -> prove logical root edge (or exact
+ * unbound local endpoint) -> exclude the regular radial origin. This same leaf
+ * drives ghost construction and the flat point-face wall view; internal AMR
+ * faces cannot acquire a wall from a matching zero velocity or a capture flag.
+ */
+arch::boundary::HydroBoundaryView BCHandler::native_reflecting_faces(const Grid& grid) const {
+    using namespace arch::boundary;
+    require_native_root_frame(grid);
+    const auto& plan=logical_plan(grid);
+    const auto& identity=grid.dyadic_identity;
+    const double domain_lower[2]{config_->grid.x1_min,config_->grid.x2_min};
+    const double domain_upper[2]{config_->grid.x1_max,config_->grid.x2_max};
+    const double block_lower[2]{grid.x1_min,grid.x2_min};
+    const double block_upper[2]{grid.x1_max,grid.x2_max};
+    HydroBoundaryView result;
+    for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
+        const int face=2*axis+side;
+        if(plan.input().faces[face]!=BoundaryType::Reflecting)continue;
+        const bool physical=identity.bound
+            ?(side?std::uint64_t(identity.logical[axis])+1
+                ==(std::uint64_t(identity.root_blocks[axis])<<identity.level)
+                :identity.logical[axis]==0)
+            :(side?block_upper[axis]==domain_upper[axis]:block_lower[axis]==domain_lower[axis]);
+        const double edge=side?block_upper[axis]:block_lower[axis];
+        result.reflecting[face]=physical&&!(axis==0&&edge==0.);
+    }
+    return result;
+}
+
+/** Enumerate actual physical reflecting walls without a user callback.
+ * Workflow: authenticate native Grid/root/config context -> select a real
+ * logical domain edge -> retain positive real target/donor mirror cells.
+ * For bound grids, lower logical=0 or upper logical+1=root_blocks*2^level.
+ * Unbound local fixtures use exact physical endpoint equality only. The
+ * ordinary callback enumerator and its transport channel selection are intact.
+ * Axis-negative corners stay with the sole final signed-axis owner.
+ */
+std::vector<BCHandler::Ghost> BCHandler::reflecting_ghosts(const Grid& grid) const {
+    using namespace arch::boundary;
+    const auto walls=native_reflecting_faces(grid);
+    std::vector<Ghost> result;
+    const int lower[2]{grid.Is(),grid.Js()},upper[2]{grid.Ie(),grid.Je()};
+    const int total[2]{grid.GetTotalX(),grid.GetTotalY()};
+    const double block_lower[2]{grid.x1_min,grid.x2_min};
+    const double block_upper[2]{grid.x1_max,grid.x2_max};
+    for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
+        const int face=2*axis+side;
+        if(!walls.reflecting[face])continue;
+        const double edge=side?block_upper[axis]:block_lower[axis];
+        const int tangent=1-axis;
+        for(int t=0;t<total[tangent];++t)for(int depth=1;depth<=grid.ng;++depth) {
+            int donor[2]{lower[0],lower[1]},ghost[2]{lower[0],lower[1]};
+            ghost[tangent]=t;donor[tangent]=std::clamp(t,lower[tangent],upper[tangent]-1);
+            donor[axis]=side?upper[axis]-depth:lower[axis]+depth-1;
+            ghost[axis]=side?upper[axis]+depth-1:lower[axis]-depth;
+            const double radial_lower=grid.GetFacePosL(ghost[0]);
+            if(radial_lower<0.) {
+                if(axis==1&&grid.x1_min==0.)continue;
+                throw std::invalid_argument("Native reflecting physical halo must remain at nonnegative radius");
+            }
+            if(axis==1)donor[0]=ghost[0];
+            std::array<double,3> native{grid.GetCellCenterX(ghost[0]),grid.GetCellCenterY(ghost[1]),grid.GetCellCenterZ(0)};
+            native[axis]=edge;
+            const std::array<double,3> ghost_native{grid.GetCellCenterX(ghost[0]),grid.GetCellCenterY(ghost[1]),grid.GetCellCenterZ(0)};
+            const bool active_tangent=t>=lower[tangent]&&t<upper[tangent];
+            const int plane=donor[tangent]-lower[tangent];
+            result.push_back({grid.GetIndex(donor[0],donor[1],0),grid.GetIndex(ghost[0],ghost[1],0),
+                face,plane,depth==1&&active_tangent,
+                MakeBoundaryCoordinates(grid,native,static_cast<BoundaryAxis>(axis),
+                    static_cast<BoundarySide>(side),time_,depth,purpose_,ghost_native,semantics_),
+                {donor[0],donor[1]},{ghost[0],ghost[1]}});
+        }
+    }
+    return result;
+}
+
 std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> BCHandler::make_diffusion_storage(const Grid& grid, int species) const {
     auto result = std::make_shared<arch::boundary::DiffusionBoundaryStorage>();
     if (purpose_ != arch::boundary::BoundaryPurpose::Diffusion) return result;
@@ -256,24 +377,36 @@ void BCHandler::capture_native_frame(NativeCandidate& candidate,
     candidate.state_=&state;candidate.grid_=&grid;
     candidate.layout_=arch::boundary::host::make_layout(grid);
     candidate.pointers_=native_storage_pointers(state);candidate.sizes_=native_storage_sizes(state);
-    candidate.geometry_=native_grid_identity(grid);candidate.species_=state.GetNumSpecies();
+    candidate.geometry_=native_grid_identity(grid);candidate.root_context_=native_config_root_identity(*config_);
+    candidate.species_=state.GetNumSpecies();
     candidate.revision_=stage_revision_;candidate.time_bits_=std::bit_cast<std::uint64_t>(time_);
     candidate.purpose_=purpose_;
 }
 
-/** Prepare native surface-only candidates without changing any solver array.
- * Completed x1 entries form an immutable prefix for x2 corner point readers.
- * lookup stores offsets only; it never clones the complete native state.
+/** Prepare unique final native surfaces from immutable per-axis layers.
+ * Workflow: incoming previous-axis prefix -> gather all builtin reflectors ->
+ * expose the complete builtin seed -> gather all user siblings -> expose the
+ * completed final axis. No current-layer sibling can influence another.
+ * append/replace lookup maintains one final entry per actual destination; the
+ * original arrays, ENUC values and callback transport conditions stay read-only
+ * until every domain candidate has passed the existing publication checks.
  */
 BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
     const Grid& grid) const {
     NativeCandidate candidate;capture_native_frame(candidate,state,grid);
-    if(!callback_)return candidate;
-    if(!native_evaluate_)throw std::logic_error("User native RZ boundary EOS has not been bound");
-    const auto requests=ghosts(grid);
-    candidate.entries_.reserve(requests.size());
-    candidate.storage_=make_diffusion_storage(grid,state.GetNumSpecies());
-    candidate.publish_controls_=true;
+    const auto builtin_requests=reflecting_ghosts(grid);
+    const auto user_requests=callback_?ghosts(grid):std::vector<Ghost>{};
+    if(!builtin_requests.empty()&&!native_reflecting_evaluate_)
+        throw std::logic_error("Native reflecting boundary EOS has not been bound");
+    if(!user_requests.empty()&&!native_evaluate_)
+        throw std::logic_error("User native RZ boundary EOS has not been bound");
+    if(builtin_requests.size()>std::numeric_limits<std::size_t>::max()-user_requests.size())
+        throw std::length_error("Native boundary candidate extent is not representable");
+    candidate.entries_.reserve(builtin_requests.size()+user_requests.size());
+    if(callback_) {
+        candidate.storage_=make_diffusion_storage(grid,state.GetNumSpecies());
+        candidate.publish_controls_=true;
+    }
     std::vector<int> lookup(static_cast<std::size_t>(grid.GetTotalSize()),-1);
     const auto checked_offset=[&](int index) {
         if(index<0||index>=grid.GetTotalSize()
@@ -292,35 +425,54 @@ BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
         return offset<0?state.X(species,index)
             :candidate.entries_[static_cast<std::size_t>(offset)].fractions[static_cast<std::size_t>(species)];
     };
-    int readable_axis=-1;
-    std::size_t readable_prefix=0;
-    for(const auto& ghost:requests) {
-        const int axis=ghost.face/2;
-        if(axis!=readable_axis) {
-            if(axis<readable_axis)throw std::logic_error("Native boundary request axes are not ordered");
-            // Finish one complete axis before exposing its immutable overlay.
-            // Newly prepared values in this axis must never alter its siblings.
-            readable_axis=axis;readable_prefix=candidate.entries_.size();
-            for(std::size_t n=0;n<readable_prefix;++n)
-                lookup[static_cast<std::size_t>(candidate.entries_[n].destination)]=static_cast<int>(n);
+    std::vector<NativeCandidate::Entry> layer;
+    layer.reserve(std::max(builtin_requests.size(),user_requests.size()));
+    /** Publish only a complete successful temporary layer to candidate lookup.
+     * This is not solver publication: existing arrays remain unchanged.
+     */
+    const auto overlay=[&] {
+        for(auto& entry:layer) {
+            const int offset=checked_offset(entry.destination);
+            if(offset<0) {
+                if(candidate.entries_.size()>static_cast<std::size_t>(std::numeric_limits<int>::max()))
+                    throw std::length_error("Native boundary lookup index is not representable");
+                const int next=static_cast<int>(candidate.entries_.size());
+                candidate.entries_.push_back(std::move(entry));
+                lookup[static_cast<std::size_t>(candidate.entries_.back().destination)]=next;
+            } else candidate.entries_[static_cast<std::size_t>(offset)]=std::move(entry);
         }
-        const arch::boundary::NativeRzBoundaryRequest request{
-            ghost.source_logical,ghost.destination_logical,ghost.coordinates};
-        const auto value=native_evaluate_(grid,request,read,fraction);
-        if(value.mass_fractions.size()!=static_cast<std::size_t>(candidate.species_))
-            throw std::logic_error("Native boundary candidate has an incomplete composition");
-        const int source_offset=checked_offset(ghost.source);
-        const double enuc=source_offset<0?state.enuc_rate[ghost.source]
-            :candidate.entries_[static_cast<std::size_t>(source_offset)].enuc;
-        candidate.entries_.push_back({ghost.destination,value.conserved,value.mass_fractions,enuc});
-        store_conditions(*candidate.storage_,ghost,value.conditions,candidate.species_);
+    };
+    /** Gather siblings against one immutable prefix, preserving ENUC mirror.
+     * User face-center conditions populate only provisional callback storage.
+     */
+    const auto gather=[&](const std::vector<Ghost>& requests,int axis,
+        const auto& evaluator,bool user) {
+        layer.clear();
+        for(const auto& ghost:requests) {
+            if(ghost.face/2!=axis)continue;
+            const arch::boundary::NativeRzBoundaryRequest request{
+                ghost.source_logical,ghost.destination_logical,ghost.coordinates};
+            const auto value=evaluator(grid,request,read,fraction);
+            if(value.mass_fractions.size()!=static_cast<std::size_t>(candidate.species_))
+                throw std::logic_error("Native boundary candidate has an incomplete composition");
+            const int source_offset=checked_offset(ghost.source);
+            const double enuc=source_offset<0?state.enuc_rate[ghost.source]
+                :candidate.entries_[static_cast<std::size_t>(source_offset)].enuc;
+            layer.push_back({ghost.destination,value.conserved,value.mass_fractions,enuc});
+            if(user)store_conditions(*candidate.storage_,ghost,value.conditions,candidate.species_);
+        }
+        overlay();
+    };
+    for(int axis=0;axis<2;++axis) {
+        gather(builtin_requests,axis,native_reflecting_evaluate_,false);
+        gather(user_requests,axis,native_evaluate_,true);
     }
     validate_native_candidate(candidate,state,grid);
     return candidate;
 }
 
-/** Authenticate the borrowed frame before the domain's first callback scatter. */
-void BCHandler::validate_native_candidate(const NativeCandidate& candidate,
+/** Authenticate the borrowed layout/geometry/BC frame without numerical work. */
+void BCHandler::validate_native_frame(const NativeCandidate& candidate,
     const FluidState& state,const Grid& grid) const {
     if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||candidate.owner_!=this||candidate.binding_revision_!=binding_revision_
@@ -331,17 +483,55 @@ void BCHandler::validate_native_candidate(const NativeCandidate& candidate,
         ||candidate.layout_!=arch::boundary::host::make_layout(grid)
         ||candidate.pointers_!=native_storage_pointers(state)
         ||candidate.sizes_!=native_storage_sizes(state)
-        ||candidate.geometry_!=native_grid_identity(grid))
+        ||candidate.geometry_!=native_grid_identity(grid)
+        ||candidate.root_context_!=native_config_root_identity(*config_))
         throw std::logic_error("Native boundary candidate storage/geometry/stage frame drifted");
-    (void)logical_plan(grid);
+    require_native_root_frame(grid);
     arch::boundary::host::validate_state(compiled_,state);
+}
+
+/** Authenticate final entries before the domain's first callback scatter. */
+void BCHandler::validate_native_candidate(const NativeCandidate& candidate,
+    const FluidState& state,const Grid& grid) const {
+    validate_native_frame(candidate,state,grid);
     if(candidate.publish_controls_&&!candidate.storage_)
         throw std::logic_error("Native boundary candidate lost its face conditions");
-    for(const auto& entry:candidate.entries_)
+    std::vector<unsigned char> destinations(static_cast<std::size_t>(grid.GetTotalSize()),0);
+    for(const auto& entry:candidate.entries_) {
         if(entry.destination<0||entry.destination>=grid.GetTotalSize()
             ||entry.destination%grid.stride_y>=grid.GetTotalX()
             ||entry.fractions.size()!=static_cast<std::size_t>(candidate.species_))
             throw std::logic_error("Native boundary candidate lost its logical surface extent");
+        if(destinations[static_cast<std::size_t>(entry.destination)]++)
+            throw std::logic_error("Native boundary candidate repeats a final destination");
+    }
+}
+
+/** Freeze an empty Hydro lease after real scheduler ghost completion.
+ * No callback or field data are evaluated/copied; EOS binding is an identity
+ * prerequisite, while the Runtime ledger remains the acceptance authority.
+ */
+BCHandler::NativeCandidate BCHandler::capture_native_hydro_frame(
+    const FluidState& state,const Grid& grid,double expected_time) const {
+    if(!std::isfinite(expected_time)||!std::isfinite(time_)
+        ||std::bit_cast<std::uint64_t>(expected_time)!=std::bit_cast<std::uint64_t>(time_)
+        ||purpose_!=arch::boundary::BoundaryPurpose::Hydro||!native_reflecting_evaluate_)
+        throw std::logic_error("Native Hydro boundary time/purpose/EOS binding is not ready");
+    NativeCandidate frame;capture_native_frame(frame,state,grid);
+    validate_native_frame(frame,state,grid);
+    return frame;
+}
+
+/** Recheck the original Hydro frame before any selected face output mutates. */
+arch::boundary::HydroBoundaryView BCHandler::native_hydro_boundary_view(
+    const NativeCandidate& frame,const FluidState& state,const Grid& grid,double expected_time) const {
+    if(!std::isfinite(expected_time)||!std::isfinite(time_)
+        ||std::bit_cast<std::uint64_t>(expected_time)!=std::bit_cast<std::uint64_t>(time_)
+        ||purpose_!=arch::boundary::BoundaryPurpose::Hydro||!native_reflecting_evaluate_
+        ||!frame.entries_.empty()||frame.storage_||frame.publish_controls_)
+        throw std::logic_error("Native Hydro boundary opaque frame changed role");
+    validate_native_frame(frame,state,grid);
+    return native_reflecting_faces(grid);
 }
 
 /** Allocation-free numerical scatter; actual EOS/GhostValid remain external. */

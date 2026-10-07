@@ -1,0 +1,180 @@
+{
+  "scope": "Internal CPU NativeRZ selected MC/PPM spatial, actual builtin physical reflecting cell/face and source-bound synchronous stage-domain authority, matched viscous boundary work; scoped engineering/scientific checks, not whole release",
+  "baseCommit": "f898a2af64a46d66fd230b37c89cdeb6cc2f8760",
+  "sourceCapture": "Actual source/test hashes after runs; source frozen during full CPU/recompiled Runtime; two test-only fixture/error-category repairs precede final full76; not performance input freeze",
+  "sourceFilesSha256": {
+    "src/numerics/diffusion/DiffFlux.h": "c1c496dbb48f4e8bc9667e60ad9c49b708760fee42fb5b004c34260d2e6b87ee",
+    "src/numerics/diffusion/RzViscousStress.h": "31496d53fe05e052cce1ba26ac7bd2871b8b2d748e594e9fcae8026646267d34",
+    "src/numerics/flux/FluxSweep.h": "f0616960eedeed0080ca05d330b812c4cca24dd6c98e5bb6856d3d26c041d53d",
+    "src/numerics/flux/InvariantDomainFlux.h": "0ff05bd2c4cedba613a3e6999d5d07a0e2fea78002545ece8ab01a679d97c080",
+    "src/numerics/flux/RzNativeFaceFlux.h": "19d5cd41eb8c3ebfa1181fc1b7ddadfdbabd8ff25fee9ded07bb0a4fb43731e7",
+    "src/numerics/integrator/HydroBoundaryAuthority.h": "f43ce843ef79cd48df6de20c358143d9a43cff7b7fdf2a5ed6448bd58d1273e3",
+    "src/numerics/integrator/HydroSolverImpl.h": "4f154c74888eb9b1c5e8f2b9511e23a382438adf56429e937e10a618f4389f43",
+    "src/numerics/integrator/IHydroSolver.h": "996b160c8d1752ef6e81846650bc7622cbc570edf002d4d7ed13636ae8161ea6",
+    "src/numerics/integrator/TimeIntegratorEuler.h": "a2a30aa7efe8928865187a04ea4f76ada5c9b3c12e8d1c0f37e3bbeee1d2e0c2",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "276f5b27915c546e5093a6236fc732ca56b8066dee95193a56da425d280b56c4",
+    "src/numerics/integrator/TimeIntegratorRK2.h": "34230dec2518ef302c52725bdcd56dc2b44f4daa4f2b3b2e2a057f350da1b763",
+    "src/numerics/integrator/TimeIntegratorRK3.h": "4787a9f1a64ab14ac190006a41f19e5cb92c9e57d4482b6f84ce85257df17f46",
+    "src/numerics/reconstruction/RzDensityMoments.h": "e8e98282f3620263738cc44b3305ee54bc3fffd55e7470a4c89eabd2696b696c",
+    "src/numerics/reconstruction/RzParityReconstruction.h": "85dca50d0b3d763c302c250411965acc85dd688087bf3b36ecab0d84e715e8cc",
+    "src/numerics/reconstruction/RzSelectedReconstruction.h": "60297c982996e967298670952551c59c77158429665dea71fcd04b0816e52776",
+    "src/numerics/state/RzCellAverage.h": "2192c01d1f4b30507c2e4efc5df8b9b9187ae4055c03866bd4007a05a4558820",
+    "src/physics/boundary/BoundaryFlux.h": "b72afac44b6c699273834b3669d508d80f9869f38ba6b58abc7e74f797f78321",
+    "src/physics/boundary/NativeRzBoundary.h": "c7c3b752b5647da47263082f3b9fc35048eda0429c0d4a6f45cf3c16b711ecd3",
+    "src/physics/boundary/PhysicalBoundaryHandler.cpp": "2ca83c6068d7a85d47b8999848fb35fbf54b879d9c8ce9b5906526770f720eb8",
+    "src/physics/boundary/PhysicalBoundaryHandler.h": "131ca4a46541b269aeaca2d9a35ec38a44a1951bd349e8782865f5a527d9d3db",
+    "tests/host/amr/test_amr_operation_plans.cpp": "24da8a40014db5606a6e04f1f2e339bd6becf78c8330c03bc5d5741bbf4a142c",
+    "tests/host/amr/test_boundary_plan.cpp": "8ae92dc2569be9fd28cba6849c7f9e2a03540ab716b302e3c60a2e356bc3ee3f",
+    "tests/host/amr/test_user_physical_boundary.cpp": "aa619582643fd9bd6f3429362aeade869e7aab2f6f0bb785b07664874d1350e7",
+    "tests/host/driver/test_host_hydro_transaction.cpp": "46e54078c285626b33ee7749c43bb94a432e3fb32f64a68a8a4bfc0ccab5741b",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "98e6d166081512d183a004d336226fa1046f0d31b31bb5d8fb86e684eb69905e",
+    "tests/host/numerics/test_flux_limiter.cpp": "1c37d85a8f4fff0f9e239432a1404840e32fefbb0a7de63b36bcebd6d836f58b",
+    "tests/host/numerics/test_low_density.cpp": "e8faf9427cb7d108c7119be60c19e22a98df0976303f17aeb48ae17c8a525439",
+    "tests/host/numerics/test_ppm_limiter.cpp": "3de482086640cdaafc34bdb1cca21405f202b325992f40b9e8ddb2e3ee8b2c63",
+    "tests/math/geometry/RzEquilibriumCases.h": "aa564a96eadc459f029fa7570f74ca4d28073203aa91154192cca16bd5b17a57"
+  },
+  "publicCpuElfSha256": "2713661b238f389814e8d798c48c9e3f305885496120423fd83af53e1e07783e",
+  "cpuBuild": {
+    "status": "PASS",
+    "steps": 171,
+    "seconds": 349.708,
+    "parallel": 2,
+    "minimumAvailableKiB": 3096116,
+    "peakOwnedRssKiB": 3875248,
+    "swapGrowthKiB": 0
+  },
+  "firstFullCpu": {
+    "passed": 74,
+    "failed": 2,
+    "seconds": 96.28,
+    "failures": [
+      "boundary_plan: new fixture changed config after immutable handler constructed",
+      "amr_operation_plans: explicitweighted loss now rejected earlier at FineFluid, previous expected ParentFluid"
+    ]
+  },
+  "repairs": {
+    "domainFixture": "Freeze original physicalconfig before handler; strict masks and negative checks remain; oneformalrepair",
+    "amrRepresentability": "Earlier shared product rejection asserted exact FineFluid; no-publication/all-original species refusal unchanged; no changed error/physics tolerance"
+  },
+  "fullCpu": {
+    "owners": 76,
+    "passed": 76,
+    "failed": 0,
+    "ctestOwnerSkips": 0,
+    "seconds": 93.64,
+    "guardSeconds": 94.651,
+    "parallel": 2,
+    "minimumAvailableKiB": 6146916,
+    "peakOwnedRssKiB": 775004,
+    "swapGrowthKiB": 0,
+    "newCiOwners": 0,
+    "inventorySha256": "6173ce42e13bfa25c71ee03f0391e82d5a2789128e38d2b45349a78c5783911a",
+    "junitSha256": "7a66054676e2f31baada69759ab27bc813b6adc1ce822e6e93e469c22f42ad7d",
+    "nestedSkipEvidence": [
+      {
+        "owner": "preview_api_contract",
+        "line": "OK (skipped=1)"
+      },
+      {
+        "owner": "memory_guard_contract",
+        "line": "OK (skipped=18)"
+      }
+    ]
+  },
+  "specificChecks": {
+    "spatialMethods": [
+      "MC MUSCL32rows",
+      "PPM32rows"
+    ],
+    "originalOrderMinimum": 1.8,
+    "angularBudgetRelative": 1e-12,
+    "fullMethodQualification": false,
+    "realBoundaryCells": 512,
+    "domainRoots": 2,
+    "sourceSlots": 3,
+    "actualBoundEosInvocations": 6,
+    "indexedBorrowAndJoinedDomainGate": true,
+    "closedStaticMixedAmrHydroMethods": [
+      "Euler",
+      "RK2",
+      "RK3"
+    ],
+    "matchedViscousAxialWorkIndependent": "r[5,6]: psi=91/11; raw=6039/728; difference=181/8008",
+    "actualFluxAssertions": 4274,
+    "stageMetadataComplexity": "twofullsynchronous scans + indexedownpatch borrow, replacing repeatedwhole-domain scans; no measured application speedup",
+    "weightedRepresentation": "reject complete loss of nonzero weighted contribution; preserve zeros/ordinary product order; arbitrarysigned cancellation precision notcertified"
+  },
+  "runtimeRollback": {
+    "seconds": 155.932,
+    "status": "PASS",
+    "privateElfSha256": "4be1512a78281b2588da46dbeb154fb79f844e8655c8c376eb1b2d00876fa819",
+    "scope": "Actual CPU RZ Runtime finalizer fault, source/ledger/pool rollback and retry; no timestep",
+    "stdout": "ACTUAL_RZ_SOURCE_PROVENANCE_ROLLBACK metadata_only=1 original_source_identity=1 all_seven_leases_bits=1 bc_frame=1 actual_callback=1 topology_versions=1 time=0 steps=0\nACTUAL_RZ_POSTGHOST_GATE_ROLLBACK actual_closure_rejection=1 returned_hook=1 unpublished_candidate=1 source_bits_versions_preserved=1\nACTUAL_RZ_ROLLBACK_FIELD_PASS fresh_pointers=1 current_ledger=1 cells=512 total=4.5134562988500393e-15 safe=1.4586002329333226e-14 time=0 steps=0\nACTUAL_RZ_RUNTIME_ROLLBACK_PASS attempts=3 source_blocks=2 staged_blocks=8 pool_before=2 peak_pool=10 source_all_seven_addresses_preserved=1 final_pool=8 all_source_arrays_bitwise=1 topology_preserved=1 original_versions=1 old_ghost_readable=1 no_staged_leak=1 retry=1 retired_handle=1 production_gate_held=1 time=0 steps=0\n",
+    "limitations": [
+      "Injected engineering failure only, not a physical stability/evolution gate",
+      "Seven actual source Host vector addresses, values and BC frame are checked through in-place rollback; no unrelated pointer or Device ownership grant",
+      "Production RZ/Device gates held"
+    ]
+  },
+  "rawCleanup": {
+    "passedFilesDeleted": 175,
+    "bytesDeleted": 13923608,
+    "processedDatasets": 4385,
+    "receiptSha256": "29483d742f551e7388c5d057adae921a54c067d1e615b5c486b8e4b9d4355b80",
+    "processedSummarySha256": "57a0f89c0db784e388f54c1ad6889c5b9660107cdb6564e40a9f232d8b428c68",
+    "cumulativeFilesDeleted": 2082,
+    "cumulativeBytesDeleted": 315703528,
+    "failedUnknownInputAndLogsPreserved": true
+  },
+  "publicReferenceDelegation": {
+    "angularFiniteStep": {
+      "seconds": 48.47,
+      "outputTokens": 11791,
+      "estimatedUsd": [
+        0.0072406,
+        0.0144812
+      ],
+      "scope": "public FE identities and counterexample only"
+    },
+    "densityPotentialForceEnvelope": {
+      "logicalAttempts": 2,
+      "seconds": 102.31,
+      "outputTokens": 22397,
+      "estimatedUsd": [
+        0.0137345,
+        0.027469
+      ],
+      "scope": "public rigorous bounded-density Phi/force envelopes; corrected vector sharpness; not kernel quadrature certificate"
+    },
+    "blockingWaitSeconds": 0,
+    "noProjectSourceOrRawExported": true,
+    "actualBillAndManagerTokenCost": null,
+    "recommendation": "Keep bounded independent math delegation and explicit review; narrow packets, one formalrepair, no provider proof as algorithm acceptance"
+  },
+  "remotePlatformEvidence": {
+    "refCheckedAtUtc": "2026-10-07T03:19:55.876247+00:00",
+    "studioBranchCurrentlyAdvertised": false,
+    "localAndRemoteComputeHeadAtCheck": "f898a2af6",
+    "current4070PairedBenchmarkAvailable": false,
+    "historicalRecordNotReassigned": true
+  },
+  "storage": {
+    "host": "/mnt/e",
+    "freeBytes": 23919271936,
+    "minimumHostFreeBytes": 8589934592,
+    "nextWriteReserveBytes": 67108864,
+    "soleCheckout": "/home/shiroakane/ARCH"
+  },
+  "releaseAccepted": false,
+  "publicNativeOrDeviceGatePromoted": false,
+  "remaining": [
+    "actualexternal native source identity/trueVwork/stagereceipts",
+    "continuousfinite-ringPhi andforcewithinoriginalcertificatebudgets",
+    "actualnonzeroangularRKL1negative/positiveandmacro rollback + physical admissibility treatment",
+    "nativecoupledAMR/evolution/checkpoint",
+    "finalCUDAphysicsandpositivespeed",
+    "nativeGUIUATandmatchedcurrent4070evidence",
+    "matchedend-to-endCPU/GPUtimeandlongstability",
+    "finalexistingCIownerconsolidation"
+  ]
+}

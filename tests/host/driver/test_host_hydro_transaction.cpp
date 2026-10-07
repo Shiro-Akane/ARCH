@@ -258,7 +258,9 @@ public:
     }
     void evaluate_patch(amr::AMRControl* c,int id,const FluidState& input,const Grid& g,double,
         std::vector<FluidVector>& increment,std::vector<double>& species,
-        const Physical::Gravity::IGravityPolicy*,const NumericsConfig&,double weight,void*) const override {
+        const Physical::Gravity::IGravityPolicy*,const NumericsConfig&,double weight,void*,
+        const arch::boundary::HostHydroBoundaryAuthority* boundary=nullptr) const override {
+        if(boundary)(void)boundary->require_view(c,id,input,g);
         ++patch_visits;
         if(journal) {
             journal->consume(id,input,g);

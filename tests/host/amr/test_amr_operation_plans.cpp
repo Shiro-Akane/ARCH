@@ -1848,8 +1848,13 @@ void test_rz_native_family_representability()
         std::vector<double> workspace(static_cast<std::size_t>(count)*prolongation_workspace_per_species);
         const auto status=prolong_native_family(context,read,enuc,fraction,count,bounds,
             workspace.data(),sentinel);
-        expect(status==(count==0?Status::ParentFluid:Status::SpeciesIntegral),
-            "native family silently erased represented momentum or an unrepresentable positive trace");
+        // The common point-to-mean owner now rejects a lost weighted
+        // nonzero momentum before the later whole-family conservation check.
+        // The physical rejection and no-publication requirement are unchanged;
+        // positive species traces still fail at their own mass-integral gate.
+        expect(status==(count==0?Status::FineFluid:Status::SpeciesIntegral),
+            "native family silently erased represented momentum or an unrepresentable positive trace: "
+            +std::string(status_message(status)));
         expect(sentinel.fluid[0].rho==123.&&sentinel.fluid[0].mom_u==124.
             &&sentinel.fluid[0].mom_v==125.&&sentinel.fluid[0].mom_w==126.
             &&sentinel.fluid[0].eng==127.&&sentinel.rhoX==nullptr,

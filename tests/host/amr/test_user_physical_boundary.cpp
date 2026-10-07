@@ -12,7 +12,11 @@
  * boundary construction and candidate publication identity. They do not
  * substitute for final whole-domain Runtime ghost/EOS or evolution gates.
  */
+#include "amr/AMRControl.h"
 #include "amr/exchange/HostBoundaryPlan.h"
+#include "driver/runtime/TopologyIdentityRegistry.h"
+#include "driver/schedule/StageScheduler.h"
+#include "numerics/integrator/HydroBoundaryAuthority.h"
 #include "physics/boundary/NativeRzBoundary.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
@@ -1673,10 +1677,1029 @@ void test_native_rz_axis_completion()
         require_bits(values(state,index),accepted[index],"axis-only no-axis call executed an ordinary BC");
 }
 
+/** Independent antiderivatives of physically mirrored cold RZ fields. */
+namespace reflecting_cell_checks {
+using Polynomial=std::array<long double,5>;
+constexpr long double kInternal=1.L/33554432.L;
+constexpr long double kRadial=1.L/16.L,kAxial=-1.L/32.L;
+constexpr auto kRz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+
+long double power(long double value,int exponent)
+{
+    long double product=1.L;for(int n=0;n<exponent;++n)product*=value;return product;
+}
+Polynomial multiply(const Polynomial& left,const Polynomial& right)
+{
+    Polynomial result{};
+    for(int i=0;i<5;++i)for(int j=0;i+j<5;++j)result[i+j]+=left[i]*right[j];
+    return result;
+}
+long double mean(const Polynomial& value,long double lower,long double upper,int weight)
+{
+    long double integral=0.L;
+    for(int n=0;n<5;++n)integral+=value[n]*(power(upper,n+weight+1)-power(lower,n+weight+1))/(n+weight+1);
+    return integral/((power(upper,weight+1)-power(lower,weight+1))/(weight+1));
+}
+
+/** V/W means of rho=1+beta*r_s^2 and u_phi=r_s, r_s=c+d*r. */
+FluidVector reference(double lower,double upper,long double beta,
+                      long double c=0.L,long double d=1.L,int direction=-1)
+{
+    const Polynomial rho{1.L+beta*c*c,2.L*beta*c*d,beta*d*d,0.L,0.L};
+    const Polynomial swirl{c,d,0.L,0.L,0.L};
+    const auto angular=multiply(rho,swirl);
+    auto energy=multiply(rho,multiply(swirl,swirl));
+    const long double constant=kInternal+.5L*(kRadial*kRadial+kAxial*kAxial);
+    for(int n=0;n<5;++n)energy[n]=.5L*energy[n]+constant*rho[n];
+    const long double density=mean(rho,lower,upper,1);
+    return {double(density),double((direction==0?-kRadial:kRadial)*density),
+        double((direction==1?-kAxial:kAxial)*density),double(mean(angular,lower,upper,2)),
+        double(mean(energy,lower,upper,1))};
+}
+
+void relative(double actual,double expected,std::string_view message)
+{
+    const double scale=std::max(std::abs(actual),std::abs(expected));
+    require(std::isfinite(actual)&&std::isfinite(expected)
+        &&std::abs(actual-expected)<=64.*std::numeric_limits<double>::epsilon()*scale,message);
+}
+
+struct Fixture {
+    SpeciesManager species=native_boundary_material();
+    IdealGas eos{1.4,species};
+    SimConfig config{};
+    Grid grid{amr::MAX_NG,1.,3.,-.125,.125,0.,1.};
+    Fixture() {
+        config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.x1_min=1.;config.grid.x1_max=3.;
+        config.grid.x2_min=-.125;config.grid.x2_max=.125;
+        config.grid.x3_min=0.;config.grid.x3_max=1.;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="reflecting";
+        config.numerics.sml_rho=1.e-14;config.numerics.min_eint=0.;
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(kRz);
+        grid.dyadic_identity.bound=true;
+        grid.dyadic_identity.root_lower={1.,-.125};grid.dyadic_identity.root_upper={3.,.125};
+        grid.dyadic_identity.root_blocks={1,1};grid.dyadic_identity.level=0;
+        grid.dyadic_identity.logical={0,0};grid.dyadic_identity.periodic_axial=false;
+        grid.InitializeTopology(kRz);
+        (void)GridMetrics::make_geometry_view(grid,kRz);
+    }
+    FluidState state(long double beta) const {
+        FluidState result;result.Preallocate(grid.GetTotalSize());result.InitSpecies(1);
+        for(int index=0;index<grid.GetTotalSize();++index) {
+            result.set(index,{987.25,123.5,-456.75,321.125,654.625});
+            result.enuc_rate[index]=42.+index/8.;result.X(0,index)=.125;
+        }
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int index=grid.GetIndex(i,j,0);
+            result.set(index,reference(grid.GetFacePosL(i),grid.GetFacePosR(i),beta));
+            result.X(0,index)=1.;
+        }
+        return result;
+    }
+};
+
+/** Bind the actual mirrored donor/depth using the existing public coordinates. */
+NativeRzBoundaryRequest request(const Grid& grid,int direction,BoundarySide side,int depth,int tangent)
+{
+    const bool upper=side==BoundarySide::Upper;
+    const int begin=direction==0?grid.Is():grid.Js(),end=direction==0?grid.Ie():grid.Je();
+    const int donor=upper?end-depth:begin+depth-1;
+    const int ghost=upper?end+depth-1:begin-depth;
+    const std::array<int,2> source=direction==0?std::array<int,2>{donor,tangent}:std::array<int,2>{tangent,donor};
+    const std::array<int,2> destination=direction==0?std::array<int,2>{ghost,tangent}:std::array<int,2>{tangent,ghost};
+    std::array<double,3> face{grid.GetCellCenterX(source[0]),grid.GetCellCenterY(source[1]),0.};
+    face[direction]=direction==0?(upper?grid.x1_max:grid.x1_min):(upper?grid.x2_max:grid.x2_min);
+    const std::array<double,3> center{grid.GetCellCenterX(destination[0]),grid.GetCellCenterY(destination[1]),0.};
+    return {source,destination,MakeBoundaryCoordinates(grid,face,
+        direction==0?BoundaryAxis::X1:BoundaryAxis::X2,side,.375,depth,
+        BoundaryPurpose::Hydro,center,kRz)};
+}
+
+/** Validate the real closure's mean and six physical EOS states, not e_eff=e0. */
+void actual_six_point_eos(const FluidState& state,const Grid& grid,int i,int j,
+                          const SimConfig& config,const IdealGas& eos)
+{
+    const auto view=GridMetrics::make_geometry_view(grid,kRz);
+    const auto read=[&](int index){return state.get(index);};
+    const int support=std::clamp(i-1,0,grid.GetTotalX()-3);
+    const arch::state::Bounds bounds{config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint};
+    const auto closure=RzThermodynamics::make_cell_supported(read,grid.GetIndex(i,j,0),view,i,support,bounds);
+    const double fractions[]{state.X(0,grid.GetIndex(i,j,0))};
+    require(closure.valid()&&arch::state::validate_eos(closure.effective_mean,fractions,1,bounds,eos)
+        ==arch::state::Status::valid,"projected native mean failed actual IdealGas");
+    constexpr std::array<long double,6> fractions_radial{0.L,
+        .069431844202973712388026755554L,.330009478207571867598667120449L,
+        .669990521792428132401332879551L,.930568155797026287611973244446L,1.L};
+    const long double lower=grid.GetFacePosL(i),upper=grid.GetFacePosR(i);
+    for(const long double t:fractions_radial) {
+        const double radius=double((1.L-t)*lower+t*upper);
+        require(arch::state::validate_eos(RzThermodynamics::base_point(closure,radius),fractions,1,bounds,eos)
+            ==arch::state::Status::valid,"projected ghost six-point actual IdealGas failed");
+    }
+}
+
+void check_empty_conditions(const PhysicalBoundaryEvaluation& evaluated)
+{
+    require(!evaluated.conditions.hydro&&evaluated.conditions.species.empty()
+        &&evaluated.conditions.temperature.kind==ScalarBoundaryKind::None
+        &&evaluated.conditions.temperature.value==0.,"reflecting scalar leaf fabricated user controls");
+    for(const auto& channel:evaluated.conditions.velocity)
+        require(channel.kind==ScalarBoundaryKind::None&&channel.value==0.,
+            "reflecting scalar leaf fabricated velocity controls");
+    require(evaluated.mass_fractions.size()==1,"reflecting scalar leaf omitted full Xi");
+    relative(evaluated.mass_fractions[0],1.,"reflecting scalar leaf changed full Xi");
+}
+
+void run()
+{
+    Fixture fixture;const auto& grid=fixture.grid;
+    for(long double beta:{0.L,1.L/64.L}) {
+        auto original=fixture.state(beta);const auto snapshot=native_boundary_snapshot(original,grid);
+        const std::array<const double*,7> addresses{original.rho.data(),original.mom_u.data(),
+            original.mom_v.data(),original.mom_w.data(),original.eng.data(),
+            original.enuc_rate.data(),original.mass_fractions.data()};
+        const auto read=[&](int index){return original.get(index);};
+        const auto fraction=[&](int species,int index){return original.X(species,index);};
+        for(int direction:{0,1})for(BoundarySide side:{BoundarySide::Lower,BoundarySide::Upper})
+        for(int depth=1;depth<=grid.ng;++depth) {
+            const int begin=direction==0?grid.Js():grid.Is(),end=direction==0?grid.Je():grid.Ie();
+            for(int tangent=begin;tangent<end;++tangent) {
+                const auto bound=request(grid,direction,side,depth,tangent);
+                actual_six_point_eos(original,grid,bound.source[0],bound.source[1],fixture.config,fixture.eos);
+                const auto evaluated=EvaluateNativeRzReflectingCell(grid,bound,fixture.config,
+                    fixture.species,fixture.eos,read,fraction);
+                check_empty_conditions(evaluated);
+                const double wall=side==BoundarySide::Upper?grid.x1_max:grid.x1_min;
+                const auto expected=reference(grid.GetFacePosL(bound.destination[0]),
+                    grid.GetFacePosR(bound.destination[0]),beta,
+                    direction==0?2.L*wall:0.L,direction==0?-1.L:1.L,direction);
+                const std::array<double,5> actual{evaluated.conserved.rho,evaluated.conserved.mom_u,
+                    evaluated.conserved.mom_v,evaluated.conserved.mom_w,evaluated.conserved.eng};
+                const std::array<double,5> wanted{expected.rho,expected.mom_u,expected.mom_v,
+                    expected.mom_w,expected.eng};
+                for(int field=0;field<5;++field)relative(actual[field],wanted[field],
+                    "actual reflecting-cell V/W mean differs from independent mirrored polynomial");
+                // rho*Xi is the independent species-mass projection, not an
+                // unweighted fraction average; Xi=1 gives its exact rho mean.
+                relative(evaluated.conserved.rho*evaluated.mass_fractions[0],expected.rho,
+                    "actual reflecting-cell rho*Xi moment differs from independent integral");
+                FluidState projected=original;const int destination=grid.GetIndex(
+                    bound.destination[0],bound.destination[1],0);
+                projected.set(destination,evaluated.conserved);projected.X(0,destination)=evaluated.mass_fractions[0];
+                actual_six_point_eos(projected,grid,bound.destination[0],bound.destination[1],fixture.config,fixture.eos);
+                require_native_boundary_unchanged(original,grid,snapshot,
+                    "read-only reflecting scalar leaf changed original U/X/ENUC/padding bits");
+                const std::array<const double*,7> after{original.rho.data(),original.mom_u.data(),
+                    original.mom_v.data(),original.mom_w.data(),original.eng.data(),
+                    original.enuc_rate.data(),original.mass_fractions.data()};
+                require(addresses==after,"read-only reflecting scalar leaf changed source allocation addresses");
+            }
+        }
+        // Keep the direct raw-copy upper-first-ghost counterexample. Its own
+        // physical mapping is invalid; genuine projection above remains valid.
+        if(beta==0.L) {
+            const auto bound=request(grid,0,BoundarySide::Upper,1,grid.Js());
+            FluidState copied=original;const int source=grid.GetIndex(bound.source[0],bound.source[1],0);
+            const int destination=grid.GetIndex(bound.destination[0],bound.destination[1],0);
+            copied.set(destination,original.get(source));
+            const auto copied_read=[&](int index){return copied.get(index);};
+            const auto view=GridMetrics::make_geometry_view(grid,kRz);
+            const auto closure=RzThermodynamics::from_density(copied.get(destination),
+                RzDensity::density_cell(copied_read,destination,view,bound.destination[0]),
+                {fixture.config.numerics.sml_rho,0.,fixture.config.numerics.max_eint});
+            const auto copied_thermal=arch::state::recover(closure.effective_mean);
+            require(!closure.valid()&&closure.status==arch::state::Status::unresolved_energy
+                &&copied_thermal.status==arch::state::Status::unresolved_energy
+                &&std::isfinite(copied_thermal.kinetic)
+                &&closure.effective_mean.eng-copied_thermal.kinetic<0.,
+                "raw-copy reflecting first ghost lost its actual negative thermal counterexample");
+            const long double a=grid.GetFacePosL(bound.source[0]),b=grid.GetFacePosR(bound.source[0]);
+            const long double c=grid.GetFacePosL(bound.destination[0]),d=grid.GetFacePosR(bound.destination[0]);
+            const long double source_j=(power(b,4)-power(a,4))/4.L/((power(b,3)-power(a,3))/3.L);
+            const long double source_r2=(power(b,4)-power(a,4))/4.L/((b*b-a*a)/2.L);
+            const long double omega=source_j*((power(d,3)-power(c,3))/3.L)/((power(d,4)-power(c,4))/4.L);
+            const long double target_r2=(power(d,4)-power(c,4))/4.L/((d*d-c*c)/2.L);
+            const long double copied_internal=kInternal+.5L*source_r2-.5L*omega*omega*target_r2;
+            require(copied_internal<0.L,"independent raw-copy effective thermal counterexample is not negative");
+        }
+        auto bad=request(grid,0,BoundarySide::Lower,1,grid.Js());++bad.source[0];
+        require_rejected([&]{(void)EvaluateNativeRzReflectingCell(grid,bad,fixture.config,
+            fixture.species,fixture.eos,read,fraction);},"wrong reflecting mirror donor was accepted");
+        require_native_boundary_unchanged(original,grid,snapshot,"invalid mirror request wrote source arrays");
+    }
+    // A distinct authenticated positive root can have a crossing-zero ghost;
+    // that target is outside the positive reflecting-cell contract, no folding.
+    Grid crossing(amr::MAX_NG,.03125,2.03125,-.125,.125,0.,1.);
+    crossing.dim=2;crossing.geometry="cylindrical";crossing.InitializeTopology(kRz);
+    crossing.dyadic_identity.bound=true;
+    crossing.dyadic_identity.root_lower={.03125,-.125};crossing.dyadic_identity.root_upper={2.03125,.125};
+    crossing.dyadic_identity.root_blocks={1,1};crossing.dyadic_identity.level=0;
+    crossing.dyadic_identity.logical={0,0};crossing.dyadic_identity.periodic_axial=false;
+    crossing.InitializeTopology(kRz);
+    // Positive donor cells retain their independently integrated cold state.
+    // The crossing target is deliberately an unsupported geometry, not a
+    // guessed positive-r extension or a different-root state masquerading as it.
+    FluidState invalid;invalid.Preallocate(crossing.GetTotalSize());invalid.InitSpecies(1);
+    for(int index=0;index<crossing.GetTotalSize();++index) {
+        invalid.set(index,{987.25,123.5,-456.75,321.125,654.625});
+        invalid.enuc_rate[index]=42.+index/8.;invalid.X(0,index)=.125;
+    }
+    for(int j=0;j<crossing.GetTotalY();++j)for(int i=0;i<crossing.GetTotalX();++i) {
+        const int index=crossing.GetIndex(i,j,0);
+        invalid.set(index,reference(crossing.GetFacePosL(i),crossing.GetFacePosR(i),0.L));
+        invalid.X(0,index)=1.;
+    }
+    const auto before=native_boundary_snapshot(invalid,crossing);
+    auto crossing_config=fixture.config;
+    crossing_config.grid.x1_min=.03125;crossing_config.grid.x1_max=2.03125;
+    const auto crossing_request=request(crossing,0,BoundarySide::Lower,1,crossing.Js());
+    const auto invalid_read=[&](int index){return invalid.get(index);};
+    const auto invalid_fraction=[&](int species,int index){return invalid.X(species,index);};
+    require(crossing.GetFacePosL(crossing_request.destination[0])<0.
+        &&crossing.GetFacePosR(crossing_request.destination[0])>0.,"cross-zero negative fixture does not cross zero");
+    require_rejected([&]{(void)EvaluateNativeRzReflectingCell(crossing,crossing_request,
+        crossing_config,fixture.species,fixture.eos,invalid_read,invalid_fraction);},
+        "reflecting scalar leaf folded a crossing-zero target");
+    require_native_boundary_unchanged(invalid,crossing,before,"cross-zero request wrote source fields");
+    // Separate real selected-EOS representation negative. All Cv=2 physical
+    // positives above remain unchanged. Positive finite Cv=1e-320 makes the
+    // same e0/Cv temperature overflow double; a nonfinite EOS output must fail.
+    SpeciesManager extreme_material;
+    extreme_material.add_species("nonfinite-temperature",1.,1.,1.4,1.e-320);
+    IdealGas extreme_eos(1.4,extreme_material);
+    auto eos_source=fixture.state(0.L);const auto eos_before=native_boundary_snapshot(eos_source,grid);
+    const auto eos_read=[&](int index){return eos_source.get(index);};
+    const auto eos_fraction=[&](int species,int index){return eos_source.X(species,index);};
+    const double xi[]{1.};
+    require(std::isfinite(extreme_eos.get_mixture_Cv(xi))&&extreme_eos.get_mixture_Cv(xi)>0.
+        &&!std::isfinite(extreme_eos.get_temperature(1.,double(kInternal),xi)),
+        "real selected-EOS negative does not produce a nonfinite temperature");
+    const auto eos_request=request(grid,0,BoundarySide::Upper,1,grid.Js());
+    require_rejected([&]{(void)EvaluateNativeRzReflectingCell(grid,eos_request,fixture.config,
+        extreme_material,extreme_eos,eos_read,eos_fraction);},
+        "reflecting scalar leaf accepted nonfinite real selected-EOS temperature");
+    require_native_boundary_unchanged(eos_source,grid,eos_before,"real EOS rejection wrote source/padding bits");
+    std::cout<<"Native reflecting-cell independent V/W checks passed (64 eps; no handler/stage grant)\n";
+}
+} // namespace reflecting_cell_checks
+
+/** Authentic callback-free Handler preparation/publication and lease negatives. */
+namespace reflecting_handler_checks {
+using reflecting_cell_checks::kRz;
+using reflecting_cell_checks::relative;
+
+std::array<const double*,7> addresses(const FluidState& state)
+{
+    return {state.rho.data(),state.mom_u.data(),state.mom_v.data(),state.mom_w.data(),
+        state.eng.data(),state.enuc_rate.data(),state.mass_fractions.data()};
+}
+
+void run()
+{
+    reflecting_cell_checks::Fixture fixture;
+    auto& grid=fixture.grid;
+    ResolvedUserBoundaries no_user;
+    ScopedUserBoundarySelection selected(no_user,fixture.config,fixture.species);
+    require(!no_user.physical,"reflecting Handler witness unexpectedly has a user callback");
+    BCHandler handler(fixture.config,kRz);handler.bind(fixture.eos,fixture.species);
+    handler.configure_stage(.375,BoundaryPurpose::Hydro);
+    auto state=fixture.state(0.L);
+    const auto original=native_boundary_snapshot(state,grid);
+    const auto original_addresses=addresses(state);
+    handler.apply_builtin(state,grid); // Actual logical seed, not a candidate or EOS acceptance.
+    const auto seeded=native_boundary_snapshot(state,grid);
+    const auto seeded_addresses=addresses(state);
+    const auto seeded_storage=state.diffusion_boundary;
+    auto candidate=handler.prepare_native(state,grid);
+    require_native_boundary_unchanged(state,grid,seeded,"callback-free prepare_native wrote solver fields");
+    require(addresses(state)==seeded_addresses&&state.diffusion_boundary==seeded_storage,
+        "callback-free prepare_native changed leases or published controls");
+    handler.validate_native_candidate(candidate,state,grid);
+
+    // A real Handler with no EOS reflector binding must refuse this seed. It is
+    // already complete; refusal must not mutate it or its allocation leases.
+    BCHandler unbound(fixture.config,kRz);unbound.configure_stage(.375,BoundaryPurpose::Hydro);
+    require_rejected([&]{(void)unbound.prepare_native(state,grid);},
+        "callback-free Native reflecting Handler accepted without a real EOS bind");
+    require_native_boundary_unchanged(state,grid,seeded,"missing EOS binding wrote callback-free seed");
+    require(addresses(state)==seeded_addresses,"missing EOS binding changed seed leases");
+
+    const auto unchanged_seed=[&]() {
+        require_native_boundary_unchanged(state,grid,seeded,"candidate rejection wrote seeded solver fields");
+        require(state.diffusion_boundary==seeded_storage,"candidate rejection published face controls");
+    };
+    const auto reject_current=[&](std::string_view message) {
+        const auto current_addresses=addresses(state);
+        require_rejected([&]{handler.validate_native_candidate(candidate,state,grid);},message);
+        unchanged_seed();
+        require(addresses(state)==current_addresses,"candidate validation changed the deliberately presented lease");
+    };
+
+    // Exact actual root configuration; restore each mutation before the next.
+    const auto root=fixture.config.grid;
+    for(int fault=0;fault<7;++fault) {
+        switch(fault) {
+        case 0: fixture.config.grid.x1_min=std::nextafter(root.x1_min,-std::numeric_limits<double>::infinity());break;
+        case 1: fixture.config.grid.x1_max=std::nextafter(root.x1_max,std::numeric_limits<double>::infinity());break;
+        case 2: fixture.config.grid.x2_min=std::nextafter(root.x2_min,-std::numeric_limits<double>::infinity());break;
+        case 3: fixture.config.grid.x2_max=std::nextafter(root.x2_max,std::numeric_limits<double>::infinity());break;
+        case 4: fixture.config.grid.nblockx1=root.nblockx1+1;break;
+        case 5: fixture.config.grid.nblockx2=root.nblockx2+1;break;
+        case 6: fixture.config.grid.x2l_boundary_type=fixture.config.grid.x2r_boundary_type="periodic";break;
+        }
+        reject_current("Native candidate accepted drift of its actual root configuration");
+        fixture.config.grid=root;
+        handler.validate_native_candidate(candidate,state,grid);
+    }
+
+    const auto stage=handler.snapshot_stage_context();
+    handler.configure_stage(.5,BoundaryPurpose::Hydro);
+    reject_current("Native candidate accepted changed real stage time");
+    handler.restore_stage_context_noexcept(stage);
+    handler.validate_native_candidate(candidate,state,grid);
+    handler.configure_stage(.375,BoundaryPurpose::Diffusion);
+    reject_current("Native candidate accepted changed real operator purpose");
+    handler.restore_stage_context_noexcept(stage);
+    handler.validate_native_candidate(candidate,state,grid);
+
+    // Hold each original allocation while presenting equal-bit replacement
+    // storage, so identity refusal cannot be mistaken for a numerical change.
+    std::array<std::vector<double>*,7> vectors{&state.rho,&state.mom_u,&state.mom_v,
+        &state.mom_w,&state.eng,&state.enuc_rate,&state.mass_fractions};
+    for(int field=0;field<7;++field) {
+        std::vector<double> replacement=*vectors[field];
+        std::swap(*vectors[field],replacement);
+        require(addresses(state)[field]!=seeded_addresses[field],"lease-negative failed to change its real allocation");
+        reject_current("Native candidate accepted a foreign real source allocation lease");
+        std::swap(*vectors[field],replacement);
+        require(addresses(state)==seeded_addresses,"restoring lease-negative lost original allocations");
+        handler.validate_native_candidate(candidate,state,grid);
+    }
+
+    const auto identity=grid.dyadic_identity;
+    for(int fault=0;fault<8;++fault) {
+        switch(fault) {
+        case 0:grid.dyadic_identity.bound=false;break;
+        case 1:grid.dyadic_identity.root_lower[0]=std::nextafter(identity.root_lower[0],-std::numeric_limits<double>::infinity());break;
+        case 2:grid.dyadic_identity.root_upper[0]=std::nextafter(identity.root_upper[0],std::numeric_limits<double>::infinity());break;
+        case 3:grid.dyadic_identity.root_upper[1]=std::nextafter(identity.root_upper[1],std::numeric_limits<double>::infinity());break;
+        case 4:++grid.dyadic_identity.root_blocks[0];break;
+        case 5:++grid.dyadic_identity.level;break;
+        case 6:++grid.dyadic_identity.logical[0];break;
+        case 7:grid.dyadic_identity.periodic_axial=true;break;
+        }
+        reject_current("Native candidate accepted a changed bound Grid generation identity");
+        grid.dyadic_identity=identity;
+        handler.validate_native_candidate(candidate,state,grid);
+    }
+    BCHandler other(fixture.config,kRz);other.bind(fixture.eos,fixture.species);
+    other.configure_stage(.375,BoundaryPurpose::Hydro);
+    require_rejected([&]{other.validate_native_candidate(candidate,state,grid);},
+        "a different actual Handler accepted another owner's reflecting candidate");
+    unchanged_seed();require(addresses(state)==seeded_addresses,"foreign Handler changed original leases");
+
+    // All deliberate drift is now restored. Actual validated publication
+    // writes ghosts only; radial projection precedes axial projection/corners.
+    handler.validate_native_candidate(candidate,state,grid);
+    handler.publish_native_noexcept(std::move(candidate),state);
+    require(addresses(state)==original_addresses&&state.diffusion_boundary==seeded_storage,
+        "reflecting publication changed source allocations or invented controls");
+    for(int index=0;index<grid.GetTotalSize();++index) {
+        const int i=index%grid.stride_y,j=index/grid.stride_y;
+        const bool padding=i>=grid.GetTotalX();
+        const bool active=i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je();
+        if(padding||active) {
+            require(native_boundary_bits(state,index)==original[index],
+                "reflecting candidate publication wrote active cells or padding");
+            continue;
+        }
+        const bool radial=i<grid.Is()||i>=grid.Ie();
+        const bool axial=j<grid.Js()||j>=grid.Je();
+        const int donor_i=i<grid.Is()?2*grid.Is()-1-i:i>=grid.Ie()?2*grid.Ie()-1-i:i;
+        const int donor_j=j<grid.Js()?2*grid.Js()-1-j:j>=grid.Je()?2*grid.Je()-1-j:j;
+        const double wall=i<grid.Is()?grid.x1_min:grid.x1_max;
+        auto expected=reflecting_cell_checks::reference(grid.GetFacePosL(i),grid.GetFacePosR(i),0.L,
+            radial?2.L*wall:0.L,radial?-1.L:1.L,radial?0:1);
+        if(radial&&axial)expected.mom_v=-expected.mom_v;
+        const auto got=state.get(index);
+        const std::array<double,5> actual{got.rho,got.mom_u,got.mom_v,got.mom_w,got.eng};
+        const std::array<double,5> wanted{expected.rho,expected.mom_u,expected.mom_v,expected.mom_w,expected.eng};
+        for(int component=0;component<5;++component)
+            relative(actual[component],wanted[component],"Handler reflecting ghost/corner differs from ordered independent V/W projection");
+        relative(state.X(0,index),1.,"Handler reflecting ghost/corner omitted complete Xi");
+        const int donor=grid.GetIndex(donor_i,donor_j,0);
+        require(std::bit_cast<std::uint64_t>(state.enuc_rate[index])==original[donor][5],
+            "reflecting ghost/corner ENUC lost its true ordered prefix donor");
+    }
+    RzThermodynamics::validate_completed_patch_eos(state,grid,1,
+        {fixture.config.numerics.sml_rho,fixture.config.numerics.min_eint,fixture.config.numerics.max_eint},fixture.eos);
+
+    // A real valid physical user law changes only Core root configuration.
+    // Grid/array leases stay exact; prepare+validation must refuse publication.
+    reflecting_cell_checks::Fixture changing;
+    changing.config.grid.x1r_boundary_type="user";
+    int callback_calls=0;
+    ResolvedUserBoundaries callbacks;
+    callbacks.physical=[&](const PhysicalBoundaryContext& context) {
+        if(++callback_calls==1)
+            changing.config.grid.x1_max=std::nextafter(3.,std::numeric_limits<double>::infinity());
+        PrimitiveData physical;physical.rho=1.;physical.u=double(reflecting_cell_checks::kRadial);
+        physical.v=double(reflecting_cell_checks::kAxial);physical.w=context.ghost_point.r_cy;
+        physical.SetTemperature(double(reflecting_cell_checks::kInternal/2.L));physical.mass_fractions={1.};
+        PhysicalBoundaryData data;data.hydro=physical;return data;
+    };
+    ScopedUserBoundarySelection callback_selected(callbacks,changing.config,changing.species);
+    BCHandler changed(changing.config,kRz);changed.bind(changing.eos,changing.species);
+    changed.configure_stage(.375,BoundaryPurpose::Hydro);
+    auto changed_seed=changing.state(0.L);changed.apply_builtin(changed_seed,changing.grid);
+    const auto changed_before=native_boundary_snapshot(changed_seed,changing.grid);
+    const auto changed_addresses=addresses(changed_seed);
+    const auto changed_identity=changing.grid.dyadic_identity;
+    const auto changed_storage=changed_seed.diffusion_boundary;
+    require_rejected([&]{auto invalid=changed.prepare_native(changed_seed,changing.grid);
+        changed.validate_native_candidate(invalid,changed_seed,changing.grid);},
+        "callback root drift passed Native candidate publication gate");
+    require(callback_calls>0&&changing.config.grid.x1_max!=3.,"callback-root negative never changed its actual root");
+    require(GridMetrics::identity_words(changing.grid.dyadic_identity)==GridMetrics::identity_words(changed_identity)
+        &&changing.grid.x1_min==1.&&changing.grid.x1_max==3.
+        &&changing.grid.x2_min==-.125&&changing.grid.x2_max==.125
+        &&changing.grid.dim==2&&changing.grid.geometry=="cylindrical"
+        &&addresses(changed_seed)==changed_addresses&&changed_seed.diffusion_boundary==changed_storage,
+        "callback-root refusal changed real Grid identity, leases or controls");
+    (void)GridMetrics::make_geometry_view(changing.grid,kRz);
+    require_native_boundary_unchanged(changed_seed,changing.grid,changed_before,
+        "callback root drift scattered an unaccepted partial boundary candidate");
+    std::cout<<"Native reflecting Handler preparation/publication identity checks passed (no face/stage/Runtime grant)\n";
+}
+} // namespace reflecting_handler_checks
+
+/** Checked wall flags belong to the actual AMR slot/frame, not equal-valued data. */
+namespace hydro_wall_authority_checks {
+using reflecting_cell_checks::kRz;
+using arch::state::ExecutionSide;
+using arch::state::StateSlot;
+using arch::scheduler::StageBinding;
+using arch::scheduler::StageDescriptor;
+
+struct Fixture {
+    reflecting_cell_checks::Fixture physical;
+    amr::AMRControl control{8,2};
+    arch::topology::TopologyIdentityRegistry topology{{2,{1,1,1},0}};
+    std::vector<amr::BlockHandle> handles;
+    arch::state::StateResidencyLedger ledger{{1}};
+    arch::scheduler::MonotonicSchedulerClock clock;
+    arch::scheduler::StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+    StageBinding binding{context,{}};
+    StageDescriptor descriptor=arch::scheduler::supported_hydro_time_plan(
+        arch::scheduler::HydroMethod::Euler).stages.front();
+    ResolvedUserBoundaries no_user;
+    ScopedUserBoundarySelection selected{no_user,physical.config,physical.species};
+    BCHandler handler{physical.config,kRz};
+    int id=-1;
+    amr::BlockHandle published_handle{};
+
+    Fixture() {
+        auto& config=physical.config;
+        config.grid.nblockx1=1;config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.amr_max_blocks=8;config.amr.lrefinemin=0;config.amr.lrefinemax=0;
+        config.numerics.time_integrator="euler";
+        control.tree->InitRootGrid(config,1,kRz);
+        const auto& active=control.tree->GetActiveBlocks();
+        require(active.size()==1,"wall authority fixture did not create one actual Tree leaf");
+        id=active.front();auto& b=block();b.RequireNativeGeometryIdentity();
+        require(b.grid.dyadic_identity.bound&&b.grid.dyadic_identity.root_lower==std::array<double,2>{1.,-.125}
+            &&b.grid.dyadic_identity.root_upper==std::array<double,2>{3.,.125},
+            "wall authority fixture lacks its actual bound annulus root");
+        const std::vector<arch::topology::TopologyObservation> observations{{id,
+            {2,b.level,b.logical_x1,b.logical_x2,b.logical_x3}}};
+        auto proposal=topology.stage_adoption(observations);
+        const auto adopted=topology.commit_after_success(std::move(proposal),
+            [&](const auto& candidate){handles=candidate.handles_in_observation_order;});
+        require(handles.size()==1&&handles.front()==topology.handle_for_pool(id)
+            &&adopted.epoch==ledger.active_epoch(),"real Tree UID/epoch adoption mismatch");
+        published_handle=handles.front();control.BindActiveHandles(handles);binding.handles=handles;
+        for(auto* state:{&b.fluid_state,&b.state_next,&b.state_scratch}) {
+            for(int index=0;index<b.grid.GetTotalSize();++index) {
+                state->set(index,{987.25,123.5,-456.75,321.125,654.625});
+                state->enuc_rate[index]=42.+index/8.;state->X(0,index)=.125;
+            }
+            for(int j=0;j<b.grid.GetTotalY();++j)for(int i=0;i<b.grid.GetTotalX();++i) {
+                const int index=b.grid.GetIndex(i,j,0);
+                state->set(index,reflecting_cell_checks::reference(
+                    b.grid.GetFacePosL(i),b.grid.GetFacePosR(i),0.L));
+                state->X(0,index)=1.;
+            }
+        }
+        require(!no_user.physical,"wall authority fixture acquired a user callback");
+        handler.bind(physical.eos,physical.species);
+        context.step_start_time=.375;context.step_dt=.125;
+        context.configure_boundary_context=[this](double time,BoundaryPurpose purpose) {
+            handler.configure_stage(time,purpose);
+        };
+        context.configure_boundary_context(context.step_start_time,BoundaryPurpose::Hydro);
+        // The authority requires a real post-boundary consumer, not only a
+        // configured BC clock. This selected EOS leaf reads the actual pooled
+        // slot and all completed logical ghosts; it never writes or publishes.
+        const auto boundary_frame=handler.snapshot_stage_context();
+        const auto actual_handles=std::span<const amr::BlockHandle>(handles);
+        context.post_boundary_acceptance=[this,boundary_frame,actual_handles](
+            const arch::scheduler::StageExecutionContext& actual,StateSlot slot,
+            arch::state::StateVersion version) {
+            require(&actual==&context&&actual.side==ExecutionSide::Host
+                && &actual.ledger==&ledger&& &actual.clock==&clock
+                &&actual.step_start_time==.375&&actual.step_dt==.125
+                &&handler.stage_context_matches(boundary_frame),
+                "actual selected-EOS post-boundary consumer changed its frame");
+            const auto live=control.ActiveHandles();
+            const auto& active=control.tree->GetActiveBlocks();
+            require(live.data()==actual_handles.data()&&live.size()==actual_handles.size()
+                &&binding.handles.data()==actual_handles.data()
+                &&binding.handles.size()==actual_handles.size()&&active.size()==live.size(),
+                "actual selected-EOS consumer changed its borrowed domain");
+            for(std::size_t patch=0;patch<active.size();++patch) {
+                require(live[patch]==published_handle&&live[patch]==topology.handle_for_pool(active[patch])
+                    &&live[patch].epoch==ledger.active_epoch(),
+                    "actual selected-EOS consumer changed its true UID/epoch");
+                ledger.require_readable({live[patch],slot},{ExecutionSide::Host,version,true,false});
+                auto& actual_block=control.pool->GetBlock(active[patch]);
+                actual_block.RequireNativeGeometryIdentity();
+                const FluidState* input=nullptr;
+                switch(slot) {
+                case StateSlot::Current:input=&actual_block.fluid_state;break;
+                case StateSlot::Next:input=&actual_block.state_next;break;
+                case StateSlot::Scratch:input=&actual_block.state_scratch;break;
+                default:throw std::logic_error("actual selected-EOS consumer rejected an unknown slot");
+                }
+                RzThermodynamics::validate_completed_patch_eos(*input,actual_block.grid,1,
+                    {physical.config.numerics.sml_rho,physical.config.numerics.min_eint,
+                     physical.config.numerics.max_eint},physical.eos);
+            }
+        };
+        // Actual physical ghost construction precedes all real readiness tokens.
+        handler.apply_builtin(b.fluid_state,b.grid);
+        auto completed=handler.prepare_native(b.fluid_state,b.grid);
+        handler.validate_native_candidate(completed,b.fluid_state,b.grid);
+        handler.publish_native_noexcept(std::move(completed),b.fluid_state);
+        const auto initial=clock.next_publication();
+        require(initial.version.value==1,"wall authority initial actual version must be one");
+        ledger.register_block(published_handle,initial.version,initial.completion);
+        context.post_boundary_acceptance(context,StateSlot::Current,initial.version);
+        ledger.publish_ghost({published_handle,StateSlot::Current},ExecutionSide::Host,
+            initial.version,clock.next_completion());
+        ledger.require_readable({published_handle,StateSlot::Current},
+            {ExecutionSide::Host,initial.version,true,true});
+    }
+    amr::Block& block(){return control.pool->GetBlock(id);}
+};
+
+struct Snapshot {
+    std::array<std::vector<NativeBoundaryBits>,3> bits;
+    std::array<std::array<const double*,7>,3> leases;
+    std::array<std::shared_ptr<const DiffusionBoundaryStorage>,3> controls;
+    arch::state::SlotCoherence current_coherence;
+    std::uint64_t clock_token=0,clock_version=0;
+};
+
+Snapshot snapshot(Fixture& f)
+{
+    Snapshot result;auto& b=f.block();
+    const std::array<const FluidState*,3> states{&b.fluid_state,&b.state_next,&b.state_scratch};
+    for(int slot=0;slot<3;++slot) {
+        result.bits[slot]=native_boundary_snapshot(*states[slot],b.grid);
+        result.leases[slot]=reflecting_handler_checks::addresses(*states[slot]);
+        result.controls[slot]=states[slot]->diffusion_boundary;
+    }
+    result.current_coherence=f.ledger.inspect({f.published_handle,StateSlot::Current});
+    result.clock_token=f.clock.last_token();result.clock_version=f.clock.last_version();
+    return result;
+}
+
+void unchanged(Fixture& f,const Snapshot& before)
+{
+    const auto actual=f.ledger.inspect({f.published_handle,StateSlot::Current});
+    const auto same_region=[](const auto& a,const auto& b) {
+        return a.residency==b.residency&&a.version==b.version&&a.completion==b.completion
+            &&a.pending_transfer==b.pending_transfer;
+    };
+    require(same_region(actual.interior,before.current_coherence.interior)
+        &&same_region(actual.ghost,before.current_coherence.ghost)
+        &&actual.ghost_source_version==before.current_coherence.ghost_source_version
+        &&f.clock.last_token()==before.clock_token&&f.clock.last_version()==before.clock_version,
+        "wall authority rejection changed actual publication or clock metadata");
+    auto& b=f.block();const std::array<const FluidState*,3> states{&b.fluid_state,&b.state_next,&b.state_scratch};
+    for(int slot=0;slot<3;++slot) {
+        require_native_boundary_unchanged(*states[slot],b.grid,before.bits[slot],
+            "rejected wall authority wrote a fault-presented slot/ghost/padding");
+        require(reflecting_handler_checks::addresses(*states[slot])==before.leases[slot]
+            &&states[slot]->diffusion_boundary==before.controls[slot],
+            "rejected wall authority changed fault-presented leases/controls");
+    }
+}
+
+/** Each fault is already present when the read-only authority is asked to act. */
+template<class Fault>
+void rejects_fault(Fault&& fault,std::string_view message)
+{
+    Fixture fixture;auto& b=fixture.block();
+    HostHydroBoundaryAuthority authority(fixture.handler,fixture.control,fixture.id,
+        fixture.binding,fixture.descriptor,b.fluid_state,b.grid);
+    fault(fixture);
+    const auto presented=snapshot(fixture);
+    require_rejected([&]{(void)authority.require_view(&fixture.control,fixture.id,b.fluid_state,b.grid);},message);
+    unchanged(fixture,presented);
+}
+
+void run()
+{
+    {
+        Fixture fixture;auto& b=fixture.block();
+        HostHydroBoundaryAuthority authority(fixture.handler,fixture.control,fixture.id,
+            fixture.binding,fixture.descriptor,b.fluid_state,b.grid);
+        const auto before=snapshot(fixture);
+        const auto view=authority.require_view(&fixture.control,fixture.id,b.fluid_state,b.grid);
+        require(view.reflecting==std::array<bool,6>{true,true,true,true,false,false},
+            "actual annulus authority failed four real walls or granted an inactive direction");
+        for(int direction=0;direction<2;++direction) {
+            const int lower=direction==0?b.grid.Is():b.grid.Js();
+            const int upper=direction==0?b.grid.Ie():b.grid.Je();int side=99;
+            require(view.reflecting_side(direction,lower,lower,upper,side)&&side==0,
+                "actual lower reflecting wall flag is missing");
+            require(view.reflecting_side(direction,upper,lower,upper,side)&&side==1,
+                "actual upper reflecting wall flag is missing");
+            require(view.reflecting_side(direction,lower+1,lower,upper,side)&&side==-1,
+                "authority granted a reflecting wall at an interior face");
+        }
+        // r=1 is an actual annulus wall; these flags do not grant a regular origin.
+        require(b.grid.GetFacePosL(b.grid.Is())==1.,"annulus authority witness unexpectedly touches the axis");
+        unchanged(fixture,before);
+        for(int foreign=0;foreign<4;++foreign) {
+            amr::AMRControl other_control{8,2};
+            other_control.tree->InitRootGrid(fixture.physical.config,1,kRz);
+            FluidState equal_state=b.fluid_state;Grid equal_grid=b.grid;
+            const auto presented=snapshot(fixture);
+            const auto equal_bits=native_boundary_snapshot(equal_state,equal_grid);
+            const auto equal_leases=reflecting_handler_checks::addresses(equal_state);
+            require_rejected([&]{
+                if(foreign==0)(void)authority.require_view(nullptr,fixture.id,b.fluid_state,b.grid);
+                if(foreign==1)(void)authority.require_view(&other_control,fixture.id,b.fluid_state,b.grid);
+                if(foreign==2)(void)authority.require_view(&fixture.control,fixture.id,equal_state,b.grid);
+                if(foreign==3)(void)authority.require_view(&fixture.control,fixture.id,b.fluid_state,equal_grid);
+            },"wall authority accepted a null/foreign equal-valued actual owner");
+            unchanged(fixture,presented);
+            require_native_boundary_unchanged(equal_state,equal_grid,equal_bits,"foreign owner refusal wrote equal-valued foreign state");
+            require(reflecting_handler_checks::addresses(equal_state)==equal_leases,"foreign refusal changed foreign leases");
+        }
+        require_rejected([&]{(void)authority.require_view(&fixture.control,fixture.id+1,b.fluid_state,b.grid);},
+            "wall authority accepted a wrong actual block id");
+        unchanged(fixture,before);
+    }
+    rejects_fault([](Fixture& f){f.handler.configure_stage(.5,BoundaryPurpose::Hydro);},"wall authority accepted BC time drift");
+    rejects_fault([](Fixture& f){f.handler.configure_stage(.375,BoundaryPurpose::Diffusion);},"wall authority accepted BC purpose drift");
+    rejects_fault([](Fixture& f){f.physical.config.grid.x1_max=std::nextafter(3.,4.);},"wall authority accepted root endpoint drift");
+    rejects_fault([](Fixture& f){f.physical.config.grid.nblockx1=2;},"wall authority accepted root count drift");
+    rejects_fault([](Fixture& f){f.block().grid.dyadic_identity.logical[0]=1;},"wall authority accepted actual bound Grid drift");
+    rejects_fault([](Fixture& f){
+        const auto changed=f.clock.next_publication();
+        f.ledger.publish_interior({f.published_handle,StateSlot::Current},ExecutionSide::Host,
+            changed.version,changed.completion);
+    },"wall authority accepted newer interior with stale real ghost publication");
+    rejects_fault([](Fixture& f){++f.handles.front().epoch.value;},"wall authority accepted borrowed handle epoch drift");
+    rejects_fault([](Fixture& f){++f.handles.front().uid.value;},"wall authority accepted borrowed handle UID drift");
+    rejects_fault([](Fixture& f){f.context.side=ExecutionSide::Device;},"Host wall authority accepted Device context drift");
+    rejects_fault([](Fixture& f){f.context.post_boundary_acceptance={};},"wall authority accepted loss of its genuine selected-EOS consumer");
+    rejects_fault([](Fixture& f){f.context.step_start_time=.5;},"wall authority accepted step start clock drift");
+    rejects_fault([](Fixture& f){f.context.step_dt=.25;},"wall authority accepted frozen step interval drift");
+    rejects_fault([](Fixture& f){std::swap(f.block().fluid_state,f.block().state_next);},
+        "wall authority accepted actual Current/Next storage rotation without a new binding");
+    // Every source lease is replaced while its old allocation is still alive;
+    // equal values therefore cannot accidentally regain the original pointer.
+    for(int field=0;field<7;++field) {
+        Fixture fixture;auto& b=fixture.block();
+        HostHydroBoundaryAuthority authority(fixture.handler,fixture.control,fixture.id,
+            fixture.binding,fixture.descriptor,b.fluid_state,b.grid);
+        std::array<std::vector<double>*,7> vectors{&b.fluid_state.rho,&b.fluid_state.mom_u,
+            &b.fluid_state.mom_v,&b.fluid_state.mom_w,&b.fluid_state.eng,
+            &b.fluid_state.enuc_rate,&b.fluid_state.mass_fractions};
+        const auto old=reflecting_handler_checks::addresses(b.fluid_state);
+        std::vector<double> replacement=*vectors[field];std::swap(replacement,*vectors[field]);
+        require(reflecting_handler_checks::addresses(b.fluid_state)[field]!=old[field],
+            "authority lease witness did not replace the actual allocation");
+        const auto presented=snapshot(fixture);
+        require_rejected([&]{(void)authority.require_view(&fixture.control,fixture.id,b.fluid_state,b.grid);},
+            "wall authority accepted an equal-bit replacement source lease");
+        unchanged(fixture,presented);
+    }
+    std::cout<<"Native Hydro wall authority real Tree/frame/lease checks passed (no stage/flux/Runtime grant)\n";
+}
+} // namespace hydro_wall_authority_checks
+
+/** Two real root leaves qualify one stage-wide read-only authority.
+ * Workflow: Tree -> registered UID/epoch -> actual native BC/exchange ->
+ * selected EOS on each completed pooled slot -> genuine ledger publication ->
+ * domain preflight -> indexed patch borrows -> explicit whole-domain join.
+ * This is an engineering identity witness, not an executor/Runtime science grant.
+ */
+namespace hydro_wall_domain_checks {
+using reflecting_cell_checks::kRz;
+using arch::state::ExecutionSide;
+using arch::state::StateSlot;
+using arch::scheduler::StageBinding;
+using arch::scheduler::StageDescriptor;
+using Field=std::vector<double> FluidState::*;
+constexpr std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,
+    &FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,
+    &FluidState::enuc_rate,&FluidState::mass_fractions};
+constexpr std::array<StateSlot,3> slots{StateSlot::Current,StateSlot::Next,StateSlot::Scratch};
+
+/** Freeze root/BC choices before the immutable selection and handler exist.
+ * BCHandler compiles its logical face kinds in its constructor; changing these
+ * afterward would not create the outflow boundary that this fixture tests.
+ */
+struct PhysicalFixture : reflecting_cell_checks::Fixture {
+    PhysicalFixture() {
+        config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.amr_max_blocks=8;config.amr.lrefinemin=0;config.amr.lrefinemax=0;
+        config.grid.x2r_boundary_type="outflow";
+        config.numerics.time_integrator="euler";
+    }
+};
+
+/** Actual Tree/registry and three completed EOS-backed source slots. */
+struct Fixture {
+    PhysicalFixture physical;
+    amr::AMRControl control{8,2};
+    arch::topology::TopologyIdentityRegistry topology{{2,{2,1,1},0}};
+    std::vector<amr::BlockHandle> handles,published;
+    arch::state::StateResidencyLedger ledger{{1}};
+    arch::scheduler::MonotonicSchedulerClock clock;
+    arch::scheduler::StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+    StageBinding binding{context,{}};
+    StageDescriptor descriptor=arch::scheduler::supported_hydro_time_plan(
+        arch::scheduler::HydroMethod::Euler).stages.front();
+    ResolvedUserBoundaries no_user;
+    ScopedUserBoundarySelection selected{no_user,physical.config,physical.species};
+    BCHandler handler{physical.config,kRz};
+    int eos_patch_checks=0;
+
+    Fixture() {
+        auto& config=physical.config;
+        require(config.grid.nblockx1==2&&config.grid.nblockx2==1
+            &&config.grid.x2r_boundary_type=="outflow",
+            "domain fixture configuration was not frozen before handler construction");
+        control.tree->InitRootGrid(config,1,kRz);
+        const auto& ids=control.tree->GetActiveBlocks();
+        require(ids.size()==2,"domain authority fixture lacks two actual Tree roots");
+        std::vector<arch::topology::TopologyObservation> observations;
+        for(std::size_t n=0;n<ids.size();++n) {
+            const int id=ids[n];
+            auto& b=control.pool->GetBlock(id);b.RequireNativeGeometryIdentity();
+            // Real root Morton order is x1=0 then x1=1, with exact binary
+            // annulus endpoints. This independently fixes which block owns
+            // each radial wall; the authority's output is not the oracle.
+            require(b.active_index==static_cast<int>(n)&&b.level==0
+                &&b.logical_x1==n&&b.logical_x2==0&&b.logical_x3==0
+                &&b.grid.x1_min==1.+static_cast<double>(n)
+                &&b.grid.x1_max==2.+static_cast<double>(n)
+                &&b.grid.x2_min==-.125&&b.grid.x2_max==.125,
+                "domain fixture actual Tree root ordering/bounds changed");
+            require(b.grid.dyadic_identity.bound
+                &&b.grid.dyadic_identity.root_blocks==std::array<int,2>{2,1},
+                "domain fixture lacks actual two-root Grid provenance");
+            observations.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3}});
+            for(auto* input:{&b.fluid_state,&b.state_next,&b.state_scratch}) {
+                for(int index=0;index<b.grid.GetTotalSize();++index) {
+                    // A real warm constant physical state avoids conflating
+                    // the identity test with a cold rotating reconstruction oracle.
+                    input->set(index,{1.,0.,0.,0.,10.});
+                    input->enuc_rate[index]=42.+id+index/8.;input->X(0,index)=1.;
+                }
+            }
+        }
+        auto proposal=topology.stage_adoption(observations);
+        const auto adopted=topology.commit_after_success(std::move(proposal),
+            [&](const auto& candidate){handles=candidate.handles_in_observation_order;});
+        published=handles;
+        require(handles.size()==2&&handles[0]!=handles[1]&&adopted.epoch==ledger.active_epoch(),
+            "domain fixture did not adopt distinct true UID/epoch handles");
+        for(std::size_t n=0;n<ids.size();++n)
+            require(handles[n]==topology.handle_for_pool(ids[n]),"domain handle is not registry-owned");
+        control.BindActiveHandles(handles);binding.handles=handles;
+        require(!no_user.physical,"domain fixture unexpectedly selected a user law");
+        handler.bind(physical.eos,physical.species);
+        context.step_start_time=.375;context.step_dt=.125;
+        context.configure_boundary_context=[this](double time,BoundaryPurpose purpose) {
+            handler.configure_stage(time,purpose);
+        };
+        context.configure_boundary_context(.375,BoundaryPurpose::Hydro);
+        const auto frame=handler.snapshot_stage_context();
+        const auto actual_handles=std::span<const amr::BlockHandle>(handles);
+        context.post_boundary_acceptance=[this,frame,actual_handles](
+            const arch::scheduler::StageExecutionContext& actual,StateSlot slot,
+            arch::state::StateVersion version) {
+            require(&actual==&context&&actual.side==ExecutionSide::Host
+                &&&actual.ledger==&ledger&&&actual.clock==&clock
+                &&actual.step_start_time==.375&&actual.step_dt==.125
+                &&handler.stage_context_matches(frame),"domain selected EOS frame changed");
+            const auto live=control.ActiveHandles();const auto& active=control.tree->GetActiveBlocks();
+            require(live.data()==actual_handles.data()&&live.size()==actual_handles.size()
+                &&binding.handles.data()==actual_handles.data()
+                &&binding.handles.size()==actual_handles.size()&&active.size()==live.size(),
+                "domain selected EOS borrowed owners changed");
+            for(std::size_t n=0;n<active.size();++n) {
+                require(live[n]==published[n]&&live[n]==topology.handle_for_pool(active[n])
+                    &&live[n].epoch==ledger.active_epoch(),"domain EOS true UID/epoch changed");
+                ledger.require_readable({live[n],slot},{ExecutionSide::Host,version,true,false});
+                auto& b=control.pool->GetBlock(active[n]);b.RequireNativeGeometryIdentity();
+                const auto member=TimeIntegration::hydro_boundary_state_member(slot);
+                RzThermodynamics::validate_completed_patch_eos(b.*member,b.grid,1,
+                    {physical.config.numerics.sml_rho,physical.config.numerics.min_eint,
+                     physical.config.numerics.max_eint},physical.eos);
+                ++eos_patch_checks;
+            }
+        };
+        const auto initial=clock.next_publication();
+        for(const auto handle:published)ledger.register_block(handle,initial.version,initial.completion);
+        for(const auto slot:slots) {
+            const auto member=TimeIntegration::hydro_boundary_state_member(slot);
+            TimeIntegration::synchronize_domain_boundary(control,handler,member,handles,kRz,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+            const auto ready=slot==StateSlot::Current?initial:clock.next_publication();
+            if(slot!=StateSlot::Current)for(const auto handle:published)
+                ledger.publish_interior({handle,slot},ExecutionSide::Host,ready.version,ready.completion);
+            context.post_boundary_acceptance(context,slot,ready.version);
+            const auto completed=clock.next_completion();
+            for(const auto handle:published) {
+                ledger.publish_ghost({handle,slot},ExecutionSide::Host,ready.version,completed);
+                ledger.require_readable({handle,slot},{ExecutionSide::Host,ready.version,true,true});
+            }
+        }
+        require(eos_patch_checks==6,"domain fixture skipped an actual completed slot EOS consumer");
+    }
+    amr::Block& block(std::size_t n){return control.pool->GetBlock(control.tree->GetActiveBlocks().at(n));}
+};
+
+struct SlotSnapshot {
+    std::array<std::vector<std::uint64_t>,7> bits;
+    std::array<const double*,7> leases{};
+    std::shared_ptr<const DiffusionBoundaryStorage> controls;
+    std::shared_ptr<BoundaryFluxCaptureStorage> capture;
+    arch::state::SlotCoherence coherence;
+};
+struct Snapshot {
+    BCHandler::StageContextSnapshot frame;
+    std::array<std::array<SlotSnapshot,3>,2> patches;
+    std::array<GridMetrics::DyadicGridIdentity,2> roots;
+    std::vector<amr::BlockHandle> handles;
+    std::vector<int> ids;
+    const amr::BlockHandle* control_span=nullptr;
+    const amr::BlockHandle* binding_span=nullptr;
+    std::size_t binding_size=0;
+    std::uint64_t token=0,version=0;
+    int eos_checks=0;
+};
+
+/** Snapshot even malformed vectors without dereferencing logical cell indices. */
+Snapshot snapshot(Fixture& f) {
+    Snapshot result{f.handler.snapshot_stage_context()};
+    result.handles.assign(f.handles.begin(),f.handles.end());
+    result.ids=f.control.tree->GetActiveBlocks();
+    result.control_span=f.control.ActiveHandles().data();result.binding_span=f.binding.handles.data();
+    result.binding_size=f.binding.handles.size();
+    result.token=f.clock.last_token();result.version=f.clock.last_version();result.eos_checks=f.eos_patch_checks;
+    for(std::size_t n=0;n<2;++n) {
+        auto& b=f.block(n);result.roots[n]=b.grid.dyadic_identity;
+        for(std::size_t s=0;s<slots.size();++s) {
+            const auto member=TimeIntegration::hydro_boundary_state_member(slots[s]);
+            const auto& state=b.*member;auto& saved=result.patches[n][s];
+            for(std::size_t field=0;field<fields.size();++field) {
+                const auto& values=state.*fields[field];saved.leases[field]=values.data();
+                for(double value:values)saved.bits[field].push_back(std::bit_cast<std::uint64_t>(value));
+            }
+            saved.controls=state.diffusion_boundary;saved.capture=state.boundary_flux_capture;
+            saved.coherence=f.ledger.inspect({f.published[n],slots[s]});
+        }
+    }
+    return result;
+}
+
+/** Refusal must preserve all fault-presented inputs, outputs and publication owners. */
+void unchanged(Fixture& f,const Snapshot& saved) {
+    require(f.handler.stage_context_matches(saved.frame)&&f.handles==saved.handles
+        &&f.control.tree->GetActiveBlocks()==saved.ids
+        &&f.control.ActiveHandles().data()==saved.control_span
+        &&f.binding.handles.data()==saved.binding_span&&f.binding.handles.size()==saved.binding_size
+        &&f.clock.last_token()==saved.token&&f.clock.last_version()==saved.version
+        &&f.eos_patch_checks==saved.eos_checks,"domain refusal changed its frame/owners/publication");
+    const auto same_region=[](const auto& a,const auto& b) {
+        return a.residency==b.residency&&a.version==b.version&&a.completion==b.completion
+            &&a.pending_transfer==b.pending_transfer;
+    };
+    for(std::size_t n=0;n<2;++n) {
+        auto& b=f.block(n);
+        require(GridMetrics::equal_identity(b.grid.dyadic_identity,saved.roots[n]),
+            "domain refusal changed fault-presented root provenance");
+        for(std::size_t s=0;s<slots.size();++s) {
+            const auto member=TimeIntegration::hydro_boundary_state_member(slots[s]);
+            const auto& state=b.*member;const auto& before=saved.patches[n][s];
+            require(state.diffusion_boundary==before.controls&&state.boundary_flux_capture==before.capture,
+                "domain refusal changed boundary controls or capture owner");
+            for(std::size_t field=0;field<fields.size();++field) {
+                const auto& values=state.*fields[field];
+                require(values.data()==before.leases[field]&&values.size()==before.bits[field].size(),
+                    "domain refusal changed a presented seven-array lease/extent");
+                for(std::size_t index=0;index<values.size();++index)
+                    require(std::bit_cast<std::uint64_t>(values[index])==before.bits[field][index],
+                        "domain refusal changed source/output/ghost/padding bits");
+            }
+            const auto actual=f.ledger.inspect({f.published[n],slots[s]});
+            require(same_region(actual.interior,before.coherence.interior)
+                &&same_region(actual.ghost,before.coherence.ghost)
+                &&actual.ghost_source_version==before.coherence.ghost_source_version,
+                "domain refusal published or altered actual slot readiness");
+        }
+    }
+}
+
+/** Last-patch preflight faults are present before any domain/worker is granted. */
+template<class Fault> void rejects_preflight(Fault&& fault,std::string_view message) {
+    Fixture f;fault(f);const auto presented=snapshot(f);
+    require_rejected([&]{HostHydroBoundaryDomainAuthority domain(f.handler,f.control,f.binding,f.descriptor);},message);
+    unchanged(f,presented);
+}
+
+void run() {
+    {
+        Fixture f;const auto before=snapshot(f);
+        HostHydroBoundaryDomainAuthority domain(f.handler,f.control,f.binding,f.descriptor);
+        for(std::size_t n=0;n<2;++n) {
+            auto& b=f.block(n);
+            HostHydroBoundaryAuthority patch(domain,n,b.id,b.fluid_state,b.grid);
+            const auto view=patch.require_view(&f.control,b.id,b.fluid_state,b.grid);
+            const std::array<bool,6> expected{n==0,n==1,true,false,false,false};
+            require(view.reflecting==expected,"domain patch granted an internal/unmarked wall or lost its own wall");
+            int side=99;
+            const int internal=n==0?b.grid.Ie():b.grid.Is();
+            require(view.reflecting_side(0,internal,b.grid.Is(),b.grid.Ie(),side)&&side==-1,
+                "domain patch granted a wall on the actual inter-root radial face");
+            require(view.reflecting_side(1,b.grid.Je(),b.grid.Js(),b.grid.Je(),side)&&side==-1,
+                "domain patch granted the actual configured outflow boundary a wall");
+            require_rejected([&]{HostHydroBoundaryAuthority wrong(domain,1-n,b.id,b.fluid_state,b.grid);},
+                "domain patch accepted another true loop index for the same pool input");
+        }
+        domain.require_complete_domain();unchanged(f,before);
+    }
+    rejects_preflight([](Fixture& f){const auto next=f.clock.next_publication();
+        f.ledger.publish_interior({f.published.back(),StateSlot::Current},ExecutionSide::Host,
+            next.version,next.completion);},"domain preflight accepted last-patch stale ghosts");
+    rejects_preflight([](Fixture& f){++f.handles.back().uid.value;},
+        "domain preflight accepted a last-patch foreign UID");
+    rejects_preflight([](Fixture& f){++f.handles.back().epoch.value;},
+        "domain preflight accepted a last-patch foreign epoch");
+    rejects_preflight([](Fixture& f){f.block(1).grid.dyadic_identity.root_upper[0]=std::nextafter(3.,4.);},
+        "domain preflight accepted last-patch root provenance drift");
+    for(const auto field:fields)rejects_preflight([field](Fixture& f){(f.block(1).fluid_state.*field).pop_back();},
+        "domain preflight accepted a malformed last-patch source array");
+    // A synchronous unrelated-patch fault cannot be seen by an O(1) borrow of
+    // patch zero; the mandatory joined domain gate must reject it before publication.
+    for(int field=0;field<7;++field) {
+        Fixture f;auto& first=f.block(0);auto& last=f.block(1);
+        HostHydroBoundaryDomainAuthority domain(f.handler,f.control,f.binding,f.descriptor);
+        HostHydroBoundaryAuthority patch(domain,0,first.id,first.fluid_state,first.grid);
+        auto& values=last.fluid_state.*fields[field];std::vector<double> old=values;
+        std::swap(old,values);require(old.data()!=values.data(),"domain joined lease witness did not replace storage");
+        const auto presented=snapshot(f);
+        (void)patch.require_view(&f.control,first.id,first.fluid_state,first.grid);
+        require_rejected([&]{HostHydroBoundaryAuthority stale(domain,1,last.id,last.fluid_state,last.grid);},
+            "domain last-patch entry accepted a captured equal-bit replacement lease");
+        require_rejected([&]{domain.require_complete_domain();},
+            "domain join accepted an unrelated equal-bit replacement lease");
+        unchanged(f,presented);
+    }
+    for(int identity=0;identity<2;++identity) {
+        Fixture f;auto& first=f.block(0);
+        HostHydroBoundaryDomainAuthority domain(f.handler,f.control,f.binding,f.descriptor);
+        HostHydroBoundaryAuthority patch(domain,0,first.id,first.fluid_state,first.grid);
+        if(identity==0)++f.handles.back().uid.value;else ++f.handles.back().epoch.value;
+        const auto presented=snapshot(f);
+        (void)patch.require_view(&f.control,first.id,first.fluid_state,first.grid);
+        require_rejected([&]{domain.require_complete_domain();},
+            "domain join accepted an unrelated captured handle identity change");
+        unchanged(f,presented);
+    }
+    std::cout<<"Native Hydro two-root domain preflight/index/join checks passed (local EOS identity; no Runtime grant)\n";
+}
+} // namespace hydro_wall_domain_checks
+
 } // namespace
 
 void test_user_physical_boundary()
 {
+    reflecting_cell_checks::run();
+    reflecting_handler_checks::run();
+    hydro_wall_authority_checks::run();
+    hydro_wall_domain_checks::run();
     test_native_rz_axis_completion();
     test_handler_domain_and_stage_time();
     const Fixture fixture;

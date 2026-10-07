@@ -748,7 +748,7 @@ void test_e0_e1_boundary_completion_contract()
         {2}, "pending transfer allowed ghost publication");
 }
 
-void test_rz_physical_boundary()
+void test_rz_logical_seed_and_axis_parity()
 {
     static_assert(static_cast<int>(BoundaryType::RzAxis)==4);
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
@@ -774,7 +774,13 @@ void test_rz_physical_boundary()
     require(axis_plan.input().faces[0]==BoundaryType::RzAxis,"r=0 patch lost axis rule");
     require(axis_plan.fingerprint()!=boundary.logical_plan().fingerprint(),
         "RZ axis has normal reflection fingerprint");
-    boundary.apply(state,grid);
+    // This deliberately nonphysical coded field tests only exact logical
+    // seed donors and signed-axis completion. EOS-backed reflecting V/W
+    // projection has an independent genuine cold-state owner.
+    const auto seed_and_axis=[](const BCHandler& owner,FluidState& values,const Grid& mesh) {
+        owner.apply_builtin(values,mesh);owner.complete_axis(values,mesh);
+    };
+    seed_and_axis(boundary,state,grid);
     const auto bits=[](double value){return std::bit_cast<std::uint64_t>(value);};
     std::size_t checked=0;
     const auto check=[&](int destination,int source,int radial,int axial,int phi) {
@@ -803,21 +809,21 @@ void test_rz_physical_boundary()
     // Only actual r=0 is regular axis: a non-axis patch must keep the user's BC.
     Grid interior=grid;interior.x1_min=1.;interior.x1_max=2.;
     auto actual=before,legacy=before;
-    boundary.apply(actual,interior);BCHandler(config).apply(legacy,interior);
+    seed_and_axis(boundary,actual,interior);BCHandler(config).apply(legacy,interior);
     require(state_hash(actual,false)==state_hash(legacy,false),"RZ applied axis to non-axis patch");
     require(boundary.logical_plan(interior).input().faces[0]==BoundaryType::Reflecting,
         "non-axis lower boundary became axis");
     auto nonzero=config;nonzero.grid.x1_min=1.;
     BCHandler nonzero_boundary(nonzero,rz);
-    auto nonzero_state=before;nonzero_boundary.apply(nonzero_state,interior);
+    auto nonzero_state=before;seed_and_axis(nonzero_boundary,nonzero_state,interior);
     require(state_hash(nonzero_state,false)==state_hash(legacy,false),
         "nonzero domain lower BC changed");
     const auto unchanged=state_hash(before,false);
     auto invalid=grid;invalid.geometry="cartesian";
     auto invalid_state=before;
-    require_rejected([&]{boundary.apply(invalid_state,invalid);},"RZ BC accepted wrong chart");
+    require_rejected([&]{seed_and_axis(boundary,invalid_state,invalid);},"RZ BC accepted wrong chart");
     require(state_hash(invalid_state,false)==unchanged,"invalid RZ BC wrote state");
-    require_rejected([&]{nonzero_boundary.apply(invalid_state,grid);},
+    require_rejected([&]{seed_and_axis(nonzero_boundary,invalid_state,grid);},
         "non-axis profile accepted r=0 patch");
     require(state_hash(invalid_state,false)==unchanged,"mismatched axis profile wrote state");
     auto bad_config=config;bad_config.grid.x1l_boundary_type="periodic";
@@ -828,7 +834,7 @@ void test_rz_physical_boundary()
     }
     auto input=one_dimensional_input();input.faces[0]=BoundaryType::RzAxis;
     require_rejected([&]{(void)make_boundary_plan(input);},"1D accepted RZ axis");
-    std::cout<<"RZ_PHYSICAL_BC checked_ghost_cells="<<checked
+    std::cout<<"RZ_LOGICAL_SEED_AXIS checked_ghost_cells="<<checked
         <<" legacy_fingerprints_preserved=1 signed_zero=1 nonzero_inner=1\n";
 }
 
@@ -846,7 +852,7 @@ int main()
         test_invalid_inputs();
         test_host_lowering_and_executor();
         test_production_bc_handler();
-        test_rz_physical_boundary();
+        test_rz_logical_seed_and_axis_parity();
         test_e0_e1_boundary_completion_contract();
         std::cout << "boundary plan contract passed\n";
         return 0;
