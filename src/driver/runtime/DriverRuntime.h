@@ -11,7 +11,10 @@
 #pragma once
 
 #include <array>
+#include <bit>
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <span>
@@ -19,12 +22,13 @@
 #include <string>
 #include <vector>
 
+#include "amr/exchange/CoordinateSeamPlan.h"
+#include "amr/transfer/AmrTransferPlans.h"
+#include "data/GlobalDefs.h"
 #include "driver/runtime/ComputeBackend.h"
 #include "driver/runtime/TopologyIdentityRegistry.h"
 #include "driver/schedule/StageScheduler.h"
 #include "grid/GridMetrics.h"
-#include "amr/exchange/CoordinateSeamPlan.h"
-#include "amr/transfer/AmrTransferPlans.h"
 #include "numerics/state/RzNativeClosure.h"
 
 class BCHandler;
@@ -60,6 +64,29 @@ public:
         :std::runtime_error(message),pool_index(pool_id),handle(identity),
           slot(selected),version(value),diagnostic(evidence) {}
 };
+class DriverRuntime;
+class NativeMacroRetryAttempt;
+/** A private Runtime-qualified refusal, never a bool from user BC or input.
+ * Values survive rollback; no candidate array/context reference is retained. */
+class NativeThermalStepRejection final : public std::runtime_error {
+    friend class DriverRuntime;
+    const DriverRuntime* runtime_;
+    const NativeBoundaryAcceptanceError evidence_;
+    std::uint64_t attempt_;
+    double start_,dt_;
+    NativeThermalStepRejection(const NativeBoundaryAcceptanceError& error,
+        const DriverRuntime* runtime,std::uint64_t attempt,double start,double dt)
+        :std::runtime_error(error.what()),runtime_(runtime),evidence_(error),attempt_(attempt),start_(start),dt_(dt) {}
+public:
+    /** Match immutable attempt provenance after its real transaction unwound. */
+    bool belongs_to(const DriverRuntime& runtime,std::uint64_t attempt,double start,double dt) const noexcept {
+        return runtime_==&runtime&&attempt_==attempt
+            &&std::bit_cast<std::uint64_t>(start_)==std::bit_cast<std::uint64_t>(start)
+            &&std::bit_cast<std::uint64_t>(dt_)==std::bit_cast<std::uint64_t>(dt);
+    }
+    double failed_aligned_dt() const noexcept {return dt_;}
+    const NativeBoundaryAcceptanceError& evidence() const noexcept {return evidence_;}
+};
 enum class NativeCoarseningVetoKind { EffectiveThermal, JeansResolution };
 /** Compact per-call evidence; no fluid arrays/raw output or scientific receipt. */
 struct NativeCoarseningVetoRecord {
@@ -92,10 +119,25 @@ public:
             throw std::logic_error("Active Host Hydro owner excludes EOS rebinding");
         const int species = native_rz_species_count();
         const auto bounds = native_rz_eos_bounds();
-        native_rz_eos_acceptance_ = [&eos, species, bounds](
-            const FluidState& state, const Grid& grid) {
-            RzThermodynamics::validate_completed_patch_eos(state, grid, species, bounds, eos);
+        if(native_rz_eos_binding_revision_==std::numeric_limits<std::uint64_t>::max())
+            throw std::overflow_error("Native RZ EOS binding revision exhausted");
+        // Build both real-EOS borrowers before publication. A failed allocation
+        // cannot leave a new acceptance callable paired with an old classifier.
+        std::function<void(const FluidState&,const Grid&)> acceptance=[&eos,species,bounds](
+            const FluidState& state,const Grid& grid) {
+            RzThermodynamics::validate_completed_patch_eos(state,grid,species,bounds,eos);
         };
+        std::function<RzThermodynamics::ActiveThermalClassification(const FluidState&,const Grid&,int)>
+            classification=[&eos,species,bounds](const FluidState& state,const Grid& grid,int requested) {
+                return RzThermodynamics::classify_completed_active_thermal(state,grid,species,bounds,eos,requested);
+            };
+        native_rz_eos_acceptance_.swap(acceptance);
+        native_rz_active_thermal_classification_.swap(classification);
+        ++native_rz_eos_binding_revision_;
+        native_rz_eos_binding_=NativeRzEosBindingWitness{
+            std::addressof(eos),species,bounds,native_rz_eos_binding_revision_};
+        // Every successful rebind invalidates any previous attempt witness,
+        // even if the same object address, bounds and species are reused.
     }
     /** Attach the exact borrowed Host candidate domain and its real BC context.
      * Bind before actual BC/exchange starts; refresh after a BC time/purpose
@@ -136,6 +178,8 @@ public:
     HostHydroTransaction* active_host_hydro_transaction() const noexcept {
         return host_hydro_transaction_;
     }
+    /** Borrow only the current internal retry attempt, never a new transaction. */
+    NativeMacroRetryAttempt* native_macro_retry_attempt() const noexcept {return native_macro_retry_attempt_;}
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
     /** Exact parent vetoes from the latest internal native call, not EOS PASS. */
     const std::vector<NativeCoarseningVetoRecord>& native_coarsening_veto_records() const noexcept {
@@ -148,6 +192,10 @@ public:
     const backend::BackendCounters& boundary_observer_operations() const { return boundary_observer_operations_; }
 private:
     friend class HostHydroTransaction;
+    friend class NativeMacroRetryAttempt;
+    NativeMacroRetryAttempt* native_macro_retry_attempt_=nullptr;
+    void qualify_native_thermal_rejection(const scheduler::StageExecutionContext&,
+        const NativeBoundaryAcceptanceError&);
     friend class GravityStage;
     // Non-owning exact token for one explicit internal Host/RZ transaction.
     HostHydroTransaction* host_hydro_transaction_=nullptr;
@@ -176,8 +224,23 @@ private:
     const SimConfig& config;
     const SpeciesManager& specs;
     SimulationController& ctrl;
+    /** Exact actual EOS binding metadata; absence grants no retry eligibility.
+     * The opaque pointer is borrowed identity, never an EOS implementation or
+     * acceptance callback. A new binding revision invalidates old attempts.
+     */
+    struct NativeRzEosBindingWitness {
+        const void* owner;
+        int species;
+        state::Bounds bounds;
+        std::uint64_t revision;
+    };
+    std::uint64_t native_rz_eos_binding_revision_=0;
+    std::optional<NativeRzEosBindingWitness> native_rz_eos_binding_;
+    bool native_rz_eos_binding_matches(const NativeRzEosBindingWitness&) const;
     // A borrowed real EOS, bound explicitly before any native candidate BC work.
     std::function<void(const FluidState&, const Grid&)> native_rz_eos_acceptance_;
+    std::function<RzThermodynamics::ActiveThermalClassification(
+        const FluidState&,const Grid&,int)> native_rz_active_thermal_classification_;
     topology::TopologyIdentityRegistry topology_registry;
     scheduler::MonotonicSchedulerClock scheduler_clock;
     std::uint64_t next_amr_transaction_id = 1;
@@ -205,5 +268,35 @@ private:
     backend::BackendCounters boundary_observer_operations_{};
     void prepare_boundary_capture(double weight, double initial_weight, bool save_initial);
     std::vector<double> integrate_boundary_capture();
+};
+/** One nonmoving synchronous macro-attempt qualification lease.
+ * Workflow: verify accepted Current/EOS -> borrow the real context/handles ->
+ * mark each original diffusion half -> Runtime qualifies only live active
+ * completed-RKL thermal refusal -> release AFTER complete macro rollback.
+ * No U backup, scientific grant, callback registry or configured parameter.
+ */
+class NativeMacroRetryAttempt final {
+    friend class DriverRuntime;
+    DriverRuntime& runtime_;
+    scheduler::StageExecutionContext& context_;
+    std::uint64_t attempt_;
+    double start_,dt_,dt_fe_;
+    std::optional<scheduler::RklMethod> method_;
+    NumericsConfig numerics_;
+    DiffusionConfig diffusion_;
+    std::optional<DriverRuntime::NativeRzEosBindingWitness> eos_binding_;
+    std::span<const amr::BlockHandle> handles_;
+    int half_=0,stages_=0;
+    bool enabled_=false;
+public:
+    NativeMacroRetryAttempt(DriverRuntime&,scheduler::StageExecutionContext&,
+        std::uint64_t,std::optional<scheduler::RklMethod>,double dt_fe);
+    NativeMacroRetryAttempt(const NativeMacroRetryAttempt&)=delete;
+    NativeMacroRetryAttempt(NativeMacroRetryAttempt&&)=delete;
+    ~NativeMacroRetryAttempt() noexcept;
+    /** Name the existing D1/D2 work; stage count is the same selected function. */
+    void begin_diffusion_half(int half,double interval);
+    /** Successful diffusion ends its qualification window; no receipt is accepted. */
+    void end_diffusion_half() noexcept {half_=0;stages_=0;}
 };
 } // namespace arch::driver

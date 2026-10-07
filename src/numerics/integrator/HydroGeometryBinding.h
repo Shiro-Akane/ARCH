@@ -12,9 +12,14 @@
  */
 #pragma once
 
+#include <cmath>
+#include <stdexcept>
+
 #include "driver/schedule/StageScheduler.h"
 #include "numerics/integrator/IHydroSolver.h"
 #include "physics/gravity/IGravityPolicy.h"
+#include "physics/gravity/NativeExternalStage.h"
+#include "physics/gravity/NativeSelfStage.h"
 
 namespace TimeIntegration {
 struct HydroGeometryBinding {
@@ -22,6 +27,31 @@ struct HydroGeometryBinding {
     amr::CoordinateSeamGeometry exchange_chart;
     bool deferred_native_source=false;
 };
+
+/** Borrow the actual prepared source's original boundary domain. Workflow:
+ * discover the declared origin; require exactly its one private live frame;
+ * borrow that frame's existing domain before register/output/cache mutation.
+ * A descriptor alone cannot construct authority, and no new BC owner is made.
+ */
+inline const arch::boundary::HostHydroBoundaryDomainAuthority&
+prepared_native_boundary_domain(const Physical::Gravity::IGravityPolicy& gravity)
+{
+    using Physical::Gravity::GravitySourceOrigin;
+    const auto* external=gravity.prepared_native_external();
+    const auto* self=gravity.prepared_native_self();
+    if(external&&self)
+        throw std::logic_error("Native source supplied two private stage frames");
+    switch(gravity.source_descriptor().origin) {
+    case GravitySourceOrigin::NativeExternalOrthonormal:
+        if(!external||self)throw std::logic_error("Native source preparation supplied no actual frame");
+        return external->boundary_domain();
+    case GravitySourceOrigin::NativeSelfComposite:
+        if(!self||external)throw std::logic_error("Native self preparation supplied no matching frame");
+        return self->boundary_domain();
+    default:
+        throw std::logic_error("Native source preparation has an unknown origin");
+    }
+}
 
 /** Resolve a shared chart and reject incomplete native Host execution before mutation. */
 template<typename BCPolicy>
@@ -44,9 +74,13 @@ HydroGeometryBinding bind_hydro_geometry(
     if (rz && gravity) {
         const auto source=gravity->source_descriptor();
         const auto& binding=arch::scheduler::current_stage_binding();
-        if(source.origin!=Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal
-            ||!source.external.enabled||!std::isfinite(source.external.g_x)
-            ||!std::isfinite(source.external.g_y)||!std::isfinite(source.external.g_z)
+        // Origin discovers ordering only; private real source publication is
+        // borrowed by the first executor after actual preparation succeeds.
+        const bool external=source.origin==Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal;
+        const bool self=source.origin==Physical::Gravity::GravitySourceOrigin::NativeSelfComposite;
+        if((!external&&!self)
+            ||(external&&(!source.external.enabled||!std::isfinite(source.external.g_x)
+                ||!std::isfinite(source.external.g_y)||!std::isfinite(source.external.g_z)))
             ||!binding.context.hydro_preparation
             ||!binding.context.hydro_preparation->supports_host_macro_step_journal())
             throw std::invalid_argument("RZ gravity requires its actual prepared source contract");

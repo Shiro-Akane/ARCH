@@ -59,10 +59,34 @@ class Budget:
     Calls count real kernel range evaluations, not individual elementary arb
     operations. A caller must not construct a fresh budget per contribution.
     Wall time includes its preflight/evaluation after this object is created.
-    No cap or timeout argument is exposed that could raise the frozen limits.
+    The ordinary request retains its frozen 90s/100000 profile. The separate
+    full-domain diagnostic uses a manager-frozen aggregate resource profile;
+    neither profile changes reference precision or physical acceptance.
+    No user-facing cap or per-contribution reset is exposed.
     """
     started: float
     calls: int = 0
+    _full_domain_diagnostic: bool = False
+
+    @property
+    def max_calls(self) -> int:
+        """Read the ONE request's immutable-by-contract callback profile."""
+        return 1800000 if self._full_domain_diagnostic else MAX_CALLS
+
+    @property
+    def timeout_seconds(self) -> float:
+        """Read the same aggregate wall profile used by every contribution."""
+        return 240.0 if self._full_domain_diagnostic else TIMEOUT_SECONDS
+
+    @classmethod
+    def full_domain_diagnostic(cls) -> Budget:
+        """Start the distinct complete-domain diagnostic, never a science grant.
+
+        One cumulative 240s/1800000-callback budget includes dense validation,
+        symmetry proofs and every source/observer/component. Earlier requests'
+        costs stay in their separate historical records; they are not reset.
+        """
+        return cls(time.monotonic(), _full_domain_diagnostic=True)
 
     @classmethod
     def start(cls) -> Budget:
@@ -71,21 +95,23 @@ class Budget:
 
     def check_time(self) -> None:
         """Check shared wall time during preflight as well as callbacks."""
-        if time.monotonic() - self.started >= TIMEOUT_SECONDS:
-            raise WorkLimit("global timeout=90 seconds reached")
+        if time.monotonic() - self.started >= self.timeout_seconds:
+            raise WorkLimit(f"global timeout={self.timeout_seconds:g} seconds reached")
 
     def take(self) -> None:
         """Charge a callback before evaluating it; do not reset after failure."""
         self.check_time()
-        if self.calls >= MAX_CALLS:
-            raise WorkLimit("global max_calls=100000 reached")
+        if self.calls >= self.max_calls:
+            raise WorkLimit(f"global max_calls={self.max_calls} reached")
         self.calls += 1
 
     def record(self) -> dict[str, Any]:
         """Report measured local accounting separately from algorithm quality."""
-        return {"calls": self.calls, "max_calls": MAX_CALLS,
+        return {"calls": self.calls, "max_calls": self.max_calls,
                 "wall_seconds": time.monotonic() - self.started,
-                "timeout_seconds": TIMEOUT_SECONDS}
+                "timeout_seconds": self.timeout_seconds,
+                "resource_profile": "full-domain-diagnostic-1" if self._full_domain_diagnostic
+                    else "bounded-request-1"}
 
 
 def rational(value: Any) -> Fraction:
@@ -516,9 +542,9 @@ def integrate_leaf(leaf: Leaf, observer: Observer, backend: Any,
                 return value if value.is_finite() else acb("nan")
             # Each callback consumes the same budget, so per-call API limits
             # cannot multiply the global cap across components or leaves.
-            remaining = MAX_CALLS - budget.calls
+            remaining = budget.max_calls - budget.calls
             if remaining <= 0:
-                raise WorkLimit("global max_calls=100000 reached")
+                raise WorkLimit(f"global max_calls={budget.max_calls} reached")
             # acb's absolute goal applies to EACH accepted subinterval; it is
             # not a global sum-error promise. Use a conservative FIXED work
             # request allocation; callback count alone proves no error bound.
@@ -531,8 +557,8 @@ def integrate_leaf(leaf: Leaf, observer: Observer, backend: Any,
                                 eval_limit=remaining, depth_limit=24)
             if failure is not None:
                 raise failure
-            if time.monotonic() - budget.started >= TIMEOUT_SECONDS:
-                raise WorkLimit("global timeout=90 seconds reached")
+            if time.monotonic() - budget.started >= budget.timeout_seconds:
+                raise WorkLimit(f"global timeout={budget.timeout_seconds:g} seconds reached")
             if not part.is_finite() or not part.imag.contains(0):
                 raise IntegralFailure("No finite real certified angular integral")
             total += 2 * part
@@ -558,7 +584,8 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
                        source_identity: dict[str, Any],
                        observer_records: list[dict[str, Any]],
                        target_widths: dict[str, Any],
-                       existing_dependency_directory: Path | None = None) -> dict[str, Any]:
+                       existing_dependency_directory: Path | None = None,
+                       _shared_budget: Budget | None = None) -> dict[str, Any]:
     """Request a complete mathematical source reference with original allowances.
 
     The caller supplies original absolute interval WIDTH allowances for Phi,
@@ -567,7 +594,11 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
     is independent of Core source/observer authentication and physical acceptance;
     the latter two remain false even when the rigorous intervals meet the request.
     """
-    budget = Budget.start()
+    # An internal diagnostic may include dense validation/coalescing in this
+    # same budget. It cannot reset calls, extend limits or restart its clock.
+    budget = Budget.start() if _shared_budget is None else _shared_budget
+    if not isinstance(budget, Budget):
+        raise TypeError("Invalid shared reference budget")
     stamp = None
     rows = []
     try:
@@ -592,8 +623,8 @@ def evaluate_reference(source: dict[str, Any], root_bounds: Any,
                 values = integrate_leaf(leaf, observer, backend, local, budget)
                 for index in range(3):
                     total[index] += values[index]
-            if time.monotonic() - budget.started >= TIMEOUT_SECONDS:
-                raise WorkLimit("global timeout=90 seconds reached")
+            if time.monotonic() - budget.started >= budget.timeout_seconds:
+                raise WorkLimit(f"global timeout={budget.timeout_seconds:g} seconds reached")
             finite = all(value.is_finite() for value in total)
             meets = finite and all(2 * value.rad() <= _exact(backend.arb, allowance)
                                    for value, allowance in zip(total, allowances))

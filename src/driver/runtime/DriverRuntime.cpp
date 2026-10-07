@@ -11,6 +11,7 @@
  */
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <stdexcept>
 #include <unordered_set>
@@ -20,7 +21,9 @@
 
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
+#include "driver/runtime/HostHydroTransaction.h"
 #include "driver/schedule/DriverControl.h"
+#include "numerics/diffusion/DiffFunction.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace arch::driver {
@@ -201,14 +204,280 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
                 // original phase/status survives; mean/physical EOS faults are
                 // not converted into an effective-thermal failure.
                 require_frame();
-                throw NativeBoundaryAcceptanceError(error.what(),patch.pool_index,
+                const NativeBoundaryAcceptanceError failure(error.what(),patch.pool_index,
                     frozen_handles[index],slot,version,error.diagnostic());
+                if(native_macro_retry_attempt_)qualify_native_thermal_rejection(actual,failure);
+                throw failure;
             }
         }
         // EOS and callbacks must not change the BC time/purpose/revision or
         // any publication/layout owner during the real whole-domain gate.
         require_frame();
     };
+}
+
+namespace {
+/** Compare actual frame numbers by bits, including signed zero. */
+bool retry_same(double a,double b) noexcept {
+    return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);
+}
+/** Reject any selected physical/gravity user BC, without case-sensitive gaps. */
+bool retry_config_matches(const NumericsConfig& a,const NumericsConfig& b,
+    const DiffusionConfig& d,const DiffusionConfig& e) noexcept {
+    return a.solver_name==b.solver_name&&a.reconstruction==b.reconstruction&&a.limiter==b.limiter
+        &&a.time_integrator==b.time_integrator&&a.hll_roe_wave_speed==b.hll_roe_wave_speed
+        &&retry_same(a.dt_init,b.dt_init)&&retry_same(a.dt_max,b.dt_max)&&retry_same(a.dt_min,b.dt_min)
+        &&retry_same(a.tstep_change_factor,b.tstep_change_factor)&&retry_same(a.cfl,b.cfl)
+        &&retry_same(a.entropy_fix_coeff,b.entropy_fix_coeff)&&retry_same(a.sml_rho,b.sml_rho)
+        &&retry_same(a.min_eint,b.min_eint)&&retry_same(a.max_eint,b.max_eint)
+        &&d.use_diffusion==e.use_diffusion&&d.integrator==e.integrator&&d.max_stages==e.max_stages
+        &&d.use_thermal_diffusion==e.use_thermal_diffusion&&d.use_viscous_diffusion==e.use_viscous_diffusion
+        &&d.use_species_diffusion==e.use_species_diffusion&&retry_same(d.diff_cfl,e.diff_cfl)
+        &&retry_same(d.nu_visc,e.nu_visc)&&retry_same(d.alpha_therm,e.alpha_therm)&&retry_same(d.D_spec,e.D_spec);
+}
+/** Case-independent real selected method comparison, never an unknown fallback. */
+bool retry_selected_method(const std::string& name,scheduler::RklMethod method) noexcept {
+    return name.size()==4&&(name[0]=='r'||name[0]=='R')&&(name[1]=='k'||name[1]=='K')
+        &&(name[2]=='l'||name[2]=='L')&&name[3]==(method==scheduler::RklMethod::RKL1?'1':'2');
+}
+bool retry_user_word(const std::string& s) noexcept {
+    return s.size()==4&&(s[0]=='u'||s[0]=='U')&&(s[1]=='s'||s[1]=='S')
+        &&(s[2]=='e'||s[2]=='E')&&(s[3]=='r'||s[3]=='R');
+}
+}
+/** Match the published actual EOS borrower, its binding epoch and real bounds.
+ * Frozen metadata is not reconstructed from current configuration. Both must
+ * agree by bits before entry and before the private live refusal is minted.
+ */
+bool DriverRuntime::native_rz_eos_binding_matches(const NativeRzEosBindingWitness& expected) const {
+    if(!native_rz_eos_binding_||!native_rz_eos_acceptance_||!native_rz_active_thermal_classification_)return false;
+    const auto& actual=*native_rz_eos_binding_;
+    const auto& n=config.numerics;
+    return actual.owner&&actual.revision!=0&&actual.owner==expected.owner
+        &&actual.revision==expected.revision&&actual.revision==native_rz_eos_binding_revision_
+        &&actual.species==expected.species&&actual.species==native_rz_species_count()
+        &&state::valid_bounds(actual.bounds)
+        &&retry_same(actual.bounds.density,expected.bounds.density)
+        &&retry_same(actual.bounds.internal_min,expected.bounds.internal_min)
+        &&retry_same(actual.bounds.internal_max,expected.bounds.internal_max)
+        &&retry_same(actual.bounds.density,n.sml_rho)
+        &&retry_same(actual.bounds.internal_min,n.min_eint)
+        &&retry_same(actual.bounds.internal_max,n.max_eint);
+}
+/** Verify accepted entry before the first B/D/H write; unsupported user BC simply
+ * disables retries while preserving its original normal/fatal execution path. */
+NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
+    StageExecutionContext& context,std::uint64_t attempt,std::optional<scheduler::RklMethod> method,double dt_fe)
+    :runtime_(runtime),context_(context),attempt_(attempt),start_(context.step_start_time),dt_(context.step_dt),
+      dt_fe_(dt_fe),method_(method),numerics_(runtime.config.numerics),diffusion_(runtime.config.physics.diffusion),
+      eos_binding_(runtime.native_rz_eos_binding_),handles_(runtime.stage_handles) {
+    if(runtime.compute_backend||runtime.geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)return;
+    const auto& g=runtime.config.grid;
+    if(runtime.bc_handler.has_user()||retry_user_word(runtime.config.physics.gravity.boundary)
+        ||retry_user_word(g.x1l_boundary_type)||retry_user_word(g.x1r_boundary_type)
+        ||retry_user_word(g.x2l_boundary_type)||retry_user_word(g.x2r_boundary_type)
+        ||retry_user_word(g.x3l_boundary_type)||retry_user_word(g.x3r_boundary_type))return;
+    const auto& binding=scheduler::current_stage_binding();
+    if(runtime.native_macro_retry_attempt_||runtime.host_hydro_transaction_||!attempt
+        ||&binding.context!=&context||binding.handles.data()!=handles_.data()||binding.handles.size()!=handles_.size()
+        ||&context.ledger!=runtime.residency_ledger.get()||&context.clock!=&runtime.scheduler_clock
+        ||context.side!=ExecutionSide::Host||!std::isfinite(start_)||!std::isfinite(dt_)||dt_<=0.
+        ||!eos_binding_||!runtime.native_rz_eos_binding_matches(*eos_binding_)
+        ||!context.post_boundary_acceptance||!context.configure_boundary_context)
+        throw std::logic_error("Native retry requires its exact quiescent macro entry");
+    if(diffusion_.use_diffusion&&(!method_||!std::isfinite(dt_fe_)||dt_fe_<=0.
+        ||!retry_selected_method(diffusion_.integrator,*method_)))
+        throw std::logic_error("Native retry lacks the selected diffusion FE owner");
+    runtime.topology_registry.validate_committed_snapshot(runtime.observe_topology());
+    const auto active=runtime.amr_ctrl.tree->GetActiveBlocks();
+    const std::vector<amr::BlockHandle> entry_handles(handles_.begin(),handles_.end());
+    if(active.size()!=handles_.size())throw std::logic_error("Native retry entry domain mismatch");
+    const auto* const entry_pool=runtime.amr_ctrl.pool.get();
+    const auto* const entry_tree=runtime.amr_ctrl.tree.get();
+    const auto boundary=runtime.bc_handler.snapshot_stage_context();
+    const auto entry_token=context.clock.last_token(),entry_version=context.clock.last_version();
+    std::vector<NativeBoundaryPatch> entry_patches;
+    std::vector<state::StateVersion> entry_versions;
+    entry_patches.reserve(active.size());entry_versions.reserve(active.size());
+    for(std::size_t i=0;i<active.size();++i) {
+        entry_patches.push_back(native_boundary_patch(active[i],runtime.amr_ctrl.pool->GetBlock(active[i])));
+        entry_versions.push_back(context.ledger.inspect({handles_[i],StateSlot::Current}).interior.version);
+    }
+    // Only metadata is frozen: no extra conserved-field backup or EOS model.
+    // A synchronous EOS callback must leave the complete entry frame unchanged.
+    const auto require_entry=[&] {
+        const auto& actual_binding=scheduler::current_stage_binding();
+        if(&actual_binding.context!=&context||actual_binding.handles.data()!=handles_.data()
+            ||actual_binding.handles.size()!=handles_.size()||runtime.host_hydro_transaction_
+            ||runtime.native_macro_retry_attempt_||runtime.compute_backend||context.side!=ExecutionSide::Host
+            ||&context.ledger!=runtime.residency_ledger.get()||&context.clock!=&runtime.scheduler_clock
+            ||context.clock.last_token()!=entry_token||context.clock.last_version()!=entry_version
+            ||!retry_same(context.step_start_time,start_)||!retry_same(context.step_dt,dt_)
+            ||!runtime.native_rz_eos_binding_matches(*eos_binding_)
+            ||!retry_config_matches(runtime.config.numerics,numerics_,runtime.config.physics.diffusion,diffusion_)
+            ||!runtime.bc_handler.stage_context_matches(boundary)
+            ||runtime.amr_ctrl.pool.get()!=entry_pool||runtime.amr_ctrl.tree.get()!=entry_tree
+            ||runtime.amr_ctrl.tree->GetActiveBlocks()!=active
+            ||runtime.stage_handles.data()!=handles_.data()||runtime.stage_handles.size()!=handles_.size()
+            ||!std::equal(handles_.begin(),handles_.end(),entry_handles.begin()))
+            throw std::logic_error("Native retry accepted-entry EOS changed its live owner frame");
+        runtime.topology_registry.validate_committed_snapshot(runtime.observe_topology());
+        for(std::size_t i=0;i<active.size();++i) {
+            const auto& block=runtime.amr_ctrl.pool->GetBlock(active[i]);
+            if(!native_boundary_patch_matches(entry_patches[i],active[i],block)
+                ||entry_handles[i]!=runtime.topology_registry.handle_for_pool(active[i]))
+                throw std::logic_error("Native retry entry grid/UID correspondence changed");
+            const auto key=state::StateKey{handles_[i],StateSlot::Current};
+            context.ledger.require_readable(key,{ExecutionSide::Host,entry_versions[i],true,true});
+            const auto coherence=context.ledger.inspect(key);
+            if(coherence.interior.pending_transfer!=state::PendingTransferPhase::None
+                ||coherence.ghost.pending_transfer!=state::PendingTransferPhase::None)
+                throw std::logic_error("Native retry entry has a pending state transfer");
+            require_native_boundary_layout(block.fluid_state,block.grid,runtime.specs.count());
+        }
+    };
+    require_entry();
+    for(const int id:active) {
+        const auto& block=runtime.amr_ctrl.pool->GetBlock(id);
+        runtime.native_rz_eos_acceptance_(block.fluid_state,block.grid);
+    }
+    require_entry();
+    runtime.native_macro_retry_attempt_=this;enabled_=true;
+}
+/** Release metadata only after the real outer transaction finished/unwound. */
+NativeMacroRetryAttempt::~NativeMacroRetryAttempt() noexcept {
+    if(!enabled_)return;
+    if(runtime_.native_macro_retry_attempt_!=this||runtime_.host_hydro_transaction_)std::terminate();
+    runtime_.native_macro_retry_attempt_=nullptr;
+}
+/** Preserve the existing half_dt/stage schedule; this names, never executes it. */
+void NativeMacroRetryAttempt::begin_diffusion_half(int half,double interval) {
+    if(!enabled_||!diffusion_.use_diffusion)return;
+    if((half!=1&&half!=2)||half_||!retry_same(interval,.5*dt_)
+        ||!eos_binding_||!runtime_.native_rz_eos_binding_matches(*eos_binding_)
+        ||!retry_config_matches(runtime_.config.numerics,numerics_,runtime_.config.physics.diffusion,diffusion_))
+        throw std::logic_error("Native retry diffusion half changed its frozen macro");
+    const auto order=*method_==scheduler::RklMethod::RKL1?DiffFunction::RKLOrder::First:DiffFunction::RKLOrder::Second;
+    stages_=DiffFunction::compute_stages(order,interval,dt_fe_,diffusion_.diff_cfl,diffusion_.max_stages);half_=half;
+}
+/** Authenticate a still-live active candidate before any macro rollback.
+ * All active cells use the same completed density support and selected EOS;
+ * unrelated EOS/input/ghost failures remain fatal, never silently retried.
+ */
+void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext& actual,
+    const NativeBoundaryAcceptanceError& error) {
+    auto& attempt=*native_macro_retry_attempt_;
+    const auto* frame=scheduler::current_rkl_completed_boundary();
+    const auto& d=error.diagnostic;
+    if(d.phase!=RzThermodynamics::AcceptancePhase::effective_thermal
+        ||d.status!=state::Status::unresolved_energy||!d.inertia_mapping_valid)return;
+    if(!frame||!frame->descriptor)
+        throw std::logic_error("Native thermal refusal lacks its actual completed RKL descriptor");
+    const auto descriptor_before=*frame->descriptor;
+    const auto completion_before=frame->completion;
+    const auto boundary_snapshot=bc_handler.snapshot_stage_context();
+    const auto* const pool_before=amr_ctrl.pool.get();
+    const auto* const tree_before=amr_ctrl.tree.get();
+    const auto active_before=amr_ctrl.tree->GetActiveBlocks();
+    std::vector<NativeBoundaryPatch> patches_before;
+    patches_before.reserve(active_before.size());
+    for(const int id:active_before)
+        patches_before.push_back(native_boundary_patch(id,amr_ctrl.pool->GetBlock(id)));
+    // The classifier borrows the actual EOS. It cannot grant a retry after a
+    // supported synchronous callback changes configuration, stage or ownership.
+    const auto require_live_failure=[&] {
+    if(scheduler::current_rkl_completed_boundary()!=frame||!frame->descriptor
+        ||frame->completion!=completion_before||!frame->completed||frame->context!=&actual||&actual!=&attempt.context_
+        ||!host_hydro_transaction_||!attempt.enabled_||!attempt.method_||attempt.half_==0
+        ||!attempt.eos_binding_||!native_rz_eos_binding_matches(*attempt.eos_binding_)
+        ||actual.side!=ExecutionSide::Host||compute_backend||&actual.ledger!=residency_ledger.get()
+        ||&actual.clock!=&scheduler_clock||frame->handles.data()!=stage_handles.data()
+        ||frame->handles.size()!=stage_handles.size()||attempt.handles_.data()!=stage_handles.data()
+        ||attempt.handles_.size()!=stage_handles.size()||frame->slot!=error.slot||frame->version!=error.version
+        ||frame->completion.value!=actual.clock.last_token()||!state::is_complete(frame->completion)
+        ||frame->version.value!=actual.clock.last_version()
+        ||!retry_same(actual.step_start_time,attempt.start_)||!retry_same(actual.step_dt,attempt.dt_)
+        ||!retry_config_matches(config.numerics,attempt.numerics_,config.physics.diffusion,attempt.diffusion_))
+        throw std::logic_error("Native thermal refusal lost its live macro/RKL owner");
+    host_hydro_transaction_->validate_storage();
+    const auto plan=scheduler::make_rkl_plan(*attempt.method_,attempt.stages_);
+    const auto& observed=*frame->descriptor;
+    if(observed.stage<1||observed.stage>attempt.stages_)
+        throw std::logic_error("Native thermal refusal has an invalid actual RKL stage");
+    const auto& expected=plan.stages[static_cast<std::size_t>(observed.stage-1)];
+    if(observed.stage!=expected.stage||observed.state_n_slot!=expected.state_n_slot
+        ||observed.previous_slot!=expected.previous_slot||observed.older_slot!=expected.older_slot
+        ||observed.output_slot!=expected.output_slot||observed.reflux_before_publish!=expected.reflux_before_publish
+        ||observed.refresh_ghost_after!=expected.refresh_ghost_after)
+        throw std::logic_error("Native thermal refusal changed its selected RKL descriptor");
+    const double half_start=attempt.start_+(attempt.half_==2?.5*attempt.dt_:0.);
+    const double half_dt=.5*attempt.dt_;
+    const double expected_time=half_start+scheduler::rkl_stage_time_fraction(
+        *attempt.method_,observed.stage,attempt.stages_)*half_dt;
+    if(!retry_same(actual.boundary_start_time,half_start)||!retry_same(actual.boundary_step_dt,half_dt)
+        ||!retry_same(boundary_snapshot.time(),expected_time)||boundary_snapshot.purpose()!=boundary::BoundaryPurpose::Diffusion)
+        throw std::logic_error("Native thermal refusal changed its actual diffusion BC time/purpose");
+    if(scheduler::current_rkl_completed_boundary()!=frame
+        ||(frame->descriptor->stage!=descriptor_before.stage
+            ||frame->descriptor->state_n_slot!=descriptor_before.state_n_slot
+            ||frame->descriptor->previous_slot!=descriptor_before.previous_slot
+            ||frame->descriptor->older_slot!=descriptor_before.older_slot
+            ||frame->descriptor->output_slot!=descriptor_before.output_slot
+            ||frame->descriptor->reflux_before_publish!=descriptor_before.reflux_before_publish
+            ||frame->descriptor->refresh_ghost_after!=descriptor_before.refresh_ghost_after))
+        throw std::logic_error("Native thermal refusal changed its live RKL frame during classification");
+    if(!bc_handler.stage_context_matches(boundary_snapshot)
+        ||amr_ctrl.pool.get()!=pool_before||amr_ctrl.tree.get()!=tree_before
+        ||amr_ctrl.tree->GetActiveBlocks()!=active_before||stage_handles.size()!=active_before.size())
+        throw std::logic_error("Native thermal refusal changed its actual domain or boundary frame");
+    const auto& binding=scheduler::current_stage_binding();
+    if(&binding.context!=&actual||binding.handles.data()!=stage_handles.data()
+        ||binding.handles.size()!=stage_handles.size())
+        throw std::logic_error("Native thermal refusal changed its actual stage binding");
+    host_hydro_transaction_->validate_storage();
+    topology_registry.validate_committed_snapshot(observe_topology());
+    const auto input_member=TimeIntegration::hydro_boundary_state_member(error.slot);
+    for(std::size_t b=0;b<active_before.size();++b) {
+        const auto& block=amr_ctrl.pool->GetBlock(active_before[b]);
+        if(!native_boundary_patch_matches(patches_before[b],active_before[b],block)
+            ||stage_handles[b]!=topology_registry.handle_for_pool(active_before[b]))
+            throw std::logic_error("Native thermal refusal changed actual grid/UID correspondence");
+        require_native_boundary_layout(block.*input_member,block.grid,specs.count());
+        const auto key=state::StateKey{stage_handles[b],error.slot};
+        actual.ledger.require_readable(key,{ExecutionSide::Host,error.version,true,false});
+        const auto coherence=actual.ledger.inspect(key);
+        if(coherence.interior.pending_transfer!=state::PendingTransferPhase::None
+            ||coherence.ghost.pending_transfer!=state::PendingTransferPhase::None)
+            throw std::logic_error("Native thermal refusal has a pending state transfer");
+    }
+    };
+    require_live_failure();
+    const auto member=TimeIntegration::hydro_boundary_state_member(error.slot);
+    const auto& active=amr_ctrl.tree->GetActiveBlocks();bool requested=false;
+    for(std::size_t b=0;b<active.size();++b) {
+        const auto& block=amr_ctrl.pool->GetBlock(active[b]);
+        const auto key=state::StateKey{stage_handles[b],error.slot};
+        actual.ledger.require_readable(key,{ExecutionSide::Host,error.version,true,false});
+        const bool target=active[b]==error.pool_index&&stage_handles[b]==error.handle;
+        if(target&&(d.i<block.grid.Is()||d.i>=block.grid.Ie()||d.j<block.grid.Js()||d.j>=block.grid.Je()))return;
+        if(target&&d.index!=block.grid.GetIndex(d.i,d.j,0))
+            throw std::logic_error("Native thermal refusal index does not match its actual active cell");
+        try {
+            const auto classification=native_rz_active_thermal_classification_(block.*member,block.grid,target?d.index:-1);
+            if(target)requested=classification.requested_failure;
+        } catch(const RzThermodynamics::AcceptanceError& other) {
+            require_live_failure();
+            // Preserve the actual later-cell phase/status and patch provenance.
+            // This fatal error is never recursively reconsidered for retry.
+            throw NativeBoundaryAcceptanceError(other.what(),active[b],stage_handles[b],
+                error.slot,error.version,other.diagnostic());
+        }
+    }
+    require_live_failure();
+    if(!requested||!native_rz_eos_binding_matches(*attempt.eos_binding_)
+        ||!bc_handler.stage_context_matches(boundary_snapshot))
+        throw std::logic_error("Native thermal refusal lacks the original live active failure");
+    throw NativeThermalStepRejection(error,this,attempt.attempt_,attempt.start_,attempt.dt_);
 }
 
 /** Return a context bound to the live ledger, with mandatory native-RZ EOS gate. */

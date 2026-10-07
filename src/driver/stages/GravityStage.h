@@ -20,17 +20,31 @@
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 #include "physics/gravity/GravitySolveTypes.h"
 
-namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; }
+namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; }
 namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
 public:
     // Explicit internal CPU verification only; never selected from SimConfig.
     // Candidate fields remain unreadable by normal Hydro/plot/CFL consumers.
-    enum class Qualification { Production, NativeRzCandidate, NativeRzExternalCandidate };
+    enum class Qualification { Production, NativeRzCandidate, NativeRzExternalCandidate, NativeRzSelfHydroCandidate };
     GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*,
         Qualification = Qualification::Production);
     ~GravityStage() override;
+    /** Internal materialized-source inspection only; quiescent Native candidate.
+     * Caller payload outlives each synchronous solve. It may copy a pending
+     * local record but cannot label it Runtime-checked until completed() below.
+     * No SimConfig/UI callback or physical field publication is introduced.
+     */
+    using NativeSourceInspectionSink=void(*)(void*,const Physical::Gravity::NativeRzSourceInspectionView&);
+    void set_native_rz_source_inspection(NativeSourceInspectionSink,void*);
+    /** Let internal diagnostics reject another existing synchronous sink owner. */
+    bool native_rz_source_inspection_attached() const noexcept {return source_inspection_sink_!=nullptr;}
+    /** True only after actual Runtime pre -> callback -> post checks all return.
+     * Reset at every solve/setter. A later budget/field solve can still fail;
+     * this bit identifies source materialization only, never science or field.
+     */
+    bool native_rz_source_inspection_completed() const noexcept {return source_inspection_completed_;}
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
     void prepare_current(double time, bool reset_solver_history);
     void invalidate() const override;
@@ -51,8 +65,20 @@ public:
     /** Flush an already accepted macro-step; an I/O failure remains an explicit run failure. */
     void flush_committed_diagnostics();
 private:
+    struct NativeSourceInspection;
+    /** Revalidate the actual source/Runtime on both sides of the synchronous sink. */
+    static void inspect_native_source(void*,const Physical::Gravity::NativeRzSourceInspectionView&);
+    NativeSourceInspectionSink source_inspection_sink_=nullptr;
+    void* source_inspection_payload_=nullptr;
+    bool source_inspection_active_=false;
+    mutable bool source_inspection_completed_=false;
     /** Internal source-only profile; public configuration never selects it. */
     bool native_external() const noexcept { return qualification_==Qualification::NativeRzExternalCandidate; }
+    /** The actual private RZ Self field/profile never opens public consumers. */
+    bool native_self() const noexcept { return qualification_==Qualification::NativeRzSelfHydroCandidate; }
+    bool native_candidate() const noexcept { return qualification_==Qualification::NativeRzCandidate||native_self(); }
+    /** Require the actual macro transaction before constructing a solved-field frame. */
+    void require_native_self_preparation(const scheduler::HydroStagePreparationRequest&) const;
     state::CompletionToken prepare_native_external(const scheduler::HydroStagePreparationRequest&);
     state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int);
     Qualification qualification_;
@@ -60,6 +86,7 @@ private:
     const Physical::Gravity::IGravityPolicy* policy_;
     const Physical::Gravity::SelfGravity* gravity_;
     std::unique_ptr<Physical::Gravity::NativeExternalStageFrame> external_frame_;
+    std::unique_ptr<Physical::Gravity::NativeSelfStageFrame> self_frame_;
     std::array<std::array<long double,4>,3> external_pending_{};
     std::array<long double,4> external_accepted_{};
     amr::TopologyEpoch epoch_{};

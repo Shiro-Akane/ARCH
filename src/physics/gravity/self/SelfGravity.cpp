@@ -14,9 +14,11 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 
 #include "physics/gravity/self/SelfGravity.h"
@@ -27,12 +29,45 @@
 #include "physics/constant/PhysicalConstants.h"
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/NativeSelfStage.h"
 #include "physics/gravity/self/GravityUserBoundary.h"
 #include "physics/gravity/self/GravityWorkspace.h"
 
 #include "physics/boundary/UserBoundary.h"
 
 namespace Physical::Gravity {
+/** Stack metadata lease for one borrowed materialized-source callback.
+ * It records publication metadata only, never a second source/field buffer.
+ */
+struct SelfGravity::NativeRzSourceInspectionLease {
+    const Workspace* workspace;
+    const NativeRzSourceInspectionView* view;
+    std::uint64_t field_generation;
+    GravitySolveIdentity previous_field_source;
+    bool consumption_requested,observe_consumption;
+    double consumption_dt,workspace_consumption_dt;
+};
+/** Reject source/frame/workspace drift before an authenticated callback marker.
+ * Source update generation is checked separately from existing field metadata;
+ * a valid pre-solve source must remain unpublished throughout inspection.
+ */
+void SelfGravity::require_native_source_inspection(const NativeRzSourceInspectionView& view) const {
+    const auto* lease=native_source_inspection_lease_;
+    if(!native_source_inspection_running_||native_source_inspection_invalidated_||!lease
+        ||lease->view!=&view||work_.get()!=lease->workspace||!work_
+        ||work_->scope!=GravityFieldScope::NativeRzCandidate||work_->ready
+        ||work_->generation!=lease->field_generation||work_->source!=lease->previous_field_source
+        ||&work_->solver.op()!=&view.op||&work_->binding!=&view.binding||!work_->ring_source
+        ||&view.service_configuration!=&config_
+        ||work_->solver.execution().device()
+        ||host_consumption_requested_!=lease->consumption_requested
+        ||work_->observe_host_consumption!=lease->observe_consumption
+        ||host_consumption_dt_!=lease->consumption_dt
+        ||work_->host_consumption_dt!=lease->workspace_consumption_dt
+        ||work_->ring_source->materialized_ring_source_generation(view.op,view.request.identity)
+            !=view.source_generation)
+        throw std::logic_error("Native source inspection lost its original materialization lease");
+}
 /** Validate gravity boundary kind and convergence controls once. */
 SelfGravity::SelfGravity(GravityConfig config):config_(std::move(config)) {
     const bool known=config_.boundary=="periodic" || config_.boundary=="isolated"
@@ -73,6 +108,12 @@ void SelfGravity::bind_native_rz_candidate(amr::EllipticMeshBinding binding,
 }
 void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candidate,
     std::uint64_t maximum_boxes,std::uint64_t maximum_work,double time) const {
+    if(prepared_native_self()) {
+        prepared_native_self()->invalidate();
+        throw std::logic_error("Native private self stage forbids synchronous mesh binding");
+    }
+    if(native_source_inspection_running_)
+        throw std::logic_error("Native source inspection forbids synchronous mesh rebinding");
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
         || binding.cells.size()!=binding.storage.size()) throw std::invalid_argument("Invalid gravity mesh binding");
@@ -138,7 +179,10 @@ void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candida
     }
 }
 /** Retire a prior gravity publication whenever its density lease changes. */
-void SelfGravity::invalidate() const noexcept { if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
+void SelfGravity::invalidate() const noexcept {
+    if(prepared_native_self())prepared_native_self()->invalidate();
+    if(native_source_inspection_running_)native_source_inspection_invalidated_=true;
+    if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
 /** Resolve the explicit per-side policy for the requested stage time. */
 arch::elliptic::CompositeBoundary SelfGravity::current_boundary(const Workspace& w,double time) const {
     if(config_.boundary=="user")
@@ -165,10 +209,18 @@ void SelfGravity::rebuild_boundary(arch::elliptic::CompositeBoundary boundary) c
 }
 /** Restart and uninterrupted runs must start each macro-step solve identically. */
 void SelfGravity::clear_solver_initial_guess() const noexcept {
+    if(prepared_native_self()){prepared_native_self()->invalidate();invalidate();return;}
+    if(native_source_inspection_running_){native_source_inspection_invalidated_=true;return;}
     if(work_) work_->solver.clear_initial_guess();
 }
 /** Gather current density, solve A phi = -4 pi G rho_source, and publish force. */
 arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& request) const {
+    if(prepared_native_self()) {
+        prepared_native_self()->invalidate();
+        throw std::logic_error("Native private self stage forbids synchronous solve reentry");
+    }
+    if(native_source_inspection_running_)
+        throw std::logic_error("Native source inspection forbids synchronous solve reentry");
     invalidate();
     // Validate the same domain dependency contract used by source caches and
     // publication before gather, moments, solve or device work can begin.
@@ -251,6 +303,28 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
         native_source=e.download(w.rhs);
         const auto density=e.download(w.density);
         w.ring_source->update(density,identity);
+        if(native_source_inspection_sink_) {
+            // Borrow the already downloaded actual gathered rho. No additional
+            // gather/download/cache occurs and ordinary no-sink work is unchanged.
+            const NativeRzSourceInspectionView view{op,w.binding,density,request,config_,
+                w.ring_source->materialized_ring_source_generation(op,identity)};
+            const NativeRzSourceInspectionLease lease{&w,&view,w.generation,w.source,
+                host_consumption_requested_,w.observe_host_consumption,host_consumption_dt_,w.host_consumption_dt};
+            struct RestoreInspection {
+                bool& running;const NativeRzSourceInspectionLease*& lease;
+                ~RestoreInspection(){running=false;lease=nullptr;}
+            } restore{native_source_inspection_running_,native_source_inspection_lease_};
+            native_source_inspection_invalidated_=false;
+            native_source_inspection_running_=true;native_source_inspection_lease_=&lease;
+            try {
+                require_native_source_inspection(view);
+                native_source_inspection_sink_(native_source_inspection_payload_,view);
+                require_native_source_inspection(view);
+            } catch(...) {
+                invalidate(); // Rejection never leaves a physical field publication.
+                throw;
+            }
+        }
         const auto proposal=w.ring_source->propose_ring_budget(op,identity,native_source,
             config_.relative_tolerance,config_.absolute_tolerance);
         if(proposal.status!=RingBudgetStatus::Proposed&&proposal.status!=RingBudgetStatus::ZeroBudget)
@@ -308,16 +382,75 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
             <<" residual="<<w.report.residual<<" target="<<w.report.target<<" rhs="<<w.report.rhs_rms;throw std::runtime_error(message.str());}
     e.fence();
     if(w.ring_source) {
-        const auto phi=e.download(w.solver.resident_potential()),rhs=e.download(w.rhs);
-        std::vector<double> residual(op.size());op.apply(phi,residual);
-        for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
-        w.ring_assessment=w.ring_source->assess_native_ring_rhs(op,w.ring,native_source,
-            rhs,phi,residual,config_.relative_tolerance,config_.absolute_tolerance);
+        const auto rhs=e.download(w.rhs);
+        const auto first_report=w.report;int used_cycles=w.report.cycles;
+        double previous_work_target=w.report.target;bool zero_cycle_refinement=false;
+        // Workflow: assess the original request with ALL certified errors. A
+        // fixed half-tolerance Krylov stop is only an initial work allocation;
+        // construction/integration/evaluation errors can consume more than
+        // half of the actual original budget. Refine the SAME resident source,
+        // boundary and potential only if the complete certificate leaves a
+        // positive margin. All solves share the user's original cycle budget.
+        // No additional gather, boundary approximation or field publication is
+        // performed here; every iterate must pass the original full proof.
+        for(int refinements=0;;++refinements) {
+            const auto phi=e.download(w.solver.resident_potential());
+            std::vector<double> residual(op.size());op.apply(phi,residual);
+            for(int i=0;i<op.size();++i)residual[i]-=rhs[i];
+            w.ring_assessment=w.ring_source->assess_native_ring_rhs(op,w.ring,native_source,
+                rhs,phi,residual,config_.relative_tolerance,config_.absolute_tolerance);
+            const auto& assessment=w.ring_assessment.conditional;
+            if(assessment.status!=arch::elliptic::BoundaryResidualStatus::ResidualTooLarge
+                ||used_cycles>=config_.max_cycles||refinements>=config_.max_cycles
+                ||zero_cycle_refinement)break;
+            const double margin=std::nextafter(assessment.tolerance_safe-
+                assessment.complete_residual_error_upper,0.);
+            if(!(margin>0.)||!std::isfinite(margin))break;
+            // For the SAME residual vector, ||r||native <= R*||r||stored,
+            // R=sqrt(max_i(w_native_upper_i/w_stored_i)). This guides work,
+            // never replaces the independent native face-operator assessment
+            // (the provider's assembled sparse arithmetic can differ).
+            const auto measure=op.native_rz_measure_enclosure();
+            if(measure.status!=arch::elliptic::BoundaryErrorStatus::Bounded)break;
+            double ratio_squared=1.;
+            for(std::size_t i=0;i<measure.weight_upper.size();++i) {
+                const double stored=op.norm_weights()[i];
+                if(!(stored>0.)||!std::isfinite(stored))
+                    throw std::runtime_error("Native refinement has invalid stored norm weight");
+                ratio_squared=std::max(ratio_squared,std::nextafter(measure.weight_upper[i]/stored,
+                    std::numeric_limits<double>::infinity()));
+            }
+            const double ratio=std::nextafter(std::sqrt(ratio_squared),
+                std::numeric_limits<double>::infinity());
+            const double work_target=std::nextafter(std::min(.5*margin/ratio,.5*previous_work_target),0.);
+            if(!(work_target>0.)||!std::isfinite(work_target))break;
+            const int remaining=config_.max_cycles-used_cycles;
+            const auto refined=w.solver.solve(w.rhs,{0.,work_target,remaining});
+            if(refined.cycles<0||refined.cycles>remaining)
+                throw std::logic_error("Native refinement exceeded the original shared cycle budget");
+            used_cycles+=refined.cycles;w.report=refined;w.report.cycles=used_cycles;
+            w.report.initial_residual=first_report.initial_residual;
+            previous_work_target=work_target;zero_cycle_refinement=refined.cycles==0;e.fence();
+            if(refined.status!=arch::multigrid::SolveStatus::Converged)
+                throw std::runtime_error("Native refinement did not converge within the original cycle budget");
+            // A zero-cycle provider acceptance is still assessed once. If it
+            // misses the actual native request, reject the unchanged iterate
+            // without another provider call. No counter is reset or padded.
+        }
         if(w.ring_assessment.conditional.status!=arch::elliptic::BoundaryResidualStatus::Accepted) {
             std::ostringstream message;message<<std::setprecision(17)
                 <<"Native RZ original request rejected: status="<<int(w.ring_assessment.conditional.status)
                 <<" total="<<w.ring_assessment.conditional.total_residual_upper
-                <<" safe="<<w.ring_assessment.conditional.tolerance_safe;
+                <<" safe="<<w.ring_assessment.conditional.tolerance_safe
+                <<" algebra="<<w.report.residual<<" algebra_target="<<w.report.target
+                <<" rhs_error="<<w.ring_assessment.conditional.rhs_error_upper
+                <<" residual_upper="<<w.ring_assessment.conditional.residual_norm_upper
+                <<" source_error="<<w.ring_assessment.source_error.norm_upper
+                <<" construction_error="<<w.ring_assessment.native_boundary_construction.native_norm_upper
+                <<" boundary_error="<<w.ring_assessment.native_boundary_potential.native_norm_upper
+                <<" assembly_error="<<w.ring_assessment.assembly_error.norm_upper
+                <<" evaluation_error="<<w.ring_assessment.native_residual_error.native_norm_upper
+                <<" complete_error="<<w.ring_assessment.native_complete_residual_error.native_norm_upper;
             throw std::runtime_error(message.str());
         }
     }
@@ -358,8 +491,84 @@ const std::vector<double>& SelfGravity::native_rz_potential() const {
 const std::array<std::vector<double>,3>& SelfGravity::native_rz_acceleration() const {
     workspace().download(GravityFieldScope::NativeRzCandidate);return work_->host_g;
 }
+/** Copy only the actual completed Host candidate and its original metadata.
+ * Workflow: validate NativeRzCandidate publication/source -> fence -> download
+ * existing Phi, gradient, boundary, sides and g arrays -> check representation
+ * -> revalidate the same workspace/source/generations before returning owners.
+ * g is the existing arithmetic average of actual gathered low/high side g;
+ * no gradient, gather, quadrature, normalization or new physical field is made.
+ * Prepare/bind are serial by contract; this synchronous read adds no callback
+ * and grants no concurrent mutation safety or production physical qualification.
+ */
+NativeRzFieldInspection SelfGravity::native_rz_field_inspection() const {
+    auto& w=workspace();
+    w.require(GravityFieldScope::NativeRzCandidate);
+    auto& execution=w.solver.execution();
+    const auto& op=w.solver.op();
+    if(execution.device()||!w.execution||w.execution->numeric()->device())
+        throw std::logic_error("Native RZ field inspection requires Host execution");
+    if(w.scope!=GravityFieldScope::NativeRzCandidate||!w.ring_source
+        ||w.ring_assessment.source!=w.source||!w.ring_assessment.source_generation
+        ||w.ring_source->materialized_ring_source_generation(op,w.source)
+            !=w.ring_assessment.source_generation)
+        throw std::logic_error("Native RZ field inspection source differs from its assessment");
+    const int n=op.size();
+    const auto m=op.faces().size();
+    if(n<=0||n>std::numeric_limits<int>::max()/6
+        ||m>static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::logic_error("Native RZ field inspection has invalid array extents");
+    const auto valid_array=[](const arch::multigrid::Vector& values,int extent) {
+        return values.size==extent&&values.data!=nullptr;
+    };
+    if(!valid_array(w.solver.resident_potential(),n)
+        ||!valid_array(w.face_gradient,static_cast<int>(m))
+        ||!valid_array(w.boundary_values,static_cast<int>(m))
+        ||!valid_array(w.sides,6*n)||!valid_array(w.g,3*n))
+        throw std::logic_error("Native RZ field inspection arrays differ from the operator");
+    NativeRzFieldInspection result;
+    result.source=w.source;
+    result.source_generation=w.ring_assessment.source_generation;
+    result.field_generation=w.generation;
+    // The actual metadata is copied, not reconstructed from cell centers.
+    result.faces=op.faces();
+    execution.fence();
+    result.potential=execution.download(w.solver.resident_potential());
+    result.face_gradient=execution.download(w.face_gradient);
+    result.boundary_values=execution.download(w.boundary_values);
+    result.side_acceleration=execution.download(w.sides);
+    const auto acceleration=execution.download(w.g);
+    const auto finite_array=[](const std::vector<double>& values,std::size_t extent) {
+        return values.size()==extent&&std::all_of(values.begin(),values.end(),
+            [](double value){return std::isfinite(value);});
+    };
+    if(!finite_array(result.potential,static_cast<std::size_t>(n))
+        ||!finite_array(result.face_gradient,m)||!finite_array(result.boundary_values,m)
+        ||!finite_array(result.side_acceleration,static_cast<std::size_t>(6*n))
+        ||!finite_array(acceleration,static_cast<std::size_t>(3*n)))
+        throw std::runtime_error("Native RZ field inspection contains nonfinite or incomplete arrays");
+    for(int axis=0;axis<3;++axis)
+        result.acceleration[axis].assign(acceleration.begin()+axis*n,
+            acceleration.begin()+(axis+1)*n);
+    // Copies own storage. Recheck the original serial publication rather than
+    // assuming the ring-source counter is the solved-field counter.
+    execution.fence();
+    w.require(GravityFieldScope::NativeRzCandidate);
+    if(work_.get()!=&w||w.source!=result.source||w.generation!=result.field_generation
+        ||w.ring_assessment.source!=result.source
+        ||w.ring_assessment.source_generation!=result.source_generation
+        ||w.ring_source->materialized_ring_source_generation(op,result.source)
+            !=result.source_generation)
+        throw std::logic_error("Native RZ field inspection changed during its synchronous copy");
+    return result;
+}
 /** Switch host/device execution and rebuild resident arrays on the same topology. */
 void SelfGravity::set_execution(std::shared_ptr<GravityExecution> execution) const {
+    if(prepared_native_self()) {
+        prepared_native_self()->invalidate();
+        throw std::logic_error("Native private self stage forbids synchronous execution replacement");
+    }
+    if(native_source_inspection_running_)
+        throw std::logic_error("Native source inspection forbids synchronous execution replacement");
     if(!execution||execution_==execution)return;
     invalidate();if(work_)work_->solver.execution().fence();execution_=std::move(execution);
     if(work_){
@@ -393,6 +602,12 @@ double SelfGravity::density_mean() const {workspace().require();return work_->me
 const SelfGravity::Timings& SelfGravity::timings() const {workspace().require();return work_->timings;}
 /** Open only the receipt observer; preparation still validates and solves the original request. */
 void SelfGravity::begin_host_stage_consumption(double step_dt) const {
+    if(prepared_native_self()) {
+        prepared_native_self()->invalidate();
+        throw std::logic_error("Native private self stage forbids legacy Host receipt attachment");
+    }
+    if(native_source_inspection_running_)
+        throw std::logic_error("Native source inspection forbids synchronous consumption attachment");
     if(host_consumption_requested_)
         throw std::logic_error("Gravity Host stage receipt is already active");
     if((execution_&&execution_->numeric()->device())
@@ -411,18 +626,106 @@ void SelfGravity::require_host_stage_consumption(const GravitySolveIdentity& exp
 }
 /** Close the optional observer; next-stage publication remains explicitly invalidated by its owner. */
 void SelfGravity::end_host_stage_consumption() const noexcept {
+    // Retiring old observer metadata is noexcept, but it must not authorize a
+    // second receipt system or leave a live private stage after such reentry.
+    if(prepared_native_self())prepared_native_self()->invalidate();
+    if(native_source_inspection_running_){native_source_inspection_invalidated_=true;return;}
     host_consumption_requested_=false;
     if(work_)work_->observe_host_consumption=false;
 }
-/** Add the midpoint face-acceleration momentum source to one native patch. */
-void SelfGravity::add_sources_on_patch(std::vector<FluidVector>& delta,const FluidState& state,
-    const Grid& grid,double dt,void*) const {
-    const auto& patch=workspace().patch(grid,state); const int stride[]{1,grid.stride_y,grid.stride_z};
-    workspace().require_host_consumer(grid,1u,dt);
+namespace {
+/** Apply the original shared face momentum leaf to the actual interior.
+ * Delta m_a=dt*rho*(g_low+g_high)/2; angular acceleration remains zero.
+ * Caller authenticates the scope, extent, original input and field lifetime.
+ */
+void apply_patch_momentum(const GravityPatchView& patch,std::vector<FluidVector>& delta,
+    const FluidState& state,const Grid& grid,double dt) {
+    const int stride[]{1,grid.stride_y,grid.stride_z};
     for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
         const int c=grid.GetIndex(i,j,k); double* momentum[]{&delta[c].mom_u,&delta[c].mom_v,&delta[c].mom_w};
         for(int a=0;a<grid.dim;++a) *momentum[a]+=gravity_momentum(patch.faces[a][c],patch.faces[a][c+stride[a]],state.rho[c],dt);
     }
+}
+/** Apply original compatible work without changing dt, metric or face values.
+ * Delta E=dt/2*(F_rho,low*w_low+F_rho,high*w_high).
+ */
+void apply_patch_flux_work(const GravityPatchView& patch,std::vector<FluidVector>& delta,
+    const std::vector<FluidVector>& flux,const Grid& grid,double dt,int axis) {
+    const int stride=axis==0?1:axis==1?grid.stride_y:grid.stride_z;
+    for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
+        const int c=grid.GetIndex(i,j,k);
+        delta[c].eng+=gravity_flux_work(patch.work_faces[axis][c],patch.work_faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
+    }
+}
+} // namespace
+
+/** Recheck the same real candidate publication and materialized ring source.
+ * Source, source generation and field generation are distinct exact identities;
+ * this private borrow never changes the field validity/physical assessment.
+ */
+void SelfGravity::require_native_frame(const GravitySolveIdentity& source,
+    std::uint64_t field_generation,std::uint64_t source_generation) const {
+    auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+    if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
+        ||w.scope!=GravityFieldScope::NativeRzCandidate||w.source!=source
+        ||w.generation!=field_generation||!w.ring_source||!source_generation
+        ||w.ring_assessment.source!=source
+        ||w.ring_assessment.source_generation!=source_generation
+        ||w.ring_source->materialized_ring_source_generation(w.solver.op(),source)!=source_generation)
+        throw std::logic_error("Native private self stage changed source, field or execution identity");
+}
+/** Retain full Candidate publication identity without rescanning op.cells.
+ * Every visit still checks the original ready scope and exact source inputs.
+ * Supported bind/prepare/execution mutations poison the attached private frame.
+ * Constructor and joined acceptance call require_native_frame, which compares
+ * the complete bound operator as well. This helper cannot mint authority.
+ */
+void SelfGravity::require_native_frame_lease(const GravitySolveIdentity& source,
+    std::uint64_t field_generation,std::uint64_t source_generation) const {
+    auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+    if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
+        ||w.scope!=GravityFieldScope::NativeRzCandidate||w.source!=source
+        ||w.generation!=field_generation||!w.ring_source||!source_generation
+        ||w.ring_assessment.source!=source
+        ||w.ring_assessment.source_generation!=source_generation
+        ||!w.ring_source->source_identity_||*w.ring_source->source_identity_!=source
+        ||w.ring_source->source_generation_!=source_generation)
+        throw std::logic_error("Native private self lease changed the original source/publication");
+}
+/** Return only the friend frame's original resident patch field. */
+GravityPatchView SelfGravity::native_candidate_patch(const Grid& grid,const FluidState& state) const {
+    return workspace().native_patch(grid,state);
+}
+/** Compile/evaluate genuine per-operation rows with the original sparse owner. */
+const GravityRefluxRows& SelfGravity::native_candidate_reflux_rows(
+    const amr::AmrFluxTopologyPlan& topology) const {
+    return workspace().prepare_native_reflux(topology);
+}
+/** Borrow already completed Host paired values; no entire field download. */
+const double* SelfGravity::native_candidate_reflux_values() const {
+    auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+    if(w.solver.execution().device()||w.reflux_field_generation!=w.generation)
+        throw std::logic_error("Native paired reflux is not the current Host field");
+    return w.reflux_values.data;
+}
+/** Add original momentum math only after the private receipt reserved it. */
+void SelfGravity::native_candidate_momentum(std::vector<FluidVector>& delta,
+    const FluidState& state,const Grid& grid,double dt) const {
+    apply_patch_momentum(workspace().native_patch(grid,state),delta,state,grid,dt);
+}
+/** Add original work math only after the private receipt reserved its axis. */
+void SelfGravity::native_candidate_flux_work(std::vector<FluidVector>& delta,
+    const std::vector<FluidVector>& flux,const FluidState& state,const Grid& grid,
+    double dt,int axis) const {
+    apply_patch_flux_work(workspace().native_patch(grid,state),delta,flux,grid,dt,axis);
+}
+
+/** Add the midpoint face-acceleration momentum source to one native patch. */
+void SelfGravity::add_sources_on_patch(std::vector<FluidVector>& delta,const FluidState& state,
+    const Grid& grid,double dt,void*) const {
+    const auto& patch=workspace().patch(grid,state);
+    workspace().require_host_consumer(grid,1u,dt);
+    apply_patch_momentum(patch,delta,state,grid,dt);
     workspace().consume_host_patch(grid,1u);
 }
 /** Add conservative gravity work using the hydro face mass flux. */
@@ -430,12 +733,9 @@ void SelfGravity::add_flux_work_on_patch(std::vector<FluidVector>& delta,const s
     const FluidState& state,const Grid& grid,double dt,int axis) const {
     if(axis<0||axis>=grid.dim)
         throw std::invalid_argument("Gravity flux work axis is outside the active patch");
-    const auto& patch=workspace().patch(grid,state); const int stride=axis==0?1:axis==1?grid.stride_y:grid.stride_z;
+    const auto& patch=workspace().patch(grid,state);
     workspace().require_host_consumer(grid,1u<<(axis+1),dt);
-    for (int k=grid.Ks();k<grid.Ke();++k) for(int j=grid.Js();j<grid.Je();++j) for(int i=grid.Is();i<grid.Ie();++i) {
-        const int c=grid.GetIndex(i,j,k);
-        delta[c].eng+=gravity_flux_work(patch.work_faces[axis][c],patch.work_faces[axis][c+stride],flux[c].rho,flux[c+stride].rho,dt);
-    }
+    apply_patch_flux_work(patch,delta,flux,grid,dt,axis);
     workspace().consume_host_patch(grid,1u<<(axis+1));
 }
 /** Reduce resident field energy and download only actual boundary face pairs. */

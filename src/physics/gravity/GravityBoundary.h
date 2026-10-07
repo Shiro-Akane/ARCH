@@ -405,6 +405,8 @@ struct RingRhsAssessment {
     arch::elliptic::NativeRzBoundaryConstructionError native_boundary_construction;
     arch::elliptic::NativeRzBoundaryPotentialError native_boundary_potential;
     arch::elliptic::NativeRzResidualEvaluationError native_residual_error;
+    // Complete prescribed residual: joint A/B construction, all other errors once.
+    arch::elliptic::NativeRzCompleteResidualError native_complete_residual_error;
     arch::elliptic::BoundaryResidualAssessment conditional;
     arch::elliptic::BoundaryResidualStatus physical_status=
         arch::elliptic::BoundaryResidualStatus::UncertifiedInput;
@@ -427,6 +429,9 @@ public:
      */
     std::uint64_t full_ring_traversal_work_bound(
         const arch::elliptic::CompositePoisson&) const;
+    /** Identity-checked actual update generation; no ring/field success grant. */
+    std::uint64_t materialized_ring_source_generation(
+        const arch::elliptic::CompositePoisson&,const GravitySolveIdentity&) const;
     RingBoundaryEvaluation ring_boundary(const arch::elliptic::CompositePoisson&,
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
     void require_current_ring(const arch::elliptic::CompositePoisson&,
@@ -452,6 +457,7 @@ public:
     const auto& volumes() const {return volumes_;}
     const auto& moments() const {return moments_;}
 private:
+    friend class SelfGravity; // Private stage borrower reads actual generation only.
     void require_ring_operator(const arch::elliptic::CompositePoisson&) const;
     arch::elliptic::CartesianMesh bound_mesh_;
     arch::elliptic::BoundaryKind bound_boundary_;

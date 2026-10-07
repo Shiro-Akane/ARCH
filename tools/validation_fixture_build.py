@@ -24,7 +24,17 @@ TARGET = "arch_gravity_stage_contract"
 ORIGINAL_FIXTURES = (
     "tests/host/gravity/test_gravity_stage_contract.cpp",
     "tests/host/driver/test_host_hydro_transaction.cpp",
+    "tests/host/driver/test_rz_runtime_boundary.cpp",
+    "tests/host/driver/test_rz_runtime_external.cpp",
 )
+LINK_PRODUCTION_SOURCES = (
+    "src/amr/elliptic/EllipticMeshAdapter.cpp",
+    "src/driver/stages/GravityStage.cpp",
+)
+# Exact current CMake owner: test TUs are replaced, real production TUs retained.
+ORIGINAL_FIXTURE_OBJECTS = tuple(f"CMakeFiles/{TARGET}.dir/{name}.o" for name in ORIGINAL_FIXTURES)
+LINK_PRODUCTION_OBJECTS = tuple(f"CMakeFiles/{TARGET}.dir/{name}.o" for name in LINK_PRODUCTION_SOURCES)
+EMBEDDED_FIXTURE_DEFINE = "-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1"
 RUNTIME_SOURCES = ("src/driver/runtime/DriverRuntime.cpp",
     "src/driver/runtime/DriverBoundary.cpp", "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
     "src/physics/boundary/PhysicalBoundaryHandler.cpp", "src/driver/runtime/DriverRegrid.cpp")
@@ -94,6 +104,14 @@ def fixture_compile_recipe(entry: dict[str, Any], production: dict[str, Any],
     if "-DARCH_CUDA_BUILD_ENABLED=0" not in tokens or \
             "-DARCH_CUDA_BUILD_ENABLED=0" not in production_tokens:
         raise RuntimeError("CPU compile contract required")
+    # The target embeds Runtime test bodies, but a private fixture has its own
+    # unchanged main. Strip only this known target-local switch; preserve all
+    # strict-FP/LTO/hardware/physics controls, and reject unknown variants.
+    embedded = [t for t in tokens if t.startswith("-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED")]
+    if embedded not in ([], [EMBEDDED_FIXTURE_DEFINE]):
+        raise RuntimeError("unexpected embedded Runtime fixture definition")
+    if embedded:
+        tokens.remove(EMBEDDED_FIXTURE_DEFINE)
     additions = []
     if recipe == "production":
         for token in command_tokens(entry["command"]):
@@ -110,7 +128,12 @@ def fixture_compile_recipe(entry: dict[str, Any], production: dict[str, Any],
 def fixture_link_recipe(commands: str, original_objects: list[str],
                         fixture_object: Path, executable: Path,
                         provider_objects: list[str] | None = None) -> list[str]:
-    """Replace both exact CTest objects with one fixture; preserve libraries/flags."""
+    """Replace all exact test-owner objects; retain real production objects.
+
+    The current owner has four test TUs plus two production TUs. Unknown,
+    missing or duplicate objects remain errors; this is not arbitrary linking.
+    Library/strict-FP/LTO order is preserved from the actual frozen CMake line.
+    """
     matches = []
     for line in commands.splitlines():
         # Ninja also returns upstream archive commands containing legitimate
@@ -124,12 +147,15 @@ def fixture_link_recipe(commands: str, original_objects: list[str],
         raise RuntimeError("missing or ambiguous CTest link recipe")
     tokens = matches[0]
     actual_objects = [token for token in tokens if token.endswith(".o")]
-    if len(original_objects) != 2 or len(set(original_objects)) != 2 \
-            or sorted(actual_objects) != sorted(original_objects):
-        raise RuntimeError("CTest link must contain exactly its two original fixture objects")
+    expected_tests = list(ORIGINAL_FIXTURE_OBJECTS)
+    expected_objects = expected_tests + list(LINK_PRODUCTION_OBJECTS)
+    if sorted(original_objects) != sorted(expected_tests) \
+            or len(set(original_objects)) != len(expected_tests) \
+            or sorted(actual_objects) != sorted(expected_objects):
+        raise RuntimeError("CTest link must contain exactly its declared test and production owner objects")
     providers = provider_objects or []
     if len(set(providers)) != len(providers) or any(
-            not name.endswith(".o") or name in original_objects or name == str(fixture_object)
+            not name.endswith(".o") or name in expected_objects or name == str(fixture_object)
             for name in providers):
         raise RuntimeError("invalid or duplicate provider object")
     if any(Path(token).name == "libarch_solver_dispatch.a" for token in tokens):
@@ -358,6 +384,36 @@ def selected_providers(entries: list[dict[str, Any]], root: Path, build: Path,
     return providers
 
 
+def selected_link_owners(entries: list[dict[str, Any]], root: Path, build: Path,
+                         template: dict[str, Any]) -> list[dict[str, Any]]:
+    """Authenticate the two real production TUs retained from this exact target.
+
+    Their configured target flags remain literal; they are not private fixtures
+    or newly recompiled production. Borrowed objects and their real source bytes
+    are frozen/hash-checked before and after compilation, linking and execution.
+    """
+    result = []
+    for name, expected_object in zip(LINK_PRODUCTION_SOURCES, LINK_PRODUCTION_OBJECTS):
+        source = (root / name).resolve()
+        entry = unique_entry(entries, source, TARGET)
+        obj = (build / entry["output"]).resolve()
+        if (Path(entry["directory"]).resolve() != build or entry["output"] != expected_object
+                or not source.is_file() or not source.is_relative_to(root)
+                or not obj.is_relative_to(build / "CMakeFiles" / (TARGET + ".dir")) or not obj.is_file()):
+            raise RuntimeError("retained production source/object belongs to another owner or is missing")
+        argv = command_tokens(entry["command"])
+        if (argv.count("-c") != 1 or argv.count("-o") != 1
+                or Path(argv[argv.index("-c") + 1]).resolve() != source
+                or (build / argv[argv.index("-o") + 1]).resolve() != obj):
+            raise RuntimeError("retained production compile operands disagree with compile database")
+        # These are the original CTest owner's real production TUs; compare
+        # against that exact owner's configured strict CPU compile controls.
+        require_production_contract(entry, template)
+        result.append({"source": name, "owner": TARGET, "object": str(obj),
+                       "ninjaTarget": expected_object, "compileEntry": entry})
+    return result
+
+
 def fixture_identity_defines(root: Path, source: Path, enabled: bool) -> list[str]:
     """Bind only the two real IO fixtures to their own exact source path and SHA."""
     if not isinstance(enabled, bool):
@@ -413,7 +469,8 @@ def build_cpu_fixture(*, build: Path, output: Path, source: Path,
     if any(Path(entry["directory"]).resolve() != build for entry in [production, *originals]):
         raise RuntimeError("compile recipe belongs to another build directory")
     providers = selected_providers(entries, root, build, reuse_compiled_sources or {}, production)
-    freshness = require_fresh_target(build, [p["ninjaTarget"] for p in providers])
+    retained = selected_link_owners(entries, root, build, originals[0])
+    freshness = require_fresh_target(build, [p["ninjaTarget"] for p in providers + retained])
     commands = subprocess.check_output(["ninja", "-t", "commands", TARGET],
                                        cwd=build, text=True, timeout=30)
     obj, exe = output / "0.o", output / executable_name
@@ -437,7 +494,7 @@ def build_cpu_fixture(*, build: Path, output: Path, source: Path,
     paths += [Path(name) for name in freshness["rerunInputObservations"]]
     paths += [compiler, linker]
     paths += [source, *libraries, *(root / name for name in owner_sources + observed_headers)]
-    paths += [path for p in providers for path in (root / p["source"], Path(p["object"]))]
+    paths += [path for p in providers + retained for path in (root / p["source"], Path(p["object"]))]
     before = capture_inputs(root, paths)
     if identity_defines and identity_defines[1] != \
             f'-DARCH_IO_FIXTURE_SOURCE_SHA256="{before["files"][str(source)]["sha256"]}"':
@@ -450,6 +507,14 @@ def build_cpu_fixture(*, build: Path, output: Path, source: Path,
               "compileRecipeSource": production["file"] if compile_recipe == "production" else originals[0]["file"],
               "compileArgv": compile_tokens, "linkArgv": link_tokens,
               "productionOpenMPControlsAdded": additions,
+              "standaloneFixtureDefinesRemoved": [EMBEDDED_FIXTURE_DEFINE]
+                  if EMBEDDED_FIXTURE_DEFINE in command_tokens(
+                      production["command"] if compile_recipe == "production" else originals[0]["command"])
+                  else [],
+              "replacedTestOwnerSources": list(ORIGINAL_FIXTURES),
+              "retainedCompiledOwnerSources": [{**p,
+                  "sourceSha256": before["files"][str((root / p["source"]).resolve())]["sha256"],
+                  "objectSha256": before["files"][p["object"]]["sha256"]} for p in retained],
               "openMPReason": "preserve previous runner's explicitly declared production OpenMP" if additions else None,
               "freshnessDryRun": freshness,
               "reusedCompiledSources": providers,

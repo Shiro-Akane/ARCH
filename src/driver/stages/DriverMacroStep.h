@@ -18,9 +18,14 @@
  */
 #pragma once
 
+#include <algorithm>
+#include <bit>
 #include <cmath>
+#include <cstdint>
 #include <optional>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 #include "driver/io/DriverIO.h"
 #include "driver/runtime/DriverRuntime.h"
@@ -55,6 +60,57 @@ public:
         if(active_) {controller_.dt_old=old_dt_;burn_advice_=old_burn_;}
     }
 };
+
+/** Try the original complete macro from the same accepted entry.
+ * Workflow: Advice -> original proposal/alignment -> fresh caller-owned context
+ * and unique macro transaction -> accept once, or fully unwind -> dt/2.
+ * Only the private Runtime-qualified exception reaches retry. Caps include all
+ * attempted wall work; no source workspace is read after failed invalidation.
+ */
+template<class Attempt>
+double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController& controller,
+    double& burn_advice,double accepted_dt_cap,Attempt&& execute)
+{
+    const bool native=!runtime.backend()
+        &&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const int maximum_attempts=native?16:1;
+    double retry_cap=accepted_dt_cap;
+    const double accepted_time=controller.t_current;
+    const int accepted_step=controller.step_count;
+    std::string first_failure;
+    for(int index=1;index<=maximum_attempts;++index) {
+        double actual_dt=0.;
+        try {
+            NativeMacroStepAdvice advice(runtime,controller,burn_advice);
+            const double proposal=controller.calculate_next_dt(std::min(accepted_dt_cap,retry_cap),burn_advice);
+            burn_advice=1e99;actual_dt=controller.sync_dt(proposal);
+            // The first legal output/final-time aligned short step preserves
+            // original sync_dt semantics; only retries enforce the aligned floor.
+            // The original calculate_next_dt still checks the proposal floor.
+            if(native&&(!std::isfinite(actual_dt)||!(actual_dt>0.)
+                ||(index>1&&actual_dt<runtime.configuration().numerics.dt_min)
+                ||!std::isfinite(accepted_time+actual_dt)||!(accepted_time+actual_dt>accepted_time)))
+                throw std::runtime_error("Native macro aligned timestep is not admissible");
+            std::forward<Attempt>(execute)(actual_dt,static_cast<std::uint64_t>(index));
+            advice.commit();return actual_dt;
+        } catch(const NativeThermalStepRejection& error) {
+            // All nested transaction/binding/context/advice lifetimes already
+            // unwound. The failed version cannot be reauthenticated now.
+            if(!native||!error.belongs_to(runtime,index,accepted_time,actual_dt)
+                ||runtime.active_host_hydro_transaction()||runtime.native_macro_retry_attempt()
+                ||controller.step_count!=accepted_step
+                ||std::bit_cast<std::uint64_t>(controller.t_current)!=std::bit_cast<std::uint64_t>(accepted_time))throw;
+            if(first_failure.empty())first_failure=error.what();
+            retry_cap=.5*error.failed_aligned_dt();
+            const auto& numerics=runtime.configuration().numerics;
+            if(index==maximum_attempts||!std::isfinite(retry_cap)||!(retry_cap>0.)
+                ||retry_cap<numerics.dt_min||!(accepted_time+retry_cap>accepted_time))
+                throw std::runtime_error("Native macro thermal retry exhausted at attempt "+std::to_string(index)
+                    +"; original refusal: "+first_failure+"; last refusal: "+error.what());
+        }
+    }
+    throw std::logic_error("Native macro retry has no accepted exit");
+}
 
 /** Execute the unique Driver five-segment sequence.
  * burn(half,dt/2,token), diffusion(dt/2), hydro(dt) call the existing owners.
@@ -94,14 +150,18 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
         // input time before that initial completion, not only inside stages.
         if(native_host)context.configure_boundary_context(start,boundary::BoundaryPurpose::Diffusion);
         else boundaries.configure_stage(start,boundary::BoundaryPurpose::Diffusion);
+        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(1,half_dt);
         diffusion(half_dt);
+        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->end_diffusion_half();
     });
     measure(CpuStage::Hydro,[&] {advance_hydro(dt);});
     measure(CpuStage::Diffusion,[&] {
         context.boundary_start_time=start+half_dt;context.boundary_step_dt=half_dt;
         if(native_host)context.configure_boundary_context(start+half_dt,boundary::BoundaryPurpose::Diffusion);
         else boundaries.configure_stage(start+half_dt,boundary::BoundaryPurpose::Diffusion);
+        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(2,half_dt);
         diffusion(half_dt);
+        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->end_diffusion_half();
     });
     if(has_burn)measure(CpuStage::BurnSecond,[&] {
         // Burn has no spatial boundary channel. Its existing fixed-density

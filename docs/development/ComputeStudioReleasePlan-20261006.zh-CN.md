@@ -410,3 +410,145 @@ DPS第三项公开接触积分半区间代数核对经Root限定采用（62.68 s
 同一冻结源树完整CPU构建通过（306.727 s），现有76/76回归通过（136.37 s，guard137.243 s），没有新CI owner；此后仅采用独立参考工具的已验收数学实现并更新说明。完整环源参考另有13项性质／拒绝检查，包含精确体积分轴向参考、密度线性、平移、非均匀双leaf、静态数学zero覆盖、缺块/重叠及100000共同调用上限；生产Gather的严格正密度规则保持。
 
 DPS新的公共RKL2双cell精确阶段参考经Root四组、17阶段有理数核对后限定接受，102.54 s、27762输出token（思考27215/正文547），估计USD0.0168451–0.0336902，账单及主智能体成本未知；与完整CPU构建／数学检查并行，无源码或raw外发、无阻塞等待。该公共图不证明真实RKL2阶段正性或全耦合。下一节点仍为真实非零RKL2两半步与外力/Hydro，真实源物化导出/连续势力/AMR功、CUDA/GUI原生、统一两平台总计时与长期验收。Gemini当前记录为机械事实更新，收益不足暂不派发。
+
+### 2026-10-07T04:47:57.846653+00:00 — 发布目标回查与并行责任
+
+关键节点9e252b2d8已提交，远端推送进行中；真实暖态RKL2＋外力＋Hydro测试已按同一owner接入，正在编译，尚无运行结论。原两半扩散、Euler/RK2/RK3、dt=1e-4及1e-12收支预算保持，Burn明确关闭，不能冒充四模块或长期验收。Root独占编译／运行；候选worker分别处理真实源物化接口与连续势/力资格缺口、同一owner内测试内容的可维护性拆分，不争抢源文件或计算资源。
+
+完整O系列仍包含真实连续自引力/AMR功、全耦合/续算、最终CUDA科学与正收益、原生GUI流程、当前平台与4070Ti同配置总计时及长时可靠性；历史异机结果的旧SHA保持，不改成当前配对记录。原8GiB Host余量和64MiB下一写入预留保持，仅已完成摘要并逐文件复核的通过raw清理；本批无新模拟raw。DPS已完成最新公共RKL2数学任务，等待真实候选的新证据再派发，避免重复验证；Gemini机械更新收益不足暂不派发。
+
+### 2026-10-07T04:56:04.417105+00:00 — 真实RKL2外力耦合短程出口
+
+关键节点9e252b2d8已推送并确认远端身份。实际暖态两半RKL2＋外力＋Hydro六组通过：单根/混合径向AMR各Euler、RK2、RK3，三步dt=1e-4，原1e-12收支门槛，实际RKL2负阶段系数和非零边界输运均保留。现有gravity_stage_contract通过33.2801 s，guard34.233 s，编译30.330 s；无新增CI owner或raw。Burn明确关闭，不能替代四模块、冷态完整宏步或长期验收。完整输出另行保留，JUnit的1024字节stdout截断不通过重跑科学测试补齐。
+
+测试维护候选将边界和外源按功能拆分，同时修复真实私有fixture编译清单中已暴露的对象/embedded入口缺口；未知对象继续拒绝。真实自引力源借用/身份检查与连续势力/AMR功为后续独立科学出口，公开Native/Device及整个release门槛保持。
+
+### 2026-10-07T04:59:03.497958+00:00 — 完整目标回查与自引力时间功参考
+
+六组暖态RKL2实际短耦合已通过，下一源码节点仍是实际Runtime源物化借用/导出、连续Phi/force及粗细面同Phi质量通量功。Root独占写入/编译，三名候选worker按Core接口、物理资格审计、测试/私有recipe组织分工；没有新增ARCH checkout。已派发DPS新的公共固定拓扑自引力二次能量与Euler/Heun/SSPRK3代数核对，32768输出token/150 s单次/230 s累计自定预算，formal repair=1；只发送公开矩阵与RK定义，无项目源码/raw。其结论须Root独立有理数复核，不授予算法或物理通过，不改变现有方法/阈值。
+
+整套目标不缩减：真连续场、全耦合/AMR/续算、最终CPU和CUDA科学/正向收益、GUI原生、当前平台与4070Ti同配置物理终点总计时、长时稳定性均保持。CI继续既有owner覆盖更新，FLASH仅可选维护者对标。下次目标回查不晚于15分钟；GPU正式计时在编译完成后核对空闲。
+
+### 2026-10-07T05:05:17.712980+00:00 — 测试收束与真实源接口首编译
+
+按功能把真实边界/角动量与外源/耦合两个测试主体拆分，共用小型rollback witness；原standalone main及移动数值主体逐字核对，原预算/断言/唯一gravity_stage_contract owner保持。私有fixture链接清单改为真实四test＋两production，保留严格未知对象拒绝、生产对象身份与strict-FP/LTO，移除唯一已知embedded入口开关。现有工具77/77通过（0.156 s），不作为私有实际运行通过。
+
+真实源物化诊断六Core候选首编译失败（28.206 s）：scheduler_clock两个getter实际返回uint64_t而新witness误用CompletionToken/StateVersion。已把完整可复现错误交原worker用唯一正式返修修正；没有运行科学用例、放宽检查或生成raw。候选仍待编译和真实Runtime源/配置/lease/重入故障检查，完成标记只指源物化，不签收连续场。
+
+新的DPS公共对称线性K自引力RK能量核对经Root精确系数多项式及fragment协方差反例限定接受：74.01 s、19319输出token（思考18888/正文431），估计USD0.01175635–0.0235127，账单/Rootactive成本未知；首次发现延迟95.988 s，review墙钟80.284 s含同期Core review，无阻塞等待/额外返工。Euler/Heun/SSPRK3公示图净能量缺陷依次为−h²、−h⁴、−h⁴+2h⁵/3−4h⁶/9，不是ARCH算法证明；实际离散映射的对称性、动态AMR及原物理预算须独立验证。无源码/raw外发。
+
+
+### 2026-10-07T05:22:00.954500+00:00 — 目标回查与真实源只读证据下一节点
+
+当前实际Runtime owner与私有边界入口均通过；同一gravity_stage_contract按功能拆分后通过31.0087 s，私有入口guard28.572 s，原CI owner及阈值不变。源物化借用接口已真实编译，尚需实际正负例和实际源导出；独立连续参考仅进行完全相等密度/相接矩形的精确合并，原始端点、全部cell身份、质量/体积及原预算保持。尚不解除Native自引力/Device公开门槛。
+
+Root继续独占重负载与项目写入；并行候选分别负责实际源测试、源JSON与物理/AMR功审计。当前无生产raw新增；唯一checkout、minAvail2GiB/无swap增长/PSI和E盘8GiB加64MiB下一写入预留保持。完整O系列目标仍是连续Phi/force与AMR能量账、全耦合/续算、最终CPU/CUDA科学和正收益、真实GUI、同配置物理终点两平台总耗时与长时可靠性；4070Ti历史旧SHA记录不能充当当前配对结果。CI覆盖现有owner，FLASH为可选维护者对标。
+
+上次回查04:59:03 UTC；本次回查超过原15分钟目标，明确记录实际时间，不倒填。下一次目标回查不晚于15分钟。DPS既有公共数学结果限定接受；新源码审查未扩充此前四片段授权，源码审查正式返修额度已耗尽。Gemini当前机械记录收益不足，冻结科学结论后的用户说明再评估。
+
+
+### 2026-10-07T05:36:02.678068+00:00 — 真实源身份首运行与验证成本收束
+
+严格现有fixture链接入口成功编译当前实际源测试，原Runtime三槽/all-block/非首块/非法输入/消费者门槛全部通过；新的Current/Scratch源物化正例也通过。重复完整场求解使新source-only生命周期矩阵预计超过原1200 s上限，Root在503.338 s仅终止精确该测试执行物；本轮记为受控中止而非owner/科学通过，部分stdout、场日志和原执行物身份全部保留，无H5新增。下一返修复用既有明确maxwork=1资源拒绝，仅测试真实源检查完成后进入原boundary工作量失败、marker/身份/清理；原三槽场求解、1e-10物理容差及原1200 s上限保持，源身份不依赖重复求场。
+
+确定AMR引力功缺口的共享修正设计为各接受阶段先登记 FE+(Phi_fragment-Phi_destination_coarsecell)*F_rho，随后使用现有面积、RK登记权重和最终reflux；不能用最终势乘跨阶段累计密度修正。DPS新的公开有限体积恒等式经Root独立有理数展开/非零协方差/跨阶段反例接受（25.54 s、5762输出token，估计USD0.00362455–0.0072491，实际账单未知；阻塞等待0）。该结果不认证实际Composite映射、self能量或算法，实际coupling/publicNative仍未开放。
+
+完整O目标和单工作区/单重负载/存储预留保持；连续场真实参考、AMR功、全模块/续算、CUDA/GUI原生、两平台匹配总耗时和长时仍未完成。当前8GiB Host及64MiB下一写入保留，失败/未知raw留存；CI继续现有owner覆盖更新。目标回查实际时间如标题，下次不晚于15分钟。
+
+
+### 2026-10-07T05:52:48.476532+00:00 — 真实源与同场导出完成、光滑势误差科学finding
+
+当前真实Runtime Current源及同场原始数组/面片导出通过（guard111.918 s、512源cell/1056原生face/1568实际observer、独立source/field代次均1，执行物7b676f84ab005e8e193d184840aba965cfce220c2ebe8cfa499ec5f4b4315ed0）。真实source identity/服务配置/源与场完整stencil位模式/挂载冲突/nonstd原异常传播均通过；1,304,160 B原始JSON仅留忽略本机目录，未生成H5，薄记录见native-source-inspection-cpu-summary.json。此结果不替代连续参考/物理消费者资格。
+
+独立闭式V平均源的Native smooth四档完整16组实际运行2.025 s：所有原residual通过、所有face及CF力阶>=1.8；混合AMR轴域势阶N16→32=1.7977719、N32→64=1.6777049失败，N64→128=1.8352007。原1e-11/300与1.8门槛保持，收集全域后统一报告失败，不删除pair。已核对源V均值正确，规则内部局部截断精确为A*Phi_point−physical_lifted_rhs=−15h²/8−5k²/12，当前仍不能以此宣布实际fitted boundary/CF势误差只是无害前渐近现象；下一单case真实残差分类将定位。
+
+整套O发布仍包含连续isolated场/AMR功、四模块/续算、最终CPU与CUDA科学及正收益、原生GUI、当前平台与4070Ti同配置物理终点总耗时及长时可靠性。Root独占重负载，source生命周期返修矩阵在运行，其他worker只产候选/只读归因，不抢编译。唯一checkout及E8GiB/64MiB写入保留保持；失败证据不清理，原常规CI owner覆盖更新。上次目标回查05:36:02，本次超过15分钟目标，保留实际时间；下一次不晚于15分钟。
+
+
+### 2026-10-07T06:05:17.166347+00:00 — 实际源生命周期与独立误差归因
+
+真实Runtime生命周期完整跑完384.500s：原三个slot全场求解、三个新source-only槽、七类故障撤销及七类重入拒绝均通过，原1200s夹具上限/solver门槛保持。Source-only分项使用真实boundary max-work1，完成源观察后明确WorkLimit且场不可读；不将它记为解场通过。最后真实Current源/场完整1056面stencil与512cell导出匹配；H5新增0，原始约1.3MB JSON留本机，薄摘要同步。
+
+N32原生混合轴网格实际算子归因通过原算术门槛：独立真实面平均通量/V源恒等式最大6.75e-14，实际tau面误差重建2.83e-12，规则双点面解析截断误差2.96e-16；全域1792cells。边界tau V-RMS0.13324，CF0.03903，规则内部0.001923；这些是局部归因，不据此签收全局收敛。原混合轴Phi两个>=1.8阶失败保留，下一步审查现有拟合的泛化修正，intervalledger必须同步，不改point/V/face定义或门槛。
+
+DPS公开RZ体积平均/局部截断公式首轮错误已唯一返修并由Root精确有理数积分复核，125.72s、28930输出token、估计USD0.01763047–0.03526094，实际账单和Rootactive成本未知。返修完成后发现延迟220.006s，review墙钟94.396s（含其他本地核对）；没有第三次派发或源码/raw外发。Root初始scratch数值由Fraction断言纠正，实际结论以独立积分为准。下一公开surface矩核对独立并行，不代替真实算法验收。
+
+全O release仍未完成：连续isolated场/AMR功、冷态真正宏重试、四模块/AMR/续算、最终CPU与CUDA正收益、原生GUI、当前两平台同配置物理终点总耗时及长时目标保持。真实source/field记录只授予诊断范围；18个固定选点连续参考将按70dps、100000调用/90s及CGSG×1e-12区间宽度处理，不能当全域通过。Root单重负载，唯一checkout，E盘8GiB/64MiB写入保留；当前约22.24GiB空闲，本次目标回查未超15分钟。
+
+
+### 2026-10-07T06:20:53.600789+00:00 — 真实源/场连续参考与下一共享数学修正
+
+真实512leaf全部密度及边界保持，精确union合并成1块；固定18个actual observer连续区间全部达到原CGSG×1e-12宽度，70dps、32854调用、1.771941s（guard2.049s），单90s/100000预算贯穿校验/合并/积分。实际cell点势、原始梯度的负值和明确标为derived的原face value行分别记录；数据及误差不是新的科学门槛，不扩写全域通过。原始boundary datum也仅在实际pure Dirichlet行作点势比较。薄摘要见native-actual-field-reference-cpu-summary.json，本机完整source/field/interval留作消费者证据。
+
+拟合修正仅canonical NativeRZ且两root轴至少4点时使用现有DenseLU的三次point-gradient再现，其他保持原二次或原radial路径；相同6/10基函数进入原Neumann inverse/系数区间证书，源V均值及force点值对象不变。原rank/positive-diagonal recovery/残差/1.8阶门槛保留，实际编译中，未据候选签收。Root关于EllipticMesh未声明的静态判断被实际alias证据纠正，记录为误报，没有虚构编译失败或回滚。
+
+冷态重试下一候选复用实际宏事务/Advice，完整macro最多16次、拒绝后实际对齐dt二分，原两Burn/Strang/RKL/EOSfloors保持；completed BC后的EOS body先验真实active再验互不重叠ghost，每个logicalcell同样完整验证。只有真实已演化RKL active热能失败并通过真实来源及全active分类才可retry；userBC、ghost、普通前BC、其他EOS/来源/工程错误继续fatal。该候选尚未接线/运行，不从较小半步通过推断完整macro。
+
+GUI原生WSLg依赖与显示socket就绪；构建回执仍指向旧ELF，源码稳定后要真实Configure/Build刷新，native picker/窗口/terminal须实际视觉验收。14700K+4070Ti现有记录是旧SHA与不同scope，没有本轮正式配对数据。全O release的AMR功/连续场/四模块/续算、最终CPU/CUDA科学与正收益、GUI、统一平台计时/长时验收保持待闭合；没有新增CTest或FLASH工作流依赖。唯一checkout、Root单重负载及E8GiB/64MiB预留保持。
+
+
+### 2026-10-07T06:36:32.872189+00:00 — 原始径向收敛门槛闭合与完整目标回查
+
+边界三次／内部及CF二次的通用面角色修正，实际编译15.164s、原rz owner guard2.022s通过全部16组原residual和全部>=1.8相邻阶门槛；混合轴Phi阶1.81575/1.91819/1.96107，混合环域1.85220/1.92915/1.96522，CF力阶均约1.98–1.99。原二次势失败和全三次CF失败同时保留，薄摘要以current字段明确修正范围，不覆盖失败证据。真实canonical十项系数区间证书仍待实际验证，光滑prescribed边界通过不替代isolated全域参考或publicNative资格。
+
+当前并行候选是callback-free Native冷态完整宏重试及AMR引力功行；Root独占项目写入/编译，worker仅/tmp候选。原两Burn/Strang/方法/科学阈值、共享FP64数学库与单checkout保持；最终CPU/CUDA、四模块/AMR/续算、GUI原生、同物理终点两平台总耗时及长时验收仍须闭合。当前没有新H5；E盘8GiB加64MiB下一写入预留保持，失败/未知数据保留。CI仅覆盖现有owner，FLASH和可选flint都不进入必须工作流。
+
+上次目标回查06:20:53 UTC，本次实际时间如标题，超过15分钟目标，未倒填。DPS两个公共数学任务已限定接受，下一只对明确的新独立问题派发，不重开已解决数学；四源码片段授权范围未扩大。下一目标回查不晚于15分钟。
+
+
+### 2026-10-07T06:49:08.639675+00:00 — 真实系数证书通过与现有CI owner收束
+
+真实canonical轴/环域、均匀/混合AMR四组十项point多项式及公共系数区间证书均通过，max point误差2.89e-14至1.53e-13，原1e-10门槛保持；内部/CF实际原行逐位一致。现有rz owner整体guard2.030s，编译13.107s。以上source/volume/face测试折入现有composite_poisson_analytic的ci模式，新增CTest项0；最新ci模式尚待实际运行。原失败证据保留；不授予isolated连续全域或公开NativePhysics资格。
+
+真实DPS仅公共仿射容量热态凸性核对已Root精确Fraction接受：28.73s，6411输出token（思考5972/正文439），估计USD0.0040057–0.0080114，账单/Rootactive成本未知。固定线性密度→惯量且正权混合保持下热限；上热限非凸，RKL2线性稳定性及最多16次dt折半都不能保证正值或成功。此次无源码/raw外发、无阻塞等待/额外返工；与源码集成和三份独立候选并行，数学结论不替代真实冷态完整macro验收。
+
+下一候选已落到真实无userBC冷态macro与AMR work-row register/reflux验收。完整O目标保持连续场/全耦合/AMR/续算、最终CPU/CUDA、真实GUI、同物理终点总耗时/4070Ti匹配数据及长时可靠性；目前单工作区/单重负载、E盘8GiB加64MiB预留、失败数据保留、FLASH不入必须CI均保持。目标回查未超过15分钟，下一次不晚于15分钟。
+
+
+### 2026-10-07T07:05:08.419620+00:00 — 真实完整宏步重试与拓扑引力功登记验证
+
+现有 gravity_stage_contract 完整通过，guard30.198s；真实近真空 first-annulus 在原RKL1 dt=.2的实际active热能失败后精确事务回滚，dt=.1完整B/2-D/2-H-D/2-B/2接受（失败实际0.00884227s、接受0.023672322s）。真实NetAprox13/BE_NR准备与两次Burn调用保留，但本夹具温度低于原激活阈值，反应没有执行，不能记为四模块反应或公开Native资格。原dt_min拒绝、首合法end-aligned短步、EOS-bound一ULP漂移拒绝也通过。独立只读复核发现分类后完整config/clock/RKL frame尚需再查及非热错误patch诊断包装缺口，Root将处理集成修正，候选唯一返修额度不重置。
+
+真实双CF方向、轴/环域、paired-z缝及零CF的六组拓扑引力功行与原Euler/RK2/RK3实际注册/回流通过；新夹具先因off-axis负halo被原guard拒绝，唯一返修仅将新环域改为[.4,1.3]保证三ghost正半径，原失败证据保留。势刺激是任意affine场，因此此次认证拓扑/面积/登记权重及一次reflux，尚未认证实际同阶段自引力场或物理能量。下一节点是private实际NativeSelf stage/frame和同场AMR功消费者，公开场/CFL/plot/Device gate保持。
+
+全部O release出口保持：isolated连续全域参考、实际自引力/燃烧/扩散/Hydro四模块/AMR/续算，最终完整CPU及CUDA科学/正向收益，Linux/WSL原生GUI，当前及4070Ti平台同物理终点总计时和长时稳定性。无新H5，Host约22.23GiB，8GiB加64MiB写入预留、唯一checkout/单重负载保持；CI覆盖既有owner，FLASH/flint非必须。上次回查06:49:08 UTC，本次为实际时间，不倒填；下次不晚于15分钟。DPS两个新公开热能凸性/非对称映射能量数学核对限定接受，不是实际算法授权；机械状态记录不为调用而派Gemini。
+
+
+### 2026-10-07T07:18:40.471030+00:00 — private NativeSelf实际接线及目标回查
+
+Root已接入真实GravityStage journal/HostMacro transaction上的private NativeSelf Hydro profile，Candidate场scope不重标、普通patch/CFL/plot/Device gate保持。候选复用原力/flux-work loops、同一驻留势及独立datum的真实AMR每Energy operation配对行，预写atomic claim与post-Apply收据；Root统一首次编译中，没有运行通过结论。分类前后与accepted-entry的完整EOS owner/config/clock/domain fence补齐，并接入三个同步真实IdealGas转发的工程拒绝用例，阈值/物理方法不变、仍待实际运行。
+
+Root独占编译，独立worker分别只读接线审计与实际PrivateSelf owner候选；唯一工作区、E盘8GiB/64MiB写入预留、无H5新增保持。DPS新公开point-receiver versus Vmean reciprocal kernel及柱坐标矩数学试行已实际派发，正在核对产物，未知保持未知。整个O release仍要求真实连续isolated全域参考、实际反应四模块/AMR/续算、完整CPU/CUDA及正收益、原生GUI、匹配两平台物理终点总计时与长时稳定性；4070Ti现有旧SHA非本轮正式数据。CI沿既有owner、FLASH/flint非必须；下一目标回查不晚于15分钟。
+
+
+### 2026-10-07T07:32:46.350293+00:00 — 实际工程拒绝闭合与private接线成本约束
+
+真实首编译72.391s通过；首owner80.172s因新的外源诊断文字未包含原actual-frame契约而失败，旧断言未改。consumer唯一返修仅恢复4处原诊断；Frame唯一返修保活真实topology shared-owner并在任何旧route读取前用当前readonly cache lease拒绝换主/清空，旧Host observer重入poison补齐。第二编译50.245s、现有完整owner33.213s（显式OMP4）通过，包含原完整冷态macro和3个新真实IdealGas-forwarding同步工程反例：nu一ULP、clock token漂移与同patch后续active负密度原pool/UID/slot/version归因均fatal、无retry、全owner回滚。跨patch分类诊断没有在这个单patch新夹具覆盖，不伪称覆盖。
+
+发现新private每Energy route的full ring_operator检查会重复扫描all cells。Root更窄替代保留每visit原Candidate资格、完整source/assessment/actual materialized identity与generation检查，仅将immutable op.cells全比较保留在真实prepare及joined accept；实际每visit O(Nblocks)，不是O1。去掉资格的原O1方案被自动审批拒绝且未执行，没有绕过拒绝/公开gate。此替代仍待本轮compile/实际PrivateSelf消费运行。
+
+新的private实际Self owner fullfield矩阵成本未知，默认CI保持原owner调用，release维护验收采用同一执行物显式private-native-self mode，无新增CTest/target；新parser对tolerance_safe误作bool已作为唯一fixture返修纠正，原实际residual/tolerance门槛保持。整个O release/真连续全域/四模块与长时/最终CPU-CUDA/GUI/匹配两平台计时仍未完成。唯一checkout/单重负载/E盘8GiB+64MiB写入保留/无H5保持。DPS point-vs-Vmean任务首16384输出全部思考无可见交付，唯一缩范围32768交付返修后Root精确有理数积分核对接受公开toy与柱坐标矩，仅数学scope；累计82.39s、21472输出token、估计USD.01315882–.02631764（实际账单未知）、无阻塞等待。下次目标回查不晚于15分钟。
+
+
+目标回查 2026-10-07T07:46:23.290337+00:00：真实private NativeSelf九次field矩阵首个whole solve在69.548s退出，实际total6.1563440988945784e-14 > safe1.3002140746945254e-14（原rtol1e-10/atol0）；未通过、不发布public能力，未放宽容差或替换物理源。Root补失败诊断的实际误差分项，先判断native operator构造/边界传播/算术评估/原algebra停机预算，独立readonly核对并行，无新CI owner。NativeSelf真实lease与原qualification仍保留；先前完整旧owner+三种classifier故障的33.213s通过不代表新self矩阵。全域源记录1568真实点，精确z反射800类；旧18点不同producer/source identity，不能直接升级。独立完整参考另冻manager资源240s/1.8M callbacks，原70dps/区间宽度与无science公差不得grant的规则保留；旧subset预算90s/100k及全部既有成本不重置。仅候选编写，不运行新完整积分。剩余总exit：全域连续精度及coupled energy预算、reactive四模块/长时、当前CPU-CUDA/GUI/两平台匹配计时与CI/文档/push；无完成或release声明。单checkout、单本机重负载、E盘8GiB+64MiB预留、无新H5，故障raw保留。下次回查≤15分钟。
+
+
+目标回查 2026-10-07T07:59:37.383651+00:00：真实诊断70.520s仍按原门槛拒绝，原代数residual2.861062e-15已低于目标6.501070e-15；主要是B构造2.425372e-14与homogeneous A/eval3.289854e-14的分离证书。精确实际符号独立核对表明同一δM在完整Aphi-source-Bdatum中乘(phi_anchor-datum)，允许联合包围；独立DPS公开系数恒等式的精确Fraction核对同时确认不能省略stored row sum与实际dot算术。Root候选采用独立typed complete residual ledger，原完整RHSerror E_b仍保留用于||b_exact||lower；源、原idealB*积分误差、组装、actual apply/subtraction和联合构造均计一次，零边界datum的旧homogeneous proof保持。原solve/rtol1e-10/atol0/maxcycles200/physical gate保持，新constantfield严格零差及缺失/非法证书拒绝折叠原CIowner，实际build通过，owner运行仍待结果；不当作新版矩阵PASS。DPS一次44.5s/10667输出（思考10216/正文451），估计USD.00654265–.0130853，账单/Root active未知；与诊断run和本地核对重叠，无等待/返修。全域参考候选完成两文件工程交付，Root尚未数值运行/科学签收；完整scope原科学出口保持。下次回查≤15分钟。
+
+
+目标回查 2026-10-07T08:11:12.598885+00:00：联合证书现有综合Poisson CIowner实际通过9.078s（canonical常数精确抵消/零datum保持/非法、未认证、Overflow拒绝及全部原convergence/BC）。随后真实Self仍原门槛拒绝71.590s：total1.3454334621176297e-14 > safe1.3002140746945254e-14，completeE1.0593272636740837e-14，原algebra residual2.8610619844354584e-15；没有把失败改称PASS。此时原认证预算有正余量，Root复用已真实Converged的resident phi与同一rhs/ring/source、在原200累计cycles内收紧work atol；每次继续以原rtol/atol完整认证，预算floor/非法/零cycle停滞明确拒绝，无新增Gather/边界积分/源项/方法/阈值。独立只读review未发现阻断，实际build26.964s通过；defaultowner与新矩阵仍待验。完整独立参考工程候选唯一返修修复outerCLI ctx70冻结与整数密度floatbits碰撞；原7 helper与3 testclass AST保持，Root综合31项工具测试通过，不加载flint/运行积分/签收physics。参考待240s/1.8M同一预算的实际全域run。完整隔离精度、真实self总能量/AMR work、反应四模块/续算、最终CPU-CUDA/GUI/匹配计时长时、CI/文档/push仍待完成。下次回查≤15分钟。
+
+
+目标回查 2026-10-07T08:21:36.513463+00:00：同源work refinement源码实际重编26.964s后，原完整gravity/stage owner再次通过32.199s，全部三种classifier拒绝/rollback保持。真实private矩阵在独立输出目录运行中；Euler第一组实际journal residual1.0956275096356466e-14≤safe1.3002140746945254e-14，原rtol1e-10/atol0与总cycles200保持，候选physics标记0。当前RK2/RK3目录已出现，但整组仍未结束、不能拼成PASS。Root已综合采用完整参考候选，31项工具测试通过0.047s；全域数值独立积分仍待单重负载槽释放。完整能量/边界/CF功账本设计并行，当前native journal缺乏独立W/边界交换证明，接口收据不能签收该科学出口。Gemini仅润色已冻结的误差/连续场/耦合说明，未改变公式或资格；manager首次complexity字段写错被本地schema拒绝（0 inference），据真实schema改dense后实际派发，整体累计资源与一次编辑限制保持。DPS无当前新增独立待题，上一公开数学已独立review并被动收集token/费用，无为维持调用制造任务。整体O/公开Native/CUDA、reactive四模块/长时、GUI/正式配对计时与发布收束均未完成。下一回查≤15分钟。
+
+
+目标回查 2026-10-07T08:32:05.868698+00:00：真实PrivateSelf矩阵780.251s后因zero-row journal schema尚buffered而停止；已完成Euler1、RK2两stage、RK3三stage、mixed Euler1共7个实际accepted fields，原residual/safe全部满足，另wrong-dt首stage实际field及全owner rollback通过。原native constructor写header直接return、zero committed flush直接return，随后fixture立即读取导致缺header，异常析构后才写出96bytes；独立只读复核确认，不是新Poisson失败。Root仅按普通journal原schema发布规则增加native constructor flush+I/O失败检查，原断言/threshold不改。最后cache-owner负例尚未进入，需独立现有owner模式验收，不拼作整组PASS。
+
+全域1568目标/800精确反射类连续参考已启动，distinct frozen240s/1.8M callbacks贯穿整个请求，70dps及原CGSG×1e-12参考宽度保留；所有失败/遗漏仍UNVERIFIED，非production科学公差。新真实self endpoint/同次Frho/CF功和Green账本设计已只读完成，尚未实施或签收。Gemini52.607s交付被数字保护检查拒绝，Root独立检查候选及语义，不把提供方成功当接受；无项目越界工具。完整O/公开Native/CUDA、reactive四模块/长时、GUI/匹配平台计时与发布出口保持待完成。唯一checkout、单重负载/E盘8GiB+64MiB预留保持，无新H5、失败raw保留；CI既有owner/FLASH与flint非必须。下次目标回查≤15分钟。
+
+
+目标回查 2026-10-07T08:46:54.109591+00:00：原native journal表头修复实际build37.803s；同一未修改数学的真实cache refusal通过70.578s，live writer schema可读、真实prepared field之后drop lease拒绝、全owner回滚。现有defaultowner再次通过33.422s，原三个classifier故障保持。之前矩阵7个accepted stages及wrong-dt rollback与此次独立最后cache check合计9次真实fields；记录为两次维护调用的scoped条款闭合，不虚称同一完整矩阵调用PASS。当前真实512source/1056face新field export通过117.183s（含真实薄编译），新source/binding/root/所有observer与旧producer逐项完全一致，field/math来源独立保存。
+
+完整连续参考1568位置、800精确反射类全部区间认证，1101139callbacks54.041577879s、guard55.436s，原240s/1.8M及固定宽度未改变；旧field不能冒充当前field。下一纯精确adapter复用数学区间、重新比较新field/side/cell，同时冻结新的同次flux/endpoint能量诊断，任何新的physics公差仍不得由观测反推。公开RZ/Device、reactive四模块/动态AMR与续算、最终CPU-CUDA/GUI/同终点计时及长时和发布仍待完整收束；本节点可review/push，不是release完成。唯一checkout/单重负载与E8GiB+64MiB预留保持，Host约22.22GiB、无H5新增。
+
+本轮辅助核对采用5个公开数学问题的6次真实DPS API（含1次截断交付的唯一返修）：已知累计worker256.44s、输出64000token、估算USD0.03930152–0.07860304；账单/Root active成本未知。新端点/Green/gauge恒等式46.74s（11786输出、11323思考）已独立Fraction/Green符号推导接受，仅数学；不等于实际总能量通过。均与本机编译/模拟和协调重叠，未阻塞主线；输出截断是交付问题，未回填科学失败。建议保留有界数学副手、保持Root独立实算签收，不能从这一批宣称普遍提速。Gemini一次52.607s、4059输入/5836输出/5114思考，数字门禁误判来自wrapper嵌套LOCK单次恢复遗漏0.5；Root按真实依赖展开后全部公式/数字一致并恢复末句原用途措辞，已采用selectedpassages至CoreRZ第6节；无第二次调用，实际费用未知。原provider INVALID_OUTPUT历史保留，未关闭门禁。下次目标回查≤15分钟。

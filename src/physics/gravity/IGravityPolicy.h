@@ -25,8 +25,9 @@ namespace Physical {
 namespace Gravity {
 
 class NativeExternalStageFrame;
+class NativeSelfStageFrame;
 /** Source description is data discovery, never authority to consume a stage. */
-enum class GravitySourceOrigin : unsigned char { Unknown, NativeExternalOrthonormal };
+enum class GravitySourceOrigin : unsigned char { Unknown, NativeExternalOrthonormal, NativeSelfComposite };
 struct GravitySourceDescriptor {
     GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
     ExternalGravityView external{};
@@ -46,6 +47,12 @@ public:
     const NativeExternalStageFrame* prepared_native_external() const noexcept {
         return native_external_frame_;
     }
+    /** Borrow only the private actual solved Native RZ Hydro-stage frame.
+     * Discovery data and diagnostic candidates cannot attach this authority.
+     */
+    const NativeSelfStageFrame* prepared_native_self() const noexcept {
+        return native_self_frame_;
+    }
     // Optional work from the actual Riemann mass flux. Existing external gravity
     // retains its cell source; self gravity supplies this compatible face work.
     virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
@@ -62,6 +69,7 @@ public:
 private:
     friend class arch::driver::GravityStage;
     mutable const NativeExternalStageFrame* native_external_frame_=nullptr;
+    mutable const NativeSelfStageFrame* native_self_frame_=nullptr;
 };
 
 } // namespace Gravity

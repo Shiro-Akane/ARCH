@@ -276,23 +276,31 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
     originals = [
         "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/gravity/test_gravity_stage_contract.cpp.o",
         "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_host_hydro_transaction.cpp.o",
+        "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_rz_runtime_boundary.cpp.o",
+        "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_rz_runtime_external.cpp.o",
+    ]
+    production_objects = [
+        "CMakeFiles/arch_gravity_stage_contract.dir/src/amr/elliptic/EllipticMeshAdapter.cpp.o",
+        "CMakeFiles/arch_gravity_stage_contract.dir/src/driver/stages/GravityStage.cpp.o",
     ]
 
     def link_line(self, objects=None):
         objects = self.originals if objects is None else objects
-        return ": && /usr/bin/c++ -O3 -flto=auto -fno-fast-math " + " ".join(objects) + \
+        return ": && /usr/bin/c++ -O3 -flto=auto -fno-fast-math " + " ".join(objects + self.production_objects) + \
             " -o arch_gravity_stage_contract libarch_driver_runtime.a libarch_diffusion_math.a " \
             "libarch_gravity_cpu.a -lm -fopenmp && :"
 
-    def test_two_original_objects_become_one_and_flags_libraries_keep_order(self):
+    def test_all_original_test_objects_become_one_and_production_flags_libraries_keep_order(self):
         tokens = fixture_build.fixture_link_recipe(self.link_line(), self.originals,
             Path("/private/0.o"), Path("/private/rz-runtime-boundary"))
         expected = fixture_build.command_tokens(self.link_line())
         expected[expected.index(self.originals[0])] = "/private/0.o"
-        expected.remove(self.originals[1])
+        for name in self.originals[1:]:
+            expected.remove(name)
         expected[expected.index("-o") + 1] = "/private/rz-runtime-boundary"
         self.assertEqual(tokens, expected)
-        self.assertEqual([t for t in tokens if t.endswith(".o")], ["/private/0.o"])
+        self.assertEqual([t for t in tokens if t.endswith(".o")],
+                         ["/private/0.o", *self.production_objects])
         self.assertIn("-flto=auto", tokens)
 
     def test_upstream_archive_shell_scaffold_is_not_executed_or_selected(self):
@@ -303,7 +311,7 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
         self.assertNotIn("gcc-ar", " ".join(result))
 
     def test_extra_application_object_cannot_be_forced_into_fixture_link(self):
-        with self.assertRaisesRegex(RuntimeError, "exactly its two"):
+        with self.assertRaisesRegex(RuntimeError, "exactly its declared"):
             fixture_build.fixture_link_recipe(
                 self.link_line(self.originals + ["CMakeFiles/ARCH.dir/src/api/preview/Preview.cpp.o"]),
                 self.originals, Path("0.o"), Path("exe"))
@@ -314,6 +322,23 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
                          self.link_line(self.originals + self.originals[:1])):
             with self.subTest(commands=commands), self.assertRaises(RuntimeError):
                 fixture_build.fixture_link_recipe(commands, self.originals, Path("0.o"), Path("exe"))
+
+    def test_stray_test_unknown_production_or_duplicate_production_objects_stay_rejected(self):
+        for extra in ("CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_stray.cpp.o",
+                      "CMakeFiles/arch_gravity_stage_contract.dir/src/driver/stages/UnknownStage.cpp.o",
+                      self.production_objects[0]):
+            with self.subTest(extra=extra), self.assertRaisesRegex(RuntimeError, "exactly its declared"):
+                fixture_build.fixture_link_recipe(self.link_line(self.originals + [extra]),
+                    self.originals, Path("0.o"), Path("exe"))
+        for missing in self.production_objects:
+            line = self.link_line().replace(" " + missing, "")
+            with self.subTest(missing=missing), self.assertRaisesRegex(RuntimeError, "exactly its declared"):
+                fixture_build.fixture_link_recipe(line, self.originals, Path("0.o"), Path("exe"))
+
+    def test_replacement_caller_cannot_claim_a_different_test_owner_list(self):
+        forged = self.originals[:-1] + ["CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_forged.cpp.o"]
+        with self.assertRaisesRegex(RuntimeError, "exactly its declared"):
+            fixture_build.fixture_link_recipe(self.link_line(forged), forged, Path("0.o"), Path("exe"))
 
     def test_selected_link_refuses_shell_tokens(self):
         for suffix in (" && execute-other", " ; execute-other", " | execute-other", " > output"):
@@ -333,6 +358,22 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
         self.assertIn("-flto=auto", result)
         self.assertIn("-ffp-contract=off", result)
         self.assertEqual(result[result.index("-c") + 1], "/source/fixture.cpp")
+
+    def test_private_standalone_removes_only_exact_embedded_switch(self):
+        entry = {"command": "c++ -DARCH_CUDA_BUILD_ENABLED=0 -DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1 "
+                 "-DARCH_HAS_KLU=1 -O3 -flto=auto -fno-fast-math -ffp-contract=off -o x.o -c x.cpp"}
+        production = {"command": "c++ -DARCH_CUDA_BUILD_ENABLED=0 -fopenmp -o main.o -c main.cpp"}
+        tokens, added = fixture_build.fixture_compile_recipe(entry, production, Path("fixture.cpp"), Path("0.o"))
+        self.assertNotIn("-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1", tokens)
+        for original in ("-DARCH_HAS_KLU=1", "-O3", "-flto=auto", "-fno-fast-math", "-ffp-contract=off"):
+            self.assertIn(original, tokens)
+        self.assertEqual(added, ["-fopenmp"])
+        for bad in ("-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=0", "-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED",
+                    "-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1 -DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1"):
+            with self.subTest(bad=bad), self.assertRaisesRegex(RuntimeError, "unexpected embedded"):
+                fixture_build.fixture_compile_recipe(
+                    {"command": "c++ -DARCH_CUDA_BUILD_ENABLED=0 " + bad + " -o x.o -c x.cpp"},
+                    production, Path("fixture.cpp"), Path("0.o"))
 
     def test_openmp_is_neither_invented_nor_duplicated(self):
         base = "c++ -DARCH_CUDA_BUILD_ENABLED=0 -o original.o -c original.cpp"
@@ -419,7 +460,7 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
         self.assertEqual(result[:index + 1] + result[index + 3:], original)
 
     def test_provider_objects_cannot_duplicate_fixture_or_import_a_full_archive(self):
-        for providers in (["a.o", "a.o"], [self.originals[0]], ["/private/0.o"],
+        for providers in (["a.o", "a.o"], [self.originals[0]], [self.production_objects[0]], ["/private/0.o"],
                           ["libarch_solver_dispatch.a"]):
             with self.subTest(providers=providers), self.assertRaisesRegex(RuntimeError, "provider object"):
                 fixture_build.fixture_link_recipe(self.link_line(), self.originals,
@@ -445,6 +486,61 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unknown fixture compile recipe"):
             fixture_build.fixture_compile_recipe(original, production, Path("f.cpp"),
                 Path("0.o"), recipe="unchecked-physics")
+
+
+class PrivateRetainedOwnerTests(unittest.TestCase):
+    """Actual-object provenance checks for the two configured source owners only."""
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name) / "source"
+        self.build = Path(self.directory.name) / "build"
+        self.entries = []
+        controls = "-DARCH_CUDA_BUILD_ENABLED=0 -DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1 " \
+            "-O3 -flto=auto -fno-fast-math -fno-math-errno -ffp-contract=off"
+        self.template = {"command": "/usr/bin/c++ " + controls + " -o template.o -c template.cpp"}
+        for name, target in zip(fixture_build.LINK_PRODUCTION_SOURCES, fixture_build.LINK_PRODUCTION_OBJECTS):
+            source = self.root / name; source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text("retained actual source bytes")
+            obj = self.build / target; obj.parent.mkdir(parents=True, exist_ok=True)
+            obj.write_bytes(b"retained actual object bytes")
+            self.entries.append({"file": str(source), "directory": str(self.build), "output": target,
+                "command": "/usr/bin/c++ " + controls + " -o " + target + " -c " + str(source)})
+
+    def selected(self):
+        return fixture_build.selected_link_owners(self.entries, self.root, self.build, self.template)
+
+    def test_exact_sources_and_objects_are_authenticated_without_execution(self):
+        retained = self.selected()
+        self.assertEqual([x["source"] for x in retained], list(fixture_build.LINK_PRODUCTION_SOURCES))
+        self.assertEqual([x["ninjaTarget"] for x in retained], list(fixture_build.LINK_PRODUCTION_OBJECTS))
+        self.assertTrue(all(x["owner"] == fixture_build.TARGET for x in retained))
+        for record in retained:
+            self.assertEqual(Path(record["object"]), (self.build / record["ninjaTarget"]).resolve())
+
+    def test_foreign_build_missing_object_operand_drift_or_fp_drift_is_rejected(self):
+        original = dict(self.entries[0])
+        changes = (
+            {"directory": str(self.root)},
+            {"command": original["command"].replace("-c " + original["file"], "-c /foreign.cpp")},
+            {"command": original["command"].replace("-fno-fast-math", "-ffast-math")},
+        )
+        for changed in changes:
+            with self.subTest(changed=changed), self.assertRaises(RuntimeError):
+                self.entries[0] = {**original, **changed}; self.selected()
+        self.entries[0] = original
+        Path(self.build / original["output"]).unlink()
+        with self.assertRaisesRegex(RuntimeError, "missing"):
+            self.selected()
+
+    def test_retained_object_bytes_and_identity_enter_the_same_frozen_input_guard(self):
+        retained = self.selected(); paths = [Path(record["object"]) for record in retained]
+        with mock.patch.object(fixture_build.provenance, "source_identity", return_value={"sha256": "frozen"}):
+            before = fixture_build.capture_inputs(self.root, paths)
+            paths[0].write_bytes(b"changed actual object bytes")
+            after = fixture_build.capture_inputs(self.root, paths)
+        with self.assertRaisesRegex(RuntimeError, "baseline changed"):
+            fixture_build.require_unchanged(before, after)
 
 
 class PrivateProviderReuseTests(unittest.TestCase):

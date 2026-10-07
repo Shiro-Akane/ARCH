@@ -18,14 +18,13 @@
 #include <type_traits>
 #include <vector>
 
-#include "numerics/integrator/IHydroSolver.h"
-#include "numerics/integrator/HydroGeometryBinding.h"
-#include "numerics/integrator/HydroBoundaryAuthority.h"
-#include "numerics/integrator/TimeIntegratorHelper.h"
-
 #include "amr/AMRControl.h"
 #include "data/FluidState.h"
 #include "driver/schedule/StageScheduler.h"
+#include "numerics/integrator/HydroBoundaryAuthority.h"
+#include "numerics/integrator/HydroGeometryBinding.h"
+#include "numerics/integrator/IHydroSolver.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
 struct SolverRK2
 {
@@ -77,9 +76,10 @@ struct SolverRK2
                 if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
                     if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>) {
                         if(geometry.deferred_native_source) {
-                            const auto* source=gravity->prepared_native_external();
-                            if(!source)throw std::logic_error("Native source preparation supplied no actual frame");
-                            wall_domain_ptr=&source->boundary_domain();
+                            // Borrow exactly the private prepared external OR
+                            // self frame's original boundary authority; never
+                            // reconstruct or relabel a source wall domain.
+                            wall_domain_ptr=&TimeIntegration::prepared_native_boundary_domain(*gravity);
                             // The private actual Runtime source frame precedes
                             // all Native register/output/cache mutation.
                             if(descriptor.stage==1) {

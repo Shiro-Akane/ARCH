@@ -1,68 +1,78 @@
 #!/usr/bin/env python3
-"""Compile an actual CPU Runtime fixture from trusted existing CMake commands.
-Recompile the touched Runtime translation units; do not configure, simulate,
-generate scientific output, or use old Runtime objects as evidence.
+"""Compile only the selected actual CPU Runtime test from its strict CTest owner.
+Reuse authenticated fresh Runtime/gravity libraries and real production owner
+objects; do not configure, rebuild production, simulate or grant native physics.
 """
-import argparse,json,pathlib,shlex,subprocess,os,hashlib
+import argparse,json,pathlib,subprocess,os,sys
+root=pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(root/"tools"))
+from validation_fixture_build import build_cpu_fixture,verify_fixture_inputs,RUNTIME_SOURCES
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
 modes=p.add_mutually_exclusive_group()
 modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
 modes.add_argument("--native-rz-regrid",action="store_true",help="Explicit internal CPU RZ Runtime AMR transaction, no physical grant")
+p.add_argument("--materialized-source-only",action="store_true",help="One actual Native source plus candidate field snapshot, separate from lifecycle matrix")
 p.add_argument("--field-after-regrid",action="store_true",help="Native RZ regrid plus original candidate fields on refined/coarse topology")
 p.add_argument("--regrid-rollback",action="store_true",help="Actual CPU RZ finalizer fault/rollback verification")
 a=p.parse_args()
+if a.materialized_source_only and not a.native_rz:p.error("--materialized-source-only requires --native-rz")
 if a.regrid_rollback and not a.native_rz_regrid:p.error("--regrid-rollback requires --native-rz-regrid")
 if a.regrid_rollback and a.field_after_regrid:p.error("field-after-regrid and rollback are independent runs")
 if a.field_after_regrid and not a.native_rz_regrid:p.error("--field-after-regrid requires --native-rz-regrid")
 build=a.build.resolve();out=a.output_root.resolve()
 if out.exists():p.error("output-root must be new")
-entries=json.loads((build/"compile_commands.json").read_text())
-main=next(e for e in entries if pathlib.Path(e["file"]).name=="main.cpp")
-root=pathlib.Path(main["file"]).parent.parent
-if "-DARCH_CUDA_BUILD_ENABLED=0" not in shlex.split(main["command"]):p.error("CPU build required")
-out.mkdir(parents=True)
-sources=["tests/host/gravity/test_rz_runtime_rollback_contract.cpp" if a.regrid_rollback else
+source=("tests/host/gravity/test_rz_runtime_rollback_contract.cpp" if a.regrid_rollback else
  "tests/host/gravity/test_rz_runtime_regrid_contract.cpp" if a.native_rz_regrid else
- "tests/host/gravity/test_gravity_runtime_rz_contract.cpp" if a.native_rz else "tests/host/gravity/test_gravity_runtime_contract.cpp",
- "src/driver/stages/GravityStage.cpp",
- "src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundary.cpp",
- "src/driver/runtime/DriverRegrid.cpp","src/amr/elliptic/EllipticMeshAdapter.cpp"]
-objects=[]
-def execute(label,args):
-    with (out/(label+".log")).open("w") as log:
-        result=subprocess.run(args,cwd=build,stdout=log,stderr=subprocess.STDOUT,timeout=180)
-    if result.returncode:
-        print((out/(label+".log")).read_text());raise SystemExit(result.returncode)
-for i,source in enumerate(sources):
-    args=shlex.split(main["command"])
-    obj=out/(str(i)+".o");objects.append(str(obj))
-    args[args.index("-o")+1]=str(obj)
-    args[args.index("-c")+1]=str(root/source)
-    execute("compile-"+str(i),args)
-commands=subprocess.check_output(["ninja","-t","commands","ARCH"],cwd=build,text=True)
-line=next(x for x in reversed(commands.splitlines()) if " -o bin/ARCH " in x)
-tokens=shlex.split(line)
-if tokens[:2]==[":","&&"]:tokens=tokens[2:]
-if tokens[-2:]==["&&",":"]:tokens=tokens[:-2]
-if any(t in {"&&",";","|",">","<"} for t in tokens):p.error("unsupported link scaffolding")
-idx=tokens.index(main["output"]);tokens[idx:idx+1]=objects
-exe=out/"gravity-runtime-contract";tokens[tokens.index("-o")+1]=str(exe)
-execute("link",tokens)
+ "tests/host/gravity/test_gravity_runtime_rz_contract.cpp" if a.native_rz else
+ "tests/host/gravity/test_gravity_runtime_contract.cpp")
+# Exact five Runtime owner TUs; real compiled objects are never claimed rebuilt.
+owners=list(RUNTIME_SOURCES)
+grav_sources=["src/physics/gravity/self/SelfGravity.cpp",
+              "src/physics/gravity/GravityBoundary.cpp","src/physics/gravity/GravityExecution.cpp"]
+headers=["tools/validation_fixture_build.py","tests/host/driver/RzRuntimeWitness.h",
+         "tests/host/gravity/RzMaterializedSourceRecord.h",
+         "src/physics/gravity/self/SelfGravity.h","src/physics/gravity/self/GravityWorkspace.h",
+         "src/physics/gravity/GravityBoundary.h","src/physics/gravity/GravityExecution.h",
+         "src/physics/gravity/GravitySolveTypes.h","src/physics/gravity/IGravityPolicy.h",
+         "src/driver/stages/GravityStage.h","src/driver/runtime/DriverRuntime.h",
+         "src/driver/runtime/StateResidency.h","src/driver/stages/DriverStages.h",
+         "src/driver/schedule/StageScheduler.h","src/numerics/state/RzNativeClosure.h",
+         "src/amr/elliptic/EllipticMeshAdapter.h"]
+rkl_headers=["src/numerics/diffusion/"+name for name in
+    ["DiffDispatch.h","DiffusionAMRStages.h","RKL1TimeIntegrator.h","RKL2TimeIntegrator.h"]]
+exe,build_record,frozen=build_cpu_fixture(build=build,output=out,source=root/source,
+    executable_name="gravity-runtime-contract",owner_sources=owners,
+    observed_headers=headers+rkl_headers+grav_sources,compile_recipe="production")
+# Keep the original selected-test production compile controls, including LTO/FP
+# and explicit OpenMP; linking uses only the exact existing four-test/two-real-
+# production CTest owner. All source/library/ELF identities are checked again.
+identities=build_record["inputs"]["files"]
+def source_sha(name):return identities[str((root/name).resolve())]["sha256"]
+reused_libraries={name:identity for name,identity in identities.items()
+    if pathlib.Path(name).name in {"libarch_driver_runtime.a","libarch_gravity_cpu.a"}}
+if {pathlib.Path(name).name for name in reused_libraries}!={"libarch_driver_runtime.a","libarch_gravity_cpu.a"}:
+    raise RuntimeError("actual Runtime/gravity archives absent from the frozen fixture link")
 test_args=[str(exe),str(out/"runtime-output")]
 if a.field_after_regrid:test_args.append("--field-after-regrid")
+if a.materialized_source_only:test_args.append("--materialized-source-only")
 result=subprocess.run(test_args,env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=1200 if a.native_rz or a.field_after_regrid or a.regrid_rollback else 30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
+verify_fixture_inputs(frozen,exe,build_record["executableIdentity"])
 summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity all-block/slot/regrid publication; no simulation time advancement",
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
- "buildDirectory":str(build),"executableSha256":hashlib.sha256(exe.read_bytes()).hexdigest(),
- "recompiledSources":{s:hashlib.sha256((root/s).read_bytes()).hexdigest() for s in sources},
- "timestepHeaderSha256":hashlib.sha256((root/"src/driver/stages/DriverStages.h").read_bytes()).hexdigest(),
- "rklHeaderSha256":{str(h.relative_to(root)):hashlib.sha256(h.read_bytes()).hexdigest()
-    for h in [root/"src/numerics/diffusion"/name for name in
-      ["DiffDispatch.h","DiffusionAMRStages.h","RKL1TimeIntegrator.h","RKL2TimeIntegrator.h"]]},
+ "buildDirectory":str(build),"executableSha256":build_record["executableIdentity"]["sha256"],
+ "recompiledSources":{source:source_sha(source)},
+ "reusedCompiledOwner":build_record["reusedCompiledOwner"],
+ "retainedCompiledOwnerSources":build_record["retainedCompiledOwnerSources"],
+ "reusedGravitySourceSha256":{name:source_sha(name) for name in grav_sources},
+ "reusedLibraries":reused_libraries,
+ "fixtureBuildInputs":"fixture-build-inputs.json",
+ "observedHeaderSha256":{name:source_sha(name) for name in headers},
+ "timestepHeaderSha256":source_sha("src/driver/stages/DriverStages.h"),
+ "rklHeaderSha256":{name:source_sha(name) for name in rkl_headers},
  "limitations":["Supported Cartesian identity path only; RZ production gravity/regrid remains gated","No actual Hydro integration or scientific evolution acceptance","No CUDA qualification; only local gravity diagnostic output"]}
 if a.native_rz or a.native_rz_regrid:
     summary["scope"]="Actual CPU RZ DriverRuntime lease -> GravityStage -> SelfGravity candidate; no timestep"
@@ -81,5 +91,9 @@ if a.regrid_rollback:
     summary["limitations"]=["Injected engineering failure only, not a physical stability/evolution gate",
         "Seven actual source Host vector addresses, values and BC frame are checked through in-place rollback; no unrelated pointer or Device ownership grant",
         "Production RZ/Device gates held"]
+if a.materialized_source_only:
+    summary["scope"]="Actual CPU Native RZ Runtime initialization -> checked Current source and same candidate field inspection; no timestep"
+    summary["limitations"]=["Source and same-solve diagnostic only; lifecycle/fault matrix is a separate default lane",
+        "Physical/native/Device gates held; no continuous accuracy or coupled evolution acceptance"]
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

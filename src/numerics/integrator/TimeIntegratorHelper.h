@@ -21,7 +21,9 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cmath>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <span>
@@ -32,9 +34,6 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#include "numerics/state/StateAdmissibility.h"
-#include "numerics/state/RzNativeClosure.h"
-#include "numerics/flux/InvariantDomainFlux.h"
 
 #include "amr/AMRControl.h"
 #include "amr/flux/AMRFluxRegistering.h"
@@ -42,9 +41,13 @@
 #include "driver/runtime/StateResidency.h"
 #include "grid/Grid.h"
 #include "grid/GridMetrics.h"
+#include "numerics/flux/InvariantDomainFlux.h"
+#include "numerics/integrator/GeometricSources.h"
+#include "numerics/state/RzNativeClosure.h"
+#include "numerics/state/StateAdmissibility.h"
 #include "physics/gravity/IGravityPolicy.h"
 #include "physics/gravity/NativeExternalSource.h"
-#include "numerics/integrator/GeometricSources.h"
+#include "physics/gravity/NativeSelfStage.h"
 
 namespace TimeIntegration
 {
@@ -779,6 +782,14 @@ namespace TimeIntegration
         }
     }
 
+    /** Apply the original selected Hydro patch math under a real source receipt.
+     * Workflow: preflight chart/source/input/interval/bounds before clearing
+     * outputs/cache; compute each selected flux; accumulate original divergence;
+     * consume same-stage self face work and paired AMR Energy registration;
+     * retain geometric sources; finally apply external original body math OR
+     * self momentum and complete the patch. The registry alone applies original
+     * area/sign/RK weights and reflux dt. No potential history is retained here.
+     */
     // FluxSchemePolicy supplies compute_fluxes for the selected reconstruction.
     template <typename FluxSchemePolicy, typename EosType>
     inline void evaluate_all_dimensions(
@@ -791,18 +802,29 @@ namespace TimeIntegration
         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
         arch::state::Bounds physical_bounds = {},
         const arch::boundary::HydroBoundaryView& hydro_boundary = {},
-        Physical::Gravity::NativeExternalStageFrame::PatchReceipt* native_source = nullptr)
+        Physical::Gravity::NativeExternalStageFrame::PatchReceipt* native_source = nullptr,
+        Physical::Gravity::NativeSelfStageFrame::PatchReceipt* native_self = nullptr)
     {
         // Validate the chart and reject consumers not yet migrated before any
         // output/cache mutation. Runtime Grid still uses its existing chart.
         (void)GridMetrics::make_geometry_view(grid, semantics);
         const bool rz=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
-        if(rz&&gravity&&gravity->source_descriptor().origin!=
-            Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal)
-            throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
-        if((rz&&gravity&&!native_source)||(native_source&&(!rz||!gravity)))
+        if(native_source&&native_self)
+            throw std::invalid_argument("Native gravity supplied both external and self receipts");
+        if((native_source||native_self)&&(!rz||!gravity))
             throw std::invalid_argument("Native gravity consumer lacks its actual source receipt");
+        if(rz&&gravity) {
+            using Physical::Gravity::GravitySourceOrigin;
+            const auto origin=gravity->source_descriptor().origin;
+            if(origin!=GravitySourceOrigin::NativeExternalOrthonormal&&origin!=GravitySourceOrigin::NativeSelfComposite)
+                throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
+            if((origin==GravitySourceOrigin::NativeExternalOrthonormal&&(!native_source||native_self))
+                ||(origin==GravitySourceOrigin::NativeSelfComposite&&(!native_self||native_source)))
+                throw std::invalid_argument("Native gravity consumer lacks its actual source receipt");
+        }
         if(native_source)native_source->require_application(state,grid,
+            GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds);
+        if(native_self)native_self->require_application(state,grid,
             GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds);
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
@@ -830,13 +852,16 @@ namespace TimeIntegration
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec, semantics,true);
 
-            if (gravity&&!native_source) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
+            // Same actual stage: self work consumes this axis's immutable
+            // Riemann mass flux immediately after its original divergence.
+            if(native_self)native_self->add_flux_work(dU,flux_buffer,dir);
+            else if (gravity&&!native_source) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
 
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
                 amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,
                                                flux_buffer, spec_flux_buffer, n_spec, flux_weight, semantics,
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,native_self);
             }
         }
 
@@ -844,6 +869,12 @@ namespace TimeIntegration
         if(native_source)
             Physical::Gravity::add_native_external_sources(dU,flux_buffer,spec_flux_buffer,
                 state,eos,grid,GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds,*native_source);
+        else if(native_self) {
+            // The frame owns dt and the actual prepared force. No external
+            // rho*u dot g, stage weight or second compatible-work pass occurs.
+            native_self->add_momentum(dU);
+            native_self->commit();
+        }
         else add_gravity_sources(dU, state, grid, dt, gravity);
     }
 } // namespace TimeIntegration

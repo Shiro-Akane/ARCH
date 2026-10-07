@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <span>
 #include <stdexcept>
@@ -316,6 +317,39 @@ struct StageExecutionContext {
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
                              state::ExecutionSide>);
 
+/** Borrowed only during one actual RKL executor/boundary call. This metadata
+ * grants no retry by itself; Runtime authenticates the live macro/field owners. */
+struct RklCompletedBoundaryFrame {
+    const StageExecutionContext* context;
+    const RklStageDescriptor* descriptor;
+    std::span<const amr::BlockHandle> handles;
+    state::StateSlot slot{};state::StateVersion version{};
+    state::CompletionToken completion{};
+    bool completed=false;
+};
+namespace detail {
+inline thread_local RklCompletedBoundaryFrame* active_rkl_completed_boundary=nullptr;
+/** Synchronous stack lease, preserving nested ordinary scope and actual span.
+ * No allocation, EOS call, numerical work or ledger publication occurs here. */
+class ScopedRklCompletedBoundary final {
+    RklCompletedBoundaryFrame frame_;
+    RklCompletedBoundaryFrame* previous_;
+public:
+    ScopedRklCompletedBoundary(const StageExecutionContext& context,
+        const RklStageDescriptor& descriptor,std::span<const amr::BlockHandle> handles)
+        :frame_{&context,&descriptor,handles},previous_(active_rkl_completed_boundary) {
+        active_rkl_completed_boundary=&frame_;
+    }
+    ScopedRklCompletedBoundary(const ScopedRklCompletedBoundary&)=delete;
+    ScopedRklCompletedBoundary(ScopedRklCompletedBoundary&&)=delete;
+    ~ScopedRklCompletedBoundary() noexcept {active_rkl_completed_boundary=previous_;}
+};
+}
+/** Inspect only the current synchronous actual RKL boundary completion. */
+inline const RklCompletedBoundaryFrame* current_rkl_completed_boundary() noexcept {
+    return detail::active_rkl_completed_boundary;
+}
+
 struct StageBinding {
     StageExecutionContext& context;
     std::span<const amr::BlockHandle> handles;
@@ -502,8 +536,13 @@ state::CompletionToken execute_completed_boundary(
     if (!state::is_complete(completed) || completed.value != token.value)
         throw std::logic_error(
             "boundary completion does not match scheduler token");
+    auto* const rkl=active_rkl_completed_boundary;
+    if(rkl&&rkl->context==&context&&rkl->descriptor->output_slot==slot) {
+        rkl->slot=slot;rkl->version=version;rkl->completion=completed;rkl->completed=true;
+    }
     if (context.post_boundary_acceptance)
         context.post_boundary_acceptance(context, slot, version);
+    if(rkl&&rkl->context==&context)rkl->completed=false;
     publish_ghost_batch(context, handles, slot, version, completed);
     return completed;
 }
@@ -580,6 +619,8 @@ StageExecutionResult execute_rkl_stage(
             older,
             {context.side, older_state.interior.version, true, false});
     }
+    detail::ScopedRklCompletedBoundary rkl_frame(context,descriptor,
+        std::span<const amr::BlockHandle>{std::data(handles),std::size(handles)});
     const StageDescriptor access{
         descriptor.stage, descriptor.state_n_slot,
         descriptor.previous_slot, descriptor.output_slot,

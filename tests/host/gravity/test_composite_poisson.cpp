@@ -1,16 +1,21 @@
-#include "numerics/multigrid/CompositeMultigrid.h"
-#include "physics/gravity/GravityBoundary.h"
-#include "physics/gravity/GravitySourceBounds.h"
-#include "physics/constant/PhysicalConstants.h"
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdlib>
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
-#include <limits>
 #include <type_traits>
-#include <cstdlib>
+#include <utility>
+#include <vector>
+
+#include "numerics/multigrid/CompositeMultigrid.h"
+#include "physics/constant/PhysicalConstants.h"
+#include "physics/gravity/GravityBoundary.h"
+#include "physics/gravity/GravitySourceBounds.h"
 using namespace arch;
 namespace {
 constexpr double pi=constants::math::pi;
@@ -2718,6 +2723,236 @@ void rz_boundary_guard() {
     std::cout<<"RZ_BOUNDARY_GUARD_PASS ring_cache=ready ring_values=refused cached_legacy=refused legacy=preserved\n";
 }
 
+/** Independent point monomial, evaluated without the production fit basis.
+ * The binary-root fixtures have exact dyadic centers, so degree <=3 products
+ * are exactly representable in the tested range before the double conversion.
+ */
+long double canonical_rz_point_monomial(const std::array<double,3>& point,
+    int radial_power,int axial_power) {
+    long double value=1.;
+    for(int i=0;i<radial_power;++i)value*=static_cast<long double>(point[0]);
+    for(int i=0;i<axial_power;++i)value*=static_cast<long double>(point[1]);
+    return value;
+}
+
+/** Independent analytic normal derivative p_r*r^(p_r-1)*z^p_z (or axial).
+ * This differentiates the input monomial; it never reads a fitted coefficient.
+ */
+long double canonical_rz_point_derivative(const std::array<double,3>& point,
+    int radial_power,int axial_power,int axis) {
+    const int exponent=axis==0?radial_power:axial_power;
+    if(exponent==0)return 0.;
+    return exponent*canonical_rz_point_monomial(point,
+        radial_power-(axis==0?1:0),axial_power-(axis==1?1:0));
+}
+
+/** Genuine canonical Native boundary-cubic and matching stencil-proof gate.
+ * Workflow:
+ * 1. Build actual axis/annulus and uniform/mixed dyadic leaves from configured
+ *    root geometry; retain the original unbound Native owner as role control.
+ * 2. Check physical boundary construction and the unchanged internal/CF rows.
+ * 3. Compare actual point gradients with ten independent analytic monomials;
+ *    require the public ideal coefficient enclosure to contain their gradients.
+ * This tests point-stencil arithmetic/certificates, not continuous self-gravity
+ * or a source/field acceptance. The original 1e-10 polynomial budget is reused.
+ */
+void native_rz_canonical_boundary_stencil_contract() {
+    constexpr double original_polynomial_budget=1e-10;
+    constexpr std::array<std::array<int,2>,10> powers{{
+        {0,0},{1,0},{0,1},{2,0},{1,1},{0,2},{3,0},{2,1},{1,2},{0,3}}};
+    for(double inner:{0.,1.})for(bool mixed:{false,true}) {
+        // N4 explicitly exercises the minimum cubic root support. N8 gives
+        // genuine coarse/fine internal fragments without a synthetic stencil.
+        const int n=mixed?8:4;
+        auto mesh=base_mesh(2,n);mesh.geometry=elliptic::Geometry::Cylindrical;
+        mesh.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        mesh.origin={inner,-.5,0.};mesh.root_upper={inner+1.,.5,0.};
+        mesh.native_canonical_domain=true;
+        require(mesh.cells[0]>=4&&mesh.cells[1]>=4,"cubic fixture lost genuine root support");
+        const auto leaves=make_cells(mesh,mixed);
+        const elliptic::CompositePoisson op(mesh,leaves,
+            elliptic::BoundaryKind::CurvilinearIsolated);
+        auto unbound=mesh;unbound.native_canonical_domain=false;
+        const elliptic::CompositePoisson original(unbound,leaves,
+            elliptic::BoundaryKind::CurvilinearIsolated);
+        require(op.faces().size()==original.faces().size()
+            &&op.cells()==original.cells(),"canonical policy changed actual leaf/face ownership");
+        std::vector<elliptic::NativeRzStencilEnclosure> proofs;
+        proofs.reserve(op.faces().size());
+        std::array<int,4> physical_sides{};
+        int internal=0,interfaces=0;
+        for(std::size_t f=0;f<op.faces().size();++f) {
+            const auto& face=op.faces()[f];const auto& old=original.faces()[f];
+            require(face.left==old.left&&face.right==old.right&&face.axis==old.axis
+                &&face.boundary_side==old.boundary_side&&face.center==old.center,
+                "canonical fit changed point/fragment identity on binary fixture");
+            require(!(inner==0.&&face.axis==0&&face.center[0]==0.),
+                "canonical axis fixture emitted a nonzero-area origin face");
+            if(face.boundary_side>=0) {
+                ++physical_sides[face.boundary_side];
+                require(face.construction==elliptic::FaceStencilConstruction::PolynomialFit,
+                    "canonical physical boundary recovered instead of exercising cubic fit");
+                require(face.samples.size()>=10,"physical boundary lost actual cubic support");
+            } else {
+                ++internal;
+                const bool cf=op.cells()[face.left].level!=op.cells()[face.right].level;
+                if(cf)++interfaces;
+                // On exact binary geometry, unchanged quadratic/two-point roles
+                // must match actual old rows, not merely fit the same constant.
+                require(face.construction==old.construction&&face.samples==old.samples
+                    &&face.coefficients==old.coefficients
+                    &&face.boundary_coefficient==old.boundary_coefficient
+                    &&face.anchor_coefficient==old.anchor_coefficient
+                    &&face.value_samples==old.value_samples
+                    &&face.value_coefficients==old.value_coefficients
+                    &&face.value_boundary_coefficient==old.value_boundary_coefficient,
+                    "canonical boundary upgrade changed internal/CF six-term policy");
+                require(cf?face.construction==elliptic::FaceStencilConstruction::PolynomialFit
+                    :face.construction==elliptic::FaceStencilConstruction::TwoPoint,
+                    "canonical internal/CF role was silently replaced");
+            }
+            auto proof=op.native_rz_stencil_enclosure(f);
+            // An unresolved inverse is an actual failed gate, not a skipped
+            // polynomial or permission to use the old six-term certificate.
+            require(proof.status==elliptic::BoundaryErrorStatus::Bounded,
+                "canonical native stencil has no actual bounded coefficient certificate");
+            require(proof.face_index==f&&proof.construction==face.construction
+                &&proof.coefficient_lower.size()==face.samples.size()
+                &&proof.coefficient_upper.size()==face.samples.size()
+                &&proof.coefficient_error_upper.size()==face.samples.size(),
+                "canonical coefficient proof detached from actual final row");
+            if(face.construction==elliptic::FaceStencilConstruction::PolynomialFit)
+                require(std::isfinite(proof.inverse_residual_upper)
+                    &&proof.inverse_residual_upper>=0.&&proof.inverse_residual_upper<1.
+                    &&std::isfinite(proof.inverse_norm_upper)&&proof.inverse_norm_upper>0.
+                    &&std::isfinite(proof.lambda_error_upper)&&proof.lambda_error_upper>=0.,
+                    "canonical fitted row bypassed the existing Neumann inverse proof");
+            require(std::isfinite(proof.boundary_lower)&&std::isfinite(proof.boundary_upper)
+                &&proof.boundary_lower<=proof.boundary_upper
+                &&std::isfinite(proof.boundary_error_upper)&&proof.boundary_error_upper>=0.,
+                "canonical boundary coefficient enclosure is malformed");
+            for(std::size_t s=0;s<face.samples.size();++s)
+                require(std::isfinite(proof.coefficient_lower[s])
+                    &&std::isfinite(proof.coefficient_upper[s])
+                    &&proof.coefficient_lower[s]<=proof.coefficient_upper[s]
+                    &&std::isfinite(proof.coefficient_error_upper[s])
+                    &&proof.coefficient_error_upper[s]>=0.,
+                    "canonical fitted coefficient enclosure is malformed");
+            proofs.push_back(std::move(proof));
+        }
+        require(internal>0&&physical_sides[1]>0&&physical_sides[2]>0&&physical_sides[3]>0,
+            "canonical fixture lacks required real face roles");
+        require(inner==0.?physical_sides[0]==0:physical_sides[0]>0,
+            "canonical annulus/axis physical-side coverage is wrong");
+        require(!mixed||interfaces>0,"canonical mixed fixture lacks genuine CF rows");
+        double largest_error=0.;
+        std::vector<double> phi(op.size());
+        for(std::size_t monomial=0;monomial<powers.size();++monomial) {
+            const int rp=powers[monomial][0],zp=powers[monomial][1];
+            for(int cell=0;cell<op.size();++cell)
+                phi[cell]=static_cast<double>(canonical_rz_point_monomial(op.center(cell),rp,zp));
+            for(std::size_t f=0;f<op.faces().size();++f) {
+                const auto& face=op.faces()[f];
+                if(face.boundary_side<0&&monomial>=6)continue; // unchanged internal quadratic role
+                const auto& proof=proofs[f];
+                const long double target=canonical_rz_point_derivative(face.center,rp,zp,face.axis);
+                const long double face_value=face.boundary_side>=0
+                    ?canonical_rz_point_monomial(face.center,rp,zp):0.;
+                const double actual=op.face_gradient(phi,face,static_cast<double>(face_value));
+                const double error=static_cast<double>(std::abs(static_cast<long double>(actual)-target));
+                require(std::isfinite(actual)&&error<original_polynomial_budget,
+                    "canonical point-gradient monomial reproduction failed original budget");
+                largest_error=std::max(largest_error,error);
+                // Independent interval contraction of the PUBLIC ideal row.
+                // The operands are exact dyadic monomial differences here;
+                // no production polynomial/Gram reconstruction acts as oracle.
+                const int anchor=face.left>=0?face.left:face.right;
+                const long double anchor_value=phi[anchor];
+                long double lower=0.,upper=0.;
+                for(std::size_t s=0;s<face.samples.size();++s) {
+                    const long double delta=static_cast<long double>(phi[face.samples[s]])-anchor_value;
+                    const long double a=proof.coefficient_lower[s]*delta;
+                    const long double b=proof.coefficient_upper[s]*delta;
+                    lower+=std::min(a,b);upper+=std::max(a,b);
+                }
+                if(face.boundary_side>=0) {
+                    const long double delta=face_value-anchor_value;
+                    const long double a=proof.boundary_lower*delta,b=proof.boundary_upper*delta;
+                    lower+=std::min(a,b);upper+=std::max(a,b);
+                }
+                require(target>=lower&&target<=upper,
+                    "public ideal coefficient proof does not enclose selected analytic point gradient");
+            }
+        }
+        require(op.native_rz_stencil_enclosure(op.faces().size()).status
+            ==elliptic::BoundaryErrorStatus::InvalidInput,
+            "canonical coefficient proof accepted a nonexistent final face");
+        // Independent exact constant field: the ideal and actual anchored
+        // gradient of phi=datum=M is zero, even when the final boundary-fit
+        // coefficient has a nonzero construction interval. Keeping its SAME
+        // A/B defect correlated must therefore give an exact zero bound.
+        // A homogeneous construction still has its original nonzero bound.
+        const double constant=std::ldexp(1.,30);
+        const std::vector<double> constant_phi(op.size(),constant),
+            constant_data(op.faces().size(),constant),zero_data(op.faces().size(),0.);
+        const auto joint=op.native_rz_prescribed_residual_construction_error(constant_phi,constant_data);
+        const auto separate_a=op.native_rz_operator_construction_error(constant_phi);
+        const auto separate_b=op.native_rz_boundary_construction_error(constant_data);
+        require(joint.status==elliptic::BoundaryErrorStatus::Bounded&&joint.native_norm_upper==0.
+            &&separate_a.status==elliptic::BoundaryErrorStatus::Bounded&&separate_a.native_norm_upper>0.
+            &&separate_b.status==elliptic::BoundaryErrorStatus::Bounded&&separate_b.native_norm_upper>0.,
+            "same prescribed coefficient correlation lost exact constant-gradient identity");
+        const auto homogeneous=op.native_rz_prescribed_residual_construction_error(constant_phi,zero_data);
+        require(homogeneous.status==separate_a.status&&homogeneous.cell_bounds==separate_a.cell_bounds
+            &&homogeneous.native_norm_upper==separate_a.native_norm_upper,
+            "joint prescribed proof changed the original zero-datum homogeneous proof");
+        require(op.native_rz_prescribed_residual_construction_error(constant_phi,{}).status
+            ==elliptic::BoundaryErrorStatus::InvalidInput,"missing actual prescribed data was certified");
+        auto invalid_data=constant_data;invalid_data[0]=std::numeric_limits<double>::quiet_NaN();
+        require(op.native_rz_prescribed_residual_construction_error(constant_phi,invalid_data).status
+            ==elliptic::BoundaryErrorStatus::InvalidInput,"nonfinite prescribed data was certified");
+
+        // The RHS lower bound retains its original separate error E_b even
+        // when the complete residual error E_c is different. These exact
+        // mathematical ledger inputs are API tests, never physical grants.
+        std::vector<double> one(op.size(),1.),zero(op.size(),0.);
+        elliptic::BoundaryRhsError rhs_error;rhs_error.status=elliptic::BoundaryErrorStatus::Bounded;
+        rhs_error.cell_bounds.assign(op.size(),.6);rhs_error.norm_upper=op.native_rz_norm_interval(rhs_error.cell_bounds).upper;
+        elliptic::NativeRzCompleteResidualError complete;complete.status=elliptic::BoundaryErrorStatus::Bounded;
+        complete.cell_bounds.assign(op.size(),.1);complete.native_norm_upper=op.native_rz_norm_interval(complete.cell_bounds).upper;
+        const auto original_safe=op.assess_boundary_residual(one,zero,rhs_error,0.,0.,
+            elliptic::BoundaryErrorQuality::CertifiedAbsolute,.5,0.,elliptic::BoundaryResidualNormScope::RootDyadicRzWeights);
+        const auto correlated=op.assess_native_rz_correlated_residual(one,zero,rhs_error,complete,.5,0.);
+        require(original_safe.status==elliptic::BoundaryResidualStatus::ResidualTooLarge
+            &&correlated.status==elliptic::BoundaryResidualStatus::Accepted
+            &&correlated.error_composition==elliptic::ResidualErrorComposition::CorrelatedPrescribedBoundary
+            &&correlated.tolerance_safe==original_safe.tolerance_safe
+            &&correlated.rhs_error_upper==original_safe.rhs_error_upper
+            &&correlated.complete_residual_error_upper==op.native_rz_norm_interval(complete.cell_bounds).upper,
+            "correlated residual proof changed original tolerance/RHS lower bound or lost complete ledger");
+        auto excessive=complete;excessive.cell_bounds.assign(op.size(),.3);
+        excessive.native_norm_upper=op.native_rz_norm_interval(excessive.cell_bounds).upper;
+        require(op.assess_native_rz_correlated_residual(one,zero,rhs_error,excessive,.5,0.).status
+            ==elliptic::BoundaryResidualStatus::ResidualTooLarge,"complete residual error was omitted");
+        auto missing=complete;missing.cell_bounds.clear();
+        require(op.assess_native_rz_correlated_residual(one,zero,rhs_error,missing,.5,0.).status
+            ==elliptic::BoundaryResidualStatus::InvalidInput,"missing complete error ledger was certified");
+        missing=complete;missing.cell_bounds[0]=-1.;
+        require(op.assess_native_rz_correlated_residual(one,zero,rhs_error,missing,.5,0.).status
+            ==elliptic::BoundaryResidualStatus::InvalidInput,"negative complete error ledger was certified");
+        missing=complete;missing.status=elliptic::BoundaryErrorStatus::UncertifiedInput;
+        require(op.assess_native_rz_correlated_residual(one,zero,rhs_error,missing,.5,0.).status
+            ==elliptic::BoundaryResidualStatus::UncertifiedInput,"uncertified complete error ledger was certified");
+        missing=complete;missing.status=elliptic::BoundaryErrorStatus::Overflow;
+        missing.native_norm_upper=std::numeric_limits<double>::infinity();
+        require(op.assess_native_rz_correlated_residual(one,zero,rhs_error,missing,.5,0.).status
+            ==elliptic::BoundaryResidualStatus::Overflow,"overflow complete error lost its actual failure class");
+        std::cout<<"RZ_CANONICAL_BOUNDARY_STENCIL_PASS inner="<<inner<<" mixed="<<mixed
+            <<" root="<<n<<" boundary_terms=10 internal_terms=6 point_error="<<largest_error
+            <<" interfaces="<<interfaces<<" certificate=actual_public_row\n";
+    }
+}
+
 /** Frozen RZ polynomial, point-valued potential and analytic face derivatives. */
 void rz_manufactured() {
     constexpr double a=.75,b=1.25;
@@ -2780,6 +3015,324 @@ void rz_manufactured() {
             <<" target="<<result.report.target<<'\n';
         // Report solution error separately; residual alone is not science acceptance.
     }
+}
+
+
+/** Independent smooth native-RZ continuum data, fixed before execution.
+ *
+ * Phi(r,z) = r^4 + z^4/2 + r^2 z^2/4 + r^2 + z^2/2.
+ * Lap_RZ(Phi) = (1/r) d_r(r d_r Phi) + d_zz Phi
+ *             = 5 + (33/2) r^2 + 7 z^2.
+ *
+ * For the actual full-ring cell [a,b] x [c,d], V=pi(b^2-a^2)(d-c).
+ * Integrating r*Lap(Phi) independently gives
+ * <Lap(Phi)>_V = 5 + (33/4)(a^2+b^2)
+ *                 + (7/3)(c^2+cd+d^2).
+ * A=-Lap, so the solver RHS is the negative analytic cell average. The
+ * corresponding physical density is positive <Lap(Phi)>_V/(4*pi*G).
+ * No discrete A*desiredPhi, inferred density, source projection, numerical
+ * quadrature or production density-moment implementation supplies this source.
+ */
+struct NativeRzSmoothReference {
+    static double potential(const std::array<double,3>& x) {
+        const double r2=x[0]*x[0],z2=x[1]*x[1];
+        return r2*r2+.5*z2*z2+.25*r2*z2+r2+.5*z2;
+    }
+    /** Physical point derivatives in the genuine (r,z) native chart. */
+    static std::array<double,3> gradient(const std::array<double,3>& x) {
+        const double r=x[0],z=x[1];
+        return {4.*r*r*r+.5*r*z*z+2.*r,2.*z*z*z+.5*r*r*z+z,0.};
+    }
+    /** Closed antiderivatives under the actual native V measure, not midpoint source. */
+    static double mean_laplacian(double a,double b,double c,double d) {
+        return 5.+(33./4.)*(a*a+b*b)+(7./3.)*(c*c+c*d+d*d);
+    }
+};
+
+/** One optional N32 actual-operator attribution, never a convergence gate.
+ * The independent V-mean source and point Dirichlet values remain unchanged.
+ * A*analytic point Phi is used only to observe truncation, never as solver RHS.
+ * Cell categories overlap explicitly; masked counts disclose intersections.
+ */
+void rz_order_diagnostic() {
+    constexpr int n=32;
+    constexpr double original_polynomial_budget=1e-10;
+    auto base=base_mesh(2,n);base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.origin={0.,-.5,0.};base.root_upper={1.,.5,0.};
+    base.native_canonical_domain=true;
+    multigrid::CompositeMultigrid solver(base,make_cells(base,true),
+        elliptic::BoundaryKind::CurvilinearIsolated);
+    const auto& op=solver.op();
+    require(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+        &&op.base().native_canonical_domain,"order diagnostic lost actual native geometry");
+    const int cells=op.size();
+    std::vector<double> source(cells),exact(cells),bc(op.faces().size()),tau(cells),
+        true_divergence(cells,0.),flux_tau(cells,0.),solution_error(cells),residual(cells);
+    std::vector<unsigned char> cf(cells,0),physical(cells,0),axis(cells,0);
+    for(int c=0;c<cells;++c) {
+        const double a=op.lower(c,0),b=op.upper(c,0),zlo=op.lower(c,1),zhi=op.upper(c,1);
+        require(a>=0.&&b>a&&zhi>zlo&&std::isfinite(a)&&std::isfinite(b)
+            &&std::isfinite(zlo)&&std::isfinite(zhi),"order diagnostic has invalid actual cell bounds");
+        const double lap=NativeRzSmoothReference::mean_laplacian(a,b,zlo,zhi);
+        const double rho=lap/(4.*pi*constants::gravity::cgs::gravitational_constant);
+        require(std::isfinite(lap)&&lap>0.&&std::isfinite(rho)&&rho>0.,
+            "order diagnostic independent physical source is invalid");
+        source[c]=-lap;exact[c]=NativeRzSmoothReference::potential(op.center(c));
+        axis[c]=a==0.;
+    }
+    for(std::size_t f=0;f<op.faces().size();++f)
+        if(op.faces()[f].boundary_side>=0)
+            bc[f]=NativeRzSmoothReference::potential(op.faces()[f].center);
+    const auto lifted=op.effective_rhs(source,bc);
+    const auto solved=solver.solve(lifted,{1e-11,0.,300});
+    require(solved.report.status==multigrid::SolveStatus::Converged
+        &&solved.report.residual<=solved.report.target,
+        "order diagnostic solve missed the original residual contract");
+    op.apply(solved.potential,residual);op.apply(exact,tau);
+    for(int c=0;c<cells;++c) {
+        residual[c]-=lifted[c];tau[c]-=lifted[c];
+        solution_error[c]=solved.potential[c]-exact[c];
+    }
+    require(op.norm(residual)<=solved.report.target,
+        "order diagnostic actual solved residual missed original target");
+    struct FaceStats {
+        int count=0;long double area=0.,point_squared=0.,mean_squared=0.;
+        double point_max=0.,mean_max=0.,prediction_max=0.;int predicted=0;
+        /** Retain weighted point/true-mean errors without an empirical cutoff. */
+        void add(double measure,double point_error,double mean_error) {
+            ++count;area+=measure;point_squared+=static_cast<long double>(measure)*point_error*point_error;
+            mean_squared+=static_cast<long double>(measure)*mean_error*mean_error;
+            point_max=std::max(point_max,std::abs(point_error));mean_max=std::max(mean_max,std::abs(mean_error));
+        }
+    } face_stats[3][2];
+    int construction_count[3]{};double prediction_max=0.;
+    for(std::size_t f=0;f<op.faces().size();++f) {
+        const auto& face=op.faces()[f];int kind=-1;
+        switch(face.construction) {
+        case elliptic::FaceStencilConstruction::TwoPoint:kind=0;break;
+        case elliptic::FaceStencilConstruction::PolynomialFit:kind=1;break;
+        case elliptic::FaceStencilConstruction::EllipticRecovery:kind=2;break;
+        }
+        require(kind>=0&&face.axis>=0&&face.axis<2&&face.native_bounds
+            &&std::isfinite(face.area)&&face.area>0.,"order diagnostic invalid actual face construction");
+        ++construction_count[kind];
+        if(face.boundary_side>=0) {
+            if(face.left>=0)physical[face.left]=1;if(face.right>=0)physical[face.right]=1;
+        }
+        if(face.left>=0&&face.right>=0
+            &&op.cells()[face.left].level!=op.cells()[face.right].level)cf[face.left]=cf[face.right]=1;
+        const double R=face.center[0],Z=face.center[1];
+        const double a=face.fragment_lower[0],b=face.fragment_upper[0];
+        const double zlo=face.fragment_lower[1],zhi=face.fragment_upper[1];
+        // Radial surface measure is constant R*dz; axial surface is r*dr.
+        // These are independent closed antiderivatives over ACTUAL fragments.
+        const double mean_gradient=face.axis==0
+            ?4.*R*R*R+2.*R+.5*R*(zlo*zlo+zlo*zhi+zhi*zhi)/3.
+            :2.*Z*Z*Z+Z+.5*Z*(a*a+b*b)/2.;
+        const double point_gradient=NativeRzSmoothReference::gradient(face.center)[face.axis];
+        const double numerical=op.face_gradient(exact,face,face.boundary_side>=0?bc[f]:0.);
+        require(std::isfinite(mean_gradient)&&std::isfinite(numerical),
+            "order diagnostic gradient is nonfinite");
+        const double point_error=numerical-point_gradient,mean_error=numerical-mean_gradient;
+        face_stats[kind][face.axis].add(face.area,point_error,mean_error);
+        const auto add_flux=[&](int c,double sign) {
+            if(c<0)return;
+            true_divergence[c]+=sign*face.area*mean_gradient/op.volumes()[c];
+            flux_tau[c]+=sign*face.area*mean_error/op.volumes()[c];
+        };
+        add_flux(face.left,-1.);add_flux(face.right,1.);
+        if(kind==0&&face.left>=0&&face.right>=0
+            &&op.cells()[face.left].level==op.cells()[face.right].level) {
+            const double h=op.width(face.left,face.axis);
+            require(h==op.width(face.right,face.axis),"order diagnostic equal-level widths differ");
+            const double dr=b-a,dz=zhi-zlo;
+            // Actual normal widths, not tangent metrics or root spacing.
+            const double predicted=face.axis==0?R*h*h-R*dz*dz/24.
+                :.5*Z*h*h-Z*dr*dr/8.;
+            const double mismatch=std::abs(mean_error-predicted);
+            ++face_stats[kind][face.axis].predicted;
+            face_stats[kind][face.axis].prediction_max=std::max(face_stats[kind][face.axis].prediction_max,mismatch);
+            prediction_max=std::max(prediction_max,mismatch);
+        }
+    }
+    double fv_identity_max=0.,tau_identity_max=0.;
+    for(int c=0;c<cells;++c) {
+        fv_identity_max=std::max(fv_identity_max,std::abs(true_divergence[c]-source[c]));
+        tau_identity_max=std::max(tau_identity_max,std::abs(tau[c]-flux_tau[c]));
+    }
+    // Reuse the original polynomial reproduction budget, not a fitted tolerance.
+    require(fv_identity_max<original_polynomial_budget,
+        "order diagnostic true face integrals disagree with independent V source");
+    require(tau_identity_max<original_polynomial_budget,
+        "order diagnostic actual tau differs from independent face-error sum");
+    require(prediction_max<original_polynomial_budget,
+        "order diagnostic regular-face analytic truncation identity failed");
+    struct CellStats {
+        int count=0;long double volume=0.,l1=0.,squared=0.,signed_sum=0.,source_sum=0.,source_abs=0.;
+        double maximum=0.;
+        /** Keep actual V and source-scaled signed sums; categories may overlap. */
+        void add(double V,double value,double rhs) {
+            require(std::isfinite(V)&&V>0.&&std::isfinite(value)&&std::isfinite(rhs),
+                "order diagnostic category contains invalid values");
+            ++count;volume+=V;l1+=static_cast<long double>(V)*std::abs(value);
+            squared+=static_cast<long double>(V)*value*value;signed_sum+=static_cast<long double>(V)*value;
+            source_sum+=static_cast<long double>(V)*rhs;source_abs+=static_cast<long double>(V)*std::abs(rhs);
+            maximum=std::max(maximum,std::abs(value));
+        }
+        /** Print bounded summaries, not per-cell raw arrays or scientific PASS. */
+        void print(const char* category,const char* field) const {
+            std::cout<<"RZ_ORDER_CELL category="<<category<<" field="<<field<<" count="<<count
+                <<" V="<<volume<<" V_L1="<<(volume?l1/volume:0.)
+                <<" V_RMS="<<(volume?std::sqrt(squared/volume):0.)<<" Linf="<<maximum
+                <<" signed_V_sum="<<signed_sum<<" signed_V_mean="<<(volume?signed_sum/volume:0.)
+                <<" source_V_sum="<<source_sum<<" source_abs_V_sum="<<source_abs
+                <<" signed_source_ratio="<<(source_abs?signed_sum/source_abs:0.)<<'\n';
+        }
+    };
+    CellStats stats[5][2];int masks[16]{};
+    for(int c=0;c<cells;++c) {
+        const bool regular=!cf[c]&&!physical[c];
+        const unsigned mask=(regular?1U:0U)|(cf[c]?2U:0U)|(physical[c]?4U:0U)|(axis[c]?8U:0U);
+        ++masks[mask];const bool selected[5]{true,regular,cf[c]!=0,physical[c]!=0,axis[c]!=0};
+        for(int category=0;category<5;++category)if(selected[category]) {
+            stats[category][0].add(op.volumes()[c],tau[c],source[c]);
+            stats[category][1].add(op.volumes()[c],solution_error[c],source[c]);
+        }
+    }
+    const char* categories[5]{"all","uniform_interior","CF_adjacent","physical_boundary","axis_first_row"};
+    std::cout<<std::setprecision(17)<<"RZ_ORDER_DIAGNOSTIC n=32 mixed=1 axis=1 cells="<<cells
+        <<" source=independent_V_mean physical_qualified=false convergence_qualified=false"
+        <<" cycles="<<solved.report.cycles<<" residual="<<op.norm(residual)<<" target="<<solved.report.target
+        <<" fv_identity_max="<<fv_identity_max<<" tau_identity_max="<<tau_identity_max
+        <<" regular_prediction_max="<<prediction_max<<'\n';
+    for(int category=0;category<5;++category) {
+        stats[category][0].print(categories[category],"tau");stats[category][1].print(categories[category],"point_phi_error");
+    }
+    for(int mask=0;mask<16;++mask)std::cout<<"RZ_ORDER_INTERSECTION mask="<<mask
+        <<" bits=regular1_CF2_physical4_axis8 count="<<masks[mask]<<'\n';
+    const char* constructions[3]{"TwoPoint","PolynomialFit","EllipticRecovery"};
+    for(int kind=0;kind<3;++kind)for(int direction=0;direction<2;++direction) {
+        const auto& stats=face_stats[kind][direction];
+        std::cout<<"RZ_ORDER_FACE construction="<<constructions[kind]<<" direction="<<direction
+            <<" total_construction_count="<<construction_count[kind]<<" count="<<stats.count<<" area="<<stats.area
+            <<" point_RMS="<<(stats.area?std::sqrt(stats.point_squared/stats.area):0.)
+            <<" mean_RMS="<<(stats.area?std::sqrt(stats.mean_squared/stats.area):0.)
+            <<" point_Linf="<<stats.point_max<<" mean_Linf="<<stats.mean_max
+            <<" predicted_count="<<stats.predicted<<" prediction_mismatch="<<stats.prediction_max<<'\n';
+    }
+}
+
+/** Smooth point-potential/full-ring-source convergence through the real MG.
+ * Workflow:
+ * 1. Construct actual native canonical endpoint meshes and the existing mixed
+ *    dyadic central refinement topology, separately on axis and annulus.
+ * 2. Supply independent analytic V-mean source and point Dirichlet values.
+ * 3. Solve with the unchanged 1e-11/0/300 contract and check actual residual.
+ * 4. Compare true geometric-point Phi and actual fragment-center derivatives
+ *    using V-RMS/area-RMS; all consecutive orders must reach original >=1.8.
+ *
+ * This qualifies a prescribed-Dirichlet native composite Poisson discretization
+ * only. It grants no finite-ring isolated boundary, field force consumer,
+ * Runtime evolution, source inspection, CUDA, or public native-RZ capability.
+ */
+void rz_smooth_convergence() {
+    bool all_orders_accepted=true;
+    for(double inner:{0.,1.})for(bool mixed:{false,true}) {
+        double previous_phi=0.,previous_face=0.,previous_interface=0.;
+        int checked_orders=0;
+        for(int n:{16,32,64,128}) {
+            auto base=base_mesh(2,n);base.geometry=elliptic::Geometry::Cylindrical;
+            base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+            base.origin={inner,-.5,0.};base.root_upper={inner+1.,.5,0.};
+            base.native_canonical_domain=true;
+            multigrid::CompositeMultigrid solver(base,make_cells(base,mixed),
+                elliptic::BoundaryKind::CurvilinearIsolated);
+            const auto& op=solver.op();
+            require(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                &&op.base().native_canonical_domain,"smooth reference lost actual native RZ geometry");
+            std::vector<double> rhs(op.size()),bc(op.faces().size()),error(op.size()),residual(op.size());
+            double rho_min=std::numeric_limits<double>::infinity(),rho_max=0.;
+            for(int cell=0;cell<op.size();++cell) {
+                const double a=op.lower(cell,0),b=op.upper(cell,0);
+                const double c=op.lower(cell,1),d=op.upper(cell,1);
+                require(std::isfinite(a)&&std::isfinite(b)&&b>a&&a>=0.
+                    &&std::isfinite(c)&&std::isfinite(d)&&d>c,
+                    "smooth manufactured source has invalid actual cell endpoints");
+                const double mean=NativeRzSmoothReference::mean_laplacian(a,b,c,d);
+                const double rho=mean/(4.*pi*constants::gravity::cgs::gravitational_constant);
+                require(std::isfinite(mean)&&mean>0.&&std::isfinite(rho)&&rho>0.,
+                    "smooth manufactured V-mean physical density is nonpositive/nonfinite");
+                rhs[cell]=-mean;rho_min=std::min(rho_min,rho);rho_max=std::max(rho_max,rho);
+            }
+            for(std::size_t f=0;f<op.faces().size();++f)
+                if(op.faces()[f].boundary_side>=0)
+                    bc[f]=NativeRzSmoothReference::potential(op.faces()[f].center);
+            const auto lifted=op.effective_rhs(rhs,bc);
+            const auto result=solver.solve(lifted,{1e-11,0.,300});
+            require(result.report.status==multigrid::SolveStatus::Converged
+                &&result.report.residual<=result.report.target,
+                "native RZ smooth manufactured solve did not meet original residual");
+            // A*actualSolvedPhi is only an independent residual check. It does
+            // not construct the source, reference Phi or reference gradient.
+            op.apply(result.potential,residual);
+            for(int cell=0;cell<op.size();++cell) {
+                residual[cell]-=lifted[cell];
+                error[cell]=result.potential[cell]-NativeRzSmoothReference::potential(op.center(cell));
+            }
+            require(op.norm(residual)<=result.report.target,
+                "native RZ smooth independent solved residual exceeds original target");
+            const double phi=op.norm(error); // Actual normalized native V-RMS.
+            double face_squared=0.,face_area=0.,interface_squared=0.,interface_area=0.;
+            int interface_faces=0,axial_faces=0;
+            for(std::size_t f=0;f<op.faces().size();++f) {
+                const auto& face=op.faces()[f];
+                require(face.native_bounds&&std::isfinite(face.area)&&face.area>0.,
+                    "smooth reference face lacks its actual native fragment measure");
+                require(!(inner==0.&&face.axis==0&&face.center[0]==0.),
+                    "smooth reference axis emitted a nonzero-area flux face");
+                if(face.boundary_side==2||face.boundary_side==3)++axial_faces;
+                const double analytic=NativeRzSmoothReference::gradient(face.center)[face.axis];
+                const double numerical=op.face_gradient(result.potential,face,
+                    face.boundary_side>=0?bc[f]:0.);
+                const double difference=numerical-analytic;
+                face_squared+=face.area*difference*difference;face_area+=face.area;
+                if(face.left>=0&&face.right>=0
+                    &&op.cells()[face.left].level!=op.cells()[face.right].level) {
+                    ++interface_faces;interface_squared+=face.area*difference*difference;
+                    interface_area+=face.area;
+                }
+            }
+            require(axial_faces>0&&face_area>0.&&(!mixed||(interface_faces>0&&interface_area>0.)),
+                "smooth reference omitted real physical axial or coarse/fine faces");
+            const double face=std::sqrt(face_squared/face_area);
+            const double interface_force=mixed?std::sqrt(interface_squared/interface_area):0.;
+            require(std::isfinite(phi)&&phi>0.&&std::isfinite(face)&&face>0.
+                &&(!mixed||(std::isfinite(interface_force)&&interface_force>0.)),
+                "smooth reference error norm vanished or became nonfinite");
+            std::cout<<"RZ_SMOOTH_CONVERGENCE inner="<<inner<<" mixed="<<mixed<<" n="<<n
+                <<" cells="<<op.size()<<" interface_faces="<<interface_faces
+                <<" phi_v_rms="<<phi<<" face_area_rms="<<face
+                <<" interface_area_rms="<<interface_force<<" rho_v_min="<<rho_min<<" rho_v_max="<<rho_max
+                <<" cycles="<<result.report.cycles<<" residual="<<op.norm(residual)
+                <<" target="<<result.report.target;
+            if(previous_phi>0.) {
+                const double qp=std::log2(previous_phi/phi),qf=std::log2(previous_face/face);
+                const double qi=mixed?std::log2(previous_interface/interface_force):0.;
+                std::cout<<" orders="<<qp<<','<<qf;if(mixed)std::cout<<','<<qi;
+                std::cout<<std::endl; // Keep the failing pair's evidence before assertion.
+                // Preserve every frozen gate; collect the remaining domains before
+                // reporting a failed owner so one coarse pair cannot hide others.
+                all_orders_accepted=all_orders_accepted
+                    &&qp>=1.8&&qf>=1.8&&(!mixed||qi>=1.8);
+                ++checked_orders;
+            } else std::cout<<std::endl;
+            previous_phi=phi;previous_face=face;previous_interface=interface_force;
+        }
+        require(checked_orders==3,"native RZ smooth convergence lost consecutive resolution pairs");
+    }
+    require(all_orders_accepted,
+        "native RZ smooth potential/face/coarse-fine order below original 1.8");
 }
 
 void curved_manufactured(bool singular=false, bool seam_refined=false) {
@@ -3115,8 +3668,9 @@ int main(int argc,char** argv) {
                 <<",\"agm_iterations\":"<<value.agm_iterations<<"}\n";return 0;
         }
 
+        if(argc>1 && std::string(argv[1])=="rz-order-diagnostic") {rz_order_diagnostic();return 0;}
         if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
-        if (argc>1 && std::string(argv[1])=="rz") { finite_ring_moment_contract(); rz_manufactured(); rz_boundary_guard(); return 0; }
+        if (argc>1 && std::string(argv[1])=="rz") { finite_ring_moment_contract(); native_rz_canonical_boundary_stencil_contract(); rz_manufactured(); rz_smooth_convergence(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="ring") { finite_ring_moment_contract(); finite_ring_kernel_contract(); rz_boundary_guard(); return 0; }
         if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
@@ -3132,6 +3686,10 @@ int main(int argc,char** argv) {
         }
         if(argc>1 && std::string(argv[1])=="ci") {
             tiny_physical_boundary();
+            // Reuse the existing analytic owner for native point-stencil,
+            // certificate and physical-volume-source convergence checks.
+            native_rz_canonical_boundary_stencil_contract();
+            rz_manufactured();rz_smooth_convergence();
             boundary_convergence(16);isolated_boundary();averaged_source_exactness();
             convergence(2);radial_convergence();curved_manufactured();
             curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);

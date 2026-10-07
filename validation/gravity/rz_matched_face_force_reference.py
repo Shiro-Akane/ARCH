@@ -6,32 +6,24 @@ from decimal import Decimal as D,localcontext
 from fractions import Fraction as F
 import hashlib,json
 from pathlib import Path
-from rz_matched_native_reference import source_from_case
+from rz_matched_native_reference import source_from_case, coalesce_exact_dense_source
 from rz_matched_source_reference import potential_reference,validate_source,G
-
-def exact_uniform_union(source):
-    """Exact integration-domain reduction only; never changes the native solver."""
-    leaves=validate_source(source)
-    rho=leaves[0]["density"]
-    if any(v["density"]!=rho for v in leaves):return source,False
-    keys=("r_lower","r_upper","z_lower","z_upper")
-    values=[[F(v[k]) for k in keys] for v in leaves]
-    rl=min(v[0] for v in values);rr=max(v[1] for v in values)
-    zl=min(v[2] for v in values);zr=max(v[3] for v in values)
-    # validate_source already rejects overlaps; equal area proves no uncovered
-    # positive-area gap inside the common enclosing rectangle.
-    assert sum(((b-a)*(d-c) for a,b,c,d in values),F(0))==(rr-rl)*(zr-zl)
-    def dec(x):return D(x.numerator)/D(x.denominator)
-    union=dict(sourceId=source["sourceId"],leaves=[dict(id="exact-uniform-union",
-        r_lower=dec(rl),r_upper=dec(rr),z_lower=dec(zl),z_upper=dec(zr),density=rho)])
-    return union,True
 
 def audit(c):
     native=source_from_case(c)
     rows=[]
     with localcontext() as ctx:
         ctx.prec=100
-        source,union=exact_uniform_union(native)
+        # Reuse the same exact union owner as the authentic source adapter.
+        # This older diagnostic still has its explicit ideal-coordinate guard;
+        # a mathematical bounding rectangle does not authenticate Runtime root.
+        bounds=[min(v["r_lower"] for v in native["leaves"]),
+                max(v["r_upper"] for v in native["leaves"]),
+                min(v["z_lower"] for v in native["leaves"]),
+                max(v["z_upper"] for v in native["leaves"])]
+        merged=coalesce_exact_dense_source(native,bounds,c["source_identity"])
+        source=merged["source"]
+        union=len(source["leaves"])==1
         ratio=D.from_float(c["source_identity"]["G"])/G
         for face in c["faces"]:
             axis=face["axis"]
@@ -81,7 +73,9 @@ def audit(c):
             D(v["finalAbsoluteDelta"])**2 for v in rows),D(0))
         return dict(radialOrigin=c["radial_origin"],mixedAmr=bool(c["mixed"]),sourceId=native["sourceId"],
             sourceIdentity=c["source_identity"],nativeLeaves=len(native["leaves"]),
-            referenceExactUniformUnion=union,faces=len(rows),coarseFineFaces=sum(v["coarseFine"] for v in rows),
+            referenceExactUniformUnion=union,
+            referenceDenseInputSha256=merged["original_dense_input_sha256"],
+            referenceUnionRectangles=merged["coalesced_leaf_count"],faces=len(rows),coarseFineFaces=sum(v["coarseFine"] for v in rows),
             faceAreaRmsNormalAccelerationDelta=str((squared/total).sqrt()),
             maximumNormalAccelerationDelta=str(max(D(v["finalAbsoluteDelta"]) for v in rows)),
             rows=rows)

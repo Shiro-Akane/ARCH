@@ -44,6 +44,14 @@ ARCH_INLINE double gravity_flux_work(double low,double high,double flux_low,doub
     // face-acceleration coefficient.
     return 0.5*dt*(flux_low*low+flux_high*high);
 }
+/** Register the same-stage coarse-cell gravitational mass-flux work.
+ * FE_registered = FE + (sum_f A_f/A_source * Phi_f - Phi_coarse) * F_rho.
+ * The existing register applies its sign, area ratio, RK weight and dt once.
+ * This scalar shared leaf carries no Host/Device allocation or authority.
+ */
+ARCH_INLINE double native_reflux_energy(double energy,double potential_difference,double mass_flux) {
+    return energy+potential_difference*mass_flux;
+}
 struct ExternalGravityView {
     double g_x = 0.0, g_y = 0.0, g_z = 0.0;
     bool enabled = false;

@@ -315,6 +315,19 @@ void GravityBoundary::update(std::span<const double> density,const GravitySolveI
     ring_density_.swap(next_density);source_identity_=std::move(next_identity);
     ++source_generation_;
 }
+/** Return only the actual current source counter after exact source/mesh checks.
+ * This pre-solve accessor requires no completed ring integration or field. A
+ * forged/stale request cannot learn a replacement generation from array size.
+ */
+std::uint64_t GravityBoundary::materialized_ring_source_generation(
+    const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source) const {
+    require_ring_operator(op);
+    validate_gravity_solve_identity(source);
+    if(!source_identity_||source!=*source_identity_||!source_generation_
+        ||ring_density_.size()!=volumes_.size())
+        throw std::logic_error("Materialized ring source identity is stale or unavailable");
+    return source_generation_;
+}
 /** Mesh equivalence is exact and ordered, not inferred from density array size. */
 void GravityBoundary::require_ring_operator(const arch::elliptic::CompositePoisson& op) const {
     const auto& mesh=op.base();
@@ -734,9 +747,32 @@ RingRhsAssessment GravityBoundary::assess_native_ring_rhs(
     combined.status=norm.status;combined.norm_upper=norm.upper;
     // Assembly already in combined RHS; A/evaluation already against computed
     // RHS. No repeated assembly or homogeneous/prescribed boundary term.
-    result.conditional=op.assess_boundary_residual(rhs,residual,combined,0.,
-        result.native_residual_error.native_norm_upper,BoundaryErrorQuality::CertifiedAbsolute,
-        rtol,atol,BoundaryResidualNormScope::RootDyadicRzWeights);
+    // The exact residual contains the SAME boundary-fit coefficient in A
+    // and B. Bound their joint construction against phi_anchor-datum while
+    // retaining the original separate complete RHS error above for ||b||lower.
+    // Source, potential integration, assembly and actual apply/subtraction
+    // arithmetic stay present, each once. Physical qualification is unchanged.
+    const auto construction=op.native_rz_prescribed_residual_construction_error(potential,ring.values);
+    if(construction.status!=BoundaryErrorStatus::Bounded) {
+        result.conditional.status=construction.status==BoundaryErrorStatus::Overflow?
+            BoundaryResidualStatus::Overflow:BoundaryResidualStatus::InvalidInput;return result;
+    }
+    auto& complete=result.native_complete_residual_error;complete.cell_bounds.resize(op.size());
+    for(int i=0;i<op.size();++i) {
+        complete.cell_bounds[i]=finite_ring_detail::sum_up(
+            finite_ring_detail::sum_up(result.source_error.cell_bounds[i],
+                result.native_boundary_potential.cell_bounds[i]),
+            finite_ring_detail::sum_up(result.assembly_error.cell_bounds[i],
+                finite_ring_detail::sum_up(result.native_residual_error.arithmetic.cell_bounds[i],
+                    construction.cell_bounds[i])));
+        if(!std::isfinite(complete.cell_bounds[i])) {
+            complete.status=BoundaryErrorStatus::Overflow;
+            result.conditional.status=BoundaryResidualStatus::Overflow;return result;
+        }
+    }
+    const auto complete_norm=op.native_rz_norm_interval(complete.cell_bounds);
+    complete.status=complete_norm.status;complete.native_norm_upper=complete_norm.upper;
+    result.conditional=op.assess_native_rz_correlated_residual(rhs,residual,combined,complete,rtol,atol);
     return result;
 }
 

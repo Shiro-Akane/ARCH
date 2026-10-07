@@ -17,7 +17,7 @@ owners=["src/driver/runtime/DriverRuntime.cpp","src/driver/runtime/DriverBoundar
         "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
         "src/physics/boundary/PhysicalBoundaryHandler.cpp",
         "src/driver/runtime/DriverRegrid.cpp"]
-headers=["src/driver/stages/DriverStages.h","src/driver/runtime/DriverRuntime.h",
+headers=["tests/host/driver/RzRuntimeWitness.h","src/driver/stages/DriverStages.h","src/driver/runtime/DriverRuntime.h",
          "src/driver/schedule/StageScheduler.h","src/numerics/state/RzNativeClosure.h"]
 rkl_headers=["src/numerics/diffusion/"+name for name in
     ["DiffDispatch.h","DiffusionAMRStages.h","RKL1TimeIntegrator.h","RKL2TimeIntegrator.h"]]

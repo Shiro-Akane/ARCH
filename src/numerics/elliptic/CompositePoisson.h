@@ -189,12 +189,25 @@ struct NativeRzResidualEvaluationError {
     std::vector<double> cell_bounds;
     double native_norm_upper=std::numeric_limits<double>::infinity();
 };
+/** Complete native residual error, distinct from an RHS-only error ledger.
+ * Source, boundary potential, assembly/apply arithmetic and the jointly
+ * constructed A*phi-B*datum are included once by the authenticated producer.
+ * This certifies a discrete residual; continuous physics stays separate.
+ */
+struct NativeRzCompleteResidualError {
+    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
+    std::vector<double> cell_bounds;
+    double native_norm_upper=std::numeric_limits<double>::infinity();
+};
+enum class ResidualErrorComposition { SeparateRhsAndOperator, CorrelatedPrescribedBoundary };
 enum class BoundaryResidualNormScope { StoredNativeWeights, RootDyadicRzWeights };
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
 struct BoundaryResidualAssessment {
     BoundaryResidualStatus status=BoundaryResidualStatus::InvalidInput;
+    ResidualErrorComposition error_composition=ResidualErrorComposition::SeparateRhsAndOperator;
+    double complete_residual_error_upper=std::numeric_limits<double>::infinity();
     double tolerance_safe=0.;
     double rhs_norm_lower=0.,rhs_norm_upper=std::numeric_limits<double>::infinity();
     double residual_norm_upper=std::numeric_limits<double>::infinity();
@@ -261,6 +274,14 @@ public:
     NativeRzResidualEvaluationError native_rz_residual_evaluation_error(
         std::span<const double> potential,std::span<const double> computed_rhs,
         std::span<const double> computed_residual) const;
+    // Joint construction of A*phi-B*datum keeps the SAME boundary coefficient
+    // correlated; the original homogeneous construction API remains unchanged.
+    NativeRzOperatorConstructionError native_rz_prescribed_residual_construction_error(
+        std::span<const double> potential,std::span<const double> boundary_values) const;
+    BoundaryResidualAssessment assess_native_rz_correlated_residual(
+        std::span<const double> approximate_rhs,std::span<const double> computed_residual,
+        const BoundaryRhsError& rhs_error,const NativeRzCompleteResidualError& complete_error,
+        double rtol,double atol) const;
     WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,
@@ -287,6 +308,8 @@ public:
     void project(std::span<double> x) const;
 private:
     friend class arch::multigrid::CompositeMultigrid;
+    NativeRzOperatorConstructionError native_rz_operator_construction_error_impl(
+        std::span<const double> potential,std::span<const double> boundary_values) const;
     // Only the hierarchy owner can construct a derived operator from a real
     // fine operator. No public flag or AMR leaf level grants this provenance.
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,

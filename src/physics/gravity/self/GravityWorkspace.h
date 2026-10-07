@@ -10,10 +10,19 @@
 
 #pragma once
 
+#include <array>
 #include <atomic>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "amr/elliptic/EllipticMeshAdapter.h"
+#include "amr/flux/AmrFluxPlan.h"
 #include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityExecution.h"
 #include "physics/gravity/GravitySolveTypes.h"
@@ -36,9 +45,46 @@ struct GravityFaceRows {
     std::vector<BoundaryPoint> observers;
 };
 GravityFaceRows gravity_face_rows(const arch::elliptic::CompositePoisson&);
+/** One topology-only Energy registration row, indexed by the ORIGINAL route
+ * operation. No stage potential, dt, RK coefficient or register metric is owned.
+ */
+struct GravityRefluxRowIdentity {
+    amr::AmrFluxRouteKey route;
+    amr::TopologyEpoch epoch;
+    std::uint64_t topology_fingerprint=0,route_fingerprint=0;
+    std::size_t operation_index=0;
+    int source_flux_offset=-1,coarse_cell_index=-1;
+    amr::AmrTransferOperation operation;
+};
+/** Geometry-only paired work rows. Row r evaluates
+ * Dphi=sum_f(A_f/A_source)*Phi_value_row_f-Phi_destination_coarse,
+ * plus an INDEPENDENT datum row acting on the same face-indexed boundary data.
+ * The existing register alone applies +/-A_source/A_coarse, stage weight and dt.
+ */
+struct GravityRefluxRows {
+    std::vector<GravityRefluxRowIdentity> identity;
+    arch::multigrid::SparseStorage potential,boundary;
+};
+/** Authenticate the actual Native RZ binding/operator/route geometry, prove
+ * complete dyadic face coverage, and compile immutable paired rows. Workflow:
+ * validate root+UID/epoch+all storage; join integer CF cell incidences; check
+ * actual fragment areas; append the target coarse potential counterterm.
+ * This does not attach a consumer, solve, cache stage Phi or qualify physics.
+ */
+GravityRefluxRows gravity_reflux_rows(const amr::EllipticMeshBinding&,
+    const arch::elliptic::CompositePoisson&,const amr::AmrFluxTopologyPlan&);
+
 struct SelfGravity::Workspace {
     using Vector=arch::multigrid::Vector;
     template<class T> using Array=arch::multigrid::Array<T>;
+    // Topology-only paired rows are reused; stage values always follow the
+    // exact solved generation. No whole-field download or persistent U copy.
+    const amr::AmrFluxTopologyPlan* reflux_topology=nullptr;
+    GravityRefluxRows reflux_rows;
+    arch::multigrid::SparseArray reflux_phi_rows,reflux_datum_rows;
+    Vector reflux_values;
+    std::uint64_t reflux_topology_fingerprint=0,reflux_field_generation=0;
+    amr::TopologyEpoch reflux_epoch{};
     amr::EllipticMeshBinding binding;
     std::shared_ptr<GravityExecution> execution;
     // Explicit per-side policy (dirichlet/neumann/user) resolved for this
@@ -109,6 +155,20 @@ struct SelfGravity::Workspace {
             throw std::logic_error("Self-gravity patch uses a different density allocation/slot");
         return patches[it->second];
     }
+    /** Borrow the exact candidate patch without promoting ordinary physics.
+     * Workflow: require candidate validity; resolve the original Grid pointer;
+     * require its actual resident density allocation; return immutable views.
+     */
+    const GravityPatchView& native_patch(const Grid& grid,const FluidState& state) const {
+        require(GravityFieldScope::NativeRzCandidate);
+        if(solver.execution().device())throw std::logic_error("Native private patch requires Host execution");
+        const auto found=lookup.find(&grid);
+        if(found==lookup.end()||patches[found->second].density!=state.rho.data())
+            throw std::logic_error("Native private patch changed its original density allocation");
+        return patches[found->second];
+    }
+    /** Cache genuine geometry rows and evaluate same-stage Dphi once. */
+    const GravityRefluxRows& prepare_native_reflux(const amr::AmrFluxTopologyPlan&);
     /** Allocate/reset the bounded per-patch receipt before any fluid producer runs. */
     void begin_host_consumption(double step_dt) {
         if(solver.execution().device())

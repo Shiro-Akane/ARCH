@@ -255,10 +255,11 @@ add_executable(arch_gravity_stage_contract
     tests/host/gravity/test_gravity_stage_contract.cpp
     tests/host/driver/test_host_hydro_transaction.cpp
     tests/host/driver/test_rz_runtime_boundary.cpp
+    tests/host/driver/test_rz_runtime_external.cpp
     src/amr/elliptic/EllipticMeshAdapter.cpp
     src/driver/stages/GravityStage.cpp)
-# Reuse this lane for the bounded actual angular Runtime contract; standalone
-# diagnostic EOS/geometry matrices retain their own main and assertions.
+# Reuse this one lane for bounded angular/external/coupled Runtime contracts;
+# standalone diagnostic EOS/geometry matrices retain their own main and assertions.
 target_compile_definitions(arch_gravity_stage_contract PRIVATE
     ARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1)
 target_link_libraries(arch_gravity_stage_contract PRIVATE arch_driver_runtime arch_gravity_cpu)

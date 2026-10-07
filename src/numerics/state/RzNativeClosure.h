@@ -249,6 +249,40 @@ namespace detail {
  * both true faces and four radial Gauss-node EOS checks with the original
  * diagnostics/bounds. Region and closure selection remain explicit callers.
  */
+/** Validate one actual logical cell using the existing complete-region body.
+ * The caller owns one species scratch vector per patch; no per-cell allocation.
+ * Native preliminary, mean EOS and six physical nodes keep original arithmetic.
+ */
+template<class Eos,class CellClosure,class StateReader>
+inline void validate_patch_eos_cell(const FluidState& state,const GridMetrics::GeometryView& view,
+    int species,const arch::state::Bounds& bounds,const Eos& eos,int i,int j,int index,
+    const CellClosure& closure,const StateReader& read,std::vector<double>& fractions)
+{
+    for(int s=0;s<species;++s)fractions[s]=state.X(s,index);
+    const auto native=read(index);
+    const auto preliminary=provisional_native_state(native,fractions.data(),species,1,bounds);
+    if(preliminary!=arch::state::Status::valid)
+        throw AcceptanceError("RZ native provisional state rejected at cell "+std::to_string(index),
+            {AcceptancePhase::provisional,preliminary,index,i,j,-1,false});
+    const auto cell=closure(read,index,view,i,bounds);
+    const auto mean_status=validate_mean_eos(cell,fractions.data(),species,eos);
+    if(mean_status!=arch::state::Status::valid) {
+        const auto phase=cell.valid() ? AcceptancePhase::mean_eos
+            : (cell.inertia_mapping_valid ? AcceptancePhase::effective_thermal
+                                         : AcceptancePhase::density_or_inertia);
+        throw AcceptanceError("RZ native closure/EOS rejected at cell "+std::to_string(index),
+            {phase,mean_status,index,i,j,-1,cell.inertia_mapping_valid});
+    }
+    for(int node=0;node<physical_node_count;++node) {
+        const auto point=base_point(cell,physical_node_radius(cell,node));
+        const auto point_status=arch::state::validate_eos(point,fractions.data(),species,bounds,eos);
+        if(point_status!=arch::state::Status::valid)
+            throw AcceptanceError("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
+                +", node "+std::to_string(node),
+                {AcceptancePhase::physical_eos,point_status,index,i,j,node,cell.inertia_mapping_valid});
+    }
+}
+
 template<class Eos,class CellClosure>
 inline void validate_patch_eos_region(const FluidState& state,const Grid& grid,int species,
     const arch::state::Bounds& bounds,const Eos& eos,int i_begin,int i_end,
@@ -268,29 +302,7 @@ inline void validate_patch_eos_region(const FluidState& state,const Grid& grid,i
     const auto read=[&](int index){return state.get(index);};
     for(int j=j_begin;j<j_end;++j)for(int i=i_begin;i<i_end;++i) {
         const int index=grid.GetIndex(i,j,0);
-        for(int s=0;s<species;++s)fractions[s]=state.X(s,index);
-        const auto native=read(index);
-        const auto preliminary=provisional_native_state(native,fractions.data(),species,1,bounds);
-        if(preliminary!=arch::state::Status::valid)
-            throw AcceptanceError("RZ native provisional state rejected at cell "+std::to_string(index),
-                {AcceptancePhase::provisional,preliminary,index,i,j,-1,false});
-        const auto cell=closure(read,index,view,i,bounds);
-        const auto mean_status=validate_mean_eos(cell,fractions.data(),species,eos);
-        if(mean_status!=arch::state::Status::valid) {
-            const auto phase=cell.valid() ? AcceptancePhase::mean_eos
-                : (cell.inertia_mapping_valid ? AcceptancePhase::effective_thermal
-                                             : AcceptancePhase::density_or_inertia);
-            throw AcceptanceError("RZ native closure/EOS rejected at cell "+std::to_string(index),
-                {phase,mean_status,index,i,j,-1,cell.inertia_mapping_valid});
-        }
-        for(int node=0;node<physical_node_count;++node) {
-            const auto point=base_point(cell,physical_node_radius(cell,node));
-            const auto point_status=arch::state::validate_eos(point,fractions.data(),species,bounds,eos);
-            if(point_status!=arch::state::Status::valid)
-                throw AcceptanceError("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
-                    +", node "+std::to_string(node),
-                    {AcceptancePhase::physical_eos,point_status,index,i,j,node,cell.inertia_mapping_valid});
-        }
+        validate_patch_eos_cell(state,view,species,bounds,eos,i,j,index,closure,read,fractions);
     }
 }
 } // namespace detail
@@ -328,10 +340,56 @@ inline void validate_completed_patch_eos(const FluidState& state,const Grid& gri
         ||ny>grid.stride_z/grid.stride_y||grid.GetTotalZ()!=1
         ||grid.GetIndex(nx-1,ny-1,0)>=grid.GetTotalSize())
         throw std::invalid_argument("RZ EOS acceptance requires the actual complete patch layout and density ghosts");
-    detail::validate_patch_eos_region(state,grid,species,bounds,eos,0,nx,0,ny,
+    const auto completed_closure=[nx](const auto& read,int index,const auto& view,int i,const auto& limits) {
+        return make_cell_supported(read,index,view,i,std::clamp(i-1,0,nx-3),limits);
+    };
+    // Actual BC/exchange is already complete. Inspect ACTIVE candidates first,
+    // then four disjoint ghost rectangles; each logical cell and its six EOS
+    // nodes is still checked exactly once on success. A rejected attempt stops
+    // here without accepting unchecked ghosts or publishing GhostValid.
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,
+        grid.Is(),grid.Ie(),grid.Js(),grid.Je(),completed_closure);
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,0,nx,0,grid.Js(),completed_closure);
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,0,nx,grid.Je(),ny,completed_closure);
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,0,grid.Is(),grid.Js(),grid.Je(),completed_closure);
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,grid.Ie(),nx,grid.Js(),grid.Je(),completed_closure);
+}
+
+/** Limited active-domain diagnostic, not acceptance or permission to retry. */
+struct ActiveThermalClassification {bool thermal_failure=false,requested_failure=false;};
+/** Classify every ACTIVE cell with the SAME completed-neighbour closure/EOS.
+ * Only effective-thermal unresolved-energy with a valid inertia map is retained;
+ * every other scientific failure propagates. No field, floor or receipt changes.
+ */
+template<class Eos>
+inline ActiveThermalClassification classify_completed_active_thermal(const FluidState& state,
+    const Grid& grid,int species,const arch::state::Bounds& bounds,const Eos& eos,int requested_index)
+{
+    const int nx=grid.GetTotalX();
+    if(nx<3)throw std::invalid_argument("Active thermal classification lacks logical density support");
+    // Same layout preflight, with actual logical support (never a PAD stride).
+    // An empty traversal validates no cell and creates no acceptance receipt.
+    detail::validate_patch_eos_region(state,grid,species,bounds,eos,0,0,0,0,
         [nx](const auto& read,int index,const auto& view,int i,const auto& limits) {
             return make_cell_supported(read,index,view,i,std::clamp(i-1,0,nx-3),limits);
         });
+    const auto view=GridMetrics::make_geometry_view(grid,GridMetrics::GeometrySemantics::AxisymmetricRz);
+    const auto closure=[nx](const auto& read,int index,const auto& geometry,int i,const auto& limits) {
+        return make_cell_supported(read,index,geometry,i,std::clamp(i-1,0,nx-3),limits);
+    };
+    const auto read=[&](int index){return state.get(index);};
+    std::vector<double> fractions(static_cast<std::size_t>(species));
+    ActiveThermalClassification result;
+    for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+        const int index=grid.GetIndex(i,j,0);
+        try {detail::validate_patch_eos_cell(state,view,species,bounds,eos,i,j,index,closure,read,fractions);}
+        catch(const AcceptanceError& error) {
+            const auto& d=error.diagnostic();
+            if(d.phase!=AcceptancePhase::effective_thermal||d.status!=arch::state::Status::unresolved_energy
+                ||!d.inertia_mapping_valid)throw;
+            result.thermal_failure=true;result.requested_failure|=index==requested_index;
+        }
+    }
+    return result;
 }
-
 } // namespace RzThermodynamics

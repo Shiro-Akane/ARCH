@@ -8,7 +8,9 @@
  *    cells and fragments share canonical global endpoints with the AMR owner.
  * 2. Build one shared flux per physical face fragment. Resolve periodic
  *    azimuth, physical Dirichlet boundaries and zero-area regularity faces.
- * 3. Fit coarse-fine and boundary gradients to a quadratic basis, then apply
+ * 3. Fit coarse-fine and boundary POINT gradients to the existing quadratic
+ *    basis, or total-degree-three at canonical Native RZ physical boundaries,
+ *    then apply
  *    A(phi) = -sum_f A_f (grad phi)_f / V_i with one interface flux owner.
  * 4. Provide a unique curved-face potential for the mass-flux work operator.
  */
@@ -545,7 +547,25 @@ void CompositePoisson::build_faces() {
 }
 
 namespace {
-/** Build the constant, linear and quadratic basis for interface reproduction. */
+/** Select the canonical Native RZ point-gradient reproduction contract.
+ * Workflow: authenticate the immutable operator geometry, then share this
+ * choice between actual physical-boundary assembly and its interval enclosure.
+ * A one-sided physical boundary gets cubic point-gradient reproduction so
+ * its flux derivative has O(h^3) smooth truncation before division by cell
+ * width. Conservative shared interior/CF fluxes keep their original quadratic
+ * reproduction; this is a geometry/role rule, not a case or outcome selector.
+ * Each actual root axis needs at least four coordinates for a general
+ * cubic. Smaller legal roots retain the original quadratic contract; this
+ * immutable support rule never depends on fitted error or a condition estimate.
+ * Existing/unbound and all other dimensions retain their original basis.
+ */
+bool native_rz_cubic_point_fit(const CartesianMesh& mesh,const CompositeFace& face) {
+    return face.boundary_side>=0&&mesh.native_canonical_domain
+        &&mesh.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+        &&mesh.geometry==Geometry::Cylindrical&&mesh.dimension==2
+        &&mesh.cells[0]>=4&&mesh.cells[1]>=4;
+}
+/** Evaluate the original total-degree-two point basis in its original order. */
 std::array<double,10> polynomial(const std::array<double,3>& x,int dim) {
     std::array<double,10> p{}; p[0]=1.;
     for (int a=0;a<dim;++a) p[1+a]=x[a];
@@ -553,14 +573,30 @@ std::array<double,10> polynomial(const std::array<double,3>& x,int dim) {
     for (int a=0;a<dim;++a) for (int b=a;b<dim;++b) p[slot++]=x[a]*x[b];
     return p;
 }
+/** Append the four cubic monomials to the unchanged two-dimensional basis.
+ * Workflow: first evaluate [1,x,y,x^2,xy,y^2], then append
+ * [x^3,x^2*y,x*y^2,y^3]. These are POINT polynomial values, not V means.
+ */
+std::array<double,10> native_rz_cubic_polynomial(const std::array<double,3>& x) {
+    auto p=polynomial(x,2);
+    p[6]=p[3]*x[0];p[7]=p[3]*x[1];
+    p[8]=p[5]*x[0];p[9]=p[5]*x[1];
+    return p;
 }
-/** Correct a coarse-fine face stencil to reproduce quadratic gradients. */
+}
+/** Correct an interface/boundary stencil in its selected POINT polynomial space.
+ * Workflow: gather actual neighboring cells; solve the existing minimum
+ * weighted coefficient correction; publish the original constant anchor.
+ * Canonical Native RZ physical boundaries reproduce total degree three
+ * using three real graph layers; internal/CF faces keep the original basis. Rank failure remains an error; all other basis/support paths remain.
+ */
 void CompositePoisson::fit_interface(CompositeFace& f) const {
     // Minimum weighted correction of the normal two-point gradient, subject
-    // to reproduction of every quadratic polynomial. Tangential offsets matter.
+    // to reproduction of the selected point polynomials. Tangential offsets matter.
+    const bool cubic=native_rz_cubic_point_fit(base_,f);
     const int anchor_cell=f.left>=0 ? f.left : f.right;
     std::vector<int> samples=f.samples;
-    for (int depth=0;depth<(kind_==BoundaryKind::RadialIsolated?3:2);++depth) {
+    for (int depth=0;depth<(cubic||kind_==BoundaryKind::RadialIsolated?3:2);++depth) {
         const auto current=samples;
         for (int i:current) samples.insert(samples.end(),neighbors_[i].begin(),neighbors_[i].end());
         std::sort(samples.begin(),samples.end());
@@ -570,7 +606,7 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
         : std::max(width(f.left,f.axis),width(f.right,f.axis)))*face_metric(f,f.axis);
     const int dim=base_.dimension;
     const bool radial=kind_==BoundaryKind::RadialIsolated;
-    const int terms=radial?4:1+dim+dim*(dim+1)/2;
+    const int terms=cubic?10:radial?4:1+dim+dim*(dim+1)/2;
     std::vector<std::array<double,10>> basis;
     std::vector<double> weights, initial;
     DenseMatrixData<10> gram;
@@ -590,7 +626,7 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
                 delta[a]-=std::floor(delta[a]/length+0.5)*length;
             delta[a]*=face_metric(f,a)/scale; distance+=delta[a]*delta[a];
         }
-        auto p=polynomial(delta,dim);
+        auto p=cubic?native_rz_cubic_polynomial(delta):polynomial(delta,dim);
         if(radial)p[3]=delta[0]*delta[0]*delta[0];
         const double weight=1./((1.+distance)*(1.+distance));
         double value=0.;
@@ -604,7 +640,8 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
     }
     // Minimize ||c-c0||_(W^-1)^2 subject to P*c=d. With
     // G=P*W*P^T, lambda=G^-1(d-P*c0), c=c0+W*P^T*lambda.
-    const bool solved=radial ? DenseLUSolver::solve<4,10>(gram,right)
+    const bool solved=cubic ? DenseLUSolver::solve<10,10>(gram,right)
+        : radial ? DenseLUSolver::solve<4,10>(gram,right)
         : dim==1 ? DenseLUSolver::solve<3,10>(gram,right)
         : dim==2 ? DenseLUSolver::solve<6,10>(gram,right) : DenseLUSolver::solve<10,10>(gram,right);
     if (!solved) throw std::invalid_argument("Degenerate composite interface interpolation");
@@ -1020,38 +1057,43 @@ double range_abs_upper(ArithmeticRange a) {
     return finite_range(a)?std::max(std::abs(a.lo),std::abs(a.hi))
         :std::numeric_limits<double>::infinity();
 }
-/** Neumann inverse proof for every matrix in the Gram enclosure.
+/** Neumann inverse proof for the selected six-/ten-term Gram enclosure.
+ * Workflow: obtain finite LU witnesses; bound I-C*G and the full interval
+ * equation residual; fail unless the same q<1 inverse proof closes.
+ * Six-term instantiation retains the original loop and arithmetic order.
  * C and lambda_hat are only finite witnesses from the existing DenseLUSolver.
  * q=||I-C*G||inf<1 proves ||G^-1||inf <= ||C||inf/(1-q).
  * This also bounds lambda error from the full interval equation residual,
  * including ideal coordinate/basis/Gram construction, not just LU rounding.
  */
-bool enclose_gram_solution(const std::array<std::array<ArithmeticRange,6>,6>& g,
-    const std::array<ArithmeticRange,6>& rhs,std::array<ArithmeticRange,6>& lambda,
+template<int Terms>
+bool enclose_gram_solution(const std::array<std::array<ArithmeticRange,Terms>,Terms>& g,
+    const std::array<ArithmeticRange,Terms>& rhs,std::array<ArithmeticRange,Terms>& lambda,
     double& q,double& inverse_upper,double& error_upper) {
+    static_assert(Terms==6||Terms==10);
     DenseMatrixData<10> midpoint;
-    for(int i=0;i<6;++i)for(int j=0;j<6;++j) {
+    for(int i=0;i<Terms;++i)for(int j=0;j<Terms;++j) {
         if(!finite_range(g[i][j]))return false;
         midpoint.data[i][j]=.5*g[i][j].lo+.5*g[i][j].hi;
     }
-    std::array<std::array<double,6>,6> inverse{};
-    for(int col=0;col<6;++col) {
+    std::array<std::array<double,Terms>,Terms> inverse{};
+    for(int col=0;col<Terms;++col) {
         auto matrix=midpoint;double x[10]{};x[col]=1.;
-        if(!DenseLUSolver::solve<6,10>(matrix,x))return false;
-        for(int row=0;row<6;++row)inverse[row][col]=x[row];
+        if(!DenseLUSolver::solve<Terms,10>(matrix,x))return false;
+        for(int row=0;row<Terms;++row)inverse[row][col]=x[row];
     }
     auto matrix=midpoint;double approximate[10]{};
-    for(int i=0;i<6;++i) {
+    for(int i=0;i<Terms;++i) {
         if(!finite_range(rhs[i]))return false;
         approximate[i]=.5*rhs[i].lo+.5*rhs[i].hi;
     }
-    if(!DenseLUSolver::solve<6,10>(matrix,approximate))return false;
+    if(!DenseLUSolver::solve<Terms,10>(matrix,approximate))return false;
     q=0.;double inverse_norm=0.,residual_norm=0.;
-    for(int i=0;i<6;++i) {
+    for(int i=0;i<Terms;++i) {
         double row=0.,inverse_row=0.;
-        for(int j=0;j<6;++j) {
+        for(int j=0;j<Terms;++j) {
             ArithmeticRange product{};
-            for(int k=0;k<6;++k)product=range_add(product,
+            for(int k=0;k<Terms;++k)product=range_add(product,
                 range_product({inverse[i][k],inverse[i][k]},g[k][j]));
             const auto defect=range_add({i==j?1.:0.,i==j?1.:0.},range_negate(product));
             row=bound_up(row+range_abs_upper(defect));
@@ -1059,7 +1101,7 @@ bool enclose_gram_solution(const std::array<std::array<ArithmeticRange,6>,6>& g,
         }
         q=std::max(q,row);inverse_norm=std::max(inverse_norm,inverse_row);
         auto residual=rhs[i];
-        for(int j=0;j<6;++j)residual=range_add(residual,
+        for(int j=0;j<Terms;++j)residual=range_add(residual,
             range_negate(range_product(g[i][j],{approximate[j],approximate[j]})));
         residual_norm=std::max(residual_norm,range_abs_upper(residual));
     }
@@ -1069,7 +1111,7 @@ bool enclose_gram_solution(const std::array<std::array<ArithmeticRange,6>,6>& g,
     inverse_upper=bound_quotient(inverse_norm,denominator);
     error_upper=bound_product(inverse_upper,residual_norm);
     if(!std::isfinite(error_upper)||!std::isfinite(inverse_upper))return false;
-    for(int i=0;i<6;++i) {
+    for(int i=0;i<Terms;++i) {
         lambda[i]=range_add({approximate[i],approximate[i]},{-error_upper,error_upper});
         if(!finite_range(lambda[i]))return false;
     }
@@ -1146,86 +1188,100 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
     std::vector<ArithmeticRange> coefficients;
     ArithmeticRange boundary_coefficient=boundary_seed;
     if(face.construction==FaceStencilConstruction::PolynomialFit) {
-        const int fine=boundary?anchor:(cells_[face.left].level>=cells_[face.right].level?face.left:face.right);
-        const int scale_level=boundary?cells_[anchor].level:
-            std::min(cells_[face.left].level,cells_[face.right].level);
-        std::vector<std::array<ArithmeticRange,6>> basis;
-        std::vector<ArithmeticRange> weights,initial;
-        std::array<std::array<ArithmeticRange,6>,6> gram{};
-        std::array<ArithmeticRange,6> rhs{};rhs[1+axis]={1.,1.};
-        if(boundary) {
-            gram[0][0]={1.,1.};
-            rhs[0]=range_negate(range_product(boundary_seed,ideal_scale));
-        }
-        for(int cell:face.samples) {
-            std::array<ArithmeticRange,2> delta{};
-            for(int a=0;a<2;++a) {
-                if(!canonical) {const double w=exact_width(cell,a);if(w<=0.)return result;}
-                const int owner=a==axis?anchor:fine;
-                const int common=std::max(cells_[cell].level,cells_[owner].level);
-                // level<=15 and index<=INT_MAX imply every doubled dyadic
-                // numerator and its difference fit <=48 bits. Build it in
-                // int64 before exact binary scaling: no world-center subtraction.
-                const std::int64_t sample=(2*std::int64_t(cells_[cell].index[a])+1)
-                    << (common-cells_[cell].level);
-                const std::int64_t face_numerator=a==axis?
-                    2*(std::int64_t(cells_[owner].index[a])+(boundary?face.boundary_side%2:1)):
-                    2*std::int64_t(cells_[owner].index[a])+1;
-                const std::int64_t face_position=face_numerator << (common-cells_[owner].level);
-                const double dyadic=std::ldexp(double(sample-face_position),scale_level-common-1);
-                if(canonical) {
-                    // Same-axis span/count cancel as exact rational factors.
-                    // Other-axis normalized offsets retain span and root-count
-                    // ratios, never ratios of rounded stored dx mantissas.
-                    if(a==axis)delta[a]={dyadic,dyadic};
-                    else delta[a]=range_product({dyadic,dyadic},range_product(
-                        range_divide_positive(ideal_native_span(base_,a),ideal_native_span(base_,axis)),
-                        range_divide_positive({double(base_.cells[axis]),double(base_.cells[axis])},
-                            {double(base_.cells[a]),double(base_.cells[a])})));
-                } else {
-                    int ea=0,en=0;
-                    const double ma=std::frexp(base_.spacing[a],&ea),mn=std::frexp(base_.spacing[axis],&en);
-                    const double exact=std::ldexp(dyadic,ea-en);
-                    if(ma==mn&&std::isfinite(exact)&&std::ldexp(exact,en-ea)==dyadic)
-                        delta[a]={exact,exact}; // shared spacing/power-of-two ratio cancels exactly
-                    else delta[a]=range_product({dyadic,dyadic},range_divide_positive(
-                        {base_.spacing[a],base_.spacing[a]},{base_.spacing[axis],base_.spacing[axis]}));
+        // Enclose the SAME actual final samples and selected point basis.
+        // Workflow: reconstruct ideal coordinate/seed ranges, apply the same
+        // weighted Gram correction, then enclose the constant anchor. Cubic
+        // terms use outward products, never an observed quadrature estimate.
+        const auto enclose_fit=[&]<int Terms>() -> bool {
+            const int fine=boundary?anchor:(cells_[face.left].level>=cells_[face.right].level?face.left:face.right);
+            const int scale_level=boundary?cells_[anchor].level:
+                std::min(cells_[face.left].level,cells_[face.right].level);
+            std::vector<std::array<ArithmeticRange,Terms>> basis;
+            std::vector<ArithmeticRange> weights,initial;
+            std::array<std::array<ArithmeticRange,Terms>,Terms> gram{};
+            std::array<ArithmeticRange,Terms> rhs{};rhs[1+axis]={1.,1.};
+            if(boundary) {
+                gram[0][0]={1.,1.};
+                rhs[0]=range_negate(range_product(boundary_seed,ideal_scale));
+            }
+            for(int cell:face.samples) {
+                std::array<ArithmeticRange,2> delta{};
+                for(int a=0;a<2;++a) {
+                    if(!canonical) {const double w=exact_width(cell,a);if(w<=0.)return false;}
+                    const int owner=a==axis?anchor:fine;
+                    const int common=std::max(cells_[cell].level,cells_[owner].level);
+                    // level<=15 and index<=INT_MAX imply every doubled dyadic
+                    // numerator and its difference fit <=48 bits. Build it in
+                    // int64 before exact binary scaling: no world-center subtraction.
+                    const std::int64_t sample=(2*std::int64_t(cells_[cell].index[a])+1)
+                        << (common-cells_[cell].level);
+                    const std::int64_t face_numerator=a==axis?
+                        2*(std::int64_t(cells_[owner].index[a])+(boundary?face.boundary_side%2:1)):
+                        2*std::int64_t(cells_[owner].index[a])+1;
+                    const std::int64_t face_position=face_numerator << (common-cells_[owner].level);
+                    const double dyadic=std::ldexp(double(sample-face_position),scale_level-common-1);
+                    if(canonical) {
+                        // Same-axis span/count cancel as exact rational factors.
+                        // Other-axis normalized offsets retain span and root-count
+                        // ratios, never ratios of rounded stored dx mantissas.
+                        if(a==axis)delta[a]={dyadic,dyadic};
+                        else delta[a]=range_product({dyadic,dyadic},range_product(
+                            range_divide_positive(ideal_native_span(base_,a),ideal_native_span(base_,axis)),
+                            range_divide_positive({double(base_.cells[axis]),double(base_.cells[axis])},
+                                {double(base_.cells[a]),double(base_.cells[a])})));
+                    } else {
+                        int ea=0,en=0;
+                        const double ma=std::frexp(base_.spacing[a],&ea),mn=std::frexp(base_.spacing[axis],&en);
+                        const double exact=std::ldexp(dyadic,ea-en);
+                        if(ma==mn&&std::isfinite(exact)&&std::ldexp(exact,en-ea)==dyadic)
+                            delta[a]={exact,exact}; // shared spacing/power-of-two ratio cancels exactly
+                        else delta[a]=range_product({dyadic,dyadic},range_divide_positive(
+                            {base_.spacing[a],base_.spacing[a]},{base_.spacing[axis],base_.spacing[axis]}));
+                    }
                 }
+                std::array<ArithmeticRange,Terms> p{{{1.,1.},delta[0],delta[1],range_square(delta[0]),
+                    range_product(delta[0],delta[1]),range_square(delta[1])}};
+                if constexpr(Terms==10) {
+                    p[6]=range_product(p[3],delta[0]);p[7]=range_product(p[3],delta[1]);
+                    p[8]=range_product(p[5],delta[0]);p[9]=range_product(p[5],delta[1]);
+                }
+                const auto denominator=range_add({1.,1.},range_add(range_square(delta[0]),range_square(delta[1])));
+                const auto weight=range_divide_positive({1.,1.},range_square(denominator));
+                ArithmeticRange seed{};
+                if(boundary&&cell==anchor)seed=inverse;
+                if(!boundary&&cell==face.left)seed=range_negate(inverse);
+                if(!boundary&&cell==face.right)seed=inverse;
+                seed=range_product(seed,ideal_scale);
+                for(int i=0;i<Terms;++i) {
+                    rhs[i]=range_add(rhs[i],range_negate(range_product(seed,p[i])));
+                    for(int j=0;j<Terms;++j)gram[i][j]=range_add(gram[i][j],
+                        range_product(weight,range_product(p[i],p[j])));
+                }
+                basis.push_back(p);weights.push_back(weight);initial.push_back(seed);
             }
-            std::array<ArithmeticRange,6> p{{{1.,1.},delta[0],delta[1],range_square(delta[0]),
-                range_product(delta[0],delta[1]),range_square(delta[1])}};
-            const auto denominator=range_add({1.,1.},range_add(range_square(delta[0]),range_square(delta[1])));
-            const auto weight=range_divide_positive({1.,1.},range_square(denominator));
-            ArithmeticRange seed{};
-            if(boundary&&cell==anchor)seed=inverse;
-            if(!boundary&&cell==face.left)seed=range_negate(inverse);
-            if(!boundary&&cell==face.right)seed=inverse;
-            seed=range_product(seed,ideal_scale);
-            for(int i=0;i<6;++i) {
-                rhs[i]=range_add(rhs[i],range_negate(range_product(seed,p[i])));
-                for(int j=0;j<6;++j)gram[i][j]=range_add(gram[i][j],
-                    range_product(weight,range_product(p[i],p[j])));
+            std::array<ArithmeticRange,Terms> lambda{};
+            if(!enclose_gram_solution<Terms>(gram,rhs,lambda,result.inverse_residual_upper,
+                result.inverse_norm_upper,result.lambda_error_upper)) {
+                result.status=BoundaryErrorStatus::UncertifiedInput;return false;
             }
-            basis.push_back(p);weights.push_back(weight);initial.push_back(seed);
-        }
-        std::array<ArithmeticRange,6> lambda{};
-        if(!enclose_gram_solution(gram,rhs,lambda,result.inverse_residual_upper,
-            result.inverse_norm_upper,result.lambda_error_upper)) {
-            result.status=BoundaryErrorStatus::UncertifiedInput;return result;
-        }
-        if(boundary)boundary_coefficient=range_add(boundary_seed,canonical
-            ?range_divide_positive(lambda[0],ideal_scale):range_divide_volume(lambda[0],scale));
-        for(std::size_t i=0;i<basis.size();++i) {
-            auto v=initial[i];
-            for(int j=0;j<6;++j)v=range_add(v,range_product(weights[i],range_product(basis[i][j],lambda[j])));
-            coefficients.push_back(canonical?range_divide_positive(v,ideal_scale):range_divide_volume(v,scale));
-        }
-        auto sum=boundary_coefficient;std::size_t anchor_index=coefficients.size();
-        for(std::size_t i=0;i<coefficients.size();++i) {
-            if(face.samples[i]==anchor)anchor_index=i;else sum=range_add(sum,coefficients[i]);
-        }
-        if(anchor_index==coefficients.size())return result;
-        coefficients[anchor_index]=range_negate(sum);
+            if(boundary)boundary_coefficient=range_add(boundary_seed,canonical
+                ?range_divide_positive(lambda[0],ideal_scale):range_divide_volume(lambda[0],scale));
+            for(std::size_t i=0;i<basis.size();++i) {
+                auto v=initial[i];
+                for(int j=0;j<Terms;++j)v=range_add(v,range_product(weights[i],range_product(basis[i][j],lambda[j])));
+                coefficients.push_back(canonical?range_divide_positive(v,ideal_scale):range_divide_volume(v,scale));
+            }
+            auto sum=boundary_coefficient;std::size_t anchor_index=coefficients.size();
+            for(std::size_t i=0;i<coefficients.size();++i) {
+                if(face.samples[i]==anchor)anchor_index=i;else sum=range_add(sum,coefficients[i]);
+            }
+            if(anchor_index==coefficients.size())return false;
+            coefficients[anchor_index]=range_negate(sum);
+            return true;
+        };
+        const bool enclosed=native_rz_cubic_point_fit(base_,face)
+            ?enclose_fit.operator()<10>():enclose_fit.operator()<6>();
+        if(!enclosed)return result;
     } else if(face.construction==FaceStencilConstruction::TwoPoint
         ||face.construction==FaceStencilConstruction::EllipticRecovery) {
         for(int cell:face.samples)coefficients.push_back(boundary?inverse:
@@ -1429,6 +1485,28 @@ NativeRzBoundaryPotentialError CompositePoisson::native_rz_propagate_potential_e
  */
 NativeRzOperatorConstructionError CompositePoisson::native_rz_operator_construction_error(
     std::span<const double> phi) const {
+    return native_rz_operator_construction_error_impl(phi,{});
+}
+/** Enclose the construction of the complete prescribed-boundary residual.
+ * Workflow: validate actual isolated Dirichlet data, then use the same native
+ * face/fit/geometry proof as homogeneous A. For M=signed area*c_B/volume,
+ * (A_ideal-A_stored)*phi-(B_ideal-B_stored)*datum contains
+ *     (M_ideal-M_stored)*(phi_anchor-datum).
+ * Both operands are exact supplied FP64 values enclosed before subtraction.
+ * A separate |M_defect|*|phi_anchor| + |M_defect|*|datum| triangle bound
+ * discards this real correlation; no coefficient or prescribed value changes.
+ */
+NativeRzOperatorConstructionError CompositePoisson::native_rz_prescribed_residual_construction_error(
+    std::span<const double> phi,std::span<const double> boundary_values) const {
+    if(boundary_kind()!=BoundaryKind::CurvilinearIsolated
+        ||boundary_values.size()!=faces_.size()||!finite_field(boundary_values))return {};
+    return native_rz_operator_construction_error_impl(phi,boundary_values);
+}
+/** Shared homogeneous/prescribed construction proof; empty data means A only.
+ * All sample differences, metric defects and outward rounding remain present.
+ */
+NativeRzOperatorConstructionError CompositePoisson::native_rz_operator_construction_error_impl(
+    std::span<const double> phi,std::span<const double> boundary_values) const {
     NativeRzOperatorConstructionError result;
     if(base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2
@@ -1455,9 +1533,15 @@ NativeRzOperatorConstructionError CompositePoisson::native_rz_operator_construct
                 const double term=bound_product(factor,range_abs_upper(difference));
                 contribution=bound_up(contribution+term);
             }
-            // Geometry already encloses the signed B factor; absolute defect
-            // bounds the homogeneous boundary term in A regardless of side.
-            const double boundary_term=bound_product(geometry.boundary_map_error_upper[side],std::abs(phi[anchor]));
+            // For prescribed data, the SAME ideal/stored B coefficient also
+            // occurs in A. Keep its defect multiplied by phi_anchor-datum;
+            // subtraction is enclosed, never assumed an exact rounded double.
+            const auto boundary_difference=boundary_values.empty()
+                ?ArithmeticRange{phi[anchor],phi[anchor]}
+                :range_add({phi[anchor],phi[anchor]},
+                    {-boundary_values[index],-boundary_values[index]});
+            const double boundary_term=bound_product(geometry.boundary_map_error_upper[side],
+                range_abs_upper(boundary_difference));
             contribution=bound_up(contribution+boundary_term);
             result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+contribution);
             if(!std::isfinite(result.cell_bounds[cell])) {result.status=BoundaryErrorStatus::Overflow;return result;}
@@ -1699,6 +1783,54 @@ BoundaryResidualAssessment CompositePoisson::assess_boundary_residual(
         result.status=BoundaryResidualStatus::Overflow;return result;
     }
     result.status=result.total_residual_upper<=result.tolerance_safe?
+        BoundaryResidualStatus::Accepted:BoundaryResidualStatus::ResidualTooLarge;
+    return result;
+}
+/** Original tolerance with separate RHS-norm and complete-residual proofs.
+ * Workflow: reuse every original input/quality/root-weight/RHS-norm check;
+ * then validate the DISTINCT complete residual ledger and re-norm its actual
+ * cell bounds using ideal native weights. No scalar supplied norm is trusted.
+ * Let E_b bound the exact RHS error and E_c bound the whole residual error:
+ *     T_safe=max(atol,rtol*down(||b_hat||_lower-E_b)),
+ *     R_upper=||r_hat||_upper+E_c.
+ * Correlated A/B construction enters E_c once. E_b is still counted in the
+ * exact RHS lower bound; adding it again to R_upper would double count it.
+ * This is discrete acceptance only, with no native physical qualification.
+ */
+BoundaryResidualAssessment CompositePoisson::assess_native_rz_correlated_residual(
+    std::span<const double> rhs,std::span<const double> residual,
+    const BoundaryRhsError& rhs_error,const NativeRzCompleteResidualError& complete_error,
+    double rtol,double atol) const {
+    auto result=assess_boundary_residual(rhs,residual,rhs_error,0.,0.,
+        BoundaryErrorQuality::CertifiedAbsolute,rtol,atol,
+        BoundaryResidualNormScope::RootDyadicRzWeights);
+    if(result.status!=BoundaryResidualStatus::Accepted
+        &&result.status!=BoundaryResidualStatus::ResidualTooLarge)return result;
+    if(complete_error.status!=BoundaryErrorStatus::Bounded) {
+        result.status=complete_error.status==BoundaryErrorStatus::Overflow?BoundaryResidualStatus::Overflow:
+            (complete_error.status==BoundaryErrorStatus::UncertifiedInput?
+                BoundaryResidualStatus::UncertifiedInput:BoundaryResidualStatus::InvalidInput);
+        return result;
+    }
+    if(boundary_kind()!=BoundaryKind::CurvilinearIsolated
+        ||complete_error.cell_bounds.size()!=cells_.size()
+        ||!std::isfinite(complete_error.native_norm_upper)||complete_error.native_norm_upper<0.) {
+        result.status=BoundaryResidualStatus::InvalidInput;return result;
+    }
+    for(double value:complete_error.cell_bounds)if(!std::isfinite(value)||value<0.) {
+        result.status=BoundaryResidualStatus::InvalidInput;return result;
+    }
+    const auto norm=native_rz_norm_interval(complete_error.cell_bounds);
+    if(norm.status!=BoundaryErrorStatus::Bounded) {
+        result.status=norm.status==BoundaryErrorStatus::Overflow?BoundaryResidualStatus::Overflow:
+            BoundaryResidualStatus::InvalidInput;return result;
+    }
+    result.error_composition=ResidualErrorComposition::CorrelatedPrescribedBoundary;
+    result.complete_residual_error_upper=norm.upper;
+    result.total_residual_upper=norm.upper==0.?result.residual_norm_upper:
+        bound_up(result.residual_norm_upper+norm.upper);
+    if(!std::isfinite(result.total_residual_upper))result.status=BoundaryResidualStatus::Overflow;
+    else result.status=result.total_residual_upper<=result.tolerance_safe?
         BoundaryResidualStatus::Accepted:BoundaryResidualStatus::ResidualTooLarge;
     return result;
 }

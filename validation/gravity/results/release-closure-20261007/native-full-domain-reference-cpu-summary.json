@@ -1,0 +1,77 @@
+{
+  "profile": "actual-materialized-full-domain-diagnostic-1",
+  "status": "FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY",
+  "science_accepted": false,
+  "physical_qualified": false,
+  "core_binding_qualified": false,
+  "reference_complete": true,
+  "coverage_complete": true,
+  "target_count": 1568,
+  "verified_target_count": 1568,
+  "unique_site_count": 800,
+  "exact_z_reflection": true,
+  "source_identity": {
+    "topology": 1,
+    "operator_revision": 1,
+    "boundary_revision": 1,
+    "accuracy_revision": 1,
+    "generation": 1,
+    "time": 0.0,
+    "G": 6.6743e-08,
+    "inputs": [
+      {
+        "uid": 1,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 2,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      }
+    ]
+  },
+  "field_identity": {
+    "source_generation": 1,
+    "field_generation": 1
+  },
+  "actual_record_canonical_sha256": "4ff13faa0561e02cbcedfca6f0e12a0fadf6cb7f4fb422f18762307a1939d562",
+  "original_source_input_sha256": "98b81e2a79e8eb07ab7f1c5d90ebdf5fdc1e6ff97514be7c186f1b7e7635754b",
+  "reference_status": "MathematicalIntervalsCertified",
+  "failure": null,
+  "target_widths_exact": {
+    "Phi": "50429584986587/755578637259143234191360000000000",
+    "g_r": "50429584986587/755578637259143234191360000000000",
+    "g_z": "50429584986587/755578637259143234191360000000000"
+  },
+  "budget": {
+    "calls": 1101139,
+    "max_calls": 1800000,
+    "wall_seconds": 54.04157787900476,
+    "timeout_seconds": 240.0,
+    "resource_profile": "full-domain-diagnostic-1"
+  },
+  "comparison_counts": {
+    "point_cell_potential": 512,
+    "force_minus_original_gradient": 1056,
+    "derived_original_value_row_vs_point_potential": 1056,
+    "actual_boundary_datum_potential": 80
+  },
+  "maximum_absolute_error_upper_exact": {
+    "point_cell_potential": "6743341026841900759878002396066713093137117366250760157243279295397/231584178474632390847141970017375815706539969331281128078915168015826259279872",
+    "force_minus_original_gradient": "587942943237199129948480369163004592013215914929209706671124145316739/463168356949264781694283940034751631413079938662562256157830336031652518559744",
+    "derived_original_value_row_vs_point_potential": "59669045022365644320369430645651510756682907673498619295549617859227/231584178474632390847141970017375815706539969331281128078915168015826259279872",
+    "actual_boundary_datum_potential": "5862075696596042140947532066381003215428825392311375768891/231584178474632390847141970017375815706539969331281128078915168015826259279872"
+  },
+  "scope": "Complete-domain mathematical interval diagnostic; no frozen production accuracy/science grant",
+  "materializedRecordSha256": "dca450ba2fce633f8fc1a2bc6394934c3111505731b3fd80947488a387b8ec7b",
+  "completeLocalResultSha256": "fd80cf64edb620aaabc6d6374d6e13285734969358a1f963fb338423f9519054",
+  "producerScope": "Older field implementation; all mathematical intervals valid for its full actual source and observers; no current Core field comparison yet",
+  "producerResultSha256": "14f866922529bf5190b24b247bad76b58efb25635455d4da7a4e75ae48b52ce5",
+  "recordedAtUtc": "2026-10-07T08:43:52.081604+00:00",
+  "guardWallSeconds": 55.436
+}

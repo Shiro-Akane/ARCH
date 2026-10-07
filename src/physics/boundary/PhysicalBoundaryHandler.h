@@ -80,6 +80,13 @@ struct BCHandler {
         arch::boundary::BoundaryPurpose purpose_;
         StageContextSnapshot(double t,std::uint64_t r,arch::boundary::BoundaryPurpose p)
             : time_(t),revision_(r),purpose_(p) {}
+    public:
+        /** Query actual immutable snapshot data, never stage authority. The
+         * owner must still check stage_context_matches and its real binding. */
+        double time() const noexcept {return time_;}
+        arch::boundary::BoundaryPurpose purpose() const noexcept {return purpose_;}
+        std::uint64_t revision() const noexcept {return revision_;}
+
     };
     /** Capture a context identity at a quiescent Host scheduler boundary. */
     StageContextSnapshot snapshot_stage_context() const noexcept {

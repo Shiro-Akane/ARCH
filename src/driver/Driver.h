@@ -183,54 +183,66 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         if (do_plt) output.write_plot(gravity_stage.plot_fields());
         if (do_chk) output.write_checkpoint(dt_burn_global, true);
 
-        NativeMacroStepAdvice timestep_advice(runtime,ctrl,dt_burn_global);
         const auto candidates = [&] {
             CpuStageTimer timed(cpu_stages, CpuStage::Timestep, time_cpu_stages);
             return calculate_timestep_candidates(runtime, workspace, eos, resolved_plan);
         }();
-        const double dt_computed = ctrl.calculate_next_dt(
-            std::min({candidates.hydro, candidates.diffusion_sts, gravity_stage.timestep()}), dt_burn_global);
-        dt_burn_global = 1e99;
-        const double dt = ctrl.sync_dt(dt_computed);
-        bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
-        auto stage_context = runtime.stage_context();
-        stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
-        stage_context.step_start_time = ctrl.t_current;
-        stage_context.step_dt = dt;
-        // Plan owners set input/output physical clocks through this one hook.
-        // Configuration changes the callback snapshot only: actual BC, exchange
-        // and scientific acceptance retain their existing scheduler owners.
-        stage_context.configure_boundary_context = [&](double time,
-            arch::boundary::BoundaryPurpose purpose) {
-            bc_handler.configure_stage(time, purpose);
-            runtime.bind_native_boundary_acceptance(stage_context, runtime.handles());
-        };
-        if (bc_handler.has_user()
-            ||runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
-            stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
+        // Freeze scalar caps from this accepted entry before any rejected
+        // macro invalidates gravity. Regrid/output above are not replayed.
+        const double accepted_dt_cap=std::min({candidates.hydro,candidates.diffusion_sts,gravity_stage.timestep()});
+        const double dt=execute_driver_macro_attempts(runtime,ctrl,dt_burn_global,accepted_dt_cap,
+            [&](double dt,std::uint64_t attempt_index) {
+            bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+            auto stage_context = runtime.stage_context();
+            stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
+            stage_context.step_start_time = ctrl.t_current;
+            stage_context.step_dt = dt;
+            // Plan owners set input/output physical clocks through this one hook.
+            // Configuration changes the callback snapshot only: actual BC, exchange
+            // and scientific acceptance retain their existing scheduler owners.
+            stage_context.configure_boundary_context = [&](double time,
                 arch::boundary::BoundaryPurpose purpose) {
-                stage_context.configure_boundary_context(time, purpose);
-                runtime.ensure_fluid_ghosts(slot);
+                bc_handler.configure_stage(time, purpose);
+                runtime.bind_native_boundary_acceptance(stage_context, runtime.handles());
             };
-        runtime.bind_boundary_accounting(stage_context);
-        ScopedStageBinding stage_binding(stage_context, runtime.handles());
+            if (bc_handler.has_user()
+                ||runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
+                    arch::boundary::BoundaryPurpose purpose) {
+                    stage_context.configure_boundary_context(time, purpose);
+                    runtime.ensure_fluid_ghosts(slot);
+                };
+            runtime.bind_boundary_accounting(stage_context);
+            ScopedStageBinding stage_binding(stage_context, runtime.handles());
+            std::optional<NativeMacroRetryAttempt> retry_attempt;
+            if(!runtime.backend()&&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+                std::optional<scheduler::RklMethod> method;
+                if(config.physics.diffusion.use_diffusion) {
+                    if(resolved_plan->diffusion_integrator==dispatch::DiffusionIntegratorId::Rkl1)
+                        method=scheduler::RklMethod::RKL1;
+                    else if(resolved_plan->diffusion_integrator==dispatch::DiffusionIntegratorId::Rkl2)
+                        method=scheduler::RklMethod::RKL2;
+                    else throw std::logic_error("Native retry has no selected supported RKL method");
+                }
+                retry_attempt.emplace(runtime,stage_context,attempt_index,method,candidates.diffusion_forward_euler);
+            }
 
-        execute_driver_macro_step(runtime,stage_context,hydro,has_burn,
-            [&](BurnHalf half,double half_dt,arch::state::CompletionToken token) {
-                return execute_burn_half(runtime,workspace,eos,burn,half,half_dt,dt_burn_global,token);
-            },
-            [&](double half_dt) {
-                advance_diffusion(runtime,workspace,stage_context,eos,resolved_plan,
-                    ctrl.step_count,half_dt,candidates.diffusion_forward_euler);
-            },
-            [&](double hydro_dt) {
-                advance_hydro(runtime,workspace,stage_context,resolved_plan,hydro_dt,
-                    integrator_solve,gravity,hydro);
-            },
-            [&](CpuStage stage,auto&& execute) {
-                CpuStageTimer timed(cpu_stages,stage,time_cpu_stages);execute();
+            execute_driver_macro_step(runtime,stage_context,hydro,has_burn,
+                [&](BurnHalf half,double half_dt,arch::state::CompletionToken token) {
+                    return execute_burn_half(runtime,workspace,eos,burn,half,half_dt,dt_burn_global,token);
+                },
+                [&](double half_dt) {
+                    advance_diffusion(runtime,workspace,stage_context,eos,resolved_plan,
+                        ctrl.step_count,half_dt,candidates.diffusion_forward_euler);
+                },
+                [&](double hydro_dt) {
+                    advance_hydro(runtime,workspace,stage_context,resolved_plan,hydro_dt,
+                        integrator_solve,gravity,hydro);
+                },
+                [&](CpuStage stage,auto&& execute) {
+                    CpuStageTimer timed(cpu_stages,stage,time_cpu_stages);execute();
+                });
             });
-        timestep_advice.commit();
         gravity_stage.invalidate();
         ctrl.advance(dt);
         // Numerical state/time are already accepted. Durable diagnostics are

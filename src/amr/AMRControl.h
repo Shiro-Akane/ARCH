@@ -67,6 +67,15 @@ struct AMRControl {
         return active_handles_;
     }
 
+    /** Borrow the exact currently published immutable flux plan without creating
+     * or replacing it. A stage retains this lease to avoid dangling route views
+     * and compares the live cache owner before consuming its frozen topology.
+     */
+    std::shared_ptr<const AmrFluxTopologyPlan> FluxTopologyPlanLease() const noexcept
+    {
+        return std::atomic_load_explicit(&flux_topology_plan_,std::memory_order_acquire);
+    }
+
     const AmrFluxTopologyPlan& RequireFluxTopologyPlan(int species_count,
         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
         int source_block = -1, bool angular_transport = false)
