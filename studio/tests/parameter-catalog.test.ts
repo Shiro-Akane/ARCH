@@ -8,7 +8,11 @@ const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../.
 
 test('current schema is dynamic, retired aliases are not destinations, missing values stay blank',()=>{
  const rows=catalog(schema.parameters,{timeintegrator:'RK1'});
- assert.equal(rows.length,94);
+ assert.equal(rows.length,schema.parameters.length);
+ const jeans=rows.find(r=>r.parameter.key==='jeans_cells')!;
+ assert.ok(jeans);assert.equal(jeans.value,'');
+ assert.equal(jeans.parameter.allowedDefault,null);
+ assert.equal(jeans.parameter.requirement.kind,'conditional');
  assert.equal(rows.find(r=>r.parameter.key==='time_integrator')?.sourceKey,'time_integrator');
  assert.ok(!rows.some(r=>r.aliases.includes('timeintegrator')));
  const raw='# retained\r\nnblockx2 = 0\r\nnblockx3 = 0\r\nunknown = untouched\r\n';
@@ -23,13 +27,21 @@ test('current schema is dynamic, retired aliases are not destinations, missing v
  const smaller=structuredClone(schema);smaller.parameters=smaller.parameters.slice(0,12);
  assert.equal(validateConfigurationSchema(smaller).parameters.length,12);
  const larger=structuredClone(schema);larger.parameters.push({...larger.parameters[0],key:'future_parameter'});
- assert.equal(validateConfigurationSchema(larger).parameters.length,95);
+ assert.equal(validateConfigurationSchema(larger).parameters.length,schema.parameters.length+1);
 });
 test('coordinate layout follows all nine Core conventions and never consumes transient invalid block tokens',()=>{
  for(const geometry of ['cartesian','cylindrical','spherical'])for(const dimension of [1,2,3]){
   const c=catalogCoordinates(schema,{geometry,nblockx1:'2',nblockx2:dimension>=2?'1':'0',nblockx3:dimension===3?'2':'0'});
   assert.equal(c?.dimension,dimension);assert.equal(c?.axes.filter(a=>a.active).length,dimension);
-  if(geometry==='cylindrical'&&dimension===2)assert.deepEqual(c?.axes.filter(a=>a.active).map(a=>a.displayName),['r','phi']);
+  if(geometry==='cylindrical'&&dimension===2){
+   // Current live Core uses the meridional chart; this checked schema must be
+   // regenerated from its real ELF, not translated by a client-side fallback.
+   const active=c!.axes.filter(a=>a.active);
+   assert.deepEqual(active.map(a=>a.displayName),['r','z']);
+   assert.deepEqual(active.map(a=>a.nativeName),['r_cy','z_cy']);
+   assert.deepEqual(active.map(a=>a.kind),['length','length']);
+   assert.deepEqual(active.map(a=>a.unit),['cm','cm']);
+  }
  }
  for(const value of ['','-','1.','1.5','-1','2147483648'])assert.equal(catalogCoordinates(schema,{nblockx1:'1',nblockx2:value,nblockx3:'0'}),undefined);
  assert.equal(catalogCoordinates(schema,{nblockx1:'1',nblockx2:'0',nblockx3:'1'}),undefined);

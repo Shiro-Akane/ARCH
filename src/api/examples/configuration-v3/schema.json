@@ -203,7 +203,7 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/BurnGradient/BurnGradient.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/BurnGradient/BurnGradient.cpp",
       "sourceSha256": "4171da69285643702258f2ae4758fc0519dba7cadda40804f3aefff09b5055c8"
     },
     {
@@ -277,7 +277,7 @@
           "usage": "verification"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/BurnOneZone/BurnOneZone.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/BurnOneZone/BurnOneZone.cpp",
       "sourceSha256": "52cb9928a8afcd8437d6c3b99149112bd310bbb9cbe47ea7d034bd6e41b503c3"
     },
     {
@@ -537,8 +537,8 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/Cellular/Cellular.cpp",
-      "sourceSha256": "afc2ae1c484def0d23e2f18c00da952cd886e1edf1883081bdc944874c4b9a01"
+      "source": "/home/shiroakane/ARCH/simulation/Cellular/Cellular.cpp",
+      "sourceSha256": "54cb01690f6879ba80d1e9d0179bd0e0416ea1e77e89cfe3a4886a027388a9cc"
     },
     {
       "caseId": "CooperativeHotspots",
@@ -830,7 +830,7 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
       "sourceSha256": "dd6b0a29ee35da013ce712892a1c8de73e5c5e5124ff0f2efcbf950a3650698d"
     },
     {
@@ -997,7 +997,7 @@
           "usage": "verification"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/DiffusionMode/DiffusionMode.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/DiffusionMode/DiffusionMode.cpp",
       "sourceSha256": "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842"
     },
     {
@@ -1102,7 +1102,7 @@
           "usage": "verification"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/ExternalGravity/ExternalGravity.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/ExternalGravity/ExternalGravity.cpp",
       "sourceSha256": "512ded6e1a5f447c7b580cf14cb21205942a3f550ff3d43a3bd6b839234d4dc2"
     },
     {
@@ -1490,8 +1490,8 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/GaussianPulse/Gaussian.cpp",
-      "sourceSha256": "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9"
+      "source": "/home/shiroakane/ARCH/simulation/GaussianPulse/Gaussian.cpp",
+      "sourceSha256": "32a5f58224a372ae9bffc22e169153db00225d3b909989adcef78c36b64d8313"
     },
     {
       "caseId": "GravityBox",
@@ -1757,7 +1757,9 @@
           "allowedDefault": null,
           "applicability": {
             "dependencies": [
-              "nblockx3"
+              "nblockx3",
+              "geometry",
+              "gravity_boundary"
             ],
             "description": "Registered model declaration; no Setup execution.",
             "id": "case:GravityBox:center_z"
@@ -1773,7 +1775,9 @@
           "requirement": {
             "condition": {
               "dependencies": [
-                "nblockx3"
+                "nblockx3",
+                "geometry",
+                "gravity_boundary"
               ],
               "description": "Registered model declaration; no Setup execution.",
               "id": "case:GravityBox:center_z"
@@ -1874,8 +1878,8 @@
           "usage": "verification"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/GravityBox/GravityBox.cpp",
-      "sourceSha256": "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d"
+      "source": "/home/shiroakane/ARCH/simulation/GravityBox/GravityBox.cpp",
+      "sourceSha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff"
     },
     {
       "caseId": "JeansWave",
@@ -2091,7 +2095,7 @@
           "usage": "verification"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/JeansWave/JeansWave.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/JeansWave/JeansWave.cpp",
       "sourceSha256": "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab"
     },
     {
@@ -2258,8 +2262,8 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/RTinstability/RT_instab.cpp",
-      "sourceSha256": "d0fcfcc78136d34dea31fff799892ac2c4ddaefcf1f60d5e4be33307b63b515a"
+      "source": "/home/shiroakane/ARCH/simulation/RTinstability/RT_instab.cpp",
+      "sourceSha256": "a35f0c9fb67fbd226726b182a06afc76210006a3c9dfd0cd1b6b96efc6d0c9b5"
     },
     {
       "caseId": "SNIaCoupled",
@@ -2518,8 +2522,8 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/SNIaCoupled/SNIaCoupled.cpp",
-      "sourceSha256": "2fe391554874d95e3802f4f7b5d66565f3afd5cf488da4b2a8c14b4d80e58a6a"
+      "source": "/home/shiroakane/ARCH/simulation/SNIaCoupled/SNIaCoupled.cpp",
+      "sourceSha256": "d44b7189471e59045f81644069230315e6c73d6bab074d8c604e620ce20e0921"
     },
     {
       "caseId": "Sedov",
@@ -2747,7 +2751,7 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/Sedov/Sedov.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/Sedov/Sedov.cpp",
       "sourceSha256": "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6"
     },
     {
@@ -2914,7 +2918,7 @@
           "usage": "verification"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/SmoothAdvection/SmoothAdvection.cpp",
       "sourceSha256": "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a"
     },
     {
@@ -3143,8 +3147,94 @@
           "usage": "simulation"
         }
       ],
-      "source": "/home/arch/projects/ARCH-compute-optim/simulation/Sod/Sod.cpp",
+      "source": "/home/shiroakane/ARCH/simulation/Sod/Sod.cpp",
       "sourceSha256": "7867565cdbe801769c0860de8d4a41254aaaa7be354951bcab69dd042a242738"
+    },
+    {
+      "caseId": "UserBoundary",
+      "composition": {
+        "inspectionRequired": false,
+        "status": "not-consumed"
+      },
+      "declarationsComplete": true,
+      "parameters": [
+        {
+          "allowedDefault": null,
+          "applicability": {
+            "dependencies": [],
+            "description": "Registered model declaration; no Setup execution.",
+            "id": "case:UserBoundary:user_boundary_heat_flux"
+          },
+          "caseId": "UserBoundary",
+          "constraints": {
+            "complete": false
+          },
+          "group": "Case",
+          "key": "user_boundary_heat_flux",
+          "options": null,
+          "path": null,
+          "requirement": {
+            "condition": {
+              "dependencies": [],
+              "description": "Registered model declaration; no Setup execution.",
+              "id": "case:UserBoundary:user_boundary_heat_flux"
+            },
+            "kind": "required"
+          },
+          "templateRecommendations": [],
+          "type": "float",
+          "units": {
+            "status": "known",
+            "unit": "erg/(cm^2*s)"
+          },
+          "usage": "simulation"
+        }
+      ],
+      "source": "/home/shiroakane/ARCH/simulation/UserBoundary/case.cpp",
+      "sourceSha256": "e1e8e2ba03f262bf1b0d77158815cc849f5d92186e24209a063391fb64cd362e"
+    },
+    {
+      "caseId": "UserGravity",
+      "composition": {
+        "inspectionRequired": false,
+        "status": "not-consumed"
+      },
+      "declarationsComplete": true,
+      "parameters": [
+        {
+          "allowedDefault": null,
+          "applicability": {
+            "dependencies": [],
+            "description": "Registered model declaration; no Setup execution.",
+            "id": "case:UserGravity:user_boundary_heat_flux"
+          },
+          "caseId": "UserGravity",
+          "constraints": {
+            "complete": false
+          },
+          "group": "Case",
+          "key": "user_boundary_heat_flux",
+          "options": null,
+          "path": null,
+          "requirement": {
+            "condition": {
+              "dependencies": [],
+              "description": "Registered model declaration; no Setup execution.",
+              "id": "case:UserGravity:user_boundary_heat_flux"
+            },
+            "kind": "required"
+          },
+          "templateRecommendations": [],
+          "type": "float",
+          "units": {
+            "status": "known",
+            "unit": "erg/(cm^2*s)"
+          },
+          "usage": "simulation"
+        }
+      ],
+      "source": "/home/shiroakane/ARCH/simulation/UserGravity/case.cpp",
+      "sourceSha256": "8d0254f84d93ffdf62ff42ed677c5d2181bac326a35a9f9f64c02e2b3a285a69"
     }
   ],
   "caseDeclarationsComplete": true,
@@ -3379,14 +3469,14 @@
           "active": true,
           "blocks": 1,
           "blocksKey": "nblockx2",
-          "displayName": "phi",
+          "displayName": "z",
           "key": "x2",
-          "kind": "angle",
+          "kind": "length",
           "lowerBoundaryKey": "x2l_boundary_type",
           "maxKey": "x2_max",
           "minKey": "x2_min",
-          "nativeName": "phi_cy",
-          "unit": "rad",
+          "nativeName": "z_cy",
+          "unit": "cm",
           "upperBoundaryKey": "x2r_boundary_type"
         },
         {
@@ -4183,6 +4273,22 @@
         "choices": [
           {
             "acceptedNames": [
+              "user",
+              "inflow",
+              "dirichlet"
+            ],
+            "displayName": "User primitive",
+            "value": "user"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "Zero normal gradient",
+            "value": "neumann"
+          },
+          {
+            "acceptedNames": [
               "outflow"
             ],
             "displayName": "Outflow",
@@ -4248,6 +4354,22 @@
       "options": {
         "caseSensitive": false,
         "choices": [
+          {
+            "acceptedNames": [
+              "user",
+              "inflow",
+              "dirichlet"
+            ],
+            "displayName": "User primitive",
+            "value": "user"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "Zero normal gradient",
+            "value": "neumann"
+          },
           {
             "acceptedNames": [
               "outflow"
@@ -4317,6 +4439,22 @@
         "choices": [
           {
             "acceptedNames": [
+              "user",
+              "inflow",
+              "dirichlet"
+            ],
+            "displayName": "User primitive",
+            "value": "user"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "Zero normal gradient",
+            "value": "neumann"
+          },
+          {
+            "acceptedNames": [
               "outflow"
             ],
             "displayName": "Outflow",
@@ -4382,6 +4520,22 @@
       "options": {
         "caseSensitive": false,
         "choices": [
+          {
+            "acceptedNames": [
+              "user",
+              "inflow",
+              "dirichlet"
+            ],
+            "displayName": "User primitive",
+            "value": "user"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "Zero normal gradient",
+            "value": "neumann"
+          },
           {
             "acceptedNames": [
               "outflow"
@@ -4451,6 +4605,22 @@
         "choices": [
           {
             "acceptedNames": [
+              "user",
+              "inflow",
+              "dirichlet"
+            ],
+            "displayName": "User primitive",
+            "value": "user"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "Zero normal gradient",
+            "value": "neumann"
+          },
+          {
+            "acceptedNames": [
               "outflow"
             ],
             "displayName": "Outflow",
@@ -4516,6 +4686,22 @@
       "options": {
         "caseSensitive": false,
         "choices": [
+          {
+            "acceptedNames": [
+              "user",
+              "inflow",
+              "dirichlet"
+            ],
+            "displayName": "User primitive",
+            "value": "user"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "Zero normal gradient",
+            "value": "neumann"
+          },
           {
             "acceptedNames": [
               "outflow"
@@ -7129,6 +7315,27 @@
             ],
             "displayName": "isolated",
             "value": "isolated"
+          },
+          {
+            "acceptedNames": [
+              "dirichlet"
+            ],
+            "displayName": "dirichlet",
+            "value": "dirichlet"
+          },
+          {
+            "acceptedNames": [
+              "neumann"
+            ],
+            "displayName": "neumann",
+            "value": "neumann"
+          },
+          {
+            "acceptedNames": [
+              "user"
+            ],
+            "displayName": "user",
+            "value": "user"
           }
         ],
         "unknownBehavior": "error"
@@ -7641,6 +7848,49 @@
       "units": {
         "status": "not-applicable",
         "unit": null
+      },
+      "usage": "simulation"
+    },
+    {
+      "allowedDefault": null,
+      "applicability": {
+        "dependencies": [
+          "refine_var"
+        ],
+        "description": "Core-owned consumer condition; inspection evaluates supplied input.",
+        "id": "requires:jeans_cells"
+      },
+      "caseId": null,
+      "constraints": {
+        "complete": false,
+        "min": 4,
+        "minInclusive": true,
+        "syntax": "finite decimal or scientific notation; full token"
+      },
+      "group": "Grid",
+      "key": "jeans_cells",
+      "options": null,
+      "path": null,
+      "presentation": {
+        "description": "Minimum cells per Jeans length; required only when refine_var requests JENS. No implicit default.",
+        "displayName": "Jeans resolution target",
+        "subgroup": "AMR"
+      },
+      "requirement": {
+        "condition": {
+          "dependencies": [
+            "refine_var"
+          ],
+          "description": "Core-owned presence requirement; inspection evaluates supplied input.",
+          "id": "requires:jeans_cells"
+        },
+        "kind": "conditional"
+      },
+      "templateRecommendations": [],
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
       },
       "usage": "simulation"
     },

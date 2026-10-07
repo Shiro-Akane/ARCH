@@ -16,4 +16,4 @@ invalid, repeated, default, case-defined and derived semantics, identity, budget
 and absence of filesystem side effects. These fixtures are evidence for this
 static boundary, not full simulation readiness or finished Host/Studio acceptance.
 
-Current capture: committed source e4c87d98, 94 writable standard parameters, retired gravity_G, and case-scoped simulation/verification usage. The source was clean when captured; static inspection includes the current shared AMR selection metadata. Configuration completeness still does not prove EOS resources or simulation readiness.
+Current capture: source 1ac24f7c2, 95 writable standard parameters, retired gravity_G, and case-scoped simulation/verification usage. The conditional jeans_cells parameter has no implicit default. The static responses describe the native cylindrical 2D (r,z) chart in cm. capture.json records the actual executable hash and unchanged source identity observed before and after capture; the executable build metadata is retained as emitted, even when its embedded commit precedes a fixture-only commit. Configuration completeness does not establish EOS resource availability or simulation readiness.

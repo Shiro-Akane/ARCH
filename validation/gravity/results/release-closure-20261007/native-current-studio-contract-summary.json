@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "status": "PASS_LOCAL_STATIC_CONTRACT_ONLY",
+  "capturedUtc": "2026-10-07T17:26:57.395900+00:00",
+  "source": {
+    "commit": "1ac24f7c2ec43cb3f6e706737a02cc0a51c94ba2",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "0e98703d1832a26a623772ed6202b694add06f72da359263bdcd36778f001ce4",
+    "dirty": false,
+    "modified_files": [],
+    "untracked_source_files": []
+  },
+  "executableSha256": "74ea5a3d67fab62909d3bf199649c25ed53945e5e609ff4ccdbb8dbbbec97dc6",
+  "fixtures": 4,
+  "staticFixtureExitCodes": {
+    "schema": 0,
+    "sod-valid": 0,
+    "empty": 3,
+    "invalid": 3
+  },
+  "sourceExecutableFence": true,
+  "parameterCatalogTests": {
+    "passed": 3,
+    "failed": 0,
+    "node": "24.21.0"
+  },
+  "actualHostPreviewParser": {
+    "case": "Gaussian",
+    "geometry": "cylindrical",
+    "dimension": 2,
+    "fields": 8,
+    "chart": [
+      "r",
+      "z"
+    ],
+    "units": [
+      "cm",
+      "cm"
+    ],
+    "shape": [
+      2,
+      2
+    ],
+    "requestId": "native-chart-recapture"
+  },
+  "historicalFailure": {
+    "oldParameterCountOracle": 94,
+    "actual": 95,
+    "reason": "New maintained conditional jeans_cells; schema catalog length now follows actual Core schema, no scientific limit changed"
+  },
+  "qualification": "Static configuration and initial Preview parser only; no actual GUI rendering, evolution, restart, CUDA, benchmark or scientific release acceptance"
+}

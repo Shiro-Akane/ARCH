@@ -70,7 +70,7 @@
       },
       {
         "available": false,
-        "reason": "Jeans diagnostic is not implemented",
+        "reason": "requires self gravity and explicit CPU or Cartesian CUDA backend; auto and native-coordinate CUDA are not qualified",
         "selected": false,
         "value": "JENS"
       },
@@ -1424,6 +1424,37 @@
       },
       "usage": "simulation",
       "valueSource": "input",
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:jeans_cells",
+        "missingDependencies": [],
+        "state": "not-applicable"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "jeans_cells",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:jeans_cells",
+        "missingDependencies": [],
+        "required": false,
+        "state": "not-applicable"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "usage": "simulation",
+      "valueSource": null,
       "valueStage": "configuration-resolution-before-setup"
     },
     {

@@ -1,7 +1,7 @@
 {
-  "baseCommit": "e4c87d98b648ea33028f6f53bae438ed388ff3d5",
+  "baseCommit": "1ac24f7c2ec43cb3f6e706737a02cc0a51c94ba2",
   "sourceWasDirty": false,
-  "executableSha256": "12322fbd2506555ee409c8bd862f73d2f44977a05673296c91d7e851397fe04e",
+  "executableSha256": "74ea5a3d67fab62909d3bf199649c25ed53945e5e609ff4ccdbb8dbbbec97dc6",
   "configurationVersion": "3",
   "fixtures": [
     {
@@ -51,8 +51,63 @@
   ],
   "implementationSha256": {
     "src/api/ApplicationContract.h": "ae4118e039d55af07ccca7ed2dda9d6804900d6f16ad5f4c52d6fbcf4a742c79",
-    "src/api/configuration/Configuration.cpp": "03df1f382c16ddda0d38293a68c2ffd75122df2d88d552bae91f4709dcff47dc",
+    "src/api/configuration/Configuration.cpp": "3c8a5c943d129f1d6746b9c5d026367cf6058558fe7db5b119f1a832a24642ce",
     "src/api/protocol/Response.h": "7ce4193b34e2c9be538f2a7ea16e4bb4eb9101ba4e6ed7d7f49efa0d041ebcd9",
-    "src/core/config/InputResolution.h": "14bcec2628176dc4680b9c9823bfc0b54040ff016696b77a6b7704d6cc893bee"
-  }
+    "src/core/config/InputResolution.h": "6b14d1391d6b5791673a1b21b9e237cc7017aec3b7fe8427a90ad6dd8d3219db"
+  },
+  "capturedUtc": "2026-10-07T17:26:57.395900+00:00",
+  "sourceIdentity": {
+    "commit": "1ac24f7c2ec43cb3f6e706737a02cc0a51c94ba2",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "0e98703d1832a26a623772ed6202b694add06f72da359263bdcd36778f001ce4",
+    "dirty": false,
+    "modified_files": [],
+    "untracked_source_files": []
+  },
+  "executableBuildIdentity": "See actual response; build may precede fixture-only commit"
 }

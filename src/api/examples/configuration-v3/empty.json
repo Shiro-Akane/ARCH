@@ -804,6 +804,25 @@
     },
     {
       "code": "UNRESOLVED_DEPENDENCY",
+      "conditionId": "requires:jeans_cells",
+      "expected": {
+        "type": "float",
+        "units": {
+          "status": "dimensionless",
+          "unit": "1"
+        }
+      },
+      "locations": [],
+      "message": "Requirement cannot be evaluated until its dependencies are resolved.",
+      "module": "Grid",
+      "parameterKey": "jeans_cells",
+      "relatedKeys": [
+        "refine_var"
+      ],
+      "severity": "error"
+    },
+    {
+      "code": "UNRESOLVED_DEPENDENCY",
       "conditionId": "requires:limiter",
       "expected": {
         "type": "string",
@@ -2577,6 +2596,41 @@
       "units": {
         "status": "not-applicable",
         "unit": null
+      },
+      "usage": "simulation",
+      "valueSource": null,
+      "valueStage": "configuration-resolution-before-setup"
+    },
+    {
+      "applicability": {
+        "conditionId": "requires:jeans_cells",
+        "missingDependencies": [
+          "refine_var"
+        ],
+        "state": "unknown-dependency"
+      },
+      "caseId": null,
+      "group": "Grid",
+      "inputState": "missing",
+      "key": "jeans_cells",
+      "locations": [],
+      "parsedValue": null,
+      "path": null,
+      "rawValue": null,
+      "requirement": {
+        "conditionId": "requires:jeans_cells",
+        "missingDependencies": [
+          "refine_var"
+        ],
+        "required": null,
+        "state": "unknown-dependency"
+      },
+      "resolvedValue": null,
+      "sourceEvidence": null,
+      "type": "float",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
       },
       "usage": "simulation",
       "valueSource": null,
