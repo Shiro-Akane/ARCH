@@ -355,6 +355,8 @@ private:
                 ||binding.context.ledger.inspect({actual.block,actual.slot}).interior.version!=actual.version)
                 throw std::logic_error("Native self source does not match actual prepared input publication");
         }
+        // A real accepted-Current field cannot acquire Hydro consumption authority.
+        policy_->require_runtime_purpose(GravityFieldPurpose::HydroStage);
         require_configuration();policy_->require_native_frame(source_,field_generation_,source_generation_);
         const auto& actual_topology=const_cast<amr::AMRControl&>(control).RequireFluxTopologyPlan(
             control.flux_register.GetNumSpecies(),GridMetrics::GeometrySemantics::AxisymmetricRz,-1,true);

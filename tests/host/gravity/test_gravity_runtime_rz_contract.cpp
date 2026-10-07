@@ -9,6 +9,8 @@
 #include "physics/gravity/self/SelfGravity.h"
 #include "physics/gravity/GravityExecution.h"
 #include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <filesystem>
 #include <iostream>
 #include <limits>
@@ -26,7 +28,9 @@
 #include <cmath>
 #include <memory>
 #include <string>
+#include <span>
 #include <sstream>
+#include <vector>
 static void require(bool x,const char* m){if(!x)throw std::runtime_error(m);}
 template<class F> static void rejects(F f,const char* m){
     bool failed=false;try{f();}catch(const std::exception&){failed=true;}
@@ -36,6 +40,9 @@ class Capture final:public Physical::Gravity::GravityExecution {
     std::shared_ptr<Physical::Gravity::GravityExecution> host=
         Physical::Gravity::make_host_gravity_execution();
 public:
+    // Tests-only real source-window observation after mandatory Current BC/EOS.
+    // It does not replace the execution, density gather or source sink.
+    std::function<void()> after_gather;
     int gathers=0;std::vector<double> density;
     std::vector<Physical::Gravity::GravityCell> cells;
     std::shared_ptr<arch::multigrid::CompositeExecution> numeric() const override{return host->numeric();}
@@ -45,6 +52,7 @@ public:
             host->numeric()->fence();++gathers;
             density.assign(input->out,input->out+input->size);
             cells.assign(input->cells,input->cells+input->size);
+            if(after_gather)after_gather();
         }
     }
 };
@@ -110,11 +118,12 @@ struct OwnerWitness {
 /** Only a guarded reentry diagnostic counts: an unrelated physical gate is not
  * evidence that the source callback excluded synchronous owner replacement.
  */
-template<class F> void guarded_reentry(F&& call) {
+template<class F> void guarded_reentry(F&& call,const char* exact_message=nullptr) {
     bool refused=false;
     try {call();}
     catch(const std::logic_error& error) {
-        require(std::string(error.what()).find("Native source inspection")!=std::string::npos,
+        require(exact_message?std::string(error.what())==exact_message:
+            std::string(error.what()).find("Native source inspection")!=std::string::npos,
             "reentry hit an unrelated rejection rather than the real inspection lease");
         refused=true;
     }
@@ -177,6 +186,7 @@ struct Sink {
     Physical::Gravity::SelfGravity& gravity;
     arch::driver::DriverRuntime& runtime;
     SimConfig& config;
+    SimulationController& counters;
     Capture& capture;
     std::shared_ptr<Physical::Gravity::GravityExecution> execution;
     Action action=Action::Copy;
@@ -189,6 +199,10 @@ struct Sink {
     double saved_rho=0.;
     std::size_t fault_offset=0;
     bool fault_applied=false;
+    // Frozen at real callback entry, after legitimate Current BC/EOS completion.
+    // Exactly the original values/addresses/ledger/clock/BC snapshot is checked
+    // after the callback/field failure; no source-phase mutation is allowed.
+    std::unique_ptr<OwnerWitness> source_window;
 
     void unreadable() const {
         rejects([&]{gravity.native_rz_assessment();},"callback/failure retained a candidate assessment");
@@ -201,6 +215,16 @@ struct Sink {
     void capture_actual(const View& view) {
         require(!stage.native_rz_source_inspection_completed(),"inspection marker was true during callback");
         unreadable();++calls;
+        source_window=std::make_unique<OwnerWitness>(runtime,counters);
+        require(view.request.purpose==Physical::Gravity::GravityFieldPurpose::AcceptedCurrent
+            &&view.request.runtime_lease
+            &&view.request.runtime_lease->purpose()==Physical::Gravity::GravityFieldPurpose::AcceptedCurrent
+            &&view.request.runtime_lease->generation()>0,
+            "actual source inspection lacks its issued AcceptedCurrent purpose");
+        rejects([&]{view.request.runtime_lease->require(Physical::Gravity::GravityFieldPurpose::HydroStage);},
+            "an actual Current source lease accepted another purpose during preparation");
+        require(!gravity.prepared_native_self()&&!gravity.prepared_native_external(),
+            "Current inspection attached a Hydro source frame");
         auto context=runtime.stage_context();const auto& active=runtime.control().tree->GetActiveBlocks();
         require(view.source_generation>0&&view.density.size()==512
             &&view.op.size()==512&&view.binding.cells==view.op.cells()
@@ -299,8 +323,10 @@ struct Sink {
             input.rho.swap(self.kept_allocation);self.fault_applied=true;break;
         case Action::StageSolve:
             guarded_reentry([&]{self.stage.prepare({plan.method,plan.stages.front(),self.runtime.handles(),
-                arch::state::ExecutionSide::Host,context.ledger,0.,0.});});break;
-        case Action::CurrentHistory:guarded_reentry([&]{self.stage.prepare_current(0.,true);});break;
+                arch::state::ExecutionSide::Host,context.ledger,0.,0.});},
+                "Gravity source preparation cannot reenter another Hydro request");break;
+        case Action::CurrentHistory:guarded_reentry([&]{self.stage.prepare_current(0.,true);},
+            "Gravity source preparation cannot reenter Current/history");break;
         case Action::SelfSolve:guarded_reentry([&]{self.gravity.prepare(view.request);});break;
         case Action::NativeBind:guarded_reentry([&]{self.gravity.bind_native_rz_candidate(view.binding,65536,0);});break;
         case Action::PublicBind:guarded_reentry([&]{self.gravity.bind(view.binding,0.);});break;
@@ -340,19 +366,15 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
     // cross-binding/global generation monotonicity is claimed.
     stage.invalidate();
     gravity.bind_native_rz_candidate(amr::bind_elliptic_mesh(control,config.grid,runtime.handles()),65536,1);
-    const auto plan=arch::scheduler::make_hydro_plan(arch::scheduler::HydroMethod::RK3);
-    Sink sink{stage,gravity,runtime,config,*capture,capture};
+    Sink sink{stage,gravity,runtime,config,counters,*capture,capture};
     stage.set_native_rz_source_inspection(&Sink::call,&sink);
     require(!stage.native_rz_source_inspection_completed(),"sink installation claimed completed materialization");
-    auto invoke=[&] {
-        const int index=sink.expected_slot==Slot::Current?0:sink.expected_slot==Slot::Scratch?1:2;
-        stage.prepare({plan.method,plan.stages[index],runtime.handles(),arch::state::ExecutionSide::Host,
-            context.ledger,0.,0.});
-    };
+    auto invoke=[&] {stage.prepare_current(counters.t_current,false);};
     auto success=[&] {
-        const OwnerWitness before(runtime,counters);const auto calls=sink.calls;
-        const auto previous_generation=sink.copied.source_generation;
-        boundary_work_limit(invoke);before.matches();
+        const auto calls=sink.calls;const auto previous_generation=sink.copied.source_generation;
+        boundary_work_limit(invoke);
+        require(bool(sink.source_window),"source callback omitted its real readonly window");
+        sink.source_window->matches();
         require(sink.calls==calls+1&&stage.native_rz_source_inspection_completed(),
             "real pre/callback/post did not complete exactly once");
         require(sink.copied.source_generation>previous_generation
@@ -372,11 +394,11 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
         require(sink.copied.bounds_and_centers.size()==512&&!sink.copied.faces.empty(),
             "source payload retained no owning geometry copies");
     };
-    for(const auto slot:{Slot::Current,Slot::Scratch,Slot::Next}) {
-        sink.expected_slot=slot;success();
-        std::cout<<"ACTUAL_RZ_SOURCE_INSPECTION_SLOT_PASS slot="<<int(slot)
-            <<" source_generation="<<sink.copied.source_generation<<" copied_cells=512 marker_after=1 boundary_work_limit=1 field_not_solved=1"<<std::endl;
-    }
+    // Published Scratch/Next source mathematics is covered by main's direct
+    // numerical requests. A checked Runtime inspection is actual Current only.
+    sink.expected_slot=Slot::Current;success();
+    std::cout<<"ACTUAL_RZ_SOURCE_INSPECTION_SLOT_PASS slot="<<int(Slot::Current)
+        <<" source_generation="<<sink.copied.source_generation<<" copied_cells=512 marker_after=1 boundary_work_limit=1 field_not_solved=1"<<std::endl;
     sink.expected_slot=Slot::Current;
     stage.invalidate();
     require(!stage.native_rz_source_inspection_completed(),"explicit stage invalidation retained source completion");
@@ -397,7 +419,7 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
     const std::array rejected{Action::Throw,Action::DriftRho,Action::ReplaceRho,
         Action::StageInvalidate,Action::SelfInvalidate,Action::EndConsumption,Action::ResetHistory};
     for(const auto action:rejected) {
-        sink.action=action;sink.fault_applied=false;const OwnerWitness before(runtime,counters);const auto calls=sink.calls;
+        sink.action=action;sink.fault_applied=false;const auto calls=sink.calls;
         auto& last=control.pool->GetBlock(control.tree->GetActiveBlocks().back());
         auto& input=selected(last,sink.expected_slot);
         if(action==Action::ReplaceRho)sink.kept_allocation=input.rho;
@@ -411,7 +433,8 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
             "fault/poisoned source callback published completion or did not run exactly once");
         if(action==Action::Throw)require(actual_error=="actual materialized-source callback fault",
             "throwing sink was masked by an earlier unrelated rejection");
-        before.matches();sink.unreadable();sink.action=Action::Copy;success();
+        require(bool(sink.source_window),"fault callback omitted its real readonly window");
+        sink.source_window->matches();sink.unreadable();sink.action=Action::Copy;success();
         std::cout<<"ACTUAL_RZ_SOURCE_INSPECTION_NEGATIVE_PASS action="<<int(action)
             <<" marker_false=1 real_input_restored=1 source_only_clean_retry=1 field_not_solved=1"<<std::endl;
     }
@@ -428,8 +451,14 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
     // Optional hook removed: actual source preparation reaches the same
     // explicit WorkLimit without running the old sink or inheriting its marker.
     // Normal no-hook field success was already proven by the original main.
-    const OwnerWitness before(runtime,counters);const auto calls=sink.calls;
-    boundary_work_limit(invoke);before.matches();
+    const auto calls=sink.calls;
+    // With no sink, observe the actual completed gather, after Current BC/EOS.
+    std::unique_ptr<OwnerWitness> source_window;
+    require(!capture->after_gather,"source-only check inherited another gather observer");
+    capture->after_gather=[&]{source_window=std::make_unique<OwnerWitness>(runtime,counters);};
+    try {boundary_work_limit(invoke);} catch(...) {capture->after_gather={};throw;}
+    capture->after_gather={};require(bool(source_window),"no-hook source missed its actual gather window");
+    source_window->matches();
     require(sink.calls==calls&&!stage.native_rz_source_inspection_completed(),
         "disabled optional hook ran its old payload or inherited its marker");
     rejects([&]{gravity.potential();},"cleared hook promoted physical field scope");
@@ -440,10 +469,10 @@ void run(SimConfig& config,amr::AMRControl& control,SimulationController& counte
     // so no cross-binding/global generation monotonicity is asserted.
     stage.invalidate();
     gravity.bind_native_rz_candidate(amr::bind_elliptic_mesh(control,config.grid,runtime.handles()),65536,0);
-    before.matches();
+    source_window->matches();
     require(!stage.native_rz_source_inspection_completed(),"restoring original binding fabricated source completion");
     sink.unreadable();
-    std::cout<<"ACTUAL_RZ_SOURCE_INSPECTION_CONTRACT_PASS slots=3 config_preflight=1"
+    std::cout<<"ACTUAL_RZ_SOURCE_INSPECTION_CONTRACT_PASS runtime_slots=1 direct_math_slots=2 config_preflight=1"
         <<" failures=7 guarded_reentries=7 copies_only=1 bounded_source_only=1 field_not_solved=1 time=0 steps=0"<<std::endl;
 }
 /** Export one real Current materialization and its existing candidate cell
@@ -462,7 +491,7 @@ void export_json(const std::filesystem::path& out,SimConfig& config,
     // refuse it without invoking it, replacing it or starting another solve.
     {
         const OwnerWitness before(runtime,counters);const int gathers=capture->gathers;
-        Sink other{stage,gravity,runtime,config,*capture,capture};
+        Sink other{stage,gravity,runtime,config,counters,*capture,capture};
         stage.set_native_rz_source_inspection(&Sink::call,&other);
         bool invoked=false;
         try {
@@ -488,14 +517,19 @@ void export_json(const std::filesystem::path& out,SimConfig& config,
         rejects([&]{(void)record.json();},"incomplete JSON record exported a checked source");
         before.matches();
     }
-    const OwnerWitness before(runtime,counters);const int gathers=capture->gathers;
-    record.capture_call(stage,[&]{stage.prepare_current(counters.t_current,true);});
+    const int gathers=capture->gathers;std::unique_ptr<OwnerWitness> source_window;
+    require(!capture->after_gather,"JSON source export inherited another gather observer");
+    capture->after_gather=[&]{source_window=std::make_unique<OwnerWitness>(runtime,counters);};
+    try {record.capture_call(stage,[&]{stage.prepare_current(counters.t_current,true);});}
+    catch(...) {capture->after_gather={};throw;}
+    capture->after_gather={};
     require(record.callback_count()==1&&record.source_only_checked()&&!record.cleanup_failed()
         &&!stage.native_rz_source_inspection_attached()&&!stage.native_rz_source_inspection_completed()
         &&capture->gathers==gathers+1,"JSON export missed actual one-call checked materialization/cleanup");
     // These are genuine scoped candidate getters under the captured matching
     // source stamp. They do not authorize continuous Phi/g or physical readers.
-    record.capture_native_field(gravity);before.matches();
+    record.capture_native_field(stage);
+    require(bool(source_window),"JSON export missed its real readonly source window");source_window->matches();
     require(gravity.native_rz_potential().size()==expected_cells&&capture->density.size()==expected_cells,
         "JSON export lost the expected dense actual field/source extent");
     for(const auto& input:gravity.native_rz_assessment().source.inputs)
@@ -616,21 +650,72 @@ int main(int argc,char** argv){
         rejects([&]{gravity.patch_view(1);},"candidate allowed nonfirst Hydro patch");
         std::cout<<"ACTUAL_RZ_RUNTIME_SLOT_PASS slot="<<static_cast<int>(slot)
             <<" lease="<<result.source.inputs.front().storage_generation
-            <<" source_generation="<<result.source_generation<<" cells=512 time=0 steps=0"<<std::endl;
+            <<" source_generation="<<result.source_generation<<" cells=512 time=0 steps=0"
+            <<" runtime_current="<<(slot==Slot::Current)<<" direct_mathematical="<<(slot!=Slot::Current)<<std::endl;
     };
     stage.prepare_current(0.,true);verify(Slot::Current);
-    const auto plan=arch::scheduler::make_hydro_plan(arch::scheduler::HydroMethod::RK3);
+    require(!gravity.prepared_native_self()&&!gravity.prepared_native_external(),
+        "accepted Current field attached a Hydro frame");
+    const auto current_field=stage.native_current_field();
+    require(current_field.source==gravity.native_rz_assessment().source,
+        "issued Current reader selected a different source");
+    require(std::isfinite(stage.native_current_timestep())&&stage.native_current_timestep()>0.,
+        "issued Current numerical timestep is invalid");
+    // No solve: exact same-epoch Runtime root and actual Grid drift must reject
+    // before copying an old field; restore the deliberate fault, not the lease.
+    {
+        const source_inspection_checks::OwnerWitness before(runtime,counters);
+        const auto epoch=runtime.handles().front().epoch;const int gathers=capture->gathers;
+        const double upper=config.grid.x1_max;
+        config.grid.x1_max=std::nextafter(upper,std::numeric_limits<double>::infinity());
+        try {rejects([&]{stage.native_current_field();},"same-epoch root drift retained a Current field lease");}
+        catch(...) {config.grid.x1_max=upper;throw;}
+        config.grid.x1_max=upper;
+        auto& grid=control.pool->GetBlock(control.tree->GetActiveBlocks().back()).grid;
+        const double dx=grid.dx1;grid.dx1=std::nextafter(dx,std::numeric_limits<double>::infinity());
+        try {rejects([&]{stage.native_current_field();},"same-epoch actual Grid drift retained a Current field lease");}
+        catch(...) {grid.dx1=dx;throw;}
+        grid.dx1=dx;before.matches();
+        require(capture->gathers==gathers&&runtime.handles().front().epoch==epoch,
+            "lease drift checks performed another solve or changed topology");
+    }
     auto context=runtime.stage_context();
-    auto invoke=[&](const arch::scheduler::StageDescriptor& descriptor){
-        return stage.prepare({plan.method,descriptor,runtime.handles(),arch::state::ExecutionSide::Host,
-            context.ledger,0.,0.});
+    std::uint64_t numerical_generation=gravity.native_rz_assessment().source.inputs.front().storage_generation;
+    /** Retain the original published-slot density and field oracles as direct
+     * mathematics. Real Runtime ledger publication is required before gather,
+     * but no fake Hydro interval/transaction or Runtime capability is issued.
+     */
+    auto invoke=[&](Slot slot){
+        stage.invalidate();
+        require(++numerical_generation!=0,"direct mathematical density generation overflow");
+        Physical::Gravity::GravitySolveIdentity identity;
+        identity.topology=runtime.handles().front().epoch;identity.input_time=counters.t_current;
+        identity.gravitational_constant=arch::constants::gravity::cgs::gravitational_constant;
+        identity.operator_revision=1;identity.boundary_revision=1;identity.accuracy_revision=1;
+        std::vector<Physical::Gravity::GravityDensityView> views;
+        const auto& active=control.tree->GetActiveBlocks();
+        for(std::size_t p=0;p<runtime.handles().size();++p) {
+            const auto handle=runtime.handles()[p];const auto version=context.ledger.inspect({handle,slot}).interior.version;
+            context.ledger.require_readable({handle,slot},{arch::state::ExecutionSide::Host,version,true,false});
+            auto& block=control.pool->GetBlock(active[p]);
+            const auto& input=source_inspection_checks::selected(block,slot);
+            const Physical::Gravity::GravityInputIdentity dependency{handle,slot,version,numerical_generation};
+            identity.inputs.push_back(dependency);
+            views.push_back({dependency,{input.rho.data(),input.rho.size(),amr::native_scalar_layout(block.grid),
+                arch::grid::FieldMemory::Host,numerical_generation}});
+        }
+        // Deliberate tags alone never authorize a Runtime purpose. There is no
+        // issued lease; source metadata is mathematical and individually read.
+        const auto purpose=slot==Slot::Scratch?Physical::Gravity::GravityFieldPurpose::AcceptedCurrent:
+            Physical::Gravity::GravityFieldPurpose::HydroStage;
+        return gravity.prepare({identity,views,purpose,nullptr});
     };
-    rejects([&]{invoke(plan.stages[1]);},"unpublished Scratch accepted");
+    rejects([&]{invoke(Slot::Scratch);},"unpublished Scratch accepted");
     require(capture->gathers==1,"unpublished Scratch reached gather");
     rejects([&]{gravity.native_rz_assessment();},"invalid lease retained field");
     const auto prefix=std::span<const amr::BlockHandle>(runtime.handles()).first(runtime.handles().size()-1);
     arch::scheduler::publish_completed_interior(context,prefix,Slot::Scratch);
-    rejects([&]{invoke(plan.stages[1]);},"unpublished nonfirst Scratch accepted");
+    rejects([&]{invoke(Slot::Scratch);},"unpublished nonfirst Scratch accepted");
     require(capture->gathers==1,"unpublished nonfirst reached gather");
     for(auto slot:{Slot::Scratch,Slot::Next}){
         for(int id:control.tree->GetActiveBlocks()){
@@ -641,13 +726,19 @@ int main(int argc,char** argv){
             for(double& rho:selected.rho)rho=1.;
         }
         arch::scheduler::publish_completed_interior(context,runtime.handles(),slot);
-        invoke(plan.stages[slot==Slot::Scratch?1:2]);verify(slot);
+        invoke(slot);verify(slot);
+        rejects([&]{stage.native_current_field();},"direct mathematical tag granted Runtime Current field access");
+        rejects([&]{stage.native_current_timestep();},"direct mathematical tag granted Runtime Current timestep access");
+        require(!gravity.prepared_native_self()&&!gravity.prepared_native_external(),
+            "direct mathematical request attached a Runtime Hydro frame");
+        std::cout<<"ACTUAL_RZ_DIRECT_MATHEMATICAL_SLOT_PASS slot="<<int(slot)
+            <<" original_source_field_oracles=1 runtime_purpose_authority=0 time=0 steps=0"<<std::endl;
     }
     require(capture->gathers==3,"actual RZ Runtime gather count");
     stage.invalidate();rejects([&]{gravity.native_rz_potential();},"invalidation retained candidate");
     rejects([&]{runtime.perform_regrid(0,0.);},"RZ production regrid gate lifted");
     require(capture->gathers==3,"regrid gate executed gravity");
-    std::cout<<"ACTUAL_RZ_RUNTIME_CONTRACT_PASS blocks=2 gathers=3 slots=3"
+    std::cout<<"ACTUAL_RZ_RUNTIME_CONTRACT_PASS blocks=2 gathers=3 slots=3 runtime_current=1 direct_mathematical_slots=2"
         <<" actual_ledger=1 nonfirst_unpublished=1 invalidation=1"
         <<" physical_consumers_rejected=1 regrid_gate_held=1 time=0 steps=0"<<std::endl;
     source_inspection_checks::run(config,control,counters,runtime,gravity,stage,capture);

@@ -13,15 +13,18 @@
 #include <atomic>
 #include <bit>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
 #include <type_traits>
+#include <utility>
 
 #include "driver/stages/GravityStage.h"
 
 #include "amr/AMRControl.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/runtime/HostHydroTransaction.h"
 #include "numerics/multigrid/CompositeMultigrid.h"
@@ -32,15 +35,16 @@
 #include "physics/gravity/self/SelfGravity.h"
 
 namespace arch::driver {
-/** Metadata-only witness for one optional actual source inspection.
- * Workflow: freeze real Runtime pool/tree/span/slot leases before prepare;
- * at materialization match every dense rho and actual Grid/operator endpoint;
- * freeze producer observer metadata; call the sink; repeat exact checks.
- * Source arrays stay borrowed. Runtime's synchronous owner excludes supported
- * mutation during this read phase; these checks do not diagnose data races or
- * promise all non-density conserved values remain bitwise unchanged.
+/** One owned metadata lease shared by Current/Hydro preparation and optional
+ * source inspection. Workflow: freeze the real Runtime/EOS/BC/slot leases;
+ * authenticate the actual bound producer before/after its unchanged solve;
+ * seal one purpose capability; retire before supported source mutation.
+ * Optional inspection additionally checks dense rho and actual operator sites.
+ * No fluid array or downloaded density is duplicated. Supported mutation is
+ * synchronous and owner-excluded; these checks do not diagnose data races or
+ * promise that all non-density conserved values remain bitwise unchanged.
  */
-struct GravityStage::NativeSourceInspection {
+struct GravityStage::RuntimeSourceLease {
     using Field=std::vector<double> FluidState::*;
     static constexpr std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,
         &FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,
@@ -61,9 +65,21 @@ struct GravityStage::NativeSourceInspection {
         std::array<double,3> center,lower,upper;
     };
     GravityStage& owner;
-    const Physical::Gravity::GravitySolveRequest& request;
-    const state::StateResidencyLedger& ledger;
     Physical::Gravity::GravitySolveIdentity identity;
+    std::vector<Physical::Gravity::GravityDensityView> owned_views;
+    Physical::Gravity::RuntimeGravitySourceLease token;
+    const Physical::Gravity::GravitySolveRequest request;
+    const state::StateResidencyLedger& ledger;
+    const Physical::Gravity::GravityFieldPurpose purpose;
+    std::optional<DriverRuntime::NativeRzEosBindingWitness> eos_binding;
+    const scheduler::StageBinding* stage_binding=nullptr;
+    const scheduler::StageExecutionContext* stage_context=nullptr;
+    const amr::BlockHandle* bound_handles=nullptr;
+    std::size_t bound_handle_count=0;
+    std::optional<scheduler::StageDescriptor> descriptor;
+    std::optional<scheduler::HydroMethod> method;
+    double step_start=0.,step_dt=0.;
+    HostHydroTransaction* transaction_owner=nullptr;
     const amr::MemoryPool* pool;const amr::AmrTree* tree;
     const Physical::Gravity::GravityDensityView* request_blocks_address;
     const Physical::Gravity::GravityInputIdentity* request_identity_address;
@@ -72,7 +88,7 @@ struct GravityStage::NativeSourceInspection {
     std::vector<int> active;
     std::vector<Patch> patches;
     std::vector<Observer> observers;
-    GridConfig root_config;GravityConfig gravity_config;
+    GridConfig root_config;GravityConfig gravity_config;NumericsConfig numerics_config;
     std::array<double,3> physical_bounds;
     BCHandler::StageContextSnapshot boundary_context;
     std::uint64_t clock_token,clock_version;
@@ -123,22 +139,57 @@ struct GravityStage::NativeSourceInspection {
                 ||!same(a.root_upper[axis],b.root_upper[axis]))return false;
         return true;
     }
-    /** Freeze only identity/configuration metadata; these copies are not controls. */
-    NativeSourceInspection(GravityStage& stage,const Physical::Gravity::GravitySolveRequest& actual,
-        const state::StateResidencyLedger& actual_ledger)
-        :owner(stage),request(actual),ledger(actual_ledger),identity(actual.identity),
+    /** Adapt only a private issued capability back to its actual owner. */
+    static void check_owner(const void* value,bool preparing) {
+        static_cast<const RuntimeSourceLease*>(value)->require_owner(preparing);
+    }
+    /** Compare the real bound producer geometry on both sides of preparation. */
+    static void check_binding(const void* value,const amr::EllipticMeshBinding& binding) {
+        static_cast<const RuntimeSourceLease*>(value)->require_binding(binding);
+    }
+    /** Move source metadata into a nonmoving lifetime covering its field.
+     * Workflow: freeze actual EOS/BC/context -> snapshot each original lease;
+     * caller attaches this unique owner -> full preflight -> unchanged solve.
+     */
+    RuntimeSourceLease(GravityStage& stage,Physical::Gravity::GravitySolveIdentity actual,
+        std::vector<Physical::Gravity::GravityDensityView> views,
+        const state::StateResidencyLedger& actual_ledger,Physical::Gravity::GravityFieldPurpose use)
+        :owner(stage),identity(std::move(actual)),owned_views(std::move(views)),
+          token(this,stage.generation_,use,&check_owner,&check_binding),
+          request{identity,owned_views,use,&token},ledger(actual_ledger),purpose(use),
+          eos_binding(stage.runtime_.native_rz_eos_binding_),
           pool(stage.runtime_.control().pool.get()),tree(stage.runtime_.control().tree.get()),
-          request_blocks_address(actual.blocks.data()),request_identity_address(actual.identity.inputs.data()),
+          request_blocks_address(request.blocks.data()),request_identity_address(request.identity.inputs.data()),
           active_address(tree->GetActiveBlocks().data()),handles_address(stage.runtime_.handles().data()),
           control_handles_address(stage.runtime_.control().ActiveHandles().data()),
           active(tree->GetActiveBlocks()),root_config(stage.runtime_.configuration().grid),
           gravity_config(stage.runtime_.configuration().physics.gravity),
+          numerics_config(stage.runtime_.configuration().numerics),
           physical_bounds{stage.runtime_.configuration().numerics.sml_rho,
               stage.runtime_.configuration().numerics.min_eint,stage.runtime_.configuration().numerics.max_eint},
           boundary_context(stage.runtime_.boundaries().snapshot_stage_context()),
           clock_token(stage.runtime_.scheduler_clock.last_token()),clock_version(stage.runtime_.scheduler_clock.last_version())
     {
-        require_domain();patches.reserve(active.size());
+        if(!pool||!tree||active.empty()||active.size()!=identity.inputs.size()
+            ||active.size()!=owned_views.size()||active.size()!=stage.runtime_.handles().size())
+            throw std::logic_error("Runtime gravity source lease has incomplete actual domain");
+        if(purpose==Physical::Gravity::GravityFieldPurpose::HydroStage) {
+            const auto& binding=scheduler::current_stage_binding();
+            if(!stage.prepared_)throw std::logic_error("Runtime Hydro source lease has no prepared descriptor");
+            stage_binding=&binding;stage_context=&binding.context;
+            transaction_owner=stage.runtime_.active_host_hydro_transaction();
+            bound_handles=binding.handles.data();bound_handle_count=binding.handles.size();
+            descriptor=stage.prepared_->descriptor;method=stage.prepared_->method;
+            const auto selected=dispatch::parse_registered_policy<dispatch::TimeIntegratorPolicies>(
+                stage.runtime_.configuration().numerics.time_integrator);
+            const bool exact_method=selected.ok&&((*method==scheduler::HydroMethod::Euler
+                &&selected.value==dispatch::TimeIntegratorId::Euler)||(*method==scheduler::HydroMethod::RK2
+                &&selected.value==dispatch::TimeIntegratorId::Rk2)||(*method==scheduler::HydroMethod::RK3
+                &&selected.value==dispatch::TimeIntegratorId::Rk3));
+            if(!exact_method)throw std::logic_error("Runtime gravity Hydro method differs from its selected configuration");
+            step_start=binding.context.step_start_time;step_dt=binding.context.step_dt;
+        }
+        patches.reserve(active.size());
         for(std::size_t p=0;p<active.size();++p) {
             const auto& block=pool->GetBlock(active[p]);const auto& input=selected(block,identity.inputs[p].slot);
             const auto& grid=block.grid;
@@ -152,6 +203,69 @@ struct GravityStage::NativeSourceInspection {
                 amr::native_scalar_layout(grid),addresses,sizes,input.GetNumSpecies(),input.block_total_size_});
         }
     }
+    RuntimeSourceLease(const RuntimeSourceLease&)=delete;
+    RuntimeSourceLease(RuntimeSourceLease&&)=delete;
+    /** Constant-cost phase fence; workers retain their existing own-patch gates.
+     * The Scheduler legitimately issues an output token after Hydro prepare;
+     * only prepare-side fences compare the original clock counter exactly.
+     */
+    void require_owner(bool preparing) const {
+        // Retirement precedes the borrowed Scheduler binding's lifetime end.
+        // Reject before inspecting any formerly live context/descriptor.
+        if(!token.live_)throw std::logic_error("Runtime gravity source lease was permanently retired");
+        const auto& r=owner.runtime_;const auto& config=r.configuration();
+        if(!owner.native_candidate()||!owner.gravity_||r.backend()
+            ||owner.runtime_source_lease_.get()!=this
+            ||r.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
+            ||&ledger!=r.residency_ledger.get()||ledger.active_epoch()!=identity.topology
+            ||r.topology_registry.epoch()!=identity.topology||r.control().pool.get()!=pool||r.control().tree.get()!=tree
+            ||owner.generation_!=token.generation()||config.grid!=root_config||config.numerics!=numerics_config
+            ||!gravity_configuration(config.physics.gravity,gravity_config)
+            ||!gravity_configuration(owner.gravity_->config_,gravity_config)
+            ||!eos_binding||!r.native_rz_eos_binding_matches(*eos_binding)
+            ||!r.boundaries().stage_context_matches(boundary_context)
+            ||(preparing&&!owner.source_prepare_running_))
+            throw std::logic_error("Runtime gravity source lease lost its actual owner/EOS/configuration");
+        const double actual_root[]{config.grid.x1_min,config.grid.x1_max,config.grid.x2_min,
+            config.grid.x2_max,config.grid.x3_min,config.grid.x3_max};
+        const double frozen_root[]{root_config.x1_min,root_config.x1_max,root_config.x2_min,
+            root_config.x2_max,root_config.x3_min,root_config.x3_max};
+        for(int a=0;a<6;++a)if(!same(actual_root[a],frozen_root[a]))
+            throw std::logic_error("Runtime gravity source lease changed actual root endpoint bits");
+        if(!same(config.numerics.sml_rho,physical_bounds[0])||!same(config.numerics.min_eint,physical_bounds[1])
+            ||!same(config.numerics.max_eint,physical_bounds[2]))
+            throw std::logic_error("Runtime gravity source lease changed physical-bound bits");
+        if(purpose==Physical::Gravity::GravityFieldPurpose::AcceptedCurrent) {
+            if(r.active_host_hydro_transaction()||owner.journal_active_||owner.prepared_||owner.committed_count_
+                ||owner.policy_->prepared_native_self()||owner.policy_->prepared_native_external()
+                ||!same(r.ctrl.t_current,identity.input_time)||(!preparing&&owner.source_prepare_running_))
+                throw std::logic_error("AcceptedCurrent gravity source lease is not actually quiescent/current");
+        } else {
+            // OMP consumers borrow the real main-thread binding explicitly;
+            // they do not have their own Scheduler TLS binding. Preparation
+            // still requires actual TLS identity before any source work.
+            if(!stage_binding)throw std::logic_error("Hydro gravity lost its borrowed stage binding");
+            const auto& binding=*stage_binding;
+            auto* transaction=r.active_host_hydro_transaction();
+            if(!owner.native_self()||!transaction||transaction!=transaction_owner
+                ||!owner.journal_active_||!owner.prepared_
+                ||(preparing && (&scheduler::current_stage_binding()!=stage_binding))
+                ||&binding.context!=stage_context
+                ||binding.context.side!=state::ExecutionSide::Host
+                ||&binding.context.ledger!=&ledger||&binding.context.clock!=&r.scheduler_clock
+                ||binding.context.hydro_preparation!=&owner
+                ||binding.handles.data()!=bound_handles||binding.handles.size()!=bound_handle_count
+                ||!same(binding.context.step_start_time,step_start)||!same(binding.context.step_dt,step_dt)
+                ||!descriptor||!method||owner.prepared_->method!=*method
+                ||!scheduler::same_stage_descriptor(owner.prepared_->descriptor,*descriptor)
+                ||!same(owner.prepared_->input_time,identity.input_time)
+                ||!same(owner.prepared_->step_dt,step_dt))
+                throw std::logic_error("HydroStage gravity source lease changed its actual journal/context/descriptor");
+        }
+        if((preparing||purpose==Physical::Gravity::GravityFieldPurpose::AcceptedCurrent)
+            &&(r.scheduler_clock.last_token()!=clock_token||r.scheduler_clock.last_version()!=clock_version))
+            throw std::logic_error("Runtime gravity preparation/Current clock changed");
+    }
     /** Reject unknown slots before dereferencing a fluid member. */
     static const FluidState& selected(const amr::Block& b,state::StateSlot slot) {
         if(slot==state::StateSlot::Current)return b.fluid_state;
@@ -160,9 +274,10 @@ struct GravityStage::NativeSourceInspection {
         throw std::logic_error("Native source inspection received an unknown input slot");
     }
     /** Reconcile registry and exact borrowed spans against actual live Runtime. */
-    void require_domain() const {
+    void require_domain(bool preparing=false) const {
+        require_owner(preparing);
         const auto& r=owner.runtime_;const auto& config=r.configuration();
-        if(owner.qualification_!=Qualification::NativeRzCandidate||!owner.source_inspection_active_
+        if(!owner.native_candidate()
             ||r.backend()||r.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
             ||&ledger!=r.residency_ledger.get()||ledger.active_epoch()!=identity.topology
             ||r.topology_registry.epoch()!=identity.topology||r.control().pool.get()!=pool||r.control().tree.get()!=tree
@@ -177,8 +292,7 @@ struct GravityStage::NativeSourceInspection {
             ||identity.gravitational_constant!=constants::gravity::cgs::gravitational_constant
             ||config.grid!=root_config||!gravity_configuration(config.physics.gravity,gravity_config)
             ||!gravity_configuration(owner.gravity_->config_,config.physics.gravity)
-            ||!r.boundaries().stage_context_matches(boundary_context)
-            ||r.scheduler_clock.last_token()!=clock_token||r.scheduler_clock.last_version()!=clock_version)
+            ||!r.boundaries().stage_context_matches(boundary_context))
             throw std::logic_error("Native source inspection lost its actual Runtime domain/configuration");
         const double actual_root[]{config.grid.x1_min,config.grid.x1_max,config.grid.x2_min,
             config.grid.x2_max,config.grid.x3_min,config.grid.x3_max};
@@ -205,14 +319,80 @@ struct GravityStage::NativeSourceInspection {
             if(current.interior.pending_transfer!=state::PendingTransferPhase::None
                 ||current.ghost.pending_transfer!=state::PendingTransferPhase::None)
                 throw std::logic_error("Native source inspection has a pending input transfer");
+            if(patches.size()!=active.size())throw std::logic_error("Runtime source lease patch extent changed");
+            const auto& expected=patches[p];const auto& block=pool->GetBlock(active[p]);
+            const auto& grid=block.grid;const auto& input_state=selected(block,input.slot);
+            block.RequireNativeGeometryIdentity();
+            if(&block!=expected.block||!block.active||block.id!=expected.id||block.active_index!=int(p)
+                ||&grid!=expected.grid||&input_state!=expected.input
+                ||!geometry(GridMetrics::make_geometry_view(grid,r.geometry_semantics()),expected.geometry)
+                ||amr::native_scalar_layout(grid)!=expected.layout||input_state.GetNumSpecies()!=expected.species
+                ||input_state.block_total_size_!=expected.extent||input_state.block_total_size_!=grid.GetTotalSize()
+                ||!coherence(current,expected.coherence)
+                ||!GridMetrics::matches_identity(grid.dyadic_identity,{grid.x1_min,grid.x2_min},
+                    {grid.x1_max,grid.x2_max},{grid.dx1,grid.dx2}))
+                throw std::logic_error("Runtime gravity source lease changed patch/Grid/layout/publication");
+            const auto& view=request.blocks[p];
+            if(view.identity!=input||view.density.data!=input_state.rho.data()||view.density.size!=input_state.rho.size()
+                ||view.density.layout!=expected.layout||view.density.memory!=arch::grid::FieldMemory::Host
+                ||view.density.storage_generation!=input.storage_generation)
+                throw std::logic_error("Runtime gravity source lease changed its actual density view");
+            for(std::size_t f=0;f<fields.size();++f)
+                if((input_state.*fields[f]).data()!=expected.addresses[f]||(input_state.*fields[f]).size()!=expected.sizes[f])
+                    throw std::logic_error("Runtime gravity source lease changed one of seven storage allocations");
+            if(purpose==Physical::Gravity::GravityFieldPurpose::AcceptedCurrent&&input.slot!=state::StateSlot::Current)
+                throw std::logic_error("AcceptedCurrent gravity lease borrowed another slot");
+            if(purpose==Physical::Gravity::GravityFieldPurpose::HydroStage&&input.slot!=descriptor->input_slot)
+                throw std::logic_error("HydroStage gravity lease borrowed another input slot");
         }
+    }
+    /** Compare the bound producer against the same live Runtime source.
+     * This is metadata traversal only. It rejects same-epoch drift instead of
+     * recomputing another mesh or pretending epoch alone proves geometry.
+     */
+    void require_binding(const amr::EllipticMeshBinding& bound) const {
+        require_domain(true);
+        const auto& base=bound.base;
+        if(!base.native_canonical_domain||base.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+            ||base.dimension!=2||base.geometry!=elliptic::Geometry::Cylindrical
+            ||base.cells[0]!=root_config.nblockx1*amr::BLOCK_NX
+            ||base.cells[1]!=root_config.nblockx2*amr::BLOCK_NY
+            ||bound.handles.size()!=patches.size()||bound.grids.size()!=patches.size()
+            ||bound.periodic!=std::array<bool,3>{root_config.x1l_boundary_type=="periodic",
+                root_config.x2l_boundary_type=="periodic",false})
+            throw std::logic_error("Runtime gravity binding differs from its actual Native source");
+        const double lower[]{root_config.x1_min,root_config.x2_min,root_config.x3_min};
+        const double upper[]{root_config.x1_max,root_config.x2_max,root_config.x3_max};
+        for(int a=0;a<3;++a)if(!same(base.origin[a],lower[a])||!same(base.root_upper[a],upper[a]))
+            throw std::logic_error("Runtime gravity binding changed actual root bounds at the same epoch");
+        for(int a=0;a<2;++a)if(!same(base.spacing[a],(upper[a]-lower[a])/base.cells[a]))
+            throw std::logic_error("Runtime gravity binding changed actual root spacing at the same epoch");
+        std::size_t c=0;
+        for(std::size_t p=0;p<patches.size();++p) {
+            const auto& patch=patches[p];const auto& block=pool->GetBlock(active[p]);const auto& grid=*patch.grid;
+            if(bound.grids[p]!=patch.grid||bound.handles[p]!=patch.handle)
+                throw std::logic_error("Runtime gravity binding changed actual Grid/handle owner");
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i,++c) {
+                if(c>=bound.cells.size()||c>=bound.storage.size()
+                    ||bound.storage[c].block!=p||bound.storage[c].offset!=grid.GetIndex(i,j,0)
+                    ||bound.cells[c].level!=block.level
+                    ||bound.cells[c].index!=std::array<int,3>{int(block.logical_x1)*amr::BLOCK_NX+i-grid.Is(),
+                        int(block.logical_x2)*amr::BLOCK_NY+j-grid.Js(),0})
+                    throw std::logic_error("Runtime gravity binding changed the real active-cell source mapping");
+            }
+        }
+        if(c!=bound.cells.size()||c!=bound.storage.size())
+            throw std::logic_error("Runtime gravity binding has omitted/extra source cells");
     }
     /** Authenticate dense source order and true operator/native Grid edge bits.
      * Observer snapshots retain actual rounded producer sites and fragments.
      * No ideal coordinate arithmetic, volume inversion or rho-from-RHS appears.
      */
     void require_view(const Physical::Gravity::NativeRzSourceInspectionView& view) const {
-        require_domain();owner.gravity_->require_native_source_inspection(view);
+        if(owner.qualification_!=Qualification::NativeRzCandidate||!owner.source_inspection_active_
+            ||purpose!=Physical::Gravity::GravityFieldPurpose::AcceptedCurrent)
+            throw std::logic_error("Native source callback has no actual Current inspection scope");
+        require_domain(true);owner.gravity_->require_native_source_inspection(view);
         const auto& mesh=view.op.base();
         if(&view.request!=&request||&view.service_configuration!=&owner.gravity_->config_
             ||!mesh_identity(view.binding.base,mesh)
@@ -289,7 +469,7 @@ struct GravityStage::NativeSourceInspection {
                 ||!same(actual.fragment_lower[a],expected.lower[a])||!same(actual.fragment_upper[a],expected.upper[a]))
                 throw std::logic_error("Native source inspection changed actual rounded observer site/bounds");
         }
-        require_domain();
+        require_domain(true);
     }
     /** Freeze exactly the already-built actual producer observer metadata. */
     void freeze_observers(const Physical::Gravity::NativeRzSourceInspectionView& view) {
@@ -309,6 +489,7 @@ struct GravityStage::NativeSourceInspection {
  * lease/counters, field readiness, numerical tolerances or public capability.
  */
 void GravityStage::set_native_rz_source_inspection(NativeSourceInspectionSink sink,void* payload) {
+    if(source_prepare_running_)throw std::logic_error("Active source lease forbids replacing its inspection sink");
     source_inspection_completed_=false;
     if(qualification_!=Qualification::NativeRzCandidate||!gravity_||runtime_.backend()
         ||journal_active_||prepared_||source_inspection_active_||runtime_.active_host_hydro_transaction())
@@ -323,6 +504,7 @@ void GravityStage::set_native_rz_source_inspection(NativeSourceInspectionSink si
  * configuration parameter, field grant or numerical producer is introduced.
  */
 void GravityStage::set_native_self_flux_observation(NativeSelfFluxObservationSink sink,void* payload) {
+    if(source_prepare_running_)throw std::logic_error("Active source lease forbids replacing its flux observer");
     if(!native_self()||!gravity_||runtime_.backend()||journal_active_||prepared_||committed_count_
         ||runtime_.active_host_hydro_transaction()||source_inspection_active_
         ||source_inspection_sink_||source_inspection_payload_
@@ -420,7 +602,10 @@ GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGrav
         throw std::runtime_error("Cannot publish gravity diagnostic schema");
 }
 /** Retire a borrowed native source before its nonmoving metadata owner dies. */
-GravityStage::~GravityStage() { if(native_external()||native_self())invalidate(); }
+GravityStage::~GravityStage() {
+    // A borrowed numerical workspace cannot outlive its issued metadata owner.
+    if(runtime_source_lease_||native_external()||native_self())invalidate();
+}
 
 /** Prepare a body source from the actual live Runtime transaction, not a field.
  * All seven input leases and complete boundary frames are captured before
@@ -509,9 +694,13 @@ void GravityStage::require_native_self_preparation(
     }
 }
 /** Lease the exact RK input density generation and publish its solved field. */
-state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::StateResidencyLedger& ledger,double time,int stage) {
-    if(source_inspection_active_)
-        throw std::logic_error("Native source inspection forbids synchronous stage solve reentry");
+state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::StateResidencyLedger& ledger,
+    double time,int stage,Physical::Gravity::GravityFieldPurpose purpose) {
+    if(source_inspection_active_||source_prepare_running_)
+        throw std::logic_error("Gravity source lease forbids synchronous stage solve reentry");
+    if(!Physical::Gravity::valid_gravity_field_purpose(purpose)
+        ||(slot!=state::StateSlot::Current&&slot!=state::StateSlot::Next&&slot!=state::StateSlot::Scratch))
+        throw std::invalid_argument("Gravity source request has an unknown purpose/slot");
     source_inspection_completed_=false;
     const auto start=std::chrono::steady_clock::now();
     invalidate();
@@ -521,6 +710,8 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     if(backend)gravity_->set_execution(backend->gravity_execution());
     const auto& handles=runtime_.handles(); const auto& config=runtime_.configuration();
     if (handles.empty()) throw std::logic_error("Gravity requires active topology");
+    if(native_candidate()&&(!runtime_.control().pool||!runtime_.control().tree))
+        throw std::logic_error("Native gravity source lease has no actual pool/tree owner");
     if (epoch_!=handles.front().epoch) {
         auto binding=amr::bind_elliptic_mesh(runtime_.control(),config.grid,handles);
         if(native_candidate())
@@ -551,7 +742,23 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     const auto prepared=std::chrono::steady_clock::now();
     auto execution=backend?backend->gravity_execution():nullptr;
     const auto before=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
-    const Physical::Gravity::GravitySolveRequest request{identity,views};
+    if(native_candidate()) {
+        auto next=std::make_unique<RuntimeSourceLease>(*this,identity,std::move(views),ledger,purpose);
+        runtime_source_lease_=std::move(next);
+    }
+    const Physical::Gravity::GravitySolveRequest ordinary_request{identity,views,purpose,nullptr};
+    const auto& request=runtime_source_lease_?runtime_source_lease_->request:ordinary_request;
+    struct SourcePrepareScope {
+        GravityStage& owner;bool completed=false;
+        explicit SourcePrepareScope(GravityStage& value):owner(value){owner.source_prepare_running_=true;}
+        ~SourcePrepareScope() {
+            owner.source_prepare_running_=false;
+            if(!completed&&owner.runtime_source_lease_) {
+                owner.runtime_source_lease_->token.retire();owner.gravity_->invalidate();
+            }
+        }
+    } source_scope(*this);
+    if(runtime_source_lease_)runtime_source_lease_->require_domain(true);
     // Stack-only attachment covers every prepare exit. The source view and
     // payload cannot outlive this solve, including exceptions before callback.
     struct RestoreSourceInspection {
@@ -565,7 +772,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
         RestoreSourceInspection(RestoreSourceInspection&&)=delete;
         ~RestoreSourceInspection(){sink=original_sink;payload=original_payload;active=false;}
     };
-    std::optional<NativeSourceInspection> inspection;
+    NativeSourceInspection* inspection=runtime_source_lease_.get();
     std::optional<RestoreSourceInspection> inspection_attachment; // Restored before witness destruction.
     if(source_inspection_sink_) {
         if(qualification_!=Qualification::NativeRzCandidate||backend||journal_active_||prepared_
@@ -576,11 +783,15 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
         inspection_attachment.emplace(gravity_->native_source_inspection_sink_,
             gravity_->native_source_inspection_payload_,source_inspection_active_,
             gravity_->native_source_inspection_sink_,gravity_->native_source_inspection_payload_);
-        inspection.emplace(*this,request,ledger);
-        gravity_->native_source_inspection_payload_=&*inspection;
+        if(!inspection)throw std::logic_error("Native source inspection has no actual Runtime source lease");
+        gravity_->native_source_inspection_payload_=inspection;
         gravity_->native_source_inspection_sink_=&GravityStage::inspect_native_source;
     }
     const auto token=gravity_->prepare(request);
+    if(runtime_source_lease_) {
+        runtime_source_lease_->require_domain(true);
+        runtime_source_lease_->token.seal();
+    }
     if(native_candidate()) {
         // Use the same Runtime lease and full original request. No physical
         // report/patch/CFL/output consumer is promoted by this diagnostic path.
@@ -594,7 +805,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
             <<gravity_->cell_count()<<'\t'<<candidate.source_generation<<'\t'
             <<candidate.conditional.total_residual_upper<<'\t'
             <<candidate.conditional.tolerance_safe<<"\t0\n";
-        if(native_self()) {
+        if(native_self()&&purpose==Physical::Gravity::GravityFieldPurpose::HydroStage) {
             if(!journal_active_||!prepared_||pending_count_>=pending_rows_.size())
                 throw std::logic_error("Native Self solved field lost its actual bounded journal");
             prepared_->source=identity;
@@ -612,7 +823,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
             diagnostics_<<row.str();diagnostics_.flush();
             if(!diagnostics_)throw std::runtime_error("Cannot write native RZ candidate diagnostics");
         }
-        return token;
+        source_scope.completed=true;return token;
     }
     const auto& report=gravity_->report();
     // Transaction rows stay private until the complete split macro-step accepts.
@@ -657,10 +868,11 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
         pending_rows_[pending_count_]={solve_row.str(),boundary_row.str()};
     }
     if(backend)for(std::size_t b=0;b<handles.size();++b)backend->publish_gravity(runtime_.backend_access(b,slot),gravity_->patch_view(b));
-    return token;
+    source_scope.completed=true;return token;
 }
 /** Prepare gravity for the requested hydro stage input. */
 state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparationRequest& request) {
+    if(source_prepare_running_)throw std::logic_error("Gravity source preparation cannot reenter another Hydro request");
     if (!gravity_&&!native_external()) throw std::logic_error("No gravity stage service");
     if(journal_active_) {
         if(prepared_||request.side!=state::ExecutionSide::Host||runtime_.backend()
@@ -684,22 +896,41 @@ state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparat
     }
     if(native_external())return prepare_native_external(request);
     if(native_self())require_native_self_preparation(request);
-    return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage);
+    return solve(request.descriptor.input_slot,request.ledger,request.input_time,request.descriptor.stage,
+        Physical::Gravity::GravityFieldPurpose::HydroStage);
 }
 /** Prepare gravity on the accepted current state for output and timestep use. */
 void GravityStage::prepare_current(double time, bool reset_solver_history) {
-    if(native_self())throw std::logic_error("Private Native Self requires an actual Hydro macro stage");
+    if(source_prepare_running_)throw std::logic_error("Gravity source preparation cannot reenter Current/history");
+    if(native_candidate()&&(runtime_.active_host_hydro_transaction()||prepared_
+        ||policy_->prepared_native_self()||policy_->prepared_native_external()
+        ||!RuntimeSourceLease::same(time,runtime_.ctrl.t_current)))
+        throw std::logic_error("Native Current preparation requires the actual accepted/quiescent Runtime time");
     if(source_inspection_active_)
         throw std::logic_error("Native source inspection forbids synchronous current/history preparation");
     if(journal_active_||committed_count_)
         throw std::logic_error("Current gravity/output preparation requires a closed, flushed macro-step");
     if (gravity_) {
+        if(native_candidate()) {
+            // Retire old source borrows before real BC/exchange changes ghost
+            // data. Obtain the new Current lease only after actual EOS accepts.
+            // Invalid immutable science configuration fails before BC/EOS
+            // can publish a legitimate new Current ghost/clock completion.
+            if(!RuntimeSourceLease::gravity_configuration(
+                runtime_.configuration().physics.gravity,gravity_->config_))
+                throw std::logic_error("Native Current immutable gravity configuration differs from Runtime");
+            invalidate();runtime_.ensure_fluid_ghosts(state::StateSlot::Current);
+            if(!runtime_.native_rz_eos_binding_
+                ||!runtime_.native_rz_eos_binding_matches(*runtime_.native_rz_eos_binding_))
+                throw std::logic_error("Native Current preparation lost its actual bound EOS");
+        }
         // A checkpoint stores accepted fluid fields but no iterative Poisson
         // history. The Driver resets only at durable restart boundaries so
         // direct and resumed paths begin from the same accepted state.
         if (reset_solver_history) gravity_->clear_solver_initial_guess();
         auto context=runtime_.stage_context();
-        solve(state::StateSlot::Current,context.ledger,time,0);
+        solve(state::StateSlot::Current,context.ledger,time,0,
+            Physical::Gravity::GravityFieldPurpose::AcceptedCurrent);
     }
 }
 /** A real Host production service can journal without granting any new physical scope. */
@@ -708,12 +939,14 @@ bool GravityStage::supports_host_macro_step_journal() const noexcept {
 }
 /** Copy accepted observer state before acquiring a fluid transaction. */
 void GravityStage::begin_macro_step() {
+    if(source_prepare_running_)throw std::logic_error("Gravity source preparation cannot start a macro journal");
     if(!supports_host_macro_step_journal()||journal_active_||committed_count_)
         throw std::logic_error("Gravity macro-step journal is unavailable or already live/unflushed");
     auto next=boundary_snapshot_; // All fallible allocation precedes owner mutation.
     pending_boundary_snapshot_=std::move(next);
     pending_boundary_exchange_=boundary_exchange_;pending_count_=0;expected_count_=0;
     journal_method_.reset();prepared_.reset();journal_active_=true;
+    if(runtime_source_lease_)invalidate();
 }
 /** Validate the exact source lease, all Runtime inputs and actual force/work consumption. */
 void GravityStage::accept(const scheduler::StageDescriptor& descriptor) {
@@ -755,6 +988,8 @@ void GravityStage::accept(const scheduler::StageDescriptor& descriptor) {
             {state::ExecutionSide::Host,input.version,true,false});
     }
     if(native_self()) {
+        if(!runtime_source_lease_)throw std::logic_error("Native Self acceptance lost its issued source lease");
+        runtime_source_lease_->require_domain(); // One full joined owner check, never per worker/patch.
         if(!self_frame_)throw std::logic_error("Native Self acceptance lacks its actual solved-field frame");
         auto* transaction=runtime_.active_host_hydro_transaction();
         if(!transaction)throw std::logic_error("Native Self acceptance lost its macro owner");
@@ -813,6 +1048,7 @@ void GravityStage::invalidate() const {
     // Explicit owner invalidation retires its last source-inspection marker.
     // A later SelfGravity solve failure remains separately observable.
     source_inspection_completed_=false;
+    if(runtime_source_lease_)runtime_source_lease_->token.retire();
     if(native_external()) {
         // Retiring an unused/older service must not detach another service's
         // actual frame. Only the owner that attached this exact borrow clears it.
@@ -826,6 +1062,25 @@ void GravityStage::invalidate() const {
         if(self_frame_)self_frame_->invalidate();
     }
     if(gravity_)gravity_->invalidate();if(runtime_.backend())runtime_.backend()->invalidate_gravity();
+}
+/** Read the actual Current candidate field without a second solve or grant.
+ * The copied inspection payload retains its existing numerical-only contract;
+ * purpose projection belongs to this issued reader, not that separately owned
+ * scientific/error scalar schema.
+ */
+Physical::Gravity::NativeRzFieldInspection GravityStage::native_current_field() const {
+    if(!native_candidate()||!runtime_source_lease_)throw std::logic_error("No issued Native Current field");
+    runtime_source_lease_->require_domain();
+    gravity_->require_runtime_purpose(Physical::Gravity::GravityFieldPurpose::AcceptedCurrent);
+    return gravity_->native_rz_field_inspection();
+}
+/** Internal numerical stability cap, never ordinary public Native CFL support. */
+double GravityStage::native_current_timestep() const {
+    if(!native_candidate()||!runtime_source_lease_)throw std::logic_error("No issued Native Current field");
+    runtime_source_lease_->require_domain();
+    gravity_->require_runtime_purpose(Physical::Gravity::GravityFieldPurpose::AcceptedCurrent);
+    return gravity_->field_timestep(runtime_.configuration().numerics.cfl,
+        Physical::Gravity::GravityFieldScope::NativeRzCandidate);
 }
 /** Report the gravity stability cap to the Driver scheduler. */
 double GravityStage::timestep() const { return gravity_?gravity_->timestep(runtime_.configuration().numerics.cfl):std::numeric_limits<double>::infinity(); }

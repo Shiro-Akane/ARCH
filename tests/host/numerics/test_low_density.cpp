@@ -1192,6 +1192,211 @@ void check_native_weighted_component_underflow()
     }
 }
 
+namespace {
+/** Independent stationary ODE reference: L(q)=0 implies q(t)=q(0).
+ * Used values are checked by IEEE bits; no magnitude threshold or floor.
+ * The active hexadecimal cases below are exact rational arithmetic, not the
+ * production recurrence repeated as an expected-value helper.
+ */
+void check_rkl_stationary_cell_reference() {
+    namespace rkl=Numerics::Diffusion::detail;
+    const auto bits=[](double value){return std::bit_cast<std::uint64_t>(value);};
+    const auto equal_fluid=[&](const FluidVector& actual,const FluidVector& expected) {
+        for(auto member:std::array<double FluidVector::*,5>{&FluidVector::rho,
+            &FluidVector::mom_u,&FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+            require(bits(actual.*member)==bits(expected.*member),"RKL exact component reference changed");
+    };
+    const FluidVector seed{std::nextafter(1.e7,0.),.13,-.27,.41,1.e8};
+    const std::array<double,2> fraction{.37,1.-.37},zero_species{};
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    const double inf=std::numeric_limits<double>::infinity();
+    // Each non-density component evolves in turn. Density and every other
+    // component are independent stationary ODEs, despite an active energy.
+    for(auto member:std::array<double FluidVector::*,4>{&FluidVector::mom_u,
+            &FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng}) {
+        FluidVector rhs{};rhs.*member=2.;
+        FluidVector first=seed;auto first_x=fraction;
+        rkl::apply_first_rkl_stage_cell(first,first_x.data(),rhs,zero_species.data(),
+            2,1,.125,first,first_x.data()); // actual first-stage alias
+        for(auto inactive:std::array<double FluidVector::*,5>{&FluidVector::rho,
+                &FluidVector::mom_u,&FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+            if(inactive!=member)require(bits(first.*inactive)==bits(seed.*inactive),
+                "first RKL stationary component with active neighbor changed");
+        require(first.*member!=seed.*member,"first RKL active component lost its RHS");
+        for(int s=0;s<2;++s)require(bits(first_x[s])==bits(fraction[s]),"first RKL stationary Xi changed");
+        for(bool scaled:{false,true})for(bool second:{false,true}) {
+            const auto order=second?DiffFunction::RKLOrder::Second:DiffFunction::RKLOrder::First;
+            const auto coefficient=DiffFunction::get_rkl_coeffs(order,2,5);
+            FluidVector older=seed;auto older_x=fraction;
+            rkl::apply_recursive_rkl_stage_cell(seed,fraction.data(),seed,fraction.data(),
+                older,older_x.data(),rhs,zero_species.data(),FluidVector{},zero_species.data(),
+                2,1,coefficient,second,.125,scaled,older,older_x.data());
+            for(auto inactive:std::array<double FluidVector::*,5>{&FluidVector::rho,
+                    &FluidVector::mom_u,&FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+                if(inactive!=member)require(bits(older.*inactive)==bits(seed.*inactive),
+                    "recursive RKL stationary component changed under older alias");
+            require(older.*member!=seed.*member,"recursive RKL active component lost its RHS");
+            for(int s=0;s<2;++s)require(bits(older_x[s])==bits(fraction[s]),
+                "recursive RKL stationary Xi changed under older alias");
+        }
+    }
+    // Tiny nonzero operators have a representable result at a zero seed. An
+    // exact-zero optimization must not turn these independent ODEs stationary.
+    const DiffFunction::RKLCoeffs dyadic{1.5,-.5,.125,-.0625};
+    for(bool scaled:{false,true})for(bool second:{false,true}) {
+        const double q=scaled?rkl::evaluate_recursive_rkl_component<true>(0.,0.,0.,
+            0x1p-500,0.,dyadic,second,.5):rkl::evaluate_recursive_rkl_component<false>(
+            0.,0.,0.,0x1p-500,0.,dyadic,second,.5);
+        require(bits(q)==bits(scaled?0x1p-503:0x1p-504),"tiny nonzero RKL RHS mistaken for stationary");
+    }
+    {
+        const FluidVector rho_one{1.,0.,0.,0.,2.};const double x[]{0.,1.},sx[]{0x1p-500,-0x1p-500};
+        double outx[2]{};FluidVector out;
+        rkl::apply_first_rkl_stage_cell(rho_one,x,FluidVector{},sx,2,1,.125,out,outx);
+        require(bits(outx[0])==bits(0x1p-503),"tiny represented species RHS was erased");
+    }
+    // First-stage coefficient and genuinely used recursive controls must not
+    // hide IEEE nonfinite arithmetic behind the stationary fast path.
+    for(double bad:{nan,inf}) {
+        FluidVector out;double outx[2]{};
+        rkl::apply_first_rkl_stage_cell(seed,fraction.data(),FluidVector{},zero_species.data(),
+            2,1,bad,out,outx);
+        require(!std::isfinite(out.rho)&&!std::isfinite(outx[0]),
+            "nonfinite first RKL coefficient masked by stationary identity");
+        for(bool scaled:{false,true})for(bool second:{false,true})for(int field=0;field<4;++field) {
+            if(field==3&&!second)continue; // gamma is genuinely unused for RKL1
+            auto c=dyadic;
+            constexpr std::array<double DiffFunction::RKLCoeffs::*,4> controls{
+                &DiffFunction::RKLCoeffs::mu,&DiffFunction::RKLCoeffs::nu,
+                &DiffFunction::RKLCoeffs::tilde_mu,&DiffFunction::RKLCoeffs::gamma};
+            c.*controls[field]=bad;
+            const double q=scaled?rkl::evaluate_recursive_rkl_component<true>(1.,1.,1.,0.,0.,c,second,.5)
+                :rkl::evaluate_recursive_rkl_component<false>(1.,1.,1.,0.,0.,c,second,.5);
+            require(!std::isfinite(q),"nonfinite used RKL coefficient masked by stationary identity");
+        }
+        for(bool second:{false,true}) {
+            require(!std::isfinite(rkl::evaluate_recursive_rkl_component<false>(
+                1.,1.,1.,0.,0.,dyadic,second,bad)),"nonfinite used RKL dt masked");
+            require(bits(rkl::evaluate_recursive_rkl_component<true>(1.,1.,1.,0.,0.,
+                dyadic,second,bad))==bits(1.),"scaled RKL inspected mathematically unused dt");
+        }
+        auto first_order=dyadic;first_order.gamma=bad;
+        for(bool scaled:{false,true}) {
+            const double q=scaled?rkl::evaluate_recursive_rkl_component<true>(seed.rho,seed.rho,
+                seed.rho,0.,bad,first_order,false,bad):rkl::evaluate_recursive_rkl_component<false>(
+                seed.rho,seed.rho,seed.rho,0.,bad,first_order,false,.5);
+            require(bits(q)==bits(seed.rho),"RKL1 unused gamma/initial RHS was wrongly rejected");
+        }
+        require(!std::isfinite(rkl::evaluate_recursive_rkl_component<false>(
+            bad,bad,bad,0.,0.,dyadic,true,.5)),"nonfinite used RKL state gained stationary validity");
+        require(!std::isfinite(rkl::evaluate_recursive_rkl_component<false>(
+            1.,1.,1.,bad,0.,dyadic,true,.5)),"nonfinite used RKL RHS gained stationary validity");
+        require(!std::isfinite(rkl::evaluate_recursive_rkl_component<false>(
+            1.,1.,1.,0.,bad,dyadic,true,.5)),"nonfinite used RKL2 initial RHS gained stationary validity");
+    }
+    // All active operations are dyadic and exactly representable. These fixed
+    // hexadecimal vectors come from independent rational evaluation of the
+    // original affine scheme, making them insensitive to helper regrouping.
+    const FluidVector n{8.,2.,-4.,6.,16.},p{10.,4.,-2.,8.,18.},o{6.,0.,-6.,4.,14.};
+    const FluidVector lp{2.,-4.,8.,-12.,32.},ln{-2.,4.,-8.,12.,-16.};
+    const DiffFunction::RKLCoeffs active{1.5,-.5,.25,-.125};
+    const std::array<FluidVector,4> expected{{
+        {0x1.88p+3,0x1.6p+2,0x1p+0,0x1.1p+3,0x1.8p+4},
+        {0x1.8cp+3,0x1.5p+2,0x1.8p+0,0x1.fp+2,0x1.9p+4},
+        {0x1.9p+3,0x1.4p+2,0x1p+1,0x1.cp+2,0x1.cp+4},
+        {0x1.98p+3,0x1.2p+2,0x1.8p+1,0x1.6p+2,0x1.ep+4}}};
+    {
+        FluidVector alias=n;double x[]{.25,.75};const double sp[]{.375,1.625};
+        rkl::apply_first_rkl_stage_cell(alias,x,lp,sp,2,1,.125,alias,x);
+        equal_fluid(alias,{0x1.08p+3,0x1.8p+0,-0x1.8p+1,0x1.2p+2,0x1.4p+4});
+        require(bits(x[0])==bits(131./528.)&&bits(x[1])==bits(397./528.),
+            "active first RKL original rhoXi quotient/alias changed");
+    }
+    // RKL1's initial operator and gamma are mathematical non-inputs, including
+    // fractions. Both public scaled/unscaled wrappers must retain the exact
+    // stationary polynomial, without borrowing a new validity helper API.
+    for(bool scaled:{false,true}) {
+        auto c=active;c.gamma=inf;FluidVector alias=seed;auto x=fraction;
+        const FluidVector unused{nan,nan,nan,nan,nan};const double sx[]{nan,inf};
+        rkl::apply_recursive_rkl_stage_cell(seed,fraction.data(),seed,fraction.data(),
+            alias,x.data(),FluidVector{},zero_species.data(),unused,sx,2,1,c,false,
+            scaled?nan:.5,scaled,alias,x.data());
+        equal_fluid(alias,seed);
+        for(int species=0;species<2;++species)require(bits(x[species])==bits(fraction[species]),
+            "RKL1 unused initial species operator poisoned stationary Xi");
+    }
+    int reference=0;
+    for(bool scaled:{false,true})for(bool second:{false,true}) {
+        FluidVector alias=o;const double xn[]{.25,.75},xp[]{.5,.5};double xo[]{.125,.875};
+        const double sp[]{.375,1.625},sn[]{-.25,-1.75};
+        rkl::apply_recursive_rkl_stage_cell(n,xn,p,xp,alias,xo,lp,sp,ln,sn,2,1,
+            active,second,.5,scaled,alias,xo);
+        equal_fluid(alias,expected[reference++]);
+        // Conservation for each active species uses a separate exact rational
+        // source table, with rational-to-double conversion at publication only.
+        const std::array<std::array<double,2>,4> exact_x{{
+            {459./784.,325./784.},{115./198.,83./198.},
+            {231./400.,169./400.},{29./51.,22./51.}}};
+        for(int s=0;s<2;++s)require(bits(xo[s])==bits(exact_x[reference-1][s]),
+            "active RKL rhoXi quotient or older-alias arithmetic changed");
+        const auto scalar=scaled?rkl::evaluate_recursive_rkl_hydro_cell<true>(n,p,o,lp,ln,active,second,.5)
+            :rkl::evaluate_recursive_rkl_hydro_cell<false>(n,p,o,lp,ln,active,second,.5);
+        equal_fluid(alias,scalar);
+    }
+    std::cout<<"RKL_STATIONARY_CELL_REFERENCE checked_nonbinary_seed=true active_hex=true alias=true physics_qualified=false\n";
+}
+
+/** Exercise the actual Host AMR scaled adapter with output==older, not only
+ * the cell wrapper. Logical halos, padding, ENUC and source leases are fixed.
+ * It is a stage-arithmetic fixture, not BC/EOS or full evolution qualification.
+ */
+void check_rkl_stationary_host_alias_reference() {
+    Grid grid(2,0.,16.,0.,1.,0.,1.);grid.dim=1;grid.InitializeTopology();
+    const int total=grid.GetTotalSize();
+    FluidState n;n.Preallocate(total);n.InitSpecies(2);
+    const FluidVector seed{std::nextafter(1.e7,0.),.13,-.27,.41,1.e8};
+    for(int i=0;i<total;++i){n.set(i,seed);n.X(0,i)=.37;n.X(1,i)=1.-.37;n.enuc_rate[i]=17.+i;}
+    FluidState p=n,older=n;
+    std::vector<FluidVector> rhs(total,FluidVector{}),initial(total,FluidVector{});
+    std::vector<double> sx(2*total,0.);
+    for(int i=grid.Is();i<grid.Ie();++i)rhs[grid.GetIndex(i,grid.Js(),grid.Ks())].eng=2.;
+    const auto bits=[](double q){return std::bit_cast<std::uint64_t>(q);};
+    const auto arrays=[](const FluidState& q){return std::array<const double*,7>{q.rho.data(),q.mom_u.data(),
+        q.mom_v.data(),q.mom_w.data(),q.eng.data(),q.mass_fractions.data(),q.enuc_rate.data()};};
+    const auto n_addresses=arrays(n),p_addresses=arrays(p);
+    for(bool second:{false,true}) {
+        older=n;const auto addresses=arrays(older);
+        const auto c=DiffFunction::get_rkl_coeffs(second?DiffFunction::RKLOrder::Second:DiffFunction::RKLOrder::First,2,5);
+        Numerics::Diffusion::detail::apply_recursive_rkl_stage(n,p,older,older,rhs,sx,initial,sx,grid,c,second);
+        require(arrays(older)==addresses,"RKL Host older-alias replaced an owned allocation");
+        for(int i=0;i<total;++i) {
+            const bool active=i>=grid.GetIndex(grid.Is(),grid.Js(),grid.Ks())&&i<grid.GetIndex(grid.Ie(),grid.Js(),grid.Ks());
+            require(bits(older.rho[i])==bits(seed.rho)&&bits(older.mom_u[i])==bits(seed.mom_u)
+                &&bits(older.mom_v[i])==bits(seed.mom_v)&&bits(older.mom_w[i])==bits(seed.mom_w),
+                "Host scaled RKL stationary conserved field changed");
+            require(bits(older.X(0,i))==bits(.37)&&bits(older.X(1,i))==bits(1.-.37)
+                &&bits(older.enuc_rate[i])==bits(n.enuc_rate[i]),"Host RKL stationary Xi/ENUC changed");
+            if(active)require(older.eng[i]!=seed.eng,"Host RKL active E RHS was lost");
+            else require(bits(older.eng[i])==bits(seed.eng),"Host RKL changed a logical halo/padding energy");
+        }
+    }
+    require(arrays(n)==n_addresses&&arrays(p)==p_addresses,"Host RKL replaced a const source allocation");
+    for(int i=0;i<total;++i)for(const auto* source:{&n,&p}) {
+        for(auto member:std::array<double FluidVector::*,5>{&FluidVector::rho,&FluidVector::mom_u,
+                &FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+            require(bits(source->get(i).*member)==bits(seed.*member),"Host RKL mutated a const source value");
+        require(bits(source->X(0,i))==bits(.37)&&bits(source->X(1,i))==bits(1.-.37)
+            &&bits(source->enuc_rate[i])==bits(17.+i),"Host RKL mutated source Xi/ENUC");
+    }
+    auto alias=n;const auto addresses=arrays(alias);
+    Numerics::Diffusion::detail::apply_first_rkl_stage(alias,alias,rhs,sx,grid,.125);
+    require(arrays(alias)==addresses,"first Host RKL alias replaced an owned allocation");
+    for(int i=0;i<total;++i)require(bits(alias.rho[i])==bits(seed.rho)
+        &&bits(alias.X(0,i))==bits(.37)&&bits(alias.X(1,i))==bits(1.-.37),
+        "first Host RKL alias changed stationary rho/Xi");
+}
+}
+
 int main() {
-    try { check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
+    try { check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
  catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; } }

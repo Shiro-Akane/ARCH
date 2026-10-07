@@ -552,6 +552,12 @@ public:
             <<",\"S\":";S.json(json);json<<",\"B_G_stored_point_rows\":";BG.json(json);
         json<<",\"internal_jump\":";internal.json(json);json<<",\"boundary_jump\":";boundary_jump.json(json);
         json<<",\"residual_cross\":";residual.json(json);
+        // Same-field proof receipts remain distinct from the LD row diagnostic
+        // below; writing them performs no solve, gather, norm or energy bound.
+        json<<",\"field_certificate0\":";
+        RzMaterializedSourceRecord::write_native_discrete_certificate(json,*field_);
+        json<<",\"field_certificate1\":";
+        RzMaterializedSourceRecord::write_native_discrete_certificate(json,post);
         json<<",\"S_minus_B_G\":"<<gap<<",\"reconstructed_gap\":"<<reconstructed
             <<",\"internal_faces\":"<<internal_count<<",\"physical_boundary_faces\":"<<boundary_count
             <<",\"construction_counts\":{\"TwoPoint\":"<<construction_counts[0]<<",\"PolynomialFit\":"<<construction_counts[1]<<",\"EllipticRecovery\":"<<construction_counts[2]<<'}'

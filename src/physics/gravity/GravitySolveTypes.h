@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -21,7 +22,11 @@
 #include "driver/runtime/StateResidency.h"
 #include "grid/ScalarFieldView.h"
 
+namespace arch::driver { class GravityStage; }
+namespace amr { struct EllipticMeshBinding; }
+
 namespace Physical::Gravity {
+class SelfGravity;
 struct GravityInputIdentity {
     amr::BlockHandle block{};
     arch::state::StateSlot slot = arch::state::StateSlot::Current;
@@ -41,9 +46,65 @@ struct GravityDensityView {
     GravityInputIdentity identity;
     arch::grid::ConstScalarFieldView density;
 };
+/** Runtime use is independent of numerical/physical qualification scope. */
+enum class GravityFieldPurpose { AcceptedCurrent, HydroStage };
+/** Validate explicit tags without treating a tag as Runtime authority. */
+inline bool valid_gravity_field_purpose(GravityFieldPurpose purpose) noexcept {
+    return purpose==GravityFieldPurpose::AcceptedCurrent||purpose==GravityFieldPurpose::HydroStage;
+}
+/** A nonmoving capability issued only by the actual GravityStage owner.
+ * Workflow: owner freezes metadata -> prepare checks owner/binding on both
+ * sides of the unchanged solver -> owner seals -> purpose readers may borrow.
+ * No configuration, mathematical fixture or public enum can construct/seal it.
+ * Callback implementations belong to the Runtime owner, not the physics math.
+ */
+class RuntimeGravitySourceLease final {
+public:
+    RuntimeGravitySourceLease(const RuntimeGravitySourceLease&)=delete;
+    RuntimeGravitySourceLease(RuntimeGravitySourceLease&&)=delete;
+    RuntimeGravitySourceLease& operator=(const RuntimeGravitySourceLease&)=delete;
+    RuntimeGravitySourceLease& operator=(RuntimeGravitySourceLease&&)=delete;
+    std::uint64_t generation() const noexcept {return generation_;}
+    GravityFieldPurpose purpose() const noexcept {return purpose_;}
+    /** Require a sealed actual owner without scanning unrelated patches. */
+    void require(GravityFieldPurpose purpose) const {
+        if(!live_||!sealed_||purpose!=purpose_)
+            throw std::logic_error("Gravity Runtime source lease is unsealed, retired or used for another purpose");
+        require_owner_(owner_,false);
+    }
+private:
+    friend class arch::driver::GravityStage;
+    friend class SelfGravity;
+    using OwnerCheck=void(*)(const void*,bool);
+    using BindingCheck=void(*)(const void*,const amr::EllipticMeshBinding&);
+    RuntimeGravitySourceLease(const void* owner,std::uint64_t generation,
+        GravityFieldPurpose purpose,OwnerCheck owner_check,BindingCheck binding_check)
+        :owner_(owner),generation_(generation),purpose_(purpose),
+          require_owner_(owner_check),require_binding_(binding_check) {
+        if(!owner_||!generation_||!valid_gravity_field_purpose(purpose_)||!require_owner_||!require_binding_)
+            throw std::invalid_argument("Incomplete actual gravity source lease issuer");
+    }
+    /** Authenticate the same source/binding while its synchronous prepare runs. */
+    void require_preparation(GravityFieldPurpose purpose,const amr::EllipticMeshBinding& binding) const {
+        if(!live_||sealed_||purpose!=purpose_)
+            throw std::logic_error("Gravity Runtime preparation lease is stale or used for another purpose");
+        require_owner_(owner_,true);require_binding_(owner_,binding);
+    }
+    /** Owner-only seal after both prepare-side checks returned successfully. */
+    void seal() noexcept {sealed_=true;}
+    /** Owner-only permanent retirement before field or fluid mutation. */
+    void retire() noexcept {live_=false;sealed_=false;}
+    const void* owner_;const std::uint64_t generation_;const GravityFieldPurpose purpose_;
+    const OwnerCheck require_owner_;const BindingCheck require_binding_;
+    bool live_=true,sealed_=false;
+};
 struct GravitySolveRequest {
     const GravitySolveIdentity& identity;
     std::span<const GravityDensityView> blocks;
+    // Absent tags preserve standalone mathematical fixtures and Existing paths.
+    // A tag alone never grants a Runtime Current reader or Hydro frame.
+    std::optional<GravityFieldPurpose> purpose;
+    const RuntimeGravitySourceLease* runtime_lease=nullptr;
     // Geometry, physical BC and elliptic operator bindings are added with their
     // verified P2/P3 implementations; the request never owns fluid storage.
 };
@@ -54,6 +115,8 @@ struct GravityFieldStamp {
     std::uint64_t storage_generation = 0;
     arch::state::CompletionToken completion{};
     GravityFieldScope scope=GravityFieldScope::ExistingPhysics;
+    std::optional<GravityFieldPurpose> purpose;
+    std::uint64_t runtime_lease_generation=0;
 };
 
 /** Validate density/domain dependencies before either source-cache or field use.
@@ -85,6 +148,9 @@ public:
             throw std::invalid_argument("Unknown gravity field qualification scope");
         if (!arch::state::is_complete(stamp.completion) || !stamp.storage_generation)
             throw std::invalid_argument("Incomplete gravity field publication");
+        if((stamp.purpose&&!valid_gravity_field_purpose(*stamp.purpose))
+            ||(stamp.runtime_lease_generation&&!stamp.purpose))
+            throw std::invalid_argument("Invalid gravity field purpose/issuer metadata");
         validate_gravity_solve_identity(stamp.source);
         published_ = std::move(stamp);
     }
@@ -93,6 +159,12 @@ public:
         GravityFieldScope scope=GravityFieldScope::ExistingPhysics) const {
         return published_ && published_->scope==scope && published_->source == source
             && published_->storage_generation == storage_generation;
+    }
+    /** Match Runtime purpose and an actually issued generation, never tags alone. */
+    bool matches_runtime(const GravitySolveIdentity& source,std::uint64_t generation,
+        GravityFieldScope scope,GravityFieldPurpose purpose,std::uint64_t lease) const {
+        return lease&&matches(source,generation,scope)&&published_->purpose==purpose
+            &&published_->runtime_lease_generation==lease;
     }
     /** Retire the publication before any state or topology mutation. */
     void invalidate() noexcept { published_.reset(); }

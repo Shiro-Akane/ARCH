@@ -182,7 +182,8 @@ void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candida
 void SelfGravity::invalidate() const noexcept {
     if(prepared_native_self())prepared_native_self()->invalidate();
     if(native_source_inspection_running_)native_source_inspection_invalidated_=true;
-    if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate(); } }
+    if(work_) { work_->ready=false; work_->downloaded=false; work_->validity.invalidate();
+        work_->purpose.reset();work_->runtime_lease=nullptr; } }
 /** Resolve the explicit per-side policy for the requested stage time. */
 arch::elliptic::CompositeBoundary SelfGravity::current_boundary(const Workspace& w,double time) const {
     if(config_.boundary=="user")
@@ -225,8 +226,13 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     // Validate the same domain dependency contract used by source caches and
     // publication before gather, moments, solve or device work can begin.
     validate_gravity_solve_identity(request.identity);
+    if((request.purpose&&!valid_gravity_field_purpose(*request.purpose))
+        ||(request.runtime_lease&&!request.purpose))
+        throw std::invalid_argument("Invalid gravity request purpose/issuer metadata");
     if (!work_) throw std::logic_error("Self-gravity mesh is not bound");
     const auto& identity=request.identity;
+    if(request.runtime_lease)
+        request.runtime_lease->require_preparation(*request.purpose,work_->binding);
     {
         auto& bound=*work_; const auto& op=bound.solver.op();
         if (request.blocks.size()!=bound.patches.size() || identity.inputs.size()!=bound.patches.size()
@@ -477,7 +483,12 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
     w.source=identity;
     arch::state::CompletionToken token{w.generation,arch::state::CompletionState::Complete};
     if(host_consumption_requested_)w.begin_host_consumption(host_consumption_dt_);
-    w.validity.publish({identity,w.generation,token,w.scope}); w.ready=true; return token;
+    if(request.runtime_lease)
+        request.runtime_lease->require_preparation(*request.purpose,w.binding);
+    w.purpose=request.purpose;w.runtime_lease=request.runtime_lease;
+    w.validity.publish({identity,w.generation,token,w.scope,request.purpose,
+        request.runtime_lease?request.runtime_lease->generation():0});
+    w.ready=true; return token;
 }
 /** Internal snapshots explicitly require candidate scope. They cannot satisfy
  * ordinary physical patch/output readers or claim continuous Phi/force quality.
@@ -494,6 +505,7 @@ const std::array<std::vector<double>,3>& SelfGravity::native_rz_acceleration() c
 /** Copy only the actual completed Host candidate and its original metadata.
  * Workflow: validate NativeRzCandidate publication/source -> fence -> download
  * existing Phi, gradient, boundary, sides and g arrays -> check representation
+ * -> enclose same-op native Phi RMS/volume and copy its scalar residual proof
  * -> revalidate the same workspace/source/generations before returning owners.
  * g is the existing arithmetic average of actual gathered low/high side g;
  * no gradient, gather, quadrature, normalization or new physical field is made.
@@ -503,6 +515,18 @@ const std::array<std::vector<double>,3>& SelfGravity::native_rz_acceleration() c
 NativeRzFieldInspection SelfGravity::native_rz_field_inspection() const {
     auto& w=workspace();
     w.require(GravityFieldScope::NativeRzCandidate);
+    // Snapshot the actual request purpose/issuer, then authenticate the sealed
+    // Runtime publication before any copy. Pure mathematical tags are retained
+    // with zero generation/authentication and acquire no Current/Hydro rights.
+    const auto purpose=w.purpose;
+    const auto* const runtime_lease=w.runtime_lease;
+    if(purpose&&!valid_gravity_field_purpose(*purpose))
+        throw std::logic_error("Native RZ field inspection has an invalid purpose tag");
+    if(runtime_lease) {
+        if(!purpose)throw std::logic_error("Native RZ field inspection lost its Runtime purpose");
+        w.require_runtime_purpose(*purpose);
+    }
+    const std::uint64_t lease_generation=runtime_lease?runtime_lease->generation():0;
     auto& execution=w.solver.execution();
     const auto& op=w.solver.op();
     if(execution.device()||!w.execution||w.execution->numeric()->device())
@@ -529,6 +553,9 @@ NativeRzFieldInspection SelfGravity::native_rz_field_inspection() const {
     result.source=w.source;
     result.source_generation=w.ring_assessment.source_generation;
     result.field_generation=w.generation;
+    result.purpose=purpose;
+    result.runtime_lease_generation=lease_generation;
+    result.runtime_lease_authenticated=runtime_lease!=nullptr;
     // The actual metadata is copied, not reconstructed from cell centers.
     result.faces=op.faces();
     execution.fence();
@@ -549,16 +576,92 @@ NativeRzFieldInspection SelfGravity::native_rz_field_inspection() const {
     for(int axis=0;axis<3;++axis)
         result.acceleration[axis].assign(acceleration.begin()+axis*n,
             acceleration.begin()+(axis+1)*n);
+    // This is an ideal-native DISCRETE certificate for the same solved
+    // publication. A weighted residual is not a continuum Phi error; copying
+    // its cellwise ledger onto a separate long-double reducer would be invalid.
+    const auto& assessment=w.ring_assessment;
+    using arch::elliptic::BoundaryErrorStatus;
+    using arch::elliptic::BoundaryResidualStatus;
+    if(assessment.scope!=RingRhsAssessmentScope::RootDyadicNativeOperator
+        ||assessment.conditional.status!=BoundaryResidualStatus::Accepted
+        ||assessment.source_error.status!=GravitySourceBoundStatus::Bounded
+        ||assessment.assembly_error.status!=BoundaryErrorStatus::Bounded
+        ||assessment.native_boundary_construction.status!=BoundaryErrorStatus::Bounded
+        ||assessment.native_boundary_potential.status!=BoundaryErrorStatus::Bounded
+        ||assessment.native_residual_error.status!=BoundaryErrorStatus::Bounded
+        ||assessment.native_residual_error.construction.status!=BoundaryErrorStatus::Bounded
+        ||assessment.native_residual_error.arithmetic.status!=BoundaryErrorStatus::Bounded
+        ||assessment.native_complete_residual_error.status!=BoundaryErrorStatus::Bounded)
+        throw std::logic_error("Native RZ field inspection has no matching native discrete residual proof");
+    // Reuse the outward-safe owners with this exact downloaded point Phi and
+    // actual operator. This optional inspection adds no production norm/cache.
+    result.native_potential_rms=op.native_rz_norm_interval(result.potential);
+    result.native_measure=op.native_rz_measure_enclosure();
+    result.conditional_residual=assessment.conditional;
+    result.physical_status=assessment.physical_status;
+    result.residual_norm_scope=arch::elliptic::BoundaryResidualNormScope::RootDyadicRzWeights;
+    auto& errors=result.residual_error;
+    errors.source_stored_upper=assessment.source_error.norm_upper;
+    errors.rhs_assembly_stored_upper=assessment.assembly_error.norm_upper;
+    errors.residual_arithmetic_stored_upper=assessment.native_residual_error.arithmetic.norm_upper;
+    errors.boundary_construction_native_upper=assessment.native_boundary_construction.native_norm_upper;
+    errors.boundary_potential_native_upper=assessment.native_boundary_potential.native_norm_upper;
+    errors.operator_construction_native_upper=assessment.native_residual_error.construction.native_norm_upper;
+    errors.residual_evaluation_native_upper=assessment.native_residual_error.native_norm_upper;
+    errors.complete_native_upper=assessment.native_complete_residual_error.native_norm_upper;
+    // Finite bounds are metadata validity, never a new acceptance threshold.
+    // Zero Phi/error remains valid; neither zero nor infinity becomes a fallback.
+    const auto nonnegative_finite=[](double value) {
+        return std::isfinite(value)&&value>=0.;
+    };
+    const auto& norm=result.native_potential_rms;
+    const auto& measure=result.native_measure;
+    const auto& residual=result.conditional_residual;
+    if(norm.status!=BoundaryErrorStatus::Bounded
+        ||!nonnegative_finite(norm.lower)||!nonnegative_finite(norm.upper)
+        ||norm.lower>norm.upper||measure.status!=BoundaryErrorStatus::Bounded
+        ||!std::isfinite(measure.total_volume_lower)||!(measure.total_volume_lower>0.)
+        ||!std::isfinite(measure.total_volume_upper)
+        ||measure.total_volume_lower>measure.total_volume_upper
+        ||measure.volume_lower.size()!=static_cast<std::size_t>(n)
+        ||measure.volume_upper.size()!=static_cast<std::size_t>(n)
+        ||measure.volume_error_upper.size()!=static_cast<std::size_t>(n)
+        ||measure.weight_lower.size()!=static_cast<std::size_t>(n)
+        ||measure.weight_upper.size()!=static_cast<std::size_t>(n)
+        ||measure.weight_error_upper.size()!=static_cast<std::size_t>(n)
+        ||!nonnegative_finite(residual.complete_residual_error_upper)
+        ||!nonnegative_finite(residual.tolerance_safe)
+        ||!nonnegative_finite(residual.rhs_norm_lower)
+        ||!nonnegative_finite(residual.rhs_norm_upper)
+        ||residual.rhs_norm_lower>residual.rhs_norm_upper
+        ||!nonnegative_finite(residual.residual_norm_upper)
+        ||!nonnegative_finite(residual.rhs_error_upper)
+        ||!nonnegative_finite(residual.total_residual_upper)
+        ||!nonnegative_finite(errors.source_stored_upper)
+        ||!nonnegative_finite(errors.rhs_assembly_stored_upper)
+        ||!nonnegative_finite(errors.residual_arithmetic_stored_upper)
+        ||!nonnegative_finite(errors.boundary_construction_native_upper)
+        ||!nonnegative_finite(errors.boundary_potential_native_upper)
+        ||!nonnegative_finite(errors.operator_construction_native_upper)
+        ||!nonnegative_finite(errors.residual_evaluation_native_upper)
+        ||!nonnegative_finite(errors.complete_native_upper))
+        throw std::runtime_error("Native RZ field inspection has invalid discrete certificate metadata");
     // Copies own storage. Recheck the original serial publication rather than
     // assuming the ring-source counter is the solved-field counter.
     execution.fence();
     w.require(GravityFieldScope::NativeRzCandidate);
     if(work_.get()!=&w||w.source!=result.source||w.generation!=result.field_generation
+        ||w.purpose!=purpose||w.runtime_lease!=runtime_lease
+        ||(runtime_lease&&runtime_lease->generation()!=lease_generation)
+        ||w.ring_assessment.physical_status!=result.physical_status
         ||w.ring_assessment.source!=result.source
         ||w.ring_assessment.source_generation!=result.source_generation
         ||w.ring_source->materialized_ring_source_generation(op,result.source)
             !=result.source_generation)
         throw std::logic_error("Native RZ field inspection changed during its synchronous copy");
+    // The same actual token and matching field stamp must still authorize the
+    // requested purpose after the synchronous fence; this is not a science gate.
+    if(runtime_lease)w.require_runtime_purpose(*purpose);
     return result;
 }
 /** Switch host/device execution and rebuild resident arrays on the same topology. */
@@ -585,7 +688,11 @@ GravityPatchView SelfGravity::patch_view(std::size_t block) const {workspace().r
 std::size_t SelfGravity::cell_count() const {return workspace().solver.op().size();}
 /** Bound a macro step by local density and face-acceleration timescales. */
 double SelfGravity::timestep(double cfl) const {
-    workspace().require();const auto& w=*work_;
+    return field_timestep(cfl,GravityFieldScope::ExistingPhysics);
+}
+/** Evaluate the original stability cap under an explicitly required field scope. */
+double SelfGravity::field_timestep(double cfl,GravityFieldScope scope) const {
+    workspace().require(scope);const auto& w=*work_;
     if(!std::isfinite(cfl)||cfl<=0.||cfl>1.)throw std::invalid_argument("Invalid gravity CFL");
     // dt_g = CFL / sqrt(max(4*pi*G*rho_max, max_a |g_a|/dx_a)).
     return cfl/std::sqrt(std::max(4.*arch::constants::math::pi*arch::constants::gravity::cgs::gravitational_constant*w.max_density,w.max_acceleration_ratio));
@@ -659,6 +766,11 @@ void apply_patch_flux_work(const GravityPatchView& patch,std::vector<FluidVector
 }
 } // namespace
 
+/** Authenticate a Runtime field purpose; direct mathematical tags cannot pass. */
+void SelfGravity::require_runtime_purpose(GravityFieldPurpose purpose) const {
+    workspace().require_runtime_purpose(purpose);
+}
+
 /** Recheck the same real candidate publication and materialized ring source.
  * Source, source generation and field generation are distinct exact identities;
  * this private borrow never changes the field validity/physical assessment.
@@ -666,6 +778,7 @@ void apply_patch_flux_work(const GravityPatchView& patch,std::vector<FluidVector
 void SelfGravity::require_native_frame(const GravitySolveIdentity& source,
     std::uint64_t field_generation,std::uint64_t source_generation) const {
     auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+    w.require_runtime_purpose(GravityFieldPurpose::HydroStage);
     if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
         ||w.scope!=GravityFieldScope::NativeRzCandidate||w.source!=source
         ||w.generation!=field_generation||!w.ring_source||!source_generation
@@ -683,6 +796,7 @@ void SelfGravity::require_native_frame(const GravitySolveIdentity& source,
 void SelfGravity::require_native_frame_lease(const GravitySolveIdentity& source,
     std::uint64_t field_generation,std::uint64_t source_generation) const {
     auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+    w.require_runtime_purpose(GravityFieldPurpose::HydroStage);
     if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
         ||w.scope!=GravityFieldScope::NativeRzCandidate||w.source!=source
         ||w.generation!=field_generation||!w.ring_source||!source_generation

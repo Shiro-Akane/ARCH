@@ -81,8 +81,11 @@ summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity al
  "timestepHeaderSha256":source_sha("src/driver/stages/DriverStages.h"),
  "rklHeaderSha256":{name:source_sha(name) for name in rkl_headers},
  "limitations":["Supported Cartesian identity path only; RZ production gravity/regrid remains gated","No actual Hydro integration or scientific evolution acceptance","No CUDA qualification; only local gravity diagnostic output"]}
-if a.native_rz or a.native_rz_regrid:
-    summary["scope"]="Actual CPU RZ DriverRuntime lease -> GravityStage -> SelfGravity candidate; no timestep"
+if a.native_rz:
+    summary["scope"]="Actual Runtime AcceptedCurrent plus direct mathematical Scratch/Next candidate checks; no time advancement"
+    summary["purposeCoverage"]={"actualRuntimeCurrent":1,"directMathematicalSlots":["Scratch","Next"],
+        "directMathematicalSlotCount":2,"ownerCompleted":result.returncode==0,
+        "hydroStageAuthorityTested":False,"physicalQualified":False,"scienceAccepted":False}
     summary["limitations"]=["Native candidate only; ordinary physical readers and RZ regrid/Device gates held",
         "No continuous Phi/force or evolution/conservation acceptance"]
 if a.native_rz_regrid:
@@ -99,7 +102,10 @@ if a.regrid_rollback:
         "Seven actual source Host vector addresses, values and BC frame are checked through in-place rollback; no unrelated pointer or Device ownership grant",
         "Production RZ/Device gates held"]
 if a.materialized_source_only:
-    summary["scope"]="Actual CPU Native RZ Runtime initialization -> checked Current source and same candidate field inspection; no timestep"
+    summary["scope"]="Actual CPU Native RZ Runtime AcceptedCurrent -> checked source and Stage-owned Current numerical field; no time advancement"
+    summary["purposeCoverage"]={"actualRuntimeCurrent":1,"directMathematicalSlots":[],
+        "directMathematicalSlotCount":0,"ownerCompleted":result.returncode==0,
+        "hydroStageAuthorityTested":False,"physicalQualified":False,"scienceAccepted":False}
     summary["limitations"]=["Source and same-solve diagnostic only; lifecycle/fault matrix is a separate default lane",
         "Physical/native/Device gates held; no continuous accuracy or coupled evolution acceptance"]
     # Read real exported binding metadata; this is source/field identity only,

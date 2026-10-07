@@ -198,6 +198,84 @@ class SyntheticMaterializedWireTests(unittest.TestCase):
                     observers=[dict(id="synthetic-cell-observer-0", kind="cell-center",
                                     source_index=0, r_observer=1.5, z_observer=0.), face_observer])
 
+    def wire_with_proof(self):
+        """Synthetic schema arithmetic only; never a Runtime/science receipt."""
+        record = self.wire()
+        field = record["candidate_field"]
+        field.update(conditional_status=0, physical_status=3)
+        field["native_discrete_certificate"] = dict(
+            schema="arch-private-native-discrete-field-certificate-1",
+            scope="ideal-root-dyadic-native-discrete-operator", physical_qualified=False,
+            continuous_potential_error_certified=False, per_cell_residual_error_exported=False,
+            norm_scope="RootDyadicRzWeights", norm_kind="volume-normalized-RMS",
+            weighted_L2_exported=False, potential_semantics="actual-stored-cell-center-point-Phi",
+            residual_vector_binding="original-certified-operator-residual;not-long-double-row-diagnostic",
+            source_generation=3, field_generation=11,
+            native_potential_rms=dict(status="Bounded", units="cm^2/s^2", lower=1., upper=3.),
+            native_measure=dict(status="Bounded", units="cm^3", total_volume_lower=3., total_volume_upper=4.),
+            conditional_residual=dict(status="Accepted", units="s^-2",
+                error_composition="CorrelatedPrescribedBoundary", complete_residual_error_upper=6.,
+                tolerance_safe=10., rhs_norm_lower=8., rhs_norm_upper=9., residual_norm_upper=4.,
+                rhs_error_upper=2., total_residual_upper=10.),
+            marginal_error_scalars=dict(units="s^-2", additive_floor=False,
+                stored_norm_scope="StoredNativeWeights", native_norm_scope="RootDyadicRzWeights",
+                authoritative_complete_floor="conditional_residual.complete_residual_error_upper",
+                source_stored_upper=10., rhs_assembly_stored_upper=10., residual_arithmetic_stored_upper=10.,
+                boundary_construction_native_upper=10., boundary_potential_native_upper=10.,
+                operator_construction_native_upper=10., residual_evaluation_native_upper=10., complete_native_upper=6.))
+        return record
+
+    def test_present_same_field_proof_preserves_nonadditive_math_only_record(self):
+        record = self.wire_with_proof(); before = copy.deepcopy(record)
+        rz.validate_materialized_record(record, surface.Budget.start())
+        self.assertEqual(record, before)
+        self.assertFalse(record["physical_qualified"])
+        self.assertNotIn("runtime_lease_authenticated", record["source_identity"])
+        # Marginals deliberately sum far above total: they are not additive.
+        self.assertEqual(record["candidate_field"]["native_discrete_certificate"]
+                         ["conditional_residual"]["total_residual_upper"], 10.)
+
+    def test_present_field_proof_corruption_refused_before_optional_backend(self):
+        mutations = [
+            lambda p: p.update(norm_kind="weighted-L2"),
+            lambda p: p.update(source_generation=4),
+            lambda p: p.update(physical_qualified=True),
+            lambda p: p["native_measure"].update(total_volume_lower=0.),
+            lambda p: p["native_measure"].update(units="cm^2"),
+            lambda p: p["native_potential_rms"].update(lower=4.),
+            lambda p: p["native_potential_rms"].update(upper=float("inf")),
+            lambda p: p["conditional_residual"].update(total_residual_upper=9.),
+            lambda p: p["conditional_residual"].update(tolerance_safe=9.),
+            lambda p: p["marginal_error_scalars"].update(complete_native_upper=5.),
+            lambda p: p["marginal_error_scalars"].update(additive_floor=True),
+            lambda p: p.update(native_measure=[]),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                record = self.wire_with_proof()
+                mutate(record["candidate_field"]["native_discrete_certificate"])
+                self.reject_before_backend(record)
+
+    def test_present_purpose_metadata_requires_one_complete_current_pair(self):
+        record = self.wire_with_proof()
+        for item, scope in ((record["source_identity"], "checked-source-materialization-only"),
+                (record["candidate_field"], "accepted-current-numerical-field-only")):
+            item.update(purpose="AcceptedCurrent", runtime_lease_generation=7,
+                        runtime_lease_authenticated=True, runtime_authority_scope=scope)
+        rz.validate_materialized_record(record, surface.Budget.start())
+        mutations = [lambda r: r["source_identity"].pop("purpose"),
+            lambda r: r["candidate_field"].pop("native_discrete_certificate"),
+            lambda r: r["candidate_field"].update(purpose="HydroStage"),
+            lambda r: r["candidate_field"].update(runtime_lease_generation=8),
+            lambda r: r["source_identity"].update(runtime_lease_generation=True),
+            lambda r: r["source_identity"].update(generation=True),
+            lambda r: r["candidate_field"].update(runtime_lease_authenticated=False),
+            lambda r: r["source_identity"].update(runtime_authority_scope="physics")]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                invalid = copy.deepcopy(record); mutate(invalid)
+                self.reject_before_backend(invalid)
+
     def reject_before_backend(self, record):
         """Exercise the real wire consumer; optional evaluation must be absent."""
         with patch.object(surface, "load_optional_flint", side_effect=AssertionError("backend reached")) as load, \

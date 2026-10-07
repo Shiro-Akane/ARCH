@@ -23,6 +23,7 @@
 
 #include "host/driver/RzRuntimeWitness.h"
 #include "host/gravity/NativeSelfEnergyWitness.h"
+#include "host/gravity/NativeActiveFourModuleWitness.h"
 
 #include "amr/AMRControl.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
@@ -960,6 +961,9 @@ void run() {
 } // namespace
 int main(int argc,char** argv) {
     try {
+        if(argc==3&&std::string(argv[1])=="private-native-active-four-module") {
+            native_active_four_module::run(argv[2]);return 0;
+        }
         if(argc==2&&std::string(argv[1])=="private-native-self") {
             native_self_hydro_owner_checks::run();return 0;
         }
@@ -978,7 +982,7 @@ int main(int argc,char** argv) {
             std::cout<<"PRIVATE_NATIVE_SELF_GREEN_PAIR algebra_checked=1 two_actual_fields=1 continuous_green_science=UNVERIFIED physical_grant=0\n";
             return 0;
         }
-        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-self, private-native-self-cache-refusal, private-native-self-energy or private-native-self-green-pair");
+        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-active-four-module <actual-helm-table-path>, private-native-self, private-native-self-cache-refusal, private-native-self-energy or private-native-self-green-pair");
         reflux_row_checks::run(); test_native_external_source_mean(); test_preparation(); test_failures(); test_field_identity(); test_host_hydro_transaction(); run_native_rz_runtime_boundary_contract();
     }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

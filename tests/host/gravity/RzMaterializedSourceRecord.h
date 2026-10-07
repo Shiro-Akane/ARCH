@@ -7,7 +7,7 @@
  * 2. Copy the real operator, source density, input identities and observer sites.
  * 3. After the call exits, require exactly one callback and that Stage's source
  *    completion; detach the sink on success and failure, then propagate errors.
- * 4. Optionally copy the actual candidate field under its own matching stamp.
+ * 4. Optionally use the Stage-owned Current reader and match its issued purpose.
  * 5. Emit finite, round-trippable JSON, never a physical/production certificate.
  *
  * Every bound is copied from the actual operator. Source rho is the actual
@@ -62,6 +62,8 @@ class RzMaterializedSourceRecord final {
     struct Captured {
         Identity identity;
         std::uint64_t generation;
+        std::optional<Physical::Gravity::GravityFieldPurpose> purpose;
+        std::uint64_t runtime_lease_generation;
         GravityConfig service;
         arch::elliptic::EllipticMesh mesh;
         std::array<bool,3> periodic;
@@ -107,6 +109,15 @@ class RzMaterializedSourceRecord final {
     /** Refuse NaN/Infinity instead of emitting invalid JSON or substituting zero. */
     static void finite(double x) {
         if(!std::isfinite(x))throw std::domain_error("Nonfinite actual source-record value");
+    }
+    /** Serialize the actual optional tag without deriving Runtime/science rights. */
+    static void write_purpose(std::ostream& out,
+            std::optional<Physical::Gravity::GravityFieldPurpose> purpose) {
+        using Physical::Gravity::GravityFieldPurpose;
+        if(!purpose)out<<"null";
+        else if(*purpose==GravityFieldPurpose::AcceptedCurrent)out<<"\"AcceptedCurrent\"";
+        else if(*purpose==GravityFieldPurpose::HydroStage)out<<"\"HydroStage\"";
+        else throw std::logic_error("Unknown actual source-record purpose");
     }
     /** Check a real stored stencil/face without evaluating or repairing it. */
     static void valid_face(const Face& f,std::size_t count) {
@@ -215,7 +226,16 @@ class RzMaterializedSourceRecord final {
             ||view.binding.grids.size()!=view.binding.handles.size()
             ||view.request.blocks.size()!=view.binding.handles.size())
             throw std::logic_error("Malformed actual native source record view");
-        Captured next{view.request.identity,view.source_generation,view.service_configuration,
+        const auto purpose=view.request.purpose;
+        const auto* const lease=view.request.runtime_lease;
+        if((purpose&&!Physical::Gravity::valid_gravity_field_purpose(*purpose))
+            ||(lease&&(!purpose||lease->purpose()!=*purpose||!lease->generation())))
+            throw std::logic_error("Source record lost its actual preparing purpose/issuer");
+        // Preparing tokens are intentionally unsealed. The real Stage performs
+        // pre/callback/post authentication; capture_call finalizes only that
+        // Stage's completed callback, never a caller-provided success flag.
+        Captured next{view.request.identity,view.source_generation,purpose,
+            lease?lease->generation():0,view.service_configuration,
             view.op.base(),view.binding.periodic,{view.op.base().origin[0],view.op.base().root_upper[0],
                 view.op.base().origin[1],view.op.base().root_upper[1]},{},{},{}};
         for(double x:next.root)finite(x);
@@ -311,14 +331,20 @@ public:
      * retaining arrays; no separate Phi/g getter, stencil evaluation, gather or
      * normalization is substituted for the actual published workspace values.
      */
-    void capture_native_field(const Physical::Gravity::SelfGravity& gravity) {
+    void capture_native_field(const arch::driver::GravityStage& stage) {
         if(capturing_||!checked_||!captured_||invoke_failed_||field_)
             throw std::logic_error("Field record requires one completed source/solve call");
-        auto receipt=gravity.native_rz_field_inspection();
+        // One owning receipt from the actual issuer. Do not separately read the
+        // SelfGravity workspace/assessment or infer authority from an enum tag.
+        auto receipt=stage.native_current_field();
         const auto& identity=captured_->identity;
         if(receipt.source!=identity||!same(receipt.source.input_time,identity.input_time)
             ||!same(receipt.source.gravitational_constant,identity.gravitational_constant)
-            ||receipt.source_generation!=captured_->generation||!receipt.field_generation)
+            ||receipt.source_generation!=captured_->generation||!receipt.field_generation
+            ||captured_->purpose!=Physical::Gravity::GravityFieldPurpose::AcceptedCurrent
+            ||!captured_->runtime_lease_generation||receipt.purpose!=captured_->purpose
+            ||receipt.runtime_lease_generation!=captured_->runtime_lease_generation
+            ||!receipt.runtime_lease_authenticated||!receipt.physical_status)
             throw std::logic_error("Actual field receipt belongs to another source/publication");
         const std::size_t n=captured_->leaves.size(),m=captured_->faces.size();
         if(n>std::numeric_limits<std::size_t>::max()/6||receipt.potential.size()!=n
@@ -337,15 +363,85 @@ public:
             if(!same_face(receipt.faces[f],captured_->faces[f]))
                 throw std::logic_error("Actual field receipt changed an original source face/stencil");
         }
-        // These two status scalars remain actual assessment observations. Its
-        // source stamp must still describe the same receipt; no certificate is
-        // created by copying arrays or by a completed source inspection.
-        const auto& assessment=gravity.native_rz_assessment();
-        if(assessment.source!=receipt.source||assessment.source_generation!=receipt.source_generation
-            ||!same(assessment.source.input_time,receipt.source.input_time)
-            ||!same(assessment.source.gravitational_constant,receipt.source.gravitational_constant))
-            throw std::logic_error("Actual field assessment changed its copied receipt source");
-        field_.emplace(Field{std::move(receipt),int(assessment.conditional.status),int(assessment.physical_status)});
+        // Both statuses belong to this one authenticated owning receipt. They
+        // remain observations, never a continuum/physical qualification grant.
+        const int conditional_status=int(receipt.conditional_residual.status);
+        const int physical_status=int(*receipt.physical_status);
+        field_.emplace(Field{std::move(receipt),conditional_status,physical_status});
+    }
+    /** Serialize the original owning field's discrete proof scalars only.
+     * Workflow: require the actual known proof scope/status -> copy its RMS,
+     * total-volume enclosure and conditional/error scalars -> restore precision.
+     * RMS(Phi)=sqrt(sum(V_i*Phi_i^2)/sum(V_i)); weighted L2 is not exported or
+     * obtained by an uncertified volume conversion. Marginal construction and
+     * evaluation bounds are not additive: the complete A/B-correlated floor
+     * remains conditional_residual.complete_residual_error_upper. No cellwise
+     * certificate is attached to the separate long-double Green row reducer.
+     */
+    static void write_native_discrete_certificate(std::ostream& out,
+        const Physical::Gravity::NativeRzFieldInspection& receipt) {
+        using arch::elliptic::BoundaryErrorStatus;
+        using arch::elliptic::BoundaryResidualStatus;
+        using arch::elliptic::ResidualErrorComposition;
+        const auto& rms=receipt.native_potential_rms;
+        const auto& measure=receipt.native_measure;
+        const auto& residual=receipt.conditional_residual;
+        const auto& errors=receipt.residual_error;
+        if(receipt.residual_norm_scope!=arch::elliptic::BoundaryResidualNormScope::RootDyadicRzWeights
+            ||rms.status!=BoundaryErrorStatus::Bounded||measure.status!=BoundaryErrorStatus::Bounded
+            ||residual.status!=BoundaryResidualStatus::Accepted
+            ||!receipt.source_generation||!receipt.field_generation)
+            throw std::logic_error("Actual field has no accepted native discrete certificate to serialize");
+        for(double value:{rms.lower,rms.upper,measure.total_volume_lower,measure.total_volume_upper,
+                residual.complete_residual_error_upper,residual.tolerance_safe,residual.rhs_norm_lower,
+                residual.rhs_norm_upper,residual.residual_norm_upper,residual.rhs_error_upper,
+                residual.total_residual_upper,errors.source_stored_upper,errors.rhs_assembly_stored_upper,
+                errors.residual_arithmetic_stored_upper,errors.boundary_construction_native_upper,
+                errors.boundary_potential_native_upper,errors.operator_construction_native_upper,
+                errors.residual_evaluation_native_upper,errors.complete_native_upper}) {
+            finite(value);
+            if(value<0.)throw std::domain_error("Negative native discrete certificate scalar");
+        }
+        if(rms.lower>rms.upper||!(measure.total_volume_lower>0.)
+            ||measure.total_volume_lower>measure.total_volume_upper
+            ||residual.rhs_norm_lower>residual.rhs_norm_upper)
+            throw std::domain_error("Reversed or nonpositive native discrete certificate enclosure");
+        const char* composition=nullptr;
+        switch(residual.error_composition) {
+        case ResidualErrorComposition::SeparateRhsAndOperator:composition="SeparateRhsAndOperator";break;
+        case ResidualErrorComposition::CorrelatedPrescribedBoundary:composition="CorrelatedPrescribedBoundary";break;
+        default:throw std::logic_error("Actual field residual composition is unknown");
+        }
+        // Existing number() is exact-roundtrip binary64 and rejects NaN/Inf.
+        // Green's later long-double evidence keeps its original stream precision.
+        struct RestorePrecision {
+            std::ostream& stream;std::streamsize prior;
+            ~RestorePrecision() {stream.precision(prior);}
+        } restore{out,out.precision()};
+        out<<"{\"schema\":\"arch-private-native-discrete-field-certificate-1\",\"scope\":\"ideal-root-dyadic-native-discrete-operator\",\"physical_qualified\":false,\"continuous_potential_error_certified\":false,\"per_cell_residual_error_exported\":false,\"norm_scope\":\"RootDyadicRzWeights\",\"norm_kind\":\"volume-normalized-RMS\",\"weighted_L2_exported\":false,\"potential_semantics\":\"actual-stored-cell-center-point-Phi\",\"residual_vector_binding\":\"original-certified-operator-residual;not-long-double-row-diagnostic\",\"source_generation\":"
+            <<receipt.source_generation<<",\"field_generation\":"<<receipt.field_generation;
+        out<<",\"native_potential_rms\":{\"status\":\"Bounded\",\"units\":\"cm^2/s^2\",\"lower\":";
+        number(out,rms.lower);out<<",\"upper\":";number(out,rms.upper);out<<'}';
+        out<<",\"native_measure\":{\"status\":\"Bounded\",\"units\":\"cm^3\",\"total_volume_lower\":";
+        number(out,measure.total_volume_lower);out<<",\"total_volume_upper\":";
+        number(out,measure.total_volume_upper);out<<'}';
+        out<<",\"conditional_residual\":{\"status\":\"Accepted\",\"units\":\"s^-2\",\"error_composition\":";
+        text(out,composition);out<<",\"complete_residual_error_upper\":";number(out,residual.complete_residual_error_upper);
+        out<<",\"tolerance_safe\":";number(out,residual.tolerance_safe);
+        out<<",\"rhs_norm_lower\":";number(out,residual.rhs_norm_lower);
+        out<<",\"rhs_norm_upper\":";number(out,residual.rhs_norm_upper);
+        out<<",\"residual_norm_upper\":";number(out,residual.residual_norm_upper);
+        out<<",\"rhs_error_upper\":";number(out,residual.rhs_error_upper);
+        out<<",\"total_residual_upper\":";number(out,residual.total_residual_upper);out<<'}';
+        out<<",\"marginal_error_scalars\":{\"units\":\"s^-2\",\"additive_floor\":false,\"stored_norm_scope\":\"StoredNativeWeights\",\"native_norm_scope\":\"RootDyadicRzWeights\",\"authoritative_complete_floor\":\"conditional_residual.complete_residual_error_upper\",\"source_stored_upper\":";
+        number(out,errors.source_stored_upper);out<<",\"rhs_assembly_stored_upper\":";
+        number(out,errors.rhs_assembly_stored_upper);out<<",\"residual_arithmetic_stored_upper\":";
+        number(out,errors.residual_arithmetic_stored_upper);out<<",\"boundary_construction_native_upper\":";
+        number(out,errors.boundary_construction_native_upper);out<<",\"boundary_potential_native_upper\":";
+        number(out,errors.boundary_potential_native_upper);out<<",\"operator_construction_native_upper\":";
+        number(out,errors.operator_construction_native_upper);out<<",\"residual_evaluation_native_upper\":";
+        number(out,errors.residual_evaluation_native_upper);out<<",\"complete_native_upper\":";
+        number(out,errors.complete_native_upper);out<<"}}";
     }
     /** Finite compatible source JSON after actual call exit. Failed/incomplete
      * captures cannot serialize as an accepted source. Outer run/ELF/fixture
@@ -371,6 +467,11 @@ public:
             <<",\"boundary_revision\":"<<c.identity.boundary_revision
             <<",\"accuracy_revision\":"<<c.identity.accuracy_revision<<",\"generation\":"<<c.generation
             <<",\"time\":";number(out,c.identity.input_time);out<<",\"G\":";number(out,c.identity.gravitational_constant);
+        out<<",\"purpose\":";write_purpose(out,c.purpose);
+        out<<",\"runtime_lease_generation\":"<<c.runtime_lease_generation
+            <<",\"runtime_lease_authenticated\":"<<(c.runtime_lease_generation?"true":"false")
+            <<",\"runtime_authority_scope\":";
+        text(out,c.runtime_lease_generation?"checked-source-materialization-only":"none-mathematical-tag-only");
         out<<",\"inputs\":[";for(std::size_t n=0;n<c.identity.inputs.size();++n){if(n)out<<',';input(out,c.identity.inputs[n]);}out<<"]}";
         out<<",\"service_configuration\":{\"origin\":\"actual-SelfGravity-constructor-copy\",\"type\":";text(out,c.service.type);
         out<<",\"boundary\":";text(out,c.service.boundary);out<<",\"g_x\":";number(out,c.service.g_x);
@@ -420,8 +521,13 @@ public:
         else {
             out<<"{\"physical_qualified\":false,\"sampling_semantics\":\"actual-native-candidate-cell-and-face-arrays\",\"field_generation\":"
                 <<field_->receipt.field_generation<<",\"source_generation\":"<<field_->receipt.source_generation
+                <<",\"purpose\":";write_purpose(out,field_->receipt.purpose);
+            out<<",\"runtime_lease_generation\":"<<field_->receipt.runtime_lease_generation
+                <<",\"runtime_lease_authenticated\":"<<(field_->receipt.runtime_lease_authenticated?"true":"false")
+                <<",\"runtime_authority_scope\":\"accepted-current-numerical-field-only\""
                 <<",\"conditional_status\":"<<field_->conditional_status
-                <<",\"physical_status\":"<<field_->physical_status<<",\"cell_values\":[";
+                <<",\"physical_status\":"<<field_->physical_status<<",\"native_discrete_certificate\":";
+            write_native_discrete_certificate(out,field_->receipt);out<<",\"cell_values\":[";
             for(std::size_t n=0;n<field_->receipt.potential.size();++n) {
                 if(n)out<<',';out<<"{\"source_index\":"<<n<<",\"leaf_id\":";text(out,leaf_id(c.leaves[n]));
                 out<<",\"potential\":";number(out,field_->receipt.potential[n]);out<<",\"acceleration\":";

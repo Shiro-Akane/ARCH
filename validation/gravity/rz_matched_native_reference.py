@@ -220,6 +220,89 @@ def audit_cell_case(case, precision=80, order=16, t_panels=1):
         referenceQuality="estimate only; no certified quadrature/spatial acceptance")
 
 
+def validate_native_field_proof_metadata(record):
+    """Validate present current-publication metadata without authenticating JSON.
+
+    Historical mathematical records remain immutable. Metadata supplied by a
+    newer writer must be complete and internally consistent; its presence never
+    substitutes for the actual producer/ELF/source fence or scientific gates.
+    """
+    field, identity = record["candidate_field"], record["source_identity"]
+    def require(condition, message):
+        if not condition: raise ValueError(message)
+    def nonnegative(value):
+        require(type(value) in (int, float) and math.isfinite(value) and value >= 0,
+                "Invalid field proof bound")
+        return value
+    keys = ("purpose", "runtime_lease_generation", "runtime_lease_authenticated", "runtime_authority_scope")
+    if any(key in item for item in (identity, field) for key in keys):
+        require(all(key in item for item in (identity, field) for key in keys),
+                "Incomplete actual field purpose metadata")
+        require(identity["purpose"] == field["purpose"] == "AcceptedCurrent"
+                and type(identity["runtime_lease_generation"]) is int
+                and identity["runtime_lease_generation"] > 0
+                and type(field["runtime_lease_generation"]) is int
+                and field["runtime_lease_generation"] == identity["runtime_lease_generation"]
+                and identity["runtime_lease_authenticated"] is True
+                and field["runtime_lease_authenticated"] is True
+                and identity["runtime_authority_scope"] == "checked-source-materialization-only"
+                and field["runtime_authority_scope"] == "accepted-current-numerical-field-only",
+                "Actual Current purpose/issuer metadata mismatch")
+    if any(key in item for item in (identity, field) for key in keys):
+        require("native_discrete_certificate" in field, "Current publication lost its same-field proof")
+    if "native_discrete_certificate" not in field: return
+    proof = field["native_discrete_certificate"]
+    require(type(identity.get("generation")) is int and identity["generation"] > 0,
+            "Invalid actual proof source generation type")
+    require(isinstance(proof, dict), "Missing field proof object")
+    expected = dict(schema="arch-private-native-discrete-field-certificate-1",
+        scope="ideal-root-dyadic-native-discrete-operator", physical_qualified=False,
+        continuous_potential_error_certified=False, per_cell_residual_error_exported=False,
+        norm_scope="RootDyadicRzWeights", norm_kind="volume-normalized-RMS",
+        weighted_L2_exported=False, potential_semantics="actual-stored-cell-center-point-Phi",
+        residual_vector_binding="original-certified-operator-residual;not-long-double-row-diagnostic")
+    require(all(proof.get(key) == value and type(proof.get(key)) is type(value)
+                for key, value in expected.items()), "Unknown field proof semantics")
+    require(all(type(proof.get(key)) is int and proof[key] > 0 and proof[key] == field[key]
+                for key in ("source_generation", "field_generation")), "Field proof generation mismatch")
+    rms, measure, residual, marginal = (proof[key] for key in
+        ("native_potential_rms", "native_measure", "conditional_residual", "marginal_error_scalars"))
+    require(all(isinstance(item, dict) for item in (rms, measure, residual, marginal)),
+            "Invalid field proof enclosure object")
+    require(rms.get("status") == measure.get("status") == "Bounded"
+            and rms.get("units") == "cm^2/s^2" and measure.get("units") == "cm^3",
+            "Unknown field norm/measure units")
+    require(nonnegative(rms["lower"]) <= nonnegative(rms["upper"])
+            and 0 < nonnegative(measure["total_volume_lower"]) <= nonnegative(measure["total_volume_upper"]),
+            "Unordered field norm/measure enclosure")
+    require(residual.get("units") == marginal.get("units") == "s^-2"
+            and marginal.get("additive_floor") is False
+            and marginal.get("stored_norm_scope") == "StoredNativeWeights"
+            and marginal.get("native_norm_scope") == "RootDyadicRzWeights"
+            and marginal.get("authoritative_complete_floor") == "conditional_residual.complete_residual_error_upper",
+            "Unknown correlated field residual semantics")
+    require(residual.get("status") == "Accepted"
+            and type(field.get("conditional_status")) is int and field["conditional_status"] == 0
+            and type(field.get("physical_status")) is int and 0 <= field["physical_status"] <= 4
+            and residual.get("error_composition") in ("SeparateRhsAndOperator", "CorrelatedPrescribedBoundary"),
+            "Unknown field residual status/composition")
+    for key in ("complete_residual_error_upper", "tolerance_safe", "rhs_norm_lower", "rhs_norm_upper",
+                "residual_norm_upper", "rhs_error_upper", "total_residual_upper"):
+        nonnegative(residual[key])
+    for key in ("source_stored_upper", "rhs_assembly_stored_upper", "residual_arithmetic_stored_upper",
+                "boundary_construction_native_upper", "boundary_potential_native_upper",
+                "operator_construction_native_upper", "residual_evaluation_native_upper", "complete_native_upper"):
+        nonnegative(marginal[key])
+    require(residual["rhs_norm_lower"] <= residual["rhs_norm_upper"]
+            and marginal["complete_native_upper"] == residual["complete_residual_error_upper"],
+            "Field residual bound identity mismatch")
+    require(Fraction(residual["total_residual_upper"]) >= Fraction(residual["residual_norm_upper"])
+                + Fraction(residual["complete_residual_error_upper"])
+            and (residual["status"] != "Accepted"
+                 or residual["total_residual_upper"] <= residual["tolerance_safe"]),
+            "Inconsistent conditional field acceptance")
+
+
 def validate_materialized_record(record, budget):
     """Check complete supplied actual record shape; this is NOT Runtime authority.
 
@@ -260,6 +343,7 @@ def validate_materialized_record(record, budget):
     require(call.get("invoke_failed") is False and call.get("field_solve_failed") is False
             and call.get("actual_candidate_observed") is True, "Actual field call did not succeed")
     identity = record["source_identity"]
+    validate_native_field_proof_metadata(record)
     require(type(field.get("source_generation")) is int
             and field["source_generation"] == identity["generation"]
             and type(field.get("field_generation")) is int and field["field_generation"] > 0,

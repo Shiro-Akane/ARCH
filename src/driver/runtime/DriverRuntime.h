@@ -196,6 +196,8 @@ private:
     NativeMacroRetryAttempt* native_macro_retry_attempt_=nullptr;
     void qualify_native_thermal_rejection(const scheduler::StageExecutionContext&,
         const NativeBoundaryAcceptanceError&);
+    // GravityStage borrows the actual EOS-binding witness and exact Current/
+    // Hydro owners; friendship does not grant Native scientific capability.
     friend class GravityStage;
     // Non-owning exact token for one explicit internal Host/RZ transaction.
     HostHydroTransaction* host_hydro_transaction_=nullptr;

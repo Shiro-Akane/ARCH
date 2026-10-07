@@ -11,7 +11,9 @@
 
 #include <array>
 #include <cstdint>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -59,7 +61,8 @@ using NativeRzSourceInspectionSink=void(*)(void*,const NativeRzSourceInspectionV
 
 /** Owning internal inspection of one completed Host native-RZ candidate.
  * Workflow: authenticate the actual published source and both generations ->
- * fence/copy the existing solved arrays and actual face metadata -> revalidate.
+ * fence/copy the existing solved arrays and actual face metadata -> enclose
+ * the same potential RMS/native measure and copy its residual proof -> revalidate.
  * potential/acceleration use the actual composite cell order. face_gradient and
  * boundary_values use faces order; side_acceleration is [cell][2*axis+side],
  * with all six stored slots retained. The face records preserve the original
@@ -73,9 +76,41 @@ using NativeRzSourceInspectionSink=void(*)(void*,const NativeRzSourceInspectionV
 struct NativeRzFieldInspection {
     GravitySolveIdentity source;
     std::uint64_t source_generation=0,field_generation=0;
+    // The actual request/stamp tag is metadata. A tag without an issued,
+    // authenticated Runtime lease has generation zero and grants no authority.
+    std::optional<GravityFieldPurpose> purpose;
+    std::uint64_t runtime_lease_generation=0;
+    bool runtime_lease_authenticated=false;
+    // Copy only the actual assessment status; absence is never a guessed grant.
+    std::optional<arch::elliptic::BoundaryResidualStatus> physical_status;
     std::vector<double> potential,face_gradient,boundary_values,side_acceleration;
     std::array<std::vector<double>,3> acceleration;
     std::vector<arch::elliptic::CompositeFace> faces;
+    // Ideal root-dyadic full-ring weights/volumes for this actual operator and
+    // point potential, not a continuum potential-error or inverse certificate.
+    arch::elliptic::BoundaryResidualNormScope residual_norm_scope=
+        arch::elliptic::BoundaryResidualNormScope::StoredNativeWeights;
+    arch::elliptic::WeightedNormInterval native_potential_rms;
+    arch::elliptic::NativeRzMeasureEnclosure native_measure;
+    arch::elliptic::BoundaryResidualAssessment conditional_residual;
+    /** Existing error-ledger scalars copied without another reduction.
+     * Workflow: retain original stored/native norm labels; expose diagnostic
+     * contributions; use conditional_residual's jointly composed complete
+     * error as the authoritative floor. These marginal bounds are NOT an
+     * additive decomposition: A/B construction is correlated, and evaluation
+     * already contains its construction/arithmetic contributions. No per-cell
+     * residual bounds are attached to a differently computed residual vector.
+     */
+    struct ResidualErrorScalars {
+        double source_stored_upper=std::numeric_limits<double>::infinity();
+        double rhs_assembly_stored_upper=std::numeric_limits<double>::infinity();
+        double residual_arithmetic_stored_upper=std::numeric_limits<double>::infinity();
+        double boundary_construction_native_upper=std::numeric_limits<double>::infinity();
+        double boundary_potential_native_upper=std::numeric_limits<double>::infinity();
+        double operator_construction_native_upper=std::numeric_limits<double>::infinity();
+        double residual_evaluation_native_upper=std::numeric_limits<double>::infinity();
+        double complete_native_upper=std::numeric_limits<double>::infinity();
+    } residual_error;
 };
 
 class SelfGravity final : public IGravityPolicy {
@@ -100,7 +135,8 @@ public:
     const std::vector<double>& native_rz_potential() const;
     const std::array<std::vector<double>,3>& native_rz_acceleration() const;
     /** Copy actual solved candidate arrays for an independent same-source
-     * diagnostic; no solve, derivative reconstruction or cache is created.
+     * diagnostic, including its existing native discrete norm/error proof;
+     * no solve, derivative reconstruction or cache is created.
      */
     NativeRzFieldInspection native_rz_field_inspection() const;
     arch::state::CompletionToken prepare(const GravitySolveRequest&) const;
@@ -132,6 +168,10 @@ public:
 private:
     friend class arch::driver::GravityStage;
     friend class NativeSelfStageFrame;
+    /** Require the issued Runtime purpose without promoting numerical scope. */
+    void require_runtime_purpose(GravityFieldPurpose) const;
+    /** Shared original timestep algebra; the public wrapper retains Existing scope. */
+    double field_timestep(double,GravityFieldScope) const;
     /** Authenticate only the friend frame's actual Host candidate publication.
      * This never changes its scope or grants the ordinary public readers.
      */

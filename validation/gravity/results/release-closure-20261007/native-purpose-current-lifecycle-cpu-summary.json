@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "status": "ACTUAL_CURRENT_SOURCE_LEASE_LIFECYCLE_ACCEPTED",
+  "scope": "Engineering lifetime/identity/readonly-source and original numerical field oracles; no Native physical/public/Device grant",
+  "actualWallSecondsIncludingStrictFixtureBuild": 324.532,
+  "runtimeCurrentPositiveSlots": 1,
+  "directMathematicalPositiveSlots": 2,
+  "callbackFaults": 7,
+  "exactGuardedReentries": 7,
+  "sameEpochRootGridDriftRejected": true,
+  "numericalTagsWithoutRuntimeLeaseRejectedByIssuedReaders": true,
+  "ordinaryPhysicalReadersStillRejected": true,
+  "rawOutputUploaded": false,
+  "sourceRecordSha256": "e2fa41b60c73e210c3af9180d209bc2ed05cd19ddf9845216e2a8c56ef731d59",
+  "sameFieldNativeDiscreteCertificate": {
+    "schema": "arch-private-native-discrete-field-certificate-1",
+    "scope": "ideal-root-dyadic-native-discrete-operator",
+    "physical_qualified": false,
+    "continuous_potential_error_certified": false,
+    "per_cell_residual_error_exported": false,
+    "norm_scope": "RootDyadicRzWeights",
+    "norm_kind": "volume-normalized-RMS",
+    "weighted_L2_exported": false,
+    "potential_semantics": "actual-stored-cell-center-point-Phi",
+    "residual_vector_binding": "original-certified-operator-residual;not-long-double-row-diagnostic",
+    "source_generation": 1,
+    "field_generation": 1,
+    "native_potential_rms": {
+      "status": "Bounded",
+      "units": "cm^2/s^2",
+      "lower": 3.0030929668616705e-07,
+      "upper": 3.0030929668618865e-07
+    },
+    "native_measure": {
+      "status": "Bounded",
+      "units": "cm^3",
+      "total_volume_lower": 3.141592653589688,
+      "total_volume_upper": 3.1415926535898984
+    },
+    "conditional_residual": {
+      "status": "Accepted",
+      "units": "s^-2",
+      "error_composition": "CorrelatedPrescribedBoundary",
+      "complete_residual_error_upper": 1.8096793613031076e-14,
+      "tolerance_safe": 1.945026418197219e-14,
+      "rhs_norm_lower": 0.0001945026418648459,
+      "rhs_norm_upper": 0.00019450264186485718,
+      "residual_norm_upper": 2.0598809401177362e-16,
+      "rhs_error_upper": 4.5123940937402485e-14,
+      "total_residual_upper": 1.8302781707042852e-14
+    },
+    "marginal_error_scalars": {
+      "units": "s^-2",
+      "additive_floor": false,
+      "stored_norm_scope": "StoredNativeWeights",
+      "native_norm_scope": "RootDyadicRzWeights",
+      "authoritative_complete_floor": "conditional_residual.complete_residual_error_upper",
+      "source_stored_upper": 4.235164736271565e-22,
+      "rhs_assembly_stored_upper": 1.5368688666554228e-19,
+      "residual_arithmetic_stored_upper": 2.0952972859003894e-19,
+      "boundary_construction_native_upper": 4.3158414025161625e-14,
+      "boundary_potential_native_upper": 3.2731712810261732e-15,
+      "operator_construction_native_upper": 5.914188378111186e-14,
+      "residual_evaluation_native_upper": 5.914200737364462e-14,
+      "complete_native_upper": 1.8096793613031076e-14
+    }
+  },
+  "actualFixtureExecutableSha256": "35f4ddea9cfc28e6e28c6d25eb1c9c673b1653db28869d8c95839a339df18477",
+  "sourceAndElfInputAfterFenceFromStrictExistingRunner": true,
+  "scienceAccepted": false,
+  "originalMainMatrixSourceFieldSolves": 3,
+  "existingRealSourceExportFieldSolve": 1
+}

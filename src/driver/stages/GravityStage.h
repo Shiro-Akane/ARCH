@@ -17,10 +17,10 @@
 
 #include "driver/schedule/StageScheduler.h"
 #include "io/IO.h"
-#include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
-namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; }
+namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; struct NativeRzFieldInspection; }
 namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
@@ -53,6 +53,11 @@ public:
     void set_native_self_flux_observation(NativeSelfFluxObservationSink,void*);
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
     void prepare_current(double time, bool reset_solver_history);
+    /** Internal issued-Current numerical reads; these retain Candidate scope
+     * and never select the ordinary Driver/public physical CFL/plot route.
+     */
+    Physical::Gravity::NativeRzFieldInspection native_current_field() const;
+    double native_current_timestep() const;
     void invalidate() const override;
     double timestep() const;
     std::vector<io::PlotScalarField> plot_fields() const;
@@ -71,7 +76,11 @@ public:
     /** Flush an already accepted macro-step; an I/O failure remains an explicit run failure. */
     void flush_committed_diagnostics();
 private:
-    struct NativeSourceInspection;
+    struct RuntimeSourceLease;
+    using NativeSourceInspection=RuntimeSourceLease;
+    // The nonmoving issuer owns metadata only, not fluid or another density cache.
+    mutable std::unique_ptr<RuntimeSourceLease> runtime_source_lease_;
+    bool source_prepare_running_=false;
     /** Revalidate the actual source/Runtime on both sides of the synchronous sink. */
     static void inspect_native_source(void*,const Physical::Gravity::NativeRzSourceInspectionView&);
     NativeSourceInspectionSink source_inspection_sink_=nullptr;
@@ -88,7 +97,8 @@ private:
     /** Require the actual macro transaction before constructing a solved-field frame. */
     void require_native_self_preparation(const scheduler::HydroStagePreparationRequest&) const;
     state::CompletionToken prepare_native_external(const scheduler::HydroStagePreparationRequest&);
-    state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int);
+    state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int,
+        Physical::Gravity::GravityFieldPurpose);
     Qualification qualification_;
     DriverRuntime& runtime_;
     const Physical::Gravity::IGravityPolicy* policy_;

@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -137,6 +138,8 @@ struct SelfGravity::Workspace {
     GravityFieldValidity validity;
     GravitySolveIdentity source;
     GravityFieldScope scope=GravityFieldScope::ExistingPhysics;
+    std::optional<GravityFieldPurpose> purpose;
+    const RuntimeGravitySourceLease* runtime_lease=nullptr; // Borrowed; field invalidation precedes issuer destruction.
     std::unique_ptr<GravityBoundary> ring_source;
     RingBoundaryControl ring_limits;
     RingBoundaryEvaluation ring;
@@ -154,6 +157,17 @@ struct SelfGravity::Workspace {
     /** Reject access unless the workspace holds a matching completed gravity field. */
     void require(GravityFieldScope requested=GravityFieldScope::ExistingPhysics) const {
         if(!ready||!validity.matches(source,generation,requested))throw std::logic_error("Self-gravity field is not published for this input");
+    }
+    /** Require an issued Runtime purpose while retaining the immutable scope.
+     * Full domain validation occurs before/after solve and joined acceptance;
+     * this borrowed per-patch fence adds no domain scan to worker consumption.
+     */
+    void require_runtime_purpose(GravityFieldPurpose expected) const {
+        require(scope);
+        if(!runtime_lease||purpose!=expected
+            ||!validity.matches_runtime(source,generation,scope,expected,runtime_lease->generation()))
+            throw std::logic_error("Gravity field lacks its actual Runtime purpose lease");
+        runtime_lease->require(expected);
     }
     /** Return a patch view only for the bound native density allocation. */
     const GravityPatchView& patch(const Grid& grid,const FluidState& state) const {
