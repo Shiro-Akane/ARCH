@@ -655,3 +655,15 @@ DPS公共角动量限制与热能正值核对一次33.14s/7889输出(7371思考/
 有界缓存实际诊断与物理尺度homology候选已合入但尚未编译；下一步读取真实live frame的共享引力步长与真实Hydro CFL，按冻结dt预检，再编译和实算。连续能量仍需要真正Hydro前/Current后source的同身份owning导出；Current-only观察接口不能伪造before授权。DPS公共配对能量恒等式33.3s已独立代数/Fubini复核，仅数学；无仓库/raw外发，费用估算USD0.00500245–0.0100049，实际账单与Root active成本未知。待验独立候选/设计继续/tmp，单重负载、唯一工作区、E盘预留与失败保留不变。CUDA/完整续算/连续能量/GUI/同终点计时长跑及CI收束仍开放。上一回查超出15分钟约4分钟如实记录，下一回查≤15分钟。
 
 新增诊断与prospective物理尺度fixture已实际CPU编译70.953s通过，累计原构建任务913.175/1200s。原Stage26.68s/1组、原Poisson/Self五组48.54s、原reference工具owner71项10.045s（含可选既有arb与独立Machin π检验）均通过。此处是工程/代数/旧owner，不是新homology连续能量或CUDA通过。真实Hydro/私有live gravity CFL原公式预检已静态review接入，实际homology尚未运行。新v2 sealed owning源/场接口、tests-only序列化与严格目的消费者分别有唯一/tmp责任；旧Current准备hook不放开、旧科学门槛保持。接下来source/HEAD冻结，完成真实动态五场并读取实际缓存观察；checkpoint/连续能量等完整O仍未验收。
+
+### 目标回查 2026-10-07 18:18:15 UTC
+
+bb25c50e5已推送当前验证过的诊断、旧CPU owner、71项工具与Studio362项薄记录；完整release仍未通过。真实动态五场下一执行1198s外层上界，扣除原1198.348s累计，保留2400s自定总上界及原物理/容差/bitwise断言；源码与HEAD冻结，不将未持久化M1 receipt计PASS。闭合owning源/场producer、一次复制serializer/实际homology observer、v2严格purpose consumer三组/tmp候选并行，Root唯一集成；不占用编译/模拟资源。原Current preparing hook、public/Device gate不放宽，不添加强制FLASH/flint或CI项目。新homology实际预检、连续参考/能量、warm fresh IO、最终CUDA/GUI/同终点计时长跑及CI仍待验。唯一checkout/E预留/失败保留维持，下一回查≤15分钟。
+
+### 目标回查 2026-10-07 18:38:50 UTC
+
+真实动态四模块owner完整PASS：CPU墙钟835.835s/guard838.683s，source/ELF/EOS冻结相同，M0→实际DENS regrid(2→5 leaves，512→1280cells，epoch1→2)→AcceptedCurrent→M1共5个真实field、4次Burn与4个扩散半步，原组分逐位和CF48能量操作/源项/守恒断言保持。accepted endpoint2e-12s，仅短时activity/accounting；连续总能量、warm fresh restart、CUDA和长时仍不据此通过。动态累计2037.031/2400s，剩362.969s，原失败/超时记录不替代或删除。
+
+新真实缓存观察明确：首512field约131s/42240 misses，第二约59s/39901 hits；重网格1280 Current约265s/184320 misses、仅65536 admissions，后两field约146s/223s、约65536hits，容量和相同几何的重复认证是可确认成本。DPS新公开轴向平移/反射等价45.82s经Root独立3000exact-Fraction与积分换元复核，只接受势积分/精确TwoSum高低项key的数学可行性，原kernel/G/当前密度/控制与残差不改。估算USD0.00652375–0.0130475，实账/Root active成本未知；与CPU模拟重叠、无源码/raw外发。生产sealedowning记录候选独立review发现copy assignment异常与moved-from不失效风险，列入唯一合并返修，未应用。整套O/CUDA/GUI/同终点计时长跑及CI仍开放，唯一checkout/单重负载/E护栏保持，下次≤15分钟。
+
+本次目标回查距上次约20.6分钟，超过15分钟目标约5.6分钟，如实记录。旧真实Current source的完整1568点参考加入严格V能量桥后仅1.025s/0新积分调用完成；真实Wh≈−4.1643e−7、保守总误差上界约5.5549e−8，说明单次完整区间不自动提供时间能量判定。它是历史同source数学记录，不能冒充新homology动态before/post，也没有据此放宽science gate。后续暖态checkpoint宜在新纯metadata积分key候选签收及当前生产对象重建后执行，避免已知大量重复几何积分占用完整2400s窗口；当前无重负载。
