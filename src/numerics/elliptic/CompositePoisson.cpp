@@ -4,7 +4,8 @@
  *
  * Workflow:
  * 1. Validate a complete set of active leaves and obtain each volume from
- *    GridMetrics, including radial and angular Jacobians.
+ *    GridMetrics, including radial and angular Jacobians. Bound native RZ
+ *    cells and fragments share canonical global endpoints with the AMR owner.
  * 2. Build one shared flux per physical face fragment. Resolve periodic
  *    azimuth, physical Dirichlet boundaries and zero-area regularity faces.
  * 3. Fit coarse-fine and boundary gradients to a quadratic basis, then apply
@@ -88,14 +89,46 @@ std::size_t CompositeCellHash::operator()(const CompositeCell& c) const noexcept
     for (int i : c.index) h ^= static_cast<std::size_t>(i) + 0x9e3779b9u + (h<<6) + (h>>2);
     return h;
 }
-/** Return physical leaf width after dyadic refinement. */
+/** Return the actual lower endpoint; ordinary arithmetic remains unchanged.
+ * Native face g at level l uses root_lower + span*(g/(root_cells*2^l)).
+ * The shared generator preserves exact configured domain endpoints.
+ */
+double CompositePoisson::lower(int cell, int axis) const {
+    if (!base_.native_canonical_domain||axis>=base_.dimension)
+        return center(cell)[axis]-.5*width(cell,axis);
+    double value=0.;
+    if (!GridMetrics::canonical_dyadic_face(base_.origin[axis],base_.root_upper[axis],
+            static_cast<std::uint64_t>(base_.cells[axis]),cells_[cell].level,
+            static_cast<std::int64_t>(cells_[cell].index[axis]),value))
+        throw std::invalid_argument("Invalid native composite lower face identity");
+    return value;
+}
+/** Return the actual upper endpoint without inverse center reconstruction. */
+double CompositePoisson::upper(int cell, int axis) const {
+    if (!base_.native_canonical_domain||axis>=base_.dimension)
+        return center(cell)[axis]+.5*width(cell,axis);
+    double value=0.;
+    if (!GridMetrics::canonical_dyadic_face(base_.origin[axis],base_.root_upper[axis],
+            static_cast<std::uint64_t>(base_.cells[axis]),cells_[cell].level,
+            static_cast<std::int64_t>(cells_[cell].index[axis])+1,value))
+        throw std::invalid_argument("Invalid native composite upper face identity");
+    return value;
+}
+/** Return native actual endpoint width; keep the ordinary uniform path. */
 double CompositePoisson::width(int cell, int axis) const {
+    if (base_.native_canonical_domain&&axis<base_.dimension)
+        return upper(cell,axis)-lower(cell,axis);
     return std::ldexp(base_.spacing[axis],-cells_[cell].level);
 }
 /** Return the physical center of an active composite leaf. */
 std::array<double,3> CompositePoisson::center(int cell) const {
     std::array<double,3> p{};
-    for (int a=0;a<base_.dimension;++a) p[a]=base_.origin[a]+(cells_[cell].index[a]+0.5)*width(cell,a);
+    for (int a=0;a<base_.dimension;++a) {
+        if (base_.native_canonical_domain) {
+            const double left=lower(cell,a),right=upper(cell,a);
+            p[a]=left+.5*(right-left);
+        } else p[a]=base_.origin[a]+(cells_[cell].index[a]+0.5)*width(cell,a);
+    }
     return p;
 }
 /** Construct from a legacy named boundary policy; existing behavior is retained. */
@@ -117,15 +150,37 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
     BoundaryKind kind,CompositeBoundary boundary,const CompositePoisson* fine)
     : base_(base), kind_(kind), boundary_(std::move(boundary)),
       cells_(std::move(cells)) {
+    if (base_.native_canonical_domain) {
+        if (base_.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+            ||base_.geometry!=Geometry::Cylindrical||base_.dimension!=2)
+            throw std::invalid_argument("Canonical native domain requires explicit RZ geometry");
+        for (int axis=0;axis<base_.dimension;++axis) {
+            double low=0.,high=0.;
+            if (base_.cells[axis]<=0
+                ||!GridMetrics::canonical_dyadic_face(base_.origin[axis],base_.root_upper[axis],
+                    static_cast<std::uint64_t>(base_.cells[axis]),0,0,low)
+                ||!GridMetrics::canonical_dyadic_face(base_.origin[axis],base_.root_upper[axis],
+                    static_cast<std::uint64_t>(base_.cells[axis]),0,base_.cells[axis],high)
+                ||!(high>low))
+                throw std::invalid_argument("Native composite domain lacks valid actual root endpoints");
+        }
+    }
     if (!fine) validate_mesh(base_,kind==BoundaryKind::CurvilinearIsolated);
     else {
         detail::validate_mesh_geometry(base_,kind==BoundaryKind::CurvilinearIsolated);
         const auto& parent=fine->base();
         if (base_.dimension!=parent.dimension || base_.geometry!=parent.geometry ||
-            base_.semantics!=parent.semantics || kind!=fine->boundary_kind())
+            base_.semantics!=parent.semantics || kind!=fine->boundary_kind()
+            ||base_.native_canonical_domain!=parent.native_canonical_domain
+            )
             throw std::invalid_argument("Composite coarse derivation changes geometry/boundary");
         bool changed=false;
         for (int a=0;a<3;++a) {
+            if (base_.native_canonical_domain
+                &&(!GridMetrics::dyadic_identity_detail::same_binary64(base_.origin[a],parent.origin[a])
+                    ||!GridMetrics::dyadic_identity_detail::same_binary64(
+                        base_.root_upper[a],parent.root_upper[a])))
+                throw std::invalid_argument("Composite coarse derivation changes actual native root endpoints");
             if (base_.origin[a]!=parent.origin[a])
                 throw std::invalid_argument("Composite coarse derivation changes origin");
             const bool unchanged=base_.cells[a]==parent.cells[a] &&
@@ -170,7 +225,9 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
         max_level_=std::max(max_level_,c.level);
         const double fraction=std::ldexp(1.,-base_.dimension*c.level);
         double volume=base_volume*fraction;
-        if (base_.geometry != Geometry::Cartesian) {
+        if (base_.native_canonical_domain) {
+            volume=GridMetrics::Rz::CellVolume(lower(i,0),upper(i,0),width(i,1));
+        } else if (base_.geometry != Geometry::Cartesian) {
             std::array<double,3> lower=base_.origin, widths=base_.spacing;
             for(int a=0;a<base_.dimension;++a) {
                 widths[a]=std::ldexp(base_.spacing[a],-c.level);
@@ -268,8 +325,41 @@ int CompositePoisson::locate(std::array<double,3> point) const {
     }
     throw std::invalid_argument("Composite mesh contains a hole");
 }
-/** Compute the exact physical area of one face fragment via shared Grid metrics. */
+/** Bind the actual native fragment before any area/stencil publication.
+ * The normal coordinate comes from its real oriented endpoint; tangential
+ * endpoints come from the real fine owner selected by logical face assembly.
+ */
+void CompositePoisson::bind_native_face_bounds(CompositeFace& face,int tangent_owner,
+    double normal_coordinate) const {
+    if (!base_.native_canonical_domain) return;
+    if (!std::isfinite(normal_coordinate))
+        throw std::invalid_argument("Invalid native composite normal face");
+    for (int axis=0;axis<base_.dimension;++axis) {
+        if (axis==face.axis) {
+            face.fragment_lower[axis]=normal_coordinate;
+            face.fragment_upper[axis]=normal_coordinate;
+            face.center[axis]=normal_coordinate;
+        } else {
+            const double left=lower(tangent_owner,axis),right=upper(tangent_owner,axis);
+            if (!std::isfinite(left)||!std::isfinite(right)||!(right>left))
+                throw std::invalid_argument("Invalid native composite tangent fragment");
+            face.fragment_lower[axis]=left;face.fragment_upper[axis]=right;
+            face.fragment_width[axis]=right-left;
+            face.center[axis]=left+.5*(right-left);
+        }
+    }
+    face.native_bounds=true;
+}
+/** Compute native area from its actual fragment; retain ordinary Grid metrics. */
 double CompositePoisson::face_area(const CompositeFace& face) const {
+    if (base_.native_canonical_domain) {
+        if (!face.native_bounds)
+            throw std::logic_error("Native composite face has no actual fragment bounds");
+        return face.axis==0
+            ?GridMetrics::Rz::RadialFaceArea(face.center[0],
+                face.fragment_upper[1]-face.fragment_lower[1])
+            :GridMetrics::Rz::AxialFaceArea(face.fragment_lower[0],face.fragment_upper[0]);
+    }
     if(base_.geometry==Geometry::Cartesian) return face.area;
     const int anchor=face.left>=0?face.left:face.right;
     std::array<double,3> lower=face.center,widths=base_.spacing;
@@ -311,7 +401,9 @@ void CompositePoisson::build_faces() {
                 // Dirichlet/Neumann/Robin side publishes one physical record;
                 // zero-area coordinate limits (origin/pole) stay regular.
                 if (boundary_.sides[2*a+side]==FaceBoundaryKind::Periodic) continue;
-                const double coordinate=base_.origin[a]+(side ? base_.cells[a]*base_.spacing[a] : 0.);
+                const double coordinate=base_.native_canonical_domain
+                    ?(side?upper(i,a):lower(i,a))
+                    :base_.origin[a]+(side ? base_.cells[a]*base_.spacing[a] : 0.);
                 if(GridMetrics::IsCoordinateJoin(base_.geometry,base_.dimension,a,coordinate)) continue;
                 CompositeFace f;
                 f.left=side ? i : -1; f.right=side ? -1 : i;
@@ -321,6 +413,7 @@ void CompositePoisson::build_faces() {
                 f.center[a]=coordinate;
                 for(int t=0;t<base_.dimension;++t) if(t!=a) f.area*=width(i,t);
                 for(int t=0;t<base_.dimension;++t) f.fragment_width[t]=width(i,t);
+                if (base_.native_canonical_domain) bind_native_face_bounds(f,i,coordinate);
                 f.area=face_area(f);
                 if(!(f.area>0.)) continue;
                 const double spacing=width(i,a)*face_metric(f,a);
@@ -355,6 +448,10 @@ void CompositePoisson::build_faces() {
             face.center[a]=base_.origin[a]+(c.index[a]+1.)*unit*base_.spacing[a];
             for(int t=0;t<base_.dimension;++t)
                 face.fragment_width[t]=t==a?width(i,t):std::min(width(i,t),width(j,t));
+            if (base_.native_canonical_domain) {
+                const int fine_owner=cells_[j].level>c.level?j:i;
+                bind_native_face_bounds(face,fine_owner,upper(i,a));
+            }
             face.area=face_area(face);
             const double inverse=1./((0.5*width(i,a)+0.5*width(j,a))*face_metric(face,a));
             // grad_f(phi) = (phi_R-phi_L)/(0.5*h_L+0.5*h_R).
@@ -486,7 +583,8 @@ void CompositePoisson::fit_interface(CompositeFace& f) const {
         auto delta=center(i);
         double distance=0.;
         for (int a=0;a<dim;++a) {
-            const double length=base_.cells[a]*base_.spacing[a];
+            const double length=base_.native_canonical_domain
+                ?base_.root_upper[a]-base_.origin[a]:base_.cells[a]*base_.spacing[a];
             delta[a]-=f.center[a];
             if(boundary_.sides[2*a]==FaceBoundaryKind::Periodic)
                 delta[a]-=std::floor(delta[a]/length+0.5)*length;
@@ -876,6 +974,48 @@ ArithmeticRange range_divide_positive(ArithmeticRange a,ArithmeticRange b) {
     return range_product(a,{std::nextafter(1./b.hi,0.),
         std::nextafter(1./b.lo,std::numeric_limits<double>::infinity())});
 }
+/** Exact-input canonical domain span, enclosed by shared outward arithmetic.
+ * Configured FP64 endpoints denote exact rational inputs; their rounded stored
+ * difference is not the mathematical domain length and is never substituted.
+ */
+ArithmeticRange ideal_native_span(const CartesianMesh& base,int axis) {
+    return range_add({base.root_upper[axis],base.root_upper[axis]},
+        range_negate({base.origin[axis],base.origin[axis]}));
+}
+/** Ideal width=(root_upper-root_lower)/(root_cells*2^level).
+ * The positive integer root count and its binary scaling are exact inputs;
+ * using this expression avoids correlated rounded-face subtraction entirely.
+ */
+ArithmeticRange ideal_native_width(const CartesianMesh& base,int axis,int level) {
+    const double count=std::ldexp(double(base.cells[axis]),level);
+    if(base.cells[axis]<=0||!std::isfinite(count)||!(count>0.)
+        ||std::ldexp(count,-level)!=double(base.cells[axis]))
+        return {std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN()};
+    return range_divide_positive(ideal_native_span(base,axis),{count,count});
+}
+/** Ideal face/center position from its exact logical integer/half integer.
+ * Root endpoints cancel algebraically to the actual input endpoint. Other
+ * positions retain the root rational span enclosure; generation grants no
+ * exactness to a computed coordinate or coefficient.
+ */
+ArithmeticRange ideal_native_position(const CartesianMesh& base,int axis,int level,double logical) {
+    const double count=std::ldexp(double(base.cells[axis]),level);
+    if(logical==0.)return {base.origin[axis],base.origin[axis]};
+    if(logical==count)return {base.root_upper[axis],base.root_upper[axis]};
+    return range_add({base.origin[axis],base.origin[axis]},
+        range_product({logical,logical},ideal_native_width(base,axis,level)));
+}
+/** Ideal r_hi^2-r_lo^2=dr*(2*origin+(2*i+1)*dr).
+ * Width and radius sum come from one root-span expression, without subtracting
+ * nearly equal edges. Actual stored measures are compared by their caller.
+ */
+ArithmeticRange ideal_native_radial_measure(const CartesianMesh& base,const CompositeCell& cell) {
+    const auto dr=ideal_native_width(base,0,cell.level);
+    const double logical=2.*cell.index[0]+1.;
+    const auto radius_sum=range_add(range_product({2.,2.},{base.origin[0],base.origin[0]}),
+        range_product({logical,logical},dr));
+    return range_product(dr,radius_sum);
+}
 double range_abs_upper(ArithmeticRange a) {
     return finite_range(a)?std::max(std::abs(a.lo),std::abs(a.hi))
         :std::numeric_limits<double>::infinity();
@@ -970,20 +1110,38 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
         const double w=width(cell,a);
         return std::ldexp(w,cells_[cell].level)==base_.spacing[a]?w:0.;
     };
-    const double h=exact_width(anchor,axis);
-    if(h<=0.||!std::isfinite(h))return result;
-    const double scale=boundary?h:std::max(exact_width(face.left,axis),exact_width(face.right,axis));
-    if(scale<=0.||!std::isfinite(scale))return result;
+    const bool canonical=base_.native_canonical_domain;
+    double h=0.,scale=0.;ArithmeticRange ideal_h{},ideal_scale{};
+    if(canonical) {
+        ideal_h=ideal_native_width(base_,axis,cells_[anchor].level);
+        const int level=boundary?cells_[anchor].level:
+            std::min(cells_[face.left].level,cells_[face.right].level);
+        ideal_scale=ideal_native_width(base_,axis,level);
+        if(!finite_range(ideal_h)||ideal_h.lo<=0.
+            ||!finite_range(ideal_scale)||ideal_scale.lo<=0.)return result;
+    } else {
+        h=exact_width(anchor,axis);
+        if(h<=0.||!std::isfinite(h))return result;
+        scale=boundary?h:std::max(exact_width(face.left,axis),exact_width(face.right,axis));
+        if(scale<=0.||!std::isfinite(scale))return result;
+        ideal_h={h,h};ideal_scale={scale,scale};
+    }
     ArithmeticRange inverse,boundary_seed{};
     if(boundary) {
-        inverse=range_divide_positive({2.,2.},{h,h});
+        inverse=range_divide_positive({2.,2.},ideal_h);
         if(face.boundary_side%2)inverse=range_negate(inverse);
         boundary_seed=range_negate(inverse);
     } else {
-        const double hl=exact_width(face.left,axis),hr=exact_width(face.right,axis);
-        if(hl<=0.||hr<=0.)return result;
-        inverse=range_divide_positive({1.,1.},
-            range_add(range_product({.5,.5},{hl,hl}),range_product({.5,.5},{hr,hr})));
+        if(canonical) {
+            inverse=range_divide_positive({1.,1.},range_add(
+                range_product({.5,.5},ideal_native_width(base_,axis,cells_[face.left].level)),
+                range_product({.5,.5},ideal_native_width(base_,axis,cells_[face.right].level))));
+        } else {
+            const double hl=exact_width(face.left,axis),hr=exact_width(face.right,axis);
+            if(hl<=0.||hr<=0.)return result;
+            inverse=range_divide_positive({1.,1.},
+                range_add(range_product({.5,.5},{hl,hl}),range_product({.5,.5},{hr,hr})));
+        }
     }
     std::vector<ArithmeticRange> coefficients;
     ArithmeticRange boundary_coefficient=boundary_seed;
@@ -997,12 +1155,12 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
         std::array<ArithmeticRange,6> rhs{};rhs[1+axis]={1.,1.};
         if(boundary) {
             gram[0][0]={1.,1.};
-            rhs[0]=range_negate(range_product(boundary_seed,{scale,scale}));
+            rhs[0]=range_negate(range_product(boundary_seed,ideal_scale));
         }
         for(int cell:face.samples) {
             std::array<ArithmeticRange,2> delta{};
             for(int a=0;a<2;++a) {
-                const double w=exact_width(cell,a);if(w<=0.)return result;
+                if(!canonical) {const double w=exact_width(cell,a);if(w<=0.)return result;}
                 const int owner=a==axis?anchor:fine;
                 const int common=std::max(cells_[cell].level,cells_[owner].level);
                 // level<=15 and index<=INT_MAX imply every doubled dyadic
@@ -1015,13 +1173,24 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
                     2*std::int64_t(cells_[owner].index[a])+1;
                 const std::int64_t face_position=face_numerator << (common-cells_[owner].level);
                 const double dyadic=std::ldexp(double(sample-face_position),scale_level-common-1);
-                int ea=0,en=0;
-                const double ma=std::frexp(base_.spacing[a],&ea),mn=std::frexp(base_.spacing[axis],&en);
-                const double exact=std::ldexp(dyadic,ea-en);
-                if(ma==mn&&std::isfinite(exact)&&std::ldexp(exact,en-ea)==dyadic)
-                    delta[a]={exact,exact}; // shared spacing/power-of-two ratio cancels exactly
-                else delta[a]=range_product({dyadic,dyadic},range_divide_positive(
-                    {base_.spacing[a],base_.spacing[a]},{base_.spacing[axis],base_.spacing[axis]}));
+                if(canonical) {
+                    // Same-axis span/count cancel as exact rational factors.
+                    // Other-axis normalized offsets retain span and root-count
+                    // ratios, never ratios of rounded stored dx mantissas.
+                    if(a==axis)delta[a]={dyadic,dyadic};
+                    else delta[a]=range_product({dyadic,dyadic},range_product(
+                        range_divide_positive(ideal_native_span(base_,a),ideal_native_span(base_,axis)),
+                        range_divide_positive({double(base_.cells[axis]),double(base_.cells[axis])},
+                            {double(base_.cells[a]),double(base_.cells[a])})));
+                } else {
+                    int ea=0,en=0;
+                    const double ma=std::frexp(base_.spacing[a],&ea),mn=std::frexp(base_.spacing[axis],&en);
+                    const double exact=std::ldexp(dyadic,ea-en);
+                    if(ma==mn&&std::isfinite(exact)&&std::ldexp(exact,en-ea)==dyadic)
+                        delta[a]={exact,exact}; // shared spacing/power-of-two ratio cancels exactly
+                    else delta[a]=range_product({dyadic,dyadic},range_divide_positive(
+                        {base_.spacing[a],base_.spacing[a]},{base_.spacing[axis],base_.spacing[axis]}));
+                }
             }
             std::array<ArithmeticRange,6> p{{{1.,1.},delta[0],delta[1],range_square(delta[0]),
                 range_product(delta[0],delta[1]),range_square(delta[1])}};
@@ -1031,7 +1200,7 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
             if(boundary&&cell==anchor)seed=inverse;
             if(!boundary&&cell==face.left)seed=range_negate(inverse);
             if(!boundary&&cell==face.right)seed=inverse;
-            seed=range_product(seed,{scale,scale});
+            seed=range_product(seed,ideal_scale);
             for(int i=0;i<6;++i) {
                 rhs[i]=range_add(rhs[i],range_negate(range_product(seed,p[i])));
                 for(int j=0;j<6;++j)gram[i][j]=range_add(gram[i][j],
@@ -1044,11 +1213,12 @@ NativeRzStencilEnclosure CompositePoisson::native_rz_stencil_enclosure(std::size
             result.inverse_norm_upper,result.lambda_error_upper)) {
             result.status=BoundaryErrorStatus::UncertifiedInput;return result;
         }
-        if(boundary)boundary_coefficient=range_add(boundary_seed,range_divide_volume(lambda[0],scale));
+        if(boundary)boundary_coefficient=range_add(boundary_seed,canonical
+            ?range_divide_positive(lambda[0],ideal_scale):range_divide_volume(lambda[0],scale));
         for(std::size_t i=0;i<basis.size();++i) {
             auto v=initial[i];
             for(int j=0;j<6;++j)v=range_add(v,range_product(weights[i],range_product(basis[i][j],lambda[j])));
-            coefficients.push_back(range_divide_volume(v,scale));
+            coefficients.push_back(canonical?range_divide_positive(v,ideal_scale):range_divide_volume(v,scale));
         }
         auto sum=boundary_coefficient;std::size_t anchor_index=coefficients.size();
         for(std::size_t i=0;i<coefficients.size();++i) {
@@ -1097,27 +1267,35 @@ NativeRzFaceEnclosure CompositePoisson::native_rz_face_enclosure(std::size_t ind
     };
     std::array<ArithmeticRange,2> center{};
     for(int a=0;a<2;++a) {
-        const int owner=a==f.axis?anchor:fine;const double w=exact_width(owner,a);
-        if(w<=0.)return result;
+        const int owner=a==f.axis?anchor:fine;
         const double logical=a==f.axis?(boundary?cells_[anchor].index[a]+double(f.boundary_side%2)
             :cells_[f.left].index[a]+1.):cells_[owner].index[a]+.5;
-        center[a]=range_add({base_.origin[a],base_.origin[a]},
-            range_product({logical,logical},{w,w}));
+        if(base_.native_canonical_domain)
+            center[a]=ideal_native_position(base_,a,cells_[owner].level,logical);
+        else {
+            const double w=exact_width(owner,a);if(w<=0.)return result;
+            center[a]=range_add({base_.origin[a],base_.origin[a]},
+                range_product({logical,logical},{w,w}));
+        }
         if(!finite_range(center[a])) {result.status=BoundaryErrorStatus::Overflow;return result;}
         result.center_lower[a]=center[a].lo;result.center_upper[a]=center[a].hi;
         result.center_error_upper[a]=bound_up(std::max(std::abs(f.center[a]-center[a].lo),
             std::abs(f.center[a]-center[a].hi)));
     }
     const auto radial_measure=[&](int cell) {
+        if(base_.native_canonical_domain)return ideal_native_radial_measure(base_,cells_[cell]);
         const double dr=exact_width(cell,0);
         if(dr<=0.)return ArithmeticRange{0.,0.};
         const auto sum=range_add(range_product({2.,2.},{base_.origin[0],base_.origin[0]}),
             range_product({2.*cells_[cell].index[0]+1.,2.*cells_[cell].index[0]+1.},{dr,dr}));
         return range_product({dr,dr},sum); // (r_hi^2-r_lo^2), no pi.
     };
-    const double dz=exact_width(fine,1);if(dz<=0.)return result;
+    ArithmeticRange height{};
+    if(base_.native_canonical_domain)height=ideal_native_width(base_,1,cells_[fine].level);
+    else {const double dz=exact_width(fine,1);if(dz<=0.)return result;height={dz,dz};}
+    if(!finite_range(height)||height.lo<=0.)return result;
     const auto without_pi=f.axis==0?
-        range_product(range_product({2.,2.},center[0]),{dz,dz}):radial_measure(fine);
+        range_product(range_product({2.,2.},center[0]),height):radial_measure(fine);
     const double infinity=std::numeric_limits<double>::infinity();
     const ArithmeticRange pi{std::nextafter(arch::constants::math::pi,-infinity),
         std::nextafter(arch::constants::math::pi,infinity)};
@@ -1133,8 +1311,11 @@ NativeRzFaceEnclosure CompositePoisson::native_rz_face_enclosure(std::size_t ind
     }
     for(int side=0;side<2;++side) {
         const int cell=side?f.right:f.left;if(cell<0)continue;
-        const double height=exact_width(cell,1);if(height<=0.)return result;
-        const auto volume_without_pi=range_product(radial_measure(cell),{height,height});
+        ArithmeticRange cell_height{};
+        if(base_.native_canonical_domain)cell_height=ideal_native_width(base_,1,cells_[cell].level);
+        else {const double height=exact_width(cell,1);if(height<=0.)return result;cell_height={height,height};}
+        if(!finite_range(cell_height)||cell_height.lo<=0.)return result;
+        const auto volume_without_pi=range_product(radial_measure(cell),cell_height);
         const auto quotient=range_divide_positive(without_pi,volume_without_pi);
         const auto stored_quotient=range_divide_volume({f.area,f.area},volumes_[cell]);
         const auto quotient_defect=range_add(quotient,range_negate(stored_quotient));
@@ -1321,16 +1502,23 @@ NativeRzMeasureEnclosure CompositePoisson::native_rz_measure_enclosure() const {
     std::vector<ArithmeticRange> volume;volume.reserve(cells_.size());
     ArithmeticRange total{};
     for(const auto& cell:cells_) {
-        const double dr=std::ldexp(base_.spacing[0],-cell.level);
-        const double dz=std::ldexp(base_.spacing[1],-cell.level);
-        if(!std::isfinite(dr)||!std::isfinite(dz)||dr<=0.||dz<=0.
-            ||std::ldexp(dr,cell.level)!=base_.spacing[0]
-            ||std::ldexp(dz,cell.level)!=base_.spacing[1])return result;
-        const auto radius_sum=range_add(
-            range_product({2.,2.},{base_.origin[0],base_.origin[0]}),
-            range_product({2.*cell.index[0]+1.,2.*cell.index[0]+1.},{dr,dr}));
-        const auto v=range_product(range_product(pi,{dr,dr}),
-            range_product(radius_sum,{dz,dz}));
+        ArithmeticRange v{};
+        if(base_.native_canonical_domain) {
+            const auto height=ideal_native_width(base_,1,cell.level);
+            if(!finite_range(height)||height.lo<=0.)return result;
+            v=range_product(pi,range_product(ideal_native_radial_measure(base_,cell),height));
+        } else {
+            const double dr=std::ldexp(base_.spacing[0],-cell.level);
+            const double dz=std::ldexp(base_.spacing[1],-cell.level);
+            if(!std::isfinite(dr)||!std::isfinite(dz)||dr<=0.||dz<=0.
+                ||std::ldexp(dr,cell.level)!=base_.spacing[0]
+                ||std::ldexp(dz,cell.level)!=base_.spacing[1])return result;
+            const auto radius_sum=range_add(
+                range_product({2.,2.},{base_.origin[0],base_.origin[0]}),
+                range_product({2.*cell.index[0]+1.,2.*cell.index[0]+1.},{dr,dr}));
+            v=range_product(range_product(pi,{dr,dr}),
+                range_product(radius_sum,{dz,dz}));
+        }
         if(!finite_range(v)||v.lo<=0.) {
             result.status=BoundaryErrorStatus::Overflow;return result;
         }

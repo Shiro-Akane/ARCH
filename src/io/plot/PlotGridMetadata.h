@@ -55,18 +55,17 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
     }
     output.lower[0].push_back(grid.GetFacePosL(i));
     output.upper[0].push_back(grid.GetFacePosR(i));
-    const double y_lower = grid.dim >= 2 ? grid.x2_min + (j-grid.ng)*grid.dx2 : 0.;
+    const double y_lower = grid.dim >= 2 ? grid.GetAxialFacePosL(j) : 0.;
     output.lower[1].push_back(y_lower);
     // Evaluate the shared face at its integer index, just like the next row's
     // lower face; adding dx2 to a rounded lower face can leave a gap/overlap.
     output.upper[1].push_back(grid.dim >= 2
-        ? grid.x2_min + (j-grid.ng+1)*grid.dx2 : 0.);
+        ? grid.GetAxialFacePosR(j) : 0.);
     output.lower[2].push_back(grid.dim == 3 ? grid.x3_min+(k-grid.ng)*grid.dx3 : 0.);
     output.upper[2].push_back(grid.dim == 3 ? grid.x3_min+(k-grid.ng+1)*grid.dx3 : 0.);
     if (rz)
         output.angular_measure.push_back(GridMetrics::Rz::AngularMomentumMeasure(
-            output.lower[0].back(), output.upper[0].back(),
-            output.upper[1].back()-output.lower[1].back()));
+            GridMetrics::make_geometry_view(grid,semantics),i,j));
     output.cell_measure.push_back(GridMetrics::CellVolume(
         GridMetrics::make_geometry_view(grid,semantics),i,j,k));
 }

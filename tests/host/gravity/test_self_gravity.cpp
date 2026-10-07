@@ -468,19 +468,68 @@ void ring_execution_identity() {
     std::vector<elliptic::CompositeCell> cells;
     for(int j=0;j<4;++j)for(int i=0;i<4;++i)cells.push_back({0,{i,j,0}});
     elliptic::CompositePoisson op(base,cells,elliptic::BoundaryKind::CurvilinearIsolated);
-    GravityBoundary tree(op,{9});GravitySolveIdentity identity;
+    GravityBoundary tree(op,{9});
+    // This genuine 4x4 source has 16 leaves, four intermediate parents and
+    // one root. Its surface has four radial outer faces and four per z end;
+    // the axis has no nonzero-area exterior face. Check the actual producer
+    // records rather than counting all interior interfaces as boundary work.
+    std::size_t leaves=0,parents=0,exterior=0;
+    std::array<std::size_t,4> exterior_by_side{};
+    for(const auto& node:tree.nodes()) {
+        if(node.cell>=0)++leaves;
+        else ++parents;
+    }
+    for(const auto& face:op.faces())if(face.boundary_side>=0) {
+        require(face.boundary_side<4,"tiny ring published an inactive boundary side");
+        ++exterior;++exterior_by_side[face.boundary_side];
+    }
+    require(leaves==16&&parents==5&&exterior==12
+        &&exterior_by_side==std::array<std::size_t,4>{0,4,4,4},
+        "tiny ring source tree or physical surface partition changed");
+    // This finite ceiling covers a full traversal and an extra failed-quartet
+    // attempt at each parent for each of the twelve real surface observers.
+    // No density update is needed to establish this geometry-only resource.
+    const auto traversal_bound=tree.full_ring_traversal_work_bound(op);
+    require(traversal_bound==312,"actual ring work ceiling did not cover the known tiny topology");
+    auto shifted_base=base;shifted_base.origin[0]=.5;
+    elliptic::CompositePoisson shifted(shifted_base,cells,
+        elliptic::BoundaryKind::CurvilinearIsolated);
+    rejects([&]{(void)tree.full_ring_traversal_work_bound(shifted);},
+        "ring resource policy accepted another actual source geometry");
+    require(tree.full_ring_traversal_work_bound(op)==traversal_bound,
+        "rejected foreign ring geometry mutated the bound resource policy");
+    GravitySolveIdentity identity;
     identity.topology={9};identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
     identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
     identity.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
     std::vector<double> density(op.size(),1.);tree.update(density,identity);
     RingBoundaryControl control;control.face_absolute_target=1.e-18;
     control.maximum_boxes_per_leaf=65536;
+    control.maximum_leaf_evaluations=traversal_bound;
     RingBoundaryEvaluation result;auto execution=make_host_gravity_execution();
     execution->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&result});
     require(result.status==RingBoundaryStatus::Bounded && result.source==identity
         && result.source_generation>0 && result.values.size()==op.faces().size(),
         "typed ring executor lost bounded source identity");
     tree.require_current_ring(op,result);
+    require(result.leaf_evaluations+result.parent_evaluations<=traversal_bound
+        &&result.represented_leaf_evaluations==exterior*leaves,
+        "bounded ring traversal omitted source coverage or exceeded its actual resource policy");
+    require(result.lower.size()==op.faces().size()&&result.upper.size()==op.faces().size()
+        &&result.errors.size()==op.faces().size(),"bounded ring omitted full face enclosure arrays");
+    for(std::size_t f=0;f<op.faces().size();++f)if(op.faces()[f].boundary_side>=0) {
+        require(std::isfinite(result.lower[f])&&std::isfinite(result.upper[f])
+            &&std::isfinite(result.values[f])&&result.lower[f]<=result.values[f]
+            &&result.values[f]<=result.upper[f]
+            &&result.errors[f].quality==elliptic::BoundaryErrorQuality::CertifiedAbsolute
+            &&std::isfinite(result.errors[f].absolute_error)
+            &&result.errors[f].absolute_error<=control.face_absolute_target,
+            "bounded traversal failed an actual surface enclosure at the original target");
+    }
+    std::cout<<"RING_FULL_TRAVERSAL_ENGINEERING_PASS leaves="<<leaves
+        <<" parents="<<parents<<" surface_faces="<<exterior<<" work_bound="<<traversal_bound
+        <<" consumed="<<result.leaf_evaluations+result.parent_evaluations
+        <<" complete_surface=1 original_target=1 physical_qualification=0\n";
     const auto generation=result.source_generation;
     auto stale=identity;stale.inputs.front().version={2};
     rejects([&]{execution->run(EvaluateRingBoundary{&tree,&op,&stale,&control,&result});},
@@ -731,7 +780,9 @@ void native_rz_service_candidate(bool zero_source=false,bool lifecycle=false) {
     if(lifecycle)gravity.set_execution(execution);
     auto binding=amr::bind_elliptic_mesh(control,config.grid,handles);
     rejects([&]{gravity.bind(binding);},"public bind enabled RZ");
-    gravity.bind_native_rz_candidate(binding,65536,100000);
+    // Exercise actual-source auto resource derivation through the existing
+    // two-block service owner; all source/config/residual assertions stay fixed.
+    gravity.bind_native_rz_candidate(binding,65536,0);
     if(zero_source) {
         bool rejected=false;
         try{gravity.prepare({identity,views});}
@@ -751,6 +802,8 @@ void native_rz_service_candidate(bool zero_source=false,bool lifecycle=false) {
         "candidate lost full native source identity or original request");
     require(assessment.physical_status==elliptic::BoundaryResidualStatus::UncertifiedInput,
         "candidate acquired physical qualification");
+    std::cout<<"RZ_NATIVE_AUTO_RESOURCE_ENGINEERING_PASS actual_self_gravity=1"
+        <<" original_two_block_source=1 original_tolerance=1 physical_qualification=0\n";
     std::cout<<std::setprecision(17)<<"RZ_NATIVE_SERVICE_RESIDUAL total="
         <<assessment.conditional.total_residual_upper<<" safe="
         <<assessment.conditional.tolerance_safe<<" source_generation="

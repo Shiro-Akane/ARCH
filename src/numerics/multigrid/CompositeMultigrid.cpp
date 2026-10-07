@@ -101,6 +101,9 @@ void CompositeMultigrid::build_levels(elliptic::CartesianMesh base,std::vector<C
     for (;;) {
         const auto& fine=levels_.back().op;
         const int maximum=fine.max_level();
+        // Copy the actual native domain authority unchanged. Root axes may be
+        // coarsened independently below; shared global face denominators use
+        // each level's actual cells, while physical root endpoints stay exact.
         auto coarse_base=fine.base();
         std::array<bool,3> coarsen_axis{};
         if (!maximum) {

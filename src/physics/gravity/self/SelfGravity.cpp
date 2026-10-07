@@ -63,7 +63,10 @@ SelfGravity::Workspace& SelfGravity::workspace() const {
 void SelfGravity::bind(amr::EllipticMeshBinding binding,double time) const {
     bind_impl(std::move(binding),false,0,0,time);
 }
-/** Explicit numerical candidate, never a production RZ capability grant. */
+/** Bind an internal numerical candidate, never a production RZ grant.
+ * A zero work cap requests actual-topology resource derivation only; explicit
+ * nonzero caps and all physical/integration accuracy requirements are retained.
+ */
 void SelfGravity::bind_native_rz_candidate(amr::EllipticMeshBinding binding,
     std::uint64_t maximum_boxes,std::uint64_t maximum_work) const {
     bind_impl(std::move(binding),true,maximum_boxes,maximum_work,0.);
@@ -80,7 +83,7 @@ void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candida
         throw std::logic_error("RZ self-gravity finite-ring runtime consumer is not qualified");
     if(native_candidate && (binding.base.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||binding.base.geometry!=arch::elliptic::Geometry::Cylindrical||binding.base.dimension!=2
-        ||config_.boundary!="isolated"||!maximum_boxes||maximum_boxes>65536||!maximum_work
+        ||config_.boundary!="isolated"||!maximum_boxes||maximum_boxes>65536
         ||(execution_&&execution_->numeric()->device())))
         throw std::invalid_argument("Invalid or unsupported internal native RZ verification binding");
     std::size_t cell=0;
@@ -126,9 +129,12 @@ void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candida
     if(native_candidate) {
         work_->scope=GravityFieldScope::NativeRzCandidate;
         work_->ring_limits.maximum_boxes_per_leaf=maximum_boxes;
-        work_->ring_limits.maximum_leaf_evaluations=maximum_work;
         work_->ring_source=std::make_unique<GravityBoundary>(
             work_->solver.op(),work_->binding.handles.front().epoch);
+        // Derive only for an actual ring consumer. Ordinary explicit-policy
+        // bindings never enter ring validation or acquire unrelated constraints.
+        work_->ring_limits.maximum_leaf_evaluations=maximum_work ? maximum_work
+            : work_->ring_source->full_ring_traversal_work_bound(work_->solver.op());
     }
 }
 /** Retire a prior gravity publication whenever its density lease changes. */

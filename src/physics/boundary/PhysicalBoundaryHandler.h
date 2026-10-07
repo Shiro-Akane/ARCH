@@ -101,7 +101,7 @@ struct BCHandler {
         arch::boundary::host::HostBoundaryLayout layout_{};
         std::array<const double*,7> pointers_{};
         std::array<std::size_t,7> sizes_{};
-        std::array<std::uint64_t,9> geometry_{};
+        std::array<std::uint64_t,20> geometry_{};
         std::uint64_t revision_ = 0, time_bits_ = 0;
         int species_ = 0;
         arch::boundary::BoundaryPurpose purpose_ = arch::boundary::BoundaryPurpose::Hydro;

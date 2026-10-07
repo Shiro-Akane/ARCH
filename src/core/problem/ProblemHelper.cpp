@@ -244,8 +244,8 @@ namespace ProblemHelper
                         for(int k=b.grid.Ks();k<b.grid.Ke();++k)
                         for(int j=b.grid.Js();j<b.grid.Je();++j)
                         for(int i=b.grid.Is();i<b.grid.Ie();++i) {
-                            const double zlo=b.grid.x2_min+(j-b.grid.ng)*b.grid.dx2;
-                            const double zhi=b.grid.x2_min+(j-b.grid.ng+1)*b.grid.dx2;
+                            const double zlo=b.grid.GetAxialFacePosL(j);
+                            const double zhi=b.grid.GetAxialFacePosR(j);
                             const auto cell=InitialRzCellState(b.grid.GetFacePosL(i),
                                 b.grid.GetFacePosR(i),zlo,zhi,n_species,eos,config.numerics,init_callback);
                             const int index=b.grid.GetIndex(i,j,k);

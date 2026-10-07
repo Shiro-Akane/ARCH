@@ -1857,6 +1857,201 @@ void test_rz_native_family_representability()
     std::cout<<"RZ_NATIVE_REPRESENTABILITY_PASS cases=3 explicit_failure=1 no_result_publication=1\n";
 }
 
+
+/** Real deep native AMR fixtures use the production Block geometry generator.
+ * Root spacings are the actual Tree inputs; no face-generation formula is
+ * repeated here. Five Blocks suffice regardless of their logical level.
+ */
+void rz_canonical_actual_block(amr::Block& block,const Grid& root,int level,
+    std::uint32_t radial,std::uint32_t axial,int id)
+{
+    block.Reset();block.id=id;block.level=level;
+    block.logical_x1=radial;block.logical_x2=axial;block.logical_x3=0;
+    block.InitGeometry(root,(root.x1_max-root.x1_min)/(root.nblockx1*amr::BLOCK_NX),
+        (root.x2_max-root.x2_min)/(root.nblockx2*amr::BLOCK_NY),1.,
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    block.fluid_state.Preallocate(block.grid.GetTotalSize());
+    block.fluid_state.InitSpecies(2);
+}
+
+/** Independent factored antiderivatives for rho=5/4, physical e=100.
+ * For rigid rotation, m_phi,W=rho*Omega*int(r^3)dr/int(r^2)dr;
+ * E_V=rho*(100+Omega^2*(r_hi^2+r_lo^2)/4). Actual endpoints
+ * come from the production Grid; these are not copied-parent or point means.
+ */
+FluidVector rz_canonical_uniform_reference(const Grid& grid,int i,double omega)
+{
+    constexpr long double rho=1.25L;
+    const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+    const long double angular_radius=.75L*(h+l)*(h*h+l*l)/(h*h+h*l+l*l);
+    const long double energy=rho*(100.L+omega*omega*(h*h+l*l)/4.L);
+    return {static_cast<double>(rho),0.,0.,static_cast<double>(rho*omega*angular_radius),
+        static_cast<double>(energy)};
+}
+
+/** Fill every actual source/fine ghost and allocated pad with admissible data.
+ * Analytic test ghosts are not a Runtime BC/regrid/restart qualification.
+ */
+void rz_canonical_fill_uniform(amr::Block& block,double omega)
+{
+    auto& u=block.fluid_state;const auto& g=block.grid;
+    for(int cell=0;cell<g.GetTotalSize();++cell) {
+        u.set(cell,{1.25,0.,0.,0.,125.});u.enuc_rate[cell]=.125;
+        u.X(0,cell)=.3;u.X(1,cell)=.7;
+    }
+    for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i)
+        u.set(g.GetIndex(i,j,0),rz_canonical_uniform_reference(g,i,omega));
+}
+
+/** Independent full-ring V/W integrals on actual physical endpoints.
+ * Factoring differences retains the information of deep outer thin cells.
+ * No production CellVolume/angular-measure helper supplies the reference.
+ */
+std::array<long double,2> rz_canonical_true_measures(const Grid& grid,int i,int j)
+{
+    constexpr long double pi=3.141592653589793238462643383279502884L;
+    const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+    const long double zl=grid.GetAxialFacePosL(j),zh=grid.GetAxialFacePosR(j);
+    const long double width=h-l,height=zh-zl;
+    expect(std::isfinite(l)&&std::isfinite(h)&&l>=0.&&width>0.
+        &&std::isfinite(zl)&&std::isfinite(zh)&&height>0.,
+        "deep actual native cell has invalid physical endpoints");
+    return {pi*width*(h+l)*height,
+        (2.L*pi/3.L)*width*(h*h+h*l+l*l)*height};
+}
+
+/** Relative integral check at the unchanged family 64-epsilon budget.
+ * Positive mass/E/species/measure targets never receive a max(1,scale)
+ * allowance, which would hide errors in tiny deep-cell integrals.
+ */
+void rz_canonical_integral_equal(long double actual,long double reference,
+    const char* label)
+{
+    constexpr long double roundoff=64.L*std::numeric_limits<double>::epsilon();
+    expect(std::isfinite(actual)&&std::isfinite(reference)&&reference!=0.,
+        std::string(label)+" lacks a nonzero finite independent target");
+    expect(std::abs(actual-reference)<=roundoff*std::abs(reference),
+        std::string(label)+" violated original 64-epsilon actual-measure conservation");
+}
+
+/** Production InitGeometry -> Block native prolongation -> physical integrals.
+ * Six deep nonbinary geometries and two real physical profiles cover each
+ * parent's 256 cell families, including thin outer cells at L14 -> L15.
+ * Actual point EOS is checked after the shared density/rotation closure.
+ * This is transfer-owner science only, not whole Runtime/AMR qualification.
+ */
+void test_rz_canonical_deep_actual_block_families()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const arch::state::Bounds bounds{1.e-14,1.e-14,1.e6};
+    SpeciesManager species;species.add_species("a",1.,1.,1.4,1.);
+    species.add_species("b",1.,1.,1.4,1.);IdealGas eos(1.4,species);
+    std::size_t families=0,physical_points=0;
+    for(const std::array<int,2> roots:{std::array<int,2>{1,1},std::array<int,2>{3,5}})
+      for(int level:{3,10,14})for(double omega:{0.,1.}) {
+        Grid root(amr::MAX_NG,.1,1.3,-.3,.7,0.,1.,roots[0],roots[1],1);
+        root.dim=2;root.geometry="cylindrical";root.InitializeTopology(rz);
+        const auto factor=std::uint32_t{1}<<level;
+        const std::uint32_t lx=static_cast<std::uint32_t>(roots[0])*factor-1;
+        const std::uint32_t ly=static_cast<std::uint32_t>(roots[1])*factor-1;
+        amr::Block parent{};std::array<amr::Block,4> fine;
+        rz_canonical_actual_block(parent,root,level,lx,ly,0);
+        rz_canonical_fill_uniform(parent,omega);const FluidState immutable_source=parent.fluid_state;
+        for(int child=0;child<4;++child) {
+            rz_canonical_actual_block(fine[child],root,level+1,
+                2*lx+(child&1),2*ly+((child>>1)&1),child+1);
+            rz_canonical_fill_uniform(fine[child],omega);
+            fine[child].InterpolateFromCoarse(parent,child,2,bounds.density,
+                bounds.internal_min,rz,bounds.internal_max);
+        }
+        const auto& pg=parent.grid;
+        for(int j=0;j<amr::BLOCK_NY;++j)for(int i=0;i<amr::BLOCK_NX;++i) {
+            const int parent_index=pg.GetIndex(pg.Is()+i,pg.Js()+j,0);
+            const auto source=parent.fluid_state.get(parent_index);
+            const auto measure=rz_canonical_true_measures(pg,pg.Is()+i,pg.Js()+j);
+            const int quadrant=(i>=amr::BLOCK_NX/2?1:0)|(j>=amr::BLOCK_NY/2?2:0);
+            const auto& child=fine[quadrant];const auto& fg=child.grid;const auto& u=child.fluid_state;
+            const int fi=fg.Is()+2*(i%(amr::BLOCK_NX/2));
+            const int fj=fg.Js()+2*(j%(amr::BLOCK_NY/2));
+            std::array<long double,7> sum{};
+            for(int member=0;member<4;++member) {
+                const int ci=fi+(member&1),cj=fj+((member>>1)&1),cell=fg.GetIndex(ci,cj,0);
+                const auto value=u.get(cell);
+                const auto m=rz_canonical_true_measures(fg,ci,cj);
+                expect(value.rho>0.&&value.eng>0.&&std::isfinite(value.rho)&&std::isfinite(value.eng),
+                    "deep actual native child has invalid mass/energy");
+                expect(value.mom_u==0.&&value.mom_v==0.,"uniform native transfer invented r/z motion");
+                if(omega==0.)expect(value.mom_w==0.,"nonrotating native transfer invented angular momentum");
+                sum[0]+=m[0];sum[1]+=m[1];sum[2]+=value.rho*m[0];sum[3]+=value.eng*m[0];
+                sum[4]+=value.mom_w*m[1];sum[5]+=value.rho*u.X(0,cell)*m[0];
+                sum[6]+=value.rho*u.X(1,cell)*m[0];
+                const auto geometry=GridMetrics::make_geometry_view(fg,rz);
+                const auto closure=RzThermodynamics::make_cell([&](int index){return u.get(index);},
+                    cell,geometry,ci,bounds);
+                expect(closure.valid(),"deep actual child density/rotation closure is invalid");
+                const double x[]{u.X(0,cell),u.X(1,cell)};
+                for(int node=0;node<RzThermodynamics::physical_node_count;++node) {
+                    const auto point=RzThermodynamics::base_point(closure,
+                        RzThermodynamics::physical_node_radius(closure,node));
+                    const auto thermal=arch::state::recover(point);
+                    expect(thermal.status==arch::state::Status::valid,
+                        "deep actual native physical point has invalid recovered thermal state");
+                    // A uniform nonrotating profile is point-exact. The rotated
+                    // finite-order profile is qualified by actual conservation
+                    // and EOS/bounds, not an unproved point-exact e=100 oracle.
+                    if(omega==0.)
+                        expect(std::abs(thermal.internal-100.)
+                            <=64.*std::numeric_limits<double>::epsilon()*100.,
+                            "nonrotating actual native physical point lost independent e=100");
+                    expect(thermal.internal>=bounds.internal_min
+                        &&thermal.internal<=bounds.internal_max,
+                        "deep actual native physical point exceeded original thermal bounds");
+                    expect(arch::state::validate_eos(point,x,2,bounds,eos)==arch::state::Status::valid,
+                        "deep actual native physical point failed actual IdealGas");
+                    ++physical_points;
+                }
+            }
+            rz_canonical_integral_equal(sum[0],measure[0],"positive V partition");
+            rz_canonical_integral_equal(sum[1],measure[1],"positive W partition");
+            rz_canonical_integral_equal(sum[2],source.rho*measure[0],"native mass");
+            rz_canonical_integral_equal(sum[3],source.eng*measure[0],"native total energy");
+            if(omega!=0.)rz_canonical_integral_equal(sum[4],source.mom_w*measure[1],"nonzero native angular momentum");
+            else expect(sum[4]==0.,"zero native angular integral drifted");
+            rz_canonical_integral_equal(sum[5],source.rho*.3L*measure[0],"species a mass");
+            rz_canonical_integral_equal(sum[6],source.rho*.7L*measure[0],"species b mass");
+            ++families;
+        }
+        expect(parent.fluid_state.rho==immutable_source.rho&&parent.fluid_state.mom_u==immutable_source.mom_u
+            &&parent.fluid_state.mom_v==immutable_source.mom_v&&parent.fluid_state.mom_w==immutable_source.mom_w
+            &&parent.fluid_state.eng==immutable_source.eng&&parent.fluid_state.enuc_rate==immutable_source.enuc_rate
+            &&parent.fluid_state.mass_fractions==immutable_source.mass_fractions,
+            "deep actual Block transfer mutated immutable source data");
+        const FluidState destination_before=fine[0].fluid_state;
+        const auto unchanged_destination=[&] {
+            const auto& u=fine[0].fluid_state;
+            return u.rho==destination_before.rho&&u.mom_u==destination_before.mom_u
+                &&u.mom_v==destination_before.mom_v&&u.mom_w==destination_before.mom_w
+                &&u.eng==destination_before.eng&&u.enuc_rate==destination_before.enuc_rate
+                &&u.mass_fractions==destination_before.mass_fractions;
+        };
+        const auto saved_logical=parent.logical_x1;++parent.logical_x1;
+        expect_rejected([&]{fine[0].InterpolateFromCoarse(parent,0,2,bounds.density,
+            bounds.internal_min,rz,bounds.internal_max);},"native transfer accepted foreign Block logical identity");
+        expect(unchanged_destination(),"foreign Block identity wrote destination before rejecting");
+        parent.logical_x1=saved_logical;
+        const double saved_upper=parent.grid.dyadic_identity.root_upper[0];
+        parent.grid.dyadic_identity.root_upper[0]=std::nextafter(saved_upper,std::numeric_limits<double>::infinity());
+        expect_rejected([&]{fine[0].InterpolateFromCoarse(parent,0,2,bounds.density,
+            bounds.internal_min,rz,bounds.internal_max);},"native transfer accepted changed root endpoint identity");
+        expect(unchanged_destination(),"changed root identity wrote destination before rejecting");
+        parent.grid.dyadic_identity.root_upper[0]=saved_upper;
+      }
+    expect(families==12u*amr::BLOCK_NX*amr::BLOCK_NY&&physical_points>0,
+        "deep actual Block fixture skipped an expected geometry/profile family");
+    std::cout<<"RZ_CANONICAL_DEEP_BLOCK_FAMILY_PASS families="<<families
+        <<" point_eos="<<physical_points<<" runtime_bc_qualification=false\n";
+}
+
 void test_rz_regrid_roundtrip() {
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     for(double inner:{0.,1.}) {
@@ -2235,6 +2430,7 @@ int main()
     test_rz_thirteen_species_family_simplex();
     test_rz_native_family_representability();
     test_rz_regrid_roundtrip();
+    test_rz_canonical_deep_actual_block_families();
         test_rz_axis_seam(false,0.);
         test_rz_axis_seam(true,0.);
         test_rz_axis_seam(false,.25);

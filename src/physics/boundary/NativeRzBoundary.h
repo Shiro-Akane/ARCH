@@ -57,9 +57,10 @@ inline CellSupport support(const Grid& grid,const std::array<int,2>& cell)
 {
     if(cell[0]<0||cell[0]>=grid.GetTotalX()||cell[1]<0||cell[1]>=grid.GetTotalY())
         throw std::invalid_argument("native RZ boundary requires real logical source and target cells");
+    // Use the same canonical axial faces as the actual grid measure. Gauss
+    // samples and V/W below then share this exact logical-cell height.
     CellSupport result{grid.GetFacePosL(cell[0]),grid.GetFacePosR(cell[0]),
-        grid.x2_min+(cell[1]-grid.ng)*grid.dx2,
-        grid.x2_min+(cell[1]-grid.ng+1)*grid.dx2};
+        grid.GetAxialFacePosL(cell[1]),grid.GetAxialFacePosR(cell[1])};
     if(!std::isfinite(result.r_lower)||!std::isfinite(result.r_upper)
        ||!std::isfinite(result.z_lower)||!std::isfinite(result.z_upper)
        ||result.r_lower<0.||!(result.r_upper>result.r_lower)

@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 #include "physics/constant/PhysicalConstants.h"
 #include <stdexcept>
 #include <string>
@@ -67,6 +68,9 @@ struct Grid
 
     // Native coordinate system used by coordinate conversion and metric views.
     std::string geometry = "cartesian"; ///< "cartesian", "cylindrical", "spherical"
+
+    // Value-only actual native AMR generation provenance; ordinary grids stay unbound.
+    GridMetrics::DyadicGridIdentity dyadic_identity{};
 
     Grid() : dim(3), nblockx1(1), nblockx2(1), nblockx3(1), ng(0), x1_min(0), x2_min(0), x3_min(0), x1_max(0), x2_max(0), x3_max(0), geometry("cartesian") {}
 
@@ -170,6 +174,18 @@ public:
         dx2 = (amr::BLOCK_NY > 1 && dim >= 2) ? (x2_max - x2_min) / amr::BLOCK_NY : 0.0;
         dx3 = (amr::BLOCK_NZ > 1 && dim == 3) ? (x3_max - x3_min) / amr::BLOCK_NZ : 0.0;
 
+        // Workflow: ordinary spacing arithmetic remains unchanged. A bound
+        // native block authenticates canonical endpoints/representative dx;
+        // all actual faces, centers and metric widths use the shared root leaf.
+        if (dyadic_identity.bound) {
+            if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+                || nblockx1 != dyadic_identity.root_blocks[0]
+                || nblockx2 != dyadic_identity.root_blocks[1]
+                || !GridMetrics::matches_identity(dyadic_identity,
+                    {x1_min,x2_min},{x1_max,x2_max},{dx1,dx2}))
+                throw std::invalid_argument("Native RZ grid generation identity does not match actual bounds/spacing");
+        }
+
         // Total length including NG cells (only for logical info if needed, memory is fixed)
         total_x_ = amr::BLOCK_NX + 2 * ng;
         total_y_ = (dim >= 2) ? amr::BLOCK_NY + 2 * ng : 1;
@@ -182,6 +198,19 @@ public:
 
         // Check Domain
         ValidateDomain(semantics);
+        if(dyadic_identity.bound) {
+            // Reject every real interior/ghost cell whose canonical faces or
+            // midpoint collapse. No nominal dx or floor repairs coordinates.
+            for(int axis=0;axis<2;++axis) {
+                const int cells=axis==0?amr::BLOCK_NX:amr::BLOCK_NY;
+                for(std::int64_t cell=-std::int64_t(ng);cell<cells+std::int64_t(ng);++cell) {
+                    double left=0.,right=0.,center=0.,width=0.;
+                    if(!GridMetrics::canonical_axis_cell(dyadic_identity,axis,cell,
+                        left,right,center,width))
+                        throw std::invalid_argument("Native RZ canonical cell faces are not representable");
+                }
+            }
+        }
     }
 
     int GetTotalX() const { return total_x_; }
@@ -353,13 +382,37 @@ public:
      * @param i Block-local x1 index, including ghost cells (not a flat offset).
      * @return The physical x-coordinate.
      */
+    /** Bound face wrapper; an invalid chart/index returns nonfinite geometry,
+     * never an ordinary-grid fallback. Both backends borrow the same leaf.
+     */
+    double CanonicalFace(int axis,std::int64_t local_face) const
+    {
+        double result=0.;
+        if(geometry!="cylindrical"||dim!=2||!GridMetrics::canonical_axis_face(dyadic_identity,axis,local_face,result))
+            return std::numeric_limits<double>::quiet_NaN();
+        return result;
+    }
+
+    /** Bound cell width/center wrapper with actual face representability. */
+    double CanonicalCellValue(int axis,std::int64_t local_cell,bool center) const
+    {
+        double left=0.,right=0.,middle=0.,width=0.;
+        if(geometry!="cylindrical"||dim!=2||!GridMetrics::canonical_axis_cell(dyadic_identity,axis,
+            local_cell,left,right,middle,width))return std::numeric_limits<double>::quiet_NaN();
+        return center?middle:width;
+    }
+
     double GetCellCenterX(int i) const
     {
         // Formula: x1_min + (local_index * dx1) + half_cell
+        if(dyadic_identity.bound)
+            return CanonicalCellValue(0,std::int64_t(i)-ng,true);
         return x1_min + (i - ng) * dx1 + 0.5 * dx1;
     }
     double GetCellCenterY(int j) const
     {
+        if(dyadic_identity.bound)
+            return CanonicalCellValue(1,std::int64_t(j)-ng,true);
         if (dim < 2)
             return 0.0;
         return x2_min + (j - ng) * dx2 + 0.5 * dx2;
@@ -372,9 +425,38 @@ public:
         return x3_min + (k - ng) * dx3 + 0.5 * dx3;
     }
     /// Left face position of cell i in x-direction (r_{i-1/2})
-    double GetFacePosL(int i) const { return x1_min + (i - ng) * dx1; }
+    double GetFacePosL(int i) const
+    {
+        if(dyadic_identity.bound)return CanonicalFace(0,std::int64_t(i)-ng);
+        return x1_min + (i - ng) * dx1;
+    }
     /// Right face position of cell i in x-direction (r_{i+1/2})
-    double GetFacePosR(int i) const { return x1_min + (i - ng + 1) * dx1; }
+    double GetFacePosR(int i) const
+    {
+        if(dyadic_identity.bound)return CanonicalFace(0,std::int64_t(i)-ng+1);
+        return x1_min + (i - ng + 1) * dx1;
+    }
+
+    /** Lower/upper actual axial faces; unbound grids retain their local formula. */
+    double GetAxialFacePosL(int j) const
+    {
+        if(dyadic_identity.bound)return CanonicalFace(1,std::int64_t(j)-ng);
+        return x2_min + (j - ng) * dx2;
+    }
+    double GetAxialFacePosR(int j) const
+    {
+        if(dyadic_identity.bound)return CanonicalFace(1,std::int64_t(j)-ng+1);
+        return x2_min + (j - ng + 1) * dx2;
+    }
+
+    /** Actual cell length for finite-volume metrics; dx stays representative. */
+    double CellWidth(int axis,int index) const
+    {
+        if(dyadic_identity.bound)
+            return CanonicalCellValue(axis,std::int64_t(index)-ng,false);
+        return axis==0?dx1:axis==1?dx2:axis==2?dx3:
+            std::numeric_limits<double>::quiet_NaN();
+    }
 
     // -- Loop Bounds for Physical Domain --
 

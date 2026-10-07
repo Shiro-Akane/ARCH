@@ -90,6 +90,11 @@ public:
             for (double value : {grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,
                     grid.x3_min,grid.x3_max,grid.dx1,grid.dx2,grid.dx3})
                 key.push_back(std::bit_cast<std::uint64_t>(value));
+            if(chart==CoordinateSeamGeometry::RzAxisymmetric) {
+                block.RequireNativeGeometryIdentity();
+                const auto provenance=GridMetrics::identity_words(grid.dyadic_identity);
+                key.insert(key.end(),provenance.begin(),provenance.end());
+            }
             key.insert(key.end(), {static_cast<std::uint64_t>(grid.dim),
                 static_cast<std::uint64_t>(grid.nblockx1),
                 static_cast<std::uint64_t>(grid.nblockx2),
@@ -492,6 +497,7 @@ public:
                     "coarse-fine Host source measure sum is invalid");
             if(rz) {
                 RzTransferGeometry geometry{};
+                source_block.RequireNativeGeometryIdentity();destination_block.RequireNativeGeometryIdentity();
                 const auto source_view=GridMetrics::make_geometry_view(source_block.grid,
                     GridMetrics::GeometrySemantics::AxisymmetricRz);
                 const auto destination_view=GridMetrics::make_geometry_view(destination_block.grid,
@@ -512,11 +518,13 @@ public:
                         -(geometry.fine_child&1);
                     const int fj=destination_block.grid.Js()+transfer.destination_cell[1]
                         -((geometry.fine_child>>1)&1);
+                    context.has_destination_geometry=true;context.destination_geometry=destination_view;
+                    context.destination_nx=destination_block.grid.GetTotalX();
+                    context.destination_ny=destination_block.grid.GetTotalY();context.fine_i=fi;context.fine_j=fj;
                     for(int child=0;child<4;++child) {
                         const int ci=fi+(child&1),cj=fj+((child>>1)&1);
                         context.children[child]={destination_view.GetFacePosL(ci),destination_view.GetFacePosR(ci),
-                            destination_view.x2_min+(cj-destination_view.ng)*destination_view.dx2,
-                            destination_view.x2_min+(cj-destination_view.ng+1)*destination_view.dx2};
+                            destination_view.GetAxialFacePosL(cj),destination_view.GetAxialFacePosR(cj)};
                     }
                 } else {
                     auto& rg=geometry.restriction;
@@ -524,14 +532,13 @@ public:
                     const int i=destination_block.grid.Is()+transfer.destination_cell[0];
                     const int j=destination_block.grid.Js()+transfer.destination_cell[1];
                     rg.coarse_volume=GridMetrics::CellVolume(destination_view,i,j,0);
-                    rg.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(
-                        destination_view.GetFacePosL(i),destination_view.GetFacePosR(i),destination_view.dx2);
+                    rg.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(destination_view,i,j);
                     for(int c=0;c<rg.count;++c) {
                         const int fi=source_block.grid.Is()+transfer.source_cells[c][0];
+                        const int fj=source_block.grid.Js()+transfer.source_cells[c][1];
                         rg.source_cells[c]=lowered.source_cells[c];
                         rg.volumes[c]=lowered.source_measures[c];
-                        rg.angular_measures[c]=GridMetrics::Rz::AngularMomentumMeasure(
-                            source_view.GetFacePosL(fi),source_view.GetFacePosR(fi),source_view.dx2);
+                        rg.angular_measures[c]=GridMetrics::Rz::AngularMomentumMeasure(source_view,fi,fj);
                     }
                 }
                 lowered.rz_geometry=rz_geometries.size();

@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <span>
 #include <vector>
@@ -420,6 +421,12 @@ public:
     RingBoundaryBudgetProposal propose_ring_budget(
         const arch::elliptic::CompositePoisson&,const GravitySolveIdentity&,
         std::span<const double> computed_source,double rtol,double atol) const;
+    /** Bound all tree visits/parent fallback attempts over actual exterior faces.
+     * This internal resource policy does not bound adaptive quadrature work,
+     * change its finite per-leaf cap, or certify any mathematical error.
+     */
+    std::uint64_t full_ring_traversal_work_bound(
+        const arch::elliptic::CompositePoisson&) const;
     RingBoundaryEvaluation ring_boundary(const arch::elliptic::CompositePoisson&,
         const GravitySolveIdentity&,const RingBoundaryControl&) const;
     void require_current_ring(const arch::elliptic::CompositePoisson&,

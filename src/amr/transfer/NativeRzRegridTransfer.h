@@ -45,6 +45,11 @@ struct NativeRzProlongationContext {
     GridMetrics::GeometryView source_geometry;
     int logical_nx=0,logical_ny=0,radial_i=0,axial_j=0;
     std::array<NativeRzChildBounds,4> children{};
+    // Actual destination generator/layout and the lower 2x2 member. Standalone
+    // unbound math contexts retain strict physical partition certification.
+    bool has_destination_geometry=false;
+    GridMetrics::GeometryView destination_geometry{};
+    int destination_nx=0,destination_ny=0,fine_i=0,fine_j=0;
 };
 
 namespace native_rz_detail {
@@ -95,7 +100,8 @@ ARCH_INLINE bool species_fraction(double mass,double density,double& fraction)
     return std::isfinite(fraction)&&fraction>=0.&&(mass==0.||fraction>0.);
 }
 
-/** Check five own-measure family means against the actual native source.
+/** Check five actual family integrals against the actual native source.
+ * Weights are M_child/M_parent, not child-sum-normalized means.
  * Scale_j=max(|parent_j|,max_k|child_k,j|), and compare
  * sum_k w_k*(child_k,j/scale_j) with parent_j/scale_j using the existing
  * 64*epsilon policy. V applies except W for m_phi. Normalized comparisons
@@ -171,12 +177,65 @@ ARCH_INLINE bool upper_bound(double base,double residual,double bound,double& th
     return true;
 }
 
-/** Verify exact actual partition and form separate positive V/W weights.
- * Geometry adjacency is authoritative caller data; this leaf invents no
- * coordinate tolerance. Denominators are sums of actual child measures.
+/** Separate projection means, physical integral ratios and source chart image.
+ * n_k=M_k/sum M controls zero-mean residuals; a_k=M_k/M_parent authenticates
+ * actual conserved integrals. They cannot substitute for geometry identity.
  */
-ARCH_INLINE bool geometry(const NativeRzProlongationContext& context,
-    std::array<double,4>& volume_weights,std::array<double,4>& angular_weights)
+struct FamilyGeometry {
+    std::array<double,4> volume_mean{},angular_mean{},volume_integral{},angular_integral{};
+    double axial_image_shift=0.;
+};
+
+/** Authenticate actual source/destination generators and signed 2:1 cells.
+ * Cross-level rounded physical endpoints are not equality oracles. Root bounds,
+ * counts and periodic authorization must match bitwise; fine global index is
+ * twice the real coarse index. Only a paired periodic z rule admits +/- one
+ * genuine root-domain image. Radial images and blind modulo are forbidden.
+ */
+ARCH_INLINE bool dyadic_mapping(const NativeRzProlongationContext& context,double& z_shift)
+{
+    const auto& source=context.source_geometry;
+    const auto& fine=context.destination_geometry;
+    if(!context.has_destination_geometry||!GridMetrics::matches_identity(source)
+       ||!GridMetrics::matches_identity(fine))return false;
+    const auto& a=source.dyadic_identity;const auto& b=fine.dyadic_identity;
+    if(b.level!=a.level+1)return false;
+    auto root_b=b;root_b.level=a.level;root_b.logical=a.logical;
+    if(!GridMetrics::equal_identity(a,root_b))return false;
+    for(int axis=0;axis<2;++axis) {
+        std::int64_t coarse=0,child=0;
+        const int source_index=axis==0?context.radial_i:context.axial_j;
+        const int fine_index=axis==0?context.fine_i:context.fine_j;
+        if(!GridMetrics::global_cell(a,axis,std::int64_t(source_index)-source.ng,coarse)
+           ||!GridMetrics::global_cell(b,axis,std::int64_t(fine_index)-fine.ng,child)
+           ||coarse<std::numeric_limits<std::int64_t>::min()/2
+           ||coarse>std::numeric_limits<std::int64_t>::max()/2)return false;
+        const auto expected=2*coarse;
+        if(child==expected)continue;
+        if(axis!=1||!a.periodic_axial)return false;
+        // Existing Morton/layout bounds make all actual indices small signed
+        // values, but check before general integer subtraction nevertheless.
+        if((expected<0&&child>std::numeric_limits<std::int64_t>::max()+expected)
+           ||(expected>0&&child<std::numeric_limits<std::int64_t>::min()+expected))return false;
+        const auto difference=child-expected;
+        const auto extent=std::int64_t(b.root_blocks[1])*amr::BLOCK_NY
+            *(std::int64_t{1}<<b.level);
+        if(difference!=extent&&difference!=-extent)return false;
+        z_shift=(difference>0?1.:-1.)*(a.root_upper[1]-a.root_lower[1]);
+        if(!std::isfinite(z_shift))return false;
+    }
+    return true;
+}
+
+/** Authenticate geometry, then form actual V/W integral and mean weights.
+ * Generated grids prove their own coordinates plus exact logical partition;
+ * unbound standalone math must prove every physical outer/midpoint equality.
+ * Fine pairwise contiguity remains exact in both paths. Shared canonical
+ * axial faces own the actual source/child height used by GridMetrics V/W.
+ * Unbound partition checks retain their existing strict physical midpoint rule.
+ * No tolerance, rescaling or invented cell is introduced.
+ */
+ARCH_INLINE bool geometry(const NativeRzProlongationContext& context,FamilyGeometry& weights)
 {
     const auto& g=context.source_geometry;
     const int nx=context.logical_nx,ny=context.logical_ny,i=context.radial_i,j=context.axial_j;
@@ -188,7 +247,7 @@ ARCH_INLINE bool geometry(const NativeRzProlongationContext& context,
        ||!std::isfinite(g.dx1)||!(g.dx1>0.)
        ||!std::isfinite(g.dx2)||!(g.dx2>0.))return false;
     const double rl=g.GetFacePosL(i),rr=g.GetFacePosR(i);
-    const double zl=g.x2_min+(j-g.ng)*g.dx2,zr=g.x2_min+(j-g.ng+1)*g.dx2;
+    const double zl=g.GetAxialFacePosL(j),zr=g.GetAxialFacePosR(j);
     if(!std::isfinite(rl)||rl<0.||!std::isfinite(rr)||!(rr>rl)
        ||!std::isfinite(zl)||!std::isfinite(zr)||!(zr>zl))return false;
     const auto& c=context.children;
@@ -199,30 +258,63 @@ ARCH_INLINE bool geometry(const NativeRzProlongationContext& context,
             ||!std::isfinite(q.axial_lower)||!std::isfinite(q.axial_upper)
             ||!(q.axial_upper>q.axial_lower))return false;
     }
-    // Pairwise identity, actual outer faces, and genuine half-cell partitions.
-    if(c[0].radial_lower!=rl||c[2].radial_lower!=rl
-       ||c[1].radial_upper!=rr||c[3].radial_upper!=rr
-       ||c[0].radial_upper!=c[1].radial_lower||c[2].radial_upper!=c[3].radial_lower
+    if(c[0].radial_upper!=c[1].radial_lower||c[2].radial_upper!=c[3].radial_lower
        ||c[0].radial_upper!=c[2].radial_upper
-       ||c[0].axial_lower!=zl||c[1].axial_lower!=zl
-       ||c[2].axial_upper!=zr||c[3].axial_upper!=zr
        ||c[0].axial_upper!=c[2].axial_lower||c[1].axial_upper!=c[3].axial_lower
-       ||c[0].axial_upper!=c[1].axial_upper
-       ||c[0].radial_upper!=rl+.5*(rr-rl)||c[0].axial_upper!=zl+.5*(zr-zl))return false;
-    double v=0.,w=0.;
-    for(int k=0;k<4;++k) {
-        const auto& q=c[k];const double dz=q.axial_upper-q.axial_lower;
-        volume_weights[k]=GridMetrics::Rz::CellVolume(q.radial_lower,q.radial_upper,dz);
-        angular_weights[k]=GridMetrics::Rz::AngularMomentumMeasure(q.radial_lower,q.radial_upper,dz);
-        if(!std::isfinite(volume_weights[k])||!(volume_weights[k]>0.)
-           ||!std::isfinite(angular_weights[k])||!(angular_weights[k]>0.))return false;
-        v+=volume_weights[k];w+=angular_weights[k];
+       ||c[0].axial_upper!=c[1].axial_upper)return false;
+    if(context.has_destination_geometry) {
+        const auto& f=context.destination_geometry;
+        const int fi=context.fine_i,fj=context.fine_j;
+        if(f.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+           ||f.geometry!=GridMetrics::Geometry::Cylindrical||f.dim!=2
+           ||context.destination_nx<2||context.destination_ny<2
+           ||f.stride_y<context.destination_nx||f.stride_z<=0
+           ||context.destination_ny>f.stride_z/f.stride_y||f.total_size<f.stride_z
+           ||fi<0||fi>=context.destination_nx-1||fj<0||fj>=context.destination_ny-1
+           ||!std::isfinite(f.dx1)||!(f.dx1>0.)
+           ||!std::isfinite(f.dx2)||!(f.dx2>0.))return false;
+        for(int k=0;k<4;++k) {
+            const int ci=fi+(k&1),cj=fj+((k>>1)&1);
+            const auto& q=c[k];
+            if(q.radial_lower!=f.GetFacePosL(ci)||q.radial_upper!=f.GetFacePosR(ci)
+               ||q.axial_lower!=f.GetAxialFacePosL(cj)
+               ||q.axial_upper!=f.GetAxialFacePosR(cj))return false;
+        }
     }
-    const double pv=GridMetrics::Rz::CellVolume(rl,rr,zr-zl);
-    const double pw=GridMetrics::Rz::AngularMomentumMeasure(rl,rr,zr-zl);
-    if(!std::isfinite(v)||!(v>0.)||!std::isfinite(w)||!(w>0.)
-       ||!std::isfinite(pv)||!(pv>0.)||!std::isfinite(pw)||!(pw>0.))return false;
-    for(int k=0;k<4;++k) {volume_weights[k]/=v;angular_weights[k]/=w;}
+    const bool bound=g.dyadic_identity.bound;
+    if(bound) {
+        if(!dyadic_mapping(context,weights.axial_image_shift))return false;
+    } else {
+        if(context.has_destination_geometry&&context.destination_geometry.dyadic_identity.bound)return false;
+        // No unbound fragment or claimed flag acquires logical authority.
+        if(c[0].radial_lower!=rl||c[2].radial_lower!=rl
+           ||c[1].radial_upper!=rr||c[3].radial_upper!=rr
+           ||c[0].axial_lower!=zl||c[1].axial_lower!=zl
+           ||c[2].axial_upper!=zr||c[3].axial_upper!=zr
+           ||c[0].radial_upper!=rl+.5*(rr-rl)||c[0].axial_upper!=zl+.5*(zr-zl))return false;
+    }
+    double v=0.,w=0.;
+    const double pv=GridMetrics::CellVolume(g,i,j,0);
+    const double pw=GridMetrics::Rz::AngularMomentumMeasure(g,i,j);
+    if(!std::isfinite(pv)||!(pv>0.)||!std::isfinite(pw)||!(pw>0.))return false;
+    for(int k=0;k<4;++k) {
+        const auto& q=c[k];
+        // Bound destinations were authenticated against their actual axial
+        // faces above; standalone children retain their supplied strict split.
+        const double dz=context.has_destination_geometry
+            ?context.destination_geometry.CellWidth(1,context.fine_j+((k>>1)&1))
+            :q.axial_upper-q.axial_lower;
+        const double cv=GridMetrics::Rz::CellVolume(q.radial_lower,q.radial_upper,dz);
+        const double cw=GridMetrics::Rz::AngularMomentumMeasure(q.radial_lower,q.radial_upper,dz);
+        if(!std::isfinite(cv)||!(cv>0.)||!std::isfinite(cw)||!(cw>0.))return false;
+        weights.volume_mean[k]=cv;weights.angular_mean[k]=cw;
+        weights.volume_integral[k]=cv/pv;weights.angular_integral[k]=cw/pw;
+        if(!std::isfinite(weights.volume_integral[k])||!(weights.volume_integral[k]>0.)
+           ||!std::isfinite(weights.angular_integral[k])||!(weights.angular_integral[k]>0.))return false;
+        v+=cv;w+=cw;
+    }
+    if(!std::isfinite(v)||!(v>0.)||!std::isfinite(w)||!(w>0.))return false;
+    for(int k=0;k<4;++k) {weights.volume_mean[k]/=v;weights.angular_mean[k]/=w;}
     return true;
 }
 
@@ -263,9 +355,10 @@ ARCH_INLINE Status prolong_native_family(const NativeRzProlongationContext& cont
     int species,const arch::state::Bounds& bounds,double* workspace,ProlongationResult& result)
 {
     using namespace native_rz_detail;
-    std::array<double,4> vw{},ww{};
+    FamilyGeometry measures{};
     if(species<0||(species>0&&!workspace)||!arch::state::valid_bounds(bounds)
-       ||!geometry(context,vw,ww))return Status::InvalidGeometry;
+       ||!geometry(context,measures))return Status::InvalidGeometry;
+    const auto& vw=measures.volume_mean;const auto& ww=measures.angular_mean;
     const auto& g=context.source_geometry;const int i=context.radial_i,j=context.axial_j;
     const int indices[]{g.GetIndex(i,j),g.GetIndex(i-1,j),g.GetIndex(i+1,j),
         g.GetIndex(i,j-1),g.GetIndex(i,j+1)};
@@ -291,7 +384,7 @@ ARCH_INLINE Status prolong_native_family(const NativeRzProlongationContext& cont
         if(!std::isfinite(enuc(indices[n])))return Status::ProlongationEnuc;
     }
     const auto& base=cells[0];const auto parent=read(indices[0]);
-    const double rc=g.GetCellCenterX(i),zc=g.GetCellCenterY(j);
+    const double rc=g.GetCellCenterX(i),zc=g.GetCellCenterY(j)+measures.axial_image_shift;
     if(!std::isfinite(rc)||!std::isfinite(zc))return Status::InvalidGeometry;
     Slopes rho_slope{},ur{},uz{},omega{},internal{};
     // Radial rho is solely the shared positive quadratic, never a new slope.
@@ -417,7 +510,7 @@ ARCH_INLINE Status prolong_native_family(const NativeRzProlongationContext& cont
         pending.enuc[child]=enuc(indices[0])+((child&1)?.25:-.25)*sx+((child&2)?.25:-.25)*sy;
         if(!std::isfinite(sx)||!std::isfinite(sy)||!std::isfinite(pending.enuc[child]))return Status::ProlongationEnuc;
     }
-    if(!family_matches_source(parent,baseline.data(),vw,ww))return Status::ParentFluid;
+    if(!family_matches_source(parent,baseline.data(),measures.volume_integral,measures.angular_integral))return Status::ParentFluid;
     for(int field=0;field<5;++field) {
         double mean=0.;for(int child=0;child<4;++child)
             mean+=component(deviation[child],field)*(field==3?ww[child]:vw[child]);
@@ -496,13 +589,13 @@ ARCH_INLINE Status prolong_native_family(const NativeRzProlongationContext& cont
     }
     // Independently verify columns after the sole roundoff row correction.
     for(int s=0;s<species;++s) {
-        double mass=0.;for(int child=0;child<4;++child)mass+=q[static_cast<std::size_t>(s)*maximum_children+child]*vw[child];
+        double mass=0.;for(int child=0;child<4;++child)mass+=q[static_cast<std::size_t>(s)*maximum_children+child]*measures.volume_integral[child];
         double target=0.;
         if(!species_product(parent.rho,parent_X[s],target))return Status::SpeciesIntegral;
         if(!std::isfinite(mass)||!std::isfinite(target)
            ||std::abs(mass-target)>tolerance*parent.rho)return Status::SpeciesIntegral;
     }
-    if(!family_matches_source(parent,pending.fluid,vw,ww))return Status::FineFluid;
+    if(!family_matches_source(parent,pending.fluid,measures.volume_integral,measures.angular_integral))return Status::FineFluid;
     pending.rhoX=workspace;result=pending;return Status::Ok;
 }
 

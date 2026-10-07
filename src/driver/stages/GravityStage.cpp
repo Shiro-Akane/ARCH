@@ -74,7 +74,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     if (epoch_!=handles.front().epoch) {
         auto binding=amr::bind_elliptic_mesh(runtime_.control(),config.grid,handles);
         if(qualification_==Qualification::NativeRzCandidate)
-            gravity_->bind_native_rz_candidate(std::move(binding),65536,100000);
+            gravity_->bind_native_rz_candidate(std::move(binding),65536,0);
         else gravity_->bind(std::move(binding),time);
         epoch_=handles.front().epoch;
     }

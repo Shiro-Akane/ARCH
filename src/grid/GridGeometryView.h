@@ -1,14 +1,21 @@
 /**
  * @file GridGeometryView.h
  * @brief Allocation-free native-grid geometry shared by Host and device math.
+ *
+ * Workflow: borrow authenticated grid identity; resolve bound RZ coordinates
+ * with the shared canonical face owner; derive actual midpoint/width from faces;
+ * lend these values to measures and physical consumers. Ordinary/unbound local
+ * formulas and chart interpretation retain their existing branches.
  */
 #pragma once
 
 #include "core/ArchPortability.h"
+#include "grid/DyadicGridIdentity.h"
 #include "physics/constant/PhysicalConstants.h"
 
 #include <array>
 #include <cmath>
+#include <limits>
 #include <type_traits>
 
 namespace GridMetrics {
@@ -38,18 +45,47 @@ struct GeometryView {
     double x3_min = 0.0;
     GeometrySemantics semantics = GeometrySemantics::Existing;
 
+    // Actual stored upper endpoints are used only to authenticate a bound
+    // native generator; never recompute them from the already rounded dx.
+    std::array<double,2> actual_block_upper{};
+    DyadicGridIdentity dyadic_identity{};
+
     ARCH_HOST_DEVICE int GetIndex(int i, int j = 0, int k = 0) const
     {
         return k * stride_z + j * stride_y + i;
     }
 
+    /** Bound face wrapper; an invalid chart/index returns nonfinite geometry,
+     * never an ordinary-grid fallback. Both backends borrow the same leaf.
+     */
+    ARCH_HOST_DEVICE double CanonicalFace(int axis,std::int64_t local_face) const
+    {
+        double result=0.;
+        if(geometry!=Geometry::Cylindrical||dim!=2||!GridMetrics::canonical_axis_face(dyadic_identity,axis,local_face,result))
+            return std::numeric_limits<double>::quiet_NaN();
+        return result;
+    }
+
+    /** Bound cell width/center wrapper with actual face representability. */
+    ARCH_HOST_DEVICE double CanonicalCellValue(int axis,std::int64_t local_cell,bool center) const
+    {
+        double left=0.,right=0.,middle=0.,width=0.;
+        if(geometry!=Geometry::Cylindrical||dim!=2||!GridMetrics::canonical_axis_cell(dyadic_identity,axis,
+            local_cell,left,right,middle,width))return std::numeric_limits<double>::quiet_NaN();
+        return center?middle:width;
+    }
+
     ARCH_HOST_DEVICE double GetCellCenterX(int i) const
     {
+        if(dyadic_identity.bound)
+            return CanonicalCellValue(0,std::int64_t(i)-ng,true);
         return x1_min + (i - ng) * dx1 + 0.5 * dx1;
     }
 
     ARCH_HOST_DEVICE double GetCellCenterY(int j) const
     {
+        if(dyadic_identity.bound)
+            return CanonicalCellValue(1,std::int64_t(j)-ng,true);
         return dim < 2 ? 0.0 : x2_min + (j - ng) * dx2 + 0.5 * dx2;
     }
 
@@ -60,12 +96,35 @@ struct GeometryView {
 
     ARCH_HOST_DEVICE double GetFacePosL(int i) const
     {
+        if(dyadic_identity.bound)return CanonicalFace(0,std::int64_t(i)-ng);
         return x1_min + (i - ng) * dx1;
     }
 
     ARCH_HOST_DEVICE double GetFacePosR(int i) const
     {
+        if(dyadic_identity.bound)return CanonicalFace(0,std::int64_t(i)-ng+1);
         return x1_min + (i - ng + 1) * dx1;
+    }
+
+    /** Lower/upper actual axial faces; unbound grids retain their local formula. */
+    ARCH_HOST_DEVICE double GetAxialFacePosL(int j) const
+    {
+        if(dyadic_identity.bound)return CanonicalFace(1,std::int64_t(j)-ng);
+        return x2_min + (j - ng) * dx2;
+    }
+    ARCH_HOST_DEVICE double GetAxialFacePosR(int j) const
+    {
+        if(dyadic_identity.bound)return CanonicalFace(1,std::int64_t(j)-ng+1);
+        return x2_min + (j - ng + 1) * dx2;
+    }
+
+    /** Actual cell length for finite-volume metrics; dx stays representative. */
+    ARCH_HOST_DEVICE double CellWidth(int axis,int index) const
+    {
+        if(dyadic_identity.bound)
+            return CanonicalCellValue(axis,std::int64_t(index)-ng,false);
+        return axis==0?dx1:axis==1?dx2:axis==2?dx3:
+            std::numeric_limits<double>::quiet_NaN();
     }
 
     // Preserve Grid::GetPhysicalCoords' spherical 1D/equatorial-2D

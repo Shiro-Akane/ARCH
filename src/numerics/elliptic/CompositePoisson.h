@@ -83,6 +83,11 @@ struct CompositeFace {
     std::vector<int> value_samples;    // Radial face-potential interpolation.
     std::vector<double> value_coefficients;
     double value_boundary_coefficient = 0.;
+    // Actual native face-fragment endpoints. The normal endpoints coincide;
+    // tangential bounds retain their original bits, never center +/- width/2.
+    bool native_bounds = false;
+    std::array<double,3> fragment_lower{};
+    std::array<double,3> fragment_upper{};
 };
 enum class BoundaryErrorQuality { CertifiedAbsolute, Estimate, Unknown };
 struct BoundaryPotentialError {
@@ -225,6 +230,9 @@ public:
     }
     int size() const { return static_cast<int>(cells_.size()); }
     int max_level() const { return max_level_; }
+    /** Actual leaf endpoints from the single native face authority. */
+    double lower(int cell, int axis) const;
+    double upper(int cell, int axis) const;
     double width(int cell, int axis) const;
     std::array<double,3> center(int cell) const;
     // Locate a leaf using coordinates in units of root cells, with periodic wrap.
@@ -305,6 +313,9 @@ private:
     void build_faces();
     void fit_interface(CompositeFace& face) const;
     void fit_curved_face_value(CompositeFace& face) const;
+    /** Bind exact normal/tangential endpoints before forming a native area. */
+    void bind_native_face_bounds(CompositeFace& face, int tangent_owner,
+                                 double normal_coordinate) const;
     double face_area(const CompositeFace& face) const;
     double face_metric(const CompositeFace& face,int axis) const;
 };

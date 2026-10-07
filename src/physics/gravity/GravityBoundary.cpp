@@ -15,6 +15,7 @@
 #include <array>
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <unordered_map>
@@ -49,6 +50,33 @@ bool exact_root_coordinate(double origin,double root_spacing,double index,
     const double error=(origin-(sum-virtual_product))+(product-virtual_product);
     return error==0.&&sum==stored;
 }
+/** Prove equality to the exact configured rational-domain coordinate.
+ * Canonical generation identity alone is not a roundoff certificate. For the
+ * supported ordinary exponent range, TwoSum/FMA residuals prove each span,
+ * ratio, product and final sum exact; otherwise ideal-root scope stays unknown.
+ * Input endpoints themselves are exact at global face zero and total count.
+ */
+bool exact_canonical_coordinate(const arch::elliptic::EllipticMesh& base,int axis,
+    std::int64_t twice_index,int level,double stored) {
+    if(level<0||level>15||base.cells[axis]<=0)return false;
+    const auto total=std::uint64_t(base.cells[axis])<<level;
+    if(total>0x1p52||std::abs(double(twice_index))>0x1p53)return false;
+    const double lower=base.origin[axis],upper=base.root_upper[axis];
+    if(twice_index==0)return stored==lower;
+    if(twice_index==std::int64_t(2*total))return stored==upper;
+    const auto ordinary=[](double x){return x==0.||(std::isfinite(x)
+        &&std::ilogb(std::abs(x))>=-400&&std::ilogb(std::abs(x))<=400);};
+    if(!ordinary(lower)||!ordinary(upper)||!(upper>lower))return false;
+    const double span=upper-lower,virtual_lower=span-upper;
+    const double span_error=(upper-(span-virtual_lower))+(-lower-virtual_lower);
+    const double numerator=double(twice_index),denominator=double(2*total);
+    const double ratio=numerator/denominator,product=span*ratio;
+    const double sum=lower+product,virtual_product=sum-lower;
+    const double sum_error=(lower-(sum-virtual_product))+(product-virtual_product);
+    return ordinary(span)&&ordinary(ratio)&&ordinary(product)&&ordinary(sum)
+        &&span_error==0.&&std::fma(ratio,denominator,-numerator)==0.
+        &&std::fma(span,ratio,-product)==0.&&sum_error==0.&&sum==stored;
+}
 /** Shared exact root source/observer geometry proof, independent of whether
  * a boundary evaluation has completed. No tolerance or coordinate replacement.
  */
@@ -58,11 +86,15 @@ bool exact_native_ring_geometry(const arch::elliptic::CompositePoisson& op) {
     const auto& base=op.base();
     for(int i=0;i<op.size();++i)for(int axis=0;axis<2;++axis) {
         const auto& cell=op.cells()[i];
-        const double center=op.center(i)[axis],half=.5*op.width(i,axis);
-        if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
-                double(cell.index[axis]),cell.level,center-half)
+        if(base.native_canonical_domain) {
+            if(!exact_canonical_coordinate(base,axis,2*std::int64_t(cell.index[axis]),
+                    cell.level,op.lower(i,axis))
+                ||!exact_canonical_coordinate(base,axis,2*(std::int64_t(cell.index[axis])+1),
+                    cell.level,op.upper(i,axis)))return false;
+        } else if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+                double(cell.index[axis]),cell.level,op.lower(i,axis))
             ||!exact_root_coordinate(base.origin[axis],base.spacing[axis],
-                double(cell.index[axis])+1.,cell.level,center+half))return false;
+                double(cell.index[axis])+1.,cell.level,op.upper(i,axis)))return false;
     }
     for(const auto& face:op.faces())if(face.boundary_side>=0) {
         const int owner=face.left>=0?face.left:face.right;
@@ -70,7 +102,10 @@ bool exact_native_ring_geometry(const arch::elliptic::CompositePoisson& op) {
         for(int axis=0;axis<2;++axis) {
             const double index=double(cell.index[axis])+(axis==face.axis
                 ? double(face.boundary_side%2):.5);
-            if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
+            if(base.native_canonical_domain) {
+                if(!face.native_bounds||!exact_canonical_coordinate(base,axis,
+                    std::int64_t(2.*index),cell.level,face.center[axis]))return false;
+            } else if(!exact_root_coordinate(base.origin[axis],base.spacing[axis],
                 index,cell.level,face.center[axis]))return false;
         }
     }
@@ -84,9 +119,7 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     const auto& base=op.base();
     moments.value[0]=op.volumes()[cell];
     if(base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        const auto center=op.center(cell);
-        return finite_ring_unit_moments(center[0]-.5*op.width(cell,0),
-            center[0]+.5*op.width(cell,0),op.width(cell,1));
+        return finite_ring_unit_moments(op.lower(cell,0),op.upper(cell,0),op.width(cell,1));
     }
     if(base.geometry==Geometry::Cartesian)return moments;
     const auto center=op.center(cell);
@@ -121,8 +154,9 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
 }
 /** Exact same-density rectangle union, never a bbox/mass approximation.
  * Direct four leaf siblings must tile [rl,rh]x[zl,zh] by equal shared edges.
- * Caller additionally proves native/root edge arithmetic is exact.
- * The single original finite-ring integral is then the sum over that union.
+ * Every stored edge is compared exactly. The original finite-ring integral
+ * over this stored union equals its four disjoint source integrals; ideal-root
+ * potential qualification remains a separate source/observer error contract.
  */
 struct UniformRingQuartet { double rl,rh,zl,zh,density; };
 std::optional<UniformRingQuartet> uniform_ring_quartet(
@@ -138,9 +172,7 @@ std::optional<UniformRingQuartet> uniform_ring_quartet(
         if(cell>=static_cast<int>(density.size()))return {};
         if(c==0)rho=density[cell];
         if(!std::isfinite(rho)||rho<0.||density[cell]!=rho)return {};
-        const auto center=op.center(cell);
-        edges[c]={center[0]-.5*op.width(cell,0),center[0]+.5*op.width(cell,0),
-            center[1]-.5*op.width(cell,1),center[1]+.5*op.width(cell,1)};
+        edges[c]={op.lower(cell,0),op.upper(cell,0),op.lower(cell,1),op.upper(cell,1)};
     }
     for(int c=4;c<8;++c)if(parent.children[c]>=0)return {};
     const double rl=edges[0][0],rm=edges[0][1],rh=edges[3][1];
@@ -161,7 +193,8 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op,
     :bound_mesh_(op.base()),bound_boundary_(op.boundary_kind()),bound_cells_(op.cells()),
      bound_topology_(bound_topology),dimension_(op.base().dimension),
      finite_ring_(op.base().semantics==GridMetrics::GeometrySemantics::AxisymmetricRz),
-     reference_radius_(op.base().origin[0]+op.base().cells[0]*op.base().spacing[0]),
+     reference_radius_(op.base().native_canonical_domain ? op.base().root_upper[0]
+        : op.base().origin[0]+op.base().cells[0]*op.base().spacing[0]),
      volumes_(op.volumes()) {
     using namespace arch::elliptic;
     if((dimension_!=2 && dimension_!=3) ||
@@ -181,6 +214,19 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op,
             for(int a=0;a<3;++a) {
                 width[a]=std::ldexp(op.base().spacing[a],-key.level);
                 native[a]=op.base().origin[a]+(key.index[a]+0.5)*width[a];
+                if(finite_ring_&&op.base().native_canonical_domain&&a<2) {
+                    const int level=std::max(key.level,0);
+                    const std::int64_t factor=std::int64_t{1}<<std::max(-key.level,0);
+                    double lower=0.,upper=0.;
+                    if(!GridMetrics::canonical_dyadic_face(op.base().origin[a],op.base().root_upper[a],
+                        op.base().cells[a],level,std::int64_t(key.index[a])*factor,lower)
+                        ||!GridMetrics::canonical_dyadic_face(op.base().origin[a],op.base().root_upper[a],
+                        op.base().cells[a],level,(std::int64_t(key.index[a])+1)*factor,upper)
+                        ||!(upper>lower))throw std::logic_error("Invalid native ring tree bounds");
+                    width[a]=upper-lower;
+                    native[a]=lower+.5*(upper-lower);
+                    node.native_lower[a]=lower;
+                }
             }
             if(finite_ring_) {
                 node.center={0.,0.,native[1]};
@@ -204,7 +250,8 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op,
             }
             for(int a=0;a<3;++a) {
                 node.native_width[a]=width[a];
-                node.native_lower[a]=native[a]-0.5*width[a];
+                if(!(finite_ring_&&op.base().native_canonical_domain&&a<2))
+                    node.native_lower[a]=native[a]-0.5*width[a];
             }
             raw.push_back(node);
         }
@@ -275,8 +322,40 @@ void GravityBoundary::require_ring_operator(const arch::elliptic::CompositePoiss
         ||mesh.dimension!=bound_mesh_.dimension||mesh.geometry!=bound_mesh_.geometry
         ||mesh.cells!=bound_mesh_.cells||mesh.spacing!=bound_mesh_.spacing
         ||mesh.origin!=bound_mesh_.origin||mesh.semantics!=bound_mesh_.semantics
+        ||mesh.native_canonical_domain!=bound_mesh_.native_canonical_domain
+        ||mesh.root_upper!=bound_mesh_.root_upper
         ||op.boundary_kind()!=bound_boundary_||op.cells()!=bound_cells_)
         throw std::logic_error("Ring boundary operator differs from bound mesh");
+}
+/** Derive a finite full-walk budget from this actual bound tree and surface.
+ * Every exterior face restarts at the root. Each leaf is visited at most once;
+ * an internal node can pay once for an exact quartet and once for its failed
+ * fallback. Hence C = F * (N + 2*P), with checked integer arithmetic. This is
+ * a traversal resource bound only: leaf boxes/range/kernel/AGM remain separate.
+ * Source values are not inspected, so construction-time use needs no update.
+ */
+std::uint64_t GravityBoundary::full_ring_traversal_work_bound(
+    const arch::elliptic::CompositePoisson& op) const {
+    require_ring_operator(op);
+    constexpr auto maximum=std::numeric_limits<std::uint64_t>::max();
+    const auto increment=[&](std::uint64_t& count) {
+        if(count==maximum)throw std::overflow_error("Ring traversal count overflow");
+        ++count;
+    };
+    std::uint64_t leaves=0,parents=0,faces=0;
+    for(const auto& node:nodes_) {
+        if(node.cell>=0)increment(leaves);
+        else increment(parents);
+    }
+    for(const auto& face:op.faces())if(face.boundary_side>=0)increment(faces);
+    if(op.size()<=0||leaves!=static_cast<std::uint64_t>(op.size())||faces==0)
+        throw std::invalid_argument("Ring traversal requires actual source leaves and exterior faces");
+    if(parents>(maximum-leaves)/2)
+        throw std::overflow_error("Ring per-face traversal work overflow");
+    const std::uint64_t per_face=leaves+2*parents;
+    if(faces>maximum/per_face)
+        throw std::overflow_error("Ring full traversal work overflow");
+    return faces*per_face;
 }
 /** Enclose the current source using existing leaf geometry and parent ordering.
  * These intervals are scratch evidence, not independently updated physical data.
@@ -290,10 +369,8 @@ std::vector<RingMomentEnclosure> GravityBoundary::ring_moment_enclosures(
     for(int index=static_cast<int>(nodes_.size())-1;index>=0;--index) {
         const auto& node=nodes_[index];
         if(node.cell>=0) {
-            const auto center=op.center(node.cell);
-            const double wr=op.width(node.cell,0),wz=op.width(node.cell,1);
-            enclosed[index]=finite_ring_moment_enclosure(center[0]-.5*wr,center[0]+.5*wr,
-                center[1]-.5*wz,center[1]+.5*wz,ring_density_[node.cell],node.center);
+            enclosed[index]=finite_ring_moment_enclosure(op.lower(node.cell,0),op.upper(node.cell,0),
+                op.lower(node.cell,1),op.upper(node.cell,1),ring_density_[node.cell],node.center);
         } else enclosed[index]=combine_ring_moment_enclosures(nodes_.data(),enclosed.data(),index);
     }
     return enclosed;
@@ -348,10 +425,9 @@ RingBoundaryBudgetProposal GravityBoundary::propose_ring_budget(
                 high=-std::numeric_limits<double>::infinity();
             for(int i=0;i<op.size();++i) {
                 mass=down(mass+down(ring_density_[i]*measure.volume_lower[i]));
-                const auto c=op.center(i);
-                outer=std::max(outer,c[0]+.5*op.width(i,0));
-                low=std::min(low,c[1]-.5*op.width(i,1));
-                high=std::max(high,c[1]+.5*op.width(i,1));
+                outer=std::max(outer,op.upper(i,0));
+                low=std::min(low,op.lower(i,1));
+                high=std::max(high,op.upper(i,1));
             }
             const double radial_extent=positive_up(outer+outer);
             const double axial_extent=offset_interval(high,low).upper;
@@ -435,8 +511,9 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
     leaf_control.maximum_boxes=control.maximum_boxes_per_leaf;
     // Recompute from this full current source; no cache survives identity changes.
     std::vector<std::optional<UniformRingQuartet>> quartets(nodes_.size());
-    if(exact_native_ring_geometry(op))
-        for(int i=0;i<static_cast<int>(nodes_.size());++i)if(nodes_[i].cell<0)
+    // Same-density coalescing integrates the exact union of stored rectangles.
+    // It does not promote their potential errors to ideal-root scope.
+    for(int i=0;i<static_cast<int>(nodes_.size());++i)if(nodes_[i].cell<0)
             quartets[i]=uniform_ring_quartet(op,nodes_,i,ring_density_);
     bool converged=true;result.status=RingBoundaryStatus::Bounded;
     for(std::size_t face=0;face<count;++face)if(op.faces()[face].boundary_side>=0) {
@@ -498,10 +575,8 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
             ++index;
             // Same operator-owned edge arithmetic used by unit_cell_moments;
             // lower+width could re-round an upper edge differently.
-            const auto center=op.center(node.cell);
-            const double wr=op.width(node.cell,0),wz=op.width(node.cell,1);
-            const double rl=center[0]-.5*wr,rh=center[0]+.5*wr;
-            const double zl=center[1]-.5*wz,zh=center[1]+.5*wz;
+            const double rl=op.lower(node.cell,0),rh=op.upper(node.cell,0);
+            const double zl=op.lower(node.cell,1),zh=op.upper(node.cell,1);
             const auto leaf=finite_ring_potential_enclosure(rl,rh,zl,zh,
                 ring_density_[node.cell],op.faces()[face].center[0],
                 op.faces()[face].center[1],source.gravitational_constant,leaf_control);

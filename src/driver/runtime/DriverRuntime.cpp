@@ -42,6 +42,7 @@ struct NativeBoundaryPatch {
     std::array<std::uint32_t, 3> logical;
     std::array<int, 8> layout;
     std::array<double, 9> coordinates;
+    GridMetrics::DyadicGridIdentity provenance;
 };
 
 /** Capture the actual active grid layout used by one candidate handle. */
@@ -53,7 +54,7 @@ NativeBoundaryPatch native_boundary_patch(int id, const amr::Block& block)
         {grid.dim, grid.ng, grid.stride_y, grid.stride_z, grid.total_size,
          grid.nblockx1, grid.nblockx2, grid.nblockx3},
         {grid.x1_min, grid.x1_max, grid.x2_min, grid.x2_max,
-         grid.x3_min, grid.x3_max, grid.dx1, grid.dx2, grid.dx3}};
+         grid.x3_min, grid.x3_max, grid.dx1, grid.dx2, grid.dx3},grid.dyadic_identity};
 }
 
 /** Compare real pool/grid identity and geometry before touching the EOS. */
@@ -65,6 +66,7 @@ bool native_boundary_patch_matches(const NativeBoundaryPatch& before,
         && before.grid == after.grid && before.level == after.level
         && before.logical == after.logical && before.layout == after.layout
         && before.coordinates == after.coordinates
+        && GridMetrics::equal_identity(before.provenance,after.provenance)
         && block.id == id && block.active
         && block.grid.dim == 2 && block.grid.geometry == "cylindrical";
 }

@@ -178,6 +178,7 @@ namespace TimeIntegration
                 for(double Grid::* f:std::array<double Grid::*,9>{&Grid::x1_min,&Grid::x1_max,
                     &Grid::x2_min,&Grid::x2_max,&Grid::x3_min,&Grid::x3_max,&Grid::dx1,&Grid::dx2,&Grid::dx3})
                     if(std::bit_cast<std::uint64_t>(a.*f)!=std::bit_cast<std::uint64_t>(b.*f))return false;
+                if(!GridMetrics::equal_identity(a.dyadic_identity,b.dyadic_identity))return false;
                 return std::equal(std::begin(a.amr_coarse_fine_face),std::end(a.amr_coarse_fine_face),
                     std::begin(b.amr_coarse_fine_face));
             };
@@ -480,12 +481,11 @@ namespace TimeIntegration
                     n_spec, total_size, area_l, area_r, volume, dt,
                     dU[idx], species_delta,
                     torque
-                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,false) : 0.0,
+                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,j,false) : 0.0,
                     torque
-                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,true) : 0.0,
+                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,j,true) : 0.0,
                     torque
-                        ? GridMetrics::Rz::AngularMomentumMeasure(
-                            geometry.GetFacePosL(i),geometry.GetFacePosR(i),geometry.dx2) : 0.0);
+                        ? GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j) : 0.0);
             }
         };
         bool parallel_rows = nk * nj > 1;
@@ -707,7 +707,7 @@ namespace TimeIntegration
                     GridMetrics::CellVolume(geometry, i, j, k), idx,
                     semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,
                     semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-                        ? GridMetrics::Rz::AngularMomentumMeasure(grid.GetFacePosL(i),grid.GetFacePosR(i),grid.dx2) : 0.0);
+                        ? GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j) : 0.0);
                 if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
             }

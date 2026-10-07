@@ -79,8 +79,16 @@ inline LogicalBlockKey logical_key(const Block& block, int dimension)
             block.logical_x2, block.logical_x3};
 }
 
-inline bool same_grid_contract(const Grid& left, const Grid& right) noexcept
+/** Compare the existing local contract and, only for explicit native RZ,
+ * the complete shared root/level/logical identity. Equality of an unbound seed
+ * does not authenticate a hierarchy; it only prevents stale cached provenance.
+ */
+inline bool same_grid_contract(const Grid& left, const Grid& right,
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) noexcept
 {
+    if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+        && !GridMetrics::equal_identity(left.dyadic_identity,right.dyadic_identity))
+        return false;
     return left.dim == right.dim && left.ng == right.ng
         && left.stride_y == right.stride_y
         && left.stride_z == right.stride_z
@@ -222,6 +230,11 @@ inline std::uint64_t compute_fingerprint(const AmrFluxTopologyPlan& plan)
         for (double value : {grid.dx1,grid.dx2,grid.dx3,
                 grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,grid.x3_min,grid.x3_max})
             hash.u64(std::bit_cast<std::uint64_t>(value));
+        // Native generation context is part of the borrowed Grid identity.
+        // Ordinary plans retain their existing hash stream byte for byte.
+        if (plan.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+            for (auto word : GridMetrics::identity_words(grid.dyadic_identity))
+                hash.u64(word);
     }
     hash.u64(static_cast<std::uint64_t>(plan.dimension));
     hash.u64(static_cast<std::uint64_t>(plan.species_count));
@@ -250,7 +263,7 @@ inline bool matches_amr_flux_geometry(
         if (plan.active_blocks[index] != id) return false;
         const auto& current=pool.GetBlock(id).grid;
         const auto& saved=plan.native_grids[index];
-        return flux_plan_detail::same_grid_contract(saved,current)
+        return flux_plan_detail::same_grid_contract(saved,current,semantics)
             && saved.nblockx1 == current.nblockx1
             && saved.nblockx2 == current.nblockx2
             && saved.nblockx3 == current.nblockx3;
@@ -590,8 +603,9 @@ inline double angular_reflux_factor(const AmrFluxTopologyPlan& topology,
     const auto geometry=GridMetrics::make_geometry_view(native,topology.semantics);
     const int i=native.Is()+cell.first[0];
     const double left=geometry.GetFacePosL(i),right=geometry.GetFacePosR(i);
-    const double V=GridMetrics::Rz::CellVolume(left,right,geometry.dx2);
-    const double W=GridMetrics::Rz::AngularMomentumMeasure(left,right,geometry.dx2);
+    const int j=native.Js()+cell.first[1];
+    const double V=GridMetrics::CellVolume(geometry,i,j,0);
+    const double W=GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j);
     if(!amr_plan_detail::is_finite_binary64(V)||V<=0.
         ||!amr_plan_detail::is_finite_binary64(W)||W<=0.)
         throw std::invalid_argument("invalid angular AMR cell measure");

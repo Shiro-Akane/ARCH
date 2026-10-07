@@ -311,6 +311,12 @@ public:
                          config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3);
         root_grid.dim = config.grid.dim;
         root_grid.geometry = config.grid.geometry;
+        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            const bool lower=config.grid.x2l_boundary_type=="periodic";
+            const bool upper=config.grid.x2r_boundary_type=="periodic";
+            if(lower!=upper)throw std::invalid_argument("Native RZ axial periodic boundaries must be paired");
+            root_grid.dyadic_identity.periodic_axial=lower;
+        }
 
         // Root-level cell spacing
         double total_x1_len = config.grid.x1_max - config.grid.x1_min;

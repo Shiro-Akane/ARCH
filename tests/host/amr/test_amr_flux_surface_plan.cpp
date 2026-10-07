@@ -559,6 +559,85 @@ void test_rz_registration_reflux(int direction, double inner,
     expect(control.RequireFluxTopologyPlan(species,rz,-1,angular).fingerprint==original_hash,
         "RZ cache rebuild changed original identity");
     const auto original_reflux_hash=control.RequireRefluxTopologyPlan(species,rz,angular).fingerprint;
+
+    // These existing scalar fixtures intentionally have unbound native grids.
+    // Seed identity equality is a cache/borrow contract, not permission to
+    // authenticate new hierarchy geometry. Exercise the actual cache and both
+    // real producers with local bounds/dx and handle epochs left untouched.
+    {
+        std::vector<GridMetrics::DyadicGridIdentity> original_seeds;
+        std::vector<FluidState> original_states;
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);
+            expect(!block.grid.dyadic_identity.bound,
+                "scalar cache fixture unexpectedly acquired authenticated native hierarchy identity");
+            original_seeds.push_back(block.grid.dyadic_identity);
+            original_states.push_back(block.fluid_state);
+        }
+        const auto register_before=control.flux_register.snapshot_host();
+        expect(!topology.routes.empty(),"identity cache fixture has no genuine producer route");
+        const auto& producer_route=topology.routes.front();
+        const auto& producer_grid=control.pool->GetBlock(producer_route.key.source_block).grid;
+        std::vector<FluidVector> unchanged_flux(producer_grid.GetTotalSize());
+        std::vector<double> unchanged_species(species*producer_grid.GetTotalSize());
+        for(int mutation=0;mutation<7;++mutation) {
+            for(int id:active) {
+                auto& seed=control.pool->GetBlock(id).grid.dyadic_identity;
+                if(mutation==0)seed.root_lower[0]=.125;
+                else if(mutation==1)seed.root_upper[1]=1.;
+                else if(mutation==2)seed.root_blocks[0]=3;
+                else if(mutation==3)seed.level=1;
+                else if(mutation==4)seed.logical[1]=1;
+                else if(mutation==5)seed.periodic_axial=true;
+                else seed.root_lower[1]=-0.; // Same value; distinct binary root identity.
+                expect(!seed.bound,"cache mutation granted scientific hierarchy authentication");
+            }
+            const auto changed=control.RequireFluxTopologyPlan(species,rz,-1,angular);
+            expect(changed.epoch==topology.epoch&&changed.fingerprint!=original_hash,
+                "actual flux cache ignored root seed identity while epoch stayed fixed");
+            const auto changed_reflux=control.RequireRefluxTopologyPlan(species,rz,angular);
+            expect(changed_reflux.operations.size()==reflux.operations.size(),
+                "identity-only cache rebuild changed unchanged local reflux geometry");
+            bool stale_flux=false;
+            try {amr::RegisterCoarseFineFluxes(control,topology,producer_route.key.source_block,
+                producer_grid,amr::axis_value(producer_route.key.axis),unchanged_flux,
+                unchanged_species,species,1.);}
+            catch(const std::invalid_argument&) {stale_flux=true;}
+            expect(stale_flux,"actual producer consumed stale root-identity flux plan");
+            bool stale_reflux_producer=false;
+            try {(void)amr::build_amr_reflux_topology_plan(*control.pool,topology);}
+            catch(const std::invalid_argument&) {stale_reflux_producer=true;}
+            expect(stale_reflux_producer,"actual reflux producer consumed stale root-identity topology");
+            bool stale_accumulation=false;
+            try {control.ApplyReflux(dt,&amr::Block::fluid_state,rz,angular);}
+            catch(const std::invalid_argument&) {stale_accumulation=true;}
+            expect(stale_accumulation,"new root identity consumed old accumulated flux fingerprint");
+            expect(control.flux_register.host_snapshot_matches(register_before),
+                "stale native identity wrote accumulated flux before rejection");
+            for(std::size_t n=0;n<active.size();++n) {
+                auto& block=control.pool->GetBlock(active[n]);const auto& saved=original_states[n];
+                const auto& state=block.fluid_state;
+                expect(state.rho==saved.rho&&state.mom_u==saved.mom_u
+                    &&state.mom_v==saved.mom_v&&state.mom_w==saved.mom_w
+                    &&state.eng==saved.eng&&state.enuc_rate==saved.enuc_rate
+                    &&state.mass_fractions==saved.mass_fractions,
+                    "stale native identity changed physical/reflux state before rejection");
+                // No local coordinate/layout/epoch changed during the mutation.
+                const auto& old_grid=topology.native_grids[n];const auto& grid=block.grid;
+                expect(grid.x1_min==old_grid.x1_min&&grid.x1_max==old_grid.x1_max
+                    &&grid.x2_min==old_grid.x2_min&&grid.x2_max==old_grid.x2_max
+                    &&grid.dx1==old_grid.dx1&&grid.dx2==old_grid.dx2
+                    &&grid.ng==old_grid.ng&&grid.stride_y==old_grid.stride_y
+                    &&grid.stride_z==old_grid.stride_z&&handles[n].epoch==topology.epoch,
+                    "root identity cache negative accidentally changed local geometry/epoch");
+                block.grid.dyadic_identity=original_seeds[n];
+            }
+            expect(control.RequireFluxTopologyPlan(species,rz,-1,angular).fingerprint==original_hash,
+                "restoring unbound seed did not recover the actual original topology identity");
+            expect(control.RequireRefluxTopologyPlan(species,rz,angular).fingerprint==original_reflux_hash,
+                "restoring seed changed the original reflux mathematical plan");
+        }
+    }
     for(int id:active) {
         auto& g=control.pool->GetBlock(id).grid;g.x1_min+=.125;g.x1_max+=.125;
     }

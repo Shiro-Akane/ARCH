@@ -49,12 +49,15 @@ std::array<std::size_t,7> native_storage_sizes(const FluidState& state) {
         state.eng.size(),state.enuc_rate.size(),state.mass_fractions.size()};
 }
 /** Bit-exact geometry frame, avoiding struct-padding comparisons. */
-std::array<std::uint64_t,9> native_grid_identity(const Grid& grid) {
-    return {std::bit_cast<std::uint64_t>(grid.x1_min),std::bit_cast<std::uint64_t>(grid.x1_max),
+std::array<std::uint64_t,20> native_grid_identity(const Grid& grid) {
+    std::array<std::uint64_t,20> result{std::bit_cast<std::uint64_t>(grid.x1_min),std::bit_cast<std::uint64_t>(grid.x1_max),
         std::bit_cast<std::uint64_t>(grid.x2_min),std::bit_cast<std::uint64_t>(grid.x2_max),
         std::bit_cast<std::uint64_t>(grid.x3_min),std::bit_cast<std::uint64_t>(grid.x3_max),
         std::bit_cast<std::uint64_t>(grid.dx1),std::bit_cast<std::uint64_t>(grid.dx2),
         std::bit_cast<std::uint64_t>(grid.dx3)};
+    const auto provenance=GridMetrics::identity_words(grid.dyadic_identity);
+    std::copy(provenance.begin(),provenance.end(),result.begin()+9);
+    return result;
 }
 /** Physical Neumann denotes the existing zero-normal-gradient hydro boundary. */
 arch::boundary::BoundaryType logical_type(std::string_view token) {

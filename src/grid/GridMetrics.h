@@ -14,6 +14,7 @@
 
 #include <array>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 #include "grid/Grid.h"
@@ -36,10 +37,24 @@ inline Geometry geometry_kind(const Grid& grid) {
     return geometry_from_name(grid.geometry);
 }
 
+/** Borrow actual geometry and its native generation provenance.
+ * Workflow: preserve ordinary fields; authenticate bound native root counts,
+ * local endpoints and spacing; copy the complete value-only context. Chart
+ * selection remains explicit in the semantics overload below. A fragment view
+ * cannot obtain hierarchy authority by merely setting its bound flag.
+ */
 inline GeometryView make_geometry_view(const Grid& grid) {
+    if (grid.dyadic_identity.bound
+        && (grid.dim != 2 || geometry_kind(grid) != Geometry::Cylindrical
+            || grid.nblockx1 != grid.dyadic_identity.root_blocks[0]
+            || grid.nblockx2 != grid.dyadic_identity.root_blocks[1]
+            || !matches_identity(grid.dyadic_identity,
+                {grid.x1_min,grid.x2_min},{grid.x1_max,grid.x2_max},{grid.dx1,grid.dx2})))
+        throw std::invalid_argument("Native RZ geometry view does not match actual generated Grid identity");
     return {geometry_kind(grid), grid.dim, grid.ng, grid.stride_y,
             grid.stride_z, grid.GetTotalSize(), grid.dx1, grid.dx2, grid.dx3,
-            grid.x1_min, grid.x2_min, grid.x3_min};
+            grid.x1_min, grid.x2_min, grid.x3_min,GeometrySemantics::Existing,
+            {grid.x1_max,grid.x2_max},grid.dyadic_identity};
 }
 
 /** Describe one logical finite-volume fragment without allocating a native Grid. */
@@ -150,6 +165,14 @@ ARCH_HOST_DEVICE inline double AngularMomentumMeasure(
     return CellVolume(left,right,dz)*VolumeCentroidRadius(left,right);
 }
 
+/** Actual native cell W=integral r dV, using the same real face width as V.
+ * The scalar measure leaf remains the sole integral formula for both backends.
+ */
+ARCH_HOST_DEVICE inline double AngularMomentumMeasure(const GeometryView& grid,int i,int j)
+{
+    return AngularMomentumMeasure(grid.GetFacePosL(i),grid.GetFacePosR(i),grid.CellWidth(1,j));
+}
+
 /** <r>_W = integral r^3 dr / integral r^2 dr, for m_phi reconstruction. */
 ARCH_HOST_DEVICE inline double AngularReconstructionRadius(double left, double right)
 {
@@ -208,9 +231,25 @@ ARCH_HOST_DEVICE inline double AxialTorqueMeasure(double left, double right)
 }
 
 /** Physical integral r dA, borrowed by hydro, viscosity and reflux owners. */
+/** Actual r/z torque face with explicit axial-cell identity.
+ * Radial integral is 2*pi*r_face^2*dz; dz is the real cell's face width.
+ */
+ARCH_HOST_DEVICE inline double FaceTorqueMeasure(
+    const GeometryView& grid,int direction,int i,int j,bool upper)
+{
+    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    return direction==0 ? RadialTorqueMeasure(upper?right:left,grid.CellWidth(1,j))
+                        : AxialTorqueMeasure(left,right);
+}
+
+/** Preserve the existing unbound API/arithmetic. Bound radial torque requires
+ * its actual j and fails closed here rather than inventing an axial cell.
+ */
 ARCH_HOST_DEVICE inline double FaceTorqueMeasure(
     const GeometryView& grid,int direction,int i,bool upper)
 {
+    if(grid.dyadic_identity.bound&&direction==0)
+        return std::numeric_limits<double>::quiet_NaN();
     const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
     return direction==0 ? RadialTorqueMeasure(upper?right:left,grid.dx2)
                         : AxialTorqueMeasure(left,right);
@@ -239,7 +278,7 @@ ARCH_HOST_DEVICE inline double CellVolume(const GeometryView& grid, int i, int j
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
     if (grid.semantics == GeometrySemantics::AxisymmetricRz)
-        return Rz::CellVolume(r_left,r_right,grid.dx2);
+        return Rz::CellVolume(r_left,r_right,grid.CellWidth(1,j));
     if (grid.geometry == Geometry::Cartesian) {
         double volume = grid.dx1;
         if (grid.dim >= 2) volume *= grid.dx2;
@@ -268,7 +307,7 @@ ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i
     const double r_right = grid.GetFacePosR(i);
     const double r_face = high_face ? r_right : r_left;
     if (grid.semantics == GeometrySemantics::AxisymmetricRz)
-        return dir == 0 ? Rz::RadialFaceArea(r_face,grid.dx2)
+        return dir == 0 ? Rz::RadialFaceArea(r_face,grid.CellWidth(1,j))
                         : Rz::AxialFaceArea(r_left,r_right);
     if (grid.geometry == Geometry::Cartesian) {
         if (dir == 0) return (grid.dim >= 2 ? grid.dx2 : 1.0) * (grid.dim == 3 ? grid.dx3 : 1.0);
@@ -322,7 +361,7 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
     const GeometryView& grid, int direction, int i, int j)
 {
     if (grid.semantics == GeometrySemantics::AxisymmetricRz)
-        return Rz::PhysicalSpacing(direction,grid.dx1,grid.dx2);
+        return Rz::PhysicalSpacing(direction,grid.CellWidth(0,i),grid.CellWidth(1,j));
     return PhysicalSpacing(grid.geometry, grid.dim, direction,
         grid.dx1, grid.dx2, grid.dx3, grid.GetCellCenterX(i), grid.SourceTheta(j));
 }

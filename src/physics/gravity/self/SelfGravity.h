@@ -10,6 +10,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <memory>
 
 #include "numerics/elliptic/CompositePoisson.h"
@@ -36,6 +37,10 @@ public:
     void bind(amr::EllipticMeshBinding binding, double time = 0.) const;
     // Internal CPU numerical verification only. Native candidates cannot be
     // read by normal physical patch/output consumers; public bind stays gated.
+    // maximum_work=0 selects a checked full traversal budget from the actual
+    // bound source tree and exterior faces. Nonzero values retain the explicit
+    // resource cap, including deliberately small verification budgets. This
+    // policy changes no scientific tolerance or per-leaf subdivision limit.
     void bind_native_rz_candidate(amr::EllipticMeshBinding,
         std::uint64_t maximum_boxes_per_leaf,std::uint64_t maximum_work) const;
     const RingRhsAssessment& native_rz_assessment() const;
