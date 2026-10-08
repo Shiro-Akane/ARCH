@@ -14,7 +14,7 @@ p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
 modes=p.add_mutually_exclusive_group()
 modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
-modes.add_argument("--native-rz-regrid",action="store_true",help="Explicit internal CPU RZ Runtime AMR transaction, no physical grant")
+modes.add_argument("--native-rz-regrid",action="store_true",help="Actual public Host RZ AMR transaction; time-zero owner checks only")
 p.add_argument("--materialized-source-only",action="store_true",help="One actual Native source plus candidate field snapshot, separate from lifecycle matrix")
 p.add_argument("--matched-resolution",type=int,choices=(0,1,2),default=None,
     help="Maintainer-only root-layout ordinal for native source-only export; omitted means original level 0")
@@ -80,17 +80,17 @@ summary={"scope":"Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity al
  "observedHeaderSha256":{name:source_sha(name) for name in headers},
  "timestepHeaderSha256":source_sha("src/driver/stages/DriverStages.h"),
  "rklHeaderSha256":{name:source_sha(name) for name in rkl_headers},
- "limitations":["Supported Cartesian identity path only; RZ production gravity/regrid remains gated","No actual Hydro integration or scientific evolution acceptance","No CUDA qualification; only local gravity diagnostic output"]}
+ "limitations":["This fixture checks the supported Cartesian identity path only","No actual Hydro integration or scientific evolution acceptance","No CUDA qualification; only local gravity diagnostic output"]}
 if a.native_rz:
     summary["scope"]="Actual Runtime AcceptedCurrent plus direct mathematical Scratch/Next candidate checks; no time advancement"
     summary["purposeCoverage"]={"actualRuntimeCurrent":1,"directMathematicalSlots":["Scratch","Next"],
         "directMathematicalSlotCount":2,"ownerCompleted":result.returncode==0,
         "hydroStageAuthorityTested":False,"physicalQualified":False,"scienceAccepted":False}
-    summary["limitations"]=["Native candidate only; ordinary physical readers and RZ regrid/Device gates held",
+    summary["limitations"]=["Isolated Native candidate only; ordinary isolated physical readers and Device gates held",
         "No continuous Phi/force or evolution/conservation acceptance"]
 if a.native_rz_regrid:
     summary["scope"]="Actual CPU RZ Runtime conservative AMR transactions and authentic cold parent veto; no timestep or gravity field grant"
-    summary["limitations"]=["Internal migration only; production RZ/Device gates held",
+    summary["limitations"]=["Public Host migration at time zero; Device migration not qualified",
         "No continuous Phi/force, Hydro evolution or full angular science acceptance"]
 if a.field_after_regrid:
     summary["scope"]="Actual CPU RZ Runtime refined/coarse AMR -> native field rebind; no timestep"
@@ -100,7 +100,7 @@ if a.regrid_rollback:
     summary["scope"]="Actual CPU RZ Runtime finalizer fault, source/ledger/pool rollback and retry; no timestep"
     summary["limitations"]=["Injected engineering failure only, not a physical stability/evolution gate",
         "Seven actual source Host vector addresses, values and BC frame are checked through in-place rollback; no unrelated pointer or Device ownership grant",
-        "Production RZ/Device gates held"]
+        "Isolated physical readers and Device gates held"]
 if a.materialized_source_only:
     summary["scope"]="Actual CPU Native RZ Runtime AcceptedCurrent -> checked source and Stage-owned Current numerical field; no time advancement"
     summary["purposeCoverage"]={"actualRuntimeCurrent":1,"directMathematicalSlots":[],

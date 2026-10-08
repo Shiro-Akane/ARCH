@@ -1,5 +1,10 @@
 # 当前 CUDA Release 原科学子组复验
 
+## 文档角色与当前入口
+
+合作方2026-10-05 RTX4070Ti科学检查点，按原源码、执行物及平台身份保存；不作为当前3060Ti源码增量或新同程计时的通过记录。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+
 ## 身份与范围
 
 当前CPU新ELF冻结JENS9+9及完整原矩阵80记录PASS后，按批准子集统一CUDA。

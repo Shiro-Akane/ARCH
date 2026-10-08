@@ -3197,15 +3197,24 @@ void native_rz_geometry_cache_contract() {
         require(hierarchy.level_count()>1,"cache witness lacks a real derived operator");
         const auto& original=hierarchy.level_operator(1);
         const elliptic::CompositePoisson cached(original.base(),original.cells(),original.boundary_kind());
+        // Prescribed production does not prebuild isolated diagnostics. Its
+        // on-demand getter must still expose every original exact payload.
+        const elliptic::CompositePoisson prescribed(original.base(),original.cells(),
+            original.boundary());
         require(cached.cells()==original.cells()&&cached.faces().size()==original.faces().size(),
             "cached and uncached geometry ownership differs");
         require(same_measure(cached.native_rz_measure_enclosure(),original.native_rz_measure_enclosure()),
             "cached native measure changed an original payload field");
+        require(same_measure(prescribed.native_rz_measure_enclosure(),original.native_rz_measure_enclosure()),
+            "prescribed on-demand native measure changed an original payload field");
         for(std::size_t face=0;face<original.faces().size();++face) {
             require(same_stencil(cached.native_rz_stencil_enclosure(face),original.native_rz_stencil_enclosure(face)),
                 "cached native stencil changed an original payload field");
             require(same_face(cached.native_rz_face_enclosure(face),original.native_rz_face_enclosure(face)),
                 "cached native map changed an original payload field");
+            require(same_stencil(prescribed.native_rz_stencil_enclosure(face),original.native_rz_stencil_enclosure(face))
+                &&same_face(prescribed.native_rz_face_enclosure(face),original.native_rz_face_enclosure(face)),
+                "prescribed on-demand geometry changed an original payload field");
         }
         const auto out_of_range=original.faces().size();
         require(same_stencil(cached.native_rz_stencil_enclosure(out_of_range),

@@ -8,11 +8,14 @@ import math
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import h5py
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT/'tools'))
+from validate_backend_results import stored_arrays_equal
 G = 6.67430e-8
 RADIUS = 1e8
 RHO = 1e7
@@ -188,7 +191,7 @@ class RadialCampaign:
             a.visititems(lambda path, value: names.append(path)
                          if isinstance(value, h5py.Dataset) else None)
             require(a.attrs['time'] == b.attrs['time'] and
-                    all(np.array_equal(a[path][:], b[path][:]) for path in names),
+                    all(stored_arrays_equal(a[path][:], b[path][:]) for path in names),
                     name + ': checkpoint continuation changed state')
         record['restart_bitwise_equal'] = True
 

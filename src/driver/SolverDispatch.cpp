@@ -6,7 +6,8 @@
  * initialization or strict checkpoint restoration. Narrow integrator entries
  * select the typed driver; timestep execution remains in the common driver.
  * Workflow:
- * 1. Validate startup configuration, backend capability and restart provenance.
+ * 1. Validate startup configuration, backend capability and restart provenance;
+ *    restore the same resolved chart/state identity as a fresh initialization.
  * 2. Resolve compile-time EOS, flux and integrator policy bindings.
  * 3. Start one Driver runtime without placing numerical formulas in dispatch.
  */
@@ -308,8 +309,14 @@ void DispatchSolver(ProblemGenerator &problem,
             config, specs, plan.eos, requirements.burn,
             canonical_policy_name<NetworkPolicies>(plan.network),
             requirements.use_nse);
+        // The same resolved chart owns fresh initialization and strict restart.
+        // Legacy polar input never acquires RZ J/W semantics by filename alone.
+        const auto expected_geometry =
+            initialization.geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                ? io::current_rz_checkpoint_geometry()
+                : io::CheckpointGeometryIdentity{1,"existing"};
         read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs,
-                 expected_provenance);
+                 expected_provenance, expected_geometry);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
         print_amr_resolution_summary(config);

@@ -102,7 +102,8 @@ static void quartic_completed_reference(const amr::AMRControl& control){
     }
 }
 /** Real four-fine Runtime source, actual analytic user BC, conservative parent
- * attempt and typed early thermal veto; no evolved step or public RZ grant.
+ * attempt and typed early thermal veto through the public Host regrid entry.
+ * This time-zero transaction does not claim evolved accuracy.
  * The exact independent Fraction reference is rho=32-r^4, Omega=1,e0=2^-25.
  * All fine logical states are admissible; several coarse interiors are not.
  */
@@ -163,7 +164,7 @@ static void cold_quartic_parent_veto(const char* output){
         versions.push_back(runtime.stage_context().ledger.inspect({handles[n],arch::state::StateSlot::Current}).interior.version);
     }
     const auto boundary_frame=boundary.snapshot_stage_context();
-    require(!runtime.regrid_native_rz_candidate(0,0.),"inadmissible quartic coarse parent was published");
+    require(!runtime.perform_regrid(0,0.),"inadmissible quartic coarse parent was published");
     const auto& records=runtime.native_coarsening_veto_records();
     require(records.size()==1,"real quartic restriction did not yield one exact parent veto");
     const auto& record=records.front();
@@ -271,9 +272,8 @@ int main(int argc,char** argv){
                 <<" total="<<assessment.conditional.total_residual_upper
                 <<" safe="<<assessment.conditional.tolerance_safe<<" time=0 steps=0"<<std::endl;
         };
-        rejects([&]{runtime.perform_regrid(0,0.);},"production RZ regrid gate lifted");
         const auto root_handles=runtime.handles();const auto root=totals(control);
-        require(runtime.regrid_native_rz_candidate(0,0.),"Runtime RZ refinement missing");
+        require(runtime.perform_regrid(0,0.),"Runtime RZ refinement missing");
         require(runtime.handles().size()>root_handles.size(),"Runtime RZ leaf count did not increase");
         require(runtime.handles().front().epoch!=root_handles.front().epoch,"refine epoch unchanged");
         conservation(root,totals(control),"refine");
@@ -304,7 +304,7 @@ int main(int argc,char** argv){
         arch::scheduler::publish_completed_interior(coarsen_context,runtime.handles(),arch::state::StateSlot::Current);
         runtime.ensure_fluid_ghosts();
         const auto coarsen_input=totals(control);
-        require(runtime.regrid_native_rz_candidate(0,0.),"Runtime RZ coarsening missing");
+        require(runtime.perform_regrid(0,0.),"Runtime RZ coarsening missing");
         require(runtime.handles().size()==root_handles.size(),"Runtime RZ coarsening root count");
         conservation(coarsen_input,totals(control),"coarsen");
         if(field_after_regrid)verify_field("coarse");
@@ -312,14 +312,13 @@ int main(int argc,char** argv){
         rejects([&]{coarse.ledger.inspect({refined_handles.back(),arch::state::StateSlot::Current});},
             "coarsened ledger retained refined handle");
         const auto stable=runtime.handles();const auto stable_totals=totals(control);
-        require(!runtime.regrid_native_rz_candidate(0,0.),"constant Runtime RZ no-change changed topology");
+        require(!runtime.perform_regrid(0,0.),"constant Runtime RZ no-change changed topology");
         require(runtime.handles()==stable,"no-change replaced identity");
         conservation(stable_totals,totals(control),"no-change");
-        rejects([&]{runtime.perform_regrid(0,0.);},"candidate transaction enabled production RZ");
         require(runtime.regrid_records().size()>=3,"Runtime regrid records missing");
         std::cout<<"ACTUAL_RZ_RUNTIME_REGRID_PASS omega="<<omega<<" root_blocks=2 refined_blocks="
             <<refined_handles.size()<<" coarse_blocks=2 actual_ledger=1 old_handle_rejected=1"
-            <<" no_change_identity=1 production_gate_held=1 time=0 steps=0"<<std::endl;
+            <<" no_change_identity=1 production_transaction=1 time=0 steps=0"<<std::endl;
     }
     cold_quartic_parent_veto(argv[1]);
     return 0;

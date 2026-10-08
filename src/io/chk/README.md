@@ -17,9 +17,9 @@ are rejected explicitly; boundary budgets restart at process launch.
 Actual serialization is delegated entirely to the adjacent [HDF5 writer](../hdf5/README.md). Note that native composition, conserved species, controller states, and output phases are strict restart contracts, not opportunities for backend-specific state reconstruction. Refer to [restart validation](../../../validation/restart/README.md) for the exact recovery and forward-continuation checks, bearing in mind that these possess distinct acceptance criteria.
 
 
-## Internal RZ state identity
+## RZ state identity
 
-The gated RZ path uses geometry_semantics_revision=2,
+The RZ path uses geometry_semantics_revision=2,
 geometry_chart=axisymmetric-rz and mandatory
 state_semantics=rz-m-phi-j-over-w-v1. Data/mom_w is the unique
 m_phi=J_cell/W_cell, with W=integral(r dV), in g/(cm^2 s).
@@ -30,11 +30,13 @@ No additional independently evolved angular array is serialized.
 Revision 1 cannot identify this representation and is rejected rather than
 converted. A missing/different tag is rejected before live hierarchy replacement.
 Layout version 6 and the existing chart revision 1 compatibility are unchanged.
-This discriminator does not prove a complete RZ restart contract: native
-measure/domain identity and other gated consumers require their own validation.
+The production startup reader selects this identity from the same resolved
+chart used for fresh initialization. Host prescribed self-gravity supports
+dynamic-AMR restart through the shared transaction. Other gated consumers and
+continuous physical accuracy retain their separate acceptance requirements.
 
 
-The current internal RZ path also requires NativeDomain version 1:
+The RZ path also requires NativeDomain version 1:
 FP64 bounds [r_min,r_max,z_min,z_max] in cm, root_blocks [Nr,Nz],
 cell_shape [BLOCK_NX,BLOCK_NY], and full_rotation normalization.
 The writer binds the actual tree root, rejects a differing active config,

@@ -1053,7 +1053,10 @@ void SelfGravity::require_native_frame(const GravitySolveIdentity& source,
  */
 void SelfGravity::require_native_frame_lease(const GravitySolveIdentity& source,
     std::uint64_t field_generation,std::uint64_t source_generation) const {
-    const auto& w=workspace();w.require(w.scope);
+    const auto& w=workspace();
+    // The original purpose gate starts with require(scope): check the same
+    // completed source/scope once before dereferencing its borrowed issuer.
+    // Runtime and patch pre/post fences remain with their original owners.
     w.require_runtime_purpose(GravityFieldPurpose::HydroStage);
     if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
         ||w.solver.op().base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz

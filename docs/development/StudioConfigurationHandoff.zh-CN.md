@@ -1,4 +1,4 @@
-> 当前合并与 release 收束以 [2026-10-06 计划](ComputeStudioReleasePlan-20261006.zh-CN.md)为入口；下文保留各阶段的证据日期和覆盖边界。
+> 本文件保存原联合交付范围、契约与证据要求。O7实现已移交，全部Core及科学验收由当前维护者负责；当前执行顺序和未完成项以[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)为准，证据见[release记录](ComputeStudioReleasePlan-20261006.zh-CN.md)。原分工、平台和命令按其日期及身份阅读。
 
 # Core、Studio、Jeans 与 RZ 联合交付计划
 

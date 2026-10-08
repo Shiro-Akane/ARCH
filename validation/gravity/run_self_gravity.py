@@ -18,6 +18,7 @@ import numpy as np
 from gravity_box import BoxCampaign
 from radial_1d import RadialCampaign
 from user_boundaries import UserBoundaryCampaign
+from validate_backend_results import stored_arrays_equal
 
 ROOT = Path(__file__).resolve().parents[2]
 RHO, PRESSURE, AMPLITUDE, G = 1e7, 6e6, 1e-4, 6.67430e-8
@@ -133,7 +134,7 @@ class Campaign:
             names = []
             left.visititems(lambda name, obj: names.append(name) if isinstance(obj, h5py.Dataset) else None)
             for name in names:
-                require(np.array_equal(left[name][:], right[name][:]), 'restart differs in ' + name)
+                require(stored_arrays_equal(left[name][:], right[name][:]), 'restart differs in ' + name)
             require(left.attrs['time'] == right.attrs['time'], 'restart time mismatch')
         self.results.append(dict(name='restart-identity', datasets=len(names), bitwise_equal=True))
         # A retired input must fail during configuration, before restart IO.

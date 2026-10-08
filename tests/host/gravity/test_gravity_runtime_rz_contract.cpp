@@ -736,7 +736,7 @@ int main(int argc,char** argv){
     }
     require(capture->gathers==3,"actual RZ Runtime gather count");
     stage.invalidate();rejects([&]{gravity.native_rz_potential();},"invalidation retained candidate");
-    rejects([&]{runtime.perform_regrid(0,0.);},"RZ production regrid gate lifted");
+    rejects([&]{runtime.perform_regrid(0,0.);},"nonfinite Current source accepted by public RZ regrid");
     require(capture->gathers==3,"regrid gate executed gravity");
     std::cout<<"ACTUAL_RZ_RUNTIME_CONTRACT_PASS blocks=2 gathers=3 slots=3 runtime_current=1 direct_mathematical_slots=2"
         <<" actual_ledger=1 nonfirst_unpublished=1 invalidation=1"

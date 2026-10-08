@@ -134,7 +134,7 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cartesian 3D | `isolated` | Physical fluid faces may be outflow or reflecting; gravity uses a finite-mass boundary |
 | Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
 | Spherical equatorial polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
-| Axisymmetric cylindrical 2D `(r,z)` | Host: `dirichlet`, `neumann`, `user` | Shared composite Poisson and native momentum/work path; radial/axial faces, full-ring volume and regular axis join; isolated fields and CUDA remain gated |
+| Axisymmetric cylindrical 2D `(r,z)` | Host: `dirichlet`, `neumann`, `user` | Shared composite Poisson and native momentum/work path; full-ring measures and regular axis join. Host dynamic AMR uses the common completed-EOS transaction; checkpoints retain native J/W identity. Isolated fields and CUDA remain gated |
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
 | Qualified scopes of all three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 
@@ -689,13 +689,13 @@ fail these conditions produce errors rather than disabling the indicator.
 Meeting the configuration conditions does not establish backend readiness:
 explicit CUDA still requires an available CUDA build and device.
 
-The public CPU entry passed nine evolutions and nine checkpoint continuations
-for a uniform periodic background with a single constant-specific-heat IdealGas.
-Full qualification for nonzero gravity fields and general EOS remains pending.
-Explicit Cartesian CUDA wiring is an engineering candidate whose final GPU
-scientific validation has not passed; it does not qualify the full RZ feature.
-See the [integration and release plan](development/ComputeStudioReleasePlan-20261006.zh-CN.md)
-for current evidence and remaining gates.
+The public CPU entry has evolution and continuation checks for a uniform
+periodic constant-specific-heat IdealGas background. Host prescribed-boundary
+RZ also has initial resolution repair, short JENS output evolution and strict
+restart checks. General EOS, nonuniform gravity coupling and the complete RZ
+scientific exits still require qualification. Explicit Cartesian CUDA wiring
+is an engineering candidate awaiting final GPU scientific validation. See
+[gravity verification](../validation/gravity/README.md) for the actual scope and evidence.
 
 `ENTR` is the local proxy `p/rho^Gamma1`, with
 `Gamma1 = rho*c_s^2/p` from the active EOS. It is the usual constant-gamma

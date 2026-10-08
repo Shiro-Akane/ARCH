@@ -9,6 +9,10 @@
 [离散记录](../../docs/development/P2PoissonMultigrid.zh-CN.md)
 保留原始预算。生产 AMR 与设备证据见下文。
 
+## 当前Host RZ有限记录
+
+[当前处理后摘要](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json)保存共享Poisson/MG、指定势／通量和用户边界、动态混合AMR、JENS初态修复／输出及八状态字段严格续算的源码与执行物身份。该记录限于已列明的Host短程场景，完整孤立连续场／总能量、曲线全应力、Device及长程仍独立验收。原预算与既有owner保留；旧记录的坐标、输入或执行物身份不自动迁移。
+
 ## 常外部重力
 
 下方外部源项测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期

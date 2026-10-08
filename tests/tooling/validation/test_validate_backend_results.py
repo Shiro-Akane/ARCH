@@ -23,6 +23,60 @@ def load_module():
 
 
 class BackendValidationTests(unittest.TestCase):
+    def test_stored_numeric_identity_detects_signed_zero_dtype_shape_and_ulp(self):
+        import numpy as np
+        module = load_module()
+        for field in ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng', 'rhoX', 'X', 'enuc_rate'):
+            with self.subTest(field=field):
+                original = np.array([[1., -0.]], dtype=np.float64)
+                self.assertTrue(module.stored_arrays_equal(original, original.copy()))
+                for changed in (np.array([[1., 0.]]),
+                                np.array([[np.nextafter(1., 2.), -0.]]),
+                                original.astype(np.float32), original.reshape(2)):
+                    self.assertFalse(module.stored_arrays_equal(original, changed))
+        self.assertTrue(module.stored_arrays_equal(np.array([b'He4'], dtype=object),
+                                                  np.array([b'He4'], dtype=object)))
+        self.assertFalse(module.stored_arrays_equal(np.array([b'He4'], dtype=object),
+                                                   np.array([b'C12'], dtype=object)))
+
+    def test_user_boundary_checkpoint_rejects_each_missing_or_nonfinite_field(self):
+        import h5py
+        import numpy as np
+        script = ROOT/'validation/gravity/user_boundaries.py'
+        spec = importlib.util.spec_from_file_location('user_boundary_reader_controls', script)
+        reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reader)
+        parameters = dict(geometry='cylindrical', x1_min=0, x1_max=1,
+                          x2_min=-.5, x2_max=.5, x3_min=0, x3_max=1,
+                          nblockx1=1, nblockx2=1, nblockx3=0)
+        fields = ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng', 'rhoX', 'X', 'enuc_rate')
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'native-checkpoint.h5'
+            with h5py.File(path, 'w') as h:
+                h.attrs.update(dim=2, time=0., step=0, boundary_identity='test',
+                               geometry_chart='axisymmetric-rz',
+                               state_semantics='rz-m-phi-j-over-w-v1')
+                for key in ('level', 'logical_x1', 'logical_x2', 'logical_x3'):
+                    h.create_dataset('Blocks/'+key, data=np.array([0], dtype=np.int32))
+                h.create_dataset('state_repairs', data=np.zeros(1))
+                for field in fields:
+                    shape = (1, 1, 256) if field in ('rhoX', 'X') else (1, 256)
+                    h.create_dataset('Data/'+field, data=np.ones(shape, dtype=np.float64))
+            reader.checkpoint(path, parameters)
+            for field in fields:
+                with self.subTest(field=field), h5py.File(path, 'r+') as h:
+                    saved = h['Data/'+field][:]
+                    changed = saved.copy(); changed.flat[0] = np.nan
+                    h['Data/'+field][...] = changed
+                with self.assertRaisesRegex(RuntimeError, 'nonfinite '+field):
+                    reader.checkpoint(path, parameters)
+                with h5py.File(path, 'r+') as h:
+                    del h['Data/'+field]
+                with self.assertRaises(KeyError):
+                    reader.checkpoint(path, parameters)
+                with h5py.File(path, 'r+') as h:
+                    h.create_dataset('Data/'+field, data=saved)
+
     def test_hydro_temporal_reference_and_order_negative_controls(self):
         import math
         spec = importlib.util.spec_from_file_location('hydro_time_reference', ROOT / 'validation/hydro/time_reference.py')

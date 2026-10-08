@@ -103,7 +103,7 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 笛卡尔三维 | `isolated` | 物理流体面可流出或反射；引力由有限质量分布设边界 |
 | 柱／球坐标一维径向 | `isolated` | 半径非负，径向内流体面反射 |
 | 球坐标二维赤道极平面 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
-| 轴对称柱坐标二维 `(r,z)` | Host：`dirichlet`、`neumann`、`user` | 共用复合泊松与原生动量／功路径；径向／轴向面、完整环体积及正则轴接合；孤立场和 CUDA 仍保持门槛 |
+| 轴对称柱坐标二维 `(r,z)` | Host：`dirichlet`、`neumann`、`user` | 共用复合泊松与原生动量／功路径、全环测度及正则轴接合；Host 动态 AMR 采用完成 EOS 检查的共同事务，checkpoint 保留原生 J/W 身份；孤立场和 CUDA 仍保持门槛 |
 | 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
 | 三类几何已验收的一至三维范围 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
 
@@ -509,7 +509,7 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 
 `JENS` 用于细化或显式输出时要求 `gravity_type=self`，并显式选择 `compute_backend=cpu`，或在 `geometry=cartesian` 下选择 `compute_backend=cuda`；`auto` 和曲线坐标 CUDA 组合会被拒绝。细化还必须提供有限的 `jeans_cells >= 4`，输出单独选择 `JENS` 不要求该细化参数。`plt_variables=ALL` 在上述自引力/后端组合中包含 `JENS`。规范名称是 `JENS`；`JEANS` 等别名以及不满足条件的输入会报错，不会自动关闭指标。声明符合配置条件不表示运行后端已就绪；显式 CUDA 仍需可用的 CUDA 构建与设备。
 
-CPU 公共入口已完成均匀周期背景、单一恒比热 IdealGas 的九组演化与九组 checkpoint 续算检查。非零引力场和一般 EOS 的完整验收仍待补齐；笛卡尔显式 CUDA 接线属于工程候选，最终 GPU 科学验收尚未通过，也不代表完整 RZ 通过。当前证据与后续门槛见[集成与发布计划](development/ComputeStudioReleasePlan-20261006.zh-CN.md)。
+CPU公共入口已有单一恒比热IdealGas的均匀周期背景演化／续算检查；Host显式势边界RZ另有初态分辨率修复、短程JENS输出和严格续算检查。一般EOS、非均匀引力耦合及完整RZ科学出口仍待验收；笛卡尔显式CUDA接线属于工程候选，最终GPU科学验收尚未通过。实际范围与证据见[引力验证](../validation/gravity/README.zh-CN.md)。
 
 `ENTR` 是局部代理量 `p/rho^Gamma1`，其中活动 EOS 给出 `Gamma1 = rho*c_s^2/p`。对于常 gamma 理想气体，它是通常的不变量；对于一般 EOS 策略，它是细化代理量。它不是 EOS 返回的绝对熵，不能用来把一般状态沿等熵线移动。固定组分等熵状态必须使用 EOS 策略接口一节记录的微分热力学恒等式构造。
 

@@ -90,7 +90,7 @@ arch::elliptic::FaceBoundaryKind face_kind(arch::boundary::GravityBoundaryCondit
     case arch::boundary::GravityBoundaryCondition::Robin: return arch::elliptic::FaceBoundaryKind::Robin;
     case arch::boundary::GravityBoundaryCondition::Periodic: return arch::elliptic::FaceBoundaryKind::Periodic;
     }
-    return arch::elliptic::FaceBoundaryKind::Neumann;
+    throw std::invalid_argument("User gravity boundary requires a known face kind");
 }
 
 /** Reject a side policy that is not finite and coercive. */

@@ -261,9 +261,11 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
     for (double& weight:weights_) weight/=total_volume.value();
     build_faces();
     // Final faces include policy elimination and positive-diagonal recovery.
-    // Only the actual finest Native owner repeatedly evaluates these proofs;
-    // derived hierarchy levels retain their original on-demand construction.
-    if (!fine && base_.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+    // The isolated finest Native owner repeatedly evaluates these proofs.
+    // Prescribed and derived operators retain the original on-demand getters:
+    // an ordinary solve does not consume the diagnostic geometry records.
+    if (!fine && kind_!=BoundaryKind::User
+        && base_.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
         prepare_native_rz_geometry_cache();
 }
 /** Validate side coefficients, periodic pairing and the radial fit shape.

@@ -1,5 +1,10 @@
 # O7.1 JENS：调用方、修改点、独立参考与测试映射
 
+## 文档角色与当前入口
+
+2026-10-03实施前映射；保留冻结公式、调用方及当时差距。现有JENS实现已移交，表中的“尚无／未接入”描述原基线，不作为再次实施的指令。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+
 2026-10-03；只读审计基线 fd9502c3ffb5de9c9571d57319a074d4b6c82b00。
 本文件是联合执行细则第2节要求的代码前映射，不是实现完成或科学批准。
 前序全模型桌面验收仍未完整关闭；本次仅准备数值工作，不提前开放JENS能力。
@@ -14,9 +19,9 @@ rho为已接受总正密度，不是Poisson扣均值密度。声速消费现有E
 jeans_cells仅一个AMR控制，显式有限实数≥4；推荐8仍非运行默认。
 曲率refine_threshold/derefine_threshold不能用于Jeans格数。
 
-## 真实当前代码与修改映射
+## 原审计基线代码与修改映射
 
-| 调用方/所有者 | 当前证据 | 实施修改点 | 必需独立证据 |
+| 调用方/所有者 | 原基线证据 | 实施修改点 | 必需独立证据 |
 | --- | --- | --- | --- |
 | physics/diagnostics | 现有VelocityDiagnostics被AMR和Plot共用；尚无Jeans叶函数 | 同目录内一个Host/device可调用数学叶函数，AMR/plot两消费者共享；完整职责才单列头文件 | 独立IdealGas解析值、密度/声速/网格缩放、极低正密度和非法/溢出 |
 | RefinementIndicatorMath.h | make_selection明确拒绝refine_on_jeans；cell_error只计算Löhner曲率 | Jeans走独立分辨约束并合并flag，不能作为新曲率Field送入cell_error | 均匀零曲率也细化；任一refine/全部可粗化 |
@@ -31,7 +36,7 @@ jeans_cells仅一个AMR控制，显式有限实数≥4；推荐8仍非运行默�
 | Studio runtime schema / AMR表单 | 当前保持JENS unavailable；动态消费binary schema | 跟随已发布能力，新增控制来自Core；不本地复制默认或科学公式 | 原文/Undo/缺项定位/版本和Build身份 |
 | cuda/amr/RefinementIndicators.cu | 已复用cell_error和既有workspace/归约，CPU前尚不验收CUDA | 共享数学/flags，新增最小值与失败证据；只回传必要块决策，不下载全域 | CPU后统一构建；真实cuda identity/device safety及相同拓扑规则 |
 
-## 实施与检验顺序
+## 原实施与检验顺序
 
 1. 维护者确认下列科学待决项；同时完成前序全模型桌面出口。
 2. 共享数学叶函数与CPU解析单测；随后配置条件/只输出路径，不能先声明AMR支持。

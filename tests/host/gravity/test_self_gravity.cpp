@@ -1299,8 +1299,8 @@ void boundary_normals() {
     std::cout<<"boundary normals passed\n";
 }
 
-/** A callback may not poison a stage with a nonfinite coefficient, datum or
- *  time; each must be rejected before any boundary vector upload. */
+/** A callback may not poison a stage with an unknown kind, nonfinite
+ *  coefficient, datum or time; reject before any boundary vector upload. */
 void user_nonfinite() {
     SimConfig config;config.grid.dim=1;config.grid.nblockx1=4;config.grid.nblockx2=config.grid.nblockx3=0;
     config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="outflow";
@@ -1322,6 +1322,10 @@ void user_nonfinite() {
         return arch::boundary::GravityBoundaryData::Robin(inf,1.,0.);},"nonfinite Robin coefficient accepted");
     reject([&](const arch::boundary::GravityBoundaryContext&){
         return arch::boundary::GravityBoundaryData::Neumann(nan);},"nonfinite Neumann datum accepted");
+    reject([](const arch::boundary::GravityBoundaryContext&){
+        return arch::boundary::GravityBoundaryData{
+            static_cast<arch::boundary::GravityBoundaryCondition>(255),0.,1.,0.};
+        },"unknown gravity boundary kind silently treated as Neumann");
     reject([](const arch::boundary::GravityBoundaryContext&){
         return arch::boundary::GravityBoundaryData::Dirichlet(0.);},"nonfinite boundary time accepted",nan);
     std::cout<<"user nonfinite rejections passed\n";

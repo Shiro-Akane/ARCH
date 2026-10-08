@@ -1,5 +1,10 @@
 # compute/optim 与 Studio 集成验收记录
 
+## 文档角色与当前入口
+
+2026-10-06集成快照和历史证据；FAILED／NOT_RUN仅适用于文内原身份。后续已有实际桌面/活动关闭及CPU修复，不能把本页旧状态直接加入当前待执行队列。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+
 本次以 `compute/optim` 的 `a566310ed3327111356b4e4df10853f0f5faf8e1` 为本地起点，合入协作者 `studio/compute-optim-integration` 的 `b7cb8b69845d44d6cb0ec4d6b19f4aabb4c65b14`，并完成兼容修正、Linux 桌面依赖准备及 CPU 验证。集成工程检查通过；正式 release 仍须按[收束计划](ComputeStudioReleasePlan-20261006.zh-CN.md)完成剩余功能与科学验收。本次不合入 `main`，不创建 release tag，也没有进行 CUDA/GPU 编译。
 
 [机器可读验收摘要](ComputeStudioIntegrationSummary-20261006.json)记录本轮实际数量与未完成状态；各测试组有交集，不计算相加后的“总验收数量”。

@@ -11,6 +11,10 @@ periodic/Dirichlet convergence and solver failure handling; its
 [discretization record](../../docs/development/P2PoissonMultigrid.zh-CN.md)
 preserves the original budgets. Production AMR and device evidence are linked below.
 
+## Current bounded Host RZ evidence
+
+The [current processed summary](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json) identifies shared Poisson/MG, prescribed potential/flux and user boundaries, dynamic mixed AMR, JENS initial repair/output and strict restart of eight state fields. This evidence covers the listed short Host cases; isolated continuum fields/total energy, full curved stress, Device and long trajectories require separate qualification. Original budgets and existing owners remain in place, and historical chart/input/binary identities retain their original scope.
+
 ## Constant external gravity
 
 The external-source tests below apply a prescribed acceleration; they do not solve

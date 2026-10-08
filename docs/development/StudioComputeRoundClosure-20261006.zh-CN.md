@@ -1,5 +1,10 @@
 # Studio / Compute 本轮冻结交付：真实 RZ 外源 owner / RK / checkpoint
 
+## 文档角色与当前入口
+
+合作方2026-10-06冻结交付记录，保留原私有patch及执行物身份；当前集成后的公共能力和剩余缺陷另外逐项验收。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+
 日期：2026-10-06。分支：studio/compute-optim-integration。
 交付父节点：1f743efd7cf7d0793a766f3c2cd4fdca1bc9cadd。
 已 fetch 并完整阅读 compute/optim 的 b466ce0216928fee56878afe43aae9e8a1614f25 收尾清单与归并说明；未 merge/cherry-pick 该说明线、O8 或 main。

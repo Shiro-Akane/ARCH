@@ -1,10 +1,15 @@
 # O7.2–O7.5 RZ 实施映射与 Core review 包
 
+## 文档角色与当前入口
+
+实施前RZ调用方映射及原基线差距；chart、V/W、AMR、IO等已有交付实现。表中的修改点用于核对已有消费者，不构成重建整套RZ的任务。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+
 基线 af18b44ae16023fa266bca2cf1a7fa0a2d5a1671。本步落实
 JeansRZPlatformHandoff.zh-CN.md §2 的实施前独立 RZ 映射要求。
 不是 RZ 实现、科学通过或能力开放；O7.1 CPU 前置及科学确认仍保留。
 
-## 1. 已冻结语义与当前差距
+## 1. 已冻结语义与原基线差距
 
 Target 已明确 2D cylindrical=(r,z)，3D cylindrical=(r,z,phi)；
 PointCoords.r 仍是球半径，r_cy/z_cy 是柱坐标。旧极平面只能经维护者复核
@@ -21,7 +26,7 @@ GeometricSources 的二维第二动量仍是旋流。GravityBoundary::values 的
 dimension==2 分支调用 logarithmic kernel，near_leaf_potential 同样选择log。
 这些不是RZ实现，不能仅替换 API 文案、单位或 z alias。
 
-## 2. 当前调用方 → 修改点 → 参考 → 必需测试
+## 2. 原基线调用方 → 修改点 → 参考 → 必需测试
 
 | 当前 owner/消费者 | 完整迁移点 | 既有参考与验证入口 |
 | --- | --- | --- |

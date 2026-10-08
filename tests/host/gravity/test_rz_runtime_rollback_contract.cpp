@@ -1,5 +1,5 @@
 // Original Runtime host finalizer and rollback; explicitly injected failure.
-// No replacement transaction, scientific dynamics or production RZ grant.
+// Reuse the actual Host transaction; time-zero rollback is not evolved accuracy.
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
@@ -270,14 +270,15 @@ int main(int argc,char** argv){
         final.ledger.require_readable({handle,arch::state::StateSlot::Current},
             {arch::state::ExecutionSide::Host,version,true,true});
     }
-    bool gated=false;try{runtime.perform_regrid(0,0.);}catch(const std::logic_error&){gated=true;}
-    require(gated,"fault verification lifted production RZ gate");
+    const auto accepted_handles=runtime.handles();
+    require(!runtime.perform_regrid(0,0.),"accepted finest topology unexpectedly changed");
+    require(runtime.handles()==accepted_handles,"public no-change regrid replaced accepted handles");
     std::cout<<"ACTUAL_RZ_RUNTIME_ROLLBACK_PASS attempts=3 source_blocks=2"
         <<" staged_blocks=8 pool_before="<<pool_before<<" peak_pool="<<peak_pool
         <<" source_all_seven_addresses_preserved=1 final_pool=8"
         <<" all_source_arrays_bitwise=1 topology_preserved=1 original_versions=1"
         <<" old_ghost_readable=1 no_staged_leak=1 retry=1 retired_handle=1"
-        <<" production_gate_held=1 time=0 steps=0"<<std::endl;
+        <<" production_transaction=1 time=0 steps=0"<<std::endl;
     return 0;
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

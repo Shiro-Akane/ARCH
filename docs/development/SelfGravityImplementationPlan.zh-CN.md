@@ -1,5 +1,9 @@
 # 自引力、可维护性重构与 GUI 协作实施计划
 
+## 文档角色与当前入口
+
+本页保存自引力最初实施阶段及继续适用的共享数学、生命周期和模块归属要求；原阶段已验收结论按原身份复用。后续O7/JENS/RZ与Studio已有交付实现，当前工作及验收顺序见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，最新证据见[release记录](ComputeStudioReleasePlan-20261006.zh-CN.md)。
+
 | 项目 | 当前记录 |
 |---|---|
 | 文档状态 | P0–P12 CPU 及 P13 受测完整方位角曲线 CUDA 已完成阶段验收；P11 FLASH 对照仍限定为原 Cellular 受控流体/燃烧问题 |

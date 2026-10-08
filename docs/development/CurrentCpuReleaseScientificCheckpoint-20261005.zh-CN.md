@@ -1,5 +1,10 @@
 # 当前 CPU Release 科学复验 checkpoint
 
+## 文档角色与当前入口
+
+合作方2026-10-05CPU科学检查点，按原源码、执行物及平台身份保存；不是当前维护者工作区的最新验收状态。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+
 ## 身份与必要性
 
 最近环体/Runtime源码改动后，旧生产ELF仍为5d454c03...。

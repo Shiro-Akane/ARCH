@@ -1,37 +1,44 @@
 {
   "schema": 1,
-  "recordedUtc": "2026-10-08T08:47:00.977119+00:00",
-  "scope": "Host prescribed RZ shared production runtime; engineering/analytic subset, not full O release",
-  "parentCommit": "86a289c3871bc9884f5531a1f4e081f9d1975adc",
+  "recordedUtc": "2026-10-08T11:19:13.319942+00:00",
+  "scope": "Host prescribed RZ production/short AMR and JENS lifecycle; not whole O release",
+  "parentCommit": "71ab505e9ff2ef203adfc5348f6a729a26d8b390",
   "sourceSha256": {
     "src/driver/runtime/DriverRuntime.cpp": "7bba7e73df57afbe8e13b7fbaadebede7b9e2cd0986ec354e6da9af6551ba2c3",
     "src/driver/stages/GravityStage.cpp": "e564407c15c77497d6df6c4cb3e4cbbdd58d9c20e7c20ec1347da8f52a5c41de",
     "src/driver/stages/GravityStage.h": "4e89b0ce130131001b2eb0a3e8248d902271b60015ffb9e13e61c057643dcce5",
     "src/physics/gravity/NativeSelfStage.h": "751d32aa9f8a4cefb82fa962589b87c02d3b8f1f4740873670351ca6ea2845a7",
-    "src/physics/gravity/self/GravityUserBoundary.cpp": "e5aaf1725fbea4d86545e059f9170b85b432ed65f14174c41e7d6f3999864b59",
+    "src/physics/gravity/self/GravityUserBoundary.cpp": "3a3f097b7bf1e51405684b67258f055ac341f24f70ca07d101cb4fc187f15f61",
     "src/physics/gravity/self/GravityWorkspace.cpp": "6909d3f0e6d04a52a2abdb3520968565b6f588d8b1185fab6b2d32c2d2217c23",
     "src/physics/gravity/self/GravityWorkspace.h": "71875d38309d780559eaafa96372143220dece6e3c29e9cf361d38780e1f3e15",
-    "src/physics/gravity/self/SelfGravity.cpp": "054ac71901686ca99763936d9d8e4781a815710337b9c047711a40059064923c",
+    "src/physics/gravity/self/SelfGravity.cpp": "395af154d98d70f2335fa21c7d5ee6c23621b4c5a7ee80826d59ea046cb99b12",
     "src/physics/gravity/self/SelfGravity.h": "daa60e364bd8b24fcc204e0ec7e59d541a2cae081ae133f359c2b6bf49c8227d",
-    "tests/host/gravity/test_self_gravity.cpp": "42c985e4a369a1ba7280ebcacafe2458f1f48abeafed6e54d88bdd2adfc38360",
-    "validation/gravity/run_self_gravity.py": "0c22a5fcfaddac23b43930b238820608d9a92f7b54b09b01ce3bc0a92a0e7bba",
-    "validation/gravity/user_boundaries.py": "2aedb7587679562351989c67f345753e3cfa5f4edb86eeb304e807221d98882d"
+    "tests/host/gravity/test_self_gravity.cpp": "12ddc473167e823e7879840a3d1662dcb059974510062fe45224dd1213c84bad",
+    "validation/gravity/run_self_gravity.py": "b121c3df24d924ac40291b43b9a8c40a91d52238e3dd902825219efcaaf93113",
+    "validation/gravity/user_boundaries.py": "e6391041ac24516bdffc9796bcae982fc704eccbbe44aa56f74710de2931ab4a",
+    "src/core/config/RuntimeParams.h": "71c9991ab9e5da30da7b71eee54bd135ff1d99ba712f2f9f7f3720bb0ffd1306",
+    "src/driver/SolverDispatch.cpp": "731da4a34cce0fa75bd805f14b8eaee4027bdcbc88a2410456daae63a827cd2f",
+    "src/driver/runtime/DriverRegrid.cpp": "2d8ff744f3508979cb5731491549aea9962d07fc05856c27ecb2776f78c38cca",
+    "src/numerics/elliptic/CompositePoisson.cpp": "7bbdb6beffa1ba6c45fb6d7604ba635a8d41b4fb06eae9dbdd7d3bf0f760d8cc",
+    "tools/validate_backend_results.py": "95c1d6e8a8fb27f5f5865591ccef7a56cba4127912e616f5046edc3f1280c137"
   },
-  "executableSha256": "52cf25a6bf18fd833332e48ef23aee33dfc3b6ad11be28689f5a973ce1ef94bb",
+  "executableSha256": "49fd01a3d840bbc8c5a77ff07b3a01a0fe1bc360dbb27e7b40e48fec413028f3",
   "cpu": {
     "inventoryOwners": 68,
     "passed": 68,
     "failed": 0,
     "skipped": 0,
-    "ctestSeconds": 190.6,
-    "guardSeconds": 191.055,
+    "ctestSeconds": 194.55,
+    "guardSeconds": 195.013,
     "inventoryJUnitExactMatch": true,
-    "junitSha256": "19bf4ae9b23e2f23263c488b46380116ba2e7b1e52d58ea16c9199b5845f18f4"
+    "junitSha256": "403ca6d6ed5f86d3ce521eab51ad57e541424d7348a48424a5bac9f2e48154b7"
   },
   "originalGravityQuick": {
-    "records": 51,
-    "guardSeconds": 8.062,
-    "summarySha256": "990a0815a013f85390405a3179d015114bfdc3da672c5b89fd72a6d1c18b727f"
+    "records": 60,
+    "summarySha256": "af24c5e90275cdc5db6dd0c2057e0f510401627ded44eab4eba7a790135c45ea",
+    "originalOwnerExpanded": true,
+    "newCTestTargets": 0,
+    "numericalAndBitIdentitySeparate": true
   },
   "analyticRz": {
     "owner": "self_gravity_lifecycle",
@@ -47,7 +54,6 @@
     "perCaseStdout": "JUnit success output truncated; owner PASS includes all assertions; no invented full sample table"
   },
   "notQualified": [
-    "public RZ dynamic AMR and restart",
     "public isolated RZ",
     "prescribed RZ Device",
     "continuous isolated total energy",
@@ -56,5 +62,219 @@
     "whole O-series release"
   ],
   "rawUploaded": false,
-  "physicsAndWindowsChanged": false
+  "physicsAndWindowsChanged": false,
+  "previousCheckpoint": {
+    "parentCommit": "86a289c3871bc9884f5531a1f4e081f9d1975adc",
+    "executableSha256": "52cf25a6bf18fd833332e48ef23aee33dfc3b6ad11be28689f5a973ce1ef94bb",
+    "cpu": {
+      "inventoryOwners": 68,
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "ctestSeconds": 190.6,
+      "guardSeconds": 191.055,
+      "inventoryJUnitExactMatch": true,
+      "junitSha256": "19bf4ae9b23e2f23263c488b46380116ba2e7b1e52d58ea16c9199b5845f18f4"
+    },
+    "originalGravityQuick": {
+      "records": 51,
+      "guardSeconds": 8.062,
+      "summarySha256": "990a0815a013f85390405a3179d015114bfdc3da672c5b89fd72a6d1c18b727f"
+    }
+  },
+  "publicRzLifecycles": [
+    {
+      "name": "rz-amr-restart-continuous",
+      "geometry": "cylindrical",
+      "dimension": 2,
+      "backend": "cpu",
+      "wall_seconds": 1.1293233780015726,
+      "steps": 6,
+      "final_time": 0.0006,
+      "mass_budget_error": 3.089534146264339e-17,
+      "energy_budget_error": null,
+      "final_blocks": 5,
+      "minimum_density": 0.9999993461910563
+    },
+    {
+      "name": "rz-amr-restart-resumed",
+      "geometry": "cylindrical",
+      "dimension": 2,
+      "backend": "cpu",
+      "wall_seconds": 0.6649742620065808,
+      "steps": 6,
+      "final_time": 0.0006,
+      "mass_budget_error": 1.322066229431253e-17,
+      "energy_budget_error": null,
+      "final_blocks": 5,
+      "minimum_density": 0.9999993461910563
+    },
+    {
+      "name": "rz-amr-restart-identity",
+      "source_backend": "cpu",
+      "target_backend": "cpu",
+      "bitwise_equal": true
+    },
+    {
+      "name": "rz-amr-lifecycle",
+      "dynamic_mixed": true,
+      "source_epochs": [
+        1,
+        2
+      ],
+      "source_cells": [
+        512,
+        1280
+      ],
+      "accepted_steps": 6,
+      "final_time": 0.0006
+    },
+    {
+      "name": "rz-jeans-restart-continuous",
+      "geometry": "cylindrical",
+      "dimension": 2,
+      "backend": "cpu",
+      "wall_seconds": 1.0600753519975115,
+      "steps": 6,
+      "final_time": 0.0006,
+      "mass_budget_error": 3.03170564391765e-16,
+      "energy_budget_error": null,
+      "final_blocks": 8,
+      "minimum_density": 0.999999999997715
+    },
+    {
+      "name": "rz-jeans-restart-resumed",
+      "geometry": "cylindrical",
+      "dimension": 2,
+      "backend": "cpu",
+      "wall_seconds": 0.5506445829814766,
+      "steps": 6,
+      "final_time": 0.0006,
+      "mass_budget_error": 3.96064134373562e-17,
+      "energy_budget_error": null,
+      "final_blocks": 8,
+      "minimum_density": 0.999999999997715
+    },
+    {
+      "name": "rz-jeans-restart-identity",
+      "source_backend": "cpu",
+      "target_backend": "cpu",
+      "bitwise_equal": true
+    },
+    {
+      "name": "rz-jeans-lifecycle",
+      "initial_resolution": 129884.12561252475,
+      "target": 200000.0,
+      "initial_repair_leaves": [
+        2,
+        8
+      ],
+      "accepted_plots": 7,
+      "max_reference_relative_error": 3.6092894565915016e-16,
+      "reference_bound": 3.552713678800501e-15,
+      "scope": "short public Host RZ nonrotating IdealGas repair/output/restart; not collapse accuracy or long-run"
+    },
+    {
+      "name": "rz-jeans-finest-deficit",
+      "rejected": true,
+      "reason": "JENS remains underresolved at lrefinemax"
+    }
+  ],
+  "tooling": {
+    "interpreter": "system Python3.12.3",
+    "discovered": 667,
+    "passed": 667,
+    "skipped": 0,
+    "wallSeconds": 44.263,
+    "firstCondaRunSkipped18AndNotAccepted": true,
+    "counterexamples": [
+      "signed-zero",
+      "one-ULP",
+      "dtype",
+      "shape",
+      "eight missing Data fields",
+      "eight nonfinite Data fields",
+      "invalid gravity boundary enum",
+      "cold inadmissible coarse parent",
+      "three original regrid rollback faults"
+    ]
+  },
+  "maintenanceChanges": {
+    "sharedSourcePurposeGuardDeduplicated": true,
+    "prescribedDiagnosticCacheNotEager": true,
+    "originalGeometryGettersCompared": true,
+    "hostRzRegridUsesOriginalTransaction": true,
+    "checkpointChartMatchesResolvedInitialization": true,
+    "rzThirdVelocityUsesSharedChartSelector": true,
+    "eosBatchedThreadCacheAndOdeFactorReuseRetained": true,
+    "speedupMeasured": false
+  },
+  "rawCleanup": {
+    "files": 376,
+    "bytes": 31629048,
+    "scope": "two successful completed quick55 groups, after field processing and stat/SHA recheck",
+    "failuresInputsLogsAndProcessedEvidencePreserved": true,
+    "additionalFinalQuick60": {
+      "files": 208,
+      "bytes": 22134256,
+      "fieldSummaryAndIdentityRecheck": true,
+      "failedGroupsExcluded": true
+    }
+  },
+  "auxiliaryReference": {
+    "deepseekLogicalTask": "RZ affine/variable-mu exact full-ring FV",
+    "apiRequests": 2,
+    "wallSeconds": 77.5,
+    "inputTokens": 3168,
+    "outputTokens": 21084,
+    "estimatedUsd": [
+      0.0130127,
+      0.0260254
+    ],
+    "actualBilling": null,
+    "formalRepairs": 1,
+    "finding": "initial four-face power expression incomplete; no algebra error found",
+    "rootExactRationalChecks": 156,
+    "runtimeQualification": false,
+    "blockedWaitSeconds": 0,
+    "recommendation": "retain bounded independent mathematics; tighten code/prose packet and first-result coordination"
+  },
+  "cudaLatestCompatibility": {
+    "status": "INCOMPLETE_RESOURCE_GUARD_STOP",
+    "ownerCount": 26,
+    "targetCount": 5,
+    "wholeNativeDeviceOrPerformanceQualified": false,
+    "compileCumulativeSecondsBeforeCurrent": 5705.884,
+    "managerCapSeconds": 7500,
+    "previousParallel2Attempt": {
+      "guardSeconds": 264.749,
+      "reason": "available_memory",
+      "minAvailableKiB": 2044192,
+      "peakOwnedRSSKiB": 4848432,
+      "swapGrowthKiB": 0,
+      "compileErrorObserved": false
+    },
+    "serialParallelism": 1,
+    "compileCumulativeSeconds": 6275.364,
+    "lastSerialAttempt": {
+      "guardSeconds": 569.48,
+      "reason": "swap_growth",
+      "minAvailableKiB": 2555148,
+      "peakOwnedRSSKiB": 4258512,
+      "swapGrowthKiB": 48148,
+      "compileErrorObserved": false
+    },
+    "nextStep": "Diagnose remaining target compile resource cost before further bounded serial continuation; no current26 PASS claim"
+  },
+  "documentationRecenter": {
+    "executionOwner": "docs/development/ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08",
+    "existingO7ImplementationAsAcceptanceBaseline": true,
+    "separateModelSpecificO9Dependencies": true,
+    "historicalInputsAndReportsRetainIdentity": true,
+    "noPhysicsOrAcceptanceChanged": true,
+    "metadataAuditCorrectedBeforePush": [
+      "tests/host/gravity/test_self_gravity.cpp",
+      "validation/gravity/run_self_gravity.py"
+    ]
+  }
 }

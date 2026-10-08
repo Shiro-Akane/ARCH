@@ -25,6 +25,22 @@ INTEGER_LEVEL_RE = re.compile(r"^[+-]?[0-9]+$")
 STEP_RE = re.compile(r"Simulation Done\. Total Steps:\s*([0-9]+)")
 
 
+def stored_arrays_equal(left, right) -> bool:
+    """Compare stored numeric bits, including signed zero, shape and dtype.
+
+    HDF5 variable-length strings are object arrays: compare their values rather
+    than Python object addresses. Numeric validity remains the reader's rule;
+    this identity check never makes a NaN scientific state admissible.
+    """
+    import numpy as np
+    a, b = np.asarray(left), np.asarray(right)
+    if a.shape != b.shape or a.dtype != b.dtype:
+        return False
+    if a.dtype.hasobject:
+        return bool(np.array_equal(a, b))
+    return a.tobytes(order="C") == b.tobytes(order="C")
+
+
 def load_manifest(path: Path) -> dict[str, Any]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     if manifest.get("schema") != 1 or not isinstance(manifest.get("cases"), list):

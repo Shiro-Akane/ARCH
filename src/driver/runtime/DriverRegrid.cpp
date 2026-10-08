@@ -158,7 +158,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
 {
     if(!native_rz_candidate)
         return execute_regrid_attempt(jeans_repair_only,false,after_host_finalization);
-    if(host_hydro_transaction_||compute_backend||jeans_repair_only
+    if(host_hydro_transaction_||compute_backend
         ||geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("Native coarsening retry requires its actual CPU RZ owner");
     ensure_fluid_ghosts(); // actual selected EOS and completed source qualification
@@ -200,7 +200,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
             for(const auto& [id,flag]:frozen_flags)amr_ctrl.pool->GetBlock(id).refine_flag=flag;
             return;
         }
-        amr_ctrl.tree->EvaluateRefinement(config);
+        if(jeans_repair_only)amr_ctrl.tree->EvaluateJeansRepair(config);
+        else amr_ctrl.tree->EvaluateRefinement(config);
         frozen_flags.reserve(source_active.size());
         std::map<amr::LogicalBlockKey,std::set<amr::LogicalBlockKey>> groups;
         for(const int id:source_active) {
@@ -221,7 +222,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
     for(;;) {
         require_sources();
         try {
-            return execute_regrid_attempt(false,true,after_host_finalization,vetoed,evaluate_native);
+            return execute_regrid_attempt(jeans_repair_only,true,after_host_finalization,vetoed,evaluate_native);
         } catch(const NativeCoarseningVeto& failure) {
             require_sources(); // attempt restored arrays/BC and aborted before retry
             if(failure.record.scope.from_epoch!=source_epoch
@@ -251,7 +252,7 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
     if(after_host_finalization&&!native_rz_candidate)
         throw std::logic_error("Native finalization verification cannot affect production regrid");
     if(native_rz_candidate&&(geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
-        ||compute_backend||jeans_repair_only))
+        ||compute_backend))
         throw std::logic_error("Native RZ transaction verification requires CPU RZ ordinary AMR");
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_rz_candidate)
         throw std::logic_error("RZ regrid migration and angular-momentum contract are incomplete");
@@ -711,10 +712,15 @@ bool DriverRuntime::device_jeans_parent_resolved(
     return minimum && *minimum>=config.amr.jeans_cells;
 }
 
-/** Apply the configured regrid cadence and record its outcome. */
+/** Apply the configured regrid cadence through the actual chart transaction.
+ * Host RZ uses the existing completed-EOS/thermal/JENS finalizer and bounded
+ * coarsening veto; legacy and Device retain their original transaction path.
+ * Both ordinary indicators and JENS-only repair keep their existing formulas. */
 bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only)
 {
-    return perform_regrid_impl(step,time,jeans_repair_only,false);
+    const bool native_host=!compute_backend
+        &&geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    return perform_regrid_impl(step,time,jeans_repair_only,native_host);
 }
 /** Internal qualification consumes the same full migration/finalizer transaction.
  * No alternative transfer math, namespace publication, or physical capability. */
