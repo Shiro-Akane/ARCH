@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -140,6 +141,44 @@ struct Block {
 
 
 
+private:
+    /** Scalar ordinary logical geometry; owns no Grid/metric array or authority. */
+    struct OrdinaryLogicalGeometry {
+        double dx1,dx2,dx3;
+        double x1_min,x1_max,x2_min,x2_max,x3_min,x3_max;
+    };
+
+    /** Sole ordinary root-to-block metadata generator.
+     * Workflow: reject an unrepresentable level before the original shift;
+     * evaluate the original factor, spacing and endpoint statements in their
+     * exact order; return only scalar metadata. InitGeometry and identity
+     * verification reuse this owner; no second rounded coordinate formula.
+     */
+    OrdinaryLogicalGeometry ordinary_logical_geometry(const Grid& root_grid,
+        double root_dx1,double root_dx2,double root_dx3) const
+    {
+        if(level<0||level>kMaxRefinementLevel)
+            throw std::invalid_argument("Logical Block level is not representable");
+        // Calculate cell sizes at this level
+        double factor = 1.0 / (1 << level);
+        double dx1 = root_dx1 * factor;
+        double dx2 = root_dx2 * factor;
+        double dx3 = root_dx3 * factor;
+
+        // Bounding box
+        double x1_min = root_grid.x1_min + logical_x1 * BLOCK_NX * dx1;
+        double x1_max = x1_min + BLOCK_NX * dx1;
+
+        double x2_min = root_grid.x2_min + logical_x2 * BLOCK_NY * dx2;
+        double x2_max = x2_min + BLOCK_NY * dx2;
+
+        double x3_min = root_grid.x3_min + logical_x3 * BLOCK_NZ * dx3;
+        double x3_max = x3_min + BLOCK_NZ * dx3;
+
+        return {dx1,dx2,dx3,x1_min,x1_max,x2_min,x2_max,x3_min,x3_max};
+    }
+
+public:
     /**
      * @brief Initialize block geometry based on root domain and its location.
      * @param root_grid  Global domain root-level Grid (carries x_min, nblockx, dim, geometry)
@@ -177,32 +216,100 @@ struct Block {
             grid.dyadic_identity=identity;
             grid.InitializeTopology(semantics);return;
         }
-        // Calculate cell sizes at this level
-        double factor = 1.0 / (1 << level);
-        double dx1 = root_dx1 * factor;
-        double dx2 = root_dx2 * factor;
-        double dx3 = root_dx3 * factor;
-
-        // Bounding box
-        double x1_min = root_grid.x1_min + logical_x1 * BLOCK_NX * dx1;
-        double x1_max = x1_min + BLOCK_NX * dx1;
-
-        double x2_min = root_grid.x2_min + logical_x2 * BLOCK_NY * dx2;
-        double x2_max = x2_min + BLOCK_NY * dx2;
-
-        double x3_min = root_grid.x3_min + logical_x3 * BLOCK_NZ * dx3;
-        double x3_max = x3_min + BLOCK_NZ * dx3;
-
+        const auto metadata=ordinary_logical_geometry(root_grid,root_dx1,root_dx2,root_dx3);
         // Initialize local grid topology wrapper
         grid = Grid(MAX_NG,
-                    x1_min, x1_max,
-                    x2_min, x2_max,
-                    x3_min, x3_max,
+                    metadata.x1_min, metadata.x1_max,
+                    metadata.x2_min, metadata.x2_max,
+                    metadata.x3_min, metadata.x3_max,
                     root_grid.nblockx1, root_grid.nblockx2, root_grid.nblockx3);
         grid.geometry = root_grid.geometry;
         grid.dim = root_grid.dim;
         grid.InitializeTopology(semantics);
     }
+    /** Require exact root/logical/local geometry identity, without BC authority.
+     * Workflow: validate chart and checked integer topology -> generate the
+     * original ordinary endpoint metadata or authenticate Native canonical
+     * metadata -> check represented local spacings and fixed storage layout.
+     * Root spacing follows AmrTree's actual root construction; active counts
+     * and all logical coordinates are checked BEFORE Morton masking/shifts.
+     * This proves numerical geometry only; the caller must separately own the
+     * real Tree/block/handle/slot/epoch and completed ghost publication.
+     */
+    void RequireLogicalGeometryIdentity(const Grid& root,
+        GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing) const
+    {
+        using Semantics=GridMetrics::GeometrySemantics;
+        if((semantics!=Semantics::Existing&&semantics!=Semantics::AxisymmetricRz)
+            ||root.dim<1||root.dim>3||grid.dim!=root.dim||grid.geometry!=root.geometry
+            ||GridMetrics::geometry_from_name(root.geometry)==GridMetrics::Geometry::Unsupported
+            ||level<0||level>kMaxRefinementLevel)
+            throw std::invalid_argument("Logical Block chart/level identity is invalid");
+        const int count[3]{root.nblockx1,root.nblockx2,root.nblockx3};
+        const std::uint32_t logical[3]{logical_x1,logical_x2,logical_x3};
+        const double lower[3]{root.x1_min,root.x2_min,root.x3_min};
+        const double upper[3]{root.x1_max,root.x2_max,root.x3_max};
+        for(int axis=0;axis<3;++axis) {
+            if(count[axis]<0||(axis<root.dim&&count[axis]==0)
+                ||(axis>=root.dim&&(count[axis]>1||logical[axis]!=0)))
+                throw std::invalid_argument("Logical Block root count/inactive coordinate is invalid");
+            const auto blocks=static_cast<std::uint64_t>(std::max(count[axis],1));
+            const auto extent=blocks<<level;
+            if(extent==0||extent-1>kMortonCoordinateMask||logical[axis]>=extent
+                ||!std::isfinite(lower[axis])||!std::isfinite(upper[axis])
+                ||(axis<root.dim&&(!(upper[axis]>lower[axis])
+                    ||!std::isfinite(upper[axis]-lower[axis]))))
+                throw std::invalid_argument("Logical Block root extent/coordinate is invalid");
+        }
+        if(morton_code!=encodeMorton(level,logical_x1,logical_x2,logical_x3))
+            throw std::invalid_argument("Logical Block Morton identity changed");
+        if(grid.nblockx1!=count[0]||grid.nblockx2!=count[1]||grid.nblockx3!=count[2])
+            throw std::invalid_argument("Logical Block local root counts changed");
+        const auto same=[](double a,double b) {
+            return std::isfinite(a)&&std::isfinite(b)
+                &&std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);
+        };
+        // Original AmrTree root-spacing arithmetic, not local nominal dx.
+        const double root_dx1=(root.x1_max-root.x1_min)/(root.nblockx1*BLOCK_NX);
+        const double root_dx2=root.nblockx2>0
+            ?(root.x2_max-root.x2_min)/(root.nblockx2*BLOCK_NY):0.;
+        const double root_dx3=root.nblockx3>0
+            ?(root.x3_max-root.x3_min)/(root.nblockx3*BLOCK_NZ):0.;
+        const auto metadata=ordinary_logical_geometry(root,root_dx1,root_dx2,root_dx3);
+        if(semantics==Semantics::AxisymmetricRz) {
+            if(root.dim!=2||root.geometry!="cylindrical"||!grid.dyadic_identity.bound)
+                throw std::invalid_argument("Logical Native Block requires its real canonical root");
+            RequireNativeGeometryIdentity();
+            const auto& identity=grid.dyadic_identity;
+            if(identity.root_blocks!=std::array<int,2>{count[0],count[1]}
+                ||identity.periodic_axial!=root.dyadic_identity.periodic_axial)
+                throw std::invalid_argument("Logical Native Block root topology changed");
+            for(int axis=0;axis<2;++axis)
+                if(!same(identity.root_lower[axis],lower[axis])
+                    ||!same(identity.root_upper[axis],upper[axis]))
+                    throw std::invalid_argument("Logical Native Block canonical root bounds changed");
+            (void)GridMetrics::make_geometry_view(grid,semantics);
+        } else {
+            if(grid.dyadic_identity.bound
+                ||!same(grid.x1_min,metadata.x1_min)||!same(grid.x1_max,metadata.x1_max)
+                ||!same(grid.x2_min,metadata.x2_min)||!same(grid.x2_max,metadata.x2_max))
+                throw std::invalid_argument("Logical ordinary Block endpoints changed");
+        }
+        // Native and ordinary share the unchanged inactive x3 constructor.
+        if(!same(grid.x3_min,metadata.x3_min)||!same(grid.x3_max,metadata.x3_max)
+            ||!same(grid.dx1,(grid.x1_max-grid.x1_min)/BLOCK_NX)
+            ||!same(grid.dx2,root.dim>=2?(grid.x2_max-grid.x2_min)/BLOCK_NY:0.)
+            ||!same(grid.dx3,root.dim==3?(grid.x3_max-grid.x3_min)/BLOCK_NZ:0.))
+            throw std::invalid_argument("Logical Block represented spacing changed");
+        const int nx=BLOCK_NX+2*MAX_NG;
+        const int ny=root.dim>=2?BLOCK_NY+2*MAX_NG:1;
+        const int nz=root.dim==3?BLOCK_NZ+2*MAX_NG:1;
+        if(grid.ng!=MAX_NG||grid.GetTotalX()!=nx||grid.GetTotalY()!=ny||grid.GetTotalZ()!=nz
+            ||grid.stride_y!=PAD_NX||grid.stride_z!=PAD_NX*ny
+            ||grid.GetTotalSize()!=PAD_NX*ny*nz)
+            throw std::invalid_argument("Logical Block storage/ghost identity changed");
+    }
+
 };
 
 

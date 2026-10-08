@@ -1,14 +1,15 @@
 /**
  * @file HydroBoundaryAuthority.h
- * @brief Borrow one real Host native-RZ Hydro input and its physical-wall frame.
+ * @brief Borrow one real Host Hydro input and its physical-root-wall frame.
  *
  * Workflow:
  * 1. Receive the actual main-thread StageBinding explicitly; never consult
  *    worker thread-local bindings inside a parallel patch evaluation.
  * 2. Locate the exact active pool block and descriptor input member; require
  *    completed Host interior/ghost ledger versions for that same handle/key.
- * 3. Capture an empty BCHandler frame at t_in=t_step+c_in*dt_step, without
- *    array copies, EOS evaluation, allocations or numerical publications.
+ * 3. Freeze the closed metadata role at t_in=t_step+c_in*dt_step. Native
+ *    keeps its point-EOS/root prerequisites; ordinary inputs use genuine BC
+ *    and ledger completion. Derive walls from exact Tree logical ownership.
  * 4. Before face/cache/output mutation, recheck the borrowed owners, spans,
  *    own handle/key/coherence, full descriptor and boundary frame. Only then
  *    return the flat mathematical wall flags to the selected shared producer.
@@ -16,7 +17,7 @@
  * Runtime/transaction owns complete-domain identity and exclusive lifetimes.
  * This scoped borrow freezes its own patch and verifies current domain span
  * agreement; it does not snapshot all unrelated patch metadata. Callable
- * presence and an empty frame never substitute for genuine Runtime science.
+ * presence and metadata observation never substitute for genuine Runtime science.
  */
 #pragma once
 
@@ -26,19 +27,21 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "amr/AMRControl.h"
 #include "driver/schedule/StageScheduler.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "grid/CoordinateBoundary.h"
 
 namespace arch::boundary {
 
 class HostHydroBoundaryDomainAuthority;
 
 /** Noncopyable scoped authority; all borrowed owners must outlive evaluation.
- * The numerical input remains the actual pooled native U, never an effective
+ * The numerical input remains the actual pooled U, never an effective
  * thermodynamic mean. There is no extra evolved or serialized state here.
  */
 class HostHydroBoundaryAuthority {
@@ -77,7 +80,8 @@ public:
         if(!block_->active||block_->id!=block_id||&block_->grid!=&grid
             ||&input_state(*block_,stage_.input_slot)!=&state)
             throw std::logic_error("Native Hydro wall authority input is not its actual pool member");
-        block_->RequireNativeGeometryIdentity();
+        block_->RequireLogicalGeometryIdentity(tree_->GetRootGrid(),boundary_->geometry_semantics());
+        freeze_configuration();
         block_active_index_=block_->active_index;level_=block_->level;
         logical_={block_->logical_x1,block_->logical_x2,block_->logical_x3};
         morton_=block_->morton_code;
@@ -91,13 +95,17 @@ public:
         coherence_=ledger_->inspect(key_);
         ledger_->require_readable(key_,{arch::state::ExecutionSide::Host,
             coherence_.interior.version,true,true});
-        frame_=boundary_->capture_native_hydro_frame(state,grid,expected_time_);
-        walls_=boundary_->native_hydro_boundary_view(frame_,state,grid,expected_time_);
+        frame_=boundary_->capture_hydro_input_frame(state,grid,expected_time_);
+        boundary_->require_hydro_input_frame(frame_,state,grid,expected_time_);
+        walls_=physical_faces(*boundary_,*tree_,*block_);
     }
 
     /** Constant-work borrow of one immutable, fully preflighted stage record. */
     HostHydroBoundaryAuthority(const HostHydroBoundaryDomainAuthority&,
         std::size_t active_index,int block_id,const FluidState&,const Grid&);
+
+    /** Query the frozen input-frame chart; this metadata query grants no authority. */
+    GridMetrics::GeometrySemantics geometry_semantics() const noexcept;
 
     HostHydroBoundaryAuthority(const HostHydroBoundaryAuthority&)=delete;
     HostHydroBoundaryAuthority& operator=(const HostHydroBoundaryAuthority&)=delete;
@@ -123,13 +131,14 @@ public:
             ||std::array<std::uint32_t,3>{block.logical_x1,block.logical_x2,block.logical_x3}!=logical_
             ||&block.grid!=grid_||&input_state(block,stage_.input_slot)!=state_)
             throw std::logic_error("Native Hydro wall authority pool identity changed");
-        block.RequireNativeGeometryIdentity();
+        block.RequireLogicalGeometryIdentity(tree_->GetRootGrid(),boundary_->geometry_semantics());
         const auto current=ledger_->inspect(key_);
         if(!same_coherence(current,coherence_))
             throw std::logic_error("Native Hydro wall authority input publication changed");
         ledger_->require_readable(key_,{arch::state::ExecutionSide::Host,
             coherence_.interior.version,true,true});
-        const auto result=boundary_->native_hydro_boundary_view(frame_,state,grid,expected_time_);
+        boundary_->require_hydro_input_frame(frame_,state,grid,expected_time_);
+        const auto result=physical_faces(*boundary_,*tree_,block);
         if(result.reflecting!=walls_.reflecting)
             throw std::logic_error("Native Hydro wall authority physical faces changed");
         return result;
@@ -142,6 +151,71 @@ private:
         const FluidState&,const Grid&) const;
     const HostHydroBoundaryDomainAuthority* domain_=nullptr;
     std::size_t domain_index_=0;
+    /** Derive physical root sides only from authentic Tree/Block integer ownership.
+     * Workflow: exact shared geometry proof -> actual FindBlock identity ->
+     * checked level/logical extent -> selected Reflecting token -> chart-join exclusion.
+     * No endpoint proximity, public mask or primitive-state guess grants a wall.
+     */
+    static HydroBoundaryView physical_faces(const BCHandler& boundary,
+        const amr::AmrTree& tree,const amr::Block& block) {
+        const auto& root=tree.GetRootGrid();
+        if(tree.GetGeometrySemantics()!=boundary.geometry_semantics())
+            throw std::logic_error("Hydro boundary Tree chart identity changed");
+        block.RequireLogicalGeometryIdentity(root,boundary.geometry_semantics());
+        if(tree.FindBlock(block.level,block.logical_x1,block.logical_x2,block.logical_x3)!=block.id)
+            throw std::logic_error("Hydro boundary logical block is not its actual Tree member");
+        const auto& plan=boundary.logical_plan(block.grid).input();
+        const int roots[3]{root.nblockx1,root.nblockx2,root.nblockx3};
+        const std::uint32_t logical[3]{block.logical_x1,block.logical_x2,block.logical_x3};
+        const double lower[3]{root.x1_min,root.x2_min,root.x3_min};
+        const double upper[3]{root.x1_max,root.x2_max,root.x3_max};
+        const auto chart=GridMetrics::geometry_from_name(root.geometry);
+        HydroBoundaryView result;
+        for(int axis=0;axis<root.dim;++axis)for(int side=0;side<2;++side) {
+            const bool root_face=side?std::uint64_t(logical[axis])+1
+                ==(std::uint64_t(roots[axis])<<block.level):logical[axis]==0;
+            result.reflecting[2*axis+side]=root_face
+                &&plan.faces[2*axis+side]==BoundaryType::Reflecting
+                &&!GridMetrics::IsCoordinateJoin(chart,root.dim,axis,side?upper[axis]:lower[axis]);
+        }
+        return result;
+    }
+    /** Stable exact three-axis root values; no uninitialized root metric fields. */
+    static std::array<std::uint64_t,11> root_words(const amr::AmrTree& tree) {
+        const auto& g=tree.GetRootGrid();
+        return {bits(g.x1_min),bits(g.x1_max),bits(g.x2_min),bits(g.x2_max),
+            bits(g.x3_min),bits(g.x3_max),std::uint64_t(g.nblockx1),std::uint64_t(g.nblockx2),
+            std::uint64_t(g.nblockx3),std::uint64_t(g.dim),std::uint64_t(GridMetrics::geometry_from_name(g.geometry))};
+    }
+    /** Copy raw BC strings once at owner construction, never during patch visits. */
+    static std::array<std::string,6> policy_tokens(const BCHandler& boundary) {
+        const auto& g=boundary.config_->grid;
+        return {g.x1l_boundary_type,g.x1r_boundary_type,g.x2l_boundary_type,
+            g.x2r_boundary_type,g.x3l_boundary_type,g.x3r_boundary_type};
+    }
+    /** Compare actual raw token values allocation-free, preserving exact identity. */
+    static bool same_policy(const BCHandler& boundary,const std::array<std::string,6>& tokens) {
+        const auto& g=boundary.config_->grid;
+        return tokens[0]==g.x1l_boundary_type&&tokens[1]==g.x1r_boundary_type
+            &&tokens[2]==g.x2l_boundary_type&&tokens[3]==g.x2r_boundary_type
+            &&tokens[4]==g.x3l_boundary_type&&tokens[5]==g.x3r_boundary_type;
+    }
+    /** Freeze domain geometry/config/policies; identity only, no science publication. */
+    void freeze_configuration() {
+        root_=root_words(*tree_);configuration_=boundary_->input_root_identity();
+        policies_=policy_tokens(*boundary_);
+        for(std::size_t n=0;n<root_.size();++n)if(root_[n]!=configuration_[n])
+            throw std::logic_error("Hydro boundary Tree root differs from actual configuration");
+    }
+    /** Revalidate frozen root/config/BC identity without copies or allocation. */
+    void require_configuration() const {
+        if(!control_||control_->pool.get()!=pool_||control_->tree.get()!=tree_)
+            throw std::logic_error("Hydro boundary root/config owner changed");
+        if(root_!=root_words(*tree_)||configuration_!=boundary_->input_root_identity()
+            ||!same_policy(*boundary_,policies_)
+            ||tree_->GetGeometrySemantics()!=boundary_->geometry_semantics())
+            throw std::logic_error("Hydro boundary root/config/policies changed");
+    }
     /** Exact floating identity is independent of numerical tolerances. */
     static std::uint64_t bits(double value) noexcept {
         return std::bit_cast<std::uint64_t>(value);
@@ -194,11 +268,12 @@ private:
     }
     /** Validate the explicitly borrowed main context; no worker TLS lookup. */
     void require_context() const {
+        require_configuration();
         if(&binding_->context!=context_||&context_->ledger!=ledger_||&context_->clock!=clock_
             ||context_->side!=arch::state::ExecutionSide::Host
             ||bool(context_->configure_boundary_context)!=configured_
             ||bool(context_->post_boundary_acceptance)!=post_boundary_
-            ||!post_boundary_||!same_descriptor(*descriptor_,stage_)
+            ||(boundary_->geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz&&!post_boundary_)||!same_descriptor(*descriptor_,stage_)
             ||bits(context_->step_start_time)!=start_bits_||bits(context_->step_dt)!=dt_bits_
             ||bits(input_time(*context_,*descriptor_))!=bits(expected_time_))
             throw std::logic_error("Native Hydro wall authority stage/context changed");
@@ -254,8 +329,11 @@ private:
     std::uint64_t start_bits_=0,dt_bits_=0;
     bool configured_=false,post_boundary_=false;
     double expected_time_=0.;
-    BCHandler::NativeCandidate frame_;
+    BCHandler::HydroInputFrame frame_;
     HydroBoundaryView walls_{};
+    std::array<std::uint64_t,11> root_{};
+    std::array<std::uint64_t,12> configuration_{};
+    std::array<std::string,6> policies_{};
 };
 /** One real synchronous Host stage borrows the entire immutable input domain.
  * Workflow: main-thread full preflight/capture -> read-only OMP patch borrows ->
@@ -295,6 +373,10 @@ public:
         configured_=bool(context_->configure_boundary_context);
         post_boundary_=bool(context_->post_boundary_acceptance);
         expected_time_=PatchAuthority::input_time(*context_,stage_);
+        root_=PatchAuthority::root_words(*tree_);configuration_=boundary_->input_root_identity();
+        policies_=PatchAuthority::policy_tokens(*boundary_);
+        for(std::size_t n=0;n<root_.size();++n)if(root_[n]!=configuration_[n])
+            throw std::logic_error("Hydro boundary Tree root differs from actual configuration");
         require_domain_owner();
         records_.reserve(active_size_);
         for(std::size_t index=0;index<active_size_;++index) {
@@ -307,14 +389,15 @@ public:
             if(!block.active||block.id!=id||block.active_index<0
                 ||static_cast<std::size_t>(block.active_index)!=index)
                 throw std::logic_error("Native Hydro wall domain active inverse index changed");
-            block.RequireNativeGeometryIdentity();
+            block.RequireLogicalGeometryIdentity(tree_->GetRootGrid(),boundary_->geometry_semantics());
             const auto& input=PatchAuthority::input_state(block,stage_.input_slot);
             const arch::state::StateKey key{handle,stage_.input_slot};
             const auto coherence=ledger_->inspect(key);
             ledger_->require_readable(key,{arch::state::ExecutionSide::Host,
                 coherence.interior.version,true,true});
-            auto frame=boundary_->capture_native_hydro_frame(input,block.grid,expected_time_);
-            const auto walls=boundary_->native_hydro_boundary_view(frame,input,block.grid,expected_time_);
+            auto frame=boundary_->capture_hydro_input_frame(input,block.grid,expected_time_);
+            boundary_->require_hydro_input_frame(frame,input,block.grid,expected_time_);
+            const auto walls=PatchAuthority::physical_faces(*boundary_,*tree_,block);
             records_.push_back({id,&block,&input,&block.grid,block.active_index,block.level,
                 {block.logical_x1,block.logical_x2,block.logical_x3},block.morton_code,
                 handle,key,coherence,std::move(frame),walls});
@@ -359,16 +442,23 @@ private:
         amr::BlockHandle handle;
         arch::state::StateKey key;
         arch::state::SlotCoherence coherence;
-        BCHandler::NativeCandidate frame;
+        BCHandler::HydroInputFrame frame;
         HydroBoundaryView walls;
     };
     /** Shared constant-sized owners/spans/clock/descriptor remain unchanged. */
     void require_domain_owner() const {
+        if(!control_||control_->pool.get()!=pool_||control_->tree.get()!=tree_)
+            throw std::logic_error("Hydro boundary domain root/config owner changed");
+        if(root_!=PatchAuthority::root_words(*tree_)||configuration_!=boundary_->input_root_identity()
+            ||!PatchAuthority::same_policy(*boundary_,policies_)
+            ||tree_->GetGeometrySemantics()!=boundary_->geometry_semantics())
+            throw std::logic_error("Hydro boundary domain root/config/policies changed");
         if(!control_||control_->pool.get()!=pool_||control_->tree.get()!=tree_
             ||&binding_->context!=context_||&context_->ledger!=ledger_||&context_->clock!=clock_
             ||context_->side!=arch::state::ExecutionSide::Host||ledger_->active_epoch()!=epoch_
             ||bool(context_->configure_boundary_context)!=configured_
-            ||bool(context_->post_boundary_acceptance)!=post_boundary_||!post_boundary_
+            ||bool(context_->post_boundary_acceptance)!=post_boundary_
+            ||(boundary_->geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz&&!post_boundary_)
             ||!PatchAuthority::same_descriptor(*descriptor_,stage_)
             ||PatchAuthority::bits(context_->step_start_time)!=start_bits_
             ||PatchAuthority::bits(context_->step_dt)!=dt_bits_
@@ -402,12 +492,13 @@ private:
             ||std::array<std::uint32_t,3>{block.logical_x1,block.logical_x2,block.logical_x3}!=record.logical
             ||&block.grid!=record.grid||&PatchAuthority::input_state(block,stage_.input_slot)!=record.state)
             throw std::logic_error("Native Hydro wall domain actual pool input changed");
-        block.RequireNativeGeometryIdentity();
+        block.RequireLogicalGeometryIdentity(tree_->GetRootGrid(),boundary_->geometry_semantics());
         if(!PatchAuthority::same_coherence(ledger_->inspect(record.key),record.coherence))
             throw std::logic_error("Native Hydro wall domain input publication changed");
         ledger_->require_readable(record.key,{arch::state::ExecutionSide::Host,
             record.coherence.interior.version,true,true});
-        const auto result=boundary_->native_hydro_boundary_view(record.frame,state,grid,expected_time_);
+        boundary_->require_hydro_input_frame(record.frame,state,grid,expected_time_);
+        const auto result=PatchAuthority::physical_faces(*boundary_,*tree_,block);
         if(result.reflecting!=record.walls.reflecting)
             throw std::logic_error("Native Hydro wall domain physical faces changed");
         return result;
@@ -440,6 +531,9 @@ private:
     bool configured_=false,post_boundary_=false;
     double expected_time_=0.;
     std::vector<Record> records_;
+    std::array<std::uint64_t,11> root_{};
+    std::array<std::uint64_t,12> configuration_{};
+    std::array<std::string,6> policies_{};
 };
 
 /** Borrow a fully preflighted stage record without scanning other patches. */
@@ -452,6 +546,12 @@ inline HostHydroBoundaryAuthority::HostHydroBoundaryAuthority(
 {
     (void)domain.require_patch_view(active_index,domain.control_,
         block_id,state,grid);
+}
+
+/** Both construction routes report their originally captured immutable chart. */
+inline GridMetrics::GeometrySemantics HostHydroBoundaryAuthority::geometry_semantics() const noexcept {
+    return domain_ ? domain_->records_[domain_index_].frame.identity_.semantics_
+                   : frame_.identity_.semantics_;
 }
 
 /** The original mathematical consumer keeps one exact per-patch entry gate. */

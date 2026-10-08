@@ -178,7 +178,27 @@ export class BuildRunner {
     child.once('error',()=>reject(new Error('Build process could not start.')));child.once('close',(code,signal)=>{result.exitCode=code;result.signal=signal;if(code===0)resolve();else reject(new Error('Build exited unsuccessfully.'));});
    });const manifest=await makeManifest(this.profile,this.projectId,id,startedAt,before,preBinary,git,compilerBefore,toolchainBefore,configurationBefore,runtimeBefore);await saveManifest(this.profile,manifest);this.current.lastSuccessfulBuild=manifest;result.state='succeeded';
   }catch(e){result.error=e instanceof Error?e.message:'Build failed';}
-  finally{result.finishedAt=new Date().toISOString();if(result.error)this.log?.append('stderr',result.error);this.log?.append('state',undefined,result.state);this.current.latestResult=result;this.current.state=result.state;this.child=undefined;await this.refreshFreshness(true);delete this.current.activeBuildId;}
+  finally{
+   // The compiler has ended, but the build remains busy until the final
+   // provenance/freshness scan completes. No terminal result or log may claim
+   // success while Run is still barred by this attempt's active identity.
+   this.child=undefined;
+   try{await this.refreshFreshness(true);}
+   catch(e){
+    const detail=e instanceof Error?e.message:'Unknown freshness error';
+    const failure='Final build freshness verification failed: '+detail;
+    result.state='failed';result.error=result.error?result.error+' '+failure:failure;
+    this.current.binaryState='freshness-unknown';this.current.freshnessReason=failure;
+   }
+   // Publish this one completed terminal snapshot synchronously, after all
+   // fallible final evidence work. Retain captured manifests and precise process
+   // exit/signal provenance; a failed scan never grants executable readiness.
+   result.finishedAt=new Date().toISOString();
+   delete this.current.activeBuildId;
+   this.current.latestResult=result;this.current.state=result.state;
+   if(result.error)this.log?.append('stderr',result.error);
+   this.log?.append('state',undefined,result.state);
+  }
  }
  events(buildId:string){if(!this.log||this.log.buildId!==buildId)throw new BuildError('Unknown or expired build ID.',404);return this.log.snapshot();}
  isActive(){return !!this.current.activeBuildId;}

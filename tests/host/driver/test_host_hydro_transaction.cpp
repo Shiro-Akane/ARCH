@@ -33,9 +33,12 @@
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverMacroStep.h"
 #include "driver/stages/DriverStages.h"
+#include "numerics/flux/FluxHLLC.h"
+#include "numerics/integrator/HydroSolverImpl.h"
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
+#include "numerics/reconstruction/Reconstruction.h"
 #include "physics/boundary/BoundaryDiagnostics.h"
 #include "physics/boundary/UserBoundary.h"
 #include "physics/eos/IdealGas.h"
@@ -1331,10 +1334,288 @@ void rejected_timestep_advice_is_not_accepted(){
         "rejected timestep proposal changed accepted scalar advice");
 }
 
+/** The closed metadata role cannot be confused with a surface or survive a move.
+ * Use the genuine EOS-bound Runtime fixture for Native; ordinary metadata uses
+ * the same actual arrays/local geometry but grants no scheduler/wall authority.
+ */
+void hydro_input_frame_metadata_roles() {
+    Fixture f;const int id=f.control.tree->GetActiveBlocks().front();
+    auto& block=f.control.pool->GetBlock(id);
+    f.bc->configure_stage(2.,boundary::BoundaryPurpose::Hydro);
+    auto original=f.bc->capture_hydro_input_frame(block.fluid_state,block.grid,2.);
+    auto moved=std::move(original);
+    bool rejected=false;
+    try{f.bc->require_hydro_input_frame(original,block.fluid_state,block.grid,2.);}
+    catch(const std::logic_error&){rejected=true;}
+    require(rejected,"moved Hydro metadata frame retained a borrowed identity");
+    f.bc->require_hydro_input_frame(moved,block.fluid_state,block.grid,2.);
+    const auto old=f.config.grid.x3_max;f.config.grid.x3_max=std::nextafter(old,std::numeric_limits<double>::infinity());
+    rejected=false;try{f.bc->require_hydro_input_frame(moved,block.fluid_state,block.grid,2.);}
+    catch(const std::logic_error&){rejected=true;}
+    f.config.grid.x3_max=old;
+    require(rejected,"Hydro metadata frame ignored third-axis configured root drift");
+    f.bc->require_hydro_input_frame(moved,block.fluid_state,block.grid,2.);
+    // Ordinary observations have no Native stamp or EOS callback prerequisite.
+    SimConfig ordinary=f.config;ordinary.grid.geometry="cartesian";
+    amr::AMRControl control{8,2};control.tree->InitRootGrid(ordinary,1);
+    auto& actual=control.pool->GetBlock(control.tree->GetActiveBlocks().front());
+    BCHandler handler(ordinary);handler.configure_stage(2.,boundary::BoundaryPurpose::Hydro);
+    auto frame=handler.capture_hydro_input_frame(actual.fluid_state,actual.grid,2.);
+    handler.require_hydro_input_frame(frame,actual.fluid_state,actual.grid,2.);
+    actual.grid.dyadic_identity.bound=true;rejected=false;
+    try{handler.require_hydro_input_frame(frame,actual.fluid_state,actual.grid,2.);}
+    catch(const std::logic_error&){rejected=true;}
+    require(rejected,"ordinary Hydro metadata accepted a fabricated Native stamp");
+}
+
+/** Ordinary authority borrows real builtin ghosts and the actual Tree/ledger.
+ * The configured integer roots independently fix external versus internal sides;
+ * no Native stamp or Native EOS callback is supplied. This proves metadata only.
+ */
+void ordinary_hydro_domain_root_faces() {
+    for(int dim:{1,2,3}) {
+        SimConfig config;config.grid.dim=dim;config.grid.geometry="cartesian";
+        config.grid.x1_min=1.;config.grid.x1_max=3.;
+        config.grid.x2_min=-1.;config.grid.x2_max=1.;
+        config.grid.x3_min=-1.;config.grid.x3_max=1.;
+        config.grid.nblockx1=2;config.grid.nblockx2=dim>=2?1:0;config.grid.nblockx3=dim==3?1:0;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="reflecting";
+        config.grid.x3l_boundary_type=config.grid.x3r_boundary_type="reflecting";
+        config.grid.amr_max_blocks=8;config.amr.lrefinemin=config.amr.lrefinemax=0;
+        amr::AMRControl control{8,dim};control.tree->InitRootGrid(config,1);
+        SpeciesManager species;species.add_species("X",1.,1.,1.4,1.);
+        IdealGas eos(1.4,species);BCHandler boundary_handler(config);
+        boundary_handler.configure_stage(2.,boundary::BoundaryPurpose::Hydro);
+        const auto& ids=control.tree->GetActiveBlocks();
+        require(ids.size()==2,"ordinary domain fixture lacks two actual root leaves");
+        topology::TopologyIdentityRegistry topology{{dim,{2,1,1},0}};
+        std::vector<topology::TopologyObservation> observations;
+        for(int id:ids) {
+            auto& b=control.pool->GetBlock(id);
+            observations.push_back({id,{dim,b.level,b.logical_x1,b.logical_x2,b.logical_x3}});
+            for(int cell=0;cell<b.grid.GetTotalSize();++cell) {
+                b.fluid_state.set(cell,{2.,0.,0.,0.,20.});b.fluid_state.X(0,cell)=1.;
+            }
+            boundary_handler.apply(b.fluid_state,b.grid);
+        }
+        std::vector<amr::BlockHandle> handles;
+        auto proposed=topology.stage_adoption(observations);
+        topology.commit_after_success(std::move(proposed),[&](const auto& value){handles=value.handles_in_observation_order;});
+        control.BindActiveHandles(handles);
+        state::StateResidencyLedger ledger{handles.front().epoch};scheduler::MonotonicSchedulerClock clock;
+        scheduler::StageExecutionContext context{state::ExecutionSide::Host,ledger,clock};
+        context.step_start_time=2.;context.step_dt=.125;
+        scheduler::StageBinding binding{context,handles};
+        const auto stage=scheduler::supported_hydro_time_plan(scheduler::HydroMethod::Euler).stages.front();
+        const auto publication=clock.next_publication();
+        for(std::size_t n=0;n<ids.size();++n) {
+            auto& b=control.pool->GetBlock(ids[n]);
+            for(int k=b.grid.Ks();k<b.grid.Ke();++k)for(int j=b.grid.Js();j<b.grid.Je();++j)
+                for(int i=b.grid.Is();i<b.grid.Ie();++i) {
+                    const int index=b.grid.GetIndex(i,j,k);
+                    require(eos.get_pressure(b.fluid_state.get(index),&b.fluid_state.X(0,index))>0.,
+                        "ordinary physical fixture failed its actual IdealGas input");
+                }
+            ledger.register_block(handles[n],publication.version,publication.completion);
+            ledger.publish_ghost({handles[n],StateSlot::Current},state::ExecutionSide::Host,
+                publication.version,clock.next_completion());
+        }
+        require(!context.post_boundary_acceptance,"ordinary domain acquired a fabricated Native gate");
+        boundary::HostHydroBoundaryDomainAuthority domain(boundary_handler,control,binding,stage);
+        for(std::size_t n=0;n<ids.size();++n) {
+            auto& b=control.pool->GetBlock(ids[n]);
+            boundary::HostHydroBoundaryAuthority patch(domain,n,b.id,b.fluid_state,b.grid);
+            const auto walls=patch.require_view(&control,b.id,b.fluid_state,b.grid);
+            require(walls.reflecting[0]==(b.logical_x1==0)
+                &&walls.reflecting[1]==(b.logical_x1==1),"ordinary wall identity guessed an internal root face");
+            for(int axis=1;axis<3;++axis)
+                require(walls.reflecting[2*axis]==(axis<dim)&&walls.reflecting[2*axis+1]==(axis<dim),
+                    "ordinary wall identity lost an active side or granted an inactive side");
+        }
+        domain.require_complete_domain();
+        // Reuse this genuine ordinary frame for all three refusal categories.
+        // The wrong-chart check precedes allocation/EOS in the concrete solver;
+        // version and stage-clock faults reach its original require_view gate.
+        auto& actual=control.pool->GetBlock(ids.front());
+        boundary::HostHydroBoundaryAuthority patch(domain,0,actual.id,actual.fluid_state,actual.grid);
+        require(patch.geometry_semantics()==GridMetrics::GeometrySemantics::Existing,
+            "ordinary input frame captured the wrong chart");
+        Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> ordinary_solver(eos);
+        Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> wrong_chart_solver(eos,rz);
+        std::vector<FluidVector> dU(actual.grid.GetTotalSize(),FluidVector{7.,11.,13.,17.,19.});
+        std::vector<double> d_spec(actual.grid.GetTotalSize(),23.);
+        const auto original_dU=dU;const auto original_spec=d_spec;
+        const auto original_fields=capture_fields(control);
+        const auto original_register=control.flux_register.snapshot_host();
+        const auto unchanged=[&]{
+            require(dU.size()==original_dU.size()&&bits(d_spec,original_spec),
+                "ordinary refusal changed output extent/species scratch");
+            for(std::size_t index=0;index<dU.size();++index) {
+                const auto& now=dU[index];const auto& prior=original_dU[index];
+                require(bits(now.rho,prior.rho)&&bits(now.mom_u,prior.mom_u)
+                    &&bits(now.mom_v,prior.mom_v)&&bits(now.mom_w,prior.mom_w)
+                    &&bits(now.eng,prior.eng),
+                    "ordinary refusal mutated divergence sentinel");
+            }
+            for(const auto& witness:original_fields)witness.matches(control);
+            require(control.flux_register.host_snapshot_matches(original_register),
+                "ordinary refusal mutated original flux register");
+        };
+        const auto evaluate=[&](const Numerics::IHydroSolver& solver){
+            solver.evaluate_patch(&control,actual.id,actual.fluid_state,actual.grid,.125,
+                dU,d_spec,nullptr,config.numerics,1.,nullptr,&patch);
+        };
+        {
+            const auto before=ledger.snapshot_host();const auto token=clock.last_token(),version=clock.last_version();
+            bool refused=false;
+            try{evaluate(wrong_chart_solver);}catch(const std::invalid_argument& error){
+                refused=std::string(error.what())=="Hydro wall authority and solver chart mismatch";
+                if(!refused)throw;
+            }
+            require(refused,"ordinary authority entered mismatched Native solver");unchanged();
+            require(ledger.host_snapshot_matches(before)&&clock.last_token()==token&&clock.last_version()==version,
+                "wrong-chart refusal changed ledger/clock");
+        }
+        {
+            // A genuine later Host publication invalidates the original ghosts.
+            // Restore only this test's prepared metadata lease after observing
+            // that both consumers leave the deliberately faulty ledger untouched.
+            auto before=ledger.snapshot_host();ledger.freeze_host_snapshot(before);
+            const auto token=clock.last_token(),version=clock.last_version();
+            const auto changed=clock.next_publication();
+            ledger.publish_interior({handles.front(),StateSlot::Current},state::ExecutionSide::Host,
+                changed.version,changed.completion);
+            const auto faulty=ledger.inspect({handles.front(),StateSlot::Current});
+            bool view_refused=false,solver_refused=false;
+            try{(void)patch.require_view(&control,actual.id,actual.fluid_state,actual.grid);}
+            catch(const std::logic_error& error){
+                view_refused=std::string(error.what())=="Native Hydro wall domain input publication changed";
+                if(!view_refused)throw;
+            }
+            try{evaluate(ordinary_solver);}catch(const std::logic_error& error){
+                solver_refused=std::string(error.what())=="Native Hydro wall domain input publication changed";
+                if(!solver_refused)throw;
+            }
+            require(view_refused&&solver_refused,"ordinary authority reused a stale readable version");unchanged();
+            const auto after=ledger.inspect({handles.front(),StateSlot::Current});
+            require(after.interior.version==faulty.interior.version
+                &&after.interior.completion==faulty.interior.completion
+                &&after.ghost.residency==faulty.ghost.residency
+                &&after.ghost_source_version==faulty.ghost_source_version
+                &&clock.last_token()==changed.completion.value&&clock.last_version()==changed.version.value,
+                "stale-version refusal rewrote the presented ledger/clock fault");
+            ledger.restore_host_snapshot_noexcept(before);ledger.release_host_snapshot(before);
+            clock=scheduler::MonotonicSchedulerClock(token,version);
+            (void)patch.require_view(&control,actual.id,actual.fluid_state,actual.grid);
+        }
+        {
+            // Actual stage input time is the authority's frozen clock datum;
+            // its monotone completion counter is not an immutable authority key.
+            const auto before=ledger.snapshot_host();const auto start=context.step_start_time;
+            const auto token=clock.last_token(),version=clock.last_version();
+            context.step_start_time=std::nextafter(start,std::numeric_limits<double>::infinity());
+            bool view_refused=false,solver_refused=false;
+            try{(void)patch.require_view(&control,actual.id,actual.fluid_state,actual.grid);}
+            catch(const std::logic_error& error){
+                view_refused=std::string(error.what())=="Native Hydro wall domain stage/context changed";
+                if(!view_refused)throw;
+            }
+            try{evaluate(ordinary_solver);}catch(const std::logic_error& error){
+                solver_refused=std::string(error.what())=="Native Hydro wall domain stage/context changed";
+                if(!solver_refused)throw;
+            }
+            require(view_refused&&solver_refused,"ordinary authority ignored the changed actual stage clock");unchanged();
+            require(ledger.host_snapshot_matches(before)&&clock.last_token()==token&&clock.last_version()==version,
+                "stage-clock refusal changed publication metadata");
+            context.step_start_time=start;
+            (void)patch.require_view(&control,actual.id,actual.fluid_state,actual.grid);
+        }
+        domain.require_complete_domain();
+        config.grid.x1l_boundary_type="outflow";bool rejected=false;
+        try{domain.require_complete_domain();}catch(const std::logic_error&){rejected=true;}
+        require(rejected,"ordinary domain accepted a changed raw BC policy token");
+    }
+}
+
+
+/** Execute the actual ordinary reflecting Runtime route for each selected method.
+ * Root-drift negatives snapshot after legitimate ghost preparation: they prove
+ * preflight rejection, not a nonexistent ordinary macro transaction rollback.
+ */
+void ordinary_runtime_wall_routes() {
+    const std::array<std::pair<dispatch::TimeIntegratorId,driver::IntegratorSolve>,3> methods{{
+        {dispatch::TimeIntegratorId::Euler,selected_euler},
+        {dispatch::TimeIntegratorId::Rk2,selected_rk2},
+        {dispatch::TimeIntegratorId::Rk3,selected_rk3}}};
+    for(const auto& [method,integrator]:methods)for(bool root_drift:{false,true}) {
+        auto config=settings(method);config.grid.dim=1;config.grid.geometry="cartesian";
+        config.grid.nblockx2=0;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+        SpeciesManager species;species.add_species("X",1.,1.,1.4,1.);
+        IdealGas eos(1.4,species);amr::AMRControl control{8,1};
+        control.tree->InitRootGrid(config,1);control.flux_register.EnsureSpecies(1);
+        for(int id:control.tree->GetActiveBlocks()) {
+            auto& block=control.pool->GetBlock(id);
+            for(auto* slot:slots(block))for(int index=0;index<block.grid.GetTotalSize();++index) {
+                slot->set(index,{2.,0.,0.,0.,20.});slot->X(0,index)=1.;
+            }
+        }
+        RunState start;start.repairs.reset(1);
+        SimulationController controller(config,start);BCHandler bc(config);bc.bind(eos,species);
+        driver::DriverRuntime runtime(control,bc,config,species,controller);
+        runtime.initialize_topology();auto context=runtime.stage_context();
+        context.step_start_time=2.;context.step_dt=.125;
+        context.boundary_start_time=2.;context.boundary_step_dt=.125;
+        context.configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose){bc.configure_stage(time,purpose);};
+        std::vector<FieldWitness> prepared;
+        context.physical_boundary_preparation=[&](StateSlot slot,double time,boundary::BoundaryPurpose purpose){
+            bc.configure_stage(time,purpose);runtime.ensure_fluid_ghosts(slot);
+            if(root_drift) {
+                prepared=capture_fields(control);
+                config.grid.x1_max=std::nextafter(config.grid.x1_max,std::numeric_limits<double>::infinity());
+            }
+        };
+        require(!context.post_boundary_acceptance,"ordinary Runtime fabricated Native acceptance");
+        Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> hydro(eos);
+        dispatch::ResolvedExecutionPlan plan{};plan.time_integrator=method;
+        driver::DriverStageWorkspace workspace;bool rejected=false;
+        {
+            scheduler::ScopedStageBinding binding(context,runtime.handles());
+            try{driver::advance_hydro(runtime,workspace,context,&plan,context.step_dt,
+                integrator,nullptr,&hydro,driver::HostHydroQualification::Production);}
+            catch(const std::logic_error& error){
+                if(!root_drift)throw;
+                // The exact Tree/config root owner must reject before patch mathematics.
+                const std::string text=error.what();
+                rejected=text.find("root")!=std::string::npos||text.find("configuration")!=std::string::npos;
+                if(!rejected)throw;
+            }
+        }
+        require(rejected==root_drift,"ordinary wall route lost its real root gate");
+        if(root_drift) {
+            require(prepared.size()==runtime.handles().size(),"negative never reached real ghost preparation");
+            for(const auto& witness:prepared)witness.matches(control);
+        } else {
+            for(int id:control.tree->GetActiveBlocks()) {
+                const auto& block=control.pool->GetBlock(id);
+                for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+                    const auto index=block.grid.GetIndex(i,block.grid.Js(),block.grid.Ks());
+                    const double fraction=block.fluid_state.X(0,index);
+                    require(eos.get_pressure(block.fluid_state.get(index),&fraction)>0.,
+                        "ordinary reflected actual Hydro output rejected selected EOS");
+                }
+            }
+        }
+    }
+}
+
 } // namespace
 
 /** Added to the existing gravity_stage_contract executable; no new broad CI campaign. */
 void test_host_hydro_transaction(){
+    hydro_input_frame_metadata_roles();ordinary_hydro_domain_root_faces();
+    ordinary_runtime_wall_routes();
     first_use_and_retry();existing_alias_late_ghost_native_rejection();descriptor_and_frame_negatives();
     exclusive_owner_and_partial_permutation();retired_uid_and_replay_history();
     fail_closed_profiles();forbidden_residency();actual_foreign_binding_before_write();

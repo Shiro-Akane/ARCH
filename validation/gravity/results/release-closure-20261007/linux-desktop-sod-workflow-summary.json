@@ -1,0 +1,106 @@
+{
+  "status": "PASS_ACTUAL_LINUX_DESKTOP_SCOPED_WORKFLOW",
+  "checkedAtUtc": "2026-10-08T01:24:04.487742+00:00",
+  "sourceGit": "e995af61d0784a413bb454481c34bddf83d6a171",
+  "binarySHA256": "ccb0821a194dfd82fe3a71acec3818e88db6f2c30cf14d9e1cc6e6089427b384",
+  "continuousConfigSHA256": "525be2169eaf4b914664b18ed79f9990b2ffde6e9f60b79d306ff83374ffadce",
+  "restartConfigSHA256": "4de31b2544407f53e1b32f68f31e8dfb578452124389a8e0ff74bbcd3736a04e",
+  "restartInputCheckpointSHA256": "5e9ee7e69205b1894d58f64f8afea48adffba455d224f313c0aec6fd5a13145c",
+  "workflow": {
+    "configure": "PASS",
+    "build": "PASS_CURRENT_HOST_IDENTITY",
+    "nativeChooser": "PASS_ACTUAL_OBSERVED_OPEN_BUTTON",
+    "run": "PASS",
+    "restart": "PASS",
+    "currentPlotAndInspector": "PASS",
+    "normalCloseCompletedJobs": "PASS",
+    "activeCloseRunningJob": "OPEN_NOT_ATTEMPTED"
+  },
+  "physicalEndpoint": {
+    "case": "Sod",
+    "dimension": 1,
+    "backend": "cpu",
+    "cells": 128,
+    "rootBlocks": 8,
+    "AMR": false,
+    "CFL": 0.4,
+    "method": "RK2/HLLC/MUSCL_MC",
+    "tmax": 0.2,
+    "finalStep": 280,
+    "restartFromTime": 0.05
+  },
+  "restartComparison": {
+    "numericComparison": "byte_exact",
+    "numericDatasets": 20,
+    "numericElements": 1095,
+    "stringDatasets": 1,
+    "stringComparison": "exact_values",
+    "allEqual": true,
+    "localReceiptSHA256": "6ebeedb7919762150f7de0111ff8a3b08ae603e493fe47057437efee51fd1cf3",
+    "totalDatasets": 21
+  },
+  "hostBuildWallSeconds": 214.297,
+  "pureCompilerWallSeconds": null,
+  "plot": {
+    "fileSHA256": "1870b2810d663e45e008600b135e03f7f11832031cc412224d7b92d0c6146b46",
+    "time": 0.2,
+    "field": "DENS",
+    "cellIndex": 0,
+    "rawValue": 1.0,
+    "fieldUnit": "g/cm^3",
+    "boundsCm": [
+      0,
+      0.0078125
+    ],
+    "measure": 0.0078125,
+    "measureUnit": "cm",
+    "measureNormalization": "per_unit_transverse_area",
+    "publicationComplete": true,
+    "FP64": true,
+    "scope": "Stored native cell; main executable/config/source identity, not full shared-library or numerical qualification"
+  },
+  "receiptDigests": {
+    "native-ui-full-20261008-build-repair": {
+      "relativePath": "native-ui-full-20261008-build-repair/receipt.json",
+      "sha256": "30d90ec6e4654a9be457ef5d39918d62a85927f869d26c5b6e4af0fe1f9c6168"
+    },
+    "native-ui-full-20261008-run-current": {
+      "relativePath": "native-ui-full-20261008-run-current/receipt.json",
+      "sha256": "7787a3fa29297ff81cc127575adeeeab240aa0d86e4691f0955524926cd083d8"
+    },
+    "native-ui-full-20261008-restart-native-open-result": {
+      "relativePath": "native-ui-full-20261008-restart-native-open-result/receipt.json",
+      "sha256": "1f692ea1798c1b303131c14d9a339accbb462bb08b35fbce544eb9311740c53c"
+    },
+    "native-ui-full-20261008-restart-real": {
+      "relativePath": "native-ui-full-20261008-restart-real/receipt.json",
+      "sha256": "efb0bdf302cda1f8ea5ce32303cb3025f360003f52022041030a376bebcfef03"
+    },
+    "native-ui-full-20261008-current-inspector-view": {
+      "relativePath": "native-ui-full-20261008-current-inspector-view/receipt.json",
+      "sha256": "bb8b5ca6f05b181454dbd3fa36519ac0e16baad7d90e9fd2c3bf47c519e8f4cc"
+    }
+  },
+  "knownLimits": [
+    "NativeDevice/fullRZ science not inferred",
+    "Active-close and full-model UI qualification remain open",
+    "Build-publication race separately repaired with original17/typecheck/lint; current real desktop revalidation pending",
+    "Initial chooser Return attempts failed before actual Open; all failure receipts kept",
+    "Initial string object-pointer byte comparison was invalid; corrected to exact string values without changing numeric-byte gates"
+  ],
+  "rawCleanup": {
+    "consumersComplete": true,
+    "ownedGuiExited": true,
+    "bytes": 522608,
+    "status": "DELETED_AFTER_CONSUMER_COMPLETION_WITH_DIGESTS",
+    "deletedAtUtc": "2026-10-08T01:24:04.488390+00:00",
+    "fileCount": 11
+  },
+  "studioFinalizerOwner": {
+    "passed": 17,
+    "durationSeconds": 4.435073,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "currentActualDesktop": "PENDING"
+  }
+}

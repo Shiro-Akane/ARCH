@@ -59,12 +59,12 @@ public:
     {
         // Authenticate the exact borrowed BC/slot/ghost frame before outputs,
         // cache allocation, or EOS work. The empty mathematical path is used
-        // by direct numerical leaves; production native integrators bind it.
+        // by direct numerical leaves; production BCHandler integrators bind the same real input frame.
+        if(boundary&&boundary->geometry_semantics()!=semantics_)
+            throw std::invalid_argument("Hydro wall authority and solver chart mismatch");
         const auto walls=boundary
             ? boundary->require_view(amr_ctrl,block_id,state,grid)
             : arch::boundary::HydroBoundaryView{};
-        if(boundary&&semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::invalid_argument("Native wall authority used by another Hydro chart");
         std::optional<Physical::Gravity::NativeExternalStageFrame::PatchReceipt> source;
         std::optional<Physical::Gravity::NativeSelfStageFrame::PatchReceipt> self_source;
         if(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&gravity) {

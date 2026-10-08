@@ -77,9 +77,9 @@ struct SolverRK3
                 // this nonmoving metadata owner expires before publication.
                 std::optional<arch::boundary::HostHydroBoundaryDomainAuthority> wall_domain;
                 const arch::boundary::HostHydroBoundaryDomainAuthority* wall_domain_ptr=nullptr;
-                if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                    if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>) {
-                        if(geometry.deferred_native_source) {
+                if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>) {
+                        if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
+                            &&geometry.deferred_native_source) {
                             // Borrow exactly the private prepared external OR
                             // self frame's original boundary authority; never
                             // reconstruct or relabel a source wall domain.
@@ -95,8 +95,8 @@ struct SolverRK3
                             wall_domain.emplace(boundary_condition,amr_ctrl,binding,descriptor);
                             wall_domain_ptr=&*wall_domain;
                         }
-                    } else throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
-                }
+                } else if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                    throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
 #pragma omp parallel
                     {
                         int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -113,11 +113,10 @@ struct SolverRK3
                             // The main-thread binding is borrowed explicitly by this OMP
                         // worker; wall authority expires with this patch-stage.
                         std::optional<arch::boundary::HostHydroBoundaryAuthority> wall;
-                        if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                            if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>)
-                                wall.emplace(*wall_domain_ptr,i,active_blocks[i],input_state,b.grid);
-                            else throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
-                        }
+                        if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>)
+                            wall.emplace(*wall_domain_ptr,i,active_blocks[i],input_state,b.grid);
+                        else if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
+                            throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
                         hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr,wall?&*wall:nullptr);
                             hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
                         } catch (...) {

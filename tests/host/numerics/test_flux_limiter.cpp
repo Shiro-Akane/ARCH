@@ -15,6 +15,7 @@
 #include "grid/Grid.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "numerics/flux/RzNativeFaceFlux.h"
+#include "numerics/flux/StationarySlipWallFlux.h"
 #include "physics/eos/IdealGas.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "numerics/flux/InvariantDomainFlux.h"
@@ -442,11 +443,324 @@ void test_native_gamma_wall_away_pressure() {
     check(!baseline_rejected.valid,
         "inadmissible selected wall prerequisite fails closed without an acoustic-speed increase");
     double untouched=123.;
-    check(!RzNativeFaceFlux::gamma_wall_pressure(.4,.00625,.1,
+    check(!StationarySlipWallFlux::gamma_wall_pressure(.4,.00625,.1,
         std::numeric_limits<double>::infinity(),untouched)&&untouched==123.,
         "nonfinite gamma wall input rejects without publishing");
-    check(RzNativeFaceFlux::gamma_wall_pressure(.4,.00625,.1,1.,untouched)&&untouched==0.,
+    check(StationarySlipWallFlux::gamma_wall_pressure(.4,.00625,.1,1.,untouched)&&untouched==0.,
         "true gamma-law vacuum has zero traction without a pressure floor");
+}
+
+/** Independent dyadic rarefaction reference: gm=2^-10 and v/c=2^10
+ * give b=1/2 and 2*gamma/gm=2050 exactly, so P_wall=P*2^-2050.
+ * These point-range witnesses have finite compatible rho/momentum/energy;
+ * neither a Runtime wall identity nor a complete EOS-range grant is inferred.
+ */
+void test_gamma_wall_positive_product_range() {
+    const double gm=std::ldexp(1.,-10),speed=1.,away=std::ldexp(1.,10);
+    const double pressure=std::ldexp(1.,1000);
+    const double rho=(1.+gm)*pressure;
+    const double momentum=rho*away;
+    const double thermal=pressure/gm;
+    const double energy=thermal+.5*momentum*away;
+    check(std::isfinite(rho)&&rho>0.&&std::isfinite(momentum)
+        &&std::isfinite(thermal)&&thermal>0.&&std::isfinite(energy),
+        "dyadic rarefaction inputs have finite compatible gas conservative state");
+    double output=123.;
+    check(StationarySlipWallFlux::gamma_wall_pressure(gm,pressure,speed,away,output)
+        &&output==std::ldexp(1.,-1050),
+        "positive representable wall pressure survives an underflowing inner exponential");
+    output=123.;
+    check(StationarySlipWallFlux::gamma_wall_pressure(gm,std::ldexp(1.,976),speed,away,output)
+        &&output==std::numeric_limits<double>::denorm_min(),
+        "independent exact dyadic wall pressure reaches minimum positive subnormal");
+    output=123.;
+    // Exact 2^-1075 is halfway between 0 and min-subnormal; round-to-nearest
+    // ties-to-even returns zero, which is not a representable positive pressure.
+    check(!StationarySlipWallFlux::gamma_wall_pressure(gm,std::ldexp(1.,975),speed,away,output)
+        &&output==123.,"unrepresentable positive wall pressure rejects without a floor or output write");
+    output=123.;
+    check(StationarySlipWallFlux::gamma_wall_pressure(gm,pressure,speed,2.*away,output)
+        &&output==0.,"actual b<=0 vacuum retains exact zero traction");
+    // This engineering check repeats the old direct expression ONLY to check
+    // unchanged ordinary-range output bits; it is not an independent EOS oracle.
+    for(double velocity:{0.,.0125,-.025}) {
+        const double ordinary_gm=.4,p=.00625,c=.1;
+        double expected=p;
+        if(velocity>0.) {
+            const double decrement=.5*ordinary_gm*(velocity/c);
+            const double exponent=(2.*(ordinary_gm+1.))/ordinary_gm;
+            expected=p*std::exp(exponent*std::log1p(-decrement));
+        } else if(velocity<0.) {
+            const double gamma=ordinary_gm+1.,mach=velocity/c;
+            const double K=.5*gamma*(gamma+1.)*mach*mach;
+            const double B=ordinary_gm/(gamma+1.);
+            expected=p*(1.+.5*K+std::hypot(.5*K,std::sqrt(K*(1.+B))));
+        }
+        output=123.;
+        check(StationarySlipWallFlux::gamma_wall_pressure(ordinary_gm,p,c,velocity,output)
+            &&std::bit_cast<std::uint64_t>(output)==std::bit_cast<std::uint64_t>(expected),
+            "ordinary rarefaction shock and at-rest pressure bits retain original arithmetic");
+    }
+}
+
+/** Actual third orthonormal direction uses the same gamma-law point solve.
+ * Independent long-double rarefaction/shock relations give pressure. This is
+ * direction/component portability only; it grants no ordinary wall authority.
+ */
+void test_shared_gamma_wall_third_direction() {
+    const double xi[kSpecies]{.75,.25};
+    constexpr double rho=2.,normal_velocity=.125,pressure=.025;
+    const long double gamma=1.4L,gm1=.4L;
+    const long double sound=std::sqrt(gamma*static_cast<long double>(pressure)/rho);
+    const long double mach=normal_velocity/sound;
+    const long double rare=static_cast<long double>(pressure)
+        *std::pow(1.L-gm1*mach/2.L,2.L*gamma/gm1);
+    const long double K=gamma*(gamma+1.L)*mach*mach/2.L,B=gm1/(gamma+1.L);
+    const long double shock=static_cast<long double>(pressure)
+        *(1.L+K/2.L+std::sqrt(K*K/4.L+K*(1.L+B)));
+    const FluidVector point{rho,0.,0.,rho*normal_velocity,
+        pressure/.4+.5*rho*normal_velocity*normal_velocity};
+    for(int side:{0,1}) {
+        FluidVector flux{123.,234.,345.,456.,567.};
+        check(StationarySlipWallFlux::gamma_wall_flux(point,xi,kEos,2,side,
+            pressure,double(sound),flux),"third-direction stationary gamma-law wall resolves");
+        check(close_rel(flux.mom_w,double(side==0?rare:shock)),
+            "third-direction pressure matches independent rarefaction/shock reference");
+        check(flux.rho==0.&&flux.mom_u==0.&&flux.mom_v==0.&&flux.eng==0.,
+            "third-direction wall has zero mass/work/tangential advection");
+        for(int s=0;s<kSpecies;++s)check(flux.rho*xi[s]==0.,
+            "third-direction impermeability gives zero constant-fraction species advection");
+        check(xi[0]==.75&&xi[1]==.25,"point-wall leaf modified borrowed composition");
+    }
+    FluidVector resting{rho,0.,0.,0.,pressure/.4},flux{};
+    check(StationarySlipWallFlux::gamma_wall_flux(resting,xi,kEos,2,0,
+        pressure,double(sound),flux)&&flux.mom_w==pressure,
+        "third-direction exact rest preserves the original pressure bits");
+    const FluidVector sentinel{123.,234.,345.,456.,567.};
+    for(const auto invalid:std::array<std::array<int,2>,3>{{{{-1,0}},{{3,0}},{{2,2}}}}) {
+        flux=sentinel;
+        check(!StationarySlipWallFlux::gamma_wall_flux(point,xi,kEos,invalid[0],invalid[1],
+            pressure,double(sound),flux)&&max_abs_diff(flux,sentinel)==0.,
+            "invalid wall direction/side rejects without publishing");
+    }
+    // All input reads precede publication, including actual third momentum.
+    auto alias=point;
+    check(StationarySlipWallFlux::gamma_wall_flux(alias,xi,kEos,2,0,
+        pressure,double(sound),alias)&&close_rel(alias.mom_w,double(rare))&&alias.eng==0.,
+        "third-direction point/output alias preserves physical input evaluation");
+}
+
+/** All three point directions bind the same exact low and original factor.
+ * Independent rarefaction/shock formulas and explicit one-sided bars supply
+ * the physical oracle; bad optional high is distinct from a bad required base.
+ * This is point algebra, not a whole-native stage/Runtime wall certificate.
+ */
+void test_shared_gamma_selected_point_blend() {
+    const double xi[kSpecies]{.75,.25},zero[kSpecies]{0.,0.};
+    constexpr double speed_normal=.125,pressure=.00625;
+    const long double gamma=1.4L,gm1=.4L,c=std::sqrt(gamma*pressure);
+    const long double mach=speed_normal/c;
+    const long double rare=pressure*std::pow(1.L-gm1*mach/2.L,2.L*gamma/gm1);
+    const long double K=gamma*(gamma+1.L)*mach*mach/2.L,B=gm1/(gamma+1.L);
+    const long double shock=pressure*(1.L+K/2.L+std::sqrt(K*K/4.L+K*(1.L+B)));
+    const auto point=[](int dir,double velocity,double energy) {
+        FluidVector value{1.,0.,0.,0.,energy};
+        if(dir==0)value.mom_u=velocity;else if(dir==1)value.mom_v=velocity;else value.mom_w=velocity;
+        return value;
+    };
+    const auto traction=[](int dir,double p) {
+        FluidVector value{};
+        if(dir==0)value.mom_u=p;else if(dir==1)value.mom_v=p;else value.mom_w=p;
+        return value;
+    };
+    const double energy=pressure/.4+.5*speed_normal*speed_normal;
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    for(int dir:{0,1,2})for(int side:{0,1}) {
+        const double un_left=side==0?-speed_normal:speed_normal;
+        const double un_right=-un_left;
+        const auto left=point(dir,un_left,energy),right=point(dir,un_right,energy);
+        const auto expected=traction(dir,double(side==0?rare:shock));
+        double baseline[kSpecies]{123.,456.};
+        const auto factor=StationarySlipWallFlux::gamma_selected_point_blend(
+            left,right,xi,xi,kSpecies,pressure,double(c),pressure,double(c),
+            kEos,dir,side,expected,zero,baseline);
+        check(factor.valid,"three-direction exact wall selected baseline is admissible");
+        check(max_abs_diff(factor.low,expected)<=kBand*std::max(std::abs(expected.mom_u),
+            std::max(std::abs(expected.mom_v),std::abs(expected.mom_w))),
+            "three-direction selected wall low matches independent shock/rarefaction traction");
+        check(baseline[0]==0.&&baseline[1]==0.,"selected wall uses zero baseline species flux");
+        // Direct independent physical fluxes, never a producer factor oracle.
+        const auto physical=[&](double velocity) {
+            auto value=traction(dir,velocity*velocity+pressure);
+            value.rho=velocity;value.eng=velocity*(energy+pressure);return value;
+        };
+        const double a=speed_normal+double(c);
+        const auto bar_left=left+(physical(un_left)-expected)/a;
+        const auto bar_right=right+(expected-physical(un_right))/a;
+        check(FluxAdmissibility::valid(bar_left)&&FluxAdmissibility::valid(bar_right),
+            "independent exact selected wall has two admissible physical bars");
+        const FluidVector bad_high{nan,0.,0.,0.,nan};const double bad_species[kSpecies]{nan,nan};
+        const auto rejected_high=StationarySlipWallFlux::gamma_selected_point_blend(
+            left,right,xi,xi,kSpecies,pressure,double(c),pressure,double(c),kEos,
+            dir,side,bad_high,bad_species,baseline);
+        check(rejected_high.valid&&rejected_high.theta==0.
+            &&max_abs_diff(rejected_high.low,factor.low)==0.,
+            "optional bad high contracts to theta0 of the identical canonical wall low");
+        for(int failure:{0,1,2}) {
+            baseline[0]=123.;baseline[1]=456.;
+            const double bad_xi[kSpecies]{nan,.25};
+            const auto bad=StationarySlipWallFlux::gamma_selected_point_blend(
+                left,right,failure==2?bad_xi:xi,xi,kSpecies,
+                failure==0?nan:pressure,failure==1?nan:double(c),pressure,double(c),
+                kEos,dir,side,expected,zero,baseline);
+            check(!bad.valid&&baseline[0]==123.&&baseline[1]==456.,
+                "malformed required wall pressure/acoustics/species rejects before scratch publication");
+        }
+    }
+    // All three aliases would overwrite required inputs when zeroing low X.
+    // They must reject before writing, without adding a numerical tolerance.
+    for(int alias_kind:{0,1,2}) {
+        double xl[kSpecies]{.75,.25},xr[kSpecies]{.75,.25},high_species[kSpecies]{0.,0.};
+        const auto left=point(2,-speed_normal,energy),right=point(2,speed_normal,energy);
+        const auto high=traction(2,double(rare));
+        double* scratch=alias_kind==0?xl:alias_kind==1?xr:high_species;
+        const auto factor=StationarySlipWallFlux::gamma_selected_point_blend(
+            left,right,xl,xr,kSpecies,pressure,double(c),pressure,double(c),kEos,
+            2,0,high,high_species,scratch);
+        check(!factor.valid&&xl[0]==.75&&xl[1]==.25&&xr[0]==.75&&xr[1]==.25
+            &&high_species[0]==0.&&high_species[1]==0.,
+            "selected wall scratch overlap rejects before required species inputs change");
+    }
+    IdealGasView stiff=kEos;stiff.global_gamma=10.;
+    const long double stiff_c=std::sqrt(10.L),u=-10.L*stiff_c;
+    const long double stiff_K=10.L*11.L*100.L/2.L,stiff_B=9.L/11.L;
+    const double stiff_wall=double(1.L+stiff_K/2.L+std::sqrt(stiff_K*stiff_K/4.L+stiff_K*(1.L+stiff_B)));
+    const double stiff_energy=double(1.L/9.L+.5L*u*u);
+    for(int dir:{0,1,2}) {
+        const auto left=point(dir,-double(u),stiff_energy),right=point(dir,double(u),stiff_energy);
+        const auto high=traction(dir,stiff_wall);double baseline[kSpecies]{123.,456.};
+        const auto factor=StationarySlipWallFlux::gamma_selected_point_blend(
+            left,right,xi,xi,kSpecies,1.,double(stiff_c),1.,double(stiff_c),
+            stiff,dir,0,high,zero,baseline);
+        check(!factor.valid,"stiff gamma10 compressive wall rejects invalid two-sided fixed-a base");
+    }
+}
+
+/** Actual ordinary Host sweeps consume given physical ghost points and flat
+ * wall metadata. This is a numerical producer witness, not Runtime authority.
+ * PCM cold rare/shock tractions have independent long-double references;
+ * selected MC/PPM at rest retain the exact physical pressure/zero advection.
+ */
+template<class Reconstruction>
+void ordinary_wall_sweep_case(int direction,double velocity,bool analytic) {
+    Grid grid(amr::MAX_NG,1.,3.,-1.,1.,-1.,1.);
+    grid.dim=direction+1;grid.geometry="cartesian";grid.InitializeTopology();
+    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(kSpecies);
+    constexpr double pressure=.00625;
+    const double energy=pressure/.4+.5*velocity*velocity;
+    for(int cell=0;cell<grid.GetTotalSize();++cell) {
+        state.set(cell,{1.,0.,0.,0.,energy});state.X(0,cell)=.75;state.X(1,cell)=.25;
+    }
+    for(int k=0;k<grid.GetTotalZ();++k)for(int j=0;j<grid.GetTotalY();++j)
+        for(int i=0;i<grid.GetTotalX();++i) {
+            const int position=direction==0?i:direction==1?j:k;
+            const int lower=direction==0?grid.Is():direction==1?grid.Js():grid.Ks();
+            const int upper=direction==0?grid.Ie():direction==1?grid.Je():grid.Ke();
+            const double normal=position<lower||position>=upper?-velocity:velocity;
+            auto point=state.get(grid.GetIndex(i,j,k));
+            if(direction==0)point.mom_u=normal;else if(direction==1)point.mom_v=normal;else point.mom_w=normal;
+            state.set(grid.GetIndex(i,j,k),point);
+        }
+    const auto before=state;
+    const int total=grid.GetTotalSize();
+    std::vector<FluidVector> actual(total),plain(total);
+    std::vector<double> species(total*kSpecies),plain_species(total*kSpecies);
+    FluxAdmissibility::MeanThermoCache cache;cache.reset(total);
+    cache.hydro_boundary.reflecting[2*direction]=true;cache.hydro_boundary.reflecting[2*direction+1]=true;
+    FluxHLLC<Reconstruction>::compute_fluxes(state,kEos,grid,actual,species,direction,0.,&cache);
+    FluxAdmissibility::MeanThermoCache empty;empty.reset(total);
+    FluxHLLC<Reconstruction>::compute_fluxes(state,kEos,grid,plain,plain_species,direction,0.,&empty);
+    const long double gamma=1.4L,gm1=.4L,sound=std::sqrt(gamma*pressure),mach=velocity/sound;
+    const long double rare=pressure*std::pow(1.L-gm1*mach/2.L,2.L*gamma/gm1);
+    const long double K=gamma*(gamma+1.L)*mach*mach/2.L,B=gm1/(gamma+1.L);
+    const long double shock=pressure*(1.L+K/2.L+std::sqrt(K*K/4.L+K*(1.L+B)));
+    for(int side:{0,1}) {
+        int i=grid.Is(),j=grid.Js(),k=grid.Ks();
+        const int face=direction==0?(side?grid.Ie():grid.Is()):direction==1?
+            (side?grid.Je():grid.Js()):(side?grid.Ke():grid.Ks());
+        if(direction==0)i=face;else if(direction==1)j=face;else k=face;
+        const int index=grid.GetIndex(i,j,k);const auto& f=actual[index];
+        const double normal=direction==0?f.mom_u:direction==1?f.mom_v:f.mom_w;
+        check(std::isfinite(normal)&&normal>0.,"ordinary actual selected wall retains positive physical traction");
+        if(analytic)check(close_rel(normal,double(side==0?rare:shock)),
+            "ordinary actual PCM rare/shock traction matches independent gamma invariant");
+        check(f.rho==0.&&f.eng==0.&&(direction==0||f.mom_u==0.)
+            &&(direction==1||f.mom_v==0.)&&(direction==2||f.mom_w==0.),
+            "ordinary actual wall has exact zero mass/work/tangential advection");
+        for(int s=0;s<kSpecies;++s)check(species[s*total+index]==0.,
+            "ordinary actual wall publishes exact zero species advection");
+    }
+    // Nonwall numerical bytes cannot change from merely present root flags.
+    const auto same=[](double a,double b){return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);};
+    for(int k=grid.Ks();k<grid.Ke();++k)for(int j=grid.Js();j<grid.Je();++j)
+        for(int i=grid.Is();i<grid.Ie();++i) {
+            const int coordinate=direction==0?i:direction==1?j:k;
+            const int lower=direction==0?grid.Is():direction==1?grid.Js():grid.Ks();
+            if(coordinate==lower)continue; // exclude the actual lower-wall slot.
+            const int index=grid.GetIndex(i,j,k);const auto& a=actual[index];const auto& b=plain[index];
+            check(same(a.rho,b.rho)&&same(a.eng,b.eng)&&same(a.mom_u,b.mom_u)
+                &&same(a.mom_v,b.mom_v)&&same(a.mom_w,b.mom_w),
+                "ordinary nonwall selected flux remains byte identical");
+            for(int species_index=0;species_index<kSpecies;++species_index)
+                check(same(species[species_index*total+index],plain_species[species_index*total+index]),
+                    "ordinary nonwall species flux remains byte identical");
+        }
+    check(state.rho==before.rho&&state.mom_u==before.mom_u&&state.mom_v==before.mom_v
+        &&state.mom_w==before.mom_w&&state.eng==before.eng&&state.mass_fractions==before.mass_fractions,
+        "ordinary wall sweep changed immutable source arrays");
+}
+void test_ordinary_wall_sweeps() {
+    for(int direction:{0,1,2}) {
+        ordinary_wall_sweep_case<PCMReconstruction>(direction,.125,true);
+        ordinary_wall_sweep_case<MusclReconstruction<McLimiter>>(direction,0.,true);
+        ordinary_wall_sweep_case<PPMReconstruction>(direction,0.,true);
+    }
+    Grid grid(amr::MAX_NG,1.,3.,0.,1.,0.,1.);grid.dim=1;grid.InitializeTopology();
+    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(kSpecies);
+    for(int cell=0;cell<grid.GetTotalSize();++cell){state.set(cell,{1.,0.,0.,0.,1.});state.X(0,cell)=.75;state.X(1,cell)=.25;}
+    const FluidVector sentinel{123.,234.,345.,456.,567.};
+    std::vector<FluidVector> flux(grid.GetTotalSize(),sentinel);
+    std::vector<double> species(kSpecies*grid.GetTotalSize(),987.);
+    FluxAdmissibility::MeanThermoCache cache;cache.reset(grid.GetTotalSize());
+    cache.hydro_boundary.reflecting[2]=true;bool rejected=false;
+    try{FluxHLLC<PCMReconstruction>::compute_fluxes(state,kEos,grid,flux,species,0,0.,&cache);}
+    catch(const std::invalid_argument&){rejected=true;}
+    check(rejected&&max_abs_diff(flux[grid.Is()],sentinel)==0.&&species[grid.Is()]==987.,
+        "inactive ordinary wall flags reject before numerical publication");
+}
+
+/** The finite optional H is canonicalized before factor/publication; an
+ * unresolved optional trial and invalid pressure must remain unchanged. */
+void test_stationary_candidate_projection() {
+    using Status=StationarySlipWallFlux::StationaryCandidateStatus;
+    for(int dir=0;dir<3;++dir) {
+        FluidVector high{3.,2.,2.,2.,4.};double species[2]={.4,-.4};
+        check(StationarySlipWallFlux::stationary_candidate(dir,high,species,2)==Status::canonical,
+            "finite stationary high canonicalizes before factor");
+        check(high.rho==0.&&high.eng==0.&&species[0]==0.&&species[1]==0.,
+            "stationary high advective components are exact zero before factor");
+        check(high.mom_u==(dir==0?2.:0.)&&high.mom_v==(dir==1?2.:0.)
+            &&high.mom_w==(dir==2?2.:0.),"stationary high retains true normal traction");
+        FluidVector bad{3.,2.,2.,2.,4.};double unresolved[2]={.4,std::numeric_limits<double>::quiet_NaN()};
+        check(StationarySlipWallFlux::stationary_candidate(dir,bad,unresolved,2)==Status::nonfinite_trial
+            &&bad.rho==3.&&bad.eng==4.&&unresolved[0]==.4&&std::isnan(unresolved[1]),
+            "nonfinite optional species trial is not cleared to success");
+        if(dir==0)bad.mom_u=-1.;else if(dir==1)bad.mom_v=-1.;else bad.mom_w=-1.;
+        double finite_species[2]={.4,.6};
+        check(StationarySlipWallFlux::stationary_candidate(dir,bad,finite_species,2)==Status::invalid
+            &&bad.rho==3.&&bad.eng==4.&&finite_species[0]==.4,
+            "negative finite wall traction rejects without publication");
+    }
 }
 
 void test_native_reflecting_face_math() {
@@ -881,6 +1195,11 @@ int main()
 
     test_native_reflecting_face_math();
     test_native_gamma_wall_away_pressure();
+    test_gamma_wall_positive_product_range();
+    test_shared_gamma_wall_third_direction();
+    test_shared_gamma_selected_point_blend();
+    test_ordinary_wall_sweeps();
+    test_stationary_candidate_projection();
     test_native_diffusion_boundary_work();
 
     ok = failures == 0;

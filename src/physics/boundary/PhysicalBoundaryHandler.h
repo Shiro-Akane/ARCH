@@ -31,6 +31,8 @@
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/UserBoundary.h"
 
+namespace arch::boundary { class HostHydroBoundaryAuthority; class HostHydroBoundaryDomainAuthority; }
+
 namespace arch::backend { class ComputeBackend; struct BackendStateAccess; }
 
 /** Boundary adapter used by all Host integrators and the shared CUDA driver. */
@@ -110,6 +112,49 @@ struct BCHandler {
      * This is binding availability only, never a numerical acceptance result.
      */
     bool native_point_eos_bound() const noexcept { return bool(native_reflecting_evaluate_); }
+private:
+    friend class arch::boundary::HostHydroBoundaryAuthority;
+    friend class arch::boundary::HostHydroBoundaryDomainAuthority;
+    /** One borrowed metadata identity; never owns scientific surface payload. */
+    struct InputIdentity {
+        const BCHandler* owner_ = nullptr;
+        std::uint64_t binding_revision_ = 0;
+        const FluidState* state_ = nullptr;
+        const Grid* grid_ = nullptr;
+        arch::boundary::host::HostBoundaryLayout layout_{};
+        std::array<const double*,7> pointers_{};
+        std::array<std::size_t,7> sizes_{};
+        std::array<std::uint64_t,20> geometry_{};
+        std::array<std::uint64_t,7> root_context_{};
+        std::array<std::uint64_t,12> full_root_{};
+        GridMetrics::GeometrySemantics semantics_ = GridMetrics::GeometrySemantics::Existing;
+        GridMetrics::Geometry chart_ = GridMetrics::Geometry::Cartesian;
+        int dimension_ = 0;
+        std::uint64_t revision_ = 0, time_bits_ = 0;
+        int species_ = 0;
+        arch::boundary::BoundaryPurpose purpose_ = arch::boundary::BoundaryPurpose::Hydro;
+    };
+public:
+    /** Closed move-only Hydro metadata; moving permanently expires the old frame.
+     * It cannot carry surface values or publish ghosts, wall flags or EOS status.
+     */
+    class HydroInputFrame {
+        friend struct BCHandler;
+        friend class arch::boundary::HostHydroBoundaryAuthority;
+        friend class arch::boundary::HostHydroBoundaryDomainAuthority;
+        InputIdentity identity_{};
+        HydroInputFrame() = default;
+    public:
+        HydroInputFrame(HydroInputFrame&& other) noexcept : identity_(other.identity_) {
+            other.identity_.owner_=nullptr;
+        }
+        HydroInputFrame& operator=(HydroInputFrame&& other) noexcept {
+            if(this!=&other){identity_=other.identity_;other.identity_.owner_=nullptr;}
+            return *this;
+        }
+        HydroInputFrame(const HydroInputFrame&)=delete;
+        HydroInputFrame& operator=(const HydroInputFrame&)=delete;
+    };
     /** Opaque numerical surface candidate. No GhostValid publication is implied.
      * It borrows one exact seed layout/frame until domain-wide preparation joins.
      */
@@ -121,18 +166,7 @@ struct BCHandler {
             std::vector<double> fractions;
             double enuc;
         };
-        const BCHandler* owner_ = nullptr;
-        std::uint64_t binding_revision_ = 0;
-        const FluidState* state_ = nullptr;
-        const Grid* grid_ = nullptr;
-        arch::boundary::host::HostBoundaryLayout layout_{};
-        std::array<const double*,7> pointers_{};
-        std::array<std::size_t,7> sizes_{};
-        std::array<std::uint64_t,20> geometry_{};
-        std::array<std::uint64_t,7> root_context_{};
-        std::uint64_t revision_ = 0, time_bits_ = 0;
-        int species_ = 0;
-        arch::boundary::BoundaryPurpose purpose_ = arch::boundary::BoundaryPurpose::Hydro;
+        InputIdentity identity_{};
         std::vector<Entry> entries_;
         std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> storage_;
         bool publish_controls_ = false;
@@ -143,16 +177,12 @@ struct BCHandler {
         NativeCandidate(const NativeCandidate&) = delete;
         NativeCandidate& operator=(const NativeCandidate&) = delete;
     };
-    /** Capture an empty opaque Hydro frame, borrowing no numerical array copy.
-     * Exact time/purpose, native EOS binding and all original storage leases
-     * must already belong to the real completed input boundary publication.
+    /** Freeze only actual input metadata at the completed Hydro snapshot.
+     * No wall, ledger or scientific permission follows from this public observation.
      */
-    NativeCandidate capture_native_hydro_frame(const FluidState&,const Grid&,double expected_time) const;
-    /** Revalidate that same opaque frame and return only genuine root wall flags.
-     * Successful calls perform no allocation, EOS evaluation or field writes.
-     */
-    arch::boundary::HydroBoundaryView native_hydro_boundary_view(
-        const NativeCandidate&,const FluidState&,const Grid&,double expected_time) const;
+    HydroInputFrame capture_hydro_input_frame(const FluidState&,const Grid&,double expected_time) const;
+    /** Recheck the original metadata, without allocation, EOS or field writes. */
+    void require_hydro_input_frame(const HydroInputFrame&,const FluidState&,const Grid&,double expected_time) const;
     /** Fill only the original logical seeds; scientific acceptance stays pending. */
     void apply_builtin(FluidState& state, const Grid& grid) const;
     /** Prepare ordered x1/x2 surface values from immutable seed/candidate views. */
@@ -191,6 +221,12 @@ private:
     std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> make_diffusion_storage(const Grid&, int) const;
     void store_conditions(arch::boundary::DiffusionBoundaryStorage&, const Ghost&,
                           const arch::boundary::PhysicalBoundaryData&, int) const;
+    /** Capture the same borrowed storage/chart identity for either private role. */
+    InputIdentity capture_input_identity(const FluidState&,const Grid&) const;
+    /** Require common metadata; Native science prerequisites remain role-specific. */
+    void validate_input_identity(const InputIdentity&,const FluidState&,const Grid&) const;
+    /** Exact three-axis configured root identity, with no face-string copies. */
+    std::array<std::uint64_t,12> input_root_identity() const;
     void capture_native_frame(NativeCandidate&,const FluidState&,const Grid&) const;
     /** Common immutable frame validation; final candidate entries stay separate. */
     void validate_native_frame(const NativeCandidate&,const FluidState&,const Grid&) const;

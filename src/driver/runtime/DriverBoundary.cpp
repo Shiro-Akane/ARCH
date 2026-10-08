@@ -42,7 +42,7 @@ struct DriverRuntime::NativeHostCurrentBoundaryStamp {
     const void* pool;
     const void* tree;
     NativeRzEosBindingWitness eos;
-    std::vector<BCHandler::NativeCandidate> frames;
+    std::vector<BCHandler::HydroInputFrame> frames;
 };
 /** Launch the device boundary plan for the requested state version. */
 state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requested, state::StateVersion version, state::CompletionToken token)
@@ -197,7 +197,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
             // that silently repairs a changed allocation or boundary binding.
             for (std::size_t index = 0; index < active.size(); ++index) {
                 const auto& block = amr_ctrl.pool->GetBlock(active[index]);
-                (void)bc_handler.native_hydro_boundary_view(stamp.frames[index],
+                bc_handler.require_hydro_input_frame(stamp.frames[index],
                     block.fluid_state, block.grid, boundary.time());
             }
             const auto ledger_before = residency_ledger->snapshot_host();
@@ -214,7 +214,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
                 throw std::logic_error("Native RZ reused boundary changed its publication owner");
             for (std::size_t index = 0; index < active.size(); ++index) {
                 const auto& block = amr_ctrl.pool->GetBlock(active[index]);
-                (void)bc_handler.native_hydro_boundary_view(stamp.frames[index],
+                bc_handler.require_hydro_input_frame(stamp.frames[index],
                     block.fluid_state, block.grid, boundary.time());
             }
             return;
@@ -237,7 +237,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
         prepared_stamp->frames.reserve(active.size());
         for (const auto id : active) {
             const auto& block = amr_ctrl.pool->GetBlock(id);
-            prepared_stamp->frames.push_back(bc_handler.capture_native_hydro_frame(
+            prepared_stamp->frames.push_back(bc_handler.capture_hydro_input_frame(
                 block.fluid_state, block.grid, boundary.time()));
         }
         const auto real_acceptance = context->post_boundary_acceptance;
@@ -255,7 +255,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
                 throw std::logic_error("Native RZ boundary changed its domain extent");
             for (std::size_t index = 0; index < completed_active.size(); ++index) {
                 const auto& block = amr_ctrl.pool->GetBlock(completed_active[index]);
-                (void)bc_handler.native_hydro_boundary_view(prepared_stamp->frames[index],
+                bc_handler.require_hydro_input_frame(prepared_stamp->frames[index],
                     block.fluid_state, block.grid, boundary.time());
             }
         };

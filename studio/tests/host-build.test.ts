@@ -1,3 +1,5 @@
+import {EventEmitter} from 'node:events';
+import {PassThrough} from 'node:stream';
 import {saveManifest,loadManifest} from '../host/buildManifest.ts';
 import {execFile} from 'node:child_process';import {promisify} from 'node:util';
 import {fixture,fakeSpawn,finished} from './build-fixture.ts';
@@ -282,4 +284,98 @@ test('overlapping freshness scans never expose cleared changed-input evidence',a
   assert.deepEqual(during.changedInputs,['case.cpp']);
   for(const result of results){assert.equal(result.binaryState,'needs-build');assert.deepEqual(result.changedInputs,['case.cpp']);}
  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+
+// Deterministic finalization seam: real freshness logic runs after the release
+// promise. No polling limit, compiler/tool identity or old test is modified.
+function finalizationDeferred(){
+ let resolve!:()=>void;
+ const promise=new Promise<void>(done=>{resolve=done;});
+ return {promise,resolve};
+}
+class DeferredFinalizationRunner extends BuildRunner{
+ readonly finalizationEntered=finalizationDeferred();
+ readonly finalizationRelease=finalizationDeferred();
+ finalizationError?:Error;
+ override async refreshFreshness(finalizing=false){
+  if(finalizing){
+   this.finalizationEntered.resolve();
+   await this.finalizationRelease.promise;
+   if(this.finalizationError)throw this.finalizationError;
+  }
+  return super.refreshFreshness(finalizing);
+ }
+}
+
+test('terminal build publication waits for final evidence and releases busy on every outcome',async()=>{
+ const outcomes=['success','process-failure','signal','scan-failure','process-and-scan-failure'] as const;
+ for(const outcome of outcomes){
+  const {root,p}=await fixture();
+  let runner:DeferredFinalizationRunner|undefined;
+  try{
+   await mkdir(root+'/studio');
+   const failedProcess=outcome==='process-failure'||outcome==='process-and-scan-failure';
+   const signalledSpawn=(()=>{
+    const child=new EventEmitter() as EventEmitter&{stdout:PassThrough;stderr:PassThrough};
+    child.stdout=new PassThrough();child.stderr=new PassThrough();
+    queueMicrotask(()=>{child.stdout.end();child.stderr.end();child.emit('close',null,'SIGTERM');});
+    return child;
+   }) as never;
+   runner=new DeferredFinalizationRunner(root,'p',p,{spawn:outcome==='signal'
+    ?signalledSpawn:fakeSpawn(root,failedProcess?2:0,!failedProcess)});
+   if(outcome==='scan-failure'||outcome==='process-and-scan-failure')
+    runner.finalizationError=new Error('injected final evidence read failure');
+   const started=await runner.start('p',p.id);
+   await runner.finalizationEntered.promise;
+   const pending=runner.snapshot();
+   assert.equal(pending.state,'building',outcome);
+   assert.equal(pending.activeBuildId,started.buildId,outcome);
+   assert.equal(pending.latestResult,undefined,outcome);
+   assert.equal(runner.isActive(),true,outcome);
+   assert.equal(runner.processId,undefined,outcome);
+   assert.equal(runner.events(started.buildId).events.some(event=>event.kind==='state'
+    &&(event.state==='succeeded'||event.state==='failed')),false,outcome);
+   await assert.rejects(runner.start('p',p.id),/build-busy/);
+   runner.finalizationRelease.resolve();
+   const terminal=await finished(runner);
+   assert.equal(terminal.activeBuildId,undefined,outcome);
+   assert.equal(runner.isActive(),false,outcome);
+   assert.equal(terminal.state,outcome==='success'?'succeeded':'failed',outcome);
+   assert.equal(terminal.latestResult?.buildId,started.buildId,outcome);
+   assert.equal(terminal.latestResult?.state,terminal.state,outcome);
+   assert.ok(terminal.latestResult?.finishedAt,outcome);
+   const terminalEvents=runner.events(started.buildId).events.filter(event=>event.kind==='state'
+    &&(event.state==='succeeded'||event.state==='failed'));
+   assert.equal(terminalEvents.length,1,outcome);
+   assert.equal(terminalEvents[0].state,terminal.state,outcome);
+   if(outcome==='success'){
+    assert.equal(terminal.latestResult?.exitCode,0);
+    assert.equal(terminal.lastSuccessfulBuild?.buildId,started.buildId);
+    // Original fixture has incomplete dependency coverage: terminal success
+    // still must not turn compiler success into a ready-to-run assertion.
+    assert.equal(terminal.binaryState,'freshness-unknown');
+   }
+   if(failedProcess){
+    assert.equal(terminal.latestResult?.exitCode,2);
+    assert.match(terminal.latestResult?.error??'',/Build exited unsuccessfully/);
+   }
+   if(outcome==='signal'){
+    assert.equal(terminal.latestResult?.exitCode,null);
+    assert.equal(terminal.latestResult?.signal,'SIGTERM');
+    assert.match(terminal.latestResult?.error??'',/Build exited unsuccessfully/);
+   }
+   if(runner.finalizationError){
+    assert.match(terminal.latestResult?.error??'',/Final build freshness verification failed/);
+    assert.match(terminal.latestResult?.error??'',/injected final evidence read failure/);
+    assert.equal(terminal.binaryState,'freshness-unknown');
+    assert.match(terminal.freshnessReason,/Final build freshness verification failed/);
+   }
+  }finally{
+   // A failed assertion must release the test gate before removing its files.
+   runner?.finalizationRelease.resolve();
+   if(runner?.isActive())await finished(runner);
+   await rm(root,{recursive:true,force:true});
+  }
+ }
 });

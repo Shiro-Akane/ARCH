@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "status": "PASS_SCOPED_CPU_HOST_BOUNDARY_CHECKPOINT",
+  "recorded_at_utc": "2026-10-08T02:47:11.220007+00:00",
+  "source_baseline": "e995af61d0784a413bb454481c34bddf83d6a171 plus reviewed Host working changes",
+  "source_sha256": {
+    "src/amr/storage/Block.h": "54d009300bdb32a1c7ed5b5e1e83e46eee53fb468c8340badcf8a78ddb32ee03",
+    "src/numerics/flux/StationarySlipWallFlux.h": "ab94157d68bdb9491678ea5da64027223f34a7d8efb988d8c75d720343cde6dd",
+    "src/numerics/flux/FluxSweep.h": "0ab795e7b0e285e3fcafde368213c51ea287bc54ac172a56cd979374c5fd5ae6",
+    "src/numerics/flux/RzNativeFaceFlux.h": "faa1b30e6b7b85020073f347ac49327e469499af6c39eb87c95e7a2d3e304312",
+    "src/numerics/integrator/HydroBoundaryAuthority.h": "3722c3477de9ee5cfe443796be1e42fd47aa1d82cd0cedc56bc002274686e831",
+    "src/numerics/integrator/HydroSolverImpl.h": "180600219b143abd9316d5348eebeedf49921b1a758ef2bd5402faae35379dd8",
+    "src/numerics/integrator/TimeIntegratorEuler.h": "940c50037c1ea55a14f23b6df7259d6ad61f1618ba7bf1123cae954c2552a356",
+    "src/numerics/integrator/TimeIntegratorRK2.h": "b997277d6052e95be365e20f88a3aef2fd3e5e9a35f629e118b79dea3d709e02",
+    "src/numerics/integrator/TimeIntegratorRK3.h": "b3b4d6254232dac8d25f75ff0fb07329acf3a8c2d22b73589460299b1bf71761",
+    "src/physics/boundary/PhysicalBoundaryHandler.cpp": "cb12965cfff35dc97e37d7602b73b5877347fdf910e2533c8135d4d62fcc0ef7",
+    "src/physics/boundary/PhysicalBoundaryHandler.h": "60846ede072243d29d27fb4d96c8895a081ba653b3de534d5e6203db526f1418",
+    "src/driver/runtime/DriverBoundary.cpp": "857a2a790ca17b64b98fdcd1a1f5ce2075edd37d6b3eea100bf768ddf8e5f5ba"
+  },
+  "production_cpu_build": {
+    "targets": [
+      "ARCH",
+      "arch_gravity_stage_contract",
+      "arch_flux_limiter"
+    ],
+    "seconds": 157.84,
+    "guard_stopped": false,
+    "swap_growth": false
+  },
+  "existing_owners": {
+    "names": [
+      "gravity_stage_contract",
+      "amr_operation_plans",
+      "conservative_flux_limiter"
+    ],
+    "passed": 3,
+    "test_seconds": 34.03,
+    "guard_seconds": 34.267,
+    "original_thresholds_preserved": true
+  },
+  "accepted_scope": [
+    "real ordinary Euler/RK2/RK3 wall-domain issuance and captured stage/root/ledger identity",
+    "shared ordinary and Native gamma-law point wall arithmetic and pre-factor stationary candidate",
+    "dyadic positive subnormal pressure and true vacuum/unrepresentable-positive distinction",
+    "same original selected low/high point admissibility factor; no borrowed wall factor or after-factor flux projection"
+  ],
+  "ordinary_failure_scope": "wrong solver semantics, stale version and clock reject before mutation; not arbitrary post-OMP full rollback proof",
+  "not_qualified": [
+    "actual Device wall-domain lifecycle",
+    "general-EOS exact wall",
+    "full curved/CF Stokes and work/stability",
+    "continuous isolated-gravity energy",
+    "whole O-series release"
+  ],
+  "local_log_sha256": {
+    "cpu-gamma-range-production-build-20261008.guard.log": "dee0853f23903749635b36e028318b4f1f431a568fcfb5d9abdd92518f9538a1",
+    "cpu-gamma-range-production-test-20261008.guard.log": "b115c6c5231a724f5d387bb02a3fe02445d0608ea2f275b3891cd8e66a9e3ef2"
+  },
+  "raw_uploaded": false
+}

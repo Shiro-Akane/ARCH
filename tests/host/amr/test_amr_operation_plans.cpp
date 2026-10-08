@@ -2711,11 +2711,53 @@ void test_rz_native_tjunction_corner_sync()
         <<" runtime_science_qualification=false\n";
 }
 
+/** Exact actual Block ordinary root geometry, including inactive dimensions.
+ * No boundary flags/Tree authority are granted here. Expected root spacings
+ * follow the existing InitRootGrid inputs; one-ULP drift must be rejected.
+ */
+void test_ordinary_logical_geometry_identity() {
+    using Semantics=GridMetrics::GeometrySemantics;
+    for(int dim=1;dim<=3;++dim)for(const char* chart:{"cartesian","cylindrical","spherical"}) {
+        Grid root(amr::MAX_NG,1.,4.,.2,1.2,.1,1.1,3,dim>=2?2:0,dim==3?2:0);
+        root.dim=dim;root.geometry=chart;
+        amr::Block block;block.Reset();block.level=2;
+        block.logical_x1=7;block.logical_x2=dim>=2?3:0;block.logical_x3=dim==3?4:0;
+        block.morton_code=amr::encodeMorton(block.level,block.logical_x1,block.logical_x2,block.logical_x3);
+        block.InitGeometry(root,(root.x1_max-root.x1_min)/(root.nblockx1*amr::BLOCK_NX),
+            root.nblockx2>0?(root.x2_max-root.x2_min)/(root.nblockx2*amr::BLOCK_NY):0.,
+            root.nblockx3>0?(root.x3_max-root.x3_min)/(root.nblockx3*amr::BLOCK_NZ):0.);
+        block.RequireLogicalGeometryIdentity(root);
+        const auto rejects=[&](const amr::Block& candidate,const Grid& candidate_root,Semantics semantics=Semantics::Existing) {
+            bool rejected=false;
+            try {candidate.RequireLogicalGeometryIdentity(candidate_root,semantics);}
+            catch(const std::invalid_argument&) {rejected=true;}
+            expect(rejected,"ordinary geometry drift/foreign logical root must reject exactly");
+        };
+        auto candidate=block;candidate.grid.x1_min=std::nextafter(candidate.grid.x1_min,0.);rejects(candidate,root);
+        candidate=block;candidate.grid.dx1=std::nextafter(candidate.grid.dx1,0.);rejects(candidate,root);
+        candidate=block;candidate.grid.ng=0;rejects(candidate,root);
+        candidate=block;candidate.grid.stride_y+=1;rejects(candidate,root);
+        candidate=block;candidate.logical_x1+=1;rejects(candidate,root);
+        candidate=block;candidate.morton_code^=1;rejects(candidate,root);
+        candidate=block;candidate.level=amr::kMaxRefinementLevel+1;rejects(candidate,root);
+        candidate=block;candidate.logical_x1=amr::kMortonCoordinateMask+1;rejects(candidate,root);
+        candidate=block;candidate.grid.dyadic_identity.bound=true;rejects(candidate,root);
+        auto changed_root=root;changed_root.x1_max=std::nextafter(changed_root.x1_max,5.);rejects(block,changed_root);
+        changed_root=root;changed_root.nblockx1+=1;rejects(block,changed_root);
+        rejects(block,root,static_cast<Semantics>(255));
+        if(dim<3) {
+            candidate=block;candidate.logical_x3=1;rejects(candidate,root);
+            changed_root=root;changed_root.nblockx3=2;rejects(block,changed_root);
+        }
+    }
+}
+
 } // namespace
 
 int main()
 {
     try {
+        test_ordinary_logical_geometry_identity();
         test_public_contract();
         test_validation();
         test_conservative_restriction_math();

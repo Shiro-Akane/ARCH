@@ -365,22 +365,46 @@ void BCHandler::apply_builtin(FluidState& state,const Grid& grid) const {
     arch::boundary::host::execute(&selected==&logical_plan_?compiled_:*axis_compiled_,state);
 }
 
-/** Capture one actual immutable storage/geometry/BC frame for surface work. */
+/** Exact complete root metadata, including all three inactive endpoint values. */
+std::array<std::uint64_t,12> BCHandler::input_root_identity() const {
+    const auto& g=config_->grid;
+    return {std::bit_cast<std::uint64_t>(g.x1_min),std::bit_cast<std::uint64_t>(g.x1_max),
+        std::bit_cast<std::uint64_t>(g.x2_min),std::bit_cast<std::uint64_t>(g.x2_max),
+        std::bit_cast<std::uint64_t>(g.x3_min),std::bit_cast<std::uint64_t>(g.x3_max),
+        std::uint64_t(g.nblockx1),std::uint64_t(g.nblockx2),std::uint64_t(g.nblockx3),
+        std::uint64_t(g.dim),std::uint64_t(GridMetrics::geometry_from_name(g.geometry)),
+        std::uint64_t(semantics_)};
+}
+/** Freeze actual storage once; no scientific state is copied or accepted.
+ * Workflow: require real chart/layout -> capture seven allocation leases and
+ * original twenty/seven Native identity words -> add explicit common chart/root.
+ */
+BCHandler::InputIdentity BCHandler::capture_input_identity(
+    const FluidState& state,const Grid& grid) const {
+    if(semantics_==GridMetrics::GeometrySemantics::Existing&&grid.dyadic_identity.bound)
+        throw std::logic_error("Ordinary Hydro input cannot borrow a Native dyadic stamp");
+    InputIdentity identity;
+    (void)logical_plan(grid);
+    (void)GridMetrics::make_geometry_view(grid,semantics_);
+    arch::boundary::host::validate_state(compiled_,state);
+    identity.owner_=this;identity.binding_revision_=binding_revision_;
+    identity.state_=&state;identity.grid_=&grid;
+    identity.layout_=arch::boundary::host::make_layout(grid);
+    identity.pointers_=native_storage_pointers(state);identity.sizes_=native_storage_sizes(state);
+    identity.geometry_=native_grid_identity(grid);identity.root_context_=native_config_root_identity(*config_);
+    identity.species_=state.GetNumSpecies();
+    identity.revision_=stage_revision_;identity.time_bits_=std::bit_cast<std::uint64_t>(time_);
+    identity.purpose_=purpose_;
+    identity.full_root_=input_root_identity();identity.semantics_=semantics_;
+    identity.chart_=GridMetrics::geometry_from_name(grid.geometry);identity.dimension_=grid.dim;
+    return identity;
+}
+/** Native surface preparation retains its explicit role and original preflight. */
 void BCHandler::capture_native_frame(NativeCandidate& candidate,
     const FluidState& state,const Grid& grid) const {
     if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("Native boundary candidate requires the explicit RZ chart");
-    (void)logical_plan(grid);
-    (void)GridMetrics::make_geometry_view(grid,semantics_);
-    arch::boundary::host::validate_state(compiled_,state);
-    candidate.owner_=this;candidate.binding_revision_=binding_revision_;
-    candidate.state_=&state;candidate.grid_=&grid;
-    candidate.layout_=arch::boundary::host::make_layout(grid);
-    candidate.pointers_=native_storage_pointers(state);candidate.sizes_=native_storage_sizes(state);
-    candidate.geometry_=native_grid_identity(grid);candidate.root_context_=native_config_root_identity(*config_);
-    candidate.species_=state.GetNumSpecies();
-    candidate.revision_=stage_revision_;candidate.time_bits_=std::bit_cast<std::uint64_t>(time_);
-    candidate.purpose_=purpose_;
+    candidate.identity_=capture_input_identity(state,grid);
 }
 
 /** Prepare unique final native surfaces from immutable per-axis layers.
@@ -419,7 +443,7 @@ BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
         return offset<0?state.get(index):candidate.entries_[static_cast<std::size_t>(offset)].conserved;
     };
     const NativeFractionReader fraction=[&](int species,int index) {
-        if(species<0||species>=candidate.species_)
+        if(species<0||species>=candidate.identity_.species_)
             throw std::out_of_range("Native boundary reader requires a registered species");
         const int offset=checked_offset(index);
         return offset<0?state.X(species,index)
@@ -453,13 +477,13 @@ BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
             const arch::boundary::NativeRzBoundaryRequest request{
                 ghost.source_logical,ghost.destination_logical,ghost.coordinates};
             const auto value=evaluator(grid,request,read,fraction);
-            if(value.mass_fractions.size()!=static_cast<std::size_t>(candidate.species_))
+            if(value.mass_fractions.size()!=static_cast<std::size_t>(candidate.identity_.species_))
                 throw std::logic_error("Native boundary candidate has an incomplete composition");
             const int source_offset=checked_offset(ghost.source);
             const double enuc=source_offset<0?state.enuc_rate[ghost.source]
                 :candidate.entries_[static_cast<std::size_t>(source_offset)].enuc;
             layer.push_back({ghost.destination,value.conserved,value.mass_fractions,enuc});
-            if(user)store_conditions(*candidate.storage_,ghost,value.conditions,candidate.species_);
+            if(user)store_conditions(*candidate.storage_,ghost,value.conditions,candidate.identity_.species_);
         }
         overlay();
     };
@@ -472,20 +496,32 @@ BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
 }
 
 /** Authenticate the borrowed layout/geometry/BC frame without numerical work. */
+/** Recheck common metadata, retaining every original twenty/seven-word gate. */
+void BCHandler::validate_input_identity(const InputIdentity& identity,
+    const FluidState& state,const Grid& grid) const {
+    if(identity.owner_!=this||identity.binding_revision_!=binding_revision_
+        ||identity.state_!=&state||identity.grid_!=&grid
+        ||identity.revision_!=stage_revision_
+        ||identity.time_bits_!=std::bit_cast<std::uint64_t>(time_)
+        ||identity.purpose_!=purpose_||identity.species_!=state.GetNumSpecies()
+        ||identity.layout_!=arch::boundary::host::make_layout(grid)
+        ||identity.pointers_!=native_storage_pointers(state)
+        ||identity.sizes_!=native_storage_sizes(state)
+        ||identity.geometry_!=native_grid_identity(grid)
+        ||identity.root_context_!=native_config_root_identity(*config_)
+        ||identity.full_root_!=input_root_identity()||identity.semantics_!=semantics_
+        ||identity.dimension_!=grid.dim
+        ||identity.chart_!=GridMetrics::geometry_from_name(grid.geometry)
+        ||config_->grid.dim!=grid.dim||config_->grid.geometry!=grid.geometry
+        ||(semantics_==GridMetrics::GeometrySemantics::Existing&&grid.dyadic_identity.bound))
+        throw std::logic_error("Native boundary candidate storage/geometry/stage frame drifted");
+}
+/** Native surface validation keeps root science and actual layout checks. */
 void BCHandler::validate_native_frame(const NativeCandidate& candidate,
     const FluidState& state,const Grid& grid) const {
-    if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
-        ||candidate.owner_!=this||candidate.binding_revision_!=binding_revision_
-        ||candidate.state_!=&state||candidate.grid_!=&grid
-        ||candidate.revision_!=stage_revision_
-        ||candidate.time_bits_!=std::bit_cast<std::uint64_t>(time_)
-        ||candidate.purpose_!=purpose_||candidate.species_!=state.GetNumSpecies()
-        ||candidate.layout_!=arch::boundary::host::make_layout(grid)
-        ||candidate.pointers_!=native_storage_pointers(state)
-        ||candidate.sizes_!=native_storage_sizes(state)
-        ||candidate.geometry_!=native_grid_identity(grid)
-        ||candidate.root_context_!=native_config_root_identity(*config_))
+    if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("Native boundary candidate storage/geometry/stage frame drifted");
+    validate_input_identity(candidate.identity_,state,grid);
     require_native_root_frame(grid);
     arch::boundary::host::validate_state(compiled_,state);
 }
@@ -500,45 +536,46 @@ void BCHandler::validate_native_candidate(const NativeCandidate& candidate,
     for(const auto& entry:candidate.entries_) {
         if(entry.destination<0||entry.destination>=grid.GetTotalSize()
             ||entry.destination%grid.stride_y>=grid.GetTotalX()
-            ||entry.fractions.size()!=static_cast<std::size_t>(candidate.species_))
+            ||entry.fractions.size()!=static_cast<std::size_t>(candidate.identity_.species_))
             throw std::logic_error("Native boundary candidate lost its logical surface extent");
         if(destinations[static_cast<std::size_t>(entry.destination)]++)
             throw std::logic_error("Native boundary candidate repeats a final destination");
     }
 }
 
-/** Freeze an empty Hydro lease after real scheduler ghost completion.
- * No callback or field data are evaluated/copied; EOS binding is an identity
- * prerequisite, while the Runtime ledger remains the acceptance authority.
+/** Observe only the genuine Hydro input metadata after boundary completion.
+ * Native additionally retains the real bound point-EOS/root prerequisites;
+ * ordinary metadata never fabricates a Native stamp or requires its EOS hook.
  */
-BCHandler::NativeCandidate BCHandler::capture_native_hydro_frame(
+BCHandler::HydroInputFrame BCHandler::capture_hydro_input_frame(
     const FluidState& state,const Grid& grid,double expected_time) const {
     if(!std::isfinite(expected_time)||!std::isfinite(time_)
         ||std::bit_cast<std::uint64_t>(expected_time)!=std::bit_cast<std::uint64_t>(time_)
-        ||purpose_!=arch::boundary::BoundaryPurpose::Hydro||!native_reflecting_evaluate_)
-        throw std::logic_error("Native Hydro boundary time/purpose/EOS binding is not ready");
-    NativeCandidate frame;capture_native_frame(frame,state,grid);
-    validate_native_frame(frame,state,grid);
+        ||purpose_!=arch::boundary::BoundaryPurpose::Hydro
+        ||(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_reflecting_evaluate_))
+        throw std::logic_error("Hydro boundary time/purpose/EOS binding is not ready");
+    HydroInputFrame frame;frame.identity_=capture_input_identity(state,grid);
+    require_hydro_input_frame(frame,state,grid,expected_time);
     return frame;
 }
-
-/** Recheck the original Hydro frame before any selected face output mutates. */
-arch::boundary::HydroBoundaryView BCHandler::native_hydro_boundary_view(
-    const NativeCandidate& frame,const FluidState& state,const Grid& grid,double expected_time) const {
+/** Metadata-only revalidation; wall/ledger/EOS authority belongs to real domain. */
+void BCHandler::require_hydro_input_frame(const HydroInputFrame& frame,
+    const FluidState& state,const Grid& grid,double expected_time) const {
     if(!std::isfinite(expected_time)||!std::isfinite(time_)
         ||std::bit_cast<std::uint64_t>(expected_time)!=std::bit_cast<std::uint64_t>(time_)
-        ||purpose_!=arch::boundary::BoundaryPurpose::Hydro||!native_reflecting_evaluate_
-        ||!frame.entries_.empty()||frame.storage_||frame.publish_controls_)
-        throw std::logic_error("Native Hydro boundary opaque frame changed role");
-    validate_native_frame(frame,state,grid);
-    return native_reflecting_faces(grid);
+        ||purpose_!=arch::boundary::BoundaryPurpose::Hydro
+        ||(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_reflecting_evaluate_))
+        throw std::logic_error("Hydro boundary opaque frame changed role");
+    validate_input_identity(frame.identity_,state,grid);
+    if(semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)require_native_root_frame(grid);
+    arch::boundary::host::validate_state(compiled_,state);
 }
 
 /** Allocation-free numerical scatter; actual EOS/GhostValid remain external. */
 void BCHandler::publish_native_noexcept(NativeCandidate&& candidate,FluidState& state) const noexcept {
     for(const auto& entry:candidate.entries_) {
         state.set(entry.destination,entry.conserved);
-        for(int species=0;species<candidate.species_;++species)
+        for(int species=0;species<candidate.identity_.species_;++species)
             state.X(species,entry.destination)=entry.fractions[static_cast<std::size_t>(species)];
         state.enuc_rate[entry.destination]=entry.enuc;
     }
