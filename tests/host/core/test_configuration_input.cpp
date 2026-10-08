@@ -557,7 +557,7 @@ int main(int argc, char** argv) {
         NetAprox13::SetupInitialFractions(network_input, network_species, normalized);
         require(normalized == expected, "network normalization changed after input migration");
 
-        std::ifstream bd_file(std::string(ARCH_SOURCE_DIR) + "/validation/burn/inputs/bd-config-v3.par");
+        std::ifstream bd_file(std::string(ARCH_SOURCE_DIR) + "/validation/burn/inputs/bd.par");
         const std::string bd_text((std::istreambuf_iterator<char>(bd_file)), {});
         auto trace = std::make_shared<arch::preview::ParameterReadTrace>(std::set<std::string>{}, true);
         auto capitalized = RuntimeParams::LoadText(without(bd_text, "xc12") + "XC12=0.5\n",

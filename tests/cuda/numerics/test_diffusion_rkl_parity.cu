@@ -472,6 +472,34 @@ double cartesian_face_dt_reference(const FluidState& state, const Grid& grid, co
     return maximum_rate > 0. ? static_cast<double>(1/maximum_rate) : std::numeric_limits<double>::max();
 }
 
+// Independent analytic face reference for the explicit linear 1D fixture.
+// The physical stress remains three-dimensional: tau_xx=(4/3)*mu*du/dx,
+// tau_yx=mu*dv/dx, tau_zx=mu*dw/dx, with mu=rho*nu. Momentum flux
+// is -tau(:,x) and total-energy flux is -velocity_face dot tau(:,x).
+// Linear primitives make the arithmetic face mean exactly their midpoint
+// value. This reference calls neither the production stress nor an EOS.
+std::array<long double, 2> cartesian_stokes_route_reference(
+    int right_cell, bool thermal)
+{
+    constexpr long double spacing = 0.01L, q_increment = 0.013L;
+    const long double q = q_increment * (right_cell - 0.5L);
+    const long double rho = 1.1L + 0.07L * q;
+    const long double mu = 0.19L * rho;
+    const long double u = 0.2L + 0.03L * q;
+    const long double v = -0.1L + 0.02L * q;
+    const long double w = 0.05L - 0.01L * q;
+    const long double tau_xx = (4.0L / 3.0L) * mu * 0.03L * q_increment / spacing;
+    const long double tau_yx = mu * 0.02L * q_increment / spacing;
+    const long double tau_zx = -mu * 0.01L * q_increment / spacing;
+    long double energy = -(u * tau_xx + v * tau_yx + w * tau_zx);
+    if (thermal) {
+        const long double x0 = 0.35L + 0.01L * q;
+        const long double cv = 3.5L * x0 + 7.25L * (1.0L - x0);
+        energy -= 0.37L * rho * cv * 0.4L * q_increment / spacing;
+    }
+    return {-tau_xx, energy};
+}
+
 void verify_frozen_host_authority()
 {
     const double composition[3] = {0.2, 0.3, 0.5};
@@ -510,29 +538,40 @@ void verify_frozen_host_authority()
     const int cell = grid.GetIndex(grid.Is() + 6, 0, 0);
     struct RouteAuthority {
         bool thermal, viscous, species;
-        std::uint64_t flux_u, flux_v, flux_w, flux_e, flux_x0, flux_x1;
-        std::uint64_t op_u, op_v, op_w, op_e, op_x0, op_x1;
+        std::uint64_t flux_v, flux_w, flux_e, flux_x0, flux_x1;
+        std::uint64_t op_v, op_w, op_e, op_x0, op_x1;
     };
+    // Unaffected thermal/species/transverse routes keep their original frozen
+    // references. Viscous longitudinal momentum and energy use the independent
+    // Stokes reference above, replacing the obsolete scalar-Laplacian values.
     const RouteAuthority routes[] = {
         {true, false, false,
-         0, 0, 0, 0xbff43400198d8819ULL, 0, 0,
-         0, 0, 0, 0x3fb7efc1166a8e00ULL, 0, 0},
+         0, 0, 0xbff43400198d8819ULL, 0, 0,
+         0, 0, 0x3fb7efc1166a8e00ULL, 0, 0},
         {false, true, false,
-         0xbf80c8737bec97afULL, 0xbf766099fa90cb42ULL,
-         0x3f666099fa90cb42ULL, 0xbf50318f4b8f7948ULL, 0, 0,
-         0x3f461885b2dc5d00ULL, 0x3f3d760799250d80ULL,
-         0xbf2d760799250d80ULL, 0x3f42fef32c7b3be0ULL, 0, 0},
+         0xbf766099fa90cb42ULL, 0x3f666099fa90cb42ULL, 0, 0, 0,
+         0x3f3d760799250d80ULL, 0xbf2d760799250d80ULL, 0, 0, 0},
         {false, false, true,
-         0, 0, 0, 0, 0xbf59e91e14a7abdaULL, 0x3f59e91e14a7b804ULL,
-         0, 0, 0, 0, 0x3f210e703064c200ULL, 0xbf210e70303eaf20ULL},
+         0, 0, 0, 0xbf59e91e14a7abdaULL, 0x3f59e91e14a7b804ULL,
+         0, 0, 0, 0x3f210e703064c200ULL, 0xbf210e70303eaf20ULL},
         {true, true, true,
-         0xbf80c8737bec97afULL, 0xbf766099fa90cb42ULL,
-         0x3f666099fa90cb42ULL, 0xbff4380c7d606bf8ULL,
+         0xbf766099fa90cb42ULL, 0x3f666099fa90cb42ULL, 0,
          0xbf59e91e14a7abdaULL, 0x3f59e91e14a7b804ULL,
-         0x3f461885b2dc5d00ULL, 0x3f3d760799250d80ULL,
-         0xbf2d760799250d80ULL, 0x3fb815befcc38640ULL,
+         0x3f3d760799250d80ULL, 0xbf2d760799250d80ULL, 0,
          0x3f210e703064c200ULL, 0xbf210e70303eaf20ULL}};
     for (const RouteAuthority& route : routes) {
+        const auto reference_flux = cartesian_stokes_route_reference(
+            grid.Is() + 5, route.thermal);
+        const auto reference_left = cartesian_stokes_route_reference(
+            grid.Is() + 6, route.thermal);
+        const auto reference_right = cartesian_stokes_route_reference(
+            grid.Is() + 7, route.thermal);
+        // L=-div(F), using the two actual cell faces and the independent
+        // fixture spacing. The existing 1e-9 comparison budget is unchanged.
+        const double reference_op_u = static_cast<double>(
+            -(reference_right[0] - reference_left[0]) / 0.01L);
+        const double reference_op_e = static_cast<double>(
+            -(reference_right[1] - reference_left[1]) / 0.01L);
         const SimConfig config = make_config(
             route.thermal, route.viscous, route.species);
         std::vector<FluidVector> flux(grid.GetTotalSize());
@@ -540,13 +579,14 @@ void verify_frozen_host_authority()
         DiffFlux::compute_fluxes(
             state, eos, grid, config, flux, species_flux, 0);
         expect_close("route.flux.u", flux[face].mom_u,
-                     std::bit_cast<double>(route.flux_u), 1.0e-9);
+                     route.viscous ? static_cast<double>(reference_flux[0]) : 0.0, 1.0e-9);
         expect_close("route.flux.v", flux[face].mom_v,
                      std::bit_cast<double>(route.flux_v), 1.0e-9);
         expect_close("route.flux.w", flux[face].mom_w,
                      std::bit_cast<double>(route.flux_w), 1.0e-9);
         expect_close("route.flux.e", flux[face].eng,
-                     std::bit_cast<double>(route.flux_e), 1.0e-9);
+                     route.viscous ? static_cast<double>(reference_flux[1])
+                                   : std::bit_cast<double>(route.flux_e), 1.0e-9);
         expect_close("route.flux.x0", species_flux[face],
                      std::bit_cast<double>(route.flux_x0), 1.0e-9);
         expect_close("route.flux.x1",
@@ -559,13 +599,14 @@ void verify_frozen_host_authority()
         std::fill(op.enuc_rate.begin(), op.enuc_rate.end(), -777.0);
         DiffFlux::compute_diffusion_operator(state, op, eos, grid, config);
         expect_close("route.op.u", op.mom_u[cell],
-                     std::bit_cast<double>(route.op_u), 1.0e-9);
+                     route.viscous ? reference_op_u : 0.0, 1.0e-9);
         expect_close("route.op.v", op.mom_v[cell],
                      std::bit_cast<double>(route.op_v), 1.0e-9);
         expect_close("route.op.w", op.mom_w[cell],
                      std::bit_cast<double>(route.op_w), 1.0e-9);
         expect_close("route.op.e", op.eng[cell],
-                     std::bit_cast<double>(route.op_e), 1.0e-9);
+                     route.viscous ? reference_op_e
+                                   : std::bit_cast<double>(route.op_e), 1.0e-9);
         expect_close("route.op.x0", op.X(0, cell),
                      std::bit_cast<double>(route.op_x0), 1.0e-9);
         expect_close("route.op.x1", op.X(1, cell),

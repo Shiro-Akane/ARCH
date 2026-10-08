@@ -109,7 +109,7 @@ int main() {
             double gpu_min = cpu_min;
             for (int half = 0; half < 2; ++half) {
                 // The canonical ten-step case doubles its initial timestep.
-                cpu.cell.burn_dt = std::ldexp(cfg.Get<double>("dt_init", 1.0e-16), step - 2);
+                cpu.cell.burn_dt = std::ldexp(cfg.numerics.dt_init, step - 2);
                 gpu.cell.burn_dt = cpu.cell.burn_dt;
                 Trace lanes[2]{gpu, cpu}; // lane 1: independent same-input replay
                 check(cudaMemcpy(device, lanes, sizeof(lanes), cudaMemcpyHostToDevice));

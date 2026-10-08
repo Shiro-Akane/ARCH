@@ -26,7 +26,7 @@ BASE = load('simulation/Sod/Sod.par')
 # Complete common controls; case-specific Sod inputs do not leak into another model.
 COMMON = edit(BASE, **{key: None for key in
               ['x_pos', 'rho_left', 'p_left', 'u_left', 'rho_right', 'p_right', 'u_right']})
-BURN = load('validation/burn/inputs/bd-config-v3.par')
+BURN = load('validation/burn/inputs/bd.par')
 CASES = {
     'Sod': ('simulation/Sod/Sod.cpp', BASE),
     'CellularDet': ('simulation/Cellular/Cellular.cpp', load('simulation/Cellular/CellularPreview2D.par')),

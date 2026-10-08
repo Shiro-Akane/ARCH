@@ -52,6 +52,10 @@ O7 的配置、Jeans 和 RZ 仍按分配的计划实施；O8 已进入独立边�
 
 正式热扩散检查加入原`low_density_math`：真实RKL2入口、16格周期域、64／96／128宏步至同一五倍离散衰减时间，独立三阶段稳定多项式与热方程指数参考、原热量及正值预算、阶段零修复和时间阶≥1.8均通过。该项限定为formal thermal-only，不替代Hydro／AMR／CUDA或30–60分钟耦合耐久；没有新增CTest目标。
 
+2026-10-09 CUDA共享节点：生产CUDA运行库已完成62项依赖重建，两个受影响的原owner已通过。扩散／RKL原窗口保持；黏性参考由独立线性算例的三维Stokes应力与同一牵引功导出，以替代旧标量拉普拉斯的纵向与能量参考，生产数学未作修改。燃烧controller改为读取已有config.numerics.dt_init，10步的两次半步及原断言保持。当前三份燃烧输入已补齐显式控制，原配置inspection3/3及CPU原owner2/2均已通过，重复临时输入现已退役。此节点不代替公开CUDA主程序、完整曲线FV／CF／稳定性或整个O9与release验收。
+
+证据见[共享CUDA原owner与输入迁移记录](../../validation/gravity/results/release-closure-20261007/cuda-shared-owner-20261009-summary.json)。
+
 ### 验收问题的技术边界
 
 | 对象 | 复用与判定 | 当前不足的处理 |

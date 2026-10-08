@@ -19,6 +19,6 @@ inline SimConfig load(const std::string& root) {
         return true;
     }();
     (void)registered;
-    return RuntimeParams::Load(root + "/validation/burn/inputs/bd-config-v3.par", "BurnOneZone");
+    return RuntimeParams::Load(root + "/validation/burn/inputs/bd.par", "BurnOneZone");
 }
 } // namespace burn_controller_fixture

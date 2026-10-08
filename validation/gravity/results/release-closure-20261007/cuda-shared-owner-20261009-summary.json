@@ -1,0 +1,190 @@
+{
+  "schema": "arch-processed-acceptance-1",
+  "baseline_commit": "9810507070af8bcc7a47447057680ea1ff278a02",
+  "scope": "Existing CUDA shared diffusion/RKL and burn-controller owners plus canonical burn configuration migration only. Not full coupled/NativeDevice/O9/release qualification.",
+  "production_mathematics_changed": false,
+  "production_cpu_elf_sha256": "4e007c794291a40b310473bff5d13759335f82b23353ed6857e1ec26ff1dde94",
+  "shared_math": {
+    "physical_Stokes": "tau=mu*(grad(U)+grad(U)^T-(2/3)*div(U)*I)",
+    "mu": "rho*nu",
+    "longitudinal_factor": "4/3",
+    "conservative_work": "F_E=-u_face dot tau(:,x)",
+    "oracle": "Independent long-double linear-fixture formula; Root exact rational check and actual DeepSeek derivation agree. No production stress/EOS helper used by reference.",
+    "changed_expected_fields": [
+      "viscous longitudinal momentum flux/operator",
+      "same-traction energy flux/operator"
+    ],
+    "unchanged": "Thermal-only, species, transverse references; all original1e-9 and C4 envelopes.",
+    "root_exact_reference": {
+      "False": {
+        "flux_u": {
+          "rational": "-54632201/5000000000",
+          "double": -0.0109264402
+        },
+        "flux_e": {
+          "rational": "-6166500423473/4000000000000000",
+          "double": -0.00154162510586825
+        },
+        "op_u": {
+          "rational": "22477/25000000",
+          "double": 0.00089908
+        },
+        "op_e": {
+          "rational": "915035459/1250000000000",
+          "double": 0.0007320283672
+        }
+      },
+      "True": {
+        "flux_u": {
+          "rational": "-54632201/5000000000",
+          "double": -0.0109264402
+        },
+        "flux_e": {
+          "rational": "-5056948131190423/4000000000000000",
+          "double": -1.2642370327976058
+        },
+        "op_u": {
+          "rational": "22477/25000000",
+          "double": 0.00089908
+        },
+        "op_e": {
+          "rational": "117792672309/1250000000000",
+          "double": 0.0942341378472
+        }
+      }
+    }
+  },
+  "cpu_existing_owners": [
+    {
+      "name": "configuration_input",
+      "seconds": 0.0370085,
+      "status": "run"
+    },
+    {
+      "name": "case_inspection_contract",
+      "seconds": 3.51894,
+      "status": "run"
+    }
+  ],
+  "cuda_existing_diffusion_owner": [
+    {
+      "name": "diffusion_rkl_parity",
+      "seconds": 0.774747,
+      "status": "run"
+    }
+  ],
+  "cuda_existing_burn_owner": [
+    {
+      "name": "burn_controller_parity",
+      "seconds": 1.37101,
+      "status": "run"
+    }
+  ],
+  "canonical_burn_inputs": {
+    "config_inspection": "3/3; no files generated or CUDA initialized",
+    "files": {
+      "validation/burn/inputs/bd.par": "c0ddc0d1056a6ad2d1b1b8103e37fab76e5c2093c5e4844f6b358d9d584e945c",
+      "validation/burn/inputs/be_nr_reference.par": "5f9fb5205a082e40bcd6994595ca681803f4e8a285b1571accceab94b2477efe",
+      "validation/burn/inputs/ros4.par": "09cc78c0668f4c529b2172210989d6ab2511dbac1a77f3d3e34aac66e11a5b71"
+    },
+    "explicit_controls": {
+      "min_eint": 1e-10,
+      "hll_wave_speed": "roe",
+      "eos_coulomb_mult": 1.0
+    },
+    "other_original_lines_and_values": "unchanged",
+    "removed_duplicate": "validation/burn/inputs/bd-config-v3.par",
+    "fixture_consumers": "Host configuration, API inspection and shared CPU/CUDA controller fixture use bd.par.",
+    "controller_accessor": "cfg.numerics.dt_init replaces retired Get(dt_init); same typedvalue, 10steps, 2halfsteps and originalminimum limiter threshold.",
+    "new_physical_burn_trajectory_qualification": false
+  },
+  "failed_evidence": {
+    "initial_cuda_rkl": "8failures from2 obsolete scalar-Laplacian route references, preserved local full log",
+    "controller_first": "Retired Get(dt_init) rejected before firstburn, preserved localfull log",
+    "thresholds_relaxed": false
+  },
+  "build_cost_seconds": {
+    "prior_cuda_preserved": 6469.534,
+    "full_dependencies_first_timeout": 900.214,
+    "full_dependencies_continuation": 1101.785,
+    "two_original_test_build": 109.84,
+    "single_controller_accessor_build": 52.389,
+    "cumulative_cuda": 8633.762,
+    "cuda_self_cap": 12000,
+    "cpu_configuration_build": 8.067
+  },
+  "resources": {
+    "single_heavy_local_job": true,
+    "cuda_compile_parallel": 3,
+    "cpu_tests_OMP_NUM_THREADS": 8,
+    "swap_growth_kib": 0,
+    "minimum_available_kib_full_library_build": 2857508,
+    "minimum_available_kib_two_tests_build": 4820200,
+    "host_E_free_bytes_lower_observed": 23795343360,
+    "raw_output_uploaded": false
+  },
+  "independent_worker": {
+    "status": "ACCEPT_INDEPENDENT_EXACT_STOKES_AND_WORK_REFERENCE_ONLY",
+    "production_math_changed": false,
+    "threshold_changed": false,
+    "source_scope": "tests/cuda/numerics/test_diffusion_rkl_parity.cu",
+    "root_exact_rational_checks": "All worker traction, velocity, viscous/thermal/combined flux and divergence fractions independently confirmed.",
+    "new_finding": "Old scalar-Laplacian longitudinal oracle omits 4/3 stress and paired energy work.",
+    "repeated_or_false_findings": 0,
+    "elapsed_seconds": 90.88,
+    "input_tokens": 1546,
+    "cached_tokens": 384,
+    "noncached_tokens": 1162,
+    "output_tokens": 26045,
+    "reasoning_tokens": 25521,
+    "visible_tokens": 524,
+    "estimated_usd_range": [
+      0.01580245,
+      0.0316049
+    ],
+    "billed_cost": null,
+    "overlap": "Root independent exact derivation, CPU original configuration build and existing two-owner run",
+    "blocking_wait_seconds": 0,
+    "paid_repairs": 0,
+    "production_rework": 0,
+    "root_active_cost": null,
+    "recommendation": "Retain bounded public-math API verification. Single task does not establish general net speedup."
+  },
+  "source_sha256": {
+    "tests/cuda/numerics/test_diffusion_rkl_parity.cu": "fbea34778d4ed88fc6a9f1fb1ba591595684cb50b57e78c954e5b2a0fd22b918",
+    "tests/cuda/microphysics/burn/test_burn_controller_parity.cu": "b680a7ebad427bf628f7fd4859422bb0a98e2b0bdf8f5485d59a8598b638f618",
+    "tests/fixtures/config/burn_controller_input.h": "0a13d033405fc43859f6c1844b2d9d0590727a64f1303d7143dcf93e359bce9c",
+    "src/numerics/diffusion/DiffFlux.h": "b1cf2390ae94a5706421dac51055a1a15a26c5183791a0d79620846fa910bdf0",
+    "src/numerics/diffusion/NewtonianViscousStress.h": "52dae690ad879ce744969bcab274b7ee49498214dd093bfacce4d4124dd3f9ae",
+    "src/numerics/diffusion/DiffusionAMRStages.h": "1f6480550d8f3e3f59a431da33c1a8ef887a3ce562932e215eaf0a21d106cf9c"
+  },
+  "execution_sha256": {
+    "build-rt-cuda/arch_cuda_diffusion_rkl_parity": "b320d0fbc554805a36b4c53caa985129d4b8015287f3ac196a3bf354400fe693",
+    "build-rt-cuda/arch_cuda_burn_controller_parity": "435a538fc19f726e8ece279c8e06e1b9efc52e297693c45590e2a0224a5095eb"
+  },
+  "documentation_worker": {
+    "status": "ACCEPT_TWO_SELECTED_PASSAGES_AFTER_EXACT_ENTRY_MASK_RESTORATION",
+    "automatic_status_preserved": "INVALID_OUTPUT",
+    "reason": "Entry masking inserted the short protected number10 into previousLOCK_0010 and into1.37101. Worker preserved the exact malformed frozen markers; Root deterministically inverted the exact span mapping. Complete numericmultiset, protectedspancounts, sourcehashes and all qualifiers verified.",
+    "scope": "Onlytwo existingdevelopment paragraphs; Root independentlyupdatescurrentCUDAtable.",
+    "numbers_changed": false,
+    "semantic_scientific_expansion": false,
+    "elapsed_seconds": 58.712,
+    "usage": {
+      "input_tokens": 3771,
+      "output_tokens": 7288,
+      "thinking_tokens": 6739,
+      "cache_read_tokens": 0,
+      "total_tokens": 11059
+    },
+    "money_cost": null,
+    "blocking_wait_seconds": 0,
+    "overlap": "Root existingarchitecture audit and processedreceipts",
+    "paid_calls": 1,
+    "paid_repairs": 0,
+    "extra_rework": "Local deterministic marker restoration only; no provider retry.",
+    "root_active_cost": null,
+    "recommendation": "Retain frozenpassage editor; adjust marker escaping before future short numericprotection. One task gives no generalnet speedup claim."
+  },
+  "architecture_audit": "PASS, currentwholecheckout afterfixturemigration"
+}
