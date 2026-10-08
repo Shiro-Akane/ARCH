@@ -24,6 +24,8 @@ namespace arch::elliptic {
 void detail::validate_mesh_geometry(const CartesianMesh& m, bool full_angular_domain)
 {
     const bool rz=m.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (m.geometry==Geometry::Cylindrical && m.dimension==2 && !rz)
+        throw std::invalid_argument("Two-dimensional cylindrical Poisson requires RZ; the polar mesh is retired");
     if (rz && (m.dimension!=2 || m.geometry!=Geometry::Cylindrical))
         throw std::invalid_argument("RZ elliptic mesh requires cylindrical dimension 2");
     if (m.dimension < 1 || m.dimension > 3) throw std::invalid_argument("Poisson dimension must be 1..3");

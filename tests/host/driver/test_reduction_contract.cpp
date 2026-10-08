@@ -496,7 +496,7 @@ void characterize_diffusion()
                 std::bit_cast<std::uint64_t>(serial_limit(state, grid)));
 
     Grid mixed_grid = make_grid(2);
-    mixed_grid.geometry = "cylindrical";
+    mixed_grid.geometry = "spherical";
     const FluidState mixed_state = make_diffusion_state(mixed_grid);
     expect_bits("production.diffusion.mixed",
                 DiffFlux::adaptive_dt_diff(

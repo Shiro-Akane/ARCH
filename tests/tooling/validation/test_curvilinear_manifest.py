@@ -1,5 +1,6 @@
 """Input/schema checks only: no ARCH execution or scientific validation claim."""
 
+from copy import deepcopy
 from pathlib import Path
 import sys
 import tempfile
@@ -26,22 +27,25 @@ class ViscousEvidenceTests(unittest.TestCase):
             f'dim={dimension} uniform={uniform} density_slope={slope} h={spacing} '
             f'error={error if error is not None else spacing*spacing*.01}'
             for geometry in ('cartesian', 'cylindrical', 'spherical')
-            for dimension in (1, 2, 3) for slope in (0., .1)
+            for dimension in (1, 2, 3) if (geometry, dimension) != ('cylindrical', 2)
+            for slope in (0., .1)
             for uniform in ((0,) if dimension == 1 else (0, 1))
             for spacing in (.05, .025, .0125))
 
     def test_complete_independent_spatial_matrix(self):
         for backend in ('cpu', 'cuda'):
             summary = geometry_reference.viscous_transcript(self.transcript(backend), backend)
-            self.assertEqual(summary['samples'], 90)
-            self.assertEqual(summary['cases'], 30)
+            self.assertEqual(summary['samples'], 78)
+            self.assertEqual(summary['cases'], 26)
 
     def test_missing_duplicate_wrong_backend_or_failed_values_are_rejected(self):
         complete = self.transcript()
         for text in ('', '\n'.join(complete.splitlines()[1:]),
                      complete+'\n'+complete.splitlines()[0], self.transcript('cuda'),
                      self.transcript(error='nan'), self.transcript(error='-1'),
-                     self.transcript(error='.01'), self.transcript(error='1e-5')):
+                     self.transcript(error='.01'), self.transcript(error='1e-5'),
+                     complete+'\nVISCOUS_SPATIAL_CONVERGENCE backend=cpu geometry=cylindrical '
+                     'dim=2 uniform=0 density_slope=0.0 h=0.05 error=2.5e-5'):
             with self.subTest(text=text[:80]), self.assertRaises(ValueError):
                 geometry_reference.viscous_transcript(text, 'cpu')
 
@@ -50,6 +54,8 @@ class ViscousEvidenceTests(unittest.TestCase):
         for geometry in ('cylindrical', 'spherical'):
             for h in (.025, .0125, .00625):
                 for dimension in (1, 2, 3):
+                    if (geometry, dimension) == ('cylindrical', 2):
+                        continue
                     lines.append(f'VISCOUS_ORIGIN backend=cpu geometry={geometry} '
                                  f'dim={dimension} h={h} error=1e-14')
                 lines.append(f'VISCOUS_RADIAL_STABILITY backend=cpu geometry={geometry} '
@@ -60,7 +66,7 @@ class ViscousEvidenceTests(unittest.TestCase):
                              f'contrast={contrast} minimum_entry=0 maximum_row_sum=.99')
         text = '\n'.join(lines)
         result = geometry_reference.origin_transcript(text, 'cpu')
-        self.assertEqual(result['origin_samples'], 18)
+        self.assertEqual(result['origin_samples'], 15)
         self.assertEqual(result['contraction_matrices'], 6)
         self.assertEqual(result['density_contraction_matrices'], 9)
         for invalid in ('', '\n'.join(lines[1:]), text+'\n'+lines[0],
@@ -69,7 +75,9 @@ class ViscousEvidenceTests(unittest.TestCase):
                         text.replace('error=1e-14', 'error=-1'),
                         text.replace('error=1e-14', 'error=1e-3'),
                         text.replace('minimum_entry=0', 'minimum_entry=-.01'),
-                        text.replace('maximum_row_sum=.99', 'maximum_row_sum=1.01')):
+                        text.replace('maximum_row_sum=.99', 'maximum_row_sum=1.01'),
+                        text+'\nVISCOUS_ORIGIN backend=cpu geometry=cylindrical '
+                        'dim=2 h=0.025 error=1e-14'):
             with self.subTest(text=invalid[:70]), self.assertRaises(ValueError):
                 geometry_reference.origin_transcript(invalid, 'cpu')
 
@@ -78,14 +86,17 @@ class ViscousEvidenceTests(unittest.TestCase):
                  f'host_error={h*h*.0001} device_error={h*h*.0001}'
                  for tag in ('DIFFUSION_SPATIAL_CONVERGENCE', 'THERMAL_SPATIAL_CONVERGENCE')
                  for geometry in ('cartesian', 'cylindrical', 'spherical')
-                 for dim in (1, 2, 3) for h in (.05, .025, .0125)]
+                 for dim in (1, 2, 3) if (geometry, dim) != ('cylindrical', 2)
+                 for h in (.05, .025, .0125)]
         text = '\n'.join(lines)
         result = geometry_reference.scalar_transcript(text)
-        self.assertEqual(result['samples'], 54)
+        self.assertEqual(result['samples'], 48)
         for invalid in ('', '\n'.join(lines[1:]), text+'\n'+lines[0],
                         text.replace('THERMAL_SPATIAL_CONVERGENCE', 'unknown'),
                         text.replace('host_error=', 'host_error=nan #='),
-                        text.replace('device_error=', 'device_error=-1 #=')):
+                        text.replace('device_error=', 'device_error=-1 #='),
+                        text+'\nDIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical '
+                        'dim=2 h=0.05 host_error=2.5e-7 device_error=2.5e-7'):
             with self.subTest(text=invalid[:70]), self.assertRaises(ValueError):
                 geometry_reference.scalar_transcript(invalid)
 
@@ -95,12 +106,12 @@ class CurvilinearManifestTests(unittest.TestCase):
         self.manifest = validator.load_manifest(
             ROOT / "validation/amr/gpu_curvilinear_cases.json")
 
-    def test_all_dimensions_keep_existing_tolerance_budgets(self):
+    def assert_complete_curvilinear_matrix(self, manifest):
         previous = validator.load_manifest(ROOT / "validation/amr/gpu_cases.json")
         references = {case["id"]: case for case in previous["cases"]}
-        self.assertEqual(len(self.manifest["cases"]), 24)
+        self.assertEqual(len(manifest["cases"]), 20)
         coverage = set()
-        for case in self.manifest["cases"]:
+        for case in manifest["cases"]:
             overrides = case["overrides"]
             method = overrides["diff_integrator"]
             dimension = 3 if int(overrides["nblockx3"]) else (2 if int(overrides["nblockx2"]) else 1)
@@ -121,9 +132,23 @@ class CurvilinearManifestTests(unittest.TestCase):
         self.assertEqual(coverage, {
             (geometry, dimension, method, coupled)
             for geometry in ("cylindrical", "spherical")
-            for dimension in (1, 2, 3)
+            for dimension in (1, 2, 3) if (geometry, dimension) != ("cylindrical", 2)
             for method in ("RKL1", "RKL2")
             for coupled in (False, True)})
+
+    def test_all_dimensions_keep_existing_tolerance_budgets(self):
+        self.assert_complete_curvilinear_matrix(self.manifest)
+
+    def test_extra_retired_polar_manifest_case_is_rejected(self):
+        mixed = deepcopy(self.manifest)
+        retired = deepcopy(next(case for case in mixed["cases"]
+            if case["overrides"]["geometry"] == "cylindrical"
+            and case["id"].endswith("_3d")))
+        retired["id"] = retired["id"].removesuffix("_3d") + "_wedge_2d"
+        retired["overrides"]["nblockx3"] = "0"
+        mixed["cases"].append(retired)
+        with self.assertRaises(AssertionError):
+            self.assert_complete_curvilinear_matrix(mixed)
 
     def test_cpu_cuda_render_one_canonical_input_without_changing_science(self):
         with tempfile.TemporaryDirectory() as directory:

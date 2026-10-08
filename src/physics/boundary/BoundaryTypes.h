@@ -6,6 +6,8 @@
  * 1. Core constructs face coordinates, stage time and a copied interior state.
  *    The explicit native RZ chart maps (r,z) onto the meridional phi=0 plane;
  *    coordinate selection alone does not change callback state conversion.
+ *    Cylindrical2D is canonical RZ here, so its retired polar normal is gone
+ *    and an explicit Existing chart for that grid is refused.
  * 2. A case callback returns primitive or scalar boundary data in CGS units.
  * 3. Core validates the result and applies it through the selected EOS/operator.
  *
@@ -51,11 +53,19 @@ struct BoundaryCoordinates {
  * Grid remains the coordinate authority, including the current 2D conventions.
  * An explicitly selected native RZ chart instead uses e_r=e_x and e_z at
  * phi=0. This is a coordinate helper, not an EOS or native-moment conversion.
+ *
+ * Guard: retired computational cylindrical2D polar (r,phi) has no Existing
+ * chart, so an explicit Existing selection for a 2-dimensional cylindrical
+ * grid is refused here. Callers that only need the canonical chart use the
+ * no-chart overload, which resolves RZ from the actual grid instead.
  */
 inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const PointCoords& face,
-    BoundaryAxis axis, BoundarySide side,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+    BoundaryAxis axis, BoundarySide side, GridMetrics::GeometrySemantics semantics)
 {
+    if (semantics == GridMetrics::GeometrySemantics::Existing
+        && grid.geometry == "cylindrical" && grid.dim == 2)
+        throw std::invalid_argument(
+            "physical boundary normal for cylindrical2D requires the canonical RZ chart");
     const auto view = GridMetrics::make_geometry_view(grid, semantics);
     const GridMetrics::Geometry geometry = view.geometry;
     if (geometry == GridMetrics::Geometry::Unsupported)
@@ -80,9 +90,10 @@ inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const Poi
         const double cosine = std::cos(phi);
         const double sine = std::sin(phi);
         if (direction == 0) normal = {cosine, sine, 0.0};
-        else if (grid.dim == 2) normal = {-sine, cosine, 0.0};
         else if (direction == 1) normal = {0.0, 0.0, 1.0};
         else normal = {-sine, cosine, 0.0};
+        // The retired cylindrical2D polar azimuthal normal (dim == 2) is gone;
+        // a cylindrical grid reaching this branch is 1D e_R or 3D e_R/e_z/e_phi.
         break;
     }
     case GridMetrics::Geometry::Spherical: {
@@ -111,6 +122,20 @@ inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const Poi
     if (!std::isfinite(magnitude) || std::abs(magnitude - 1.0) > 64.0 * std::numeric_limits<double>::epsilon())
         throw std::invalid_argument("physical boundary normal is not a finite unit direction");
     return normal;
+}
+
+/** No-chart normal: resolve the canonical chart from the actual grid.
+ * Cylindrical2D commits to axisymmetric RZ; every other supported geometry
+ * keeps its Existing angular/native chart. Use the explicit-semantics overload
+ * when a specific chart must be asserted rather than inferred.
+ */
+inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const PointCoords& face,
+    BoundaryAxis axis, BoundarySide side)
+{
+    const bool rz = grid.geometry == "cylindrical" && grid.dim == 2;
+    return BoundaryCartesianNormal(grid, face, axis, side,
+        rz ? GridMetrics::GeometrySemantics::AxisymmetricRz
+           : GridMetrics::GeometrySemantics::Existing);
 }
 
 /** Snapshot passed only to the physical boundary callback. */

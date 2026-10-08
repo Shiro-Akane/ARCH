@@ -286,9 +286,9 @@ void test_all_requirement_codes()
            "CUDA cylindrical self gravity uses the shared curved operator");
     r.dimension=2; r.root_blocks_x3=0;
     expect(query_support(plan, r, probe).cpu_supported,
-           "CPU 2D polar self gravity");
+           "CPU 2D cylindrical RZ self gravity shape");
     expect(query_support(plan, r, probe).cuda_supported,
-           "CUDA 2D polar self gravity");
+           "CUDA 2D cylindrical RZ self gravity shape");
     r.dimension=1; r.root_blocks_x2=0;
     expect(query_support(plan, r, probe).cpu_supported,
            "CPU 1D radial self gravity");

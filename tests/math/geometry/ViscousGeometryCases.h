@@ -12,6 +12,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <string_view>
 #include <vector>
 
 namespace ViscousGeometryCases {
@@ -65,7 +66,7 @@ inline Sample sample(GridMetrics::Geometry geometry, int dimension,
     if (geometry == GridMetrics::Geometry::Cartesian) {
         squared_radius += q2*q2;
         if (dimension == 3) squared_radius += q3*q3;
-    } else if (dimension == 2) {
+    } else if (dimension == 2 && geometry == GridMetrics::Geometry::Spherical) {
         x = r*std::cos(q2);
         cartesian_x_projection = {std::cos(q2),-std::sin(q2),0.};
     } else if (geometry == GridMetrics::Geometry::Cylindrical) {
@@ -124,6 +125,9 @@ void convergence(const char* backend, Evaluate evaluate)
     for (int dimension : {1, 2, 3})
     for (double density_slope : {0., .1})
     for (bool uniform : {false, true}) {
+        // The former cylindrical polar problem is retired. Genuine RZ tensor
+        // and angular-moment witnesses belong to the existing RzViscousCases owner.
+        if (dimension==2 && std::string_view(name)=="cylindrical") continue;
         if (dimension == 1 && uniform) continue;
         double previous = 0.;
         for (double spacing : {.05, .025, .0125}) {
@@ -207,6 +211,7 @@ void radial_origin(const char* backend, Evaluate evaluate)
     for (const char* name : {"cylindrical", "spherical"})
     for (int dimension : {1, 2, 3})
     for (double spacing : {.025, .0125, .00625}) {
+        if (dimension==2 && std::string_view(name)=="cylindrical") continue;
         Grid grid(amr::MAX_NG, 0., amr::BLOCK_NX*spacing, .5, 1., .2, .7);
         grid.dim = dimension; grid.geometry = name; grid.InitializeTopology();
         FluidState state;

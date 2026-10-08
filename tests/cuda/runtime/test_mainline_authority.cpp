@@ -464,7 +464,7 @@ void test_resolved_dispatch_source_boundary()
         require_not_contains(dispatch, removed_entry);
     }
 
-    // The startup display uses the same polar angle as the shared grid names.
+    // Startup display uses the shared spherical polar and explicit RZ chart names.
     // Inspect this presentation-only branch; no duplicate geometry is evaluated.
     require_contains(root / "src/driver/SolverDispatch.cpp",
                      "if (config.grid.dim == 2) return \"phi\";");
@@ -473,9 +473,19 @@ void test_resolved_dispatch_source_boundary()
     grid.geometry = "spherical";
     require(grid.GetAxisNames() == std::vector<std::string>{"r", "phi"},
             "spherical 2D display must name the polar angle phi");
-    grid.geometry = "cylindrical";
-    require(grid.GetAxisNames() == std::vector<std::string>{"r_cy", "phi_cy"},
-            "cylindrical 2D display must name the polar angle phi");
+    Grid cylindrical(4, 0.0, 1.0, -0.5, 0.5);
+    cylindrical.dim = 2;
+    cylindrical.geometry = "cylindrical";
+    constexpr auto rz = GridMetrics::GeometrySemantics::AxisymmetricRz;
+    cylindrical.InitializeTopology(rz);
+    require(GridMetrics::resolve_public_chart(cylindrical.geometry, cylindrical.dim) == rz,
+            "public cylindrical 2D chart must resolve to RZ");
+    require(cylindrical.GetAxisNames(rz) == std::vector<std::string>{"r_cy", "z_cy"},
+            "cylindrical RZ display must name the axial coordinate z");
+    bool retired_polar_rejected = false;
+    try { (void)cylindrical.GetAxisNames(); }
+    catch (const std::invalid_argument&) { retired_polar_rejected = true; }
+    require(retired_polar_rejected, "retired cylindrical 2D polar display accepted");
 }
 
 } // namespace

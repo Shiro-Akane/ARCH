@@ -236,6 +236,22 @@ void run_dimension(int dimension, const std::string& geometry)
 
     amr::AMRControl control(64, dimension);
     const LeafGrid leaves = mixed_corner_grid(dimension);
+    if (geometry == "cylindrical" && dimension == 2) {
+        // Workflow: the default Existing fixture denotes the retired (r,phi)
+        // chart. Require its real topology construction to reject; choosing
+        // Native RZ here would grant an unrelated fixture a false state lease.
+        bool rejected = false;
+        try {
+            control.tree->LoadLeafGrid(
+                config, 4, leaves.level, leaves.x, leaves.y, leaves.z);
+        } catch (const std::invalid_argument&) {
+            rejected = true;
+        }
+        require(rejected,
+                "CUDA AMR fixture accepted retired cylindrical2D polar topology");
+        std::cout << "CUDA_AMR_RETIRED_POLAR_REJECTION dimension=2\n";
+        return;
+    }
     control.tree->LoadLeafGrid(
         config, 4, leaves.level, leaves.x, leaves.y, leaves.z);
     const auto& active = control.tree->GetActiveBlocks();
@@ -568,7 +584,8 @@ int main()
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension)
                 run_dimension(dimension, geometry);
-        run_coordinate_seam(2, "cylindrical");
+        // The retired 2D cylindrical angular seam is not a CUDA RZ seam test.
+        // Its Existing topology rejection is exercised in the matrix above.
         run_coordinate_seam(3, "cylindrical");
         run_coordinate_seam(3, "spherical");
         return 0;

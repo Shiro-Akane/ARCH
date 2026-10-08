@@ -223,7 +223,8 @@ namespace DiffFlux
         if (GridMetrics::is_axisymmetric_rz(grid))
             return direction == 2 ? ViscousBasisRotation{0.0, -inverse_radius, 0.0}
                                   : ViscousBasisRotation{};
-        if (grid.dim == 2) return {0.0, 0.0, inverse_radius}; // both polar (r,phi)
+        if (grid.dim == 2 && grid.geometry == DiffusionGeometry::Spherical)
+            return {0.0, 0.0, inverse_radius}; // spherical polar (r,phi)
         if (grid.geometry == DiffusionGeometry::Cylindrical)
             return direction == 2 ? ViscousBasisRotation{0.0, -inverse_radius, 0.0}
                                   : ViscousBasisRotation{}; // (r,z,phi)

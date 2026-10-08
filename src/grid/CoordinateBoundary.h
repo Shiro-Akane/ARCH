@@ -9,7 +9,8 @@
  *
  * A small positive radius or polar angle is a physical surface, not a join.
  * The classification therefore has no dimensional area threshold. In 2D,
- * spherical/cylindrical axis 1 is phi and has no polar join. Power-of-two root
+ * spherical axis 1 is phi; cylindrical axis 1 is z. Neither has a polar join.
+ * Power-of-two root
  * extents retain supplied endpoints under mesh scaling.
  */
 #pragma once

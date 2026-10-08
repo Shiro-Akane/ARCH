@@ -669,30 +669,31 @@ void test_host_restart(const std::filesystem::path& directory)
         2, "cylindrical", rz.geometry_identity); }, "RZ accepted as legacy polar");
     expect_rejected([&] { io::require_checkpoint_geometry_compatible(
         2, "cylindrical", {}, io::current_rz_checkpoint_geometry()); }, "legacy polar accepted as RZ");
-    // Real old 2D cylindrical HDF + populated live tree: never interpreted as RZ.
+    // Real old cylindrical HDF is refused by a legitimate populated RZ receiver.
     {
         HighFive::File file(rz_path.string(), HighFive::File::ReadWrite);
         file.deleteAttribute("geometry_semantics_revision");
         file.deleteAttribute("geometry_chart");
         file.deleteAttribute("repair_semantics");
     }
-    auto polar_config = config;
-    polar_config.grid.dim = 2;
-    polar_config.grid.geometry = "cylindrical";
-    polar_config.grid.nblockx2 = 1;
-    amr::AMRControl polar_live(polar_config.grid.amr_max_blocks, 2);
-    polar_live.tree->InitRootGrid(polar_config, species.count());
-    const auto polar_ids = polar_live.tree->GetActiveBlocks();
-    auto& polar_fluid = polar_live.pool->GetBlock(polar_ids.front()).fluid_state;
-    std::fill(polar_fluid.rho.begin(), polar_fluid.rho.end(), 19.0);
-    const auto polar_rho = polar_fluid.rho;
-    RunState polar_state = state;
-    expect_rejected([&] { read_chk(rz_path.string(), polar_live, polar_state,
-        polar_config, species, identity, io::current_rz_checkpoint_geometry()); },
+    auto rz_config = config;
+    rz_config.grid.dim = 2;
+    rz_config.grid.geometry = "cylindrical";
+    rz_config.grid.nblockx2 = 1;
+    amr::AMRControl rz_receiver(rz_config.grid.amr_max_blocks, 2);
+    rz_receiver.tree->InitRootGrid(rz_config, species.count(),
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    const auto rz_ids = rz_receiver.tree->GetActiveBlocks();
+    auto& rz_fluid = rz_receiver.pool->GetBlock(rz_ids.front()).fluid_state;
+    std::fill(rz_fluid.rho.begin(), rz_fluid.rho.end(), 19.0);
+    const auto rz_rho = rz_fluid.rho;
+    RunState rz_state = state;
+    expect_rejected([&] { read_chk(rz_path.string(), rz_receiver, rz_state,
+        rz_config, species, identity, io::current_rz_checkpoint_geometry()); },
         "actual legacy polar file accepted as RZ", "no authoritative RZ");
-    expect(polar_live.tree->GetActiveBlocks() == polar_ids && polar_fluid.rho == polar_rho
-        && polar_state.time == state.time && polar_state.step == state.step
-        && polar_state.chk_idx == state.chk_idx && polar_state.plt_idx == state.plt_idx,
+    expect(rz_receiver.tree->GetActiveBlocks() == rz_ids && rz_fluid.rho == rz_rho
+        && rz_state.time == state.time && rz_state.step == state.step
+        && rz_state.chk_idx == state.chk_idx && rz_state.plt_idx == state.plt_idx,
         "legacy polar rejection changed live state");
     auto invalid_geometry = checkpoint;
     invalid_geometry.geometry_identity = {2, "existing"};

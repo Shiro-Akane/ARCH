@@ -99,18 +99,21 @@ inline void cell_average_samples()
             range.axial_lo,range.axial_lo+amr::BLOCK_NY*dz,0.,1.);
         grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
         const auto native=GridMetrics::make_geometry_view(grid,rz);
-        const auto legacy=GridMetrics::make_geometry_view(grid,existing);
         const auto original=GridMetrics::make_geometry_view(grid);
         if(native.semantics!=rz||native.geometry!=GridMetrics::Geometry::Cylindrical
-           ||native.dim!=2||legacy.semantics!=existing||original.semantics!=existing
-           ||native.ng!=legacy.ng||native.stride_y!=legacy.stride_y
-           ||native.stride_z!=legacy.stride_z||native.total_size!=legacy.total_size
-           ||native.dx1!=legacy.dx1||native.dx2!=legacy.dx2||native.dx3!=legacy.dx3
-           ||native.x1_min!=legacy.x1_min||native.x2_min!=legacy.x2_min
-           ||native.x3_min!=legacy.x3_min||legacy.geometry!=original.geometry
-           ||legacy.dim!=original.dim||legacy.stride_y!=original.stride_y
-           ||legacy.total_size!=original.total_size)
-            throw std::runtime_error("RZ sample factory changed a legal native/legacy layout");
+           ||native.dim!=2||original.semantics!=rz
+           ||native.ng!=original.ng||native.stride_y!=original.stride_y
+           ||native.stride_z!=original.stride_z||native.total_size!=original.total_size
+           ||native.dx1!=original.dx1||native.dx2!=original.dx2||native.dx3!=original.dx3
+           ||native.x1_min!=original.x1_min||native.x2_min!=original.x2_min
+           ||native.x3_min!=original.x3_min||native.geometry!=original.geometry
+           ||native.dim!=original.dim)
+            throw std::runtime_error("RZ sample factory changed the actual native layout");
+        bool retired_rejected=false;
+        try {(void)GridMetrics::make_geometry_view(grid,existing);}
+        catch(const std::invalid_argument&) {retired_rejected=true;}
+        if(!retired_rejected)
+            throw std::runtime_error("RZ sample factory accepted a retired cylindrical polar chart");
         bool rejected=false;
         try {
             (void)GridMetrics::make_geometry_view(grid,

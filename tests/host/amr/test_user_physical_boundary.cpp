@@ -169,17 +169,18 @@ void test_geometry_normals()
         std::array<double, 3> face;
     };
     // Nontrivial angles: theta = 1.0 rad, phi = 0.7 rad.
-    const std::array<GeometryCase, 9> cases{{
+    const std::array<GeometryCase, 8> cases{{
         {1, "cartesian", {7.3, 0.0, 0.0}},
         {2, "cartesian", {7.3, 1.4, 0.0}},
         {3, "cartesian", {7.3, 1.4, 0.7}},
         {1, "cylindrical", {7.3, 0.0, 0.0}},
-        {2, "cylindrical", {7.3, 0.9, 0.0}},
         {3, "cylindrical", {7.3, 1.4, 0.7}},
         {1, "spherical", {7.3, 0.0, 0.0}},
         {2, "spherical", {7.3, 0.9, 0.0}},
         {3, "spherical", {7.3, 1.0, 0.7}},
     }};
+    require_rejected([&] { (void)make_grid(2, "cylindrical"); },
+        "retired cylindrical 2D polar grid accepted");
     for (const GeometryCase& item : cases) {
         const Grid grid = make_grid(item.dimension, item.geometry);
         for (int axis = 0; axis < item.dimension; ++axis) {
@@ -227,9 +228,9 @@ void test_geometry_normals()
 
     // Axis/pole degeneracy: the coordinate-basis direction is still reported,
     // while the metric distance honestly collapses to zero.
-    const Grid cylindrical = make_grid(2, "cylindrical");
+    const Grid spherical_plane = make_grid(2, "spherical");
     const auto axis_face = MakeBoundaryCoordinates(
-        cylindrical, {0.0, 0.4, 0.0}, BoundaryAxis::X2, BoundarySide::Upper, 0.2,
+        spherical_plane, {0.0, 0.4, 0.0}, BoundaryAxis::X2, BoundarySide::Upper, 0.2,
         1, BoundaryPurpose::Diffusion, {0.0, 0.5, 0.0});
     close(vector_magnitude(axis_face.cartesian_normal), 1.0, 1.0e-12, "axis normal stays a unit direction");
     close(axis_face.cartesian_normal[0], -std::sin(0.4), 1.0e-15, "axis normal uses the phi basis");
@@ -302,16 +303,16 @@ void test_coordinate_dimensions()
     close(face_only.cartesian_normal[0], -1.0, 1.0e-15, "lower x face points inward");
 
     // Curvilinear angular steps use the shared metric: arc length, not the chord.
-    const Grid cylindrical = make_grid(2, "cylindrical");
-    const auto azimuthal = MakeBoundaryCoordinates(cylindrical, {2.0, 0.5, 0.0},
+    const Grid spherical_plane = make_grid(2, "spherical");
+    const auto azimuthal = MakeBoundaryCoordinates(spherical_plane, {2.0, 0.5, 0.0},
         BoundaryAxis::X2, BoundarySide::Upper, 0.0, 1, BoundaryPurpose::Diffusion, {2.0, 0.75, 0.0});
-    close(azimuthal.physical_distance, 2.0 * 0.25, 1.0e-14, "cylindrical r*dphi distance");
+    close(azimuthal.physical_distance, 2.0 * 0.25, 1.0e-14, "spherical 2D r*dphi distance");
     const PointCoords expected_point =
-        Grid::PhysicalCoordsFromNative(2, "cylindrical", 2.0, 0.75, 0.0);
+        Grid::PhysicalCoordsFromNative(2, "spherical", 2.0, 0.75, 0.0);
     require(azimuthal.ghost_point.x == expected_point.x &&
             azimuthal.ghost_point.y == expected_point.y &&
             azimuthal.ghost_point.z == expected_point.z &&
-            azimuthal.ghost_point.phi_cy == expected_point.phi_cy,
+            azimuthal.ghost_point.phi == expected_point.phi,
             "ghost point uses the shared native mapping");
 
     const Grid spherical = make_grid(3, "spherical");
@@ -395,15 +396,23 @@ void test_native_rz_coordinates()
             "RZ coordinates lost the actual native request identity");
     }
 
-    // The same native numbers intentionally retain the legacy polar meaning
-    // when no explicit chart is supplied. Existing dimensional tests remain.
-    const auto legacy = MakeBoundaryCoordinates(grid, {2.0, .4, 0.0},
+    // Cylindrical 2D has only the explicit RZ chart. Generic angular
+    // coordinates remain covered by the supported spherical 2D polar plane.
+    require_rejected([&] { (void)MakeBoundaryCoordinates(grid, {2.0, .4, 0.0},
+        BoundaryAxis::X2, BoundarySide::Upper, 0.0, 1,
+        BoundaryPurpose::Diffusion, {2.0, .6, 0.0}); },
+        "retired cylindrical 2D polar coordinates accepted");
+    Grid polar_grid(4, 0.0, 16.0, 0.0, 2.0 * std::acos(-1.0), 0.0, 2.0);
+    polar_grid.dim = 2;
+    polar_grid.geometry = "spherical";
+    polar_grid.InitializeTopology();
+    const auto polar = MakeBoundaryCoordinates(polar_grid, {2.0, .4, 0.0},
         BoundaryAxis::X2, BoundarySide::Upper, 0.0, 1,
         BoundaryPurpose::Diffusion, {2.0, .6, 0.0});
-    close(legacy.point.x, 2.0 * std::cos(.4), 1.e-15, "default cylindrical coordinates retain polar x");
-    close(legacy.point.y, 2.0 * std::sin(.4), 1.e-15, "default cylindrical coordinates retain polar y");
-    close(legacy.point.z, 0.0, 1.e-15, "default cylindrical 2D has no axial coordinate");
-    close(legacy.physical_distance, .4, 1.e-15, "default cylindrical azimuth retains r*dphi distance");
+    close(polar.point.x, 2.0 * std::cos(.4), 1.e-15, "spherical polar coordinates preserve x");
+    close(polar.point.y, 2.0 * std::sin(.4), 1.e-15, "spherical polar coordinates preserve y");
+    close(polar.point.z, 0.0, 1.e-15, "spherical 2D polar plane has no axial coordinate");
+    close(polar.physical_distance, .4, 1.e-15, "spherical azimuth retains r*dphi distance");
 
     const auto reject_chart = [&](const Grid& candidate, GridMetrics::GeometrySemantics semantics) {
         const PointCoords point{};

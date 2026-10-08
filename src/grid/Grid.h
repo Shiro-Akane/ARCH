@@ -3,8 +3,9 @@
  * @brief Block-local grid extents, native coordinates, and padded array indexing.
  *
  * Three-dimensional native axes are Cartesian (x,y,z), cylindrical (R,z,phi),
- * or spherical (r,theta,phi). Both curved two-dimensional grids use the polar
- * plane (r,phi); angular coordinates are in radians. GridMetrics owns physical
+ * or spherical (r,theta,phi). Two-dimensional spherical grids use the polar
+ * plane (r,phi); cylindrical grids use the full-ring meridian (r,z). Angular
+ * coordinates are in radians and meridional coordinates are in cm. GridMetrics owns physical
  * volumes, face areas, and orthonormal spacing derived from this geometry.
  *
  * Array offsets are i + j*stride_y + k*stride_z. Axis indices include ghosts;
@@ -97,7 +98,11 @@ private:
      */
     void RequireGeometrySemantics(GridMetrics::GeometrySemantics semantics) const
     {
-        if (semantics == GridMetrics::GeometrySemantics::Existing) return;
+        if (semantics == GridMetrics::GeometrySemantics::Existing) {
+            if (dim == 2 && geometry == "cylindrical")
+                throw std::invalid_argument("Two-dimensional cylindrical grids require the RZ chart; the polar chart is retired");
+            return;
+        }
         if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz ||
             dim != 2 || geometry != "cylindrical")
             throw std::invalid_argument("RZ coordinates require cylindrical dimension 2");
@@ -148,13 +153,8 @@ private:
             if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: R_min cannot be negative.");
 
-            // Legacy 2D is polar; explicit RZ x2 is an unrestricted length.
-            if (dim == 2 && semantics == GridMetrics::GeometrySemantics::Existing)
-            {
-                if ((x2_max - x2_min) > 2.0 * arch::constants::math::pi + eps)
-                    throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
-            }
-            else if (dim == 3)
+            // RZ x2 is an unrestricted axial length; only 3D has an active phi axis.
+            if (dim == 3)
             {
                 if ((x3_max - x3_min) > 2.0 * arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (Cylindrical): Azimuthal angle phi (z bounds) cannot exceed 2*pi.");
@@ -240,8 +240,6 @@ public:
         {
             if (dim == 1)
                 return {"r_cy"};
-            if (dim == 2)
-                return {"r_cy", "phi_cy"}; // The 2D cylindrical case is a polar plane.
             return {"r_cy", "z_cy", "phi_cy"};
         }
 
@@ -271,6 +269,9 @@ public:
                                                 double cx, double cy = 0.0, double cz = 0.0,
                                                 GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
     {
+        if (dim == 2 && geometry == "cylindrical"
+            && semantics == GridMetrics::GeometrySemantics::Existing)
+            throw std::invalid_argument("Two-dimensional cylindrical coordinates require the RZ chart; the polar chart is retired");
         if (semantics != GridMetrics::GeometrySemantics::Existing) {
             if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz ||
                 dim != 2 || geometry != "cylindrical")
@@ -336,19 +337,10 @@ public:
         }
         else if (geometry == "cylindrical")
         {
-            // In two dimensions, cy is the azimuthal angle phi.
-            if (dim == 2)
-            {
-                coords.r_cy = cx;
-                coords.phi_cy = cy; // The second native coordinate is azimuth.
-                coords.z_cy = 0.0;  // A 2D cylindrical grid lies in the z=0 plane.
-            }
-            else
-            {
-                coords.r_cy = cx;
-                coords.z_cy = cy;
-                coords.phi_cy = cz;
-            }
+            // The RZ branch above owns 2D; 1D/3D retain their native expansion.
+            coords.r_cy = cx;
+            coords.z_cy = cy;
+            coords.phi_cy = cz;
 
             coords.x = coords.r_cy * std::cos(coords.phi_cy);
             coords.y = coords.r_cy * std::sin(coords.phi_cy);

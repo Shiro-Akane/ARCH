@@ -1621,6 +1621,51 @@ int run_device_primitives()
         || destination.species(0, active - 1) != 0.2)
         return 112;
 
+    // Workflow: reuse the actual stage buffers/launcher for SSPRK3's final
+    // (1/3,2/3) pair with zero conserved and species RHS. Each seed component
+    // is a power-of-two multiple of the independently specified nextafter(1)
+    // bit pattern; ample thermal energy prevents a repair from masking drift.
+    constexpr double stationary_q = 0x1.0000000000001p+0;
+    const FluidVector stationary_seed{
+        stationary_q, stationary_q / 16.0, stationary_q / 8.0,
+        stationary_q / 32.0, 8.0 * stationary_q};
+    old_state.store(active, stationary_seed);
+    current_state.store(active, stationary_seed);
+    stage_delta.store(active, {});
+    for (int species_index = 0; species_index < 2; ++species_index) {
+        const double fraction = species_index == 0 ? .25 : .75;
+        old_state.set_species(species_index, active, fraction);
+        current_state.set_species(species_index, active, fraction);
+        stage_delta.set_species(species_index, active, 0.0);
+    }
+    if (!old_state.upload() || !current_state.upload() || !stage_delta.upload())
+        return 203;
+    if (launch_hydro_single_stage_update(
+            old_state.view, current_state.view, destination.view,
+            stage_delta.view, grid, 1.0 / 3.0, 2.0 / 3.0,
+            1e-12, 1e-10, 1e20, nullptr) != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess || !destination.download()
+        || !vector_bits(destination.load(active),
+                        0x3ff0000000000001ULL, 0x3fb0000000000001ULL,
+                        0x3fc0000000000001ULL, 0x3fa0000000000001ULL,
+                        0x4020000000000001ULL)
+        || !exact_bits(destination.species(0, active), 0x3fd0000000000000ULL)
+        || !exact_bits(destination.species(1, active), 0x3fe8000000000000ULL))
+        return 204;
+    for (int cell = 0; cell < total; ++cell) {
+        if (!exact_bits(destination.enuc_rate[cell], 0x4031000000000000ULL))
+            return 205;
+        if (cell != active
+            && (!vector_bits(destination.load(cell),
+                             0x4022000000000000ULL, 0x4020000000000000ULL,
+                             0x401c000000000000ULL, 0x4018000000000000ULL,
+                             0x4014000000000000ULL)
+                || !exact_bits(destination.species(0, cell), 0x3fc999999999999aULL)
+                || !exact_bits(destination.species(1, cell), 0x3fe999999999999aULL)))
+            return 205;
+    }
+    std::cout << "CUDA_RK3_STATIONARY_PASS cells=1 species=2\n";
+
     state.store(active, {2.0, 2.0, 2.5, 2.0, 10.0});
     if (!state.upload())
         return 113;

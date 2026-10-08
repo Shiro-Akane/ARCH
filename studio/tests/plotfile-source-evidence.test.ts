@@ -318,12 +318,15 @@ test('formal digests cannot certify incomplete, nonfinite or contradictory confi
  for(const attrs of [{effective_config_sha256:'e'.repeat(64)},{build_id:'e'.repeat(64)},{case_id:'another-case'}])
   await formalFixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/formal|identity|digest/i);},{attrs});
 });
-test('formal legacy polar cylindrical inspection stays distinct from axisymmetric RZ',async()=>{
+test('formal 2D cylindrical polar is retired and rejected while spherical 2D polar stays a valid formal profile',async()=>{
+ await formalFixture(async path=>{
+  await assert.rejects(inspectPlotfileMetadata(path),/Invalid formal native geometry profile/);
+ },{geometry:'cylindrical'});
  await formalFixture(async path=>{
   const metadata=await inspectPlotfileMetadata(path);assert.equal(metadata.renderEligible,false);
   assert.deepEqual(metadata.candidateNativeGrid?.axes,['r','phi','inactive']);assert.equal(metadata.candidateNativeGrid?.chart,'existing');
   assert.equal(validatePlotfileAudit({protocolVersion:PROTOCOL_VERSION,projectId:'session',relativePath:'formal.h5',metadata},'session','formal.h5').audit.completion.state,'complete');
- },{geometry:'cylindrical'});
+ },{geometry:'spherical'});
 });
 test('Core and Host use identical frozen effective-config field coverage',async()=>{
  const text=await readFile(new URL('../../src/core/config/ConfigurationIdentityFields.inc',import.meta.url),'utf8');

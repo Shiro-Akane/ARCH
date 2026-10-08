@@ -1,0 +1,522 @@
+{
+  "schema": 1,
+  "status": "PASS_CURRENT_CPU_BASELINE_SHARED_CUDA_STAGE_AND_ONE_JEANS_MULTICYCLE_RESTART_PAIR",
+  "recorded_at_utc": "2026-10-08T14:04:51.184499+00:00",
+  "baseline_commit": "1b955deadbae2831373ed113b23ee606e93a7987",
+  "working_branch": "compute/optim",
+  "sole_checkout": true,
+  "structural_scope": {
+    "spherical_2d": "r,phi preserved",
+    "cylindrical_2d": "axisymmetric r,z only; old Existing polar explicitly refused",
+    "cylindrical_1d_3d": "preserved",
+    "PointCoords_input_geometries": "preserved",
+    "old_checkpoint_identity": "refused without live-state mutation",
+    "new_ctest_targets": 0,
+    "source_math_manifest": {
+      "src/cuda/common/CudaCommon.cuh": "c0b352b6df19b59787bb8ea81bf76cebf09685e142ccc987d9a8117883cd02aa",
+      "src/grid/CoordinateBoundary.h": "2bf59a8a45f9844b9f719cec3ac2abf13e002eddceeb574807a5cfe3e0f809ff",
+      "src/grid/DyadicGridIdentity.h": "748e36f5a582e498e8b7e6d00cc9119e43a111e3dd219c80fc63eb26d5fdea28",
+      "src/grid/Grid.h": "d5401c9359cfd48222bd3646ecc8e4d95afa891b6231cbc20098fef52e944bf6",
+      "src/grid/GridGeometryView.h": "5d2320df092996778531b2d8d8789d6052db94c8cae72730afe1836419b4c04e",
+      "src/grid/GridMetrics.h": "e2fdcd33ae303aadbb0cd857c0ed7325498f705d2e50bc7a07b207d6464448e8",
+      "src/grid/ScalarFieldView.h": "2d6af088f40006853183933d6e4fc868e50b75452aef6229f6c3156d38866f16",
+      "src/io/chk/CheckpointGeometryIdentity.h": "69b4a0f93ae83111257f3753b235ba3db18f8e49107c46fecbac4f3998cd910b",
+      "src/numerics/integrator/TimeIntegratorHelper.h": "9337c72ccb0e706304393297634d8225f4536540df753ed04f63da0e115be4e6",
+      "src/physics/boundary/BoundaryTypes.h": "3e409c423a7ea2c8efd3d3d3315398dbd11cd876678cda8d0e0d0a45b06d46eb"
+    }
+  },
+  "shared_rk_repair": {
+    "original_final_weight_exact_sum": "18014398509481983/18014398509481984",
+    "stationary_seed": "0x1.0000000000001p+0",
+    "old_stationary_result": "0x1.0000000000000p+0",
+    "new_stationary_result": "0x1.0000000000001p+0",
+    "mathematical_formula": "old+w_flux*((current-old)+delta), range-protected equivalent convex combination for finite extreme differences",
+    "physical_coefficients_floors_and_original_windows_changed": false,
+    "two_burn_halfsteps_full_face_eos_exact_caches_retained": true
+  },
+  "current_checks": {
+    "cpu": {
+      "tests": 68,
+      "skips": 0,
+      "ctest_time_seconds_reported": 195.0,
+      "guard_seconds": 196.137
+    },
+    "tooling": {
+      "tests": 668,
+      "skips": 0,
+      "python": "system Linux3.12.3 supporting pidfd",
+      "test_seconds": 38.789,
+      "guard_seconds": 39.23
+    },
+    "studio": {
+      "tests": 368,
+      "skips": 0,
+      "node": "24.21.0",
+      "test_seconds": 7.051155984,
+      "desktop_scientific_gate_granted": false
+    },
+    "architecture_audit": "PASS",
+    "cuda_shared_rk_owner": {
+      "owner": "hydro_leaf_parity",
+      "tests": 1,
+      "skips": 0,
+      "test_seconds": 0.474397,
+      "guard_seconds": 1.016,
+      "nvcc_build_seconds": 194.17,
+      "cumulative_cuda_build_seconds": 6469.534,
+      "device": "RTX 3060 Ti",
+      "shared_stage_math": "all5conserved_fields+2species+ghost_and_ENUC_no_write",
+      "whole_native_device_qualified": false,
+      "formal_performance_measurement": false
+    }
+  },
+  "jeans": {
+    "cells": 512,
+    "periods": 20,
+    "physical_endpoint": 22.536725161713402,
+    "mid_checkpoint_time": 11.268362580856701,
+    "CFL": 0.2,
+    "CPU_threads": 1,
+    "ELF_sha256": "5f6b601e003f43892bb835d9957b94388b1e45341aa3c2ca3a8088b15625f82e",
+    "continuous_input_sha256": "1b6d963b06b46cda78acabe28acca05bc6aa25311df18aa8acc283c95b5e7e58",
+    "restart_input_sha256": "a337176fa8bbf77514187db30b125143172bf32cc9cfedf7bc95418ca9fa2a64",
+    "original_budgets": {
+      "density_relative_rms": 0.02,
+      "mass_relative_drift": 1e-12,
+      "energy_over_initial_potential": 0.01
+    },
+    "continuous_wall_seconds": 270.0867578420148,
+    "continuous_guard_seconds": 272.247,
+    "resume_wall_seconds": null,
+    "resume_guard_seconds": 134.621,
+    "resume_wall_reason_unknown": "Local analysis failed after process return0; model wall not saved. Existing output-only supplemental analysis recovered science, no rerun/time estimate.",
+    "continuous_solves": 461634,
+    "resume_solves": 230818,
+    "all_actual_residuals_at_or_below_own_targets": true,
+    "state_repair_events": 0,
+    "maxima": {
+      "density_relative_rms": 0.001962654791184626,
+      "mass_relative_drift": 1.730950316414237e-15,
+      "energy_over_initial_potential": 1.44937233854533e-06
+    },
+    "continuous_resources": {
+      "samples": 135,
+      "peak_rss_kib": 24460,
+      "late_rss_range_kib": 0,
+      "late_open_fd_range": 0,
+      "leak_freedom_proven": false
+    },
+    "resume_resources": {
+      "samples": 67,
+      "peak_rss_kib": 22296,
+      "late_rss_range_kib": 4,
+      "late_open_fd_range": 0,
+      "leak_freedom_proven": false
+    },
+    "strict_restart_all_datasets": {
+      "datasets": 14,
+      "bitwise_equal": true,
+      "original": "studio/.local/release-closure-20261006/o9-long-20261008/jeans512-20cycles-rkfixed/JeansWave_chk_0002.h5"
+    },
+    "output_schedule_exact_match": true,
+    "samples": [
+      {
+        "density_relative_rms": 0.0,
+        "mass_relative_drift": 0.0,
+        "energy_over_initial_potential": 0.0,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205738162340522e-19,
+        "time": 0.0,
+        "fundamental_amplitude_ratio": 1.0000000000000155,
+        "phase_error_radians": 8.526566332588747e-17,
+        "second_harmonic_relative_amplitude": 4.800470307342471e-14,
+        "rho_min": 9999000.025099512,
+        "pressure_min": 5999000.025099513
+      },
+      {
+        "density_relative_rms": 0.0004795503421754777,
+        "mass_relative_drift": 1.730950316414237e-15,
+        "energy_over_initial_potential": 6.66293451001876e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.36907539481519e-19,
+        "time": 1.4085453226070876,
+        "fundamental_amplitude_ratio": 0.999994451603427,
+        "phase_error_radians": -0.00012155192609566699,
+        "second_harmonic_relative_amplitude": 0.00046324901462762566,
+        "rho_min": 9998999.635078728,
+        "pressure_min": 5998999.668436012
+      },
+      {
+        "density_relative_rms": 0.0006482892035134272,
+        "mass_relative_drift": 1.235821400769055e-15,
+        "energy_over_initial_potential": 1.912746812565139e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 5.879142213940216e-19,
+        "time": 2.8170906452141753,
+        "fundamental_amplitude_ratio": 0.999995569513079,
+        "phase_error_radians": -0.00024284831443621878,
+        "second_harmonic_relative_amplitude": 0.0006006323389675957,
+        "rho_min": 9998999.355324186,
+        "pressure_min": 5998999.355381056
+      },
+      {
+        "density_relative_rms": 0.0006253453715103507,
+        "mass_relative_drift": 4.121829988434911e-16,
+        "energy_over_initial_potential": 7.342755892819441e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205793700832587e-19,
+        "time": 4.225635967821263,
+        "fundamental_amplitude_ratio": 0.9999902283174695,
+        "phase_error_radians": -0.0003641556565324226,
+        "second_harmonic_relative_amplitude": 0.0005077407213983435,
+        "rho_min": 9998999.573903192,
+        "pressure_min": 5998999.607264669
+      },
+      {
+        "density_relative_rms": 0.0004916326290370917,
+        "mass_relative_drift": 2.0991137716919184e-16,
+        "energy_over_initial_potential": 8.541433393979331e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 3.2662031548967884e-20,
+        "time": 5.634181290428351,
+        "fundamental_amplitude_ratio": 0.9999916027273996,
+        "phase_error_radians": -0.000485631645190394,
+        "second_harmonic_relative_amplitude": 7.269903034839344e-05,
+        "rho_min": 9998999.952575604,
+        "pressure_min": 5998999.95258075
+      },
+      {
+        "density_relative_rms": 0.0007343889257724845,
+        "mass_relative_drift": 3.9981387089937926e-16,
+        "energy_over_initial_potential": 1.44937233854533e-06,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 1.878077881928312e-18,
+        "time": 7.0427266130354385,
+        "fundamental_amplitude_ratio": 0.9999860815569083,
+        "phase_error_radians": -0.0006072397614920166,
+        "second_harmonic_relative_amplitude": 0.0004121988335707941,
+        "rho_min": 9998999.712046742,
+        "pressure_min": 5998999.7453993745
+      },
+      {
+        "density_relative_rms": 0.0009411238796001931,
+        "mass_relative_drift": 8.269125828519463e-16,
+        "energy_over_initial_potential": 1.2858384794585165e-06,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205809997246368e-19,
+        "time": 8.451271935642525,
+        "fundamental_amplitude_ratio": 0.9999871855483435,
+        "phase_error_radians": -0.0007285189516596589,
+        "second_harmonic_relative_amplitude": 0.0005951184843348018,
+        "rho_min": 9998999.356637951,
+        "pressure_min": 5998999.356694861
+      },
+      {
+        "density_relative_rms": 0.0010102024245430513,
+        "mass_relative_drift": 8.069036994129419e-16,
+        "energy_over_initial_potential": 1.3913220995605867e-06,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205850014976006e-19,
+        "time": 9.859817258249613,
+        "fundamental_amplitude_ratio": 0.9999818060620562,
+        "phase_error_radians": -0.000849851939538668,
+        "second_harmonic_relative_amplitude": 0.0005453978292262081,
+        "rho_min": 9998999.522628242,
+        "pressure_min": 5998999.555993477
+      },
+      {
+        "density_relative_rms": 0.000982275924868873,
+        "mass_relative_drift": 5.296897143125534e-16,
+        "energy_over_initial_potential": 9.798332373766987e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 1.2411678411139075e-18,
+        "time": 11.268362580856701,
+        "fundamental_amplitude_ratio": 0.9999832049663093,
+        "phase_error_radians": -0.0009712555965775316,
+        "second_harmonic_relative_amplitude": 0.0001440931880909835,
+        "rho_min": 9998999.939031458,
+        "pressure_min": 5998999.939037694
+      },
+      {
+        "density_relative_rms": 0.001149507056898295,
+        "mass_relative_drift": 1.4308170648291708e-15,
+        "energy_over_initial_potential": 1.240973692986532e-06,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 1.2248441946416761e-18,
+        "time": 12.676907903463789,
+        "fundamental_amplitude_ratio": 0.9999777081718725,
+        "phase_error_radians": -0.0010929183934606373,
+        "second_harmonic_relative_amplitude": 0.00035496328164968727,
+        "rho_min": 9998999.785343219,
+        "pressure_min": 5998999.818691484
+      },
+      {
+        "density_relative_rms": 0.0013477355795709018,
+        "mass_relative_drift": 1.068474375642836e-15,
+        "energy_over_initial_potential": 1.1337776764542332e-06,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 1.2411737511657603e-18,
+        "time": 14.085453226070877,
+        "fundamental_amplitude_ratio": 0.9999788061602325,
+        "phase_error_radians": -0.0012141925138141362,
+        "second_harmonic_relative_amplitude": 0.0005841403443561534,
+        "rho_min": 9998999.413796537,
+        "pressure_min": 5998999.4138501175
+      },
+      {
+        "density_relative_rms": 0.001454951068944594,
+        "mass_relative_drift": 9.247742127627134e-16,
+        "energy_over_initial_potential": 7.947231832690071e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205902177430461e-19,
+        "time": 15.493998548677965,
+        "fundamental_amplitude_ratio": 0.9999733881583969,
+        "phase_error_radians": -0.0013355527098006354,
+        "second_harmonic_relative_amplitude": 0.0005762080270962253,
+        "rho_min": 9998999.469250327,
+        "pressure_min": 5998999.502619509
+      },
+      {
+        "density_relative_rms": 0.0014726794577377246,
+        "mass_relative_drift": 1.4406396076083183e-16,
+        "energy_over_initial_potential": 9.286325841128692e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.532525745495119e-19,
+        "time": 16.90254387128505,
+        "fundamental_amplitude_ratio": 0.9999748002696386,
+        "phase_error_radians": -0.0014568838059406198,
+        "second_harmonic_relative_amplitude": 0.00021287376820252222,
+        "rho_min": 9998999.929321397,
+        "pressure_min": 5998999.929328576
+      },
+      {
+        "density_relative_rms": 0.001605822623834194,
+        "mass_relative_drift": 3.0850060284137726e-16,
+        "energy_over_initial_potential": 1.4949220835894057e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 1.2411859391461135e-18,
+        "time": 18.31108919389214,
+        "fundamental_amplitude_ratio": 0.9999693360495969,
+        "phase_error_radians": -0.0015785937203406442,
+        "second_harmonic_relative_amplitude": 0.00029216904541296993,
+        "rho_min": 9998999.839596098,
+        "pressure_min": 5998999.872941202
+      },
+      {
+        "density_relative_rms": 0.0017924295458796884,
+        "mass_relative_drift": 2.9103830456733706e-16,
+        "energy_over_initial_potential": 8.084223547108344e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205927381907316e-19,
+        "time": 19.719634516499227,
+        "fundamental_amplitude_ratio": 0.9999704299761967,
+        "phase_error_radians": -0.0016998614724786838,
+        "second_harmonic_relative_amplitude": 0.0005674866404460375,
+        "rho_min": 9998999.464268949,
+        "pressure_min": 5998999.464319504
+      },
+      {
+        "density_relative_rms": 0.0019180818615627088,
+        "mass_relative_drift": 3.827153705060482e-16,
+        "energy_over_initial_potential": 2.3357087308315572e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205957575397269e-19,
+        "time": 21.128179839106316,
+        "fundamental_amplitude_ratio": 0.999964975175373,
+        "phase_error_radians": -0.0018212597411876022,
+        "second_harmonic_relative_amplitude": 0.0006003319131249291,
+        "rho_min": 9998999.42114864,
+        "pressure_min": 5998999.45452148
+      },
+      {
+        "density_relative_rms": 0.001962654791184626,
+        "mass_relative_drift": 9.786162991076708e-17,
+        "energy_over_initial_potential": 1.441837794252325e-07,
+        "initial_net_force": 6.205738162340522e-19,
+        "final_net_force": 6.205954242523893e-19,
+        "time": 22.536725161713402,
+        "fundamental_amplitude_ratio": 0.9999663906363803,
+        "phase_error_radians": -0.0019425121333642526,
+        "second_harmonic_relative_amplitude": 0.00027785140484083243,
+        "rho_min": 9998999.87728946,
+        "pressure_min": 5998999.8773005055
+      }
+    ],
+    "original_failure": {
+      "time": 4.225635967821263,
+      "mass_relative_drift": 1.2032887752866372e-12,
+      "raw_retained": true
+    },
+    "same_time_after_repair": {
+      "mass_relative_drift": 4.121829988434911e-16,
+      "original_budget_changed": false
+    },
+    "formal_benchmark": false,
+    "full_O9_complete": false,
+    "strict_final_dataset_names_shapes": [
+      {
+        "name": "Blocks/level",
+        "shape": [
+          32
+        ],
+        "dtype": "int32"
+      },
+      {
+        "name": "Blocks/logical_x1",
+        "shape": [
+          32
+        ],
+        "dtype": "uint32"
+      },
+      {
+        "name": "Blocks/logical_x2",
+        "shape": [
+          32
+        ],
+        "dtype": "uint32"
+      },
+      {
+        "name": "Blocks/logical_x3",
+        "shape": [
+          32
+        ],
+        "dtype": "uint32"
+      },
+      {
+        "name": "Data/eng",
+        "shape": [
+          32,
+          16
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "Data/enuc_rate",
+        "shape": [
+          32,
+          16
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "Data/mom_u",
+        "shape": [
+          32,
+          16
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "Data/mom_v",
+        "shape": [
+          32,
+          16
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "Data/mom_w",
+        "shape": [
+          32,
+          16
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "Data/rho",
+        "shape": [
+          32,
+          16
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "gravity_controls",
+        "shape": [
+          4
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "repair_position",
+        "shape": [
+          3
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "state_controls",
+        "shape": [
+          20
+        ],
+        "dtype": "float64"
+      },
+      {
+        "name": "state_repairs",
+        "shape": [
+          10
+        ],
+        "dtype": "float64"
+      }
+    ],
+    "all_trace_residual_summary": [
+      {
+        "bytes": 106633487,
+        "sha256": "bb5c8b427ef2602cd1f7328cf51bc508f25a3db167daa749e30ebddf99970bc3",
+        "rows": 461634,
+        "maximum_residual_to_target": 0.030288767514933562,
+        "minimum_generation": null,
+        "maximum_generation": null
+      },
+      {
+        "bytes": 53388131,
+        "sha256": "3339d0229df0da1487ba670f7153c5c960e13d64b55b24f0bef8d8727e79e88a",
+        "rows": 230818,
+        "maximum_residual_to_target": 0.029256921141583785,
+        "minimum_generation": null,
+        "maximum_generation": null
+      }
+    ]
+  },
+  "scope": {
+    "O9": "continue original model-specific long verification including30-60minute durability; current20T pair is a preliminary multicycle subset",
+    "O10": "later Grid/AMR redesign discussion; no redesign implementation this release",
+    "whole_release_complete": false,
+    "current_cuda": "PASS actual rebuilt original hydro_leaf_parity including shared RK3 stationary witness; other current CUDA owners and fullNative/macroscopic science remain pending",
+    "matching_current_4070_Ti_pairs": 0,
+    "raw_uploaded": false
+  },
+  "helper_summary": {
+    "deepseek": {
+      "logical_tasks_this_segment": 3,
+      "actual_calls": 5,
+      "known_wall_seconds": 453.46,
+      "effective": "four partial original fixture candidates and exact scalar cosine reference, integrated only after root review",
+      "false_or_duplicate": "initial API implementation/schema mismatch; repair timeouts; unused scalar subleading term incorrect and omitted",
+      "extra_rework": "root corrected fragment collision/domain identity; no third call to exhausted logical tasks",
+      "blocking_wait_seconds": 0,
+      "local_heavy_contention": false,
+      "known_tokens_last_success": 10599,
+      "last_success_cached_input_tokens": 384,
+      "last_success_reasoning_tokens": 8774,
+      "last_success_visible_output_tokens": 360,
+      "known_last_success_estimated_usd": [
+        0.0056437,
+        0.0112874
+      ],
+      "all_task_tokens_and_actual_cost": null,
+      "general_speedup_claimed": false,
+      "recommendation": "retain bounded exact-reference assistance; complete short context first, isolate fragments, keep root scientific acceptance"
+    },
+    "gemini_this_segment": "Skipped short mutable state edits; previously accepted calibration prose retained. Revisit only meaningful frozen report."
+  },
+  "data_hygiene": {
+    "passed_h5_deleted": 26,
+    "passed_h5_bytes_deleted": 4072872,
+    "passed_trace_bytes_deleted": 160021618,
+    "transient_required_reference_h5_retained": 3,
+    "reference_bytes_retained": 122760,
+    "raw_uploaded": false,
+    "failed_numerical_raw_preserved": true
+  }
+}

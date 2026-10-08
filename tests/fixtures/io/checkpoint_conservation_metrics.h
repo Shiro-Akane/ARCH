@@ -11,6 +11,7 @@
 
 #include "amr/storage/Block.h"
 #include "grid/GridMetrics.h"
+#include "io/chk/CheckpointGeometryIdentity.h"
 #include "io/hdf5/HDF5Writer.h"
 
 #include <cmath>
@@ -55,7 +56,11 @@ inline Grid checkpoint_root_grid(const GridConfig& config)
     root.geometry = config.geometry;
     require(GridMetrics::geometry_kind(root) != GridMetrics::Geometry::Unsupported,
             "conservation parameter geometry is unsupported");
-    root.InitializeTopology(); // shared domain/geometry validation
+    // Cylindrical 2D uses full-ring RZ (r,z); every other supported geometry
+    // keeps its Existing chart. Grid performs the shared domain validation.
+    const bool axisymmetric_rz = config.dim == 2 && config.geometry == "cylindrical";
+    root.InitializeTopology(axisymmetric_rz ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                            : GridMetrics::GeometrySemantics::Existing);
     return root;
 }
 
@@ -82,9 +87,23 @@ inline Totals compute(const io::CheckpointData& checkpoint,
             "conservation checkpoint field shape drifted");
     Grid root;
     double root_dx1 = 0.0, root_dx2 = 0.0, root_dx3 = 0.0;
+    bool axisymmetric_rz = false;
     if (physical_grid != nullptr) {
         require(checkpoint.geometry == physical_grid->geometry && checkpoint.dim == physical_grid->dim,
                 "conservation checkpoint/parameter geometry or dimension mismatch");
+        // Only an authoritative RZ checkpoint is supported in cylindrical 2D.
+        // Reject retired polar payloads rather than supplying their identity.
+        axisymmetric_rz = checkpoint.dim == 2 && checkpoint.geometry == "cylindrical";
+        if (axisymmetric_rz) {
+            io::require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                checkpoint.geometry_identity, io::current_rz_checkpoint_geometry());
+            const io::CheckpointNativeDomainIdentity expected_domain{
+                {physical_grid->x1_min,physical_grid->x1_max,
+                 physical_grid->x2_min,physical_grid->x2_max},
+                {physical_grid->nblockx1,physical_grid->nblockx2},
+                {amr::BLOCK_NX,amr::BLOCK_NY}};
+            io::require_rz_checkpoint_domain_compatible(checkpoint.native_domain,expected_domain);
+        }
         root = checkpoint_root_grid(*physical_grid);
         const std::size_t local_cells = static_cast<std::size_t>(amr::BLOCK_NX)
             * (checkpoint.dim >= 2 ? amr::BLOCK_NY : 1)
@@ -102,6 +121,8 @@ inline Totals compute(const io::CheckpointData& checkpoint,
         root_dx3 = root.nblockx3 > 0
             ? (root.x3_max - root.x3_min) / (static_cast<double>(root.nblockx3) * amr::BLOCK_NZ) : 0.0;
     }
+    const auto semantics = axisymmetric_rz ? GridMetrics::GeometrySemantics::AxisymmetricRz
+                                           : GridMetrics::GeometrySemantics::Existing;
     Totals result;
     result.species.resize(species_count, 0.0L);
     for (std::size_t block = 0; block < blocks; ++block) {
@@ -122,13 +143,16 @@ inline Totals compute(const io::CheckpointData& checkpoint,
             geometry_block.logical_x1 = coordinates[0];
             geometry_block.logical_x2 = coordinates[1];
             geometry_block.logical_x3 = coordinates[2];
-            geometry_block.InitGeometry(root, root_dx1, root_dx2, root_dx3);
+            geometry_block.InitGeometry(root, root_dx1, root_dx2, root_dx3, semantics);
         }
         for (std::size_t local = 0; local < checkpoint.cells_per_block; ++local) {
             // Without domain parameters, Cartesian totals use root-cell units.
             // Parameter-bound runs use the shared physical cell measure,
-            // including the two-dimensional polar convention.
+            // including spherical 2D polar and cylindrical 2D full-ring RZ.
             long double measure = std::ldexp(1.0L, -checkpoint.dim * checkpoint.levels[block]);
+            // Canonical RZ stores mom_w as m_phi = J/W, so its conserved total
+            // needs the angular-momentum weight W in place of the volume V.
+            long double mom_w_measure = measure;
             if (physical_grid != nullptr) {
                 const int i = static_cast<int>(local % amr::BLOCK_NX) + amr::MAX_NG;
                 const int j = checkpoint.dim >= 2
@@ -136,14 +160,22 @@ inline Totals compute(const io::CheckpointData& checkpoint,
                 const int k = checkpoint.dim == 3
                     ? static_cast<int>(local / (amr::BLOCK_NX * amr::BLOCK_NY)) + amr::MAX_NG : 0;
                 measure = GridMetrics::CellVolume(geometry_block.grid, i, j, k);
+                mom_w_measure = measure;
+                if (axisymmetric_rz)
+                    mom_w_measure = GridMetrics::Rz::AngularMomentumMeasure(
+                        GridMetrics::make_geometry_view(
+                            geometry_block.grid, GridMetrics::GeometrySemantics::AxisymmetricRz),
+                        i, j);
             }
             require(std::isfinite(measure) && measure > 0.0L,
                     "conservation checkpoint cell volume is invalid");
+            require(std::isfinite(mom_w_measure) && mom_w_measure > 0.0L,
+                    "conservation checkpoint angular-momentum measure is invalid");
             const std::size_t index = block * checkpoint.cells_per_block + local;
             result.mass += measure * checkpoint.rho[index];
             result.mom_u += measure * checkpoint.mom_u[index];
             result.mom_v += measure * checkpoint.mom_v[index];
-            result.mom_w += measure * checkpoint.mom_w[index];
+            result.mom_w += mom_w_measure * checkpoint.mom_w[index];
             result.energy += measure * checkpoint.eng[index];
             for (std::size_t component = 0; component < species_count; ++component)
                 result.species[component] += measure * checkpoint.rhoX[component * cells + index];

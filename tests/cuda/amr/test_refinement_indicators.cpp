@@ -395,14 +395,24 @@ int main() {
         return 1;
     }
     try {
+        // Actual Grid construction rejects the retired chart before GPU work.
+        Grid retired_grid(2, 1.0, 2.0, 0.4, 1.1, 0.2, 0.8);
+        retired_grid.dim = 2;
+        retired_grid.geometry = "cylindrical";
+        bool retired_polar_rejected = false;
+        try { retired_grid.InitializeTopology(); }
+        catch (const std::invalid_argument&) { retired_polar_rejected = true; }
+        require(retired_polar_rejected, "retired cylindrical 2D polar indicator fixture accepted");
         verify_cuda_jeans_resolution();
         require(std::abs(amr::indicator::loehner_error(1.0, 2.0, 4.0) - 1.0 / 3.09) < 1.e-15,
             "frozen Lohner stencil changed");
         require(amr::indicator::refinement_flag(0.8, 1, 0, 2, 0.8, 0.2) == 0,
             "refinement equality boundary changed");
         for (int dimension = 1; dimension <= 3; ++dimension)
-            for (const auto* geometry : {"cartesian", "cylindrical", "spherical"})
+            for (const auto* geometry : {"cartesian", "cylindrical", "spherical"}) {
+                if (std::string(geometry) == "cylindrical" && dimension == 2) continue;
                 run(dimension, geometry);
+            }
         test_tabular_temperature_failures();
         for (std::size_t count : {1,3,1024,1025}) test_batch_wave(count);
         require(arch::cuda::indicator_wave_capacity(1024,200,true,1024)<1024,

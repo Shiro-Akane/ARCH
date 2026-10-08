@@ -1470,7 +1470,7 @@ void test_rz_rigid_rotation_transfer() {
         const auto initialize=[](amr::Block& block,double lo,double hi,double zlo,double zhi) {
             block.grid=Grid(amr::MAX_NG,lo,hi,zlo,zhi,0.,1.);
             block.grid.geometry="cylindrical";block.grid.dim=2;
-            block.grid.InitializeTopology();
+            block.grid.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
             block.fluid_state.Preallocate(block.grid.GetTotalSize());
             block.fluid_state.InitSpecies(1);
         };
@@ -1603,7 +1603,7 @@ void test_rz_angular_restriction_counterexample() {
     const long double independent_e=1539.L/16.L-(8.L/9.L)*(111.L/8.L)*(111.L/8.L)/2.L;
     expect(std::abs(independent_e-85.L/8.L)<2.e-12L,"independent native thermal rational changed");
     Grid native_grid(amr::MAX_NG,0.,16.,-.5,.5,0.,1.);
-    native_grid.geometry="cylindrical";native_grid.dim=2;native_grid.InitializeTopology();
+    native_grid.geometry="cylindrical";native_grid.dim=2;native_grid.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
     const auto native_geometry=GridMetrics::make_geometry_view(native_grid,
         GridMetrics::GeometrySemantics::AxisymmetricRz);
     const auto read=[&](int){return result.fluid;};
@@ -1641,7 +1641,7 @@ void rz_test_block_geometry(amr::Block& block,double low,double high,
     double axial_low,double axial_high,int species)
 {
     block.grid=Grid(amr::MAX_NG,low,high,axial_low,axial_high,0.,1.);
-    block.grid.geometry="cylindrical";block.grid.dim=2;block.grid.InitializeTopology();
+    block.grid.geometry="cylindrical";block.grid.dim=2;block.grid.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
     block.fluid_state.Preallocate(block.grid.GetTotalSize());block.fluid_state.InitSpecies(species);
 }
 
@@ -1742,7 +1742,7 @@ void test_rz_cold_block_family_roundtrip()
     // Whole native [0,1] means: mphi=3/4 and E=17/64. Copied into [.5,1],
     // kappa=392/405 gives e=17/64-(392/405)*(3/4)^2/2=-19/2880.
     Grid outer(amr::MAX_NG,.5,8.5,-.5,.5,0.,1.);
-    outer.geometry="cylindrical";outer.dim=2;outer.InitializeTopology();
+    outer.geometry="cylindrical";outer.dim=2;outer.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
     const FluidVector copied{1.,0.,0.,3./4.,17./64.};
     const long double bad_e=17.L/64.L-(392.L/405.L)*(3.L/4.L)*(3.L/4.L)/2.L;
     expect(std::abs(bad_e+19.L/2880.L)<2.e-12L,"independent copied cold reference changed");
@@ -2065,7 +2065,7 @@ void test_rz_regrid_roundtrip() {
         std::array<amr::Block,4> fine;
         const auto initialize=[&](amr::Block& block,double left,double right,double low,double high) {
             block.grid=Grid(amr::MAX_NG,left,right,low,high,0.,1.);
-            block.grid.geometry="cylindrical";block.grid.dim=2;block.grid.InitializeTopology();
+            block.grid.geometry="cylindrical";block.grid.dim=2;block.grid.InitializeTopology(GridMetrics::GeometrySemantics::AxisymmetricRz);
             block.fluid_state.Preallocate(block.grid.GetTotalSize());
             block.fluid_state.InitSpecies(2);
         };
@@ -2150,8 +2150,8 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
     amr::AMRControl control(24,2);
     if (mixed) {
         control.tree->LoadLeafGrid(config,2,
-            {1,1,1,1,0},{0,1,0,1,0},{0,0,1,1,1},{0,0,0,0,0});
-    } else control.tree->InitRootGrid(config,2);
+            {1,1,1,1,0},{0,1,0,1,0},{0,0,1,1,1},{0,0,0,0,0},GridMetrics::GeometrySemantics::AxisymmetricRz);
+    } else control.tree->InitRootGrid(config,2,GridMetrics::GeometrySemantics::AxisymmetricRz);
     const auto& active=control.tree->GetActiveBlocks();
     for (int id:active) {
         auto& block=control.pool->GetBlock(id);
@@ -2179,10 +2179,10 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
         handles.push_back({{5000+index},{97}});
     auto& exchange=control.ghost_exchange;
     const auto rz=amr::CoordinateSeamGeometry::RzAxisymmetric;
-    expect(exchange.GetPlans(control.pool,control.tree,2,handles)
-        .coordinate_seam.transfers.empty(),"Default chart silently enabled RZ");
+    expect_rejected([&] { (void)exchange.GetPlans(control.pool,control.tree,2,handles); },
+        "retired cylindrical 2D chart accepted by exchange");
     expect(!exchange.GetPlans(control.pool,control.tree,2,handles,rz)
-        .coordinate_seam.transfers.empty(),"Chart identity reused cached polar plan");
+        .coordinate_seam.transfers.empty(),"Explicit RZ chart failed to build its actual axis plan");
     const auto builds=exchange.PlanCacheBuilds();
     (void)exchange.GetPlans(control.pool,control.tree,2,handles,rz);
     expect(exchange.PlanCacheBuilds()==builds,"Unchanged RZ chart missed cache");
@@ -2201,8 +2201,8 @@ void test_rz_axis_seam(bool mixed, double inner_radius)
     amr::execute_coordinate_seam_plan(restored.coordinate_seam,control.pool,
         &amr::Block::fluid_state);
     expect(exchange.PlanCacheBuilds()==builds+2,"Restored axis retained shifted plan");
-    expect(exchange.GetPlans(control.pool,control.tree,2,handles)
-        .coordinate_seam.transfers.empty(),"Returning to polar retained RZ plan");
+    expect_rejected([&] { (void)exchange.GetPlans(control.pool,control.tree,2,handles); },
+        "retired cylindrical 2D chart consumed a cached RZ plan");
     std::set<int> levels;
     for (const auto& transfer:plan.transfers) {
         expect(transfer.geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,
@@ -2378,11 +2378,11 @@ void test_rz_cold_coordinate_seam()
 
 void test_coordinate_seam_mapping()
 {
-    // Ordinary curved Hydro may use a partial wedge with physical side
-    // boundaries. The new chart plan must not reject that existing topology.
+    // Spherical 2D polar Hydro may use a partial wedge with physical side
+    // boundaries. Cylindrical 2D uses the separate actual RZ chart.
     SimConfig wedge{};
     wedge.grid.dim = 2;
-    wedge.grid.geometry = "cylindrical";
+    wedge.grid.geometry = "spherical";
     wedge.grid.nblockx1 = 1;
     wedge.grid.nblockx2 = 1;
     wedge.grid.nblockx3 = 0;
@@ -2400,8 +2400,6 @@ void test_coordinate_seam_mapping()
     expect(wedge_control.ghost_exchange.GetPlans(wedge_control.pool,
             wedge_control.tree, 2, wedge_handles).coordinate_seam.transfers.empty(),
         "partial-azimuth Hydro unexpectedly requires a coordinate seam");
-    test_coordinate_seam_case(2, false, false);
-    test_coordinate_seam_case(2, false, true);
     test_coordinate_seam_case(2, true, false);
     test_coordinate_seam_case(2, true, true);
     test_coordinate_seam_case(3, false, false);
@@ -2718,6 +2716,8 @@ void test_rz_native_tjunction_corner_sync()
 void test_ordinary_logical_geometry_identity() {
     using Semantics=GridMetrics::GeometrySemantics;
     for(int dim=1;dim<=3;++dim)for(const char* chart:{"cartesian","cylindrical","spherical"}) {
+        // Bound RZ identities have their dedicated actual-root owner.
+        if(dim==2 && std::string(chart)=="cylindrical")continue;
         Grid root(amr::MAX_NG,1.,4.,.2,1.2,.1,1.1,3,dim>=2?2:0,dim==3?2:0);
         root.dim=dim;root.geometry=chart;
         amr::Block block;block.Reset();block.level=2;

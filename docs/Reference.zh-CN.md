@@ -583,6 +583,8 @@ struct PointCoords {
 };
 ```
 
+二维 spherical 的计算平面是 `(r,phi)`，二维 cylindrical 的计算平面是轴对称 `(r,z)`；RZ 的两个逻辑轴均为长度，三个物理速度分量仍存在。其代表子午面点满足 `(x,y,z)=(r,0,z)`。
+
 `Grid::GetPhysicalCoords` 填充所有表示。以原点为球心的三维球对称密度分布为例，设 `rho_bg > 0`、`rho_peak > 0` 和 `width > 0` 为算例采用的 CGS 参数。在 `Init` 中，先用笛卡尔坐标写：
 
 ```cpp

@@ -4,8 +4,9 @@
  *
  * Workflow:
  * 1. Inspect committed leaf geometry for an origin, cylindrical axis, or
- *    spherical pole. Existing angular charts require a full turn; explicit
- *    RZ mode mirrors the axis locally at unchanged z.
+ *    spherical pole. Cylindrical2D is canonical axisymmetric RZ and mirrors its
+ *    axis locally at unchanged z; the retained Existing angular charts
+ *    (spherical2D/3D and cylindrical3D) require a full turn.
  * 2. Map each singular-face ghost center through the regular coordinate chart
  *    and locate its active AMR donor. Record native-vector basis signs.
  * 3. On every Host or CUDA stage, apply shared reconstruction after ordinary
@@ -39,7 +40,8 @@
 
 namespace amr {
 
-/** Explicit chart identity; RZ is opt-in until the whole geometry path migrates. */
+/** Explicit chart identity; cylindrical2D is now canonical RZ, so its
+ *  ExistingChart selection is refused rather than reinterpreted. */
 enum class CoordinateSeamGeometry { ExistingChart, RzAxisymmetric };
 
 struct CoordinateSeamPlan {
@@ -145,25 +147,37 @@ inline void donor_stencil(const Grid& grid,
 
 } // namespace seam_detail
 
-/** Build immutable singular-face operations from the current active hierarchy. */
+/** Build immutable singular-face operations from the current active hierarchy.
+ * An explicit chart must be asserted by the caller; the no-chart overload below
+ * resolves the canonical chart from the actual grid instead.
+ */
 inline CoordinateSeamPlan make_coordinate_seam_plan(
     const std::shared_ptr<MemoryPool>& pool,
     std::span<const int> active_blocks, int dimension,
-    CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart)
+    CoordinateSeamGeometry chart)
 {
     if (chart != CoordinateSeamGeometry::ExistingChart
         && chart != CoordinateSeamGeometry::RzAxisymmetric)
         throw std::invalid_argument("Unknown coordinate seam chart cannot select a stencil");
-    const bool rz = chart == CoordinateSeamGeometry::RzAxisymmetric;
-    if (rz && dimension != 2)
+    if (chart == CoordinateSeamGeometry::RzAxisymmetric && dimension != 2)
         throw std::invalid_argument("RZ coordinate seam requires dimension 2");
     CoordinateSeamPlan plan;
     if (active_blocks.empty() || dimension < 2 || dimension > 3) return plan;
     const Grid& first = pool->GetBlock(active_blocks.front()).grid;
+    const bool cylindrical2d = first.geometry == "cylindrical" && dimension == 2;
+    // Retired computational cylindrical2D polar (r,phi) no longer has an
+    // Existing seam: its old angular full-turn donor is deleted, so an explicit
+    // Existing selection for cylindrical2D is refused and only canonical RZ
+    // proceeds. Every other geometry keeps its Existing angular/native join.
+    if (chart == CoordinateSeamGeometry::ExistingChart && cylindrical2d)
+        throw std::invalid_argument(
+            "Coordinate seam for cylindrical2D requires the canonical RZ chart");
     if (first.geometry != "cylindrical" && first.geometry != "spherical") {
-        if (rz) throw std::invalid_argument("RZ coordinate seam requires cylindrical geometry");
+        if (chart == CoordinateSeamGeometry::RzAxisymmetric)
+            throw std::invalid_argument("RZ coordinate seam requires cylindrical geometry");
         return plan;
     }
+    const bool rz = cylindrical2d || chart == CoordinateSeamGeometry::RzAxisymmetric;
     if (rz && first.geometry != "cylindrical")
         throw std::invalid_argument("RZ coordinate seam requires cylindrical geometry");
     const bool spherical = first.geometry == "spherical";
@@ -202,6 +216,8 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     // A partial wedge is still a valid pre-existing Hydro boundary problem.
     // Only full turns have a physical phi+pi donor. Explicit potential
     // boundaries may use sectors, whose regularity does not imply this join.
+    // This now guards only the retained angular joins (spherical and
+    // cylindrical3D); cylindrical2D mirrors its RZ axis instead.
     if (!rz && std::abs(phi_width - 2. * pi) > 64.*std::numeric_limits<double>::epsilon()*2.*pi) return plan;
 
     // Leaf lookup is needed for a singular full-turn chart or explicit RZ
@@ -264,6 +280,22 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
         }
     }
     return plan;
+}
+
+/** No-chart seam: select the canonical chart from the actual committed grid.
+ * Cylindrical2D resolves to axisymmetric RZ; every other geometry keeps its
+ * Existing angular/native join. Callers that must assert a specific chart use
+ * the explicit-chart overload above.
+ */
+inline CoordinateSeamPlan make_coordinate_seam_plan(
+    const std::shared_ptr<MemoryPool>& pool,
+    std::span<const int> active_blocks, int dimension)
+{
+    const bool cylindrical2d = !active_blocks.empty() && dimension == 2
+        && pool->GetBlock(active_blocks.front()).grid.geometry == "cylindrical";
+    return make_coordinate_seam_plan(pool, active_blocks, dimension,
+        cylindrical2d ? CoordinateSeamGeometry::RzAxisymmetric
+                      : CoordinateSeamGeometry::ExistingChart);
 }
 
 /** Apply cached donor stencils to one Host state slot after ordinary exchange. */

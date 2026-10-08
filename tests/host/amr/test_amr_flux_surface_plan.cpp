@@ -426,8 +426,25 @@ void test_rz_registration_reflux(int direction, double inner,
     amr::AMRControl control(32,2);
     control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
-        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0},rz);
     const auto& active=control.tree->GetActiveBlocks();
+    // This owner tests scalar plan caching/reflux, not Native Runtime authority.
+    // Build fresh unbound mathematical fragments from the actual leaf bounds;
+    // do not clear the authentication flag of a live Tree-bound Grid. Native
+    // state/Tree identity and its drift rejection have their separate owners.
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);
+        const auto& original=block.grid;
+        Grid fragment(original.ng,original.x1_min,original.x1_max,
+            original.x2_min,original.x2_max,original.x3_min,original.x3_max,
+            original.nblockx1,original.nblockx2,original.nblockx3);
+        fragment.dim=original.dim;fragment.geometry=original.geometry;
+        fragment.InitializeTopology(rz);
+        expect(!fragment.dyadic_identity.bound,
+            "scalar fragment construction acquired Native Runtime authority");
+        block.grid=std::move(fragment);
+    }
+
     std::vector<amr::BlockHandle> handles;
     int coarse=-1;
     for(std::size_t n=0;n<active.size();++n) {
@@ -599,12 +616,14 @@ void test_rz_registration_reflux(int direction, double inner,
     }
     // Chart and physical geometry are independent of topology epoch.
     const auto original_hash=topology.fingerprint;
-    const auto legacy_hash=control.RequireFluxTopologyPlan(species).fingerprint;
-    expect(legacy_hash!=original_hash,"AMR cache confused polar and RZ chart");
+    bool retired_chart_rejected=false;
+    try { (void)control.RequireFluxTopologyPlan(species); }
+    catch(const std::invalid_argument&) { retired_chart_rejected=true; }
+    expect(retired_chart_rejected,"retired cylindrical 2D chart accepted by the AMR flux owner");
     bool wrong_chart_rejected=false;
     try { control.ApplyReflux(dt); }
     catch(const std::invalid_argument&) { wrong_chart_rejected=true; }
-    expect(wrong_chart_rejected,"legacy chart consumed RZ accumulated flux");
+    expect(wrong_chart_rejected,"retired cylindrical 2D chart consumed RZ accumulated flux");
 
     expect(control.RequireFluxTopologyPlan(species,rz,-1,angular).fingerprint==original_hash,
         "RZ cache rebuild changed original identity");
@@ -785,7 +804,8 @@ void test_rz_uniform_empty_reflux() {
     config.grid.x2_min=-1.;config.grid.x2_max=1.;
     config.grid.amr_max_blocks=8;config.amr.lrefinemin=0;config.amr.lrefinemax=0;
     amr::AMRControl control(8,2);
-    control.tree->LoadLeafGrid(config,0,{0,0},{0,1},{0,0},{0,0});
+    control.tree->LoadLeafGrid(config,0,{0,0},{0,1},{0,0},{0,0},
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
     const std::vector<amr::BlockHandle> handles{{{3000},{89}},{{3001},{89}}};
     control.BindActiveHandles(handles);
     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;

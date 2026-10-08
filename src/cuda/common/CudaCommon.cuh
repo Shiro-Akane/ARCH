@@ -8,8 +8,10 @@
  * numerical policy. Passing a view transfers neither ownership nor completion.
  * Workflow: lower an explicitly selected chart; authenticate any bound native
  * root and layout with the common dyadic owner; copy value-only provenance;
- * recheck the payload before launch. Metadata does not authorize a backend or
- * certify EOS, boundary, source, or native physics consumers.
+ * recheck the payload before launch. Cylindrical2D lowers canonically as RZ
+ * unless a chart is given, and an explicit Existing chart for it is refused.
+ * Metadata does not authorize a backend or certify EOS, boundary, source, or
+ * native physics consumers.
  */
 
 #pragma once
@@ -252,7 +254,13 @@ inline bool valid_device_grid_geometry(const DeviceGridView& grid)
 {
     using GridMetrics::GeometrySemantics;
     if (grid.semantics == GeometrySemantics::Existing)
-        return !grid.dyadic_identity.bound;
+        // Existing stays valid for every other supported geometry; a retired
+        // computational cylindrical2D polar (r,phi) payload must lower as the
+        // canonical RZ chart, so an Existing 2-dimensional cylindrical grid is
+        // refused here before any launch.
+        return !grid.dyadic_identity.bound
+            && !(grid.geometry == static_cast<int>(DeviceGeometry::Cylindrical)
+                && grid.dim == 2);
     if (grid.semantics != GeometrySemantics::AxisymmetricRz
         || grid.geometry != static_cast<int>(DeviceGeometry::Cylindrical)
         || grid.dim != 2 || !grid.dyadic_identity.bound
@@ -313,17 +321,24 @@ static_assert(std::is_trivially_copyable_v<SpeciesWorkspaceView>);
  * internal chart; authenticate native actual root counts and canonical
  * lower/upper/spacing with matches_identity; then copy the owned identity.
  * Native missing-data and chart mismatches fail before this function returns.
+ * Retired computational cylindrical2D polar (r,phi) has no Existing lowering,
+ * so an explicit Existing selection for a 2-dimensional cylindrical grid is
+ * refused; callers wanting the canonical chart use the no-chart overload.
  * Its caller owns allocation order: this function itself allocates no GPU
  * storage and does not promise that an earlier caller allocation did not occur.
  */
 template <class HostGrid>
 inline DeviceGridView make_device_grid_view(const HostGrid& grid,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+    GridMetrics::GeometrySemantics semantics)
 {
     using GridMetrics::GeometrySemantics;
     if (semantics != GeometrySemantics::Existing
         && semantics != GeometrySemantics::AxisymmetricRz)
         throw std::invalid_argument("CUDA grid lowering received unknown geometry semantics");
+    if (semantics == GeometrySemantics::Existing
+        && grid.geometry == "cylindrical" && grid.dim == 2)
+        throw std::invalid_argument(
+            "CUDA cylindrical2D lowering requires the canonical RZ chart");
     if constexpr (requires { grid.dyadic_identity.bound; }) {
         if (grid.dyadic_identity.bound && semantics == GeometrySemantics::Existing)
             throw std::invalid_argument("CUDA bound Native RZ grid requires explicit geometry semantics");
@@ -375,5 +390,19 @@ inline DeviceGridView make_device_grid_view(const HostGrid& grid,
         }
     }
     return view;
+}
+
+/** No-chart lowering: select the canonical chart from the actual Host grid.
+ * Cylindrical2D resolves to axisymmetric RZ; every other geometry keeps
+ * Existing. Either path still requires a bound native dyadic identity and the
+ * unchanged ordinary-layout/RZ preflight before any launch.
+ */
+template <class HostGrid>
+inline DeviceGridView make_device_grid_view(const HostGrid& grid)
+{
+    using GridMetrics::GeometrySemantics;
+    const bool rz = grid.geometry == "cylindrical" && grid.dim == 2;
+    return make_device_grid_view(grid,
+        rz ? GeometrySemantics::AxisymmetricRz : GeometrySemantics::Existing);
 }
 } // namespace arch::cuda

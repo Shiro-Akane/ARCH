@@ -224,7 +224,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 {
     const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
     if ((semantics != GridMetrics::GeometrySemantics::Existing && !rz)
-        || (rz && (dim != 2 || geom != "cylindrical")))
+        || (rz && (dim != 2 || geom != "cylindrical"))
+        || (!rz && dim == 2 && geom == "cylindrical"))
         throw std::invalid_argument("Unsupported Plotfile geometry profile.");
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())

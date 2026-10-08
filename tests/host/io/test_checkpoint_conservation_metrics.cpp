@@ -43,6 +43,13 @@ io::CheckpointData checkpoint(const GridConfig& config,
     result.logical_x1 = std::move(logical);
     result.logical_x2.resize(result.levels.size());
     result.logical_x3.resize(result.levels.size());
+    // Cylindrical2D fixtures now carry the canonical RZ identity explicitly;
+    // this is fixture data and does not pretend to be a runtime producer.
+    if (result.dim == 2 && result.geometry == "cylindrical") {
+        result.geometry_identity = io::current_rz_checkpoint_geometry();
+        result.native_domain = {{config.x1_min,config.x1_max,config.x2_min,config.x2_max},
+            {config.nblockx1,config.nblockx2},{amr::BLOCK_NX,amr::BLOCK_NY}};
+    }
     const auto cells = result.levels.size() * result.cells_per_block;
     result.rho.assign(cells, 2.0);
     result.mom_u.assign(cells, 0.25);
@@ -174,6 +181,46 @@ void check_mixed_annulus_and_shell()
     }
 }
 
+void check_native_rz_full_ring_measures()
+{
+    const auto parameters = config(2, "cylindrical");
+    auto data = checkpoint(parameters);
+    expect(data.geometry_identity.revision == io::rz_checkpoint_revision
+               && data.geometry_identity.chart == "axisymmetric-rz",
+           "cylindrical2D metric fixture lost its explicit native RZ identity");
+    // Independent full-ring references over r in [1,2], z in [.25,.75]:
+    // V = 2*pi*int r dr dz = 3*pi/2 and W = 2*pi*int r^2 dr dz = 7*pi/3.
+    // The stored mom_w is m_phi = J/W, so its total is the angular momentum.
+    const long double pi = 3.14159265358979323846L;
+    const long double volume = 3.0L * pi / 2.0L;
+    const long double angular_weight = 7.0L * pi / 3.0L;
+    const auto close = [](long double observed, long double reference) {
+        return std::abs(observed - reference) <= 1e-14L * std::abs(reference);
+    };
+    const auto observed = checkpoint_metrics::compute(data, &parameters);
+    expect(close(observed.mass, 2.0L * volume), "RZ full-ring physical mass reference drifted");
+    expect(close(observed.energy, 5.0L * volume), "RZ full-ring physical energy reference drifted");
+    expect(close(observed.mom_w, 0.75L * angular_weight),
+           "RZ stored mom_w=m_phi=J/W angular-momentum total drifted");
+    expect(close(observed.species[0], 0.5L * volume), "RZ first species mass reference drifted");
+    expect(close(observed.species[1], 1.5L * volume), "RZ second species mass reference drifted");
+    // A retired cylindrical2D polar payload must be refused before the metric:
+    // neither an Existing revision-1 clone nor an absent identity can certify
+    // the canonical RZ state, and the checkpoint is never marked here.
+    auto retired = data;
+    retired.geometry_identity = {1, "existing"};
+    rejected([&] { checkpoint_metrics::compute(retired, &parameters); });
+    auto unmarked = data;
+    unmarked.geometry_identity = {};
+    rejected([&] { checkpoint_metrics::compute(unmarked, &parameters); });
+    auto missing_domain = data;
+    missing_domain.native_domain = {};
+    rejected([&] { checkpoint_metrics::compute(missing_domain, &parameters); });
+    auto mismatched_domain = data;
+    mismatched_domain.native_domain.bounds[3] = 1.0;
+    rejected([&] { checkpoint_metrics::compute(mismatched_domain, &parameters); });
+}
+
 void check_invalid_metadata()
 {
     auto parameters = config(1, "cylindrical");
@@ -201,6 +248,7 @@ int main()
     check_explicit_metric_inputs();
     check_nine_geometries_and_cell_order();
     check_mixed_annulus_and_shell();
+    check_native_rz_full_ring_measures();
     check_invalid_metadata();
     std::cout << "checkpoint conservation metrics: shared geometry and legacy/negative controls PASS\n";
 }

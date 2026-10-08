@@ -21,6 +21,9 @@ inline bool supports_plot_native_grid(const Grid& grid,
         return grid.geometry == "cylindrical" && grid.dim == 2;
     if (semantics != GridMetrics::GeometrySemantics::Existing)
         throw std::invalid_argument("Unknown Plotfile geometry profile.");
+    // A two-dimensional cylinder is an RZ chart with full-ring V and W.
+    // Reject the retired polar identity before appending any native bounds.
+    if (grid.geometry == "cylindrical" && grid.dim == 2) return false;
     return (grid.geometry == "cartesian" || grid.geometry == "cylindrical"
         || grid.geometry == "spherical") && grid.dim >= 1 && grid.dim <= 3;
 }
@@ -42,7 +45,9 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
         output.normalization=grid.dim==1?"per_unit_transverse_area":grid.dim==2?"per_unit_transverse_length":"full_volume";
     } else {
         output.axes[0]="r"; output.axis_units[0]="cm";
-        if(grid.dim==2){output.axes[1]="phi";output.axis_units[1]="rad";}
+        if(grid.dim==2 && grid.geometry=="spherical") {
+            output.axes[1]="phi";output.axis_units[1]="rad";
+        }
         if(grid.dim==3) {
             output.axes[1]=grid.geometry=="cylindrical"?"z":"theta";
             output.axis_units[1]=grid.geometry=="cylindrical"?"cm":"rad";

@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
         const auto profile=GridMetrics::GeometrySemantics::AxisymmetricRz;
         Grid grid;grid.dim=2;grid.ng=2;grid.geometry="cylindrical";
         grid.x1_min=0.;grid.x1_max=1.;grid.x2_min=-1.;grid.x2_max=1.;
-        grid.InitializeTopology();
+        grid.InitializeTopology(profile);
         io::PlotNativeGrid native;io::PlotRzAngularState angular;
         native.logical[0]={0};native.logical[1]={0};native.logical[2]={0};
         std::vector<double> x,y,z,density;
@@ -118,6 +118,17 @@ int main(int argc, char** argv) {
             require(raw==native.angular_measure,"W output changed");
         }
         const auto digest=arch::core::file_sha256(path);
+        bool retired_chart_rejected=false;
+        try {
+            // Even an unannotated lower-level writer must reject the retired
+            // Cyl2 profile before it can replace a published native RZ file.
+            io::write_hdf5_plt_impl(path,0,2,"cylindrical",dims,x,y,z,{0},{0},
+                {{"DENS",density}},nullptr,nullptr,nullptr,
+                GridMetrics::GeometrySemantics::Existing,nullptr);
+        } catch(const std::invalid_argument&) {retired_chart_rejected=true;}
+        require(retired_chart_rejected,"retired cylindrical polar writer accepted");
+        require(arch::core::file_sha256(path)==digest,
+            "retired cylindrical writer replaced a published file");
         for (int mutation=0;mutation<10;++mutation) {
             auto n=native;auto s=angular;
             const io::PlotNativeGrid* np=&n;const io::PlotRzAngularState* sp=&s;
@@ -168,7 +179,14 @@ int main(int argc, char** argv) {
             // it does not upgrade the partial source/publication identity below.
             for(const auto* geometry:{"cylindrical","spherical"}) {
                 grid.geometry=geometry;
-                require(io::supports_plot_native_grid(grid),"known curved native chart unsupported");
+                if(dimension==2 && grid.geometry=="cylindrical") {
+                    require(!io::supports_plot_native_grid(grid),
+                        "retired cylindrical polar Plotfile chart accepted");
+                    require(io::supports_plot_native_grid(grid,
+                        GridMetrics::GeometrySemantics::AxisymmetricRz),
+                        "explicit native RZ Plotfile chart unsupported");
+                } else require(io::supports_plot_native_grid(grid),
+                    "known curved native chart unsupported");
             }
             grid.geometry="unknown-chart";
             require(!io::supports_plot_native_grid(grid),"unknown native chart accepted");

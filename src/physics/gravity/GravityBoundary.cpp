@@ -202,7 +202,7 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op,
     using namespace arch::elliptic;
     if((dimension_!=2 && dimension_!=3) ||
        (dimension_==2 && op.base().geometry==Geometry::Cartesian))
-        throw std::invalid_argument("Isolated multipole gravity requires 2D polar or 3D space");
+        throw std::invalid_argument("Isolated gravity requires spherical 2D polar, axisymmetric RZ, or 3D space");
     int root_level=0;
     // Round UP: a 48-cell axis needs a 64-cell tree root. Flooring this
     // depth would silently omit mass in the outermost root cells.

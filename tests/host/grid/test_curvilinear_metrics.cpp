@@ -359,7 +359,8 @@ void test_rz_torque_divergence_budget() {
     IdealGas eos(1.4,species);
     for(double inner:{0.,1.})for(int lane:{0,1,2}) {
         Grid grid(amr::MAX_NG,inner,inner+1.,-.5,1.,0.,1.);
-        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(
+            GridMetrics::GeometrySemantics::AxisymmetricRz);
         const int size=grid.GetTotalSize();
         FluidState state,updated;
         state.Preallocate(size);state.InitSpecies(2);
@@ -476,7 +477,8 @@ void test_rz_host_hydro() {
         // state with constant u_phi. True negative-radius ghosts use the same
         // odd velocity/even energy field and independent signed integrals.
         Grid grid(amr::MAX_NG, inner, inner+1., -.5, .5, 0., 1.);
-        grid.dim=2; grid.geometry="cylindrical"; grid.InitializeTopology();
+        grid.dim=2; grid.geometry="cylindrical"; grid.InitializeTopology(
+            GridMetrics::GeometrySemantics::AxisymmetricRz);
         FluidState state, updated;
         const int size=grid.GetTotalSize();
         state.Preallocate(size); state.InitSpecies(1);
@@ -595,7 +597,8 @@ void test_rz_host_cfl() {
     const double sound=std::sqrt(1.4*pressure/rho);
     for (double inner : {0.,1.}) {
         Grid grid(amr::MAX_NG,inner,inner+1.,-1.,1.,0.,1.);
-        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(
+            GridMetrics::GeometrySemantics::AxisymmetricRz);
         FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
         double zero_swirl_dt=0.;
         for (double swirl : {0.,2.}) {
@@ -1330,12 +1333,15 @@ void test_rz_native_coordinates()
         throw std::runtime_error("RZ invalid divergence changed output before rejection");
     bool rejected=false;
     try {grid.InitializeTopology();} catch(const std::invalid_argument&) {rejected=true;}
-    if(!rejected) throw std::runtime_error("legacy polar angle guard was removed");
-    // Exact legacy coordinate witnesses and 3D cylindrical mapping.
-    const auto old=Grid::PhysicalCoordsFromNative(2,"cylindrical",3.,.5);
-    if(old.z_cy!=0. || old.phi_cy!=.5 || old.x!=3.*std::cos(.5) ||
-       old.y!=3.*std::sin(.5))
-        throw std::runtime_error("legacy cylindrical polar mapping changed");
+    if(!rejected) throw std::runtime_error("retired cylindrical polar topology accepted");
+    // Old cylindrical polar state cannot be relabelled; spherical polar remains valid.
+    rejected=false;
+    try {(void)Grid::PhysicalCoordsFromNative(2,"cylindrical",3.,.5);}
+    catch(const std::invalid_argument&) {rejected=true;}
+    if(!rejected) throw std::runtime_error("retired cylindrical polar coordinate mapping accepted");
+    const auto polar=Grid::PhysicalCoordsFromNative(2,"spherical",3.,.5);
+    if(polar.phi!=.5 || polar.x!=3.*std::cos(.5) || polar.y!=3.*std::sin(.5))
+        throw std::runtime_error("spherical two-dimensional polar mapping changed");
     const auto three=Grid::PhysicalCoordsFromNative(3,"cylindrical",3.,-4.,.5);
     if(three.r_cy!=3. || three.z_cy!=-4. || three.phi_cy!=.5 || three.r!=5.)
         throw std::runtime_error("3D cylindrical mapping changed");
@@ -1899,18 +1905,17 @@ int main(int argc,char** argv)
             || delta.mom_w!=29.)
             throw std::runtime_error("RZ torque source changed unrelated cylindrical contributions");
     }
-    // Preserve the pre-extraction polar/full cylindrical formulas exactly.
-    for (int dim : {1,2,3}) {
+    // Preserve the radial/full cylindrical formulas; RZ has its own witnesses above.
+    for (int dim : {1,3}) {
         GeometryView grid{};
         grid.geometry=Geometry::Cylindrical;grid.dim=dim;
         grid.x1_min=1.;grid.dx1=.25;grid.dx2=.5;grid.dx3=.3;
         const FluidVector u{2.,6.,14.,10.,20.};
         FluidVector actual{17.,19.,23.,29.,31.}, expected=actual;
         const double rho=u.rho,vr=u.mom_u/rho;
-        const double vp=dim==2?u.mom_v/rho:(dim==3?u.mom_w/rho:0.);
+        const double vp=dim==3?u.mom_w/rho:0.;
         const double inv=(1.25-1.)/(.5*(1.25-1.)*(1.25+1.));
         expected.mom_u += .125*(rho*vp*vp+5.)*inv;
-        if (dim==2) expected.mom_v += .125*(-rho*vr*(u.mom_v/rho))*inv;
         if (dim==3) expected.mom_w += .125*(-rho*vr*(u.mom_w/rho))*inv;
         TimeIntegration::add_geometric_source_cell(u,nullptr,ConstantEos{},
             grid,0,0,.125,actual);
@@ -1920,11 +1925,10 @@ int main(int argc,char** argv)
             throw std::runtime_error("Legacy cylindrical source formula changed");
     }
     for (double left : {0.,1.,4.}) {
-        const auto legacy=make_geometry_view(Geometry::Cylindrical,2,
+        const auto rz=make_geometry_view(Geometry::Cylindrical,2,
             {left,-2.,0.},{.25,.5,0.});
-        const auto rz=make_rz_geometry_view(legacy);
-        if (legacy.semantics!=GeometrySemantics::Existing)
-            throw std::runtime_error("RZ conversion changed input view");
+        if (rz.semantics!=GeometrySemantics::AxisymmetricRz)
+            throw std::runtime_error("cylindrical two-dimensional view did not select RZ");
         if (CellVolume(rz,0,0,0)!=Rz::CellVolume(left,left+.25,.5)
             || FaceArea(rz,0,0,0,0,false)!=Rz::RadialFaceArea(left,.5)
             || FaceArea(rz,0,0,0,0,true)!=Rz::RadialFaceArea(left+.25,.5)
@@ -1987,13 +1991,15 @@ int main(int argc,char** argv)
     for (double theta_left : {0.0, pi/3, pi/2, 5*pi/6}) {
         GeometryView grid{};
         grid.geometry = geometry; grid.dim = dimension;
+        if (geometry==Geometry::Cylindrical && dimension==2)
+            grid.semantics=GeometrySemantics::AxisymmetricRz;
         grid.dx1 = .25; grid.dx2 = pi/6; grid.dx3 = .2;
         grid.x1_min = radius; grid.x2_min = theta_left;
         const double theta = theta_left + pi/12;
         const double r = radius + .125;
         double width_y = grid.dx2, width_z = grid.dx3;
         if (geometry != Geometry::Cartesian) {
-            if (dimension == 2 || geometry == Geometry::Spherical) width_y *= r;
+            if (geometry == Geometry::Spherical) width_y *= r;
             if (dimension == 3) width_z *= r;
             if (dimension == 3 && geometry == Geometry::Spherical) width_z *= std::sin(theta);
         }

@@ -5,9 +5,9 @@
  * These Host/device leaves are the metric authority for flux divergence,
  * transfer, sources, and stability estimates. Inactive-coordinate measures
  * are omitted consistently: spherical 1D uses volume per solid angle, while
- * Existing curved 2D math views describe a polar plane, not an (r,theta) slice.
- * Public configuration selects full-ring AxisymmetricRz for cylindrical 2D;
- * explicit internal views retain their own semantics and qualification gates.
+ * Spherical 2D describes a polar plane, not an (r,theta) slice. Cylindrical 2D
+ * uses the full-ring (r,z) chart. Explicit storage views retain their native
+ * field and AMR qualification gates; choosing geometry grants no state lease.
  * Face fluxes and vector components use the local orthonormal basis.
  */
 
@@ -47,8 +47,12 @@ inline GeometrySemantics resolve_public_chart(const std::string& geometry, int d
         ? GeometrySemantics::AxisymmetricRz : GeometrySemantics::Existing;
 }
 
-/** Internal Grid defaults stay explicit; public owners use resolve_public_chart. */
-inline bool is_axisymmetric_rz(const Grid&) { return false; }
+/** A cylindrical two-dimensional grid has one computational chart, (r,z).
+ * This geometry query does not authenticate its field or AMR generation.
+ */
+inline bool is_axisymmetric_rz(const Grid& grid) {
+    return grid.dim == 2 && grid.geometry == "cylindrical";
+}
 
 inline Geometry geometry_kind(const Grid& grid) {
     return geometry_from_name(grid.geometry);
@@ -57,7 +61,8 @@ inline Geometry geometry_kind(const Grid& grid) {
 /** Borrow actual geometry and its native generation provenance.
  * Workflow: preserve ordinary fields; authenticate bound native root counts,
  * local endpoints and spacing; copy the complete value-only context. Chart
- * selection remains explicit in the semantics overload below. A fragment view
+ * selection follows the computational geometry; explicit semantics must match.
+ * A fragment view
  * cannot obtain hierarchy authority by merely setting its bound flag.
  */
 inline GeometryView make_geometry_view(const Grid& grid) {
@@ -70,7 +75,7 @@ inline GeometryView make_geometry_view(const Grid& grid) {
         throw std::invalid_argument("Native RZ geometry view does not match actual generated Grid identity");
     return {geometry_kind(grid), grid.dim, grid.ng, grid.stride_y,
             grid.stride_z, grid.GetTotalSize(), grid.dx1, grid.dx2, grid.dx3,
-            grid.x1_min, grid.x2_min, grid.x3_min,GeometrySemantics::Existing,
+            grid.x1_min, grid.x2_min, grid.x3_min,resolve_public_chart(grid.geometry,grid.dim),
             {grid.x1_max,grid.x2_max},grid.dyadic_identity};
 }
 
@@ -78,7 +83,8 @@ inline GeometryView make_geometry_view(const Grid& grid) {
 inline GeometryView make_geometry_view(Geometry geometry, int dimension,
     const std::array<double,3>& lower, const std::array<double,3>& width) {
     return {geometry, dimension, 0, 0, 0, 0, width[0], width[1], width[2],
-            lower[0], lower[1], lower[2]};
+            lower[0], lower[1], lower[2],geometry==Geometry::Cylindrical && dimension==2
+                ? GeometrySemantics::AxisymmetricRz : GeometrySemantics::Existing};
 }
 
 /**
@@ -100,6 +106,8 @@ inline GeometryView make_geometry_view(const Grid& grid, GeometrySemantics seman
     if (semantics!=GeometrySemantics::Existing
         && semantics!=GeometrySemantics::AxisymmetricRz)
         throw std::invalid_argument("Unknown geometry semantics cannot select a grid chart");
+    if (semantics != resolve_public_chart(grid.geometry,grid.dim))
+        throw std::invalid_argument("Grid chart differs from its computational geometry; cylindrical 2D uses RZ only");
     const auto view=make_geometry_view(grid);
     return semantics==GeometrySemantics::AxisymmetricRz ? make_rz_geometry_view(view) : view;
 }
@@ -128,8 +136,8 @@ ARCH_HOST_DEVICE inline double cylindrical_inverse_radius_average(
  * Workflow: callers validate 0 <= r_left < r_right and dz > 0, then use
  * these same volume/face measures for divergence, transfer and diagnostics.
  * Explicit AxisymmetricRz GeometryView dispatch consumes these same leaves.
- * Existing internal 2-D cylindrical views retain the polar-plane convention;
- * public cylindrical 2-D entry owners select this explicit RZ chart together.
+ * Cylindrical 2-D views use this chart; spherical 2-D keeps its polar-plane
+ * convention. A geometry view alone does not grant native state authority.
  * Units are cm^3, cm^2 and cm for CGS inputs. No unit-azimuth normalization
  * or inactive-direction measure is mixed into the full 2*pi volume.
  */
@@ -334,6 +342,9 @@ ARCH_HOST_DEVICE inline double polar_angle_measure(double theta_left, double the
 }
 
 ARCH_HOST_DEVICE inline double CellVolume(const GeometryView& grid, int i, int j, int /*k*/) {
+    if (grid.geometry==Geometry::Cylindrical && grid.dim==2
+        && grid.semantics!=GeometrySemantics::AxisymmetricRz)
+        return std::numeric_limits<double>::quiet_NaN();
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
     if (grid.semantics == GeometrySemantics::AxisymmetricRz)
@@ -362,6 +373,9 @@ ARCH_HOST_DEVICE inline double CellVolume(const GeometryView& grid, int i, int j
 }
 
 ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i, int j, int /*k*/, bool high_face) {
+    if (grid.geometry==Geometry::Cylindrical && grid.dim==2
+        && grid.semantics!=GeometrySemantics::AxisymmetricRz)
+        return std::numeric_limits<double>::quiet_NaN();
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
     const double r_face = high_face ? r_right : r_left;
@@ -376,7 +390,7 @@ ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i
     if (grid.geometry == Geometry::Cylindrical) {
         const double annulus = cylindrical_annulus_volume(r_left, r_right);
         if (dir == 0) return r_face * (grid.dim >= 2 ? grid.dx2 : 1.0) * (grid.dim == 3 ? grid.dx3 : 1.0);
-        if (dir == 1) return grid.dim == 2 ? (r_right - r_left) : annulus * grid.dx3;
+        if (dir == 1) return annulus * grid.dx3;
         return (r_right - r_left) * grid.dx2;
     }
 
@@ -395,7 +409,7 @@ ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i
 }
 
 // Orthonormal physical distances for both hyperbolic CFL and diffusive
-// gradients/stability. In 2-D both curved systems use (r,phi); in 3-D
+// gradients/stability. In 2-D cylindrical uses (r,z), spherical uses (r,phi); in 3-D
 // cylindrical uses (r,z,phi) and spherical uses (r,theta,phi).
 ARCH_HOST_DEVICE inline double PhysicalSpacing(
     Geometry geometry, int dim, int direction, double dx1, double dx2,
@@ -405,7 +419,7 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
         return direction == 0 ? dx1 : (direction == 1 ? dx2 : dx3);
     if (geometry == Geometry::Cylindrical) {
         if (direction == 0) return dx1;
-        if (direction == 1) return dim == 2 ? radius * dx2 : dx2;
+        if (direction == 1) return dx2;
         return radius * dx3;
     }
     if (geometry == Geometry::Spherical) {
@@ -419,6 +433,9 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
 ARCH_HOST_DEVICE inline double PhysicalSpacing(
     const GeometryView& grid, int direction, int i, int j)
 {
+    if (grid.geometry==Geometry::Cylindrical && grid.dim==2
+        && grid.semantics!=GeometrySemantics::AxisymmetricRz)
+        return std::numeric_limits<double>::quiet_NaN();
     if (grid.semantics == GeometrySemantics::AxisymmetricRz)
         return Rz::PhysicalSpacing(direction,grid.CellWidth(0,i),grid.CellWidth(1,j));
     return PhysicalSpacing(grid.geometry, grid.dim, direction,

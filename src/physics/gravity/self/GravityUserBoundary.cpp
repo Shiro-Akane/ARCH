@@ -34,7 +34,7 @@ Grid coordinate_authority(const arch::elliptic::EllipticMesh& mesh) {
 }
 
 /** Expand a face with the same geometry/chart authority as physical boundaries.
- * RZ at phi=0 has (x,y,z)=(r,0,z); legacy polar/spherical expansion keeps the
+ * RZ at phi=0 has (x,y,z)=(r,0,z); spherical polar expansion keeps the
  * existing coordinate rules. No second coordinate conversion is introduced.
  */
 PointCoords native_point(const arch::elliptic::EllipticMesh& mesh,

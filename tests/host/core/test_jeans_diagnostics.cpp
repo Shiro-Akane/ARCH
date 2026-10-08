@@ -462,7 +462,13 @@ int main()
     grid.dx2 = 3.0; grid.dim = 2; check_spacing(3.0);
     grid.dx3 = 4.0; grid.dim = 3; check_spacing(4.0);
     grid.geometry = GridMetrics::Geometry::Cylindrical;
-    grid.dim = 2; check_spacing(6.0); // r=2, polar arc r*dphi.
+    grid.dim = 2;
+    if (JeansDiagnostics::evaluate_cell(1,1,grid,0,0).status !=
+            JeansDiagnostics::Status::invalid_input)
+        throw std::runtime_error("Retired cylindrical 2-D polar spacing accepted");
+    grid=GridMetrics::make_rz_geometry_view(grid);
+    check_spacing(3.0); // (r,z), axial physical length dz=3, without r*dphi.
+    grid.semantics=GridMetrics::GeometrySemantics::Existing;
     grid.dim = 3; check_spacing(8.0); // (r,z,phi), largest r*dphi.
     grid.geometry = GridMetrics::Geometry::Spherical;
     grid.dim = 2; check_spacing(6.0); // Existing 2-D polar specialization.

@@ -19,6 +19,7 @@
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/RzCellAverage.h"
 #include "driver/schedule/DriverControl.h"
+#include "driver/schedule/StageScheduler.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/diffusion/DiffusionAMRStages.h"
@@ -329,8 +330,10 @@ void native_rz_diffusion_thermodynamics() {
     close(axial.mom_w,0.,"native conduction changed angular momentum flux");
 
     // Ordinary charts use the unchanged raw vector and never consult a native
-    // density reader; the existing legacy diffusion regressions remain below.
-    auto existing=geometry;existing.semantics=GridMetrics::GeometrySemantics::Existing;
+    // density reader. This independent Cartesian view carries no native chart
+    // identity; a cylindrical 2D Existing view is an explicitly retired chart.
+    GridMetrics::GeometryView existing;
+    existing.geometry=GridMetrics::Geometry::Cartesian;existing.dim=2;
     int reads=0;const auto counting_read=[&](int index){++reads;return field.get(index);};
     const auto legacy=DiffFlux::diffusion_thermal_input(raw,counting_read,existing,cell,i);
     require(legacy.valid&&reads==0&&legacy.state.rho==raw.rho&&legacy.state.mom_w==raw.mom_w
@@ -915,7 +918,12 @@ void native_rz_actual_diffusion_distances()
         nu*C/(d_upper*dz*C),"upper angular row nu*Cface/(d_face*dz_center*Ccenter)");
     require(std::isnan(RzViscousStress::face_row_rate(center,low,1,double(d_lower),double(nu),double(rl),-1.)),
         "invalid actual angular-row height accepted");
-    auto ordinary=geometry;ordinary.semantics=GridMetrics::GeometrySemantics::Existing;
+    // The retained ordinary angular metric belongs to spherical 2D. Use a
+    // fresh mathematical view, without relabeling a bound native RZ identity.
+    GridMetrics::GeometryView ordinary;
+    ordinary.geometry=GridMetrics::Geometry::Spherical;ordinary.dim=2;
+    ordinary.ng=g.ng;ordinary.dx1=g.dx1;ordinary.dx2=g.dx2;ordinary.dx3=g.dx3;
+    ordinary.x1_min=g.x1_min;ordinary.x2_min=g.x2_min;ordinary.x3_min=g.x3_min;
     require(DiffFlux::diffusion_face_spacing(ordinary,1,i,j)==DiffFlux::diffusion_face_spacing(
         ordinary.geometry,ordinary.dim,1,ordinary.dx1,ordinary.dx2,ordinary.dx3,
         ordinary.GetCellCenterX(i),ordinary.SourceTheta(j)),"ordinary producer literal spacing changed");
@@ -1395,8 +1403,89 @@ void check_rkl_stationary_host_alias_reference() {
         &&bits(alias.X(0,i))==bits(.37)&&bits(alias.X(1,i))==bits(1.-.37),
         "first Host RKL alias changed stationary rho/Xi");
 }
+/** Independent RK polynomial witnesses through the public shared cell update.
+ * Workflow: apply real scheduler weights to L(U)=0; check exact conserved/Xi
+ * publication; then use dyadic source data and rational endpoint references.
+ * These cell checks do not certify a full evolution or native thermal closure.
+ */
+void check_rk_conserved_polynomial_reference() {
+    const auto bits=[](double x){return std::bit_cast<std::uint64_t>(x);};
+    const std::array<double FluidVector::*,5> components{
+        &FluidVector::rho,&FluidVector::mom_u,&FluidVector::mom_v,
+        &FluidVector::mom_w,&FluidVector::eng};
+    const auto exact=[&](const FluidVector& value,const FluidVector& expected,const char* message){
+        for(const auto member:components)require(bits(value.*member)==bits(expected.*member),message);
+    };
+    const double q=0x1.0000000000001p+0;
+    const FluidVector seed{q,q,-2.*q,.5*q,16.*q},zero{};
+    const std::array<double,2> fraction{.5,.5};
+    for(const auto method:{arch::scheduler::HydroMethod::Euler,
+            arch::scheduler::HydroMethod::RK2,arch::scheduler::HydroMethod::RK3}) {
+        const auto plan=arch::scheduler::make_hydro_plan(method);
+        FluidVector current=seed;auto current_fraction=fraction;
+        for(const auto& stage:plan.stages) {
+            FluidVector output;std::array<double,2> output_fraction{},species_delta{};
+            const auto status=TimeIntegration::update_stage_cell(seed,current,zero,
+                fraction.data(),current_fraction.data(),species_delta.data(),2,1,
+                stage.old_weight,stage.update_weight,1e-30,1e-30,1e300,
+                output,output_fraction.data());
+            require(status==arch::state::Status::valid,"RK stationary polynomial required a repair/rejection");
+            exact(output,seed,"RK stationary polynomial changed a represented conserved component");
+            for(int s=0;s<2;++s)require(bits(output_fraction[s])==bits(fraction[s]),
+                "RK stationary polynomial changed an exact binary fraction");
+            current=output;current_fraction=output_fraction;
+        }
+    }
+    // Euler ignores old: conserved endpoint (4,1,2,3,64)+(2,2,-1,.5,8).
+    const FluidVector old_state{4.,1.,-2.,.5,64.},current{6.,-1.,4.,1.5,80.};
+    const std::array<double,2> old_x{.25,.75},current_x{.5,.5};
+    FluidVector output;std::array<double,2> output_x{};
+    const FluidVector euler_input{4.,1.,2.,3.,64.},euler_delta{2.,2.,-1.,.5,8.};
+    const std::array<double,2> euler_species{.5,1.5};
+    auto status=TimeIntegration::update_stage_cell(old_state,euler_input,euler_delta,
+        current_x.data(),old_x.data(),euler_species.data(),2,1,0.,1.,
+        1e-30,1e-30,1e300,output,output_x.data());
+    require(status==arch::state::Status::valid,"Euler independent nonzero source rejected");
+    exact(output,{6.,3.,1.,3.5,72.},"Euler independent dyadic source endpoint differs");
+    require(bits(output_x[0])==bits(.25)&&bits(output_x[1])==bits(.75),
+        "Euler source did not preserve independent species/mass pairing");
+    // Heun endpoint averages old with current+delta. Species masses are
+    // (1+4)/2=5/2 and (3+4)/2=7/2, at rho=6: Xi=(5/12,7/12).
+    const FluidVector delta{2.,3.,-2.,.5,8.};
+    const std::array<double,2> species_delta{1.,1.};
+    status=TimeIntegration::update_stage_cell(old_state,current,delta,
+        old_x.data(),current_x.data(),species_delta.data(),2,1,.5,.5,
+        1e-30,1e-30,1e300,output,output_x.data());
+    require(status==arch::state::Status::valid,"RK independent nonzero source rejected");
+    exact(output,{6.,1.5,0.,1.25,76.},"RK independent rational conserved endpoint differs");
+    require(bits(output_x[0])==bits(5./12.)&&bits(output_x[1])==bits(7./12.),
+        "RK independent rational species endpoint differs");
+    // A represented convex mean can survive even when curr-old overflows.
+    // Native provisional finite/rho checks here are not a point-EOS certificate.
+    const FluidVector wide_old{2.,-1e308,0.,0.,8.},wide_current{2.,1e308,0.,0.,8.};
+    status=TimeIntegration::update_stage_cell(wide_old,wide_current,zero,
+        nullptr,nullptr,nullptr,0,1,.5,.5,1e-30,1e-30,1e300,
+        output,nullptr,{},1.,0,true);
+    require(status==arch::state::Status::valid,"represented convex endpoint rejected after difference overflow");
+    exact(output,{2.,0.,0.,0.,8.},"range-protected convex endpoint differs from exact cancellation");
+    const double invalid=std::numeric_limits<double>::quiet_NaN();
+    const double infinity=std::numeric_limits<double>::infinity();
+    for(const auto weights:std::array<std::array<double,2>,6>{{
+            {invalid,.5},{.5,infinity},{-.25,1.25},{1.25,-.25},{.25,.5},{0.,0.}}}) {
+        status=TimeIntegration::update_stage_cell(seed,seed,zero,
+            nullptr,nullptr,nullptr,0,1,weights[0],weights[1],1e-30,1e-30,1e300,output,nullptr);
+        require(!arch::state::accepted(status),"RK malformed weights gained a stationary publication");
+    }
+    // Finite weights cannot hide a nonfinite required Euler trial.
+    const FluidVector huge{2.,0.,0.,0.,1e308},huge_delta{0.,0.,0.,0.,1e308};
+    status=TimeIntegration::update_stage_cell(seed,huge,huge_delta,
+        nullptr,nullptr,nullptr,0,1,.5,.5,1e-30,1e-30,1e300,output,nullptr);
+    require(!arch::state::accepted(status),"RK weighted publication concealed nonfinite curr+delta");
+    std::cout<<"RK_CONSERVED_POLYNOMIAL_REFERENCE stationary_methods=3 rational_updates=2 range=1\n";
+}
+
 }
 
 int main() {
-    try { check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
+    try { check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
  catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; } }

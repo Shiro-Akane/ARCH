@@ -27,7 +27,9 @@ enum class Geometry : int {
     Unsupported = 3,
 };
 
-/** Internal explicit chart; default preserves legacy cylindrical polar 2D. */
+/** Explicit storage chart: cylindrical 2D requires AxisymmetricRz.
+ * Existing applies to Cartesian, spherical and cylindrical 1D/3D only.
+ */
 enum class GeometrySemantics : int { Existing = 0, AxisymmetricRz = 1 };
 
 struct GeometryView {
@@ -170,7 +172,10 @@ ARCH_HOST_DEVICE inline std::array<double,3> PhysicalPosition(
     if (geometry == Geometry::Cartesian) return native;
     const double r = native[0];
     if (dimension == 1) return {r,0.,0.};
-    if (dimension == 2) return {r*std::cos(native[1]), r*std::sin(native[1]), 0.};
+    if (dimension == 2) {
+        if (geometry == Geometry::Cylindrical) return {r,0.,native[1]};
+        return {r*std::cos(native[1]), r*std::sin(native[1]), 0.};
+    }
     if (geometry == Geometry::Cylindrical)
         return {r*std::cos(native[2]), r*std::sin(native[2]), native[1]};
     if (geometry == Geometry::Spherical)

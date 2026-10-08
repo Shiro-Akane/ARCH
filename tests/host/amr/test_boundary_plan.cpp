@@ -760,7 +760,7 @@ void test_rz_logical_seed_and_axis_parity()
     config.grid.x2l_boundary_type="reflecting";config.grid.x2r_boundary_type="outflow";
     BCHandler boundary(config,rz);
     Grid grid(amr::MAX_NG,0.,1.,-.5,.5,0.,1.);
-    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
     FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(2);
     for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
         const int cell=grid.GetIndex(i,j,0);const double code=i+100.*j;

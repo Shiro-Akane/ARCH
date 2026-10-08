@@ -787,6 +787,8 @@ struct PointCoords {
 };
 ```
 
+Two-dimensional spherical geometry uses the polar plane `(r,phi)`, while two-dimensional cylindrical geometry uses the axisymmetric plane `(r,z)`. Both RZ axes are lengths, all three physical velocity components remain present, and a representative meridian point has `(x,y,z)=(r,0,z)`.
+
 `Grid::GetPhysicalCoords` populates every representation. For a 3D spherical
 density profile centered at the origin, let `rho_bg > 0`, `rho_peak > 0`, and
 `width > 0` be case parameters in CGS units. Inside `Init`, the Cartesian form is:

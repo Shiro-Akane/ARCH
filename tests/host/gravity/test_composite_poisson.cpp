@@ -1005,18 +1005,18 @@ void radial_convergence() {
         }
 }
 
-/** Check independent enclosed-mass force with a hollow polar ring/spherical shell. */
+/** Check independent enclosed-mass force with a hollow spherical shell. */
 void curved_gauss_law() {
     constexpr double G=1.,q=.2,rmin=.5;
-    for(int dim:{2,3})for(bool refined:{false,true}) {
+    constexpr int dim=3;
+    for(bool refined:{false,true}) {
         double previous=0.;
         for(int n:{8,16}) {
             auto base=base_mesh(dim,n);
-            base.geometry=dim==2?elliptic::Geometry::Cylindrical:elliptic::Geometry::Spherical;
+            base.geometry=elliptic::Geometry::Spherical;
             base.origin[0]=rmin;base.spacing[0]=1./n;
-            if(dim==2){base.origin[1]=0.;base.spacing[1]=2*pi/n;}
-            else {base.origin[1]=0.;base.spacing[1]=pi/n;
-                base.origin[2]=0.;base.spacing[2]=2*pi/n;}
+            base.origin[1]=0.;base.spacing[1]=pi/n;
+            base.origin[2]=0.;base.spacing[2]=2*pi/n;
             multigrid::CompositeMultigrid solver(base,make_cells(base,refined),
                 elliptic::BoundaryKind::CurvilinearIsolated);
             const auto& op=solver.op();
@@ -1024,8 +1024,7 @@ void curved_gauss_law() {
             for(int i=0;i<op.size();++i) {
                 const double r=op.center(i)[0],h=op.width(i,0);
                 const double lo=r-h/2,hi=r+h/2;
-                const double average_r2=dim==2?(hi*hi+lo*lo)/2
-                    :3.*(std::pow(hi,5)-std::pow(lo,5))
+                const double average_r2=3.*(std::pow(hi,5)-std::pow(lo,5))
                         /(5.*(std::pow(hi,3)-std::pow(lo,3)));
                 rho[i]=1.+q*average_r2;
                 rhs[i]=-4*pi*G*rho[i];
@@ -1041,11 +1040,9 @@ void curved_gauss_law() {
                 const double r=face.center[0];
                 double expected=0.;
                 if(face.axis==0) {
-                    const double mass=dim==2
-                        ?2*pi*(.5*(r*r-rmin*rmin)+q*.25*(std::pow(r,4)-std::pow(rmin,4)))
-                        :4*pi*((std::pow(r,3)-std::pow(rmin,3))/3.
+                    const double mass=4*pi*((std::pow(r,3)-std::pow(rmin,3))/3.
                             +q*(std::pow(r,5)-std::pow(rmin,5))/5.);
-                    expected=dim==2?2*G*mass/r:G*mass/(r*r);
+                    expected=G*mass/(r*r);
                 }
                 const double actual=op.face_gradient(solved.potential,face,
                     face.boundary_side>=0?bc[index]:0.);
@@ -1070,6 +1067,7 @@ void curved_boundary_integral() {
     constexpr double weights[]{5./9.,8./9.,5./9.};
     for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
         for(int dim:{2,3}) {
+            if(geometry==elliptic::Geometry::Cylindrical && dim==2) continue;
             auto base=base_mesh(dim,8);base.geometry=geometry;
             base.origin[0]=.5;base.spacing[0]=1./8;
             if(dim==2){base.origin[1]=0.;base.spacing[1]=2*pi/8;}
@@ -1142,6 +1140,7 @@ void curved_boundary_integral() {
 void curved_domain_extension() {
     for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
         for(int dim:{2,3}) {
+            if(geometry==elliptic::Geometry::Cylindrical && dim==2) continue;
             std::vector<double> reference;
             double reference_norm=0.,difference=0.;int compared=0;
             for(int radial_cells:{8,16}) {
@@ -3111,16 +3110,13 @@ void rz_boundary_guard() {
     rejected([&] {(void)ring.values(rz_op,constants::gravity::cgs::gravitational_constant);});
     auto polar=rz;polar.semantics=GridMetrics::GeometrySemantics::Existing;
     polar.origin[1]=0.;polar.spacing[1]=2.*pi/polar.cells[1];
-    const elliptic::CompositePoisson polar_op(polar,make_cells(polar,false),
-        elliptic::BoundaryKind::CurvilinearIsolated);
-    Physical::Gravity::GravityBoundary legacy(polar_op);
-    legacy.update(std::vector<double>(polar_op.size(),1.));
-    rejected([&] {(void)ring.values(polar_op,constants::gravity::cgs::gravitational_constant);});
-    const auto values=legacy.values(polar_op,constants::gravity::cgs::gravitational_constant);
-    require(values.size()==polar_op.faces().size(),"Legacy boundary lost output shape");
-    for(double value:values)require(std::isfinite(value),"Legacy boundary no longer finite");
-    rejected([&] {(void)legacy.values(rz_op,constants::gravity::cgs::gravitational_constant);});
-    std::cout<<"RZ_BOUNDARY_GUARD_PASS ring_cache=ready ring_values=refused cached_legacy=refused legacy=preserved\n";
+    bool retired_polar_rejected=false;
+    try {
+        const elliptic::CompositePoisson polar_op(polar,make_cells(polar,false),
+            elliptic::BoundaryKind::CurvilinearIsolated);
+    } catch(const std::invalid_argument&) { retired_polar_rejected=true; }
+    require(retired_polar_rejected,"retired cylindrical 2D polar operator accepted");
+    std::cout<<"RZ_BOUNDARY_GUARD_PASS ring_cache=ready ring_values=refused legacy_polar=retired\n";
 }
 
 /** Independent point monomial, evaluated without the production fit basis.
@@ -4075,6 +4071,7 @@ void rz_two_field_green_consistency() {
 void curved_manufactured(bool singular=false, bool seam_refined=false) {
     for(auto geometry:{elliptic::Geometry::Cylindrical,elliptic::Geometry::Spherical})
         for(int dim:{2,3}) for(bool refined:{false,true}) {
+            if(geometry==elliptic::Geometry::Cylindrical && dim==2) continue;
             if(seam_refined && (!singular || !refined || dim!=2)) continue;
             double previous=0.,previous_force=0.,previous_interface=0.;
             for(int n:{8,16}) {

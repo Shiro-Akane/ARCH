@@ -23,7 +23,7 @@ namespace TimeIntegration {
 /**
  * Shared cylindrical curvature terms for a piecewise-constant accepted cell.
  * The loader chooses its actual angular component; the same formula serves
- * polar (r,phi) and axisymmetric/full (r,z,phi) orthonormal bases.
+ * axisymmetric/full (r,z,phi) orthonormal bases.
  * Positive density, resolved pressure and GridMetrics average 1/r are inputs.
  * Angular momentum density gets -rho*v_r*v_phi/r; z, mass and energy do not.
  */
@@ -111,13 +111,12 @@ ARCH_HOST_DEVICE inline void add_geometric_source_cell(
     const double inverse_radius = GridMetrics::InverseRadiusVolumeAverage(grid, i);
 
     if (grid.geometry == Geometry::Cylindrical) {
-        // 2D axes are (r,phi); 3D axes are (r,z,phi), as on the CPU.
+        // Both cylindrical charts use (r,z,phi) physical components.
         const bool rz = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
-        const double v_phi = rz ? v_z : (grid.dim == 2 ? v_y : (grid.dim == 3 ? v_z : 0.0));
+        const double v_phi = (rz || grid.dim == 3) ? v_z : 0.0;
         // RZ torque divergence already contains the azimuthal curvature.
         // Retain the radial pressure/centrifugal source exactly.
-        double* angular_delta = rz ? nullptr :
-            (grid.dim==2?&delta.mom_v:(grid.dim==3?&delta.mom_w:nullptr));
+        double* angular_delta = !rz && grid.dim==3 ? &delta.mom_w : nullptr;
         add_cylindrical_momentum_sources(rho,v_x,v_phi,p,inverse_radius,dt,
             delta.mom_u,angular_delta);
     } else if (grid.geometry == Geometry::Spherical) {

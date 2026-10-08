@@ -14,6 +14,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace {
@@ -219,7 +220,6 @@ void analytic_geometry_examples()
     constexpr double pi = 3.14159265358979323846;
     const Example examples[]{
         {GridMetrics::Geometry::Cylindrical, 1, {.25, 0, 0}, {-.003, 0, 0}, 4.0},
-        {GridMetrics::Geometry::Cylindrical, 2, {1.15, -.6, 0}, {-.003, -.0045, 0}, 2*pi},
         {GridMetrics::Geometry::Cylindrical, 3, {1.85, 0, -.8}, {-.003, 0, -.006}, pi/2},
         {GridMetrics::Geometry::Spherical, 1, {6.0/13, 0, 0}, {-.006*12/13, 0, 0}, 26.0/3},
         {GridMetrics::Geometry::Spherical, 2, {1.15, -.6, 0}, {-.003, -.0045, 0}, 2*pi},
@@ -683,15 +683,23 @@ int main()
         independent_newtonian();
         analytic_geometry_examples();
         viscous_diffusion_convergence();
+        // Cylindrical 2D is covered by the native RZ owners; the former
+        // generic polar-plane fixture belongs only to spherical geometry.
         for (const char* geometry : {"cylindrical", "spherical"})
-            for (int dimension = 1; dimension <= 3; ++dimension)
+            for (int dimension = 1; dimension <= 3; ++dimension) {
+                if (std::string_view(geometry) == "cylindrical" && dimension == 2)
+                    continue;
                 run_case(geometry, dimension);
+            }
         run_case("cartesian", 2, 41);
         run_case("spherical", 3, 41);
         for (const char* geometry : {"cartesian", "cylindrical", "spherical"})
-            for (int dimension = 1; dimension <= 3; ++dimension)
+            for (int dimension = 1; dimension <= 3; ++dimension) {
+                if (std::string_view(geometry) == "cylindrical" && dimension == 2)
+                    continue;
                 for (bool thermal : {false, true})
                     scalar_diffusion_convergence(geometry, dimension, thermal);
+            }
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';

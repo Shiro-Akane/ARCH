@@ -232,7 +232,10 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
 }
 type NativeHeader={version:string;measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|'cm^3'|null;
  measureNormalization?:string|null;geometry?:string;axes?:string[];axisUnits?:string[];chart?:string};
-/** Recognize an explicit native chart; never map legacy cylindrical directly to RZ. */
+/**
+ * Recognize an explicit native chart. Legacy 2D cylindrical polar (r,phi) is
+ * retired: it is rejected, never mapped to RZ or silently accepted.
+ */
 function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:string):NativeHeader|null {
  const entity=file.get('NativeGrid');
  if(entity===null)return null;
@@ -246,7 +249,8 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
   throw Error('Unsupported candidate native geometry.');
  if(formal&&(!['arch-native-cartesian-1','arch-native-curvilinear-1','arch-native-axisymmetric-rz-2'].includes(String(version))||
    scalar(entity,'native_geometry')!==geometry||version==='arch-native-cartesian-1'&&geometry!=='cartesian'||
-   version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(geometry)||
+   version==='arch-native-curvilinear-1'&&(!['cylindrical','spherical'].includes(geometry)||
+     geometry==='cylindrical'&&dimension===2)||
    rz&&(geometry!=='cylindrical'||dimension!==2||scalar(file,'geometry_semantics_revision')!==2||
      scalar(file,'geometry_chart')!=='axisymmetric-rz')))throw Error('Invalid formal native geometry profile');
  const convention=rz?'full-rotation-axisymmetric-ring':geometry==='cartesian'?

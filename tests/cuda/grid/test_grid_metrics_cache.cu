@@ -307,6 +307,12 @@ struct OrdinarySyntheticGrid {
  */
 void run_native_lowering_preflight()
 {
+    // Reject the retired chart using a real Grid before any device allocation.
+    bool retired_polar_rejected = false;
+    try { (void)make_grid(2, "cylindrical", amr::MAX_NG); }
+    catch (const std::invalid_argument&) { retired_polar_rejected = true; }
+    require(retired_polar_rejected, "retired cylindrical 2D polar cache fixture accepted");
+
     using GridMetrics::GeometrySemantics;
     const auto ordinary = make_grid(2, "cartesian", amr::MAX_NG);
     const OrdinarySyntheticGrid synthetic(arch::cuda::make_device_grid_view(ordinary));
@@ -573,9 +579,11 @@ int main()
         check(probe);
         check(cudaSetDevice(0));
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
-            for (int dim = 1; dim <= 3; ++dim)
+            for (int dim = 1; dim <= 3; ++dim) {
+                if (geometry == "cylindrical" && dim == 2) continue;
                 for (int variant = 0; variant < 3; ++variant)
                     run_parity(dim, geometry, variant);
+            }
         run_invalid_inputs();
         run_native_parity(true, 1, 1, 0, 0, 0, false);
         run_native_parity(false, 3, 5, 3, 2, 7, false);
@@ -586,7 +594,7 @@ int main()
             5U * (1U << 15) - 1, true);
         run_native_cache_rejection();
         std::cout << "Native geometry: five real canonical payload/cache layouts passed; backend qualification unchanged\n";
-        std::cout << "Grid metric cache: 27 shared-math parity layouts and invalid-input guards passed\n";
+        std::cout << "Grid metric cache: 24 shared-math parity layouts and invalid-input guards passed\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "Grid metric cache failure: " << error.what() << '\n';

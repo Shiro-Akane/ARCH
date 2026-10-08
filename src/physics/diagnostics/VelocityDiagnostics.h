@@ -30,9 +30,9 @@ struct Values {
  * @brief Evaluates physical div(v) and |curl(v)| from orthonormal velocity components.
  *
  * Momentum storage follows the hydro source-term convention: VELX is radial for
- * curvilinear grids; VELY is azimuthal in 2-D polar/cylindrical grids and polar
- * in 3-D spherical grids; VELZ is azimuthal in 3-D cylindrical/spherical grids.
- * Explicit RZ views use VELY=axial and VELZ=azimuthal with no phi derivative.
+ * curvilinear grids; VELY is azimuthal in spherical 2-D polar grids and polar
+ * in spherical 3-D grids. Cylindrical RZ and 3-D grids use VELY=axial and
+ * VELZ=azimuthal; spherical 3-D also uses VELZ=azimuthal. RZ has no phi derivative.
  * Logical-grid indices are materialized once because this routine is called in the
  * AMR and PLT inner loops; the component derivatives then reuse the same stencil.
  */
@@ -127,8 +127,8 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
     }
 
     if (grid.dim <= 2) {
-        // Both 2-D cylindrical and the project's 2-D spherical specialization
-        // are polar (r, phi) grids with physical components (v_r, v_phi).
+        // The spherical 2-D specialization is polar (r,phi).
+        // Cylindrical RZ has already used its three-component curl above.
         const double omega = (vel_y_center + radius * ddx(vel_y) - ddy(vel_x)) / radius;
         result.vorticity = std::abs(omega);
         return result;

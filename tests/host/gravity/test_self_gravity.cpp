@@ -1241,12 +1241,26 @@ void boundary_normals() {
     rejects([&]{arch::boundary::BoundaryCartesianNormal(oblique,far,arch::boundary::BoundaryAxis::X1,
         arch::boundary::BoundarySide::Lower);},"normal from an unsupported geometry accepted");
     const double sixth=constants::math::pi/6.;
+    // The retired cylindrical2D polar (r,phi) chart is now the canonical
+    // axisymmetric RZ (r,z) chart: native coordinates must be built with the
+    // explicit RZ semantics, and the old chart coordinates must be refused.
     Grid cylindrical2;cylindrical2.dim=2;cylindrical2.geometry="cylindrical";
-    const auto polar=Grid::PhysicalCoordsFromNative(2,"cylindrical",2.,sixth,0.);
-    check(cylindrical2,polar,arch::boundary::BoundaryAxis::X1,arch::boundary::BoundarySide::Upper,
-        {std::cos(sixth),std::sin(sixth),0.},"cylindrical radial normal");
-    check(cylindrical2,polar,arch::boundary::BoundaryAxis::X2,arch::boundary::BoundarySide::Upper,
-        {-std::sin(sixth),std::cos(sixth),0.},"cylindrical azimuthal normal");
+    rejects([&]{Grid::PhysicalCoordsFromNative(2,"cylindrical",2.,sixth,0.);},
+        "retired cylindrical polar coordinates accepted");
+    const auto rz=Grid::PhysicalCoordsFromNative(2,"cylindrical",2.,.5,0.,
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    check(cylindrical2,rz,arch::boundary::BoundaryAxis::X1,arch::boundary::BoundarySide::Upper,
+        {1.,0.,0.},"cylindrical RZ radial normal");
+    check(cylindrical2,rz,arch::boundary::BoundaryAxis::X2,arch::boundary::BoundarySide::Upper,
+        {0.,0.,1.},"cylindrical RZ axial normal");
+    // The oblique normal coverage supplied by the retired polar azimuth is
+    // preserved by the two-dimensional spherical polar section at phi=pi/6.
+    Grid spherical_section;spherical_section.dim=2;spherical_section.geometry="spherical";
+    const auto oblique_point=Grid::PhysicalCoordsFromNative(2,"spherical",2.,sixth,0.);
+    check(spherical_section,oblique_point,arch::boundary::BoundaryAxis::X1,arch::boundary::BoundarySide::Upper,
+        {std::cos(sixth),std::sin(sixth),0.},"oblique radial normal");
+    check(spherical_section,oblique_point,arch::boundary::BoundaryAxis::X2,arch::boundary::BoundarySide::Upper,
+        {-std::sin(sixth),std::cos(sixth),0.},"oblique azimuthal normal");
     Grid cylindrical3;cylindrical3.dim=3;cylindrical3.geometry="cylindrical";
     const auto tube=Grid::PhysicalCoordsFromNative(3,"cylindrical",1.5,0.25,0.4);
     check(cylindrical3,tube,arch::boundary::BoundaryAxis::X2,arch::boundary::BoundarySide::Upper,

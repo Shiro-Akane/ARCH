@@ -35,7 +35,7 @@ no whole-domain KLU/cuDSS or FFT route is introduced.
 
 Validated production models are Cartesian periodic 1D–3D and isolated 3D, with
 burning/diffusion coupling. CPU/CUDA 1D isolated spherical/cylindrical gravity
-has radial field and AMR acceptance. Tested CPU/CUDA 2D full-azimuth polar and
+has radial field and AMR acceptance. Tested CPU/CUDA spherical 2D full-azimuth polar and
 3D cylindrical/spherical isolated gravity include origin, axis and pole AMR
 chart mapping. The driver solves at each actual RK input,
 invalidates after state changes and explicitly materializes fields for output.

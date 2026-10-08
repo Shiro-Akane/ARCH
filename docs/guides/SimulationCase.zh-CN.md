@@ -309,7 +309,9 @@ point.r_cy, point.phi_cy, point.z_cy
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi（极平面） | r, theta, phi |
-| Cylindrical | r | r, phi（极平面） | r, z, phi |
+| Cylindrical | r | r, z（轴对称平面） | r, z, phi |
+
+计算几何决定了网格的逻辑轴、度量和守恒量表示：二维 spherical 使用极平面 (r,phi)，而二维 cylindrical 使用轴对称平面 (r,z)（即 RZ）。在 RZ 中，r 和 z 均为长度，虽然 phi 不作为网格方向，但由于物理空间是三维的，三个速度分量依然存在。三维 cylindrical 则使用 (r,z,phi)。
 
 以原点为球心的三维球对称密度分布为例，沿用上方算例中的 `rho0_`、`amplitude_` 和 `width_`。在 `Init` 中，可以先用笛卡尔坐标写：
 
