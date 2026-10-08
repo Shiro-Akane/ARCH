@@ -808,3 +808,9 @@ Cartesian 完整 Newtonian 面应力通过原 CPU owner 的解析收敛、正密
 当前共享 gamma-law 墙压与同一低阶基准因子已通过原 CUDA `hydro_leaf_parity`（0.43 s）及 required EOS failure owner（0.43 s）；CPU原限制器0.01 s通过。编译179.976 s、selected累计819.768/900 s，未触发内存／交换／磁盘护栏。三维 trace、变系数配对 Cartesian 应力、真实物理BC功、正黏性可表示性和薄环 Native 角动量散度按各自 owner 范围签收。空CTest匹配曾执行但不计通过；改用实际注册名及 `--no-tests=error` 后真正执行原 owner。
 
 普通 Host/CUDA 墙面尚未传入实际 reflecting stage frame，不从等态、capture或Native身份推断其权限。后续以真实BC／root面／slot／version／ghost完成证明推广同一共享墙压，避免双实现。RKL1/2周期剪切与压缩模态的真实多块科学验收正在原owner内准备，不新增CTest。整套 release、全曲线/CF张量、连续自引力能量、完整NativeDevice、真实UI运行、正式计时和长跑仍开放。
+
+### 2026-10-08 — 显式边界证明与源语义检查点
+
+最终 D/N/R 行的系数包络现对应实际消元后的 L、beta 和独立 anchor k；纯通量行的常数势不产生虚假误差。非周期 Neumann 保留完整密度，由原 Gauss 相容性检查决定问题是否可解；仅全周期拓扑采用背景均值扣除。生产系数、求解器、公差和运行资格均保持。原 CPU 泊松两个 owner 全部通过（保护器 11.068 s），没有新增 CTest。处理后的记录见 `validation/gravity/results/release-closure-20261007/native-final-boundary-source-contract-summary.json`。
+
+EOS 面近似按用户确认退役；完整面 EOS、精确状态缓存、电子补偿及 Coulomb 控制保留。本节点尚未关闭 RZ 显式边界的实际源/字段身份、连续精度与能量、完整曲线应力/CF、最终 CPU/CUDA/GUI、正式匹配终点计时和长跑验收；上个 CUDA 26/26 检查点不能替代本次数学头文件变更后的验证。下一步由同一真实密度汇集建立共同 source 身份，再分别审查孤立积分与显式 datum 证据，不新增重复密度缓存或伪造积分证明。

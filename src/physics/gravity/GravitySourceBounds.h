@@ -1,8 +1,19 @@
 /**
- * Internal companion certificate for the existing isolated source -4*pi*G*rho.
- * Uses authoritative stored rho/shared CGS G, mathematical pi enclosure and
- * actual computed source. Never a second source producer or simulation path.
- * Periodic and isolated paths have distinct reference contracts.
+ * @file GravitySourceBounds.h
+ * @brief Companion error ledgers for the actual Poisson density source.
+ *
+ * Workflow:
+ * 1. Select the source contract by actual all-periodic boundary topology.
+ * 2. Keep rho unchanged for isolated or prescribed flux/value boundaries;
+ *    wholly periodic gravity instead uses rho minus its normalized mean.
+ * 3. Enclose shared CGS G, mathematical pi and the same supplied FP64 rho.
+ * 4. Compare against the actual produced source and bound stored-weight RMS.
+ * 5. Reject missing, nonfinite or collapsed positive uncentered sources.
+ *
+ * A=-Laplacian: b=-4*pi*G*rho or b=-4*pi*G*(rho-mean(rho)). A Neumann
+ * constant nullspace does not authorize background subtraction: actual flux
+ * compatibility and field existence remain the operator/solve owner's duty.
+ * These are error companions, not a second producer or a field capability.
  */
 #pragma once
 #include <cmath>
@@ -22,11 +33,15 @@ struct GravitySourceBounds {
     // Norm is conditional on stored native weights, not ideal geometry.
     double norm_upper=std::numeric_limits<double>::infinity();
 };
-inline GravitySourceBounds bound_isolated_gravity_source(
+/** Enclose b=-4*pi*G*rho for every nonperiodic source without altering rho.
+ * A pure-flux operator may have a free gauge; this certificate alone proves
+ * neither its Gauss compatibility nor its solved potential/force accuracy.
+ */
+inline GravitySourceBounds bound_uncentered_gravity_source(
     const arch::elliptic::CompositePoisson& op,std::span<const double> density,
     std::span<const double> computed_source) {
     GravitySourceBounds result{};
-    if(op.has_constant_nullspace()) {
+    if(op.periodic_boundary()) {
         result.status=GravitySourceBoundStatus::UnsupportedPeriodic;return result;
     }
     if(density.size()!=static_cast<std::size_t>(op.size())
@@ -97,7 +112,7 @@ inline GravitySourceBounds bound_periodic_gravity_source(
     std::span<const double> computed_source) {
     using namespace gravity_source_detail;
     GravitySourceBounds result{};
-    if(!op.has_constant_nullspace()) {
+    if(!op.periodic_boundary()) {
         result.status=GravitySourceBoundStatus::UnsupportedNonperiodic;return result;
     }
     if(density.empty()||density.size()!=static_cast<std::size_t>(op.size())

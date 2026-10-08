@@ -132,6 +132,8 @@ struct NativeRzStencilEnclosure {
     std::size_t face_index=0;
     std::vector<double> coefficient_lower,coefficient_upper,coefficient_error_upper;
     double boundary_lower=0.,boundary_upper=0.,boundary_error_upper=0.;
+    // Final eliminated anchor k: flux rows store k=-alpha*q separately from beta.
+    double anchor_lower=0.,anchor_upper=0.,anchor_error_upper=0.;
     double inverse_residual_upper=0.,inverse_norm_upper=0.,lambda_error_upper=0.;
 };
 /** Ideal root-dyadic face geometry and signed native boundary-map factors.

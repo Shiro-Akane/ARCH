@@ -412,7 +412,7 @@ RingBoundaryBudgetProposal GravityBoundary::propose_ring_budget(
     result.source_generation=source_generation_;
     if(!std::isfinite(rtol)||rtol<=0.||rtol>=1.
         ||!std::isfinite(atol)||atol<0.)return result;
-    const auto source_error=bound_isolated_gravity_source(op,ring_density_,computed_source);
+    const auto source_error=bound_uncentered_gravity_source(op,ring_density_,computed_source);
     if(source_error.status!=GravitySourceBoundStatus::Bounded) {
         result.status=source_error.status==GravitySourceBoundStatus::Overflow
             ?RingBudgetStatus::Overflow:RingBudgetStatus::InvalidInput;return result;
@@ -742,7 +742,7 @@ RingRhsAssessment GravityBoundary::assess_ring_rhs(
     result.source=ring.source;result.source_generation=ring.source_generation;
     if(ring.source.gravitational_constant!=arch::constants::gravity::cgs::gravitational_constant)
         return result; // This physical source companion uses the authoritative shared G.
-    result.source_error=bound_isolated_gravity_source(op,ring_density_,computed_source);
+    result.source_error=bound_uncentered_gravity_source(op,ring_density_,computed_source);
     result.boundary_error=op.propagate_boundary_error(ring.errors);
     result.assembly_error=op.bound_rhs_assembly_roundoff(computed_source,ring.values,computed_rhs);
     result.residual_error=op.bound_residual_evaluation_roundoff(potential,computed_rhs,computed_residual);
@@ -799,7 +799,7 @@ RingRhsAssessment GravityBoundary::assess_native_ring_rhs(
                 ?BoundaryResidualStatus::Overflow:BoundaryResidualStatus::InvalidInput);
         return result;
     }
-    result.source_error=bound_isolated_gravity_source(op,ring_density_,source);
+    result.source_error=bound_uncentered_gravity_source(op,ring_density_,source);
     result.native_boundary_construction=op.native_rz_boundary_construction_error(ring.values);
     result.assembly_error=op.bound_rhs_assembly_roundoff(source,ring.values,rhs);
     result.native_residual_error=op.native_rz_residual_evaluation_error(potential,rhs,residual);

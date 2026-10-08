@@ -1345,6 +1345,39 @@ NativeRzStencilEnclosure CompositePoisson::compute_native_rz_stencil_enclosure(s
     if(coefficients.size()!=face.coefficients.size()||!finite_range(boundary_coefficient)) {
         result.status=BoundaryErrorStatus::Overflow;return result;
     }
+    // Workflow: Q and q above enclose the original fitted Dirichlet row.
+    // Certify the FINAL policy-eliminated row, never compare pre-elimination
+    // Q/q with actual L/beta. Interior and Dirichlet retain their old path.
+    // D=a+b*s*q>0; L_i=(a/D)*Q_i, beta=q/D, k=-(a/D)*q.
+    ArithmeticRange anchor_coefficient{};
+    if(boundary && boundary_.conditions[face.boundary_side].kind!=FaceBoundaryKind::Dirichlet) {
+        const auto& condition=boundary_.conditions[face.boundary_side];
+        const double sign=(face.boundary_side&1)?1.:-1.;
+        const auto denominator=range_add({condition.a,condition.a},
+            range_product({condition.b,condition.b},
+                range_product({sign,sign},boundary_coefficient)));
+        if(!finite_range(denominator)||denominator.lo<=0.) {
+            result.status=BoundaryErrorStatus::UncertifiedInput;return result;
+        }
+        if(condition.a==0.) {
+            // Exact flux law: q cancels, beta=s/b and L_i=k=0. This is not
+            // cancellation of stored beta/k nor a general residual certificate.
+            for(auto& coefficient:coefficients)coefficient={};
+            boundary_coefficient=range_divide_positive({sign,sign},{condition.b,condition.b});
+        } else {
+            const auto alpha=range_divide_positive({condition.a,condition.a},denominator);
+            anchor_coefficient=range_negate(range_product(alpha,boundary_coefficient));
+            for(auto& coefficient:coefficients)coefficient=range_product(alpha,coefficient);
+            boundary_coefficient=range_divide_positive(boundary_coefficient,denominator);
+        }
+    }
+    if(!finite_range(boundary_coefficient)||!finite_range(anchor_coefficient)) {
+        result.status=BoundaryErrorStatus::Overflow;return result;
+    }
+    result.anchor_lower=anchor_coefficient.lo;result.anchor_upper=anchor_coefficient.hi;
+    result.anchor_error_upper=bound_up(std::max(
+        std::abs(face.anchor_coefficient-anchor_coefficient.lo),
+        std::abs(face.anchor_coefficient-anchor_coefficient.hi)));
     result.boundary_lower=boundary_coefficient.lo;result.boundary_upper=boundary_coefficient.hi;
     result.boundary_error_upper=bound_up(std::max(std::abs(face.boundary_coefficient-boundary_coefficient.lo),
         std::abs(face.boundary_coefficient-boundary_coefficient.hi)));
@@ -1357,7 +1390,8 @@ NativeRzStencilEnclosure CompositePoisson::compute_native_rz_stencil_enclosure(s
         result.coefficient_lower.push_back(v.lo);result.coefficient_upper.push_back(v.hi);
         result.coefficient_error_upper.push_back(error);
     }
-    result.status=std::isfinite(result.boundary_error_upper)?BoundaryErrorStatus::Bounded:BoundaryErrorStatus::Overflow;
+    result.status=std::isfinite(result.boundary_error_upper)&&std::isfinite(result.anchor_error_upper)
+        ?BoundaryErrorStatus::Bounded:BoundaryErrorStatus::Overflow;
     return result;
 }
 /** Enclose geometry and signed B from the same ideal root/leaf/face identity.
@@ -1588,16 +1622,39 @@ NativeRzOperatorConstructionError CompositePoisson::native_rz_operator_construct
                 const double term=bound_product(factor,range_abs_upper(difference));
                 contribution=bound_up(contribution+term);
             }
-            // For prescribed data, the SAME ideal/stored B coefficient also
-            // occurs in A. Keep its defect multiplied by phi_anchor-datum;
-            // subtraction is enclosed, never assumed an exact rounded double.
-            const auto boundary_difference=boundary_values.empty()
-                ?ArithmeticRange{phi[anchor],phi[anchor]}
-                :range_add({phi[anchor],phi[anchor]},
-                    {-boundary_values[index],-boundary_values[index]});
-            const double boundary_term=bound_product(geometry.boundary_map_error_upper[side],
-                range_abs_upper(boundary_difference));
-            contribution=bound_up(contribution+boundary_term);
+            if(has_flux_boundary(face)) {
+                // The eliminated flux row is sum L_i*(Phi_i-Phi_A)+k*Phi_A
+                // for homogeneous A, with ideal k=-alpha*q=-a*beta. The
+                // actual stored k is independent of stored beta rounding;
+                // enclose its OWN area/volume map instead of borrowing the
+                // Dirichlet beta*(datum-Phi_A) identity. Pure Neumann has
+                // ideal/stored k=0 and never acquires a potential dependency.
+                const auto ideal_anchor=range_product(quotient,
+                    {stencil.anchor_lower,stencil.anchor_upper});
+                const auto stored_anchor=range_divide_volume(range_product(
+                    {face.area,face.area},
+                    {face.anchor_coefficient,face.anchor_coefficient}),volumes_[cell]);
+                const double anchor_error=range_abs_upper(range_add(ideal_anchor,
+                    range_negate(stored_anchor)));
+                contribution=bound_up(contribution+bound_product(anchor_error,std::abs(phi[anchor])));
+                // Generic prescribed data would contribute a separate beta*c
+                // map. The public correlated prescribed proof below remains
+                // restricted to its qualified isolated Dirichlet boundary.
+                if(!boundary_values.empty())contribution=bound_up(contribution+
+                    bound_product(geometry.boundary_map_error_upper[side],
+                        std::abs(boundary_values[index])));
+            } else {
+                // Dirichlet uses the SAME ideal/stored B map in A. Preserve
+                // its original correlated Phi_A-datum bound and operation
+                // order, including an exact zero for a common constant.
+                const auto boundary_difference=boundary_values.empty()
+                    ?ArithmeticRange{phi[anchor],phi[anchor]}
+                    :range_add({phi[anchor],phi[anchor]},
+                        {-boundary_values[index],-boundary_values[index]});
+                const double boundary_term=bound_product(geometry.boundary_map_error_upper[side],
+                    range_abs_upper(boundary_difference));
+                contribution=bound_up(contribution+boundary_term);
+            }
             result.cell_bounds[cell]=bound_up(result.cell_bounds[cell]+contribution);
             if(!std::isfinite(result.cell_bounds[cell])) {result.status=BoundaryErrorStatus::Overflow;return result;}
         }
@@ -1767,13 +1824,22 @@ PoissonArithmeticError CompositePoisson::bound_residual_evaluation_roundoff(
         const int anchor=f.left>=0?f.left:f.right;
         ArithmeticRange gradient{};
         for(std::size_t k=0;k<f.samples.size();++k) {
+            // A pure flux row's zero coefficient does not consume Phi at all,
+            // matching composite_face_gradient even for extreme finite values.
+            if(has_flux_boundary(f)&&f.coefficients[k]==0.)continue;
             const double value=potential[f.samples[k]],base=potential[anchor];
             const auto difference=range_add({value,value},range_negate({base,base}));
             gradient=range_add(gradient,
                 range_product({f.coefficients[k],f.coefficients[k]},difference));
         }
-        gradient=range_add(gradient,range_product({f.boundary_coefficient,f.boundary_coefficient},
-            {-potential[anchor],-potential[anchor]}));
+        if(has_flux_boundary(f)) {
+            if(f.anchor_coefficient!=0.)gradient=range_add(gradient,
+                range_product({f.anchor_coefficient,f.anchor_coefficient},
+                    {potential[anchor],potential[anchor]}));
+        } else {
+            gradient=range_add(gradient,range_product({f.boundary_coefficient,f.boundary_coefficient},
+                {-potential[anchor],-potential[anchor]}));
+        }
         const auto flux=range_product({f.area,f.area},gradient);
         if(f.left>=0)exact[f.left]=range_add(exact[f.left],
             range_negate(range_divide_volume(flux,volumes_[f.left])));

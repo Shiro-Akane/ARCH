@@ -609,6 +609,128 @@ void native_zero_area_boundary_nullspace() {
     }
 }
 
+/** Final D/N/R certificates on actual native uniform and mixed operators.
+ * Workflow: prescribe exact binary-rational a,b and affine Phi=x_axis, whose
+ * exact normal derivative is 1 and datum c=a*x_face+b*s. Read the actual row,
+ * compare its certified defects and independently accumulate its ideal range.
+ * The a=0 laws also prove zero Phi dependence without a residual-scope grant.
+ */
+void native_final_boundary_stencil_enclosure() {
+    using K=elliptic::FaceBoundaryKind;
+    const std::array<elliptic::FaceBoundaryCondition,4> laws{{
+        {K::Dirichlet,1.,0.},{K::Neumann,0.,1.},
+        {K::Robin,2.,.5},{K::Robin,0.,2.}}};
+    auto base=base_mesh(2,4);base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.origin={0.,-.5,0.};base.spacing={.25,.25,1.};
+    base.native_canonical_domain=true;base.root_upper={1.,.5,0.};
+    const auto encloses=[](double lo,double hi,double error,double actual) {
+        return std::isfinite(lo)&&std::isfinite(hi)&&std::isfinite(error)
+            &&lo<=hi&&error>=0.
+            &&std::abs(actual-lo)<=error&&std::abs(actual-hi)<=error;
+    };
+    for(bool mixed:{false,true}) for(const auto law:laws) {
+        elliptic::CompositeBoundary boundary;
+        boundary.sides.fill(K::Neumann);
+        for(int side=0;side<4;++side) {
+            boundary.sides[side]=law.kind;boundary.conditions[side]=law;
+        }
+        const elliptic::CompositePoisson op(base,make_cells(base,mixed),boundary);
+        int checked=0;
+        for(std::size_t index=0;index<op.faces().size();++index) {
+            const auto& face=op.faces()[index];if(face.boundary_side<0)continue;
+            ++checked;
+            const auto proof=op.native_rz_stencil_enclosure(index);
+            require(proof.status==elliptic::BoundaryErrorStatus::Bounded,
+                "final native D/N/R row has no coefficient certificate");
+            require(proof.coefficient_lower.size()==face.samples.size()
+                &&proof.coefficient_upper.size()==face.samples.size()
+                &&proof.coefficient_error_upper.size()==face.samples.size(),
+                "final native certificate detached from actual samples");
+            require(encloses(proof.boundary_lower,proof.boundary_upper,
+                    proof.boundary_error_upper,face.boundary_coefficient)
+                &&encloses(proof.anchor_lower,proof.anchor_upper,
+                    proof.anchor_error_upper,face.anchor_coefficient),
+                "final datum/anchor construction defect is not bounded");
+            const int anchor=face.left>=0?face.left:face.right;
+            const double sign=(face.boundary_side&1)?1.:-1.;
+            const double datum=law.a*face.center[face.axis]+law.b*sign;
+            const double phi_anchor=op.center(anchor)[face.axis];
+            std::vector<double> phi(op.size());
+            for(int cell=0;cell<op.size();++cell)phi[cell]=op.center(cell)[face.axis];
+            long double low=0.,high=0.;
+            // Directed long-double accumulation only transports the already
+            // certified intervals; it is not an independent Gram certificate.
+            const auto accumulate=[&](double l,double h,long double factor) {
+                const long double a=l*factor,b=h*factor;
+                low=std::nextafter(low+std::min(a,b),-std::numeric_limits<long double>::infinity());
+                high=std::nextafter(high+std::max(a,b),std::numeric_limits<long double>::infinity());
+            };
+            for(std::size_t sample=0;sample<face.samples.size();++sample) {
+                require(encloses(proof.coefficient_lower[sample],proof.coefficient_upper[sample],
+                    proof.coefficient_error_upper[sample],face.coefficients[sample]),
+                    "final sample coefficient defect is not bounded");
+                accumulate(proof.coefficient_lower[sample],proof.coefficient_upper[sample],
+                    static_cast<long double>(phi[face.samples[sample]])-phi_anchor);
+            }
+            accumulate(proof.boundary_lower,proof.boundary_upper,
+                law.kind==K::Dirichlet?static_cast<long double>(datum)-phi_anchor:datum);
+            accumulate(proof.anchor_lower,proof.anchor_upper,phi_anchor);
+            require(low<=1.L&&high>=1.L,
+                "final ideal D/N/R row does not enclose its exact rational affine derivative");
+            if(law.kind==K::Dirichlet) {
+                require(proof.anchor_lower==0.&&proof.anchor_upper==0.,
+                    "Dirichlet enclosure invented an explicit anchor term");
+            } else if(law.a==0.) {
+                const double exact_beta=sign/law.b;
+                require(proof.boundary_lower<=exact_beta&&proof.boundary_upper>=exact_beta
+                    &&proof.anchor_lower==0.&&proof.anchor_upper==0.,
+                    "analytic Neumann/zero-a Robin elimination was not certified");
+                for(std::size_t sample=0;sample<face.samples.size();++sample)
+                    require(proof.coefficient_lower[sample]==0.&&proof.coefficient_upper[sample]==0.,
+                        "analytic flux enclosure retains a Phi coefficient");
+                std::fill(phi.begin(),phi.end(),1.e100);
+                require(std::abs(op.face_gradient(phi,face,datum)-1.)
+                    <=elliptic::CompositePoisson::compatibility_roundoff,
+                    "actual flux boundary depends on an irrelevant large potential");
+            }
+        }
+        require(checked>0,"native final-stencil fixture exercised no physical rows");
+        if(law.a==0.) {
+            // The actual whole homogeneous flux operator annihilates a
+            // constant, including its boundary rows. Its construction and
+            // evaluation ledgers must describe that same law, not beta*Phi_A.
+            std::vector<double> constant(op.size(),1.e100),zero(op.size(),0.),residual(op.size());
+            op.apply(constant,residual);
+            for(double value:residual)require(value==0.,
+                "actual homogeneous flux operator retained constant Phi");
+            const auto construction=op.native_rz_operator_construction_error(constant);
+            const auto arithmetic=op.bound_residual_evaluation_roundoff(constant,zero,residual);
+            require(construction.status==elliptic::BoundaryErrorStatus::Bounded
+                &&construction.native_norm_upper==0.,
+                "flux operator construction ledger invented a constant-potential dependence");
+            require(arithmetic.status==elliptic::BoundaryErrorStatus::Bounded
+                &&arithmetic.norm_upper==0.,
+                "flux residual arithmetic ledger used a Dirichlet anchor law");
+            // A free potential gauge does not turn physical density into a
+            // periodic contrast. The companion can enclose this real source,
+            // while the unchanged Gauss gate rejects zero-flux positive mass.
+            const std::vector<double> density(op.size(),1.);
+            const double factor=-4.*pi*constants::gravity::cgs::gravitational_constant;
+            const std::vector<double> source(op.size(),factor);
+            require(Physical::Gravity::bound_uncentered_gravity_source(op,density,source).status
+                ==Physical::Gravity::GravitySourceBoundStatus::Bounded,
+                "pure flux source was incorrectly classified as a periodic contrast");
+            require(Physical::Gravity::bound_periodic_gravity_source(op,density,source).status
+                ==Physical::Gravity::GravitySourceBoundStatus::UnsupportedNonperiodic,
+                "Neumann nullspace authorized periodic background subtraction");
+            bool incompatible=false;
+            try {op.validate_compatibility(source);}catch(const std::invalid_argument&){incompatible=true;}
+            require(incompatible,"source enclosure bypassed actual zero-flux Gauss compatibility");
+        }
+    }
+}
+
 /** Pure Neumann nullspace, volume-weighted gauge and source compatibility. */
 void pure_neumann_compatibility() {
     using K=elliptic::FaceBoundaryKind;
@@ -2119,7 +2241,7 @@ void native_ring_solved_probe(bool mixed=false,bool dynamic_budget=false,bool bu
         if(budget_only) {
             require(proposal.basis==RingBudgetBasis::PositiveIsolatedRhs,
                 "heterogeneous source missing proved RHS basis");
-            const auto bounds=bound_isolated_gravity_source(op,density,source);
+            const auto bounds=bound_uncentered_gravity_source(op,density,source);
             if(!first)std::cout<<',';first=false;
             std::cout<<"{\"budget_only\":true,\"dynamic_budget\":true,\"mixed\":"<<mixed
                 <<",\"radial_origin\":"<<origin<<",\"origin\":";dump(base.origin);
@@ -2391,7 +2513,7 @@ void isolated_gravity_source_probe() {
     std::vector<double> density(op.size()),source(op.size());
     const double factor=-4.*constants::math::pi*constants::gravity::cgs::gravitational_constant;
     for(int i=0;i<op.size();++i){density[i]=samples[i%9];source[i]=factor*density[i];}
-    const auto bounds=bound_isolated_gravity_source(op,density,source);
+    const auto bounds=bound_uncentered_gravity_source(op,density,source);
     require(bounds.status==GravitySourceBoundStatus::Bounded,
         "isolated source construction bounds missing");
     const auto dump=[](const auto& x) {
@@ -2403,23 +2525,23 @@ void isolated_gravity_source_probe() {
     std::cout<<",\"upper\":";dump(bounds.upper);std::cout<<",\"cellBounds\":";dump(bounds.cell_bounds);
     std::cout<<",\"weights\":";dump(op.norm_weights());std::cout<<",\"normUpper\":"<<bounds.norm_upper;
     auto zero=density;std::fill(zero.begin(),zero.end(),0.);
-    require(bound_isolated_gravity_source(op,zero,zero).norm_upper==0.,
+    require(bound_uncentered_gravity_source(op,zero,zero).norm_upper==0.,
         "exact zero source acquired hidden floor");
     auto tiny=density;std::fill(tiny.begin(),tiny.end(),std::numeric_limits<double>::denorm_min());
-    require(bound_isolated_gravity_source(op,tiny,zero).status==GravitySourceBoundStatus::CollapsedToZero,
+    require(bound_uncentered_gravity_source(op,tiny,zero).status==GravitySourceBoundStatus::CollapsedToZero,
         "positive unrepresentable source accepted as zero");
     tiny[0]=-1.;
-    require(bound_isolated_gravity_source(op,tiny,source).status==GravitySourceBoundStatus::InvalidInput,
+    require(bound_uncentered_gravity_source(op,tiny,source).status==GravitySourceBoundStatus::InvalidInput,
         "negative physical density accepted");
     auto invalid=source;invalid[0]=std::numeric_limits<double>::quiet_NaN();
-    require(bound_isolated_gravity_source(op,density,invalid).status==GravitySourceBoundStatus::InvalidInput,
+    require(bound_uncentered_gravity_source(op,density,invalid).status==GravitySourceBoundStatus::InvalidInput,
         "NaN source acquired certificate");
     invalid=source;invalid[8]=std::numeric_limits<double>::max();
-    require(bound_isolated_gravity_source(op,density,invalid).status==GravitySourceBoundStatus::Overflow,
+    require(bound_uncentered_gravity_source(op,density,invalid).status==GravitySourceBoundStatus::Overflow,
         "unrepresentable error distance acquired finite certificate");
     auto cart=base_mesh(2,4);
     elliptic::CompositePoisson periodic(cart,make_cells(cart,false),elliptic::BoundaryKind::Periodic);
-    require(bound_isolated_gravity_source(periodic,{},{}).status==GravitySourceBoundStatus::UnsupportedPeriodic,
+    require(bound_uncentered_gravity_source(periodic,{},{}).status==GravitySourceBoundStatus::UnsupportedPeriodic,
         "total density certified as periodic contrast source");
     std::cout<<",\"negativePass\":true}\n";
 }
@@ -3048,6 +3170,8 @@ void native_rz_geometry_cache_contract() {
             &&a.coefficient_error_upper==b.coefficient_error_upper
             &&a.boundary_lower==b.boundary_lower&&a.boundary_upper==b.boundary_upper
             &&a.boundary_error_upper==b.boundary_error_upper
+            &&a.anchor_lower==b.anchor_lower&&a.anchor_upper==b.anchor_upper
+            &&a.anchor_error_upper==b.anchor_error_upper
             &&a.inverse_residual_upper==b.inverse_residual_upper
             &&a.inverse_norm_upper==b.inverse_norm_upper&&a.lambda_error_upper==b.lambda_error_upper;
     };
@@ -4286,7 +4410,7 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="policy") {
             tiny_physical_boundary();
             mixed_cartesian_boundary();curved_mixed_boundary();
-            native_zero_area_boundary_nullspace();
+            native_zero_area_boundary_nullspace();native_final_boundary_stencil_enclosure();
             pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;
         }
         if(argc>1 && std::string(argv[1])=="ci") {
@@ -4299,7 +4423,7 @@ int main(int argc,char** argv) {
             convergence(2);radial_convergence();curved_manufactured();
             curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);
             mixed_cartesian_boundary();curved_mixed_boundary();
-            native_zero_area_boundary_nullspace();
+            native_zero_area_boundary_nullspace();native_final_boundary_stencil_enclosure();
             pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;
         }
         averaged_source_exactness();
