@@ -20,6 +20,8 @@ Use this page to choose the capabilities needed for a simulation. The reference 
 
 General radiation transport is outside the current feature set. Thermal diffusion and radiation thermodynamics in an EOS follow their respective models.
 
+Small curved cells near the origin or poles can substantially restrict timesteps and increase AMR evolution cost; near-origin accuracy limits depend on the tested problem. Releases use the current mesh, with radial mapping and AMR mesh redesign considered separately.
+
 ## Self-gravity domains
 
 `gravity_type=self` uses the same Poisson mathematics and composite AMR path on CPU and CUDA. Fluid-face boundaries must match `gravity_boundary` and the mesh topology.
