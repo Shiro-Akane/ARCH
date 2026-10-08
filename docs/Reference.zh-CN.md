@@ -259,8 +259,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 - 标准、算例和组分声明完成所有权判断后，未知键明确报错；
 - 算例参数必须在 Setup 前声明；`SimConfig::Get<T>` 读取已解析的声明值，第二个实参不补齐缺项。非法值保留原 token，但没有有效 resolved 值或来源；
 - 网格边界 `x1/x2/x3_min/max` 及引力参数 `gravity_g_x/y/z` 使用轻量表达式解析器，支持小写 `pi`、`-pi`、`2*pi`、`pi*2`、`pi/2` 和 `exp(number)`，例如 `exp(1)`；结果必须有限。独立的 `e/E` 常数及 `sin`、`cos`、`log` 不属于 `.par` 表达式语法；`1e8`/`1E8` 中的 `e/E` 仅是科学记数法的指数标记；
-- 路径相对于进程工作目录解释；
-- EOS dispatch 会移除 `eos_table_path` 的引号，普通字符串则保留解析器文本。
+- 路径相对于进程工作目录解释。普通路径无需外围引号，例如 `out_dir = output/my run` 会保留内部空格；`#` 即使位于引号内也会开启注释；
+- EOS dispatch 会移除 `eos_table_path` 与 `eos_helm_table_path` 中的单双引号字符；其他字符串保留解析器文本，包括引号。
 
 无效选项按下表处理：
 

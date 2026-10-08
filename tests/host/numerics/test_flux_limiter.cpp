@@ -739,6 +739,60 @@ void test_ordinary_wall_sweeps() {
         "inactive ordinary wall flags reject before numerical publication");
 }
 
+/** Exercise extracted point assembly with the actual HLLC high policy.
+ * True B fractions are deliberately distinct from reconstructed fractions;
+ * their read occurs only after the high callback, retaining old EOS order.
+ * This is shared point wiring/atomicity, not a Runtime boundary certificate.
+ */
+void test_shared_point_wall_assembler() {
+    using Status=StationarySlipWallFlux::PointWallStatus;
+    constexpr double pressure=.00625;
+    const double sound=std::sqrt(1.4*pressure),true_xi[2]{.75,.25};
+    const FluidVector point{1.,0.,0.,0.,pressure/.4};
+    for(int dir=0;dir<3;++dir)for(int side=0;side<2;++side)for(int trial=0;trial<2;++trial) {
+        double left[2]{.25,.75},right[2]{.25,.75},low[2]{123.,456.},high_species[2]{123.,456.};
+        bool high_seen=false;int base_reads=0;
+        const auto read_base=[&](int species) {
+            check(high_seen,"true base composition is read after optional high policy");
+            ++base_reads;return true_xi[species];
+        };
+        const auto high_compute=[&](const FluidVector& L,const FluidVector& R,
+            const double* xl,const double* xr,const auto& eos,FluidVector& high,double* species) {
+            high_seen=true;
+            check(xl[0]==.25&&xr[0]==.25,"selected high receives reconstructed composition");
+            if(trial)throw std::runtime_error("documented optional high EOS failure");
+            FluxHLLC<PCMReconstruction>::compute_face_flux(L,R,xl,xr,2,eos,dir,1.,high,species);
+        };
+        FluidVector output{123.,456.,789.,123.,456.};
+        const auto status=StationarySlipWallFlux::assemble_point(point,point,point,point,
+            dir,side,2,pressure,sound,kEos,left,right,low,high_species,read_base,high_compute,output);
+        check(status==Status::valid&&high_seen&&base_reads==2,
+            "shared point wall consumes original high then true base exactly once");
+        check(output.rho==0.&&output.eng==0.&&high_species[0]==0.&&high_species[1]==0.,
+            "shared point wall publishes its actual zero-advection selected blend");
+        check(std::abs((dir==0?output.mom_u:dir==1?output.mom_v:output.mom_w)-pressure)
+                <=kBand*pressure,
+            "at-rest actual selected wall retains physical pressure traction in original rounding band");
+        check(left[0]==.75&&right[0]==.75,"required wall factor uses true mean composition");
+    }
+    double left[2]{.25,.75},right[2]{.25,.75},low[2]{123.,456.},high_species[2]{123.,456.};
+    int high_calls=0;
+    const auto read_base=[&](int species){return true_xi[species];};
+    const auto high_compute=[&](const FluidVector& L,const FluidVector& R,
+        const double* xl,const double* xr,const auto& eos,FluidVector& high,double* species) {
+        ++high_calls;FluxHLLC<PCMReconstruction>::compute_face_flux(L,R,xl,xr,2,eos,0,1.,high,species);
+    };
+    const FluidVector sentinel{123.,456.,789.,123.,456.};auto output=sentinel;
+    check(StationarySlipWallFlux::assemble_point(point,point,point,point,3,0,2,
+        pressure,sound,kEos,left,right,low,high_species,read_base,high_compute,output)
+            ==Status::invalid_metadata&&high_calls==0&&max_abs_diff(output,sentinel)==0.,
+        "shared wall invalid direction rejects before callback/output publication");
+    check(StationarySlipWallFlux::assemble_point(point,point,point,point,0,0,2,
+        -pressure,sound,kEos,left,right,low,high_species,read_base,high_compute,output)
+            !=Status::valid&&max_abs_diff(output,sentinel)==0.,
+        "invalid actual baseline pressure rejects without fluid publication");
+}
+
 /** The finite optional H is canonicalized before factor/publication; an
  * unresolved optional trial and invalid pressure must remain unchanged. */
 void test_stationary_candidate_projection() {
@@ -1199,6 +1253,7 @@ int main()
     test_shared_gamma_wall_third_direction();
     test_shared_gamma_selected_point_blend();
     test_ordinary_wall_sweeps();
+    test_shared_point_wall_assembler();
     test_stationary_candidate_projection();
     test_native_diffusion_boundary_work();
 

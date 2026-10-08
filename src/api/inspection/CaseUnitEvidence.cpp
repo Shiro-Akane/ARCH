@@ -29,7 +29,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"u_left", "cm/s"},
         {"u_right", "cm/s"},
     }}},
-    {"CellularDet", {"simulation/Cellular/Cellular.cpp", "afc2ae1c484def0d23e2f18c00da952cd886e1edf1883081bdc944874c4b9a01", {
+    {"CellularDet", {"simulation/Cellular/Cellular.cpp", "54cb01690f6879ba80d1e9d0179bd0e0416ea1e77e89cfe3a4886a027388a9cc", {
         {"rhoAmbient", "g/cm^3"},
         {"tempAmbient", "K"},
         {"rhoPerturb", "g/cm^3"},
@@ -39,7 +39,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"noiseAmplitude", "1"},
         {"shock_dir", "1"},
     }}},
-    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "fb21321b48c8455973bd971f6bf7d20b7f5dfbc410bb897dff8c65c5e8f55ca9", {
+    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "32a5f58224a372ae9bffc22e169153db00225d3b909989adcef78c36b64d8313", {
         {"rho0", "g/cm^3"},
         {"p0", "erg/cm^3"},
         {"amp", "1"},
@@ -62,7 +62,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"ambient_pressure", "erg/cm^3"},
         {"explosion_energy", "dimension-dependent-energy"},
     }}},
-    {"RT", {"simulation/RTinstability/RT_instab.cpp", "d0fcfcc78136d34dea31fff799892ac2c4ddaefcf1f60d5e4be33307b63b515a", {
+    {"RT", {"simulation/RTinstability/RT_instab.cpp", "a35f0c9fb67fbd226726b182a06afc76210006a3c9dfd0cd1b6b96efc6d0c9b5", {
         {"rho_heavy", "g/cm^3"},
         {"rho_light", "g/cm^3"},
         {"y_int", "cm"},
@@ -76,7 +76,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
@@ -124,7 +124,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
     {"UserGravity", {"simulation/UserGravity/case.cpp", "8d0254f84d93ffdf62ff42ed677c5d2181bac326a35a9f9f64c02e2b3a285a69", {
         {"user_boundary_heat_flux", "erg/(cm^2 s)"},
     }}},
-    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "2fe391554874d95e3802f4f7b5d66565f3afd5cf488da4b2a8c14b4d80e58a6a", {
+    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "d44b7189471e59045f81644069230315e6c73d6bab074d8c604e620ce20e0921", {
         {"rho0", "g/cm^3"},
         {"temperature0", "K"},
         {"temperature_peak", "K"},

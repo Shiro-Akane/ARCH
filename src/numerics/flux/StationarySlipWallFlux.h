@@ -275,4 +275,126 @@ ARCH_INLINE FluxAdmissibility::PointFaceBlend gamma_selected_point_blend(
         direction,high,species_high,canonical_low,species_low);
 }
 
+/** Point-only result: Host owns exception translation and publication. */
+enum class PointWallStatus : unsigned char {
+    valid,invalid_metadata,invalid_high_traction,inadmissible_baseline,
+    invalid_pressure_traction,nonfinite_flux,nonfinite_species
+};
+
+/** Assemble one stationary ordinary point wall with the existing selected law.
+ * Workflow: mirror actual interior H and immutable B independently; dispatch
+ * only explicit gamma-law moving walls; evaluate optional H through the original
+ * candidate EOS/selected policy; canonicalize FINITE H before its factor; then
+ * replace both Xi arrays with true B composition read in original species order.
+ * Required P/c are the actual already prepared interior mean cache values.
+ * The gamma low uses the sole selected-baseline factor; at rest/general EOS
+ * retains the original mirrored-policy LLF low and original bar/factor. Apply
+ * the same theta to all fluid/species and publish fluid ONLY after every check.
+ * No post-factor projection, effective-gamma substitute or second limiter.
+ *
+ * BaseSpecies(s) reads immutable true interior fractions AFTER high computation.
+ * HighCompute(left,right,XiL,XiR,trialEOS,H,highSpecies) owns the selected policy
+ * and any exact caller cache indices/coefficient, never Runtime wall authority.
+ * Four caller-owned S planes XiL/XiR/Xi_cell/highSpecies remain unpublished
+ * scratch, with actual disjoint extents; zero species permits null pointers.
+ * Input points are value copies for alias-safe mirroring. Fluid output can alias
+ * an input; it is assigned only after full success. Scratch may change on failure.
+ * This shared Host/device leaf owns no Grid, storage, boundary identity or EOS
+ * qualification. The caller retains actual required EOS preparation and guards.
+ */
+template<class Eos,class BaseSpecies,class HighCompute>
+ARCH_INLINE PointWallStatus assemble_point(FluidVector base_left,FluidVector base_right,
+    FluidVector U_L,FluidVector U_R,int dir,int wall_side,int n_spec,
+    double pressure,double speed,const Eos& eos,double* Xi_L,double* Xi_R,
+    double* Xi_cell,double* face_species_flux,const BaseSpecies& base_species,
+    const HighCompute& high_compute,FluidVector& output)
+{
+    if(dir<0||dir>2||(wall_side!=0&&wall_side!=1)||n_spec<0
+        ||(n_spec&&(!Xi_L||!Xi_R||!Xi_cell||!face_species_flux)))
+        return PointWallStatus::invalid_metadata;
+    if(wall_side==0) {
+        U_L=StationarySlipWallFlux::reflected_point(U_R,dir);
+        base_left=StationarySlipWallFlux::reflected_point(base_right,dir);
+        for(int s=0;s<n_spec;++s)Xi_L[s]=Xi_R[s];
+    } else {
+        U_R=StationarySlipWallFlux::reflected_point(U_L,dir);
+        base_right=StationarySlipWallFlux::reflected_point(base_left,dir);
+        for(int s=0;s<n_spec;++s)Xi_R[s]=Xi_L[s];
+    }
+    bool gamma_wall=false;
+    if constexpr(requires {eos.roe_gamma_minus_one(Xi_L);}) {
+        const auto& h=wall_side==0?U_R:U_L;
+        const auto& base=wall_side==0?base_right:base_left;
+        gamma_wall=(dir==0?h.mom_u:dir==1?h.mom_v:h.mom_w)!=0.
+            ||(dir==0?base.mom_u:dir==1?base.mom_v:base.mom_w)!=0.;
+    }
+    FluidVector high;
+    const auto& trial_eos=arch::state::candidate_eos(eos);
+    FluxAdmissibility::compute_candidate([&] {
+        if constexpr(requires {eos.roe_gamma_minus_one(Xi_L);}) {
+            if(gamma_wall) {
+                const auto& interior=wall_side==0?U_R:U_L;
+                const double* xi=wall_side==0?Xi_R:Xi_L;
+                double pressure=0.,speed=0.;
+                FluxAdmissibility::required_mean_thermo(interior,xi,trial_eos,pressure,speed);
+                if(StationarySlipWallFlux::gamma_wall_flux(interior,xi,trial_eos,
+                    dir,wall_side,pressure,speed,high)) {
+                    for(int s=0;s<n_spec;++s)face_species_flux[s]=0.;
+                } else {
+                    high=FluidVector(arch::state::invalid(),0.,0.,0.,arch::state::invalid());
+                    for(int s=0;s<n_spec;++s)face_species_flux[s]=arch::state::invalid();
+                }
+                return;
+            }
+        }
+        high_compute(U_L,U_R,Xi_L,Xi_R,trial_eos,high,face_species_flux);
+    },high,face_species_flux,n_spec);
+    if(StationarySlipWallFlux::stationary_candidate(
+        dir,high,face_species_flux,n_spec)
+            ==StationarySlipWallFlux::StationaryCandidateStatus::invalid)
+        return PointWallStatus::invalid_high_traction;
+    for(int s=0;s<n_spec;++s)Xi_L[s]=base_species(s);
+    for(int s=0;s<n_spec;++s)Xi_R[s]=Xi_L[s];
+    FluxAdmissibility::PointFaceBlend factor;
+    if(gamma_wall) {
+        if constexpr(requires {eos.roe_gamma_minus_one(Xi_L);})
+            factor=StationarySlipWallFlux::gamma_selected_point_blend(
+                base_left,base_right,Xi_L,Xi_R,n_spec,
+                pressure,speed,pressure,speed,eos,dir,wall_side,
+                high,face_species_flux,Xi_cell);
+    } else {
+        factor=FluxAdmissibility::point_face_blend_with_thermo(
+            base_left,base_right,Xi_L,Xi_R,n_spec,
+            pressure,speed,pressure,speed,dir,high,face_species_flux);
+    }
+    if(!factor.valid||!StationarySlipWallFlux::finite_flux(factor.low)
+        ||!std::isfinite(factor.theta)||factor.theta<0.||factor.theta>1.)
+        return PointWallStatus::inadmissible_baseline;
+    const double hp=dir==0?high.mom_u:dir==1?high.mom_v:high.mom_w;
+    const double lp=dir==0?factor.low.mom_u:dir==1?factor.low.mom_v:factor.low.mom_w;
+    if(hp<0.||(!std::isfinite(hp)&&factor.theta!=0.)||!std::isfinite(lp)||lp<0.)
+        return PointWallStatus::invalid_pressure_traction;
+    const auto blended=factor.theta==0.?factor.low:factor.theta==1.?high:
+        factor.low+factor.theta*(high-factor.low);
+    if(!StationarySlipWallFlux::finite_flux(blended))
+        return PointWallStatus::nonfinite_flux;
+    // Publish exactly the H/low blend verified above. No
+    // post-factor projection may change the verified object.
+    const double flrho=dir==0?base_left.mom_u:dir==1?base_left.mom_v:base_left.mom_w;
+    const double frrho=dir==0?base_right.mom_u:dir==1?base_right.mom_v:base_right.mom_w;
+    for(int s=0;s<n_spec;++s) {
+        const double low_species=gamma_wall?0.:
+            .5*flrho*Xi_L[s]+.5*frrho*Xi_R[s]
+            -(.5*factor.wave_speed)*(base_right.rho*Xi_R[s]-base_left.rho*Xi_L[s]);
+        const double value=factor.theta==0.?low_species:
+            factor.theta==1.?face_species_flux[s]:
+            low_species+factor.theta*(face_species_flux[s]-low_species);
+        if(!std::isfinite(value))
+            return PointWallStatus::nonfinite_species;
+        face_species_flux[s]=value;
+    }
+    output=blended;
+    return PointWallStatus::valid;
+}
+
 } // namespace StationarySlipWallFlux

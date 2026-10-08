@@ -677,7 +677,7 @@ void test_rz_mixed_hydro_stage(int direction,double inner) {
     amr::AMRControl control(32,2);
     control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
-        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0},rz);
     const auto& active=control.tree->GetActiveBlocks();
     std::vector<amr::BlockHandle> handles;
     const FluidVector reference{2.,0.,6.,0.,21.5}; // p5, vz3, zero swirl.
@@ -936,7 +936,7 @@ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false
     amr::AMRControl control(32,2);
     control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
-        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0},rz);
     const auto& active=control.tree->GetActiveBlocks();
     std::vector<amr::BlockHandle> handles;
     for(std::size_t n=0;n<active.size();++n) {
@@ -1184,7 +1184,7 @@ void test_rz_scheduled_hydro(int direction,double inner) {
     amr::AMRControl control(32,2);
     control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
-        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0},rz);
     const auto& active=control.tree->GetActiveBlocks();
     std::vector<amr::BlockHandle> handles;
     const FluidVector reference{2.,0.,6.,0.,21.5}; // p5, vz3, zero swirl.

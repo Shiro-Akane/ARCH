@@ -14,9 +14,10 @@
 
 | 内容 | 已确认的范围 | 下一出口 |
 | --- | --- | --- |
-| Host 边界身份与共享数学 | 普通/Native 统一 `HydroInputFrame`、精确 Tree/logical-root 身份，以及普通 Euler/RK2/RK3 生产壁面接线通过原三项 CPU owner；正压力中间量下溢修复同批复验 3/3 通过（34.03 s），保留原门槛 | 一般 EOS、完整曲线演化与设备权限独立验收；写前拒绝证据不替代普通路径后期失败的完整回退 |
-| Studio 构建发布 | 原 HostBuild owner 17/17、类型检查和 lint 通过；终态仅在最终身份刷新后发布 | 当前实现的真实活动进程关闭检查 |
-| 实际桌面与 Plot | `e995af61d` 下原生 Configure/Build/Run/Restart/Plot 已通过；续算的 20 个数值数据集、1095 个值逐位一致，另一个字符串数据集等值 | 后续源码冻结后复核当前 producer；活动关闭与全部支持交互仍单列 |
+| 当前 CPU 回归 | 完整现有非 tooling 清单65/68通过；曲线用例补齐真实RZ树绑定、五模型单位表达式人工复核重签后，原两项owner再次2/2通过（21.50 s）；不合并冒充新全量通过 | RZ user自引力入口与独立full-ring V/W账本仍失败；修正后重新执行原完整清单和CI完成性检查 |
+| Host 边界身份与共享数学 | 普通/Native 统一 `HydroInputFrame`、精确 Tree/logical-root 身份、普通 Euler/RK2/RK3 壁面接线通过原三项 CPU owner；同一壁面候选／低阶基态／限制因子汇入共享点组装器，完整CPU构建与原限制器、曲线owner通过；原数学及门槛保持 | 一般 EOS、完整曲线 FV/CF/配对功与设备权限独立验收；写前拒绝证据不替代普通路径后期失败的完整回退 |
+| Studio 构建发布 | 原 HostBuild owner 17/17、类型检查和 lint 通过；当前真实 Configure/Build/Run 已通过，正常关闭 GUI/Host 后同一 Sod 作业完成 8993 步至 t=0.2 | 后续共享数学源码的 producer 身份与完整支持交互矩阵独立复核 |
+| 实际桌面与 Plot | `e995af61d` 下原生 Configure/Build/Run/Restart/Plot 已通过；续算的 20 个数值数据集、1095 个值逐位一致，另一个字符串数据集等值 | 后续源码冻结后复核当前 producer；活动关闭已完成真实同作业验证，全部支持交互矩阵仍需验收 |
 | 数学与耦合 | 当前 Cartesian 全应力原 owner、共享曲线点张量与部分实际 CUDA 叶已有限定证据；暖态四模块、动态 AMR 与 fresh checkpoint 已有短程记录 | 完整曲线 FV/CF/配对功/稳定性、连续自引力总能量、NativeDevice 生命周期及长时验收 |
 | CUDA 与第二平台 | 完整构建累计 2300.127 s，保留已完成对象；选定叶通过。4070 Ti 记录按旧身份留存 | 完整 EOS/RKL、当前设备运行；新冻结配置下两平台正式同程配对组目前为 0 |
 

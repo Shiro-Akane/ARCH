@@ -369,9 +369,11 @@ Important behavior:
   `2*pi`, `pi*2`, `pi/2`, and `exp(number)` such as `exp(1)`. Results must be
   finite. Standalone `e/E`, `sin`, `cos`, and `log` are outside `.par` syntax;
   `e/E` in `1e8` or `1E8` is only a scientific-notation exponent marker;
-- paths are interpreted relative to the process working directory;
-- quotes are stripped from `eos_table_path` by EOS dispatch, but general strings
-  retain parser text.
+- paths are interpreted relative to the process working directory. Write ordinary
+  paths without surrounding quotes: `out_dir = output/my run` retains the internal
+  space. `#` starts a comment even inside quotes;
+- EOS dispatch removes single and double quote characters from `eos_table_path`
+  and `eos_helm_table_path`; other strings retain parser text, including quotes.
 
 Invalid selections are handled as follows:
 

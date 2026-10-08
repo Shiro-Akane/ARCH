@@ -191,97 +191,41 @@ void compute_fluxes(const FluidState& state, const EosType& eos, const Grid& gri
                             throw std::invalid_argument("Ordinary wall view has an invalid actual face");
                     }
                     if(wall_side>=0) {
-                        // High and immutable point means borrow the same real
-                        // interior separately; composition is mirrored with it.
-                        auto base_left=state.get(idx),base_right=state.get(idx+stride);
-                        if(wall_side==0) {
-                            U_L=StationarySlipWallFlux::reflected_point(U_R,dir);
-                            base_left=StationarySlipWallFlux::reflected_point(base_right,dir);
-                            for(int s=0;s<n_spec;++s)Xi_L[s]=Xi_R[s];
-                        } else {
-                            U_R=StationarySlipWallFlux::reflected_point(U_L,dir);
-                            base_right=StationarySlipWallFlux::reflected_point(base_left,dir);
-                            for(int s=0;s<n_spec;++s)Xi_R[s]=Xi_L[s];
-                        }
-                        bool gamma_wall=false;
-                        if constexpr(requires {eos.roe_gamma_minus_one(Xi_L.data());}) {
-                            const auto& h=wall_side==0?U_R:U_L;
-                            const auto& base=wall_side==0?base_right:base_left;
-                            gamma_wall=(dir==0?h.mom_u:dir==1?h.mom_v:h.mom_w)!=0.
-                                ||(dir==0?base.mom_u:dir==1?base.mom_v:base.mom_w)!=0.;
-                        }
-                        FluidVector high;
-                        const auto& trial_eos=arch::state::candidate_eos(eos);
-                        FluxAdmissibility::compute_candidate([&] {
-                            if constexpr(requires {eos.roe_gamma_minus_one(Xi_L.data());}) {
-                                if(gamma_wall) {
-                                    const auto& interior=wall_side==0?U_R:U_L;
-                                    const double* xi=wall_side==0?Xi_R.data():Xi_L.data();
-                                    double pressure=0.,speed=0.;
-                                    FluxAdmissibility::required_mean_thermo(interior,xi,trial_eos,pressure,speed);
-                                    if(StationarySlipWallFlux::gamma_wall_flux(interior,xi,trial_eos,
-                                        dir,wall_side,pressure,speed,high)) {
-                                        for(int s=0;s<n_spec;++s)face_species_flux[s]=0.;
-                                    } else {
-                                        high=FluidVector(arch::state::invalid(),0.,0.,0.,arch::state::invalid());
-                                        for(int s=0;s<n_spec;++s)face_species_flux[s]=arch::state::invalid();
-                                    }
-                                    return;
-                                }
-                            }
-                            FluxPolicy::compute_face_flux(U_L,U_R,Xi_L.data(),Xi_R.data(),n_spec,
-                                trial_eos,dir,coefficient,high,face_species_flux.data(),&mean_view,idx,idx+stride);
-                        },high,face_species_flux.data(),n_spec);
-                        if(StationarySlipWallFlux::stationary_candidate(
-                            dir,high,face_species_flux.data(),n_spec)
-                                ==StationarySlipWallFlux::StationaryCandidateStatus::invalid)
-                            throw std::runtime_error("Ordinary wall high has invalid pressure traction");
                         const int interior_cell=wall_side==0?idx+stride:idx;
-                        state.get_species_to_buffer(interior_cell,Xi_L.data());
-                        for(int s=0;s<n_spec;++s)Xi_R[s]=Xi_L[s];
-                        const double pressure=mean_cache->pressure[interior_cell];
-                        const double speed=mean_cache->sound_speed[interior_cell];
-                        FluxAdmissibility::PointFaceBlend factor;
-                        if(gamma_wall) {
-                            if constexpr(requires {eos.roe_gamma_minus_one(Xi_L.data());})
-                                factor=StationarySlipWallFlux::gamma_selected_point_blend(
-                                    base_left,base_right,Xi_L.data(),Xi_R.data(),n_spec,
-                                    pressure,speed,pressure,speed,eos,dir,wall_side,
-                                    high,face_species_flux.data(),Xi_cell.data());
-                        } else {
-                            factor=FluxAdmissibility::point_face_blend_with_thermo(
-                                base_left,base_right,Xi_L.data(),Xi_R.data(),n_spec,
-                                pressure,speed,pressure,speed,dir,high,face_species_flux.data());
-                        }
-                        if(!factor.valid||!StationarySlipWallFlux::finite_flux(factor.low)
-                            ||!std::isfinite(factor.theta)||factor.theta<0.||factor.theta>1.)
+                        const auto base_species=[&state,interior_cell](int species) {
+                            return state.X(species,interior_cell);
+                        };
+                        const auto high_compute=[&](const FluidVector& left,const FluidVector& right,
+                            const double* x_left,const double* x_right,const auto& trial_eos,
+                            FluidVector& high,double* species_high) {
+                            FluxPolicy::compute_face_flux(left,right,x_left,x_right,n_spec,
+                                trial_eos,dir,coefficient,high,species_high,&mean_view,idx,idx+stride);
+                        };
+                        FluidVector wall_flux;
+                        const auto status=StationarySlipWallFlux::assemble_point(
+                            state.get(idx),state.get(idx+stride),U_L,U_R,dir,wall_side,n_spec,
+                            mean_cache->pressure[interior_cell],mean_cache->sound_speed[interior_cell],
+                            eos,Xi_L.data(),Xi_R.data(),Xi_cell.data(),face_species_flux.data(),
+                            base_species,high_compute,wall_flux);
+                        using WallStatus=StationarySlipWallFlux::PointWallStatus;
+                        switch(status) {
+                        case WallStatus::valid:break;
+                        case WallStatus::invalid_metadata:
+                            throw std::invalid_argument("Ordinary point wall has invalid metadata");
+                        case WallStatus::invalid_high_traction:
+                            throw std::runtime_error("Ordinary wall high has invalid pressure traction");
+                        case WallStatus::inadmissible_baseline:
                             throw std::runtime_error("Ordinary selected wall has an inadmissible baseline");
-                        const double hp=dir==0?high.mom_u:dir==1?high.mom_v:high.mom_w;
-                        const double lp=dir==0?factor.low.mom_u:dir==1?factor.low.mom_v:factor.low.mom_w;
-                        if(hp<0.||(!std::isfinite(hp)&&factor.theta!=0.)||!std::isfinite(lp)||lp<0.)
+                        case WallStatus::invalid_pressure_traction:
                             throw std::runtime_error("Ordinary wall has invalid pressure traction");
-                        const auto blended=factor.theta==0.?factor.low:factor.theta==1.?high:
-                            factor.low+factor.theta*(high-factor.low);
-                        if(!StationarySlipWallFlux::finite_flux(blended))
+                        case WallStatus::nonfinite_flux:
                             throw std::runtime_error("Ordinary wall flux is not finite");
-                        // Publish exactly the H/low blend verified above. No
-                        // post-factor projection may change the verified object.
-                        const double flrho=dir==0?base_left.mom_u:dir==1?base_left.mom_v:base_left.mom_w;
-                        const double frrho=dir==0?base_right.mom_u:dir==1?base_right.mom_v:base_right.mom_w;
-                        for(int s=0;s<n_spec;++s) {
-                            const double low_species=gamma_wall?0.:
-                                .5*flrho*Xi_L[s]+.5*frrho*Xi_R[s]
-                                -(.5*factor.wave_speed)*(base_right.rho*Xi_R[s]-base_left.rho*Xi_L[s]);
-                            const double value=factor.theta==0.?low_species:
-                                factor.theta==1.?face_species_flux[s]:
-                                low_species+factor.theta*(face_species_flux[s]-low_species);
-                            if(!std::isfinite(value))
-                                throw std::runtime_error("Ordinary wall species flux is not finite");
-                            face_species_flux[s]=value;
+                        case WallStatus::nonfinite_species:
+                            throw std::runtime_error("Ordinary wall species flux is not finite");
                         }
-                        flux_out[idx+stride]=blended;
-                        for(int s=0;s<n_spec;++s)
-                            spec_flux_out[s*total_size+idx+stride]=face_species_flux[s];
+                        flux_out[idx+stride]=wall_flux;
+                        for(int species=0;species<n_spec;++species)
+                            spec_flux_out[species*total_size+idx+stride]=face_species_flux[species];
                         continue;
                     }
 

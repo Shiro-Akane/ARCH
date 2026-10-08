@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "utc": "2026-10-08T04:05:13.644569+00:00",
+  "status": "PASS_SCOPED_CPU_CHECKPOINT; FULL_RELEASE_NOT_COMPLETE",
+  "parentCommit": "1b722c20f7ae54dca602b198c4667482061d36d8",
+  "changes": [
+    "single shared stationary point wall assembler; original high/low/EOS/order/factor; no postfactorprojection",
+    "three existingRZ fixtureLoadLeafGrid calls explicitlybindnative semantics",
+    "five CGS units source expressions independentlyreviewed; manual SHA stamps refreshed; exactmatch/failclosedkept"
+  ],
+  "sourceSha256": {
+    "src/numerics/flux/StationarySlipWallFlux.h": "aec718d3b3b475409673d7cf39572692af8b37b371fee8fabd5aaa2fd60eb4e7",
+    "src/numerics/flux/FluxSweep.h": "be390bc82c65bb95c7f3bc7f5f0c93182ade5ff4b98b178be7751aa726b06432",
+    "src/api/inspection/CaseUnitEvidence.cpp": "82677700373f7a061563739d6d38828b5f9de51d295dfaaf2383a251af620db1",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "effc508525592c1f5cb9d818dabadd4353f8ddbbf40218b6353e0af411e23e44",
+    "tests/host/numerics/test_flux_limiter.cpp": "e5f947a2a5633ce5fde60fb33a88014bda49fbd9e39ad5bf4bebef61e11d9fbd"
+  },
+  "executables": {
+    "ARCH": "05bbb764c8eb26ad8de8c74d0217509a134757d33d42e54be585c18f64c10873",
+    "curvilinear_metrics": "c6e4f587d87f2504cc34726671b539bd3e2166f3858c62093d23753b836041a4"
+  },
+  "verification": {
+    "allExistingNonTooling": {
+      "total": 68,
+      "passed": 65,
+      "failed": [
+        "curvilinear_metrics",
+        "case_inspection_contract",
+        "self_gravity_physics"
+      ],
+      "testSeconds": 177.55,
+      "guardSeconds": 178.005,
+      "ciCompleteness": "REJECTED_NONZERO_FAILURES",
+      "originalFailureEvidenceKept": true
+    },
+    "repairBuild": {
+      "pass": true,
+      "guardSeconds": 64.253
+    },
+    "originalRepairedOwners": {
+      "passed": 2,
+      "testSeconds": 21.5,
+      "guardSeconds": 22.122,
+      "names": [
+        "curvilinear_metrics",
+        "case_inspection_contract"
+      ]
+    },
+    "originalFluxOwner": {
+      "passed": 1,
+      "testSeconds": 0.02,
+      "fullCpuBuildPass": true
+    },
+    "architectureAudit": {
+      "exit": 0,
+      "seconds": 5.381091551
+    }
+  },
+  "currentFullCpuPass": false,
+  "scientificThresholdsChanged": false,
+  "eosFaceApproximation": "RETIRED; fullEOS and exactstatecache/electron/Coulomb physics retained",
+  "remaining": [
+    "nativeRZ userGravity source ownership, conditional field certification and independentfullring VW accounting",
+    "complete curvedFV/CF/pairedwork/stability",
+    "continuumselfenergy/NativeDevice lifecycle",
+    "frozenmatchedendpointbenchmarks/longruns/currentsecondplatform comparison"
+  ],
+  "excludedPendingCuda": [
+    "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+    "tests/cuda/hydro/test_cuda_hydro_block.cu",
+    "tests/cuda/numerics/test_cuda_multiblock_diffusion.cu"
+  ],
+  "providerSummary": {
+    "DeepSeek": {
+      "purpose": "public independentFV axis consistency",
+      "sameLogicalAttempts": 2,
+      "seconds": 245.08,
+      "outcome": "TIMEOUT_NO_DELIVERABLE",
+      "tokens": null,
+      "money": null,
+      "extraRepair": 1,
+      "overlap": "Root CPU contract review/compile",
+      "blockingWaitSeconds": 0,
+      "retainSplit": "Adjust to smaller bounded math after realcontractfreeze; no universal speedup claim"
+    },
+    "Gemini": {
+      "purpose": "frozenWorkflowcomment prose",
+      "seconds": 36.782,
+      "reportedTotalTokens": 7514,
+      "money": null,
+      "outcome": "COMMENT_CANDIDATE_ACCEPTED_SCOPED; APPLY_DEFERRED",
+      "projectCodeChangedByWorker": false,
+      "overlap": "CUDAcompile/Rootreview",
+      "blockingWaitSeconds": 0
+    }
+  },
+  "rawData": "notuploaded; failedCPU batch175H5 13965472B retained; attemptedcleanupdeniedbeforeexecution for insufficientperfilecompletionproof"
+}
