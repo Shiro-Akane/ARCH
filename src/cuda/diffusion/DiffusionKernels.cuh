@@ -172,6 +172,13 @@ ARCH_INLINE int diffusion_face_cell(
     return grid.index(i, j, k);
 }
 
+struct DiffusionStateReader {
+    DeviceStateView state;
+    ARCH_INLINE FluidVector operator()(int cell) const { return state.load(cell); }
+    ARCH_INLINE double fraction(int species, int cell) const
+    { return state.mass_fractions[species * state.total_size + cell]; }
+};
+
 template <typename EosView>
 __global__ void diffusion_face_kernel(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
@@ -209,6 +216,7 @@ __global__ void diffusion_face_kernel(
             geometry.GetCellCenterX(i), geometry.GetCellCenterY(j));
         const FluidVector left = state.load(left_cell);
         const FluidVector right = state.load(right_cell);
+        DiffFlux::DiffusionFaceProperties properties{};
         const DiffFlux::DiffusionFaceStatus face_status =
             DiffFlux::evaluate_diffusion_face(
                 left, right,
@@ -223,12 +231,18 @@ __global__ void diffusion_face_kernel(
                     ? flux.mass_fractions + right_cell : nullptr,
                 flux.total_size, config.use_viscous_diffusion
                     ? DiffFlux::viscous_basis_rotation(geometry, direction, i, j)
-                    : DiffFlux::ViscousBasisRotation{});
+                    : DiffFlux::ViscousBasisRotation{}, &properties);
         if (!face_status.valid) {
             atomicExch(status, 1);
             continue;
         }
         if (face_status.active) {
+            if(!DiffFlux::replace_cartesian_viscous_flux(
+                DiffusionStateReader{state},
+                right_cell,geometry,direction,spacing,eos,species,config,
+                left_species,right_species,properties,charge,inverse_mass,face_flux)) {
+                atomicExch(status,1);continue;
+            }
             const int k = grid.ks + linear / (ni * nj);
             const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
                 grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
@@ -254,13 +268,6 @@ __global__ void diffusion_face_kernel(
         }
     }
 }
-
-struct DiffusionStateReader {
-    DeviceStateView state;
-    ARCH_INLINE FluidVector operator()(int cell) const { return state.load(cell); }
-    ARCH_INLINE double fraction(int species, int cell) const
-    { return state.mass_fractions[species * state.total_size + cell]; }
-};
 
 template <typename EosView>
 __global__ void diffusion_dt_candidates_kernel(

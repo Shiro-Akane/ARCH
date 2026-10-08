@@ -54,6 +54,11 @@ struct TestIdealGas
 {
     ARCH_INLINE double get_gamma(const double*) const { return 1.4; }
 
+    // This fixed-composition test EOS borrows the production single-gas
+    // temperature relation and CGS Cv; native mean admissibility requires it.
+    ARCH_INLINE double get_temperature(double rho,double energy,const double*) const
+    { return IdealGasView{}.get_temperature(rho,energy,nullptr); }
+
     ARCH_INLINE double get_pressure(const FluidVector& state, const double*) const
     {
         const double kinetic = 0.5
@@ -607,7 +612,11 @@ FaceResult characterize_face(double coefficient)
 
 bool exact_bits(double actual, std::uint64_t expected)
 {
-    return std::bit_cast<std::uint64_t>(actual) == expected;
+    const auto bits=std::bit_cast<std::uint64_t>(actual);
+    if(bits!=expected)
+        std::cerr << "Host characterization bit mismatch actual=0x" << std::hex
+                  << bits << " expected=0x" << expected << std::dec << '\n';
+    return bits == expected;
 }
 
 bool vector_bits(
@@ -697,10 +706,14 @@ bool validate_characterized_host_paths()
     const auto ppm = PPMReconstruction::apply(
         {1, 0, 0, 0, 2}, {1, 0, 0, 0, 2}, {1, 0, 0, 0, 2},
         {10, 0, 0, 0, 20}, {10, 0, 0, 0, 20}, {10, 0, 0, 0, 20});
+    // On this unsupported sharp step, one neighboring second difference is
+    // zero on each side. The current curvature support k is exactly zero:
+    // theta=0 selects the CW bounds, which return the own-cell means 1/10
+    // (energy 2/20). These exact analytical values retire the old method snapshot.
     if (!vector_bits(ppm.first,
-                     0x4004000000000000ULL, 0, 0, 0, 0x4014000000000000ULL)
+                     0x3ff0000000000000ULL, 0, 0, 0, 0x4000000000000000ULL)
         || !vector_bits(ppm.second,
-                        0x4020fffffffffffeULL, 0, 0, 0, 0x4030fffffffffffeULL))
+                        0x4024000000000000ULL, 0, 0, 0, 0x4034000000000000ULL))
         return false;
 
     const FaceResult hll = characterize_face<FluxHLL>(0.0);
@@ -1007,10 +1020,10 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         && exact_bits(actual.limiter_negzero, 0x0000000000000000ULL)
         && exact_bits(actual.slope, 0x3fe0000000000000ULL)
         && actual.slope_below == 0.5*((1.0+0.5e-12)-1.0)
-        && std::abs(actual.ppm_left - 5.0 / 3.0)
-               <= 2e-15 * std::max(1.0, std::abs(5.0 / 3.0))
-        && std::abs(actual.ppm_right - 25.0 / 3.0)
-               <= 2e-15 * std::max(1.0, std::abs(25.0 / 3.0))
+        // The same unsupported scalar step has exact CW endpoints 0/10;
+        // no rounding window or positive floor is needed for these values.
+        && actual.ppm_left == 0.0
+        && actual.ppm_right == 10.0
         && actual.cfl_nan_minimum == 3.0
         && actual.cfl_infinite_minimum == 3.0
         && species_match;
@@ -1860,11 +1873,10 @@ int run_native_cfl_divergence()
                 for(int j=grid.js;j<grid.je;++j)for(int i=grid.is;i<grid.ie;++i) {
                     const int c=host_grid.GetIndex(i,j,0),stride=grid.stride(direction);
                     FluidVector expected{};
-                    TimeIntegration::accumulate_cell_divergence(flux.load(c),flux.load(c+stride),nullptr,nullptr,
+                    const TimeIntegration::NativeAngularDivergence angular{&geometry,direction,i,j};
+                    require(TimeIntegration::accumulate_cell_divergence(flux.load(c),flux.load(c+stride),nullptr,nullptr,
                         0,total,metrics[(1+direction)*total+c],metrics[(3+direction)*total+c],metrics[c],.001,
-                        expected,nullptr,GridMetrics::Rz::FaceTorqueMeasure(geometry,direction,i,j,false),
-                        GridMetrics::Rz::FaceTorqueMeasure(geometry,direction,i,j,true),
-                        GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j));
+                        expected,nullptr,&angular),"native Host reference divergence rejected valid geometry");
                     require(vector_near(delta.load(c),expected),"native device divergence lost shared Host parity");
                     const long double l=host_grid.GetFacePosL(i),h=host_grid.GetFacePosR(i);
                     const long double dz=static_cast<long double>(host_grid.GetAxialFacePosR(j))-host_grid.GetAxialFacePosL(j);
@@ -2249,8 +2261,10 @@ int main()
               << " stationary_transport=" << identities.stationary_transport << '\n';
     if (!identities.passed())
         return 2;
-    if (!validate_characterized_host_paths())
+    if (!validate_characterized_host_paths()) {
+        std::cerr << "Independent Host characterization failed before any device launch\n";
         return 1;
+    }
     print_double("limiter.minmod.negzero", MinMod::calc(-0.0));
     print_double("limiter.minmod.half", MinMod::calc(0.5));
     print_double("limiter.superbee.half", SuperBee::calc(0.5));

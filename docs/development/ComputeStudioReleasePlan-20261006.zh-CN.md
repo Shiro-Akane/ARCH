@@ -747,3 +747,41 @@ Root 集成了 GNU 工具链取证的重复工作优化：先读取有界描述�
 当前 Studio 原全量367/367、原 GNU 构建身份 case、lint/typecheck/build 均通过；约1s测试等待没有改变，修复的是生产取证重复完整扫描。工具默认665/665、actionlint和架构审计通过，原失败证据保留。正式Native点查询支持原生1/2/3维字段与测度，Overview/render仍为Cartesian1/2；真实留存RZ writer只读链已验，不替代当前动态科学及桌面人工验收。完成的工程节点可以推送，整套O release仍未通过：步后独立参考36/808 WorkLimit、完整Newtonian FV/AMR稳定性、NativeDevice完整生命周期、当前GUI UAT、正式同终点计时及长时仍开放。
 
 DPS新密度加权primitive矩拟合秩证明26.86s返回，Root独立复核中；该证明不授予实际梯度或算子资格。shared covariant点梯度惰性候选251.70/360s返回，原stress/work正文未改，待Root核对。距上次实际回查23.585分钟；超过15分钟的延迟如实保留，不回填时间。唯一checkout、一个本机重负载、E盘8GiB加下一写入预留、失败/未关闭raw保留及不上传原始输出要求继续有效。
+
+### 目标回查（2026-10-07T22:40:01.089139+00:00）
+
+已验证工程节点推送7dbbfa9fe，main/tag未动。CUDA提前编译首次20.117s真实失败于requiredEOS适配器缺少get_temperature；补同一选定EOS转发，并核对required pressure/T/sound的有限正值错误锁存。额外Inf和零/负/NaN温度反例进入原owner，原物理门槛不变；现有三leaf继续统一编译，1200s累计预算保留首失败。shared covariant梯度四frame函数与8独立解析场/失败原子性已集成源码，原57点/旧PDE正文及窗口保持，尚未编译或设备通过。
+
+完整tensor仍不能直接用中央切向导数替换面通量：Root在实际mu_face=nu*(rho_L+rho_R)/2的正密度3×3周期反例得到精确功−250661/1000；DPS也得相同总量，但y分组索引错误正在唯一定点返修，不能忽略交付错误。该例否定候选离散，不宣称旧生产operator已有同样错误。完整配对离散、连续步后参考/能量、完整NativeDevice、GUI人工、正式计时长时及整套release仍开放。独立只读GUI/Device调用链审查与CUDA编译并行，无source/计算资源争抢。距上次15.727分钟，下一回查≤15分钟。
+
+### 2026-10-07 23:00 UTC — 编译限额与完整应力接入检查
+
+目标仍为完整 O 系列 release 验收，未完成。CUDA 提前编译累计 1199.230 s（首轮缺少温度接口失败 20.117 s，修复轮达到 1179.113 s 的时间上限）；EOS 失败处理目标已链接，其余目标尚未完成。未触发内存、交换或 E 盘容量保护；发现重型 NVCC 池仍为单并发，后续依据实测资源余量调整并保留全部累计耗时。公开变系数 Cartesian 配对应力恒等式已独立用 64 组有理数输入核对；该数学结果不授予曲线坐标、AMR、边界或 RKL 运行验收。正在同一共享数学层接入明确的面应力及原有 owner 验证。
+
+### 2026-10-07 23:15 UTC — 原目标回查与全应力 owner
+
+完整 O 系列 release 目标未完成。Cartesian 完整应力真实 CPU owner 通过（编译 18.181 s；测试 15.69 s，保护器 16.080 s）；固定 3D trace、变系数乘积加权面牵引、同面能量功与独立解析参考已接入，共用一套 Host/device 数学。原曲线坐标 PDE 尚为旧定义，不能从点梯度通过推断完整迁移。首次 selected CUDA 双目标编译 67.380 s 因旧 TestIdealGas 缺温度接口失败，证据保留；修复借用生产 IdealGasView 温度关系后继续同一 540 s 累计限额。EOS 失败传播 GPU owner 已独立通过（0.47 s）。下一出口为真实 CUDA owner 与物理 BCHandler 闭合功；Native Device 全生命周期、连续自引力精度/能量、真实 GUI、匹配终点计时和长跑仍未验收。
+
+### 目标回查（2026-10-07T23:51:04.516079+00:00）
+
+Cartesian 完整 Newtonian 面应力通过原 CPU owner 的解析收敛、正密度变系数周期功以及真实 BCHandler 周期／反射 slip 边界（9 个算例、13,104 个 active cells）；原窗口不变。CUDA 扩散解析／配对点 owner 已运行通过，最新下溢 guard 重编译中。正值 `rho*nu` 不可表示时明确拒绝；极小非负系数的均值保留可表示的半单位，原普通数值算术保持，未新增控制参数。Root 独立 1,089 组精确二进制均值及实际 CPU owner 通过；DPS 首轮及唯一返修均超时，累计 169.16/170 s，结果、token 与费用未知，不计独立验收通过。
+
+真实 HydroLeaf CUDA 在原 native angular 独立门槛失败。W 与两 torque lever 正确，归因为深层薄环 FP64 两乘积相减的相消误差；共享因式化径向公式与轴向公共因子抵消已接入，退役三个可分离测度 scalar，全部调用迁移。原 CPU owner 15.53 s 通过，原 3e-14 门槛保持，CUDA 正在编译。数学叶先检查、失败不写输出；完整 Native Device 的错误 latch 与事务生命周期仍待验，不能从此 leaf 通过授予完整能力。
+
+真实 Linux 自有 Electron 已完成原生文件选择、非法参数／Revert、历史正式 Sod 文件 Inspector 的实际输入路径；原配置和生产文件未改变。历史 writer 的身份明确标记，不当作当前生产端科学通过；当前 Configure/Build/Run/Restart、运行中关闭及 Native RZ 视觉验收仍开放。CI 原有模块 14 项通过，添加 required EOS owner 缺失／跳过／失败的防退化断言，未增加测试方法或工作流。
+
+完整 O release 仍未完成：全曲线坐标 FV/CF 张量、连续孤立自引力能量、完整 Native Device、真实运行工作流、匹配终点正式计时与长跑继续保留。当前匹配 4070 Ti 正式数据仍为零组。唯一 checkout、单重型任务和 E 盘护栏保持。
+
+### 2026-10-08 — 冷态墙面压力与限制器基准
+
+当前 Core、API、字段、物理数学及验收全部由本工作区维护者负责；合理的旧接口退役与修复不再依赖外部许可。Linux UI 协作仅涉及界面工作。原默认工具测试本轮 665/665 通过；当前 CUDA geometry/EOS failure owner 均通过，Native angular 两布局原 3e-14 门槛也通过。HydroLeaf 随后暴露了真实冷态反射墙的负牵引：理想气体非真空膨胀的精确墙压为正，原近似 HLLC 和 LLF 均可能为负，二者凸混合无法修复。
+
+共享 gamma-law 稀疏波／冲击墙压与实际所选低阶基准的两侧状态因子已接入；普通 LLF 算序保持。首次候选因借用旧 LLF theta 被拒绝并保留，唯一定点返修已纠正。高阶候选失败可以退回同一个合法基准；required 基态不合法直接拒绝，不提高声速界或改变 CFL。原 CPU `conservative_flux_limiter` 及新增独立墙压／两侧组分／拒绝反例通过（0.01 s），CUDA 正编译实际共享叶；通用 EOS 精确墙、普通墙路径及完整 Native 阶段仍未验收。DPS 两项公开数学核对分别57.34 s、105.62 s，经 Root 的高精度与精确代数复核，仅签收点数学，不替代运行。
+
+真实 Linux 自有进程的闲置正常关闭现已通过 WM_DELETE_WINDOW 与进程退出证据；真实 Configure/Build/Run/Restart 和运行中关闭仍开放。全 Cartesian Stokes 的实际 CPU BCHandler 与当前 CUDA 几何 owner 已通过，AMR/RKL/曲线完整张量、连续自引力能量、正式匹配终点计时和长跑继续保留。原四个 Cartesian AMR diffusion case 仅组分扩散，不能当作黏性 CF 功验收；后续在现有 owner 覆盖更新真实牵引/功及时间权重，避免新增测试入口。
+
+### 2026-10-08 00:23 UTC — 已验收数学节点封包
+
+当前共享 gamma-law 墙压与同一低阶基准因子已通过原 CUDA `hydro_leaf_parity`（0.43 s）及 required EOS failure owner（0.43 s）；CPU原限制器0.01 s通过。编译179.976 s、selected累计819.768/900 s，未触发内存／交换／磁盘护栏。三维 trace、变系数配对 Cartesian 应力、真实物理BC功、正黏性可表示性和薄环 Native 角动量散度按各自 owner 范围签收。空CTest匹配曾执行但不计通过；改用实际注册名及 `--no-tests=error` 后真正执行原 owner。
+
+普通 Host/CUDA 墙面尚未传入实际 reflecting stage frame，不从等态、capture或Native身份推断其权限。后续以真实BC／root面／slot／version／ghost完成证明推广同一共享墙压，避免双实现。RKL1/2周期剪切与压缩模态的真实多块科学验收正在原owner内准备，不新增CTest。整套 release、全曲线/CF张量、连续自引力能量、完整NativeDevice、真实UI运行、正式计时和长跑仍开放。

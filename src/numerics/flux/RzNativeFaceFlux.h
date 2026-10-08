@@ -92,6 +92,74 @@ ARCH_INLINE FluidVector reflected_point(const FluidVector& interior,int directio
     return result;
 }
 
+/** Exact stationary slip-wall pressure for an explicit gamma-law EOS.
+ * Workflow: validate the gamma-law parameters and physical endpoint acoustics;
+ * return unchanged P at rest; solve the rarefaction invariant or shock jump;
+ * publish only a representable pressure. Away speed is +u at a lower wall
+ * and -u at an upper wall. No state, EOS energy or heat is modified.
+ * Rarefaction: c_wall/c=1-(gamma-1)*v/(2c),
+ * P_wall/P=(c_wall/c)^(2*gamma/(gamma-1)); a genuine vacuum has P_wall=0.
+ * Compression: K=gamma*(gamma+1)*(v/c)^2/2, B=(gamma-1)/(gamma+1),
+ * P_wall/P=1+K/2+sqrt((K/2)^2+K*(1+B)). hypot avoids squaring K/2.
+ * This is point gamma-law mathematics, not a general-EOS or Runtime grant.
+ */
+ARCH_INLINE bool gamma_wall_pressure(double gamma_minus_one,double pressure,
+    double sound_speed,double away_speed,double& output)
+{
+    if(!std::isfinite(gamma_minus_one)||!(gamma_minus_one>0.)
+        ||!std::isfinite(pressure)||!(pressure>0.)
+        ||!std::isfinite(sound_speed)||!(sound_speed>0.)
+        ||!std::isfinite(away_speed)) return false;
+    if(away_speed==0.) {output=pressure;return true;}
+    const double gamma=gamma_minus_one+1.;
+    const double mach=away_speed/sound_speed;
+    if(!std::isfinite(gamma)||!std::isfinite(mach)) return false;
+    double candidate=0.;
+    if(away_speed>0.) {
+        const double decrement=.5*gamma_minus_one*mach;
+        if(!std::isfinite(decrement)) return false;
+        const double base=1.-decrement;
+        if(base<=0.) {output=0.;return true;}
+        const double exponent=(2.*gamma)/gamma_minus_one;
+        const double logarithm=std::log1p(-decrement);
+        if(!std::isfinite(exponent)||!std::isfinite(logarithm)) return false;
+        candidate=pressure*std::exp(exponent*logarithm);
+    } else {
+        const double K=.5*gamma*(gamma+1.)*mach*mach;
+        const double B=gamma_minus_one/(gamma+1.);
+        const double root_argument=K*(1.+B);
+        if(!std::isfinite(K)||!std::isfinite(B)||!std::isfinite(root_argument)) return false;
+        candidate=pressure*(1.+.5*K+std::hypot(.5*K,std::sqrt(root_argument)));
+    }
+    // Only actual vacuum may publish zero; never floor an unrepresented
+    // strictly positive rarefaction/compression pressure back into existence.
+    if(!std::isfinite(candidate)||!(candidate>0.)) return false;
+    output=candidate;
+    return true;
+}
+
+/** Consume actual already queried point acoustics for a gamma-law wall flux.
+ * This helper is instantiated only through roe_gamma_minus_one capability;
+ * get_gamma/effective gamma alone cannot authorize a gamma-law solution.
+ * All stationary-wall advective, total-energy and species fluxes are zero;
+ * only the true normal pressure traction is published, atomically.
+ */
+template<class Eos>
+ARCH_INLINE bool gamma_wall_flux(const FluidVector& point,const double* composition,
+    const Eos& eos,int direction,int side,double pressure,double speed,FluidVector& output)
+{
+    if((direction!=0&&direction!=1)||(side!=0&&side!=1)
+        ||!finite_flux(point)||!(point.rho>0.)) return false;
+    const double un=(direction==0?point.mom_u:point.mom_v)/point.rho;
+    double wall_pressure=0.;
+    if(!gamma_wall_pressure(eos.roe_gamma_minus_one(composition),pressure,speed,
+        side==0?un:-un,wall_pressure)) return false;
+    FluidVector candidate{};
+    if(direction==0)candidate.mom_u=wall_pressure;else candidate.mom_v=wall_pressure;
+    output=candidate;
+    return true;
+}
+
 /** One actual selected face, returned atomically through unpublished scratch.
  * Output arrays must not alias any scratch range; scratch bytes are always
  * provisional. Required B EOS errors propagate. Only documented trial EOS failures can
@@ -169,9 +237,37 @@ ARCH_INLINE arch::state::Status compute(const StateReader& read,const FractionRe
             base_right=reflected_point(base_left,context.direction);
             for(int s=0;s<species;++s)scratch.x_right[s]=scratch.x_left[s];
         }
+        // At rest retain the original mirrored point-policy/factor bits.
+        // A nonzero H or B normal speed selects the SAME canonical wall
+        // baseline for factor construction and eventual face integration.
+        bool gamma_wall=false;
+        if constexpr(requires {eos.roe_gamma_minus_one(scratch.x_left);}) {
+            if(wall_side>=0) {
+                const auto& h=wall_side==0?high_right:high_left;
+                const auto& b=wall_side==0?base_right:base_left;
+                gamma_wall=(context.direction==0?h.mom_u:h.mom_v)!=0.
+                    ||(context.direction==0?b.mom_u:b.mom_v)!=0.;
+            }
+        }
         FluidVector high;
         const auto& trial_eos=arch::state::candidate_eos(eos);
         FluxAdmissibility::compute_candidate([&] {
+            if constexpr(requires {eos.roe_gamma_minus_one(scratch.x_left);}) {
+                if(gamma_wall) {
+                    const auto& interior=wall_side==0?high_right:high_left;
+                    const double* xi=wall_side==0?scratch.x_right:scratch.x_left;
+                    double pressure=0.,speed=0.;
+                    FluxAdmissibility::required_mean_thermo(interior,xi,trial_eos,pressure,speed);
+                    if(gamma_wall_flux(interior,xi,trial_eos,context.direction,wall_side,
+                        pressure,speed,high)) {
+                        for(int s=0;s<species;++s)scratch.candidate_species[s]=0.;
+                    } else {
+                        high=FluidVector(arch::state::invalid(),0.,0.,0.,arch::state::invalid());
+                        for(int s=0;s<species;++s)scratch.candidate_species[s]=arch::state::invalid();
+                    }
+                    return;
+                }
+            }
             FluxPolicy::compute_face_flux(high_left,high_right,scratch.x_left,scratch.x_right,
                 species,trial_eos,context.direction,coefficient,high,scratch.candidate_species,
                 means,left_cell,right_cell);
@@ -193,11 +289,45 @@ ARCH_INLINE arch::state::Status compute(const StateReader& read,const FractionRe
         double pl=0.,cl=0.,pr=0.,cr=0.;
         FluxAdmissibility::required_mean_thermo(base_left,scratch.x_left,eos,pl,cl);
         FluxAdmissibility::required_mean_thermo(base_right,scratch.x_right,eos,pr,cr);
-        const auto factor=FluxAdmissibility::point_face_blend_with_thermo(
-            base_left,base_right,scratch.x_left,scratch.x_right,species,
-            pl,cl,pr,cr,context.direction,high,scratch.candidate_species);
+        FluxAdmissibility::PointFaceBlend factor;
+        if(gamma_wall) {
+            // reconstruct_face has finished using this independent workspace;
+            // its first S entries now hold the stationary baseline species
+            // flux, leaving both accumulated low/high arrays untouched.
+            double* species_low=species?scratch.reconstruction:nullptr;
+            for(int s=0;s<species;++s)species_low[s]=0.;
+            FluidVector canonical_low{};
+            if constexpr(requires {eos.roe_gamma_minus_one(scratch.x_left);}) {
+                const auto& interior=wall_side==0?base_right:base_left;
+                const double* xi=wall_side==0?scratch.x_right:scratch.x_left;
+                if(!gamma_wall_flux(interior,xi,eos,context.direction,wall_side,
+                    wall_side==0?pr:pl,wall_side==0?cr:cl,canonical_low))
+                    return Status::invalid_thermodynamics;
+            }
+            // This owner requires BOTH baseline one-sided states admissible
+            // before theta is derived; it cannot reuse the old LLF bar/low.
+            factor=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
+                base_left,base_right,scratch.x_left,scratch.x_right,species,
+                pl,cl,pr,cr,context.direction,high,scratch.candidate_species,
+                canonical_low,species_low);
+        } else {
+            factor=FluxAdmissibility::point_face_blend_with_thermo(
+                base_left,base_right,scratch.x_left,scratch.x_right,species,
+                pl,cl,pr,cr,context.direction,high,scratch.candidate_species);
+        }
         if(!factor.valid||!finite_flux(factor.low)||!std::isfinite(factor.theta)
             ||factor.theta<0.||factor.theta>1.)return Status::invalid_thermodynamics;
+        if(wall_side>=0) {
+            // General EOS retain their original point policy; no effective
+            // gamma grants an exact wall solution or permits negative stress.
+            const double high_pressure=context.direction==0?high.mom_u:high.mom_v;
+            const double low_pressure=context.direction==0?factor.low.mom_u:factor.low.mom_v;
+            if(high_pressure<0.||(!std::isfinite(high_pressure)&&factor.theta!=0.)
+                ||!std::isfinite(low_pressure)||low_pressure<0.)
+                return Status::invalid_thermodynamics;
+        }
+        // Common factor covers exactly this low/high, all fields/species and
+        // all Gauss nodes. It is not a whole mixed-measure stage theorem.
         theta=std::min(theta,factor.theta);
         double volume_weight=1.,angular_weight=1.;
         if(context.direction==1&&!axial_weights(context.geometry,context.face_i,
@@ -208,8 +338,9 @@ ARCH_INLINE arch::state::Status compute(const StateReader& read,const FractionRe
         const double mass_left=context.direction==0?base_left.mom_u:base_left.mom_v;
         const double mass_right=context.direction==0?base_right.mom_u:base_right.mom_v;
         for(int s=0;s<species;++s) {
-            const double low_species=.5*mass_left*scratch.x_left[s]+.5*mass_right*scratch.x_right[s]
+            double low_species=.5*mass_left*scratch.x_left[s]+.5*mass_right*scratch.x_right[s]
                 -(.5*factor.wave_speed)*(base_right.rho*scratch.x_right[s]-base_left.rho*scratch.x_left[s]);
+            if(gamma_wall)low_species=0.;
             if(!std::isfinite(low_species))return Status::invalid_composition;
             scratch.high_sum[s]+=volume_weight*scratch.candidate_species[s];
             scratch.low_sum[s]+=volume_weight*low_species;

@@ -71,13 +71,25 @@ public:
     }
 
     ARCH_INLINE double get_pressure(const FluidVector& state, const double* composition) const
-    { return checked_pressure(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_pressure(state, composition);
     }, state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng)); }
 
+    /** Forward the selected EOS temperature for required physical-state checks.
+     * Match the actual rho/e/X inputs through the existing pure-query owner,
+     * then preserve its result and sticky nonfinite failure transport. The
+     * shared validate_eos owner still requires finite positive temperature;
+     * no temperature floor or alternate thermal inversion is introduced.
+     */
+    ARCH_INLINE double get_temperature(
+        double rho, double energy, const double* composition) const
+    { return checked_positive(evaluate_once(composition, [&] {
+        return eos_.get_temperature(rho, energy, composition);
+    }, rho, energy)); }
+
     ARCH_INLINE double get_sound_speed(
         const FluidVector& state, double pressure, const double* composition) const
-    { return checked(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_sound_speed(state, pressure, composition);
     }, state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng, pressure)); }
 
@@ -87,7 +99,7 @@ public:
     }
     ARCH_INLINE double get_sound_speed(
         const FluidVector& state, const double* composition) const
-    { return checked(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_sound_speed(state, composition);
     }, state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng)); }
 
@@ -102,7 +114,7 @@ public:
         double& pressure, double& speed) const
     {
         if (reuse_mean_thermodynamics(rho, energy, composition, pressure, speed)) {
-            pressure = checked_pressure(pressure); speed = checked(speed);
+            pressure = checked_positive(pressure); speed = checked_positive(speed);
             return;
         }
         if constexpr (requires { typename Eos::HostHydroScope; }) {
@@ -114,8 +126,8 @@ public:
         } else {
             eos_.get_pressure_and_sound_speed(rho, energy, composition, pressure, speed);
         }
-        pressure = checked_pressure(pressure);
-        speed = checked(speed);
+        pressure = checked_positive(pressure);
+        speed = checked_positive(speed);
     }
 
     ARCH_INLINE double get_gamma(const double* composition) const
@@ -156,7 +168,7 @@ public:
 
     ARCH_INLINE double get_pressure_from_rho_e(
         double rho, double energy, const double* composition) const
-    { return checked_pressure(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_pressure_from_rho_e(rho, energy, composition);
     }, rho, energy)); }
 
@@ -183,7 +195,7 @@ public:
 
     ARCH_INLINE double get_pressure_from_rho_T(
         double rho, double temperature, const double* composition) const
-    { return checked_pressure(eos_.get_pressure_from_rho_T(rho, temperature, composition)); }
+    { return checked_positive(eos_.get_pressure_from_rho_T(rho, temperature, composition)); }
 
     ARCH_INLINE double get_dp_drho_e(
         double rho, double energy, const double* composition) const
@@ -276,11 +288,13 @@ private:
         }
     }
 
-    ARCH_INLINE double checked_pressure(double value) const
+    /** Required pressure, temperature and sound speed remain finite positive.
+     * Preserve the original result; any invalid value poisons the owning latch
+     * without a floor. Optional views have a null latch and retain local failure.
+     */
+    ARCH_INLINE double checked_positive(double value) const
     {
-        // A finite nonpositive hydro pressure is no more admissible than NaN.
-        // Do not change the EOS value; the launch owner rejects the stage.
-        if (!(value > 0.0) && status_ != nullptr) {
+        if ((!std::isfinite(value) || !(value > 0.0)) && status_ != nullptr) {
 #if defined(__CUDA_ARCH__)
             atomicExch(status_, 1);
 #else

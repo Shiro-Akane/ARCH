@@ -1,0 +1,41 @@
+{
+  "status": "ACCEPTED_REFLECTION_CORE_WITH_CORRECTED_FACE_COUNT_SCOPE",
+  "decision": "accept",
+  "adoption_scope": "partial",
+  "atUtc": "2026-10-07T23:22:37.474340+00:00",
+  "actualSeconds": 84.15,
+  "capSeconds": 180,
+  "workerReportedTokens": {
+    "input": 1500,
+    "cachedInput": 384,
+    "noncachedInput": 1116,
+    "output": 18190,
+    "thinking": 17844,
+    "visible": 346
+  },
+  "estimatedUsd": {
+    "offPeak": 0.01108255,
+    "peak": 0.0221651,
+    "invoice": "UNKNOWN"
+  },
+  "delivery": "Complete raw JSON retained; wrapper declined summary length, no providerretry",
+  "rootAccepted": [
+    "G andtau transform under actual orthogonalvectorreflection",
+    "Slipwall tangentialtraction andface normalvelocity vanish",
+    "Even positive mass andcompletecorner reflection restrict symmetricPSD operator"
+  ],
+  "rootDiscardedFinding": "Worker literal boundaryfaces twiceperiodic count wrong: each wall face has one geometric copy in a 2N periodic axis; activeKE boundary work uses half of its ghost velocity jump. Correct factor2^d follows cell mass/energy restriction, not that face-count assertion.",
+  "rootIndependentProof": "For actualreflection embedding P, A_ext P=P A_active and P^T M_ext P=2^d M_active; K_active=2^-d P^T K_ext P. This gives mass symmetry/PSD and globalworkfactor without faulty boundary-face counting.",
+  "formalRepairsUsed": 0,
+  "formalRepairsRemaining": 1,
+  "runtime": "PENDING actualBCHandler owner",
+  "limits": [
+    "Only canonical uniformCartesian physicalvector slipreflection withallcorner parity",
+    "Not allcomponentsodd/Neumann/outflow/usertraction/AMR/nonlinearEOS/RKL"
+  ],
+  "workflow": {
+    "review_kind": "initial",
+    "adoption_scope": "partial",
+    "failure_category": "semantic"
+  }
+}

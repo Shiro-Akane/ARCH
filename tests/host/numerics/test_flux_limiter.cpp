@@ -346,6 +346,109 @@ void check_native_wall_face(const NativeWallFixture& fixture,int direction,int s
     }
 }
 
+/** Cold rotating wall with actual nonzero axial away speed.
+ * Independent ideal-gas rarefaction invariant and shock-jump quadratic supply
+ * pressure; the source V/W antiderivatives and existing 64-epsilon band stay.
+ * These flat flags qualify point/face math only, not Runtime wall authority.
+ */
+void test_native_gamma_wall_away_pressure() {
+    NativeWallFixture fixture;
+    constexpr double velocity=.125;
+    for(int j=0;j<fixture.grid.GetTotalY();++j)for(int i=0;i<fixture.grid.GetTotalX();++i) {
+        const int cell=fixture.grid.GetIndex(i,j);
+        auto state=fixture.state.get(cell);
+        state.mom_v=velocity;
+        state.eng+=.5*velocity*velocity;
+        fixture.state.set(cell,state);
+    }
+    check_native_wall_required_eos(fixture);
+    const long double gm1=.4L,gamma=1.4L,P=gm1*NativeWallFixture::internal;
+    const long double c=std::sqrt(gamma*P),mach=velocity/c;
+    const long double rarefaction=P*std::pow(1.L-gm1*mach/2.L,2.L*gamma/gm1);
+    const long double K=gamma*(gamma+1.L)*mach*mach/2.L,B=gm1/(gamma+1.L);
+    const long double compression=P*(1.L+K/2.L+std::sqrt(K*K/4.L+K*(1.L+B)));
+    const auto wall=fixture.walls();
+    for(int side=0;side<2;++side) {
+        FluidVector flux{};std::array<double,kSpecies> species_flux{};
+        const auto context=fixture.context(1,side);
+        const auto status=native_wall_compute<PCMReconstruction>(fixture,context,&wall,flux,species_flux);
+        check(status==arch::state::Status::valid,"cold away/compression gamma-law wall produces a valid flux");
+        if(status!=arch::state::Status::valid)continue;
+        const double expected=double(side==0?rarefaction:compression);
+        const int interior=context.geometry.GetIndex(context.face_i,context.face_j+(side==0));
+        const double scale=std::max(std::abs(expected),std::abs(fixture.state.get(interior).eng));
+        check(flux.mom_v>0.&&std::abs(flux.mom_v-expected)<=kBand*scale,
+            "cold gamma-law wall pressure matches independent rarefaction/shock jump");
+        check(flux.rho==0.&&flux.eng==0.&&flux.mom_u==0.&&flux.mom_w==0.
+            &&species_flux[0]==0.&&species_flux[1]==0.,
+            "stationary gamma-law wall has exactly zero advective/work/species flux");
+    }
+    // Independent one-sided baseline states from the frozen wall pressure.
+    // This checks the actual prerequisite, rather than borrowing an LLF bar.
+    const double speed=double(c),pressure=double(P),wall_pressure=double(rarefaction);
+    const FluidVector left{1.,0.,-velocity,0.,double(NativeWallFixture::internal+.5L*velocity*velocity)};
+    const FluidVector right{1.,0.,velocity,0.,left.eng};
+    const double a=velocity+speed;
+    const FluidVector wall_flux{0.,0.,wall_pressure,0.,0.};
+    const FluidVector left_physical{-velocity,0.,velocity*velocity+pressure,0.,-velocity*(left.eng+pressure)};
+    const FluidVector right_physical{velocity,0.,velocity*velocity+pressure,0.,velocity*(right.eng+pressure)};
+    const auto bl=left+(left_physical-wall_flux)/a;
+    const auto br=right+(wall_flux-right_physical)/a;
+    check(FluxAdmissibility::valid(bl)&&FluxAdmissibility::valid(br),
+        "independent cold exact wall has two admissible baseline states");
+    const double xi[kSpecies]{.75,.25},zero[kSpecies]{0.,0.};
+    const auto selected=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
+        left,right,xi,xi,kSpecies,pressure,speed,pressure,speed,1,
+        wall_flux,zero,wall_flux,zero);
+    check(selected.valid&&selected.theta==1.&&selected.low.mom_v==wall_pressure,
+        "selected-baseline factor binds its actual wall low and equal high");
+    for(int species=0;species<kSpecies;++species) {
+        const double ql=left.rho*xi[species]+left_physical.rho*xi[species]/a;
+        const double qr=right.rho*xi[species]-right_physical.rho*xi[species]/a;
+        check(ql>0.&&qr>0.&&std::abs(ql-bl.rho*xi[species])<=kBand*std::abs(ql)
+            &&std::abs(qr-br.rho*xi[species])<=kBand*std::abs(qr),
+            "both actual selected wall species bases retain positive constant fractions");
+    }
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    const FluidVector bad_high{nan,0.,0.,0.,nan};
+    const double bad_species[kSpecies]{nan,nan};
+    const auto trial_rejected=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
+        left,right,xi,xi,kSpecies,pressure,speed,pressure,speed,1,
+        bad_high,bad_species,wall_flux,zero);
+    check(trial_rejected.valid&&trial_rejected.theta==0.
+        &&trial_rejected.low.mom_v==wall_pressure,
+        "nonfinite optional high chooses theta0 of the actual admissible wall baseline");
+    // A legitimate gamma-law exact wall alone cannot guarantee the fixed-a
+    // one-sided bases. Independent gamma=10, compressive Mach=-10 witness
+    // has a negative internal energy; the factor must fail without raising a.
+    const long double stiff_gamma=10.L,stiff_gm1=9.L,stiff_p=1.L;
+    const long double stiff_c=std::sqrt(stiff_gamma*stiff_p),stiff_v=-10.L*stiff_c;
+    const long double stiff_K=stiff_gamma*(stiff_gamma+1.L)*100.L/2.L;
+    const long double stiff_B=stiff_gm1/(stiff_gamma+1.L);
+    const double stiff_wall=double(stiff_p*(1.L+stiff_K/2.L
+        +std::sqrt(stiff_K*stiff_K/4.L+stiff_K*(1.L+stiff_B))));
+    const double u=double(stiff_v),es=double(stiff_p/stiff_gm1+.5L*stiff_v*stiff_v);
+    const FluidVector stiff_left{1.,0.,-u,0.,es},stiff_right{1.,0.,u,0.,es};
+    const FluidVector stiff_low{0.,0.,stiff_wall,0.,0.};
+    const double stiff_a=std::abs(u)+double(stiff_c);
+    const FluidVector stiff_fl{-u,0.,u*u+1.,0.,-u*(es+1.)};
+    const auto stiff_bar=stiff_left+(stiff_fl-stiff_low)/stiff_a;
+    check(stiff_bar.eng/stiff_bar.rho-.5*stiff_bar.mom_v*stiff_bar.mom_v
+        /(stiff_bar.rho*stiff_bar.rho)<0.,
+        "independent stiff compressive wall really has an inadmissible fixed-a base");
+    const auto baseline_rejected=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
+        stiff_left,stiff_right,xi,xi,kSpecies,1.,double(stiff_c),1.,double(stiff_c),1,
+        stiff_low,zero,stiff_low,zero);
+    check(!baseline_rejected.valid,
+        "inadmissible selected wall prerequisite fails closed without an acoustic-speed increase");
+    double untouched=123.;
+    check(!RzNativeFaceFlux::gamma_wall_pressure(.4,.00625,.1,
+        std::numeric_limits<double>::infinity(),untouched)&&untouched==123.,
+        "nonfinite gamma wall input rejects without publishing");
+    check(RzNativeFaceFlux::gamma_wall_pressure(.4,.00625,.1,1.,untouched)&&untouched==0.,
+        "true gamma-law vacuum has zero traction without a pressure floor");
+}
+
 void test_native_reflecting_face_math() {
     NativeWallFixture fixture;check_native_wall_required_eos(fixture);
     const auto source_rho=fixture.state.rho,source_u=fixture.state.mom_u,
@@ -777,6 +880,7 @@ int main()
     }
 
     test_native_reflecting_face_math();
+    test_native_gamma_wall_away_pressure();
     test_native_diffusion_boundary_work();
 
     ok = failures == 0;

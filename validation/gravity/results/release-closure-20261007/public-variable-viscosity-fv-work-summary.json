@@ -1,0 +1,38 @@
+{
+  "status": "ACCEPTED_ARBITRARY_POSITIVE_FACE_MU_COUNTEREXAMPLE_ONLY",
+  "logical_task_id": "public-variable-viscosity-fv-dissipation-20261008",
+  "reviewed_at_utc": "2026-10-07T22:28:06.277410+00:00",
+  "exact_fraction_work": "-131/125",
+  "periodic_grid": [
+    2,
+    3
+  ],
+  "negative_x_faces": 2,
+  "current_production_bug": "NOT_ESTABLISHED_current_operator_is_vector_Laplacian",
+  "limits": [
+    "Face viscosities chosen independently; not shown realizable by actual arithmetic density/nu owner",
+    "Negative work disproves dissipativity, not a standalone eigenvalue proof",
+    "Public adjoint necessity is not concrete FV/geometry/CF qualification"
+  ],
+  "worker_seconds": 81.11,
+  "reported_tokens": {
+    "input_tokens": 1396,
+    "cached_input_tokens": 384,
+    "output_tokens": 19964,
+    "noncached_input_tokens": 1012,
+    "reasoning_tokens": 19573,
+    "visible_output_tokens": 391
+  },
+  "estimated_usd": {
+    "currency": "USD",
+    "off_peak": 0.01213135,
+    "peak": 0.0242627,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  },
+  "actual_invoice": "UNKNOWN",
+  "root_active_token_cost": "UNKNOWN",
+  "formal_repairs_used": 0,
+  "formal_repairs_remaining": 1,
+  "source_raw_export": false
+}

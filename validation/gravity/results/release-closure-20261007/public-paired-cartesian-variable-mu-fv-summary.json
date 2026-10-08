@@ -1,0 +1,37 @@
+{
+  "status": "ACCEPTED_PUBLIC_UNIFORM_CARTESIAN_WORK_IDENTITY_ONLY",
+  "atUtc": "2026-10-07T23:01:57.207688+00:00",
+  "rootExactCases": 64,
+  "actualAttemptsSeconds": [
+    70.28,
+    55.34
+  ],
+  "cumulativeSeconds": 125.62,
+  "cumulativeCapSeconds": 190,
+  "formalRepairsUsed": 1,
+  "formalRepairsRemaining": 0,
+  "reportedTokens": {
+    "input": 3277,
+    "cachedInput": 1024,
+    "noncachedInput": 2253,
+    "output": 30147,
+    "thinking": 29948,
+    "visible": 199
+  },
+  "estimatedUsd": {
+    "offPeak": 0.01842922,
+    "peak": 0.03685844,
+    "invoice": "UNKNOWN"
+  },
+  "limits": [
+    "DPS omitted rowbound, not accepted as checked",
+    "No curved/AMR/BC/RKL/local thermal qualification",
+    "No production global operator run"
+  ],
+  "noticeTiming": "Helper notice recorded now; earlier actual result read is known, no retrospective exact reaction claim",
+  "workflow": {
+    "review_kind": "repair_delta",
+    "adoption_scope": "evidence_only",
+    "failure_category": "output_budget"
+  }
+}

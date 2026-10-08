@@ -18,8 +18,25 @@ from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS
 
 class CiResultTests(unittest.TestCase):
     def test_driver_cuda_requires_real_device_coverage_and_rejects_skips(self):
+        # Independent literal prevents a self-consistent group union from
+        # silently dropping the actual required-EOS failure CUDA owner.
+        eos_owner = "cuda_hydro_eos_failure"
+        self.assertIn(eos_owner, DRIVER_CUDA_COVERAGE_ANCHORS)
         names = DRIVER_CUDA_COVERAGE_ANCHORS | {"additional_cuda_contract"}
         self.assertEqual(check_inventory(self.inventory(names), "driver-cuda"), names)
+        self.assertEqual(check_junit(self.report(names), names), len(names))
+        with self.assertRaisesRegex(ValueError, eos_owner):
+            check_inventory(self.inventory(names - {eos_owner}), "driver-cuda")
+        with self.assertRaisesRegex(ValueError, "complete CTest inventory"):
+            check_junit(self.report(names - {eos_owner}), names)
+        # Neither zero summary failure counters nor a present inventory entry
+        # can turn a skipped/failed required EOS control into device coverage.
+        for marker in ("skipped", "failure", "error"):
+            eos_report = self.report(names)
+            eos_case = next(case for case in eos_report if case.get("name") == eos_owner)
+            ET.SubElement(eos_case, marker)
+            with self.subTest(eos_marker=marker), self.assertRaisesRegex(ValueError, eos_owner):
+                check_junit(eos_report, names)
         with self.assertRaisesRegex(ValueError, "cuda_compile_probe"):
             check_inventory(self.inventory(CPU_COVERAGE_ANCHORS), "driver-cuda")
         report = self.report(names)

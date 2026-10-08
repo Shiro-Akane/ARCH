@@ -1,0 +1,63 @@
+{
+  "status": "PASS_ACTUAL_UNIFORM_CARTESIAN_STOKES_CPU_OWNER_ONLY",
+  "atUtc": "2026-10-07T23:15:45.665224+00:00",
+  "originalOwner": "curvilinear_metrics",
+  "cpuCompileSeconds": [
+    18.173,
+    18.181
+  ],
+  "cpuTestSeconds": [
+    15.58,
+    15.69
+  ],
+  "guardsSeconds": [
+    16.078,
+    16.08
+  ],
+  "old57ConstitutiveCasesRetained": true,
+  "covariantCases": 8,
+  "pairedCases": 6,
+  "periodicWorkIndependentExact": "17027/500",
+  "naiveNegativeControlExact": "-250661/1000",
+  "physicalTraceComponents": 3,
+  "oldCurvedPdeOracleRetained": true,
+  "originalWindowsPreserved": true,
+  "newActualCartesianOperator": true,
+  "sameMomentumEnergyTraction": true,
+  "finiteStepMassEnergy1dDensityContrast": [
+    1,
+    10,
+    100
+  ],
+  "cuda": "PASS_ACTUAL_CURRENT_ORIGINAL_CUDA_GEOMETRY_OWNER_1.13s",
+  "limits": [
+    "Uniform Cartesian analytic and periodic/reflecting-slip owner scope",
+    "Not whole AMR/RKL/NativeDevice/fullcurvedStokes or continuousselfgravity qualification"
+  ],
+  "currentCpuOwner": "PASS afterpositiveviscosity/Nativeconditionedheaders_15.53s",
+  "realPhysicalBC": {
+    "owner": "actual BCHandler",
+    "types": [
+      "periodic",
+      "reflecting slip"
+    ],
+    "dimensions": [
+      1,
+      2,
+      3
+    ],
+    "cases": 9,
+    "activeCells": 13104,
+    "momentumEnergyPaired": true,
+    "sourceArraysUnchanged": true,
+    "finiteStepMassNormNonincrease": true,
+    "originalWindowsPreserved": true
+  },
+  "positiveViscosity": {
+    "rootDyadicPairs": 1089,
+    "CPU": "PASS",
+    "CUDA": "PASS_ACTUAL_CURRENT",
+    "noConfigFloorAdded": true,
+    "DPS": "UNKNOWN_both_bounded_attempts_timeout169.16s"
+  }
+}

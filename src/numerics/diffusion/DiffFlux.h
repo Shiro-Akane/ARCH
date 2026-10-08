@@ -27,6 +27,7 @@
 
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/diffusion/DiffusionTypes.h"
+#include "numerics/diffusion/NewtonianViscousStress.h"
 #include "numerics/diffusion/RzViscousStress.h"
 #include "numerics/state/RzNativeClosure.h"
 
@@ -342,6 +343,13 @@ namespace DiffFlux
         face.coefficients.valid = face.coefficients.valid
             && face.temperature_left > 0.0 && std::isfinite(face.temperature_left)
             && face.temperature_right > 0.0 && std::isfinite(face.temperature_right);
+        if(face.coefficients.valid&&config.use_viscous_diffusion) {
+            // The original face law must not erase a configured positive nu
+            // when rho*nu is unrepresentable, in any computational geometry.
+            double mu=0.;
+            face.coefficients.valid=NewtonianViscousStress::dynamic_viscosity(
+                face.density,face.coefficients.nu_visc,mu);
+        }
         return face;
     }
 
@@ -377,6 +385,143 @@ namespace DiffFlux
             face.heat_capacity, face.coefficients, config, flux,
             species_flux, species_flux_stride, rotation);
         return {true, true};
+    }
+
+    /** Gather only the transverse centred columns used by a Cartesian face.
+     * Workflow: validate actual storage extents and each borrowed positive-rho
+     * velocity; form G_ik=(u_i,+-u_i,-)/(2h_k) for active k!=direction.
+     * The normal column is zero because the paired traction uses the true
+     * normal face difference. Thus one real corner halo suffices; no second
+     * normal ghost is read. Inactive physical partials remain actual zero.
+     */
+    template<class StateReader>
+    ARCH_INLINE bool cartesian_transverse_gradient(const StateReader& read,
+        const GridMetrics::GeometryView& grid,int cell,int direction,
+        NewtonianViscousStress::VelocityGradient& output)
+    {
+        if(grid.geometry!=DiffusionGeometry::Cartesian||
+           grid.semantics!=GridMetrics::GeometrySemantics::Existing||
+           grid.dim<1||grid.dim>3||direction<0||direction>=grid.dim||
+           grid.ng<1||grid.stride_y<=0||grid.stride_z<=0||grid.total_size<=0||
+           cell<0||cell>=grid.total_size)return false;
+        const int extents[3]{grid.stride_y,grid.stride_z/grid.stride_y,
+            grid.total_size/grid.stride_z};
+        const int coordinate[3]{cell%grid.stride_y,
+            (cell%grid.stride_z)/grid.stride_y,cell/grid.stride_z};
+        const int strides[3]{1,grid.stride_y,grid.stride_z};
+        const double spacing[3]{grid.dx1,grid.dx2,grid.dx3};
+        NewtonianViscousStress::VelocityGradient candidate{};
+        for(int axis=0;axis<grid.dim;++axis)if(axis!=direction) {
+            if(coordinate[axis]<=0||coordinate[axis]>=extents[axis]-1||
+               !std::isfinite(spacing[axis])||!(spacing[axis]>0.))return false;
+            const auto left=read(cell-strides[axis]),right=read(cell+strides[axis]);
+            if(!diffusion_face_is_active(left.rho,right.rho))return false;
+            const double a[3]{left.mom_u/left.rho,left.mom_v/left.rho,left.mom_w/left.rho};
+            const double b[3]{right.mom_u/right.rho,right.mom_v/right.rho,right.mom_w/right.rho};
+            for(int component=0;component<3;++component) {
+                if(!std::isfinite(a[component])||!std::isfinite(b[component]))return false;
+                const double value=.5*((b[component]-a[component])/spacing[axis]);
+                if(!std::isfinite(value))return false;
+                candidate[3*component+axis]=value;
+            }
+        }
+        output=candidate;return true;
+    }
+
+    /** Replace Cartesian viscosity and pair energy with the identical traction.
+     * Workflow: use already checked actual left/right EOS temperatures and Xi;
+     * evaluate the existing coefficient owner at EACH cell, not at face rho/T;
+     * form mu_c=rho_c*nu_c and the shared product-weighted traction. Thermal
+     * flux is recomputed with its ORIGINAL face coefficient/cv/T expression,
+     * then the same new momentum flux is dotted with the ORIGINAL face velocity.
+     * Species flux is untouched and no extra dissipative heat is introduced.
+     * Both backends borrow this one leaf before publishing their face vector.
+     */
+    template<class EosType,class SpeciesAccessor,class StateReader>
+    ARCH_INLINE bool replace_cartesian_viscous_flux(const StateReader& read,
+        int right_cell,const GridMetrics::GeometryView& grid,int direction,
+        double spacing,const EosType& eos,const SpeciesAccessor& species,
+        const DiffusionConfigView& config,const double* composition_left,
+        const double* composition_right,const DiffusionFaceProperties& face,
+        double* charge,double* inverse_mass,FluidVector& flux)
+    {
+        if(grid.geometry!=DiffusionGeometry::Cartesian||!config.use_viscous_diffusion)return true;
+        // The existing coefficient owner always returns nu=0 when configured
+        // nu is exactly zero, including stellar conductivity. The already
+        // validated original face flux then carries zero viscous traction;
+        // no extra EOS evaluation or unused transverse stencil is needed.
+        if(config.nu_visc==0.)return true;
+        if(direction<0||direction>=grid.dim)return false;
+        const int stride=direction==0?1:direction==1?grid.stride_y:grid.stride_z;
+        if(right_cell<stride||right_cell>=grid.total_size)return false;
+        const auto left=read(right_cell-stride),right=read(right_cell);
+        if(!diffusion_face_is_active(left.rho,right.rho))return false;
+        const auto lc=evaluate_diffusion_coefficients_from_eos(eos,species,config,
+            left.rho,face.temperature_left,composition_left,charge,inverse_mass);
+        const auto rc=evaluate_diffusion_coefficients_from_eos(eos,species,config,
+            right.rho,face.temperature_right,composition_right,charge,inverse_mass);
+        if(!lc.valid||!rc.valid)return false;
+        double mu_left=0.,mu_right=0.;
+        if(!NewtonianViscousStress::dynamic_viscosity(left.rho,lc.nu_visc,mu_left)||
+           !NewtonianViscousStress::dynamic_viscosity(right.rho,rc.nu_visc,mu_right))return false;
+        NewtonianViscousStress::VelocityGradient gl{},gr{};
+        // Zero viscosity has no transverse-stencil obligation; the point leaf
+        // still checks every actual face velocity before its zero shortcut.
+        if((mu_left!=0.||mu_right!=0.)&&
+           (!cartesian_transverse_gradient(read,grid,right_cell-stride,direction,gl)||
+            !cartesian_transverse_gradient(read,grid,right_cell,direction,gr)))return false;
+        const NewtonianViscousStress::Vector ul{left.mom_u/left.rho,left.mom_v/left.rho,left.mom_w/left.rho};
+        const NewtonianViscousStress::Vector ur{right.mom_u/right.rho,right.mom_v/right.rho,right.mom_w/right.rho};
+        NewtonianViscousStress::Vector traction{};
+        if(!NewtonianViscousStress::cartesian_paired_traction(direction,spacing,
+            ul,ur,gl,gr,mu_left,mu_right,traction))return false;
+        const double thermal_flux=config.use_thermal_diffusion
+            ?(-face.coefficients.alpha_therm*face.density*face.heat_capacity
+                *((face.temperature_right-face.temperature_left)/spacing)):0.;
+        const NewtonianViscousStress::Vector velocity{.5*(ul[0]+ur[0]),.5*(ul[1]+ur[1]),.5*(ul[2]+ur[2])};
+        const NewtonianViscousStress::Vector momentum{-traction[0],-traction[1],-traction[2]};
+        double work=0.;
+        if(!NewtonianViscousStress::power(velocity,momentum,work))return false;
+        FluidVector candidate=flux;
+        candidate.mom_u=momentum[0];candidate.mom_v=momentum[1];candidate.mom_w=momentum[2];
+        candidate.eng=thermal_flux+work;
+        if(!std::isfinite(candidate.eng))return false;
+        flux=candidate;return true;
+    }
+
+    /** Add half an absolute velocity-matrix row bound for one Cartesian face.
+     * Each centred transverse derivative has absolute coefficient sum 1/h_k;
+     * a normal difference has 2/h_j. Triangle bounds retain BOTH mu products,
+     * including terms that could cancel across two faces, so no cancellation
+     * is presumed. Divide by the actual rho cell capacity. The maximum final
+     * row gives |lambda|<=2*rate; dt<=1/rate bounds a negative-real FE interval
+     * once the separate global dissipativity/BC contract is proved. This leaf
+     * alone does not prove real nonpositive spectrum or RKL qualification.
+     */
+    ARCH_INLINE bool cartesian_viscous_row_bound(double mu_left,double mu_right,
+        double rho,const GridMetrics::GeometryView& grid,int direction,double* rows)
+    {
+        if(!rows||grid.geometry!=DiffusionGeometry::Cartesian||grid.dim<1||grid.dim>3||
+           direction<0||direction>=grid.dim||!std::isfinite(rho)||!(rho>0.)||
+           !std::isfinite(mu_left)||mu_left<0.||!std::isfinite(mu_right)||mu_right<0.)return false;
+        const double h[3]{grid.dx1,grid.dx2,grid.dx3};
+        for(int k=0;k<grid.dim;++k)if(!std::isfinite(h[k])||!(h[k]>0.))return false;
+        double mu_face=0.;
+        if(!NewtonianViscousStress::nonnegative_coefficient_mean(mu_left,mu_right,mu_face))return false;
+        const double capacity=mu_face/rho;
+        if(!std::isfinite(capacity)||(mu_face>0.&&capacity==0.))return false;
+        double candidate[3]{rows[0],rows[1],rows[2]};
+        for(int i=0;i<3;++i) {
+            candidate[i]+=capacity*(i==direction?4./3.:1.)/h[direction]/h[direction];
+            if(i==direction) {
+                for(int k=0;k<grid.dim;++k)if(k!=direction)
+                    candidate[i]+=capacity/(3.*h[direction])/h[k];
+            } else if(i<grid.dim)
+                candidate[i]+=capacity/(2.*h[direction])/h[i];
+            if(!std::isfinite(candidate[i])||candidate[i]<0.)return false;
+        }
+        for(int i=0;i<3;++i)rows[i]=candidate[i];
+        return true;
     }
 
     /** Replace only the explicit RZ azimuthal traction and paired work.
@@ -500,6 +645,7 @@ namespace DiffFlux
         if (!(cell_cv > 0.0) || !std::isfinite(cell_cv)) return {diffusion_dt_sentinel(), false};
         const double volume = GridMetrics::CellVolume(grid, i, j, k);
         double maximum = 0., inverse_dt = 0., angular_row = 0.;
+        double cartesian_rows[3]{};
         const bool rz_viscous = GridMetrics::is_axisymmetric_rz(grid)
             && config.use_viscous_diffusion;
         RzViscousStress::AngularCell angular_center{};
@@ -546,6 +692,18 @@ namespace DiffFlux
                         composition, species_count, eos, species, config,
                         face_composition, charge, inverse_mass, &adjacent_thermal, &thermal);
                 if (!face.coefficients.valid) return {diffusion_dt_sentinel(), false};
+                if(grid.geometry==DiffusionGeometry::Cartesian&&config.use_viscous_diffusion
+                   &&config.nu_visc!=0.) {
+                    const double adjacent_temperature=side?face.temperature_right:face.temperature_left;
+                    const auto adjacent_coefficients=evaluate_diffusion_coefficients_from_eos(
+                        eos,species,config,adjacent.rho,adjacent_temperature,neighbour_composition,charge,inverse_mass);
+                    double mu_cell=0.,mu_adjacent=0.;
+                    if(!adjacent_coefficients.valid||
+                       !NewtonianViscousStress::dynamic_viscosity(value.rho,coefficients.nu_visc,mu_cell)||
+                       !NewtonianViscousStress::dynamic_viscosity(adjacent.rho,adjacent_coefficients.nu_visc,mu_adjacent)||
+                       !cartesian_viscous_row_bound(mu_cell,mu_adjacent,
+                        value.rho,grid,direction,cartesian_rows))return {diffusion_dt_sentinel(),false};
+                }
                 // The unknowns are velocity, temperature and mass fraction;
                 // their cell capacities are rho, rho*cv and rho respectively.
                 const double density_ratio = face.density / value.rho;
@@ -584,6 +742,8 @@ namespace DiffFlux
         // [-2*max(sum K/C),0]. Its own FE/RKL interval is therefore bounded
         // by 1/sum(K/C), rather than the old nearest-neighbor stencil guess.
         inverse_dt=std::max(inverse_dt,angular_row);
+        if(grid.geometry==DiffusionGeometry::Cartesian&&config.use_viscous_diffusion)
+            for(int component=0;component<3;++component)inverse_dt=std::max(inverse_dt,cartesian_rows[component]);
         if (!std::isfinite(inverse_dt) || !(inverse_dt > 0.))
             return {diffusion_dt_sentinel(), false};
         return {1. / inverse_dt, true};
@@ -761,6 +921,10 @@ inline void capture_diffusion_surface_flux(
                                 throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
                             }
                             if (!status.active) continue;
+                            if(!replace_cartesian_viscous_flux(read,idx_R,geometry_view,dir,spacing,
+                                eos,species,diffusion_config,Xi_L.data(),Xi_R.data(),properties,
+                                charge.data(),inverse_mass.data(),F_diff))
+                                throw std::runtime_error("Invalid Cartesian Newtonian traction or paired work");
                             const auto* controls=state.diffusion_boundary
                                 ?state.diffusion_boundary->view().at(dir,i,j,k,
                                     grid.Is(),grid.Ie(),grid.Js(),grid.Je(),grid.Ks(),grid.Ke(),n_species):nullptr;
@@ -823,7 +987,10 @@ inline void capture_diffusion_surface_flux(
             eos, species, config, rho, temperature, composition, charge, inverse_mass);
         status.valid = coefficients.valid;
         if (!status.valid) return status;
-        const double dynamic_viscosity = coefficients.nu_visc * rho;
+        double dynamic_viscosity=0.;
+        if(!NewtonianViscousStress::dynamic_viscosity(rho,coefficients.nu_visc,dynamic_viscosity)) {
+            status.valid=false;return status;
+        }
         if (dynamic_viscosity == 0.) return status;
         const double inverse_radius = GridMetrics::InverseRadiusVolumeAverage(grid, i);
         if (grid.dim == 1) {

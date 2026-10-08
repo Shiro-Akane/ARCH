@@ -1303,6 +1303,31 @@ void test_rz_native_coordinates()
            p.z!=p.z_cy || p.r!=std::hypot(p.r_cy,p.z_cy))
             throw std::runtime_error("RZ native cell center mismatch");
     }
+    // Same physical J/W formula, independently reduced at the regular axis.
+    // Invalid native controls must leave every caller field/species untouched.
+    const auto metric=GridMetrics::make_geometry_view(grid,rz);
+    const int ai=grid.Is(),aj=grid.Js();
+    double increment=41.;
+    if(!GridMetrics::Rz::AngularFluxIncrement(metric,0,ai,aj,2.,3.,.01,increment)
+        ||std::abs(increment-(-.09/grid.dx1))>3.e-14*std::max(1.,std::abs(increment)))
+        throw std::runtime_error("RZ conditioned regular-axis torque integral changed");
+    if(!GridMetrics::Rz::AngularFluxIncrement(metric,1,ai,aj,2.,2.,.01,increment)
+        ||increment!=0.)throw std::runtime_error("RZ identical axial torque does not cancel exactly");
+    for(double invalid_dt:{-1.,std::numeric_limits<double>::infinity(),
+        std::numeric_limits<double>::quiet_NaN()}) {
+        increment=41.;
+        if(GridMetrics::Rz::AngularFluxIncrement(metric,0,ai,aj,2.,3.,invalid_dt,increment)
+            ||increment!=41.)throw std::runtime_error("RZ invalid timestep partially published");
+    }
+    const TimeIntegration::NativeAngularDivergence absent{nullptr,0,ai,aj};
+    const FluidVector sentinel{41.,43.,47.,53.,59.};auto delta=sentinel;
+    double species_delta=61.,species_flux=1.;
+    if(TimeIntegration::accumulate_cell_divergence(sentinel,sentinel,
+        &species_flux,&species_flux,1,1,1.,1.,1.,.01,delta,&species_delta,&absent)
+        ||delta.rho!=sentinel.rho||delta.mom_u!=sentinel.mom_u
+        ||delta.mom_v!=sentinel.mom_v||delta.mom_w!=sentinel.mom_w
+        ||delta.eng!=sentinel.eng||species_delta!=61.)
+        throw std::runtime_error("RZ invalid divergence changed output before rejection");
     bool rejected=false;
     try {grid.InitializeTopology();} catch(const std::invalid_argument&) {rejected=true;}
     if(!rejected) throw std::runtime_error("legacy polar angle guard was removed");
@@ -1609,6 +1634,143 @@ void test_rz_selected_pcm_axial_flux()
         if(!std::isfinite(f.rho)||!std::isfinite(f.mom_u)||!std::isfinite(f.mom_v)
             ||!std::isfinite(f.mom_w)||!std::isfinite(f.eng))
             throw std::runtime_error("Actual native PCM axial sweep produced invalid physical flux");
+    }
+}
+
+/** Actual canonical single-block Cartesian BC -> diffusion -> FE work witnesses.
+ * The Grid/BCHandler contract fixes 16 cells per active axis (not a fabricated
+ * 8-cell layout). Active data alone are initialized; apply() fills every real
+ * ghost/corner. Independent source-index/parity checks precede true operator
+ * and dt calls. Integral references use constant Cartesian V/A, not the stress
+ * implementation. This is Host closed-boundary qualification, not AMR/RKL.
+ */
+void test_cartesian_real_diffusion_boundaries()
+{
+    SpeciesManager species;species.add_species("wall-gas",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    constexpr double pi=3.141592653589793238462643383279502884;
+    for(int dimension:{1,2,3})for(bool reflecting:{false,true})
+    for(bool translation:{false,true}) {
+        if(reflecting&&translation)continue; // translation is a periodic null.
+        SimConfig config{};config.grid.dim=dimension;config.grid.geometry="cartesian";
+        config.grid.x1_min=0.;config.grid.x1_max=1.;config.grid.x2_min=0.;config.grid.x2_max=1.;
+        config.grid.x3_min=0.;config.grid.x3_max=1.;
+        const std::string token=reflecting?"reflecting":"periodic";
+        config.grid.x1l_boundary_type=token;config.grid.x1r_boundary_type=token;
+        config.grid.x2l_boundary_type=token;config.grid.x2r_boundary_type=token;
+        config.grid.x3l_boundary_type=token;config.grid.x3r_boundary_type=token;
+        config.physics.diffusion.use_diffusion=true;config.physics.diffusion.use_viscous_diffusion=true;
+        config.physics.diffusion.use_thermal_diffusion=false;config.physics.diffusion.use_species_diffusion=false;
+        config.physics.diffusion.nu_visc=ViscousGeometryCases::viscosity;
+        Grid grid(amr::MAX_NG,0.,1.,0.,1.,0.,1.);grid.dim=dimension;grid.InitializeTopology();
+        FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+        for(int k=grid.Ks();k<grid.Ke();++k)for(int j=grid.Js();j<grid.Je();++j)
+        for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,j,k);
+            const double x=grid.GetCellCenterX(i),y=dimension>=2?grid.GetCellCenterY(j):0.,
+                z=dimension==3?grid.GetCellCenterZ(k):0.;
+            // Positive varying dyadic rho makes the translation's velocity
+            // divisions exact; no constant-density exemption is needed.
+            const double rho=1.+.25*((i-grid.Is())%2)+.125*((j-grid.Js())%2)+.0625*((k-grid.Ks())%2);
+            std::array<double,3> u{.25,-.375,.5};
+            if(!translation) {
+                if(reflecting) {
+                    u[0]=.2*std::sin(pi*x)*(1.+.3*std::cos(pi*y)+.2*std::cos(pi*z));
+                    u[1]=dimension>=2?.3*std::sin(pi*y)*(1.+.2*std::cos(pi*x)+.1*std::cos(pi*z)):.3*std::cos(pi*x);
+                    u[2]=dimension==3?.4*std::sin(pi*z)*(1.+.15*std::cos(pi*x)+.1*std::cos(pi*y)):
+                        .4*std::cos(pi*x)*std::cos(pi*y);
+                } else {
+                    u[0]=.3*std::sin(2.*pi*x)+.1*std::cos(2.*pi*y);
+                    u[1]=.2*std::cos(2.*pi*x)+.25*std::sin(2.*pi*y);
+                    u[2]=.15*std::sin(2.*pi*x)+.2*std::cos(2.*pi*y)+.25*std::sin(2.*pi*z);
+                }
+            }
+            state.set(cell,{rho,rho*u[0],rho*u[1],rho*u[2],rho*(30.+.5*(u[0]*u[0]+u[1]*u[1]+u[2]*u[2]))});
+            state.X(0,cell)=1.;state.enuc_rate[cell]=0.;
+        }
+        const FluidState active_seed=state;
+        BCHandler boundary(config);boundary.bind(eos,species);
+        boundary.configure_stage(.125,arch::boundary::BoundaryPurpose::Diffusion);
+        boundary.apply(state,grid);
+        const int lower[3]{grid.Is(),grid.Js(),grid.Ks()},upper[3]{grid.Ie(),grid.Je(),grid.Ke()};
+        for(int k=0;k<grid.GetTotalZ();++k)for(int j=0;j<grid.GetTotalY();++j)
+        for(int i=0;i<grid.GetTotalX();++i) {
+            const int position[3]{i,j,k};int source[3]{i,j,k};double signs[3]{1.,1.,1.};
+            bool ghost=false;
+            for(int axis=0;axis<dimension;++axis) {
+                const int extent=upper[axis]-lower[axis];
+                if(position[axis]<lower[axis]) {
+                    ghost=true;source[axis]=reflecting?2*lower[axis]-position[axis]-1:position[axis]+extent;
+                    if(reflecting)signs[axis]=-1.;
+                } else if(position[axis]>=upper[axis]) {
+                    ghost=true;source[axis]=reflecting?2*upper[axis]-position[axis]-1:position[axis]-extent;
+                    if(reflecting)signs[axis]=-1.;
+                }
+            }
+            const int cell=grid.GetIndex(i,j,k),donor=grid.GetIndex(source[0],source[1],source[2]);
+            const auto actual=state.get(cell),expected=active_seed.get(donor);
+            if(!std::isfinite(actual.rho)||!(actual.rho>0.)||actual.rho!=expected.rho||
+               actual.mom_u!=signs[0]*expected.mom_u||actual.mom_v!=signs[1]*expected.mom_v||
+               actual.mom_w!=signs[2]*expected.mom_w||actual.eng!=expected.eng||
+               state.X(0,cell)!=active_seed.X(0,donor)||state.enuc_rate[cell]!=active_seed.enuc_rate[donor])
+                throw std::runtime_error(ghost?"Cartesian actual ghost/corner parity mismatch":"Cartesian boundary overwrote active source");
+        }
+        state.boundary_flux_capture=std::make_shared<arch::boundary::BoundaryFluxCaptureStorage>();
+        for(int axis=0;axis<dimension;++axis) {
+            const int a=(axis+1)%3,b=(axis+2)%3;
+            const std::size_t count=static_cast<std::size_t>(upper[a]-lower[a])*(upper[b]-lower[b])*7;
+            for(int side=0;side<2;++side)state.boundary_flux_capture->stage[2*axis+side].assign(count,0.);
+        }
+        const FluidState before=state;
+        FluidState delta;delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
+        const double dt=DiffFlux::adaptive_dt_diff(state,eos,grid,config,1.);
+        if(!std::isfinite(dt)||!(dt>0.))throw std::runtime_error("Cartesian real-BC dt rejected");
+        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config);
+        // Const operator may update only the explicit observer, never source.
+        if(state.rho!=before.rho||state.mom_u!=before.mom_u||state.mom_v!=before.mom_v||
+           state.mom_w!=before.mom_w||state.eng!=before.eng||state.mass_fractions!=before.mass_fractions||
+           state.enuc_rate!=before.enuc_rate)throw std::runtime_error("Cartesian diffusion mutated its actual source");
+        const double h[3]{grid.dx1,grid.dx2,grid.dx3};
+        long double volume=1.;for(int axis=0;axis<dimension;++axis)volume*=h[axis];
+        long double ke=0.,ke_next=0.,dke=0.,energy=0.,energy_scale=0.,work_scale=0.,boundary_energy=0.,boundary_scale=0.;
+        double null_error=0.;
+        for(int k=grid.Ks();k<grid.Ke();++k)for(int j=grid.Js();j<grid.Je();++j)
+        for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,j,k);const auto u=state.get(cell),d=delta.get(cell);
+            if(d.rho!=0.||delta.X(0,cell)!=0.||!std::isfinite(d.eng))throw std::runtime_error("Cartesian viscosity changed mass/species or produced invalid energy");
+            const double momentum[3]{u.mom_u,u.mom_v,u.mom_w},increment[3]{d.mom_u,d.mom_v,d.mom_w};
+            for(int n=0;n<3;++n) {
+                if(!std::isfinite(increment[n]))throw std::runtime_error("Cartesian viscous momentum is nonfinite");
+                const long double term=volume*momentum[n]*increment[n]/u.rho;
+                dke+=term;work_scale+=std::abs(term);
+                ke+=volume*momentum[n]*momentum[n]/(2.L*u.rho);
+                const long double next=static_cast<long double>(momentum[n])+dt*increment[n];
+                ke_next+=volume*next*next/(2.L*u.rho);
+                null_error=std::max(null_error,std::abs(increment[n]));
+            }
+            energy+=volume*d.eng;energy_scale+=std::abs(volume*d.eng);
+            null_error=std::max(null_error,std::abs(d.eng));
+        }
+        for(int axis=0;axis<dimension;++axis)for(int side=0;side<2;++side) {
+            const auto& plane=state.boundary_flux_capture->stage[2*axis+side];
+            for(std::size_t offset=0;offset<plane.size();offset+=7) {
+                for(int field=0;field<7;++field)if(!std::isfinite(plane[offset+field]))
+                    throw std::runtime_error("Cartesian surface observer published nonfinite flux");
+                const long double term=(side?1.L:-1.L)*(volume/h[axis])*plane[offset+4];
+                boundary_energy+=term;boundary_scale+=std::abs(term);
+                if(plane[offset]!=0.||plane[offset+5]!=0.)throw std::runtime_error("Cartesian wall has viscous mass/species flux");
+            }
+        }
+        constexpr long double tolerance=2.e-12L;
+        if(dke>tolerance*std::max(1.L,work_scale))throw std::runtime_error("Cartesian actual-BC kinetic derivative is positive");
+        if(ke_next-ke>tolerance*std::max(1.L,ke))throw std::runtime_error("Cartesian actual recommended FE dt increases kinetic energy");
+        if(std::abs(boundary_energy)>tolerance*std::max(1.L,boundary_scale)||
+           std::abs(energy+boundary_energy)>tolerance*std::max(1.L,energy_scale+boundary_scale))
+            throw std::runtime_error("Cartesian closed real-boundary energy accounting failed");
+        if(translation&&null_error>2.e-12)throw std::runtime_error("Cartesian variable-rho periodic translation is not null");
+        std::cout<<"CARTESIAN_REAL_BC_WORK dim="<<dimension<<" boundary="<<token<<" translation="<<translation
+            <<" dt="<<dt<<" dke="<<static_cast<double>(dke)<<" energy="<<static_cast<double>(energy)
+            <<" boundary_energy="<<static_cast<double>(boundary_energy)<<" fe_delta_ke="<<static_cast<double>(ke_next-ke)<<'\n';
     }
 }
 
@@ -1933,6 +2095,9 @@ int main(int argc,char** argv)
     test_rz_supported_density();
     RzViscousCases::azimuthal_operator();
     ViscousGeometryCases::newtonian_constitutive();
+    ViscousGeometryCases::newtonian_covariant_gradient();
+    ViscousGeometryCases::newtonian_paired_faces();
+    test_cartesian_real_diffusion_boundaries();
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
     ViscousGeometryCases::density_stability("cpu", evaluate);

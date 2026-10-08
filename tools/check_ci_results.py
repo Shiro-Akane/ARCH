@@ -55,7 +55,7 @@ DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_store_lifecycle", "cuda_amr_exchange", "cuda_hydro_dispatch",
     "diffusion_rkl_parity", "cuda_multiblock_hydro", "cuda_multiblock_diffusion",
     "cuda_multiblock_burn", "cuda_reduction_contract", "checkpoint_temporal_comparison",
-    "hydro_leaf_parity", "cuda_curvilinear_geometry_smoke", "cuda_grid_metrics_cache",
+    "hydro_leaf_parity", "cuda_hydro_eos_failure", "cuda_curvilinear_geometry_smoke", "cuda_grid_metrics_cache",
     "cuda_refinement_indicators", "cuda_ppm_limiter_math", "cuda_flux_limiter",
     "cuda_conservative_acceptance", "eos_host_device_parity",
 })

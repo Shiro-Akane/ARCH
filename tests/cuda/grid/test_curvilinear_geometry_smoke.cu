@@ -137,6 +137,31 @@ __global__ void independent_newtonian_kernel(
     result[0]=maximum;result[1]=valid?1.:0.;
 }
 
+/** Execute actual runtime-uploaded frame inputs in the same point math.
+ * This is a constitutive connection witness, independent of diffusion updates.
+ */
+__global__ void independent_covariant_kernel(
+    const ViscousGeometryCases::CovariantPointCase* cases,int count,double* result)
+{
+    double maximum=0.;
+    for(int index=0;index<count;++index)
+        maximum=std::max(maximum,ViscousGeometryCases::covariant_point_error(cases[index]));
+    result[0]=maximum;result[1]=ViscousGeometryCases::covariant_point_guards()?1.:0.;
+}
+
+
+/** Actual uploaded face and periodic witnesses execute shared scalar math. */
+__global__ void independent_paired_traction_kernel(
+    const ViscousGeometryCases::PairedTractionCase* cases,int count,
+    const ViscousGeometryCases::PairedPeriodicCase* periodic,double* result)
+{
+    double maximum=0.;
+    for(int index=0;index<count;++index)
+        maximum=std::max(maximum,ViscousGeometryCases::paired_traction_error(cases[index]));
+    result[0]=maximum;result[1]=ViscousGeometryCases::paired_traction_guards()?1.:0.;
+    result[2]=ViscousGeometryCases::paired_periodic_work(*periodic,result+3)?1.:0.;
+}
+
 /** Execute the sole shared constitutive leaf on actual device case buffers. */
 void independent_newtonian()
 {
@@ -148,6 +173,30 @@ void independent_newtonian()
     require(std::isfinite(device[0])&&device[0]<=64.*std::numeric_limits<double>::epsilon()
         &&device[1]==1.,"independent CUDA Newtonian constitutive point law");
     ViscousGeometryCases::newtonian_constitutive();
+    const auto frames=ViscousGeometryCases::covariant_point_cases();
+    DeviceBuffer<ViscousGeometryCases::CovariantPointCase> frame_cases(frames.size());
+    frame_cases.upload(frames);
+    independent_covariant_kernel<<<1,1>>>(frame_cases.get(),static_cast<int>(frames.size()),result.get());
+    check(cudaGetLastError());const auto frame_result=result.download();
+    require(std::isfinite(frame_result[0])&&frame_result[0]<=64.*std::numeric_limits<double>::epsilon()
+        &&frame_result[1]==1.,"independent CUDA covariant gradient failure/publication law");
+    ViscousGeometryCases::newtonian_covariant_gradient();
+    const auto paired=ViscousGeometryCases::paired_traction_cases();
+    DeviceBuffer<ViscousGeometryCases::PairedTractionCase> paired_cases(paired.size());
+    paired_cases.upload(paired);
+    DeviceBuffer<ViscousGeometryCases::PairedPeriodicCase> periodic(1);
+    periodic.upload({ViscousGeometryCases::paired_periodic_case()});
+    DeviceBuffer<double> paired_result(7);
+    independent_paired_traction_kernel<<<1,1>>>(paired_cases.get(),static_cast<int>(paired.size()),periodic.get(),paired_result.get());
+    check(cudaGetLastError());const auto paired_values=paired_result.download();
+    require(std::isfinite(paired_values[0])&&paired_values[0]<=64.*std::numeric_limits<double>::epsilon()
+        &&paired_values[1]==1.&&paired_values[2]==1.,"independent CUDA paired traction/work law");
+    ViscousGeometryCases::newtonian_paired_faces();
+    std::cout<<"NEWTONIAN_DEVICE_PAIRED_FACE cases="<<paired.size()<<" max_error="<<paired_values[0]
+        <<" corrected_D="<<paired_values[3]<<" naive_D="<<paired_values[4]<<'\n';
+
+    std::cout<<"NEWTONIAN_DEVICE_COVARIANT_POINT cases="<<frames.size()
+        <<" max_error="<<frame_result[0]<<'\n';
     std::cout<<"NEWTONIAN_DEVICE_CONSTITUTIVE_POINT cases="<<inputs.size()
         <<" max_error="<<device[0]<<'\n';
 }

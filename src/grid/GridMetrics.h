@@ -278,6 +278,48 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(int direction, double dr, double 
     return direction == 0 ? dr : dz;
 }
 
+/** Conditioned native J/W flux increment from the actual cell endpoints.
+ * Workflow: validate finite physical fluxes and the explicit (r,z) chart;
+ * factor the radial torque difference before dividing by W; publish only a
+ * finite increment. Failure leaves output untouched and grants no stage
+ * acceptance. Caller retains the mandatory accepted-state/EOS gate.
+ * With t=l/h and dr=h-l, the exact radial integral ratio is
+ * (dt/dr)*3/(1+t+t*t)*[(FL-FR)*t*t-FR*(dr/h)*(1+t)].
+ * This is the same two-lever torque/W divergence with 2*pi cancelled;
+ * axial torque and W share the annulus factor, giving dt/dz*(FL-FR).
+ */
+ARCH_HOST_DEVICE inline bool AngularFluxIncrement(
+    const GeometryView& grid,int direction,int i,int j,
+    double lower_flux,double upper_flux,double dt,double& output)
+{
+    if(grid.semantics!=GeometrySemantics::AxisymmetricRz
+        ||grid.geometry!=Geometry::Cylindrical||grid.dim!=2
+        ||(direction!=0&&direction!=1)
+        ||!std::isfinite(lower_flux)||!std::isfinite(upper_flux)
+        ||!std::isfinite(dt)||dt<0.0) return false;
+    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    const double dr=right-left,dz=grid.CellWidth(1,j);
+    if(!std::isfinite(left)||!std::isfinite(right)||left<0.0
+        ||!std::isfinite(dr)||!(dr>0.0)||!std::isfinite(dz)||!(dz>0.0))
+        return false;
+    double candidate=0.0;
+    if(dt!=0.0) {
+        const double scaled_dt=dt/(direction==0?dr:dz);
+        // A positive timestep ratio cannot silently erase a representable
+        // later flux product. Extreme ranges fail closed, without a floor.
+        if(!std::isfinite(scaled_dt)||scaled_dt==0.0)return false;
+        if(direction==0) {
+            const double t=left/right;
+            candidate=scaled_dt*(3.0/(1.0+t+t*t))
+                *((lower_flux-upper_flux)*t*t
+                  -upper_flux*(dr/right)*(1.0+t));
+        } else candidate=scaled_dt*(lower_flux-upper_flux);
+    }
+    if(!std::isfinite(candidate)) return false;
+    output=candidate;
+    return true;
+}
+
 } // namespace Rz
 
 ARCH_HOST_DEVICE inline double polar_angle_measure(double theta_left, double theta_right) {

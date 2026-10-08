@@ -129,13 +129,14 @@ static __device__ inline void hydro_divergence_kernel_work(
     const int cell = grid.active_cell(linear);
     const int stride = grid.stride(direction);
     FluidVector cell_delta = delta.load(cell);
-    // Workflow: active Native m_phi is J/W. Borrow true torque integrals
-    // integral(r dA) and W=integral(r dV); all remaining fields still use
-    // the original immutable V/face-area cache and shared divergence leaf.
+    // Workflow: Native J/W uses the same conditioned endpoint formula as
+    // Host, cancelling the full-ring measure without large torque products.
+    // Other fields retain the immutable V/face-area cache and shared leaf.
     const auto geometry=make_grid_geometry_view(grid);
     const bool native=geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
     const int i=cell%grid.stride_y,j=(cell%grid.stride_z)/grid.stride_y;
-    TimeIntegration::accumulate_cell_divergence(
+    const TimeIntegration::NativeAngularDivergence angular{&geometry,direction,i,j};
+    const bool divergence_valid=TimeIntegration::accumulate_cell_divergence(
         flux.load(cell), flux.load(cell + stride),
         flux.n_species > 0 ? flux.mass_fractions + cell : nullptr,
         flux.n_species > 0 ? flux.mass_fractions + cell + stride : nullptr,
@@ -144,9 +145,11 @@ static __device__ inline void hydro_divergence_kernel_work(
         grid.face_area_upper[direction][cell], grid.cell_volume[cell], dt,
         cell_delta,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr,
-        native?GridMetrics::Rz::FaceTorqueMeasure(geometry,direction,i,j,false):0.0,
-        native?GridMetrics::Rz::FaceTorqueMeasure(geometry,direction,i,j,true):0.0,
-        native?GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j):0.0);
+        native ? &angular : nullptr);
+    // This existing kernel has no status latch. Explicit nonfinite output
+    // reaches its original accepted-state rejection; this is not an atomic
+    // whole-stage/device qualification and must not be ignored by its caller.
+    if(!divergence_valid) cell_delta.mom_w=std::numeric_limits<double>::quiet_NaN();
     // w_low/high belong to this cell, even where the physical face is shared.
     // Host and Device apply the identical dt/2 mass-flux work leaf.
     if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(

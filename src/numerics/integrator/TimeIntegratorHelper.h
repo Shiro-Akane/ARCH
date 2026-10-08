@@ -416,23 +416,41 @@ namespace TimeIntegration
         }
     }
 
-    ARCH_INLINE void accumulate_cell_divergence(
+    /** Borrowed geometry for one native angular cell increment. This
+     * mathematical context conveys no Runtime/source/ghost authority.
+     */
+    struct NativeAngularDivergence {
+        const GridMetrics::GeometryView* geometry = nullptr;
+        int direction = 0;
+        int i = 0;
+        int j = 0;
+    };
+
+    /** Add V-measure fields/species and, when explicitly supplied, the
+     * conditioned native J/W increment from the shared geometry leaf.
+     * Validate the native angular increment before any cell/species write.
+     * False leaves all outputs untouched; it never falls back to V transport.
+     */
+    ARCH_INLINE bool accumulate_cell_divergence(
         const FluidVector& lower_flux, const FluidVector& upper_flux,
         const double* lower_species_flux, const double* upper_species_flux,
         int n_spec, int species_stride,
         double area_l, double area_r, double volume, double dt,
         FluidVector& dU, double* d_spec,
-        double torque_l = 0.0, double torque_r = 0.0,
-        double angular_measure = 0.0)
+        const NativeAngularDivergence* angular = nullptr)
     {
+        double increment=0.0;
+        if(angular&&(!angular->geometry
+            ||!GridMetrics::Rz::AngularFluxIncrement(*angular->geometry,
+                angular->direction,angular->i,angular->j,
+                lower_flux.mom_w,upper_flux.mom_w,dt,increment))) return false;
         double dt_over_vol = dt / volume;
         auto lower=lower_flux,upper=upper_flux;
         // The unique RZ m_phi slot is J/W. All other fields remain V averages.
         // Do not form an unused m_phi V-divergence before replacing it.
-        if(angular_measure>0.0) {
+        if(angular) {
             lower.mom_w=upper.mom_w=0.0;
-            dU.mom_w += dt/angular_measure
-                *(lower_flux.mom_w*torque_l-upper_flux.mom_w*torque_r);
+            dU.mom_w += increment;
         }
         dU = dU + (lower * area_l - upper * area_r) * dt_over_vol;
         for (int s = 0; s < n_spec; ++s)
@@ -440,6 +458,7 @@ namespace TimeIntegration
             int off = s * species_stride;
             d_spec[off] += (lower_species_flux[off] * area_l - upper_species_flux[off] * area_r) * dt_over_vol;
         }
+        return true;
     }
 
     // Helper 1: Accumulate Flux Divergence
@@ -462,7 +481,9 @@ namespace TimeIntegration
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
 
+        arch::state::HostFailure failure;
         const auto accumulate_row = [&](int kj) {
+            try {
             int k = ks + kj / nj;
             int j = js + kj % nj;
             for (int i = grid.Is(); i < grid.Ie(); ++i)
@@ -479,18 +500,15 @@ namespace TimeIntegration
                     ? spec_fluxes.data() + idx + stride : nullptr;
                 double* species_delta = n_spec > 0
                     ? d_spec.data() + idx : nullptr;
-                accumulate_cell_divergence(
+                const NativeAngularDivergence angular{&geometry,dir,i,j};
+                if(!accumulate_cell_divergence(
                     fluxes[idx], fluxes[idx + stride],
                     lower_species_flux, upper_species_flux,
                     n_spec, total_size, area_l, area_r, volume, dt,
-                    dU[idx], species_delta,
-                    torque
-                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,j,false) : 0.0,
-                    torque
-                        ? GridMetrics::Rz::FaceTorqueMeasure(geometry,dir,i,j,true) : 0.0,
-                    torque
-                        ? GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j) : 0.0);
+                    dU[idx], species_delta,torque ? &angular : nullptr))
+                    throw std::runtime_error("Invalid native angular flux divergence: cell="+std::to_string(idx));
             }
+            } catch (...) { failure.capture_current(); }
         };
         bool parallel_rows = nk * nj > 1;
 #ifdef _OPENMP
@@ -504,6 +522,7 @@ namespace TimeIntegration
             for (int kj = 0; kj < nk * nj; ++kj)
                 accumulate_row(kj);
         }
+        failure.rethrow();
     }
 
     // Helper: Geometric Source Terms (cylindrical / spherical)

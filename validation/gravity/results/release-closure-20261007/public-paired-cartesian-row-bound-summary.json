@@ -1,0 +1,35 @@
+{
+  "status": "ACCEPTED_PERIODIC_UNIFORM_CARTESIAN_ROWBOUND_ONLY",
+  "atUtc": "2026-10-07T23:08:36.522291+00:00",
+  "cumulativeSeconds": 124.44,
+  "cumulativeCapSeconds": 160,
+  "attemptSeconds": [
+    75.32,
+    49.12
+  ],
+  "firstDelivery": "output limit16384allthinking",
+  "rootIndependentExactCases": 12,
+  "rootRows": 468,
+  "maxRatio": "1",
+  "formalRepairsUsed": 1,
+  "formalRepairsRemaining": 0,
+  "reportedTokens": {
+    "input": 3187,
+    "cachedInput": 1024,
+    "noncachedInput": 2163,
+    "output": 26954,
+    "thinking": 26619,
+    "visible": 335
+  },
+  "estimatedUsd": {
+    "offPeak": 0.01649992,
+    "peak": 0.03299984,
+    "invoice": "UNKNOWN"
+  },
+  "limits": [
+    "Fixed periodic uniform Cartesian density/coefficient; same-cell cross terms cancel beforetriangle",
+    "FE kinetic mass norm only",
+    "No BC/AMR/curved/nonlinear EOS/RKL grant",
+    "Production candidate uses a more conservative uncancelled face row triangle, separately reviewed"
+  ]
+}

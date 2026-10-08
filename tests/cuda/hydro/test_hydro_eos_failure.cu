@@ -41,7 +41,7 @@ template<class T> struct Buffer {
     Buffer& operator=(const Buffer&) = delete;
 };
 
-enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure };
+enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure, InfinitePressure, ZeroTemperature, NegativeTemperature, NonfiniteTemperature };
 struct ProbeEos : IdealGasView {
     Fault fault = Fault::None;
     ARCH_INLINE double get_pressure(const FluidVector& value, const double* x) const
@@ -51,7 +51,16 @@ struct ProbeEos : IdealGasView {
             || fault == Fault::GeometryPressure)
             return std::numeric_limits<double>::quiet_NaN();
         if (fault == Fault::NegativeFinitePressure) return -1.0;
+        if (fault == Fault::InfinitePressure) return std::numeric_limits<double>::infinity();
         return IdealGasView::get_pressure(value, x);
+    }
+    // Required thermal checks consume the selected EOS result without a floor.
+    ARCH_INLINE double get_temperature(double rho, double energy, const double* x) const
+    {
+        if (fault == Fault::ZeroTemperature) return 0.;
+        if (fault == Fault::NegativeTemperature) return -1.;
+        if (fault == Fault::NonfiniteTemperature) return std::numeric_limits<double>::quiet_NaN();
+        return IdealGasView::get_temperature(rho, energy, x);
     }
     ARCH_INLINE double get_pressure_from_rho_e(double rho, double energy, const double* x) const
     {
@@ -506,7 +515,8 @@ void test_native_selected_face_eos_ownership()
     for(int f=0;f<5;++f)
         require(std::isfinite(good.second[f*n+face])&&std::isfinite(recoverable.second[f*n+face]),
             "Native PPM optional inverse did not produce finite B flux");
-    for(Fault fault:{Fault::GeometryPressure,Fault::NegativeFinitePressure}) {
+    for(Fault fault:{Fault::GeometryPressure,Fault::NegativeFinitePressure,Fault::InfinitePressure,
+        Fault::ZeroTemperature,Fault::NegativeTemperature,Fault::NonfiniteTemperature}) {
         const auto bad=run(fault);
         require(bad.first==1&&bad.second==sentinels,"Required native source/B EOS fault published flux or failed to latch");
     }

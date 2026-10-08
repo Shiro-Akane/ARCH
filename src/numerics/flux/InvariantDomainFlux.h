@@ -274,6 +274,59 @@ ARCH_INLINE PointFaceBlend point_face_blend_with_thermo(
         p_left,c_left,p_right,c_right,direction,high,species_high,arithmetic);
 }
 
+/** Limit a high face flux against an explicitly selected physical baseline.
+ * Workflow: use the existing endpoint acoustic speed a; build the two
+ * distinct baseline states; reject an inadmissible prerequisite; limit the
+ * high-minus-baseline correction with one fluid/species fraction.
+ * B_L=U_L+(F_L-L)/a, B_R=U_R+(L-F_R)/a;
+ * B_L(theta)=B_L+theta*(L-H)/a, B_R(theta)=B_R-theta*(L-H)/a.
+ * An arbitrary baseline cannot borrow the LLF bar or its fraction. This
+ * point algebra supports a Cartesian convex update only with the owning
+ * sum(dt*A*a/V)<=1 and closed uniform physical flux geometry; it grants
+ * no mixed-measure native stage, geometric source or general-EOS theorem.
+ * The ordinary LLF entry retains its original arithmetic above. Caller owns
+ * species storage and supplies the same selected baseline for every field.
+ */
+ARCH_INLINE PointFaceBlend point_face_blend_with_baseline_and_thermo(
+    const FluidVector& left,const FluidVector& right,
+    const double* x_left,const double* x_right,int species,
+    double p_left,double c_left,double p_right,double c_right,
+    int direction,const FluidVector& high,const double* species_high,
+    const FluidVector& low,const double* species_low)
+{
+    PointFaceBlend result;
+    const double a=std::max(std::abs(get_un(left,direction))+c_left,
+                            std::abs(get_un(right,direction))+c_right);
+    result.wave_speed=a;result.low=low;
+    if(!(a>0.)||!std::isfinite(a))return result;
+    const auto fl=get_flux(left,p_left,direction);
+    const auto fr=get_flux(right,p_right,direction);
+    const auto bar_left=left+(fl-low)/a;
+    const auto bar_right=right+(low-fr)/a;
+    if(!valid(bar_left)||!valid(bar_right))return result;
+    const auto correction=(low-high)/a;
+    double theta=std::min(segment_fraction(bar_left,correction),
+                          segment_fraction(bar_right,-1.*correction));
+    for(int s=0;s<species;++s) {
+        if(!std::isfinite(species_low[s]))return result;
+        const double bar_species_left=left.rho*x_left[s]
+            +(fl.rho*x_left[s]-species_low[s])/a;
+        const double bar_species_right=right.rho*x_right[s]
+            +(species_low[s]-fr.rho*x_right[s])/a;
+        const double tau=arch::state::composition_roundoff_limit;
+        const double shifted_left=bar_species_left+tau*bar_left.rho;
+        const double shifted_right=bar_species_right+tau*bar_right.rho;
+        if(!std::isfinite(shifted_left)||!std::isfinite(shifted_right)
+            ||shifted_left<0.||shifted_right<0.)return result;
+        const double deviation=(species_low[s]-species_high[s])/a
+                              +tau*correction.rho;
+        if(!std::isfinite(deviation))theta=0.;
+        else if(deviation<0.)theta=std::min(theta,shifted_left/(-deviation));
+        else if(deviation>0.)theta=std::min(theta,shifted_right/deviation);
+    }
+    result.theta=theta;result.valid=true;return result;
+}
+
 /** Blend a face flux using the sole original shared factor owner.
  * Keep original final fluid/species expression order and rejection bytes.
  * No required mean EOS query, trace window or segment iteration is changed.
