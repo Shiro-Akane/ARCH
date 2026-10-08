@@ -1484,8 +1484,120 @@ void check_rk_conserved_polynomial_reference() {
     std::cout<<"RK_CONSERVED_POLYNOMIAL_REFERENCE stationary_methods=3 rational_updates=2 range=1\n";
 }
 
+
+/** Test active complementary species with the real RKL cell adapters.
+ * Workflow: gather the closed two-cell operator before any aliased stage write,
+ * evolve both cells with the production coefficients, then compare the complete
+ * step to independent low-degree Legendre stability polynomials. The operator
+ * is L(X)_c=lambda*(X_other-X_c), with no BC, Hydro or normalization shortcut.
+ * Its antisymmetric eigenvalue is -2*lambda; the symmetric mass mode is zero.
+ * This arithmetic fixture does not qualify the complete DiffusionMode 5tau run.
+ */
+void check_rkl_active_complementary_reference() {
+    namespace rkl=Numerics::Diffusion::detail;
+    using Fractions=std::array<std::array<double,2>,2>;
+    using Cells=std::array<FluidVector,2>;
+    constexpr double lambda=1.;
+    constexpr double dt=0x1p-12;
+    constexpr int steps=25000;
+    constexpr double window=512.*2.*std::numeric_limits<double>::epsilon();
+    const long double z=-2.L*static_cast<long double>(lambda)*dt;
+    const Fractions initial{{{{.37,.63}},{{.63,.37}}}};
+    const std::array<long double,2> initial_mass{
+        static_cast<long double>(initial[0][0])+initial[1][0],
+        static_cast<long double>(initial[0][1])+initial[1][1]};
+    const long double mean=(static_cast<long double>(initial[0][0])+initial[1][0])/2.L;
+    const long double initial_amplitude=(static_cast<long double>(initial[1][0])-initial[0][0])/2.L;
+    const auto bits=[](double value){return std::bit_cast<std::uint64_t>(value);};
+    const Cells fluid_seed{{{1.,0.,0.,0.,4.},{1.,0.,0.,0.,4.}}};
+    // Independent exact polynomial coefficients from P2 and P3, not the
+    // producer's recurrence weights. dt and lambda are exact binary inputs.
+    const auto amplification=[&](bool second,int stages) {
+        if(second) return stages==2 ? 1.L+z+z*z/2.L
+            : 1.L+z+z*z/2.L+z*z*z/15.L;
+        return stages==2 ? 1.L+z+z*z/6.L
+            : 1.L+z+5.L*z*z/24.L+5.L*z*z*z/432.L;
+    };
+    for(bool scaled:{false,true}) for(bool second:{false,true}) for(int stages:{2,3}) {
+        const auto order=second?DiffFunction::RKLOrder::Second:DiffFunction::RKLOrder::First;
+        const long double decay=amplification(second,stages);
+        require(decay>0.L&&decay<1.L,"independent RKL closed-mode polynomial is unstable");
+        Cells current=fluid_seed;
+        Fractions current_x=initial;
+        long double amplitude=initial_amplitude;
+        for(int step=0;step<steps;++step) {
+            const Cells state_n=current;
+            const Fractions species_n=current_x;
+            // All genuine operator inputs are gathered from the immutable
+            // stage frame. Both species and both cells are computed separately.
+            const auto rhs=[&](const Cells& u,const Fractions& x) {
+                Fractions result{};
+                for(int cell=0;cell<2;++cell) for(int species=0;species<2;++species)
+                    result[cell][species]=lambda*(u[1-cell].rho*x[1-cell][species]
+                                                -u[cell].rho*x[cell][species]);
+                return result;
+            };
+            const Fractions initial_rhs=rhs(state_n,species_n);
+            require(initial_rhs[0][0]!=0.&&initial_rhs[0][1]!=0.,
+                "active RKL complementary witness became a stationary test");
+            Cells older=state_n,previous=state_n;
+            Fractions older_x=species_n,previous_x=species_n;
+            for(int stage=1;stage<=stages;++stage) {
+                const auto coefficients=DiffFunction::get_rkl_coeffs(order,stage,stages);
+                const Fractions previous_rhs=rhs(previous,previous_x);
+                Fractions used_previous=previous_rhs,used_initial=initial_rhs;
+                if(scaled) for(int cell=0;cell<2;++cell) for(int species=0;species<2;++species) {
+                    used_previous[cell][species]*=dt;
+                    used_initial[cell][species]*=dt;
+                }
+                if(stage==1) {
+                    for(int cell=0;cell<2;++cell)
+                        rkl::apply_first_rkl_stage_cell(state_n[cell],species_n[cell].data(),
+                            FluidVector{},used_initial[cell].data(),2,1,
+                            scaled?coefficients.tilde_mu:coefficients.tilde_mu*dt,
+                            previous[cell],previous_x[cell].data());
+                } else {
+                    // Output really aliases older. The next stage sees all
+                    // outputs only after the two-cell gather and writes finish.
+                    for(int cell=0;cell<2;++cell)
+                        rkl::apply_recursive_rkl_stage_cell(state_n[cell],species_n[cell].data(),
+                            previous[cell],previous_x[cell].data(),older[cell],older_x[cell].data(),
+                            FluidVector{},used_previous[cell].data(),FluidVector{},used_initial[cell].data(),
+                            2,1,coefficients,second,dt,scaled,older[cell],older_x[cell].data());
+                    std::swap(previous,older);
+                    std::swap(previous_x,older_x);
+                }
+                for(int cell=0;cell<2;++cell) {
+                    require(arch::state::validate_composition(previous_x[cell].data(),2,1)
+                        ==arch::state::Status::valid,"active RKL complementary simplex rejected");
+                    for(auto member:std::array<double FluidVector::*,5>{&FluidVector::rho,
+                            &FluidVector::mom_u,&FluidVector::mom_v,&FluidVector::mom_w,&FluidVector::eng})
+                        require(bits(previous[cell].*member)==bits(fluid_seed[cell].*member),
+                            "passive active-species RKL changed stationary fluid");
+                }
+            }
+            current=previous;
+            current_x=previous_x;
+            amplitude*=decay;
+            for(int species=0;species<2;++species) {
+                const long double mass=static_cast<long double>(current_x[0][species])+current_x[1][species];
+                require(std::abs(mass-initial_mass[species])<=window*std::abs(initial_mass[species]),
+                    "active closed RKL changed global species mass");
+            }
+            for(int cell=0;cell<2;++cell) for(int species=0;species<2;++species) {
+                const long double tracer=mean+(cell?amplitude:-amplitude);
+                const long double expected=species==0?tracer:initial_mass[0]-tracer;
+                require(std::abs(static_cast<long double>(current_x[cell][species])-expected)<=window,
+                    "active RKL decay differs from independent stability polynomial");
+            }
+        }
+    }
+    std::cout<<"RKL_ACTIVE_COMPLEMENTARY_REFERENCE routes=8 steps=25000 cells=2 species=2 "
+        "simplex=core-window decay=independent-polynomial scope=cell-arithmetic-only full_5tau=false\n";
+}
+
 }
 
 int main() {
-    try { check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
+    try { check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_rkl_active_complementary_reference(); check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
  catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; } }

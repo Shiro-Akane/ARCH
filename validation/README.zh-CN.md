@@ -56,11 +56,7 @@ CPU KLU 与 GPU cuDSS。各模块摘要链接独立科学检查，并保留原�
 注册入口本身不是执行结果。托管 CI 只执行一次数值／API 清单，工具检查由独立任务
 执行；[CI 说明](../.github/workflows/README.md)给出一致的发现与完成判定规则。
 
-现行 Native RZ 记录包含共享数学、真实所有者检查和短时四模块 AMR 运行。
-连续自引力／能量的独立验收、全新进程的暖态重启、Native Device 耦合、
-真实桌面交互、长时运行和正式配对计时仍有各自的验收出口。
-其范围见[引力摘要](gravity/README.md#axisymmetric-rz-verification)和
-[发布验证计划](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)。
+现行 Native RZ 记录包含共享数学、真实所有者检查以及短时的四模块 AMR 运行。Cartesian 完整应力及 RZ 方位牵引与配对功已具备相应范围的证据；但完整曲线 Newtonian 面牵引、几何体项、同一应力的功、粗细耦合及真实的稳定性行界仍待验收。连续自引力/能量的独立验收、全新进程的暖态重启、Native Device 耦合、真实的桌面交互、长时运行和正式配对计时均保留独立的验收出口。其适用范围请参见[引力摘要](gravity/README.md#axisymmetric-rz-verification)和[发布验证计划](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)。
 
 ## 误差约定
 

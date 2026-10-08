@@ -62,13 +62,7 @@ Hosted CI selects the numerical/API entries once and runs their tooling owners
 in its separate job; [the CI guide](../.github/workflows/README.md) explains the
 matching discovery and completion checks.
 
-Current Native RZ records include shared mathematical and owner checks plus a
-short four-module AMR run. Independent continuous self-gravity/energy acceptance,
-warm fresh-process restart, Native Device coupling, real desktop interactions,
-sustained execution and formal paired timings retain separate acceptance exits.
-See the [gravity summary](gravity/README.md#axisymmetric-rz-verification) and
-[release verification plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)
-for their scopes.
+Current Native RZ records include shared mathematical and owner checks, plus a short four-module AMR run. Cartesian full-stress checks and RZ azimuthal traction with paired work have scoped evidence. Full curvilinear Newtonian face traction, geometric volume terms, work from the same stress, coarse-fine coupling, and the actual stability row bound still require acceptance. Independent continuous self-gravity/energy acceptance, warm fresh-process restart, Native Device coupling, real desktop interactions, sustained execution, and formal paired timings retain separate exits. See the [gravity summary](gravity/README.md#axisymmetric-rz-verification) and [release verification plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md) for their scopes.
 
 ## Error conventions
 

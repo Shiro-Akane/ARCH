@@ -82,7 +82,7 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | --- | --- | --- |
 | 通量 | `SW`、`VL`、`Roe`、`HLL`、`HLLC` | 已 dispatch |
 | 重构 | `pcm`、`donor_cell`；`muscl`、`plm`；`ppm` | 所列 alias 已 dispatch；`weno5` 只出现在 ghost 数计算中 |
-| MUSCL limiter | `minmod`、`superbee`、`vanleer`、`mc` | 已 dispatch；包括 `none` 在内的未知值回退到 MinMod |
+| MUSCL limiter | `minmod`、`superbee`、`vanleer`、`mc` | 已 dispatch；包括 `none` 在内的未知值在配置解析时明确报错 |
 | 流体时间推进 | `Euler`、`RK1`；`RK2`、`SSPRK2`；`RK3`、`SSPRK3` | Euler、SSPRK2、SSPRK3 |
 | 扩散时间推进 | `RKL2`、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
 | EOS | `ideal`、`tabular`、`helmholtz` | CPU 与 CUDA 均已 dispatch |
@@ -91,7 +91,7 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
 | 线性求解 | `Auto`、`DenseLU`、`SparseKLU`、`cuDSS` | 不区分大小写；接受 `dense_lu`、`sparse_klu`、`cu_dss` 别名。`Auto` 对不超过 31 个总 ODE 方程选择 DenseLU，计数包含温度及可选辅助能量状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA；不兼容的显式组合会在后端构造前报错，不替换求解器。缺少求解库或已注册的 CUDA 网络执行代码时也会明确报错。 |
 
-策略名称按 ASCII 大小写不敏感；不同 dispatcher 接受的 alias 与 fallback 行为仍须按上表核对。
+策略名称按 ASCII 大小写不敏感；接受的别名见上表，未知策略在配置解析时明确报错。
 
 ### 自引力计算域
 
@@ -113,8 +113,8 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 
 策略表列出可用组件，不代表其全部排列组合都已验收。配置在启动时解析为执行方案；
 为下一次运行更换方法时，仍须满足 EOS、材料模型、计算域和构建条件。程序没有运行中
-动态切换策略的接口，重启也须遵守下文的物理身份检查。部分未知策略名会回退为默认值，
-因此需要检查实际解析后的方案。
+动态切换策略的接口，重启也须遵守下文的物理身份检查。未知策略名在配置解析时报错；
+运行前可检查解析后的方案及诊断。
 
 `HLLC + MUSCL/MC + RK2 + RKL2 + BD + self-gravity MG + AMR` 已通过普通共享
 Driver 联动。[SNIaCoupled](../simulation/SNIaCoupled/README.md)以 Helmholtz、
@@ -495,7 +495,7 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 | `DENS` | 质量密度 | 是 | 是 | 所有模型 |
 | `PRES` | 活动 EOS 的压力 | 是 | 是 | 所有 EOS |
 | `TEMP` | 活动 EOS 的温度 | 是 | 是 | 所有 EOS |
-| `VELX/Y/Z` | 活动逻辑方向速度 | 是 | 是 | 仅活动维度 |
+| `VELX/Y/Z` | 所选计算坐标中的物理速度分量 | 是 | 是 | RZ 可输出三个分量；Cartesian 平面按活动维度选择，分量含义随计算坐标变化 |
 | `ENER` | 总能量密度 | 是 | 是 | 所有模型 |
 | `VORT` | 考虑度量的旋度模 | 是 | 是 | 已实现几何 |
 | `DIVV` | 考虑度量的速度散度 | 是 | 是 | 已实现几何 |
@@ -985,7 +985,7 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 - CUDA 生成网络必须满足[设备数学包契约](../src/physics/network/custom/README.md)，包括声明 `device_callable_math=true`；通过检查的仅主机网络包在 CPU 上执行。生成网络 NSE 受平衡模型资格限制；正确的动力学网络不一定适合 NSE 旁路。
 - 自引力的几何、边界与根网格限制见[自引力计算域](#自引力计算域)；域外质量源尚未进入该能力范围。Jeans 场与细化的配置条件及受测范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)；具体耦合与性能见[引力验证](../validation/gravity/README.zh-CN.md)。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
-- 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
+- 状态修复与界面限制可能改变守恒量；生产运行应检查记录的修复量、解析后的配置与诊断。非法输入和未知策略在配置解析时明确报错。
 - 正式 Plotfile 内嵌发布完成标记、类型化配置／算例／构建／执行物／EOS 身份、字段单位及原生单元边界与测度。来源记录按已声明的执行物和构建范围解释，运行环境及外部依赖仍需另行记录；旧 candidate 的 `unknown` 字段表示来源证明不完整，其资格不能等同于正式发布。检查点内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 无法保证跨机器逐位复现。
 - 算例构建假设 `simulation/<Case>/` 布局；plot 写入、关闭或发布失败会由 Core 传播并以非零状态退出，不会返回成功发布结果。完成发布资格仅属于成功关闭并原子发布的最终文件，残留临时或部分文件不能作为完整 Plotfile 的科学权威。
 - Sedov 在单元中心沉积归一化的连续有限半径 profile，因此离散注入能量随分辨率变化。

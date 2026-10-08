@@ -113,7 +113,7 @@ application results and release acceptance.
 | --- | --- | --- |
 | Flux | `SW`, `VL`, `Roe`, `HLL`, `HLLC` | dispatched |
 | Reconstruction | `pcm`, `donor_cell`; `muscl`, `plm`; `ppm` | dispatched aliases shown; `weno5` appears only in ghost-count code |
-| MUSCL limiter | `minmod`, `superbee`, `vanleer`, `mc` | dispatched; unknown values, including `none`, fall back to MinMod |
+| MUSCL limiter | `minmod`, `superbee`, `vanleer`, `mc` | dispatched; unknown values, including `none`, are rejected during configuration resolution |
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2`, `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
@@ -122,7 +122,7 @@ application results and release acceptance.
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
 | Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` selects DenseLU for up to 31 total ODE equations, including temperature and any auxiliary energy states. Larger systems use SparseKLU on CPU or cuDSS on CUDA. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction without solver substitution. Missing solver libraries or registered CUDA network code also cause rejection. |
 
-Policy names are ASCII case-insensitive; check the accepted aliases and fallback behavior for each dispatcher.
+Policy names are ASCII case-insensitive. Accepted aliases are listed above; unknown policies are rejected during configuration resolution.
 
 ### Self-gravity domains
 
@@ -146,8 +146,8 @@ The policy tables list available components, not a verified Cartesian product.
 Configuration resolves a plan at startup. Switching methods for another run
 requires a compatible EOS, material model, domain and build; there is no live
 policy-switching interface. Restart also retains the scientific identity checks
-listed below. Inspect the resolved plan because some unknown policy names use
-fallback defaults.
+listed below. Unknown policy names are rejected during configuration resolution;
+inspect the resolved plan and diagnostics before running.
 
 `HLLC + MUSCL/MC + RK2 + RKL2 + BD + self-gravity MG + AMR` runs through the
 ordinary shared driver. The [SNIaCoupled example](../simulation/SNIaCoupled/README.md)
@@ -665,7 +665,7 @@ include `rho`, `p`, `u`, `v`, `w`, and `eng`.
 | `DENS` | mass density | yes | yes | all models |
 | `PRES` | pressure from active EOS | yes | yes | all EOS |
 | `TEMP` | temperature from active EOS | yes | yes | all EOS |
-| `VELX/Y/Z` | velocity along active logical directions | yes | yes | active dimensions only |
+| `VELX/Y/Z` | physical velocity components in the selected computational chart | yes | yes | RZ exposes all three components; Cartesian planes select active dimensions; component meaning follows the chart |
 | `ENER` | total energy density | yes | yes | all models |
 | `VORT` | metric-aware curl magnitude | yes | yes | implemented geometries |
 | `DIVV` | metric-aware velocity divergence | yes | yes | implemented geometries |
@@ -1344,9 +1344,9 @@ State-control identity includes state bounds, timestep controls, Coulomb fractio
 - See [self-gravity domains](#self-gravity-domains) for geometry, boundary and root-grid constraints. External mass sources remain outside this capability. [AMR and plot variable vocabulary](#amr-and-plot-variable-vocabulary) gives Jeans field/refinement conditions and tested scope; [gravity validation](../validation/gravity/README.md) records coupled and performance scope.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
-- State repair, interface clamping, and fallback defaults can alter strict
-  conservation or hide malformed numerical selections; production runs must
-  inspect their resolved configuration and diagnostics.
+- State repair and interface limiting can change conserved quantities; inspect
+  recorded repair amounts, the resolved configuration and diagnostics. Malformed
+  inputs and unknown policies are rejected during configuration resolution.
 - Formal Plotfiles embed completed-publication markers, typed configuration/case/
   build/binary/EOS identities, field units and native cell bounds/measures.
   Interpret provenance within its declared executable and build scope; record

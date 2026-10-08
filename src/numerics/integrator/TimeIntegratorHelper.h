@@ -29,8 +29,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <limits>
 #include <span>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -295,6 +298,39 @@ namespace TimeIntegration
                 }
     }
 
+    /** Describe a rejected composition without changing its values or tolerance.
+     * Workflow: this cold error path reports finite/negative counts, min/max and
+     * sum at full binary64 decimal precision. The same shared simplex rule
+     * |sum(X)-1| <= 512*N*epsilon remains the acceptance authority.
+     */
+    inline std::string rejected_stage_composition(const FluidState& state, int cell)
+    {
+        const int count = state.GetNumSpecies();
+        double sum = 0.0;
+        double minimum = std::numeric_limits<double>::infinity();
+        double maximum = -std::numeric_limits<double>::infinity();
+        int nonfinite = 0, negative = 0;
+        for (int species = 0; species < count; ++species) {
+            const double value = state.X(species, cell);
+            sum += value;
+            if (!std::isfinite(value)) ++nonfinite;
+            else {
+                minimum = std::min(minimum, value);
+                maximum = std::max(maximum, value);
+                if (value < 0.0) ++negative;
+            }
+        }
+        std::ostringstream message;
+        message.precision(std::numeric_limits<double>::max_digits10);
+        message << " composition_count=" << count << " nonfinite=" << nonfinite
+                << " negative=" << negative << " Xi_min=" << minimum
+                << " Xi_max=" << maximum << " Xi_sum=" << sum
+                << " simplex_error=" << std::abs(sum - 1.0)
+                << " simplex_limit=" << 512.0 * count
+                    * std::numeric_limits<double>::epsilon();
+        return message.str();
+    }
+
     /** Repair Existing trace errors; native RZ only prechecks before Runtime EOS. */
     inline void accept_stage_state(FluidState& state, const Grid& grid,
                                    const NumericsConfig& config,
@@ -321,7 +357,9 @@ namespace TimeIntegration
                         state.stage_repairs.view(), cell);
                     if (!arch::state::accepted(status))
                         throw std::runtime_error("Invalid accepted state: cell=" + std::to_string(cell)
-                            + " status=" + std::to_string(static_cast<int>(status)));
+                            + " status=" + std::to_string(static_cast<int>(status))
+                            + (status == arch::state::Status::invalid_composition
+                                ? rejected_stage_composition(state, cell) : std::string{}));
                 }
     }
 

@@ -1,0 +1,221 @@
+{
+  "schema": "arch.processed-scientific-receipt.v1",
+  "record_date": "2026-10-09",
+  "source_baseline_before_uncommitted_delta": "6e732193f3d2faef9acf7fc081316344e7a4f4e4",
+  "source_file_sha256": {
+    "src/numerics/diffusion/DiffusionAMRStages.h": "1f6480550d8f3e3f59a431da33c1a8ef887a3ce562932e215eaf0a21d106cf9c",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "4332fd9a6b6bc5586611a1227fdfc8fa191bf41971a8944a7c3ff6a382c586af",
+    "src/numerics/diffusion/DiffFunction.cpp": "8e91a4d1727853c6bb09c6182e81227c8b855aa08de249662afde939249e938f"
+  },
+  "cpu_elf_sha256": "4e007c794291a40b310473bff5d13759335f82b23353ed6857e1ec26ff1dde94",
+  "scope": "Public Cartesian 1D passive complementary species diffusion, CPU; neither thermal/burn/AMR/CUDA nor complete O9 release acceptance",
+  "original_failure": {
+    "cells": 512,
+    "last_reported_step": 24882,
+    "last_reported_time_rounded": 8.2135,
+    "status": "invalid_composition",
+    "guard_seconds": 74.387,
+    "raw_evidence_retained_locally": true,
+    "exact_rejected_cell_state_not_captured": true,
+    "last_published_simplex_error": 2.1604940059205546e-13,
+    "original_two_species_Core_limit": 2.2737367544323206e-13
+  },
+  "repair": {
+    "same_RKL_coefficients_and_physical_operator": true,
+    "shared_Host_Device_centered_conserved_recurrence": true,
+    "RKL1": "Up + nu*(Uolder-Up) + operator_terms",
+    "RKL2": "U0 + mu*(Up-U0) + nu*(Uolder-U0) + operator_terms",
+    "species_use_rhoX_not_X_recurrence": true,
+    "finite_unused_RKL1_controls_not_required": true,
+    "composition_projection_or_floor_or_threshold_change": false,
+    "single_row_Host_stage_loop_skips_multiworker_team": true,
+    "other_row_scheduling_unchanged": true,
+    "cold_failure_diagnostic_only": true
+  },
+  "existing_owner_acceptance": {
+    "low_density_active_complementary_routes": 8,
+    "steps_per_route": 25000,
+    "independent_reference": "long-double exact two-cell stability polynomials; all intermediate Core composition windows",
+    "old_reference_assertions_preserved": true,
+    "new_CTest_targets": 0,
+    "cpu_inventory_tests": 68,
+    "passed": 68,
+    "skipped": 0,
+    "failed": 0,
+    "exact_inventory_names_match_JUnit": true,
+    "cpu_guard_seconds": 199.089,
+    "architecture_audit_exit_code": 0,
+    "junit_sha256": "8df605671aba657e53446141227a85f541057177ca225f24128ee73422cfa7bc",
+    "inventory_sha256": "b9162a7795b518b42e1fd117180dc64b24534b948391c520a68fe62ab6da2caf"
+  },
+  "production_cases": [
+    {
+      "cells": 256,
+      "threads": 8,
+      "physical_endpoint": 12.665147955292221,
+      "steps": 19184,
+      "guard_seconds": 22.128,
+      "input_sha256": "22c4d97e5b373579a873b42ff7a68168d19e427e92161e389a49728913f71dfb",
+      "all_17_original_reference_and_invariant_checks_pass": true,
+      "max_sample_tracer_L1": 2.9333567035999195e-06,
+      "terminal_tracer_L1": 2.6920712953445135e-07,
+      "max_drift": {
+        "gas_energy_relative": 0.0,
+        "mass": 0.0,
+        "mean_x": 7.216449660063518e-16,
+        "rho_background_relative": 9.992007221626409e-16,
+        "rho_x_relative": 1.4432899320127037e-15
+      },
+      "three_epoch_observations": [
+        {
+          "amplitude_last": 0.05240564200858211,
+          "phase": "early",
+          "samples": 6,
+          "t_first": 0.0,
+          "t_last": 3.957858736028819,
+          "tracer_l1_max": 2.9333567035999195e-06
+        },
+        {
+          "amplitude_last": 0.008037421997938884,
+          "phase": "middle",
+          "samples": 6,
+          "t_first": 4.749430483234583,
+          "t_last": 8.707289219263401,
+          "tracer_l1_max": 2.297492043606443e-06
+        },
+        {
+          "amplitude_last": 0.0016848673289307336,
+          "phase": "late",
+          "samples": 5,
+          "t_first": 9.498860966469165,
+          "t_last": 12.665147955292221,
+          "tracer_l1_max": 7.046967981480697e-07
+        }
+      ]
+    },
+    {
+      "cells": 512,
+      "threads": 8,
+      "physical_endpoint": 12.665147955292221,
+      "steps": 38368,
+      "guard_seconds": 118.622,
+      "input_sha256": "0a03d0db6ef68d6a126de299cde391071cb9f6c14549d34410c8a5faf7b5e2b3",
+      "all_17_original_reference_and_invariant_checks_pass": true,
+      "max_sample_tracer_L1": 7.333207694736402e-07,
+      "terminal_tracer_L1": 6.729499014827313e-08,
+      "max_drift": {
+        "gas_energy_relative": 0.0,
+        "mass": 0.0,
+        "mean_x": 9.059419880941277e-14,
+        "rho_background_relative": 1.780797731498751e-13,
+        "rho_x_relative": 1.8118839761882555e-13
+      },
+      "three_epoch_observations": [
+        {
+          "amplitude_last": 0.05240354557261153,
+          "phase": "early",
+          "samples": 6,
+          "t_first": 0.0,
+          "t_last": 3.957858736028819,
+          "tracer_l1_max": 7.333207694736402e-07
+        },
+        {
+          "amplitude_last": 0.008036533104543483,
+          "phase": "middle",
+          "samples": 6,
+          "t_first": 4.749430483234583,
+          "t_last": 8.707289219263401,
+          "tracer_l1_max": 5.743484734840485e-07
+        },
+        {
+          "amplitude_last": 0.001684581885821324,
+          "phase": "late",
+          "samples": 5,
+          "t_first": 9.498860966469165,
+          "t_last": 12.665147955292221,
+          "tracer_l1_max": 1.7616048649188656e-07
+        }
+      ]
+    }
+  ],
+  "spatial_order": {
+    "status": "PASS",
+    "cells": [
+      256,
+      512
+    ],
+    "same_final_ELF": true,
+    "terminal_L1": [
+      2.6920712953445135e-07,
+      6.729499014827313e-08
+    ],
+    "order": 2.0001456071206634,
+    "unchanged_minimum": 1.8,
+    "endpoint": 12.665147955292221
+  },
+  "strict_midpoint_restart": {
+    "status": "PASS",
+    "scope": "Final CPU N512 5tau continuous vs strict midpoint restart; not complete O9",
+    "physical_end": 12.665147955292221,
+    "restart_time": 6.332573977646111,
+    "final_dataset_count": 21,
+    "all_dataset_names_shapes_dtypes_stored_bits_equal": true,
+    "continued_plot_count": 8,
+    "continued_times_exact_original_schedule": true,
+    "independent_reference_and_original_invariants_pass": true,
+    "guard_seconds": 58.327,
+    "threads": 8,
+    "cpu_elf_sha256": "4e007c794291a40b310473bff5d13759335f82b23353ed6857e1ec26ff1dde94",
+    "thresholds_changed": false
+  },
+  "observed_schedule_change": {
+    "status": "PASS_NEW_BINARY_ROW_SCHEDULE_EQUIVALENCE",
+    "original_CPU8_guard_seconds": 127.684,
+    "final_CPU8_guard_seconds": 118.622,
+    "speed_ratio_single_observation": 1.0763939235554956,
+    "not_formal_repeated_benchmark": true,
+    "same_scalar_arithmetic": true,
+    "all17_samples_original_windows": true
+  },
+  "resources": {
+    "CPU_physical_affinity": [
+      0,
+      2,
+      4,
+      6,
+      8,
+      10,
+      12,
+      14
+    ],
+    "OMP_DYNAMIC": false,
+    "current_cpu_build_guard_seconds": 194.366,
+    "current_cpu_build_peak_owned_RSS_KiB": 4225016,
+    "current_cpu_build_min_available_KiB": 2773016,
+    "build_swap_growth_KiB": 0,
+    "strict_restart_peak_owned_RSS_KiB": 25260,
+    "strict_restart_swap_growth_KiB": 0,
+    "host_E_free_minimum_bytes_restart": 23803424768,
+    "no_guard_stop": true
+  },
+  "provider_review": {
+    "DeepSeek_observer_unique_repair_accepted": true,
+    "DeepSeek_RKL_exact_algebra_accepted": true,
+    "DeepSeek_invalid_floating_counterexample_rejected": true,
+    "Gemini_three_existing_document_passages_accepted_with_original_CLI_error_retained": true,
+    "worker_delivery_not_algorithm_acceptance": true,
+    "observer_logical_wall_seconds": 153.61,
+    "RKL_math_wall_seconds": 60.79,
+    "thermal_math_logical_wall_seconds": 120.57,
+    "Gemini_wall_seconds": 45.009,
+    "all_actual_provider_bill_and_manager_active_cost": null,
+    "no_raw_uploaded": true
+  },
+  "remaining_scope": {
+    "current_CUDA_diffusion_owner": "pending actual rebuild/check",
+    "full_curved_stress_FV_CF_work": "pending",
+    "Jeans_30_to_60_minute_durability": "next",
+    "whole_O9_and_release_complete": false,
+    "O10_grid_redesign": "deferred discussion, not this release prerequisite"
+  }
+}
