@@ -756,6 +756,84 @@ void run_lifetime_and_hydro_witness()
     const double dt = backend->compute_hydro_dt(current, 0.8);
     require(std::isfinite(dt) && dt > 0.0, "CUDA Hydro dt is invalid");
 
+    // Use the actual completed Current ghosts/access and a genuinely issued
+    // complete token. Only the canonical input-time fraction changes. Refusal
+    // must precede stage diagnostics, metadata upload and device kernel work;
+    // this is descriptor defense, not a new wall or Native scientific grant.
+    {
+        auto changed_clock=euler_descriptor;
+        changed_clock.input_time_fraction=std::nextafter(
+            euler_descriptor.input_time_fraction,std::numeric_limits<double>::infinity());
+        const auto completed=clock.next_completion();
+        const std::array keys{
+            arch::state::StateKey{current.block,arch::state::StateSlot::Current},
+            arch::state::StateKey{current.block,arch::state::StateSlot::Next},
+            arch::state::StateKey{current.block,arch::state::StateSlot::Scratch}};
+        const std::array before_ledger{ledger.inspect(keys[0]),ledger.inspect(keys[1]),ledger.inspect(keys[2])};
+        const auto before_trace_size=backend->trace_snapshot().size();
+        const auto before_stage_repairs=backend->stage_repairs;
+        const auto before_reflux_repairs=backend->reflux_repairs;
+        const std::array before_states{block.fluid_state,block.state_next,block.state_scratch};
+        using Field=std::vector<double> FluidState::*;
+        const std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,
+            &FluidState::mom_w,&FluidState::eng,&FluidState::enuc_rate,&FluidState::mass_fractions};
+        const std::array<const FluidState*,3> states{&block.fluid_state,&block.state_next,&block.state_scratch};
+        std::array<std::array<const double*,7>,3> addresses{};
+        for(std::size_t slot=0;slot<states.size();++slot)for(std::size_t field=0;field<fields.size();++field)
+            addresses[slot][field]=(states[slot]->*fields[field]).data();
+        const auto same_double=[](double left,double right){
+            return std::bit_cast<std::uint64_t>(left)==std::bit_cast<std::uint64_t>(right);
+        };
+        const auto same_values=[&](const auto& left,const auto& right){
+            return left.size()==right.size()&&std::equal(left.begin(),left.end(),right.begin(),same_double);
+        };
+        const auto same_repairs=[&](const auto& left,const auto& right){
+            return same_values(left.values,right.values)&&left.semantics==right.semantics
+                &&left.block_uid==right.block_uid&&left.stage==right.stage&&same_double(left.time,right.time)
+                &&same_double(left.position[0],right.position[0])
+                &&same_double(left.position[1],right.position[1])
+                &&same_double(left.position[2],right.position[2]);
+        };
+        const auto token_before=clock.last_token(),version_before=clock.last_version();
+        // Snapshot after trace inspection: both trace_snapshot() and counters()
+        // intentionally count their own reads. The final counter read below is
+        // the sole permitted getter increment; rejected work must add nothing.
+        const auto before_counters=backend->counters();
+        bool rejected=false;
+        try{(void)backend->execute_hydro_stage(current,changed_clock,0.1*dt,completed);}
+        catch(const std::invalid_argument& error){
+            rejected=std::string(error.what())=="invalid Hydro stage contract";
+            if(!rejected)throw;
+        }
+        require(rejected,"one-ULP Hydro input time fraction was accepted");
+        auto expected_counters=before_counters;
+        ++expected_counters.getter_count;
+        require(backend->counters()==expected_counters,
+            "invalid Hydro input clock launched kernels/transfers or changed observable counters");
+        const auto same_region=[](const auto& left,const auto& right){
+            return left.residency==right.residency&&left.version==right.version
+                &&left.completion==right.completion&&left.pending_transfer==right.pending_transfer;
+        };
+        for(std::size_t slot=0;slot<keys.size();++slot) {
+            const auto after=ledger.inspect(keys[slot]);
+            require(same_region(after.interior,before_ledger[slot].interior)
+                &&same_region(after.ghost,before_ledger[slot].ghost)
+                &&after.ghost_source_version==before_ledger[slot].ghost_source_version,
+                "invalid Hydro input clock changed real slot publication metadata");
+        }
+        require(clock.last_token()==token_before&&clock.last_version()==version_before,
+            "invalid Hydro input clock changed its actual clock");
+        require(backend->trace_snapshot().size()==before_trace_size
+                    &&same_repairs(backend->stage_repairs,before_stage_repairs)
+                    &&same_repairs(backend->reflux_repairs,before_reflux_repairs),
+            "invalid Hydro input clock changed observable trace/repair receipts");
+        for(std::size_t slot=0;slot<states.size();++slot)for(std::size_t field=0;field<fields.size();++field)
+            require((states[slot]->*fields[field]).data()==addresses[slot][field]
+                        &&same_values(states[slot]->*fields[field],before_states[slot].*fields[field]),
+                "invalid Hydro input clock changed original Host fields/leases");
+        std::cout<<"CUDA_HYDRO_INPUT_CLOCK_REJECTION_PASS observable_only=1 native_authority=0\n";
+    }
+
     (void)arch::scheduler::execute_euler_lane(
         context, handles,
         [&](const arch::scheduler::StageDescriptor& descriptor,

@@ -20,21 +20,6 @@
 namespace arch::cuda {
 namespace {
 
-bool same_hydro_descriptor(
-    const scheduler::StageDescriptor& left,
-    const scheduler::StageDescriptor& right) noexcept
-{
-    return left.stage == right.stage
-        && left.old_slot == right.old_slot
-        && left.input_slot == right.input_slot
-        && left.output_slot == right.output_slot
-        && left.old_weight == right.old_weight
-        && left.update_weight == right.update_weight
-        && left.flux_register_weight == right.flux_register_weight
-        && left.input_requires_ghost == right.input_requires_ghost
-        && left.refresh_ghost_after == right.refresh_ghost_after;
-}
-
 scheduler::HydroMethod hydro_method(
     dispatch::TimeIntegratorId integrator)
 {
@@ -134,7 +119,7 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
         hydro_method(impl_->launch.plan.time_integrator));
     if (!complete_token(expected) || descriptor.stage <= 0
         || descriptor.stage > static_cast<int>(plan.stages.size())
-        || !same_hydro_descriptor(descriptor, plan.stages[descriptor.stage - 1]))
+        || !scheduler::same_stage_descriptor(descriptor, plan.stages[descriptor.stage - 1]))
         throw std::invalid_argument("invalid Hydro stage contract");
     if (currents.empty()) return expected;
     impl_->select_device();

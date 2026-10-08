@@ -547,6 +547,68 @@ void curved_mixed_boundary() {
     }
 }
 
+/** A zero-area native axis datum cannot remove the physical constant mode.
+ * Workflow: build actual uniform/mixed native operators, verify the retained
+ * rows and A*1, then require the unchanged pure-flux source compatibility.
+ * A_radial = 2*pi*r*dz is exactly zero at r=0; its configured a is inactive.
+ */
+void native_zero_area_boundary_nullspace() {
+    using K=elliptic::FaceBoundaryKind;
+    auto base=base_mesh(2,4);
+    base.geometry=elliptic::Geometry::Cylindrical;
+    base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.origin={0.,-.5,0.};base.spacing={.25,.25,1.};
+    base.native_canonical_domain=true;base.root_upper={1.,.5,0.};
+    for(bool refined:{false,true}) for(K axis_kind:{K::Dirichlet,K::Robin}) {
+        elliptic::CompositeBoundary boundary;
+        boundary.sides.fill(K::Neumann);
+        boundary.sides[0]=axis_kind;
+        boundary.conditions[0]=axis_kind==K::Dirichlet
+            ?elliptic::FaceBoundaryCondition{K::Dirichlet,1.,0.}
+            :elliptic::FaceBoundaryCondition{K::Robin,1.,1.};
+        const auto cells=make_cells(base,refined);
+        elliptic::CompositePoisson op(base,cells,boundary);
+        require(op.has_constant_nullspace() && !op.periodic_boundary(),
+            "zero-area native axis boundary removed the constant nullspace");
+        int physical_faces=0;
+        for(const auto& face:op.faces()) if(face.boundary_side>=0) {
+            ++physical_faces;
+            require(face.area>0. && face.boundary_side!=0,
+                "zero-area axis contributed a physical operator row");
+            require(boundary.sides[face.boundary_side]==K::Neumann,
+                "axis-only value policy leaked to a nonzero-area face");
+        }
+        require(physical_faces>0,"native flux boundary fixture has no active faces");
+        std::vector<double> constant(op.size(),2.5),applied(op.size());
+        op.apply(constant,applied);
+        for(double value:applied) require(value==0.,
+            "actual native pure-flux operator does not annihilate constants");
+        op.project(constant);
+        for(double value:constant) require(value==0.,
+            "native pure-flux gauge did not remove a constant");
+        std::vector<double> zero(op.size(),0.),mass(op.size(),1.);
+        op.validate_compatibility(zero);
+        bool rejected=false;
+        try {op.validate_compatibility(mass);} catch(const std::invalid_argument&) {rejected=true;}
+        require(rejected,"axis-only datum allowed incompatible nonzero physical mass");
+        // An explicit free gauge is consistent with the same actual rows.
+        boundary.constant_nullspace=true;
+        elliptic::CompositePoisson explicit_gauge(base,cells,boundary);
+        require(explicit_gauge.has_constant_nullspace(),
+            "explicit nullspace was rejected by an inactive axis value policy");
+        // A real outer value row still fixes the gauge; no blanket curved rule.
+        boundary.constant_nullspace=false;
+        boundary.sides[1]=K::Dirichlet;
+        boundary.conditions[1]={K::Dirichlet,1.,0.};
+        elliptic::CompositePoisson outer_value(base,cells,boundary);
+        require(!outer_value.has_constant_nullspace(),
+            "actual nonzero-area outer Dirichlet row lost gauge fixing");
+        outer_value.apply(mass,applied);
+        require(std::any_of(applied.begin(),applied.end(),[](double value){return value!=0.;}),
+            "nonzero-area outer Dirichlet operator still annihilates constants");
+    }
+}
+
 /** Pure Neumann nullspace, volume-weighted gauge and source compatibility. */
 void pure_neumann_compatibility() {
     using K=elliptic::FaceBoundaryKind;
@@ -4224,6 +4286,7 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="policy") {
             tiny_physical_boundary();
             mixed_cartesian_boundary();curved_mixed_boundary();
+            native_zero_area_boundary_nullspace();
             pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;
         }
         if(argc>1 && std::string(argv[1])=="ci") {
@@ -4236,6 +4299,7 @@ int main(int argc,char** argv) {
             convergence(2);radial_convergence();curved_manufactured();
             curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);
             mixed_cartesian_boundary();curved_mixed_boundary();
+            native_zero_area_boundary_nullspace();
             pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;
         }
         averaged_source_exactness();

@@ -266,10 +266,11 @@ CompositePoisson::CompositePoisson(CartesianMesh base, std::vector<CompositeCell
     if (!fine && base_.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
         prepare_native_rz_geometry_cache();
 }
-/** Validate the per-side policy and derive its nullspace and fit-shape flags.
- *  Dirichlet keeps a=1,b=0, Neumann a=0,b=1, Robin finite a>=0,b>0 and every
- *  periodic pair is mandatory. Periodicity is carried by sides; the matching
- *  coefficient pair of a periodic side is unused and never scanned below. */
+/** Validate side coefficients, periodic pairing and the radial fit shape.
+ *  Dirichlet keeps a=1,b=0, Neumann a=0,b=1, Robin finite a>=0,b>0.
+ *  Nullspace classification is deferred until build_faces publishes actual
+ *  positive-area physical faces: an origin/pole policy alone is not a row.
+ *  A periodic side's unused coefficient pair is never scanned here. */
 void CompositePoisson::prepare_boundary() {
     for(int axis=0;axis<3;++axis) for(int side=0;side<2;++side) {
         const int index=2*axis+side;
@@ -296,17 +297,10 @@ void CompositePoisson::prepare_boundary() {
            (boundary_.sides[2*axis+1]==FaceBoundaryKind::Periodic))
             throw std::invalid_argument("Composite periodic boundary requires paired sides");
     periodic_only_=true;
-    bool positive_a=false;
     for(int axis=0;axis<base_.dimension;++axis) for(int side=0;side<2;++side) {
         if(boundary_.sides[2*axis+side]==FaceBoundaryKind::Periodic) continue;
         periodic_only_=false;
-        if(boundary_.conditions[2*axis+side].a>0.) positive_a=true;
     }
-    // A positive Dirichlet/Robin weight makes the operator nonsingular; a pure
-    // flux/periodic policy always leaves the constant mode free.
-    if(positive_a && boundary_.constant_nullspace)
-        throw std::invalid_argument("Composite positive boundary weight contradicts the constant nullspace");
-    if(!positive_a) boundary_.constant_nullspace=true;
     // The 1D radial isolated fit needs its cubic regularity basis for the
     // legacy kind and for an equivalent explicit user policy.
     radial_=base_.geometry!=Geometry::Cartesian && base_.dimension==1 &&
@@ -467,6 +461,16 @@ void CompositePoisson::build_faces() {
             neighbors_[i].push_back(j); neighbors_[j].push_back(i);
         }
     }
+    // Workflow: derive the gauge from actual retained physical rows before
+    // fitting/elimination. Their homogeneous datum gives A*1 != 0 only when
+    // A_face > 0 and a > 0; a zero-measure coordinate limit contributes none.
+    bool positive_a=false;
+    for(const auto& face:faces_)
+        if(face.boundary_side>=0 && face.area>0.
+            && boundary_.conditions[face.boundary_side].a>0.) positive_a=true;
+    if(positive_a && boundary_.constant_nullspace)
+        throw std::invalid_argument("Composite positive boundary weight contradicts the constant nullspace");
+    if(!positive_a) boundary_.constant_nullspace=true;
     for (auto& neighbors:neighbors_) {
         std::sort(neighbors.begin(),neighbors.end());
         neighbors.erase(std::unique(neighbors.begin(),neighbors.end()),neighbors.end());

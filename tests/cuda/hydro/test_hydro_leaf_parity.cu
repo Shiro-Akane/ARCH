@@ -32,6 +32,7 @@
 #include "numerics/flux/FluxRoe.h"
 #include "numerics/flux/FluxSW.h"
 #include "numerics/flux/FluxVL.h"
+#include "numerics/flux/StationarySlipWallFlux.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/reconstruction/Reconstruction.h"
 #include "fixtures/hydro/MeanThermoCases.h"
@@ -2245,6 +2246,123 @@ int run_native_selected_faces()
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 200;}
 }
 
+/** Actual shared point-wall assembly on Host and in a CUDA kernel.
+ * The at-rest reference is F=(0,P*n,0), with zero species advection. The
+ * optional negative high trial is deliberate NaN input, not a failed EOS.
+ * This leaf grants no Runtime wall, native geometry or rollback capability.
+ */
+struct SharedWallLeafResult { int cases=0, failures=0; };
+
+/** Read true immutable base composition after the selected high callback. */
+struct SharedWallBaseSpecies {
+    int* high_calls;
+    int* base_reads;
+    int* order_errors;
+    ARCH_INLINE double operator()(int species) const {
+        if(*high_calls!=1) ++*order_errors;
+        ++*base_reads;
+        return species==0?.75:.25;
+    }
+};
+
+/** Preserve the actual HLLC/PCM high policy or supply an optional NaN trial. */
+struct SharedWallHighPolicy {
+    int direction, species, trial;
+    int* high_calls;
+    int* order_errors;
+    template<class Eos>
+    ARCH_INLINE void operator()(const FluidVector& left,const FluidVector& right,
+        const double* xl,const double* xr,const Eos& eos,
+        FluidVector& high,double* species_flux) const {
+        ++*high_calls;
+        if(species && (xl[0]!=.25||xr[0]!=.25)) ++*order_errors;
+        if(trial) {
+            high={arch::state::invalid(),0.,0.,0.,arch::state::invalid()};
+            for(int s=0;s<species;++s)species_flux[s]=arch::state::invalid();
+        } else {
+            FluxHLLC<PCMReconstruction>::compute_face_flux(left,right,xl,xr,
+                species,eos,direction,1.,high,species_flux);
+        }
+    }
+};
+
+/** Exercise all point directions/sides and required-output rejection. */
+ARCH_INLINE SharedWallLeafResult evaluate_shared_wall_assembly() {
+    using Status=StationarySlipWallFlux::PointWallStatus;
+    constexpr double pressure=.00625;
+    const double sound=std::sqrt(1.4*pressure);
+    const FluidVector point{1.,0.,0.,0.,pressure/.4};
+    const FluidVector sentinel{123.,456.,789.,123.,456.};
+    const IdealGasView eos{};
+    SharedWallLeafResult result{};
+    for(int dir=0;dir<3;++dir)for(int side=0;side<2;++side)
+        for(int species_case=0;species_case<2;++species_case)for(int trial=0;trial<2;++trial) {
+            const int species=species_case?2:0;
+            double left[2]{.25,.75},right[2]{.25,.75},low[2]{123.,456.},high_species[2]{123.,456.};
+            int high_calls=0,base_reads=0,order_errors=0;
+            const SharedWallBaseSpecies read_base{&high_calls,&base_reads,&order_errors};
+            const SharedWallHighPolicy selected{dir,species,trial,&high_calls,&order_errors};
+            auto output=sentinel;
+            const auto status=StationarySlipWallFlux::assemble_point(point,point,point,point,
+                dir,side,species,pressure,sound,eos,species?left:nullptr,
+                species?right:nullptr,species?low:nullptr,species?high_species:nullptr,
+                read_base,selected,output);
+            const double normal=dir==0?output.mom_u:dir==1?output.mom_v:output.mom_w;
+            const bool valid=status==Status::valid&&high_calls==1&&base_reads==species
+                &&order_errors==0&&output.rho==0.&&output.eng==0.
+                &&std::isfinite(normal)
+                &&std::abs(normal-pressure)<=arch::state::composition_roundoff_limit*pressure
+                &&(dir==0||output.mom_u==0.)&&(dir==1||output.mom_v==0.)
+                &&(dir==2||output.mom_w==0.)
+                &&(!species||(high_species[0]==0.&&high_species[1]==0.
+                    &&left[0]==.75&&right[0]==.75));
+            ++result.cases;if(!valid)++result.failures;
+        }
+    for(int negative=0;negative<2;++negative) {
+        double left[2]{.25,.75},right[2]{.25,.75},low[2]{123.,456.},high_species[2]{123.,456.};
+        int high_calls=0,base_reads=0,order_errors=0;
+        const SharedWallBaseSpecies read_base{&high_calls,&base_reads,&order_errors};
+        const SharedWallHighPolicy selected{0,2,0,&high_calls,&order_errors};
+        auto output=sentinel;
+        const auto status=StationarySlipWallFlux::assemble_point(point,point,point,point,
+            negative?0:3,0,2,negative?arch::state::invalid():pressure,sound,eos,
+            left,right,low,high_species,read_base,selected,output);
+        const bool valid=status!=Status::valid&&output.rho==sentinel.rho
+            &&output.mom_u==sentinel.mom_u&&output.mom_v==sentinel.mom_v
+            &&output.mom_w==sentinel.mom_w&&output.eng==sentinel.eng
+            &&(negative||high_calls==0);
+        ++result.cases;if(!valid)++result.failures;
+    }
+    return result;
+}
+
+/** Launch the same mathematical leaf using genuine device-local scratch. */
+__global__ void shared_wall_assembly_kernel(SharedWallLeafResult* output) {
+    if(blockIdx.x==0&&threadIdx.x==0)*output=evaluate_shared_wall_assembly();
+}
+
+/** Check Host and copied device evidence against the same physical identities. */
+int run_shared_point_wall_assembler() {
+    const auto host=evaluate_shared_wall_assembly();
+    SharedWallLeafResult* device=nullptr;
+    const auto allocation=cudaMalloc(&device,sizeof(SharedWallLeafResult));
+    if(allocation!=cudaSuccess)return 201;
+    shared_wall_assembly_kernel<<<1,1>>>(device);
+    const auto launch=cudaGetLastError();
+    const auto sync=cudaDeviceSynchronize();
+    SharedWallLeafResult copied{};
+    const auto transfer=cudaMemcpy(&copied,device,sizeof(copied),cudaMemcpyDeviceToHost);
+    const auto release=cudaFree(device);
+    if(launch!=cudaSuccess||sync!=cudaSuccess||transfer!=cudaSuccess||release!=cudaSuccess
+        ||host.cases!=26||copied.cases!=host.cases||host.failures||copied.failures) {
+        std::cerr<<"shared point-wall leaf: host="<<host.failures<<'/'<<host.cases
+            <<" device="<<copied.failures<<'/'<<copied.cases<<'\n';return 202;
+    }
+    std::cout<<"SHARED_POINT_WALL_ASSEMBLER_LEAF_PASS host_cases=26 device_cases=26 "
+        "optional_trial_negative=1 runtime_authority=0 native_authority=0\n";
+    return 0;
+}
+
 #endif
 } // namespace
 
@@ -2389,6 +2507,8 @@ int main()
     if(mean_result!=0)return mean_result;
     const int selected_face_result=run_native_selected_faces();
     if(selected_face_result!=0)return selected_face_result;
+    const int wall_assembly_result=run_shared_point_wall_assembler();
+    if(wall_assembly_result!=0)return wall_assembly_result;
 #endif
     return 0;
 }
