@@ -23,6 +23,7 @@
 #include "numerics/diffusion/DiffFlux.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/diffusion/DiffusionAMRStages.h"
+#include "math/diffusion/ThermalFiveDecayCases.h"
 #include "fixtures/hydro/MeanThermoCases.h"
 #include <iostream>
 #include <stdexcept>
@@ -1599,5 +1600,5 @@ void check_rkl_active_complementary_reference() {
 }
 
 int main() {
-    try { check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_rkl_active_complementary_reference(); check_native_weighted_component_underflow(); leaves(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
+    try { check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_rkl_active_complementary_reference(); check_native_weighted_component_underflow(); leaves(); ThermalFiveDecayCases::run(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
  catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; } }
