@@ -150,7 +150,7 @@ jobs:
 
       - name: Run every configured CPU numerical and API test
         run: |
-          ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 \
+          ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 --stop-on-failure \
             --no-tests=error --output-on-failure \
             --output-junit "$PWD/build-ci/reports/ctest.xml" \
             2>&1 | tee build-ci/reports/ctest.log

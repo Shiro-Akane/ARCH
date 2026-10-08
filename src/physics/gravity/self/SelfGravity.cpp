@@ -118,11 +118,18 @@ void SelfGravity::bind_impl(amr::EllipticMeshBinding binding,bool native_candida
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
         || binding.cells.size()!=binding.storage.size()) throw std::invalid_argument("Invalid gravity mesh binding");
-    // Source/measure binding is distinct from the full-ring boundary,
-    // native force/work and runtime publication consumer. Do not enter the
-    // legacy EvaluateBoundary workspace before that full RZ path is accepted.
-    if(binding.base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_candidate)
-        throw std::logic_error("RZ self-gravity finite-ring runtime consumer is not qualified");
+    // Prescribed RZ data use the same gather -> Poisson -> gradient -> field
+    // owner as (r,phi), with the operator's actual full-ring measures. They do
+    // not request or inherit an isolated ring-integral certificate. The latter
+    // remains a separate bounded diagnostic until its runtime is accepted.
+    if(binding.base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_candidate) {
+        const bool prescribed=config_.boundary=="user"||config_.boundary=="dirichlet"
+            ||config_.boundary=="neumann";
+        if(!prescribed)
+            throw std::logic_error("RZ self-gravity finite-ring runtime consumer is not qualified");
+        if(execution_&&execution_->numeric()->device())
+            throw std::logic_error("Prescribed RZ self-gravity currently requires Host execution");
+    }
     if(native_candidate && (binding.base.semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||binding.base.geometry!=arch::elliptic::Geometry::Cylindrical||binding.base.dimension!=2
         ||config_.boundary!="isolated"||!maximum_boxes||maximum_boxes>65536
@@ -1027,64 +1034,66 @@ void SelfGravity::require_runtime_purpose(GravityFieldPurpose purpose) const {
     workspace().require_runtime_purpose(purpose);
 }
 
-/** Recheck the same real candidate publication and materialized ring source.
- * Source, source generation and field generation are distinct exact identities;
- * this private borrow never changes the field validity/physical assessment.
+/** Require the actual solved RZ Hydro field and its original source lease.
+ * Prescribed fields use the common completed publication generation. Isolated
+ * candidates additionally authenticate their genuine ring materialization;
+ * a prescribed datum never receives an invented ring/integration identity.
  */
 void SelfGravity::require_native_frame(const GravitySolveIdentity& source,
     std::uint64_t field_generation,std::uint64_t source_generation) const {
-    auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
-    w.require_runtime_purpose(GravityFieldPurpose::HydroStage);
-    if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
-        ||w.scope!=GravityFieldScope::NativeRzCandidate||w.source!=source
-        ||w.generation!=field_generation||!w.ring_source||!source_generation
-        ||w.ring_assessment.source!=source
-        ||w.ring_assessment.source_generation!=source_generation
-        ||w.ring_source->materialized_ring_source_generation(w.solver.op(),source)!=source_generation)
-        throw std::logic_error("Native private self stage changed source, field or execution identity");
+    require_native_frame_lease(source,field_generation,source_generation);
+    const auto& w=workspace();
+    if(w.scope==GravityFieldScope::NativeRzCandidate
+        &&w.ring_source->materialized_ring_source_generation(w.solver.op(),source)!=source_generation)
+        throw std::logic_error("Native self field lost its exact ring operator/source association");
 }
-/** Retain full Candidate publication identity without rescanning op.cells.
- * Every visit still checks the original ready scope and exact source inputs.
- * Supported bind/prepare/execution mutations poison the attached private frame.
- * Constructor and joined acceptance call require_native_frame, which compares
- * the complete bound operator as well. This helper cannot mint authority.
+/** Recheck the existing field/Runtime identity without copying or scanning rho.
+ * The completed field generation already names the gathered prescribed source.
+ * Candidate ring counters retain their original distinct diagnostic semantics.
  */
 void SelfGravity::require_native_frame_lease(const GravitySolveIdentity& source,
     std::uint64_t field_generation,std::uint64_t source_generation) const {
-    auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+    const auto& w=workspace();w.require(w.scope);
     w.require_runtime_purpose(GravityFieldPurpose::HydroStage);
     if(w.solver.execution().device()||!w.execution||w.execution->numeric()->device()
-        ||w.scope!=GravityFieldScope::NativeRzCandidate||w.source!=source
-        ||w.generation!=field_generation||!w.ring_source||!source_generation
-        ||w.ring_assessment.source!=source
-        ||w.ring_assessment.source_generation!=source_generation
-        ||!w.ring_source->source_identity_||*w.ring_source->source_identity_!=source
-        ||w.ring_source->source_generation_!=source_generation)
-        throw std::logic_error("Native private self lease changed the original source/publication");
+        ||w.solver.op().base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||w.source!=source||w.generation!=field_generation||!source_generation)
+        throw std::logic_error("Native self lease changed its source/publication/execution");
+    if(w.scope==GravityFieldScope::NativeRzCandidate) {
+        if(!w.ring_source||w.ring_assessment.source!=source
+            ||w.ring_assessment.source_generation!=source_generation
+            ||!w.ring_source->source_identity_||*w.ring_source->source_identity_!=source
+            ||w.ring_source->source_generation_!=source_generation)
+            throw std::logic_error("Native candidate lease lost its materialized ring source");
+    } else if(w.scope!=GravityFieldScope::ExistingPhysics||!w.explicit_boundary
+        ||w.solver.op().boundary_kind()!=arch::elliptic::BoundaryKind::User
+        ||source_generation!=field_generation) {
+        throw std::logic_error("Prescribed RZ lease does not name its actual completed field");
+    }
 }
 /** Return only the friend frame's original resident patch field. */
-GravityPatchView SelfGravity::native_candidate_patch(const Grid& grid,const FluidState& state) const {
+GravityPatchView SelfGravity::prepared_rz_patch(const Grid& grid,const FluidState& state) const {
     return workspace().native_patch(grid,state);
 }
 /** Compile/evaluate genuine per-operation rows with the original sparse owner. */
-const GravityRefluxRows& SelfGravity::native_candidate_reflux_rows(
+const GravityRefluxRows& SelfGravity::prepared_rz_reflux_rows(
     const amr::AmrFluxTopologyPlan& topology) const {
     return workspace().prepare_native_reflux(topology);
 }
 /** Borrow already completed Host paired values; no entire field download. */
-const double* SelfGravity::native_candidate_reflux_values() const {
-    auto& w=workspace();w.require(GravityFieldScope::NativeRzCandidate);
+const double* SelfGravity::prepared_rz_reflux_values() const {
+    auto& w=workspace();w.require(w.scope);
     if(w.solver.execution().device()||w.reflux_field_generation!=w.generation)
         throw std::logic_error("Native paired reflux is not the current Host field");
     return w.reflux_values.data;
 }
 /** Add original momentum math only after the private receipt reserved it. */
-void SelfGravity::native_candidate_momentum(std::vector<FluidVector>& delta,
+void SelfGravity::prepared_rz_momentum(std::vector<FluidVector>& delta,
     const FluidState& state,const Grid& grid,double dt) const {
     apply_patch_momentum(workspace().native_patch(grid,state),delta,state,grid,dt);
 }
 /** Add original work math only after the private receipt reserved its axis. */
-void SelfGravity::native_candidate_flux_work(std::vector<FluidVector>& delta,
+void SelfGravity::prepared_rz_flux_work(std::vector<FluidVector>& delta,
     const std::vector<FluidVector>& flux,const FluidState& state,const Grid& grid,
     double dt,int axis) const {
     apply_patch_flux_work(workspace().native_patch(grid,state),delta,flux,grid,dt,axis);

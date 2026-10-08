@@ -134,7 +134,7 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cartesian 3D | `isolated` | Physical fluid faces may be outflow or reflecting; gravity uses a finite-mass boundary |
 | Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
 | Spherical equatorial polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
-| Axisymmetric cylindrical 2D `(r,z)` | Qualification in progress | Full field/energy, dynamic reacting AMR, continuation and CUDA acceptance remain in progress; execution is capability-checked |
+| Axisymmetric cylindrical 2D `(r,z)` | Host: `dirichlet`, `neumann`, `user` | Shared composite Poisson and native momentum/work path; radial/axial faces, full-ring volume and regular axis join; isolated fields and CUDA remain gated |
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
 | Qualified scopes of all three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 

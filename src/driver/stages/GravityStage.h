@@ -95,9 +95,13 @@ private:
     void* native_flux_observation_payload_=nullptr;
     /** Internal source-only profile; public configuration never selects it. */
     bool native_external() const noexcept { return qualification_==Qualification::NativeRzExternalCandidate; }
-    /** The actual private RZ Self field/profile never opens public consumers. */
-    bool native_self() const noexcept { return qualification_==Qualification::NativeRzSelfHydroCandidate; }
-    bool native_candidate() const noexcept { return qualification_==Qualification::NativeRzCandidate||native_self(); }
+    /** RZ source/work receipts cover real prescribed fields and isolated diagnostics. */
+    bool native_self() const noexcept;
+    /** Only explicit internal profiles select ring-integration diagnostics. */
+    bool native_candidate() const noexcept {
+        return qualification_==Qualification::NativeRzCandidate
+            ||qualification_==Qualification::NativeRzSelfHydroCandidate;
+    }
     /** Require the actual macro transaction before constructing a solved-field frame. */
     void require_native_self_preparation(const scheduler::HydroStagePreparationRequest&) const;
     state::CompletionToken prepare_native_external(const scheduler::HydroStagePreparationRequest&);

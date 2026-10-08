@@ -632,6 +632,113 @@ void ring_execution_identity() {
     std::cout<<"TYPED_RING_HOST_EXECUTION_PASS cells="<<op.size()
         <<" source_identity=1 stale_result_retired=1 work_limit=1 missing_owner=1 legacy_log_rejected=1\n";
 }
+/** Authentic RZ user service: same quadratic PDE and original analytic
+ * windows as line_error. No isolated boundary or Runtime source authority. */
+void rz_user_analytic_service() {
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const double A=constants::math::pi*constants::gravity::cgs::gravitational_constant;
+    for(double inner:{0.,1.}) {
+        SimConfig config;config.grid.geometry="cylindrical";config.grid.dim=2;
+        config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.x1_min=inner;config.grid.x1_max=inner+1.;
+        config.grid.x2_min=-.5;config.grid.x2_max=.5;
+        config.grid.x1l_boundary_type=inner==0.?"reflect":"outflow";
+        config.grid.x1r_boundary_type=config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
+        config.amr.lrefinemax=1;config.amr.refine_on_rho=true;
+        config.amr.refine_threshold=.1;config.amr.derefine_threshold=.05;
+        config.physics.gravity.boundary="user";
+        SpeciesManager species;bool bad_datum=false;
+        boundary::ResolvedUserBoundaries callbacks;
+        callbacks.gravity=[&](const boundary::GravityBoundaryContext& ctx) {
+            require(ctx.point.x==ctx.native_position[0]&&ctx.point.y==0.
+                &&ctx.point.z==ctx.native_position[1],"RZ gravity callback lost its meridian chart");
+            const double sign=ctx.side==boundary::BoundarySide::Lower?-1.:1.;
+            const bool radial=ctx.axis==boundary::BoundaryAxis::X1;
+            require(ctx.cartesian_normal==std::array<double,3>{radial?sign:0.,0.,radial?0.:sign},
+                "RZ gravity callback used an azimuthal rather than an axial normal");
+            const double r=ctx.native_position[0],phi=A*(r*r+ctx.time);
+            const double datum=bad_datum?std::numeric_limits<double>::quiet_NaN():phi;
+            if(ctx.time<1.)return boundary::GravityBoundaryData::Dirichlet(datum);
+            return boundary::GravityBoundaryData::Robin(2.,1.,
+                bad_datum?datum:2.*phi+ctx.cartesian_normal[0]*2.*A*r);
+        };
+        boundary::ScopedUserBoundarySelection selection(callbacks,config,species);
+        amr::AMRControl control(8,2);control.tree->InitRootGrid(config,0,rz);
+        std::vector<amr::BlockHandle> handles;GravitySolveIdentity identity;
+        std::vector<GravityDensityView> views;
+        const auto bind_source=[&](std::uint64_t epoch) {
+            handles.clear();views.clear();identity={};identity.topology={epoch};
+            identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+            identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
+            for(int id:control.tree->GetActiveBlocks()) {
+                auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+                for(auto* fluid:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+                    for(int c=0;c<grid.GetTotalSize();++c)fluid->set(c,{1.,0.,0.,0.,10.});
+                    std::fill(fluid->mass_fractions.begin(),fluid->mass_fractions.end(),1.);
+                }
+                handles.push_back({{static_cast<std::uint64_t>(id+1)},{epoch}});
+                const GravityInputIdentity input{handles.back(),state::StateSlot::Current,{1},epoch};
+                identity.inputs.push_back(input);
+                views.push_back({input,{block.fluid_state.rho.data(),block.fluid_state.rho.size(),
+                    amr::native_scalar_layout(grid),grid::FieldMemory::Host,epoch}});
+            }
+        };
+        bind_source(27);SelfGravity gravity(config.physics.gravity);
+        gravity.bind(amr::bind_elliptic_mesh(control,config.grid,handles));
+        const auto check=[&](double time) {
+            identity.input_time=time;
+            std::vector<std::vector<double>> before;
+            for(int id:control.tree->GetActiveBlocks())before.push_back(control.pool->GetBlock(id).fluid_state.rho);
+            const auto token=gravity.prepare({identity,views});
+            require(gravity.report().residual<=gravity.report().target,"RZ explicit quadratic residual");
+            const auto& phi=gravity.potential();const auto& force=gravity.acceleration();
+            double pe=0.,ps=0.,fe=0.,fs=0.;std::size_t cell=0,block_index=0;
+            for(int id:control.tree->GetActiveBlocks()) {
+                const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+                for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i,++cell) {
+                    const double r=grid.GetCellCenterX(i),exact=A*(r*r+time),g=-2.*A*r;
+                    pe+=(phi.at(cell)-exact)*(phi.at(cell)-exact);ps+=exact*exact;
+                    fe+=(force[0].at(cell)-g)*(force[0].at(cell)-g)
+                        +force[1].at(cell)*force[1].at(cell)+force[2].at(cell)*force[2].at(cell);
+                    fs+=g*g;
+                }
+                require(block.fluid_state.rho==before[block_index++],"RZ explicit service changed source density");
+            }
+            require(cell==phi.size(),"RZ explicit field layout changed");
+            std::cout<<std::setprecision(17)<<"RZ_USER_SERVICE_ERROR inner="<<inner
+                <<" time="<<time<<" leaves="<<control.tree->GetActiveBlocks().size()
+                <<" potential="<<std::sqrt(pe/ps)<<" force="<<std::sqrt(fe/fs)
+                <<" residual="<<gravity.report().residual<<" target="<<gravity.report().target<<'\n';
+            require(std::sqrt(pe/ps)<1e-7,"RZ user quadratic potential");
+            require(std::sqrt(fe/fs)<1e-6,"RZ user quadratic force");
+            return token;
+        };
+        const auto first=check(0.),datum=check(.5),rebuilt=check(1.5);
+        require(datum.value>first.value&&rebuilt.value>datum.value,
+            "RZ datum/operator rebuild restarted publication generation");
+        bad_datum=true;
+        rejects([&]{gravity.prepare({identity,views});},"nonfinite RZ user datum accepted");
+        rejects([&]{gravity.potential();},"bad RZ datum retained old potential publication");
+        rejects([&]{gravity.acceleration();},"bad RZ datum retained old force publication");
+        bad_datum=false;check(1.5);
+        if(inner==1.) {
+            const int selected=control.tree->GetActiveBlocks().front();
+            auto transaction=control.tree->PrepareRegrid(config,{}, {},[&] {
+                for(int id:control.tree->GetActiveBlocks())control.pool->GetBlock(id).refine_flag=id==selected?1:0;
+            });
+            require(transaction.topology_changed(),"RZ explicit mixed witness did not refine");
+            std::vector<amr::BlockHandle> next;
+            for(int id:transaction.proposed_active_blocks())next.push_back({{static_cast<std::uint64_t>(id+1)},{28}});
+            transaction.BuildMigrationPlans(handles,next,{1,{27},{28}});
+            transaction.ExecuteMigration();transaction.ActivateForFinalization();
+            transaction.PublishNoexcept();transaction.ReleaseRetired();
+            require(control.tree->GetActiveBlocks().size()==5,"RZ explicit mixed leaf count");
+            bind_source(28);gravity.bind(amr::bind_elliptic_mesh(control,config.grid,handles),1.5);
+            check(1.5);
+        }
+    }
+    std::cout<<"RZ_USER_SERVICE_ANALYTIC_PASS axis=1 annulus=1 mixed=1 datum=1 rebuild=1 stale_retired=1\n";
+}
 void rz_binding_identity() {
     constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     std::size_t checked=0;
@@ -1366,4 +1473,4 @@ int main(int argc,char** argv) { try {
     dirichlet_quadratic();neumann_compatibility();mixed_periodic();
     user_robin_time();user_rejections();user_periodic_mismatch();boundary_normals();user_nonfinite();
     user_structure_rebuild();user_restart_time();user_periodic_payload();user_green_accounting();
-    qualification_scope();request_identity_preflight();host_consumption_receipt();host_stage_diagnostic_journal();lifecycle();native_components();rz_binding_identity();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+    qualification_scope();request_identity_preflight();host_consumption_receipt();host_stage_diagnostic_journal();lifecycle();native_components();rz_binding_identity();rz_user_analytic_service();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

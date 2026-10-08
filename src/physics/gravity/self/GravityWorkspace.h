@@ -176,13 +176,15 @@ struct SelfGravity::Workspace {
             throw std::logic_error("Self-gravity patch uses a different density allocation/slot");
         return patches[it->second];
     }
-    /** Borrow the exact candidate patch without promoting ordinary physics.
-     * Workflow: require candidate validity; resolve the original Grid pointer;
+    /** Borrow the exact prepared RZ patch without changing producer scope.
+     * Workflow: require original field validity; resolve the original Grid pointer;
      * require its actual resident density allocation; return immutable views.
      */
     const GravityPatchView& native_patch(const Grid& grid,const FluidState& state) const {
-        require(GravityFieldScope::NativeRzCandidate);
-        if(solver.execution().device())throw std::logic_error("Native private patch requires Host execution");
+        require(scope);
+        if(solver.execution().device()
+            ||solver.op().base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::logic_error("Prepared RZ patch requires its actual Host chart");
         const auto found=lookup.find(&grid);
         if(found==lookup.end()||patches[found->second].density!=state.rho.data())
             throw std::logic_error("Native private patch changed its original density allocation");

@@ -642,6 +642,11 @@ void DriverRuntime::initialize_topology()
     if (geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz
         && !native_rz_eos_acceptance_)
         throw std::logic_error("Native RZ initialization requires an explicitly bound EOS");
+    // The native macro snapshots flux storage before the first split operator.
+    // Freeze its actual composition extent here, even with AMR disabled; the
+    // integrator's later EnsureSpecies cannot resize an already leased arena.
+    if(geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
+        amr_ctrl.flux_register.EnsureSpecies(specs.count());
     for (int id:amr_ctrl.tree->GetActiveBlocks())
         (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
     auto initial_candidate =

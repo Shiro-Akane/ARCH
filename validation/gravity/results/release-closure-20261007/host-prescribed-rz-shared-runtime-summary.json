@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "recordedUtc": "2026-10-08T08:47:00.977119+00:00",
+  "scope": "Host prescribed RZ shared production runtime; engineering/analytic subset, not full O release",
+  "parentCommit": "86a289c3871bc9884f5531a1f4e081f9d1975adc",
+  "sourceSha256": {
+    "src/driver/runtime/DriverRuntime.cpp": "7bba7e73df57afbe8e13b7fbaadebede7b9e2cd0986ec354e6da9af6551ba2c3",
+    "src/driver/stages/GravityStage.cpp": "e564407c15c77497d6df6c4cb3e4cbbdd58d9c20e7c20ec1347da8f52a5c41de",
+    "src/driver/stages/GravityStage.h": "4e89b0ce130131001b2eb0a3e8248d902271b60015ffb9e13e61c057643dcce5",
+    "src/physics/gravity/NativeSelfStage.h": "751d32aa9f8a4cefb82fa962589b87c02d3b8f1f4740873670351ca6ea2845a7",
+    "src/physics/gravity/self/GravityUserBoundary.cpp": "e5aaf1725fbea4d86545e059f9170b85b432ed65f14174c41e7d6f3999864b59",
+    "src/physics/gravity/self/GravityWorkspace.cpp": "6909d3f0e6d04a52a2abdb3520968565b6f588d8b1185fab6b2d32c2d2217c23",
+    "src/physics/gravity/self/GravityWorkspace.h": "71875d38309d780559eaafa96372143220dece6e3c29e9cf361d38780e1f3e15",
+    "src/physics/gravity/self/SelfGravity.cpp": "054ac71901686ca99763936d9d8e4781a815710337b9c047711a40059064923c",
+    "src/physics/gravity/self/SelfGravity.h": "daa60e364bd8b24fcc204e0ec7e59d541a2cae081ae133f359c2b6bf49c8227d",
+    "tests/host/gravity/test_self_gravity.cpp": "42c985e4a369a1ba7280ebcacafe2458f1f48abeafed6e54d88bdd2adfc38360",
+    "validation/gravity/run_self_gravity.py": "0c22a5fcfaddac23b43930b238820608d9a92f7b54b09b01ce3bc0a92a0e7bba",
+    "validation/gravity/user_boundaries.py": "2aedb7587679562351989c67f345753e3cfa5f4edb86eeb304e807221d98882d"
+  },
+  "executableSha256": "52cf25a6bf18fd833332e48ef23aee33dfc3b6ad11be28689f5a973ce1ef94bb",
+  "cpu": {
+    "inventoryOwners": 68,
+    "passed": 68,
+    "failed": 0,
+    "skipped": 0,
+    "ctestSeconds": 190.6,
+    "guardSeconds": 191.055,
+    "inventoryJUnitExactMatch": true,
+    "junitSha256": "19bf4ae9b23e2f23263c488b46380116ba2e7b1e52d58ea16c9199b5845f18f4"
+  },
+  "originalGravityQuick": {
+    "records": 51,
+    "guardSeconds": 8.062,
+    "summarySha256": "990a0815a013f85390405a3179d015114bfdc3da672c5b89fd72a6d1c18b727f"
+  },
+  "analyticRz": {
+    "owner": "self_gravity_lifecycle",
+    "axisAndAnnulus": true,
+    "realStaticRegridLeaves": [
+      2,
+      5
+    ],
+    "timeDependentDirichletAndRobin": true,
+    "invalidDatumRecovery": true,
+    "potentialRelativeWindow": 1e-07,
+    "forceRelativeWindow": 1e-06,
+    "perCaseStdout": "JUnit success output truncated; owner PASS includes all assertions; no invented full sample table"
+  },
+  "notQualified": [
+    "public RZ dynamic AMR and restart",
+    "public isolated RZ",
+    "prescribed RZ Device",
+    "continuous isolated total energy",
+    "full curved Newtonian FV/CF/RKL",
+    "formal same-endpoint benchmark and long-run",
+    "whole O-series release"
+  ],
+  "rawUploaded": false,
+  "physicsAndWindowsChanged": false
+}

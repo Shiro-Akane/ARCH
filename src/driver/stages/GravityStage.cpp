@@ -214,7 +214,7 @@ struct GravityStage::RuntimeSourceLease {
         // Reject before inspecting any formerly live context/descriptor.
         if(!token.live_)throw std::logic_error("Runtime gravity source lease was permanently retired");
         const auto& r=owner.runtime_;const auto& config=r.configuration();
-        if(!owner.native_candidate()||!owner.gravity_||r.backend()
+        if((!owner.native_candidate()&&!owner.native_self())||!owner.gravity_||r.backend()
             ||owner.runtime_source_lease_.get()!=this
             ||r.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
             ||&ledger!=r.residency_ledger.get()||ledger.active_epoch()!=identity.topology
@@ -277,7 +277,7 @@ struct GravityStage::RuntimeSourceLease {
     void require_domain(bool preparing=false) const {
         require_owner(preparing);
         const auto& r=owner.runtime_;const auto& config=r.configuration();
-        if(!owner.native_candidate()
+        if((!owner.native_candidate()&&!owner.native_self())
             ||r.backend()||r.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
             ||&ledger!=r.residency_ledger.get()||ledger.active_epoch()!=identity.topology
             ||r.topology_registry.epoch()!=identity.topology||r.control().pool.get()!=pool||r.control().tree.get()!=tree
@@ -538,6 +538,19 @@ void GravityStage::inspect_native_source(void* payload,const Physical::Gravity::
         owner.source_inspection_completed_=false;owner.invalidate();throw;
     }
 }
+/** Reuse the actual RZ momentum/work transaction for prescribed boundaries.
+ * This selects existing Runtime receipts, not another Poisson/source producer.
+ * Isolated private profiles retain their original diagnostic qualification.
+ */
+bool GravityStage::native_self() const noexcept {
+    if(qualification_==Qualification::NativeRzSelfHydroCandidate)return true;
+    const auto& config=runtime_.configuration();
+    return qualification_==Qualification::Production&&gravity_&&!runtime_.backend()
+        &&runtime_.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz
+        &&config.physics.gravity.type=="self"
+        &&(config.physics.gravity.boundary=="user"||config.physics.gravity.boundary=="dirichlet"
+            ||config.physics.gravity.boundary=="neumann");
+}
 /** Open diagnostics for a configured self-gravity stage. */
 GravityStage::GravityStage(DriverRuntime& runtime,const Physical::Gravity::IGravityPolicy* policy,
     Qualification qualification)
@@ -742,7 +755,7 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
     const auto prepared=std::chrono::steady_clock::now();
     auto execution=backend?backend->gravity_execution():nullptr;
     const auto before=execution?execution->numeric()->counters():arch::multigrid::ExecutionCounters{};
-    if(native_candidate()) {
+    if(native_candidate()||native_self()) {
         auto next=std::make_unique<RuntimeSourceLease>(*this,identity,std::move(views),ledger,purpose);
         runtime_source_lease_=std::move(next);
     }
@@ -792,6 +805,20 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
         runtime_source_lease_->require_domain(true);
         runtime_source_lease_->token.seal();
     }
+    if(native_self()&&purpose==Physical::Gravity::GravityFieldPurpose::HydroStage) {
+        if(!journal_active_||!prepared_||pending_count_>=pending_rows_.size())
+            throw std::logic_error("Native Self solved field lost its actual bounded journal");
+        prepared_->source=identity;
+        const auto& binding=scheduler::current_stage_binding();
+        // Borrow the actual producer scope unchanged. Explicit data use
+        // the common solved field; private ring profiles remain candidates.
+        std::unique_ptr<Physical::Gravity::NativeSelfStageFrame> next{
+            new Physical::Gravity::NativeSelfStageFrame(*gravity_,runtime_.boundaries(),
+            runtime_.control(),binding,prepared_->descriptor,config,
+            prepared_->step_dt,generation_,identity,
+            native_flux_observation_sink_,native_flux_observation_payload_)};
+        self_frame_=std::move(next);policy_->native_self_frame_=self_frame_.get();
+    }
     if(native_candidate()) {
         // Use the same Runtime lease and full original request. No physical
         // report/patch/CFL/output consumer is promoted by this diagnostic path.
@@ -806,18 +833,6 @@ state::CompletionToken GravityStage::solve(state::StateSlot slot,const state::St
             <<candidate.conditional.total_residual_upper<<'\t'
             <<candidate.conditional.tolerance_safe<<"\t0\n";
         if(native_self()&&purpose==Physical::Gravity::GravityFieldPurpose::HydroStage) {
-            if(!journal_active_||!prepared_||pending_count_>=pending_rows_.size())
-                throw std::logic_error("Native Self solved field lost its actual bounded journal");
-            prepared_->source=identity;
-            const auto& binding=scheduler::current_stage_binding();
-            // Field scope remains NativeRzCandidate. Only this typed frame may
-            // borrow it for the exact real stage; ordinary consumers still fail.
-            std::unique_ptr<Physical::Gravity::NativeSelfStageFrame> next{
-                new Physical::Gravity::NativeSelfStageFrame(*gravity_,runtime_.boundaries(),
-                    runtime_.control(),binding,prepared_->descriptor,config,
-                    prepared_->step_dt,generation_,identity,
-                    native_flux_observation_sink_,native_flux_observation_payload_)};
-            self_frame_=std::move(next);policy_->native_self_frame_=self_frame_.get();
             pending_rows_[pending_count_].solve=row.str();
         } else {
             diagnostics_<<row.str();diagnostics_.flush();
@@ -902,7 +917,7 @@ state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparat
 /** Prepare gravity on the accepted current state for output and timestep use. */
 void GravityStage::prepare_current(double time, bool reset_solver_history) {
     if(source_prepare_running_)throw std::logic_error("Gravity source preparation cannot reenter Current/history");
-    if(native_candidate()&&(runtime_.active_host_hydro_transaction()||prepared_
+    if((native_candidate()||native_self())&&(runtime_.active_host_hydro_transaction()||prepared_
         ||policy_->prepared_native_self()||policy_->prepared_native_external()
         ||!RuntimeSourceLease::same(time,runtime_.ctrl.t_current)))
         throw std::logic_error("Native Current preparation requires the actual accepted/quiescent Runtime time");
@@ -911,7 +926,7 @@ void GravityStage::prepare_current(double time, bool reset_solver_history) {
     if(journal_active_||committed_count_)
         throw std::logic_error("Current gravity/output preparation requires a closed, flushed macro-step");
     if (gravity_) {
-        if(native_candidate()) {
+        if(native_candidate()||native_self()) {
             // Retire old source borrows before real BC/exchange changes ghost
             // data. Obtain the new Current lease only after actual EOS accepts.
             // Invalid immutable science configuration fails before BC/EOS

@@ -221,11 +221,11 @@ def main():
                 ('reject-1d-cartesian-isolated', {'gravity_boundary':'isolated'},
                  'Cartesian isolated gravity requires a 3D'),
                 ('reject-periodic-fluid-face', {'x1l_boundary_type':'outflow'},
-                 'Fluid faces must match the gravity topology'),
+                 'Fluid faces must match the field topology'),
                 ('reject-3d-isolated-fluid-faces',
                  {'gravity_boundary':'isolated', 'nblockx2':1, 'nblockx3':1,
                   'x2_min':0, 'x2_max':1, 'x3_min':0, 'x3_max':1},
-                 'Fluid faces must match the gravity topology')]:
+                 'Fluid faces must match the field topology')]:
             campaign.reject(name, message, **changes)
         status = 'passed'
     except Exception:

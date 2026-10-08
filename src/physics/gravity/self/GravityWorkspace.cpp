@@ -356,7 +356,7 @@ GravityRefluxRows gravity_reflux_rows(const amr::EllipticMeshBinding& binding,
  */
 const GravityRefluxRows& SelfGravity::Workspace::prepare_native_reflux(
     const amr::AmrFluxTopologyPlan& topology) {
-    require(GravityFieldScope::NativeRzCandidate);
+    require(scope);
     auto& e=solver.execution();
     if(e.device()||topology.epoch!=source.topology)
         throw std::logic_error("Native paired reflux changed backend or topology epoch");
@@ -381,7 +381,7 @@ const GravityRefluxRows& SelfGravity::Workspace::prepare_native_reflux(
         for(int row=0;row<reflux_values.size;++row)
             if(!std::isfinite(reflux_values.data[row]))
                 throw std::runtime_error("Native paired reflux value is nonfinite");
-        require(GravityFieldScope::NativeRzCandidate);
+        require(scope);
         reflux_field_generation=generation;
     }
     return reflux_rows;

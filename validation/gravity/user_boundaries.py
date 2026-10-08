@@ -43,7 +43,17 @@ def checkpoint(path, parameters):
         result = dict(time=float(file.attrs['time']), step=int(file.attrs['step']),
                       identity=str(file.attrs['boundary_identity']),
                       repair=np.array(file['state_repairs']), levels=levels, state=state)
-    volume = []
+        chart = file.attrs.get('geometry_chart', '')
+        chart = chart.decode() if isinstance(chart, bytes) else str(chart)
+        native_rz = chart == 'axisymmetric-rz'
+        require(native_rz == (parameters['geometry'] == 'cylindrical' and dim == 2),
+                str(path)+': checkpoint chart differs from the configured public geometry')
+        if native_rz:
+            semantics = file.attrs.get('state_semantics', '')
+            semantics = semantics.decode() if isinstance(semantics, bytes) else str(semantics)
+            require(semantics == 'rz-m-phi-j-over-w-v1',
+                    str(path)+': missing native angular state semantics')
+    volume, angular_measure = [], []
     for block, level in enumerate(levels):
         widths = [(float(parameters[f'x{a}_max'])-float(parameters[f'x{a}_min'])) /
                   (16 * int(parameters[f'nblockx{a}']) * 2**int(level)) if a <= dim else 1. for a in (1, 2, 3)]
@@ -54,6 +64,14 @@ def checkpoint(path, parameters):
         geom = parameters['geometry']
         if geom == 'cartesian':
             measure = np.full(x.shape, math.prod(widths))
+        elif native_rz:
+            # RZ is a full ring, not a polar wedge: V=integral(2*pi*r dr dz).
+            # Its evolved mom_w is m_phi=J/W; W=integral(r dV), not V.
+            lower = x.astype(np.longdouble)
+            upper = lower + np.longdouble(widths[0])
+            pi = np.longdouble(math.pi)
+            measure = pi*(upper*upper-lower*lower)*np.longdouble(widths[1])
+            angular_measure.append((2*pi/3*(upper**3-lower**3)*np.longdouble(widths[1])).ravel())
         elif geom == 'cylindrical' or (geom == 'spherical' and dim == 2):
             measure = .5*((x+widths[0])**2-x**2) * widths[1] * widths[2]
         elif dim == 1:
@@ -62,7 +80,9 @@ def checkpoint(path, parameters):
             measure = ((x+widths[0])**3-x**3)/3. * (np.cos(y)-np.cos(y+widths[1])) * widths[2]
         volume.append(measure.ravel())
     volume = np.asarray(volume, dtype=np.longdouble)
-    result['totals'] = np.array([np.sum(state[key].astype(np.longdouble)*volume)
+    angular_weight = np.asarray(angular_measure, dtype=np.longdouble) if native_rz else volume
+    result['totals'] = np.array([np.sum(state[key].astype(np.longdouble)*
+                                (angular_weight if key == 'mom_w' else volume))
                                for key in ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng')], dtype=np.longdouble)
     result['species'] = np.sum(state['rhoX'].astype(np.longdouble)*volume, axis=(1, 2))
     for key, values in state.items():

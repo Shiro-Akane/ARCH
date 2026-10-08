@@ -248,10 +248,10 @@ public:
     GravitySourceDescriptor source_descriptor() const noexcept override {
         return {GravitySourceOrigin::NativeSelfComposite,{}};
     }
-    /** Bind using the actual stage/restart time; public RZ remains gated. */
+    /** Bind using actual stage/restart time; Host RZ accepts prescribed boundaries. */
     void bind(amr::EllipticMeshBinding binding, double time = 0.) const;
     // Internal CPU numerical verification only. Native candidates cannot be
-    // read by normal physical patch/output consumers; public bind stays gated.
+    // read by normal physical consumers; public isolated RZ stays gated.
     // maximum_work=0 selects a checked full traversal budget from the actual
     // bound source tree and exterior faces. Nonzero values retain the explicit
     // resource cap, including deliberately small verification budgets. This
@@ -326,27 +326,27 @@ private:
         std::uint64_t expected_source_generation) const;
     /** Shared original timestep algebra; the public wrapper retains Existing scope. */
     double field_timestep(double,GravityFieldScope) const;
-    /** Authenticate only the friend frame's actual Host candidate publication.
-     * This never changes its scope or grants the ordinary public readers.
+    /** Authenticate the friend frame's actual Host RZ solved publication.
+     * Preserve the producer scope and its original Runtime source identity.
      */
     void require_native_frame(const GravitySolveIdentity&,std::uint64_t field_generation,
         std::uint64_t source_generation) const;
-    /** Retain the original Candidate publication/source checks on each visit;
+    /** Retain actual publication/source checks on each visit;
      * the full immutable operator is compared once at prepare and after join.
      */
     void require_native_frame_lease(const GravitySolveIdentity&,
         std::uint64_t field_generation,std::uint64_t source_generation) const;
     /** Borrow actual resident patch arrays under the exact private publication. */
-    GravityPatchView native_candidate_patch(const Grid&,const FluidState&) const;
+    GravityPatchView prepared_rz_patch(const Grid&,const FluidState&) const;
     /** Compile/reuse authentic topology rows; evaluate stage-local Dphi using
      * resident Phi and independent datum, with no field download or new solve.
      */
-    const GravityRefluxRows& native_candidate_reflux_rows(const amr::AmrFluxTopologyPlan&) const;
+    const GravityRefluxRows& prepared_rz_reflux_rows(const amr::AmrFluxTopologyPlan&) const;
     /** Borrow the already fenced Host execution result; lifetime is one frame. */
-    const double* native_candidate_reflux_values() const;
-    /** Original source and face-work arithmetic, private candidate scope only. */
-    void native_candidate_momentum(std::vector<FluidVector>&,const FluidState&,const Grid&,double) const;
-    void native_candidate_flux_work(std::vector<FluidVector>&,const std::vector<FluidVector>&,
+    const double* prepared_rz_reflux_values() const;
+    /** Original source and face-work arithmetic under the prepared RZ receipt. */
+    void prepared_rz_momentum(std::vector<FluidVector>&,const FluidState&,const Grid&,double) const;
+    void prepared_rz_flux_work(std::vector<FluidVector>&,const std::vector<FluidVector>&,
         const FluidState&,const Grid&,double,int) const;
     struct NativeRzSourceInspectionLease;
     /** Require the exact live source-only inspection and unchanged workspace.

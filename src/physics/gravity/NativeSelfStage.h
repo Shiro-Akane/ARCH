@@ -1,11 +1,11 @@
 /**
  * @file NativeSelfStage.h
- * @brief Private, nonmoving Host native self-gravity stage and write receipts.
+ * @brief Nonmoving Host RZ self-gravity stage and write receipts.
  *
  * Workflow:
  * 1. GravityStage alone constructs after actual Runtime/macro transaction and
  *    source preparation. Reuse the real BC/domain/slot/seven-storage leases.
- * 2. Borrow exactly the ready NativeRzCandidate publication, never relabel it.
+ * 2. Borrow the ready producer publication and preserve its actual scope.
  *    Compile authentic topology rows and evaluate SAME-stage resident Phi.
  * 3. Claim each patch once; reserve momentum, each real work axis and each
  *    original Energy registration operation BEFORE its numerical write.
@@ -19,7 +19,9 @@
  * E_registered = F_E + psi_o F_rho,
  * psi_o = sum_fragment(A_fragment/A_source)*Phi_fragment - Phi_dest_coarse.
  * Original sign, area, RK weight and dt remain with their original register.
- * This internal experiment grants no continuous field/public/Device science.
+ * Prescribed fields reuse normal solved-field publication; isolated diagnostic
+ * fields retain their candidate scope. Neither receipt certifies continuum
+ * field accuracy or Device execution.
  */
 #pragma once
 
@@ -117,7 +119,7 @@ public:
                 if(frame_->observation_sink_) {
                     observe_axis(Observation::Kind::AxisBefore,delta,flux,axis);require_input();
                 }
-                frame_->policy_->native_candidate_flux_work(delta,flux,*input_,*grid_,frame_->dt_,axis);
+                frame_->policy_->prepared_rz_flux_work(delta,flux,*input_,*grid_,frame_->dt_,axis);
                 require_input();
                 if(frame_->observation_sink_) {
                     observe_axis(Observation::Kind::AxisAfter,delta,flux,axis);require_input();
@@ -128,7 +130,7 @@ public:
         void add_momentum(std::vector<FluidVector>& delta) {
             guard([&]{require_input();require_arrays(delta);
                 auto& phase=frame_->patches_[index_].source[0];reserve(phase);
-                frame_->policy_->native_candidate_momentum(delta,*input_,*grid_,frame_->dt_);
+                frame_->policy_->prepared_rz_momentum(delta,*input_,*grid_,frame_->dt_);
                 require_input();consume(phase);});
         }
         /** Reserve one actual Energy operation before original route application.
@@ -212,7 +214,7 @@ public:
                 ||frame_->patches_[index_].phase.load(std::memory_order_acquire)!=Phase::Claimed)
                 throw std::logic_error("Native self claim is stale or already consumed");
             frame_->domain_.require_input_patch(index_,frame_->control_,id_,*input_,*grid_);
-            (void)frame_->policy_->native_candidate_patch(*grid_,*input_);
+            (void)frame_->policy_->prepared_rz_patch(*grid_,*input_);
         }
         /** Build a borrowed event from this exact already-authenticated claim.
          * Scalars identify the original descriptor/source, not another solve.
@@ -293,7 +295,7 @@ public:
      */
     double timestep() const {
         double result=0.;checked([&]{require_live();
-            result=policy_->field_timestep(cfl_,GravityFieldScope::NativeRzCandidate);});
+            result=policy_->field_timestep(cfl_,policy_->workspace().scope);});
         return result;
     }
     /** Own the exact prepared Hydro source/field, without another solve.
@@ -326,7 +328,7 @@ public:
                 throw std::logic_error("Native self claim is outside its actual domain");
             index=static_cast<std::size_t>(block.active_index);
             domain_.require_input_patch(index,control,id,input,grid);
-            (void)policy_->native_candidate_patch(grid,input);
+            (void)policy_->prepared_rz_patch(grid,input);
             PatchReceipt::reserve(patches_[index].phase);});
         return PatchReceipt(*this,index,id,input,grid);
     }
@@ -366,7 +368,8 @@ private:
           bounds_{config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint},
           dt_(dt),stage_weight_(descriptor.flux_register_weight),cfl_(config.numerics.cfl),generation_(generation),source_(source),
           field_generation_(policy.workspace().generation),
-          source_generation_(policy.workspace().ring_assessment.source_generation),
+          source_generation_(policy.workspace().scope==GravityFieldScope::NativeRzCandidate
+              ?policy.workspace().ring_assessment.source_generation:policy.workspace().generation),
           domain_(boundary,control,binding,descriptor),patch_count_(control.tree->GetActiveBlocks().size()),
           patches_(std::make_unique<PatchRecord[]>(patch_count_)),
           descriptor_(descriptor),observation_sink_(sink),observation_payload_(payload) {
@@ -394,8 +397,8 @@ private:
             throw std::logic_error("Native self topology owner changed during construction");
         topology_=topology_lease_.get();
         epoch_=topology_->epoch;topology_fingerprint_=topology_->fingerprint;
-        rows_=&policy_->native_candidate_reflux_rows(*topology_);
-        psi_=policy_->native_candidate_reflux_values();
+        rows_=&policy_->prepared_rz_reflux_rows(*topology_);
+        psi_=policy_->prepared_rz_reflux_values();
         energy_=std::make_unique<std::atomic<Phase>[]>(rows_->identity.size());
         if(observation_sink_&&!rows_->identity.empty())
             energy_observations_=std::make_unique<EnergyObservation[]>(rows_->identity.size());

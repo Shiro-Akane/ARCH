@@ -17,6 +17,22 @@ All commands below run from the repository root in Linux or WSL2. Tool tests,
 numerical regressions and application smoke have different purposes;
 [Validation](../validation/README.md) records scientific comparisons and budgets.
 
+During development, build the affected existing targets and run their ordinary
+numerical and interface checks first. When a check fails, identify the input,
+calculation or wiring error before adding the smallest reproducing witness;
+do not launch a larger simulation matrix for the same unresolved failure.
+After ordinary checks pass, extend the relevant existing owner with missing
+edge coverage: near vacuum, axis-adjacent cells, strong rotation, nonfinite
+inputs, recovery after rejection, and AMR restart. Retain the analytical-error,
+conservation and convergence criteria.
+
+Completed evidence may be reused for the same source, input and executable
+identities. Rerun affected checks after mathematical or call-path changes;
+run the complete inventory once at source freeze, before CUDA, whole-run timing
+and long-run acceptance. Keep independent references separate from production
+calculations. Prefer assertions in existing targets over another compiled copy
+of the production algorithm or another run of the same simulation group.
+
 For conservative-state acceptance changes, the focused Host targets are
 `arch_conservative_acceptance`, `arch_rkl_repair_weights` and
 `arch_shared_stage_scheduler`. They check bounded composition corrections and
