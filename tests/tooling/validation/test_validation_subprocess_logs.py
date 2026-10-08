@@ -1,9 +1,11 @@
 """Process/logging contracts only; no real ARCH execution or validation claim."""
 
 from pathlib import Path
+import json
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from unittest import mock
 
@@ -12,6 +14,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 import validate_backend_results as validation
 import validate_cuda_amr_restart as restart
 import validation_sanitizer as instrumentation
+sys.path.insert(0, str(ROOT / "validation/gravity"))
+import gravity_box
 
 
 class ValidationSubprocessLogsTests(unittest.TestCase):
@@ -152,6 +156,64 @@ class ValidationSubprocessLogsTests(unittest.TestCase):
         self.assertEqual(observed.returncode, 86)
         sanitizer.evidence.assert_not_called()
         self.assertEqual((self.root / "arch.stderr").read_text(), "tool failure")
+
+    def test_benchmark_keeps_accepted_sample_after_hard_process_exit(self):
+        # Exercise only receipt durability. The child never starts ARCH/GPU;
+        # os._exit bypasses finally just like a killed measurement wrapper.
+        self.arch.write_bytes(b"unit-only image identity, never executed")
+        output = self.root / "partial-benchmark"
+        output.mkdir()
+        code = textwrap.dedent("""
+            import os, subprocess, sys
+            from pathlib import Path
+            sys.path.insert(0, sys.argv[1])
+            import check_cuda_compatibility as benchmark
+            class UnitCampaign:
+                cloud_config = staticmethod(benchmark.BoxCampaign.cloud_config)
+                def __init__(self, image, output, backend, threads, resources):
+                    self.threads = threads
+                def run(self, name, **config):
+                    if name == 'warmup-cpu-4':
+                        os._exit(23)
+                    return ([{'time': .1}], None,
+                            {'name': name, 'threads': self.threads,
+                             'elapsed_seconds': 1., 'cells': 1})
+            benchmark.BoxCampaign = UnitCampaign
+            benchmark.subprocess.run = lambda *a, **k: subprocess.CompletedProcess(a[0], 1)
+            benchmark.benchmark(Path(sys.argv[2]), Path(sys.argv[3]),
+                                only='small-periodic', repeats=3)
+        """)
+        result = subprocess.run([sys.executable, "-c", code,
+            str(ROOT / "validation/gravity"), str(self.arch), str(output)],
+            capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 23, result.stdout + result.stderr)
+        report = json.loads((output / "performance.json").read_text())
+        self.assertEqual(report['status'], 'incomplete')
+        self.assertEqual([r['name'] for r in report['results']], ['warmup-cpu-1'])
+        self.assertEqual(report['summaries'], [])
+        self.assertFalse((output / "performance.json.tmp").exists())
+
+    def test_completed_output_reader_keeps_unknown_clock_and_energy_budget(self):
+        import numpy as np
+        campaign = gravity_box.BoxCampaign(self.arch, self.root)
+        lane = self.root / "completed"
+        lane.mkdir()
+        (lane / "state_repairs.txt").write_text("events=0\n")
+        for name in ("unit_plt_0.h5", "unit_plt_1.h5"):
+            (lane / name).touch()
+        state = {'DENS': np.ones(1), 'volume': np.ones(1), 'ENER': np.full(1, 2.)}
+        config = {'gravity_type': 'none'}
+        with mock.patch.object(gravity_box, "load", side_effect=[state, state]):
+            unused, unused_path, record = campaign.inspect_completed_run("completed", config)
+        self.assertIsNone(record['elapsed_seconds'])
+        heated = state | {'ENER': np.full(1, 2.0002)}
+        with mock.patch.object(gravity_box, "load", side_effect=[state, heated]):
+            with self.assertRaisesRegex(RuntimeError, 'energy minus nuclear budget'):
+                campaign.inspect_completed_run("completed", config, energy_budget=1e-6)
+        with mock.patch.object(gravity_box, "load", side_effect=[state, heated]):
+            unused, unused_path, record = campaign.inspect_completed_run(
+                "completed", config, energy_budget=None)
+        self.assertNotIn('energy_minus_nuclear_over_initial_gas', record)
 
 
 if __name__ == "__main__":

@@ -2,9 +2,21 @@
  * @file DiffusionKernels.cuh
  * @brief Device flux, stability and RKL-stage traversal for shared diffusion.
  *
- * DiffFlux and DiffusionAMRStages own transport, geometry and stage arithmetic.
- * Launch results describe queued kernels and their write extent; the runtime
- * owns the stream, workspaces, EOS status checks and logical-slot publication.
+ * Workflow:
+ * 1. Borrow the runtime's existing state, species scratch, grid metrics and
+ *    physical boundary controls; the kernels neither allocate nor publish them.
+ * 2. Read each face's states and call DiffFlux for its physical distance,
+ *    native thermal closure, material coefficients, traction and matched work.
+ * 3. Apply the shared prescribed-flux boundary owner, then capture the actual
+ *    oriented flux used by divergence/reflux: q = F_E - sum_i F_mom_i*v_i.
+ * 4. Borrow the same shared geometry/source and stability-row owners for the
+ *    operator and timestep; DiffusionAMRStages owns the RKL-stage arithmetic.
+ * 5. Return queued-kernel status and write extent. The runtime owns streams,
+ *    workspaces, EOS failure checks, halo exchange and logical-slot publication.
+ *
+ * CPU and CUDA share all transport and integration mathematics. In native RZ,
+ * angular momentum and energy use W and V measures respectively; the shared
+ * face owner supplies the physical work velocity rather than J/(W*rho).
  * A successful interior update does not make the surrounding ghosts valid.
  */
 
@@ -211,11 +223,16 @@ __global__ void diffusion_face_kernel(
         const int nj = grid.je - grid.js + (direction == 1 ? 1 : 0);
         const int i = grid.is + linear % ni;
         const int j = grid.js + (linear / ni) % nj;
-        const double spacing = DiffFlux::diffusion_face_spacing(
-            geometry.geometry, grid.dim, direction, grid.dx1, grid.dx2, grid.dx3,
-            geometry.GetCellCenterX(i), geometry.GetCellCenterY(j));
+        // Borrow the same physical face distance and EOS-only native closure
+        // as Host. Conserved V/W means stay in the original device buffers.
+        const double spacing = DiffFlux::diffusion_face_spacing(geometry,direction,i,j);
         const FluidVector left = state.load(left_cell);
         const FluidVector right = state.load(right_cell);
+        const DiffusionStateReader read{state};
+        const auto thermal_left=DiffFlux::diffusion_thermal_input(
+            left,read,geometry,left_cell,i-(direction==0?1:0));
+        const auto thermal_right=DiffFlux::diffusion_thermal_input(
+            right,read,geometry,right_cell,i);
         DiffFlux::DiffusionFaceProperties properties{};
         const DiffFlux::DiffusionFaceStatus face_status =
             DiffFlux::evaluate_diffusion_face(
@@ -231,7 +248,8 @@ __global__ void diffusion_face_kernel(
                     ? flux.mass_fractions + right_cell : nullptr,
                 flux.total_size, config.use_viscous_diffusion
                     ? DiffFlux::viscous_basis_rotation(geometry, direction, i, j)
-                    : DiffFlux::ViscousBasisRotation{}, &properties);
+                    : DiffFlux::ViscousBasisRotation{}, &properties,
+                &thermal_left,&thermal_right);
         if (!face_status.valid) {
             atomicExch(status, 1);
             continue;
@@ -246,18 +264,38 @@ __global__ void diffusion_face_kernel(
             const int k = grid.ks + linear / (ni * nj);
             const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
                 grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
+            const bool native=GridMetrics::is_axisymmetric_rz(geometry);
+            double work_velocity[3]{};
+            if(native) {
+                work_velocity[0]=.5*(left.mom_u/left.rho+right.mom_u/right.rho);
+                work_velocity[1]=.5*(left.mom_v/left.rho+right.mom_v/right.rho);
+            }
+            // The existing shared leaf replaces angular traction and its work
+            // once. nu=0 still supplies the physical work velocity needed by
+            // a prescribed native traction; no new stress formula lives here.
+            if((config.use_viscous_diffusion||(native&&controls))
+                &&!DiffFlux::replace_rz_azimuthal_flux(read,right_cell,geometry,
+                    direction,i,spacing,config.use_viscous_diffusion
+                        ?properties.coefficients.nu_visc:0.,face_flux,
+                    native?&work_velocity[2]:nullptr)) {
+                atomicExch(status,1);continue;
+            }
             const int coordinate[3]{i,j,k}, lower[3]{grid.is,grid.js,grid.ks};
-            boundary::ApplyDiffusionBoundaryFlux(controls, coordinate[direction] == lower[direction] ? -1. : 1.,
-                left, right, face_flux,
-                state.n_species ? flux.mass_fractions + right_cell : nullptr, state.n_species, flux.total_size);
+            if(controls)
+                boundary::ApplyDiffusionBoundaryFlux(controls, coordinate[direction] == lower[direction] ? -1. : 1.,
+                    left, right, face_flux,
+                    state.n_species ? flux.mass_fractions + right_cell : nullptr, state.n_species, flux.total_size,
+                    native?work_velocity:nullptr);
             flux.store(right_cell, face_flux);
             // Observe the actual post-override flux: heat follows the shared
-            // DiffFlux convention F_E - sum_i F_mom_i * average face velocity.
+            // DiffFlux convention F_E - sum_i F_mom_i * matched face velocity.
+            // Native torque and work use different W/V measures; reuse the
+            // same physical velocity that supplied the boundary work above.
             if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1]) {
                 const double velocity[3]{
-                    0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
-                    0.5 * (left.mom_v / left.rho + right.mom_v / right.rho),
-                    0.5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
+                    native?work_velocity[0]:0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
+                    native?work_velocity[1]:0.5 * (left.mom_v / left.rho + right.mom_v / right.rho),
+                    native?work_velocity[2]:0.5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
                 const double heat = face_flux.eng - face_flux.mom_u * velocity[0]
                     - face_flux.mom_v * velocity[1] - face_flux.mom_w * velocity[2];
                 boundary::CaptureBoundaryFlux(state.capture, direction, i, j, k,

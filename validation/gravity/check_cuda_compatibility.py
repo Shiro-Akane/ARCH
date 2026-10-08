@@ -48,10 +48,14 @@ def benchmark(executable, output, terminal_time=.1, only=None, repeats=5,
             stop.wait(.5)
     thread = threading.Thread(target=monitor,daemon=True)
     thread.start()
+    # Explicitly preserve the former 3D Setup values. The canonical base is
+    # one-dimensional; active transverse domains/centers must be declared.
+    periodic_transverse_domain=dict(x2_min=0.,x3_min=0.,x2_max=1e8,x3_max=1e8,
+                                    center_y=5e7,center_z=5e7)
     cases = [
         ('small-periodic',dict(nblockx1=4)),
-        ('medium-periodic',dict(nblockx1=2,nblockx2=2,nblockx3=2,x2_max=1e8,x3_max=1e8)),
-        ('large-periodic',dict(nblockx1=4,nblockx2=4,nblockx3=4,x2_max=1e8,x3_max=1e8,max_blocks=128)),
+        ('medium-periodic',dict(nblockx1=2,nblockx2=2,nblockx3=2,**periodic_transverse_domain)),
+        ('large-periodic',dict(nblockx1=4,nblockx2=4,nblockx3=4,max_blocks=128,**periodic_transverse_domain)),
         ('large-isolated-amr',BoxCampaign.cloud_config(roots=2,width=.06,center_x=.22,center_y=.22,center_z=.22,
             lrefinemax=1,refine_threshold=.1,derefine_threshold=.01))]
     if only == 'large-user-boundary':
@@ -60,6 +64,21 @@ def benchmark(executable, output, terminal_time=.1, only=None, repeats=5,
     images={'cpu':executable,'cuda':executable}
     if baseline_cpu:
         images.update({'baseline-cpu':baseline_cpu,'candidate-cpu':cpu_executable})
+    image_hashes={path:hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in set(images.values())}
+
+    def save_report():
+        """Atomically preserve accepted samples outside their measured clock."""
+        report=dict(executable=str(executable),sha256=image_hashes[executable],
+                    status='passed' if len(summaries)==sum(1 for name,_ in cases if not only or name==only) else 'incomplete',
+                    protocol='warmup, CPU thread selection, alternating complete physical endpoints',
+                    images={label:dict(path=str(path),sha256=image_hashes[path]) for label,path in images.items()},
+                    device_memory_scope='whole-device usage including baseline, not per-process allocation',
+                    device_memory=list(device_memory),results=records,summaries=summaries)
+        temporary=output/'performance.json.tmp'
+        temporary.write_text(json.dumps(report,indent=2)+'\n')
+        temporary.replace(output/'performance.json')
+
     try:
         for name,config in cases:
             if only and name!=only:continue
@@ -86,6 +105,7 @@ def benchmark(executable, output, terminal_time=.1, only=None, repeats=5,
                     require(np.allclose(final[key],reference[key],rtol=2e-11,atol=2e-13),
                             sample+': final-state parity failed for '+key)
                 records.append(record)
+                save_report()
                 return record
             sweep=[]
             for count in [1,4,8]:
@@ -116,13 +136,7 @@ def benchmark(executable, output, terminal_time=.1, only=None, repeats=5,
             print(name,speedup,flush=True)
     finally:
         stop.set();thread.join(timeout=15)
-        report=dict(executable=str(executable),sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
-                    status='passed' if len(summaries)==sum(1 for name,_ in cases if not only or name==only) else 'incomplete',
-                    protocol='warmup, CPU thread selection, alternating complete physical endpoints',
-                    images={label:dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest()) for label,path in images.items()},
-                    device_memory_scope='whole-device usage including baseline, not per-process allocation',
-                    device_memory=device_memory,results=records,summaries=summaries)
-        (output/'performance.json').write_text(json.dumps(report,indent=2)+'\n')
+        save_report()
 
 
 def main():

@@ -4,6 +4,7 @@
 #include "cuda/hydro/kernels/HydroFaceKernel.cuh"
 #include "physics/eos/IdealGas.h"
 #include "math/geometry/CurvilinearMetricCases.h"
+#include "math/geometry/RzViscousCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
 
 #include <algorithm>
@@ -665,6 +666,121 @@ void viscous_diffusion_convergence()
     ViscousGeometryCases::density_stability("cuda", evaluate);
 }
 
+// Reuse the original true V/W means, independent antiderivative references
+// and 2e-12 window. Only device buffers, metrics and actual kernel launches
+// differ from the Host owner; this does not qualify the full Native runtime.
+void native_rz_azimuthal_operator()
+{
+    DeviceBuffer<double> properties(4);
+    properties.upload({1.,1.,1.4,3.});
+    const SpeciesPODView species{properties.get(),properties.get()+1,
+        properties.get()+2,properties.get()+3,1};
+    const IdealGasView eos{species,1.4};
+    RzViscousCases::azimuthal_operator([&](const FluidState& state,
+        FluidState& delta,const IdealGas&,const Grid& grid,
+        const SimConfig& config,GridMetrics::GeometrySemantics semantics) {
+        const int cells=grid.GetTotalSize();
+        // These analytic fixtures are single-root blocks. Bind their exact
+        // domain/count/level identity for the unchanged device preflight;
+        // this value-only fixture does not certify a Runtime's freshness.
+        Grid device_host_grid=grid;
+        device_host_grid.dyadic_identity={true,{grid.x1_min,grid.x2_min},
+            {grid.x1_max,grid.x2_max},{1,1},0,{0,0},false};
+        auto device_grid=arch::cuda::make_device_grid_view(device_host_grid,semantics);
+        DeviceBuffer<double> metrics(7*cells);
+        cache_metrics(device_grid,metrics);
+        DeviceState input(cells,1),output(cells,1),faces(cells,1);
+        input.storage.upload(pack(state));
+        DeviceBuffer<int> status(1);
+        const auto actual=device_diffusion_operator(input,output,faces,device_grid,
+            eos,species,DiffFlux::make_diffusion_config_view(config),status);
+        for(int cell=0;cell<cells;++cell) {
+            delta.set(cell,{actual[cell],actual[cells+cell],actual[2*cells+cell],
+                actual[3*cells+cell],actual[4*cells+cell]});
+            delta.X(0,cell)=actual[6*cells+cell];
+        }
+    });
+    std::cout<<"CUDA_NATIVE_RZ_AZIMUTHAL_ORIGINAL_FIXTURES_PASS\n";
+}
+
+// With nu=0, prescribed native traction still does physical work. Independent
+// integrals check both axial signs and the actual post-override capture; an
+// E/F quotient cannot define the work velocity at zero endogenous traction.
+void native_rz_prescribed_axial_work()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    Grid grid(amr::MAX_NG,1.,2.,-.5,.5,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+    grid.dyadic_identity={true,{1.,-.5},{2.,.5},{1,1},0,{0,0},false};
+    const int cells=grid.GetTotalSize(),radial_cells=grid.Ie()-grid.Is();
+    FluidState state;initialize(state,cells,1);
+    RzViscousCases::NativeClosureReference reference;
+    reference.omega=2.L;reference.internal=30.L;
+    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+        const int cell=grid.GetIndex(i,j,0);
+        state.set(cell,reference.native(grid.GetFacePosL(i),grid.GetFacePosR(i)));
+        state.X(0,cell)=1.;
+    }
+    auto device_grid=arch::cuda::make_device_grid_view(grid,rz);
+    DeviceBuffer<double> metrics(7*cells);cache_metrics(device_grid,metrics);
+    DeviceBuffer<double> properties(4);properties.upload({1.,1.,1.4,3.});
+    const SpeciesPODView species{properties.get(),properties.get()+1,
+        properties.get()+2,properties.get()+3,1};
+    const IdealGasView eos{species,1.4};
+    SimConfig config{};
+    auto& diffusion=config.physics.diffusion;
+    diffusion.use_diffusion=diffusion.use_thermal_diffusion=true;
+    diffusion.use_viscous_diffusion=false;diffusion.nu_visc=0.;
+    diffusion.alpha_therm=.02;
+    DeviceState input(cells,1),faces(cells,1);
+    const auto original=pack(state);input.storage.upload(original);
+    using arch::boundary::ScalarBoundaryCondition;
+    using arch::boundary::ScalarBoundaryKind;
+    std::vector<ScalarBoundaryCondition> wall(5*radial_cells);
+    for(int plane=0;plane<radial_cells;++plane) {
+        wall[5*plane]={ScalarBoundaryKind::OutwardFlux,.35};
+        wall[5*plane+3]={ScalarBoundaryKind::OutwardFlux,.2};
+    }
+    DeviceBuffer<ScalarBoundaryCondition> controls(wall.size());controls.upload(wall);
+    DeviceBuffer<double> lower_capture(7*radial_cells),upper_capture(7*radial_cells);
+    input.view.diffusion_boundary.faces[2]=controls.get();
+    input.view.diffusion_boundary.faces[3]=controls.get();
+    input.view.capture.stage[2]=lower_capture.get();
+    input.view.capture.stage[3]=upper_capture.get();
+    DeviceBuffer<int> status(1);
+    const int count=arch::cuda::detail::diffusion_face_count(device_grid,1);
+    arch::cuda::detail::diffusion_face_kernel<<<(count+127)/128,128>>>(
+        input.view,faces.view,device_grid,eos,species,
+        DiffFlux::make_diffusion_config_view(config),1,status.get());
+    check(cudaGetLastError());
+    require(status.download()[0]==0,"native prescribed axial work rejected");
+    const auto actual=faces.storage.download();
+    const auto captured_lower=lower_capture.download(),captured_upper=upper_capture.download();
+    for(int i=grid.Is();i<grid.Ie();++i) {
+        const int plane=i-grid.Is();
+        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+        // Constant native axial traction: F_E = q + F_mphi*Omega*I2/I1.
+        // I_p = integral_a^b r^p dr; these references do not read production
+        // density caches, angular closure or its returned work coefficient.
+        const long double velocity=2.L*RzViscousCases::integral(a,b,2)
+            /RzViscousCases::integral(a,b,1);
+        for(int side=0;side<2;++side) {
+            const long double sign=side?1.L:-1.L;
+            const int cell=grid.GetIndex(i,side?grid.Je():grid.Js(),0);
+            const auto& capture=side?captured_upper:captured_lower;
+            const long double heat=sign*7.L/20.L,momentum=sign/5.L;
+            const long double energy=heat+momentum*velocity;
+            RzViscousCases::check(actual[3*cells+cell],momentum,"native prescribed axial traction sign");
+            RzViscousCases::check(actual[4*cells+cell],energy,"native prescribed axial physical work");
+            RzViscousCases::check(capture[7*plane+3],momentum,"native captured traction sign");
+            RzViscousCases::check(capture[7*plane+4],energy,"native captured total work");
+            RzViscousCases::check(capture[7*plane+6],heat,"native captured heat excludes physical work");
+        }
+    }
+    require(input.storage.download()==original,"native boundary observer changed input state");
+    std::cout<<"CUDA_NATIVE_RZ_ZERO_VISCOSITY_AXIAL_WORK_PASS\n";
+}
+
 } // namespace
 
 int main()
@@ -683,6 +799,8 @@ int main()
         independent_newtonian();
         analytic_geometry_examples();
         viscous_diffusion_convergence();
+        native_rz_azimuthal_operator();
+        native_rz_prescribed_axial_work();
         // Cylindrical 2D is covered by the native RZ owners; the former
         // generic polar-plane fixture belongs only to spherical geometry.
         for (const char* geometry : {"cylindrical", "spherical"})

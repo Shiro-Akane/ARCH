@@ -89,6 +89,15 @@ class BoxCampaign:
                                     stdout=log, stderr=subprocess.STDOUT, timeout=1200)
         elapsed = time.perf_counter() - started
         require(result.returncode == 0, name+': run failed; '+str(folder/'run.log'))
+        return self.inspect_completed_run(name, config, elapsed, energy_budget)
+
+    def inspect_completed_run(self, name, config, elapsed=None, energy_budget=1e-6):
+        """Read an already completed run with the same scientific checks.
+
+        A missing wrapper clock remains None; driver timings come from ARCH.
+        This reader does not infer an exit status or rerun the simulation.
+        """
+        folder = self.output/name
         plots = [load(p, config) for p in sorted(folder.glob('*plt*.h5'))]
         require(bool(plots), name+': missing plot')
         repairs = dict(line.split('=', 1) for line in (folder/'state_repairs.txt').read_text().splitlines() if '=' in line)

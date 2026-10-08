@@ -456,7 +456,8 @@ inline void closed_graph()
  * Independent antiderivatives initialize the entire analytic ghost extension.
  * Other velocities vanish, isolating the approved azimuthal migration.
  */
-inline void azimuthal_operator()
+template<class Evaluate>
+inline void azimuthal_operator(const Evaluate& evaluate)
 {
     closed_graph();
     SpeciesManager species;species.add_species("gas",1.,1.,1.4,3.);
@@ -491,7 +492,7 @@ inline void azimuthal_operator()
             state.set(cell,{static_cast<double>(rho),0.,0.,static_cast<double>(sign*momentum),1000.});
             state.X(0,cell)=1.;
         }
-        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,rz);
+        evaluate(state,delta,eos,grid,config,rz);
         double maximum=0.;
         for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
             const int cell=grid.GetIndex(i,j,0);
@@ -518,5 +519,17 @@ inline void azimuthal_operator()
         ++fixtures;
     }
     std::cout<<"RZ_SYMMETRIC_VISCOSITY fixtures="<<fixtures<<" PASS\n";
+}
+
+/** Keep the original Host owner and assertions; a device owner can supply
+ * its storage/launch adapter to the same independently integrated fixtures.
+ */
+inline void azimuthal_operator()
+{
+    azimuthal_operator([](const FluidState& state,FluidState& delta,
+        const IdealGas& eos,const Grid& grid,const SimConfig& config,
+        GridMetrics::GeometrySemantics semantics) {
+        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,semantics);
+    });
 }
 } // namespace RzViscousCases
