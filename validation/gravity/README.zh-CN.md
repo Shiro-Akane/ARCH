@@ -168,6 +168,8 @@ Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收�
 
 ## 轴对称 `(r,z)` 验证
 
-原生轴对称路线目前为内部验收候选。CPU 检查覆盖真实反射／用户边界、原 Euler／RK2／RK3 外力阶段以及方位扩散拒绝与回滚。连续自引力、完整耦合和设备发布分别具有验收出口；[当前 CPU 记录](results/release-closure-20261007/native-external-angular-cpu-summary.json)保存实际源码身份和原预算。
+Host轴对称指定势／外力路线已有公开运行与续算记录；原生孤立自引力继续按实际消费者进行内部验收。CPU 检查覆盖真实反射／用户边界、原 Euler／RK2／RK3 外力阶段以及方位扩散拒绝与回滚。连续自引力、完整耦合和设备发布分别具有验收出口；[当前 CPU 记录](results/release-closure-20261007/native-external-angular-cpu-summary.json)保存实际源码身份和原预算。
 
 可选[完整环源参考](rz_ring_surface_reference.py)从显式、完整的分片常密度环源计算势及两个力分量的向外区间，包含接触位置。它使用已安装的 `python-flint`，ARCH 构建和 CI 独立运行。工具检查实际输入几何、完整覆盖与共同工作上限；数学区间仅认证输入本身，真实 Core 源／观测点身份及物理误差另行核对。[参考记录](results/release-closure-20261007/ring-surface-reference-summary.json)保留此范围。
+
+[连续标量能量参考](rz_scalar_energy_reference.py)使用原实际源和真实逐面质量通量，计算连续体积势能变化与完整边界面平均势功。它复用精确常密度环片合并，以正Newton核约束小二次项；独立未降维积分检查归入既有tooling owner，CI继续不依赖FLASH或flint。积分收敛估计与严格密度不等式分别记录；[有限Euler补测](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)通过预先冻结的交换量预算，长时、混层和Device耦合各自验收。

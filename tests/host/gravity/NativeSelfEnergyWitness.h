@@ -85,6 +85,10 @@ template<class Owner> class NativeSelfEnergyWitness final {
         std::array<int,2> phase{};bool delta_seen=false;
         long double dm=0.;
     };
+    struct BoundaryMassFlux {
+        std::size_t face;int axis,side;long double mass_flux,energy_flux,area,dt,weight,point_phi;
+    };
+    std::vector<BoundaryMassFlux> boundary_fluxes_;
     Owner& owner_;double dt_;amr::EllipticMeshBinding binding_;
     std::vector<Cell> cells_;std::optional<Field> legacy_field_;
     RzMaterializedSourceRecord before_record_;
@@ -368,6 +372,11 @@ public:
                             be=energy_finite(self.dt_*event.stage_weight*A*sign*event.flux->at(index).eng);
                         self.boundary_phi_+=bp;self.boundary_phi_scale_+=std::abs(bp);
                         self.boundary_energy_+=be;self.boundary_energy_scale_+=std::abs(be);
+                        // Passive capture of the original numerical face flux.
+                        // The independent scalar reference later integrates Phi
+                        // over this exact native face; no flux is reconstructed.
+                        self.boundary_fluxes_.push_back({f,event.axis,face.boundary_side,
+                            F,event.flux->at(index).eng,A,self.dt_,event.stage_weight,P});
                     }
                 }
             } else {
@@ -491,6 +500,26 @@ public:
         json<<"}\n";tsv<<std::setprecision(std::numeric_limits<long double>::max_digits10)<<"scope\tDeltaE\tB_E\tB_Phi\tQ\tepsilon_account\tDeltaW\tL\tS\tB_G\tfinite_step\tD_total\n"
             <<"stored-point-rows-diagnostic\t"<<deltaE<<'\t'<<BE<<'\t'<<BP<<'\t'<<Q<<'\t'<<epsilon<<'\t'<<W1-W0<<'\t'<<L<<'\t'<<S<<'\t'<<BG<<'\t'<<finite_step<<'\t'<<D<<'\n';
         json.flush();tsv.flush();energy_require(bool(json)&&bool(tsv),"Accepted energy diagnostic output failed");
+        // Publish same-stage raw observations only after original accounting
+        // closes. They stay local with the authentic source records.
+        std::ofstream fluxes(destination+"/boundary-mass-flux.json");
+        energy_require(bool(fluxes),"Cannot open actual boundary flux observations");
+        fluxes<<std::setprecision(std::numeric_limits<long double>::max_digits10)
+            <<"{\"schema\":\"arch-native-boundary-flux-1\",\"method\":\"Euler\",\"time\":"<<field_->source.input_time
+            <<",\"source_generation\":"<<field_->source_generation<<",\"field_generation\":"<<field_->field_generation
+            <<",\"faces\":[";
+        std::vector<bool> seen(field_->faces.size(),false);std::size_t expected=0;
+        for(const auto& face:field_->faces)expected+=face.boundary_side>=0;
+        energy_require(boundary_fluxes_.size()==expected,"Actual boundary flux coverage mismatch");
+        for(std::size_t i=0;i<boundary_fluxes_.size();++i) {
+            const auto& f=boundary_fluxes_[i];
+            energy_require(!seen.at(f.face),"Actual boundary flux face duplicated");seen[f.face]=true;
+            if(i)fluxes<<',';
+            fluxes<<"{\"face_index\":"<<f.face<<",\"axis\":"<<f.axis<<",\"boundary_side\":"<<f.side
+                <<",\"F_rho\":"<<f.mass_flux<<",\"F_energy\":"<<f.energy_flux<<",\"area\":"<<f.area
+                <<",\"dt\":"<<f.dt<<",\"stage_weight\":"<<f.weight<<",\"stored_point_phi\":"<<f.point_phi<<'}';
+        }
+        fluxes<<"]}\n";fluxes.flush();energy_require(bool(fluxes),"Actual boundary flux output failed");
     }
     /** Reduce the genuine two-time discrete Green identity from ORIGINAL rows.
      * Workflow: fence both actual sources/rows; assemble original face incidence;
@@ -907,7 +936,7 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
         <<",\"resource_scope\":\"whole-request external guard; additional campaign budget must be frozen before execution\",\"rho\":1,\"G\":"<<arch::constants::gravity::cgs::gravitational_constant
         <<",\"L\":10000,\"t_start\":0,\"t_dyn\":"<<observed.dynamical_time<<",\"T\":"<<observed.endpoint_interval
         <<",\"dt\":"<<dt<<",\"t_end_actual\":"<<observed.counters->t_current<<",\"e_star\":"<<observed.specific_energy
-        <<",\"velocity\":\"u_r=-r/t_dyn,u_z=-z/t_dyn,u_phi=0\",\"mean_definition\":\"independent-full-ring-V-antiderivatives\",\"physical_energy_budget\":null,\"rollback_campaign\":\"original separate four-field owner unchanged\",\"timestep_preflight\":{\"status\":\"ACTUAL_HYDRO_AND_PREPARED_GRAVITY_CAPS_CHECKED\",\"CFL\":"<<observed.config.numerics.cfl
+        <<",\"velocity\":\"u_r=-r/t_dyn,u_z=-z/t_dyn,u_phi=0\",\"mean_definition\":\"independent-full-ring-V-antiderivatives\",\"physical_energy_budget\":0.01,\"physical_energy_normalization\":\"abs(Q)+abs(independent-B_Phi)\",\"physical_energy_budget_scope\":\"finite-same-endpoint-Euler-homology-only\",\"rollback_campaign\":\"original separate four-field owner unchanged\",\"timestep_preflight\":{\"status\":\"ACTUAL_HYDRO_AND_PREPARED_GRAVITY_CAPS_CHECKED\",\"CFL\":"<<observed.config.numerics.cfl
         <<",\"minimum_hydro_cap\":"<<minimum_hydro_cap<<",\"minimum_actual_pre_hydro_gravity_cap\":"<<minimum_gravity_cap
         <<",\"extra_preflight_solves\":0,\"public_native_timestep_authority\":false}}\n";
     inputs.flush();energy_require(bool(inputs),"Homology input evidence output failed");

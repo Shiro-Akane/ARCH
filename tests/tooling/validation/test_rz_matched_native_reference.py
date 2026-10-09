@@ -1894,4 +1894,49 @@ class DensityContrastReuseEngineeringTests(unittest.TestCase):
         self.assertEqual((old,reference),unchanged)
         self.assertEqual((mapping.started,mapping.calls),(started,0));load.assert_not_called();reset.assert_not_called()
 
+class ScalarContinuousEnergyTests(unittest.TestCase):
+    """Independent full dz/dZ quadrature checks the reduced volume/face kernel.
+
+    Use separated axial intervals so the direct five-dimensional tensor rule
+    converges without the reduced formula or triangle transform under test.
+    This fixes azimuth factors, source measures and face/volume distinctions.
+    """
+    @staticmethod
+    def direct(observer, source, face_axis=None):
+        import numpy as np
+        x, w = np.polynomial.legendre.leggauss(12)
+        theta, wt = np.polynomial.legendre.leggauss(24)
+        theta = (theta+1)*np.pi*.5;wt *= np.pi*.5
+        intervals = [observer[:2], source[:2], observer[2:], source[2:]]
+        nodes, weights = [], []
+        for n, (lo, hi) in enumerate(intervals):
+            collapsed = (face_axis == 0 and n == 0) or (face_axis == 1 and n == 2)
+            nodes.append(np.asarray([lo]) if collapsed else (lo+hi)*.5+(hi-lo)*x*.5)
+            weights.append(np.asarray([1.]) if collapsed else (hi-lo)*w*.5)
+        r, R, z, Z, angle = np.meshgrid(*nodes, theta, indexing="ij")
+        wr, wR, wz, wZ, wa = np.meshgrid(*weights, wt, indexing="ij")
+        distance = np.sqrt(r*r+R*R-2*r*R*np.cos(angle)+(z-Z)**2)
+        return float(4*np.pi*np.sum(r*R*wr*wR*wz*wZ*wa/distance))
+
+    def test_volume_reduction_against_full_tensor_rule(self):
+        import rz_scalar_energy_reference as scalar
+        observer=(1.1,1.3,8.,9.);source=(1.,2.,-1.,1.)
+        direct=self.direct(observer,source)
+        self.assertLess(abs(scalar.volume_pair(observer,source,12)-direct)/direct,2e-12)
+        # Axial translation must not affect the distance interaction.
+        shifted_observer=observer[:2]+(observer[2]+3.,observer[3]+3.)
+        shifted_source=source[:2]+(source[2]+3.,source[3]+3.)
+        self.assertAlmostEqual(scalar.volume_pair(shifted_observer,shifted_source,12),direct,places=11)
+
+    def test_face_integrals_against_full_tensor_rule(self):
+        import rz_scalar_energy_reference as scalar
+        source=(1.,2.,-1.,1.)
+        cases=((0,(2.,2.,8.,9.)),(1,(1.1,1.3,8.,8.)))
+        for axis, observer in cases:
+            with self.subTest(axis=axis):
+                face=dict(axis=axis,fragment_lower=[observer[0],observer[2],0.],
+                          fragment_upper=[observer[1],observer[3],0.])
+                direct=self.direct(observer,source,axis)
+                self.assertLess(abs(scalar.face_pair(face,source,1.,12)-direct)/direct,2e-12)
+
 if __name__=="__main__":unittest.main()
