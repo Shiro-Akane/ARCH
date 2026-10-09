@@ -60,7 +60,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | Host 执行 | `compute_backend = cpu` | 支持 | OpenMP 在构建时配置。 |
 | CUDA 执行 | `compute_backend = cuda/auto` | 支持 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
-| 几何 | `cartesian`、`cylindrical`、`spherical` | 已验收范围支持 CPU／CUDA；轴对称二维验收进行中 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
+| 几何 | `cartesian`、`cylindrical`、`spherical` | 按计算域选择后端 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项；支持范围见[功能清单](Features.zh-CN.md)。 |
 | AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
 | 自重力 | `gravity_type = self` | CPU、CUDA | 周期笛卡尔、孤立三维笛卡尔，以及受测径向和完整方位角曲线坐标域；具体条件见[自引力计算域](#自引力计算域)。 |
 | Jeans 场与细化 | `JENS` | CPU 已接线；CUDA 工程候选 | 要求自引力和显式后端；适用条件与验收范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)。 |
@@ -103,11 +103,11 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 笛卡尔三维 | `isolated` | 物理流体面可流出或反射；引力由有限质量分布设边界 |
 | 柱／球坐标一维径向 | `isolated` | 半径非负，径向内流体面反射 |
 | 球坐标二维赤道极平面 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
-| 轴对称柱坐标二维 `(r,z)` | Host：`dirichlet`、`neumann`、`user` | 共用复合泊松与原生动量／功路径、全环测度及正则轴接合；Host 动态 AMR 采用完成 EOS 检查的共同事务，checkpoint 保留原生 J/W 身份；孤立场和 CUDA 仍保持门槛 |
+| 轴对称柱坐标二维 `(r,z)` | Host：`dirichlet`、`neumann`、`user` | 完整环体积与正则轴接合；适用后端见[功能清单](Features.zh-CN.md#自引力计算域) |
 | 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
 | 三类几何已验收的一至三维范围 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
 
-所有自引力域的根网格各轴单元数须为二的幂，根网格间距比不超过 2，AMR 叶子保持 2:1 平衡。`gravity_boundary` 应与流体面拓扑匹配。显式 `dirichlet`、`neumann` 和 `user` 适用于三类几何已验收的一至三维范围，轴对称二维柱坐标仍须通过上述能力检查；`user` 可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，并支持有效的环域／扇区／楔域。坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势只由密度偏离体积平均值的部分驱动；孤立势不减去密度背景。二维球坐标极平面孤立势采用单位轴向长度质量的对数核。轴对称柱坐标 `(r,z)` 使用完整环体积语义；当前实现及局部检查不代表完整科学或 CUDA 验收，历史柱坐标极平面记录保持原坐标语义。误差控制见[引力参数](#eos-与重力)，受测轨迹见[引力验证](../validation/gravity/README.zh-CN.md)。
+所有自引力域的根网格各轴单元数必须为二的幂，根网格间距比不超过 2，且 AMR 叶子保持 2:1 平衡。`gravity_boundary` 必须与流体面拓扑匹配。`user` 边界可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，适用于有效的环域／扇区／楔域；坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势由密度相对体积平均值的偏差驱动，孤立势使用完整密度。二维球坐标极平面采用单位轴向长度质量的对数核；轴对称 `(r,z)` 采用完整环体积。计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域)，残差控制见[引力参数](#eos-与重力)。
 
 ### 方法与物理模块的组合
 
@@ -313,7 +313,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | Spherical | r | r, phi | r, theta, phi |
 | Cylindrical | r | r, z | r, z, phi |
 
-转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点。二维柱坐标把 `(r,z)` 展开为 `point.x=r`、`point.y=0`、`point.z=z`，且 `point.phi_cy=0`；径向、轴向和方位速度仍是三个物理分量。配置及初态 Preview 的坐标检查不代表时间演化验收。
+转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点。二维柱坐标把 `(r,z)` 展开为 `point.x=r`、`point.y=0`、`point.z=z`，且 `point.phi_cy=0`；径向、轴向和方位速度仍是三个物理分量。
 
 所有 `bool` 参数均不区分大小写地接受 `true` 或 `false`，例如 `TRUE`、`False` 和 `tRuE`。数值 `0/1`、`on/off`、`yes/no`、部分匹配及其他拼写都会被拒绝，错误信息会指出参数名。
 
@@ -363,7 +363,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_helm_table_path` | string | 默认：空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
 | `eos_coulomb_mult` | double | 条件必填：Helmholtz | Helmholtz 离子 Coulomb 修正比例，有限 `[0,1]`；非默认值仅限 Helmholtz；不是电子补齐开关 |
 | `gamma` | double | 条件必填：IdealGas | 理想气体模型 gamma |
-| `gravity_type` | string | 必填 | `none`、`external`、`self`；self 已验收 CPU/CUDA Cartesian 一至三维全周期或三维孤立、一维球／柱径向、二维球坐标极平面及三维完整方位角柱／球坐标孤立域和受测接合；轴对称二维柱坐标仍受运行能力检查约束，完整科学验收进行中 |
+| `gravity_type` | string | 必填 | `none`、`external`、`self`；self 的计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域) |
 | `gravity_g_x/y/z` | expression | 条件必填：外部引力；全部分量 | 外部重力分量 |
 | `gravity_G` | expression | 已退役；拒绝 | 报 RETIRED_PARAMETER；不可由输入覆盖 |
 | `gravity_boundary` | string | 条件必填：自引力 | `periodic` 去除体积平均密度；`isolated` 为现有有限质量／径向／二维对数核；`dirichlet` 零势；`neumann` 零外法向梯度且检查 Gauss 相容性；`user` 从 `gravity_boundary.cpp` 返回逐面条件 |
@@ -509,7 +509,7 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 
 `JENS` 用于细化或显式输出时要求 `gravity_type=self`，并显式选择 `compute_backend=cpu`，或在 `geometry=cartesian` 下选择 `compute_backend=cuda`；`auto` 和曲线坐标 CUDA 组合会被拒绝。细化还必须提供有限的 `jeans_cells >= 4`，输出单独选择 `JENS` 不要求该细化参数。`plt_variables=ALL` 在上述自引力/后端组合中包含 `JENS`。规范名称是 `JENS`；`JEANS` 等别名以及不满足条件的输入会报错，不会自动关闭指标。声明符合配置条件不表示运行后端已就绪；显式 CUDA 仍需可用的 CUDA 构建与设备。
 
-CPU公共入口已有单一恒比热IdealGas的均匀周期背景演化／续算检查；Host显式势边界RZ另有初态分辨率修复、短程JENS输出和严格续算检查。一般EOS、非均匀引力耦合及完整RZ科学出口仍待验收；笛卡尔显式CUDA接线属于工程候选，最终GPU科学验收尚未通过。实际范围与证据见[引力验证](../validation/gravity/README.zh-CN.md)。
+`JENS` 的配置要求保持本节所列条件，适用模型与后端的受测范围见[功能清单](Features.zh-CN.md#自引力计算域)。
 
 `ENTR` 是局部代理量 `p/rho^Gamma1`，其中活动 EOS 给出 `Gamma1 = rho*c_s^2/p`。对于常 gamma 理想气体，它是通常的不变量；对于一般 EOS 策略，它是细化代理量。它不是 EOS 返回的绝对熵，不能用来把一般状态沿等熵线移动。固定组分等熵状态必须使用 EOS 策略接口一节记录的微分热力学恒等式构造。
 

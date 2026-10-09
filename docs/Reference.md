@@ -78,7 +78,7 @@ external provenance claim unless their file header or that notice says so.
 | Host execution | `compute_backend = cpu` | supported | OpenMP is configured at build time. |
 | CUDA execution | `compute_backend = cuda/auto` | supported | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
-| Geometry | `cartesian`, `cylindrical`, `spherical` | qualified scopes on CPU and CUDA; axisymmetric 2D in progress | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
+| Geometry | `cartesian`, `cylindrical`, `spherical` | backend depends on domain | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms; see the [feature list](Features.md) for scope. |
 | AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
 | Self gravity | `gravity_type = self` | CPU, CUDA | Periodic Cartesian, isolated 3D Cartesian, and tested radial/full-azimuth curvilinear domains; see [self-gravity domains](#self-gravity-domains). |
 | Jeans field and refinement | `JENS` | CPU wired; CUDA engineering candidate | Requires self gravity and an explicit backend; see [AMR and plot variable vocabulary](#amr-and-plot-variable-vocabulary) for conditions and validation scope. |
@@ -134,11 +134,11 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cartesian 3D | `isolated` | Physical fluid faces may be outflow or reflecting; gravity uses a finite-mass boundary |
 | Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
 | Spherical equatorial polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
-| Axisymmetric cylindrical 2D `(r,z)` | Host: `dirichlet`, `neumann`, `user` | Shared composite Poisson and native momentum/work path; full-ring measures and regular axis join. Host dynamic AMR uses the common completed-EOS transaction; checkpoints retain native J/W identity. Isolated fields and CUDA remain gated |
+| Axisymmetric cylindrical 2D `(r,z)` | Host: `dirichlet`, `neumann`, `user` | Full-ring volume and regular axis joins; see the [feature list](Features.md#self-gravity-domains) for backend scope |
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
 | Qualified scopes of all three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 
-Every self-gravity root axis needs a power-of-two cell extent. Native root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. Explicit `dirichlet`, `neumann` and `user` operate in the qualified 1D–3D geometry scopes; axisymmetric cylindrical 2D remains subject to the capability checks above. User conditions combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions, including valid annuli, sectors and wedges. Coordinate singularities retain their regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). A periodic potential responds to density relative to its volume mean, while isolated gravity uses the full density. The isolated spherical two-dimensional polar potential uses a logarithmic kernel with mass per unit axial length. Axisymmetric cylindrical `(r,z)` uses full-ring volume semantics; its current implementation and local checks do not establish complete scientific or CUDA qualification. Historical cylindrical polar records describe their original chart. See [gravity parameters](#eos-and-gravity) for solver controls and [gravity validation](../validation/gravity/README.md) for tested trajectories.
+Every self-gravity root axis needs a power-of-two cell extent. Root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. User boundaries combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions on valid annuli, sectors or wedges; coordinate singularities retain regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). Periodic gravity responds to density relative to its volume mean; isolated gravity uses the full density. The spherical polar 2D potential uses a logarithmic kernel with mass per unit axial length; axisymmetric `(r,z)` uses full-ring volume. See the [feature list](Features.md#self-gravity-domains) for domain/backend scope and [gravity parameters](#eos-and-gravity) for residual controls.
 
 ### Combining methods and physics
 
@@ -426,7 +426,7 @@ Logical coordinate meanings are:
 | Spherical | r | r, phi | r, theta, phi |
 | Cylindrical | r | r, z | r, z, phi |
 
-For converted `PointCoords`, the origin is fixed at `(0,0,0)`. Cylindrical 2D expands `(r,z)` as `point.x=r`, `point.y=0`, `point.z=z`, with `point.phi_cy=0`; radial, axial and azimuthal velocities remain three physical components. Configuration and initial Preview chart checks do not qualify time evolution.
+For converted `PointCoords`, the origin is fixed at `(0,0,0)`. Cylindrical 2D expands `(r,z)` as `point.x=r`, `point.y=0`, `point.z=z`, with `point.phi_cy=0`; radial, axial and azimuthal velocities remain three physical components.
 
 Every `bool` parameter accepts `true` or `false` case-insensitively (for example,
 `TRUE`, `False`, and `tRuE`). Numeric `0/1`, `on/off`, `yes/no`, partial matches,
@@ -481,7 +481,7 @@ tabular component discovery or electron completion.
 | `eos_helm_table_path` | string | Default: empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
 | `eos_coulomb_mult` | double | Required: Helmholtz | Helmholtz ion Coulomb correction fraction, finite `[0,1]`; nondefault values require Helmholtz; independent of electron completion |
 | `gamma` | double | Required: IdealGas | ideal-gas model gamma |
-| `gravity_type` | string | Required | `none`, `external`, `self`; qualified CPU/CUDA self-gravity scopes include Cartesian periodic 1D–3D, isolated Cartesian 3D, spherical/cylindrical radial 1D, spherical polar 2D and full-azimuth cylindrical/spherical 3D with tested joins; axisymmetric cylindrical 2D remains subject to Runtime capability checks and ongoing scientific qualification |
+| `gravity_type` | string | Required | `none`, `external`, `self`; see the [feature list](Features.md#self-gravity-domains) for self-gravity domains and backends |
 | `gravity_g_x/y/z` | expression | Required: external gravity; all components | used for external gravity |
 | `gravity_G` | expression | Retired; rejected | Reports RETIRED_PARAMETER; no input override |
 | `gravity_boundary` | string | Required: self gravity | `periodic`: remove volume-mean density; `isolated`: existing finite-mass/radial/logarithmic closure; `dirichlet`: zero potential; `neumann`: zero outward gradient with Gauss compatibility; `user`: per-side data from `gravity_boundary.cpp` |
@@ -689,13 +689,7 @@ fail these conditions produce errors rather than disabling the indicator.
 Meeting the configuration conditions does not establish backend readiness:
 explicit CUDA still requires an available CUDA build and device.
 
-The public CPU entry has evolution and continuation checks for a uniform
-periodic constant-specific-heat IdealGas background. Host prescribed-boundary
-RZ also has initial resolution repair, short JENS output evolution and strict
-restart checks. General EOS, nonuniform gravity coupling and the complete RZ
-scientific exits still require qualification. Explicit Cartesian CUDA wiring
-is an engineering candidate awaiting final GPU scientific validation. See
-[gravity verification](../validation/gravity/README.md) for the actual scope and evidence.
+The configuration requirements for `JENS` are listed above; see the [feature list](Features.md#self-gravity-domains) for tested models and backends.
 
 `ENTR` is the local proxy `p/rho^Gamma1`, with
 `Gamma1 = rho*c_s^2/p` from the active EOS. It is the usual constant-gamma

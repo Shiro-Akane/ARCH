@@ -16,25 +16,26 @@ Use this page to choose the capabilities needed for a simulation. The reference 
 | Gravity | External acceleration and self-consistent potential, acceleration and energy work | See the self-gravity domain table below |
 | Execution | CPU/OpenMP and CUDA backends share physics and mathematics; the host owns AMR topology while the device executes numerical work | Build and network capabilities select the backend; speed depends on workload size |
 | Output and restart | HDF5 fields, checkpoints, solver and repair diagnostics; cross-backend restart for compatible configurations | EOS, network, geometry, gravity and control identity must agree on restart |
+| Studio | Standalone Linux/WSLg window; configuration, build, run/restart, initial-field/AMR Preview and read-only Plotfile queries | Preview follows each model’s advertised capabilities; Plotfile overviews cover Cartesian 1D/2D and stored-cell queries cover recorded native 1D–3D charts. See the [Studio guide](guides/Studio.md) |
 | Custom cases | Define `Setup`, `Init` and parameters through `<UserInterface.h>` and `<GlobalDefs.h>` | The [case guide](guides/SimulationCase.md) gives the workflow |
 
 General radiation transport is outside the current feature set. Thermal diffusion and radiation thermodynamics in an EOS follow their respective models.
 
-Small curved cells near the origin or poles can substantially restrict timesteps and increase AMR evolution cost; near-origin accuracy limits depend on the tested problem. Releases use the current mesh, with radial mapping and AMR mesh redesign considered separately.
+Small curved cells near the origin or poles can substantially restrict timesteps and increase AMR evolution cost. Assess near-origin accuracy with convergence checks for the chosen problem.
 
 ## Self-gravity domains
 
-`gravity_type=self` uses the same Poisson mathematics and composite AMR path on CPU and CUDA. Fluid-face boundaries must match `gravity_boundary` and the mesh topology.
+`gravity_type=self` uses shared Poisson mathematics and the composite AMR solver. Available domains and backends are listed below; gravity boundaries, fluid-face boundaries and mesh topology must be compatible.
 
-| Geometry | Validated gravity boundary and dimension | Key condition |
+| Geometry | Available capability | Conditions and validated scope |
 | --- | --- | --- |
-| Cartesian | Periodic in one to three dimensions; isolated in three dimensions | Periodic gravity removes volume-mean density; isolated gravity uses a finite-mass boundary |
-| Cylindrical/spherical | Isolated radial one-dimensional domains | Nonnegative radius and a reflecting inner fluid face |
-| Two-dimensional spherical polar | Isolated domains spanning a full azimuth | `(r,phi)` covers a complete turn; azimuthal fluid faces are periodic and the inner radial face reflects |
-| Axisymmetric cylindrical 2D `(r,z)` | Scientific qualification in progress | Host prescribed potential/flux and user gravity boundaries have short dynamic-AMR and strict-restart evidence; isolated continuum fields, gravitational energy, reacting dynamic AMR and CUDA remain under qualification, with Runtime capability checks |
-| Three-dimensional cylindrical/spherical | Isolated domains spanning a full azimuth | Cylindrical `(r,z,phi)` or spherical `(r,theta,phi)`; axis/pole joins use their reflecting conditions |
-| All geometries, 1D–3D | Prescribed potential/normal gradient/linear Robin and user boundaries | Valid physical domains, annuli or sectors; periodic pairs match AMR topology; pure Neumann requires Gauss compatibility |
+| Cartesian | Periodic 1D–3D; isolated 3D; CPU/CUDA | Periodic gravity removes volume-mean density; isolated gravity uses a finite-mass boundary |
+| Cylindrical/spherical radial 1D | Isolated domains; CPU/CUDA | Nonnegative radius and a reflecting inner fluid face |
+| Spherical polar 2D `(r,phi)` | Full-azimuth isolated domains; CPU/CUDA | Complete azimuth with periodic fluid faces and a reflecting inner radial face |
+| Axisymmetric cylindrical 2D `(r,z)` | Host prescribed potential/flux and user gravity boundaries | Short dynamic AMR and strict restart are validated; isolated-field spatial convergence and a finite-step continuum energy reference have passed. Complete isolated evolution, reacting dynamic AMR and CUDA execution remain under validation |
+| Cylindrical/spherical 3D | Full-azimuth isolated domains; CPU/CUDA | Cylindrical `(r,z,phi)` or spherical `(r,theta,phi)`; corresponding reflecting joins at axes/poles |
+| Supported 1D–3D scopes of all three geometries | Prescribed potential/outward normal gradient/linear Robin and user boundaries | Nonperiodic domains, annuli or sectors; periodic directions match AMR topology and pure Neumann requires Gauss compatibility. Backend scope follows the geometry rows above |
 
-The established Cartesian, radial and full-azimuth scopes have elliptic-field, AMR, restart and selected coupled checks. Historical cylindrical 2D polar records retain their original chart and do not qualify axisymmetric `(r,z)`. Per-side Dirichlet, Neumann, coercive linear Robin and user callbacks support all three geometries and valid sectors; isolated mass models still require full azimuth. External mass sources remain outside self gravity. See [user boundaries](guides/UserBoundaries.md) for transport channels and backend costs. Representative CPU/CUDA runs combine fluid dynamics, thermal diffusion, burning, self gravity and AMR; changing the models calls for the relevant [combination checks](Reference.md#combining-methods-and-physics). See [gravity parameters and interfaces](Reference.md#eos-and-gravity) for boundaries, residual controls and output fields, and [gravity validation](../validation/gravity/README.md) for measured scope.
+External mass sources are outside self gravity. Representative CPU/CUDA runs combine fluid dynamics, thermal diffusion, burning, self gravity and AMR; see [combining methods and physics](Reference.md#combining-methods-and-physics) for model and method conditions. See [user boundaries](guides/UserBoundaries.md) for interfaces and [gravity validation](../validation/gravity/README.md) for tested configurations, error budgets and processed evidence.
 
-The Jeans field and refinement indicator `JENS` are wired on CPU, with current validation covering a uniform periodic constant-specific-heat IdealGas background and Host prescribed-boundary RZ initial resolution repair, short output evolution and strict restart. Explicit Cartesian CUDA wiring is an engineering candidate awaiting final GPU validation; general EOS, nonuniform gravity coupling and the complete RZ scientific exits remain unqualified. Selecting this indicator requires self gravity and an explicit backend; `auto`, curved-coordinate CUDA and invalid combinations are rejected. See [AMR and plot variable vocabulary](Reference.md#amr-and-plot-variable-vocabulary) for configuration conditions and `jeans_cells`.
+The Jeans field and refinement indicator `JENS` support tested CPU evolution/restart of uniform periodic constant-specific-heat IdealGas backgrounds, and Host prescribed-potential axisymmetric initial refinement, short output evolution and strict restart. Explicit Cartesian CUDA wiring is implemented but awaits final GPU scientific validation; applicability to general EOS and nonuniform gravity coupling remains under validation. See [AMR and plot variable vocabulary](Reference.md#amr-and-plot-variable-vocabulary) for configuration conditions and `jeans_cells`.
