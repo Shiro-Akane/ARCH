@@ -126,6 +126,15 @@ public:
             throw std::logic_error("Active Host Hydro owner excludes EOS rebinding");
         const int species = native_rz_species_count();
         const auto bounds = native_rz_eos_bounds();
+        // An installed Device EOS belongs to its actual backend lifetime.
+        // Reusing the same borrowed EOS is lawful; replacing that owner or
+        // its frozen physical bounds would leave resident validation on the
+        // old model. Reject before changing either Host callable/binding.
+        if (compute_backend && (!native_rz_eos_binding_
+            || native_rz_eos_binding_->owner != std::addressof(eos)
+            || native_rz_eos_binding_->species != species
+            || !native_rz_eos_binding_matches(*native_rz_eos_binding_)))
+            throw std::logic_error("Installed Native Device backend excludes EOS owner/bounds replacement");
         if(native_rz_eos_binding_revision_==std::numeric_limits<std::uint64_t>::max())
             throw std::overflow_error("Native RZ EOS binding revision exhausted");
         // Build both real-EOS borrowers before publication. A failed allocation
@@ -286,6 +295,8 @@ private:
     struct UserBoundaryStamp {
         amr::TopologyEpoch epoch{};
         std::uint64_t revision = 0;
+        // Native completed ghosts also retain the actual callback/EOS binding.
+        std::uint64_t boundary_binding = 0;
     };
     std::array<UserBoundaryStamp, 3> user_boundary_stamps_{};
     /** Completed native Host Current Hydro identity, with empty opaque BC

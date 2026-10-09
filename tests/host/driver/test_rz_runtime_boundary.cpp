@@ -147,6 +147,39 @@ static void native_rkl_preflight_before_write(
     attempt(context,wrong_extent,"stage domain extent mismatch");
 }
 
+/** Verify actual Native storage recipes while retaining the accepted Host state.
+ * The original Runtime issues generations for its complete committed domain;
+ * this CPU observation constructs no Device fields or scientific capability.
+ */
+static void real_native_backend_bindings(arch::driver::DriverRuntime& runtime) {
+    using namespace arch;
+    auto& control=runtime.control();const auto& active=control.tree->GetActiveBlocks();
+    auto context=runtime.stage_context();
+    const auto ledger=context.ledger.snapshot_metadata(state::ExecutionSide::Host);
+    const auto token=context.clock.last_token();
+    const auto version=context.clock.last_version();
+    const auto boundary=runtime.boundaries().snapshot_stage_context();
+    std::vector<rz_runtime_witness::FieldsWitness> fields;
+    for(int id:active)fields.emplace_back(control.pool->GetBlock(id));
+    const auto bindings=runtime.prepare_backend_bindings();
+    require(!runtime.backend()&&bindings.size()==active.size()
+        &&bindings.size()==runtime.handles().size(),"Native bindings omitted actual committed owners");
+    for(std::size_t n=0;n<bindings.size();++n) {
+        const auto& block=control.pool->GetBlock(active[n]);const auto& binding=bindings[n];
+        require(binding.block==&block&&binding.handle==runtime.handles()[n]
+            &&backend::is_valid(binding.storage)
+            &&binding.physical_boundary==&runtime.boundaries().logical_plan(block.grid),
+            "Native bindings changed actual Grid/handle/plan identity");
+        for(std::size_t earlier=0;earlier<n;++earlier)
+            require(bindings[earlier].storage!=binding.storage,"Native bindings reused a storage generation");
+        fields[n].matches(control.pool->GetBlock(active[n]));
+    }
+    require(context.ledger.metadata_snapshot_matches(ledger)
+        &&context.clock.last_token()==token&&context.clock.last_version()==version
+        &&runtime.boundaries().stage_context_matches(boundary),
+        "Native bindings published numerical state, completion or a BC stage");
+}
+
 /** Actual Runtime/EOS gate witnesses; no numerical advance, alternate EOS or output. */
 static void real_native_eos_boundary_gate() {
     using namespace arch;
@@ -182,6 +215,15 @@ static void real_native_eos_boundary_gate() {
     for(std::size_t i=0;i<before.size();++i)
         require(before[i]==control.pool->GetBlock(control.tree->GetActiveBlocks()[i]).fluid_state.rho,
             "Unbound native initialization wrote physical ghosts");
+    bool unbound_storage=false;
+    try {(void)runtime.prepare_backend_bindings();}
+    catch(const std::logic_error& error) {
+        unbound_storage=std::string(error.what()).find("bound EOS")!=std::string::npos;
+    }
+    require(unbound_storage&&runtime.handles().empty(),"Native storage issuance accepted an unbound EOS");
+    for(std::size_t i=0;i<before.size();++i)
+        require(before[i]==control.pool->GetBlock(control.tree->GetActiveBlocks()[i]).fluid_state.rho,
+            "Unbound Native storage issuance wrote real fields");
     runtime.bind_native_rz_eos(eos);runtime.initialize_topology();
     require(eos.pressure_calls>0,"Actual native initialization did not call real IdealGas");
     auto context=runtime.stage_context();
@@ -194,6 +236,15 @@ static void real_native_eos_boundary_gate() {
         require(rejected&&eos.pressure_calls==0,message);
         require(context.ledger.metadata_snapshot_matches(saved),"Rejected native gate changed publication/ghost ledger");
     };
+    // A changed late actual logical owner must reject before storage issuance;
+    // restore the fixture identity before proving the complete legal recipe.
+    auto& last_owner=control.pool->GetBlock(control.tree->GetActiveBlocks().back());
+    const auto saved_logical=last_owner.logical_x1;++last_owner.logical_x1;
+    rejects_before_eos([&]{(void)runtime.prepare_backend_bindings();},
+        "Native storage issuance accepted a changed committed domain");
+    last_owner.logical_x1=saved_logical;
+    eos.pressure_calls=0;real_native_backend_bindings(runtime);
+    require(eos.pressure_calls==0,"Native storage recipe unexpectedly reevaluated EOS physics");
     context.side=state::ExecutionSide::Device;
     rejects_before_eos([&]{context.post_boundary_acceptance(context,Slot::Current,version);},
         "Native gate accepted actual Device context or evaluated its EOS");
@@ -764,9 +815,12 @@ void run(){rejected_macro();accepted_half();}
  * reflux, independent ring V, and mass/energy/kinetic checks. Reflecting
  * Hydro walls can exchange diffusive work under the existing BC contract;
  * energy therefore includes the genuine already-validated surface receipt.
- * Both
- * original RKL families, very low density, real EOS completion and zero repair
- * are exercised. This bounded trajectory is not a long-time or Device grant.
+ * Both original RKL families, very low density, real EOS completion and zero
+ * repair are exercised unchanged. One additional normal-density five-leaf
+ * RKL2 trajectory uses rho=1+0.25*r and true density-weighted input means.
+ * Its two real macrosteps must change momentum and total energy and dissipate
+ * discrete kinetic energy; it has no uniform eigenmode reference.
+ * This bounded trajectory is not a long-time or Device grant.
  */
 static void real_native_meridional_rkl()
 {
@@ -774,7 +828,7 @@ static void real_native_meridional_rkl()
     using state::StateSlot;
     constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
     constexpr long double pi=std::numbers::pi_v<long double>;
-    for(int layout:{0,1,2})for(bool second:{false,true})for(double density:{1.,1.e-20}) {
+    const auto run_case=[&](int layout,bool second,double density,bool varying_density) {
         SimConfig config{};
         config.grid.dim=2;config.grid.geometry="cylindrical";
         config.grid.nblockx1=layout==2?2:1;config.grid.nblockx2=layout==1?2:1;
@@ -804,6 +858,59 @@ static void real_native_meridional_rkl()
             "meridional RKL lost its actual leaf layout");
         RzMeridionalCases::PeriodicMode mode;mode.density=density;
         if(layout==2)mode.radial_amplitude=.04L;
+        /** Exact V means for the added smooth positive continuum field.
+         * rho=1+a*r, ur=A*sin(kr*(r-r0))*sin(kz*z), uz=B*cos(kz*z).
+         * V uses r dr dz and E=rho*e+rho*(ur^2+uz^2)/2; W stores zero
+         * angular momentum. The added r^2 antiderivatives integrate rho's
+         * extra radial weight rather than multiplying point/mean velocities.
+         * The original twelve constant-rho cases retain their original means.
+         */
+        const auto initial_mean=[&](const Grid& grid,int i,int j) -> FluidVector {
+            if(!varying_density)return mode.means(grid,i,j);
+            constexpr long double a=.25L;
+            const long double l=grid.GetFacePosL(i),h=grid.GetFacePosR(i);
+            const long double zl=grid.GetAxialFacePosL(j),zh=grid.GetAxialFacePosR(j);
+            const long double kr=pi/(mode.radial_upper-mode.radial_lower);
+            const long double kz=2.L*pi/mode.axial_length;
+            const long double z=(zl+zh)/2.L,dz=zh-zl;
+            const long double volume_radial=(h-l)*(h+l)/2.L;
+            const long double rho=1.L+a*RzMetricCases::mean_power(l,h,1,1);
+            // Integral r*(1+a*r)*sin(k*(r-r0)) dr.
+            const auto weighted_sine=[&](long double r,long double k) {
+                const long double x=k*(r-mode.radial_lower);
+                return -r*std::cos(x)/k+std::sin(x)/(k*k)
+                    +a*(-r*r*std::cos(x)/k+2.L*r*std::sin(x)/(k*k)
+                        +2.L*std::cos(x)/(k*k*k));
+            };
+            // Integral r*(1+a*r)*cos(k*(r-r0)) dr.
+            const auto weighted_cosine=[&](long double r,long double k) {
+                const long double x=k*(r-mode.radial_lower);
+                return r*std::sin(x)/k+std::cos(x)/(k*k)
+                    +a*(r*r*std::sin(x)/k+2.L*r*std::cos(x)/(k*k)
+                        -2.L*std::sin(x)/(k*k*k));
+            };
+            const long double rho_sr=(weighted_sine(h,kr)-weighted_sine(l,kr))/volume_radial;
+            const long double rho_sr2=.5L*rho-.5L*(weighted_cosine(h,2.L*kr)
+                -weighted_cosine(l,2.L*kr))/volume_radial;
+            const long double sz=mode.sinc(kz*dz/2.L)*std::sin(kz*z);
+            const long double cz=mode.sinc(kz*dz/2.L)*std::cos(kz*z);
+            const long double sz2=.5L-.5L*mode.sinc(kz*dz)*std::cos(2.L*kz*z);
+            const long double cz2=1.L-sz2;
+            return {double(rho),double(mode.radial_amplitude*rho_sr*sz),
+                double(mode.axial_amplitude*rho*cz),0.,double(mode.internal*rho
+                    +.5L*mode.radial_amplitude*mode.radial_amplitude*rho_sr2*sz2
+                    +.5L*mode.axial_amplitude*mode.axial_amplitude*rho*cz2)};
+        };
+        if(varying_density) {
+            require(layout==2&&second&&density==1.,
+                "variable-density witness escaped its single frozen five-leaf RKL2 input");
+            std::size_t coarse_fine_faces=0;
+            for(int id:active)for(int face=0;face<4;++face) {
+                const auto& neighbor=control.pool->GetBlock(id).face_neighbors[face];
+                if(neighbor.count&&neighbor.level_diff)++coarse_fine_faces;
+            }
+            require(coarse_fine_faces>0,"variable-density RKL2 lost actual coarse/fine faces");
+        }
         for(int id:active) {
             auto& block=control.pool->GetBlock(id);block.RequireNativeGeometryIdentity();
             const auto& grid=block.grid;
@@ -813,7 +920,7 @@ static void real_native_meridional_rkl()
                     input->set(cell,{density,0.,0.,0.,12.*density});input->X(0,cell)=1.;
                 }
                 for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i)
-                    input->set(grid.GetIndex(i,j,0),mode.means(grid,i,j));
+                    input->set(grid.GetIndex(i,j,0),initial_mean(grid,i,j));
             }
         }
         RunState start{};start.repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
@@ -864,6 +971,14 @@ static void real_native_meridional_rkl()
         require(std::isfinite(one_amplitude)&&std::abs(one_amplitude)<=1.L,
             "meridional RKL reference is outside its stable interval");
         long double max_velocity_error=0.;
+        // Only the added case snapshots actual interior values for per-macro
+        // activity checks; no production field or original-case input changes.
+        std::vector<std::vector<FluidVector>> previous_values(varying_density?active.size():0);
+        if(varying_density)for(std::size_t n=0;n<active.size();++n) {
+            const auto& block=control.pool->GetBlock(active[n]);const auto& grid=block.grid;
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i)
+                previous_values[n].push_back(block.fluid_state.get(grid.GetIndex(i,j,0)));
+        }
         for(int macro=0;macro<2;++macro) {
             context.step_start_time=context.boundary_start_time=macro*dt;
             context.step_dt=context.boundary_step_dt=dt;
@@ -881,7 +996,8 @@ static void real_native_meridional_rkl()
             const long double tolerance=rz_runtime_witness::scalar_budget;
             const long double mass_error=(after[0]-initial[0]+outward[0])/initial[0];
             const long double energy_error=(after[1]-initial[1]+outward[4])/initial[1];
-            std::cout<<"RZ_MERIDIONAL_RKL_SURFACE layout="<<layout<<" macro="<<macro
+            std::cout<<(varying_density?"RZ_MERIDIONAL_VARIABLE_CF_SURFACE":"RZ_MERIDIONAL_RKL_SURFACE")
+                <<" layout="<<layout<<" macro="<<macro
                 <<" mass_error="<<double(mass_error)<<" energy_error="<<double(energy_error)
                 <<" outward_work="<<outward[4]<<'\n';
             require(std::isfinite(mass_error)&&std::isfinite(energy_error)
@@ -889,11 +1005,16 @@ static void real_native_meridional_rkl()
                 "Native meridional RKL lost independent V totals plus physical-surface balance");
             require(after[2]<=previous_kinetic*(1.L+tolerance)&&after[2]<initial[2],
                 "closed Native meridional RKL increased kinetic energy or stayed inactive");
+            if(varying_density)require(after[2]<previous_kinetic,
+                "variable-density RKL2 skipped finite kinetic dissipation in a real macrostep");
             previous_kinetic=after[2];
             if(layout!=2)require(std::abs(after[2]-initial[2]*amplitude*amplitude)
                 <=tolerance*initial[2],"Native axial RKL kinetic Legendre reference failed");
+            std::size_t changed_momentum=0,changed_energy=0;
+            double rho_min=std::numeric_limits<double>::infinity(),rho_max=0.;
             for(std::size_t n=0;n<active.size();++n) {
                 const auto& block=control.pool->GetBlock(active[n]);const auto& grid=block.grid;
+                std::size_t interior=0;
                 const auto coherence=context.ledger.inspect({runtime.handles()[n],StateSlot::Current});
                 require(coherence.interior.version.value==before.value+stages,
                     "meridional RKL skipped actual stage publication");
@@ -903,9 +1024,17 @@ static void real_native_meridional_rkl()
                     "meridional RKL concealed heating or a floor repair");
                 for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
                     const int cell=grid.GetIndex(i,j,0);const auto value=block.fluid_state.get(cell);
-                    require(value.rho==density&&value.mom_w==0.&&block.fluid_state.X(0,cell)==1.
+                    const double expected_rho=varying_density?previous_values[n][interior].rho:density;
+                    require(value.rho==expected_rho&&value.mom_w==0.&&block.fluid_state.X(0,cell)==1.
                         &&std::isfinite(value.eng)&&value.eng>0.,
                         "meridional RKL changed stationary mass/angular/species or lost positivity");
+                    if(varying_density) {
+                        auto& previous=previous_values[n][interior++];
+                        changed_momentum+=value.mom_u!=previous.mom_u||value.mom_v!=previous.mom_v;
+                        changed_energy+=value.eng!=previous.eng;
+                        rho_min=std::min(rho_min,value.rho);rho_max=std::max(rho_max,value.rho);
+                        previous=value;
+                    }
                     if(layout!=2) {
                         const auto reference=mode.means(grid,i,j);
                         max_velocity_error=std::max(max_velocity_error,std::abs((long double)value.mom_u/density));
@@ -914,6 +1043,14 @@ static void real_native_meridional_rkl()
                     }
                 }
             }
+            if(varying_density) {
+                require(rho_min>1.&&rho_max<2.&&rho_max-rho_min>.4
+                    &&changed_momentum>0&&changed_energy>0,
+                    "variable-density RKL2 lost normal-scale variation or an actual momentum/energy consumer");
+                std::cout<<"RZ_MERIDIONAL_VARIABLE_CF_ACTIVITY macro="<<macro
+                    <<" rho_min="<<rho_min<<" rho_max="<<rho_max
+                    <<" changed_momentum="<<changed_momentum<<" changed_energy="<<changed_energy<<'\n';
+            }
         }
         require(max_velocity_error<=rz_runtime_witness::scalar_budget,
             "Native axial RKL exact discrete eigenmode failed");
@@ -921,12 +1058,16 @@ static void real_native_meridional_rkl()
             "meridional RKL coarse/fine register lost its Native identity");
         for(double value:runtime.repair_budget().values)require(value==0.,
             "meridional RKL endpoint has nonzero repair accounting");
-        std::cout<<std::setprecision(17)<<"RZ_MERIDIONAL_REAL_RKL layout="<<layout
+        std::cout<<std::setprecision(17)
+            <<(varying_density?"RZ_MERIDIONAL_VARIABLE_CF_RKL":"RZ_MERIDIONAL_REAL_RKL")<<" layout="<<layout
             <<" rkl="<<(second?2:1)<<" density="<<density<<" stages="<<stages
             <<" macro_steps=2 dt="<<dt<<" max_velocity_error="<<double(max_velocity_error)
             <<" kinetic_ratio="<<double(previous_kinetic/initial[2])
             <<" Legendre_reference="<<(layout!=2)<<" real_EOS=1 zero_repairs=1 PASS\n";
-    }
+    };
+    for(int layout:{0,1,2})for(bool second:{false,true})for(double density:{1.,1.e-20})
+        run_case(layout,second,density,false);
+    run_case(2,true,1.,true);
 }
 
 
@@ -936,6 +1077,7 @@ static void real_native_meridional_rkl()
 void run_native_rz_runtime_external_contract();
 /** Existing gravity-stage lane: call each coherent Runtime body exactly once. */
 void run_native_rz_runtime_boundary_contract() {
+    real_native_eos_boundary_gate();
     real_native_current_boundary_idempotence();
     real_native_meridional_rkl();
     angular_runtime_checks::run();
@@ -964,10 +1106,12 @@ int main(int argc,char** argv) {
     config.grid.x2_min=-1.;config.grid.x2_max=1.;
     config.grid.amr_max_blocks=32;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
     amr::AMRControl control(32,2);
-    if(mixed)control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
+    if(mixed)control.tree->LoadLeafGrid(config,2,{1,1,1,1,0},
         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
-        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
-    else control.tree->LoadLeafGrid(config,0,{0},{0},{0},{0});
+        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0},
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
+    else control.tree->LoadLeafGrid(config,2,{0},{0},{0},{0},
+        GridMetrics::GeometrySemantics::AxisymmetricRz);
     SpeciesManager species;species.add_species("a",1.,1.,1.4,3.);
     species.add_species("b",2.,1.,1.4,3.);
     IdealGas eos(1.4,species);
@@ -1281,13 +1425,10 @@ int main(int argc,char** argv) {
     bad.fluid_state.rho[bad_cell]=saved;
     const auto current_version=runtime.stage_context().ledger.inspect(
         {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version;
-    bool device=false,regrid=false;
-    try{(void)runtime.prepare_backend_bindings();}catch(const std::logic_error&){device=true;}
-    try{(void)runtime.perform_regrid(0,0.);}catch(const std::logic_error&){regrid=true;}
-    require(device&&regrid,"Unmigrated RZ consumer accepted");
+    real_native_backend_bindings(runtime);
     require(runtime.stage_context().ledger.inspect(
         {runtime.handles()[0],arch::state::StateSlot::Current}).interior.version==current_version,
-        "Rejected Runtime consumer changed version");
+        "Prepared Native storage recipe changed version");
     require(counters.step_count==0&&counters.t_current==0.,"Runtime fixture advanced time");
     std::cout<<"RZ_RUNTIME_HALO direction="<<direction<<" inner="<<inner
         <<" leaves="<<active.size()<<" version="<<v.value<<" PASS\n";

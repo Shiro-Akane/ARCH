@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-10-09T18:17:25.667203+00:00",
+  "baseline_head": "88c3c4ceee8aefaf4d373c52a8ded5a6a571b533",
+  "scope": "Actual Native Host/Device Runtime ordered boundary/EOS/cache/late callback rollback plus one nonlinear-density mixed-CF Host RKL2 trajectory; no full Native numerical/source/regrid/retry qualification.",
+  "sources_sha256": {
+    "src/driver/runtime/DriverBoundary.cpp": "66a019ca4aaf2e68e4887b2e856d5372d4fbbc41c09b756acb16840ccf1f76e4",
+    "src/driver/runtime/DriverRuntime.cpp": "dd0d5e1d6373ade08ca1b1c3fe0b3482e134e2add8da6da7036d8f10d5232bff",
+    "src/driver/runtime/DriverRuntime.h": "4c4b58de93f351fed037f39771291a634c92a67a0b19d63e993cfa4296351895",
+    "src/driver/runtime/RuntimeStateTransaction.h": "28b3f81182dff073de8b7028d044ac81046d41ebcf887dcd947377c8a14f1c80",
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "d2aa5c88a675c8f528598f3ec26f43d5db0ca26e94f7de4d57c5bcb340cb9a5d",
+    "tests/cuda/runtime/test_cuda_store_lifecycle.cpp": "e9b7ab9d5e052005914ae5c02915b02cd71acb084a468e197e822958e53c2641",
+    "src/cuda/runtime/boundary/CudaBackendBoundary.cu": "b382ff0cd0d64a362ea3cf445b6b9b7310e07bf2850d7e6316ac37c7e2fdf25c",
+    "src/cuda/runtime/control/CudaBackendMacroStep.cpp": "c150b28f863c785fd4e5c6dae72d2d9536ed3603596621c266cd04036da92197",
+    "src/cuda/runtime/CudaBackend.h": "0a380f749e2efbd15263ec3c7689fce0363841facb5258dba3afd3bc6dd89733",
+    "src/numerics/state/RzNativeClosure.h": "47e3d176ba642e5170170da5a2ccbcf3d1462fc42cb5f83228c7a34468552c5c",
+    "src/numerics/diffusion/DiffusionAMRStages.h": "1f6480550d8f3e3f59a431da33c1a8ef887a3ce562932e215eaf0a21d106cf9c"
+  },
+  "changes": {
+    "runtime": "Real Native factory/install/upload, both exchanges, whole-domain candidate preflight/publish, final axis, actual resident completed EOS and scheduler GhostValid; same math and actual identity/bounds",
+    "rollback": "One RuntimeStateTransaction: resident three-slot savepoint, original metadata/source/clock/budget body; actual dt=0 only nondynamical boundary refresh, Host strict positive dt preserved",
+    "cache": "Real completed EOS still runs; no callback/exchange/capacity/savepoint work on genuine cache hit. Late callback fault restores actual fields and complete owner metadata; attempted work counters retained; same owner successfully reused",
+    "upload_chart": "Original Flux/Reflux metadata bootstrap now receives actual geometry_semantics; original angular_transport default unchanged, no numerical transport qualification",
+    "host_existing_fixture": "Retired blanket Device-context/storage refusal expectations migrated to genuine actual owner validity; original diagnostic/numerical budgets retained",
+    "new_nonlinear_fixture": "One five-leaf actual mixed-CF variable rho=1+.25*r RKL2 trajectory, exact density-weighted initial means, both macros activate 1280 cells; true V totals plus real surface work, K decreases, completed EOS and zero repairs. Original twelve trajectories retained"
+  },
+  "cpu": {
+    "first_build_guard_seconds": 57.741,
+    "second_build_guard_seconds": 27.464,
+    "cumulative_build_guard_seconds": 85.205,
+    "first_affected_owners": {
+      "passed": 4,
+      "failed": 0,
+      "ctest_seconds": 41.34,
+      "guard_seconds": 41.417,
+      "names": [
+        "state_residency",
+        "shared_stage_scheduler",
+        "gravity_stage_contract",
+        "boundary_plan"
+      ]
+    },
+    "final_changed_owner": {
+      "name": "gravity_stage_contract",
+      "status": "PASS",
+      "ctest_seconds": 37.15,
+      "guard_seconds": 37.367,
+      "source_after_upload_chart_and_nonlinear_fixture": true
+    },
+    "architecture": {
+      "audit": "PASS",
+      "original_unittest_passed": 111,
+      "seconds": 5.131,
+      "rule_changes": false
+    },
+    "nonlinear_cf": {
+      "layout": "five leaves;1280 interiors;actual coarse/fine faces",
+      "method": "RKL2",
+      "stages": 7,
+      "macros": 2,
+      "dt": 0.025775196115652838,
+      "original_relative_mass_energy_budget": 2e-12,
+      "surface_balances": [
+        {
+          "macro": 0,
+          "mass_relative_residual": 0.0,
+          "total_energy_with_surface_work_relative_residual": 7.032989368336756e-17,
+          "outward_mechanical_work": 9.166048904511095e-08
+        },
+        {
+          "macro": 1,
+          "mass_relative_residual": 0.0,
+          "total_energy_with_surface_work_relative_residual": 4.9970516456875014e-17,
+          "outward_mechanical_work": 1.8136555286225424e-07
+        }
+      ],
+      "activity": [
+        {
+          "macro": 0,
+          "density_min": 1.253926282051282,
+          "density_max": 1.7422149122807018,
+          "changed_momentum_cells": 1280,
+          "changed_energy_cells": 1280
+        },
+        {
+          "macro": 1,
+          "density_min": 1.253926282051282,
+          "density_max": 1.7422149122807018,
+          "changed_momentum_cells": 1280,
+          "changed_energy_cells": 1280
+        }
+      ],
+      "kinetic_ratio": 0.9607556124842226,
+      "uniform_eigenmode_reference": false,
+      "real_completed_eos": true,
+      "zero_repairs": true
+    },
+    "elf_sha256": "d17614eae14710b86c75fbac014c0c9422e1aa685b6662a83404f1f5f9608941"
+  },
+  "cuda": {
+    "target": "arch_cuda_store_lifecycle",
+    "build_attempts": [
+      {
+        "status": "PASS",
+        "guard_seconds": 123.105
+      },
+      {
+        "status": "PASS",
+        "guard_seconds": 19.244,
+        "scope": "sole original-worker fixture configuration repair only"
+      }
+    ],
+    "cumulative_build_guard_seconds": 142.349,
+    "first_owner": {
+      "status": "FAIL",
+      "ctest_seconds": 0.9,
+      "guard_seconds": 1.017,
+      "cause": "New fixture gave a user Diffusion temperature gradient while thermal channel was disabled; original public validation correctly refused",
+      "first_three_new_role_cases": "PASS",
+      "production_numerical_failure": false
+    },
+    "sole_repair": {
+      "scope": "Enable declared thermal channel, original alpha_therm=.01 and same actual backend diffusion config; no numerical diffusion advance",
+      "production_checks_changed": false,
+      "threshold_changes": false,
+      "original_assertions_retained": true
+    },
+    "final_owner": {
+      "status": "PASS",
+      "ctest_seconds": 0.89,
+      "guard_seconds": 1.017,
+      "skip": false
+    },
+    "memcheck": {
+      "guard_seconds": 2.026,
+      "errors": 0,
+      "leaked_bytes": 0,
+      "leaked_allocations": 0,
+      "error_exitcode": 99
+    },
+    "coverage": "Four actual committed two-domain Runtime cases: axis builtin N0 and off-axis user N2, Hydro/Diffusion; actual logical Current parity64epsilon, exact ENUC/interiors, full EOS-only cache counters and late callback rollback/reuse. Padding and Next/Scratch not newly observed; original three-slot savepoint coverage retained.",
+    "elf_sha256": "7fe87fa6461457d08dcaec490da4c85e4575160b3d219f7a1fcc116d7e4507fc"
+  },
+  "independent_review": {
+    "provider": "DeepSeek real Flash high API",
+    "logical_task": "native-runtime-boundary-cache-review-20261010",
+    "scope": "Only readonly completed-EOS cache source property; no Runtime/algorithm grant",
+    "initial": "INCOMPLETE max_output_tokens;67.45seconds;retained",
+    "sole_delivery_repair": "ACCEPTED_LIMITED_SOURCE_PROPERTY;80.37seconds;32768 manager output cap",
+    "cumulative_provider_seconds": 147.82,
+    "known_total_tokens": 45433,
+    "known_thinking_tokens": 36927,
+    "known_visible_output_tokens": 201,
+    "estimated_usd_range": [
+      0.02342847,
+      0.04685694
+    ],
+    "billing_cost": null,
+    "manager_active_cost": null,
+    "overlap": "Host fixture preparation and Root integration; tool-free remote review, no local heavy resource contention",
+    "new_physical_defect": false,
+    "recommendation": "Keep bounded one-property reasoning; broad full-patch request exhausted output. Single trial does not establish general speedup."
+  },
+  "resources": {
+    "single_checkout": "/home/shiroakane/ARCH",
+    "heavy_local_jobs": 1,
+    "parallel_build": 2,
+    "guard_stops": 0,
+    "swap_growth_kib": 0,
+    "host_free_min_bytes": 23759388672,
+    "host_free_minimum_bytes": 8589934592,
+    "next_write_reserve_bytes": 536870912,
+    "raw_data_uploaded": false,
+    "new_ctest_or_workflow": false
+  },
+  "remaining": "Ordinary curved full CF RKL owner; Native Device Hydro and gravity actual consumers/common macro/retry/staged regrid; remaining O9 long trajectories, current Studio/CI and matched final timing. Accepted old static/leaf/12RKL/warm mixed restart not reopened.",
+  "text_review": {
+    "status": "ACCEPTED_FULL_SUPPLIED_PROSE_WITH_LOCAL_FACT_CORRECTIONS",
+    "elapsed_seconds": 36.568,
+    "known_tokens": 7796,
+    "known_output_tokens": 3920,
+    "known_thinking_tokens": 3252,
+    "money_cost": null,
+    "local_corrections": [
+      "first new test -> first fixture run: actual fourth role originally failed, not first case",
+      "配稳计时 typo -> 配对计时",
+      "Explicit actual same-level Device case scope prevents workflow CF routing from being interpreted as completed CF acceptance"
+    ],
+    "extra_production_rework": 0,
+    "recommendation": "Keep frozen prose editing and Root semantic review; do not request another paid pass for two local wording corrections"
+  }
+}

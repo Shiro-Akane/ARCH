@@ -6,6 +6,7 @@
  * complete state upload, storage reuse and resource-lifetime constraints.
  */
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -20,11 +21,15 @@
 
 #include <cuda_runtime_api.h>
 
+#include "amr/AMRControl.h"
 #include "amr/exchange/BoundaryPlan.h"
 #include "amr/exchange/ExchangePlan.h"
 #include "amr/exchange/HostBoundaryPlan.h"
 #include "amr/storage/Block.h"
 #include "cuda/runtime/CudaBackend.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
+#include "driver/schedule/DriverControl.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/boundary/NativeRzBoundary.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
@@ -1581,6 +1586,182 @@ void run_native_ordered_device_boundary(int device_count)
     }
 }
 
+
+/** Drive genuine committed Native Runtime boundaries through the real backend.
+ * One axis/N0 builtin domain and one off-axis/N2 user domain retain independent
+ * genuine Host Runtime references. Four role cases check the original numerical
+ * window, exact ENUC/interiors, actual EOS-only cache and late callback rollback.
+ * No macro/source/retry/production capability or allocation padding is tested.
+ */
+void run_native_runtime_boundary(int device_count)
+{
+    using namespace arch;using state::StateSlot;using state::StateRegion;
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto close=[](double actual,double expected) {
+        require(std::isfinite(actual)&&std::abs(actual-expected)
+            <=64.*std::numeric_limits<double>::epsilon()*std::max(1.,std::abs(expected)),
+            "Native Runtime boundary differs from its original Host 64-epsilon reference");
+    };
+    for(bool user:{false,true}) {
+        const int count=user?2:0;
+        SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.nblockx1=user?2:1;config.grid.nblockx2=user?1:2;config.grid.nblockx3=0;
+        config.grid.x1_min=user?1.:0.;config.grid.x1_max=user?3.:1.;
+        config.grid.x2_min=user?-.5:-1.;config.grid.x2_max=user?.5:1.;
+        config.grid.amr_max_blocks=8;config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type=user?"user":"reflecting";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type=user?"user":"reflecting";
+        config.numerics.sml_rho=config.numerics.min_eint=1.e-14;config.numerics.max_eint=1.e12;
+        config.physics.burn.use_burn=false;
+        config.physics.diffusion.use_diffusion=config.physics.diffusion.use_thermal_diffusion=true;
+        config.physics.diffusion.use_viscous_diffusion=config.physics.diffusion.use_species_diffusion=false;
+        config.physics.diffusion.alpha_therm=.01;
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);const double cv=count?1.:IdealGasView::default_specific_heat_cv;
+        double callback_time=0.;boundary::BoundaryPurpose purpose=boundary::BoundaryPurpose::Hydro;
+        bool fault=false;std::atomic<int> calls{0},late_calls{0};std::array<std::atomic<int>,2> axis_calls{};
+        boundary::ResolvedUserBoundaries callbacks;callbacks.identity="native-runtime-actual-committed-store";
+        if(user)callbacks.physical=[&](const boundary::PhysicalBoundaryContext& context) {
+            require(context.time==callback_time&&context.purpose==purpose,"Runtime callback lost physical stage time/purpose");
+            ++calls;++axis_calls[static_cast<int>(context.axis)];
+            if(fault&&context.axis==boundary::BoundaryAxis::X2&&context.ghost_point.r_cy>2.5) {
+                ++late_calls;throw std::runtime_error("Native Runtime late callback fault");
+            }
+            PrimitiveData point;point.rho=1.+context.ghost_point.r_cy/64.;point.SetTemperature(10.);
+            point.mass_fractions={.25,.75};boundary::PhysicalBoundaryData data;data.hydro=point;
+            if(purpose==boundary::BoundaryPurpose::Diffusion)
+                data.temperature={boundary::ScalarBoundaryKind::NormalGradient,0.};
+            return data;
+        };
+        boundary::ScopedUserBoundarySelection selection(callbacks,config,species);
+        amr::AMRControl host_control(8,2),control(8,2);
+        /** Seed actual Native pool owners; the original mean law is shared with
+         * the already-qualified ordered user fixture, not a numerical advance.
+         */
+        const auto seed=[&](amr::AMRControl& selected) {
+            selected.tree->InitRootGrid(config,count,native);
+            const auto& active=selected.tree->GetActiveBlocks();require(active.size()==2,"Runtime boundary lost its real two-root domain");
+            for(std::size_t b=0;b<active.size();++b) {
+                auto& block=selected.pool->GetBlock(active[b]);block.RequireNativeGeometryIdentity();const auto& g=block.grid;
+                require(g.ng==amr::MAX_NG,"Runtime boundary lost its original full halo");
+                for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+                    field->stage_repairs.reset(count,state::RepairSemantics::RzVolumeAngular);
+                    for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+                        const int cell=g.GetIndex(i,j,0);const bool interior=i>=g.Is()&&i<g.Ie()&&j>=g.Js()&&j<g.Je();
+                        const long double a=g.GetFacePosL(i),z=g.GetFacePosR(i),v=(z*z-a*a)/2.;
+                        const double rho=user?(interior?double(1.L+(z*z*z-a*a*a)/(192.L*v)):4.):2.;
+                        field->set(cell,{rho,0.,0.,0.,10.*cv*rho});
+                        field->enuc_rate[cell]=(i+j)&1?10000.*b+100.*j+i:-0.;
+                        for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;
+                    }
+                }
+            }
+        };
+        seed(host_control);seed(control);
+        RunState start;start.repairs.reset(count,state::RepairSemantics::RzVolumeAngular);
+        SimulationController host_counters(config,start),counters(config,start);
+        BCHandler host_handler(config,native),handler(config,native);host_handler.bind(eos,species);handler.bind(eos,species);
+        host_handler.configure_stage(0.,purpose);handler.configure_stage(0.,purpose);
+        driver::DriverRuntime host_runtime(host_control,host_handler,config,species,host_counters);
+        driver::DriverRuntime runtime(control,handler,config,species,counters);
+        host_runtime.bind_native_rz_eos(eos);runtime.bind_native_rz_eos(eos);
+        host_runtime.initialize_topology();runtime.initialize_topology();
+        const auto topology=runtime.prepare_backend_bindings();std::vector<cuda::CudaBlockBinding> bindings;
+        std::vector<FluidState> initial;
+        for(const auto& entry:topology){bindings.push_back({entry.block,entry.handle,entry.storage,entry.physical_boundary});initial.push_back(entry.block->fluid_state);}
+        auto launch=make_launch_config();launch.diffusion=DiffFlux::make_diffusion_config_view(config);
+        launch.density_floor=config.numerics.sml_rho;
+        launch.minimum_internal_energy=config.numerics.min_eint;launch.maximum_internal_energy=config.numerics.max_eint;
+        runtime.install_backend(cuda::make_cuda_backend(bindings,kBackendDevice,launch,species,eos));runtime.upload_initial_state();
+        auto* const backend=runtime.backend();const auto& active=control.tree->GetActiveBlocks();
+        auto initial_context=runtime.stage_context();const auto initial_version=initial_context.ledger.inspect({runtime.handles().front(),StateSlot::Current}).interior.version;
+        /** Observe only actual Current logical cells; allocation-only padding is
+         * not a Device witness and Next/Scratch are never materialized here.
+         */
+        const auto materialize=[&] {
+            auto result=initial;
+            for(std::size_t b=0;b<result.size();++b)for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+                backend->enqueue_materialize_host_current(runtime.backend_access(b,StateSlot::Current),region,transfer_view(result[b]));
+            backend->quiesce();return result;
+        };
+        const auto reference=[&] {
+            host_handler.configure_stage(callback_time,purpose);calls=0;axis_calls[0]=0;axis_calls[1]=0;
+            host_runtime.ensure_fluid_ghosts(StateSlot::Current);
+            std::vector<FluidState> result;for(int id:host_control.tree->GetActiveBlocks())result.push_back(host_control.pool->GetBlock(id).fluid_state);
+            return result;
+        };
+        const auto compare=[&](const std::vector<FluidState>& observed,const std::vector<FluidState>& expected) {
+            require(observed.size()==expected.size()&&observed.size()==initial.size(),"Runtime boundary omitted a genuine domain");
+            for(std::size_t b=0;b<observed.size();++b) {
+                const auto& g=control.pool->GetBlock(active[b]).grid;
+                for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+                    const int cell=g.GetIndex(i,j,0);const auto a=observed[b].get(cell),e=expected[b].get(cell),original=initial[b].get(cell);
+                    const std::array av{a.rho,a.mom_u,a.mom_v,a.mom_w,a.eng},ev{e.rho,e.mom_u,e.mom_v,e.mom_w,e.eng},iv{original.rho,original.mom_u,original.mom_v,original.mom_w,original.eng};
+                    for(std::size_t f=0;f<av.size();++f)close(av[f],ev[f]);
+                    require(std::bit_cast<std::uint64_t>(observed[b].enuc_rate[cell])==std::bit_cast<std::uint64_t>(expected[b].enuc_rate[cell]),"Runtime boundary changed exact ENUC donor inheritance");
+                    const bool interior=i>=g.Is()&&i<g.Ie()&&j>=g.Js()&&j<g.Je();
+                    for(int s=0;s<count;++s) {
+                        close(observed[b].X(s,cell),expected[b].X(s,cell));
+                        if(interior)require(std::bit_cast<std::uint64_t>(observed[b].X(s,cell))==std::bit_cast<std::uint64_t>(initial[b].X(s,cell)),"Runtime boundary wrote interior composition");
+                    }
+                    if(interior)for(std::size_t f=0;f<av.size();++f)
+                        require(std::bit_cast<std::uint64_t>(av[f])==std::bit_cast<std::uint64_t>(iv[f]),"Runtime boundary wrote a true interior");
+                }
+            }
+        };
+        const auto require_publication=[&] {
+            auto context=runtime.stage_context();
+            for(const auto handle:runtime.handles()) {
+                const auto coherence=context.ledger.inspect({handle,StateSlot::Current});
+                require(coherence.interior.version==initial_version&&coherence.ghost_source_version==initial_version,
+                    "Nondynamical Runtime boundary changed interior version or ghost provenance");
+                context.ledger.require_readable({handle,StateSlot::Current},{state::ExecutionSide::Device,initial_version,true,true});
+            }
+            require(!runtime.active_runtime_state_transaction()&&!runtime.native_macro_retry_attempt()
+                &&counters.step_count==0&&counters.t_current==0.,"Nondynamical Runtime boundary retained a macro/retry lease or advanced physics");
+        };
+        for(auto role:{boundary::BoundaryPurpose::Hydro,boundary::BoundaryPurpose::Diffusion}) {
+            purpose=role;callback_time=role==boundary::BoundaryPurpose::Hydro?.375:.625;
+            const auto expected=reference();const int expected_calls=calls.load();const std::array expected_axes{axis_calls[0].load(),axis_calls[1].load()};
+            handler.configure_stage(callback_time,purpose);calls=0;axis_calls[0]=0;axis_calls[1]=0;
+            select_device_probe(device_count);runtime.ensure_fluid_ghosts(StateSlot::Current);
+            require_backend_device_selected("Native Runtime did not use its actual Device owner");
+            require(calls.load()==expected_calls&&axis_calls[0].load()==expected_axes[0]&&axis_calls[1].load()==expected_axes[1],
+                "Runtime callback node order/coverage differs from the genuine Host owner");
+            require_publication();compare(materialize(),expected);
+            auto context=runtime.stage_context();const auto owner=driver::RuntimeStateTransaction::snapshot_owner(runtime,context);
+            const auto callbacks_before=calls.load();const auto before=backend->counters();
+            runtime.ensure_fluid_ghosts(StateSlot::Current);const auto after=backend->counters();
+            auto expected_counter=before;expected_counter.kernel_count+=active.size();
+            expected_counter.bytes_d2h+=active.size()*(sizeof(int)+sizeof(RzThermodynamics::AcceptanceDiagnostic));
+            ++expected_counter.stream_sync_count;expected_counter.getter_count+=3; // Internal before, original trace query, this observation.
+            require(after==expected_counter&&calls.load()==callbacks_before,
+                "Runtime cache repeated savepoint/capacity/callback/exchange work instead of only actual completed EOS");
+            require(driver::RuntimeStateTransaction::owner_matches(runtime,context,owner),"Runtime cache changed exact ledger/clock/BC/budgets/owner");
+            compare(materialize(),expected);
+            std::cout<<"NATIVE_RUNTIME_BC species="<<count<<" user="<<user<<" purpose="<<static_cast<int>(role)
+                <<" domains="<<active.size()<<" cache_eos_kernels="<<after.kernel_count-before.kernel_count<<'\n';
+        }
+        if(user) {
+            purpose=boundary::BoundaryPurpose::Diffusion;callback_time=.875;const auto expected=reference();
+            handler.configure_stage(callback_time,purpose);auto context=runtime.stage_context();
+            const auto before_fields=materialize();const auto owner=driver::RuntimeStateTransaction::snapshot_owner(runtime,context);
+            calls=0;late_calls=0;const auto before=backend->counters();fault=true;bool rejected=false;
+            try {runtime.ensure_fluid_ghosts(StateSlot::Current);}
+            catch(const std::runtime_error& error){rejected=std::string(error.what())=="Native Runtime late callback fault";if(!rejected)throw;}
+            fault=false;const auto after=backend->counters();
+            require(rejected&&late_calls.load()>0&&calls.load()>late_calls.load()&&after.kernel_count>before.kernel_count,
+                "Late real user-domain callback did not fail after prior actual boundary work");
+            require(driver::RuntimeStateTransaction::owner_matches(runtime,context,owner),"Failed real Runtime boundary changed ledger/clock/BC/budgets/lease");
+            const auto restored=materialize();for(std::size_t b=0;b<restored.size();++b)
+                require(same_bits(restored[b],before_fields[b]),"Late Runtime callback failure changed actual Current logical fields or observation padding");
+            calls=0;runtime.ensure_fluid_ghosts(StateSlot::Current);require(calls.load()>0,"Failed Runtime boundary became a false cache hit");
+            require_publication();compare(materialize(),expected);
+            std::cout<<"NATIVE_RUNTIME_BC late_callback_rollback=1 successful_reuse=1 actual_work_preserved=1 PASS\n";
+        }
+    }
+}
+
 } // namespace
 
 int main()
@@ -1602,6 +1783,7 @@ int main()
         run_resident_diffusion_activity();
         run_native_final_axis_backend(device_count);
         run_native_ordered_device_boundary(device_count);
+        run_native_runtime_boundary(device_count);
         std::cout << "CUDA store lifecycle passed\n";
         return 0;
     } catch (const std::exception& error) {

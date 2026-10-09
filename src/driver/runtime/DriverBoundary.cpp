@@ -4,20 +4,25 @@
  *
  * Workflow:
  * 1. Select the actual Current/Next/Scratch slot and freeze its domain context.
- * 2. Apply physical boundaries and whole-domain halo exchange to that slot.
+ * 2. Native Device borrows the original resident savepoint, builtin seed,
+ *    two identical domain exchanges, compact ordered surfaces and final axis.
+ *    Existing geometry retains its original physical/single-exchange path.
  * 3. Validate native-RZ closure with the real EOS before publishing ghosts.
- * 4. Record only successfully completed boundary identities. Quiescent native
- *    Host Current Hydro may reuse ghost work, retaining its real EOS gate.
+ * 4. Record only successfully completed BC bindings. Completed Native ghosts
+ *    may reuse field work, retaining their actual Host or Device EOS gate.
  */
 
 #include <algorithm>
+#include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
@@ -44,9 +49,26 @@ struct DriverRuntime::NativeHostCurrentBoundaryStamp {
     NativeRzEosBindingWitness eos;
     std::vector<BCHandler::HydroInputFrame> frames;
 };
-/** Launch the device boundary plan for the requested state version. */
+/** Execute the original resident boundary owner for one actual slot/version.
+ * Workflow:
+ * 1. Borrow the existing accesses and original cached exchange plan. Native RZ
+ *    authenticates its already armed Runtime transaction and explicit RZ chart.
+ * 2. Seed original builtin ghosts, then complete the first domain exchange.
+ * 3. Prepare ALL compact Native surfaces against their actual Runtime Grids;
+ *    validate the complete domain before the first fallible existing scatter.
+ * 4. Repeat the SAME exchange and finish original cached signed-axis copies.
+ *    The calling scheduler retains final actual EOS and GhostValid publication.
+ * Existing geometry retains builtin/user followed by its single exchange.
+ */
 state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requested, state::StateVersion version, state::CompletionToken token)
 {
+    const bool native = geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    auto* const transaction = native ? active_runtime_state_transaction() : nullptr;
+    if (native) {
+        if (!transaction)
+            throw std::logic_error("Native Device boundary requires its actual Runtime state transaction");
+        transaction->validate_storage();
+    }
     auto& accesses = boundary_accesses;
     accesses.clear();
     accesses.reserve(stage_handles.size());
@@ -55,40 +77,72 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
         accesses.push_back(access);
     }
     const auto& plans = amr_ctrl.ghost_exchange.GetPlans(
-        amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
-    (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
+        amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles,
+        native ? amr::CoordinateSeamGeometry::RzAxisymmetric
+               : amr::CoordinateSeamGeometry::ExistingChart);
+    /** Reuse the same actual same-level, coarse-fine and seam operations. */
+    const auto exchange = [&]() -> state::CompletionToken {
+        for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
+            const auto& plan = plans.same_level[group];
+            auto& level_accesses = boundary_level_accesses;
+            level_accesses.clear();
+            level_accesses.reserve(plan.blocks.size());
+            for (const auto index : plans.level_indices[group])
+                level_accesses.push_back(accesses[index]);
+            (void)compute_backend->execute_same_level_exchange(
+                level_accesses, plan, requested, version, token);
+        }
+        const auto coarse_fine_completed = compute_backend->execute_coarse_fine_exchange(
+            accesses, plans.coarse_fine, requested, version, token);
+        if (coarse_fine_completed != token)
+            throw std::logic_error("Device coarse-fine exchange returned incomplete work");
+        if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
+        // The original physical donor map serves Host and CUDA; only storage
+        // and kernels differ, with no whole-state Host staging here.
+        return compute_backend->execute_coordinate_seam_exchange(
+            accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
+            requested, version, token);
+    };
+    const auto seeded = compute_backend->execute_physical_boundary_batch(accesses, version, token);
+    if (native) {
+        if (seeded != token || exchange() != token)
+            throw std::logic_error("Native Device seed/exchange returned incomplete work");
+        const auto& active = amr_ctrl.tree->GetActiveBlocks();
+        if (active.size() != accesses.size())
+            throw std::logic_error("Native Device boundary lost the actual Runtime domain");
+        std::vector<const Grid*> grids;
+        std::vector<BCHandler::NativeDeviceCandidate> candidates;
+        grids.reserve(active.size()); candidates.reserve(active.size());
+        for (std::size_t index = 0; index < active.size(); ++index)
+            grids.push_back(&amr_ctrl.pool->GetBlock(active[index]).grid);
+        for (std::size_t index = 0; index < accesses.size(); ++index)
+            candidates.push_back(bc_handler.prepare_native_device(
+                *compute_backend, accesses[index], *grids[index]));
+        // The one actual macro owner rechecks domain/storage; the original
+        // candidate validates exact BC binding/root/Grid before ALL scatters.
+        transaction->validate_storage();
+        for (std::size_t index = 0; index < accesses.size(); ++index)
+            bc_handler.validate_native_device_candidate(candidates[index],
+                *compute_backend, accesses[index], *grids[index]);
+        for (std::size_t index = 0; index < accesses.size(); ++index)
+            bc_handler.publish_native_device(std::move(candidates[index]),
+                *compute_backend, accesses[index], *grids[index]);
+        if (exchange() != token)
+            throw std::logic_error("Native Device final exchange returned incomplete work");
+        return compute_backend->execute_native_axis_boundary_batch(accesses, version, token);
+    }
+    // Preserve the original ExistingChart user-before-single-exchange path.
     if (bc_handler.has_user()) {
         const auto& active = amr_ctrl.tree->GetActiveBlocks();
         for (std::size_t b = 0; b < accesses.size(); ++b)
             bc_handler.apply_device(*compute_backend, accesses[b], amr_ctrl.pool->GetBlock(active[b]).grid);
     }
-    for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
-        const auto& plan = plans.same_level[group];
-        auto& level_accesses = boundary_level_accesses;
-        level_accesses.clear();
-        level_accesses.reserve(plan.blocks.size());
-        for (const auto index : plans.level_indices[group])
-            level_accesses.push_back(accesses[index]);
-        (void)compute_backend->execute_same_level_exchange(
-            level_accesses, plan, requested, version, token);
-    }
-    const auto coarse_fine_completed = compute_backend->execute_coarse_fine_exchange(
-        accesses, plans.coarse_fine, requested, version, token);
-    if (coarse_fine_completed != token)
-        throw std::logic_error("Device coarse-fine exchange returned incomplete work");
-    if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
-    // The same physical donor map serves Host and CUDA. Only the field
-    // storage and kernel launch differ; no whole-state Host staging occurs.
-    return compute_backend->execute_coordinate_seam_exchange(
-        accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
-        requested, version, token);
+    return exchange();
 }
 
 /** Wait for and validate a device boundary publication. */
 void DriverRuntime::complete_device_boundary(StateSlot slot)
 {
-    if (geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::logic_error("Native RZ EOS boundary acceptance is unavailable on Device");
     if (stage_handles.empty())
         throw std::logic_error("CUDA boundary requires active blocks");
     const auto version = residency_ledger->inspect(
@@ -113,6 +167,96 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
     // while leaving the interior synchronized, breaking the whole-state
     // materialization contract required by Host consumers.
     auto& stamp = user_boundary_stamps_[static_cast<std::size_t>(slot)];
+    if (geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        const auto boundary = bc_handler.snapshot_stage_context();
+        const auto eos_binding = native_rz_eos_binding_;
+        if (!eos_binding || !native_rz_eos_binding_matches(*eos_binding)
+            || !bc_handler.native_point_eos_bound())
+            throw std::logic_error("Native Device boundary lost its real EOS/BC binding");
+        const bool same_context = stamp.epoch == stage_handles.front().epoch
+            && stamp.revision == boundary.revision()
+            && stamp.boundary_binding == boundary.binding_revision();
+        /** Gate completed ghosts or refresh through the same actual transaction.
+         * This never creates a nested savepoint or replaces the bound stage.
+         * A reused boundary still evaluates the genuine resident EOS each time;
+         * only a fresh completed boundary obtains a scheduler completion token.
+         */
+        const auto complete_native = [&](StageExecutionContext& context,
+            RuntimeStateTransaction* transaction) {
+            if (transaction) transaction->validate_storage();
+            if (context.side != ExecutionSide::Device
+                || &context.ledger != residency_ledger.get()
+                || &context.clock != &scheduler_clock
+                || !context.post_boundary_acceptance
+                || !bc_handler.stage_context_matches(boundary))
+                throw std::logic_error("Native Device boundary requires its real bound stage/EOS frame");
+            if ((needs_device_ghosts || !same_context) && !transaction)
+                throw std::logic_error("Native Device boundary refresh requires its actual Runtime state transaction");
+            const auto before = compute_backend->counters();
+            if (!needs_device_ghosts && same_context) {
+                std::vector<state::SlotCoherence> accepted;
+                accepted.reserve(stage_handles.size());
+                for (const auto handle : stage_handles)
+                    accepted.push_back(residency_ledger->inspect({handle, slot}));
+                const auto token_before = scheduler_clock.last_token();
+                const auto version_before = scheduler_clock.last_version();
+                context.post_boundary_acceptance(context, slot, version);
+                if (scheduler_clock.last_token() != token_before
+                    || scheduler_clock.last_version() != version_before)
+                    throw std::logic_error("Native Device reused EOS gate changed its publication");
+                /** Compare original selected-slot metadata without another lease. */
+                const auto same_region = [](const state::RegionCoherence& a,
+                    const state::RegionCoherence& b) {
+                    return a.residency == b.residency && a.version == b.version
+                        && a.completion == b.completion && a.pending_transfer == b.pending_transfer;
+                };
+                for (std::size_t index = 0; index < stage_handles.size(); ++index) {
+                    const auto after = residency_ledger->inspect({stage_handles[index], slot});
+                    const auto& prior = accepted[index];
+                    if (!same_region(after.interior, prior.interior)
+                        || !same_region(after.ghost, prior.ghost)
+                        || after.ghost_source_version != prior.ghost_source_version)
+                        throw std::logic_error("Native Device reused EOS gate changed selected-slot residency");
+                }
+            } else {
+                (void)arch::scheduler::complete_boundary(context, stage_handles, slot, version,
+                    [&](StateSlot requested, state::StateVersion input,
+                        state::CompletionToken token) {
+                        return execute_device_boundary(requested, input, token);
+                    });
+            }
+            if (!native_rz_eos_binding_matches(*eos_binding)
+                || !bc_handler.stage_context_matches(boundary))
+                throw std::logic_error("Native Device completed boundary changed its EOS/BC binding");
+            if (transaction) transaction->validate_storage();
+            trace_backend_operation(backend::BackendOperation::PhysicalBoundary, slot, before);
+            stamp = {stage_handles.front().epoch, boundary.revision(), boundary.binding_revision()};
+        };
+        if (auto* transaction = active_runtime_state_transaction()) {
+            // The existing macro owns the real context and all three resident
+            // slots. Capacity was prepared before this savepoint was armed.
+            auto& context = scheduler::current_stage_binding().context;
+            complete_native(context, transaction);
+            return;
+        }
+        auto context = stage_context();
+        context.step_start_time = boundary.time();
+        context.step_dt = 0.; // Actual nondynamical refresh, never a fabricated timestep.
+        context.boundary_start_time = boundary.time();
+        scheduler::ScopedStageBinding binding(context, stage_handles);
+        if (!needs_device_ghosts && same_context) {
+            // The actual backend EOS reads only completed resident fields.
+            // A genuine cache hit needs neither capacity work nor a D2D backup.
+            complete_native(context, nullptr);
+            return;
+        }
+        // The original constructor alone prepares physical controls after
+        // complete domain preflight and before freezing/arming its savepoint.
+        RuntimeStateTransaction transaction(*this, context, nullptr);
+        complete_native(context, &transaction);
+        transaction.commit();
+        return;
+    }
     const bool same_context = !bc_handler.has_user()
         || (stamp.epoch == stage_handles.front().epoch
             && stamp.revision == bc_handler.stage_revision());

@@ -5,8 +5,8 @@
  * Workflow:
  * 1. Borrow resolved configuration, species and the actual run EOS.
  * 2. Stage topology/ledger identity before real physical BC and halo exchange.
- * 3. For native RZ, preflight the whole Host domain and validate the shared
- *    thermodynamic closure against the actual EOS before ghost publication.
+ * 3. For native RZ, preflight the actual domain and validate the shared
+ *    thermodynamic closure through its selected Host/Device EOS before ghosts.
  * 4. Publish completed topology/state identities to the next scheduled stage.
  */
 
@@ -122,9 +122,14 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
         return;
     if (!native_rz_eos_acceptance_)
         throw std::logic_error("Native RZ boundary acceptance requires an explicitly bound EOS");
-    if (compute_backend || context.side != ExecutionSide::Host
-        || &context.clock != &scheduler_clock)
-        throw std::logic_error("Native RZ EOS boundary acceptance requires the real Host clock/side");
+    const auto side = context.side;
+    auto* const backend_owner = compute_backend.get();
+    if (&context.clock != &scheduler_clock
+        || (side == ExecutionSide::Host && backend_owner)
+        || (side == ExecutionSide::Device
+            && (!backend_owner || backend_owner->side() != ExecutionSide::Device))
+        || (side != ExecutionSide::Host && side != ExecutionSide::Device))
+        throw std::logic_error("Native RZ EOS boundary acceptance requires its real clock/side");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     if (handles.empty() || handles.size() != active.size())
         throw std::logic_error("Native RZ EOS boundary domain extent mismatch");
@@ -132,6 +137,15 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
     const bool committed_domain = ledger == residency_ledger.get();
     if (committed_domain)
         topology_registry.validate_committed_snapshot(observe_topology());
+    // Device EOS observes only the actual committed store. Initial/regrid Host
+    // candidates keep their original replacement ledger and full Host gate.
+    if (side == ExecutionSide::Device
+        && (!committed_domain || handles.data() != stage_handles.data()
+            || handles.size() != stage_handles.size()
+            || backend_storage.size() != handles.size()))
+        throw std::logic_error("Native Device EOS boundary requires the complete committed domain");
+    const std::vector<backend::StorageGeneration> frozen_storage = backend_owner
+        ? backend_storage : std::vector<backend::StorageGeneration>{};
     const auto epoch = ledger->active_epoch();
     const int species = specs.count();
     std::vector<amr::BlockHandle> frozen_handles(handles.begin(), handles.end());
@@ -149,6 +163,11 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
             throw std::logic_error("Native RZ EOS boundary handle/pool correspondence changed");
         const auto& block = amr_ctrl.pool->GetBlock(active[index]);
         patches.push_back(native_boundary_patch(active[index], block));
+        if (backend_owner) {
+            (void)GridMetrics::make_geometry_view(block.grid, geometry_semantics_);
+            if (!backend_owner->contains({handles[index], frozen_storage[index], StateSlot::Current}))
+                throw std::logic_error("Native Device EOS boundary actual storage is unavailable");
+        }
     }
     auto* const pool = amr_ctrl.pool.get();
     auto* const tree = amr_ctrl.tree.get();
@@ -158,12 +177,21 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
     if (!eos_binding || !native_rz_eos_binding_matches(*eos_binding))
         throw std::logic_error("Native RZ EOS boundary binding is stale");
     context.post_boundary_acceptance = [this, ledger, committed_domain, epoch, species, pool, tree,
+        side, backend_owner, frozen_storage,
         handles, frozen_handles = std::move(frozen_handles), patches = std::move(patches),
         boundary_snapshot, eos_acceptance, eos_binding](const StageExecutionContext& actual,
             StateSlot slot, state::StateVersion version) {
         const auto member = TimeIntegration::hydro_boundary_state_member(slot);
+        std::vector<backend::BackendStateAccess> accesses;
+        if (backend_owner) {
+            accesses.reserve(frozen_handles.size());
+            for (std::size_t index = 0; index < frozen_handles.size(); ++index)
+                accesses.push_back({frozen_handles[index], frozen_storage[index], slot});
+        }
         const auto require_frame = [&] {
-            if (actual.side != ExecutionSide::Host || compute_backend
+            if (actual.side != side || compute_backend.get() != backend_owner
+                || (backend_owner && (backend_owner->side() != ExecutionSide::Device
+                    || backend_storage != frozen_storage))
                 || &actual.ledger != ledger || &actual.clock != &scheduler_clock
                 || (committed_domain && (residency_ledger.get() != ledger
                     || stage_handles.data() != handles.data()
@@ -173,11 +201,12 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
                 || !native_rz_eos_binding_matches(*eos_binding)
                 || !bc_handler.stage_context_matches(boundary_snapshot))
                 throw std::logic_error("Native RZ EOS boundary context/owner changed");
-            // Gate before ghost publication: only accepted exact-version Host
-            // INTERIORS are required. A pending ghost transfer also rejects.
+            // Gate before ghost publication: require only exact-version actual
+            // INTERIORS. Completed ghost data is read by the real EOS owner;
+            // neither side may have a pending transfer at this acceptance gate.
             for (const auto handle : frozen_handles) {
                 ledger->require_readable({handle, slot},
-                    {ExecutionSide::Host, version, true, false});
+                    {side, version, true, false});
                 const auto coherence = ledger->inspect({handle, slot});
                 if (coherence.interior.pending_transfer != state::PendingTransferPhase::None
                     || coherence.ghost.pending_transfer != state::PendingTransferPhase::None)
@@ -197,11 +226,39 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
                 if (committed_domain && frozen_handles[index]
                     != topology_registry.handle_for_pool(current_active[index]))
                     throw std::logic_error("Native RZ EOS boundary handle/pool correspondence changed");
-                require_native_boundary_layout(block.*member, block.grid, species);
+                if (backend_owner) {
+                    (void)GridMetrics::make_geometry_view(block.grid, geometry_semantics_);
+                    if (!backend_owner->contains(accesses[index]))
+                        throw std::logic_error("Native Device EOS boundary storage lease changed");
+                } else {
+                    require_native_boundary_layout(block.*member, block.grid, species);
+                }
             }
         };
         require_frame();
-        for (std::size_t index=0;index<patches.size();++index) {
+        if (backend_owner) {
+            // Read complete resident logical patches through the actual selected
+            // backend EOS. No Host U, materialization, floor or retry is used.
+            const auto rejected = backend_owner->validate_completed_native_eos_batch(
+                accesses, eos_binding->bounds);
+            require_frame();
+            if (rejected) {
+                std::size_t index = 0;
+                for (; index < accesses.size(); ++index) {
+                    const auto& access = accesses[index];
+                    if (access.block == rejected->access.block
+                        && access.storage == rejected->access.storage
+                        && access.slot == rejected->access.slot) break;
+                }
+                if (index == accesses.size())
+                    throw std::logic_error("Native Device EOS refusal belongs to another domain");
+                throw NativeBoundaryAcceptanceError(
+                    "Native Device completed boundary EOS rejected at cell "
+                        + std::to_string(rejected->diagnostic.index),
+                    patches[index].pool_index, frozen_handles[index], slot, version,
+                    rejected->diagnostic);
+            }
+        } else for (std::size_t index=0;index<patches.size();++index) {
             const auto& patch=patches[index];
             const auto& block = amr_ctrl.pool->GetBlock(patch.pool_index);
             try {
@@ -818,12 +875,26 @@ void DriverRuntime::initialize_topology()
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
     if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
-    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::logic_error("RZ device runtime is not yet migrated");
+    const bool native = geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (native && (compute_backend || !residency_ledger || !native_rz_eos_binding_
+        || !native_rz_eos_binding_matches(*native_rz_eos_binding_)))
+        throw std::logic_error("Native backend preparation requires its bound EOS and uninstalled committed owner");
+    if (native) topology_registry.validate_committed_snapshot(observe_topology());
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     if (active.empty() || stage_handles.size() != active.size()) {
         throw std::logic_error(
             "CUDA backend requires a complete active topology");
+    }
+    if (native) {
+        // The original per-grid logical plan supplies both seed and signed-axis
+        // factory caches; no independent boundary policy is introduced here.
+        for (std::size_t index = 0; index < active.size(); ++index) {
+            const auto& block = amr_ctrl.pool->GetBlock(active[index]);
+            if (stage_handles[index] != topology_registry.handle_for_pool(active[index]))
+                throw std::logic_error("Native backend preparation handle/pool order changed");
+            (void)GridMetrics::make_geometry_view(block.grid, geometry_semantics_);
+            (void)bc_handler.logical_plan(block.grid);
+        }
     }
     bool needs_host_ghosts = false;
     for (const auto handle : stage_handles) {
@@ -847,7 +918,7 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
         backend_storage.push_back(storage);
         bindings.push_back({
             &amr_ctrl.pool->GetBlock(active[index]), stage_handles[index],
-            storage, &bc_handler.logical_plan()});
+            storage, &bc_handler.logical_plan(amr_ctrl.pool->GetBlock(active[index]).grid)});
     }
     return bindings;
 }
@@ -856,9 +927,30 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
     if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
-    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::logic_error("RZ device runtime is not yet migrated");
     if (compute_backend || !backend) throw std::logic_error("invalid backend installation");
+    if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        if (backend->side()!=ExecutionSide::Device || !residency_ledger
+            || !native_rz_eos_binding_
+            || !native_rz_eos_binding_matches(*native_rz_eos_binding_))
+            throw std::logic_error("Native backend installation requires its actual Device owner and bound EOS");
+        topology_registry.validate_committed_snapshot(observe_topology());
+        const auto& active=amr_ctrl.tree->GetActiveBlocks();
+        if (active.empty() || stage_handles.size()!=active.size()
+            || backend_storage.size()!=active.size())
+            throw std::logic_error("Native backend installation requires complete committed storage");
+        // Factory binding authenticates actual geometry/EOS/allocation; this
+        // Runtime preflight proves coverage before publishing the new owner.
+        for (std::size_t index=0;index<active.size();++index) {
+            const auto& block=amr_ctrl.pool->GetBlock(active[index]);
+            if (stage_handles[index]!=topology_registry.handle_for_pool(active[index]))
+                throw std::logic_error("Native backend installation handle/pool order changed");
+            (void)GridMetrics::make_geometry_view(block.grid,geometry_semantics_);
+            (void)bc_handler.logical_plan(block.grid);
+            for (const auto slot : {StateSlot::Current,StateSlot::Next,StateSlot::Scratch})
+                if (!backend->contains({stage_handles[index],backend_storage[index],slot}))
+                    throw std::logic_error("Native backend installation lacks an actual state slot");
+        }
+    }
     compute_backend = std::move(backend);
 }
 
@@ -876,8 +968,10 @@ void DriverRuntime::upload_initial_state()
             arch::state::PendingTransferPhase::PendingH2D, 0,
             arch::backend::BackendOperation::InitialUpload);
     }
+    // Initial metadata follows the actual chart. Numerical transport retains
+    // its existing separate consumer qualification and torque-plan selection.
     compute_backend->prepare_amr_flux_plan(
-        amr_ctrl.RequireFluxTopologyPlan(specs.count()),
-        amr_ctrl.RequireRefluxTopologyPlan(specs.count()));
+        amr_ctrl.RequireFluxTopologyPlan(specs.count(), geometry_semantics_),
+        amr_ctrl.RequireRefluxTopologyPlan(specs.count(), geometry_semantics_));
 }
 } // namespace arch::driver

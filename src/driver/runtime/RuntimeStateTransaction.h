@@ -4,17 +4,20 @@
  *
  * Workflow:
  * 1. Validate the exact Runtime/context/binding and actual Host or Device side.
- * 2. Prepare all fallible metadata, receipt and observer-mirror backups before
- *    freezing the same ledger and actual Host flux-register arena.
+ * 2. Prepare all fallible metadata, receipt and observer-mirror backups. For
+ *    Device, collect the real Current/Grid control extents and reserve unbound
+ *    capacity before freezing the same ledger and actual Host flux arena.
  * 3. Retain original Host field allocations or the actual resident backend slots;
  *    bind one Runtime owner and the existing Host-only source journal.
  * 4. Compose the unchanged source/repair/boundary receipts in that single scope.
  * 5. Commit after real owner/storage completion, or invalidate/discard the source,
  *    restore actual fields first, then restore the common Runtime metadata.
  *
- * Only field protection branches by execution side. This lifetime service does
- * not authenticate hidden backend mathematics, prewarm boundary capacity, or
- * open Native Device boundary/EOS/source/retry/production capabilities.
+ * One metadata/rollback/commit body protects both field sides. Device may use
+ * finite zero dt for a same-time boundary refresh; numerical advances retain
+ * their positive-dt checks. Capacity preparation evaluates neither callback
+ * nor EOS and preserves bound controls. This lifetime service does not grant
+ * Native Device source/retry or numerical production qualification.
  */
 #pragma once
 
@@ -185,12 +188,16 @@ class RuntimeStateTransaction final {
     std::array<DriverRuntime::UserBoundaryStamp,3> stamps_;
     bool committed_=false,leased_=false;
 
-    /** Reject unsupported owner/side/source inputs before any allocation or lease acquisition. */
+    /** Reject unsupported owner/side/source inputs before allocation or leases.
+     * Host keeps strictly positive step_dt; Device also admits finite zero for
+     * boundary preparation at one physical time, never a numerical advance.
+     */
     static DriverRuntime& preflight(DriverRuntime& runtime,
         scheduler::StageExecutionContext& context,const Numerics::IHydroSolver* hydro) {
         if(!runtime.residency_ledger||!runtime.amr_ctrl.pool||!runtime.amr_ctrl.tree
             ||runtime.runtime_state_transaction_
-            ||!std::isfinite(context.step_start_time)||!std::isfinite(context.step_dt)||context.step_dt<=0.
+            ||!std::isfinite(context.step_start_time)||!std::isfinite(context.step_dt)
+            ||(context.side==state::ExecutionSide::Host?context.step_dt<=0.:context.step_dt<0.)
             ||(context.side!=state::ExecutionSide::Host&&context.side!=state::ExecutionSide::Device)
             ||&context.ledger!=runtime.residency_ledger.get()
             ||&context.clock!=&runtime.scheduler_clock
@@ -389,7 +396,8 @@ public:
                 bool(c.post_boundary_acceptance),bool(c.configure_boundary_context)}!=s.callbacks)return false;
         for(std::size_t i=0;i<3;++i)
             if(r.user_boundary_stamps_[i].epoch!=s.stamps[i].epoch
-                ||r.user_boundary_stamps_[i].revision!=s.stamps[i].revision)return false;
+                ||r.user_boundary_stamps_[i].revision!=s.stamps[i].revision
+                ||r.user_boundary_stamps_[i].boundary_binding!=s.stamps[i].boundary_binding)return false;
         for(std::size_t i=0;i<s.layout.size();++i) {
             const auto& a=r.boundary_surface_layout_[i];const auto& b=s.layout[i];
             if(a.block!=b.block)return false;
@@ -439,8 +447,10 @@ public:
         else blocks_.reserve(active_.size());
         std::map<boundary::BoundaryFluxCaptureStorage*,bool> unique;
         std::vector<backend::BackendStateAccess> currents;
+        std::vector<std::array<std::size_t,6>> boundary_control_extents;
         if(backend_) {
             device_blocks_.reserve(active_.size());currents.reserve(active_.size());
+            boundary_control_extents.reserve(active_.size());
             runtime.topology_registry.validate_committed_snapshot(runtime.observe_topology());
         }
         for(std::size_t b=0;b<active_.size();++b) {
@@ -458,6 +468,9 @@ public:
                 runtime.residency_ledger->require_readable({handles_[b],state::StateSlot::Current},
                     {state::ExecutionSide::Device,version,true,false});
                 currents.push_back(access);
+                // Original BC/Grid chart selects actual face shapes without callback/EOS.
+                boundary_control_extents.push_back(runtime.bc_handler.native_device_control_extents(
+                    block.grid,runtime.specs.count()));
                 for(const auto& capture:device_blocks_.back().captures)
                     if(capture&&unique.emplace(capture.get(),true).second)captures_.emplace_back(capture);
             } else {
@@ -477,6 +490,10 @@ public:
             }
         }
         require_owner();
+        // Authenticate the complete batch before growth, while no transaction
+        // is armed. The existing backend reserves all three physical owners,
+        // preserving their live control values and original view bindings.
+        if(backend_)backend_->prepare_boundary_control_capacity(currents,boundary_control_extents);
         runtime.residency_ledger->freeze_metadata_snapshot(ledger_);
         try {runtime.amr_ctrl.flux_register.freeze_host_snapshot(flux_);}
         catch(...) {runtime.residency_ledger->release_metadata_snapshot(ledger_);throw;}
