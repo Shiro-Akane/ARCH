@@ -23,6 +23,72 @@ def load_module():
 
 
 class BackendValidationTests(unittest.TestCase):
+    def test_terminal_lane_selects_actual_hdf5_time_not_output_index(self):
+        import h5py
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "canonical.par").write_text("geometry=cartesian\n")
+            case = {"id": "terminal", "input": "canonical.par", "problem": "Gaussian",
+                    "overrides": {"chk_dt": "0.05", "lrefinemax": "1"}}
+            lane = root / "output/terminal/scientific/cpu"
+            lane.mkdir(parents=True)
+            prefix = "terminal_cpu_scientific"
+            checkpoints = []
+            for index, time in ((1, 0.05), (97, 0.1), (999, 0.075)):
+                checkpoint = lane / f"{prefix}_chk_{index:04d}.h5"
+                with h5py.File(checkpoint, "w") as handle:
+                    handle.attrs["time"] = time
+                checkpoints.append(checkpoint)
+            completed = mock.Mock(returncode=0, stdout="Simulation Done. Total Steps: 4")
+            with mock.patch.object(module, "run_arch_with_logs", return_value=completed), \
+                    mock.patch.object(module, "validate_resolved_plan", return_value={}), \
+                    mock.patch.object(module, "read_regrid_metrics", return_value={}):
+                result = module.run_arch_terminal_lane(
+                    Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+                self.assertEqual(result["checkpoint"], checkpoints[1])
+                self.assertEqual(result["checkpoint_sha256"], module._sha256(checkpoints[1]))
+                parameters = module.read_parameter_map(result["parameter_file"])
+                self.assertEqual(parameters["chk_dt"], "0.05")
+                self.assertEqual(parameters["lrefinemax"], "1")
+                self.assertEqual(parameters["tmax"], "0.1")
+                checkpoints[1].unlink()
+                with self.assertRaisesRegex(RuntimeError, "checkpoint at time 0.1; found 0"):
+                    module.run_arch_terminal_lane(
+                        Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+
+    def test_terminal_lane_rejects_invalid_or_ambiguous_checkpoint_time(self):
+        import h5py
+        import numpy as np
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "canonical.par").write_text("geometry=cartesian\n")
+            case = {"id": "terminal", "input": "canonical.par", "problem": "Gaussian"}
+            lane = root / "output/terminal/scientific/cpu"
+            lane.mkdir(parents=True)
+            first = lane / "terminal_cpu_scientific_chk_0001.h5"
+            second = lane / "terminal_cpu_scientific_chk_0002.h5"
+            completed = mock.Mock(returncode=0, stdout="Simulation Done. Total Steps: 4")
+            with mock.patch.object(module, "run_arch_with_logs", return_value=completed), \
+                    mock.patch.object(module, "validate_resolved_plan", return_value={}), \
+                    mock.patch.object(module, "read_regrid_metrics", return_value={}):
+                for time in (None, float("nan"), float("inf"), -0.1, "0.1",
+                             np.array([0.1]), np.bool_(True)):
+                    with self.subTest(time=time):
+                        with h5py.File(first, "w") as handle:
+                            if time is not None:
+                                handle.attrs["time"] = time
+                        with self.assertRaisesRegex(RuntimeError, "invalid scientific checkpoint time"):
+                            module.run_arch_terminal_lane(
+                                Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+                for checkpoint in (first, second):
+                    with h5py.File(checkpoint, "w") as handle:
+                        handle.attrs["time"] = 0.1
+                with self.assertRaisesRegex(RuntimeError, "checkpoint at time 0.1; found 2"):
+                    module.run_arch_terminal_lane(
+                        Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+
     def test_stored_numeric_identity_detects_signed_zero_dtype_shape_and_ulp(self):
         import numpy as np
         module = load_module()

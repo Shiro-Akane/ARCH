@@ -271,3 +271,5 @@ These data files support reproduction and independent review; they are not setup
 - [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
 
 </details>
+
+The current bound RZ transfer consumer has its own [processed record](results/release-closure-20261009/native-device-migration-summary.json): native prolongation/restriction, exact identity counterexamples, low density and species-storage cases use the same Host/device mathematics. The historical curved application rows retain their recorded chart and source identities; they do not qualify the current complete RZ Device Runtime. That runtime follows the [current release exits](../../docs/development/ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核).

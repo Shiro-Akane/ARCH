@@ -156,7 +156,8 @@ void CudaBackend::migrate_staged_current(
             check_cuda(launch_cuda_regrid_prolongation(
                 current_block(*sources.at(group.source.handle)),
                 current_block(*destinations.at(group.destination.handle)), group.child_index,
-                impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+                {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+                 impl_->launch.maximum_internal_energy},
                 workspace.get(), workspace.size(), device_status.get(), impl_->stream.get()),
                 "launch CUDA regrid prolongation");
             ++kernel_count;
@@ -167,7 +168,8 @@ void CudaBackend::migrate_staged_current(
                 children.blocks[child] = current_block(*sources.at(group.children[child].handle));
             check_cuda(launch_cuda_regrid_restriction(children,
                 current_block(*destinations.at(group.destination.handle)),
-                impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+                {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+                 impl_->launch.maximum_internal_energy},
                 workspace.get(), workspace.size(), device_status.get(), impl_->stream.get()),
                 "launch CUDA regrid restriction");
             ++kernel_count;

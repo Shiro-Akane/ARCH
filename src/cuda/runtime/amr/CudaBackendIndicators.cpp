@@ -146,7 +146,8 @@ std::optional<double> CudaBackend::evaluate_jeans_parent(
     }
     const DeviceRegridBlock destination{parent.view(),grid};
     check_cuda(validate_cuda_regrid_restriction(children,destination,
-        impl_->launch.density_floor,impl_->launch.minimum_internal_energy,
+        {impl_->launch.density_floor,impl_->launch.minimum_internal_energy,
+         impl_->launch.maximum_internal_energy},
         restriction_workspace.get(),restriction_workspace.size(),transfer_status.get()),
         "validate CUDA JENS parent restriction");
     auto& scratch=impl_->refinement_scratch;
@@ -160,7 +161,8 @@ std::optional<double> CudaBackend::evaluate_jeans_parent(
         check_cuda(cudaMemsetAsync(transfer_status.get(),0,sizeof(int),impl_->stream.get()),
             "initialize CUDA JENS parent restriction status");
         check_cuda(launch_cuda_regrid_restriction(children,destination,
-            impl_->launch.density_floor,impl_->launch.minimum_internal_energy,
+            {impl_->launch.density_floor,impl_->launch.minimum_internal_energy,
+             impl_->launch.maximum_internal_energy},
             restriction_workspace.get(),restriction_workspace.size(),transfer_status.get(),impl_->stream.get()),
             "restrict CUDA JENS candidate parent");
         ++impl_->runtime_counters.kernel_count;

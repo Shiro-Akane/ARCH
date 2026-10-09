@@ -95,7 +95,7 @@ CUDA已实际重编译并运行上述受影响内核owner；公开CUDA生产库�
 | 出口 | 当前状态 | 关闭所需证据 |
 | --- | --- | --- |
 | R1：FV／粗细面及非线性阶段 | 既有Host实现和短程有有限通过；完整范围待验 | 真实AMR通量／reflux、质量／角动量／机械功与热收支、非线性RKL及失败回退；对应演化和严格续算 |
-| R2：完整NativeDevice | **实际接线未完成**；Runtime安装及物理边界仍有明确拒绝 | 按原共享数学迁移实际内置／用户ghost、AMR迁移／粗细面、hydro／gravity和回滚；真实完成态EOS接受后再发布状态，运行／续算及拒绝路径通过 |
+| R2：完整NativeDevice | resident EOS、燃烧及真实V/W网格迁移已有有限消费者通过；Runtime安装及物理边界仍有明确拒绝 | 接通内置／用户ghost、粗细面、hydro／gravity和回滚，保留同一共享数学；真实完成态EOS接受后再发布状态，完整运行／续算及拒绝路径通过 |
 | R3：剩余O9 | 独立C/O终点参考、真实BD／ROS4强反应终点及BD中段严格续算已通过；墙钟耐久与其余耦合仍待验 | BurnOneZone活动反应终点与独立参考；热扩散、RZ和代表性四模块＋反复AMR长程的分项收支、中段续算及RSS／fd观测。相同轨迹的独有覆盖可合并，不穷举所有组合 |
 | R4：当前工程交付 | 历史完整工具／Studio及实际桌面路径可复用；当前源码完整签收待完成 | 当前受影响CPU完整清单、必要CUDA消费者，以及最新Core→Host→Studio→Plot的实际producer／字段／单位／发布失败与交互映射 |
 | R5：最终成本 | 3060Ti旧执行物同程3D记录正向1.22485倍；4070Ti当前配对缺测 | 依赖冻结后同物理终点、精度、CFL／AMR的CPU及CUDA绝对成本与正向收益；driver钟和完整CLI钟分别记录。4070Ti旧数据只作历史资料，缺测不杜撰、不因外部平台无法取得而阻塞本机验收 |
@@ -106,6 +106,12 @@ R1／R2包含实际修复或接线，不能列为“只剩报告”。其他出�
 已签收的静态高斯、单步连续引力能量、共享Stokes／EOS叶和短程燃烧服务保持关闭，只有受影响身份变化或新矛盾才重开。O10网格重设计、Windows原生适配及额外最终冻结轮继续暂缓；它们不计入上述分母。O9按原计划继续，近原点现有网格限制按已批准范围披露。FLASH和H100不是本次发布前置，CPU优化不回退，两次Strang燃烧、完整面EOS及共享数学设计保持。
 
 2026-10-09生产燃烧节点：当前403d147fc同一CPU源码的原注册清单76/76再次通过，无跳过；两路续建289.440秒，先前三路内存护栏停止29.455秒保留，累计318.895秒。实际BurnOneZone在rho=1e7、C/O各0.5、T0=3e9、t_end=1e-6下完成34个宏步，两次Strang燃烧和原优化保持。BD／ROS4均通过独立终点的原核素绝对1e-8、温度／能量相对1e-8及质量1e-12预算；BD误差约1e-11，ROS4核素／能量约7.286e-9／8.257e-9，记录其实际预算占用，不从局部RTOL推断全程精度。BD的5e-7中段严格续算至同一终点，20个数值数据集的名称／类型／形状／存储位和一个组分名称数据集一致，全部路径零修复。这些实际运行约5–7秒，只签收强反应物理终点与续算，不代替墙钟耐久、热扩散或完整四模块／AMR／CUDA。新公开输入和[处理后证据](../../validation/burn/results/release-closure-20261009/production-summary.json)复用既有算例／运行／存储位比较入口，没有新增CTest、CI工作流或外部软件依赖。
+
+2026-10-09网格迁移节点：沿原CUDA AMR owner接通共享Native prolongation／restriction，实际父子身份和完整Bounds来自既有控制层；角动量按W、其余流体均值按V传递。NVCC实际调用暴露共享identity相等判断的false inequality，改为逐字段读取后仍严格比较所有字段及root端点二进制位，不放宽几何门槛。受影响CPU曲线owner与实际CUDA迁移、身份反例的处理证据见[迁移记录](../../validation/amr/results/release-closure-20261009/native-device-migration-summary.json)。这是provisional interior消费者，真实ghost、完成态EOS与完整Runtime授权仍有独立出口。原验证工具同时改为按checkpoint实际time取终态，避免中段0001被误用；沿原tooling owner验收，不新增CI。
+
+NativeDevice下一接线任务已经按既有Host owner定位：先将正半径反射的原数学体提取为同一Host/device scalar leaf，再接immutable轴候选层、两次exchange、最终轴corner和真实completed EOS接受。普通signed-copy seed或仅新增EOS调用不能代替这一顺序；Runtime guard在完整消费者验收前保留。迁移及静态identity已签收的范围不随这个新节点重复重做。
+
+下一条四模块长程复用已有2D周期Cartesian SNIaCoupled＋AMR，先冻结核反应能、热输运、引力与机械功的共同收支、活动性及收敛预算；当前候选保留候选身份。原跨后端字段误差仅用于复现比较，不代替独立物理预算；运行入口明确保留AMR 0/1，终态按实际物理时间选择，中段续算及RSS/fd与输出清理仍沿原入口。
 
 ### 验收问题的技术边界
 

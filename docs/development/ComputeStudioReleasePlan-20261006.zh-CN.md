@@ -24,6 +24,8 @@
 
 2026-10-09更新：当前CPU清单76/76通过，无跳过；真实BD／ROS4强反应终点均在原预算内，BD中段重启保留20个数值数据集逐位一致。复现输入、误差及构建资源记录见[燃烧处理记录](../../validation/burn/results/release-closure-20261009/production-summary.json)，详细科学范围统一记入[优化计划的当前出口](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)。有限终点与重启验收不代替墙钟耐久和完整耦合。
 
+2026-10-09网格迁移更新：真实CUDA RZ的V/W迁移接线已复用Host数学，设备身份比较保持全字段严格语义；有限迁移与受影响CPU owner的证据统一记在[迁移记录](../../validation/amr/results/release-closure-20261009/native-device-migration-summary.json)。完整ghost／Runtime仍按下一出口处理。原验证工具已按实际time选择终态，中段checkpoint不再被固定编号误认。
+
 ### 发布差额与当前排程
 
 2026-10-09复核：发布估计约完成75%，属于按工作包加权的工程判断，不能从局部测试通过率推导release就绪。分母、估计范围和六个剩余出口统一见[O总表的发布进度](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)，本页仅保存原证据。主要剩余工作为完整NativeDevice接线、FV／粗细面与非线性阶段、活动燃烧及其余长时耦合；当前producer的GUI／Plot、完整必要回归、最终整程计时和CI覆盖也要结算。

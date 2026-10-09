@@ -212,15 +212,21 @@ ARCH_INLINE bool expected_axis(const DyadicGridIdentity& identity,int axis,
 }
 
 /** Compare every identity value, including disabled root seed provenance.
+ * Workflow: compare scalar authority flags, then both actual root-count/logical
+ * components and the original binary64 endpoint bits. Explicit element reads
+ * keep the same Host/device semantics without a C++20 std::array comparison
+ * helper; the actual NVCC native transfer consumer exposed a false inequality
+ * in that helper. No identity field or exactness requirement is omitted.
  * Unknown/stale metadata cannot compare equal by merely sharing bound=false.
  */
 ARCH_INLINE bool equal_identity(const DyadicGridIdentity& left,const DyadicGridIdentity& right)
 {
     if(left.bound!=right.bound || left.level!=right.level
-       ||left.periodic_axial!=right.periodic_axial
-       ||left.root_blocks!=right.root_blocks || left.logical!=right.logical)return false;
+       ||left.periodic_axial!=right.periodic_axial)return false;
     for(int axis=0;axis<2;++axis)
-        if(!dyadic_identity_detail::same_binary64(left.root_lower[axis],right.root_lower[axis])
+        if(left.root_blocks[axis]!=right.root_blocks[axis]
+           ||left.logical[axis]!=right.logical[axis]
+           ||!dyadic_identity_detail::same_binary64(left.root_lower[axis],right.root_lower[axis])
            ||!dyadic_identity_detail::same_binary64(left.root_upper[axis],right.root_upper[axis]))
             return false;
     return true;

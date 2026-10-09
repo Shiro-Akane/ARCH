@@ -1,0 +1,249 @@
+{
+  "recorded_utc": "2026-10-09T10:11:45.711772+00:00",
+  "baseline_commit": "1c908bba7",
+  "scope": "actual provisional Native RZ CUDA regrid consumer, shared exact identity, and terminal checkpoint selection",
+  "release_qualified": false,
+  "full_native_runtime_qualified": false,
+  "source_files_sha256": {
+    "src/cuda/amr/RegridMigration.cu": "acd87f8f0e8b9e0ac0e0bba738d133325a488d16e8e1d04955dae0d88f7ca6ca",
+    "src/cuda/amr/RegridMigration.h": "9014a433353de38cebb526d2d30d4c9f6ed8806ad207f9f369b70f1b2a5e67ca",
+    "src/cuda/runtime/amr/CudaBackendMigration.cpp": "a228739ede558523cc39a42951284d21403619d3c35600bb302eb7102d7d5fbc",
+    "src/cuda/runtime/amr/CudaBackendIndicators.cpp": "024ad98113dd1289e94c4068c3cb6cc38b1c46de680988b18e60ba8fbf4ceb91",
+    "src/grid/DyadicGridIdentity.h": "5fba110ce12d51a7cabd80729c9eb54735b2a9dea75240126ec91cc5196f97f3",
+    "tests/cuda/amr/test_cuda_regrid_migration.cu": "17a34290c9cb6e606bd14e1cd62b487d4b17db91df9918b170b2b88b6d570492",
+    "tools/validate_backend_results.py": "d1b9d4589444e37548e3d4a27b500a3586a64ca544591f2fc0b7d3cabe62fa79",
+    "tests/tooling/validation/test_validate_backend_results.py": "3bc30ee5f47ec8db27c2fd26ed7d37d9fac2d0fbe45ee9d93999de71f312f6ea"
+  },
+  "binaries_sha256": {
+    "build-rt-cuda/arch_cuda_regrid_migration": "b9726e61d6b8b897a689ff1e0a0b365681e38140bd90409435bbdb44e60fb3e8",
+    "build-release-cpu/arch_curvilinear_metrics": "5243fe5ac8c8708d60abeb90d1a28648eb9cafdaace64bcebeb9d2b6a1159742"
+  },
+  "shared_math": {
+    "prolongation": "amr::regrid_math::prolong_native_family, unchanged Host algorithm",
+    "restriction": "amr::regrid_math::restrict_family, V for rho/mr/mz/E, W for q=J/W",
+    "bounds": "full existing state::Bounds in all adapters; completed target thermal ceiling and EOS remain owner responsibility",
+    "identity_fix": "explicit scalar/element comparisons retain all root fields and binary64 endpoint equality; observed original NVCC consumer falsely rejected identical roots; no universal compiler claim",
+    "physics_controls_unchanged": [
+      "density/inertia reconstruction",
+      "species projection",
+      "EOS",
+      "two Strang burn halves",
+      "ODE",
+      "CPU exact cache",
+      "AMR selection/regrid policy"
+    ]
+  },
+  "CPU": {
+    "owner": "curvilinear_metrics",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "guard_seconds": 20.165,
+    "scope": "affected existing owner after shared identity correction; previous full76 has original403d147fc identity"
+  },
+  "CUDA": {
+    "owner": "cuda_regrid_migration",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "ordinary_case_records": [
+      "CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=cartesian",
+      "CUDA_REGRID_MIGRATION_PASS dim=2 species=4 geometry=cartesian",
+      "CUDA_REGRID_MIGRATION_PASS dim=3 species=4 geometry=cartesian",
+      "CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=cylindrical",
+      "CUDA_REGRID_MIGRATION_PASS dim=3 species=4 geometry=cylindrical",
+      "CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=spherical",
+      "CUDA_REGRID_MIGRATION_PASS dim=2 species=4 geometry=spherical",
+      "CUDA_REGRID_MIGRATION_PASS dim=3 species=4 geometry=spherical",
+      "CUDA_REGRID_MIGRATION_PASS dim=1 species=0 geometry=cartesian",
+      "CUDA_REGRID_MIGRATION_PASS dim=2 species=21 geometry=cartesian",
+      "CUDA_REGRID_MIGRATION_PASS dim=2 species=41 geometry=cartesian"
+    ],
+    "native_case_records": [
+      "CUDA_NATIVE_REGRID_MIGRATION_PASS species=4 rho=2 nonuniform=0",
+      "CUDA_NATIVE_REGRID_MIGRATION_PASS species=4 rho=2 nonuniform=1",
+      "CUDA_NATIVE_REGRID_MIGRATION_PASS species=4 rho=1e-20 nonuniform=0",
+      "CUDA_NATIVE_REGRID_MIGRATION_PASS species=0 rho=2 nonuniform=0",
+      "CUDA_NATIVE_REGRID_MIGRATION_PASS species=41 rho=2 nonuniform=0"
+    ],
+    "identity_checks_each_native_case": 12,
+    "constant_state_oracle": "independent long-double ring integral means; actual downloaded device interiors and V/W domain integrals",
+    "new_native_relative_allowance": 3e-13,
+    "ordinary_window_unchanged": true,
+    "source_bits": "memcmp against original complete source allocation",
+    "provisional_ghost_padding": "complete destination compare includes unchanged initial ghost/padding storage; source bit identity separately checked with memcmp",
+    "negative_binding_cases": [
+      "chart relabel",
+      "wrong child ordering/identity",
+      "insufficient scratch",
+      "negative donor density and sticky first failure across later success"
+    ],
+    "species_counts": [
+      0,
+      4,
+      41
+    ],
+    "low_density": 1e-20,
+    "density_floor": 1e-30
+  },
+  "memory_checker": {
+    "tool": "NVIDIA Compute Sanitizer 2023.3.1.0",
+    "owner": "same actual migration executable",
+    "errors": 0,
+    "leaked_bytes": 0,
+    "leaked_allocations": 0,
+    "interpretation": "finite exercised allocations only, not a long-run or async general proof"
+  },
+  "build_attempts": [
+    {
+      "log": "native-regrid-kernel-build.log",
+      "guard_seconds": 9.086,
+      "peak_owned_rss_KiB": 290400,
+      "minimum_available_KiB": 6623452,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": true
+    },
+    {
+      "log": "native-regrid-owner-build.log",
+      "guard_seconds": 30.306,
+      "peak_owned_rss_KiB": 529316,
+      "minimum_available_KiB": 6355020,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-owner-build-fixture-correction.log",
+      "guard_seconds": 26.222,
+      "peak_owned_rss_KiB": 472464,
+      "minimum_available_KiB": 6418132,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-owner-build-diagnostic.log",
+      "guard_seconds": 17.228,
+      "peak_owned_rss_KiB": 467364,
+      "minimum_available_KiB": 6401900,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-owner-build-binding-diagnostic.log",
+      "guard_seconds": 21.202,
+      "peak_owned_rss_KiB": 481444,
+      "minimum_available_KiB": 6388428,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-owner-build-map-diagnostic.log",
+      "guard_seconds": 22.236,
+      "peak_owned_rss_KiB": 411468,
+      "minimum_available_KiB": 6490372,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-owner-build-root-diagnostic.log",
+      "guard_seconds": 24.238,
+      "peak_owned_rss_KiB": 462624,
+      "minimum_available_KiB": 6413604,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-owner-build-shared-identity.log",
+      "guard_seconds": 36.33,
+      "peak_owned_rss_KiB": 530212,
+      "minimum_available_KiB": 6357520,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-identity-cpu-owner-build.log",
+      "guard_seconds": 33.459,
+      "peak_owned_rss_KiB": 1073036,
+      "minimum_available_KiB": 6117372,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    },
+    {
+      "log": "native-regrid-final-owner-build.log",
+      "guard_seconds": 27.523,
+      "peak_owned_rss_KiB": 530720,
+      "minimum_available_KiB": 6354612,
+      "swap_growth_KiB": 0,
+      "guard_stopped": false,
+      "had_compiler_error": false
+    }
+  ],
+  "cumulative_guarded_build_seconds": 247.83,
+  "manager_cumulative_cap_seconds": 600,
+  "diagnostic_failure_retained": {
+    "first_compile": "wrong helper spelling corrected to exact Host AngularMomentumMeasure",
+    "first_fixture": "retired chart factory corrected to bound actual RZ factory",
+    "actual_scientific_failure": "original shared identity false inequality on Device, fixed without changing criteria",
+    "debug_run": "owned temporary diagnostic terminated143 after repeated comparison output;106384527bytes locally compressed with digest; no production print remains"
+  },
+  "terminal_checkpoint_tool": {
+    "behavior": "select unique H5 actual scalar time equal to configured physical endpoint, no output-index assumption",
+    "preserved": "AMR overrides, tmax, parameter-bound full C++ metadata/step/identity checks",
+    "existing_owner_root_independent": {
+      "passed": 38,
+      "wall_seconds": 0.246
+    },
+    "existing_log_owner_worker": {
+      "passed": 11,
+      "wall_seconds": 0.179
+    },
+    "new_CTest_targets": 0,
+    "new_CI_jobs": 0,
+    "test_raw_H5": "TemporaryDirectory only, automatically removed"
+  },
+  "delegation": {
+    "DPS": {
+      "task": "native-regrid-consumer-acceptance-scope-20261009",
+      "transport": "actual read-only Flash high API, generic public specification only",
+      "duration_seconds": 37.84,
+      "input_tokens": 1418,
+      "cached_tokens": 384,
+      "output_tokens": 7503,
+      "thinking_tokens": 7071,
+      "visible_tokens": 432,
+      "estimated_USD": [
+        0.00465805,
+        0.0093161
+      ],
+      "actual_billing": null,
+      "useful": "global V/W and sticky failure scope; parent/child identity must be tested",
+      "rejected_hypothesis": "solid rotation already produces nonuniform native q, so uniform-q warning did not justify an extra fixture",
+      "parallel": "Root CPU evidence review/push and adapter inspection",
+      "blocking_wait_seconds": 0,
+      "repairs": 0,
+      "manager_active_cost": null,
+      "recommendation": "retain bounded independent scope/math work; local implementation owners and actual acceptance remain Root; no general speedup claim"
+    },
+    "local_agents": "read-only adapter review; checkpoint tool unique writer; next boundary exact dependency map; no concurrent compiler/ARCH processes"
+  },
+  "architecture_audit": {
+    "exit_code": 0
+  },
+  "raw_uploaded": false,
+  "new_CTest_targets": 0,
+  "remaining": [
+    "Native physical/user ghosts with immutable layers and final axis corners",
+    "actual completed EOS/domain frame publication",
+    "complete Native Device hydro/gravity/coarse-fine/reflux/rollback lifecycle",
+    "four-module long-time separated science budgets and active trajectories",
+    "final producer/GUI/CI coverage and matched-endpoint costs"
+  ]
+}

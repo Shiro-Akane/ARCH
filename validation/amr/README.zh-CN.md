@@ -196,3 +196,5 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 - [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
 
 </details>
+
+当前真实绑定的RZ传递消费者另有[处理记录](results/release-closure-20261009/native-device-migration-summary.json)：原生prolongation／restriction、严格身份反例、低密度及组分存储复用同一Host/device数学。历史曲线应用行保留各自chart和源码身份，其结果不代签当前完整RZ Device Runtime；完整运行链按[当前发布出口](../../docs/development/ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)验收。

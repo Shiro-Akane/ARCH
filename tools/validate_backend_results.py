@@ -1048,13 +1048,36 @@ def run_arch_terminal_lane(
     accepted_steps = int(match.group(1))
     prefix = lane_root / base_name
     plan = prefix.with_name(prefix.name + "_backend_plan.txt")
-    checkpoint = prefix.with_name(prefix.name + "_chk_0001.h5")
     resolved_plan = validate_resolved_plan(plan, backend, case.get("plan_policy"))
     trace = prefix.with_name(prefix.name + "_backend_trace.tsv")
     trace_summary = (
         validate_cuda_trace(trace, accepted_steps) if backend == "cuda" else None)
-    if not checkpoint.is_file():
-        raise RuntimeError(f"missing scientific HDF5 checkpoint: {checkpoint}")
+    # CHK indices count outputs, not physical endpoints: an intermediate
+    # chk_dt can make 0001 the midpoint. Inspect only the writer's scalar time
+    # attribute here; run_case retains the full parameter-bound metadata and
+    # step/identity validation through the existing checkpoint comparator.
+    import h5py
+    terminal_checkpoints = []
+    for candidate in sorted(lane_root.glob(base_name + "_chk_*.h5")):
+        try:
+            with h5py.File(candidate, "r") as handle:
+                stored_time = handle.attrs["time"]
+                if getattr(stored_time, "shape", ()) != () \
+                        or isinstance(stored_time, (str, bytes, bool)) \
+                        or getattr(getattr(stored_time, "dtype", None), "kind", "f") not in "fiu":
+                    raise ValueError("time must be a numeric scalar")
+                actual_time = float(stored_time)
+        except (OSError, KeyError, TypeError, ValueError) as error:
+            raise RuntimeError(f"invalid scientific checkpoint time: {candidate}") from error
+        if not math.isfinite(actual_time) or actual_time < 0.0:
+            raise RuntimeError(f"invalid scientific checkpoint time: {candidate}")
+        if actual_time == terminal_time:
+            terminal_checkpoints.append(candidate)
+    if len(terminal_checkpoints) != 1:
+        raise RuntimeError(
+            f"expected one scientific HDF5 checkpoint at time {terminal_time!r}; "
+            f"found {len(terminal_checkpoints)}")
+    checkpoint = terminal_checkpoints[0]
     if _sha256(parameter) != parameter_sha256:
         raise RuntimeError("scientific parameter file changed during execution")
     return {

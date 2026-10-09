@@ -3,7 +3,11 @@
  * @brief Device transfer interface for host-authoritative regrid plans.
  *
  * State, geometry and scratch pointers are borrowed from the transaction owner.
- * RegridTransferMath supplies the common conservative family operations.
+ * Workflow: authenticate borrowed chart/layout and actual parent/child identity;
+ * gather immutable old-state families; invoke the existing shared ordinary or
+ * native RZ transfer; write provisional destination interiors and sticky status.
+ * RegridTransferMath and NativeRzRegridTransfer supply all numerical operations.
+ * Actual completed ghosts/EOS and topology publication belong to the caller.
  */
 #pragma once
 
@@ -37,19 +41,19 @@ struct DeviceRegridChildren {
 // routes need no workspace. No fixed mathematical species ceiling is imposed.
 cudaError_t launch_cuda_regrid_prolongation(
     DeviceRegridBlock source, DeviceRegridBlock destination, int child_index,
-    double density_floor, double min_eint, double* workspace,
+    state::Bounds bounds, double* workspace,
     std::size_t workspace_scalars, int* status, cudaStream_t stream);
 
 // No enqueue: share the complete restriction layout/workspace preflight with
 // callers that must validate before enqueueing metric/setup work.
 cudaError_t validate_cuda_regrid_restriction(
     const DeviceRegridChildren& children, DeviceRegridBlock destination,
-    double density_floor, double min_eint, double* workspace,
+    state::Bounds bounds, double* workspace,
     std::size_t workspace_scalars, int* status);
 
 cudaError_t launch_cuda_regrid_restriction(
     const DeviceRegridChildren& children, DeviceRegridBlock destination,
-    double density_floor, double min_eint, double* workspace,
+    state::Bounds bounds, double* workspace,
     std::size_t workspace_scalars, int* status, cudaStream_t stream);
 
 } // namespace arch::cuda
