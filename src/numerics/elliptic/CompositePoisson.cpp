@@ -987,16 +987,46 @@ struct ArithmeticRange {double lo=0.,hi=0.;};
 bool finite_range(ArithmeticRange a) {
     return std::isfinite(a.lo)&&std::isfinite(a.hi)&&a.lo<=a.hi;
 }
+/** Prove an exact binary64 sum without weakening outward interval fallback.
+ * Workflow: Knuth TwoSum -> require every intermediate finite -> accept only
+ * a zero error term. With nearest rounding and gradual underflow, s+error is
+ * the exact sum of the two supplied binary64 values. An overflow witness is
+ * unusable even if another rearrangement would produce a finite result.
+ */
+bool exact_sum_witness(double a,double b,double sum) {
+    if(!std::isfinite(sum))return false;
+    const double part=sum-a,other=sum-part;
+    const double first=a-other,second=b-part,error=first+second;
+    return std::isfinite(part)&&std::isfinite(other)&&std::isfinite(first)
+        &&std::isfinite(second)&&std::isfinite(error)&&error==0.;
+}
+/** Prove a product equality using FMA, including extreme-exponent safeguards.
+ * Each operand has at most 53 significant binary digits. If ea+eb>=-970,
+ * its exact product lies on a lattice no finer than 2^(ea+eb-104)>=2^-1074.
+ * Subtracting a supplied binary64 result preserves this lattice. Consequently
+ * a NONZERO residual cannot round to zero in FMA. Without that exponent proof,
+ * an underflowed FMA zero is not evidence and the original enclosure remains.
+ */
+bool exact_product_witness(double a,double b,double product) {
+    if(!std::isfinite(a)||!std::isfinite(b)||!std::isfinite(product))return false;
+    if(a==0.||b==0.)return product==0.;
+    if(std::ilogb(std::abs(a))+std::ilogb(std::abs(b))<-970)return false;
+    return std::fma(a,b,-product)==0.;
+}
 ArithmeticRange range_negate(ArithmeticRange a) {return {-a.hi,-a.lo};}
 ArithmeticRange range_add(ArithmeticRange a,ArithmeticRange b) {
     if(a.lo==0.&&a.hi==0.)return b;
     if(b.lo==0.&&b.hi==0.)return a;
     if(a.lo==a.hi&&b.lo==b.hi&&a.lo==-b.lo)return {};
+    if(a.lo==a.hi&&b.lo==b.hi&&exact_sum_witness(a.lo,b.lo,a.lo+b.lo))
+        return {a.lo+b.lo,a.lo+b.lo};
     return {std::nextafter(a.lo+b.lo,-std::numeric_limits<double>::infinity()),
             std::nextafter(a.hi+b.hi,std::numeric_limits<double>::infinity())};
 }
 ArithmeticRange range_product(ArithmeticRange a,ArithmeticRange b) {
     if((a.lo==0.&&a.hi==0.)||(b.lo==0.&&b.hi==0.))return {};
+    if(a.lo==a.hi&&b.lo==b.hi&&exact_product_witness(a.lo,b.lo,a.lo*b.lo))
+        return {a.lo*b.lo,a.lo*b.lo};
     const double v[]{a.lo*b.lo,a.lo*b.hi,a.hi*b.lo,a.hi*b.hi};
     double lo=v[0],hi=v[0];
     for(double x:v){lo=std::min(lo,x);hi=std::max(hi,x);}
@@ -1005,11 +1035,15 @@ ArithmeticRange range_product(ArithmeticRange a,ArithmeticRange b) {
 }
 ArithmeticRange range_divide_volume(ArithmeticRange a,double volume) {
     if(a.lo==0.&&a.hi==0.)return {};
+    if(a.lo==a.hi&&std::isfinite(volume)&&volume>0.
+        &&exact_product_witness(a.lo/volume,volume,a.lo))
+        return {a.lo/volume,a.lo/volume};
     return {std::nextafter(a.lo/volume,-std::numeric_limits<double>::infinity()),
             std::nextafter(a.hi/volume,std::numeric_limits<double>::infinity())};
 }
 ArithmeticRange range_square(ArithmeticRange a) {
     if(a.lo==0.&&a.hi==0.)return {};
+    if(a.lo==a.hi)return range_product(a,a);
     const double v[]{a.lo*a.lo,a.hi*a.hi};
     const double lo=a.lo<=0.&&a.hi>=0.?0.:std::min(v[0],v[1]);
     return {lo==0.?0.:std::nextafter(lo,0.),
@@ -1019,6 +1053,8 @@ ArithmeticRange range_divide_positive(ArithmeticRange a,ArithmeticRange b) {
     if(!finite_range(a)||!finite_range(b)||b.lo<=0.)
         return {std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN()};
     if(a.lo==0.&&a.hi==0.)return {};
+    if(a.lo==a.hi&&b.lo==b.hi&&exact_product_witness(a.lo/b.lo,b.lo,a.lo))
+        return {a.lo/b.lo,a.lo/b.lo};
     return range_product(a,{std::nextafter(1./b.hi,0.),
         std::nextafter(1./b.lo,std::numeric_limits<double>::infinity())});
 }

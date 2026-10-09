@@ -16,14 +16,17 @@ modes=p.add_mutually_exclusive_group()
 modes.add_argument("--native-rz",action="store_true",help="Explicit internal CPU RZ candidate, no physical grant")
 modes.add_argument("--native-rz-regrid",action="store_true",help="Actual public Host RZ AMR transaction; time-zero owner checks only")
 p.add_argument("--materialized-source-only",action="store_true",help="One actual Native source plus candidate field snapshot, separate from lifecycle matrix")
+p.add_argument("--isolated-gaussian",action="store_true",help="Independent smooth physical isolated-source spatial check through the existing Native Runtime owner")
 p.add_argument("--matched-resolution",type=int,choices=(0,1,2),default=None,
     help="Maintainer-only root-layout ordinal for native source-only export; omitted means original level 0")
 p.add_argument("--field-after-regrid",action="store_true",help="Native RZ regrid plus original candidate fields on refined/coarse topology")
 p.add_argument("--regrid-rollback",action="store_true",help="Actual CPU RZ finalizer fault/rollback verification")
 a=p.parse_args()
 if a.materialized_source_only and not a.native_rz:p.error("--materialized-source-only requires --native-rz")
-if a.matched_resolution is not None and not (a.native_rz and a.materialized_source_only):
-    p.error("--matched-resolution requires --native-rz --materialized-source-only")
+if a.isolated_gaussian and (not a.native_rz or a.materialized_source_only):
+    p.error("--isolated-gaussian requires --native-rz and is separate from source-only export")
+if a.matched_resolution is not None and not (a.native_rz and (a.materialized_source_only or a.isolated_gaussian)):
+    p.error("--matched-resolution requires --native-rz and source-only export or isolated Gaussian")
 if a.regrid_rollback and not a.native_rz_regrid:p.error("--regrid-rollback requires --native-rz-regrid")
 if a.regrid_rollback and a.field_after_regrid:p.error("field-after-regrid and rollback are independent runs")
 if a.field_after_regrid and not a.native_rz_regrid:p.error("--field-after-regrid requires --native-rz-regrid")
@@ -63,7 +66,8 @@ if {pathlib.Path(name).name for name in reused_libraries}!={"libarch_driver_runt
 test_args=[str(exe),str(out/"runtime-output")]
 if a.field_after_regrid:test_args.append("--field-after-regrid")
 if a.materialized_source_only:test_args.append("--materialized-source-only")
-if a.matched_resolution is not None:test_args.extend(["--matched-resolution",str(a.matched_resolution)])
+if a.isolated_gaussian:test_args.extend(["--isolated-gaussian",str(0 if a.matched_resolution is None else a.matched_resolution)])
+elif a.matched_resolution is not None:test_args.extend(["--matched-resolution",str(a.matched_resolution)])
 result=subprocess.run(test_args,env={**os.environ,"OMP_NUM_THREADS":"2","CUDA_VISIBLE_DEVICES":""},
     text=True,capture_output=True,timeout=1200 if a.native_rz or a.field_after_regrid or a.regrid_rollback else 30)
 (out/"stdout.log").write_text(result.stdout);(out/"stderr.log").write_text(result.stderr)
@@ -161,5 +165,26 @@ if a.materialized_source_only:
             actualAmrLeafLevel=0,actualRootPatchCount=len(binding["patches"]),
             actualServiceConfiguration=record["service_configuration"],materializedRecordSha256=hashlib.sha256(raw).hexdigest(),
             actualRecordStat=dict(device=after.st_dev,inode=after.st_ino,size=after.st_size,mtimeNs=after.st_mtime_ns,ctimeNs=after.st_ctime_ns))
+if a.isolated_gaussian:
+    summary["scope"]="Actual Native Current -> original isolated Poisson -> actual point/cell consumers for a frozen smooth physical Gaussian; static spatial observations"
+    summary["limitations"]=["No time advancement or coupled energy qualification",
+        "Point energy is a quadrature approximation to the independently analytic continuum energy",
+        "Three-level spatial order requires all actual resolution observations; no public/Device grant"]
+    summary["purposeCoverage"]={"actualRuntimeCurrent":1,"ownerCompleted":result.returncode==0,
+        "physicalQualified":False,"scienceAccepted":False,"timeAdvanced":False}
+    record_path=out/"runtime-output"/"isolated-gaussian-summary.json"
+    if record_path.exists():
+        raw=record_path.read_bytes()
+        def reject_nonfinite(token):raise ValueError("Nonfinite Gaussian observation: "+token)
+        observation=json.loads(raw,parse_constant=reject_nonfinite)
+        level=0 if a.matched_resolution is None else a.matched_resolution
+        if (observation.get("schema")!="arch-native-isolated-gaussian-1"
+            or observation.get("level")!=level or observation.get("cells")!=256*(1<<level)**2
+            or observation.get("physical_qualified") is not False
+            or observation.get("time_advanced") is not False
+            or observation.get("original_residual_pass") is not True):
+            raise RuntimeError("Gaussian observation differs from frozen actual layout/scope")
+        summary["GaussianObservation"]=observation
+        summary["GaussianObservationSha256"]=hashlib.sha256(raw).hexdigest()
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")
 print(json.dumps(summary));raise SystemExit(result.returncode)

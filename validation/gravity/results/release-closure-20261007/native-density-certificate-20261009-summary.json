@@ -1,0 +1,325 @@
+{
+  "schema": "arch-release-math-node-1",
+  "scope": "Negative native density polynomial only and exact-input elliptic interval certificate; public isolated/Device/O9 qualifications remain separate",
+  "baseline": "fbd8e7d95",
+  "scienceQualified": false,
+  "scientific_budgets_changed": false,
+  "physical_eos_floor_changed": false,
+  "evolved_state_or_source_mean_changed": false,
+  "new_user_parameters": 0,
+  "new_ctest_targets": 0,
+  "new_workflows": 0,
+  "sourceSha256": {
+    "src/numerics/reconstruction/RzDensityMoments.h": "c78aa7d1921322f7e0f5ea35bb81712f56a048113ffe5c261f597b7de5d915fa",
+    "src/numerics/elliptic/CompositePoisson.cpp": "d2ac0fb7fd9fcdb43e9039a0a5197133c74e0d9d5b0b7129fc45b89a2f617b37",
+    "src/physics/gravity/self/SelfGravity.cpp": "5f3590b846c77d6e4a179e133ea4db4ecdffe177f09e1508cd22ab6438294c4e"
+  },
+  "negative_density_failure": {
+    "physical_point_density": 4.0389678347315804e-28,
+    "actual_native_mean": 2.849237631967878e-12,
+    "original_sml_rho": 1e-24,
+    "phase": "real physical point EOS before Poisson",
+    "fix": "Only p_min<=0 branch contracts toward minimum of same positive donor means. Exact theta=(m-d)/(m-p_min), same V mean and inertia leaf; bound checked after c0 recompute with original-mean constant fallback; alreadypositive polynomial path unchanged"
+  },
+  "original_CPU_density_owners": {
+    "names": [
+      "curvilinear_metrics",
+      "gravity_stage_contract",
+      "low_density_math"
+    ],
+    "passed": 3,
+    "total": 3,
+    "guard_seconds": 55.4,
+    "build_guard_seconds": 79.161
+  },
+  "certificate_failure": {
+    "original_total": 2.010445437212582e-16,
+    "original_safe": 1.4082390228543642e-16,
+    "algebra": 1.09509946499009e-17,
+    "algebra_target": 7.041195115741804e-17,
+    "complete": 1.900935524422503e-16,
+    "finding": "No double-counted RHS/evaluation ledger; exact grid-input arithmetic was artificially expanded and then amplified through the verified Gram inverse construction bound"
+  },
+  "certificate_fix": {
+    "method": "Finite TwoSum zero error or guarded exact FMA lattice witness retains a point interval; otherwise original outward enclosure",
+    "product_exponent_guard": "ilogb(abs(a))+ilogb(abs(b))>=-970",
+    "underflow_counterexample": "At exponent sum-971, (1+2^-52)*(2^-971+2^-1023) has real rounding residual2^-1075 while FMA returns0; guard rejects this witness",
+    "original_operator_coefficients_or_source_changed": false,
+    "solver_cycle_cap_changed": false,
+    "rtol_atol_changed": false,
+    "all_error_owners_retained": true
+  },
+  "original_CPU_certificate_owners": {
+    "names": [
+      "gravity_stage_contract",
+      "composite_poisson_analytic",
+      "composite_poisson_contract"
+    ],
+    "passed": 3,
+    "total": 3,
+    "guard_seconds": 62.652,
+    "build_guard_seconds": 27.914
+  },
+  "independent_exact_references": {
+    "exact-interval-arithmetic-reference": {
+      "status": "PASS",
+      "cases": 18,
+      "reference": "exact Fraction arithmetic over FP64 native operator arrays",
+      "scope": "stored source/coefficient/volume/weight evaluation only; excludes geometry/source construction and full physical residual acceptance"
+    },
+    "exact-interval-stencil-reference": {
+      "status": "PASS",
+      "cases": 38,
+      "faces": 7464,
+      "coefficientTerms": 38752,
+      "probeSha256": "ebdf859903137f1489606d55f1d00ece1c9c11c3cf6c97e690a06482359f03ba",
+      "scope": "Root-dyadic ideal final RZ stencil interval containment and exact Gram inverse norm"
+    },
+    "exact-interval-residual-reference": {
+      "status": "PASS",
+      "cases": 38,
+      "cells": 3288,
+      "faces": 7464,
+      "probeSha256": "ebdf859903137f1489606d55f1d00ece1c9c11c3cf6c97e690a06482359f03ba",
+      "scope": "Canonical homogeneous native A construction, actual scalar apply/subtraction arithmetic, and complete manufactured ideal-boundary residual interval box"
+    }
+  },
+  "reference_guard_seconds": 10.083,
+  "gaussian_static": {
+    "status": "ACCEPTED_STATIC_WITH_DISCLOSED_NEAR_LIMIT_DEVIATIONS",
+    "frozen_cells": [
+      256,
+      1024,
+      4096
+    ],
+    "physical_budget": 0.001,
+    "smooth_order_budget": 1.8,
+    "relative_poisson_request": 1e-10,
+    "cycle_cap": 200,
+    "levels": [
+      {
+        "schema": "arch-native-isolated-gaussian-1",
+        "level": 0,
+        "cells": 256,
+        "physical_qualified": false,
+        "time_advanced": false,
+        "original_residual_pass": true,
+        "source_generation": 1,
+        "field_generation": 1,
+        "mass_relative_error": 8.782037597132586e-18,
+        "potential": {
+          "L1": 0.00011015181216597816,
+          "RMS": 0.00015497600489373353,
+          "Linf": 0.0006906911479681118
+        },
+        "acceleration": {
+          "L1": 0.0007165293190013221,
+          "RMS": 0.0017548555060459936,
+          "Linf": 0.016635754576029733
+        },
+        "W_point": -8.226723865213427e-07,
+        "W_continuum": -8.255918699304922e-07,
+        "energy_relative_error": 0.0035362308126838187,
+        "tail_potential_normalized_upper": 5.626758735962956e-08,
+        "tail_force_normalized_upper": 2.706418252376022e-07,
+        "tail_energy_relative_upper": 1.480247845726356e-06,
+        "residual_total_upper": 9.858354878953524e-17,
+        "residual_safe_target": 1.4082390230230902e-16
+      },
+      {
+        "schema": "arch-native-isolated-gaussian-1",
+        "level": 1,
+        "cells": 1024,
+        "physical_qualified": false,
+        "time_advanced": false,
+        "original_residual_pass": true,
+        "source_generation": 1,
+        "field_generation": 1,
+        "mass_relative_error": 1.6263032587282567e-17,
+        "potential": {
+          "L1": 2.7478055020002745e-05,
+          "RMS": 3.8493951934967104e-05,
+          "Linf": 0.00020018341219689436
+        },
+        "acceleration": {
+          "L1": 0.00017985191345095715,
+          "RMS": 0.0004471823518192602,
+          "Linf": 0.004427478453329984
+        },
+        "W_point": -8.248589790917424e-07,
+        "W_continuum": -8.255918699304922e-07,
+        "energy_relative_error": 0.0008877156685317217,
+        "tail_potential_normalized_upper": 5.626758735962956e-08,
+        "tail_force_normalized_upper": 2.706418252376022e-07,
+        "tail_energy_relative_upper": 1.480247845726356e-06,
+        "residual_total_upper": 1.5892368285780776e-16,
+        "residual_safe_target": 3.9128233744778835e-16
+      },
+      {
+        "schema": "arch-native-isolated-gaussian-1",
+        "level": 2,
+        "cells": 4096,
+        "physical_qualified": false,
+        "time_advanced": false,
+        "original_residual_pass": true,
+        "source_generation": 1,
+        "field_generation": 1,
+        "mass_relative_error": 3.577867169202165e-18,
+        "potential": {
+          "L1": 6.86563958449891e-06,
+          "RMS": 9.612373873531213e-06,
+          "Linf": 5.1777349168339325e-05
+        },
+        "acceleration": {
+          "L1": 4.502449240333957e-05,
+          "RMS": 0.0001123358460743935,
+          "Linf": 0.0011153376076919747
+        },
+        "W_point": -8.25408343227333e-07,
+        "W_continuum": -8.255918699304922e-07,
+        "energy_relative_error": 0.000222297129905886,
+        "tail_potential_normalized_upper": 5.626758735962956e-08,
+        "tail_force_normalized_upper": 2.706418252376022e-07,
+        "tail_energy_relative_upper": 1.480247845726356e-06,
+        "residual_total_upper": 3.3559287624766864e-16,
+        "residual_safe_target": 1.09722242048443e-15
+      }
+    ],
+    "limits": [
+      "Static point/cell observations, not a continuous coupled energy law or public Device grant",
+      "Original full piecewise source reference unchanged",
+      "No raw H5 generated or uploaded"
+    ],
+    "frozen_strict_budget_pass": false,
+    "observed_orders": {
+      "potential_L1": [
+        2.0031414352205474,
+        2.0008138601121583
+      ],
+      "potential_RMS": [
+        2.0093411623169466,
+        2.0016671229589695
+      ],
+      "potential_Linf": [
+        1.7867183008569607,
+        1.9509294220977755
+      ],
+      "acceleration_L1": [
+        1.99421622956169,
+        1.9980275917438977
+      ],
+      "acceleration_RMS": [
+        1.9724170865674187,
+        1.9930448915132186
+      ],
+      "acceleration_Linf": [
+        1.9097301153429123,
+        1.989004812435065
+      ],
+      "energy": [
+        1.9940428769636072,
+        1.9976083398678017
+      ]
+    },
+    "accepted_deviations": [
+      {
+        "metric": "finest acceleration Linf",
+        "observed": 0.0011153376076919747,
+        "frozen_budget": 0.001,
+        "relative_exceedance": 0.11533760769197476,
+        "interpretation": "Finite second-order spatial truncation; finest order1.989; RMS/L1 far below budget; no solver/source/controller modification"
+      },
+      {
+        "metric": "coarsest potential Linf refinement order",
+        "observed": 1.7867183008569607,
+        "frozen_budget": 1.8,
+        "interpretation": "Coarse preasymptotic pair; next pair1.951, both potentials decrease and finest absolute budget passes"
+      }
+    ],
+    "decision_basis": "2026-10-09 direct user steering: disclose slightly exceeded near-limit spatial observations and accept where error/convergence permit; do not over-defend or undo CPU optimization. Not an industry-wide threshold and not a change to old tests.",
+    "all_level_guard_seconds": [
+      18.41,
+      29.368,
+      256.879
+    ],
+    "original_fine_collector_exit_code": 1,
+    "original_failure_retained": true,
+    "collector_change": "New collector preserves strict budget as a boolean/scalar observation and requires aggregate scientific decision; all original discrete/EOS/source/reference hard gates and old owners unchanged"
+  },
+  "delegation": {
+    "DeepSeek_density": {
+      "wall_seconds": 17.64,
+      "output_tokens": 3066,
+      "estimate_usd": [
+        0.00199375,
+        0.0039875
+      ],
+      "actual_fee": null,
+      "acceptance": "limited exact donor identity, Root Fraction/actual CPU independently accepted"
+    },
+    "DeepSeek_generic_arithmetic": {
+      "wall_seconds": 99.69,
+      "input_tokens": 1345,
+      "cached_input_tokens": 384,
+      "output_tokens": 23974,
+      "thinking_tokens": 23528,
+      "visible_output_tokens": 446,
+      "estimate_usd": [
+        0.0145297,
+        0.0290594
+      ],
+      "actual_fee": null,
+      "first_notice_delay_seconds": 57.819,
+      "review_wall_seconds": 50.216,
+      "blocking_wait_seconds": 0,
+      "formal_repairs_used": 0,
+      "accepted": "exact generic binary64 witness and tight exponent counterexample, Root rational review; no physical gate grant",
+      "parallel_overlap": "Root arithmetic patch, compiled owner work and evidence review; duration overlap not measured",
+      "scope_note": "Private implementation packet rejected by automatic approval, not transmitted; generic numerical-analysis packet succeeded"
+    },
+    "Gemini_selected_prose": {
+      "wall_seconds": 32.091,
+      "input_tokens": 3609,
+      "output_tokens": 2972,
+      "thinking_tokens": 2541,
+      "total_tokens": 6581,
+      "actual_fee": null,
+      "formal_repairs_used": 0,
+      "adoption": "Selected negative-density prose for existing O plan, Root reviewed current source and protected identities"
+    },
+    "manager_active_cost": null,
+    "recommendation": "Keep bounded independent math/text work; generic payloads suffice here. Do not repeat accepted source references or extrapolate overall speedup from one pilot."
+  },
+  "remaining": [
+    "Continuous gravity total energy and affected evolving source references; static Gaussian scope only",
+    "Full FV/coarse-fine/nonlinear and NativeDevice lifecycle",
+    "Necessary CUDA full-library rebuild and remaining O9/producer/CI exits"
+  ],
+  "current_CPU_refresh": {
+    "build_tasks": 111,
+    "build_guard_seconds": 335.537,
+    "original_owners_passed": 76,
+    "original_owners_total": 76,
+    "ctest_seconds": 251.19,
+    "guard_seconds": 252.163,
+    "guard_stopped": false,
+    "minimum_host_free_bytes": 23788658688,
+    "peak_owned_rss_kib": 760856,
+    "swap_growth_kib": 0,
+    "full_test_log_preserved_locally": true,
+    "extra_final_freeze_round": false
+  },
+  "currentSourceSha256": {
+    "src/numerics/reconstruction/RzDensityMoments.h": "c78aa7d1921322f7e0f5ea35bb81712f56a048113ffe5c261f597b7de5d915fa",
+    "src/numerics/elliptic/CompositePoisson.cpp": "d2ac0fb7fd9fcdb43e9039a0a5197133c74e0d9d5b0b7129fc45b89a2f617b37",
+    "src/physics/gravity/self/SelfGravity.cpp": "5f3590b846c77d6e4a179e133ea4db4ecdffe177f09e1508cd22ab6438294c4e",
+    "tests/host/gravity/test_gravity_runtime_rz_contract.cpp": "ac3f426f3d6c47fb7ae4a1b939fdf1175360f5dd7be541a18ce0a68377e440fa",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "2b7bda6eccf67c7cf9a9d4836f6f78e2c2914b62a7a91c1f2d457dcca35d091f",
+    "validation/gravity/run_gravity_runtime_contract.py": "9c933dbb824a00c786a35e6360d879e9b3c05231bfe7d8e91321f616ce50d2d4"
+  },
+  "currentBinarySha256": {
+    "build-release-cpu/bin/ARCH": "274621702007edd84f6e3f8767db679ce1f725bb1952a62bc27c074d754052c5",
+    "build-release-cpu/arch_gravity_stage_contract": "fa3772a5a5f82781f8a98e0745858393279e26472ea703941c1071d5bab5c4ca",
+    "build-release-cpu/arch_curvilinear_metrics": "9f4cf0f48725aa632f9c3845665571a2c541cb84569f2e0916c5619d31443cb0"
+  }
+}

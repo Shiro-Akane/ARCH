@@ -5,6 +5,8 @@
  * Workflow:
  * 1. Fit a density-only quadratic to three real same-row native V means and
  *    enforce positivity over the target cell while preserving its own V mean.
+ *    A fitted negative ray contracts toward existing positive donor means;
+ *    already-positive rays retain their original polynomial and arithmetic.
  *    Central support retains the original path; explicit one-sided support
  *    never fabricates a halo or infers an unavailable density.
  * 2. Integrate C=int rho*r^3 dr and s=int rho*r^5 dr/C with four Gauss points,
@@ -99,29 +101,35 @@ ARCH_INLINE bool extrema(const RzReconstruction::Polynomial& p,
     return true;
 }
 
-/** Contract p toward its positive native mean without a dimensional floor.
- * p_theta=rho_bar+theta*(p-rho_bar) preserves the V mean. c0 is recomputed
- * from the exact authoritative moments after contraction. nextafter moves
- * the positivity boundary inward; theta=0 is the constant limiting segment.
+/** Contract only a negative fit toward its positive native mean.
+ * p_theta=rho_bar+theta*(p-rho_bar) preserves the V mean. The admissible
+ * lower value d is the minimum of the same three positive donor means:
+ * theta=(rho_bar-d)/(rho_bar-p_min). This avoids manufacturing a near-zero
+ * physical point from positive donors at an outflow edge. It is a temporary
+ * conservative ray limiter, not a change to any density mean or user floor.
+ * c0 is recomputed from the actual moments; nextafter moves theta inward.
+ * An already-positive polynomial keeps the original path. If rounding fails
+ * the new contraction bound, the constant original mean is its valid limit.
  */
 ARCH_INLINE bool positive_density(RzReconstruction::Polynomial& p,
     double mean,const RzReconstruction::Moments& moments,
-    double left,double right,double& maximum)
+    double left,double right,double donor_minimum,double& maximum)
 {
     double minimum=0.;
-    if(!(mean>0.)||!std::isfinite(mean)||
+    if(!(mean>0.)||!std::isfinite(mean)||!(donor_minimum>0.)||
+       !std::isfinite(donor_minimum)||donor_minimum>mean||
        !extrema(p,left,right,minimum,maximum))return false;
     if(minimum>0.)return true;
     const double scale=std::fmax(mean,std::abs(minimum));
-    double theta=(mean/scale)/(mean/scale-minimum/scale);
-    theta=std::nextafter(theta,0.);
+    double theta=(mean/scale-donor_minimum/scale)/(mean/scale-minimum/scale);
+    if(theta>0.)theta=std::nextafter(theta,0.);
     if(!std::isfinite(theta)||theta<0.||theta>1.)return false;
     p.linear*=theta;p.quadratic*=theta;
     p.constant=mean-p.linear*moments.first-p.quadratic*moments.second;
     if(!extrema(p,left,right,minimum,maximum))return false;
-    if(!(minimum>0.)) {
-        // Rounding can leave a zero endpoint. The constant mean keeps the
-        // same strictly positive integral without introducing a physical floor.
+    if(minimum<donor_minimum) {
+        // The exact constant limit preserves the same mean and donor bound;
+        // it does not alter evolved rho, its floor, or the common inertia rule.
         p={mean,0.,0.};maximum=mean;
     }
     return true;
@@ -230,7 +238,8 @@ ARCH_INLINE Cell density_cell_supported(const StateReader& read,int index,
     double density_scale=0.;
     if(!detail::positive_density(result.density,target_mean,geometry.volume[target],
         (result.lower-result.origin)/result.spacing,
-        (result.upper-result.origin)/result.spacing,density_scale))return result;
+        (result.upper-result.origin)/result.spacing,
+        std::fmin(low.rho,std::fmin(middle.rho,high.rho)),density_scale))return result;
     density_scale=std::fmax(density_scale,target_mean);
     const double radius_scale=std::fmax(std::abs(result.lower),std::abs(result.upper));
     const double half=.5*(result.upper-result.lower),midpoint=result.lower+half;

@@ -198,10 +198,39 @@ void test_rz_supported_density()
             a=cell.density.constant-static_cast<long double>(cell.density.linear)*o/h+c*o*o;
         const SupportedDensityReference contracted{a,b,c};
         close(contracted.mean(0.,1.),1.,"RZ one-sided contraction preserved actual target V mean");
+        // The target mean is also the minimum donor. The independently exact
+        // negative-fit contraction has theta=(1-1)/(1-p_min)=0, hence rho=1.
+        for(double t:{-.5,0.,.5})close(cell.density.at(t),1.,
+            "RZ negative fit manufactured a near-zero point from positive donors");
         close(cell.capacity,static_cast<double>(contracted.integral(0.,1.,3)),
             "RZ one-sided contracted signed C");
         close(cell.mean_s,static_cast<double>(contracted.integral(0.,1.,5)/contracted.integral(0.,1.,3)),
             "RZ one-sided contracted graph abscissa");
+    }
+
+    // An independent affine polynomial has native V mean m on r=[1,2]:
+    // <t>_V=1/18, <t^2>_V=1/12, p_min=-11m/9. With donor_min=m/4,
+    // theta=27/80 gives the exact limiting coefficients (37m/40,27m/20,0).
+    // The constant m is permitted only as the existing rounded-bound fallback.
+    for(double mean:{1.,1e-12,1e-100}) {
+        RzReconstruction::Polynomial p{mean*(7./9.),4.*mean,0.};
+        RzReconstruction::Moments moments;moments.first=1./18.;moments.second=1./12.;
+        double maximum=0.;
+        if(!RzDensity::detail::positive_density(p,mean,moments,-.5,.5,.25*mean,maximum))
+            throw std::runtime_error("RZ donor-supported negative density ray was rejected");
+        double minimum=0.;
+        if(!RzDensity::detail::extrema(p,-.5,.5,minimum,maximum)||minimum<.25*mean)
+            throw std::runtime_error("RZ donor-supported density contraction lost its positive bound");
+        close((p.constant+p.linear/18.+p.quadratic/12.)/mean,1.,
+            "RZ donor-supported density contraction changed native mass");
+        if(p.linear!=0.) {
+            close(p.constant/mean,37./40.,"RZ exact donor-supported density constant");
+            close(p.linear/mean,27./20.,"RZ exact donor-supported density slope");
+        } else close(p.constant/mean,1.,"RZ rounded density fallback changed its original mean");
+        RzReconstruction::Polynomial valid{mean,0.,0.};
+        if(!RzDensity::detail::positive_density(valid,mean,moments,-.5,.5,.25*mean,maximum)
+            ||valid.constant!=mean||valid.linear!=0.||valid.quadratic!=0.)
+            throw std::runtime_error("RZ already-positive density polynomial changed");
     }
 
     const auto grid=grid_for(1,5);

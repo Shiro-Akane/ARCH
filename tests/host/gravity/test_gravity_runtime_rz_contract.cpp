@@ -31,6 +31,9 @@
 #include <span>
 #include <sstream>
 #include <vector>
+#include <algorithm>
+#include <iomanip>
+#include <numbers>
 static void require(bool x,const char* m){if(!x)throw std::runtime_error(m);}
 template<class F> static void rejects(F f,const char* m){
     bool failed=false;try{f();}catch(const std::exception&){failed=true;}
@@ -550,8 +553,226 @@ void export_json(const std::filesystem::path& out,SimConfig& config,
 }
 } // namespace source_inspection_checks
 
+namespace isolated_gaussian_checks {
+using Real=long double;
+constexpr Real pi=std::numbers::pi_v<Real>;
+constexpr Real G=arch::constants::gravity::cgs::gravitational_constant;
+constexpr Real finest_budget=1e-3L,reference_budget=1e-4L;
+
+/** Independent integral of rho=exp(-r^2-z^2) in the actual full-ring cell.
+ * Integral rho*dV = pi*(exp(-rL^2)-exp(-rH^2))*sqrt(pi)/2
+ *                  *(erf(zH)-erf(zL)); dV=pi*(rH^2-rL^2)*dz.
+ * Store its V mean once as binary64; no production reconstruction is borrowed.
+ */
+Real density_mean(Real rl,Real rh,Real zl,Real zh) {
+    const Real mass=pi*(std::exp(-rl*rl)-std::exp(-rh*rh))
+        *std::sqrt(pi)/2*(std::erf(zh)-std::erf(zl));
+    const Real volume=pi*(rh*rh-rl*rl)*(zh-zl);
+    require(volume>0.&&mass>0.,"Gaussian exact source mean lost positivity");
+    return mass/volume;
+}
+
+/** Full-space spherical Newton reference and separately bounded omitted tail.
+ * M=pi^(3/2), Phi=-G*M*erf(s)/s, W=-G*M^2/sqrt(2*pi).
+ * The rectangular full-ring domain contains the ball s<=4. Positive tail
+ * shell comparison bounds potential globally; an observer-centered split
+ * bounds force by G*(4*pi*rho_max*a+M_tail/a^2), without assuming spherical
+ * cancellation for the actually omitted rectangular complement.
+ */
+struct Reference {
+    const Real mass=pi*std::sqrt(pi),phi_scale=4*pi*G,g_scale=4*pi*G;
+    const Real energy=-G*mass*mass/std::sqrt(2*pi);
+    const Real domain_mass=mass*(1-std::exp(-16.L))*std::erf(4.L);
+    const Real tail_mass=mass*std::erfc(4.L)+8*pi*std::exp(-16.L);
+    const Real tail_phi=2*pi*G*std::exp(-16.L);
+    const Real a=std::cbrt(tail_mass/(2*pi*std::exp(-16.L)));
+    const Real tail_g=G*(4*pi*std::exp(-16.L)*a+tail_mass/(a*a));
+    const Real tail_energy=2*pi*G*tail_mass;
+    std::array<Real,3> at(Real r,Real z) const {
+        const Real s=std::hypot(r,z);
+        if(s==0.)return {-2*pi*G,0.,0.};
+        const Real phi=-G*mass*std::erf(s)/s;
+        const Real factor=-G*mass*(std::erf(s)-2*s*std::exp(-s*s)/std::sqrt(pi))/(s*s*s);
+        return {phi,factor*r,factor*z};
+    }
+};
+
+/** Reduce all actual cell observations with independent true full-ring volume.
+ * These point potential/acceleration norms and W_point are spatial accuracy
+ * observations; they are not an exact continuum or finite-step energy law.
+ */
+struct Norms {
+    Real l1=0.,rms=0.,linf=0.;
+    void add(Real error,Real volume) {
+        require(std::isfinite(error)&&volume>0.,"Gaussian observation is nonfinite");
+        l1+=volume*std::abs(error);rms+=volume*error*error;
+        linf=std::max(linf,std::abs(error));
+    }
+    void finish(Real volume,Real scale) {
+        l1/=volume*scale;rms=std::sqrt(rms/volume)/scale;linf/=scale;
+    }
+    void write(std::ostream& out) const {
+        out<<"{\"L1\":"<<l1<<",\"RMS\":"<<rms<<",\"Linf\":"<<linf<<'}';
+    }
+    bool finest_pass() const {return l1<=finest_budget&&rms<=finest_budget&&linf<=finest_budget;}
+};
+
+/** Actual Runtime Current -> original native Poisson -> original cell consumers.
+ * Freeze source, CGS G, domain, solver request, physical budgets and geometry
+ * before the first solve. Every active cell is retained, including the axis.
+ * The original lifecycle and piecewise-ring source lanes remain separate.
+ */
+void run(const std::filesystem::path& out,int level) {
+    require(!std::filesystem::exists(out),"Gaussian fixture requires a fresh output directory");
+    const Reference reference;
+    require(reference.tail_phi/reference.phi_scale<=reference_budget
+        &&reference.tail_g/reference.g_scale<=reference_budget
+        &&reference.tail_energy/std::abs(reference.energy)<=reference_budget,
+        "Gaussian omitted-tail reference uncertainty exceeds frozen resolution budget");
+    const int scale=1<<level;
+    SimConfig config;config.grid.geometry="cylindrical";config.grid.dim=2;
+    config.grid.nblockx1=config.grid.nblockx2=scale;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=4.;config.grid.x2_min=-4.;config.grid.x2_max=4.;
+    config.grid.x1l_boundary_type="reflecting";config.grid.x1r_boundary_type="outflow";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
+    config.grid.amr_max_blocks=4*scale*scale;config.amr.lrefinemax=1;
+    config.numerics.sml_rho=1e-24;config.numerics.min_eint=1e-12;config.numerics.max_eint=1e21;
+    config.physics.gravity.boundary="isolated";
+    config.physics.gravity.relative_tolerance=1e-10;config.physics.gravity.absolute_tolerance=0.;
+    config.physics.gravity.max_cycles=200;config.io.out_dir=out.string();
+    require(amr::BLOCK_NX==16&&amr::BLOCK_NY==16,"Gaussian fixture requires original16x16 native blocks");
+    const std::size_t expected=256*scale*scale;
+    SpeciesManager species;species.add_species("fixture",1.,1.,1.4,1.);IdealGas eos(1.4,species);
+    amr::AMRControl control(config.grid.amr_max_blocks,2);
+    control.tree->InitRootGrid(config,1,GridMetrics::GeometrySemantics::AxisymmetricRz);
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+        for(auto* state:rz_runtime_witness::slots(block)) {
+            state->InitSpecies(1);
+            for(int cell=0;cell<grid.GetTotalSize();++cell) {
+                state->set(cell,{1.,0.,0.,0.,10.});state->X(0,cell)=1.;
+            }
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                const int cell=grid.GetIndex(i,j,0);
+                const double rho=static_cast<double>(density_mean(grid.GetFacePosL(i),grid.GetFacePosR(i),
+                    grid.GetAxialFacePosL(j),grid.GetAxialFacePosR(j)));
+                require(std::isfinite(rho)&&rho>config.numerics.sml_rho,"Gaussian source violates explicit density bounds");
+                state->set(cell,{rho,0.,0.,0.,10.*rho});
+            }
+        }
+    }
+    RunState start{};SimulationController counters(config,start);
+    BCHandler boundary(config,GridMetrics::GeometrySemantics::AxisymmetricRz);boundary.bind(eos,species);
+    arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.bind_native_rz_eos(eos);
+    // The actual Runtime constructor binds an empty repair owner to its RZ
+    // measure. Freeze that legitimate identity before any initialization or
+    // solve; compare all values/metadata afterward, without accepting repairs.
+    require(counters.repairs.semantics==arch::state::RepairSemantics::RzVolumeAngular
+        &&std::all_of(counters.repairs.values.begin(),counters.repairs.values.end(),
+            [](double value){return value==0.;}),"Gaussian initial repair owner is not empty RZ");
+    const auto repairs=counters.repairs;
+    const auto report_rejection=[&](const RzThermodynamics::AcceptanceDiagnostic& diagnostic) {
+        std::cerr<<"GAUSSIAN_ACTUAL_CLOSURE_REJECTION phase="<<int(diagnostic.phase)
+            <<" status="<<int(diagnostic.status)<<" i="<<diagnostic.i<<" j="<<diagnostic.j
+            <<" node="<<diagnostic.node<<std::endl;
+        if(scale==1&&diagnostic.node>=0) {
+            const auto& block=control.pool->GetBlock(control.tree->GetActiveBlocks().front());
+            const auto view=GridMetrics::make_geometry_view(block.grid,GridMetrics::GeometrySemantics::AxisymmetricRz);
+            const auto read=[&](int c){return block.fluid_state.get(c);};
+            const auto cell=RzThermodynamics::make_cell(read,diagnostic.index,view,diagnostic.i,
+                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+            const auto point=RzThermodynamics::base_point(cell,RzThermodynamics::physical_node_radius(cell,diagnostic.node));
+            std::cerr<<std::setprecision(17)<<"GAUSSIAN_ACTUAL_POINT rho="<<point.rho
+                <<" native_rho="<<read(diagnostic.index).rho<<" E="<<point.eng
+                <<" density_floor="<<config.numerics.sml_rho<<std::endl;
+        }
+    };
+    try {runtime.initialize_topology();}
+    catch(const arch::driver::NativeBoundaryAcceptanceError& error) {report_rejection(error.diagnostic);throw;}
+    Physical::Gravity::SelfGravity gravity(config.physics.gravity);
+    auto capture=std::make_shared<Capture>();gravity.set_execution(capture);
+    using Stage=arch::driver::GravityStage;
+    Stage stage(runtime,&gravity,Stage::Qualification::NativeRzCandidate);
+    try {stage.prepare_current(0.,true);}
+    catch(const arch::driver::NativeBoundaryAcceptanceError& error) {report_rejection(error.diagnostic);throw;}
+    const auto solution=stage.native_current_source_and_field();const auto& field=solution.field();
+    const auto& certificate=field.conditional_residual;
+    require(capture->gathers==1&&solution.cells().size()==expected&&solution.density().size()==expected
+        &&field.potential.size()==expected&&field.acceleration[0].size()==expected
+        &&field.acceleration[1].size()==expected,"Gaussian solve lost actual cell/source coverage");
+    require(field.runtime_lease_authenticated&&field.source.input_time==0.
+        &&certificate.status==arch::elliptic::BoundaryResidualStatus::Accepted
+        &&certificate.total_residual_upper<=certificate.tolerance_safe,
+        "Gaussian actual native solve failed original complete residual certificate");
+    const auto context=runtime.stage_context();
+    require(field.source.inputs.size()==runtime.handles().size(),"Gaussian source lease lost an active owner");
+    for(const auto& input:field.source.inputs)
+        require(input.slot==arch::state::StateSlot::Current&&input.storage_generation>0
+            &&input.version==context.ledger.inspect({input.block,input.slot}).interior.version,
+            "Gaussian source uses another actual Runtime slot/version");
+    Norms potential,force;Real volume_sum=0.,mass_sum=0.,energy=0.;
+    for(std::size_t n=0;n<expected;++n) {
+        const auto& cell=solution.cells()[n];const Real rl=cell.lower[0],rh=cell.upper[0];
+        const Real zl=cell.lower[1],zh=cell.upper[1];
+        const Real volume=pi*(rh*rh-rl*rl)*(zh-zl);
+        const double expected_rho=static_cast<double>(density_mean(rl,rh,zl,zh));
+        require(rz_runtime_witness::bits(solution.density()[n],expected_rho),
+            "Actual Gaussian materialized density differs from independently integrated source");
+        require(std::abs(Real(cell.operator_volume)/volume-1)<=1e-12L,
+            "Gaussian operator measure differs from independent full-ring volume");
+        const auto exact=reference.at(cell.center[0],cell.center[1]);
+        potential.add(Real(field.potential[n])-exact[0],volume);
+        force.add(std::hypot(Real(field.acceleration[0][n])-exact[1],
+            Real(field.acceleration[1][n])-exact[2]),volume);
+        volume_sum+=volume;mass_sum+=solution.density()[n]*volume;
+        energy+=.5L*solution.density()[n]*volume*field.potential[n];
+    }
+    potential.finish(volume_sum,reference.phi_scale);force.finish(volume_sum,reference.g_scale);
+    const Real mass_error=std::abs(mass_sum/reference.domain_mass-1);
+    const Real energy_error=std::abs(energy/reference.energy-1);
+    require(mass_error<=1e-12L&&counters.t_current==0.&&counters.step_count==0
+        &&rz_runtime_witness::same_repairs(counters.repairs,repairs),
+        "Gaussian actual source changed mass, clock or repair ledger");
+    std::ofstream writer(out/"isolated-gaussian-summary.json");require(bool(writer),"Cannot create Gaussian thin receipt");
+    writer<<std::setprecision(std::numeric_limits<Real>::max_digits10)
+        <<"{\"schema\":\"arch-native-isolated-gaussian-1\",\"level\":"<<level
+        <<",\"cells\":"<<expected<<",\"physical_qualified\":false,\"time_advanced\":false"
+        <<",\"original_residual_pass\":true,\"source_generation\":"<<field.source_generation
+        <<",\"field_generation\":"<<field.field_generation<<",\"mass_relative_error\":"<<mass_error
+        <<",\"potential\":";potential.write(writer);writer<<",\"acceleration\":";force.write(writer);
+    writer<<",\"W_point\":"<<energy<<",\"W_continuum\":"<<reference.energy
+        <<",\"energy_relative_error\":"<<energy_error
+        <<",\"tail_potential_normalized_upper\":"<<reference.tail_phi/reference.phi_scale
+        <<",\"tail_force_normalized_upper\":"<<reference.tail_g/reference.g_scale
+        <<",\"tail_energy_relative_upper\":"<<reference.tail_energy/std::abs(reference.energy)
+        <<",\"residual_total_upper\":"<<certificate.total_residual_upper
+        <<",\"residual_safe_target\":"<<certificate.tolerance_safe
+        <<",\"finest_accuracy_tested\":"<<(level==2?"true":"false")
+        <<",\"frozen_finest_accuracy_pass\":"
+        <<(level==2&&potential.finest_pass()&&force.finest_pass()&&energy_error<=finest_budget
+            ?"true":"false")<<"}\n";
+    writer.flush();require(bool(writer),"Cannot publish Gaussian thin receipt");
+    std::cout<<"ACTUAL_RZ_ISOLATED_GAUSSIAN_OBSERVED level="<<level<<" cells="<<expected
+        <<" potential_Linf="<<potential.linf<<" force_Linf="<<force.linf
+        <<" energy_relative="<<energy_error<<" repairs=0 time=0 physical_qualified=0"<<std::endl;
+    // A single static level collects observations; the maintainer assesses
+    // all three levels, convergence and any explicitly accepted near-limit
+    // deviation together. Preserve the original budget result in the receipt,
+    // rather than treating this collector as a public physics qualification.
+    if(level==2&&!(potential.finest_pass()&&force.finest_pass()&&energy_error<=finest_budget))
+        std::cout<<"GAUSSIAN_FROZEN_FINEST_ACCURACY_EXCEEDED budget="<<finest_budget
+            <<" all_level_scientific_review_required=1"<<std::endl;
+}
+} // namespace isolated_gaussian_checks
+
 int main(int argc,char** argv){
  try {
+    if(argc==4&&std::string(argv[2])=="--isolated-gaussian") {
+        const std::string level(argv[3]);require(level=="0"||level=="1"||level=="2",
+            "Gaussian static fixture requires exact resolution level0,1or2");
+        isolated_gaussian_checks::run(argv[1],level[0]-'0');return 0;
+    }
     const bool default_lane=argc==2;
     const bool source_lane=(argc==3||argc==5)&&std::string(argv[2])=="--materialized-source-only";
     require(default_lane||source_lane,

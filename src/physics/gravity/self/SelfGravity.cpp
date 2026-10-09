@@ -468,6 +468,9 @@ arch::state::CompletionToken SelfGravity::prepare(const GravitySolveRequest& req
                 <<" boundary_error="<<w.ring_assessment.native_boundary_potential.native_norm_upper
                 <<" assembly_error="<<w.ring_assessment.assembly_error.norm_upper
                 <<" evaluation_error="<<w.ring_assessment.native_residual_error.native_norm_upper
+                <<" apply_arithmetic="<<w.ring_assessment.native_residual_error.arithmetic.norm_upper
+                <<" joint_construction="<<op.native_rz_prescribed_residual_construction_error(
+                    e.download(w.solver.resident_potential()),w.ring.values).native_norm_upper
                 <<" complete_error="<<w.ring_assessment.native_complete_residual_error.native_norm_upper;
             throw std::runtime_error(message.str());
         }
