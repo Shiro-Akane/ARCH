@@ -32,7 +32,7 @@
 
 2026-10-09复核：发布估计约完成75%，属于按工作包加权的工程判断，不能从局部测试通过率推导release就绪。分母、估计范围和六个剩余出口统一见[O总表的发布进度](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)，本页仅保存原证据。主要剩余工作为完整NativeDevice接线、FV／粗细面与非线性阶段、活动燃烧及其余长时耦合；当前producer的GUI／Plot、完整必要回归、最终整程计时和CI覆盖也要结算。
 
-本轮校准为只读源码／证据核对及计划更新，没有运行新模拟、编译或补测。前述76/76、四个CPU owner、三个CUDA owner和六条燃烧路线均使用各自已记录身份；完整NativeDevice仍未授予公共运行能力。4070Ti资料仅有历史记录，当前同配置配对缺测；Windows、额外最终冻结轮和O10仍按既定顺序暂缓。服务／参考节点独立封包并保留有限范围，计划校准不代替生产实现及完整回归。
+当前计划校准与实际消费者验收分别记录：新resident反射层的受影响CPU编译与原两owner通过，CUDA同缓存编译中，尚未授予运行能力。前述76/76、四个CPU owner、三个CUDA owner和六条燃烧路线均使用各自已记录身份；完整NativeDevice仍未授予公共运行能力。4070Ti资料仅有历史记录，当前同配置配对缺测；Windows、额外最终冻结轮和O10仍按既定顺序暂缓。服务／参考节点独立封包并保留有限范围，计划校准不代替生产实现及完整回归。
 
 同一resident服务在真实存储上只返回紧凑EOS诊断，完整预检后才launch；原多块燃烧owner新增的Native子集覆盖实际Helmholtz/aprox13、DenseLU与cuDSS的BE_NR／BD／ROS4，原密度与三个动量存储位保持。编译中的NVCC隐式C++20比较链接错误已用现有Host存储解析器和实际owner唯一性修复，无共享类型或数学改动。当前三个CUDA owner及新增六条实际燃烧路线通过，完整NativeDevice仍按后续真实ghost／AMR／hydro／gravity消费者验收。[处理后摘要](../../validation/gravity/results/release-closure-20261007/native-device-resident-burn-20261009-summary.json)保留真实编译失败、累积成本、输入／执行物身份和有限结论。
 
@@ -80,6 +80,8 @@ EOS 面近似开关已在此前优化试验中撤回：没有取得加速，且�
 
 2026-10-09共享完成态EOS节点：原Host接受主体提取为同一Host/Device标量叶，原生预检、实际密度／惯量闭合、mean及六个物理节点的EOS顺序和原预算保持；Host异常文字与phase保持。CUDA读取既有required-query失败锁存，有限错误返回不能使单元变为有效。四个受影响CPU owner和两个真实CUDA owner全部通过；原逻辑单元身份、signed-axis Host ghost及NaN padding位保持均有原owner断言，没有新增CTest、用户参数或演化量。一次新增测试lambda标注编译错误已用原项目写法修复，保留失败与215.649秒累计编译记录；实际Device检查1.63秒通过。该节点仅授予共享单元检查叶，resident batch服务、真实原生ghost与完整NativeDevice／长程仍按下一消费者验收。[处理后记录](../../validation/gravity/results/release-closure-20261007/native-device-eos-leaf-20261009-summary.json)。
 
+
+当前消费者回查（2026-10-09 UTC）：有序边界后端层的受影响CPU原owner2/2及架构111/111通过；当前CUDA原边界和真实存储owner均已通过，零组分夹具仅修正既有传输步幅契约，原数值窗口保持。真实存储执行物memcheck／leak-check为0错误、0泄漏；全部构建累计3044.675秒，原失败保留。[限定消费者记录](../../validation/amr/results/release-closure-20261009/native-device-reflecting-layer-summary.json)保存具体身份与范围。完整Native宏步／边界接线与其余O9仍开放，已签收共享数学不重开。现有owner的测试候选与CI映射并行完成，后续先集成已冻结候选，再验收实际消费者。任务责任和发布出口统一见[主计划当前批次](ComputeOptimizationPlan.zh-CN.md#当前执行批次原消费者接线与o9账本)。
 
 ## 规则基准与完成标准
 

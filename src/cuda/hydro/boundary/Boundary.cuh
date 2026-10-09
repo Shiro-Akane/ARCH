@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 #include <limits>
 
@@ -75,14 +76,17 @@ static __global__ void boundary_phase_kernel(
  * outputs belong to the caller's candidate buffer, never the input fields.
  * The shared leaf owns the original point EOS, mirror and V/W integrals.
  * The first failure remains sticky; sibling lanes still validate their own
- * required EOS queries. Runtime joins all layers before any publication.
+ * required EOS queries. Readonly prefix entries override actual resident
+ * ghosts, including the inherited ENUC; siblings never read candidate outputs.
+ * Runtime joins all layers before any publication.
  */
 template<class Eos>
 __global__ void native_reflecting_candidates_kernel(
     DeviceStateView input, DeviceGridView grid,
     const boundary::native_rz_math::Request* requests, int count,
     state::Bounds bounds, Eos eos, SpeciesWorkspaceView workspace,
-    FluidVector* conserved, double* fractions, int* failed)
+    FluidVector* conserved, double* fractions, int* failed,
+    NativeBoundaryPrefixView prefix, double* enuc)
 {
     namespace math = boundary::native_rz_math;
     __shared__ int required_status[kSpeciesKernelThreads];
@@ -92,9 +96,9 @@ __global__ void native_reflecting_candidates_kernel(
     const auto checked = make_checked_hydro_eos(eos, required_status + threadIdx.x);
     const math::Context context{make_grid_geometry_view(grid),
         grid.total_x, grid.total_y, grid.is, grid.ie, grid.js, grid.je};
-    const auto read = [input](int index) { return input.load(index); };
-    const auto fraction = [input](int species, int index) {
-        return input.species(species, index);
+    const auto read = [input, prefix](int index) { return prefix.read(input, index); };
+    const auto fraction = [input, prefix](int species, int index) {
+        return prefix.fraction(input, species, index);
     };
     // This buffer is borrowed for this launch only. Contiguous lane rows let
     // the unchanged common leaf reuse its original source/support/sample Xi
@@ -110,6 +114,15 @@ __global__ void native_reflecting_candidates_kernel(
             const auto status = result.valid() ? math::Status::invalid_point_eos : result.status;
             atomicCAS(failed, 0, static_cast<int>(status));
             break;
+        }
+        if (enuc) {
+            const int source = grid.index(requests[ordinal].source[0], requests[ordinal].source[1]);
+            const double inherited_enuc = prefix.enuc_value(input, source);
+            if (!std::isfinite(inherited_enuc)) {
+                atomicCAS(failed, 0, static_cast<int>(math::Status::invalid_source_state));
+                break;
+            }
+            enuc[ordinal] = inherited_enuc;
         }
         conserved[ordinal] = result.conserved;
         for (int s = 0; s < input.n_species; ++s)
@@ -129,19 +142,25 @@ inline cudaError_t launch_native_reflecting_candidates(
     DeviceStateView input, DeviceGridView grid,
     const boundary::native_rz_math::Request* requests, int count,
     state::Bounds bounds, Eos eos, SpeciesWorkspaceView workspace,
-    FluidVector* conserved, double* fractions, int* failed, cudaStream_t stream)
+    FluidVector* conserved, double* fractions, int* failed, cudaStream_t stream,
+    NativeBoundaryPrefixView prefix = {}, double* enuc = nullptr)
 {
     if (!valid_hydro_view(input) || !valid_hydro_grid(grid)
         || grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
         || input.total_size != grid.total_size || count < 1 || !requests
         || !conserved || !failed || !state::valid_bounds(bounds)
         || (input.n_species > 0 && (!fractions || !workspace.values))
-        || !valid_species_workspace(workspace, input.n_species, 11))
+        || !valid_species_workspace(workspace, input.n_species, 11)
+        || prefix.count < 0
+        || (prefix.count > 0 && (!prefix.indices || !prefix.conserved || !prefix.enuc
+            || prefix.species != input.n_species
+            || (input.n_species > 0 && !prefix.fractions))))
         return cudaErrorInvalidValue;
     const int threads = detail::species_launch_threads(workspace);
     const int blocks = detail::species_launch_blocks(count, workspace);
     detail::native_reflecting_candidates_kernel<<<blocks, threads, 0, stream>>>(
-        input, grid, requests, count, bounds, eos, workspace, conserved, fractions, failed);
+        input, grid, requests, count, bounds, eos, workspace, conserved, fractions, failed,
+        prefix, enuc);
     return cudaPeekAtLastError();
 }
 

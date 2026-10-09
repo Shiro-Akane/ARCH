@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "status": "PASS_ACTUAL_UNPUBLISHED_NATIVE_REFLECTING_LAYER_ONLY",
+  "base_commit": "02561c85b84bc003a44ae61a70d9cd7607c5139f",
+  "recorded_at_utc": "2026-10-09T15:19:02.667572+00:00",
+  "unique_checkout": "/home/shiroakane/ARCH",
+  "source_sha256": {
+    "src/cuda/hydro/boundary/Boundary.cuh": "b8a9a368d57864d1e991913482dae094741cac6fd13d34cb781b353b0a3e5618",
+    "src/cuda/hydro/boundary/BoundaryPlan.h": "57ad942cf781ff7e7cb3c66cd37a57da52579872098574118f226723452e133f",
+    "src/cuda/runtime/CudaBackend.h": "59bbc93fc958faf611eb2cd9f9853e415b5a0cd7d0757546ff49c8a6787a631d",
+    "src/cuda/runtime/boundary/CudaBackendBoundary.cu": "48f77b77ff2667dc80ce67ecf385b439815632bc41aece66e6eb318f63eb8c1a",
+    "src/cuda/runtime/control/CudaBackendInternal.h": "faa12ad22311af3ae77bd29dce2d85cdc6e9cbcbbb31e4bededcf71885f10546",
+    "src/driver/runtime/ComputeBackend.h": "6b14d8a7bf8f26afec7356a4ed930a35d22a62d3a970f10dd0e82e93e7251726",
+    "tests/cuda/runtime/test_cuda_store_lifecycle.cpp": "2855fe892378fdc8926d263b776c8e747bd4081cbfdf544eb091c930bb296c43"
+  },
+  "CPU": {
+    "affected_existing_owners": [
+      "boundary_plan",
+      "gravity_stage_contract"
+    ],
+    "passed": 2,
+    "build_guard_seconds": 61.074,
+    "ctest_seconds": 37.38,
+    "full_current_release_regression": false
+  },
+  "architecture": {
+    "existing_owner_tests_passed": 111,
+    "seconds": 5.259,
+    "change_scope": "Reviewed service symbol exact names at3 specific owners only; forbidden dispatch/body scan stays active, wrong owner and body negative cases preserved"
+  },
+  "CUDA": {
+    "build_attempts": [
+      {
+        "log": "native-backend-layer-cuda-build.log",
+        "guard_seconds": 900.341,
+        "result": "timeout124",
+        "guard_stopped": false,
+        "sha256": "310a56be38e997f0be4b139c53a50eae8568a81f5004233b20de383ae5592b48"
+      },
+      {
+        "log": "native-backend-layer-cuda-build-continued.log",
+        "guard_seconds": 899.985,
+        "result": "timeout124",
+        "guard_stopped": false,
+        "sha256": "134f7429db30121af3f1775306fd48eac6251bd8c7647204933efb3ee8c93ad9"
+      },
+      {
+        "log": "native-backend-layer-cuda-build-final.log",
+        "guard_seconds": 1212.062,
+        "result": "PASS",
+        "guard_stopped": false,
+        "sha256": "de2aa4f38ccdfad949ab2b7de28baf08372ecd79afa60b658dd8630cbb38b776"
+      },
+      {
+        "log": "native-backend-layer-cuda-parity-build.log",
+        "guard_seconds": 19.179,
+        "result": "PASS",
+        "guard_stopped": false,
+        "sha256": "6b191041163d9b3a41707938d24e5a30f746fb449a33b884b7306f36290cbb6d"
+      },
+      {
+        "log": "native-backend-layer-cuda-fixture-rebuild.log",
+        "guard_seconds": 13.108,
+        "result": "PASS",
+        "guard_stopped": false,
+        "sha256": "ac8e01e836915b68cecd353eaed342d5f143396f7d726d3b405bc812edcefef6"
+      }
+    ],
+    "cumulative_all_affected_build_seconds": 3044.675,
+    "original_owner_results": [
+      {
+        "name": "boundary_plan_parity",
+        "status": "run",
+        "seconds": 0.469888,
+        "source_junit": "native-backend-layer-cuda-tests.junit.xml",
+        "skipped": false
+      },
+      {
+        "name": "cuda_store_lifecycle",
+        "status": "fail",
+        "seconds": 0.265001,
+        "source_junit": "native-backend-layer-cuda-tests.junit.xml",
+        "skipped": false
+      },
+      {
+        "name": "cuda_store_lifecycle",
+        "status": "run",
+        "seconds": 0.321733,
+        "source_junit": "native-backend-layer-cuda-store-tests-repaired.junit.xml",
+        "skipped": false
+      }
+    ],
+    "fixture_failure": "N0 newtest HostStateTransferView had nonzero species stride before layer launch; set0 as existing contract, no numerical assertion/window change",
+    "math_window": "Existing64*doubleepsilon*max(abs(actual),abs(expected)) unchanged",
+    "actual_species_counts": [
+      0,
+      2
+    ],
+    "layers": [
+      "real radial whole-depth immutable siblings",
+      "real axial corners using complete sorted radial ghost prefix"
+    ],
+    "checks": [
+      "actual store/storage/slot, selected EOS/bounds and explicit11*N small-network workspace",
+      "all request/prefix preflight before launch; stale/mixed/duplicate/interior/padding indices refused",
+      "full compact surface shape, cell-major Xi and exact inherited ENUC",
+      "compact actual H2D/D2H/kernel counters",
+      "logical source fields unchanged; materialization doesnot overwriteHost padding",
+      "finite invalid thermodynamic source failure, no partial accepted surface, nextvalid reuse"
+    ],
+    "padding_scope": "Actualresident paddingbits not directly observable through this public backendfixture. Kernel write-only outputs and original commonleaf directfullallocation owner scope retained; no public-fixture paddingbit grant",
+    "memcheck": {
+      "owner": "arch_cuda_store_lifecycle currentELF",
+      "tool": "CUDA12.3 compute-sanitizer --tool memcheck --leak-check full --error-exitcode99",
+      "errors": 0,
+      "leaked_bytes": 0,
+      "leaked_allocations": 0,
+      "guard_seconds": 1.017
+    }
+  },
+  "scientific_or_architectural_changes": {
+    "new_math": false,
+    "new_evolved_field_or_scientific_parameter": false,
+    "original_budgets_changed": false,
+    "two_Strang_halves_preserved": true,
+    "full_face_EOS_and_CPU_optimizations_preserved": true,
+    "new_CTest_target_or_workflow": false
+  },
+  "remaining_release_exits": [
+    "actual BCHandler builtin/user ordered candidate domain and two exchanges",
+    "actual cached finalaxis/corner and true completedEOS before ghostpublication",
+    "actual residentwholemacro field/metadata rollback and retry/restart",
+    "remaining R1FV/CF/nonlinear and R3O9 coupling/resource longtrajectories",
+    "final currentproducerGUI/Plot, source-dependent regressions/CI and paired CPU/CUDA timings"
+  ],
+  "auxiliary": {
+    "DeepSeek_adapter": {
+      "status": "PASS_LIMITED_STORAGE_ADAPTER_THEN_ACTUAL_BACKEND_OWNER",
+      "wall_seconds": 38.28,
+      "input_tokens": 1464,
+      "cache_input_tokens": 256,
+      "output_tokens": 9291,
+      "estimated_USD_range": [
+        0.00575657,
+        0.01151314
+      ],
+      "actual_billing": null
+    },
+    "DeepSeek_endpoint_semantics": {
+      "status": "PASS_LIMITED_PUBLIC_IDENTITIES_PARTIAL_ADOPTION_AFTER_SOLE_SIGN_REPAIR",
+      "wall_seconds_all_attempts": 67.63,
+      "estimated_USD_range": [
+        0.0091223,
+        0.0182446
+      ],
+      "actual_billing": null,
+      "root_exact_fraction_cases": 256,
+      "algorithm_qualified": false
+    },
+    "Gemini_prose": {
+      "status": "ONLY_VERIFIED_PENDING_CLAUSE_ADOPTED_WHOLE_NUMERIC_CANDIDATE_REJECTED",
+      "wall_seconds": 63.316,
+      "input_tokens": 4179,
+      "output_tokens": 7347,
+      "thinking_included_in_output": 6592,
+      "actual_cost": null,
+      "external_text_transfer_direct_user_authorized_and_recorded": true
+    },
+    "parallel_overlap": "Remote independent proof/text and off-project localcandidates overlappedcachedstrictCUDA compilation; no heavy resource competition. Root active cost unknown; no general speedup claim."
+  },
+  "raw_data_uploaded": false,
+  "ELF_sha256": {
+    "arch_cuda_store_lifecycle": "93ef081b6486c3175c061d16224c7641b7bc902a680760249b867a5e311e77c2",
+    "arch_cuda_boundary_plan_parity": "82388daa0a87e03489041b2d2773f024d2c5cd8c0d199aa3b2fa2b3efe83d217"
+  }
+}

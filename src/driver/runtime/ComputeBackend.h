@@ -37,6 +37,7 @@
 namespace Physical::Gravity { class GravityExecution; }
 namespace amr { struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
 namespace arch::boundary { class BoundaryPlan; }
+namespace arch::boundary::native_rz_math { struct Request; }
 
 namespace arch::backend {
 
@@ -348,6 +349,18 @@ public:
         std::span<const BackendStateAccess>, const state::Bounds&)
     {
         throw std::logic_error("backend resident Native EOS acceptance is unavailable");
+    }
+    /** Prepare one immutable Native reflecting layer through the resident EOS.
+     * Prefix offsets are strictly increasing ghosts and their cell-major X/U
+     * are provisional surface values from completed preceding layers. Return
+     * only requested surface candidates, never write resident state or publish
+     * GhostValid. The caller owns actual BC enumeration and the stage lease.
+     */
+    virtual BoundaryCells prepare_native_reflecting_layer(
+        BackendStateAccess, std::span<const boundary::native_rz_math::Request>,
+        const state::Bounds&, std::span<const int> = {}, const BoundaryCells* = nullptr)
+    {
+        throw std::logic_error("backend resident Native reflecting layer is unavailable");
     }
     virtual state::CompletionToken execute_same_level_exchange(
         std::span<const BackendStateAccess> accesses,

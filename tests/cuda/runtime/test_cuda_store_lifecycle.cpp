@@ -24,6 +24,7 @@
 #include "amr/storage/Block.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "physics/eos/IdealGas.h"
+#include "physics/boundary/NativeRzBoundary.h"
 #include "physics/species/Species.h"
 
 namespace {
@@ -669,6 +670,264 @@ void run_native_completed_eos()
     }
 }
 
+
+/** Exercise the actual store owner, surface buffers and immutable prefix.
+ * The Host wrapper supplies the already-qualified common numerical law; this
+ * check concerns real slots, cell-major Xi, transport and unpublished ownership.
+ */
+void run_native_reflecting_layers(int device_count)
+{
+    namespace math = arch::boundary::native_rz_math;
+    using arch::boundary::BoundaryAxis;
+    using arch::boundary::BoundarySide;
+    using arch::state::StateRegion;
+    constexpr auto native = GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto state_view = [](FluidState& state) {
+        return arch::backend::HostStateTransferView{
+            state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+            state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
+            state.mass_fractions.empty() ? nullptr : state.mass_fractions.data(),
+            state.rho.size(), static_cast<std::size_t>(state.GetNumSpecies()),
+            state.GetNumSpecies() > 0 ? state.rho.size() : 0};
+    };
+    const auto relative = [](double actual, double expected) {
+        const double scale = std::max(std::abs(actual), std::abs(expected));
+        require(std::isfinite(actual) && std::isfinite(expected)
+                    && std::abs(actual - expected)
+                        <= 64. * std::numeric_limits<double>::epsilon() * scale,
+                "resident native reflector differs from the Host point law");
+    };
+    for (int species_count : {0, 2}) {
+        Grid root(amr::MAX_NG, 1., 2., -.5, .5, 0., 1., 1, 1, 1);
+        root.geometry = "cylindrical";
+        root.dim = 2;
+        amr::Block block{};
+        block.Reset();
+        block.active = true;
+        block.InitGeometry(root, 1. / amr::BLOCK_NX, 1. / amr::BLOCK_NY, 1., native);
+        block.RequireNativeGeometryIdentity();
+        const auto& grid = block.grid;
+        const double poison = std::numeric_limits<double>::quiet_NaN();
+        for (auto* state : {&block.fluid_state, &block.state_next, &block.state_scratch}) {
+            state->Preallocate(grid.GetTotalSize());
+            state->InitSpecies(species_count);
+            for (auto* plane : {&state->rho, &state->mom_u, &state->mom_v,
+                               &state->mom_w, &state->eng, &state->enuc_rate,
+                               &state->mass_fractions})
+                std::fill(plane->begin(), plane->end(), poison);
+        }
+        for (int j = 0; j < grid.GetTotalY(); ++j)
+            for (int i = 0; i < grid.GetTotalX(); ++i) {
+                const int cell = grid.GetIndex(i, j, 0);
+                const long double a = grid.GetFacePosL(i), z = grid.GetFacePosR(i);
+                const long double V = (z*z-a*a)/2.L, W = (z*z*z-a*a*a)/3.L;
+                const long double I = (z*z*z*z-a*a*a*a)/4.L;
+                constexpr long double omega = .125L, radial = .0625L, axial = -.03125L;
+                block.fluid_state.set(cell, {1., double(radial), double(axial),
+                    double(omega*I/W), double(.125L + (radial*radial+axial*axial)/2.L
+                        + omega*omega*I/(2.L*V))});
+                block.fluid_state.enuc_rate[cell] = 1000. + cell;
+                if (species_count) {
+                    block.fluid_state.X(0, cell) = .2 + .001*i + .0001*j;
+                    block.fluid_state.X(1, cell) = 1. - block.fluid_state.X(0, cell);
+                }
+                // A later corner must use the completed x1 prefix for every
+                // required support ghost, rather than these resident fields.
+                if (i < grid.Is()) {
+                    block.fluid_state.eng[cell] = poison;
+                    block.fluid_state.enuc_rate[cell] = -2000. - cell;
+                }
+            }
+        SpeciesManager species;
+        if (species_count) {
+            species.add_species("H1", 1., 1., 1.4, 1.);
+            species.add_species("He4", 4., 2., 1.4, 1.);
+        }
+        IdealGas eos(1.4, species);
+        const auto boundary = make_boundary_plan(2);
+        auto launch = make_launch_config();
+        launch.density_floor = 1e-12;
+        launch.minimum_internal_energy = 1e-12;
+        launch.maximum_internal_energy = 1e20;
+        const arch::state::Bounds bounds{launch.density_floor,
+            launch.minimum_internal_energy, launch.maximum_internal_energy};
+        SimConfig reference_config{};
+        reference_config.numerics.sml_rho = bounds.density;
+        reference_config.numerics.min_eint = bounds.internal_min;
+        reference_config.numerics.max_eint = bounds.internal_max;
+        const amr::BlockHandle handle{{2201 + static_cast<std::uint64_t>(species_count)}, {22}};
+        const arch::backend::StorageGeneration storage{2201 + static_cast<std::uint64_t>(species_count)};
+        auto backend = arch::cuda::make_cuda_backend(block, handle, storage,
+            kBackendDevice, launch, species, boundary, eos);
+        const auto access = current(handle, storage);
+        for (auto region : {StateRegion::Interior, StateRegion::Ghost})
+            backend->enqueue_upload_slot(access, region, state_view(block.fluid_state));
+        backend->quiesce();
+        const auto original = block.fluid_state;
+        const auto require_unchanged = [&] {
+            auto observed = original;
+            for (auto region : {StateRegion::Interior, StateRegion::Ghost})
+                backend->enqueue_materialize_host_current(access, region, state_view(observed));
+            backend->quiesce();
+            require(same_bits(observed, block.fluid_state),
+                    "resident native reflector wrote fields, Xi or padding");
+        };
+        const auto require_candidates = [&](const std::vector<math::Request>& requests,
+            const arch::backend::BoundaryCells& actual, const FluidState& donor) {
+            require(actual.species_count == static_cast<std::size_t>(species_count)
+                && actual.conserved.size() == requests.size()
+                && actual.enuc.size() == requests.size()
+                && actual.composition.size() == requests.size()*species_count,
+                "resident native reflector returned an incomplete surface layout");
+            for (std::size_t row = 0; row < requests.size(); ++row) {
+                const auto& request = requests[row];
+                arch::boundary::NativeRzBoundaryRequest host{};
+                host.source = request.source;
+                host.destination = request.destination;
+                host.coordinates.dimension = 2;
+                host.coordinates.axis = request.axis;
+                host.coordinates.side = request.side;
+                host.coordinates.ghost_depth = request.ghost_depth;
+                host.coordinates.purpose = request.purpose;
+                const auto expected = arch::boundary::EvaluateNativeRzReflectingCell(
+                    grid, host, reference_config, species, eos,
+                    [&](int cell) { return donor.get(cell); },
+                    [&](int s, int cell) { return donor.X(s, cell); });
+                const auto& a = actual.conserved[row];
+                const auto& b = expected.conserved;
+                for (const auto pair : {std::pair{a.rho,b.rho}, std::pair{a.mom_u,b.mom_u},
+                    std::pair{a.mom_v,b.mom_v}, std::pair{a.mom_w,b.mom_w}, std::pair{a.eng,b.eng}})
+                    relative(pair.first, pair.second);
+                for (int s = 0; s < species_count; ++s)
+                    relative(actual.composition[row*species_count+s], expected.mass_fractions[s]);
+                const int source = grid.GetIndex(request.source[0], request.source[1], 0);
+                require(std::bit_cast<std::uint64_t>(actual.enuc[row])
+                        == std::bit_cast<std::uint64_t>(donor.enuc_rate[source]),
+                        "resident native reflector lost source/prefix ENUC bits");
+            }
+        };
+        std::vector<math::Request> radial;
+        for (int j : {grid.Js()+1, grid.Js()})
+            for (int depth = grid.ng; depth >= 1; --depth)
+                radial.push_back({{grid.Is()+depth-1,j}, {grid.Is()-depth,j},
+                    BoundaryAxis::X1, BoundarySide::Lower, depth});
+        select_device_probe(device_count);
+        const auto before = backend->counters();
+        const auto first = backend->prepare_native_reflecting_layer(access, radial, bounds);
+        require_backend_device_selected("native reflecting preparation lost backend device");
+        const auto after = backend->counters();
+        require(after.kernel_count-before.kernel_count == 1
+            && after.bytes_h2d-before.bytes_h2d == radial.size()*sizeof(math::Request)
+            && after.bytes_d2h-before.bytes_d2h
+                == sizeof(int)+radial.size()*(sizeof(FluidVector)+(species_count+1)*sizeof(double)),
+            "native reflecting layer downloaded full state or miscounted surface outputs");
+        require_candidates(radial, first, original);
+        std::vector<std::size_t> order(radial.size());
+        for (std::size_t row = 0; row < order.size(); ++row) order[row] = row;
+        std::sort(order.begin(), order.end(), [&](auto a, auto b) {
+            return grid.GetIndex(radial[a].destination[0], radial[a].destination[1], 0)
+                < grid.GetIndex(radial[b].destination[0], radial[b].destination[1], 0);
+        });
+        std::vector<int> indices;
+        arch::backend::BoundaryCells prefix;
+        prefix.species_count = species_count;
+        auto completed = original;
+        for (auto row : order) {
+            const int cell = grid.GetIndex(radial[row].destination[0], radial[row].destination[1], 0);
+            indices.push_back(cell);
+            prefix.conserved.push_back(first.conserved[row]);
+            prefix.enuc.push_back(first.enuc[row]);
+            completed.set(cell, first.conserved[row]);
+            completed.enuc_rate[cell] = first.enuc[row];
+            for (int s = 0; s < species_count; ++s) {
+                const double x = first.composition[row*species_count+s];
+                prefix.composition.push_back(x);
+                completed.X(s, cell) = x;
+            }
+        }
+        const std::vector<math::Request> corners{
+            {{0,grid.Js()}, {0,grid.Js()-1}, BoundaryAxis::X2, BoundarySide::Lower, 1},
+            {{1,grid.Js()+1}, {1,grid.Js()-2}, BoundaryAxis::X2, BoundarySide::Lower, 2}};
+        const auto before_corner = backend->counters();
+        const auto second = backend->prepare_native_reflecting_layer(access, corners, bounds, indices, &prefix);
+        const auto after_corner = backend->counters();
+        require(after_corner.kernel_count-before_corner.kernel_count == 1
+            && after_corner.bytes_h2d-before_corner.bytes_h2d == corners.size()*sizeof(math::Request)
+                + indices.size()*(sizeof(int)+sizeof(FluidVector)+(species_count+1)*sizeof(double))
+            && after_corner.bytes_d2h-before_corner.bytes_d2h
+                == sizeof(int)+corners.size()*(sizeof(FluidVector)+(species_count+1)*sizeof(double)),
+            "native corner prefix changed surface-only download accounting");
+        require_candidates(corners, second, completed);
+        require_unchanged();
+        const auto reject = [&](auto&& function, std::string_view message) {
+            const auto start = backend->counters();
+            require_rejected(std::forward<decltype(function)>(function), message);
+            const auto end = backend->counters();
+            require(end.kernel_count == start.kernel_count && end.bytes_h2d == start.bytes_h2d
+                && end.bytes_d2h == start.bytes_d2h,
+                "native reflector preflight rejection performed device work");
+        };
+        auto stale = access;
+        stale.storage.value += 1;
+        reject([&] { backend->prepare_native_reflecting_layer(stale, radial, bounds); },
+               "native reflector accepted stale storage");
+        auto invalid_slot = access;
+        invalid_slot.slot = static_cast<arch::state::StateSlot>(255);
+        reject([&] { backend->prepare_native_reflecting_layer(invalid_slot, radial, bounds); },
+               "native reflector accepted an invalid slot");
+        auto changed_bounds = bounds;
+        changed_bounds.density *= 2.;
+        reject([&] { backend->prepare_native_reflecting_layer(access, radial, changed_bounds); },
+               "native reflector accepted unfrozen bounds");
+        auto duplicate = radial;
+        duplicate.push_back(radial.front());
+        reject([&] { backend->prepare_native_reflecting_layer(access, duplicate, bounds); },
+               "native reflector accepted duplicate destinations");
+        auto invalid = radial;
+        invalid.back().destination[0] = grid.Is();
+        reject([&] { backend->prepare_native_reflecting_layer(access, invalid, bounds); },
+               "native reflector accepted an interior destination");
+        auto malformed = prefix;
+        malformed.enuc.pop_back();
+        reject([&] { backend->prepare_native_reflecting_layer(access, corners, bounds, indices, &malformed); },
+               "native reflector accepted malformed prefix planes");
+        auto bad_indices = indices;
+        bad_indices[1] = bad_indices[0];
+        reject([&] { backend->prepare_native_reflecting_layer(access, corners, bounds, bad_indices, &prefix); },
+               "native reflector accepted duplicate prefix indices");
+        bad_indices = indices;
+        bad_indices.back() = grid.GetIndex(grid.Is(), grid.Js()+1, 0);
+        reject([&] { backend->prepare_native_reflecting_layer(access, corners, bounds, bad_indices, &prefix); },
+               "native reflector accepted an interior prefix");
+        require(grid.stride_y > grid.GetTotalX(), "native store test requires real row padding");
+        bad_indices = indices;
+        bad_indices.back() = grid.GetIndex(grid.GetTotalX(), grid.Js()+1, 0);
+        reject([&] { backend->prepare_native_reflecting_layer(access, corners, bounds, bad_indices, &prefix); },
+               "native reflector accepted padded prefix indices");
+        const int bad_source = grid.GetIndex(radial.front().source[0], radial.front().source[1], 0);
+        const double saved = block.fluid_state.eng[bad_source];
+        block.fluid_state.eng[bad_source] = -1.;
+        backend->enqueue_upload_slot(access, StateRegion::Interior, state_view(block.fluid_state));
+        backend->quiesce();
+        const auto before_failure = backend->counters();
+        require_rejected<std::runtime_error>([&] {
+            backend->prepare_native_reflecting_layer(access, radial, bounds);
+        }, "native reflector accepted a bad thermodynamic source");
+        const auto after_failure = backend->counters();
+        require(after_failure.kernel_count-before_failure.kernel_count == 1
+            && after_failure.bytes_h2d-before_failure.bytes_h2d == radial.size()*sizeof(math::Request)
+            && after_failure.bytes_d2h-before_failure.bytes_d2h == sizeof(int),
+            "native reflector failure exposed partial candidates or downloaded full state");
+        require_unchanged();
+        block.fluid_state.eng[bad_source] = saved;
+        backend->enqueue_upload_slot(access, StateRegion::Interior, state_view(block.fluid_state));
+        backend->quiesce();
+        const auto recovered = backend->prepare_native_reflecting_layer(access, radial, bounds);
+        require_candidates(radial, recovered, original);
+        require_unchanged();
+    }
+}
+
 } // namespace
 
 int main()
@@ -685,6 +944,7 @@ int main()
         run_region_transfers(device_count);
         run_store_lifecycle(device_count);
         run_native_completed_eos();
+        run_native_reflecting_layers(device_count);
         std::cout << "CUDA store lifecycle passed\n";
         return 0;
     } catch (const std::exception& error) {

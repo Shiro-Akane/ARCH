@@ -9,6 +9,8 @@
  * 1. Receive device-resident block state and boundary plans.
  * 2. Launch CUDA ghost and boundary transport for the active stage.
  * 3. Leave core hydro mathematics in the shared host/device policies.
+ * 4. Borrow only a completed sparse candidate prefix while preparing the
+ *    next immutable Native layer; no prefix accessor writes resident fields.
  */
 
 #pragma once
@@ -26,6 +28,52 @@
 
 namespace arch::cuda
 {
+/** Read preceding completed layers by their actual sorted ghost offsets.
+ * This is an allocation adapter, not a BC or EOS authority. Host control owns
+ * sorted/unique offsets, full cell-major X extents and buffer lifetime. The
+ * resident input accessor retains its own species-major storage convention.
+ */
+struct NativeBoundaryPrefixView {
+    const int* indices = nullptr;
+    const FluidVector* conserved = nullptr;
+    const double* fractions = nullptr;
+    const double* enuc = nullptr;
+    int count = 0;
+    int species = 0;
+
+    /** Lower-bound lookup; the empty view never dereferences null storage. */
+    ARCH_INLINE int find(int index) const {
+        int lo = 0, hi = count;
+        while (lo < hi) {
+            const int mid = lo + (hi - lo) / 2;
+            if (indices[mid] < index) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo < count && indices[lo] == index ? lo : -1;
+    }
+    /** Borrow the completed prefix mean, else the immutable resident cell. */
+    template<class Input>
+    ARCH_INLINE FluidVector read(const Input& input, int index) const {
+        const int ordinal = find(index);
+        return ordinal >= 0 ? conserved[ordinal] : input.load(index);
+    }
+    /** Read X in cell-major prefix or through the resident species accessor. */
+    template<class Input>
+    ARCH_INLINE double fraction(const Input& input, int species_index, int index) const {
+        const int ordinal = find(index);
+        if (ordinal >= 0)
+            return fractions[static_cast<std::size_t>(ordinal) * static_cast<std::size_t>(species)
+                + static_cast<std::size_t>(species_index)];
+        return input.species(species_index,index);
+    }
+    /** ENUC inherits from the same donor prefix as U/X, without reintegration. */
+    template<class Input>
+    ARCH_INLINE double enuc_value(const Input& input, int index) const {
+        const int ordinal = find(index);
+        return ordinal >= 0 ? enuc[ordinal] : input.enuc_rate[index];
+    }
+};
+
 struct DeviceBoundaryTransfer {
     std::uint64_t logical_ordinal;
     int source_index;

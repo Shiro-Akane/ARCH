@@ -24,6 +24,7 @@
 #include "cuda/common/DeviceAllocation.h"
 #include "cuda/microphysics/eos/helm_eos_loader.h"
 #include "cuda/microphysics/network/device_network_owner.h"
+#include "physics/boundary/NativeRzBoundaryMath.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/tabular/Tabular3DEOS.h"
@@ -320,6 +321,19 @@ struct CudaBackend::Impl {
     // Compact Native acceptance diagnostics; shares hydro_batch.status only
     // after prior synchronous batches drained. No evolved field is staged here.
     ReusableDeviceAllocation<RzThermodynamics::AcceptanceDiagnostic> native_eos_diagnostics;
+    // One unpublished reflector layer, reused only after owner-stream quiescence.
+    // Native math needs 11*N contiguous doubles per lane even when N fits the
+    // local species fast path. The existing five-array transport owner remains
+    // independent; only requested surfaces and immutable ghost prefixes stage.
+    struct NativeReflectingScratch {
+        ReusableDeviceAllocation<boundary::native_rz_math::Request> requests;
+        ReusableDeviceAllocation<int> prefix_indices;
+        ReusableDeviceAllocation<FluidVector> prefix_conserved, conserved;
+        ReusableDeviceAllocation<double> prefix_fractions, prefix_enuc, fractions, enuc;
+        ReusableDeviceAllocation<double> workspace_storage;
+        ReusableDeviceAllocation<int> failed;
+        SpeciesWorkspaceView workspace{};
+    } native_reflecting;
     ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
     ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;

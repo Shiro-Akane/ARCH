@@ -702,6 +702,19 @@ def audit_tree(root: pathlib.Path):
                 r"\b(?:native_reflecting_candidates_kernel|launch_native_reflecting_candidates)\b",
                 "", boundary_code)
             boundary_code = re.sub(r"\bmath\s*::\s*reflect_cell\b", "", boundary_code)
+        native_storage_identifiers = {
+            "src/cuda/runtime/CudaBackend.h": ("prepare_native_reflecting_layer",),
+            "src/cuda/runtime/boundary/CudaBackendBoundary.cu": (
+                "prepare_native_reflecting_layer", "native_reflecting_lanes",
+                "native_reflecting", "launch_native_reflecting_candidates"),
+            "src/cuda/runtime/control/CudaBackendInternal.h": (
+                "NativeReflectingScratch", "native_reflecting"),
+        }
+        # Real backend services only allocate/transport provisional surfaces;
+        # their reviewed identifiers do not implement a second reflecting law.
+        # Keep the complete bodies scanned, including BC enums and sign rules.
+        for identifier in native_storage_identifiers.get(relative, ()):
+            boundary_code = re.sub(r"\b" + identifier.lower() + r"\b", "", boundary_code)
         boundary_mapping = any(token in boundary_code for token in
                                ("outflow", "reflect", "periodic", "physical boundary", "boundary_type",
                                 "x1l_boundary", "x1r_boundary", "grid boundary"))

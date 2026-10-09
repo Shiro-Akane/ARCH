@@ -8,21 +8,27 @@
  * 3. Host evaluates the shared callback/EOS; scatter validated returned ghosts.
  * 4. Upload packed diffusion-face controls consumed by the shared flux leaf.
  * 5. Lazily own the physical-surface flux observer named by the Host layout.
- * 6. Check completed native logical cells through the shared EOS acceptance
+ * 6. Prepare one unpublished resident Native reflector layer with immutable
+ *    ghost prefix readers and a separate bounded 11*N lane workspace.
+ * 7. Check completed native logical cells through the shared EOS acceptance
  *    leaf; return compact diagnostics without field transfer or state writes.
  *
  * Observer planes are sized by the Host-provided surface layout and bound to
  * all three stage slots; no state values cross this service. No boundary
- * formula is duplicated here. Built-in BCs never call this service.
+ * formula is duplicated here. The reflector returns provisional surfaces only;
+ * Runtime owns all layer joins, final scattering and completed acceptance.
  */
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <map>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "cuda/hydro/boundary/Boundary.cuh"
 #include "cuda/hydro/policies/CheckedHydroEos.cuh"
 
 namespace arch::cuda {
@@ -96,6 +102,54 @@ void validate_indices(const DeviceStateView& state, std::span<const int> indices
         const bool active = i >= grid.is && i < grid.ie && j >= grid.js && j < grid.je && k >= grid.ks && k < grid.ke;
         if (ghosts == active) throw std::invalid_argument("Boundary slice has the wrong interior/ghost role");
     }
+}
+
+/** Authenticate real logical cells; allocation padding is never a prefix cell.
+ * Only ghosts may be replaced by an immutable preceding candidate prefix.
+ */
+void validate_native_ghost_offset(int cell, const DeviceStateView& input,
+    const DeviceGridView& grid)
+{
+    if (cell < 0 || cell >= input.total_size)
+        throw std::out_of_range("Native boundary ghost outside device allocation");
+    const int k = cell / grid.stride_z;
+    const int rem = cell - k * grid.stride_z;
+    const int j = rem / grid.stride_y, i = rem - j * grid.stride_y;
+    if (i >= grid.total_x || j >= grid.total_y || k >= grid.total_z
+        || (i >= grid.is && i < grid.ie && j >= grid.js && j < grid.je
+            && k >= grid.ks && k < grid.ke))
+        throw std::invalid_argument("Native boundary prefix/target must name a logical ghost");
+}
+
+/** Bound contiguous Native scratch by useful work, device lanes and free memory.
+ * Reserve at least a device warp for N>0; the grid-stride kernel reuses those
+ * lanes for arbitrarily many surface requests. No transport workspace is lent.
+ */
+std::size_t native_reflecting_lanes(int species, std::size_t count, int device)
+{
+    cudaDeviceProp properties{};
+    check_cuda(cudaGetDeviceProperties(&properties, device),
+        "query Native reflecting workspace device");
+    std::size_t available = 0, total = 0;
+    check_cuda(cudaMemGetInfo(&available, &total),
+        "query Native reflecting workspace budget");
+    constexpr std::size_t arrays = 11, budget_divisor = 64;
+    if (species < 1 || static_cast<std::size_t>(species)
+            > std::numeric_limits<std::size_t>::max() / (arrays * sizeof(double))
+        || properties.warpSize <= 0 || properties.warpSize > kSpeciesKernelThreads
+        || properties.multiProcessorCount <= 0 || properties.maxThreadsPerMultiProcessor <= 0)
+        throw std::invalid_argument("Invalid Native reflecting workspace extent/device");
+    const std::size_t warp = static_cast<std::size_t>(properties.warpSize);
+    const std::size_t bytes_per_lane = static_cast<std::size_t>(species) * arrays * sizeof(double);
+    const std::size_t hardware = static_cast<std::size_t>(properties.multiProcessorCount)
+        * properties.maxThreadsPerMultiProcessor;
+    const std::size_t useful = ((count + warp - 1) / warp) * warp;
+    const std::size_t cap = std::min({hardware, useful,
+        static_cast<std::size_t>(std::numeric_limits<int>::max())});
+    const std::size_t lanes = (std::min(cap, (available / budget_divisor) / bytes_per_lane) / warp) * warp;
+    if (lanes == 0)
+        throw std::runtime_error("Native reflecting workspace budget cannot hold one device warp");
+    return lanes;
 }
 
 /** Physical outer-face plane cells owned by one face direction and side. */
@@ -196,6 +250,177 @@ std::optional<backend::NativeEosFailure> CudaBackend::validate_completed_native_
         if (scratch.host_status[index] != 0)
             return backend::NativeEosFailure{accesses[index], diagnostics[index]};
     return std::nullopt;
+}
+
+/** Consume actual resident storage and the selected backend EOS for one layer.
+ * All leases, requests and complete ghost prefix shapes are preflighted before
+ * any device touch. Every sibling reads the same input/prefix; candidate buffers
+ * are disjoint and only a successful joined layer returns surface values.
+ */
+backend::BoundaryCells CudaBackend::prepare_native_reflecting_layer(
+    backend::BackendStateAccess access,
+    std::span<const boundary::native_rz_math::Request> requests,
+    const state::Bounds& bounds, std::span<const int> prefix_indices,
+    const backend::BoundaryCells* prefix)
+{
+    namespace math = boundary::native_rz_math;
+    auto& block = impl_->require_block(access);
+    const auto input = block.require_access(access);
+    const auto& grid = block.grid;
+    const int species = impl_->species_view.count;
+    if (!valid_hydro_view(input) || !valid_hydro_grid(grid)
+        || grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+        || grid.ng < 1 || input.total_size != grid.total_size
+        || input.n_species != species || impl_->species_count != species)
+        throw std::invalid_argument("Native reflector requires an actual complete resident Native patch");
+    if (!state::valid_bounds(bounds) || bounds.density != impl_->launch.density_floor
+        || bounds.internal_min != impl_->launch.minimum_internal_energy
+        || bounds.internal_max != impl_->launch.maximum_internal_energy)
+        throw std::invalid_argument("Native reflector requires the frozen backend bounds");
+    visit_eos(impl_->eos, [&](const auto& eos) {
+        const int count = [&] {
+            if constexpr (requires { eos.species.count; }) return eos.species.count;
+            else return eos.specs.count;
+        }();
+        if (count != species)
+            throw std::invalid_argument("Native reflector selected EOS species owner mismatch");
+    });
+    const std::size_t maximum = static_cast<std::size_t>(std::numeric_limits<int>::max());
+    if (requests.empty() || requests.size() > maximum || prefix_indices.size() > maximum
+        || (species > 0 && (requests.size() > std::numeric_limits<std::size_t>::max()
+            / static_cast<std::size_t>(species)
+            || prefix_indices.size() > std::numeric_limits<std::size_t>::max()
+                / static_cast<std::size_t>(species))))
+        throw std::invalid_argument("Invalid Native reflector surface size");
+    const math::Context context{make_grid_geometry_view(grid), grid.total_x,
+        grid.total_y, grid.is, grid.ie, grid.js, grid.je};
+    std::vector<int> destinations;
+    destinations.reserve(requests.size());
+    for (const auto& request : requests) {
+        math::CellSupport source{}, target{};
+        int support_begin = 0;
+        if (request.axis != requests.front().axis
+            || math::validate_request(context, request) != math::Status::valid
+            || math::support(context, request.source, source) != math::Status::valid
+            || math::support(context, request.destination, target) != math::Status::valid
+            || math::source_support_begin(context, request.source[0], support_begin) != math::Status::valid)
+            throw std::invalid_argument("Invalid Native reflector request/support or mixed axis layer");
+        const int destination = grid.index(request.destination[0], request.destination[1]);
+        validate_native_ghost_offset(destination, input, grid);
+        // The sole support selector bounds three actual radial observations;
+        // require their flattened offsets before the first kernel can read U.
+        for (int n = 0; n < 3; ++n) {
+            const int index = grid.index(support_begin + n, request.source[1]);
+            if (support_begin + n < 0 || support_begin + n >= grid.total_x
+                || index < 0 || index >= input.total_size)
+                throw std::invalid_argument("Native reflector support lies outside logical storage");
+        }
+        destinations.push_back(destination);
+    }
+    std::sort(destinations.begin(), destinations.end());
+    if (std::adjacent_find(destinations.begin(), destinations.end()) != destinations.end())
+        throw std::invalid_argument("Duplicate Native reflector destination");
+    if ((!prefix && !prefix_indices.empty())
+        || (prefix && (prefix->species_count != static_cast<std::size_t>(species)
+            || prefix->conserved.size() != prefix_indices.size()
+            || prefix->enuc.size() != prefix_indices.size()
+            || prefix->composition.size() != prefix_indices.size() * static_cast<std::size_t>(species))))
+        throw std::invalid_argument("Mismatched Native reflector prefix shape");
+    for (std::size_t n = 0; n < prefix_indices.size(); ++n) {
+        if (n > 0 && prefix_indices[n - 1] >= prefix_indices[n])
+            throw std::invalid_argument("Native reflector prefix offsets must be sorted and unique");
+        validate_native_ghost_offset(prefix_indices[n], input, grid);
+        const auto& u = prefix->conserved[n];
+        if (!std::isfinite(u.rho) || !std::isfinite(u.mom_u) || !std::isfinite(u.mom_v)
+            || !std::isfinite(u.mom_w) || !std::isfinite(u.eng) || !std::isfinite(prefix->enuc[n]))
+            throw std::invalid_argument("Nonfinite Native reflector prefix fields");
+        for (int s = 0; s < species; ++s)
+            if (!std::isfinite(prefix->composition[n * static_cast<std::size_t>(species) + s]))
+                throw std::invalid_argument("Nonfinite Native reflector prefix composition");
+    }
+
+    impl_->select_device();
+    // Allocation growth/reuse may release prior capacity: establish the owner's
+    // stream witness before touching any reusable request/prefix/candidate row.
+    impl_->checked_quiesce("quiesce before Native reflector scratch reuse");
+    auto& scratch = impl_->native_reflecting;
+    scratch.requests.reserve(requests.size());
+    scratch.conserved.reserve(requests.size());
+    scratch.enuc.reserve(requests.size());
+    scratch.fractions.reserve(requests.size() * static_cast<std::size_t>(species));
+    scratch.failed.reserve(1);
+    scratch.prefix_indices.reserve(prefix_indices.size());
+    scratch.prefix_conserved.reserve(prefix_indices.size());
+    scratch.prefix_enuc.reserve(prefix_indices.size());
+    scratch.prefix_fractions.reserve(prefix_indices.size() * static_cast<std::size_t>(species));
+    if (species > 0 && (!scratch.workspace.values
+        || !valid_species_workspace(scratch.workspace, species, 11))) {
+        const auto lanes = native_reflecting_lanes(species, requests.size(), impl_->device_ordinal);
+        scratch.workspace_storage.reserve(lanes * static_cast<std::size_t>(species) * 11);
+        scratch.workspace = {scratch.workspace_storage.get(), scratch.workspace_storage.size(),
+            static_cast<int>(lanes), species, 11};
+    }
+    const NativeBoundaryPrefixView device_prefix{scratch.prefix_indices.get(),
+        scratch.prefix_conserved.get(), scratch.prefix_fractions.get(), scratch.prefix_enuc.get(),
+        static_cast<int>(prefix_indices.size()), species};
+    backend::BoundaryCells result;
+    result.species_count = species;
+    result.conserved.resize(requests.size());
+    result.enuc.resize(requests.size());
+    result.composition.resize(requests.size() * static_cast<std::size_t>(species));
+    int failed = 0;
+    // All asynchronous Host sources/destinations and reusable device owners
+    // outlive this guard on upload, launch, status or candidate-copy exceptions.
+    CudaQuiescenceGuard work_guard{*impl_};
+    enqueue_cuda_metadata_upload(scratch.requests.get(), requests.data(), requests.size_bytes(),
+        impl_->stream.get(), impl_->runtime_counters, "upload Native reflector requests");
+    if (!prefix_indices.empty()) {
+        enqueue_cuda_metadata_upload(scratch.prefix_indices.get(), prefix_indices.data(),
+            prefix_indices.size_bytes(), impl_->stream.get(), impl_->runtime_counters,
+            "upload Native reflector prefix offsets");
+        enqueue_cuda_metadata_upload(scratch.prefix_conserved.get(), prefix->conserved.data(),
+            prefix->conserved.size() * sizeof(FluidVector), impl_->stream.get(), impl_->runtime_counters,
+            "upload Native reflector prefix conserved");
+        enqueue_cuda_metadata_upload(scratch.prefix_enuc.get(), prefix->enuc.data(),
+            prefix->enuc.size() * sizeof(double), impl_->stream.get(), impl_->runtime_counters,
+            "upload Native reflector prefix ENUC");
+        if (species > 0)
+            enqueue_cuda_metadata_upload(scratch.prefix_fractions.get(), prefix->composition.data(),
+                prefix->composition.size() * sizeof(double), impl_->stream.get(), impl_->runtime_counters,
+                "upload Native reflector prefix composition");
+    }
+    check_cuda(cudaMemsetAsync(scratch.failed.get(), 0, sizeof(int), impl_->stream.get()),
+        "clear Native reflector layer status");
+    visit_eos(impl_->eos, [&](const auto& eos) {
+        check_cuda(launch_native_reflecting_candidates(input, grid, scratch.requests.get(),
+            static_cast<int>(requests.size()), bounds, eos, scratch.workspace,
+            scratch.conserved.get(), scratch.fractions.get(), scratch.failed.get(),
+            impl_->stream.get(), device_prefix, scratch.enuc.get()), "prepare Native reflector layer");
+        ++impl_->runtime_counters.kernel_count;
+    });
+    check_cuda(cudaMemcpyAsync(&failed, scratch.failed.get(), sizeof(int),
+        cudaMemcpyDeviceToHost, impl_->stream.get()), "download Native reflector layer status");
+    impl_->runtime_counters.bytes_d2h += sizeof(int);
+    quiesce();
+    if (failed != 0)
+        throw std::runtime_error("Native reflecting layer failed shared math/EOS acceptance: "
+            + std::to_string(failed));
+    check_cuda(cudaMemcpyAsync(result.conserved.data(), scratch.conserved.get(),
+        result.conserved.size() * sizeof(FluidVector), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        "download Native reflector conserved candidates");
+    impl_->runtime_counters.bytes_d2h += result.conserved.size() * sizeof(FluidVector);
+    check_cuda(cudaMemcpyAsync(result.enuc.data(), scratch.enuc.get(), result.enuc.size() * sizeof(double),
+        cudaMemcpyDeviceToHost, impl_->stream.get()), "download Native reflector inherited ENUC");
+    impl_->runtime_counters.bytes_d2h += result.enuc.size() * sizeof(double);
+    if (species > 0) {
+        check_cuda(cudaMemcpyAsync(result.composition.data(), scratch.fractions.get(),
+            result.composition.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
+            "download Native reflector composition candidates");
+        impl_->runtime_counters.bytes_d2h += result.composition.size() * sizeof(double);
+    }
+    quiesce();
+    work_guard.completed = true;
+    return result;
 }
 
 backend::BoundaryCells CudaBackend::read_boundary_cells(backend::BackendStateAccess access,

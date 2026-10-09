@@ -406,6 +406,27 @@ void launch_native_reflecting_candidates() { native_reflecting_candidates_kernel
         self.assert_accepted({path: delegate})
         self.assert_rejected(path, delegate + "\nif (type == BoundaryType::Reflecting) copy();")
         self.assert_rejected("src/cuda/halo.cuh", delegate)
+        owners = {
+            "src/cuda/runtime/CudaBackend.h": "void prepare_native_reflecting_layer();",
+            "src/cuda/runtime/boundary/CudaBackendBoundary.cu": """
+void native_reflecting_lanes();
+void prepare_native_reflecting_layer() {
+    auto& scratch = impl.native_reflecting;
+    launch_native_reflecting_candidates();
+}
+""",
+            "src/cuda/runtime/control/CudaBackendInternal.h": """
+struct NativeReflectingScratch {};
+NativeReflectingScratch native_reflecting;
+""",
+        }
+        for owner, storage in owners.items():
+            with self.subTest(owner=owner):
+                self.assert_accepted({owner: storage})
+                self.assert_rejected(owner,
+                    storage + "\nif (type == BoundaryType::Reflecting) copy();")
+        self.assert_rejected("src/cuda/halo.cuh", owners[
+            "src/cuda/runtime/boundary/CudaBackendBoundary.cu"])
 
     def test_rejects_production_cuda_glob(self):
         self.assert_rejected("CMakeLists.txt", "file(GLOB_RECURSE cuda *.cu)\nadd_executable(ARCH ${cuda})")
