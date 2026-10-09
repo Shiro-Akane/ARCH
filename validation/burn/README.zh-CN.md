@@ -114,3 +114,5 @@ CUDA 短步策略检查仍保留原严格后端一致性阈值，与上文的参
 - [内置 NSE 应用验证 (JSON)](results/nse-application-native-20260907/release-890/evidence.json)
 
 </details>
+
+强反应生产终点与中段续算可复用 `inputs/long_time_reference.par`：C/O各0.5、rho=1e7、T0=3e9，物理终点1e-6，中段checkpoint位于5e-7。实际BD／ROS4终点通过独立时间参考的核素／温度／能量预算，BD中段续算的20个数值数据集逐位一致；见[处理记录](results/release-closure-20261009/production-summary.json)。运行时设定ODE局部容差不保证同值的全程误差；该几秒轨迹用于物理终点和续算，墙钟耐久及多模块长程另验收。

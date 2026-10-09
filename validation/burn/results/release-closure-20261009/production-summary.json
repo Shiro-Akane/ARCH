@@ -1,0 +1,196 @@
+{
+  "scope": "current full CPU existing inventory plus actual active nonlinear BurnOneZone endpoints and midpoint restart",
+  "baseline_commit": "403d147fc",
+  "recorded_utc": "2026-10-09T09:16:48.710207+00:00",
+  "release_qualified": false,
+  "O9_wall_durability_qualified": false,
+  "full_native_device_qualified": false,
+  "current_CPU": {
+    "source_commit": "403d147fc",
+    "attempts": [
+      {
+        "jobs": 3,
+        "guard_seconds": 29.455,
+        "exit": 125,
+        "reason": "available_memory",
+        "peak_owned_rss_KiB": 4982384,
+        "min_available_KiB": 2030780,
+        "swap_growth_KiB": 0,
+        "completed_objects_retained": true
+      }
+    ],
+    "manager_cumulative_cap_seconds": 720,
+    "remaining_manager_seconds": 690.545,
+    "status": "PASS_EXACT_EXISTING_76_OF_76_NO_SKIP",
+    "second_build_guard_seconds": 289.44,
+    "cumulative_build_guard_seconds": 318.895,
+    "ctest_guard_seconds": 209.839,
+    "tests": 76,
+    "passed": 76,
+    "skipped": 0,
+    "ARCH_sha256": "d66984950bc9e287a171564990b20af9d0cd93e83f0aeb0a09c00ec0d9143a74"
+  },
+  "inputs": {
+    "rho": 10000000.0,
+    "T0": 3000000000.0,
+    "C12": 0.5,
+    "O16": 0.5,
+    "network": "aprox13",
+    "EOS": "bundled Helmholtz, Coulomb1",
+    "NSE": false,
+    "terminal_time": 1e-06,
+    "mid_checkpoint_time": 5e-07,
+    "ode_rtol": 1e-10,
+    "ode_atol": 1e-14,
+    "two_Strang_burn_halves": "unchanged shared production policy",
+    "source_or_CPU_optimization_modified": false,
+    "CPU_environment": {
+      "OMP_NUM_THREADS": 8,
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_PROC_BIND": "close",
+      "OMP_PLACES": "cores"
+    },
+    "public_reference_input": "validation/burn/inputs/long_time_reference.par",
+    "public_input_sha256": "121fde59d1d38ae8654832421e3b22e49c6741115e60ba36f307fea1ce5a05d1"
+  },
+  "frozen_budgets": {
+    "species_absolute": 1e-08,
+    "temperature_relative": 1e-08,
+    "energy_relative": 1e-08,
+    "mass_closure": 1e-12
+  },
+  "actual_BD": {
+    "metrics": {
+      "species_absolute_error": 1.7729484547146512e-11,
+      "mass_closure": 0.0,
+      "temperature_relative_error": 1.3774315021919392e-11,
+      "energy_relative_error": 3.182409891167026e-11,
+      "reaction_change_linf": 0.4514618382759871,
+      "minimum_X": 3.4030114702270308e-15,
+      "temperature_min": 3956420145.5212703,
+      "temperature_max": 3956420145.5212703,
+      "steps": 34,
+      "physical_time": 1e-06,
+      "repair_events": 0
+    },
+    "guard_seconds": 6.058,
+    "wrapper_seconds": 5.012811149004847,
+    "parameter_sha256": "de8c4ad8cc41c271d843c7a7a343d525f050cf9b75f5ab7827b9f4d66c17aa83"
+  },
+  "actual_ROS4": {
+    "metrics": {
+      "species_absolute_error": 7.285910930132644e-09,
+      "mass_closure": 0.0,
+      "temperature_relative_error": 3.611431820260691e-09,
+      "energy_relative_error": 8.257026617997099e-09,
+      "reaction_change_linf": 0.4514618324369907,
+      "minimum_X": 3.4030098851922175e-15,
+      "temperature_min": 3956420131.2874255,
+      "temperature_max": 3956420131.2874255,
+      "steps": 34,
+      "physical_time": 1e-06,
+      "repair_events": 0
+    },
+    "guard_seconds": 7.069,
+    "wrapper_seconds": 5.850509099953342,
+    "parameter_sha256": "ee7f14d6fad4b85e7bd23f37d2a085f4f2e907520b9d021662795fe3bb0e67ba",
+    "qualification_note": "energy8.257e-9 andspecies7.286e-9 are within original1e-8 budget; localODE tolerances do not themselves bound global endpoint error; no automatic accuracy claim beyond observed budgets"
+  },
+  "actual_BD_restart": {
+    "guard_seconds": 5.079,
+    "wrapper_seconds": 4.1500779439811595,
+    "lanes": {
+      "continuous": {
+        "final": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/math-closure-20261009/burn-production-mid-restart/continuous/BurnOneZone_chk_0002.h5",
+        "parameter": {
+          "path": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/math-closure-20261009/burn-production-mid-restart/continuous/input.par",
+          "sha256": "546eb25c349cf2ad8bd88299e30262e1fa6037f4a769dadad885f5f1964d3461"
+        },
+        "time": 1e-06,
+        "step": 34,
+        "errors": {
+          "X": 1.5354384430565915e-11,
+          "T": 1.2155276785108526e-11,
+          "e": 2.8144042651945256e-11,
+          "mass": 1.1102230246251565e-16
+        },
+        "wall_seconds": 1.9690652340068482
+      },
+      "resumed": {
+        "final": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/math-closure-20261009/burn-production-mid-restart/resumed/BurnOneZone_chk_0002.h5",
+        "parameter": {
+          "path": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/math-closure-20261009/burn-production-mid-restart/resumed/input.par",
+          "sha256": "26f8e3fe347d5932399f35439f43e093d5fe2248f6800b54289cd760276de368"
+        },
+        "time": 1e-06,
+        "step": 34,
+        "errors": {
+          "X": 1.5354384430565915e-11,
+          "T": 1.2155276785108526e-11,
+          "e": 2.8144042651945256e-11,
+          "mass": 1.1102230246251565e-16
+        },
+        "wall_seconds": 1.3460161149851047
+      }
+    },
+    "bitwise_numeric_datasets": [
+      "Blocks/level",
+      "Blocks/logical_x1",
+      "Blocks/logical_x2",
+      "Blocks/logical_x3",
+      "Data/X",
+      "Data/eng",
+      "Data/enuc_rate",
+      "Data/mom_u",
+      "Data/mom_v",
+      "Data/mom_w",
+      "Data/rho",
+      "Data/rhoX",
+      "Species/A",
+      "Species/Cv",
+      "Species/Z",
+      "Species/gamma",
+      "gravity_controls",
+      "repair_position",
+      "state_controls",
+      "state_repairs"
+    ],
+    "equal_text_datasets": [
+      "Species/name"
+    ],
+    "source_checkpoint_sha256": "5f22253bad536d95d48f00881f9fe78803148a22ef86a3139bf23ef8093b611e"
+  },
+  "independent_reference": {
+    "path": "validation/burn/results/release-closure-20261009/time-reference-summary.json",
+    "sha256": "98a75117df3da507dcd88b33a1e409d5530c4c153b9e85a13d7fdde5c331848d",
+    "scope": "two separate temporal methods plus independent highprecision EOS endpoint, same physical reaction RHS; no repeated derivation in this node"
+  },
+  "replay": {
+    "cpu_command": "build-release-cpu/bin/ARCH BurnOneZone validation/burn/inputs/long_time_reference.par",
+    "ros4": "samephysicalinput, set ode_solver=ROS4 in separate copy; original budgets unchanged",
+    "restart": "samephysicalinput, restart=true and restart_file=..._chk_0001.h5; final20numericdataset dtype/shape/bits andSpecies/name compared tocontinuousfinal",
+    "expected_endpoint_reference": "see linked reference hex fields; compare actual Data/rhoX dividedbyrho, Data/eng dividedbyrho and finalplotTEMP"
+  },
+  "new_CTest_targets": 0,
+  "new_CI_jobs": 0,
+  "raw_uploaded": false,
+  "remaining": [
+    "wall-clock30-60min active reaction/coupled resource stability",
+    "thermal/RZ/all-active AMR coupling and NativeDevice full production lifecycle",
+    "final CUDA producer/GUI/CI and matched endpoint timings"
+  ],
+  "accepted_raw_cleanup": {
+    "removed_files": 14,
+    "removed_bytes": 1107032,
+    "retained_checkpoints": 2,
+    "retained_reason": "midpoint andcontinuousfinal for furtherbackendrestart",
+    "summary_policy": "datasetdtype/shape/digest andfileidentity/actualtime recordedbeforedelete; no H5uploaded",
+    "collector_repair": "local scalarreader fixed beforeanydeletion; no mathematicalchanges"
+  },
+  "public_input_configuration_inspection": {
+    "kind": "configuration-inspection",
+    "request_id": "burn-production-reference",
+    "exit_code": 0,
+    "scientific_runtime_qualified_by_inspection": false
+  }
+}

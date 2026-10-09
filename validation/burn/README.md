@@ -155,3 +155,5 @@ These data files support reproduction and independent review; they are not setup
 - [Built-in NSE application results (JSON)](results/nse-application-native-20260907/release-890/evidence.json)
 
 </details>
+
+The active nonlinear endpoint and midpoint restart use `inputs/long_time_reference.par`: equal C/O fractions, rho=1e7, T0=3e9, physical endpoint1e-6 and midpoint checkpoint5e-7. Actual BD/ROS4 endpoints met the independent species/temperature/energy budgets; the BD restart retained20 numerical datasets bit for bit. See the [processed record](results/release-closure-20261009/production-summary.json). Local ODE tolerances do not bound global endpoint errors by themselves. This seconds-long run qualifies its physical endpoint and restart; wall-clock durability and long coupled trajectories have separate exits.
