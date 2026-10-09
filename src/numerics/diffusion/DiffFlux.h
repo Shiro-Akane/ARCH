@@ -104,7 +104,7 @@ namespace DiffFlux
 
     /** Actual right-indexed face distance, shared by producer and dt rows.
      * Workflow: preserve the original ordinary/radial PhysicalSpacing path;
-     * on a Native axial face, borrow both adjacent represented cell widths;
+     * on Native r/z faces, borrow both adjacent represented cell widths;
      * reject invalid geometry and return their positive finite half-sum.
      * Formula d_(j-1/2)=0.5*dz_(j-1)+0.5*dz_j. Periodic alias widths are
      * supplied by the same GridMetrics cell owner, never reconstructed here.
@@ -113,16 +113,7 @@ namespace DiffFlux
     ARCH_INLINE double diffusion_face_spacing(
         const GridMetrics::GeometryView& grid,int direction,int i,int j)
     {
-        if(!GridMetrics::is_axisymmetric_rz(grid)||direction!=1)
-            return GridMetrics::PhysicalSpacing(grid,direction,i,j);
-        if(j==std::numeric_limits<int>::min())
-            return std::numeric_limits<double>::quiet_NaN();
-        const double left=grid.CellWidth(1,j-1),right=grid.CellWidth(1,j);
-        if(!std::isfinite(left)||!(left>0.)||!std::isfinite(right)||!(right>0.))
-            return std::numeric_limits<double>::quiet_NaN();
-        const double distance=.5*left+.5*right;
-        return std::isfinite(distance)&&distance>0.?distance:
-            std::numeric_limits<double>::quiet_NaN();
+        return GridMetrics::CellPairDistance(grid,direction,i,j);
     }
 
     ARCH_INLINE DiffusionCoefficients evaluate_diffusion_coefficients(
@@ -496,7 +487,8 @@ namespace DiffFlux
      * kinematic nu is constant or exactly zero. Form each actual rho*nu product,
      * borrow metric stencils, and pair that traction with its physical velocity.
      * Recompute the original thermal term rather than subtracting two large
-     * mechanical powers. Native V/W means retain their own closure below.
+     * mechanical powers. Native Pr/M,Pz/M use the same meridional strain;
+     * its separate angular owner below retains the actual V/W/I* closure.
      */
     template<class StateReader>
     ARCH_INLINE bool replace_curvilinear_viscous_flux(const StateReader& read,
@@ -505,7 +497,7 @@ namespace DiffFlux
         const DiffusionFaceProperties& face,FluidVector& flux,
         double* physical_work_velocity=nullptr)
     {
-        if(grid.geometry==DiffusionGeometry::Cartesian||GridMetrics::is_axisymmetric_rz(grid)||
+        if(grid.geometry==DiffusionGeometry::Cartesian||
            (!config.use_viscous_diffusion&&!physical_work_velocity))return true;
         const double nu=config.use_viscous_diffusion?face.coefficients.nu_visc:0.;
         if(grid.dim!=1&&nu==0.)return true;
@@ -521,7 +513,13 @@ namespace DiffFlux
             velocity=radial.work_velocity;
         } else if(!CurvilinearViscousStress::face_traction(read,right_cell,grid,direction,i,j,
             mu_left,mu_right,traction,velocity))return false;
-        const NewtonianViscousStress::Vector momentum{-traction[0],-traction[1],-traction[2]};
+        // Native meridional strain is orthogonal to the already accepted
+        // angular graph. Retain its existing raw phi flux/power here; the
+        // following angular owner replaces that pair once in V/W normalization.
+        const bool native=GridMetrics::is_axisymmetric_rz(grid);
+        if(native)velocity[2]=.5*(left.mom_w/left.rho+right.mom_w/right.rho);
+        const NewtonianViscousStress::Vector momentum{-traction[0],-traction[1],
+            native?flux.mom_w:-traction[2]};
         double power=0.;
         if(!NewtonianViscousStress::power(velocity,momentum,power))return false;
         // The thermal owner uses its original actual normal face spacing.
@@ -697,7 +695,7 @@ namespace DiffFlux
         double maximum = 0., inverse_dt = 0., angular_row = 0.;
         double cartesian_rows[3]{},curved_rows[3]{};
         const bool curved_viscous=grid.geometry!=DiffusionGeometry::Cartesian
-            &&!GridMetrics::is_axisymmetric_rz(grid)&&config.use_viscous_diffusion;
+            &&config.use_viscous_diffusion;
         const bool rz_viscous = GridMetrics::is_axisymmetric_rz(grid)
             && config.use_viscous_diffusion;
         RzViscousStress::AngularCell angular_center{};
@@ -809,8 +807,7 @@ namespace DiffFlux
         inverse_dt += source_rate;
         if(curved_viscous&&viscosity>0.&&grid.dim>1) {
             NewtonianViscousStress::Tensor sums{};
-            if(!CurvilinearViscousStress::stress_row_sums(grid,grid.GetCellCenterX(i),
-                grid.SourceTheta(j),-1,sums))return {diffusion_dt_sentinel(),false};
+            if(!CurvilinearViscousStress::stress_row_sums(grid,i,j,-1,sums))return {diffusion_dt_sentinel(),false};
             const double factor=viscosity/grid.GetCellCenterX(i);
             const auto frame=CurvilinearViscousStress::frame(grid);
             if(frame==NewtonianViscousStress::Frame::CylindricalRZPhi) {
@@ -1095,31 +1092,26 @@ inline void capture_diffusion_surface_flux(
             status.valid=false;return status;
         }
         if (dynamic_viscosity == 0.) return status;
-        if(!GridMetrics::is_axisymmetric_rz(grid)) {
-            NewtonianViscousStress::Tensor tau{};
-            NewtonianViscousStress::Vector source{};
-            if(grid.dim==1) {
-                if(!CurvilinearViscousStress::radial_connection_source(read_state,grid.GetIndex(i,j,k),
-                    grid,i,coefficients.nu_visc,source)) {status.valid=false;return status;}
-            } else if(!CurvilinearViscousStress::cell_stress(read_state,grid.GetIndex(i,j,k),
-                grid,i,j,dynamic_viscosity,tau)||
-               !CurvilinearViscousStress::connection_source(tau,grid,i,j,source)) {
-                status.valid=false;return status;
-            }
-            delta.mom_u+=dt*source[0];delta.mom_v+=dt*source[1];delta.mom_w+=dt*source[2];
-            return status;
+        NewtonianViscousStress::Tensor tau{};
+        NewtonianViscousStress::Vector source{};
+        if(grid.dim==1) {
+            if(!CurvilinearViscousStress::radial_connection_source(read_state,grid.GetIndex(i,j,k),
+                grid,i,coefficients.nu_visc,source)) {status.valid=false;return status;}
+        } else if(!CurvilinearViscousStress::cell_stress(read_state,grid.GetIndex(i,j,k),
+            grid,i,j,dynamic_viscosity,tau)||
+           !CurvilinearViscousStress::connection_source(tau,grid,i,j,source)) {
+            status.valid=false;return status;
         }
-        // Only Native RZ reaches this branch. Its already accepted angular
-        // torque owner supplies the phi connection in its face divergence.
-        // Retain the current radial meridional term until its full tensor/FV
-        // gate closes; no ordinary-chart vector-Laplacian source remains.
-        const double inverse_radius=GridMetrics::InverseRadiusVolumeAverage(grid,i);
-        delta.mom_u-=dt*dynamic_viscosity*((U.mom_u/rho)/r)*inverse_radius;
+        // Native ur=Pr/M and uz=Pz/M form only the meridional Stokes block.
+        // Its unresolved phi normal stress is included in the three-dimensional
+        // trace, while the separate angular graph owns every phi force/work.
+        // No old vector-Laplacian source is applied in either chart.
+        delta.mom_u+=dt*source[0];delta.mom_v+=dt*source[1];delta.mom_w+=dt*source[2];
         return status;
     }
 
     /**
-     * @brief Adds the matched Stokes geometry, or the current gated Native RZ source.
+     * @brief Adds matched Stokes geometry in ordinary or Native meridional components.
      */
     template <typename EosType>
     inline void add_geometric_sources(std::vector<FluidVector>& dU, const FluidState& state,

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "host/driver/RzRuntimeWitness.h"
+#include "math/geometry/RzMeridionalCases.h"
 
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
@@ -501,7 +502,7 @@ struct Fixture {
     std::optional<scheduler::StageExecutionContext> context;
     driver::DriverStageWorkspace workspace;
     dispatch::ResolvedExecutionPlan plan{};
-    int diffusion_calls=0,hydro_calls=0,burn_calls=0;
+    int diffusion_calls=0,hydro_calls=0,burn_calls=0,expected_stages=0;
     bool candidate_seen=false;
     FluidVector observed_candidate;
     state::StateVersion candidate_version{};
@@ -569,7 +570,14 @@ struct Fixture {
         plan.diffusion_integrator=dispatch::DiffusionIntegratorId::Rkl1;
         context.emplace(runtime->stage_context());
         const auto candidate=driver::calculate_timestep_candidates(*runtime,workspace,*eos,&plan);
-        dt_fe=candidate.diffusion_forward_euler;near(dt_fe,1./8.,"actual angular Runtime FE row reference failed");
+        // Full meridional Stokes now participates in this Runtime's bound,
+        // even for a currently angular-only state. At r=1/2, h_r=h_z=nu=1,
+        // independent absolute row contributions are radial face 8, axial
+        // cross-face 6 and the connection 8: dt_FE=1/22. The unchanged
+        // angular graph alone has rate 8 and is no longer the global maximum.
+        dt_fe=candidate.diffusion_forward_euler;
+        std::cout<<"RZ_ANGULAR_FULL_STOKES_FE actual="<<dt_fe<<" independent="<<1./22.<<'\n';
+        near(dt_fe,1./22.,"actual full-Stokes Runtime FE row reference failed");
         require(runtime->handles().size()==1&&context->hydro_preparation==nullptr,
             "angular fixture fabricated a source journal or lost actual topology");
     }
@@ -585,7 +593,7 @@ struct Fixture {
         require(bool(science),"angular fixture lost its actual bound Runtime EOS gate");
         context->post_boundary_acceptance=[this,science](const scheduler::StageExecutionContext& actual,
             StateSlot slot,state::StateVersion version) {
-            const auto expected=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,1).stages.front().output_slot;
+            const auto expected=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,expected_stages).stages.back().output_slot;
             if(diffusion_calls==1&&slot==expected) {
                 const auto member=TimeIntegration::hydro_boundary_state_member(slot);
                 observed_candidate=(block().*member).get(first_cell());
@@ -595,7 +603,8 @@ struct Fixture {
         };
     }
     /** Same genuine boundary configure/preparation owner as Driver.h. */
-    void bind_frame(double half_dt) {
+    void bind_frame(double half_dt,int stages) {
+        expected_stages=stages;
         context->step_start_time=controller->t_current;context->step_dt=2.*half_dt;
         context->boundary_start_time=controller->t_current;context->boundary_step_dt=half_dt;
         context->configure_boundary_context=[this](double time,boundary::BoundaryPurpose purpose) {
@@ -608,8 +617,8 @@ struct Fixture {
         runtime->bind_boundary_accounting(*context);
         // Install the real observer/storage before the rollback snapshot. It
         // remains aliased across all slots and its planes are checked deeply.
-        const auto one=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,1);
-        context->rkl_flux_capture_begin(one.stages.front(),one);
+        const auto selected=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,expected_stages);
+        context->rkl_flux_capture_begin(selected.stages.front(),selected);
         runtime->ensure_fluid_ghosts();
         const auto ready=context->ledger.inspect({runtime->handles().front(),StateSlot::Current});
         context->ledger.require_readable({runtime->handles().front(),StateSlot::Current},
@@ -620,16 +629,19 @@ struct Fixture {
         require(runtime->active_host_hydro_transaction()!=nullptr,
             "angular actual diffusion did not borrow its outer owner");
         require(DiffFunction::compute_stages(DiffFunction::RKLOrder::First,interval,dt_fe,
-            config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages)==1,
-            "angular Runtime witness did not select genuine one-stage RKL1");
+            config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages)==expected_stages,
+            "angular Runtime witness selected a different actual RKL1 stage count");
         driver::advance_diffusion(*runtime,workspace,*context,*eos,&plan,controller->step_count,interval,dt_fe);
     }
 };
 
 /** Actual first D/2 fails thermally and the complete native macro owner rolls back. */
 void rejected_macro() {
-    Fixture f;const double half_dt=f.config.physics.diffusion.diff_cfl*f.dt_fe;
-    f.bind_frame(half_dt);
+    // With the complete tensor bound dt_FE=1/22, dt=1/5 selects three
+    // stages. The unchanged angular graph uses S=<r^2> weighted by inertia,
+    // K_f=2*r_f^4/(S_R-S_L), and flux work at its same physical face Omega.
+    // Exact Legendre recurrence keeps stages 1/2 positive and stage 3 negative.
+    Fixture f;constexpr double half_dt=1./5.;f.bind_frame(half_dt,3);
     const FieldsWitness fields_before(f.block());
     const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
     const auto identity_before=f.block().grid.dyadic_identity;
@@ -668,12 +680,12 @@ void rejected_macro() {
     near(f.observed_candidate.rho,1.,"negative angular proposal changed density");
     near(f.observed_candidate.mom_u,0.,"negative angular proposal changed radial momentum");
     near(f.observed_candidate.mom_v,0.,"negative angular proposal changed axial momentum");
-    near(f.observed_candidate.mom_w,9./32.,"negative angular actual RKL1 angular mean reference failed");
-    near(f.observed_candidate.eng,e0+15./512.,"negative angular actual RKL1 energy mean reference failed");
+    near(f.observed_candidate.mom_w,2967./6272.,"negative angular actual RKL1 angular mean reference failed");
+    near(f.observed_candidate.eng,e0+14596739./177020928.,"negative angular actual RKL1 energy mean reference failed");
     // Independent first annulus M=1/2, W=1/3, C=1/4; no production closure is the oracle.
     const double j=f.observed_candidate.mom_w/3.;
     const double thermal=f.observed_candidate.eng-4.*j*j;
-    near(thermal,e0-3./512.,"negative angular independent recovered thermal reference failed");
+    near(thermal,e0-3009439./177020928.,"negative angular independent recovered thermal reference failed");
     require(thermal<0.,"negative angular finite-step reference lost its physical sign");
     fields_before.matches(f.block());
     require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before)
@@ -686,7 +698,7 @@ void rejected_macro() {
 
 /** A real accepted RKL half-step, not a no-op-Hydro or complete macro substitute. */
 void accepted_half() {
-    Fixture f;constexpr double interval=1./16.;f.bind_frame(interval);
+    Fixture f;constexpr double interval=1./16.;f.bind_frame(interval,2);
     const auto& g=f.block().grid;const auto identity=g.dyadic_identity;
     const double old_time=f.controller->t_current,old_dt=f.controller->dt_old,old_burn=f.burn_advice;
     const int old_step=f.controller->step_count;
@@ -708,10 +720,10 @@ void accepted_half() {
     near(actual.rho,1.,"positive angular half changed density");
     near(actual.mom_u,0.,"positive angular half changed radial momentum");
     near(actual.mom_v,0.,"positive angular half changed axial momentum");
-    near(actual.mom_w,45./256.,"positive angular actual RKL mean reference failed");
-    near(actual.eng,e0+75./4096.,"positive angular actual RKL energy mean reference failed");
+    near(actual.mom_w,345./2048.,"positive angular actual RKL mean reference failed");
+    near(actual.eng,e0+8275./393216.,"positive angular actual RKL energy mean reference failed");
     const double j=actual.mom_w/3.,thermal=actual.eng-4.*j*j;
-    near(thermal,e0+75./16384.,"positive angular independent thermal reference failed");
+    near(thermal,e0+26525./3145728.,"positive angular independent thermal reference failed");
     require(thermal>f.config.numerics.min_eint,"positive angular half lost admissible physical thermal state");
     const auto ready=f.context->ledger.inspect({f.runtime->handles().front(),StateSlot::Current});
     f.context->ledger.require_readable({f.runtime->handles().front(),StateSlot::Current},
@@ -746,6 +758,177 @@ void accepted_half() {
 void run(){rejected_macro();accepted_half();}
 } // namespace angular_runtime_checks
 
+/** Actual Native meridional RKL with closed walls and periodic axial exchange.
+ * Single/two-root uniform modes use independent true means and a Legendre
+ * endpoint reference. Mixed leaves use true sine/cosine means, real per-stage
+ * reflux, independent ring V, and mass/energy/kinetic checks. Reflecting
+ * Hydro walls can exchange diffusive work under the existing BC contract;
+ * energy therefore includes the genuine already-validated surface receipt.
+ * Both
+ * original RKL families, very low density, real EOS completion and zero repair
+ * are exercised. This bounded trajectory is not a long-time or Device grant.
+ */
+static void real_native_meridional_rkl()
+{
+    using namespace arch;
+    using state::StateSlot;
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr long double pi=std::numbers::pi_v<long double>;
+    for(int layout:{0,1,2})for(bool second:{false,true})for(double density:{1.,1.e-20}) {
+        SimConfig config{};
+        config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.nblockx1=layout==2?2:1;config.grid.nblockx2=layout==1?2:1;
+        config.grid.nblockx3=0;config.grid.x1_min=1.;config.grid.x1_max=3.;
+        config.grid.x2_min=0.;config.grid.x2_max=2.;config.grid.amr_max_blocks=32;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="periodic";
+        config.amr.lrefinemin=0;config.amr.lrefinemax=layout==2?1:0;
+        config.numerics.sml_rho=1.e-24;config.numerics.min_eint=1.e-14;
+        config.numerics.max_eint=1.e10;config.numerics.cfl=.4;
+        config.physics.burn.use_burn=false;config.physics.gravity.type="none";
+        config.physics.diffusion.use_diffusion=config.physics.diffusion.use_viscous_diffusion=true;
+        config.physics.diffusion.use_thermal_diffusion=config.physics.diffusion.use_species_diffusion=false;
+        config.physics.diffusion.nu_visc=.03;config.physics.diffusion.diff_cfl=.8;
+        config.physics.diffusion.max_stages=17;
+        config.physics.diffusion.integrator=second?"RKL2":"RKL1";
+        config.io.tmax=1.;
+        SpeciesManager species;species.add_species("meridional-gas",1.,1.,1.4,3.);
+        IdealGas eos(1.4,species);
+        amr::AMRControl control(32,2);
+        if(layout==2)control.tree->LoadLeafGrid(config,1,{1,1,1,1,0},
+            {0,1,0,1,1},{0,0,1,1,0},{0,0,0,0,0},rz);
+        else control.tree->InitRootGrid(config,1,rz);
+        control.flux_register.EnsureSpecies(1);
+        const auto& active=control.tree->GetActiveBlocks();
+        require(active.size()==static_cast<std::size_t>(layout==2?5:layout==1?2:1),
+            "meridional RKL lost its actual leaf layout");
+        RzMeridionalCases::PeriodicMode mode;mode.density=density;
+        if(layout==2)mode.radial_amplitude=.04L;
+        for(int id:active) {
+            auto& block=control.pool->GetBlock(id);block.RequireNativeGeometryIdentity();
+            const auto& grid=block.grid;
+            for(auto* input:rz_runtime_witness::slots(block)) {
+                input->stage_repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
+                for(int cell=0;cell<grid.GetTotalSize();++cell) {
+                    input->set(cell,{density,0.,0.,0.,12.*density});input->X(0,cell)=1.;
+                }
+                for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i)
+                    input->set(grid.GetIndex(i,j,0),mode.means(grid,i,j));
+            }
+        }
+        RunState start{};start.repairs.reset(1,state::RepairSemantics::RzVolumeAngular);
+        SimulationController counters(config,start);
+        BCHandler boundary(config,rz);boundary.bind(eos,species);
+        boundary.configure_stage(0.,boundary::BoundaryPurpose::Diffusion);
+        driver::DriverRuntime runtime(control,boundary,config,species,counters);
+        runtime.bind_native_rz_eos(eos);runtime.initialize_topology();
+        auto context=runtime.stage_context();driver::DriverStageWorkspace workspace;
+        context.configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose) {
+            boundary.configure_stage(time,purpose);
+            runtime.bind_native_boundary_acceptance(context,runtime.handles());
+        };
+        context.physical_boundary_preparation=[&](StateSlot slot,double time,
+            boundary::BoundaryPurpose purpose) {
+            context.configure_boundary_context(time,purpose);runtime.ensure_fluid_ghosts(slot);
+        };
+        runtime.bind_boundary_accounting(context);
+        dispatch::ResolvedExecutionPlan plan{};
+        plan.diffusion_integrator=second?dispatch::DiffusionIntegratorId::Rkl2:
+            dispatch::DiffusionIntegratorId::Rkl1;
+        const auto candidate=driver::calculate_timestep_candidates(runtime,workspace,eos,&plan);
+        const double dt=8.*candidate.diffusion_forward_euler*config.physics.diffusion.diff_cfl;
+        const auto order=second?DiffFunction::RKLOrder::Second:DiffFunction::RKLOrder::First;
+        const int stages=DiffFunction::compute_stages(order,dt,candidate.diffusion_forward_euler,
+            config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages);
+        require(std::isfinite(dt)&&dt>0.&&stages>=2,"meridional RKL skipped real recurrence");
+        const auto totals=[&]() {
+            std::array<long double,3> result{};
+            for(int id:active) {
+                const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+                for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                    const long double lo=grid.x1_min+(i-grid.ng)*(long double)grid.dx1;
+                    const long double hi=lo+grid.dx1;
+                    const long double volume=pi*(hi-lo)*(hi+lo)*grid.dx2;
+                    const auto value=block.fluid_state.get(grid.GetIndex(i,j,0));
+                    result[0]+=volume*value.rho;result[1]+=volume*value.eng;
+                    result[2]+=volume*((long double)value.mom_u*value.mom_u
+                        +(long double)value.mom_v*value.mom_v)/(2.L*value.rho);
+                }
+            }
+            return result;
+        };
+        const auto initial=totals();long double previous_kinetic=initial[2],amplitude=1.L;
+        const auto& first_grid=control.pool->GetBlock(active.front()).grid;
+        const long double one_amplitude=layout==2?1.L:RzMeridionalCases::amplification(second,
+            stages,mode.axial_eigenvalue(first_grid.dx2,config.physics.diffusion.nu_visc)*dt);
+        require(std::isfinite(one_amplitude)&&std::abs(one_amplitude)<=1.L,
+            "meridional RKL reference is outside its stable interval");
+        long double max_velocity_error=0.;
+        for(int macro=0;macro<2;++macro) {
+            context.step_start_time=context.boundary_start_time=macro*dt;
+            context.step_dt=context.boundary_step_dt=dt;
+            const auto before=context.ledger.inspect({runtime.handles().front(),StateSlot::Current}).interior.version;
+            {
+                scheduler::ScopedStageBinding binding(context,runtime.handles());
+                driver::advance_diffusion(runtime,workspace,context,eos,&plan,macro,dt,
+                    candidate.diffusion_forward_euler);
+            }
+            amplitude*=one_amplitude;
+            const auto after=totals();
+            const auto& outward=runtime.diffusion_boundary_budget();
+            require(outward.size()==static_cast<std::size_t>(6+species.count()),
+                "meridional RKL omitted its actual physical-surface receipt");
+            const long double tolerance=rz_runtime_witness::scalar_budget;
+            const long double mass_error=(after[0]-initial[0]+outward[0])/initial[0];
+            const long double energy_error=(after[1]-initial[1]+outward[4])/initial[1];
+            std::cout<<"RZ_MERIDIONAL_RKL_SURFACE layout="<<layout<<" macro="<<macro
+                <<" mass_error="<<double(mass_error)<<" energy_error="<<double(energy_error)
+                <<" outward_work="<<outward[4]<<'\n';
+            require(std::isfinite(mass_error)&&std::isfinite(energy_error)
+                &&std::abs(mass_error)<=tolerance&&std::abs(energy_error)<=tolerance,
+                "Native meridional RKL lost independent V totals plus physical-surface balance");
+            require(after[2]<=previous_kinetic*(1.L+tolerance)&&after[2]<initial[2],
+                "closed Native meridional RKL increased kinetic energy or stayed inactive");
+            previous_kinetic=after[2];
+            if(layout!=2)require(std::abs(after[2]-initial[2]*amplitude*amplitude)
+                <=tolerance*initial[2],"Native axial RKL kinetic Legendre reference failed");
+            for(std::size_t n=0;n<active.size();++n) {
+                const auto& block=control.pool->GetBlock(active[n]);const auto& grid=block.grid;
+                const auto coherence=context.ledger.inspect({runtime.handles()[n],StateSlot::Current});
+                require(coherence.interior.version.value==before.value+stages,
+                    "meridional RKL skipped actual stage publication");
+                context.ledger.require_readable({runtime.handles()[n],StateSlot::Current},
+                    {state::ExecutionSide::Host,coherence.interior.version,true,true});
+                for(double value:block.fluid_state.stage_repairs.values)require(value==0.,
+                    "meridional RKL concealed heating or a floor repair");
+                for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                    const int cell=grid.GetIndex(i,j,0);const auto value=block.fluid_state.get(cell);
+                    require(value.rho==density&&value.mom_w==0.&&block.fluid_state.X(0,cell)==1.
+                        &&std::isfinite(value.eng)&&value.eng>0.,
+                        "meridional RKL changed stationary mass/angular/species or lost positivity");
+                    if(layout!=2) {
+                        const auto reference=mode.means(grid,i,j);
+                        max_velocity_error=std::max(max_velocity_error,std::abs((long double)value.mom_u/density));
+                        max_velocity_error=std::max(max_velocity_error,
+                            std::abs((long double)value.mom_v/density-amplitude*reference.mom_v/density));
+                    }
+                }
+            }
+        }
+        require(max_velocity_error<=rz_runtime_witness::scalar_budget,
+            "Native axial RKL exact discrete eigenmode failed");
+        if(layout==2)require(control.RequireFluxTopologyPlan(1,rz,-1,true).semantics==rz,
+            "meridional RKL coarse/fine register lost its Native identity");
+        for(double value:runtime.repair_budget().values)require(value==0.,
+            "meridional RKL endpoint has nonzero repair accounting");
+        std::cout<<std::setprecision(17)<<"RZ_MERIDIONAL_REAL_RKL layout="<<layout
+            <<" rkl="<<(second?2:1)<<" density="<<density<<" stages="<<stages
+            <<" macro_steps=2 dt="<<dt<<" max_velocity_error="<<double(max_velocity_error)
+            <<" kinetic_ratio="<<double(previous_kinetic/initial[2])
+            <<" Legendre_reference="<<(layout!=2)<<" real_EOS=1 zero_repairs=1 PASS\n";
+    }
+}
+
 
 #ifdef ARCH_RZ_RUNTIME_CONTRACT_EMBEDDED
 // The private standalone diagnostic keeps its original main and scope; only
@@ -754,6 +937,7 @@ void run_native_rz_runtime_external_contract();
 /** Existing gravity-stage lane: call each coherent Runtime body exactly once. */
 void run_native_rz_runtime_boundary_contract() {
     real_native_current_boundary_idempotence();
+    real_native_meridional_rkl();
     angular_runtime_checks::run();
     run_native_rz_runtime_external_contract();
 }
@@ -770,6 +954,7 @@ int main(int argc,char** argv) {
   real_native_eos_boundary_gate();
   real_native_current_boundary_idempotence();
   angular_runtime_checks::run();
+  real_native_meridional_rkl();
   for(bool mixed:{false,true})for(int direction:{0,1})for(double inner:{0.,1.}) {
     SimConfig config{};
     config.grid.dim=2;config.grid.geometry="cylindrical";

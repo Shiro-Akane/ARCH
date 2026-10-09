@@ -1,0 +1,359 @@
+{
+  "schema": "arch-release-scientific-node-1",
+  "node": "shared-native-meridional-stokes-20261009",
+  "baseline_commit": "9cc1bbda2f2aca24c8883b46aace483eebe24259",
+  "source_files_sha256": {
+    "src/grid/GridMetrics.h": "d707ef672738dddb041b31a16ec92d38d32842855d219355aa74334b63c3479c",
+    "src/numerics/diffusion/CurvilinearViscousStress.h": "c7a801e8e3c5d4a594430f768285f284ce20add3c86e341a44530c4c820218bc",
+    "src/numerics/diffusion/DiffFlux.h": "9aa38488ca80050d8d4be40540cd1316c2d64f4cfd9fe205dbc5fe9b1f27adf2",
+    "tests/cuda/grid/test_curvilinear_geometry_smoke.cu": "9f3a4d5cfca8eed32be97c6cd0931aac41ef44002e4712b1857783c6a993b012",
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "0dcf33be0af5dcd0709c4ea66477d0949d75bb9512587ced3fd2d1fba166e989",
+    "tests/host/driver/test_rz_runtime_external.cpp": "981d8551d46cbab87a4960ae476fced27db7761f6d23093001564be45833b26d",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "134eb8c691b907d9561287bbb12c951cf44e4c51c80290b3d3b0ac36abf9da80",
+    "tests/host/numerics/test_low_density.cpp": "67d8066e529114bddf2d46a8a9da254d6a15ceb17fb55f96d6c72ab6e6020043",
+    "tests/math/geometry/CurvedStokesCases.h": "2560a73e7adaa4e12165d44df0b0b91c00b730b29a0ac432c749f7c4e9075da5",
+    "tests/math/geometry/RzMeridionalCases.h": "e0cdc80f0f8c4ea88f93d875c276f1789ee676f7208100e9f94e5aa9490c034f"
+  },
+  "CPU_production_ELF_sha256": "ffec9db887af910dd08b4e05fc86a15f4287e807f663c6e992e2bc48b2da7474",
+  "CPU_runtime_owner_ELF_sha256": "a6b2dd916a1ea5254ecacf4cb359b41eee68643db0e7287885d881e2e44cc9d6",
+  "CPU_lowdensity_owner_ELF_sha256": "4705f92212009d32dc8f9bef098aeb9b94230bef1bc0d6834859f678b09b1b61",
+  "CUDA_geometry_owner_ELF_sha256": "e413a93f56a67fb9c6b9b9d4563236e7ddbe059d50203747df7eb0a518e7a41a",
+  "original_windows_changed": false,
+  "new_CTest_targets": 0,
+  "scientific_scope": {
+    "shared_native_meridional": "Pr/M,Pz/M; three-dimensional zero-bulk Stokes, adjoint face traction, geometric connection, same-stress work, actual distance/capacity row bound",
+    "angular": "existing V/W/I* graph and original9 mathematical fixtures retained",
+    "geometry_each_backend": {
+      "smooth_PDE": 9,
+      "variable_density_energy": 2,
+      "actual_axis": 4
+    },
+    "actual_CPU_Runtime_RKL": {
+      "trajectories": 12,
+      "methods": [
+        "RKL1",
+        "RKL2"
+      ],
+      "layouts": [
+        "single root",
+        "two same-level axial roots",
+        "mixed five leaves"
+      ],
+      "densities": [
+        1.0,
+        1e-20
+      ],
+      "macro_steps_each": 2,
+      "maximum_stage_count": 17,
+      "independent_uniform_eigenvalue": "-16*nu*sin(k*h/2)^2/(3*h^2)",
+      "velocity_window": 2e-12,
+      "energy_window": 2e-12,
+      "mixed_boundary_work": "actual outward diffusion receipt; reflecting Hydro does not imply zero viscous work",
+      "state_repairs": 0,
+      "original_whole_owner_seconds": 34.03
+    }
+  },
+  "cold_reference": {
+    "unit_viscosity_actual_FE": "1/22",
+    "old_half_dt_0_1": "actual RKL1 two stages and positive; original explicit FE counterexample preserved",
+    "deliberate_negative_RKL1_half_dt": "1/5",
+    "stages": 3,
+    "thermal_increment_exact": "-3009439/177020928",
+    "accepted_half_dt": "1/16",
+    "accepted_stages": 2,
+    "thermal_increment_exact_accepted": "26525/3145728",
+    "actual_macro_viscosity": 2.0,
+    "actual_macro_FE": "1/44",
+    "actual_macro_reject_dt": 0.2,
+    "actual_macro_retry_dt": 0.1,
+    "hydro_CFL_and_cold_profile_unchanged": true,
+    "first_CFL_mismatch_preserved": true
+  },
+  "CPU_regression": {
+    "production_build_seconds": 319.053,
+    "first_full_run_seconds": 197.139,
+    "first_full_registered_passes": 75,
+    "registered_count": 76,
+    "first_failed_owner": "low_density_math",
+    "cause": "obsolete angular-only FE row / completed-method assumption",
+    "only_failed_owner_retest": "PASS",
+    "retest_guard_seconds": 1.017,
+    "retest_build_seconds": 9.07,
+    "subsequent_production_change": false,
+    "single_fresh_76_of_76_run_claimed": false
+  },
+  "CUDA_current_header_owner": {
+    "build_guard_seconds": 131.796,
+    "test_guard_seconds": 2.024,
+    "actual_ctest_seconds": 1.28,
+    "owner": "cuda_curvilinear_geometry_smoke",
+    "all_previous_assertions_preserved": true,
+    "production_ELF_rebuilt": false
+  },
+  "guard_runs": {
+    "cpu-native-full-row-lowdensity-build.guard.txt": {
+      "sha256": "b0d385fcecb6c5462e1fe3986b64f1262e28799645ddc754c808b2f59dad0a0b",
+      "elapsed_seconds": 9.07,
+      "guard_stopped": false
+    },
+    "cpu-native-full-row-lowdensity-test.guard.txt": {
+      "sha256": "65e8f21a25f3cfd317c1386ccc98578376eb031b62061cca423412895bf71f99",
+      "elapsed_seconds": 1.017,
+      "guard_stopped": false
+    },
+    "cpu-native-meridional-owner-build.guard.txt": {
+      "sha256": "3dd1b56d855a54395d9791e1dcce50ba86b5d3ce3c034a81d6c4b271de07c809",
+      "elapsed_seconds": 26.286,
+      "guard_stopped": false
+    },
+    "cpu-native-meridional-owner-test.guard.txt": {
+      "sha256": "ed8f271e2bcc667f6951377f8114b1f81ffd6435d9b8d05c5c73d7fc20335a51",
+      "elapsed_seconds": 19.102,
+      "guard_stopped": false
+    },
+    "cpu-native-production-full-build.guard.txt": {
+      "sha256": "4d81e7a2181ff0ed926e520fbdc97d25f7ad9b329ad28733e6b57f14bec55248",
+      "elapsed_seconds": 319.053,
+      "guard_stopped": false
+    },
+    "cpu-native-production-full-tests.guard.txt": {
+      "sha256": "06caf212929dcce0150f5caae1ccac0d4913fe66e28145fe2db0fe0f50b5ade6",
+      "elapsed_seconds": 197.139,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-cold-migration-build.guard.txt": {
+      "sha256": "344f19f17586ba690048b100fda3ab6d525667bf8a5405e1456ca3860f3641a3",
+      "elapsed_seconds": 21.352,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-cold-migration-test.guard.txt": {
+      "sha256": "d0236430941782ab16769f55eee02e739f951007206802c129f8f41b92ce2acb",
+      "elapsed_seconds": 32.211,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-full-row-build.guard.txt": {
+      "sha256": "0b88848f1d96ee89ce6d5fa7ecf3c863be57be68d4859432c639646265e84e9f",
+      "elapsed_seconds": 21.374,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-full-row-test.guard.txt": {
+      "sha256": "83f140309b1c2e97578e454d6feef56cc5071e17b2a91aa6c87d544de784898d",
+      "elapsed_seconds": 4.049,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-owner-build.guard.txt": {
+      "sha256": "49d918977d982c92420eb32b5180db0255a716766ae16163d0cc217f2acf636c",
+      "elapsed_seconds": 51.575,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-owner-test.guard.txt": {
+      "sha256": "b22235afba02e98cf12f9276ede9073769cb8ac220234882cad40544b1f1faba",
+      "elapsed_seconds": 3.036,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-receipt-build.guard.txt": {
+      "sha256": "fbe7f1032486334703ea78b200674082335615fdb773f67b10264890296cadc8",
+      "elapsed_seconds": 19.304,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-receipt-test.guard.txt": {
+      "sha256": "4ecfbe5fb4709f8c5a4f69d343616d6060723ad60a004c7af51cc8a42144067a",
+      "elapsed_seconds": 5.047,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-stiff-cold-build.guard.txt": {
+      "sha256": "18f208cc04b951afa4a72f779009b41347236c11c3305c485996ffaec7fce7be",
+      "elapsed_seconds": 20.342,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-stiff-cold-test.guard.txt": {
+      "sha256": "fb15b34343d919d1bd90114533a9cde964af48a62793e36b8eec31e8922a6f62",
+      "elapsed_seconds": 34.261,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-surface-build.guard.txt": {
+      "sha256": "8f9bec505a1747f49f5e238388b8cd219510282dd3a424574a9b06b7fbd2f83f",
+      "elapsed_seconds": 19.361,
+      "guard_stopped": false
+    },
+    "cpu-native-rkl-surface-test.guard.txt": {
+      "sha256": "538bd50c6bb1f22fdb0dc64a02f8f79ef7e65954f386920ddc5635650ed387cc",
+      "elapsed_seconds": 3.048,
+      "guard_stopped": false
+    },
+    "cuda-native-current-header-build.guard.txt": {
+      "sha256": "01d07f1c62c676775a26836fc57c3e3492cda3c3666f73184e64817619a21e37",
+      "elapsed_seconds": 131.796,
+      "guard_stopped": false
+    },
+    "cuda-native-current-header-test.guard.txt": {
+      "sha256": "255d805ea8182f83f4236bf79afd4d3479f45b8521ec36da91d3fc904585bbb6",
+      "elapsed_seconds": 2.024,
+      "guard_stopped": false
+    },
+    "cuda-native-meridional-owner-build.guard.txt": {
+      "sha256": "ff3b74270884905e8bcb8bc08ae0a7b895d603c23ba3af4b7c3531f39bdf3e00",
+      "elapsed_seconds": 135.828,
+      "guard_stopped": false
+    },
+    "cuda-native-meridional-owner-test.guard.txt": {
+      "sha256": "e57550251208c4da821f38c3876ad8fd9d7c7b0e2ec9d726cb31988b851675bd",
+      "elapsed_seconds": 2.02,
+      "guard_stopped": false
+    }
+  },
+  "DPS_runs": [
+    {
+      "job": "native-axial-rkl-independent-reference-20261009.job",
+      "logical_task_id": "native-axial-rkl-independent-reference-20261009",
+      "seconds": 120.69,
+      "usage": {
+        "input_tokens": 1722,
+        "cached_input_tokens": 384,
+        "output_tokens": 25802,
+        "noncached_input_tokens": 1338,
+        "reasoning_tokens": 25324,
+        "visible_output_tokens": 478
+      },
+      "estimated_usd": {
+        "currency": "USD",
+        "off_peak": 0.01568305,
+        "peak": 0.0313661,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "review": null,
+      "accepted_scope": "restricted uniform Native axial cosine reference only"
+    },
+    {
+      "job": "native-full-row-cold-rkl-counterexample-20261009.job",
+      "logical_task_id": "native-full-row-cold-rkl-counterexample-20261009",
+      "seconds": 150.08,
+      "usage": null,
+      "estimated_usd": null,
+      "review": null,
+      "accepted_scope": null
+    },
+    {
+      "job": "native-full-row-cold-rkl-counterexample-20261009.repair.job",
+      "logical_task_id": "native-full-row-cold-rkl-counterexample-20261009",
+      "seconds": 64.19,
+      "usage": {
+        "input_tokens": 1968,
+        "cached_input_tokens": 384,
+        "output_tokens": 17149,
+        "noncached_input_tokens": 1584,
+        "reasoning_tokens": 16807,
+        "visible_output_tokens": 342
+      },
+      "estimated_usd": {
+        "currency": "USD",
+        "off_peak": 0.01052815,
+        "peak": 0.0210563,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "review": null,
+      "accepted_scope": "unchanged finite angular operator: selected RKL1 s3 dt=1/5 cold counterexample; old dt=.1 now selects s2 and stays positive"
+    },
+    {
+      "job": "native-isolated-energy-reciprocity-20261009.job",
+      "logical_task_id": "native-isolated-energy-reciprocity-20261009",
+      "seconds": 75.48,
+      "usage": {
+        "input_tokens": 1593,
+        "cached_input_tokens": 256,
+        "output_tokens": 16394,
+        "noncached_input_tokens": 1337,
+        "reasoning_tokens": 15529,
+        "visible_output_tokens": 865
+      },
+      "estimated_usd": {
+        "currency": "USD",
+        "off_peak": 0.01003772,
+        "peak": 0.02007544,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "review": null,
+      "accepted_scope": "selected frozen-H antisymmetric endpoint defect, independently bounded endpoint-error identity, changed-H term; NOT external/open-boundary semantics"
+    },
+    {
+      "job": "native-meridional-stokes-block-check-20261009.job",
+      "logical_task_id": "native-meridional-stokes-block-check-20261009",
+      "seconds": 53.74,
+      "usage": {
+        "input_tokens": 1657,
+        "cached_input_tokens": 384,
+        "output_tokens": 12067,
+        "noncached_input_tokens": 1273,
+        "reasoning_tokens": 11768,
+        "visible_output_tokens": 299
+      },
+      "estimated_usd": {
+        "currency": "USD",
+        "off_peak": 0.0074323,
+        "peak": 0.0148646,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "review": "REPAIR_REQUIRED",
+      "accepted_scope": null
+    },
+    {
+      "job": "native-meridional-stokes-block-check-20261009.repair.job",
+      "logical_task_id": "native-meridional-stokes-block-check-20261009",
+      "seconds": 6.3,
+      "usage": {
+        "input_tokens": 1247,
+        "cached_input_tokens": 256,
+        "output_tokens": 1201,
+        "noncached_input_tokens": 991,
+        "reasoning_tokens": 1017,
+        "visible_output_tokens": 184
+      },
+      "estimated_usd": {
+        "currency": "USD",
+        "off_peak": 0.00087002,
+        "peak": 0.00174004,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "review": "ACCEPTED",
+      "accepted_scope": "corrected local axisymmetric fullStokes block separation and existing meridionalM/angularI kineticcapacities; closedadjoint algebra only"
+    }
+  ],
+  "Gemini": {
+    "logical_task": "native-stokes-scope-prose-20261009",
+    "seconds": 57.974,
+    "usage": {
+      "input": 4036,
+      "output": 7478,
+      "thinking": 6743,
+      "visible": 735
+    },
+    "status": "ACCEPTED_PARTIAL",
+    "scope": "first2 verified paragraphs only; machine INVALID_OUTPUT formatting preserved; later new CUDA Runtime claim excluded",
+    "provider_project_writes": 0,
+    "account_fee": null
+  },
+  "delegation_summary": {
+    "selection": "independent block, axial time polynomial, cold-stage rational and source-to-point energy-map checks; frozen prose only",
+    "new_findings": "negative cold fixture now requires3RKLstages; asymmetric source-to-point H must not be assumed self-adjoint",
+    "repeated_or_wrong": "block first answer used unsymmetrized gradient; formal correction accepted. Broad energy external-work claim not adopted. Prose whole candidate not accepted. Prior incomplete cold timeout cost unknown",
+    "local_resource_overlap": "external pure text overlapped serial original-owner builds/tests and root integration; no second local heavy computation",
+    "blocking_wait_seconds": 0,
+    "manager_active_cost_and_actual_bill": null,
+    "recommendation": "retain bounded independent math checks; narrow final output and keep scope/budget review; single node does not show general speedup"
+  },
+  "still_open": [
+    "general FV/coarse-fine full energy proof",
+    "nonlinear finite RKL stability qualification beyond tested trajectories",
+    "continuous isolated field and gravitational total energy",
+    "NativeDevice public lifecycle",
+    "remaining O9 coupled long trajectories and final source-dependent GUI/CI"
+  ],
+  "whole_release_accepted": false,
+  "raw_simulation_H5_generated": 0,
+  "H5_uploaded": false
+}

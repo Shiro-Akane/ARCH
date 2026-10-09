@@ -441,7 +441,8 @@ void native_rz_angular_fe_thermal_reference()
     const auto diffusion=DiffFlux::make_diffusion_config_view(config);
     // Independent capacities and s centroids of every REAL radial row. The
     // graph includes both axial neighbors even though this field has zero dz
-    // gradient; the retained radial-velocity source also bounds this operator.
+    // gradient. Its old scalar bound remains an independent angular check;
+    // the complete meridional Stokes rows now determine the actual timestep.
     const auto C=[](int n) {
         const long double l=n,h=n+1;
         return (h*h*h*h-l*l*l*l)/4.L;
@@ -460,15 +461,26 @@ void native_rz_angular_fe_thermal_reference()
         const long double q_generic=4.L*nu+4.L*nu/((2.L*n+1.L)*(2.L*n+1.L));
         const long double q_phi=(K(n)+K(n+1))/C(n)+2.L*nu;
         require(q_generic>=q_phi,"independent actual angular row exceeds retained row");
+        // Unit true-volume cells: a normal Stokes diagonal has absolute row
+        // 10/3+2/(3r), and a transverse shear has row 3. Sum their real V
+        // capacities and the connection row 4/(3r^2)+4/(3r). At the axis
+        // the zero-area inner face vanishes, leaving 8+6+8=22. For n>0
+        // both radial faces give the closed expression below. No production
+        // stress, capacity or row-bound helper supplies this reference.
+        const long double radius=n+.5L;
+        const long double q_full=nu*(n==0?22.L:
+            38.L/3.L+8.L/(3.L*radius)+4.L/(3.L*radius*radius));
+        require(q_full>=q_generic&&q_full>=q_phi,
+            "independent complete Stokes row does not bound the angular block");
         const auto dt=DiffFlux::evaluate_diffusion_dt_candidate(field.get(index),
             field.mass_fractions.data()+index,1,grid.GetTotalSize(),eos,species_view,
             diffusion,geometry,radial,j,0,composition,neighbor_composition,
             face_composition,charge,inverse_mass,read);
         require(dt.valid,"actual angular FE row rejected valid analytical source");
-        relative(dt.value,1.L/q_generic,"actual angular FE row differs from integral reference");
+        relative(dt.value,1.L/q_full,"actual full-Stokes FE row differs from integral reference");
     }
     const double raw_fe=DiffFlux::adaptive_dt_diff(field,eos,grid,config,1.,rz);
-    relative(raw_fe,1.L/8.L,"actual all-cell FE minimum differs from 16-row reference");
+    relative(raw_fe,1.L/22.L,"actual all-cell FE minimum differs from complete 16-row reference");
     std::vector<FluidVector> face_flux(grid.GetTotalSize());
     std::vector<double> face_species(grid.GetTotalSize());
     DiffFlux::compute_fluxes(field,eos,grid,config,face_flux,face_species,0,false,rz);
@@ -487,11 +499,16 @@ void native_rz_angular_fe_thermal_reference()
             "pure native angular diffusion changed unrelated conserved quantities");
     }
     for(bool negative:{false,true}) {
-        const double dt=negative?config.physics.diffusion.diff_cfl*raw_fe:1./16.;
+        // Preserve both original explicit FE counterexamples and their exact
+        // values. These finite leaf proposals are NOT a timestep-selected
+        // whole RKL method: the new tensor bound selects two stages for both.
+        // Actual selected three-stage rejection/two-stage acceptance and full
+        // macro rollback are exercised by the existing Runtime owner.
+        const double dt=negative?1./10.:1./16.;
         const int stages=DiffFunction::compute_stages_rkl1(dt,raw_fe,
             config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages);
-        require(stages==1,"actual angular FE witness did not select genuine one-stage RKL1");
-        const auto coefficient=DiffFunction::get_rkl1_coeffs(1,stages);
+        require(stages==2,"actual tensor-bound RKL selection differs from the independent interval");
+        const auto coefficient=DiffFunction::get_rkl1_coeffs(1,1);
         require(coefficient.tilde_mu==1.,"actual one-stage RKL1 no longer equals FE");
         std::vector<FluidVector> increment(grid.GetTotalSize());
         std::vector<double> species_increment(grid.GetTotalSize());
@@ -564,7 +581,7 @@ void native_rz_angular_fe_thermal_reference()
         require(std::bit_cast<std::uint64_t>(field.stage_repairs.position[axis])
             ==std::bit_cast<std::uint64_t>(repair_before.position[axis]),
             "angular FE leaves changed source receipt position");
-    std::cout<<"RZ_ANGULAR_FE_REFERENCE_PASS actual_operator=true actual_rkl1_stage=true negative_thermal_rejected=true smaller_step_positive=true BC_or_Runtime_qualified=false\n";
+    std::cout<<"RZ_ANGULAR_FE_REFERENCE_PASS actual_operator=true explicit_FE_leaf=true selected_RKL1_stages=2 full_tensor_rows=16 negative_thermal_rejected=true smaller_step_positive=true BC_or_Runtime_qualified=false\n";
 }
 
 /** Destination numerical-inertia counterexample; not an AMR transfer qualification.

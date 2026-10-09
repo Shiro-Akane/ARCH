@@ -39,6 +39,7 @@
 #include "math/geometry/RzEquilibriumCases.h"
 #include "math/geometry/RzReconstructionCases.h"
 #include "math/geometry/RzViscousCases.h"
+#include "math/geometry/RzMeridionalCases.h"
 
 namespace {
 void close(double actual, double expected, const char* name) {
@@ -2051,9 +2052,9 @@ int main(int argc,char** argv)
         result.raw_dt = DiffFlux::adaptive_dt_diff(state, eos, grid, config, 1.);
         return result;
     };
-    // The original radial/axial connection remains unchanged. The phi
-    // connection now belongs to the symmetric torque divergence below and
-    // must not also be applied as the former vector-Laplacian cell source.
+    // Native meridional Stokes uses ur=r, uz=3z, mu=2nu:
+    // G=diag(1,3,1), tau_phiphi=-(4/3)mu, so S_r=(8/3)nu/r.
+    // The phi shear remains solely in its accepted angular torque owner.
     for (double left : {0.,1.,4.}) {
         auto grid=make_rz_geometry_view(make_geometry_view(
             Geometry::Cylindrical,2,{left,-1.,0.},{.25,.5,0.}));
@@ -2076,9 +2077,10 @@ int main(int argc,char** argv)
         // strict reader whitelist rather than forbidding legitimate radial rho.
         std::array<int,3> radial_reads{};
         const auto read=[&](int index) {
-            if(index<cell-1 || index>cell+1)
+            const bool radial=index>=cell-1&&index<=cell+1;
+            if(!radial&&index!=cell-grid.stride_y&&index!=cell+grid.stride_y)
                 throw std::runtime_error("RZ viscous source accessed inactive phi neighbour");
-            ++radial_reads[static_cast<std::size_t>(index-(cell-1))];
+            if(radial)++radial_reads[static_cast<std::size_t>(index-(cell-1))];
             return states.at(static_cast<std::size_t>(index));
         };
         const auto status=DiffFlux::evaluate_geometric_diffusion_cell(
@@ -2089,7 +2091,7 @@ int main(int argc,char** argv)
         if(radial_reads[0]==0 || radial_reads[1]==0 || radial_reads[2]==0)
             throw std::runtime_error("RZ viscous source omitted its actual radial density stencil");
         const double r=grid.GetCellCenterX(1),inv=2./(left+left+.25);
-        close(delta.mom_u,-2.*coefficients.nu_visc*inv,"RZ radial viscous connection");
+        close(delta.mom_u,(8./3.)*coefficients.nu_visc/r,"RZ full Stokes radial connection");
         close(delta.mom_w,0.,"RZ duplicated azimuthal viscous connection");
         if (delta.mom_v!=0. || delta.rho!=0. || delta.eng!=0.)
             throw std::runtime_error("RZ viscous source changed z/mass/energy");
@@ -2102,6 +2104,21 @@ int main(int argc,char** argv)
     RzReconstructionCases::native_profile();
     test_rz_supported_density();
     RzViscousCases::azimuthal_operator();
+    RzMeridionalCases::convergence("cpu",[](const FluidState& state,FluidState& delta,
+        const IdealGas& eos,const Grid& grid,const SimConfig& config,
+        GridMetrics::GeometrySemantics semantics) {
+        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,semantics);
+    });
+    const auto native_evaluate=[&](const FluidState& state,const Grid& grid) {
+        constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        FluidState delta;delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
+        DiffFlux::compute_diffusion_operator(state,delta,eos,grid,config,native);
+        ViscousGeometryCases::Evaluation result;result.derivative.resize(grid.GetTotalSize());
+        for(int cell=0;cell<grid.GetTotalSize();++cell)result.derivative[cell]=delta.get(cell);
+        result.raw_dt=DiffFlux::adaptive_dt_diff(state,eos,grid,config,1.,native);return result;
+    };
+    CurvedStokesCases::density_energy("cpu-native",ViscousGeometryCases::viscosity,native_evaluate,true);
+    CurvedStokesCases::cylindrical_axis_energy("cpu-native",ViscousGeometryCases::viscosity,native_evaluate,true);
     ViscousGeometryCases::newtonian_constitutive();
     ViscousGeometryCases::newtonian_covariant_gradient();
     ViscousGeometryCases::newtonian_paired_faces();

@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <numbers>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
@@ -28,7 +29,9 @@ inline long double volume(const Grid& grid,int i,int j)
         const long double theta=grid.GetCellCenterY(j),half=grid.dx2/2.L;
         return (b*b*b-a*a*a)/3.L*(std::cos(theta-half)-std::cos(theta+half))*grid.dx3;
     }
-    return (b*b-a*a)/2.L*grid.dx2*(grid.dim==3?grid.dx3:1.L);
+    const long double azimuth=grid.geometry=="cylindrical"&&grid.dim==2
+        ?2.L*std::numbers::pi_v<long double>:(grid.dim==3?grid.dx3:1.L);
+    return (b*b-a*a)/2.L*grid.dx2*azimuth;
 }
 
 /** Build the independent point gradient and its Stokes/variance quadratic.
@@ -86,13 +89,16 @@ inline Cell reference(const FluidState& state,const Grid& grid,int i,int j,int k
  * independent positive Stokes quadratic use the original 2e-12 window.
  */
 template<class Evaluate>
-void density_energy(const char* backend,double nu,Evaluate evaluate)
+void density_energy(const char* backend,double nu,Evaluate evaluate,bool native=false)
 {
     for(const char* name:{"cylindrical","spherical"})for(int dim:{2,3}) {
-        if(std::string_view(name)=="cylindrical"&&dim==2)continue;
+        const bool rz=std::string_view(name)=="cylindrical"&&dim==2;
+        if(rz!=native)continue;
         for(double density_scale:{1.,1.e-20}) {
             Grid grid(amr::MAX_NG,1.,2.,.5,1.5,.2,.7);
-            grid.dim=dim;grid.geometry=name;grid.InitializeTopology();
+            grid.dim=dim;grid.geometry=name;
+            grid.InitializeTopology(native?GridMetrics::GeometrySemantics::AxisymmetricRz
+                :GridMetrics::GeometrySemantics::Existing);
             FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
             for(int k=0;k<grid.GetTotalZ();++k)for(int j=0;j<grid.GetTotalY();++j)
             for(int i=0;i<grid.GetTotalX();++i) {
@@ -101,7 +107,7 @@ void density_energy(const char* backend,double nu,Evaluate evaluate)
                 const bool active=i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je()&&k>=grid.Ks()&&k<grid.Ke();
                 const double u=active?(n==0?.1:n==1?.5:n==2?.8:0.):0.;
                 const double v=active?((j-grid.Js())%2?.2:-.3):0.;
-                const double w=active?((k-grid.Ks()+n)%2?.4:-.1):0.;
+                const double w=active&&!native?((k-grid.Ks()+n)%2?.4:-.1):0.;
                 state.set(index,{rho,rho*u,rho*v,rho*w,rho*(30.+.5*(u*u+v*v+w*w))});
                 state.X(0,index)=1.;
             }
@@ -167,11 +173,13 @@ void density_energy(const char* backend,double nu,Evaluate evaluate)
  * slab result; no production gradient/source/row constructs this oracle.
  */
 template<class Evaluate>
-void cylindrical_axis_energy(const char* backend,double nu,Evaluate evaluate)
+void cylindrical_axis_energy(const char* backend,double nu,Evaluate evaluate,bool native=false)
 {
     for(double density_scale:{1.,1.e-20})for(int mode=0;mode<2;++mode) {
         Grid grid(amr::MAX_NG,0.,1.,0.,1.,0.,1.);
-        grid.dim=3;grid.geometry="cylindrical";grid.InitializeTopology();
+        grid.dim=native?2:3;grid.geometry="cylindrical";
+        grid.InitializeTopology(native?GridMetrics::GeometrySemantics::AxisymmetricRz
+            :GridMetrics::GeometrySemantics::Existing);
         FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
         for(int k=0;k<grid.GetTotalZ();++k)for(int j=0;j<grid.GetTotalY();++j)
         for(int i=0;i<grid.GetTotalX();++i) {
@@ -197,7 +205,8 @@ void cylindrical_axis_energy(const char* backend,double nu,Evaluate evaluate)
                 throw std::runtime_error("axisymmetric radial diffusion changed mass/transverse momentum");
         }
         const long double expected=(mode==0?-10765141.L/450000.L:-1000171.L/1125.L)
-            *nu*density_scale*(grid.x2_max-grid.x2_min)*(grid.x3_max-grid.x3_min);
+            *nu*density_scale*(grid.x2_max-grid.x2_min)
+            *(native?2.L*std::numbers::pi_v<long double>:(grid.x3_max-grid.x3_min));
         if(!(Kdot<0.)||std::abs(Kdot-expected)>2.e-12L*std::abs(expected)
            ||std::abs(Eflux)>2.e-12L*std::abs(expected)
            ||after-before>2.e-12L*before)

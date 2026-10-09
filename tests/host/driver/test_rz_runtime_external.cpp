@@ -1155,7 +1155,10 @@ struct Fixture {
         config.numerics.time_integrator="euler";config.numerics.solver_name="HLLC";
         config.numerics.reconstruction="pcm";config.numerics.dt_min=minimum_step;
         config.physics.gravity.type="none";config.physics.diffusion.use_diffusion=true;
-        config.physics.diffusion.use_viscous_diffusion=true;config.physics.diffusion.nu_visc=1.;
+        // A genuinely stiff viscosity keeps the cold three-stage witness
+        // inside the unchanged Hydro CFL. Scaling nu and the half interval
+        // inversely preserves the exact frozen angular reference recurrence.
+        config.physics.diffusion.use_viscous_diffusion=true;config.physics.diffusion.nu_visc=2.;
         config.physics.diffusion.use_thermal_diffusion=config.physics.diffusion.use_species_diffusion=false;
         config.physics.diffusion.integrator="RKL1";config.physics.burn.use_burn=true;
         config.physics.burn.network_name="aprox13";config.physics.burn.odeconfig.ode_solver="BE_NR";
@@ -1196,7 +1199,10 @@ struct Fixture {
         context.emplace(runtime->stage_context());
         const auto actual=driver::calculate_timestep_candidates(*runtime,workspace,*eos,&plan);
         fe=actual.diffusion_forward_euler;hydro_dt=actual.hydro;
-        near(fe,1./8.,"native retry actual FE row changed its independent reference");
+        // Full-Stokes unit-nu row: radial 8 + axial cross-row 6 + geometry 8.
+        // The stiffness input nu=2 makes dt_FE=1/44; the unchanged macro .2
+        // selects three stages at its first .1 half and stays inside Hydro CFL.
+        near(fe,1./44.,"native retry full-Stokes FE row changed its independent reference");
         require(hydro_dt>=.2,"native retry .2 is outside true Hydro CFL; do not bypass that restriction");
     }
     amr::Block& block(){return control.pool->GetBlock(control.tree->GetActiveBlocks().front());}
@@ -1280,9 +1286,9 @@ void complete_retry() {
     require(f.attempts.size()==2&&bits(f.attempts[0].dt,.2)&&bits(f.attempts[1].dt,.1)
         &&f.attempts[0].rejected&&!f.attempts[1].rejected&&bits(accepted,.1)&&f.observed,
         "native actual fullmacro did not reject .2 then accept the exact smaller .1");
-    near(f.failed_value.mom_w,9./32.,"native retry independent first angular mean changed");
-    near(f.failed_value.eng,cold_internal+15./512.,"native retry independent first energy mean changed");
-    near(f.failed_value.eng-4.*std::pow(f.failed_value.mom_w/3.,2),cold_internal-3./512.,
+    near(f.failed_value.mom_w,2967./6272.,"native retry independent first angular mean changed");
+    near(f.failed_value.eng,cold_internal+14596739./177020928.,"native retry independent first energy mean changed");
+    near(f.failed_value.eng-4.*std::pow(f.failed_value.mom_w/3.,2),cold_internal-3009439./177020928.,
         "native retry lost independent genuinely negative thermal state");
     require(f.attempts[0].burn_first==1&&f.attempts[0].burn_second==0&&f.attempts[0].diffusion==1
         &&f.attempts[0].hydro==0&&f.attempts[1].burn_first==1&&f.attempts[1].burn_second==1
@@ -1438,6 +1444,10 @@ void classification_post_fence_rejections() {
             const auto closure=RzThermodynamics::make_cell_supported(read,first,
                 GridMetrics::make_geometry_view(grid,rz),grid.Is(),
                 std::clamp(grid.Is()-1,0,grid.GetTotalX()-3),bounds);
+            // The new full-tensor timestep selects three RKL1 stages. Its
+            // first two cold means are valid; inject only after the same
+            // genuine final-stage thermal refusal reaches classification.
+            if(closure.status==state::Status::valid)return;
             require(closure.inertia_mapping_valid&&closure.status==state::Status::unresolved_energy,
                 "classifier probe fired before the actual first unresolved active closure");
             // Both the mandatory gate and classification test the first cell

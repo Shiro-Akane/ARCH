@@ -17,13 +17,16 @@
  * 4. Bound the absolute rows of these actual stencils for the timestep owner.
  *    This algebraic bound alone is not a dissipativity or RKL certificate.
  *
- * Native RZ V/W means keep their separate density/torque owner; they cannot
- * be interpreted as these ordinary point samples. Both backends borrow this
+ * Native RZ borrows only ur=Pr/M and uz=Pz/M from its existing numerical
+ * kinetic closure, with real V mass capacities. Its J/W is never interpreted
+ * as point velocity: the separate accepted angular owner retains V/W/I*.
+ * Axisymmetry makes the two stress blocks orthogonal. Both backends borrow this
  * allocation-free leaf. Coefficients, EOS, BC, AMR/reflux and acceptance remain
  * with their existing owners. Invalid inputs never publish a partial result.
  */
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <numbers>
@@ -52,7 +55,7 @@ ARCH_INLINE Frame frame(const GridMetrics::GeometryView& grid)
     return grid.dim==2?Frame::CylindricalRPhiZ:Frame::SphericalRThetaPhi;
 }
 
-/** Validate one ordinary sample before any division or zero-mu shortcut. */
+/** Validate ordinary velocity or the Native meridional mean kinetic variables. */
 template<class StateReader>
 ARCH_INLINE bool velocity(const StateReader& read,int cell,
     const GridMetrics::GeometryView& grid,Vector& output)
@@ -60,7 +63,8 @@ ARCH_INLINE bool velocity(const StateReader& read,int cell,
     if(cell<0||cell>=grid.total_size)return false;
     const auto state=read(cell);
     if(!std::isfinite(state.rho)||!(state.rho>0.))return false;
-    const Vector candidate{state.mom_u/state.rho,state.mom_v/state.rho,state.mom_w/state.rho};
+    const Vector candidate{state.mom_u/state.rho,state.mom_v/state.rho,
+        GridMetrics::is_axisymmetric_rz(grid)?0.:state.mom_w/state.rho};
     for(double value:candidate)if(!std::isfinite(value))return false;
     output=candidate;return true;
 }
@@ -84,6 +88,21 @@ ARCH_INLINE bool spacings(const GridMetrics::GeometryView& grid,
            (candidate[axis]<0.&&!(grid.geometry==GridMetrics::Geometry::Spherical&&
                grid.dim==3&&axis==2)))return false;
     }
+    output=candidate;return true;
+}
+
+/** Native meridional spacings from actual cells; ordinary spacings unchanged.
+ * This is the numerical mean-velocity block, with no phi derivative obligation.
+ * Full angular strain, capacity, torque and work remain in RzViscousStress.
+ */
+ARCH_INLINE bool cell_spacings(const GridMetrics::GeometryView& grid,
+    int i,int j,std::array<double,3>& output)
+{
+    if(!GridMetrics::is_axisymmetric_rz(grid))
+        return spacings(grid,grid.GetCellCenterX(i),grid.SourceTheta(j),output);
+    if(grid.geometry!=GridMetrics::Geometry::Cylindrical||grid.dim!=2)return false;
+    std::array<double,3> candidate{grid.CellWidth(0,i),grid.CellWidth(1,j),0.};
+    for(int axis=0;axis<2;++axis)if(!std::isfinite(candidate[axis])||!(candidate[axis]>0.))return false;
     output=candidate;return true;
 }
 
@@ -133,13 +152,24 @@ ARCH_INLINE bool partials(const StateReader& read,int cell,
         (cell%grid.stride_z)/grid.stride_y,cell/grid.stride_z};
     const int strides[3]{1,grid.stride_y,grid.stride_z};
     Gradient candidate{};
+    Vector middle{};
+    const bool native=GridMetrics::is_axisymmetric_rz(grid);
+    if(native&&!velocity(read,cell,grid,middle))return false;
     for(int axis=0;axis<grid.dim;++axis)if(axis!=excluded) {
         if(coordinate[axis]<=0||coordinate[axis]>=extents[axis]-1)return false;
         Vector low{},high{};
         if(!velocity(read,cell-strides[axis],grid,low)||
            !velocity(read,cell+strides[axis],grid,high))return false;
+        double minus=0.,plus=0.;
+        if(native) {
+            minus=GridMetrics::CellPairDistance(grid,axis,coordinate[0],coordinate[1]);
+            plus=GridMetrics::CellPairDistance(grid,axis,coordinate[0]+(axis==0),coordinate[1]+(axis==1));
+            if(!std::isfinite(minus)||!(minus>0.)||!std::isfinite(plus)||!(plus>0.))return false;
+        }
         for(int component=0;component<3;++component) {
-            const double value=.5*((high[component]-low[component])/h[axis]);
+            const double value=native?.5*((high[component]-middle[component])/plus
+                +(middle[component]-low[component])/minus)
+                :.5*((high[component]-low[component])/h[axis]);
             if(!std::isfinite(value))return false;
             candidate[3*component+axis]=value;
         }
@@ -191,7 +221,7 @@ ARCH_INLINE bool face_traction(const StateReader& read,int right_cell,
     std::array<double,3> hl{},hr{};
     const double rl=grid.GetCellCenterX(il),rr=grid.GetCellCenterX(i);
     const double tl_point=grid.SourceTheta(jl),tr_point=grid.SourceTheta(j);
-    if(!spacings(grid,rl,tl_point,hl)||!spacings(grid,rr,tr_point,hr))return false;
+    if(!cell_spacings(grid,il,jl,hl)||!cell_spacings(grid,i,j,hr))return false;
     Gradient pl{},pr{},gl{},gr{};
     if((mu_left!=0.||mu_right!=0.)&&
        (!partials(read,right_cell-stride,grid,hl,direction,pl)||
@@ -200,6 +230,11 @@ ARCH_INLINE bool face_traction(const StateReader& read,int right_cell,
     // Evaluate that column directly with the paired difference; this is the
     // same adjoint expression, without a subtractive cancellation or an extra
     // normal ghost obligation. All transverse columns retain their real halo.
+    if(GridMetrics::is_axisymmetric_rz(grid)) {
+        const double distance=GridMetrics::CellPairDistance(grid,direction,i,j);
+        if(!std::isfinite(distance)||!(distance>0.))return false;
+        hl[direction]=hr[direction]=distance;
+    }
     for(int a=0;a<3;++a) {
         pl[3*a+direction]=(right[a]-left[a])/hl[direction];
         pr[3*a+direction]=(right[a]-left[a])/hr[direction];
@@ -349,7 +384,7 @@ ARCH_INLINE bool cell_stress(const StateReader& read,int cell,
 {
     Vector u{};Gradient partial{},gradient{};std::array<double,3> h{};
     const double radius=grid.GetCellCenterX(i),theta=grid.SourceTheta(j);
-    if(!velocity(read,cell,grid,u)||!spacings(grid,radius,theta,h)||
+    if(!velocity(read,cell,grid,u)||!cell_spacings(grid,i,j,h)||
        !partials(read,cell,grid,h,-1,partial)||
        !covariant_gradient(grid,u,partial,radius,theta,gradient))return false;
     return NewtonianViscousStress::stress(gradient,mu,output);
@@ -389,15 +424,33 @@ ARCH_INLINE bool connection_source(const Tensor& tau,
  * triangle bound on actual velocity coefficients, not on a scalar Laplacian.
  */
 ARCH_INLINE bool stress_row_sums(const GridMetrics::GeometryView& grid,
-    double radius,double theta,int normal,Tensor& output)
+    int i,int j,int normal,Tensor& output,double normal_distance=0.)
 {
-    std::array<double,3> h{};if(!spacings(grid,radius,theta,h))return false;
+    std::array<double,3> h{};if(!cell_spacings(grid,i,j,h))return false;
+    const double radius=grid.GetCellCenterX(i),theta=grid.SourceTheta(j);
+    if(!std::isfinite(radius)||!(radius>0.))return false;
+    const bool native=GridMetrics::is_axisymmetric_rz(grid);
     Gradient g{};
-    for(int axis=0;axis<grid.dim;++axis)for(int component=0;component<3;++component)
-        g[3*component+axis]=(axis==normal?2.:1.)/std::abs(h[axis]);
+    for(int axis=0;axis<grid.dim;++axis) {
+        double row=(axis==normal?2.:1.)/std::abs(h[axis]);
+        if(native) {
+            if(axis==normal) {
+                if(!std::isfinite(normal_distance)||!(normal_distance>0.))return false;
+                row=2./normal_distance;
+            } else {
+                const double low=GridMetrics::CellPairDistance(grid,axis,i,j);
+                const double high=GridMetrics::CellPairDistance(grid,axis,i+(axis==0),j+(axis==1));
+                if(!std::isfinite(low)||!(low>0.)||!std::isfinite(high)||!(high>0.))return false;
+                // A centred average of unequal-sided slopes has absolute row
+                // max(1/hminus,1/hplus), including its nonzero centre weight.
+                row=std::max(1./low,1./high);
+            }
+        }
+        for(int component=0;component<(native?2:3);++component)g[3*component+axis]=row;
+    }
     const double inv=1./radius;
     if(frame(grid)==Frame::CylindricalRPhiZ) {g[1]+=inv;g[4]+=inv;}
-    else if(frame(grid)==Frame::CylindricalRZPhi) {g[2]+=inv;g[8]+=inv;}
+    else if(frame(grid)==Frame::CylindricalRZPhi) {if(!native)g[2]+=inv;g[8]+=inv;}
     else {
         const double cot=grid.dim==3?std::abs(std::cos(theta)/std::sin(theta)):0.;
         g[1]+=inv;g[4]+=inv;g[2]+=inv;g[5]+=cot*inv;g[8]+=(1.+cot)*inv;
@@ -431,11 +484,17 @@ ARCH_INLINE bool face_row_sums(const GridMetrics::GeometryView& grid,
     const double volume=GridMetrics::CellVolume(grid,i,j,k);
     if(!std::isfinite(vl)||!(vl>0.)||!std::isfinite(vr)||!(vr>0.)||!std::isfinite(volume)||!(volume>0.))return false;
     Tensor nl{},nr{};std::array<double,3> hl{},hr{};
-    const double rl=grid.GetCellCenterX(il),rr=grid.GetCellCenterX(ir),tl=grid.SourceTheta(jl),tr=grid.SourceTheta(jr);
-    if(!spacings(grid,rl,tl,hl)||!spacings(grid,rr,tr,hr)||
-       !stress_row_sums(grid,rl,tl,direction,nl)||!stress_row_sums(grid,rr,tr,direction,nr))return false;
+    if(!cell_spacings(grid,il,jl,hl)||!cell_spacings(grid,ir,jr,hr))return false;
+    const bool native=GridMetrics::is_axisymmetric_rz(grid);
+    const double distance=native?GridMetrics::CellPairDistance(grid,direction,ir,jr):0.;
+    if(native) {
+        if(!std::isfinite(distance)||!(distance>0.))return false;
+        hl[direction]=hr[direction]=distance;
+    }
+    if(!stress_row_sums(grid,il,jl,direction,nl,distance)||
+       !stress_row_sums(grid,ir,jr,direction,nr,distance))return false;
     Vector candidate=output;
-    for(int a=0;a<3;++a) {
+    for(int a=0;a<(native?2:3);++a) {
         candidate[a]+=(mu_left*vl/(2.*std::abs(hl[direction]))*nl[3*a+direction]
             +mu_right*vr/(2.*std::abs(hr[direction]))*nr[3*a+direction])/(rho*volume);
     }

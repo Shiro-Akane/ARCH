@@ -5,6 +5,7 @@
 #include "physics/eos/IdealGas.h"
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzViscousCases.h"
+#include "math/geometry/RzMeridionalCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
 #include "math/geometry/RadialStokesCases.h"
 #include "math/geometry/CurvedStokesCases.h"
@@ -684,17 +685,18 @@ void viscous_diffusion_convergence()
     CurvedStokesCases::cylindrical_axis_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
 }
 
-// Reuse the original true V/W means, independent antiderivative references
-// and 2e-12 window. Only device buffers, metrics and actual kernel launches
-// differ from the Host owner; this does not qualify the full Native runtime.
-void native_rz_azimuthal_operator()
+// Reuse the Host owner's true V/W means and independent Stokes references.
+// Original angular fixtures and 2e-12 windows remain. Device allocation,
+// metrics, launches and readback are the only backend-specific operations;
+// this operator check does not qualify the full Native runtime.
+void native_rz_viscous_operator()
 {
     DeviceBuffer<double> properties(4);
     properties.upload({1.,1.,1.4,3.});
     const SpeciesPODView species{properties.get(),properties.get()+1,
         properties.get()+2,properties.get()+3,1};
     const IdealGasView eos{species,1.4};
-    RzViscousCases::azimuthal_operator([&](const FluidState& state,
+    const auto evaluate=[&](const FluidState& state,
         FluidState& delta,const IdealGas&,const Grid& grid,
         const SimConfig& config,GridMetrics::GeometrySemantics semantics) {
         const int cells=grid.GetTotalSize();
@@ -712,12 +714,36 @@ void native_rz_azimuthal_operator()
         DeviceBuffer<int> status(1);
         const auto actual=device_diffusion_operator(input,output,faces,device_grid,
             eos,species,DiffFlux::make_diffusion_config_view(config),status);
+        DeviceBuffer<double> candidates(device_grid.active_cell_count()),timestep(1);
+        arch::cuda::DiffusionWorkspaceView workspace{faces.view,candidates.get(),
+            timestep.get(),status.get()};
+        check(arch::cuda::launch_raw_diffusion_dt(input.view,eos,species,device_grid,
+            DiffFlux::make_diffusion_config_view(config),workspace,nullptr).error);
+        require(status.download()[0]==0,"native Stokes timestep rejected valid state");
         for(int cell=0;cell<cells;++cell) {
             delta.set(cell,{actual[cell],actual[cells+cell],actual[2*cells+cell],
                 actual[3*cells+cell],actual[4*cells+cell]});
             delta.X(0,cell)=actual[6*cells+cell];
         }
-    });
+        return timestep.download()[0];
+    };
+    RzViscousCases::azimuthal_operator(evaluate);
+    RzMeridionalCases::convergence("cuda",evaluate);
+    SpeciesManager host_species;host_species.add_species("gas",1.,1.,1.4,3.);
+    const IdealGas host_eos(1.4,host_species);
+    SimConfig config{};
+    config.physics.diffusion.use_diffusion=config.physics.diffusion.use_viscous_diffusion=true;
+    config.physics.diffusion.nu_visc=ViscousGeometryCases::viscosity;
+    const auto meridional=[&](const FluidState& state,const Grid& grid) {
+        constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+        FluidState delta;delta.Preallocate(grid.GetTotalSize());delta.InitSpecies(1);
+        const double raw_dt=evaluate(state,delta,host_eos,grid,config,native);
+        ViscousGeometryCases::Evaluation result{};result.derivative.resize(grid.GetTotalSize());
+        for(int cell=0;cell<grid.GetTotalSize();++cell)result.derivative[cell]=delta.get(cell);
+        result.raw_dt=raw_dt;return result;
+    };
+    CurvedStokesCases::density_energy("cuda-native",ViscousGeometryCases::viscosity,meridional,true);
+    CurvedStokesCases::cylindrical_axis_energy("cuda-native",ViscousGeometryCases::viscosity,meridional,true);
     std::cout<<"CUDA_NATIVE_RZ_AZIMUTHAL_ORIGINAL_FIXTURES_PASS\n";
 }
 
@@ -817,7 +843,7 @@ int main()
         independent_newtonian();
         analytic_geometry_examples();
         viscous_diffusion_convergence();
-        native_rz_azimuthal_operator();
+        native_rz_viscous_operator();
         native_rz_prescribed_axial_work();
         // Cylindrical 2D is covered by the native RZ owners; the former
         // generic polar-plane fixture belongs only to spherical geometry.

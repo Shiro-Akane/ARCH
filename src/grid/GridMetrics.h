@@ -442,6 +442,25 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
         grid.dx1, grid.dx2, grid.dx3, grid.GetCellCenterX(i), grid.SourceTheta(j));
 }
 
+/** Distance between the two represented cells of a right-indexed face.
+ * Native r/z uses (width_left+width_right)/2 from the common cell owner,
+ * including periodic aliases. Ordinary charts keep their original physical
+ * spacing. Invalid geometry returns NaN, never a representative-width fallback.
+ */
+ARCH_HOST_DEVICE inline double CellPairDistance(
+    const GeometryView& grid,int direction,int i,int j)
+{
+    if(!is_axisymmetric_rz(grid))return PhysicalSpacing(grid,direction,i,j);
+    if(direction<0||direction>1)return std::numeric_limits<double>::quiet_NaN();
+    const int index=direction==0?i:j;
+    if(index==std::numeric_limits<int>::min())return std::numeric_limits<double>::quiet_NaN();
+    const double left=grid.CellWidth(direction,index-1),right=grid.CellWidth(direction,index);
+    if(!std::isfinite(left)||!(left>0.)||!std::isfinite(right)||!(right>0.))
+        return std::numeric_limits<double>::quiet_NaN();
+    const double distance=.5*left+.5*right;
+    return std::isfinite(distance)&&distance>0.?distance:std::numeric_limits<double>::quiet_NaN();
+}
+
 // Cell-volume average of 1/r for piecewise-constant orthonormal sources.
 // In spherical 1D/3D this is integral(r dr)/integral(r^2 dr), not 1/r_mid.
 // Using the same measure as flux divergence preserves constant-pressure rest.
