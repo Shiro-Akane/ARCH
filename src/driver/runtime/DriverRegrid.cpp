@@ -158,7 +158,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
 {
     if(!native_rz_candidate)
         return execute_regrid_attempt(jeans_repair_only,false,after_host_finalization);
-    if(host_hydro_transaction_||compute_backend
+    if(runtime_state_transaction_||compute_backend
         ||geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("Native coarsening retry requires its actual CPU RZ owner");
     ensure_fluid_ghosts(); // actual selected EOS and completed source qualification
@@ -248,7 +248,7 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
     std::span<const amr::LogicalBlockKey> vetoed_coarsenings,
     const std::function<void()>& evaluate_native_indicators)
 {
-    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
+    if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
     if(after_host_finalization&&!native_rz_candidate)
         throw std::logic_error("Native finalization verification cannot affect production regrid");
     if(native_rz_candidate&&(geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
@@ -732,7 +732,7 @@ bool DriverRuntime::regrid_native_rz_candidate(int step,double time,
 bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only,
     bool native_rz_candidate,const std::function<void()>& after_host_finalization)
 {
-    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
+    if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};

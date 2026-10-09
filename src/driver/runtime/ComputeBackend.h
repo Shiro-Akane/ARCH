@@ -519,6 +519,18 @@ public:
         const BoundaryCells&, const boundary::DiffusionBoundaryStorage&) {
         throw std::logic_error("backend user boundary slice write is unavailable");
     }
+    /** Prepare only actual physical-control allocation capacity before a macro.
+     * Workflow: validate the complete committed Current domain and requested
+     * face counts -> preserve all live control bindings -> reserve unbound
+     * capacity for all three physical owners. No values, fields, EOS/callback,
+     * stage publication or Current-to-other-slot copy is part of this service.
+     */
+    virtual void prepare_boundary_control_capacity(
+        std::span<const BackendStateAccess>,
+        std::span<const std::array<std::size_t,6>>)
+    {
+        throw std::logic_error("backend boundary control capacity preparation is unavailable");
+    }
     /** Configure the observer weights applied to the next observed stage. */
     virtual void configure_boundary_flux_capture(std::span<const BoundaryFluxPlanes>, double, double, bool) {
         throw std::logic_error("backend boundary flux capture is unavailable");

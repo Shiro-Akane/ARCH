@@ -30,7 +30,7 @@
 #include <vector>
 
 #include "amr/AMRControl.h"
-#include "driver/runtime/HostHydroTransaction.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverMacroStep.h"
 #include "driver/stages/DriverStages.h"
@@ -436,7 +436,7 @@ struct Fixture {
         runtime->bind_boundary_accounting(*context);plan.time_integrator=method;
     }
     void advance(driver::IntegratorSolve integrator=selected_rk3,
-        driver::HostHydroQualification qualification=driver::HostHydroQualification::NativeRzRollback){
+        driver::RuntimeStateQualification qualification=driver::RuntimeStateQualification::NativeRzRollback){
         scheduler::ScopedStageBinding binding(*context,runtime->handles());
         driver::advance_hydro(*runtime,workspace,*context,&plan,context->step_dt,integrator,nullptr,&hydro,qualification);
     }
@@ -569,7 +569,7 @@ void native_gate_preflight_preserves_evidence(){
         if(fault==1)f.context->post_boundary_acceptance={};
         if(fault==2)f.context->side=state::ExecutionSide::Device;
         const auto fields_before=capture_fields(f.control);
-        const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+        const auto owner_before=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
         bool caught=false;
         try {
             const auto invoke=[&]{method.solve(f.control,f.context->step_dt,*f.bc,nullptr,&f.hydro,f.config.numerics);};
@@ -589,7 +589,7 @@ void native_gate_preflight_preserves_evidence(){
         }
         require(caught,"actual native selected solve did not reject its incomplete execution frame");
         for(const auto& field:fields_before)field.matches(f.control);
-        require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
+        require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner_before),
             "native gate preflight changed populated registers, Runtime owners or publication evidence");
         require(f.hydro.patch_visits==0&&f.hydro.final_block_visits==0,
             "native gate preflight reached an actual numerical patch producer");
@@ -680,7 +680,7 @@ void reflux_receipt_preflight_preserves_evidence(){
 /** Require an actual injected rejection, then independent full owner/array comparison. */
 template<class Action> void rejected_exact(Fixture& f,Action action,const char* expected){
     const auto fields_before=capture_fields(f.control);
-    const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+    const auto owner_before=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
     const auto committed=f.journal->committed;const int committed_count=f.journal->committed_count;
     bool caught=false;
     try{action();}catch(const std::exception& error){
@@ -689,7 +689,7 @@ template<class Action> void rejected_exact(Fixture& f,Action action,const char* 
     }
     require(caught,"expected concrete rejection was not reached");
     for(const auto& field:fields_before)field.matches(f.control);
-    require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
+    require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner_before),
         "Runtime BC/budget/clock/ledger/flux owner changed on rejection");
     require(f.journal->committed==committed&&f.journal->committed_count==committed_count
         &&f.journal->pending_count==0,"failed macro-step exposed an accepted source prefix");
@@ -781,11 +781,11 @@ void post_boundary_callback_presence_is_frozen(){
         }
         rejected_exact(f,[&] {
             scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
-            driver::HostHydroTransaction transaction(*f.runtime,*f.context,f.hydro);
+            driver::RuntimeStateTransaction transaction(*f.runtime,*f.context,&f.hydro);
             if(present)f.context->post_boundary_acceptance={};
             else f.context->post_boundary_acceptance=science;
             transaction.validate_storage();
-        },"Host Hydro transaction owner/frame changed");
+        },"Runtime state transaction owner/frame changed");
         require(bool(f.context->post_boundary_acceptance)==present,
             "rollback failed to restore the new hook's original presence");
         if(present) {
@@ -825,8 +825,8 @@ void first_use_and_retry(){
     require(repairs_equal(failed.runtime->repair_budget(),control.runtime->repair_budget()),"retry repair receipt differs");
     require(failed.context->clock.last_token()==control.context->clock.last_token()
         &&failed.context->clock.last_version()==control.context->clock.last_version(),"retry publication clock differs");
-    const auto ledger=control.context->ledger.snapshot_host();
-    require(failed.context->ledger.host_snapshot_matches(ledger),"retry ledger differs from uninterrupted control");
+    const auto ledger=control.context->ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
+    require(failed.context->ledger.metadata_records_match(ledger),"retry ledger differs from uninterrupted control");
     const auto flux=control.control.flux_register.snapshot_host();
     require(failed.control.flux_register.host_snapshot_matches(flux,false),
         "retry register metadata/payload differs from uninterrupted control");
@@ -893,13 +893,13 @@ void descriptor_and_frame_negatives(){
 void exclusive_owner_and_partial_permutation(){
     Fixture f;
     const auto before=capture_fields(f.control);
-    const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+    const auto owner_before=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
     {
         scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
-        driver::HostHydroTransaction transaction(*f.runtime,*f.context,f.hydro);
+        driver::RuntimeStateTransaction transaction(*f.runtime,*f.context,&f.hydro);
         const auto must_reject=[](auto action,const char* name){bool caught=false;try{action();}
             catch(const std::logic_error&){caught=true;}require(caught,name);};
-        must_reject([&]{driver::HostHydroTransaction duplicate(*f.runtime,*f.context,f.hydro);},"duplicate owner accepted");
+        must_reject([&]{driver::RuntimeStateTransaction duplicate(*f.runtime,*f.context,&f.hydro);},"duplicate owner accepted");
         must_reject([&]{f.runtime->regrid_native_rz_candidate(0,0.);},"regrid escaped active owner");
         must_reject([&]{f.runtime->initialize_topology();},"topology adoption escaped active owner");
         must_reject([&]{f.runtime->prepare_backend_bindings();},"backend storage issuance escaped active owner");
@@ -915,8 +915,32 @@ void exclusive_owner_and_partial_permutation(){
         // Destructor rejects a partially completed physical rotation without backup allocations.
     }
     for(const auto& field:before)field.matches(f.control);
-    require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),"partial rotation rollback changed owner");
+    require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner_before),"partial rotation rollback changed owner");
     f.advance();require(f.journal->commit_calls==1,"duplicate-owner test released another live owner token");
+    // Commit the actual borrowed Hydro lane, then prove this released object cannot publish twice.
+    {
+        scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
+        driver::RuntimeStateTransaction transaction(*f.runtime,*f.context,&f.hydro);
+        driver::advance_hydro(*f.runtime,f.workspace,*f.context,&f.plan,f.context->step_dt,
+            selected_rk3,nullptr,&f.hydro);
+        transaction.commit();
+        const auto accepted_fields=capture_fields(f.control);
+        const auto accepted_owner=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
+        const auto accepted_sources=f.journal->committed;const int accepted_commits=f.journal->commit_calls;
+        for(bool commit_again:{false,true}) {
+            bool refused=false;
+            try {if(commit_again)transaction.commit();else transaction.validate_storage();}
+            catch(const std::logic_error& error) {
+                refused=std::string(error.what())=="Runtime state transaction is not the active unique owner";
+            }
+            require(refused,"committed Runtime transaction was accepted for reuse");
+            for(const auto& field:accepted_fields)field.matches(f.control);
+            require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,accepted_owner),
+                "released transaction reuse changed accepted metadata or budgets");
+            require(f.journal->committed==accepted_sources&&f.journal->commit_calls==accepted_commits,
+                "released transaction reuse republished accepted source history");
+        }
+    }
 }
 
 /** Exercise retired-record and invisible high-watermark restoration in the actual Runtime ledger. */
@@ -959,15 +983,15 @@ void fail_closed_profiles(){
         }
     } unsupported;
     require_failure([&]{scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
-        driver::HostHydroTransaction no_storage_contract(*f.runtime,*f.context,unsupported);},
+        driver::RuntimeStateTransaction no_storage_contract(*f.runtime,*f.context,&unsupported);},
         "unavailable fixed-extent Hydro trait accepted");
     Fixture foreign;
     require_failure([&]{scheduler::ScopedStageBinding binding(*foreign.context,foreign.runtime->handles());
-        driver::HostHydroTransaction wrong(*f.runtime,*foreign.context,f.hydro);},"foreign Runtime context accepted");
+        driver::RuntimeStateTransaction wrong(*f.runtime,*foreign.context,&f.hydro);},"foreign Runtime context accepted");
     // Ordinary legacy lane is still callable with its default qualification and has no transaction backups.
     f.context->hydro_preparation=nullptr;f.hydro.journal=nullptr;
-    f.advance(selected_rk3,driver::HostHydroQualification::NativeRzRollback);
-    f.advance(selected_rk3,driver::HostHydroQualification::Production);
+    f.advance(selected_rk3,driver::RuntimeStateQualification::NativeRzRollback);
+    f.advance(selected_rk3,driver::RuntimeStateQualification::Production);
     require(f.journal->commit_calls==0,"production lane implicitly acquired an internal journal transaction");
 }
 
@@ -1005,8 +1029,8 @@ void forbidden_residency(){
 void actual_foreign_binding_before_write(){
     Fixture a,b;
     const auto a_fields=capture_fields(a.control),b_fields=capture_fields(b.control);
-    const auto a_owner=driver::HostHydroTransaction::snapshot_owner(*a.runtime,*a.context);
-    const auto b_owner=driver::HostHydroTransaction::snapshot_owner(*b.runtime,*b.context);
+    const auto a_owner=driver::RuntimeStateTransaction::snapshot_owner(*a.runtime,*a.context);
+    const auto b_owner=driver::RuntimeStateTransaction::snapshot_owner(*b.runtime,*b.context);
     const auto copied_handles=a.runtime->handles();
     const auto rejects_binding=[&](scheduler::StageExecutionContext& bound_context,
         std::span<const amr::BlockHandle> borrowed_handles) {
@@ -1015,7 +1039,7 @@ void actual_foreign_binding_before_write(){
             scheduler::ScopedStageBinding actual_binding(bound_context,borrowed_handles);
             try {
                 driver::advance_hydro(*a.runtime,a.workspace,*a.context,&a.plan,a.context->step_dt,
-                    selected_rk3,nullptr,&a.hydro,driver::HostHydroQualification::NativeRzRollback);
+                    selected_rk3,nullptr,&a.hydro,driver::RuntimeStateQualification::NativeRzRollback);
             } catch(const std::logic_error& error) {
                 caught=std::string(error.what()).find("exact bound stage context and borrowed Runtime handles")!=std::string::npos;
                 if(!caught)throw;
@@ -1024,9 +1048,9 @@ void actual_foreign_binding_before_write(){
         require(caught,"foreign-valid actual thread-local binding was not rejected before writes");
         for(const auto& field:a_fields)field.matches(a.control);
         for(const auto& field:b_fields)field.matches(b.control);
-        require(driver::HostHydroTransaction::owner_matches(*a.runtime,*a.context,a_owner),
+        require(driver::RuntimeStateTransaction::owner_matches(*a.runtime,*a.context,a_owner),
             "caller Runtime owner/publications changed under foreign binding");
-        require(driver::HostHydroTransaction::owner_matches(*b.runtime,*b.context,b_owner),
+        require(driver::RuntimeStateTransaction::owner_matches(*b.runtime,*b.context,b_owner),
             "actual bound foreign Runtime owner/publications changed");
         require(a.hydro.patch_visits==0&&b.hydro.patch_visits==0
             &&a.journal->commit_calls==0&&b.journal->commit_calls==0
@@ -1044,11 +1068,11 @@ void actual_foreign_binding_before_write(){
 void changed_borrowed_binding_after_begin(){
     Fixture f;
     const auto fields_before=capture_fields(f.control);
-    const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+    const auto owner_before=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
     auto copied_handles=f.runtime->handles();
     {
         scheduler::ScopedStageBinding scope(*f.context,f.runtime->handles());
-        driver::HostHydroTransaction transaction(*f.runtime,*f.context,f.hydro);
+        driver::RuntimeStateTransaction transaction(*f.runtime,*f.context,&f.hydro);
         auto& actual=const_cast<scheduler::StageBinding&>(scheduler::current_stage_binding());
         const auto original=actual.handles;
         const auto must_reject=[&] {
@@ -1068,7 +1092,7 @@ void changed_borrowed_binding_after_begin(){
         transaction.validate_storage();
     }
     for(const auto& field:fields_before)field.matches(f.control);
-    require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
+    require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner_before),
         "binding-tamper rejection changed accepted owner/publications");
     require(f.hydro.patch_visits==0,"binding tamper executed a numerical producer");
 }
@@ -1083,7 +1107,7 @@ void mismatched_step_size_before_write(){
     for(double dt:bad_steps)rejected_exact(f,[&] {
         scheduler::ScopedStageBinding actual_binding(*f.context,f.runtime->handles());
         driver::advance_hydro(*f.runtime,f.workspace,*f.context,&f.plan,dt,
-            selected_rk3,nullptr,&f.hydro,driver::HostHydroQualification::NativeRzRollback);
+            selected_rk3,nullptr,&f.hydro,driver::RuntimeStateQualification::NativeRzRollback);
     },"Hydro step size must be finite, positive and equal frozen context.step_dt");
     require(f.hydro.patch_visits==0&&f.journal->commit_calls==0&&f.journal->discard_calls==0,
         "bad independent step size reached a producer or opened a journal");
@@ -1118,7 +1142,7 @@ void production_invalidation_before_repair_failure(){
         f.hydro.fault=HydroProbe::Fault::RepairSemantics;
         const auto accepted_version=f.context->ledger.inspect({f.runtime->handles()[0],StateSlot::Current}).interior.version;
         bool reached_repair_failure=false;
-        try{f.advance(selected_rk3,driver::HostHydroQualification::Production);}
+        try{f.advance(selected_rk3,driver::RuntimeStateQualification::Production);}
         catch(const std::invalid_argument& error){
             reached_repair_failure=std::string(error.what()).find("Cannot merge different repair measure identities")!=std::string::npos;
             if(!reached_repair_failure)throw;
@@ -1173,7 +1197,7 @@ void diffusion_activity_environment_contract() {
         DiffusionActivityEnv environment(option);
         Fixture f(dispatch::TimeIntegratorId::Euler,false,false,false);
         const auto before=capture_fields(f.control);
-        const auto ledger=f.context->ledger.snapshot_host();
+        const auto ledger=f.context->ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
         require(!f.runtime->diffusion_activity_enabled(),"diffusion activity must default to off");
         // No valid plan or retained slot is needed when the observer is off.
         f.runtime->observe_completed_diffusion_activity({});
@@ -1182,7 +1206,7 @@ void diffusion_activity_environment_contract() {
             &&f.runtime->diffusion_activity_totals().accepted_macros==0,
             "disabled diffusion observer produced a diagnostic receipt");
         for(const auto& state:before)state.matches(f.control);
-        require(f.context->ledger.host_snapshot_matches(ledger),
+        require(f.context->ledger.metadata_snapshot_matches(ledger),
             "disabled diffusion observer changed the actual state ledger");
     }
     for(const char* option:std::array<const char*,4>{"","01","true","2"}) {
@@ -1214,7 +1238,7 @@ void whole_macro_endpoint_and_rollback(){
             f.controller->dt_old=.375;f.controller->step_count=1;f.controller->t_current=2.;
             double burn_advice=.75;
             const auto fields_before=capture_fields(f.control);
-            const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+            const auto owner_before=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
             const auto repairs_before=f.runtime->repair_budget();
             const auto activity_before=f.runtime->diffusion_activity_totals();
             require(f.runtime->diffusion_activity_enabled()
@@ -1268,7 +1292,7 @@ void whole_macro_endpoint_and_rollback(){
                 driver::execute_driver_macro_step(*f.runtime,*f.context,&f.hydro,true,
                     [&](driver::BurnHalf half,double interval,state::CompletionToken token) {
                         ++burn_calls;
-                        require(f.runtime->active_host_hydro_transaction()!=nullptr,
+                        require(f.runtime->active_runtime_state_transaction()!=nullptr,
                             "burn did not borrow the complete macro owner");
                         require(f.journal->committed_count==source_count,
                             "Hydro committed its borrowed macro owner before Burn2");
@@ -1397,7 +1421,7 @@ void whole_macro_endpoint_and_rollback(){
                     "failed D/B/final-EOS macro promoted a diffusion diagnostic prefix");
                 require(rejected,"macro failure injection did not reach its actual late owner");
                 for(const auto& before:fields_before)before.matches(f.control);
-                require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
+                require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner_before),
                     "full macro rejection lost fields/addresses/BC/ledger/register/receipts");
                 require(bits(f.controller->dt_old,old_dt)&&bits(burn_advice,old_burn),
                     "failed macro did not restore exact accepted timestep advice");
@@ -1426,7 +1450,7 @@ void whole_macro_endpoint_and_rollback(){
                 require(!rejected&&measured==sequence&&burn_calls==2&&diffusion_calls==2,
                     "accepted macro changed the original split or timing intervals");
                 require(f.journal->committed_count==source_count+3&&f.journal->pending_count==0
-                    &&!f.runtime->active_host_hydro_transaction(),"macro endpoint did not commit/release its one owner");
+                    &&!f.runtime->active_runtime_state_transaction(),"macro endpoint did not commit/release its one owner");
                 require(!bits(f.runtime->diffusion_boundary_budget(),diffusion_before)
                     &&!bits(f.runtime->hydro_boundary_budget(),hydro_before),
                     "macro commit omitted a tentative boundary receipt owner");
@@ -1596,21 +1620,21 @@ void ordinary_hydro_domain_root_faces() {
                 dU,d_spec,nullptr,config.numerics,1.,nullptr,&patch);
         };
         {
-            const auto before=ledger.snapshot_host();const auto token=clock.last_token(),version=clock.last_version();
+            const auto before=ledger.snapshot_metadata(arch::state::ExecutionSide::Host);const auto token=clock.last_token(),version=clock.last_version();
             bool refused=false;
             try{evaluate(wrong_chart_solver);}catch(const std::invalid_argument& error){
                 refused=std::string(error.what())=="Hydro wall authority and solver chart mismatch";
                 if(!refused)throw;
             }
             require(refused,"ordinary authority entered mismatched Native solver");unchanged();
-            require(ledger.host_snapshot_matches(before)&&clock.last_token()==token&&clock.last_version()==version,
+            require(ledger.metadata_snapshot_matches(before)&&clock.last_token()==token&&clock.last_version()==version,
                 "wrong-chart refusal changed ledger/clock");
         }
         {
             // A genuine later Host publication invalidates the original ghosts.
             // Restore only this test's prepared metadata lease after observing
             // that both consumers leave the deliberately faulty ledger untouched.
-            auto before=ledger.snapshot_host();ledger.freeze_host_snapshot(before);
+            auto before=ledger.snapshot_metadata(arch::state::ExecutionSide::Host);ledger.freeze_metadata_snapshot(before);
             const auto token=clock.last_token(),version=clock.last_version();
             const auto changed=clock.next_publication();
             ledger.publish_interior({handles.front(),StateSlot::Current},state::ExecutionSide::Host,
@@ -1634,14 +1658,14 @@ void ordinary_hydro_domain_root_faces() {
                 &&after.ghost_source_version==faulty.ghost_source_version
                 &&clock.last_token()==changed.completion.value&&clock.last_version()==changed.version.value,
                 "stale-version refusal rewrote the presented ledger/clock fault");
-            ledger.restore_host_snapshot_noexcept(before);ledger.release_host_snapshot(before);
+            ledger.restore_metadata_snapshot_noexcept(before);ledger.release_metadata_snapshot(before);
             clock=scheduler::MonotonicSchedulerClock(token,version);
             (void)patch.require_view(&control,actual.id,actual.fluid_state,actual.grid);
         }
         {
             // Actual stage input time is the authority's frozen clock datum;
             // its monotone completion counter is not an immutable authority key.
-            const auto before=ledger.snapshot_host();const auto start=context.step_start_time;
+            const auto before=ledger.snapshot_metadata(arch::state::ExecutionSide::Host);const auto start=context.step_start_time;
             const auto token=clock.last_token(),version=clock.last_version();
             context.step_start_time=std::nextafter(start,std::numeric_limits<double>::infinity());
             bool view_refused=false,solver_refused=false;
@@ -1655,7 +1679,7 @@ void ordinary_hydro_domain_root_faces() {
                 if(!solver_refused)throw;
             }
             require(view_refused&&solver_refused,"ordinary authority ignored the changed actual stage clock");unchanged();
-            require(ledger.host_snapshot_matches(before)&&clock.last_token()==token&&clock.last_version()==version,
+            require(ledger.metadata_snapshot_matches(before)&&clock.last_token()==token&&clock.last_version()==version,
                 "stage-clock refusal changed publication metadata");
             context.step_start_time=start;
             (void)patch.require_view(&control,actual.id,actual.fluid_state,actual.grid);
@@ -1712,7 +1736,7 @@ void ordinary_runtime_wall_routes() {
         {
             scheduler::ScopedStageBinding binding(context,runtime.handles());
             try{driver::advance_hydro(runtime,workspace,context,&plan,context.step_dt,
-                integrator,nullptr,&hydro,driver::HostHydroQualification::Production);}
+                integrator,nullptr,&hydro,driver::RuntimeStateQualification::Production);}
             catch(const std::logic_error& error){
                 if(!root_drift)throw;
                 // The exact Tree/config root owner must reject before patch mathematics.

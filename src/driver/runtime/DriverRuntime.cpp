@@ -23,7 +23,7 @@
 
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
-#include "driver/runtime/HostHydroTransaction.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/diffusion/DiffusionTypes.h"
@@ -285,7 +285,7 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
         ||retry_user_word(g.x2l_boundary_type)||retry_user_word(g.x2r_boundary_type)
         ||retry_user_word(g.x3l_boundary_type)||retry_user_word(g.x3r_boundary_type))return;
     const auto& binding=scheduler::current_stage_binding();
-    if(runtime.native_macro_retry_attempt_||runtime.host_hydro_transaction_||!attempt
+    if(runtime.native_macro_retry_attempt_||runtime.runtime_state_transaction_||!attempt
         ||&binding.context!=&context||binding.handles.data()!=handles_.data()||binding.handles.size()!=handles_.size()
         ||&context.ledger!=runtime.residency_ledger.get()||&context.clock!=&runtime.scheduler_clock
         ||context.side!=ExecutionSide::Host||!std::isfinite(start_)||!std::isfinite(dt_)||dt_<=0.
@@ -315,7 +315,7 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
     const auto require_entry=[&] {
         const auto& actual_binding=scheduler::current_stage_binding();
         if(&actual_binding.context!=&context||actual_binding.handles.data()!=handles_.data()
-            ||actual_binding.handles.size()!=handles_.size()||runtime.host_hydro_transaction_
+            ||actual_binding.handles.size()!=handles_.size()||runtime.runtime_state_transaction_
             ||runtime.native_macro_retry_attempt_||runtime.compute_backend||context.side!=ExecutionSide::Host
             ||&context.ledger!=runtime.residency_ledger.get()||&context.clock!=&runtime.scheduler_clock
             ||context.clock.last_token()!=entry_token||context.clock.last_version()!=entry_version
@@ -354,7 +354,7 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
 /** Release metadata only after the real outer transaction finished/unwound. */
 NativeMacroRetryAttempt::~NativeMacroRetryAttempt() noexcept {
     if(!enabled_)return;
-    if(runtime_.native_macro_retry_attempt_!=this||runtime_.host_hydro_transaction_)std::terminate();
+    if(runtime_.native_macro_retry_attempt_!=this||runtime_.runtime_state_transaction_)std::terminate();
     runtime_.native_macro_retry_attempt_=nullptr;
 }
 /** Preserve the existing half_dt/stage schedule; this names, never executes it. */
@@ -395,7 +395,7 @@ void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext
     const auto require_live_failure=[&] {
     if(scheduler::current_rkl_completed_boundary()!=frame||!frame->descriptor
         ||frame->completion!=completion_before||!frame->completed||frame->context!=&actual||&actual!=&attempt.context_
-        ||!host_hydro_transaction_||!attempt.enabled_||!attempt.method_||attempt.half_==0
+        ||!runtime_state_transaction_||!attempt.enabled_||!attempt.method_||attempt.half_==0
         ||!attempt.eos_binding_||!native_rz_eos_binding_matches(*attempt.eos_binding_)
         ||actual.side!=ExecutionSide::Host||compute_backend||&actual.ledger!=residency_ledger.get()
         ||&actual.clock!=&scheduler_clock||frame->handles.data()!=stage_handles.data()
@@ -406,7 +406,7 @@ void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext
         ||!retry_same(actual.step_start_time,attempt.start_)||!retry_same(actual.step_dt,attempt.dt_)
         ||!retry_config_matches(config.numerics,attempt.numerics_,config.physics.diffusion,attempt.diffusion_))
         throw std::logic_error("Native thermal refusal lost its live macro/RKL owner");
-    host_hydro_transaction_->validate_storage();
+    runtime_state_transaction_->validate_storage();
     const auto plan=scheduler::make_rkl_plan(*attempt.method_,attempt.stages_);
     const auto& observed=*frame->descriptor;
     if(observed.stage<1||observed.stage>attempt.stages_)
@@ -441,7 +441,7 @@ void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext
     if(&binding.context!=&actual||binding.handles.data()!=stage_handles.data()
         ||binding.handles.size()!=stage_handles.size())
         throw std::logic_error("Native thermal refusal changed its actual stage binding");
-    host_hydro_transaction_->validate_storage();
+    runtime_state_transaction_->validate_storage();
     topology_registry.validate_committed_snapshot(observe_topology());
     const auto input_member=TimeIntegration::hydro_boundary_state_member(error.slot);
     for(std::size_t b=0;b<active_before.size();++b) {
@@ -761,7 +761,7 @@ void DriverRuntime::trace_backend_operation(backend::BackendOperation operation,
 /** Register initial block identities and their state residency. */
 void DriverRuntime::initialize_topology()
 {
-    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
+    if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     if (geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz
         && !native_rz_eos_acceptance_)
         throw std::logic_error("Native RZ initialization requires an explicitly bound EOS");
@@ -817,7 +817,7 @@ void DriverRuntime::initialize_topology()
 /** Build topology bindings for backend storage allocation. */
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
-    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
+    if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("RZ device runtime is not yet migrated");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
@@ -855,7 +855,7 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
 /** Install a validated compute backend and its resident block views. */
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
-    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
+    if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz)
         throw std::logic_error("RZ device runtime is not yet migrated");
     if (compute_backend || !backend) throw std::logic_error("invalid backend installation");
@@ -865,7 +865,7 @@ void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> bac
 /** Upload accepted case initial state before device stepping. */
 void DriverRuntime::upload_initial_state()
 {
-    if(host_hydro_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
+    if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     for (std::size_t index = 0; index < active.size(); ++index) {
         amr::Block& block = amr_ctrl.pool->GetBlock(active[index]);

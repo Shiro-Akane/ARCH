@@ -701,6 +701,132 @@ void test_cpu_executor_contract_witness()
     }
 }
 
+/** Side-qualified snapshots protect metadata, never backend numerical fields.
+ * An independent prepared reference retains original records/high-watermarks
+ * because noexcept restoration swaps the leased backup with tentative records.
+ */
+void test_side_qualified_metadata_leases()
+{
+    constexpr std::array slots{StateSlot::Current,StateSlot::Next,StateSlot::Scratch};
+    for(auto side:{ExecutionSide::Host,ExecutionSide::Device}) {
+        StateResidencyLedger ledger{{1}};const auto block=handle(70,1),retired=handle(71,1),new_uid=handle(72,1);
+        const auto initialize=[&](StateResidencyLedger& owner) {
+            owner.register_block(block,version(1),complete(100),side);
+            for(std::size_t n=0;n<slots.size();++n) {
+                const auto state=key(block,slots[n]);const auto v=version(n+1);const auto token=100*(n+1);
+                if(n)owner.publish_interior(state,side,v,complete(token));
+                owner.publish_ghost(state,side,v,complete(token+1));
+            }
+            owner.register_block(retired,version(9),complete(900),side);owner.retire_block(retired);
+        };
+        initialize(ledger);const auto original=snapshot_all(ledger,block);const auto epoch=ledger.active_epoch();
+        auto reference=ledger.snapshot_metadata(side);auto backup=ledger.snapshot_metadata(side);
+        expect(ledger.metadata_snapshot_matches(reference)&&ledger.metadata_snapshot_matches(backup),
+            "prepared side-qualified snapshots retain exact original metadata");
+        const auto opposite=side==ExecutionSide::Host?ExecutionSide::Device:ExecutionSide::Host;
+        expect_throws([&]{(void)ledger.snapshot_metadata(opposite);},"snapshot rejects opposite-side valid regions");
+        expect_throws([&]{(void)ledger.snapshot_metadata(static_cast<ExecutionSide>(255));},"snapshot rejects invalid side");
+        StateResidencyLedger unrelated{{1}};initialize(unrelated);auto foreign=unrelated.snapshot_metadata(side);
+        expect(!ledger.metadata_snapshot_matches(foreign),"equal records from a different ledger are not this owner");
+        expect_throws([&]{ledger.freeze_metadata_snapshot(foreign);},"cannot freeze another ledger's identical snapshot");
+        ledger.freeze_metadata_snapshot(backup);
+        expect_throws([&]{ledger.freeze_metadata_snapshot(reference);},"metadata lease rejects reentry");
+        expect_throws([&]{(void)ledger.snapshot_metadata(side);},"cannot prepare another snapshot under active lease");
+        const auto current=key(block,StateSlot::Current);
+        expect_throws([&]{ledger.publish_interior(current,opposite,version(4),complete(400));},
+            "metadata lease rejects opposite-side interior publication");
+        expect_throws([&]{ledger.publish_ghost(current,opposite,version(1),complete(400));},
+            "metadata lease rejects opposite-side ghost publication");
+        expect_throws([&]{ledger.register_block(new_uid,version(1),complete(901),side);},
+            "metadata lease rejects new UID registration");
+        expect_throws([&]{ledger.retire_block(block);},"metadata lease rejects active retirement");
+        const auto direction=side==ExecutionSide::Host?PendingTransferPhase::PendingH2D:PendingTransferPhase::PendingD2H;
+        expect_throws([&]{ledger.begin_transfer(current,StateRegion::Interior,direction,pending(400));},
+            "metadata lease rejects asynchronous transfer");
+        expect(ledger.metadata_snapshot_matches(reference),"rejected lease operations changed original records/history");
+        for(std::size_t n=0;n<slots.size();++n) {
+            const auto state=key(block,slots[n]);const auto v=version(10+n);const auto token=500+100*n;
+            ledger.publish_interior(state,side,v,complete(token));ledger.publish_ghost(state,side,v,complete(token+1));
+        }
+        const auto staged=snapshot_all(ledger,block);
+        ledger.rotate_slots(block,{StateSlot::Next,StateSlot::Scratch,StateSlot::Current});
+        expect(same_slot(ledger.inspect(key(block,StateSlot::Current)),staged[1])
+            &&same_slot(ledger.inspect(key(block,StateSlot::Next)),staged[2])
+            &&same_slot(ledger.inspect(key(block,StateSlot::Scratch)),staged[0]),
+            "leased side-qualified rotation retains all three complete logical records");
+        expect(!ledger.metadata_snapshot_matches(reference),"tentative publications/rotation are distinguishable from original");
+        ledger.restore_metadata_snapshot_noexcept(backup);ledger.release_metadata_snapshot(backup);
+        expect(ledger.active_epoch()==epoch&&same_snapshot(snapshot_all(ledger,block),original)
+            &&ledger.metadata_snapshot_matches(reference),"rollback did not restore exact records/epoch/token high-watermarks");
+        expect_throws([&]{ledger.freeze_metadata_snapshot(backup);},"swapped tentative backup is stale after restoration/release");
+        expect_throws([&]{(void)ledger.inspect(key(retired,StateSlot::Current));},"rollback lost a retired UID tombstone");
+        expect_throws([&]{ledger.register_block(retired,version(10),complete(901),side);},"rollback allowed retired UID reuse");
+        // Exact old high-watermarks must reject their equality, then accept a
+        // legitimate token below the discarded tentative 500..701 history.
+        expect_throws([&]{ledger.publish_ghost(current,side,version(1),complete(101));},"rollback lost original ghost history");
+        ledger.publish_ghost(current,side,version(1),complete(102));
+        expect_throws([&]{ledger.publish_interior(current,side,version(4),complete(100));},"rollback lost original interior history");
+        ledger.publish_interior(current,side,version(4),complete(102));
+        expect(!ledger.metadata_snapshot_matches(reference),"reference detects legal post-release state advancement");
+        expect_throws([&]{ledger.freeze_metadata_snapshot(reference);},"stale prepared metadata cannot acquire a later lease");
+        ledger.register_block(new_uid,version(1),complete(901),side);
+        auto reusable=ledger.snapshot_metadata(side);ledger.freeze_metadata_snapshot(reusable);
+        ledger.release_metadata_snapshot(reusable);
+    }
+}
+
+/** Use actual ledger transfer begin/completion to obtain Synchronized metadata.
+ * No real Host or Device bytes are copied here: their rollback ownership is an
+ * upper-layer responsibility, and a Device publication always drops Host validity.
+ */
+void test_metadata_transfer_and_synchronized_contract()
+{
+    for(auto source:{ExecutionSide::Host,ExecutionSide::Device}) {
+        StateResidencyLedger ledger{{2}};const auto block=handle(80,2);const auto current=key(block,StateSlot::Current);
+        ledger.register_block(block,version(1),complete(10),source);
+        ledger.publish_ghost(current,source,version(1),complete(11));
+        const auto direction=source==ExecutionSide::Host?PendingTransferPhase::PendingH2D:PendingTransferPhase::PendingD2H;
+        ledger.begin_transfer(current,StateRegion::Interior,direction,pending(20));
+        for(auto side:{ExecutionSide::Host,ExecutionSide::Device})
+            expect_throws([&]{(void)ledger.snapshot_metadata(side);},"all side snapshots reject pending interior transfer");
+        ledger.complete_transfer(current,StateRegion::Interior,complete(20));
+        ledger.begin_transfer(current,StateRegion::Ghost,direction,pending(21));
+        for(auto side:{ExecutionSide::Host,ExecutionSide::Device})
+            expect_throws([&]{(void)ledger.snapshot_metadata(side);},"all side snapshots reject pending ghost transfer");
+        ledger.complete_transfer(current,StateRegion::Ghost,complete(21));ledger.quiesce();
+        const auto synchronized=ledger.inspect(current);
+        expect(synchronized.interior.residency==StateResidency::Synchronized
+            &&synchronized.ghost.residency==StateResidency::Synchronized,
+            "completed transfer must produce actual Synchronized ledger regions");
+        expect_throws([&]{(void)ledger.snapshot_metadata(ExecutionSide::Host);},
+            "Host snapshot remains strict and rejects Synchronized metadata");
+        auto reference=ledger.snapshot_metadata(ExecutionSide::Device);
+        auto backup=ledger.snapshot_metadata(ExecutionSide::Device);ledger.freeze_metadata_snapshot(backup);
+        ledger.publish_ghost(current,ExecutionSide::Device,version(1),complete(22));
+        const auto ghost_published=ledger.inspect(current);
+        expect(ghost_published.interior.residency==StateResidency::Synchronized
+            &&ghost_published.ghost.residency==StateResidency::DeviceValid,
+            "Device ghost publication must not retain stale synchronized Ghost ownership");
+        ledger.publish_interior(current,ExecutionSide::Device,version(2),complete(23));
+        expect(ledger.inspect(current).interior.residency==StateResidency::DeviceValid
+            &&ledger.inspect(current).ghost.residency==StateResidency::Invalid,
+            "Device interior publication drops Synchronized and invalidates old ghosts");
+        ledger.restore_metadata_snapshot_noexcept(backup);ledger.release_metadata_snapshot(backup);
+        expect(same_slot(ledger.inspect(current),synchronized)&&ledger.metadata_snapshot_matches(reference),
+            "Device metadata rollback preserves exact synchronized records and transfer high-watermarks");
+        // A fresh prepared snapshot becomes stale if a real transfer begins;
+        // rejecting freeze must preserve the still-pending operation unchanged.
+        ledger.publish_interior(current,ExecutionSide::Device,version(2),complete(23));
+        auto stale=ledger.snapshot_metadata(ExecutionSide::Device);
+        ledger.materialize_host_current(block,StateRegion::Interior,pending(24));const auto outstanding=ledger.inspect(current);
+        expect_throws([&]{ledger.freeze_metadata_snapshot(stale);},"stale snapshot cannot freeze over a pending transfer");
+        expect(same_slot(ledger.inspect(current),outstanding),"rejected stale freeze changed pending transfer metadata");
+        ledger.complete_materialize_host_current(block,StateRegion::Interior,complete(24));
+        auto restored_ready=ledger.snapshot_metadata(ExecutionSide::Device);ledger.freeze_metadata_snapshot(restored_ready);
+        ledger.release_metadata_snapshot(restored_ready);
+    }
+}
+
 } // namespace
 
 int main()
@@ -728,6 +854,8 @@ int main()
     run_case("quiesce retirement and new epoch", test_quiesce_retirement_and_new_epoch);
     run_case("full rotation and high watermarks", test_full_rotation_and_high_watermarks);
     run_case("CPU executor contract witness", test_cpu_executor_contract_witness);
+    run_case("side-qualified metadata leases", test_side_qualified_metadata_leases);
+    run_case("metadata transfers and synchronized snapshots", test_metadata_transfer_and_synchronized_contract);
 
     if (failures != 0) {
         std::cerr << failures << " state residency assertion(s) failed\n";

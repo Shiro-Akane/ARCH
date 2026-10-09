@@ -1,17 +1,20 @@
 /**
- * @file HostHydroTransaction.h
- * @brief Runtime-owned, internal Host/RZ rejection scope.
+ * @file RuntimeStateTransaction.h
+ * @brief One Runtime rejection scope with Host fields or actual backend savepoints.
  *
  * Workflow:
- * 1. Validate Runtime/context/topology and fixed-allocation Hydro ownership.
- * 2. Allocate all backups before ghost, observer, register or stage mutations.
- * 3. Compose tentative source, repair and both boundary budgets through the
- *    selected Hydro or full B/2-D/2-H-D/2-B/2 owner.
- * 4. Commit only at that owner's accepted endpoint, or invalidate the source and restore
- *    the original allocations, slot mapping and complete owner metadata.
+ * 1. Validate the exact Runtime/context/binding and actual Host or Device side.
+ * 2. Prepare all fallible metadata, receipt and observer-mirror backups before
+ *    freezing the same ledger and actual Host flux-register arena.
+ * 3. Retain original Host field allocations or the actual resident backend slots;
+ *    bind one Runtime owner and the existing Host-only source journal.
+ * 4. Compose the unchanged source/repair/boundary receipts in that single scope.
+ * 5. Commit after real owner/storage completion, or invalidate/discard the source,
+ *    restore actual fields first, then restore the common Runtime metadata.
  *
- * No physical formula, time tableau, floor or acceptance tolerance is changed.
- * This internal qualification scope does not promote public RZ or Device use.
+ * Only field protection branches by execution side. This lifetime service does
+ * not authenticate hidden backend mathematics, prewarm boundary capacity, or
+ * open Native Device boundary/EOS/source/retry/production capabilities.
  */
 #pragma once
 
@@ -30,19 +33,21 @@
 
 #include "amr/AMRControl.h"
 #include "data/FluidState.h"
+#include "driver/runtime/ComputeBackend.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "grid/GridMetrics.h"
 #include "numerics/integrator/IHydroSolver.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "physics/species/Species.h"
 
 namespace arch::driver {
 
-/** Explicit verification profile; never selected by SimConfig or capability discovery. */
-enum class HostHydroQualification { Production, NativeRzRollback };
+/** Existing Host verification profile; never selected by capability discovery. */
+enum class RuntimeStateQualification { Production, NativeRzRollback };
 
 /** All fallible setup belongs to construction; no allocation is needed to reject. */
-class HostHydroTransaction final {
+class RuntimeStateTransaction final {
     using Field = std::vector<double> FluidState::*;
     static constexpr std::array<Field,7> fields_{
         &FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,
@@ -85,6 +90,49 @@ class HostHydroTransaction final {
             : id(pool_id),address(&b),grid_address(&b.grid),
               slots{SlotBackup(b.fluid_state),SlotBackup(b.state_next),SlotBackup(b.state_scratch)} {}
     };
+    /** Actual Runtime block/grid identity; no Host conserved field is copied for Device. */
+    struct DeviceBlockLease {
+        int id;
+        const amr::Block* address;
+        const Grid* grid_address;
+        GridMetrics::GeometryView geometry;
+        std::array<std::shared_ptr<boundary::BoundaryFluxCaptureStorage>,3> captures;
+        /** Borrow the real generated Grid and the existing Host observer mirror bindings. */
+        DeviceBlockLease(int pool_id,const amr::Block& b,GridMetrics::GeometrySemantics semantics)
+            : id(pool_id),address(&b),grid_address(&b.grid),
+              geometry(GridMetrics::make_geometry_view(b.grid,semantics)),
+              captures{b.fluid_state.boundary_flux_capture,b.state_next.boundary_flux_capture,
+                  b.state_scratch.boundary_flux_capture} {}
+        /** Compare real block/Grid metadata; backend validation separately protects its allocations. */
+        bool owns(const amr::Block& b,GridMetrics::GeometrySemantics semantics) const {
+            if(&b!=address||&b.grid!=grid_address||b.id!=id||!b.active)return false;
+            const auto now=GridMetrics::make_geometry_view(b.grid,semantics);
+            return now.geometry==geometry.geometry&&now.dim==geometry.dim&&now.ng==geometry.ng
+                &&now.stride_y==geometry.stride_y&&now.stride_z==geometry.stride_z
+                &&now.total_size==geometry.total_size&&now.semantics==geometry.semantics
+                &&now.dx1==geometry.dx1&&now.dx2==geometry.dx2&&now.dx3==geometry.dx3
+                &&now.x1_min==geometry.x1_min&&now.x2_min==geometry.x2_min&&now.x3_min==geometry.x3_min
+                &&now.actual_block_upper==geometry.actual_block_upper
+                &&GridMetrics::equal_identity(now.dyadic_identity,geometry.dyadic_identity);
+        }
+        /** Restore observer bindings only; Host conserved arrays are not a Device backup. */
+        void restore_capture_bindings(amr::Block& b) const noexcept {
+            b.fluid_state.boundary_flux_capture=captures[0];
+            b.state_next.boundary_flux_capture=captures[1];
+            b.state_scratch.boundary_flux_capture=captures[2];
+        }
+    };
+    /** Existing compact completed-stage reports are Host metadata, not resident field backups. */
+    struct DeviceReportBackup {
+        state::RepairBudget stage,reflux;
+        /** Allocate both copies before acquiring any metadata or backend savepoint lease. */
+        explicit DeviceReportBackup(const backend::ComputeBackend& backend)
+            : stage(backend.stage_repairs),reflux(backend.reflux_repairs) {}
+        /** Restore the exact entry reports without allocation; unaccepted scratch is not published. */
+        void restore(backend::ComputeBackend& backend) noexcept {
+            std::swap(backend.stage_repairs,stage);std::swap(backend.reflux_repairs,reflux);
+        }
+    };
     struct CaptureBackup {
         std::shared_ptr<boundary::BoundaryFluxCaptureStorage> owner;
         boundary::BoundaryFluxCaptureStorage values;
@@ -108,6 +156,7 @@ class HostHydroTransaction final {
     scheduler::StageExecutionContext& context_;
     scheduler::StageExecutionContext context_before_;
     scheduler::HydroStagePreparation* preparation_;
+    backend::ComputeBackend* const backend_;
     std::shared_ptr<amr::MemoryPool> pool_;
     std::shared_ptr<amr::AmrTree> tree_;
     std::vector<int> active_;
@@ -118,11 +167,14 @@ class HostHydroTransaction final {
     const scheduler::StageBinding* binding_address_;
     const amr::BlockHandle* binding_handles_address_;
     std::size_t binding_handles_size_;
-    state::StateResidencyLedger::HostSnapshot ledger_;
+    state::StateResidencyLedger::MetadataSnapshot ledger_;
     amr::FluxRegister::HostSnapshot flux_;
     scheduler::MonotonicSchedulerClock clock_;
     BCHandler::StageContextSnapshot boundary_context_;
     std::vector<BlockBackup> blocks_;
+    std::vector<DeviceBlockLease> device_blocks_;
+    std::optional<DeviceReportBackup> device_reports_;
+    std::unique_ptr<backend::BackendMacroStateTransaction> backend_savepoint_;
     std::vector<CaptureBackup> captures_;
     state::RepairBudget accepted_repairs_,tentative_repairs_;
     amr::TopologyEpoch boundary_epoch_;
@@ -133,25 +185,34 @@ class HostHydroTransaction final {
     std::array<DriverRuntime::UserBoundaryStamp,3> stamps_;
     bool committed_=false,leased_=false;
 
-    /** Fail before dereferencing or allocating against an unsupported owner. */
+    /** Reject unsupported owner/side/source inputs before any allocation or lease acquisition. */
     static DriverRuntime& preflight(DriverRuntime& runtime,
-        scheduler::StageExecutionContext& context,const Numerics::IHydroSolver& hydro) {
+        scheduler::StageExecutionContext& context,const Numerics::IHydroSolver* hydro) {
         if(!runtime.residency_ledger||!runtime.amr_ctrl.pool||!runtime.amr_ctrl.tree
-            ||runtime.host_hydro_transaction_||runtime.compute_backend
+            ||runtime.runtime_state_transaction_
             ||!std::isfinite(context.step_start_time)||!std::isfinite(context.step_dt)||context.step_dt<=0.
-            ||(context.hydro_preparation&&!context.hydro_preparation->supports_host_macro_step_journal())
-            ||context.side!=state::ExecutionSide::Host
+            ||(context.side!=state::ExecutionSide::Host&&context.side!=state::ExecutionSide::Device)
             ||&context.ledger!=runtime.residency_ledger.get()
             ||&context.clock!=&runtime.scheduler_clock
-            ||runtime.geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
-            ||hydro.geometry_semantics()!=runtime.geometry_semantics_
-            ||hydro.host_storage_contract()!=Numerics::HostHydroStorageContract::FixedExtentSlotPermutation)
-            throw std::logic_error("Host/RZ rollback requires its exact quiescent Runtime and Hydro owner");
+            ||runtime.geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::logic_error("Runtime rollback requires its exact quiescent Native owner/frame");
+        if(context.side==state::ExecutionSide::Host) {
+            if(runtime.compute_backend||!hydro
+                ||(context.hydro_preparation&&!context.hydro_preparation->supports_host_macro_step_journal())
+                ||hydro->geometry_semantics()!=runtime.geometry_semantics_
+                ||hydro->host_storage_contract()!=Numerics::HostHydroStorageContract::FixedExtentSlotPermutation)
+                throw std::logic_error("Host/RZ rollback requires its exact quiescent Runtime and Hydro owner");
+        } else if(!runtime.compute_backend||runtime.compute_backend->side()!=state::ExecutionSide::Device
+            ||context.hydro_preparation) {
+            // The existing source journal qualifies Host consumption only. A
+            // Device field savepoint cannot make that journal a Device consumer.
+            throw std::logic_error("Resident rollback requires its actual Device backend and no Host-only source journal");
+        }
         const auto& binding=scheduler::current_stage_binding();
         if(&binding.context!=&context||binding.handles.data()!=runtime.stage_handles.data()
             ||binding.handles.size()!=runtime.stage_handles.size()
             ||!std::equal(binding.handles.begin(),binding.handles.end(),runtime.stage_handles.begin()))
-            throw std::logic_error("Host/RZ rollback requires exact bound stage context and borrowed Runtime handles");
+            throw std::logic_error("Runtime rollback requires exact bound stage context and borrowed Runtime handles");
         return runtime;
     }
     /** Source invalidation precedes restoring any old field or lease. */
@@ -160,7 +221,10 @@ class HostHydroTransaction final {
         try {preparation_->invalidate();}catch(...) {std::terminate();}
         preparation_->discard_macro_step();
     }
-    /** Check identities without issuing generations or changing accepted data. */
+    /** Check the same Runtime identities and actual field owner without issuing generations.
+     * Device savepoint validation joins the backend stream and checks retained
+     * allocations; generated Grid identity is metadata, not hidden launch-chart proof.
+     */
     void require_owner() const {
         // RK3 reads the actual thread-local binding, not this function's context argument.
         // Check original borrowed span identity and content before touching any owner.
@@ -169,8 +233,8 @@ class HostHydroTransaction final {
             ||binding.handles.data()!=binding_handles_address_||binding.handles.size()!=binding_handles_size_
             ||binding.handles.size()!=handles_.size()
             ||!std::equal(binding.handles.begin(),binding.handles.end(),handles_.begin()))
-            throw std::logic_error("Host Hydro transaction actual stage binding changed");
-        if(runtime_.compute_backend||context_.side!=state::ExecutionSide::Host
+            throw std::logic_error("Runtime state transaction actual stage binding changed");
+        if(runtime_.compute_backend.get()!=backend_||context_.side!=context_before_.side
             || &context_.ledger!=runtime_.residency_ledger.get()
             || &context_.clock!=&runtime_.scheduler_clock
             || runtime_.amr_ctrl.pool!=pool_||runtime_.amr_ctrl.tree!=tree_
@@ -183,7 +247,7 @@ class HostHydroTransaction final {
                 !=bool(context_before_.post_boundary_acceptance)
             || bool(context_.configure_boundary_context)
                 !=bool(context_before_.configure_boundary_context))
-            throw std::logic_error("Host Hydro transaction owner/frame changed");
+            throw std::logic_error("Runtime state transaction owner/frame changed");
         for(const auto& b:blocks_) {
             auto& live=pool_->GetBlock(b.id);
             if(&live!=b.address||&live.grid!=b.grid_address)
@@ -199,6 +263,16 @@ class HostHydroTransaction final {
                     ||slot->block_total_size_!=b.slots[which].values.block_total_size_)
                     throw std::logic_error("Host Hydro changed fixed field layout");
             }
+        }
+        if(backend_) {
+            runtime_.topology_registry.validate_committed_snapshot(runtime_.observe_topology());
+            for(std::size_t b=0;b<device_blocks_.size();++b) {
+                if(!device_blocks_[b].owns(pool_->GetBlock(device_blocks_[b].id),runtime_.geometry_semantics_)
+                    ||handles_[b]!=runtime_.topology_registry.handle_for_pool(device_blocks_[b].id)
+                    ||!backend_->contains({handles_[b],storage_[b],state::StateSlot::Current}))
+                    throw std::logic_error("Resident macro actual block/Grid/storage identity changed");
+            }
+            if(backend_savepoint_)backend_savepoint_->validate_storage();
         }
     }
     /** Restore saved context callbacks by noexcept swap; their referenced owners survive. */
@@ -220,12 +294,12 @@ class HostHydroTransaction final {
     /** End only this exact owner lease, without unbinding another transaction. */
     void release() noexcept {
         if(!leased_)return;
-        if(runtime_.host_hydro_transaction_!=this)std::terminate();
+        if(runtime_.runtime_state_transaction_!=this)std::terminate();
         runtime_.amr_ctrl.flux_register.release_host_snapshot(flux_);
-        runtime_.residency_ledger->release_host_snapshot(ledger_);
+        runtime_.residency_ledger->release_metadata_snapshot(ledger_);
         runtime_.tentative_hydro_boundary_budget_=nullptr;
         runtime_.tentative_diffusion_boundary_budget_=nullptr;
-        runtime_.host_hydro_transaction_=nullptr;leased_=false;
+        runtime_.runtime_state_transaction_=nullptr;leased_=false;
     }
 public:
     /** Authenticate one source preparation against this live actual Runtime owner.
@@ -236,8 +310,9 @@ public:
         const scheduler::StageExecutionContext& context,
         std::span<const amr::BlockHandle> handles) const {
         require_owner();
-        if(preparation_!=&owner||&context!=&context_
-            ||runtime_.active_host_hydro_transaction()!=this
+        if(backend_||context_before_.side!=state::ExecutionSide::Host
+            ||preparation_!=&owner||&context!=&context_
+            ||runtime_.active_runtime_state_transaction()!=this
             ||handles.data()!=handles_address_||handles.size()!=handles_.size()
             ||!std::equal(handles.begin(),handles.end(),handles_.begin()))
             throw std::logic_error("Native source preparation changed its actual Runtime transaction owner");
@@ -251,9 +326,10 @@ public:
         std::vector<int> active;
         std::vector<amr::BlockHandle> handles;
         std::vector<backend::StorageGeneration> storage;
+        const backend::ComputeBackend* backend_owner;
         const amr::BlockHandle* handles_address;
         const backend::StorageGeneration* storage_address;
-        state::StateResidencyLedger::HostSnapshot ledger;
+        state::StateResidencyLedger::MetadataSnapshot ledger;
         amr::FluxRegister::HostSnapshot flux;
         std::uint64_t token,version;
         BCHandler::StageContextSnapshot boundary;
@@ -270,8 +346,12 @@ public:
     };
     /** Allocate a diagnostic witness only when explicitly requested by owner verification. */
     static OwnerWitness snapshot_owner(DriverRuntime& r,const scheduler::StageExecutionContext& c) {
+        // Negative witnesses may deliberately present the wrong context side.
+        // Capture metadata on its actual Runtime field side and retain c.side
+        // independently below; this read-only witness grants no execution lease.
+        const auto side=r.compute_backend?r.compute_backend->side():state::ExecutionSide::Host;
         return {r.amr_ctrl.pool,r.amr_ctrl.tree,r.amr_ctrl.tree->GetActiveBlocks(),r.stage_handles,r.backend_storage,
-            r.stage_handles.data(),r.backend_storage.data(),r.residency_ledger->snapshot_host(),
+            r.compute_backend.get(),r.stage_handles.data(),r.backend_storage.data(),r.residency_ledger->snapshot_metadata(side),
             r.amr_ctrl.flux_register.snapshot_host(),r.scheduler_clock.last_token(),r.scheduler_clock.last_version(),
             r.bc_handler.snapshot_stage_context(),r.repair_budget(),r.boundary_budget_epoch_,r.boundary_surface_layout_,
             r.hydro_boundary_budget_,r.diffusion_boundary_budget_,r.boundary_rkl_previous_,r.boundary_rkl_older_,
@@ -289,8 +369,9 @@ public:
         };
         const auto& repairs=r.repair_budget();
         if(r.amr_ctrl.pool!=s.pool||r.amr_ctrl.tree!=s.tree||r.amr_ctrl.tree->GetActiveBlocks()!=s.active
+            ||r.compute_backend.get()!=s.backend_owner
             ||r.stage_handles!=s.handles||r.backend_storage!=s.storage||r.stage_handles.data()!=s.handles_address
-            ||r.backend_storage.data()!=s.storage_address||!r.residency_ledger->host_snapshot_matches(s.ledger)
+            ||r.backend_storage.data()!=s.storage_address||!r.residency_ledger->metadata_snapshot_matches(s.ledger)
             ||!r.amr_ctrl.flux_register.host_snapshot_matches(s.flux)||r.scheduler_clock.last_token()!=s.token
             ||r.scheduler_clock.last_version()!=s.version||!r.bc_handler.stage_context_matches(s.boundary)
             ||!array_bits(repairs.values,s.repairs.values)||repairs.semantics!=s.repairs.semantics
@@ -315,18 +396,20 @@ public:
             for(std::size_t f=0;f<6;++f)
                 if(!array_bits(a.stage[f],b.stage[f])||!array_bits(a.initial[f],b.initial[f]))return false;
         }
-        return !r.host_hydro_transaction_&&!r.tentative_hydro_boundary_budget_
+        return !r.runtime_state_transaction_&&!r.tentative_hydro_boundary_budget_
             &&!r.tentative_diffusion_boundary_budget_;
     }
-    HostHydroTransaction(DriverRuntime& runtime,scheduler::StageExecutionContext& context,
-        const Numerics::IHydroSolver& hydro)
+    /** Prepare one metadata/source scope and acquire its actual side's field protection last. */
+    RuntimeStateTransaction(DriverRuntime& runtime,scheduler::StageExecutionContext& context,
+        const Numerics::IHydroSolver* hydro)
         : runtime_(preflight(runtime,context,hydro)),context_(context),context_before_(context),preparation_(context.hydro_preparation),
+          backend_(runtime.compute_backend.get()),
           pool_(runtime.amr_ctrl.pool),tree_(runtime.amr_ctrl.tree),
           active_(tree_->GetActiveBlocks()),handles_(runtime.stage_handles),storage_(runtime.backend_storage),
           handles_address_(runtime.stage_handles.data()),storage_address_(runtime.backend_storage.data()),
           binding_address_(&scheduler::current_stage_binding()),
           binding_handles_address_(binding_address_->handles.data()),binding_handles_size_(binding_address_->handles.size()),
-          ledger_(runtime.residency_ledger->snapshot_host()),flux_(runtime.amr_ctrl.flux_register.snapshot_host()),
+          ledger_(runtime.residency_ledger->snapshot_metadata(context.side)),flux_(runtime.amr_ctrl.flux_register.snapshot_host()),
           clock_(runtime.scheduler_clock),boundary_context_(runtime.bc_handler.snapshot_stage_context()),
           accepted_repairs_(runtime.repair_budget()),tentative_repairs_(accepted_repairs_),
           boundary_epoch_(runtime.boundary_budget_epoch_),surface_layout_(runtime.boundary_surface_layout_),
@@ -337,13 +420,12 @@ public:
           stamps_(runtime.user_boundary_stamps_) {
         static_assert(std::is_nothrow_swappable_v<FluidState>);
         static_assert(std::is_nothrow_swappable_v<state::RepairBudget>);
-        if(runtime.host_hydro_transaction_||runtime.compute_backend
+        if(runtime.runtime_state_transaction_
             ||runtime.geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
-            ||hydro.host_storage_contract()!=Numerics::HostHydroStorageContract::FixedExtentSlotPermutation
-            ||hydro.geometry_semantics()!=runtime.geometry_semantics_
             ||active_.empty()||active_.size()!=handles_.size()
+            ||(backend_&&storage_.size()!=handles_.size())
             ||runtime.amr_ctrl.flux_register.GetNumSpecies()!=runtime.specs.count())
-            throw std::logic_error("Host/RZ rollback qualification is unavailable or overlapping");
+            throw std::logic_error("Runtime rollback is unavailable or overlapping");
         const auto field_extent=static_cast<std::size_t>(state::RepairView::fixed_size+2*runtime.specs.count());
         if(accepted_repairs_.values.size()!=field_extent
             ||accepted_repairs_.semantics!=state::RepairSemantics::RzVolumeAngular)
@@ -352,62 +434,112 @@ public:
         if((!hydro_before_.empty()&&hydro_before_.size()!=boundary_fields)
             ||(!diffusion_before_.empty()&&diffusion_before_.size()!=boundary_fields))
             throw std::logic_error("Host/RZ boundary receipt layout mismatch");
-        blocks_.reserve(active_.size());captures_.reserve(3*active_.size());
+        captures_.reserve(3*active_.size());
+        if(backend_)device_reports_.emplace(*backend_);
+        else blocks_.reserve(active_.size());
         std::map<boundary::BoundaryFluxCaptureStorage*,bool> unique;
+        std::vector<backend::BackendStateAccess> currents;
+        if(backend_) {
+            device_blocks_.reserve(active_.size());currents.reserve(active_.size());
+            runtime.topology_registry.validate_committed_snapshot(runtime.observe_topology());
+        }
         for(std::size_t b=0;b<active_.size();++b) {
             runtime.residency_ledger->quiesce(handles_[b]);
             auto& block=pool_->GetBlock(active_[b]);
-            blocks_.emplace_back(active_[b],block);
-            for(const auto& slot:blocks_.back().slots) {
-                const auto& s=slot.values;
-                const auto cells=static_cast<std::size_t>(block.grid.GetTotalSize());
-                if(s.rho.empty()||s.GetNumSpecies()!=runtime.specs.count()
-                    ||s.block_total_size_!=static_cast<int>(cells))
-                    throw std::logic_error("Host/RZ slot field/species extent mismatch");
-                for(std::size_t f=0;f<fields_.size();++f)
-                    if(slot.leases[f].size!=(f==6?cells*runtime.specs.count():cells))
-                        throw std::logic_error("Host/RZ slot vector extent mismatch");
-                if(s.boundary_flux_capture&&unique.emplace(s.boundary_flux_capture.get(),true).second)
-                    captures_.emplace_back(s.boundary_flux_capture);
+            if(backend_) {
+                if(block.id!=active_[b]||!block.active
+                    ||handles_[b]!=runtime.topology_registry.handle_for_pool(active_[b]))
+                    throw std::logic_error("Resident macro Runtime block/handle mismatch");
+                device_blocks_.emplace_back(active_[b],block,runtime.geometry_semantics_);
+                const auto access=runtime.backend_access(b,state::StateSlot::Current);
+                if(!backend_->contains(access))
+                    throw std::logic_error("Resident macro actual Current storage lease is unavailable");
+                const auto version=runtime.residency_ledger->inspect({handles_[b],state::StateSlot::Current}).interior.version;
+                runtime.residency_ledger->require_readable({handles_[b],state::StateSlot::Current},
+                    {state::ExecutionSide::Device,version,true,false});
+                currents.push_back(access);
+                for(const auto& capture:device_blocks_.back().captures)
+                    if(capture&&unique.emplace(capture.get(),true).second)captures_.emplace_back(capture);
+            } else {
+                blocks_.emplace_back(active_[b],block);
+                for(const auto& slot:blocks_.back().slots) {
+                    const auto& s=slot.values;
+                    const auto cells=static_cast<std::size_t>(block.grid.GetTotalSize());
+                    if(s.rho.empty()||s.GetNumSpecies()!=runtime.specs.count()
+                        ||s.block_total_size_!=static_cast<int>(cells))
+                        throw std::logic_error("Host/RZ slot field/species extent mismatch");
+                    for(std::size_t f=0;f<fields_.size();++f)
+                        if(slot.leases[f].size!=(f==6?cells*runtime.specs.count():cells))
+                            throw std::logic_error("Host/RZ slot vector extent mismatch");
+                    if(s.boundary_flux_capture&&unique.emplace(s.boundary_flux_capture.get(),true).second)
+                        captures_.emplace_back(s.boundary_flux_capture);
+                }
             }
         }
         require_owner();
-        runtime.residency_ledger->freeze_host_snapshot(ledger_);
+        runtime.residency_ledger->freeze_metadata_snapshot(ledger_);
         try {runtime.amr_ctrl.flux_register.freeze_host_snapshot(flux_);}
-        catch(...) {runtime.residency_ledger->release_host_snapshot(ledger_);throw;}
-        runtime.host_hydro_transaction_=this;leased_=true;
-        runtime.tentative_hydro_boundary_budget_=&hydro_tentative_;
-        runtime.tentative_diffusion_boundary_budget_=&diffusion_tentative_;
-        try {if(preparation_)preparation_->begin_macro_step();}
-        catch(...) {discard_source_noexcept();release();throw;}
+        catch(...) {runtime.residency_ledger->release_metadata_snapshot(ledger_);throw;}
+        try {
+            // All Host metadata/report/mirror allocations and leases precede
+            // actual resident savepoint creation. No Host U is materialized.
+            if(backend_) {
+                backend_savepoint_=backend_->begin_macro_state_transaction(currents);
+                if(!backend_savepoint_)
+                    throw std::logic_error("Resident macro backend returned no actual field savepoint");
+            }
+            runtime.runtime_state_transaction_=this;leased_=true;
+            runtime.tentative_hydro_boundary_budget_=&hydro_tentative_;
+            runtime.tentative_diffusion_boundary_budget_=&diffusion_tentative_;
+            if(preparation_)preparation_->begin_macro_step();
+        } catch(...) {
+            discard_source_noexcept();
+            backend_savepoint_.reset(); // Actual fields restore before metadata can be released.
+            if(leased_)release();
+            else {
+                runtime.amr_ctrl.flux_register.release_host_snapshot(flux_);
+                runtime.residency_ledger->release_metadata_snapshot(ledger_);
+            }
+            throw;
+        }
     }
-    HostHydroTransaction(const HostHydroTransaction&)=delete;
-    HostHydroTransaction& operator=(const HostHydroTransaction&)=delete;
-    HostHydroTransaction(HostHydroTransaction&&)=delete;
-    HostHydroTransaction& operator=(HostHydroTransaction&&)=delete;
+    RuntimeStateTransaction(const RuntimeStateTransaction&)=delete;
+    RuntimeStateTransaction& operator=(const RuntimeStateTransaction&)=delete;
+    RuntimeStateTransaction(RuntimeStateTransaction&&)=delete;
+    RuntimeStateTransaction& operator=(RuntimeStateTransaction&&)=delete;
     /** Driver receipt collection remains tentative until the macro-step succeeds. */
     state::RepairBudget& repair_receipts() noexcept {return tentative_repairs_;}
-    /** Validate physical allocation groups after a stage, including partial rotations. */
-    void validate_storage() const {require_owner();}
+    /** Validate Host allocation permutations or join/check the original actual backend savepoint. */
+    void validate_storage() const {
+        if(!leased_||runtime_.runtime_state_transaction_!=this)
+            throw std::logic_error("Runtime state transaction is not the active unique owner");
+        require_owner();
+    }
     /** Final preflight can throw; publication tail is allocation-free and noexcept-owned. */
     void commit() {
-        require_owner();
+        validate_storage();
         runtime_.residency_ledger->quiesce();
         if(preparation_)preparation_->commit_macro_step();
         std::swap(runtime_.repair_budget(),tentative_repairs_);
         runtime_.hydro_boundary_budget_.swap(hydro_tentative_);
         runtime_.diffusion_boundary_budget_.swap(diffusion_tentative_);
-        committed_=true;release();
+        if(backend_savepoint_)backend_savepoint_->commit();
+        committed_=true;release();backend_savepoint_.reset();
     }
-    /** Reject after all selected Host workers have joined; invalidate source first. */
-    ~HostHydroTransaction() noexcept {
+    /** Invalidate source first; restore real fields before common ledger/context metadata. */
+    ~RuntimeStateTransaction() noexcept {
         if(!leased_)return;
         if(committed_) {release();return;}
         discard_source_noexcept();
         // Regrid/backend mutations are forbidden by Runtime entry guards. A solver
         // violating its fixed-allocation declaration is fatal, never silently repaired.
         if(runtime_.amr_ctrl.pool!=pool_||runtime_.amr_ctrl.tree!=tree_
-            ||runtime_.stage_handles!=handles_||tree_->GetActiveBlocks()!=active_)std::terminate();
+            ||runtime_.compute_backend.get()!=backend_
+            ||runtime_.stage_handles!=handles_||runtime_.backend_storage!=storage_
+            ||tree_->GetActiveBlocks()!=active_)std::terminate();
+        for(const auto& b:device_blocks_)
+            if(!b.owns(pool_->GetBlock(b.id),runtime_.geometry_semantics_))std::terminate();
+        backend_savepoint_.reset(); // Its destructor drains and restores actual Device fields/planes.
         for(auto& b:blocks_) {
             auto& block=pool_->GetBlock(b.id);
             std::array<FluidState*,3> live{&block.fluid_state,&block.state_next,&block.state_scratch};
@@ -420,19 +552,23 @@ public:
             }
             for(int s=0;s<3;++s)b.slots[s].restore(*live[s]);
         }
+        for(const auto& block:device_blocks_)block.restore_capture_bindings(pool_->GetBlock(block.id));
         for(auto& capture:captures_)capture.restore();
+        if(device_reports_)device_reports_->restore(*backend_);
         runtime_.boundary_budget_epoch_=boundary_epoch_;
         runtime_.boundary_surface_layout_.swap(surface_layout_);
         runtime_.hydro_boundary_budget_.swap(hydro_before_);
         runtime_.diffusion_boundary_budget_.swap(diffusion_before_);
         runtime_.boundary_rkl_previous_.swap(rkl_previous_);
         runtime_.boundary_rkl_older_.swap(rkl_older_);
-        runtime_.boundary_observer_operations_=observer_before_;
+        // Host's original scoped witness restores this accounting metadata.
+        // Device entries measure actual work, including failed stages/restores.
+        if(!backend_)runtime_.boundary_observer_operations_=observer_before_;
         runtime_.user_boundary_stamps_=stamps_;
         std::swap(runtime_.repair_budget(),accepted_repairs_);
         runtime_.bc_handler.restore_stage_context_noexcept(boundary_context_);
         runtime_.amr_ctrl.flux_register.restore_host_snapshot_noexcept(flux_);
-        runtime_.residency_ledger->restore_host_snapshot_noexcept(ledger_);
+        runtime_.residency_ledger->restore_metadata_snapshot_noexcept(ledger_);
         runtime_.scheduler_clock=clock_;
         restore_context();release();
     }

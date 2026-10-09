@@ -1034,8 +1034,15 @@ void run_resident_macro_savepoint(int device_count)
             const auto before=backend->counters();require_rejected(operation,"invalid resident savepoint/namespace accepted");
             require(unchanged_counters_after_query(*backend,before),"resident preflight rejection enqueued partial work");
         };
+        // Both real blocks already bind face0 on all three physical owners.
+        // Reserve only that existing shape so face1 remains an unbound growth case.
+        std::array<std::array<std::size_t,6>,2> retained_control_counts{};
+        for(auto& face_counts:retained_control_counts)face_counts[0]=4+static_cast<std::size_t>(count);
         auto stale=accesses;stale[1].storage.value+=99;
         rejects_no_work([&]{backend->begin_macro_state_transaction(stale);});
+        rejects_no_work([&]{backend->prepare_boundary_control_capacity(stale,retained_control_counts);});
+        auto inactive_control_counts=retained_control_counts;inactive_control_counts[1][2]=1;
+        rejects_no_work([&]{backend->prepare_boundary_control_capacity(accesses,inactive_control_counts);});
         auto duplicate=accesses;duplicate[1]=duplicate[0];rejects_no_work([&]{backend->begin_macro_state_transaction(duplicate);});
         rejects_no_work([&]{backend->begin_macro_state_transaction(std::span<const backend::BackendStateAccess>(accesses.data(),1));});
         rejects_no_work([&]{backend->begin_macro_state_transaction({});});
@@ -1044,6 +1051,15 @@ void run_resident_macro_savepoint(int device_count)
         const auto diffuse=[&]{(void)backend->execute_diffusion_stage_batch(accesses,rkl,rkl.stages.front(),1.e-4,1.,{2,state::CompletionState::Complete});};
         std::array<std::array<FluidState,3>,2> control_reference;std::vector<backend::BoundaryFluxPlanes> surface_reference;
         {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();control_reference=all_slots();surface_reference=backend->download_boundary_flux_capture();}
+        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
+        // Capacity is sufficient and genuinely bound: prewarm is metadata-only.
+        // Replay the original Diffusion consumer instead of inspecting raw pointers.
+        const auto before_capacity=backend->counters();
+        backend->prepare_boundary_control_capacity(accesses,retained_control_counts);
+        require(unchanged_counters_after_query(*backend,before_capacity),
+            "bound resident control prewarm enqueued work despite sufficient capacity");
+        {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();same_slots(control_reference);
+            same_surfaces(backend->download_boundary_flux_capture(),surface_reference);savepoint->validate_storage();}
         same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
         const auto before_save=backend->counters();
         bool exception_seen=false;
@@ -1376,6 +1392,108 @@ void run_native_ordered_device_boundary(int device_count)
         const auto reject_no_work=[&](auto&& operation){const auto before=owner->counters();
             require_rejected(operation,"Native Device BC accepted candidate/store frame drift");
             require(unchanged_counters_after_query(*owner,before),"Native Device BC frame rejection enqueued work");};
+        if(user) {
+            // Warm only real allocation capacity. The existing Current producer
+            // first binds its genuine non-None controls; Next/Scratch receive
+            // their own initialized fixture fields, never copies of Current.
+            const std::array<backend::BackendStateAccess,1> domain{access};
+            for(int n=1;n<3;++n) {
+                auto& field=n==1?block.state_next:block.state_scratch;
+                for(double& value:field.enuc_rate)value+=1000.*n;
+                auto target=access;target.slot=n==1?state::StateSlot::Next:state::StateSlot::Scratch;
+                for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+                    owner->enqueue_upload_slot(target,region,transfer_view(field));
+            }
+            block.fluid_state=seed;upload();purpose=boundary::BoundaryPurpose::Diffusion;
+            handler.configure_stage(.375,purpose);calls=0;axis_calls={};
+            const auto produce=[&](state::StateSlot slot) {
+                auto target=access;target.slot=slot;
+                auto value=handler.prepare_native_device(*owner,target,grid);
+                handler.validate_native_device_candidate(value,*owner,target,grid);
+                handler.publish_native_device(std::move(value),*owner,target,grid);
+            };
+            produce(state::StateSlot::Current);
+            constexpr state::SlotRotation cycle{state::StateSlot::Next,state::StateSlot::Scratch,state::StateSlot::Current};
+            const std::array host_templates{block.fluid_state,block.state_next,block.state_scratch};
+            const auto all_slots=[&] {
+                auto result=host_templates;
+                for(int n=0;n<3;++n) {
+                    for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+                        owner->enqueue_materialize_host_current(access,region,transfer_view(result[n]));
+                    owner->quiesce();owner->rotate_slots(access,cycle);
+                }
+                return result;
+            };
+            const auto initial_fields=all_slots();const int donor=grid.GetIndex(grid.Is(),grid.Js(),0);
+            for(int n=0;n<3;++n)require(std::bit_cast<std::uint64_t>(initial_fields[n].enuc_rate[donor])
+                ==std::bit_cast<std::uint64_t>(host_templates[n].enuc_rate[donor]),"independent physical-slot upload lost its actual donor marker");
+            require(initial_fields[1].enuc_rate[donor]==initial_fields[0].enuc_rate[donor]+1000.
+                &&initial_fields[2].enuc_rate[donor]==initial_fields[0].enuc_rate[donor]+2000.,
+                "capacity fixture did not expose three genuinely distinct physical-slot donors");
+            const auto stage=handler.snapshot_stage_context();
+            const int initial_calls=calls;const auto shape_before=owner->counters();
+            const auto extents=handler.native_device_control_extents(grid,count);
+            require(extents[0]==static_cast<std::size_t>(grid.Je()-grid.Js())*(4+count)
+                &&extents[1]==extents[0]&&extents[2]==static_cast<std::size_t>(grid.Ie()-grid.Is())*(4+count)
+                &&extents[3]==extents[2]&&extents[4]==0&&extents[5]==0,
+                "capacity request lost actual Diffusion tangential/active/species shape");
+            require(calls==initial_calls&&handler.stage_context_matches(stage)&&unchanged_counters_after_query(*owner,shape_before),
+                "pure control extent helper performed callback/stage/backend work");
+            const std::array<std::array<std::size_t,6>,1> shapes{extents};
+            const std::array<std::array<std::size_t,6>,1> zero_shapes{};
+            const auto zero_before=owner->counters();owner->prepare_boundary_control_capacity(domain,zero_shapes);
+            require(unchanged_counters_after_query(*owner,zero_before),"zero control-capacity request synchronized or changed real work counters");
+            auto bad=shapes;--bad[0][0];
+            reject_no_work([&]{owner->prepare_boundary_control_capacity(domain,bad);});
+            bad=shapes;bad[0][4]=1;reject_no_work([&]{owner->prepare_boundary_control_capacity(domain,bad);});
+            auto stale=domain;++stale[0].storage.value;
+            reject_no_work([&]{owner->prepare_boundary_control_capacity(stale,shapes);});
+            auto next=domain;next[0].slot=state::StateSlot::Next;
+            reject_no_work([&]{owner->prepare_boundary_control_capacity(next,shapes);});
+            const std::array duplicate{access,access};const std::array<std::array<std::size_t,6>,2> duplicate_shapes{extents,extents};
+            reject_no_work([&]{owner->prepare_boundary_control_capacity(duplicate,duplicate_shapes);});
+            reject_no_work([&]{owner->prepare_boundary_control_capacity({},{});}); // Omitted committed one-block domain.
+            reject_no_work([&]{owner->prepare_boundary_control_capacity(domain,{});});
+            select_device_probe(device_count);const auto before=owner->counters();
+            owner->prepare_boundary_control_capacity(domain,shapes);const auto prepared=owner->counters();const int prepared_calls=calls;
+            require_backend_device_selected("control capacity did not select its actual backend device");
+            require(prepared.kernel_count==before.kernel_count&&prepared.getter_count==before.getter_count+1
+                &&prepared.bytes_h2d==before.bytes_h2d&&prepared.bytes_d2h==before.bytes_d2h
+                &&prepared.stream_sync_count>before.stream_sync_count,
+                "new unbound capacity performed numerical/field work or missed its stream join");
+            require(prepared_calls==initial_calls&&handler.stage_context_matches(stage),"capacity prewarm invoked a callback or changed BC context");
+            const auto repeated_before=owner->counters();owner->prepare_boundary_control_capacity(domain,shapes);
+            require(unchanged_counters_after_query(*owner,repeated_before),"sufficient control capacity performed extra stream/work operations");
+            const auto warmed_fields=all_slots();for(int n=0;n<3;++n)
+                require(same_bits(warmed_fields[n],initial_fields[n]),"capacity preparation changed a real physical-slot U/X/ENUC field");
+            const auto macro_before=owner->counters();bool scope_failed=false;
+            try {
+                auto savepoint=owner->begin_macro_state_transaction(domain);
+                reject_no_work([&]{owner->prepare_boundary_control_capacity(domain,shapes);});
+                for(auto slot:{state::StateSlot::Current,state::StateSlot::Next,state::StateSlot::Scratch})produce(slot);
+                const auto consumed=all_slots();const int ghost=grid.GetIndex(grid.Is()-1,grid.Js(),0);
+                for(int n=0;n<3;++n)require(std::bit_cast<std::uint64_t>(consumed[n].enuc_rate[ghost])
+                    ==std::bit_cast<std::uint64_t>(initial_fields[n].enuc_rate[donor]),
+                    "three-slot normal BC producer failed to consume the corresponding real physical donor");
+                owner->rotate_slots(access,cycle);savepoint->validate_storage();
+                throw std::runtime_error("capacity publication rollback scope fault");
+            }catch(const std::runtime_error& error) {
+                scope_failed=std::string(error.what())=="capacity publication rollback scope fault";if(!scope_failed)throw;
+            }
+            require(scope_failed&&owner->counters().kernel_count>macro_before.kernel_count
+                &&owner->counters().bytes_h2d>macro_before.bytes_h2d,"resident rollback erased real producer work counters");
+            const auto restored=all_slots();for(int n=0;n<3;++n)
+                require(same_bits(restored[n],initial_fields[n]),"capacity-backed failed macro did not restore real fields and slot permutation");
+            {auto savepoint=owner->begin_macro_state_transaction(domain);
+                for(auto slot:{state::StateSlot::Current,state::StateSlot::Next,state::StateSlot::Scratch})produce(slot);
+                savepoint->validate_storage();savepoint->commit();}
+            // Reuse is through the genuine producer, without a control getter.
+            // Fields alone cannot prove private bound-control values/pointers.
+            const auto enough_before=owner->counters();owner->prepare_boundary_control_capacity(domain,shapes);
+            require(unchanged_counters_after_query(*owner,enough_before),"committed three-slot controls lost their warmed capacity");
+            std::cout<<"NATIVE_CONTROL_CAPACITY species="<<count<<" join="<<prepared.stream_sync_count-before.stream_sync_count
+                <<" callbacks_during_capacity="<<prepared_calls-initial_calls<<'\n';
+        }
         for(auto role:{boundary::BoundaryPurpose::Hydro,boundary::BoundaryPurpose::Diffusion}) {
             purpose=role;handler.configure_stage(.375,role);block.fluid_state=seed;upload();
             auto reference=seed;calls=0;axis_calls={};auto host=handler.prepare_native(reference,grid);

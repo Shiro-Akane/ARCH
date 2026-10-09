@@ -13,6 +13,8 @@
 #include "cuda/runtime/DeviceBlockStore.h"
 #include "driver/runtime/ComputeBackend.h"
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -179,6 +181,10 @@ public:
     void enqueue_upload_slot(
         backend::BackendStateAccess access, state::StateRegion region,
         backend::HostStateTransferView host) override;
+    /** Reserve epoch control capacity without reading or binding stage values. */
+    void prepare_boundary_control_capacity(
+        std::span<const backend::BackendStateAccess> currents,
+        std::span<const std::array<std::size_t,6>> face_counts) override;
     std::unique_ptr<backend::BackendMacroStateTransaction>
     begin_macro_state_transaction(
         std::span<const backend::BackendStateAccess> currents) override;

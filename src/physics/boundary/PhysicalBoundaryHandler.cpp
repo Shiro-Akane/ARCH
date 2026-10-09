@@ -12,6 +12,9 @@
  *    controls; complete only shared axis parity after final domain exchange.
  *    Runtime actual completed-ghost EOS precedes scheduler GhostValid.
  *
+ * Epoch control shapes borrow this same physical-face enumeration with an
+ * explicit Diffusion purpose. No callback/EOS or BC stage mutation is needed.
+ *
  * Native source points remain inside their actual support. Negative axis
  * corners are signed copies, and padding is never a physical halo. The domain
  * and outer macro/regrid owners handle genuine exchange and rollback.
@@ -144,6 +147,15 @@ void BCHandler::configure_stage(double time, arch::boundary::BoundaryPurpose pur
  * native moment/thermodynamic conversion remains a separate physical contract.
  */
 std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
+    return ghosts(grid,purpose_);
+}
+
+/** Reuse the original face/mirror enumeration for one explicit purpose.
+ * This changes no BC time/revision or callback binding; metadata-only capacity
+ * preparation selects Diffusion while all original consumers keep their stage.
+ */
+std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid,
+    arch::boundary::BoundaryPurpose purpose) const {
     using namespace arch::boundary;
     std::vector<Ghost> result;
     const int lower[3]{grid.Is(), grid.Js(), grid.Ks()}, upper[3]{grid.Ie(), grid.Je(), grid.Ke()};
@@ -162,7 +174,7 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
         const int face = 2 * axis + side;
         const auto name = names[face];
         const bool hydro_user = name == "user" || name == "inflow" || name == "dirichlet";
-        if (name == "periodic" || (purpose_ == BoundaryPurpose::Hydro && !hydro_user)) continue;
+        if (name == "periodic" || (purpose == BoundaryPurpose::Hydro && !hydro_user)) continue;
         const double edge = side ? block_upper[axis] : block_lower[axis];
         const double domain = side ? domain_upper[axis] : domain_lower[axis];
         const double scale = std::max({std::abs(edge), std::abs(domain), std::abs(widths[axis])});
@@ -203,7 +215,7 @@ std::vector<BCHandler::Ghost> BCHandler::ghosts(const Grid& grid) const {
                 result.push_back({grid.GetIndex(donor[0], donor[1], donor[2]),
                     grid.GetIndex(ghost[0], ghost[1], ghost[2]), face, plane, depth == 1 && active_tangent,
                     MakeBoundaryCoordinates(grid, native, static_cast<BoundaryAxis>(axis),
-                        static_cast<BoundarySide>(side), time_, depth, purpose_, ghost_native, semantics_),
+                        static_cast<BoundarySide>(side), time_, depth, purpose, ghost_native, semantics_),
                     {donor[0],donor[1]},{ghost[0],ghost[1]}});
             }
     }
@@ -318,14 +330,51 @@ std::vector<BCHandler::Ghost> BCHandler::reflecting_ghosts(const Grid& grid) con
     return result;
 }
 
+/** Select the original actual Diffusion face shapes, without creating values.
+ * Workflow: check species/layout -> enumerate existing physical faces using
+ * explicit Diffusion purpose -> count each first-active face once. Capacity is
+ * (4+N)*N_face records; it conveys neither a control value nor a valid binding.
+ */
+std::array<std::size_t,6> BCHandler::diffusion_control_extents(const Grid& grid,int species) const {
+    if(species<0)
+        throw std::invalid_argument("Diffusion boundary capacity requires a valid species extent");
+    (void)logical_plan(grid);
+    std::array<std::size_t,6> result{};
+    if(!callback_)return result;
+    const int extent[3]{grid.Ie()-grid.Is(),grid.Je()-grid.Js(),grid.Ke()-grid.Ks()};
+    const std::size_t fields=4+static_cast<std::size_t>(species);
+    for(const auto& ghost:ghosts(grid,arch::boundary::BoundaryPurpose::Diffusion)) {
+        if(!ghost.first_active_layer||result[ghost.face])continue;
+        const int axis=ghost.face/2;
+        const std::size_t a=static_cast<std::size_t>(extent[(axis+1)%3]),
+            b=static_cast<std::size_t>(extent[(axis+2)%3]);
+        if(!a||!b||a>std::numeric_limits<std::size_t>::max()/b
+            ||a*b>std::numeric_limits<std::size_t>::max()/fields)
+            throw std::overflow_error("Diffusion boundary capacity is not representable");
+        result[ghost.face]=a*b*fields;
+    }
+    return result;
+}
+
+/** Authenticate actual Native chart/root and return only immutable face counts.
+ * No FluidState, callback, selected EOS or stage-context mutation is involved.
+ * All-zero counts leave backend control bindings and capacity untouched.
+ */
+std::array<std::size_t,6> BCHandler::native_device_control_extents(
+    const Grid& grid,int species) const {
+    require_native_root_frame(grid);
+    return diffusion_control_extents(grid,species);
+}
+
+/** Allocate actual callback storage using the same shape as capacity preparation.
+ * The values are populated later by the existing real producer/store_conditions;
+ * a metadata count is never uploaded or advertised as a bound None condition.
+ */
 std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> BCHandler::make_diffusion_storage(const Grid& grid, int species) const {
     auto result = std::make_shared<arch::boundary::DiffusionBoundaryStorage>();
     if (purpose_ != arch::boundary::BoundaryPurpose::Diffusion) return result;
-    const int extent[3]{grid.Ie() - grid.Is(), grid.Je() - grid.Js(), grid.Ke() - grid.Ks()};
-    for (const auto& g : ghosts(grid)) if (g.first_active_layer && result->faces[g.face].empty()) {
-        const int axis = g.face / 2;
-        result->faces[g.face].resize(extent[(axis + 1) % 3] * extent[(axis + 2) % 3] * (4 + species));
-    }
+    const auto counts=diffusion_control_extents(grid,species);
+    for(int face=0;face<6;++face)result->faces[face].resize(counts[face]);
     return result;
 }
 

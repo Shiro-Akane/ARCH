@@ -514,7 +514,7 @@ DPS无源码公共有限环体表面积分/一角核与contact log恒等式由Ro
 
 现有gravity_stage_contract新增的实际Native Runtime出口通过（2.48907 s，guard3.036 s），保持原methods/CFL/EOS门槛：真实RKL1默认半步0.1在completed热力学门拒绝，完整宏事务/Advice恢复三slot七数组bits/地址、ledger/register/clock/BC/repair/预算；真正半步1/16在真实Runtime EOS/BC gate接受。新测试复用原CI owner，未把整套私有chart矩阵重复加入常规CI；完整正宏步、自适应缩步、RKL2与长时仍待验。薄记录见[native-external-angular-cpu-summary.json](../../validation/gravity/results/release-closure-20261007/native-external-angular-cpu-summary.json)。
 
-外源接线在下一批进行：defaultUnknown discovery、实际GravityStage私有frame、真实HostHydroTransaction/七lease/domain/RK stage借用，物理8 Gauss点实际EOS和同一V体功/W力矩源叶；Native register清理延后真实frame准备，普通路径保持。实际边界预算观测器仍有Native面积/力矩及builtin启用缺口，独立修正候选尚待验，不据此先签守恒。公开Native/Device继续关闭；整个O release、连续势/力及耦合、GUI原生、CUDA、两平台匹配总计时/长时保持原目标。
+外源接线在下一批进行：defaultUnknown discovery、实际GravityStage私有frame、真实RuntimeStateTransaction/七lease/domain/RK stage借用，物理8 Gauss点实际EOS和同一V体功/W力矩源叶；Native register清理延后真实frame准备，普通路径保持。实际边界预算观测器仍有Native面积/力矩及builtin启用缺口，独立修正候选尚待验，不据此先签守恒。公开Native/Device继续关闭；整个O release、连续势/力及耦合、GUI原生、CUDA、两平台匹配总计时/长时保持原目标。
 
 第二DPS公开接触圆盘端点代数经Root精确因式/分支/axis复核后限范围接受：94.35 s、21819输出token（思考21349/正文470），估计USD0.013318–0.026636；实际费用未知。明确内部点leading log系数2、径向edge系数1，pi端点必须切换稳定直接式；未产生向外积分证书或生产力认证。无源码/raw外发；review墙钟包含Root同期实现时间，非active成本。E真实余量约22.28GiB，原8GiB/64MiB预留与单重负载owner保持；本批无raw。
 
@@ -972,3 +972,8 @@ O9 长时及模型级出口继续执行；O10 网格与 AMR 重设计独立留�
 最后参考任务已知 10599 token、估算 0.0056437–0.0112874 美元，全批 token／账单及维护者活跃成本未知。
 与本地工作重叠、阻塞等待和重型资源争用均为 0，不能据单次记录推断普遍提速。
 Gemini 此节点跳过：当前改动是短事实记录，既有已验收校准文字保留。
+
+
+### 2026-10-10 — 统一 Runtime 状态与实际控制容量
+
+旧 Host 专用回滚类已退役，同一 `RuntimeStateTransaction` 保护 Host 字段或实际 Device 三槽，并复用源项、ledger、clock、BC与收支恢复主体。原CPU四个受影响owner及111项架构检查通过；实际CUDA存储owner0.85秒通过，memcheck和完整leak-check为0错误、0泄漏。容量只增长未绑定controls；真实绑定的RKL重放及原计数／64 epsilon窗口保持。首次最终链接缺隐式身份比较符号的失败、65.561秒的同缓存C++控制owner修复与两轮累计1163.578秒保留。源码身份及剩余出口见[统一状态处理记录](../../validation/amr/results/release-closure-20261009/native-unified-runtime-summary.json)。此节点不代签实际NativeRuntime边界／EOS／源项／宏步或O9长程。

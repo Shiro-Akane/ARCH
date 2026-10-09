@@ -17,7 +17,7 @@
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
 #include "driver/io/DriverIO.h"
 #include "driver/runtime/DriverRuntime.h"
-#include "driver/runtime/HostHydroTransaction.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverBurn.h"
 
@@ -399,7 +399,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     // An outer native macro owner publishes both diffusion halves only after
     // final Current BC/EOS acceptance. Standalone/Existing stages keep their
     // original accepted receipt owner and coefficient weights.
-    auto* transaction=runtime.active_host_hydro_transaction();
+    auto* transaction=runtime.active_runtime_state_transaction();
     auto& accepted=transaction?transaction->repair_receipts():runtime.repair_budget();
     if(transaction)transaction->validate_storage();
     accepted.combine(pending);
@@ -518,7 +518,7 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     StageExecutionContext& stage_context, const dispatch::ResolvedExecutionPlan* resolved_plan,
     double dt, IntegratorSolve integrator_solve,
     const Physical::Gravity::IGravityPolicy* gravity, const Numerics::IHydroSolver* hydro,
-    HostHydroQualification qualification = HostHydroQualification::Production)
+    RuntimeStateQualification qualification = RuntimeStateQualification::Production)
 {
     if(!resolved_plan||!hydro||(!runtime.backend()&&!integrator_solve))
         throw std::logic_error("Hydro requires its selected plan and executable solver");
@@ -526,11 +526,14 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
         throw std::logic_error("Hydro step size must be finite, positive and equal frozen context.step_dt");
     if(stage_context.hydro_acceptance)
         throw std::logic_error("Hydro acceptance already has another owner");
-    auto* transaction=runtime.active_host_hydro_transaction();
-    std::optional<HostHydroTransaction> local_transaction;
+    auto* transaction=runtime.active_runtime_state_transaction();
+    std::optional<RuntimeStateTransaction> local_transaction;
     if(transaction)transaction->validate_storage();
-    else if(qualification==HostHydroQualification::NativeRzRollback) {
-        local_transaction.emplace(runtime,stage_context,*hydro);
+    else if(qualification==RuntimeStateQualification::NativeRzRollback) {
+        // This existing standalone profile remains Host-only after the owner rename.
+        if(runtime.backend()||stage_context.side!=state::ExecutionSide::Host)
+            throw std::logic_error("Standalone NativeRzRollback requires its actual Host owner");
+        local_transaction.emplace(runtime,stage_context,hydro);
         transaction=&*local_transaction;
     }
     auto& amr_ctrl = runtime.control();

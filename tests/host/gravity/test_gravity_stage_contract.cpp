@@ -396,7 +396,7 @@ void run_case(int axis,double radial_lower,bool mixed,bool periodic) {
     const auto rows=Physical::Gravity::gravity_reflux_rows(binding,op,topology);
     const auto register_before=control.flux_register.snapshot_host();
     require(control.flux_register.host_snapshot_matches(register_before),"builder changed actual register arena");
-    const auto ledger_before=owner.runtime->stage_context().ledger.snapshot_host();
+    const auto ledger_before=owner.runtime->stage_context().ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     require(rows.potential.offsets.size()==rows.identity.size()+1&&rows.boundary.offsets.size()==rows.identity.size()+1,
         "reflux rows lost independent sparse row alignment");
     if(!mixed) {require(rows.identity.empty()&&topology.routes.empty(),"uniform actual Runtime fabricated CF rows");return;}
@@ -528,7 +528,7 @@ void run_case(int axis,double radial_lower,bool mixed,bool periodic) {
     grid.dyadic_identity.root_upper[0]=std::nextafter(provenance.root_upper[0],std::numeric_limits<double>::infinity());
     refused([&]{return Physical::Gravity::gravity_reflux_rows(binding,op,topology);},control.flux_register,no_registration);
     grid.dyadic_identity=provenance;
-    require(owner.runtime->stage_context().ledger.host_snapshot_matches(ledger_before),"topology row checks published real fluid ledger state");
+    require(owner.runtime->stage_context().ledger.metadata_snapshot_matches(ledger_before),"topology row checks published real fluid ledger state");
 }
 void run() {
     for(int axis:{0,1})for(double radial_lower:{0.,.4})run_case(axis,radial_lower,true,false);
@@ -830,7 +830,7 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
     const Physical::Gravity::IGravityPolicy* policy,const NumericsConfig& config,double weight,void* stream,
     const boundary::HostHydroBoundaryAuthority* walls) const {
     require(control==&owner_.control&&policy==owner_.gravity.get()&&walls
-        &&owner_.runtime->active_host_hydro_transaction()&&bits(dt,owner_.step_interval),
+        &&owner_.runtime->active_runtime_state_transaction()&&bits(dt,owner_.step_interval),
         "PrivateSelf consumer lost actual Runtime/policy/transaction/wall identity");
     const auto* frame=policy->prepared_native_self();
     require(frame&&!policy->prepared_native_external(),"PrivateSelf consumer has no uniquely prepared real field frame");
@@ -949,7 +949,7 @@ void cache_refusal() {
         Owner owner(scheduler::HydroMethod::RK3,false,"rk3-cache-lease-refusal");owner.drop_cache=true;
         auto& block=owner.control.pool->GetBlock(owner.control.tree->GetActiveBlocks().front());
         const rz_runtime_witness::FieldsWitness fields(block);
-        const auto saved=driver::HostHydroTransaction::snapshot_owner(*owner.runtime,*owner.context);
+        const auto saved=driver::RuntimeStateTransaction::snapshot_owner(*owner.runtime,*owner.context);
         bool refused=false;try{owner.advance();}catch(const std::logic_error& error) {
             refused=std::string(error.what())=="PRIVATE_SELF_REAL_CACHE_LEASE_REFUSED";if(!refused)throw;
         }
@@ -957,8 +957,8 @@ void cache_refusal() {
         require(refused&&owner.observer->cache_fault_seen&&owner.execution->gathers==1&&lease
             &&lease->fingerprint>0&&lease->epoch==owner.runtime->handles().front().epoch
             &&!owner.control.FluxTopologyPlanLease()
-            &&driver::HostHydroTransaction::owner_matches(*owner.runtime,*owner.context,saved)
-            &&!owner.runtime->active_host_hydro_transaction()&&!owner.gravity->prepared_native_self()
+            &&driver::RuntimeStateTransaction::owner_matches(*owner.runtime,*owner.context,saved)
+            &&!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self()
             &&bits(owner.counters->t_current,.375)&&owner.counters->step_count==1,
             "PrivateSelf dropped actual cache lease did not preserve owner/field rollback or resurrected cache");
         owner.stage->flush_committed_diagnostics();journal_rows(owner,0);
@@ -995,13 +995,13 @@ void run() {
         Owner owner(scheduler::HydroMethod::RK3,false,"rk3-dt-refusal");owner.wrong_dt=true;
         auto& block=owner.control.pool->GetBlock(owner.control.tree->GetActiveBlocks().front());
         const rz_runtime_witness::FieldsWitness fields(block);
-        const auto saved=driver::HostHydroTransaction::snapshot_owner(*owner.runtime,*owner.context);
+        const auto saved=driver::RuntimeStateTransaction::snapshot_owner(*owner.runtime,*owner.context);
         bool refused=false;try{owner.advance();}catch(const std::logic_error& error) {
             refused=std::string(error.what())=="PRIVATE_SELF_REAL_DT_CLAIM_REFUSED";if(!refused)throw;
         }
         fields.matches(block);require(refused&&owner.observer->dt_fault_seen&&owner.execution->gathers==1
-            &&driver::HostHydroTransaction::owner_matches(*owner.runtime,*owner.context,saved)
-            &&!owner.runtime->active_host_hydro_transaction()&&!owner.gravity->prepared_native_self()
+            &&driver::RuntimeStateTransaction::owner_matches(*owner.runtime,*owner.context,saved)
+            &&!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self()
             &&bits(owner.counters->t_current,.375)&&owner.counters->step_count==1,
             "PrivateSelf actual dt rejection did not restore fields/leases/ledger/flux/clock/BC/source owners");
         owner.stage->flush_committed_diagnostics();journal_rows(owner,0);

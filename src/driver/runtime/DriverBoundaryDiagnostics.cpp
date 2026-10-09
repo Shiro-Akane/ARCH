@@ -163,7 +163,7 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
 /** Attach actual surface accounting: native RZ always observes built-in faces;
  * ordinary cases retain the existing selected-callback activation condition. */
 void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& context) {
-    if(host_hydro_transaction_)throw std::logic_error("Boundary accounting must bind before Host Hydro transaction");
+    if(runtime_state_transaction_)throw std::logic_error("Boundary accounting must bind before Host Hydro transaction");
     const auto* selected=boundary::CurrentUserBoundaries();
     const bool native_rz=geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
     if (!native_rz && (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity))) return;

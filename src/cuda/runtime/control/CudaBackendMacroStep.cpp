@@ -406,4 +406,114 @@ CudaBackend::begin_macro_state_transaction(
     return transaction;
 }
 
+/** Prepare physical controls capacity before the original resident savepoint.
+ * Workflow:
+ * 1. Authenticate ALL unique Current leases of the complete committed domain;
+ *    reject staged topology or an active macro before any actual device work.
+ * 2. Check actual grid/species/counts, all three physical states, the complete
+ *    logical-slot permutation and every non-null original control binding.
+ * 3. If any unbound plane needs growth, join this real owner stream once and
+ *    reserve its requested capacity. Retain null bindings and unread capacity.
+ * 4. Leave live values/pointers, state fields and all publication metadata intact.
+ *
+ * The BC owner supplies (4+N)*N_face counts from the original physical-face
+ * selection. This service checks shape, not physical policy or callback data;
+ * each later stage still evaluates and uploads its own actual producer values.
+ */
+void CudaBackend::prepare_boundary_control_capacity(
+    std::span<const backend::BackendStateAccess> currents,
+    std::span<const std::array<std::size_t,6>> face_counts) {
+    impl_->macro_state.require_idle();
+    if(currents.empty()||currents.size()!=face_counts.size()
+        ||impl_->store.has_staged_transaction())
+        throw std::invalid_argument("Boundary capacity requires actual Current domain/counts without staged topology");
+    validate_hydro_batch_accesses(currents);
+    const auto committed=impl_->store.active_entries().size();
+    if(currents.size()!=committed||impl_->active_resources.size()!=committed)
+        throw std::invalid_argument("Boundary capacity requires the complete committed Current domain");
+    struct CapacityRequest {
+        CudaBlockRuntime* block;
+        std::array<std::size_t,6> counts;
+    };
+    std::vector<CapacityRequest> requests;
+    requests.reserve(currents.size());
+    bool grows=false;
+    /** Compare allocation identity only; control/capture bindings are separate. */
+    const auto same_allocation=[](DeviceStateView a,DeviceStateView b) {
+        return a.rho==b.rho&&a.mom_u==b.mom_u&&a.mom_v==b.mom_v&&a.mom_w==b.mom_w
+            &&a.eng==b.eng&&a.enuc_rate==b.enuc_rate&&a.mass_fractions==b.mass_fractions
+            &&a.total_size==b.total_size&&a.n_species==b.n_species;
+    };
+    for(std::size_t index=0;index<currents.size();++index) {
+        auto& block=impl_->require_block(currents[index]);
+        const auto current=block.require_access(currents[index]);
+        if(!valid_hydro_grid(block.grid)||!valid_hydro_view(current)
+            ||current.total_size!=block.grid.total_size
+            ||current.n_species!=impl_->species_count)
+            throw std::logic_error("Boundary capacity requires actual complete grid/species storage");
+        const auto& counts=face_counts[index];
+        std::array<std::size_t,6> expected{};
+        const std::size_t fields=4+static_cast<std::size_t>(current.n_species);
+        for(int face=0;face<6;++face) {
+            if(face/2<block.grid.dim) {
+                const std::size_t cells=macro_control_elements(block,face)/fields;
+                if(!cells||cells>std::numeric_limits<std::size_t>::max()/fields)
+                    throw std::overflow_error("Boundary control capacity is not representable");
+                expected[face]=cells*fields;
+            }
+            if(counts[face]&&counts[face]!=expected[face])
+                throw std::invalid_argument("Boundary capacity count disagrees with the actual active face shape");
+        }
+        std::array<DeviceStateView,3> physical{};
+        for(std::size_t owner=0;owner<physical.size();++owner) {
+            physical[owner]=block.state_storage[owner].view();
+            if(!valid_hydro_view(physical[owner])
+                ||physical[owner].total_size!=block.grid.total_size
+                ||physical[owner].n_species!=current.n_species)
+                throw std::logic_error("Boundary capacity lost a physical state owner");
+        }
+        std::array<bool,3> seen{};
+        std::array<std::array<bool,6>,3> bound{};
+        for(const auto& logical:block.slots) {
+            std::size_t owner=physical.size();
+            for(std::size_t candidate=0;candidate<physical.size();++candidate)
+                if(same_allocation(logical,physical[candidate]))owner=candidate;
+            if(owner==physical.size()||seen[owner])
+                throw std::logic_error("Boundary capacity logical slots are not actual physical-owner permutation");
+            seen[owner]=true;
+            for(int face=0;face<6;++face) {
+                const auto* pointer=logical.diffusion_boundary.faces[face];
+                if(!pointer)continue;
+                const auto& allocation=block.user_boundary_controls[owner][face];
+                if(!expected[face]||pointer!=allocation.get()||allocation.size()<expected[face])
+                    throw std::logic_error("Boundary capacity found an invalid original control binding");
+                bound[owner][face]=true;
+            }
+        }
+        for(std::size_t owner=0;owner<physical.size();++owner)for(int face=0;face<6;++face) {
+            const auto& allocation=block.user_boundary_controls[owner][face];
+            if(counts[face]>allocation.size()) {
+                if(bound[owner][face])
+                    throw std::logic_error("Boundary capacity cannot replace a bound control allocation");
+                grows=true;
+            }
+        }
+        requests.push_back({&block,counts});
+    }
+    // Every possible failure from input/layout/frame checks precedes the first
+    // device selection/join/allocation, including a malformed late domain row.
+    // Empty shapes or sufficient capacity keep repeated calls metadata-only.
+    if(!grows)return;
+    impl_->select_device();
+    impl_->checked_quiesce("prepare physical boundary control capacity");
+    for(const auto& request:requests)
+        for(auto& physical:request.block->user_boundary_controls)
+            for(int face=0;face<6;++face)
+                if(request.counts[face]>physical[face].size())
+                    physical[face].reserve(request.counts[face]);
+    // reserve grows only previously unbound capacity. No slot view is rebound,
+    // no old valid plane is replaced and no newly allocated byte is consumed.
+}
+
+
 } // namespace arch::cuda

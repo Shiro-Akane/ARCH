@@ -83,7 +83,7 @@ static void native_rkl_preflight_before_write(
         const auto& block=control.pool->GetBlock(id);
         before.push_back({block.fluid_state,block.state_next,block.state_scratch});
     }
-    const auto ledger_before=context.ledger.snapshot_host();
+    const auto ledger_before=context.ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     const auto flux_before=control.flux_register.snapshot_host();
     const auto boundary_before=runtime.boundaries().snapshot_stage_context();
     const auto same_state=[](const FluidState& state,const FluidState& saved) {
@@ -120,7 +120,7 @@ static void native_rkl_preflight_before_write(
             rejected=std::string(error.what()).find(expected)!=std::string::npos;
         }
         require(rejected,"Native RKL owner did not reject at its pre-write preflight");
-        require(context.ledger.host_snapshot_matches(ledger_before),
+        require(context.ledger.metadata_snapshot_matches(ledger_before),
             "Native RKL preflight rejection changed publication ledger");
         require(control.flux_register.host_snapshot_matches(flux_before),
             "Native RKL preflight rejection changed actual flux arena/content/species");
@@ -186,13 +186,13 @@ static void real_native_eos_boundary_gate() {
     require(eos.pressure_calls>0,"Actual native initialization did not call real IdealGas");
     auto context=runtime.stage_context();
     const auto version=context.ledger.inspect({runtime.handles().front(),Slot::Current}).interior.version;
-    const auto saved=context.ledger.snapshot_host();
+    const auto saved=context.ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     const auto stage_snapshot=boundary.snapshot_stage_context();
     const auto rejects_before_eos=[&](const auto& action,const char* message) {
         eos.pressure_calls=0;bool rejected=false;
         try {action();}catch(const std::logic_error&) {rejected=true;}
         require(rejected&&eos.pressure_calls==0,message);
-        require(context.ledger.host_snapshot_matches(saved),"Rejected native gate changed publication/ghost ledger");
+        require(context.ledger.metadata_snapshot_matches(saved),"Rejected native gate changed publication/ghost ledger");
     };
     context.side=state::ExecutionSide::Device;
     rejects_before_eos([&]{context.post_boundary_acceptance(context,Slot::Current,version);},
@@ -212,11 +212,11 @@ static void real_native_eos_boundary_gate() {
         foreign_ledger.require_readable({handle,Slot::Current},
             {state::ExecutionSide::Host,version,true,true});
     }
-    const auto foreign_before=foreign_ledger.snapshot_host();
+    const auto foreign_before=foreign_ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     scheduler::StageExecutionContext foreign{state::ExecutionSide::Host,foreign_ledger,context.clock};
     rejects_before_eos([&]{context.post_boundary_acceptance(foreign,Slot::Current,version);},
         "Native gate accepted foreign actual ledger");
-    require(foreign_ledger.host_snapshot_matches(foreign_before),
+    require(foreign_ledger.metadata_snapshot_matches(foreign_before),
         "Native gate rejection changed otherwise-valid foreign ledger");
     boundary.configure_stage(.125,arch::boundary::BoundaryPurpose::Diffusion);
     rejects_before_eos([&]{context.post_boundary_acceptance(context,Slot::Current,version);},
@@ -232,10 +232,10 @@ static void real_native_eos_boundary_gate() {
     // the earlier block. This is a lease-order witness, not physical error data.
     const std::array<amr::BlockHandle,1> late{runtime.handles().back()};
     (void)scheduler::publish_completed_interior(context,late,Slot::Current);
-    const auto divergent=context.ledger.snapshot_host();
+    const auto divergent=context.ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     eos.pressure_calls=0;bool version_rejected=false;
     try {runtime.ensure_fluid_ghosts();}catch(const std::logic_error&) {version_rejected=true;}
-    require(version_rejected&&eos.pressure_calls==0&&context.ledger.host_snapshot_matches(divergent),
+    require(version_rejected&&eos.pressure_calls==0&&context.ledger.metadata_snapshot_matches(divergent),
         "Whole-domain native boundary did not reject late unreadable version before EOS/publication");
 
     // Real IdealGas can reject a positive finite thermal state when its actual
@@ -313,11 +313,11 @@ static void real_native_current_boundary_idempotence() {
      */
     const auto repeat_without_publication=[&](ObservedIdealGas& selected) {
         const auto before=fields_snapshot();
-        const auto owner=driver::HostHydroTransaction::snapshot_owner(runtime,context);
+        const auto owner=driver::RuntimeStateTransaction::snapshot_owner(runtime,context);
         selected.pressure_calls=0;runtime.ensure_fluid_ghosts(Slot::Current);
         require(selected.pressure_calls>0,"Current boundary reuse skipped genuine IdealGas acceptance");
         fields_match(before);
-        require(driver::HostHydroTransaction::owner_matches(runtime,context,owner),
+        require(driver::RuntimeStateTransaction::owner_matches(runtime,context,owner),
             "Repeated native Current completion changed accepted owners");
     };
     runtime.ensure_fluid_ghosts(Slot::Current);
@@ -389,7 +389,7 @@ static void real_native_current_boundary_idempotence() {
     auto old_context=runtime.stage_context();
     const auto rebind_boundary=boundary.snapshot_stage_context();
     const auto old_version=old_context.ledger.inspect({runtime.handles().front(),Slot::Current}).interior.version;
-    const auto rebind_ledger=old_context.ledger.snapshot_host();
+    const auto rebind_ledger=old_context.ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     const auto rebind_token=old_context.clock.last_token();
     runtime.bind_native_rz_eos(rebound);eos.pressure_calls=0;rebound.pressure_calls=0;
     require(boundary.stage_context_matches(rebind_boundary),"Runtime-only EOS rebind changed the independent BC frame");
@@ -399,7 +399,7 @@ static void real_native_current_boundary_idempotence() {
         stale_rejected=std::string(error.what()).find("Native RZ EOS boundary context/owner changed")!=std::string::npos;
     }
     require(stale_rejected&&eos.pressure_calls==0&&rebound.pressure_calls==0
-        &&old_context.ledger.host_snapshot_matches(rebind_ledger)
+        &&old_context.ledger.metadata_snapshot_matches(rebind_ledger)
         &&old_context.clock.last_token()==rebind_token,
         "Retained native callback accepted its retired actual EOS borrower");
     boundary.bind(rebound,species);runtime.ensure_fluid_ghosts(Slot::Current);
@@ -412,7 +412,7 @@ static void real_native_current_boundary_idempotence() {
     auto same_owner_context=runtime.stage_context();
     const auto same_owner_version=same_owner_context.ledger.inspect(
         {runtime.handles().front(),Slot::Current}).interior.version;
-    const auto same_owner_ledger=same_owner_context.ledger.snapshot_host();
+    const auto same_owner_ledger=same_owner_context.ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     const auto same_owner_token=same_owner_context.clock.last_token();
     runtime.bind_native_rz_eos(rebound);rebound.pressure_calls=0;
     bool same_owner_stale=false;
@@ -421,7 +421,7 @@ static void real_native_current_boundary_idempotence() {
         same_owner_stale=std::string(error.what()).find("Native RZ EOS boundary context/owner changed")!=std::string::npos;
     }
     require(same_owner_stale&&rebound.pressure_calls==0
-        &&same_owner_context.ledger.host_snapshot_matches(same_owner_ledger)
+        &&same_owner_context.ledger.metadata_snapshot_matches(same_owner_ledger)
         &&same_owner_context.clock.last_token()==same_owner_token,
         "Same-object EOS rebind revived a retired acceptance callback");
     runtime.ensure_fluid_ghosts(Slot::Current);
@@ -438,7 +438,7 @@ static void real_native_current_boundary_idempotence() {
     const int ghost=last.grid.GetIndex(last.grid.Is()+2,last.grid.Je(),0);
     const double saved_energy=last.fluid_state.eng[ghost];last.fluid_state.eng[ghost]=-1.;
     const auto fault_fields=fields_snapshot();
-    const auto fault_owner=driver::HostHydroTransaction::snapshot_owner(runtime,context);
+    const auto fault_owner=driver::RuntimeStateTransaction::snapshot_owner(runtime,context);
     rebound.pressure_calls=0;bool thermal_rejected=false;
     try {runtime.ensure_fluid_ghosts(Slot::Current);}
     catch(const driver::NativeBoundaryAcceptanceError& error) {
@@ -449,7 +449,7 @@ static void real_native_current_boundary_idempotence() {
     require(thermal_rejected&&rebound.pressure_calls>0,
         "Repeated Current completion concealed an invalid completed ghost or skipped real EOS");
     fields_match(fault_fields);
-    require(driver::HostHydroTransaction::owner_matches(runtime,context,fault_owner),
+    require(driver::RuntimeStateTransaction::owner_matches(runtime,context,fault_owner),
         "Rejected reused native ghost changed ledger/clock/BC/accepted owners");
     last.fluid_state.eng[ghost]=saved_energy;
     repeat_without_publication(rebound);
@@ -626,7 +626,7 @@ struct Fixture {
     }
     void diffuse(double interval) {
         ++diffusion_calls;
-        require(runtime->active_host_hydro_transaction()!=nullptr,
+        require(runtime->active_runtime_state_transaction()!=nullptr,
             "angular actual diffusion did not borrow its outer owner");
         require(DiffFunction::compute_stages(DiffFunction::RKLOrder::First,interval,dt_fe,
             config.physics.diffusion.diff_cfl,config.physics.diffusion.max_stages)==expected_stages,
@@ -643,7 +643,7 @@ void rejected_macro() {
     // Exact Legendre recurrence keeps stages 1/2 positive and stage 3 negative.
     Fixture f;constexpr double half_dt=1./5.;f.bind_frame(half_dt,3);
     const FieldsWitness fields_before(f.block());
-    const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+    const auto owner_before=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
     const auto identity_before=f.block().grid.dyadic_identity;
     const auto old_time=f.controller->t_current,old_dt=f.controller->dt_old,old_burn=f.burn_advice;
     const int old_step=f.controller->step_count;
@@ -688,7 +688,7 @@ void rejected_macro() {
     near(thermal,e0-3009439./177020928.,"negative angular independent recovered thermal reference failed");
     require(thermal<0.,"negative angular finite-step reference lost its physical sign");
     fields_before.matches(f.block());
-    require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before)
+    require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner_before)
         &&GridMetrics::equal_identity(f.block().grid.dyadic_identity,identity_before),
         "angular failed macro did not restore ledger/register/clock/BC/budgets/handles/root owners");
     require(bits(f.controller->t_current,old_time)&&f.controller->step_count==old_step
@@ -707,7 +707,7 @@ void accepted_half() {
     for(int s=0;s<3;++s)for(int field=0;field<7;++field)original[s][field]=(before_slots[s]->*fields[field]).data();
     scheduler::ScopedStageBinding binding(*f.context,f.runtime->handles());
     {
-        driver::HostHydroTransaction transaction(*f.runtime,*f.context,*f.hydro);
+        driver::RuntimeStateTransaction transaction(*f.runtime,*f.context,f.hydro.get());
         f.context->configure_boundary_context(old_time,boundary::BoundaryPurpose::Diffusion);
         f.diffuse(interval);
         f.context->configure_boundary_context(old_time+interval,boundary::BoundaryPurpose::Hydro);
@@ -749,7 +749,7 @@ void accepted_half() {
     require(GridMetrics::equal_identity(g.dyadic_identity,identity)
         &&bits(f.controller->t_current,old_time)&&f.controller->step_count==old_step
         &&bits(f.controller->dt_old,old_dt)&&bits(f.burn_advice,old_burn)
-        &&!f.runtime->active_host_hydro_transaction(),"positive angular half altered root/time/advice or retained an owner");
+        &&!f.runtime->active_runtime_state_transaction(),"positive angular half altered root/time/advice or retained an owner");
     std::cout<<std::setprecision(17)<<"RZ_ANGULAR_RKL1_ACCEPTED_HALF dt="<<interval
         <<" actual_fe="<<f.dt_fe<<" thermal="<<thermal<<" mean_energy="<<actual.eng
         <<" real_completed_eos=1 macro_acceptance=0\n";
@@ -1260,7 +1260,7 @@ int main(int argc,char** argv) {
     auto& bad=control.pool->GetBlock(active.front());
     const int bad_cell=bad.grid.GetIndex(bad.grid.Is(),bad.grid.Js(),0);
     const double saved=bad.fluid_state.rho[bad_cell];
-    const auto density_failure_ledger=runtime.stage_context().ledger.snapshot_host();
+    const auto density_failure_ledger=runtime.stage_context().ledger.snapshot_metadata(arch::state::ExecutionSide::Host);
     bad.fluid_state.rho[bad_cell]=std::numeric_limits<double>::quiet_NaN();
     bool invalid_density=false;
     try{(void)arch::driver::calculate_timestep_candidates(runtime,workspace,eos,nullptr);}
@@ -1276,7 +1276,7 @@ int main(int argc,char** argv) {
         if(!invalid_density)throw;
     }
     require(invalid_density,"Driver ignored invalid active CFL density");
-    require(runtime.stage_context().ledger.host_snapshot_matches(density_failure_ledger),
+    require(runtime.stage_context().ledger.metadata_snapshot_matches(density_failure_ledger),
         "Malformed native CFL density published a boundary/version prefix");
     bad.fluid_state.rho[bad_cell]=saved;
     const auto current_version=runtime.stage_context().ledger.inspect(

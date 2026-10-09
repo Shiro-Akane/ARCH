@@ -105,7 +105,7 @@ struct DiffusionActivityTotals {
     double process_start_time=0.;
     int process_start_step=0;
 };
-class HostHydroTransaction;
+class RuntimeStateTransaction;
 class DriverRuntime {
 public:
     DriverRuntime(amr::AMRControl&, BCHandler&, const SimConfig&,
@@ -122,7 +122,7 @@ public:
     template<class Eos> void bind_native_rz_eos(const Eos& eos) {
         if (geometry_semantics_ != GridMetrics::GeometrySemantics::AxisymmetricRz)
             return;
-        if (host_hydro_transaction_)
+        if (runtime_state_transaction_)
             throw std::logic_error("Active Host Hydro owner excludes EOS rebinding");
         const int species = native_rz_species_count();
         const auto bounds = native_rz_eos_bounds();
@@ -182,9 +182,10 @@ public:
     const SpeciesManager& species() const { return specs; }
     GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return geometry_semantics_; }
     state::RepairBudget& repair_budget();
-    /** Borrow the one internal Host/native-RZ macro owner; never begin a nested scope. */
-    HostHydroTransaction* active_host_hydro_transaction() const noexcept {
-        return host_hydro_transaction_;
+    /** Borrow the one internal Runtime state owner; never begin a nested scope.
+     * Its existence protects storage/metadata, not Native scientific capability. */
+    RuntimeStateTransaction* active_runtime_state_transaction() const noexcept {
+        return runtime_state_transaction_;
     }
     /** Borrow only the current internal retry attempt, never a new transaction. */
     NativeMacroRetryAttempt* native_macro_retry_attempt() const noexcept {return native_macro_retry_attempt_;}
@@ -215,7 +216,7 @@ public:
         diffusion_activity_totals_=value;
     }
 private:
-    friend class HostHydroTransaction;
+    friend class RuntimeStateTransaction;
     friend class NativeMacroRetryAttempt;
     bool diffusion_activity_enabled_=false;
     std::optional<backend::DiffusionActivityReceipt> diffusion_activity_half_;
@@ -227,8 +228,8 @@ private:
     // GravityStage borrows the actual EOS-binding witness and exact Current/
     // Hydro owners; friendship does not grant Native scientific capability.
     friend class GravityStage;
-    // Non-owning exact token for one explicit internal Host/RZ transaction.
-    HostHydroTransaction* host_hydro_transaction_=nullptr;
+    // Non-owning exact identity for one explicit Runtime state transaction.
+    RuntimeStateTransaction* runtime_state_transaction_=nullptr;
     std::vector<double>* tentative_hydro_boundary_budget_=nullptr;
     std::vector<double>* tentative_diffusion_boundary_budget_=nullptr;
     std::vector<topology::TopologyObservation> observe_blocks(std::span<const int>) const;

@@ -83,7 +83,7 @@ struct OwnerWitness {
     arch::driver::DriverRuntime& runtime;
     SimulationController& counters;
     std::vector<rz_runtime_witness::FieldsWitness> fields;
-    arch::state::StateResidencyLedger::HostSnapshot ledger;
+    arch::state::StateResidencyLedger::MetadataSnapshot ledger;
     BCHandler::StageContextSnapshot boundary;
     const std::uint64_t token,version;
     const double time,dt;
@@ -91,7 +91,7 @@ struct OwnerWitness {
     const arch::state::RepairBudget repairs;
     const std::vector<double> hydro,diffusion;
     OwnerWitness(arch::driver::DriverRuntime& owner,SimulationController& clock)
-        :runtime(owner),counters(clock),ledger(owner.stage_context().ledger.snapshot_host()),
+        :runtime(owner),counters(clock),ledger(owner.stage_context().ledger.snapshot_metadata(arch::state::ExecutionSide::Host)),
          boundary(owner.boundaries().snapshot_stage_context()),
          token(owner.stage_context().clock.last_token()),version(owner.stage_context().clock.last_version()),
          time(clock.t_current),dt(clock.dt_old),step(clock.step_count),
@@ -105,7 +105,7 @@ struct OwnerWitness {
         require(active.size()==fields.size(),"source inspection changed the actual active domain");
         for(std::size_t p=0;p<fields.size();++p)fields[p].matches(runtime.control().pool->GetBlock(active[p]));
         auto context=runtime.stage_context();
-        require(context.ledger.host_snapshot_matches(ledger)
+        require(context.ledger.metadata_snapshot_matches(ledger)
             &&context.clock.last_token()==token&&context.clock.last_version()==version,
             "source inspection changed actual fluid ledger or scheduler clock");
         require(runtime.boundaries().stage_context_matches(boundary)

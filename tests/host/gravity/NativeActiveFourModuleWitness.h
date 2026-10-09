@@ -315,7 +315,7 @@ public:
      * No counters, accumulated accounting values or gravity journal are reset.
      */
     void bind_context_at_current() {
-        require(!context&&!runtime->active_host_hydro_transaction()&&!gravity->prepared_native_self(),
+        require(!context&&!runtime->active_runtime_state_transaction()&&!gravity->prepared_native_self(),
             "Context rebinding requires a quiescent actual Runtime");
         context.emplace(runtime->stage_context());context->step_start_time=controller->t_current;
         context->step_dt=macro_dt;
@@ -454,7 +454,7 @@ public:
         const auto begin=context->rkl_flux_capture_begin,accept=context->rkl_flux_capture_accept;
         require(bool(begin)&&bool(accept),"Native Runtime did not bind actual RKL accounting");
         context->rkl_flux_capture_begin=[this,begin](const scheduler::RklStageDescriptor& stage,const scheduler::RklPlan& p) {
-            require(active_diffusion>=0&&active_diffusion<2&&runtime->active_host_hydro_transaction()
+            require(active_diffusion>=0&&active_diffusion<2&&runtime->active_runtime_state_transaction()
                 &&p.method==scheduler::RklMethod::RKL2&&p.second_order&&p.stages.size()>=2,
                 "Actual RKL observer lost its split/method/transaction");
             auto& r=diffusions[active_diffusion];require(stage.stage==++r.rkl_begin,"Actual RKL stages were skipped/repeated");
@@ -481,7 +481,7 @@ public:
         if(event.kind!=Physical::Gravity::NativeSelfStageObservation::Kind::AxisAfter)return;
         require(event.grid&&event.input&&event.delta&&event.flux&&event.descriptor&&event.source
             &&event.axis>=0&&event.axis<2&&event.block_id==o.control.tree->GetActiveBlocks().front()
-            &&o.runtime->active_host_hydro_transaction()&&bits(event.dt,macro_dt)
+            &&o.runtime->active_runtime_state_transaction()&&bits(event.dt,macro_dt)
             &&event.source_generation>0&&event.field_generation>0,
             "Actual four-module source work lost its real stage/field/input owner");
         const auto plan=scheduler::make_hydro_plan(scheduler::HydroMethod::RK2);
@@ -532,7 +532,7 @@ public:
         driver::execute_driver_macro_step(*runtime,*context,hydro.get(),true,
             [&](driver::BurnHalf which,double half,state::CompletionToken token) {
                 const int index=which==driver::BurnHalf::First?0:1;auto& record=burns[index];
-                require(bits(half,.5*macro_dt)&&++record.calls==1&&runtime->active_host_hydro_transaction(),
+                require(bits(half,.5*macro_dt)&&++record.calls==1&&runtime->active_runtime_state_transaction(),
                     "Real burn half lost its original interval/transaction");
                 const auto before=freeze_active();
                 const auto completed=driver::execute_burn_half(*runtime,workspace,*eos,burn,which,half,burn_advice,token);
@@ -595,7 +595,7 @@ public:
             [&](double full) {require(++hydro_calls==1&&bits(full,macro_dt),"Actual Hydro was skipped/repeated");
                 driver::advance_hydro(*runtime,workspace,*context,&plan,full,&SolverRK2::solve<BCHandler>,gravity.get(),hydro.get());},
             [](driver::CpuStage,auto&& call) {call();});
-        require(!runtime->active_host_hydro_transaction()&&!gravity->prepared_native_self()
+        require(!runtime->active_runtime_state_transaction()&&!gravity->prepared_native_self()
             &&bits(controller->t_current,dynamic?entry_time:start.time)&&controller->step_count==(dynamic?entry_step:start.step),
             "Actual macro left a tentative source/transaction or prematurely advanced time");
         if(dynamic)complete_dynamic_sources();

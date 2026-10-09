@@ -13,12 +13,17 @@
  * 7. Check completed native logical cells through the shared EOS acceptance
  *    leaf; return compact diagnostics without field transfer or state writes.
  *
+ * Epoch control capacity preparation authenticates the complete actual store,
+ * preserves every live plane and reserves only unbound three-owner capacity.
+ * It never evaluates callbacks/EOS or changes slot control bindings.
+ *
  * Observer planes are sized by the Host-provided surface layout and bound to
  * all three stage slots; no state values cross this service. No boundary
  * formula is duplicated here. The reflector returns provisional surfaces only;
  * Runtime owns all layer joins, final scattering and completed acceptance.
  */
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -523,6 +528,7 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
     impl_->runtime_counters.bytes_h2d += destinations.size() * sizeof(int) + packed.size() * sizeof(double) + bytes;
     ++impl_->runtime_counters.kernel_count;
 }
+
 
 void CudaBackend::configure_boundary_flux_capture(
     std::span<const backend::BoundaryFluxPlanes> layout, double weight,

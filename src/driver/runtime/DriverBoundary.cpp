@@ -156,7 +156,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
     // other slots/purposes and all Existing geometry retain their original path.
     const auto boundary = bc_handler.snapshot_stage_context();
     const bool native_current = context && slot == StateSlot::Current
-        && !host_hydro_transaction_
+        && !runtime_state_transaction_
         && !native_macro_retry_attempt_
         && geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz
         && bc_handler.native_point_eos_bound()
@@ -200,13 +200,13 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
                 bc_handler.require_hydro_input_frame(stamp.frames[index],
                     block.fluid_state, block.grid, boundary.time());
             }
-            const auto ledger_before = residency_ledger->snapshot_host();
+            const auto ledger_before = residency_ledger->snapshot_metadata(arch::state::ExecutionSide::Host);
             const auto token_before = scheduler_clock.last_token();
             const auto version_before = scheduler_clock.last_version();
             // Evaluate every actual completed cell using the freshly bound real
             // EOS callback. A corrupt ghost or rebind remains a hard failure.
             context->post_boundary_acceptance(*context, slot, version);
-            if (!residency_ledger->host_snapshot_matches(ledger_before)
+            if (!residency_ledger->metadata_snapshot_matches(ledger_before)
                 || scheduler_clock.last_token() != token_before
                 || scheduler_clock.last_version() != version_before
                 || !native_rz_eos_binding_matches(stamp.eos)
@@ -280,6 +280,8 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 /** Download accepted resident state only when host output needs it. */
 void DriverRuntime::materialize_current_for_host()
 {
+    if(runtime_state_transaction_&&compute_backend)
+        throw std::logic_error("Active resident macro excludes Host materialization");
     ensure_fluid_ghosts(StateSlot::Current);
     if (!compute_backend) return;
     const auto& active = amr_ctrl.tree->GetActiveBlocks();

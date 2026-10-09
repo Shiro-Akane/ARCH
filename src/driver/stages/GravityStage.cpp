@@ -26,7 +26,7 @@
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "driver/runtime/DriverRuntime.h"
-#include "driver/runtime/HostHydroTransaction.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "numerics/multigrid/CompositeMultigrid.h"
 #include "physics/gravity/GravityExecution.h"
 #include "physics/gravity/GravitySolveTypes.h"
@@ -79,7 +79,7 @@ struct GravityStage::RuntimeSourceLease {
     std::optional<scheduler::StageDescriptor> descriptor;
     std::optional<scheduler::HydroMethod> method;
     double step_start=0.,step_dt=0.;
-    HostHydroTransaction* transaction_owner=nullptr;
+    RuntimeStateTransaction* transaction_owner=nullptr;
     const amr::MemoryPool* pool;const amr::AmrTree* tree;
     const Physical::Gravity::GravityDensityView* request_blocks_address;
     const Physical::Gravity::GravityInputIdentity* request_identity_address;
@@ -177,7 +177,7 @@ struct GravityStage::RuntimeSourceLease {
             const auto& binding=scheduler::current_stage_binding();
             if(!stage.prepared_)throw std::logic_error("Runtime Hydro source lease has no prepared descriptor");
             stage_binding=&binding;stage_context=&binding.context;
-            transaction_owner=stage.runtime_.active_host_hydro_transaction();
+            transaction_owner=stage.runtime_.active_runtime_state_transaction();
             bound_handles=binding.handles.data();bound_handle_count=binding.handles.size();
             descriptor=stage.prepared_->descriptor;method=stage.prepared_->method;
             const auto selected=dispatch::parse_registered_policy<dispatch::TimeIntegratorPolicies>(
@@ -236,7 +236,7 @@ struct GravityStage::RuntimeSourceLease {
             ||!same(config.numerics.max_eint,physical_bounds[2]))
             throw std::logic_error("Runtime gravity source lease changed physical-bound bits");
         if(purpose==Physical::Gravity::GravityFieldPurpose::AcceptedCurrent) {
-            if(r.active_host_hydro_transaction()||owner.journal_active_||owner.prepared_||owner.committed_count_
+            if(r.active_runtime_state_transaction()||owner.journal_active_||owner.prepared_||owner.committed_count_
                 ||owner.policy_->prepared_native_self()||owner.policy_->prepared_native_external()
                 ||!same(r.ctrl.t_current,identity.input_time)||(!preparing&&owner.source_prepare_running_))
                 throw std::logic_error("AcceptedCurrent gravity source lease is not actually quiescent/current");
@@ -246,7 +246,7 @@ struct GravityStage::RuntimeSourceLease {
             // still requires actual TLS identity before any source work.
             if(!stage_binding)throw std::logic_error("Hydro gravity lost its borrowed stage binding");
             const auto& binding=*stage_binding;
-            auto* transaction=r.active_host_hydro_transaction();
+            auto* transaction=r.active_runtime_state_transaction();
             if(!owner.native_self()||!transaction||transaction!=transaction_owner
                 ||!owner.journal_active_||!owner.prepared_
                 ||(preparing && (&scheduler::current_stage_binding()!=stage_binding))
@@ -492,7 +492,7 @@ void GravityStage::set_native_rz_source_inspection(NativeSourceInspectionSink si
     if(source_prepare_running_)throw std::logic_error("Active source lease forbids replacing its inspection sink");
     source_inspection_completed_=false;
     if(qualification_!=Qualification::NativeRzCandidate||!gravity_||runtime_.backend()
-        ||journal_active_||prepared_||source_inspection_active_||runtime_.active_host_hydro_transaction())
+        ||journal_active_||prepared_||source_inspection_active_||runtime_.active_runtime_state_transaction())
         throw std::logic_error("Native source inspection requires a quiescent actual Native candidate stage");
     if(!sink&&payload)throw std::invalid_argument("Native source inspection payload requires its sink");
     source_inspection_sink_=sink;source_inspection_payload_=payload;
@@ -506,7 +506,7 @@ void GravityStage::set_native_rz_source_inspection(NativeSourceInspectionSink si
 void GravityStage::set_native_self_flux_observation(NativeSelfFluxObservationSink sink,void* payload) {
     if(source_prepare_running_)throw std::logic_error("Active source lease forbids replacing its flux observer");
     if(!native_self()||!gravity_||runtime_.backend()||journal_active_||prepared_||committed_count_
-        ||runtime_.active_host_hydro_transaction()||source_inspection_active_
+        ||runtime_.active_runtime_state_transaction()||source_inspection_active_
         ||source_inspection_sink_||source_inspection_payload_
         ||gravity_->native_source_inspection_sink_||gravity_->native_source_inspection_payload_
         ||gravity_->native_source_inspection_running_||policy_->prepared_native_self()
@@ -627,7 +627,7 @@ GravityStage::~GravityStage() {
 state::CompletionToken GravityStage::prepare_native_external(
     const scheduler::HydroStagePreparationRequest& request) {
     const auto& binding=scheduler::current_stage_binding();
-    auto* transaction=runtime_.active_host_hydro_transaction();
+    auto* transaction=runtime_.active_runtime_state_transaction();
     if(!journal_active_||!prepared_||!transaction||runtime_.backend()
         ||request.side!=state::ExecutionSide::Host||&request.ledger!=&binding.context.ledger
         ||&binding.context.ledger!=runtime_.residency_ledger.get()
@@ -678,7 +678,7 @@ state::CompletionToken GravityStage::prepare_native_external(
 void GravityStage::require_native_self_preparation(
     const scheduler::HydroStagePreparationRequest& request) const {
     const auto& binding=scheduler::current_stage_binding();
-    auto* transaction=runtime_.active_host_hydro_transaction();
+    auto* transaction=runtime_.active_runtime_state_transaction();
     if(!native_self()||!journal_active_||!prepared_||!gravity_||!transaction||runtime_.backend()
         ||request.side!=state::ExecutionSide::Host||&request.ledger!=&binding.context.ledger
         ||&binding.context.ledger!=runtime_.residency_ledger.get()
@@ -917,7 +917,7 @@ state::CompletionToken GravityStage::prepare(const scheduler::HydroStagePreparat
 /** Prepare gravity on the accepted current state for output and timestep use. */
 void GravityStage::prepare_current(double time, bool reset_solver_history) {
     if(source_prepare_running_)throw std::logic_error("Gravity source preparation cannot reenter Current/history");
-    if((native_candidate()||native_self())&&(runtime_.active_host_hydro_transaction()||prepared_
+    if((native_candidate()||native_self())&&(runtime_.active_runtime_state_transaction()||prepared_
         ||policy_->prepared_native_self()||policy_->prepared_native_external()
         ||!RuntimeSourceLease::same(time,runtime_.ctrl.t_current)))
         throw std::logic_error("Native Current preparation requires the actual accepted/quiescent Runtime time");
@@ -972,7 +972,7 @@ void GravityStage::accept(const scheduler::StageDescriptor& descriptor) {
     if(native_external()) {
         if(!external_frame_)throw std::logic_error("Native external source frame was not prepared");
         const auto budget=external_frame_->require_complete_consumption();
-        auto* transaction=runtime_.active_host_hydro_transaction();
+        auto* transaction=runtime_.active_runtime_state_transaction();
         if(!transaction)throw std::logic_error("Native external acceptance lost its macro owner");
         const auto& binding=scheduler::current_stage_binding();
         transaction->require_source_preparation_owner(*this,binding.context,binding.handles);
@@ -1006,7 +1006,7 @@ void GravityStage::accept(const scheduler::StageDescriptor& descriptor) {
         if(!runtime_source_lease_)throw std::logic_error("Native Self acceptance lost its issued source lease");
         runtime_source_lease_->require_domain(); // One full joined owner check, never per worker/patch.
         if(!self_frame_)throw std::logic_error("Native Self acceptance lacks its actual solved-field frame");
-        auto* transaction=runtime_.active_host_hydro_transaction();
+        auto* transaction=runtime_.active_runtime_state_transaction();
         if(!transaction)throw std::logic_error("Native Self acceptance lost its macro owner");
         const auto& binding=scheduler::current_stage_binding();
         transaction->require_source_preparation_owner(*this,binding.context,binding.handles);

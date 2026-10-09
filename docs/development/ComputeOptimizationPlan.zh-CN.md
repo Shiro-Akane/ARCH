@@ -125,13 +125,15 @@ NativeDevice下一接线任务只处理已定位的剩余消费者：immutable�
 
 | 当前任务 | 复用入口与实施边界 | 接受后解锁 |
 | --- | --- | --- |
-| Native Device 有序物理边界 | 优先对接真实 backend 存储与所选 EOS 反射候选。原 species workspace 最多五组数组且小网络下不分配，因此反射需独立分配容量有界的 `11*N` 工作区；需保留原工作区与共享反射数学。随后基于既有 BC owner，依次实现 x1 builtin → user、x2 builtin → user 不可变前缀、两次 exchange、最终轴 corner 及完成态 EOS。必须复用既有的 lease、阶段及 BC 身份，严禁另造平行权限系统。 | 经原 store 与 boundary owner 验收后，方可对接完整 Runtime；通过有限候选并不解除公共运行 guard。 |
-| O9 真实导热活动 | 原周期外边界账本无法证明内部热流。RKL 已保留输入槽，需按共享的 `final_rotation` 查回半步输入，在必需的 BC 与 EOS 完成后，以真实叶体积积分能量变化；无需全 U 快照或全域 D2H。两个半步仅存暂定收据，完整宏步成功后才累计，失败则丢弃；续算需明确 since-process-start。若启用其他输运，诊断中应称其为扩散能量活动，不能全归为导热。 | 经对应原 owner 验证通过后，冻结四模块长程预算，方可启动真实 AMR、续算及资源观测。 |
+| Native Device 有序物理边界 | 真实反射、不可变前缀、有序适配、最终轴缓存与 resident 三槽保存／恢复服务已通过原消费者。当前同一 side-aware ledger、单一 Runtime 回滚主体及实际控制容量也已通过 CPU／CUDA 原 owner。下一步接入原 Runtime 的两次 exchange、最终轴 corner 和真实完成态 EOS；缓存命中保留 EOS 验收，静止只读观察不创建全槽备份。原 lease、阶段、BC 身份与共享数学保持。 | 先验收实际 Runtime 边界／EOS及失败回滚，再接入源项和宏步；限定服务通过不解除公共数值运行 guard。 |
+| O9 真实导热活动 | 半步端点重分布与成功宏步累计诊断已通过原 Host／Device owner。复用共享 `final_rotation` 与真实叶体积，活动量不等同于净外边界通量；失败宏步丢弃暂定收据，续算按 since-process-start。若同时启用其他输运，记录扩散能量活动，不能全归为导热。 | 冻结代表性四模块分尺度收支与活动预算后，执行真实 AMR、续算及资源长时观测；服务验证不代签长轨迹。 |
 | 端点数值误差 | 已签收的核能公式不再重新推导。长双精度后处理无法恢复上游的 FP64 场、体积与积分误差。确定实际系数与端点误差界后，需报告绝对残差及核能、引力各自尺度。未取得积分误差界时必须保持未知状态，严禁仅凭气体能归一值签收弱引力功。 | 待分尺度收支与活动性完整后，方可验收代表性耦合；不得放宽原有测试标准。 |
 
 本次回查：真实后端层已通过实际存储消费者验收。受影响CPU接口编译61.074秒、原边界／引力阶段2/2（CTest37.38秒）及原架构工具owner111/111通过。CUDA沿同一冻结源码缓存完成生产依赖与原测试，含两次时间上限及夹具定点修复的总构建成本3044.675秒；原`boundary_plan_parity`通过0.469888秒，新存储夹具先因零组分步幅不符合既有传输契约失败，修为0后原`cuda_store_lifecycle`通过0.321733秒。原`64 epsilon`窗口和科学断言保持。当前真实0／2组分反射层、不可变角部前缀、实际传输计数及失败后复用通过；对应执行物的memcheck＋完整leak-check为0错误、0泄漏。Host materialization未改padding不冒称直接观察了resident padding位。无新增CTest／workflow，无内存／存储护栏停止；源码、执行物、原失败与累计成本见[存储反射层记录](../../validation/amr/results/release-closure-20261009/native-device-reflecting-layer-summary.json)。这一限定服务通过不代替完整NativeRuntime、宏步回滚或长时验收。
 
 O9 Host／Device诊断、resident保存／恢复、最终轴corner缓存及有序BC适配已通过原实际消费者。受影响CPU两个批次各2/2，原架构owner111/111；当前CUDA边界owner0.38秒、真实存储owner0.84秒通过，存储执行物memcheck＋完整leak-check为0错误、0泄漏。两路编译累计1455.344秒，包括首次时间上限、一次维护者哈希转录错误后的无任务调用及仅测试重建。原失败来自新计数断言漏计既有`counters()`自身的一个getter；修正后仍比较完整计数结构，实际内核、传输、同步、字段及原64 epsilon门槛保持。[当前服务记录](../../validation/amr/results/release-closure-20261009/native-resident-services-summary.json)保存限定身份与原失败。保存／恢复主体按功能移入CUDA control目录，原函数正文逐字保持。完整Native宏步仍需复用一份Runtime元数据／源项账本，不能由后端服务通过代签。活动诊断观测半步端点重分布，完整宏步接受后才累计；只设运行诊断开关。DPS公开恒等式与静止态契约仅签收各自解释，不授予RKL／O9算法资格；恢复Synchronized必须保护真实Host镜像，同侧写入仍降为该侧有效。下一批同一ledger、Runtime回滚主体及边界控制容量候选已独立准备：保留原Host严格规则、原独立参考比较和真实显存owner，预分配不覆盖已绑定controls、不调用用户callback或复制Current。当前运行guard、源项及长程出口仍独立验收。
+
+2026-10-10状态／容量节点：一份 side-aware 元数据账本及 `RuntimeStateTransaction` 已替代旧 Host 专用回滚类，原严格 Host 规则、实际字段／源项／时钟／BC收支恢复和释放后拒绝复用保持。CPU原四个受影响owner通过，架构111项通过；实际CUDA存储owner通过0.85秒，memcheck／完整leak-check为0错误、0泄漏。容量服务仅预留未绑定controls，已绑定指针与实际RKL消费保持。首次NVCC最终链接缺隐式身份比较符号的失败保留；纯控制编排移到既有C++宏步存储文件后，同缓存修复65.561秒、两轮累计1163.578秒通过，全局身份头与物理未改。身份、原失败及限定范围见[统一状态处理记录](../../validation/amr/results/release-closure-20261009/native-unified-runtime-summary.json)。下一节点为实际Runtime接线，完整Native数值运行、其余科学／长程／GUI／计时出口继续待验。
 
 所有限定范围不解除公共Native运行guard；已有共享数学和科学门槛不重开。本机只运行一个受保护的生产／验证任务，唯一checkout、成功raw及时处理删除。下一回查在实际消费者接受、辅助任务返回或15分钟时进行；结果只回写本表、发布出口和同一短状态，不新增任务队列。
 

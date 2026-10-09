@@ -57,7 +57,7 @@ inline void Owner::observe_dynamic_source(const Physical::Gravity::NativeSelfSta
         ||event.kind==Kind::EnergyReserved||event.kind==Kind::EnergyApplied,
         "Dynamic source observer received an unknown operation");
     require(event.grid&&event.input&&event.descriptor&&event.source&&event.axis>=0&&event.axis<2
-        &&runtime->active_host_hydro_transaction()&&bits(event.dt,context->step_dt)
+        &&runtime->active_runtime_state_transaction()&&bits(event.dt,context->step_dt)
         &&event.generation>0&&event.source_generation>0&&event.field_generation>0,
         "Dynamic source lost its real field/transaction/dt owner");
     const auto plan=scheduler::make_hydro_plan(scheduler::HydroMethod::RK2);
@@ -316,7 +316,7 @@ inline void advance_dynamic_to_m1(Owner& owner) {
     report_macro(owner,0,std::chrono::duration<double>(Clock::now()-started).count());
     const auto boundaries_after_m0=boundary_before(owner);
     const auto old_handles=owner.runtime->handles();const auto old_epoch=owner.context->ledger.active_epoch();
-    require(!owner.runtime->active_host_hydro_transaction()&&!owner.gravity->prepared_native_self(),
+    require(!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self(),
         "Dynamic regrid overlaps a real source or fluid transaction");
     owner.gravity_stage->flush_committed_diagnostics();owner.gravity_stage->invalidate();
     // A context borrows its ledger: destroy it before the true regrid replaces it.
@@ -413,7 +413,7 @@ inline void advance_dynamic_to_m1(Owner& owner) {
         &&current_boundary_after.diffusion==current_boundary_before.diffusion,
         "AcceptedCurrent diagnostic changed cumulative boundary accounting");
     require(bits(owner.controller->t_current,accepted_time)&&owner.controller->step_count==accepted_step
-        &&!owner.runtime->active_host_hydro_transaction()&&!owner.gravity->prepared_native_self(),
+        &&!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self(),
         "Current diagnostic changed time or manufactured a Hydro source transaction");
     const double gravity_dt=owner.gravity_stage->native_current_timestep();
     require(std::isfinite(gravity_dt)&&gravity_dt>0.&&macro_dt<=gravity_dt,
@@ -459,7 +459,7 @@ inline void run_amr(const std::string& table) {
 inline void prepare_continuation_current(Owner& owner) {
     const auto before=owner.freeze_active();const auto accounting=boundary_before(owner);
     const double time=owner.controller->t_current;const int step=owner.controller->step_count;
-    require(!owner.runtime->active_host_hydro_transaction()&&!owner.gravity->prepared_native_self(),
+    require(!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self(),
         "Restart Current overlaps a tentative numerical owner");
     owner.gravity_stage->prepare_current(time,true);
     const auto view=owner.gravity_stage->native_current_field();

@@ -36,7 +36,7 @@
 #include "host/gravity/RzMaterializedSourceRecord.h"
 
 #include "amr/elliptic/EllipticMeshAdapter.h"
-#include "driver/runtime/HostHydroTransaction.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/StageScheduler.h"
 #include "driver/stages/DriverStages.h"
 #include "physics/gravity/NativeSelfStage.h"
@@ -767,11 +767,11 @@ template<class Owner> void run_native_self_energy(double dt) {
     rejected=false;try{observed.stage->set_native_self_flux_observation(&native_energy_noop,&other);}catch(const std::logic_error&){rejected=true;}
     energy_require(rejected,"Source-only candidate acquired a private-Hydro observation sink");
     const rz_runtime_witness::FieldsWitness accepted(block);
-    const auto saved=driver::HostHydroTransaction::snapshot_owner(*observed.runtime,*observed.context);
+    const auto saved=driver::RuntimeStateTransaction::snapshot_owner(*observed.runtime,*observed.context);
     RzMaterializedSourceRecord record;record.capture_call(*observed.stage,[&]{observed.stage->prepare_current(tnew,false);});
     energy_require(record.source_only_checked()&&!record.cleanup_failed()&&record.callback_count()==1,"PostCurrent source callback not authenticated");
     auto post=observed.gravity->native_rz_field_inspection();accepted.matches(block);
-    energy_require(driver::HostHydroTransaction::owner_matches(*observed.runtime,*observed.context,saved)
+    energy_require(driver::RuntimeStateTransaction::owner_matches(*observed.runtime,*observed.context,saved)
         &&observed.execution->gathers==2&&observed.counters->step_count==2
         &&rz_runtime_witness::bits(observed.counters->t_current,tnew),"Actual postCurrent solve mutated accepted Runtime owners");
     rejected=false;try{observed.gravity->potential();}catch(const std::logic_error&){rejected=true;}
@@ -779,13 +779,13 @@ template<class Owner> void run_native_self_energy(double dt) {
     Owner fault(scheduler::HydroMethod::Euler,false,"energy-axis-fault");int prefix=0;
     auto& fault_block=fault.control.pool->GetBlock(fault.control.tree->GetActiveBlocks().front());
     const rz_runtime_witness::FieldsWitness before(fault_block);
-    const auto fault_owner=driver::HostHydroTransaction::snapshot_owner(*fault.runtime,*fault.context);
+    const auto fault_owner=driver::RuntimeStateTransaction::snapshot_owner(*fault.runtime,*fault.context);
     fault.stage->set_native_self_flux_observation(&native_energy_fault,&prefix);
     rejected=false;try{fault.advance();}catch(const std::logic_error& e){rejected=std::string(e.what())=="PRIVATE_SELF_ENERGY_AXIS_PREFIX_FAULT";if(!rejected)throw;}
     before.matches(fault_block);
     energy_require(rejected&&prefix==1&&fault.execution->gathers==1
-        &&driver::HostHydroTransaction::owner_matches(*fault.runtime,*fault.context,fault_owner)
-        &&!fault.runtime->active_host_hydro_transaction()&&!fault.gravity->prepared_native_self()
+        &&driver::RuntimeStateTransaction::owner_matches(*fault.runtime,*fault.context,fault_owner)
+        &&!fault.runtime->active_runtime_state_transaction()&&!fault.gravity->prepared_native_self()
         &&rz_runtime_witness::bits(fault.counters->t_current,fault.start.time)&&fault.counters->step_count==fault.start.step,
         "Real AxisBefore fault did not restore fields/leases/register/BC/ledger/clock/accounting owners");
     fault.stage->flush_committed_diagnostics();journal_rows(fault,0);
@@ -823,12 +823,12 @@ template<class Owner> void run_native_self_green_pair(double dt) {
     observed.runtime->ensure_fluid_ghosts(state::StateSlot::Current);
     observed.stage=std::make_unique<Stage>(*observed.runtime,observed.gravity.get(),Stage::Qualification::NativeRzCandidate);
     const rz_runtime_witness::FieldsWitness accepted(block);
-    const auto saved=driver::HostHydroTransaction::snapshot_owner(*observed.runtime,*observed.context);
+    const auto saved=driver::RuntimeStateTransaction::snapshot_owner(*observed.runtime,*observed.context);
     RzMaterializedSourceRecord record;record.capture_call(*observed.stage,[&]{observed.stage->prepare_current(tnew,false);});
     energy_require(record.source_only_checked()&&!record.cleanup_failed()&&record.callback_count()==1,
         "Green pair postCurrent materialized source is not authentic");
     auto post=observed.gravity->native_rz_field_inspection();accepted.matches(block);
-    energy_require(driver::HostHydroTransaction::owner_matches(*observed.runtime,*observed.context,saved)
+    energy_require(driver::RuntimeStateTransaction::owner_matches(*observed.runtime,*observed.context,saved)
         &&observed.execution->gathers==2&&observed.counters->step_count==observed.start.step+1
         &&rz_runtime_witness::bits(observed.counters->t_current,tnew),
         "Green pair actual postCurrent solve mutated accepted fields/Runtime owners");
@@ -892,7 +892,7 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
         const auto active=observed.control.tree->GetActiveBlocks();
         std::vector<rz_runtime_witness::FieldsWitness> accepted;accepted.reserve(active.size());
         for(int id:active)accepted.emplace_back(observed.control.pool->GetBlock(id));
-        const auto saved=driver::HostHydroTransaction::snapshot_owner(*observed.runtime,*observed.context);
+        const auto saved=driver::RuntimeStateTransaction::snapshot_owner(*observed.runtime,*observed.context);
         observed.stage->prepare_current(tnew,false);
         RzMaterializedSourceRecord record;
         record.capture_owned_solution(observed.stage->native_current_source_and_field());
@@ -901,7 +901,7 @@ template<class Owner,class Input> void run_native_self_homology_pair(Input input
             "Homology postCurrent owning source/field not authentic");
         const auto& post=record.native_field_receipt();
         for(std::size_t b=0;b<active.size();++b)accepted[b].matches(observed.control.pool->GetBlock(active[b]));
-        energy_require(driver::HostHydroTransaction::owner_matches(*observed.runtime,*observed.context,saved)
+        energy_require(driver::RuntimeStateTransaction::owner_matches(*observed.runtime,*observed.context,saved)
             &&observed.execution->gathers==2*(step+1)&&observed.counters->step_count==observed.start.step+step+1
             &&rz_runtime_witness::bits(observed.counters->t_current,tnew),"Homology postCurrent changed accepted owners");
         bool refused=false;try{observed.gravity->potential();}catch(const std::logic_error&){refused=true;}

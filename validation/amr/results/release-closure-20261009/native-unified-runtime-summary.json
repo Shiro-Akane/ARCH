@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-10-09T17:38:06.722753+00:00",
+  "baseline_head": "30e21d3128217ebd12ab043d2a2a1609e6a0797e",
+  "scope": "One side-selected metadata ledger and Runtime rollback body; original Host consumers and actual CUDA controls/lifecycle service. No complete Native Runtime/science qualification.",
+  "sources_sha256": {
+    "src/cuda/runtime/CudaBackend.h": "0a380f749e2efbd15263ec3c7689fce0363841facb5258dba3afd3bc6dd89733",
+    "src/cuda/runtime/boundary/CudaBackendBoundary.cu": "b382ff0cd0d64a362ea3cf445b6b9b7310e07bf2850d7e6316ac37c7e2fdf25c",
+    "src/driver/runtime/ComputeBackend.h": "c69513683479abe36fc1180ed3402a6ab5f27f3368098811bacfd9a4f5fccdb9",
+    "src/driver/runtime/DriverBoundary.cpp": "c55db72aecdd68e022f5c806366220ccdce6135292dd5218c183da9927787863",
+    "src/driver/runtime/DriverBoundaryDiagnostics.cpp": "fc6cac9abf55dec09a5e5a2d0dd8717b138e70f209e83cd5a7f1bfed1f31ebf7",
+    "src/driver/runtime/DriverRegrid.cpp": "7b48d8576a54c414bb54b440fb5904e76b309e38cd4112304b8c6825ac1d72eb",
+    "src/driver/runtime/DriverRuntime.cpp": "185652c2a633efb6631d08d80dd7f914dc738eca14795e4b997b97426d119583",
+    "src/driver/runtime/DriverRuntime.h": "de6bf64debb8ac0d568c8f13624198e96dd7b5815ceb043c364c1613688efec3",
+    "src/driver/runtime/StateResidency.h": "64567469ec6e8eb129dd2680318af96ec93709aa6083d70b11b6b2724464a9ac",
+    "src/driver/stages/DriverMacroStep.h": "67fecc1c9b784b03762913798fb49c60cebffa234b233e04a50692d849fa76ba",
+    "src/driver/stages/DriverStages.h": "c2d6c7a28ab699afb76cc67c4c8dbee66b2dda7fc36d7abd98cbf36da67e4b53",
+    "src/driver/stages/GravityStage.cpp": "6f8e12277d9f0460c683599f4112c3ccad76f18f88ec3a06891d4c4cff20486d",
+    "src/physics/boundary/PhysicalBoundaryHandler.cpp": "9559a16ae21733c4fddf368268c707d5fe6699ac3e893aa63eb260715b09d7c7",
+    "src/physics/boundary/PhysicalBoundaryHandler.h": "d01136a8654826b94132f73a03f2f71242f0262fffc5cafa126ca00c5283954e",
+    "tests/cuda/runtime/test_cuda_store_lifecycle.cpp": "150bd2300e1c0c3c4e651ca7c7f43696ffd89ce8fcdbfc97d734a925d855d929",
+    "tests/host/driver/test_host_hydro_transaction.cpp": "fc04811b28d6f14a1aaaafe8629d225f717f7873a5c648d1b5634fb8b01bb6c3",
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "d7659090fdf51fc9bf446950ac315fe15e29b52f89d73acf3c02c106796eabe9",
+    "tests/host/driver/test_rz_runtime_external.cpp": "eaa456a3276a305882e06e109122602d380aad7484dbb4028a68236230de6550",
+    "tests/host/driver/test_state_residency.cpp": "33c54144e8f6ca3d183dd4c7535759a0ac3e5e0713edb8704ec38beec0aa1d26",
+    "tests/host/gravity/NativeActiveAmrWitness.h": "faa0608c6c492b3d45e80392ec145c8d87e9425def40da643d295afa271d83df",
+    "tests/host/gravity/NativeActiveFourModuleWitness.h": "6ca573ea0eae8280c0006048fa09e100d9c30b6dc778f353c6de24f2b3d0b6ba",
+    "tests/host/gravity/NativeSelfEnergyWitness.h": "21fcb356cb580b11c7e78ef1964cedfe5d67dd43c5899554615e1cb502f6cd77",
+    "tests/host/gravity/test_gravity_runtime_rz_contract.cpp": "11dd0f79934e29cefee59a96d6c5fade7f56a7cb1fcb4ce3f1516059faaa8af9",
+    "tests/host/gravity/test_gravity_stage_contract.cpp": "6be790adb6e773774d55bbc9b6740812717076b363fa6702eceb3207813f6065",
+    "src/driver/runtime/RuntimeStateTransaction.h": "9b07ba2003e0336be98f54c80a978f5bce8ed763f6eee9a60bb6552c3ef771ca",
+    "src/cuda/runtime/control/CudaBackendMacroStep.cpp": "c150b28f863c785fd4e5c6dae72d2d9536ed3603596621c266cd04036da92197"
+  },
+  "retired_source": "src/driver/runtime/HostHydroTransaction.h",
+  "current_source": "src/driver/runtime/RuntimeStateTransaction.h",
+  "changes": {
+    "ledger": "Immutable actual field side, one metadata compare/restore body, strict Host behavior retained; synchronized restore requires protected actual mirror",
+    "runtime": "One common source/context/clock/BC/repair/ledger rollback body; original Host arrays and actual backend three-slot savepoint; live unique-owner validation excludes released reuse",
+    "capacity": "Complete actual committed Current leases, all three allocations/permutations and bound controls preflight; only unbound capacity can grow, no callbacks/EOS/state copy/publication",
+    "nvcc_link_repair": "Pure control orchestration moved to existing CXX CudaBackendMacroStep owner; retain original validator and count helper; global BlockHandle untouched"
+  },
+  "cpu": {
+    "affected_owners": {
+      "state_residency": "PASS",
+      "shared_stage_scheduler": "PASS",
+      "boundary_plan": "PASS",
+      "gravity_stage_contract": "PASS"
+    },
+    "build_guard_seconds": 97.346,
+    "first_test_attempt": {
+      "guard_seconds": 2.035,
+      "passed": 3,
+      "failed": 1,
+      "cause": "Retained exact diagnostic expectation used retired class name",
+      "physical_failure": false
+    },
+    "repair_test": {
+      "owner": "gravity_stage_contract",
+      "ctest_seconds": 33.98,
+      "guard_seconds": 34.317,
+      "status": "PASS",
+      "thresholds_changed": false
+    },
+    "architecture": {
+      "audit": "PASS",
+      "unittest_passed": 111,
+      "seconds": 6.3,
+      "rule_changes": false
+    }
+  },
+  "cuda": {
+    "target": "arch_cuda_store_lifecycle",
+    "build_attempts": [
+      {
+        "log": "native-unified-runtime-cuda-build-01.log",
+        "guard_seconds": 1098.017,
+        "status": "FAIL",
+        "cause": "NVCC implicit BlockHandle equality missing at final link; all compiles completed"
+      },
+      {
+        "log": "native-unified-runtime-cuda-build-02.log",
+        "guard_seconds": 65.561,
+        "status": "PASS"
+      }
+    ],
+    "cumulative_build_guard_seconds": 1163.578,
+    "original_ctest": {
+      "name": "cuda_store_lifecycle",
+      "seconds": 0.85,
+      "guard_seconds": 1.017,
+      "status": "PASS",
+      "skip": false
+    },
+    "memcheck": {
+      "guard_seconds": 2.025,
+      "errors": 0,
+      "leaked_bytes": 0,
+      "leaked_allocations": 0,
+      "error_exitcode": 99
+    },
+    "coverage": "Real 0/2 species three physical owners, unchanged bound controls, no-growth capacity within actual savepoint, real RKL replay, late invalid input/no-work, rollback/commit/reuse; original full counters and 64epsilon unchanged",
+    "elf_sha256": "db1f7a04f12633b2cb0dbab56901543fc74e1c366d5b6622f8dc9692ac58fca0"
+  },
+  "resources": {
+    "single_checkout": "/home/shiroakane/ARCH",
+    "heavy_local_jobs": 1,
+    "parallel_build": 2,
+    "guard_stops": 0,
+    "swap_growth_kib": 0,
+    "host_free_min_bytes": 23759388672,
+    "host_free_threshold_bytes": 8589934592,
+    "next_write_reserve_bytes": 536870912,
+    "raw_data_uploaded": false,
+    "new_ctest_or_workflow": false
+  },
+  "remaining": "Actual Native Runtime ordered boundary + completed EOS + source/retry/macro, independent physical coupled/FV/CF gates, O9 remaining long trajectories, current Studio/CI and matched timing remain required."
+}

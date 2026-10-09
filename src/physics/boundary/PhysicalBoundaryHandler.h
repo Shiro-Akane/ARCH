@@ -4,6 +4,8 @@
  *
  * Workflow:
  * 1. Compile the existing logical plan, retaining its built-in fast path.
+ *    Epoch preparation reserves only unbound physical-control capacity,
+ *    preserving actual values/bindings before any resident macro savepoint.
  * 2. Bind the chosen EOS for callback-free native reflecting point laws and
  *    the optional immutable case callback once per simulation.
  * 3. For native RZ, domain ownership separates builtin/exchange seed,
@@ -14,6 +16,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
@@ -243,6 +246,11 @@ public:
     /** Gather/scatter a boundary slice; active domain arrays stay on device. */
     void apply_device(arch::backend::ComputeBackend&, arch::backend::BackendStateAccess,
                       const Grid&) const;
+    /** Return physical Diffusion face capacities without callback/EOS or state.
+     * The explicit original face enumerator does not modify this BC stage.
+     * No user callback yields zero counts; Runtime owns epoch preparation.
+     */
+    std::array<std::size_t,6> native_device_control_extents(const Grid&,int species) const;
     bool has_user() const noexcept { return bool(callback_); }
     const arch::boundary::BoundaryPlan& logical_plan() const noexcept { return logical_plan_; }
     const arch::boundary::BoundaryPlan& logical_plan(const Grid&) const;
@@ -256,6 +264,12 @@ private:
     };
     static arch::boundary::BoundaryPlan make_logical_plan(const SimConfig&);
     std::vector<Ghost> ghosts(const Grid&) const;
+    /** Enumerate the same physical faces for an explicit purpose, without
+     * changing the current stage or evaluating any case callback/EOS.
+     */
+    std::vector<Ghost> ghosts(const Grid&,arch::boundary::BoundaryPurpose) const;
+    /** Shared actual face/count recipe for capacity and real control storage. */
+    std::array<std::size_t,6> diffusion_control_extents(const Grid&,int species) const;
     /** Shared allocation-free selection of authenticated physical reflecting faces. */
     arch::boundary::HydroBoundaryView native_reflecting_faces(const Grid&) const;
     /** Enumerate only genuine positive Native physical reflecting surfaces. */

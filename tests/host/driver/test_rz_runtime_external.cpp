@@ -468,7 +468,7 @@ struct Fixture {
 
 /** Check genuine final Host publication and native repair identities. */
 void accepted_current(Fixture& f) {
-    require(!f.runtime->active_host_hydro_transaction()&&!f.force->prepared_native_external(),
+    require(!f.runtime->active_runtime_state_transaction()&&!f.force->prepared_native_external(),
         "external accepted endpoint retained a transaction/source borrow");
     for(const auto handle:f.runtime->handles()) {
         const state::StateKey key{handle,StateSlot::Current};
@@ -494,12 +494,12 @@ struct RollbackWitness {
     Fixture& f;
     std::vector<std::pair<int,rz_runtime_witness::FieldsWitness>> values;
     std::vector<GridMetrics::DyadicGridIdentity> roots;
-    driver::HostHydroTransaction::OwnerWitness owner;
+    driver::RuntimeStateTransaction::OwnerWitness owner;
     std::array<long double,4> body;
     double time,advice;
     int step;
     explicit RollbackWitness(Fixture& actual)
-        : f(actual),owner(driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context)),
+        : f(actual),owner(driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context)),
           body(f.source?f.source->external_source_budget():std::array<long double,4>{}),
           time(f.controller->t_current),advice(f.controller->dt_old),step(f.controller->step_count) {
         for(int id:f.control.tree->GetActiveBlocks()) {
@@ -508,7 +508,7 @@ struct RollbackWitness {
         }
     }
     void unchanged() const {
-        require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner),
+        require(driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner),
             "external rejection changed real Runtime owner/ledger/register/BC/receipt identity");
         for(std::size_t n=0;n<values.size();++n) {
             auto& block=f.control.pool->GetBlock(values[n].first);values[n].second.matches(block);
@@ -516,7 +516,7 @@ struct RollbackWitness {
                 "external rejection changed actual root provenance");
         }
         require(bits(time,f.controller->t_current)&&bits(advice,f.controller->dt_old)
-            &&step==f.controller->step_count&&!f.runtime->active_host_hydro_transaction()
+            &&step==f.controller->step_count&&!f.runtime->active_runtime_state_transaction()
             &&!f.force->prepared_native_external(),"external rejection changed accepted time/advice/source borrow");
         if(f.source)require(f.source->external_source_budget()==body,
             "external rejection leaked a source-budget accepted prefix");
@@ -585,7 +585,7 @@ void application_guard_rejections() {
             const Physical::Gravity::IGravityPolicy* policy,const NumericsConfig& numerics) {
             require(!probe_seen&&control==&f.control&&policy==f.force.get()
                 &&f.control.tree->GetActiveBlocks().size()==1
-                &&f.runtime->active_host_hydro_transaction()!=nullptr,
+                &&f.runtime->active_runtime_state_transaction()!=nullptr,
                 "external application probe did not enter its real one-leaf macro owner");
             probe_seen=true;
             const auto* frame=policy->prepared_native_external();
@@ -962,7 +962,7 @@ struct CoupledRklWitness {
             require(plan.method==scheduler::RklMethod::RKL2&&plan.second_order
                 &&plan.stages.size()==static_cast<std::size_t>(f.actual_diffusion_stages)
                 &&f.actual_diffusion_stages>=2&&bits(f.context->boundary_step_dt,.5*dt)
-                &&f.runtime->active_host_hydro_transaction()!=nullptr,
+                &&f.runtime->active_runtime_state_transaction()!=nullptr,
                 "coupled diffusion bypassed the real RKL2/half/macro owner");
             if(stage.stage==1) {
                 require(!in_half,"coupled RKL began a half before its previous endpoint");
@@ -1144,7 +1144,7 @@ struct Fixture {
     // Empty for original cases. Fatal negatives synchronously inspect the real
     // noncopyable pre-macro witnesses after rollback, while their owners live.
     std::function<void(const rz_runtime_witness::FieldsWitness&,
-        const driver::HostHydroTransaction::OwnerWitness&)> attempt_checkpoint;
+        const driver::RuntimeStateTransaction::OwnerWitness&)> attempt_checkpoint;
     Fixture(double minimum_step=1.e-20,bool short_final=false) {
         config.grid.dim=2;config.grid.geometry="cylindrical";
         config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
@@ -1234,7 +1234,7 @@ struct Fixture {
     void actual_attempt(double interval,std::uint64_t index) {
         active_attempt=static_cast<int>(attempts.size());attempts.push_back({interval});bind_frame(interval);
         const rz_runtime_witness::FieldsWitness before(block());
-        const auto owner=driver::HostHydroTransaction::snapshot_owner(*runtime,*context);
+        const auto owner=driver::RuntimeStateTransaction::snapshot_owner(*runtime,*context);
         const auto identity=block().grid.dyadic_identity;
         const auto started=std::chrono::steady_clock::now();
         try {
@@ -1265,9 +1265,9 @@ struct Fixture {
                 &&evidence.diagnostic.phase==RzThermodynamics::AcceptancePhase::effective_thermal
                 &&evidence.diagnostic.status==state::Status::unresolved_energy&&evidence.diagnostic.inertia_mapping_valid,
                 "native retry qualified a foreign/nonthermal/ghost refusal");
-            before.matches(block());require(driver::HostHydroTransaction::owner_matches(*runtime,*context,owner)
+            before.matches(block());require(driver::RuntimeStateTransaction::owner_matches(*runtime,*context,owner)
                 &&GridMetrics::equal_identity(identity,g.dyadic_identity)
-                &&!runtime->active_host_hydro_transaction()&&!runtime->native_macro_retry_attempt(),
+                &&!runtime->active_runtime_state_transaction()&&!runtime->native_macro_retry_attempt(),
                 "native rejected macro did not restore complete real owners");
             throw;
         } catch(...) {
@@ -1355,7 +1355,7 @@ void first_aligned_short() {
 /** Config drift after the genuine EOS binding is fatal before macro mutation. */
 void eos_binding_drift() {
     Fixture f;f.bind_frame(.2);const rz_runtime_witness::FieldsWitness before(f.block());
-    const auto owner=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
+    const auto owner=driver::RuntimeStateTransaction::snapshot_owner(*f.runtime,*f.context);
     const double original=f.config.numerics.min_eint;
     f.config.numerics.min_eint=std::nextafter(original,std::numeric_limits<double>::infinity());
     bool rejected=false;
@@ -1366,7 +1366,7 @@ void eos_binding_drift() {
             if(!rejected)throw;
         }}
     f.config.numerics.min_eint=original;before.matches(f.block());
-    require(rejected&&driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner)
+    require(rejected&&driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner)
         &&!f.runtime->native_macro_retry_attempt(),"native EOS drift acquired retry permission or changed actual owners");
 }
 /** Forward every selected thermodynamic result to the fixture's actual IdealGas.
@@ -1408,8 +1408,8 @@ void classification_post_fence_rejections() {
         bool owners_restored=false;int checkpoints=0;
         f.attempt_checkpoint=[&](const auto& fields,const auto& owner) {
             ++checkpoints;fields.matches(f.block());
-            owners_restored=driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner)
-                &&!f.runtime->active_host_hydro_transaction()&&!f.runtime->native_macro_retry_attempt();
+            owners_restored=driver::RuntimeStateTransaction::owner_matches(*f.runtime,*f.context,owner)
+                &&!f.runtime->active_runtime_state_transaction()&&!f.runtime->native_macro_retry_attempt();
             require(owners_restored,"classifier fatal exit did not restore actual live noncopyable owners");
         };
         const double original_nu=f.config.physics.diffusion.nu_visc;
@@ -1432,7 +1432,7 @@ void classification_post_fence_rejections() {
             if(fired||!frame||!frame->completed||frame->context!=&*f.context)return;
             require(f.active_attempt==0&&f.attempts.size()==1
                 &&f.attempts.front().burn_first==1&&f.attempts.front().diffusion==1
-                &&f.attempts.front().hydro==0&&f.runtime->active_host_hydro_transaction(),
+                &&f.attempts.front().hydro==0&&f.runtime->active_runtime_state_transaction(),
                 "thermal classifier injection lacks its genuine cold macro/RKL prefix");
             auto& block=f.block();const auto& grid=block.grid;
             const auto member=TimeIntegration::hydro_boundary_state_member(frame->slot);
@@ -1505,7 +1505,7 @@ void classification_post_fence_rejections() {
             &&f.attempts.front().burn_second==0&&f.attempts.front().diffusion==1
             &&f.attempts.front().hydro==0&&owners_restored,
             "classifier engineering rejection retried/skipped the genuine first B/D prefix");
-        require(!f.runtime->active_host_hydro_transaction()&&!f.runtime->native_macro_retry_attempt()
+        require(!f.runtime->active_runtime_state_transaction()&&!f.runtime->native_macro_retry_attempt()
             &&bits(f.counters->t_current,accepted_time)&&f.counters->step_count==accepted_step
             &&bits(f.counters->dt_old,accepted_old_dt)&&bits(f.burn_advice,accepted_advice),
             "classifier fatal rejection failed exact leases/fields/ledger/register/clock/BC/Advice rollback");

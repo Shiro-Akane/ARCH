@@ -29,7 +29,7 @@
 
 #include "driver/io/DriverIO.h"
 #include "driver/runtime/DriverRuntime.h"
-#include "driver/runtime/HostHydroTransaction.h"
+#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverStages.h"
 
@@ -97,7 +97,7 @@ double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController
             // All nested transaction/binding/context/advice lifetimes already
             // unwound. The failed version cannot be reauthenticated now.
             if(!native||!error.belongs_to(runtime,index,accepted_time,actual_dt)
-                ||runtime.active_host_hydro_transaction()||runtime.native_macro_retry_attempt()
+                ||runtime.active_runtime_state_transaction()||runtime.native_macro_retry_attempt()
                 ||controller.step_count!=accepted_step
                 ||std::bit_cast<std::uint64_t>(controller.t_current)!=std::bit_cast<std::uint64_t>(accepted_time))throw;
             if(first_failure.empty())first_failure=error.what();
@@ -125,7 +125,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
 {
     const bool native_host=!runtime.backend()
         &&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    std::optional<HostHydroTransaction> transaction;
+    std::optional<RuntimeStateTransaction> transaction;
     if(native_host) {
         // Presence is a necessary preflight, not scientific authority. The
         // subsequent Runtime boundary work authenticates its actual EOS/BC
@@ -134,7 +134,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
             ||context.hydro_acceptance||context.rkl_acceptance
             ||!std::isfinite(context.step_start_time+context.step_dt))
             throw std::logic_error("Native macro endpoint requires its genuine boundary/stage owners");
-        transaction.emplace(runtime,context,*hydro);
+        transaction.emplace(runtime,context,hydro);
     }
     std::array<std::optional<backend::DiffusionActivityReceipt>,2> activity_halves;
     // Scalars are owned by this original macro attempt; any exception/retry
