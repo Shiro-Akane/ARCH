@@ -3,7 +3,10 @@
  * @brief Check multiblock CUDA burning for each supported ODE method.
  *
  * Run aprox13 with BE-NR, BD and ROS4 through the production backend and
- * compare the block results with the corresponding CPU calculation.
+ * compare sequential and batched device fields bitwise. A native-RZ subset
+ * also compares the real backend with the shared Host burn operation, keeping
+ * native density/momenta and inactive storage unchanged. This finite service
+ * check does not enable the full native CUDA Runtime.
  */
 #include "amr/storage/Block.h"
 #include "amr/exchange/BoundaryPlan.h"
@@ -12,6 +15,9 @@
 #include "driver/stages/DriverBurn.h"
 #include "driver/DriverUtils.h"
 #include "numerics/burnsolver/Networks.h"
+#include "numerics/burnsolver/ode/ode_bd.h"
+#include "numerics/burnsolver/ode/ode_be-nr.h"
+#include "numerics/burnsolver/ode/ode_ros4.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/species/Species.h"
 
@@ -20,6 +26,7 @@
 #include <bit>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -31,18 +38,22 @@ void require(bool condition, const char* message)
     if (!condition) throw std::runtime_error(message);
 }
 
-arch::boundary::BoundaryPlan make_boundary_plan()
+arch::boundary::BoundaryPlan make_boundary_plan(int dimension = 1)
 {
     using namespace arch::boundary;
     BoundaryPlanInput input{};
-    input.dimension = 1;
-    input.active_extent = {amr::BLOCK_NX, 1, 1};
+    input.dimension = dimension;
+    input.active_extent = {amr::BLOCK_NX, dimension == 2 ? amr::BLOCK_NY : 1, 1};
     input.ghost_depth = amr::MAX_NG;
     input.faces.fill(BoundaryType::Inactive);
     input.faces[face_index(BoundaryAxis::X1, BoundarySide::Lower)] =
         BoundaryType::Outflow;
     input.faces[face_index(BoundaryAxis::X1, BoundarySide::Upper)] =
         BoundaryType::Outflow;
+    if (dimension == 2) {
+        input.faces[face_index(BoundaryAxis::X2, BoundarySide::Lower)] = BoundaryType::Outflow;
+        input.faces[face_index(BoundaryAxis::X2, BoundarySide::Upper)] = BoundaryType::Outflow;
+    }
     return arch::boundary::make_boundary_plan(input);
 }
 
@@ -68,7 +79,8 @@ BurnConfig make_burn_config()
 }
 
 arch::cuda::CudaLaunchConfig make_launch_config(
-    arch::dispatch::OdeSolverId ode)
+    arch::dispatch::OdeSolverId ode,
+    arch::dispatch::LinearSolverId linear = arch::dispatch::LinearSolverId::DenseLu)
 {
     SimConfig config{};
     config.physics.eos_type = "helmholtz";
@@ -82,7 +94,7 @@ arch::cuda::CudaLaunchConfig make_launch_config(
         arch::dispatch::EosId::Helmholtz,
         arch::dispatch::NetworkId::Aprox13,
         ode,
-        arch::dispatch::LinearSolverId::DenseLu,
+        linear,
         arch::dispatch::DiffusionIntegratorId::None};
     return arch::cuda::make_cuda_launch_config(plan, config);
 }
@@ -286,6 +298,135 @@ std::vector<FluidState> run_route(arch::dispatch::OdeSolverId ode, const char* n
     return downloaded;
 }
 
+
+/** Burn two real native patches through each existing dense ODE route.
+ * Independent constant-density full-ring moments seed the geometry:
+ * V~(b^2-a^2)/2, W~(b^3-a^3)/3, I~rho*(b^4-a^4)/4,
+ * q=Omega*I/W and E=rho*e+rho*(u_r^2+u_z^2)/2+Omega^2*I/(2V).
+ * One hot cell per patch reacts; cold cells and all ghosts keep their state.
+ * The same Host operator supplies the paired endpoint, with the established
+ * burn-global 1e-8 state/energy and 1e-12 mass budgets. This is backend/closure
+ * parity, not an independent nuclear-rate reference or Runtime capability.
+ */
+template<template<class, class, class> class Solver>
+void run_native_route(arch::dispatch::OdeSolverId ode, const char* name,
+    arch::dispatch::LinearSolverId linear = arch::dispatch::LinearSolverId::DenseLu)
+{
+    constexpr auto native = GridMetrics::GeometrySemantics::AxisymmetricRz;
+    SpeciesManager species;
+    NetAprox13::RegisterSpecies(species);
+    HelmEos eos(std::string(ARCH_SOURCE_DIR)
+        + "/EOS_toolkit/tables/helmholtz/helm_table.dat", &species);
+    Grid root(amr::MAX_NG, 1., 3., -.5, .5, 0., 1., 2, 1, 1);
+    root.geometry = "cylindrical"; root.dim = 2;
+    std::array<amr::Block, 2> blocks;
+    const double poison = std::numeric_limits<double>::quiet_NaN();
+    constexpr double rho = 1.e6, ur = 1.e7, uz = -2.e7, omega = 5.e8;
+    for (int b = 0; b < 2; ++b) {
+        auto& block = blocks[b]; block.Reset(); block.active = true;
+        block.level = 0; block.logical_x1 = b; block.logical_x2 = 0;
+        block.InitGeometry(root, 1./amr::BLOCK_NX, 1./amr::BLOCK_NY, 1., native);
+        block.RequireNativeGeometryIdentity();
+        const auto& grid = block.grid;
+        for (auto* field : {&block.fluid_state, &block.state_next, &block.state_scratch}) {
+            field->Preallocate(grid.GetTotalSize()); field->InitSpecies(NetAprox13::NUM_SPECIES);
+        }
+        auto& field = block.fluid_state;
+        for (auto* plane : {&field.rho, &field.mom_u, &field.mom_v, &field.mom_w,
+                            &field.eng, &field.mass_fractions})
+            std::fill(plane->begin(), plane->end(), poison);
+        std::fill(field.enuc_rate.begin(), field.enuc_rate.end(), -6.25);
+        std::array<double, NetAprox13::NUM_SPECIES> composition{};
+        double sum = 0.;
+        for (int n = 0; n < NetAprox13::NUM_SPECIES; ++n) {
+            composition[n] = n + 1 + b; sum += composition[n];
+        }
+        for (double& x : composition) x /= sum;
+        for (int j = 0; j < grid.GetTotalY(); ++j)
+            for (int i = 0; i < grid.GetTotalX(); ++i) {
+                const int cell = grid.GetIndex(i,j,0);
+                const double temperature = i == grid.Is() && j == grid.Js() ? 2.e9 : 5.e7;
+                const double thermal = eos.get_eint_from_T(rho, temperature, composition.data());
+                const long double a = grid.GetFacePosL(i), z = grid.GetFacePosR(i);
+                const long double V = (z*z-a*a)/2.L, W = (z*z*z-a*a*a)/3.L;
+                const long double I = rho*(z*z*z*z-a*a*a*a)/4.L;
+                field.set(cell, {rho, rho*ur, rho*uz, double(omega*I/W),
+                    double(rho*static_cast<long double>(thermal)
+                        + .5L*rho*(ur*ur+uz*uz) + .5L*omega*omega*I/V)});
+                for (int n = 0; n < NetAprox13::NUM_SPECIES; ++n) field.X(n,cell)=composition[n];
+            }
+    }
+    const std::array initial{blocks[0].fluid_state, blocks[1].fluid_state};
+    auto expected = initial;
+    SimConfig config{}; config.physics.eos_type="helmholtz";
+    config.physics.burn=make_burn_config();config.physics.burn.network_name="aprox13";
+    config.numerics.sml_rho=1.e-30;config.numerics.min_eint=1.e-30;config.numerics.max_eint=1.e30;
+    constexpr double interval=1.e-12;
+    Solver<NetAprox13,DenseMatrixData<NetAprox13::ODE_NEQ>,DenseLUSolver> burner;
+    std::array<DriverBurn::HostBurnPatch,2> patches{{{&expected[0],&blocks[0].grid,native},
+                                                 {&expected[1],&blocks[1].grid,native}}};
+    std::array<double,2> limits{};
+    DriverBurn::execute_host_burn_batch(patches,interval,eos,burner,config,limits);
+    auto launch=make_launch_config(ode,linear);
+    launch.density_floor=config.numerics.sml_rho;
+    launch.minimum_internal_energy=config.numerics.min_eint;
+    launch.maximum_internal_energy=config.numerics.max_eint;
+    const auto plan=make_boundary_plan(2);
+    const std::array handles{amr::BlockHandle{{3101},{31}},amr::BlockHandle{{3102},{31}}};
+    const std::array storage{arch::backend::StorageGeneration{3101},arch::backend::StorageGeneration{3102}};
+    const std::array bindings{arch::cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&plan},
+                             arch::cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&plan}};
+    auto backend=arch::cuda::make_cuda_backend(bindings,0,launch,species,eos);
+    const std::array accesses{arch::backend::BackendStateAccess{handles[0],storage[0],arch::state::StateSlot::Current},
+                             arch::backend::BackendStateAccess{handles[1],storage[1],arch::state::StateSlot::Current}};
+    for (int b=0;b<2;++b)
+        for (auto region:{arch::state::StateRegion::Interior,arch::state::StateRegion::Ghost})
+            backend->enqueue_upload_slot(accesses[b],region,transfer_view(blocks[b].fluid_state));
+    backend->quiesce();
+    const auto results=backend->execute_burn_batch(accesses,interval,
+        {3,arch::state::CompletionState::Complete});
+    require(results.size()==2,"Native burn lost a batch result");
+    for (const auto& result:results)
+        require(result.status==0 && result.failed_cells==0 && arch::state::is_complete(result.completion),
+            "Native actual backend burn rejected the physical closure");
+    require(!backend->validate_completed_native_eos_batch(accesses,
+        {launch.density_floor,launch.minimum_internal_energy,launch.maximum_internal_energy}),
+        "Native burned state failed resident completed EOS acceptance");
+    for (int b=0;b<2;++b) {
+        auto actual=initial[b]; const auto& grid=blocks[b].grid;
+        for (auto region:{arch::state::StateRegion::Interior,arch::state::StateRegion::Ghost})
+            backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(actual));
+        backend->quiesce();
+        for (auto member:{&FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,&FluidState::mom_w})
+            for (std::size_t k=0;k<(actual.*member).size();++k)
+                require(std::bit_cast<std::uint64_t>((actual.*member)[k])
+                    == std::bit_cast<std::uint64_t>((initial[b].*member)[k]),
+                    "Native burner overwrote density/native moments or padding");
+        const int hot=grid.GetIndex(grid.Is(),grid.Js(),0);
+        require(actual.eng[hot]!=initial[b].eng[hot] && actual.enuc_rate[hot]!=0.,
+            "Native paired burn check accepted a no-op");
+        for (int j=0;j<grid.GetTotalY();++j) for (int i=0;i<grid.GetTotalX();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            double sum=0.;
+            for (int n=0;n<NetAprox13::NUM_SPECIES;++n) {
+                require(std::isfinite(actual.X(n,cell)) && actual.X(n,cell)>=0.
+                    && std::abs(actual.X(n,cell)-expected[b].X(n,cell))<=1.e-8,
+                    "Native Host/device species parity failed");
+                sum+=actual.X(n,cell);
+            }
+            require(std::abs(sum-1.)<=1.e-12
+                && std::isfinite(actual.eng[cell])
+                && std::abs(actual.eng[cell]/expected[b].eng[cell]-1.)<=1.e-8,
+                "Native Host/device energy or mass parity failed");
+            if (cell!=hot)
+                require(std::bit_cast<std::uint64_t>(actual.eng[cell])
+                        == std::bit_cast<std::uint64_t>(initial[b].eng[cell])
+                    && actual.enuc_rate[cell]==0.,"Native cold/ghost burn changed state");
+        }
+    }
+    std::cout << "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=" << name << " blocks=2\n";
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -314,6 +455,14 @@ int main(int argc, char** argv)
                             "Burn batch changed field bits");
                 }
         }
+        run_native_route<Solver_BE_NR>(arch::dispatch::OdeSolverId::BeNr,"be_nr");
+        run_native_route<Solver_BD>(arch::dispatch::OdeSolverId::Bd,"bd");
+        run_native_route<Solver_ROS4>(arch::dispatch::OdeSolverId::Ros4,"ros4");
+#if ARCH_HAS_CUDSS_PROVIDER
+        run_native_route<Solver_BE_NR>(arch::dispatch::OdeSolverId::BeNr,"be_nr_cudss",arch::dispatch::LinearSolverId::CuDss);
+        run_native_route<Solver_BD>(arch::dispatch::OdeSolverId::Bd,"bd_cudss",arch::dispatch::LinearSolverId::CuDss);
+        run_native_route<Solver_ROS4>(arch::dispatch::OdeSolverId::Ros4,"ros4_cudss",arch::dispatch::LinearSolverId::CuDss);
+#endif
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

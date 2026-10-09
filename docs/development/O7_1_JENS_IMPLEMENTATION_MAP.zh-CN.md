@@ -3,7 +3,7 @@
 ## 文档角色与当前入口
 
 2026-10-03实施前映射；保留冻结公式、调用方及当时差距。现有JENS实现已移交，表中的“尚无／未接入”描述原基线，不作为再次实施的指令。
-当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)。
 
 2026-10-03；只读审计基线 fd9502c3ffb5de9c9571d57319a074d4b6c82b00。
 本文件是联合执行细则第2节要求的代码前映射，不是实现完成或科学批准。

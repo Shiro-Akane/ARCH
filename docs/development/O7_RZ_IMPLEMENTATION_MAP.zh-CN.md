@@ -3,7 +3,7 @@
 ## 文档角色与当前入口
 
 实施前RZ调用方映射及原基线差距；chart、V/W、AMR、IO等已有交付实现。表中的修改点用于核对已有消费者，不构成重建整套RZ的任务。
-当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)。
 
 基线 af18b44ae16023fa266bca2cf1a7fa0a2d5a1671。本步落实
 JeansRZPlatformHandoff.zh-CN.md §2 的实施前独立 RZ 映射要求。

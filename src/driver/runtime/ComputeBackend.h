@@ -18,6 +18,7 @@
 #include "data/FluidState.h"
 #include "data/GlobalDefs.h"
 #include "grid/ScalarFieldView.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "physics/gravity/GravitySourceTypes.h"
 #include "driver/schedule/StageScheduler.h"
 
@@ -95,6 +96,12 @@ struct BackendStateAccess {
     amr::BlockHandle block{};
     StorageGeneration storage{};
     state::StateSlot slot = state::StateSlot::Current;
+};
+
+/** Compact evidence from a real resident completed-cell EOS failure. */
+struct NativeEosFailure {
+    BackendStateAccess access{};
+    RzThermodynamics::AcceptanceDiagnostic diagnostic{};
 };
 
 /**
@@ -331,6 +338,16 @@ public:
             if (execute_physical_boundary(access, version, expected) != expected)
                 throw std::logic_error("Boundary batch returned incomplete work");
         return expected;
+    }
+    /** Read completed Native patches through their resident selected EOS.
+     * The caller owns completed BC/exchange and exact slot/version coverage.
+     * A successful return witnesses synchronous validation, not ghost publication
+     * or Native backend capability. This operation never repairs state.
+     */
+    virtual std::optional<NativeEosFailure> validate_completed_native_eos_batch(
+        std::span<const BackendStateAccess>, const state::Bounds&)
+    {
+        throw std::logic_error("backend resident Native EOS acceptance is unavailable");
     }
     virtual state::CompletionToken execute_same_level_exchange(
         std::span<const BackendStateAccess> accesses,

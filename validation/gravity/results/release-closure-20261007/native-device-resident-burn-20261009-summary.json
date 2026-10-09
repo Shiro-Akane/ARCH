@@ -1,0 +1,117 @@
+{
+  "scope": "shared completed-native resident EOS service and real native dense/sparse burning consumers",
+  "release_qualified": false,
+  "full_native_device_runtime": false,
+  "recorded_utc": "2026-10-09T08:17:56.458637+00:00",
+  "baseline_commit": "306096cb174ad1a933b3a0f3ef5bf208e4131a42",
+  "source_sha256": {
+    "src/driver/runtime/ComputeBackend.h": "ab2a850cee8dfa3851f6ac51e3832b9697da56f9057de8372e790d0ddbe80b12",
+    "src/cuda/runtime/CudaBackend.h": "8281ef51c9f2023b02ba6df5dbd171f08523fabf84f0c7d4ac9e3c5249859b4e",
+    "src/cuda/runtime/control/CudaBackendInternal.h": "4cd70b9287c6464a8420673391e0cd1a7c735a05f1a619edacd74f190f1869a9",
+    "src/cuda/runtime/boundary/CudaBackendBoundary.cu": "a06741136d36604c946efe57a164209ef5502a1604668911869702ec9318b21d",
+    "src/cuda/microphysics/burn/NativeBurnState.cuh": "aaf781ac002ef111fa088a5aa2e066b48f1b17b4fc6753b9ff40153af9444714",
+    "src/cuda/microphysics/burn/SparseBurnCells.cuh": "84dd250636077e613f189ac35fe38931da459388ac3ad594186b637f6c98312e",
+    "src/cuda/runtime/burn/dense/CudaBackendBurnImpl.cuh": "8f2d11b0f67c7a56d08926841a0976928411b6a9a84818fe06e84a20648070c7",
+    "tests/cuda/runtime/test_cuda_store_lifecycle.cpp": "ee93a24ee5a1d6d6fd5a491a6b487a1e4c777257d1f0e7ec2b86273a197f19a9",
+    "tests/cuda/microphysics/burn/test_cuda_multiblock_burn.cu": "7f5398aa3c14f05eb498e8f7e7d3c206cfc2fcabb73df83669e81ae6e2885a6c",
+    "tests/cuda/microphysics/burn/test_burn_eos_failure.cu": "2805cd60585238ec71db0211233be833d88768cc07ba6bc4b1f83e9f21607d29"
+  },
+  "actual_test_binary_sha256": {
+    "build-rt-cuda/arch_cuda_store_lifecycle": "4e52e4230245bd963b5ed95ee5a9ed032f229ff230ba86f7142ba0e4e44fe8d0",
+    "build-rt-cuda/arch_cuda_burn_eos_failure": "f2654c1e3d38a931ddf4a2ab06b1eace4ad9a5ab496b40b7425651c873edb67d",
+    "build-rt-cuda/arch_cuda_multiblock_burn": "af4e8bede3e96bc3410fea8bb187cb2ec7e83dea2bcacce6c24bcb4363f3b17e"
+  },
+  "implementation": {
+    "resident": "actual selected EOS, whole batch preflight, all logical cells/ghosts with existing shared closure, sticky required query status, O(batch) diagnostics only; no field download or state write",
+    "native_burn": "existing shared density/inertia leaf supplies transient effective mean; exact warp grouping and sparse records retained; commit only E/X/enuc, rho/native3mom remain authoritative",
+    "allocation": "existing species scratch/stream/status owners reused; compact diagnostic capacity is O(batch); no new persistent burn storage or sparse-record extent",
+    "compiler_repair": "NVCC12.3 implicit C++20 defaulted handle equality reproduced undefined. Actual existing Host store/slot resolver used once, duplicate resolved-owner pointers checked O(nlogn); no global type/header/compiler flag change.",
+    "architecture": "One common Host/device mathematical closure, unchangedEOS,ODE/NSE/two Strang halves, all existing CPUoptimization contracts and fullruntime/ghost capability guards retained"
+  },
+  "actual_checks": {
+    "cpu_original_owners": {
+      "names": [
+        "compute_backend",
+        "shared_stage_scheduler",
+        "reduction_contract",
+        "gravity_stage_contract"
+      ],
+      "count": 4,
+      "passed": 4,
+      "skipped": 0,
+      "build_guard_seconds": 65.946,
+      "test_CTest_seconds": 37.4,
+      "test_guard_seconds": 38.378
+    },
+    "cuda_original_owners": {
+      "names": [
+        "cuda_burn_eos_failure",
+        "cuda_multiblock_burn",
+        "cuda_store_lifecycle"
+      ],
+      "passed": 3,
+      "skipped": 0,
+      "CTest_seconds": 18.99,
+      "guard_seconds": 19.144
+    },
+    "native_resident_cases": [
+      "2 independent constantdensity V/W/I patches including actualghosts",
+      "Host NaN storagepadding excluded from transfer; reviewed device traversal uses logical cells only",
+      "late staleaccess,duplicate owner,mixedslots rejected before anylaunch",
+      "unique actualnonfiniteghost diagnostic; valid nextbatch clears priorlaunchstatus",
+      "counters:noH2D,no fullstateD2H; 2actualkernels and 2*(int+diagnostic) bytesonly",
+      "all logical materialized field bits unchanged; Host padding bits unchanged, no raw Device padding readback claim"
+    ],
+    "native_burn_consumers": {
+      "route_markers": [
+        "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=be_nr blocks=2",
+        "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=bd blocks=2",
+        "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=ros4 blocks=2",
+        "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=be_nr_cudss blocks=2",
+        "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=bd_cudss blocks=2",
+        "CUDA_NATIVE_MULTIBLOCK_BURN_PASS route=ros4_cudss blocks=2"
+      ],
+      "network": "actual aprox13",
+      "EOS": "actual bundled Helmholtz",
+      "patches": 2,
+      "active_hot_cells": 2,
+      "other_cells": "cold logical cells/ghosts; storagepadding",
+      "interval_seconds": 1e-12,
+      "reference": "same shared Host operation; backend/closure parity, not independent nuclear-rate qualification",
+      "species_and_total_energy_budget": 1e-08,
+      "mass_closure_budget": 1e-12,
+      "moment_density_padding": "bitwise original unchanged",
+      "burn_noop_rejected": true,
+      "post_burn_resident_actual_EOS": "all logical cells accepted",
+      "first_dense_only_build_guard_seconds": 18.194,
+      "first_dense_only_test_guard_seconds": 2.031,
+      "dense_and_cudss_build_guard_seconds": 19.223,
+      "final_CTest_seconds": 2.76,
+      "final_guard_seconds": 3.04,
+      "padding_scope": "Host transfer padding bit checks; device logical indexing reviewed to exclude stride padding, no raw device padding download claim"
+    }
+  },
+  "build_cost": {
+    "cumulative_cuda_guard_seconds": 3506.821,
+    "manager_node_cap_seconds": 5000,
+    "attempts_seconds": [
+      900.711,
+      900.246,
+      1200.902,
+      411.01,
+      56.535,
+      18.194,
+      19.223
+    ],
+    "first_three_attempts": "time cap; retained completed objects, no compiler or resource failure",
+    "fourth": "real linkerfailure, retained evidence",
+    "final": "passed local adapter repair and same-owner consumer extensions",
+    "maximum_owned_RSS_KiB": 4038728,
+    "minimum_available_KiB": 2883056,
+    "swap_growth_KiB": 0,
+    "host_free_bytes_minimum": 23783378944,
+    "H5_created": 0
+  },
+  "remaining": "real builtin/userghost lifecycle, nativeAMRmigration/CF/reflux, hydro/gravity/rollback and integrated longcoupling; finite services do notenable fullNativeDevice",
+  "delegation": "Candidate EOS service and thinburn adapters from existing worker owners were independently reviewed and integrated. Root owned exact integration/compiler diagnosis, real consumer assertions and scientific decision; no newforcedreview."
+}

@@ -3,7 +3,7 @@
 ## 文档角色与当前入口
 
 合作方2026-10-06冻结交付记录，保留原私有patch及执行物身份；当前集成后的公共能力和剩余缺陷另外逐项验收。
-当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)。
 
 日期：2026-10-06。分支：studio/compute-optim-integration。
 交付父节点：1f743efd7cf7d0793a766f3c2cd4fdca1bc9cadd。

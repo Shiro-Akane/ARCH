@@ -3,7 +3,7 @@
 ## 文档角色与当前入口
 
 2026-10-06移交时的有限任务与证据；文内两侧分工和当时未接线状态保留原身份。全部Core工作现由维护者接手，已验收项按当前总表复用。
-当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口2026-10-08)。
+当前执行顺序与已关闭项统一见[O总表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)，当前证据见[release验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)。
 
 日期：2026-10-06。工作线：`studio/compute-optim-integration`。
 审阅节点：`1f743efd7cf7d0793a766f3c2cd4fdca1bc9cadd`。

@@ -16,7 +16,7 @@ Choose a registered compiled case and its `.par`, edit grouped parameters, then 
 
 Initial views call real Setup/Init and shared EOS conversion. Available dimensions/geometry/fields are negotiated per case; registration alone grants no Preview capability. AMR is a separate bounded request, overlaid only on matching field/config/build identities. Resource estimates describe capacity, not MPI OOM predictions. Coordinate and field/color scale controls are independent. Log views must distinguish zero/nonpositive values without changing raw data.
 
-Core units are CGS, including ideal gas. Standard descriptions come from Core; custom units are reviewed source/declaration evidence, not automatic inference of arbitrary C++ expressions. Public RZ and CUDA JENS gates remain explicit.
+Core units are CGS, including ideal gas. Standard descriptions come from Core; custom units are reviewed source/declaration evidence, not automatic inference of arbitrary C++ expressions. See the [feature list](../Features.md) for supported model/backend combinations.
 
 Confirmed Run/Restart use associated saved input and the selected compiled binary. Their owned independent terminal and records survive Host exit. Stop targets the recorded job. Output reservations coordinate managed runs but do not approve overwriting earlier scientific data. Cluster/background scheduling is outside this local workflow.
 

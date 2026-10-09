@@ -317,6 +317,9 @@ struct CudaBackend::Impl {
     } hydro_batch;
     HydroBatchScratch diffusion_batch;
     HydroBatchScratch reflux_batch;
+    // Compact Native acceptance diagnostics; shares hydro_batch.status only
+    // after prior synchronous batches drained. No evolved field is staged here.
+    ReusableDeviceAllocation<RzThermodynamics::AcceptanceDiagnostic> native_eos_diagnostics;
     ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
     ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;

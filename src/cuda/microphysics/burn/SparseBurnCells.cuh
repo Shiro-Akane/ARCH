@@ -10,6 +10,7 @@
 #pragma once
 
 #include "cuda/microphysics/burn/SparseOdeBatch.cuh"
+#include "cuda/microphysics/burn/NativeBurnState.cuh"
 #include "cuda/common/CudaCommon.cuh"
 #include "driver/stages/DriverBurnPolicy.h"
 
@@ -26,7 +27,7 @@ template <class Network, template <class, class, class> class Solver, class Eos>
 __global__ void prepare_cells(
     SparseOdeBatchView<Network, Solver> batch, SparseBurnCellRecord* records,
     DeviceStateView state, DeviceGridView grid, int first, int count,
-    double burn_dt, Eos eos, BurnConfigView config)
+    double burn_dt, Eos eos, BurnConfigView config, arch::state::Bounds bounds)
 {
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     if (lane >= count) return;
@@ -47,6 +48,14 @@ __global__ void prepare_cells(
     batch.densities[lane] = record.fluid.rho;
     batch.intervals[lane] = 0.0; // Inactive/invalid cells make no ODE progress.
     if (!config.use_burn) return;
+    if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        const int i = grid.is + (first + lane) % (grid.ie - grid.is);
+        if (prepare_native_burn_mean(state, grid, cell, i, bounds, record.fluid)
+                != arch::state::Status::valid) {
+            record.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
+            return;
+        }
+    }
     record.disposition = DriverBurn::check_burn_density(record.fluid, config);
     if (record.disposition != DriverBurn::BurnCellDisposition::Ready) return;
     record.prepared = DriverBurn::prepare_burn_cell(
@@ -94,7 +103,10 @@ __global__ void commit_cells(
                         bounds.density, bounds.internal_min, bounds.internal_max) != arch::state::Status::valid) {
                     record.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
                 } else {
-                state.store(cell, record.fluid);
+                // The resident record holds effective mean input, not native moments.
+                if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+                    state.eng[cell] = record.fluid.eng;
+                else state.store(cell, record.fluid);
                 for (int species = 0; species < Network::NUM_SPECIES; ++species)
                     state.set_species(species, cell, packed[species]);
                 state.enuc_rate[cell] = handoff.enuc_rate;
@@ -139,7 +151,7 @@ void execute_sparse_burn_cells(
         const int threads = executor.launch_threads();
         const int blocks = (count + threads - 1) / threads;
         sparse_burn_detail::prepare_cells<Network, Solver>
-            <<<blocks, threads, 0, stream>>>(batch, records, state, grid, first, count, burn_dt, eos, config);
+            <<<blocks, threads, 0, stream>>>(batch, records, state, grid, first, count, burn_dt, eos, config, bounds);
         sparse_burn_detail::checked(cudaGetLastError(), "Sparse burn prepare launch");
         executor.execute(count, eos, config);
         sparse_burn_detail::commit_cells<Network, Solver>

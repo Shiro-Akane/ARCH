@@ -35,6 +35,6 @@ The Plotfile workspace reads full published files. Display overviews currently c
 | [STATUS.md](STATUS.md) | Current evidence and release closure status |
 | [validation/](../validation/README.md) | Scientific references and reproduction tools |
 
-Current integration is on `compute/optim`. Older GUI loading/contract branches are retired; start each new scoped task from the latest `origin/compute/optim` and retire its branch after review and merge. See the [branch record](../docs/development/GuiBranchRetirement-20261006.zh-CN.md) and [integration/release plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md). Public RZ/CUDA JENS gates and their incomplete scientific findings remain explicit; a passing engineering checkpoint is not a completed release.
+Current integration is on `compute/optim`. Older GUI loading/contract branches are retired; start each new scoped task from the latest `origin/compute/optim` and retire its branch after review and merge. See the [branch record](../docs/development/GuiBranchRetirement-20261006.zh-CN.md) and [integration/release plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md). The [feature list](../docs/Features.md) records supported model/backend combinations.
 
 Environment prerequisites and installation: [Linux/WSL setup](../docs/guides/StudioEnvironment.md).

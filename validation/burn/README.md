@@ -131,6 +131,8 @@ with `--binary <build>/arch_burn_mainline_reference --build-dir <build>` using
 NumPy/SciPy/mpmath. It queries only the shared RHS/EOS, not ARCH's ODE algorithm
 or Jacobian, and never refreshes fixtures. Use the common memory guard for runs.
 
+For a new physical endpoint, `--derive-reference --input <initial-state.json>` accepts explicit `network`, `rho`, `interval` and `state`. The state contains every registered mass fraction, followed by temperature. This uses the bound Helmholtz table and shared RHS to derive a reference for review; it never replaces old endpoints or qualifies a production trajectory. The new reacting C/O reference meets its preallocated cross-method and endpoint first-law budgets. Both step ceilings were inactive in this adaptive integration and do not establish active step refinement. The [processed record](results/release-closure-20261009/time-reference-summary.json) identifies inputs, independence and reference errors; actual long evolution/restart remains a separate gate.
+
 Method-dependent numerical snapshots are retained as historical records with
 their original checkers and negative controls. Accuracy is assessed with
 independent references rather than treating these approximate endpoints as exact

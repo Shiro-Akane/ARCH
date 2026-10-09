@@ -116,6 +116,8 @@ public:
     state::CompletionToken execute_physical_boundary_batch(
         std::span<const backend::BackendStateAccess> accesses,
         state::StateVersion version, state::CompletionToken expected) override;
+    std::optional<backend::NativeEosFailure> validate_completed_native_eos_batch(
+        std::span<const backend::BackendStateAccess>, const state::Bounds&) override;
     backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
         std::span<const int>, state::StateRegion = state::StateRegion::Interior) override;
     void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,

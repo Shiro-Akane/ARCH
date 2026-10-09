@@ -5,10 +5,13 @@
  * The test selects a device through the backend interface and verifies
  * complete state upload, storage reuse and resource-lifetime constraints.
  */
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstdint>
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -581,6 +584,91 @@ void run_store_lifecycle(int device_count)
         "lifetime-owning RAII abort did not restore the backend device");
 }
 
+/** Real resident Native EOS inspection uses no Host field download or write.
+ * Independent constant-density V/W/I means cover two blocks, a late stale
+ * access rejected before launch, and one actual nonfinite ghost failure.
+ */
+void run_native_completed_eos()
+{
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    Grid root(amr::MAX_NG,1.,3.,-.5,.5,0.,1.,2,1,1);
+    root.geometry="cylindrical";root.dim=2;
+    std::array<amr::Block,2> blocks;
+    const double poison=std::numeric_limits<double>::quiet_NaN();
+    for(int b=0;b<2;++b) {
+        auto& block=blocks[b];block.Reset();block.level=0;block.active=true;
+        block.logical_x1=b;block.logical_x2=0;
+        block.InitGeometry(root,1./amr::BLOCK_NX,1./amr::BLOCK_NY,1.,native);
+        block.RequireNativeGeometryIdentity();const auto& grid=block.grid;
+        for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+            field->Preallocate(grid.GetTotalSize());field->InitSpecies(0);
+            for(auto* plane:{&field->rho,&field->mom_u,&field->mom_v,&field->mom_w,
+                &field->eng,&field->enuc_rate})std::fill(plane->begin(),plane->end(),poison);
+        }
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int index=grid.GetIndex(i,j,0);
+            const long double a=grid.GetFacePosL(i),z=grid.GetFacePosR(i);
+            const long double V=(z*z-a*a)/2.L,W=(z*z*z-a*a*a)/3.L;
+            const long double I=(z*z*z*z-a*a*a*a)/4.L;
+            block.fluid_state.set(index,{1.,0.,0.,double(I/W),double(.125L+I/(2.L*V))});
+            block.fluid_state.enuc_rate[index]=-0.;
+        }
+    }
+    SpeciesManager species;IdealGas eos(1.4,species);
+    const auto plan=make_boundary_plan(2);auto launch=make_launch_config();
+    launch.density_floor=1e-12;launch.minimum_internal_energy=1e-12;
+    launch.maximum_internal_energy=1e20;
+    const arch::state::Bounds bounds{launch.density_floor,launch.minimum_internal_energy,
+        launch.maximum_internal_energy};
+    const std::array handles{amr::BlockHandle{{2101},{21}},amr::BlockHandle{{2102},{21}}};
+    const std::array storage{arch::backend::StorageGeneration{2101},arch::backend::StorageGeneration{2102}};
+    const std::array bindings{arch::cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&plan},
+        arch::cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&plan}};
+    auto backend=arch::cuda::make_cuda_backend(bindings,kBackendDevice,launch,species,eos);
+    const std::array accesses{current(handles[0],storage[0]),current(handles[1],storage[1])};
+    for(int b=0;b<2;++b)for(auto region:{arch::state::StateRegion::Interior,arch::state::StateRegion::Ghost})
+        backend->enqueue_upload_slot(accesses[b],region,transfer_view(blocks[b].fluid_state));
+    backend->quiesce();const auto before=backend->counters();
+    require(!backend->validate_completed_native_eos_batch(accesses,bounds),
+        "resident Native EOS rejected independent physical V/W means");
+    const auto after=backend->counters();
+    require(after.bytes_h2d==before.bytes_h2d && after.kernel_count-before.kernel_count==2
+        && after.bytes_d2h-before.bytes_d2h==2*(sizeof(int)+sizeof(RzThermodynamics::AcceptanceDiagnostic)),
+        "resident Native EOS downloaded state or changed batch launch ownership");
+    auto stale=accesses;stale[1].storage.value+=99;
+    require_rejected<std::invalid_argument>([&]{backend->validate_completed_native_eos_batch(stale,bounds);},
+        "late stale Native patch was accepted");
+    require(backend->counters().kernel_count==after.kernel_count,
+        "Native late preflight rejection partly launched the batch");
+    auto duplicate=accesses;duplicate[1]=duplicate[0];
+    require_rejected<std::invalid_argument>([&]{backend->validate_completed_native_eos_batch(duplicate,bounds);},
+        "duplicate resident Native patch was accepted");
+    auto mixed=accesses;mixed[1].slot=arch::state::StateSlot::Next;
+    require_rejected<std::invalid_argument>([&]{backend->validate_completed_native_eos_batch(mixed,bounds);},
+        "mixed Native inspection slots were accepted");
+    require(backend->counters().kernel_count==after.kernel_count,
+        "Native duplicate/slot preflight rejection launched work");
+    const int bad=blocks[1].grid.GetIndex(0,blocks[1].grid.Js(),0);
+    const double saved=blocks[1].fluid_state.eng[bad];blocks[1].fluid_state.eng[bad]=poison;
+    backend->enqueue_upload_slot(accesses[1],arch::state::StateRegion::Ghost,transfer_view(blocks[1].fluid_state));
+    backend->quiesce();const auto failure=backend->validate_completed_native_eos_batch(accesses,bounds);
+    require(failure && failure->access.block==handles[1] && failure->diagnostic.index==bad
+        && failure->diagnostic.phase==RzThermodynamics::AcceptancePhase::provisional
+        && failure->diagnostic.status==arch::state::Status::nonfinite,
+        "resident Native EOS lost actual failed block/ghost/phase");
+    blocks[1].fluid_state.eng[bad]=saved;
+    backend->enqueue_upload_slot(accesses[1],arch::state::StateRegion::Ghost,transfer_view(blocks[1].fluid_state));
+    backend->quiesce();require(!backend->validate_completed_native_eos_batch(accesses,bounds),
+        "new resident Native inspection retained a prior launch failure");
+    for(int b=0;b<2;++b) {
+        auto observed=blocks[b].fluid_state;
+        for(auto region:{arch::state::StateRegion::Interior,arch::state::StateRegion::Ghost})
+            backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(observed));
+        backend->quiesce();require(same_bits(observed,blocks[b].fluid_state),
+            "resident Native EOS wrote physical fields or Host padding");
+    }
+}
+
 } // namespace
 
 int main()
@@ -596,6 +684,7 @@ int main()
     try {
         run_region_transfers(device_count);
         run_store_lifecycle(device_count);
+        run_native_completed_eos();
         std::cout << "CUDA store lifecycle passed\n";
         return 0;
     } catch (const std::exception& error) {

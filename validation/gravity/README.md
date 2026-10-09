@@ -13,7 +13,7 @@ preserves the original budgets. Production AMR and device evidence are linked be
 
 ## Current bounded Host RZ evidence
 
-The [current processed summary](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json) identifies shared Poisson/MG, prescribed potential/flux and user boundaries, dynamic mixed AMR, JENS initial repair/output and strict restart of eight state fields. This evidence covers the listed short Host cases; isolated continuum fields/total energy, full curved stress, Device and long trajectories require separate qualification. Original budgets and existing owners remain in place, and historical chart/input/binary identities retain their original scope.
+The [Host scenario summary](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json) records prescribed potential/flux and user boundaries, dynamic mixed AMR, JENS and strict restart. [Isolated-field convergence](results/release-closure-20261007/native-density-certificate-20261009-summary.json) and [finite-Euler continuum energy](results/release-closure-20261007/native-continuous-energy-20261009-summary.json) are accepted within their frozen scopes. The shared completed-EOS [resident service and burn consumers](results/release-closure-20261007/native-device-resident-burn-20261009-summary.json) pass actual device checks; the complete Device production chain, coarse/fine faces and long coupled runs retain separate gates. Each record preserves its actual chart, inputs, source and binary identity.
 
 ## Constant external gravity
 

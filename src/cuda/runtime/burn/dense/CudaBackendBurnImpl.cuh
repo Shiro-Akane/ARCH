@@ -18,6 +18,7 @@
 #include "cuda/runtime/burn/CudaBurnOdeTypes.h"
 
 #include "cuda/microphysics/microphysics_api.h"
+#include "cuda/microphysics/burn/NativeBurnState.cuh"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/common/ExactWarpGroup.cuh"
 #include "cuda/microphysics/network/device_network_owner.h"
@@ -64,6 +65,12 @@ __global__ void burn_cells_kernel(
     for (int species = 0; species < Network::NUM_SPECIES; ++species)
         cell.state[species] = state.species(species, cell_index);
     cell.burn_dt = burn_dt;
+    const bool native = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    bool native_input_valid = true;
+    if (native && config.use_burn)
+        native_input_valid = blocks && prepare_native_burn_mean(
+            state, grid, cell_index, i, blocks[blockIdx.y].bounds, cell.fluid)
+            == arch::state::Status::valid;
     using Ode = OdeType<OdeBinding>;
     constexpr bool shared_workspace =
         std::is_same_v<OdeBinding, dispatch::CudaBeNrBinding>;
@@ -76,14 +83,21 @@ __global__ void burn_cells_kernel(
     // A kernel fixes the network, EOS tables, controls and interval. Include
     // every remaining physical input before delegating once to the same policy.
     ExactWarpGroup group;
+    group.match(static_cast<int>(native_input_valid));
     group.match(cell.fluid.rho); group.match(cell.fluid.mom_u);
     group.match(cell.fluid.mom_v); group.match(cell.fluid.mom_w);
     group.match(cell.fluid.eng); group.match(cell.burn_dt);
     for (int species = 0; species < Network::NUM_SPECIES; ++species)
         group.match(cell.state[species]);
-    if (group.leader())
-        execute_burn_policy_cell<Network, Ode::template solver>(
-            cell, workspaces[shared_workspace ? 0 : linear], checked_eos, config, network);
+    if (group.leader()) {
+        if (native_input_valid)
+            execute_burn_policy_cell<Network, Ode::template solver>(
+                cell, workspaces[shared_workspace ? 0 : linear], checked_eos, config, network);
+        else {
+            cell.ode.status = BurnOdeStatus::EosFailure;
+            cell.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
+        }
+    }
     // Preserve the original failure latch before each lane publishes its own
     // disposition. Never let a finite fallback erase the leader's EOS failure.
     const int eos_failed = group.broadcast(statuses[linear]);
@@ -123,7 +137,9 @@ __global__ void burn_cells_kernel(
     }
 
     if (cell.interior_effect.interior_written) {
-        state.store(cell_index, cell.fluid);
+        // Grouped ordinary effective states never replace a lane's native J/W.
+        if (native) state.eng[cell_index] = cell.fluid.eng;
+        else state.store(cell_index, cell.fluid);
         for (int species = 0; species < Network::NUM_SPECIES; ++species)
             state.mass_fractions[
                 static_cast<std::size_t>(species) * state.total_size
@@ -154,6 +170,10 @@ cudaError_t launch_route(
     if (state.n_species != Network::NUM_SPECIES)
         return cudaErrorInvalidValue;
     if (config.host_blocks.empty() != (config.device_blocks == nullptr))
+        return cudaErrorInvalidValue;
+    // Native candidates require the configured bounds in an owned block record.
+    if (config.controls.use_burn && config.host_blocks.empty()
+        && grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
         return cudaErrorInvalidValue;
     // Validate every borrowed record before any wave writes. The backend has
     // already checked unique handles, generations and Current-slot ownership.

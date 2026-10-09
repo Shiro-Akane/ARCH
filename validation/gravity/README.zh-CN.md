@@ -11,7 +11,7 @@
 
 ## 当前Host RZ有限记录
 
-[当前处理后摘要](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json)保存共享Poisson/MG、指定势／通量和用户边界、动态混合AMR、JENS初态修复／输出及八状态字段严格续算的源码与执行物身份。该记录限于已列明的Host短程场景，完整孤立连续场／总能量、曲线全应力、Device及长程仍独立验收。原预算与既有owner保留；旧记录的坐标、输入或执行物身份不自动迁移。
+[Host场景摘要](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json)记录指定势／通量和用户边界、动态混合AMR、JENS与严格续算。[孤立场收敛](results/release-closure-20261007/native-density-certificate-20261009-summary.json)及[有限Euler连续能量](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)按各自冻结范围签收。共享完成态EOS的[resident服务与燃烧消费者](results/release-closure-20261007/native-device-resident-burn-20261009-summary.json)通过实际设备检查；完整Device生产链、粗细面与长时耦合保持独立出口。各记录保留实际坐标、输入、源码和执行物身份。
 
 ## 常外部重力
 
