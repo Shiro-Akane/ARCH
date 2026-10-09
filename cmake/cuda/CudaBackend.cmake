@@ -265,6 +265,10 @@ arch_configure_cuda_host_object(arch_cuda_backend_microphysics_control
     src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_store
     src/cuda/runtime/control/CudaBackendStore.cpp -g1)
+# Share the existing object target/pool while separating macro field lifetime
+# from topology namespace transactions. Both sources contain Host control only.
+target_sources(arch_cuda_backend_store PRIVATE
+    src/cuda/runtime/control/CudaBackendMacroStep.cpp)
 arch_configure_cuda_host_object(arch_cuda_backend_indicators
     src/cuda/runtime/amr/CudaBackendIndicators.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_migration

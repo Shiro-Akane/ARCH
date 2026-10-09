@@ -136,6 +136,14 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
             throw std::logic_error("Native macro endpoint requires its genuine boundary/stage owners");
         transaction.emplace(runtime,context,*hydro);
     }
+    std::array<std::optional<backend::DiffusionActivityReceipt>,2> activity_halves;
+    // Scalars are owned by this original macro attempt; any exception/retry
+    // destroys them. This guard clears only the unconsumed diagnostic scratch.
+    struct ClearActivityHalf {
+        DriverRuntime& runtime;
+        ~ClearActivityHalf() { runtime.clear_diffusion_activity_half(); }
+    } clear_activity_half{runtime};
+    runtime.clear_diffusion_activity_half();
     const double start=context.step_start_time,dt=context.step_dt,half_dt=.5*dt;
     auto& boundaries=runtime.boundaries();
     // Original symmetric split: B(dt/2), D(dt/2), H(dt), D(dt/2), B(dt/2).
@@ -152,6 +160,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
         else boundaries.configure_stage(start,boundary::BoundaryPurpose::Diffusion);
         if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(1,half_dt);
         diffusion(half_dt);
+        activity_halves[0]=runtime.take_diffusion_activity_half();
         if(auto* attempt=runtime.native_macro_retry_attempt())attempt->end_diffusion_half();
     });
     measure(CpuStage::Hydro,[&] {advance_hydro(dt);});
@@ -161,6 +170,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
         else boundaries.configure_stage(start+half_dt,boundary::BoundaryPurpose::Diffusion);
         if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(2,half_dt);
         diffusion(half_dt);
+        activity_halves[1]=runtime.take_diffusion_activity_half();
         if(auto* attempt=runtime.native_macro_retry_attempt())attempt->end_diffusion_half();
     });
     if(has_burn)measure(CpuStage::BurnSecond,[&] {
@@ -186,7 +196,10 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
                 {state::ExecutionSide::Host,coherence.interior.version,true,true});
         }
         transaction->validate_storage();
-        transaction->commit();
     }
+    // Finish potentially-throwing scalar checks before the real native commit.
+    const auto activity=runtime.prepare_diffusion_activity_promotion(activity_halves);
+    if(transaction)transaction->commit();
+    runtime.promote_diffusion_activity(activity);
 }
 } // namespace arch::driver

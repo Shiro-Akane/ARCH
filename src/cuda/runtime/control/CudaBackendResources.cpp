@@ -6,6 +6,11 @@
  * on the backend stream. Upload guards and explicit quiescence keep host staging
  * and device destinations alive through completion, including exception paths.
  * Numerical values come from the shared geometry, EOS and policy authorities.
+ * Workflow for immutable boundary payloads:
+ * 1. Resolve actual block/grid ownership and compile the original logical plan.
+ * 2. For Native blocks, cache only its final signed-axis/corner lowering.
+ * 3. Upload member-owned transfer arrays once for this storage generation.
+ * 4. Fence construction/publication before exposing or retiring these views.
  */
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
@@ -422,6 +427,19 @@ CudaBlockRuntime::CudaBlockRuntime(
                            * sizeof(DeviceBoundaryTransfer),
                        stream, counters,
                    "upload boundary transfers");
+        // The original logical plan is the sole authority for this immutable
+        // final-axis subset. Ordinary geometry keeps its existing allocation
+        // and launch route unchanged; off-axis Native owns an empty cache.
+        if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            native_axis_boundary = compile_rz_axis_boundary_plan(logical_boundary, grid);
+            if (!native_axis_boundary.transfers.empty()) {
+                native_axis_boundary_transfers.allocate(native_axis_boundary.transfers.size());
+                enqueue_cuda_metadata_upload(native_axis_boundary_transfers.get(),
+                    native_axis_boundary.transfers.data(),
+                    native_axis_boundary.transfers.size() * sizeof(DeviceBoundaryTransfer),
+                    stream, counters, "upload Native final axis transfers");
+            }
+        }
         // All asynchronous inputs/destinations are member-owned. The enclosing
         // store construction/publication fences the batch; no local Host metric
         // buffers require a normal-path fence for each individual block.

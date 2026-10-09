@@ -1115,7 +1115,33 @@ void native_rz_angular_velocity_underflow()
     std::cout<<"RZ_ANGULAR_REPRESENTATION_PASS nonzero_underflow_rejected=true zero_and_represented_preserved=true whole_stage_qualified=false\n";
 }
 
+/** Endpoint items use the supplied physical V; they never count cumulative flux. */
+void diffusion_activity_scalar_contract() {
+    const auto same=DiffFlux::diffusion_energy_activity_term(.5,2.,2.);
+    require(same.valid&&same.signed_energy_change==0.&&same.absolute_energy_change==0.,
+        "identical energy endpoints must have zero scalar activity");
+    const auto outward=DiffFlux::diffusion_energy_activity_term(.5,2.,6.);
+    const auto inward=DiffFlux::diffusion_energy_activity_term(2.,3.,2.);
+    require(outward.valid&&inward.valid&&outward.signed_energy_change==-2.
+        &&inward.signed_energy_change==2.
+        &&outward.signed_energy_change+inward.signed_energy_change==0.
+        &&outward.absolute_energy_change+inward.absolute_energy_change==4.,
+        "volume-weighted signed cancellation concealed nonzero endpoint activity");
+    const auto overflow=DiffFlux::diffusion_energy_activity_term(2.,
+        std::numeric_limits<double>::max(),0.);
+    require(!overflow.valid,"nonrepresentable activity product was accepted");
+    for(const double volume:{0.,-1.,std::numeric_limits<double>::infinity()})
+        require(!DiffFlux::diffusion_energy_activity_term(volume,2.,1.).valid,
+            "invalid true cell measure was accepted for endpoint activity");
+    require(!DiffFlux::diffusion_energy_activity_term(1.,
+            std::numeric_limits<double>::quiet_NaN(),1.).valid
+        &&!DiffFlux::diffusion_energy_activity_term(1.,2.,
+            std::numeric_limits<double>::infinity()).valid,
+        "nonfinite energy endpoint was accepted for activity");
+}
+
 void leaves() {
+    diffusion_activity_scalar_contract();
     native_rz_angular_velocity_underflow();
     native_rz_stage_prechecks();
     native_rz_diffusion_thermodynamics();

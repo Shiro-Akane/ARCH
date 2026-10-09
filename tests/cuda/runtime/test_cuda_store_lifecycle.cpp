@@ -21,10 +21,14 @@
 #include <cuda_runtime_api.h>
 
 #include "amr/exchange/BoundaryPlan.h"
+#include "amr/exchange/ExchangePlan.h"
+#include "amr/exchange/HostBoundaryPlan.h"
 #include "amr/storage/Block.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/boundary/NativeRzBoundary.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "physics/boundary/UserBoundary.h"
 #include "physics/species/Species.h"
 
 namespace {
@@ -120,7 +124,9 @@ arch::backend::HostStateTransferView transfer_view(FluidState& state)
     return {
         state.rho.data(), state.mom_u.data(), state.mom_v.data(),
         state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
-        nullptr, state.rho.size(), 0, 0};
+        state.mass_fractions.empty()?nullptr:state.mass_fractions.data(),
+        state.rho.size(),static_cast<std::size_t>(state.GetNumSpecies()),
+        state.GetNumSpecies()>0?state.rho.size():0};
 }
 
 arch::cuda::CudaLaunchConfig make_launch_config()
@@ -928,6 +934,535 @@ void run_native_reflecting_layers(int device_count)
     }
 }
 
+
+/** Account for the one public counter query made by this assertion itself.
+ * Every work field and any additional production getter remain exact: counters()
+ * increments getter_count before returning its snapshot, even on a no-op path.
+ */
+bool unchanged_counters_after_query(const arch::backend::ComputeBackend& backend,
+    arch::backend::BackendCounters expected)
+{
+    ++expected.getter_count;
+    return backend.counters()==expected;
+}
+
+/** Exercise the actual resident savepoint through public field/surface consumers.
+ * The three real cyclic rotations expose each slot as Current, then restore
+ * the original map. Host padding remains sentinel; resident padding is not
+ * observable through these region transfers and is not qualified here.
+ */
+void run_resident_macro_savepoint(int device_count)
+{
+    using namespace arch;using state::StateSlot;using state::StateRegion;
+    constexpr state::SlotRotation cycle{StateSlot::Next,StateSlot::Scratch,StateSlot::Current};
+    for(int count:{0,2}) {
+        std::array<amr::Block,2> blocks{make_block(0,1.),make_block(1,2.)};
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);auto launch=make_launch_config();
+        launch.diffusion={true,true,false,false,0.,.01,0.};
+        launch.plan.diffusion_integrator=dispatch::DiffusionIntegratorId::Rkl1;
+        const auto boundary=make_boundary_plan();
+        const std::array handles{amr::BlockHandle{{3101},{31}},amr::BlockHandle{{3102},{31}}};
+        const std::array storage{backend::StorageGeneration{3101},backend::StorageGeneration{3102}};
+        std::array<backend::BackendStateAccess,2> accesses{current(handles[0],storage[0]),current(handles[1],storage[1])};
+        for(int b=0;b<2;++b) {
+            int slot=0;for(auto* field:{&blocks[b].fluid_state,&blocks[b].state_next,&blocks[b].state_scratch}) {
+                field->InitSpecies(count);
+                for(int i=0;i<blocks[b].grid.GetTotalX();++i) {
+                    const int cell=blocks[b].grid.GetIndex(i);const double seed=100.*(1+slot)+b+.125*i;
+                    field->set(cell,{2.,.1,.2,.3,seed});field->enuc_rate[cell]=(i&1)?seed:-0.;
+                    for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;
+                }
+                ++slot;
+            }
+        }
+        const std::array bindings{cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&boundary},
+            cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&boundary}};
+        auto backend=cuda::make_cuda_backend(bindings,kBackendDevice,launch,species,eos);
+        const auto upload=[&](int b,StateSlot slot,FluidState& field) {
+            auto access=accesses[b];access.slot=slot;
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})backend->enqueue_upload_slot(access,region,transfer_view(field));
+        };
+        for(int b=0;b<2;++b) {
+            upload(b,StateSlot::Current,blocks[b].fluid_state);upload(b,StateSlot::Next,blocks[b].state_next);
+            upload(b,StateSlot::Scratch,blocks[b].state_scratch);
+        }
+        // Preallocate the genuine controls for each physical owner before pinning.
+        boundary::DiffusionBoundaryStorage controls;controls.faces[0].resize(4+count);
+        controls.faces[0][0]={boundary::ScalarBoundaryKind::OutwardFlux,.03125};
+        for(int b=0;b<2;++b)for(auto slot:{StateSlot::Current,StateSlot::Next,StateSlot::Scratch}) {
+            auto access=accesses[b];access.slot=slot;const std::array ghost{blocks[b].grid.GetIndex(0)};
+            const auto values=backend->read_boundary_cells(access,ghost,StateRegion::Ghost);
+            backend->write_boundary_cells(access,ghost,values,controls);
+        }
+        std::array<backend::BoundaryFluxPlanes,2> layout;
+        for(int b=0;b<2;++b){layout[b].block=handles[b];for(int face:{0,1})layout[b].stage[face].resize(6+count);}
+        backend->configure_boundary_flux_capture(layout,1.,0.,true);
+        const auto hydro=scheduler::make_hydro_plan(scheduler::HydroMethod::Euler).stages.front();
+        (void)backend->execute_hydro_stage_batch(accesses,hydro,1.e-4,{1,state::CompletionState::Complete});backend->quiesce();
+        const auto all_slots=[&] {
+            std::array<std::array<FluidState,3>,2> result;
+            for(int slot=0;slot<3;++slot)for(int b=0;b<2;++b) {
+                result[b][slot]=blocks[b].fluid_state;
+                for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+                    backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(result[b][slot]));
+                backend->quiesce();backend->rotate_slots(accesses[b],cycle);
+            }
+            return result;
+        };
+        const auto same_slots=[&](const auto& expected) {
+            const auto observed=all_slots();for(int b=0;b<2;++b)for(int slot=0;slot<3;++slot)
+                require(same_bits(observed[b][slot],expected[b][slot]),"resident rollback changed an original logical slot or Host padding");
+        };
+        const auto same_surfaces=[](const auto& actual,const auto& expected) {
+            require(actual.size()==expected.size(),"resident rollback changed observer owner count");
+            for(std::size_t b=0;b<actual.size();++b) {
+                require(actual[b].block==expected[b].block,"resident rollback changed observer identity");
+                for(int face=0;face<6;++face)for(int plane=0;plane<2;++plane) {
+                    const auto& a=plane?actual[b].initial[face]:actual[b].stage[face];
+                    const auto& e=plane?expected[b].initial[face]:expected[b].stage[face];
+                    require(a.size()==e.size(),"resident rollback changed observer active shape");
+                    for(std::size_t n=0;n<a.size();++n)require(std::bit_cast<std::uint64_t>(a[n])==std::bit_cast<std::uint64_t>(e[n]),
+                        "resident rollback failed to restore genuine observer plane bits");
+                }
+            }
+        };
+        const auto baseline=all_slots();const auto surfaces=backend->download_boundary_flux_capture();
+        require(std::any_of(surfaces[0].stage[0].begin(),surfaces[0].stage[0].end(),[](double x){return x!=0.;}),
+            "resident observer reference remained zero");
+        const auto rejects_no_work=[&](auto&& operation) {
+            const auto before=backend->counters();require_rejected(operation,"invalid resident savepoint/namespace accepted");
+            require(unchanged_counters_after_query(*backend,before),"resident preflight rejection enqueued partial work");
+        };
+        auto stale=accesses;stale[1].storage.value+=99;
+        rejects_no_work([&]{backend->begin_macro_state_transaction(stale);});
+        auto duplicate=accesses;duplicate[1]=duplicate[0];rejects_no_work([&]{backend->begin_macro_state_transaction(duplicate);});
+        rejects_no_work([&]{backend->begin_macro_state_transaction(std::span<const backend::BackendStateAccess>(accesses.data(),1));});
+        rejects_no_work([&]{backend->begin_macro_state_transaction({});});
+        auto wrong=accesses;wrong[1].slot=StateSlot::Next;rejects_no_work([&]{backend->begin_macro_state_transaction(wrong);});
+        const auto rkl=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,1);
+        const auto diffuse=[&]{(void)backend->execute_diffusion_stage_batch(accesses,rkl,rkl.stages.front(),1.e-4,1.,{2,state::CompletionState::Complete});};
+        std::array<std::array<FluidState,3>,2> control_reference;std::vector<backend::BoundaryFluxPlanes> surface_reference;
+        {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();control_reference=all_slots();surface_reference=backend->download_boundary_flux_capture();}
+        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
+        const auto before_save=backend->counters();
+        bool exception_seen=false;
+        try {
+            select_device_probe(device_count);auto savepoint=backend->begin_macro_state_transaction(accesses);
+            require_backend_device_selected("resident savepoint did not restore selected device");
+            const auto saved=backend->counters();
+            require(saved.bytes_h2d==before_save.bytes_h2d&&saved.bytes_d2h==before_save.bytes_d2h
+                &&saved.kernel_count==before_save.kernel_count&&saved.stream_sync_count>before_save.stream_sync_count,
+                "resident savepoint added a field transfer or false kernel");
+            rejects_no_work([&]{backend->begin_macro_state_transaction(accesses);});
+            rejects_no_work([&]{backend->begin_store_transaction({1,{31},{32}},bindings);});
+            auto changed_layout=layout;changed_layout[1].stage[0].clear();
+            rejects_no_work([&]{backend->configure_boundary_flux_capture(changed_layout,.25,.5,false);});
+            same_surfaces(backend->download_boundary_flux_capture(),surfaces);
+            auto growing=controls;growing.faces[1].resize(4+count);
+            const std::array ghost{blocks[0].grid.GetIndex(0)};
+            const auto values=backend->read_boundary_cells(accesses[0],ghost,StateRegion::Ghost);
+            auto rejected_values=values;rejected_values.conserved[0].eng+=37.;
+            rejects_no_work([&]{backend->write_boundary_cells(accesses[0],ghost,rejected_values,growing);});
+            same_slots(baseline);
+            for(int b=0;b<2;++b)for(auto slot:{StateSlot::Current,StateSlot::Next,StateSlot::Scratch}) {
+                auto changed=baseline[b][static_cast<int>(slot)];for(double& value:changed.eng)value+=17.;upload(b,slot,changed);
+            }
+            controls.faces[0][0].value=7.;
+            for(int b=0;b<2;++b){const std::array g{blocks[b].grid.GetIndex(0)};const auto v=backend->read_boundary_cells(accesses[b],g,StateRegion::Ghost);
+                backend->write_boundary_cells(accesses[b],g,v,controls);backend->rotate_slots(accesses[b],cycle);}
+            backend->configure_boundary_flux_capture(layout,.25,.5,false);diffuse();
+            // Remove a real binding after overwrite; restoring capacity alone cannot pass replay.
+            boundary::DiffusionBoundaryStorage none;backend->write_boundary_cells(accesses[0],ghost,values,none);
+            savepoint->validate_storage();throw std::runtime_error("resident rollback scope fault");
+        }catch(const std::runtime_error& error){exception_seen=std::string(error.what())=="resident rollback scope fault";if(!exception_seen)throw;}
+        require(exception_seen&&backend->counters().bytes_h2d>before_save.bytes_h2d
+            &&backend->counters().kernel_count>before_save.kernel_count,"rollback erased actual work counters");
+        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
+        {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();same_slots(control_reference);
+            same_surfaces(backend->download_boundary_flux_capture(),surface_reference);savepoint->validate_storage();savepoint->commit();}
+        same_slots(control_reference); // Commit kept the real changed output rather than restoring baseline.
+        {auto savepoint=backend->begin_macro_state_transaction(accesses);backend->copy_state_slot(accesses[0],{handles[0],storage[0],StateSlot::Scratch});}
+        same_slots(control_reference); // The same grow-only savepoint can be reused immediately.
+    }
+}
+
+/** Reduce actual resident endpoints with independent true-volume references.
+ * Only real interiors contribute. Public Ghost uploads poison all actual halos;
+ * resident allocation padding stays unobservable through this transfer owner.
+ */
+void run_resident_diffusion_activity()
+{
+    using namespace arch;using state::StateSlot;using state::StateRegion;
+    for(bool native:{false,true})for(int count:{0,2}) {
+        std::array<amr::Block,2> blocks{make_block(0,1.),make_block(1,2.)};
+        if(native) {
+            Grid root(amr::MAX_NG,1.,3.,-.5,.5,0.,1.,2,1,1);root.geometry="cylindrical";root.dim=2;
+            for(int b=0;b<2;++b){blocks[b].Reset();blocks[b].active=true;blocks[b].logical_x1=b;blocks[b].logical_x2=0;
+                blocks[b].InitGeometry(root,1./amr::BLOCK_NX,1./amr::BLOCK_NY,1.,GridMetrics::GeometrySemantics::AxisymmetricRz);}
+        }
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);const auto boundary=make_boundary_plan(native?2:1);
+        for(auto& block:blocks)for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+            field->Preallocate(block.grid.GetTotalSize());field->InitSpecies(count);
+            for(int cell=0;cell<block.grid.GetTotalSize();++cell){field->set(cell,{2.,0.,0.,0.,1.e100});field->enuc_rate[cell]=-0.;
+                for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;}
+        }
+        long double expected_signed[2]{},expected_absolute[2]{};std::uint64_t cells=0;
+        for(auto& block:blocks){const auto& g=block.grid;for(int k=g.Ks();k<g.Ke();++k)for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const int cell=g.GetIndex(i,j,k);const double difference=((i+j)&1)?.125:-.125;
+            block.fluid_state.eng[cell]=20.;block.state_next.eng[cell]=20.-difference;block.state_scratch.eng[cell]=19.75;
+            const long double volume=native?std::acos(-1.L)*(static_cast<long double>(g.GetFacePosR(i))*g.GetFacePosR(i)
+                -static_cast<long double>(g.GetFacePosL(i))*g.GetFacePosL(i))
+                    *(static_cast<long double>(g.GetAxialFacePosR(j))-g.GetAxialFacePosL(j))
+                :static_cast<long double>(g.dx1);
+            expected_signed[0]+=volume*difference;expected_absolute[0]+=volume*std::abs(difference);
+            expected_signed[1]+=volume*.25L;expected_absolute[1]+=volume*.25L;++cells;
+        }}
+        const std::array handles{amr::BlockHandle{{3201},{32}},amr::BlockHandle{{3202},{32}}};
+        const std::array storage{backend::StorageGeneration{3201},backend::StorageGeneration{3202}};
+        const std::array bindings{cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&boundary},cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&boundary}};
+        auto backend=cuda::make_cuda_backend(bindings,kBackendDevice,make_launch_config(),species,eos);
+        const std::array accesses{current(handles[0],storage[0]),current(handles[1],storage[1])};
+        const auto upload=[&](int b,StateSlot slot,FluidState& field){auto access=accesses[b];access.slot=slot;
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})backend->enqueue_upload_slot(access,region,transfer_view(field));};
+        for(int b=0;b<2;++b){upload(b,StateSlot::Current,blocks[b].fluid_state);upload(b,StateSlot::Next,blocks[b].state_next);upload(b,StateSlot::Scratch,blocks[b].state_scratch);}backend->quiesce();
+        const auto no_work=[&](auto&& operation){const auto before=backend->counters();require_rejected(operation,"invalid diffusion activity owner accepted");
+            require(unchanged_counters_after_query(*backend,before),"diffusion activity preflight partly enqueued work");};
+        const auto empty_before=backend->counters();const auto empty=backend->reduce_diffusion_energy_activity_batch({},StateSlot::Next);
+        require(empty.cells==0&&empty.signed_energy_change==0.&&empty.absolute_energy_change==0.&&unchanged_counters_after_query(*backend,empty_before),"empty activity batch performed work");
+        auto stale=accesses;stale[1].storage.value+=99;no_work([&]{backend->reduce_diffusion_energy_activity_batch(stale,StateSlot::Next);});
+        auto duplicate=accesses;duplicate[1]=duplicate[0];no_work([&]{backend->reduce_diffusion_energy_activity_batch(duplicate,StateSlot::Next);});
+        auto mixed=accesses;mixed[1].slot=StateSlot::Next;no_work([&]{backend->reduce_diffusion_energy_activity_batch(mixed,StateSlot::Next);});
+        for(auto slot:{StateSlot::Current,static_cast<StateSlot>(255)})no_work([&]{backend->reduce_diffusion_energy_activity_batch(accesses,slot);});
+        int reference=0;for(auto slot:{StateSlot::Next,StateSlot::Scratch}) {
+            const auto before=backend->counters();const auto result=backend->reduce_diffusion_energy_activity_batch(accesses,slot);const auto after=backend->counters();
+            const long double tolerance=64.L*std::numeric_limits<double>::epsilon()*std::max(1.L,expected_absolute[reference]);
+            require(result.cells==cells&&std::abs(result.signed_energy_change-expected_signed[reference])<=tolerance
+                &&std::abs(result.absolute_energy_change-expected_absolute[reference])<=tolerance,"resident endpoint activity lost independent true volume/cell ownership");
+            require(after.kernel_count==before.kernel_count+1&&after.bytes_h2d>before.bytes_h2d
+                &&after.bytes_d2h>before.bytes_d2h,"activity did not report actual compact metadata/result work");
+            std::cout<<"RESIDENT_DIFFUSION_ACTIVITY chart="<<(native?"RZ":"Cartesian")<<" species="<<count
+                <<" retained_slot="<<static_cast<int>(slot)<<" h2d="<<after.bytes_h2d-before.bytes_h2d
+                <<" d2h="<<after.bytes_d2h-before.bytes_d2h<<" kernels="<<after.kernel_count-before.kernel_count<<'\n';++reference;
+        }
+        // Reading an endpoint receipt never mutates any real U/X/ENUC or host padding.
+        constexpr state::SlotRotation cycle{StateSlot::Next,StateSlot::Scratch,StateSlot::Current};
+        for(int slot=0;slot<3;++slot)for(int b=0;b<2;++b){auto observed=slot==0?blocks[b].fluid_state:slot==1?blocks[b].state_next:blocks[b].state_scratch;
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(observed));backend->quiesce();
+            const auto& original=slot==0?blocks[b].fluid_state:slot==1?blocks[b].state_next:blocks[b].state_scratch;
+            require(same_bits(observed,original),"resident activity modified an endpoint field or host padding");backend->rotate_slots(accesses[b],cycle);}
+        const auto& g=blocks[1].grid;const int bad=g.GetIndex(g.Is(),g.Js(),g.Ks());
+        blocks[1].fluid_state.eng[bad]=std::numeric_limits<double>::quiet_NaN();upload(1,StateSlot::Current,blocks[1].fluid_state);backend->quiesce();
+        require_rejected<std::runtime_error>([&]{backend->reduce_diffusion_energy_activity_batch(accesses,StateSlot::Next);},"nonfinite actual endpoint accepted");
+        blocks[1].fluid_state.eng[bad]=20.;upload(1,StateSlot::Current,blocks[1].fluid_state);backend->quiesce();
+        require(backend->reduce_diffusion_energy_activity_batch(accesses,StateSlot::Next).cells==cells,"activity scratch did not recover after nonfinite endpoint");
+        backend->copy_state_slot_batch(accesses,StateSlot::Scratch);const auto zero=backend->reduce_diffusion_energy_activity_batch(accesses,StateSlot::Scratch);
+        require(zero.cells==cells&&zero.signed_energy_change==0.&&zero.absolute_energy_change==0.,"identical actual resident energy endpoints had nonzero activity");
+    }
+}
+
+
+/** Exercise the actual final Native axis/corner service after a second exchange.
+ * Two axial neighbor blocks share r=0. A fresh interior donor and real second
+ * exchange distinguish final signed completion from stale first-stage images.
+ * The existing Host axis-only executor owns parity and corner references; this
+ * is resident boundary transport, not a completed Runtime/EOS acceptance.
+ */
+void run_native_final_axis_backend(int device_count)
+{
+    using namespace arch;using state::StateSlot;using state::StateRegion;
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    constexpr state::CompletionToken token{17,state::CompletionState::Complete};
+    const auto fill=[](amr::Block& block,int count,int owner) {
+        const auto& g=block.grid;
+        for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+            field->Preallocate(g.GetTotalSize());field->InitSpecies(count);
+            // Host allocation tails remain known sentinels. Region transfers
+            // do not expose or initialize resident allocation-only padding.
+            for(auto* plane:{&field->rho,&field->mom_u,&field->mom_v,&field->mom_w,&field->eng,&field->enuc_rate})
+                std::fill(plane->begin(),plane->end(),-98765.);
+            for(int k=0;k<g.GetTotalZ();++k)for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+                const int cell=g.GetIndex(i,j,k);const double code=10000.*owner+100.*j+i;
+                field->set(cell,{100.+code,3.+code,5.+2.*code,7.+3.*code,100000.+code});
+                field->enuc_rate[cell]=(i+j)&1?9.+4.*code:-0.;
+                for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;
+                if(i<g.Is()&&g.x1_min==0.) {
+                    field->set(cell,{-1234.,-2345.,-3456.,-4567.,-5678.});field->enuc_rate[cell]=-6789.;
+                    for(int s=0;s<count;++s)field->X(s,cell)=-7.-s;
+                }
+            }
+            const int cell=g.GetIndex(g.Is(),g.dim>=2?g.Js()+1:g.Js(),g.Ks());field->mom_u[cell]=0.;field->mom_w[cell]=-0.;
+        }
+    };
+    for(int count:{0,2}) {
+        Grid root(amr::MAX_NG,0.,1.,-1.,1.,0.,1.,1,2,1);root.geometry="cylindrical";root.dim=2;
+        std::array<amr::Block,2> blocks;
+        for(int b=0;b<2;++b) {
+            blocks[b].Reset();blocks[b].active=true;blocks[b].logical_x1=0;blocks[b].logical_x2=b;
+            blocks[b].InitGeometry(root,1./amr::BLOCK_NX,1./amr::BLOCK_NY,1.,native);
+            blocks[b].RequireNativeGeometryIdentity();fill(blocks[b],count,b);
+        }
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);
+        auto input=make_boundary_plan(2).input();input.faces[0]=boundary::BoundaryType::RzAxis;
+        const auto axis=boundary::make_boundary_plan(input);
+        const std::array handles{amr::BlockHandle{{3301},{33}},amr::BlockHandle{{3302},{33}}};
+        const std::array storage{backend::StorageGeneration{3301},backend::StorageGeneration{3302}};
+        const std::array bindings{cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&axis},
+            cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&axis}};
+        auto backend=cuda::make_cuda_backend(bindings,kBackendDevice,make_launch_config(),species,eos);
+        const std::array accesses{current(handles[0],storage[0]),current(handles[1],storage[1])};
+        const auto materialize=[&] {
+            std::array<FluidState,2> result{blocks[0].fluid_state,blocks[1].fluid_state};
+            for(int b=0;b<2;++b)for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+                backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(result[b]));
+            backend->quiesce();return result;
+        };
+        for(int b=0;b<2;++b)for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+            backend->enqueue_upload_slot(accesses[b],region,transfer_view(blocks[b].fluid_state));backend->quiesce();
+        require(backend->execute_native_axis_boundary_batch(accesses,{1},{1,state::CompletionState::Complete})
+            ==state::CompletionToken{1,state::CompletionState::Complete},"initial axis completion lost its actual token");
+        std::array<amr::SameLevelTopologyEntry,2> topology;
+        for(int b=0;b<2;++b){topology[b].logical={2,0,0,static_cast<std::uint32_t>(b),0};topology[b].handle=handles[b];}
+        topology[0].neighbors[3]=topology[1].logical;topology[1].neighbors[2]=topology[0].logical;
+        const auto exchange=amr::make_same_level_exchange_plan(topology,2,{amr::BLOCK_NX,amr::BLOCK_NY,1},amr::MAX_NG,handles[0].epoch);
+        (void)backend->execute_same_level_exchange(accesses,exchange,StateSlot::Current,{1},{2,state::CompletionState::Complete});
+        for(int b=0;b<2;++b) {
+            const auto& g=blocks[b].grid;auto& field=blocks[b].fluid_state;
+            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+                const int cell=g.GetIndex(i,j,0);field.eng[cell]+=1000.;field.enuc_rate[cell]+=2000.;
+                if(field.mom_u[cell]!=0.)field.mom_u[cell]+=30.;
+                if(field.mom_w[cell]!=0.)field.mom_w[cell]+=70.;
+            }
+            backend->enqueue_upload_slot(accesses[b],StateRegion::Interior,transfer_view(field));
+        }
+        backend->quiesce();
+        (void)backend->execute_same_level_exchange(accesses,exchange,StateSlot::Current,{2},{3,state::CompletionState::Complete});
+        // Fresh poison is confined to actual negative-r axis/corner ghosts;
+        // positive-r exchanged donors and outer user-style values stay resident.
+        for(int b=0;b<2;++b) {
+            const auto& g=blocks[b].grid;std::vector<int> indices;
+            backend::BoundaryCells values;values.species_count=static_cast<std::size_t>(count);
+            for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.Is();++i) {
+                indices.push_back(g.GetIndex(i,j,0));values.conserved.push_back({-1234.,-2345.,-3456.,-4567.,-5678.});
+                values.enuc.push_back(-6789.);for(int s=0;s<count;++s)values.composition.push_back(-7.-s);
+            }
+            backend->write_boundary_cells(accesses[b],indices,values,{});
+        }
+        const auto before_fields=materialize();auto reference=before_fields;
+        for(int b=0;b<2;++b)boundary::host::execute_rz_axis(axis,
+            boundary::host::compile(axis,boundary::host::make_layout(blocks[b].grid)),reference[b]);
+        const auto reject_before_work=[&](auto&& operation) {
+            const auto before=backend->counters();require_rejected(operation,"invalid final Native axis batch accepted");
+            require(unchanged_counters_after_query(*backend,before),"final Native axis batch preflight launched or transferred partial work");
+        };
+        auto stale=accesses;stale[1].storage.value+=99;reject_before_work([&]{backend->execute_native_axis_boundary_batch(stale,{3},token);});
+        auto duplicate=accesses;duplicate[1]=duplicate[0];reject_before_work([&]{backend->execute_native_axis_boundary_batch(duplicate,{3},token);});
+        auto mixed=accesses;mixed[1].slot=StateSlot::Next;reject_before_work([&]{backend->execute_native_axis_boundary_batch(mixed,{3},token);});
+        auto invalid=accesses;invalid[1].slot=static_cast<StateSlot>(255);reject_before_work([&]{backend->execute_native_axis_boundary_batch(invalid,{3},token);});
+        reject_before_work([&]{backend->execute_native_axis_boundary_batch(accesses,{},token);});
+        reject_before_work([&]{backend->execute_native_axis_boundary_batch(accesses,{3},{17,state::CompletionState::Pending});});
+        reject_before_work([&]{backend->execute_native_axis_boundary_batch(accesses,{3},{0,state::CompletionState::Complete});});
+        const auto rejected_fields=materialize();for(int b=0;b<2;++b)require(same_bits(rejected_fields[b],before_fields[b]),
+            "failed late Native axis preflight changed resident logical fields");
+        select_device_probe(device_count);const auto before=backend->counters();
+        require(backend->execute_native_axis_boundary_batch(accesses,{3},token)==token,"final Native axis lost joined completion token");
+        require_backend_device_selected("final Native axis completion did not select its device");
+        const auto after=backend->counters();
+        require(after.kernel_count-before.kernel_count==4&&after.bytes_h2d==before.bytes_h2d&&after.bytes_d2h==before.bytes_d2h
+            &&after.stream_sync_count>before.stream_sync_count,"final Native axis reran physical seeds or uploaded/downloaded cached metadata");
+        const auto observed=materialize();for(int b=0;b<2;++b)require(same_bits(observed[b],reference[b]),
+            "final resident axis/corner differs from original Host signed executor or rewrites outer/interior user values");
+        // Repeating the cached signed completion is idempotent and adds exactly
+        // the two original nonempty X/Y phases per actual axis owner.
+        const auto repeat_before=backend->counters();require(backend->execute_native_axis_boundary_batch(accesses,{3},token)==token,"cached final Native axis lost completion");
+        const auto repeat_after=backend->counters();require(repeat_after.kernel_count-repeat_before.kernel_count==4
+            &&repeat_after.bytes_h2d==repeat_before.bytes_h2d&&repeat_after.bytes_d2h==repeat_before.bytes_d2h,"cached final Native axis reuploaded metadata");
+        const auto repeated=materialize();for(int b=0;b<2;++b)require(same_bits(repeated[b],reference[b]),"signed axis completion is not idempotent");
+        // Ordinary and positive-r Native owners have distinct real factories;
+        // neither a caller enum nor an empty axis list creates Native authority.
+        for(bool ordinary:{false,true}) {
+            amr::Block other=make_block(0,1.);
+            if(!ordinary){Grid off_root(amr::MAX_NG,1.,2.,-.5,.5,0.,1.,1,1,1);off_root.geometry="cylindrical";off_root.dim=2;
+                other.Reset();other.active=true;other.InitGeometry(off_root,1./amr::BLOCK_NX,1./amr::BLOCK_NY,1.,native);other.RequireNativeGeometryIdentity();}
+            fill(other,count,5);const auto other_boundary=make_boundary_plan(ordinary?1:2);
+            const amr::BlockHandle handle{{3401},{34}};const backend::StorageGeneration generation{3401};
+            auto owner=cuda::make_cuda_backend(other,handle,generation,kBackendDevice,make_launch_config(),species,other_boundary,eos);
+            const std::array access{current(handle,generation)};
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})owner->enqueue_upload_slot(access[0],region,transfer_view(other.fluid_state));owner->quiesce();
+            const auto original=other.fluid_state;const auto initial=owner->counters();
+            if(ordinary){require_rejected([&]{owner->execute_native_axis_boundary_batch(access,{1},token);},"ordinary owner received a Native final-axis grant");
+                require(unchanged_counters_after_query(*owner,initial),"ordinary final-axis refusal enqueued work");}
+            else {require(owner->execute_native_axis_boundary_batch(access,{1},token)==token,"off-axis no-op lost token");const auto final=owner->counters();
+                require(final.kernel_count==initial.kernel_count&&final.bytes_h2d==initial.bytes_h2d&&final.bytes_d2h==initial.bytes_d2h,
+                    "off-axis Native final completion wrote physical seed ghosts or transferred metadata");}
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})owner->enqueue_materialize_host_current(access[0],region,transfer_view(other.fluid_state));owner->quiesce();
+            require(same_bits(other.fluid_state,original),"ordinary refusal/off-axis Native no-op changed actual logical fields or Host padding");
+        }
+    }
+}
+
+/** Compare actual ordered Native Device candidates with the existing Host owner.
+ * Callback preparation remains read-only, whole x1 layers precede x2 corners,
+ * and the published compact ghosts retain donor ENUC exactly. Public transfers
+ * observe logical cells only; resident padding and full Runtime are unqualified.
+ */
+void run_native_ordered_device_boundary(int device_count)
+{
+    using namespace arch;using state::StateRegion;
+    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto close=[](double actual,double expected) {
+        require(std::isfinite(actual)&&std::abs(actual-expected)
+            <=64.*std::numeric_limits<double>::epsilon()*std::max(1.,std::abs(expected)),
+            "ordered Native Device boundary differs from the original Host 64-epsilon reference");
+    };
+    for(int count:{0,2})for(bool user:{false,true}) {
+        SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+        config.grid.x1_min=1.;config.grid.x1_max=2.;config.grid.x2_min=-.5;config.grid.x2_max=.5;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type=user?"user":"reflecting";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type=user?"user":"reflecting";
+        config.numerics.sml_rho=config.numerics.min_eint=1.e-14;config.numerics.max_eint=1.e12;
+        config.physics.diffusion.use_diffusion=config.physics.diffusion.use_thermal_diffusion=true;
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);const double cv=count?1.:IdealGasView::default_specific_heat_cv;
+        Grid root(amr::MAX_NG,1.,2.,-.5,.5,0.,1.,1,1,1);root.geometry="cylindrical";root.dim=2;
+        amr::Block block;block.Reset();block.active=true;
+        block.InitGeometry(root,1./amr::BLOCK_NX,1./amr::BLOCK_NY,1.,native);block.RequireNativeGeometryIdentity();
+        const auto& grid=block.grid;require(grid.ng==amr::MAX_NG&&grid.x1_min>0.,"ordered BC fixture lost full off-axis halo");
+        for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+            field->Preallocate(grid.GetTotalSize());field->InitSpecies(count);
+            for(int cell=0;cell<grid.GetTotalSize();++cell){field->set(cell,{4.,0.,0.,0.,40.*cv});field->enuc_rate[cell]=-999.;
+                for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;}
+            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                const int cell=grid.GetIndex(i,j,0);const bool interior=i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je();
+                const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i),v=(b*b-a*a)/2.;
+                const double rho=user&&!interior?4.:double(1.L+(b*b*b-a*a*a)/(192.L*v));
+                field->set(cell,{rho,user?0.:.1*rho,user?0.:.2*rho,0.,(user?10.*cv:20.*cv)*rho});
+                field->enuc_rate[cell]=(i+j)&1?100.*j+i:-0.;
+            }
+        }
+        const auto seed=block.fluid_state;boundary::BoundaryPurpose purpose=boundary::BoundaryPurpose::Hydro;
+        int fault=0,calls=0;std::array<int,2> axis_calls{};
+        boundary::ResolvedUserBoundaries callbacks;callbacks.identity="ordered-native-actual-store";
+        if(user)callbacks.physical=[&](const boundary::PhysicalBoundaryContext& context) {
+            require(context.time==.375&&context.purpose==purpose,"actual callback lost selected stage time/purpose");
+            const int axis=static_cast<int>(context.axis);++calls;++axis_calls[axis];
+            if((fault==1&&calls==11)||(fault==2&&context.axis==boundary::BoundaryAxis::X2))
+                throw std::runtime_error("ordered callback scope fault");
+            if(context.axis==boundary::BoundaryAxis::X2) {
+                close(context.interior.rho,1.+context.ghost_point.r_cy/64.);
+                close(context.interior.temperature,10.);
+            }
+            PrimitiveData point;point.rho=1.+context.ghost_point.r_cy/64.;point.SetTemperature(10.);
+            if(count)point.mass_fractions={.25,.75};
+            boundary::PhysicalBoundaryData data;data.hydro=point;
+            if(purpose==boundary::BoundaryPurpose::Diffusion)
+                data.temperature={boundary::ScalarBoundaryKind::NormalGradient,0.};
+            return data;
+        };
+        boundary::ScopedUserBoundarySelection selected(callbacks,config,species);
+        BCHandler handler(config,native);handler.bind(eos,species);
+        const amr::BlockHandle handle{{3501},{35}};const backend::StorageGeneration generation{3501};
+        auto launch=make_launch_config();launch.density_floor=config.numerics.sml_rho;
+        launch.minimum_internal_energy=config.numerics.min_eint;launch.maximum_internal_energy=config.numerics.max_eint;
+        auto owner=cuda::make_cuda_backend(block,handle,generation,kBackendDevice,launch,species,handler.logical_plan(),eos);
+        const auto access=current(handle,generation);
+        const auto upload=[&]{for(auto role:{StateRegion::Interior,StateRegion::Ghost})
+            owner->enqueue_upload_slot(access,role,transfer_view(block.fluid_state));owner->quiesce();};
+        const auto materialize=[&]{auto result=seed;for(auto role:{StateRegion::Interior,StateRegion::Ghost})
+            owner->enqueue_materialize_host_current(access,role,transfer_view(result));owner->quiesce();return result;};
+        const auto reject_no_work=[&](auto&& operation){const auto before=owner->counters();
+            require_rejected(operation,"Native Device BC accepted candidate/store frame drift");
+            require(unchanged_counters_after_query(*owner,before),"Native Device BC frame rejection enqueued work");};
+        for(auto role:{boundary::BoundaryPurpose::Hydro,boundary::BoundaryPurpose::Diffusion}) {
+            purpose=role;handler.configure_stage(.375,role);block.fluid_state=seed;upload();
+            auto reference=seed;calls=0;axis_calls={};auto host=handler.prepare_native(reference,grid);
+            handler.validate_native_candidate(host,reference,grid);require(same_bits(reference,seed),"Host reference preparation wrote its seed");
+            handler.publish_native_noexcept(std::move(host),reference);const auto expected_calls=axis_calls;
+            calls=0;axis_calls={};select_device_probe(device_count);const auto before=owner->counters();
+            auto candidate=handler.prepare_native_device(*owner,access,grid);const auto prepared=owner->counters();
+            require_backend_device_selected("Native Device BC preparation did not select its real backend device");
+            require(prepared.kernel_count-before.kernel_count==2,"ordered BC must use exactly two reflecting layers or two real role gathers");
+            if(user) {
+                const auto logical_cells=static_cast<std::uint64_t>(grid.GetTotalX())*grid.GetTotalY();
+                require(axis_calls==expected_calls&&axis_calls[0]>0&&axis_calls[1]>0&&calls>2,
+                    "ordered callback node count/prefix differs between Host and real Device preparation");
+                require(prepared.bytes_d2h-before.bytes_d2h<=logical_cells*(6+count)*sizeof(double)
+                    &&prepared.bytes_h2d-before.bytes_h2d<=logical_cells*sizeof(int),
+                    "user preparation gathered beyond the unique real logical packed footprint");
+            }
+            require(same_bits(materialize(),seed),"read-only Device BC preparation changed a resident logical field");
+            handler.validate_native_device_candidate(candidate,*owner,access,grid);
+            const auto context=handler.snapshot_stage_context();handler.configure_stage(.5,role);
+            reject_no_work([&]{handler.validate_native_device_candidate(candidate,*owner,access,grid);});handler.restore_stage_context_noexcept(context);
+            auto stale=access;++stale.storage.value;
+            reject_no_work([&]{handler.validate_native_device_candidate(candidate,*owner,stale,grid);});
+            reject_no_work([&]{(void)handler.prepare_native_device(*owner,stale,grid);});
+            auto other_grid=grid;reject_no_work([&]{handler.validate_native_device_candidate(candidate,*owner,access,other_grid);});
+            const double root_upper=config.grid.x1_max;config.grid.x1_max=std::nextafter(root_upper,3.);
+            reject_no_work([&]{handler.validate_native_device_candidate(candidate,*owner,access,grid);});config.grid.x1_max=root_upper;
+            const double patch_upper=block.grid.x1_max;block.grid.x1_max=std::nextafter(patch_upper,3.);
+            reject_no_work([&]{handler.validate_native_device_candidate(candidate,*owner,access,grid);});block.grid.x1_max=patch_upper;
+            require(same_bits(materialize(),seed),"candidate frame rejection changed resident fields");
+            const auto publish_before=owner->counters();handler.publish_native_device(std::move(candidate),*owner,access,grid);
+            const auto published=owner->counters();require(published.kernel_count==publish_before.kernel_count+1,"ordered publication did not use one compact ghost scatter");
+            const auto actual=materialize();
+            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                const int cell=grid.GetIndex(i,j,0);const auto a=actual.get(cell),e=reference.get(cell);
+                const std::array av{a.rho,a.mom_u,a.mom_v,a.mom_w,a.eng},ev{e.rho,e.mom_u,e.mom_v,e.mom_w,e.eng};
+                for(std::size_t f=0;f<av.size();++f)close(av[f],ev[f]);
+                require(std::bit_cast<std::uint64_t>(actual.enuc_rate[cell])==std::bit_cast<std::uint64_t>(reference.enuc_rate[cell]),"ordered publication changed exact source ENUC inheritance");
+                for(int s=0;s<count;++s)close(actual.X(s,cell),reference.X(s,cell));
+                if(i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je()) {
+                    const auto u=seed.get(cell);const std::array original{u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng};
+                    for(std::size_t f=0;f<av.size();++f)require(std::bit_cast<std::uint64_t>(av[f])==std::bit_cast<std::uint64_t>(original[f]),"boundary publication wrote a real interior");
+                    for(int k=0;k<count;++k)require(std::bit_cast<std::uint64_t>(actual.X(k,cell))==std::bit_cast<std::uint64_t>(seed.X(k,cell)),"boundary publication wrote real interior composition");
+                }
+            }
+            std::cout<<"NATIVE_ORDERED_BC species="<<count<<" user="<<user<<" purpose="<<static_cast<int>(role)
+                <<" prepare_kernels="<<prepared.kernel_count-before.kernel_count<<" h2d="<<prepared.bytes_h2d-before.bytes_h2d
+                <<" d2h="<<prepared.bytes_d2h-before.bytes_d2h<<'\n';
+            if(user)for(int failing:{1,2}) {
+                block.fluid_state=seed;upload();fault=failing;calls=0;axis_calls={};
+                require_rejected<std::runtime_error>([&]{(void)handler.prepare_native_device(*owner,access,grid);},"later sibling/axis callback fault was accepted");
+                fault=0;require(same_bits(materialize(),seed),"failed later sibling/axis preparation partly published resident ghosts");
+            }
+            block.fluid_state=seed;upload();calls=0;axis_calls={};auto invalidated=handler.prepare_native_device(*owner,access,grid);
+            handler.bind(eos,species);reject_no_work([&]{handler.validate_native_device_candidate(invalidated,*owner,access,grid);});
+            require(same_bits(materialize(),seed),"binding drift wrote resident fields");
+        }
+    }
+    // An actual internal dyadic patch has no physical surfaces even though its
+    // root has four reflecting walls. Empty prepare/validate/publish is strictly
+    // metadata-only: no species getter, controls, transfer, launch or sync.
+    for(int count:{0,2}) {
+        SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+        config.grid.nblockx1=config.grid.nblockx2=3;config.grid.nblockx3=0;
+        config.grid.x1_min=1.;config.grid.x1_max=4.;config.grid.x2_min=0.;config.grid.x2_max=3.;
+        config.numerics.sml_rho=config.numerics.min_eint=1.e-14;config.numerics.max_eint=1.e12;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+        config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="reflecting";
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);boundary::ScopedUserBoundarySelection selection({},config,species);
+        BCHandler handler(config,native);handler.bind(eos,species);handler.configure_stage(.375,boundary::BoundaryPurpose::Hydro);
+        Grid root(amr::MAX_NG,1.,4.,0.,3.,0.,1.,3,3,1);root.geometry="cylindrical";root.dim=2;
+        amr::Block block;block.Reset();block.active=true;block.logical_x1=block.logical_x2=1;
+        block.InitGeometry(root,1./amr::BLOCK_NX,1./amr::BLOCK_NY,1.,native);block.RequireNativeGeometryIdentity();
+        for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}){field->Preallocate(block.grid.GetTotalSize());field->InitSpecies(count);}
+        const amr::BlockHandle handle{{3601},{36}};const backend::StorageGeneration generation{3601};
+        auto launch=make_launch_config();launch.density_floor=config.numerics.sml_rho;
+        launch.minimum_internal_energy=config.numerics.min_eint;launch.maximum_internal_energy=config.numerics.max_eint;
+        auto owner=cuda::make_cuda_backend(block,handle,generation,kBackendDevice,launch,species,handler.logical_plan(),eos);
+        const auto access=current(handle,generation);const auto before=owner->counters();
+        auto candidate=handler.prepare_native_device(*owner,access,block.grid);
+        handler.validate_native_device_candidate(candidate,*owner,access,block.grid);
+        handler.publish_native_device(std::move(candidate),*owner,access,block.grid);
+        require(unchanged_counters_after_query(*owner,before),"empty physical patch performed transfer/sync/control/getter/kernel work");
+    }
+}
+
 } // namespace
 
 int main()
@@ -945,6 +1480,10 @@ int main()
         run_store_lifecycle(device_count);
         run_native_completed_eos();
         run_native_reflecting_layers(device_count);
+        run_resident_macro_savepoint(device_count);
+        run_resident_diffusion_activity();
+        run_native_final_axis_backend(device_count);
+        run_native_ordered_device_boundary(device_count);
         std::cout << "CUDA store lifecycle passed\n";
         return 0;
     } catch (const std::exception& error) {

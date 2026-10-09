@@ -6,6 +6,9 @@
  * device views. Runtime-owned scratch and transfer metadata remain alive through
  * stream completion; ghost and slot visibility follow the common driver contract.
  * Flux, CFL, interpolation and geometry formulas stay in their shared owners.
+ * Final Native boundary workflow: preflight every actual block/slot/cache,
+ * enqueue only cached signed-axis/corner copies after completed donor exchange,
+ * then join once. Runtime performs completed-cell EOS and ghost publication.
  */
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
@@ -16,6 +19,7 @@
 
 #include <cmath>
 #include <string>
+#include <utility>
 
 namespace arch::cuda {
 namespace {
@@ -364,6 +368,84 @@ state::CompletionToken CudaBackend::execute_physical_boundary_batch(
     quiesce();
     work_guard.completed = true;
     impl_->runtime_counters.kernel_count += static_cast<std::uint64_t>(kernels);
+    return expected;
+}
+
+/**
+ * @brief Complete final Native signed-axis and corner copies on actual storage.
+ *
+ * The immutable cache was lowered in the actual block factory from its original
+ * logical boundary and grid, never from caller-selected boundary controls.
+ * Validate the complete request batch before the first enqueue. Each nonempty
+ * cache reuses launch_boundary_plan through the original narrow CUDA wrapper:
+ * its X phase completes radial axis rows, and the following Y launch completes
+ * shared corner operations on the already exchanged positive-r axial ghosts.
+ * Empty off-axis caches enqueue no work. The returned original token records
+ * only successful synchronous execution, not EOS acceptance or GhostValid.
+ */
+state::CompletionToken CudaBackend::execute_native_axis_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected)
+{
+    validate_hydro_batch_accesses(accesses, accesses.empty()
+        ? state::StateSlot::Current : accesses.front().slot);
+    if (!state::is_valid(version) || !complete_token(expected))
+        throw std::invalid_argument("invalid Native final axis completion contract");
+    if (accesses.empty()) return expected;
+    if (accesses.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::overflow_error("Native final axis batch exceeds launch index extent");
+
+    // Only actual requested views and their existing immutable caches are
+    // borrowed. No metadata buffer or caller policy is uploaded per call.
+    std::vector<std::pair<DeviceStateView, const CudaBlockRuntime*>> launches;
+    launches.reserve(accesses.size());
+    for (const auto access : accesses) {
+        const auto& block = impl_->require_block(access);
+        const DeviceStateView selected = block.require_access(access);
+        const auto& cache = block.native_axis_boundary;
+        if (!valid_hydro_grid(block.grid)
+            || block.grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+            || !valid_hydro_view(selected)
+            || selected.total_size != block.grid.total_size
+            || selected.n_species != impl_->species_count
+            || cache.total_size != block.grid.total_size
+            || cache.logical_fingerprint != block.boundary.logical_fingerprint
+            || block.native_axis_boundary_transfers.size() != cache.transfers.size())
+            throw std::invalid_argument("Native final axis cache differs from the actual block owner");
+        if (cache.transfers.empty()) {
+            if (block.grid.x1_min == 0. || block.native_axis_boundary_transfers.get() != nullptr)
+                throw std::logic_error("Native axis block lost its original transfer cache");
+            for (std::size_t phase = 0; phase < cache.phases.size(); ++phase)
+                if (cache.phases[phase].id != static_cast<boundary::BoundaryPhaseId>(phase)
+                    || cache.phases[phase].first != 0 || cache.phases[phase].count != 0)
+                    throw std::logic_error("Native off-axis cache is not the empty original subset");
+            continue;
+        }
+        if (block.grid.x1_min != 0.)
+            throw std::logic_error("Native off-axis block owns an axis transfer cache");
+        check_cuda(validate_boundary_launch(selected, block.native_axis_boundary_transfers.get(), cache),
+            "validate Native final axis launch shape");
+        launches.emplace_back(selected, &block);
+    }
+    // No new work exists for a fully off-axis request; this is not the final
+    // Runtime/macro join authority and does not invent an unnecessary fence.
+    if (launches.empty()) return expected;
+
+    impl_->select_device();
+    CudaQuiescenceGuard work_guard{*impl_};
+    for (const auto& [selected, block] : launches) {
+        check_cuda(launch_cuda_backend_boundary_plan(selected,
+            block->native_axis_boundary_transfers.get(), block->native_axis_boundary,
+            impl_->stream.get()), "launch Native final axis boundary");
+        // Record successful actual enqueues immediately, so a later failure
+        // cannot erase previously launched work. The original narrow launcher
+        // does not report partial phases on its own error: that exceptional
+        // contribution is unknown, and no scientific success is returned.
+        for (const auto& phase : block->native_axis_boundary.phases)
+            if (phase.count > 0) ++impl_->runtime_counters.kernel_count;
+    }
+    impl_->checked_quiesce("synchronize Native final axis boundary");
+    work_guard.completed = true;
     return expected;
 }
 

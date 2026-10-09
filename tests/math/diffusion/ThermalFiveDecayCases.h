@@ -11,10 +11,13 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 #include "amr/storage/Block.h"
 #include "driver/schedule/StageScheduler.h"
+#include "numerics/diffusion/DiffusionTypes.h"
 #include "numerics/diffusion/RKL2TimeIntegrator.h"
 #include "physics/eos/IdealGas.h"
 
@@ -99,7 +102,37 @@ inline Result trajectory(int macrosteps) {
     for(int step=1;step<=macrosteps;++step) {
         context.step_start_time=(step-1)*dt;context.step_dt=dt;
         context.boundary_start_time=context.step_start_time;context.boundary_step_dt=dt;
+        const auto seed_energy=block.fluid_state.eng;
+        const auto* seed_allocation=block.fluid_state.eng.data();
         RKL2TimeIntegrator::integrate(block,eos,grid,config,dt,dt_fe,boundary);
+        // Read the actual retained input from the producer's sole rotation plan.
+        const auto plan=make_rkl_plan(RklMethod::RKL2,3);
+        std::optional<StateSlot> seed_slot;
+        for(const auto mapping:{std::pair{StateSlot::Current,plan.final_rotation.current_from},
+                std::pair{StateSlot::Next,plan.final_rotation.next_from},
+                std::pair{StateSlot::Scratch,plan.final_rotation.scratch_from}})
+            if(mapping.second==StateSlot::Current) {
+                require(!seed_slot,"thermal RKL duplicated its original Current slot");seed_slot=mapping.first;
+            }
+        require(seed_slot&&*seed_slot!=StateSlot::Current,"thermal RKL did not retain a distinct seed");
+        const auto& retained=Numerics::Diffusion::detail::state_for(block,*seed_slot);
+        require(retained.eng.data()==seed_allocation,"thermal RKL lost the real input allocation");
+        long double signed_activity=0.,absolute_activity=0.;
+        const auto geometry=GridMetrics::make_geometry_view(grid);
+        for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,grid.Js(),grid.Ks());
+            require(std::bit_cast<std::uint64_t>(retained.eng[cell])
+                ==std::bit_cast<std::uint64_t>(seed_energy[cell]),"thermal RKL changed its retained energy seed");
+            const double volume=GridMetrics::CellVolume(geometry,i,grid.Js(),grid.Ks());
+            const auto activity=DiffFlux::diffusion_energy_activity_term(
+                volume,block.fluid_state.eng[cell],retained.eng[cell]);
+            require(activity.valid,"real thermal endpoints produced an invalid activity term");
+            signed_activity+=activity.signed_energy_change;
+            absolute_activity+=activity.absolute_energy_change;
+        }
+        require(absolute_activity>0.,"decaying thermal mode has no endpoint redistribution");
+        require(std::abs(signed_activity)<=1.e-12L*std::abs(initial_heat)*h,
+            "closed thermal endpoint activity violated the original heat conservation budget");
         const auto& state=block.fluid_state;
         const long double amplification=std::pow(polynomial,step);
         const long double continuous=std::exp(lambda*(step*dt));

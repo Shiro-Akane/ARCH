@@ -11,6 +11,8 @@
  * 3. Leave core hydro mathematics in the shared host/device policies.
  * 4. Borrow only a completed sparse candidate prefix while preparing the
  *    next immutable Native layer; no prefix accessor writes resident fields.
+ * 5. Lower final Native signed-axis/corner copies from the same logical plan;
+ *    their two ordered phases never relaunch ordinary outer physical seeds.
  */
 
 #pragma once
@@ -113,6 +115,28 @@ inline int flatten_boundary_checked(
     return static_cast<int>(index);
 }
 
+/** Lower one shared logical operation without defining a boundary policy.
+ * Ordinary plans and final-axis subsets use this same checked logical-cell
+ * flattening and component_mapping; padding and invented signs never enter.
+ */
+inline DeviceBoundaryTransfer compile_boundary_transfer(
+    const boundary::BoundaryOperation& operation, const DeviceGridView& grid)
+{
+    DeviceBoundaryTransfer transfer{};
+    transfer.logical_ordinal = operation.ordinal;
+    transfer.source_index = flatten_boundary_checked(grid, operation.source);
+    transfer.destination_index = flatten_boundary_checked(grid, operation.destination);
+    for (std::uint8_t field = 0; field < 5; ++field) {
+        transfer.conserved_signs[field] = boundary::component_mapping(
+            operation, static_cast<boundary::BoundaryFieldClass>(field)).sign;
+    }
+    transfer.conserved_signs[5] = boundary::component_mapping(
+        operation, boundary::BoundaryFieldClass::AllSpecies).sign;
+    transfer.species_sign = boundary::component_mapping(
+        operation, boundary::BoundaryFieldClass::AllSpecies).sign;
+    return transfer;
+}
+
 ARCH_INLINE double boundary_signed_copy(
     double value, std::int8_t sign) noexcept
 {
@@ -147,26 +171,62 @@ inline DeviceCompiledBoundaryPlan compile_boundary_plan(
     for (std::size_t phase = 0; phase < compiled.phases.size(); ++phase)
         compiled.phases[phase] = plan.phases()[phase];
     compiled.transfers.reserve(plan.operations().size());
-    for (const auto& operation : plan.operations()) {
-        DeviceBoundaryTransfer transfer{};
-        transfer.logical_ordinal = operation.ordinal;
-        transfer.source_index = detail::flatten_boundary_checked(
-            grid, operation.source);
-        transfer.destination_index = detail::flatten_boundary_checked(
-            grid, operation.destination);
-        for (std::uint8_t field = 0; field < 5; ++field) {
-            transfer.conserved_signs[field] = boundary::component_mapping(
-                operation,
-                static_cast<boundary::BoundaryFieldClass>(field)).sign;
-        }
-        transfer.conserved_signs[5] = boundary::component_mapping(
-            operation, boundary::BoundaryFieldClass::AllSpecies).sign;
-        transfer.species_sign = boundary::component_mapping(
-            operation, boundary::BoundaryFieldClass::AllSpecies).sign;
-        compiled.transfers.push_back(transfer);
-    }
+    for (const auto& operation : plan.operations())
+        compiled.transfers.push_back(detail::compile_boundary_transfer(operation, grid));
     return compiled;
 }
+/** Lower only final Native RZ axis copies and their shared axial corners.
+ * Authenticate the original logical plan against the actual Native grid first;
+ * obtain original RzAxis transfers from its ordinary lowering, and obtain all
+ * extra corners from the sole rz_axis_corner_operations producer. The compact
+ * ordinals identify this upload list, never a new logical boundary authority.
+ *
+ * The existing launch_boundary_plan executor consumes this list after the
+ * second domain exchange: X completes original axis rows, Y supplies the next
+ * stream barrier for the corner list, and Z is empty. Corner operations retain
+ * their original logical X phase and parity; phase labels here only sequence
+ * launches. No ordinary outer radial or axial physical seed is relaunched.
+ * Off-axis Native blocks return an empty list that the caller must skip. The
+ * runtime still owns the actual state lease/grid binding, join and final EOS.
+ */
+inline DeviceCompiledBoundaryPlan compile_rz_axis_boundary_plan(
+    const boundary::BoundaryPlan& logical, const DeviceGridView& grid)
+{
+    if (grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
+        throw std::invalid_argument("Final RZ axis lowering requires the actual Native grid");
+    const auto original = compile_boundary_plan(logical, grid);
+    const bool at_axis = grid.x1_min == 0.;
+    if (at_axis != (logical.input().faces[0] == boundary::BoundaryType::RzAxis))
+        throw std::invalid_argument("Final RZ axis logical plan differs from the actual radial origin");
+    DeviceCompiledBoundaryPlan compiled{};
+    compiled.logical_fingerprint = logical.fingerprint();
+    compiled.total_size = grid.total_size;
+    compiled.phases = {boundary::BoundaryPhase{boundary::BoundaryPhaseId::X, 0, 0},
+        boundary::BoundaryPhase{boundary::BoundaryPhaseId::Y, 0, 0},
+        boundary::BoundaryPhase{boundary::BoundaryPhaseId::Z, 0, 0}};
+    if (!at_axis) return compiled;
+    const auto corners = boundary::rz_axis_corner_operations(logical);
+    for (std::size_t ordinal = 0; ordinal < logical.operations().size(); ++ordinal) {
+        if (logical.operations()[ordinal].type != boundary::BoundaryType::RzAxis) continue;
+        auto transfer = original.transfers[ordinal];
+        transfer.logical_ordinal = compiled.transfers.size();
+        compiled.transfers.push_back(transfer);
+    }
+    const std::size_t axis_count = compiled.transfers.size();
+    for (const auto& corner : corners) {
+        auto transfer = detail::compile_boundary_transfer(corner, grid);
+        transfer.logical_ordinal = compiled.transfers.size();
+        compiled.transfers.push_back(transfer);
+    }
+    if (compiled.transfers.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::overflow_error("Final RZ axis transfer count exceeds the device launch extent");
+    compiled.phases[0].count = axis_count;
+    compiled.phases[1].first = axis_count;
+    compiled.phases[1].count = corners.size();
+    compiled.phases[2].first = compiled.transfers.size();
+    return compiled;
+}
+
 inline cudaError_t validate_boundary_launch(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,
     const DeviceCompiledBoundaryPlan& compiled)

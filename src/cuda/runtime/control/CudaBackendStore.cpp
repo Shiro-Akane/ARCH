@@ -6,11 +6,16 @@
  * are prepared. Publication follows a completion witness and atomically changes
  * the store namespace; abandoned candidates synchronize before releasing memory.
  * The shared DeviceBlockStoreLifecycle owns identity rules, not transfer physics.
+ *
+ * Macro-entry resident field snapshots are owned by CudaBackendMacroStep.cpp;
+ * this file owns only staged topology/store namespace publication.
  */
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 #include <algorithm>
+#include <array>
+#include <utility>
 
 namespace arch::cuda {
 namespace {
@@ -77,6 +82,7 @@ CudaBackend::StoreTransaction::StoreTransaction(
 CudaBackend::StoreTransaction::~StoreTransaction()
 {
     if (!impl_ || impl_->consumed || !impl_->owner) return;
+    if (impl_->owner->macro_state.active) std::terminate();
     // Failure to select/quiesce means staged allocations may still be in use.
     impl_->owner->quiesce_or_terminate();
     try {
@@ -115,6 +121,7 @@ CudaBackend::StoreTransaction CudaBackend::begin_store_transaction(
     amr::AmrPlanScope scope,
     std::span<const CudaBlockBinding> bindings)
 {
+    impl_->macro_state.require_idle();
     if (bindings.empty())
         throw std::invalid_argument("CUDA staged block set is empty");
 
@@ -235,6 +242,7 @@ void CudaBackend::enqueue_upload_staged_current(
 
 void CudaBackend::abort_store_transaction(StoreTransaction&& transaction)
 {
+    impl_->macro_state.require_idle();
     if (!transaction.impl_ || transaction.impl_->consumed
         || transaction.impl_->owner.get() != impl_.get())
         throw std::invalid_argument("invalid CUDA store abort");
@@ -250,6 +258,7 @@ void CudaBackend::abort_store_transaction(StoreTransaction&& transaction)
 void CudaBackend::publish_store_transaction(
     StoreTransaction&& transaction, DeviceRetirementFence fence)
 {
+    impl_->macro_state.require_idle();
     if (!transaction.impl_ || transaction.impl_->consumed
         || transaction.impl_->owner.get() != impl_.get())
         throw std::invalid_argument("invalid CUDA store publication");
@@ -310,6 +319,7 @@ bool CudaBackend::retirement_ready(DeviceRetirementFence fence) const
 
 void CudaBackend::complete_store_retirement(DeviceRetirementFence fence)
 {
+    impl_->macro_state.require_idle();
     auto found = std::find_if(
         impl_->retired_resources.begin(), impl_->retired_resources.end(),
         [fence](const Impl::RetiredCudaResources& resources) {
@@ -408,6 +418,7 @@ void CudaBackend::prepare_amr_flux_plan(
         && impl_->active_amr_flux->reflux_fingerprint
             == reflux.fingerprint)
         return;
+    impl_->macro_state.require_idle();
     impl_->select_device();
     std::unique_ptr<CudaAmrFluxPlanRuntime> prepared;
     try {
@@ -431,6 +442,7 @@ void CudaBackend::stage_amr_flux_plan(
     const amr::AmrFluxTopologyPlan& topology,
     const amr::RefluxPlan& reflux)
 {
+    impl_->macro_state.require_idle();
     auto& selected = require_cuda_topology_transaction(transaction);
     auto& concrete = selected.transaction;
     if (!concrete.impl_ || concrete.impl_->consumed
@@ -457,6 +469,7 @@ void CudaBackend::stage_amr_flux_plan(
 void CudaBackend::publish_topology_store_transaction(
     std::unique_ptr<backend::BackendTopologyStoreTransaction> transaction)
 {
+    impl_->macro_state.require_idle();
     if (!transaction)
         throw std::invalid_argument("topology store transaction is null");
     auto& selected = require_cuda_topology_transaction(*transaction);

@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,7 @@
 
 #include "amr/AMRControl.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "io/plot/PlotGridMetadata.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
@@ -139,6 +141,44 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                                   const CpuStageTimings& cpu_stages)
 {
     const auto& config = runtime.configuration();
+    if(runtime.diffusion_activity_enabled()) {
+        const auto& value=runtime.diffusion_activity_totals();
+        const auto& diffusion=config.physics.diffusion;
+        const bool thermal_only=diffusion.use_thermal_diffusion
+            &&!diffusion.use_viscous_diffusion&&!diffusion.use_species_diffusion;
+        const auto& leaves=runtime.control().tree->GetActiveBlocks();
+        if(leaves.empty())throw std::logic_error("Diffusion activity output lacks an actual leaf");
+        const auto& grid=runtime.control().pool->GetBlock(leaves.front()).grid;
+        io::PlotNativeGrid measure;
+        // Reuse the existing measure/normalization owner for one actual cell.
+        io::append_plot_native_cell(measure,grid,grid.Is(),grid.Js(),grid.Ks(),runtime.geometry_semantics());
+        std::ofstream activity(config.io.out_dir+"/diffusion_activity.tsv");
+        if(!activity)throw std::runtime_error("Cannot write diffusion activity diagnostics");
+        activity << "# scope=since-process-start; quantity=endpoint-energy-redistribution; units=CGS\n"
+                 << "# signed=sum_half,sum_leaf,sum_interior V*(E_after-E_seed); "
+                    "absolute=sum_half,sum_leaf,sum_interior V*abs(E_after-E_seed)\n"
+                 << "# excludes-intermediate-excursions=true; not-cumulative-heat-flux=true; "
+                    "accepted-state-includes-existing-repairs=true; thermal-only-operator=" << thermal_only << '\n'
+                 << "# geometry=" << grid.geometry << "; dimension=" << grid.dim
+                 << "; chart=" << (runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz
+                     ? "AxisymmetricRz" : "Existing")
+                 << "; cell_measure_unit=" << measure.measure_unit
+                 << "; normalization=" << measure.normalization
+                 << "; measure_convention=" << measure.measure_convention
+                 << "; quantity_unit=(erg/cm^3)*(" << measure.measure_unit << ")\n"
+                 << std::setprecision(std::numeric_limits<long double>::max_digits10)
+                 << "# process_start_time=" << value.process_start_time
+                 << "; process_start_step=" << value.process_start_step << '\n';
+        const auto& operations=runtime.diffusion_activity_operations();
+        activity << "# observer_bytes_h2d=" << operations.bytes_h2d
+                 << "; observer_bytes_d2h=" << operations.bytes_d2h
+                 << "; observer_kernels=" << operations.kernel_count
+                 << "; observer_synchronizations=" << operations.stream_sync_count << '\n'
+                 << "time\tsigned_energy_change\tabsolute_energy_change\tcell_visits\taccepted_halves\taccepted_macros\n"
+                 << ctrl.t_current << '\t' << value.signed_energy_change << '\t' << value.absolute_energy_change
+                 << '\t' << value.cells << '\t' << value.accepted_halves << '\t' << value.accepted_macros << '\n';
+        close_diagnostic(activity,"diffusion activity diagnostics");
+    }
     const auto& hydro_budget=runtime.hydro_boundary_budget();
     const auto& diffusion_budget=runtime.diffusion_boundary_budget();
     if (!hydro_budget.empty()) {

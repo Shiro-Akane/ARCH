@@ -26,14 +26,13 @@
 
 #include "amr/exchange/HostBoundaryPlan.h"
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "driver/runtime/ComputeBackend.h"
 #include "physics/boundary/BoundaryFlux.h"
 #include "physics/boundary/NativeRzBoundary.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/UserBoundary.h"
 
 namespace arch::boundary { class HostHydroBoundaryAuthority; class HostHydroBoundaryDomainAuthority; }
-
-namespace arch::backend { class ComputeBackend; struct BackendStateAccess; }
 
 /** Boundary adapter used by all Host integrators and the shared CUDA driver. */
 struct BCHandler {
@@ -177,6 +176,51 @@ public:
         NativeCandidate(const NativeCandidate&) = delete;
         NativeCandidate& operator=(const NativeCandidate&) = delete;
     };
+    /** Move-only unpublished Native Device surface, tied to an actual store.
+     * Frame identity uses the real backend/access and Grid/stage/root words.
+     * No Host FluidState pointers, whole resident arrays or scientific authority
+     * are stored. The Runtime retains its domain-wide transaction and ledger.
+     */
+    class NativeDeviceCandidate {
+        friend struct BCHandler;
+        const BCHandler* owner_ = nullptr;
+        arch::backend::ComputeBackend* backend_ = nullptr;
+        arch::backend::BackendStateAccess access_{};
+        const Grid* grid_ = nullptr;
+        arch::boundary::host::HostBoundaryLayout layout_{};
+        std::array<std::uint64_t,20> geometry_{};
+        std::array<std::uint64_t,7> root_context_{};
+        std::array<std::uint64_t,12> full_root_{};
+        std::optional<StageContextSnapshot> context_;
+        std::vector<int> destinations_;
+        arch::backend::BoundaryCells values_;
+        std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> storage_;
+        bool need_controls_ = false;
+    public:
+        NativeDeviceCandidate() = default;
+        NativeDeviceCandidate(NativeDeviceCandidate&&) noexcept = default;
+        NativeDeviceCandidate& operator=(NativeDeviceCandidate&&) noexcept = default;
+        NativeDeviceCandidate(const NativeDeviceCandidate&) = delete;
+        NativeDeviceCandidate& operator=(const NativeDeviceCandidate&) = delete;
+    };
+    /** Prepare readonly actual-store layers x1 builtin/user, then x2 builtin/user.
+     * Builtin layers use the backend's selected EOS; user layers borrow one
+     * compact seed gather and the original bound Host callback/point law.
+     */
+    NativeDeviceCandidate prepare_native_device(arch::backend::ComputeBackend&,
+        arch::backend::BackendStateAccess,const Grid&) const;
+    /** Recheck actual backend/access, exact stage/binding/root/Grid and surface.
+     * This validates the provisional payload only; it grants no GhostValid or
+     * completed-cell EOS acceptance. Validate ALL domains before any scatter.
+     */
+    void validate_native_device_candidate(const NativeDeviceCandidate&,
+        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&) const;
+    /** Scatter through the existing fallible backend operation. The macro owner
+     * must retain an actual resident savepoint; failure can follow earlier domain
+     * writes. Final exchange/axis/EOS and scheduler publication remain external.
+     */
+    void publish_native_device(NativeDeviceCandidate&&,
+        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&) const;
     /** Freeze only actual input metadata at the completed Hydro snapshot.
      * No wall, ledger or scientific permission follows from this public observation.
      */

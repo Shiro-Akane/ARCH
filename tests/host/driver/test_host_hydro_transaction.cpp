@@ -19,6 +19,7 @@
 #include <atomic>
 #include <bit>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -1151,12 +1152,57 @@ struct MacroHeatProbe {
     }
 };
 
+/** Restore the test process's original optional trace setting on every exit. */
+struct DiffusionActivityEnv {
+    std::optional<std::string> original;
+    explicit DiffusionActivityEnv(const char* value) {
+        if(const char* previous=std::getenv("ARCH_TRACE_DIFFUSION_ACTIVITY"))original=previous;
+        const int status=value?::setenv("ARCH_TRACE_DIFFUSION_ACTIVITY",value,1)
+            : ::unsetenv("ARCH_TRACE_DIFFUSION_ACTIVITY");
+        require(status==0,"cannot set isolated diffusion activity test environment");
+    }
+    ~DiffusionActivityEnv() {
+        if(original)(void)::setenv("ARCH_TRACE_DIFFUSION_ACTIVITY",original->c_str(),1);
+        else (void)::unsetenv("ARCH_TRACE_DIFFUSION_ACTIVITY");
+    }
+};
+
+/** Actual Runtime construction owns the strict opt-in; disabled calls are inert. */
+void diffusion_activity_environment_contract() {
+    for(const char* option:std::array<const char*,2>{nullptr,"0"}) {
+        DiffusionActivityEnv environment(option);
+        Fixture f(dispatch::TimeIntegratorId::Euler,false,false,false);
+        const auto before=capture_fields(f.control);
+        const auto ledger=f.context->ledger.snapshot_host();
+        require(!f.runtime->diffusion_activity_enabled(),"diffusion activity must default to off");
+        // No valid plan or retained slot is needed when the observer is off.
+        f.runtime->observe_completed_diffusion_activity({});
+        require(!f.runtime->take_diffusion_activity_half()
+            &&f.runtime->diffusion_activity_totals().accepted_halves==0
+            &&f.runtime->diffusion_activity_totals().accepted_macros==0,
+            "disabled diffusion observer produced a diagnostic receipt");
+        for(const auto& state:before)state.matches(f.control);
+        require(f.context->ledger.host_snapshot_matches(ledger),
+            "disabled diffusion observer changed the actual state ledger");
+    }
+    for(const char* option:std::array<const char*,4>{"","01","true","2"}) {
+        DiffusionActivityEnv environment(option);bool refused=false;
+        try{Fixture f(dispatch::TimeIntegratorId::Euler,false,false,false);}
+        catch(const std::invalid_argument& error) {
+            refused=std::string(error.what())=="ARCH_TRACE_DIFFUSION_ACTIVITY must be exactly 0 or 1";
+            if(!refused)throw;
+        }
+        require(refused,"Runtime accepted an ambiguous diffusion activity setting");
+    }
+}
+
 /** Same five-segment production helper, actual Burn/RKL/Runtime EOS and BC.
  * Hydro/source and additional surface impulses are explicitly diagnostic
  * injections. Nonzero old history, tentative RKL budgets and late failures
  * exercise transaction ownership without claiming source/tensor accuracy.
  */
 void whole_macro_endpoint_and_rollback(){
+    DiffusionActivityEnv environment("1");
     enum class Fault {None,BurnFirst,DiffusionFirst,HydroLast,DiffusionSecond,BurnSecond,EndpointEos};
     const std::array<Fault,7> faults{{Fault::None,Fault::BurnFirst,Fault::DiffusionFirst,
         Fault::HydroLast,Fault::DiffusionSecond,Fault::BurnSecond,Fault::EndpointEos}};
@@ -1170,6 +1216,13 @@ void whole_macro_endpoint_and_rollback(){
             const auto fields_before=capture_fields(f.control);
             const auto owner_before=driver::HostHydroTransaction::snapshot_owner(*f.runtime,*f.context);
             const auto repairs_before=f.runtime->repair_budget();
+            const auto activity_before=f.runtime->diffusion_activity_totals();
+            require(f.runtime->diffusion_activity_enabled()
+                &&activity_before.process_start_time==f.start.time
+                &&activity_before.process_start_step==f.start.step,
+                "diffusion trace lost its since-process-start controller identity");
+            long double expected_activity_signed=0.,expected_activity_absolute=0.;
+            std::uint64_t expected_activity_cells=0;
             const auto hydro_before=f.runtime->hydro_boundary_budget();
             const auto diffusion_before=f.runtime->diffusion_boundary_budget();
             const auto source_before=f.journal->committed;
@@ -1244,8 +1297,62 @@ void whole_macro_endpoint_and_rollback(){
                         require(DiffFunction::compute_stages(rkl_order,interval,.01,
                             f.config.physics.diffusion.diff_cfl,f.config.physics.diffusion.max_stages)>=2,
                             "macro RKL profile omitted real recurrence stages");
+                        // Freeze the true input endpoint before the existing producer runs.
+                        // This test neither fabricates a receipt nor changes any field/slot.
+                        std::vector<std::vector<double>> seed_energy;
+                        std::vector<const double*> seed_allocations;
+                        for(int id:f.control.tree->GetActiveBlocks()) {
+                            const auto& energy=f.control.pool->GetBlock(id).fluid_state.eng;
+                            seed_energy.push_back(energy);seed_allocations.push_back(energy.data());
+                        }
                         driver::advance_diffusion(*f.runtime,f.workspace,*f.context,*f.eos,&f.plan,
                             1,interval,.01);
+                        const int stages=DiffFunction::compute_stages(rkl_order,interval,.01,
+                            f.config.physics.diffusion.diff_cfl,f.config.physics.diffusion.max_stages);
+                        const auto actual_plan=scheduler::make_rkl_plan(
+                            order==dispatch::DiffusionIntegratorId::Rkl1
+                                ?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages);
+                        std::optional<StateSlot> seed_slot;
+                        for(const auto mapping:{std::pair{StateSlot::Current,actual_plan.final_rotation.current_from},
+                                std::pair{StateSlot::Next,actual_plan.final_rotation.next_from},
+                                std::pair{StateSlot::Scratch,actual_plan.final_rotation.scratch_from}})
+                            if(mapping.second==StateSlot::Current) {
+                                require(!seed_slot,"actual RKL plan duplicated its original Current");
+                                seed_slot=mapping.first;
+                            }
+                        require(seed_slot&&*seed_slot!=StateSlot::Current,
+                            "completed RKL lost its distinct retained seed endpoint");
+                        const auto member=TimeIntegration::hydro_boundary_state_member(*seed_slot);
+                        long double half_signed=0.,half_absolute=0.;std::uint64_t half_cells=0;
+                        const auto& active=f.control.tree->GetActiveBlocks();
+                        for(std::size_t b=0;b<active.size();++b) {
+                            const auto& block=f.control.pool->GetBlock(active[b]);const auto& g=block.grid;
+                            const auto& retained=(block.*member).eng;
+                            require(retained.data()==seed_allocations[b],
+                                "RKL diagnostic retained a copy instead of the actual original allocation");
+                            const auto geometry=GridMetrics::make_geometry_view(g,rz);
+                            for(int k=g.Ks();k<g.Ke();++k)for(int j=g.Js();j<g.Je();++j)
+                                for(int i=g.Is();i<g.Ie();++i) {
+                                    const int cell=g.GetIndex(i,j,k);
+                                    require(bits(retained[cell],seed_energy[b][cell]),
+                                        "real RKL overwrote the retained original energy endpoint");
+                                    const long double volume=GridMetrics::CellVolume(geometry,i,j,k);
+                                    const long double delta=static_cast<long double>(block.fluid_state.eng[cell])
+                                        -seed_energy[b][cell];
+                                    half_signed+=volume*delta;half_absolute+=volume*std::abs(delta);++half_cells;
+                                }
+                        }
+                        // Each public half is FP64; process totals sum the two accepted halves.
+                        expected_activity_signed+=static_cast<double>(half_signed);
+                        expected_activity_absolute+=static_cast<double>(half_absolute);
+                        expected_activity_cells+=half_cells;
+                        const auto& tentative=f.runtime->diffusion_activity_totals();
+                        require(tentative.signed_energy_change==activity_before.signed_energy_change
+                            &&tentative.absolute_energy_change==activity_before.absolute_energy_change
+                            &&tentative.cells==activity_before.cells
+                            &&tentative.accepted_halves==activity_before.accepted_halves
+                            &&tentative.accepted_macros==activity_before.accepted_macros,
+                            "a diffusion half promoted diagnostic totals before the complete macro");
                         require(repairs_equal(f.runtime->repair_budget(),repairs_before),
                             "diffusion half exposed accepted macro repair history");
                         if((fault==Fault::DiffusionFirst&&diffusion_calls==1)
@@ -1278,7 +1385,16 @@ void whole_macro_endpoint_and_rollback(){
             }
             require(bits(f.controller->t_current,2.)&&f.controller->step_count==1,
                 "macro helper advanced accepted physical time/count before the caller's commit");
+            require(!f.runtime->take_diffusion_activity_half(),
+                "complete or rejected macro leaked a tentative diffusion half");
             if(fault!=Fault::None) {
+                const auto& activity=f.runtime->diffusion_activity_totals();
+                require(activity.signed_energy_change==activity_before.signed_energy_change
+                    &&activity.absolute_energy_change==activity_before.absolute_energy_change
+                    &&activity.cells==activity_before.cells
+                    &&activity.accepted_halves==activity_before.accepted_halves
+                    &&activity.accepted_macros==activity_before.accepted_macros,
+                    "failed D/B/final-EOS macro promoted a diffusion diagnostic prefix");
                 require(rejected,"macro failure injection did not reach its actual late owner");
                 for(const auto& before:fields_before)before.matches(f.control);
                 require(driver::HostHydroTransaction::owner_matches(*f.runtime,*f.context,owner_before),
@@ -1291,6 +1407,19 @@ void whole_macro_endpoint_and_rollback(){
                     require(burn_calls==2&&diffusion_calls==2,
                         "late failure did not execute both actual Burn and diffusion halves");
             } else {
+                const auto& activity=f.runtime->diffusion_activity_totals();
+                // Reuse this owner's existing 2e-12 scalar budget for independently
+                // accumulated true ring V endpoints; no new science threshold.
+                require(std::abs(activity.signed_energy_change-activity_before.signed_energy_change
+                            -expected_activity_signed)
+                        <=2.e-12L*std::max(1.L,std::abs(expected_activity_signed))
+                    &&std::abs(activity.absolute_energy_change-activity_before.absolute_energy_change
+                            -expected_activity_absolute)
+                        <=2.e-12L*std::max(1.L,expected_activity_absolute)
+                    &&activity.cells==activity_before.cells+expected_activity_cells
+                    &&activity.accepted_halves==activity_before.accepted_halves+2
+                    &&activity.accepted_macros==activity_before.accepted_macros+1,
+                    "accepted macro omitted or counted a true diffusion half more than once");
                 const std::vector<driver::CpuStage> sequence{driver::CpuStage::BurnFirst,
                     driver::CpuStage::Diffusion,driver::CpuStage::Hydro,
                     driver::CpuStage::Diffusion,driver::CpuStage::BurnSecond};
@@ -1624,6 +1753,7 @@ void test_host_hydro_transaction(){
     independent_rz_hydro_receipt_counts();reflux_receipt_preflight_preserves_evidence();
     post_boundary_rejection_rolls_back_complete_runtime();post_boundary_callback_presence_is_frozen();
     native_gate_preflight_preserves_evidence();
+    diffusion_activity_environment_contract();
     whole_macro_endpoint_and_rollback();rejected_timestep_advice_is_not_accepted();
     native_builtin_boundary_capture_measures();
 }

@@ -35,6 +35,28 @@ struct DeviceDiffusionBatchBlock {
 };
 static_assert(std::is_trivially_copyable_v<DeviceDiffusionBatchBlock>);
 
+/** Actual resident energy endpoints and their one shared block grid. */
+struct DeviceDiffusionActivityBlock {
+    const double* current_energy = nullptr;
+    const double* seed_energy = nullptr;
+    DeviceGridView grid{};
+};
+/** Compact per-patch receipt plus explicit finite-data failure status. */
+struct DeviceDiffusionActivityResult {
+    double signed_energy_change = 0.0, absolute_energy_change = 0.0;
+    std::uint64_t cells = 0;
+    int failed = 0;
+};
+static_assert(std::is_trivially_copyable_v<DeviceDiffusionActivityBlock>);
+static_assert(std::is_trivially_copyable_v<DeviceDiffusionActivityResult>);
+
+// Metadata/volume validation never dereferences either resident field pointer.
+bool valid_diffusion_activity_binding(const DeviceDiffusionActivityBlock& binding);
+CudaBackendLaunchResult launch_cuda_backend_diffusion_activity_batch(
+    std::span<const DeviceDiffusionActivityBlock> host,
+    const DeviceDiffusionActivityBlock* device, DeviceDiffusionActivityResult* results,
+    cudaStream_t stream);
+
 struct DeviceStateCopyBlock { DeviceStateView source, destination; };
 static_assert(std::is_trivially_copyable_v<DeviceStateCopyBlock>);
 

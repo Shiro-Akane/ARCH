@@ -207,6 +207,11 @@ struct CudaBlockRuntime {
     DeviceGridView grid{};
     DeviceCompiledBoundaryPlan boundary;
     DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
+    // Immutable subset compiled from this factory's original logical authority
+    // and actual Native grid. Storage follows this block generation; off-axis
+    // Native and ordinary blocks never allocate a final-axis transfer payload.
+    DeviceCompiledBoundaryPlan native_axis_boundary{};
+    DeviceAllocation<DeviceBoundaryTransfer> native_axis_boundary_transfers;
 
     CudaBlockRuntime(
         const amr::Block& block, amr::BlockHandle requested_handle,
@@ -336,6 +341,10 @@ struct CudaBackend::Impl {
     } native_reflecting;
     ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
     ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
+    // Optional endpoint diagnostic only: compact bindings/results, no field
+    // storage. Calls quiesce the owner stream before growth/reuse/destruction.
+    ReusableDeviceAllocation<DeviceDiffusionActivityBlock> diffusion_activity_bindings;
+    ReusableDeviceAllocation<DeviceDiffusionActivityResult> diffusion_activity_results;
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
     ReusableDeviceAllocation<DeviceBurnBatchBlock> burn_bindings;
     ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
@@ -371,6 +380,32 @@ struct CudaBackend::Impl {
     std::uint64_t immutable_owner_constructions = 0;
     std::uint64_t next_retirement_fence = 1;
     std::size_t staged_resource_count = 0;
+    /**
+     * @brief Grow-only resident storage for one non-reentrant macro savepoint.
+     *
+     * Logical views and valid plane extents live in the transaction, never in
+     * capacity. Private state allocations may exceed the current block extent;
+     * copy views use the actual saved extent. Transient scalar controls retain
+     * only originally bound records, not unread/unbound allocation capacity.
+     */
+    struct MacroStateScratch {
+        struct Block {
+            std::array<std::unique_ptr<DeviceStateStorage>, 3> states;
+            std::array<ReusableDeviceAllocation<double>, 6> observer_stage,
+                observer_initial, amr_register, amr_initial;
+            std::array<std::array<ReusableDeviceAllocation<boundary::ScalarBoundaryCondition>, 6>, 3>
+                controls;
+        };
+        std::vector<std::unique_ptr<Block>> blocks;
+        bool active = false;
+
+        /** Reject namespace/allocation changes while original owners are pinned. */
+        void require_idle() const
+        {
+            if (active)
+                throw std::logic_error("CUDA macro state savepoint is active");
+        }
+    } macro_state;
     std::vector<DeviceStoreEntry> initial_entries;
     DeviceBlockStoreLifecycle store;
     std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>

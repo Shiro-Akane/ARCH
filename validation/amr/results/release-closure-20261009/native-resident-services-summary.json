@@ -1,0 +1,224 @@
+{
+  "schema": "arch.scoped-validation-summary.v1",
+  "recorded_utc": "2026-10-09T16:42:36.963081+00:00",
+  "baseline_commit": "1555ce51d6e7f4532d869892881f10b0c090942a",
+  "status": "PASS_SCOPED_RESIDENT_SERVICES",
+  "scope": [
+    "Actual complete-domain CUDA three-slot field/control/observer savepoint rollback, commit and reuse, species0/2; original Cartesian two-owner field consumer",
+    "Actual compact Cartesian/NativeRZ endpoint activity, true interior V and retained Next/Scratch; no field writes/full-field transfer",
+    "Cached actual NativeRZ final signed axis/corners after second neighbor exchange, species0/2; original Host signed-copy reference",
+    "Ordered actual NativeRZ builtin/user boundary preparation and compact publication, both purposes and species0/2; original Host reference, callback failure and empty no-work cases",
+    "CPU two-half activity receipts remain tentative until complete original B/2-D/2-H-D/2-B/2 succeeds"
+  ],
+  "not_qualified": [
+    "Complete NativeDevice Runtime, source work consumption, retry or public entry",
+    "Representative O9 coupled long-time/restart or final CPU/CUDA matched timing",
+    "Private resident padding directly observed; Host materialization padding preservation is narrower",
+    "Outward continuous integral certificate"
+  ],
+  "physics_constraints": {
+    "shared_cpu_cuda_mathematics": true,
+    "two_strang_burn_halves_preserved": true,
+    "complete_face_eos_and_exact_cache_preserved": true,
+    "original_scientific_thresholds_preserved": true,
+    "no_new_ctest_or_workflow": true
+  },
+  "cuda_build": {
+    "attempts": [
+      {
+        "seconds": 900.305,
+        "exit": 124,
+        "completed_steps": "22/40",
+        "reason": "manager time limit; partial objects retained"
+      },
+      {
+        "seconds": 539.886,
+        "exit": 0,
+        "completed_steps": "18/18 remaining"
+      },
+      {
+        "seconds": 1.018,
+        "exit": 0,
+        "reason": "no-op invocation after manager hand-copied hash precondition typo; no source edit occurred"
+      },
+      {
+        "seconds": 14.135,
+        "exit": 0,
+        "reason": "test-only counter observation rebuild"
+      }
+    ],
+    "cumulative_guard_wall_seconds": 1455.344,
+    "prior_first_reflection_layer_seconds": 3044.675,
+    "manager_cumulative_cap_seconds": 3600,
+    "parallelism": 2,
+    "fast_math": false,
+    "flags": [
+      "--fmad=false",
+      "--ftz=false",
+      "--prec-div=true",
+      "--prec-sqrt=true"
+    ],
+    "resource_guard_stop": false,
+    "swap_growth_kib": 0,
+    "minimum_host_storage_free_bytes": 23759388672
+  },
+  "cpu": {
+    "first_affected_owners": [
+      "gravity_stage_contract",
+      "low_density_math"
+    ],
+    "first_build_seconds": 53.68,
+    "first_ctest_seconds": 34.06,
+    "subsequent_affected_owners": [
+      "gravity_stage_contract",
+      "boundary_plan"
+    ],
+    "subsequent_build_seconds": 68.875,
+    "subsequent_ctest_seconds": 33.58,
+    "each_run_passed": 2,
+    "architecture_original_owner_passed": 111,
+    "architecture_seconds": 4.995,
+    "early_configuration_failure": "stale removed temporary Node cache, repaired to persistent Node24; no compiler/scientific change"
+  },
+  "cuda_tests": {
+    "boundary_plan_parity": {
+      "passed": true,
+      "ctest_seconds": 0.38,
+      "guard_wall_seconds": 1.018
+    },
+    "cuda_store_lifecycle": {
+      "first": {
+        "passed": false,
+        "ctest_seconds": 0.44,
+        "failure": "resident preflight rejection enqueued partial work"
+      },
+      "final": {
+        "passed": true,
+        "ctest_seconds": 0.84,
+        "guard_wall_seconds": 1.025
+      },
+      "measurement_repair": "counters() increments its getter_count: by-value expected adds exactly the one assertion query and all fields remain compared; original numerical/field assertions and production unchanged"
+    },
+    "compute_sanitizer": {
+      "tool": "memcheck",
+      "leak_check": "full",
+      "errors": 0,
+      "leaked_bytes": 0,
+      "leaked_allocations": 0,
+      "guard_wall_seconds": 2.025
+    }
+  },
+  "sources": {
+    "cmake/cuda/CudaBackend.cmake": "6ae9a4d245c762e570be1a1ae2f734f0f5a713ab1dc75f50a99504734b3fd903",
+    "src/cuda/hydro/boundary/BoundaryPlan.h": "5d598f08340f30eba1ef4d587d273e432f6a503db82281988ccb05005c117cf3",
+    "src/cuda/runtime/CudaBackend.h": "55784f50d35e98d12f0f9fe83f4a6d0506788fd3c827b1830207abd8c2aa207f",
+    "src/cuda/runtime/boundary/CudaBackendBoundary.cu": "94da5a19a592113af072842cb04eae275d3d130375cc7621b5427ca4196405ae",
+    "src/cuda/runtime/control/CudaBackendInternal.h": "fbfb5856c7dba070ff7b25af4eca029bf1e710eaf40ecc6d2a83fb71388a4f23",
+    "src/cuda/runtime/control/CudaBackendMacroStep.cpp": "059937f2a3e9f2581f8b2c67f2b6b952c4fb9af6d9c3e0298629faa9136e5fb2",
+    "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp": "864515d3dd48180db4a1658ced2d66ad0e243a4d2549889df7ea79fa5750d8fb",
+    "src/cuda/runtime/control/CudaBackendResources.cpp": "87fd47366c43685d44559ea3e0ffd2612bcc56415bf4f19bb0d45f491705a51a",
+    "src/cuda/runtime/control/CudaBackendStore.cpp": "d4976bab8a3520360513529be6407f2a8b0eb5b71a2f2094ed6482d6a7854401",
+    "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu": "060027e700add69ab746d0c0ec653f45725bdc2f09274010f2a6af5b23458094",
+    "src/cuda/runtime/diffusion/CudaBackendDiffusion.h": "be62630c1c6c3c7dca9c4ed1f503a151d067ec5fabecdc4fef866b3ac4988ca8",
+    "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp": "5991f9f330dfb6fe9d54fffc7661cd5c9d386b25d1cb6879312bbce2d51b9b57",
+    "src/driver/io/DriverIO.cpp": "86a7cca5634762f776cb80e34f37486522bc51e90964ebcd24afa1c72e82f223",
+    "src/driver/runtime/ComputeBackend.h": "9a620be1084068c1c168c7adcddca4b70458b6998220377f87ec3aec082b06e9",
+    "src/driver/runtime/DriverRuntime.cpp": "8dfdecedbb6e6bdf352a70e2f2dfd12b1c64f7196e0ba2c79b08f7a14c8642e8",
+    "src/driver/runtime/DriverRuntime.h": "fd0b444f98b18fd81042e8954192428301556558d327cb6fc53cff40b1f7f50d",
+    "src/driver/stages/DriverMacroStep.h": "7ffd3eb7fd17027b144c490b676d01e2a71c277e7f20dd7a77a6c97e1bf962b7",
+    "src/driver/stages/DriverStages.h": "116e4e0a14fa26b1ec11d2deab3e5cbd74d75983cc6dcae2d9501f23650ed424",
+    "src/numerics/diffusion/DiffusionTypes.h": "58cd73610d117af1ab9f62fa0a2dac1346c598b71423bfbefea2fa3f8e22168a",
+    "src/physics/boundary/PhysicalBoundaryHandler.cpp": "7f651f4b4491baac2c0ec5ca6b8edfa998b5e4664c12ce91504c5d36d79a08ba",
+    "src/physics/boundary/PhysicalBoundaryHandler.h": "363630057b34f304c0de5e26c9cd4d1f8637f52949b66b90396521845fd219e8",
+    "tests/cuda/runtime/test_cuda_store_lifecycle.cpp": "573c64c9b7b94b956b9758bb78d3c650eb7e2d0de181b84a91a07c41f9859e98",
+    "tests/host/driver/test_host_hydro_transaction.cpp": "873091ae329b1dae99ebf9a19bf477bfb9d2fd83e56265a06d87d02e952c02af",
+    "tests/host/numerics/test_low_density.cpp": "0a4f1f699e4d1075f243e6d4c3de44bd11764e1495525e1471c9506271466344",
+    "tests/math/diffusion/ThermalFiveDecayCases.h": "250354c1862890e39202e2e4351bfda0a593548523876625b8c5f485b05653c9"
+  },
+  "executables": {
+    "build-rt-cuda/arch_cuda_store_lifecycle": {
+      "sha256": "049dd36e2c600c55a1eef9246a19d1aaaf9754e4c2eba8534614dfdd1f916862",
+      "bytes": 310632768
+    },
+    "build-rt-cuda/arch_cuda_boundary_plan_parity": {
+      "sha256": "fc534f38d55a040607d3c0d0df4f764ace1245bcf99922d39bfd3327f5396673",
+      "bytes": 2098848
+    }
+  },
+  "local_logs": {
+    "native-resident-cohort-cuda-build-01.log": {
+      "sha256": "71f1fab2b07e1ebeda79e18e7079ebf6a246b0eb47f26988e264ceb6667abed2",
+      "bytes": 126665,
+      "retained": "local only"
+    },
+    "native-resident-cohort-cuda-build-02.log": {
+      "sha256": "d23bde5de00f604de43c91cd421a64a9a119fbe10025cefa70fa47caf568b404",
+      "bytes": 26865,
+      "retained": "local only"
+    },
+    "native-resident-cohort-cuda-test-build-03.log": {
+      "sha256": "8f93929b2498b422fbeced0b65e32a61dd608ae833d249fb248fc755aac48b7c",
+      "bytes": 925,
+      "retained": "local only"
+    },
+    "native-resident-cohort-cuda-test-build-04.log": {
+      "sha256": "dd88de85ffe27b7e830307c74807492bd245807b1e102534e163c6115b10a590",
+      "bytes": 2403,
+      "retained": "local only"
+    },
+    "native-resident-cohort-boundary-parity.log": {
+      "sha256": "5a0b28d7068c9ebb171dcdc9a8cf02caa8c39e2497380c29c9e7ca80ecde9f21",
+      "bytes": 1173,
+      "retained": "local only"
+    },
+    "native-resident-cohort-store-owner.log": {
+      "sha256": "210c751726c52271b5ceab6da790f8b086032884f26c522b701dc464d0f526d9",
+      "bytes": 1324,
+      "retained": "local only"
+    },
+    "native-resident-cohort-store-owner-after-observation-repair.log": {
+      "sha256": "57372c41c5edcf21e1e25b1c6dcf11614fe97d9dd37b84b006456b70d640a7ce",
+      "bytes": 1175,
+      "retained": "local only"
+    },
+    "native-resident-cohort-store-memcheck.log": {
+      "sha256": "11e27b3c897dc8f0696c878c783640ac9e2f54bf64a0d084397b0871a18b5b61",
+      "bytes": 2401,
+      "retained": "local only"
+    }
+  },
+  "assistance": {
+    "dps": {
+      "task": "public quiescent-side rollback contract only",
+      "accepted_scope": "strict Host, Device/Synchronized admission requires actual field/mirror protection; same-side publication demotion",
+      "seconds": 23.49,
+      "input_tokens": 1531,
+      "cache_tokens": 384,
+      "output_tokens": 4788,
+      "thinking_tokens": 4465,
+      "estimated_usd_range": [
+        0.003046,
+        0.006092
+      ],
+      "billing": "unknown",
+      "scientific_algorithm_qualification": false,
+      "repair_calls": 0
+    },
+    "gemini": {
+      "task": "whole selected current-task table text",
+      "seconds": 36.784,
+      "input_tokens": 3835,
+      "output_tokens": 3284,
+      "thinking_tokens": 2746,
+      "total_tokens": 7119,
+      "billing": "unknown",
+      "accepted_scope": "entire selected table after exact source/number/protected-marker restoration review",
+      "local_wrapper_finding": "nested protected-mark restoration order caused false Numbers changed; original INVALID_OUTPUT kept, reverse exact restoration verified, no check relaxation/provider retry",
+      "repair_calls": 0
+    },
+    "parallel_overlap": "provider text tasks and independent local candidates overlapped CPU/CUDA preparation/build; workers ran no local build/simulation",
+    "dependent_wait_seconds": 0,
+    "root_active_cost": "unknown",
+    "recommendation": "Retain bounded independent reasoning/prose; fix local nested lock restoration before reusable text batching; no general speedup inferred."
+  }
+}

@@ -10,6 +10,11 @@
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "driver/stages/DriverBurnPolicy.h"
+#include "core/CompensatedSum.h"
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 namespace arch::cuda {
 namespace {
@@ -89,6 +94,77 @@ std::vector<double> CudaBackend::compute_diffusion_dt_batch(
             throw std::runtime_error("diffusion dt candidate failed: block="
                 + std::to_string(currents[index].block.uid.value));
     return dt;
+}
+
+/** Optional read-only endpoint reduction; Runtime owns retained-seed validity.
+ * Resolve every actual Current/seed lease and full grid before any launch.
+ * Only compact per-patch summaries return to Host; diagnostics never add a
+ * stage, field copy, EOS query or publication to the normal diffusion route.
+ */
+backend::DiffusionActivityReceipt CudaBackend::reduce_diffusion_energy_activity_batch(
+    std::span<const backend::BackendStateAccess> currents, state::StateSlot retained_seed)
+{
+    if (retained_seed != state::StateSlot::Next && retained_seed != state::StateSlot::Scratch)
+        throw std::invalid_argument("Diffusion activity needs a distinct retained seed slot");
+    std::vector<DeviceDiffusionActivityBlock> bindings;
+    std::vector<const CudaBlockRuntime*> owners;
+    bindings.reserve(currents.size()); owners.reserve(currents.size());
+    for (const auto current : currents) {
+        if (current.slot != state::StateSlot::Current)
+            throw std::invalid_argument("Diffusion activity requires actual Current leases");
+        auto& block = impl_->require_block(current);
+        const auto endpoint = block.require_access(current);
+        auto seed_access = current; seed_access.slot = retained_seed;
+        const auto seed = block.require_access(seed_access);
+        if (!valid_hydro_view(endpoint) || !valid_hydro_view(seed)
+            || endpoint.total_size != block.grid.total_size || seed.total_size != endpoint.total_size
+            || seed.n_species != endpoint.n_species || endpoint.eng == seed.eng)
+            throw std::invalid_argument("Diffusion activity endpoint/seed resident shape mismatch");
+        DeviceDiffusionActivityBlock binding{endpoint.eng, seed.eng, block.grid};
+        if (!valid_diffusion_activity_binding(binding))
+            throw std::invalid_argument("Diffusion activity requires finite actual geometry/layout/volumes");
+        bindings.push_back(binding); owners.push_back(&block);
+    }
+    std::sort(owners.begin(), owners.end(), std::less<>{});
+    if (std::adjacent_find(owners.begin(), owners.end()) != owners.end())
+        throw std::invalid_argument("Duplicate Diffusion activity Current owner");
+    backend::DiffusionActivityReceipt receipt{};
+    if (currents.empty()) return receipt;
+    std::vector<DeviceDiffusionActivityResult> summaries(currents.size());
+    impl_->select_device();
+    impl_->checked_quiesce("quiesce before diffusion activity scratch reuse");
+    impl_->diffusion_activity_bindings.reserve(bindings.size());
+    impl_->diffusion_activity_results.reserve(summaries.size());
+    CudaQuiescenceGuard work_guard{*impl_};
+    enqueue_cuda_metadata_upload(impl_->diffusion_activity_bindings.get(), bindings.data(),
+        bindings.size() * sizeof(DeviceDiffusionActivityBlock), impl_->stream.get(),
+        impl_->runtime_counters, "upload diffusion activity bindings");
+    const auto launched = launch_cuda_backend_diffusion_activity_batch(bindings,
+        impl_->diffusion_activity_bindings.get(), impl_->diffusion_activity_results.get(), impl_->stream.get());
+    impl_->runtime_counters.kernel_count += launched.kernels_launched;
+    check_cuda(launched.error, "reduce resident diffusion endpoint activity");
+    check_cuda(cudaMemcpyAsync(summaries.data(), impl_->diffusion_activity_results.get(),
+        summaries.size() * sizeof(DeviceDiffusionActivityResult), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        "download compact diffusion activity receipts");
+    impl_->runtime_counters.bytes_d2h += summaries.size() * sizeof(DeviceDiffusionActivityResult);
+    quiesce(); work_guard.completed = true;
+    arch::math::CompensatedSum signed_change, absolute_change;
+    for (std::size_t n = 0; n < summaries.size(); ++n) {
+        const auto& summary = summaries[n];
+        if (summary.failed || !std::isfinite(summary.signed_energy_change)
+            || !std::isfinite(summary.absolute_energy_change) || summary.absolute_energy_change < 0.0
+            || summary.cells != static_cast<std::uint64_t>(bindings[n].grid.active_cell_count())
+            || summary.cells > std::numeric_limits<std::uint64_t>::max() - receipt.cells)
+            throw std::runtime_error("Diffusion activity endpoint/geometry/reduction is nonfinite or incomplete");
+        signed_change.add(summary.signed_energy_change);
+        absolute_change.add(summary.absolute_energy_change);
+        receipt.cells += summary.cells;
+    }
+    receipt.signed_energy_change = signed_change.value();
+    receipt.absolute_energy_change = absolute_change.value();
+    if (!std::isfinite(receipt.signed_energy_change) || !std::isfinite(receipt.absolute_energy_change))
+        throw std::runtime_error("Diffusion activity batch reduction overflow");
+    return receipt;
 }
 
 void CudaBackend::copy_state_slot(

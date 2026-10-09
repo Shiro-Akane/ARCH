@@ -462,6 +462,25 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
     const backend::BoundaryCells& values, const boundary::DiffusionBoundaryStorage& controls) {
     auto& block = impl_->require_block(access);
     auto state = block.require_access(access);
+    std::size_t owner = block.state_storage.size();
+    for (std::size_t candidate = 0; candidate < block.state_storage.size(); ++candidate)
+        if (block.state_storage[candidate].rho.get() == state.rho) owner = candidate;
+    if (owner == block.state_storage.size())
+        throw std::logic_error("User ghost slice has no state allocation owner");
+    // Preflight every actual control plane before any ghost transfer or write.
+    // Non-null DiffusionBoundaryView records use a fixed actual physical-face
+    // shape. A macro savepoint pins the original allocation while stage values
+    // and null/non-null bindings may change within its existing capacity.
+    for (int face = 0; face < 6; ++face) {
+        const auto& source = controls.faces[face];
+        const auto& destination = block.user_boundary_controls[owner][face];
+        const std::size_t expected = static_cast<std::size_t>(physical_face_cells(block.grid, face))
+            * static_cast<std::size_t>(4 + state.n_species);
+        if (!source.empty() && source.size() != expected)
+            throw std::invalid_argument("Diffusion boundary controls do not match the actual face shape");
+        if (impl_->macro_state.active && source.size() > destination.size())
+            throw std::logic_error("CUDA macro savepoint forbids scalar-control allocation growth");
+    }
     validate_indices(state, indices, true, block.grid);
     if (values.species_count != static_cast<std::size_t>(state.n_species) || values.conserved.size() != indices.size()
         || values.enuc.size() != indices.size() || values.composition.size() != indices.size() * values.species_count)
@@ -490,10 +509,6 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
     auto& slot = block.slots[slot_index(access.slot)];
     // Slot views rotate, allocations do not. Controls follow the physical
     // state owner, so filling Yprev cannot overwrite cached Y0 controls.
-    std::size_t owner=block.state_storage.size();
-    for(std::size_t candidate=0;candidate<block.state_storage.size();++candidate)
-        if(block.state_storage[candidate].rho.get()==state.rho) owner=candidate;
-    if(owner==block.state_storage.size()) throw std::logic_error("User ghost slice has no state allocation owner");
     for (int face = 0; face < 6; ++face) {
         const auto& source = controls.faces[face];
         auto& destination = block.user_boundary_controls[owner][face];
@@ -512,6 +527,25 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
 void CudaBackend::configure_boundary_flux_capture(
     std::span<const backend::BoundaryFluxPlanes> layout, double weight,
     double initial_weight, bool save_initial) {
+    // A resident savepoint allows stage weights and values to change, but its
+    // fixed observer layout must have been configured before macro entry.
+    // Validate the whole batch before any weight, shape, allocation or memset.
+    if (impl_->macro_state.active) {
+        for (const backend::BoundaryFluxPlanes& planes : layout) {
+            CudaBlockRuntime* found = impl_->find_block(planes.block);
+            if (found == nullptr)
+                throw std::invalid_argument("boundary flux capture names an unknown CUDA block");
+            const auto& observer = found->boundary_flux_observer;
+            for (int face = 0; face < 6; ++face) {
+                const std::size_t elements = planes.stage[face].size();
+                if (observer.active_elements[face] != elements
+                    || observer.owned[face] != (elements != 0)
+                    || observer.stage[face].size() < elements
+                    || observer.initial[face].size() < elements)
+                    throw std::logic_error("CUDA macro savepoint forbids observer layout changes");
+            }
+        }
+    }
     impl_->select_device();
     for (const backend::BoundaryFluxPlanes& planes : layout) {
         CudaBlockRuntime* found = impl_->find_block(planes.block);

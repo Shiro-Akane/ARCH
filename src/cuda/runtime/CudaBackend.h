@@ -116,6 +116,9 @@ public:
     state::CompletionToken execute_physical_boundary_batch(
         std::span<const backend::BackendStateAccess> accesses,
         state::StateVersion version, state::CompletionToken expected) override;
+    state::CompletionToken execute_native_axis_boundary_batch(
+        std::span<const backend::BackendStateAccess> accesses,
+        state::StateVersion version, state::CompletionToken expected) override;
     std::optional<backend::NativeEosFailure> validate_completed_native_eos_batch(
         std::span<const backend::BackendStateAccess>, const state::Bounds&) override;
     backend::BoundaryCells prepare_native_reflecting_layer(
@@ -147,6 +150,8 @@ public:
                       state::SlotRotation rotation) override;
     double compute_diffusion_dt(
         backend::BackendStateAccess current) override;
+    backend::DiffusionActivityReceipt reduce_diffusion_energy_activity_batch(
+        std::span<const backend::BackendStateAccess>, state::StateSlot retained_seed) override;
     void copy_state_slot(backend::BackendStateAccess source,
                          backend::BackendStateAccess destination) override;
     state::CompletionToken execute_diffusion_stage(
@@ -174,6 +179,9 @@ public:
     void enqueue_upload_slot(
         backend::BackendStateAccess access, state::StateRegion region,
         backend::HostStateTransferView host) override;
+    std::unique_ptr<backend::BackendMacroStateTransaction>
+    begin_macro_state_transaction(
+        std::span<const backend::BackendStateAccess> currents) override;
     bool supports_dynamic_topology_store() const noexcept override;
     std::unique_ptr<backend::BackendTopologyStoreTransaction>
     begin_topology_store_transaction(

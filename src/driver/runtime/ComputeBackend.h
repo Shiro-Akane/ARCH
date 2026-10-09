@@ -117,6 +117,30 @@ struct BackendTopologyBinding {
     const boundary::BoundaryPlan* physical_boundary = nullptr;
 };
 
+/**
+ * @brief Retain actual resident macro-entry fields until the caller commits.
+ *
+ * Workflow: begin with valid Current leases, execute the existing macro, prove
+ * retained storage still owns the same allocations, then commit. Destruction
+ * before commit restores all retained slots and backend-owned surface/control
+ * planes without throwing. Runtime separately restores its ledger, source,
+ * boundary frame, clock and budgets; this owner grants no execution permission.
+ */
+class BackendMacroStateTransaction {
+public:
+    BackendMacroStateTransaction() = default;
+    virtual ~BackendMacroStateTransaction() = default;
+    BackendMacroStateTransaction(const BackendMacroStateTransaction&) = delete;
+    BackendMacroStateTransaction& operator=(const BackendMacroStateTransaction&) = delete;
+    BackendMacroStateTransaction(BackendMacroStateTransaction&&) = delete;
+    BackendMacroStateTransaction& operator=(BackendMacroStateTransaction&&) = delete;
+
+    /** Check original allocations/shape and join the actual owner stream. */
+    virtual void validate_storage() const = 0;
+    /** Release the savepoint after the caller's complete macro validation. */
+    virtual void commit() noexcept = 0;
+};
+
 class BackendTopologyStoreTransaction {
 public:
     BackendTopologyStoreTransaction() = default;
@@ -222,6 +246,18 @@ inline void validate_host_state_transfer_view(
         }
     }
 }
+
+/** Compact endpoint energy redistribution over actual leaf cell measures.
+ * The producer evaluates the shared V*(E_after-E_seed) term; this receipt
+ * carries signed and absolute endpoint sums, not cumulative face heat flux.
+ * Units follow the actual geometry measure. Scalar observation never publishes
+ * a state version or provides thermodynamic/stage acceptance.
+ */
+struct DiffusionActivityReceipt {
+    double signed_energy_change = 0.0;
+    double absolute_energy_change = 0.0;
+    std::uint64_t cells = 0;
+};
 
 struct BurnExecutionResult {
     double dt_recommended = 0.0;
@@ -340,6 +376,18 @@ public:
                 throw std::logic_error("Boundary batch returned incomplete work");
         return expected;
     }
+    /** Apply final Native signed-axis/corner copies from the actual block cache.
+     * The caller has completed the positive-r donors and both domain exchanges.
+     * Whole-batch storage/slot and nonzero version/complete token checks precede
+     * writes. This operation neither validates EOS nor publishes GhostValid;
+     * Runtime owns the actual ledger/version and final acceptance authority.
+     */
+    virtual state::CompletionToken execute_native_axis_boundary_batch(
+        std::span<const BackendStateAccess>, state::StateVersion,
+        state::CompletionToken)
+    {
+        throw std::logic_error("backend resident Native final axis boundary is unavailable");
+    }
     /** Read completed Native patches through their resident selected EOS.
      * The caller owns completed BC/exchange and exact slot/version coverage.
      * A successful return witnesses synchronous validation, not ghost publication
@@ -386,6 +434,15 @@ public:
     virtual void rotate_slots(BackendStateAccess current,
                               state::SlotRotation rotation) = 0;
     virtual double compute_diffusion_dt(BackendStateAccess current) = 0;
+    /** Observe resident completed Current against the RKL-retained input slot.
+     * Caller retains the actual input version and completed boundary/EOS owner;
+     * backend resolves storage and returns only compact measured scalars.
+     */
+    virtual DiffusionActivityReceipt reduce_diffusion_energy_activity_batch(
+        std::span<const BackendStateAccess>, state::StateSlot)
+    {
+        throw std::logic_error("backend diffusion energy activity unavailable");
+    }
     virtual void copy_state_slot(BackendStateAccess source,
                                  BackendStateAccess destination) = 0;
     virtual state::CompletionToken execute_diffusion_stage(
@@ -469,6 +526,12 @@ public:
     /** Transfer only block-owned physical-surface planes back to Host storage. */
     virtual std::vector<BoundaryFluxPlanes> download_boundary_flux_capture() {
         throw std::logic_error("backend boundary flux capture is unavailable");
+    }
+    /** Retain all three slots of the complete committed Current owner domain. */
+    virtual std::unique_ptr<BackendMacroStateTransaction>
+    begin_macro_state_transaction(std::span<const BackendStateAccess>)
+    {
+        throw std::logic_error("backend resident macro state transaction is unavailable");
     }
     virtual bool supports_dynamic_topology_store() const noexcept
     {

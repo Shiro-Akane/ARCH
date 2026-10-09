@@ -355,6 +355,8 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
             arch::backend::BackendOperation::DiffusionStage,
             StateSlot::Current, before);
         runtime.repair_budget().combine(pending);
+        if(runtime.diffusion_activity_enabled())runtime.observe_completed_diffusion_activity(
+            scheduler::make_rkl_plan(rkl1?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages));
         return;
     }
 
@@ -401,6 +403,9 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     auto& accepted=transaction?transaction->repair_receipts():runtime.repair_budget();
     if(transaction)transaction->validate_storage();
     accepted.combine(pending);
+    // Both adapters returned after their real final boundary/acceptance work.
+    if(runtime.diffusion_activity_enabled())runtime.observe_completed_diffusion_activity(
+        scheduler::make_rkl_plan(rkl1?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages));
 }
 enum class BurnHalf { First, Second };
 /** Advance one burn half-step and reduce accepted burn timestep advice. */

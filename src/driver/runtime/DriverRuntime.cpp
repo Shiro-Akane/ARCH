@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <cstdlib>
+#include <string_view>
 #include <stdexcept>
 #include <unordered_set>
 #include <utility>
@@ -24,6 +26,7 @@
 #include "driver/runtime/HostHydroTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/diffusion/DiffFunction.h"
+#include "numerics/diffusion/DiffusionTypes.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace arch::driver {
@@ -505,10 +508,130 @@ DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx2)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
           config.amr.lrefinemax}) {
+    if(const char* value=std::getenv("ARCH_TRACE_DIFFUSION_ACTIVITY")) {
+        const std::string_view option(value);
+        if(option!="0"&&option!="1")
+            throw std::invalid_argument("ARCH_TRACE_DIFFUSION_ACTIVITY must be exactly 0 or 1");
+        diffusion_activity_enabled_=option=="1";
+    }
+    diffusion_activity_totals_.process_start_time=ctrl.t_current;
+    diffusion_activity_totals_.process_start_step=ctrl.step_count;
     ctrl.repairs.bind_semantics(geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
         ? state::RepairSemantics::RzVolumeAngular : state::RepairSemantics::ExistingVolume);
 }
 DriverRuntime::~DriverRuntime() = default;
+
+/** Read two existing energy planes after the real final BC/EOS gate returned.
+ * This records endpoint redistribution, not time-integrated heat or intermediate
+ * RKL excursions. Existing repairs/viscous work remain part of accepted E.
+ */
+void DriverRuntime::observe_completed_diffusion_activity(const scheduler::RklPlan& plan)
+{
+    if(!diffusion_activity_enabled_)return;
+    if(plan.stages.empty())throw std::logic_error("Diffusion activity lacks its actual RKL plan");
+    const auto& rotation=plan.final_rotation;
+    std::optional<StateSlot> retained_seed;
+    for(const auto mapping:{std::pair{StateSlot::Current,rotation.current_from},
+            std::pair{StateSlot::Next,rotation.next_from},
+            std::pair{StateSlot::Scratch,rotation.scratch_from}}) {
+        if(mapping.second==StateSlot::Current) {
+            if(retained_seed)throw std::logic_error("RKL rotation duplicated its seed");
+            retained_seed=mapping.first;
+        }
+    }
+    if(!retained_seed||*retained_seed==StateSlot::Current)
+        throw std::logic_error("RKL rotation did not retain a distinct input Current");
+    topology_registry.validate_committed_snapshot(observe_topology());
+    const auto& active=amr_ctrl.tree->GetActiveBlocks();
+    if(!residency_ledger||active.empty()||active.size()!=stage_handles.size())
+        throw std::logic_error("Diffusion activity lost actual leaf/ledger ownership");
+    const auto side=compute_backend?ExecutionSide::Device:ExecutionSide::Host;
+    for(const auto handle:stage_handles) {
+        for(const auto slot:{StateSlot::Current,*retained_seed}) {
+            const state::StateKey key{handle,slot};
+            const auto coherence=residency_ledger->inspect(key);
+            scheduler::detail::require_settled_destination(coherence);
+            residency_ledger->require_readable(key,
+                {side,coherence.interior.version,true,slot==StateSlot::Current});
+        }
+    }
+    backend::DiffusionActivityReceipt receipt{};
+    if(compute_backend) {
+        std::vector<backend::BackendStateAccess> accesses;
+        accesses.reserve(stage_handles.size());
+        for(std::size_t b=0;b<stage_handles.size();++b)
+            accesses.push_back(backend_access(b,StateSlot::Current));
+        const auto before=compute_backend->counters();
+        receipt=compute_backend->reduce_diffusion_energy_activity_batch(accesses,*retained_seed);
+        const auto after=compute_backend->counters();
+        diffusion_activity_operations_.bytes_h2d+=after.bytes_h2d-before.bytes_h2d;
+        diffusion_activity_operations_.bytes_d2h+=after.bytes_d2h-before.bytes_d2h;
+        diffusion_activity_operations_.kernel_count+=after.kernel_count-before.kernel_count;
+        diffusion_activity_operations_.stream_sync_count+=after.stream_sync_count-before.stream_sync_count;
+    } else {
+        const auto seed_member=TimeIntegration::hydro_boundary_state_member(*retained_seed);
+        long double signed_change=0.,absolute_change=0.;
+        for(const int id:active) {
+            const auto& block=amr_ctrl.pool->GetBlock(id);
+            const auto& grid=block.grid;
+            const auto& after=block.fluid_state.eng;
+            const auto& before=(block.*seed_member).eng;
+            const auto extent=static_cast<std::size_t>(grid.GetTotalSize());
+            if(!block.active||after.size()!=extent||before.size()!=extent)
+                throw std::logic_error("Diffusion activity energy plane/leaf mismatch");
+            const auto geometry=GridMetrics::make_geometry_view(grid,geometry_semantics_);
+            for(int k=grid.Ks();k<grid.Ke();++k)
+                for(int j=grid.Js();j<grid.Je();++j)
+                    for(int i=grid.Is();i<grid.Ie();++i) {
+                        const int cell=grid.GetIndex(i,j,k);
+                        const double volume=GridMetrics::CellVolume(geometry,i,j,k);
+                        const auto term=DiffFlux::diffusion_energy_activity_term(volume,after[cell],before[cell]);
+                        if(!term.valid)
+                            throw std::runtime_error("Diffusion activity requires a valid shared endpoint energy term");
+                        signed_change+=term.signed_energy_change;
+                        absolute_change+=term.absolute_energy_change;
+                        if(receipt.cells==std::numeric_limits<std::uint64_t>::max())
+                            throw std::overflow_error("Diffusion activity cell count exhausted");
+                        ++receipt.cells;
+                    }
+        }
+        const auto maximum=static_cast<long double>(std::numeric_limits<double>::max());
+        if(!std::isfinite(signed_change)||!std::isfinite(absolute_change)
+            ||std::abs(signed_change)>maximum||absolute_change>maximum)
+            throw std::overflow_error("Diffusion activity half receipt is not representable");
+        receipt.signed_energy_change=static_cast<double>(signed_change);
+        receipt.absolute_energy_change=static_cast<double>(absolute_change);
+    }
+    if(!std::isfinite(receipt.signed_energy_change)||!std::isfinite(receipt.absolute_energy_change)
+        ||receipt.absolute_energy_change<0.||receipt.cells==0)
+        throw std::runtime_error("Diffusion activity returned an invalid half receipt");
+    diffusion_activity_half_=receipt;
+}
+
+DiffusionActivityTotals DriverRuntime::prepare_diffusion_activity_promotion(
+    std::span<const std::optional<backend::DiffusionActivityReceipt>> halves) const
+{
+    auto next=diffusion_activity_totals_;
+    if(!diffusion_activity_enabled_)return next;
+    if(halves.size()!=2)throw std::logic_error("Diffusion activity requires the original two macro halves");
+    if(!halves[0]&&!halves[1])return next; // Disabled diffusion contributes nothing.
+    if(!halves[0]||!halves[1])throw std::logic_error("Diffusion activity macro lost a half receipt");
+    if(next.accepted_macros==std::numeric_limits<std::uint64_t>::max()
+        ||next.accepted_halves>std::numeric_limits<std::uint64_t>::max()-2)
+        throw std::overflow_error("Diffusion activity accepted count exhausted");
+    for(const auto& half:halves) {
+        if(!std::isfinite(half->signed_energy_change)||!std::isfinite(half->absolute_energy_change)
+            ||half->absolute_energy_change<0.||half->cells==0
+            ||next.cells>std::numeric_limits<std::uint64_t>::max()-half->cells)
+            throw std::overflow_error("Diffusion activity promotion has an invalid receipt/count");
+        next.signed_energy_change+=half->signed_energy_change;
+        next.absolute_energy_change+=half->absolute_energy_change;
+        next.cells+=half->cells;
+    }
+    if(!std::isfinite(next.signed_energy_change)||!std::isfinite(next.absolute_energy_change))
+        throw std::overflow_error("Diffusion activity process total exhausted");
+    next.accepted_halves+=2;++next.accepted_macros;return next;
+}
 /** Snapshot logical identities for the requested active block order. */
 std::vector<TopologyObservation> DriverRuntime::observe_blocks(std::span<const int> active) const
 {

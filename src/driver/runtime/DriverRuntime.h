@@ -98,6 +98,13 @@ struct NativeCoarseningVetoRecord {
     state::StateVersion version{}; // zero for fail-only prepublication checks
     double jeans_minimum=0.; // meaningful only for JeansResolution
 };
+/** Accepted diagnostic segment; never a checkpoint/evolved state quantity. */
+struct DiffusionActivityTotals {
+    long double signed_energy_change=0., absolute_energy_change=0.;
+    std::uint64_t cells=0, accepted_halves=0, accepted_macros=0;
+    double process_start_time=0.;
+    int process_start_step=0;
+};
 class HostHydroTransaction;
 class DriverRuntime {
 public:
@@ -191,9 +198,29 @@ public:
     const std::vector<double>& hydro_boundary_budget() const { return hydro_boundary_budget_; }
     const std::vector<double>& diffusion_boundary_budget() const { return diffusion_boundary_budget_; }
     const backend::BackendCounters& boundary_observer_operations() const { return boundary_observer_operations_; }
+    bool diffusion_activity_enabled() const noexcept { return diffusion_activity_enabled_; }
+    const DiffusionActivityTotals& diffusion_activity_totals() const noexcept { return diffusion_activity_totals_; }
+    const backend::BackendCounters& diffusion_activity_operations() const noexcept { return diffusion_activity_operations_; }
+    /** Observe accepted half-step endpoints only, through actual retained slots. */
+    void observe_completed_diffusion_activity(const scheduler::RklPlan&);
+    void clear_diffusion_activity_half() noexcept { diffusion_activity_half_.reset(); }
+    std::optional<backend::DiffusionActivityReceipt> take_diffusion_activity_half() noexcept {
+        auto result=diffusion_activity_half_;diffusion_activity_half_.reset();return result;
+    }
+    /** Prepare scalar accumulation before final physical commit; no publication. */
+    DiffusionActivityTotals prepare_diffusion_activity_promotion(
+        std::span<const std::optional<backend::DiffusionActivityReceipt>>) const;
+    /** Scalar assignment after the complete macro and its real native commit. */
+    void promote_diffusion_activity(const DiffusionActivityTotals& value) noexcept {
+        diffusion_activity_totals_=value;
+    }
 private:
     friend class HostHydroTransaction;
     friend class NativeMacroRetryAttempt;
+    bool diffusion_activity_enabled_=false;
+    std::optional<backend::DiffusionActivityReceipt> diffusion_activity_half_;
+    DiffusionActivityTotals diffusion_activity_totals_{};
+    backend::BackendCounters diffusion_activity_operations_{};
     NativeMacroRetryAttempt* native_macro_retry_attempt_=nullptr;
     void qualify_native_thermal_rejection(const scheduler::StageExecutionContext&,
         const NativeBoundaryAcceptanceError&);

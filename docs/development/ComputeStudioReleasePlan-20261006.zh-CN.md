@@ -81,7 +81,7 @@ EOS 面近似开关已在此前优化试验中撤回：没有取得加速，且�
 2026-10-09共享完成态EOS节点：原Host接受主体提取为同一Host/Device标量叶，原生预检、实际密度／惯量闭合、mean及六个物理节点的EOS顺序和原预算保持；Host异常文字与phase保持。CUDA读取既有required-query失败锁存，有限错误返回不能使单元变为有效。四个受影响CPU owner和两个真实CUDA owner全部通过；原逻辑单元身份、signed-axis Host ghost及NaN padding位保持均有原owner断言，没有新增CTest、用户参数或演化量。一次新增测试lambda标注编译错误已用原项目写法修复，保留失败与215.649秒累计编译记录；实际Device检查1.63秒通过。该节点仅授予共享单元检查叶，resident batch服务、真实原生ghost与完整NativeDevice／长程仍按下一消费者验收。[处理后记录](../../validation/gravity/results/release-closure-20261007/native-device-eos-leaf-20261009-summary.json)。
 
 
-当前消费者回查（2026-10-09 UTC）：有序边界后端层的受影响CPU原owner2/2及架构111/111通过；当前CUDA原边界和真实存储owner均已通过，零组分夹具仅修正既有传输步幅契约，原数值窗口保持。真实存储执行物memcheck／leak-check为0错误、0泄漏；全部构建累计3044.675秒，原失败保留。[限定消费者记录](../../validation/amr/results/release-closure-20261009/native-device-reflecting-layer-summary.json)保存具体身份与范围。完整Native宏步／边界接线与其余O9仍开放，已签收共享数学不重开。现有owner的测试候选与CI映射并行完成，后续先集成已冻结候选，再验收实际消费者。任务责任和发布出口统一见[主计划当前批次](ComputeOptimizationPlan.zh-CN.md#当前执行批次原消费者接线与o9账本)。
+当前消费者回查（2026-10-09 UTC）：`1555ce51d`保留原反射层身份。后续O9端点活动、resident回滚、有序BC与最终轴服务的CPU受影响批次各2/2、架构111/111、两个原CUDA owner及实际存储memcheck均通过；内存检查为0错误、0泄漏。新计数断言只修正观察自身的一个getter，生产实现和全部原科学门槛保持，原失败与1455.344秒累计编译见[当前服务记录](../../validation/amr/results/release-closure-20261009/native-resident-services-summary.json)。下一Runtime主体／ledger与边界容量候选独立准备，保留严格Host规则、原参考比较、真实Device字段及Host镜像保护。完整宏步、源项与长程继续各自验收，已签收数学不重开，不新增测试家族。Gemini整份文本的持续外发／编辑授权与事实复核边界写入[主计划](ComputeOptimizationPlan.zh-CN.md#当前执行批次原消费者接线与o9账本)。
 
 ## 规则基准与完成标准
 
