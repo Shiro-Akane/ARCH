@@ -245,13 +245,55 @@ private:
 };
 
 namespace detail {
-/** Shared read-only Host region gate: preserve native precheck, actual mean EOS,
- * both true faces and four radial Gauss-node EOS checks with the original
- * diagnostics/bounds. Region and closure selection remain explicit callers.
+/** Borrow an optional EOS query latch after the original selected-EOS checks.
+ * Ordinary Host EOS types have no latch and retain the existing status path.
  */
-/** Validate one actual logical cell using the existing complete-region body.
- * The caller owns one species scratch vector per patch; no per-cell allocation.
- * Native preliminary, mean EOS and six physical nodes keep original arithmetic.
+template<class Eos>
+ARCH_INLINE bool required_eos_query_failed(const Eos& eos)
+{
+    if constexpr(requires {eos.required_query_failed();})return eos.required_query_failed();
+    else return false;
+}
+
+/** Check one actual logical cell using the existing complete-region body.
+ * The caller loads contiguous Xi; this leaf only reads the supplied state and
+ * returns the original gate diagnostics. Native preliminary, closure, mean EOS
+ * and six physical nodes keep their original order and arithmetic.
+ */
+template<class Eos,class CellClosure,class StateReader>
+ARCH_INLINE AcceptanceDiagnostic check_patch_eos_cell(const GridMetrics::GeometryView& view,
+    int species,const arch::state::Bounds& bounds,const Eos& eos,int i,int j,int index,
+    const CellClosure& closure,const StateReader& read,const double* fractions)
+{
+    const auto native=read(index);
+    const auto preliminary=provisional_native_state(native,fractions,species,1,bounds);
+    if(preliminary!=arch::state::Status::valid)
+        return {AcceptancePhase::provisional,preliminary,index,i,j,-1,false};
+    const auto cell=closure(read,index,view,i,bounds);
+    auto mean_status=validate_mean_eos(cell,fractions,species,eos);
+    const bool mean_query_failed=required_eos_query_failed(eos);
+    if(mean_status==arch::state::Status::valid&&mean_query_failed)
+        mean_status=arch::state::Status::invalid_thermodynamics;
+    if(mean_status!=arch::state::Status::valid) {
+        const auto phase=cell.valid() ? AcceptancePhase::mean_eos
+            : (cell.inertia_mapping_valid ? AcceptancePhase::effective_thermal
+                                         : AcceptancePhase::density_or_inertia);
+        return {phase,mean_status,index,i,j,-1,cell.inertia_mapping_valid};
+    }
+    for(int node=0;node<physical_node_count;++node) {
+        const auto point=base_point(cell,physical_node_radius(cell,node));
+        auto point_status=arch::state::validate_eos(point,fractions,species,bounds,eos);
+        const bool point_query_failed=required_eos_query_failed(eos);
+        if(point_status==arch::state::Status::valid&&point_query_failed)
+            point_status=arch::state::Status::invalid_thermodynamics;
+        if(point_status!=arch::state::Status::valid)
+            return {AcceptancePhase::physical_eos,point_status,index,i,j,node,cell.inertia_mapping_valid};
+    }
+    return {AcceptancePhase::physical_eos,arch::state::Status::valid,index,i,j,-1,cell.inertia_mapping_valid};
+}
+
+/** Preserve the Host species scratch and original failure text around the leaf.
+ * EOS/reader/closure exceptions still propagate to the transaction owner.
  */
 template<class Eos,class CellClosure,class StateReader>
 inline void validate_patch_eos_cell(const FluidState& state,const GridMetrics::GeometryView& view,
@@ -259,28 +301,15 @@ inline void validate_patch_eos_cell(const FluidState& state,const GridMetrics::G
     const CellClosure& closure,const StateReader& read,std::vector<double>& fractions)
 {
     for(int s=0;s<species;++s)fractions[s]=state.X(s,index);
-    const auto native=read(index);
-    const auto preliminary=provisional_native_state(native,fractions.data(),species,1,bounds);
-    if(preliminary!=arch::state::Status::valid)
-        throw AcceptanceError("RZ native provisional state rejected at cell "+std::to_string(index),
-            {AcceptancePhase::provisional,preliminary,index,i,j,-1,false});
-    const auto cell=closure(read,index,view,i,bounds);
-    const auto mean_status=validate_mean_eos(cell,fractions.data(),species,eos);
-    if(mean_status!=arch::state::Status::valid) {
-        const auto phase=cell.valid() ? AcceptancePhase::mean_eos
-            : (cell.inertia_mapping_valid ? AcceptancePhase::effective_thermal
-                                         : AcceptancePhase::density_or_inertia);
-        throw AcceptanceError("RZ native closure/EOS rejected at cell "+std::to_string(index),
-            {phase,mean_status,index,i,j,-1,cell.inertia_mapping_valid});
-    }
-    for(int node=0;node<physical_node_count;++node) {
-        const auto point=base_point(cell,physical_node_radius(cell,node));
-        const auto point_status=arch::state::validate_eos(point,fractions.data(),species,bounds,eos);
-        if(point_status!=arch::state::Status::valid)
-            throw AcceptanceError("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
-                +", node "+std::to_string(node),
-                {AcceptancePhase::physical_eos,point_status,index,i,j,node,cell.inertia_mapping_valid});
-    }
+    const auto diagnostic=check_patch_eos_cell(view,species,bounds,eos,i,j,index,
+        closure,read,fractions.data());
+    if(diagnostic.status==arch::state::Status::valid)return;
+    if(diagnostic.phase==AcceptancePhase::provisional)
+        throw AcceptanceError("RZ native provisional state rejected at cell "+std::to_string(index),diagnostic);
+    if(diagnostic.phase==AcceptancePhase::physical_eos)
+        throw AcceptanceError("RZ physical baseline/EOS rejected at cell "+std::to_string(index)
+            +", node "+std::to_string(diagnostic.node),diagnostic);
+    throw AcceptanceError("RZ native closure/EOS rejected at cell "+std::to_string(index),diagnostic);
 }
 
 template<class Eos,class CellClosure>

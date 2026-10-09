@@ -89,6 +89,8 @@ CUDA已实际重编译并运行上述受影响内核owner；公开CUDA生产库�
 
 2026-10-09连续能量节点：沿原512格、两个真实字段和96个真实边界面完成同一Euler终点；原机器账本、Current源与原预算保持。独立参考直接积分真实密度增量与均匀初态的连续势，保留小二次项的正核上下界，边界功使用完整面平均势及实际F_rho。12／24／48阶积分差递减；归一收支6.3682e-5，参考不确定度估计9.8927e-5，合计1.6261e-4，低于运行前冻结的1%有限引力交换预算。正核密度不等式严格成立，具体积分误差与数值端点明确为收敛估计，不称向外积分证书。原gravity阶段owner通过，原参考测试86/86通过，包含独立未降维体积／面Newton积分检查；实际演化98.648秒，当前参考15.106秒。生产算法、EOS、两次Strang燃烧和既有CPU优化没有改动，没有新增CTest或workflow。该单次有限耦合签收后不再重复初态完整点场参考；公共NativeDevice及长时／AMR全耦合仍按其真实消费者验收。[连续能量补测记录](../../validation/gravity/results/release-closure-20261007/native-continuous-energy-20261009-summary.json)保存公式、身份、独立审查、估计限定和全部耗时。
 
+2026-10-09共享完成态EOS节点：原Host接受主体提取为同一Host/Device标量叶，原生预检、实际密度／惯量闭合、mean及六个物理节点的EOS顺序和原预算保持；Host异常文字与phase保持。CUDA读取既有required-query失败锁存，有限错误返回不能使单元变为有效。四个受影响CPU owner和两个真实CUDA owner全部通过；原逻辑单元身份、signed-axis Host ghost及NaN padding位保持均有原owner断言，没有新增CTest、用户参数或演化量。一次新增测试lambda标注编译错误已用原项目写法修复，保留失败与215.649秒累计编译记录；实际Device检查1.63秒通过。该节点仅授予共享单元检查叶，resident batch服务、真实原生ghost与完整NativeDevice／长程仍按下一消费者验收。[处理后记录](../../validation/gravity/results/release-closure-20261007/native-device-eos-leaf-20261009-summary.json)。
+
 ### 接续工作顺序
 
 1. 收束本批已通过修复及文档，冻结其有限结论并push到当前分支；保留最新CUDA资源停止，完整release仍未签收。

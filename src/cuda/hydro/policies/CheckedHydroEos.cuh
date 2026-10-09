@@ -36,6 +36,13 @@ public:
     ARCH_INLINE CheckedHydroEosView(Eos eos, int* status)
         : eos_(bind_device_eos_status(eos, status)), status_(status) {}
 
+    /** Read the launch-owned sticky required-query failure without changing it.
+     * Shared native acceptance consumes this after each original EOS check;
+     * finite error fallback values cannot authorize a completed physical cell.
+     */
+    ARCH_INLINE bool required_query_failed() const
+    { return status_ != nullptr && *status_ != 0; }
+
     ARCH_INLINE CheckedHydroEosView candidate_view() const
     {
         auto candidate = *this;

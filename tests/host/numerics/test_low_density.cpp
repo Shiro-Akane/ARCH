@@ -762,6 +762,41 @@ void native_rz_completed_ghost_eos_reference() {
     RzThermodynamics::validate_patch_eos(field,grid,1,bounds,eos);
     RzThermodynamics::validate_completed_patch_eos(field,grid,1,bounds,eos);
     unchanged(valid_before);
+    // A selected EOS can report a failure while returning finite values.
+    // The common cell leaf must preserve the actual failed query's phase,
+    // and a valid traversal still calls mean + six points in original order.
+    struct QueryProbe {
+        const IdealGas& eos;std::array<int,3>& calls;bool& failed;int fail_call;
+        bool required_query_failed() const {return failed;}
+        double get_temperature(double rho,double energy,const double* x) const {
+            ++calls[0];if(calls[0]==fail_call)failed=true;
+            return eos.get_temperature(rho,energy,x);
+        }
+        double get_pressure(const FluidVector& value,const double* x) const {
+            ++calls[1];return eos.get_pressure(value,x);
+        }
+        double get_sound_speed(const FluidVector& value,double pressure,const double* x) const {
+            ++calls[2];return eos.get_sound_speed(value,pressure,x);
+        }
+    };
+    const auto supported=[nx](const auto& reader,int index,const auto& geometry,int i,const auto& limits) {
+        return RzThermodynamics::make_cell_supported(reader,index,geometry,i,std::clamp(i-1,0,nx-3),limits);
+    };
+    for(int fail_call:{0,1,4}) {
+        std::array<int,3> calls{};bool failed=false;
+        const QueryProbe probe{eos,calls,failed,fail_call};
+        const auto result=RzThermodynamics::detail::check_patch_eos_cell(view,1,bounds,probe,
+            grid.Is(),grid.Js(),grid.GetIndex(grid.Is(),grid.Js(),0),supported,read,fractions);
+        const int expected_calls=fail_call?fail_call:7;
+        require(calls==std::array<int,3>{expected_calls,expected_calls,expected_calls},
+            "native shared acceptance changed the original EOS query order/count");
+        require((result.status==arch::state::Status::valid)==(fail_call==0),
+            "native shared acceptance ignored a finite failed EOS query");
+        if(fail_call)require(result.phase==(fail_call==1?RzThermodynamics::AcceptancePhase::mean_eos:
+            RzThermodynamics::AcceptancePhase::physical_eos)&&result.node==(fail_call==1?-1:2),
+            "native shared acceptance lost actual mean/physical failure identity");
+    }
+    unchanged(valid_before);
     for(int j=0;j<ny;++j)for(int i=0;i<nx;++i) {
         const int index=grid.GetIndex(i,j,0),support=std::clamp(i-1,0,nx-3);
         const auto cell=RzThermodynamics::make_cell_supported(read,index,view,i,support,bounds);

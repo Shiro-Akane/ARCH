@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "status": "PASS_SHARED_NATIVE_COMPLETED_CELL_EOS_HOST_DEVICE_LEAF",
+  "recorded_at_utc": "2026-10-09T06:25:39.834915+00:00",
+  "source_base_commit": "4a15bf4063e4def874e62300841b6860c2bb88a4",
+  "source_sha256": {
+    "src/numerics/state/RzNativeClosure.h": "47e3d176ba642e5170170da5a2ccbcf3d1462fc42cb5f83228c7a34468552c5c",
+    "src/cuda/hydro/policies/CheckedHydroEos.cuh": "3c3cd512cf9635bb1f7b6f61537e24f95a17c8393cf0e3be35660af35e150db5",
+    "tests/host/numerics/test_low_density.cpp": "df7054a6e5facbeca86c181cb2d8e1b61b71796a9b7e2e5e25e6638e67ec3155",
+    "tests/cuda/hydro/test_hydro_eos_failure.cu": "16283afd5163868081717764043db9623d69d965150eed4c9666d8e8524f3f92"
+  },
+  "scope": "Original Host complete-region acceptance body extracted once; actual Device scalar consumer uses the same provisional/closure/mean/six-node EOS order and original bounds",
+  "implementation": {
+    "evolved_fields_added": 0,
+    "public_parameters_added": 0,
+    "numerical_method_changes": false,
+    "eos_math_or_cache_changes": false,
+    "ordinary_host_optional_latch_branch": "compile-time eliminated for EOS types without latch",
+    "original_host_error_text_and_phase_preserved": true,
+    "device_required_query_latch": "read existing sticky launch-owned status; finite fallback cannot authorize valid cell"
+  },
+  "cpu": {
+    "build_targets": [
+      "arch_low_density",
+      "arch_native_tabular",
+      "arch_gravity_stage_contract",
+      "arch_curvilinear_metrics"
+    ],
+    "build_guard_seconds": 86.471,
+    "passed": 4,
+    "total": 4,
+    "ctest_seconds": 61.98,
+    "test_guard_seconds": 62.566,
+    "budget_windows_changed": false
+  },
+  "cuda": {
+    "targets": [
+      "arch_cuda_hydro_eos_failure",
+      "arch_cuda_curvilinear_geometry_smoke"
+    ],
+    "first_build_status": "FAIL_NEW_TEST_EXPLICIT_DEVICE_LAMBDA_ANNOTATION",
+    "first_build_guard_seconds": 164.234,
+    "repair": "Use existing implicitly Device local lambda style, no extra nvcc flag",
+    "repair_build_guard_seconds": 51.415,
+    "passed": 2,
+    "total": 2,
+    "ctest_seconds": 1.63,
+    "test_guard_seconds": 2.178,
+    "actual_kernels_run": true,
+    "budget_windows_changed": false,
+    "compiler_warnings": "Existing-style Host/Device templates instantiated with Device lambdas emit #20014-D; actual Device owner passed; warnings not suppressed"
+  },
+  "original_owner_extensions": [
+    "Valid mean + six nodes keeps seven T/P/c queries",
+    "Finite failure at first mean T retains mean_eos/node=-1",
+    "Finite failure at physical node2 retains physical_eos/node=2",
+    "Host signed-axis ghost support and NaN padding unchanged",
+    "Device all real logical cells, target index/i/j match and U/X/enuc/NaN padding bit unchanged"
+  ],
+  "resource": {
+    "local_heavy_jobs_concurrent": 1,
+    "all_guards_stopped": false,
+    "max_observed_owned_rss_kib": 1821864,
+    "swap_growth_kib": 0,
+    "minimum_host_E_free_bytes": 23785697280,
+    "raw_h5_generated": false,
+    "raw_uploaded": false
+  },
+  "not_qualified": [
+    "resident backend batch service",
+    "Native physical or user ghost generation",
+    "Native full Hydro/AMR/gravity/burn/diffusion lifecycle",
+    "new formal benchmark, long run or whole release"
+  ],
+  "independent_delegation": {
+    "generic_reaction_math": "Physical annulus formula independently checked with exact Fraction; no source modification",
+    "worker": "real DeepSeek Flash high API, initial + one formal repair",
+    "manager_packet_error": "initial generic momentum formula omitted sqrt(rho); existing source correct and untouched",
+    "worker_false_statement": "signed-W sign sentence rejected by Root, no third retry",
+    "wall_seconds": 80.04,
+    "reported_input_tokens": 2894,
+    "reported_output_tokens": 18200,
+    "estimated_usd": [
+      0.01126002,
+      0.02252004
+    ],
+    "actual_bill": null,
+    "manager_active_cost": null,
+    "blocking_wait_seconds": 0,
+    "parallel_overlap": "CPU focused build/test and selected NVCC compile",
+    "recommendation": "Keep bounded independent derivations; manager must independently verify units and mirrored sign before adapter use"
+  },
+  "executable_sha256": {
+    "build-release-cpu/arch_low_density": "f2fd953dbd7d3e6f64c153c6850e70943fb94ecaaf39ee1915aff0fed322eec6",
+    "build-release-cpu/arch_gravity_stage_contract": "7c010ea431fbee14a5104176a3650420f159a6db9ba2e8b9bc419ba9bbee377f",
+    "build-rt-cuda/arch_cuda_hydro_eos_failure": "ed613a9bf7f5237fd0ef4e8ef69bd799186baef4755d461c78a8c94ff9fbdec2",
+    "build-rt-cuda/arch_cuda_curvilinear_geometry_smoke": "b66c80c1a08294ecf2451e1acfe919c693a858bce1039955a1b99cf9d516da2e"
+  }
+}

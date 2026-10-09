@@ -41,9 +41,12 @@ template<class T> struct Buffer {
     Buffer& operator=(const Buffer&) = delete;
 };
 
-enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure, InfinitePressure, ZeroTemperature, NegativeTemperature, NonfiniteTemperature };
+enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure, InfinitePressure, ZeroTemperature, NegativeTemperature, NonfiniteTemperature, LatchedFiniteTemperature };
 struct ProbeEos : IdealGasView {
     Fault fault = Fault::None;
+    int* device_error_status=nullptr;
+    int* temperature_calls=nullptr;
+    int fail_temperature_call=0;
     ARCH_INLINE double get_pressure(const FluidVector& value, const double* x) const
     {
         if ((fault == Fault::GhostPressure && value.rho == 2.0)
@@ -57,6 +60,17 @@ struct ProbeEos : IdealGasView {
     // Required thermal checks consume the selected EOS result without a floor.
     ARCH_INLINE double get_temperature(double rho, double energy, const double* x) const
     {
+        if(temperature_calls) {
+            const int call=++*temperature_calls;
+            if(fault==Fault::LatchedFiniteTemperature&&call==fail_temperature_call
+                &&device_error_status) {
+#if defined(__CUDA_ARCH__)
+                atomicExch(device_error_status,1);
+#else
+                *device_error_status=1;
+#endif
+            }
+        }
         if (fault == Fault::ZeroTemperature) return 0.;
         if (fault == Fault::NegativeTemperature) return -1.;
         if (fault == Fault::NonfiniteTemperature) return std::numeric_limits<double>::quiet_NaN();
@@ -469,6 +483,28 @@ __global__ void native_eos_face_test_kernel(arch::cuda::DeviceStateView input,
             {1e-12,1e-12,1e20},scratch,0,status,&means);
 }
 
+/** Traverse each real logical cell through the same Host/Device acceptance leaf.
+ * Padding is excluded; each lane owns its sticky query latch and query count.
+ */
+__global__ void native_completed_cell_eos_kernel(arch::cuda::DeviceStateView input,
+    arch::cuda::DeviceGridView grid,int nx,int ny,int fail_call,int* latches,int* calls,
+    RzThermodynamics::AcceptanceDiagnostic* diagnostics)
+{
+    const int lane=blockIdx.x*blockDim.x+threadIdx.x;if(lane>=nx*ny)return;
+    const int i=lane%nx,j=lane/nx,index=grid.index(i,j);
+    ProbeEos plain;plain.fault=Fault::LatchedFiniteTemperature;
+    plain.temperature_calls=calls+lane;plain.fail_temperature_call=fail_call;
+    const auto eos=arch::cuda::make_checked_hydro_eos(plain,latches+lane);
+    const auto read=[input](int cell){return input.load(cell);};
+    const auto closure=[nx](const auto& reader,int cell,const auto& geometry,int radial,const auto& bounds) {
+        const int first=radial-1<0?0:(radial-1>nx-3?nx-3:radial-1);
+        return RzThermodynamics::make_cell_supported(reader,cell,geometry,radial,first,bounds);
+    };
+    diagnostics[lane]=RzThermodynamics::detail::check_patch_eos_cell(
+        arch::cuda::make_grid_geometry_view(grid),0,{1e-12,1e-12,1e20},eos,
+        i,j,index,closure,read,nullptr);
+}
+
 /** Independent annulus V/W moments remain real, not fabricated point means.
  * rho=1, Omega=1, e0=1/64, vz=1/8. PPM's optional inverse-energy fault must
  * recover the complete immutable B bundle; required pressure faults reject
@@ -525,6 +561,32 @@ void test_native_selected_face_eos_ownership()
     NativeTrialResult actual{};check(cudaMemcpy(&actual,trial.data,sizeof(actual),cudaMemcpyDeviceToHost));
     require(!actual.optional_ray_valid&&actual.optional_latch==0&&actual.required_latch==1,
         "Native rejected high ray and required point EOS crossed latch ownership");
+    const int nx=hg.GetTotalX(),ny=hg.GetTotalY(),logical=nx*ny;
+    Buffer<int> latches(logical),calls(logical);
+    Buffer<RzThermodynamics::AcceptanceDiagnostic> diagnostics(logical);
+    for(int fail_call:{0,1,4}) {
+        check(cudaMemset(latches.data,0,logical*sizeof(int)));
+        check(cudaMemset(calls.data,0,logical*sizeof(int)));
+        native_completed_cell_eos_kernel<<<(logical+127)/128,128>>>(input,grid,nx,ny,
+            fail_call,latches.data,calls.data,diagnostics.data);check(cudaGetLastError());
+        std::vector<int> actual_calls(logical),actual_latches(logical);
+        std::vector<RzThermodynamics::AcceptanceDiagnostic> actual_diagnostics(logical);
+        check(cudaMemcpy(actual_calls.data(),calls.data,logical*sizeof(int),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(actual_latches.data(),latches.data,logical*sizeof(int),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(actual_diagnostics.data(),diagnostics.data,
+            logical*sizeof(RzThermodynamics::AcceptanceDiagnostic),cudaMemcpyDeviceToHost));
+        for(int lane=0;lane<logical;++lane) {
+            const auto& d=actual_diagnostics[lane];
+            require(actual_calls[lane]==(fail_call?fail_call:7)
+                &&actual_latches[lane]==(fail_call?1:0),"Native device cell EOS query order/latch changed");
+            require(d.index==grid.index(lane%nx,lane/nx)&&d.i==lane%nx&&d.j==lane/nx
+                &&(d.status==arch::state::Status::valid)==(fail_call==0),
+                "Native device acceptance changed logical cell/failure identity");
+            if(fail_call)require(d.phase==(fail_call==1?RzThermodynamics::AcceptancePhase::mean_eos:
+                RzThermodynamics::AcceptancePhase::physical_eos)&&d.node==(fail_call==1?-1:2),
+                "Finite native EOS fallback escaped actual Device failure phase");
+        }
+    }
     std::vector<double> after(host.size());
     check(cudaMemcpy(after.data(),source.data,after.size()*sizeof(double),cudaMemcpyDeviceToHost));
     for(std::size_t k=0;k<host.size();++k)

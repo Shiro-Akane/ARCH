@@ -64,6 +64,9 @@ EOS 面近似开关已在此前优化试验中撤回：没有取得加速，且�
 
 2026-10-09原生应力补测：同一共享完整Stokes数学已接入Native RZ径向／轴向路径，原角动量表示保持。CPU/CUDA原几何owner各通过15个新增观测；真实CPU Runtime新增12条RKL1/RKL2、同层／混层、正常／低密度轨迹均通过两个实际宏步，原2e-12窗口与零修复保持。完整冷旋流owner的拒绝、回滚与重试亦通过；新完整行界对应的阶段数由独立有理数参考核对。当前CPU生产重建后原注册清单首次75/76通过，唯一旧低密度行界参考迁移后的原owner复测通过；这是分项签收，不伪写为一次全量通过。当前CUDA原几何内核通过，生产CUDA全库尚未为本次共享头重建。完整FV／CF、连续引力能量、NativeDevice及其余长程仍沿各自出口验收，见[处理后记录](../../validation/gravity/results/release-closure-20261007/shared-native-stokes-20261009-summary.json)。
 
+2026-10-09共享完成态EOS节点：原Host接受主体提取为同一Host/Device标量叶，原生预检、实际密度／惯量闭合、mean及六个物理节点的EOS顺序和原预算保持；Host异常文字与phase保持。CUDA读取既有required-query失败锁存，有限错误返回不能使单元变为有效。四个受影响CPU owner和两个真实CUDA owner全部通过；原逻辑单元身份、signed-axis Host ghost及NaN padding位保持均有原owner断言，没有新增CTest、用户参数或演化量。一次新增测试lambda标注编译错误已用原项目写法修复，保留失败与215.649秒累计编译记录；实际Device检查1.63秒通过。该节点仅授予共享单元检查叶，resident batch服务、真实原生ghost与完整NativeDevice／长程仍按下一消费者验收。[处理后记录](../../validation/gravity/results/release-closure-20261007/native-device-eos-leaf-20261009-summary.json)。
+
+
 ## 规则基准与完成标准
 
 1. 优先采用最新已确认的 Core 契约及接口版本，而不是仅按提交日期选整份文件。新规则必须包含双方已验收功能；旧的正确约束不可因重构丢失。
