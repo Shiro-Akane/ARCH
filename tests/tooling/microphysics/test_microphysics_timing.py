@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT/'validation/backend'))
@@ -16,6 +17,30 @@ spec.loader.exec_module(timing)
 
 
 class MicrophysicsTimingTests(unittest.TestCase):
+    def test_onezone_checkpoint_consumer_uses_frozen_mass_energy_law(self):
+        import h5py
+        import numpy as np
+        data=dict(arrays=dict(AION=[1.,1.],ZION=[.5,.5]),
+                  burn_energy_weights=[10.,6.],burn_energy_conversion=-1.)
+        reference=SimpleNamespace(burn_energy_data=lambda _:data)
+        with tempfile.TemporaryDirectory() as tmp:
+            paths=[Path(tmp)/f'{i}.h5' for i in range(2)]
+            for path,x,e in zip(paths,([.5,.5],[.4,.6]),(10.,10.4)):
+                with h5py.File(path,'w') as f:
+                    for name in ('mom_u','mom_v','mom_w'):
+                        f['Data/'+name]=np.zeros((1,2))
+                    f['Data/rho']=np.full((1,2),1e7)
+                    f['Data/eng']=np.full((1,2),1e7*e)
+                    f['Data/X']=np.broadcast_to(np.asarray(x)[:,None,None],(2,1,2))
+            with patch.dict(sys.modules,{'nse_reference':reference}):
+                result=timing.burn_balance(*paths)
+                self.assertLess(result['energy_relative'],1e-12)
+                self.assertEqual(result['energy_budget'],1e-12)
+                with h5py.File(paths[1],'r+') as f:
+                    f['Data/eng'][0,0]+=1e5
+                with self.assertRaisesRegex(RuntimeError,'energy/charge'):
+                    timing.burn_balance(*paths)
+
     def test_default_thread_matrix_is_unchanged(self):
         self.assertEqual(timing.lane_configurations([1,8,16]),
             [(v,b,t) for v in ('baseline','candidate') for b in ('cpu','cuda') for t in (1,8,16)])

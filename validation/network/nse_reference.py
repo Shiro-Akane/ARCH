@@ -6,7 +6,9 @@ Equations (1)--(3): https://cococubed.com/code_pages/nse.shtml
 Constants: SI definitions / CODATA 2022 (NIST allascii.txt).
 
 Only immutable nuclear DATA are read from network headers. No ARCH solver,
-interpolator, constants header or compiled implementation is imported. A
+interpolator or compiled implementation is imported. NSE roots use independent
+physical constants; the separate burn-data adapter reads the frozen Timmes
+energy convention for production endpoint bookkeeping. A
 double-precision trust-region fit supplies an initial guess; mpmath then solves
 the *unscaled* mass and charge equations with arbitrary-precision arithmetic.
 Two independently rounded precisions must agree before results are emitted.
@@ -19,12 +21,6 @@ import hashlib
 import json
 from pathlib import Path
 import re
-
-import mpmath as mp
-import numpy as np
-from scipy.optimize import least_squares
-from scipy.special import logsumexp
-
 
 ROOT = Path(__file__).resolve().parents[2]
 NETWORKS = {"aprox13": "NetAprox13", "aprox19": "NetAprox19",
@@ -66,7 +62,52 @@ def nuclear_data(name: str) -> dict:
                 conversion_sha256=hashlib.sha256(conversion_path.read_bytes()).hexdigest())
 
 
+def burn_energy_data(name: str) -> dict:
+    """Read the frozen burn energy convention, distinct from the NSE reference.
+
+    The aprox networks use rounded nuclear masses and -N_A*c^2. Their
+    endpoint energy includes any mass/charge drift; binding energy alone is
+    equivalent only for exactly conserved mass and charge. This data adapter
+    does not import or evaluate ARCH's RHS or change independent NSE constants.
+    """
+    data = nuclear_data(name)
+    path = ROOT / f"src/physics/network/{name}/{NETWORKS[name]}.h"
+    source = path.read_text()
+    conversion_path = ROOT / "src/physics/network/timmes_common/NuclearConstants.h"
+    text = conversion_path.read_text()
+    scalars = {}
+    for key in ("ev2erg", "avo", "clight", "mn", "mp"):
+        match = re.search(r"\b" + key + r"\s*=\s*([\d.eE+-]+)\s*;", text)
+        if not match:
+            raise ValueError(f"unrecognized burn energy data: {key}")
+        scalars[key] = float(match[1])
+    if re.search(r"ENERGY_WEIGHTS\s*=\s*MION\s*;", source) and re.search(
+            r"ENERGY_CONVERSION\s*=\s*timmes::constants::enuc_conv2\s*;", source):
+        mev2gr = (scalars["ev2erg"] * 1.0e6) / (scalars["clight"] * scalars["clight"])
+        weights = [(a-z)*scalars["mn"] + z*scalars["mp"] - b*mev2gr
+                   for a, z, b in zip(data["arrays"]["AION"],
+                                      data["arrays"]["ZION"], data["arrays"]["BION"])]
+        conversion = -scalars["avo"] * scalars["clight"] * scalars["clight"]
+        basis = "nuclear_mass"
+    elif re.search(r"ENERGY_WEIGHTS\s*=\s*BION\s*;", source) and re.search(
+            r"ENERGY_CONVERSION\s*=\s*timmes::constants::enuc_conv\s*;", source):
+        weights = data["arrays"]["BION"]
+        conversion = data["energy_conversion"]
+        basis = "binding_energy"
+    else:
+        raise ValueError("unsupported burn energy convention; no binding-only fallback")
+    return dict(data, burn_energy_weights=weights,
+                burn_energy_conversion=conversion, burn_energy_basis=basis)
+
+
 def equilibrium(data: dict, digits: int) -> dict:
+    # Optional reference solvers are needed for Saha roots, not for immutable
+    # burn metadata or the existing NumPy-only tooling/CI qualification.
+    import mpmath as mp
+    import numpy as np
+    from scipy.optimize import least_squares
+    from scipy.special import logsumexp
+
     with mp.workdps(digits):
         a, z, binding, spin = ([mp.mpf(value) for value in data["arrays"][field]]
                               for field in ("AION", "ZION", "BION", "SPIN"))

@@ -63,9 +63,11 @@ class CoupledMicrophysicsTests(unittest.TestCase):
             wrong[key].flat[0]=value
             with self.assertRaises(ArithmeticError): module.field_quality(wrong)
 
-    def balance(self,snapshots):
-        reference=SimpleNamespace(nuclear_data=lambda name:dict(arrays=dict(AION=[1.,1.],
-            BION=[2.,6.],ZION=[0.5,0.5]),energy_conversion=1.))
+    def balance(self,snapshots,rest=12.):
+        reference=SimpleNamespace(burn_energy_data=lambda name:dict(arrays=dict(AION=[1.,1.],
+            BION=[2.,6.],ZION=[0.5,0.5]),energy_conversion=1.,
+            burn_energy_weights=[rest-2.,rest-6.],burn_energy_conversion=-1.,
+            burn_energy_basis='nuclear_mass'))
         with patch.dict(sys.modules,{'nse_reference':reference}), \
              patch.object(module.runtime,'read_conservation_metrics',side_effect=snapshots):
             return module.balance(Path('validator'),Path('initial'),Path('final'),Path('par'))
@@ -84,6 +86,36 @@ class CoupledMicrophysicsTests(unittest.TestCase):
     def test_zero_burn_cannot_qualify_coupled_case(self):
         initial=self.snapshots()[0]
         with self.assertRaises(ArithmeticError): self.balance([initial,copy.deepcopy(initial)])
+
+    def test_binding_only_balance_cannot_hide_rest_mass_drift(self):
+        records=self.snapshots()
+        records[1]['rhoX'][1]+=4e-13
+        records[1]['mass']+=4e-13
+        # This satisfies the old binding-only first-law/mass/charge window,
+        # but omits an energy contribution amplified by the rest-mass scale.
+        dx=np.array(records[1]['rhoX'],dtype=np.longdouble)-np.array(records[0]['rhoX'],dtype=np.longdouble)
+        old_q=np.sum(dx*np.array([2.,6.],dtype=np.longdouble))
+        self.assertLess(abs(np.longdouble(10.4)-np.longdouble(10.)-old_q)/10.4,1e-12)
+        self.assertLess(abs(sum(dx)),1e-12)
+        with self.assertRaisesRegex(ArithmeticError,'first-law'):
+            self.balance(records,rest=1e8)
+
+    def test_endpoint_law_handles_cell_arrays_and_rejects_wrong_species(self):
+        data=dict(arrays=dict(AION=[1.,1.]),burn_energy_weights=[10.,6.],burn_energy_conversion=-1.)
+        result=module.nuclear_energy_delta(data,np.array([[-.1,-.2],[.1,.2]]))
+        np.testing.assert_allclose(result,[.4,.8],rtol=0,atol=1e-16)
+        for delta in ([0.], [[0.,0.]], [float('nan'),0.]):
+            with self.assertRaises(ArithmeticError): module.nuclear_energy_delta(data,delta)
+
+    def test_frozen_network_energy_conventions_are_distinct(self):
+        import nse_reference
+        alpha=nse_reference.burn_energy_data('aprox13')
+        binding=nse_reference.burn_energy_data('iso7')
+        self.assertEqual(alpha['burn_energy_basis'],'nuclear_mass')
+        self.assertLess(alpha['burn_energy_conversion'],0.)
+        self.assertEqual(binding['burn_energy_basis'],'binding_energy')
+        self.assertEqual(binding['burn_energy_weights'],binding['arrays']['BION'])
+        self.assertEqual(binding['burn_energy_conversion'],binding['energy_conversion'])
 
 
 if __name__=='__main__': unittest.main()

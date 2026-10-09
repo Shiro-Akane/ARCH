@@ -117,9 +117,9 @@ def burn_balance(initial, final):
     import numpy as np
     sys.path.insert(0, str(ROOT / 'validation/network'))
     import nse_reference
-    data = nse_reference.nuclear_data('aprox13')
+    from verify_microphysics_coupling import nuclear_energy_delta
+    data = nse_reference.burn_energy_data('aprox13')
     mass = np.asarray(data['arrays']['AION'], dtype=np.longdouble)
-    binding = np.asarray(data['arrays']['BION'], dtype=np.longdouble) / mass
     charge = np.asarray(data['arrays']['ZION'], dtype=np.longdouble) / mass
     def state(path):
         with h5py.File(path) as f:
@@ -131,8 +131,8 @@ def burn_balance(initial, final):
     x0, e0 = state(initial)
     x1, e1 = state(final)
     dx = x1-x0
+    q = nuclear_energy_delta(data,dx)
     shape = (-1,) + (1,)*(dx.ndim-1)
-    q = np.sum(dx*binding.reshape(shape),axis=0)*np.longdouble(data['energy_conversion'])
     error = float(np.max(np.abs(e1-e0-q)/np.maximum(np.maximum(np.abs(e0),np.abs(e1)),np.abs(q))))
     ye = float(np.max(np.abs(np.sum(dx*charge.reshape(shape),axis=0))))
     evolution = float(np.max(np.abs(dx)))

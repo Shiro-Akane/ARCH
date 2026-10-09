@@ -1,0 +1,194 @@
+{
+  "scope": "Existing endpoint nuclear-energy qualification consumer and current tooling; not full O9 or release",
+  "baseline_commit": "db4ddae21015f3ef457d67af3de05268cfe8af1a",
+  "recorded_utc": "2026-10-09T11:18:52.096244+00:00",
+  "release_qualified": false,
+  "full_O9_qualified": false,
+  "production_math_or_CPU_optimization_changed": false,
+  "CUDA_build_required_for_this_validation_only_change": false,
+  "source_sha256": {
+    "validation/network/nse_reference.py": "648c1e0f1a3c6457d904bf3fc1caeb783fdf8f890d7ba09e25ab0ad182876d73",
+    "validation/backend/verify_microphysics_coupling.py": "cd75773fb21abfd53958700a082e01f441dc122b98712075b7aedadefad35331",
+    "validation/backend/run_microphysics_timing.py": "66b2a5bd9f8c0d8f41de9554102a40ca2e3f1ad92cc8983ffe3867bef7caa3d1",
+    "tests/tooling/microphysics/test_microphysics_coupling.py": "fff05ce3ff4abb5b34f36d16e46ea07f201d2b070e2b99001804d77985c5a627",
+    "tests/tooling/microphysics/test_microphysics_timing.py": "7164e83ad9cb8739f29cacf81242e0e14bc957b9e23a21365326427585101015"
+  },
+  "correction": {
+    "old_qualification_basis": "binding energy only",
+    "current_aprox13_basis": "actual rounded MION and (-avo*clight)*clight, preserving operation order",
+    "current_iso7_basis": "actual BION and mev2erg*avo",
+    "shared_consumer": "verify_microphysics_coupling.nuclear_energy_delta",
+    "old_reference_status": "Retained under original source and binding-only basis; not relabeled as new mass-law qualification",
+    "independent_NSE_roots": "unchanged equations/constants/budgets; optional solver imports deferred until equilibrium is called",
+    "new_CTest_targets": 0,
+    "new_CI_lanes": 0,
+    "new_required_CI_dependencies": []
+  },
+  "verification": {
+    "affected_microphysics_tooling_tests": 31,
+    "current_full_tooling_tests": 679,
+    "skipped": 0,
+    "failed": 0,
+    "full_tooling_seconds": 42.99,
+    "full_tooling_guard_seconds": 43.391,
+    "test_budget_changes": false,
+    "new_counterexample": "4e-13 allowed mass drift amplified by a 1e8 rest-energy scale; old binding-only check passes, full mass-law check rejects",
+    "actual_BD_consumer": {
+      "energy_relative": 1.0459611185562891e-13,
+      "mass_relative": 0.0,
+      "charge_absolute": 3.556346968340044e-17,
+      "budget": 1e-12,
+      "nuclear_energy": 2.5807001583138053e+32,
+      "binding_energy_component": 2.5807001583145853e+32,
+      "nonbinding_energy_component": -7.80094000126608e+19,
+      "energy_residual": 6.979900364042954e+19,
+      "energy_normalization": 6.673192951643476e+32,
+      "species_mass_change": [
+        2701536042874.757,
+        -451461838275987.1,
+        7739783759278.3125,
+        110284953279984.78,
+        142782796907277.97,
+        170619105719139.9,
+        15701043547773.006,
+        1538774737676.5059,
+        93411206969.17014,
+        431201962.57939476,
+        1868193.936117533,
+        4852.862416254328,
+        3.403001470227031
+      ],
+      "uncertainty": "Upstream FP64 integration error is not bounded by this scalar check; no interval qualification.",
+      "before_mass": 1000000000000000,
+      "after_mass": 1000000000000000,
+      "before_energy": 4.092492793328973e+32,
+      "after_energy": 6.673192951643476e+32,
+      "measure": "physical_cell_volume",
+      "parameter_sha256": "17aaa643eab9b752ea5a7e40848b9ce8301eff356aa53bc427539306cc7e66d7",
+      "terminal_time": 1e-06,
+      "steps": 34,
+      "energy_basis": "nuclear_mass",
+      "binary_sha256": "d66984950bc9e287a171564990b20af9d0cd93e83f0aeb0a09c00ec0d9143a74",
+      "status": "PASS_ORIGINAL_1E-12_METRIC_AND_ONEZONE_GATES",
+      "release_qualified": false,
+      "production_physics_modified": false,
+      "analysis_only_seconds": 0.6286579449661076,
+      "producer_reused_after_analysis_nameerror": true,
+      "onezone": {
+        "energy_relative": 1.1113167720069563e-13,
+        "charge_absolute": 3.802851210407417e-17,
+        "max_species_evolution": 0.4514618382759871,
+        "energy_budget": 1e-12,
+        "charge_budget": 1e-12
+      },
+      "processed_raw": [
+        {
+          "name": "endpoint_ledger_bd_cpu_scientific_HLLC_plt_0001.h5",
+          "bytes": 121080,
+          "sha256": "d6a06ccb1413a6ab94fd32c74ffff7fbb082873c33cdc2270eda2fe2d7a6b97b"
+        },
+        {
+          "name": "endpoint_ledger_bd_cpu_scientific_chk_0000.h5",
+          "bytes": 23096,
+          "sha256": "a68edbd739f6145e0bf80cf2d70532021b55fc5c8f9d75d81df9d65d71b9777c"
+        },
+        {
+          "name": "endpoint_ledger_bd_cpu_scientific_HLLC_plt_0000.h5",
+          "bytes": 121080,
+          "sha256": "5da7b831d48e4c71b38a542176d859b38c2915b9f7123de035528b5a57952605"
+        },
+        {
+          "name": "endpoint_ledger_bd_cpu_scientific_chk_0001.h5",
+          "bytes": 23096,
+          "sha256": "037d27ab6d433f9348deb1f78fd5da15567c485e312fad837d03965a01440378"
+        }
+      ],
+      "successful_raw_deleted_bytes": 288352
+    },
+    "architecture_audit": "PASS_CURRENT_TREE",
+    "independent_local_diff_review": "No reproduced defect in frozen MION/conversion/iso7 conventions, species-first helper, old gates or independent NSE roots; no runtime authority implied"
+  },
+  "unit_semantics": {
+    "actual_case_geometry": "Cartesian 1D",
+    "mass": "g/cm^2, per transverse area",
+    "energy": "erg/cm^2, per transverse area",
+    "onezone_specific_energy": "erg/g"
+  },
+  "limits": {
+    "upstream_FP64_volume_product_integration_error_bound": "UNKNOWN; long-double postprocessing does not establish it",
+    "gas_scale_normalization": "Only original endpoint consistency gate; does not certify a much smaller gravity-energy signal",
+    "thermal_activity": "NOT_IMPLEMENTED; ready retained-RKL-input hook mapped",
+    "NativeDevice_Runtime": "NOT_QUALIFIED; next actual consumer requires separate 11*N workspace and full ordered boundary sequence"
+  },
+  "attempts": [
+    {
+      "name": "producer and first postprocessing",
+      "guard_seconds": 3.039,
+      "producer_completed": true,
+      "postprocessor_passed": false,
+      "error": "Root migration omitted shape needed by charge reduction; NameError; original log retained",
+      "raw_output_reused": true
+    },
+    {
+      "name": "analysis-only repaired existing consumers",
+      "guard_seconds": 1.02,
+      "passed": true,
+      "producer_rerun": false
+    }
+  ],
+  "storage": {
+    "successful_raw_removed_bytes": 288352,
+    "raw_uploaded": false,
+    "local_output_peak_bytes": 68575651,
+    "host_E_minimum_free_bytes": 23770660864,
+    "host_E_minimum_required_bytes": 8589934592,
+    "next_write_reserve_bytes": 536870912,
+    "swap_growth_KiB": 0
+  },
+  "delegation": {
+    "deepseek_model": "deepseek-flash",
+    "reasoning_effort": "high",
+    "wall_seconds": 32.97,
+    "reported_token_usage": {
+      "input_tokens": 1479,
+      "cached_input_tokens": 384,
+      "output_tokens": 6582,
+      "noncached_input_tokens": 1095,
+      "reasoning_tokens": 6034,
+      "visible_output_tokens": 548
+    },
+    "estimated_cost_usd": {
+      "currency": "USD",
+      "off_peak": 0.0041146,
+      "peak": 0.0082292,
+      "status": "estimate from reported token usage; API billing is authoritative",
+      "pricing_snapshot": "2026-10-02.1"
+    },
+    "actual_bill": "UNKNOWN",
+    "Root_active_cost": "UNKNOWN",
+    "review_status": "PASS_LIMITED_PUBLIC_BOUND_PARTIAL_ADOPTION",
+    "independent_exact_fraction_samples": 512,
+    "adoption": "combined-coefficient interval and separate physical scales only; no production threshold/physics authority",
+    "not_adopted": [
+      "Separate triangle bounds are safely conservative, not intrinsically erroneous double counting",
+      "No addition of nuclear rest energy to production Egas+W semantics",
+      "Ideal expanded coefficients are not bit-exact frozen rounded MION; actual coefficients or an explicit coefficient-rounding remainder are required"
+    ],
+    "private_source_or_raw_sent": false,
+    "local_build_or_simulation_competition": false,
+    "blocking_wait_seconds": 0,
+    "overlap": "Root actual consumer inspection and two independent local read-only maps",
+    "worker_formal_repairs": 0,
+    "Root_rework": "restore local shape and defer optional solver imports; original failure retained",
+    "recommendation": "Retain bounded data/roundoff checks and readonly actual-consumer maps; no universal speedup inference",
+    "notice_latency": "UNKNOWN; recorder started after actual first inspection, no backdating"
+  },
+  "remaining_exits": [
+    "R1 full FV/CF/nonlinear coupled stages",
+    "R2 full NativeDevice Runtime and ordered boundary",
+    "R3 remaining O9 wall durability and representative AMR four-module budgets",
+    "R4 final current producer GUI/Plot and required regression",
+    "R5 final matched CPU/CUDA physical endpoint cost",
+    "R6 final CI coverage and material convergence"
+  ]
+}

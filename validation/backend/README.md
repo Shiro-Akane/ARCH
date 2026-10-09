@@ -57,6 +57,14 @@ restart retains strict controller-state and output-history comparisons. The
 endpoint must follow the three-step source run. The console's `dt_burn` is the
 executed Strang half-step, so the ENUC witness reads checkpoint controller state.
 
+Endpoint nuclear-energy checks use the selected network's frozen energy
+weights and conversion. The aprox13 mass convention retains mass/charge drift
+and records its difference from binding energy; immutable data access needs
+only the existing tooling dependencies. Independent NSE root calculations
+load their optional reference solvers separately. The
+[processed endpoint record](results/release-closure-20261009/endpoint-nuclear-energy-summary.json)
+identifies the diagnostic scope and original budgets.
+
 [probe_cuda_calls.cpp](probe_cuda_calls.cpp) is an optional, test-only preload
 observer. By default it reports host CUDA API latency, which may include waiting
 for earlier work and must not be interpreted as PCIe or kernel time. Setting

@@ -110,17 +110,38 @@ def active_enuc_steps(transcript, limits, growth):
     return matches
 
 
+def nuclear_energy_delta(data, delta_mass):
+    """Apply the frozen endpoint law to species mass or mass-fraction changes.
+
+    Q = ENERGY_CONVERSION * sum_s ENERGY_WEIGHTS_s * delta_M_s / A_s.
+    The first axis is species; remaining axes may be cells. Long-double
+    evaluation avoids another FP64 cancellation, but cannot recover rounding
+    already present in checkpoint values or upstream volume integrals.
+    """
+    delta=np.asarray(delta_mass,dtype=np.longdouble)
+    a=np.asarray(data['arrays']['AION'],dtype=np.longdouble)
+    weights=np.asarray(data['burn_energy_weights'],dtype=np.longdouble)
+    conversion=np.longdouble(data['burn_energy_conversion'])
+    if delta.ndim<1 or a.ndim!=1 or weights.shape!=a.shape or delta.shape[0]!=a.size \
+            or not np.all(np.isfinite(delta)) or not np.all(np.isfinite(a)) \
+            or not np.all(a>0) or not np.all(np.isfinite(weights)) or not np.isfinite(conversion):
+        raise ArithmeticError('invalid endpoint nuclear-energy data or species shape')
+    shape=(-1,)+(1,)*(delta.ndim-1)
+    return np.sum(delta*(weights/a).reshape(shape),axis=0,dtype=np.longdouble)*conversion
+
+
 def balance(validator,initial,final,parameter):
     import nse_reference
-    data=nse_reference.nuclear_data('aprox13')
+    data=nse_reference.burn_energy_data('aprox13')
     before=runtime.read_conservation_metrics(validator,initial,parameter)
     after=runtime.read_conservation_metrics(validator,final,parameter)
     mass=np.asarray(data['arrays']['AION'],dtype=np.longdouble)
-    binding=np.asarray(data['arrays']['BION'],dtype=np.longdouble)/mass
     charge=np.asarray(data['arrays']['ZION'],dtype=np.longdouble)/mass
     # Physical-volume integrals from the shared checkpoint geometry reader.
     dx=np.asarray(after['rhoX'],dtype=np.longdouble)-np.asarray(before['rhoX'],dtype=np.longdouble)
-    q=np.sum(dx*binding)*np.longdouble(data['energy_conversion'])
+    q=nuclear_energy_delta(data,dx)
+    binding_q=np.sum(dx*np.asarray(data['arrays']['BION'],dtype=np.longdouble)/mass,
+                     dtype=np.longdouble)*np.longdouble(data['energy_conversion'])
     e0,e1=np.longdouble(before['energy']),np.longdouble(after['energy'])
     e=float(abs(e1-e0-q)/max(abs(e0),abs(e1),abs(q)))
     y=float(abs(np.sum(dx*charge))/abs(np.longdouble(before['mass'])))
@@ -130,7 +151,12 @@ def balance(validator,initial,final,parameter):
     if abs(q) <= 1e-12*abs(e0):
         raise ArithmeticError('coupled input did not measurably release/absorb nuclear energy')
     return dict(before=before,after=after,nuclear_data=data,energy_relative=e,mass_relative=m,
-                charge_absolute=y,budget=1e-12)
+                charge_absolute=y,budget=1e-12,nuclear_energy=float(q),
+                binding_energy_component=float(binding_q),
+                nonbinding_energy_component=float(q-binding_q),
+                energy_residual=float(e1-e0-q),energy_normalization=float(max(abs(e0),abs(e1),abs(q))),
+                species_mass_change=[float(v) for v in dx],
+                uncertainty='Upstream FP64 integration error is not bounded by this scalar check; no interval qualification.')
 
 
 def main():
