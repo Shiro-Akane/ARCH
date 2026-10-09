@@ -5,21 +5,32 @@
  * Exercise shared reflux arithmetic, surface-to-cell mapping and topology
  * partitioning, including signed and zero-weight stage contributions.
  */
+#include <algorithm>
 #include <array>
+#include <atomic>
 #include <bit>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <limits>
 #include <map>
+#include <numbers>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "amr/AMRControl.h"
 #include "amr/flux/AmrFluxExecutionPlan.h"
 #include "amr/flux/FluxRegister.h"
 #include "amr/flux/AMRFluxRegistering.h"
+
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+#include "driver/stages/DriverStages.h"
+#include "physics/boundary/UserBoundary.h"
+#include "physics/eos/IdealGas.h"
 
 namespace {
 
@@ -814,6 +825,221 @@ void test_rz_uniform_empty_reflux() {
     control.ApplyReflux(.1,&amr::Block::fluid_state,rz);
 }
 
+
+/** Actual ordinary polar-plane Stokes/RKL2 consumer on five mixed AMR leaves.
+ * Workflow: seed the existing Spherical2D (r,phi) chart away from r=0, bind
+ * real no-slip user walls plus periodic phi, run the sole production composite
+ * RKL owner twice, and observe its existing physical-work and CF registers.
+ * rho=1, e=12, ur=uz=0, uphi=.05*sin(pi*(r-1)/2); ordinary point-state
+ * EOS conventions apply. Full energy is checked with the genuine measured
+ * outward mechanical work, never assumed zero from a thermal wall law.
+ * This finite conservation/activity witness has no continuous PDE/order claim.
+ */
+void test_spherical_polar_real_mixed_rkl2()
+{
+    using namespace arch;
+    using state::StateSlot;
+    constexpr double pi=std::numbers::pi_v<double>;
+    constexpr long double conservation_budget=2.e-12L;
+    SimConfig config{};
+    config.grid.dim=2;config.grid.geometry="spherical";
+    config.grid.nblockx1=2;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=1.;config.grid.x1_max=3.;
+    config.grid.x2_min=0.;config.grid.x2_max=2.*pi;config.grid.amr_max_blocks=32;
+    config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="user";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="periodic";
+    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+    config.numerics.sml_rho=1.e-24;config.numerics.min_eint=1.e-14;
+    config.numerics.max_eint=1.e10;config.numerics.cfl=.4;config.io.tmax=1.;
+    config.physics.burn.use_burn=false;config.physics.gravity.type="none";
+    auto& diffusion=config.physics.diffusion;
+    diffusion.use_diffusion=diffusion.use_viscous_diffusion=true;
+    // A temperature prescription requires its real channel to be enabled.
+    // alpha=0 is legal: this witness qualifies nonzero viscosity, not heating by conduction.
+    diffusion.use_thermal_diffusion=true;diffusion.alpha_therm=0.;
+    diffusion.use_species_diffusion=false;diffusion.nu_visc=.03;
+    diffusion.diff_cfl=.8;diffusion.max_stages=17;diffusion.integrator="RKL2";
+    SpeciesManager species;species.add_species("polar-gas",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    amr::AMRControl control(32,2);
+    control.tree->LoadLeafGrid(config,1,{1,1,1,1,0},
+        {0,1,0,1,1},{0,0,1,1,0},{0,0,0,0,0});
+    control.flux_register.EnsureSpecies(1);
+    const auto& active=control.tree->GetActiveBlocks();
+    expect(active.size()==5,"ordinary polar RKL2 lost its five actual mixed leaves");
+    for(int id:active) {
+        auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+        for(auto* field:std::array<FluidState*,3>{
+            &block.fluid_state,&block.state_next,&block.state_scratch}) {
+            field->stage_repairs.reset(1);
+            for(int cell=0;cell<grid.GetTotalSize();++cell) {
+                field->set(cell,{1.,0.,0.,0.,12.});field->X(0,cell)=1.;
+            }
+            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                const double tangential=.05*std::sin(pi*(grid.GetCellCenterX(i)-1.)/2.);
+                field->set(grid.GetIndex(i,j,0),{1.,0.,tangential,0.,12.+.5*tangential*tangential});
+            }
+        }
+    }
+    std::array<std::atomic<std::size_t>,2> diffusion_calls{};
+    boundary::ResolvedUserBoundaries callbacks;
+    callbacks.identity="ordinary-polar-no-slip-zero-temperature-gradient";
+    /** The original pure point law owns velocity reflection and EOS conversion. */
+    callbacks.physical=[&](const boundary::PhysicalBoundaryContext& request) {
+        expect(request.axis==boundary::BoundaryAxis::X1&&request.dimension==2,
+            "ordinary polar physical callback escaped the two radial faces");
+        boundary::PhysicalBoundaryData data;
+        if(request.purpose==boundary::BoundaryPurpose::Hydro) {
+            auto wall=request.interior;wall.u=wall.v=wall.w=0.;data.hydro=std::move(wall);
+        } else {
+            expect(request.purpose==boundary::BoundaryPurpose::Diffusion,
+                "ordinary polar wall received a nonphysical purpose");
+            diffusion_calls[static_cast<std::size_t>(request.side)].fetch_add(1,std::memory_order_relaxed);
+            data.temperature={boundary::ScalarBoundaryKind::NormalGradient,0.};
+            for(auto& velocity:data.velocity)velocity={boundary::ScalarBoundaryKind::Value,0.};
+        }
+        return data;
+    };
+    boundary::ScopedUserBoundarySelection selection(std::move(callbacks),config,species);
+    RunState start{};start.repairs.reset(1);
+    SimulationController counters(config,start);
+    BCHandler boundary(config);boundary.bind(eos,species);
+    boundary.configure_stage(0.,boundary::BoundaryPurpose::Diffusion);
+    driver::DriverRuntime runtime(control,boundary,config,species,counters);
+    runtime.initialize_topology();auto context=runtime.stage_context();
+    driver::DriverStageWorkspace workspace;
+    context.configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose) {
+        boundary.configure_stage(time,purpose);
+    };
+    context.physical_boundary_preparation=[&](StateSlot slot,double time,boundary::BoundaryPurpose purpose) {
+        context.configure_boundary_context(time,purpose);runtime.ensure_fluid_ghosts(slot);
+    };
+    /** Validate real completed logical cells with the same selected point EOS. */
+    const auto validate_eos=[&](StateSlot slot) {
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+            const auto& field=slot==StateSlot::Current?block.fluid_state:
+                slot==StateSlot::Next?block.state_next:block.state_scratch;
+            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                const int cell=grid.GetIndex(i,j,0);const auto value=field.get(cell);
+                const double fraction=field.X(0,cell);
+                const auto recovered=state::recover(value);
+                const double pressure=eos.get_pressure(value,&fraction);
+                const double temperature=eos.get_temperature(value.rho,recovered.internal,&fraction);
+                expect(state::accepted(recovered.status)&&std::isfinite(pressure)&&pressure>0.
+                    &&std::isfinite(temperature)&&temperature>0.,
+                    "ordinary polar completed cell failed its real selected EOS");
+            }
+        }
+    };
+    std::size_t eos_completions=0,observed_stages=0,nonzero_cf_stages=0;
+    context.post_boundary_acceptance=[&](const scheduler::StageExecutionContext&,StateSlot slot,state::StateVersion) {
+        validate_eos(slot);++eos_completions;
+    };
+    validate_eos(StateSlot::Current);
+    runtime.bind_boundary_accounting(context);
+    expect(bool(context.rkl_flux_capture_accept),"ordinary polar user walls omitted real mechanical-work accounting");
+    const auto accept_surface=context.rkl_flux_capture_accept;
+    double cf_momentum_linf=0.,cf_energy_linf=0.;
+    /** Observe the existing completed stage; retain its sole receipt producer once. */
+    context.rkl_flux_capture_accept=[&](const scheduler::RklStageDescriptor& stage,const scheduler::RklPlan& plan) {
+        accept_surface(stage,plan);++observed_stages;
+        bool active_momentum=false,active_energy=false;
+        for(int id:active)for(int face=0;face<4;++face) {
+            const auto& block=control.pool->GetBlock(id);
+            if(block.face_neighbors[face].level_diff<=0||!control.flux_register.HasData(id,face))continue;
+            const int face_cells=face<2?amr::BLOCK_NY:amr::BLOCK_NX;
+            for(int cell=0;cell<face_cells;++cell) {
+                const auto actual=control.flux_register.GetSummedFlux(id,face,cell);
+                expect(std::isfinite(actual.mom_v)&&std::isfinite(actual.eng),"ordinary polar actual CF residual is nonfinite");
+                cf_momentum_linf=std::max(cf_momentum_linf,std::abs(actual.mom_v));
+                cf_energy_linf=std::max(cf_energy_linf,std::abs(actual.eng));
+                active_momentum=active_momentum||actual.mom_v!=0.;active_energy=active_energy||actual.eng!=0.;
+            }
+        }
+        if(active_momentum&&active_energy)++nonzero_cf_stages;
+    };
+    expect(!control.RequireRefluxTopologyPlan(1).operations.empty(),"ordinary polar real RKL2 has no CF correction plan");
+    dispatch::ResolvedExecutionPlan plan{};plan.diffusion_integrator=dispatch::DiffusionIntegratorId::Rkl2;
+    const auto candidate=driver::calculate_timestep_candidates(runtime,workspace,eos,&plan);
+    const double dt=8.*candidate.diffusion_forward_euler*diffusion.diff_cfl;
+    const int stages=DiffFunction::compute_stages(DiffFunction::RKLOrder::Second,dt,
+        candidate.diffusion_forward_euler,diffusion.diff_cfl,diffusion.max_stages);
+    expect(std::isfinite(dt)&&dt>0.&&stages>=2,"ordinary polar RKL2 skipped its real recurrence");
+    /** Integrate actual cell measures; Spherical2D is the r dr dphi plane. */
+    const auto totals=[&]() {
+        std::array<long double,3> result{};
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                const long double volume=GridMetrics::CellVolume(grid,i,j,0);
+                const auto value=block.fluid_state.get(grid.GetIndex(i,j,0));
+                expect(std::isfinite(volume)&&volume>0.,"ordinary polar actual cell volume is invalid");
+                result[0]+=volume*value.rho;result[1]+=volume*value.eng;
+                result[2]+=volume*((long double)value.mom_u*value.mom_u
+                    +(long double)value.mom_v*value.mom_v+(long double)value.mom_w*value.mom_w)/(2.L*value.rho);
+            }
+        }
+        return result;
+    };
+    const auto initial=totals();long double previous_kinetic=initial[2];
+    for(int macro=0;macro<2;++macro) {
+        context.step_start_time=context.boundary_start_time=macro*dt;
+        context.step_dt=context.boundary_step_dt=dt;
+        const auto before=context.ledger.inspect({runtime.handles().front(),StateSlot::Current}).interior.version;
+        const auto previous_cf=nonzero_cf_stages;
+        std::vector<double> previous_energy;
+        for(int id:active) {
+            const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i)
+                previous_energy.push_back(block.fluid_state.eng[grid.GetIndex(i,j,0)]);
+        }
+        {
+            scheduler::ScopedStageBinding binding(context,runtime.handles());
+            driver::advance_diffusion(runtime,workspace,context,eos,&plan,macro,dt,candidate.diffusion_forward_euler);
+        }
+        const auto after=totals();const auto& outward=runtime.diffusion_boundary_budget();
+        expect(outward.size()==static_cast<std::size_t>(6+species.count()),"ordinary polar RKL2 lost actual surface receipt");
+        const long double mass_error=(after[0]-initial[0]+outward[0])/initial[0];
+        const long double energy_error=(after[1]-initial[1]+outward[4])/initial[1];
+        expect(std::isfinite(mass_error)&&std::isfinite(energy_error)
+            &&std::abs(mass_error)<=conservation_budget&&std::abs(energy_error)<=conservation_budget,
+            "ordinary polar mixed RKL2 lost mass/energy plus actual mechanical surface work");
+        expect(after[2]<previous_kinetic,"ordinary polar mixed RKL2 failed finite kinetic dissipation");
+        previous_kinetic=after[2];
+        expect(nonzero_cf_stages>previous_cf,"ordinary polar macrostep bypassed active momentum/energy CF correction");
+        std::size_t cell_count=0,changed_energy=0;
+        for(std::size_t n=0;n<active.size();++n) {
+            const auto& block=control.pool->GetBlock(active[n]);const auto& grid=block.grid;
+            const auto coherence=context.ledger.inspect({runtime.handles()[n],StateSlot::Current});
+            expect(coherence.interior.version.value==before.value+stages,"ordinary polar RKL2 missed real stage publication");
+            context.ledger.require_readable({runtime.handles()[n],StateSlot::Current},
+                {state::ExecutionSide::Host,coherence.interior.version,true,true});
+            for(double value:block.fluid_state.stage_repairs.values)expect(value==0.,"ordinary polar current has a floor repair");
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                const int cell=grid.GetIndex(i,j,0);
+                expect(std::bit_cast<std::uint64_t>(block.fluid_state.rho[cell])==std::bit_cast<std::uint64_t>(1.)
+                    &&std::bit_cast<std::uint64_t>(block.fluid_state.X(0,cell))==std::bit_cast<std::uint64_t>(1.),
+                    "ordinary polar RKL2 changed stationary rho/X bits");
+                changed_energy+=block.fluid_state.eng[cell]!=previous_energy[cell_count++];
+            }
+        }
+        expect(changed_energy>0,"ordinary polar RKL2 skipped its nonlinear paired-energy consumer");
+        for(double value:runtime.repair_budget().values)expect(value==0.,"ordinary polar RKL2 concealed repair accounting");
+        std::cout<<"SPHERICAL_POLAR_MIXED_REAL_RKL2_SURFACE macro="<<macro
+            <<" mass_error="<<double(mass_error)<<" energy_error="<<double(energy_error)
+            <<" actual_outward_work="<<outward[4]<<" changed_energy="<<changed_energy
+            <<" nonzero_cf_stages="<<nonzero_cf_stages-previous_cf<<'\n';
+    }
+    expect(observed_stages==static_cast<std::size_t>(2*stages)&&eos_completions>=observed_stages,
+        "ordinary polar RKL2 missed actual stages or completed EOS checks");
+    expect(diffusion_calls[0].load()>0&&diffusion_calls[1].load()>0,"ordinary polar RKL2 skipped an actual radial wall callback");
+    std::cout<<"SPHERICAL_POLAR_MIXED_REAL_RKL2_PASS leaves=5 macro_steps=2 stages="<<stages
+        <<" dt="<<dt<<" kinetic_ratio="<<double(previous_kinetic/initial[2])
+        <<" cf_momentum_linf="<<cf_momentum_linf<<" cf_energy_linf="<<cf_energy_linf
+        <<" real_EOS=1 zero_repairs=1 thermal_activity=0 continuous_PDE_reference=0\n";
+}
+
 } // namespace
 
 int main()
@@ -831,6 +1057,7 @@ int main()
             test_rz_registration_reflux(direction,inner);
         for(int direction:{0,1})for(double inner:{0.,1.})for(double stage:{1.,-.375})
             test_rz_registration_reflux(direction,inner,true,stage);
+        test_spherical_polar_real_mixed_rkl2();
         std::cout << "AMR_FLUX_SURFACE_PLAN_PASS\n";
         return 0;
     } catch (const std::exception& error) {

@@ -1565,6 +1565,142 @@ void verify_rkl_stages()
     }
 }
 
+/** Exercise the real first/recursive output consumers on raw native means.
+ * A constant-density rigid rotation has m_phi=J/W and E=E/V. Independent
+ * antiderivatives give m_phi=3*omega*(a+b)*(a^2+b^2)/(4*(a^2+a*b+b^2))
+ * and E=e+omega^2*(a^2+b^2)/4 for rho=1. At this distant annulus, raw
+ * Cartesian recovery rejects E-m_phi^2/2 while the native inertia leaves e>0.
+ * Zero operators preserve the stationary RKL identity exactly. This is an
+ * output-kernel precheck, not a completed Runtime BC/EOS acceptance fixture.
+ */
+void verify_native_rkl_output_precheck()
+{
+    constexpr auto native = GridMetrics::GeometrySemantics::AxisymmetricRz;
+    Grid grid(amr::MAX_NG, 8., 24., 0., 16., 0., 1.);
+    grid.dim = 2; grid.geometry = "cylindrical";
+    grid.InitializeTopology(native);
+    grid.dyadic_identity.bound = true;
+    grid.dyadic_identity.root_lower = {8., 0.};
+    grid.dyadic_identity.root_upper = {24., 16.};
+    grid.dyadic_identity.root_blocks = {1, 1};
+    grid.dyadic_identity.level = 0;
+    grid.dyadic_identity.logical = {0, 0};
+    grid.InitializeTopology(native);
+    const auto device_grid = arch::cuda::make_device_grid_view(grid, native);
+    const auto geometry = GridMetrics::make_geometry_view(grid, native);
+    const int extent = grid.GetTotalSize();
+    const int probe = grid.GetIndex(grid.Is(), grid.Js(), grid.Ks());
+    FluidState initial, increment;
+    initial.Preallocate(extent); initial.InitSpecies(2);
+    increment.Preallocate(extent); increment.InitSpecies(2);
+    constexpr long double omega = 64.L;
+    for (int cell = 0; cell < extent; ++cell) {
+        initial.set(cell, {1., 0., 0., 0., 1.});
+        initial.X(0, cell) = .25; initial.X(1, cell) = .75;
+        initial.enuc_rate[cell] = 700000. + cell;
+        const int i = cell % grid.stride_y;
+        if (i >= grid.GetTotalX()) continue; // allocation padding is not a cell.
+        const long double a = grid.GetFacePosL(i), b = grid.GetFacePosR(i);
+        initial.mom_w[cell] = static_cast<double>(.75L * omega * (a+b)
+            * (a*a+b*b) / (a*a+a*b+b*b));
+        initial.eng[cell] = static_cast<double>(1.L+.25L*omega*omega*(a*a+b*b));
+    }
+    const arch::state::Bounds bounds{.75, .25, 2.};
+    const auto closure = RzThermodynamics::make_cell(
+        [&](int cell) { return initial.get(cell); }, probe, geometry, grid.Is(), bounds);
+    if (!closure.valid() || !(closure.internal > .5))
+        fail("native annulus reference lost positive effective thermal energy");
+    double ordinary_x[]{.25, .75};
+    const auto ordinary = arch::state::accept_conservative_state(initial.get(probe),
+        ordinary_x, 2, 1, bounds.density, bounds.internal_min,
+        bounds.internal_max, GridMetrics::CellVolume(geometry, grid.Is(), grid.Js(), grid.Ks()),
+        {}, probe);
+    if (ordinary != arch::state::Status::unresolved_energy)
+        fail("native annulus no longer separates raw and effective kinetic recovery");
+
+    DeviceStateOwner input(extent, 2), delta(extent, 2), output(extent, 2);
+    DeviceArray<int> status(1);
+    arch::state::RepairBudget repairs(2, arch::state::RepairSemantics::RzVolumeAngular);
+    DeviceArray<double> device_repairs(repairs.values.size());
+    arch::cuda::DeviceDiffusionBatchBlock binding{};
+    binding.state_n = binding.previous = binding.older = input.view;
+    binding.delta = binding.initial_delta = delta.view;
+    binding.output = output.view; binding.grid = device_grid;
+    binding.workspace.status = status.pointer; binding.bounds = bounds;
+    binding.repairs = {device_repairs.pointer, 2, repairs.semantics};
+    DeviceArray<arch::cuda::DeviceDiffusionBatchBlock> device_binding(1);
+    device_binding.upload(&binding, 1);
+    delta.upload(increment);
+    const std::array<arch::state::Status, 7> expected{
+        arch::state::Status::valid, arch::state::Status::nonfinite,
+        arch::state::Status::nonpositive_density, arch::state::Status::invalid_thermodynamics,
+        arch::state::Status::invalid_composition, arch::state::Status::invalid_composition,
+        arch::state::Status::invalid_composition};
+    for (int route = 0; route < 3; ++route) {
+        for (std::size_t scenario = 0; scenario < expected.size(); ++scenario) {
+            FluidState trial = initial;
+            if (scenario == 1) trial.eng[probe] = std::numeric_limits<double>::infinity();
+            if (scenario == 2) trial.rho[probe] = 0.;
+            if (scenario == 3) trial.rho[probe] = .5;
+            if (scenario == 4) {
+                trial.X(0, probe) = -std::numeric_limits<double>::epsilon();
+                trial.X(1, probe) = 1.+std::numeric_limits<double>::epsilon();
+            }
+            if (scenario == 5) trial.X(1, probe) = .5;
+            if (scenario == 6) trial.X(0, probe) = std::numeric_limits<double>::quiet_NaN();
+            input.upload(trial); output.upload(initial);
+            const int zero = 0;
+            status.upload(&zero, 1);
+            device_repairs.upload(repairs.values.data(), repairs.values.size());
+            const dim3 cells(arch::cuda::detail::hydro_launch_blocks(device_grid.active_cell_count(), 128));
+            if (route == 0) {
+                const auto coefficients = DiffFunction::get_rkl_coeffs(DiffFunction::RKLOrder::First, 1, 5);
+                arch::cuda::detail::first_rkl_stage_kernel<<<cells, 128>>>(
+                    input.view, delta.view, output.view, device_grid,
+                    coefficients.tilde_mu*.125, device_binding.pointer);
+            } else {
+                const bool second_order = route == 2;
+                const auto coefficients = DiffFunction::get_rkl_coeffs(second_order
+                    ? DiffFunction::RKLOrder::Second : DiffFunction::RKLOrder::First, 3, 5);
+                arch::cuda::detail::recursive_rkl_stage_kernel<<<cells, 128>>>(
+                    input.view, input.view, input.view, delta.view, delta.view,
+                    output.view, device_grid, coefficients, second_order, .125, false,
+                    device_binding.pointer);
+            }
+            require_cuda(cudaGetLastError(), "native RKL output launch");
+            require_cuda(cudaDeviceSynchronize(), "native RKL output sync");
+            int reported = 0; status.download(&reported, 1);
+            const int expected_code = expected[scenario] == arch::state::Status::valid
+                ? 0 : 100+static_cast<int>(expected[scenario]);
+            if (reported != expected_code) fail("native RKL output status hid or invented a failure");
+            const auto result = output.download();
+            for (int cell = 0; cell < extent; ++cell) {
+                const auto actual = result.get(cell), seed = initial.get(cell);
+                const std::array<double, 6> actual_fields{actual.rho, actual.mom_u,
+                    actual.mom_v, actual.mom_w, actual.eng, result.enuc_rate[cell]};
+                const std::array<double, 6> seed_fields{seed.rho, seed.mom_u,
+                    seed.mom_v, seed.mom_w, seed.eng, initial.enuc_rate[cell]};
+                for (std::size_t field = 0; field < actual_fields.size(); ++field)
+                    expect_bits("native RKL stationary/failed output raw field", actual_fields[field],
+                        std::bit_cast<std::uint64_t>(seed_fields[field]));
+                if (scenario == 0 || cell != probe)
+                    for (int species = 0; species < 2; ++species)
+                        expect_bits("native RKL stationary/ghost species", result.X(species, cell),
+                            std::bit_cast<std::uint64_t>(initial.X(species, cell)));
+            }
+            if (scenario == 4 || scenario == 5)
+                for (int species = 0; species < 2; ++species)
+                    expect_bits("native RKL rejected fractions remain unprojected", result.X(species, probe),
+                        std::bit_cast<std::uint64_t>(trial.X(species, probe)));
+            if (scenario == 6 && !std::isnan(result.X(0, probe)))
+                fail("native RKL replaced a nonfinite fraction");
+            device_repairs.download(repairs.values.data(), repairs.values.size());
+            for (double value : repairs.values)
+                expect_bits("native RKL does not repair raw V/W state", value, 0);
+        }
+    }
+}
+
 } // namespace
 
 int main()
@@ -1583,5 +1719,6 @@ int main()
     verify_preflight_and_master_off();
     verify_buffer_initialization();
     verify_rkl_stages();
+    verify_native_rkl_output_precheck();
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -11,6 +11,8 @@
  *    oriented flux used by divergence/reflux: q = F_E - sum_i F_mom_i*v_i.
  * 4. Borrow the same shared geometry/source and stability-row owners for the
  *    operator and timestep; DiffusionAMRStages owns the RKL-stage arithmetic.
+ *    Native outputs receive only its shared provisional finite/rho/simplex
+ *    check; the completed Runtime BC/EOS gate owns thermal acceptance.
  * 5. Return queued-kernel status and write extent. The runtime owns streams,
  *    workspaces, EOS failure checks, halo exchange and logical-slot publication.
  *
@@ -36,6 +38,7 @@
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "numerics/diffusion/DiffusionAMRStages.h"
+#include "numerics/state/RzNativeClosure.h"
 #include "physics/species/Species.h"
 
 namespace arch::cuda
@@ -428,6 +431,34 @@ static __global__ void diffusion_dt_reduce_kernel(
     *result = DiffFlux::finalize_raw_diffusion_dt(reduced.value);
 }
 
+/** Check one RKL output in its actual conserved representation.
+ * Workflow: native J/W and E/V receive the shared finite/rho/simplex-only
+ * provisional check, without raw kinetic recovery, repair or projection.
+ * Existing outputs retain their original volume-weighted repair owner.
+ * A valid native result still requires the Runtime's completed BC/EOS gate;
+ * this cell check publishes neither thermal acceptance nor ghost validity.
+ */
+ARCH_INLINE state::Status check_rkl_stage_output(
+    const FluidVector& updated, DeviceStateView destination,
+    const DeviceGridView& grid, const DeviceDiffusionBatchBlock& binding, int cell)
+{
+    double* fractions = destination.n_species
+        ? destination.mass_fractions + cell : nullptr;
+    if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
+        return RzThermodynamics::provisional_native_state(updated, fractions,
+            destination.n_species, destination.total_size, binding.bounds);
+    const int k = cell / grid.stride_z;
+    const int j = (cell - k * grid.stride_z) / grid.stride_y;
+    const int i = cell - k * grid.stride_z - j * grid.stride_y;
+    return state::accept_conservative_state(updated, fractions,
+        destination.n_species, destination.total_size,
+        binding.bounds.density, binding.bounds.internal_min,
+        binding.bounds.internal_max,
+        GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k),
+        binding.repairs, cell);
+}
+
+/** Apply the unchanged first RKL polynomial, then precheck its actual output. */
 static __global__ void first_rkl_stage_kernel(
     DeviceStateView state_n, DeviceStateView increment,
     DeviceStateView destination, DeviceGridView grid, double coefficient,
@@ -451,14 +482,8 @@ static __global__ void first_rkl_stage_kernel(
             ? destination.mass_fractions + cell : nullptr);
     if (blocks) {
         const auto& b = blocks[blockIdx.y];
-        const int k = cell / grid.stride_z;
-        const int j = (cell - k * grid.stride_z) / grid.stride_y;
-        const int i = cell - k * grid.stride_z - j * grid.stride_y;
-        const auto status = state::accept_conservative_state(updated,
-            destination.n_species ? destination.mass_fractions + cell : nullptr,
-            destination.n_species, destination.total_size,
-            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max,
-            GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k), b.repairs, cell);
+        const auto status = check_rkl_stage_output(
+            updated, destination, grid, b, cell);
         if (!state::accepted(status)) {
             atomicExch(b.workspace.status, 100 + static_cast<int>(status));
             return;
@@ -484,6 +509,7 @@ static __global__ void initialize_rkl_stage_buffers_kernel(
     }
 }
 
+/** Apply the unchanged recursive RKL polynomial and representation precheck. */
 static __global__ void recursive_rkl_stage_kernel(
     DeviceStateView state_n, DeviceStateView state_previous,
     DeviceStateView state_older, DeviceStateView increment_previous,
@@ -523,14 +549,8 @@ static __global__ void recursive_rkl_stage_kernel(
             ? destination.mass_fractions + cell : nullptr);
     if (blocks) {
         const auto& b = blocks[blockIdx.y];
-        const int k = cell / grid.stride_z;
-        const int j = (cell - k * grid.stride_z) / grid.stride_y;
-        const int i = cell - k * grid.stride_z - j * grid.stride_y;
-        const auto status = state::accept_conservative_state(updated,
-            destination.n_species ? destination.mass_fractions + cell : nullptr,
-            destination.n_species, destination.total_size,
-            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max,
-            GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k), b.repairs, cell);
+        const auto status = check_rkl_stage_output(
+            updated, destination, grid, b, cell);
         if (!state::accepted(status)) {
             atomicExch(b.workspace.status, 100 + static_cast<int>(status));
             return;

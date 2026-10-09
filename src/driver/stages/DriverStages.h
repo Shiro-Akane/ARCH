@@ -281,6 +281,20 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
         ~ClearRklAcceptance() { context.rkl_acceptance = {}; }
     } clear_rkl_acceptance{stage_context};
 
+    /** Record the same completed stage through its actual receipt owner.
+     * Workflow: validate an active macro lease and accumulate both backend
+     * halves tentatively; standalone stages retain the original accepted
+     * budget. Observe activity only after real final boundary/acceptance work.
+     */
+    const auto record_completed_diffusion = [&] {
+        auto* transaction=runtime.active_runtime_state_transaction();
+        auto& accepted=transaction?transaction->repair_receipts():runtime.repair_budget();
+        if(transaction)transaction->validate_storage();
+        accepted.combine(pending);
+        if(runtime.diffusion_activity_enabled())runtime.observe_completed_diffusion_activity(
+            scheduler::make_rkl_plan(rkl1?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages));
+    };
+
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
         const auto copy_one = [&](StateSlot destination) {
@@ -354,9 +368,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
         runtime.trace_backend_operation(
             arch::backend::BackendOperation::DiffusionStage,
             StateSlot::Current, before);
-        runtime.repair_budget().combine(pending);
-        if(runtime.diffusion_activity_enabled())runtime.observe_completed_diffusion_activity(
-            scheduler::make_rkl_plan(rkl1?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages));
+        record_completed_diffusion();
         return;
     }
 
@@ -396,16 +408,7 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
             config, resolved_plan->diffusion_integrator,
             execute_single);
     }
-    // An outer native macro owner publishes both diffusion halves only after
-    // final Current BC/EOS acceptance. Standalone/Existing stages keep their
-    // original accepted receipt owner and coefficient weights.
-    auto* transaction=runtime.active_runtime_state_transaction();
-    auto& accepted=transaction?transaction->repair_receipts():runtime.repair_budget();
-    if(transaction)transaction->validate_storage();
-    accepted.combine(pending);
-    // Both adapters returned after their real final boundary/acceptance work.
-    if(runtime.diffusion_activity_enabled())runtime.observe_completed_diffusion_activity(
-        scheduler::make_rkl_plan(rkl1?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages));
+    record_completed_diffusion();
 }
 enum class BurnHalf { First, Second };
 /** Advance one burn half-step and reduce accepted burn timestep advice. */

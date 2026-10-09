@@ -94,8 +94,8 @@ CUDA已实际重编译并运行上述受影响内核owner；公开CUDA生产库�
 
 | 出口 | 当前状态 | 关闭所需证据 |
 | --- | --- | --- |
-| R1：FV／粗细面及非线性阶段 | 原12条Host RKL及一条变密度五叶RKL2双宏步、真实边界功与零修复通过；既有混层严格续算保持签收 | 普通曲线真实FV／粗细面消费者、后续引力耦合的分尺度收支与演化；只补对应未覆盖范围，不重跑已签收续算 |
-| R2：完整NativeDevice | 真实Runtime安装、轴上／离轴同层根的内置／用户ghost、resident EOS、缓存及晚回调回滚已通过；燃烧、V/W迁移和保存服务保持限定签收 | 接通真实Native Hydro、RKL与事务记录、引力源项及配对功、重试和staged regrid；完成真实粗细面与完整宏步／续算，继续复用同一共享数学 |
+| R1：FV／粗细面及非线性阶段 | 原12条Host RKL、变密度五叶RKL2及普通Spherical2D五叶RKL2双宏步通过，真实边界功、EOS与零修复保持；既有混层严格续算保持签收 | Native Hydro实际角动量／reflux及后续引力耦合的分尺度收支与演化；只补未覆盖范围，不重跑已签收续算 |
+| R2：完整NativeDevice | 真实Runtime安装、轴上／离轴同层根的内置／用户ghost、resident EOS、缓存及晚回调回滚已通过；燃烧、V/W迁移和保存服务保持限定签收 | Native RKL暂态输出与共用事务记录接线已通过限定检查；继续接通真实Native Hydro、引力源项及配对功、重试和staged regrid；完成真实粗细面与完整宏步／续算，继续复用同一共享数学 |
 | R3：剩余O9 | 独立C/O终点参考、真实BD／ROS4强反应终点及BD中段严格续算已通过；既有耦合／计时检查已对齐生产核质量能量约定，真实BD补测通过原门槛；墙钟耐久与其余耦合仍待验 | 热扩散、RZ和代表性四模块＋反复AMR长程的分项收支、中段续算及RSS／fd观测。复用已签收燃烧终点，不另造核能累计状态；相同轨迹的独有覆盖可合并，不穷举所有组合 |
 | R4：当前工程交付 | 历史完整工具／Studio及实际桌面路径可复用；当前源码完整签收待完成 | 当前受影响CPU完整清单、必要CUDA消费者，以及最新Core→Host→Studio→Plot的实际producer／字段／单位／发布失败与交互映射 |
 | R5：最终成本 | 3060Ti旧执行物同程3D记录正向1.22485倍；4070Ti当前配对缺测 | 依赖冻结后同物理终点、精度、CFL／AMR的CPU及CUDA绝对成本与正向收益；driver钟和完整CLI钟分别记录。4070Ti旧数据只作历史资料，缺测不杜撰、不因外部平台无法取得而阻塞本机验收 |
@@ -111,7 +111,7 @@ R1／R2包含实际修复或接线，不能列为“只剩报告”。其他出�
 
 2026-10-09反射消费者节点：正半径反射原数学已提取为同一Host/device leaf，Host callback的数值包装也复用该实现。原CPU边界及运行契约2/2通过；原CUDA边界owner内5组共400个实际请求和11个拒绝反例通过，保留原64 epsilon窗口，完整输入／填充位不变。显式memcheck＋leak-check为0错误、0泄漏；源码、构建失败、限定证据和独立精确积分核对统一见[反射处理记录](../../validation/amr/results/release-closure-20261009/native-device-reflector-summary.json)。未新增CTest或CI项目。
 
-NativeDevice下一接线任务只处理已定位的剩余消费者：immutable轴候选层、两次exchange、最终轴corner与真实completed EOS及其精确阶段身份接受。普通signed-copy seed或仅新增EOS调用不能代替这一顺序；Runtime guard在完整消费者验收前保留。共享反射、迁移及静态identity的已签收范围保持关闭，只有受影响修改或新矛盾才重开。
+NativeDevice的有序边界、两次exchange、最终轴corner及真实completed EOS已在下方Runtime节点限定签收；下一步处理实际Hydro、引力、完整宏步、重试与staged regrid。共享反射、迁移及静态identity保持已签收范围，只有受影响修改或新矛盾才重开；完整数值运行guard在消费者验收前保留。
 
 下一条四模块长程复用已有2D周期Cartesian SNIaCoupled＋AMR，先冻结核反应能、热输运、引力与机械功的共同收支、活动性及收敛预算；当前候选保留候选身份。原跨后端字段误差仅用于复现比较，不代替独立物理预算；运行入口明确保留AMR 0/1，终态按实际物理时间选择，中段续算及RSS/fd与输出清理仍沿原入口。
 
@@ -125,8 +125,8 @@ NativeDevice下一接线任务只处理已定位的剩余消费者：immutable�
 
 | 当前任务 | 复用入口与实施边界 | 接受后解锁 |
 | --- | --- | --- |
-| Native Device Runtime边界 | 实际安装、两次交换、有序候选、最终轴、resident EOS、缓存及晚回调回滚通过原CPU/CUDA owner；新Device场景覆盖两个同层根，未代签粗细层数值宏步。 | 进入原Native RKL暂态／事务记录及gravity-free Hydro批次；完整数值运行guard保持至消费者验收。 |
-| 完整FV／粗细面 | 原Host RKL轨迹保持；新增一条变密度五叶RKL2的两个实际宏步过原质量／能量含边界功、活动性和零修复检查。普通Spherical2D沿原`(r,phi)`，下一条真实CF轨迹复用既有Runtime／RKL／收支。 | 完成普通曲线CF及Native Hydro实际角动量／reflux；后续引力耦合按独立尺度预算推进，不重复已签收叶函数。 |
+| Native Device Runtime边界 | 实际安装、两次交换、有序候选、最终轴、resident EOS、缓存及晚回调回滚通过原CPU/CUDA owner；新Device场景覆盖两个同层根，未代签粗细层数值宏步。 | Native RKL暂态输出与事务记录接线已通过限定检查，进入gravity-free Hydro批次；完整数值运行guard保持至消费者验收。 |
+| 完整FV／粗细面 | 原Host RKL轨迹保持；新增一条变密度五叶RKL2的两个实际宏步过原质量／能量含边界功、活动性和零修复检查。普通Spherical2D沿原`(r,phi)`的五叶RKL2双宏步现已通过真实Runtime／register／reflux／EOS和原收支门槛。 | 完成普通曲线CF及Native Hydro实际角动量／reflux；后续引力耦合按独立尺度预算推进，不重复已签收叶函数。 |
 | O9真实导热活动 | 半步端点重分布与成功宏步累计诊断已通过原Host／Device owner。沿共享`final_rotation`、真实叶体积及原事务记录；失败宏步丢弃暂定收据，续算按since-process-start。 | 冻结代表性四模块分尺度收支与活动预算，执行真实AMR、中段续算和资源长程观测；多个输运并开时不能把全部扩散活动归为导热。 |
 | 端点误差与核能账本 | aprox13使用实际舍入`MION`及`-N_A*c²`，iso7保留实际结合能约定；两既有验证入口共用端点辅助函数，真实BD输出过原`1e-12`窗口。[核能记录](../../validation/backend/results/release-closure-20261009/endpoint-nuclear-energy-summary.json)保存原失败和限定范围。 | 保留原独立参考。需取得上游FP64场／体积／积分误差界，报告绝对残差及核能／引力各自尺度；气体总能归一值不能代签弱引力功。 |
 
@@ -136,7 +136,7 @@ NativeDevice下一接线任务只处理已定位的剩余消费者：immutable�
 
 在测试覆盖方面，原有 Host RKL owner 中的一条五叶混层轨迹采用了空间变密度的真实积分初态。该轨迹成功完成了两个实际的 RKL2 宏步，并逐步核对了动量与总能量活动、动能耗散、真实的 V 测度守恒以及物理边界机械功，全程保持 EOS 接受且实现零修复。这一验证补充了对非线性密度及粗细面消费者的有限覆盖，既不依赖均匀密度的特征模态作为参考，也不宣称具备长程特性或设备端资格。与此同时，原先已通过测试的短轨迹及严格的中段续算依然保持签收状态。
 
-在后续计划中，下一批工作将沿着现有消费者接入 Native RKL 的暂态检查与事务修复记录，并补充验证普通球坐标二维 (r,phi) 网格的真实粗细面收支。之后，系统将接通完整的 Device Hydro 与各类引力的实际状态及源项消费者。需要强调的是，实现完整发布仍有赖于完成剩余的长程耦合、当前的 Studio／Plot、最终配对计时以及 CI 与文档的收束工作；局部服务的通过并不会解除其他的运行门槛。
+Native RKL暂态检查与共用事务记录已沿现有消费者接入，普通球坐标二维(r,phi)的真实粗细面收支也已通过原门槛。该节点CPU三项原owner通过，CUDA原RKL owner及memcheck通过；详细源码身份、首次错误构建目标及累计成本见[处理后记录](../../validation/amr/results/release-closure-20261009/native-rkl-polar-cf-summary.json)。Native输出检查覆盖三条真实内核路由各七个正常／拒绝反例，保持原始V/W状态与零修复；该检查不代替完成态EOS或完整Device宏步。普通五叶RKL2两宏步的能量含真实边界功相对误差分别约6.29e-15和1.76e-14，低于原2e-12门槛，并有非零粗细面动量／能量通量。下一步接通完整的Device Hydro与各类引力的实际状态及源项消费者。需要强调的是，实现完整发布仍有赖于完成剩余的长程耦合、当前的 Studio／Plot、最终配对计时以及 CI 与文档的收束工作；局部服务的通过并不会解除其他的运行门槛。
 
 本节点CPU两轮编译累计85.205秒，原四owner通过后，启动几何与变密度补测的原引力owner再通过37.15秒；原架构111项通过。CUDA两轮编译累计142.349秒，首次非法温度通道夹具的失败保留，唯一修复后原owner通过0.89秒；memcheck／完整leak-check为0错误、0泄漏。原`64 epsilon`与`2e-12`预算均保持，无新增CTest或workflow，也未上传raw。构建资源、实际源码和有限科学范围统一保存于上述处理后记录。
 

@@ -276,6 +276,9 @@ foreach(contract IN ITEMS boundary_plan same_level_exchange_plan
     add_test(NAME ${contract} COMMAND arch_${contract})
 endforeach()
 
+# The existing AMR lane also consumes the sole Runtime BC/work and composite RKL owners.
+target_link_libraries(arch_amr_flux_surface_plan PRIVATE arch_driver_runtime)
+
 # Extend the existing boundary contract lane rather than multiplying test jobs.
 target_sources(arch_boundary_plan PRIVATE
     src/physics/boundary/PhysicalBoundaryHandler.cpp

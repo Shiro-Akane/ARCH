@@ -18,8 +18,8 @@
 | Host 边界身份与共享数学 | 普通/Native 统一 `HydroInputFrame`、精确 Tree/logical-root 身份、普通 Euler/RK2/RK3 壁面接线通过原三项 CPU owner；同一壁面候选／低阶基态／限制因子汇入共享点组装器，完整CPU构建与原限制器、曲线owner通过；原数学及门槛保持 | 一般 EOS、完整曲线 FV/CF/配对功与设备权限独立验收；写前拒绝证据不替代普通路径后期失败的完整回退 |
 | Studio 构建发布 | 原 HostBuild owner 17/17、类型检查和 lint 通过；当前真实 Configure/Build/Run 已通过，正常关闭 GUI/Host 后同一 Sod 作业完成 8993 步至 t=0.2 | 后续共享数学源码的 producer 身份与完整支持交互矩阵独立复核 |
 | 实际桌面与 Plot | `e995af61d` 下原生 Configure/Build/Run/Restart/Plot 已通过；续算的 20 个数值数据集、1095 个值逐位一致，另一个字符串数据集等值 | 后续源码冻结后复核当前 producer；活动关闭已完成真实同作业验证，全部支持交互矩阵仍需验收 |
-| 数学与耦合 | 普通及Native共享Stokes、原12条Host RKL与新增变密度五叶RKL2双宏步通过；真实V收支含边界功、EOS及零修复保持。高斯静态和Euler连续能量保持已记录范围 | 普通曲线真实FV／粗细面、后续引力耦合演化和长程仍按原消费者验收；原叶函数、静态参考及混层严格续算不重开 |
-| CUDA 与第二平台 | 共享EOS／应力、Native燃烧六路及V/W迁移保留限定通过；实际Runtime安装、同层根有序ghost／EOS／缓存及晚回调恢复通过。4070 Ti保留旧身份 | Native Hydro／RKL、真实引力源与功、粗细面／宏步／重试／staged regrid继续验收；3060 Ti旧同程1.22485倍只适用于旧执行物，4070 Ti无当前配对组 |
+| 数学与耦合 | 普通及Native共享Stokes、原12条Host RKL与新增变密度五叶RKL2双宏步通过；真实V收支含边界功、EOS及零修复保持。高斯静态和Euler连续能量保持已记录范围 | 普通Spherical2D五叶RKL2双宏步亦已通过真实粗细面收支；Native Hydro、后续引力耦合演化和长程仍按原消费者验收；原叶函数、静态参考及混层严格续算不重开 |
+| CUDA 与第二平台 | 共享EOS／应力、Native燃烧六路及V/W迁移保留限定通过；实际Runtime安装、同层根有序ghost／EOS／缓存及晚回调恢复通过。4070 Ti保留旧身份 | Native RKL暂态与事务记录通过限定检查；Native Hydro、真实引力源与功、粗细面／宏步／重试／staged regrid继续验收；3060 Ti旧同程1.22485倍只适用于旧执行物，4070 Ti无当前配对组 |
 | O9 多周期与续算 | Cartesian Jeans1024格、CFL0.1、CPU8完成20T约34分钟；17次采样、原预算、零修复和10T中段严格续算通过，后段RSS/fd观测稳定。组分扩散5衰减时间与续算通过；formal热RKL2原owner通过；既有核能账本对齐实际生产能量约定，真实BD端点补测过原1e-12门槛 | C/O独立终点及真实BD／ROS4生产终点、BD中段严格续算保持签收；真实扩散活动观测后冻结分尺度四模块收支，继续墙钟长程、RZ及必要后端。有限内存记录不证明绝对无泄漏，O10仅讨论 |
 
 2026-10-09更新：403d147fc源码的CPU清单76/76通过，无跳过；真实BD／ROS4强反应终点均在原预算内，BD中段重启保留20个数值数据集逐位一致。复现输入、误差及构建资源记录见[燃烧处理记录](../../validation/burn/results/release-closure-20261009/production-summary.json)，详细科学范围统一记入[优化计划的当前出口](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)。有限终点与重启验收不代替墙钟耐久和完整耦合。
@@ -32,7 +32,7 @@
 
 2026-10-09复核：发布估计约完成75%，属于按工作包加权的工程判断，不能从局部测试通过率推导release就绪。分母、估计范围和六个剩余出口统一见[O总表的发布进度](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)，本页仅保存原证据。主要剩余工作为完整NativeDevice接线、FV／粗细面与非线性阶段、活动燃烧及其余长时耦合；当前producer的GUI／Plot、完整必要回归、最终整程计时和CI覆盖也要结算。
 
-2026-10-10实际Runtime节点的原CPU受影响owner、CUDA存储owner及memcheck通过，源与执行物身份、首次夹具拒绝和唯一修复统一见[处理后记录](../../validation/amr/results/release-closure-20261009/native-runtime-ordered-boundary-summary.json)。边界／生命周期签收后，当前任务转到Native RKL暂态记录、真实Hydro／引力消费者和普通曲线粗细面；完整NativeDevice仍待公共运行验收。历史76/76、燃烧六路及其他服务记录保持各自身份，4070Ti当前配对缺测。Windows、额外最终冻结轮和O10继续暂缓，后续动作只在O总表维护。
+2026-10-10实际Runtime节点的原CPU受影响owner、CUDA存储owner及memcheck通过，源与执行物身份、首次夹具拒绝和唯一修复统一见[处理后记录](../../validation/amr/results/release-closure-20261009/native-runtime-ordered-boundary-summary.json)。随后Native RKL暂态检查及共用事务记录接线、普通Spherical2D五叶RKL2真实CF轨迹均通过原owner，见[当前RKL与粗细面处理记录](../../validation/amr/results/release-closure-20261009/native-rkl-polar-cf-summary.json)。CPU三项通过35.86秒，CUDA RKL通过0.96秒，memcheck为0错误／0泄漏；CUDA编译462.759秒。当前任务进入真实Hydro／引力消费者，完整NativeDevice仍待公共运行验收。历史76/76、燃烧六路及其他服务记录保持各自身份，4070Ti当前配对缺测。Windows、额外最终冻结轮和O10继续暂缓，后续动作只在O总表维护。
 
 同一resident服务在真实存储上只返回紧凑EOS诊断，完整预检后才launch；原多块燃烧owner新增的Native子集覆盖实际Helmholtz/aprox13、DenseLU与cuDSS的BE_NR／BD／ROS4，原密度与三个动量存储位保持。编译中的NVCC隐式C++20比较链接错误已用现有Host存储解析器和实际owner唯一性修复，无共享类型或数学改动。当前三个CUDA owner及新增六条实际燃烧路线通过，完整NativeDevice仍按后续真实ghost／AMR／hydro／gravity消费者验收。[处理后摘要](../../validation/gravity/results/release-closure-20261007/native-device-resident-burn-20261009-summary.json)保留真实编译失败、累积成本、输入／执行物身份和有限结论。
 
