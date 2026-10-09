@@ -23,6 +23,7 @@
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/common/ExactWarpGroup.cuh"
 #include "data/FluidState.h"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace arch::cuda {
 

@@ -396,6 +396,17 @@ const char* explanation = R"note(physical boundary "outflow"
     def test_rejects_cuda_boundary_duplication(self):
         self.assert_rejected("src/cuda/Boundary.cuh", "void fill_boundary() {}")
 
+    def test_shared_native_boundary_delegate_keeps_local_rules_forbidden(self):
+        path = "src/cuda/hydro/boundary/Boundary.cuh"
+        delegate = """
+namespace math = arch::boundary::native_rz_math;
+void native_reflecting_candidates_kernel() { math::reflect_cell(); }
+void launch_native_reflecting_candidates() { native_reflecting_candidates_kernel(); }
+"""
+        self.assert_accepted({path: delegate})
+        self.assert_rejected(path, delegate + "\nif (type == BoundaryType::Reflecting) copy();")
+        self.assert_rejected("src/cuda/halo.cuh", delegate)
+
     def test_rejects_production_cuda_glob(self):
         self.assert_rejected("CMakeLists.txt", "file(GLOB_RECURSE cuda *.cu)\nadd_executable(ARCH ${cuda})")
 

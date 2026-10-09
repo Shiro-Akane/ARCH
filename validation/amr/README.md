@@ -273,3 +273,5 @@ These data files support reproduction and independent review; they are not setup
 </details>
 
 The current bound RZ transfer consumer has its own [processed record](results/release-closure-20261009/native-device-migration-summary.json): native prolongation/restriction, exact identity counterexamples, low density and species-storage cases use the same Host/device mathematics. The historical curved application rows retain their recorded chart and source identities; they do not qualify the current complete RZ Device Runtime. That runtime follows the [current release exits](../../docs/development/ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核).
+
+The [positive-radius RZ reflecting-candidate record](results/release-closure-20261009/native-device-reflector-summary.json) exercises the same Host/device point law and V/W integral in the existing boundary owner, including cold flow, low density, larger compositions and failure before candidate writes. Ordered boundary completion and runtime publication follow the release exits above.

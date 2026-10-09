@@ -41,6 +41,7 @@
 #include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "physics/boundary/BoundaryTypes.h"
+#include "physics/boundary/NativeRzBoundaryMath.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/species/Species.h"
 
@@ -53,93 +54,104 @@ struct NativeRzBoundaryRequest {
 };
 
 namespace native_rz_detail {
-/** Real positive-cell support; never infer it from padded allocation columns. */
-struct CellSupport { double r_lower,r_upper,z_lower,z_upper; };
-
-/** Read physical bounds from actual logical grid cells; reject negative r. */
-inline CellSupport support(const Grid& grid,const std::array<int,2>& cell)
+/** Bind the actual logical extents and active intervals to the borrowed view. */
+inline native_rz_math::Context context(const Grid& grid,const GridMetrics::GeometryView& geometry)
 {
-    if(cell[0]<0||cell[0]>=grid.GetTotalX()||cell[1]<0||cell[1]>=grid.GetTotalY())
+    return {geometry,grid.GetTotalX(),grid.GetTotalY(),grid.Is(),grid.Ie(),grid.Js(),grid.Je()};
+}
+
+/** Lower only numerical request values; callback/stage coordinates stay Host-owned. */
+inline native_rz_math::Request numerical_request(const NativeRzBoundaryRequest& request)
+{
+    return {request.source,request.destination,request.coordinates.axis,request.coordinates.side,
+        request.coordinates.ghost_depth,request.coordinates.purpose};
+}
+
+/** Preserve input-error versus physical/integration-error exception categories. */
+inline void require_success(native_rz_math::Status status)
+{
+    using Status=native_rz_math::Status;
+    switch(status) {
+    case Status::valid:return;
+    case Status::invalid_request:
+        throw std::invalid_argument("native RZ boundary requires an actual two-dimensional physical ghost mirror request");
+    case Status::invalid_cell:
         throw std::invalid_argument("native RZ boundary requires real logical source and target cells");
-    // Use the same canonical axial faces as the actual grid measure. Gauss
-    // samples and V/W below then share this exact logical-cell height.
-    CellSupport result{grid.GetFacePosL(cell[0]),grid.GetFacePosR(cell[0]),
-        grid.GetAxialFacePosL(cell[1]),grid.GetAxialFacePosR(cell[1])};
-    if(!std::isfinite(result.r_lower)||!std::isfinite(result.r_upper)
-       ||!std::isfinite(result.z_lower)||!std::isfinite(result.z_upper)
-       ||result.r_lower<0.||!(result.r_upper>result.r_lower)
-       ||!(result.z_upper>result.z_lower))
+    case Status::invalid_support:
         throw std::invalid_argument("native RZ physical callback requires a positive radial cell with finite ordered bounds");
-    return result;
-}
-
-/** Require the frozen donor policy: normal mirror and true tangent ownership. */
-inline void validate_request(const Grid& grid,const NativeRzBoundaryRequest& request)
-{
-    const auto& c=request.coordinates;
-    const int axis=static_cast<int>(c.axis),depth=c.ghost_depth;
-    if(grid.GetTotalX()<3||grid.GetTotalY()<1||grid.ng<1
-       ||!std::isfinite(grid.dx1)||!(grid.dx1>0.)
-       ||!std::isfinite(grid.dx2)||!(grid.dx2>0.)
-       ||c.dimension!=2||axis<0||axis>1||depth<1||depth>grid.ng
-       ||(c.side!=BoundarySide::Lower&&c.side!=BoundarySide::Upper))
-        throw std::invalid_argument("native RZ boundary requires an actual two-dimensional physical ghost request");
-    if(c.purpose!=BoundaryPurpose::Hydro&&c.purpose!=BoundaryPurpose::Diffusion)
-        throw std::invalid_argument("native RZ boundary supports only Hydro and Diffusion requests");
-    const int lower=axis==0?grid.Is():grid.Js(),upper=axis==0?grid.Ie():grid.Je();
-    const bool left=c.side==BoundarySide::Lower;
-    const int target=left?lower-depth:upper+depth-1;
-    const int donor=left?lower+depth-1:upper-depth;
-    if(request.destination[axis]!=target||request.source[axis]!=donor
-       ||(axis==0&&request.source[1]!=std::clamp(request.destination[1],grid.Js(),grid.Je()-1))
-       ||(axis==1&&request.source[0]!=request.destination[0]))
-        throw std::invalid_argument("native RZ boundary donor does not match its physical mirror and tangent cell");
-}
-
-/** Select three real density observations for this physical-law donor.
- * Workflow: authenticate its logical radial index/layout; an active donor
- * uses three actual active columns before physical ghosts have been built.
- * begin=clamp(i-1,Is,Ie-3) keeps its original centered support away from a wall
- * and uses the same existing one-sided fit at the first/last active column.
- * A genuine axial-corner donor outside the active range already belongs to
- * the completed preceding radial prefix and retains the original logical
- * begin=clamp(i-1,0,totalX-3). No density, energy or EOS is changed here.
- *
- * Seed copies are provisional storage, not density observations certifying
- * an active in-cell physical primitive. Reading them can change I_* while
- * native J/E remain fixed and falsely erase a cold donor's thermal energy.
- * The final completed-ghost EOS still uses its original full logical stencil.
- */
-inline int source_support_begin(const Grid& grid,int source_i)
-{
-    const int nx=grid.GetTotalX(),lower=grid.Is(),upper=grid.Ie();
-    if(nx<3||grid.ng<1||grid.stride_y<nx||source_i<0||source_i>=nx
-       ||lower<0||upper<lower||upper>nx)
+    case Status::invalid_source_layout:
         throw std::invalid_argument("native RZ boundary source requires a real radial layout/index");
-    if(source_i>=lower&&source_i<upper) {
-        if(upper-lower<3)
-            throw std::invalid_argument("native RZ boundary active source requires three real active density cells");
-        return std::clamp(source_i-1,lower,upper-3);
+    case Status::insufficient_active_support:
+        throw std::invalid_argument("native RZ boundary active source requires three real active density cells");
+    case Status::invalid_bounds_or_species:
+        throw std::invalid_argument("native RZ reflecting boundary requires valid numerics bounds and species layout");
+    case Status::invalid_workspace:
+        throw std::invalid_argument("native RZ reflecting boundary requires its complete caller-owned species workspace");
+    case Status::invalid_source_state:
+        throw std::runtime_error("native RZ reflecting source support has invalid native fields or composition");
+    case Status::invalid_source_closure:
+        throw std::runtime_error("native RZ reflecting boundary has no admissible supported source closure");
+    case Status::invalid_point_closure:
+        throw std::runtime_error("native RZ boundary has no valid in-cell numerical closure");
+    case Status::invalid_point_eos:
+        throw std::runtime_error("native RZ boundary physical point lies outside the selected EOS or bounds");
+    case Status::invalid_point_thermal:
+        throw std::runtime_error("interior boundary state has no resolvable thermal energy");
+    case Status::invalid_point_composition:
+        throw std::invalid_argument("interior boundary composition must supply finite non-negative mass fractions summing to one");
+    case Status::invalid_point_temperature:
+        throw std::runtime_error("interior boundary state lies outside the selected EOS temperature domain");
+    case Status::invalid_point_pressure:
+        throw std::runtime_error("interior boundary state lies outside the selected EOS pressure domain");
+    case Status::invalid_mapped_fraction:
+        throw std::runtime_error("native RZ boundary target sample lies outside its actual cell");
+    case Status::invalid_mapped_point:
+        throw std::runtime_error("native RZ boundary mapped point lies outside its actual donor cell");
+    case Status::invalid_target_measures:
+        throw std::runtime_error("native RZ target cell V/W measures are not representable");
+    case Status::invalid_reflected_eos:
+        throw std::runtime_error("native RZ reflected physical sample lies outside the selected EOS or bounds");
+    case Status::conserved_integration_failed:
+        throw std::runtime_error("native RZ boundary conserved integration failed");
+    case Status::fraction_integration_failed:
+        throw std::runtime_error("native RZ boundary composition integration failed");
+    case Status::invalid_candidate:
+        throw std::runtime_error("native RZ integrated candidate has invalid native fields or composition");
     }
-    return std::clamp(source_i-1,0,nx-3);
+    throw std::runtime_error("native RZ boundary returned an unknown numerical failure status");
 }
 
-/** Map a target fraction into its own true donor; reflect only the normal.
- * Normal mapping s=source_upper-f*(source_upper-source_lower) is mathematically
- * 2*face-target for mirrored cells. Tangents use source_lower+f*source_width;
- * both remain inside actual support, including clamped axial tangent donors.
- */
+using CellSupport=native_rz_math::CellSupport;
+
+/** Borrow the sole positive logical-cell support leaf and translate its status. */
+inline CellSupport support(const native_rz_math::Context& context,const std::array<int,2>& cell)
+{
+    CellSupport result{};
+    require_success(native_rz_math::support(context,cell,result));return result;
+}
+
+/** Authenticate the original Host request before callback or donor reads. */
+inline void validate_request(const native_rz_math::Context& context,
+    const NativeRzBoundaryRequest& request)
+{
+    if(request.coordinates.dimension!=2)
+        throw std::invalid_argument("native RZ boundary requires an actual two-dimensional physical ghost request");
+    require_success(native_rz_math::validate_request(context,numerical_request(request)));
+}
+
+/** Reuse the sole active/completed-corner three-density support selection. */
+inline int source_support_begin(const native_rz_math::Context& context,int source_i)
+{
+    int begin=0;require_success(native_rz_math::source_support_begin(context,source_i,begin));return begin;
+}
+
+/** Map through the same normal/tangent fractions as the device numerical leaf. */
 inline double mapped_coordinate(double target,double target_lower,double target_upper,
     double source_lower,double source_upper,bool reflect)
 {
-    const double fraction=(target-target_lower)/(target_upper-target_lower);
-    if(!std::isfinite(fraction)||fraction<0.||fraction>1.)
-        throw std::runtime_error("native RZ boundary target sample lies outside its actual cell");
-    const double point=reflect?source_upper-fraction*(source_upper-source_lower)
-        :source_lower+fraction*(source_upper-source_lower);
-    if(!std::isfinite(point)||point<source_lower||point>source_upper)
-        throw std::runtime_error("native RZ boundary mapped point lies outside its actual donor cell");
-    return point;
+    double point=0.;
+    require_success(native_rz_math::mapped_coordinate(target,target_lower,target_upper,
+        source_lower,source_upper,reflect,point));return point;
 }
 
 /** Build actual target-tangent face/sample coordinates with unchanged epoch. */
@@ -186,44 +198,34 @@ inline void require_same_channels(const PhysicalBoundaryData& center,
             throw std::invalid_argument("native RZ boundary sample changes center channel kind or presence");
 }
 
-/** Actual strict EOS/bounds check of a numerical closure's physical point. */
+/** Construct the Host snapshot from the sole checked physical-point leaf.
+ * The scalar owner preserves validate_eos and the original extra T/P queries;
+ * only copied Xi ownership and PrimitiveData's vector remain Host-specific.
+ */
 template<class Eos>
 inline PrimitiveData physical_primitive(const RzThermodynamics::Cell& closure,double radius,
     std::span<const double> fractions,const arch::state::Bounds& bounds,const Eos& eos,
     FluidVector& point)
 {
-    if(!closure.valid()||!std::isfinite(radius)||radius<closure.density.lower
-       ||radius>closure.density.upper)
-        throw std::runtime_error("native RZ boundary has no valid in-cell numerical closure");
-    point=RzThermodynamics::base_point(closure,radius);
-    const double* xi=fractions.empty()?nullptr:fractions.data();
-    if(arch::state::validate_eos(point,xi,static_cast<int>(fractions.size()),bounds,eos)
-        !=arch::state::Status::valid)
-        throw std::runtime_error("native RZ boundary physical point lies outside the selected EOS or bounds");
-    return BoundaryInteriorPrimitive(point,fractions,eos);
+    native_rz_math::Primitive scalar;
+    require_success(native_rz_math::physical_point(closure,radius,
+        fractions.empty()?nullptr:fractions.data(),static_cast<int>(fractions.size()),bounds,eos,point,scalar));
+    PrimitiveData result;
+    result.rho=scalar.rho;result.u=scalar.u;result.v=scalar.v;result.w=scalar.w;
+    result.temperature=scalar.temperature;result.p=scalar.pressure;result.has_temperature=true;
+    result.mass_fractions.assign(fractions.begin(),fractions.end());return result;
 }
 
-/** Check actual target V/W and return the unchanged eight Gauss samples.
- * The operation order matches the original callback path: dz, V, W, finite
- * checks, then the shared sample constructor. No face or mean is synthesized.
- */
+/** Borrow the original target dz/V/W precheck and unchanged eight Gauss points. */
 inline std::array<GridMetrics::Rz::CellAverageSample,8> cell_samples(const CellSupport& target)
 {
-    const double dz=target.z_upper-target.z_lower;
-    const double volume=GridMetrics::Rz::CellVolume(target.r_lower,target.r_upper,dz);
-    const double angular=GridMetrics::Rz::AngularMomentumMeasure(target.r_lower,target.r_upper,dz);
-    if(!std::isfinite(volume)||!(volume>0.)||!std::isfinite(angular)||!(angular>0.))
-        throw std::runtime_error("native RZ target cell V/W measures are not representable");
-    return GridMetrics::Rz::CellAverageSamples(target.r_lower,target.r_upper,
-        target.z_lower,target.z_upper);
+    std::array<GridMetrics::Rz::CellAverageSample,8> result{};
+    require_success(native_rz_math::cell_samples(target,result));return result;
 }
 
-/** Integrate one complete read-only point law using the original sample order.
- * rho/mr/mz/E use sum(w_V U), mphi uses sum(w_W rho*vphi), and
- * Xi=sum(w_V*rho*Xi)/sum(w_V*rho) uses the sole scaled ratio implementation.
- * Source and reflected point EOS checks precede this leaf. The result is only
- * provisional finite/rho/simplex data; completed-ghost EOS is owned by Runtime.
- * Conditions are copied verbatim for callbacks, or empty for built-in laws.
+/** Reuse the sole V/W and scaled density-weighted Xi integral for callbacks.
+ * Point EOS checks precede integration; conditions are copied verbatim and
+ * completed-ghost EOS/publication remain the Runtime owner's responsibility.
  */
 inline PhysicalBoundaryEvaluation integrate_samples(
     const std::array<GridMetrics::Rz::CellAverageSample,8>& samples,
@@ -231,23 +233,13 @@ inline PhysicalBoundaryEvaluation integrate_samples(
     const std::array<double,8>& densities,const std::vector<double>& fractions,
     int count,const arch::state::Bounds& bounds,const PhysicalBoundaryData& conditions)
 {
-    constexpr std::size_t sample_count=8;
-    const auto conserved=RzCellAverage::conserved_mean(samples,
-        [&points](std::size_t k) {return points[k];});
-    if(!conserved.valid())throw std::runtime_error("native RZ boundary conserved integration failed");
     PhysicalBoundaryEvaluation result;
-    result.conserved=conserved.value;result.conditions=conditions;
     result.mass_fractions.resize(static_cast<std::size_t>(count));
-    for(int s=0;s<count;++s) {
-        const auto averaged=RzCellAverage::fraction_mean(weights,densities,
-            [&fractions,s](std::size_t k) {return fractions[static_cast<std::size_t>(s)*sample_count+k];});
-        if(!averaged.valid())throw std::runtime_error("native RZ boundary composition integration failed");
-        result.mass_fractions[s]=averaged.value;
-    }
-    if(RzThermodynamics::provisional_native_state(result.conserved,result.mass_fractions.data(),
-        count,1,bounds)!=arch::state::Status::valid)
-        throw std::runtime_error("native RZ integrated candidate has invalid native fields or composition");
-    return result;
+    const auto integrated=native_rz_math::integrate_samples(samples,points,weights,densities,
+        fractions.empty()?nullptr:fractions.data(),count,bounds,
+        result.mass_fractions.empty()?nullptr:result.mass_fractions.data());
+    require_success(integrated.status);
+    result.conserved=integrated.conserved;result.conditions=conditions;return result;
 }
 
 } // namespace native_rz_detail
@@ -264,9 +256,10 @@ PhysicalBoundaryEvaluation EvaluateNativeRzBoundaryCell(const Grid& grid,
 {
     const auto geometry=GridMetrics::make_geometry_view(grid,
         GridMetrics::GeometrySemantics::AxisymmetricRz);
-    native_rz_detail::validate_request(grid,request);
-    const auto source=native_rz_detail::support(grid,request.source);
-    const auto target=native_rz_detail::support(grid,request.destination);
+    const auto numerical_context=native_rz_detail::context(grid,geometry);
+    native_rz_detail::validate_request(numerical_context,request);
+    const auto source=native_rz_detail::support(numerical_context,request.source);
+    const auto target=native_rz_detail::support(numerical_context,request.destination);
     const arch::state::Bounds bounds{config.numerics.sml_rho,config.numerics.min_eint,
         config.numerics.max_eint};
     if(!arch::state::valid_bounds(bounds)||species.count()<0)
@@ -282,7 +275,7 @@ PhysicalBoundaryEvaluation EvaluateNativeRzBoundaryCell(const Grid& grid,
     if(RzThermodynamics::provisional_native_state(read(source_index),source_x.data(),count,1,bounds)
         !=arch::state::Status::valid)
         throw std::runtime_error("native RZ boundary source has invalid native fields or composition");
-    const int source_begin=native_rz_detail::source_support_begin(grid,request.source[0]);
+    const int source_begin=native_rz_detail::source_support_begin(numerical_context,request.source[0]);
     const auto source_closure=RzThermodynamics::make_cell_supported(read,source_index,
         geometry,request.source[0],source_begin,bounds);
     const double center_r=grid.GetCellCenterX(request.destination[0]);
@@ -390,64 +383,23 @@ PhysicalBoundaryEvaluation EvaluateNativeRzReflectingCell(const Grid& grid,
 {
     const auto geometry=GridMetrics::make_geometry_view(grid,
         GridMetrics::GeometrySemantics::AxisymmetricRz);
-    native_rz_detail::validate_request(grid,request);
-    const auto source=native_rz_detail::support(grid,request.source);
-    const auto target=native_rz_detail::support(grid,request.destination);
+    const auto numerical_context=native_rz_detail::context(grid,geometry);
+    native_rz_detail::validate_request(numerical_context,request);
     const arch::state::Bounds bounds{config.numerics.sml_rho,config.numerics.min_eint,
         config.numerics.max_eint};
-    if(!arch::state::valid_bounds(bounds)||species.count()<0)
-        throw std::invalid_argument("native RZ reflecting boundary requires valid numerics bounds and species layout");
     const int count=species.count();
-    const int source_index=grid.GetIndex(request.source[0],request.source[1],0);
-    const int source_begin=native_rz_detail::source_support_begin(grid,request.source[0]);
-    std::vector<double> source_x(static_cast<std::size_t>(count)),support_x(static_cast<std::size_t>(count));
-    for(int s=0;s<count;++s)source_x[s]=fraction(s,source_index);
-    // Active donors borrow actual active density columns. A genuine completed
-    // corner prefix can include signed axis-reflected native density cells;
-    // these are density observations, never negative-r physical EOS points.
-    for(int i=source_begin;i<source_begin+3;++i) {
-        const int index=grid.GetIndex(i,request.source[1],0);
-        for(int s=0;s<count;++s)support_x[s]=fraction(s,index);
-        if(RzThermodynamics::provisional_native_state(read(index),support_x.data(),count,1,bounds)
-            !=arch::state::Status::valid)
-            throw std::runtime_error("native RZ reflecting source support has invalid native fields or composition");
-    }
-    const auto source_closure=RzThermodynamics::make_cell_supported(read,source_index,
-        geometry,request.source[0],source_begin,bounds);
-    if(!source_closure.valid())
-        throw std::runtime_error("native RZ reflecting boundary has no admissible supported source closure");
-    const auto samples=native_rz_detail::cell_samples(target);
-    constexpr std::size_t sample_count=8;
-    std::array<FluidVector,sample_count> points{};
-    std::array<double,sample_count> weights{},densities{};
-    std::vector<double> fractions(static_cast<std::size_t>(count)*sample_count);
-    const auto axis=request.coordinates.axis;
-    for(std::size_t k=0;k<sample_count;++k) {
-        const auto& q=samples[k];
-        // The radial baseline is constant in z within its actual donor cell;
-        // still authenticate the real axial fraction and normal reflection.
-        (void)native_rz_detail::mapped_coordinate(q.axial,target.z_lower,target.z_upper,
-            source.z_lower,source.z_upper,axis==BoundaryAxis::X2);
-        const double radius=native_rz_detail::mapped_coordinate(q.radius,
-            target.r_lower,target.r_upper,source.r_lower,source.r_upper,axis==BoundaryAxis::X1);
-        FluidVector reflected;
-        (void)native_rz_detail::physical_primitive(source_closure,radius,
-            source_x,bounds,eos,reflected);
-        if(axis==BoundaryAxis::X1)
-            reflected.mom_u*=reflection_sign(axis,BoundaryType::Reflecting,BoundaryFieldClass::MomentumX);
-        else
-            reflected.mom_v*=reflection_sign(axis,BoundaryType::Reflecting,BoundaryFieldClass::MomentumY);
-        if(arch::state::validate_eos(reflected,source_x.data(),count,bounds,eos)
-            !=arch::state::Status::valid)
-            throw std::runtime_error("native RZ reflected physical sample lies outside the selected EOS or bounds");
-        points[k]=reflected;weights[k]=q.volume_weight;densities[k]=points[k].rho;
-        // Keep fractions, without a premature rho*Xi product that could lose a
-        // positive trace. The shared scaled density-weighted ratio owns Xi.
-        for(int s=0;s<count;++s)
-            fractions[static_cast<std::size_t>(s)*sample_count+k]=source_x[s];
-    }
-    return native_rz_detail::integrate_samples(samples,points,weights,densities,
-        fractions,count,bounds,PhysicalBoundaryData{});
+    std::size_t workspace_size=0;
+    if(!arch::state::valid_bounds(bounds)||!native_rz_math::workspace_extent(count,workspace_size))
+        throw std::invalid_argument("native RZ reflecting boundary requires valid numerics bounds and species layout");
+    std::vector<double> workspace(workspace_size);
+    PhysicalBoundaryEvaluation result;
+    result.mass_fractions.resize(static_cast<std::size_t>(count));
+    const native_rz_math::Workspace borrowed{workspace.empty()?nullptr:workspace.data(),workspace.size(),
+        result.mass_fractions.empty()?nullptr:result.mass_fractions.data(),result.mass_fractions.size()};
+    const auto reflected=native_rz_math::reflect_cell(numerical_context,
+        native_rz_detail::numerical_request(request),bounds,count,eos,read,fraction,borrowed);
+    native_rz_detail::require_success(reflected.status);
+    result.conserved=reflected.conserved;return result;
 }
 
 } // namespace arch::boundary

@@ -24,6 +24,9 @@
 #include <type_traits>
 #include <vector>
 
+// The native candidate consumer is kept separate from ordinary raw-plan parity.
+void test_native_rz_reflecting_candidates();
+
 namespace
 {
 using namespace arch::boundary;
@@ -580,6 +583,7 @@ int main()
     try {
         test_cuda_lowering_and_execution();
         test_invalid_cuda_inputs();
+        test_native_rz_reflecting_candidates();
         std::cout << "boundary plan CUDA contract passed\n";
         return 0;
     } catch (const std::exception& error) {

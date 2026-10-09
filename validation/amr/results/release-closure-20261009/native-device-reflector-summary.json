@@ -1,0 +1,193 @@
+{
+  "schema": "arch-native-device-reflector-consumer-1",
+  "review_date": "2026-10-09",
+  "baseline_commit": "94f1cd3b4e82eb873429f4edb35f1a93a6cc619b",
+  "status": "PASS_ORIGINAL_CPU_OWNERS_REAL_CUDA_CANDIDATE_AND_MEMCHECK_NOT_FULL_RUNTIME",
+  "shared_math": {
+    "owner": "src/physics/boundary/NativeRzBoundaryMath.h",
+    "host_adapter": "EvaluateNativeRzReflectingCell and existing callback numeric wrappers",
+    "device_adapter": "launch_native_reflecting_candidates",
+    "unchanged": "real three-density support, original eight Gauss points, selected EOS source/reflected queries, normal signs, V/W means, scaled density Xi, full configured bounds; no repairs or heating",
+    "workspace": "Caller-owned10*N scratch plusN mean Xi, explicit11*N per Device lane, no speciescap, no0species nullarithmetic",
+    "publication": "Candidate-only immutable siblings; entire layer rejection remains caller responsibility"
+  },
+  "source_sha256": {
+    "src/physics/boundary/NativeRzBoundary.h": "b67f7d055e9f11e9f96f8ca2215c0497ac8bb5b62191255db64daf4db67fc032",
+    "src/physics/boundary/NativeRzBoundaryMath.h": "f50ac29e5d4a35e5ae897c7d7c2bcaded0841fb76a81bd5a8a7027c7d0996dcf",
+    "src/cuda/hydro/boundary/Boundary.cuh": "d7cc5047a13d347e8a44acd4bd6474cb8572bb6d003d88d59484e20161850981",
+    "src/cuda/hydro/policies/CheckedHydroEos.cuh": "2810dabeb0297c64e10ce5883ee1e965be5e14691eea4b97898e72e455ed678a",
+    "tests/cuda/grid/test_native_rz_reflection.cu": "defb6ea809912f5e2d7474778ae469850a0ef26c56100022cee9cb0d578b5ba3",
+    "tests/cuda/grid/test_boundary_plan_parity.cu": "aad490804afbae613c35812bc636e4cd4bbc9ff90e4893b94b805316ea61d6d5",
+    "cmake/tests/CudaTests.cmake": "b983205435e94433e2e9b5b2b02dfbf5ff28e9699ef71a42cfd751267c2d39c5",
+    "tools/audit_architecture.py": "b9b7150c939e89719d6aad1c00fff2701b410b41546b7939d95a6087866d3001",
+    "tests/tooling/architecture/test_audit_architecture.py": "6894efddf8d2591ba96689f73f6362f9852210694a00cdf62b3f286ccd965c8d"
+  },
+  "executable_sha256": {
+    "build-release-cpu/arch_boundary_plan": "bde30409d808d0d17fb3ebaa8a39163431354295ac7b365748b4a29303913658",
+    "build-release-cpu/arch_gravity_stage_contract": "2065b1b122cb8ea20eed0871c7696c764c6a3484f6ba033310300cb7756d12f7",
+    "build-rt-cuda/arch_cuda_boundary_plan_parity": "30656821dd3f214ddbf0313dc82d9a0c03d50917e82658d762ad9ceecf3b95f5"
+  },
+  "cpu": {
+    "build_guard_seconds": 77.225,
+    "jobs": 2,
+    "ctest_guard_seconds": 36.361,
+    "tests": [
+      {
+        "name": "gravity_stage_contract",
+        "seconds": 35.8889,
+        "status": "run"
+      },
+      {
+        "name": "boundary_plan",
+        "seconds": 0.356403,
+        "status": "run"
+      }
+    ],
+    "original_tests_and_windows_unchanged": true,
+    "full_current_source_76_signed": false,
+    "last_full_CPU_commit": "403d147fc"
+  },
+  "cuda": {
+    "build_attempts": [
+      {
+        "seconds": 13.137,
+        "exit": 1,
+        "cause": "CheckedHydroEos header lacked explicit StateAdmissibility dependency; fixed include only"
+      },
+      {
+        "seconds": 27.324,
+        "exit": 1,
+        "cause": "Newtest auto multi-declaration deduced two different vector types; worker one deliveryrepair splitdeclaration only"
+      },
+      {
+        "seconds": 23.206,
+        "exit": 0
+      }
+    ],
+    "cumulative_build_guard_seconds": 63.667,
+    "manager_cumulative_cap_seconds": 300,
+    "jobs": 1,
+    "ctest_guard_seconds": 1.023,
+    "tests": [
+      {
+        "name": "boundary_plan_parity",
+        "seconds": 0.438906,
+        "status": "run"
+      }
+    ],
+    "groups": [
+      {
+        "species": 4,
+        "beta": 0,
+        "rho0": 1,
+        "requests": 80
+      },
+      {
+        "species": 4,
+        "beta": 0.015625,
+        "rho0": 1,
+        "requests": 80
+      },
+      {
+        "species": 4,
+        "beta": 0,
+        "rho0": 1e-20,
+        "density_floor": 1e-30,
+        "requests": 80
+      },
+      {
+        "species": 0,
+        "beta": 0,
+        "rho0": 1,
+        "requests": 80
+      },
+      {
+        "species": 41,
+        "beta": 0.015625,
+        "rho0": 1,
+        "requests": 80
+      }
+    ],
+    "independent_reference": "Longdouble polynomial antiderivatives, rho=rho0*(1+beta*s^2), swirl=s, actualtargetbounds; no productionclosure/quadrature in expected means",
+    "window": "Original Host reflector64*doubleepsilon*max(abs(actual),abs(expected)); no max1floor or change",
+    "negative_cases": 11,
+    "negative_scope": [
+      "wrongmirror/axis/depth",
+      "fullinternalenergyceiling",
+      "realpositive Cv=1e-320 selectedIdealGas nonfiniteT",
+      "finitepositive EOSqueries with actualborrowed stickyerrorlatch",
+      "prelaunchshortworkspace/invalidbounds",
+      "truepositive-root crossingzero target",
+      "actual negative rho/nonfiniteenergy"
+    ],
+    "write_checks": "WholeinputU/X/ENUC/paddingbits unchanged; failedrowU/Xcandidate sentinels unchanged; later validcandidate doesnotclearprevious transaction failure",
+    "header_linkage": "Private non-template headerkernel made static so two existingownertranslationunits share no externalstub; old launcher behavior unchanged",
+    "ordinary_body_unchanged": true,
+    "compiler_fp_options": "ExistingNVCC12.3 compute86 -O3, fmadfalse, ftzfalse, precisionsqrt/divtrue; no fastmathchange"
+  },
+  "memcheck": {
+    "tool": "Compute Sanitizer2023.3.1.0 memcheck",
+    "guard_seconds": 1.021,
+    "errors": 0,
+    "leak_check": "Firstmemcheck didnotrequestleaks; second explicit --leak-check full resolves this check",
+    "full_leak_guard_seconds": 1.022,
+    "bytes_leaked": 0,
+    "leaked_allocations": 0,
+    "qualification": "Finiteactualconsumer only, not fullRuntime or longresourceproof"
+  },
+  "architecture": {
+    "original_full_owner_tests": 111,
+    "seconds": 5.034,
+    "full_tree_pass": true,
+    "rule_update": "Only3 revieweddelegateidentifiers omitted from keywordscan in exactBoundary.cuh; bodies/localpolicydispatch remain checked",
+    "counterexamples": "Samefile localBoundaryType::Reflecting and same delegate inunreviewedhalo stillreject",
+    "new_ctest_targets": 0,
+    "new_ci_jobs": 0
+  },
+  "delegation": {
+    "local_shared_leaf_and_consumer_tests": "Disjointwriter ownership, no workerlocalbuild/run; Root independentreview/build/test; testworkerone localdeliveryrepair",
+    "deepseek": {
+      "accepted": true,
+      "scientific_algorithm_qualified": false,
+      "scope": "Independent publicscalar exactrational oracle only; all seven reviewed via stdlib Fraction",
+      "new_findings": "Seven exactrational antiderivative values independently reconfirm existing positive-wall projection and unresolved-variance relationship; no new algorithm defect",
+      "root_review": "Analytic antiderivatives exactrationalassert PASS",
+      "first_delivery": "thinkingonly outputcap16384; retained, no usableanswer",
+      "one_formal_repair": true,
+      "cumulative_seconds": 142.09,
+      "tokens": {
+        "input": 2903,
+        "cached": 640,
+        "output": 34207,
+        "reasoning": 33978,
+        "visible": 229
+      },
+      "estimated_cost_usd": {
+        "off_peak": 0.02086557,
+        "peak": 0.04173114
+      },
+      "overlap": "Local shared-leaf candidate, Root Device/testmapping and O9readonlyaudit",
+      "localheavy_contention": false,
+      "blocking_wait_seconds": 0,
+      "actual_billing_root_activecost": "unknown",
+      "recommendation": "Retain bounded independentmath delegation; narrowcompleteexactquestion and use32768managercap forhigh upfront, no universal speedclaim",
+      "timing_note": "manager instrumentation followed result-reading; emitted notice/review wall retained, actual firstdiscovery latency and Root active time unknown",
+      "repeated_or_false_positives": "Known variance relationship reconfirmed, no new physicschange. First thinking-only cutoff yielded no usable scientificfinding."
+    },
+    "O9_readonly_review": "Candidate qualifiercalibration; cm-scalegravity masked atgasenergy precision, ordinaryGaussian periodicseam, localODEbudget not transferable"
+  },
+  "resource": {
+    "max_build_peak_owned_rss_kib": 1831580,
+    "swap_growth_kib": 0,
+    "guard_stop": false,
+    "min_host_free_bytes": 23772119040,
+    "raw_scientific_H5_produced": 0,
+    "short_process_peak_note": "Guard sampledRSS forsubsecondCuda tests isnot exactprocesspeak"
+  },
+  "remaining": [
+    "CompleteorderedNativeaxis/usercandidate layers, exchange andfinalaxis-cornerparity",
+    "ActualcompletedDeviceEOS with exactstage/domain/framebeforepublication",
+    "FullNativeDevice Runtimeinstall/hydro/gravity/AMRCF/rollback andrestart",
+    "R1/R3remainingFV/nonlinearcoupling/O9, R4latestproducerGUI/regressions, R5matchedtiming, R6finalCI/materials"
+  ]
+}

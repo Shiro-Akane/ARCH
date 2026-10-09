@@ -22,9 +22,11 @@
 | CUDA 与第二平台 | 实际共享EOS完成态叶、原V/W面牵引功、hydro／RKL／燃烧controller及三个真实后端owner已通过；resident完成态EOS服务与真实RZ两patch燃烧的DenseLU／cuDSS各三ODE路线通过。4070 Ti保留旧身份记录 | 真实ghost、AMR迁移／粗细面与完整NativeDevice生产链仍待验；此前同程CPU8／3060 Ti正向1.22485倍保留原执行物身份，4070 Ti无当前配对组 |
 | O9 多周期与续算 | Cartesian Jeans1024格、CFL0.1、CPU8完成20T约34分钟；17次采样、原预算、零修复和10T中段严格续算通过，后段RSS/fd观测稳定。组分扩散5衰减时间与续算通过；formal热RKL2原owner通过 | C/O独立终点及真实BD／ROS4生产终点、BD中段严格续算已通过；墙钟长程待验；热扩散完整耦合、RZ及后端继续各自验收。有限内存记录不证明绝对无泄漏，O10仅讨论 |
 
-2026-10-09更新：当前CPU清单76/76通过，无跳过；真实BD／ROS4强反应终点均在原预算内，BD中段重启保留20个数值数据集逐位一致。复现输入、误差及构建资源记录见[燃烧处理记录](../../validation/burn/results/release-closure-20261009/production-summary.json)，详细科学范围统一记入[优化计划的当前出口](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)。有限终点与重启验收不代替墙钟耐久和完整耦合。
+2026-10-09更新：403d147fc源码的CPU清单76/76通过，无跳过；真实BD／ROS4强反应终点均在原预算内，BD中段重启保留20个数值数据集逐位一致。复现输入、误差及构建资源记录见[燃烧处理记录](../../validation/burn/results/release-closure-20261009/production-summary.json)，详细科学范围统一记入[优化计划的当前出口](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)。有限终点与重启验收不代替墙钟耐久和完整耦合。
 
 2026-10-09网格迁移更新：真实CUDA RZ的V/W迁移接线已复用Host数学，设备身份比较保持全字段严格语义；有限迁移与受影响CPU owner的证据统一记在[迁移记录](../../validation/amr/results/release-closure-20261009/native-device-migration-summary.json)。完整ghost／Runtime仍按下一出口处理。原验证工具已按实际time选择终态，中段checkpoint不再被固定编号误认。
+
+2026-10-09反射接线更新：原正半径反射数学与Host数值包装已共用一个Host/device实现；原CPU owner、实际CUDA候选和设备内存检查通过。独立积分、源码身份与限定范围见[处理记录](../../validation/amr/results/release-closure-20261009/native-device-reflector-summary.json)。后续仅接有序候选层、exchange、轴corner和完成态EOS／阶段身份；完整Runtime出口仍待验。
 
 ### 发布差额与当前排程
 

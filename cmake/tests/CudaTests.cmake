@@ -392,7 +392,8 @@ arch_configure_cuda_math_test(arch_cuda_diffusion_rkl_parity "-Xcompiler=-march=
 target_link_libraries(arch_cuda_diffusion_rkl_parity PRIVATE
     arch_cuda_backend)
 add_executable(arch_cuda_boundary_plan_parity
-    tests/cuda/grid/test_boundary_plan_parity.cu)
+    tests/cuda/grid/test_boundary_plan_parity.cu
+    tests/cuda/grid/test_native_rz_reflection.cu)
 arch_configure_cuda_math_test(arch_cuda_boundary_plan_parity)
 add_executable(arch_cuda_policy_resolution
     tests/cuda/runtime/test_cuda_policy_resolution.cu)
