@@ -265,10 +265,17 @@ __global__ void diffusion_face_kernel(
             const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
                 grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
             const bool native=GridMetrics::is_axisymmetric_rz(geometry);
+            const bool radial=geometry.geometry!=GridMetrics::Geometry::Cartesian&&geometry.dim==1;
+            const bool matched_work=native||radial;
             double work_velocity[3]{};
-            if(native) {
+            if(matched_work) {
                 work_velocity[0]=.5*(left.mom_u/left.rho+right.mom_u/right.rho);
                 work_velocity[1]=.5*(left.mom_v/left.rho+right.mom_v/right.rho);
+                work_velocity[2]=.5*(left.mom_w/left.rho+right.mom_w/right.rho);
+            }
+            if(!DiffFlux::replace_curvilinear_viscous_flux(read,right_cell,geometry,direction,i,j,
+                config,properties,face_flux,radial?work_velocity:nullptr)) {
+                atomicExch(status,1);continue;
             }
             // The existing shared leaf replaces angular traction and its work
             // once. nu=0 still supplies the physical work velocity needed by
@@ -285,7 +292,7 @@ __global__ void diffusion_face_kernel(
                 boundary::ApplyDiffusionBoundaryFlux(controls, coordinate[direction] == lower[direction] ? -1. : 1.,
                     left, right, face_flux,
                     state.n_species ? flux.mass_fractions + right_cell : nullptr, state.n_species, flux.total_size,
-                    native?work_velocity:nullptr);
+                    matched_work?work_velocity:nullptr);
             flux.store(right_cell, face_flux);
             // Observe the actual post-override flux: heat follows the shared
             // DiffFlux convention F_E - sum_i F_mom_i * matched face velocity.
@@ -293,9 +300,9 @@ __global__ void diffusion_face_kernel(
             // same physical velocity that supplied the boundary work above.
             if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1]) {
                 const double velocity[3]{
-                    native?work_velocity[0]:0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
-                    native?work_velocity[1]:0.5 * (left.mom_v / left.rho + right.mom_v / right.rho),
-                    native?work_velocity[2]:0.5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
+                    matched_work?work_velocity[0]:0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
+                    matched_work?work_velocity[1]:0.5 * (left.mom_v / left.rho + right.mom_v / right.rho),
+                    matched_work?work_velocity[2]:0.5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
                 const double heat = face_flux.eng - face_flux.mom_u * velocity[0]
                     - face_flux.mom_v * velocity[1] - face_flux.mom_w * velocity[2];
                 boundary::CaptureBoundaryFlux(state.capture, direction, i, j, k,

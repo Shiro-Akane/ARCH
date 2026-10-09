@@ -5,6 +5,12 @@ grid and AMR hierarchy.
 
 - [DiffFlux.h](DiffFlux.h) owns the shared face/cell operators, geometric terms,
   face thermodynamics and stability estimates.
+- [NewtonianViscousStress.h](NewtonianViscousStress.h) owns the sole three-dimensional
+  Stokes constitutive law and physical frame connections.
+  [CurvilinearViscousStress.h](CurvilinearViscousStress.h) pairs ordinary-chart
+  metric gradients, face traction, geometry and work, with the corresponding row bounds.
+  [RzViscousStress.h](RzViscousStress.h) retains native density capacities and
+  angular torque/work; native means require their distinct V/W/I* closure.
 - [DiffFunction.h](DiffFunction.h) and [DiffFunction.cpp](DiffFunction.cpp) own
   RKL stage selection and recurrence coefficients.
 - [DiffusionAMRStages.h](DiffusionAMRStages.h) owns common stage updates;

@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "numerics/integrator/TimeIntegratorHelper.h"
+#include "numerics/diffusion/CurvilinearViscousStress.h"
 #include "numerics/diffusion/DiffusionTypes.h"
 #include "numerics/diffusion/NewtonianViscousStress.h"
 #include "numerics/diffusion/RzViscousStress.h"
@@ -490,6 +491,54 @@ namespace DiffFlux
         flux=candidate;return true;
     }
 
+    /** Replace ordinary curved vector diffusion with the shared Stokes traction.
+     * Workflow: retain the existing coefficient/EOS/species owner; its current
+     * kinematic nu is constant or exactly zero. Form each actual rho*nu product,
+     * borrow metric stencils, and pair that traction with its physical velocity.
+     * Recompute the original thermal term rather than subtracting two large
+     * mechanical powers. Native V/W means retain their own closure below.
+     */
+    template<class StateReader>
+    ARCH_INLINE bool replace_curvilinear_viscous_flux(const StateReader& read,
+        int right_cell,const GridMetrics::GeometryView& grid,int direction,
+        int i,int j,const DiffusionConfigView& config,
+        const DiffusionFaceProperties& face,FluidVector& flux,
+        double* physical_work_velocity=nullptr)
+    {
+        if(grid.geometry==DiffusionGeometry::Cartesian||GridMetrics::is_axisymmetric_rz(grid)||
+           (!config.use_viscous_diffusion&&!physical_work_velocity))return true;
+        const double nu=config.use_viscous_diffusion?face.coefficients.nu_visc:0.;
+        if(grid.dim!=1&&nu==0.)return true;
+        const int stride=direction==0?1:direction==1?grid.stride_y:grid.stride_z;
+        const auto left=read(right_cell-stride),right=read(right_cell);
+        double mu_left=0.,mu_right=0.;
+        if(!NewtonianViscousStress::dynamic_viscosity(left.rho,nu,mu_left)||
+           !NewtonianViscousStress::dynamic_viscosity(right.rho,nu,mu_right))return false;
+        NewtonianViscousStress::Vector traction{},velocity{};
+        if(grid.dim==1) {
+            const auto radial=CurvilinearViscousStress::radial_face(read,right_cell,grid,i,nu);
+            if(!radial.valid||!NewtonianViscousStress::traction(radial.stress,0,traction))return false;
+            velocity=radial.work_velocity;
+        } else if(!CurvilinearViscousStress::face_traction(read,right_cell,grid,direction,i,j,
+            mu_left,mu_right,traction,velocity))return false;
+        const NewtonianViscousStress::Vector momentum{-traction[0],-traction[1],-traction[2]};
+        double power=0.;
+        if(!NewtonianViscousStress::power(velocity,momentum,power))return false;
+        // The thermal owner uses its original actual normal face spacing.
+        const double spacing=diffusion_face_spacing(grid,direction,i,j);
+        const double heat=config.use_thermal_diffusion
+            ?-face.coefficients.alpha_therm*face.density*face.heat_capacity
+                *((face.temperature_right-face.temperature_left)/spacing):0.;
+        FluidVector candidate=flux;
+        candidate.mom_u=momentum[0];candidate.mom_v=momentum[1];candidate.mom_w=momentum[2];
+        candidate.eng=heat+power;
+        if(!std::isfinite(candidate.eng))return false;
+        flux=candidate;
+        if(physical_work_velocity)for(int component=0;component<3;++component)
+            physical_work_velocity[component]=velocity[component];
+        return true;
+    }
+
     /** Add half an absolute velocity-matrix row bound for one Cartesian face.
      * Each centred transverse derivative has absolute coefficient sum 1/h_k;
      * a normal difference has 2/h_j. Triangle bounds retain BOTH mu products,
@@ -646,7 +695,9 @@ namespace DiffFlux
         if (!(cell_cv > 0.0) || !std::isfinite(cell_cv)) return {diffusion_dt_sentinel(), false};
         const double volume = GridMetrics::CellVolume(grid, i, j, k);
         double maximum = 0., inverse_dt = 0., angular_row = 0.;
-        double cartesian_rows[3]{};
+        double cartesian_rows[3]{},curved_rows[3]{};
+        const bool curved_viscous=grid.geometry!=DiffusionGeometry::Cartesian
+            &&!GridMetrics::is_axisymmetric_rz(grid)&&config.use_viscous_diffusion;
         const bool rz_viscous = GridMetrics::is_axisymmetric_rz(grid)
             && config.use_viscous_diffusion;
         RzViscousStress::AngularCell angular_center{};
@@ -719,6 +770,24 @@ namespace DiffFlux
                 maximum = std::max(maximum, transport);
                 const double area_per_volume = GridMetrics::FaceArea(grid, direction, i, j, k, side != 0) / volume;
                 inverse_dt += area_per_volume * (transport / spacing + viscosity * connection);
+                if(curved_viscous&&viscosity>0.&&grid.dim==1) {
+                    NewtonianViscousStress::Vector rows{curved_rows[0],curved_rows[1],curved_rows[2]};
+                    double mu=0.;
+                    if(!NewtonianViscousStress::dynamic_viscosity(face.density,face.coefficients.nu_visc,mu)||
+                       !CurvilinearViscousStress::radial_row_sums(grid,i,side!=0,value.rho,mu,rows))
+                        return {diffusion_dt_sentinel(),false};
+                    for(int component=0;component<3;++component)curved_rows[component]=rows[component];
+                } else if(curved_viscous&&viscosity>0.) {
+                    double mu_center=0.,mu_adjacent=0.;
+                    if(!NewtonianViscousStress::dynamic_viscosity(value.rho,face.coefficients.nu_visc,mu_center)||
+                       !NewtonianViscousStress::dynamic_viscosity(adjacent.rho,face.coefficients.nu_visc,mu_adjacent))
+                        return {diffusion_dt_sentinel(),false};
+                    NewtonianViscousStress::Vector rows{curved_rows[0],curved_rows[1],curved_rows[2]};
+                    if(!CurvilinearViscousStress::face_row_sums(grid,i,j,k,direction,side!=0,value.rho,
+                        side?mu_center:mu_adjacent,side?mu_adjacent:mu_center,rows))
+                        return {diffusion_dt_sentinel(),false};
+                    for(int component=0;component<3;++component)curved_rows[component]=rows[component];
+                }
                 if(rz_viscous) {
                     const auto adjacent_angular=RzViscousStress::angular_cell(
                         read_state,neighbour,grid,radial_index);
@@ -738,6 +807,27 @@ namespace DiffFlux
         const double source_rate = viscous_source_stability_rate(viscosity, grid, i, j);
         if (!(maximum > 0.) && !(source_rate > 0.)) return {};
         inverse_dt += source_rate;
+        if(curved_viscous&&viscosity>0.&&grid.dim>1) {
+            NewtonianViscousStress::Tensor sums{};
+            if(!CurvilinearViscousStress::stress_row_sums(grid,grid.GetCellCenterX(i),
+                grid.SourceTheta(j),-1,sums))return {diffusion_dt_sentinel(),false};
+            const double factor=viscosity/grid.GetCellCenterX(i);
+            const auto frame=CurvilinearViscousStress::frame(grid);
+            if(frame==NewtonianViscousStress::Frame::CylindricalRZPhi) {
+                curved_rows[0]+=factor*sums[8];curved_rows[2]+=factor*sums[2];
+            } else if(frame==NewtonianViscousStress::Frame::CylindricalRPhiZ) {
+                curved_rows[0]+=factor*sums[4];curved_rows[1]+=factor*sums[1];
+            } else {
+                const double theta=grid.SourceTheta(j),cot=grid.dim==3?std::abs(std::cos(theta)/std::sin(theta)):0.;
+                curved_rows[0]+=factor*(sums[4]+sums[8]);
+                curved_rows[1]+=factor*(sums[1]+cot*sums[8]);
+                curved_rows[2]+=factor*(sums[2]+cot*sums[5]);
+            }
+        }
+        if(curved_viscous)for(double row:curved_rows) {
+            if(!std::isfinite(row)||row<0.)return {diffusion_dt_sentinel(),false};
+            inverse_dt=std::max(inverse_dt,row);
+        }
         // Frozen torque graph: C_i*omega'_i=sum K_ij*(omega_j-omega_i).
         // Positive symmetric K and density-only C give real eigenvalues in
         // [-2*max(sum K/C),0]. Its own FE/RKL interval is therefore bounded
@@ -826,6 +916,11 @@ inline void capture_diffusion_surface_flux(
                         diffusion_face_spacing(geometry,dir,face[0],face[1]),0.,geometry.GetFacePosL(face[0]));
                     if(!work.valid)throw std::runtime_error("Invalid native diffusion boundary work observation");
                     velocity[2]=work.work_velocity;
+                } else if(geometry.geometry!=DiffusionGeometry::Cartesian&&geometry.dim==1) {
+                    const auto work=CurvilinearViscousStress::radial_face(
+                        [&state](int c){return state.get(c);},index,geometry,face[0],0.);
+                    if(!work.valid)throw std::runtime_error("Invalid radial diffusion boundary work observation");
+                    for(int component=0;component<3;++component)velocity[component]=work.work_velocity[component];
                 }
                 const FluidVector& flux = flux_buffer[index];
                 const double heat = flux.eng - flux.mom_u * velocity[0]
@@ -930,8 +1025,15 @@ inline void capture_diffusion_surface_flux(
                                 ?state.diffusion_boundary->view().at(dir,i,j,k,
                                     grid.Is(),grid.Ie(),grid.Js(),grid.Je(),grid.Ks(),grid.Ke(),n_species):nullptr;
                             const bool native=GridMetrics::is_axisymmetric_rz(geometry_view);
+                            const bool radial=geometry_view.geometry!=DiffusionGeometry::Cartesian
+                                &&geometry_view.dim==1;
+                            const bool matched_work=native||radial;
                             double work_velocity[3]{.5*(U_L.mom_u/U_L.rho+U_R.mom_u/U_R.rho),
-                                .5*(U_L.mom_v/U_L.rho+U_R.mom_v/U_R.rho),0.};
+                                .5*(U_L.mom_v/U_L.rho+U_R.mom_v/U_R.rho),
+                                .5*(U_L.mom_w/U_L.rho+U_R.mom_w/U_R.rho)};
+                            if(!replace_curvilinear_viscous_flux(read,idx_R,geometry_view,dir,i,j,
+                                diffusion_config,properties,F_diff,radial?work_velocity:nullptr))
+                                throw std::runtime_error("Invalid curvilinear Newtonian traction or paired work");
                             // Prescribed traction needs its physical work coefficient
                             // even if viscosity is disabled. nu=0 preserves the
                             // original thermal/species flux before boundary control.
@@ -945,7 +1047,7 @@ inline void capture_diffusion_surface_flux(
                                 arch::boundary::ApplyDiffusionBoundaryFlux(controls,
                                     coordinate[dir] == lower[dir] ? -1. : 1., U_L, U_R, F_diff,
                                     n_species ? spec_flux_out.data() + idx_R : nullptr, n_species, grid.GetTotalSize(),
-                                    native?work_velocity:nullptr);
+                                    matched_work?work_velocity:nullptr);
                             }
                             flux_out[idx_R] = F_diff;
                         }
@@ -993,54 +1095,31 @@ inline void capture_diffusion_surface_flux(
             status.valid=false;return status;
         }
         if (dynamic_viscosity == 0.) return status;
-        const double inverse_radius = GridMetrics::InverseRadiusVolumeAverage(grid, i);
-        if (grid.dim == 1) {
-            // Radial symmetry still has one/two unresolved angular basis
-            // derivatives. There are no angular state neighbours to load.
-            const double angular_dimensions = grid.geometry == DiffusionGeometry::Spherical ? 2.0 : 1.0;
-            delta.mom_u -= dt * angular_dimensions * dynamic_viscosity
-                * ((U.mom_u / rho) / r) * inverse_radius;
+        if(!GridMetrics::is_axisymmetric_rz(grid)) {
+            NewtonianViscousStress::Tensor tau{};
+            NewtonianViscousStress::Vector source{};
+            if(grid.dim==1) {
+                if(!CurvilinearViscousStress::radial_connection_source(read_state,grid.GetIndex(i,j,k),
+                    grid,i,coefficients.nu_visc,source)) {status.valid=false;return status;}
+            } else if(!CurvilinearViscousStress::cell_stress(read_state,grid.GetIndex(i,j,k),
+                grid,i,j,dynamic_viscosity,tau)||
+               !CurvilinearViscousStress::connection_source(tau,grid,i,j,source)) {
+                status.valid=false;return status;
+            }
+            delta.mom_u+=dt*source[0];delta.mom_v+=dt*source[1];delta.mom_w+=dt*source[2];
             return status;
         }
-        const FluidVector velocity = viscous_velocity(U);
-        FluidVector source{};
-        const bool rz = GridMetrics::is_axisymmetric_rz(grid);
-        for (int direction = 1; direction < (rz ? 3 : grid.dim); ++direction) {
-            const auto rotation = viscous_basis_rotation(grid, direction, i, j);
-            if (rotation.x == 0.0 && rotation.y == 0.0 && rotation.z == 0.0) continue;
-            if (rz && direction == 2) {
-                // Axisymmetry removes d_phi(v), not C_phi(v). Reuse the same
-                // cylindrical connection twice; no inactive-axis neighbour.
-                // The new torque divergence already supplies the complete
-                // azimuthal connection. Keep the original radial connection;
-                // adding the old phi term here would count it a second time.
-                auto connection=rotation.apply(rotation.apply(velocity));
-                connection.mom_w=0.;
-                source = source + connection;
-                continue;
-            }
-            const int stride = direction == 1 ? grid.stride_y : grid.stride_z;
-            const int cell = grid.GetIndex(i, j, k);
-            const auto left = read_state(cell - stride), right = read_state(cell + stride);
-            if (!diffusion_face_is_active(left.rho, right.rho)) {
-                status.valid = false;
-                return status;
-            }
-            const double spacing = GridMetrics::PhysicalSpacing(grid, direction, i, j);
-            const FluidVector gradient = (viscous_velocity(right) - viscous_velocity(left))
-                / (2.0 * spacing) + rotation.apply(velocity);
-            source = source + rotation.apply(gradient);
-        }
-        // -sum C_d(F_d) = mu sum C_d(D_d v). Variable mu remains inside
-        // face fluxes; the work flux there already supplies conservative energy.
-        // The outer divergence connection is integrated with the same volume
-        // measure as face divergence. Its inner velocity gradient uses r_mid.
-        delta = delta + source * (dt * dynamic_viscosity * r * inverse_radius);
+        // Only Native RZ reaches this branch. Its already accepted angular
+        // torque owner supplies the phi connection in its face divergence.
+        // Retain the current radial meridional term until its full tensor/FV
+        // gate closes; no ordinary-chart vector-Laplacian source remains.
+        const double inverse_radius=GridMetrics::InverseRadiusVolumeAverage(grid,i);
+        delta.mom_u-=dt*dynamic_viscosity*((U.mom_u/rho)/r)*inverse_radius;
         return status;
     }
 
     /**
-     * @brief Adds vector-Laplacian geometric source terms for momentum diffusion.
+     * @brief Adds the matched Stokes geometry, or the current gated Native RZ source.
      */
     template <typename EosType>
     inline void add_geometric_sources(std::vector<FluidVector>& dU, const FluidState& state,

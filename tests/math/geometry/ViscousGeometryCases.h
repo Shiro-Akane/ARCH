@@ -1,4 +1,4 @@
-// Independent full Cartesian 3D Stokes and unchanged curved vector-diffusion witnesses.
+// Independent three-dimensional Stokes witnesses in each actual component chart.
 // Test data only: no call to production gradient, connection or flux operators.
 #pragma once
 
@@ -42,10 +42,18 @@ inline Sample sample(GridMetrics::Geometry geometry, int dimension,
         const double rho = 1. + density_slope*r;
         const double velocity = r*r*r;
         result.state = {rho, rho*velocity, 0., 0., rho*(30.+.5*velocity*velocity)};
-        result.derivative.mom_u = viscosity*((2.*embedded+4.)*rho*r
-                                            + 3.*density_slope*r*r);
-        result.derivative.eng = viscosity*((3.*embedded+12.)*rho*std::pow(r,4)
-                                          + 3.*density_slope*std::pow(r,5));
+        // Cyl: tau_rr=(10/3)*mu*r^2, tau_phiphi=-(2/3)*mu*r^2.
+        // Sph: tau_rr=(8/3)*mu*r^2, tau_tt=tau_pp=-(4/3)*mu*r^2.
+        // div(tau)_r includes -tau_phiphi/r or -(tau_tt+tau_pp)/r;
+        // total energy is div(u*tau_rr), not an additional heating source.
+        const long double radius=r,density=rho,a=density_slope,nu=viscosity;
+        if(embedded==2) {
+            result.derivative.mom_u=static_cast<double>(nu*(32.L*density*radius/3.L+10.L*a*radius*radius/3.L));
+            result.derivative.eng=static_cast<double>(nu*(20.L*density*std::pow(radius,4)+10.L*a*std::pow(radius,5)/3.L));
+        } else {
+            result.derivative.mom_u=static_cast<double>(nu*(40.L*density*radius/3.L+8.L*a*radius*radius/3.L));
+            result.derivative.eng=static_cast<double>(nu*(56.L*density*std::pow(radius,4)/3.L+8.L*a*std::pow(radius,5)/3.L));
+        }
         if (geometry == GridMetrics::Geometry::Cartesian) {
             // u=x^3, tau_xx=(4/3)*mu*u'=4*mu*x^2:
             // div(tau)_x=nu*(8*rho*x+4*a*x^2),
@@ -58,8 +66,8 @@ inline Sample sample(GridMetrics::Geometry geometry, int dimension,
     }
 
     // v=q e_x, q=1 or x^2+y^2(+z^2); rho=1+a*x, mu=nu*rho.
-    // div(mu grad(q)) = nu*(2*dimension*rho + 2*a*x).
-    // div(mu*q*grad(q)) = nu*q*((2*dimension+4)*rho + 2*a*x).
+    // Full Stokes gives Fx=nu*((2D+2/3)*rho+(8/3)*a*x),
+    // Fy=2*nu*a*y, Fz=2*nu*a*z, with the same traction's energy work.
     // A uniform Cartesian vector gives zero momentum AND work-flux divergence.
     double x = r, squared_radius = r*r;
     std::array<double,3> cartesian_x_projection{1.,0.,0.};
@@ -83,11 +91,18 @@ inline Sample sample(GridMetrics::Geometry geometry, int dimension,
     const auto& b = cartesian_x_projection;
     result.state = {rho,rho*q*b[0],rho*q*b[1],rho*q*b[2],rho*(30.+.5*q*q)};
     if (!uniform) {
-        const double momentum = viscosity*(2.*dimension*rho+2.*density_slope*x);
-        result.derivative.mom_u = momentum*b[0];
-        result.derivative.mom_v = momentum*b[1];
-        result.derivative.mom_w = momentum*b[2];
-        result.derivative.eng = viscosity*q*((2.*dimension+4.)*rho+2.*density_slope*x);
+        // Rotate the exact Cartesian force, including its transverse part.
+        // In a curved frame the position vector is r*e_r (+z*e_z in cyl).
+        const std::array<long double,3> position=geometry==GridMetrics::Geometry::Cartesian
+            ?std::array<long double,3>{r,q2,dimension==3?q3:0.}
+            :std::array<long double,3>{r,geometry==GridMetrics::Geometry::Cylindrical?q2:0.,0.};
+        const long double nu=viscosity,a=density_slope,density=rho,X=x,Q=q;
+        const long double parallel=(2.L*dimension+2.L/3.L)*density+2.L*a*X/3.L;
+        result.derivative.mom_u=static_cast<double>(nu*(parallel*b[0]+2.L*a*position[0]));
+        result.derivative.mom_v=static_cast<double>(nu*(parallel*b[1]+2.L*a*position[1]));
+        result.derivative.mom_w=static_cast<double>(nu*(parallel*b[2]+2.L*a*position[2]));
+        result.derivative.eng=static_cast<double>(nu*(density*((2.L*dimension+14.L/3.L)*Q
+            +4.L*X*X/3.L)+8.L*a*X*Q/3.L));
         if (geometry == GridMetrics::Geometry::Cartesian) {
             // u=Q e_x, Q=x^2+y^2(+z^2), mu=nu*(1+a*x), full 3D trace.
             // tau_xx=(8/3)*mu*x, tau_xj=2*mu*x_j, tau_jj=-(4/3)*mu*x.
@@ -165,8 +180,9 @@ void convergence(const char* backend, Evaluate evaluate)
     }
 }
 
-// v=r e_r is linear in Cartesian coordinates: its vector Laplacian is zero,
-// including the first active cell touching r=0. Its work divergence is d*nu.
+// v=r e_r has zero force. Spherical 1D/3D is isotropic homology with tau=0;
+// cylindrical/polar in-plane homology has div(tau*u)=(4/3)*nu because the
+// third strain is zero. Include the first active cell touching r=0.
 // Then assemble the actual 1D momentum operator from unit columns. A forward
 // Euler matrix with nonnegative entries and row sums <=1 is a contraction in
 // the max norm; this check does not reuse the production timestep derivation.
@@ -200,8 +216,14 @@ Contraction momentum_contraction(FluidState state, const Grid& grid, Evaluate ev
         }
     }
     result.maximum_row_sum = *std::max_element(row_sums.begin(), row_sums.end());
-    if (!(result.minimum_entry >= -2.e-12 && result.maximum_row_sum <= 1.+2.e-12))
+    if (!(result.minimum_entry >= -2.e-12 && result.maximum_row_sum <= 1.+2.e-12)) {
+        std::cerr<<"VISCOUS_CONTRACTION_FAILURE geometry="<<grid.geometry
+            <<" h="<<grid.dx1<<" raw_dt="<<result.raw_dt
+            <<" rho_first="<<state.rho[grid.Is()]<<" rho_next="<<state.rho[grid.Is()+1]
+            <<" minimum_entry="<<result.minimum_entry
+            <<" maximum_row_sum="<<result.maximum_row_sum<<std::endl;
         throw std::runtime_error("forward Euler is not a velocity max-norm contraction");
+    }
     return result;
 }
 
@@ -227,9 +249,9 @@ void radial_origin(const char* backend, Evaluate evaluate)
         const auto measured = evaluate(state, grid);
         const int j = dimension >= 2 ? grid.Js()+amr::BLOCK_NY/2 : 0;
         const int k = dimension == 3 ? grid.Ks()+amr::BLOCK_NZ/2 : 0;
-        const int embedded = grid.geometry == "spherical" && dimension != 2 ? 3 : 2;
+        const bool isotropic = grid.geometry == "spherical" && dimension != 2;
         const double null_error = error(measured.derivative[grid.GetIndex(grid.Is(),j,k)],
-                                       {0.,0.,0.,0.,embedded*viscosity});
+                                       {0.,0.,0.,0.,isotropic?0.:(4./3.)*viscosity});
         std::cout << "VISCOUS_ORIGIN backend=" << backend << " geometry=" << name
                   << " dim=" << dimension << " h=" << spacing << " error=" << null_error << '\n';
         if (!(null_error <= 2.e-11)) throw std::runtime_error("radial linear field fails origin balance");

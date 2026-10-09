@@ -18,6 +18,8 @@
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzMetricCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
+#include "math/geometry/RadialStokesCases.h"
+#include "math/geometry/CurvedStokesCases.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/gravity/ExternalGravity.h"
@@ -2107,4 +2109,7 @@ int main(int argc,char** argv)
     ViscousGeometryCases::convergence("cpu", evaluate);
     ViscousGeometryCases::radial_origin("cpu", evaluate);
     ViscousGeometryCases::density_stability("cpu", evaluate);
+    RadialStokesCases::density_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::density_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::cylindrical_axis_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
 }

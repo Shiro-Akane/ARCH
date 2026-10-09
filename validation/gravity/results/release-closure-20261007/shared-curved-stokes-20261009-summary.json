@@ -1,0 +1,412 @@
+{
+  "schema": "arch.processed-validation-receipt.1",
+  "node": "shared-curved-stokes-20261009",
+  "baseline_commit": "3a412736994432d231578865eca72b0e543d58c8",
+  "scientific_scope": "ordinary cylindrical1/3 and spherical1/2polar/3 full shared Stokes operator, original convergence/origin/row windows plus finite actual energy fixtures",
+  "whole_release_accepted": false,
+  "source_files_sha256": {
+    "src/numerics/diffusion/CurvilinearViscousStress.h": "39333aebfe8c48566f407f2e7ca829c6362abc419ed14ead90d5e1840ccd5c56",
+    "src/numerics/diffusion/DiffFlux.h": "cb4f0334d506a74b5f97119f3e6e4b8eaaa1c5bdba8095a5c6ed4a83ce7f8532",
+    "src/cuda/diffusion/DiffusionKernels.cuh": "cf71f6ffc37fd24aacde6d176463f7865a1d11b7a87f1c5108229c5796138b5e",
+    "tests/math/geometry/CurvedStokesCases.h": "770cfede930ce45c4efd014f7b9d1788c496b83467cb3158938ed7190bb4b175",
+    "tests/math/geometry/RadialStokesCases.h": "182edec131b6911f2ae354be1180fbec8f7a166507a929a11092eaa0a89e91ca",
+    "tests/math/geometry/ViscousGeometryCases.h": "723ebd70e8a4e1e9ded172e3dfb5781cb18ee27f7e482201b7cd4156e11845ad",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "9a8a8d9c3d7ef81448276f70c30494bd35b635ec0ccf51825420c0a06a00782f",
+    "tests/cuda/grid/test_curvilinear_geometry_smoke.cu": "6db15e5a6ac3cef82446b5b47d88cd9c903fad4cfbcb40249fdc974eaf61a0fd"
+  },
+  "CPU_elf_sha256": "e0ef7a2c457aad9605ee80d6cbb3448c2635813d221355a4ae1a32d3295b7bd1",
+  "CUDA_geometry_owner_elf_sha256": "322f7cb530e2fdc2667cffae5e25b9c28ceb41692d09fe64e3a823036aced12c",
+  "CPU_regression": {
+    "registered_total": 76,
+    "CI_cpu_inventory": 68,
+    "existing_tooling_inventory": 8,
+    "pass": 76,
+    "skip": 0,
+    "additional_ctest_targets_created_this_node": 0,
+    "names_equal_actual_registered_inventory": true,
+    "receipt_count_correction": "Initial postcheck incorrectly expected CI68 for all76 existing registrations; corrected mapping, no rerun and no scientific/test failure"
+  },
+  "actual_energy_fixture_count_each_backend": {
+    "radial": 36,
+    "ordinary_multidimensional": 6,
+    "cylindrical_axis": 4
+  },
+  "observed_CUDA_log_counts": {
+    "RADIAL_STOKES_DENSITY_ENERGY": 36,
+    "CURVED_STOKES_DENSITY_ENERGY": 6,
+    "CYLINDRICAL_AXIS_STOKES_ENERGY": 4
+  },
+  "CPU_fixture_count_origin": "fixed shared loops invoked by current compiled existing geometry owner; percase LastTest.log was overwritten by read-only CTest inventory query, no replay merely to collect evidence",
+  "independent_references": [
+    "longdouble physical volumes and positive radial edge strain forms",
+    "longdouble full3D point Stokes plus derivative-column variance and truevolume adjoint quadratic",
+    "exact rational actualaxis3x3 stiffness and leading principal minors; supplied density only"
+  ],
+  "original_windows_changed": false,
+  "new_CTest_targets": 0,
+  "retained_CUDA_source_assertions": {
+    "cases": 5,
+    "all_assertions_and_windows_retained": true,
+    "independent_derivation": {
+      "radial_inputs": "r=2,h=1,u=(2,3,4),mu=.06,dt=.1, actual neighbors r=1,3, two faces r=1.5,2.5",
+      "radial_delta": {
+        "cylindrical": [
+          "-13/3000",
+          "0",
+          "-13/2000"
+        ],
+        "spherical": [
+          "-103/24500",
+          "-927/196000",
+          "-309/49000"
+        ]
+      },
+      "multidimensional_deltas": {
+        "cylindrical3": [
+          "-1/250",
+          "0",
+          "-3/500"
+        ],
+        "polar2": [
+          "-1/250",
+          "-9/2000",
+          "0"
+        ],
+        "spherical3": [
+          "-7/1000",
+          "-1/80",
+          "-3/250"
+        ]
+      },
+      "original_hydro_and_volume_assertions": "unchanged",
+      "all_original_viscous_assertions_and_2e-12_window": "retained; reference migrates with actual PDE/valid stencil",
+      "auto_review_rejected_deleted_assertions_proposal": "not executed; retain all5cases instead"
+    }
+  },
+  "actual_failures_preserved": [
+    "candidate curved half-row bound produced FE minentry=-0.3; full absolute row repaired without tolerance change",
+    "candidate center stress +face traction was continuum secondorder but variabledensity Kdot=5371/6000>0; candidate rejected, common radial edge and multidimensional strain adjoint implemented",
+    "postcheck first counted68CI targets as whole76existing registered inventory; count mapping repaired, no model/test rerun",
+    "automaticapproval rejected deleting oldCUDAviscous assertions; zero execution, safer all5assertions migration retained"
+  ],
+  "guard_runs": {
+    "cpu-axis-owner-build.guard": {
+      "raw_identity_sha256": "26ca7bc7e80c052a5665679b21b34c4c093ff0cbbd2304793d3af9814cf39867",
+      "elapsed_seconds": 15.173,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6151964 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=1044192 elapsed_seconds=15.173 stop_reason=none"
+    },
+    "cpu-axis-owner-test.guard": {
+      "raw_identity_sha256": "210262f6933e668c070a5502365f4f7956e0972fcb898e16f233df16733a0f24",
+      "elapsed_seconds": 19.106,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6881880 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=29604 elapsed_seconds=19.106 stop_reason=none"
+    },
+    "cpu-curved-build.guard": {
+      "raw_identity_sha256": "4c40f6f70d4f238e889972ee7f412d0f4e9ff83fda055dab01e4478205835762",
+      "elapsed_seconds": 19.206,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6159608 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=1012988 elapsed_seconds=19.206 stop_reason=none"
+    },
+    "cpu-curved-diagnostic-build.guard": {
+      "raw_identity_sha256": "9c9231f2030c1db33f3c91f6eb0591696320036742018bdd222915a401439e9e",
+      "elapsed_seconds": 15.164,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6180704 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=1073036 elapsed_seconds=15.164 stop_reason=none"
+    },
+    "cpu-curved-diagnostic-test.guard": {
+      "raw_identity_sha256": "354d97378c38c563d961be716c1ffcc4a9a8e59728b65562c60c7822b6329434",
+      "elapsed_seconds": 18.093,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6868956 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=29784 elapsed_seconds=18.093 stop_reason=none"
+    },
+    "cpu-curved-first-test.guard": {
+      "raw_identity_sha256": "726cce8c078ff77e9092ddfcb1170e9fa65c8493988ad8afcf54ee46658ef08c",
+      "elapsed_seconds": 18.09,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6897240 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=29272 elapsed_seconds=18.090 stop_reason=none"
+    },
+    "cpu-curved-rate-build.guard": {
+      "raw_identity_sha256": "faa3d2f4b315f822d38f86df2ec8123be0b77b307b08e1f80191b6a9d185ecc9",
+      "elapsed_seconds": 19.196,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6177532 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=1065104 elapsed_seconds=19.196 stop_reason=none"
+    },
+    "cpu-curved-rate-test.guard": {
+      "raw_identity_sha256": "0cb3428ab19f3fecf2170ad9472921bc571122a999536a47d8d25db62095a049",
+      "elapsed_seconds": 18.092,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6894520 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=29444 elapsed_seconds=18.092 stop_reason=none"
+    },
+    "cpu-final-production-build.guard": {
+      "raw_identity_sha256": "3e5e2c6a30710864a44c8e408a3582f3b6470154f1a5e1a3ac6c307c98ff996e",
+      "elapsed_seconds": 152.918,
+      "guard_stopped": false,
+      "summary": "min_available_kib=2521720 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=4474060 elapsed_seconds=152.918 stop_reason=none"
+    },
+    "cpu-full-stokes-owner-build.guard": {
+      "raw_identity_sha256": "8f87b11fb0cb713c028c3d01f53eb907537bf6dfc26a446f6cf51642d8dd1727",
+      "elapsed_seconds": 19.196,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6144472 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=976992 elapsed_seconds=19.196 stop_reason=none"
+    },
+    "cpu-full-stokes-owner-test.guard": {
+      "raw_identity_sha256": "6a2e19d88cbfa3287b08421650bc6e6765c898aeb256950f521947b4c6ffdcf4",
+      "elapsed_seconds": 19.102,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6867616 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=36668 elapsed_seconds=19.102 stop_reason=none"
+    },
+    "cpu-production-rebuild.guard": {
+      "raw_identity_sha256": "3779887a7fd12cc5b184e63f350d1e4884733b9ed044bcc352d82857a822284a",
+      "elapsed_seconds": 155.143,
+      "guard_stopped": false,
+      "summary": "min_available_kib=2542048 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=4472376 elapsed_seconds=155.143 stop_reason=none"
+    },
+    "cpu-radial-edge-build.guard": {
+      "raw_identity_sha256": "fde8874fc1af9c4774377a9bba41b54a5742e9ffdd1b856c5fba37f39077ee50",
+      "elapsed_seconds": 19.176,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6172788 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=984200 elapsed_seconds=19.176 stop_reason=none"
+    },
+    "cpu-radial-edge-test.guard": {
+      "raw_identity_sha256": "a7f74613308d9115f36ea0c43c437164c12e7b42486c87cd7a664ad990554d71",
+      "elapsed_seconds": 18.092,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6892976 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=29444 elapsed_seconds=18.092 stop_reason=none"
+    },
+    "cpu-radial-energy-build.guard": {
+      "raw_identity_sha256": "2b4455ea9b7dcb8ada694825a8b255b45201c5ffe74d10daa63d3567d12023dd",
+      "elapsed_seconds": 15.176,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6170408 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=1077168 elapsed_seconds=15.176 stop_reason=none"
+    },
+    "cpu-radial-energy-test.guard": {
+      "raw_identity_sha256": "cca4a0f74b9754e076c6da19307418c35508527a080b83bba9f1c0609e5fd931",
+      "elapsed_seconds": 18.092,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6888088 baseline_swap_kib=39712 peak_swap_kib=39712 guard_stopped=False peak_owned_rss_kib=29316 elapsed_seconds=18.092 stop_reason=none"
+    },
+    "cpu-regression.guard": {
+      "raw_identity_sha256": "a721dd8634050f8867b119df6b1ed96299e9eeecc91f38ddaea511d4d5907362",
+      "elapsed_seconds": 192.05,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6398404 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=524292 elapsed_seconds=192.050 stop_reason=none"
+    },
+    "cuda-full-stokes-owner-build.guard": {
+      "raw_identity_sha256": "5649362ca04578a88581c703579b75c98e5505056fc0d3eb1fa66e8a21fd6c58",
+      "elapsed_seconds": 90.543,
+      "guard_stopped": false,
+      "summary": "min_available_kib=5644144 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=1307776 elapsed_seconds=90.543 stop_reason=none"
+    },
+    "cuda-full-stokes-owner-test.guard": {
+      "raw_identity_sha256": "cf789bfe2d470d7d3148492e42059c4c1d1040b47b269d335885d89146b0f4cf",
+      "elapsed_seconds": 2.021,
+      "guard_stopped": false,
+      "summary": "min_available_kib=6745776 baseline_swap_kib=38432 peak_swap_kib=38432 guard_stopped=False peak_owned_rss_kib=175332 elapsed_seconds=2.021 stop_reason=none"
+    }
+  },
+  "DPS_runs": [
+    {
+      "task": "actual-radial-stokes-stability-review-20261009.job",
+      "provider": "deepseek",
+      "duration_seconds": 123.38,
+      "reported_token_usage": {
+        "input_tokens": 1703,
+        "cached_input_tokens": 384,
+        "output_tokens": 32768,
+        "noncached_input_tokens": 1319,
+        "reasoning_tokens": 32768,
+        "visible_output_tokens": 0
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.0198598,
+        "peak": 0.0397196,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "REPAIR_REQUIRED",
+      "scope": null
+    },
+    {
+      "task": "actual-radial-stokes-stability-review-20261009.repair.job",
+      "provider": "deepseek",
+      "duration_seconds": 65.4,
+      "reported_token_usage": {
+        "input_tokens": 1520,
+        "cached_input_tokens": 384,
+        "output_tokens": 17461,
+        "noncached_input_tokens": 1136,
+        "reasoning_tokens": 17261,
+        "visible_output_tokens": 200
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.01064815,
+        "peak": 0.0212963,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "ACCEPTED",
+      "scope": "Exact scalar kinetic counterexample to rejected centre-stress candidate only"
+    },
+    {
+      "task": "curved-axis-actual-row-check-20261009.job",
+      "provider": "deepseek",
+      "duration_seconds": 104.72,
+      "reported_token_usage": {
+        "input_tokens": 1694,
+        "cached_input_tokens": 384,
+        "output_tokens": 28164,
+        "noncached_input_tokens": 1310,
+        "reasoning_tokens": 27913,
+        "visible_output_tokens": 251
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.01709605,
+        "peak": 0.0341921,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "ACCEPTED",
+      "scope": "exact supplied N3 ordinary cylindrical axis boundary and variable-density stencil only"
+    },
+    {
+      "task": "curved-shared-gradient-adjoint-check-20261009.job",
+      "provider": "deepseek",
+      "duration_seconds": 133.94,
+      "reported_token_usage": {
+        "input_tokens": 1591,
+        "cached_input_tokens": 384,
+        "output_tokens": 32768,
+        "noncached_input_tokens": 1207,
+        "reasoning_tokens": 32768,
+        "visible_output_tokens": 0
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.019843,
+        "peak": 0.039686,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "REPAIR_REQUIRED",
+      "scope": null
+    },
+    {
+      "task": "curved-shared-gradient-adjoint-check-20261009.repair.job",
+      "provider": "deepseek",
+      "duration_seconds": 35.32,
+      "reported_token_usage": {
+        "input_tokens": 1527,
+        "cached_input_tokens": 384,
+        "output_tokens": 8225,
+        "noncached_input_tokens": 1143,
+        "reasoning_tokens": 7908,
+        "visible_output_tokens": 317
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.0051076,
+        "peak": 0.0102152,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "ACCEPTED",
+      "scope": "local positive Stokes microgradient expectation and derivative of D/2 only"
+    },
+    {
+      "task": "curved-stokes-independent-oracle-20261009.job",
+      "provider": "deepseek",
+      "duration_seconds": 87.89,
+      "reported_token_usage": {
+        "input_tokens": 1518,
+        "cached_input_tokens": 256,
+        "output_tokens": 25170,
+        "noncached_input_tokens": 1262,
+        "reasoning_tokens": 24373,
+        "visible_output_tokens": 797
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.01529207,
+        "peak": 0.03058414,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "ACCEPTED",
+      "scope": "Exact continuum Stokes force, work, heating and V means only; no FV/operator/scientific acceptance"
+    },
+    {
+      "task": "rz-meridional-independent-oracle-20261009.job",
+      "provider": "deepseek",
+      "duration_seconds": 93.51,
+      "reported_token_usage": {
+        "input_tokens": 1556,
+        "cached_input_tokens": 256,
+        "output_tokens": 25632,
+        "noncached_input_tokens": 1300,
+        "reasoning_tokens": 25021,
+        "visible_output_tokens": 611
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.01557497,
+        "peak": 0.03114994,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "independent_acceptance": "ACCEPTED",
+      "scope": "Exact continuum Stokes force, work, heating and V means only; no FV/operator/scientific acceptance"
+    }
+  ],
+  "Gemini": {
+    "duration_seconds": 37.309,
+    "reported_usage": {
+      "input_tokens": 3799,
+      "output_tokens": 4298,
+      "thinking_tokens": 3745,
+      "cache_read_tokens": 0,
+      "total_tokens": 8097
+    },
+    "acceptance": "selected first3 plan paragraphs, current run scopes independently updated",
+    "account_fee": null,
+    "paid_second_round": false
+  },
+  "delegation_summary": {
+    "useful_evidence": "independent continuum derivatives, exact rejectedcandidate rationalenergy witness, positive microgradient derivative and exactaxis rows; Root independently verified every accepted formula",
+    "exclusive_speedup_claim": false,
+    "repetition_or_errors": "two allreasoning truncated deliveries used one narrowed repair each; RZ angularmean context omitted one radius factor, that field not adopted; no false mathematical bug from truncation",
+    "concurrency": "remote puretext reasoning/editor overlapped local serial builds and implementation; no concurrent local heavyjobs",
+    "blocking_wait_seconds": 0,
+    "manager_active_cost": null,
+    "billing_exact": null,
+    "recommendation": "retain for short independent rational witnesses and frozen prose; narrow expensive algebra up front and preserve cumulative repair budgets",
+    "DPS_reported_API_usage": {
+      "input_tokens": 11109,
+      "cached_input_tokens": 2432,
+      "noncached_input_tokens": 8677,
+      "output_tokens": 170188,
+      "reasoning_tokens": 168012,
+      "visible_output_tokens": 2176
+    },
+    "DPS_estimated_usd_range": [
+      0.10342164000000001,
+      0.20684328000000002
+    ],
+    "DPS_account_fee": null,
+    "DPS_provider_wall_seconds_sum": 644.16
+  },
+  "still_open": [
+    "NativeRZ full meridional FV/CF/RKL",
+    "ordinary coarsefine and nonlinearRKL full qualification",
+    "continuous isolatedRZ force and totalenergy",
+    "NativeDevice fullruntime lifecycle",
+    "remaining O9 fullcoupled durability and source-dependent GUI/CI"
+  ],
+  "production_CUDA_ELF_rebuilt_for_this_node": false,
+  "why_production_CUDA_rebuild_deferred": "Standalone actual changed kernels accepted; final production-policy dependency rebuild after remaining shared math freeze avoids repeated expensive NVCC cycles",
+  "raw_simulation_outputs_generated_this_node": 0,
+  "H5_uploaded": false
+}

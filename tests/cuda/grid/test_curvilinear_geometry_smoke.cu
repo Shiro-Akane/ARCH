@@ -6,6 +6,8 @@
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/RzViscousCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
+#include "math/geometry/RadialStokesCases.h"
+#include "math/geometry/CurvedStokesCases.h"
 
 #include <algorithm>
 #include <array>
@@ -207,10 +209,14 @@ void analytic_geometry_examples()
 {
     // Hand-derived examples: rho=2, velocity=(2,3,4), p=5,
     // r=2, theta=pi/4, dt=.1, nu=.03. Native velocity components are
-    // constant in neighbouring cells. Viscous source is mu*sum C_d(C_d(v));
-    // spherical 2D is polar, spherical 3D includes radial/theta cot coupling.
-    // Spherical 1D/3D sources use <1/r> = 6/13 on the shell [1,3].
-    // The volume-weighted source is 12/13 of its midpoint value (1/r_mid = 1/2).
+    // constant in neighbouring cells. Hydro and its original shell volume
+    // remain unchanged. Full Stokes sources use the same complete stress as
+    // actual face traction, rather than the retired vector Laplacian.
+    // Radial viscous inputs additionally bind the real r=1,2,3 stencil with
+    // h=1 and faces 3/2,5/2. Their independent rational residual is computed
+    // from tau=mu*(G+G^T-(2/3)*tr(G)*I), with q=u/r at those two faces.
+    // Multidimensional references are the point connection C_j*tau[:,j],
+    // with real centred zero partials. Every original assertion/window stays.
     struct Example {
         GridMetrics::Geometry geometry;
         int dimension;
@@ -220,11 +226,11 @@ void analytic_geometry_examples()
     };
     constexpr double pi = 3.14159265358979323846;
     const Example examples[]{
-        {GridMetrics::Geometry::Cylindrical, 1, {.25, 0, 0}, {-.003, 0, 0}, 4.0},
-        {GridMetrics::Geometry::Cylindrical, 3, {1.85, 0, -.8}, {-.003, 0, -.006}, pi/2},
-        {GridMetrics::Geometry::Spherical, 1, {6.0/13, 0, 0}, {-.006*12/13, 0, 0}, 26.0/3},
-        {GridMetrics::Geometry::Spherical, 2, {1.15, -.6, 0}, {-.003, -.0045, 0}, 2*pi},
-        {GridMetrics::Geometry::Spherical, 3, {36.0/13, 15.0/13, -24.0/13}, {-.0105*12/13, -.012*12/13, -.012*12/13}, 13.0/6},
+        {GridMetrics::Geometry::Cylindrical, 1, {.25, 0, 0}, {-13.0/3000, 0, -13.0/2000}, 4.0},
+        {GridMetrics::Geometry::Cylindrical, 3, {1.85, 0, -.8}, {-.004, 0, -.006}, pi/2},
+        {GridMetrics::Geometry::Spherical, 1, {6.0/13, 0, 0}, {-103.0/24500, -927.0/196000, -309.0/49000}, 26.0/3},
+        {GridMetrics::Geometry::Spherical, 2, {1.15, -.6, 0}, {-.004, -.0045, 0}, 2*pi},
+        {GridMetrics::Geometry::Spherical, 3, {36.0/13, 15.0/13, -24.0/13}, {-.007, -.0125, -.012}, 13.0/6},
     };
     DiffFlux::DiffusionConfigView config{};
     config.use_diffusion = config.use_viscous_diffusion = true;
@@ -241,9 +247,18 @@ void analytic_geometry_examples()
         FluidVector hydro{}, viscous{};
         TimeIntegration::add_geometric_source_cell(
             state, nullptr, ConstantGeometryEos{}, grid, 0, 0, .1, hydro);
+        // Valid storage and real neighbours are essential to the matched
+        // finite-volume geometric residual. The synthetic hydro point above
+        // intentionally has no such storage, so keep its metric test separate.
+        auto viscous_grid=grid;
+        viscous_grid.ng=1;viscous_grid.dx1=1.;viscous_grid.x1_min=.5;
+        viscous_grid.stride_y=5;
+        viscous_grid.stride_z=example.dimension>=2?25:5;
+        viscous_grid.total_size=example.dimension==3?125:viscous_grid.stride_z;
+        const int j=example.dimension>=2?1:0,k=example.dimension==3?1:0;
         const auto result = DiffFlux::evaluate_geometric_diffusion_cell(
             state, nullptr, ConstantGeometryEos{}, SpeciesPODView{}, config,
-            grid, 0, 0, 0, .1, nullptr, nullptr, viscous,
+            viscous_grid, 2, j, k, .1, nullptr, nullptr, viscous,
             [&state](int) { return state; });
         require(result.valid && result.active, "frozen geometry coefficient unexpectedly inactive");
         const double hydro_values[]{hydro.mom_u, hydro.mom_v, hydro.mom_w};
@@ -664,6 +679,9 @@ void viscous_diffusion_convergence()
     ViscousGeometryCases::convergence("cuda", evaluate);
     ViscousGeometryCases::radial_origin("cuda", evaluate);
     ViscousGeometryCases::density_stability("cuda", evaluate);
+    RadialStokesCases::density_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::density_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::cylindrical_axis_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
 }
 
 // Reuse the original true V/W means, independent antiderivative references
