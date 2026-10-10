@@ -1,6 +1,6 @@
 {
   "schema": "arch-native-public-consumer-closure-1",
-  "recorded_utc": "2026-10-10T12:53:13.396454+00:00",
+  "recorded_utc": "2026-10-10T14:45:46.185434+00:00",
   "baseline_commit": "e69a859705da0efc0c7abad64c8949f9e4934951",
   "status": "CURRENT_CUDA_PRODUCTION_ENGINEERING_READY_HYDRO_DEVICE_FRESH_RZ_LONG_TIMING_PENDING",
   "scope": "Current coherent33 Runtime/isolated Self/source/retry/AMR integration plus shared optional geometric EOS-ray selection; actual original owners only",
@@ -82,8 +82,7 @@
   "pending": [
     "Full original CUDA Hydro owner terminal and scientific assertions",
     "Current production CUDA ARCH public four-module fresh-process checkpoint continuation",
-    "Original RZ five-crossing uninterrupted endpoint and its own midpoint strict fresh counterpart",
-    "Final protected CPU identity refresh and exclusive paired fullCLI/driver timing",
+    "Frozen exclusive paired fullCLI/driver timing after remaining correctness gates",
     "Final CI/materials and release freeze/push"
   ],
   "other_math_delegation": {
@@ -196,7 +195,9 @@
     "new_production_changes": 0,
     "quadrature_uncertainty": "degree12/24/48 convergence estimate, not outward certificate",
     "long_acceptance": false,
-    "raw_uploaded": false
+    "raw_uploaded": false,
+    "current_scope": "Existing saved states through2.5 crossings accepted within original budgets; original full5 crossings+long own strict fresh deferred, not passed.",
+    "finite_time_evidence": "o9-endpoint-ledger-summary.json#/rz_finite_time_scope_20261010"
   },
   "resource_interruption_20261010": {
     "recorded_utc": "2026-10-10T11:54:09.846826+00:00",
@@ -427,10 +428,22 @@
     "production_build_seconds": 280.85823792200244,
     "production_ready_receipt_sha256": "23652be62d0ef84d3c4b0da2fa6c456c993d83b3f8cad9eb9e6631719e6d98e8",
     "production_explicit_case": "SNIaCoupled",
-    "production_implicit_default_case": false
+    "production_implicit_default_case": false,
+    "isolated_progress_20261010": {
+      "scope": "Observed firstaxis1samelevelcurrentphase return only; no fullHydro PASS or fairbenchmark",
+      "host_initial_current_seconds": 95.442576491,
+      "device_initial_current_seconds": 5875.145104315,
+      "device_current_returned": true,
+      "host_batch_accepted_stages": 2,
+      "current_owner_terminal": false,
+      "known_execution_difference": "Sharedmath/globalbudget; Host precision-revalidated exactmemo, Device cold singlelane. No new scientific inconsistency found.",
+      "performance_implementation_deferred": true,
+      "extra_profile_runs": 0,
+      "basis_report_sha256": "a78386de55850c73fe0f13709b10bf664a1c23ebe69a09e01d74ed10341ea80a"
+    }
   },
   "rz_uninterrupted_replacement": {
-    "status": "RUNNING_NOT_ACCEPTED",
+    "status": "USER_AUTHORIZED_STOP_TERMINAL_241_NOT_FULL_PASS",
     "started_utc": "2026-10-10T12:49:58.217147+00:00",
     "CPU_ELF_sha256": "63ffa636ae1ba1961c50308784ad6dcb75b58e456967d8a57d76cd42176dcffb",
     "producer_source_manifest_sha256": "425d524cb51e881741970cce890c5a690ff5c56457dd5effdbfb8a97050247c0",
@@ -440,11 +453,34 @@
     "acoustic_crossings": 5,
     "omp_threads": 8,
     "primary_affinity": "4-11",
-    "fresh_waits_for_original_Hydro_terminal": true,
+    "fresh_waits_for_original_Hydro_terminal": false,
     "fresh_started": false,
     "same_physical_inputs_and_scientific_budgets": true,
     "fair_timing_grant": false,
-    "actual_exit_code": null
+    "actual_exit_code": 241,
+    "history_before_user_deferral": {
+      "status": "RUNNING_NOT_ACCEPTED",
+      "fresh_waits_for_original_Hydro_terminal": true,
+      "actual_exit_code": null
+    },
+    "fresh_status": "NOT_LAUNCHED_LONG_PAIR_DEFERRED_BY_USER",
+    "terminal_receipt_sha256": "42e1a2a586a1225af60f288122af130d372e12dae77c68b817378acde4c978cd",
+    "user_stop_review_sha256": "3eb0ec87be722f5b1798eb3ace098253d993b52b362d350b3bbd236705a02479",
+    "cpu_protection_released": true,
+    "full_long_scientific_pass": false,
+    "finite_saved_state_scope": "Earlier original run, not this stopped replacement; see o9-endpoint-ledger-summary.json",
+    "user_deferred": [
+      "Original full five-crossing endpoint",
+      "Its own long strict fresh pair"
+    ],
+    "resource_observation": {
+      "guard_triggered": false,
+      "guard_seconds": 4817.437,
+      "peak_process_rss_kib": 37964,
+      "fd_peak": 5,
+      "formal_benchmark": false,
+      "leak_freedom_proven": false
+    }
   },
   "source_sha256_scope": "Historical coherent33 baseline hashes, retained verbatim; not current production CUDA source hashes.",
   "current_source_manifest": {
@@ -452,5 +488,112 @@
     "sha256": "e2bc63905e09a70cba64276a905ff6fd3ddb9eeb1839776f961d773da0378769",
     "entries": 176,
     "git_head_annotation": "e69a859705da0efc0c7abad64c8949f9e4934951"
+  },
+  "final_cpu_environment_20261010": {
+    "status": "ACCEPTED_LOCAL_EXISTING_CACHE_CPU_ENVIRONMENT_AND_CONFIGURATION_OWNER",
+    "recorded_utc": "2026-10-10T14:36:36.624571+00:00",
+    "receipt_sha256": "f2968bb60dbb8286fd7ee7bacaf73dd91c0605989be3e3634126b8bdb352aaa9",
+    "root_review_sha256": "b857063ee091f56cd5dda2d516d328771d98a6b279ceff1a72b607a2a738ce40",
+    "cpu_elf_sha256": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9",
+    "source176_freeze_sha256": "e2bc63905e09a70cba64276a905ff6fd3ddb9eeb1839776f961d773da0378769",
+    "git_head": "d5a9158746e6e85b09e778843ed1290d891a28c6",
+    "same_cache_profile": true,
+    "configured_project_python": "Conda work3.12.14",
+    "guard_python": "System3.12.3 with verified pidfd/subreaper",
+    "actual_stages": {
+      "guard_interpreter_preflight": {
+        "actual_exit_code": 0,
+        "seconds": 0.05598895999719389
+      },
+      "configure": {
+        "actual_exit_code": 0,
+        "seconds": 2.070337023003958
+      },
+      "build_ARCH": {
+        "actual_exit_code": 0,
+        "seconds": 243.14699104300234
+      },
+      "inventory": {
+        "actual_exit_code": 0,
+        "seconds": 0.04115524599910714
+      },
+      "configuration_v3": {
+        "actual_exit_code": 0,
+        "seconds": 3.078804051998304
+      }
+    },
+    "configuration_v3_tests": 1,
+    "zero_skips": true,
+    "matching_shared_compiled_source_entries": 345,
+    "guard_triggered": false,
+    "cold_build": false,
+    "hosted_CI": false,
+    "full68_repeated": false,
+    "prior_guard_interpreter_failure": {
+      "actual_exit": 2,
+      "cmake_executed": false,
+      "guard_was_not_bypassed": true
+    },
+    "scientific_release_grant": false
+  },
+  "code_freeze": {
+    "baseline_git_head": "d5a9158746e6e85b09e778843ed1290d891a28c6",
+    "tracked_entries": 1237,
+    "scope": "Freeze implementation/tests/CI; verify only remaining basic functionality, no full regression reruns, no optimization/structure fixes now; record failures truthfully. Docs and compact processed evidence may change.",
+    "new_implementation_fixes_authorized": false,
+    "full_regression_retests_scheduled": false
+  },
+  "basic_module_evidence_20261010": {
+    "scope": "Basic functionality only. Reuse accepted CPU/Studio/science identities; current CUDA fields below describe exact accepted consumers, not all combinations. New CPUa1 is configuration/environment only.",
+    "modules": {
+      "hydro": {
+        "cpu": "Existing68 and publicHost evolution accepted",
+        "cuda": "SourceNone coupledBurn macros accepted; fullHydro owner pending"
+      },
+      "eos": {
+        "cpu": "ExistingHelm/tabular/reference/lowdensity owners accepted",
+        "cuda": "Currenttabular completion and Burn completedEOS accepted"
+      },
+      "burn": {
+        "cpu": "ExistingBD/ROS4 endpoints and BDstrictrestart accepted",
+        "cuda": "CurrentBurn same/mixedSourceNone macros and rollback accepted; publicSelfcoupling pending"
+      },
+      "diffusion": {
+        "cpu": "ExistingsharedStokes/RKL/thermalref and Cartesianactivity accepted",
+        "cuda": "CurrentRKLservices and BurncoupledD/activity accepted; productionfourmodule pending"
+      },
+      "self_gravity": {
+        "cpu": "ExistingpublicHost Self/coupling/checkpoint and finiteRZoriginalbudgets accepted",
+        "cuda": "FulloriginalHydro Self and productionpubliccoupling pending"
+      },
+      "amr": {
+        "cpu": "ExistingpublicHost mixedwarmrestart and CartesianL2 repeatedevents accepted",
+        "cuda": "Currentexchange/refinement/regrid transactions accepted; Hydroreflux and productionfresh pending"
+      },
+      "boundary": {
+        "cpu": "ExistingpublicBC and ordered/rollback owners accepted",
+        "cuda": "Currentordered/runtime/Burnconsumer boundary accepted; fullSelfHydro combination pending"
+      },
+      "config_api": {
+        "cpu": "Finala1 existingconfiguration_v3 owner actualPASS; priorCorestatic14categories95params retained",
+        "cuda": "Production0828 registeredcases and explicitSNIaCoupledinspect actualPASS; not runtime"
+      },
+      "io_restart": {
+        "cpu": "Existingpublication/checkpoint owners, Hostwarm30720words, Cartesian21datasets and Sod19datasets retained",
+        "cuda": "Productionpubliccheckpoint2tofresh3 not executed"
+      },
+      "studio": {
+        "cpu": "Current374/lint/type/build and scopednativeX11 engineering accepted",
+        "cuda": "No numericalCUDA claim; finalproductionoutput consumption pending",
+        "human_WSLg_UAT": false
+      }
+    },
+    "new_test_families": 0,
+    "new_source_changes": 0,
+    "current_real_functional_gaps": [
+      "CompleteoriginalCUDA Hydro/Self owner terminal/assertions",
+      "PublicproductionCUDA3macro and independentfresh2to3"
+    ],
+    "basis_report_sha256": "9fdd0855b1e74bf1ddc62a0ffcc3aa8b8267912c83af46cb07d8414e62c7a766"
   }
 }

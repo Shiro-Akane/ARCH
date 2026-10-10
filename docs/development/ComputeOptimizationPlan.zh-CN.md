@@ -38,11 +38,11 @@ O7.0–O7.5、O8 与 Studio 已有实现和移交记录，当前工作以现有�
 | O6／O6+ CPU 优化 | 既有精确EOS缓存、BD因子复用、批处理与拓扑缓存保留；此前7场景中6个进入2倍、5个进入1.5倍，细网格2.867倍、Sod1.746倍按旧身份保留 | 原路径同物理终点防退化与有证据的热点；不重复已否决路线，不改分裂／物理凑倍数 |
 | O7.0 配置／常数／用途 | `PreparedConfiguration`、配置扩展3、nullable、用途响应、旧G退役诊断和共享CGS常数已经存在；当前CPU配置/API owner通过 | 核对最终binary、API样例与Studio消费者身份及剩余验收映射；不再重新设计默认值或用途系统 |
 | O7.1 JENS | 已有共享数学、真实AMR/输出和移交CPU/CUDA记录；当前公开Host RZ的2→8初态修复、最高层不足拒绝、7次输出及八字段续算通过 | 映射既有一般EOS／极限值／关闭开销／后端证据，执行实际缺失或受影响项；限定短程通过不签收塌缩或长程 |
-| O7.2–O7.5 RZ | chart、V/W、角动量、轴线、迁移／reflux及IO沿已有实现；Host prescribed动态混层与严格restart、公共isolated四个Host owner及fresh Runtime续算已通过 | 最终CUDA原消费者、公共Device fresh restart及独立RZ闭域长程按原出口验收；只修复真实复现缺陷 |
+| O7.2–O7.5 RZ | chart、V/W、角动量、轴线、迁移／reflux及IO沿已有实现；Host prescribed动态混层与严格restart、公共isolated四个Host owner及fresh Runtime续算已通过 | 最终CUDA原消费者及公共Device fresh restart待验；既有RZ保存状态至2.5次声穿越按原预算有限签收，原完整长程按用户授权后置；只修复真实复现缺陷 |
 | O8 用户BC | 两类公开边界接口、阶段/收支和已移交回归保留；新增无效枚举拒绝进入原owner | 确认当前chart/backend覆盖映射及缺失公共执行路径，保留内置路径性能；不另建边界分发体系 |
 | Studio／Plot | 当前完整374项与真实Core静态14类／95参数检查通过；原生Configure／Build／Preview及AMR已实际成功，字段／单位／native cell契约保留 | Sod真实Run／Restart已到t=.02，19个状态／几何数据集逐字节一致，当前producer Plot／Inspector及原生交互经复核；固定source的唯一模型选择及冲突409提示已修复，当前完整374项／lint／类型检查／构建通过，新bundle已通过一次受控失败／显式Retry／Cellular当前初态及原Plot只读的限定原生工程复查 |
 | 当前兼容回归 | CPU显式58目标构建、完整68/68 CTest、Python749/749及新CPU执行物上的LowDensity72/72通过，均无跳过；LowDensity执行物SHA前缀为`63ffa`，完整身份按原receipt。旧76／668及CUDA节点保留历史身份；Studio374/374、lint、类型检查和真实Core静态14类／95参数检查通过。柱二维旧极坐标退役，球二维极坐标、柱一维／三维及Native RZ保留 | 当前176源码下原CUDA消费者8/9及独立registry通过；生产ELF已链接，完整Hydro和公共四模块／fresh restart待验；旧节点不得代签新执行物，无新增测试族 |
-| O9 计时／长程 | Cartesian Jeans20T与10T严格续算、组分扩散5τ、正式热扩散、强反应终点／续算，以及代表性四模块main／half／restart和L2补充均按原限定签收；main原1<2事件失败保留 | 独立RZ原两轨资源中断后，一次原终点替代primary已启动；自身fresh等待Hydro终端，端点与续算仍未签；本机最终公平CPU/CUDA成本及4070Ti配对缺测仍按R5结算。旧1.22485倍driver记录仅保留其身份，不代签当前CLI成本 |
+| O9 计时／长程 | Cartesian Jeans20T与10T严格续算、组分扩散5τ、正式热扩散、强反应终点／续算，以及代表性四模块main／half／restart和L2补充均按原限定签收；main原1<2事件失败保留 | 独立RZ原保存状态至2.5次声穿越满足原预算；重复primary按用户授权停止，原5次声穿越及其长程严格续算后置、不记通过。本机最终公平CPU/CUDA成本及4070Ti配对缺测仍按R5结算。旧1.22485倍driver记录仅保留其身份，不代签当前CLI成本 |
 | 原点网格限制／O10设计讨论 | 原最低优先讨论项；本次接受当前曲线网格／AMR的已知原点限制并公布适用条件 | 非本次release阻塞；依据实际限步、精度和工作量单独讨论／规划后实施 |
 
 正式热扩散检查加入原`low_density_math`：真实RKL2入口、16格周期域、64／96／128宏步至同一五倍离散衰减时间，独立三阶段稳定多项式与热方程指数参考、原热量及正值预算、阶段零修复和时间阶≥1.8均通过。该项限定为formal thermal-only，不替代Hydro／AMR／CUDA或30–60分钟耦合耐久；没有新增CTest目标。
@@ -57,7 +57,7 @@ O7.0–O7.5、O8 与 Studio 已有实现和移交记录，当前工作以现有�
 
 径向算子的密度反差检查必须采用实际的单元质量容量来计算动能。将单元中心应力与面通量分别拼接虽能得到连续 PDE 的二阶一致性，却可能破坏离散动能耗散。本轮保留了三格反例，采用同一面应变的变分导数构造几何残差，并让该面的物理速度与牵引功相配对。时间步使用该算子实际的完整绝对行界；曲率耗散项的对角贡献不能沿用 Cartesian 零行和前提下的半行界。
 
-共享普通曲线与Native径／轴完整Stokes、原9组PDE／变密度／轴线检查，以及12条Host RKL轨迹保持原限定签收。混层真实边界机械功仍计入收支，reflecting流体边界不能直接解释为零黏性功。原稳定性行界迁移、失败和编译过程见[历史快照](archive/compute-studio/ExecutionHistory.zh-CN.md#o总表整理前快照2026-10-10)、[普通曲线节点](../../validation/gravity/results/release-closure-20261007/shared-curved-stokes-20261009-summary.json)和[Native应力节点](../../validation/gravity/results/release-closure-20261007/shared-native-stokes-20261009-summary.json)。当前176源码的CUDA构建与消费者状态只在下方维护；旧ELF不代签新源码。高斯三档有限静态及原Euler连续能量保持关闭，剩余实际出口为最终Device消费者、公共Device续算及独立RZ长程。
+共享普通曲线与Native径／轴完整Stokes、原9组PDE／变密度／轴线检查，以及12条Host RKL轨迹保持原限定签收。混层真实边界机械功仍计入收支，reflecting流体边界不能直接解释为零黏性功。原稳定性行界迁移、失败和编译过程见[历史快照](archive/compute-studio/ExecutionHistory.zh-CN.md#o总表整理前快照2026-10-10)、[普通曲线节点](../../validation/gravity/results/release-closure-20261007/shared-curved-stokes-20261009-summary.json)和[Native应力节点](../../validation/gravity/results/release-closure-20261007/shared-native-stokes-20261009-summary.json)。当前176源码的CUDA构建与消费者状态只在下方维护；旧ELF不代签新源码。高斯三档有限静态及原Euler连续能量保持关闭，本轮剩余实际出口为最终Device消费者与公共Device续算；RZ完整长程按最新授权后置。
 
 ### 发布进度与剩余出口（2026-10-09复核）
 
@@ -65,7 +65,7 @@ O7.0–O7.5、O8 与 Studio 已有实现和移交记录，当前工作以现有�
 
 **CPU/CUDA当前封包。** 既有CPU完整68/68、Python749/749及当前CPU低密度72/72全数通过（均零跳过）。公共Self、四模块宏步、AMR与生产checkpoint续算的Host检查保持原身份，其中2→5混层续算终态30720个存储字逐位一致。共享入口的源项预检修复由原Host owner通过，CTest耗时28.63秒，不据此重新授予全部源码的新完整回归身份。
 
-当前176项源码冻结身份为`e2bc6390…`。原CUDA消费者中8/9通过，另有既有`cuda_hydro_dispatch`通过；包含完整同层／混层Burn宏步、late rollback和原门槛，Burn的CTest耗时127.39秒。其余7项原检查实际退出0，护栏包装器墙钟15.043秒；完整Hydro正在执行，尚未签收。原Hydro只增加阶段进度输出，输入、实际调用与断言保持。新的生产CUDA ARCH已实际编译、链接成功，护栏包装器墙钟280.858秒，注册模型及显式SNIaCoupled配置身份检查通过；CUDA ELF为`0828b3c8…`。公共Device四模块及fresh checkpoint仍待这个生产执行物的实际验收。RZ长程保留原CPU ELF`63ffa636…`与其自己的producer身份；两条轨迹终端前保持该执行物。工程构建通过不授予科学完整通过。
+当前176项源码冻结身份为`e2bc6390…`。原CUDA消费者中8/9通过，另有既有`cuda_hydro_dispatch`通过；包含完整同层／混层Burn宏步、late rollback和原门槛，Burn的CTest耗时127.39秒。其余7项原检查实际退出0，护栏包装器墙钟15.043秒；完整Hydro正在执行，尚未签收。原Hydro只增加阶段进度输出，输入、实际调用与断言保持。新的生产CUDA ARCH已实际编译、链接成功，护栏包装器墙钟280.858秒，注册模型及显式SNIaCoupled配置身份检查通过；CUDA ELF为`0828b3c8…`。公共Device四模块及fresh checkpoint仍待这个生产执行物的实际验收。RZ原CPU ELF`63ffa636…`及其producer身份保持追溯；重复primary已实际终止、自身fresh未启动，执行物保护已按授权解除，最终CPU环境与配置检查可继续。工程构建通过不授予科学完整通过。
 
 确认修复限定于：Self真实事务校验、Native扩散收据测度、classifier夹具构造、嵌套checked EOS的candidate标记传播、Native宏步缺source准备器时的准入拒绝。原失败、资源中断及超时按各自身份保留于[执行历史](archive/compute-studio/ExecutionHistory.zh-CN.md)；[公共消费者记录](../../validation/backend/results/release-closure-20261009/native-public-consumer-summary.json)提供处理后证据。CPU/CUDA共用数学，保留完整面EOS、精确缓存、严格浮点与两次Strang燃烧。Helm Euler两个V动量仅采用已授权的限定尺度Q与3e-14系数，其余字段、J/W、EOS及独立2e-12窗口保持不变。当前先完成事实可用性封包，后续性能方案另行讨论。
 
@@ -78,10 +78,10 @@ O9四模块CPU主轨迹3997步、约53分钟，以及中段续算的21数据集�
 | 配置／Core API | 10 | 90%–95% | 显式输入、来源、常数与用途接口已交付；最终producer和Studio消费者身份仍需核对 |
 | CPU优化与结构 | 10 | 90%–95% | 精确缓存、批处理和拓扑缓存保持；最终58目标构建／68项CPU清单通过，原76/76节点保留历史身份；最终同程防退化与成本沿R5结算 |
 | Jeans／JENS | 10 | 80%–85% | CPU演化、初态细化、输出及续算已有证据；一般EOS／极限值与最终CUDA范围仍需对应验收 |
-| RZ Host及共享数学 | 20 | 75%–85% | 度量、角动量、迁移、有限静态／Euler能量、共享Stokes及原Host FV／CF保持签收；公共Host四owners已过，独立RZ长程已恢复运行，端点及严格续算仍未签 |
+| RZ Host及共享数学 | 20 | 75%–85% | 度量、角动量、迁移、有限静态／Euler能量、共享Stokes及原Host FV／CF保持签收；公共Host四owners已过，既有RZ状态至2.5次声穿越满足原预算；原完整长程及严格续算按用户授权后置 |
 | 用户BC | 5 | 85%–95% | 公开接口、阶段及收支已有证据；完整NativeDevice边界与其拒绝／回滚仍随调用链验收 |
 | CUDA生产调用链 | 15 | 50%–65% | Runtime／Hydro／source／retry／staged regrid接线已集成，原节点保留限定证据；当前176源码原9 owner已有8项通过，完整Hydro正在执行；新生产ELF已链接，公共四模块／fresh restart待验 |
-| O9长时与耦合 | 15 | 45%–60% | Jeans、组分扩散、正式热扩散、强反应及Cartesian四模块main／half／restart／L2已按原范围签收；RZ五声穿越端点和严格续算待验 |
+| O9长时与耦合 | 15 | 45%–60% | Jeans、组分扩散、正式热扩散、强反应及Cartesian四模块main／half／restart／L2已按原范围签收；既有RZ有限时段数学按原预算签收；原五声穿越端点和长程严格续算后置、不记通过 |
 | Studio／Plot | 10 | 80%–90% | 原工程入口及原生Configure／Build／Preview／AMR已通过；真实SodRun／Restart／Plot和原生交互已限定签收；source绑定选择器／409修复及当前374项／资源构建通过；新bundle原生复查发现模型发现GET超时后的恢复入口缺失，显式重试与原生RZ根快照消费已修复并通过完整374项／lint／类型检查／构建，限定原生Retry／Cellular当前初态／原Plot只读已签收 |
 | CI／文档／数据收束 | 5 | 65%–80% | 既有owner静态映射已接受，68项CPU与749项工具清单通过；最终CUDA身份／耗时、远端CI与功能材料待结算 |
 
@@ -89,9 +89,9 @@ O9四模块CPU主轨迹3997步、约53分钟，以及中段续算的21数据集�
 
 | 出口 | 当前状态 | 关闭所需证据 |
 | --- | --- | --- |
-| R1：FV／粗细面及非线性阶段 | 原12条Host RKL、变密度五叶RKL2及普通Spherical2D五叶RKL2双宏步通过，真实边界功、EOS与零修复保持；既有混层严格续算及公共Host四owners保持签收 | 在最终176源码的原Device owner中验Native Hydro角动量／reflux及耦合；独立RZ闭域五声穿越轨迹资源中断，仍须原分尺度收支与演化出口，不重跑已签Host续算 |
+| R1：FV／粗细面及非线性阶段 | 原12条Host RKL、变密度五叶RKL2及普通Spherical2D五叶RKL2双宏步通过，真实边界功、EOS与零修复保持；既有混层严格续算及公共Host四owners保持签收 | 在最终176源码的原Device owner中验Native Hydro角动量／reflux及耦合；独立RZ既有有限时段已通过原分尺度收支预算，原五声穿越及其长程续算后置；不重跑已签Host续算 |
 | R2：完整NativeDevice | Runtime有序ghost／resident EOS、Hydro／引力配对功、retry、staged regrid及完整宏步已集成；Host受影响检查通过，原Device服务证据保持限定身份；修正前176源码原构建已完成；共享EOS及source准备器准入修复已由受影响Host、registry和原Burn owner通过；当前原9项已有8项通过，完整Hydro运行中；新生产CUDA ARCH构建、链接及只读身份检查通过，公共Device fresh待验 | 执行最终9个原owner（8 Device＋1 Host表fixture），并以新生产CUDA ELF沿公共SNIaCoupled完成真实四模块checkpoint→fresh进程restart；原入口和共享数学复用，源码集成或构建成功不算数值通过 |
-| R3：剩余O9 | C/O独立终点、BD／ROS4强反应及BD严格续算、正式热扩散、Cartesian四模块main／half／restart、导热活动和L2补充反复AMR／资源观测均按原限定签收；main原事件不足FAIL保留 | 独立RZ闭域轨迹38967及中点fresh65485均因系统可用内存护栏退出125，分别到step556及553；实际中点step534／t=212372.6280429131的checkpoint完整保留。新不中断primary已启动，其自身fresh等待Hydro终端。原终点424745.2560858262 s／5声穿越及严格比较仍未签；两次fresh恢复不能代替不中断轨迹与restart对照；必要后端独立验收。复用已签收反应参考，不新增累计核能状态或全组合矩阵 |
+| R3：剩余O9 | C/O独立终点、BD／ROS4强反应及BD严格续算、正式热扩散、Cartesian四模块main／half／restart、导热活动和L2补充反复AMR／资源观测均按原限定签收；main原事件不足FAIL保留 | 原保存状态至1.25／2.5次声穿越通过原2%能量、0.2%参考、1e-12质量和信号门槛；step534修复记录全零。重复primary经用户授权SIGTERM停止、实际退出241，自身fresh未启动。原5次声穿越及对应长程严格续算后置，不记完整PASS；原125资源中断保持。当前有限时段签收不推断未来演化或CUDA正确性，必要后端独立验收 |
 | R4：当前工程交付 | 当前58 CPU构建／68 CTest、749工具、Studio374和真实Core静态14类／95参数通过；原生Configure／Build／Preview／AMR及SodRun／Restart／Plot已实际成功，19个状态／几何数据集字节一致；固定source选择器／409及完整Studio检查通过，真实Host错配409／合法检查已过；新bundle模型发现GET超时后的显式重试及RZ初始网格消费协议已通过当前完整工程检查，限定原生Retry／Cellular当前初态／原Plot只读已签收 | 必要CUDA及最新producer／字段／单位／发布失败映射继续验收；TS限定选择器／409及完整Studio检查通过；显式Retry保留原15s及作用域守卫，当前完整374项零跳过通过；实际单次受控失败恢复、128²当前Cellular初态及原producer Plot只读已签收。已签Run／Restart／Plot及Cellular完整链路不重复排队 |
 | R5：最终成本 | 3060Ti旧执行物同程3D记录正向1.22485倍；4070Ti当前配对缺测 | 依赖冻结后同物理终点、精度、CFL／AMR的CPU及CUDA绝对成本与正向收益；driver钟和完整CLI钟分别记录。4070Ti旧数据只作历史资料，缺测不杜撰、不因外部平台无法取得而阻塞本机验收 |
 | R6：CI与材料 | 现有owner静态映射已接受，无新增缺注册；Studio路径选择、原报告19/19、构建8/8、actionlint、749/749工具及68/68 CPU清单通过，均无skip；当前提交尚无远端CI结果 | 记录最终CUDA与production身份、实际覆盖／耗时及材料，拒绝空选择／skip，核对架构、链接和功能清单。长跑、正式计时、FLASH不进入必需CI，原始H5不入仓库 |
@@ -118,17 +118,17 @@ Cartesian `SNIaCoupled`四模块＋AMR的原合同已执行，main／half／rest
 | 完整FV／粗细面 | 原Host RKL、变密度五叶RKL2及普通Spherical2D五叶RKL2双宏步已过Runtime／register／reflux／EOS和原收支；公共Host四owners已通过 | 最终Device Native Hydro角动量／reflux原owner与独立RZ分尺度长程；普通曲线CF和Host续算不重复排队 |
 | Native gravity-free Hydro／外引力 | selected-face、V/W、角动量register／reflux、共享数学及原SourceNone／混层／外场Hydro、staged regrid证据保留历史身份；共享源EOS修复已过CPU | 在当前176源码完成原Device消费者，包括真实SourceNone Burn五段宏步；Helm两个V动量的授权3e-14 Q尺度与其余窗口保持，原失败保留 |
 | Native Device自引力 | resident场借用、原Energy索引／同代psi、共享面质量通量功／动量、Runtime阶段及真实join已集成；CPU前置已通过 | 原CUDA Hydro owner同层轴域／混层Dirichlet及Production isolated待最终构建后执行；原事务／热拒步／直接半步对照沿同owner，不新增矩阵 |
-| RZ isolated公开消费者 | 有限环体Newton／Poisson／梯度及原参考保持；真实source与field分别认证，periodic拒绝／未prepare拒绝／发布回收保持；公共Host Current／Hydro／CFL／Plot、rollback/reuse、四模块／checkpoint均已通过 | 验最终Device原owner，再以新生产CUDA ELF执行公共四模块fresh restart；独立RZ五声穿越运行中。不得重标Candidate或增新数学／参数，尚未授完整公共能力 |
-| O9真实导热活动 | 共享final_rotation／真实叶体积／事务观测与Host／Device原owner通过；Cartesian half及L2实际accepted activity、AMR、续算和资源观测已签 | 保留since-process-start及失败宏步丢弃暂定收据；多个输运并开不能全算导热。RZ依自己的原合同验收，不重开Cartesian活动长跑 |
+| RZ isolated公开消费者 | 有限环体Newton／Poisson／梯度及原参考保持；真实source与field分别认证，periodic拒绝／未prepare拒绝／发布回收保持；公共Host Current／Hydro／CFL／Plot、rollback/reuse、四模块／checkpoint均已通过 | 验最终Device原owner，再以新生产CUDA ELF执行公共四模块fresh restart；原RZ完整五声穿越及其长程续算按用户授权后置。不得重标Candidate或增新数学／参数，尚未授完整公共能力 |
+| O9真实导热活动 | 共享final_rotation／真实叶体积／事务观测与Host／Device原owner通过；Cartesian half及L2实际accepted activity、AMR、续算和资源观测已签 | 保留since-process-start及失败宏步丢弃暂定收据；多个输运并开不能全算导热。RZ有限时段与后置完整长程分别结算，不重开Cartesian活动长跑 |
 | 端点误差与核能账本 | aprox13使用实际舍入`MION`及`-N_A*c²`，iso7保留实际结合能约定；两既有验证入口共用端点辅助函数，真实BD输出过原`1e-12`窗口。[核能记录](../../validation/backend/results/release-closure-20261009/endpoint-nuclear-energy-summary.json)保存原失败和限定范围。 | 保留原独立参考。需给出上游FP64场／体积／积分的可复核误差或不确定度估计，报告绝对残差及核能／引力各自尺度；高精度累加不能恢复上游精度，气体总能归一值不能代签弱引力功。沿已接受的收敛估计，不新增逐运算严格证书。 |
 
 边界／RKL节点、ENUC诊断继承、原失败及委派的详细范围统一见[接线批次记录](archive/compute-studio/ExecutionHistory.zh-CN.md#native-hydro接线批次记录)。当前动作仅维护上表；原共享公式、两次Strang燃烧与CPU优化保持。下一次回查在消费者验收、辅助结果返回或15分钟时进行。
 
-2026-10-10封包范围确认：用户接受先完成现有功能的事实可用性封包，再单独讨论后续性能优化。保持当前数学源码冻结，收束已运行的长程、最终Device、严格续算及Studio出口；同步功能／限制、处理后证据与CI后推送当前分支。RZ环边界并行或新的成本优化实现均后置，不重新追逐FLASH倍数线，不以局部通过替代完整既定出口。
+2026-10-10最新封包范围确认：用户授权在已保存RZ数据满足原预算后停止重复CPU运行。原运行0、1.25及2.5次声穿越的实际PWC状态已独立核对；两个非零时刻满足原能量、参考、质量及信号预算，step534的12项修复记录均为零。2.5次声穿越时包含不确定性估计的能量残差为0.1423%（原门槛2%），参考不确定性为0.0491%（原门槛0.2%），质量相对差1.71e-17。积分与舍入不确定性为估计，有限签收不能证明未观测的未来演化。重复primary实际运行约80分钟后经SIGTERM停止、退出241，护栏未触发、峰值RSS约37MiB／fd5；该次primary没有到达上述旧保存状态，也不作无内存泄漏证明。原5次声穿越终点及其长程严格续算后置，不记完整通过；自身fresh未启动。当前集中闭合CUDA原Hydro、生产公共四模块fresh、最终CPU环境、公平计时与CI材料。
 
-2026-10-10 RZ成本核对：现有五声穿越轨迹为16×16均匀RZ，`Δr=Δz=6.25e9 cm`，自然`dt≈398.183 s`；该布局没有角向`rΔφ`收缩。最近90次实际场调用中source/boundary阶段占记录引力计算约99.98%，中位7.82 s，而泊松迭代中位约0.001 s；源码对应串行有限环孤立边界。此为并行NVCC期间的既有日志归因，不是正式benchmark，也未进一步定位memo／积分细项。按用户授权，仅将同一进程现有8个OMP线程由4个物理核分散到8个物理核，保留原输入、ELF、线程数、终点及科学预算；短时编译仍可能共享部分核心，不能据此声称8倍加速。环边界并行优化须保留共享数学、全局工作预算、累计及精确缓存语义，不中途替换当前长测实现。
+2026-10-10 RZ成本核对：16×16均匀RZ的`Δr=Δz=6.25e9 cm`、自然`dt≈398.183 s`，没有角向`rΔφ`收缩。重复primary最后90次场调用中，source/boundary占记录引力阶段约99.985%，中位7.804 s；Poisson中位0.000902 s。OMP8已生效，但热点主要串行，低CPU总占用不等于线程配置缺失。CUDA孤立环边界亦使用单lane控制器；源码检查未发现有效树和工作预算下的显然无界循环，不据此宣称运行通过或充分占用GPU。以上为并行正确性运行的归因，非公平benchmark；source/boundary还包含准备工作，未定位具体缓存失效。后续统一讨论共享环积分执行、精确缓存与工作调度，保留全局预算、确定性累加、完整面EOS和两次Strang；不在本轮追加性能实现。
 
-2026-10-10长程范围回查：代表性Cartesian四模块／反复AMR与RZ独有几何／可分辨引力功保持原覆盖；实际覆盖一致时允许合并轨迹，不要求各模块同量级、逐AMR另出物理账本或穷举网格／后端／耐久重复。Jeans、组分扩散、纯热及强反应终点和Cartesian/L2限定长程已签，剩余RZ轨迹运行中。原端点／资源工具节点19/19、61/61及`1dabd12a4`仅保留其工具身份，当前工具完整结果见上方749/749，不能代替科学端点。
+2026-10-10长程范围回查：代表性Cartesian四模块／反复AMR与RZ独有几何／可分辨引力功保持原覆盖；实际覆盖一致时允许合并轨迹，不要求各模块同量级、逐AMR另出物理账本或穷举网格／后端／耐久重复。Jeans、组分扩散、纯热及强反应终点和Cartesian/L2限定长程已签，RZ既有有限时段按原预算签收，原完整长程及对应严格续算后置。原端点／资源工具节点19/19、61/61及`1dabd12a4`仅保留其工具身份，当前工具完整结果见上方749/749，不能代替科学端点。
 
 ### O9代表性四模块长程的冻结范围（2026-10-10）
 
@@ -155,14 +155,16 @@ Cartesian `SNIaCoupled`四模块＋AMR的原合同已执行，main／half／rest
 
 ### 接续工作顺序
 
-最新授权先收束事实可用性封包，停止新增性能实现；已有数学与物理出口保持原预算、原终点，实际资源中断不改写为通过。后续性能方案在封包后另行讨论。
+2026-10-10最新执行约束：以基本功能完整闭合，冻结现有实现、测试和CI代码。仅执行尚缺的CUDA原Hydro、生产公共四模块运行／fresh续算及最终结果核对；已有68 CPU、749工具、72低密度和374 Studio不重排，也不新增全量冷构建轮次。最终CPU已在白名单环境下沿既有cache完成ARCH增量构建及原配置owner；冷缓存与main PR远端CI未测分别保留，不由缓存结果代签。功能失败、缺测和性能成本如实记录，优化设置／结构审计及实现调整后置。
 
-本轮已授权最终发布验收与候选冻结：六个出口全部关闭后，沿当前同一源码／构建身份收束优化、Core／Studio／Plot、CI及文档，推送`compute/optim`供项目负责人合入main。任一必需功能未签收继续定点修复，当前不提前冻结。Windows原生适配与O10网格重设计仍保持原暂缓／讨论边界。
+最新授权先收束事实可用性封包，停止新增性能实现；RZ既有有限时段按原预算签收，原五次声穿越及其长程严格续算后置。原终点、预算和资源中断身份保留，不以较短时段代签完整长程。后续性能方案在封包后另行讨论。
 
-1. Self／retry／完整宏步已集成；58目标构建、68 CPU、749工具、LowDensity72及公共Host四owners通过。当前验176源码CUDA原消费者，并等待新生产CUDA ELF执行公共四模块fresh restart；独立RZ五声穿越及中点fresh均已因资源护栏中断，端点和严格续算未签。Cartesian／half／restart／L2保持原限定签收，全部旧失败与超时保留身份，release仍未签收。
+本轮按最新授权的基本功能范围冻结实现；原RZ完整长程已明确后置。六个出口在本轮范围内关闭后，沿当前同一源码／构建身份收束优化、Core／Studio／Plot、CI及文档，推送`compute/optim`供项目负责人合入main。现有实现已按用户要求冻结；任一必需功能未签收时保留缺口及其影响，不由冻结决定代签通过，也不自行开启返修。Windows原生适配与O10网格重设计仍保持原暂缓／讨论边界。
+
+1. Self／retry／完整宏步已集成；58目标构建、68 CPU、749工具、LowDensity72及公共Host四owners通过。当前验176源码CUDA原消费者，并等待新生产CUDA ELF执行公共四模块fresh restart；RZ既有保存状态至2.5次声穿越通过原预算，重复primary已按用户授权停止；原完整长程与对应严格续算后置、不记通过。Cartesian／half／restart／L2保持原限定签收，全部旧失败与超时保留身份，release仍未签收。
 2. 建立“已交付实现／已验收／证据需刷新／复现缺陷”的对应关系，先读已有owner和receipt；验收记录缺失不自动判为实现缺失。
 3. 对真实科学阻断做定点修复，独立检查可并行，存在写入或数据依赖的顺序执行。共享头变更按科学节点合并后统一CPU重点检查，再CUDA；不为每条文字或点推导全量重编译。
-4. 已签C/O独立参考及BurnOneZone终点／续算按原条件复用，不重新排队；独立RZ轨迹沿已冻结前置继续执行和处理。CPU成本沿原入口结算；本轮封包不新增运行逻辑优化，后续热点及数值方案另行讨论。无关轨迹不互相阻断。
+4. 已签C/O独立参考及BurnOneZone终点／续算按原条件复用，不重新排队；RZ现有状态的有限签收已完成，原完整长程及其严格续算在后续统一验证与执行优化计划中处理。CPU成本沿原入口结算；本轮封包不新增运行逻辑优化，后续热点及数值方案另行讨论。无关轨迹不互相阻断。
 5. 源码及模型依赖冻结后完成必需后端、整程计时、长程、GUI及CI出口。第二平台数据按实际可取得范围签收，旧身份与缺测保持明确；不推断新的加速比。
 
 ### 复查与文档规则
@@ -173,7 +175,7 @@ O7.1–O7.5以合作方已移交的已有实现作为验收基线。维护者先
 
 已通过且数学、输入和执行路径身份未变的事项冻结结论。新发现须记入同一问题项，给出复现缺陷的步骤、受影响路径、既定门槛和唯一下一动作；定点修复后跑对应owner。常规检查失败时暂停依赖它的重验证，保留失败证据；诊断只扩充定位所需的最小反例。预算内未闭合的事项明确列为失败或待验，不用增加证书层级、积分研究或重复模拟来代替出口。
 
-O9按模型实际依赖推进。已签Cartesian子集与当前RZ轨迹分别按自己的冻结身份结算；RZ前置已允许原五声穿越轨迹运行，终点未达或原验收未过仍保持开放。输入、源码、构建、执行物和物理终点逐组冻结，变化影响哪个模型，就更新该模型证据。CPU/CUDA继续共享数学，保留两个燃烧半步、完整面EOS、精确缓存及严格浮点。正式计时独占机器资源；无依赖的冻结CPU可靠性长跑可与串行NVCC编译在不同CPU亲和性、内存／swap及磁盘护栏下并行。文档、只读审查和远端纯推理可以并行。
+O9按模型实际依赖推进。已签Cartesian子集与RZ既有有限时段分别按自己的冻结身份结算；RZ原完整五声穿越及对应长程续算按最新用户授权后置，未达终点不记完整通过。输入、源码、构建、执行物和物理终点逐组冻结，变化影响哪个模型，就更新该模型证据。CPU/CUDA继续共享数学，保留两个燃烧半步、完整面EOS、精确缓存及严格浮点。正式计时独占机器资源；无依赖的冻结CPU可靠性长跑可与串行NVCC编译在不同CPU亲和性、内存／swap及磁盘护栏下并行。文档、只读审查和远端纯推理可以并行。
 
 冻结模块的并行任务只处理缺失且可独立复核的交付：DeepSeek负责有界数学反例／参考核对，Gemini负责冻结事实后的文字及现有注释候选；维护者负责源码集成与最终科学判定。每个任务写明依赖、唯一写入责任、基线及已有预算，辅助任务不占用本机编译／模拟资源。结果返回、依赖解锁和阶段切换时重新检查下一就绪任务；没有新问题或有效独有覆盖时不重复派发已签收参考。
 
@@ -587,7 +589,7 @@ Sod 保留为廉价 Hydro 锚点，无须为满足墙钟人为跑满一小时。
 
 Cartesian `JeansWave`20周期与10T中段严格续算已按原限定通过；原合同保持共享CGS G、IdealGas、RK3／MUSCL／MC、CFL 0.2和振幅`1e-4`，`T=2*pi/sqrt((2*pi)^2-4*pi*G*1e7)`、终点约22.5367 s及16个等间隔样点不变。独立cell-average参考、密度RMS `0.02`、质量漂移`1e-12`、能量漂移／初始势能`0.01`及每次有限正态／零修复／泊松检查保持；相位／幅度／高谐波只作归因。512／1024格与半CFL原离散预算记录按其身份保留，不重新安排短测和冻结；该子集通过不授O9全部模型，也不能减小dt凑30–60分钟。
 
-RZ独有长程沿已冻结现有 `GravityBox` 的均匀IdealGas全环盒：`r=[0,1e11]`、`z=[-5e10,5e10]`，256根格、固定反射绝热物质壁、isolated自场，`rho0=1e-7`、`T0=1e4`、原gas_cv与CGS G。终点保持5个声穿越时间，即424745.2560858262 s，沿原RK2/MUSCL/MC/HLLC、CFL0.3自然步长，无步数quota、无dt上限；中段严格续算、固定采样及资源观测另验。长程收支预算在任何本轨迹观测前定为可分辨引力交换的2%，独立参考分配0.2%，质量1e-12、零修复及信号/舍入估计比至少100；原Euler的1%门槛不变。独立Newton参考必须读取actual initial／final PWC；名义均匀初态不能代替bitwise-uniform检查，实际两端并非逐位均匀。正负密度增量的二次能量项保守界单列，三阶积分差仍为估计；参考91/91通过不授轨迹端点通过。会话38967在step556／约13214.651 s因系统可用内存护栏退出125；中点fresh65485在step553／约1450.236 s同样中断，均不是物理失败或通过。已闭合mid534可用于分段恢复；分段端点与原不中断／restart配对必须分别标明。原21600 s仅为管理资源cap，不是物理终点；旧partial632.524 s保留未达终点身份。一次不中断0→原终点的资源恢复已在全部重型编译／link实际结束后于2026-10-10 12:49:58 UTC启动，使用8个OpenMP线程；其自身实际中点fresh仍须待Hydro终端后启动，原严格比较待验。43200 s是管理时限，原科学预算、CPU执行物和严格比较正文保持，本次已核对全部重型NVCC及生产link实际结束后启动。预算不足或终点未达即保持缺口，不能事后缩短终点。
+RZ有限时段及后续长程共用原冻结 `GravityBox`：均匀IdealGas全环盒、`r=[0,1e11]`、`z=[-5e10,5e10]`、256根格、反射绝热物质壁、isolated自场，`rho0=1e-7`、`T0=1e4`、共享CGS G，RK2／MUSCL／MC／HLLC与CFL0.3。原完整终点为424745.2560858262 s／5次声穿越，无步数quota或dt上限；原预算为可分辨引力交换的2%、参考不确定性0.2%、质量1e-12、零修复及信号／舍入估计比至少100，原Euler的1%不变。现有1.25及2.5次声穿越保存状态已经按actual initial／final PWC独立Newton参考满足这些预算；参考91/91与有限时段结果均不代签完整终点。按2026-10-10用户授权，本轮停止重复primary，自身fresh不启动，原完整终点及其长程严格续算转入后续统一验证与执行优化。后续先讨论串行环边界、精确缓存及共享执行成本；方案验收后再沿原合同完成不中断轨迹与其自身fresh，不以两次分段恢复替代严格对照。近原点非均匀网格／AMR重设计仍属O10独立讨论。原资源中断、时限及启动过程见[历史记录](archive/compute-studio/ExecutionHistory.zh-CN.md#rz有限时段封包授权前的长程状态2026-10-10)，处理后状态与身份见[O9账本](../../validation/backend/results/release-closure-20261009/o9-endpoint-ledger-summary.json)。
 
 ### O9.3 可选外部对照
 
@@ -719,7 +721,7 @@ ARCH 配置／默认测试／CI／发布门槛的依赖。外部程序缺失不�
 ### 8.2 覆盖收束清单
 
 既有`ciOwnerMapReview`静态映射与下列工程收束项已接受；勾选仅对应各项限定范围。
-最终CUDA执行身份／耗时、production producer和干净runner结果沿未勾选项结算。
+最终CUDA执行身份／耗时及production producer沿未勾选项结算。最新用户要求不新增全量重测；本地环境检查沿原cache完成，冷缓存／干净runner及远端CI保持其实际未测身份，不据此重新安排68／749／374／72。
 main PR仍是远端CI的触发条件，本分支本地验收与远端运行结果分别记录。
 
 - [ ] 在已接受映射上补齐最终CUDA／production执行身份与实测耗时，汇总已有CPU／Tooling／Studio结果；
@@ -739,10 +741,10 @@ main PR仍是远端CI的触发条件，本分支本地验收与远端运行结�
   科学预算、物理开关和必需执行范围保持原要求。
 - [x] 正确性检查沿既有常规CI执行；正式性能比较、长时轨迹、大型网络规模扫描和外部软件比较
   保持手动出口，各自按实际结果验收。
-- [ ] 静态外部依赖核对已完成；待最终revision在现有干净runner实际配置／构建／必需测试。
+- [ ] 静态外部依赖核对已完成；本地白名单环境的既有cache配置／ARCH构建与配置owner已验。完整干净runner／冷缓存未测，按最新范围不另开全量轮次。
   环境仅含ARCH所需工具／库，FLASH与GPU hosted依赖均非必需。
-- [ ] 已收束真实重复执行并同步双语测试／工作流说明；待最终CUDA／production与干净runner结果齐备后，
-  沿同一表补齐最终覆盖、实测耗时及未测限制。
+- [ ] 已收束真实重复执行并同步双语测试／工作流说明；待最终CUDA／production结果齐备后，
+  沿同一表补齐最终覆盖、实测耗时及未测限制；完整干净runner／冷缓存与main PR远端结果按真实取得范围记录。
 
 阶段内可以临时增加有针对性的诊断，但阶段交付必须完成本清单的覆盖回收。
 是否收束以独有证据和耗时为准，不以减少文件数或把许多测试藏进一个名称为准。

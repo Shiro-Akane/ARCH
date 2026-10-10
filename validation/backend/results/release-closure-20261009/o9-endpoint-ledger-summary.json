@@ -1,7 +1,7 @@
 {
   "schema": "arch-processed-validation-v1",
   "status": "PASS_OBSERVATIONAL_TOOLING_ONLY",
-  "recorded_utc": "2026-10-10T01:35:16.260018+00:00",
+  "recorded_utc": "2026-10-10T14:28:07.813837+00:00",
   "baseline_commit": "e69a859705da0efc0c7abad64c8949f9e4934951",
   "source_sha256": {
     "validation/gravity/curved/verify_coupled.py": "2990baeab376e9706d36c930e94c57cc84dc76914ea262762dfbf7eeb2343776",
@@ -527,6 +527,108 @@
       "raw_data_tracked": false
     },
     "o9_fully_accepted": false,
-    "raw_data_tracked": false
+    "raw_data_tracked": false,
+    "current_RZ_scope": "See rz_finite_time_scope_20261010: finite-state original-budget checks accepted, original full trajectory+own strictfresh deferred by user; prior status above records earlier pending scope."
+  },
+  "rz_finite_time_scope_20261010": {
+    "status": "PARTIAL_OBSERVED_STATES_WITHIN_ORIGINAL_BUDGETS",
+    "contract_sha256": "95b8850ed7a57df1adba0128aad23dc378a9b9d47be995e0f62693899f336bd1",
+    "parameter_sha256": "b0da69f37e0dcc2cc4d4912b0780add441233d73c7aff2fd45ed1b3e6ae86d13",
+    "reference_script_sha256": "6da18835a86a0cdc550387976f5627c57156b85016e380d3628ee8c3271cfb68",
+    "diagnostic_script_sha256": "be0a9c56e3fa81f5ac5dea78c4a59a2d521f854ff5b1c210b57858702ec7fa3a",
+    "original_full_endpoint": 424745.2560858262,
+    "endpoint_reached": false,
+    "observed_endpoint": 212372.6280429131,
+    "observed_acoustic_crossings": 2.5,
+    "original_budgets": {
+      "physical_budget": 0.02,
+      "reference_budget": 0.002,
+      "mass_budget": 1e-12,
+      "signal_ratio": 100.0
+    },
+    "original_exit_code": 125,
+    "terminal_repair_report_available": false,
+    "full_O9_long_scientific_PASS": false,
+    "strict_endpoint_restart_comparison_completed": false,
+    "limitations": [
+      "Original existing source functions and original budgets; no new simulation, no changed input/threshold and no fabricated terminal repair report.",
+      "Checkpoint zero repairs covers stored accepted state through step534 only. Original run was resource-interrupted, not normal completion.",
+      "Quadrature/roundoff uncertainties are estimates, not a strict certificate or proof of unobserved future evolution.",
+      "Does not qualify current CUDA isolated controller, full five-crossing endpoint, or final fresh evolution equivalence."
+    ],
+    "wall_seconds": 41.89651364499878,
+    "processed_report_sha256": "bc84c2fab51f91d3b3d21ffa7f1afcae13ce284007d94432e406810e10600091",
+    "samples": [
+      {
+        "time": 0.0,
+        "sha256": "01f5511a45f6867ec1edd8f165f89b354a79e8b2e3792013e4a0df830ba4c8d4",
+        "cells": 256,
+        "mass_relative_error": 0.0,
+        "normalized_energy_with_uncertainties": null,
+        "normalized_reference_uncertainty": null,
+        "signal_to_roundoff": 0.0,
+        "gates": {
+          "mass": true,
+          "signal": false,
+          "reference": false,
+          "energy": false
+        },
+        "interpretation": "Baseline only: exchange scale is zero, so nonzero exchange gates are not applicable at t=0."
+      },
+      {
+        "time": 106186.31402145655,
+        "sha256": "9309784b66cc914ae5fc9486c30e4d664d13ac5d10393d083ec7c4eac8015988",
+        "cells": 256,
+        "mass_relative_error": 8.715457263599505e-17,
+        "normalized_energy_with_uncertainties": 0.0009252464009594333,
+        "normalized_reference_uncertainty": 0.00020209205879767305,
+        "signal_to_roundoff": 160014.8340271109,
+        "gates": {
+          "mass": true,
+          "signal": true,
+          "reference": true,
+          "energy": true
+        }
+      },
+      {
+        "time": 212372.6280429131,
+        "sha256": "f1b16087fd7f5fb47edae1e07a81a6f6d3a751a32555983c904b0143d688fe1e",
+        "cells": 256,
+        "mass_relative_error": 1.7089131889410794e-17,
+        "normalized_energy_with_uncertainties": 0.001422657333565233,
+        "normalized_reference_uncertainty": 0.0004906522231395673,
+        "signal_to_roundoff": 269702.58648760204,
+        "gates": {
+          "mass": true,
+          "signal": true,
+          "reference": true,
+          "energy": true
+        }
+      }
+    ],
+    "checkpoint": {
+      "sha256": "c1e7a4d726f4c38a39c77b60cedeca3e1c5f94f9002f77b436a5b3205263b90a",
+      "step": 534,
+      "time": 212372.6280429131,
+      "resume_after_regrid": 1,
+      "stored_repair_values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "zero_stored_repairs": true
+    },
+    "root_scope": "Accepted finite observed states under original budgets; full five-crossing trajectory and its own long strict fresh deferred by explicit user authorization. No CUDA or future-evolution inference.",
+    "DPS_review": "Independent read-only claim-boundary review accepted; Root owns scientific acceptance.",
+    "raw_uploaded": false
   }
 }
