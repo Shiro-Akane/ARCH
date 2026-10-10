@@ -19,6 +19,7 @@ import ctypes
 from dataclasses import dataclass
 import errno
 import os
+import select
 import math
 from pathlib import Path
 import signal
@@ -329,6 +330,150 @@ def owned_rss_kib(descendants):
     return total
 
 
+class ProcessSamplesObservation:
+    """Optional per-process rows from the existing pinned descendant owner.
+
+    Reads are bracketed by PID/start-time checks, not an atomic process snapshot.
+    Exited/reused identities may be skipped. Missing live data remains explicit;
+    neither a complete finite record nor stable samples prove leak freedom.
+    """
+
+    def __init__(self, path, seconds, started):
+        if not math.isfinite(seconds) or seconds <= 0:
+            raise ValueError('process sampling interval must be finite and positive')
+        self.seconds, self.started, self.next_due = seconds, started, started
+        self.samples = self.rows = self.valid_rows = self.missing = self.skipped = 0
+        self.peak_rss_kib = self.peak_fd_count = None
+        self.complete = False
+        self.write_error = None
+        self.stream = Path(path).open('x', encoding='utf-8', newline='')
+        self.writer = csv.writer(self.stream, delimiter='\t', lineterminator='\n')
+        try:
+            self.writer.writerow(('elapsed_seconds', 'pid', 'start_time', 'parent',
+                                  'rss_kib', 'fd_count', 'comm', 'status'))
+            self.stream.flush()
+        except BaseException:
+            self.stream.close()
+            raise
+
+    @staticmethod
+    def _has_exited(descriptor):
+        # The existing pidfd pins the original identity even after PID reuse.
+        try:
+            poller = select.poll()
+            poller.register(descriptor, select.POLLIN)
+            return any(event & (select.POLLIN | select.POLLHUP)
+                       for _, event in poller.poll(0))
+        except (OSError, ValueError):
+            return False  # Unknown liveness is missing evidence, not an exit.
+
+    @staticmethod
+    def _process_values(pid):
+        rss = descriptors = command = None
+        missing = []
+        try:
+            lines = [line.split() for line in Path(f'/proc/{pid}/status').read_text().splitlines()
+                     if line.startswith('VmRSS:')]
+            if len(lines) != 1 or len(lines[0]) != 3 or lines[0][2] != 'kB' \
+                    or not lines[0][1].isdecimal():
+                raise ValueError('VmRSS unavailable')
+            rss = int(lines[0][1])
+        except (OSError, ValueError):
+            missing.append('rss')
+        try:
+            with os.scandir(f'/proc/{pid}/fd') as entries:
+                descriptors = sum(1 for _ in entries)
+        except OSError:
+            missing.append('fd')
+        try:
+            command = Path(f'/proc/{pid}/comm').read_text().rstrip('\n')
+            command = command.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')[:256]
+            if not command:
+                raise ValueError('comm unavailable')
+        except (OSError, ValueError):
+            command = None
+            missing.append('comm')
+        return rss, descriptors, command, missing
+
+    def _row(self, elapsed, pid, start_time, parent, rss, descriptors, command, missing):
+        if missing:
+            self.missing += 1
+        try:
+            self.writer.writerow((f'{elapsed:.6f}', pid, start_time, parent,
+                                  '' if rss is None else rss,
+                                  '' if descriptors is None else descriptors,
+                                  '' if command is None else command,
+                                  'missing:' + ','.join(missing) if missing else 'ok'))
+        except (OSError, ValueError) as error:
+            self.write_error = type(error).__name__
+            return
+        self.rows += 1
+        if not missing:
+            self.valid_rows += 1
+            self.peak_rss_kib = rss if self.peak_rss_kib is None else max(self.peak_rss_kib, rss)
+            self.peak_fd_count = (descriptors if self.peak_fd_count is None
+                                  else max(self.peak_fd_count, descriptors))
+
+    def sample(self, descendants):
+        now = time.monotonic()
+        if now < self.next_due or self.write_error is not None:
+            return
+        self.next_due = now + self.seconds
+        self.samples += 1
+        elapsed = now - self.started
+        for pid, (start_time, descriptor) in descendants.owned.items():
+            before = process_identity(pid)
+            if before is None:
+                if self._has_exited(descriptor):
+                    self.skipped += 1
+                else:
+                    self._row(elapsed, pid, start_time, '', None, None, None, ['identity'])
+                if self.write_error is not None:
+                    break
+                continue
+            if before.pid != pid or before.start_time != start_time or before.state in ('Z', 'X'):
+                self.skipped += 1
+                continue
+            rss, descriptors, command, missing = self._process_values(pid)
+            after = process_identity(pid)
+            if after is None:
+                if self._has_exited(descriptor):
+                    self.skipped += 1
+                    continue
+                self._row(elapsed, pid, start_time, '', None, None, None, ['identity'])
+            elif after.pid != pid or after.start_time != start_time or after.state in ('Z', 'X'):
+                self.skipped += 1
+                continue
+            else:
+                self._row(elapsed, pid, start_time, after.parent, rss, descriptors, command, missing)
+            if self.write_error is not None:
+                break
+        try:
+            self.stream.flush()
+        except (OSError, ValueError) as error:
+            self.write_error = type(error).__name__
+
+    def close(self, monitor_complete=False):
+        if self.stream.closed:
+            return
+        self.complete = (monitor_complete and self.valid_rows > 0
+                         and self.missing == 0 and self.write_error is None)
+        try:
+            self.stream.close()
+        except (OSError, ValueError) as error:
+            self.write_error = type(error).__name__
+            self.complete = False
+
+    def summary(self):
+        return ('PROCESS_SAMPLES_OBSERVATION scope=owned_descendants '
+                'phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False '
+                f'interval_seconds={self.seconds} samples={self.samples} rows={self.rows} '
+                f'valid_rows={self.valid_rows} missing={self.missing} skipped={self.skipped} '
+                f'peak_process_rss_kib={self.peak_rss_kib if self.peak_rss_kib is not None else "missing"} '
+                f'peak_process_fd_count={self.peak_fd_count if self.peak_fd_count is not None else "missing"} '
+                f'write_error={self.write_error or "none"} complete={self.complete}')
+
+
 def pinned_storage_status(root, label):
     """Stat a requested storage root without following a final symlink.
 
@@ -588,6 +733,10 @@ def main():
     parser.add_argument('--poll-seconds', type=float, default=1.0)
     parser.add_argument('--log', type=Path,
                         help='save child output and the memory summary in a new log file')
+    parser.add_argument('--process-samples', type=Path,
+                        help='optional new TSV of owned process RSS/fd samples; never overwrite')
+    parser.add_argument('--process-sample-seconds', type=float, default=5.,
+                        help='positive finite process sampling interval; observed at guard polls')
     parser.add_argument('--gpu-memory-device',
                         help='optional nvidia-smi device index or UUID to observe; not a CUDA_VISIBLE_DEVICES ordinal')
     parser.add_argument('--nvidia-smi', default='nvidia-smi',
@@ -616,6 +765,8 @@ def main():
     if not command or args.min_available_mib <= 0 or args.max_swap_growth_mib < 0 \
             or not math.isfinite(args.poll_seconds) or args.poll_seconds <= 0:
         parser.error('a command, positive headroom/poll interval and nonnegative swap allowance are required')
+    if not math.isfinite(args.process_sample_seconds) or args.process_sample_seconds <= 0:
+        parser.error('--process-sample-seconds must be finite and positive')
     if (not all(math.isfinite(value) and 0 < value <= 100 for value in
                 (args.max_memory_stall_percent, args.max_io_stall_percent))
             or not math.isfinite(args.pressure_seconds) or args.pressure_seconds <= 0):
@@ -672,6 +823,14 @@ def main():
     except (OSError, RuntimeError) as error:
         parser.error(f'cannot establish safe child ownership: {error}')
     log = args.log.open('x', encoding='utf-8') if args.log else None
+    try:
+        process_samples = (ProcessSamplesObservation(args.process_samples,
+                           args.process_sample_seconds, started)
+                           if args.process_samples is not None else None)
+    except (OSError, ValueError) as error:
+        if log:
+            log.close()
+        parser.error(f'cannot establish requested process sampling: {error}')
     process = None
     breached = False
     stop_reason = 'none'
@@ -684,6 +843,8 @@ def main():
         while process.poll() is None:
             descendants.refresh()
             peak_owned_rss = max(peak_owned_rss, owned_rss_kib(descendants))
+            if process_samples:
+                process_samples.sample(descendants)
             available, swap = memory_kib()
             minimum, peak_swap = min(minimum, available), max(peak_swap, swap)
             pressure_reason = pressure.sample() if pressure else None
@@ -752,18 +913,24 @@ def main():
         # cannot be intercepted; external users should stop the guard via TERM.
         for signum in handlers:
             signal.signal(signum, signal.SIG_IGN)
+        cleanup_complete = False
         try:
             # Popen can be interrupted after fork but before assignment. The
             # subreaper still owns that child even without a Popen handle.
             descendants.cleanup(process)
+            cleanup_complete = True
         finally:
             for signum, handler in handlers.items():
                 signal.signal(signum, handler)
+            if process_samples:
+                process_samples.close(monitor_complete=(stop_reason == 'none' and cleanup_complete))
             summary = (f'MEMORY_GUARD_RESULT min_available_kib={minimum} '
                        f'baseline_swap_kib={baseline_swap} peak_swap_kib={peak_swap} '
                        f'guard_stopped={breached} peak_owned_rss_kib={peak_owned_rss} '
                        f'elapsed_seconds={time.monotonic() - started:.3f} stop_reason={stop_reason}')
             print(summary, flush=True)
+            if process_samples:
+                print(process_samples.summary(), flush=True)
             if gpu:
                 print(gpu.summary(), flush=True)
             if pressure:
@@ -774,6 +941,8 @@ def main():
                 print(host_storage.summary(), flush=True)
             if log:
                 log.write(summary + '\n')
+                if process_samples:
+                    log.write(process_samples.summary() + '\n')
                 if gpu:
                     log.write(gpu.summary() + '\n')
                 if pressure:

@@ -1,6 +1,7 @@
 """Linux-only regressions; children sleep and use no meaningful extra RAM."""
 
 import importlib.util
+import csv
 import errno
 import json
 import os
@@ -70,6 +71,104 @@ class SystemPressureTests(unittest.TestCase):
             return 'some avg10=90.0 total=999\nfull avg10=1.0 total=400\n'
         with patch.object(guard.Path, 'read_text', read):
             self.assertEqual(guard.pressure_counters(), (400, 400, 3, 7))
+
+
+class ProcessSamplesObservationTests(unittest.TestCase):
+    def observation(self, path, seconds=5.):
+        result = guard.ProcessSamplesObservation(path, seconds, 0.)
+        self.addCleanup(result.close)
+        return result
+
+    def rows(self, path):
+        with path.open(newline='') as stream:
+            return list(csv.DictReader(stream, delimiter='\t'))
+
+    def test_interval_rows_are_flushed_and_not_resampled_before_due(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'samples.tsv'
+            observer = self.observation(path)
+            owner = SimpleNamespace(owned={42: (100, 7)})
+            identity = guard.ProcessIdentity(42, 9, 100, 'S')
+            with patch.object(guard, 'process_identity', return_value=identity), \
+                    patch.object(observer, '_process_values', return_value=(12, 3, 'child', [])) as read, \
+                    patch.object(guard.time, 'monotonic', side_effect=(0., 4., 5.)):
+                observer.sample(owner)
+                self.assertEqual(len(self.rows(path)), 1)  # Read before close: flush is observable.
+                observer.sample(owner)
+                self.assertEqual(read.call_count, 1)
+                observer.sample(owner)
+            self.assertEqual(len(self.rows(path)), 2)
+            observer.close(monitor_complete=True)
+            self.assertTrue(observer.complete)
+
+    def test_pid_reuse_before_or_after_field_read_discards_the_row(self):
+        old = guard.ProcessIdentity(42, 9, 100, 'S')
+        reused = guard.ProcessIdentity(42, 9, 101, 'S')
+        with tempfile.TemporaryDirectory() as directory:
+            for name, identities, read_count in (('before', [reused], 0),
+                                                  ('after', [old, reused], 1)):
+                with self.subTest(name=name):
+                    path = Path(directory) / f'{name}.tsv'
+                    observer = self.observation(path)
+                    with patch.object(guard, 'process_identity', side_effect=identities), \
+                            patch.object(observer, '_process_values', return_value=(12, 3, 'child', [])) as read:
+                        observer.sample(SimpleNamespace(owned={42: (100, 7)}))
+                    self.assertEqual(read.call_count, read_count)
+                    self.assertEqual(self.rows(path), [])
+                    self.assertEqual(observer.skipped, 1)
+                    observer.close(monitor_complete=True)
+                    self.assertFalse(observer.complete)
+
+    def test_live_missing_identity_or_counter_is_explicit_and_incomplete(self):
+        identity = guard.ProcessIdentity(42, 9, 100, 'S')
+        with tempfile.TemporaryDirectory() as directory:
+            for name, known in (('identity', None), ('rss', identity)):
+                with self.subTest(name=name):
+                    path = Path(directory) / f'{name}.tsv'
+                    observer = self.observation(path)
+                    with patch.object(guard, 'process_identity', return_value=known), \
+                            patch.object(observer, '_has_exited', return_value=False), \
+                            patch.object(observer, '_process_values', return_value=(None, 3, 'child', ['rss'])):
+                        observer.sample(SimpleNamespace(owned={42: (100, 7)}))
+                    row, = self.rows(path)
+                    self.assertEqual(row['rss_kib'], '')
+                    self.assertEqual(row['status'], 'missing:' + name)
+                    self.assertEqual(observer.missing, 1)
+                    observer.close(monitor_complete=True)
+                    self.assertFalse(observer.complete)
+                    self.assertIn('missing=1', observer.summary())
+
+    def test_verified_exit_is_skipped_without_a_zero_or_missing_row(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'samples.tsv'
+            observer = self.observation(path)
+            with patch.object(guard, 'process_identity', return_value=None), \
+                    patch.object(observer, '_has_exited', return_value=True):
+                observer.sample(SimpleNamespace(owned={42: (100, 7)}))
+            self.assertEqual(self.rows(path), [])
+            self.assertEqual(observer.skipped, 1)
+            self.assertEqual(observer.missing, 0)
+
+    def test_unreadable_proc_fields_never_turn_into_zero(self):
+        def read(path):
+            if str(path).endswith('/status'):
+                return 'Name:\tchild\n'  # No VmRSS, not VmRSS=0.
+            return 'child\n'
+        with patch.object(guard.Path, 'read_text', read), \
+                patch.object(guard.os, 'scandir', side_effect=PermissionError('FD_UNAVAILABLE')):
+            rss, descriptors, command, missing = guard.ProcessSamplesObservation._process_values(42)
+        self.assertIsNone(rss)
+        self.assertIsNone(descriptors)
+        self.assertEqual(command, 'child')
+        self.assertEqual(missing, ['rss', 'fd'])
+
+    def test_invalid_interval_refuses_before_creating_the_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for index, value in enumerate((0., -1., float('nan'), float('inf'))):
+                path = Path(directory) / f'{index}.tsv'
+                with self.subTest(value=value), self.assertRaises(ValueError):
+                    guard.ProcessSamplesObservation(path, value, 0.)
+                self.assertFalse(path.exists())
 
 
 class GpuMemoryObservationTests(unittest.TestCase):
@@ -638,6 +737,69 @@ class MemoryGuardTests(unittest.TestCase):
         self.assertNotIn('HOST_STORAGE_OBSERVATION', output)
 
 
+    def test_real_child_rss_fd_rows_survive_command_failure(self):
+        # The child waits for two flushed rows, avoiding scheduler-speed assumptions.
+        child = r"""
+import csv, json, os, pathlib, sys, time
+files = [open(os.devnull) for _ in range(4)]
+pathlib.Path(sys.argv[1]).write_text(json.dumps({
+    'pid': os.getpid(),
+    'start': int(pathlib.Path('/proc/self/stat').read_text().rsplit(')', 1)[1].split()[19])}))
+deadline = time.monotonic() + 4
+while time.monotonic() < deadline:
+    with pathlib.Path(sys.argv[2]).open(newline='') as stream:
+        rows = list(csv.DictReader(stream, delimiter='\t'))
+    ready = [row for row in rows if row.get('pid') == str(os.getpid())
+             and row.get('status') == 'ok' and (row.get('fd_count') or '').isdigit()
+             and int(row['fd_count']) >= 7]
+    if len(ready) >= 2:
+        raise SystemExit(17)
+    time.sleep(.01)
+raise SystemExit(18)
+"""
+        with tempfile.TemporaryDirectory(prefix='arch-process-samples-') as directory:
+            root = Path(directory)
+            marker, samples = root / 'child.json', root / 'samples.tsv'
+            result = subprocess.run(
+                [sys.executable, '-c', RUNNER, str(TOOL), str(marker), 'normal',
+                 '--min-available-mib', '1', '--max-swap-growth-mib', '0',
+                 '--poll-seconds', '.01', '--process-samples', str(samples),
+                 '--process-sample-seconds', '.02', '--',
+                 sys.executable, '-c', child, str(marker), str(samples)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=8)
+            self.assertEqual(result.returncode, 17, result.stdout + result.stderr)
+            record = json.loads(marker.read_text())
+            with samples.open(newline='') as stream:
+                rows = list(csv.DictReader(stream, delimiter='\t'))
+            actual = [row for row in rows if row['pid'] == str(record['pid']) and row['status'] == 'ok']
+            self.assertGreaterEqual(sum(int(row['fd_count']) >= 7 for row in actual), 2)
+            for row in actual:
+                self.assertEqual(int(row['start_time']), record['start'])
+                self.assertGreater(int(row['rss_kib']), 0)
+                self.assertTrue(row['comm'])
+            self.assertEqual(sorted(float(row['elapsed_seconds']) for row in actual),
+                             [float(row['elapsed_seconds']) for row in actual])
+            self.assertIn('PROCESS_SAMPLES_OBSERVATION scope=owned_descendants', result.stdout)
+            self.assertIn('leak_freedom_proven=False', result.stdout)
+            self.assertIsNone(guard.process_identity(record['pid']))
+
+    def test_process_samples_survive_guard_stop_without_changing_tree_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'samples.tsv'
+            code, output = self.run_tree('breach', extra_args=(
+                '--process-samples', str(path), '--process-sample-seconds', '.01'))
+            self.assertEqual(code, 125, output)
+            self.assertTrue(path.read_text().startswith('elapsed_seconds\tpid\t'))
+            summaries = [line for line in output.splitlines() if line.startswith('PROCESS_SAMPLES_OBSERVATION')]
+            self.assertEqual(len(summaries), 1)
+            self.assertIn('complete=False', summaries[0])
+
+    def test_default_run_has_no_process_sample_summary(self):
+        code, output = self.run_tree('normal', '0')
+        self.assertEqual(code, 0, output)
+        self.assertNotIn('PROCESS_SAMPLES_OBSERVATION', output)
+
+
 @unittest.skipUnless(sys.platform == 'linux', 'Linux guard required')
 class StoragePreflightTests(unittest.TestCase):
     """A refused storage preflight must never launch the child process."""
@@ -714,6 +876,21 @@ class StoragePreflightTests(unittest.TestCase):
         self.assert_refused_without_child(
             ('--host-storage-root', tempfile.gettempdir(), '--min-host-free-mib', '1000000000'),
             'already below the configured minimum before launch')
+
+
+    def test_existing_process_samples_file_refuses_without_overwrite_or_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'samples.tsv'
+            path.write_text('KEEP_EXISTING_SAMPLES\n')
+            self.assert_refused_without_child(('--process-samples', str(path)),
+                                               'cannot establish requested process sampling')
+            self.assertEqual(path.read_text(), 'KEEP_EXISTING_SAMPLES\n')
+
+    def test_invalid_process_sample_interval_refuses_without_child(self):
+        for value in ('0', '-1', 'nan', 'inf'):
+            with self.subTest(value=value):
+                self.assert_refused_without_child((f'--process-sample-seconds={value}',),
+                                                   'must be finite and positive')
 
 
 if __name__ == '__main__':

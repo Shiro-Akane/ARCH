@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "status": "PASS_ORIGINAL_TOOLING_OWNER_ONLY",
+  "utc": "2026-10-09T23:57:10.289488+00:00",
+  "scope": "Existing coupled endpoint observer: every plot checked; HDF5 physicaltime ordering; original short science gates preserved",
+  "sources": {
+    "validation/gravity/curved/verify_coupled.py": "ec676a5eee679de100cc058efe9d3c340ca192dc05c8cdadd946f3228e08e5df",
+    "tests/tooling/microphysics/test_microphysics_coupling.py": "1959cde29820e954a56efa0cfd323bd0658296d8e2e4056bfa214f6ecf0ab2ad"
+  },
+  "test_command": "python3 tests/tooling/microphysics/test_microphysics_coupling.py -v",
+  "tests": 19,
+  "test_seconds": 0.136,
+  "skips": 0,
+  "new_CTest_targets": 0,
+  "new_workflows": 0,
+  "DPS": {
+    "worker_seconds": 180.03,
+    "termination": "timeout after complete candidate/report; no retry",
+    "usage_tokens": null,
+    "estimated_cost_usd": null,
+    "known_scope_attempt": "git status/log attempted outsideGit capsule despite prohibition; ARCH not inspected or changed",
+    "root_integration_change": "new test directory attribute name preserves unittest.TestCase.run"
+  },
+  "new_simulations": 0,
+  "raw_H5_uploaded": false,
+  "long_science_or_release_acceptance": false
+}

@@ -6,11 +6,17 @@ from types import SimpleNamespace
 import unittest
 import numpy as np
 from unittest.mock import patch
+import h5py
+import json
+import tempfile
 
 ROOT=Path(__file__).resolve().parents[3]
 spec=importlib.util.spec_from_file_location('microphysics_coupling',ROOT/'validation/backend/verify_microphysics_coupling.py')
 module=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
+coupled_spec=importlib.util.spec_from_file_location('coupled_endpoint',ROOT/'validation/gravity/curved/verify_coupled.py')
+coupled=importlib.util.module_from_spec(coupled_spec)
+coupled_spec.loader.exec_module(coupled)
 
 
 class CoupledMicrophysicsTests(unittest.TestCase):
@@ -116,6 +122,154 @@ class CoupledMicrophysicsTests(unittest.TestCase):
         self.assertEqual(binding['burn_energy_basis'],'binding_energy')
         self.assertEqual(binding['burn_energy_weights'],binding['arrays']['BION'])
         self.assertEqual(binding['burn_energy_conversion'],binding['energy_conversion'])
+
+
+class CoupledEndpointObserverTests(unittest.TestCase):
+    """Endpoint-mode audit semantics for ordered multi-sample plot runs."""
+
+    def setUp(self):
+        self.temporary=tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.directory=Path(self.temporary.name)/'run'
+
+    def write_plot(self,name,time,level_counts,*,e_nuc=1.5,nonfinite=None,nonpositive=False):
+        self.directory.mkdir(parents=True,exist_ok=True)
+        levels=np.concatenate([np.full(count,level,dtype=np.int32) for level,count in level_counts])
+        values={'DENS':1e7,'PRES':1e24,'TEMP':1e9,'ENER':-1e15,'ENUC':e_nuc,
+                'GPOT':-1e19,'GACX':0.,'GACY':0.,'c12':.5,'o16':.5}
+        with h5py.File(self.directory/name,'w') as handle:
+            handle.attrs['time']=float(time)
+            handle.attrs['dim']=2
+            handle.create_dataset('Grid/level',data=levels)
+            for field,value in values.items():
+                data=np.full(levels.shape,value)
+                if field==nonfinite:
+                    data[0]=np.nan
+                if nonpositive and field in ('DENS','TEMP'):
+                    data[0]=0.
+                handle.create_dataset(f'Data/{field}',data=data)
+
+    def write_driver(self,steps=2):
+        self.directory.mkdir(parents=True,exist_ok=True)
+        rows=''.join('%d %d 0.5 1e-3 2e-3 1e-6 0.25\n'%(step,step) for step in range(1,steps+1))
+        (self.directory/'run_log.dat').write_text('Simulation Done. Total Steps: %d\n'%steps+rows)
+        (self.directory/'state_repairs.txt').write_text('events=0\n')
+        (self.directory/'gravity_solves.tsv').write_text(
+            'iteration\tresidual\ttarget\titerations\n0\t1e-12\t1e-10\t4\n')
+        (self.directory/'run_regrid.tsv').write_text('step\ttopology_changed\n1\t1\n')
+
+    def test_endpoint_accepts_three_samples_in_hdf5_time_order(self):
+        # Filenames oppose the physical order, so only stored HDF5 time can order these.
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',30.,[('0',4),('1',8)])
+        self.write_plot('run_plt_00020.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00030.h5',20.,[('0',6),('1',6)])
+        result=coupled.verify('ordered',self.directory,None,expected_time=30.)
+        self.assertEqual(result['initial']['time_seconds'],10.)
+        self.assertEqual(result['final']['time_seconds'],30.)
+        self.assertEqual(result['requested_endpoint'],30.)
+        self.assertEqual(result['steps'],2)
+        self.assertEqual(result['state_repairs'],0)
+        self.assertEqual(len(result['samples']),1)
+        self.assertEqual(result['samples'][0]['time_seconds'],20.)
+        self.assertEqual(result['samples'][0]['leaves_by_level'],{'0':6,'1':6})
+        self.assertEqual(result['samples'][0]['field_min_max']['ENUC'],[1.5,1.5])
+        self.assertEqual(result['final']['field_min_max']['DENS'],[1e7,1e7])
+
+    def test_short_mode_still_rejects_three_plots(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00020.h5',20.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00030.h5',30.,[('0',8),('1',4)])
+        with self.assertRaisesRegex(ValueError,'initial and final'):
+            coupled.verify('short',self.directory,2)
+
+    def test_endpoint_rejects_duplicate_or_nonfinite_plot_times(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00020.h5',20.,[('0',6),('1',6)])
+        self.write_plot('run_plt_00030.h5',20.,[('0',6),('1',6)])
+        with self.assertRaisesRegex(ValueError,'strictly increasing'):
+            coupled.verify('duplicate',self.directory,None,expected_time=20.)
+        self.write_plot('run_plt_00030.h5',float('nan'),[('0',6),('1',6)])
+        with self.assertRaisesRegex(ValueError,'nonfinite'):
+            coupled.verify('nonfinite',self.directory,None,expected_time=20.)
+
+    def test_endpoint_must_match_the_latest_physical_output(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00020.h5',20.,[('0',6),('1',6)])
+        # An earlier sample that matches the target must not satisfy the run while
+        # a later physical output exists.
+        with self.assertRaisesRegex(ValueError,'endpoint was not reached'):
+            coupled.verify('earlier',self.directory,None,expected_time=10.)
+        with self.assertRaisesRegex(ValueError,'endpoint was not reached'):
+            coupled.verify('unreached',self.directory,None,expected_time=5.)
+
+    def test_malformed_intermediate_plot_is_rejected(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00030.h5',30.,[('0',6),('1',6)])
+        self.write_plot('run_plt_00020.h5',20.,[('0',6),('1',6)],nonfinite='TEMP')
+        with self.assertRaisesRegex(ValueError,'Nonfinite TEMP'):
+            coupled.verify('nonfinite',self.directory,None,expected_time=30.)
+        self.write_plot('run_plt_00020.h5',20.,[('0',6),('1',6)],nonpositive=True)
+        with self.assertRaisesRegex(ValueError,'Nonpositive physical state'):
+            coupled.verify('nonpositive',self.directory,None,expected_time=30.)
+
+    def test_intermediate_samples_need_no_enuc_activity_or_mixing(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00020.h5',20.,[('0',12)],e_nuc=0.)
+        self.write_plot('run_plt_00030.h5',30.,[('0',6),('1',6)])
+        result=coupled.verify('inactive',self.directory,None,expected_time=30.)
+        self.assertEqual(result['samples'][0]['leaves_by_level'],{'0':12})
+        self.assertEqual(result['samples'][0]['field_min_max']['ENUC'],[0.,0.])
+        self.assertEqual(result['final']['field_min_max']['ENUC'][1],1.5)
+
+    def test_two_plot_endpoint_call_keeps_original_keys_and_tolerance(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00020.h5',30.0000000005,[('0',6),('1',6)])
+        result=coupled.verify('two',self.directory,None,expected_time=30.)
+        self.assertEqual(result['samples'],[])
+        self.assertEqual(result['initial']['time_seconds'],10.)
+        self.assertAlmostEqual(result['final']['time_seconds'],30.0000000005)
+        for key in ('directory','steps','requested_endpoint','initial','final','state_repairs',
+                    'gravity_solves','maximum_residual_over_target','maximum_iterations',
+                    'minimum_diffusion_dt_seconds','topology_changes'):
+            self.assertIn(key,result)
+        with self.assertRaisesRegex(ValueError,'endpoint was not reached'):
+            coupled.verify('outside',self.directory,None,expected_time=30.1)
+
+    def test_cli_requires_a_run_and_rejects_duplicate_labels(self):
+        with patch.object(sys,'argv',['verify_coupled.py']):
+            with self.assertRaises(SystemExit) as failure:
+                coupled.main()
+        self.assertEqual(failure.exception.code,2)
+        with patch.object(sys,'argv',['verify_coupled.py','--run','same:first:2',
+                                      '--endpoint-run','same:second:20.']):
+            with self.assertRaises(SystemExit) as failure:
+                coupled.main()
+        self.assertEqual(failure.exception.code,2)
+        with patch.object(sys,'argv',['verify_coupled.py','--run','broken','--run','other:a:1']):
+            with self.assertRaises(SystemExit) as failure:
+                coupled.main()
+        self.assertEqual(failure.exception.code,2)
+
+    def test_endpoint_cli_reports_samples(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',30.,[('0',4),('1',8)])
+        self.write_plot('run_plt_00020.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00030.h5',20.,[('0',6),('1',6)])
+        target=Path(self.temporary.name)/'report.json'
+        with patch.object(sys,'argv',['verify_coupled.py','--endpoint-run',
+                                      f'ordered:{self.directory}:30.','--output',str(target)]):
+            coupled.main()
+        report=json.loads(target.read_text())
+        self.assertEqual(sorted(report),['ordered'])
+        self.assertEqual(report['ordered']['requested_endpoint'],30.)
+        self.assertEqual([sample['time_seconds'] for sample in report['ordered']['samples']],[20.])
 
 
 if __name__=='__main__': unittest.main()

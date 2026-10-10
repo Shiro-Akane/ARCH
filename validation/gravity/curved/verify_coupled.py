@@ -1,7 +1,9 @@
-"""Audit existing P11 CPU four-module AMR runs without launching simulations.
+"""Audit existing CPU four-module AMR runs without launching simulations.
 
 Usage: verify_coupled.py --run label:directory:expected_steps [--run ...]
-The check reads the actual Driver outputs, not a private case implementation.
+       verify_coupled.py --endpoint-run label:directory:physical_time [--endpoint-run ...]
+At least one run of either form is required. The check reads the actual Driver
+outputs, not a private case implementation.
 """
 
 import argparse
@@ -56,9 +58,28 @@ def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time
     elif expected_steps is None or expected_steps < 1:
         raise ValueError(f"{label}: positive expected steps required")
     plots = sorted(directory.glob("*_plt_*.h5"))
-    if len(plots) != 2:
-        raise ValueError(f"{label}: expected initial and final plots")
-    initial, final = [leaf_levels(path) for path in plots]
+    if expected_time is None:
+        if len(plots) != 2:
+            raise ValueError(f"{label}: expected initial and final plots")
+        initial, final = [leaf_levels(path) for path in plots]
+        samples = None
+    else:
+        if len(plots) < 2:
+            raise ValueError(f"{label}: expected at least initial and final plots")
+        # Physical ordering comes from the stored HDF5 time, never filenames.
+        states = [leaf_levels(path) for path in plots]
+        times = [state["time_seconds"] for state in states]
+        if not all(math.isfinite(value) for value in times):
+            raise ValueError(f"{label}: nonfinite plot time")
+        states.sort(key=lambda state: state["time_seconds"])
+        ordered = [state["time_seconds"] for state in states]
+        if any(later <= earlier for earlier, later in zip(ordered, ordered[1:])):
+            raise ValueError(f"{label}: plot times are not unique and strictly increasing")
+        initial, final = states[0], states[-1]
+        samples = [{"time_seconds": state["time_seconds"],
+                    "leaves_by_level": state["leaves_by_level"],
+                    "field_min_max": state["field_min_max"]}
+                   for state in states[1:-1]]
     if expect_mixed:
         if not ("0" in initial["leaves_by_level"] and
                 "1" in initial["leaves_by_level"] and
@@ -115,26 +136,61 @@ def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time
         raise ValueError(f"{label}: no actual AMR refinement")
     if not expect_mixed and any(row["topology_changed"] == "1" for row in regrids):
         raise ValueError(f"{label}: regular grid changed topology")
-    return {"directory": str(directory), "steps": accepted_steps,
-            "requested_endpoint": expected_time,
-            "initial": initial, "final": final, "state_repairs": 0,
-            "gravity_solves": len(solves),
-            "maximum_residual_over_target": max(ratios),
-            "maximum_iterations": max(int(row["iterations"]) for row in solves),
-            "minimum_diffusion_dt_seconds": min(diffusion_dt),
-            "topology_changes": sum(row["topology_changed"] == "1" for row in regrids)}
+    result = {"directory": str(directory), "steps": accepted_steps,
+              "requested_endpoint": expected_time,
+              "initial": initial, "final": final, "state_repairs": 0,
+              "gravity_solves": len(solves),
+              "maximum_residual_over_target": max(ratios),
+              "maximum_iterations": max(int(row["iterations"]) for row in solves),
+              "minimum_diffusion_dt_seconds": min(diffusion_dt),
+              "topology_changes": sum(row["topology_changed"] == "1" for row in regrids)}
+    if expected_time is not None:
+        result["samples"] = samples
+    return result
+
+
+def split_specification(specification, parameter, parser):
+    """Split label:directory:parameter, reporting malformed command lines."""
+    parts = specification.split(":", 2)
+    if len(parts) != 3:
+        parser.error(f"expected label:directory:{parameter} in {specification!r}")
+    return parts
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", action="append", required=True,
+    parser.add_argument("--run", action="append", default=[],
                         help="label:output-directory:expected-steps")
+    parser.add_argument("--endpoint-run", action="append", default=[],
+                        help="label:output-directory:physical-time-seconds")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    results = {}
+    if not args.run and not args.endpoint_run:
+        parser.error("at least one --run or --endpoint-run is required")
+    jobs = []
+    labels = set()
     for specification in args.run:
-        label, path, steps = specification.split(":", 2)
-        results[label] = verify(label, Path(path), int(steps))
+        label, path, steps = split_specification(specification, "expected-steps", parser)
+        if label in labels:
+            parser.error(f"duplicate run label {label!r}")
+        labels.add(label)
+        try:
+            jobs.append((label, Path(path), int(steps), None))
+        except ValueError:
+            parser.error(f"expected an integer step count in {specification!r}")
+    for specification in args.endpoint_run:
+        label, path, endpoint = split_specification(specification,
+                                                    "physical-time-seconds", parser)
+        if label in labels:
+            parser.error(f"duplicate run label {label!r}")
+        labels.add(label)
+        try:
+            jobs.append((label, Path(path), None, float(endpoint)))
+        except ValueError:
+            parser.error(f"expected a numeric physical time in {specification!r}")
+    results = {}
+    for label, path, steps, endpoint in jobs:
+        results[label] = verify(label, path, steps, expected_time=endpoint)
     report = json.dumps(results, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(report)
