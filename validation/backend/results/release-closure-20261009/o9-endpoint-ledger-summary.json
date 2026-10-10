@@ -1,0 +1,70 @@
+{
+  "schema": "arch-processed-validation-v1",
+  "status": "PASS_OBSERVATIONAL_TOOLING_ONLY",
+  "recorded_utc": "2026-10-10T00:54:08.199487+00:00",
+  "baseline_commit": "1dabd12a48837ce3aebae8b8a55671a19feb8dd4",
+  "source_sha256": {
+    "validation/gravity/curved/verify_coupled.py": "7908023100bff521ade339c329d16d5f370cca6b2a39b746a1ff27a6d4f754ca",
+    "tests/tooling/microphysics/test_microphysics_coupling.py": "6ab206a6049d2db3715dbdcd358eb54bc6bc5775350bd52ef172207162d2250e"
+  },
+  "scope": "Optional actual checkpoint/plot endpoint accounting for existing Cartesian periodic self-gravity plus active burn coupled run; no scientific acceptance thresholds or production algorithm changes.",
+  "original_owner": {
+    "command": "python3 tests/tooling/microphysics/test_microphysics_coupling.py",
+    "passed": 34,
+    "skipped": 0,
+    "seconds": 0.367,
+    "root_executed": true,
+    "new_ctest_targets": 0,
+    "new_workflows": 0
+  },
+  "preserved_byte_exact": [
+    "verify",
+    "leaf_levels",
+    "physical_times_agree",
+    "split_specification",
+    "original CoupledMicrophysicsTests class"
+  ],
+  "coverage": [
+    "Actual stored FP64 fields/units/publication/source identities/real leaf volumes and checkpoint pairing",
+    "Long-double endpoint sums retained as round-trippable decimal strings until delta accounting",
+    "Actual existing nuclear mass energy conversion; gas+self-gravity endpoint energy minus nuclear change",
+    "AMR partition changes allowed with identical source identity and proper species/measures",
+    "CLI ledger plots must resolve to the actual audited run directory plot set; foreign identical publications rejected before reader",
+    "Missing fields, nonfinite data, wrong dtype/units/measure/source identity and CLI misuse rejected"
+  ],
+  "limitations": [
+    "Synthetic small H5 publications and mocked external metrics producer are tooling semantics tests; real long coupled trajectory remains required",
+    "Observations only: no scientific qualification, strict upstream FP64 error certificate or inferred weak-gravity-work accuracy",
+    "Native RZ and complete CUDA long coupled science not granted"
+  ],
+  "review_findings": [
+    {
+      "id": "CLI_LANE_ASSOCIATION",
+      "status": "FIXED",
+      "detail": "Previously matching time and source identity allowed foreign trajectory plots; require audited lane membership before read."
+    },
+    {
+      "id": "SILENT_TEST_PARSER_FALLBACK",
+      "status": "REMOVED",
+      "detail": "Use original runtime.read_parameter_map owner; import failures are not replaced by a second parser."
+    }
+  ],
+  "delegation": {
+    "provider": "DeepSeek real CLI",
+    "logical_task_id": "o9-endpoint-ledger-20261010",
+    "attempts": 2,
+    "first_seconds": 240.02,
+    "sole_repair_seconds": 300.04,
+    "total_worker_seconds": 540.06,
+    "both_timed_out": true,
+    "delivery": "Partial source artifacts independently reviewed and integrated; worker final report/result absent",
+    "root_tokens": null,
+    "worker_tokens": null,
+    "estimated_cost_usd": null,
+    "known_scope_issue": "First attempt read actual checkout/Git beyond isolated packet; no actual checkout writes or heavy work observed. Sole repair command review36 distinct commands and0actual checkout/Git references.",
+    "overlap": "CUDA original-owner diagnosis and CPU next-cohort integration/build; no worker local compile/simulation",
+    "extra_rework": "Root integration plus one independently detected CLI association fix; no third worker attempt",
+    "recommendation": "Retain bounded implementation delegation, narrow completion artifacts, require exact scoped source review; no general speedup inferred."
+  },
+  "raw_data_tracked": false
+}

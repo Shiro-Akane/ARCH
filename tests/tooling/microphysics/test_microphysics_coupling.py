@@ -271,5 +271,374 @@ class CoupledEndpointObserverTests(unittest.TestCase):
         self.assertEqual(report['ordered']['requested_endpoint'],30.)
         self.assertEqual([sample['time_seconds'] for sample in report['ordered']['samples']],[20.])
 
+    def test_ledger_cli_accepts_resolved_plots_from_the_audited_lane(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',30.,[('0',4),('1',8)])
+        self.write_plot('run_plt_00020.h5',10.,[('0',8),('1',4)])
+        initial=self.directory/'run_plt_00020.h5'
+        final=self.directory/'run_plt_00010.h5'
+        alias=Path(self.temporary.name)/'initial-alias.h5'
+        alias.symlink_to(initial)
+        target=Path(self.temporary.name)/'ledger.json'
+        argv=['verify_coupled.py','--endpoint-run',f'ordered:{self.directory}:30.',
+              '--parameters','input.par','--checkpoint-validator','validator',
+              '--ledger-pair','final.chk',str(final),
+              '--ledger-pair','initial.chk',str(alias),'--output',str(target)]
+        def read_sample(_validator,_parameters,_checkpoint,plot):
+            with h5py.File(plot,'r') as handle:
+                return {'time_seconds':float(handle.attrs['time']),'network':'aprox13'}
+        owners=(None,None,lambda _network: {},None)
+        with patch.object(sys,'argv',argv), \
+                patch.object(coupled,'_project_owners',return_value=owners), \
+                patch.object(coupled,'read_ledger_sample',side_effect=read_sample) as reader, \
+                patch.object(coupled,'endpoint_ledger',return_value={}) as endpoint:
+            coupled.main()
+        report=json.loads(target.read_text())['ordered']
+        self.assertEqual([sample['time_seconds'] for sample in
+                          report['scientific_ledger']['samples']],[10.,30.])
+        self.assertEqual(reader.call_count,2)
+        before,after,_data=endpoint.call_args.args
+        self.assertEqual((before['time_seconds'],after['time_seconds']),(10.,30.))
+
+    def test_ledger_cli_rejects_foreign_plots_with_matching_times_and_contents(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
+        self.write_plot('run_plt_00020.h5',30.,[('0',4),('1',8)])
+        foreign=Path(self.temporary.name)/'foreign'
+        foreign.mkdir()
+        for plot in self.directory.glob('*_plt_*.h5'):
+            (foreign/plot.name).write_bytes(plot.read_bytes())
+        argv=['verify_coupled.py','--run',f'audited:{self.directory}:2',
+              '--parameters','input.par','--checkpoint-validator','validator',
+              '--ledger-pair','initial.chk',str(foreign/'run_plt_00010.h5'),
+              '--ledger-pair','final.chk',str(foreign/'run_plt_00020.h5')]
+        with patch.object(sys,'argv',argv), \
+                patch.object(coupled,'_project_owners') as owners, \
+                patch.object(coupled,'read_ledger_sample') as reader:
+            with self.assertRaisesRegex(ValueError,'ledger plot .* was not audited'):
+                coupled.main()
+        owners.assert_not_called()
+        reader.assert_not_called()
+
+
+import hashlib
+
+
+_read_parameter_map=module.runtime.read_parameter_map
+
+
+class LedgerObserverTests(unittest.TestCase):
+    """Observational endpoint-ledger semantics on small synthetic publications.
+
+    The checkpoint-validator binary, the frozen burn-energy reader and the
+    parameter-map helper are mocked here only; the endpoint nuclear-energy
+    helper under test is the real owner loaded by this test module.
+    """
+
+    SPECIES=(('h1',1.,0.5),('he4',2.,1.))
+
+    def setUp(self):
+        self.temporary=tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.directory=Path(self.temporary.name)
+        self.parameters=self.directory/'run.par'
+        self.parameters.write_text(
+            'geometry=cartesian\n'
+            'gravity_type=self\n'
+            'gravity_boundary=periodic\n'
+            'use_burn=true\n'
+            'network_name=aprox13\n'
+            'eos_type=helmholtz\n'
+            'x1l_boundary_type=periodic\n'
+            'x1r_boundary_type=periodic\n'
+            'x2l_boundary_type=periodic\n'
+            'x2r_boundary_type=periodic\n')
+
+    def burn_data(self,*,digest='a'*64,conversion='b'*64,basis='nuclear_mass',
+                  a=None,z=None):
+        return {'arrays':{'AION':list(a) if a else [1.,2.],
+                          'ZION':list(z) if z else [0.5,1.],
+                          'BION':[2.,6.]},
+                'burn_energy_weights':[10.,6.],'burn_energy_conversion':-1.,
+                'burn_energy_basis':basis,'data_sha256':digest,
+                'conversion_sha256':conversion}
+
+    @staticmethod
+    def entry(key,rho,eng,gpot,volume,fractions):
+        return {'key':key,'rho':rho,'eng':eng,'gpot':gpot,'V':volume,'X':list(fractions)}
+
+    def pair(self,tag,time,entries,*,field_dtype=np.float64,measure_dtype=np.float64,
+             field_units=None,raw_config=None,boundary=None,gravity=('self','periodic'),
+             network='aprox13',eos_table='c'*64,reverse=False,plot_time=None):
+        checkpoint=self.directory/f'{tag}.chk.h5'
+        plot=self.directory/f'{tag}.plt.h5'
+        blocks=len(entries)
+        count=len(self.SPECIES)
+        rho=np.array([item['rho'] for item in entries])
+        eng=np.array([item['eng'] for item in entries])
+        gpot=np.array([item['gpot'] for item in entries])
+        volume=np.array([item['V'] for item in entries])
+        keys=[item['key'] for item in entries]
+        levels=np.array([key[0] for key in keys],dtype=np.int32)
+        logicals=[np.array([key[axis] for key in keys],dtype=np.int32) for axis in (1,2,3)]
+        masses=np.array([[item['X'][index] for item in entries]
+                         for index in range(count)]).reshape(count,blocks,1)
+        order=np.arange(blocks)[::-1] if reverse else np.arange(blocks)
+        with h5py.File(checkpoint,'w') as handle:
+            handle.attrs['time']=float(time)
+            handle.attrs['step']=1
+            handle.attrs['dim']=2
+            handle.attrs['geometry']='cartesian'
+            handle.attrs['num_species']=count
+            handle.attrs['cells_per_block']=1
+            handle.attrs['active_network']=network
+            handle.attrs['eos_type']='helmholtz'
+            handle.attrs['eos_table_sha256']=eos_table
+            handle.attrs['boundary_identity']=boundary or (
+                'boundary-v1;callbacks.identity;faces='+'periodic;'*4)
+            handle.attrs['gravity_type']=gravity[0]
+            handle.attrs['gravity_boundary']=gravity[1]
+            handle.attrs['burn_enabled']=1
+            blocks_group=handle.create_group('Blocks')
+            blocks_group.create_dataset('level',data=levels[order])
+            for axis in (1,2,3):
+                blocks_group.create_dataset(f'logical_x{axis}',
+                                            data=logicals[axis-1][order])
+            data=handle.create_group('Data')
+            data.create_dataset('rho',data=rho[order].reshape(blocks,1))
+            data.create_dataset('eng',data=eng[order].reshape(blocks,1))
+            data.create_dataset('rhoX',data=masses[:,order,:])
+            species_group=handle.create_group('Species')
+            species_group.create_dataset('name',data=np.array(
+                [name.encode() for name,_,_ in self.SPECIES]))
+            species_group.create_dataset('A',data=np.array(
+                [value for _,value,_ in self.SPECIES]))
+            species_group.create_dataset('Z',data=np.array(
+                [value for _,_,value in self.SPECIES]))
+        units={'DENS':'g/cm^3','ENER':'erg/cm^3','GPOT':'cm^2/s^2'}
+        if field_units:
+            units.update(field_units)
+        with h5py.File(plot,'w') as handle:
+            handle.attrs['time']=float(time if plot_time is None else plot_time)
+            handle.attrs['dim']=2
+            handle.attrs['geometry']='cartesian'
+            handle.attrs['plot_publication_version']='arch-plot-publication-1'
+            handle.attrs['plot_publication_state']='complete'
+            handle.attrs['plot_identity_state']='recorded'
+            handle.create_dataset('Grid/level',data=levels)
+            native=handle.create_group('NativeGrid')
+            native.attrs['measure_source']='GridMetrics::CellVolume'
+            native.attrs['measure_unit']='cm^2'
+            native.attrs['measure_normalization']='per_unit_transverse_length'
+            native.attrs['native_geometry']='cartesian'
+            for axis in (1,2,3):
+                native.create_dataset(f'logical_x{axis}',data=logicals[axis-1])
+            native.create_dataset('cell_measure',data=volume.astype(measure_dtype))
+            identity=handle.create_group('SourceIdentity')
+            identity.attrs['raw_config_sha256']=raw_config or hashlib.sha256(
+                self.parameters.read_bytes()).hexdigest()
+            identity.attrs['eos_type']='helmholtz'
+            identity.attrs['eos_table_sha256']=eos_table
+            identity.attrs['binary_sha256']='d'*64
+            identity.create_dataset('species_names',data=np.array(
+                [name.encode() for name,_,_ in self.SPECIES]))
+            for name,values in (('DENS',rho),('ENER',eng),('GPOT',gpot)):
+                dataset=handle.create_dataset(
+                    f'Data/{name}',data=values.reshape(blocks,1).astype(field_dtype))
+                dataset.attrs['unit']=units[name]
+        return checkpoint,plot
+
+    def sample(self,checkpoint,plot,*,burn=None,metrics=None):
+        data=burn or self.burn_data()
+        def read_conservation_metrics(validator,checkpoint_path,parameter_file=None):
+            with h5py.File(checkpoint_path,'r') as handle:
+                num_species=int(handle.attrs['num_species'])
+                time=float(handle.attrs['time'])
+            result={'measure':'physical_cell_volume','geometry':'cartesian',
+                    'mass':1.0,'energy':1.0,'rhoX':[1.0]*num_species,
+                    'time':time,'step':1,'blocks':0}
+            if parameter_file is not None:
+                result['parameter_sha256']=hashlib.sha256(
+                    Path(parameter_file).read_bytes()).hexdigest()
+            if metrics:
+                metrics(result)
+            return result
+        owners=(read_conservation_metrics,module.nuclear_energy_delta,
+                lambda name: data,_read_parameter_map)
+        with patch.object(coupled,'_project_owners',return_value=owners):
+            return coupled.read_ledger_sample(self.directory/'validator',
+                                             self.parameters,checkpoint,plot)
+
+    def endpoint(self,before,after,data=None):
+        owners=(None,module.nuclear_energy_delta,None,None)
+        with patch.object(coupled,'_project_owners',return_value=owners):
+            return coupled.endpoint_ledger(before,after,data or self.burn_data())
+
+    def test_ledger_integrates_stored_cell_volume_not_level_weights(self):
+        first=self.entry((0,0,0,0),1e7,1e15,-1e19,1.0,[0.6,0.4])
+        second=self.entry((1,2,0,0),2e7,2e15,-2e19,3.0,[0.5,0.5])
+        sample=self.sample(*self.pair('volume',10.,[first,second],reverse=True))
+        volume=np.array([1.,3.]).astype(np.longdouble)
+        rho=np.array([1e7,2e7]).astype(np.longdouble)
+        phi=np.array([-1e19,-2e19]).astype(np.longdouble)
+        self.assertEqual(sample['blocks'],2)
+        self.assertEqual(sample['measure_source'],'GridMetrics::CellVolume')
+        self.assertEqual(np.longdouble(sample['mass']),
+                         np.sum(volume*rho,dtype=np.longdouble))
+        self.assertNotEqual(np.longdouble(sample['mass']),
+                            np.sum(rho,dtype=np.longdouble))
+        self.assertEqual(np.longdouble(sample['w']),
+                         np.longdouble(0.5)*np.sum(volume*rho*phi,dtype=np.longdouble))
+        self.assertEqual(np.longdouble(sample['mean_phi']),
+                         np.sum(volume*phi,dtype=np.longdouble)/np.sum(volume,
+                                                                      dtype=np.longdouble))
+
+    def test_endpoint_ledger_reports_nonzero_nuclear_energy_and_potential(self):
+        initial=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.0,[0.6,0.4]),
+                 self.entry((1,2,0,0),2e7,2e15,-2e19,3.0,[0.5,0.5])]
+        final=[self.entry((0,0,0,0),1e7,1.5e15,-1.5e19,1.0,[0.4,0.6]),
+               self.entry((1,2,0,0),2e7,2e15,-2.5e19,3.0,[0.5,0.5]),
+               self.entry((0,1,0,0),5e6,1e15,-1e19,2.0,[0.8,0.2])]
+        before=self.sample(*self.pair('before',10.,initial,reverse=True))
+        after=self.sample(*self.pair('after',20.,final))
+        result=self.endpoint(before,after)
+        delta=(np.array([np.longdouble(value) for value in after['species_integrals']])
+               -np.array([np.longdouble(value) for value in before['species_integrals']]))
+        expected=((np.longdouble(after['egas'])-np.longdouble(before['egas']))
+                  + (np.longdouble(after['w'])-np.longdouble(before['w']))
+                  - module.nuclear_energy_delta(self.burn_data(),delta))
+        self.assertEqual(result['residual'],float(expected))
+        self.assertNotEqual(result['q'],0.)
+        self.assertNotEqual(result['delta_w'],0.)
+        self.assertNotEqual(result['delta_egas'],0.)
+        self.assertEqual(result['namespace'],'observations_only')
+        self.assertFalse(result['scientific_qualified'])
+        self.assertIn('upstream FP64',result['uncertainty'])
+        self.assertIn('absolute_term_sums',result['roundoff'])
+        self.assertEqual(sorted(result['scales']),['energy','mass','q','w'])
+        self.assertEqual(len(result['species_mass_change']),2)
+
+    def test_endpoint_keeps_longdouble_difference_beyond_float64_resolution(self):
+        big=float(2**53)
+        before_entries=[self.entry((0,0,0,0),1e7,big,-1.,1.,[0.6,0.4])]
+        after_entries=[self.entry((0,0,0,0),1e7,big,-1.,1.,[0.6,0.4]),
+                       self.entry((1,1,0,0),1e7,1.0,-1.,1.,[0.5,0.5])]
+        before=self.sample(*self.pair('big_before',10.,before_entries))
+        after=self.sample(*self.pair('big_after',20.,after_entries))
+        self.assertNotEqual(np.longdouble(before['egas']),
+                            np.longdouble(after['egas']))
+        self.assertEqual(float(before['egas']),float(after['egas']))
+        result=self.endpoint(before,after)
+        self.assertEqual(result['delta_egas'],1.0)
+
+    def test_ledger_requires_binary64_fields_and_canonical_units(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'binary64'):
+            self.sample(*self.pair('float32field',10.,item,field_dtype=np.float32))
+        with self.assertRaisesRegex(ValueError,'binary64'):
+            self.sample(*self.pair('float32measure',10.,item,measure_dtype=np.float32))
+        with self.assertRaisesRegex(ValueError,'unit'):
+            self.sample(*self.pair('badunit',10.,item,field_units={'ENER':'MeV'}))
+
+    def test_ledger_rejects_wrong_config_identity(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'raw config identity'):
+            self.sample(*self.pair('hash',10.,item,raw_config='e'*64))
+
+    def test_ledger_rejects_duplicate_and_mismatched_leaf_keys(self):
+        duplicate=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4]),
+                   self.entry((0,0,0,0),2e7,2e15,-2e19,2.,[0.5,0.5])]
+        with self.assertRaisesRegex(ValueError,'duplicate logical leaf keys'):
+            self.sample(*self.pair('duplicate',10.,duplicate))
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        checkpoint,plot=self.pair('mismatch',10.,item)
+        with h5py.File(checkpoint,'r+') as handle:
+            handle['Blocks/logical_x1'][0]=77
+        with self.assertRaisesRegex(ValueError,'logical leaf key sets differ'):
+            self.sample(checkpoint,plot)
+
+    def test_ledger_rejects_missing_potential_and_nonphysical_measure(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        checkpoint,plot=self.pair('nophi',10.,item)
+        with h5py.File(plot,'r+') as handle:
+            del handle['Data/GPOT']
+        with self.assertRaisesRegex(ValueError,'missing Data/GPOT'):
+            self.sample(checkpoint,plot)
+        zero=[self.entry((0,0,0,0),1e7,1e15,-1e19,0.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'cell_measure'):
+            self.sample(*self.pair('zerovolume',10.,zero))
+
+    def test_ledger_rejects_nonfinite_and_nonpositive_state(self):
+        item=[self.entry((0,0,0,0),1e7,float('nan'),-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'finite'):
+            self.sample(*self.pair('naneng',10.,item))
+        item=[self.entry((0,0,0,0),0.,1e15,-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'positive'):
+            self.sample(*self.pair('zerorho',10.,item))
+
+    def test_ledger_rejects_unsupported_scope(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        boundary='boundary-v1;callbacks.identity;faces=reflecting;periodic;periodic;periodic;'
+        with self.assertRaisesRegex(ValueError,'unsupported boundary'):
+            self.sample(*self.pair('reflecting',10.,item,boundary=boundary))
+        with self.assertRaisesRegex(ValueError,'unsupported gravity'):
+            self.sample(*self.pair('nocg',10.,item,gravity=('none','periodic')))
+        with self.assertRaisesRegex(ValueError,'unsupported ledger network'):
+            self.sample(*self.pair('badnet',10.,item,network='aprox99'))
+
+    def test_ledger_rejects_bit_or_shape_mismatch(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        checkpoint,plot=self.pair('bits',10.,item)
+        with h5py.File(checkpoint,'r+') as handle:
+            handle['Data/rho'][0,0]=1e7+1
+        with self.assertRaisesRegex(ValueError,'bit-exactly'):
+            self.sample(checkpoint,plot)
+        checkpoint,plot=self.pair('rhoXshape',10.,item)
+        with h5py.File(checkpoint,'r+') as handle:
+            del handle['Data/rhoX']
+            handle.create_dataset('Data/rhoX',data=np.zeros((2,1,2)))
+        with self.assertRaisesRegex(ValueError,'rhoX'):
+            self.sample(checkpoint,plot)
+
+    def test_ledger_requires_finite_recorded_metrics(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'finite recorded number'):
+            self.sample(*self.pair('nanmetric',10.,item),
+                        metrics=lambda result: result.update({'mass':float('nan')}))
+        with self.assertRaisesRegex(ValueError,'required key'):
+            self.sample(*self.pair('missingmetric',10.,item),
+                        metrics=lambda result: result.pop('time'))
+        with self.assertRaisesRegex(ValueError,'physical times differ'):
+            self.sample(*self.pair('plottime',10.,item,plot_time=11.))
+
+    def test_endpoint_rejects_mismatched_supplied_identity(self):
+        initial=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        final=[self.entry((0,0,0,0),1e7,1.5e15,-1.5e19,1.,[0.4,0.6])]
+        before=self.sample(*self.pair('id_before',10.,initial))
+        after=self.sample(*self.pair('id_after',20.,final))
+        with self.assertRaisesRegex(ValueError,'nuclear data identity'):
+            self.endpoint(before,after,self.burn_data(digest='f'*64))
+        with self.assertRaisesRegex(ValueError,'A/Z identity'):
+            self.endpoint(before,after,self.burn_data(a=[1.,4.]))
+        with self.assertRaisesRegex(ValueError,'strictly increasing'):
+            self.endpoint(after,before)
+        other=self.sample(*self.pair('id_other',20.,final,eos_table='f'*64))
+        with self.assertRaisesRegex(ValueError,'disagree on eos_table_sha256'):
+            self.endpoint(before,other)
+
+    def test_ledger_cli_validates_the_optional_branch_flags(self):
+        arguments=(['verify_coupled.py','--ledger-pair','a','b'],
+                   ['verify_coupled.py','--run','lab:directory:1','--parameters','p'],
+                   ['verify_coupled.py','--run','lab:directory:1','--parameters','p',
+                    '--checkpoint-validator','v','--ledger-pair','a','b'],
+                   ['verify_coupled.py','--run','lab:directory:1','--run','other:directory:1',
+                    '--parameters','p','--checkpoint-validator','v',
+                    '--ledger-pair','a','b','--ledger-pair','c','d'])
+        for argv in arguments:
+            with patch.object(sys,'argv',argv):
+                with self.assertRaises(SystemExit) as failure:
+                    coupled.main()
+            self.assertEqual(failure.exception.code,2)
+
 
 if __name__=='__main__': unittest.main()
