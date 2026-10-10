@@ -57,7 +57,7 @@ export function ConfigurationIdentity({copy}:{copy:WorkingCopy|null}){
  const {model,discovery,buildScope}=useCoreParameters();
  const registered=sameBuildScope(discovery,buildScope)?discovery?.cases.find(c=>c.caseId===model):undefined;
  const warning=pairingSuspicion(model,copy?.filename??'');
- return <section className="configuration-identity" aria-label="Current configuration identity"><div><strong>Current Model: {model}</strong><strong>Parameter File: {copy?.filename??'Not loaded'}</strong></div><p>Source: {registered?.inspection.sourceFile??'Unavailable until binary discovery'} · compiled source association; build freshness remains separately reported</p><p>Parameter path: {copy?.hostPath??'Browser import / no trusted Host path'}</p><p className={warning?'pairing-warning':'section-note'}>{warning??'Model / parameter association unconfirmed; filenames do not verify compatibility.'}</p></section>;
+ return <section className="configuration-identity" aria-label="Current configuration identity">{warning&&<p className="pairing-warning">{warning}</p>}<details><summary>Source &amp; parameter association</summary><p>Source: {registered?.inspection.sourceFile??'Unavailable until binary discovery'} · compiled source association; build freshness remains separately reported</p><p>Parameter path: {copy?.hostPath??'Browser import / no trusted Host path'}</p><p className="section-note">Model / parameter association unconfirmed; filenames do not verify compatibility.</p></details></section>;
 }
 // Shared by editors and the preview action; stale inspection cannot validate a new Working Copy.
 // eslint-disable-next-line react-refresh/only-export-components

@@ -1,5 +1,6 @@
 import {RunHistory} from './RunHistory';
 import {useEffect,useRef,useState} from 'react';
+import type {ReactNode} from 'react';
 import {useHost} from '../host/hostContext';
 import {useCoreParameters} from '../state/coreParameters';
 import {buildRequest} from '../host/BuildAdapter';
@@ -7,7 +8,8 @@ import {validateRunPreparation,validateRunAcceptance,validateRunStatus} from '..
 import type {RunPreparation,RunAcceptance} from '../host/runContracts';
 import type {WorkingCopy} from '../data/RealInitPreviewProvider';
 import {configRevision} from '../data/RealInitPreviewProvider';
-export function RunControls({copy,busy}:{copy:WorkingCopy|null;busy:boolean}){
+interface RunControlSections {actions:ReactNode;status:ReactNode;details:ReactNode}
+export function RunControls({copy,busy,children}:{copy:WorkingCopy|null;busy:boolean;children?:(sections:RunControlSections)=>ReactNode}){
  const {snapshot,connected}=useHost(),{model}=useCoreParameters();
  const project=snapshot?.session,projectId=connected?project?.projectId:undefined;
  const configPath=project?.parameterFile?.relativePath,binaryPath=project?.executable?.relativePath;
@@ -83,13 +85,13 @@ export function RunControls({copy,busy}:{copy:WorkingCopy|null;busy:boolean}){
   }catch(e){setMessage({projectId,text:e instanceof Error?e.message:'Stop request failed.'});}
   finally{if(ticket===epoch.current.value)setPending(undefined);}
  }
- return <section className="run-controls" aria-label="Local Run and Restart">
-  <div className="workflow-actions">
-   <button disabled={!eligible||waiting} title={reason} onClick={()=>void prepare('run')}>Run</button>
-   <button disabled={!eligible||waiting} title={reason+' Restart uses restart_file in the saved configuration.'} onClick={()=>void prepare('restart')}>Restart from checkpoint</button>
-   <span role="status">{waiting?pending.kind+'…':active?'Latest run · '+active.state.state:reason}</span>
-   {active&&!active.state.finishedAt&&<button disabled={waiting} onClick={()=>void stop()}>Stop run</button>}
-  </div>
+ const actions=<>
+  <button disabled={!eligible||waiting} title={reason} onClick={()=>void prepare('run')}>Run</button>
+  <button disabled={!eligible||waiting} title={reason+' Restart uses restart_file in the saved configuration.'} onClick={()=>void prepare('restart')}>Restart from checkpoint</button>
+  {active&&!active.state.finishedAt&&<button disabled={waiting} onClick={()=>void stop()}>Stop run</button>}
+ </>;
+ const status=<span role="status">{waiting?pending.kind+'…':active?'Latest run · '+active.state.state:reason}</span>;
+ const details=<>
   {message&&message.projectId===projectId&&<p role="status">{message?.text}</p>}
   {active&&<details><summary>Latest independent run · {active.runId}</summary><p>Model: {active.caseId} · Saved config: {active.configPath} · SHA-256: <code>{active.configSha}</code></p><p>Terminal PID: {active.terminalPid} · Core PID: {active.state.processId??'not started'} · Exit: {active.state.exitCode??active.state.signal??'pending'}</p>{active.state.error&&<p role="alert">{active.state.error}</p>}<p>Closing Studio or changing configuration does not stop this run. Full output remains in its terminal and local run log.</p></details>}
   <RunHistory projectId={projectId} refreshKey={activeRunId}/>
@@ -106,5 +108,9 @@ export function RunControls({copy,busy}:{copy:WorkingCopy|null;busy:boolean}){
    {plan.canConfirm&&<label><input type="checkbox" checked={confirmed} disabled={waiting} onChange={e=>setConfirmed(e.target.checked)}/> I confirm this saved input, compiled binary and output destination.</label>}
    <div className="workflow-actions"><button disabled={!confirmed||!plan.canConfirm||waiting||!eligible} onClick={()=>void start()}>Start in independent terminal</button><button disabled={waiting} onClick={()=>{setCandidate(undefined);setConfirmed(false);}}>Cancel</button></div>
   </section>}
+ </>;
+ // Keep one owned state machine while the workflow places actions and details separately.
+ return children?children({actions,status,details}):<section className="run-controls" aria-label="Local Run and Restart">
+  <div className="workflow-actions">{actions}{status}</div>{details}
  </section>;
 }

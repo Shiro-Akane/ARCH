@@ -1,0 +1,25 @@
+/* Video review: one document identity, production workspace choices. */
+.topbar { min-width:0; gap:18px; padding:0 20px; }
+.document-meta { min-width:0; flex:1; }
+.document-model { min-width:0; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.document-file { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.document-dirty { flex:none; color:#f2c082; font-size:11px; }
+.workspace-choice { display:flex; align-items:center; gap:8px; font-size:11px; color:#b1c0cc; }
+.topbar-right { flex:none; min-width:0; }
+.configuration-identity { padding:7px 20px; }
+.configuration-identity summary { cursor:pointer; font-size:12px; color:#adbfcd; }
+.configuration-identity details[open] { max-height:22vh; overflow:auto; }
+.mode-description[hidden] { display:none; }
+@media (max-width:1100px) {
+ .topbar { gap:10px; padding:0 12px; }
+ .document-meta { gap:7px; }
+ .workspace-choice > span { display:none; }
+ .brand-light { display:none; }
+}
+@media (max-width:780px) {
+ .topbar { height:auto; min-height:64px; flex-wrap:wrap; padding:10px 12px; }
+ .document-meta { flex:1 1 220px; }
+ .topbar-right { margin-left:0; }
+ .document-model { max-width:110px; }
+ .document-file { max-width:180px; }
+}
