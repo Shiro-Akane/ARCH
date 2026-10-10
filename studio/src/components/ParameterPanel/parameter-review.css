@@ -1,0 +1,24 @@
+/* Video feedback: compact fields and persistent category controls, desktop first. */
+.parameter-panel .standard-catalog > .block-navigator {
+ position: sticky;
+ top: 0;
+ z-index: 3;
+ background: #151d26;
+ padding: 8px 0;
+ border-bottom: 1px solid #435360;
+}
+.parameter-panel .standard-catalog .parameter-field { gap: 4px; margin: 8px 0; padding-bottom: 8px; }
+.parameter-panel .parameter-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.parameter-panel .parameter-label-row .parameter-label { min-width: 0; overflow-wrap: anywhere; }
+.parameter-panel .parameter-label-row .parameter-unit { flex: none; color: #a9bcc8; font-size: 11px; }
+.parameter-panel .parameter-help { margin-top: 2px; }
+.parameter-panel .parameter-help > summary { width: fit-content; padding: 2px 0; font-size: 11px; }
+.parameter-panel .parameter-help > summary:focus-visible,
+.parameter-panel .axis-help > summary:focus-visible,
+.parameter-panel .catalog-help > summary:focus-visible { outline: 2px solid #f3b572; outline-offset: 2px; }
+.parameter-panel .parameter-help p { margin: 6px 0; }
+.parameter-panel .grid-axis-block h4 { display: flex; justify-content: space-between; gap: 8px; }
+.parameter-panel .axis-state { font-size: 11px; font-weight: normal; color: #a7b9c7; }
+.parameter-panel .axis-help, .parameter-panel .catalog-help { color: #a7b9c7; font-size: 11px; }
+.parameter-panel .case-extra-heading { margin: 10px 0 6px; font-size: 12px; color: #a9bcc8; }
+.parameter-panel .standard-group > summary { overflow-wrap: anywhere; }
