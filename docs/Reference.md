@@ -79,7 +79,7 @@ external provenance claim unless their file header or that notice says so.
 | CUDA execution | `compute_backend = cuda/auto` | supported | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | backend depends on domain | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms; see the [feature list](Features.md) for scope. |
-| AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
+| AMR | `lrefinemax >= 0` | CPU/CUDA within the [feature scope](Features.md) | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
 | Self gravity | `gravity_type = self` | CPU, CUDA | Periodic Cartesian, isolated 3D Cartesian, and tested radial/full-azimuth curvilinear domains; see [self-gravity domains](#self-gravity-domains). |
 | Jeans field and refinement | `JENS` | CPU wired; CUDA engineering candidate | Requires self gravity and an explicit backend; see [AMR and plot variable vocabulary](#amr-and-plot-variable-vocabulary) for conditions and validation scope. |
 
@@ -345,7 +345,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 ./bin/ARCH <ProblemType> <ParFile>
 ```
 
-Ordinary simulations use these two positional arguments. `ARCH --config-schema` emits the standard configuration catalogue. `ARCH --inspect-config <ProblemType> --config-stdin` reads unsaved parameter text from standard input and returns parsed values, provenance and diagnostics. Inspection runs before case Setup and backend construction, so actual initialization and execution determine whether a case can run. See the [configuration inspection API](../src/api/CONFIGURATION_API.md) for the protocol.
+Ordinary simulations use these two positional arguments. `ARCH --config-schema` emits the standard configuration catalogue. `ARCH --inspect-config <ProblemType> --config-stdin` reads unsaved parameter text from standard input and returns parsed values, provenance and diagnostics. Inspection runs before case Setup and backend construction, so actual initialization and execution determine whether a case can run. See the [configuration inspection API](../src/api/docs/CONFIGURATION_API.md) for the protocol.
 
 ## Parameter parsing
 

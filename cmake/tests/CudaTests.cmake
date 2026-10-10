@@ -284,7 +284,7 @@ target_link_libraries(arch_cuda_hydro_leaf_parity PRIVATE
 add_executable(arch_cuda_reduction_contract
     tests/cuda/runtime/test_cuda_reduction_contract.cu)
 arch_configure_cuda_math_test(arch_cuda_reduction_contract)
-target_link_libraries(arch_cuda_reduction_contract PRIVATE arch_cuda_gravity_execution)
+target_link_libraries(arch_cuda_reduction_contract PRIVATE arch_cuda_gravity_execution arch_gravity_cpu)
 add_executable(arch_cuda_burn_policy_parity
     tests/cuda/microphysics/burn/test_burn_policy_parity.cu
     src/core/files/FileFingerprint.cpp)
@@ -351,7 +351,9 @@ target_include_directories(arch_cuda_multiblock_hydro PRIVATE
 set_target_properties(arch_cuda_multiblock_hydro PROPERTIES
     CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
 target_link_libraries(arch_cuda_multiblock_hydro PRIVATE
-    arch_cuda_backend arch_solver_dispatch CUDA::cudart)
+    arch_cuda_backend arch_solver_dispatch arch_driver_runtime CUDA::cudart)
+target_compile_definitions(arch_cuda_multiblock_hydro PRIVATE
+    ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(arch_cuda_multiblock_diffusion
     tests/cuda/numerics/test_cuda_multiblock_diffusion.cu)
 set_source_files_properties(tests/cuda/numerics/test_cuda_multiblock_diffusion.cu
@@ -371,7 +373,7 @@ target_include_directories(arch_cuda_multiblock_burn PRIVATE
 target_compile_definitions(arch_cuda_multiblock_burn PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_multiblock_burn PRIVATE
-    arch_cuda_backend arch_solver_dispatch)
+    arch_cuda_backend arch_solver_dispatch arch_driver_runtime)
 add_executable(arch_cuda_store_lifecycle
     tests/cuda/runtime/test_cuda_store_lifecycle.cpp)
 target_compile_features(arch_cuda_store_lifecycle PRIVATE cxx_std_20)

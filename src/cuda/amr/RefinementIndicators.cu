@@ -3,18 +3,50 @@
  * @brief Device traversal and block reduction for AMR refinement indicators.
  *
  * Optional thermodynamic fields are evaluated through shared EOS views, then
- * amr::indicator::cell_error evaluates the selected stencils. A final device
- * reduction preserves nonfinite/EOS failures. Launches enqueue work only;
- * runtime control owns buffers, synchronization and refine/derefine decisions.
+ * amr::indicator::cell_error evaluates the selected stencils. On the Native RZ
+ * chart the shared density/inertia closure and its physical center baseline
+ * replace ordinary point EOS on raw V/W conserved means; Existing input keeps
+ * its original padded point-EOS arithmetic. A final device reduction preserves
+ * nonfinite/EOS failures. Launches enqueue work only; runtime control owns
+ * buffers, synchronization and refine/derefine decisions.
  */
 
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "numerics/state/RzNativeClosure.h"
 #include "physics/diagnostics/JeansDiagnostics.h"
 
 namespace arch::cuda {
 namespace {
+
+// The device grid mirrors the Host chart identity. The Native full-ring RZ
+// chart is the only one whose conserved means are V/W means rather than
+// ordinary point states; it is read from the actual grid, not a backend flag.
+ARCH_INLINE bool native_semantics(DeviceGridView grid)
+{
+    return static_cast<int>(grid.semantics)
+        == static_cast<int>(GridMetrics::GeometrySemantics::AxisymmetricRz);
+}
+
+// Host Native closure: std::clamp(i-1,0,nx-3). The explicit real three-column
+// radial support never guesses a halo beyond the supplied begin.
+ARCH_INLINE int native_support_begin(int i, int nx)
+{
+    const int last = nx - 3;
+    return i - 1 < 0 ? 0 : (i - 1 > last ? last : i - 1);
+}
+
+// The same actual logical layout preflight as the Host completed-patch Native
+// traversal: real radial support, at least one logical ghost layer, one logical
+// z plane and an x padding that stays storage-only.
+ARCH_INLINE bool valid_native_layout(DeviceGridView grid)
+{
+    return grid.total_x >= 3 && grid.total_y >= 1 && grid.stride_y >= grid.total_x
+        && grid.stride_z > 0 && grid.total_y <= grid.stride_z / grid.stride_y
+        && grid.total_z == 1 && grid.ng >= 1
+        && (grid.total_x - 1) + grid.stride_y * (grid.total_y - 1) < grid.total_size;
+}
 
 // Use the selected EOS and total positive density on active accepted cells.
 // No density floor, mean-density subtraction or copied sound-speed formula.
@@ -33,16 +65,37 @@ __global__ void jeans_resolution_kernel(DeviceStateView state, DeviceGridView gr
         : nullptr;
     for (int species = 0; species < state.n_species; ++species)
         fractions[species] = state.species(species, cell);
-    const auto value = state.load(cell);
-    const double pressure = eos.get_pressure(value, fractions);
-    const double sound = eos.get_sound_speed(value, pressure, fractions);
-    const auto resolution = std::isfinite(pressure) && pressure > 0.0
-        && std::isfinite(sound) && sound > 0.0
-        ? JeansDiagnostics::evaluate_cell(value.rho,
-            sound * sound, make_grid_geometry_view(grid), i, j)
-        : JeansDiagnostics::Resolution{};
-    workspace.cell_resolution[linear] = resolution.status == JeansDiagnostics::Status::valid
-        ? resolution.cells : std::numeric_limits<double>::quiet_NaN();
+    // The original point arithmetic of the Existing route, evaluated on the
+    // accepted state selected below for the actual chart.
+    const auto observe = [&](const auto& value) {
+        const double pressure = eos.get_pressure(value, fractions);
+        const double sound = eos.get_sound_speed(value, pressure, fractions);
+        const auto resolution = std::isfinite(pressure) && pressure > 0.0
+            && std::isfinite(sound) && sound > 0.0
+            ? JeansDiagnostics::evaluate_cell(value.rho,
+                sound * sound, make_grid_geometry_view(grid), i, j)
+            : JeansDiagnostics::Resolution{};
+        workspace.cell_resolution[linear] =
+            resolution.status == JeansDiagnostics::Status::valid
+            ? resolution.cells : std::numeric_limits<double>::quiet_NaN();
+    };
+    if (!native_semantics(grid)) {
+        observe(state.load(cell));
+        return;
+    }
+    // Native full-ring RZ: the actual accepted conserved means are V/W means,
+    // so the accepted observer reuses the exact shared Host closure and its
+    // explicit real radial support instead of point EOS on raw means. Default
+    // leaf bounds derive only the numerical mean; genuine configured source
+    // acceptance stays owned by Runtime. An invalid closure is not repaired.
+    const auto closure = RzThermodynamics::make_cell_supported(
+        [&state](int index) { return state.load(index); }, cell,
+        make_grid_geometry_view(grid), i, native_support_begin(i, grid.total_x));
+    if (!closure.valid()) {
+        workspace.cell_resolution[linear] = std::numeric_limits<double>::quiet_NaN();
+        return;
+    }
+    observe(closure.effective_mean);
 }
 
 __global__ void jeans_minimum_kernel(DeviceJeansWorkspace workspace, int count)
@@ -69,10 +122,17 @@ cudaError_t launch_jeans(DeviceStateView state, DeviceGridView grid, Eos eos,
                          DeviceJeansWorkspace workspace, cudaStream_t stream)
 {
     if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
-        || grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+        || (grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+            && !native_semantics(grid))
         || state.total_size != grid.total_size || grid.active_cell_count() <= 0
         || !workspace.cell_resolution || !workspace.block_minimum
         || !workspace.eos_status || (state.n_species && !workspace.composition))
+        return cudaErrorInvalidValue;
+    // The Native observer reads the actual two-dimensional full-ring chart
+    // through its explicit real radial support; general Cylindrical or Spherical
+    // identity is not accepted here and no geometry enum value is guessed.
+    // Storage padding is never an EOS cell.
+    if (native_semantics(grid) && (grid.dim != 2 || !valid_native_layout(grid)))
         return cudaErrorInvalidValue;
     if constexpr (requires { eos.species.size(); }) {
         if (eos.species.size() > 0 && eos.species.size() != state.n_species)
@@ -92,28 +152,96 @@ cudaError_t launch_jeans(DeviceStateView state, DeviceGridView grid, Eos eos,
     return cudaGetLastError();
 }
 
+// Shared Native closure failure: the private wave latch is sticky 0/1 and the
+// borrowed planes stay invalid, even for a ghost outside the final stencil.
+ARCH_DEVICE ARCH_FORCE_INLINE void native_thermodynamics_failure(DeviceStateView state,
+    DeviceIndicatorWorkspace workspace, int cell)
+{
+    const double invalid = std::numeric_limits<double>::quiet_NaN();
+    atomicExch(workspace.eos_status, 1);
+    if (workspace.thermodynamics != nullptr) {
+        workspace.thermodynamics[cell] = invalid;
+        workspace.thermodynamics[state.total_size + cell] = invalid;
+        workspace.thermodynamics[2 * state.total_size + cell] = invalid;
+    }
+    if (workspace.physical_velocity[0] != nullptr)
+        for (int component = 0; component < 3; ++component)
+            workspace.physical_velocity[component][cell] = invalid;
+}
+
 template<class Eos>
-__global__ void thermodynamics_kernel(DeviceStateView state, Eos eos,
+__global__ void thermodynamics_kernel(DeviceStateView state, DeviceGridView grid, Eos eos,
                                       DeviceIndicatorWorkspace workspace,
                                       const DeviceIndicatorBatchBlock* batch = nullptr)
 {
     if (batch) {
         state = batch[blockIdx.y].state;
+        grid = batch[blockIdx.y].grid;
         workspace = batch[blockIdx.y].workspace;
         eos = bind_device_eos_status(eos, workspace.eos_status);
-        if (!workspace.pressure && !workspace.temperature && !workspace.gamma1) return;
+        // A wave launches when any block needs a mean-thermodynamics or Native
+        // physical evaluation; each block keeps its own route and latch.
+        if (!workspace.pressure && !workspace.temperature && !workspace.gamma1
+            && workspace.physical_velocity[0] == nullptr) return;
     }
     const int cell = blockIdx.x * blockDim.x + threadIdx.x;
     if (cell >= state.total_size) return;
+    if (!native_semantics(grid)) {
+        // Original Existing arithmetic: every padded storage cell is one
+        // ordinary point EOS sample, exactly as before.
+        double* composition = state.n_species > 0
+            ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species : nullptr;
+        for (int species = 0; species < state.n_species; ++species)
+            composition[species] = state.species(species, cell);
+        const auto value = amr::indicator::thermodynamics(state.load(cell), composition,
+            eos, workspace.pressure, workspace.temperature, workspace.gamma1);
+        workspace.thermodynamics[cell] = value.pressure;
+        workspace.thermodynamics[state.total_size + cell] = value.temperature;
+        workspace.thermodynamics[2 * state.total_size + cell] = value.gamma1;
+        return;
+    }
+    // Native chart: only genuine logical cells are physical. The x row
+    // remainder is storage padding, never an EOS sample or density support.
+    const int k = cell / grid.stride_z;
+    const int j = (cell - k * grid.stride_z) / grid.stride_y;
+    const int i = cell - k * grid.stride_z - j * grid.stride_y;
+    if (i >= grid.total_x || j >= grid.total_y || k >= grid.total_z) return;
     double* composition = state.n_species > 0
         ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species : nullptr;
     for (int species = 0; species < state.n_species; ++species)
         composition[species] = state.species(species, cell);
-    const auto value = amr::indicator::thermodynamics(state.load(cell), composition,
+    const auto geometry = make_grid_geometry_view(grid);
+    const auto read = [&state](int index) { return state.load(index); };
+    // The Host Native traversal closure: shared density/inertia means with the
+    // explicit real three-column radial support clamp(i-1,0,nx-3).
+    const auto closure = RzThermodynamics::make_cell_supported(read, cell, geometry, i,
+        native_support_begin(i, grid.total_x), workspace.bounds);
+    if (!closure.valid() || arch::state::validate_eos(closure.effective_mean, composition,
+            state.n_species, workspace.bounds, eos) != arch::state::Status::valid) {
+        native_thermodynamics_failure(state, workspace, cell);
+        return;
+    }
+    const auto values = amr::indicator::thermodynamics(closure.effective_mean, composition,
         eos, workspace.pressure, workspace.temperature, workspace.gamma1);
-    workspace.thermodynamics[cell] = value.pressure;
-    workspace.thermodynamics[state.total_size + cell] = value.temperature;
-    workspace.thermodynamics[2 * state.total_size + cell] = value.gamma1;
+    workspace.thermodynamics[cell] = values.pressure;
+    workspace.thermodynamics[state.total_size + cell] = values.temperature;
+    workspace.thermodynamics[2 * state.total_size + cell] = values.gamma1;
+    if (workspace.physical_velocity[0] == nullptr) return;
+    // Same conservative physical center baseline as the Host Native traversal.
+    const auto point = RzThermodynamics::base_point(closure, geometry.GetCellCenterX(i));
+    if (arch::state::validate_eos(point, composition, state.n_species, workspace.bounds, eos)
+        != arch::state::Status::valid) {
+        native_thermodynamics_failure(state, workspace, cell);
+        return;
+    }
+    workspace.physical_velocity[0][cell] = point.mom_u / point.rho;
+    workspace.physical_velocity[1][cell] = point.mom_v / point.rho;
+    workspace.physical_velocity[2][cell] = point.mom_w / point.rho;
+    for (int component = 0; component < 3; ++component)
+        if (!std::isfinite(workspace.physical_velocity[component][cell])) {
+            native_thermodynamics_failure(state, workspace, cell);
+            return;
+        }
 }
 
 __global__ void indicators_kernel(DeviceStateView state, DeviceGridView grid,
@@ -138,7 +266,9 @@ __global__ void indicators_kernel(DeviceStateView state, DeviceGridView grid,
         thermo ? thermo + state.total_size : nullptr,
         thermo ? thermo + 2 * state.total_size : nullptr, state.total_size,
         grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, workspace.density_floor,
-        state.n_species};
+        state.n_species,
+        {workspace.physical_velocity[0], workspace.physical_velocity[1],
+         workspace.physical_velocity[2]}};
     workspace.cell_errors[linear] = amr::indicator::cell_error(view,
         make_grid_geometry_view(grid), workspace.selection, workspace.selection_count, i, j, k);
 }
@@ -182,13 +312,31 @@ __global__ void reset_batch_status(const DeviceIndicatorBatchBlock* batch)
 bool valid_indicator_binding(DeviceStateView state, DeviceGridView grid,
                              DeviceIndicatorWorkspace workspace)
 {
-    return valid_hydro_view(state) && valid_hydro_grid(grid)
-        && state.total_size == grid.total_size && workspace.selection_count >= 0
-        && (workspace.selection_count == 0 || workspace.selection != nullptr)
-        && workspace.cell_errors != nullptr && workspace.block_error != nullptr
-        && (!(workspace.pressure || workspace.temperature || workspace.gamma1)
-            || (workspace.thermodynamics && workspace.eos_status
-                && (state.n_species == 0 || workspace.composition)));
+    const bool thermodynamics = workspace.pressure || workspace.temperature || workspace.gamma1;
+    const bool physical = workspace.physical_velocity[0] != nullptr
+        || workspace.physical_velocity[1] != nullptr
+        || workspace.physical_velocity[2] != nullptr;
+    // Borrowed physical planes are all-or-none and belong to the Native chart
+    // only; a partial request or an Existing pointer is a binding error.
+    if (physical && !(workspace.physical_velocity[0] && workspace.physical_velocity[1]
+            && workspace.physical_velocity[2] && native_semantics(grid)))
+        return false;
+    if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
+        || state.total_size != grid.total_size || workspace.selection_count < 0
+        || (workspace.selection_count != 0 && workspace.selection == nullptr)
+        || workspace.cell_errors == nullptr || workspace.block_error == nullptr)
+        return false;
+    if (!thermodynamics && !physical) return true;
+    // Both routes need the shared arena planes, the private EOS latch and the
+    // per-cell composition scratch the kernel writes.
+    if (workspace.thermodynamics == nullptr || workspace.eos_status == nullptr
+        || (state.n_species != 0 && workspace.composition == nullptr))
+        return false;
+    if (!native_semantics(grid)) return true;
+    // The Native traversal borrows the actual chart, the actual bounds and a
+    // genuine logical layout: storage pitch padding is never an EOS cell.
+    return arch::state::valid_bounds(workspace.bounds)
+        && workspace.bounds.density == workspace.density_floor && valid_native_layout(grid);
 }
 
 template<class Eos>
@@ -203,12 +351,13 @@ cudaError_t launch(DeviceStateView state, DeviceGridView grid, Eos eos,
         error = cudaMemsetAsync(workspace.eos_status, 0, sizeof(int), stream);
         if (error != cudaSuccess) return error;
     }
-    if (workspace.pressure || workspace.temperature || workspace.gamma1) {
+    const bool physical = workspace.physical_velocity[0] != nullptr;
+    if (workspace.pressure || workspace.temperature || workspace.gamma1 || physical) {
         error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &threads,
             thermodynamics_kernel<Eos>);
         if (error != cudaSuccess) return error;
         thermodynamics_kernel<<<detail::hydro_launch_blocks(state.total_size, threads), threads, 0, stream>>>(
-            state, bind_device_eos_status(eos, workspace.eos_status), workspace);
+            state, grid, bind_device_eos_status(eos, workspace.eos_status), workspace);
         error = cudaGetLastError();
         if (error != cudaSuccess) return error;
     }
@@ -250,7 +399,10 @@ CudaBackendLaunchResult launch_batch(std::span<const DeviceIndicatorBatchBlock> 
         for (const auto& b : wave) {
             storage = std::max(storage, b.state.total_size);
             cells = std::max(cells, b.grid.active_cell_count());
-            thermo |= b.workspace.pressure || b.workspace.temperature || b.workspace.gamma1;
+            // A Native physical-only request still needs the shared closure and
+            // its mean EOS gate, so the same optional launch serves it.
+            thermo |= b.workspace.pressure || b.workspace.temperature || b.workspace.gamma1
+                || b.workspace.physical_velocity[0] != nullptr;
         }
         if (thermo && thermo_threads == 0) {
             result.error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &thermo_threads,
@@ -264,7 +416,7 @@ CudaBackendLaunchResult launch_batch(std::span<const DeviceIndicatorBatchBlock> 
         if (!record()) return result;
         if (thermo) {
             thermodynamics_kernel<<<dim3(detail::hydro_launch_blocks(storage, thermo_threads),
-                static_cast<unsigned>(count)), thermo_threads, 0, stream>>>(b.state, eos, b.workspace, bindings);
+                static_cast<unsigned>(count)), thermo_threads, 0, stream>>>(b.state, b.grid, eos, b.workspace, bindings);
             if (!record()) return result;
         }
         indicators_kernel<<<dim3(detail::hydro_launch_blocks(cells, indicator_threads),

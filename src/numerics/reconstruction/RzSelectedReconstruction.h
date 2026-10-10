@@ -15,6 +15,8 @@
  * This point/EOS adapter is not a whole-native-stage invariant-domain theorem.
  * Root traversal owns current ghosts, method/interface choice, flux averaging,
  * torque lever, registration and final Runtime density/inertia/EOS acceptance.
+ * The heavy entry uses the same Host inline body and a CUDA call boundary;
+ * this controls compile expansion without changing its reconstruction order.
  */
 #pragma once
 
@@ -362,7 +364,7 @@ ARCH_INLINE FluidVector source_point(const RzThermodynamics::Cell& cell,double r
  * must precede this call; unknown policy or insufficient real support rejects.
  */
 template<class Policy,class StateReader,class FractionReader,class Eos>
-ARCH_INLINE FaceBundles reconstruct_face(const StateReader& read,const FractionReader& fraction,
+ARCH_HEAVY_INLINE FaceBundles reconstruct_face(const StateReader& read,const FractionReader& fraction,
     const Context& c,const Eos& eos,double* output_rhoX,double* workspace,std::size_t workspace_count) {
     FaceBundles result;
     if(!detail::context_valid(c,workspace_count,output_rhoX,workspace))return result;

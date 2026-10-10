@@ -370,8 +370,58 @@ int main(int argc, char** argv) {
     require(io::plot_field_metadata("ENUC",true).unit=="erg/g/s","specific burn rate unit changed");
     require(io::plot_field_metadata("VELX",true).basis=="cartesian","Cartesian velocity basis absent");
     require(io::plot_field_metadata("VELX",false).basis=="unknown","curved basis guessed");
+    // Gravity leaves reuse the shared owner: scalar potential, vector
+    // acceleration component, and no guessed chart until a producer supplies one.
+    require(io::plot_field_metadata("GPOT",true).meaning=="gravitational_potential",
+            "gravitational potential mislabeled");
+    require(io::plot_field_metadata("GPOT",true).basis=="scalar","potential not declared scalar");
+    require(io::plot_field_metadata("GPOT",true).unit=="cm^2/s^2","potential unit changed");
+    for(const char* axis:{"X","Y","Z"}) {
+        const std::string gac=std::string("GAC")+axis;
+        require(io::plot_field_metadata(gac,true).meaning=="gravitational_acceleration_component",
+                "acceleration meaning changed");
+        require(io::plot_field_metadata(gac,true).basis=="cartesian","Cartesian acceleration basis absent");
+        require(io::plot_field_metadata(gac,true).unit=="cm/s^2","acceleration unit changed");
+        require(io::plot_field_metadata(gac,false).basis=="unknown","curved acceleration chart guessed");
+        require(io::plot_field_metadata(gac,false).meaning=="gravitational_acceleration_component",
+                "curved acceleration meaning guessed");
+    }
     require(arch::fields::cgs_unit("ENTR").empty(),"API assigned fixed ENTR unit");
     require(arch::fields::cgs_unit("not-a-field").empty(),"unknown unit inferred");
+    // Bounded gravity fixture: real HDF publication of GPOT/GAC* keeps the
+    // declared units/meanings/basis and the exact stored field values.
+    {
+        const std::vector<size_t> gravity_dims{1,2};
+        const std::vector<double> gpot{2.5,-3.5}, gacx{-0.25,0.5}, gacy{1.,-1.}, gacz{0.,0.};
+        const std::vector<double> cell_x{0.,1.}, cell_zero{0.,0.};
+        const std::map<std::string,io::PlotFieldMetadata> gravity_declarations{
+            {"GPOT",io::plot_field_metadata("GPOT",true)},
+            {"GACX",io::plot_field_metadata("GACX",true)},
+            {"GACY",io::plot_field_metadata("GACY",true)},
+            {"GACZ",io::plot_field_metadata("GACZ",true)}};
+        const auto gravity_path=(root/"gravity-fields.h5").string();
+        io::write_hdf5_plt_impl(gravity_path,0,1,"cartesian",gravity_dims,cell_x,cell_zero,cell_zero,
+            {0},{0},{{"GPOT",gpot},{"GACX",gacx},{"GACY",gacy},{"GACZ",gacz}},
+            nullptr,nullptr,&gravity_declarations);
+        HighFive::File f(gravity_path,HighFive::File::ReadOnly);
+        const auto attribute=[&](const std::string& dataset,const char* name) {
+            std::string value;f.getDataSet(dataset).getAttribute(name).read(value);return value;
+        };
+        require(attribute("Data/GPOT","unit")=="cm^2/s^2","GPOT unit not declared");
+        require(attribute("Data/GPOT","meaning")=="gravitational_potential","GPOT meaning not declared");
+        require(attribute("Data/GPOT","basis")=="scalar","GPOT not declared scalar");
+        for(const char* axis:{"X","Y","Z"}) {
+            const std::string gac=std::string("GAC")+axis;
+            require(attribute("Data/"+gac,"unit")=="cm/s^2","GAC unit not declared");
+            require(attribute("Data/"+gac,"meaning")=="gravitational_acceleration_component",
+                    "GAC meaning not declared");
+            require(attribute("Data/"+gac,"basis")=="cartesian","GAC basis not declared");
+        }
+        std::vector<double> raw(2);
+        f.getDataSet("Data/GPOT").read(raw.data());require(raw==gpot,"GPOT values changed");
+        f.getDataSet("Data/GACX").read(raw.data());require(raw==gacx,"GACX values changed");
+        f.getDataSet("Data/GACY").read(raw.data());require(raw==gacy,"GACY values changed");
+    }
     auto target = root / "candidate.h5";
     std::vector<size_t> dims{2,3,5};
     std::vector<double> x(30), y(30), z(30,0), v(30);

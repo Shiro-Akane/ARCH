@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <span>
 #include <vector>
 
 #include "data/FluidState.h"
@@ -20,9 +22,24 @@
 #include "physics/gravity/GravitySourceTypes.h"
 
 namespace arch::driver { class GravityStage; }
+namespace arch::backend { struct BackendStateAccess; }
 
 namespace Physical {
 namespace Gravity {
+
+/** Borrowed Device identities for one synchronous private gravity stage.
+ * Runtime callbacks authenticate the actual Runtime/backend/transaction owner.
+ * The owner retains both spans until every receipt and real stream has joined;
+ * these metadata alone certify neither numerical execution nor field scope.
+ */
+struct NativeGravityDeviceDomain {
+    const void* owner{};
+    void (*require_domain)(const void*){};
+    void (*require_patch)(const void*,std::size_t,arch::backend::BackendStateAccess,
+        const GridMetrics::GeometryView&){};
+    std::span<const arch::backend::BackendStateAccess> accesses{};
+    std::span<const GridMetrics::GeometryView> geometries{};
+};
 
 class NativeExternalStageFrame;
 class NativeSelfStageFrame;

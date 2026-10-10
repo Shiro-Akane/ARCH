@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <array>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -34,7 +35,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace Physical::Gravity { class GravityExecution; }
+namespace Physical::Gravity { class GravityExecution; class IGravityPolicy; }
 namespace amr { struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
 namespace arch::boundary { class BoundaryPlan; }
 namespace arch::boundary::native_rz_math { struct Request; }
@@ -99,10 +100,22 @@ struct BackendStateAccess {
     state::StateSlot slot = state::StateSlot::Current;
 };
 
-/** Compact evidence from a real resident completed-cell EOS failure. */
+/** Compact failure evidence from a real resident selected-EOS traversal or from
+ * the failure-only early restricted-interior closure inspection. A carried
+ * diagnostic is never acceptance, completion or ghost publication proof.
+ */
 struct NativeEosFailure {
     BackendStateAccess access{};
     RzThermodynamics::AcceptanceDiagnostic diagnostic{};
+};
+
+/** Failure-only resident active-domain inspection; never state acceptance.
+ * A nonthermal failure takes precedence over the original target still failing.
+ * Runtime alone authenticates a live retry frame and may qualify a rejection.
+ */
+struct NativeActiveThermalInspection {
+    bool requested_failure = false;
+    std::optional<NativeEosFailure> nonthermal_failure;
 };
 
 /**
@@ -154,6 +167,10 @@ public:
     BackendTopologyStoreTransaction& operator=(
         BackendTopologyStoreTransaction&&) = delete;
 };
+
+/** Bounded Runtime completion for this exact unpublished Current namespace. */
+using StagedBoundaryCompletion =
+    std::function<void(BackendTopologyStoreTransaction&)>;
 
 struct HostStateTransferView {
     double* rho = nullptr;
@@ -315,6 +332,94 @@ public:
     virtual StorageGeneration storage_generation() const noexcept = 0;
     virtual bool contains(BackendStateAccess access) const noexcept = 0;
 
+    /** Explicit candidate namespace only; unsupported backends never fall back. */
+    virtual bool contains(BackendTopologyStoreTransaction&,
+        BackendStateAccess) const noexcept { return false; }
+    virtual state::CompletionToken execute_physical_boundary_batch(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged physical boundary is unavailable");
+    }
+    virtual state::CompletionToken execute_same_level_exchange(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        const amr::SameLevelExchangePlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged same-level exchange is unavailable");
+    }
+    virtual state::CompletionToken execute_coarse_fine_exchange(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        const amr::CoarseFineTransferPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged coarse-fine exchange is unavailable");
+    }
+    virtual state::CompletionToken execute_coordinate_seam_exchange(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        std::span<const int>, const amr::CoordinateSeamPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged coordinate seam exchange is unavailable");
+    }
+    virtual state::CompletionToken execute_native_axis_boundary_batch(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged Native final axis boundary is unavailable");
+    }
+    virtual std::optional<NativeEosFailure> validate_completed_native_eos_batch(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        const state::Bounds&)
+    {
+        throw std::logic_error("backend staged Native EOS acceptance is unavailable");
+    }
+    /** Failure-only early closure witness of unpublished coarse restricted parents.
+     * Callers name only actual staged Current accesses whose coarse parent is
+     * the restriction owner of this attempt; the backend inspects the eligible
+     * active three-rho logical interior with the shared early closure leaf.
+     * A returned failure is authentic evidence for the caller's own veto policy.
+     * A clean or empty return is NOT completed EOS, BC, ghost or completion
+     * proof, changes no state and grants no capability or readiness. The exact
+     * candidate transaction must be authenticated before any work; committed
+     * storage is never a fallback.
+     */
+    virtual std::optional<NativeEosFailure> inspect_native_restricted_interiors(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        const state::Bounds&)
+    {
+        throw std::logic_error(
+            "backend staged Native restricted-interior early closure is unavailable");
+    }
+    virtual BoundaryCells prepare_native_reflecting_layer(
+        BackendTopologyStoreTransaction&, BackendStateAccess,
+        std::span<const boundary::native_rz_math::Request>, const state::Bounds&,
+        std::span<const int> = {}, const BoundaryCells* = nullptr)
+    {
+        throw std::logic_error("backend staged Native reflecting layer is unavailable");
+    }
+    virtual BoundaryCells read_boundary_cells(
+        BackendTopologyStoreTransaction&, BackendStateAccess,
+        std::span<const int>, state::StateRegion = state::StateRegion::Interior)
+    {
+        throw std::logic_error("backend staged boundary slice read is unavailable");
+    }
+    virtual void write_boundary_cells(
+        BackendTopologyStoreTransaction&, BackendStateAccess,
+        std::span<const int>, const BoundaryCells&,
+        const boundary::DiffusionBoundaryStorage&)
+    {
+        throw std::logic_error("backend staged boundary slice write is unavailable");
+    }
+    // Staged Native Current observer: authenticate the exact candidate
+    // transaction before any work and resolve only that unpublished namespace;
+    // committed storage is never a fallback.
+    virtual std::vector<double> evaluate_jeans_resolution(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>)
+    {
+        throw std::logic_error("backend staged JENS accepted-state consumer is unavailable");
+    }
+
     virtual std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() { return {}; }
     virtual const double* gravity_density(BackendStateAccess) {
         throw std::logic_error("backend gravity density unavailable");
@@ -349,8 +454,13 @@ public:
     virtual state::CompletionToken execute_hydro_stage_batch(
         std::span<const BackendStateAccess> currents,
         const scheduler::StageDescriptor& descriptor,
-        double dt, state::CompletionToken expected)
+        double dt, state::CompletionToken expected,
+        const Physical::Gravity::IGravityPolicy* prepared_source = nullptr)
     {
+        // A private source frame needs an actual qualified consumer; the
+        // generic per-block fallback cannot silently ignore its borrowed owner.
+        if (prepared_source)
+            throw std::logic_error("Hydro batch backend has no prepared source consumer");
         validate_hydro_batch_accesses(currents);
         if (!state::is_complete(expected))
             throw std::invalid_argument("Hydro batch requires a completion token");
@@ -397,6 +507,15 @@ public:
         std::span<const BackendStateAccess>, const state::Bounds&)
     {
         throw std::logic_error("backend resident Native EOS acceptance is unavailable");
+    }
+    /** Inspect all actual committed active cells after a completed-EOS refusal.
+     * Preserve the original target; return every other failure as fatal evidence
+     * before reporting that target. No field, ledger or completion is changed.
+     */
+    virtual NativeActiveThermalInspection classify_completed_native_active_thermal(
+        std::span<const BackendStateAccess>, const state::Bounds&, const NativeEosFailure&)
+    {
+        throw std::logic_error("backend resident Native active thermal classification is unavailable");
     }
     /** Prepare one immutable Native reflecting layer through the resident EOS.
      * Prefix offsets are strictly increasing ghosts and their cell-major X/U
@@ -601,7 +720,8 @@ public:
         const amr::CoarseFineTransferPlan&,
         std::span<const int> = {},
         std::span<const amr::BlockHandle> = {},
-        const amr::CoordinateSeamPlan* = nullptr)
+        const amr::CoordinateSeamPlan* = nullptr,
+        const StagedBoundaryCompletion& = {})
     {
         throw std::logic_error("backend staged device ghosts are unavailable");
     }

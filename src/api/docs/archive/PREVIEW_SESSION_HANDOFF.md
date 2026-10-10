@@ -26,7 +26,7 @@
 | Studio | 旧图保留与 Inspector 配对，新结果整体替换 | 旧图明确标记过期，不混用新参数和旧数据；过期 AMR 不叠到新场上 |
 | Studio | 显示操作直接重绘 | Log/Linear、配色、显示上下限、截断、已有数据缩放不调用初始化 |
 
-独立桌面窗口、命令行启动器和原 AMR 绘制等需求继续由 Host/Studio 实现。统一要求已写入 [ARCH_STUDIO_LOCAL_LAUNCH_AMR_UX_REQUIREMENTS.zh-CN.md](../../docs/development/ARCH_STUDIO_LOCAL_LAUNCH_AMR_UX_REQUIREMENTS.zh-CN.md) 第 10 节；可直接转交此文档。
+独立桌面窗口、命令行启动器和原 AMR 绘制等需求继续由 Host/Studio 实现。统一要求已写入 [ARCH_STUDIO_LOCAL_LAUNCH_AMR_UX_REQUIREMENTS.zh-CN.md](../../../../docs/development/ARCH_STUDIO_LOCAL_LAUNCH_AMR_UX_REQUIREMENTS.zh-CN.md) 第 10 节；可直接转交此文档。
 
 ## 实测样本
 
@@ -40,13 +40,13 @@
 
 CellularDet 全部 16,384 个坐标都调用了 Init；对应 37–38 种逐位不同的状态。对所有采样状态都不同的连续场，或大规模 AMR，仍需要完成相应计算，不承诺统一刷新时长。首次载入测量不代表系统磁盘缓存为空。
 
-原始阶段数据和可重现脚本位于 [examples/preview-session](examples/preview-session/README.md)。源码变更、错误、取消、主动释放缓存和会话回收后，下次请求可能再次出现首次准备耗时。
+原始阶段数据和可重现脚本位于 [examples/preview-session](../../examples/preview-session/README.md)。源码变更、错误、取消、主动释放缓存和会话回收后，下次请求可能再次出现首次准备耗时。
 
 ## 同步与调用
 
 已包含 `97a2b50c` 的分支只需摘取其后的本次提交。仍停留在 v0.13.0 / `e97e571ba98641384aee44425a29b83255401856` 的分支，应先摘取 `97a2b50c`，再摘取本次增量，然后重建 CPU binary。准确提交由交接消息与远端分支提供；不需要合入 main 或整条 Studio 历史。
 
-先读取 `--preview-capabilities.extensions.session`，再使用 [PREVIEW_SESSION_API.md](PREVIEW_SESSION_API.md) 的协议。旧 response 对象直接作为 session-result.response 返回；现有场图、AMR、参数检查的响应处理器可以继续使用。
+先读取 `--preview-capabilities.extensions.session`，再使用 [PREVIEW_SESSION_API.md](../PREVIEW_SESSION_API.md) 的协议。旧 response 对象直接作为 session-result.response 返回；现有场图、AMR、参数检查的响应处理器可以继续使用。
 
 测试命令：
 

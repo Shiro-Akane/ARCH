@@ -41,7 +41,8 @@ export function InitializationWorkflow({copy,fieldBusy,buildReady,onBusy,onMesh}
     const accepted=acceptWorkflowResult(s.result,identity,operation);
     if(start.text!==current.current.text||start.caseId!==current.current.caseId||!sameBuildScope(start.scope,current.current.scope))throw new Error('Working Copy, model or build changed; late result discarded.');
     setResults(old=>({...old,[operation]:{result:accepted,text:start.text}}));if(operation==='preview-amr')onMesh(accepted);
-    setMessage(accepted.core.status==='limited'?'Limited / Incomplete · preview budget reached':'Current · '+(operation==='inspect-case'?'initialization inspection':operation==='preview-amr'?'initial AMR hierarchy':'resource estimate'));return;
+    const nativeRoot=operation==='preview-amr'&&(accepted.core.data as AmrMesh).snapshot==='native-root-topology-active-initialization-only';
+    setMessage(accepted.core.status==='limited'?(nativeRoot?'Limited / Incomplete · Native RZ root initialization only; requested refinement unavailable':'Limited / Incomplete · preview budget reached'):'Current · '+(nativeRoot?'Native RZ root initialization':operation==='inspect-case'?'initialization inspection':operation==='preview-amr'?'initial AMR hierarchy':'resource estimate'));return;
    }
    throw new Error('Workflow wall timeout; previous result retained.');
   }catch(e){if(ticket===generation.current&&alive.current){if(owned.current)await previewRequest('/api/workflow/'+owned.current+'/cancel',undefined,true).catch(()=>{});setError(e instanceof Error?e.message:'Workflow failed.');setMessage('Previous result retained.');}}
@@ -64,8 +65,13 @@ export function InitializationWorkflow({copy,fieldBusy,buildReady,onBusy,onMesh}
  {inspection.result.core.data&&'samples' in inspection.result.core.data&&<InitProbe data={inspection.result.core.data as CaseProbe} state={inspection.result.core.state}/>}
  <details><summary>Compiled source / state / diagnostics</summary><pre>{JSON.stringify({identity:inspection.result.identity,capability:inspection.result.core.capability,state:inspection.result.core.state,diagnostics:inspection.result.core.diagnostics},null,2)}</pre></details></details>}
  {resources&&<details open><summary>Resource estimate · {isCurrent(resources)?'Current':'Previous result / stale'}</summary><ResourceTable data={resources.result.core.data as ResourceEstimate}/></details>}
- {mesh&&<details open><summary>Initial AMR · {isCurrent(mesh)?(mesh.result.core.status==='limited'?'Limited / Incomplete':'Complete'):'Previous result / stale'}</summary><MeshSummary mesh={mesh.result.core.data as AmrMesh}/><details><summary>Mesh provenance / state / diagnostics</summary><pre>{JSON.stringify({identity:mesh.result.identity,state:mesh.result.core.state,diagnostics:mesh.result.core.diagnostics},null,2)}</pre></details></details>}
+ {mesh&&<details open><summary>Initial AMR · {isCurrent(mesh)?(mesh.result.core.status==='limited'?'Limited / Incomplete':(mesh.result.core.data as AmrMesh).snapshot==='native-root-topology-active-initialization-only'?'Root initialization complete':'Complete'):'Previous result / stale'}</summary><MeshSummary mesh={mesh.result.core.data as AmrMesh}/><details><summary>Mesh provenance / state / diagnostics</summary><pre>{JSON.stringify({identity:mesh.result.identity,state:mesh.result.core.state,diagnostics:mesh.result.core.diagnostics},null,2)}</pre></details></details>}
  </section>;
 }
 const show=(value:unknown)=>value===null||value===undefined?'Unavailable':typeof value==='object'?JSON.stringify(value):String(value);
-function MeshSummary({mesh}:{mesh:AmrMesh}){return <><p>{mesh.snapshot==='none'?'No hierarchy snapshot: root grid exceeds preview budget.':mesh.complete?'Complete initial hierarchy':'Limited / Incomplete: last completed balanced hierarchy'}</p><p>{mesh.limitedReason??'No preview limit reached'} · Completed passes: {mesh.completedPasses} · Configured max_blocks: {mesh.configuredMaxBlocks} · Preview working capacity: {mesh.workingCapacity}</p>{mesh.snapshot!=='none'&&<p>{mesh.leafCount} leaf blocks · {mesh.levelCounts.map(l=>'L'+l.level+': '+l.leafBlocks).join(' · ')}</p>}<ResourceTable data={mesh.resources}/></>;}
+function MeshSummary({mesh}:{mesh:AmrMesh}){
+ const nativeRoot=mesh.snapshot==='native-root-topology-active-initialization-only';
+ const description=nativeRoot?(mesh.complete?'Complete root-level initialization; no refinement requested.':'Limited / Incomplete: root initialization only; requested refinement unavailable.')
+  :mesh.snapshot==='none'?'No hierarchy snapshot: root grid exceeds preview budget.':mesh.complete?'Complete initial hierarchy':'Limited / Incomplete: last completed balanced hierarchy';
+ return <><p>{description}</p><p>{mesh.limitedReason??'No preview limit reached'} · Completed passes: {mesh.completedPasses} · Configured max_blocks: {mesh.configuredMaxBlocks} · Preview working capacity: {mesh.workingCapacity}</p>{mesh.snapshot!=='none'&&<p>{mesh.leafCount} leaf blocks · {mesh.levelCounts.map(l=>'L'+l.level+': '+l.leafBlocks).join(' · ')}</p>}<ResourceTable data={mesh.resources}/></>;
+}

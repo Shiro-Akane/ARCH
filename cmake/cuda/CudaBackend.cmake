@@ -167,17 +167,42 @@ arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox21
     src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox21.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_iso7
     src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DIso7.cu)
-# Hydro owns one shared template implementation and one canonical source
-# owner per EOS.  Heavy tabular interpolation call boundaries keep NVCC
-# Debug frontend memory bounded without duplicating physics or routes.
+# Each canonical Hydro EOS source is compiled in two target-private flux
+# families using the same registry and numerical templates. The base owner
+# defines the public entries; its Hll/Hllc companion defines a host helper.
+# This compiler organization requires workload measurements under the guard.
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal
     src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)
+target_compile_definitions(arch_cuda_backend_hydro_ideal PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal_hll
+    src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)
+target_compile_definitions(arch_cuda_backend_hydro_ideal_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm
     src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)
+target_compile_definitions(arch_cuda_backend_hydro_helm PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm_hll
+    src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)
+target_compile_definitions(arch_cuda_backend_hydro_helm_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3
     src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular3 PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3_hll
+    src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular3_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4
     src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular4 PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4_hll
+    src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular4_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
     src/cuda/runtime/diffusion/CudaBackendDiffusion.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_exchange
@@ -207,9 +232,13 @@ arch_order_cuda_targets(
     arch_cuda_backend_burn_tabular4d_aprox21
     arch_cuda_backend_burn_tabular4d_iso7
     arch_cuda_backend_hydro_ideal
+    arch_cuda_backend_hydro_ideal_hll
     arch_cuda_backend_hydro_helm
+    arch_cuda_backend_hydro_helm_hll
     arch_cuda_backend_hydro_tabular3
+    arch_cuda_backend_hydro_tabular3_hll
     arch_cuda_backend_hydro_tabular4
+    arch_cuda_backend_hydro_tabular4_hll
     arch_cuda_backend_diffusion
     arch_cuda_backend_exchange
     arch_cuda_backend_amr_flux)
@@ -330,9 +359,13 @@ add_library(arch_cuda_backend STATIC
     $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox21>
     $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_iso7>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_helm>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_helm_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_diffusion>
     $<TARGET_OBJECTS:arch_cuda_backend_exchange>
     $<TARGET_OBJECTS:arch_cuda_backend_amr_flux>)

@@ -2,16 +2,23 @@
  * @file FiniteRingBoundaryMath.h
  * @brief Shared finite-volume ring potential math owned by GravityBoundary.
  *
+ * Workflow:
+ * 1. Validate stored ring geometry, density, G and the existing numeric budget.
+ * 2. Return exact-zero, analytic-axis or certified-far results before scratch use.
+ * 3. Reuse one adaptive/reduction body with Host-growing or Device-fixed storage.
+ * 4. Return an interval and original diagnostics to the existing gravity owner.
+ *
  * Internal bounded mathematics, not a new solver or user precision control.
  * Quadrature differences are estimates; production certified ledger is separate.
  */
 #pragma once
-#include <cmath>
-#include <limits>
-#include <cstdint>
-#include <vector>
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <stdexcept>
+#include <vector>
 #include "core/ArchPortability.h"
 #include "core/CompensatedSum.h"
 #include "physics/constant/PhysicalConstants.h"
@@ -955,13 +962,23 @@ ARCH_HEAVY_INLINE RingBox enclose_box(double rl,double rh,double zl,double zh,
     }
     result.status=RingIntervalStatus::Bounded;return result;
 }
-/** Bounded host workspace for balanced outward sums and largest-box choice.
- * Each leaf stores an existing certified box interval. Replacement touches
- * O(log maximum_boxes) ancestors; no subtraction from rounded totals, no new
- * integration formula, and earliest-index tie breaking matches the old scan.
- * Empty siblings are exact zero, so they cannot add a zero-input error floor.
+/** Minimum complete binary-tree capacity for the original finite box budget.
+ * Zero declines an invalid budget; the bounded shift never exceeds 65536.
  */
-class RingBoxReduction {
+ARCH_INLINE std::size_t ring_reduction_capacity(std::size_t maximum) {
+    if(maximum==0||maximum>65536)return 0;
+    std::size_t capacity=1;
+    while(capacity<maximum)capacity*=2;
+    return capacity;
+}
+
+/** Borrowed balanced outward-sum tree shared by Host and Device controllers.
+ * Workflow: bind default-initialized Host nodes or reset actual raw nodes;
+ * replace one box; update the original left/right ancestors; inspect the root.
+ * This view owns no allocation, source identity, error budget or certificate.
+ * Every unused sibling is zero/Bounded/width=-1 before any replacement.
+ */
+class RingBoxReductionView {
 public:
     struct Node {
         PositiveInterval integral{};
@@ -969,13 +986,31 @@ public:
         double largest_width=-1.;
         std::size_t worst_index=0;
     };
-    explicit RingBoxReduction(std::size_t maximum):maximum_(maximum) {
-        if(maximum==0||maximum>65536)throw std::invalid_argument("Invalid ring reduction capacity");
-        while(capacity_<maximum)capacity_*=2;
-        nodes_.resize(2*capacity_);
+    /** Bind storage already default-initialized by its Host vector owner.
+     * Only that owner may use this unchecked binding; raw callers use reset.
+     */
+    ARCH_INLINE RingBoxReductionView(Node* nodes,std::size_t maximum,
+        std::size_t capacity,std::uint64_t updates=0)
+        :maximum_(maximum),capacity_(capacity),nodes_(nodes),node_updates_(updates) {}
+    /** Construct an unbound view without touching caller storage. */
+    ARCH_INLINE RingBoxReductionView()=default;
+    /** Validate/reset a fresh raw view, including every unused sibling.
+     * Failure retires the previous view and leaves caller memory untouched.
+     */
+    ARCH_INLINE bool reset(Node* nodes,std::size_t count,std::size_t maximum) {
+        *this=RingBoxReductionView{};
+        const std::size_t capacity=ring_reduction_capacity(maximum);
+        if(!capacity||!nodes||count<2*capacity)return false;
+        maximum_=maximum;capacity_=capacity;nodes_=nodes;
+        for(std::size_t index=0;index<2*capacity_;++index)nodes_[index]=Node{};
+        return true;
     }
-    void replace(std::size_t index,PositiveInterval interval,RingIntervalStatus status) {
-        if(index>=maximum_)throw std::out_of_range("Ring reduction leaf exceeds budget");
+    /** Replace a valid leaf using the original interval/status/tie arithmetic.
+     * The Host wrapper preserves its out-of-range exception; raw callers get
+     * false before mutation. Adaptive callers already prove the index bound.
+     */
+    ARCH_INLINE bool replace(std::size_t index,PositiveInterval interval,RingIntervalStatus status) {
+        if(!nodes_||index>=maximum_)return false;
         if(status==RingIntervalStatus::Bounded
             &&(!std::isfinite(interval.lower)||!std::isfinite(interval.upper)
                 ||interval.lower<0.||interval.lower>interval.upper))
@@ -1002,13 +1037,107 @@ public:
             parent.largest_width=chosen.largest_width;parent.worst_index=chosen.worst_index;
             nodes_[node]=parent;++node_updates_;
         }
+        return true;
     }
+    /** Read the original root after a successful bind/reset. */
+    ARCH_INLINE const Node& total() const {return nodes_[1];}
+    /** Report the original leaf-plus-ancestor update counter. */
+    ARCH_INLINE std::uint64_t node_updates() const {return node_updates_;}
+private:
+    std::size_t maximum_=0,capacity_=1;
+    Node* nodes_=nullptr;
+    std::uint64_t node_updates_=0;
+};
+
+/** Existing Host-owning reduction API; mathematical replacement has one body.
+ * Vector resize retains the original 2*ceil_pow2(maximum) default nodes.
+ * Views are borrowed per call so normal owner copy/move keeps valid storage.
+ */
+class RingBoxReduction {
+public:
+    using Node=RingBoxReductionView::Node;
+    /** Allocate the same bounded Host tree and retain original invalid input. */
+    explicit RingBoxReduction(std::size_t maximum):maximum_(maximum) {
+        capacity_=ring_reduction_capacity(maximum);
+        if(!capacity_)throw std::invalid_argument("Invalid ring reduction capacity");
+        nodes_.resize(2*capacity_);
+    }
+    /** Preserve the Host bounds exception and delegate only tree arithmetic. */
+    void replace(std::size_t index,PositiveInterval interval,RingIntervalStatus status) {
+        if(index>=maximum_)throw std::out_of_range("Ring reduction leaf exceeds budget");
+        RingBoxReductionView view(nodes_.data(),maximum_,capacity_,node_updates_);
+        view.replace(index,interval,status);
+        node_updates_=view.node_updates();
+    }
+    /** Inspect the same default-initialized or replaced root. */
     const Node& total() const {return nodes_[1];}
+    /** Report the same cumulative replacement work. */
     std::uint64_t node_updates() const {return node_updates_;}
 private:
     std::size_t maximum_=0,capacity_=1;
     std::vector<Node> nodes_;
     std::uint64_t node_updates_=0;
+};
+
+/** Host storage adapter: boxes grow only when the original loop appends one.
+ * No constructor allocation occurs, so zero/axis/far paths stay allocation-free.
+ * The original first box is stored before the bounded Node allocation.
+ */
+class HostRingBoxStorage {
+public:
+    /** Start actual adaptive storage after all physical fast paths declined. */
+    bool initialize(const RingBox& first,std::size_t maximum) {
+        boxes_.push_back(first);
+        maximum_=maximum;capacity_=ring_reduction_capacity(maximum);
+        nodes_.resize(2*capacity_);
+        return true;
+    }
+    /** Read the actual used box count, never the maximum storage extent. */
+    std::size_t size() const {return boxes_.size();}
+    /** Address one already-used source subdivision box. */
+    RingBox& operator[](std::size_t index) {return boxes_[index];}
+    /** Grow the Host box vector by the original single append. */
+    void push_back(const RingBox& box) {boxes_.push_back(box);}
+    /** Borrow the original initialized nodes for this one adaptive invocation. */
+    RingBoxReductionView reduction() {
+        return RingBoxReductionView(nodes_.data(),maximum_,capacity_);
+    }
+private:
+    std::vector<RingBox> boxes_;
+    std::vector<RingBoxReductionView::Node> nodes_;
+    std::size_t maximum_=0,capacity_=1;
+};
+
+/** Fixed raw storage adapter for a later actual Device execution owner.
+ * This adapter allocates nothing. Capacity validation occurs only if the shared
+ * physical controller really needs subdivision; unused boxes are never read.
+ */
+class RawRingBoxStorage {
+public:
+    /** Borrow actual nonoverlapping box/node allocations without touching them. */
+    ARCH_INLINE RawRingBoxStorage(RingBox* boxes,std::size_t box_count,
+        RingBoxReductionView::Node* nodes,std::size_t node_count)
+        :boxes_(boxes),box_count_(box_count),nodes_(nodes),node_count_(node_count) {}
+    /** Validate actual capacities and reset every reduction sibling for reuse. */
+    ARCH_INLINE bool initialize(const RingBox& first,std::size_t maximum) {
+        size_=0;
+        if(!boxes_||box_count_<maximum||!reduction_.reset(nodes_,node_count_,maximum))return false;
+        boxes_[0]=first;size_=1;return true;
+    }
+    /** Read the used box count, shared with Host append/replace order. */
+    ARCH_INLINE std::size_t size() const {return size_;}
+    /** Address an existing box inside the checked raw allocation. */
+    ARCH_INLINE RingBox& operator[](std::size_t index) {return boxes_[index];}
+    /** Append only after the shared loop proves size < maximum <= capacity. */
+    ARCH_INLINE void push_back(const RingBox& box) {boxes_[size_]=box;++size_;}
+    /** Borrow the freshly reset balanced reduction for one invocation. */
+    ARCH_INLINE RingBoxReductionView reduction() {return reduction_;}
+private:
+    RingBox* boxes_=nullptr;
+    std::size_t box_count_=0,size_=0;
+    RingBoxReductionView::Node* nodes_=nullptr;
+    std::size_t node_count_=0;
+    RingBoxReductionView reduction_;
 };
 } // namespace finite_ring_detail
 
@@ -1057,14 +1186,17 @@ ARCH_INLINE bool reuse_bounded_ring_interval(finite_ring_detail::SignedInterval 
     output=result;return true;
 }
 
-/** Encloses the exact integral for stored geometry/density/G, including contact.
- * Bounds remain diagnostic when a requested target fails; status WorkLimit is
- * not successful convergence. Resource controller is CPU only at this node.
+namespace finite_ring_detail {
+/** One original physical/adaptive body for growing Host and fixed raw storage.
+ * Workflow: original input/fast paths -> original first enclosure -> real
+ * storage initialization -> original balanced reduction/subdivision -> result.
+ * Box replacements both use the OLD count and complete before append/observe.
+ * WorkLimit from insufficient raw storage remains unbounded, never successful.
  */
-inline RingPotentialEnclosure finite_ring_potential_enclosure(
+template<class BoxStorage>
+ARCH_HEAVY_INLINE RingPotentialEnclosure finite_ring_potential_enclosure_shared(
     double rl,double rh,double zl,double zh,double density,
-    double ro,double zo,double G,const RingEnclosureControl& control) {
-    using namespace finite_ring_detail;
+    double ro,double zo,double G,const RingEnclosureControl& control,BoxStorage& boxes) {
     RingPotentialEnclosure result{};
     if(!std::isfinite(rl)||!std::isfinite(rh)||rl<0.||!(rl<rh)
         ||!std::isfinite(zl)||!std::isfinite(zh)||!(zl<zh)
@@ -1096,11 +1228,14 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
     const double factor_lo=positive_down(positive_down(4.*G)*density);
     const double factor_hi=product_up(product_up(4.,G),density);
     if(!std::isfinite(factor_hi)) {result.status=RingIntervalStatus::PrecisionLimit;return result;}
-    std::vector<RingBox> boxes{enclose_box(rl,rh,zl,zh,ro,zo)};
+    const auto initial=enclose_box(rl,rh,zl,zh,ro,zo);
     result.range_evaluations=1;
-    result.kernel_enclosures=boxes[0].kernel_enclosures;
-    result.agm_iterations=boxes[0].agm_iterations;
-    RingBoxReduction reduction(control.maximum_boxes);
+    result.kernel_enclosures=initial.kernel_enclosures;
+    result.agm_iterations=initial.agm_iterations;
+    if(!boxes.initialize(initial,control.maximum_boxes)) {
+        result.status=RingIntervalStatus::WorkLimit;return result;
+    }
+    auto reduction=boxes.reduction();
     reduction.replace(0,boxes[0].integral,boxes[0].status);
     for(;;) {
         const auto& total=reduction.total();
@@ -1144,4 +1279,33 @@ inline RingPotentialEnclosure finite_ring_potential_enclosure(
         boxes[worst]=first;boxes.push_back(second);
     }
 }
+
+/** Internal raw-storage entry for a real Host/Device allocation owner.
+ * Caller supplies nonoverlapping box/node spans in the executing memory space;
+ * this function adds no allocation, source binding or field qualification.
+ * Empty/insufficient storage is irrelevant to zero/axis/certified-far results;
+ * a genuine adaptive path returns original WorkLimit with bound_valid=false.
+ */
+ARCH_HEAVY_INLINE RingPotentialEnclosure finite_ring_potential_enclosure_raw(
+    double rl,double rh,double zl,double zh,double density,
+    double ro,double zo,double G,const RingEnclosureControl& control,
+    RingBox* boxes,std::size_t box_count,
+    RingBoxReductionView::Node* nodes,std::size_t node_count) {
+    RawRingBoxStorage storage(boxes,box_count,nodes,node_count);
+    return finite_ring_potential_enclosure_shared(rl,rh,zl,zh,density,ro,zo,G,control,storage);
+}
+} // namespace finite_ring_detail
+
+/** Existing Host API: preserve fast paths and actual-growth box allocation.
+ * The shared body retains the original formulas, operation order, budgets and
+ * diagnostics; only the Host adapter owns vector allocations and exceptions.
+ */
+inline RingPotentialEnclosure finite_ring_potential_enclosure(
+    double rl,double rh,double zl,double zh,double density,
+    double ro,double zo,double G,const RingEnclosureControl& control) {
+    finite_ring_detail::HostRingBoxStorage storage;
+    return finite_ring_detail::finite_ring_potential_enclosure_shared(
+        rl,rh,zl,zh,density,ro,zo,G,control,storage);
+}
+
 } // namespace Physical::Gravity

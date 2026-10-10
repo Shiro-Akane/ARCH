@@ -6,7 +6,7 @@
 
 ## 接入方需要更新的认识
 
-- 从当前构建的 `ARCH --config-schema` 读取目录。此基线返回 `configuration-schema` version `2`、92 个标准键；不要固定为早期交接文档中的 90 或 88。五个已退役键会返回 `RETIRED_PARAMETER`；`gravity_boundary`、`gravity_rtol`、`gravity_atol`、`gravity_max_cycles` 已加入 Gravity 组。参数说明和适用范围见 [CONFIGURATION_API.md](../../../../src/api/CONFIGURATION_API.md)。
+- 从当前构建的 `ARCH --config-schema` 读取目录。此基线返回 `configuration-schema` version `2`、92 个标准键；不要固定为早期交接文档中的 90 或 88。五个已退役键会返回 `RETIRED_PARAMETER`；`gravity_boundary`、`gravity_rtol`、`gravity_atol`、`gravity_max_cycles` 已加入 Gravity 组。参数说明和适用范围见 [CONFIGURATION_API.md](../../../../src/api/docs/CONFIGURATION_API.md)。
 - `ARCH --list-cases` 当前返回 14 个已注册模型；每个模型可查询初始化检查及源码对应的单位证据。完整初始场图与真实初始 AMR 网格仍仅对 Sod 1D、CellularDet 2D 开放。界面应读取每个模型的 `initialFieldPreview` / `initialAmrPreview`，并用 `ARCH --preview-capabilities` 的 `modelCapabilities` 确定维度和采样范围。
 - `gravity_type=self` 的生产计算能力已有扩展，但 `JENS` 加密指标仍不可用；初始场与 AMR 预览不计算重力势或加速度图。不能把新增的物理求解功能当作新增的 GUI 场图能力。
 - `--preview-session` 的逐行 JSON 命令及 `preview-session-result.response` 仍沿用单次命令的响应结构。Host 继续负责进程超时、取消、当前 binary 与项目身份、旧结果淘汰；Studio 按返回的身份同时更新场图、Inspector 与网格。
@@ -24,10 +24,10 @@ ctest --test-dir build-ui-main-check -R '^(preview_|configuration_api_contract|u
 
 ## 文档入口
 
-1. [CONFIGURATION_API.md](../../../../src/api/CONFIGURATION_API.md)：标准键、退役键、单位、适用条件与可编辑选项。
-2. [CASE_INSPECTION_API.md](../../../../src/api/CASE_INSPECTION_API.md)：14 个模型的 Setup/Init 检查及单位证据边界。
-3. [INITIAL_AMR_API.md](../../../../src/api/INITIAL_AMR_API.md)：初始 AMR 网格与资源估算。
-4. [PREVIEW_SESSION_API.md](../../../../src/api/PREVIEW_SESSION_API.md)：持续编辑的 NDJSON 会话协议。
-5. [PREVIEW_SESSION_HANDOFF.md](../../../../src/api/PREVIEW_SESSION_HANDOFF.md)：既有 Host/Studio 分工；其中的旧基线与测速为历史记录。
+1. [CONFIGURATION_API.md](../../../../src/api/docs/CONFIGURATION_API.md)：标准键、退役键、单位、适用条件与可编辑选项。
+2. [CASE_INSPECTION_API.md](../../../../src/api/docs/CASE_INSPECTION_API.md)：14 个模型的 Setup/Init 检查及单位证据边界。
+3. [INITIAL_AMR_API.md](../../../../src/api/docs/INITIAL_AMR_API.md)：初始 AMR 网格与资源估算。
+4. [PREVIEW_SESSION_API.md](../../../../src/api/docs/PREVIEW_SESSION_API.md)：持续编辑的 NDJSON 会话协议。
+5. [PREVIEW_SESSION_HANDOFF.md](../../../../src/api/docs/archive/PREVIEW_SESSION_HANDOFF.md)：既有 Host/Studio 分工；其中的旧基线与测速为历史记录。
 
 跟随 UI contract 分支时需要重新构建 CPU binary，再让 Host 查询本次 binary 的 schema、case 列表和预览能力。单独更新前端静态列表不足以获得主线新增参数与模型。

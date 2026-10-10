@@ -3,6 +3,10 @@
 [Build.md](Build.md) ([Chinese](Build.zh-CN.md)) explains configuration versus
 compilation, dependencies, CUDA targets, and memory-aware build parallelism.
 
+[Studio.md](Studio.md) ([Chinese](Studio.zh-CN.md)) covers the Linux/WSL desktop,
+parameter editing, Preview, builds, Run/Restart and Plotfile views. Its
+[environment guide](StudioEnvironment.md) lists desktop prerequisites.
+
 [SimulationCase.md](SimulationCase.md) ([Chinese](SimulationCase.zh-CN.md)) walks
 through building, running and extending a small Sod problem. Start there for a
 first calculation, then use the [simulation catalogue](../../simulation/README.md)

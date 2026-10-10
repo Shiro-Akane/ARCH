@@ -1482,6 +1482,54 @@ void check_rkl_stationary_host_alias_reference() {
         &&bits(alias.X(0,i))==bits(.37)&&bits(alias.X(1,i))==bits(1.-.37),
         "first Host RKL alias changed stationary rho/Xi");
 }
+/** Reject stale output diagnostics through the actual Host stage wrapper.
+ * The burn rate is inherited from the input, independently of RK weights and
+ * geometry. Distinct old/output sentinels expose accidental slot provenance;
+ * logical halos and padding remain the existing boundary owner's responsibility.
+ */
+void check_hydro_diagnostic_input() {
+    const auto bits=[](double value){return std::bit_cast<std::uint64_t>(value);};
+    for(const auto semantics:{GridMetrics::GeometrySemantics::Existing,
+            GridMetrics::GeometrySemantics::AxisymmetricRz}) {
+        Grid grid(amr::MAX_NG,1.,2.,-1.,1.,0.,1.);
+        grid.dim=semantics==GridMetrics::GeometrySemantics::Existing?1:2;
+        grid.geometry=grid.dim==1?"cartesian":"cylindrical";
+        grid.InitializeTopology(semantics);
+        const int extent=grid.GetTotalSize();
+        FluidState old,input,output;
+        for(auto* state:{&old,&input,&output}) {
+            state->Preallocate(extent);state->InitSpecies(0);
+            for(int cell=0;cell<extent;++cell)state->set(cell,{2.,0.,0.,0.,8.});
+        }
+        std::vector<FluidVector> delta(extent);
+        const std::vector<double> species_delta;
+        for(int cell=0;cell<extent;++cell) {
+            old.enuc_rate[cell]=-9000.-cell;
+            input.enuc_rate[cell]=cell&1?7000.+cell:-0.;
+        }
+        for(const auto method:{arch::scheduler::HydroMethod::Euler,
+                arch::scheduler::HydroMethod::RK2,arch::scheduler::HydroMethod::RK3}) {
+            for(const auto& stage:arch::scheduler::make_hydro_plan(method).stages) {
+                std::fill(output.enuc_rate.begin(),output.enuc_rate.end(),12345.);
+                TimeIntegration::perform_stage_update(old,input,output,delta,species_delta,
+                    grid,stage.old_weight,stage.update_weight,1e-14,1e-14,1e10,semantics);
+                for(int cell=0;cell<extent;++cell) {
+                    const int k=cell/grid.stride_z;
+                    const int j=(cell-k*grid.stride_z)/grid.stride_y;
+                    const int i=cell-k*grid.stride_z-j*grid.stride_y;
+                    const bool active=i>=grid.Is()&&i<grid.Ie()
+                        &&j>=grid.Js()&&j<grid.Je()&&k>=grid.Ks()&&k<grid.Ke();
+                    require(bits(output.enuc_rate[cell])==bits(active?input.enuc_rate[cell]:12345.),
+                        "Host Hydro diagnostic used stale/weighted output or touched its halo/padding");
+                    require(bits(input.enuc_rate[cell])==bits(cell&1?7000.+cell:-0.)
+                        &&bits(old.enuc_rate[cell])==bits(-9000.-cell),
+                        "Host Hydro diagnostic inheritance mutated an input");
+                }
+            }
+        }
+    }
+}
+
 /** Independent RK polynomial witnesses through the public shared cell update.
  * Workflow: apply real scheduler weights to L(U)=0; check exact conserved/Xi
  * publication; then use dyadic source data and rational endpoint references.
@@ -1678,5 +1726,5 @@ void check_rkl_active_complementary_reference() {
 }
 
 int main() {
-    try { check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_rkl_active_complementary_reference(); check_native_weighted_component_underflow(); leaves(); ThermalFiveDecayCases::run(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
+    try { check_hydro_diagnostic_input(); check_rk_conserved_polynomial_reference(); check_rkl_stationary_cell_reference(); check_rkl_stationary_host_alias_reference(); check_rkl_active_complementary_reference(); check_native_weighted_component_underflow(); leaves(); ThermalFiveDecayCases::run(); std::cout << "Low-density analytic leaves passed through rho=1e-100\n"; }
  catch(const std::exception& e) { std::cerr<<e.what()<<'\n'; return 1; } }

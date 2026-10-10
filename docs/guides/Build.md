@@ -21,7 +21,7 @@ The presets in [CMakePresets.json](../../CMakePresets.json) keep output separate
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-All three use Ninja and OpenMP. The Release presets set `BUILD_TESTING=OFF`;
+All four use Ninja and OpenMP. The Release presets set `BUILD_TESTING=OFF`;
 `cuda-debug` enables tests for development. Both CUDA
 presets target the visible GPU with `CMAKE_CUDA_ARCHITECTURES=native` and set
 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1`. They configure builds only: use the explicit

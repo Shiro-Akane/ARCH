@@ -12,6 +12,8 @@
 #include "cuda/runtime/gravity/CudaGravityExecution.h"
 #include "driver/schedule/ReductionSpec.h"
 #include "physics/eos/IdealGas.h"
+#include "physics/gravity/FiniteRingBoundaryMath.h"
+#include "physics/constant/PhysicalConstants.h"
 
 #include <algorithm>
 #include <bit>
@@ -20,6 +22,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -657,7 +660,139 @@ void verify_composite_flux_extremes()
         if(actual[i]!=expected[i])fail("composite prescribed flux lost an extreme-value datum");
 }
 
-// The production provider must decline unqualified ring work before touching
+/** Actual Device raw controller: one lane owns the same real scratch spans
+ * through contact/separated/repeat/short/recovery calls. No Host pointer, typed
+ * gravity provider, source identity or production certificate is substituted.
+ */
+__global__ void finite_ring_raw_storage_kernel(
+    Physical::Gravity::finite_ring_detail::RingBox* boxes,
+    Physical::Gravity::finite_ring_detail::RingBoxReductionView::Node* nodes,
+    Physical::Gravity::RingPotentialEnclosure* output)
+{
+    if(blockIdx.x||threadIdx.x)return;
+    using namespace Physical::Gravity;using namespace finite_ring_detail;
+    constexpr std::size_t maximum=17,node_count=64;
+    for(std::size_t n=0;n<maximum;++n)
+        boxes[n]={-4.,-3.,-2.,-1.,{1.e100,2.e100},RingIntervalStatus::InvalidInput,999,999};
+    for(std::size_t n=0;n<node_count;++n){nodes[n].integral={1.e100,2.e100};
+        nodes[n].status=RingIntervalStatus::InvalidInput;nodes[n].largest_width=1.e100;nodes[n].worst_index=maximum-1;}
+    RingEnclosureControl control;control.maximum_boxes=maximum;
+    for(int lane=0;lane<6;++lane)
+        output[lane]=finite_ring_potential_enclosure_raw(.5,1.,-.375,.375,1.,lane==1?2.:1.,0.,1.,control,
+            boxes,lane==3?maximum-1:maximum,nodes,lane==4?node_count-1:node_count);
+    control.relative_target=1.e-10;
+    output[6]=finite_ring_potential_enclosure_raw(.5,1.,-.375,.375,0.,1.,0.,1.,control,nullptr,0,nullptr,0);
+    output[7]=finite_ring_potential_enclosure_raw(.5,1.,-.375,.375,1.,0.,0.,1.,control,nullptr,0,nullptr,0);
+    output[8]=finite_ring_potential_enclosure_raw(.5,1.,-.375,.375,1.,1.e6,0.,1.,control,nullptr,0,nullptr,0);
+}
+
+/** Independent full-azimuth product quadrature; a reference, not a certified near bound. */
+long double independent_ring_potential(double lo,double hi,double zlo,double zhi,
+    const std::array<double,3>& point,int order) {
+    std::vector<long double> nodes(order),weights(order);
+    constexpr long double pi_l=3.141592653589793238462643383279502884L;
+    for(int i=0;i<order;++i) {
+        long double x=std::cos(pi_l*(i+.75L)/(order+.5L));
+        for(int it=0;it<30;++it) {
+            long double prev=1.,p=x;
+            for(int n=2;n<=order;++n) {const long double next=((2*n-1)*x*p-(n-1)*prev)/n;prev=p;p=next;}
+            const long double derivative=order*(x*p-prev)/(x*x-1.);
+            const long double next=x-p/derivative;
+            if(std::abs(next-x)<4*std::numeric_limits<long double>::epsilon()) {x=next;break;}
+            x=next;
+        }
+        long double prev=1.,p=x;
+        for(int n=2;n<=order;++n) {const long double next=((2*n-1)*x*p-(n-1)*prev)/n;prev=p;p=next;}
+        const long double derivative=order*(x*p-prev)/(x*x-1.);
+        nodes[i]=x;weights[i]=2/((1-x*x)*derivative*derivative);
+    }
+    constexpr int azimuths=256;
+    long double value=0.;
+    for(int i=0;i<order;++i)for(int j=0;j<order;++j) {
+        const long double radius=.5L*(lo+hi)+.5L*(hi-lo)*nodes[i];
+        const long double z=.5L*(zlo+zhi)+.5L*(zhi-zlo)*nodes[j];
+        long double angular=0.;
+        for(int k=0;k<azimuths;++k) {
+            const long double angle=2*pi_l*(k+.5L)/azimuths;
+            const long double x=point[0]-radius*std::cos(angle);
+            const long double y=point[1]-radius*std::sin(angle);
+            const long double dz=point[2]-z;
+            angular+=1/std::sqrt(x*x+y*y+dz*dz);
+        }
+        value-=radius*weights[i]*weights[j]*.25L*(hi-lo)*(zhi-zlo)
+            *2*pi_l/azimuths*angular;
+    }
+    return value;
+}
+
+/** Compare actual Device intervals/diagnostics to the original Host controller.
+ * Certificates constrain the same source integral; cross-compiler endpoints
+ * need overlap, not an invented bit-exact or tighter error budget.
+ */
+void verify_finite_ring_raw_storage_owner()
+{
+    using namespace Physical::Gravity;using namespace finite_ring_detail;
+    const int failures_before=failures;
+    constexpr std::size_t maximum=17,node_count=64;
+    DeviceArray<RingBox> boxes(maximum);
+    DeviceArray<RingBoxReductionView::Node> nodes(node_count);
+    DeviceArray<RingPotentialEnclosure> output(9);
+    if(!boxes.pointer||!nodes.pointer||!output.pointer)return;
+    finite_ring_raw_storage_kernel<<<1,1>>>(boxes.pointer,nodes.pointer,output.pointer);
+    require_cuda(cudaGetLastError(),"finite-ring raw controller launch");
+    require_cuda(cudaDeviceSynchronize(),"finite-ring raw controller sync");
+    std::vector<RingPotentialEnclosure> actual(9);output.download(actual.data(),actual.size());
+    RingEnclosureControl control;control.maximum_boxes=maximum;
+    for(int lane=0;lane<9;++lane) {
+        const bool short_capacity=lane==3||lane==4;
+        auto policy=control;if(lane>=6)policy.relative_target=1.e-10;
+        const double density=lane==6?0.:1.;const double radius=lane==1?2.:lane==7?0.:lane==8?1.e6:1.;
+        const auto expected=finite_ring_potential_enclosure(.5,1.,-.375,.375,density,radius,0.,1.,policy);
+        const auto& value=actual[lane];
+        if(short_capacity) {
+            if(value.status!=RingIntervalStatus::WorkLimit||value.bound_valid||value.leaf_boxes!=0)
+                fail("short actual Device raw capacity retained a certificate");
+            continue;
+        }
+        if(value.status!=expected.status||value.bound_valid!=expected.bound_valid
+            ||value.leaf_boxes!=expected.leaf_boxes||value.range_evaluations!=expected.range_evaluations
+            ||value.kernel_enclosures!=expected.kernel_enclosures||value.agm_iterations!=expected.agm_iterations)
+            fail("actual Device raw controller changed original status or work diagnostics lane="+std::to_string(lane));
+        if(!value.bound_valid||!std::isfinite(value.lower)||!std::isfinite(value.upper)
+            ||!std::isfinite(value.value)||!std::isfinite(value.absolute_error)
+            ||value.lower>value.value||value.value>value.upper
+            ||value.lower>expected.upper||expected.lower>value.upper
+            ||std::abs(value.value-expected.value)>value.absolute_error+expected.absolute_error)
+            fail("actual Device raw interval is invalid or disjoint from original Host lane="+std::to_string(lane));
+        if(lane<6) {
+            if(value.status!=RingIntervalStatus::WorkLimit||value.leaf_boxes!=maximum
+                ||value.range_evaluations!=2*maximum-1)
+                fail("actual Device fixture bypassed original adaptive controller");
+        } else if(value.status!=RingIntervalStatus::Bounded||value.leaf_boxes!=0||value.range_evaluations!=0
+            ||value.absolute_error>policy.relative_target*std::abs(value.value))
+            fail("actual Device physical fast path required scratch or missed original target");
+        if(lane==0||lane==8) {
+            const std::array<double,3> point{radius,0.,0.};
+            const auto reference8=independent_ring_potential(.5,1.,-.375,.375,point,8);
+            const auto reference12=independent_ring_potential(.5,1.,-.375,.375,point,12);
+            if(!(value.lower<=reference8&&reference8<=value.upper
+                &&value.lower<=reference12&&reference12<=value.upper))
+                fail("actual Device raw contact/far escaped original independent Newton references");
+        }
+        if(lane==7) {
+            // Same original long-double axis primitive and 2e-10 reference budget.
+            const auto primitive=[](long double r,long double z){return .5L*(z*std::sqrt(r*r+z*z)+r*r*std::asinh(z/r));};
+            const long double reference=-2*3.141592653589793238462643383279502884L*
+                (primitive(1.,.375L)-primitive(1.,-.375L)-primitive(.5L,.375L)+primitive(.5L,-.375L));
+            if(!(std::abs(value.value-reference)<2.e-10L*std::abs(reference)))
+                fail("actual Device raw axis differs from original independent Newton primitive");
+        }
+    }
+    if(failures==failures_before)std::cout<<"FINITE_RING_RAW_STORAGE_OWNER_PASS side=Device maximum=17 nodes=64 dirty_reuse=1 short_unbounded=1 fastpaths=3 kernels=1 synchronizations=1 scratch_h2d=0 receipt_d2h="
+        <<9*sizeof(RingPotentialEnclosure)<<" consumer_qualified=0\n";
+}
+
+// The typed provider must reject incomplete ring work before touching
 // borrowed owners, launching a kernel, or retaining an old Host certificate.
 void verify_typed_ring_device_gates()
 {
@@ -669,7 +804,7 @@ void verify_typed_ring_device_gates()
     bool rejected=false;
     try {owner->run(EvaluateRingBoundary{nullptr,nullptr,nullptr,nullptr,&result});}
     catch(const std::logic_error& e) {
-        rejected=std::string_view(e.what())=="CUDA finite-ring boundary execution is not qualified";
+        rejected=std::string_view(e.what())=="Incomplete ring work descriptor";
     }
     if(!rejected || result.status==RingBoundaryStatus::Bounded
         || result.source_generation!=0 || !result.values.empty())
@@ -689,6 +824,217 @@ void verify_typed_ring_device_gates()
     std::cout<<"TYPED_RING_DEVICE_GATES_PASS legacy_log_rejected=1 result_retired=1 kernels=0 transfers=0\n";
 }
 
+/** Actual typed owner receipts against one cold Host controller. This uses
+ * the supported public 4x4 operator with only four nonzero source leaves;
+ * two-dimensional boundary interpolation needs more than four stored cells.
+ * No solved field/Runtime/source journal is qualified by this fixture.
+ */
+void ring_require(bool ok,const char* message) {if(!ok)throw std::runtime_error(message);}
+Physical::Gravity::RingBoundaryEvaluation cold_ring_boundary(
+    const Physical::Gravity::GravityBoundary& tree,const arch::elliptic::CompositePoisson& op,
+    const Physical::Gravity::GravitySolveIdentity& identity,const Physical::Gravity::RingBoundaryControl& control) {
+    using namespace Physical::Gravity;using namespace ring_boundary_detail;using namespace finite_ring_detail;
+    const auto packet=tree.prepare_ring_boundary_inputs(op,identity,control);
+    RingBoundaryEvaluation result;result.source=packet.source;
+    const auto count=packet.faces.size();
+    result.values.assign(count,0.);result.lower.assign(count,0.);result.upper.assign(count,0.);
+    result.far_truncation_upper.assign(count,0.);result.far_evaluation_width_upper.assign(count,0.);result.errors.resize(count);
+    std::vector<RingBox> boxes(control.maximum_boxes_per_leaf);
+    std::vector<RingBoxReductionView::Node> nodes(2*ring_reduction_capacity(control.maximum_boxes_per_leaf));
+    ColdRingLeafEvaluator leaf{boxes.data(),boxes.size(),nodes.data(),nodes.size()};
+    const RingBoundaryOutputView output{result.values.data(),result.lower.data(),result.upper.data(),
+        result.far_truncation_upper.data(),result.far_evaluation_width_upper.data(),result.errors.data(),count};
+    ring_boundary_shared(packet.view(),packet.control,output,result,leaf);return result;
+}
+/** Compare the complete ordered source identity without NVCC 12.3's missing
+ * implicit C++20 equality symbols. Scalar == retains the original floating-point
+ * semantics; this is neither a tolerant nor a partial provenance comparison.
+ */
+bool same_ring_source_identity(const Physical::Gravity::GravitySolveIdentity& a,
+    const Physical::Gravity::GravitySolveIdentity& b)
+{
+    if(a.topology.value!=b.topology.value || a.inputs.size()!=b.inputs.size()
+        || a.input_time!=b.input_time || a.gravitational_constant!=b.gravitational_constant
+        || a.operator_revision!=b.operator_revision || a.boundary_revision!=b.boundary_revision
+        || a.accuracy_revision!=b.accuracy_revision) return false;
+    for(std::size_t i=0;i<a.inputs.size();++i) {
+        const auto& x=a.inputs[i];const auto& y=b.inputs[i];
+        if(x.block.uid.value!=y.block.uid.value || x.block.epoch.value!=y.block.epoch.value
+            || x.slot!=y.slot || x.version.value!=y.version.value
+            || x.storage_generation!=y.storage_generation) return false;
+    }
+    return true;
+}
+void compare_cold_ring_receipts(const Physical::Gravity::RingBoundaryEvaluation& actual,
+    const Physical::Gravity::RingBoundaryEvaluation& expected,const arch::elliptic::CompositePoisson& op,
+    const Physical::Gravity::RingBoundaryControl& control) {
+    using namespace Physical::Gravity;using namespace arch::elliptic;
+    const auto count=op.faces().size();
+    ring_require(actual.status==expected.status&&same_ring_source_identity(actual.source,expected.source)
+        &&actual.source_generation==expected.source_generation,"typed Device ring lost cold source/status provenance");
+    ring_require(actual.values.size()==count&&actual.lower.size()==count&&actual.upper.size()==count
+        &&actual.errors.size()==count&&actual.far_truncation_upper.size()==count
+        &&actual.far_evaluation_width_upper.size()==count,"typed Device ring omitted full original output arrays");
+    ring_require(actual.leaf_evaluations==expected.leaf_evaluations&&actual.parent_evaluations==expected.parent_evaluations
+        &&actual.parent_acceptances==expected.parent_acceptances&&actual.represented_leaf_evaluations==expected.represented_leaf_evaluations
+        &&actual.coalesced_parent_attempts==expected.coalesced_parent_attempts
+        &&actual.coalesced_parent_acceptances==expected.coalesced_parent_acceptances
+        &&actual.coalesced_native_leaves==expected.coalesced_native_leaves
+        &&actual.range_evaluations==expected.range_evaluations&&actual.kernel_enclosures==expected.kernel_enclosures
+        &&actual.agm_iterations==expected.agm_iterations,"typed Device ring changed cold DFS/controller work diagnostics");
+    ring_require(actual.memo_hits==0&&actual.memo_admissions==0&&actual.memo_misses==expected.memo_misses
+        &&actual.memo_misses==actual.leaf_evaluations+actual.coalesced_parent_attempts,
+        "typed Device cold history did not retain every original leaf/quartet attempt");
+    for(std::size_t face=0;face<count;++face) {
+        ring_require(actual.errors[face].quality==expected.errors[face].quality,"typed Device ring changed all-or-nothing face quality");
+        if(op.faces()[face].boundary_side<0) {
+            ring_require(actual.values[face]==0.&&actual.lower[face]==0.&&actual.upper[face]==0.
+                &&actual.errors[face].absolute_error==0.&&actual.far_truncation_upper[face]==0.
+                &&actual.far_evaluation_width_upper[face]==0.,"typed Device ring gave an interior face boundary data");
+            continue;
+        }
+        ring_require(std::isfinite(actual.values[face])&&std::isfinite(actual.lower[face])&&std::isfinite(actual.upper[face])
+            &&actual.lower[face]<=actual.values[face]&&actual.values[face]<=actual.upper[face]
+            &&std::isfinite(actual.errors[face].absolute_error)
+            &&actual.lower[face]<=expected.upper[face]&&expected.lower[face]<=actual.upper[face]
+            &&std::abs(actual.values[face]-expected.values[face])<=actual.errors[face].absolute_error+expected.errors[face].absolute_error,
+            "typed Device ring interval is invalid or disjoint from original cold Host enclosure");
+        ring_require(std::isfinite(actual.far_truncation_upper[face])&&actual.far_truncation_upper[face]>=0.
+            &&std::isfinite(actual.far_evaluation_width_upper[face])&&actual.far_evaluation_width_upper[face]>=0.,
+            "typed Device ring lost finite nonnegative far decomposition");
+        if(actual.status==RingBoundaryStatus::Bounded)
+            ring_require(actual.errors[face].quality==BoundaryErrorQuality::CertifiedAbsolute
+                &&actual.errors[face].absolute_error<=control.face_absolute_target,"typed Device ring missed original certified absolute budget");
+        else ring_require(actual.errors[face].quality==BoundaryErrorQuality::Unknown,"typed Device partial ring retained certification");
+    }
+}
+void verify_typed_ring_device_owner() {
+    using namespace Physical::Gravity;using namespace ring_boundary_detail;using namespace arch;
+    const auto start_failures=failures;
+    elliptic::CartesianMesh base;base.dimension=2;base.cells={4,4,1};base.spacing={.25,.25,1.};base.origin={0.,-.5,0.};
+    base.geometry=elliptic::Geometry::Cylindrical;base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.native_canonical_domain=true;base.root_upper={1.,.5,0.};
+    std::vector<elliptic::CompositeCell> cells;
+    for(int j=0;j<4;++j)for(int i=0;i<4;++i)cells.push_back({0,{i,j,0}});
+    elliptic::CompositePoisson op(base,cells,elliptic::BoundaryKind::CurvilinearIsolated);
+    GravityBoundary tree(op,{9});GravitySolveIdentity identity;identity.topology={9};
+    identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+    identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
+    identity.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
+    std::vector<double> density(op.size(),0.);
+    for(int cell=0;cell<op.size();++cell)if(op.cells()[cell].index[0]<2&&op.cells()[cell].index[1]>=2)density[cell]=1.;
+    ring_require(op.size()==16&&std::count(density.begin(),density.end(),1.)==4,"typed sparse native source shape changed");
+    tree.update(density,identity);
+    RingBoundaryControl control;control.face_absolute_target=1.e-5;control.maximum_boxes_per_leaf=17;
+    control.maximum_leaf_evaluations=tree.full_ring_traversal_work_bound(op);
+    auto owner=arch::cuda::make_cuda_gravity_execution(nullptr,0,{});
+    ring_require(owner->numeric()->device(),"typed ring fixture selected a Host execution provider");
+    const auto packet=tree.prepare_ring_boundary_inputs(op,identity,control);
+    const auto count=packet.faces.size(),surface=packet.surface_faces.size();
+    ring_require(surface==12&&control.maximum_leaf_evaluations==312,"typed owner lost original actual surface/work ceiling");
+    const auto h2d=tree.nodes().size()*(sizeof(BoundaryTreeNode)+sizeof(RingMomentEnclosure)+sizeof(UniformRingQuartet))
+        +static_cast<std::size_t>(op.size())*(sizeof(RingLeafEdges)+sizeof(double))+count*sizeof(RingBoundaryFace);
+    const auto same_counters=[](const auto& a,const auto& b) {return a.kernels==b.kernels&&a.bytes_h2d==b.bytes_h2d
+        &&a.bytes_d2h==b.bytes_d2h&&a.synchronizations==b.synchronizations;};
+    RingBoundaryEvaluation actual;
+    const auto run=[&](const RingBoundaryControl& budget) {
+        const auto expected=cold_ring_boundary(tree,op,identity,budget);
+        const auto before=owner->numeric()->counters();
+        owner->run(EvaluateRingBoundary{&tree,&op,&identity,&budget,&actual});
+        const auto after=owner->numeric()->counters();
+        ring_require(after.kernels-before.kernels==1&&after.synchronizations-before.synchronizations==8
+            &&after.bytes_h2d-before.bytes_h2d==h2d,"typed owner hid a real launch/input transfer/join");
+        const auto receipt_bytes=after.bytes_d2h-before.bytes_d2h;
+        ring_require(receipt_bytes>sizeof(RingBoundaryScalars)
+            &&receipt_bytes<sizeof(RingBoundaryScalars)+count*(5*sizeof(double)+sizeof(elliptic::BoundaryPotentialError)),
+            "typed owner downloaded complete interior arrays or omitted surface receipts");
+        compare_cold_ring_receipts(actual,expected,op,budget);
+        return receipt_bytes;
+    };
+    const auto receipt_bytes=run(control);const auto first=actual;
+    ring_require(first.status==RingBoundaryStatus::Bounded&&first.represented_leaf_evaluations==surface*op.size()
+        &&first.coalesced_parent_acceptances>0&&first.range_evaluations>0,"typed current source did not complete actual finite-ring work");
+    tree.require_current_ring(op,first);
+    for(const int face:packet.surface_faces) {
+        const auto& f=op.faces()[face];
+        ring_require(packet.faces[face].r==f.center[0]&&packet.faces[face].z==f.center[1],"typed packet lost native (r,z) observer words");
+    }
+    const int probe=packet.surface_faces.front();
+    ring_require(op.faces()[probe].center[1]!=0.,"typed coordinate fixture did not exercise a nonzero axial observer");
+    int contact=-1;
+    for(const int face:packet.surface_faces)if(op.faces()[face].boundary_side==3&&op.faces()[face].center[0]<.5) {contact=face;break;}
+    ring_require(contact>=0,"typed fixture omitted the actual positive-source contact observer");
+    for(const int observer:{probe,contact}) {
+        long double reference8=0.,reference12=0.;
+        const std::array<double,3> point{op.faces()[observer].center[0],0.,op.faces()[observer].center[1]};
+        for(int cell=0;cell<op.size();++cell)if(density[cell]>0.) {
+            const auto factor=static_cast<long double>(identity.gravitational_constant)*density[cell];
+            reference8+=factor*independent_ring_potential(op.lower(cell,0),op.upper(cell,0),op.lower(cell,1),op.upper(cell,1),point,8);
+            reference12+=factor*independent_ring_potential(op.lower(cell,0),op.upper(cell,0),op.lower(cell,1),op.upper(cell,1),point,12);
+        }
+        ring_require(first.lower[observer]<=reference8&&reference8<=first.upper[observer]
+            &&first.lower[observer]<=reference12&&reference12<=first.upper[observer],
+            "typed native contact/separated face escaped original independent Newton reference orders");
+    }
+    ring_require(run(control)==receipt_bytes&&actual.values==first.values&&actual.lower==first.lower&&actual.upper==first.upper
+        &&actual.source_generation==first.source_generation,"typed owner dirty reuse changed same-input Device receipts");
+    auto prefix=control;prefix.maximum_leaf_evaluations=5;run(prefix);
+    ring_require(actual.status==RingBoundaryStatus::WorkLimit&&actual.parent_evaluations==5&&actual.leaf_evaluations==0
+        &&actual.coalesced_parent_acceptances==4&&actual.represented_leaf_evaluations==16&&actual.values[probe]<0.,
+        "typed global cap lost the original completed first-face prefix");
+    for(std::size_t f=0;f<count;++f) {
+        ring_require(actual.errors[f].quality==elliptic::BoundaryErrorQuality::Unknown,"typed partial prefix certified a face");
+        if(static_cast<int>(f)!=probe)ring_require(actual.values[f]==0.,"typed global cap evaluated a later face");
+    }
+    bool partial_rejected=false;try {tree.require_current_ring(op,actual);}catch(const std::exception&) {partial_rejected=true;}
+    ring_require(partial_rejected,"typed partial prefix became a current certified source receipt");
+    auto fallback=control;fallback.face_absolute_target=0.;fallback.maximum_boxes_per_leaf=1;fallback.maximum_leaf_evaluations=4;run(fallback);
+    ring_require(actual.status==RingBoundaryStatus::WorkLimit&&actual.parent_evaluations==4&&actual.leaf_evaluations==0
+        &&actual.coalesced_parent_attempts==3&&actual.coalesced_parent_acceptances==2&&actual.represented_leaf_evaluations==8,
+        "typed failed quartet fallback was not charged before evaluation");
+    auto zero_target=control;zero_target.face_absolute_target=0.;run(zero_target);
+    ring_require(actual.status!=RingBoundaryStatus::Bounded,"typed nonzero source acquired a hidden zero-target floor");
+    const auto reject=[&](const EvaluateRingBoundary& request) {
+        actual=first;const auto before=owner->numeric()->counters();bool rejected=false;
+        try {owner->run(request);}catch(const std::exception&) {rejected=true;}
+        ring_require(rejected&&same_counters(before,owner->numeric()->counters()),"typed rejected request did CUDA work");
+        if(request.result)ring_require(actual.source_generation==0&&actual.source.inputs.empty()&&actual.values.empty()
+            &&actual.lower.empty()&&actual.upper.empty()&&actual.errors.empty()
+            &&actual.status!=RingBoundaryStatus::Bounded,"typed rejected request retained previous certification");
+    };
+    auto stale=identity;stale.inputs.front().version={2};reject({&tree,&op,&stale,&control,&actual});
+    auto bad_control=control;bad_control.maximum_leaf_evaluations=0;reject({&tree,&op,&identity,&bad_control,&actual});
+    bad_control=control;bad_control.maximum_boxes_per_leaf=0;reject({&tree,&op,&identity,&bad_control,&actual});
+    bad_control=control;bad_control.maximum_boxes_per_leaf=65537;reject({&tree,&op,&identity,&bad_control,&actual});
+    bad_control=control;bad_control.face_absolute_target=std::numeric_limits<double>::quiet_NaN();reject({&tree,&op,&identity,&bad_control,&actual});
+    reject({nullptr,&op,&identity,&control,&actual});reject({&tree,&op,&identity,&control,nullptr});
+    auto moved_base=base;moved_base.origin[1]+=.25;moved_base.root_upper[1]+=.25;
+    elliptic::CompositePoisson moved_op(moved_base,cells,elliptic::BoundaryKind::CurvilinearIsolated);
+    reject({&tree,&moved_op,&identity,&control,&actual});
+    auto invalid=density;invalid[8]=-1.;bool update_rejected=false;
+    try {tree.update(invalid,identity);}catch(const std::exception&) {update_rejected=true;}
+    ring_require(update_rejected,"typed source fixture accepted a negative input update");
+    reject({&tree,&op,&identity,&control,&actual});
+    tree.update(density,identity);run(control);
+    ring_require(actual.status==RingBoundaryStatus::Bounded&&actual.source_generation>first.source_generation,
+        "typed actual owner did not recover with a new materialized source generation");
+    bool old_rejected=false;try {tree.require_current_ring(op,first);}catch(const std::exception&) {old_rejected=true;}
+    ring_require(old_rejected,"typed original receipt gained authority over replacement source generation");
+    // Same four positive leaves, now nonuniform: exact coalescence must decline,
+    // and accepted general parents retain separate tail/evaluation outputs.
+    const auto recovered_generation=actual.source_generation;
+    density[8]=.5;density[9]=1.;density[12]=1.5;density[13]=2.;identity.inputs.front().version={2};
+    tree.update(density,identity);run(control);
+    ring_require(actual.status==RingBoundaryStatus::Bounded&&actual.source_generation>recovered_generation
+        &&actual.parent_acceptances>0&&*std::max_element(actual.far_truncation_upper.begin(),actual.far_truncation_upper.end())>0.
+        &&*std::max_element(actual.far_evaluation_width_upper.begin(),actual.far_evaluation_width_upper.end())>0.,
+        "typed nonuniform current source omitted accepted far-parent error decomposition");
+    tree.require_current_ring(op,actual);
+    if(failures==start_failures)std::cout<<"TYPED_RING_DEVICE_OWNER_PASS stored_leaves=16 nonzero_leaves=4 surface_faces="<<surface
+        <<" global_cap_order=1 fallback_charge=1 reuse=1 invalid_zero_work=1 kernels_per_call=1 joins_per_call=8 receipt_d2h="
+        <<receipt_bytes<<" field_qualified=0 runtime_qualified=0\n";
+}
+
 int main()
 {
     int device_count = 0;
@@ -704,7 +1050,9 @@ int main()
     verify_real_diffusion_owner();
     verify_composite_reductions();
     verify_composite_flux_extremes();
+    verify_finite_ring_raw_storage_owner();
     verify_typed_ring_device_gates();
+    try {verify_typed_ring_device_owner();}catch(const std::exception& e){fail(std::string("typed ring owner: ")+e.what());}
     if (edge_cases != 36) fail("device edge case count");
     if (failures == 0)
         std::cout << "D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases="

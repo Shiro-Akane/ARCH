@@ -1939,4 +1939,105 @@ class ScalarContinuousEnergyTests(unittest.TestCase):
                 direct=self.direct(observer,source,axis)
                 self.assertLess(abs(scalar.face_pair(face,source,1.,12)-direct)/direct,2e-12)
 
+class ClosedUniformEnergyTests(unittest.TestCase):
+    """Synthetic adapter/signed-bound owner checks; no production trajectory claim."""
+    @staticmethod
+    def records():
+        return [dict(id="inner",r_lower=0.,r_upper=.5,z_lower=-.5,z_upper=.5,density=.5),
+                dict(id="outer",r_lower=.5,r_upper=1.,z_lower=-.5,z_upper=.5,density=1.5)]
+
+    def test_signed_contrast_uses_zero_psd_lower_bound_not_old_dmin_squared(self):
+        import rz_scalar_energy_reference as scalar
+        result=scalar.closed_uniform_reference(self.records(),1.,[0.,1.,-.5,.5],float(surface.CGS_G))
+        self.assertEqual(result["a_exact"],"1/2")
+        lower,upper=result["quadratic_delta_W_interval"]
+        expected=-.5*float(surface.CGS_G)*.25*(result["levels"][-1]["I_DD"]+result["quadrature_I_estimate"])
+        self.assertEqual(lower,expected)
+        self.assertEqual(upper,0.)
+        self.assertEqual(result["Uref"],result["quadrature_linear_estimate"]-lower/2)
+        self.assertEqual(result["DeltaWcenter"],result["levels"][-1]["linear_delta_W"]+lower/2)
+        uniform=self.records()
+        for item in uniform:item["density"]=1.
+        zero=scalar.closed_uniform_reference(uniform,1.,[0.,1.,-.5,.5],float(surface.CGS_G))
+        self.assertEqual((zero["S"],zero["a"],zero["DeltaWcenter"],zero["Uref"]),(0.,0.,0.,0.))
+
+    def test_invalid_physical_source_or_kernel_scope_rejects_before_quadrature(self):
+        import rz_scalar_energy_reference as scalar
+        for kind in ("negative","gap","G","degrees"):
+            records=self.records();G=float(surface.CGS_G);degrees=(12,24,48)
+            if kind=="negative":records[0]["density"]=-.5
+            if kind=="gap":records[1]["r_lower"]=.75
+            if kind=="G":G=1.
+            if kind=="degrees":degrees=(6,12,24)
+            with self.subTest(kind=kind),patch.object(scalar,"volume_pair") as kernel:
+                with self.assertRaises(ValueError):scalar.closed_uniform_reference(records,1.,[0.,1.,-.5,.5],G,degrees)
+                kernel.assert_not_called()
+
+    def test_actual_rounded_initial_density_has_zero_change_and_reverse_energy(self):
+        import math
+        import rz_scalar_energy_reference as scalar
+        rho0=1.
+        initial=self.records()
+        initial[0]["density"]=math.nextafter(rho0,0.)
+        initial[1]["density"]=math.nextafter(rho0,math.inf)
+        root=[0.,1.,-.5,.5];G=float(surface.CGS_G)
+        # An unchanged physical field has exactly zero Newton energy change,
+        # even when its stored means differ from the requested uniform value.
+        same=scalar.closed_uniform_reference(initial,rho0,root,G,initial_records=list(reversed(initial)))
+        self.assertEqual((same["S"],same["DeltaWcenter"]),(0.,0.))
+        self.assertGreater(same["initial_a"],0.)
+        self.assertLess(same["quadratic_delta_W_interval"][0],0.)
+        self.assertGreater(same["quadratic_delta_W_interval"][1],0.)
+        uniform=self.records()
+        for item in uniform:item["density"]=rho0
+        forward=scalar.closed_uniform_reference(initial,rho0,root,G)
+        reverse=scalar.closed_uniform_reference(uniform,rho0,root,G,initial_records=initial)
+        # Swapping the two endpoints reverses the energy difference and its
+        # complete interval; no initial roundoff component is silently dropped.
+        self.assertEqual(reverse["S"],-forward["S"])
+        self.assertEqual(reverse["DeltaWcenter"],-forward["DeltaWcenter"])
+        self.assertEqual(reverse["Uref"],forward["Uref"])
+        self.assertEqual(reverse["quadratic_delta_W_interval"],
+                         [-forward["quadratic_delta_W_interval"][1],-forward["quadratic_delta_W_interval"][0]])
+
+    def test_initial_partition_must_match_actual_final_bounds_before_quadrature(self):
+        import rz_scalar_energy_reference as scalar
+        initial=self.records();initial[0]["r_upper"]=.25;initial[1]["r_lower"]=.25
+        with patch.object(scalar,"volume_pair") as kernel:
+            with self.assertRaisesRegex(ValueError,"cell bounds differ"):
+                scalar.closed_uniform_reference(self.records(),1.,[0.,1.,-.5,.5],float(surface.CGS_G),
+                    initial_records=initial)
+            kernel.assert_not_called()
+
+    def test_contract_requires_bound_binary_all_budgets_and_actual_closed_scope(self):
+        import hashlib
+        import tempfile
+        import rz_scalar_energy_reference as scalar
+        values=dict(geometry="cylindrical",compute_backend="cpu",gravity_type="self",gravity_boundary="isolated",
+            eos_type="ideal",solver="HLLC",reconstruct="muscl",limiter="mc",time_integrator="RK2",use_burn="false",
+            use_diffusion="false",network_name="none",hydrostatic_radial="false",nblockx1=1,nblockx2=1,nblockx3=0,
+            lrefinemin=0,lrefinemax=0,max_steps=-1,amplitude=0,temperature_amplitude=0,velocity0=0,rho0=1.,tmax=1.,
+            x1_min=0.,x1_max=1.,x2_min=-.5,x2_max=.5,temperature0=1e4,gas_cv=1.2471693927e8,gamma=5/3,cfl=.3,dt_max=-1)
+        values.update({"x"+str(a)+side+"_boundary_type":"reflecting" for a in (1,2,3) for side in ("l","r")})
+        contract=dict(schema="arch-rz-closed-uniform-long-contract-1",model="GravityBox",rho0=1.,G=float(surface.CGS_G),
+            root_bounds=[0.,1.,-.5,.5],t_end=1.,physical_budget=.02,reference_budget=.002,mass_budget=1e-12,
+            signal_ratio=100.,roundoff_observation_multiplier=8.,physical_endpoint_time_relative_budget=2e-10,
+            quadrature_degrees=[12,24,48],zero_repairs=True,expected_binary_sha256="a"*64)
+        with tempfile.TemporaryDirectory() as directory:
+            parameters=Path(directory)/"input.par"
+            def write():
+                parameters.write_text("".join(str(key)+"="+str(value)+"\n" for key,value in values.items()))
+                contract["input"]=dict(sha256=hashlib.sha256(parameters.read_bytes()).hexdigest())
+            write();scalar.validate_closed_contract(parameters,contract)
+            for key in ("physical_budget","reference_budget","mass_budget","signal_ratio"):
+                missing=copy.deepcopy(contract);del missing[key]
+                with self.subTest(missing=key),self.assertRaises(KeyError):scalar.validate_closed_contract(parameters,missing)
+            pending=copy.deepcopy(contract);pending["expected_binary_sha256"]=None
+            with self.assertRaises(ValueError):scalar.validate_closed_contract(parameters,pending)
+            values["x1r_boundary_type"]="outflow";write()
+            with self.assertRaisesRegex(ValueError,"scope"):scalar.validate_closed_contract(parameters,contract)
+            values["x1r_boundary_type"]="reflecting";values["amplitude"]=.001;write()
+            with self.assertRaisesRegex(ValueError,"physical parameters"):scalar.validate_closed_contract(parameters,contract)
+
+
 if __name__=="__main__":unittest.main()

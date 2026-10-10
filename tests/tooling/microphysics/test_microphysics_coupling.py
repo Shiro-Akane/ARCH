@@ -176,6 +176,61 @@ class CoupledEndpointObserverTests(unittest.TestCase):
         self.assertEqual(result['samples'][0]['field_min_max']['ENUC'],[1.5,1.5])
         self.assertEqual(result['final']['field_min_max']['DENS'],[1e7,1e7])
 
+    def test_evolving_amr_is_opt_in_for_fully_refined_endpoint(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',1),('1',12)])
+        self.write_plot('run_plt_00020.h5',30.,[('1',16)])
+        with self.assertRaisesRegex(ValueError,'coarse/fine mixed'):
+            coupled.verify('default',self.directory,None,expected_time=30.)
+        result=coupled.verify('evolving',self.directory,None,expected_time=30.,evolving_amr=True)
+        self.assertEqual(result['initial']['leaves_by_level'],{'0':1,'1':12})
+        self.assertEqual(result['final']['leaves_by_level'],{'1':16})
+        self.assertEqual(result['topology_changes'],1)
+        self.assertEqual(result['steps'],2)
+        self.assertTrue(result['evolving_amr'])
+        target=Path(self.temporary.name)/'evolving.json'
+        with patch.object(sys,'argv',['verify_coupled.py','--endpoint-run',
+                                      f'evolving:{self.directory}:30.','--evolving-amr',
+                                      '--output',str(target)]):
+            coupled.main()
+        self.assertEqual(json.loads(target.read_text())['evolving'],result)
+
+    def test_evolving_amr_still_requires_actual_topology_change(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',1),('1',12)])
+        self.write_plot('run_plt_00020.h5',30.,[('1',16)])
+        (self.directory/'run_regrid.tsv').write_text('step\ttopology_changed\n1\t0\n')
+        with self.assertRaisesRegex(ValueError,'no actual AMR refinement'):
+            coupled.verify('unchanged',self.directory,None,expected_time=30.,evolving_amr=True)
+
+    def test_evolving_amr_rejects_empty_negative_or_noninteger_levels(self):
+        self.write_driver()
+        self.write_plot('run_plt_00010.h5',10.,[('0',1),('1',12)])
+        self.write_plot('run_plt_00020.h5',30.,[('1',16)])
+        for levels in (np.array([],dtype=np.int32),np.array([-1],dtype=np.int32),
+                       np.array([1.5],dtype=np.float64)):
+            with self.subTest(levels=levels):
+                with h5py.File(self.directory/'run_plt_00020.h5','r+') as handle:
+                    del handle['Grid/level']
+                    handle.create_dataset('Grid/level',data=levels)
+                with self.assertRaisesRegex(ValueError,'Invalid active AMR levels'):
+                    coupled.verify('invalid',self.directory,None,expected_time=30.,evolving_amr=True)
+
+    def test_evolving_amr_requires_endpoint_amr_semantics(self):
+        for steps,keywords in ((2,{}),(None,{'expected_time':30.,'expect_mixed':False})):
+            with self.subTest(steps=steps,keywords=keywords):
+                with self.assertRaisesRegex(ValueError,'requires endpoint AMR mode'):
+                    coupled.verify('invalid',self.directory,steps,evolving_amr=True,**keywords)
+        for arguments in (['--run','short:missing:2'],
+                          ['--run','short:missing:2','--endpoint-run','long:missing:30.']):
+            with self.subTest(arguments=arguments), \
+                    patch.object(sys,'argv',['verify_coupled.py','--evolving-amr',*arguments]), \
+                    patch.object(coupled,'verify') as observer:
+                with self.assertRaises(SystemExit) as failure:
+                    coupled.main()
+                self.assertEqual(failure.exception.code,2)
+                observer.assert_not_called()
+
     def test_short_mode_still_rejects_three_plots(self):
         self.write_driver()
         self.write_plot('run_plt_00010.h5',10.,[('0',8),('1',4)])
@@ -369,7 +424,8 @@ class LedgerObserverTests(unittest.TestCase):
 
     def pair(self,tag,time,entries,*,field_dtype=np.float64,measure_dtype=np.float64,
              field_units=None,raw_config=None,boundary=None,gravity=('self','periodic'),
-             network='aprox13',eos_table='c'*64,reverse=False,plot_time=None):
+             network='aprox13',eos_table='c'*64,reverse=False,plot_time=None,
+             mom=None,mom_dtype=np.float64,omit_mom=None,mom_shape=None):
         checkpoint=self.directory/f'{tag}.chk.h5'
         plot=self.directory/f'{tag}.plt.h5'
         blocks=len(entries)
@@ -408,6 +464,15 @@ class LedgerObserverTests(unittest.TestCase):
             data.create_dataset('rho',data=rho[order].reshape(blocks,1))
             data.create_dataset('eng',data=eng[order].reshape(blocks,1))
             data.create_dataset('rhoX',data=masses[:,order,:])
+            for name in ('mom_u','mom_v','mom_w'):
+                if name==omit_mom:
+                    continue
+                if mom_shape is not None:
+                    values=np.zeros(mom_shape,dtype=np.float64)
+                else:
+                    values=np.asarray((mom or {}).get(name,np.zeros(blocks)),
+                                      dtype=np.float64)[order].reshape(blocks,1)
+                data.create_dataset(name,data=values.astype(mom_dtype))
             species_group=handle.create_group('Species')
             species_group.create_dataset('name',data=np.array(
                 [name.encode() for name,_,_ in self.SPECIES]))
@@ -531,6 +596,72 @@ class LedgerObserverTests(unittest.TestCase):
         result=self.endpoint(before,after)
         self.assertEqual(result['delta_egas'],1.0)
 
+    def test_half_ulp_is_conservative_across_zero_subnormal_binade_and_maxfinite(self):
+        values=np.array([0.,2.**-1074,1.,2.,np.finfo(np.float64).max])
+        half=coupled._half_ulp(values)
+        minsubnormal=np.ldexp(np.longdouble(1.),-1075)
+        self.assertEqual(half.dtype,np.dtype(np.longdouble))
+        self.assertEqual(half[0],minsubnormal)
+        self.assertEqual(half[1],minsubnormal)
+        self.assertEqual(half[2],np.ldexp(np.longdouble(1.),-53))
+        # A binade-boundary value takes the next-larger spacing, i.e. the
+        # conservative standard sensitivity rather than an exact certificate.
+        self.assertEqual(half[3],np.ldexp(np.longdouble(1.),-52))
+        self.assertEqual(half[4],np.ldexp(np.longdouble(1.),970))
+        self.assertTrue(np.all(np.isfinite(half)))
+
+    def test_ledger_reports_stored_field_half_ulp_sensitivities(self):
+        first=self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])
+        second=self.entry((1,2,0,0),2e7,2e15,-2e19,3.,[0.5,0.5])
+        sample=self.sample(*self.pair('sens',10.,[first,second],reverse=True))
+        volume=np.array([1.,3.]).astype(np.longdouble)
+        expected=np.sum(volume*coupled._half_ulp(np.array([1e15,2e15])),
+                        dtype=np.longdouble)
+        self.assertEqual(np.longdouble(sample['egas_sensitivity']),expected)
+        self.assertEqual(len(sample['species_integral_sensitivity']),2)
+        self.assertTrue(all(np.isfinite(np.longdouble(value))
+                            for value in sample['species_integral_sensitivity']))
+        self.assertIn('stored-field perturbation only',sample['sensitivity_note'])
+
+    def test_endpoint_q_sensitivity_reuses_the_existing_nuclear_law(self):
+        initial=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        final=[self.entry((0,0,0,0),1e7,1.5e15,-1.5e19,1.,[0.4,0.6])]
+        before=self.sample(*self.pair('sens_before',10.,initial))
+        after=self.sample(*self.pair('sens_after',20.,final))
+        result=self.endpoint(before,after)
+        uncertainty=(np.array([np.longdouble(value) for value in
+                               before['species_integral_sensitivity']])
+                     +np.array([np.longdouble(value) for value in
+                                after['species_integral_sensitivity']]))
+        expected=np.sum(np.abs(module.nuclear_energy_delta(
+            self.burn_data(),np.diag(uncertainty))),dtype=np.longdouble)
+        self.assertEqual(np.longdouble(result['sensitivity']['q']),expected)
+        self.assertEqual(np.longdouble(result['sensitivity']['delta_egas']),
+                         np.longdouble(before['egas_sensitivity'])
+                         +np.longdouble(after['egas_sensitivity']))
+        self.assertEqual(result['sensitivity']['ratio_state'],'reported')
+        self.assertIsNotNone(result['q_over_egas'])
+        self.assertIsNotNone(result['q_over_sensitivity'])
+
+    def test_endpoint_requires_and_null_safes_stored_field_sensitivity(self):
+        initial=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        final=[self.entry((0,0,0,0),1e7,1.5e15,-1.5e19,1.,[0.4,0.6])]
+        before=self.sample(*self.pair('zs_before',10.,initial))
+        after=self.sample(*self.pair('zs_after',20.,final))
+        missing=copy.deepcopy(before)
+        del missing['egas_sensitivity']
+        with self.assertRaisesRegex(ValueError,'mandatory'):
+            self.endpoint(missing,after)
+        before['egas_sensitivity']='0.0'
+        after['egas_sensitivity']='0.0'
+        before['species_integral_sensitivity']=['0.0','0.0']
+        after['species_integral_sensitivity']=['0.0','0.0']
+        result=self.endpoint(before,after)
+        self.assertEqual(np.longdouble(result['sensitivity']['q']),np.longdouble(0.))
+        self.assertEqual(result['sensitivity']['ratio_state'],
+                         'zero_stored_field_sensitivity')
+        self.assertIsNone(result['q_over_sensitivity'])
+
     def test_ledger_requires_binary64_fields_and_canonical_units(self):
         item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
         with self.assertRaisesRegex(ValueError,'binary64'):
@@ -575,6 +706,48 @@ class LedgerObserverTests(unittest.TestCase):
         item=[self.entry((0,0,0,0),0.,1e15,-1e19,1.,[0.6,0.4])]
         with self.assertRaisesRegex(ValueError,'positive'):
             self.sample(*self.pair('zerorho',10.,item))
+
+    def test_ledger_checks_stored_cartesian_momentum_energy(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        sample=self.sample(*self.pair('momzero',10.,item))
+        self.assertEqual(np.longdouble(sample['physical_state']
+                                       ['min_specific_internal_energy']),
+                         np.longdouble(1e8))
+        self.assertEqual(np.longdouble(sample['physical_state']
+                                       ['min_species_density']),
+                         np.longdouble(0.4))
+        # The stored species vector need not close against rho: the observation
+        # is reported as a large relative residual and is still accepted.
+        relative=np.abs(np.longdouble(0.6)+np.longdouble(0.4)
+                        -np.longdouble(1e7))/np.longdouble(1e7)
+        self.assertEqual(np.longdouble(sample['physical_state']
+                                       ['max_abs_species_sum_minus_rho_relative']),
+                         relative)
+        self.assertGreater(float(relative),0.5)
+        hot=self.sample(*self.pair('momflow',10.,item,mom={'mom_u':np.array([1e7])}))
+        self.assertEqual(np.longdouble(hot['physical_state']
+                                       ['min_specific_internal_energy']),
+                         np.longdouble(1e8)-np.longdouble(2)**-1)
+
+    def test_ledger_rejects_invalid_stored_momentum(self):
+        item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'mom_v'):
+            self.sample(*self.pair('mommissing',10.,item,omit_mom='mom_v'))
+        with self.assertRaisesRegex(ValueError,'binary64'):
+            self.sample(*self.pair('momdtype',10.,item,mom_dtype=np.float32))
+        with self.assertRaisesRegex(ValueError,'mom_u'):
+            self.sample(*self.pair('momshape',10.,item,mom_shape=(2,1)))
+        with self.assertRaisesRegex(ValueError,'finite'):
+            self.sample(*self.pair('momnan',10.,item,
+                                   mom={'mom_u':np.array([float('nan')])}))
+
+    def test_ledger_rejects_nonpositive_physical_internal_energy(self):
+        # A finite positive energy density can still leave no internal energy
+        # once the stored Cartesian kinetic term is removed.
+        item=[self.entry((0,0,0,0),1e7,1e7,-1e19,1.,[0.6,0.4])]
+        with self.assertRaisesRegex(ValueError,'specific internal energy'):
+            self.sample(*self.pair('momhot',10.,item,
+                                   mom={'mom_u':np.array([2e7])}))
 
     def test_ledger_rejects_unsupported_scope(self):
         item=[self.entry((0,0,0,0),1e7,1e15,-1e19,1.,[0.6,0.4])]

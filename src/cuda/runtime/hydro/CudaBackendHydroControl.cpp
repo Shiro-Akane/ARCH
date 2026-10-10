@@ -6,6 +6,11 @@
  * device views. Runtime-owned scratch and transfer metadata remain alive through
  * stream completion; ghost and slot visibility follow the common driver contract.
  * Flux, CFL, interpolation and geometry formulas stay in their shared owners.
+ * Native Hydro workflow: cold-preflight the entire actual gravity-free batch
+ * and original angular plan before reset/upload; run shared selected faces,
+ * geometric source and provisional V/W update; download compact status/repair
+ * rows and join once. Preserve actual failure work, without granting thermal
+ * acceptance, macro/source/retry or regrid qualification.
  * Final Native boundary workflow: preflight every actual block/slot/cache,
  * enqueue only cached signed-axis/corner copies after completed donor exchange,
  * then join once. Runtime performs completed-cell EOS and ghost publication.
@@ -13,13 +18,21 @@
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
-#include "amr/exchange/CoarseFineCellPlan.h"
-#include "amr/transfer/LimitedLinearProlongation.h"
-#include "cuda/hydro/GridGeometryAdapter.cuh"
-
+#include <algorithm>
+#include <bit>
 #include <cmath>
 #include <string>
 #include <utility>
+
+#include "amr/exchange/CoarseFineCellPlan.h"
+#include "amr/transfer/LimitedLinearProlongation.h"
+#include "amr/transfer/RegridTransferMath.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "driver/dispatch/PolicyDescriptor.h"
+#include "numerics/reconstruction/AMRInterfaceStencil.h"
+#include "physics/gravity/IGravityPolicy.h"
+#include "physics/gravity/NativeExternalStage.h"
+#include "physics/gravity/NativeSelfStage.h"
 
 namespace arch::cuda {
 namespace {
@@ -34,6 +47,60 @@ scheduler::HydroMethod hydro_method(
     case TimeIntegratorId::Rk3: return scheduler::HydroMethod::RK3;
     }
     throw std::invalid_argument("invalid resolved Hydro integrator");
+}
+
+/** Cold Native stage validation on actual factory storage and plan bindings.
+ * Workflow: inspect the selected registered stencil and original torque mode;
+ * reject sources, stale shapes, malformed Bounds or undersized real scratch;
+ * do not clear status, receipts, fields, capture or registers here. The existing
+ * backend access validator has already authenticated every actual lease/owner.
+ */
+void require_native_hydro_stage(const CudaBlockRuntime& block,
+    const CudaLaunchConfig& launch, const CudaAmrFluxPlanRuntime* plan,
+    SpeciesWorkspaceView workspace, int species_count, double dt,
+    const scheduler::StageDescriptor& descriptor, bool prepared_external, bool prepared_self)
+{
+    const auto& grid = block.grid;
+    const auto& bounds = block.native_hydro_bounds;
+    const int depth = dispatch::static_requirements_for<dispatch::ReconstructionPolicies>(
+        launch.plan.reconstruction).ghost_depth;
+    if (launch.gravity.enabled != prepared_external || launch.self_gravity != prepared_self
+        || block.self_gravity.enabled() != prepared_self || (prepared_external && prepared_self))
+        throw std::logic_error("Native Device Hydro gravity source has no actual prepared consumer");
+    if (!dispatch::policy_id_registered<dispatch::FluxPolicies>(launch.plan.flux)
+        || !dispatch::policy_id_registered<dispatch::LimiterPolicies>(launch.plan.limiter))
+        throw std::invalid_argument("Native Hydro selected registry route is unavailable");
+    if (!std::isfinite(dt) || !(dt > 0.) || !std::isfinite(launch.entropy_fix_coefficient)
+        || !state::valid_bounds(bounds) || bounds.density != launch.density_floor
+        || bounds.internal_min != launch.minimum_internal_energy
+        || bounds.internal_max != launch.maximum_internal_energy
+        || depth <= 0 || !valid_hydro_grid(grid) || grid.ng < depth
+        || !valid_species_workspace(workspace, species_count, 41)
+        || (species_count > 0 && !workspace.values))
+        throw std::invalid_argument("invalid actual Native Hydro stage storage/bounds/scratch");
+    if (grid.dyadic_identity.root_lower[0] == 0. && grid.ng < 3
+        && (launch.plan.reconstruction == dispatch::ReconstructionId::Muscl
+            || AMRInterfaceReconstruction::needs_tvd_interface_stencil(depth,
+                grid.amr_coarse_fine_face, 0, grid.is - 1, grid.is, grid.ie)))
+        throw std::invalid_argument("Native axis MUSCL requires its original three-column support");
+    if (!grid.cell_volume || !plan
+        || plan->semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+        || !plan->angular_transport || plan->dimension != 2
+        || plan->species_count != species_count || plan->epoch != block.handle.epoch)
+        throw std::logic_error("Native Hydro requires the actual Native angular AMR plan");
+    const auto found = std::find(plan->runtime_blocks.begin(), plan->runtime_blocks.end(), &block);
+    if (found == plan->runtime_blocks.end())
+        throw std::logic_error("Native Hydro block is absent from the actual angular plan");
+    for (const auto view : {block.slots[slot_index(descriptor.old_slot)],
+            block.slots[slot_index(descriptor.input_slot)],
+            block.slots[slot_index(descriptor.output_slot)],
+            block.hydro_delta.view(), block.face_flux.view()})
+        if (!valid_hydro_view(view) || view.total_size != grid.total_size
+            || view.n_species != species_count)
+            throw std::invalid_argument("Native Hydro actual field shape drifted");
+    for (int axis = 0; axis < 2; ++axis)
+        if (!grid.face_area_lower[axis] || !grid.face_area_upper[axis])
+            throw std::invalid_argument("Native Hydro actual metric cache is missing");
 }
 
 } // namespace
@@ -116,7 +183,8 @@ state::CompletionToken CudaBackend::execute_hydro_stage(
 state::CompletionToken CudaBackend::execute_hydro_stage_batch(
     std::span<const backend::BackendStateAccess> currents,
     const scheduler::StageDescriptor& descriptor,
-    double dt, state::CompletionToken expected)
+    double dt, state::CompletionToken expected,
+    const Physical::Gravity::IGravityPolicy* prepared_source)
 {
     validate_hydro_batch_accesses(currents);
     const auto plan = scheduler::make_hydro_plan(
@@ -125,14 +193,137 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
         || descriptor.stage > static_cast<int>(plan.stages.size())
         || !scheduler::same_stage_descriptor(descriptor, plan.stages[descriptor.stage - 1]))
         throw std::invalid_argument("invalid Hydro stage contract");
-    if (currents.empty()) return expected;
+    if (currents.empty()) {
+        if (prepared_source)
+            throw std::logic_error("Prepared Native source requires its complete actual domain");
+        return expected;
+    }
+    const int species_count = impl_->species_view.count;
+    const auto semantics = impl_->require_block(currents.front()).grid.semantics;
+    const bool native = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const Physical::Gravity::NativeExternalStageFrame* external_frame = nullptr;
+    const Physical::Gravity::NativeSelfStageFrame* self_frame = nullptr;
+    if (prepared_source) {
+        if (!native)
+            throw std::logic_error("Native source batch has an ordinary geometry");
+        const auto origin = prepared_source->source_descriptor().origin;
+        if (origin == Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal) {
+            if (impl_->launch.self_gravity || !impl_->launch.gravity.enabled
+                || !(external_frame = prepared_source->prepared_native_external())
+                || external_frame->require_device_domain() != currents.size())
+                throw std::logic_error("Native external batch lacks its actual complete Device frame");
+        } else if (origin == Physical::Gravity::GravitySourceOrigin::NativeSelfComposite) {
+            if (!impl_->launch.self_gravity || impl_->launch.gravity.enabled
+                || !(self_frame = prepared_source->prepared_native_self())
+                || self_frame->require_device_domain() != currents.size()
+                || !impl_->active_amr_flux
+                || impl_->active_amr_flux->epoch != self_frame->registration_topology().epoch
+                || impl_->active_amr_flux->topology_fingerprint
+                    != self_frame->registration_topology().fingerprint)
+                throw std::logic_error("Native Self batch lacks its actual complete Device field/plan");
+        } else {
+            throw std::logic_error("Native batch received an unknown prepared source");
+        }
+    }
+    std::vector<Physical::Gravity::NativeExternalStageFrame::DevicePatchReceipt> source_receipts;
+    std::vector<Physical::Gravity::NativeSelfStageFrame::DevicePatchReceipt> self_receipts;
+    if (external_frame) source_receipts.reserve(currents.size());
+    if (self_frame) self_receipts.reserve(currents.size());
+    // These are original-operation indices, never numeric psi copies. One
+    // existing grow-only device allocation serves all actual routes this stage.
+    std::vector<std::size_t> self_rows;
+    std::vector<std::array<std::size_t, 3>> self_row_offsets;
+    std::vector<std::array<const amr::AmrFluxRegistrationRoute*, 3>> self_routes;
+    if (self_frame) {
+        self_row_offsets.resize(currents.size());
+        self_routes.resize(currents.size());
+        for (auto& offsets : self_row_offsets)
+            offsets.fill(std::numeric_limits<std::size_t>::max());
+    }
+    const auto repairs_profile = native ? state::RepairSemantics::RzVolumeAngular
+        : state::RepairSemantics::ExistingVolume;
+    // Complete the actual request preflight before resetting/uploading any
+    // numerical binding, receipt, field, observer or flux-register value.
+    for (const auto current : currents) {
+        auto& block = impl_->require_block(current);
+        static_cast<void>(block.require_access(current));
+        if (block.grid.semantics != semantics)
+            throw std::invalid_argument("Hydro batch mixes actual geometry semantics");
+        if (native)
+            require_native_hydro_stage(block, impl_->launch, impl_->active_amr_flux.get(),
+                impl_->species_workspace, species_count, dt, descriptor,
+                external_frame != nullptr, self_frame != nullptr);
+        if (self_frame && (!gravity_ready_ || block.gravity_generation != gravity_generation_
+            || block.self_gravity.density != block.slots[slot_index(descriptor.input_slot)].rho))
+            throw std::logic_error("Native Self input field has an expired actual publication");
+    }
+    // Claim and authenticate all original inputs before the first register,
+    // field, status or upload mutation. No Host fluid array is read or staged.
+    if (external_frame) {
+        for (std::size_t index = 0; index < currents.size(); ++index) {
+            auto input_access = currents[index]; input_access.slot = descriptor.input_slot;
+            const auto& block = impl_->require_block(input_access);
+            const auto geometry = make_grid_geometry_view(block.grid);
+            auto receipt = external_frame->claim_device_patch(index,input_access,
+                geometry,dt,*prepared_source);
+            receipt.require_application(input_access,geometry,dt,block.native_hydro_bounds);
+            const auto& external = receipt.external();
+            const auto& launched = impl_->launch.gravity;
+            const auto same = [](double a,double b) {
+                return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);
+            };
+            if (external.enabled != launched.enabled || !same(external.g_x,launched.g_x)
+                || !same(external.g_y,launched.g_y) || !same(external.g_z,launched.g_z))
+                throw std::logic_error("Native source frame differs from the actual backend launch components");
+            source_receipts.push_back(std::move(receipt));
+        }
+    }
+    if (self_frame) {
+        const auto& topology = self_frame->registration_topology();
+        for (std::size_t index = 0; index < currents.size(); ++index) {
+            auto input_access = currents[index]; input_access.slot = descriptor.input_slot;
+            const auto& block = impl_->require_block(input_access);
+            if (!gravity_ready_ || block.gravity_generation != gravity_generation_
+                || block.self_gravity.density != block.slots[slot_index(descriptor.input_slot)].rho)
+                throw std::logic_error("Native Self input field has an expired actual publication");
+            const auto geometry = make_grid_geometry_view(block.grid);
+            auto receipt = self_frame->claim_device_patch(index, input_access, geometry, dt, *prepared_source);
+            receipt.require_application(input_access, geometry, dt, block.native_hydro_bounds);
+            const auto& field = receipt.patch_view();
+            if (field.density != block.self_gravity.density)
+                throw std::logic_error("Native Self batch changed its original resident density");
+            for (int axis = 0; axis < block.grid.dim; ++axis)
+                if (field.faces[axis] != block.self_gravity.faces[axis]
+                    || field.work_low[axis] != block.self_gravity.work_low[axis]
+                    || field.work_high[axis] != block.self_gravity.work_high[axis])
+                    throw std::logic_error("Native Self batch changed its resident face/work arrays");
+            receipt.reserve_sources();
+            for (int axis = 0; axis < block.grid.dim; ++axis) {
+                const auto* compiled = impl_->active_amr_flux->find_route(currents[index].block, axis);
+                const auto* route = receipt.registration_route(axis);
+                if ((compiled == nullptr) != (route == nullptr))
+                    throw std::logic_error("Native Self original/backend route presence differs");
+                if (!route) continue;
+                if (route->source.handle != currents[index].block)
+                    throw std::logic_error("Native Self route is foreign to its original source");
+                self_routes[index][axis] = route;
+                auto rows = receipt.registration_rows(topology, *route);
+                if (std::any_of(rows.begin(), rows.end(), [](std::size_t row) {
+                        return row != std::numeric_limits<std::size_t>::max(); })) {
+                    self_row_offsets[index][axis] = self_rows.size();
+                    self_rows.insert(self_rows.end(), rows.begin(), rows.end());
+                }
+            }
+            self_receipts.push_back(std::move(receipt));
+        }
+    }
     impl_->select_device();
     auto& scratch = impl_->hydro_batch;
     scratch.ensure_capacity(currents.size());
-    const int species_count = impl_->species_view.count;
     scratch.ensure_repairs(currents.size(), species_count);
+    if (external_frame) scratch.ensure_native_external_budget(currents.size());
+    if (self_frame) scratch.native_self_rows.reserve(self_rows.size());
     const int repair_stride = state::RepairView::fixed_size + 2 * species_count;
-    stage_repairs.reset(species_count);
     std::vector<DeviceHydroBatchBlock> blocks;
     blocks.reserve(currents.size());
     for (std::size_t index = 0; index < currents.size(); ++index) {
@@ -148,14 +339,33 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
             block.hydro_delta.view(), block.face_flux.view(), block.grid,
             scratch.status->get() + index,
             make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block),
-            {scratch.repairs->get() + index * repair_stride, species_count},
+            {scratch.repairs->get() + index * repair_stride, species_count, repairs_profile},
             self?block.self_gravity:Physical::Gravity::GravityPatchView{},
-            block.mean_pressure.get(), block.mean_sound_speed.get(), impl_->launch.roe_wave_speed});
+            block.mean_pressure.get(), block.mean_sound_speed.get(), impl_->launch.roe_wave_speed,
+            block.native_hydro_walls, block.native_hydro_bounds,
+            external_frame ? scratch.native_external_budget->get() + 4 * index : nullptr});
+        if (self_frame) {
+            for (int axis = 0; axis < block.grid.dim; ++axis) {
+                const auto offset = self_row_offsets[index][axis];
+                if (offset == std::numeric_limits<std::size_t>::max()) continue;
+                blocks.back().routes[axis].native_self_reflux = {
+                    self_frame->prepared_reflux_values(), scratch.native_self_rows.get() + offset,
+                    self_routes[index][axis]->plan.operations.size(), self_frame->row_count(),
+                    scratch.status->get() + index};
+            }
+        }
     }
+    if ((external_frame || self_frame) && descriptor.stage == 1)
+        (void)clear_amr_flux_register(expected);
+    stage_repairs.reset(species_count, repairs_profile);
     auto& device_blocks = impl_->hydro_bindings;
     device_blocks.reserve(blocks.size());
     CudaBackendLaunchResult launch{};
     CudaQuiescenceGuard work_guard{*impl_};
+    if (!self_rows.empty())
+        enqueue_cuda_metadata_upload(scratch.native_self_rows.get(), self_rows.data(),
+            self_rows.size() * sizeof(std::size_t), impl_->stream.get(),
+            impl_->runtime_counters, "upload original Native Self Energy row indices");
     enqueue_cuda_metadata_upload(device_blocks.get(), blocks.data(),
         blocks.size() * sizeof(DeviceHydroBatchBlock), impl_->stream.get(),
         impl_->runtime_counters, "upload Hydro batch bindings");
@@ -166,22 +376,40 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
             impl_->launch.minimum_internal_energy, impl_->launch.maximum_internal_energy,
             descriptor, dt, impl_->stream.get(), impl_->species_workspace, impl_->launch.gravity);
     });
+    const auto kernels = static_cast<std::uint64_t>(launch.kernels_launched);
+    // A rejected partial launch still drains before recording its reported
+    // work. Neither a counter nor a successful enqueue grants completion.
+    if (!launch.route_found || launch.error != cudaSuccess) {
+        quiesce();
+        work_guard.completed = true;
+        impl_->runtime_counters.kernel_count += kernels;
+    }
     if (!launch.route_found) throw std::logic_error("CUDA Hydro batch route is unavailable");
     check_cuda(launch.error, "launch Hydro stage batch");
-    const auto kernels = static_cast<std::uint64_t>(launch.kernels_launched);
     // Distinct latches prevent a valid later block from clearing earlier EOS
     // failures. The ordered stream still protects shared species scratch and
     // registers face flux before its block scratch is overwritten.
     check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
                    currents.size() * sizeof(int), cudaMemcpyDeviceToHost,
                    impl_->stream.get()), "download Hydro stage batch EOS status");
+    impl_->runtime_counters.bytes_d2h += currents.size() * sizeof(int);
     check_cuda(cudaMemcpyAsync(scratch.host_repairs.data(), scratch.repairs->get(),
         scratch.host_repairs.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
         "download Hydro stage repair summaries");
+    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
+    if (external_frame) {
+        check_cuda(cudaMemcpyAsync(scratch.host_native_external_budget.data(),
+            scratch.native_external_budget->get(),
+            scratch.host_native_external_budget.size() * sizeof(double),
+            cudaMemcpyDeviceToHost, impl_->stream.get()),
+            "download measured Native external body budgets");
+        impl_->runtime_counters.bytes_d2h += scratch.host_native_external_budget.size() * sizeof(double);
+    }
     quiesce();
     work_guard.completed = true;
+    // Record known completed work before checking the actual numerical latch,
+    // so a drained EOS failure retains its real attempted stage cost.
     impl_->runtime_counters.kernel_count += kernels;
-    impl_->runtime_counters.bytes_d2h += currents.size() * sizeof(int);
     for (std::size_t index = 0; index < currents.size(); ++index) {
         if (scratch.host_status[index] != 0)
             throw std::runtime_error("Invalid CUDA hydro stage EOS query: stage="
@@ -191,12 +419,46 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
                 + std::to_string(scratch.host_status[index]));
     }
     for (std::size_t index = 0; index < currents.size(); ++index) {
-        state::RepairBudget report(species_count);
+        state::RepairBudget report(species_count, repairs_profile);
         std::copy_n(scratch.host_repairs.data() + index * repair_stride, repair_stride, report.values.data());
         report.block_uid = currents[index].block.uid.value;
         stage_repairs.combine(report);
     }
-    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
+    if (external_frame) {
+        // The original stage has joined. Check the entire compact row set and
+        // exact applications before publishing any patch receipt; journal
+        // acceptance applies the source RK weight once after this return.
+        for (double value : scratch.host_native_external_budget)
+            if (!std::isfinite(value))
+                throw std::runtime_error("Native external measured body budget is nonfinite");
+        for (std::size_t index = 0; index < source_receipts.size(); ++index) {
+            auto input_access = currents[index]; input_access.slot = descriptor.input_slot;
+            const auto& block = impl_->require_block(input_access);
+            source_receipts[index].require_application(input_access,
+                make_grid_geometry_view(block.grid),dt,block.native_hydro_bounds);
+        }
+        for (std::size_t index = 0; index < source_receipts.size(); ++index) {
+            const auto* row = scratch.host_native_external_budget.data() + 4 * index;
+            source_receipts[index].commit({row[0],row[1],row[2],row[3]});
+        }
+    }
+    if (self_frame) {
+        // All kernels have joined and EVERY original status latch passed.
+        // Authenticate the whole application set before consuming any receipt;
+        // Runtime still owns completed EOS and whole-macro accept/rollback.
+        for (std::size_t index = 0; index < self_receipts.size(); ++index) {
+            auto input_access = currents[index]; input_access.slot = descriptor.input_slot;
+            const auto& block = impl_->require_block(input_access);
+            self_receipts[index].require_application(input_access,
+                make_grid_geometry_view(block.grid), dt, block.native_hydro_bounds);
+        }
+        for (std::size_t index = 0; index < self_receipts.size(); ++index) {
+            self_receipts[index].commit_sources();
+            for (const auto* route : self_routes[index])
+                if (route) self_receipts[index].commit_registration(*route);
+            self_receipts[index].commit();
+        }
+    }
     return expected;
 }
 
@@ -237,7 +499,6 @@ state::CompletionToken CudaBackend::clear_amr_flux_register(
 state::CompletionToken CudaBackend::execute_amr_reflux(
     state::StateSlot slot, double dt, state::CompletionToken expected)
 {
-    reflux_repairs.reset(impl_->species_view.count);
     if (!complete_token(expected) || !std::isfinite(dt) || dt < 0.0)
         throw std::invalid_argument("invalid CUDA AMR reflux contract");
     CudaAmrFluxPlanRuntime* const plan = impl_->active_amr_flux.get();
@@ -247,8 +508,25 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
         || plan->device_blocks.size() != plan->host_blocks.size())
         throw std::logic_error("CUDA AMR flux block bindings drifted");
 
+    const bool native = plan->semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const auto repairs_profile = native ? state::RepairSemantics::RzVolumeAngular
+        : state::RepairSemantics::ExistingVolume;
+    if (native && !plan->angular_transport)
+        throw std::logic_error("Native reflux requires the actual angular AMR plan");
+    // Authenticate every original plan owner/shape before rebinding or clearing
+    // even an empty Native report. Slot rotation changes views, not owners.
+    for (const auto* block : plan->runtime_blocks) {
+        if (!block || block->grid.semantics != plan->semantics
+            || block->handle.epoch != plan->epoch
+            || !valid_hydro_grid(block->grid)
+            || !valid_hydro_view(block->slots[slot_index(slot)])
+            || block->slots[slot_index(slot)].n_species != plan->species_count
+            || block->slots[slot_index(slot)].total_size != block->grid.total_size)
+            throw std::logic_error("CUDA AMR reflux actual owner/chart/shape drifted");
+    }
     auto& scratch = impl_->reflux_batch;
     const int species_count = impl_->species_view.count;
+    reflux_repairs.reset(species_count, repairs_profile);
     const int repair_stride = state::RepairView::fixed_size + 2 * species_count;
     scratch.ensure_repairs(plan->host_blocks.size(), species_count);
 
@@ -261,7 +539,7 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
             throw std::logic_error("CUDA AMR flux block was retired early");
         plan->host_blocks[index].state = block->slots[slot_index(slot)];
         plan->host_blocks[index].repairs = {
-            scratch.repairs->get() + index * repair_stride, species_count};
+            scratch.repairs->get() + index * repair_stride, species_count, repairs_profile};
     }
 
     const auto& reflux = plan->compiled_reflux;
@@ -293,22 +571,22 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
                "launch CUDA AMR reflux");
     check_cuda(cudaMemcpyAsync(&reflux_status,plan->reflux_status.get(),sizeof(int),
         cudaMemcpyDeviceToHost,impl_->stream.get()),"download reflux status");
+    impl_->runtime_counters.bytes_d2h += sizeof(int);
     check_cuda(cudaMemcpyAsync(scratch.host_repairs.data(), scratch.repairs->get(),
         scratch.host_repairs.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
         "download reflux repair receipts");
+    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
     quiesce();
     reflux_guard.completed=true;
-    impl_->runtime_counters.bytes_d2h+=sizeof(int);
+    if (dt > 0.0) ++impl_->runtime_counters.kernel_count;
     if (reflux_status) throw std::runtime_error("Invalid state after CUDA AMR reflux: status="+std::to_string(reflux_status));
     for (std::size_t index = 0; index < plan->host_blocks.size(); ++index) {
-        state::RepairBudget report(species_count);
+        state::RepairBudget report(species_count, repairs_profile);
         std::copy_n(scratch.host_repairs.data() + index * repair_stride,
             repair_stride, report.values.data());
         report.block_uid = plan->runtime_blocks[index]->handle.uid.value;
         reflux_repairs.combine(report);
     }
-    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
-    if (dt > 0.0) ++impl_->runtime_counters.kernel_count;
     return expected;
 }
 
@@ -336,16 +614,50 @@ state::CompletionToken CudaBackend::execute_physical_boundary_batch(
 {
     validate_hydro_batch_accesses(accesses, accesses.empty()
         ? state::StateSlot::Current : accesses.front().slot);
+    return impl_->execute_physical_boundary_batch(accesses, version, expected,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+
+state::CompletionToken CudaBackend::execute_physical_boundary_batch(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->execute_physical_boundary_batch(accesses, version, expected,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+
+state::CompletionToken CudaBackend::Impl::execute_physical_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected,
+    const BlockResolver& resolve)
+{
+    const auto slot = accesses.empty() ? state::StateSlot::Current : accesses.front().slot;
+    if (slot != state::StateSlot::Current && slot != state::StateSlot::Next
+        && slot != state::StateSlot::Scratch)
+        throw std::invalid_argument("Invalid backend batch slot");
     if (!state::is_valid(version) || !complete_token(expected))
         throw std::invalid_argument("invalid boundary batch completion contract");
     if (accesses.empty()) return expected;
     if (accesses.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         throw std::overflow_error("boundary batch exceeds launch index extent");
+    std::vector<const CudaBlockRuntime*> owners;
+    owners.reserve(accesses.size());
     std::vector<DeviceBoundaryBatchBlock> blocks;
     blocks.reserve(accesses.size());
     std::array<int, 3> phase_counts{};
     for (const auto access : accesses) {
-        const auto& block = impl_->require_block(access);
+        if (access.slot != slot)
+            throw std::invalid_argument("Invalid backend batch access");
+        const auto& block = resolve(access);
+        owners.push_back(&block);
         const auto selected = block.require_access(access);
         check_cuda(validate_boundary_launch(selected, block.boundary_transfers.get(),
             block.boundary), "validate boundary batch block");
@@ -354,20 +666,23 @@ state::CompletionToken CudaBackend::execute_physical_boundary_batch(
             phase_counts[phase] = std::max(phase_counts[phase],
                 static_cast<int>(block.boundary.phases[phase].count));
     }
-    impl_->select_device();
-    auto& device_blocks = impl_->boundary_bindings;
+    std::sort(owners.begin(), owners.end(), std::less<>{});
+    if (std::adjacent_find(owners.begin(), owners.end()) != owners.end())
+        throw std::invalid_argument("Duplicate Hydro batch block");
+    select_device();
+    auto& device_blocks = boundary_bindings;
     device_blocks.reserve(blocks.size());
     int kernels = 0;
-    CudaQuiescenceGuard work_guard{*impl_};
+    CudaQuiescenceGuard work_guard{*this};
     enqueue_cuda_metadata_upload(device_blocks.get(), blocks.data(),
-        blocks.size() * sizeof(DeviceBoundaryBatchBlock), impl_->stream.get(),
-        impl_->runtime_counters, "upload boundary batch bindings");
+        blocks.size() * sizeof(DeviceBoundaryBatchBlock), stream.get(),
+        runtime_counters, "upload boundary batch bindings");
     check_cuda(launch_cuda_backend_boundary_batch(device_blocks.get(),
-        static_cast<int>(blocks.size()), phase_counts, impl_->stream.get(), kernels),
+        static_cast<int>(blocks.size()), phase_counts, stream.get(), kernels),
         "launch boundary batch");
-    quiesce();
+    checked_quiesce("synchronize CUDA backend");
     work_guard.completed = true;
-    impl_->runtime_counters.kernel_count += static_cast<std::uint64_t>(kernels);
+    runtime_counters.kernel_count += static_cast<std::uint64_t>(kernels);
     return expected;
 }
 
@@ -389,6 +704,35 @@ state::CompletionToken CudaBackend::execute_native_axis_boundary_batch(
 {
     validate_hydro_batch_accesses(accesses, accesses.empty()
         ? state::StateSlot::Current : accesses.front().slot);
+    return impl_->execute_native_axis_boundary_batch(accesses, version, expected,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+
+state::CompletionToken CudaBackend::execute_native_axis_boundary_batch(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->execute_native_axis_boundary_batch(accesses, version, expected,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+
+state::CompletionToken CudaBackend::Impl::execute_native_axis_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected,
+    const BlockResolver& resolve)
+{
+    const auto slot = accesses.empty() ? state::StateSlot::Current : accesses.front().slot;
+    if (slot != state::StateSlot::Current && slot != state::StateSlot::Next
+        && slot != state::StateSlot::Scratch)
+        throw std::invalid_argument("Invalid backend batch slot");
     if (!state::is_valid(version) || !complete_token(expected))
         throw std::invalid_argument("invalid Native final axis completion contract");
     if (accesses.empty()) return expected;
@@ -397,17 +741,22 @@ state::CompletionToken CudaBackend::execute_native_axis_boundary_batch(
 
     // Only actual requested views and their existing immutable caches are
     // borrowed. No metadata buffer or caller policy is uploaded per call.
+    std::vector<const CudaBlockRuntime*> owners;
+    owners.reserve(accesses.size());
     std::vector<std::pair<DeviceStateView, const CudaBlockRuntime*>> launches;
     launches.reserve(accesses.size());
     for (const auto access : accesses) {
-        const auto& block = impl_->require_block(access);
+        if (access.slot != slot)
+            throw std::invalid_argument("Invalid backend batch access");
+        const auto& block = resolve(access);
+        owners.push_back(&block);
         const DeviceStateView selected = block.require_access(access);
         const auto& cache = block.native_axis_boundary;
         if (!valid_hydro_grid(block.grid)
             || block.grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
             || !valid_hydro_view(selected)
             || selected.total_size != block.grid.total_size
-            || selected.n_species != impl_->species_count
+            || selected.n_species != species_count
             || cache.total_size != block.grid.total_size
             || cache.logical_fingerprint != block.boundary.logical_fingerprint
             || block.native_axis_boundary_transfers.size() != cache.transfers.size())
@@ -427,24 +776,27 @@ state::CompletionToken CudaBackend::execute_native_axis_boundary_batch(
             "validate Native final axis launch shape");
         launches.emplace_back(selected, &block);
     }
+    std::sort(owners.begin(), owners.end(), std::less<>{});
+    if (std::adjacent_find(owners.begin(), owners.end()) != owners.end())
+        throw std::invalid_argument("Duplicate Hydro batch block");
     // No new work exists for a fully off-axis request; this is not the final
     // Runtime/macro join authority and does not invent an unnecessary fence.
     if (launches.empty()) return expected;
 
-    impl_->select_device();
-    CudaQuiescenceGuard work_guard{*impl_};
+    select_device();
+    CudaQuiescenceGuard work_guard{*this};
     for (const auto& [selected, block] : launches) {
         check_cuda(launch_cuda_backend_boundary_plan(selected,
             block->native_axis_boundary_transfers.get(), block->native_axis_boundary,
-            impl_->stream.get()), "launch Native final axis boundary");
+            stream.get()), "launch Native final axis boundary");
         // Record successful actual enqueues immediately, so a later failure
         // cannot erase previously launched work. The original narrow launcher
         // does not report partial phases on its own error: that exceptional
         // contribution is unknown, and no scientific success is returned.
         for (const auto& phase : block->native_axis_boundary.phases)
-            if (phase.count > 0) ++impl_->runtime_counters.kernel_count;
+            if (phase.count > 0) ++runtime_counters.kernel_count;
     }
-    impl_->checked_quiesce("synchronize Native final axis boundary");
+    checked_quiesce("synchronize Native final axis boundary");
     work_guard.completed = true;
     return expected;
 }
@@ -460,6 +812,27 @@ state::CompletionToken CudaBackend::execute_same_level_exchange(
     impl_->execute_same_level_exchange(accesses, plan, slot,
         [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
             return impl_->require_block(access);
+        });
+    return expected;
+}
+
+state::CompletionToken CudaBackend::execute_same_level_exchange(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
+    state::StateVersion source_version,
+    state::CompletionToken expected)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    if (slot != state::StateSlot::Current)
+        throw std::invalid_argument("staged exchange requires Current");
+    if (!state::is_valid(source_version) || !complete_token(expected))
+        throw std::invalid_argument("invalid CUDA same_level exchange completion");
+    impl_->execute_same_level_exchange(accesses, plan, slot,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged exchange requires Current");
+            return resolve_staged_block(staged, access);
         });
     return expected;
 }
@@ -641,6 +1014,27 @@ state::CompletionToken CudaBackend::execute_coarse_fine_exchange(
     return expected;
 }
 
+state::CompletionToken CudaBackend::execute_coarse_fine_exchange(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    const amr::CoarseFineTransferPlan& plan, state::StateSlot slot,
+    state::StateVersion source_version,
+    state::CompletionToken expected)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    if (slot != state::StateSlot::Current)
+        throw std::invalid_argument("staged exchange requires Current");
+    if (!state::is_valid(source_version) || !complete_token(expected))
+        throw std::invalid_argument("invalid CUDA coarse_fine exchange completion");
+    impl_->execute_coarse_fine_exchange(accesses, plan, slot,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged exchange requires Current");
+            return resolve_staged_block(staged, access);
+        });
+    return expected;
+}
+
 void CudaBackend::Impl::execute_coarse_fine_exchange(
     std::span<const backend::BackendStateAccess> accesses,
     const amr::CoarseFineTransferPlan& plan, state::StateSlot slot,
@@ -655,6 +1049,15 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
     std::vector<DeviceExchangeBlock> host_blocks;
     host_blocks.reserve(accesses.size());
     int species_count = -1;
+    // Native chart detection: the borrowed plan chart is the chart of its real
+    // block views, so an actual axisymmetric-RZ 2D plan always selects the
+    // Native leaf. A chart that mixes an RZ view with any other real chart, or
+    // an RZ view that is not the required 2D form, is rejected before upload
+    // instead of falling back to ordinary transfer math.
+    bool any_rz = false;
+    bool all_rz_dim2 = true;
+    bool bounds_identical = true;
+    const state::Bounds* borrowed_bounds = nullptr;
     for (const backend::BackendStateAccess& access : accesses) {
         if (access.slot != slot
             || access.block.epoch != plan.scope.from_epoch)
@@ -674,10 +1077,33 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
                 "CUDA coarse-fine exchange species counts differ");
         species_count = selected.n_species;
         host_blocks.push_back({selected, block.grid});
+        if (block.grid.semantics
+                == GridMetrics::GeometrySemantics::AxisymmetricRz)
+            any_rz = true;
+        if (block.grid.semantics
+                != GridMetrics::GeometrySemantics::AxisymmetricRz
+            || block.grid.dim != 2)
+            all_rz_dim2 = false;
+        const state::Bounds& borrowed = block.native_hydro_bounds;
+        if (borrowed_bounds == nullptr)
+            borrowed_bounds = &borrowed;
+        else if (borrowed.density != borrowed_bounds->density
+            || borrowed.internal_min != borrowed_bounds->internal_min
+            || borrowed.internal_max != borrowed_bounds->internal_max)
+            bounds_identical = false;
     }
     if (species_count < 0)
         throw std::invalid_argument(
             "CUDA coarse-fine exchange requires blocks");
+
+    if (any_rz && !all_rz_dim2)
+        throw std::invalid_argument(
+            "CUDA coarse-fine exchange mixes actual Native chart/dimension");
+    const bool native = all_rz_dim2;
+    if (native && (borrowed_bounds == nullptr || !bounds_identical
+            || !state::valid_bounds(*borrowed_bounds)))
+        throw std::invalid_argument(
+            "Native CUDA coarse-fine exchange requires genuine identical valid borrowed Native bounds");
 
     const amr::CoarseFineCellPlan cell_plan =
         amr::compile_coarse_fine_cell_plan(plan, species_count);
@@ -712,6 +1138,13 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
 
     std::vector<DeviceCoarseFineTransfer> host_transfers;
     host_transfers.reserve(cell_plan.transfers.size());
+    // Shared logical plan rule of every lowered record: 0 unknown,
+    // 1 fine->coarse restriction overlay, 2 coarse->fine prolongation. The
+    // classification is an auxiliary of the Native branch only, so the
+    // ordinary lowering path keeps its original allocation and POD writes.
+    std::vector<unsigned char> native_rules;
+    if (native)
+        native_rules.reserve(cell_plan.transfers.size());
     for (const amr::CoarseFineCellTransfer& transfer
          : cell_plan.transfers) {
         const auto source = indices.find(transfer.source.handle);
@@ -764,8 +1197,96 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
                     transfer.slope_cells[cell]);
         }
         host_transfers.push_back(lowered);
+        if (native)
+            native_rules.push_back(
+                transfer.rule == amr::RefinementRule::FineGhostAverage ? 1
+                : transfer.rule == amr::RefinementRule::CoarseGhostInjection ? 2
+                : 0);
     }
     if (host_transfers.empty()) return;
+
+    // Native RZ preflight and plan ordering. Workflow: confirm every shared
+    // logical rule lowered consistently, confirm every destination lies inside
+    // its actual block layout, confirm every fine restriction donor is an
+    // actual interior cell, then order the restriction prefix by the actual
+    // destination so the device overlay lookup can binary search it. The
+    // shared logical plan remains the single source of the records; only the
+    // borrowed Native order changes, and the ordinary plan is left untouched.
+    int restriction_count = 0;
+    if (native) {
+        for (std::size_t n = 0; n < host_transfers.size(); ++n) {
+            const DeviceCoarseFineTransfer& transfer = host_transfers[n];
+            const unsigned char rule = native_rules[n];
+            if (rule == 0)
+                throw std::logic_error(
+                    "Native transfer has an unknown real refinement rule");
+            if ((rule == 1) != (transfer.prolongation_dimension == 0))
+                throw std::invalid_argument(
+                    "CUDA coarse-fine rule lowering is inconsistent");
+            const DeviceGridView& destination_grid =
+                host_blocks[transfer.destination_block].grid;
+            if (destination_grid.stride_y <= 0
+                || destination_grid.total_y <= 0)
+                throw std::invalid_argument(
+                    "CUDA coarse-fine block layout is invalid");
+            if (transfer.destination_cell < 0
+                || transfer.destination_cell >= destination_grid.total_size)
+                throw std::out_of_range(
+                    "coarse-fine destination is outside CUDA block layout");
+            if (rule != 1) continue;
+            const DeviceGridView& source_grid =
+                host_blocks[transfer.source_block].grid;
+            if (source_grid.stride_y <= 0 || source_grid.total_y <= 0)
+                throw std::invalid_argument(
+                    "CUDA coarse-fine block layout is invalid");
+            for (std::size_t cell = 0; cell < transfer.source_count; ++cell) {
+                const int index = transfer.source_cells[cell];
+                if (index < 0 || index >= source_grid.total_size)
+                    throw std::out_of_range(
+                        "Native restriction source is outside CUDA block layout");
+                const int i = index % source_grid.stride_y;
+                const int j = (index / source_grid.stride_y)
+                    % source_grid.total_y;
+                const int k = source_grid.stride_z > 0
+                    ? index / source_grid.stride_z : 0;
+                if (i < source_grid.is || i >= source_grid.ie
+                    || j < source_grid.js || j >= source_grid.je
+                    || k < source_grid.ks || k >= source_grid.ke)
+                    throw std::invalid_argument(
+                        "Native restriction overlay requires actual fine interior donors");
+            }
+        }
+        std::vector<std::size_t> restriction_order;
+        restriction_order.reserve(host_transfers.size());
+        for (std::size_t n = 0; n < host_transfers.size(); ++n)
+            if (native_rules[n] == 1) restriction_order.push_back(n);
+        std::stable_sort(restriction_order.begin(), restriction_order.end(),
+            [&](std::size_t left, std::size_t right) {
+                const DeviceCoarseFineTransfer& a = host_transfers[left];
+                const DeviceCoarseFineTransfer& b = host_transfers[right];
+                if (a.destination_block != b.destination_block)
+                    return a.destination_block < b.destination_block;
+                return a.destination_cell < b.destination_cell;
+            });
+        for (std::size_t n = 1; n < restriction_order.size(); ++n) {
+            const DeviceCoarseFineTransfer& previous =
+                host_transfers[restriction_order[n - 1]];
+            const DeviceCoarseFineTransfer& current =
+                host_transfers[restriction_order[n]];
+            if (previous.destination_block == current.destination_block
+                && previous.destination_cell == current.destination_cell)
+                throw std::logic_error(
+                    "Native restriction overlay has duplicate actual destination");
+        }
+        std::vector<DeviceCoarseFineTransfer> ordered;
+        ordered.reserve(host_transfers.size());
+        for (const std::size_t n : restriction_order)
+            ordered.push_back(host_transfers[n]);
+        for (std::size_t n = 0; n < host_transfers.size(); ++n)
+            if (native_rules[n] != 1) ordered.push_back(host_transfers[n]);
+        host_transfers = std::move(ordered);
+        restriction_count = static_cast<int>(restriction_order.size());
+    }
 
     select_device();
     auto& device_blocks = exchange_scratch.blocks;
@@ -779,8 +1300,23 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
         > std::numeric_limits<std::size_t>::max() / field_count)
         throw std::overflow_error(
             "CUDA coarse-fine scratch size overflow");
-    scratch.reserve(static_cast<std::size_t>(
-        host_transfers.size() * field_count));
+    std::size_t scratch_scalars = static_cast<std::size_t>(
+        host_transfers.size() * field_count);
+    if (native && species_count > 0) {
+        // The reusable allocation keeps the whole gathered plan first and then
+        // one borrowed prolongation workspace per transfer, using the shared
+        // per-species workspace extent.
+        const std::size_t per_transfer = static_cast<std::size_t>(
+            amr::regrid_math::prolongation_workspace_per_species)
+            * static_cast<std::size_t>(species_count);
+        if (host_transfers.size()
+            > (std::numeric_limits<std::size_t>::max() - scratch_scalars)
+                / per_transfer)
+            throw std::overflow_error(
+                "CUDA coarse-fine scratch size overflow");
+        scratch_scalars += host_transfers.size() * per_transfer;
+    }
+    scratch.reserve(scratch_scalars);
     int status = 0;
     CudaQuiescenceGuard work_guard{*this};
     enqueue_cuda_metadata_upload(
@@ -793,20 +1329,36 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
                    host_transfers.size() * sizeof(DeviceCoarseFineTransfer),
                    stream.get(), runtime_counters,
                "upload CUDA coarse-fine transfers");
-    check_cuda(launch_cuda_backend_coarse_fine_exchange(
-                   device_blocks.get(), device_transfers.get(),
-                   static_cast<int>(host_transfers.size()),
-                   static_cast<int>(field_count), scratch.get(),
-                   exchange_status.get(), stream.get()),
-               "launch CUDA coarse-fine exchange");
+    if (native) {
+        // Native RZ: three kernels (restriction gather, prolongation gather,
+        // existing scatter) share the ordinary metadata uploads, status clear,
+        // status download and single quiescence point.
+        check_cuda(launch_cuda_backend_coarse_fine_exchange_native(
+                       device_blocks.get(), device_transfers.get(),
+                       static_cast<int>(host_transfers.size()),
+                       restriction_count, static_cast<int>(field_count),
+                       scratch.get(), *borrowed_bounds,
+                       exchange_status.get(), stream.get()),
+                   "launch CUDA coarse-fine exchange");
+    } else {
+        check_cuda(launch_cuda_backend_coarse_fine_exchange(
+                       device_blocks.get(), device_transfers.get(),
+                       static_cast<int>(host_transfers.size()),
+                       static_cast<int>(field_count), scratch.get(),
+                       exchange_status.get(), stream.get()),
+                   "launch CUDA coarse-fine exchange");
+    }
     check_cuda(cudaMemcpyAsync(
                    &status, exchange_status.get(), sizeof(int),
                    cudaMemcpyDeviceToHost, stream.get()),
                "download CUDA coarse-fine exchange status");
     checked_quiesce("synchronize CUDA coarse_fine exchange");
     work_guard.completed = true;
-    runtime_counters.kernel_count += 2;
+    runtime_counters.kernel_count += native ? 3 : 2;
     runtime_counters.bytes_d2h += sizeof(int);
+    if (status != 0 && native)
+        throw std::runtime_error(amr::regrid_math::status_message(
+            static_cast<amr::regrid_math::Status>(status)));
     if (status != 0)
         throw std::runtime_error(
             amr::prolongation_math::invalid_prolongation_density_message());

@@ -41,8 +41,9 @@ inline const FluidState& selected_fluid(const amr::Block& block,state::StateSlot
 /** Copy all three actual solve phase times without another field solve.
  * Their sum omits any work outside the producer's existing timed regions.
  */
-inline std::array<double,3> solve_times(const Physical::Gravity::SelfGravity& gravity) {
-    const auto& t=gravity.timings(Physical::Gravity::GravityFieldScope::NativeRzCandidate);const std::array<double,3> result{t.source_boundary,t.poisson,t.force};
+inline std::array<double,3> solve_times(const Physical::Gravity::SelfGravity& gravity,
+    Physical::Gravity::GravityFieldScope scope=Physical::Gravity::GravityFieldScope::NativeRzCandidate) {
+    const auto& t=gravity.timings(scope);const std::array<double,3> result{t.source_boundary,t.poisson,t.force};
     for(double value:result)require(std::isfinite(value)&&value>=0.,"Actual solve timing is invalid");
     return result;
 }
@@ -90,23 +91,27 @@ inline void Owner::observe_dynamic_source(const Physical::Gravity::NativeSelfSta
     require(topology&&topology->epoch==event.source->topology&&topology->semantics==native
         &&topology->angular_transport&&topology->species_count==species_count,
         "Dynamic source lost the actual native flux topology lease");
-    const auto times=solve_times(*gravity);
-    const auto ring=gravity->ring_memo_observations(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
-    require(ring.epoch==event.source->topology.value&&ring.source_generation==event.source_generation
-        &&ring.field_generation==event.field_generation,"Dynamic ring observations changed actual field identity");
+    const auto times=solve_times(*gravity,production()?Physical::Gravity::GravityFieldScope::ExistingPhysics
+        :Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+    std::optional<Physical::Gravity::SelfGravity::RingMemoObservations> ring;
+    if(!production()) {
+        ring=gravity->ring_memo_observations(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+        require(ring->epoch==event.source->topology.value&&ring->source_generation==event.source_generation
+            &&ring->field_generation==event.field_generation,"Dynamic ring observations changed actual field identity");
+    }
     std::lock_guard<std::mutex> lock(source_mutex);
     auto [it,inserted]=sources.try_emplace(stage);auto& visit=it->second;
     if(inserted) {
         visit.descriptor=*event.descriptor;visit.field_generation=event.field_generation;
         visit.source_generation=event.source_generation;visit.input_time=event.source->input_time;
         visit.source=*event.source;visit.lease=event.generation;
-        visit.topology_fingerprint=topology->fingerprint;visit.solver_seconds=times;visit.ring_memo=ring;
+        visit.topology_fingerprint=topology->fingerprint;visit.solver_seconds=times;if(ring)visit.ring_memo=*ring;
     }
     require(visit.source==*event.source&&visit.lease==event.generation
         &&visit.field_generation==event.field_generation&&visit.source_generation==event.source_generation
         &&visit.topology_fingerprint==topology->fingerprint,
         "Dynamic operation crossed field/source/topology generations");
-    require(visit.ring_memo==ring,"Repeated same-field observer changed actual ring observations");
+    if(ring)require(visit.ring_memo==*ring,"Repeated same-field observer changed actual ring observations");
     for(int k=0;k<3;++k)require(bits(visit.solver_seconds[k],times[k]),
         "Repeated same-field observer changed its actual solve timing");
     if(event.kind==Kind::AxisBefore||event.kind==Kind::AxisAfter) {
@@ -185,6 +190,7 @@ inline void Owner::complete_dynamic_sources() {
  * The Stage object is retained across regrid so no previous accepted row is lost.
  */
 inline void Owner::check_dynamic_journal() {
+    if(production()) {check_production_journal(accepted_journal);return;}
     std::ifstream file(config.io.out_dir+"/native_rz_candidates.tsv");std::string line;
     require(bool(std::getline(file,line)),"Dynamic journal header is missing");std::size_t count=0;
     while(std::getline(file,line))if(!line.empty()) {
@@ -276,6 +282,61 @@ inline void print_ring_observations(const Physical::Gravity::SelfGravity::RingMe
         <<" accepted_field_observation=1 physical_qualified=0"<<std::endl;
 }
 
+/** Prepare the same accepted Current through the public Production reader.
+ * Workflow: real BC/EOS/source solve -> ordinary public field/patch/Plot views
+ * -> unchanged interiors/accounting/time. Current's buffered journal row is
+ * checked after the next original accepted macro flush; no fake source counter.
+ */
+inline void prepare_production_current(Owner& owner,bool reset_history) {
+    require(owner.production()&&!owner.runtime->active_runtime_state_transaction()
+        &&!owner.gravity->prepared_native_self(),"Public Current overlaps a tentative source owner");
+    const auto before=owner.freeze_active();const auto accounting=boundary_before(owner);
+    const double time=owner.controller->t_current;const int step=owner.controller->step_count;
+    owner.gravity_stage->prepare_current(time,reset_history);
+    const auto binding=amr::bind_elliptic_mesh(owner.control,owner.config.grid,owner.runtime->handles());
+    const auto& potential=owner.gravity->potential();const auto& acceleration=owner.gravity->acceleration();
+    require(potential.size()==binding.cells.size()&&!potential.empty(),"Public Current lost its actual cell domain");
+    bool nonzero=false;
+    for(std::size_t cell=0;cell<potential.size();++cell) {
+        require(std::isfinite(potential[cell]),"Public Current potential is nonfinite");
+        for(int axis=0;axis<2;++axis) {
+            require(acceleration[axis].size()==potential.size()&&std::isfinite(acceleration[axis][cell]),
+                "Public Current acceleration has invalid extent or value");
+            nonzero|=potential[cell]!=0.&&acceleration[axis][cell]!=0.;
+        }
+    }
+    require(nonzero,"Public Current did not expose a genuine nonzero solved field");
+    const auto& active=owner.control.tree->GetActiveBlocks();
+    for(std::size_t n=0;n<owner.runtime->handles().size();++n) {
+        const auto handle=owner.runtime->handles()[n];const auto stamp=owner.context->ledger.inspect({handle,state::StateSlot::Current});
+        owner.context->ledger.require_readable({handle,state::StateSlot::Current},
+            {state::ExecutionSide::Host,stamp.interior.version,true,true});
+        const auto& block=owner.control.pool->GetBlock(active[n]);
+        require(owner.gravity->patch_view(n).density==block.fluid_state.rho.data(),
+            "Public Current patch changed its actual density allocation");
+    }
+    const auto fields=owner.gravity_stage->plot_fields();
+    require(fields.size()==3&&fields[0].name=="GPOT"&&fields[1].name=="GACX"&&fields[2].name=="GACY",
+        "Public Current Plot fields changed the original dim2 schema");
+    for(std::size_t field=0;field<fields.size();++field) {
+        const auto& actual=field==0?potential:acceleration[field-1];
+        require(fields[field].values.size()==actual.size(),"Public Plot field has a foreign extent");
+        for(std::size_t cell=0;cell<actual.size();++cell)
+            require(bits(fields[field].values[cell],actual[cell]),"Public Plot reader changed the actual solved field bits");
+    }
+    const double gravity_dt=owner.gravity_stage->timestep();
+    require(std::isfinite(gravity_dt)&&gravity_dt>0.&&macro_dt<=gravity_dt,
+        "Public Current gravity timestep rejects the original continuation interval");
+    require_active_unchanged(owner,before);const auto after=boundary_before(owner);
+    require(after.hydro==accounting.hydro&&after.diffusion==accounting.diffusion
+        &&bits(owner.controller->t_current,time)&&owner.controller->step_count==step
+        &&!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self(),
+        "Public Current changed accepted state/time/accounting or minted Hydro consumption");
+    // Production exposes the real stage0 row, not private source-generation diagnostics.
+    // Zero here means unobserved, never a forged identity accepted by the backend.
+    owner.accepted_journal.push_back({0,time,owner.context->ledger.active_epoch().value,0,0,binding.cells.size()});
+}
+
 /** Publish compact actual half/stage evidence only after that macro's checks.
  * Actual RKL work remains distinct from the immutable thermal input flux probe.
  */
@@ -290,7 +351,7 @@ inline void report_macro(const Owner& owner,int macro,double seconds) {
             <<" rkl2_begin="<<d.rkl_begin<<" rkl2_accept="<<d.rkl_accept<<'\n';
     }
     for(const auto& [stage,visit]:owner.sources) {
-        print_ring_observations(visit.ring_memo,stage,visit.input_time,"HydroStage");
+        if(!owner.production())print_ring_observations(visit.ring_memo,stage,visit.input_time,"HydroStage");
         std::cout<<"NATIVE_ACTIVE_AMR_SOURCE macro="<<macro<<" stage="<<stage<<" epoch="<<visit.source.topology.value
             <<" lease="<<visit.lease<<" field_generation="<<visit.field_generation
             <<" source_generation="<<visit.source_generation<<" time="<<visit.input_time
@@ -332,7 +393,9 @@ inline void advance_dynamic_to_m1(Owner& owner) {
             <<" level="<<b.level<<" flag="<<b.refine_flag<<'\n';
     }
     const auto regrid_start=Clock::now();
-    owner.runtime->regrid_native_rz_candidate(owner.controller->step_count,owner.controller->t_current);
+    if(owner.production())require(owner.runtime->perform_regrid(owner.controller->step_count,owner.controller->t_current),
+        "Public dynamic regrid did not change its real selected domain");
+    else owner.runtime->regrid_native_rz_candidate(owner.controller->step_count,owner.controller->t_current);
     owner.runtime->bind_native_rz_eos(*owner.eos);owner.bind_context_at_current();
     const auto& measurement=owner.runtime->regrid_records().back();
     require(measurement.changed&&measurement.old_blocks==2&&measurement.new_blocks==5
@@ -380,6 +443,8 @@ inline void advance_dynamic_to_m1(Owner& owner) {
     const int accepted_step=owner.controller->step_count;const auto current_start=Clock::now();
     // Regrid rebind itself rebuilds the geometry/operator history. There is no
     // durable restart here, so do not gratuitously reset the solver's history.
+    if(owner.production())prepare_production_current(owner,false);
+    else {
     owner.gravity_stage->prepare_current(accepted_time,false);
     const auto current=owner.gravity_stage->native_current_field();const auto current_times=solve_times(*owner.gravity);
     const auto binding=amr::bind_elliptic_mesh(owner.control,owner.config.grid,owner.runtime->handles());
@@ -433,23 +498,29 @@ inline void advance_dynamic_to_m1(Owner& owner) {
         <<" discrete_proof=accepted physical_qualified=0"<<std::endl;
     print_ring_observations(owner.gravity->ring_memo_observations(
         Physical::Gravity::GravityFieldScope::NativeRzCandidate),0,accepted_time,"AcceptedCurrent");
+    }
     const auto m1_before=owner.totals();const auto b1=boundary_before(owner);const auto m1_start=Clock::now();
     owner.advance();const auto m1_after=owner.totals();check_macro_balance(owner,m1_before,b1,m1_after);
     report_macro(owner,1,std::chrono::duration<double>(Clock::now()-m1_start).count());
-    bool stale_current_refused=false;try{(void)owner.gravity_stage->native_current_field();}
+    bool stale_current_refused=false;try{
+        if(owner.production())(void)owner.gravity->potential();
+        else (void)owner.gravity_stage->native_current_field();
+    }
     catch(const std::logic_error&){stale_current_refused=true;}
     require(stale_current_refused,"Accepted M1 revived the pre-M1 Current purpose/field lease");
     require(owner.accepted_journal.size()==5&&bits(owner.controller->t_current,2.*macro_dt)
         &&owner.controller->step_count==owner.start.step+2,
         "Dynamic activity did not retain exactly five real fields and two accepted physical times");
-    std::cout<<"PRIVATE_NATIVE_ACTIVE_FOUR_MODULE_AMR candidate_only=1 genuine_regrid=1 actual_fields=5"
+    std::cout<<(owner.production()?"PUBLIC_NATIVE_ACTIVE_FOUR_MODULE_AMR production_route=1":"PRIVATE_NATIVE_ACTIVE_FOUR_MODULE_AMR candidate_only=1")
+        <<" genuine_regrid=1 actual_fields=5"
         <<" macros=2 leaves=5 cells=1280 real_CF_routes="<<topology.routes.size()
         <<" accepted_time="<<owner.controller->t_current<<" accepted_steps="<<owner.controller->step_count
         <<" activity_accounting_checked=1 restart_qualified=0 total_energy_qualified=0 physical_qualified=0\n";
 }
 /** Original two-macro entry retains its original frozen endpoint and assertions. */
-inline void run_amr(const std::string& table) {
-    Owner owner(table,true);advance_dynamic_to_m1(owner);
+inline void run_amr(const std::string& table,driver::GravityStage::Qualification qualification=
+    driver::GravityStage::Qualification::NativeRzSelfHydroCandidate) {
+    Owner owner(table,true,0.,{},{},qualification);advance_dynamic_to_m1(owner);
 }
 
 /** Recreate the unsaved iterative history independently on each resumed branch.
@@ -457,6 +528,7 @@ inline void run_amr(const std::string& table) {
  * a potential or relabelling a Hydro frame. Its actual fluid remains unchanged.
  */
 inline void prepare_continuation_current(Owner& owner) {
+    if(owner.production()) {prepare_production_current(owner,true);return;}
     const auto before=owner.freeze_active();const auto accounting=boundary_before(owner);
     const double time=owner.controller->t_current;const int step=owner.controller->step_count;
     require(!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self(),

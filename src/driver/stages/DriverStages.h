@@ -585,10 +585,20 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
         const auto executor = [&] (
             const arch::scheduler::StageDescriptor& descriptor,
             arch::state::CompletionToken token) {
-            if (descriptor.stage == 1)
+            // Native source consumption authenticates every original frame
+            // receipt before clearing its first-stage register. Other routes
+            // retain the original register owner and typed source views.
+            const auto* prepared_source = runtime.geometry_semantics()
+                == GridMetrics::GeometrySemantics::AxisymmetricRz && gravity
+                && (gravity->source_descriptor().origin
+                        == Physical::Gravity::GravitySourceOrigin::NativeExternalOrthonormal
+                    || gravity->source_descriptor().origin
+                        == Physical::Gravity::GravitySourceOrigin::NativeSelfComposite)
+                ? gravity : nullptr;
+            if (descriptor.stage == 1 && !prepared_source)
                 (void)compute_backend->clear_amr_flux_register(token);
             return compute_backend->execute_hydro_stage_batch(
-                currents, descriptor, dt, token);
+                currents, descriptor, dt, token, prepared_source);
         };
         const auto boundary = [&] (
             StateSlot slot, arch::state::StateVersion version,

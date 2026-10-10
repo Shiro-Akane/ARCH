@@ -12,6 +12,10 @@
  *    ghost prefix readers and a separate bounded 11*N lane workspace.
  * 7. Check completed native logical cells through the shared EOS acceptance
  *    leaf; return compact diagnostics without field transfer or state writes.
+ * 8. Inspect only actual staged coarse restricted-parent active interiors
+ *    through the shared early closure leaf; that witness is failure-only.
+ * 9. After an actual committed refusal, classify all active cells through the
+ *    same completed EOS leaf; unrelated failures take precedence over retry.
  *
  * Epoch control capacity preparation authenticates the complete actual store,
  * preserves every live plane and reserves only unbound three-owner capacity.
@@ -38,16 +42,23 @@
 
 namespace arch::cuda {
 namespace {
-/** Traverse logical cells only; stride padding is neither a cell nor support.
- * Every lane owns a sticky required-query latch in shared memory. The patch's
- * compact status arbitrates only the diagnostic writer, never EOS queries.
+/** Traverse active cells or disjoint logical-minus-active ghosts exactly once.
+ * Workflow: completed mode launches active before ghosts on the same stream;
+ * an active failure suppresses that patch's ghost queries. Error-only mode
+ * traverses all active candidates, retains the original thermal target in bit
+ * one and arbitrates sticky nonthermal evidence in bit two. Every lane keeps
+ * its original sticky required-query latch; no mode changes EOS/state values.
  */
-template<class Eos>
+template<bool ClassifyActiveThermal, class Eos>
 __global__ void validate_completed_native_eos(DeviceStateView input,
     DeviceGridView grid, state::Bounds bounds, Eos eos,
     SpeciesWorkspaceView workspace, int* failed,
-    RzThermodynamics::AcceptanceDiagnostic* diagnostic)
+    RzThermodynamics::AcceptanceDiagnostic* diagnostic,
+    bool ghosts, int requested_index)
 {
+    // The preceding active launch has joined this stream before ghost work.
+    // Atomic read also respects a failure first found by another ghost lane.
+    if (ghosts && atomicAdd(failed, 0) != 0) return;
     __shared__ int required_status[kSpeciesKernelThreads];
     required_status[threadIdx.x] = 0;
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
@@ -62,9 +73,13 @@ __global__ void validate_completed_native_eos(DeviceStateView input,
         const int support = i-1 < 0 ? 0 : (i-1 > nx-3 ? nx-3 : i-1);
         return RzThermodynamics::make_cell_supported(reader, index, view, i, support, limits);
     };
-    const int count = grid.total_x * grid.total_y;
+    const int active_x = grid.ie - grid.is, active_y = grid.je - grid.js;
+    const int count = ghosts ? grid.total_x * grid.total_y : active_x * active_y;
     for (int logical = lane; logical < count; logical += lanes) {
-        const int i = logical % grid.total_x, j = logical / grid.total_x;
+        const int i = ghosts ? logical % grid.total_x : grid.is + logical % active_x;
+        const int j = ghosts ? logical / grid.total_x : grid.js + logical / active_x;
+        if (ghosts && i >= grid.is && i < grid.ie && j >= grid.js && j < grid.je)
+            continue;
         const int index = grid.index(i, j, 0);
         for (int s = 0; s < input.n_species; ++s)
             fractions[s] = input.species(s, index);
@@ -72,8 +87,52 @@ __global__ void validate_completed_native_eos(DeviceStateView input,
             geometry, input.n_species, bounds, checked, i, j, index,
             closure, read, input.n_species > 0 ? fractions : nullptr);
         if (result.status != state::Status::valid) {
-            if (atomicCAS(failed, 0, 1) == 0) *diagnostic = result;
+            if constexpr (ClassifyActiveThermal) {
+                if (RzThermodynamics::is_retryable_thermal_failure(result)) {
+                    if (index == requested_index) atomicOr(failed, 1);
+                    continue; // A later active nonthermal failure must stay fatal.
+                }
+                if ((atomicOr(failed, 2) & 2) == 0) *diagnostic = result;
+            } else if (atomicCAS(failed, 0, 1) == 0) *diagnostic = result;
             // Never clear a required-query failure for a later cell/node.
+            break;
+        }
+    }
+}
+
+/** Failure-only early closure inspection of real coarse restricted parents.
+ * Only actual active eligible cells are traversed: the shared leaf needs a real
+ * three-active-rho support, so both active radial ends are excluded while every
+ * active axial cell is inspected. Each lane loads the actual staged species and
+ * reuses the original provisional/closure arithmetic. No EOS is queried, no
+ * input is written and a clean traversal is neither EOS nor completion proof;
+ * the first failing cell is copied out and no later cell clears it.
+ */
+__global__ void inspect_native_restricted_interior_cells(DeviceStateView input,
+    DeviceGridView grid, state::Bounds bounds, SpeciesWorkspaceView workspace,
+    int* failed, RzThermodynamics::AcceptanceDiagnostic* diagnostic)
+{
+    const int eligible_x = grid.ie - grid.is - 2, eligible_y = grid.je - grid.js;
+    if (eligible_x <= 0 || eligible_y <= 0) return;
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    const int lanes = blockDim.x * gridDim.x;
+    detail::SpeciesLaneScratch<1> scratch(workspace, lane);
+    double* fractions = scratch.array(0);
+    const auto geometry = make_grid_geometry_view(grid);
+    const auto read = [input](int index) { return input.load(index); };
+    const int count = eligible_x * eligible_y;
+    for (int logical = lane; logical < count; logical += lanes) {
+        const int i = grid.is + 1 + logical % eligible_x;
+        const int j = grid.js + logical / eligible_x;
+        const int index = grid.index(i, j, 0);
+        for (int s = 0; s < input.n_species; ++s)
+            fractions[s] = input.species(s, index);
+        const auto result = RzThermodynamics::check_restricted_interior_cell(
+            read, geometry, i, j, index,
+            input.n_species > 0 ? fractions : nullptr, input.n_species, bounds);
+        if (result.status != state::Status::valid) {
+            if (atomicCAS(failed, 0, 1) == 0) *diagnostic = result;
+            // The original early host loop stops at its first rejected cell.
             break;
         }
     }
@@ -168,15 +227,74 @@ int physical_face_cells(const DeviceGridView& grid, int face) {
 std::optional<backend::NativeEosFailure> CudaBackend::validate_completed_native_eos_batch(
     std::span<const backend::BackendStateAccess> accesses, const state::Bounds& bounds)
 {
+    return impl_->validate_native_acceptance_batch(accesses, bounds,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        }, Impl::NativeAcceptanceMode::Completed).failure;
+}
+
+/** Classify only the exact committed refusal; this issues no retry authority.
+ * Workflow: shared preflight authenticates its target, the resident active scan
+ * joins all patches, and nonthermal evidence wins before requested_seen.
+ */
+backend::NativeActiveThermalInspection CudaBackend::classify_completed_native_active_thermal(
+    std::span<const backend::BackendStateAccess> accesses, const state::Bounds& bounds,
+    const backend::NativeEosFailure& original_refusal)
+{
+    auto result = impl_->validate_native_acceptance_batch(accesses, bounds,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        }, Impl::NativeAcceptanceMode::ClassifyActiveThermal, &original_refusal);
+    return {result.requested_failure, std::move(result.failure)};
+}
+
+std::optional<backend::NativeEosFailure> CudaBackend::validate_completed_native_eos_batch(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses, const state::Bounds& bounds)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->validate_native_acceptance_batch(accesses, bounds,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        }, Impl::NativeAcceptanceMode::Completed).failure;
+}
+
+std::optional<backend::NativeEosFailure> CudaBackend::inspect_native_restricted_interiors(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses, const state::Bounds& bounds)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->validate_native_acceptance_batch(accesses, bounds,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged restricted interior requires Current");
+            return resolve_staged_block(staged, access);
+        }, Impl::NativeAcceptanceMode::RestrictedInterior).failure;
+}
+
+/** One private execution owner for completed, early and error-only traversals.
+ * Workflow: retain the original full-domain preflight, selected EOS, scratch and
+ * compact single-join diagnostics. Completed checks active before ghosts; early
+ * inspection invokes no EOS. Active classification preserves the original
+ * target and reports any nonthermal failure before its requested thermal bit.
+ * No mode writes a field or publishes completion/retry authority.
+ */
+CudaBackend::Impl::NativeAcceptanceResult CudaBackend::Impl::validate_native_acceptance_batch(
+    std::span<const backend::BackendStateAccess> accesses, const state::Bounds& bounds,
+    const BlockResolver& resolve, NativeAcceptanceMode mode,
+    const backend::NativeEosFailure* original_refusal)
+{
     const auto slot = accesses.empty() ? state::StateSlot::Current : accesses.front().slot;
-    if (!state::valid_bounds(bounds) || bounds.density != impl_->launch.density_floor
-        || bounds.internal_min != impl_->launch.minimum_internal_energy
-        || bounds.internal_max != impl_->launch.maximum_internal_energy)
+    if (!state::valid_bounds(bounds) || bounds.density != launch.density_floor
+        || bounds.internal_min != launch.minimum_internal_energy
+        || bounds.internal_max != launch.maximum_internal_energy)
         throw std::invalid_argument("Native EOS acceptance requires the frozen backend bounds");
-    const int species = impl_->species_view.count;
+    const int species = species_view.count;
     // Inspect the actual selected EOS/count before any launch, including a
     // monostate owner. No caller EOS enum or duplicate dispatch table is used.
-    visit_eos(impl_->eos, [&](const auto& eos) {
+    visit_eos(eos, [&](const auto& eos) {
         const int count = [&] {
             if constexpr (requires { eos.species.count; }) return eos.species.count;
             else return eos.specs.count;
@@ -184,7 +302,7 @@ std::optional<backend::NativeEosFailure> CudaBackend::validate_completed_native_
         if (count != species)
             throw std::invalid_argument("Native EOS acceptance species owner mismatch");
     });
-    if (!valid_species_workspace(impl_->species_workspace, species, 1))
+    if (!valid_species_workspace(species_workspace, species, 1))
         throw std::invalid_argument("Invalid Native EOS acceptance species workspace");
     struct ResidentPatch { DeviceStateView state; DeviceGridView grid; };
     std::vector<ResidentPatch> patches;
@@ -198,7 +316,7 @@ std::optional<backend::NativeEosFailure> CudaBackend::validate_completed_native_
         // The existing Host-compiled store resolver checks handle, epoch,
         // storage and slot. Compare its unique owners after resolving once;
         // NVCC 12.3 can leave implicit C++20 handle equality undefined.
-        auto& block = impl_->require_block(access);
+        auto& block = resolve(access);
         const auto view = block.require_access(access);
         const auto& grid = block.grid;
         if (!valid_hydro_view(view) || !valid_hydro_grid(grid)
@@ -209,52 +327,114 @@ std::optional<backend::NativeEosFailure> CudaBackend::validate_completed_native_
         patches.push_back({view, grid});
         owners.push_back(&block);
     }
+    std::size_t requested_patch = accesses.size();
+    if (mode == NativeAcceptanceMode::ClassifyActiveThermal) {
+        if (!original_refusal || original_refusal->access.slot != slot
+            || !RzThermodynamics::is_retryable_thermal_failure(original_refusal->diagnostic))
+            throw std::invalid_argument("Native active classification requires its original thermal refusal");
+        // Resolve the original four-field access through the existing Host store
+        // owner. Compare resolved addresses, never NVCC implicit handle equality.
+        const auto* requested_owner = &resolve(original_refusal->access);
+        const auto found = std::find(owners.begin(), owners.end(), requested_owner);
+        if (found == owners.end())
+            throw std::invalid_argument("Native thermal refusal is outside the actual batch");
+        requested_patch = static_cast<std::size_t>(found - owners.begin());
+        const auto& grid = patches[requested_patch].grid;
+        const auto& target = original_refusal->diagnostic;
+        if (target.i < grid.is || target.i >= grid.ie || target.j < grid.js || target.j >= grid.je
+            || target.index != grid.index(target.i, target.j, 0))
+            throw std::invalid_argument("Native thermal refusal must retain its original active cell");
+    }
     std::sort(owners.begin(), owners.end(), std::less<>{});
     if (std::adjacent_find(owners.begin(), owners.end()) != owners.end())
         throw std::invalid_argument("Duplicate Native EOS acceptance block");
-    if (accesses.empty()) return std::nullopt;
-    impl_->select_device();
-    auto& scratch = impl_->hydro_batch;
+    if (accesses.empty()) return {};
+    select_device();
+    auto& scratch = hydro_batch;
     scratch.ensure_capacity(accesses.size());
-    auto& device_diagnostics = impl_->native_eos_diagnostics;
+    auto& device_diagnostics = native_eos_diagnostics;
     device_diagnostics.reserve(accesses.size());
     std::vector<RzThermodynamics::AcceptanceDiagnostic> diagnostics(accesses.size());
     static_assert(std::is_trivially_copyable_v<RzThermodynamics::AcceptanceDiagnostic>);
     // Host destinations and reusable device owners outlive the guard on every
     // enqueue/launch/download exception. Calls on this backend remain serial.
-    CudaQuiescenceGuard work_guard{*impl_};
+    CudaQuiescenceGuard work_guard{*this};
     check_cuda(cudaMemsetAsync(scratch.status->get(), 0, accesses.size() * sizeof(int),
-        impl_->stream.get()), "clear Native EOS acceptance status");
+        stream.get()), "clear Native EOS acceptance status");
     check_cuda(cudaMemsetAsync(device_diagnostics.get(), 0,
-        accesses.size() * sizeof(RzThermodynamics::AcceptanceDiagnostic), impl_->stream.get()),
+        accesses.size() * sizeof(RzThermodynamics::AcceptanceDiagnostic), stream.get()),
         "clear Native EOS acceptance diagnostics");
-    visit_eos(impl_->eos, [&](const auto& eos) {
-        const int threads = detail::species_launch_threads(impl_->species_workspace);
+    if (mode == NativeAcceptanceMode::RestrictedInterior) {
+        // Failure-only early inspection performs no thermodynamic EOS query;
+        // shared preflight still validates the selected EOS owner/species count.
+        const int threads = detail::species_launch_threads(species_workspace);
         for (std::size_t index = 0; index < patches.size(); ++index) {
             const auto& patch = patches[index];
             const int cells = patch.grid.total_x * patch.grid.total_y;
-            validate_completed_native_eos<<<detail::species_launch_blocks(cells,
-                impl_->species_workspace), threads, 0, impl_->stream.get()>>>(
-                    patch.state, patch.grid, bounds, eos, impl_->species_workspace,
+            inspect_native_restricted_interior_cells<<<detail::species_launch_blocks(cells,
+                species_workspace), threads, 0, stream.get()>>>(
+                    patch.state, patch.grid, bounds, species_workspace,
                     scratch.status->get() + index, device_diagnostics.get() + index);
-            check_cuda(cudaGetLastError(), "validate resident Native EOS patch");
-            ++impl_->runtime_counters.kernel_count;
+            check_cuda(cudaGetLastError(), "inspect staged Native restricted interiors");
+            ++runtime_counters.kernel_count;
+        }
+    } else visit_eos(eos, [&](const auto& eos) {
+        const int threads = detail::species_launch_threads(species_workspace);
+        for (std::size_t index = 0; index < patches.size(); ++index) {
+            const auto& patch = patches[index];
+            const int cells = patch.grid.total_x * patch.grid.total_y;
+            if (mode == NativeAcceptanceMode::ClassifyActiveThermal) {
+                const int requested_index = index == requested_patch
+                    ? original_refusal->diagnostic.index : -1;
+                validate_completed_native_eos<true><<<detail::species_launch_blocks(cells,
+                    species_workspace), threads, 0, stream.get()>>>(
+                        patch.state, patch.grid, bounds, eos, species_workspace,
+                        scratch.status->get() + index, device_diagnostics.get() + index,
+                        false, requested_index);
+                check_cuda(cudaGetLastError(), "classify resident Native active thermal failures");
+                ++runtime_counters.kernel_count;
+            } else {
+                validate_completed_native_eos<false><<<detail::species_launch_blocks(cells,
+                    species_workspace), threads, 0, stream.get()>>>(
+                        patch.state, patch.grid, bounds, eos, species_workspace,
+                        scratch.status->get() + index, device_diagnostics.get() + index,
+                        false, -1);
+                check_cuda(cudaGetLastError(), "validate resident Native active EOS cells");
+                ++runtime_counters.kernel_count;
+                // Same-stream launch: active refusal skips this patch's ghost
+                // EOS; success checks every remaining logical cell once.
+                validate_completed_native_eos<false><<<detail::species_launch_blocks(cells,
+                    species_workspace), threads, 0, stream.get()>>>(
+                        patch.state, patch.grid, bounds, eos, species_workspace,
+                        scratch.status->get() + index, device_diagnostics.get() + index,
+                        true, -1);
+                check_cuda(cudaGetLastError(), "validate resident Native ghost EOS cells");
+                ++runtime_counters.kernel_count;
+            }
         }
     });
     check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
-        accesses.size() * sizeof(int), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        accesses.size() * sizeof(int), cudaMemcpyDeviceToHost, stream.get()),
         "download Native EOS acceptance status");
     check_cuda(cudaMemcpyAsync(diagnostics.data(), device_diagnostics.get(),
         accesses.size() * sizeof(RzThermodynamics::AcceptanceDiagnostic),
-        cudaMemcpyDeviceToHost, impl_->stream.get()), "download Native EOS acceptance diagnostics");
-    quiesce();
+        cudaMemcpyDeviceToHost, stream.get()), "download Native EOS acceptance diagnostics");
+    checked_quiesce("synchronize CUDA backend");
     work_guard.completed = true;
-    impl_->runtime_counters.bytes_d2h += accesses.size()
+    runtime_counters.bytes_d2h += accesses.size()
         * (sizeof(int) + sizeof(RzThermodynamics::AcceptanceDiagnostic));
+    if (mode == NativeAcceptanceMode::ClassifyActiveThermal) {
+        // Inspect every patch's fatal bit before permitting the requested target.
+        // A thermal target in an earlier patch cannot hide a later fatal cell.
+        for (std::size_t index = 0; index < accesses.size(); ++index)
+            if ((scratch.host_status[index] & 2) != 0)
+                return {backend::NativeEosFailure{accesses[index], diagnostics[index]}, false};
+        return {{}, (scratch.host_status[requested_patch] & 1) != 0};
+    }
     for (std::size_t index = 0; index < accesses.size(); ++index)
         if (scratch.host_status[index] != 0)
-            return backend::NativeEosFailure{accesses[index], diagnostics[index]};
-    return std::nullopt;
+            return {backend::NativeEosFailure{accesses[index], diagnostics[index]}, false};
+    return {};
 }
 
 /** Consume actual resident storage and the selected backend EOS for one layer.
@@ -268,21 +448,50 @@ backend::BoundaryCells CudaBackend::prepare_native_reflecting_layer(
     const state::Bounds& bounds, std::span<const int> prefix_indices,
     const backend::BoundaryCells* prefix)
 {
+    return impl_->prepare_native_reflecting_layer(access, requests, bounds, prefix_indices, prefix,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+
+backend::BoundaryCells CudaBackend::prepare_native_reflecting_layer(
+    backend::BackendTopologyStoreTransaction& transaction,
+    backend::BackendStateAccess access,
+    std::span<const boundary::native_rz_math::Request> requests,
+    const state::Bounds& bounds, std::span<const int> prefix_indices,
+    const backend::BoundaryCells* prefix)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->prepare_native_reflecting_layer(access, requests, bounds, prefix_indices, prefix,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+
+backend::BoundaryCells CudaBackend::Impl::prepare_native_reflecting_layer(
+    backend::BackendStateAccess access,
+    std::span<const boundary::native_rz_math::Request> requests,
+    const state::Bounds& bounds, std::span<const int> prefix_indices,
+    const backend::BoundaryCells* prefix,
+    const BlockResolver& resolve)
+{
     namespace math = boundary::native_rz_math;
-    auto& block = impl_->require_block(access);
+    auto& block = resolve(access);
     const auto input = block.require_access(access);
     const auto& grid = block.grid;
-    const int species = impl_->species_view.count;
+    const int species = species_view.count;
     if (!valid_hydro_view(input) || !valid_hydro_grid(grid)
         || grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
         || grid.ng < 1 || input.total_size != grid.total_size
-        || input.n_species != species || impl_->species_count != species)
+        || input.n_species != species || species_count != species)
         throw std::invalid_argument("Native reflector requires an actual complete resident Native patch");
-    if (!state::valid_bounds(bounds) || bounds.density != impl_->launch.density_floor
-        || bounds.internal_min != impl_->launch.minimum_internal_energy
-        || bounds.internal_max != impl_->launch.maximum_internal_energy)
+    if (!state::valid_bounds(bounds) || bounds.density != launch.density_floor
+        || bounds.internal_min != launch.minimum_internal_energy
+        || bounds.internal_max != launch.maximum_internal_energy)
         throw std::invalid_argument("Native reflector requires the frozen backend bounds");
-    visit_eos(impl_->eos, [&](const auto& eos) {
+    visit_eos(eos, [&](const auto& eos) {
         const int count = [&] {
             if constexpr (requires { eos.species.count; }) return eos.species.count;
             else return eos.specs.count;
@@ -344,11 +553,11 @@ backend::BoundaryCells CudaBackend::prepare_native_reflecting_layer(
                 throw std::invalid_argument("Nonfinite Native reflector prefix composition");
     }
 
-    impl_->select_device();
+    select_device();
     // Allocation growth/reuse may release prior capacity: establish the owner's
     // stream witness before touching any reusable request/prefix/candidate row.
-    impl_->checked_quiesce("quiesce before Native reflector scratch reuse");
-    auto& scratch = impl_->native_reflecting;
+    checked_quiesce("quiesce before Native reflector scratch reuse");
+    auto& scratch = native_reflecting;
     scratch.requests.reserve(requests.size());
     scratch.conserved.reserve(requests.size());
     scratch.enuc.reserve(requests.size());
@@ -360,7 +569,7 @@ backend::BoundaryCells CudaBackend::prepare_native_reflecting_layer(
     scratch.prefix_fractions.reserve(prefix_indices.size() * static_cast<std::size_t>(species));
     if (species > 0 && (!scratch.workspace.values
         || !valid_species_workspace(scratch.workspace, species, 11))) {
-        const auto lanes = native_reflecting_lanes(species, requests.size(), impl_->device_ordinal);
+        const auto lanes = native_reflecting_lanes(species, requests.size(), device_ordinal);
         scratch.workspace_storage.reserve(lanes * static_cast<std::size_t>(species) * 11);
         scratch.workspace = {scratch.workspace_storage.get(), scratch.workspace_storage.size(),
             static_cast<int>(lanes), species, 11};
@@ -376,81 +585,106 @@ backend::BoundaryCells CudaBackend::prepare_native_reflecting_layer(
     int failed = 0;
     // All asynchronous Host sources/destinations and reusable device owners
     // outlive this guard on upload, launch, status or candidate-copy exceptions.
-    CudaQuiescenceGuard work_guard{*impl_};
+    CudaQuiescenceGuard work_guard{*this};
     enqueue_cuda_metadata_upload(scratch.requests.get(), requests.data(), requests.size_bytes(),
-        impl_->stream.get(), impl_->runtime_counters, "upload Native reflector requests");
+        stream.get(), runtime_counters, "upload Native reflector requests");
     if (!prefix_indices.empty()) {
         enqueue_cuda_metadata_upload(scratch.prefix_indices.get(), prefix_indices.data(),
-            prefix_indices.size_bytes(), impl_->stream.get(), impl_->runtime_counters,
+            prefix_indices.size_bytes(), stream.get(), runtime_counters,
             "upload Native reflector prefix offsets");
         enqueue_cuda_metadata_upload(scratch.prefix_conserved.get(), prefix->conserved.data(),
-            prefix->conserved.size() * sizeof(FluidVector), impl_->stream.get(), impl_->runtime_counters,
+            prefix->conserved.size() * sizeof(FluidVector), stream.get(), runtime_counters,
             "upload Native reflector prefix conserved");
         enqueue_cuda_metadata_upload(scratch.prefix_enuc.get(), prefix->enuc.data(),
-            prefix->enuc.size() * sizeof(double), impl_->stream.get(), impl_->runtime_counters,
+            prefix->enuc.size() * sizeof(double), stream.get(), runtime_counters,
             "upload Native reflector prefix ENUC");
         if (species > 0)
             enqueue_cuda_metadata_upload(scratch.prefix_fractions.get(), prefix->composition.data(),
-                prefix->composition.size() * sizeof(double), impl_->stream.get(), impl_->runtime_counters,
+                prefix->composition.size() * sizeof(double), stream.get(), runtime_counters,
                 "upload Native reflector prefix composition");
     }
-    check_cuda(cudaMemsetAsync(scratch.failed.get(), 0, sizeof(int), impl_->stream.get()),
+    check_cuda(cudaMemsetAsync(scratch.failed.get(), 0, sizeof(int), stream.get()),
         "clear Native reflector layer status");
-    visit_eos(impl_->eos, [&](const auto& eos) {
+    visit_eos(eos, [&](const auto& eos) {
         check_cuda(launch_native_reflecting_candidates(input, grid, scratch.requests.get(),
             static_cast<int>(requests.size()), bounds, eos, scratch.workspace,
             scratch.conserved.get(), scratch.fractions.get(), scratch.failed.get(),
-            impl_->stream.get(), device_prefix, scratch.enuc.get()), "prepare Native reflector layer");
-        ++impl_->runtime_counters.kernel_count;
+            stream.get(), device_prefix, scratch.enuc.get()), "prepare Native reflector layer");
+        ++runtime_counters.kernel_count;
     });
     check_cuda(cudaMemcpyAsync(&failed, scratch.failed.get(), sizeof(int),
-        cudaMemcpyDeviceToHost, impl_->stream.get()), "download Native reflector layer status");
-    impl_->runtime_counters.bytes_d2h += sizeof(int);
-    quiesce();
+        cudaMemcpyDeviceToHost, stream.get()), "download Native reflector layer status");
+    runtime_counters.bytes_d2h += sizeof(int);
+    checked_quiesce("synchronize CUDA backend");
     if (failed != 0)
         throw std::runtime_error("Native reflecting layer failed shared math/EOS acceptance: "
             + std::to_string(failed));
     check_cuda(cudaMemcpyAsync(result.conserved.data(), scratch.conserved.get(),
-        result.conserved.size() * sizeof(FluidVector), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        result.conserved.size() * sizeof(FluidVector), cudaMemcpyDeviceToHost, stream.get()),
         "download Native reflector conserved candidates");
-    impl_->runtime_counters.bytes_d2h += result.conserved.size() * sizeof(FluidVector);
+    runtime_counters.bytes_d2h += result.conserved.size() * sizeof(FluidVector);
     check_cuda(cudaMemcpyAsync(result.enuc.data(), scratch.enuc.get(), result.enuc.size() * sizeof(double),
-        cudaMemcpyDeviceToHost, impl_->stream.get()), "download Native reflector inherited ENUC");
-    impl_->runtime_counters.bytes_d2h += result.enuc.size() * sizeof(double);
+        cudaMemcpyDeviceToHost, stream.get()), "download Native reflector inherited ENUC");
+    runtime_counters.bytes_d2h += result.enuc.size() * sizeof(double);
     if (species > 0) {
         check_cuda(cudaMemcpyAsync(result.composition.data(), scratch.fractions.get(),
-            result.composition.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
+            result.composition.size() * sizeof(double), cudaMemcpyDeviceToHost, stream.get()),
             "download Native reflector composition candidates");
-        impl_->runtime_counters.bytes_d2h += result.composition.size() * sizeof(double);
+        runtime_counters.bytes_d2h += result.composition.size() * sizeof(double);
     }
-    quiesce();
+    checked_quiesce("synchronize CUDA backend");
     work_guard.completed = true;
     return result;
 }
 
 backend::BoundaryCells CudaBackend::read_boundary_cells(backend::BackendStateAccess access,
-    std::span<const int> indices, state::StateRegion region) {
-    auto& block = impl_->require_block(access);
+    std::span<const int> indices, state::StateRegion region)
+{
+    return impl_->read_boundary_cells(access, indices, region,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+
+backend::BoundaryCells CudaBackend::read_boundary_cells(
+    backend::BackendTopologyStoreTransaction& transaction,
+    backend::BackendStateAccess access,
+    std::span<const int> indices, state::StateRegion region)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->read_boundary_cells(access, indices, region,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+
+backend::BoundaryCells CudaBackend::Impl::read_boundary_cells(backend::BackendStateAccess access,
+    std::span<const int> indices, state::StateRegion region,
+    const BlockResolver& resolve)
+{
+    auto& block = resolve(access);
     const auto state = block.require_access(access);
     if(region!=state::StateRegion::Interior && region!=state::StateRegion::Ghost)
         throw std::invalid_argument("Unknown boundary snapshot region");
     validate_indices(state, indices, region==state::StateRegion::Ghost, block.grid);
-    impl_->select_device();
+    select_device();
     const std::size_t stride = 6 + state.n_species;
     std::vector<double> packed(indices.size() * stride);
     block.user_boundary_indices.reserve(indices.size());
     block.user_boundary_values.reserve(packed.size());
     check_cuda(cudaMemcpyAsync(block.user_boundary_indices.get(), indices.data(), indices.size_bytes(),
-        cudaMemcpyHostToDevice, impl_->stream.get()), "upload user boundary donors");
-    boundary_slice<<<(indices.size() + 127) / 128, 128, 0, impl_->stream.get()>>>(state,
+        cudaMemcpyHostToDevice, stream.get()), "upload user boundary donors");
+    boundary_slice<<<(indices.size() + 127) / 128, 128, 0, stream.get()>>>(state,
         block.user_boundary_indices.get(), block.user_boundary_values.get(), static_cast<int>(indices.size()), false);
     check_cuda(cudaGetLastError(), "gather user boundary donors");
     check_cuda(cudaMemcpyAsync(packed.data(), block.user_boundary_values.get(), packed.size() * sizeof(double),
-        cudaMemcpyDeviceToHost, impl_->stream.get()), "download boundary slice");
-    quiesce();
-    impl_->runtime_counters.bytes_h2d += indices.size_bytes();
-    impl_->runtime_counters.bytes_d2h += packed.size() * sizeof(double);
-    ++impl_->runtime_counters.kernel_count;
+        cudaMemcpyDeviceToHost, stream.get()), "download boundary slice");
+    checked_quiesce("synchronize CUDA backend");
+    runtime_counters.bytes_h2d += indices.size_bytes();
+    runtime_counters.bytes_d2h += packed.size() * sizeof(double);
+    ++runtime_counters.kernel_count;
     backend::BoundaryCells result;
     result.species_count = state.n_species;
     result.conserved.resize(indices.size()); result.enuc.resize(indices.size());
@@ -464,8 +698,33 @@ backend::BoundaryCells CudaBackend::read_boundary_cells(backend::BackendStateAcc
 }
 
 void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::span<const int> indices,
-    const backend::BoundaryCells& values, const boundary::DiffusionBoundaryStorage& controls) {
-    auto& block = impl_->require_block(access);
+    const backend::BoundaryCells& values, const boundary::DiffusionBoundaryStorage& controls)
+{
+    impl_->write_boundary_cells(access, indices, values, controls,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+
+void CudaBackend::write_boundary_cells(
+    backend::BackendTopologyStoreTransaction& transaction,
+    backend::BackendStateAccess access, std::span<const int> indices,
+    const backend::BoundaryCells& values, const boundary::DiffusionBoundaryStorage& controls)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    impl_->write_boundary_cells(access, indices, values, controls,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+
+void CudaBackend::Impl::write_boundary_cells(backend::BackendStateAccess access, std::span<const int> indices,
+    const backend::BoundaryCells& values, const boundary::DiffusionBoundaryStorage& controls,
+    const BlockResolver& resolve)
+{
+    auto& block = resolve(access);
     auto state = block.require_access(access);
     std::size_t owner = block.state_storage.size();
     for (std::size_t candidate = 0; candidate < block.state_storage.size(); ++candidate)
@@ -483,7 +742,7 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
             * static_cast<std::size_t>(4 + state.n_species);
         if (!source.empty() && source.size() != expected)
             throw std::invalid_argument("Diffusion boundary controls do not match the actual face shape");
-        if (impl_->macro_state.active && source.size() > destination.size())
+        if (macro_state.active && source.size() > destination.size())
             throw std::logic_error("CUDA macro savepoint forbids scalar-control allocation growth");
     }
     validate_indices(state, indices, true, block.grid);
@@ -501,13 +760,13 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
         packed.insert(packed.end(), values.composition.begin() + n * state.n_species,
             values.composition.begin() + (n + 1) * state.n_species);
     }
-    impl_->select_device();
+    select_device();
     block.user_boundary_indices.reserve(destinations.size()); block.user_boundary_values.reserve(packed.size());
     check_cuda(cudaMemcpyAsync(block.user_boundary_indices.get(), destinations.data(), destinations.size() * sizeof(int),
-        cudaMemcpyHostToDevice, impl_->stream.get()), "upload user ghost offsets");
+        cudaMemcpyHostToDevice, stream.get()), "upload user ghost offsets");
     check_cuda(cudaMemcpyAsync(block.user_boundary_values.get(), packed.data(), packed.size() * sizeof(double),
-        cudaMemcpyHostToDevice, impl_->stream.get()), "upload user ghost values");
-    boundary_slice<<<(destinations.size() + 127) / 128, 128, 0, impl_->stream.get()>>>(state,
+        cudaMemcpyHostToDevice, stream.get()), "upload user ghost values");
+    boundary_slice<<<(destinations.size() + 127) / 128, 128, 0, stream.get()>>>(state,
         block.user_boundary_indices.get(), block.user_boundary_values.get(), static_cast<int>(destinations.size()), true);
     check_cuda(cudaGetLastError(), "scatter user ghost slice");
     std::size_t bytes = 0;
@@ -520,13 +779,13 @@ void CudaBackend::write_boundary_cells(backend::BackendStateAccess access, std::
         if (source.empty()) { slot.diffusion_boundary.faces[face] = nullptr; continue; }
         destination.reserve(source.size());
         check_cuda(cudaMemcpyAsync(destination.get(), source.data(), source.size() * sizeof(source[0]),
-            cudaMemcpyHostToDevice, impl_->stream.get()), "upload diffusion boundary controls");
+            cudaMemcpyHostToDevice, stream.get()), "upload diffusion boundary controls");
         slot.diffusion_boundary.faces[face] = destination.get();
         bytes += source.size() * sizeof(source[0]);
     }
-    quiesce();
-    impl_->runtime_counters.bytes_h2d += destinations.size() * sizeof(int) + packed.size() * sizeof(double) + bytes;
-    ++impl_->runtime_counters.kernel_count;
+    checked_quiesce("synchronize CUDA backend");
+    runtime_counters.bytes_h2d += destinations.size() * sizeof(int) + packed.size() * sizeof(double) + bytes;
+    ++runtime_counters.kernel_count;
 }
 
 

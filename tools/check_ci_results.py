@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 from pathlib import Path
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -136,6 +137,99 @@ def check_node_tap(text):
     return counters["tests"]
 
 
+# Affected-module CI scope: triage whether a revision can skip the full Studio
+# build/Node gate. This is only a conservative scope decision, never a test PASS
+# and never scientific validation; any doubt falls back to the full Studio gate.
+STUDIO_SCOPE_DOC_SUFFIXES = (".md", ".rst")
+STUDIO_SCOPE_TXT_SUFFIX = ".txt"
+# A .txt file is documentation only under docs/ or with an explicit
+# README/LICENSE/NOTICE basename; any other .txt may be build/config/tool input.
+STUDIO_SCOPE_TXT_DOC_PREFIX = "docs/"
+STUDIO_SCOPE_TXT_DOC_NAMES = frozenset({"README.txt", "LICENSE.txt", "NOTICE.txt"})
+# Studio UI/API documentation always exercises the gate.
+STUDIO_SCOPE_ALWAYS_PREFIXES = ("studio/", "src/api/")
+# Build recipes and protected build/tool/config/workflow directories share
+# documentation extensions but are still build code, so they are checked ahead
+# of every documentation-suffix allowance.
+STUDIO_SCOPE_PROTECTED_NAMES = frozenset({"CMakeLists.txt"})
+STUDIO_SCOPE_PROTECTED_PREFIXES = ("cmake/", "tools/", "config/", "build/", ".github/")
+STUDIO_SCOPE_SKIP_PREFIXES = (
+    "src/numerics/", "src/physics/", "src/cuda/",
+    "tests/host/", "tests/cuda/", "validation/",
+)
+STUDIO_SCOPE_HEX40 = re.compile(r"^[0-9a-fA-F]{40}$")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def scope_path_requires_studio(path):
+    """Return True when a changed repository path must exercise the Studio gate.
+
+    Only explicitly unrelated paths may skip the gate: documentation text that
+    is not Studio UI/API documentation, standalone numerical implementation,
+    Core-only host/CUDA tests and scientific validation tooling. Every other
+    path -- including all studio/**, API/core/interface/data/grid/amr/driver/io,
+    include, simulation and any cmake/workflow/config/build/tooling code --
+    requires Studio. Protected build/tool/config/workflow directories and build
+    recipes win over documentation suffixes, and .txt is documentation only
+    under docs/ or with an explicit README/LICENSE/NOTICE basename. Unknown,
+    empty or escaping paths require Studio.
+    """
+    if not isinstance(path, str) or not path or path.startswith("/") or path.startswith("../"):
+        return True
+    if path.startswith(STUDIO_SCOPE_ALWAYS_PREFIXES):
+        return True
+    name = path.rsplit("/", 1)[-1]
+    if name in STUDIO_SCOPE_PROTECTED_NAMES or path.startswith(STUDIO_SCOPE_PROTECTED_PREFIXES):
+        return True
+    if any(name.endswith(suffix) for suffix in STUDIO_SCOPE_DOC_SUFFIXES):
+        return False
+    if name.endswith(STUDIO_SCOPE_TXT_SUFFIX):
+        return not (path.startswith(STUDIO_SCOPE_TXT_DOC_PREFIX)
+                    or name in STUDIO_SCOPE_TXT_DOC_NAMES)
+    return not path.startswith(STUDIO_SCOPE_SKIP_PREFIXES)
+
+
+def _scope_result(required, reason, changed_paths=()):
+    return {"required": bool(required), "reason": reason, "changed_paths": list(changed_paths)}
+
+
+def check_studio_scope(base, head, repo_root=None):
+    """Classify a base..head diff, defaulting to the full Studio gate on doubt.
+
+    Returns {"required": bool, "reason": str, "changed_paths": [...]}. A True
+    ``required`` is a conservative fallback: diff errors, malformed or missing
+    refs, non-UTF-8 paths, an empty change list and any unknown path all request
+    the full Studio gate rather than reporting a passing test result.
+    """
+    if not isinstance(base, str) or not STUDIO_SCOPE_HEX40.match(base):
+        return _scope_result(True, "--studio-scope-base is not a full 40-hex commit ref")
+    if not isinstance(head, str) or (head != "HEAD" and not STUDIO_SCOPE_HEX40.match(head)):
+        return _scope_result(True, "--studio-scope-head is not HEAD or a full 40-hex commit ref")
+    root = REPO_ROOT if repo_root is None else Path(repo_root)
+    command = ["git", "diff", "--no-renames", "--name-only", "-z", base, head, "--"]
+    try:
+        completed = subprocess.run(command, cwd=str(root), stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, check=False)
+    except OSError as error:
+        return _scope_result(True, "git diff could not run: " + str(error))
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", "replace").strip()
+        return _scope_result(True, "git diff failed: " + (detail or "exit " + str(completed.returncode)))
+    try:
+        decoded = completed.stdout.decode("utf-8")
+    except UnicodeDecodeError:
+        return _scope_result(True, "git diff emitted paths that are not valid UTF-8")
+    changed = [path for path in decoded.split("\0") if path]
+    if not changed:
+        return _scope_result(True, "empty change list; conservative full Studio gate required")
+    studio = [path for path in changed if scope_path_requires_studio(path)]
+    if studio:
+        preview = ", ".join(studio[:3]) + ("..." if len(studio) > 3 else "")
+        return _scope_result(True, "Studio-affecting path(s): " + preview, changed)
+    return _scope_result(
+        False, "all " + str(len(changed)) + " changed path(s) are unrelated to Studio", changed)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=PROFILES, default="cpu",
@@ -145,10 +239,22 @@ def main(argv=None):
                         help="ctest --show-only=json-v1 output from the CI build")
     reports.add_argument("--node-tap", type=Path,
                          help="complete Node --test --test-reporter=tap output")
+    reports.add_argument("--studio-scope-base", metavar="FULL40HEX",
+                         help="base commit for the affected-module Studio scope decision")
+    parser.add_argument("--studio-scope-head", metavar="HEAD|FULL40HEX",
+                        help="head rev for --studio-scope-base (HEAD or a full 40-hex commit ref)")
     parser.add_argument("--junit", type=Path,
                         help="ctest --output-junit report; omit to check discovery only")
     args = parser.parse_args(argv)
+    if args.studio_scope_head is not None and args.studio_scope_base is None:
+        parser.error("--studio-scope-head requires --studio-scope-base and is invalid "
+                     "with --inventory/--node-tap")
     try:
+        if args.studio_scope_base is not None:
+            if args.junit is not None:
+                raise ValueError("--junit requires --inventory")
+            print(json.dumps(check_studio_scope(args.studio_scope_base, args.studio_scope_head)))
+            return 0
         if args.node_tap is not None:
             if args.junit is not None:
                 raise ValueError("--junit requires --inventory")
@@ -165,7 +271,8 @@ def main(argv=None):
         else:
             print(f"{args.profile}: {len(expected)} inventory tests; coverage anchors present")
     except (OSError, ValueError, ET.ParseError) as error:
-        profile = "studio" if args.node_tap is not None else args.profile
+        profile = ("studio" if args.node_tap is not None or args.studio_scope_base is not None
+                   else args.profile)
         print(f"{profile} result check failed: {error}", file=sys.stderr)
         return 1
     return 0

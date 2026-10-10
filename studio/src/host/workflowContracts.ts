@@ -16,7 +16,7 @@ export interface AmrMesh {
  version:'1';kind:'amr-leaf-mesh';dimension:1|2|3;geometry:'cartesian'|'spherical'|'cylindrical';unit:string|null;
  coordinates?:{version:'1';basis:'native-grid';metadata:CoordinateSystem};
  leaves:AmrLeaf[];leafCount:number;levelCounts:{level:number;leafBlocks:number}[];
- complete:boolean;completedPasses:number;snapshot:'none'|'last-completed-balanced-hierarchy';limitedReason:string|null;
+ complete:boolean;completedPasses:number;snapshot:'none'|'last-completed-balanced-hierarchy'|'native-root-topology-active-initialization-only';limitedReason:string|null;
  configuredMaxBlocks:number;workingCapacity:number;resources:ResourceEstimate;
 }
 export interface WorkflowCore {

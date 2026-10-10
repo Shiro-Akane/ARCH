@@ -82,8 +82,11 @@ Runner contracts labeled `tooling` execute in the Tooling job; the CPU job uses
 the same label exclusion for inventory and execution. An unfiltered local
 CTest run below includes those contracts.
 
-Studio and Host run their full Node suite once, followed by lint and the typed
-production build. The `CI required` result combines all three jobs. It does not represent CUDA
+Changes affecting Studio, Core interfaces or build contracts run the full
+Studio/Host Node suite once, followed by lint and the typed production build.
+The existing Studio job records `NOT_APPLICABLE` for clearly unrelated changes;
+unknown paths or unavailable revision information select the full lane.
+The `CI required` result combines all three jobs. It does not represent CUDA
 execution or a rerun of the full scientific Validation campaign. Diagnostic
 artifacts are kept for 14 days, separately from reviewed Validation records.
 See the [workflow guide](../.github/workflows/README.md) for manual runs,

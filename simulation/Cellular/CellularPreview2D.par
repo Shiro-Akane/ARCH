@@ -22,6 +22,7 @@ refine_var = DENS
 refine_threshold = 0.8
 derefine_threshold = 0.2
 restart = false
+tmax = 5.0e-8
 eos_type = helmholtz
 eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
 use_burn = true

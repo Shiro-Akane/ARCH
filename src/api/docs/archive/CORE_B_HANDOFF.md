@@ -32,11 +32,11 @@ build-studio-cpu/bin/ARCH --preview CellularDet --config-stdin \
 - 返回 EOS、基础区域、AMR 配置和已注册组分；仍是 CPU 初始采样。
 - 输入最多 1 MiB；输出含换行最多 8 MiB。超限返回退出码 7 / `RESPONSE_TOO_LARGE`，保留身份和可容纳的状态，`data=null`。
 
-精确字段、错误码及状态含义见 [README](README.md)。完整真实输入/输出见 [示例](examples/core-b/README.md)。
+精确字段、错误码及状态含义见 [README](../../README.md)。完整真实输入/输出见 [示例](../../examples/core-b/README.md)。
 
 ## 参考配置与依赖
 
-使用 [CellularPreview2D.par](../../simulation/Cellular/CellularPreview2D.par)。参考输入选择 Helmholtz 和 aprox19，包含两个活动方向、分界位置及小幅场扰动。
+使用 [CellularPreview2D.par](../../../../simulation/Cellular/CellularPreview2D.par)。参考输入选择 Helmholtz 和 aprox19，包含两个活动方向、分界位置及小幅场扰动。
 
 从仓库根目录运行时，表路径为 `EOS_toolkit/tables/helmholtz/helm_table.dat`。其他工作目录使用有效的绝对路径或相对于运行目录的路径。不要直接把这一配置的 EOS 改成 ideal：现有核素组分没有 ideal 所需的热参数，预览会报告无效初值。
 

@@ -205,6 +205,9 @@ struct CudaBlockRuntime {
     Physical::Gravity::GravityPatchView self_gravity{};
     std::uint64_t gravity_generation=0;
     DeviceGridView grid{};
+    // Original logical plan + actual bound grid determine physical Hydro walls.
+    arch::boundary::HydroBoundaryView native_hydro_walls{};
+    state::Bounds native_hydro_bounds{};
     DeviceCompiledBoundaryPlan boundary;
     DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
     // Immutable subset compiled from this factory's original logical authority
@@ -244,6 +247,10 @@ struct CudaAmrFluxPlanRuntime {
     std::uint64_t reflux_fingerprint = 0;
     int dimension = 0;
     int species_count = 0;
+    // Inspect the actual immutable topology mode; this is no new permission or
+    // identity. Hydro/reflux must consume the original Native torque lowering.
+    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
+    bool angular_transport = false;
     std::vector<CudaBlockRuntime*> runtime_blocks;
     std::vector<DeviceAmrFluxBlockView> host_blocks;
     DeviceAllocation<DeviceAmrFluxBlockView> device_blocks;
@@ -320,6 +327,29 @@ struct CudaBackend::Impl {
             dt.swap(next_dt);
             status.swap(next_status);
         }
+        // Compact Native external observer rows: four measured doubles per
+        // block, never field storage. Only the qualified external Native path
+        // calls this; no other consumer allocates or grows this capacity.
+        std::unique_ptr<DeviceAllocation<double>> native_external_budget;
+        std::vector<double> host_native_external_budget;
+        void ensure_native_external_budget(std::size_t count)
+        {
+            if (count > std::numeric_limits<std::size_t>::max() / 4)
+                throw std::invalid_argument(
+                    "invalid Native external budget extent");
+            const auto size = count * 4;
+            host_native_external_budget.resize(size);
+            if (size == 0
+                || (native_external_budget && native_external_budget->size() >= size))
+                return;
+            auto next = std::make_unique<DeviceAllocation<double>>();
+            next->allocate(size);
+            native_external_budget.swap(next);
+        }
+        // One metadata-only original-operation → resident-psi-row map for the
+        // actual synchronous Native Self batch. The numerical psi stays with
+        // its original Gravity workspace, and reuse follows stream quiescence.
+        ReusableDeviceAllocation<std::size_t> native_self_rows;
     } hydro_batch;
     HydroBatchScratch diffusion_batch;
     HydroBatchScratch reflux_batch;
@@ -432,6 +462,34 @@ struct CudaBackend::Impl {
     CudaBlockRuntime* find_block(amr::BlockHandle handle) noexcept;
     using BlockResolver = std::function<
         CudaBlockRuntime&(backend::BackendStateAccess)>;
+    // Existing boundary bodies share the same authenticated storage resolver.
+    state::CompletionToken execute_physical_boundary_batch(
+        std::span<const backend::BackendStateAccess>, state::StateVersion,
+        state::CompletionToken, const BlockResolver&);
+    state::CompletionToken execute_native_axis_boundary_batch(
+        std::span<const backend::BackendStateAccess>, state::StateVersion,
+        state::CompletionToken, const BlockResolver&);
+    // Workflow: authenticate the entire actual domain, select one traversal,
+    // then join the same compact diagnostics. Failure-only modes publish no
+    // state, completion or retry authority; the Runtime owns their policy.
+    enum class NativeAcceptanceMode { Completed, RestrictedInterior, ClassifyActiveThermal };
+    struct NativeAcceptanceResult {
+        std::optional<backend::NativeEosFailure> failure;
+        bool requested_failure = false;
+    };
+    NativeAcceptanceResult validate_native_acceptance_batch(
+        std::span<const backend::BackendStateAccess>, const state::Bounds&,
+        const BlockResolver&, NativeAcceptanceMode,
+        const backend::NativeEosFailure* original_refusal = nullptr);
+    backend::BoundaryCells prepare_native_reflecting_layer(
+        backend::BackendStateAccess, std::span<const boundary::native_rz_math::Request>,
+        const state::Bounds&, std::span<const int>, const backend::BoundaryCells*,
+        const BlockResolver&);
+    backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
+        std::span<const int>, state::StateRegion, const BlockResolver&);
+    void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,
+        const backend::BoundaryCells&, const boundary::DiffusionBoundaryStorage&,
+        const BlockResolver&);
     // One lowering/execution path serves active slots and the unpublished
     // regrid namespace; only the validated storage resolver differs.
     void execute_same_level_exchange(
@@ -446,6 +504,10 @@ struct CudaBackend::Impl {
         std::span<const backend::BackendStateAccess>,
         std::span<const int>, const amr::CoordinateSeamPlan&,
         state::StateSlot, const BlockResolver&);
+    // The same accepted-state observer serves committed Current storage and the
+    // authenticated unpublished regrid namespace; only the resolver differs.
+    std::vector<double> evaluate_jeans_resolution(
+        std::span<const backend::BackendStateAccess>, const BlockResolver&);
     CudaBlockRuntime& first_block() noexcept;
     const CudaBlockRuntime& first_block() const noexcept;
 
@@ -489,5 +551,9 @@ struct CudaBackend::StoreTransaction::Impl {
 
     bool current_upload_complete() const noexcept;
 };
+
+// Resolve only this authenticated unpublished store; active storage is never a fallback.
+CudaBlockRuntime& resolve_staged_block(CudaBackend::StoreTransaction::Impl&,
+    backend::BackendStateAccess);
 
 } // namespace arch::cuda

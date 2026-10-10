@@ -1,3 +1,4 @@
+#include "physics/gravity/FiniteRingBoundaryMath.h"
 #include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/GravityExecution.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
@@ -13,6 +14,7 @@
 #include "driver/stages/GravityStage.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
 #include <algorithm>
+#include <bit>
 #include <chrono>
 #include <cmath>
 #include <functional>
@@ -158,7 +160,7 @@ void host_stage_diagnostic_journal() {
     runtime.initialize_topology();auto context=runtime.stage_context();
     SelfGravity gravity(f.config.physics.gravity);
     driver::GravityStage stage(runtime,&gravity);
-    require(stage.supports_host_macro_step_journal(),"real Host journal capability absent");
+    require(stage.supports_macro_step_journal(arch::state::ExecutionSide::Host),"real Host journal capability absent");
     stage.flush_committed_diagnostics();
     const auto read_rows=[&] {
         std::ifstream input(directory/"gravity_solves.tsv");
@@ -455,6 +457,141 @@ void user_periodic_mismatch() {
     rejects([&]{gravity.bind(amr::bind_elliptic_mesh(f.control,f.config.grid,f.handles));},
         "periodic user side disagreed with the AMR topology");
     std::cout<<"user rejections passed\n";
+}
+
+/** Borrow actual raw scratch for the original controller, without granting a
+ * field/typed consumer. Dirty unused siblings and a non-power-of-two maximum
+ * must not change the original Host interval or its exact work diagnostics.
+ */
+void finite_ring_raw_storage_contract() {
+    using namespace finite_ring_detail;
+    constexpr std::size_t maximum=17,node_count=64;
+    std::vector<RingBox> boxes(maximum);
+    std::vector<RingBoxReductionView::Node> nodes(node_count);
+    for(auto& box:boxes)box={-4.,-3.,-2.,-1.,{1.e100,2.e100},RingIntervalStatus::InvalidInput,999,999};
+    for(auto& node:nodes){node.integral={1.e100,2.e100};node.status=RingIntervalStatus::InvalidInput;
+        node.largest_width=1.e100;node.worst_index=maximum-1;}
+    RingEnclosureControl control;control.maximum_boxes=maximum;
+    const auto contact=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,1.,0.,1.,control);
+    const auto separated=finite_ring_potential_enclosure(.5,1.,-.375,.375,1.,2.,0.,1.,control);
+    for(const auto& value:{contact,separated})require(value.bound_valid
+        &&value.status==RingIntervalStatus::WorkLimit&&value.leaf_boxes==maximum
+        &&value.range_evaluations==2*maximum-1,"raw fixture did not enter the original adaptive controller");
+    const auto exact=[&](const RingPotentialEnclosure& value,const RingPotentialEnclosure& expected) {
+        const auto bits=[](double x){return std::bit_cast<std::uint64_t>(x);};
+        require(bits(value.lower)==bits(expected.lower)&&bits(value.upper)==bits(expected.upper)
+            &&bits(value.value)==bits(expected.value)&&bits(value.absolute_error)==bits(expected.absolute_error)
+            &&value.status==expected.status&&value.bound_valid==expected.bound_valid
+            &&value.leaf_boxes==expected.leaf_boxes&&value.range_evaluations==expected.range_evaluations
+            &&value.kernel_enclosures==expected.kernel_enclosures&&value.agm_iterations==expected.agm_iterations,
+            "raw Host scratch changed original enclosure bits or diagnostics");
+    };
+    // Reuse the same actual allocations, including recovery after both short spans.
+    for(int lane=0;lane<6;++lane) {
+        const auto value=finite_ring_potential_enclosure_raw(.5,1.,-.375,.375,1.,lane==1?2.:1.,0.,1.,control,
+            boxes.data(),lane==3?maximum-1:maximum,nodes.data(),lane==4?node_count-1:node_count);
+        if(lane==3||lane==4)require(value.status==RingIntervalStatus::WorkLimit&&!value.bound_valid
+            &&value.leaf_boxes==0,"short raw capacity retained a valid or Bounded certificate");
+        else exact(value,lane==1?separated:contact);
+    }
+    auto fast=control;fast.relative_target=1.e-10;
+    const double density[]={0.,1.,1.},radius[]={1.,0.,1.e6};
+    for(int lane=0;lane<3;++lane) {
+        const auto value=finite_ring_potential_enclosure_raw(.5,1.,-.375,.375,density[lane],radius[lane],0.,1.,fast,
+            nullptr,0,nullptr,0);
+        exact(value,finite_ring_potential_enclosure(.5,1.,-.375,.375,density[lane],radius[lane],0.,1.,fast));
+        require(value.bound_valid&&value.status==RingIntervalStatus::Bounded
+            &&value.leaf_boxes==0&&value.range_evaluations==0,"raw physical fast path required scratch");
+        if(lane==1) {
+            // Existing independent axis primitive from test_composite_poisson;
+            // this is one original reference check, not another quadrature scheme.
+            const auto primitive=[](long double r,long double z){return .5L*(z*std::sqrt(r*r+z*z)+r*r*std::asinh(z/r));};
+            const long double reference=-2*3.141592653589793238462643383279502884L*
+                (primitive(1.,.375L)-primitive(1.,-.375L)-primitive(.5L,.375L)+primitive(.5L,-.375L));
+            require(std::abs(value.value-reference)<2.e-10L*std::abs(reference),
+                "raw axis result differs from the original independent Newton primitive");
+        }
+    }
+    std::cout<<"FINITE_RING_RAW_STORAGE_OWNER_PASS side=Host maximum=17 nodes=64 dirty_reuse=1 short_unbounded=1 fastpaths=3 consumer_qualified=0\n";
+}
+
+/** The same supported sparse native owner, with original Host memo retained.
+ * Cold raw references exercise the shared global body without within-call or
+ * retained history; successful warm Host work keeps its original callable.
+ */
+void ring_shared_cold_owner_contract() {
+    using namespace ring_boundary_detail;using namespace finite_ring_detail;
+    elliptic::CartesianMesh base;base.dimension=2;base.cells={4,4,1};base.spacing={.25,.25,1.};base.origin={0.,-.5,0.};
+    base.geometry=elliptic::Geometry::Cylindrical;base.semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    base.native_canonical_domain=true;base.root_upper={1.,.5,0.};
+    std::vector<elliptic::CompositeCell> cells;
+    for(int j=0;j<4;++j)for(int i=0;i<4;++i)cells.push_back({0,{i,j,0}});
+    elliptic::CompositePoisson op(base,cells,elliptic::BoundaryKind::CurvilinearIsolated);
+    GravityBoundary tree(op,{9});GravitySolveIdentity identity;identity.topology={9};
+    identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+    identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
+    identity.inputs.push_back({{{1},{9}},state::StateSlot::Current,{1},1});
+    std::vector<double> density(op.size(),0.);
+    for(int cell=0;cell<op.size();++cell)if(op.cells()[cell].index[0]<2&&op.cells()[cell].index[1]>=2)density[cell]=1.;
+    tree.update(density,identity);
+    RingBoundaryControl control;control.face_absolute_target=1.e-5;control.maximum_boxes_per_leaf=17;
+    control.maximum_leaf_evaluations=tree.full_ring_traversal_work_bound(op);
+    const auto cold=[&](const RingBoundaryControl& budget) {
+        auto prepared=tree.prepare_ring_boundary_inputs(op,identity,budget);auto moved=std::move(prepared);
+        const auto input=moved.view();
+        require(input.nodes==tree.nodes().data()&&input.node_count==static_cast<int>(tree.nodes().size())
+            &&input.edges==moved.edges.data()&&input.faces==moved.faces.data()
+            &&input.moment_bounds==moved.moment_bounds.data()&&input.quartets==moved.quartets.data(),
+            "moved Host packet retained old owning-vector pointers");
+        for(int cell=0;cell<op.size();++cell)require(input.edges[cell].rl==op.lower(cell,0)
+            &&input.edges[cell].rh==op.upper(cell,0)&&input.edges[cell].zl==op.lower(cell,1)
+            &&input.edges[cell].zh==op.upper(cell,1)&&input.density[cell]==density[cell],"shared packet changed actual source/edge words");
+        RingBoundaryEvaluation result;result.source=moved.source;const auto count=moved.faces.size();
+        result.values.assign(count,0.);result.lower.assign(count,0.);result.upper.assign(count,0.);
+        result.far_truncation_upper.assign(count,0.);result.far_evaluation_width_upper.assign(count,0.);result.errors.resize(count);
+        std::vector<RingBox> boxes(budget.maximum_boxes_per_leaf);
+        std::vector<RingBoxReductionView::Node> nodes(2*ring_reduction_capacity(budget.maximum_boxes_per_leaf));
+        ColdRingLeafEvaluator leaf{boxes.data(),boxes.size(),nodes.data(),nodes.size()};
+        const RingBoundaryOutputView output{result.values.data(),result.lower.data(),result.upper.data(),
+            result.far_truncation_upper.data(),result.far_evaluation_width_upper.data(),result.errors.data(),count};
+        ring_boundary_shared(input,moved.control,output,result,leaf);return result;
+    };
+    const auto uncached=cold(control);auto owner=make_host_gravity_execution();RingBoundaryEvaluation first,warm;
+    owner->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&first});
+    owner->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&warm});
+    require(uncached.status==RingBoundaryStatus::Bounded&&uncached.memo_hits==0&&uncached.memo_admissions==0
+        &&uncached.memo_misses==uncached.leaf_evaluations+uncached.coalesced_parent_attempts
+        &&uncached.represented_leaf_evaluations==12*16,"cold shared Host controller lost original source coverage/history distinction");
+    require(first.status==RingBoundaryStatus::Bounded&&first.memo_admissions>0&&warm.memo_hits>0
+        &&warm.kernel_enclosures==0&&warm.range_evaluations==0&&warm.agm_iterations==0
+        &&warm.lower==first.lower&&warm.upper==first.upper&&warm.values==first.values
+        &&warm.parent_evaluations==uncached.parent_evaluations&&warm.leaf_evaluations==uncached.leaf_evaluations,
+        "shared extraction changed the real Host memo callable or warm work charges");
+    tree.require_current_ring(op,warm);
+    for(std::size_t f=0;f<op.faces().size();++f) {
+        require(uncached.errors[f].quality==elliptic::BoundaryErrorQuality::CertifiedAbsolute
+            &&warm.errors[f].quality==elliptic::BoundaryErrorQuality::CertifiedAbsolute,
+            "completed shared Host work did not certify the whole original face array");
+        if(op.faces()[f].boundary_side>=0)require(uncached.lower[f]<=warm.upper[f]&&warm.lower[f]<=uncached.upper[f]
+            &&uncached.errors[f].absolute_error<=control.face_absolute_target&&warm.errors[f].absolute_error<=control.face_absolute_target,
+            "cold/warm original Host intervals are disjoint or exceed the same budget");
+        else require(uncached.values[f]==0.&&warm.values[f]==0.,"shared Host interior face became boundary data");
+    }
+    auto prefix=control;prefix.maximum_leaf_evaluations=5;const auto partial=cold(prefix);
+    require(partial.status==RingBoundaryStatus::WorkLimit&&partial.parent_evaluations==5
+        &&partial.leaf_evaluations==0&&partial.coalesced_parent_acceptances==4&&partial.represented_leaf_evaluations==16,
+        "shared Host cap did not retain one original completed face prefix");
+    for(const auto& error:partial.errors)require(error.quality==elliptic::BoundaryErrorQuality::Unknown,
+        "shared Host partial prefix retained a certificate");
+    auto fallback=control;fallback.face_absolute_target=0.;fallback.maximum_boxes_per_leaf=1;fallback.maximum_leaf_evaluations=4;
+    const auto failed=cold(fallback);
+    require(failed.status==RingBoundaryStatus::WorkLimit&&failed.parent_evaluations==4&&failed.leaf_evaluations==0
+        &&failed.coalesced_parent_attempts==3&&failed.coalesced_parent_acceptances==2&&failed.represented_leaf_evaluations==8,
+        "shared Host failed quartet evaluated an uncharged fallback");
+    owner->run(EvaluateRingBoundary{&tree,&op,&identity,&control,&warm});
+    require(warm.status==RingBoundaryStatus::Bounded&&warm.memo_hits>0&&warm.source_generation==first.source_generation,
+        "cold scratch/controller calls changed the real Host source or memo history");
+    std::cout<<"RING_SHARED_COLD_HOST_OWNER_PASS stored_leaves=16 nonzero_leaves=4 max_boxes=17 cold_history=1 warm_memo=1 partial_uncertified=1 field_qualified=0\n";
 }
 
 /** Existing bounded native source, now consumed through the actual executor.
@@ -986,27 +1123,31 @@ void rz_binding_identity() {
         rejects([&]{gravity_boundary_point(op,static_cast<int>(op.faces().size()));},"invalid face descriptor accepted");
         auto controls=config.physics.gravity;controls.boundary="isolated";
         SelfGravity gravity(controls);
-        bool rejected=false;
-        try {gravity.bind(binding);}
-        catch(const std::logic_error& error) {
-            rejected=std::string_view(error.what())==
-                "RZ self-gravity finite-ring runtime consumer is not qualified";
-        }
-        require(rejected,"unqualified RZ reached legacy gravity runtime");
-        rejects([&]{gravity.potential();},"failed RZ bind published potential");
+        // Public isolated binding owns the real ring producer, but binding
+        // alone must not publish a potential, force, report or Hydro patch.
+        gravity.bind(binding);
+        rejects([&]{gravity.potential();},"unprepared public RZ bind published potential");
+        rejects([&]{gravity.acceleration();},"unprepared public RZ bind published force");
+        rejects([&]{gravity.report();},"unprepared public RZ bind published a report");
+        rejects([&]{gravity.patch_view(0);},"unprepared public RZ bind published a Hydro patch");
         Fixture legacy;SelfGravity reused(legacy.config.physics.gravity);
         reused.bind(amr::bind_elliptic_mesh(legacy.control,legacy.config.grid,legacy.handles));
         reused.prepare({legacy.identity,legacy.views});
         require(!reused.potential().empty(),"existing Cartesian field not ready");
-        rejects([&]{reused.bind(binding);},"live field accepted unqualified RZ chart");
-        rejects([&]{reused.potential();},"RZ bind failure retained old field publication");
+        // This fixture retains its Cartesian periodic gravity policy. Public
+        // isolated RZ support does not make periodic RZ a supported binding;
+        // its rejection must still retire the prior Cartesian publication.
+        require(legacy.config.physics.gravity.boundary=="periodic",
+            "Cartesian retirement fixture lost its periodic gravity policy");
+        rejects([&]{reused.bind(binding);},"periodic RZ binding was accepted");
+        rejects([&]{reused.potential();},"unsupported periodic RZ bind retained old field publication");
         reused.bind(amr::bind_elliptic_mesh(legacy.control,legacy.config.grid,legacy.handles));
         reused.prepare({legacy.identity,legacy.views});
         require(!reused.potential().empty(),"supported Cartesian rebind did not recover");
         };
         verify_binding(amr::bind_elliptic_mesh(control,config.grid,handles));
-        // Same original tree transfer owner; production Runtime RZ regridding
-        // remains gated. Refine one root, retaining a real mixed-level mesh.
+        // Same original tree transfer owner: refine one root and retain a
+        // real mixed-level binding witness; this is not a Runtime evolution.
         const int selected=control.tree->GetActiveBlocks().front();
         auto transaction=control.tree->PrepareRegrid(config,{}, {}, [&] {
             for(int id:control.tree->GetActiveBlocks())
@@ -1023,7 +1164,7 @@ void rz_binding_identity() {
         verify_binding(amr::bind_elliptic_mesh(control,config.grid,next));
     }
     std::cout<<"RZ_ELLIPTIC_BINDING_IDENTITY_PASS cells="<<checked
-        <<" axis=1 offaxis=1 mixed=1 workspace_lengths=1 face_acceleration=1 potential_work=1 actual_cell_force=1 physical_timestep=1 meridian_observers=1 axial_dirichlet=1 runtime_gate=1 old_publication_retired=1 recovery=1\n";
+        <<" axis=1 offaxis=1 mixed=1 workspace_lengths=1 face_acceleration=1 potential_work=1 actual_cell_force=1 physical_timestep=1 meridian_observers=1 axial_dirichlet=1 public_isolated_bind=1 periodic_rz_rejected=1 old_publication_retired=1 recovery=1\n";
 }
 /** Real native two-block gather and original SelfGravity pipeline.
  * Opt-in expensive verification; no Hydro/time/output and no physical publish.
@@ -1055,7 +1196,13 @@ void native_rz_service_candidate(bool zero_source=false,bool lifecycle=false) {
     auto execution=std::make_shared<IdentityExecution>();
     if(lifecycle)gravity.set_execution(execution);
     auto binding=amr::bind_elliptic_mesh(control,config.grid,handles);
-    rejects([&]{gravity.bind(binding);},"public bind enabled RZ");
+    // A public isolated bind is now legal, but has no field until prepare.
+    // Rebinding below explicitly selects the unchanged private candidate owner.
+    gravity.bind(binding);
+    rejects([&]{gravity.potential();},"unprepared public isolated bind published potential");
+    rejects([&]{gravity.acceleration();},"unprepared public isolated bind published force");
+    rejects([&]{gravity.report();},"unprepared public isolated bind published a report");
+    rejects([&]{gravity.patch_view(0);},"unprepared public isolated bind published a Hydro patch");
     // Exercise actual-source auto resource derivation through the existing
     // two-block service owner; all source/config/residual assertions stay fixed.
     gravity.bind_native_rz_candidate(binding,65536,0);
@@ -1491,4 +1638,4 @@ int main(int argc,char** argv) { try {
     dirichlet_quadratic();neumann_compatibility();mixed_periodic();
     user_robin_time();user_rejections();user_periodic_mismatch();boundary_normals();user_nonfinite();
     user_structure_rebuild();user_restart_time();user_periodic_payload();user_green_accounting();
-    qualification_scope();request_identity_preflight();host_consumption_receipt();host_stage_diagnostic_journal();lifecycle();native_components();rz_binding_identity();rz_user_analytic_service();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }
+    qualification_scope();request_identity_preflight();host_consumption_receipt();host_stage_diagnostic_journal();lifecycle();native_components();rz_binding_identity();rz_user_analytic_service();finite_ring_raw_storage_contract();ring_shared_cold_owner_contract();ring_execution_identity();std::cout<<"Self-gravity lifecycle validation passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;} }

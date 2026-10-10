@@ -209,14 +209,42 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Include both merge parents; unavailable refs conservatively run Studio.
+          fetch-depth: 2
+
+      - name: Decide affected-module scope
+        id: scope
+        env:
+          ARCH_CI_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p build-ci/studio
+          python3 tools/check_ci_results.py \
+            --studio-scope-base "$ARCH_CI_PR_BASE_SHA" --studio-scope-head HEAD \
+            > build-ci/studio/scope.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          scope = json.loads(Path("build-ci/studio/scope.json").read_text())
+          assert type(scope["required"]) is bool
+          print(json.dumps(scope, indent=2))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("required=" + str(scope["required"]).lower() + "\n")
+          if not scope["required"]:
+              print("Studio: NOT_APPLICABLE to this diff; no test pass is claimed.")
+          PY
 
       - name: Prepare the declared Node runtime
+        if: steps.scope.outputs.required == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24.21.0'
           package-manager-cache: false
 
       - name: Record identity and install locked dependencies
+        if: steps.scope.outputs.required == 'true'
         working-directory: studio
         run: |
           set -euo pipefail
@@ -227,14 +255,16 @@ jobs:
           /usr/bin/time -p npm ci 2>&1 | tee ../build-ci/studio/install.log
 
       - name: Run the full Studio suite including Host exactly once
+        if: steps.scope.outputs.required == 'true'
         working-directory: studio
         run: |
           set -euo pipefail
-          /usr/bin/time -p node --test --test-reporter=tap tests/*.test.ts \
+          /usr/bin/time -p node --test --test-concurrency=1 --test-reporter=tap tests/*.test.ts \
             2> ../build-ci/studio/test-time.log | tee ../build-ci/studio/tests.tap
           python3 ../tools/check_ci_results.py --node-tap ../build-ci/studio/tests.tap
 
       - name: Lint and build production assets with type checking
+        if: steps.scope.outputs.required == 'true'
         working-directory: studio
         run: |
           set -euo pipefail

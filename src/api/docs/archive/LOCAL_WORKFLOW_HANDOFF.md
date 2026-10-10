@@ -1,11 +1,11 @@
 # 本地工作流 API 扩展交接
 
 本文保存以下冻结提交的历史交付事实。当前能力从实际 binary 查询；后续配置整改、
-Studio 接入和平台验收采用 [Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)。
+Studio 接入和平台验收采用 [Core／Studio 联合交付计划](../../../../docs/development/StudioConfigurationHandoff.zh-CN.md)。
 
 交付到 `codex/studio-core-ui-contracts`，继续以 `origin/main` 的 `01cc4f723e674d47fe23850e7c0fef221e92e98c` 为冻结基线，在原 Core 接口提交 `5e96d4f004c9bd320fb232853d59b90006cdb0f2` 后增量实现。没有合入 Studio 分支历史。核对的前端 checkpoint 是 `studio/phase2f-plot-presentation` / `studio-phase2f-v0.13.0` / `e97e571ba98641384aee44425a29b83255401856`。
 
-后续持续预览增量已整理为 [PREVIEW_SESSION_HANDOFF.md](PREVIEW_SESSION_HANDOFF.md)，接口见 [PREVIEW_SESSION_API.md](PREVIEW_SESSION_API.md)。在本文件记录的基础上接入会话、资源复用、阶段事件和图像版本管理；会话增量最终 CPU 验证 18/18 组通过。下方 15 组测试记录属于前一基础增量。
+后续持续预览增量已整理为 [PREVIEW_SESSION_HANDOFF.md](PREVIEW_SESSION_HANDOFF.md)，接口见 [PREVIEW_SESSION_API.md](../PREVIEW_SESSION_API.md)。在本文件记录的基础上接入会话、资源复用、阶段事件和图像版本管理；会话增量最终 CPU 验证 18/18 组通过。下方 15 组测试记录属于前一基础增量。
 
 ## 已可接入
 
@@ -18,7 +18,7 @@ Studio 接入和平台验收采用 [Core／Studio 联合交付计划](../../docs
 - `--amr-resources`：无需 Setup/EOS 的逐 Level 全域资源规模提示。
 - `--preview-amr`：Linux/WSL CPU 上的真实 Sod 1D / CellularDet 2D 初始网格；包括叶块、2:1 层级、物理边界、单元尺寸、预算状态和资源信息。
 
-准确调用、限制和返回字段见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)，展示字段见 [CONFIGURATION_API.md](CONFIGURATION_API.md)，模型检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，实际响应见 [examples/local-workflow](examples/local-workflow/README.md)。
+准确调用、限制和返回字段见 [INITIAL_AMR_API.md](../INITIAL_AMR_API.md)，展示字段见 [CONFIGURATION_API.md](../CONFIGURATION_API.md)，模型检查见 [CASE_INSPECTION_API.md](../CASE_INSPECTION_API.md)，实际响应见 [examples/local-workflow](../../examples/local-workflow/README.md)。
 
 ## Studio / Host 接续工作
 
@@ -29,7 +29,7 @@ Studio 接入和平台验收采用 [Core／Studio 联合交付计划](../../docs
 5. 为全部注册模型接入 --inspect-case；根据能力区分参数检查、完整场图和 AMR 网格。读取单位证据，不维护前端模型单位表；模型检查时间预算独立读取（CPU 300 秒，Host wall 360 秒），允许用户取消。
 6. 坐标轴和场值各自提供 Linear/Log、范围和截断。零值、负值、非有限值分别提示；Log 仅绘制正值，留空/遮罩无效值，曲线断开。Inspector 与源数组保留原值，切回 Linear 恢复完整显示。没有正值时显示无可绘制数据，不报成负数配置错误。
 
-后续完整工作流与交接边界见 [Core／Studio 联合交付计划](../../docs/development/StudioConfigurationHandoff.zh-CN.md)。
+后续完整工作流与交接边界见 [Core／Studio 联合交付计划](../../../../docs/development/StudioConfigurationHandoff.zh-CN.md)。
 
 ## 单位与兼容性
 

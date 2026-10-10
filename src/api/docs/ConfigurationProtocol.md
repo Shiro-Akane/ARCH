@@ -1,11 +1,11 @@
-# Configuration extension v3 — candidate contract
+# Configuration transport protocol v3
 
-Status: implemented by the current integration Core for schema/inspection;
-Host/Studio migration and end-to-end activation gates remain incomplete.
-The filename is retained for existing fixture links. CONFIGURATION_API.md
-describes the current boundary and known migration gaps. Required/default
-classification remains owned by ConfigurationContractPlan.zh-CN.md; this
-document defines transport, not another scientific parameter catalogue.
+The current Core publishes this configuration transport. Host and Studio consume
+nullable values, provenance and structured diagnostics. Configuration inspection
+is separate from initialization and run readiness. CONFIGURATION_API.md describes
+the interface and its coverage. Required/default classification remains owned by
+ConfigurationContractPlan.zh-CN.md; this document defines transport rather than
+a separate scientific parameter catalogue.
 
 ## Envelope and compatibility
 
@@ -120,7 +120,7 @@ remain visible with errors until an explicit Undo-able remove.
 
 ## Shared candidate fixtures and implementation gates
 
-examples/configuration-v3-candidate contains hand-authored protocol expectations,
+[configuration fixtures](../examples/configuration-v3-candidate/README.md) contain hand-authored protocol expectations,
 not captured ARCH outputs. Core and Host must consume the same files; no copied
 frontend expectation table. The initial syntax fixture deliberately reports
 partial coverage. It preserves valid explicit zero/false alongside malformed

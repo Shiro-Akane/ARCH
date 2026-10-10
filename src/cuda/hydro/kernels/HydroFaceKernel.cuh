@@ -10,9 +10,10 @@
  * 1. Receive stage views, face geometry and device state arrays.
  * 2. Launch the shared hydro face, source or state work on CUDA.
  * 3. Publish stage output only after the backend stream orders writes.
- * 4. A separate private face-only adapter borrows 41*S lane-major scratch and
- *    invokes shared selected native point/face mathematics. It grants neither
- *    full Native launch capability nor Runtime/BC/AMR/source publication.
+ * 4. Native batch faces borrow the same bounded backend arena as 41*S
+ *    lane-major scratch and invoke the selected shared point/face mathematics.
+ *    The raw scalar launcher stays Existing-only. Neither path grants Runtime
+ *    thermal, source, macro, retry or regrid publication.
  */
 
 #pragma once
@@ -34,15 +35,31 @@ namespace arch::cuda
 namespace detail
 {
 /** Explicit private leaf arena: 41*S contiguous doubles PER LANE.
- * Workflow: the test/storage owner allocates the arena; the adapter checks
+ * Workflow: borrow the owner's existing bounded allocation; the adapter checks
  * integer capacity, borrows 16*S rhoX + 19*S reconstruction + five S scratch
  * planes, and reserves the last S solely for unpublished output. This is not
- * the array-major SpeciesWorkspaceView and does not change any launch ABI.
+ * the array-major scratch interpretation. The two layouts borrow the same
+ * bytes only across ordered kernels; no scratch survives between launches.
  */
 struct NativeFaceScratchView {
     double* values=nullptr;
     std::size_t capacity=0;
     int lanes=0;
+};
+
+/** Read resident U through one storage type shared by all flux policies.
+ * The value capture is identical to the old per-policy lambda, while its type
+ * no longer forces another selected reconstruction instantiation for each Flux.
+ */
+struct NativeFaceStateReader {
+    DeviceStateView state;
+    ARCH_INLINE FluidVector operator()(int cell) const {return state.load(cell);}
+};
+
+/** Read one resident Xi with the original species-major indexing and lifetime. */
+struct NativeFaceFractionReader {
+    DeviceStateView state;
+    ARCH_INLINE double operator()(int species,int cell) const {return state.species(species,cell);}
 };
 
 /** Reject malformed POD extents before a shared reader can dereference them.
@@ -89,7 +106,8 @@ ARCH_INLINE bool native_face_storage_valid(DeviceStateView state,
  * Axial averages use V for rho/mr/mz/E/rhoX and W for physical mphi; no second
  * torque lever lives here. Failure latches the required status and leaves all
  * real flux arrays unchanged. Earlier faces remain provisional, not a stage
- * transaction. Full Native launch/Runtime/BC/AMR/self-gravity gates stay held.
+ * transaction. The actual gravity-free batch owns launches/AMR; completed
+ * Runtime BC/EOS, source, macro, retry and regrid gates remain separate.
  * The caller owns nonoverlapping source, destination and scratch allocations.
  */
 template<class Reconstruction,class Flux,class EosView>
@@ -133,8 +151,8 @@ __device__ inline arch::state::Status hydro_native_face_math(
     const RzSelectedReconstruction::Context context{geometry,grid.total_x,grid.total_y,i,j,
         direction,state.n_species,bounds};
     const int left=grid.index(i,j),right=left+grid.stride(direction);
-    const auto read=[state](int cell){return state.load(cell);};
-    const auto fraction=[state](int s,int cell){return state.species(s,cell);};
+    const NativeFaceStateReader read{state};
+    const NativeFaceFractionReader fraction{state};
     // If a caller already supplied a checked view, retire its earlier ordinary
     // mean borrowing before nesting the required-query transport. Native point
     // EOS cannot reuse closure-mean P/c from either wrapper layer.
@@ -181,12 +199,19 @@ ARCH_INLINE void reconstruct_amr_face(
         species_left, species_right, species_cell);
 }
 
-template <typename Reconstruction, typename Flux, typename EosView>
+/** Traverse the actual selected directional faces and publish limited fluxes.
+ * Native delegates to the existing strict 41*S point/face adapter using factory
+ * walls and Bounds; Existing retains reconstruction, limiting, stores and
+ * capture order below. The real block status is sticky, not thermal readiness.
+ */
+template <typename Reconstruction, typename Flux, bool NativeSupported = false, typename EosView>
 __device__ inline void hydro_face_kernel_work(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     EosView eos, int direction, double coefficient,
     SpeciesWorkspaceView workspace = {}, const double* mean_pressure = nullptr,
-    const double* mean_sound_speed = nullptr, bool roe_wave_speed = true)
+    const double* mean_sound_speed = nullptr, bool roe_wave_speed = true,
+    state::Bounds native_bounds = {}, int* required_status = nullptr,
+    arch::boundary::HydroBoundaryView native_walls = {})
 {
     int i_begin = grid.is;
     int j_begin = grid.js;
@@ -201,6 +226,40 @@ __device__ inline void hydro_face_kernel_work(
     const int nj = grid.je - j_begin;
     const int nk = grid.ke - k_begin;
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    if constexpr (!NativeSupported) {
+        // The original scalar launch admits only Existing. Keep the same cold
+        // device refusal for direct calls, without instantiating Native math.
+        if (grid.semantics != GridMetrics::GeometrySemantics::Existing) return;
+    } else if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        // Each ordered Native wave borrows one actual block and the same pool.
+        // Its lane-major view uses actual launch lanes, including S=0 (no pool).
+        const NativeFaceScratchView arena{workspace.values, workspace.capacity,
+            static_cast<int>(blockDim.x * gridDim.x)};
+        const FluxAdmissibility::MeanThermoView means{
+            state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng,
+            state.mass_fractions, mean_pressure, mean_sound_speed, nullptr,
+            state.total_size, state.n_species, roe_wave_speed, grid.semantics};
+        for (int linear = lane; linear < ni * nj * nk;
+             linear += blockDim.x * gridDim.x) {
+            const int i = i_begin + linear % ni;
+            const int j = j_begin + (linear / ni) % nj;
+            const int k = k_begin + linear / (ni * nj);
+            const auto status = hydro_native_face_math<Reconstruction, Flux>(
+                state, flux, grid, eos, direction, i, j, coefficient,
+                native_bounds, arena, lane, required_status, &means, native_walls);
+            if (status != state::Status::valid) continue;
+            const int face = grid.index(i, j, k) + grid.stride(direction);
+            // Capture the exact just-published physical flux at its original
+            // right-cell address. W/torque conversion remains in AMR lowering.
+            if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1])
+                arch::boundary::CaptureBoundaryFlux(state.capture, direction,
+                    i+(direction==0),j+(direction==1),k+(direction==2),
+                    grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, flux.load(face),
+                    state.n_species ? flux.mass_fractions + face : nullptr,
+                    state.n_species, flux.total_size, 0.0);
+        }
+        return;
+    }
     SpeciesLaneScratch<4> scratch(workspace, lane);
     double* species_left = scratch.array(0);
     double* species_right = scratch.array(1);

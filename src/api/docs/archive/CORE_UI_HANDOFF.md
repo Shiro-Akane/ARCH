@@ -7,13 +7,13 @@
 
 > P3/P4 历史更新（2026-09-22）：当时标准目录为 92 项，CPU 周期 self 已接入。
 > 新键、能力边界、GPOT/GAC 单位、资源排除项与 checkpoint v6 见
-> [P3/P4 交接](../../docs/development/P3P4CompositeGravity.zh-CN.md#gui--cuda-分支交接)。
+> [P3/P4 交接](../../../../docs/development/P3P4CompositeGravity.zh-CN.md#gui--cuda-分支交接)。
 > 下方 P1/P1.5 的计数和验收是历史记录；GUI 不应硬编码历史键数。
 
 
 > P1.5 接入更新：下文是 2026-09-20 的交付快照。当前 Core 已统一 CGS（包括 IdealGas），
 > 标准目录为 88 项，删除五个退役键并登记三个已有宏步控制；最新契约见
-> [配置接口](CONFIGURATION_API.md) 和 [P1.5 记录](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)。
+> [配置接口](../CONFIGURATION_API.md) 和 [P1.5 记录](../../../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)。
 > GUI 应重新读取目录，保留物理分组，并由 GUI 自行标记高级选项；本次没有修改 studio。
 
 
@@ -37,7 +37,7 @@
 3. 坐标与单位：提供三种 geometry 在 1/2/3D 下的轴名称和稳定 x1/x2/x3 参数键；Preview 返回标准场和坐标单位。Helmholtz/tabular 按 CGS，IdealGas 按模型自定单位 `code_*` 标记；标签不转换数值。未知 custom 参数保留单位未知。
 4. 输入检查：标准整数不再截断小数或后缀；标准浮点数、坐标表达式要求完整、有限的合法输入。Helmholtz diffusion 的禁止组合返回字段错误。标准缺省值与 RuntimeParams 共用定义；custom 参数的既有读取语义保持不变。
 
-接口说明：[CONFIGURATION_API.md](CONFIGURATION_API.md)。完整真实输入和响应：[examples/configuration](examples/configuration/README.md)。原有 Preview / Sod x_pos 绑定 / CellularDet 二维数据仍使用原入口。
+接口说明：[CONFIGURATION_API.md](../CONFIGURATION_API.md)。完整真实输入和响应：[examples/configuration](../../examples/configuration/README.md)。原有 Preview / Sod x_pos 绑定 / CellularDet 二维数据仍使用原入口。
 
 ## Studio 与 Host 接下来处理
 

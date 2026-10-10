@@ -156,15 +156,18 @@ public:
         // even if the same object address, bounds and species are reused.
         native_host_current_boundary_stamp_.reset();
     }
-    /** Attach the exact borrowed Host candidate domain and its real BC context.
+    /** Attach the exact borrowed candidate domain and its real BC context.
+     * Device replacement ledgers bind the explicit staged store and storage.
      * Bind before actual BC/exchange starts; refresh after a BC time/purpose
      * change. This internal gate does not open the public RZ science capability.
      */
     void bind_native_boundary_acceptance(scheduler::StageExecutionContext&,
-        std::span<const amr::BlockHandle>);
+        std::span<const amr::BlockHandle>,
+        backend::BackendTopologyStoreTransaction* staged = nullptr,
+        std::span<const backend::StorageGeneration> staged_storage = {});
     bool perform_regrid(int step, double time, bool jeans_repair_only = false);
-    // Explicit internal CPU transaction verification; not reachable from
-    // SimConfig/API/Driver evolution and never enables Device or production RZ.
+    // Explicit internal Native transaction qualification; public Driver
+    // capability gates remain separate. The verification callback is Host only.
     bool regrid_native_rz_candidate(int step,double time,
         const std::function<void()>& after_host_finalization = {});
     void ensure_jeans_resolution(int step, double time);
@@ -233,7 +236,7 @@ private:
     backend::BackendCounters diffusion_activity_operations_{};
     NativeMacroRetryAttempt* native_macro_retry_attempt_=nullptr;
     void qualify_native_thermal_rejection(const scheduler::StageExecutionContext&,
-        const NativeBoundaryAcceptanceError&);
+        const NativeBoundaryAcceptanceError&,const backend::NativeEosFailure* resident_refusal=nullptr);
     // GravityStage borrows the actual EOS-binding witness and exact Current/
     // Hydro owners; friendship does not grant Native scientific capability.
     friend class GravityStage;
@@ -247,6 +250,13 @@ private:
     int native_rz_species_count() const;
     state::Bounds native_rz_eos_bounds() const;
     void complete_device_boundary(state::StateSlot);
+    // One original boundary recipe; the caller owns storage/ledger validation.
+    state::CompletionToken execute_device_boundary_domain(
+        std::span<const backend::BackendStateAccess>,
+        std::span<const amr::BlockHandle>, state::StateSlot,
+        state::StateVersion, state::CompletionToken,
+        backend::BackendTopologyStoreTransaction*,
+        const std::function<void()>& validate_storage);
     bool execute_regrid(bool jeans_repair_only,bool native_rz_candidate=false,
         const std::function<void()>& after_host_finalization = {});
     bool execute_regrid_attempt(bool jeans_repair_only,bool native_rz_candidate,
@@ -255,6 +265,8 @@ private:
         const std::function<void()>& evaluate_native_indicators = {});
     bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
         bool native_rz_candidate,const std::function<void()>& after_host_finalization = {});
+    // Original Device indicator arithmetic; Native retries freeze its flags once.
+    void evaluate_device_regrid_indicators(bool jeans_repair_only);
     bool device_jeans_parent_resolved(const amr::Block&,std::span<const int>);
     static backend::HostStateTransferView host_transfer_view(FluidState&);
 
@@ -335,6 +347,9 @@ class NativeMacroRetryAttempt final {
     DiffusionConfig diffusion_;
     std::optional<DriverRuntime::NativeRzEosBindingWitness> eos_binding_;
     std::span<const amr::BlockHandle> handles_;
+    state::ExecutionSide side_;
+    backend::ComputeBackend* backend_;
+    std::vector<backend::StorageGeneration> storage_;
     int half_=0,stages_=0;
     bool enabled_=false;
 public:

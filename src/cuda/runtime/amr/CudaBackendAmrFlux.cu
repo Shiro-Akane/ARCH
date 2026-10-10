@@ -31,6 +31,27 @@ bool valid_count(int count) noexcept
         && count <= std::numeric_limits<int>::max() - (kThreads - 1);
 }
 
+/** Report the fully disabled view that selects the original SourceNone route.
+ * The optional adapter is off only when every borrowed pointer is null and
+ * both counts are zero, so a default-constructed view stays ordinary. */
+bool native_self_reflux_disabled(
+    const Physical::Gravity::NativeSelfRefluxView& view) noexcept
+{
+    return view.psi == nullptr && view.row_of_energy_operation == nullptr
+        && view.operation_count == 0 && view.row_count == 0
+        && view.status == nullptr;
+}
+
+/** Report a complete enabled view: resident psi rows, original operations
+ * index mapping, positive counts and a writable refusal status. */
+bool native_self_reflux_enabled(
+    const Physical::Gravity::NativeSelfRefluxView& view) noexcept
+{
+    return view.psi != nullptr && view.row_of_energy_operation != nullptr
+        && view.status != nullptr && view.operation_count > 0
+        && view.row_count > 0;
+}
+
 } // namespace
 
 cudaError_t launch_cuda_amr_flux_surface_clear(
@@ -72,7 +93,8 @@ cudaError_t launch_cuda_amr_flux_register_route(
     int target_count,
     const amr::AmrFluxRegistrationTerm* device_terms,
     int term_count, AmrFluxSource source, double stage_weight,
-    cudaStream_t stream)
+    cudaStream_t stream,
+    Physical::Gravity::NativeSelfRefluxView native_self_reflux)
 {
     if (device_blocks == nullptr || block_count <= 0
         || source_block < 0 || source_block >= block_count
@@ -82,11 +104,27 @@ cudaError_t launch_cuda_amr_flux_register_route(
             && source != AmrFluxSource::InitialSurface)
         || !std::isfinite(stage_weight))
         return cudaErrorInvalidValue;
+    // Classify the optional resident adapter from host-known descriptor state
+    // only; no device pointer is dereferenced here.
+    const bool native_self = native_self_reflux_enabled(native_self_reflux);
+    if (!native_self && !native_self_reflux_disabled(native_self_reflux))
+        return cudaErrorInvalidValue;
+    if (native_self && source != AmrFluxSource::StageScratch)
+        return cudaErrorInvalidValue;
     if (stage_weight == 0.0) return cudaSuccess;
-    amr_flux_kernel_detail::register_route_kernel
-        <<<launch_blocks(target_count), kThreads, 0, stream>>>(
-            device_blocks, source_block, device_targets, device_terms,
-            target_count, source, stage_weight);
+    // Both selections enqueue the same kernel template with the original grid,
+    // block size and stream; only the energy scalar differs inside.
+    if (native_self) {
+        amr_flux_kernel_detail::register_route_kernel<true>
+            <<<launch_blocks(target_count), kThreads, 0, stream>>>(
+                device_blocks, source_block, device_targets, device_terms,
+                target_count, source, stage_weight, native_self_reflux);
+    } else {
+        amr_flux_kernel_detail::register_route_kernel<false>
+            <<<launch_blocks(target_count), kThreads, 0, stream>>>(
+                device_blocks, source_block, device_targets, device_terms,
+                target_count, source, stage_weight, native_self_reflux);
+    }
     return cudaGetLastError();
 }
 
@@ -127,7 +165,8 @@ CudaAmrFluxLaunchResult launch_cuda_amr_flux_register(
     result.error = launch_cuda_amr_flux_register_route(
         route.device_blocks, route.block_count, route.source_block,
         route.device_targets, route.target_count, route.device_terms,
-        route.term_count, source, stage_weight, stream);
+        route.term_count, source, stage_weight, stream,
+        route.native_self_reflux);
     if (result.error == cudaSuccess) result.kernels_launched = 1;
     return result;
 }

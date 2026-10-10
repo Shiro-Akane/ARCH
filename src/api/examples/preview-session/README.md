@@ -21,4 +21,4 @@ python3 -B src/api/examples/preview-session/benchmark.py build-ui-api/bin/ARCH .
 
 CellularDet 样本中 16,384 个坐标均执行真实 Init，只有 37–38 种逐位不同的转换输入；单次请求内精确复用省去重复 EOS 转换。连续场本身没有重复状态时，仍需逐点执行全部转换。
 
-完整协议、限制和各方分工见 [PREVIEW_SESSION_API.md](../../PREVIEW_SESSION_API.md)，同步信息见 [PREVIEW_SESSION_HANDOFF.md](../../PREVIEW_SESSION_HANDOFF.md)。
+完整协议、限制和各方分工见 [PREVIEW_SESSION_API.md](../../docs/PREVIEW_SESSION_API.md)，同步信息见 [PREVIEW_SESSION_HANDOFF.md](../../docs/archive/PREVIEW_SESSION_HANDOFF.md)。

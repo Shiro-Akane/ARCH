@@ -18,7 +18,7 @@ CPU 门槛已完成并封包；按后续授权补齐的 P1 CUDA 门槛也已通�
 和 `core/problem/InitialStateConversion.h` 的共同路径，没有再造旧 main 的初始化实现。
 
 GUI 已记录的 18/18 CPU 检查沿用
-[PREVIEW_SESSION_HANDOFF](../../src/api/PREVIEW_SESSION_HANDOFF.md)，本地没有专门重跑。
+[PREVIEW_SESSION_HANDOFF](../../src/api/docs/archive/PREVIEW_SESSION_HANDOFF.md)，本地没有专门重跑。
 该记录只适用于其冻结源码与范围；本轮另行验证 P1 实际影响的核心路径。
 后续自动 CPU CI 仍运行完整已配置 inventory，包含其适用的 Core/API 检查。
 GUI 基准内的严格配置解析、CGS 默认值等既有行为来自上述提交，不是 P1 重构引入。

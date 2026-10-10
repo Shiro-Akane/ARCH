@@ -276,7 +276,7 @@ public:
     virtual state::CompletionToken prepare(const HydroStagePreparationRequest&) = 0;
     virtual void invalidate() const {}
     /** Existing services are not implicitly accepted as atomic source journals. */
-    virtual bool supports_host_macro_step_journal() const noexcept { return false; }
+    virtual bool supports_macro_step_journal(state::ExecutionSide) const noexcept { return false; }
     /** Candidate hook: fallible private journal allocation; never writes accepted fluid/owners. */
     virtual void begin_macro_step() {}
     /** Candidate hook: validate complete prepared frame/consumption, then append a tentative receipt. */

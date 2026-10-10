@@ -715,10 +715,31 @@ class PrivateProviderReuseTests(unittest.TestCase):
                 and node.func.value.id == "subprocess" and node.func.attr == "run"]
         self.assertEqual(len(runs), 1)
         self.assertEqual({item.arg: ast.unparse(item.value) for item in runs[0].keywords}["timeout"], "remaining")
-        exclusive = [node for node in body if isinstance(node, ast.If)
-                     and ast.unparse(node.test) == "a.warm_native_active and a.initial_thermal_rejection"]
-        self.assertEqual(len(exclusive), 1)
-        self.assertEqual(ast.unparse(exclusive[0].body[0].value.func), "p.error")
+        # Exercise only the real parser declarations, without importing or
+        # executing fixture/build code. All three modes must be selectable
+        # alone and mutually exclusive; the old warm/rejection rule remains.
+        import contextlib, io, itertools
+        setup = [node for node in body if
+                 (isinstance(node, ast.Assign) and any(
+                     isinstance(target, ast.Name) and target.id in ("p", "modes")
+                     for target in node.targets)) or
+                 (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+                  and isinstance(node.value.func, ast.Attribute)
+                  and isinstance(node.value.func.value, ast.Name)
+                  and node.value.func.value.id in ("p", "modes"))]
+        namespace = {"argparse": __import__("argparse"),
+                     "pathlib": __import__("pathlib"), "__doc__": "parser contract"}
+        exec(compile(ast.Module(body=setup, type_ignores=[]), "runner-parser", "exec"), namespace)
+        parser = namespace["p"]
+        common = ["--build", "unused-build", "--output-root", "unused-output"]
+        modes = [["--initial-thermal-rejection"], ["--warm-native-active", "actual-table"],
+                 ["--public-native-active", "actual-table"]]
+        for mode in modes:
+            parser.parse_args(common + mode)
+        for left, right in itertools.combinations(modes, 2):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
+                parser.parse_args(common + left + right)
+            self.assertEqual(error.exception.code, 2)
         exhausted = [(index, node) for index, node in enumerate(body) if isinstance(node, ast.If)
                      and ast.unparse(node.test) == "remaining <= 0.0"]
         self.assertEqual(len(exhausted), 1)

@@ -5,22 +5,21 @@
  * The active store remains the migration source while the private candidate
  * receives survivor copies and parent/child transfers. Completion and EOS status
  * are checked before candidate ghosts are completed and the runtime may publish
- * the new topology; these methods do not retire the old store.
+ * the new topology; these methods do not retire the old store. Native completion
+ * borrows Runtime's ordered boundary/EOS owner before marking Current complete.
  */
 #include "amr/exchange/CoordinateSeamPlan.h"
 #include "amr/transfer/RegridExecutionPlan.h"
 #include "cuda/amr/RegridMigration.h"
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
+#include <functional>
 #include <set>
 
 namespace arch::cuda {
-namespace {
 
-using Access = backend::BackendStateAccess;
-
-CudaBlockRuntime& staged_block(CudaBackend::StoreTransaction::Impl& staged,
-                               Access access)
+CudaBlockRuntime& resolve_staged_block(CudaBackend::StoreTransaction::Impl& staged,
+    backend::BackendStateAccess access)
 {
     const auto& entry = staged.owner->store.migration_record(staged.candidate,
         {staged.candidate.scope(), access, DeviceMigrationRole::StagedNewDestination});
@@ -30,6 +29,10 @@ CudaBlockRuntime& staged_block(CudaBackend::StoreTransaction::Impl& staged,
     static_cast<void>(found->second->require_access(access));
     return *found->second;
 }
+
+namespace {
+
+using Access = backend::BackendStateAccess;
 
 DeviceRegridBlock current_block(CudaBlockRuntime& block)
 {
@@ -78,7 +81,7 @@ void CudaBackend::migrate_staged_current(
     }
     for (const auto& entry : staged.candidate.entries()) {
         const Access access{entry.record.handle, entry.record.storage, state::StateSlot::Current};
-        destinations.emplace(access.block, &staged_block(staged, access));
+        destinations.emplace(access.block, &resolve_staged_block(staged, access));
     }
 
     std::set<amr::BlockHandle> reconstructed;
@@ -197,7 +200,8 @@ void CudaBackend::complete_staged_current_ghosts(
     const amr::CoarseFineTransferPlan& coarse_fine,
     std::span<const int> active_ids,
     std::span<const amr::BlockHandle> active_handles,
-    const amr::CoordinateSeamPlan* coordinate_seam)
+    const amr::CoordinateSeamPlan* coordinate_seam,
+    const std::function<void()>& native_completion)
 {
     if (!transaction.impl_ || transaction.impl_->consumed
         || transaction.impl_->owner.get() != impl_.get())
@@ -230,43 +234,61 @@ void CudaBackend::complete_staged_current_ghosts(
     if (covered.size() != accesses.size())
         throw std::invalid_argument("incomplete staged ghost level bindings");
     const Impl::BlockResolver resolve = [&](Access access) -> CudaBlockRuntime& {
-        return staged_block(staged, access);
+        return resolve_staged_block(staged, access);
     };
+    if (accesses.empty())
+        throw std::invalid_argument("staged CUDA boundary domain is empty");
+    const auto semantics = resolve(accesses.front()).grid.semantics;
+    for (const auto& access : accesses)
+        if (resolve(access).grid.semantics != semantics)
+            throw std::invalid_argument("mixed staged CUDA boundary charts");
+    const bool native = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (native && !native_completion)
+        throw std::invalid_argument("Native staged CUDA ghosts require Runtime completion");
+    if (!native && native_completion)
+        throw std::invalid_argument("Existing staged CUDA ghosts reject Native completion");
+    std::vector<int> ids_for_access;
+    if (coordinate_seam && !coordinate_seam->transfers.empty()) {
+        if (active_ids.size() != active_handles.size()
+            || active_ids.size() != accesses.size())
+            throw std::invalid_argument(
+                "staged CUDA coordinate seam bindings are incomplete");
+        std::map<amr::BlockHandle, int> id_by_handle;
+        for (std::size_t index = 0; index < active_ids.size(); ++index)
+            if (!id_by_handle.emplace(active_handles[index],
+                    active_ids[index]).second)
+                throw std::invalid_argument(
+                    "duplicate staged CUDA coordinate seam handle");
+        ids_for_access.reserve(accesses.size());
+        for (const auto& access : accesses)
+            ids_for_access.push_back(id_by_handle.at(access.block));
+    }
     impl_->select_device();
     CudaQuiescenceGuard guard{*impl_};
     try {
-        std::uint64_t kernels = 0;
-        for (const auto& access : accesses) {
-            auto& block = resolve(access);
-            check_cuda(launch_cuda_backend_boundary_plan(block.require_access(access),
-                block.boundary_transfers.get(), block.boundary, impl_->stream.get()),
-                "launch staged CUDA physical boundary");
-            for (const auto& phase : block.boundary.phases) if (phase.count > 0) ++kernels;
-        }
-        impl_->checked_quiesce("complete staged CUDA physical boundaries");
-        impl_->runtime_counters.kernel_count += kernels;
-        for (std::size_t index = 0; index < same_level.size(); ++index)
-            impl_->execute_same_level_exchange(level_accesses[index], same_level[index],
-                state::StateSlot::Current, resolve);
-        impl_->execute_coarse_fine_exchange(accesses, coarse_fine, state::StateSlot::Current, resolve);
-        if (coordinate_seam && !coordinate_seam->transfers.empty()) {
-            if (active_ids.size() != active_handles.size()
-                || active_ids.size() != accesses.size())
-                throw std::invalid_argument(
-                    "staged CUDA coordinate seam bindings are incomplete");
-            std::map<amr::BlockHandle, int> id_by_handle;
-            for (std::size_t index = 0; index < active_ids.size(); ++index)
-                if (!id_by_handle.emplace(active_handles[index],
-                        active_ids[index]).second)
-                    throw std::invalid_argument(
-                        "duplicate staged CUDA coordinate seam handle");
-            std::vector<int> ids_for_access;
-            ids_for_access.reserve(accesses.size());
-            for (const auto& access : accesses)
-                ids_for_access.push_back(id_by_handle.at(access.block));
-            impl_->execute_coordinate_seam_exchange(
-                accesses, ids_for_access, *coordinate_seam,
-                state::StateSlot::Current, resolve);
+        // Runtime owns ordered Native surfaces, both exchanges, final axis and EOS.
+        if (native) {
+            native_completion();
+        } else {
+            std::uint64_t kernels = 0;
+            for (const auto& access : accesses) {
+                auto& block = resolve(access);
+                check_cuda(launch_cuda_backend_boundary_plan(block.require_access(access),
+                    block.boundary_transfers.get(), block.boundary, impl_->stream.get()),
+                    "launch staged CUDA physical boundary");
+                for (const auto& phase : block.boundary.phases) if (phase.count > 0) ++kernels;
+            }
+            impl_->checked_quiesce("complete staged CUDA physical boundaries");
+            impl_->runtime_counters.kernel_count += kernels;
+            for (std::size_t index = 0; index < same_level.size(); ++index)
+                impl_->execute_same_level_exchange(level_accesses[index], same_level[index],
+                    state::StateSlot::Current, resolve);
+            impl_->execute_coarse_fine_exchange(accesses, coarse_fine, state::StateSlot::Current, resolve);
+            if (coordinate_seam && !coordinate_seam->transfers.empty()) {
+                impl_->execute_coordinate_seam_exchange(
+                    accesses, ids_for_access, *coordinate_seam,
+                    state::StateSlot::Current, resolve);
+            }
         }
         impl_->checked_quiesce("complete staged CUDA Current ghosts");
         guard.completed = true;

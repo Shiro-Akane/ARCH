@@ -31,8 +31,16 @@ export function validateResources(value:unknown):ResourceEstimate{
  return value as unknown as ResourceEstimate;
 }
 export function validateMesh(value:unknown,status:string):AmrMesh{
- if(!record(value)||value.version!=='1'||value.kind!=='amr-leaf-mesh'||![1,2,3].includes(Number(value.dimension))||!['cartesian','spherical','cylindrical'].includes(String(value.geometry))||(value.unit!==null&&typeof value.unit!=='string')||typeof value.complete!=='boolean'||!integer(value.completedPasses)||!integer(value.leafCount,0,1024)||!Array.isArray(value.leaves)||value.leaves.length!==value.leafCount||!Array.isArray(value.levelCounts)||!integer(value.configuredMaxBlocks,1)||!integer(value.workingCapacity,0,1024)||!['none','last-completed-balanced-hierarchy'].includes(String(value.snapshot))||(value.limitedReason!==null&&typeof value.limitedReason!=='string'))invalid('Invalid initial AMR mesh.');
+ if(!record(value)||value.version!=='1'||value.kind!=='amr-leaf-mesh'||![1,2,3].includes(Number(value.dimension))||!['cartesian','spherical','cylindrical'].includes(String(value.geometry))||(value.unit!==null&&typeof value.unit!=='string')||typeof value.complete!=='boolean'||!integer(value.completedPasses)||!integer(value.leafCount,0,1024)||!Array.isArray(value.leaves)||value.leaves.length!==value.leafCount||!Array.isArray(value.levelCounts)||!integer(value.configuredMaxBlocks,1)||!integer(value.workingCapacity,0,1024)||!['none','last-completed-balanced-hierarchy','native-root-topology-active-initialization-only'].includes(String(value.snapshot))||(value.limitedReason!==null&&typeof value.limitedReason!=='string'))invalid('Invalid initial AMR mesh.');
  if((status==='ok')!==value.complete||(value.complete&&(value.snapshot==='none'||value.limitedReason!==null))||(!value.complete&&typeof value.limitedReason!=='string')||(value.snapshot==='none'&&value.leafCount!==0))invalid('Contradictory AMR completion state.');
+ // The public Native preview initializes root cells; it does not run refinement.
+ if(value.snapshot==='native-root-topology-active-initialization-only'
+  &&(value.dimension!==2||value.geometry!=='cylindrical'||value.completedPasses!==0
+   ||!integer(value.configuredMaxLevel)||value.leafCount===0
+   ||value.leaves.some(l=>!record(l)||l.level!==0)
+   ||(value.complete?value.configuredMaxLevel!==0:
+    value.configuredMaxLevel===0||value.limitedReason!=='native-rz-amr-preview-not-qualified')))
+  invalid('Invalid Native RZ root initialization snapshot.');
  if(value.coordinates!==undefined){
   const c=value.coordinates;
   if(!record(c)||c.version!=='1'||c.basis!=='native-grid')invalid('Invalid AMR coordinate contract.');

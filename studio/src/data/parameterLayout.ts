@@ -28,7 +28,7 @@ export function parameterPlacement(row:CatalogRow,rows:CatalogRow[],inspection:C
   if(mode==='external'){
    const axis=['gravity_g_x','gravity_g_y','gravity_g_z'].indexOf(key);
    if(axis>=0)return 'common'; // Core requires all external acceleration components, including explicit zeros.
-   if(['gravity_boundary','gravity_G','gravity_rtol','gravity_atol','gravity_max_cycles'].includes(key)||inspection?.parameters.find(x=>x.key===key)?.applicability.state==='not-applicable')return 'inactive';
+   if(['gravity_boundary','gravity_rtol','gravity_atol','gravity_max_cycles'].includes(key)||inspection?.parameters.find(x=>x.key===key)?.applicability.state==='not-applicable')return 'inactive';
   }
   if(mode==='self'&&['gravity_g_x','gravity_g_y','gravity_g_z'].includes(key))return 'inactive';
   if(mode==='self'&&['gravity_rtol','gravity_atol','gravity_max_cycles'].includes(key))return 'advanced';

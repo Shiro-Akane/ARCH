@@ -2,7 +2,7 @@
 
 [Workflow](Studio.md) · [Detailed setup and troubleshooting](StudioEnvironment.zh-CN.md)
 
-The current desktop supports Linux x64 and WSL with WSLg. Core, Host and Electron run on Linux. A scientific-only build does not need Electron; the desktop does not require compiling CUDA. Run the GUI as a normal Linux user.
+The current desktop supports Linux x64 and WSL with WSLg. Core, Host and Electron run on Linux. A scientific-only build does not need Node, npm or Electron; the desktop does not require compiling CUDA. Run the GUI as a normal Linux user.
 
 Required components are C++20, CMake 3.22+, Ninja and HDF5 development libraries for the CPU Core; Linux Node 24+ and npm for source builds; the locked Electron runtime; Linux GTK3/NSS/GBM/ALSA/X11 libraries; a working graphical session; and `/usr/bin/xterm` plus `flock` for independent Run/Restart terminals. Python 3.10+ is for validation; scientific tests additionally need h5py and NumPy. The portable package includes Host Node and h5wasm but still needs Core and system libraries.
 

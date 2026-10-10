@@ -20,15 +20,27 @@
 namespace arch::cuda {
 namespace detail {
 
+/** Accumulate the original curvature source on actual stage readers.
+ * Workflow: Native requires a gravity-free batch/status owner, then integrates
+ * its shared physical profile; Existing retains its geometric/external leaves.
+ * Required source/EOS failures stay latched and never publish stage readiness.
+ */
 template <typename EosView>
 __device__ inline void hydro_source_kernel_work(
     DeviceStateView state, DeviceStateView delta, DeviceGridView grid,
     EosView eos, double dt, SpeciesWorkspaceView workspace,
-    Physical::Gravity::ExternalGravityView gravity)
+    Physical::Gravity::ExternalGravityView gravity, int* required_status = nullptr)
 {
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     SpeciesLaneScratch<1> scratch(workspace, lane);
     double* composition = scratch.array(0);
+    const bool native = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (native && (!required_status || gravity.enabled || !std::isfinite(dt) || !(dt > 0.))) {
+        if (required_status) atomicExch(required_status, 1);
+        return;
+    }
+    const auto read = [state](int cell) { return state.load(cell); };
+    const auto fraction = [state](int species, int cell) { return state.species(species, cell); };
     for (int linear = lane; linear < grid.active_cell_count();
          linear += blockDim.x * gridDim.x) {
         const int ni = grid.ie - grid.is;
@@ -39,10 +51,22 @@ __device__ inline void hydro_source_kernel_work(
         for (int species = 0; species < state.n_species; ++species)
             composition[species] = state.species(species, cell);
         FluidVector value = delta.load(cell);
-        TimeIntegration::add_geometric_source_cell(
-            state.load(cell), state.n_species > 0 ? composition : nullptr,
-            eos, make_grid_geometry_view(grid), i, j, dt, value);
-        Physical::Gravity::add_external_gravity_source_cell(state.load(cell), gravity, dt, value);
+        if (native) {
+            // S_r*V = 2*pi*dz*integral(P+rho*u_phi^2)dr. Reuse the same
+            // conservative profile/quadrature and required full point EOS;
+            // J/W receives no extra torque source or raw-mean correction.
+            if (!TimeIntegration::add_rz_integrated_geometric_source(
+                    read, fraction, cell, state.n_species, eos,
+                    make_grid_geometry_view(grid), i, dt, composition, value)) {
+                atomicExch(required_status, 1);
+                continue;
+            }
+        } else {
+            TimeIntegration::add_geometric_source_cell(
+                state.load(cell), state.n_species > 0 ? composition : nullptr,
+                eos, make_grid_geometry_view(grid), i, j, dt, value);
+            Physical::Gravity::add_external_gravity_source_cell(state.load(cell), gravity, dt, value);
+        }
         delta.store(cell, value);
     }
 }
@@ -66,7 +90,10 @@ cudaError_t launch_hydro_sources(
 {
     if (!valid_hydro_view(state) || !valid_hydro_view(delta)
         || !valid_species_workspace(workspace, state.n_species, 1)
-        || !valid_hydro_grid(grid) || state.total_size != grid.total_size
+        || !valid_hydro_grid(grid)
+        // The raw scalar route has no Native required-query status owner.
+        || grid.semantics != GridMetrics::GeometrySemantics::Existing
+        || state.total_size != grid.total_size
         || delta.total_size != state.total_size || delta.n_species != state.n_species
         || make_grid_geometry_view(grid).geometry == GridMetrics::Geometry::Unsupported)
         return cudaErrorInvalidValue;

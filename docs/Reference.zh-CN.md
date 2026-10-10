@@ -61,7 +61,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | CUDA 执行 | `compute_backend = cuda/auto` | 支持 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
 | 几何 | `cartesian`、`cylindrical`、`spherical` | 按计算域选择后端 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项；支持范围见[功能清单](Features.zh-CN.md)。 |
-| AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
+| AMR | `lrefinemax >= 0` | CPU／CUDA 范围见[功能清单](Features.zh-CN.md) | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
 | 自重力 | `gravity_type = self` | CPU、CUDA | 周期笛卡尔、孤立三维笛卡尔，以及受测径向和完整方位角曲线坐标域；具体条件见[自引力计算域](#自引力计算域)。 |
 | Jeans 场与细化 | `JENS` | CPU 已接线；CUDA 工程候选 | 要求自引力和显式后端；适用条件与验收范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)。 |
 
@@ -245,7 +245,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 ```
 
 常规模拟使用这两个位置参数。`ARCH --config-schema` 输出标准配置目录；
-`ARCH --inspect-config <ProblemType> --config-stdin` 从标准输入读取尚未保存的参数文本，返回解析值、来源与诊断。配置检查发生在算例 Setup 和后端构造之前，适合编辑器展示；完整算例可运行性仍由实际初始化与执行验证。协议细节见[配置检查接口](../src/api/CONFIGURATION_API.md)。
+`ARCH --inspect-config <ProblemType> --config-stdin` 从标准输入读取尚未保存的参数文本，返回解析值、来源与诊断。配置检查发生在算例 Setup 和后端构造之前，适合编辑器展示；完整算例可运行性仍由实际初始化与执行验证。协议细节见[配置检查接口](../src/api/docs/CONFIGURATION_API.md)。
 
 ## 参数解析
 

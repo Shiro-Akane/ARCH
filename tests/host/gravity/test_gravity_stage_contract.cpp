@@ -710,9 +710,20 @@ struct Owner {
     std::optional<scheduler::StageExecutionContext> context;
     driver::DriverStageWorkspace workspace;dispatch::ResolvedExecutionPlan resolved{};
     scheduler::HydroMethod method;bool mixed,wrong_dt=false,drop_cache=false;
+    Stage::Qualification qualification;
+    struct PublicSource {
+        scheduler::StageDescriptor descriptor{};
+        Physical::Gravity::GravitySolveIdentity source{};
+        std::uint64_t source_generation=0,field_generation=0,lease=0;
+        std::map<int,std::array<int,2>> axes;
+    };
+    std::map<std::uint64_t,PublicSource> public_sources;
+    bool production() const noexcept{return qualification==Stage::Qualification::Production;}
+    static void observe_public_source(void*,const Physical::Gravity::NativeSelfStageObservation&);
     HomologyInput homology{};double step_interval=interval,dynamical_time=0.,endpoint_interval=0.,specific_energy=0.;
-    Owner(scheduler::HydroMethod selected,bool refined,const std::string& label,HomologyInput input={})
-        :method(selected),mixed(refined),homology(input) {
+    Owner(scheduler::HydroMethod selected,bool refined,const std::string& label,HomologyInput input={},
+        Stage::Qualification selected_qualification=Stage::Qualification::NativeRzSelfHydroCandidate)
+        :method(selected),mixed(refined),qualification(selected_qualification),homology(input) {
         if(homology.enabled) {
             require(method==scheduler::HydroMethod::Euler&&!mixed
                 &&(homology.cells==512||homology.cells==2048)
@@ -787,11 +798,11 @@ struct Owner {
         runtime->bind_native_rz_eos(*eos);runtime->initialize_topology();
         gravity=std::make_unique<Physical::Gravity::SelfGravity>(config.physics.gravity);
         execution=std::make_shared<ActualExecution>();gravity->set_execution(execution);
-        stage=std::make_unique<Stage>(*runtime,gravity.get(),Stage::Qualification::NativeRzSelfHydroCandidate);
-        require(stage->supports_host_macro_step_journal(),"PrivateSelf did not acquire genuine Host journal capability");
+        stage=std::make_unique<Stage>(*runtime,gravity.get(),qualification);
+        require(stage->supports_macro_step_journal(arch::state::ExecutionSide::Host),"PrivateSelf did not acquire genuine Host journal capability");
         // The actual schema must already be readable while its writer lives,
         // including a later zero-row macro rejection. No solve is needed here.
-        {std::ifstream journal(config.io.out_dir+"/native_rz_candidates.tsv");std::string header;
+        if(!production()) {std::ifstream journal(config.io.out_dir+"/native_rz_candidates.tsv");std::string header;
             require(bool(std::getline(journal,header))&&header==
                 "time\tstage\tepoch\tlease\tcells\tsource_generation\tresidual_upper\ttolerance_safe\tphysical_qualified",
                 "PrivateSelf live writer has not published the actual journal schema");}
@@ -808,6 +819,7 @@ struct Owner {
         context->hydro_preparation=stage.get();
         context->configure_boundary_context(start.time,boundary::BoundaryPurpose::Hydro);
         runtime->bind_boundary_accounting(*context);
+        if(production())stage->set_native_self_flux_observation(&Owner::observe_public_source,this);
     }
     /** One real macro transaction surrounds selected real Hydro/final reflux/EOS.
      * Burn/diffusion are disabled for this independent source-consumer owner;
@@ -825,6 +837,94 @@ struct Owner {
     }
 };
 
+/** Copy only compact identities while the original source callback is live. */
+void Owner::observe_public_source(void* payload,const Physical::Gravity::NativeSelfStageObservation& event) {
+    if(event.kind!=Physical::Gravity::NativeSelfStageObservation::Kind::AxisAfter)return;
+    auto& owner=*static_cast<Owner*>(payload);
+    require(owner.production()&&event.descriptor&&event.source&&event.grid&&event.input
+        &&event.axis>=0&&event.axis<2&&event.source_generation>0&&event.field_generation>0
+        &&event.generation>0&&owner.runtime->active_runtime_state_transaction()
+        &&bits(event.dt,owner.step_interval),"PublicSelf source callback lost its actual owner");
+    const auto plan=scheduler::make_hydro_plan(owner.method);const int stage=event.descriptor->stage;
+    require(stage>0&&static_cast<std::size_t>(stage)<=plan.stages.size()
+        &&scheduler::same_stage_descriptor(*event.descriptor,plan.stages[stage-1])
+        &&bits(event.stage_weight,plan.stages[stage-1].flux_register_weight)
+        &&event.source->topology==owner.context->ledger.active_epoch()
+        &&bits(event.source->input_time,owner.context->step_start_time+event.descriptor->input_time_fraction*event.dt)
+        &&event.source->inputs.size()==owner.runtime->handles().size(),
+        "PublicSelf source changed its descriptor/time/epoch/domain");
+    const auto& active=owner.control.tree->GetActiveBlocks();bool patch=false;
+    require(active.size()==event.source->inputs.size(),"PublicSelf source lost active handle order");
+    for(std::size_t n=0;n<event.source->inputs.size();++n) {
+        const auto& source=event.source->inputs[n];const auto handle=owner.runtime->handles()[n];
+        const auto stamp=owner.context->ledger.inspect({handle,event.descriptor->input_slot});
+        require(source.block==handle&&source.slot==event.descriptor->input_slot
+            &&source.version==stamp.interior.version&&source.storage_generation==event.generation,
+            "PublicSelf source changed its live selected publication/order");
+        owner.context->ledger.require_readable({handle,source.slot},{state::ExecutionSide::Host,source.version,true,true});
+        if(active[n]==event.block_id) {
+            const auto& block=owner.control.pool->GetBlock(active[n]);
+            patch=event.grid==&block.grid
+                &&event.input==rz_runtime_witness::slots(owner.control.pool->GetBlock(active[n]))[static_cast<std::size_t>(event.descriptor->input_slot)]
+                &&owner.gravity->patch_view(n).density==event.input->rho.data();
+        }
+    }
+    require(patch,"PublicSelf source callback lost its actual patch/density");
+    std::lock_guard<std::mutex> lock(owner.observer->mutex);
+    auto [it,inserted]=owner.public_sources.try_emplace(event.field_generation);auto& saved=it->second;
+    if(inserted) {saved.descriptor=*event.descriptor;saved.source=*event.source;
+        saved.source_generation=event.source_generation;saved.field_generation=event.field_generation;saved.lease=event.generation;}
+    require(scheduler::same_stage_descriptor(saved.descriptor,*event.descriptor)&&saved.source==*event.source
+        &&saved.source_generation==event.source_generation&&saved.field_generation==event.field_generation
+        &&saved.lease==event.generation&&++saved.axes[event.block_id][event.axis]==1,
+        "PublicSelf source repeated an axis or crossed same-field identities");
+    if(event.axis==0)++owner.observer->visits[event.field_generation];
+}
+
+/** Ordinary Production readers only; private inspectors must retain their gates. */
+void public_field(Owner& owner) {
+    const int gathers=owner.execution->gathers;
+    const auto& phi=owner.gravity->potential();const auto& acceleration=owner.gravity->acceleration();
+    const auto binding=amr::bind_elliptic_mesh(owner.control,owner.config.grid,owner.runtime->handles());
+    require(!phi.empty()&&phi.size()==binding.cells.size(),"PublicSelf field has a foreign domain");
+    bool nonzero=false;
+    for(std::size_t n=0;n<phi.size();++n) {
+        require(std::isfinite(phi[n]),"PublicSelf Phi is nonfinite");
+        for(int axis=0;axis<2;++axis) {
+            require(acceleration[axis].size()==phi.size()&&std::isfinite(acceleration[axis][n]),
+                "PublicSelf acceleration is nonfinite or has a foreign extent");
+            nonzero|=phi[n]!=0.&&acceleration[axis][n]!=0.;
+        }
+    }
+    require(nonzero,"PublicSelf field is identically zero");
+    const auto& report=owner.gravity->report();
+    require(std::isfinite(report.residual)&&report.residual>=0.&&std::isfinite(report.target)
+        &&report.target>0.&&report.residual<=report.target,"PublicSelf solve missed its original target");
+    const auto& timing=owner.gravity->timings();
+    for(double value:{timing.source_boundary,timing.poisson,timing.force})
+        require(std::isfinite(value)&&value>=0.,"PublicSelf solve timing is invalid");
+    const double cap=owner.stage->timestep();
+    require(std::isfinite(cap)&&cap>0.&&bits(cap,owner.gravity->timestep(owner.config.numerics.cfl)),
+        "PublicSelf ordinary CFL reader changed the actual field cap");
+    const auto fields=owner.stage->plot_fields();
+    require(fields.size()==3&&fields[0].name=="GPOT"&&fields[1].name=="GACX"&&fields[2].name=="GACY",
+        "PublicSelf Plot consumer changed its dim2 schema");
+    for(std::size_t f=0;f<fields.size();++f) {
+        const auto& values=f==0?phi:acceleration[f-1];
+        require(fields[f].values.size()==values.size(),"PublicSelf Plot consumer changed extent");
+        for(std::size_t n=0;n<values.size();++n)
+            require(bits(fields[f].values[n],values[n]),"PublicSelf Plot consumer changed field bits");
+    }
+    rejects([&]{owner.gravity->native_rz_assessment();},"Production exposed candidate assessment");
+    rejects([&]{owner.gravity->native_rz_potential();},"Production exposed candidate Phi");
+    rejects([&]{owner.gravity->native_rz_acceleration();},"Production exposed candidate acceleration");
+    rejects([&]{owner.gravity->native_rz_field_inspection();},"Production exposed candidate inspection");
+    rejects([&]{owner.stage->native_current_field();},"Production exposed private Current inspection");
+    rejects([&]{owner.stage->native_current_source_and_field();},"Production exposed private Current source inspection");
+    rejects([&]{owner.stage->native_current_timestep();},"Production exposed private Current CFL");
+    require(owner.execution->gathers==gathers,"PublicSelf field/Plot inspection performed another gather");
+}
+
 void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidState& input,const Grid& grid,
     double dt,std::vector<FluidVector>& du,std::vector<double>& dx,
     const Physical::Gravity::IGravityPolicy* policy,const NumericsConfig& config,double weight,void* stream,
@@ -834,6 +934,16 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
         "PrivateSelf consumer lost actual Runtime/policy/transaction/wall identity");
     const auto* frame=policy->prepared_native_self();
     require(frame&&!policy->prepared_native_external(),"PrivateSelf consumer has no uniquely prepared real field frame");
+    if(owner_.production()) {
+        public_field(owner_);
+        const auto& active=control->tree->GetActiveBlocks();const auto found=std::find(active.begin(),active.end(),id);
+        require(found!=active.end()&&owner_.gravity->patch_view(static_cast<std::size_t>(found-active.begin())).density==input.rho.data(),
+            "PublicSelf Hydro patch lost its actual selected density");
+        rejects([&]{owner_.stage->prepare_current(owner_.counters->t_current,false);},
+            "PublicSelf allowed Current preparation during actual Hydro");
+        std::lock_guard<std::mutex> lock(mutex);nonzero_field=true;
+        const int cell=grid.GetIndex(grid.Is(),grid.Js(),0);flow|=input.mom_u[cell]!=0.||input.mom_v[cell]!=0.;
+    } else {
     const auto& assessment=owner_.gravity->native_rz_assessment();
     {
         std::lock_guard<std::mutex> lock(mutex);
@@ -878,6 +988,7 @@ void ObservedHydro::evaluate_patch(amr::AMRControl* control,int id,const FluidSt
         }
         ++visits[generation];
         const int cell=grid.GetIndex(grid.Is(),grid.Js(),0);flow|=input.mom_u[cell]!=0.||input.mom_v[cell]!=0.;
+    }
     }
     if(owner_.drop_cache) {
         // Republish the exact actual span after real field preparation. Only the
@@ -965,6 +1076,151 @@ void cache_refusal() {
         rejects([&]{owner.gravity->native_rz_potential();},"PrivateSelf rejected cache macro retained usable candidate field");
     }
 }
+/** Current refresh may publish ghosts/clock, but cannot change accepted interiors/accounting. */
+void public_current(Owner& owner) {
+    const auto before=driver::RuntimeStateTransaction::snapshot_owner(*owner.runtime,*owner.context);
+    const double time=owner.counters->t_current;const int step=owner.counters->step_count;
+    std::vector<FluidState> states;std::vector<std::array<state::RepairBudget,3>> repairs;
+    for(int id:owner.control.tree->GetActiveBlocks()) {
+        auto& block=owner.control.pool->GetBlock(id);states.push_back(block.fluid_state);
+        const auto slots=rz_runtime_witness::slots(block);
+        repairs.push_back({slots[0]->stage_repairs,slots[1]->stage_repairs,slots[2]->stage_repairs});
+    }
+    const int gathers_before=owner.execution->gathers;
+    owner.stage->prepare_current(time,true);public_field(owner);
+    require(owner.execution->gathers==gathers_before+1,"Public Current omitted or repeated its actual density gather");
+    const auto& active=owner.control.tree->GetActiveBlocks();
+    for(std::size_t n=0;n<active.size();++n) {
+        auto& block=owner.control.pool->GetBlock(active[n]);const auto& grid=block.grid;
+        const auto& fluid=block.fluid_state;const auto& old=states[n];
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const auto cell=grid.GetIndex(i,j,0);
+            for(auto member:{&FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,&FluidState::enuc_rate})
+                require(bits((fluid.*member)[cell],(old.*member)[cell]),"Public Current changed accepted U/ENUC");
+            require(bits(fluid.X(0,cell),old.X(0,cell)),"Public Current changed accepted species");
+        }
+        const auto slots=rz_runtime_witness::slots(block);
+        for(std::size_t slot=0;slot<slots.size();++slot)
+            require(rz_runtime_witness::same_repairs(slots[slot]->stage_repairs,repairs[n][slot]),
+                "Public Current changed a stage repair receipt");
+        const auto handle=owner.runtime->handles()[n];const auto stamp=owner.context->ledger.inspect({handle,state::StateSlot::Current});
+        owner.context->ledger.require_readable({handle,state::StateSlot::Current},
+            {state::ExecutionSide::Host,stamp.interior.version,true,true});
+        require(owner.gravity->patch_view(n).density==fluid.rho.data(),"Public Current patch lost actual rho");
+    }
+    const auto after=driver::RuntimeStateTransaction::snapshot_owner(*owner.runtime,*owner.context);
+    require(rz_runtime_witness::same_repairs(before.repairs,after.repairs)
+        &&rz_runtime_witness::bits(before.hydro,after.hydro)&&rz_runtime_witness::bits(before.diffusion,after.diffusion)
+        &&rz_runtime_witness::bits(before.previous,after.previous)&&rz_runtime_witness::bits(before.older,after.older)
+        &&before.counters==after.counters&&before.budget_epoch==after.budget_epoch
+        &&before.active==after.active&&before.handles==after.handles&&before.storage==after.storage
+        &&before.handles_address==after.handles_address&&before.storage_address==after.storage_address
+        &&owner.control.flux_register.host_snapshot_matches(before.flux)
+        &&before.layout.size()==after.layout.size()&&bits(time,owner.counters->t_current)&&step==owner.counters->step_count
+        &&!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self(),
+        "Public Current changed accepted repairs/boundary accounting/time");
+    for(std::size_t n=0;n<before.layout.size();++n) {
+        require(before.layout[n].block==after.layout[n].block,"Public Current changed boundary-plane owner");
+        for(std::size_t face=0;face<6;++face)
+            require(rz_runtime_witness::bits(before.layout[n].stage[face],after.layout[n].stage[face])
+                &&rz_runtime_witness::bits(before.layout[n].initial[face],after.layout[n].initial[face]),
+                "Public Current changed boundary-plane accounting");
+    }
+    const int gathers=owner.execution->gathers;
+    rejects([&]{owner.stage->prepare_current(std::nextafter(time,std::numeric_limits<double>::infinity()),false);},
+        "Public Current accepted a foreign Runtime time");
+    require(owner.execution->gathers==gathers,"Wrong-time Current performed a solve");
+    // stage0 is buffered until the NEXT accepted macro flush. No journal read here.
+}
+
+/** Parse actual Production schema only after a real accepted macro flush. */
+void public_journal(const Owner& owner,std::size_t expected_hydro,bool require_current) {
+    std::ifstream file(owner.config.io.out_dir+"/gravity_solves.tsv");std::string line;
+    require(bool(std::getline(file,line))&&line==
+        "time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds",
+        "PublicSelf actual Production journal schema is missing");
+    const auto expected_cells=amr::bind_elliptic_mesh(owner.control,owner.config.grid,owner.runtime->handles()).cells.size();
+    std::size_t hydro=0,current=0;std::uint64_t previous=0;
+    while(std::getline(file,line))if(!line.empty()) {
+        std::istringstream row(line);double time=0.,rhs=0.,residual=0.,target=0.,mean=0.,setup=0.,solve=0.,source=0.,poisson=0.,force=0.;
+        int stage=-1,iterations=-1,device=-1;std::uint64_t epoch=0,generation=0,kernels=0,h2d=0,d2h=0,joins=0;std::size_t cells=0;
+        require(bool(row>>time>>stage>>epoch>>generation>>cells>>iterations>>rhs>>residual>>target>>mean>>device
+            >>setup>>solve>>kernels>>h2d>>d2h>>joins>>source>>poisson>>force)
+            &&epoch==owner.context->ledger.active_epoch().value&&generation>previous&&cells==expected_cells
+            &&iterations>=0&&device==0&&std::isfinite(rhs)&&rhs>=0.&&std::isfinite(residual)&&residual>=0.
+            &&std::isfinite(target)&&target>0.&&residual<=target&&std::isfinite(mean)&&mean>0.,
+            "PublicSelf journal changed its actual source/solve semantics");
+        for(double value:{setup,solve,source,poisson,force})require(std::isfinite(value)&&value>=0.,"PublicSelf invalid journal timing");
+        if(stage==0) {require(++current==1&&hydro==0&&bits(time,owner.start.time),"PublicSelf misplaced Current row");}
+        else {
+            require(stage==static_cast<int>(++hydro),"PublicSelf omitted/repeated accepted Hydro row");
+            const auto visit=std::find_if(owner.public_sources.begin(),owner.public_sources.end(),
+                [&](const auto& item){return item.second.descriptor.stage==stage;});
+            require(visit!=owner.public_sources.end()&&generation==visit->second.lease
+                &&bits(time,visit->second.source.input_time),"PublicSelf journal has no genuine source observation");
+        }
+        previous=generation;
+    }
+    require(hydro==expected_hydro&&(!require_current||current==1),"PublicSelf journal has missing/extra accepted purposes");
+}
+void public_accept(Owner& owner) {
+    const auto stages=scheduler::make_hydro_plan(owner.method).stages.size();const int gathers=owner.execution->gathers;
+    const double time=owner.counters->t_current;const int step=owner.counters->step_count;
+    owner.advance();
+    require(owner.execution->gathers-gathers==static_cast<int>(stages)&&owner.observer->visits.size()==stages
+        &&owner.public_sources.size()==stages&&owner.observer->nonzero_field&&owner.observer->flow
+        &&!owner.gravity->prepared_native_self()&&bits(time,owner.counters->t_current)&&step==owner.counters->step_count,
+        "PublicSelf macro skipped real stages or advanced the controller");
+    for(const auto& [generation,visit]:owner.public_sources) {
+        require(generation==visit.field_generation&&visit.axes.size()==owner.runtime->handles().size()
+            &&owner.observer->visits.at(generation)==static_cast<int>(owner.runtime->handles().size()),
+            "PublicSelf field generation did not cover every real patch");
+        for(const auto& [id,axes]:visit.axes){(void)id;require(axes[0]==1&&axes[1]==1,"PublicSelf source omitted an actual axis");}
+    }
+    rejects([&]{owner.gravity->potential();},"PublicSelf retained a stale Hydro field after accept");
+    owner.stage->flush_committed_diagnostics();public_journal(owner,stages,true);
+    owner.counters->advance(owner.step_interval);
+    require(bits(owner.counters->t_current,time+owner.step_interval)&&owner.counters->step_count==step+1,
+        "PublicSelf controller did not advance exactly once");
+    public_current(owner); // Field/Plot consumer check only, never a file-publication claim.
+    owner.stage->invalidate();rejects([&]{owner.gravity->potential();},"PublicSelf explicit invalidation retained Phi");
+}
+void run_public() {
+    {
+        Owner owner(scheduler::HydroMethod::RK2,false,"public-isolated-rk2",{},Stage::Qualification::Production);
+        public_current(owner);public_accept(owner);
+    }
+    {
+        Owner owner(scheduler::HydroMethod::Euler,true,"public-isolated-mixed",{},Stage::Qualification::Production);
+        const auto& topology=owner.control.RequireFluxTopologyPlan(1,rz,-1,true);
+        require(!topology.routes.empty(),"PublicSelf mixed owner has no genuine CF routes");
+        public_current(owner);public_accept(owner);
+    }
+    {
+        Owner owner(scheduler::HydroMethod::RK3,false,"public-isolated-dt-refusal",{},Stage::Qualification::Production);
+        public_current(owner);owner.wrong_dt=true;
+        std::vector<rz_runtime_witness::FieldsWitness> fields;
+        for(int id:owner.control.tree->GetActiveBlocks())fields.emplace_back(owner.control.pool->GetBlock(id));
+        const auto saved=driver::RuntimeStateTransaction::snapshot_owner(*owner.runtime,*owner.context);
+        const int gathers=owner.execution->gathers;
+        bool refused=false;try{owner.advance();}catch(const std::logic_error& error) {
+            refused=std::string(error.what())=="PRIVATE_SELF_REAL_DT_CLAIM_REFUSED";if(!refused)throw;
+        }
+        const auto& active=owner.control.tree->GetActiveBlocks();
+        for(std::size_t n=0;n<active.size();++n)fields[n].matches(owner.control.pool->GetBlock(active[n]));
+        require(refused&&owner.observer->dt_fault_seen&&owner.execution->gathers==gathers+1
+            &&owner.public_sources.empty()&&owner.observer->visits.empty()
+            &&driver::RuntimeStateTransaction::owner_matches(*owner.runtime,*owner.context,saved)
+            &&!owner.runtime->active_runtime_state_transaction()&&!owner.gravity->prepared_native_self()
+            &&bits(owner.counters->t_current,owner.start.time)&&owner.counters->step_count==owner.start.step,
+            "PublicSelf genuine wrong-dt refusal did not fully restore the owner");
+        owner.stage->flush_committed_diagnostics();public_journal(owner,0,false);
+        rejects([&]{owner.gravity->potential();},"PublicSelf rejected macro retained a field");
+        owner.wrong_dt=false;public_accept(owner); // Clear only the injected fault; reuse restored actual owner.
+    }
+    std::cout<<"PUBLIC_NATIVE_SELF_HYDRO_OWNER production_isolated=1 actual_RK2_single=1 actual_Euler_mixed=1 wrong_dt_full_rollback_reuse=1 current_cfl_plot_consumers=1 file_publication=UNVERIFIED thermal_retry=UNVERIFIED\n";
+}
+
 void run() {
     for(auto method:{scheduler::HydroMethod::Euler,scheduler::HydroMethod::RK2,scheduler::HydroMethod::RK3}) {
         const auto name=method==scheduler::HydroMethod::Euler?"euler":method==scheduler::HydroMethod::RK2?"rk2":"rk3";
@@ -1015,11 +1271,20 @@ void run() {
 } // namespace
 int main(int argc,char** argv) {
     try {
+        if(argc==3&&std::string(argv[1])=="public-native-active-four-module") {
+            native_active_four_module::run(argv[2],arch::driver::GravityStage::Qualification::Production);return 0;
+        }
+        if(argc==3&&std::string(argv[1])=="public-native-active-four-module-amr") {
+            native_active_four_module::run_amr(argv[2],arch::driver::GravityStage::Qualification::Production);return 0;
+        }
         if(argc==3&&std::string(argv[1])=="private-native-active-four-module-amr") {
             native_active_four_module::run_amr(argv[2]);return 0;
         }
         if(argc==3&&std::string(argv[1])=="private-native-active-four-module") {
             native_active_four_module::run(argv[2]);return 0;
+        }
+        if(argc==2&&std::string(argv[1])=="public-native-self") {
+            native_self_hydro_owner_checks::run_public();return 0;
         }
         if(argc==2&&std::string(argv[1])=="private-native-self") {
             native_self_hydro_owner_checks::run();return 0;
@@ -1052,7 +1317,7 @@ int main(int argc,char** argv) {
                 <<" endpoint_steps="<<input.steps<<" total_energy_science=UNVERIFIED before_materialized_source=EXPORTED_OWNING_SNAPSHOT physical_grant=0\n";
             return 0;
         }
-        if(argc!=1)throw std::invalid_argument("expected no arguments, private-native-active-four-module-amr <actual-helm-table-path>, private-native-active-four-module <actual-helm-table-path>, private-native-self, private-native-self-cache-refusal, private-native-self-energy, private-native-self-green-pair or private-native-self-homology");
+        if(argc!=1)throw std::invalid_argument("expected no arguments, public-native-active-four-module-amr <actual-helm-table-path>, public-native-active-four-module <actual-helm-table-path>, private-native-active-four-module-amr <actual-helm-table-path>, private-native-active-four-module <actual-helm-table-path>, public-native-self, private-native-self, private-native-self-cache-refusal, private-native-self-energy, private-native-self-green-pair or private-native-self-homology");
         reflux_row_checks::run(); test_native_external_source_mean(); test_preparation(); test_failures(); test_field_identity(); test_host_hydro_transaction(); run_native_rz_runtime_boundary_contract();
     }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

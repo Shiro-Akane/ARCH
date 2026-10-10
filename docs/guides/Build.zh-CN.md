@@ -218,6 +218,9 @@ CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `
 算例边界随应用编译：把 `physical_boundary.cpp`、`gravity_boundary.cpp` 放在注册算例源码
 同目录，新增文件后重新配置并构建，无需边界路径参数。见[用户边界](UserBoundaries.zh-CN.md)。
 
-## Linux Studio desktop
+## Linux Studio 桌面
 
-`studio-cpu-release` builds Core and the optional Electron desktop together; normal Core presets keep Studio disabled. The GUI preset uses the Host-owned local CPU build directory and GNU provenance settings. See the [Studio workflow](Studio.md) and [environment setup](StudioEnvironment.zh-CN.md) for Node 24+, WSLg, graphical libraries and independent terminal requirements.
+`studio-cpu-release` 同时构建 Core 与可选的 Electron 桌面；普通 Core 预设保持 Studio 关闭。
+GUI 预设使用 Host 管理的本地 CPU 构建目录和 GNU 构建身份设置。
+Node 24+、WSLg、图形库及独立终端的要求见 [Studio 使用指南](Studio.zh-CN.md)
+与[环境准备](StudioEnvironment.zh-CN.md)。

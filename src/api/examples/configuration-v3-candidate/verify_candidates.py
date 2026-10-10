@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check proposed fixture consistency, not ARCH implementation acceptance."""
+"""Check historical v3 fixture consistency, independently of current Core acceptance."""
 import hashlib
 import json
 from pathlib import Path
@@ -88,7 +88,7 @@ def check():
     assert sum(d["code"] == "MISSING_PARAMETER" for d in empty["diagnostics"]) == 19
     assert next(p for p in empty["parameters"] if p["key"] == "restart_file")["requirement"]["required"] is False
     print("PASS: candidate schema, declaration coverage, four envelopes, hashes, source spans and absence invariants.")
-    print("NOT production acceptance: Core/Host still implement configuration v2.")
+    print("Fixture consistency only: current Core/Host behavior requires integration tests.")
 
 
 if __name__ == "__main__":

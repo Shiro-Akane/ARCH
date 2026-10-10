@@ -4,6 +4,8 @@
  * Workflow:
  * 1. Identify the existing stored field without changing its calculation.
  * 2. Attach CGS units and known basis/meaning from the shared field-unit owner.
+ *    Gravity leaves stay declarations only: GPOT is a scalar potential and
+ *    GAC* a vector component whose chart is supplied by the producer.
  * 3. Preserve explicit reasons where a physical unit cannot be declared.
  */
 #pragma once
@@ -25,6 +27,11 @@ inline PlotFieldMetadata plot_field_metadata(std::string_view name, bool cartesi
         m.meaning = "velocity_component";
         m.basis = cartesian ? "cartesian" : "unknown";
     }
+    else if (name == "GPOT") m.meaning = "gravitational_potential";
+    else if (name == "GACX" || name == "GACY" || name == "GACZ") {
+        m.meaning = "gravitational_acceleration_component";
+        m.basis = cartesian ? "cartesian" : "unknown";
+    }
     else if (name == "ENTR") {
         m.meaning = "pressure_density_proxy";
         m.unit_reason = "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy";
@@ -39,7 +46,9 @@ inline PlotFieldMetadata plot_field_metadata(std::string_view name, bool cartesi
     else if (name == "DIVV") {
         m.meaning = "velocity_divergence"; m.unit = "1/s";
     }
-    if (m.meaning != "unknown" && m.meaning != "velocity_component") m.basis = "scalar";
+    // Vector components keep their declared chart; only true scalars are forced.
+    if (m.meaning != "unknown" && m.meaning != "velocity_component"
+        && m.meaning != "gravitational_acceleration_component") m.basis = "scalar";
     if (const auto unit = arch::fields::cgs_unit(name); !unit.empty()) m.unit = unit;
     if (m.unit != "unknown") m.unit_reason.clear();
     return m;

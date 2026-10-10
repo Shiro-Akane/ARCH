@@ -13,6 +13,8 @@
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "driver/schedule/StageScheduler.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "numerics/state/StateAdmissibility.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "physics/eos/eos.h"
 #include "physics/gravity/GravitySourceTypes.h"
 
@@ -34,6 +36,14 @@ struct DeviceHydroBatchBlock {
     double* mean_pressure = nullptr;
     double* mean_sound_speed = nullptr;
     bool roe_wave_speed = true;
+    // Immutable values from the actual block factory, never a caller-selected
+    // boundary authority. Bounds are the existing configured numerics limits.
+    arch::boundary::HydroBoundaryView native_walls{};
+    state::Bounds native_bounds{};
+    // Compact 4-double per-block observed Native external source impulse/work
+    // [radial, axial, torque, work]. It is a measured consumer output only:
+    // never an authority, an evolved field or a completion witness.
+    double* native_external_budget = nullptr;
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 
@@ -61,17 +71,6 @@ struct CudaBackendLaunchResult {
     cudaError_t launch_cuda_backend_hydro_dt( \
         DeviceStateView state, DeviceGridView grid, EOS eos, double cfl, \
         CudaHydroWorkspaceView workspace, cudaStream_t stream); \
-    CudaBackendLaunchResult launch_cuda_backend_hydro_stage( \
-        const dispatch::ResolvedExecutionPlan& plan, DeviceStateView old_state, \
-        DeviceStateView input, DeviceStateView output, DeviceStateView delta, \
-        DeviceStateView face_flux, DeviceGridView grid, EOS eos, \
-        double entropy_fix_coefficient, double density_floor, \
-        double minimum_internal_energy, \
-        double maximum_internal_energy, \
-        const CudaAmrFluxDirectionRouteView* amr_routes, \
-        const scheduler::StageDescriptor& descriptor, double dt, \
-        int* eos_status, cudaStream_t stream, SpeciesWorkspaceView species_workspace = {}, \
-        Physical::Gravity::ExternalGravityView gravity = {}); \
     CudaBackendLaunchResult launch_cuda_backend_hydro_stage_batch( \
         const dispatch::ResolvedExecutionPlan& plan, \
         std::span<const DeviceHydroBatchBlock> host_blocks, \

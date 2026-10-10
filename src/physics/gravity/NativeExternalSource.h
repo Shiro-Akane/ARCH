@@ -1,29 +1,28 @@
 /**
  * @file NativeExternalSource.h
- * @brief Host traversal of one genuinely prepared native-RZ body source.
+ * @brief Shared native-RZ body-source cell math and actual Host traversal.
  *
  * Workflow:
  * 1. Authenticate the actual immutable patch through its private stage receipt.
- * 2. Recover the existing physical baseline and validate all eight real Gauss
- *    states with the selected EOS and unchanged composition/physical bounds.
- * 3. Call the shared point source and V/W integrator; reuse dead face scratch.
- * 4. Validate every candidate addition before adding one patch body source,
- *    then publish measured V impulse/work and W angular impulse exactly once.
+ * 2. Evaluate the shared ARCH_INLINE cell leaf for every eligible cell: recover
+ *    the existing physical baseline, validate all eight real Gauss states with
+ *    the selected EOS and unchanged composition/physical bounds, call the same
+ *    point source and V/W integrator, and check the candidate addition.
+ * 3. Keep a leaf result only while it is Valid, reuse dead face scratch, and
+ *    map the leaf's five statuses to the exact original failure messages, so
+ *    the Host traversal consumes the platform-neutral cell evaluation.
+ * 4. Revalidate the same actual application, then add one patch body source and
+ *    publish measured V impulse/work and W angular impulse exactly once.
  *
  * No additional state, density profile, floor, EOS or source formula is created.
  * The macro transaction owns rollback of tentative output and source budgets.
  */
 #pragma once
 
-#include <array>
-#include <cmath>
 #include <span>
 #include <stdexcept>
 
-#include "data/FluidState.h"
-#include "grid/GridMetrics.h"
-#include "numerics/state/RzNativeClosure.h"
-#include "physics/gravity/GravitySource.h"
+#include "physics/gravity/NativeExternalSourceMath.h"
 #include "physics/gravity/NativeExternalStage.h"
 
 namespace Physical::Gravity {
@@ -50,33 +49,20 @@ void add_native_external_sources(std::span<FluidVector> dU,
         ||input.mass_fractions.size()!=static_cast<std::size_t>(species)*extent)
         throw std::invalid_argument("Native external source requires its actual patch scratch/layout");
     const auto read=[&](int index){return input.get(index);};
-    const auto finite=[](const FluidVector& u) {
-        return std::isfinite(u.rho)&&std::isfinite(u.mom_u)&&std::isfinite(u.mom_v)
-            &&std::isfinite(u.mom_w)&&std::isfinite(u.eng);
-    };
+    const auto fraction=[&](int s,int index){return input.X(s,index);};
     for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
         const int index=grid.GetIndex(i,j,0);
-        const auto cell=RzThermodynamics::make_cell(read,index,geometry,i,bounds);
-        if(!cell.valid())throw std::runtime_error("Native external source input closure is invalid");
-        for(int s=0;s<species;++s)fraction_scratch[s]=input.X(s,index);
-        const auto samples=GridMetrics::Rz::CellAverageSamples(
-            grid.GetFacePosL(i),grid.GetFacePosR(i),grid.GetAxialFacePosL(j),grid.GetAxialFacePosR(j));
-        std::array<FluidVector,8> points;
-        for(std::size_t node=0;node<points.size();++node) {
-            points[node]=RzThermodynamics::base_point(cell,samples[node].radius);
-            if(arch::state::validate_eos(points[node],fraction_scratch.data(),species,bounds,eos)
-                !=arch::state::Status::valid)
-                throw std::runtime_error("Native external source physical point/EOS is invalid");
-        }
-        const auto source=native_external_source_mean(samples,
-            [&](std::size_t node){return points[node];},external,dt);
-        if(!source.valid()||source.value.rho!=0.||!finite(dU[index]))
+        const auto result=evaluate_native_external_source_cell(read,fraction,index,
+            species,eos,geometry,i,j,dt,bounds,fraction_scratch.data(),external,dU[index]);
+        if(result.status==NativeExternalCellStatus::InputClosureInvalid)
+            throw std::runtime_error("Native external source input closure is invalid");
+        if(result.status==NativeExternalCellStatus::PhysicalPointInvalid)
+            throw std::runtime_error("Native external source physical point/EOS is invalid");
+        if(result.status==NativeExternalCellStatus::IntegralUnrepresentable)
             throw std::runtime_error("Native external source integral is unrepresentable");
-        scratch[index]=source.value;
-        auto candidate=dU[index];
-        candidate.mom_u+=source.value.mom_u;candidate.mom_v+=source.value.mom_v;
-        candidate.mom_w+=source.value.mom_w;candidate.eng+=source.value.eng;
-        if(!finite(candidate))throw std::runtime_error("Native external source candidate addition is nonfinite");
+        if(result.status==NativeExternalCellStatus::CandidateNonfinite)
+            throw std::runtime_error("Native external source candidate addition is nonfinite");
+        scratch[index]=result.source;
     }
     // Revalidate the same actual application after every candidate EOS/source
     // check and before the first patch dU source write. The claim owns failure.
@@ -88,12 +74,8 @@ void add_native_external_sources(std::span<FluidVector> dU,
         dU[index].mom_w+=scratch[index].mom_w;dU[index].eng+=scratch[index].eng;
         // Accounting uses actual rounded additions, with no RK weight here:
         // Q_r/z/E = V*(dU_after-dU_before), Q_J = W*delta(m_phi).
-        const long double volume=GridMetrics::CellVolume(geometry,i,j,0);
-        const long double angular=GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j);
-        budget.radial_momentum+=volume*(static_cast<long double>(dU[index].mom_u)-before.mom_u);
-        budget.axial_momentum+=volume*(static_cast<long double>(dU[index].mom_v)-before.mom_v);
-        budget.torque+=angular*(static_cast<long double>(dU[index].mom_w)-before.mom_w);
-        budget.work+=volume*(static_cast<long double>(dU[index].eng)-before.eng);
+        accumulate_native_external_source_budget(budget.radial_momentum,
+            budget.axial_momentum,budget.torque,budget.work,before,dU[index],geometry,i,j);
     }
     receipt.commit(budget);
 }

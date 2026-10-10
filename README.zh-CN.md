@@ -11,6 +11,8 @@
 
 ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积法推进流体状态，并用自适应网格细化（AMR）增加局部空间分辨率。CPU 与 CUDA 共用物理和数学实现。
 
+运行环境为 **Linux 或 WSL2**。科学计算程序可独立构建与运行；**ARCH Studio 始终是选配组件**，CPU／CUDA 计算无需安装或编译图形界面。
+
 **ARCH 的输入、输出和物理常数统一使用 CGS**：长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力和能量密度为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`。角度使用 `rad`。输入不会自动换算单位；更多量纲见[算例指南](docs/guides/SimulationCase.zh-CN.md#单位)。
 
 从下方的[构建](#构建)与[首次运行](#首次运行)开始。完成第一个算例后，按[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续学习；需要查找模块范围或具体参数时，再使用[功能清单](docs/Features.zh-CN.md)和[参考手册](docs/Reference.zh-CN.md)。
@@ -26,15 +28,15 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 ## 构建
 
-本地桌面 [ARCH Studio](docs/guides/Studio.zh-CN.md) 提供分组参数编辑、真实初始场与 AMR 预览、受控编译、独立终端运行/续算以及只读 Plotfile 查看。可用 `ARCH_BUILD_STUDIO=ON` 与 Core 一起构建，随后通过 `arch-studio` 呼出；每个模型的能力以选中二进制返回的接口为准。[Studio 状态](studio/STATUS.md)与[本轮发布收束计划](docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)列出验收范围及待完成内容。
-
-在 Linux 或 WSL2 终端中构建。按所选后端准备依赖：
+在 Linux 或 WSL2 终端中构建。按所选后端准备 Core 依赖：
 
 - **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
 - **两种后端共用的库：** HDF5 C++/HL 和 OpenMP。
 - **CUDA 构建另需：** CMake 3.25.2+、CUDA Toolkit 12.0+ 和兼容的 GPU 驱动。
 
 依赖安装、编译内存限制及源码包中的 EOS 表处理见[构建指南](docs/guides/Build.zh-CN.md)。
+
+需要桌面操作时，可额外选装 [ARCH Studio](docs/guides/Studio.zh-CN.md)，提供配置编辑、预览和只读 Plotfile 查看。`ARCH_BUILD_STUDIO` 默认关闭，显式设为 `ON` 才构建桌面；只有这时才需 Linux Node 24+、npm、Electron 与图形环境，详见[桌面环境](docs/guides/StudioEnvironment.zh-CN.md)。上面的 Core 依赖及下方两种计算构建均可独立使用。
 
 ### 获取源码
 

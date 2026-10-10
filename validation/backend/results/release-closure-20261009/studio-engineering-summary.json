@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "utc": "2026-10-10T03:59:38.100259+00:00",
+  "status": "PASS_SCOPED_AUTOMATED_ENGINEERING",
+  "scope": "Current Studio automated engineering plus static selected-binary Core configuration integration; mathematical and full native desktop acceptance separate",
+  "branch": "compute/optim",
+  "git_head": "e69a859705da0efc0c7abad64c8949f9e4934951",
+  "uncommitted_sources_tested": true,
+  "node": "v24.21.0",
+  "source_identity": {
+    "verified_file_count": 414,
+    "inventory_sha256": "e9d2cb1dcc4756602ce13c90d36ee962fa3381dad324416379da476f112193ff",
+    "before_after_and_root_review_unchanged": true,
+    "selected_core_elf_sha256": "2d209aea6b67844966a2b8524c4b937fded89ebe85cd761f584842763efafc02"
+  },
+  "checks": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "production_build": "PASS",
+    "complete_node_tests": {
+      "passed": 369,
+      "failed": 0,
+      "skipped": 0,
+      "test_files": 81,
+      "host_subset_recounted": false
+    },
+    "real_core_configuration_integration": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "categories": 14,
+      "counted_in_369": false,
+      "scientific_resources": "not-created"
+    }
+  },
+  "failed_attempt_preserved": {
+    "passed": 340,
+    "failed": 29,
+    "cause": "Manager put TMPDIR under Studio ES-module package; existing CommonJS fixture inherited type=module",
+    "independent_cause_observed": "Same existing fixture/executable exits1 with require-not-defined in package TMPDIR, exits0 in /tmp",
+    "source_tests_thresholds_modified": false
+  },
+  "resource_observation": {
+    "guard_stopped": false,
+    "swap_growth_kib": 0,
+    "cumulative_guarded_wall_seconds": 133.251,
+    "not_a_performance_benchmark": true
+  },
+  "documentation": {
+    "current_contracts": "src/api/docs",
+    "historical_handoffs": "src/api/docs/archive",
+    "public_cpp_paths_changed": false,
+    "local_markdown_targets_checked": 3291,
+    "missing_targets": 0,
+    "archived_bodies_preserved": 6,
+    "fixture_json_par_unchanged": true,
+    "fixture_script_change": "Docstring/final console notice only; all checks unchanged"
+  },
+  "remaining_outside_scope": [
+    "Final native desktop interactive matrix",
+    "Physical and mathematical solver acceptance",
+    "Final frozen CPU/CUDA consumers and matched timing"
+  ],
+  "raw_data_uploaded": false,
+  "ci_scope": {
+    "status": "ROOT_ACCEPTED_LOCAL_CI_SCOPE",
+    "utc": "2026-10-10T04:14:41.638487+00:00",
+    "full_studio_suite_retained": 369,
+    "no_studio_tests_deleted": true,
+    "old_cpu_ctest_junit_node_tap_logic": "AST identical; original14 checker test methods unchanged",
+    "scope_regression": "19/19,0skip,0.110s; includes exact-content migration out of Studio",
+    "actionlint": "1.7.12 exit0",
+    "ci_jobs_added": 0,
+    "required_job": "still requires success from Tooling,CPU,Studio; job-level skip is not accepted",
+    "unrelated_diff": "only expensive Node steps omitted; scope.json declares NOT_APPLICABLE, no Node test pass claimed",
+    "fallback": "unknown paths, empty diff, invalid/missing refs and git errors run full Studio",
+    "hosted_workflow_executed": false,
+    "sha256": {
+      "tools/check_ci_results.py": "8fb59835c1a08d0319b8ae15f09a54a66b2ca43d84e1d11e87d2dd29f3e6acb5",
+      "tests/tooling/build_tools/test_ci_results.py": "e08c39f54918050df79c6e16efe98ad9ed5c2d2d892295baee9052874fd25458",
+      ".github/workflows/ci.yml": "45d8c4fefdfdb3cdbcfc2468fe4ba7f41d7fabfd9aaada3e11138063809b7ac2"
+    },
+    "root_test_strengthening": "same-content real git mv instead of different-content delete/add in existing new method",
+    "scientific_thresholds_changed": false,
+    "build_preset_owner": "8/8,0skip,16.191s; existing isolated linker/preset fixtures, no scientific executable rebuilt"
+  },
+  "parallel_tooling_current": {
+    "entry": "unittest.defaultTestLoader.discover(\"tests/tooling\", pattern=\"test_*.py\")",
+    "python": "/usr/bin/python3",
+    "python_version": "3.12.3",
+    "tests_run": 744,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "expected_failures": 0,
+    "unexpected_successes": 0,
+    "elapsed_seconds": 50.86880967799516,
+    "status": "PASS",
+    "scope": "Original complete tooling CI entry, not scientific or performance qualification.",
+    "host_resource_observation": {
+      "guard_elapsed_seconds": 51.393,
+      "peak_owned_rss_kib": 192644,
+      "guard_stopped": false,
+      "swap_growth_kib": 0,
+      "peak_output_bytes": 147151,
+      "minimum_E_free_bytes": 23719141376
+    },
+    "revision": "e69a859705da0efc0c7abad64c8949f9e4934951",
+    "worktree_has_uncommitted_changes": true,
+    "source_identity_files": 58,
+    "source_identity_local": "studio/.local/release-closure-20261006/engineering-parallel-20261010/tooling-full/tested-tooling-source-identity.json",
+    "current_compiled_source_freeze": "studio/.local/release-closure-20261006/math-closure-20261009/native-external-unified-cuda-kernel-linkfix.freeze.json",
+    "command_entry_sha256": "2de1d1798741730db5ed3918a165dc112da1438d152475ca7bb61ce907028682",
+    "not_final_release_grant": true
+  },
+  "local_gui_display_check": {
+    "model": "CellularDet",
+    "config": "simulation/Cellular/CellularPreview2D.par",
+    "configuration_inspection": "ok, zero diagnostics, before Setup",
+    "windows_browser_display": "actual production UI and real Host visible; selected model/config verified in Windows screen capture",
+    "native_wslg_desktop": "not accepted: compositor stuck in uninterruptible wait; Windows restore/client reconnect did not recover; no WSL shutdown during frozen workloads",
+    "temporary_browser_scope": "inspection only; Build/Run/writes paused; no Mock substitution, no producer readiness bypass",
+    "real_preview": "not generated; no matching successful build manifest",
+    "scientific_or_complete_desktop_acceptance": false
+  },
+  "actual_native_execution_20261010": {
+    "utc": "2026-10-10T08:08:46.790803+00:00",
+    "status": "ROOT_ACCEPTED_AUTOMATED_NATIVE_ENGINEERING_SCOPE_SOURCE_BINDING_FIX_PENDING",
+    "scope": "Original real Electron/GTK/Host/Core engineering path; not human desktopUAT, physicsreference or benchmark",
+    "binary_sha256": "63ffa636ae1ba1961c50308784ad6dcb75b58e456967d8a57d76cd42176dcffb",
+    "actual_producer_identity_verified": true,
+    "run_restart_endpoint": 0.02,
+    "actual_state_geometry_datasets_byte_equal": 19,
+    "original_source_binding_503_retained": true,
+    "pending": [
+      "TS-only sourcebound selector/typed409 fix, currentStudio tests/build and narrow native recheck"
+    ],
+    "raw_cleanup": "Deferred until new-dist originalviewer consumer finishes; only491146bytes, no rawupload",
+    "original_receipt": "Local gui-final-native-20261010/native-ui-engineering-final.receipt.json; originalCellularConfigureBuildPreviewAMR andSodRunRestartPlot/nativeerror/dirtyclose"
+  },
+  "current_selected_source_owner_fix_20261010": {
+    "status": "ROOT_ACCEPTED_ORIGINAL_FULL_STUDIO_NATIVE_NARROW_PENDING",
+    "actual_session_exit": 0,
+    "node": "v24.21.0",
+    "cases": {
+      "passed": 373,
+      "failed": 0,
+      "skipped": 0,
+      "test_files": 81,
+      "new_assertions_in_existing_owners": 4,
+      "host_subset_recounted": false
+    },
+    "checks": {
+      "lint": "PASS_ZERO_WARNINGS",
+      "typecheck": "PASS_IN_PRODUCTION_BUILD",
+      "production_assets": "PASS"
+    },
+    "implementation": "One pure selected-source identity view; fixed or pending desktop model, exact source owner retained, typed HTTP409; unbound complete registry retained.",
+    "sources": {
+      "studio/host/project.ts": "e1c997f39b6d3d6ead2ab22a1699323b8d7a8cad9036dd6e31991cd40785e1bd",
+      "studio/src/components/RealInitWorkspace.tsx": "1bf695091e3c910e90a9f6fd9063b5311dea9cdec1894007cadad4ebc992eb20",
+      "studio/src/components/ConfigurationBridge.tsx": "4e1430db4597f0738484dae5b63e7f70cf4cbbe514e33fca9d9dfb835016ce21",
+      "studio/src/data/configurationIdentity.ts": "5634817fe76b748e967bf7e8b256d835e0040055e397777837ade11afa374734",
+      "studio/tests/configuration-contract.test.ts": "7a3f0cc202bb3e4b114879e6c459f2fc9bbe958ddaf45e28b61126ce39829461",
+      "studio/tests/host-project.test.ts": "926a06cbaf790eb86d6d2caf022f01d678fe157c0cc2004a31f6f9127c5634aa"
+    },
+    "formal_repair": "Pure identity view memoized with four real dependencies; existing Preview callback and owner retained.",
+    "first_failure_retained": {
+      "tests_passed": 372,
+      "tests_failed": 1,
+      "scientific_threshold_changes": false,
+      "test_source_changes": false,
+      "classification": "Existing one-second build-fixture wait exhausted; synthetic child wrote after fixture teardown. Exact phase delay unknown. Unchanged full suite passed; no production premature terminal observed."
+    },
+    "manager_heap_failure_retained": "256MiB V8 heap insufficient for lint;1024MiB guard passes, source/rules unchanged.",
+    "new_native_recheck": "RUNNING_NOT_ACCEPTED",
+    "performance_measurement": false,
+    "mathematical_grant": false,
+    "native_newdist_status": "HOST_WRONGMODEL409_AND_LEGAL_INSPECTION_PASS_UI_DISCOVERY_TIMEOUT_RECOVERY_PENDING",
+    "native_discovery_failure": {
+      "old_obsolete_scope_GET_seconds": 13.992,
+      "current_scope_GET_seconds": 15.0001,
+      "current_scope_timeout": true,
+      "discovery_after_timeout": null,
+      "manual_current_response_original_validation": "fixedCellularDet",
+      "no_fixture_threshold_or_get_timeout_change": true,
+      "root_cause_of_initial_latency": "unknown",
+      "source": "gui-final-native-20261010/selected-source-failed-discovery-sequence.json",
+      "repair": "Originalowner minimal existing-request retry design pending; no repeatedBuild/Preview"
+    }
+  },
+  "updated_utc": "2026-10-10T09:20:05.387437+00:00",
+  "current_interface_final_20261010": {
+    "status": "ROOT_ACCEPTED_FULL374_AND_NARROW_NATIVE_RECOVERY_READONLY",
+    "node_tests": 374,
+    "test_files": 81,
+    "skips": 0,
+    "actual_guard_exit": 0,
+    "test_seconds": 51.540792499996314,
+    "lint_seconds": 11.72787495800003,
+    "typed_build_seconds": 7.185754862999602,
+    "resource_scheduling": "One serial file worker; fixed1s existing GNU fixture and all production/tests/assertions unchanged. Actual former373/374 timeout retained as failure.",
+    "sources": {
+      "studio/host/project.ts": "e1c997f39b6d3d6ead2ab22a1699323b8d7a8cad9036dd6e31991cd40785e1bd",
+      "studio/src/components/RealInitWorkspace.tsx": "1bf695091e3c910e90a9f6fd9063b5311dea9cdec1894007cadad4ebc992eb20",
+      "studio/src/components/ConfigurationBridge.tsx": "dd783fe342cf640e27c195c609c15a50b49fc283b84f51022f5fa9bcad8dd3c0",
+      "studio/src/data/configurationIdentity.ts": "5634817fe76b748e967bf7e8b256d835e0040055e397777837ade11afa374734",
+      "studio/tests/configuration-contract.test.ts": "7a3f0cc202bb3e4b114879e6c459f2fc9bbe958ddaf45e28b61126ce39829461",
+      "studio/tests/host-project.test.ts": "926a06cbaf790eb86d6d2caf022f01d678fe157c0cc2004a31f6f9127c5634aa",
+      "studio/src/host/workflowContracts.ts": "0a83fb8da22800fa1ea30536a2ff228cc97f71d4b87b0d92a9765f123e079a52",
+      "studio/src/host/workflowValidation.ts": "48f6d77d7fdaa42a1e6602bc8d5011e0be247136e5df4425c0ba34428c107f4b",
+      "studio/src/components/Workflow/InitializationWorkflow.tsx": "9dbce2e67eb3905b40bf6a0a7bdce4918cf795c3d3877659ed4113c14d9bfa51",
+      "studio/src/components/Workflow/AmrControls.tsx": "e710bd137651bbfbd9b1b2552fcd89230d43152f7bb1c26023fa6aade2f90dea",
+      "studio/tests/amr-native-volume.test.ts": "d4d513877eb30c0602fd7bd0f52c26d527558acb6d627c986ccd45da5d67b120",
+      "studio/package.json": "a6feab73d6c6e479b248b9ac316767fd0fccaef64fa50f3a1995fca29f48c535",
+      "studio/package-lock.json": "964ac764d6c7af40b743ebca560abbd51676b80e68c1073e69b388bf2d93d46c"
+    },
+    "assets": {
+      "dist/assets/index-BHdI00An.js": "3e919f9c913ff657dff6e76ee2a84a04a4f940ec811d26d8e5bfc9780a56652e",
+      "dist/assets/index-DrhItLC5.css": "10415d29f0687c8faea5af6adf3df769d2df066074f10e0ea2d004bc87eb11fd"
+    },
+    "CPU_ELF": "63ffa636ae1ba1961c50308784ad6dcb75b58e456967d8a57d76cd42176dcffb",
+    "source176_unchanged": true,
+    "retry_recovery": "Explicit user Retry model discovery onoriginalcurrent-scope GET;15s timeout andschema/source guards retained, noauto-loop",
+    "RZ_mesh_consumer": "Accept actual existing native-root-topology-active-initialization-only snapshot with exactdim2/cylindrical/root/completion/limitation invariants; noCore/mathchange",
+    "new_native_status": "PASS_ENGINEERING_NOT_HUMAN_WSLG_UAT",
+    "science_grant": false,
+    "CI_scheduling": "Full affected suite once; --test-concurrency=1, noextraHostsubset, noFLASH requirement",
+    "resources": {
+      "guard_stopped": false,
+      "swap_growth_kib": 0,
+      "peak_owned_rss_kib": 970424,
+      "min_available_kib": 4801096,
+      "output_bytes": 98522,
+      "host_free_min_bytes": 23602692096
+    },
+    "native_evidence": {
+      "single_controlled_cases_failure": 1,
+      "trusted_retry_real_host": 200,
+      "selected_model": "CellularDet",
+      "source_model_switch_disabled": true,
+      "automatic_initial_samples": 16384,
+      "automatic_initial_field_count": 7,
+      "time_stepping": false,
+      "existing_current_SodPlot_metadata": "PASS_CGS_PUBLICATION_SOURCE_BINARY",
+      "same_actual_CPU_ELF": "63ffa636ae1ba1961c50308784ad6dcb75b58e456967d8a57d76cd42176dcffb",
+      "no_new_simulation_or_build": true,
+      "natural_initial_failure_retained": true
+    },
+    "human_WSLg_foreground_UAT": false
+  }
+}

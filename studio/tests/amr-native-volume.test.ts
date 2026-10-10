@@ -17,6 +17,43 @@ function mesh3(){
   lower:[1,.1,k],upper:[3,.5,k+1],cellShape:[4,2,2],cellSpacing:[.5,.2,.5]}));
  return m;
 }
+function nativeRoot(refine:boolean){
+ const m=mesh3();m.dimension=2;m.geometry='cylindrical';m.resources.dimension=2;
+ m.coordinates.metadata.dimension=2;m.coordinates.metadata.geometry='cylindrical';
+ m.coordinates.metadata.axes.forEach((a:Record<string,unknown>,i:number)=>{
+  a.displayName=a.nativeName=['r','z','phi'][i];a.active=i<2;
+  a.kind=['radial','linear','angular'][i];a.unit=i===2?'rad':'cm';a.blocks=i===0?1:i===1?2:0;
+ });
+ m.leaves=[0,1].map(z=>({logicalKey:'0:0:'+z+':0',level:0,logicalIndex:[0,z,0],
+  lower:[0,z],upper:[1,z+1],cellShape:[4,4],cellSpacing:[.25,.25]}));
+ m.levelCounts=[{level:0,leafBlocks:2}];m.completedPasses=0;m.configuredMaxLevel=refine?1:0;
+ m.snapshot='native-root-topology-active-initialization-only';m.complete=!refine;
+ m.limitedReason=refine?'native-rz-amr-preview-not-qualified':null;
+ return m;
+}
+test('Native RZ root initialization is complete only without requested refinement and remains a typed limited snapshot otherwise',()=>{
+ for(const refine of [false,true]){
+  const core=example();core.data=nativeRoot(refine);core.status=refine?'limited':'ok';
+  core.state.grid.dimension=2;core.state.grid.geometry='cylindrical';
+  const accepted=validateWorkflowCore(core,'preview-amr',core.identity);
+  assert.equal(accepted.status,refine?'limited':'ok');
+  assert.equal((accepted.data as AmrMesh).complete,!refine);
+  assert.equal((accepted.data as AmrMesh).completedPasses,0);
+  assert.equal((accepted.data as AmrMesh).snapshot,'native-root-topology-active-initialization-only');
+  assert.equal((accepted.data as AmrMesh).limitedReason,refine?'native-rz-amr-preview-not-qualified':null);
+ }
+ for(const mutate of [
+  (m:ReturnType<typeof nativeRoot>)=>m.snapshot='unrecognized-snapshot',
+  (m:ReturnType<typeof nativeRoot>)=>m.completedPasses=1,
+  (m:ReturnType<typeof nativeRoot>)=>{m.leaves[0].level=1;m.leaves[0].logicalKey='1:0:0:0';},
+  (m:ReturnType<typeof nativeRoot>)=>m.geometry='spherical',
+  (m:ReturnType<typeof nativeRoot>)=>m.limitedReason='regrid-exceeds-working-capacity',
+ ]){const m=nativeRoot(true);mutate(m);assert.throws(()=>validateMesh(m,'limited'));}
+ const requested=nativeRoot(true);requested.complete=true;requested.limitedReason=null;
+ assert.throws(()=>validateMesh(requested,'ok'));
+ const rootOnly=nativeRoot(false);rootOnly.complete=false;rootOnly.limitedReason='native-rz-amr-preview-not-qualified';
+ assert.throws(()=>validateMesh(rootOnly,'limited'));
+});
 test('native three-axis AMR mesh requires authoritative matching coordinates, resources and state',()=>{
  assert.equal(validateMesh(mesh3(),'ok').dimension,3);
  for(const mutate of [(m:ReturnType<typeof mesh3>)=>delete m.coordinates,

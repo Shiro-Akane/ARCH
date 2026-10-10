@@ -9,6 +9,8 @@
  * 1. Receive a shared flux, reconstruction or integrator policy.
  * 2. Bind CUDA-compatible state views to the same mathematical policy.
  * 3. Return device work descriptors without a separate physics formula.
+ * Target-private flux families limit compiler instantiation of this same
+ * registry walk; the default visitor continues to accept every flux policy.
  */
 
 #pragma once
@@ -104,7 +106,7 @@ struct HydroReconstructionVisitor {
     }
 };
 
-template <class Function>
+template <class Function, int FluxFamily = 0>
 struct HydroFluxVisitor {
     const dispatch::ResolvedExecutionPlan& plan;
     Function& function;
@@ -113,22 +115,29 @@ struct HydroFluxVisitor {
     template <class Registration>
     void operator()()
     {
-        using Flux = typename CudaFluxType<
-            typename dispatch::PolicyRegistration<Registration>::CudaBinding>::type;
-        HydroReconstructionVisitor<Function, Flux> visitor{plan, function, invoked};
-        const bool found = dispatch::visit_policy<dispatch::ReconstructionPolicies>(plan.reconstruction, visitor);
-        invoked = invoked && found;
+        constexpr auto id = dispatch::PolicyRegistration<Registration>::id;
+        if constexpr (FluxFamily == 0
+            || (FluxFamily == 1 && (id == dispatch::FluxId::Vl
+                || id == dispatch::FluxId::Sw || id == dispatch::FluxId::Roe))
+            || (FluxFamily == 2 && (id == dispatch::FluxId::Hll
+                || id == dispatch::FluxId::Hllc))) {
+            using Flux = typename CudaFluxType<
+                typename dispatch::PolicyRegistration<Registration>::CudaBinding>::type;
+            HydroReconstructionVisitor<Function, Flux> visitor{plan, function, invoked};
+            const bool found = dispatch::visit_policy<dispatch::ReconstructionPolicies>(plan.reconstruction, visitor);
+            invoked = invoked && found;
+        }
     }
 };
 
 } // namespace detail
 
-template <class Function>
+template <int FluxFamily = 0, class Function>
 bool visit_cuda_hydro_route(
     const dispatch::ResolvedExecutionPlan& plan, Function&& function)
 {
     bool invoked = false;
-    detail::HydroFluxVisitor<std::remove_reference_t<Function>> visitor{plan, function, invoked};
+    detail::HydroFluxVisitor<std::remove_reference_t<Function>, FluxFamily> visitor{plan, function, invoked};
     const bool found = dispatch::visit_policy<dispatch::FluxPolicies>(plan.flux, visitor);
     return found && invoked;
 }

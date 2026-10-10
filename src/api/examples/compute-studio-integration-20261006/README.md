@@ -18,4 +18,4 @@ build-studio-cpu/bin/ARCH --inspect-case UserGravity --config-stdin \
   < src/api/examples/compute-studio-integration-20261006/user-gravity.par
 ```
 
-Client behavior must follow the selected binary's response rather than hard-code these counts. The files contain metadata and a small configuration only; no raw field arrays, plotfiles or checkpoints. Historical examples keep their original contract version. See the [API](../../README.md), [configuration contract](../../CONFIGURATION_API.md) and [integration report](../../../../docs/development/ComputeStudioIntegrationReport-20261006.zh-CN.md).
+Client behavior must follow the selected binary's response rather than hard-code these counts. The files contain metadata and a small configuration only; no raw field arrays, plotfiles or checkpoints. Historical examples keep their original contract version. See the [API](../../README.md), [configuration contract](../../docs/CONFIGURATION_API.md) and [integration report](../../../../docs/development/ComputeStudioIntegrationReport-20261006.zh-CN.md).

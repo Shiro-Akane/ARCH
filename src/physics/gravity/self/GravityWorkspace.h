@@ -176,19 +176,27 @@ struct SelfGravity::Workspace {
             throw std::logic_error("Self-gravity patch uses a different density allocation/slot");
         return patches[it->second];
     }
-    /** Borrow the exact prepared RZ patch without changing producer scope.
-     * Workflow: require original field validity; resolve the original Grid pointer;
-     * require its actual resident density allocation; return immutable views.
+    /** Borrow the exact prepared RZ patch on the explicitly requested side.
+     * Workflow: require original field validity; require the actual requested
+     * execution side and original RZ chart; resolve the original Grid pointer;
+     * require its exact resident density allocation; return immutable views.
+     * The density pointer is borrowed from the authentic source lease; this
+     * lookup grants no Runtime authority of its own.
      */
-    const GravityPatchView& native_patch(const Grid& grid,const FluidState& state) const {
+    const GravityPatchView& native_patch(const Grid& grid,const double* density,
+        bool expected_device) const {
         require(scope);
-        if(solver.execution().device()
-            ||solver.op().base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::logic_error("Prepared RZ patch requires its actual Host chart");
+        if(solver.execution().device()!=expected_device
+        ||solver.op().base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
+            throw std::logic_error("Prepared RZ patch requires its actual requested-side chart");
         const auto found=lookup.find(&grid);
-        if(found==lookup.end()||patches[found->second].density!=state.rho.data())
+        if(found==lookup.end()||patches[found->second].density!=density)
             throw std::logic_error("Native private patch changed its original density allocation");
         return patches[found->second];
+    }
+    /** Original Host caller: borrow the exact Host-side prepared RZ patch. */
+    const GravityPatchView& native_patch(const Grid& grid,const FluidState& state) const {
+        return native_patch(grid,state.rho.data(),false);
     }
     /** Cache genuine geometry rows and evaluate same-stage Dphi once. */
     const GravityRefluxRows& prepare_native_reflux(const amr::AmrFluxTopologyPlan&);

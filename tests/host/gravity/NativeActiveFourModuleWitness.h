@@ -148,6 +148,7 @@ public:
     SpeciesManager species;
     amr::AMRControl control;
     const bool dynamic;
+    const driver::GravityStage::Qualification qualification;
     RunState start{};
     std::unique_ptr<HelmEos> eos;
     std::unique_ptr<SimulationController> controller;
@@ -178,8 +179,11 @@ public:
      */
     explicit Owner(const std::string& table,bool dynamic_mode=false,
         double endpoint_time=0.,EmptyInitialization initialization={},
-        const std::string& output_directory={})
-        :control(dynamic_mode?32:8,2),dynamic(dynamic_mode) {
+        const std::string& output_directory={},
+        driver::GravityStage::Qualification selected=driver::GravityStage::Qualification::NativeRzSelfHydroCandidate)
+        :control(dynamic_mode?32:8,2),dynamic(dynamic_mode),qualification(selected) {
+        require(selected==driver::GravityStage::Qualification::NativeRzSelfHydroCandidate
+            ||selected==driver::GravityStage::Qualification::Production,"Unsupported activity owner qualification");
         require(!table.empty(),"Active four-module requires an explicit actual Helm table path");
         config.grid.dim=2;config.grid.geometry="cylindrical";
         config.grid.nblockx1=dynamic?2:1;config.grid.nblockx2=1;config.grid.nblockx3=0;
@@ -223,7 +227,9 @@ public:
         config.io.tmax=endpoint_time==0.?(dynamic?2.*macro_dt:macro_dt):endpoint_time;
         require(std::isfinite(config.io.tmax)&&config.io.tmax>0.,"Invalid frozen activity endpoint");config.io.plt_dt=config.io.chk_dt=-1.;
         config.io.plt_dstep=config.io.chk_dstep=-1;
-        config.io.out_dir=output_directory.empty()?(dynamic?"native-active-four-module-amr":"native-active-four-module"):output_directory;
+        config.io.out_dir=output_directory.empty()?(production()
+            ?(dynamic?"public-native-active-four-module-amr":"public-native-active-four-module")
+            :(dynamic?"native-active-four-module-amr":"native-active-four-module")):output_directory;
         if(!output_directory.empty())config.io.base_name="native-active";
         config.io.restart=initialization.load!=nullptr;
         NetAprox13::RegisterSpecies(species);
@@ -292,9 +298,8 @@ public:
         runtime=std::make_unique<driver::DriverRuntime>(control,*bc,config,species,*controller);
         runtime->bind_native_rz_eos(*eos);runtime->initialize_topology();
         gravity=std::make_unique<Physical::Gravity::SelfGravity>(config.physics.gravity);
-        gravity_stage=std::make_unique<driver::GravityStage>(*runtime,gravity.get(),
-            driver::GravityStage::Qualification::NativeRzSelfHydroCandidate);
-        require(gravity_stage->supports_host_macro_step_journal(),"Active macro lacks actual gravity journal");
+        gravity_stage=std::make_unique<driver::GravityStage>(*runtime,gravity.get(),qualification);
+        require(gravity_stage->supports_macro_step_journal(arch::state::ExecutionSide::Host),"Active macro lacks actual gravity journal");
         gravity_stage->set_native_self_flux_observation(&Owner::observe_source,this);
         hydro=std::make_unique<Hydro>(*eos,native);
         plan.flux=dispatch::FluxId::Hllc;plan.reconstruction=dispatch::ReconstructionId::Muscl;
@@ -334,6 +339,10 @@ public:
         require(std::isfinite(forward_euler)&&forward_euler>0.&&std::isfinite(candidates.hydro)
             &&macro_dt<=candidates.hydro,"Frozen active macro exceeds its actual physical stability proposal");
     }
+    /** Select only this test owner's explicit Production observation branch.
+     * Workflow: leave actual field scope/authority with GravityStage. */
+    bool production() const noexcept {return qualification==driver::GravityStage::Qualification::Production;}
+
     /** Borrow the actual first pooled Current; the single-root entry retains its scope. */
     amr::Block& current_block() {return control.pool->GetBlock(control.tree->GetActiveBlocks().front());}
     /** Resolve a recorded pooled cell only under its same UID, epoch and logical key. */
@@ -500,16 +509,35 @@ public:
         std::lock_guard<std::mutex> lock(o.source_mutex);
         auto [it,inserted]=o.sources.try_emplace(stage);
         auto& visit=it->second;
-        const auto& timing=o.gravity->timings(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+        const auto& timing=o.gravity->timings(o.production()?Physical::Gravity::GravityFieldScope::ExistingPhysics
+            :Physical::Gravity::GravityFieldScope::NativeRzCandidate);
         const std::array<double,3> times{timing.source_boundary,timing.poisson,timing.force};
         for(double value:times)require(std::isfinite(value)&&value>=0.,"Actual solve phase timing is invalid");
-        const auto ring=o.gravity->ring_memo_observations(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
-        require(ring.epoch==event.source->topology.value&&ring.source_generation==event.source_generation
-            &&ring.field_generation==event.field_generation,"Actual source ring observations changed field identity");
+        std::optional<Physical::Gravity::SelfGravity::RingMemoObservations> ring;
+        if(!o.production()) {
+            ring=o.gravity->ring_memo_observations(Physical::Gravity::GravityFieldScope::NativeRzCandidate);
+            require(ring->epoch==event.source->topology.value&&ring->source_generation==event.source_generation
+                &&ring->field_generation==event.field_generation,"Actual source ring observations changed field identity");
+        }
         if(inserted) {visit.descriptor=*event.descriptor;visit.field_generation=event.field_generation;
             visit.source_generation=event.source_generation;visit.input_time=event.source->input_time;
-            visit.solver_seconds=times;visit.ring_memo=ring;}
-        require(visit.ring_memo==ring,"Same-field ring observations changed between actual consumers");
+            visit.solver_seconds=times;if(ring)visit.ring_memo=*ring;
+            if(o.production()) {visit.source=*event.source;visit.lease=event.generation;}
+        }
+        if(ring)require(visit.ring_memo==*ring,"Same-field ring observations changed between actual consumers");
+        if(o.production()) {
+            require(visit.source==*event.source&&visit.lease==event.generation
+                &&event.source->topology==o.context->ledger.active_epoch(),"Public source identity changed within its real field");
+            for(std::size_t n=0;n<event.source->inputs.size();++n) {
+                const auto& input=event.source->inputs[n];
+                const auto stamp=o.context->ledger.inspect({o.runtime->handles()[n],event.descriptor->input_slot});
+                require(input.block==o.runtime->handles()[n]&&input.slot==event.descriptor->input_slot
+                    &&input.version==stamp.interior.version&&input.storage_generation==event.generation,
+                    "Public source observer consumed a foreign selected publication");
+                o.context->ledger.require_readable({input.block,input.slot},
+                    {state::ExecutionSide::Host,input.version,true,true});
+            }
+        }
         for(int k=0;k<3;++k)require(bits(visit.solver_seconds[k],times[k]),
             "Same-field actual solve phase timing changed between observers");
         require(visit.field_generation==event.field_generation&&visit.source_generation==event.source_generation
@@ -621,8 +649,42 @@ public:
         if(dynamic)check_dynamic_journal();else check_journal();
         macro_wall_seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-macro_started).count();
     }
+    /** Read only the original Production solve journal after its actual flush.
+     * Workflow: verify schema, exact expected purpose/time/domain and monotonic
+     * real lease; use the producer's original residual/target, never a new proof. */
+    void check_production_journal(const std::vector<JournalVisit>& expected) {
+        std::ifstream file(config.io.out_dir+"/gravity_solves.tsv");std::string line;
+        require(bool(std::getline(file,line))&&line==
+            "time\tstage\tepoch\tgeneration\tcells\titerations\trhs_rms\tresidual\ttarget\trho_mean\tdevice\tsetup_seconds\tsolve_seconds\tkernels\tbytes_h2d\tbytes_d2h\tsynchronizations\tsource_boundary_seconds\tpoisson_seconds\tforce_seconds",
+            "Public activity lost its actual Production journal schema");
+        std::size_t count=0;std::uint64_t previous=0;
+        while(std::getline(file,line))if(!line.empty()) {
+            require(count<expected.size(),"Public journal has an invented accepted field");
+            const auto& want=expected[count++];std::istringstream row(line);
+            double time=0.,rhs=0.,residual=0.,target=0.,mean=0.,setup=0.,solve=0.,source=0.,poisson=0.,force=0.;
+            int stage=-1,iterations=-1,device=-1;std::uint64_t epoch=0,generation=0,kernels=0,h2d=0,d2h=0,joins=0;std::size_t cells=0;
+            require(bool(row>>time>>stage>>epoch>>generation>>cells>>iterations>>rhs>>residual>>target>>mean>>device
+                >>setup>>solve>>kernels>>h2d>>d2h>>joins>>source>>poisson>>force)
+                &&stage==want.stage&&bits(time,want.time)&&epoch==want.epoch&&cells==want.cells
+                &&generation>previous&&(!want.lease||generation==want.lease)&&iterations>=0&&device==0
+                &&std::isfinite(rhs)&&rhs>=0.&&std::isfinite(residual)&&residual>=0.
+                &&std::isfinite(target)&&target>0.&&residual<=target&&std::isfinite(mean)&&mean>0.,
+                "Public journal changed its actual purpose/source/domain/solve result");
+            for(double value:{setup,solve,source,poisson,force})
+                require(std::isfinite(value)&&value>=0.,"Public solve journal contains an invalid timing");
+            previous=generation;
+        }
+        require(count==expected.size(),"Public journal omitted an accepted field");
+    }
+
     /** Read the actual two committed rows; no synthesized successful receipt. */
     void check_journal() {
+        if(production()) {
+            std::vector<JournalVisit> expected;
+            for(int stage=1;stage<=2;++stage) {const auto& visit=sources.at(stage);
+                expected.push_back({stage,visit.input_time,visit.source.topology.value,visit.lease,visit.source_generation,256});}
+            check_production_journal(expected);return;
+        }
         std::ifstream file(config.io.out_dir+"/native_rz_candidates.tsv");std::string line;
         require(bool(std::getline(file,line)),"Actual active-macro journal header is missing");int count=0;
         while(std::getline(file,line))if(!line.empty()) {
@@ -644,8 +706,9 @@ public:
  * Initial u_phi=0 and g_phi=0 make J a zero-angular sanity check only; its
  * existing mass-normalized diagnostic does not qualify nonzero wall torque.
  */
-inline void run(const std::string& table) {
-    Owner owner(table);const auto before=owner.totals();owner.advance();const auto after=owner.totals();
+inline void run(const std::string& table,driver::GravityStage::Qualification qualification=
+    driver::GravityStage::Qualification::NativeRzSelfHydroCandidate) {
+    Owner owner(table,false,0.,{},{},qualification);const auto before=owner.totals();owner.advance();const auto after=owner.totals();
     const auto& hydro=owner.runtime->hydro_boundary_budget();const auto& diffusion=owner.runtime->diffusion_boundary_budget();
     require(hydro.size()==6+species_count&&diffusion.size()==hydro.size(),"Actual macro boundary receipts are incomplete");
     for(double value:hydro)require(std::isfinite(value),"Actual Hydro boundary receipt is nonfinite");
@@ -671,7 +734,8 @@ inline void run(const std::string& table) {
     for(const auto& [stage,visit]:owner.sources)
         std::cout<<"NATIVE_ACTIVE_SOURCE_TIMING stage="<<stage<<" source_boundary_seconds="<<visit.solver_seconds[0]
             <<" poisson_seconds="<<visit.solver_seconds[1]<<" force_seconds="<<visit.solver_seconds[2]<<'\n';
-    std::cout<<"PRIVATE_NATIVE_ACTIVE_FOUR_MODULE candidate_only=1 actual_BD_DenseLU=1 actual_Helm_table=1"
+    std::cout<<(owner.production()?"PUBLIC_NATIVE_ACTIVE_FOUR_MODULE production_route=1":"PRIVATE_NATIVE_ACTIVE_FOUR_MODULE candidate_only=1")
+        <<" actual_BD_DenseLU=1 actual_Helm_table=1"
         <<" actual_aprox13=1 actual_RKL2=1 actual_RK2_Self=1 macro_dt="<<macro_dt
         <<" macro_wall_seconds="<<owner.macro_wall_seconds
         <<" accepted_time="<<owner.controller->t_current<<" accepted_steps="<<owner.controller->step_count

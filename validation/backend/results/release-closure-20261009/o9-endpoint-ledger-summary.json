@@ -1,19 +1,20 @@
 {
   "schema": "arch-processed-validation-v1",
   "status": "PASS_OBSERVATIONAL_TOOLING_ONLY",
-  "recorded_utc": "2026-10-10T00:54:08.199487+00:00",
-  "baseline_commit": "1dabd12a48837ce3aebae8b8a55671a19feb8dd4",
+  "recorded_utc": "2026-10-10T01:35:16.260018+00:00",
+  "baseline_commit": "e69a859705da0efc0c7abad64c8949f9e4934951",
   "source_sha256": {
-    "validation/gravity/curved/verify_coupled.py": "7908023100bff521ade339c329d16d5f370cca6b2a39b746a1ff27a6d4f754ca",
-    "tests/tooling/microphysics/test_microphysics_coupling.py": "6ab206a6049d2db3715dbdcd358eb54bc6bc5775350bd52ef172207162d2250e"
+    "validation/gravity/curved/verify_coupled.py": "2990baeab376e9706d36c930e94c57cc84dc76914ea262762dfbf7eeb2343776",
+    "tests/tooling/microphysics/test_microphysics_coupling.py": "480e0bed180e62dd8bb27693d6234bab4897c027144610190d2be46c7e80ee70"
   },
   "scope": "Optional actual checkpoint/plot endpoint accounting for existing Cartesian periodic self-gravity plus active burn coupled run; no scientific acceptance thresholds or production algorithm changes.",
   "original_owner": {
-    "command": "python3 tests/tooling/microphysics/test_microphysics_coupling.py",
-    "passed": 34,
+    "command": "python3 -m unittest discover -s tests/tooling/microphysics -p test_microphysics_coupling.py -v",
+    "passed": 41,
     "skipped": 0,
-    "seconds": 0.367,
+    "seconds": 0.609,
     "root_executed": true,
+    "old34_test_methods_byte_exact": true,
     "new_ctest_targets": 0,
     "new_workflows": 0
   },
@@ -22,7 +23,8 @@
     "leaf_levels",
     "physical_times_agree",
     "split_specification",
-    "original CoupledMicrophysicsTests class"
+    "original CoupledMicrophysicsTests class",
+    "all original 34 test methods"
   ],
   "coverage": [
     "Actual stored FP64 fields/units/publication/source identities/real leaf volumes and checkpoint pairing",
@@ -30,10 +32,12 @@
     "Actual existing nuclear mass energy conversion; gas+self-gravity endpoint energy minus nuclear change",
     "AMR partition changes allowed with identical source identity and proper species/measures",
     "CLI ledger plots must resolve to the actual audited run directory plot set; foreign identical publications rejected before reader",
-    "Missing fields, nonfinite data, wrong dtype/units/measure/source identity and CLI misuse rejected"
+    "Missing fields, nonfinite data, wrong dtype/units/measure/source identity and CLI misuse rejected",
+    "Actual stored finite FP64 momenta and positive Cartesian physical internal energy; no zero momentum fallback",
+    "Stored-field half-ULP sensitivity for gas/nuclear endpoint differences, including zero/subnormal/binade/maxfinite; fixed measures, no upstream error certificate"
   ],
   "limitations": [
-    "Synthetic small H5 publications and mocked external metrics producer are tooling semantics tests; real long coupled trajectory remains required",
+    "Original tooling includes synthetic fixtures; actual five-macro Cartesian fourmodule producer also passed formal metrics/publication/ledger; longrun remains required",
     "Observations only: no scientific qualification, strict upstream FP64 error certificate or inferred weak-gravity-work accuracy",
     "Native RZ and complete CUDA long coupled science not granted"
   ],
@@ -66,5 +70,463 @@
     "extra_rework": "Root integration plus one independently detected CLI association fix; no third worker attempt",
     "recommendation": "Retain bounded implementation delegation, narrow completion artifacts, require exact scoped source review; no general speedup inferred."
   },
-  "raw_data_tracked": false
+  "raw_data_tracked": false,
+  "history": [
+    {
+      "recorded_utc": "2026-10-10T00:54:08.199487+00:00",
+      "baseline_commit": "1dabd12a48837ce3aebae8b8a55671a19feb8dd4",
+      "source_sha256": {
+        "validation/gravity/curved/verify_coupled.py": "7908023100bff521ade339c329d16d5f370cca6b2a39b746a1ff27a6d4f754ca",
+        "tests/tooling/microphysics/test_microphysics_coupling.py": "6ab206a6049d2db3715dbdcd358eb54bc6bc5775350bd52ef172207162d2250e"
+      },
+      "original_owner": {
+        "command": "python3 tests/tooling/microphysics/test_microphysics_coupling.py",
+        "passed": 34,
+        "skipped": 0,
+        "seconds": 0.367,
+        "root_executed": true,
+        "new_ctest_targets": 0,
+        "new_workflows": 0
+      },
+      "scope": "Optional actual checkpoint/plot endpoint accounting for existing Cartesian periodic self-gravity plus active burn coupled run; no scientific acceptance thresholds or production algorithm changes."
+    }
+  ],
+  "delegation_followup": {
+    "logical_task_id": "o9-ledger-state-sensitivity-20261010",
+    "worker_seconds": 300.03,
+    "worker_timed_out": true,
+    "source_review": "Complete candidate independently accepted; original41tests run once by Root",
+    "known_scope_issue": "Worker ran standalone stub harnesses outside selected capsule despite no-tests/nooutsidewrites packet; attempted rm harness rejected. No actualARCH source/build/sim access observed in returned report; cannot treat its mock results as acceptance. Root will run actual original owner once.",
+    "tokens": null,
+    "estimated_cost_usd": null,
+    "parallel_overlap": "Root actualNative sourcebridge and liveCUDA compile; worker stub tests unrequested, no actualARCH numerical run observed",
+    "extra_rework": "Root review and realowner only; no formalrepair",
+    "recommendation": "Retain bounded source candidates; strengthen no-harness scope and stop after complete deliverable; do not count stub harness as acceptance"
+  },
+  "actual_producer": {
+    "utc": "2026-10-10T01:51:01.921393+00:00",
+    "status": "ORIGINAL_PUBLICATION_OWNER_AND_REAL_PRODUCER_LEDGER_PASS_LIMITED",
+    "freeze": {
+      "utc": "2026-10-10T01:47:10.580679+00:00",
+      "purpose": "Actual unchanged five-step Cartesian fourmodule AMR original producer publication and ledger after metadata correction; no longrun claim",
+      "source_input": "simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "source_sha256": "fffe60075b5610759d6388af904e69fe2f180a34886a4b6ad5d487ca70284d8a",
+      "input_sha256": "f6b0d16653bc0f06d7bd6853b2fb9f4363cfed05095119903134719321b66276",
+      "binary_sha256": "773684bccc61623bf5d87cbb42662e7317c21cc2eb3b248edf0a90679436bbd3",
+      "original_plt_variables_preserved": true,
+      "max_steps": 5,
+      "omp_threads": 8,
+      "actual_validation": "original plotfile_publication + actual checkpoint metrics + actual observational endpoint ledger",
+      "raw_upload": false
+    },
+    "original_plotfile_publication": {
+      "passed": 1,
+      "skipped": 0,
+      "seconds": 0.04,
+      "cpu_build_seconds": 59.011
+    },
+    "actual_producer": {
+      "exit": 0,
+      "steps": 5,
+      "time_seconds": 1.155519300300824e-11,
+      "wrapper_seconds": 5.088,
+      "initial_mixed_leaves": 13,
+      "topology_changes_including_initial": 1,
+      "later_topology_changes": 0,
+      "repairs": 0,
+      "gravity_solves": 17,
+      "maximum_residual_over_target": 0.26755378881762076,
+      "peak_owned_rss_kib": 65092,
+      "peak_process_fd": 5,
+      "sampling_complete": true,
+      "endpoints": [
+        {
+          "name": "CoupledProducerMetadata_HLLC_plt_0000.h5",
+          "bytes": 1002328,
+          "sha256": "d21854246b7498fb0cad2df7c124f811be73af506d7fc0d7ca4b693aef594c66"
+        },
+        {
+          "name": "CoupledProducerMetadata_HLLC_plt_0001.h5",
+          "bytes": 1002328,
+          "sha256": "41063b4b697a939c61ebb34fb4c0daade13458a5f8f002d818ea3e158e7c7ab9"
+        },
+        {
+          "name": "CoupledProducerMetadata_chk_0000.h5",
+          "bytes": 871112,
+          "sha256": "5e5f12c95fb8f8ecd144394cfc6904341d1c9f4edcbd9965ab25074980e640d6"
+        },
+        {
+          "name": "CoupledProducerMetadata_chk_0001.h5",
+          "bytes": 871112,
+          "sha256": "0d9bc5df0e0247a5a242dcf5f5172cbc420d45b5492531f6f34df8cad78951c3"
+        }
+      ],
+      "field_metadata": {
+        "GPOT": {
+          "averaging": "unknown",
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "gravitational_potential",
+          "metadata_version": "arch-field-1",
+          "unit": "cm^2/s^2"
+        },
+        "GACX": {
+          "averaging": "unknown",
+          "basis": "cartesian",
+          "centering": "cell",
+          "meaning": "gravitational_acceleration_component",
+          "metadata_version": "arch-field-1",
+          "unit": "cm/s^2"
+        },
+        "GACY": {
+          "averaging": "unknown",
+          "basis": "cartesian",
+          "centering": "cell",
+          "meaning": "gravitational_acceleration_component",
+          "metadata_version": "arch-field-1",
+          "unit": "cm/s^2"
+        }
+      },
+      "metadata_averaging": "unknown retained; this node does not assert potential/acceleration are volume averages"
+    },
+    "observational_ledger": {
+      "absolute_terms": {
+        "delta_egas": 3.264698285555712e+16,
+        "delta_w": 0.6821766845336299,
+        "q": 3.264626760858814e+16,
+        "total": 6.5293250464145256e+16
+      },
+      "delta_charge": 3.9809581577293377e-10,
+      "delta_egas": 3.264698285555712e+16,
+      "delta_mass": 3.637978807091713e-12,
+      "delta_w": 0.6821766845336299,
+      "namespace": "observations_only",
+      "q": 3.264626760858814e+16,
+      "q_over_egas": "1.6313401854543962238e-08",
+      "q_over_sensitivity": "1.9509683573916987383e+04",
+      "residual": 715246968981.666,
+      "roundoff": {
+        "absolute_term_sums": {
+          "delta_egas": 3.264698285555712e+16,
+          "delta_w": 0.6821766845336299,
+          "q": 3.264626760858814e+16,
+          "total": 6.5293250464145256e+16
+        },
+        "input_machine_eps": 2.220446049250313e-16,
+        "longdouble_machine_eps": 1.0842021724855044e-19,
+        "longdouble_precision_bits": 64,
+        "note": "roundoff diagnostics only; no strict certificate and no recovered upstream precision is claimed"
+      },
+      "scales": {
+        "energy": 2.0011931232782567e+24,
+        "mass": 10031038.004180143,
+        "q": 3.264626760858814e+16,
+        "w": 42.89990141125658
+      },
+      "scientific_qualified": false,
+      "sensitivity": {
+        "basis": "stored_field_half_ulp",
+        "delta_egas": "2.86523392e+08",
+        "note": "stored-field perturbation only: each stored binary64 field is perturbed by its cell half-ULP (conservative binade spacing) against the fixed stored measures; this excludes upstream PDE/ODE, volume uncertainty, algorithm error and longdouble summation, is not scientific qualified and not a pass/fail gate, and cannot recover FP64 upstream precision",
+        "q": "1.673336601534316974e+12",
+        "ratio_state": "reported"
+      },
+      "species_mass_change": [
+        0.029068621520819772,
+        -0.17441156466520624,
+        -0.00046819380349916173,
+        0.1450512458798674,
+        0.0003506439767962711,
+        0.00040922780016123715,
+        2.008725234886577e-08,
+        3.192922990857087e-19,
+        6.637813880642707e-25,
+        1.3620176566706532e-29,
+        1.184893731545248e-28,
+        1.2392511782956332e-28,
+        5.761149798442202e-29
+      ],
+      "uncertainty": "longdouble summation reduces only postprocessing rounding; upstream FP64 and discretization uncertainty requires frozen reference/time-space control",
+      "w_after": -42.21772472672295,
+      "w_before": -42.89990141125658
+    },
+    "source_sha256": {
+      "src/io/plot/PlotIO.cpp": "c0923198e8b19c2e22bf34ad3543a50532062cc2a8e76a2bc7459db1ee2867d5",
+      "src/io/plot/PlotFieldMetadata.h": "e36eb3eb0a9715f6cca3efa687ee3f4f99cb640da4ebd11088482df787a13207",
+      "tests/host/io/test_plotfile_publication.cpp": "b61783828a44d2504e075b3be50e7a72692e6e6e1aa90f81745d28482d6082fb"
+    },
+    "scientific_qualified": false,
+    "scope": "Actual short producer publication/units and endpoint reader; not durability, repeated AMR, final current complete CPU/GPU or UI qualification",
+    "raw_upload": false,
+    "retention": "Successful initial plot/checkpoint raw already cleaned after receipts; final plot retained for pending native Viewer interaction, with raw SHA and exact isolated Host/client readback recorded. No raw upload.",
+    "isolated_host_client_reader": {
+      "status": "PASS_ACTUAL_PRODUCER_ISOLATED_HOST_AND_SHARED_CLIENT_CONTRACT_LIMITED",
+      "fileSha256": "41063b4b697a939c61ebb34fb4c0daade13458a5f8f002d818ea3e158e7c7ab9",
+      "producerBinarySha256": "773684bccc61623bf5d87cbb42662e7317c21cc2eb3b248edf0a90679436bbd3",
+      "caseId": "SNIaCoupled",
+      "completion": {
+        "state": "complete",
+        "reason": "Recognized checked-close atomic publication with validated scoped runtime provenance."
+      },
+      "renderEligible": true,
+      "dimension": 2,
+      "blocks": 13,
+      "cells": 3328,
+      "rows": [
+        {
+          "field": "GPOT",
+          "unit": "cm^2/s^2",
+          "declaration": {
+            "version": "arch-field-1",
+            "unit": "cm^2/s^2",
+            "centering": "cell",
+            "basis": "scalar",
+            "meaning": "gravitational_potential",
+            "unitReason": null
+          },
+          "sliceAndNativePointStoredFp64Exact": true,
+          "overviewAccepted": true,
+          "overviewScannedCells": 3328
+        },
+        {
+          "field": "GACX",
+          "unit": "cm/s^2",
+          "declaration": {
+            "version": "arch-field-1",
+            "unit": "cm/s^2",
+            "centering": "cell",
+            "basis": "cartesian",
+            "meaning": "gravitational_acceleration_component",
+            "unitReason": null
+          },
+          "sliceAndNativePointStoredFp64Exact": true,
+          "overviewAccepted": true,
+          "overviewScannedCells": 3328
+        },
+        {
+          "field": "GACY",
+          "unit": "cm/s^2",
+          "declaration": {
+            "version": "arch-field-1",
+            "unit": "cm/s^2",
+            "centering": "cell",
+            "basis": "cartesian",
+            "meaning": "gravitational_acceleration_component",
+            "unitReason": null
+          },
+          "sliceAndNativePointStoredFp64Exact": true,
+          "overviewAccepted": true,
+          "overviewScannedCells": 3328
+        }
+      ],
+      "rawUnchanged": true,
+      "elapsedMs": 2750.335259,
+      "node": "v24.21.0",
+      "scope": "Actual frozen short producer → isolated Host reader → shared client metadata/slice/native-point/overview validators. No native window rendering, longrun/repeatedAMR or final fullrelease grant.",
+      "rawUpload": false
+    }
+  },
+  "long_trajectory_observations_20261010": {
+    "recorded_utc": "2026-10-10T07:14:19.214755+00:00",
+    "status": "CARTESIAN_LONG_CONTROL_RESTART_ACTIVITY_AND_SUPPLEMENT_REPEATED_AMR_CHECKS_ACCEPTED_NATIVE_RZ_PENDING",
+    "scope": "Actual main/control/restart terminal observations under frozen original CPU identity. No new reference or field budget.",
+    "cpu_elf_sha256": "2d209aea6b67844966a2b8524c4b937fded89ebe85cd761f584842763efafc02",
+    "geometry": "Cartesian2D; active-coordinate product measure, energy quantities per unit transverse length",
+    "main": {
+      "steps": 3997,
+      "physical_endpoint": 1e-08,
+      "seconds": 3190.158,
+      "input_sha256": "7ea14396e2b9b57f2b0ca6cdea3d33607d048d28c445a96ebeb0e6418ea9a00f",
+      "gates": {
+        "mass_relative": {
+          "observed": 9.121206295921582e-17,
+          "limit": 1e-12,
+          "passed": true
+        },
+        "charge_over_mass": {
+          "observed": 3.726575193971467e-17,
+          "limit": 1e-12,
+          "passed": true
+        },
+        "residual_over_egas": {
+          "observed": 4.741163769378752e-13,
+          "limit": 1e-08,
+          "passed": true
+        },
+        "residual_absolute": {
+          "observed": 948799168993.375,
+          "allowance": 1586306799488845.8,
+          "rule": "abs(R) <= 0.001*abs(Q) + U_Q + U_E",
+          "passed": true
+        },
+        "nuclear_signal_over_stored_sensitivity": {
+          "observed": 959179.5127711446,
+          "minimum": 100,
+          "passed": true
+        }
+      },
+      "postinit_amr_changes": 1,
+      "minimum_postinit_amr_changes": 2,
+      "repeated_amr": "FAIL",
+      "diffusion_activity": "NOT_OBSERVED"
+    },
+    "half_cfl": {
+      "steps": 7988,
+      "physical_endpoint": 1e-08,
+      "seconds": 6367.108,
+      "input_sha256": "f414aed4599cae27d9a7ba0325fe3621cdc57716d4f16a206b7141e0be6a03da",
+      "state_repairs": 0,
+      "poisson": {
+        "gravity_solves": 23966,
+        "maximum_iterations": 8,
+        "maximum_residual_over_target": 0.4989901560992592
+      },
+      "q": 1.5847468473917934e+18,
+      "q_main_relative_difference": 5.832128363925045e-05,
+      "original_q_difference_limit": 0.01,
+      "q_control": "PASS",
+      "diffusion_activity": {
+        "accepted_halves": 15976,
+        "accepted_macros": 7988,
+        "cell_visits": 65382400,
+        "signed_endpoint_redistribution": -864616448,
+        "absolute_endpoint_redistribution": 1.5364937538192042e+21,
+        "interpretation": "Sum over accepted thermal-only half endpoints; not cumulative heat flux or ENUC*dt; observed only for half-CFL lane."
+      },
+      "same_native_leaf_keys": true,
+      "field_difference_observations_only": {
+        "DENS": {
+          "normalized_l1_mean": "6.660329668867668858e-05",
+          "normalized_linf": "4.2345556601769562374e-04"
+        },
+        "TEMP": {
+          "normalized_l1_mean": "2.7506322362057531586e-05",
+          "normalized_linf": "9.161807157656063235e-05"
+        },
+        "ENER": {
+          "normalized_l1_mean": "9.864991097046688741e-05",
+          "normalized_linf": "5.911903941902430781e-04"
+        }
+      },
+      "specific_internal_energy_normalized_linf": "1.500517922547417415e-04",
+      "maximum_species_absolute_linf": {
+        "species": "c12",
+        "value": 8.209592117225384e-09
+      },
+      "field_difference_acceptance_limit": null,
+      "resource_observations": {
+        "samples": 632,
+        "rss_peak_kib": 72408,
+        "rss_last_quarter_range_kib": [
+          38872,
+          39128
+        ],
+        "fd_range": [
+          5,
+          5
+        ],
+        "leak_freedom_proven": false,
+        "formal_benchmark": false
+      },
+      "processed_identity": {
+        "terminal.receipt.json": "bc97da28eb329e06a5738aacc86691fea6b71a8889e0d288c6cc1fabe06b5320",
+        "resources.json": "17c285cbe0b7c0c34e40b004a4f381bc8e91e60abff08ac5572df0d1f20c8187",
+        "field-observations.json": "1e792293a5ed4f5172fcc7126542628284449dd0aec1014ca845c5986d200249",
+        "endpoint.json": "9696c9d56dbe12fe54214868ef0eb02ff1bfcc9cac994dabf389694c8ac84877",
+        "activity-and-q.receipt.json": "f54fe7204cf99baaf26f1ec8607351eef8a01c482f028146ed15df85d063a962"
+      }
+    },
+    "restart": {
+      "status": "PASS_ALL_DATASET_NAMES_DTYPES_SHAPES_BITS_AND_ROOT_ATTRIBUTES",
+      "datasets": 21,
+      "root_attribute_names_exact": true,
+      "receipt_sha256": "819fa1eebcfd4cbd528b14baccccc2ff6b3b7b1c7e035e196f4013a98e852d50"
+    },
+    "level2_pilot": {
+      "status": "SHORT_DIAGNOSTIC_ONLY",
+      "steps": 64,
+      "physical_endpoint": 7.306583777318081e-11,
+      "postinit_amr_changes": 1,
+      "receipt_sha256": "53dccd063d4dc503e5d631c250428f28ee8b2ae788e83254663e9bcead933bb4"
+    },
+    "supplement": {
+      "status": "PASS_SELECTED_FROZEN_L2_SUPPLEMENT_GATES",
+      "physical_endpoint": 1e-09,
+      "level_max": 2,
+      "input_sha256": "11401c3bca545ec75b8ba4308ad5abc0ab640667258f01a622975e8046f4edbf",
+      "original_main_fail_retained": true,
+      "new_thresholds": false,
+      "steps": 811,
+      "seconds": 2642.514,
+      "postinit_amr_changes": 3,
+      "minimum_postinit_amr_changes": 2,
+      "gates": {
+        "mass_relative": {
+          "observed": 7.053974650325041e-17,
+          "limit": 1e-12,
+          "passed": true
+        },
+        "charge_over_mass": {
+          "observed": 2.454509008318072e-17,
+          "limit": 1e-12,
+          "passed": true
+        },
+        "residual_over_egas": {
+          "observed": 2.360075566837922e-13,
+          "limit": 1e-08,
+          "passed": true
+        },
+        "residual_absolute": {
+          "observed": 472296779303.4375,
+          "allowance": 372515956522707.1,
+          "rule": "abs(R) <= 0.001*abs(Q) + U_Q + U_E",
+          "passed": true
+        },
+        "nuclear_signal_over_stored_sensitivity": {
+          "observed": 227153.82589152016,
+          "minimum": 100,
+          "passed": true
+        }
+      },
+      "poisson": {
+        "solves": 2435,
+        "maximum_residual_over_target": 0.49996354030965684,
+        "frozen_maximum": 1,
+        "maximum_iterations": 9,
+        "passed": true
+      },
+      "state_repairs": 0,
+      "thermal_activity": {
+        "accepted_halves": 1622,
+        "accepted_macros": 811,
+        "cell_visits": 26101760,
+        "absolute_endpoint_redistribution": "284731546771509362688",
+        "interpretation": "Actual accepted thermal-only half endpoints; not cumulative heat flux."
+      },
+      "resource_observations": {
+        "samples": 263,
+        "peak_rss_kib": 197884,
+        "second_half_rss_range_kib": [
+          194940,
+          194940
+        ],
+        "fd_range": [
+          5,
+          5
+        ],
+        "swap_growth_mib": 49.1015625,
+        "formal_benchmark": false,
+        "leak_freedom_proven": false
+      },
+      "processed_identity": {
+        "endpoint.json": "2451f177a122ce1f85a72ba335f590a561f83a8cf28b808fd6e24a30d3921d09",
+        "terminal.receipt.json": "fa0f394303c802d7aac969075a6c6a95464e5c705c260632b7b69bcf40259273",
+        "resources.json": "ec0bc4ac6ff20cfe1496478b19261fd256e73a1c1bf0c3fb89e213f23cef459e",
+        "root-review.json": "e2a7293025cf66cce85aa00fc2ec096282ced68824e76fa10628253d81e54370"
+      },
+      "raw_data_tracked": false
+    },
+    "o9_fully_accepted": false,
+    "raw_data_tracked": false
+  }
 }

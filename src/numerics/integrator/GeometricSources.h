@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 #include "data/FluidState.h"
 #include "grid/GridMetrics.h"
@@ -56,26 +57,22 @@ ARCH_HOST_DEVICE inline void add_rz_geometric_source_cell(
         pressure,inverse_radius,dt,delta.mom_u,nullptr);
 }
 
-/** Integrate the RZ radial source using the same conservative point profile.
- * S_r V = 2*pi*dz*integral(P+rho*u_phi^2) dr: the radial Jacobian cancels
- * the curvature 1/r before quadrature, including the native axis cell.
- * A bad required stencil or thermodynamic state rejects the stage. The caller
- * owns composition scratch and commits the result only after this leaf passes.
+namespace detail {
+/** Evaluate one complete RZ source profile without publishing a partial result.
+ * Workflow: recover the four quadrature states and their unchanged fractions,
+ * require positive finite EOS pressures, then use the shared cylindrical source
+ * formula. A failed node leaves the caller's accepted integral untouched.
  */
 template<class StateReader,class FractionReader,class EosType>
-ARCH_INLINE bool add_rz_integrated_geometric_source(
+ARCH_INLINE bool rz_source_profile_integral(
     const StateReader& read,const FractionReader& fraction,int index,int species,
-    const EosType& eos,const GridMetrics::GeometryView& grid,int i,double dt,
-    double* composition,FluidVector& delta)
+    const EosType& eos,const RzReconstruction::RadialCell& cell,
+    const RzReconstruction::LimitedProfile& profile,double inverse_radius,
+    double dt,double* composition,double& accepted_integral)
 {
-    const auto cell=RzReconstruction::radial_cell(grid,i);
-    const auto closure=RzThermodynamics::make_cell(read,index,grid,i);
-    const auto profile=RzReconstruction::limited_profile(read,fraction,index,species,cell,closure);
-    if(!profile.valid)return false;
-    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
     FluidVector integral{};
     for(int n=0;n<4;++n) {
-        const double radius=RzReconstruction::certified_node_radius(n+2,closure);
+        const double radius=RzReconstruction::certified_node_radius(n+2,profile.baseline);
         const auto point=profile.at(radius);
         for(int k=0;k<species;++k)
             composition[k]=RzReconstruction::limited_fraction(read,fraction,index,k,
@@ -85,11 +82,82 @@ ARCH_INLINE bool add_rz_integrated_geometric_source(
         const double pressure=eos.get_pressure(point,composition);
         if(!std::isfinite(pressure)||!(pressure>0.))return false;
         add_cylindrical_momentum_sources(point.rho,point.mom_u/point.rho,
-            point.mom_w/point.rho,pressure,2./(left+right),
+            point.mom_w/point.rho,pressure,inverse_radius,
             .5*dt*RzReconstruction::quadrature_weight(n),integral.mom_u,nullptr);
     }
     if(!std::isfinite(integral.mom_u))return false;
-    delta.mom_u+=integral.mom_u;
+    accepted_integral=integral.mom_u;
+    return true;
+}
+
+/** Optional high-profile EOS rejection contracts the existing conservative ray.
+ * The checked device view suppresses only the optional trial's required-state
+ * latch. Host EOS domain exceptions reject that trial; required baseline EOS
+ * queries bypass this wrapper and retain their normal failure behaviour.
+ */
+template<class StateReader,class FractionReader,class EosType>
+ARCH_INLINE bool rz_source_profile_trial(
+    const StateReader& read,const FractionReader& fraction,int index,int species,
+    const EosType& eos,const RzReconstruction::RadialCell& cell,
+    const RzReconstruction::LimitedProfile& profile,double inverse_radius,
+    double dt,double* composition,double& accepted_integral)
+{
+    const auto& trial_eos=arch::state::candidate_eos(eos);
+#if defined(__CUDA_ARCH__)
+    return rz_source_profile_integral(read,fraction,index,species,trial_eos,cell,
+        profile,inverse_radius,dt,composition,accepted_integral);
+#else
+    try {
+        return rz_source_profile_integral(read,fraction,index,species,trial_eos,cell,
+            profile,inverse_radius,dt,composition,accepted_integral);
+    } catch(const std::runtime_error&) {return false;}
+#endif
+}
+} // namespace detail
+
+/** Integrate the RZ radial source using the same conservative point profile.
+ * S_r V = 2*pi*dz*integral(P+rho*u_phi^2) dr: the radial Jacobian cancels
+ * the curvature 1/r before quadrature, including the native axis cell.
+ * Workflow: certify the existing conservative ray, evaluate its four EOS nodes,
+ * and, only if the optional high profile fails, require the true baseline and
+ * contract one theta for all conserved fields and fractions. The existing finite
+ * dyadic ladder ends at the explicit theta=0 baseline; it is not a maximal-theta
+ * search or an energy repair. A bad required stencil or used baseline rejects
+ * the stage. The caller owns scratch and receives only the complete integral.
+ */
+template<class StateReader,class FractionReader,class EosType>
+ARCH_INLINE bool add_rz_integrated_geometric_source(
+    const StateReader& read,const FractionReader& fraction,int index,int species,
+    const EosType& eos,const GridMetrics::GeometryView& grid,int i,double dt,
+    double* composition,FluidVector& delta)
+{
+    const auto cell=RzReconstruction::radial_cell(grid,i);
+    const auto closure=RzThermodynamics::make_cell(read,index,grid,i);
+    auto profile=RzReconstruction::limited_profile(read,fraction,index,species,cell,closure);
+    if(!profile.valid)return false;
+    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    const double inverse_radius=2./(left+right);
+    double integral=0.;
+    if(profile.theta==0.) {
+        if(!detail::rz_source_profile_integral(read,fraction,index,species,eos,cell,
+            profile,inverse_radius,dt,composition,integral))return false;
+    } else if(!detail::rz_source_profile_trial(read,fraction,index,species,eos,cell,
+        profile,inverse_radius,dt,composition,integral)) {
+        const double initial_theta=profile.theta;
+        profile.theta=0.;
+        if(!detail::rz_source_profile_integral(read,fraction,index,species,eos,cell,
+            profile,inverse_radius,dt,composition,integral))return false;
+        // Keep the certified baseline integral unless a whole contracted trial
+        // succeeds. The same theta applies to U and every rho*X polynomial.
+        for(int trial=1;trial<=RzReconstruction::high_profile_halving_limit;++trial) {
+            profile.theta=std::ldexp(initial_theta,-trial);
+            if(RzReconstruction::ray_nodes_valid(read,fraction,index,species,cell,
+                closure,arch::state::Bounds{},profile)
+                &&detail::rz_source_profile_trial(read,fraction,index,species,eos,
+                    cell,profile,inverse_radius,dt,composition,integral))break;
+        }
+    }
+    delta.mom_u+=integral;
     return true;
 }
 

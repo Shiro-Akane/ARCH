@@ -243,16 +243,25 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
         || !(dt > 0.0) || !(dt_fe > 0.0))
         throw std::invalid_argument("invalid diffusion stage contract");
     if (currents.empty()) return expected;
+    // Repair rows retain the actual batch's conservation measure even when
+    // no correction occurs. Native J/W receipts cannot merge with
+    // ordinary volume-weighted receipts; authenticate every chart before resetting either owner.
+    const auto semantics = impl_->require_block(currents.front()).grid.semantics;
+    for (const auto current : currents)
+        if (impl_->require_block(current).grid.semantics != semantics)
+            throw std::invalid_argument("Diffusion batch mixes actual geometry semantics");
+    const auto repairs_profile = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+        ? state::RepairSemantics::RzVolumeAngular : state::RepairSemantics::ExistingVolume;
     impl_->select_device();
     auto& scratch = impl_->diffusion_batch;
     scratch.ensure_capacity(currents.size());
     const int species_count = impl_->species_view.count;
     const int repair_stride = state::RepairView::fixed_size + 2 * species_count;
     scratch.ensure_repairs(currents.size(), species_count);
-    stage_repairs.reset(species_count);
+    stage_repairs.reset(species_count, repairs_profile);
     // A descriptor may omit reflux; never let an earlier stage's receipt
     // become part of this stage's acceptance/accounting callback.
-    reflux_repairs.reset(species_count);
+    reflux_repairs.reset(species_count, repairs_profile);
     std::vector<DeviceDiffusionBatchBlock> bindings;
     bindings.reserve(currents.size());
     impl_->diffusion_bindings.reserve(currents.size());
@@ -286,7 +295,7 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
         binding.bounds = {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
             impl_->launch.maximum_internal_energy};
         binding.routes = make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block);
-        binding.repairs = {scratch.repairs->get() + index * repair_stride, species_count};
+        binding.repairs = {scratch.repairs->get() + index * repair_stride, species_count, repairs_profile};
         bindings.push_back(binding);
     }
     CudaQuiescenceGuard work_guard{*impl_};
@@ -320,7 +329,7 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
             throw std::runtime_error("diffusion stage failed: block="
                 + std::to_string(currents[index].block.uid.value));
     for (std::size_t index = 0; index < currents.size(); ++index) {
-        state::RepairBudget report(species_count);
+        state::RepairBudget report(species_count, repairs_profile);
         std::copy_n(scratch.host_repairs.data() + index * repair_stride,
             repair_stride, report.values.data());
         report.block_uid = currents[index].block.uid.value;

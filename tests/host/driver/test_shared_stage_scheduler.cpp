@@ -2420,10 +2420,11 @@ void test_production_lane_fingerprints_and_authority_absence()
 
     const std::string driver_loop = read_source("src/driver/Driver.h");
     const std::string stage_work = read_source("src/driver/stages/DriverStages.h");
+    const std::string driver_runtime = read_source("src/driver/runtime/DriverRuntime.cpp");
+    const std::string driver_regrid = read_source("src/driver/runtime/DriverRegrid.cpp");
     const std::string driver = driver_loop + read_source("src/driver/runtime/DriverRuntime.h")
-        + read_source("src/driver/runtime/DriverRuntime.cpp")
-        + read_source("src/driver/runtime/DriverBoundary.cpp")
-        + read_source("src/driver/runtime/DriverRegrid.cpp");
+        + driver_runtime + read_source("src/driver/runtime/DriverBoundary.cpp")
+        + driver_regrid;
     const std::string macro = read_source("src/driver/stages/DriverMacroStep.h");
     const auto first_seam = macro.find("execute_burn_first_lane(");
     const auto second_seam = macro.find("execute_burn_second_lane(");
@@ -2455,21 +2456,65 @@ void test_production_lane_fingerprints_and_authority_absence()
                               "MonotonicSchedulerClock scheduler_clock;")
                == 1,
            "Driver owns one run-persistent scheduler clock");
-    expect(source_occurrences(driver, "register_block(") == 3,
-           "Driver registers initial Host, regridded Host and staged Device authority");
-    expect(source_occurrences(driver, "initial_witness.completion") == 1
-               && source_occurrences(driver,
-                                     "topology_witness.completion") == 3,
-           "each regrid authority fans out its batch token; Device also publishes migrated ghosts");
-    const auto migration_complete = driver.find("prepared.CompleteDeviceMigration()");
-    const auto device_registration = driver.find("payload.ledger->register_block(");
-    const auto device_ghost = driver.find("payload.ledger->publish_ghost(");
-    const auto ready = driver.find("transaction.mark_ready()", device_ghost);
-    expect(migration_complete < device_registration && device_registration < device_ghost
-               && device_ghost < ready && ready != std::string::npos
-               && driver.find("payload.topology_witness.completion, ExecutionSide::Device)")
-                      != std::string::npos,
-           "completed device migration publishes Device interiors/ghosts before transactional commit");
+    const auto host_ledger_begin = driver_regrid.find("const auto make_regrid_ledger =");
+    const auto host_ledger_end = driver_regrid.find(
+        "topology_registry.validate_committed_snapshot(", host_ledger_begin);
+    expect(host_ledger_begin != std::string::npos && host_ledger_end != std::string::npos,
+           "Host regrid registration owner remains discoverable");
+    const auto host_ledger = driver_regrid.substr(host_ledger_begin, host_ledger_end - host_ledger_begin);
+    expect(source_occurrences(driver_runtime, "register_block(") == 1
+               && source_occurrences(driver_runtime, "initial_witness.completion") == 1
+               && source_occurrences(host_ledger, "ledger->register_block(") == 1
+               && source_occurrences(host_ledger, "topology_witness.completion") == 1,
+           "initial and regridded Host authority each fan out one actual batch witness");
+
+    // Native registers completed migrated interiors in a PRIVATE ledger before
+    // its real boundary/EOS callback; ordinary migration registers both states
+    // only after its own ghost completion. Do not conflate their first matches.
+    const auto migration = driver_regrid.find("compute_backend->migrate_staged_current(");
+    const auto native_begin = driver_regrid.find("if (native_staged) {", migration);
+    const auto ordinary_completion = driver_regrid.find(
+        "} else {\n                compute_backend->complete_staged_current_ghosts(", native_begin);
+    const auto migration_complete = driver_regrid.find("prepared.CompleteDeviceMigration()", ordinary_completion);
+    const auto ordinary_begin = driver_regrid.find("if (!native_staged) {", migration_complete);
+    const auto ready = driver_regrid.find("transaction.mark_ready()", ordinary_begin);
+    expect(migration != std::string::npos && native_begin != std::string::npos
+               && ordinary_completion != std::string::npos && migration_complete != std::string::npos
+               && ordinary_begin != std::string::npos && ready != std::string::npos
+               && migration < native_begin && native_begin < ordinary_completion
+               && ordinary_completion < migration_complete && migration_complete < ordinary_begin
+               && ordinary_begin < ready,
+           "Native and ordinary staged completion owners precede one transactional readiness gate");
+    const auto native_device = driver_regrid.substr(native_begin, ordinary_completion - native_begin);
+    const auto ordinary_device = driver_regrid.substr(ordinary_begin, ready - ordinary_begin);
+    const auto native_registration = native_device.find("payload.ledger->register_block(");
+    const auto native_binding = native_device.find("bind_native_boundary_acceptance(staged_context");
+    const auto native_completion = native_device.find("compute_backend->complete_staged_current_ghosts(");
+    const auto native_boundary = native_device.find("scheduler::complete_boundary(staged_context");
+    const auto native_execution = native_device.find("execute_device_boundary_domain(", native_boundary);
+    const auto native_readable = native_device.find("staged_ledger->require_readable({handle,StateSlot::Current}", native_execution);
+    expect(source_occurrences(native_device, "payload.ledger->register_block(") == 1
+               && native_device.find("payload.topology_witness.completion, ExecutionSide::Device)") != std::string::npos
+               && native_device.find("const auto migrated = payload.topology_witness;") != std::string::npos
+               && native_binding != std::string::npos && native_completion != std::string::npos
+               && native_boundary != std::string::npos && native_execution != std::string::npos
+               && native_readable != std::string::npos
+               && native_registration < native_binding && native_binding < native_completion
+               && native_completion < native_boundary && native_boundary < native_execution
+               && native_execution < native_readable
+               && native_device.find("residency_ledger.get() == staged_ledger") != std::string::npos
+               && native_device.find("publish_ghost(") == std::string::npos,
+           "Native staged Device ledger publishes ghosts only through real boundary/EOS completion before readiness");
+    const auto ordinary_registration = ordinary_device.find("payload.ledger->register_block(");
+    const auto ordinary_ghost = ordinary_device.find("payload.ledger->publish_ghost(");
+    expect(source_occurrences(ordinary_device, "payload.ledger->register_block(") == 1
+               && source_occurrences(ordinary_device, "payload.ledger->publish_ghost(") == 1
+               && ordinary_registration < ordinary_ghost
+               && ordinary_device.find("payload.topology_witness.completion, ExecutionSide::Device)") != std::string::npos
+               && ordinary_device.find("ExecutionSide::Device, payload.topology_witness.version,") != std::string::npos
+               && ordinary_device.find("payload.topology_witness.completion);", ordinary_ghost) != std::string::npos
+               && source_occurrences(driver_regrid, "register_block(") == 3,
+           "ordinary completed Device migration registers interiors then migrated ghosts with the same witness");
     expect(driver.find("handle.uid.value") == std::string::npos,
            "registration batch witnesses never depend on handle identity");
     expect(driver.find("scheduler_clock =") == std::string::npos,

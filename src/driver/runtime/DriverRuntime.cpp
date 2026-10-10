@@ -7,7 +7,8 @@
  * 2. Stage topology/ledger identity before real physical BC and halo exchange.
  * 3. For native RZ, preflight the actual domain and validate the shared
  *    thermodynamic closure through its selected Host/Device EOS before ghosts.
- * 4. Publish completed topology/state identities to the next scheduled stage.
+ * 4. Bootstrap the actual resident AMR flux/reflux chart, including native
+ *    angular transport, before publishing it to the next numerical stage.
  */
 
 #include <algorithm>
@@ -116,10 +117,17 @@ int DriverRuntime::native_rz_species_count() const { return specs.count(); }
  * ledger; neither is substituted with the accepted Runtime ledger.
  */
 void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& context,
-    std::span<const amr::BlockHandle> handles)
+    std::span<const amr::BlockHandle> handles,
+    backend::BackendTopologyStoreTransaction* staged,
+    std::span<const backend::StorageGeneration> staged_storage)
 {
-    if (geometry_semantics_ != GridMetrics::GeometrySemantics::AxisymmetricRz)
+    if (!staged && !staged_storage.empty())
+        throw std::logic_error("Native boundary storage requires its explicit staged store");
+    if (geometry_semantics_ != GridMetrics::GeometrySemantics::AxisymmetricRz) {
+        if (staged)
+            throw std::logic_error("Staged boundary acceptance requires Native RZ geometry");
         return;
+    }
     if (!native_rz_eos_acceptance_)
         throw std::logic_error("Native RZ boundary acceptance requires an explicitly bound EOS");
     const auto side = context.side;
@@ -137,15 +145,19 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
     const bool committed_domain = ledger == residency_ledger.get();
     if (committed_domain)
         topology_registry.validate_committed_snapshot(observe_topology());
-    // Device EOS observes only the actual committed store. Initial/regrid Host
-    // candidates keep their original replacement ledger and full Host gate.
-    if (side == ExecutionSide::Device
+    // A staged Device gate retains its replacement ledger and exact store.
+    // Initial/regrid Host candidates retain their original full Host gate.
+    if (staged && (side != ExecutionSide::Device || committed_domain
+        || staged_storage.size() != handles.size()))
+        throw std::logic_error("Native staged EOS boundary requires its replacement Device domain");
+    if (!staged && side == ExecutionSide::Device
         && (!committed_domain || handles.data() != stage_handles.data()
             || handles.size() != stage_handles.size()
             || backend_storage.size() != handles.size()))
         throw std::logic_error("Native Device EOS boundary requires the complete committed domain");
-    const std::vector<backend::StorageGeneration> frozen_storage = backend_owner
-        ? backend_storage : std::vector<backend::StorageGeneration>{};
+    const std::vector<backend::StorageGeneration> frozen_storage = staged
+        ? std::vector<backend::StorageGeneration>(staged_storage.begin(), staged_storage.end())
+        : backend_owner ? backend_storage : std::vector<backend::StorageGeneration>{};
     const auto epoch = ledger->active_epoch();
     const int species = specs.count();
     std::vector<amr::BlockHandle> frozen_handles(handles.begin(), handles.end());
@@ -165,7 +177,10 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
         patches.push_back(native_boundary_patch(active[index], block));
         if (backend_owner) {
             (void)GridMetrics::make_geometry_view(block.grid, geometry_semantics_);
-            if (!backend_owner->contains({handles[index], frozen_storage[index], StateSlot::Current}))
+            const backend::BackendStateAccess access{
+                handles[index], frozen_storage[index], StateSlot::Current};
+            if (!(staged ? backend_owner->contains(*staged, access)
+                         : backend_owner->contains(access)))
                 throw std::logic_error("Native Device EOS boundary actual storage is unavailable");
         }
     }
@@ -177,10 +192,12 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
     if (!eos_binding || !native_rz_eos_binding_matches(*eos_binding))
         throw std::logic_error("Native RZ EOS boundary binding is stale");
     context.post_boundary_acceptance = [this, ledger, committed_domain, epoch, species, pool, tree,
-        side, backend_owner, frozen_storage,
+        side, backend_owner, staged, staged_storage, frozen_storage,
         handles, frozen_handles = std::move(frozen_handles), patches = std::move(patches),
         boundary_snapshot, eos_acceptance, eos_binding](const StageExecutionContext& actual,
             StateSlot slot, state::StateVersion version) {
+        if (staged && slot != StateSlot::Current)
+            throw std::logic_error("Native staged EOS boundary accepts Current only");
         const auto member = TimeIntegration::hydro_boundary_state_member(slot);
         std::vector<backend::BackendStateAccess> accesses;
         if (backend_owner) {
@@ -191,7 +208,10 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
         const auto require_frame = [&] {
             if (actual.side != side || compute_backend.get() != backend_owner
                 || (backend_owner && (backend_owner->side() != ExecutionSide::Device
-                    || backend_storage != frozen_storage))
+                    || (!staged && backend_storage != frozen_storage)))
+                || (staged && (residency_ledger.get() == ledger
+                    || staged_storage.size() != frozen_storage.size()
+                    || !std::equal(staged_storage.begin(), staged_storage.end(), frozen_storage.begin())))
                 || &actual.ledger != ledger || &actual.clock != &scheduler_clock
                 || (committed_domain && (residency_ledger.get() != ledger
                     || stage_handles.data() != handles.data()
@@ -228,7 +248,8 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
                     throw std::logic_error("Native RZ EOS boundary handle/pool correspondence changed");
                 if (backend_owner) {
                     (void)GridMetrics::make_geometry_view(block.grid, geometry_semantics_);
-                    if (!backend_owner->contains(accesses[index]))
+                    if (!(staged ? backend_owner->contains(*staged, accesses[index])
+                                 : backend_owner->contains(accesses[index])))
                         throw std::logic_error("Native Device EOS boundary storage lease changed");
                 } else {
                     require_native_boundary_layout(block.*member, block.grid, species);
@@ -238,9 +259,13 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
         require_frame();
         if (backend_owner) {
             // Read complete resident logical patches through the actual selected
-            // backend EOS. No Host U, materialization, floor or retry is used.
-            const auto rejected = backend_owner->validate_completed_native_eos_batch(
-                accesses, eos_binding->bounds);
+            // backend EOS. An eligible refusal is classified in the same
+            // resident namespace before rollback; no Host U is materialized.
+            const auto rejected = staged
+                ? backend_owner->validate_completed_native_eos_batch(*staged,
+                    accesses, eos_binding->bounds)
+                : backend_owner->validate_completed_native_eos_batch(
+                    accesses, eos_binding->bounds);
             require_frame();
             if (rejected) {
                 std::size_t index = 0;
@@ -252,11 +277,15 @@ void DriverRuntime::bind_native_boundary_acceptance(StageExecutionContext& conte
                 }
                 if (index == accesses.size())
                     throw std::logic_error("Native Device EOS refusal belongs to another domain");
-                throw NativeBoundaryAcceptanceError(
+                const NativeBoundaryAcceptanceError failure(
                     "Native Device completed boundary EOS rejected at cell "
                         + std::to_string(rejected->diagnostic.index),
                     patches[index].pool_index, frozen_handles[index], slot, version,
                     rejected->diagnostic);
+                if (!staged && committed_domain && native_macro_retry_attempt_
+                    && native_macro_retry_attempt_->half_ != 0)
+                    qualify_native_thermal_rejection(actual, failure, &*rejected);
+                throw failure;
             }
         } else for (std::size_t index=0;index<patches.size();++index) {
             const auto& patch=patches[index];
@@ -334,8 +363,9 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
     StageExecutionContext& context,std::uint64_t attempt,std::optional<scheduler::RklMethod> method,double dt_fe)
     :runtime_(runtime),context_(context),attempt_(attempt),start_(context.step_start_time),dt_(context.step_dt),
       dt_fe_(dt_fe),method_(method),numerics_(runtime.config.numerics),diffusion_(runtime.config.physics.diffusion),
-      eos_binding_(runtime.native_rz_eos_binding_),handles_(runtime.stage_handles) {
-    if(runtime.compute_backend||runtime.geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)return;
+      eos_binding_(runtime.native_rz_eos_binding_),handles_(runtime.stage_handles),side_(context.side),
+      backend_(runtime.compute_backend.get()),storage_(backend_?runtime.backend_storage:std::vector<backend::StorageGeneration>{}) {
+    if(runtime.geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)return;
     const auto& g=runtime.config.grid;
     if(runtime.bc_handler.has_user()||retry_user_word(runtime.config.physics.gravity.boundary)
         ||retry_user_word(g.x1l_boundary_type)||retry_user_word(g.x1r_boundary_type)
@@ -345,7 +375,11 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
     if(runtime.native_macro_retry_attempt_||runtime.runtime_state_transaction_||!attempt
         ||&binding.context!=&context||binding.handles.data()!=handles_.data()||binding.handles.size()!=handles_.size()
         ||&context.ledger!=runtime.residency_ledger.get()||&context.clock!=&runtime.scheduler_clock
-        ||context.side!=ExecutionSide::Host||!std::isfinite(start_)||!std::isfinite(dt_)||dt_<=0.
+        ||(side_==ExecutionSide::Host&&backend_)
+        ||(side_==ExecutionSide::Device&&(!backend_||backend_->side()!=ExecutionSide::Device
+            ||storage_.size()!=handles_.size()))
+        ||(side_!=ExecutionSide::Host&&side_!=ExecutionSide::Device)
+        ||!std::isfinite(start_)||!std::isfinite(dt_)||dt_<=0.
         ||!eos_binding_||!runtime.native_rz_eos_binding_matches(*eos_binding_)
         ||!context.post_boundary_acceptance||!context.configure_boundary_context)
         throw std::logic_error("Native retry requires its exact quiescent macro entry");
@@ -373,7 +407,8 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
         const auto& actual_binding=scheduler::current_stage_binding();
         if(&actual_binding.context!=&context||actual_binding.handles.data()!=handles_.data()
             ||actual_binding.handles.size()!=handles_.size()||runtime.runtime_state_transaction_
-            ||runtime.native_macro_retry_attempt_||runtime.compute_backend||context.side!=ExecutionSide::Host
+            ||runtime.native_macro_retry_attempt_||runtime.compute_backend.get()!=backend_||context.side!=side_
+            ||(backend_&&(backend_->side()!=ExecutionSide::Device||runtime.backend_storage!=storage_))
             ||&context.ledger!=runtime.residency_ledger.get()||&context.clock!=&runtime.scheduler_clock
             ||context.clock.last_token()!=entry_token||context.clock.last_version()!=entry_version
             ||!retry_same(context.step_start_time,start_)||!retry_same(context.step_dt,dt_)
@@ -392,16 +427,39 @@ NativeMacroRetryAttempt::NativeMacroRetryAttempt(DriverRuntime& runtime,
                 ||entry_handles[i]!=runtime.topology_registry.handle_for_pool(active[i]))
                 throw std::logic_error("Native retry entry grid/UID correspondence changed");
             const auto key=state::StateKey{handles_[i],StateSlot::Current};
-            context.ledger.require_readable(key,{ExecutionSide::Host,entry_versions[i],true,true});
+            context.ledger.require_readable(key,{side_,entry_versions[i],true,true});
             const auto coherence=context.ledger.inspect(key);
             if(coherence.interior.pending_transfer!=state::PendingTransferPhase::None
                 ||coherence.ghost.pending_transfer!=state::PendingTransferPhase::None)
                 throw std::logic_error("Native retry entry has a pending state transfer");
-            require_native_boundary_layout(block.fluid_state,block.grid,runtime.specs.count());
+            if(backend_) {
+                if(!backend_->contains({handles_[i],storage_[i],StateSlot::Current}))
+                    throw std::logic_error("Native retry entry resident storage changed");
+            } else require_native_boundary_layout(block.fluid_state,block.grid,runtime.specs.count());
         }
     };
     require_entry();
-    for(const int id:active) {
+    if(backend_) {
+        std::vector<backend::BackendStateAccess> accesses;
+        accesses.reserve(handles_.size());
+        for(std::size_t i=0;i<handles_.size();++i)
+            accesses.push_back({handles_[i],storage_[i],StateSlot::Current});
+        const auto rejected=backend_->validate_completed_native_eos_batch(accesses,eos_binding_->bounds);
+        require_entry();
+        if(rejected) {
+            std::size_t i=0;
+            for(;i<accesses.size();++i) {
+                const auto& access=accesses[i];
+                if(access.block==rejected->access.block&&access.storage==rejected->access.storage
+                    &&access.slot==rejected->access.slot)break;
+            }
+            if(i==accesses.size())
+                throw std::logic_error("Native retry entry EOS refusal belongs to another domain");
+            throw NativeBoundaryAcceptanceError("Native Device retry entry EOS rejected at cell "
+                +std::to_string(rejected->diagnostic.index),active[i],handles_[i],StateSlot::Current,
+                entry_versions[i],rejected->diagnostic);
+        }
+    } else for(const int id:active) {
         const auto& block=runtime.amr_ctrl.pool->GetBlock(id);
         runtime.native_rz_eos_acceptance_(block.fluid_state,block.grid);
     }
@@ -429,7 +487,7 @@ void NativeMacroRetryAttempt::begin_diffusion_half(int half,double interval) {
  * unrelated EOS/input/ghost failures remain fatal, never silently retried.
  */
 void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext& actual,
-    const NativeBoundaryAcceptanceError& error) {
+    const NativeBoundaryAcceptanceError& error,const backend::NativeEosFailure* resident_refusal) {
     auto& attempt=*native_macro_retry_attempt_;
     const auto* frame=scheduler::current_rkl_completed_boundary();
     const auto& d=error.diagnostic;
@@ -454,7 +512,10 @@ void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext
         ||frame->completion!=completion_before||!frame->completed||frame->context!=&actual||&actual!=&attempt.context_
         ||!runtime_state_transaction_||!attempt.enabled_||!attempt.method_||attempt.half_==0
         ||!attempt.eos_binding_||!native_rz_eos_binding_matches(*attempt.eos_binding_)
-        ||actual.side!=ExecutionSide::Host||compute_backend||&actual.ledger!=residency_ledger.get()
+        ||actual.side!=attempt.side_||compute_backend.get()!=attempt.backend_
+        ||(attempt.backend_&&(attempt.backend_->side()!=ExecutionSide::Device
+            ||backend_storage!=attempt.storage_||!resident_refusal))
+        ||(!attempt.backend_&&resident_refusal)||&actual.ledger!=residency_ledger.get()
         ||&actual.clock!=&scheduler_clock||frame->handles.data()!=stage_handles.data()
         ||frame->handles.size()!=stage_handles.size()||attempt.handles_.data()!=stage_handles.data()
         ||attempt.handles_.size()!=stage_handles.size()||frame->slot!=error.slot||frame->version!=error.version
@@ -506,9 +567,12 @@ void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext
         if(!native_boundary_patch_matches(patches_before[b],active_before[b],block)
             ||stage_handles[b]!=topology_registry.handle_for_pool(active_before[b]))
             throw std::logic_error("Native thermal refusal changed actual grid/UID correspondence");
-        require_native_boundary_layout(block.*input_member,block.grid,specs.count());
+        if(attempt.backend_) {
+            if(!attempt.backend_->contains({stage_handles[b],attempt.storage_[b],error.slot}))
+                throw std::logic_error("Native thermal refusal resident storage changed");
+        } else require_native_boundary_layout(block.*input_member,block.grid,specs.count());
         const auto key=state::StateKey{stage_handles[b],error.slot};
-        actual.ledger.require_readable(key,{ExecutionSide::Host,error.version,true,false});
+        actual.ledger.require_readable(key,{attempt.side_,error.version,true,false});
         const auto coherence=actual.ledger.inspect(key);
         if(coherence.interior.pending_transfer!=state::PendingTransferPhase::None
             ||coherence.ghost.pending_transfer!=state::PendingTransferPhase::None)
@@ -518,7 +582,48 @@ void DriverRuntime::qualify_native_thermal_rejection(const StageExecutionContext
     require_live_failure();
     const auto member=TimeIntegration::hydro_boundary_state_member(error.slot);
     const auto& active=amr_ctrl.tree->GetActiveBlocks();bool requested=false;
-    for(std::size_t b=0;b<active.size();++b) {
+    if(attempt.backend_) {
+        std::vector<backend::BackendStateAccess> accesses;
+        accesses.reserve(active.size());
+        std::size_t target=active.size();
+        for(std::size_t b=0;b<active.size();++b) {
+            accesses.push_back({stage_handles[b],attempt.storage_[b],error.slot});
+            if(active[b]==error.pool_index&&stage_handles[b]==error.handle)target=b;
+        }
+        if(target==active.size()||resident_refusal->access.block!=accesses[target].block
+            ||resident_refusal->access.storage!=accesses[target].storage
+            ||resident_refusal->access.slot!=accesses[target].slot)
+            throw std::logic_error("Native thermal refusal lost its original resident access");
+        const auto& original=resident_refusal->diagnostic;
+        if(original.phase!=d.phase||original.status!=d.status||original.index!=d.index
+            ||original.i!=d.i||original.j!=d.j||original.node!=d.node
+            ||original.inertia_mapping_valid!=d.inertia_mapping_valid)
+            throw std::logic_error("Native thermal refusal changed its original resident diagnostic");
+        const auto& grid=amr_ctrl.pool->GetBlock(active[target]).grid;
+        if(d.i<grid.Is()||d.i>=grid.Ie()||d.j<grid.Js()||d.j>=grid.Je())return;
+        if(d.index!=grid.GetIndex(d.i,d.j,0))
+            throw std::logic_error("Native thermal refusal index does not match its actual active cell");
+        const auto classification=attempt.backend_->classify_completed_native_active_thermal(
+            accesses,attempt.eos_binding_->bounds,*resident_refusal);
+        require_live_failure();
+        // A later nonthermal active failure is fatal even when the original
+        // requested cell still has the same effective-thermal refusal.
+        if(classification.nonthermal_failure) {
+            const auto& fatal=*classification.nonthermal_failure;
+            std::size_t b=0;
+            for(;b<accesses.size();++b) {
+                const auto& access=accesses[b];
+                if(access.block==fatal.access.block&&access.storage==fatal.access.storage
+                    &&access.slot==fatal.access.slot)break;
+            }
+            if(b==accesses.size())
+                throw std::logic_error("Native active EOS classification belongs to another domain");
+            throw NativeBoundaryAcceptanceError("Native Device active EOS classification rejected at cell "
+                +std::to_string(fatal.diagnostic.index),active[b],stage_handles[b],error.slot,
+                error.version,fatal.diagnostic);
+        }
+        requested=classification.requested_failure;
+    } else for(std::size_t b=0;b<active.size();++b) {
         const auto& block=amr_ctrl.pool->GetBlock(active[b]);
         const auto key=state::StateKey{stage_handles[b],error.slot};
         actual.ledger.require_readable(key,{ExecutionSide::Host,error.version,true,false});
@@ -954,7 +1059,10 @@ void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> bac
     compute_backend = std::move(backend);
 }
 
-/** Upload accepted case initial state before device stepping. */
+/** Upload only accepted Current and bind the original immutable transport plans.
+ * Native RZ selects the existing angular route even when its route list is empty;
+ * this bootstrap does not qualify Device gravity, retries or dynamic regridding.
+ */
 void DriverRuntime::upload_initial_state()
 {
     if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes topology/backend mutation");
@@ -968,10 +1076,11 @@ void DriverRuntime::upload_initial_state()
             arch::state::PendingTransferPhase::PendingH2D, 0,
             arch::backend::BackendOperation::InitialUpload);
     }
-    // Initial metadata follows the actual chart. Numerical transport retains
-    // its existing separate consumer qualification and torque-plan selection.
+    // Use the actual Runtime chart and the original cache owner. Native
+    // Hydro consumes W-weighted torque routes; Existing keeps its false mode.
+    const bool angular_transport=geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
     compute_backend->prepare_amr_flux_plan(
-        amr_ctrl.RequireFluxTopologyPlan(specs.count(), geometry_semantics_),
-        amr_ctrl.RequireRefluxTopologyPlan(specs.count(), geometry_semantics_));
+        amr_ctrl.RequireFluxTopologyPlan(specs.count(), geometry_semantics_,-1,angular_transport),
+        amr_ctrl.RequireRefluxTopologyPlan(specs.count(), geometry_semantics_,angular_transport));
 }
 } // namespace arch::driver

@@ -18,11 +18,11 @@ A 增量已对交接提交 `31f6f8db` 的对应文件执行补丁应用检查，
 - 继续调用 `ARCH --preview Sod --config-stdin`；schemaVersion 仍为 1.0。
 - 新增可选的 parameterMetadata v1 与 graphicalBindings v1，并由 `--preview-capabilities` 的 extensions 明确列出覆盖范围。
 - 首批只覆盖 Sod x_pos。实际 Get 调用提供默认值、实际值及来源；Sod 提供内部实际位置和当前域约束。
-- 显式、缺失、解析失败回退、重复 key、数值前缀、越界失败和未知来源的表达见 [README](README.md)。
+- 显式、缺失、解析失败回退、重复 key、数值前缀、越界失败和未知来源的表达见 [README](../../README.md)。
 - Setup 之前的失败不编造 metadata；Setup 已读取后发生的失败保留已确认的信息，成功绑定仅随完整成功预览发布。
 - EOS/grid/AMR/species 快照继续提供；没有时间推进、科学输出、临时 `.par` 或 CUDA 初始化。
 
-完整成功、默认、回退、越界、拒绝响应及对应输入见 [examples/core-a](examples/core-a/README.md)。原有一维场和错误响应示例也已由当前程序重新生成。
+完整成功、默认、回退、越界、拒绝响应及对应输入见 [examples/core-a](../../examples/core-a/README.md)。原有一维场和错误响应示例也已由当前程序重新生成。
 
 ## 构建与针对性验证
 

@@ -1034,7 +1034,9 @@ public:
     /** Prepare conservative topology/transfer relations without publication.
      * A Runtime retry may supply exact native parent vetoes after restoring its
      * frozen indicator flags. Apply those vetoes before the unchanged 2:1 ripple;
-     * final completed-state EOS/JENS acceptance remains Runtime-owned.
+     * final completed-state EOS/JENS acceptance remains Runtime-owned. A Native
+     * Device callback is provisional only and must accompany that real staged
+     * Runtime finalizer; it never grants completed parent EOS/JENS acceptance.
      */
     PreparedRegrid PrepareRegrid(
         const SimConfig& config,
@@ -1119,8 +1121,9 @@ public:
                 if (can_merge && (config.amr.refine_on_jeans
                     || root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)) {
                     if(candidate_parent) {
-                        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-                            throw std::logic_error("device RZ candidate parent is not qualified");
+                        // Native Device validates the actual child leases and
+                        // defers EOS/JENS to Runtime's completed staged candidate,
+                        // matching the provisional-only default Native hook.
                         can_merge=candidate_parent(CandidateParentGeometry(siblings),siblings);
                     } else can_merge=CandidateParentResolved(config,siblings);
                 }

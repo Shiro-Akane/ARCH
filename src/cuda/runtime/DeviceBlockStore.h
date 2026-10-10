@@ -19,6 +19,7 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 #include <span>
 #include <stdexcept>
@@ -184,6 +185,7 @@ public:
             : owner_(std::exchange(other.owner_, nullptr)),
               scope_(other.scope_), entries_(std::move(other.entries_)),
               prepared_retirement_(std::move(other.prepared_retirement_)),
+              index_(std::move(other.index_)),
               commit_attempted_(other.commit_attempted_)
         {
             other.scope_ = {};
@@ -212,8 +214,10 @@ public:
 
         Candidate(DeviceBlockStoreLifecycle& owner, amr::AmrPlanScope scope,
                   std::vector<DeviceStoreEntry> entries,
-                  std::vector<DeviceStoreEntry> retirement)
-            : owner_(&owner), scope_(scope), entries_(std::move(entries))
+                  std::vector<DeviceStoreEntry> retirement,
+                  std::unique_ptr<const DeviceBlockStoreIndex> index)
+            : owner_(&owner), scope_(scope), entries_(std::move(entries)),
+              index_(std::move(index))
         {
             prepared_retirement_.push_back(
                 RetirementBatch{{}, std::move(retirement)});
@@ -230,6 +234,10 @@ public:
         amr::AmrPlanScope scope_{};
         std::vector<DeviceStoreEntry> entries_;
         std::list<RetirementBatch> prepared_retirement_;
+        // Immutable identity index over the staged entries, projected in their
+        // original order.  It is built (and may throw) before the lifecycle
+        // counters move, then swapped into place at publication.
+        std::unique_ptr<const DeviceBlockStoreIndex> index_;
         bool commit_attempted_ = false;
     };
 
@@ -238,6 +246,9 @@ public:
         : active_entries_(initial.begin(), initial.end())
     {
         validate_initial_entries();
+        // Build the immutable identity index over the validated initial
+        // entries after their contents are frozen.
+        active_index_ = build_index(active_entries_);
     }
 
     DeviceBlockStoreLifecycle(const DeviceBlockStoreLifecycle&) = delete;
@@ -258,18 +269,19 @@ public:
         return staged_transaction_id_ != 0;
     }
 
+    // Identity lookups resolve through the immutable index in O(log N); the
+    // index maps each handle back to its original active_entries_ position.
     bool contains(backend::BackendStateAccess access) const noexcept
     {
-        return find_entry(active_entries_, access) != nullptr;
+        return active_index_ != nullptr && active_index_->contains(access);
     }
 
     const DeviceStoreEntry& record(
         backend::BackendStateAccess access) const
     {
-        const auto* found = find_entry(active_entries_, access);
-        if (found == nullptr)
+        if (!contains(access))
             throw std::invalid_argument("stale active device store access");
-        return *found;
+        return active_entries_[active_index_->index_of(access)];
     }
 
     Candidate prepare(amr::AmrPlanScope scope,
@@ -325,9 +337,15 @@ public:
         }
 
         // Construct every potentially throwing owner before mutating the
-        // lifecycle counters or exposing a staged transaction.
-        Candidate candidate(
-            *this, scope, std::move(staged), active_entries_);
+        // lifecycle counters or exposing a staged transaction.  The retirement
+        // batch and the staged identity index are both built here, so a
+        // throwing allocation or index validation leaves the active namespace,
+        // the counters and the staged transaction intact.
+        std::vector<DeviceStoreEntry> retirement(
+            active_entries_.begin(), active_entries_.end());
+        auto staged_index = build_index(staged);
+        Candidate candidate(*this, scope, std::move(staged),
+                            std::move(retirement), std::move(staged_index));
         max_storage_generation_ = proposed_storage_max;
         max_layout_generation_ = proposed_layout_max;
         max_transaction_id_ = scope.transaction_id;
@@ -348,13 +366,15 @@ public:
             if (migration.access.block.epoch != migration.scope.from_epoch)
                 throw std::invalid_argument(
                     "old migration source epoch mismatch");
-            found = find_entry(active_entries_, migration.access);
+            found = find_entry_by_index(*active_index_, active_entries_,
+                                        migration.access);
             break;
         case DeviceMigrationRole::StagedNewDestination:
             if (migration.access.block.epoch != migration.scope.to_epoch)
                 throw std::invalid_argument(
                     "new migration destination epoch mismatch");
-            found = find_entry(candidate.entries_, migration.access);
+            found = find_entry_by_index(*candidate.index_, candidate.entries_,
+                                        migration.access);
             break;
         }
         if (found == nullptr)
@@ -408,7 +428,11 @@ public:
             std::span<const DeviceStoreEntry>(candidate.entries_));
 
         // From here onward publication is allocation-free and non-throwing.
+        // The entries and their identity index are swapped together, then the
+        // epoch is published; a throwing finalizer above performs neither
+        // swap, so the active namespace and its index never diverge.
         active_entries_.swap(candidate.entries_);
+        active_index_.swap(candidate.index_);
         active_epoch_ = candidate.scope_.to_epoch;
         retirements_.splice(retirements_.end(),
                             candidate.prepared_retirement_);
@@ -508,6 +532,7 @@ private:
         candidate.scope_ = {};
         candidate.entries_.clear();
         candidate.prepared_retirement_.clear();
+        candidate.index_.reset();
         candidate.commit_attempted_ = true;
     }
 
@@ -520,16 +545,29 @@ private:
         poison(candidate);
     }
 
-    static const DeviceStoreEntry* find_entry(
-        std::span<const DeviceStoreEntry> entries,
-        backend::BackendStateAccess access) noexcept
+    // Project the entry records in their original order and hand them to the
+    // existing immutable DeviceBlockStoreIndex.  The index copies the records
+    // in that order, so each handle maps back to its original entry position
+    // and queries then resolve in O(log N) rather than a linear scan.
+    static std::unique_ptr<const DeviceBlockStoreIndex> build_index(
+        std::span<const DeviceStoreEntry> entries)
     {
-        for (const auto& entry : entries) {
-            if (entry.record.handle == access.block
-                && entry.record.storage == access.storage)
-                return &entry;
-        }
-        return nullptr;
+        std::vector<DeviceBlockRecord> records;
+        records.reserve(entries.size());
+        for (const auto& entry : entries) records.push_back(entry.record);
+        return std::make_unique<const DeviceBlockStoreIndex>(
+            std::span<const DeviceBlockRecord>(records));
+    }
+
+    // Resolve an access through a published or staged identity index and
+    // return the address of the original entry it names, or nullptr.
+    static const DeviceStoreEntry* find_entry_by_index(
+        const DeviceBlockStoreIndex& index,
+        std::span<const DeviceStoreEntry> entries,
+        backend::BackendStateAccess access)
+    {
+        if (!index.contains(access)) return nullptr;
+        return &entries[index.index_of(access)];
     }
 
     std::vector<DeviceArenaSlot> allocate_arena_slots(
@@ -578,7 +616,11 @@ private:
                             });
     }
 
+    // The active namespace and the immutable identity index over it are always
+    // swapped together at publication, so both describe the same original
+    // entry order.  Retired batches need no identity index.
     std::vector<DeviceStoreEntry> active_entries_;
+    std::unique_ptr<const DeviceBlockStoreIndex> active_index_;
     std::list<RetirementBatch> retirements_;
     amr::TopologyEpoch active_epoch_{};
     std::uint64_t staged_transaction_id_ = 0;

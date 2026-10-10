@@ -45,7 +45,7 @@ plt 按独立出口交付。Windows 适配/安装包、O8/O10、main 合并均�
 
 ## 配置 v3 候选契约（非运行实现）
 
-入口为 src/api/CONFIGURATION_V3_CANDIDATE.md；共享样例位于
+入口为 [配置传输协议](../../src/api/docs/ConfigurationProtocol.md)；共享样例位于
 src/api/examples/configuration-v3-candidate/。94-key 目标目录继承现有 Core 的
 单位/选项/展示元数据，按唯一计划限制默认集合；当前生产 binary 仍发布 v2 和 95 keys。
 四组完整 JSON 封套覆盖有效 Sod、空输入、缺少 burn 开关、语法/重复错误。

@@ -2131,6 +2131,7 @@ int main(int argc,char** argv)
     // Complete Host operator with native padded storage and explicit RZ chart.
     RzViscousCases::native_thermodynamic_closure();
     RzReconstructionCases::native_profile();
+    RzReconstructionCases::source_eos_profile();
     test_rz_supported_density();
     RzViscousCases::azimuthal_operator();
     RzMeridionalCases::convergence("cpu",[](const FluidState& state,FluidState& delta,

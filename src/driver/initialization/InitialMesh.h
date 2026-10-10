@@ -11,8 +11,9 @@
 
 #pragma once
 
-#include "interface/ProblemGenerator.h"
 #include "driver/DriverUtils.h"
+#include "interface/ProblemGenerator.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 
 namespace arch::driver {
 // Shared fresh-start boundary. Does not allocate a pool, evolve time or write output.

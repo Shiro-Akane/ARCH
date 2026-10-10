@@ -114,6 +114,16 @@ cudaError_t launch_cuda_backend_coarse_fine_exchange(
         blocks, transfers, transfer_count, field_count, scratch, status, stream);
 }
 
+cudaError_t launch_cuda_backend_coarse_fine_exchange_native(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoarseFineTransfer* transfers, int transfer_count,
+    int restriction_count, int field_count, double* scratch,
+    state::Bounds bounds, int* status, cudaStream_t stream)
+{
+    return launch_coarse_fine_exchange_native(blocks, transfers, transfer_count,
+        restriction_count, field_count, scratch, bounds, status, stream);
+}
+
 cudaError_t launch_cuda_backend_boundary_plan(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,
     const DeviceCompiledBoundaryPlan& compiled, cudaStream_t stream)

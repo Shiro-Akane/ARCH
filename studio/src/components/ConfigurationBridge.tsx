@@ -1,34 +1,50 @@
 import {desktop} from '../host/desktop';
 import {validateDiscovery} from '../host/workflowClient';
 import {InspectionRequests} from '../data/inspectionRequests';
-import {useEffect,useRef} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {useCoreParameters} from '../state/coreParameters';
 import {useHost} from '../host/hostContext';
 import type {WorkingCopy} from '../data/RealInitPreviewProvider';
 import {configRevision,previewRequest} from '../data/RealInitPreviewProvider';
 import {validateSchemaResponse} from '../host/configurationValidation';
 import {sameBuildScope} from '../host/configurationContracts';
-import {pairingSuspicion} from '../data/configurationIdentity';
+import type {ConfigurationBuildScope} from '../host/configurationContracts';
+import {pairingSuspicion,selectedSourceModels} from '../data/configurationIdentity';
 export function ConfigurationBridge({copy}:{copy:WorkingCopy|null}){
  const {connected,snapshot}=useHost();
- const {model,buildScope,configurationScope,setConfigurationScope,setSchema,setInspection,setInspectionMessage,setDiscovery,setModel}=useCoreParameters();
+ const {model,discovery,buildScope,configurationScope,setConfigurationScope,setSchema,setInspection,setInspectionMessage,setDiscovery,setModel}=useCoreParameters();
  const requests=useRef(new InspectionRequests());
+ const [discoveryAttempt,setDiscoveryAttempt]=useState(0);
+ const [discoveryResult,setDiscoveryResult]=useState<{request:{scope:ConfigurationBuildScope;attempt:number};error:string|null}|null>(null);
  const projectId=connected?snapshot?.session.projectId:undefined;
  const binarySha=snapshot?.session.executable?.sha256;
+ const discoveryRequest=useMemo(()=>buildScope&&buildScope.projectId===projectId?{scope:buildScope,attempt:discoveryAttempt}:null,[buildScope,projectId,discoveryAttempt]);
+ const currentDiscoveryResult=discoveryResult?.request===discoveryRequest?discoveryResult:null;
+ const discoveryPending=!!discoveryRequest&&!currentDiscoveryResult;
+ const discoveryFailed=!!currentDiscoveryResult&&currentDiscoveryResult.error!==null;
  useEffect(()=>{setConfigurationScope(projectId&&binarySha?{projectId,buildId:'selected-binary:'+binarySha,binarySha256:binarySha}:null);},[projectId,binarySha,setConfigurationScope]);
  const project=configurationScope?.projectId===projectId?configurationScope:null;
+ const sourceModels=selectedSourceModels(desktop?.selectedSource,connected?snapshot?.session:null,sameBuildScope(discovery,buildScope)?discovery:null,desktop?.caseId);
+ const boundCase=sourceModels.state==='fixed'?sourceModels.caseId:undefined;
+ const pendingSource=sourceModels.state==='pending'?sourceModels.message:undefined;
+ const modelReady=sourceModels.state==='unbound'||sourceModels.state==='fixed'&&model===boundCase;
  useEffect(()=>{
-  if(!buildScope||buildScope.projectId!==projectId)return;let disposed=false;
-  void previewRequest('/api/cases').then(v=>{if(!disposed){const registered=validateDiscovery(v,buildScope);setDiscovery(registered);
-   if(desktop?.selectedSource&&snapshot?.session.caseSource?.sha256){
-    const absolute=snapshot.session.projectRoot+'/'+desktop.selectedSource;
-    const matches=registered.cases.filter(c=>(c.inspection.sourceFile===absolute||c.inspection.sourceFile===desktop?.selectedSource)
-     &&c.inspection.compiledSourceSha256===snapshot.session.caseSource?.sha256);
-    if(matches.length===1)setModel(matches[0].caseId);
-   }
-  }}).catch(()=>{if(!disposed)setDiscovery(null);});
+  if(boundCase&&model!==boundCase)setModel(boundCase);
+  if(pendingSource){setInspection(null);setInspectionMessage(pendingSource);}
+ },[boundCase,model,pendingSource,setModel,setInspection,setInspectionMessage]);
+ useEffect(()=>{
+  if(!discoveryRequest)return;let disposed=false;
+  // A failed read remains pending until an explicit retry or a genuine scope change.
+  void previewRequest('/api/cases').then(v=>{
+   if(disposed)return;
+   const registry=validateDiscovery(v,discoveryRequest.scope);
+   setDiscovery(registry);setDiscoveryResult({request:discoveryRequest,error:null});
+  }).catch(e=>{
+   if(disposed)return;
+   setDiscovery(null);setDiscoveryResult({request:discoveryRequest,error:e instanceof Error?e.message:'Model discovery unavailable.'});
+  });
   return()=>{disposed=true;};
- },[buildScope,projectId,setDiscovery,setModel,snapshot?.session.projectRoot,snapshot?.session.caseSource?.sha256]);
+ },[discoveryRequest,setDiscovery]);
  const text=copy?.text;
  useEffect(()=>{
   if(!project)return;let disposed=false;
@@ -37,7 +53,7 @@ export function ConfigurationBridge({copy}:{copy:WorkingCopy|null}){
  },[project,setSchema,setInspectionMessage,setDiscovery]);
  useEffect(()=>{
   const gate=requests.current;const ticket=gate.begin();
-  if(!project||text===undefined)return;
+  if(!project||text===undefined||!modelReady)return;
   let disposed=false;
   const timer=setTimeout(()=>{
    setInspectionMessage('Inspecting current Working Copy…');
@@ -50,14 +66,17 @@ export function ConfigurationBridge({copy}:{copy:WorkingCopy|null}){
    })().catch(e=>{if(!disposed)setInspectionMessage(e instanceof Error?e.message:'Inspection unavailable');});
   },350);
   return()=>{disposed=true;gate.invalidate();clearTimeout(timer);};
- },[project,model,text,setInspection,setInspectionMessage]);
- return null;
+ },[project,model,text,modelReady,setInspection,setInspectionMessage]);
+ return discoveryRequest&&(discoveryPending||discoveryFailed)?<section className="configuration-identity" aria-label="Model discovery"><p role="status">{discoveryPending?'Discovering models in the current binary…':`Model discovery unavailable: ${currentDiscoveryResult?.error}`}</p><button type="button" disabled={discoveryPending} onClick={()=>setDiscoveryAttempt(attempt=>attempt+1)}>Retry model discovery</button></section>:null;
 }
 export function ConfigurationIdentity({copy}:{copy:WorkingCopy|null}){
+ const {connected,snapshot}=useHost();
  const {model,discovery,buildScope}=useCoreParameters();
- const registered=sameBuildScope(discovery,buildScope)?discovery?.cases.find(c=>c.caseId===model):undefined;
+ const sourceModels=selectedSourceModels(desktop?.selectedSource,connected?snapshot?.session:null,sameBuildScope(discovery,buildScope)?discovery:null,desktop?.caseId);
+ const displayedModel=sourceModels.state==='pending'?'Pending selected source':sourceModels.state==='fixed'?sourceModels.caseId:model;
+ const registered=sourceModels.cases.find(c=>c.caseId===displayedModel);
  const warning=pairingSuspicion(model,copy?.filename??'');
- return <section className="configuration-identity" aria-label="Current configuration identity"><div><strong>Current Model: {model}</strong><strong>Parameter File: {copy?.filename??'Not loaded'}</strong></div><p>Source: {registered?.inspection.sourceFile??'Unavailable until binary discovery'} · compiled source association; build freshness remains separately reported</p><p>Parameter path: {copy?.hostPath??'Browser import / no trusted Host path'}</p><p className={warning?'pairing-warning':'section-note'}>{warning??'Model / parameter association unconfirmed; filenames do not verify compatibility.'}</p></section>;
+ return <section className="configuration-identity" aria-label="Current configuration identity"><div><strong>Current Model: {displayedModel}</strong><strong>Parameter File: {copy?.filename??'Not loaded'}</strong></div><p>Source: {registered?.inspection.sourceFile??'Unavailable until binary discovery'} · compiled source association; build freshness remains separately reported</p><p>Parameter path: {copy?.hostPath??'Browser import / no trusted Host path'}</p><p className={warning?'pairing-warning':'section-note'}>{sourceModels.state==='pending'?sourceModels.message:warning??'Model / parameter association unconfirmed; filenames do not verify compatibility.'}</p></section>;
 }
 // Shared by editors and the preview action; stale inspection cannot validate a new Working Copy.
 // eslint-disable-next-line react-refresh/only-export-components

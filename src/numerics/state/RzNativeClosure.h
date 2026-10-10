@@ -12,6 +12,8 @@
  *    physical baseline at both faces and the four shared radial Gauss nodes.
  * 6. Completed-patch callers traverse logical ghosts with an explicit real
  *    three-column support; storage padding is never a logical boundary.
+ * 7. Expose one failure-only coarse restricted-parent interior leaf that reuses
+ *    the original provisional/closure arithmetic without EOS or ghost reads.
  *
  * I_* is the inertia of the explicit numerical density reconstruction, not a
  * certificate of an unknown subcell physical field. No new evolved field, EOS,
@@ -229,6 +231,45 @@ struct AcceptanceDiagnostic {
     bool inertia_mapping_valid=false;
 };
 
+/** Preserve the one thermal retry category shared by Host and Device scans.
+ * This diagnostic predicate grants no retry; the actual Runtime owner must
+ * authenticate the original active target and its still-live completed frame.
+ */
+ARCH_INLINE bool is_retryable_thermal_failure(const AcceptanceDiagnostic& diagnostic)
+{
+    return diagnostic.phase==AcceptancePhase::effective_thermal
+        &&diagnostic.status==arch::state::Status::unresolved_energy
+        &&diagnostic.inertia_mapping_valid;
+}
+
+/** Failure-only coarse restricted-parent interior witness.
+ * This is mechanically the original Host early check: the provisional native
+ * mean precheck followed by the centered three-rho closure construction. It
+ * returns the exact provisional failure, the density_or_inertia/effective_thermal
+ * closure failure or a valid status; no EOS is queried, no input, threshold,
+ * floor, ghost or numerical expression is added or changed. The caller must
+ * supply an actual active eligible cell whose three active radial densities
+ * exist, i in [Is+1,Ie-1) and j in [Js,Je); the traversal itself is not a
+ * completed BC, EOS or ghost publication receipt.
+ */
+template<class StateReader>
+ARCH_INLINE AcceptanceDiagnostic check_restricted_interior_cell(const StateReader& read,
+    const GridMetrics::GeometryView& geometry,int i,int j,int index,
+    const double* fractions,int species,const arch::state::Bounds& bounds)
+{
+    const auto native=read(index);
+    const auto preliminary=provisional_native_state(native,fractions,species,1,bounds);
+    if(preliminary!=arch::state::Status::valid)
+        return {AcceptancePhase::provisional,preliminary,index,i,j,-1,false};
+    const auto cell=make_cell(read,index,geometry,i,bounds);
+    if(!cell.valid())
+        return {cell.inertia_mapping_valid?AcceptancePhase::effective_thermal
+                :AcceptancePhase::density_or_inertia,
+            cell.status,index,i,j,-1,cell.inertia_mapping_valid};
+    return {AcceptancePhase::effective_thermal,arch::state::Status::valid,index,i,j,-1,
+        cell.inertia_mapping_valid};
+}
+
 /** Preserve the existing runtime-error text while carrying exact gate evidence.
  * The authentic restriction transaction may consider only a newly restricted
  * interior's effective_thermal result under its own proven source/migration
@@ -414,8 +455,7 @@ inline ActiveThermalClassification classify_completed_active_thermal(const Fluid
         try {detail::validate_patch_eos_cell(state,view,species,bounds,eos,i,j,index,closure,read,fractions);}
         catch(const AcceptanceError& error) {
             const auto& d=error.diagnostic();
-            if(d.phase!=AcceptancePhase::effective_thermal||d.status!=arch::state::Status::unresolved_energy
-                ||!d.inertia_mapping_valid)throw;
+            if(!is_retryable_thermal_failure(d))throw;
             result.thermal_failure=true;result.requested_failure|=index==requested_index;
         }
     }

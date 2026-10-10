@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Build the internal CPU RK2 checkpoint fixture with frozen owner objects.
-The explicit warm mode runs four physical modules and a genuine AMR regrid.
+"""Build the CPU RK2 checkpoint fixture with frozen owner objects.
+Warm modes select private inspection or the public Production gravity contract,
+run four physical modules and a genuine AMR regrid.
 No configure, production rebuild or public case run. Raw checkpoints stay local.
 """
 import argparse,json,pathlib,subprocess,os,sys,time,hashlib
@@ -10,11 +11,15 @@ from validation_fixture_build import build_cpu_fixture,verify_fixture_inputs,RUN
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument("--build",type=pathlib.Path,required=True)
 p.add_argument("--output-root",type=pathlib.Path,required=True)
-p.add_argument("--initial-thermal-rejection",action="store_true",help="Reject an initial native thermal state below the unchanged configured bound")
-p.add_argument("--warm-native-active",type=pathlib.Path,help="Explicit maintained warm Helm/aprox13 mixed-AMR checkpoint mode; actual table required")
+modes=p.add_mutually_exclusive_group()
+modes.add_argument("--initial-thermal-rejection",action="store_true",help="Reject an initial native thermal state below the unchanged configured bound")
+modes.add_argument("--warm-native-active",type=pathlib.Path,help="Private warm Helm/aprox13 mixed-AMR checkpoint mode; actual table required")
+modes.add_argument("--public-native-active",type=pathlib.Path,help="Public Production warm Helm/aprox13 mixed-AMR checkpoint mode; actual table required")
 a=p.parse_args()
-if a.warm_native_active and a.initial_thermal_rejection:p.error("warm and initial-rejection modes are exclusive")
-started=time.monotonic();table=a.warm_native_active.resolve() if a.warm_native_active else None
+started=time.monotonic()
+selected_table=a.public_native_active or a.warm_native_active
+table=selected_table.resolve() if selected_table else None
+qualification="Production" if a.public_native_active else "NativeRzSelfHydroCandidate" if table else None
 def table_identity(path):
     st=path.stat();digest=hashlib.sha256()
     with path.open("rb") as stream:
@@ -43,13 +48,13 @@ if table:headers += ["tests/host/gravity/NativeActiveFourModuleWitness.h",
     "src/numerics/burnsolver/ode/ode_bd.h","src/numerics/diffusion/DiffusionAMRStages.h",
     "src/numerics/diffusion/DiffFlux.h","src/driver/stages/DriverMacroStep.h",
     "src/physics/gravity/NativeSelfStage.h","src/physics/gravity/self/SelfGravity.h",
-    "src/driver/stages/GravityStage.h"]
+    "src/driver/stages/GravityStage.h","src/numerics/integrator/GeometricSources.h"]
 exe,build_record,frozen=build_cpu_fixture(build=build,output=out,source=root/source,
     executable_name="rz-checkpoint-continuation",owner_sources=list(RUNTIME_SOURCES),
     observed_headers=headers,reuse_compiled_sources=providers,
     compile_recipe="production",io_fixture_identity=True)
 run_args=[str(exe),str(out/"evidence")]
-if table:run_args += ["--warm-native-active",str(table)]
+if table:run_args += ["--public-native-active" if a.public_native_active else "--warm-native-active",str(table)]
 elif a.initial_thermal_rejection:run_args += ["--initial-thermal-rejection"]
 remaining=2400.-(time.monotonic()-started) if table else 30.
 if remaining<=0.:raise RuntimeError("warm compile+run 2400s envelope exhausted before run")
@@ -60,6 +65,7 @@ except subprocess.TimeoutExpired as error:
     def partial(value):return value.decode(errors="replace") if isinstance(value,bytes) else value or ""
     (out/"stdout.log").write_text(partial(error.stdout));(out/"stderr.log").write_text(partial(error.stderr))
     (out/"timeout.json").write_text(json.dumps({"warmNativeActive":bool(table),
+        "gravityQualification":qualification,
         "runTimeoutSeconds":remaining,"compileAndRunSeconds":time.monotonic()-started,
         "scienceQualification":False},indent=2)+"\n")
     raise
@@ -68,11 +74,12 @@ if table and table_identity(table)!=table_before:raise RuntimeError("actual warm
 verify_fixture_inputs(frozen,exe,build_record["executableIdentity"])
 identities=build_record["inputs"]["files"]
 def source_sha(name):return identities[str((root/name).resolve())]["sha256"]
-summary={"scope":("Internal RZ warm four-module M0 -> actual regrid/Current -> M1 -> checkpoint -> fresh empty Runtime -> uninterrupted/resumed M2; engineering and bitwise continuation fixture, no continuous-energy qualification"
+summary={"scope":("RZ warm four-module M0 -> actual regrid/Current -> M1 -> checkpoint -> fresh empty Runtime -> uninterrupted/resumed M2; selected gravity qualification, engineering and bitwise continuation fixture, no continuous-energy qualification"
     if table else "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation"),
  "exitCode":result.returncode,"stdout":result.stdout,"stderr":result.stderr,
  "initialThermalRejectionProbe":a.initial_thermal_rejection,
  "warmNativeActive":bool(table),"actualHelmTableIdentity":table_before,
+ "gravityQualification":qualification,
  "compileAndRunSeconds":time.monotonic()-started,
  "prospectiveCompileAndRunCapSeconds":2400 if table else None,
  "stageHeaderSha256":source_sha("src/driver/stages/DriverStages.h"),
@@ -81,7 +88,7 @@ summary={"scope":("Internal RZ warm four-module M0 -> actual regrid/Current -> M
  "reusedCompiledOwner":build_record["reusedCompiledOwner"],
  "reusedCompiledSources":build_record["reusedCompiledSources"],
  "fixtureBuildInputs":"fixture-build-inputs.json",
- "limitations":["Public RZ dispatch still gated","No scientific evolution acceptance","CUDA not qualified",
+ "limitations":["Limited to the explicitly selected gravity qualification","No long-time or continuous-energy acceptance","CUDA not qualified",
     "Warm mode requires actual dynamic M1 acceptance; neither old fixture nor materialized field alone qualifies it",
     "Warm compile+run wall deadline counts compilation; an outer existing resource guard supplies hard process-tree/disk enforcement"]}
 (out/"result.json").write_text(json.dumps(summary,indent=2)+"\n")

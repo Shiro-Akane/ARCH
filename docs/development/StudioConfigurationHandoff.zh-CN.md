@@ -82,7 +82,7 @@ H5／plt／checkpoint 原始数据继续留在本机。
 | 理解现有用户行为 | [Reference](../Reference.zh-CN.md)、[算例指南](../guides/SimulationCase.zh-CN.md)、[功能清单](../Features.zh-CN.md) | CGS、Setup/Init、PointCoords、支持域及限制 |
 | 开始 O7.0 前 | [配置完整性计划](ConfigurationContractPlan.zh-CN.md)、[计算优化计划](ComputeOptimizationPlan.zh-CN.md)第 1 节 | 必填／条件／允许默认、G 退役与用途；不能自行补物理默认 |
 | 修改 Core 前 | [实现所有权](ImplementationOwnership.md)、[注释规范](CommentAndDocumentationStyle.md) | 共用数学和消费者在哪里，新增文件是否必要 |
-| 接入 Host／Studio 前 | [API 索引](../../src/api/README.md)、[配置 API](../../src/api/CONFIGURATION_API.md)、[模型检查](../../src/api/CASE_INSPECTION_API.md)、[AMR](../../src/api/INITIAL_AMR_API.md)、[预览会话](../../src/api/PREVIEW_SESSION_API.md) | 当前版本与候选版本、检查层次、身份、资源及取消边界 |
+| 接入 Host／Studio 前 | [API 索引](../../src/api/README.md)、[配置 API](../../src/api/docs/CONFIGURATION_API.md)、[模型检查](../../src/api/docs/CASE_INSPECTION_API.md)、[AMR](../../src/api/docs/INITIAL_AMR_API.md)、[预览会话](../../src/api/docs/PREVIEW_SESSION_API.md) | 当前版本与候选版本、检查层次、身份、资源及取消边界 |
 | 开始 O7.1–O7.5 前 | [执行细则](JeansRZPlatformHandoff.zh-CN.md)及其中列出的数学／验证资料；主计划第 2、3 节 | Jeans／RZ 的定义、边界、文件归属与独立验收 |
 | 计时或长跑前 | 本文第 7、9 节、执行细则第 5 节、主计划第 5、8 节、[发布标准](CudaReleaseStandard.md) | 冻结输入／预算、同物理终点、CI 收束与本地后处理 |
 | 提交报告前 | [报告指南](../guides/Reporting.zh-CN.md) | 提交何种精简证据、如何保留异常和本地数据索引 |
@@ -474,10 +474,13 @@ SNIaCoupled 是厘米尺度的四模块热点执行示例，不能据此宣称�
 Helmholtz 当前恒星扩散路径为热传导，不能将打开所有开关写成三种输运都已参与。
 纯流体或小型单区模型的 GPU 负收益照实记录，不要求每个模型都加速。
 
-**现有 runner 还不是即取即用的整程计时包。**
-`run_cuda_matrix.py` 的 `--pair` 接受步数，`check_cuda_compatibility.py`
-的 benchmark 也有步数上限；它们可保留作短检查。
-实施时在现有执行／取证工具中补齐“指定物理终点”模式，复用后处理与证据结构，
+**复用现有物理终点入口，计时前冻结完整运行包。**
+`run_cuda_matrix.py` 已提供 `--endpoint-pair`、显式线程／亲和性及
+`--cpu-only-arch`，终点模式要求至少三次重复，并设置 `max_steps=-1`；
+原 `--pair` 保留短步数检查用途。`check_cuda_compatibility.py` 的 benchmark
+也已支持物理终点、预热及线程筛选；其默认主配对使用同一 CUDA binary 的
+CPU／CUDA 后端，不能仅凭传入 `--cpu-arch` 就认定已测独立纯 CPU 基线。
+工具中的输入冻结与后处理可直接复用；完整构建、EOS、硬件与运行预算仍需核对。
 确认 max_steps 没有提前截停。终点比较不得要求 CPU／GPU 恰好同一步数；
 自适应轨迹的合理差别由共同误差预算判断，不靠强行对齐步数掩盖。
 维护者冻结终点与预算后，提交可复制的一条执行命令和完整 manifest，

@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
 #include <utility>
 
 namespace arch::cuda {
@@ -370,6 +371,20 @@ CudaBackend::begin_topology_store_transaction(
         begin_store_transaction(scope, cuda_bindings));
 }
 
+CudaBackend::StoreTransaction::Impl& CudaBackend::require_staged_boundary_transaction(
+    backend::BackendTopologyStoreTransaction& transaction) const
+{
+    auto& concrete = require_cuda_topology_transaction(transaction).transaction;
+    if (!concrete.impl_ || concrete.impl_->consumed || !concrete.impl_->owner
+        || concrete.impl_->owner.get() != impl_.get() || concrete.impl_->upload_failed)
+        throw std::invalid_argument("invalid CUDA staged boundary transaction");
+    auto& staged = *concrete.impl_;
+    for (const auto& [arena, initialized] : staged.uploaded_current)
+        if (initialized != StoreTransaction::Impl::kInteriorUploaded)
+            throw std::logic_error("staged boundaries require complete migrated interiors");
+    return staged;
+}
+
 void CudaBackend::enqueue_upload_staged_current(
     backend::BackendTopologyStoreTransaction& transaction,
     backend::BackendStateAccess access, state::StateRegion region,
@@ -399,12 +414,16 @@ void CudaBackend::complete_staged_current_ghosts(
     const amr::CoarseFineTransferPlan& coarse_fine,
     std::span<const int> active_ids,
     std::span<const amr::BlockHandle> active_handles,
-    const amr::CoordinateSeamPlan* coordinate_seam)
+    const amr::CoordinateSeamPlan* coordinate_seam,
+    const backend::StagedBoundaryCompletion& native_completion)
 {
+    std::function<void()> complete_native;
+    if (native_completion)
+        complete_native = [&] { native_completion(transaction); };
     complete_staged_current_ghosts(
         require_cuda_topology_transaction(transaction).transaction,
         same_level, coarse_fine, active_ids, active_handles,
-        coordinate_seam);
+        coordinate_seam, complete_native);
 }
 
 void CudaBackend::prepare_amr_flux_plan(

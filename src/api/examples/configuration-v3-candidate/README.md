@@ -1,8 +1,9 @@
 # Configuration v3 candidate fixtures
 
-These are proposed expectations, not output captured from the current v2 ARCH.
-Normative candidate: ../../CONFIGURATION_V3_CANDIDATE.md.
-Core and Host must use these same files when implementing v3.
+These hand-authored fixtures preserve the configuration v3 transport expectations.
+They are distinct from responses captured from a running ARCH binary. The current
+[transport protocol](../../docs/ConfigurationProtocol.md) and
+[configuration API](../../docs/CONFIGURATION_API.md) define the active interface.
 
 | Fixture | Scope |
 | --- | --- |
@@ -22,10 +23,10 @@ explicit; network_name=none explicitly selects the non-nuclear Sod setup.
 
 verify_candidates.py checks candidate consistency, input hashes, byte positions,
 declaration coverage and the missing-switch invariant. It does not run ARCH or
-prove that v3 is implemented. After implementation, the existing Core/Host
-contract tests must compare actual responses against these expectations.
+prove that v3 is implemented. Actual Core/Host behavior is checked by the existing integration contract tests.
+These historical counts and declarations are not a runtime parameter registry.
 
-Remaining implementation acceptance includes case-defined values, all other
+The fixture coverage should be distinguished from runtime acceptance of case-defined values, all other
 registered model declarations, inactive invalid tokens, retired/unknown keys,
 unknown methods, unchecked paths, overflow, whitespace-only revisions and stale
 Host identities. Those checks extend the shared corpus during implementation;

@@ -644,7 +644,7 @@ void run_native_completed_eos()
     require(!backend->validate_completed_native_eos_batch(accesses,bounds),
         "resident Native EOS rejected independent physical V/W means");
     const auto after=backend->counters();
-    require(after.bytes_h2d==before.bytes_h2d && after.kernel_count-before.kernel_count==2
+    require(after.bytes_h2d==before.bytes_h2d && after.kernel_count-before.kernel_count==4
         && after.bytes_d2h-before.bytes_d2h==2*(sizeof(int)+sizeof(RzThermodynamics::AcceptanceDiagnostic)),
         "resident Native EOS downloaded state or changed batch launch ownership");
     auto stale=accesses;stale[1].storage.value+=99;
@@ -672,6 +672,75 @@ void run_native_completed_eos()
     backend->enqueue_upload_slot(accesses[1],arch::state::StateRegion::Ghost,transfer_view(blocks[1].fluid_state));
     backend->quiesce();require(!backend->validate_completed_native_eos_batch(accesses,bounds),
         "new resident Native inspection retained a prior launch failure");
+    // Error-only classification borrows this same selected EOS and resident
+    // owner. Cauchy-Schwarz with measure r dr gives W^2 < V*I, so the
+    // ordinary J/W kinetic estimate exceeds the true V/I rotational energy.
+    // Move half that independent positive gap below the true kinetic energy:
+    // total energy remains positive, but the actual Native thermal part is negative.
+    auto& target_block=blocks[0];const auto& target_grid=target_block.grid;
+    const int ti=target_grid.Is()+3,tj=target_grid.Js()+3;
+    const int target=target_grid.GetIndex(ti,tj,0);
+    const double target_energy=target_block.fluid_state.eng[target];
+    const long double a=target_grid.GetFacePosL(ti),z=target_grid.GetFacePosR(ti);
+    const long double V=(z*z-a*a)/2.L,I=(z*z*z*z-a*a*a*a)/4.L;
+    const long double ordinary=.5L*target_block.fluid_state.mom_w[target]
+        *target_block.fluid_state.mom_w[target],mapped=I/(2.L*V);
+    require(ordinary>mapped,"classifier fixture lost its independent angular kinetic gap");
+    target_block.fluid_state.eng[target]=double(mapped-(ordinary-mapped)/2.L);
+    backend->enqueue_upload_slot(accesses[0],arch::state::StateRegion::Interior,
+        transfer_view(target_block.fluid_state));backend->quiesce();
+    const auto thermal=backend->validate_completed_native_eos_batch(accesses,bounds);
+    require(thermal&&thermal->access.block==handles[0]&&thermal->diagnostic.index==target
+        &&RzThermodynamics::is_retryable_thermal_failure(thermal->diagnostic),
+        "classifier did not retain a real resident active thermal refusal");
+    const auto inspected=backend->classify_completed_native_active_thermal(accesses,bounds,*thermal);
+    require(inspected.requested_failure&&!inspected.nonthermal_failure,
+        "classifier did not find its original actual active thermal target");
+    const auto preflight=[&](const auto& actual,const auto& original) {
+        const auto before_refusal=backend->counters();
+        require_rejected<std::invalid_argument>([&]{
+            backend->classify_completed_native_active_thermal(actual,bounds,original);
+        },"classifier accepted a stale or wrong original target");
+        const auto after_refusal=backend->counters();
+        require(after_refusal.kernel_count==before_refusal.kernel_count
+            &&after_refusal.bytes_h2d==before_refusal.bytes_h2d
+            &&after_refusal.bytes_d2h==before_refusal.bytes_d2h
+            &&after_refusal.stream_sync_count==before_refusal.stream_sync_count,
+            "classifier preflight refusal submitted resident work");
+    };
+    preflight(stale,*thermal);
+    auto wrong=*thermal;++wrong.access.storage.value;preflight(accesses,wrong);
+    wrong=*thermal;++wrong.diagnostic.index;preflight(accesses,wrong);
+    wrong=*thermal;wrong.diagnostic.i=target_grid.Is()-1;
+    wrong.diagnostic.index=target_grid.GetIndex(wrong.diagnostic.i,tj,0);preflight(accesses,wrong);
+    const auto& fatal_grid=blocks[1].grid;
+    const auto fatal_density=blocks[1].fluid_state.rho;
+    for(int j=fatal_grid.Js();j<fatal_grid.Je();++j)for(int i=fatal_grid.Is();i<fatal_grid.Ie();++i)
+        blocks[1].fluid_state.rho[fatal_grid.GetIndex(i,j,0)]=0.;
+    backend->enqueue_upload_slot(accesses[1],arch::state::StateRegion::Interior,
+        transfer_view(blocks[1].fluid_state));backend->quiesce();
+    const auto fatal=backend->classify_completed_native_active_thermal(accesses,bounds,*thermal);
+    require(fatal.nonthermal_failure&&fatal.nonthermal_failure->access.block==handles[1]
+        &&fatal.nonthermal_failure->diagnostic.i>=fatal_grid.Is()&&fatal.nonthermal_failure->diagnostic.i<fatal_grid.Ie()
+        &&fatal.nonthermal_failure->diagnostic.j>=fatal_grid.Js()&&fatal.nonthermal_failure->diagnostic.j<fatal_grid.Je()
+        &&fatal.nonthermal_failure->diagnostic.status==arch::state::Status::nonpositive_density,
+        "earlier thermal target concealed a later patch's actual fatal density");
+    blocks[1].fluid_state.rho=fatal_density;
+    target_block.fluid_state.eng[target]=target_energy;
+    for(int b=0;b<2;++b)backend->enqueue_upload_slot(accesses[b],
+        arch::state::StateRegion::Interior,transfer_view(blocks[b].fluid_state));
+    blocks[1].fluid_state.eng[bad]=poison;
+    backend->enqueue_upload_slot(accesses[1],arch::state::StateRegion::Ghost,
+        transfer_view(blocks[1].fluid_state));backend->quiesce();
+    const auto ghost_only=backend->classify_completed_native_active_thermal(accesses,bounds,*thermal);
+    require(!ghost_only.requested_failure&&!ghost_only.nonthermal_failure,
+        "a ghost-only failure replaced the restored active thermal target");
+    preflight(accesses,*failure); // The original real ghost refusal is not an active thermal authority.
+    blocks[1].fluid_state.eng[bad]=saved;
+    backend->enqueue_upload_slot(accesses[1],arch::state::StateRegion::Ghost,
+        transfer_view(blocks[1].fluid_state));backend->quiesce();
+    require(!backend->validate_completed_native_eos_batch(accesses,bounds),
+        "classifier edge checks did not restore the genuine accepted state");
     for(int b=0;b<2;++b) {
         auto observed=blocks[b].fluid_state;
         for(auto region:{arch::state::StateRegion::Interior,arch::state::StateRegion::Ghost})
@@ -1732,7 +1801,7 @@ void run_native_runtime_boundary(int device_count)
             auto context=runtime.stage_context();const auto owner=driver::RuntimeStateTransaction::snapshot_owner(runtime,context);
             const auto callbacks_before=calls.load();const auto before=backend->counters();
             runtime.ensure_fluid_ghosts(StateSlot::Current);const auto after=backend->counters();
-            auto expected_counter=before;expected_counter.kernel_count+=active.size();
+            auto expected_counter=before;expected_counter.kernel_count+=2*active.size();
             expected_counter.bytes_d2h+=active.size()*(sizeof(int)+sizeof(RzThermodynamics::AcceptanceDiagnostic));
             ++expected_counter.stream_sync_count;expected_counter.getter_count+=3; // Internal before, original trace query, this observation.
             require(after==expected_counter&&calls.load()==callbacks_before,

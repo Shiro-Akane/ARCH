@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 
 #include "amr/exchange/BoundaryPlan.h"
@@ -35,6 +36,43 @@
 #include "physics/boundary/BoundaryFlux.h"
 
 namespace arch::boundary::native_rz_math {
+
+/** Select reflecting physical faces from the actual bound logical authority.
+ * Workflow: validate the shared canonical grid and original plan layout;
+ * retain only a configured Reflecting token on a dyadic root edge; exclude
+ * the regular radial axis. Internal/periodic faces cannot become Hydro walls.
+ * The Host BC owner authenticates its root/config first; the CUDA factory uses
+ * this same pure selector before caching the immutable value for its generation.
+ * This value alone grants neither completed ghosts nor thermal acceptance.
+ */
+inline HydroBoundaryView bound_reflecting_faces(
+    const BoundaryPlan& plan, const GridMetrics::GeometryView& geometry)
+{
+    const auto& input = plan.input();
+    const auto& identity = geometry.dyadic_identity;
+    if (geometry.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
+        || !identity.bound || !GridMetrics::matches_identity(geometry)
+        || input.dimension != 2 || input.ghost_depth != geometry.ng
+        || input.active_extent[0] != amr::BLOCK_NX
+        || input.active_extent[1] != amr::BLOCK_NY
+        || input.active_extent[2] != 1)
+        throw std::invalid_argument("Native reflecting plan differs from the actual bound grid");
+    HydroBoundaryView result;
+    for (int axis = 0; axis < 2; ++axis) {
+        for (int side = 0; side < 2; ++side) {
+            const int face = 2 * axis + side;
+            if (input.faces[face] != BoundaryType::Reflecting) continue;
+            const bool physical = side
+                ? std::uint64_t(identity.logical[axis]) + 1
+                    == (std::uint64_t(identity.root_blocks[axis]) << identity.level)
+                : identity.logical[axis] == 0;
+            const double edge = side ? geometry.actual_block_upper[axis]
+                : (axis == 0 ? geometry.x1_min : geometry.x2_min);
+            result.reflecting[face] = physical && !(axis == 0 && edge == 0.);
+        }
+    }
+    return result;
+}
 
 /** Numerical failures; invalid input and physical/integration failures differ. */
 enum class Status : unsigned char {

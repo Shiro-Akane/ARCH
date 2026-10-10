@@ -6,9 +6,11 @@
  * completion before comparing the public boundary handler with reference data.
  */
 #include "amr/exchange/BoundaryPlan.h"
+#include "amr/exchange/HostBoundaryPlan.h"
 #include "driver/DriverUtils.h"
 #include "driver/schedule/StageScheduler.h"
 #include "driver/runtime/StateResidency.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 
 #include <array>
 #include <bit>

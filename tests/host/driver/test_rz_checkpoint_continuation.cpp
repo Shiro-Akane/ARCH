@@ -135,10 +135,11 @@ static void load_warm_checkpoint(void* payload,amr::AMRControl& control,RunState
  * differences; process-local journal prefixes/budgets are never checkpointed.
  * No formal Plot identity is invented: DriverIO's Plot member is unused here.
  */
-static void warm_continuation(const std::filesystem::path& root,const std::string& table) {
+static void warm_continuation(const std::filesystem::path& root,const std::string& table,
+    arch::driver::GravityStage::Qualification qualification=arch::driver::GravityStage::Qualification::NativeRzSelfHydroCandidate) {
     using namespace native_active_four_module;
     const auto table_sha=arch::core::file_sha256(table);
-    Owner original(table,true,3.*macro_dt,{},(root/"uninterrupted").string());
+    Owner original(table,true,3.*macro_dt,{},(root/"uninterrupted").string(),qualification);
     ::require(arch::core::file_sha256(table)==table_sha,"Actual new Helm table changed during construction");
     advance_dynamic_to_m1(original);
     ::require(bits(original.controller->dt_old,macro_dt),"Warm M1 lost actual dt_old");
@@ -169,7 +170,7 @@ static void warm_continuation(const std::filesystem::path& root,const std::strin
     ::require(warm_words(original)==split,"Checkpoint writer changed native conserved means");
     WarmCheckpointInput loader_input{file.string(),table,table_sha};
     Owner resumed(table,true,3.*macro_dt,
-        EmptyInitialization{&load_warm_checkpoint,&loader_input},(root/"resumed").string());
+        EmptyInitialization{&load_warm_checkpoint,&loader_input},(root/"resumed").string(),qualification);
     ::require(warm_words(resumed)==split,"Fresh EMPTY checkpoint owner changed accepted native bits");
     ::require(bits(resumed.controller->t_current,original.controller->t_current)
         &&resumed.controller->step_count==original.controller->step_count
@@ -197,13 +198,19 @@ static void warm_continuation(const std::filesystem::path& root,const std::strin
     warm_repairs(original.controller->repairs,resumed.controller->repairs);
     ::require(arch::core::file_sha256(file.string())==checkpoint_sha
         &&arch::core::file_sha256(table)==table_sha,"Warm consumers changed checkpoint/table contents");
-    std::cout<<std::setprecision(17)<<"PASS WARM_NATIVE_ACTIVE_CHECKPOINT_CONTINUATION split_time="
+    std::cout<<std::setprecision(17)<<(original.production()?"PASS PUBLIC_NATIVE_ACTIVE_CHECKPOINT_CONTINUATION production_route=1 split_time=":
+        "PASS WARM_NATIVE_ACTIVE_CHECKPOINT_CONTINUATION split_time=")
         <<2.*macro_dt<<" final_time="<<original.controller->t_current<<" final_step=3 leaves=5 cells=1280"
         <<" bit_words="<<split.size()<<" checkpoint_sha="<<checkpoint_sha<<" table_sha="<<table_sha
         <<" genuine_burn_thermal_hydro_self=1 mixed_CF=1 raw_checkpoints=1 physical_qualified=0 total_energy_qualified=0 CUDA_qualified=0\n";
 }
 int main(int argc,char** argv) {
  try {
+    // Explicit public mode preserves the same genuine EMPTY checkpoint and M2 window.
+    if(argc==4&&std::string(argv[2])=="--public-native-active") {
+        const std::filesystem::path root(argv[1]);require(!std::filesystem::exists(root),"output root exists");
+        warm_continuation(root,argv[3],arch::driver::GravityStage::Qualification::Production);return 0;
+    }
     if(argc==4&&std::string(argv[2])=="--warm-native-active") {
         const std::filesystem::path root(argv[1]);require(!std::filesystem::exists(root),"output root exists");
         warm_continuation(root,argv[3]);return 0;

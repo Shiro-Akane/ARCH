@@ -82,7 +82,7 @@ HydroGeometryBinding bind_hydro_geometry(
             ||(external&&(!source.external.enabled||!std::isfinite(source.external.g_x)
                 ||!std::isfinite(source.external.g_y)||!std::isfinite(source.external.g_z)))
             ||!binding.context.hydro_preparation
-            ||!binding.context.hydro_preparation->supports_host_macro_step_journal())
+            ||!binding.context.hydro_preparation->supports_macro_step_journal(arch::state::ExecutionSide::Host))
             throw std::invalid_argument("RZ gravity requires its actual prepared source contract");
         // Discovery selects ordering only. The first executor must borrow the
         // private real frame before clearing registers or evaluating patches.

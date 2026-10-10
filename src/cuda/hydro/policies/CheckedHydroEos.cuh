@@ -47,7 +47,7 @@ public:
     ARCH_INLINE CheckedHydroEosView candidate_view() const
     {
         auto candidate = *this;
-        candidate.eos_ = bind_device_eos_status(eos_, nullptr);
+        candidate.eos_ = optional_eos();
         candidate.status_ = nullptr;
         return candidate;
     }
@@ -165,11 +165,11 @@ public:
         if constexpr (requires { typename Eos::HostHydroScope; }) {
             const auto group = input_group(composition, rho, energy);
             chi = kappa = 0.0;
-            if (group.leader()) bind_device_eos_status(eos_, nullptr)
+            if (group.leader()) optional_eos()
                 .get_dp_drho_e_and_dp_de_rho(rho, energy, composition, chi, kappa);
             chi = group.broadcast(chi); kappa = group.broadcast(kappa);
         } else {
-            bind_device_eos_status(eos_, nullptr)
+            optional_eos()
                 .get_dp_drho_e_and_dp_de_rho(rho, energy, composition, chi, kappa);
         }
     }
@@ -186,19 +186,19 @@ public:
     ARCH_INLINE double probe_pressure_from_rho_e(
         double rho, double energy, const double* composition) const
     { return evaluate_once(composition, [&] {
-        return bind_device_eos_status(eos_, nullptr).get_pressure_from_rho_e(rho, energy, composition);
+        return optional_eos().get_pressure_from_rho_e(rho, energy, composition);
     }, rho, energy); }
 
     ARCH_INLINE double probe_dp_drho_e(
         double rho, double energy, const double* composition) const
     { return evaluate_once(composition, [&] {
-        return bind_device_eos_status(eos_, nullptr).get_dp_drho_e(rho, energy, composition);
+        return optional_eos().get_dp_drho_e(rho, energy, composition);
     }, rho, energy); }
 
     ARCH_INLINE double probe_dp_de_rho(
         double rho, double energy, const double* composition) const
     { return evaluate_once(composition, [&] {
-        return bind_device_eos_status(eos_, nullptr).get_dp_de_rho(rho, energy, composition);
+        return optional_eos().get_dp_de_rho(rho, energy, composition);
     }, rho, energy); }
 
     ARCH_INLINE double get_pressure_from_rho_T(
@@ -225,10 +225,18 @@ public:
     ARCH_INLINE double probe_total_energy_primitive(
         double rho, double u, double v, double w, double pressure,
         const double* composition) const
-    { return bind_device_eos_status(eos_, nullptr).get_total_energy_primitive(
+    { return optional_eos().get_total_energy_primitive(
         rho, u, v, w, pressure, composition); }
 
 private:
+    /** Detach optional-query status through every checked adapter layer.
+     * Workflow: select the existing inner candidate recursively, then detach
+     * the raw EOS status. Each query still uses the original EOS mathematics;
+     * required calls retain their sticky launch-owned status unchanged.
+     */
+    ARCH_INLINE Eos optional_eos() const
+    { return bind_device_eos_status(arch::state::candidate_eos(eos_), nullptr); }
+
     // These borrowed fields never escape hydro_face_kernel_work. They are not
     // a temperature hint, persistent cache, or approximation of a face state.
     const DeviceStateView* means_ = nullptr;

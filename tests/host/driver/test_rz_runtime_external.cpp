@@ -444,9 +444,8 @@ struct Fixture {
         if(advance_time)controller->advance(dt); // Only after the actual owner accepted.
     }
     void bind_source() {
-        source=std::make_unique<driver::GravityStage>(*runtime,force.get(),
-            driver::GravityStage::Qualification::NativeRzExternalCandidate);
-        require(source->active()&&source->supports_host_macro_step_journal(),"real native external journal is inactive");
+        source=std::make_unique<driver::GravityStage>(*runtime,force.get());
+        require(source->active()&&source->supports_macro_step_journal(arch::state::ExecutionSide::Host),"real native external journal is inactive");
         context->hydro_preparation=source.get();
     }
     std::array<long double,6> totals() const {
@@ -813,11 +812,11 @@ void rejected_source_inputs() {
         saved.unchanged();
     };
     UnknownPolicy unknown;
-    ctor_reject(&unknown,driver::GravityStage::Qualification::NativeRzExternalCandidate);
+    ctor_reject(&unknown,driver::GravityStage::Qualification::Production);
     require(unknown.calls==0,"unknown source was executed during metadata refusal");
     ctor_reject(f.force.get(),static_cast<driver::GravityStage::Qualification>(255));
     Physical::Gravity::ExternalGravity wrong(0.,0.,std::nextafter(.025,1.));
-    ctor_reject(&wrong,driver::GravityStage::Qualification::NativeRzExternalCandidate);
+    ctor_reject(&wrong,driver::GravityStage::Qualification::Production);
     bool missing=false;
     try{f.advance();}
     catch(const std::invalid_argument& e){missing=std::string(e.what()).find("actual prepared source contract")!=std::string::npos;}

@@ -21,7 +21,7 @@ Core 已提供标准参数目录、未保存 `.par` 检查、Sod 一维初始场
 | 连续改参 | --preview-session 提供资源复用、完整初始化、阶段和耗时 | 保持会话、输入合并、取消及图像版本一致性 |
 | Preview 的 Log 零值 | 原值及零、负、非有限、正值范围统计均可读取 | 区分零/负/非有限值，按第 5.7 节绘图 |
 
-前端仍需实现本地启动、桌面窗口、AMR 绘制和上述表单交互。接口说明位于 `src/api/LOCAL_WORKFLOW_HANDOFF.md`、`src/api/INITIAL_AMR_API.md`、`src/api/CASE_INSPECTION_API.md`。旧顶层 `amrHierarchy=false` 保留给旧点采样入口；新客户端读取 `extensions.amr`，不把旧字段当作新增能力缺失。
+前端仍需实现本地启动、桌面窗口、AMR 绘制和上述表单交互。接口说明位于 `src/api/docs/archive/LOCAL_WORKFLOW_HANDOFF.md`、`src/api/docs/INITIAL_AMR_API.md`、`src/api/docs/CASE_INSPECTION_API.md`。旧顶层 `amrHierarchy=false` 保留给旧点采样入口；新客户端读取 `extensions.amr`，不把旧字段当作新增能力缺失。
 
 ## 2. 从终端打开当前项目
 
@@ -388,7 +388,7 @@ Core 继续从冻结的 `main` 基线组织独立改动，复用已完成接口�
 
 ### 9.3 接入和验收资料
 
-代码、最新响应示例与 scoped test 位于本轮交付的 ui-contract 分支。2026-09-21 CPU 构建通过，15 组相关测试最终通过；包括两种模型的预览与正式初始化 t=0 网格逐块对照。未运行 CUDA 编译或 GPU 测试。现有 v0.13.0 接入方只摘取 `5e96d4f0` 之后的本轮增量即可，重建 CPU binary 后开始 Host/Studio 接入。完整字段、限制、兼容性和测试说明见 `src/api/LOCAL_WORKFLOW_HANDOFF.md`，具体 commit 在交接消息中提供。
+代码、最新响应示例与 scoped test 位于本轮交付的 ui-contract 分支。2026-09-21 CPU 构建通过，15 组相关测试最终通过；包括两种模型的预览与正式初始化 t=0 网格逐块对照。未运行 CUDA 编译或 GPU 测试。现有 v0.13.0 接入方只摘取 `5e96d4f0` 之后的本轮增量即可，重建 CPU binary 后开始 Host/Studio 接入。完整字段、限制、兼容性和测试说明见 `src/api/docs/archive/LOCAL_WORKFLOW_HANDOFF.md`，具体 commit 在交接消息中提供。
 
 ## 10. 连续改参时的预览更新
 
@@ -432,12 +432,12 @@ Core 不沿用上一份场值，不根据参数名字猜测可以跳过哪些初
 
 Core 会话增量已经完成 CPU 构建及 18/18 组相关回归；界面接入按上述分工验收。
 
-接口与可直接试跑的示例见 [本地预览会话](../../src/api/PREVIEW_SESSION_API.md)，本轮 Core / Host / Studio 分工及同步范围见 [会话增量交接](../../src/api/PREVIEW_SESSION_HANDOFF.md)。
+接口与可直接试跑的示例见 [本地预览会话](../../src/api/docs/PREVIEW_SESSION_API.md)，本轮 Core / Host / Studio 分工及同步范围见 [会话增量交接](../../src/api/docs/archive/PREVIEW_SESSION_HANDOFF.md)。
 
 ## 接入资料
 
-- [本轮 Core 交接](../../src/api/LOCAL_WORKFLOW_HANDOFF.md)：分支、同步范围、兼容性和测试结果。
-- [模型检查接口](../../src/api/CASE_INSPECTION_API.md)：参数来源、单位证据、初始化样本、时间预算和失败状态。
-- [初始 AMR 接口](../../src/api/INITIAL_AMR_API.md)：资源表、叶块布局和预算状态。
-- [配置接口](../../src/api/CONFIGURATION_API.md)：标准参数、表单说明和依赖关系。
+- [本轮 Core 交接](../../src/api/docs/archive/LOCAL_WORKFLOW_HANDOFF.md)：分支、同步范围、兼容性和测试结果。
+- [模型检查接口](../../src/api/docs/CASE_INSPECTION_API.md)：参数来源、单位证据、初始化样本、时间预算和失败状态。
+- [初始 AMR 接口](../../src/api/docs/INITIAL_AMR_API.md)：资源表、叶块布局和预算状态。
+- [配置接口](../../src/api/docs/CONFIGURATION_API.md)：标准参数、表单说明和依赖关系。
 - [实际响应示例](../../src/api/examples/local-workflow/README.md)。

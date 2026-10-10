@@ -164,7 +164,7 @@ $$
 摘要和科学自定义参数身份；跨机器／后端不依赖绝对源码路径。身份改变或缺失明确拒绝
 续算。输出路径和后端选择不属于边界物理身份。
 
-## 配置 v3 与函数式注册
+## 算例参数声明与注册
 
 每个算例必须声明它读取的参数。函数式算例使用 `REGISTER_PROBLEM_WITH_CONFIGURATION(NAME, SETUP_FUNC, INIT_FUNC, DESCRIBE_FUNC)`，由最后一个回调返回完整 `CaseConfiguration`；原三参数宏不补造声明或默认值。示例见 [UserGravity/case.cpp](../../simulation/UserGravity/case.cpp)。`user_boundary_heat_flux` 显式声明为浮点输入，单位 `erg/(cm^2*s)`；完整输入保留现有物理值。自引力使用内部固定 CGS 常数，不能再通过 `gravity_G` / `G_const` 改写。
 

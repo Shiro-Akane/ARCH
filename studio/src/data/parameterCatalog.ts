@@ -1,9 +1,8 @@
-import {isRetiredParameter} from './retiredParameters.ts';
 import type {StandardParameter,ConfigurationSchema,CoordinateSystem,InspectionParameter} from '../host/configurationContracts.ts';
 export const parameterGroups=['Grid','EOS','Network','Gravity','Diffusion','Runtime'] as const;
 export function catalog(schema:StandardParameter[],values:Record<string,string>){
- return schema.filter(p=>!p.aliasOf&&!isRetiredParameter(p.key)).map(parameter=>{
-  const aliases=schema.filter(p=>p.aliasOf===parameter.key&&!isRetiredParameter(p.key)).map(p=>p.key);
+ return schema.filter(p=>!p.aliasOf).map(parameter=>{
+  const aliases=schema.filter(p=>p.aliasOf===parameter.key).map(p=>p.key);
   const sourceKey=Object.hasOwn(values,parameter.key)?parameter.key:aliases.find(k=>Object.hasOwn(values,k))??parameter.key;
   return {parameter,aliases,sourceKey,explicit:Object.hasOwn(values,sourceKey),value:values[sourceKey]??''};
  });

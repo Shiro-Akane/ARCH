@@ -128,7 +128,7 @@ Riemann 分母、斜率退化、矩阵主元、Newton 进展等由各方法所�
 本次参数审查重点是物理含义和配置权威，不全面重整 ODE 控制器或罗列所有算法小常数。
 已核对链路为 `StandardParameters` → `RuntimeParams` → `SimConfig` → Setup/dispatch → 实际物理消费者，
 并对照配置 API、[当前参数参考](../../../Reference.zh-CN.md)及
-[GUI/Core 审查](../../../../src/api/STUDIO_UI_REVIEW_2026-09-20.zh-CN.md)。以下是静态检查，不是新的运行验证。
+[GUI/Core 审查](../../../../src/api/docs/archive/STUDIO_UI_REVIEW_2026-09-20.zh-CN.md)。以下是静态检查，不是新的运行验证。
 标准参数表已供解析和 API 复用；应在此基础上补缺口，不能再建第三套注册/默认值系统。
 
 | 编号 | 现有内容及证据位置（以 `src/` 为根） | 计划处理 |

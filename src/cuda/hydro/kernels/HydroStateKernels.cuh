@@ -2,7 +2,7 @@
  * @file HydroStateKernels.cuh
  * @brief Device CFL reduction, buffer clearing and flux-divergence traversal.
  *
- * CFL candidates use DriverUtils and divergence uses TimeIntegratorHelper with
+ * CFL candidates use DriverUtils and divergence uses HydroCellUpdate with
  * shared metric caches. Reductions retain failure status. Borrowed buffers stay
  * owned by the runtime, which checks completion before reading results or
  * publishing the next stage.
@@ -18,7 +18,7 @@
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "driver/DriverUtils.h"
-#include "numerics/integrator/TimeIntegratorHelper.h"
+#include "numerics/integrator/HydroCellUpdate.h"
 #include "numerics/state/RzNativeClosure.h"
 #include "physics/gravity/GravitySource.h"
 

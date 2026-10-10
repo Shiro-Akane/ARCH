@@ -11,6 +11,8 @@ Chinese translation: [README.zh-CN.md](README.zh-CN.md) · [Documentation overvi
 
 ARCH models compressible fluid motion, heat transfer and nuclear reactions. It advances fluid state with a finite-volume method and uses adaptive mesh refinement (AMR) to add spatial resolution where needed. CPU and CUDA share the physics and mathematical implementation.
 
+The supported environment is **Linux or WSL2**. Build and run the scientific executable independently; **ARCH Studio is always optional** and is not required for CPU or CUDA calculations.
+
 **ARCH uses CGS for inputs, outputs and physical constants**: length in `cm`, time in `s`, density in `g/cm³`, pressure and energy density in `erg/cm³`, specific internal energy in `erg/g`, and temperature in `K`. Angles use `rad`. Inputs are not converted automatically; see the [case guide](docs/guides/SimulationCase.md#units) for more units.
 
 Begin with [Build](#build) and [First run](#first-run). After the first case, follow the [ARCH Simulation Case Guide](docs/guides/SimulationCase.md) in order. Use the [feature list](docs/Features.md) or [reference](docs/Reference.md) when you need module scope or a specific setting.
@@ -27,15 +29,15 @@ Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automati
 
 ## Build
 
-[ARCH Studio](docs/guides/Studio.md) provides grouped parameter editing, real initial fields/AMR, controlled builds, independent Run/Restart terminals and read-only Plotfile views. Opt in with `ARCH_BUILD_STUDIO=ON` to build it alongside Core, then launch `arch-studio`. Capabilities come from the selected binary. See [current status](studio/STATUS.md) and the [integration/release closure plan](docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md).
-
-Build in a Linux or WSL2 terminal. Prepare the dependencies for your backend:
+Build in a Linux or WSL2 terminal. Prepare the Core dependencies for your backend:
 
 - **Core tools:** a C++20 compiler, CMake 3.22+, Ninja and Git.
 - **Libraries used by both builds:** HDF5 C++/HL and OpenMP.
 - **CUDA builds also need:** CMake 3.25.2+, CUDA Toolkit 12.0+ and a compatible GPU driver.
 
 The [build guide](docs/guides/Build.md) covers installation, compilation memory limits and EOS tables in source archives.
+
+For desktop configuration, previews and read-only Plotfile viewing, optionally install [ARCH Studio](docs/guides/Studio.md). `ARCH_BUILD_STUDIO` defaults to `OFF`; set it to `ON` to build the desktop. Only this option needs Linux Node 24+, npm, Electron and a graphical session; see [desktop requirements](docs/guides/StudioEnvironment.md). Both calculation builds below work independently of Studio.
 
 ### Get the source
 

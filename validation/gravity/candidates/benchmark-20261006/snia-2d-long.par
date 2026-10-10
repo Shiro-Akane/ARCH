@@ -1,4 +1,5 @@
-# PROPOSAL ONLY: Core endpoint/budget confirmation required before execution.
+# O9 frozen representative: physical endpoint and acceptance scope are recorded
+# in docs/development/ComputeOptimizationPlan.zh-CN.md. Run acceptance is pending.
 # 2D periodic Cartesian C/O hotspot with AMR and four active modules.
 geometry=cartesian
 nblockx1=2
@@ -20,16 +21,16 @@ time_integrator=RK2
 cfl=0.3
 lrefinemin=0
 lrefinemax=1
-tmax=1e-6
+tmax=1e-8
 max_steps=-1
 dt_init=2.5e-11
 dt_min=1e-20
-tstep_change_factor=1.0
-out_dir=studio/.local/integration/proposed-snia-2d-long
+tstep_change_factor=2.0
+out_dir=studio/.local/release-closure-20261006/o9-coupled-long/run
 base_name=SNIaCoupled2Dlong
-plt_dt=-1
+plt_dt=1.25e-9
 plt_dstep=-1
-chk_dt=5e-7
+chk_dt=5e-9
 chk_dstep=-1
 plt_variables=DENS,PRES,TEMP,VELX,VELY,ENER,ENUC,SPECIES
 restart=false

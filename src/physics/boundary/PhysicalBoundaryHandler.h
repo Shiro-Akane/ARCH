@@ -180,14 +180,16 @@ public:
         NativeCandidate& operator=(const NativeCandidate&) = delete;
     };
     /** Move-only unpublished Native Device surface, tied to an actual store.
-     * Frame identity uses the real backend/access and Grid/stage/root words.
-     * No Host FluidState pointers, whole resident arrays or scientific authority
-     * are stored. The Runtime retains its domain-wide transaction and ledger.
+     * Frame identity uses the real backend/access, optional exact staged store,
+     * and Grid/stage/root words. No Host FluidState pointers, whole resident
+     * arrays or scientific authority are stored. Committed writes belong to
+     * the Runtime savepoint; unpublished writes belong to candidate disposal.
      */
     class NativeDeviceCandidate {
         friend struct BCHandler;
         const BCHandler* owner_ = nullptr;
         arch::backend::ComputeBackend* backend_ = nullptr;
+        arch::backend::BackendTopologyStoreTransaction* staged_ = nullptr;
         arch::backend::BackendStateAccess access_{};
         const Grid* grid_ = nullptr;
         arch::boundary::host::HostBoundaryLayout layout_{};
@@ -209,21 +211,28 @@ public:
     /** Prepare readonly actual-store layers x1 builtin/user, then x2 builtin/user.
      * Builtin layers use the backend's selected EOS; user layers borrow one
      * compact seed gather and the original bound Host callback/point law.
+     * An explicit staged store accepts Current only and never reads the
+     * committed namespace as fallback; nullptr preserves committed dispatch.
      */
     NativeDeviceCandidate prepare_native_device(arch::backend::ComputeBackend&,
-        arch::backend::BackendStateAccess,const Grid&) const;
-    /** Recheck actual backend/access, exact stage/binding/root/Grid and surface.
-     * This validates the provisional payload only; it grants no GhostValid or
-     * completed-cell EOS acceptance. Validate ALL domains before any scatter.
+        arch::backend::BackendStateAccess,const Grid&,
+        arch::backend::BackendTopologyStoreTransaction* staged=nullptr) const;
+    /** Recheck actual backend/access and exact staged-store pointer, followed
+     * by the original stage/binding/root/Grid and surface identity. This
+     * validates provisional payload only; it grants no GhostValid or completed
+     * cell EOS acceptance. Validate ALL domains before any scatter.
      */
     void validate_native_device_candidate(const NativeDeviceCandidate&,
-        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&) const;
-    /** Scatter through the existing fallible backend operation. The macro owner
-     * must retain an actual resident savepoint; failure can follow earlier domain
-     * writes. Final exchange/axis/EOS and scheduler publication remain external.
+        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&,
+        arch::backend::BackendTopologyStoreTransaction* staged=nullptr) const;
+    /** Scatter through the existing fallible backend operation. Committed
+     * writes require the Runtime resident savepoint; unpublished staged writes
+     * require the topology candidate disposal owner. Failure can follow earlier
+     * domain writes. Final exchange/axis/EOS and publication remain external.
      */
     void publish_native_device(NativeDeviceCandidate&&,
-        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&) const;
+        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&,
+        arch::backend::BackendTopologyStoreTransaction* staged=nullptr) const;
     /** Freeze only actual input metadata at the completed Hydro snapshot.
      * No wall, ledger or scientific permission follows from this public observation.
      */

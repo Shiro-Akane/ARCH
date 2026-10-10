@@ -327,27 +327,10 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (vars.vort || vars.divv) {
         extract_velocity_diagnostics(vars.vort, vars.divv);
     }
+
+    // Species keep their dedicated declaration owner; materialize them before
+    // the shared metadata loop so name collisions remain rejected.
     std::map<std::string, io::PlotFieldMetadata> field_metadata;
-    for (const auto& [name, values] : data_map) {
-        auto declaration = io::plot_field_metadata(name, geom == "cartesian");
-        if (!rz && geom!="cartesian" && (name=="VELX" || name=="VELY" || name=="VELZ"))
-            declaration.basis=dim==3?(geom=="cylindrical"?"local-orthonormal-r-z-phi":"local-orthonormal-r-theta-phi"):
-                dim==2?"local-orthonormal-r-phi-inactive":"local-orthonormal-r-inactive-inactive";
-        if (rz && (name == "VELX" || name == "VELY" || name == "VELZ")) {
-            declaration.basis = "local-orthonormal-r-z-phi";
-            declaration.meaning = name == "VELX" ? "radial_velocity"
-                : name == "VELY" ? "axial_velocity" : "representative_azimuthal_velocity";
-        }
-        if (rz) {
-            if (name == "DENS" || name == "ENER") declaration.averaging = "native-volume-average";
-            else if (name == "VELZ") declaration.averaging = "representative-m_phi-over-rho";
-            else if (name == "VELX" || name == "VELY")
-                declaration.averaging = "recovered-from-native-volume-averaged-conserved-state";
-            else if (name == "PRES" || name == "TEMP" || name == "ENTR" || name == "JENS")
-                declaration.averaging = "evaluated-from-native-mean-thermodynamic-closure";
-        }
-        field_metadata.emplace(name,std::move(declaration));
-    }
     std::vector<int> selected_species;
     if (vars.species) {
         for (int species = 0; species < specs.count(); ++species) selected_species.push_back(species);
@@ -372,12 +355,48 @@ void write_plt(amr::AMRControl &amr_ctrl,
         });
     }
 
+    // Actual producer extras (GPOT/GAC*) are validated and copied through the
+    // same data_map before the metadata loop, so they are declared by the
+    // existing plot_field_metadata owner instead of an unknown default.
     for (const auto& field : extra_fields) {
         if (field.name.empty() || field.values.size()!=total_cells || data_map.contains(std::string(field.name)))
             throw std::invalid_argument("Invalid additional plot field");
         if (!std::all_of(field.values.begin(),field.values.end(),[](double x){return std::isfinite(x);}))
             throw std::invalid_argument("Nonfinite additional plot field");
         data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
+    }
+
+    // Velocity and gravitational-acceleration payloads store physical
+    // orthonormal components in native coordinate-axis order on every chart.
+    const auto is_directional_component=[](const std::string& name) {
+        return name=="VELX"||name=="VELY"||name=="VELZ"
+            ||name=="GACX"||name=="GACY"||name=="GACZ";
+    };
+    for (const auto& [name, values] : data_map) {
+        auto declaration = io::plot_field_metadata(name, geom == "cartesian");
+        if (!rz && geom!="cartesian" && is_directional_component(name))
+            declaration.basis=dim==3?(geom=="cylindrical"?"local-orthonormal-r-z-phi":"local-orthonormal-r-theta-phi"):
+                dim==2?"local-orthonormal-r-phi-inactive":"local-orthonormal-r-inactive-inactive";
+        if (rz && is_directional_component(name)) {
+            declaration.basis = "local-orthonormal-r-z-phi";
+            if (name == "VELX") declaration.meaning = "radial_velocity";
+            else if (name == "VELY") declaration.meaning = "axial_velocity";
+            else if (name == "VELZ") declaration.meaning = "representative_azimuthal_velocity";
+        }
+        // RZ radial/axial acceleration carries its chart meaning; the azimuthal
+        // component keeps the honest generic meaning and no gravity averaging
+        // or normalization is invented.
+        if (rz && name == "GACX") declaration.meaning = "radial_gravitational_acceleration";
+        else if (rz && name == "GACY") declaration.meaning = "axial_gravitational_acceleration";
+        if (rz) {
+            if (name == "DENS" || name == "ENER") declaration.averaging = "native-volume-average";
+            else if (name == "VELZ") declaration.averaging = "representative-m_phi-over-rho";
+            else if (name == "VELX" || name == "VELY")
+                declaration.averaging = "recovered-from-native-volume-averaged-conserved-state";
+            else if (name == "PRES" || name == "TEMP" || name == "ENTR" || name == "JENS")
+                declaration.averaging = "evaluated-from-native-mean-thermodynamic-closure";
+        }
+        field_metadata.emplace(name,std::move(declaration));
     }
     // Encoding/EOS/build identities were frozen once by the production startup
     // owner. The output-session UUID remains independent of this scientific ID.

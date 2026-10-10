@@ -122,6 +122,65 @@ struct Fixture {
     }
 };
 
+/** Check provenance against original Energy entries, without using group_fields.
+ * Workflow: match each existing compiled term/target to its original operands,
+ * then require its exact vector position and one-to-one Energy coverage.
+ */
+void expect_energy_operation_indices(
+    const amr::AmrFluxTopologyPlan& topology,
+    const std::vector<amr::AmrFluxEndpointBinding>& bindings,
+    const amr::AmrCompiledFluxTopologyPlan& compiled)
+{
+    expect(compiled.routes.size() == topology.routes.size(),
+           "compiled Energy provenance changed route alignment");
+    for (std::size_t route_index = 0; route_index < topology.routes.size(); ++route_index) {
+        const auto& original = topology.routes[route_index];
+        const auto& route = compiled.routes[route_index];
+        const auto source = std::find_if(bindings.begin(), bindings.end(),
+            [&](const auto& binding) { return binding.endpoint == original.source; });
+        expect(source != bindings.end() && route.source_block == source->runtime_index,
+               "compiled Energy provenance changed source binding");
+        std::vector<int> visits(original.plan.operations.size(), 0);
+        std::size_t checked_terms = 0;
+        for (const auto& target : route.targets) {
+            const auto destination = std::find_if(bindings.begin(), bindings.end(),
+                [&](const auto& binding) { return binding.runtime_index == target.destination_block; });
+            expect(destination != bindings.end(), "compiled Energy provenance lost destination binding");
+            for (int offset = 0; offset < target.term_count; ++offset) {
+                const auto& term = route.terms.at(static_cast<std::size_t>(target.first_term + offset));
+                std::size_t expected = std::numeric_limits<std::size_t>::max();
+                for (std::size_t index = 0; index < original.plan.operations.size(); ++index) {
+                    const auto& operation = original.plan.operations[index];
+                    if (operation.field != amr::AmrField::Energy
+                        || operation.destination != destination->endpoint
+                        || operation.rule != target.rule
+                        || 2 * amr::axis_value(operation.axis) + amr::side_value(operation.side)
+                            != target.destination_face
+                        || operation.weight != term.geometric_weight
+                        || amr::flux_execution_detail::checked_full_cell(
+                            source->grid, operation.source_box, operation.axis, true) != term.source_cell
+                        || amr::flux_execution_detail::checked_register_cell(
+                            destination->grid, operation.destination_box, operation.axis, operation.side)
+                            != target.destination_cell)
+                        continue;
+                    expect(expected == std::numeric_limits<std::size_t>::max(),
+                           "compiled Energy provenance matched multiple original operations");
+                    expected = index;
+                }
+                expect(expected != std::numeric_limits<std::size_t>::max()
+                           && term.energy_operation_index == expected,
+                       "compiled term lost original Energy vector index");
+                ++visits[expected];
+                ++checked_terms;
+            }
+        }
+        expect(checked_terms == route.terms.size(), "compiled Energy provenance omitted a term");
+        for (std::size_t index = 0; index < visits.size(); ++index)
+            expect(visits[index] == (original.plan.operations[index].field == amr::AmrField::Energy ? 1 : 0),
+                   "compiled Energy provenance duplicated or omitted an original group");
+    }
+}
+
 void test_shared_math()
 {
     using amr::RefinementRule;
@@ -210,6 +269,10 @@ void test_canonical_surface_lowering()
     Fixture fixture;
     const auto compiled = amr::compile_amr_flux_topology_plan(
         fixture.topology, fixture.bindings);
+    expect_energy_operation_indices(fixture.topology, fixture.bindings, compiled);
+    expect(amr::AmrFluxRegistrationTerm{}.energy_operation_index
+               == std::numeric_limits<std::size_t>::max(),
+           "unbound Energy operation index lost its sentinel");
     expect(compiled.routes.size() == 1,
            "topology did not lower exactly one source route");
     const auto& route = compiled.routes.front();
@@ -253,6 +316,19 @@ void test_canonical_surface_lowering()
         grid.total_size) * (6 + Fixture::species_count);
     expect(compact < old_full_volume,
            "surface storage regressed to a full-volume cache");
+
+    // Valid plans require ordinal == vector index. Preserve that original gate;
+    // a reordered operation vector must never acquire compiled provenance.
+    auto reordered = fixture.topology;
+    auto& operations = reordered.routes.front().plan.operations;
+    std::reverse(operations.begin(), operations.end());
+    reordered.routes.front().plan.fingerprint =
+        amr::compute_amr_plan_fingerprint(reordered.routes.front().plan);
+    reordered.fingerprint = amr::flux_plan_detail::compute_fingerprint(reordered);
+    bool rejected = false;
+    try { (void)amr::compile_amr_flux_topology_plan(reordered, fixture.bindings); }
+    catch (const std::invalid_argument&) { rejected = true; }
+    expect(rejected, "reordered operations escaped original canonical plan validation");
 }
 
 void test_zero_activation_and_signed_execution()
@@ -373,6 +449,7 @@ void test_real_2d_topology_surface_partition()
 
     const auto compiled = amr::compile_amr_flux_topology_plan(
         topology, bindings);
+    expect_energy_operation_indices(topology, bindings, compiled);
     struct CellPartition {
         int coarse_terms = 0;
         int fine_terms = 0;
@@ -605,6 +682,7 @@ void test_rz_registration_reflux(int direction, double inner,
                 amr::make_amr_flux_grid_layout(block.grid)});
         }
         const auto compiled=amr::compile_amr_flux_topology_plan(topology,bindings);
+        expect_energy_operation_indices(topology, bindings, compiled);
         for(const auto& route:compiled.routes) for(const auto& term:route.terms) {
             const auto& g=control.pool->GetBlock(route.source_block).grid;
             const int i=term.source_cell%g.stride_y;

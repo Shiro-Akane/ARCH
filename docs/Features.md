@@ -16,7 +16,7 @@ Use this page to choose the capabilities needed for a simulation. The reference 
 | Gravity | External acceleration and self-consistent potential, acceleration and energy work | See the self-gravity domain table below |
 | Execution | CPU/OpenMP and CUDA backends share physics and mathematics; the host owns AMR topology while the device executes numerical work | Build and network capabilities select the backend; speed depends on workload size |
 | Output and restart | HDF5 fields, checkpoints, solver and repair diagnostics; cross-backend restart for compatible configurations | EOS, network, geometry, gravity and control identity must agree on restart |
-| Studio | Standalone Linux/WSLg window; configuration, build, run/restart, initial-field/AMR Preview and read-only Plotfile queries | Preview follows each model’s advertised capabilities; Plotfile overviews cover Cartesian 1D/2D and stored-cell queries cover recorded native 1D–3D charts. See the [Studio guide](guides/Studio.md) |
+| Studio (optional) | Standalone Linux/WSLg window; configuration, build, run/restart, initial-field/AMR Preview and read-only Plotfile queries | Preview follows each model’s advertised capabilities; RZ initial AMR provides root-mesh snapshots. Plotfile overviews cover Cartesian 1D/2D and stored-cell queries cover recorded native 1D–3D charts. See the [Studio guide](guides/Studio.md) |
 | Custom cases | Define `Setup`, `Init` and parameters through `<UserInterface.h>` and `<GlobalDefs.h>` | The [case guide](guides/SimulationCase.md) gives the workflow |
 
 General radiation transport is outside the current feature set. Thermal diffusion and radiation thermodynamics in an EOS follow their respective models.

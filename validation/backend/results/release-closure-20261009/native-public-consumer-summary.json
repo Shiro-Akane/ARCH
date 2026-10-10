@@ -1,0 +1,456 @@
+{
+  "schema": "arch-native-public-consumer-closure-1",
+  "recorded_utc": "2026-10-10T12:53:13.396454+00:00",
+  "baseline_commit": "e69a859705da0efc0c7abad64c8949f9e4934951",
+  "status": "CURRENT_CUDA_PRODUCTION_ENGINEERING_READY_HYDRO_DEVICE_FRESH_RZ_LONG_TIMING_PENDING",
+  "scope": "Current coherent33 Runtime/isolated Self/source/retry/AMR integration plus shared optional geometric EOS-ray selection; actual original owners only",
+  "public_cpu_owners": {
+    "status": "PASS_THREE_ORIGINAL_PUBLIC_HOST_OWNERS",
+    "results": [
+      {
+        "owner": "public-native-self",
+        "returncode": 0,
+        "elapsed_seconds": 540.3152321970047
+      },
+      {
+        "owner": "public-native-active-four-module",
+        "returncode": 0,
+        "elapsed_seconds": 53.22126686199772
+      },
+      {
+        "owner": "public-native-active-four-module-amr",
+        "returncode": 0,
+        "elapsed_seconds": 440.3099344630027
+      }
+    ],
+    "identity_unchanged": true,
+    "science_long_device_not_granted": true
+  },
+  "public_owner_binary_sha256": "5b8beb17f4d2c382cf942c4e12cf61fa30def1c27e54661cf4fcc8d383f19d94",
+  "actual_eos_table_sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+  "affected_cpu": {
+    "priority_original_owners_passed": 8,
+    "priority_ctest_seconds": 65.43,
+    "curvilinear_original_owner_passed": 1,
+    "curvilinear_ctest_seconds": 24.7,
+    "new_edge_cases_in_original_curvilinear_owner": 4,
+    "edge_scope": [
+      "normal path exactly4queries",
+      "nonzero contracted source ray",
+      "required baseline success",
+      "bad required baseline rejects without delta write"
+    ]
+  },
+  "shared_math_fix": {
+    "scope": "Only optional high-profile EOS source query may contract existing common conservative theta ray; required baseline queried on fallback, never suppressed",
+    "preserved": [
+      "normal successful path4pressure queries",
+      "original source quadrature and momentum formula",
+      "single common theta across all conserved/composition fields",
+      "explicit theta0 baseline",
+      "existing54dyadic attempts",
+      "original density/energy floors",
+      "full face EOS/exact caches",
+      "two Strang burn halves",
+      "shared CPU/CUDA mathematics and strictFP"
+    ],
+    "new_user_controls": 0
+  },
+  "authorized_test_norm": {
+    "scope": "New original cached Helm Euler radial/axial V momenta only",
+    "coefficient": 3e-14,
+    "scale": "Independent Host |m0| plus original |dt*A*F/V| and |dt*S| sums",
+    "strict_error_bound_claim": false,
+    "other_original_budgets_unchanged": true,
+    "original_failures_preserved": true
+  },
+  "source_sha256": {
+    "src/numerics/integrator/GeometricSources.h": "33af82ede690e8e345028dd8a382ba08a243ab39e8093de85ea5b0530bb20f63",
+    "tests/math/geometry/RzReconstructionCases.h": "2c0ed21214be24ada72e5d3cb52e2385a1c4f61955be3bbcef25f392e73df3a9",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "bdeabcdd2352b20f170fba748ad26a36d5846de9652e9377d6c5e4e3bdcd3c48",
+    "tests/cuda/hydro/test_cuda_multiblock_hydro.cu": "3f4e21a12acfc3d90d18f4ec8f95a58bd2c409e52c4cbdbcce10d037cf52e603",
+    "src/physics/gravity/NativeSelfStage.h": "ca59f76880fb4f8ccec8b112557f683f36536b3df86e35a4bbee323315d196d2",
+    "tests/host/gravity/test_gravity_stage_contract.cpp": "93b1b4fd7d00c25bddd3b157b51591308e809d03f120f983a172e7c38d9fc375",
+    "validation/io/run_rz_checkpoint_continuation.py": "e2ba0d53afc5a02a2060672669cb1e1b7581e6d058c2ea676486eac1ae913622"
+  },
+  "source_manifest": {
+    "count": 176,
+    "local_freeze_basename": "native-next33-final-cuda-source.freeze.json",
+    "manifest_sha256": "13152aa9f0ef4c6d98cc8e01aa736dab9d3146f343ac8439613a7ae0457634ca",
+    "scope": "Historical coherent33 compilation/source baseline; current production CUDA identity is current_original_cuda_consumers and current_source_manifest."
+  },
+  "pending": [
+    "Full original CUDA Hydro owner terminal and scientific assertions",
+    "Current production CUDA ARCH public four-module fresh-process checkpoint continuation",
+    "Original RZ five-crossing uninterrupted endpoint and its own midpoint strict fresh counterpart",
+    "Final protected CPU identity refresh and exclusive paired fullCLI/driver timing",
+    "Final CI/materials and release freeze/push"
+  ],
+  "other_math_delegation": {
+    "status": "ACCEPTED_LIMITED_SIGNED_ENERGY_MATH_NOT_RUNTIME",
+    "new_finding": "Signed density increments admit a conservative one-sided quadratic interval; existing positive-only Euler bound cannot be reused unchanged. This may retain O(N) independent uniform-source integrals for one weak-contrast long lane.",
+    "repeat_or_false_positive": "No new production bug. No repeated static/Euler verification. Provider shorthand Phi_D clarified by Root.",
+    "measured_seconds": 29.79,
+    "usage": {
+      "input_tokens": 2130,
+      "cached_input_tokens": 384,
+      "output_tokens": 5892,
+      "noncached_input_tokens": 1746,
+      "reasoning_tokens": 5424,
+      "visible_output_tokens": 468
+    },
+    "estimated_cost_usd": {
+      "currency": "USD",
+      "off_peak": 0.00379825,
+      "peak": 0.0075965,
+      "status": "estimate from reported token usage; API billing is authoritative",
+      "pricing_snapshot": "2026-10-10.1"
+    },
+    "actual_fee_usd": null,
+    "blocking_wait_seconds": 0,
+    "extra_rework": "None",
+    "recommendation": "Keep bounded independent math check for genuine new signed-density scope; do not turn this proof into repeated pointwise reference campaigns."
+  },
+  "qualification": {
+    "complete_release": false,
+    "long_time_grant": false,
+    "CUDA_numeric_grant": false,
+    "production_CUDA_build_link_readonly_identity": true,
+    "Studio_supported_engineering_chain": "PASS in separate studio-engineering-summary.json; private X11 engineering, not human WSLg foreground UAT"
+  },
+  "raw_h5_or_full_logs_tracked": false,
+  "new_ctest_targets": 0,
+  "new_ci_workflows": 0,
+  "public_checkpoint_continuation_20261010": {
+    "utc": "2026-10-10T07:15:48.139694+00:00",
+    "status": "PASS_ORIGINAL_PUBLIC_PRODUCTION_WARM_CHECKPOINT_OWNER",
+    "producer_exit_code": 0,
+    "qualification": "Production",
+    "actual_route": "PASS PUBLIC_NATIVE_ACTIVE_CHECKPOINT_CONTINUATION production_route=1 split_time=2e-12 final_time=3.0000000000000001e-12 final_step=3 leaves=5 cells=1280 bit_words=30720 checkpoint_sha=67b8e6df256ef598a685c010f156b3c4a0a822aaf9226d1e9129108cf6131672 table_sha=c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1 genuine_burn_thermal_hydro_self=1 mixed_CF=1 raw_checkpoints=1 physical_qualified=0 total_energy_qualified=0 CUDA_qualified=0",
+    "compile_and_run_seconds": 969.7440025219985,
+    "guard_seconds": 970.568,
+    "executable_sha256": "6c8c00db577b3c9f38bbc557ce6c0e33d5d23c96b9e45e262518b48e303fe6e4",
+    "result_sha256": "e1e016dd3d5e45759bca7c96ed4ccfc0fde60587918d8224228de383ef2cfc69",
+    "captured_build_inputs_sha256": "205d02469f2e0ff7e748721da7aa5a164a18a18698ee11d6bb7bcc055b0b41d9",
+    "stage_header_sha256": "2daab4a1f738eb80778c890bdc1b94716c49b4769d4ca265f0c9cac5f83479a9",
+    "physical_qualified": false,
+    "continuous_energy_qualified": false,
+    "cuda_qualified": false,
+    "root_checks": [
+      "Actual terminal exit0 and original assertions",
+      "Public Production route, genuine Burn/Thermal/Hydro/Self and mixed CF",
+      "Actual fresh Runtime resume/30720 storage words",
+      "Executable and stage header unchanged",
+      "Original 2400s combined compile+run cap"
+    ],
+    "post_run_provider_rebuild_now_allowed": true
+  },
+  "final_cpu_checks": {
+    "explicit_build_targets": 58,
+    "cpu_ctest": {
+      "passed": 68,
+      "skipped": 0,
+      "elapsed_seconds": 234.66,
+      "binary_sha256": "bc1bacfc27ff945f27d4b822ea50fe98d5669c94262012423c911c2af3a818e3"
+    },
+    "tooling": {
+      "passed": 749,
+      "skipped": 0,
+      "elapsed_seconds": 50.248,
+      "original747_retained": true,
+      "change_reason": "2 original-owner edge cases for actual rounded initial PWC energy reference"
+    },
+    "current_producer": {
+      "binary_sha256": "63ffa636ae1ba1961c50308784ad6dcb75b58e456967d8a57d76cd42176dcffb",
+      "original_studio_build": "BuildIdentity.cpp plus production relink only; physical compiled sources unchanged, prior68/math provenance retained, current actual API/lowdensity separately executed"
+    },
+    "low_density": {
+      "passed": 72,
+      "elapsed_seconds": 11.128,
+      "minimum_density": 1.0000000000000001e-48,
+      "minimum_thermal_density": 2.5000000000000008e-48,
+      "zero_repairs": 67,
+      "expected_floor_repair_runs": 5,
+      "restart_field_and_repair_bits_equal": true,
+      "raw_closed_h5_removed": 287,
+      "bytes_reclaimed": 20561600
+    },
+    "core_host_static": {
+      "categories": 14,
+      "parameter_count": 95,
+      "scientific_resources_created": false
+    },
+    "architecture_audit_exit_code": 0,
+    "benchmark_qualification": false
+  },
+  "closed_rz_reference": {
+    "scope": "Actual stored initial/final PWC density, exact percell density differences against spatially varying uniform background kernel",
+    "reference_source_sha256": "6da18835a86a0cdc550387976f5627c57156b85016e380d3628ee8c3271cfb68",
+    "original_owner_passed": 91,
+    "initial_rounding_not_discarded": true,
+    "quadratic_bounds": "[-G*a_final^2*I_DD/2,+G*a_initial^2*I_DD/2]",
+    "physical_budget": 0.02,
+    "reference_budget": 0.002,
+    "mass_budget": 1e-12,
+    "physical_endpoint_unchanged": true,
+    "new_production_changes": 0,
+    "quadrature_uncertainty": "degree12/24/48 convergence estimate, not outward certificate",
+    "long_acceptance": false,
+    "raw_uploaded": false
+  },
+  "resource_interruption_20261010": {
+    "recorded_utc": "2026-10-10T11:54:09.846826+00:00",
+    "scope": "Actual resource terminals retained separately from numerical acceptance",
+    "nested_backend_build": {
+      "session": 89130,
+      "actual_exit_code": 125,
+      "guard_stop": "available_memory",
+      "elapsed_seconds": 3770.973288134992,
+      "owned_peak_rss_kib": 4831324,
+      "original_burn_not_executed": true
+    },
+    "closed_rz_primary": {
+      "session": 38967,
+      "actual_exit_code": 125,
+      "last_accepted_step": 556,
+      "guard_seconds": 13214.651,
+      "arch_peak_rss_kib": 38648,
+      "fd_range": [
+        5,
+        5
+      ],
+      "physical_end_not_reached": true
+    },
+    "closed_rz_fresh": {
+      "session": 65485,
+      "actual_exit_code": 125,
+      "last_accepted_step": 553,
+      "guard_seconds": 1449.754,
+      "wrapper_seconds": 1450.2363474339945,
+      "arch_peak_rss_kib": 37776,
+      "fd_range": [
+        5,
+        5
+      ],
+      "physical_end_not_reached": true
+    },
+    "closed_midpoint": {
+      "step": 534,
+      "time": 212372.6280429131,
+      "sha256": "c1e7a4d726f4c38a39c77b60cedeca3e1c5f94f9002f77b436a5b3205263b90a",
+      "bytes": 37688
+    },
+    "qualification": "No new numerical assertion recorded; none of these three interruptions is PASS. Observed bounded RSS/fd is not leak-freedom proof. Two fresh midpoint resumes do not prove continuous-vs-restart equivalence.",
+    "recovery": "Retain completed compiler objects; no heavy NVCC overlap with RZ long. Physical endpoint/budgets remain unchanged.",
+    "raw_uploaded": false
+  },
+  "nested_checked_eos_transport": {
+    "scope": "Bounded actual nested optional/required EOS latch defect, original adapter and original dispatch owner",
+    "production_file": "src/cuda/hydro/policies/CheckedHydroEos.cuh",
+    "production_sha256": "21d3cb49a7fce9886a91ed8f4f2a2f9c32537725e22f101bdc1427d3672a0ba6",
+    "counterexample": "Two nested checked views with two separate sticky latches: original candidate pressure path contaminated required status.",
+    "before_production_fix": "Actual original-owner assertion failure: Nested candidate pressure poisoned a required EOS latch",
+    "after_production_fix": "Actual original dispatch owner PASS, nested2/optional6 plus existing60registry/3unknown/2limiter controls",
+    "fix": "Reuse shared recursive candidate_eos selector before rebinding status; required queries remain sticky and unchanged. No EOS, source formula, floors or science threshold change.",
+    "complete_macro_acceptance": false,
+    "independent_delegation": {
+      "provider": "DeepSeek real API Flash high",
+      "status": "ROOT_ACCEPTED_BOUNDED_SOURCE_REASONING",
+      "finding": "Corroborates nested candidate contamination; derivative-pair path already recursively safe. Does not identify the original first failing mixed-grid cell.",
+      "measured_worker_seconds": 46.83,
+      "input_tokens": 11388,
+      "cached_input_tokens": 384,
+      "noncached_input_tokens": 11004,
+      "output_tokens": 11222,
+      "reasoning_tokens": 10585,
+      "visible_output_tokens": 637,
+      "estimated_usd_range": [
+        0.00838495,
+        0.0167699
+      ],
+      "actual_fee_usd": null,
+      "root_active_token_cost": null,
+      "root_review_wall_seconds": 120.902,
+      "blocking_wait_seconds": 0,
+      "formal_repair_calls": 0,
+      "overlap": "Existing CUDA/RZ work, Root failure/source review and consumed GUI raw cleanup",
+      "recommendation": "Retain bounded independent review for genuine new defects; no duplicate review or claimed general speedup."
+    }
+  },
+  "current_native_source_preflight": {
+    "status": "AFFECTED_HOST_AND_ORIGINAL_CUDA_BURN_PASS",
+    "correction": "Shared Native macro refuses non-none source without genuine preparation before transaction and split. Original mathematical implementations and numerical budgets unchanged.",
+    "new_source_freeze_sha256": "e2bc63905e09a70cba64276a905ff6fd3ddb9eeb1839776f961d773da0378769",
+    "DPS_review": {
+      "seconds": 44.2,
+      "tokens": {
+        "input": 9079,
+        "cached_input": 384,
+        "output": 9911,
+        "reasoning": 9460,
+        "visible": 451
+      },
+      "estimated_USD": [
+        0.007252,
+        0.014504
+      ],
+      "actual_fee": null,
+      "root_accepted_scope": "Read-only corroboration of missing admission guard; no scientific owner grant."
+    },
+    "scientific_release_grant": false,
+    "diagnostic_classification": "Existing invalid_argument / actual prepared source contract retained; original Host negative verifies same refusal earlier at macro entry.",
+    "first_affected_Host_owner_actual_exit": 8,
+    "first_affected_Host_owner_seconds": 26.207276404995355,
+    "current_affected_owners": "AFFECTED_HOST_DISPATCH_AND_ORIGINAL_CUDA_BURN_PASS",
+    "current_affected_Host_owner": {
+      "status": "PASS",
+      "name": "gravity_stage_contract",
+      "zero_skips": true,
+      "seconds": 29.212877967001987,
+      "executable_sha256": "365ec0206feaa73eb62124f7b6819d407ce7d45a4ea4c681bc9013ee3cd28799",
+      "junit_sha256": "a779dd14aa2a7324334c04f49bb91f9705736be9cbdeb17b128a2330344fe4be",
+      "seconds_clock": "Actual guarded CTest wrapper elapsed; CTest reports28.63s Host /127.39s Burn. Correctness execution, not fair benchmark."
+    },
+    "current_nested_dispatch": {
+      "status": "PASS",
+      "zero_skips": true,
+      "seconds": 1.0654937509971205
+    },
+    "current_affected_Device_owner": {
+      "name": "cuda_multiblock_burn",
+      "status": "PASS",
+      "zero_skips": true,
+      "seconds": 127.70264883599884,
+      "executable_sha256": "e5af27b0962a4c4b97f9f2ac86323b26f139d33c1c3ee303bfef2f76bd3d8865",
+      "junit_sha256": "11c4c7da6e9b530fa762f5401aa94ea115eb3a5b59929b5afb5a88d60920f359",
+      "samelevel_real_macro": true,
+      "mixed_real_macro_and_late_rollback": true,
+      "original_scientific_assertions": true,
+      "seconds_clock": "Actual guarded CTest wrapper elapsed; CTest reports28.63s Host /127.39s Burn. Correctness execution, not fair benchmark."
+    },
+    "complete_original9_production_Device_fresh_and_O9_not_granted": true,
+    "previous_failed_attempt": {
+      "actual_previous_owner_exit": 8,
+      "actual_previous_owner_seconds": 128.78086311199877,
+      "previous_error": "SourceNone source preflight did actual split work",
+      "previous_guard_stopped": false,
+      "samelevel_macro_pass": true,
+      "mixed_full_macro_pass": false
+    }
+  },
+  "current_original_cuda_consumers": {
+    "source_freeze_sha256": "e2bc63905e09a70cba64276a905ff6fd3ddb9eeb1839776f961d773da0378769",
+    "original_names_pass": [
+      "cuda_amr_exchange",
+      "cuda_multiblock_burn",
+      "cuda_reduction_contract",
+      "cuda_refinement_indicators",
+      "cuda_regrid_transaction",
+      "cuda_store_lifecycle",
+      "tabular_completion_device",
+      "tabular_component_completion"
+    ],
+    "original_pass_count": 8,
+    "original_total": 9,
+    "registry_pass": true,
+    "Hydro": "RUNNING_COMPLETE_ORIGINAL_OWNER_NOT_ACCEPTED",
+    "production": "BUILD_LINK_AND_READONLY_CLI_IDENTITY_PASS",
+    "owners": {
+      "cuda_hydro_dispatch": {
+        "status": "PASS",
+        "mode": "REUSED_EXACT_ACCEPTED_EXECUTION",
+        "actual_exit_code": 0,
+        "executable_sha256": "20b8cde6639d9cfdf1d5a00ed230de3582044e71470f79bd963d6a48a076ae5c",
+        "junit_sha256": "4db26ee7356d8cb96091f530a6c74751ad3d8f08e27600faf73b802345b6c6f1"
+      },
+      "cuda_multiblock_burn": {
+        "status": "PASS",
+        "mode": "REUSED_EXACT_ACCEPTED_EXECUTION",
+        "actual_exit_code": 0,
+        "executable_sha256": "e5af27b0962a4c4b97f9f2ac86323b26f139d33c1c3ee303bfef2f76bd3d8865",
+        "junit_sha256": "11c4c7da6e9b530fa762f5401aa94ea115eb3a5b59929b5afb5a88d60920f359"
+      },
+      "cuda_refinement_indicators": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "ab414b3d15ca671187d504563952f1626ecf16b1f66ac9573aaa7050c45c01b8",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      },
+      "cuda_store_lifecycle": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "160e7350cad56492d79a3469af908376c6e26e435c7098922dfd8ebfdd00cbe2",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      },
+      "cuda_reduction_contract": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "17f3d3abce70b95fb69a3978495ef97541038d4f89603c3c45710a3b64ba2fbd",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      },
+      "tabular_component_completion": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "f41f0870abec1ea5f5bacfc1e999a72d98ced3c415793c5737ff0255d45b3558",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      },
+      "cuda_regrid_transaction": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "24d401a13a88393b6abfa71c875151b9b0cb8cbbff557e362396d6abb3500c5d",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      },
+      "tabular_completion_device": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "85d69730db565a37ad49f7076e0bfaa6ee36117b8ab2b73ed3945def494e249b",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      },
+      "cuda_amr_exchange": {
+        "status": "PASS",
+        "mode": "EXECUTED",
+        "actual_exit_code": 0,
+        "executable_sha256": "29139e59e0e3a56515ee67b3eda2ca276624c51ec15d451f2a4ae93d72875c6c",
+        "junit_sha256": "bb0405d86ef55f32792805d3f486a065bd065c1627b3370d71d298aaef33da72"
+      }
+    },
+    "scientific_release_grant": false,
+    "production_ARCH_sha256": "0828b3c8644333d446a044b555c15681e9277a10217d3fac6e129ccf14ba861c",
+    "production_ARCH_bytes": 368728472,
+    "production_build_actual_exit_code": 0,
+    "production_build_seconds": 280.85823792200244,
+    "production_ready_receipt_sha256": "23652be62d0ef84d3c4b0da2fa6c456c993d83b3f8cad9eb9e6631719e6d98e8",
+    "production_explicit_case": "SNIaCoupled",
+    "production_implicit_default_case": false
+  },
+  "rz_uninterrupted_replacement": {
+    "status": "RUNNING_NOT_ACCEPTED",
+    "started_utc": "2026-10-10T12:49:58.217147+00:00",
+    "CPU_ELF_sha256": "63ffa636ae1ba1961c50308784ad6dcb75b58e456967d8a57d76cd42176dcffb",
+    "producer_source_manifest_sha256": "425d524cb51e881741970cce890c5a690ff5c56457dd5effdbfb8a97050247c0",
+    "candidate_manifest_sha256": "8a771e016cfd33004eeaac8f0d95bb607eaa4bdc18a15279b99e9a57bbd28a89",
+    "root_review_sha256": "219647862e29f0a7550a2cda86e32a10359d7e1821072ab35393b2bc0e158bff",
+    "physical_endpoint": 424745.2560858262,
+    "acoustic_crossings": 5,
+    "omp_threads": 8,
+    "primary_affinity": "4-11",
+    "fresh_waits_for_original_Hydro_terminal": true,
+    "fresh_started": false,
+    "same_physical_inputs_and_scientific_budgets": true,
+    "fair_timing_grant": false,
+    "actual_exit_code": null
+  },
+  "source_sha256_scope": "Historical coherent33 baseline hashes, retained verbatim; not current production CUDA source hashes.",
+  "current_source_manifest": {
+    "scope": "Current176 source cohort for CUDA production0828 and original CUDA consumers; retained CPU63ffa has its own older producer identity.",
+    "sha256": "e2bc63905e09a70cba64276a905ff6fd3ddb9eeb1839776f961d773da0378769",
+    "entries": 176,
+    "git_head_annotation": "e69a859705da0efc0c7abad64c8949f9e4934951"
+  }
+}

@@ -6,8 +6,12 @@
  * 1. Prepare candidate topology, migration plans and replacement state ledger.
  * 2. Finalize real candidate BC/halo exchange with its own handles and ledger.
  * 3. Gate native-RZ thermodynamics before ghost/topology publication; on any
- *    failure restore retained source arrays and abort staged mesh resources.
- * 4. Publish the successful topology and its completed state identities.
+ *    failure restore Host source arrays or discard private Device storage, then
+ *    abort staged mesh resources.
+ * 4. For Device coarse parents inspect the staged active interior closure
+ *    before the real BC, while the completed EOS and staged Jeans gates stay
+ *    mandatory after it; early success publishes nothing.
+ * 5. Publish the successful topology and its completed state identities.
  */
 
 #include <algorithm>
@@ -150,22 +154,29 @@ struct NativeRegridSource {
 /** One ordinary/device attempt, or bounded exact native-parent veto retries.
  * Workflow: accept source ghosts/EOS once, freeze exact source identities and
  * evaluated flags, then retry fresh transactions only for authentic restricted
- * interior thermal/JENS failures. Every failure has already restored Current
- * values/leases and aborted its unpublished namespace before reaching this loop.
+ * interior thermal/JENS failures. Host failures restore Current values/leases;
+ * Device failures discard private storage before topology abort and this loop.
  */
 bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candidate,
     const std::function<void()>& after_host_finalization)
 {
     if(!native_rz_candidate)
         return execute_regrid_attempt(jeans_repair_only,false,after_host_finalization);
-    if(runtime_state_transaction_||compute_backend
-        ||geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::logic_error("Native coarsening retry requires its actual CPU RZ owner");
+    if(runtime_state_transaction_
+        ||geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
+        ||(compute_backend&&compute_backend->side()!=ExecutionSide::Device))
+        throw std::logic_error("Native coarsening retry requires its actual quiescent RZ owner");
+    if(compute_backend&&after_host_finalization)
+        throw std::logic_error("Native Host finalization verification excludes Device regrid");
     ensure_fluid_ghosts(); // actual selected EOS and completed source qualification
     topology_registry.validate_committed_snapshot(observe_topology());
     const auto source_active=amr_ctrl.tree->GetActiveBlocks();
     const auto source_handles=stage_handles;
     const auto* const handle_address=stage_handles.data();
+    auto* const source_backend=compute_backend.get();
+    const auto source_storage=backend_storage;
+    const auto* const storage_address=backend_storage.data();
+    const auto source_side=source_backend?ExecutionSide::Device:ExecutionSide::Host;
     const auto* const source_pool=amr_ctrl.pool.get();
     const auto* const source_tree=amr_ctrl.tree.get();
     auto* const source_ledger=residency_ledger.get();
@@ -176,7 +187,9 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
     sources.reserve(source_active.size());
     for(const int id:source_active)sources.emplace_back(id,amr_ctrl.pool->GetBlock(id),config.grid.dim);
     const auto require_sources=[&] {
-        if(compute_backend||amr_ctrl.pool.get()!=source_pool||amr_ctrl.tree.get()!=source_tree
+        if(compute_backend.get()!=source_backend
+            ||(source_backend&&(backend_storage.data()!=storage_address||backend_storage!=source_storage))
+            ||amr_ctrl.pool.get()!=source_pool||amr_ctrl.tree.get()!=source_tree
             ||residency_ledger.get()!=source_ledger
             ||source_ledger->active_epoch()!=source_epoch
             ||stage_handles.data()!=handle_address||stage_handles!=source_handles
@@ -188,7 +201,10 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
             if(!sources[index].matches(amr_ctrl.pool->GetBlock(sources[index].id),config.grid.dim))
                 throw std::logic_error("Native coarsening retry source allocation/layout changed");
             source_ledger->require_readable({source_handles[index],StateSlot::Current},
-                {ExecutionSide::Host,source_version,true,true});
+                {source_side,source_version,true,true});
+            if(source_backend&&!source_backend->contains(
+                {source_handles[index],source_storage[index],StateSlot::Current}))
+                throw std::logic_error("Native coarsening retry source storage changed");
         }
     };
     std::vector<std::pair<int,int>> frozen_flags;
@@ -200,7 +216,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
             for(const auto& [id,flag]:frozen_flags)amr_ctrl.pool->GetBlock(id).refine_flag=flag;
             return;
         }
-        if(jeans_repair_only)amr_ctrl.tree->EvaluateJeansRepair(config);
+        if(source_backend)evaluate_device_regrid_indicators(jeans_repair_only);
+        else if(jeans_repair_only)amr_ctrl.tree->EvaluateJeansRepair(config);
         else amr_ctrl.tree->EvaluateRefinement(config);
         frozen_flags.reserve(source_active.size());
         std::map<amr::LogicalBlockKey,std::set<amr::LogicalBlockKey>> groups;
@@ -242,6 +259,47 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only,bool native_rz_candida
     }
 }
 
+/** Evaluate the original Device source flags before topology preparation.
+ * Workflow: select indicators -> complete actual Current ghosts -> evaluate
+ * original summaries/JENS -> reject finest deficits -> publish only flags.
+ * The Native retry owner freezes these flags once and replays them unchanged.
+ */
+void DriverRuntime::evaluate_device_regrid_indicators(bool jeans_repair_only)
+{
+    const auto old_active=amr_ctrl.tree->GetActiveBlocks();
+    (void)amr::indicator::make_selection(
+        config.amr,config.grid.dim,amr_ctrl.tree->RefinementSpecies());
+    std::vector<double> errors;
+    if(!jeans_repair_only) {
+        complete_device_boundary(StateSlot::Current);
+        std::vector<arch::backend::BackendStateAccess> accesses;
+        accesses.reserve(stage_handles.size());
+        for(std::size_t index=0;index<stage_handles.size();++index)
+            accesses.push_back(backend_access(index,StateSlot::Current));
+        errors=compute_backend->evaluate_refinement_indicators(
+            accesses,config.amr,config.numerics.sml_rho,
+            amr_ctrl.tree->RefinementSpecies());
+        if(errors.size()!=old_active.size())
+            throw std::logic_error("backend AMR indicator count mismatch");
+    }
+    const auto minima=config.amr.refine_on_jeans
+        ? evaluate_current_jeans_resolution() : std::vector<double>{};
+    // Validate every finest-level deficit before changing any decision flag.
+    if(config.amr.refine_on_jeans)
+        for(std::size_t index=0;index<old_active.size();++index)
+            if(minima[index]<config.amr.jeans_cells
+                && amr_ctrl.pool->GetBlock(old_active[index]).level>=config.amr.lrefinemax)
+                throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
+    for(std::size_t index=0;index<old_active.size();++index) {
+        auto& block=amr_ctrl.pool->GetBlock(old_active[index]);
+        block.refine_flag=jeans_repair_only?0:amr::indicator::refinement_flag(
+            errors[index],block.level,config.amr.lrefinemin,config.amr.lrefinemax,
+            config.amr.refine_threshold,config.amr.derefine_threshold);
+        if(config.amr.refine_on_jeans && minima[index]<config.amr.jeans_cells)
+            block.refine_flag=1;
+    }
+}
+
 /** Stage one fresh topology transaction; ordinary/device arithmetic is shared. */
 bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz_candidate,
     const std::function<void()>& after_host_finalization,
@@ -249,11 +307,11 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
     const std::function<void()>& evaluate_native_indicators)
 {
     if(runtime_state_transaction_)throw std::logic_error("Active Host Hydro owner excludes regrid");
-    if(after_host_finalization&&!native_rz_candidate)
-        throw std::logic_error("Native finalization verification cannot affect production regrid");
+    if(after_host_finalization&&(!native_rz_candidate||compute_backend))
+        throw std::logic_error("Native finalization verification requires its actual Host candidate");
     if(native_rz_candidate&&(geometry_semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
-        ||compute_backend))
-        throw std::logic_error("Native RZ transaction verification requires CPU RZ ordinary AMR");
+        ||(compute_backend&&compute_backend->side()!=ExecutionSide::Device)))
+        throw std::logic_error("Native RZ transaction verification requires its actual chart/side");
     if (geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz&&!native_rz_candidate)
         throw std::logic_error("RZ regrid migration and angular-momentum contract are incomplete");
     // Internal transaction qualification uses backend-local JENS consumers.
@@ -292,47 +350,18 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
 #endif
 
     const auto evaluate_device_indicators = [&] {
-        (void)amr::indicator::make_selection(
-            config.amr,config.grid.dim,amr_ctrl.tree->RefinementSpecies());
-        std::vector<double> errors;
-        if(!jeans_repair_only) {
-            complete_device_boundary(StateSlot::Current);
-            std::vector<arch::backend::BackendStateAccess> accesses;
-            accesses.reserve(stage_handles.size());
-            for(std::size_t index=0;index<stage_handles.size();++index)
-                accesses.push_back(backend_access(index,StateSlot::Current));
-            errors=compute_backend->evaluate_refinement_indicators(
-                accesses,config.amr,config.numerics.sml_rho,
-                amr_ctrl.tree->RefinementSpecies());
-            if(errors.size()!=old_active.size())
-                throw std::logic_error("backend AMR indicator count mismatch");
-        }
-        const auto minima=config.amr.refine_on_jeans
-            ? evaluate_current_jeans_resolution() : std::vector<double>{};
-        // Validate every finest-level deficit before changing any decision flag.
-        if(config.amr.refine_on_jeans)
-            for(std::size_t index=0;index<old_active.size();++index)
-                if(minima[index]<config.amr.jeans_cells
-                    && amr_ctrl.pool->GetBlock(old_active[index]).level>=config.amr.lrefinemax)
-                    throw std::runtime_error("JENS remains underresolved at lrefinemax; increase allowed resolution.");
-        for(std::size_t index=0;index<old_active.size();++index) {
-            auto& block=amr_ctrl.pool->GetBlock(old_active[index]);
-            block.refine_flag=jeans_repair_only?0:amr::indicator::refinement_flag(
-                errors[index],block.level,config.amr.lrefinemin,config.amr.lrefinemax,
-                config.amr.refine_threshold,config.amr.derefine_threshold);
-            if(config.amr.refine_on_jeans && minima[index]<config.amr.jeans_cells)
-                block.refine_flag=1;
-        }
+        evaluate_device_regrid_indicators(jeans_repair_only);
     };
     const auto evaluate_device_parent = [&](const amr::Block& parent,std::span<const int> siblings) {
         return device_jeans_parent_resolved(parent,siblings);
     };
     auto prepared = compute_backend
         ? amr_ctrl.tree->PrepareRegrid(
-            config, {}, {}, evaluate_device_indicators, jeans_repair_only,
-            config.amr.refine_on_jeans
+            config, {}, {}, native_rz_candidate?evaluate_native_indicators
+                :std::function<void()>(evaluate_device_indicators), jeans_repair_only,
+            (native_rz_candidate||config.amr.refine_on_jeans)
                 ? std::function<bool(const amr::Block&,std::span<const int>)>(evaluate_device_parent)
-                : std::function<bool(const amr::Block&,std::span<const int>)>{})
+                : std::function<bool(const amr::Block&,std::span<const int>)>{},vetoed_coarsenings)
         : amr_ctrl.tree->PrepareRegrid(config, {}, {},
             native_rz_candidate?evaluate_native_indicators:std::function<void()>{},
             jeans_repair_only,{},vetoed_coarsenings);
@@ -363,6 +392,47 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
     prepared.BuildMigrationPlans(
         stage_handles, proposed.handles_in_observation_order, scope);
 
+    // Only this attempt's authentic restricted-parent active-cell refusal may
+    // enter the finite loop. Ghost/survivor/prolongation/other failures stay fatal.
+    const auto veto_native_parent_thermal = [&](const NativeBoundaryAcceptanceError& error,
+        std::span<const amr::BlockHandle> candidate_handles, state::StateVersion version) {
+        if(native_rz_candidate&&!after_host_finalization&&error.slot==StateSlot::Current
+            &&error.version==version
+            &&native_thermal_veto(error.diagnostic)) {
+            const auto& active=amr_ctrl.tree->GetActiveBlocks();
+            const auto found=std::find(active.begin(),active.end(),error.pool_index);
+            if(found!=active.end()) {
+                const auto patch=static_cast<std::size_t>(found-active.begin());
+                const auto& grid=amr_ctrl.pool->GetBlock(error.pool_index).grid;
+                const auto& d=error.diagnostic;
+                if(patch<candidate_handles.size()&&candidate_handles[patch]==error.handle
+                    &&d.i>=grid.Is()&&d.i<grid.Ie()&&d.j>=grid.Js()&&d.j<grid.Je()
+                    &&d.index==grid.GetIndex(d.i,d.j,0)) {
+                    const auto key=prepared.restricted_parent_key(error.pool_index);
+                    if(key)
+                        throw NativeCoarseningVeto(error.what(),
+                            {*key,NativeCoarseningVetoKind::EffectiveThermal,d,scope,
+                                error.handle,error.version,0.});
+                }
+            }
+        }
+    };
+    // Validate each actual completed patch in the original Host evaluation order.
+    // The caller obtains its key from this live prepared restriction relation.
+    const auto validate_completed_parent_jeans = [&](
+        std::span<const amr::BlockHandle> candidate_handles, state::StateVersion version,
+        std::size_t patch, const std::optional<amr::LogicalBlockKey>& key, double minimum) {
+        const auto& actual_ids=amr_ctrl.tree->GetActiveBlocks();
+        if(candidate_handles.size()!=actual_ids.size()||patch>=actual_ids.size())
+            throw std::logic_error("Completed candidate JENS result extent mismatch");
+        if(!std::isfinite(minimum)||minimum<=0.)
+            throw std::runtime_error("Completed candidate JENS result is invalid");
+        if(key&&minimum<config.amr.jeans_cells)
+            throw NativeCoarseningVeto("Completed restricted parent remains JENS underresolved",
+                {*key,NativeCoarseningVetoKind::JeansResolution,std::nullopt,
+                    scope,candidate_handles[patch],version,minimum});
+    };
+
     amr::TopologyTransaction transaction(
         scope.transaction_id, scope.from_epoch, scope.to_epoch);
     transaction.begin_migration();
@@ -391,9 +461,11 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
             for (std::size_t index = 0; index < payload.handles.size(); ++index) {
                 const auto storage = storage_generation_issuer.issue();
                 payload.storage.push_back(storage);
-                payload.bindings.push_back({
-                    &amr_ctrl.pool->GetBlock(prepared.proposed_active_blocks()[index]),
-                    payload.handles[index], storage, &bc_handler.logical_plan()});
+                auto& block=amr_ctrl.pool->GetBlock(prepared.proposed_active_blocks()[index]);
+                // A new axis child borrows the same per-grid logical plan as
+                // initial binding; the domain-wide plan describes outer walls.
+                payload.bindings.push_back({&block, payload.handles[index], storage,
+                    &bc_handler.logical_plan(block.grid)});
             }
             std::vector<arch::backend::BackendStateAccess> source_accesses;
             source_accesses.reserve(stage_handles.size());
@@ -405,9 +477,15 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
             prepared.ActivateForDeviceMigration();
             payload.store_transaction =
                 compute_backend->begin_topology_store_transaction(scope, payload.bindings);
-            const auto staged_flux_plan = amr::build_amr_flux_topology_plan(
-                *amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(), payload.handles,
-                config.grid.dim, specs.count());
+            const bool native_staged =
+                geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz;
+            const auto staged_flux_plan = native_staged
+                ? amr::build_amr_flux_topology_plan(
+                    *amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(), payload.handles,
+                    config.grid.dim, specs.count(), geometry_semantics_, true)
+                : amr::build_amr_flux_topology_plan(
+                    *amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(), payload.handles,
+                    config.grid.dim, specs.count());
             const auto staged_reflux_plan =
                 amr::build_amr_reflux_topology_plan(*amr_ctrl.pool, staged_flux_plan);
             compute_backend->stage_amr_flux_plan(
@@ -426,22 +504,172 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
             const auto staged_coordinate_seam = amr::make_coordinate_seam_plan(
                 amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(),
                 config.grid.dim);
-            compute_backend->complete_staged_current_ghosts(
-                *payload.store_transaction, staged_same_level, staged_coarse_fine,
-                amr_ctrl.tree->GetActiveBlocks(), payload.handles,
-                &staged_coordinate_seam);
+            if (native_staged) {
+                // Migration has joined the actual Current interiors. Keep this
+                // Device ledger private; only the real boundary/EOS gate may
+                // publish its ghosts before the staged completion joins.
+                payload.ledger = std::make_unique<StateResidencyLedger>(scope.to_epoch);
+                for (const auto handle : payload.handles)
+                    payload.ledger->register_block(handle, payload.topology_witness.version,
+                        payload.topology_witness.completion, ExecutionSide::Device);
+                StageExecutionContext staged_context{
+                    ExecutionSide::Device, *payload.ledger, scheduler_clock};
+                auto* const staged_backend = compute_backend.get();
+                auto* const staged_store = payload.store_transaction.get();
+                auto* const staged_ledger = payload.ledger.get();
+                auto* const staged_pool = amr_ctrl.pool.get();
+                auto* const staged_tree = amr_ctrl.tree.get();
+                const auto migrated = payload.topology_witness;
+                const std::span<const amr::BlockHandle> staged_handles = payload.handles;
+                const std::span<const backend::StorageGeneration> staged_storage = payload.storage;
+                const std::vector<int> staged_ids = amr_ctrl.tree->GetActiveBlocks();
+                const std::vector<backend::BackendStateAccess> staged_accesses = [&] {
+                    std::vector<backend::BackendStateAccess> result;
+                    result.reserve(staged_handles.size());
+                    for (std::size_t index = 0; index < staged_handles.size(); ++index)
+                        result.push_back({staged_handles[index], staged_storage[index], StateSlot::Current});
+                    return result;
+                }();
+                bind_native_boundary_acceptance(staged_context, staged_handles,
+                    staged_store, staged_storage);
+                const std::function<void()> validate_storage = [&] {
+                    if (compute_backend.get() != staged_backend
+                        || payload.store_transaction.get() != staged_store
+                        || payload.ledger.get() != staged_ledger
+                        || residency_ledger.get() == staged_ledger
+                        || staged_ledger->active_epoch() != scope.to_epoch
+                        || staged_context.side != ExecutionSide::Device
+                        || &staged_context.ledger != staged_ledger
+                        || &staged_context.clock != &scheduler_clock
+                        || !staged_context.post_boundary_acceptance
+                        || payload.topology_witness.version != migrated.version
+                        || payload.topology_witness.completion != migrated.completion
+                        || payload.handles.data() != staged_handles.data()
+                        || payload.storage.data() != staged_storage.data()
+                        || payload.handles.size() != staged_accesses.size()
+                        || payload.storage.size() != staged_accesses.size()
+                        || amr_ctrl.pool.get() != staged_pool
+                        || amr_ctrl.tree.get() != staged_tree
+                        || amr_ctrl.tree->GetActiveBlocks() != staged_ids)
+                        throw std::logic_error("Native staged boundary candidate identity changed");
+                    for (std::size_t index = 0; index < staged_accesses.size(); ++index) {
+                        const auto access = staged_accesses[index];
+                        if (payload.handles[index] != access.block
+                            || payload.storage[index] != access.storage
+                            || !staged_backend->contains(*staged_store, access))
+                            throw std::logic_error("Native staged boundary storage identity changed");
+                        staged_ledger->require_readable({access.block, StateSlot::Current},
+                            {ExecutionSide::Device, migrated.version, true, false});
+                        const auto current = staged_ledger->inspect({access.block, StateSlot::Current});
+                        if (current.interior.residency != state::StateResidency::DeviceValid
+                            || current.interior.completion != migrated.completion
+                            || current.interior.pending_transfer != state::PendingTransferPhase::None
+                            || current.ghost.pending_transfer != state::PendingTransferPhase::None)
+                            throw std::logic_error("Native staged boundary Current interior changed");
+                    }
+                };
+                compute_backend->complete_staged_current_ghosts(
+                    *payload.store_transaction, staged_same_level, staged_coarse_fine,
+                    amr_ctrl.tree->GetActiveBlocks(), payload.handles,
+                    &staged_coordinate_seam,
+                    [&](backend::BackendTopologyStoreTransaction& actual_store) {
+                        if (&actual_store != staged_store)
+                            throw std::logic_error("Native staged boundary callback store changed");
+                        validate_storage();
+                        // Early failure-only closure evidence of the actual
+                        // coarse restricted parents, taken BEFORE the real BC
+                        // touches these staged interiors. Only the prepared
+                        // restriction relation names the eligible subset.
+                        const auto& actual_ids=amr_ctrl.tree->GetActiveBlocks();
+                        if(staged_accesses.size()!=actual_ids.size())
+                            throw std::logic_error("Native staged early closure access extent mismatch");
+                        std::vector<backend::BackendStateAccess> restricted_accesses;
+                        std::vector<std::size_t> restricted_patches;
+                        for(std::size_t patch=0;patch<actual_ids.size();++patch)
+                            if(prepared.restricted_parent_key(actual_ids[patch])) {
+                                restricted_accesses.push_back(staged_accesses[patch]);
+                                restricted_patches.push_back(patch);
+                            }
+                        const auto early=staged_backend->inspect_native_restricted_interiors(
+                            actual_store,restricted_accesses,native_rz_eos_bounds());
+                        if(early) {
+                            const auto found=std::find_if(restricted_accesses.begin(),
+                                restricted_accesses.end(),[&](const backend::BackendStateAccess& access) {
+                                    return access.block==early->access.block
+                                        &&access.storage==early->access.storage;
+                                });
+                            if(found==restricted_accesses.end()
+                                ||early->access.slot!=StateSlot::Current)
+                                throw std::logic_error("Native staged early closure access is outside the restricted subset");
+                            const auto patch=restricted_patches[
+                                static_cast<std::size_t>(found-restricted_accesses.begin())];
+                            const auto& grid=amr_ctrl.pool->GetBlock(actual_ids[patch]).grid;
+                            const auto& diagnostic=early->diagnostic;
+                            if(diagnostic.i<grid.Is()+1||diagnostic.i>=grid.Ie()-1
+                                ||diagnostic.j<grid.Js()||diagnostic.j>=grid.Je()
+                                ||diagnostic.index!=grid.GetIndex(diagnostic.i,diagnostic.j,0))
+                                throw std::logic_error("Native staged early closure diagnostic is outside the eligible interior");
+                            // Same veto classifier as the completed path: only a
+                            // typed exact thermal refusal retries. Anything else,
+                            // including provisional/density/inertia, stays fatal.
+                            NativeBoundaryAcceptanceError error(
+                                "Restricted native parent interior cannot represent its conservative thermal state",
+                                actual_ids[patch],staged_handles[patch],StateSlot::Current,
+                                migrated.version,diagnostic);
+                            veto_native_parent_thermal(error,staged_handles,migrated.version);
+                            throw error;
+                        }
+                        try {
+                            (void)scheduler::complete_boundary(staged_context, staged_handles,
+                                StateSlot::Current, migrated.version,
+                                [&](StateSlot slot, state::StateVersion version,
+                                    state::CompletionToken token) {
+                                    return execute_device_boundary_domain(staged_accesses,
+                                        staged_handles, slot, version, token,
+                                        &actual_store, validate_storage);
+                                });
+                        } catch(const NativeBoundaryAcceptanceError& error) {
+                            veto_native_parent_thermal(error,staged_handles,migrated.version);
+                            throw;
+                        }
+                        for(const auto handle:staged_handles)
+                            staged_ledger->require_readable({handle,StateSlot::Current},
+                                {ExecutionSide::Device,migrated.version,true,true});
+                        if(config.amr.refine_on_jeans) {
+                            // The actual callback still owns migrated-interior
+                            // storage; markComplete follows only after return.
+                            const auto minima=staged_backend->evaluate_jeans_resolution(
+                                actual_store,staged_accesses);
+                            const auto& actual_ids=amr_ctrl.tree->GetActiveBlocks();
+                            if(minima.size()!=actual_ids.size())
+                                throw std::logic_error("Completed candidate JENS result extent mismatch");
+                            for(std::size_t patch=0;patch<actual_ids.size();++patch) {
+                                const auto key=prepared.restricted_parent_key(actual_ids[patch]);
+                                validate_completed_parent_jeans(staged_handles,migrated.version,
+                                    patch,key,minima[patch]);
+                            }
+                        }
+                    });
+            } else {
+                compute_backend->complete_staged_current_ghosts(
+                    *payload.store_transaction, staged_same_level, staged_coarse_fine,
+                    amr_ctrl.tree->GetActiveBlocks(), payload.handles,
+                    &staged_coordinate_seam);
+            }
             prepared.CompleteDeviceMigration();
 
             // No field H2D transfer occurred: publish the actual authority of
             // these reconstructed fields. Host arrays are deliberately
             // stale and materialize only for an explicit Host consumer.
-            payload.ledger = std::make_unique<StateResidencyLedger>(scope.to_epoch);
-            for (const auto handle : payload.handles) {
-                payload.ledger->register_block(handle, payload.topology_witness.version,
-                    payload.topology_witness.completion, ExecutionSide::Device);
-                payload.ledger->publish_ghost({handle, StateSlot::Current},
-                    ExecutionSide::Device, payload.topology_witness.version,
-                    payload.topology_witness.completion);
+            if (!native_staged) {
+                payload.ledger = std::make_unique<StateResidencyLedger>(scope.to_epoch);
+                for (const auto handle : payload.handles) {
+                    payload.ledger->register_block(handle, payload.topology_witness.version,
+                        payload.topology_witness.completion, ExecutionSide::Device);
+                    payload.ledger->publish_ghost({handle, StateSlot::Current},
+                        ExecutionSide::Device, payload.topology_witness.version,
+                        payload.topology_witness.completion);
+                }
             }
             transaction.mark_ready();
 
@@ -501,25 +729,22 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
                 const auto geometry=GridMetrics::make_geometry_view(grid,geometry_semantics_);
                 const auto read=[&fluid](int cell) {return fluid.get(cell);};
                 // Failure-only: these three migrated active rho observations
-                // are final and independent of unknown candidate BC/ghosts.
+                // are final and independent of unknown candidate BC/ghosts. The
+                // shared leaf owns the original provisional/closure arithmetic;
+                // messages, classifier and meta provenance stay unchanged.
                 for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is()+1;i<grid.Ie()-1;++i) {
                     const int cell=grid.GetIndex(i,j,0);
                     for(int sp=0;sp<specs.count();++sp)fractions[sp]=fluid.X(sp,cell);
-                    if(RzThermodynamics::provisional_native_state(read(cell),fractions.data(),
-                        specs.count(),1,bounds)!=state::Status::valid)
+                    const auto diagnostic=RzThermodynamics::check_restricted_interior_cell(
+                        read,geometry,i,j,cell,fractions.data(),specs.count(),bounds);
+                    if(diagnostic.status==state::Status::valid)continue;
+                    if(diagnostic.phase==RzThermodynamics::AcceptancePhase::provisional)
                         throw std::runtime_error("Restricted native parent provisional state is invalid");
-                    const auto closure=RzThermodynamics::make_cell(read,cell,geometry,i,bounds);
-                    if(!closure.valid()) {
-                        const RzThermodynamics::AcceptanceDiagnostic diagnostic{
-                            closure.inertia_mapping_valid?RzThermodynamics::AcceptancePhase::effective_thermal
-                                :RzThermodynamics::AcceptancePhase::density_or_inertia,
-                            closure.status,cell,i,j,-1,closure.inertia_mapping_valid};
-                        if(!native_thermal_veto(diagnostic))
-                            throw RzThermodynamics::AcceptanceError("Restricted native parent early closure is invalid",diagnostic);
-                        throw NativeCoarseningVeto("Restricted native parent interior cannot represent its conservative thermal state",
-                            {*key,NativeCoarseningVetoKind::EffectiveThermal,diagnostic,scope,
-                                proposed.handles_in_observation_order[patch],{},0.});
-                    }
+                    if(!native_thermal_veto(diagnostic))
+                        throw RzThermodynamics::AcceptanceError("Restricted native parent early closure is invalid",diagnostic);
+                    throw NativeCoarseningVeto("Restricted native parent interior cannot represent its conservative thermal state",
+                        {*key,NativeCoarseningVetoKind::EffectiveThermal,diagnostic,scope,
+                            proposed.handles_in_observation_order[patch],{},0.});
                 }
             }
         }
@@ -606,27 +831,9 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
                                         return token;
                                     });
                                 } catch(const NativeBoundaryAcceptanceError& error) {
-                                if(native_rz_candidate&&!after_host_finalization&&error.slot==StateSlot::Current
-                                    &&error.version==payload.topology_witness.version
-                                    &&native_thermal_veto(error.diagnostic)) {
-                                    const auto& active=amr_ctrl.tree->GetActiveBlocks();
-                                    const auto found=std::find(active.begin(),active.end(),error.pool_index);
-                                    if(found!=active.end()) {
-                                        const auto patch=static_cast<std::size_t>(found-active.begin());
-                                        const auto& grid=amr_ctrl.pool->GetBlock(error.pool_index).grid;
-                                        const auto& d=error.diagnostic;
-                                        if(patch<payload.handles.size()&&payload.handles[patch]==error.handle
-                                            &&d.i>=grid.Is()&&d.i<grid.Ie()&&d.j>=grid.Js()&&d.j<grid.Je()
-                                            &&d.index==grid.GetIndex(d.i,d.j,0)) {
-                                            const auto key=prepared.restricted_parent_key(error.pool_index);
-                                            if(key)
-                                                throw NativeCoarseningVeto(error.what(),
-                                                    {*key,NativeCoarseningVetoKind::EffectiveThermal,d,scope,
-                                                        error.handle,error.version,0.});
-                                        }
-                                    }
-                                }
-                                throw; // ghost/EOS/survivor/prolongation failures stay fatal
+                                    veto_native_parent_thermal(error,payload.handles,
+                                        payload.topology_witness.version);
+                                    throw; // ghost/EOS/survivor/prolongation failures stay fatal
                                 }
 
                                 for (const amr::BlockHandle handle
@@ -643,12 +850,8 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
                                         const int id=actual_ids[patch];
                                         const auto key=prepared.restricted_parent_key(id);
                                         const double minimum=amr_ctrl.tree->MinimumJeansCells(amr_ctrl.pool->GetBlock(id));
-                                        if(!std::isfinite(minimum)||minimum<=0.)
-                                            throw std::runtime_error("Completed candidate JENS result is invalid");
-                                        if(key&&minimum<config.amr.jeans_cells)
-                                            throw NativeCoarseningVeto("Completed restricted parent remains JENS underresolved",
-                                                {*key,NativeCoarseningVetoKind::JeansResolution,std::nullopt,
-                                                    scope,payload.handles[patch],payload.topology_witness.version,minimum});
+                                        validate_completed_parent_jeans(payload.handles,
+                                            payload.topology_witness.version,patch,key,minimum);
                                     }
                                 }
                             } catch (...) {
@@ -679,15 +882,27 @@ bool DriverRuntime::execute_regrid_attempt(bool jeans_repair_only,bool native_rz
     return true;
 }
 
-/** Lease an authoritative logical child family before private parent EOS.
- * Tree owns geometric sibling order/parent construction; Runtime owns accepted
- * publication and selected storage identities. Neither reads Host field arrays.
+/** Lease the actual logical child family before provisional parent selection.
+ * Workflow: validate Native geometry and committed Current/ghost storage, then
+ * defer its thermal/JENS gate to the real completed staged candidate. Existing
+ * geometry retains the original private parent EOS/JENS call below.
+ * Tree owns sibling order/parent construction; no Host field arrays are read.
  */
 bool DriverRuntime::device_jeans_parent_resolved(
     const amr::Block& parent,std::span<const int> siblings)
 {
-    if(!compute_backend || !config.amr.refine_on_jeans)
+    const bool native=geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if(!compute_backend || (!native&&!config.amr.refine_on_jeans))
         throw std::logic_error("device JENS parent requires an explicit active request");
+    if(native) {
+        if(compute_backend->side()!=ExecutionSide::Device)
+            throw std::logic_error("Native provisional parent requires its actual Device owner");
+        const auto expected=amr_ctrl.tree->CandidateParentGeometry(siblings);
+        parent.RequireNativeGeometryIdentity();
+        (void)GridMetrics::make_geometry_view(parent.grid,geometry_semantics_);
+        if(!GridMetrics::equal_identity(parent.grid.dyadic_identity,expected.grid.dyadic_identity))
+            throw std::logic_error("Native provisional parent geometry changed its actual child family");
+    }
     topology_registry.validate_committed_snapshot(observe_topology());
     const auto version=current_interior_version();
     const auto& active=amr_ctrl.tree->GetActiveBlocks();
@@ -700,12 +915,15 @@ bool DriverRuntime::device_jeans_parent_resolved(
         if(found==active.end()) throw std::logic_error("device JENS parent child is not active");
         const auto index=static_cast<std::size_t>(found-active.begin());
         residency_ledger->require_readable(
-            {stage_handles[index],StateSlot::Current},{ExecutionSide::Device,version,true,false});
+            {stage_handles[index],StateSlot::Current},{ExecutionSide::Device,version,true,native});
         const auto access=backend_access(index,StateSlot::Current);
         if(!compute_backend->contains(access))
             throw std::logic_error("device JENS parent storage is unavailable");
         accesses.push_back(access);
     }
+    // Native is provisional only: migration and the completed staged owner
+    // must still gate actual parent thermal closure and Jeans before publication.
+    if(native)return true;
     const auto minimum=compute_backend->evaluate_jeans_parent(accesses,parent);
     if(minimum && (!std::isfinite(*minimum) || *minimum<=0.))
         throw std::runtime_error("device JENS parent summary is invalid");
@@ -713,14 +931,13 @@ bool DriverRuntime::device_jeans_parent_resolved(
 }
 
 /** Apply the configured regrid cadence through the actual chart transaction.
- * Host RZ uses the existing completed-EOS/thermal/JENS finalizer and bounded
- * coarsening veto; legacy and Device retain their original transaction path.
+ * Native RZ on either actual side uses the completed-EOS/thermal/JENS finalizer
+ * and one bounded coarsening-veto owner; Existing keeps its original path.
  * Both ordinary indicators and JENS-only repair keep their existing formulas. */
 bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only)
 {
-    const bool native_host=!compute_backend
-        &&geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    return perform_regrid_impl(step,time,jeans_repair_only,native_host);
+    const bool native=geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    return perform_regrid_impl(step,time,jeans_repair_only,native);
 }
 /** Internal qualification consumes the same full migration/finalizer transaction.
  * No alternative transfer math, namespace publication, or physical capability. */

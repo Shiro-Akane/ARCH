@@ -1,23 +1,22 @@
-# Studio integration status — 2026-10-08
+# Studio integration status — 2026-10-10
 
-Working integration: `compute/optim`, combining base `a566310e` and collaborator closure `b7cb8b69`. Current acceptance is recorded in the [integration report](../docs/development/ComputeStudioIntegrationReport-20261006.zh-CN.md), with the [release closure plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md) as the next-step authority.
+The working integration is `compute/optim`. The [release acceptance record](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口) contains current evidence and execution identities; the [O-series plan](../docs/development/ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08) defines the remaining release gates. Earlier integration reports retain their dated scope.
 
-The shared development baseline is `origin/compute/optim`; old GUI delivery and contract branches are retired. New task branches start from its current reviewed commit. [Retirement/provenance](../docs/development/GuiBranchRetirement-20261006.zh-CN.md) preserves historical sources and the recovery route.
+Studio is an optional Linux/WSL desktop component. Its production entry is `arch-studio`; the Linux package bundles Host Node. Graphical and terminal prerequisites are described in the [Studio guide](../docs/guides/Studio.md).
 
 | Area | Current boundary |
 | --- | --- |
-| Linux CLI / desktop | Production `arch-studio` entry; opt-in CMake build, bundled Host Node in the Linux package; graphical and terminal prerequisites |
-| Parameter workspace | Schema v3; explicit/conditional required inputs, unknown/retired/invalid diagnostics, case/source identity |
-| Initial Preview / AMR | Real Setup/Init, bounded field/slice and separate AMR requests; capabilities negotiated per compiled case |
-| Save / Build / Run / Restart | Explicit saving and tracked builds, independent owned run terminal, checkpoint identity and Core compatibility checks |
-| Plotfile | Completed-publication and typed identity checks in the isolated read-only pipeline; formal native 1D/2D/3D point and slice queries use intrinsic coordinates, native bounds, volume/torque measures and CGS units. Overview/render remains Cartesian 1D/2D. Current native desktop interaction acceptance is separate. |
-| Native UAT | Previous scoped evidence preserved; this integration does not substitute automation for missing desktop interaction checks |
-| Native RZ Host engineering | The integrated shared density/inertia closure, real post-ghost EOS, stage clocks and native output/checkpoint semantics have local CPU checks. Actual four-module mixed-AMR evolution and fresh checkpoint continuation have bounded engineering evidence; they do not establish long-run or complete scientific qualification. |
-| Full RZ findings | Continuous field/energy acceptance and the full meridional Newtonian FV stress, AMR work and stability qualification remain open. An owning homogeneous pre-step source has a complete independent interval reference; the distinct post-step source reached its work limit and remains incomplete. |
-| CUDA JENS / 2D diagnostics | Explicit Cartesian CUDA Jeans has an engineering route; fresh local GPU acceptance and performance are pending. Automatic and curved CUDA selection retain their rejection conditions. |
-| Validation storage | Actual Host mount and bounded output guards; passed raw files are processed and identity-checked before cleanup. Failures and unqualified evidence remain local. |
-| Current engineering checks | All 367 Studio tests, lint, type checking and production build pass with the original waiting and drift checks. The current default tooling suite passes all 665 tests; five affected original CPU owners pass. These results do not replace the full current CPU/CUDA scientific campaign. |
+| Configuration / Core API | Schema v3, explicit and conditional inputs, source identity, and invalid/retired input diagnostics. The real Host → Core static check covers 14 categories and 95 parameters; inspection precedes Setup and does not establish runtime readiness. |
+| Initial Preview / AMR | Real Setup/Init, bounded fields/slices and separate AMR requests, with capabilities negotiated per compiled case. Native RZ provides an initialized root snapshot; a request for finer initial levels remains explicitly limited. |
+| Source-bound workspace | A uniquely compiled model is fixed to its source. Conflicting identities return a typed error. Model discovery has an explicit Retry action that preserves the working copy. |
+| Save / Build / Run / Restart | Native Configure, Build, Cellular Preview/AMR, and Sod Run/Restart have scoped evidence. The Sod continuation matches 19 state/geometry datasets byte for byte at the same endpoint. |
+| Plotfile | Completed-publication and typed identity checks in a read-only pipeline. Native 1D/2D/3D point and slice queries expose intrinsic coordinates, cell bounds, volume/torque measures and CGS units. Overview/render supports Cartesian 1D/2D. Native Inspector, failed-publication handling and current-producer metadata reads have scoped engineering evidence. |
+| Desktop acceptance | Actual Electron/Host paths were exercised on a private X11 display. The current bundle passed controlled discovery failure → Retry → real Host recovery and Cellular Preview. These automated desktop checks do not establish human WSLg foreground visibility. |
+| Core mathematics / long runs | Finite static and Euler gravity checks, shared curved/native Stokes operators, Host FV/coarse-fine and public Host continuation have bounded acceptance. The independent RZ five-crossing endpoint and strict midpoint continuation remain pending. |
+| CUDA | The final frozen-source build, original Device consumers and new production-binary public continuation remain pending. Historical GPU results retain their original identities. |
+| Engineering checks | All 374 Studio tests pass with zero skips, using one test-file worker; lint, type checking and production build pass. The current CPU inventory passes 68 tests and Python tooling passes 749 tests, also with zero skips. These results retain their individual source/binary identities and do not substitute for pending scientific or performance gates. |
+| CI / data | Main-targeting PR CI uses affected-path selection and the existing owners; long runs, formal timing and FLASH are local validation work. Raw HDF5/checkpoint/full logs stay local. Reviewed summaries are versioned after consumption and identity checks. The current workflow has local lint evidence; remote CI has not run for this candidate. |
 
-Incomplete intended-release functions must be completed and validated before release. Changing release scope requires an explicit project decision. `main` and release tags are not changed by this integration. Raw HDF5/checkpoint/log data stay local; only bounded reviewed summaries are versioned.
+Release readiness remains pending the remaining O-series gates. The current packaging pass closes usability evidence and records measured costs; further performance implementation is deferred. The project owner controls `main` merge and publication.
 
-[Historical checkpoint reports](docs/archive/README.md) retain exact earlier scopes and limitations. Their counts and machine paths are not current launch instructions.
+[Historical checkpoint reports](docs/archive/README.md) retain earlier counts, limitations and provenance. [Branch retirement](../docs/development/GuiBranchRetirement-20261006.zh-CN.md) records the old GUI delivery branches and recovery route.

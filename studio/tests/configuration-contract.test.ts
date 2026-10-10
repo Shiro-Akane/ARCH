@@ -22,7 +22,9 @@ test('late inspection identity requires every scope component',()=>{
 
 import {readFile} from 'node:fs/promises';
 import {validateConfigurationSchema,validateConfigurationInspection} from '../src/host/configurationValidation.ts';
-import {pairingSuspicion,previewMetadataMatches} from '../src/data/configurationIdentity.ts';
+import {pairingSuspicion,previewMetadataMatches,selectedSourceModels} from '../src/data/configurationIdentity.ts';
+import type {ProjectSession} from '../src/host/contracts.ts';
+import type {DiscoveryResponse} from '../src/host/workflowContracts.ts';
 import {loadPar,editPar,parErrors,exportPar} from '../src/state/parState.ts';
 test('actual Core schema and successful/failed inspection fixtures are accepted, malformed identity rejected',async()=>{
  const fixture=async(name:string)=>JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/'+name,import.meta.url),'utf8'));
@@ -51,6 +53,48 @@ test('pairing suspicion is advisory; generic filenames never become verified',()
  for(const name of ['1.par','test.par','Sod.par'])assert.equal(pairingSuspicion('Sod',name),null);
  const scope={projectId:'p',buildId:'b',binarySha256:'sha'};const result={identity:{...scope,caseId:'Sod'}} as never;
  assert.ok(previewMetadataMatches(result,scope,'Sod'));assert.equal(previewMetadataMatches(result,scope,'CellularDet'),false);assert.equal(previewMetadataMatches(result,{...scope,binarySha256:'new'},'Sod'),false);
+});
+
+async function selectedSourceFixture(){
+ const registry=JSON.parse(await readFile(new URL('../../src/api/examples/local-workflow/registered-cases.json',import.meta.url),'utf8'));
+ const source='simulation/Sod/Sod.cpp',sourceSha='c'.repeat(64),binarySha='b'.repeat(64);
+ const discovery:DiscoveryResponse={protocolVersion:PROTOCOL_VERSION,projectId:'project',buildId:'build',binarySha256:binarySha,cases:registry.cases,fieldModels:[],amr:null};
+ const sod=discovery.cases.find(c=>c.caseId==='Sod')!;sod.inspection.sourceFile='/project/'+source;sod.inspection.compiledSourceSha256=sourceSha;
+ const session:ProjectSession={projectId:'project',displayName:'project',projectRoot:'/project',caseSource:{relativePath:source,kind:'case-source',exists:true,changed:false,sha256:sourceSha},executable:{relativePath:'bin/ARCH',kind:'executable',exists:true,changed:false,sha256:binarySha},sourceState:'available',configFileState:'unknown',binaryState:'available',mapping:'unknown',metadata:'unavailable',openedAt:'now',refreshedAt:'now'};
+ return {source,discovery,session,sod};
+}
+test('selected source presents only its unique compiled model and retains explicit reopening guidance',async()=>{
+ const f=await selectedSourceFixture();
+ for(const path of ['/project/'+f.source,f.source]){
+  f.sod.inspection.sourceFile=path;
+  const selection=selectedSourceModels(f.source,f.session,f.discovery,'Sod');
+  assert.equal(selection.state,'fixed');assert.deepEqual(selection.cases.map(c=>c.caseId),['Sod']);
+  if(selection.state==='fixed'){assert.equal(selection.caseId,'Sod');assert.match(selection.message,/Close this project and reopen/);}
+ }
+});
+test('unregistered, ambiguous or stale selected source stays pending without a default Sod option',async()=>{
+ const f=await selectedSourceFixture();
+ const alias={...structuredClone(f.sod),caseId:'SodAlias'};
+ // A second registration cannot be hidden by giving it a different digest:
+ // the authoritative Host rejects path ambiguity before checking the SHA.
+ alias.inspection.compiledSourceSha256='d'.repeat(64);
+ const selections=[
+  selectedSourceModels(f.source,f.session,{...f.discovery,cases:[]}),
+  selectedSourceModels(f.source,f.session,{...f.discovery,cases:[f.sod,alias]}),
+  selectedSourceModels(f.source,{...f.session,caseSource:{...f.session.caseSource!,sha256:'e'.repeat(64)}},f.discovery),
+  selectedSourceModels(f.source,undefined,f.discovery),
+  selectedSourceModels(f.source,f.session,null),
+  selectedSourceModels(f.source,{...f.session,caseSource:{...f.session.caseSource!,sha256:undefined}},f.discovery),
+  selectedSourceModels(f.source,f.session,{...f.discovery,projectId:'other'}),
+  selectedSourceModels(f.source,f.session,{...f.discovery,binarySha256:'f'.repeat(64)}),
+  selectedSourceModels(f.source,f.session,f.discovery,'CellularDet'),
+ ];
+ for(const selection of selections){assert.equal(selection.state,'pending');assert.deepEqual(selection.cases,[]);if(selection.state==='pending')assert.match(selection.message,/pending:/);}
+});
+test('unbound web model selection retains every registered model without a source identity',async()=>{
+ const f=await selectedSourceFixture(),selection=selectedSourceModels(undefined,undefined,f.discovery);
+ assert.equal(selection.state,'unbound');assert.equal(selection.cases.length,f.discovery.cases.length);assert.equal(selection.cases,f.discovery.cases);
+ assert.ok(selection.cases.some(c=>c.caseId==='CellularDet'));assert.ok(selection.cases.some(c=>c.caseId==='ExternalGravity'));
 });
 
 import {InspectionRequests} from '../src/data/inspectionRequests.ts';

@@ -142,7 +142,7 @@ public:
         :owner_(owner),context_(context){}
     JournalProbe(const JournalProbe&)=delete;JournalProbe& operator=(const JournalProbe&)=delete;
     JournalProbe(JournalProbe&&)=delete;JournalProbe& operator=(JournalProbe&&)=delete;
-    bool supports_host_macro_step_journal() const noexcept override{return true;}
+    bool supports_macro_step_journal(arch::state::ExecutionSide side) const noexcept override{return side==arch::state::ExecutionSide::Host;}
     /** Begin allocates only private journal capacity before any field mutation. */
     void begin_macro_step() override {
         if(macro_)throw std::logic_error("JOURNAL_DUPLICATE_OWNER");
@@ -1122,7 +1122,7 @@ public:
     int preparations=0,accepts=0,begins=0;
     mutable int invalidations=0;
     explicit ProductionReadinessProbe(bool journal_capable):journal_capable_(journal_capable){}
-    bool supports_host_macro_step_journal() const noexcept override{return journal_capable_;}
+    bool supports_macro_step_journal(arch::state::ExecutionSide side) const noexcept override{return side==arch::state::ExecutionSide::Host&&journal_capable_;}
     void begin_macro_step() override{++begins;}
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest& request) override {
         for(const auto handle:request.handles) {

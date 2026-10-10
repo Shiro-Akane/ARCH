@@ -8,7 +8,8 @@ A *backend* refers to the specific execution engine in ARCH responsible for perf
 The CUDA backend executes hydrodynamics and adaptive-mesh numerical work on the
 GPU. CPU and CUDA share the same mathematical and physical implementations;
 device memory, kernels, streams and linear-solver libraries are backend-specific.
-Both backends support the feature scope below. The
+The components below follow the geometry and backend scope in the
+[feature list](Features.md). The
 [validation index](../validation/README.md) records the tested configurations,
 technical results and combined acceptance status.
 
@@ -64,11 +65,11 @@ Conversely, the GPU computes the actual cell indicators and transfers just one s
 
 The server measurements below retain their original source identity and
 transport configuration; they precede the current self-gravity work and do not
-establish that every present Helmholtz transport channel is active. Current
-workstation evidence and the controlled FLASH comparison are recorded in the
-[current acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
-Shared CPU optimizations change the comparison baseline. The current RTX
-workstation shows an end-to-end gain for the tested 2D four-module AMR case;
+establish that every present Helmholtz transport channel is active. Earlier
+workstation measurements and the controlled FLASH comparison are recorded in the
+[optimization acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
+Shared CPU optimizations change the comparison baseline. Those RTX
+measurements show an end-to-end gain for the tested 2D four-module AMR case;
 Cellular, Jeans and the 3D curved coupled case remain faster on CPU. Use the
 measured complete-task time for the actual input and scale.
 

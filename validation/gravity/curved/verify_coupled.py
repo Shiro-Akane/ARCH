@@ -2,6 +2,7 @@
 
 Usage: verify_coupled.py --run label:directory:expected_steps [--run ...]
        verify_coupled.py --endpoint-run label:directory:physical_time [--endpoint-run ...]
+                        [--evolving-amr]
 At least one run of either form is required. The check reads the actual Driver
 outputs, not a private case implementation.
 """
@@ -17,10 +18,13 @@ import h5py
 import numpy as np
 
 
-def leaf_levels(plot):
-    """Return the distribution of active AMR levels in one plot."""
+def leaf_levels(plot, *, evolving_amr=False):
+    """Return active levels; dynamic endpoints require a legal nonempty distribution."""
     with h5py.File(plot) as handle:
         levels = handle["Grid/level"][()]
+        if evolving_amr and (levels.ndim != 1 or levels.dtype.kind not in "iu"
+                             or levels.size == 0 or np.any(levels < 0)):
+            raise ValueError(f"Invalid active AMR levels in {plot}")
         counts = {str(int(level)): int(count) for level, count in
                   zip(*np.unique(levels, return_counts=True))}
         time = float(handle.attrs["time"])
@@ -50,8 +54,11 @@ def physical_times_agree(left, right):
     return abs(left - right) <= max(1e-20, 2e-10 * scale)
 
 
-def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time=None):
-    """Require completed four-module stepping and the requested AMR topology."""
+def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time=None,
+           evolving_amr=False):
+    """Audit the original topology policy or opt-in evolving endpoint AMR."""
+    if evolving_amr and (expected_time is None or not expect_mixed):
+        raise ValueError(f"{label}: evolving AMR requires endpoint AMR mode")
     if expected_time is not None:
         if not math.isfinite(expected_time) or expected_time <= 0 or expected_steps is not None:
             raise ValueError(f"{label}: endpoint mode requires positive finite time and no step quota")
@@ -67,7 +74,7 @@ def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time
         if len(plots) < 2:
             raise ValueError(f"{label}: expected at least initial and final plots")
         # Physical ordering comes from the stored HDF5 time, never filenames.
-        states = [leaf_levels(path) for path in plots]
+        states = [leaf_levels(path, evolving_amr=evolving_amr) for path in plots]
         times = [state["time_seconds"] for state in states]
         if not all(math.isfinite(value) for value in times):
             raise ValueError(f"{label}: nonfinite plot time")
@@ -80,14 +87,14 @@ def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time
                     "leaves_by_level": state["leaves_by_level"],
                     "field_min_max": state["field_min_max"]}
                    for state in states[1:-1]]
-    if expect_mixed:
+    if expect_mixed and not evolving_amr:
         if not ("0" in initial["leaves_by_level"] and
                 "1" in initial["leaves_by_level"] and
                 "0" in final["leaves_by_level"] and
                 "1" in final["leaves_by_level"]):
             raise ValueError(f"{label}: not a coarse/fine mixed AMR run")
-    elif (set(initial["leaves_by_level"]) != {"0"}
-          or set(final["leaves_by_level"]) != {"0"}):
+    elif not expect_mixed and (set(initial["leaves_by_level"]) != {"0"}
+                               or set(final["leaves_by_level"]) != {"0"}):
         raise ValueError(f"{label}: expected a regular root grid")
     if expected_time is not None and not physical_times_agree(final["time_seconds"], expected_time):
         raise ValueError(f"{label}: requested physical endpoint was not reached")
@@ -146,6 +153,8 @@ def verify(label, directory, expected_steps, expect_mixed=True, *, expected_time
               "topology_changes": sum(row["topology_changed"] == "1" for row in regrids)}
     if expected_time is not None:
         result["samples"] = samples
+    if evolving_amr:
+        result["evolving_amr"] = True
     return result
 
 
@@ -164,6 +173,12 @@ LEDGER_REQUIRED_METRICS = ("measure", "mass", "energy", "rhoX", "time")
 LEDGER_UNCERTAINTY = (
     "longdouble summation reduces only postprocessing rounding; upstream FP64 and "
     "discretization uncertainty requires frozen reference/time-space control")
+LEDGER_FIELD_SENSITIVITY_NOTE = (
+    "stored-field perturbation only: each stored binary64 field is perturbed by its "
+    "cell half-ULP (conservative binade spacing) against the fixed stored measures; "
+    "this excludes upstream PDE/ODE, volume uncertainty, algorithm error and "
+    "longdouble summation, is not scientific qualified and not a pass/fail gate, "
+    "and cannot recover FP64 upstream precision")
 
 
 def _project_owners():
@@ -219,6 +234,23 @@ def _longdouble(value, label):
     if not np.isfinite(restored):
         raise ValueError(f"{label} is not a finite observation")
     return restored
+
+
+def _half_ulp(values):
+    """Conservative per-cell half-spacing of stored binary64 field values.
+
+    The spacing is read from the regular binade exponent of each value, so a
+    value on a binade boundary takes the next-larger spacing.  The step is
+    formed with longdouble ``ldexp`` from ``2**max(exponent - 53, -1074)``, so
+    zero and minsubnormal inputs keep the minsubnormal spacing instead of
+    underflowing, and ``np.spacing(maxfinite)`` is never evaluated.  This is a
+    standard stored-field sensitivity, not an exact error certificate.
+    """
+    magnitude = np.abs(np.asarray(values, dtype=np.float64))
+    _, exponent = np.frexp(magnitude)
+    exponent = np.maximum(exponent.astype(np.int64) - 53, -1074)
+    exponent = np.where(magnitude == 0.0, -1074, exponent)
+    return np.ldexp(np.longdouble(1.0), (exponent - 1).astype(np.int64))
 
 
 def _logical_keys(levels, group, label):
@@ -373,6 +405,13 @@ def read_ledger_sample(validator, parameters, checkpoint, plot):
         rho = _stored_float64(handle["Data/rho"], "checkpoint Data/rho")
         eng = _stored_float64(handle["Data/eng"], "checkpoint Data/eng")
         rhoX = _stored_float64(handle["Data/rhoX"], "checkpoint Data/rhoX")
+        momenta = []
+        for name in ("mom_u", "mom_v", "mom_w"):
+            if f"Data/{name}" not in handle:
+                raise ValueError(
+                    f"checkpoint is missing Data/{name}; no zero momentum fallback")
+            momenta.append(_stored_float64(handle[f"Data/{name}"],
+                                           f"checkpoint Data/{name}"))
         if "Species/name" not in handle:
             raise ValueError("checkpoint carries no Species/name record")
         names = [_text(name) for name in handle["Species/name"][()]]
@@ -445,6 +484,11 @@ def read_ledger_sample(validator, parameters, checkpoint, plot):
     if rhoX.shape != (num_species, len(checkpoint_keys), cells_per_block):
         raise ValueError(
             "checkpoint Data/rhoX must be exactly (num_species, blocks, cells_per_block)")
+    for name, values in zip(("mom_u", "mom_v", "mom_w"), momenta):
+        if values.shape != rho.shape:
+            raise ValueError(
+                f"checkpoint Data/{name} must exactly match the rho shape; "
+                "no zero momentum fallback")
     if per_block != cells_per_block:
         raise ValueError("plot cells per active leaf disagree with the checkpoint cells_per_block")
     if len(set(plot_keys)) != len(plot_keys) or len(set(checkpoint_keys)) != len(checkpoint_keys):
@@ -469,6 +513,9 @@ def read_ledger_sample(validator, parameters, checkpoint, plot):
         raise ValueError("checkpoint eng must be finite")
     if not np.all(np.isfinite(rhoX)):
         raise ValueError("checkpoint rhoX must be finite")
+    for name, values in zip(("mom_u", "mom_v", "mom_w"), momenta):
+        if not np.all(np.isfinite(values)):
+            raise ValueError(f"checkpoint Data/{name} must be finite")
     if not np.all(np.isfinite(dens)) or not np.all(dens > 0):
         raise ValueError("plot DENS must be finite and positive")
     if not np.all(np.isfinite(ener)):
@@ -477,6 +524,24 @@ def read_ledger_sample(validator, parameters, checkpoint, plot):
         raise ValueError("plot GPOT must be finite; no zero potential fallback")
     if not np.all(np.isfinite(measure)) or not np.all(measure > 0):
         raise ValueError("stored cell_measure must be finite and positive")
+
+    # Frozen Cartesian physical internal energy from the stored momenta; the
+    # existing positive-rho rule and any EOS inversion are left untouched.
+    density_state = rho.reshape(-1).astype(np.longdouble)
+    kinetic_state = sum(momenta[index].reshape(-1).astype(np.longdouble) ** 2
+                        for index in range(3))
+    specific_internal_energy = (eng.reshape(-1).astype(np.longdouble) / density_state
+                                - kinetic_state / (2 * density_state * density_state))
+    if not np.all(np.isfinite(specific_internal_energy)):
+        raise ValueError("checkpoint Cartesian specific internal energy is not finite")
+    if not np.all(specific_internal_energy > 0):
+        raise ValueError("checkpoint Cartesian specific internal energy is not positive")
+    species_state = rhoX.reshape(num_species, -1).astype(np.longdouble)
+    physical_state = {
+        "min_specific_internal_energy": _decimal(np.min(specific_internal_energy)),
+        "min_species_density": _decimal(np.min(species_state)),
+        "max_abs_species_sum_minus_rho_relative": _decimal(np.max(
+            np.abs(np.sum(species_state, axis=0) - density_state) / density_state))}
 
     order = {key: index for index, key in enumerate(plot_keys)}
     permutation = [order[key] for key in checkpoint_keys]
@@ -502,6 +567,15 @@ def read_ledger_sample(validator, parameters, checkpoint, plot):
     if not all(np.isfinite(value) for value in (mass, egas, w, mean_phi)) \
             or not all(np.isfinite(value) for value in species_integrals):
         raise ValueError("integrated ledger observations are not finite")
+    stored_energy = eng.reshape(-1)
+    stored_species = rhoX.reshape(num_species, -1)
+    egas_sensitivity = np.sum(volume * _half_ulp(stored_energy), dtype=np.longdouble)
+    species_sensitivity = [np.sum(volume * _half_ulp(stored_species[index]),
+                                  dtype=np.longdouble)
+                           for index in range(num_species)]
+    if not np.isfinite(egas_sensitivity) \
+            or not all(np.isfinite(value) for value in species_sensitivity):
+        raise ValueError("integrated stored-field sensitivities are not finite")
     metric_report = {"measure": _text(metrics["measure"]),
                      "mass": float(metrics["mass"]),
                      "energy": float(metrics["energy"]),
@@ -533,6 +607,10 @@ def read_ledger_sample(validator, parameters, checkpoint, plot):
             "mass": _decimal(mass), "egas": _decimal(egas), "w": _decimal(w),
             "mean_phi": _decimal(mean_phi),
             "species_integrals": [_decimal(value) for value in species_integrals],
+            "physical_state": physical_state,
+            "egas_sensitivity": _decimal(egas_sensitivity),
+            "species_integral_sensitivity": [_decimal(value) for value in species_sensitivity],
+            "sensitivity_note": LEDGER_FIELD_SENSITIVITY_NOTE,
             "checkpoint_metrics": metric_report}
 
 
@@ -553,6 +631,11 @@ def endpoint_ledger(before, after, data):
             raise ValueError(f"ledger samples disagree on {key}")
     if not after["time_seconds"] > before["time_seconds"]:
         raise ValueError("ledger samples must be strictly increasing in physical time")
+    for key in ("egas_sensitivity", "species_integral_sensitivity"):
+        if key not in before or key not in after:
+            raise ValueError(
+                f"ledger samples must carry the mandatory {key!r} observation; "
+                "no zero fallback")
     if _digest(data.get("data_sha256"), "supplied nuclear data") \
             != before["nuclear_data_sha256"]:
         raise ValueError("supplied nuclear data identity disagrees with the ledger samples")
@@ -590,6 +673,32 @@ def endpoint_ledger(before, after, data):
     residual = delta_egas + delta_w - q
     absolute_term_sums = {"delta_egas": abs(delta_egas), "delta_w": abs(delta_w),
                           "q": abs(q), "total": abs(delta_egas) + abs(delta_w) + abs(q)}
+    egas_sensitivity = (_longdouble(before["egas_sensitivity"], "before egas sensitivity")
+                        + _longdouble(after["egas_sensitivity"], "after egas sensitivity"))
+    before_sensitivity = [_longdouble(value, "before species sensitivity")
+                          for value in before["species_integral_sensitivity"]]
+    after_sensitivity = [_longdouble(value, "after species sensitivity")
+                         for value in after["species_integral_sensitivity"]]
+    if len(before_sensitivity) != len(before_species) \
+            or len(after_sensitivity) != len(before_species):
+        raise ValueError("ledger samples disagree on the species sensitivity vector")
+    species_sensitivity = (np.asarray(before_sensitivity, dtype=np.longdouble)
+                           + np.asarray(after_sensitivity, dtype=np.longdouble))
+    # The stored-field Q sensitivity reuses the frozen nuclear law on a
+    # one-species uncertainty basis; no coefficient or constant is copied.
+    q_sensitivity = np.sum(np.abs(nuclear_energy_delta(
+        data, np.diag(species_sensitivity))), dtype=np.longdouble)
+    if not np.isfinite(egas_sensitivity) or not np.isfinite(q_sensitivity):
+        raise ValueError("endpoint stored-field sensitivities are not finite")
+    egas_scale = max(abs(_longdouble(before["egas"], "before egas")),
+                     abs(_longdouble(after["egas"], "after egas")))
+    q_over_egas = None if egas_scale == 0 else _decimal(q / egas_scale)
+    if q_sensitivity > 0:
+        q_over_sensitivity = _decimal(abs(q) / q_sensitivity)
+        ratio_state = "reported"
+    else:
+        q_over_sensitivity = None
+        ratio_state = "zero_stored_field_sensitivity"
     return {"namespace": LEDGER_NAMESPACE, "scientific_qualified": False,
             "q": float(q), "delta_mass": float(delta_mass),
             "delta_charge": float(charge), "delta_egas": float(delta_egas),
@@ -608,6 +717,13 @@ def endpoint_ledger(before, after, data):
                                          abs(np.longdouble(_longdouble(after["mass"],
                                                                        "after mass")))))},
             "species_mass_change": [float(value) for value in delta],
+            "q_over_egas": q_over_egas,
+            "q_over_sensitivity": q_over_sensitivity,
+            "sensitivity": {"delta_egas": _decimal(egas_sensitivity),
+                            "q": _decimal(q_sensitivity),
+                            "ratio_state": ratio_state,
+                            "basis": "stored_field_half_ulp",
+                            "note": LEDGER_FIELD_SENSITIVITY_NOTE},
             "roundoff": {
                 "input_machine_eps": float(np.finfo(np.float64).eps),
                 "longdouble_machine_eps": float(np.finfo(np.longdouble).eps),
@@ -625,6 +741,9 @@ def main():
                         help="label:output-directory:expected-steps")
     parser.add_argument("--endpoint-run", action="append", default=[],
                         help="label:output-directory:physical-time-seconds")
+    parser.add_argument("--evolving-amr", action="store_true",
+                        help="endpoint runs only: allow changing AMR level distributions; "
+                             "still require an actual topology change")
     parser.add_argument("--parameters", type=Path,
                         help="existing parameters input for the observational ledger")
     parser.add_argument("--checkpoint-validator", type=Path,
@@ -635,6 +754,8 @@ def main():
     args = parser.parse_args()
     if not args.run and not args.endpoint_run:
         parser.error("at least one --run or --endpoint-run is required")
+    if args.evolving_amr and (args.run or not args.endpoint_run):
+        parser.error("--evolving-amr requires only --endpoint-run lanes")
     jobs = []
     labels = set()
     for specification in args.run:
@@ -670,7 +791,8 @@ def main():
         ledger_pairs = [(Path(pair[0]), Path(pair[1])) for pair in args.ledger_pair]
     results = {}
     for label, path, steps, endpoint in jobs:
-        results[label] = verify(label, path, steps, expected_time=endpoint)
+        results[label] = verify(label, path, steps, expected_time=endpoint,
+                                evolving_amr=args.evolving_amr)
     if ledger_pairs:
         label = next(iter(results))
         lane = results[label]

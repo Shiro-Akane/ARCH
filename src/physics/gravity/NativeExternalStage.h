@@ -9,9 +9,13 @@
  *    O(1) indexed patch checks, and one O(N) recheck after workers join.
  * 3. Each patch atomically claims one source visit. Its receipt rechecks the
  *    original policy, dt, stage/slot/ghost identity and seven allocation leases.
- * 4. Commit only finite measured body-source budgets; an abandoned or failed
+ * 4. The Device branch reuses that same claim/failure machine with frozen
+ *    Root-issued backend access and geometry metadata plus Root recheck
+ *    callbacks; no device support is claimed and no callback alone proves real
+ *    Runtime authority.
+ * 5. Commit only finite measured body-source budgets; an abandoned or failed
  *    claim cannot be reused. Complete-domain acceptance requires every patch.
- * 5. The owner detaches the policy borrow and invalidates this generation
+ * 6. The owner detaches the policy borrow and invalidates this generation
  *    before rotation, rollback or destruction. No raw fields are copied.
  *
  * Budgets represent actual source additions:
@@ -30,9 +34,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <utility>
 
+#include "driver/runtime/ComputeBackend.h"
 #include "driver/schedule/StageScheduler.h"
 #include "data/GlobalDefs.h"
 #include "numerics/integrator/HydroBoundaryAuthority.h"
@@ -71,6 +77,14 @@ private:
         std::atomic<Phase> phase{Phase::Ready};
         NativeBodySourceBudget budget{};
     };
+
+    /** Frozen Root-owned Device metadata for one synchronous stage.
+     * Both callbacks are Root's real Runtime/domain authority; a nonempty
+     * pointer is not by itself proof that such authority exists. The two spans
+     * borrow the issuer's stable metadata for the whole stage and never copy a
+     * fluid state, grid object or device array. Zero/null on the Host branch.
+     */
+    using DeviceDomain=NativeGravityDeviceDomain;
 
 public:
     /** Move-only claim of one actual source patch; no ownership of field arrays.
@@ -218,6 +232,148 @@ public:
         std::uint64_t generation_{};
     };
 
+    /** Move-only claim of one Root-authorized device patch; no ownership of any
+     * device storage. An uncommitted destructor marks Failed and performs no
+     * throwing check. Moving transfers the same claim; it never reopens Ready
+     * or issues a new generation. The receipt borrows the frozen Root-owned
+     * access and geometry entries at its own index and copies neither fluid
+     * state nor a grid/device pointer. Receipt lifetime must be contained in
+     * the frame lifetime.
+     */
+    class DevicePatchReceipt final {
+    public:
+        DevicePatchReceipt(const DevicePatchReceipt&) = delete;
+        DevicePatchReceipt& operator=(const DevicePatchReceipt&) = delete;
+
+        /** Transfer one existing claim without touching source or accounting. */
+        DevicePatchReceipt(DevicePatchReceipt&& other) noexcept
+            : frame_(std::exchange(other.frame_,nullptr)),index_(other.index_),
+              access_(other.access_),geometry_(other.geometry_),
+              generation_(other.generation_) {}
+
+        /** Abandon the old claim before accepting a different live claim. */
+        DevicePatchReceipt& operator=(DevicePatchReceipt&& other) noexcept {
+            if(this!=&other) {
+                abandon();
+                frame_=std::exchange(other.frame_,nullptr);
+                index_=other.index_;access_=other.access_;geometry_=other.geometry_;
+                generation_=other.generation_;
+            }
+            return *this;
+        }
+
+        /** A failed/abandoned device visit cannot become an accepted receipt. */
+        ~DevicePatchReceipt() { abandon(); }
+
+        /** Return the original local (g_r,g_z,g_phi) only after real checks.
+         * The view is the frame's frozen immutable source data, not a device
+         * array; it must not be retained beyond the frame or reinterpreted.
+         */
+        const ExternalGravityView& external() const {
+            require_input();
+            return frame_->external_;
+        }
+
+        /** Revalidate this exact claimed device patch before any source commit.
+         * Every failure permanently marks this claim Failed. Catching the
+         * exception cannot revive it or retry against repaired device metadata.
+         */
+        void require_input() const {
+            if(!frame_)throw std::logic_error("Native external device receipt is not live");
+            try {
+                frame_->require_device_claim(index_,generation_);
+            } catch(...) {
+                fail();
+                throw;
+            }
+        }
+
+        /** Authenticate the source helper's actual operands before its math/write.
+         * Workflow: retain the live claim and the Root require_patch recheck,
+         * which runs through require_input; then match the frozen
+         * BackendStateAccess identity, the entire value-only geometry view, the
+         * exact stage dt and the configured physical bounds. An exception
+         * permanently fails this claim. No EOS, allocation, domain scan or
+         * numerical tolerance is introduced by application identity.
+         */
+        void require_application(const arch::backend::BackendStateAccess& access,
+            const GridMetrics::GeometryView& geometry,double dt,
+            const arch::state::Bounds& bounds) const {
+            if(!frame_)throw std::logic_error("Native external device receipt is not live");
+            try {
+                require_input();
+                if(!NativeExternalStageFrame::same_access(access,*access_)
+                    ||!NativeExternalStageFrame::same_geometry(geometry,*geometry_)
+                    ||!NativeExternalStageFrame::same_double(dt,frame_->dt_)
+                    ||!NativeExternalStageFrame::same_bounds(bounds,frame_->physical_bounds_))
+                    throw std::logic_error("Native external device application changed access, geometry, interval or physical bounds");
+            } catch(...) {
+                fail();
+                throw;
+            }
+        }
+
+        /** Publish one finite measured budget after all patch source additions.
+         * This operation intentionally may throw: stale identity or a nonfinite
+         * budget cannot be hidden by noexcept termination or an accepted prefix.
+         * Allocation and numerical device writes remain outside this method.
+         */
+        void commit(const NativeBodySourceBudget& budget) {
+            require_input();
+            if(!NativeExternalStageFrame::finite(budget)) {
+                fail();
+                throw std::runtime_error("Native external device body budget is nonfinite");
+            }
+            auto& record=frame_->consumption_[index_];
+            record.budget=budget;
+            // A final scalar live/policy check precedes publication. Complete
+            // patch identity was checked above; no callback or device operation
+            // occurs between that check and the release transition.
+            try {
+                frame_->require_live();
+            } catch(...) {
+                fail();
+                throw;
+            }
+            Phase expected=Phase::Claimed;
+            if(!record.phase.compare_exchange_strong(expected,Phase::Consumed,
+                std::memory_order_release,std::memory_order_relaxed)) {
+                fail();
+                throw std::logic_error("Native external device receipt was already consumed or failed");
+            }
+            frame_=nullptr;
+        }
+
+    private:
+        friend class NativeExternalStageFrame;
+
+        /** Bind an already successful CAS to the frozen Root-owned span entries. */
+        DevicePatchReceipt(const NativeExternalStageFrame& frame,std::size_t index) noexcept
+            : frame_(&frame),index_(index),access_(&frame.device_.accesses[index]),
+              geometry_(&frame.device_.geometries[index]),generation_(frame.generation_) {}
+
+        /** Mark only our unconsumed claim Failed; never overwrite Consumed. */
+        void fail() const noexcept {
+            if(!frame_)return;
+            Phase expected=Phase::Claimed;
+            (void)frame_->consumption_[index_].phase.compare_exchange_strong(
+                expected,Phase::Failed,std::memory_order_release,
+                std::memory_order_relaxed);
+        }
+
+        /** Retire a moved-from/live handle without any fallible identity work. */
+        void abandon() noexcept {
+            fail();
+            frame_=nullptr;
+        }
+
+        const NativeExternalStageFrame* frame_{};
+        std::size_t index_{};
+        const arch::backend::BackendStateAccess* access_{};
+        const GridMetrics::GeometryView* geometry_{};
+        std::uint64_t generation_{};
+    };
+
     NativeExternalStageFrame(const NativeExternalStageFrame&) = delete;
     NativeExternalStageFrame& operator=(const NativeExternalStageFrame&) = delete;
     NativeExternalStageFrame(NativeExternalStageFrame&&) = delete;
@@ -233,10 +389,27 @@ public:
      * Patch wall authorities can reuse it instead of preparing another domain.
      * Their own indexed checks remain mandatory; this is not scientific EOS
      * acceptance and does not perform an O(N) scan on a worker.
+     * The Device branch has no Host boundary domain and rejects before any
+     * dereference instead of fabricating one.
      */
     const arch::boundary::HostHydroBoundaryDomainAuthority& boundary_domain() const {
         require_live();
-        return domain_;
+        if(!domain_)
+            throw std::logic_error("Native external device frame has no Host boundary domain");
+        return *domain_;
+    }
+
+    /** Validate the original whole Device domain before any consumer launch.
+     * Reuse the issuer's actual Runtime transaction check and return the frozen
+     * patch count. This is a read-only identity check, never a consumption or
+     * completion grant; each patch still needs its original move-only receipt.
+     */
+    std::size_t require_device_domain() const {
+        require_live();
+        if(domain_)
+            throw std::logic_error("Native external Host frame has no Device domain");
+        device_.require_domain(device_.owner);
+        return patch_count_;
     }
 
     /** Claim one body-source visit using the actual pool inverse active index.
@@ -249,6 +422,9 @@ public:
         const IGravityPolicy& actual_policy) const
     {
         require_live();
+        // Reject the Device branch before any Host fluid or domain dereference.
+        if(!domain_)
+            throw std::logic_error("Native external Host patch claim requires the Host boundary domain");
         if(control!=control_||&actual_policy!=policy_||block_id<0
             ||control_->pool.get()!=pool_||control_->tree.get()!=tree_
             ||!same_double(dt,dt_))
@@ -258,7 +434,7 @@ public:
             ||static_cast<std::size_t>(block.active_index)>=patch_count_)
             throw std::logic_error("Native external source patch index is outside its domain");
         const auto index=static_cast<std::size_t>(block.active_index);
-        domain_.require_input_patch(index,control,block_id,input,grid);
+        domain_->require_input_patch(index,control,block_id,input,grid);
         Phase expected=Phase::Ready;
         if(!consumption_[index].phase.compare_exchange_strong(expected,Phase::Claimed,
             std::memory_order_acq_rel,std::memory_order_acquire))
@@ -266,14 +442,51 @@ public:
         return PatchReceipt(*this,index,block_id,input,grid);
     }
 
+    /** Claim one measured device-source visit using Root's frozen metadata order.
+     * Validate the Device branch, actual policy, captured pool/tree identity,
+     * frozen access identity, frozen geometry view and exact stage interval
+     * before the Ready->Claimed CAS, and run the Root require_patch callback
+     * before that transition. Wrong branch, stale metadata and duplicate claims
+     * reject. Work per patch is constant: this never scans the device domain,
+     * and it authorizes no view, clock, ledger, storage, BC or transaction
+     * change by itself.
+     */
+    DevicePatchReceipt claim_device_patch(std::size_t index,
+        arch::backend::BackendStateAccess access,const GridMetrics::GeometryView& geometry,
+        double dt,const IGravityPolicy& actual_policy) const
+    {
+        require_live();
+        // The caller passes no control on this branch, so the captured pooled
+        // owner identity is rechecked against the frame's own pool and tree.
+        if(domain_||&actual_policy!=policy_
+            ||control_->pool.get()!=pool_||control_->tree.get()!=tree_
+            ||index>=patch_count_||!same_double(dt,dt_))
+            throw std::logic_error("Native external device source consumer changed branch, owner or interval");
+        if(!same_access(access,device_.accesses[index])
+            ||!same_geometry(geometry,device_.geometries[index]))
+            throw std::logic_error("Native external device source patch metadata is not the frozen expected entry");
+        device_.require_patch(device_.owner,index,access,geometry);
+        Phase expected=Phase::Ready;
+        if(!consumption_[index].phase.compare_exchange_strong(expected,Phase::Claimed,
+            std::memory_order_acq_rel,std::memory_order_acquire))
+            throw std::logic_error("Native external device source patch was already claimed");
+        return DevicePatchReceipt(*this,index);
+    }
+
     /** Accept complete source consumption only after all patch workers join.
      * Recheck the original whole domain, require every release-published finite
      * budget, and sum in actual active order. Overflow rejects; no rescaling,
      * invented conservation allowance or partial accepted prefix is introduced.
+     * Domain acceptance selects the Host authority or the Root Device callback
+     * before the common loop; the Host fluid path is never dereferenced on the
+     * Device branch.
      */
     NativeBodySourceBudget require_complete_consumption() const {
         require_live();
-        domain_.require_complete_domain();
+        if(domain_)
+            domain_->require_complete_domain();
+        else
+            device_.require_domain(device_.owner);
         NativeBodySourceBudget total{};
         for(std::size_t index=0;index<patch_count_;++index) {
             const auto& record=consumption_[index];
@@ -317,7 +530,9 @@ private:
           configuration_(&configuration.physics.gravity),numerics_(&configuration.numerics),
           physical_bounds_{configuration.numerics.sml_rho,configuration.numerics.min_eint,
               configuration.numerics.max_eint},dt_(dt),
-          generation_(generation),domain_(boundary,control,binding,descriptor),
+          generation_(generation),
+          domain_(std::make_unique<arch::boundary::HostHydroBoundaryDomainAuthority>(
+              boundary,control,binding,descriptor)),
           patch_count_(control.tree->GetActiveBlocks().size()),
           consumption_(std::make_unique<Consumption[]>(patch_count_))
     {
@@ -332,6 +547,47 @@ private:
         require_configuration();
         // Actual Runtime/configuration/axis/source authority is the friend
         // caller's responsibility. No nonempty callback or enum grants it here.
+    }
+
+    /** Capture one actual, already authorized Device stage with bounded metadata.
+     * This overload borrows Root-owned frozen access/geometry spans and the two
+     * Root recheck callbacks. It copies no fluid state, grid object, device
+     * array or Host boundary authority and needs neither BCHandler nor
+     * StageBinding. A nonempty callback is not proof of real Runtime authority:
+     * the actual issuer must supply the real Runtime object, only GravityStage
+     * can call this constructor, and the branch stays unreachable until Root
+     * integrates that issuer. No policy attachment occurs in the constructor.
+     */
+    NativeExternalStageFrame(const IGravityPolicy& policy,const amr::AMRControl& control,
+        ExternalGravityView external,const SimConfig& configuration,double dt,
+        std::uint64_t generation,const DeviceDomain& domain)
+        : policy_(&policy),control_(&control),pool_(control.pool.get()),
+          tree_(control.tree.get()),external_(external),
+          configuration_(&configuration.physics.gravity),numerics_(&configuration.numerics),
+          physical_bounds_{configuration.numerics.sml_rho,configuration.numerics.min_eint,
+              configuration.numerics.max_eint},dt_(dt),
+          generation_(generation),domain_(nullptr),device_(domain),
+          patch_count_(domain.accesses.size()),
+          consumption_(std::make_unique<Consumption[]>(patch_count_))
+    {
+        if(domain.owner==nullptr||!domain.require_domain||!domain.require_patch)
+            throw std::invalid_argument("Native external device stage lacks Root-owned metadata callbacks");
+        if(device_.accesses.empty()||device_.accesses.size()!=device_.geometries.size()
+            ||patch_count_!=control.tree->GetActiveBlocks().size())
+            throw std::invalid_argument("Native external device stage metadata does not match the active domain");
+        if(!std::isfinite(dt_)||!(dt_>0.)||generation_==0
+            ||!finite_external(external_)||!external_.enabled)
+            throw std::invalid_argument("Native external device stage source data or generation is invalid");
+        const auto description=policy_->source_descriptor();
+        if(description.origin!=GravitySourceOrigin::NativeExternalOrthonormal
+            ||!same_external(description.external,external_))
+            throw std::invalid_argument("Native external device stage description disagrees with source data");
+        require_configuration();
+        // Actual Runtime/view/clock/ledger/storage/BC/transaction authority
+        // stays with Root; require_patch runs per claim, before its CAS.
+        device_.require_domain(device_.owner);
+        // No device support, measured kernel budget or physical qualification
+        // follows from a supplied owner or callback.
     }
 
     /** Compare scientific identity bits, including signed zero, without a tolerance. */
@@ -367,6 +623,18 @@ private:
                 ||!same_double(a.root_lower[axis],b.root_lower[axis])
                 ||!same_double(a.root_upper[axis],b.root_upper[axis]))return false;
         return true;
+    }
+
+    /** Compare the four actual backend identity fields named by the contract.
+     * Key, epoch, storage and slot are compared exactly; no tolerance, address
+     * comparison or second device lookup is introduced here.
+     */
+    static bool same_access(const arch::backend::BackendStateAccess& first,
+        const arch::backend::BackendStateAccess& second) noexcept {
+        return first.block.uid.value==second.block.uid.value
+            &&first.block.epoch.value==second.block.epoch.value
+            &&first.storage.value==second.storage.value
+            &&first.slot==second.slot;
     }
 
     /** Check only source-view representability; configuration/chart authority is upstream. */
@@ -419,10 +687,24 @@ private:
         const Grid& grid,std::uint64_t generation) const
     {
         require_live();
-        if(generation!=generation_||index>=patch_count_
+        if(!domain_||generation!=generation_||index>=patch_count_
             ||consumption_[index].phase.load(std::memory_order_acquire)!=Phase::Claimed)
             throw std::logic_error("Native external patch claim is not its original generation");
-        domain_.require_input_patch(index,control_,block_id,state,grid);
+        domain_->require_input_patch(index,control_,block_id,state,grid);
+    }
+
+    /** Recheck one device claim's frozen identity and run Root's recheck.
+     * The frame borrows the Root-owned span entries, so the frozen access and
+     * geometry passed back to the callback are exactly the claimed metadata.
+     */
+    void require_device_claim(std::size_t index,std::uint64_t generation) const
+    {
+        require_live();
+        if(domain_||generation!=generation_||index>=patch_count_
+            ||consumption_[index].phase.load(std::memory_order_acquire)!=Phase::Claimed)
+            throw std::logic_error("Native external device patch claim is not its original generation");
+        device_.require_patch(device_.owner,index,device_.accesses[index],
+            device_.geometries[index]);
     }
 
     const IGravityPolicy* policy_;
@@ -435,7 +717,10 @@ private:
     const arch::state::Bounds physical_bounds_; // Immutable stage identity of its three limits.
     const double dt_;
     const std::uint64_t generation_;
-    const arch::boundary::HostHydroBoundaryDomainAuthority domain_;
+    /** Host-only prepared boundary domain; null exactly on the Device branch. */
+    const std::unique_ptr<const arch::boundary::HostHydroBoundaryDomainAuthority> domain_;
+    /** Zero/null callbacks with empty spans on the Host branch. */
+    const DeviceDomain device_{};
     const std::size_t patch_count_;
     std::unique_ptr<Consumption[]> consumption_;
     std::atomic<bool> live_{true};

@@ -16,6 +16,8 @@
  * Point LLF screening is not a whole mixed-measure invariant-domain proof;
  * completed native Runtime density/inertia/EOS acceptance remains mandatory.
  * This leaf owns no allocation, backend launch, halo or publication authority.
+ * The heavy shared entry retains ordinary Host inline semantics; CUDA keeps a
+ * call boundary so each numerical policy does not expand the full donor body.
  */
 #pragma once
 
@@ -77,7 +79,7 @@ ARCH_INLINE bool axial_weights(const GridMetrics::GeometryView& geometry,int i,
  * 2:1 TVD policy BEFORE entering; no NG-based method substitution occurs here.
  */
 template<class FluxPolicy,class ReconstructPolicy,class StateReader,class FractionReader,class Eos>
-ARCH_INLINE arch::state::Status compute(const StateReader& read,const FractionReader& fraction,
+ARCH_HEAVY_INLINE arch::state::Status compute(const StateReader& read,const FractionReader& fraction,
     const RzSelectedReconstruction::Context& context,const Eos& eos,double coefficient,
     const FluxAdmissibility::MeanThermoView* means,int left_cell,int right_cell,
     Scratch scratch,FluidVector& output,double* output_species,

@@ -16,7 +16,7 @@
 | 重力 | 外部加速度与随流体状态更新的自引力势、加速度和能量功 | 自引力域与边界的具体条件见下表 |
 | 执行后端 | CPU/OpenMP 与 CUDA 共用物理和数学实现；动态 AMR 在主机管理拓扑、设备执行数值任务 | 构建与网络能力决定可选后端；实际加速取决于算例规模 |
 | 输出与恢复 | HDF5 流体场、检查点、求解与修复诊断；相容配置可在 CPU/CUDA 之间续算 | 恢复时须保持 EOS、网络、几何、引力与控制参数的科学身份 |
-| Studio | Linux／WSLg 独立窗口；配置、构建、运行／续算、初态／AMR 预览与只读 Plotfile 查询 | 预览依模型声明能力；Plotfile 总览为笛卡尔一／二维，原生单元查询覆盖所记录的一至三维坐标；见[Studio 指南](guides/Studio.zh-CN.md) |
+| Studio（选配） | Linux／WSLg 独立窗口；配置、构建、运行／续算、初态／AMR 预览与只读 Plotfile 查询 | 预览依模型声明能力，RZ 初始 AMR 提供根级快照；Plotfile 总览为笛卡尔一／二维，原生单元查询覆盖所记录的一至三维坐标；见[Studio 指南](guides/Studio.zh-CN.md) |
 | 自定义算例 | 通过 `<UserInterface.h>` 和 `<GlobalDefs.h>` 定义 `Setup`、`Init` 与参数 | [算例指南](guides/SimulationCase.zh-CN.md)给出完整工作流 |
 
 通用辐射输运不在当前功能范围内；热扩散和 EOS 的辐射热力学分量按各自模型使用。

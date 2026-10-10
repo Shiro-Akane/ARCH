@@ -12,6 +12,7 @@
 #include "amr/exchange/CoordinateSeamMath.h"
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/hydro/boundary/BoundaryPlan.h"
+#include "numerics/state/StateAdmissibility.h"
 
 #include <cuda_runtime.h>
 
@@ -83,6 +84,14 @@ cudaError_t launch_cuda_backend_coarse_fine_exchange(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int transfer_count,
     int field_count, double* scratch, int* status, cudaStream_t stream);
+
+/** Borrowed Native RZ ghost plan: the restriction prefix is ordered before the
+ * prolongation suffix and the borrowed limits come from the actual block. */
+cudaError_t launch_cuda_backend_coarse_fine_exchange_native(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoarseFineTransfer* transfers, int transfer_count,
+    int restriction_count, int field_count, double* scratch,
+    state::Bounds bounds, int* status, cudaStream_t stream);
 
 cudaError_t launch_cuda_backend_boundary_plan(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,

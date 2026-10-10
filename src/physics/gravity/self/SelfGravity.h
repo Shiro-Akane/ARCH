@@ -248,7 +248,7 @@ public:
     GravitySourceDescriptor source_descriptor() const noexcept override {
         return {GravitySourceOrigin::NativeSelfComposite,{}};
     }
-    /** Bind using actual stage/restart time; Host RZ accepts prescribed boundaries. */
+    /** Bind using actual stage/restart time; RZ accepts prescribed boundaries on the bound execution side. */
     void bind(amr::EllipticMeshBinding binding, double time = 0.) const;
     // Internal CPU numerical verification only. Native candidates cannot be
     // read by normal physical consumers; public isolated RZ stays gated.
@@ -338,12 +338,21 @@ private:
         std::uint64_t field_generation,std::uint64_t source_generation) const;
     /** Borrow actual resident patch arrays under the exact private publication. */
     GravityPatchView prepared_rz_patch(const Grid&,const FluidState&) const;
+    /** Borrow the same resident patch arrays on the explicitly requested backend
+     * side. The density pointer is a resident read from the authentic source
+     * lease; the actual Runtime/Frame caller must still authenticate density,
+     * access and field generations before consumption.
+     */
+    GravityPatchView prepared_rz_device_patch(const Grid&,const double* density) const;
     /** Compile/reuse authentic topology rows; evaluate stage-local Dphi using
      * resident Phi and independent datum, with no field download or new solve.
      */
     const GravityRefluxRows& prepared_rz_reflux_rows(const amr::AmrFluxTopologyPlan&) const;
-    /** Borrow the already fenced Host execution result; lifetime is one frame. */
-    const double* prepared_rz_reflux_values() const;
+    /** Borrow the already fenced execution result on the explicitly requested
+     * backend side; lifetime is one frame. Ordinary Host callers keep the
+     * default Host-bound side.
+     */
+    const double* prepared_rz_reflux_values(bool expected_device=false) const;
     /** Original source and face-work arithmetic under the prepared RZ receipt. */
     void prepared_rz_momentum(std::vector<FluidVector>&,const FluidState&,const Grid&,double) const;
     void prepared_rz_flux_work(std::vector<FluidVector>&,const std::vector<FluidVector>&,

@@ -67,7 +67,6 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
     if (native) {
         if (!transaction)
             throw std::logic_error("Native Device boundary requires its actual Runtime state transaction");
-        transaction->validate_storage();
     }
     auto& accesses = boundary_accesses;
     accesses.clear();
@@ -76,8 +75,40 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
         const auto access = backend_access(index, requested);
         accesses.push_back(access);
     }
+    const std::function<void()> validate_storage = native
+        ? std::function<void()>([this, transaction] {
+            if (active_runtime_state_transaction() != transaction)
+                throw std::logic_error("Native Device boundary Runtime state owner changed");
+            transaction->validate_storage();
+        }) : std::function<void()>{};
+    return execute_device_boundary_domain(accesses, stage_handles, requested,
+        version, token, nullptr, validate_storage);
+}
+
+/** Reuse the ordered recipe over the caller's exact backend storage domain. */
+state::CompletionToken DriverRuntime::execute_device_boundary_domain(
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::BlockHandle> handles, StateSlot requested,
+    state::StateVersion version, state::CompletionToken token,
+    backend::BackendTopologyStoreTransaction* staged,
+    const std::function<void()>& validate_storage)
+{
+    const bool native = geometry_semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if (staged && (!native || requested != StateSlot::Current
+        || !compute_backend || compute_backend->side() != ExecutionSide::Device))
+        throw std::logic_error("Staged Device boundary requires the actual Native Current domain");
+    if (native) {
+        if (!validate_storage)
+            throw std::logic_error("Native Device boundary requires its storage validation owner");
+        validate_storage();
+    }
+    if (accesses.size() != handles.size())
+        throw std::logic_error("Device boundary access/handle extent mismatch");
+    for (std::size_t index = 0; index < accesses.size(); ++index)
+        if (accesses[index].block != handles[index] || accesses[index].slot != requested)
+            throw std::logic_error("Device boundary access/handle order or selected slot changed");
     const auto& plans = amr_ctrl.ghost_exchange.GetPlans(
-        amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles,
+        amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, handles,
         native ? amr::CoordinateSeamGeometry::RzAxisymmetric
                : amr::CoordinateSeamGeometry::ExistingChart);
     /** Reuse the same actual same-level, coarse-fine and seam operations. */
@@ -89,21 +120,34 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
             level_accesses.reserve(plan.blocks.size());
             for (const auto index : plans.level_indices[group])
                 level_accesses.push_back(accesses[index]);
-            (void)compute_backend->execute_same_level_exchange(
-                level_accesses, plan, requested, version, token);
+            if (staged)
+                (void)compute_backend->execute_same_level_exchange(*staged,
+                    level_accesses, plan, requested, version, token);
+            else
+                (void)compute_backend->execute_same_level_exchange(
+                    level_accesses, plan, requested, version, token);
         }
-        const auto coarse_fine_completed = compute_backend->execute_coarse_fine_exchange(
-            accesses, plans.coarse_fine, requested, version, token);
+        const auto coarse_fine_completed = staged
+            ? compute_backend->execute_coarse_fine_exchange(*staged,
+                accesses, plans.coarse_fine, requested, version, token)
+            : compute_backend->execute_coarse_fine_exchange(
+                accesses, plans.coarse_fine, requested, version, token);
         if (coarse_fine_completed != token)
             throw std::logic_error("Device coarse-fine exchange returned incomplete work");
         if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
         // The original physical donor map serves Host and CUDA; only storage
         // and kernels differ, with no whole-state Host staging here.
-        return compute_backend->execute_coordinate_seam_exchange(
-            accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
-            requested, version, token);
+        return staged
+            ? compute_backend->execute_coordinate_seam_exchange(*staged,
+                accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
+                requested, version, token)
+            : compute_backend->execute_coordinate_seam_exchange(
+                accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
+                requested, version, token);
     };
-    const auto seeded = compute_backend->execute_physical_boundary_batch(accesses, version, token);
+    const auto seeded = staged
+        ? compute_backend->execute_physical_boundary_batch(*staged, accesses, version, token)
+        : compute_backend->execute_physical_boundary_batch(accesses, version, token);
     if (native) {
         if (seeded != token || exchange() != token)
             throw std::logic_error("Native Device seed/exchange returned incomplete work");
@@ -117,19 +161,21 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
             grids.push_back(&amr_ctrl.pool->GetBlock(active[index]).grid);
         for (std::size_t index = 0; index < accesses.size(); ++index)
             candidates.push_back(bc_handler.prepare_native_device(
-                *compute_backend, accesses[index], *grids[index]));
-        // The one actual macro owner rechecks domain/storage; the original
-        // candidate validates exact BC binding/root/Grid before ALL scatters.
-        transaction->validate_storage();
+                *compute_backend, accesses[index], *grids[index], staged));
+        // The bound owner rechecks domain/storage; the original candidate
+        // validates exact BC binding/root/Grid before ALL scatters.
+        validate_storage();
         for (std::size_t index = 0; index < accesses.size(); ++index)
             bc_handler.validate_native_device_candidate(candidates[index],
-                *compute_backend, accesses[index], *grids[index]);
+                *compute_backend, accesses[index], *grids[index], staged);
         for (std::size_t index = 0; index < accesses.size(); ++index)
             bc_handler.publish_native_device(std::move(candidates[index]),
-                *compute_backend, accesses[index], *grids[index]);
+                *compute_backend, accesses[index], *grids[index], staged);
         if (exchange() != token)
             throw std::logic_error("Native Device final exchange returned incomplete work");
-        return compute_backend->execute_native_axis_boundary_batch(accesses, version, token);
+        return staged
+            ? compute_backend->execute_native_axis_boundary_batch(*staged, accesses, version, token)
+            : compute_backend->execute_native_axis_boundary_batch(accesses, version, token);
     }
     // Preserve the original ExistingChart user-before-single-exchange path.
     if (bc_handler.has_user()) {

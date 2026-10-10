@@ -2,7 +2,7 @@
 
 [操作指南](Studio.zh-CN.md) · [构建模块](../../cmake/README.md) · [桌面入口](../../studio/desktop/README.md)
 
-本轮支持 Linux x64 桌面及带 WSLg 的 WSL。Core、Host 和 Electron 都在 Linux 侧运行；用户通过 `arch-studio` 呼出独立窗口。普通 Core 编译不依赖 Electron，桌面构建不要求 CUDA 编译。请用普通 Linux 用户启动 GUI；管理员权限仅用于安装系统依赖。
+本轮支持 Linux x64 桌面及带 WSLg 的 WSL。Core、Host 和 Electron 都在 Linux 侧运行；用户通过 `arch-studio` 呼出独立窗口。普通 Core 编译不依赖 Node、npm 或 Electron，桌面构建不要求 CUDA 编译。请用普通 Linux 用户启动 GUI；管理员权限仅用于安装系统依赖。
 
 ## 组件清单
 

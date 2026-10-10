@@ -3,13 +3,12 @@
 当前集成分支的 Core 已实现配置扩展版本 3，外层仍为 schemaVersion="1.0"。
 Host/Studio 已消费 v3 的 nullable 表单、来源与诊断；静态 inspection 的坐标、扩散和 AMR
 选择摘要已从共同解析结果接线。生产 Driver/dispatch 使用私有构造的只读
-RuntimeConfiguration，见下文的运行边界。它们是已实现的接口能力，不代表 O7.0
-或联合阶段已经发布：旧输入迁移、完整材料来源展示、受影响科学与平台验收仍分别核对。
+RuntimeConfiguration，见下文的运行边界。配置接口、初始化和正式运行分别验收；当前科学与平台验证范围见[功能清单](../../../docs/Features.zh-CN.md)。
 v2 的 defaultValue/defaultSource、缺项回填和 custom 未检查列表不再是本接口。
 
-完整字段定义见 [v3 协议](CONFIGURATION_V3_CANDIDATE.md)；
+完整字段定义见 [v3 协议](ConfigurationProtocol.md)；
 必填／默认规则唯一来源仍是
-[配置完整性计划](../../docs/development/ConfigurationContractPlan.zh-CN.md)。
+[配置完整性计划](../../../docs/development/ConfigurationContractPlan.zh-CN.md)。
 
 ## 入口与边界
 
@@ -17,12 +16,12 @@ v2 的 defaultValue/defaultSource、缺项回填和 custom 未检查列表不再
 势边界可选 `dirichlet/neumann/user`。两类回调使用同目录的
 `physical_boundary.cpp`、`gravity_boundary.cpp`，说明其 Host 执行和边界传输成本。
 客户端应读取目录中的选项；配置 inspection 不执行回调，也不证明该算例已编译或可运行。
-O8 边界选项随当前 v3 目录发布；标准参数数量以选定 binary 为准。
+用户边界选项随当前 v3 目录发布；标准参数数量以选定 binary 为准。
 
 调用 build-cpu/bin/ARCH --config-schema 查询目录。
 调用 build-cpu/bin/ARCH --inspect-config Sod --config-stdin --request-id editor-001
 并通过 stdin 提供原始参数文件。可用输入见
-[迁移后的 Sod](examples/configuration-v3-candidate/sod-valid.par)。
+[迁移后的 Sod](../examples/configuration-v3-candidate/sod-valid.par)。
 
 stdin 限制 1 MiB、stdout JSON 含换行限制 8 MiB。退出码 0 表示本层声明检查
 完成，2 为请求错误，3 为无效／不完整／条件未定，7 为响应超限。
@@ -37,7 +36,7 @@ inspection 仅调用共同输入解析及登记的静态 case 声明：
 
 ## Schema
 
-parameters 是当前活动标准目录；本 binary 为 95 项，gravity_G 进入 retiredKeys。模型声明从同一 binary 的 registry 取得，本次集成包含原有 14 个模型与 O8 的 UserBoundary/UserGravity 示例；Host 不应写死数量。
+parameters 是当前活动标准目录；本 binary 为 95 项，gravity_G 进入 retiredKeys。模型声明从同一 binary 的 registry 取得，本次集成包含原有 14 个模型与 UserBoundary/UserGravity 示例；Host 不应写死数量。
 25 个允许登记默认通过 allowedDefault 发布，其他项为 null。
 这些数量仅是本次 binary 证据，客户端不得固定数量。
 
@@ -49,7 +48,7 @@ parameters 是当前活动标准目录；本 binary 为 95 项，gravity_G 进�
 constraints.complete=false，不代表全部模型物理规则已在 schema 枚举。
 
 caseDeclarations 包含当前注册模型的来源路径、源码 SHA 和静态参数声明。
-集成 binary 还包含 O8 用户边界示例；模型数量以 registry 实际响应为准；网络组分目录依赖选定 network，在 inspection 展开。
+集成 binary 还包含用户边界示例；模型数量以 registry 实际响应为准；网络组分目录依赖选定 network，在 inspection 展开。
 动态依赖未知时不宣称所选模型全部可验证。auxiliaryParameters 当前含 log_dir，
 缺失时沿现有 main 所有者从 out_dir 派生，不是新的物理默认。
 
@@ -113,8 +112,8 @@ configuration_entry_contract 覆盖。它们的通过范围必须关联实际 so
 实际 v3 配置响应存于 examples/configuration-v3；原 examples/configuration 是历史
 v2 证据，不作为当前客户端协议期望，也不因当前检查通过而改写历史文件。
 
-当前旧模型输入的复验见
-[全模型输入审计](../../docs/development/FullModelCurrentInputAudit-20261004.zh-CN.md)：
+2026-10-04 旧输入快照的静态复验见
+[全模型输入审计](../../../docs/development/FullModelCurrentInputAudit-20261004.zh-CN.md)：
 16 profiles 覆盖该 binary 的 14 个注册 case，15 份声明完整；旧 CellularDet 输入缺
 tmax，仍为失败。已批准的 t=0 替代输入与旧 burn-on 输入分开记录。
 该静态结果不执行 Setup/Init，也不证明 simulation readiness。
@@ -122,13 +121,13 @@ tmax，仍为失败。已批准的 t=0 替代输入与旧 burn-on 输入分开�
 ## 受控运行边界
 
 配置准备后的合法策略解析（例如 use_nse=auto）由生产启动所有者完成，再构造
-[RuntimeConfiguration](../core/config/RuntimeConfiguration.h)。其构造函数私有，
+[RuntimeConfiguration](../../core/config/RuntimeConfiguration.h)。其构造函数私有，
 仅 DispatchSolver 可构造；对象以 const 持有有效配置及已准备的 species。
 Driver 与 dispatch bindings 接收该类型，不能用原始 SimConfig 或另一份
 SpeciesManager 替代。输入、checked preparation 与策略解析后的运行值仍为不同层。
 
 既有 CPU t=0 拓扑对照记录于
-[运行边界摘要](../../docs/development/O7RuntimeConfigurationT0Summary.json)。
+[运行边界摘要](../../../docs/development/O7RuntimeConfigurationT0Summary.json)。
 该证据仅覆盖所记身份的初始拓扑，不表示 CUDA、演化、所有下层直接入口或整个
 材料来源呈现已经完成；后续验收继续按联合计划分别记录。
 

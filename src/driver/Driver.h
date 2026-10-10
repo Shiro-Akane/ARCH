@@ -221,7 +221,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             runtime.bind_boundary_accounting(stage_context);
             ScopedStageBinding stage_binding(stage_context, runtime.handles());
             std::optional<NativeMacroRetryAttempt> retry_attempt;
-            if(!runtime.backend()&&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz) {
+            if(runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz) {
                 std::optional<arch::scheduler::RklMethod> method;
                 if(config.physics.diffusion.use_diffusion) {
                     if(resolved_plan->diffusion_integrator==arch::dispatch::DiffusionIntegratorId::Rkl1)

@@ -8,7 +8,7 @@
  *    Device, collect the real Current/Grid control extents and reserve unbound
  *    capacity before freezing the same ledger and actual Host flux arena.
  * 3. Retain original Host field allocations or the actual resident backend slots;
- *    bind one Runtime owner and the existing Host-only source journal.
+ *    bind one Runtime owner and the existing side-qualified source journal.
  * 4. Compose the unchanged source/repair/boundary receipts in that single scope.
  * 5. Commit after real owner/storage completion, or invalidate/discard the source,
  *    restore actual fields first, then restore the common Runtime metadata.
@@ -205,15 +205,17 @@ class RuntimeStateTransaction final {
             throw std::logic_error("Runtime rollback requires its exact quiescent Native owner/frame");
         if(context.side==state::ExecutionSide::Host) {
             if(runtime.compute_backend||!hydro
-                ||(context.hydro_preparation&&!context.hydro_preparation->supports_host_macro_step_journal())
+                ||(context.hydro_preparation&&!context.hydro_preparation->supports_macro_step_journal(context.side))
                 ||hydro->geometry_semantics()!=runtime.geometry_semantics_
                 ||hydro->host_storage_contract()!=Numerics::HostHydroStorageContract::FixedExtentSlotPermutation)
                 throw std::logic_error("Host/RZ rollback requires its exact quiescent Runtime and Hydro owner");
         } else if(!runtime.compute_backend||runtime.compute_backend->side()!=state::ExecutionSide::Device
-            ||context.hydro_preparation) {
-            // The existing source journal qualifies Host consumption only. A
-            // Device field savepoint cannot make that journal a Device consumer.
-            throw std::logic_error("Resident rollback requires its actual Device backend and no Host-only source journal");
+            ||(context.hydro_preparation
+                &&(!context.hydro_preparation->supports_macro_step_journal(context.side)
+                    ||!(context.step_dt>0.)))) {
+            // Source-bearing advances require this service's actual Device
+            // journal. Source-free same-time boundary refresh keeps zero dt.
+            throw std::logic_error("Resident rollback requires its actual Device backend and side-qualified source journal");
         }
         const auto& binding=scheduler::current_stage_binding();
         if(&binding.context!=&context||binding.handles.data()!=runtime.stage_handles.data()
@@ -311,13 +313,18 @@ class RuntimeStateTransaction final {
 public:
     /** Authenticate one source preparation against this live actual Runtime owner.
      * Presence of a callback or a source descriptor never substitutes for this
-     * exact context, preparation, span and fixed-allocation transaction lease.
+     * exact context, preparation, span and actual side's storage transaction lease.
      */
     void require_source_preparation_owner(const scheduler::HydroStagePreparation& owner,
         const scheduler::StageExecutionContext& context,
         std::span<const amr::BlockHandle> handles) const {
         require_owner();
-        if(backend_||context_before_.side!=state::ExecutionSide::Host
+        const auto side=context_before_.side;
+        if((side!=state::ExecutionSide::Host&&side!=state::ExecutionSide::Device)
+            ||context.side!=side||!owner.supports_macro_step_journal(side)
+            ||(side==state::ExecutionSide::Host?backend_!=nullptr:
+                (!backend_||backend_->side()!=state::ExecutionSide::Device
+                    ||runtime_.compute_backend.get()!=backend_||!backend_savepoint_))
             ||preparation_!=&owner||&context!=&context_
             ||runtime_.active_runtime_state_transaction()!=this
             ||handles.data()!=handles_address_||handles.size()!=handles_.size()

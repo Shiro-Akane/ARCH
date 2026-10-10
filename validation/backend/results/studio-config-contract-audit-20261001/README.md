@@ -18,7 +18,7 @@
 | 候选迁移探针 | 旧校验器拒绝 synthetic null／missing 和新版本 | 仅证明客户端假设，不是已实现的新协议 |
 
 原摘要 `realHost.schemaVersion="2"` 表示配置扩展版本；
-[现行协议](../../../../src/api/CONFIGURATION_API.md) 的外层 `schemaVersion` 为 `"1.0"`，
+[现行协议](../../../../src/api/docs/CONFIGURATION_API.md) 的外层 `schemaVersion` 为 `"1.0"`，
 二者不能混用。错误样例替换为非法数值明确失败，不恢复旧静默回填行为。
 
 本目录不是完整原始测试归档，也不替代合作者下一轮提交的日志、源码及人工验收。

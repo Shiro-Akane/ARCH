@@ -347,10 +347,14 @@ GravityRefluxRows gravity_reflux_rows(const amr::EllipticMeshBinding& binding,
     return result;
 }
 
-/** Pair the original Energy operations with actual stage Phi and datum.
- * Workflow: validate candidate/Host scope; rebuild only when the authentic
- * topology owner/epoch/fingerprint changes; run the shared compensated sparse
- * rows against resident arrays; fence and reject every nonfinite value.
+/**
+ * Pair the original Energy operations with actual stage Phi and datum.
+ * Workflow: validate scope; rebuild only when the authentic topology
+ * owner/epoch/fingerprint changes; run the shared compensated sparse rows
+ * against resident arrays. Empty valid topology publishes the generation
+ * without work. Nonempty Host execution runs both rows, fences, and checks
+ * every value. Nonempty Device execution runs both shared rows then uses the
+ * shared finite-checked maximum reduction (one download) before publishing.
  * Formula: psi_o = sum_f(A_f/A_source)*Phi_f - Phi_destination_coarse.
  * dt, RK weight and original registration sign/area remain outside these rows.
  */
@@ -358,7 +362,7 @@ const GravityRefluxRows& SelfGravity::Workspace::prepare_native_reflux(
     const amr::AmrFluxTopologyPlan& topology) {
     require(scope);
     auto& e=solver.execution();
-    if(e.device()||topology.epoch!=source.topology)
+    if(topology.epoch!=source.topology)
         throw std::logic_error("Native paired reflux changed backend or topology epoch");
     if(reflux_topology!=&topology||reflux_epoch!=topology.epoch
         ||reflux_topology_fingerprint!=topology.fingerprint) {
@@ -373,14 +377,25 @@ const GravityRefluxRows& SelfGravity::Workspace::prepare_native_reflux(
         reflux_topology_fingerprint=topology.fingerprint;reflux_field_generation=0;
     }
     if(reflux_field_generation!=generation) {
+        if(reflux_values.size==0) {
+            require(scope);
+            reflux_field_generation=generation;
+            return reflux_rows;
+        }
         e.run(arch::multigrid::RowsWork{reflux_values.size,reflux_phi_rows.view(),
             solver.resident_potential().data,reflux_values.data});
         e.run(arch::multigrid::RowsWork{reflux_values.size,reflux_datum_rows.view(),
             boundary_values.data,reflux_values.data,1.,1.});
-        e.fence();
-        for(int row=0;row<reflux_values.size;++row)
-            if(!std::isfinite(reflux_values.data[row]))
+        if(e.device()) {
+            const double maximum_value=e.maximum(reflux_values);
+            if(!std::isfinite(maximum_value))
                 throw std::runtime_error("Native paired reflux value is nonfinite");
+        } else {
+            e.fence();
+            for(int row=0;row<reflux_values.size;++row)
+                if(!std::isfinite(reflux_values.data[row]))
+                    throw std::runtime_error("Native paired reflux value is nonfinite");
+        }
         require(scope);
         reflux_field_generation=generation;
     }

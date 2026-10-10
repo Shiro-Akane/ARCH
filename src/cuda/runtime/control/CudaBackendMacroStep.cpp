@@ -438,12 +438,6 @@ void CudaBackend::prepare_boundary_control_capacity(
     std::vector<CapacityRequest> requests;
     requests.reserve(currents.size());
     bool grows=false;
-    /** Compare allocation identity only; control/capture bindings are separate. */
-    const auto same_allocation=[](DeviceStateView a,DeviceStateView b) {
-        return a.rho==b.rho&&a.mom_u==b.mom_u&&a.mom_v==b.mom_v&&a.mom_w==b.mom_w
-            &&a.eng==b.eng&&a.enuc_rate==b.enuc_rate&&a.mass_fractions==b.mass_fractions
-            &&a.total_size==b.total_size&&a.n_species==b.n_species;
-    };
     for(std::size_t index=0;index<currents.size();++index) {
         auto& block=impl_->require_block(currents[index]);
         const auto current=block.require_access(currents[index]);
@@ -477,7 +471,7 @@ void CudaBackend::prepare_boundary_control_capacity(
         for(const auto& logical:block.slots) {
             std::size_t owner=physical.size();
             for(std::size_t candidate=0;candidate<physical.size();++candidate)
-                if(same_allocation(logical,physical[candidate]))owner=candidate;
+                if(same_macro_state_allocation(logical,physical[candidate]))owner=candidate;
             if(owner==physical.size()||seen[owner])
                 throw std::logic_error("Boundary capacity logical slots are not actual physical-owner permutation");
             seen[owner]=true;

@@ -263,7 +263,9 @@ arch::boundary::HydroBoundaryView BCHandler::native_reflecting_faces(const Grid&
     using namespace arch::boundary;
     require_native_root_frame(grid);
     const auto& plan=logical_plan(grid);
-    const auto& identity=grid.dyadic_identity;
+    if(grid.dyadic_identity.bound)
+        return native_rz_math::bound_reflecting_faces(plan,
+            GridMetrics::make_geometry_view(grid,GridMetrics::GeometrySemantics::AxisymmetricRz));
     const double domain_lower[2]{config_->grid.x1_min,config_->grid.x2_min};
     const double domain_upper[2]{config_->grid.x1_max,config_->grid.x2_max};
     const double block_lower[2]{grid.x1_min,grid.x2_min};
@@ -272,11 +274,9 @@ arch::boundary::HydroBoundaryView BCHandler::native_reflecting_faces(const Grid&
     for(int axis=0;axis<2;++axis)for(int side=0;side<2;++side) {
         const int face=2*axis+side;
         if(plan.input().faces[face]!=BoundaryType::Reflecting)continue;
-        const bool physical=identity.bound
-            ?(side?std::uint64_t(identity.logical[axis])+1
-                ==(std::uint64_t(identity.root_blocks[axis])<<identity.level)
-                :identity.logical[axis]==0)
-            :(side?block_upper[axis]==domain_upper[axis]:block_lower[axis]==domain_lower[axis]);
+        // The unbound local-fixture fallback retains exact endpoint matching.
+        const bool physical=side?block_upper[axis]==domain_upper[axis]
+            :block_lower[axis]==domain_lower[axis];
         const double edge=side?block_upper[axis]:block_lower[axis];
         result.reflecting[face]=physical&&!(axis==0&&edge==0.);
     }
@@ -553,7 +553,11 @@ BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
  * 3. Complete x1 builtin then user, followed by x2 builtin then user. Every
  *    sibling observes the same completed prefix; ENUC follows its true donor.
  * 4. Return compact unique final ghosts and face controls. Runtime owns ALL
- *    domain validation, fallible scatter, final axis/exchange/EOS and rollback.
+ *    domain validation, fallible scatter and final axis/exchange/EOS. Committed
+ *    writes retain a resident savepoint; staged writes retain candidate disposal.
+ *
+ * A nonnull staged pointer selects that exact unpublished Current namespace
+ * throughout; unavailable candidate operations never fall back to active data.
  *
  * The builtin backend calls the sole shared reflector and selected resident EOS.
  * User calls the original EvaluateNativeRzBoundaryCell through its bound hook;
@@ -561,11 +565,14 @@ BCHandler::NativeCandidate BCHandler::prepare_native(const FluidState& state,
  */
 BCHandler::NativeDeviceCandidate BCHandler::prepare_native_device(
     arch::backend::ComputeBackend& backend,arch::backend::BackendStateAccess access,
-    const Grid& grid) const {
+    const Grid& grid,arch::backend::BackendTopologyStoreTransaction* staged) const {
     using Entry=NativeCandidate::Entry;
     using arch::backend::BoundaryCells;
     using arch::boundary::NativeRzBoundaryRequest;
-    if(backend.side()!=arch::state::ExecutionSide::Device||!backend.contains(access))
+    if(staged&&access.slot!=arch::state::StateSlot::Current)
+        throw std::logic_error("Staged Native Device boundary requires Current");
+    if(backend.side()!=arch::state::ExecutionSide::Device
+        ||!(staged?backend.contains(*staged,access):backend.contains(access)))
         throw std::logic_error("Native Device boundary requires an actual resident store lease");
     require_native_root_frame(grid);
     if(!native_reflecting_evaluate_)
@@ -575,7 +582,7 @@ BCHandler::NativeDeviceCandidate BCHandler::prepare_native_device(
     if(!user_requests.empty()&&!native_evaluate_)
         throw std::logic_error("User native RZ boundary EOS has not been bound");
     NativeDeviceCandidate candidate;
-    candidate.owner_=this;candidate.backend_=&backend;candidate.access_=access;
+    candidate.owner_=this;candidate.backend_=&backend;candidate.staged_=staged;candidate.access_=access;
     candidate.grid_=&grid;candidate.context_=snapshot_stage_context();
     candidate.layout_=arch::boundary::host::make_layout(grid);
     candidate.geometry_=native_grid_identity(grid);
@@ -589,7 +596,7 @@ BCHandler::NativeDeviceCandidate BCHandler::prepare_native_device(
     if(builtin_requests.empty()&&user_requests.empty()) {
         // An interior/periodic patch has no candidate fields or controls.
         // Its empty payload needs no species query or device synchronization.
-        validate_native_device_candidate(candidate,backend,access,grid);
+        validate_native_device_candidate(candidate,backend,access,grid,staged);
         return candidate;
     }
     const auto geometry=GridMetrics::make_geometry_view(grid,semantics_);
@@ -648,8 +655,10 @@ BCHandler::NativeDeviceCandidate BCHandler::prepare_native_device(
     for(int role=0;role<2;++role) {
         const auto& indices=role_indices[role];
         if(indices.empty())continue;
-        const auto cells=backend.read_boundary_cells(access,indices,role==0
-            ?arch::state::StateRegion::Interior:arch::state::StateRegion::Ghost);
+        const auto region=role==0
+            ?arch::state::StateRegion::Interior:arch::state::StateRegion::Ghost;
+        const auto cells=staged?backend.read_boundary_cells(*staged,access,indices,region)
+            :backend.read_boundary_cells(access,indices,region);
         accept_shape(cells,indices.size());
         for(std::size_t n=0;n<indices.size();++n) {
             std::vector<double> x(cells.species_count);
@@ -698,8 +707,10 @@ BCHandler::NativeDeviceCandidate BCHandler::prepare_native_device(
         }
         if(!requests.empty()) {
             pack_prefix(prefix_indices,prefix);
-            const auto values=backend.prepare_native_reflecting_layer(access,requests,bounds,
-                prefix_indices,prefix_indices.empty()?nullptr:&prefix);
+            const auto values=staged?backend.prepare_native_reflecting_layer(*staged,access,
+                requests,bounds,prefix_indices,prefix_indices.empty()?nullptr:&prefix)
+                :backend.prepare_native_reflecting_layer(access,requests,bounds,
+                    prefix_indices,prefix_indices.empty()?nullptr:&prefix);
             accept_shape(values,selected.size());
             layer.clear();layer.reserve(selected.size());
             for(std::size_t n=0;n<selected.size();++n) {
@@ -727,23 +738,27 @@ BCHandler::NativeDeviceCandidate BCHandler::prepare_native_device(
     }
     if(callback_&&!candidate.storage_)candidate.storage_=make_diffusion_storage(grid,*species);
     pack_prefix(candidate.destinations_,candidate.values_);
-    validate_native_device_candidate(candidate,backend,access,grid);
+    validate_native_device_candidate(candidate,backend,access,grid,staged);
     return candidate;
 }
 
 /** Recheck the original actual-store/BC frame and compact logical ghost shape.
+ * The optional staged namespace must be the exact candidate borrowed at prepare;
+ * staged access accepts Current only and never substitutes the committed store.
  * The existing stage/binding and twenty/seven/full-root words are retained;
  * no Host input pointers or independent state/EOS permission system is invented.
  */
 void BCHandler::validate_native_device_candidate(const NativeDeviceCandidate& candidate,
     arch::backend::ComputeBackend& backend,arch::backend::BackendStateAccess access,
-    const Grid& grid) const {
-    if(candidate.owner_!=this||candidate.backend_!=&backend||candidate.grid_!=&grid
+    const Grid& grid,arch::backend::BackendTopologyStoreTransaction* staged) const {
+    if(candidate.owner_!=this||candidate.backend_!=&backend||candidate.staged_!=staged
+        ||candidate.grid_!=&grid||(staged&&access.slot!=arch::state::StateSlot::Current)
         ||candidate.access_.block!=access.block||candidate.access_.storage!=access.storage
         ||candidate.access_.slot!=access.slot||!candidate.context_
         ||!stage_context_matches(*candidate.context_)
         ||std::bit_cast<std::uint64_t>(candidate.context_->time())!=std::bit_cast<std::uint64_t>(time_)
-        ||backend.side()!=arch::state::ExecutionSide::Device||!backend.contains(access)
+        ||backend.side()!=arch::state::ExecutionSide::Device
+        ||!(staged?backend.contains(*staged,access):backend.contains(access))
         ||semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz
         ||!native_reflecting_evaluate_
         ||candidate.layout_!=arch::boundary::host::make_layout(grid)
@@ -782,17 +797,22 @@ void BCHandler::validate_native_device_candidate(const NativeDeviceCandidate& ca
 
 /** Scatter a validated surface through the existing fallible store operation.
  * Empty physical surfaces need no scatter. The outer owner must validate ALL
- * domains and retain resident rollback before calling this method; subsequent
- * final axis/exchange/EOS acceptance still precedes scheduler GhostValid.
+ * domains and retain resident rollback for committed writes or candidate
+ * disposal for staged writes. Subsequent final axis/exchange/EOS acceptance
+ * still precedes scheduler GhostValid.
  */
 void BCHandler::publish_native_device(NativeDeviceCandidate&& candidate,
     arch::backend::ComputeBackend& backend,arch::backend::BackendStateAccess access,
-    const Grid& grid) const {
-    validate_native_device_candidate(candidate,backend,access,grid);
+    const Grid& grid,arch::backend::BackendTopologyStoreTransaction* staged) const {
+    validate_native_device_candidate(candidate,backend,access,grid,staged);
     if(!candidate.destinations_.empty()) {
         const arch::boundary::DiffusionBoundaryStorage empty_controls;
-        backend.write_boundary_cells(access,candidate.destinations_,candidate.values_,
-            candidate.storage_?*candidate.storage_:empty_controls);
+        if(staged)
+            backend.write_boundary_cells(*staged,access,candidate.destinations_,candidate.values_,
+                candidate.storage_?*candidate.storage_:empty_controls);
+        else
+            backend.write_boundary_cells(access,candidate.destinations_,candidate.values_,
+                candidate.storage_?*candidate.storage_:empty_controls);
     }
     candidate.owner_=nullptr;
 }

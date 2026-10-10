@@ -10,6 +10,7 @@
 #pragma once
 
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
+#include "physics/gravity/GravitySourceTypes.h"
 
 #include <cuda_runtime.h>
 
@@ -32,6 +33,8 @@ struct CudaAmrFluxDirectionRouteView {
     const amr::AmrFluxRegistrationTerm* device_terms = nullptr;
     int term_count = 0;
     unsigned int source_face_mask = 0;
+    /** Optional resident Self-gravity rows; {} keeps the ordinary route. */
+    Physical::Gravity::NativeSelfRefluxView native_self_reflux{};
 };
 
 struct CudaAmrFluxLaunchResult {
@@ -52,6 +55,14 @@ cudaError_t launch_cuda_amr_flux_surface_capture(
  * Register one canonical source-block/direction route before stage_flux is
  * overwritten by the next direction.  targets and terms are device arrays
  * uploaded from AmrCompiledFluxRegistrationRoute.
+ *
+ * native_self_reflux is optional. A disabled view (every borrowed pointer null
+ * and both counts zero) keeps the original SourceNone energy arithmetic; any
+ * partial mix is caller misuse and is refused without dereferencing it. An
+ * enabled view (psi != nullptr) requires mapping and status pointers, positive
+ * operation/row counts and source == AmrFluxSource::StageScratch, so the RKL
+ * InitialSurface cache never selects paired energy. Both selections enqueue
+ * the same kernel template with the original grid, block size and stream.
  */
 cudaError_t launch_cuda_amr_flux_register_route(
     const DeviceAmrFluxBlockView* device_blocks, int block_count,
@@ -60,7 +71,8 @@ cudaError_t launch_cuda_amr_flux_register_route(
     int target_count,
     const amr::AmrFluxRegistrationTerm* device_terms,
     int term_count, AmrFluxSource source, double stage_weight,
-    cudaStream_t stream);
+    cudaStream_t stream,
+    Physical::Gravity::NativeSelfRefluxView native_self_reflux = {});
 
 CudaAmrFluxLaunchResult launch_cuda_amr_flux_capture_initial(
     CudaAmrFluxDirectionRouteView route, DeviceGridView grid,

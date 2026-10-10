@@ -1,6 +1,6 @@
 /**
  * @file NativeSelfStage.h
- * @brief Nonmoving Host RZ self-gravity stage and write receipts.
+ * @brief Nonmoving Host/Device RZ self-gravity stage and write receipts.
  *
  * Workflow:
  * 1. GravityStage alone constructs after actual Runtime/macro transaction and
@@ -31,17 +31,21 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 #include "amr/AMRControl.h"
 #include "data/GlobalDefs.h"
+#include "driver/runtime/ComputeBackend.h"
 #include "driver/schedule/StageScheduler.h"
 #include "numerics/integrator/HydroBoundaryAuthority.h"
 #include "physics/gravity/GravitySource.h"
+#include "physics/gravity/IGravityPolicy.h"
 #include "physics/gravity/self/GravityWorkspace.h"
 #include "physics/gravity/self/SelfGravity.h"
 
@@ -81,6 +85,7 @@ class NativeSelfStageFrame final {
 public:
     using Observation=NativeSelfStageObservation;
     using ObservationSink=void(*)(void*,const Observation&);
+    class DevicePatchReceipt;
     /** One move-only patch claim; borrowing lifetime ends before owner teardown. */
     class PatchReceipt final {
     public:
@@ -198,6 +203,7 @@ public:
         }
     private:
         friend class NativeSelfStageFrame;
+        friend class DevicePatchReceipt;
         /** Bind a successfully reserved patch without allocating numerical state. */
         PatchReceipt(const NativeSelfStageFrame& frame,std::size_t index,int id,
             const FluidState& input,const Grid& grid) noexcept
@@ -213,7 +219,7 @@ public:
             if(generation_!=frame_->generation_
                 ||frame_->patches_[index_].phase.load(std::memory_order_acquire)!=Phase::Claimed)
                 throw std::logic_error("Native self claim is stale or already consumed");
-            frame_->domain_.require_input_patch(index_,frame_->control_,id_,*input_,*grid_);
+            frame_->domain_->require_input_patch(index_,frame_->control_,id_,*input_,*grid_);
             (void)frame_->policy_->prepared_rz_patch(*grid_,*input_);
         }
         /** Build a borrowed event from this exact already-authenticated claim.
@@ -278,6 +284,138 @@ public:
         const FluidState* input_{};const Grid* grid_{};std::uint64_t generation_{};
     };
 
+    /** One Device claim of the SAME patch/source/Energy phases as Host.
+     * The runtime owner reserves before any launch and commits only after the real stream
+     * join and all status checks accept. Metadata cannot witness that join.
+     */
+    class DevicePatchReceipt final {
+    public:
+        DevicePatchReceipt(const DevicePatchReceipt&)=delete;
+        DevicePatchReceipt& operator=(const DevicePatchReceipt&)=delete;
+        DevicePatchReceipt(DevicePatchReceipt&& other) noexcept
+            :frame_(std::exchange(other.frame_,nullptr)),index_(other.index_),
+              generation_(other.generation_) {}
+        DevicePatchReceipt& operator=(DevicePatchReceipt&& other) noexcept {
+            if(this!=&other){abandon();frame_=std::exchange(other.frame_,nullptr);
+                index_=other.index_;generation_=other.generation_;}return *this;
+        }
+        ~DevicePatchReceipt(){abandon();}
+        /** Match actual launch operands and repeat the runtime's real patch authority. */
+        void require_application(const arch::backend::BackendStateAccess& access,
+            const GridMetrics::GeometryView& geometry,double dt,const arch::state::Bounds& bounds) const {
+            guard([&]{require_input();
+                if(!same_access(access,frame_->device_.accesses[index_])
+                    ||!same_geometry(geometry,frame_->device_.geometries[index_])
+                    ||!same_double(dt,frame_->dt_)||!same_bounds(bounds,frame_->bounds_))
+                    throw std::logic_error("Native self Device application changed actual operands");
+                frame_->device_.require_patch(frame_->device_.owner,index_,access,geometry);});
+        }
+        /** Borrow authenticated resident arrays; never read them on Host. */
+        const GravityPatchView& patch_view() const {
+            guard([&]{require_input();});return frame_->device_fields_[index_];
+        }
+        /** Reserve momentum and BOTH original flux-work axes before ANY launch. */
+        void reserve_sources() {
+            guard([&]{require_input();
+                for(auto& phase:frame_->patches_[index_].source)PatchReceipt::reserve(phase);});
+        }
+        /** The runtime calls only after real stream join and all source status checks. */
+        void commit_sources() {
+            guard([&]{require_input();
+                for(const auto& phase:frame_->patches_[index_].source)
+                    if(phase.load(std::memory_order_acquire)!=Phase::Claimed)
+                        throw std::logic_error("Native self Device source was not reserved");
+                for(auto& phase:frame_->patches_[index_].source)PatchReceipt::consume(phase);});
+        }
+        /** Borrow this patch's original directional route; absence means no
+         * registration work, including a same-level domain without CF faces.
+         */
+        const amr::AmrFluxRegistrationRoute* registration_route(int axis) const {
+            const amr::AmrFluxRegistrationRoute* route=nullptr;
+            guard([&]{require_input();
+                if(axis<0||axis>=2)throw std::invalid_argument("Native Self registration axis is invalid");
+                route=frame_->topology_->find(frame_->control_->tree->GetActiveBlocks()[index_],axis);
+            });return route;
+        }
+        /** Map ORIGINAL operations to global psi rows and reserve before launch.
+         * Non-Energy entries are SIZE_MAX. No psi value, sign, area, dt or RK
+         * weight is evaluated or changed here; the backend launches the Self leaf.
+         */
+        std::vector<std::size_t> registration_rows(const amr::AmrFluxTopologyPlan& topology,
+            const amr::AmrFluxRegistrationRoute& route) {
+            std::vector<std::size_t> result;
+            guard([&]{require_input();require_route(topology,route);
+                result.assign(route.plan.operations.size(),std::numeric_limits<std::size_t>::max());
+                for(std::size_t ordinal=0;ordinal<route.plan.operations.size();++ordinal) {
+                    if(route.plan.operations[ordinal].field!=amr::AmrField::Energy)continue;
+                    const auto found=frame_->row_index_.find({route.key,ordinal});
+                    if(found==frame_->row_index_.end())
+                        throw std::logic_error("Native self Device registration has no original Energy row");
+                    const auto row=found->second;const auto& identity=frame_->rows_->identity[row];
+                    if(identity.operation!=route.plan.operations[ordinal]
+                        ||identity.route_fingerprint!=route.plan.fingerprint)
+                        throw std::logic_error("Native self Device registration changed original operation");
+                    result[ordinal]=row;
+                }
+                for(auto row:result)if(row!=std::numeric_limits<std::size_t>::max())
+                    PatchReceipt::reserve(frame_->energy_[row]);
+            });return result;
+        }
+        /** Consume reserved route rows only after real register join/status.
+         * Empty original routes retain their original absence of Energy work.
+         */
+        void commit_registration(const amr::AmrFluxRegistrationRoute& route) {
+            guard([&]{require_input();require_route(*frame_->topology_,route);
+                for(std::size_t ordinal=0;ordinal<route.plan.operations.size();++ordinal) {
+                    if(route.plan.operations[ordinal].field!=amr::AmrField::Energy)continue;
+                    const auto found=frame_->row_index_.find({route.key,ordinal});
+                    if(found==frame_->row_index_.end()
+                        ||frame_->energy_[found->second].load(std::memory_order_acquire)!=Phase::Claimed)
+                        throw std::logic_error("Native self Device Energy operation was not reserved");
+                }
+                for(std::size_t ordinal=0;ordinal<route.plan.operations.size();++ordinal)
+                    if(route.plan.operations[ordinal].field==amr::AmrField::Energy)
+                        PatchReceipt::consume(frame_->energy_[frame_->row_index_.at({route.key,ordinal})]);
+                require_input();});
+        }
+        /** Original patch gate: all three source phases and ALL its Energy rows. */
+        void commit() {
+            guard([&]{require_input();const auto& record=frame_->patches_[index_];
+                for(const auto& phase:record.source)
+                    if(phase.load(std::memory_order_acquire)!=Phase::Consumed)
+                        throw std::logic_error("Native self Device patch omitted original source work");
+                for(auto row:record.energy_rows)
+                    if(frame_->energy_[row].load(std::memory_order_acquire)!=Phase::Consumed)
+                        throw std::logic_error("Native self Device patch omitted original Energy registration");
+                PatchReceipt::consume(frame_->patches_[index_].phase);});frame_=nullptr;
+        }
+    private:
+        friend class NativeSelfStageFrame;
+        DevicePatchReceipt(const NativeSelfStageFrame& frame,std::size_t index) noexcept
+            :frame_(&frame),index_(index),generation_(frame.generation_) {}
+        template<class F> void guard(F&& action) const {
+            if(!frame_)throw std::logic_error("Native self Device receipt is not live");
+            try{action();}catch(...){frame_->invalidate();throw;}
+        }
+        void require_input() const {
+            frame_->require_live();
+            if(generation_!=frame_->generation_||index_>=frame_->patch_count_
+                ||frame_->patches_[index_].phase.load(std::memory_order_acquire)!=Phase::Claimed)
+                throw std::logic_error("Native self Device claim is stale or already consumed");
+            frame_->require_device_patch(index_,frame_->device_.accesses[index_],
+                frame_->device_.geometries[index_]);
+        }
+        void require_route(const amr::AmrFluxTopologyPlan& topology,
+            const amr::AmrFluxRegistrationRoute& route) const {
+            const int id=frame_->control_->tree->GetActiveBlocks()[index_];
+            if(&topology!=frame_->topology_||route.key.source_block!=id
+                ||topology.find(id,amr::axis_value(route.key.axis))!=&route)
+                throw std::logic_error("Native self Device registration borrowed a foreign route");
+        }
+        void abandon() noexcept {if(frame_){frame_->invalidate();frame_=nullptr;}}
+        const NativeSelfStageFrame* frame_=nullptr;std::size_t index_{};std::uint64_t generation_{};
+    };
+
     NativeSelfStageFrame(const NativeSelfStageFrame&)=delete;
     NativeSelfStageFrame& operator=(const NativeSelfStageFrame&)=delete;
     NativeSelfStageFrame(NativeSelfStageFrame&&)=delete;
@@ -286,7 +424,9 @@ public:
     ~NativeSelfStageFrame(){invalidate();}
     /** Borrow the original BC domain, not a new wall authority or EOS gate. */
     const arch::boundary::HostHydroBoundaryDomainAuthority& boundary_domain() const {
-        checked([&]{require_live();});return domain_;
+        checked([&]{require_live();
+            if(!domain_)throw std::logic_error("Native self Device frame has no Host boundary domain");});
+        return *domain_;
     }
     /** Read the original gravity stability cap from this actual live Hydro field.
      * dt_g = CFL / sqrt(max(4*pi*G*rho_max, max_a |g_a|/dx_a)).
@@ -308,11 +448,13 @@ public:
      */
     NativeRzSolutionInspection inspect_source_and_field() const {
         try {
-            require_live();domain_.require_complete_domain();
+            require_live();
+            if(!domain_)throw std::logic_error("Native self Device frame has no Host field inspection");
+            domain_->require_complete_domain();
             policy_->require_native_frame(source_,field_generation_,source_generation_);
             auto result=policy_->copy_native_rz_solution(GravityFieldPurpose::HydroStage,
                 source_,field_generation_,source_generation_);
-            require_live();domain_.require_complete_domain();
+            require_live();domain_->require_complete_domain();
             policy_->require_native_frame(source_,field_generation_,source_generation_);
             return result;
         } catch(...) {invalidate();throw;}
@@ -321,20 +463,52 @@ public:
     PatchReceipt claim_patch(const amr::AMRControl* control,int id,const FluidState& input,
         const Grid& grid,double dt,const IGravityPolicy& policy) const {
         std::size_t index=0;checked([&]{require_live();
+            if(!domain_)throw std::logic_error("Native self Host claim requires its Host boundary domain");
             if(control!=control_||&policy!=policy_||id<0||!same_double(dt,dt_))
                 throw std::logic_error("Native self claim changed owner or interval");
             const auto& block=control_->pool->GetBlock(id);
             if(block.active_index<0||static_cast<std::size_t>(block.active_index)>=patch_count_)
                 throw std::logic_error("Native self claim is outside its actual domain");
             index=static_cast<std::size_t>(block.active_index);
-            domain_.require_input_patch(index,control,id,input,grid);
+            domain_->require_input_patch(index,control,id,input,grid);
             (void)policy_->prepared_rz_patch(grid,input);
             PatchReceipt::reserve(patches_[index].phase);});
         return PatchReceipt(*this,index,id,input,grid);
     }
+    /** Authenticate the complete real Device domain before consumer launches. */
+    std::size_t require_device_domain() const {
+        checked([&]{require_live();require_device_inputs();});return patch_count_;
+    }
+    /** Borrow current resident psi after live Device publication checks. */
+    const double* prepared_reflux_values() const {
+        checked([&]{require_live();require_device_branch();});return psi_;
+    }
+    /** Borrow the retained ORIGINAL route owner for Device row lowering.
+     * The backend compares its actual plan fingerprint before using these
+     * routes; the frame continues to reserve and consume their original rows.
+     */
+    const amr::AmrFluxTopologyPlan& registration_topology() const {
+        checked([&]{require_live();require_device_branch();});return *topology_;
+    }
+    /** Original global row count; no additional numerical state or weighting. */
+    std::size_t row_count() const {
+        checked([&]{require_live();require_device_branch();});return rows_->identity.size();
+    }
+    /** Claim exact original input access once, before any Device mutation. */
+    DevicePatchReceipt claim_device_patch(std::size_t index,
+        arch::backend::BackendStateAccess access,const GridMetrics::GeometryView& geometry,
+        double dt,const IGravityPolicy& policy) const {
+        checked([&]{require_live();
+            if(&policy!=policy_||!same_double(dt,dt_))
+                throw std::logic_error("Native self Device claim changed policy or interval");
+            require_device_patch(index,access,geometry);
+            PatchReceipt::reserve(patches_[index].phase);});
+        return DevicePatchReceipt(*this,index);
+    }
     /** Main-thread join gate: all actual input/field/operation receipts agree. */
     void require_complete_consumption() const {
-        checked([&]{require_live();domain_.require_complete_domain();
+        checked([&]{require_live();
+            if(domain_)domain_->require_complete_domain();else require_device_inputs();
             policy_->require_native_frame(source_,field_generation_,source_generation_);
             for(std::size_t patch=0;patch<patch_count_;++patch) {
                 if(patches_[patch].phase.load(std::memory_order_acquire)!=Phase::Consumed)
@@ -364,20 +538,46 @@ private:
         const arch::scheduler::StageDescriptor& descriptor,const SimConfig& config,
         double dt,std::uint64_t generation,const GravitySolveIdentity& source,
         ObservationSink sink=nullptr,void* payload=nullptr)
+        :NativeSelfStageFrame(policy,control,binding,descriptor,config,dt,generation,source,
+            std::make_unique<const arch::boundary::HostHydroBoundaryDomainAuthority>(
+                boundary,control,binding,descriptor),{}, {},sink,payload) {}
+    /** GravityStage alone supplies real Device authority and stage-long resident borrows.
+     * No Host boundary domain or public/native scope is created on this branch.
+     */
+    NativeSelfStageFrame(const SelfGravity& policy,const amr::AMRControl& control,
+        const arch::scheduler::StageBinding& binding,const arch::scheduler::StageDescriptor& descriptor,
+        const SimConfig& config,double dt,std::uint64_t generation,const GravitySolveIdentity& source,
+        const NativeGravityDeviceDomain& device,std::span<const GravityPatchView> fields,
+        ObservationSink sink=nullptr,void* payload=nullptr)
+        :NativeSelfStageFrame(policy,control,binding,descriptor,config,dt,generation,source,
+            nullptr,device,fields,sink,payload) {}
+    /** One shared initializer preserves original source/ledger/topology/row setup. */
+    NativeSelfStageFrame(const SelfGravity& policy,const amr::AMRControl& control,
+        const arch::scheduler::StageBinding& binding,const arch::scheduler::StageDescriptor& descriptor,
+        const SimConfig& config,double dt,std::uint64_t generation,const GravitySolveIdentity& source,
+        std::unique_ptr<const arch::boundary::HostHydroBoundaryDomainAuthority> domain,
+        NativeGravityDeviceDomain device,std::span<const GravityPatchView> fields,
+        ObservationSink sink,void* payload)
         :policy_(&policy),control_(&control),configuration_(&config),gravity_(config.physics.gravity),grid_configuration_(config.grid),
           bounds_{config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint},
           dt_(dt),stage_weight_(descriptor.flux_register_weight),cfl_(config.numerics.cfl),generation_(generation),source_(source),
           field_generation_(policy.workspace().generation),
-          source_generation_(policy.workspace().scope==GravityFieldScope::NativeRzCandidate
+          source_generation_(policy.workspace().ring_source
               ?policy.workspace().ring_assessment.source_generation:policy.workspace().generation),
-          domain_(boundary,control,binding,descriptor),patch_count_(control.tree->GetActiveBlocks().size()),
+          domain_(std::move(domain)),device_(device),device_fields_(fields),
+          patch_count_(control.tree->GetActiveBlocks().size()),
           patches_(std::make_unique<PatchRecord[]>(patch_count_)),
           descriptor_(descriptor),observation_sink_(sink),observation_payload_(payload) {
+        if(!domain_&&(observation_sink_||observation_payload_))
+            throw std::invalid_argument("Native self Device frame cannot use Host observations");
+        if((domain_&&binding.context.side!=arch::state::ExecutionSide::Host)
+            ||(!domain_&&binding.context.side!=arch::state::ExecutionSide::Device))
+            throw std::logic_error("Native self stage binding has the wrong actual side");
         if(!observation_sink_&&observation_payload_)
             throw std::invalid_argument("Native self observation payload requires its sink");
         if(!generation_||!patch_count_||!std::isfinite(dt_)||!(dt_>0.)
             ||!same_double(dt_,binding.context.step_dt)||!std::isfinite(stage_weight_)||!(stage_weight_>0.)
-            ||source_.inputs.size()!=patch_count_||source_.topology!=binding.context.ledger.active_epoch()
+            ||source_.inputs.size()!=patch_count_||binding.handles.size()!=patch_count_||source_.topology!=binding.context.ledger.active_epoch()
             ||!same_double(source_.input_time,binding.context.step_start_time
                 +descriptor.input_time_fraction*binding.context.step_dt))
             throw std::invalid_argument("Native self stage source/interval/identity is invalid");
@@ -387,6 +587,7 @@ private:
                 ||binding.context.ledger.inspect({actual.block,actual.slot}).interior.version!=actual.version)
                 throw std::logic_error("Native self source does not match actual prepared input publication");
         }
+        if(!domain_)require_device_inputs();
         // A real accepted-Current field cannot acquire Hydro consumption authority.
         policy_->require_runtime_purpose(GravityFieldPurpose::HydroStage);
         require_configuration();policy_->require_native_frame(source_,field_generation_,source_generation_);
@@ -398,7 +599,7 @@ private:
         topology_=topology_lease_.get();
         epoch_=topology_->epoch;topology_fingerprint_=topology_->fingerprint;
         rows_=&policy_->prepared_rz_reflux_rows(*topology_);
-        psi_=policy_->prepared_rz_reflux_values();
+        psi_=policy_->prepared_rz_reflux_values(!domain_);
         energy_=std::make_unique<std::atomic<Phase>[]>(rows_->identity.size());
         if(observation_sink_&&!rows_->identity.empty())
             energy_observations_=std::make_unique<EnergyObservation[]>(rows_->identity.size());
@@ -412,6 +613,56 @@ private:
                 throw std::logic_error("Native self Energy row source is not active");
             patches_[block.active_index].energy_rows.push_back(row);
         }
+    }
+    void require_device_branch() const {
+        if(domain_)throw std::logic_error("Native self Host frame has no Device domain");
+    }
+    /** Whole-domain callback owns Runtime/storage/transaction identity, not metadata. */
+    void require_device_inputs() const {
+        require_device_branch();
+        if(!device_.owner||!device_.require_domain||!device_.require_patch
+            ||device_.accesses.size()!=patch_count_||device_.geometries.size()!=patch_count_
+            ||device_fields_.size()!=patch_count_)
+            throw std::logic_error("Native self Device domain borrow is incomplete");
+        device_.require_domain(device_.owner);
+        for(std::size_t index=0;index<patch_count_;++index)
+            require_device_patch(index,device_.accesses[index],device_.geometries[index]);
+    }
+    /** Compare the exact original input slot/storage identity and all field pointers. */
+    void require_device_patch(std::size_t index,arch::backend::BackendStateAccess access,
+        const GridMetrics::GeometryView& geometry) const {
+        require_device_branch();
+        if(index>=patch_count_||device_.accesses.size()!=patch_count_
+            ||device_.geometries.size()!=patch_count_||device_fields_.size()!=patch_count_
+            ||!device_.owner||!device_.require_patch
+            ||!same_access(access,device_.accesses[index])
+            ||!same_geometry(geometry,device_.geometries[index])
+            ||source_.inputs[index].block!=access.block||source_.inputs[index].slot!=access.slot)
+            throw std::logic_error("Native self Device patch changed original input identity");
+        device_.require_patch(device_.owner,index,access,geometry);
+        const auto& active=control_->tree->GetActiveBlocks();
+        if(active.size()!=patch_count_)throw std::logic_error("Native self Device active domain changed");
+        const auto& block=control_->pool->GetBlock(active[index]);
+        if(block.active_index<0||static_cast<std::size_t>(block.active_index)!=index
+            ||!same_geometry(geometry,GridMetrics::make_geometry_view(block.grid,
+                GridMetrics::GeometrySemantics::AxisymmetricRz)))
+            throw std::logic_error("Native self Device field has a foreign pooled Grid");
+        const auto& field=device_fields_[index];
+        const auto actual=policy_->prepared_rz_device_patch(block.grid,field.density);
+        if(!same_patch(field,actual))
+            throw std::logic_error("Native self Device field changed resident pointers");
+    }
+    static bool same_patch(const GravityPatchView& a,const GravityPatchView& b) noexcept {
+        if(a.density!=b.density)return false;
+        for(int axis=0;axis<3;++axis)
+            if(a.faces[axis]!=b.faces[axis]||a.work_low[axis]!=b.work_low[axis]
+                ||a.work_high[axis]!=b.work_high[axis])return false;
+        return true;
+    }
+    static bool same_access(const arch::backend::BackendStateAccess& a,
+        const arch::backend::BackendStateAccess& b) noexcept {
+        return a.block.uid.value==b.block.uid.value&&a.block.epoch.value==b.block.epoch.value
+            &&a.storage.value==b.storage.value&&a.slot==b.slot;
     }
     /** Exact floating identity includes signed zero, independent of tolerances. */
     static bool same_double(double a,double b) noexcept {
@@ -481,7 +732,8 @@ private:
         const auto& w=policy_->workspace();
         if(topology_->epoch!=epoch_||topology_->fingerprint!=topology_fingerprint_
             ||w.reflux_topology!=topology_||w.reflux_field_generation!=field_generation_
-            ||&w.reflux_rows!=rows_||w.reflux_values.data!=psi_)
+            ||&w.reflux_rows!=rows_||w.reflux_values.data!=psi_
+            ||(!domain_&&policy_->prepared_rz_reflux_values(true)!=psi_))
             throw std::logic_error("Native self paired work or topology changed");
     }
     /** Invoke the frozen sink synchronously, rejecting callback recursion.
@@ -509,7 +761,9 @@ private:
     const GravityConfig gravity_;const GridConfig grid_configuration_;const arch::state::Bounds bounds_;
     const double dt_,stage_weight_,cfl_;const std::uint64_t generation_;
     const GravitySolveIdentity source_;const std::uint64_t field_generation_,source_generation_;
-    const arch::boundary::HostHydroBoundaryDomainAuthority domain_;
+    const std::unique_ptr<const arch::boundary::HostHydroBoundaryDomainAuthority> domain_;
+    const NativeGravityDeviceDomain device_{};
+    const std::span<const GravityPatchView> device_fields_{};
     const std::size_t patch_count_;std::unique_ptr<PatchRecord[]> patches_;
     // Retain the actual cache control block. The raw pointer is only an indexed
     // borrow into this lease, never independent ownership or cache authority.

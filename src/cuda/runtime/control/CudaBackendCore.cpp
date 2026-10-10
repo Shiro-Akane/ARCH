@@ -39,6 +39,19 @@ bool CudaBackend::contains(
     return impl_->store.contains(access);
 }
 
+bool CudaBackend::contains(backend::BackendTopologyStoreTransaction& transaction,
+    backend::BackendStateAccess access) const noexcept
+{
+    try {
+        auto& staged = require_staged_boundary_transaction(transaction);
+        if (access.slot != state::StateSlot::Current) return false;
+        static_cast<void>(resolve_staged_block(staged, access));
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 void CudaBackend::enqueue_materialize_host_current(
     backend::BackendStateAccess current, state::StateRegion region,
     backend::HostStateTransferView host)

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <bit>
+#include <cstdint>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -8,6 +10,7 @@
 
 #include "math/geometry/RzViscousCases.h"
 #include "numerics/flux/FluxHLLC.h"
+#include "numerics/integrator/GeometricSources.h"
 #include "numerics/reconstruction/RzCellPolynomial.h"
 
 namespace RzReconstructionCases {
@@ -597,4 +600,144 @@ inline void native_profile()
     native_mean_cache_traversal();
     native_acceptance_leaves();
 }
+
+/** Constant-pressure fake EOS keeps the source oracle independent of the
+ * reconstruction: with zero swirl, int(P dr)/int(r dr)=2P/(rL+rR).
+ * Query counters describe calls made by the source, never fixture probes.
+ */
+struct SourceConstantPressure {
+    mutable int queries=0;
+    double get_pressure(const FluidVector&,const double*) const {++queries;return 7.;}
+};
+
+/** A checked-view analogue: optional domain refusals do not latch a required
+ * failure. The original view still reports a genuinely bad used baseline.
+ */
+struct SourceDomainPressure {
+    bool reject_every_trial=false;
+    bool reject_required=false;
+    mutable int candidate_queries=0,required_queries=0,candidate_refusals=0;
+    mutable int consecutive_candidate_accepts=0,completed_candidate_profiles=0;
+    mutable bool accepted_nonbaseline=false;
+    mutable bool required_fault=false;
+    struct Candidate {
+        const SourceDomainPressure* owner;
+        double get_pressure(const FluidVector& point,const double*) const {
+            ++owner->candidate_queries;
+            if(owner->reject_every_trial||std::abs(point.eng-100.)>1./32.) {
+                ++owner->candidate_refusals;
+                owner->consecutive_candidate_accepts=0;
+                return std::numeric_limits<double>::quiet_NaN();
+            }
+            if(++owner->consecutive_candidate_accepts==4)++owner->completed_candidate_profiles;
+            owner->accepted_nonbaseline=owner->accepted_nonbaseline||point.eng!=100.;
+            return 7.;
+        }
+    };
+    Candidate candidate_view() const {return {this};}
+    double get_pressure(const FluidVector&,const double*) const {
+        ++required_queries;
+        if(reject_required) {
+            required_fault=true;
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return 7.;
+    }
+};
+
+inline void source_eos_profile()
+{
+    constexpr auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+    Grid grid(amr::MAX_NG,1.,1.+amr::BLOCK_NX,-.5,.5,0.,1.);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(rz);
+    const auto view=GridMetrics::make_geometry_view(grid,rz);
+    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(2);
+    const int i=grid.Is()+3,index=grid.GetIndex(i,grid.Js()+1,0);
+    // Positive native means Ebar=(...,99,100,101,...), rho=1, zero momentum,
+    // X=(1/2,1/2). These prescribe a nonconstant conservative-valid profile;
+    // pressure itself is the independent constant 7 for every accepted query.
+    for(int j=0;j<grid.GetTotalY();++j)for(int radial=0;radial<grid.GetTotalX();++radial) {
+        const int n=grid.GetIndex(radial,j,0);
+        state.set(n,{1.,0.,0.,0.,100.+radial-i});
+        state.X(0,n)=.5;state.X(1,n)=.5;
+    }
+    const auto read=[&](int n){return state.get(n);};
+    const auto fraction=[&](int s,int n){return state.X(s,n);};
+    const auto cell=RzReconstruction::radial_cell(view,i);
+    const auto baseline=RzThermodynamics::make_cell(read,index,view,i);
+    const auto profile=RzReconstruction::limited_profile(read,fraction,index,2,cell,baseline);
+    if(!profile.valid||profile.theta!=1.)
+        throw std::runtime_error("RZ source EOS fixture did not retain its conservative high profile");
+    bool rejects_high=false;
+    const long double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    for(long double node:nodes) {
+        const double radius=static_cast<double>((left+right)/2.L+(right-left)/2.L*node);
+        const auto point=profile.at(radius);
+        const double fractions[]{RzReconstruction::limited_fraction(read,fraction,index,0,
+            cell,radius,profile,point.rho),RzReconstruction::limited_fraction(read,fraction,
+            index,1,cell,radius,profile,point.rho)};
+        if(arch::state::validate(point,fractions,2,1,0.,0.,
+                std::numeric_limits<double>::max())!=arch::state::Status::valid
+           ||RzThermodynamics::base_point(baseline,radius).eng!=100.)
+            throw std::runtime_error("RZ source EOS fixture lost its valid constant-energy baseline");
+        rejects_high=rejects_high||std::abs(point.eng-100.)>1./32.;
+    }
+    if(!rejects_high)throw std::runtime_error("RZ source EOS fixture did not isolate a high-point EOS refusal");
+    constexpr double dt=.125;
+    // Independent annular integral, not a call to the source metric/helper.
+    const long double expected=dt*7.L*(right-left)/((right*right-left*left)/2.L);
+    const FluidVector seed{11.,13.,17.,19.,23.};
+    const auto same=[](double a,double b) {
+        return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);
+    };
+    const auto check_unchanged=[&](const FluidVector& result,bool radial) {
+        if(!same(result.rho,seed.rho)||!same(result.mom_v,seed.mom_v)
+           ||!same(result.mom_w,seed.mom_w)||!same(result.eng,seed.eng)
+           ||(radial&&!same(result.mom_u,seed.mom_u)))
+            throw std::runtime_error("RZ source EOS failure published partial or unrelated delta fields");
+    };
+    const auto integrate=[&](const auto& eos,FluidVector& delta) {
+        double composition[2]{};
+        return TimeIntegration::add_rz_integrated_geometric_source(read,fraction,index,2,
+            eos,view,i,dt,composition,delta);
+    };
+    {
+        SourceConstantPressure eos;auto delta=seed;
+        if(!integrate(eos,delta)||eos.queries!=4)
+            throw std::runtime_error("RZ legal source profile did not use exactly four pressure queries");
+        RzViscousCases::check(delta.mom_u-seed.mom_u,expected,
+            "RZ constant-pressure source differs from independent annular integral");
+        check_unchanged(delta,false);
+    }
+    {
+        SourceDomainPressure eos;auto delta=seed;
+        if(!integrate(eos,delta)||eos.candidate_refusals==0||eos.required_queries!=4
+           ||eos.completed_candidate_profiles!=1||!eos.accepted_nonbaseline
+           ||eos.required_fault||eos.candidate_queries>4*(RzReconstruction::high_profile_halving_limit+1))
+            throw std::runtime_error("RZ high-point EOS refusal did not contract a bounded clean trial ray");
+        RzViscousCases::check(delta.mom_u-seed.mom_u,expected,
+            "RZ contracted source changed independent constant-pressure integral");
+        check_unchanged(delta,false);
+    }
+    {
+        SourceDomainPressure eos;eos.reject_every_trial=true;auto delta=seed;
+        if(!integrate(eos,delta)||eos.candidate_refusals==0||eos.required_queries!=4
+           ||eos.completed_candidate_profiles!=0
+           ||eos.required_fault||eos.candidate_queries>4*(RzReconstruction::high_profile_halving_limit+1))
+            throw std::runtime_error("RZ source did not certify and use its valid required baseline");
+        RzViscousCases::check(delta.mom_u-seed.mom_u,expected,
+            "RZ zero-ray fallback changed independent constant-pressure integral");
+        check_unchanged(delta,false);
+    }
+    {
+        SourceDomainPressure eos;eos.reject_every_trial=true;eos.reject_required=true;
+        auto delta=seed;
+        if(integrate(eos,delta)||eos.candidate_refusals==0||eos.required_queries==0
+           ||!eos.required_fault)
+            throw std::runtime_error("RZ source concealed a genuinely bad required baseline EOS");
+        check_unchanged(delta,true);
+    }
+    std::cout<<"RZ_SOURCE_EOS_PROFILE cases=4 constant_pressure=1 trial_latch_isolation=1 PASS\n";
+}
+
 } // namespace RzReconstructionCases

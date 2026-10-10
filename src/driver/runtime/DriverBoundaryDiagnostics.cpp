@@ -3,7 +3,8 @@
  * @brief Integrate actual domain-face fluxes without changing evolved fields.
  *
  * Workflow:
- * 1. Allocate actual physical-surface observers for native RZ or selected callbacks.
+ * 1. Allocate actual physical-surface observers for native RZ or selected callbacks;
+ *    prewarm Device native planes before the resident macro savepoint is armed.
  * 2. Set weights from the existing RK/RKL descriptors before face evaluation.
  * 3. Integrate ordinary fields with actual face area, and native phi with torque measure.
  * 4. Accumulate Hydro quadrature and the unchanged RKL accounting recurrence.
@@ -160,8 +161,12 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
     return result;
 }
 
-/** Attach actual surface accounting: native RZ always observes built-in faces;
- * ordinary cases retain the existing selected-callback activation condition. */
+/** Attach the original surface callbacks and prewarm actual Device native owners.
+ * The existing preparation helper initializes both effective plane sets before
+ * the savepoint freezes their layout; stage callbacks later overwrite weights
+ * and values. Prewarming changes diagnostic scratch, never accepted budgets.
+ * Native RZ observes built-in faces; ordinary activation remains unchanged.
+ */
 void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& context) {
     if(runtime_state_transaction_)throw std::logic_error("Boundary accounting must bind before Host Hydro transaction");
     const auto* selected=boundary::CurrentUserBoundaries();
@@ -170,6 +175,13 @@ void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& c
     const int fields=6+specs.count();
     if (hydro_boundary_budget_.empty()) {
         hydro_boundary_budget_.assign(fields,0.); diffusion_boundary_budget_.assign(fields,0.);
+    }
+    if(native_rz&&compute_backend) {
+        // This binder is still unarmed. Reuse the exact whole-domain layout
+        // helper, not Host epoch metadata as a substitute for Device capacity.
+        // Initialize effective initial planes as well as stage planes so the
+        // resident savepoint captures actual configured values in every slot.
+        prepare_boundary_capture(0.,0.,true);
     }
     context.hydro_flux_capture_begin=[this](const scheduler::StageDescriptor& stage) {
         prepare_boundary_capture(stage.flux_register_weight,0.,false);

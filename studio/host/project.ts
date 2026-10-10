@@ -8,7 +8,7 @@ import {ConfigurationAdapter} from './configuration.ts';
 import {PreviewRunner} from './previewRunner.ts';
 import {SOD_PREVIEW_PROFILE,PREVIEW_PROFILES} from './previewProfile.ts';
 import {readSource} from './source.ts';
-import {BuildRunner} from './buildRunner.ts';
+import {BuildError,BuildRunner} from './buildRunner.ts';
 import {requireCompiledSourceCase} from './desktopSource.ts';
 import {validateExistingBuildProfile} from './existingBuildProfile.ts';
 import type {BuildProfile} from '../src/host/contracts.ts';
@@ -74,11 +74,14 @@ export async function openProject(options:ProjectOptions) {
  function projectId(id:string){if(id!==result.session.projectId)throw new ConfigError('protocol-error','Project session changed. Reconnect before saving.');}
  const configuration=options.binary?new ConfigurationAdapter({root,projectId:result.session.projectId,binaryRelativePath:options.binary}):undefined;
  if(options.selectedSource){
-  if(!configuration)throw new Error('Selected source has no configured executable owner.');
+  if(!configuration)throw new BuildError('Selected source has no configured executable owner. Close this project and reopen it with its compiled binary.',409);
   const assertCase=async(caseId:string)=>{
    const registry=await configuration.discovery();
-   const resolved=await requireCompiledSourceCase(root,options.selectedSource!,registry.cases,options.requestedCaseId);
-   if(caseId!==resolved)throw new Error('Requested case differs from the exact selected source registration.');
+   // Keep the exact source/digest owner; expose association failures as conflicts.
+   let resolved:string;
+   try{resolved=await requireCompiledSourceCase(root,options.selectedSource!,registry.cases,options.requestedCaseId);}
+   catch(error){throw new BuildError(error instanceof Error?error.message:'Selected source association could not be verified.',409);}
+   if(caseId!==resolved)throw new BuildError('Requested case differs from the exact selected source registration. Close this project and reopen the source for the intended model.',409);
   };
   configuration.assertCase=assertCase;if(runPreparation)runPreparation.assertCase=assertCase;
   if(workflow)workflow.assertCase=assertCase;if(preview)preview.assertCase=assertCase;

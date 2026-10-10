@@ -229,13 +229,250 @@ def collect(directory, degrees=(12, 24, 48)):
         wall_seconds=time.monotonic()-started)
 
 
+def _closed_digest(value):
+    """Require a bound SHA256; pending/unknown provenance is never acceptance."""
+    if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+        raise ValueError("Closed-run identity is not a bound SHA256")
+    return value
+
+
+def validate_closed_contract(parameters, contract):
+    """Workflow: bind the prospective contract to exact input bytes and scope."""
+    import sys
+    from rz_ring_surface_reference import CGS_G
+    if contract["schema"] != "arch-rz-closed-uniform-long-contract-1" or contract["model"] != "GravityBox":
+        raise ValueError("Unsupported closed-uniform contract")
+    _closed_digest(contract["expected_binary_sha256"])
+    digest = hashlib.sha256(parameters.read_bytes()).hexdigest()
+    if digest != _closed_digest(contract["input"]["sha256"]):
+        raise ValueError("Closed input differs from the prospective contract")
+    for key in ("rho0", "G", "t_end", "physical_budget", "reference_budget", "mass_budget",
+                "signal_ratio", "roundoff_observation_multiplier", "physical_endpoint_time_relative_budget"):
+        value = contract[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError("Missing/nonpositive closed contract control: "+key)
+    if (rational(contract["G"]) != CGS_G or contract["quadrature_degrees"] != [12,24,48]
+        or contract["zero_repairs"] is not True or contract["roundoff_observation_multiplier"] != 8
+        or not 0 < contract["reference_budget"] < contract["physical_budget"] < 1
+        or not 0 < contract["mass_budget"] < 1 or contract["signal_ratio"] < 1
+        or contract["physical_endpoint_time_relative_budget"] >= 1):
+        raise ValueError("Invalid closed reference budgets/scope")
+    root = list(map(rational, contract["root_bounds"]))
+    if len(root) != 4 or not (root[0] == 0 < root[1] and root[2] < root[3]):
+        raise ValueError("Closed reference needs the actual axis/root")
+    tools_path = str(Path(__file__).resolve().parents[2]/"tools")
+    if tools_path not in sys.path: sys.path.insert(0,tools_path)
+    from validate_backend_results import read_parameter_map
+    values = read_parameter_map(parameters)
+    required = dict(geometry="cylindrical", compute_backend="cpu", gravity_type="self", gravity_boundary="isolated",
+        eos_type="ideal", solver="HLLC", reconstruct="muscl", limiter="mc", time_integrator="RK2",
+        use_burn="false", use_diffusion="false", network_name="none", hydrostatic_radial="false")
+    required.update({"x"+str(a)+side+"_boundary_type":"reflecting" for a in (1,2,3) for side in ("l","r")})
+    if any(values[key] != expected for key, expected in required.items()):
+        raise ValueError("Closed-uniform reference scope differs from actual parameters")
+    numeric = dict(nblockx1=1, nblockx2=1, nblockx3=0, lrefinemin=0, lrefinemax=0, max_steps=-1,
+        amplitude=0, temperature_amplitude=0, velocity0=0, rho0=contract["rho0"], tmax=contract["t_end"],
+        x1_min=contract["root_bounds"][0], x1_max=contract["root_bounds"][1],
+        x2_min=contract["root_bounds"][2], x2_max=contract["root_bounds"][3],
+        temperature0=1e4, gas_cv=1.2471693927e8, gamma=5/3, cfl=.3, dt_max=-1)
+    if any(float(values[key]) != expected for key, expected in numeric.items()):
+        raise ValueError("Closed-uniform physical parameters changed")
+    return digest
+
+
+def _closed_partition(records, root_bounds):
+    """Reuse exact mathematical coverage without fabricating Runtime stamps."""
+    from rz_ring_surface_reference import Leaf, _validate_nonoverlapping_rectangles
+    leaves = tuple(Leaf.from_record(record) for record in records)
+    L,H,A,B = map(rational, root_bounds)
+    if not leaves or len({x.identity for x in leaves}) != len(leaves) or any(
+        not (L <= x.L < x.H <= H and A <= x.A < x.B <= B) for x in leaves):
+        raise ValueError("Closed plot has missing/duplicate/outside PWC cells")
+    _validate_nonoverlapping_rectangles(leaves, None)
+    if sum((x.H-x.L)*(x.B-x.A) for x in leaves) != (H-L)*(B-A):
+        raise ValueError("Closed plot PWC partition does not cover the root")
+    return leaves
+
+
+def read_closed_plot(path, contract, parameter_sha256):
+    """Read one complete formal PWC publication, preserving native stored V."""
+    import h5py
+    text = lambda value: value.decode() if isinstance(value, bytes) else str(value)
+    with h5py.File(path, "r") as h:
+        attrs = dict(plot_publication_version="arch-plot-publication-1", plot_publication_state="complete",
+            plot_identity_state="recorded", geometry="cylindrical", geometry_chart="axisymmetric-rz", time_unit="s")
+        if any(text(h.attrs[key]) != value for key,value in attrs.items()) or h.attrs["dim"] != 2:
+            raise ValueError("Closed input is not a formal Native RZ publication")
+        identity = h["SourceIdentity"]
+        if (text(identity.attrs["version"]) != "arch-plot-identity-1" or text(identity.attrs["scope"]) != "resolved-runtime"
+            or text(identity.attrs["binary_sha256"]) != contract["expected_binary_sha256"]
+            or text(identity.attrs["raw_config_sha256"]) != parameter_sha256
+            or text(identity.attrs["eos_type"]) != "ideal" or text(identity.attrs["eos_unit_system"]) != "cgs"):
+            raise ValueError("Closed plot binary/config/EOS identity mismatch")
+        native = h["NativeGrid"]
+        attrs = dict(version="arch-native-axisymmetric-rz-2", x1_axis="r", x2_axis="z", x3_axis="inactive",
+            x1_unit="cm", x2_unit="cm", centering="cell", block_kind="active-leaf", measure_unit="cm^3",
+            measure_normalization="full_rotation", measure_source="GridMetrics::CellVolume",
+            measure_convention="full-rotation-axisymmetric-ring", native_geometry="cylindrical")
+        if any(text(native.attrs[key]) != value for key,value in attrs.items()) or native.attrs["ghost_cells"] != 0:
+            raise ValueError("Closed NativeGrid axes/measure/active-cell identity mismatch")
+        def stored(dataset, unit=None):
+            values = dataset[()]
+            if values.dtype != np.float64 or not np.all(np.isfinite(values)) or (unit is not None and text(dataset.attrs["unit"]) != unit):
+                raise ValueError("Closed plot requires finite stored FP64 with actual units")
+            return values
+        fields = {name:stored(h["Data/"+name],unit) for name,unit in
+            dict(DENS="g/cm^3", ENER="erg/cm^3", GPOT="cm^2/s^2", TEMP="K", PRES="erg/cm^3").items()}
+        shape = fields["DENS"].shape
+        if len(shape) != 3 or shape[0] != len(h["Grid/level"]) or any(x.shape != shape for x in fields.values()):
+            raise ValueError("Closed fields disagree with active Data layout")
+        for name in ("DENS","ENER"):
+            if text(h["Data/"+name].attrs["averaging"]) != "native-volume-average":
+                raise ValueError("Closed density/energy is not the actual Native V-mean")
+        if any(np.any(fields[name] <= 0) for name in ("DENS","TEMP","PRES")):
+            raise ValueError("Closed plot has nonpositive density/temperature/pressure")
+        V = stored(native["cell_measure"])
+        bounds = [stored(native[name]) for name in ("x1_lower","x1_upper","x2_lower","x2_upper")]
+        n = fields["DENS"].size
+        if any(x.shape != (n,) for x in [V]+bounds) or np.any(V <= 0):
+            raise ValueError("Closed plot is missing active cell bounds/positive V")
+        records = [dict(id=str(i), r_lower=float(bounds[0][i]), r_upper=float(bounds[1][i]),
+            z_lower=float(bounds[2][i]), z_upper=float(bounds[3][i]), density=float(fields["DENS"].flat[i])) for i in range(n)]
+        _closed_partition(records, contract["root_bounds"])
+        measure = V.astype(np.longdouble)
+        rho = fields["DENS"].reshape(-1).astype(np.longdouble)
+        terms = fields["ENER"].reshape(-1).astype(np.longdouble)*measure
+        physical_time = float(h.attrs["time"])
+        if not math.isfinite(physical_time) or physical_time < 0:
+            raise ValueError("Closed plot time is not a finite nonnegative value")
+        return dict(path=str(path), time=physical_time, records=records,
+            mass=np.sum(rho*measure,dtype=np.longdouble), Egas=np.sum(terms,dtype=np.longdouble),
+            absolute_Egas_terms=np.sum(np.abs(terms),dtype=np.longdouble),
+            discrete_Wh=np.sum(rho*measure*fields["GPOT"].reshape(-1).astype(np.longdouble),dtype=np.longdouble)/2,
+            field_min_max={name:[float(x.min()),float(x.max())] for name,x in fields.items()},
+            run_id=text(identity.attrs["run_id"]), effective_config_sha256=_closed_digest(text(identity.attrs["effective_config_sha256"])),
+            sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+
+
+def closed_uniform_reference(records, rho0, root_bounds, G, degrees=(12,24,48), initial_records=None):
+    """Use actual PWC endpoints about rho0, including initial averaging roundoff.
+
+    With eta_i=rho_i-rho0 and eta_f=rho_f-rho0,
+    DeltaW=-G*rho0*<rho_f-rho_i,K*1>-G*(<eta_f,K*eta_f>-<eta_i,K*eta_i>)/2.
+    Positivity of the Newton kernel quadratic form bounds the second term by
+    [-G*a_f**2*I_DD/2,+G*a_i**2*I_DD/2]. The initial term is retained, rather
+    than demanding that a volume-averaged uniform input be bitwise constant.
+    Omitting initial_records retains the exact uniform mathematical reference.
+    """
+    from rz_ring_surface_reference import CGS_G
+    if rational(G) != CGS_G or rational(rho0) <= 0 or tuple(degrees) != (12,24,48):
+        raise ValueError("Invalid closed Newton controls")
+    leaves = _closed_partition(records, root_bounds)
+    cell_key = lambda x: (x.L,x.H,x.A,x.B)
+    initial = None
+    if initial_records is not None:
+        initial = {cell_key(x):x.rho for x in _closed_partition(initial_records,root_bounds)}
+        if set(initial) != {cell_key(x) for x in leaves}:
+            raise ValueError("Closed initial/final PWC cell bounds differ")
+    length = max(float(root_bounds[1])-float(root_bounds[0]), float(root_bounds[3])-float(root_bounds[2]))
+    domain = tuple(float(x)/length for x in root_bounds)
+    background = rational(rho0)
+    old = [background if initial is None else initial[cell_key(x)] for x in leaves]
+    deltas = [x.rho-rho_i for x,rho_i in zip(leaves,old)]
+    exact_a = max(abs(x.rho-background) for x in leaves)
+    exact_initial_a = max(abs(rho_i-background) for rho_i in old)
+    a = float(exact_a)
+    if rational(a) < exact_a: a = math.nextafter(a, math.inf)
+    initial_a = float(exact_initial_a)
+    if rational(initial_a) < exact_initial_a: initial_a = math.nextafter(initial_a, math.inf)
+    levels = []
+    for degree in degrees:
+        I = volume_pair(domain, domain, degree)*length**5
+        S = math.fsum(float(delta)*volume_pair(tuple(float(v)/length for v in (x.L,x.H,x.A,x.B)),domain,degree)*length**5
+                      for x,delta in zip(leaves,deltas) if delta)
+        levels.append(dict(degree=degree,I_DD=I,S=S,linear_delta_W=-G*rho0*S))
+    if not all(math.isfinite(value) for level in levels for value in level.values()):
+        raise ValueError("Closed Newton quadrature became nonfinite")
+    coarse,medium,fine = levels
+    qI = 4*abs(fine["I_DD"]-medium["I_DD"])
+    qL = 4*abs(fine["linear_delta_W"]-medium["linear_delta_W"])
+    interval = [-.5*G*a*a*(fine["I_DD"]+qI),.5*G*initial_a*initial_a*(fine["I_DD"]+qI)]
+    center = fine["linear_delta_W"]+(interval[0]+interval[1])/2
+    monotone = all(abs(fine[key]-medium[key]) <= abs(medium[key]-coarse[key]) for key in ("I_DD","linear_delta_W"))
+    return dict(levels=levels,S=fine["S"],a=a,a_exact=str(exact_a),initial_a=initial_a,
+        initial_a_exact=str(exact_initial_a),quadratic_delta_W_interval=interval,
+        DeltaWcenter=center,Uref=qL+(interval[1]-interval[0])/2,quadrature_I_estimate=qI,quadrature_linear_estimate=qL,
+        quadrature_monotone=monotone,uncertainty_kind="signed PSD density bound with numerical convergence estimates, not outward quadrature enclosure")
+
+
+def collect_closed_run(directory, parameters, contract_path):
+    """Workflow: authenticate all samples -> observe gates -> require the actual final endpoint."""
+    started = time.monotonic()
+    contract = load(contract_path)
+    parameter_sha = validate_closed_contract(parameters,contract)
+    samples = sorted((read_closed_plot(path,contract,parameter_sha) for path in directory.glob("*_plt_*.h5")),key=lambda x:x["time"])
+    if len(samples) < 2 or samples[0]["time"] != 0 or any(b["time"] <= a["time"] for a,b in zip(samples,samples[1:])):
+        raise ValueError("Closed run requires unique physical times beginning at zero")
+    initial = samples[0]
+    if any(x["run_id"] != initial["run_id"] or x["effective_config_sha256"] != initial["effective_config_sha256"] for x in samples):
+        raise ValueError("Closed plot samples came from different runs/configurations")
+    repairs_path = directory/"state_repairs.txt"
+    pairs = [line.split("=",1) for line in repairs_path.read_text().splitlines() if "=" in line]
+    if len({k for k,v in pairs}) != len(pairs) or int(dict(pairs)["events"]) != 0:
+        raise ValueError("Closed run has missing/duplicate/nonzero terminal repair events")
+    rows = []
+    for sample in samples:
+        ref = closed_uniform_reference(sample["records"],contract["rho0"],contract["root_bounds"],contract["G"],
+            initial_records=initial["records"])
+        deltaE = sample["Egas"]-initial["Egas"]
+        # Frozen diagnostic rounding estimate, not a strict certificate.
+        Uround = 8*np.finfo(np.float64).eps*(initial["absolute_Egas_terms"]+sample["absolute_Egas_terms"])
+        scale = max(abs(deltaE),abs(np.longdouble(ref["DeltaWcenter"])))
+        residual = deltaE+np.longdouble(ref["DeltaWcenter"])
+        mass_error = abs(sample["mass"]-initial["mass"])/initial["mass"]
+        gates = dict(mass=bool(mass_error <= contract["mass_budget"]),
+            signal=bool(scale >= contract["signal_ratio"]*Uround),
+            reference=bool(ref["Uref"] <= contract["reference_budget"]*scale and ref["quadrature_monotone"]),
+            energy=bool(abs(residual)+ref["Uref"]+Uround <= contract["physical_budget"]*scale))
+        rows.append(dict(time=sample["time"],path=sample["path"],sha256=sample["sha256"],cells=len(sample["records"]),
+            Egas=str(sample["Egas"]),mass=str(sample["mass"]),discrete_Wh=str(sample["discrete_Wh"]),
+            DeltaEgas=str(deltaE),Uround=str(Uround),residual=str(residual),scale=str(scale),mass_relative_error=float(mass_error),
+            field_min_max=sample["field_min_max"],gates=gates,**ref))
+    endpoint = abs(samples[-1]["time"]-contract["t_end"]) <= contract["physical_endpoint_time_relative_budget"]*contract["t_end"]
+    passed = endpoint and all(row["gates"]["mass"] for row in rows) and all(rows[-1]["gates"].values())
+    return dict(schema="arch-rz-closed-uniform-reference-1",status="PASS_CLOSED_UNIFORM_OBSERVED_GATES" if passed else "NEEDS_REVIEW",
+        endpoint_reached=endpoint,samples=rows,contract=contract,parameter_sha256=parameter_sha,
+        contract_sha256=hashlib.sha256(contract_path.read_bytes()).hexdigest(),
+        terminal_repair_events=0,terminal_repairs_path=str(repairs_path),terminal_repairs_sha256=hashlib.sha256(repairs_path.read_bytes()).hexdigest(),
+        repair_identity_scope="terminal original report; Root production receipt binds run directory, no embedded binary/config identity",
+        boundary_scope="stationary reflecting insulated input and original wall owners; plot does not independently observe zero face flux",
+        roundoff_kind="8eps64 absolute-energy sensitivity estimate, not a strict rounding certificate",
+        core_binding_qualified=False,reference_scope="formal plot PWC mathematics, not Runtime issuer; numerical uncertainty estimates only",
+        energy_budget_scope="actual final endpoint; all written samples retain observations and require mass/finite-positive fields",
+        wall_seconds=time.monotonic()-started)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--step-dir", type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--step-dir", type=Path)
+    mode.add_argument("--closed-run", type=Path)
+    parser.add_argument("--parameters", type=Path)
+    parser.add_argument("--contract", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    result = collect(args.step_dir)
+    if args.closed_run is not None:
+        if args.parameters is None or args.contract is None:
+            parser.error("--closed-run requires --parameters and --contract")
+        result = collect_closed_run(args.closed_run,args.parameters,args.contract)
+    else:
+        if args.parameters is not None or args.contract is not None:
+            parser.error("--parameters/--contract belong only to --closed-run")
+        result = collect(args.step_dir)
     args.output.write_text(json.dumps(result, indent=2, allow_nan=False)+"\n")
+    if args.closed_run is not None:
+        print(json.dumps({k:result[k] for k in ("status","endpoint_reached","wall_seconds")}))
+        return 0 if result["status"] == "PASS_CLOSED_UNIFORM_OBSERVED_GATES" else 1
     print(json.dumps({k:result[k] for k in ("status", "normalized_balance",
         "normalized_reference_uncertainty", "wall_seconds")}))
     return 0 if result["status"] == "PASS_FINITE_EULER_ENERGY" else 1

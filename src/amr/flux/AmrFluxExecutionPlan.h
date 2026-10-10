@@ -16,6 +16,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <set>
 #include <span>
@@ -58,6 +59,8 @@ struct AmrFluxRegistrationTerm {
     int source_surface_cell = -1;  // Compact initial-flux surface.
     double geometric_weight = 0.0;
     double angular_factor = 1.0;
+    // Original route.plan.operations position; never a compiled-term ordinal.
+    std::size_t energy_operation_index = std::numeric_limits<std::size_t>::max();
 };
 
 struct AmrFluxRegistrationTarget {
@@ -297,6 +300,7 @@ struct RawGroup {
     std::array<bool, 5> conserved{};
     std::vector<bool> species;
     std::uint64_t first_ordinal = 0;
+    std::size_t energy_operation_index = std::numeric_limits<std::size_t>::max();
 };
 
 template <class Plan>
@@ -304,7 +308,9 @@ inline std::vector<RawGroup> group_fields(
     const Plan& plan, const BindingIndex& bindings, int species_count)
 {
     std::map<RawKey, RawGroup> grouped;
-    for (const auto& operation : plan.operations) {
+    for (std::size_t operation_index = 0; operation_index < plan.operations.size();
+         ++operation_index) {
+        const auto& operation = plan.operations[operation_index];
         const auto& source = require_binding(bindings, operation.source);
         const auto& destination = require_binding(
             bindings, operation.destination);
@@ -343,6 +349,8 @@ inline std::vector<RawGroup> group_fields(
                 throw std::invalid_argument(
                     "duplicate or invalid AMR conserved flux field");
             group.conserved[static_cast<std::size_t>(field)] = true;
+            if (operation.field == AmrField::Energy)
+                group.energy_operation_index = operation_index;
         }
     }
 
@@ -412,7 +420,8 @@ inline AmrCompiledFluxRegistrationRoute compile_route(
             checked_surface_cell(
                 group.source->grid, group.key.source_box, group.key.axis),
             group.key.weight, angular_registration_lever(topology,
-                group.key.source,group.key.source_box,group.key.axis)});
+                group.key.source,group.key.source_box,group.key.axis),
+            group.energy_operation_index});
     }
 
     result.targets.reserve(targets.size());

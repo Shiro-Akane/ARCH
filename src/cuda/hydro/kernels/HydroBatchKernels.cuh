@@ -11,7 +11,11 @@
  * Workflow:
  * 1. Receive stage views, face geometry and device state arrays.
  * 2. Launch the shared hydro face, source or state work on CUDA.
- * 3. Publish stage output only after the backend stream orders writes.
+ * 3. Complete original per-direction AMR registration before scratch reuse.
+ * 4. Native uses factory walls/Bounds, shared integrated curvature, and strict
+ *    V/W provisional updates; completed Runtime BC/EOS owns thermal acceptance.
+ * 5. Only a gravity-enabled Native block evaluates the shared external cell
+ *    leaf, applies its impulse and reduces the measured compact budget.
  */
 #pragma once
 
@@ -23,10 +27,17 @@
 #include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "numerics/state/RzNativeClosure.h"
+#include "physics/gravity/NativeExternalSourceMath.h"
 
 namespace arch::cuda {
 namespace detail {
 
+/** Reset actual stage increments and initialize the output diagnostic.
+ * ENUC is the last burn half's specific rate, not an RK conserved variable:
+ * active cells inherit the actual input bits, while unused output storage keeps
+ * the original zero initialization. Never borrow uninitialized Next/Scratch or
+ * input padding, and do not add transport, weighting or a second kernel.
+ */
 static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
 {
     const auto& b = blocks[blockIdx.y];
@@ -37,7 +48,12 @@ static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
     if (cell >= b.delta.total_size) return;
     b.delta.store(cell, {0.0, 0.0, 0.0, 0.0, 0.0});
     for (int s = 0; s < b.delta.n_species; ++s) b.delta.set_species(s, cell, 0.0);
-    b.output.enuc_rate[cell] = 0.0;
+    const int k = cell / b.grid.stride_z;
+    const int j = (cell - k * b.grid.stride_z) / b.grid.stride_y;
+    const int i = cell - k * b.grid.stride_z - j * b.grid.stride_y;
+    const bool active = i >= b.grid.is && i < b.grid.ie
+        && j >= b.grid.js && j < b.grid.je && k >= b.grid.ks && k < b.grid.ke;
+    b.output.enuc_rate[cell] = active ? b.input.enuc_rate[cell] : 0.0;
 }
 
 /** Authenticate Native metadata before any state/fraction reader is invoked.
@@ -207,9 +223,10 @@ __global__ void hydro_batch_faces(const DeviceHydroBatchBlock* blocks, Eos eos,
 {
     const auto& b = blocks[blockIdx.y];
     if (direction >= b.grid.dim) return;
-    hydro_face_kernel_work<Reconstruction, Flux>(b.input, b.face_flux, b.grid,
+    hydro_face_kernel_work<Reconstruction, Flux, true>(b.input, b.face_flux, b.grid,
         make_checked_hydro_eos(eos, b.eos_status), direction, coefficient, workspace,
-        b.mean_pressure, b.mean_sound_speed, b.roe_wave_speed);
+        b.mean_pressure, b.mean_sound_speed, b.roe_wave_speed,
+        b.native_bounds, b.eos_status, b.native_walls);
 }
 
 static __global__ void hydro_batch_divergence(const DeviceHydroBatchBlock* blocks,
@@ -225,9 +242,16 @@ __global__ void hydro_batch_sources(const DeviceHydroBatchBlock* blocks, Eos eos
     double dt, SpeciesWorkspaceView workspace, Physical::Gravity::ExternalGravityView gravity)
 {
     const auto& b = blocks[blockIdx.y];
-    if (b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled)
+    // Native keeps its original gravity-free geometric source: the external
+    // body is consumed afterwards by the dedicated external kernels. Every
+    // ordinary block still receives the original external gravity view exactly
+    // as before, so only the qualified Native branch changes.
+    const Physical::Gravity::ExternalGravityView source_gravity =
+        b.grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+            ? Physical::Gravity::ExternalGravityView{} : gravity;
+    if (b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || source_gravity.enabled)
         hydro_source_kernel_work(b.input, b.delta, b.grid,
-            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity);
+            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, source_gravity, b.eos_status);
     const int linear=blockIdx.x*blockDim.x+threadIdx.x;
     if(b.self_gravity.enabled() && linear<b.grid.active_cell_count()) {
         const int c=b.grid.active_cell(linear);FluidVector delta=b.delta.load(c);
@@ -236,6 +260,121 @@ __global__ void hydro_batch_sources(const DeviceHydroBatchBlock* blocks, Eos eos
             b.self_gravity.faces[a][c],b.self_gravity.faces[a][c+b.grid.stride(a)],b.input.rho[c],dt);
         b.delta.store(c,delta);
     }
+}
+
+/** Evaluate the shared external cell source for every active Native cell.
+ * Workflow: bind the same input readers -> reuse the shared eight-node cell
+ * leaf with the original checked EOS adapter, input geometry, Native Bounds and the
+ * current before-delta -> keep species scratch in the existing Native lane
+ * array -> publish every Valid candidate impulse into the dead face_flux plane
+ * only after the original directional AMR registrations completed. A non-Valid
+ * candidate latches the existing required-query status and leaves delta
+ * untouched. No field, RK weight or authority is produced here.
+ */
+template<class Eos>
+__global__ void hydro_batch_native_external_eval(const DeviceHydroBatchBlock* blocks,
+    Eos eos, double dt, SpeciesWorkspaceView workspace,
+    Physical::Gravity::ExternalGravityView gravity)
+{
+    const auto& b = blocks[blockIdx.y];
+    if (b.grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz) return;
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    SpeciesLaneScratch<1> scratch(workspace, lane);
+    double* composition = scratch.array(0);
+    const auto read = [input = b.input](int cell) { return input.load(cell); };
+    const auto fraction = [input = b.input](int species, int cell) {
+        return input.species(species, cell);
+    };
+    const auto geometry = make_grid_geometry_view(b.grid);
+    const int ni = b.grid.ie - b.grid.is;
+    const int nj = b.grid.je - b.grid.js;
+    for (int linear = lane; linear < b.grid.active_cell_count();
+         linear += blockDim.x * gridDim.x) {
+        const int i = b.grid.is + linear % ni;
+        const int j = b.grid.js + (linear / ni) % nj;
+        const int cell = b.grid.active_cell(linear);
+        const auto candidate = Physical::Gravity::evaluate_native_external_source_cell(
+            read, fraction, cell, b.input.n_species,
+            make_checked_hydro_eos(eos, b.eos_status), geometry, i, j, dt,
+            b.native_bounds, composition, gravity, b.delta.load(cell));
+        if (candidate.status != Physical::Gravity::NativeExternalCellStatus::Valid) {
+            atomicExch(b.eos_status, 1);
+            continue;
+        }
+        b.face_flux.store(cell, {0.0, candidate.source.mom_u, candidate.source.mom_v,
+            candidate.source.mom_w, candidate.source.eng});
+    }
+}
+
+/** Apply the accepted external impulse and measure its shared V/V/W budget.
+ * Workflow: read the patch latch once so any candidate failure vetoes the whole
+ * application -> reload the before-delta and the saved impulse -> repeat the
+ * same four rounded additions (mom_u, mom_v, mom_w, eng; never rho or species)
+ * -> store the after-delta -> reuse the shared rounded-add budget leaf with
+ * four zero FP64 locals and write the per-cell row back into the dead
+ * face_flux. dt is already carried by the evaluated source; no RK weight or new
+ * volume/budget law is introduced.
+ */
+static __global__ void hydro_batch_native_external_apply(const DeviceHydroBatchBlock* blocks)
+{
+    const auto& b = blocks[blockIdx.y];
+    if (b.grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz) return;
+    // The eval kernel completed earlier on this stream; the atomic read keeps
+    // the veto visible to every applying thread without a new latch owner.
+    if (atomicAdd(b.eos_status, 0) != 0) return;
+    const auto geometry = make_grid_geometry_view(b.grid);
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    const int ni = b.grid.ie - b.grid.is;
+    const int nj = b.grid.je - b.grid.js;
+    for (int linear = lane; linear < b.grid.active_cell_count();
+         linear += blockDim.x * gridDim.x) {
+        const int i = b.grid.is + linear % ni;
+        const int j = b.grid.js + (linear / ni) % nj;
+        const int cell = b.grid.active_cell(linear);
+        const FluidVector before = b.delta.load(cell);
+        const FluidVector source = b.face_flux.load(cell);
+        FluidVector after = before;
+        after.mom_u += source.mom_u;
+        after.mom_v += source.mom_v;
+        after.mom_w += source.mom_w;
+        after.eng += source.eng;
+        b.delta.store(cell, after);
+        double radial = 0.0, axial = 0.0, torque = 0.0, work = 0.0;
+        Physical::Gravity::accumulate_native_external_source_budget(radial, axial,
+            torque, work, before, after, geometry, i, j);
+        b.face_flux.store(cell, {0.0, radial, axial, torque, work});
+    }
+}
+
+/** Reduce the measured external budget deterministically for one Native block.
+ * Workflow: one thread owns the compact row and traverses the actual j rows
+ * then i, replicating the Host accumulation order in FP64 -> reset the four
+ * outputs even when the patch failed -> latch a non-finite measured row. No
+ * atomic partial-sum order, new algorithm or controller is introduced.
+ */
+static __global__ void hydro_batch_native_external_reduce(const DeviceHydroBatchBlock* blocks)
+{
+    const auto& b = blocks[blockIdx.y];
+    if (blockIdx.x != 0 || threadIdx.x != 0) return;
+    if (b.grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz) return;
+    double radial = 0.0, axial = 0.0, torque = 0.0, work = 0.0;
+    if (atomicAdd(b.eos_status, 0) == 0) {
+        for (int j = b.grid.js; j < b.grid.je; ++j)
+            for (int i = b.grid.is; i < b.grid.ie; ++i) {
+                const FluidVector row = b.face_flux.load(b.grid.index(i, j, 0));
+                radial += row.mom_u;
+                axial += row.mom_v;
+                torque += row.mom_w;
+                work += row.eng;
+            }
+    }
+    b.native_external_budget[0] = radial;
+    b.native_external_budget[1] = axial;
+    b.native_external_budget[2] = torque;
+    b.native_external_budget[3] = work;
+    if (!std::isfinite(radial) || !std::isfinite(axial)
+        || !std::isfinite(torque) || !std::isfinite(work))
+        atomicExch(b.eos_status, 1);
 }
 
 static __global__ void hydro_batch_update(const DeviceHydroBatchBlock* blocks,
@@ -248,17 +387,38 @@ static __global__ void hydro_batch_update(const DeviceHydroBatchBlock* blocks,
         minimum_internal_energy, maximum_internal_energy, b.eos_status, b.repairs);
 }
 
+/** Validate all POD launch storage before any clear/flux/register write.
+ * The actual backend additionally authenticates leases and original plan modes.
+ * Native borrows factory Bounds/walls and 41*S real lanes; Existing retains its
+ * original view, stencil, four-plane workspace and cached-metric checks.
+ */
 template<class Reconstruction>
 bool valid_hydro_batch_block(const DeviceHydroBatchBlock& b, SpeciesWorkspaceView workspace)
 {
+    const bool native = b.grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
     if (!valid_hydro_grid(b.grid) || !b.eos_status
-        // Cache-only Native numerical evidence does not migrate the full raw
-        // face/source/update path. Reject before clear/flux/register writes.
-        || b.grid.semantics != GridMetrics::GeometrySemantics::Existing
-        || !valid_species_workspace(workspace, b.input.n_species, 4)
+        || (!native && b.grid.semantics != GridMetrics::GeometrySemantics::Existing)
+        || !valid_species_workspace(workspace, b.input.n_species, native ? 41 : 4)
+        || (native && b.input.n_species > 0 && !workspace.values)
         || b.grid.ng < Reconstruction::ghost_depth || !b.grid.cell_volume
         || make_grid_geometry_view(b.grid).geometry == GridMetrics::Geometry::Unsupported)
         return false;
+    if (native) {
+        using Selected = typename Reconstruction::shared_policy;
+        if (!native_face_storage_valid(b.input, b.face_flux, b.grid, 0,
+                b.grid.is - 1, b.grid.js, b.native_bounds, 0.0)
+            || (b.self_gravity.enabled() && (b.self_gravity.density != b.input.rho
+                || !b.self_gravity.faces[0] || !b.self_gravity.faces[1]
+                || !b.self_gravity.work_low[0] || !b.self_gravity.work_low[1]
+                || !b.self_gravity.work_high[0] || !b.self_gravity.work_high[1]))
+            || b.repairs.semantics != state::RepairSemantics::RzVolumeAngular
+            || (b.grid.dyadic_identity.root_lower[0] == 0. && b.grid.ng < 3
+                && (RzSelectedReconstruction::PolicyTraits<Selected>::kind == 1
+                    || AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+                        Reconstruction::ghost_depth, b.grid.amr_coarse_fine_face,
+                        0, b.grid.is - 1, b.grid.is, b.grid.ie))))
+            return false;
+    }
     for (const auto view : {b.old_state, b.input, b.output, b.delta, b.face_flux})
         if (!valid_hydro_view(view) || view.total_size != b.grid.total_size
             || view.n_species != b.input.n_species) return false;
@@ -284,9 +444,29 @@ CudaBackendLaunchResult launch_hydro_batch(
     CudaBackendLaunchResult result{};
     if (host.empty()) return result;
     if (!device) return {cudaErrorInvalidValue, 0, true};
-    for (const auto& b : host)
+    const state::Bounds bounds{density_floor, min_e, max_e};
+    for (const auto& b : host) {
         if (!detail::valid_hydro_batch_block<Reconstruction>(b, workspace))
             return {cudaErrorInvalidValue, 0, true};
+        const bool native =
+            b.grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
+        // The compact Native external observer is qualified only for the exact
+        // external branch: a gravity-enabled Native block must carry one row
+        // pointer, and every other block must carry none. Self borrows the
+        // authenticated resident field and its original paired row mapping;
+        // simultaneous external and Self sources are invalid.
+        if ((gravity.enabled && native) != (b.native_external_budget != nullptr))
+            return {cudaErrorInvalidValue, 0, true};
+        if (native && gravity.enabled && b.self_gravity.enabled())
+            return {cudaErrorInvalidValue, 0, true};
+        if (native
+            && (!std::isfinite(dt) || !(dt > 0.)
+                || !std::isfinite(coefficient) || !state::valid_bounds(bounds)
+                || b.native_bounds.density != bounds.density
+                || b.native_bounds.internal_min != bounds.internal_min
+                || b.native_bounds.internal_max != bounds.internal_max))
+            return {cudaErrorInvalidValue, 0, true};
+    }
     // Wide species use the existing bounded lane arena. One block per wave
     // avoids cross-block aliasing without multiplying its memory budget.
     // Local per-thread species scratch can execute many blocks concurrently.
@@ -348,6 +528,23 @@ CudaBackendLaunchResult launch_hydro_batch(
         }
         if (sources) {
             detail::hydro_batch_sources<<<source_grid, threads, 0, stream>>>(bindings, eos, dt, workspace, gravity);
+            if (!record()) return result;
+        }
+        // Only a gravity-enabled Native member consumes the shared external
+        // body: after the original directional registration and source pass,
+        // evaluate -> apply -> reduce on this same stream. Non-Native members
+        // return before any read, and pure ordinary waves launch nothing here.
+        const bool native_external = gravity.enabled
+            && std::any_of(wave.begin(), wave.end(), [](const auto& b) {
+                return b.grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz; });
+        if (native_external) {
+            detail::hydro_batch_native_external_eval<Eos><<<source_grid, threads, 0, stream>>>(
+                bindings, eos, dt, workspace, gravity);
+            if (!record()) return result;
+            detail::hydro_batch_native_external_apply<<<cell_grid, 128, 0, stream>>>(bindings);
+            if (!record()) return result;
+            const dim3 external_row(1, static_cast<unsigned>(count));
+            detail::hydro_batch_native_external_reduce<<<external_row, 1, 0, stream>>>(bindings);
             if (!record()) return result;
         }
         detail::hydro_batch_update<<<cell_grid, 128, 0, stream>>>(bindings,

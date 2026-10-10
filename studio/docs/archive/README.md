@@ -2,7 +2,7 @@
 
 These reports preserve their original scope, evidence and version. Current behavior follows the [Studio guide](../../README.md), [status](../../STATUS.md) and [integration/release plan](../../../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md). Historical instructions are not current launch commands.
 
-Historical `studio/scripts/import_cellular.py` and `compareRestartCheckpoints.mjs` now live in [verification tools](../../tests/tools/); old prose retains its original path as provenance.
+Historical `studio/scripts/import_cellular.py` and `compareRestartCheckpoints.mjs` now live in [verification tools](../../tests/tools); old prose retains its original path as provenance.
 
 - [MANUAL_UAT_CANDIDATE.md](MANUAL_UAT_CANDIDATE.md)
 - [ORIGINAL_REQUIREMENT_CLOSURE_REPORT.md](ORIGINAL_REQUIREMENT_CLOSURE_REPORT.md)

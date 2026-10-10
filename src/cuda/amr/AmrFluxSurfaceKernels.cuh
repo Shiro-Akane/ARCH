@@ -7,17 +7,23 @@
  * the runtime serializes contributors and owns stream completion.
  * Workflow:
  * 1. Receive compiled AMR face plans and resident surface buffers.
- * 2. Launch shared flux-register math over CUDA indices.
+ * 2. Launch shared flux-register math over CUDA indices; an optional resident
+ *    Self-gravity selection replaces only the energy scalar with the shared
+ *    native_reflux_energy leaf and reports refusal through borrowed status.
  * 3. Return conservative corrections after backend stream ordering.
  */
 
 #pragma once
 
+#include <cstddef>
 #include "amr/flux/AmrFluxMath.h"
 #include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
+#include "physics/gravity/GravitySource.h"
+
 
 namespace arch::cuda::amr_flux_kernel_detail {
 
@@ -81,11 +87,29 @@ __global__ void capture_surface_kernel(
             species, cell, block.stage_flux.species(species, source_cell));
 }
 
+/**
+ * Register one target's accumulated fluxes from either the full direction
+ * scratch (StageScratch) or the compact initial-flux surface.
+ *
+ * NativeSelf is a compile-time selection. When false the kernel body keeps the
+ * original arithmetic byte for byte, including eng += coefficient *
+ * stage_source.eng[cell]; when true only that energy scalar changes to the
+ * shared Physical::Gravity::native_reflux_energy leaf evaluated with the same
+ * source cell's original FE and Frho and the psi row that the original
+ * route.plan.operations index maps to. Momentum, density, species, coefficient,
+ * sign/area/RK/dt weighting and accumulation order are untouched.
+ *
+ * Paired misuse (mapping out of range, nonfinite psi row or nonfinite leaf
+ * result) sets status to 1 and returns before this target writes any
+ * destination, so no partially paired target is ever registered.
+ */
+template <bool NativeSelf>
 __global__ void register_route_kernel(
     const DeviceAmrFluxBlockView* blocks, int source_block,
     const amr::AmrFluxRegistrationTarget* targets,
     const amr::AmrFluxRegistrationTerm* terms, int target_count,
-    AmrFluxSource source_kind, double stage_weight)
+    AmrFluxSource source_kind, double stage_weight,
+    Physical::Gravity::NativeSelfRefluxView native_self)
 {
     const int target_index = static_cast<int>(
         blockIdx.x * blockDim.x + threadIdx.x);
@@ -114,7 +138,33 @@ __global__ void register_route_kernel(
             mom_v += coefficient * stage_source.mom_v[cell];
             mom_w += coefficient * amr::flux_math::angular_registered_flux(
                 stage_source.mom_w[cell],term.angular_factor);
-            eng += coefficient * stage_source.eng[cell];
+            if constexpr (NativeSelf) {
+                // Original operations index -> SAME stage global psi row.
+                const std::size_t operation_index = term.energy_operation_index;
+                if (operation_index >= native_self.operation_count
+                    || native_self.row_of_energy_operation[operation_index]
+                        >= native_self.row_count) {
+                    atomicExch(native_self.status, 1);
+                    return;
+                }
+                const double potential_difference = native_self.psi[
+                    native_self.row_of_energy_operation[operation_index]];
+                if (!isfinite(potential_difference)) {
+                    atomicExch(native_self.status, 1);
+                    return;
+                }
+                const double paired_energy =
+                    Physical::Gravity::native_reflux_energy(
+                        stage_source.eng[cell], potential_difference,
+                        stage_source.rho[cell]);
+                if (!isfinite(paired_energy)) {
+                    atomicExch(native_self.status, 1);
+                    return;
+                }
+                eng += coefficient * paired_energy;
+            } else {
+                eng += coefficient * stage_source.eng[cell];
+            }
         } else {
             rho += coefficient * surface_source.rho[cell];
             mom_u += coefficient * surface_source.mom_u[cell];
@@ -149,6 +199,12 @@ __global__ void register_route_kernel(
     }
 }
 
+/** Apply original compiled conservative and torque corrections, then check U/X.
+ * Native m_phi=J/W already receives the compiler's V/W factor exactly once.
+ * Its shared provisional check never recovers raw ordinary kinetic energy or
+ * records a repair; real completed BC/EOS remains the thermal acceptance owner.
+ * Existing retains its original ordinary acceptance and repair arithmetic.
+ */
 __global__ void reflux_kernel(
     const DeviceAmrFluxBlockView* blocks,
     const amr::AmrRefluxTarget* targets,
@@ -196,11 +252,15 @@ __global__ void reflux_kernel(
         const int k = state_cell / grid.stride_z;
         const int j = (state_cell - k * grid.stride_z) / grid.stride_y;
         const int i = state_cell - k * grid.stride_z - j * grid.stride_y;
-        const auto outcome=arch::state::accept_conservative_state(state.load(state_cell),
-            state.n_species?state.mass_fractions+state_cell:nullptr,
-            state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling,
-            GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k),
-            blocks[target.block].repairs, state_cell);
+        const auto outcome = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+            ? RzThermodynamics::provisional_native_state(state.load(state_cell),
+                state.n_species ? state.mass_fractions + state_cell : nullptr,
+                state.n_species, state.total_size, {density_floor, energy_floor, energy_ceiling})
+            : arch::state::accept_conservative_state(state.load(state_cell),
+                state.n_species?state.mass_fractions+state_cell:nullptr,
+                state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling,
+                GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k),
+                blocks[target.block].repairs, state_cell);
         if (!arch::state::accepted(outcome)) atomicExch(status,100+static_cast<int>(outcome));
     }
 }

@@ -14,10 +14,12 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "driver/schedule/StageScheduler.h"
 #include "io/IO.h"
 #include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/GravitySourceTypes.h"
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
 namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; struct NativeRzFieldInspection; class NativeRzSolutionInspection; }
@@ -25,9 +27,9 @@ namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
 public:
-    // Explicit internal CPU verification only; never selected from SimConfig.
-    // Candidate fields remain unreadable by normal Hydro/plot/CFL consumers.
-    enum class Qualification { Production, NativeRzCandidate, NativeRzExternalCandidate, NativeRzSelfHydroCandidate };
+    // Production uses the actual Runtime/configuration route; remaining profiles
+    // are internal Host scientific diagnostics, never selected from SimConfig.
+    enum class Qualification { Production, NativeRzCandidate, NativeRzSelfHydroCandidate };
     GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*,
         Qualification = Qualification::Production);
     ~GravityStage() override;
@@ -69,7 +71,7 @@ public:
     /** Four accepted body-source integrals; no potential/self-gravity accounting. */
     std::array<long double,4> external_source_budget() const noexcept { return external_accepted_; }
     /** Journal capability is independent of the physical field/RZ qualification gate. */
-    bool supports_host_macro_step_journal() const noexcept override;
+    bool supports_macro_step_journal(state::ExecutionSide) const noexcept override;
     /** Freeze accepted observer state before any macro-step fluid producer runs. */
     void begin_macro_step() override;
     /** Accept only the exact prepared descriptor and genuinely consumed field. */
@@ -81,6 +83,9 @@ public:
     void flush_committed_diagnostics();
 private:
     struct RuntimeSourceLease;
+    struct DeviceSourceLease;
+    // Frozen metadata outlives the Device frame that borrows its span entries.
+    mutable std::unique_ptr<DeviceSourceLease> device_source_lease_;
     using NativeSourceInspection=RuntimeSourceLease;
     // The nonmoving issuer owns metadata only, not fluid or another density cache.
     mutable std::unique_ptr<RuntimeSourceLease> runtime_source_lease_;
@@ -93,8 +98,8 @@ private:
     mutable bool source_inspection_completed_=false;
     NativeSelfFluxObservationSink native_flux_observation_sink_=nullptr;
     void* native_flux_observation_payload_=nullptr;
-    /** Internal source-only profile; public configuration never selects it. */
-    bool native_external() const noexcept { return qualification_==Qualification::NativeRzExternalCandidate; }
+    /** Route the actual Production RZ external configuration to the existing issuer. */
+    bool native_external() const noexcept;
     /** RZ source/work receipts cover real prescribed fields and isolated diagnostics. */
     bool native_self() const noexcept;
     /** Only explicit internal profiles select ring-integration diagnostics. */
@@ -105,6 +110,8 @@ private:
     /** Require the actual macro transaction before constructing a solved-field frame. */
     void require_native_self_preparation(const scheduler::HydroStagePreparationRequest&) const;
     state::CompletionToken prepare_native_external(const scheduler::HydroStagePreparationRequest&);
+    /** Prepare only actual resident input metadata; side-aware journal remains required. */
+    state::CompletionToken prepare_native_external_device(const scheduler::HydroStagePreparationRequest&);
     state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int,
         Physical::Gravity::GravityFieldPurpose);
     Qualification qualification_;
@@ -113,6 +120,9 @@ private:
     const Physical::Gravity::SelfGravity* gravity_;
     std::unique_ptr<Physical::Gravity::NativeExternalStageFrame> external_frame_;
     std::unique_ptr<Physical::Gravity::NativeSelfStageFrame> self_frame_;
+    // Metadata-only borrows into the authentic prepared resident field. Retire
+    // and destroy the previous frame before replacing this stable span storage.
+    std::vector<Physical::Gravity::GravityPatchView> self_device_fields_;
     std::array<std::array<long double,4>,3> external_pending_{};
     std::array<long double,4> external_accepted_{};
     amr::TopologyEpoch epoch_{};

@@ -16,7 +16,7 @@ separately when useful.
 | --- | --- |
 | `Tooling` | Workflow syntax, shared-authority/header audit and every selected Python test under `tests/tooling`; empty or skipped suites fail |
 | `CPU Release` | The `cpu-release` preset with tests and KLU enabled; builds ARCH and all configured CPU tests, then runs every numerical/API CTest; Tooling owns the runner contracts |
-| `Studio and Host` | Clean locked install with Node 24.21.0; full Node suite once (including Host), lint and production build with type checking; empty/skipped/TODO reports fail |
+| `Studio and Host` | Clean locked install with Node 24.21.0; full Node suite once (including Host), serial file workers, lint and production build with type checking; empty/skipped/TODO reports fail |
 | `CI required` | Succeeds only when Tooling, CPU Release and Studio/Host all succeed; failed, cancelled or skipped dependencies do not count as passing |
 
 Pull requests targeting `main` trigger the workflow, including documentation
@@ -62,8 +62,8 @@ Machin/arb arithmetic witness is a maintainer opt-in:
 as `NOT_REQUESTED` / `NOT_RUN`; it produces no skip or numerical pass. Explicit
 selection requires an already installed flint backend and fails when it is
 unavailable. ARCH build and hosted CI require no flint installation. The
-module's current selection is 80 default tests or 81 with that one witness;
-selected-suite completeness and all numerical assertions remain unchanged.
+module reports its actual selected inventory in the test log; selected-suite
+completeness and all numerical assertions remain unchanged.
 
 For a local default check from the repository root:
 
@@ -108,6 +108,19 @@ complete CUDA inventory or a substitute for application-level numerical,
 restart and sanitizer validation; the hosted CPU job keeps its full inventory.
 
 ## Studio and Host coverage
+
+The Studio job first records an affected-module decision from the PR base and
+tested merge revision. Studio/API paths and build, tool or configuration changes
+run the full lane. Clearly independent numerical implementation, Core-only
+tests, scientific validation and documentation can omit Node setup and execution.
+Unknown paths, missing refs, failed diffs and empty change lists select the full
+lane. Rename detection is disabled so moving a Studio file preserves its deleted
+path in the decision.
+
+The job always runs and `CI required` still requires its success. An unrelated
+diff records `NOT_APPLICABLE`, not a completed Node test run; an affected diff
+keeps the complete suite and its original failure/skip checks. The classifier
+and its regression cases belong to the existing tooling entry.
 
 The existing workflow now includes one Linux Studio/Host job. Its Node runtime
 matches the locally verified 24.21.0 environment. The setup-node action is pinned

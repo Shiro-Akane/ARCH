@@ -3,7 +3,10 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -13,7 +16,8 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS,
-                              check_inventory, check_junit, check_node_tap, main)
+                              check_inventory, check_junit, check_node_tap,
+                              check_studio_scope, main, scope_path_requires_studio)
 
 
 class CiResultTests(unittest.TestCase):
@@ -183,6 +187,143 @@ class CiResultTests(unittest.TestCase):
                 inventory.write_text("[]", encoding="utf-8")
                 self.assertEqual(main(["--inventory", str(inventory)]), 1)
                 self.assertEqual(main(["--inventory", str(inventory.with_name("missing"))]), 1)
+
+    def git_repo(self):
+        """Create a throwaway repo so scope tests exercise real git diff output."""
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        env = dict(os.environ, GIT_AUTHOR_NAME="scope", GIT_AUTHOR_EMAIL="scope@example.com",
+                   GIT_COMMITTER_NAME="scope", GIT_COMMITTER_EMAIL="scope@example.com")
+
+        def git(*args):
+            subprocess.run(["git", *args], cwd=root, check=True, env=env,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        git("init", "-q")
+        return root, git
+
+    @staticmethod
+    def head_of(root):
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True,
+                              stdout=subprocess.PIPE, text=True).stdout.strip()
+
+    def test_studio_scope_only_known_unrelated_paths_may_skip(self):
+        # Documentation outside Studio/API text, standalone numerical code,
+        # Core-only tests and scientific validation tooling may skip Studio.
+        for path in ("README.md", "docs/design.rst", "docs/notes.txt", "notes/guide.md",
+                     "README.txt", "LICENSE.txt", "NOTICE.txt",
+                     "src/numerics/eos.py", "src/physics/gravity.cpp", "src/cuda/kernel.cu",
+                     "tests/host/host_case.cpp", "tests/cuda/device_case.cu", "validation/run.py"):
+            with self.subTest(skippable=path):
+                self.assertFalse(scope_path_requires_studio(path))
+        # Studio UI/API docs, interfaces, core/data/grid/amr/driver/io, include,
+        # simulation, cmake/workflow/config/build/tooling and unknown paths stay.
+        # Protected build/tool/config/workflow directories win over any doc
+        # suffix, and .txt is documentation only under docs/ or with an explicit
+        # README/LICENSE/NOTICE basename, so ambiguous notes/todo.txt stays.
+        for path in ("studio/ui/main.cpp", "studio/README.md", "src/api/client.cpp",
+                     "src/api/README.md", "src/grid/grid.cpp", "src/amr/refine.cpp",
+                     "src/driver/step.cpp", "src/io/writer.cpp", "include/arch/header.hpp",
+                     "simulation/run.cc", "CMakeLists.txt", "cmake/toolchain.cmake",
+                     ".github/workflows/studio.yml", "tools/check_ci_results.py",
+                     "tools/requirements.txt", "tools/README.md", "cmake/config.txt",
+                     "cmake/notes.txt", "config/settings.txt", "build/notes.txt",
+                     ".github/workflows/notes.txt", "requirements.txt", "notes/todo.txt",
+                     "src/numerics", "notes/todo.MD", "../escape.md", ""):
+            with self.subTest(required=path):
+                self.assertTrue(scope_path_requires_studio(path))
+
+    def test_studio_scope_malformed_refs_and_bad_diff_fall_back_to_studio(self):
+        good = "a" * 40
+        for base in ("HEAD", "abcdef1", "", None, "z" * 40, "a" * 39):
+            with self.subTest(base=base):
+                result = check_studio_scope(base, "HEAD")
+                self.assertTrue(result["required"])
+                self.assertEqual(set(result), {"required", "reason", "changed_paths"})
+                self.assertIsInstance(result["reason"], str)
+                self.assertEqual(result["changed_paths"], [])
+        for head in ("main", "abcdef1", "", None, "z" * 40):
+            with self.subTest(head=head):
+                self.assertTrue(check_studio_scope(good, head)["required"])
+        # A valid but non-repository root is a diff error, not a skip decision.
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertTrue(check_studio_scope(good, "HEAD", repo_root=directory)["required"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required for real diff semantics")
+    def test_studio_scope_real_git_delete_missing_ref_and_empty_fall_back(self):
+        root, git = self.git_repo()
+        (root / "studio").mkdir()
+        (root / "README.md").write_text("docs\n", encoding="utf-8")
+        (root / "studio" / "engine.cpp").write_text("int main() {}\n", encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", "base")
+        base = self.head_of(root)
+
+        # Same refs produce an empty change list -> conservative Studio fallback.
+        empty = check_studio_scope(base, base, repo_root=root)
+        self.assertTrue(empty["required"])
+        self.assertEqual(empty["changed_paths"], [])
+
+        # An exact-content rename would hide the old Studio path in normal
+        # --name-only output; --no-renames must retain the deletion.
+        git("config", "diff.renames", "true")
+        (root / "src" / "numerics").mkdir(parents=True)
+        git("mv", "studio/engine.cpp", "src/numerics/engine.py")
+        git("add", "-A")
+        git("commit", "-q", "-m", "move")
+        moved = check_studio_scope(base, self.head_of(root), repo_root=root)
+        self.assertTrue(moved["required"])
+        self.assertIn("studio/engine.cpp", moved["changed_paths"])
+
+        # A well-formed but missing commit ref is a diff failure, not a skip.
+        missing = check_studio_scope("0" * 40, self.head_of(root), repo_root=root)
+        self.assertTrue(missing["required"])
+        self.assertEqual(missing["changed_paths"], [])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required for real diff semantics")
+    def test_studio_scope_real_git_docs_only_change_may_skip(self):
+        root, git = self.git_repo()
+        (root / "README.md").write_text("docs\n", encoding="utf-8")
+        (root / "src" / "numerics").mkdir(parents=True)
+        (root / "src" / "numerics" / "eos.py").write_text("x = 1\n", encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", "base")
+        base = self.head_of(root)
+        (root / "README.md").write_text("more docs\n", encoding="utf-8")
+        (root / "src" / "numerics" / "eos.py").write_text("x = 2\n", encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", "docs and numerics")
+        result = check_studio_scope(base, self.head_of(root), repo_root=root)
+        self.assertFalse(result["required"])
+        self.assertEqual(sorted(result["changed_paths"]),
+                         ["README.md", "src/numerics/eos.py"])
+        self.assertEqual(set(result), {"required", "reason", "changed_paths"})
+
+    def test_studio_scope_cli_emits_json_and_rejects_mixed_modes(self):
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            # The capsule is not a Git repository, so this exercises the diff
+            # error fallback: exit 0 with a conservative JSON decision, no PASS.
+            code = main(["--studio-scope-base", "0" * 40, "--studio-scope-head", "HEAD"])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(set(payload), {"required", "reason", "changed_paths"})
+        self.assertIsInstance(payload["required"], bool)
+        self.assertIsInstance(payload["reason"], str)
+        # Base without head stays conservative: malformed-head rule, exit 0.
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            self.assertEqual(main(["--studio-scope-base", "0" * 40]), 0)
+        self.assertTrue(json.loads(stdout.getvalue())["required"])
+        # --studio-scope-head is only valid with --studio-scope-base; alone or
+        # paired with --node-tap/--inventory it is rejected, never ignored.
+        for argv in (["--studio-scope-head", "HEAD"],
+                     ["--node-tap", "unused", "--studio-scope-head", "HEAD"],
+                     ["--inventory", "unused", "--studio-scope-head", "HEAD"],
+                     ["--node-tap", "unused", "--studio-scope-base", "0" * 40]):
+            with self.subTest(argv=argv), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    main(argv)
+            self.assertEqual(error.exception.code, 2)
 
 
 if __name__ == "__main__":

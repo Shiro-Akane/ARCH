@@ -15,18 +15,18 @@
 #include "amr/exchange/BoundaryPlan.h"
 #include "data/FluidState.h"
 
-#include "core/config/RuntimeParams.h"
-
 #include "grid/Grid.h"
 #include "grid/GridMetrics.h"
 #include "numerics/state/RzNativeClosure.h"
 
 #include <bit>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -73,8 +73,6 @@ inline double reduce_block_minimum(
     return result.value;
 }
 } // namespace DriverReduction
-
-#include "physics/boundary/PhysicalBoundaryHandler.h"
 
 ARCH_INLINE double compute_cfl_candidate(
     const FluidVector& U, double c, int dim,

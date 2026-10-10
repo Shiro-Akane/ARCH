@@ -145,4 +145,4 @@ EOS 文件变化发生在一次请求中时，原接口返回 EOS_SOURCE_CHANGED
 - `InitialSampleCache.h`：仅在当前场采样中复用逐位相同输入的转换结果；数值转换仍使用原 Core 实现。
 - `Progress.h`：既有模型检查、场图与 AMR 阶段发布。
 
-验收覆盖冷/热请求与独立进程数值一致、连续修改几何和温度、错误恢复、表文件同长度同 mtime 修改、组分顺序变化、3D/4D 表切换、缓存预算、CPU 预算恢复、非法协议输入、取消重启与请求上限。实际响应及耗时记录放在 `examples/preview-session/`；测试结果与准确同步范围见 [PREVIEW_SESSION_HANDOFF.md](PREVIEW_SESSION_HANDOFF.md)。
+验收覆盖冷/热请求与独立进程数值一致、连续修改几何和温度、错误恢复、表文件同长度同 mtime 修改、组分顺序变化、3D/4D 表切换、缓存预算、CPU 预算恢复、非法协议输入、取消重启与请求上限。实际响应及耗时记录放在 `examples/preview-session/`；测试结果与准确同步范围见 [PREVIEW_SESSION_HANDOFF.md](archive/PREVIEW_SESSION_HANDOFF.md)。

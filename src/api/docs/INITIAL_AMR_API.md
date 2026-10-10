@@ -19,8 +19,8 @@ initialFieldPreview、initialAmrPreview 与 previewDimensions，不保留 Sod/Ce
 DiffusionMode、ExternalGravity、Gaussian、GravityBox、JeansWave、RT、SNIaCoupled、
 Sedov、SmoothAdvection、Sod。这是该 binary 的证据，不是永久模型数量常量。
 支持维数以运行时列表为准；参见
-[全模型生产 Host 验证](../../docs/development/FullModelProductionHostProgress.zh-CN.md)
-和[三维有界混合快照](../../docs/development/FullModel3DMixedAmr-20261004.zh-CN.md)。
+[全模型生产 Host 验证](../../../docs/development/FullModelProductionHostProgress.zh-CN.md)
+和[三维有界混合快照](../../../docs/development/FullModel3DMixedAmr-20261004.zh-CN.md)。
 
 此查询给本地启动器使用。`arch-studio` 命令、桌面窗口、项目发现、源码/构建身份以及文件管理由 Studio/Host 实现。Core 不依据 `.cpp` 文件名猜测注册名，也不能通过该列表证明源码与 binary 一致。
 
@@ -81,7 +81,7 @@ ARCH --preview-amr CellularDet --config-stdin \
 metadata 的 dimension/geometry/active axes 应与 mesh 和 state.grid 一致。
 Cartesian 轴为长度，通常 cm；角度轴使用 Core 发布的 rad。曲线网格 data.unit=null，
 不能将所有 bounds/spacing 都标成 cm，也不能把原生轴绘图误称笛卡尔位置。
-当前二维 cylindrical 仍是极平面，不因本扩展成为 RZ；RZ 迁移需独立完成 Core 与科学验收。
+二维 `cylindrical` 使用轴对称 `(r,z)`，二维 `spherical` 保持极平面构型；客户端读取实际坐标元数据区分。当前 RZ 初始 AMR 查询在要求细化时返回根网格快照、`complete=false` 与 `limitedReason=native-rz-amr-preview-not-qualified`；该快照不能显示为已完成细化。
 三维视图沿所选原生轴取切面，仅过滤已有叶块，不重新调用 Init/AMR；
 切面内边界半开、最外侧边界包含。保持原始 logicalKey、level、三轴 bounds/shape/spacing。
 
@@ -99,7 +99,7 @@ Host 必须继续实现墙钟超时（建议 45 秒）、取消和子进程回�
 
 ## 验证
 
-2026-09-21 CPU Debug 构建与 15 组 scoped CTest 最终通过；详细结果见 [LOCAL_WORKFLOW_HANDOFF.md](LOCAL_WORKFLOW_HANDOFF.md)。
+2026-09-21 CPU Debug 构建与 15 组 scoped CTest 最终通过；详细结果见 [LOCAL_WORKFLOW_HANDOFF.md](archive/LOCAL_WORKFLOW_HANDOFF.md)。
 
 新增 `ui_expansion_contract`：模型枚举、90 参数展示、扩散依赖、CGS、资源公式与溢出、根网格/细化预算、1D/2D 平衡和域覆盖、CUDA 请求仍走 CPU、非法请求。
 

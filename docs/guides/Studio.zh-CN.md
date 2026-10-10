@@ -2,7 +2,7 @@
 
 [English](Studio.md) · [首页](../../README.zh-CN.md) · [Studio 状态](../../studio/STATUS.md)
 
-Studio 用于编辑 `.par`、核对初始场与网格、编译已注册的模型，以及准备本机运行和续算。Core 在 Linux/WSL 编译和运行；这一阶段按 Linux 桌面交付。
+Studio 是可选的桌面组件，Core 的 CPU／CUDA 构建与运行可独立使用。它用于编辑 `.par`、核对初始场与网格、编译已注册的模型，以及准备本机运行和续算。Core 在 Linux/WSL 编译和运行；这一阶段按 Linux 桌面交付。
 
 ## 构建并呼出界面
 
@@ -16,7 +16,7 @@ build-studio-cpu/bin/arch-studio --project "$PWD" --binary build-studio-cpu/bin/
 
 Studio 构建选项默认关闭，普通 Core 编译不会安装网页依赖。开启后，CMake 将根据锁定的依赖清单准备 Linux 桌面运行时与生产资源；首次运行需要网络连接与磁盘空间。生成的入口依赖当前源码目录。若已有 Studio 开发环境，也可直接运行 `studio/desktop/arch-studio`。界面会在独立窗口中打开，连接端口由程序内部管理。
 
-可以通过 `--source /path/to/case.cpp` 指定已注册源码，或仅指定 `--project` 后在窗口中选择模型与 `.par`。若源码已修改或尚未编译，请先执行 Configure/Build；选中源码并不代表旧二进制已包含该修改。工作目录、选中的 Core、模型和参数文件将一并显示。Host 仅使用批准的构建配置；GUI 的受控 CPU 配置默认为 `build-studio-cpu`。
+可以通过 `--source /path/to/case.cpp` 指定已注册源码，或仅指定 `--project` 后在窗口中选择模型与 `.par`。指定源码时，模型固定为其唯一编译注册项；切换模型请关闭项目，再打开对应源码。源码身份尚未匹配时，界面显示待确认状态。模型发现请求失败时，可点击 `Retry model discovery` 在当前构建上重试；工作副本保持。若源码已修改或尚未编译，请先执行 Configure/Build；选中源码并不代表旧二进制已包含该修改。工作目录、选中的 Core、模型和参数文件将一并显示。Host 仅使用批准的构建配置；GUI 的受控 CPU 配置默认为 `build-studio-cpu`。
 
 ## 日常操作
 
@@ -33,7 +33,7 @@ Studio 构建选项默认关闭，普通 Core 编译不会安装网页依赖。�
 
 所有 Core 量都按 CGS；长度 `cm`，密度 `g/cm³`，压力 `erg/cm³`，温度 `K`，速度 `cm/s`，角度 `rad`。标准参数说明来自 Core。custom 单位来自已审阅的声明和源码证据；普通数值采样不能可靠反推出任意 C++ 的量纲。修改源码后旧单位证据须重新审阅。
 
-系统在运行时会协商每个模型支持的维数、几何和字段。注册新的 `.cpp` 后，还须具备完整的参数声明及初始采样／AMR 能力，才能显示真实预览。二维柱坐标采用轴对称 `(r,z)`；模型与后端的支持范围见[功能清单](../Features.zh-CN.md)。
+系统在运行时会协商每个模型支持的维数、几何和字段。注册新的 `.cpp` 后，还须具备完整的参数声明及初始采样／AMR 能力，才能显示真实预览。二维柱坐标采用轴对称 `(r,z)`。其 Initial AMR 当前提供实际根级初始化快照；要求更高细化层级时显示受限状态，不能据此判断演化过程的动态 AMR。模型与后端的支持范围见[功能清单](../Features.zh-CN.md)。
 
 ## 查看 Plotfile
 
@@ -44,7 +44,7 @@ XDMF、可重建查询索引、有界跨查询缓存、更多几何/三维格式
 ## 协作与验证入口
 
 - [Core API 与兼容边界](../../src/api/README.md)
-- [配置 v3 契约](../../src/api/CONFIGURATION_API.md)
+- [配置 v3 契约](../../src/api/docs/CONFIGURATION_API.md)
 - [Studio/Host 工程测试](../../studio/tests/README.md)
 - [科学验证](../../validation/README.zh-CN.md)
 - [本轮集成与发布计划](../development/ComputeStudioReleasePlan-20261006.zh-CN.md)

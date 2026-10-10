@@ -155,39 +155,7 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     }
     return moments;
 }
-/** Exact same-density rectangle union, never a bbox/mass approximation.
- * Direct four leaf siblings must tile [rl,rh]x[zl,zh] by equal shared edges.
- * Every stored edge is compared exactly. The original finite-ring integral
- * over this stored union equals its four disjoint source integrals; ideal-root
- * potential qualification remains a separate source/observer error contract.
- */
-struct UniformRingQuartet { double rl,rh,zl,zh,density; };
-std::optional<UniformRingQuartet> uniform_ring_quartet(
-    const arch::elliptic::CompositePoisson& op,
-    std::span<const BoundaryTreeNode> nodes,int index,std::span<const double> density) {
-    const auto& parent=nodes[index];
-    std::array<std::array<double,4>,4> edges{};
-    double rho=0.;
-    for(int c=0;c<4;++c) {
-        const int child=parent.children[c];
-        if(child<0||child>=static_cast<int>(nodes.size())||nodes[child].cell<0)return {};
-        const int cell=nodes[child].cell;
-        if(cell>=static_cast<int>(density.size()))return {};
-        if(c==0)rho=density[cell];
-        if(!std::isfinite(rho)||rho<0.||density[cell]!=rho)return {};
-        edges[c]={op.lower(cell,0),op.upper(cell,0),op.lower(cell,1),op.upper(cell,1)};
-    }
-    for(int c=4;c<8;++c)if(parent.children[c]>=0)return {};
-    const double rl=edges[0][0],rm=edges[0][1],rh=edges[3][1];
-    const double zl=edges[0][2],zm=edges[0][3],zh=edges[3][3];
-    if(!(rl<rm&&rm<rh&&zl<zm&&zm<zh))return {};
-    for(int c=0;c<4;++c) {
-        const std::array<double,4> expected{
-            c&1?rm:rl,c&1?rh:rm,c&2?zm:zl,c&2?zh:zm};
-        if(edges[c]!=expected)return {};
-    }
-    return UniformRingQuartet{rl,rh,zl,zh,rho};
-}
+
 
 }
 /** Build a physical-space mass tree over every active leaf. */
@@ -526,7 +494,7 @@ void GravityBoundary::clear_ring_memo() noexcept {ring_memo_.clear();}
  */
 RingPotentialEnclosure GravityBoundary::memoized_ring_potential(
     double rl,double rh,double zl,double zh,double density,double ro,double zo,double G,
-    const RingEnclosureControl& control,bool quartet,RingBoundaryEvaluation& diagnostics) const {
+    const RingEnclosureControl& control,bool quartet,RingBoundaryScalars& diagnostics) const {
     const bool eligible=std::isfinite(rl)&&std::isfinite(rh)&&rl>=0.&&rl<rh
         &&std::isfinite(zl)&&std::isfinite(zh)&&zl<zh
         &&std::isfinite(ro)&&ro>=0.&&std::isfinite(zo)
@@ -582,10 +550,13 @@ RingPotentialEnclosure GravityBoundary::memoized_ring_potential(
     return original;
 }
 
-RingBoundaryEvaluation GravityBoundary::ring_boundary(
+/** Authenticate and pack the one actual source/controller input contract.
+ * Source-owned nodes/density are borrowed synchronously; all geometric words
+ * come from the original op.lower/upper and native face-center accessors.
+ */
+ring_boundary_detail::PreparedRingBoundaryInputs GravityBoundary::prepare_ring_boundary_inputs(
     const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source,
     const RingBoundaryControl& control) const {
-    using namespace finite_ring_detail;
     require_ring_operator(op);
     if(!source_identity_||source!=*source_identity_||ring_density_.size()!=volumes_.size())
         throw std::logic_error("Ring source identity is stale or unavailable");
@@ -593,122 +564,57 @@ RingBoundaryEvaluation GravityBoundary::ring_boundary(
         ||control.maximum_boxes_per_leaf==0||control.maximum_boxes_per_leaf>65536
         ||control.maximum_leaf_evaluations==0)
         throw std::invalid_argument("Invalid internal ring boundary budget");
-    RingBoundaryEvaluation result;result.source=source;result.source_generation=source_generation_;
-    const auto moment_bounds=ring_moment_enclosures(op,source);
-    const auto count=op.faces().size();
+    if(!source_generation_||op.cells().size()>static_cast<std::size_t>(std::numeric_limits<int>::max())
+        ||nodes_.size()>static_cast<std::size_t>(std::numeric_limits<int>::max())
+        ||op.faces().size()>static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::overflow_error("Ring execution packet shape or generation is invalid");
+    // Validate actual source/surface coverage without changing the requested cap.
+    (void)full_ring_traversal_work_bound(op);
+    using namespace ring_boundary_detail;
+    PreparedRingBoundaryInputs input;
+    input.source=source;input.control=control;input.source_generation=source_generation_;
+    input.nodes=nodes_.data();input.node_count=static_cast<int>(nodes_.size());
+    input.density=ring_density_.data();input.cell_count=op.size();
+    input.moment_bounds=ring_moment_enclosures(op,source);
+    input.edges.resize(op.size());
+    for(int cell=0;cell<op.size();++cell)
+        input.edges[cell]={op.lower(cell,0),op.upper(cell,0),op.lower(cell,1),op.upper(cell,1)};
+    input.faces.resize(op.faces().size());
+    for(std::size_t face=0;face<op.faces().size();++face) {
+        input.faces[face]={op.faces()[face].center[0],op.faces()[face].center[1],op.faces()[face].boundary_side};
+        if(op.faces()[face].boundary_side>=0)input.surface_faces.push_back(static_cast<int>(face));
+    }
+    input.quartets.resize(nodes_.size());
+    // Current same-density eligibility describes exact stored rectangle unions.
+    const auto read=input.view();
+    for(int i=0;i<input.node_count;++i)if(nodes_[i].cell<0)
+        input.quartets[i]=uniform_ring_quartet(read,i);
+    return input;
+}
+
+RingBoundaryEvaluation GravityBoundary::ring_boundary(
+    const arch::elliptic::CompositePoisson& op,const GravitySolveIdentity& source,
+    const RingBoundaryControl& control) const {
+    const auto input=prepare_ring_boundary_inputs(op,source,control);
+    RingBoundaryEvaluation result;result.source=input.source;result.source_generation=input.source_generation;
+    const auto count=input.faces.size();
     result.values.assign(count,0.);result.lower.assign(count,0.);result.upper.assign(count,0.);
     result.errors.resize(count);
     result.far_truncation_upper.assign(count,0.);
     result.far_evaluation_width_upper.assign(count,0.);
-    RingEnclosureControl leaf_control{};
-    leaf_control.absolute_target=positive_down(control.face_absolute_target/op.size());
-    leaf_control.maximum_boxes=control.maximum_boxes_per_leaf;
-    // Current moments and quartet eligibility are always recomputed from the full source.
-    // The integral memo stores only mathematical intervals, never source authority.
-    std::vector<std::optional<UniformRingQuartet>> quartets(nodes_.size());
-    // Same-density coalescing integrates the exact union of stored rectangles.
-    // It does not promote their potential errors to ideal-root scope.
-    for(int i=0;i<static_cast<int>(nodes_.size());++i)if(nodes_[i].cell<0)
-            quartets[i]=uniform_ring_quartet(op,nodes_,i,ring_density_);
-    bool converged=true;result.status=RingBoundaryStatus::Bounded;
-    for(std::size_t face=0;face<count;++face)if(op.faces()[face].boundary_side>=0) {
-        SignedInterval total{};
-        for(int index=0;index<static_cast<int>(nodes_.size());) {
-            const auto& node=nodes_[index];
-            if(result.leaf_evaluations+result.parent_evaluations>=control.maximum_leaf_evaluations) {
-                result.status=RingBoundaryStatus::WorkLimit;return result;
-            }
-            if(node.cell<0) {
-                ++result.parent_evaluations;
-                if(quartets[index]) {
-                    // The parent visit pays for this exact integral first.
-                    // Avoid evaluating a multipole approximation unnecessarily.
-                    ++result.coalesced_parent_attempts;
-                    const auto& tile=*quartets[index];
-                    auto tile_control=leaf_control;
-                    tile_control.absolute_target=positive_down(4.*leaf_control.absolute_target);
-                    const auto enclosure=memoized_ring_potential(tile.rl,tile.rh,tile.zl,tile.zh,
-                        tile.density,op.faces()[face].center[0],op.faces()[face].center[1],
-                        source.gravitational_constant,tile_control,true,result);
-                    result.range_evaluations+=enclosure.range_evaluations;
-                    result.kernel_enclosures+=enclosure.kernel_enclosures;
-                    result.agm_iterations+=enclosure.agm_iterations;
-                    if(enclosure.bound_valid&&enclosure.status==RingIntervalStatus::Bounded) {
-                        total=interval_sum(total,{enclosure.lower,enclosure.upper});
-                        ++result.coalesced_parent_acceptances;
-                        result.coalesced_native_leaves+=4;
-                        result.represented_leaf_evaluations+=4;
-                        index=node.end;continue;
-                    }
-                    // Failed exact integral falls back to the old far/descent
-                    // path, with its extra evaluation charged to the same cap.
-                    if(result.leaf_evaluations+result.parent_evaluations>=control.maximum_leaf_evaluations) {
-                        result.status=RingBoundaryStatus::WorkLimit;return result;
-                    }
-                    ++result.parent_evaluations;
-                }
-                double tail=0.;SignedInterval evaluation{};
-                const auto far=ring_node_far_enclosure(node,moment_bounds[index],
-                    op.faces()[face].center[0],op.faces()[face].center[1],source.gravitational_constant,
-                    &tail,&evaluation);
-                const double allowance=positive_down(leaf_control.absolute_target*moment_bounds[index].leaves);
-                const double halfwidth=interval_finite(far)
-                    ? positive_up(.5*(far.upper-far.lower)) : std::numeric_limits<double>::infinity();
-                if(interval_finite(far)&&halfwidth<=allowance) {
-                    total=interval_sum(total,far);
-                    ++result.parent_acceptances;
-                    result.far_truncation_upper[face]=sum_up(result.far_truncation_upper[face],tail);
-                    result.far_evaluation_width_upper[face]=sum_up(result.far_evaluation_width_upper[face],
-                        positive_up(evaluation.upper-evaluation.lower));
-                    result.represented_leaf_evaluations+=moment_bounds[index].leaves;
-                    index=node.end;continue;
-                }
-                ++index;continue; // Budget/separation failure descends; no geometric-only opening.
-            }
-            ++result.leaf_evaluations;
-            ++result.represented_leaf_evaluations;
-            ++index;
-            // Same operator-owned edge arithmetic used by unit_cell_moments;
-            // lower+width could re-round an upper edge differently.
-            const double rl=op.lower(node.cell,0),rh=op.upper(node.cell,0);
-            const double zl=op.lower(node.cell,1),zh=op.upper(node.cell,1);
-            const auto leaf=memoized_ring_potential(rl,rh,zl,zh,
-                ring_density_[node.cell],op.faces()[face].center[0],
-                op.faces()[face].center[1],source.gravitational_constant,leaf_control,false,result);
-            result.range_evaluations+=leaf.range_evaluations;
-            result.kernel_enclosures+=leaf.kernel_enclosures;
-            result.agm_iterations+=leaf.agm_iterations;
-            if(!leaf.bound_valid) {
-                result.status=RingBoundaryStatus::PrecisionLimit;return result;
-            }
-            if(leaf.status!=RingIntervalStatus::Bounded) {
-                converged=false;
-                result.status=leaf.status==RingIntervalStatus::WorkLimit?
-                    RingBoundaryStatus::WorkLimit:RingBoundaryStatus::PrecisionLimit;
-            }
-            total=interval_sum(total,{leaf.lower,leaf.upper});
-        }
-        if(!interval_finite(total)) {
-            result.status=RingBoundaryStatus::PrecisionLimit;return result;
-        }
-        result.lower[face]=total.lower;result.upper[face]=total.upper;
-        result.values[face]=total.lower+.5*(total.upper-total.lower);
-        const double error=positive_up(std::max(result.values[face]-total.lower,
-                                                total.upper-result.values[face]));
-        result.errors[face].absolute_error=error;
-        if(!std::isfinite(result.values[face])||!std::isfinite(error)) {
-            result.status=RingBoundaryStatus::PrecisionLimit;return result;
-        }
-        if(error>control.face_absolute_target) {
-            converged=false;if(result.status==RingBoundaryStatus::Bounded)
-                result.status=RingBoundaryStatus::PrecisionLimit;
-        }
-    }
-    // Certification is all-or-nothing, including FP64 source reduction/budget.
-    if(converged)for(auto& error:result.errors)
-        error.quality=arch::elliptic::BoundaryErrorQuality::CertifiedAbsolute;
+    using namespace ring_boundary_detail;
+    // Preserve the existing exact Host memo, lookup/admission order and leaf API.
+    auto evaluate_leaf=[this](const RingLeafEdges& edge,double density,double ro,double zo,
+        double G,const RingEnclosureControl& leaf_control,bool quartet,RingBoundaryScalars& diagnostics) {
+        return memoized_ring_potential(edge.rl,edge.rh,edge.zl,edge.zh,density,ro,zo,G,
+            leaf_control,quartet,diagnostics);
+    };
+    const RingBoundaryOutputView output{result.values.data(),result.lower.data(),result.upper.data(),
+        result.far_truncation_upper.data(),result.far_evaluation_width_upper.data(),result.errors.data(),count};
+    ring_boundary_shared(input.view(),input.control,output,result,evaluate_leaf);
     return result;
 }
+
 /** Certify the actual producer's source and observer coordinate identity.
  * No re-integration, coordinate replacement or physics change is performed.
  * All leaf edges and exterior face centers must equal ideal root coordinates

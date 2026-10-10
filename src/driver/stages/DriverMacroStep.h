@@ -1,11 +1,12 @@
 /**
  * @file DriverMacroStep.h
- * @brief Execute the existing symmetric split with one native Host endpoint owner.
+ * @brief Execute the existing symmetric split with one actual native endpoint owner.
  *
  * Workflow:
  * 1. Borrow the actual Runtime StageBinding and the already-bound diagnostics.
- * 2. For Host native RZ only, snapshot the existing complete transaction owner
- *    before any B/2-D/2-H-D/2-B/2 field or receipt write.
+ * 2. For native RZ, preflight the actual side/source and acquire the same
+ *    complete transaction before any B/2-D/2-H-D/2-B/2 field or receipt write.
+ *    Actual source journals retain the backend's private frame authentication.
  * 3. Execute the same two half-steps and full Hydro step through their original
  *    callables and CPU measurement intervals; no time tableau is introduced.
  * 4. Complete real Current ghosts/EOS at Hydro(t_n+dt), check exact ledger and
@@ -13,8 +14,9 @@
  * 5. On rejection, the one owner restores fields/leases/metadata. The separately
  *    scoped advice guard restores accepted timestep advice, not completed I/O.
  *
- * Existing charts and Device execution retain their original sequence without
- * transaction snapshots or an additional endpoint boundary evaluation.
+ * Existing charts retain their original sequence. Native sides retry only an
+ * actual Runtime-qualified active thermal refusal after complete rollback;
+ * Device classification and the endpoint retain their actual resident fields.
  */
 #pragma once
 
@@ -48,8 +50,7 @@ public:
     NativeMacroStepAdvice(const DriverRuntime& runtime,SimulationController& controller,
         double& burn_advice) noexcept
         : controller_(controller),burn_advice_(burn_advice),
-          active_(!runtime.backend()
-              &&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz),
+          active_(runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz),
           old_dt_(active_?controller.dt_old:0.),old_burn_(active_?burn_advice:0.) {}
     NativeMacroStepAdvice(const NativeMacroStepAdvice&)=delete;
     NativeMacroStepAdvice& operator=(const NativeMacroStepAdvice&)=delete;
@@ -64,15 +65,15 @@ public:
 /** Try the original complete macro from the same accepted entry.
  * Workflow: Advice -> original proposal/alignment -> fresh caller-owned context
  * and unique macro transaction -> accept once, or fully unwind -> dt/2.
- * Only the private Runtime-qualified exception reaches retry. Caps include all
- * attempted wall work; no source workspace is read after failed invalidation.
+ * Only the actual Runtime-qualified exception reaches retry on either Native
+ * side. Advice/admissible alignment apply on both sides. Caps include attempted
+ * wall work; failed source state is not read.
  */
 template<class Attempt>
 double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController& controller,
     double& burn_advice,double accepted_dt_cap,Attempt&& execute)
 {
-    const bool native=!runtime.backend()
-        &&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const bool native=runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
     const int maximum_attempts=native?16:1;
     double retry_cap=accepted_dt_cap;
     const double accepted_time=controller.t_current;
@@ -115,6 +116,8 @@ double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController
 /** Execute the unique Driver five-segment sequence.
  * burn(half,dt/2,token), diffusion(dt/2), hydro(dt) call the existing owners.
  * measure(CpuStage,callable) preserves the existing nonoverlapping CPU timers.
+ * Native sides borrow the same owner; Device requires positive dt before split
+ * work. The final Current check uses the actual field side and source journal.
  * Injected callables in engineering tests exercise rollback only; they do not
  * replace a scientific qualification of the actual Burn/Diffusion/source math.
  */
@@ -123,10 +126,21 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
     const Numerics::IHydroSolver* hydro,bool has_burn,BurnExecutor&& burn,
     DiffusionExecutor&& diffusion,HydroExecutor&& advance_hydro,Measure&& measure)
 {
-    const bool native_host=!runtime.backend()
-        &&runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    const bool native=runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
+    if(native&&runtime.backend()) {
+        // The shared transaction also serves dt=0 boundary refresh. A macro is
+        // a genuine numerical advance and cannot borrow that zero-dt allowance.
+        if(!std::isfinite(context.step_dt)||!(context.step_dt>0.))
+            throw std::logic_error("Native Device macro requires a finite positive timestep");
+    }
+    // SourceNone needs no source journal. Every configured body force must
+    // bring its actual preparation owner before any savepoint or split work;
+    // otherwise a changed configuration could advance a source-free macro.
+    if(native&&!context.hydro_preparation
+        &&runtime.configuration().physics.gravity.type!="none")
+        throw std::invalid_argument("Native macro requires its actual prepared source contract before split work");
     std::optional<RuntimeStateTransaction> transaction;
-    if(native_host) {
+    if(native) {
         // Presence is a necessary preflight, not scientific authority. The
         // subsequent Runtime boundary work authenticates its actual EOS/BC
         // and domain, including failures after the second burn publication.
@@ -156,7 +170,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
         // Native RKL completes Current boundaries before its first recurrence
         // stage. Refresh the genuine Runtime EOS snapshot at this half's
         // input time before that initial completion, not only inside stages.
-        if(native_host)context.configure_boundary_context(start,boundary::BoundaryPurpose::Diffusion);
+        if(native)context.configure_boundary_context(start,boundary::BoundaryPurpose::Diffusion);
         else boundaries.configure_stage(start,boundary::BoundaryPurpose::Diffusion);
         if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(1,half_dt);
         diffusion(half_dt);
@@ -166,7 +180,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
     measure(CpuStage::Hydro,[&] {advance_hydro(dt);});
     measure(CpuStage::Diffusion,[&] {
         context.boundary_start_time=start+half_dt;context.boundary_step_dt=half_dt;
-        if(native_host)context.configure_boundary_context(start+half_dt,boundary::BoundaryPurpose::Diffusion);
+        if(native)context.configure_boundary_context(start+half_dt,boundary::BoundaryPurpose::Diffusion);
         else boundaries.configure_stage(start+half_dt,boundary::BoundaryPurpose::Diffusion);
         if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(2,half_dt);
         diffusion(half_dt);
@@ -193,7 +207,7 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
             const auto coherence=context.ledger.inspect(key);
             scheduler::detail::require_settled_destination(coherence);
             context.ledger.require_readable(key,
-                {state::ExecutionSide::Host,coherence.interior.version,true,true});
+                {context.side,coherence.interior.version,true,true});
         }
         transaction->validate_storage();
     }
