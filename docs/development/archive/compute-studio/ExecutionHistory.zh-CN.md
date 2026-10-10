@@ -2019,3 +2019,11 @@ production values gate保留，可靠near bound/global ledger及RZ B/C/D仍待�
 修复前的CUDA记录为8/9通过，剩余失败定位到完整Burn宏步Host参考的高阶几何源EOS压力拒绝。共享修复已沿既有保守ray收缩用于可选高阶点，使用基线时仍required检查，正常路径仍4次压力查询。修正前176项冻结源码的原10个target共99项构建步骤已全部完成，实际退出0，耗时9729.861秒且资源护栏未触发。原9项消费者（8项Device执行、1项Host表fixture）首次执行为6通过、3失败；既有NVCC／Host registry owner通过。三项真实问题已分别补Self全域实际事务校验、修正Native扩散收据测度、按独立动能证明修正新classifier fixture构造，保留原阈值及失败记录。三项修正后11项增量构建已实际退出0、约111.184秒；classifier和AMR交换原owner通过，Hydro原600秒及旧身份1800秒尝试均触及管理上限，后者停在首个真实isolated case，尚无新数值断言失败。保留两次超时证据，旧身份不再重跑；当前源码完整owner需据实际工作量确定资源安排，不能记为通过。Burn同层四模块宏步通过；混层夹具漏区分Diffusion合法物理面查询，按原接口补purpose分流后，混层Device实际出现EOS拒绝。独立源码审查及最小反例确认嵌套checked EOS可将可回退试算写入required标记；现已统一递归candidate选择，原owner反例先失败后通过。公式、EOS和门槛不变。受影响增量编译因系统可用内存护栏中断后单独串行恢复，backend／Burn构建已实际退出0、1456.678秒。原Burn随后实际退出8、128.781秒，混层SourceNone源项预检断言失败，护栏未触发；源码确认非none配置缺少source准备器时未先拒绝，现于共用Native宏步入口补上检查，原数学与断言保持。受影响原Host owner已通过、28.63秒、零skip；原CUDA Burn owner亦通过、127.39秒、零skip，同层／混层宏步与late rollback保持原门槛。当前继续原消费者和生产身份验收，旧条件队列未启动下游。原Hydro仅增加阶段进度输出，完整原宏步仍待复验。当前176项修正身份另行冻结，通过原消费者后再构建新生产ARCH；尚未授予新Device完整数值通过。随后还需新生产CUDA执行物的公共四模块和fresh checkpoint验收。
 
 Helm新夹具两个V动量的限定运算尺度判据经用户明确授权，3e-14系数及其余原门槛保持，原失败证据保留。公式、精度、完整面EOS、精确缓存、严格浮点及两次Strang燃烧保持。
+
+## 受控截断与文档交接节点（2026-10-10 23:53 JST）
+
+按用户要求先收束当前运行并推送现状。唯一剩余CUDA完整Hydro owner由已核实身份的原资源护栏接收SIGTERM，只清理其所属进程；护栏包装器实际退出143、外层序列退出1，墙钟7522.660秒，相关五个进程均已退出。停止前原8/9消费者及独立registry通过保持；首个轴对称同层isolated case的Device Current实际返回，Host两个batch stage接受，完整isolated batch／宏步及完整Hydro owner未完成，不能记PASS。截至停止前未记录新的数值断言失败。护栏未因资源触发，所属进程合计RSS峰值312500KiB，E盘最小空余23576039424bytes；采样因截断标为不完整，不作无泄漏证明。
+
+最终CPU白名单环境、原cache增量ARCH构建及原单配置owner已通过，CPU ELF为`a1c76c6f…`；原68项完整记录不迁移到该新ELF。CUDA生产ELF `0828b3c8…` 仅构建与只读配置身份通过，公共四模块三宏步及独立fresh未执行；正式CPU/CUDA配对计时未执行，4070Ti当前正式配对0组。RZ有限保存状态至2.5次声穿越的原预算签收保持，原五次终点及其长程严格续算继续后置。
+
+本节点只更新现状文档与紧凑处理后记录，实现、测试、CI代码及科学门槛不变，不启动新运行，不上传原始H5、checkpoint或全量日志。当前完整release未签收；后续围绕剩余实际功能缺口与执行成本统一调整。当前出口沿[O总表](../../ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)，终止身份及范围沿[公共消费者摘要](../../../../validation/backend/results/release-closure-20261009/native-public-consumer-summary.json)查阅。
