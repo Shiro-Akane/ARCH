@@ -22,3 +22,8 @@
 - 既有科学验收以 `docs/development/ComputeOptimizationPlan.zh-CN.md` 顶部 R1–R6 和 `ComputeStudioReleasePlan-20261006.zh-CN.md` 的当前出口为准。历史空复选框不等于待重做任务；已通过项按其源码、执行物和输入身份复用，缺项、失败、中断与后置分开记录。
 
 - 新工作区测试前核对 Git LFS 夹具：`studio/tests/fixtures/sod-1d.h5` 应为真实 HDF5，而非文本指针。本轮 `git lfs checkout studio/tests/fixtures/sod-1d.h5` 从本地对象库恢复成功；对象缺失时仅拉取需要的路径，勿顺带下载全部 EOS／历史模拟数据。
+
+## 文件归属与注释
+
+- 新增、拆分或移动文件前，按 `docs/development/ImplementationOwnership.md` 核对目录、文件职责、调用方和构建归属；优先复用现有所有者，不以文件数或文件大小决定拆分。
+- 冻结行为的源码注释按 `docs/development/CommentAndDocumentationStyle.md` 说明职责、流程、数学约定和资源生命周期。历史证据及锁定字节的文件保留原文，通过维护中的说明补充；注释改善不授权数值、接口或验收变化。

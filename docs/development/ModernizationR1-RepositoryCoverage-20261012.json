@@ -1,18 +1,18 @@
 {
   "work_package": "modernization-R1",
   "date": "2026-10-12",
-  "baseline_commit": "a0185bdf524d374f9c804666a98a4c76668db044",
+  "baseline_commit": "c5ce17a67bd8d82899ab7420fec627c3cf97cb9d",
   "branch_observed": "compute/optim",
-  "inventory_source": "git ls-tree -r --name-only a0185bdf524d374f9c804666a98a4c76668db044",
-  "tracked_paths": 11076,
-  "assigned_paths": 11076,
+  "inventory_source": "git ls-tree -r --name-only c5ce17a67bd8d82899ab7420fec627c3cf97cb9d",
+  "tracked_paths": 11078,
+  "assigned_paths": 11078,
   "unassigned_paths": 0,
   "baseline_entry_modes": {
-    "100644": 11069,
+    "100644": 11071,
     "100755": 7
   },
   "gitlinks_or_submodules": 0,
-  "meaning": "100% 仅指此 Git 基线的路径分类；不代表逐文件阅读、构建、运行、科学正确性或重构验收。R1 新建文档不在旧基线计数内。",
+  "meaning": "100% 仅指调查 Git 基线的路径分类。阶段1另核对主要模块的代表调用与构建归属；不表示逐文件/公式阅读、运行验收或后端全路由等价。本轮新增文档不反计入调查基线。",
   "selection_rule": "目录前缀以 / 结尾，最长匹配优先；非目录前缀精确匹配单文件；空前缀仅兜底根文件。每条 tracked_paths 为排除更长匹配后的互斥计数。",
   "top_level_counts": {
     "(root files)": 12,
@@ -21,7 +21,7 @@
     "EOS_toolkit": 9,
     "LICENSES": 4,
     "cmake": 23,
-    "docs": 628,
+    "docs": 630,
     "examples": 3,
     "include": 3,
     "simulation": 59,
@@ -41,7 +41,7 @@
     "historical_archive": 91,
     "license_and_provenance": 4,
     "maintained_upstream_derived_production": 26,
-    "mixed_project_documentation": 614,
+    "mixed_project_documentation": 616,
     "optional_external_comparison_and_evidence": 34,
     "project_cuda_execution_and_adapters": 119,
     "project_examples": 3,
@@ -629,7 +629,7 @@
       "kind": "mixed_project_documentation",
       "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
       "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
-      "tracked_paths": 575
+      "tracked_paths": 577
     },
     {
       "prefix": "docs/guides/",
@@ -902,5 +902,46 @@
     "所有历史记录的科学重签及 validation 结果中的数据／日志全读",
     "原始 H5／checkpoint／EOS 表内容、第三方源树内部、原生 GUI UAT",
     "新的编译／运行／内存基线、CUDA 完整构建、RZ 长程与性能优化"
-  ]
+  ],
+  "previous_structure_snapshot": {
+    "baseline_commit": "a0185bdf524d374f9c804666a98a4c76668db044",
+    "tracked_paths": 11076,
+    "report": "ModernizationR1-RepositoryMap-20261012.zh-CN.md"
+  },
+  "stage1_inspection": {
+    "status": "static_survey_complete",
+    "report": "ModernizationR1-Stage1Completion-20261012.zh-CN.md",
+    "build_inventory": "ModernizationR1-BuildInventory-20261012.json",
+    "depth": "all paths classified; major-family owner/consumer/build/test navigation inspected; representative shared source edges checked",
+    "families": [
+      "configuration/cases/dispatch",
+      "driver/schedule/state/residency",
+      "hydro/reconstruction/flux/update",
+      "grid/metrics/native-RZ/diagnostics",
+      "AMR/topology/ghost/seam/transfer/reflux/refinement",
+      "EOS/source/view/device-owner",
+      "network/NSE/ODE/energy/linear-provider",
+      "diffusion/RKL/constitutive-stress",
+      "gravity/source/Poisson/MG/host-device-execution",
+      "physical-boundary/transport/callback",
+      "checkpoint/plot/HDF5/publication",
+      "Core-API/preview/session/configuration",
+      "Studio/config/preview/build/run/restart/plot/desktop",
+      "CMake/dependency/generated-routes",
+      "tests/fixtures/independent-references/CI",
+      "validation/tools/resources/provenance",
+      "layout/comment/future-placement",
+      "upstream-provenance/runtime-data/history/candidates"
+    ],
+    "not_verified": [
+      "fresh scientific runs",
+      "all policy/geometry/backend combinations",
+      "raw data and large upstream algebra line-by-line",
+      "modernization performance/compile/memory baseline",
+      "full CUDA compilation",
+      "RZ long campaigns",
+      "native GUI UAT"
+    ],
+    "unclassified_paths": []
+  }
 }

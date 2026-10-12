@@ -132,6 +132,43 @@ declaration header. The existing `eosdispatch` remains the selection authority.
 Source constants/interpretation and the five-point stencil are shared contracts,
 not independently maintained copies in these files.
 
+## Directory and file placement
+
+Before creating or relocating a unit, check its responsibility against this map,
+its direct callers, includes/imports and actual CMake or Studio build entry.
+Choose the existing owner with the same mathematics, data lifetime or control
+boundary. A new directory needs a coherent responsibility; file count, file
+length and visual symmetry are not sufficient reasons. Keep related work
+together and preserve public case/API/CLI entry paths unless their contract is
+explicitly being changed.
+
+| Responsibility | Existing location and boundary |
+| --- | --- |
+| Shared reconstruction, flux, integration or state mathematics | `src/numerics/{reconstruction,flux,integrator,state}`; CUDA policies bind these implementations |
+| EOS view/closure, source decoding or table completion | `src/physics/eos` and its `tabular` / `sources` owners; CUDA allocation/upload stays in `src/cuda/microphysics/eos/owners` |
+| Reaction network/NSE physics and ODE coupling | `src/physics/{network,nse}` and `src/numerics/burnsolver/{ode,coupling}`; preserve upstream provenance and shared energy authority |
+| AMR topology, transfer, reflux or refinement | Existing `src/amr/{topology,transfer,flux,refinement}` owner; device traversal/migration stays in `src/cuda/{amr,runtime/amr}` |
+| Device kernels and execution adapters | The matching `src/cuda/hydro`, `microphysics`, `diffusion` or `runtime` area; no separate copy of shared formulas |
+| Stage binding, order or state lifecycle | `src/driver/stages`, `schedule` or `runtime`, according to which contract it owns |
+| API implementation or request/response contract | Matching `src/api/{configuration,preview,session,inspection,protocol,resources}` owner; existing public declaration paths remain stable |
+| Persistent data and serialization | `src/io/{hdf5,chk,plot}`; driver materialization/order remains in `src/driver/io` |
+| New user problem | `simulation/<case>` through `include/UserInterface.h` and `include/GlobalDefs.h`; registry and preparation remain in Core |
+| Generated network or CUDA binding | Generator/manifest owner in `tools/network` or `cmake`; emit selected packages to their configured package root and CUDA route TUs to the build tree |
+| Test or independent oracle | `tests/{host,cuda,api,tooling}/<area>`; shared fixtures/math under `tests/{fixtures,math}`; scientific references/runners under `validation/<area>` |
+| Studio service, renderer contract or desktop packaging | `studio/host`, `studio/src` (including `studio/src/host`) or `studio/desktop`; these have distinct process responsibilities |
+
+For an accepted move, update direct consumers, target/source lists, local links
+and the ownership map together. Preserve independent test oracles and historical
+evidence. Use the [comment guidance](CommentAndDocumentationStyle.md) to explain
+the resulting responsibility and data flow. A path change alone does not justify
+a forwarding layer, a second process runner, or a new abstraction.
+
+The [P1 layout record](layout/README.zh-CN.md) and its `moves.json` retain their
+2026-09-22 identity. They are historical migration evidence, not a current file
+count or authorization gate. The [stage 1 inspection](ModernizationR1-Stage1Completion-20261012.zh-CN.md)
+reconciles later multigrid work and the intentionally retired sparse BE-NR
+header without rewriting that record.
+
 ## Current interface and compatibility review
 
 Updated 2026-09-08. These decisions define the maintained interfaces. Verification

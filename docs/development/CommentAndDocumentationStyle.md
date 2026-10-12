@@ -86,6 +86,39 @@ changes need their own implementation review and tests.
 
 ## Preserve evidence and translations
 
+### Comments in behavior-frozen source
+
+Behavior-frozen source keeps its formulas, operation order, acceptance gates,
+interfaces and ownership contracts. Within an authorized comment task, improve
+the explanation without changing those contracts. A useful file or module
+comment identifies the responsibility and real flow: inputs, owned work,
+published outputs, and the conditions under which consumers may read them.
+Declaration headers describe the contract they expose; they do not claim to
+execute the implementation's request handling or numerical work.
+
+At sensitive boundaries, explain the implemented units, sign and coordinate
+conventions, conserved measures, borrowed views, slot/ghost identity, resource
+lifetime, synchronization and failure propagation where relevant. Link the
+maintained mathematical owner rather than copying a formula into an adapter.
+Explain non-obvious choices beside their implementation. Skip obvious operations
+and repeated generic Workflow steps; no fixed comment length or paragraph count
+is a quality requirement. Apply the same responsibility and lifetime guidance
+to new or split Studio modules, using the appropriate TypeScript comment form.
+
+Comment-only changes still change source bytes and may invalidate source
+digests, build identities or evidence tied to an exact revision. Review the diff
+and affected identity rules; record any refreshed identity separately. Reuse
+existing risk-adaptive verification rather than running an expensive scientific
+campaign merely for prose. Do not relabel an old measurement as a result for
+the edited source.
+
+If a file is explicitly byte-frozen, an imported source requires its original
+annotations, or it is immutable historical evidence, retain the file and add
+the explanation in its maintained owner documentation or a new dated record.
+Changing behavior, protected interfaces or numerical criteria requires its
+own authorized work package. This guidance does not authorize a bulk comment
+rewrite or a redesign of frozen source.
+
 Frozen results, failed attempts and signed review records retain their original
 text, inputs and identities. Explain later work in a new record or a maintained
 summary; do not rewrite historical evidence to match a newer implementation.
