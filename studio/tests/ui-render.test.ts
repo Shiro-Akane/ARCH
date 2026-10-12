@@ -89,3 +89,25 @@ test('raw Init composition labels Core species indices without normalization or 
  const empty=structuredClone(data);empty.samples[0].massFractions=[];
  assert.match(renderToStaticMarkup(createElement(Probe,{data:empty,state:{species:[]}})),/No species registered by Core/);
 });
+
+test('production workspace choices exclude illustrations while explicit debug routes remain',async()=>{
+ const {initialWorkspace,workspaceOptions}=await import('../src/data/workspacePresentation.ts');
+ assert.equal(initialWorkspace(),'config');
+ assert.deepEqual(workspaceOptions.map(option=>option.value),['config','plotfile']);
+ assert.equal(initialWorkspace('?demo=cellular'),'cellular');
+ assert.equal(initialWorkspace('?demo=hotspot'),'mock');
+ assert.equal(initialWorkspace('?demo=unknown'),'config');
+});
+test('header uses selected model, actual parameter filename and unsaved state once',async()=>{
+ const Header=await component('components/WorkspaceHeader.tsx','WorkspaceHeader');
+ const Core=await component('state/coreParameters.tsx','CoreParameterProvider');
+ const html=renderToStaticMarkup(createElement(Core,null,createElement(Header,{source:'config',onSource:()=>{},debugSamples:false,copy:{filename:'my-input.par',text:'cfl=0.4',valid:true,dirty:true}})));
+ assert.match(html,/>Sod</);
+ assert.equal((html.match(/>my-input.par</g)??[]).length,1);
+ assert.match(html,/>Unsaved</);
+ assert.match(html,/aria-label="Workspace"/);
+ assert.equal((html.match(/<option/g)??[]).length,2);
+ assert.doesNotMatch(html,/Real config|Working copy|REAL CONFIG|Hotspot demo|Cellular snapshot/);
+ const plot=renderToStaticMarkup(createElement(Core,null,createElement(Header,{source:'plotfile',onSource:()=>{},debugSamples:false,copy:null})));
+ assert.match(plot,/Read only/);assert.doesNotMatch(plot,/>Unsaved</);
+});
