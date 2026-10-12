@@ -1,0 +1,906 @@
+{
+  "work_package": "modernization-R1",
+  "date": "2026-10-12",
+  "baseline_commit": "a0185bdf524d374f9c804666a98a4c76668db044",
+  "branch_observed": "compute/optim",
+  "inventory_source": "git ls-tree -r --name-only a0185bdf524d374f9c804666a98a4c76668db044",
+  "tracked_paths": 11076,
+  "assigned_paths": 11076,
+  "unassigned_paths": 0,
+  "baseline_entry_modes": {
+    "100644": 11069,
+    "100755": 7
+  },
+  "gitlinks_or_submodules": 0,
+  "meaning": "100% 仅指此 Git 基线的路径分类；不代表逐文件阅读、构建、运行、科学正确性或重构验收。R1 新建文档不在旧基线计数内。",
+  "selection_rule": "目录前缀以 / 结尾，最长匹配优先；非目录前缀精确匹配单文件；空前缀仅兜底根文件。每条 tracked_paths 为排除更长匹配后的互斥计数。",
+  "top_level_counts": {
+    "(root files)": 12,
+    ".agents": 2,
+    ".github": 4,
+    "EOS_toolkit": 9,
+    "LICENSES": 4,
+    "cmake": 23,
+    "docs": 628,
+    "examples": 3,
+    "include": 3,
+    "simulation": 59,
+    "src": 579,
+    "studio": 337,
+    "tests": 225,
+    "tools": 23,
+    "validation": 9165
+  },
+  "category_counts": {
+    "api_contract_and_history": 6,
+    "build_definition": 23,
+    "ci_and_review_configuration": 4,
+    "compiled_case_source_and_input": 59,
+    "curved_geometry_validation_assets": 15,
+    "generated_package_location_without_package": 2,
+    "historical_archive": 91,
+    "license_and_provenance": 4,
+    "maintained_upstream_derived_production": 26,
+    "mixed_project_documentation": 614,
+    "optional_external_comparison_and_evidence": 34,
+    "project_cuda_execution_and_adapters": 119,
+    "project_examples": 3,
+    "project_generator_and_adapters": 7,
+    "project_skill": 2,
+    "project_source_and_local_docs": 252,
+    "project_source_with_provenance": 82,
+    "project_validation_and_build_tools": 16,
+    "public_forwarding_header": 3,
+    "repository_entry": 12,
+    "runtime_data_and_provenance": 9,
+    "rz_contract_validation_assets": 11,
+    "studio_build_and_entry": 13,
+    "studio_contract": 1,
+    "studio_desktop": 11,
+    "studio_frontend_components": 44,
+    "studio_frontend_data_adapter": 24,
+    "studio_frontend_host_adapter": 30,
+    "studio_host": 40,
+    "studio_licenses": 1,
+    "studio_src": 11,
+    "studio_tests": 95,
+    "tests_and_fixtures": 225,
+    "unaccepted_candidate_evidence": 9,
+    "validation_runner_input_and_reference": 218,
+    "versioned_api_example_evidence": 85,
+    "versioned_evidence_with_possible_replay_code": 8875
+  },
+  "coverage_groups": [
+    {
+      "prefix": "",
+      "kind": "repository_entry",
+      "inspection": "入口文件已读；根配置按相关段落核对",
+      "note": "仅匹配未被更长前缀覆盖的根文件。",
+      "tracked_paths": 12
+    },
+    {
+      "prefix": ".agents/",
+      "kind": "project_skill",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": ".github/",
+      "kind": "ci_and_review_configuration",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "cmake/",
+      "kind": "build_definition",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 23
+    },
+    {
+      "prefix": "docs/",
+      "kind": "mixed_project_documentation",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 8
+    },
+    {
+      "prefix": "EOS_toolkit/",
+      "kind": "runtime_data_and_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 9
+    },
+    {
+      "prefix": "LICENSES/",
+      "kind": "license_and_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "examples/",
+      "kind": "project_examples",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 3
+    },
+    {
+      "prefix": "include/",
+      "kind": "public_forwarding_header",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 3
+    },
+    {
+      "prefix": "simulation/",
+      "kind": "compiled_case_source_and_input",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 59
+    },
+    {
+      "prefix": "src/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "studio/",
+      "kind": "studio_build_and_entry",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 13
+    },
+    {
+      "prefix": "tests/",
+      "kind": "tests_and_fixtures",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "tools/",
+      "kind": "project_validation_and_build_tools",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 16
+    },
+    {
+      "prefix": "validation/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "src/core/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 34
+    },
+    {
+      "prefix": "src/data/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 7
+    },
+    {
+      "prefix": "src/grid/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 7
+    },
+    {
+      "prefix": "src/interface/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "src/driver/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 36
+    },
+    {
+      "prefix": "src/amr/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 31
+    },
+    {
+      "prefix": "src/numerics/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/physics/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/cuda/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/io/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 16
+    },
+    {
+      "prefix": "src/api/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 33
+    },
+    {
+      "prefix": "src/numerics/burnsolver/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "src/numerics/diffusion/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 12
+    },
+    {
+      "prefix": "src/numerics/elliptic/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 5
+    },
+    {
+      "prefix": "src/numerics/flux/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "src/numerics/integrator/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "src/numerics/linalg/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 7
+    },
+    {
+      "prefix": "src/numerics/multigrid/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 8
+    },
+    {
+      "prefix": "src/numerics/reconstruction/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "src/numerics/state/",
+      "kind": "project_source_and_local_docs",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录归属不等于全部可在设备执行；Host 求解器与共享数学须逐调用区分。",
+      "tracked_paths": 3
+    },
+    {
+      "prefix": "src/physics/eos/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 24
+    },
+    {
+      "prefix": "src/physics/network/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "src/physics/gravity/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 26
+    },
+    {
+      "prefix": "src/physics/boundary/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 10
+    },
+    {
+      "prefix": "src/physics/diffusionCoe/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/physics/nse/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/physics/constant/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "src/physics/species/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "src/physics/diagnostics/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "含 ARCH 实现及有来源声明的适配；不将整个目录视为第三方快照。",
+      "tracked_paths": 3
+    },
+    {
+      "prefix": "src/physics/network/iso7/",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "来源声明、代表头文件／包含关系已核对，未重审全部公式",
+      "note": "Timmes 派生的内置生产实现；不是当前用户生成的 custom package。",
+      "tracked_paths": 5
+    },
+    {
+      "prefix": "src/physics/network/aprox13/",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "来源声明、代表头文件／包含关系已核对，未重审全部公式",
+      "note": "Timmes 派生的内置生产实现；不是当前用户生成的 custom package。",
+      "tracked_paths": 6
+    },
+    {
+      "prefix": "src/physics/network/aprox19/",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "来源声明、代表头文件／包含关系已核对，未重审全部公式",
+      "note": "Timmes 派生的内置生产实现；不是当前用户生成的 custom package。",
+      "tracked_paths": 6
+    },
+    {
+      "prefix": "src/physics/network/aprox21/",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "来源声明、代表头文件／包含关系已核对，未重审全部公式",
+      "note": "Timmes 派生的内置生产实现；不是当前用户生成的 custom package。",
+      "tracked_paths": 6
+    },
+    {
+      "prefix": "src/physics/network/custom/",
+      "kind": "generated_package_location_without_package",
+      "inspection": "已穷举当前版本化路径",
+      "note": "本基线仅 README.md 与 .gitignore；生成器能力不等于已存在生成包。",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "src/physics/network/timmes_common/",
+      "kind": "project_source_with_provenance",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "Dual、RatePair、TimmesNetworkSupport 为 ARCH 自写支持；来源按 THIRD_PARTY_NOTICES 细分。",
+      "tracked_paths": 9
+    },
+    {
+      "prefix": "src/physics/eos/HelmEos.h",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "单文件精确前缀；Timmes 派生实现。",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/physics/nse/nse_solver.h",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "单文件精确前缀；Timmes public_nse 派生实现。",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/physics/diffusionCoe/diffusion_math.hpp",
+      "kind": "maintained_upstream_derived_production",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "AMReX-Astro Microphysics 适配；来源声明已读，未做外部许可证审计。",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "src/cuda/common/",
+      "kind": "project_cuda_execution_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录含执行、存储、路由和共享数学消费者；不能据目录证明没有重复公式。",
+      "tracked_paths": 9
+    },
+    {
+      "prefix": "src/cuda/hydro/",
+      "kind": "project_cuda_execution_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录含执行、存储、路由和共享数学消费者；不能据目录证明没有重复公式。",
+      "tracked_paths": 14
+    },
+    {
+      "prefix": "src/cuda/amr/",
+      "kind": "project_cuda_execution_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录含执行、存储、路由和共享数学消费者；不能据目录证明没有重复公式。",
+      "tracked_paths": 8
+    },
+    {
+      "prefix": "src/cuda/diffusion/",
+      "kind": "project_cuda_execution_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录含执行、存储、路由和共享数学消费者；不能据目录证明没有重复公式。",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "src/cuda/microphysics/",
+      "kind": "project_cuda_execution_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录含执行、存储、路由和共享数学消费者；不能据目录证明没有重复公式。",
+      "tracked_paths": 22
+    },
+    {
+      "prefix": "src/cuda/runtime/",
+      "kind": "project_cuda_execution_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "目录含执行、存储、路由和共享数学消费者；不能据目录证明没有重复公式。",
+      "tracked_paths": 62
+    },
+    {
+      "prefix": "src/api/docs/",
+      "kind": "api_contract_and_history",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "现行协议与 archive 分开使用。",
+      "tracked_paths": 6
+    },
+    {
+      "prefix": "src/api/docs/archive/",
+      "kind": "historical_archive",
+      "inspection": "路径分类；仅按 API 入口识别档案范围，未逐项重签",
+      "note": "",
+      "tracked_paths": 7
+    },
+    {
+      "prefix": "src/api/examples/",
+      "kind": "versioned_api_example_evidence",
+      "inspection": "路径分类、示例入口抽查；未重放全部请求",
+      "note": "85 个示例／响应等文件，不是 85 个生产实现文件。",
+      "tracked_paths": 85
+    },
+    {
+      "prefix": "tests/host/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 70
+    },
+    {
+      "prefix": "tests/cuda/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 48
+    },
+    {
+      "prefix": "tests/math/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 20
+    },
+    {
+      "prefix": "tests/tooling/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 41
+    },
+    {
+      "prefix": "tests/smoke/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "tests/fixtures/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 23
+    },
+    {
+      "prefix": "tests/api/",
+      "kind": "tests_and_fixtures",
+      "inspection": "注册入口／代表测试已读；无当前执行结果",
+      "note": "",
+      "tracked_paths": 19
+    },
+    {
+      "prefix": "studio/host/",
+      "kind": "studio_host",
+      "inspection": "入口／分层／包配置静态检查；不代签 GUI 或 Host 执行",
+      "note": "",
+      "tracked_paths": 40
+    },
+    {
+      "prefix": "studio/src/",
+      "kind": "studio_src",
+      "inspection": "入口／分层／包配置静态检查；不代签 GUI 或 Host 执行",
+      "note": "",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "studio/desktop/",
+      "kind": "studio_desktop",
+      "inspection": "入口／分层／包配置静态检查；不代签 GUI 或 Host 执行",
+      "note": "",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "studio/tests/",
+      "kind": "studio_tests",
+      "inspection": "入口／分层／包配置静态检查；不代签 GUI 或 Host 执行",
+      "note": "",
+      "tracked_paths": 95
+    },
+    {
+      "prefix": "studio/licenses/",
+      "kind": "studio_licenses",
+      "inspection": "入口／分层／包配置静态检查；不代签 GUI 或 Host 执行",
+      "note": "",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "studio/docs/archive/",
+      "kind": "historical_archive",
+      "inspection": "路径分类、归档入口已读；未逐项审签",
+      "note": "67 个历史 GUI/Host 交接与 UAT 记录。",
+      "tracked_paths": 67
+    },
+    {
+      "prefix": "studio/docs/contracts/",
+      "kind": "studio_contract",
+      "inspection": "契约入口已定位，未重新验证全部约定",
+      "note": "",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "studio/src/host/",
+      "kind": "studio_frontend_host_adapter",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "浏览器端 Host 客户端与契约，区别于 studio/host Node 服务。",
+      "tracked_paths": 30
+    },
+    {
+      "prefix": "studio/src/data/",
+      "kind": "studio_frontend_data_adapter",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 24
+    },
+    {
+      "prefix": "studio/src/components/",
+      "kind": "studio_frontend_components",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "",
+      "tracked_paths": 44
+    },
+    {
+      "prefix": "docs/development/",
+      "kind": "mixed_project_documentation",
+      "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
+      "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
+      "tracked_paths": 575
+    },
+    {
+      "prefix": "docs/guides/",
+      "kind": "mixed_project_documentation",
+      "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
+      "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
+      "tracked_paths": 13
+    },
+    {
+      "prefix": "docs/physics/",
+      "kind": "mixed_project_documentation",
+      "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
+      "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
+      "tracked_paths": 3
+    },
+    {
+      "prefix": "docs/legal/",
+      "kind": "mixed_project_documentation",
+      "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
+      "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "docs/releases/",
+      "kind": "mixed_project_documentation",
+      "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
+      "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
+      "tracked_paths": 8
+    },
+    {
+      "prefix": "docs/zenodo/",
+      "kind": "mixed_project_documentation",
+      "inspection": "导航、当前契约及代表记录已读；未逐篇内容审计",
+      "note": "日期记录保留原证据身份；目录存在不表示当前验收完成。",
+      "tracked_paths": 5
+    },
+    {
+      "prefix": "docs/development/archive/",
+      "kind": "historical_archive",
+      "inspection": "路径分类、归档入口已读；未逐项审签",
+      "note": "",
+      "tracked_paths": 14
+    },
+    {
+      "prefix": "tools/network/",
+      "kind": "project_generator_and_adapters",
+      "inspection": "入口／代表文件静态检查，非逐文件审计",
+      "note": "ARCH 维护的生成适配器；生成包可能携带上游模板／反应数据来源。",
+      "tracked_paths": 7
+    },
+    {
+      "prefix": "validation/amr/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 29
+    },
+    {
+      "prefix": "validation/amr/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 3708
+    },
+    {
+      "prefix": "validation/backend/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 9
+    },
+    {
+      "prefix": "validation/backend/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 2069
+    },
+    {
+      "prefix": "validation/burn/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 10
+    },
+    {
+      "prefix": "validation/burn/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 406
+    },
+    {
+      "prefix": "validation/diffusion/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "validation/eos/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 4
+    },
+    {
+      "prefix": "validation/eos/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 992
+    },
+    {
+      "prefix": "validation/gravity/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 54
+    },
+    {
+      "prefix": "validation/gravity/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 668
+    },
+    {
+      "prefix": "validation/hydro/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 20
+    },
+    {
+      "prefix": "validation/hydro/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 357
+    },
+    {
+      "prefix": "validation/io/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 41
+    },
+    {
+      "prefix": "validation/io/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 9
+    },
+    {
+      "prefix": "validation/low_density/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 3
+    },
+    {
+      "prefix": "validation/low_density/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 74
+    },
+    {
+      "prefix": "validation/network/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 24
+    },
+    {
+      "prefix": "validation/network/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 373
+    },
+    {
+      "prefix": "validation/restart/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 8
+    },
+    {
+      "prefix": "validation/tooling/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类、证据入口抽查；未读全量日志／数据或重跑",
+      "note": "results 内仍有复现脚本被现行工具引用；不等同死代码或可删除生成缓存。",
+      "tracked_paths": 2
+    },
+    {
+      "prefix": "validation/assets/",
+      "kind": "validation_runner_input_and_reference",
+      "inspection": "入口／代表脚本与构建引用已核对；未逐项科学验证",
+      "note": "",
+      "tracked_paths": 1
+    },
+    {
+      "prefix": "validation/gravity/flash/",
+      "kind": "optional_external_comparison_and_evidence",
+      "inspection": "比较入口／原身份已定位；不运行外部程序",
+      "note": "FLASH 比较材料为可选验证参考，不是 ARCH 必需构建依赖。",
+      "tracked_paths": 34
+    },
+    {
+      "prefix": "validation/gravity/flash/results/",
+      "kind": "versioned_evidence_with_possible_replay_code",
+      "inspection": "路径分类；沿用前置记录的旧身份，不重跑",
+      "note": "",
+      "tracked_paths": 217
+    },
+    {
+      "prefix": "validation/gravity/candidates/",
+      "kind": "unaccepted_candidate_evidence",
+      "inspection": "路径分类；不重新判定科学有效性",
+      "note": "",
+      "tracked_paths": 9
+    },
+    {
+      "prefix": "validation/gravity/curved/",
+      "kind": "curved_geometry_validation_assets",
+      "inspection": "路径分类；未逐个读取输入或结果",
+      "note": "",
+      "tracked_paths": 15
+    },
+    {
+      "prefix": "validation/core_contracts/rz/",
+      "kind": "rz_contract_validation_assets",
+      "inspection": "入口定位；不启动 RZ 长程或重签旧验证",
+      "note": "",
+      "tracked_paths": 11
+    },
+    {
+      "prefix": "validation/archive/",
+      "kind": "historical_archive",
+      "inspection": "路径分类；保留原用途及身份",
+      "note": "",
+      "tracked_paths": 3
+    }
+  ],
+  "local_ignored_observed": [
+    {
+      "path": "studio/node_modules/",
+      "kind": "installed_third_party_dependencies",
+      "inspection": "仅识别目录，不审计第三方内部"
+    },
+    {
+      "path": "studio/dist/",
+      "kind": "generated_frontend_assets",
+      "inspection": "仅识别目录，不把产物当源码"
+    }
+  ],
+  "generated_or_external_not_in_current_tracked_tree": [
+    "build*/generated: CustomNetworkRegistry/CustomNetworks/BuildIdentity headers、CUDA route TUs、arch-studio launcher",
+    "build*/_deps: HighFive / fallback SuiteSparse 上游 checkout",
+    "build*/bin, CMakeFiles, output, checkpoints: 构建或运行产物；当前工作区未创建这些构建目录",
+    "自定义网络生成包：默认 custom 目录无包；外部根位置由构建参数决定"
+  ],
+  "outside_current_worktree": "主仓库 /home/shiroakane/ARCH 的旧构建与执行物仅沿用前置记录身份；未枚举其依赖／产物内容。独有 cellular-burn-rate-audit 远端分支未纳入本基线路径。",
+  "deep_inspection_not_performed": [
+    "逐文件数学实现、完整调用图、CPU/GPU 全路由等价性",
+    "实际 configure 后的完整 target/link/CTest 目录与本机依赖可用性",
+    "所有历史记录的科学重签及 validation 结果中的数据／日志全读",
+    "原始 H5／checkpoint／EOS 表内容、第三方源树内部、原生 GUI UAT",
+    "新的编译／运行／内存基线、CUDA 完整构建、RZ 长程与性能优化"
+  ]
+}

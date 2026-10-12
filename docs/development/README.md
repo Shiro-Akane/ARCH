@@ -1,5 +1,7 @@
 # Contributor guide and working records
 
+The [modernization plan](../../ARCH_MODERNIZATION_PLAN.md) tracks the current modernization work packages. Its [R1 repository map](ModernizationR1-RepositoryMap-20261012.zh-CN.md) and [coverage index](ModernizationR1-RepositoryCoverage-20261012.json) classify the inspected Git baseline, build entries and remaining investigation scope; path coverage is not numerical acceptance.
+
 The [current O-series execution table](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08) governs priorities, closed items and remaining acceptance work in the sole `compute/optim` workspace. The [release evidence record](ComputeStudioReleasePlan-20261006.zh-CN.md) identifies current checks and unresolved scientific exits. Configuration and scientific contracts define requirements; dated implementation maps and reports retain their original source, binary and platform identities. The [integration report](ComputeStudioIntegrationReport-20261006.zh-CN.md) and [consolidation record](ComputeOptimConsolidation-20261006.zh-CN.md) preserve handover provenance; dedicated GNN work remains separate.
 
 The [GUI branch retirement record](GuiBranchRetirement-20261006.zh-CN.md) makes `origin/compute/optim` the shared baseline for new short-lived Studio/Host tasks, preserves old contract documents and records the recovery bundle. Completed GUI branches are not parallel development baselines.
