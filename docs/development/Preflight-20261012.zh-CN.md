@@ -50,18 +50,18 @@ RZ 成本的已测归因：16×16 均匀网格自然 `dt≈398.183 s`；重复 p
 | 合并范围与格式 | 19 个 Studio 文件；冲突已清；`git diff --check` 通过 |
 | 当前原生桌面／人类交互 | 本轮未重新执行；来源 review 的历史 browser UAT 与既有原生证据按各自身份保留 |
 
-远端清理须在集成推送成功、祖先关系复核后执行，并用原 SHA lease 防止误删他人新提交。清理前保存的旧引用如下；**执行状态待清理后更新**。
+远端清理须在集成推送成功、祖先关系复核后执行，并用原 SHA lease 防止误删他人新提交。清理前保存的旧引用如下；**已执行并复核**：远端删除使用原 SHA lease 与 atomic；集成节点已先推送至 compute。
 
 | 引用 | 原提交 | 清理状态／理由 |
 |---|---|---|
-| 远端 `codex/o8-boundaries` | `11a321d5604f9ee62b9f9587c81f14de4f128bc4` | 已在 compute 基线中，无独有提交；待删除 |
-| 远端 `codex/core-rz-decisions-20261006` | `4639774fe3c94ae27b3e831d0f0b9d6340de34fd` | 已在 compute 基线中，无独有提交；待删除 |
-| 远端 `studio/ui-video-review-20261010` | `594ca5c16695aaae38d57cfe291d1bf63eaf7cf8` | 本轮集成后删除 |
-| 本地 `codex/gnn-data-positivity` | `25adec4224497981a0c124a3485f786194975be4` | 已在 compute 中，无独有提交；待安全删除 |
+| 远端 `codex/o8-boundaries` | `11a321d5604f9ee62b9f9587c81f14de4f128bc4` | 已在 compute 基线中，无独有提交；远端已删除 |
+| 远端 `codex/core-rz-decisions-20261006` | `4639774fe3c94ae27b3e831d0f0b9d6340de34fd` | 已在 compute 基线中，无独有提交；远端已删除 |
+| 远端 `studio/ui-video-review-20261010` | `594ca5c16695aaae38d57cfe291d1bf63eaf7cf8` | 本轮集成并推送后，远端已删除 |
+| 本地 `codex/gnn-data-positivity` | `25adec4224497981a0c124a3485f786194975be4` | 已在 compute 中，无独有提交；本地 `git branch -d` 已删除 |
 | 第二个 GNN 分支 | 本轮本地／远端均未发现 | 不按数量猜测或删除其他主题分支 |
 | `codex/cellular-burn-rate-audit-20261008` | `110e769ddbf4bad6a8aafef744dffe4c7aadf27f` | 保留：独有审计报告尚未合并，属于后续全仓检查的资料 |
 
-main 及全部既有标签保持。只存在当前工作区与主仓库两个 checkout，没有可删的独立 O8／GNN／Studio 工作树；主仓库已脱离 compute 分支、停在前置基线，以保留旧构建、执行物及未跟踪项目入口，不能为精简而删除它。当前工作区是 compute 的唯一分支 checkout。
+main 及全部既有标签保持。只存在当前工作区与主仓库两个 checkout，没有可删的独立 O8／GNN／Studio 工作树；主仓库已脱离 compute 分支、停在前置基线，以保留旧构建、执行物及未跟踪项目入口，不能为精简而删除它。当前工作区是 compute 的唯一分支 checkout。主仓库原有未跟踪 AGENTS.md 另增一个短恢复指针，不复制进度台账或修改旧源码。
 
 已删除引用的提交均由集成后的 compute 历史保留，不做 GC／reflog 清理。需要恢复时按表中 SHA 建回相应本地分支；远端恢复须按届时授权执行。前后 Git 清单及验证日志保留在本机证据目录。
 
@@ -75,6 +75,6 @@ main 及全部既有标签保持。只存在当前工作区与主仓库两个 ch
 
 本轮共派发 5 项真实提供方任务，预算与原始产物由现有全局网关留存。没有建立新协作规则或项目网关。格式失败任务的本机完整 JSON 已作精确解析并留副本，保留网关 FAILED／未采用状态，不通过它解锁依赖。发现的交付格式失败和嵌套锁标记恢复问题仅记录为后续全局维护反馈；本轮未修改 Skill／MCP 基础设施。
 
-本机证据目录：`/mnt/c/Users/26428/.codex/visualizations/2026/10/11/01a12b15-a669-76a0-b053-6fd9e79a6b50/preflight-20261012`，含 before、retirement-candidates-before、Studio 检查日志、首轮 LFS 失败及多模型原始产物；完成后补 after／清理回执。仓库只保留本页和必要薄摘要，不纳入 H5、依赖目录或全量运行日志。
+本机证据目录：`/mnt/c/Users/26428/.codex/visualizations/2026/10/11/01a12b15-a669-76a0-b053-6fd9e79a6b50/preflight-20261012`，含 before、retirement-candidates-before、Studio 检查日志、首轮 LFS 失败及多模型原始产物；已补 retirement-receipt／after 清单。仓库只保留本页和必要薄摘要，不纳入 H5、依赖目录或全量运行日志。
 
 下一轮从[总计划](../../ARCH_MODERNIZATION_PLAN.md)阶段 1 的完整覆盖检查开始，按已验身份复用旧结果；RZ 长程和正式性能实现仍需按计划选入具体工作包，本轮不自动启动。
