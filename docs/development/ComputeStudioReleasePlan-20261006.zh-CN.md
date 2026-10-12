@@ -4,6 +4,8 @@
 
 ## 当前验收出口
 
+2026-10-12 前置更新：Studio 视频 review 已集成，合并后完整 385/385、零跳过，lint 与类型／生产构建通过；[前置记录](Preflight-20261012.zh-CN.md)保存当前结果。下方 2026-10-10 封包的 374 项与原生链路按原身份保留，本轮未新增科学运行或授予完整 release。
+
 完整 release 尚未签收。Core、配置/API、字段语义、数学物理、后端与运行验收均由当前维护方负责；UI 改善可独立协作。下列结果各有验收范围，最终发布仍需关闭 O 总表的 R1–R6。
 
 **工程链路。** Studio 当前完整入口374/374通过，零跳过，lint、类型检查及生产资源构建通过；source绑定及RZ初始网格协议的新增断言放入原有owner；全套81个文件以单文件worker执行，原断言和等待门槛保持。真实 Core→Host 配置入口通过，覆盖14类静态检查，单独计作1项。原生桌面已实际完成 Configure、Build、初态 Preview、AMR Preview、Sod Run／Restart及当前producer的Plotfile／Inspector；Run与Restart的19个状态及几何数据集逐字节一致。指定源码时的模型选择器及冲突409提示已修复；真实Host的错配拒绝及合法检查通过。新构建原生复查发现的模型发现GET超时已补齐显式重试；当前bundle在真实Electron／Host中完成单次受控网络失败→用户重试→合法模型恢复，并正常产生128²／7字段初态。现有producer的Sod Plot只读元数据正常。RZ根网格快照消费通过完整原owner检查；本机桌面验证为私有X11工程验收，人类WSLg前台显示不在该签收范围；已签收的完整Preview及Run／Restart链路保留原证据。[工程记录](../../validation/backend/results/release-closure-20261009/studio-engineering-summary.json)保存各自执行范围。

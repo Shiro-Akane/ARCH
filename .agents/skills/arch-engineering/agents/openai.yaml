@@ -1,0 +1,4 @@
+interface:
+  display_name: "ARCH Engineering"
+  short_description: "Preserve ARCH numerical contracts and stop at useful gains"
+  default_prompt: "Use $arch-engineering with the global multimodel skill to plan bounded implementation and validation while preserving existing numerical contracts."

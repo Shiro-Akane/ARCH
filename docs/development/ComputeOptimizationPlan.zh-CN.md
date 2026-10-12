@@ -17,6 +17,7 @@ O7.0–O7.5、O8 与 Studio 已有实现和移交记录，当前工作以现有�
 ## 当前执行校准（2026-10-08）
 
 本节是当前任务及工作顺序的唯一总表，最新复核为2026-10-10；后方原设计、移交分工和逐轮记录按其日期保存。
+2026-10-12 前置核对见[工作入口与进度记录](Preflight-20261012.zh-CN.md)：本轮未重跑科学检查；Studio UI 合并后完整 385/385、lint 与类型／生产构建通过，未重签原生运行；既有科学已验范围保持原身份，当前总计划见[现代化计划](../../ARCH_MODERNIZATION_PLAN.md)。
 [release 验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)
 提供当前证据与身份，[配置契约](ConfigurationContractPlan.zh-CN.md)和
 [Core RZ 契约](CoreRZDecisions-20261006.zh-CN.md)提供定义及门槛。
@@ -90,7 +91,7 @@ O9四模块CPU主轨迹3997步、约53分钟，以及中段续算的21数据集�
 | 出口 | 当前状态 | 关闭所需证据 |
 | --- | --- | --- |
 | R1：FV／粗细面及非线性阶段 | 原12条Host RKL、变密度五叶RKL2及普通Spherical2D五叶RKL2双宏步通过，真实边界功、EOS与零修复保持；既有混层严格续算及公共Host四owners保持签收 | 在最终176源码的原Device owner中验Native Hydro角动量／reflux及耦合；独立RZ既有有限时段已通过原分尺度收支预算，原五声穿越及其长程续算后置；不重跑已签Host续算 |
-| R2：完整NativeDevice | Runtime有序ghost／resident EOS、Hydro／引力配对功、retry、staged regrid及完整宏步已集成；Host受影响检查通过，原Device服务证据保持限定身份；修正前176源码原构建已完成；共享EOS及source准备器准入修复已由受影响Host、registry和原Burn owner通过；当前原9项已有8项通过，完整Hydro受控停止、实际退出143、未签收；新生产CUDA ARCH构建、链接及只读身份检查通过，公共Device fresh待验 | 执行最终9个原owner（8 Device＋1 Host表fixture），并以新生产CUDA ELF沿公共SNIaCoupled完成真实四模块checkpoint→fresh进程restart；原入口和共享数学复用，源码集成或构建成功不算数值通过 |
+| R2：完整NativeDevice | Runtime有序ghost／resident EOS、Hydro／引力配对功、retry、staged regrid及完整宏步已集成；Host受影响检查通过，原Device服务证据保持限定身份；修正前176源码原构建已完成；共享EOS及source准备器准入修复已由受影响Host、registry和原Burn owner通过；当前原9项已有8项通过，完整Hydro受控停止、实际退出143、未签收；新生产CUDA ARCH构建、链接及只读身份检查通过，公共Device fresh待验 | 按原身份复用已通过的8项，只补未签收的完整Hydro；仅在源码或执行物影响对应覆盖时重开受影响owner。再以新生产CUDA ELF沿公共SNIaCoupled完成真实四模块checkpoint→fresh进程restart；原入口和共享数学复用，源码集成或构建成功不算数值通过 |
 | R3：剩余O9 | C/O独立终点、BD／ROS4强反应及BD严格续算、正式热扩散、Cartesian四模块main／half／restart、导热活动和L2补充反复AMR／资源观测均按原限定签收；main原事件不足FAIL保留 | 原保存状态至1.25／2.5次声穿越通过原2%能量、0.2%参考、1e-12质量和信号门槛；step534修复记录全零。重复primary经用户授权SIGTERM停止、实际退出241，自身fresh未启动。原5次声穿越及对应长程严格续算后置，不记完整PASS；原125资源中断保持。当前有限时段签收不推断未来演化或CUDA正确性，必要后端独立验收 |
 | R4：当前工程交付 | 既有58 CPU构建／68 CTest、749工具、Studio374和真实Core静态14类／95参数按原身份通过；最终CPU `a1c76c6f…` 的白名单环境／原cache增量构建及原单配置owner另行通过；原生Configure／Build／Preview／AMR及SodRun／Restart／Plot已实际成功，19个状态／几何数据集字节一致；固定source选择器／409及完整Studio检查通过，真实Host错配409／合法检查已过；新bundle模型发现GET超时后的显式重试及RZ初始网格消费协议已通过当前完整工程检查，限定原生Retry／Cellular当前初态／原Plot只读已签收 | 必要CUDA及最新producer／字段／单位／发布失败映射继续验收；TS限定选择器／409及完整Studio检查通过；显式Retry保留原15s及作用域守卫，当前完整374项零跳过通过；实际单次受控失败恢复、128²当前Cellular初态及原producer Plot只读已签收。已签Run／Restart／Plot及Cellular完整链路不重复排队 |
 | R5：最终成本 | 3060Ti旧执行物同程3D记录正向1.22485倍；4070Ti当前配对缺测 | 依赖冻结后同物理终点、精度、CFL／AMR的CPU及CUDA绝对成本与正向收益；driver钟和完整CLI钟分别记录。4070Ti旧数据只作历史资料，缺测不杜撰、不因外部平台无法取得而阻塞本机验收 |
