@@ -1,0 +1,1409 @@
+{
+  "work_package": "R2.1",
+  "recorded_date": "2026-10-12",
+  "status": "COMPLETE_IDENTITY_AND_SELECTION_ONLY",
+  "scope": "Identity, representative selection and document consolidation only; no numerical run or performance measurement.",
+  "branch": "compute/optim",
+  "baseline_commit": "890d81a06afdbe6537e216234dbebab02b14366a",
+  "primary_checkout_commit": "9aaa5addde2cda05bf88b209ce46d1c82b33df93",
+  "production_tree_oids": {
+    "src": "e0757c64defadb6bbad2912c1452dbd21662d449",
+    "include": "40fd2cffc1323f1b08a918b4a2200574ed51e484",
+    "simulation": "31f82322521d9d207a8ac1de6249d70d80f9e34d",
+    "studio": "de9e37c3c23fb92c8560ae48bb71c1ba15d95d50",
+    "cmake": "6fa71aba8cca8a86e7904afa0bcea681bd03c73b",
+    "tests": "826a5ef701b9ab6ec347670272bc2ce3df41cfc5",
+    "tools": "08559146a4501eff0640d13ad50f2a715aa61a98",
+    ".github": "07f1130743bd067f3d8e9df609a57920d4550d3f"
+  },
+  "source_comparisons": {
+    "a0185bdf524d374f9c804666a98a4c76668db044": {
+      "areas": [
+        "src",
+        "include",
+        "simulation",
+        "studio",
+        "cmake",
+        "tests",
+        "tools",
+        ".github"
+      ],
+      "changed_paths": []
+    },
+    "d5a9158746e6e85b09e778843ed1290d891a28c6": {
+      "core_areas": [
+        "src",
+        "include",
+        "simulation",
+        "cmake",
+        "tests",
+        "tools",
+        ".github"
+      ],
+      "core_changed_paths": [],
+      "studio_changed_paths": [
+        "studio/ARCH_STUDIO_VIDEO_UI_IMPLEMENTATION_REPORT.md",
+        "studio/ARCH_STUDIO_VIDEO_UI_REVIEW_2026-10-10.md",
+        "studio/index.html",
+        "studio/src/App.tsx",
+        "studio/src/components/ConfigurationBridge.tsx",
+        "studio/src/components/ParameterPanel/ConfigPanel.tsx",
+        "studio/src/components/ParameterPanel/StandardCatalog.tsx",
+        "studio/src/components/ParameterPanel/parameter-review.css",
+        "studio/src/components/ParameterPanel/parameterPresentation.ts",
+        "studio/src/components/RunControls.tsx",
+        "studio/src/components/WorkflowBar.tsx",
+        "studio/src/components/WorkspaceHeader.tsx",
+        "studio/src/components/workflow-review.css",
+        "studio/src/data/workspacePresentation.ts",
+        "studio/src/main.tsx",
+        "studio/src/shell-review.css",
+        "studio/tests/parameter-video-review.test.ts",
+        "studio/tests/ui-render.test.ts",
+        "studio/tests/workflow-presentation.test.ts"
+      ]
+    },
+    "9aaa5addde2cda05bf88b209ce46d1c82b33df93": {
+      "core_areas": [
+        "src",
+        "include",
+        "simulation",
+        "cmake",
+        "tests",
+        "tools",
+        ".github"
+      ],
+      "core_changed_paths": [],
+      "studio_changed_paths_count": 19,
+      "meaning": "Preserved cache source root matches current Core tree; Studio and untracked entry documents are recorded separately."
+    }
+  },
+  "executables": {
+    "cpu": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+      "bytes": 16649928,
+      "sha256": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9",
+      "historical_status": "Final existing-cache incremental build and one configuration owner PASS; not a new 68-test run."
+    },
+    "cuda": {
+      "path": "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+      "bytes": 368728472,
+      "sha256": "0828b3c8644333d446a044b555c15681e9277a10217d3fac6e129ccf14ba861c",
+      "historical_status": "Build/link and read-only CLI identity PASS; no three-macro/fresh public Device scientific run."
+    }
+  },
+  "historical_source_cohort": {
+    "scope": "Current176 source cohort for CUDA production0828 and original CUDA consumers; retained CPU63ffa has its own older producer identity.",
+    "sha256": "e2bc63905e09a70cba64276a905ff6fd3ddb9eeb1839776f961d773da0378769",
+    "entries": 176,
+    "git_head_annotation": "e69a859705da0efc0c7abad64c8949f9e4934951"
+  },
+  "builds": {
+    "build-release-cpu": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu",
+      "cache_sha256": "5a15c7c673b2f3f5163ba605150787fbc2cc32c52bf4f001cf4a14478b8700b7",
+      "compile_commands_sha256": "10f2d8fad8fed64f215844812cf2bfbb1af9e2cfaa180f8fe8b2d2b516a4e982",
+      "settings": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_HOME_DIRECTORY": "/home/shiroakane/ARCH",
+        "CMAKE_C_COMPILER": "/usr/bin/cc",
+        "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_KLU": "ON",
+        "ARCH_ENABLE_CUDSS": "ON",
+        "ARCH_BUILD_STUDIO": "ON",
+        "BUILD_TESTING": "ON",
+        "CUDSS_ROOT": "",
+        "Python3_EXECUTABLE": "/home/shiroakane/miniconda3/envs/work/bin/python"
+      },
+      "registered_tests": 76,
+      "resolved_existing_commands": 76,
+      "selected_commands": [
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_amr_flux_surface_plan"
+          ],
+          "name": "amr_flux_surface_plan",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_amr_flux_surface_plan"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_burn_mainline_reference"
+          ],
+          "name": "burn_mainline_reference",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_burn_mainline_reference"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_checkpoint_compatibility",
+            "/home/shiroakane/ARCH/build-release-cpu/checkpoint-compatibility-data"
+          ],
+          "name": "checkpoint_compatibility",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_checkpoint_compatibility"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_cuda_single_level_validation",
+            "--test-time-comparison"
+          ],
+          "name": "checkpoint_temporal_comparison",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_cuda_single_level_validation"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_composite_poisson",
+            "ci"
+          ],
+          "name": "composite_poisson_analytic",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_composite_poisson"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_composite_poisson",
+            "contract"
+          ],
+          "name": "composite_poisson_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_composite_poisson"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "/home/shiroakane/ARCH/tests/api/configuration/test_configuration.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH"
+          ],
+          "name": "configuration_api_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/configuration/test_configuration.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "/home/shiroakane/ARCH/tests/api/configuration/test_configuration_entry.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH"
+          ],
+          "name": "configuration_entry_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/configuration/test_configuration_entry.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/configuration/test_configuration_v3.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH"
+          ],
+          "name": "configuration_v3_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/configuration/test_configuration_v3.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_conservative_acceptance"
+          ],
+          "name": "conservative_acceptance",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_conservative_acceptance"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_flux_limiter"
+          ],
+          "name": "conservative_flux_limiter",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_flux_limiter"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_generated_nse"
+          ],
+          "name": "generated_nse",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_generated_nse"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_helm_components",
+            "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat"
+          ],
+          "name": "helm_components",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_helm_components",
+            "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_native_tabular",
+            "/home/shiroakane/ARCH/build-release-cpu/native-tabular-test-data"
+          ],
+          "name": "native_tabular_eos",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_native_tabular"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_poisson_multigrid",
+            "analytic"
+          ],
+          "name": "poisson_multigrid_analytic",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_poisson_multigrid"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_poisson_multigrid",
+            "contract"
+          ],
+          "name": "poisson_multigrid_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_poisson_multigrid"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_ppm_limiter"
+          ],
+          "name": "ppm_limiter_math",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_ppm_limiter"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "/home/shiroakane/ARCH/tests/api/preview/test_preview.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH"
+          ],
+          "name": "preview_api_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/preview/test_preview.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "/home/shiroakane/ARCH/tests/api/preview/test_cellular_preview.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH",
+            "/home/shiroakane/ARCH/build-release-cpu/arch_preview_cellular_reference"
+          ],
+          "name": "preview_cellular_2d",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/preview/test_cellular_preview.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH/build-release-cpu/arch_preview_cellular_reference"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "/home/shiroakane/ARCH/tests/api/preview/test_full_model_preview.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "/home/shiroakane/ARCH"
+          ],
+          "name": "preview_full_model_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/tests/api/preview/test_full_model_preview.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_rkl_repair_weights"
+          ],
+          "name": "rkl_repair_weights",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_rkl_repair_weights"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/tooling",
+            "-p",
+            "test_rz_qualification_runners.py"
+          ],
+          "name": "rz_qualification_runner_contract",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_same_level_exchange_plan"
+          ],
+          "name": "same_level_exchange_plan",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_same_level_exchange_plan"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_self_gravity"
+          ],
+          "name": "self_gravity_lifecycle",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_self_gravity"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "-B",
+            "/home/shiroakane/ARCH/validation/gravity/run_self_gravity.py",
+            "--arch",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--output",
+            "/home/shiroakane/ARCH/build-release-cpu/self-gravity-jeans",
+            "--quick"
+          ],
+          "name": "self_gravity_physics",
+          "observed_artifacts": [
+            "/home/shiroakane/miniconda3/envs/work/bin/python",
+            "/home/shiroakane/ARCH/validation/gravity/run_self_gravity.py",
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_shared_stage_scheduler"
+          ],
+          "name": "shared_stage_scheduler",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_shared_stage_scheduler"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_topology_transaction"
+          ],
+          "name": "topology_transaction",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-release-cpu/arch_topology_transaction"
+          ]
+        }
+      ],
+      "query_meaning": "ctest --show-only=json-v1, no tests executed; resolved means command exists, not PASS"
+    },
+    "build-rt-cuda": {
+      "path": "/home/shiroakane/ARCH/build-rt-cuda",
+      "cache_sha256": "8d025564fefbfb80cbf4a4fe19e45945c2bf8ecf769b1cada2e74ab461157f87",
+      "compile_commands_sha256": "65ab237dcb6ac87215304b0f697be0426b9ecb954370d7667086ccc5795bfe91",
+      "settings": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_HOME_DIRECTORY": "/home/shiroakane/ARCH",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.3/bin/nvcc",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_KLU": "ON",
+        "ARCH_ENABLE_CUDSS": "ON",
+        "ARCH_BUILD_STUDIO": "OFF",
+        "BUILD_TESTING": "ON",
+        "CUDSS_ROOT": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12"
+      },
+      "registered_tests": 143,
+      "resolved_existing_commands": 75,
+      "selected_commands": [
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_burn_controller_parity"
+          ],
+          "name": "burn_controller_parity",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_burn_controller_parity"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_amr_exchange"
+          ],
+          "name": "cuda_amr_exchange",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_amr_exchange"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_block",
+            "rkl1"
+          ],
+          "name": "cuda_backend_diffusion_rkl1",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_block"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_block",
+            "rkl2"
+          ],
+          "name": "cuda_backend_diffusion_rkl2",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_block"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_conservative_acceptance"
+          ],
+          "name": "cuda_conservative_acceptance",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_conservative_acceptance"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_ppm_limiter"
+          ],
+          "name": "cuda_ppm_limiter_math",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_ppm_limiter"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_regrid_transaction"
+          ],
+          "name": "cuda_regrid_transaction",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_regrid_transaction"
+          ]
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_diffusion_rkl_parity"
+          ],
+          "name": "diffusion_rkl_parity",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_diffusion_rkl_parity"
+          ]
+        },
+        {
+          "name": "generated_nse_device"
+        },
+        {
+          "command": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_leaf_parity"
+          ],
+          "name": "hydro_leaf_parity",
+          "observed_artifacts": [
+            "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_leaf_parity"
+          ]
+        },
+        {
+          "name": "native_tabular_device"
+        },
+        {
+          "name": "network_nse_device"
+        }
+      ],
+      "query_meaning": "ctest --show-only=json-v1, no tests executed; resolved means command exists, not PASS"
+    }
+  },
+  "environment": {
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "scientific_python": "/home/shiroakane/miniconda3/envs/work/bin/python",
+    "python_version": "3.12.14",
+    "guard_python": "/usr/bin/python3",
+    "wsl_memtotal_kib": 8081604,
+    "wsl_swap_total_kib": 2097152,
+    "gpu": "NVIDIA GeForce RTX 3060 Ti",
+    "gpu_total_mib": 8192,
+    "gpu_driver": "610.47",
+    "performance_measurement": false,
+    "numpy_version": "2.5.3",
+    "h5py_version": "3.16.0",
+    "hdf5_version": "1.14.6",
+    "cpu_model": "Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz",
+    "visible_cpu_affinity_count": 16
+  },
+  "storage_observation": {
+    "recorded_utc": "2026-10-12T04:46:24Z",
+    "method": "Windows registry Lxss BasePath + Get-CimInstance Win32_LogicalDisk; Linux df for virtual filesystem",
+    "distribution": "Ubuntu",
+    "vhd_base_path": "E:\\WSL\\Ubuntu",
+    "host_mount": "/mnt/e",
+    "host_E_size_bytes": 270142779392,
+    "host_E_free_bytes": 23495598080,
+    "linux_virtual_available_bytes": 960135749632,
+    "warning_free_bytes_approx": 1073741824,
+    "recheck": "Before H5 batch, expected material growth, or I/O anomaly; no constant capacity polling. Snapshot precedes local 60 MB EOS restoration.",
+    "raw_h5_created_this_round": false
+  },
+  "dependencies": {
+    "helmholtz": {
+      "path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "bytes": 60242514,
+      "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+      "initial_state": "133-byte LFS pointer",
+      "action": "git lfs checkout exact path from local object store; no network pull",
+      "matches_original_reference": true
+    },
+    "sod_fixture": {
+      "path": "studio/tests/fixtures/sod-1d.h5",
+      "bytes": 14336,
+      "expected_kind": "materialized curated test HDF5"
+    }
+  },
+  "selection_manifest": {
+    "path": "validation/backend/cases.json",
+    "bytes": 11552,
+    "sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877"
+  },
+  "groups": [
+    {
+      "id": "G1",
+      "scope": "Hydro shared core and exact/analytic fluid references",
+      "cpu_tests": [
+        "ppm_limiter_math",
+        "conservative_flux_limiter",
+        "conservative_acceptance",
+        "shared_stage_scheduler"
+      ],
+      "cuda_tests": [
+        "hydro_leaf_parity",
+        "cuda_conservative_acceptance",
+        "cuda_ppm_limiter_math"
+      ],
+      "cases": [
+        "hydro_ppm_n64",
+        "hydro_ppm_n128",
+        "hydro_ppm_n256",
+        "sod_ppm_n64",
+        "sod_ppm_n128",
+        "sod_ppm_n256"
+      ],
+      "oracle": [
+        "analytic finite-volume entropy-wave averages",
+        "independent exact Euler Riemann solution",
+        "existing mathematical-leaf assertions"
+      ],
+      "budget_sources": [
+        "validation/backend/cases.json",
+        "validation/hydro/README.md",
+        "tests/cuda/hydro/test_hydro_leaf_parity.cu"
+      ],
+      "coverage_limit": "No all-flux/EOS/integrator matrix. Grouped validator needs all three resolutions, including Sod."
+    },
+    {
+      "id": "G2",
+      "scope": "EOS, burning, NSE and nuclear/thermal handoff",
+      "cpu_tests": [
+        "helm_components",
+        "native_tabular_eos",
+        "burn_mainline_reference",
+        "generated_nse"
+      ],
+      "cuda_tests": [
+        "native_tabular_device",
+        "generated_nse_device",
+        "network_nse_device",
+        "burn_controller_parity"
+      ],
+      "cases": [],
+      "inputs": [
+        "validation/burn/inputs/be_nr_reference.par",
+        "validation/burn/inputs/bd.par",
+        "validation/burn/inputs/ros4.par"
+      ],
+      "oracle": [
+        "EOS and NSE existing independent/reference assertions",
+        "short-time converged BE_NR versus BD/ROS4 is internal cross-solver verification, not independent reaction RHS"
+      ],
+      "budget_sources": [
+        "validation/burn/README.md",
+        "validation/eos/README.md",
+        "tests/host/burn/test_burn_mainline_reference.cpp",
+        "tests/host/network/test_generated_nse.cpp"
+      ],
+      "burn_short_endpoint": 1e-10,
+      "burn_species_linf_max": 1e-08,
+      "burn_relative_total_energy_max": 1e-08,
+      "burn_abundance_sum_residual_max": 1e-12,
+      "coverage_limit": "EOS/NSE tests keep their individual constants; no blanket borrowed tolerance. Existing release 1e-6 burn and its independent time-method reference remain separate.",
+      "input_identities": [
+        {
+          "path": "validation/burn/inputs/be_nr_reference.par",
+          "bytes": 1612,
+          "sha256": "5f9fb5205a082e40bcd6994595ca681803f4e8a285b1571accceab94b2477efe"
+        },
+        {
+          "path": "validation/burn/inputs/bd.par",
+          "bytes": 1592,
+          "sha256": "c0ddc0d1056a6ad2d1b1b8103e37fab76e5c2093c5e4844f6b358d9d584e945c"
+        },
+        {
+          "path": "validation/burn/inputs/ros4.par",
+          "bytes": 1598,
+          "sha256": "09cc78c0668f4c529b2172210989d6ab2511dbac1a77f3d3e34aac66e11a5b71"
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "scope": "AMR exchange/flux/topology and checkpoint identity",
+      "cpu_tests": [
+        "same_level_exchange_plan",
+        "amr_flux_surface_plan",
+        "topology_transaction",
+        "checkpoint_compatibility",
+        "checkpoint_temporal_comparison"
+      ],
+      "cuda_tests": [
+        "cuda_amr_exchange",
+        "cuda_regrid_transaction"
+      ],
+      "cases": [],
+      "oracle": [
+        "independent plan/geometry witnesses and existing transaction assertions",
+        "exact stored-state restart identity is distinct from norm-based backend comparison"
+      ],
+      "budget_sources": [
+        "cmake/tests/HostTests.cmake",
+        "tests/host/io/test_checkpoint_compatibility.cpp",
+        "validation/amr/README.md",
+        "validation/restart/README.md"
+      ],
+      "coverage_limit": "No new long regrid trajectory or complete four-module public Device fresh restart. Reuse historical identity-scoped results."
+    },
+    {
+      "id": "G4",
+      "scope": "RKL diffusion recurrence, bounds, conservation and analytic decay",
+      "cpu_tests": [
+        "rkl_repair_weights"
+      ],
+      "cuda_tests": [
+        "diffusion_rkl_parity",
+        "cuda_backend_diffusion_rkl1",
+        "cuda_backend_diffusion_rkl2"
+      ],
+      "cases": [
+        "diffusion_rkl1_n64",
+        "diffusion_rkl2_n64",
+        "diffusion_rkl2_n128",
+        "diffusion_rkl2_n256"
+      ],
+      "oracle": [
+        "analytic periodic cosine decay with finite-volume sinc factor",
+        "existing portable recurrence parity and correction receipts"
+      ],
+      "budget_sources": [
+        "validation/backend/cases.json",
+        "validation/diffusion/README.md",
+        "tests/cuda/numerics/test_diffusion_rkl_parity.cu"
+      ],
+      "coverage_limit": "Ideal-gas constant species diffusion; no qualification of Helmholtz species/viscous transport or coupled Native RZ."
+    },
+    {
+      "id": "G5",
+      "scope": "Poisson/multigrid mathematics, Self lifecycle and RZ runner contract",
+      "cpu_tests": [
+        "poisson_multigrid_contract",
+        "poisson_multigrid_analytic",
+        "composite_poisson_contract",
+        "composite_poisson_analytic",
+        "self_gravity_lifecycle",
+        "self_gravity_physics",
+        "rz_qualification_runner_contract"
+      ],
+      "cuda_tests": [],
+      "cases": [],
+      "oracle": [
+        "manufactured/polynomial/discrete-Fourier Poisson references",
+        "independent Jeans-wave quick checks, if runtime fits",
+        "qualification runner parsing/contract only for RZ"
+      ],
+      "budget_sources": [
+        "docs/development/P2PoissonMultigrid.zh-CN.md",
+        "tests/host/gravity/test_poisson_multigrid.cpp",
+        "tests/host/gravity/test_composite_poisson.cpp",
+        "validation/gravity/run_self_gravity.py",
+        "validation/core_contracts/rz/README.zh-CN.md"
+      ],
+      "coverage_limit": "self_gravity_physics actually runs ARCH and writes H5; runner-contract success is not a physical RZ trajectory. Full five-crossing RZ/fresh remain deferred."
+    },
+    {
+      "id": "G6",
+      "scope": "Configuration/API identity and selected full-model previews",
+      "cpu_tests": [
+        "configuration_api_contract",
+        "configuration_entry_contract",
+        "configuration_v3_contract",
+        "preview_api_contract",
+        "preview_full_model_contract",
+        "preview_cellular_2d"
+      ],
+      "cuda_tests": [],
+      "cases": [],
+      "oracle": [
+        "current configuration revision, validation and inspection/preview contracts"
+      ],
+      "budget_sources": [
+        "tests/api/configuration/test_configuration.py",
+        "cmake/tests/HostTests.cmake",
+        "src/api/docs/ConfigurationProtocol.md"
+      ],
+      "coverage_limit": "No trajectory, GPU scientific equivalence or new native GUI UAT. Cellular preview is unrelated to burn-rate discrepancy acceptance."
+    }
+  ],
+  "selected_backend_cases": [
+    {
+      "id": "hydro_ppm_n64",
+      "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/ppm_n64.par",
+      "scientific_time": 0.1,
+      "resolution": 64,
+      "qualification_group": "smooth_ppm",
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 2e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_entropy_wave",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "l1_max": 0.0001,
+        "mass_relative_drift_max": 1e-12,
+        "minimum_l1_order": 2.7,
+        "convergence_pairs": "final"
+      },
+      "input_sha256": "f4724934e91addfcad388eb90c6096f0b27a5b13db145de0923a9dd744cba67e"
+    },
+    {
+      "id": "hydro_ppm_n128",
+      "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/ppm_n128.par",
+      "scientific_time": 0.1,
+      "resolution": 128,
+      "qualification_group": "smooth_ppm",
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 2e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_entropy_wave",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "l1_max": 0.0001,
+        "mass_relative_drift_max": 1e-12,
+        "minimum_l1_order": 2.7,
+        "convergence_pairs": "final"
+      },
+      "input_sha256": "f1a612380a6782b74a5738437c40fb5b7dbbd7260693525014a4cc8472c483c0"
+    },
+    {
+      "id": "hydro_ppm_n256",
+      "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/ppm_n256.par",
+      "scientific_time": 0.1,
+      "resolution": 256,
+      "qualification_group": "smooth_ppm",
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 2e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_entropy_wave",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "l1_max": 0.0001,
+        "mass_relative_drift_max": 1e-12,
+        "minimum_l1_order": 2.7,
+        "convergence_pairs": "final"
+      },
+      "input_sha256": "5a97bca5b3f9ffecb1949e03030bf20b4f18568af3f34011e8873e6da2d49202"
+    },
+    {
+      "id": "sod_ppm_n64",
+      "problem": "Sod",
+      "input": "validation/hydro/inputs/sod_ppm_n64.par",
+      "resolution": 64,
+      "qualification_group": "sod_ppm",
+      "scientific_time": 0.2,
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10,
+        11
+      ],
+      "timeout_seconds": 1200,
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "sod_exact_riemann",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "l1_max": 0.05,
+        "l2_max": 0.1,
+        "shock_position_cells_max": 2.5,
+        "minimum_l1_order": 0.7,
+        "minimum_l2_order": 0.3
+      },
+      "input_sha256": "1aa66de035bf1df8b0593b285c681bab2229421ef6f90044d2fd469677cbe04b"
+    },
+    {
+      "id": "sod_ppm_n128",
+      "problem": "Sod",
+      "input": "validation/hydro/inputs/sod_ppm_n128.par",
+      "resolution": 128,
+      "qualification_group": "sod_ppm",
+      "scientific_time": 0.2,
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "timeout_seconds": 1200,
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "sod_exact_riemann",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "l1_max": 0.03,
+        "l2_max": 0.08,
+        "shock_position_cells_max": 2.5,
+        "minimum_l1_order": 0.7,
+        "minimum_l2_order": 0.3
+      },
+      "input_sha256": "70fae22e34dfef48590a66e9f432bf8b3c8dd98898d01dc04bf77e2f3f9b8877"
+    },
+    {
+      "id": "sod_ppm_n256",
+      "problem": "Sod",
+      "input": "validation/hydro/inputs/sod_ppm_n256.par",
+      "resolution": 256,
+      "qualification_group": "sod_ppm",
+      "scientific_time": 0.2,
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "timeout_seconds": 1200,
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "sod_exact_riemann",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "l1_max": 0.02,
+        "l2_max": 0.06,
+        "shock_position_cells_max": 2.5,
+        "minimum_l1_order": 0.7,
+        "minimum_l2_order": 0.3
+      },
+      "input_sha256": "46d126792466fa5083b7e2d42f36a952cab16c6dcaf5e634d13d58590c087a80"
+    },
+    {
+      "id": "diffusion_rkl1_n64",
+      "problem": "DiffusionMode",
+      "input": "validation/diffusion/inputs/rkl1_n64.par",
+      "scientific_time": 0.1,
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 5e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_diffusion_mode",
+        "fraction_bounds": [
+          0.0,
+          1.0
+        ],
+        "l1_max": 1e-05,
+        "linf_max": 1e-05,
+        "mean_relative_drift_max": 1e-12
+      },
+      "input_sha256": "0757020964cd4a111b7588e89cda5e299790dba605f2a2666e83f2a9767c685c"
+    },
+    {
+      "id": "diffusion_rkl2_n64",
+      "problem": "DiffusionMode",
+      "input": "validation/diffusion/inputs/rkl2_n64.par",
+      "scientific_time": 0.1,
+      "resolution": 64,
+      "qualification_group": "diffusion_rkl2",
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 5e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_diffusion_mode",
+        "fraction_bounds": [
+          0.0,
+          1.0
+        ],
+        "l1_max": 1e-05,
+        "mean_relative_drift_max": 1e-12,
+        "minimum_l1_order": 1.8,
+        "convergence_pairs": "final"
+      },
+      "input_sha256": "9763e2ff6b3e8b3a961e90fe520a0291b6aa258604515882da65133a0a0ed2ec"
+    },
+    {
+      "id": "diffusion_rkl2_n128",
+      "problem": "DiffusionMode",
+      "input": "validation/diffusion/inputs/rkl2_n128.par",
+      "scientific_time": 0.1,
+      "resolution": 128,
+      "qualification_group": "diffusion_rkl2",
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 5e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_diffusion_mode",
+        "fraction_bounds": [
+          0.0,
+          1.0
+        ],
+        "l1_max": 1e-05,
+        "mean_relative_drift_max": 1e-12,
+        "minimum_l1_order": 1.8,
+        "convergence_pairs": "final"
+      },
+      "input_sha256": "9404faabbf5cd4da337431b1de41ba9c76e29e055b6e41c0f12e7cfff316163a"
+    },
+    {
+      "id": "diffusion_rkl2_n256",
+      "problem": "DiffusionMode",
+      "input": "validation/diffusion/inputs/rkl2_n256.par",
+      "scientific_time": 0.1,
+      "resolution": 256,
+      "qualification_group": "diffusion_rkl2",
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "reduction_policy": {
+        "rtol": 5e-10,
+        "atol": 2e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "periodic_diffusion_mode",
+        "fraction_bounds": [
+          0.0,
+          1.0
+        ],
+        "l1_max": 1e-05,
+        "mean_relative_drift_max": 1e-12,
+        "minimum_l1_order": 1.8,
+        "convergence_pairs": "final"
+      },
+      "input_sha256": "7885c639e990845337b8d779a4f26a4703b928d740ae8c30f2e1ba16fc118208"
+    }
+  ],
+  "run_policy": {
+    "priority": "Numerical correctness; independent reference and backend parity evaluated separately.",
+    "numerical_criteria_changed": false,
+    "initial_operational_caps_not_scientific_gates": {
+      "ordinary_owner_seconds": 120,
+      "gravity_analytic_existing_timeout_seconds": 600,
+      "gravity_quick_existing_timeout_seconds": 300,
+      "representative_batch_minutes": 10,
+      "new_h5_batch_logical_mib": 256
+    },
+    "early_stop": "Clearly anomalous progress, sustained resource pressure, I/O failure or limit: TERM the owned existing guard; keep endpoint/step, metrics and exit; classify INCOMPLETE_NEEDS_EXECUTION_OPTIMIZATION, never PASS.",
+    "guard_parameters_source": "docs/guides/Build.md: --min-available-mib 1536 --max-swap-growth-mib 256 --pressure-guard",
+    "heavy_concurrency": 1,
+    "ctest_jobs": 1,
+    "uniform_omp_threads": 4,
+    "gravity_quick_omp_threads": 1,
+    "performance_timing_is_formal": false
+  },
+  "historical_evidence": [
+    {
+      "path": "validation/backend/results/release-closure-20261009/native-public-consumer-summary.json",
+      "status": "Eight of nine original CUDA owners accepted; full Hydro user-stopped; CPU final config-only distinct from historical full suite."
+    },
+    {
+      "path": "validation/backend/results/release-closure-20261009/o9-endpoint-ledger-summary.json",
+      "status": "RZ saved1.25/2.5-crossing states accepted within original .02/.002/1e-12/signal100; full5/fresh deferred. Cartesian main1<2 AMR-events FAIL preserved, separate L2 supplement3 events accepted."
+    },
+    {
+      "path": "validation/burn/results/release-closure-20261009/production-summary.json",
+      "status": "Historical long1e-6 aprox13 burn; independent time-method reference shares reaction RHS; original species/temp/energy1e-8 and closure1e-12 unchanged."
+    },
+    {
+      "path": "docs/development/archive/modernization/CellularBurnRateCpuCudaAudit-20261008.zh-CN.md",
+      "report_commit": "110e769ddbf4bad6a8aafef744dffe4c7aadf27f",
+      "reproduction_commit": "ee091b35c45e959910a6a4520aa240856c0d560d",
+      "blob_sha256": "33103426d23c53e531713a9394fd7b6939265dd6a78d7138431683df8bd056a0",
+      "status": "Historical enuc_rate screening gate NOT_MET; root cause unlocated, no current-commit rerun or new tolerance. Step2 is step-aligned, steps1/24 exact-time."
+    }
+  ],
+  "no_automatic_next_stage": "R2.2 and R2.3 remain NOT_STARTED.",
+  "checks": {
+    "manifest_structure_exit_code": 0,
+    "manifest_cases": 22,
+    "selected_cases": 10,
+    "local_links_and_anchors_checked": 392,
+    "missing_files": 0,
+    "missing_anchors": 0,
+    "archived_machine_json_original_bytes": true,
+    "cellular_report_original_bytes": true,
+    "historical_contract_numeric_literals_preserved": true,
+    "production_code_git_diff": [],
+    "new_numerical_runs": 0,
+    "new_performance_measurements": 0,
+    "selected_command_artifacts": 36
+  },
+  "delegation": [
+    {
+      "job_id": "ac3ccbaa51044e10b1e55cdfbfc8d2fc",
+      "provider": "deepseek",
+      "scope": "evidence_only",
+      "purpose": "numerical representative correction"
+    },
+    {
+      "job_id": "e4228660e6244e02a3579504e5d24e04",
+      "provider": "deepseek",
+      "scope": "evidence_only",
+      "purpose": "document archive triage correction"
+    },
+    {
+      "job_id": "0a15f9c790d04e7ebbf13d60653f5e46",
+      "provider": "antigravity",
+      "scope": "full",
+      "purpose": "frozen run-policy prose"
+    }
+  ],
+  "selected_command_artifacts": {
+    "/home/shiroakane/ARCH/build-release-cpu/arch_amr_flux_surface_plan": {
+      "bytes": 1399920,
+      "sha256": "a7a2a274af65d0c62e1957015842280aa7b1fb21da9fac8a858a75b53d9a4e6e"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_burn_mainline_reference": {
+      "bytes": 586904,
+      "sha256": "92a2f09b4f4d0c95cf4178f36dd66e9dc6016190edc98b55bf96c3c16c8e7f60"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_checkpoint_compatibility": {
+      "bytes": 605456,
+      "sha256": "8bbe9620bc4eedb620a42795ed9bbc7e35672e961ba03cd6241716abec03396a"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_cuda_single_level_validation": {
+      "bytes": 434680,
+      "sha256": "f4a1d73a5dd3fadc453e1ed34db302bc0af7c2439f16839349c34004b688b5d6"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_composite_poisson": {
+      "bytes": 933848,
+      "sha256": "b2bc92a88d62379c0d54d16714f3729a471e77130ed46a00dc021576c1b12cc2"
+    },
+    "/home/shiroakane/miniconda3/envs/work/bin/python": {
+      "bytes": 31896496,
+      "sha256": "97109784606a4650256286ebf762e48a1334d14b673f4d9da94c5c64b14b7b7f"
+    },
+    "/home/shiroakane/ARCH/tests/api/configuration/test_configuration.py": {
+      "bytes": 18831,
+      "sha256": "e1fc2b748f9eeb7d0a73aba0fad368f1c6aba9f48f2b37505c140f8253c817ae"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH": {
+      "bytes": 16649928,
+      "sha256": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9"
+    },
+    "/home/shiroakane/ARCH/tests/api/configuration/test_configuration_entry.py": {
+      "bytes": 4956,
+      "sha256": "2782d0bfd97573a85d23079ed617989d9bf7b65568f519db8350d5f90c49f04c"
+    },
+    "/home/shiroakane/ARCH/tests/api/configuration/test_configuration_v3.py": {
+      "bytes": 26010,
+      "sha256": "79890897953b3dedfbe5826c5626105ae939e0cf24f48443589549b25b703106"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_conservative_acceptance": {
+      "bytes": 39016,
+      "sha256": "44b9dd376252769f0c341673655f2e4964374f1feb2b03aed5b8c89370e7d181"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_flux_limiter": {
+      "bytes": 629536,
+      "sha256": "5804f29682963781022d7f30078840a3e3cc3da7758ab7e874b2c61f5d13073f"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_generated_nse": {
+      "bytes": 666512,
+      "sha256": "39224c64f7cefacb4ba4a8d0aee33845eb608d90402464c9ce4f874e29dec2d9"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_helm_components": {
+      "bytes": 140288,
+      "sha256": "a20d3088deb0ae8a10dbc75338727f62d7c69528af0be202e24ac16db6bd1db2"
+    },
+    "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat": {
+      "bytes": 60242514,
+      "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_native_tabular": {
+      "bytes": 355600,
+      "sha256": "9622984463c5670f9ea916accd19855c6e324f123bd14cf872d53e69ebf34690"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_poisson_multigrid": {
+      "bytes": 143992,
+      "sha256": "a8fa9b2c6e547ac5c228cebcc3db90d8b2646ad778457d19f141e614994a8a45"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_ppm_limiter": {
+      "bytes": 121400,
+      "sha256": "4da3ae14a926b61620744ff1538b92ca8d9002e3c19daf33a05969770fa61f84"
+    },
+    "/home/shiroakane/ARCH/tests/api/preview/test_preview.py": {
+      "bytes": 12429,
+      "sha256": "46c94380ca8c2723bd33499c938b2ec2c3cd2d445ae5d7220af7f5d77ec64521"
+    },
+    "/home/shiroakane/ARCH/tests/api/preview/test_cellular_preview.py": {
+      "bytes": 13555,
+      "sha256": "c38bfc0e01b6ea1b0e5b377093ba0ec156dcbd5eca09ae1fc6d9d93f266c54f9"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_preview_cellular_reference": {
+      "bytes": 923136,
+      "sha256": "7a205e81093ec2fc1bded9327cb35d650b0566c043a656b25cc91a69453c4bbd"
+    },
+    "/home/shiroakane/ARCH/tests/api/preview/test_full_model_preview.py": {
+      "bytes": 15588,
+      "sha256": "ea7145e12f217e604130b1828a8ef18096aa42d248916fbf794b355c31a7de30"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_rkl_repair_weights": {
+      "bytes": 22072,
+      "sha256": "96b4c94b7843d09d0aed24d51ad0570c94408e87c10d0441f6e42500a7f1ea08"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_same_level_exchange_plan": {
+      "bytes": 72320,
+      "sha256": "5f782e8786a3723f8284789109eb43c610ca1135a2397be1e6800db6e6dadbdd"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_self_gravity": {
+      "bytes": 1746624,
+      "sha256": "31b6630c21110dd38d9e0e9bbfa3d2daa6f857abcd28b01229d177264e046c9d"
+    },
+    "/home/shiroakane/ARCH/validation/gravity/run_self_gravity.py": {
+      "bytes": 13941,
+      "sha256": "b121c3df24d924ac40291b43b9a8c40a91d52238e3dd902825219efcaaf93113"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_shared_stage_scheduler": {
+      "bytes": 424896,
+      "sha256": "66f708a736da16dbd07c05a6df394c195f97068149e739ccc42b92645a76e8e5"
+    },
+    "/home/shiroakane/ARCH/build-release-cpu/arch_topology_transaction": {
+      "bytes": 385680,
+      "sha256": "1d976b080e4f4ee3caae5de2fb8117154292a93501d8d88281e2438dd65c8e94"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_burn_controller_parity": {
+      "bytes": 3374568,
+      "sha256": "435a538fc19f726e8ece279c8e06e1b9efc52e297693c45590e2a0224a5095eb"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_amr_exchange": {
+      "bytes": 351894176,
+      "sha256": "29139e59e0e3a56515ee67b3eda2ca276624c51ec15d451f2a4ae93d72875c6c"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_block": {
+      "bytes": 291431152,
+      "sha256": "d2794eba406fdd3f357f0551af1e2c0379a48c0a2db2c76d60dacb3970e04f7f"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_conservative_acceptance": {
+      "bytes": 58808,
+      "sha256": "11ce7f266af9c8f5f6cbf1b5dfbdf4fcc959fae0ee30120c1c2cc2ac407fb088"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_ppm_limiter": {
+      "bytes": 48560,
+      "sha256": "4d3b09ada297c4dc3c83037749921ef6d3593ce9b344656b5dc83761295be7f7"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_regrid_transaction": {
+      "bytes": 352942024,
+      "sha256": "24d401a13a88393b6abfa71c875151b9b0cb8cbbff557e362396d6abb3500c5d"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_diffusion_rkl_parity": {
+      "bytes": 8802128,
+      "sha256": "70b4565b724ebf2a03398bab90147301caeaf097da8ce904bf8996cdac3a7ef7"
+    },
+    "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_hydro_leaf_parity": {
+      "bytes": 12155232,
+      "sha256": "a6c47ad6564fdca92575839c00b9af5014a5e5615114d68c460caea991de8277"
+    }
+  },
+  "primary_checkout_status_at_start": [
+    "?? .agents/",
+    "?? AGENTS.md"
+  ],
+  "selected_command_artifact_meaning": "Selected executable or direct file argument only; observing identity is not proof of build-source linkage or test PASS."
+}

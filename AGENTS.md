@@ -18,12 +18,20 @@
 
 ## 进度恢复
 
-- 现代化计划与工作包入口：`ARCH_MODERNIZATION_PLAN.md`；本轮前置记录：`docs/development/Preflight-20261012.zh-CN.md`。
+- 现代化计划与工作包入口：`ARCH_MODERNIZATION_PLAN.md`；历史前置记录：`docs/development/archive/modernization/Preflight-20261012.zh-CN.md`。
+- 当前基线与代表集：`docs/development/modernization/BaselineIdentity-20261012.zh-CN.md`。R2.1 只冻结身份与选择范围，R2.2 数值运行和 R2.3 测量尚未启动。
 - 既有科学验收以 `docs/development/ComputeOptimizationPlan.zh-CN.md` 顶部 R1–R6 和 `ComputeStudioReleasePlan-20261006.zh-CN.md` 的当前出口为准。历史空复选框不等于待重做任务；已通过项按其源码、执行物和输入身份复用，缺项、失败、中断与后置分开记录。
 
+- 当前 Helmholtz 表 `EOS_toolkit/tables/helmholtz/helm_table.dat` 已用本地 `git lfs checkout` 恢复为 60,242,514 字节，原 SHA-256 见基线；新工作区仍须核对是否为指针。
 - 新工作区测试前核对 Git LFS 夹具：`studio/tests/fixtures/sod-1d.h5` 应为真实 HDF5，而非文本指针。本轮 `git lfs checkout studio/tests/fixtures/sod-1d.h5` 从本地对象库恢复成功；对象缺失时仅拉取需要的路径，勿顺带下载全部 EOS／历史模拟数据。
+
+## 运行与存储边界
+
+- 运行明显异常缓慢时，记录已到达时刻／步数、耗时、退出原因和已得到的数值证据，标为待执行优化；可通过现有护栏受控停止本任务进程。截断不能记为 PASS，不改变原终点、误差门槛或物理定义。
+- H5／checkpoint 使用实际宿主盘容量。本机 WSL Ubuntu 的 VHD 位于 `E:\WSL\Ubuntu`，对应宿主挂载 `/mnt/e`；Linux `/` 的虚拟可用空间不能替代宿主余量。开始 H5 批次前、预计明显增长或出现 I/O 异常时核对；约剩 **1 GiB** 时预警并停止新增大输出，不高频反复查盘。路径／机器改变时重核映射。
+- 2026-10-12 实查 WSL 可见内存约 7.7 GiB，GPU 为 RTX 3060 Ti 8 GiB；历史 16 GB 工作站目标及可选 4070 Ti 记录不等于本轮实际可用资源。沿用现有资源护栏，重负载串行。
 
 ## 文件归属与注释
 
 - 新增、拆分或移动文件前，按 `docs/development/ImplementationOwnership.md` 核对目录、文件职责、调用方和构建归属；优先复用现有所有者，不以文件数或文件大小决定拆分。
-- 冻结行为的源码注释按 `docs/development/CommentAndDocumentationStyle.md` 说明职责、流程、数学约定和资源生命周期。历史证据及锁定字节的文件保留原文，通过维护中的说明补充；注释改善不授权数值、接口或验收变化。
+- 冻结行为的源码注释按 `docs/development/CommentAndDocumentationStyle.md` 说明职责、流程、数学约定和资源生命周期。原始结果、签收记录及锁定字节的文件保留原文；已授权的历史说明可纠正、合并或归档，并保留来源、数值与失败记录；注释改善不授权数值、接口或验收变化。

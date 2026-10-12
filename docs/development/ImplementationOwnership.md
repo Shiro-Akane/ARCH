@@ -165,7 +165,7 @@ a forwarding layer, a second process runner, or a new abstraction.
 
 The [P1 layout record](layout/README.zh-CN.md) and its `moves.json` retain their
 2026-09-22 identity. They are historical migration evidence, not a current file
-count or authorization gate. The [stage 1 inspection](ModernizationR1-Stage1Completion-20261012.zh-CN.md)
+count or authorization gate. The [stage 1 inspection](archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md)
 reconciles later multigrid work and the intentionally retired sparse BE-NR
 header without rewriting that record.
 

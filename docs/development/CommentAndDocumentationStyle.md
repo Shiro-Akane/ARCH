@@ -119,6 +119,12 @@ Changing behavior, protected interfaces or numerical criteria requires its
 own authorized work package. This guidance does not authorize a bulk comment
 rewrite or a redesign of frozen source.
 
+User-authorized historical documentation cleanup may correct obsolete planning
+prose, consolidate useful references or move completed records into the existing
+archive. Keep dated conclusions distinguishable from current status and repair
+both incoming and outgoing links. Do not remove a record merely because it is
+old; delete only material shown to have no remaining reference value.
+
 Frozen results, failed attempts and signed review records retain their original
 text, inputs and identities. Explain later work in a new record or a maintained
 summary; do not rewrite historical evidence to match a newer implementation.

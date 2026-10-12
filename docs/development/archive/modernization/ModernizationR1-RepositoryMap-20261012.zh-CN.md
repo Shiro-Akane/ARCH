@@ -1,13 +1,15 @@
 # 现代化 R1：仓库结构与模块归属映射
 
-R1 已完成结构映射；阶段 1 的深层调用与实现检查仍未完成，R2 未启动。本页是[现代化总计划](../../ARCH_MODERNIZATION_PLAN.md)的证据跳板，不替代[既有实现所有权表](ImplementationOwnership.md)或数值契约。本页的 R1 是现代化工作包，与旧优化计划的 release R1–R6 编号不同。
+> 已完成阶段的历史快照；状态和下一工作包以[现代化主计划](../../../../ARCH_MODERNIZATION_PLAN.md)为准。归档仅调整阅读位置与相对链接，原调查／验收身份保留。
+
+R1 已完成结构映射；阶段 1 的深层调用与实现检查仍未完成，R2 未启动。本页是[现代化总计划](../../../../ARCH_MODERNIZATION_PLAN.md)的证据跳板，不替代[既有实现所有权表](../../ImplementationOwnership.md)或数值契约。本页的 R1 是现代化工作包，与旧优化计划的 release R1–R6 编号不同。
 
 ## 范围与基线
 
 | 项目 | 已核实结果 |
 |---|---|
 | 检查基线 | `compute/optim`，`a0185bdf524d374f9c804666a98a4c76668db044`；开始时与 `origin/compute/optim` 一致，工作区干净 |
-| 工作入口 | [AGENTS.md](../../AGENTS.md) → [总计划](../../ARCH_MODERNIZATION_PLAN.md) → [前置记录](Preflight-20261012.zh-CN.md)；项目 `arch-engineering` 与全局 `multimodel-engineering` |
+| 工作入口 | [AGENTS.md](../../../../AGENTS.md) → [总计划](../../../../ARCH_MODERNIZATION_PLAN.md) → [前置记录](Preflight-20261012.zh-CN.md)；项目 `arch-engineering` 与全局 `multimodel-engineering` |
 | 实际目录 | `/home/shiroakane/.codex/worktrees/d7a6/ARCH`；主目录 `/home/shiroakane/ARCH` 脱离分支停在 `9aaa5addd…`，保留旧执行物；共两个 worktree |
 | 路径与环境 | 沿用 AGENTS 中已验证的 WSL 读取入口；科学 Python 使用 `work`，本轮分类脚本使用该环境的 Python；未修改全局环境 |
 | 检查方式 | Git 全路径清点、目录与入口检查、代表源码／CMake／契约阅读、两个 DeepSeek 只读调查及 Codex 独立核对 |
@@ -22,34 +24,34 @@ R1 已完成结构映射；阶段 1 的深层调用与实现检查仍未完成�
 
 | 区域 | 路径数 | 主要归属与边界 | 检查入口 |
 |---|---:|---|---|
-| 根文件 | 12 | 项目入口、战略计划、CMake／presets、许可与 Git 规则 | [README](../../README.zh-CN.md)、[CMakeLists](../../CMakeLists.txt) |
-| `.agents`／`.github` | 2／4 | 项目 Skill、CI、安全配置、默认 reviewer；CODEOWNERS 不等于数学 owner | [Skill](../../.agents/skills/arch-engineering/SKILL.md)、[CI](../../.github/workflows/ci.yml) |
-| `src` | 579 | 科学核心、运行时、API、后端及局部文档；`src` 内 428 个 `.h/.cpp/.inc/.cuh/.cu/.hpp` 路径 | 下表及 [src 导航](../../src/README.md) |
-| `include` | 3 | ARCH 自有的算例公共转发头与说明；不是第三方 SDK | [include](../../include/README.md) |
-| `simulation` | 59 | 16 个算例目录，20 个 `.cpp`；Setup／Init、注册、边界辅助及 `.par` 输入；实际算法在公共核心 | [算例目录](../../simulation/README.md) |
-| `cmake` | 23 | 目标归属、依赖、生成注册、CUDA 路由、测试与 Studio 构建 | [cmake 导航](../../cmake/README.md) |
-| `studio` | 337 | UI／数据适配、Node Host、Electron、测试、契约和归档 | [Studio](../../studio/README.md) |
-| `tests` | 225 | Host／CUDA／数学／API／工具契约、夹具与冒烟 | [测试入口](../../tests/README.md)、[注册说明](../../cmake/tests/README.md) |
-| `tools`／`examples` | 23／3 | 验证、资源护栏、身份与架构检查、网络生成适配；开发者示例 | [工具](../../tools/README.md)、[示例](../../examples/README.md) |
-| `validation` | 9,165 | 独立参考、runner、输入、版本化证据及历史实验；其中 `results` 路径 8,875 条 | [验证入口](../../validation/README.zh-CN.md) |
-| `docs` | 628 | 当前指南／科学契约、开发记录、发布材料与历史归档；development 占 589 条 | [文档导航](../README.md)、[开发入口](README.md) |
-| `EOS_toolkit`／`LICENSES` | 9／4 | 外部 EOS 表、格式／来源说明和许可证；读取与物理模型在 `src/physics/eos` | [EOS 表](../../EOS_toolkit/README.md)、[来源声明](../../THIRD_PARTY_NOTICES.md) |
+| 根文件 | 12 | 项目入口、战略计划、CMake／presets、许可与 Git 规则 | [README](../../../../README.zh-CN.md)、[CMakeLists](../../../../CMakeLists.txt) |
+| `.agents`／`.github` | 2／4 | 项目 Skill、CI、安全配置、默认 reviewer；CODEOWNERS 不等于数学 owner | [Skill](../../../../.agents/skills/arch-engineering/SKILL.md)、[CI](../../../../.github/workflows/ci.yml) |
+| `src` | 579 | 科学核心、运行时、API、后端及局部文档；`src` 内 428 个 `.h/.cpp/.inc/.cuh/.cu/.hpp` 路径 | 下表及 [src 导航](../../../../src/README.md) |
+| `include` | 3 | ARCH 自有的算例公共转发头与说明；不是第三方 SDK | [include](../../../../include/README.md) |
+| `simulation` | 59 | 16 个算例目录，20 个 `.cpp`；Setup／Init、注册、边界辅助及 `.par` 输入；实际算法在公共核心 | [算例目录](../../../../simulation/README.md) |
+| `cmake` | 23 | 目标归属、依赖、生成注册、CUDA 路由、测试与 Studio 构建 | [cmake 导航](../../../../cmake/README.md) |
+| `studio` | 337 | UI／数据适配、Node Host、Electron、测试、契约和归档 | [Studio](../../../../studio/README.md) |
+| `tests` | 225 | Host／CUDA／数学／API／工具契约、夹具与冒烟 | [测试入口](../../../../tests/README.md)、[注册说明](../../../../cmake/tests/README.md) |
+| `tools`／`examples` | 23／3 | 验证、资源护栏、身份与架构检查、网络生成适配；开发者示例 | [工具](../../../../tools/README.md)、[示例](../../../../examples/README.md) |
+| `validation` | 9,165 | 独立参考、runner、输入、版本化证据及历史实验；其中 `results` 路径 8,875 条 | [验证入口](../../../../validation/README.zh-CN.md) |
+| `docs` | 628 | 当前指南／科学契约、开发记录、发布材料与历史归档；development 占 589 条 | [文档导航](../../../README.md)、[开发入口](../../README.md) |
+| `EOS_toolkit`／`LICENSES` | 9／4 | 外部 EOS 表、格式／来源说明和许可证；读取与物理模型在 `src/physics/eos` | [EOS 表](../../../../EOS_toolkit/README.md)、[来源声明](../../../../THIRD_PARTY_NOTICES.md) |
 
 ## 科学核心与应用分层
 
 | 模块 | 路径数 | 功能与主要归属 | 代表入口／消费者 |
 |---|---:|---|---|
-| `src/main.cpp`、`src/README.md` | 2 | CLI 入口先识别 API 命令；常规运行再加载参数、创建算例、Setup、解析边界并分派 | [main.cpp](../../src/main.cpp) |
-| `src/core`／`data` | 34／7 | 配置、注册、可移植标注、文件身份；状态／配置记录、诊断与单位 | [ProblemRegistry](../../src/core/problem/ProblemRegistry.h)、[GlobalDefs](../../src/data/GlobalDefs.h) |
-| `src/grid`／`interface` | 7／4 | 网格布局、几何度量／视图、标量场；算例接口与初始生成契约 | [GridMetrics](../../src/grid/GridMetrics.h)、[GenericProblem](../../src/interface/GenericProblem.h) |
-| `src/driver` | 36 | 策略分派、能力／运行计划、阶段调度、状态与拓扑生命周期、I/O／引力适配；通过 ComputeBackend 接后端 | [SolverDispatch](../../src/driver/SolverDispatch.cpp)、[DriverRuntime](../../src/driver/runtime/DriverRuntime.h)、[ComputeBackend](../../src/driver/runtime/ComputeBackend.h) |
-| `src/amr` | 31 | 拓扑、存储、邻接交换、粗细插值／限制、通量注册与 reflux、椭圆网格适配 | [AMR](../../src/amr/README.md)、[RegridTransferMath](../../src/amr/transfer/RegridTransferMath.h) |
-| `src/numerics` | 80 | 重构／限制器、Riemann 通量、积分与状态规则、扩散、ODE／线性代数、Poisson／多重网格 | [numerics](../../src/numerics/README.md)；混合共享数学与 Host 执行实现，不能整体标为设备公共库 |
-| `src/physics` | 111 | EOS、内置网络／NSE、重力、物理边界、导热系数、物种、常数及诊断 | [physics](../../src/physics/README.md)、[所有权表](ImplementationOwnership.md) |
-| `src/cuda` | 120 | 设备视图／存储、kernel、调度／路由、AMR、Hydro、扩散、微物理／重力执行；引用公共数学 | [CUDA](../../src/cuda/README.md)、[runtime](../../src/cuda/runtime/README.md)；目录位置不能证明内部完全没有数学重复 |
-| `src/io` | 16 | 参数解析、日志、共享 HDF5 序列化、plot／checkpoint 与 restart 兼容 | [I/O](../../src/io/README.md)；Driver 在输出边界保证所需状态可读 |
-| `src/api` | 131 | Core 配置／模型检查、初始预览／AMR、会话与协议；32 个 C++ 源／头、85 个示例文件、13 个协议／历史文档及 1 个 README | [API](../../src/api/README.md)；预览使用 CPU，预览通过不认证正式运行或 GPU 可用性 |
-| `studio/src`／`host`／`desktop` | 109／40／11 | 前端工作流与数据读取／绘图；Node Host 管理 Core 子进程、项目、Build／Run／Preview；Electron 桌面壳 | [前端入口](../../studio/src/main.tsx)、[Host](../../studio/host/server.ts)、[桌面入口](../../studio/desktop/main.cjs) |
+| `src/main.cpp`、`src/README.md` | 2 | CLI 入口先识别 API 命令；常规运行再加载参数、创建算例、Setup、解析边界并分派 | [main.cpp](../../../../src/main.cpp) |
+| `src/core`／`data` | 34／7 | 配置、注册、可移植标注、文件身份；状态／配置记录、诊断与单位 | [ProblemRegistry](../../../../src/core/problem/ProblemRegistry.h)、[GlobalDefs](../../../../src/data/GlobalDefs.h) |
+| `src/grid`／`interface` | 7／4 | 网格布局、几何度量／视图、标量场；算例接口与初始生成契约 | [GridMetrics](../../../../src/grid/GridMetrics.h)、[GenericProblem](../../../../src/interface/GenericProblem.h) |
+| `src/driver` | 36 | 策略分派、能力／运行计划、阶段调度、状态与拓扑生命周期、I/O／引力适配；通过 ComputeBackend 接后端 | [SolverDispatch](../../../../src/driver/SolverDispatch.cpp)、[DriverRuntime](../../../../src/driver/runtime/DriverRuntime.h)、[ComputeBackend](../../../../src/driver/runtime/ComputeBackend.h) |
+| `src/amr` | 31 | 拓扑、存储、邻接交换、粗细插值／限制、通量注册与 reflux、椭圆网格适配 | [AMR](../../../../src/amr/README.md)、[RegridTransferMath](../../../../src/amr/transfer/RegridTransferMath.h) |
+| `src/numerics` | 80 | 重构／限制器、Riemann 通量、积分与状态规则、扩散、ODE／线性代数、Poisson／多重网格 | [numerics](../../../../src/numerics/README.md)；混合共享数学与 Host 执行实现，不能整体标为设备公共库 |
+| `src/physics` | 111 | EOS、内置网络／NSE、重力、物理边界、导热系数、物种、常数及诊断 | [physics](../../../../src/physics/README.md)、[所有权表](../../ImplementationOwnership.md) |
+| `src/cuda` | 120 | 设备视图／存储、kernel、调度／路由、AMR、Hydro、扩散、微物理／重力执行；引用公共数学 | [CUDA](../../../../src/cuda/README.md)、[runtime](../../../../src/cuda/runtime/README.md)；目录位置不能证明内部完全没有数学重复 |
+| `src/io` | 16 | 参数解析、日志、共享 HDF5 序列化、plot／checkpoint 与 restart 兼容 | [I/O](../../../../src/io/README.md)；Driver 在输出边界保证所需状态可读 |
+| `src/api` | 131 | Core 配置／模型检查、初始预览／AMR、会话与协议；32 个 C++ 源／头、85 个示例文件、13 个协议／历史文档及 1 个 README | [API](../../../../src/api/README.md)；预览使用 CPU，预览通过不认证正式运行或 GPU 可用性 |
+| `studio/src`／`host`／`desktop` | 109／40／11 | 前端工作流与数据读取／绘图；Node Host 管理 Core 子进程、项目、Build／Run／Preview；Electron 桌面壳 | [前端入口](../../../../studio/src/main.tsx)、[Host](../../../../studio/host/server.ts)、[桌面入口](../../../../studio/desktop/main.cjs) |
 
 下图只表示已定位的结构与消费关系，不是完整时序或全部运行路由的验收图。
 
@@ -84,7 +86,7 @@ flowchart LR
 | 构建树生成物 | CustomNetworkRegistry／CustomNetworks／BuildIdentity 头、dense／sparse／custom CUDA route TU、arch-studio launcher；`cmake/templates` 是维护的输入模板，生成文件在 binary tree |
 | 本地非版本化内容 | 当前仅识别 `studio/node_modules/` 与 `studio/dist/` 为忽略的依赖／资源产物；未审计其内部。HighFive／SuiteSparse 的 `_deps` 属构建树，不是当前 include 目录的 vendored 源码 |
 
-依据：[Application](../../cmake/project/Application.cmake)、[Dependencies](../../cmake/dependencies/Dependencies.cmake)、[CUDA backend](../../cmake/cuda/CudaBackend.cmake)、[CustomNetworks](../../cmake/CustomNetworks.cmake)、[templates](../../cmake/templates/README.md)、[第三方说明](../../THIRD_PARTY_NOTICES.md)。来源归类依据仓库现有声明，本轮不做新的外部许可证审计。
+依据：[Application](../../../../cmake/project/Application.cmake)、[Dependencies](../../../../cmake/dependencies/Dependencies.cmake)、[CUDA backend](../../../../cmake/cuda/CudaBackend.cmake)、[CustomNetworks](../../../../cmake/CustomNetworks.cmake)、[templates](../../../../cmake/templates/README.md)、[第三方说明](../../../../THIRD_PARTY_NOTICES.md)。来源归类依据仓库现有声明，本轮不做新的外部许可证审计。
 
 ## 验证入口与未覆盖区域
 
@@ -112,7 +114,7 @@ CI 源码包含 Tooling、CPU、Studio／Host 三个执行 lane 及 required 汇
 | R1-C03：微物理数学与设备 owner | 公共 EOS／网络／ODE、设备存储 owner 及生成 route 分属不同区域 | 后续分开检查公式与上传／寿命／实例化；当前不以文件数量推断过度工程化 |
 | R1-C04：RZ 成本归因续查 | 前置记录保存 source／boundary 的旧热点证据；本轮只定位共同 gravity 与 CUDA execution 归属 | 留待有界性能调查；旧热点不等于已证明缓存失效或新性能根因，不重开长程 |
 
-建议下一轮仍属于阶段 1：只展开 **C01**，以[现有所有权表](ImplementationOwnership.md)为起点，覆盖 `numerics/reconstruction`、`numerics/flux`、`numerics/integrator/{TimeIntegratorHelper,HydroCellUpdate,GeometricSources}.h` 与相关 state／geometry 消费者。先证实实际公共调用和后端差异，再决定哪些问题值得进入联合审计；R1 不放行架构修改或数值优化。
+建议下一轮仍属于阶段 1：只展开 **C01**，以[现有所有权表](../../ImplementationOwnership.md)为起点，覆盖 `numerics/reconstruction`、`numerics/flux`、`numerics/integrator/{TimeIntegratorHelper,HydroCellUpdate,GeometricSources}.h` 与相关 state／geometry 消费者。先证实实际公共调用和后端差异，再决定哪些问题值得进入联合审计；R1 不放行架构修改或数值优化。
 
 ## 协作与证据位置
 

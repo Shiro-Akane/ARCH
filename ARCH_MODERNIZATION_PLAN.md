@@ -9,11 +9,11 @@
 | 建立日期 | 2026-10-11（Asia/Tokyo） |
 | 目标分支 | 已核实：当前工作区使用 `compute/optim` |
 | 前置基线 | `9aaa5addde2cda05bf88b209ce46d1c82b33df93`；原有未跟踪项目入口与 Skill 已保留 |
-| 当前阶段 | 阶段 0、整个阶段 1／R1 已完成；阶段 2–8 与 R2 均未启动 |
-| 本次执行范围 | 全仓静态现状检查：模块／共享核心／实际调用、构建与验证入口、文件归属及注释要求；隔离 configure，只写文档与索引，不编译应用／测试、不重跑 RZ 长程 |
+| 当前阶段 | 阶段 0、整个阶段 1／R1 已完成；R2.1 身份与代表集已完成，R2.2／R2.3 及阶段 3–8 未启动 |
+| 本次执行范围 | R2.1：冻结当前／历史证据身份，选择最小数值代表集，核实依赖与资源、整理文档；不运行数值轨迹、不编译 CUDA、不重跑 RZ 长程 |
 | 已有实查与验证 | 基线 `c5ce17a67bd8d82899ab7420fec627c3cf97cb9d` 的 11,078 条路径全部分类；四种配置的生产闭包覆盖全部 119 个源码／算例编译单元；结构审计通过，新科学／性能基线未测量 |
 | 当前入口 | WSL 读取已恢复；普通沙箱启动异常仍存在，可用方式与 `work` 环境见 [AGENTS.md](AGENTS.md) |
-| 详细清单与接续 | [阶段 1 完成报告](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md)；原结构地图记为 R1.1（原 R1），下一步建议 R2.1，需后续启动，不自动推进 |
+| 详细清单与接续 | [阶段 1 完成报告](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md)；原结构地图记为 R1.1（原 R1）；本轮见 [R2.1 基线与下一步](docs/development/modernization/BaselineIdentity-20261012.zh-CN.md)，不自动开始 R2.2 |
 
 依据：用户提供的 “ARCH — Architecture Modernization and Engineering Optimization” 启动词及已确认的战略计划。沿用项目 `AGENTS.md`、`arch-engineering` 和全局 `multimodel-engineering`，不在项目内另建重复治理或 MCP 基础设施。
 
@@ -27,7 +27,7 @@
 4. 遵守项目约定的运行性能非回归标准，优先考虑可测的端到端收益。
 5. 避免无必要的抽象、防御性框架、重复实现、文件碎片化和依赖复杂度。
 6. 保持 16 GB RAM 本机开发可行，避免持续 Swap 抖动。
-7. 核验目录、文件职责、调用与构建归属；新增／移动优先使用现有所有者。冻结行为源码的注释须准确、易维护；字节冻结与历史证据保持原文。要求统一落在 [所有权规范](docs/development/ImplementationOwnership.md#directory-and-file-placement) 与 [注释规范](docs/development/CommentAndDocumentationStyle.md#comments-in-behavior-frozen-source)，不另建规则体系。
+7. 核验目录、文件职责、调用与构建归属；新增／移动优先使用现有所有者。冻结行为源码的注释须准确、易维护；原始结果与字节冻结文件保持原文；按本轮授权纠正过时说明、归档已完成记录，并保留原身份与失败证据。要求统一落在 [所有权规范](docs/development/ImplementationOwnership.md#directory-and-file-placement) 与 [注释规范](docs/development/CommentAndDocumentationStyle.md#comments-in-behavior-frozen-source)，不另建规则体系。
 
 有效结果包括：结构简化且运行性能不退化、编译效率提高、具有合理复杂度代价的运行提速，以及有证据地保留现有实现。无需每项修改同时改善所有指标。
 
@@ -47,9 +47,9 @@ Codex 负责目标与范围控制、科学和数值判断、任务分解、独�
 
 | 阶段 | 状态 | 战略目标 | W1 做什么、怎么做 | W2 做什么、怎么做 | W3 做什么、怎么做 | 交付与放行条件 |
 |---|---|---|---|---|---|---|
-| **0．战略约束与前置** | 已完成：战略计划与前置 | 确定目标，恢复可用入口并避免旧任务漂移 | 复核旧验收身份与缺口，检查 Studio 合并边界 | 核实路径、`work`、Node、分支及合并后 Studio 检查 | 独立核对证据，润色已冻结的入口说明 | [前置记录](docs/development/Preflight-20261012.zh-CN.md)；本轮不启动现代化实现 |
-| **1．全仓现状检查** | 已完成：R1.1–R1.8 | 建立完整覆盖与真实依赖关系 | 已查共享数学所有者及代表 CPU/GPU 调用，保留必要后端差异；未证明全组合等价 | 已查全路径、四类配置、生产目标闭包、条件测试、CI、第三方／生成／历史边界及文件落点 | 已独立核对源码锚点、构建归属和证据边界；候选不自动成为修改包 | [完成清单、候选与后续安排](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md)、[路径索引](docs/development/ModernizationR1-RepositoryCoverage-20261012.json)、[构建索引](docs/development/ModernizationR1-BuildInventory-20261012.json)；无新科学运行验收 |
-| **2．可复现基线** | 待开始 | 确定保持项与改善项 | 选择代表算例，记录物理不变量、数值结果和已接受的参考解差异 | 测量端到端运行、冷/增量编译、RAM/Swap；记录配置与复现命令 | 检查算例代表性、比较公平性和测量可信度 | 基线表及现有验收标准；缺失标准由 Codex 澄清，不能自行放宽 |
+| **0．战略约束与前置** | 已完成：战略计划与前置 | 确定目标，恢复可用入口并避免旧任务漂移 | 复核旧验收身份与缺口，检查 Studio 合并边界 | 核实路径、`work`、Node、分支及合并后 Studio 检查 | 独立核对证据，润色已冻结的入口说明 | [前置记录](docs/development/archive/modernization/Preflight-20261012.zh-CN.md)；本轮不启动现代化实现 |
+| **1．全仓现状检查** | 已完成：R1.1–R1.8 | 建立完整覆盖与真实依赖关系 | 已查共享数学所有者及代表 CPU/GPU 调用，保留必要后端差异；未证明全组合等价 | 已查全路径、四类配置、生产目标闭包、条件测试、CI、第三方／生成／历史边界及文件落点 | 已独立核对源码锚点、构建归属和证据边界；候选不自动成为修改包 | [完成清单、候选与后续安排](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md)、[路径索引](docs/development/archive/modernization/ModernizationR1-RepositoryCoverage-20261012.json)、[构建索引](docs/development/archive/modernization/ModernizationR1-BuildInventory-20261012.json)；无新科学运行验收 |
+| **2．可复现基线** | R2.1 已完成；R2.2／2.3 待开始 | 确定保持项与改善项 | 选择代表算例，记录物理不变量、数值结果和已接受的参考解差异 | 测量端到端运行、冷/增量编译、RAM/Swap；记录配置与复现命令 | 检查算例代表性、比较公平性和测量可信度 | 基线表及现有验收标准；缺失标准由 Codex 澄清，不能自行放宽 |
 | **3．联合审计与排序** | 待开始 | 找到值得修改的问题 | 审计数学重复、模块边界、状态所有权和不必要抽象 | 用测量审计依赖、编译瓶颈、测试缺口和运行热点 | 挑战收益假设，比较局部修改与保留现状的成本 | 候选清单记录证据、收益、风险、验证成本和依赖；明确修改／保留／延后 |
 | **4．最低必要验证与 CI** | 待开始 | 为高风险修改建立保护 | 补齐将被修改路径的关键数值与接口验证，优先复用已有测试 | 建立最小构建、冒烟和回归入口；按 16 GB 内存约束排程重负载任务 | 检查验证能否捕获真实回归，删除重复或低价值检查 | 首批工作包具有可执行验收和回退方法；无需先建设完整 CI 平台 |
 | **5．构建与开发效率改进** | 待开始；按证据选择 | 先处理风险较低且证据充分的问题 | 清理已确认的无效耦合和局部重复，保护公共接口 | 针对瓶颈改善依赖、编译范围、构建并发和常用开发命令 | 核对复杂度是否下降，检查编译收益和内存代价 | 小批次独立验收；相关检查通过，并有可复现收益或明确维护价值 |
@@ -65,10 +65,10 @@ Codex 负责目标与范围控制、科学和数值判断、任务分解、独�
 
 | 维度 | 应记录的内容 | 当前状态 | 证据入口 |
 |---|---|---|---|
-| 数值与物理 | 代表算例、配置、不变量、误差标准、已接受差异、CPU/GPU 比较范围 | 历史范围已核对；阶段 2 选择可复用或受影响项 | [前置证据与缺口](docs/development/Preflight-20261012.zh-CN.md#旧进度核对) |
+| 数值与物理 | 代表算例、配置、不变量、误差标准、已接受差异、CPU/GPU 比较范围 | R2.1 已选六组并核对原门槛；本轮没有新数值 PASS | [基线与复用范围](docs/development/modernization/BaselineIdentity-20261012.zh-CN.md#历史证据的复用范围) |
 | 端到端运行 | 基线提交、硬件、配置、工作负载、计时范围和重复测量结果 | 未测量 | 待补充 |
 | 编译与开发效率 | 冷/增量构建、构建配置、并发、缓存状态和耗时 | 未测量 | 待补充 |
-| 内存与本机可行性 | 构建及运行的峰值内存、Swap 行为、同时任务和资源限制 | 未测量 | 待补充 |
+| 内存与本机可行性 | 峰值内存、Swap、并发和实际宿主盘 | 身份已查：WSL 7.7 GiB、3060 Ti 8 GiB；峰值未测，宿主 E 盘低余量约 1 GiB 才预警 | [运行与存储](docs/development/modernization/BaselineIdentity-20261012.zh-CN.md#时间资源与-h5-约定) |
 
 ## 工作包与证据索引
 
@@ -77,20 +77,22 @@ Codex 负责目标与范围控制、科学和数值判断、任务分解、独�
 | ID | 阶段与问题 | 负责人及唯一写入范围 | 状态 | 验收结论 | 详情与证据入口 |
 |---|---|---|---|---|---|
 | P0-1 | 读取入口与环境恢复 | Codex：项目入口及文档；Gemini：冻结文本润色 | 已完成 | WSL 路径、`work` 与 Linux Node 已验证；普通沙箱根因未修复 | [入口说明](AGENTS.md) |
-| P0-2 | RZ／旧验收进度核对 | DeepSeek：只读核对；Codex：最终证据台账 | 已核对 | 复用已通过项，未完成／失败／暂缓分别保留；不重跑长程 | [旧进度核对](docs/development/Preflight-20261012.zh-CN.md#旧进度核对) |
-| P0-3 | Studio review 集成与分支整理 | DeepSeek：合并边界审查；Codex：唯一 Git／源码写入者 | 已完成 | 合并后 385/385、lint 与 typed build 通过，已推送并按祖先关系清理 | [集成与清理](docs/development/Preflight-20261012.zh-CN.md#studio-集成与分支清理) |
-| R1.1（原 R1） | 仓库结构与模块归属映射 | DeepSeek：核心／构建只读调查；Codex：唯一文档写入与验收 | 已完成，原始快照保留 | 原基线 11,076 条路径归入 115 组；没有新运行验收 | [原模块地图](docs/development/ModernizationR1-RepositoryMap-20261012.zh-CN.md) |
-| R1.2–R1.5 | 控制／Hydro、AMR、微物理、重力／扩散／边界 | DeepSeek：独立只读调查；Codex：源码关键调用与边界核对 | 已完成静态调查 | 共享权威实现、代表消费者及必要执行差异已映射；未穷举数学／运行等价性 | [共享核心地图](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md#主要模块与共享核心地图) |
-| R1.6 | Core API／I/O／Studio 实际入口 | Codex：只读追踪，结合 AMR／I/O 调查 | 已完成静态调查 | 16 case、9 API 命令、发布／预览／运行／重启／读取及身份边界已定位；无新 GUI UAT | [模块地图](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md#主要模块与共享核心地图) |
-| R1.7 | 构建／依赖／测试／CI／资源入口 | Codex：唯一 configure／机器索引写入；只读审计 | 已完成 | 四种 configure 成功，CTest 注册 76／140／143／76；119 个生产编译单元全归属，结构审计退出 0 | [构建与验证](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md#构建依赖与验证入口)、[机器索引](docs/development/ModernizationR1-BuildInventory-20261012.json) |
-| R1.8 | 目录对应／未来落点／冻结源码注释／接续 | DeepSeek：只读布局调查；Codex：唯一项目规范与报告写入 | 已完成 | 延用现有 ownership/style，保留历史布局与失败证据；形成候选、未验证范围和阶段 2–8 分工 | [文件要求](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md#文件排布核验与项目要求)、[后续安排](docs/development/ModernizationR1-Stage1Completion-20261012.zh-CN.md#可预见的后续工作安排) |
+| P0-2 | RZ／旧验收进度核对 | DeepSeek：只读核对；Codex：最终证据台账 | 已核对 | 复用已通过项，未完成／失败／暂缓分别保留；不重跑长程 | [旧进度核对](docs/development/archive/modernization/Preflight-20261012.zh-CN.md#旧进度核对) |
+| P0-3 | Studio review 集成与分支整理 | DeepSeek：合并边界审查；Codex：唯一 Git／源码写入者 | 已完成 | 合并后 385/385、lint 与 typed build 通过，已推送并按祖先关系清理 | [集成与清理](docs/development/archive/modernization/Preflight-20261012.zh-CN.md#studio-集成与分支清理) |
+| R1.1（原 R1） | 仓库结构与模块归属映射 | DeepSeek：核心／构建只读调查；Codex：唯一文档写入与验收 | 已完成，原始快照保留 | 原基线 11,076 条路径归入 115 组；没有新运行验收 | [原模块地图](docs/development/archive/modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md) |
+| R1.2–R1.5 | 控制／Hydro、AMR、微物理、重力／扩散／边界 | DeepSeek：独立只读调查；Codex：源码关键调用与边界核对 | 已完成静态调查 | 共享权威实现、代表消费者及必要执行差异已映射；未穷举数学／运行等价性 | [共享核心地图](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md#主要模块与共享核心地图) |
+| R1.6 | Core API／I/O／Studio 实际入口 | Codex：只读追踪，结合 AMR／I/O 调查 | 已完成静态调查 | 16 case、9 API 命令、发布／预览／运行／重启／读取及身份边界已定位；无新 GUI UAT | [模块地图](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md#主要模块与共享核心地图) |
+| R1.7 | 构建／依赖／测试／CI／资源入口 | Codex：唯一 configure／机器索引写入；只读审计 | 已完成 | 四种 configure 成功，CTest 注册 76／140／143／76；119 个生产编译单元全归属，结构审计退出 0 | [构建与验证](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md#构建依赖与验证入口)、[机器索引](docs/development/archive/modernization/ModernizationR1-BuildInventory-20261012.json) |
+| R1.8 | 目录对应／未来落点／冻结源码注释／接续 | DeepSeek：只读布局调查；Codex：唯一项目规范与报告写入 | 已完成 | 延用现有 ownership/style，保留历史布局与失败证据；形成候选、未验证范围和阶段 2–8 分工 | [文件要求](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md#文件排布核验与项目要求)、[后续安排](docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md#可预见的后续工作安排) |
+| R2.1 | 基线身份、数值代表集与文档整理 | DeepSeek：只读核查；Gemini：冻结正文；Codex：身份核验及唯一写入 | 已完成 | 原标准保持；旧 CPU／CUDA ELF 核对一致；RZ 长程未重跑 | [基线、命令与后续分工](docs/development/modernization/BaselineIdentity-20261012.zh-CN.md) |
 
 每个工作包的详情至少说明：问题证据、目标与边界、依赖、负责人、验收方法、回退方法，以及执行后的真实结果。短工作包可直接写在本文件中，内容增长后再链接独立文件。
 
 ## 推进约定
 
 - 独立分析可以并行；实现按模块划定唯一写入责任，依赖任务等待前项独立验收。
-- 编译、数值回归和性能基准统一排程，避免重负载竞争及持续 Swap 抖动。
+- 编译、数值回归和性能基准统一排程，避免重负载竞争及持续 Swap 抖动。明显异常缓慢可受控截断并记待优化／未完成，不能放宽数值门槛或改写为 PASS。
+- H5 按实际宿主盘安排；批次开始、明显增长或 I/O 异常时核对，约余 1 GiB 时预警，不高频查盘。
 - 验证强度随风险调整：小改动执行相关检查；数学、状态或运行路径变化扩大验证；不机械重复全量回归。
 - 总体契约与路线已确定；除重大新证据外不因小任务反复重审。局部工作包由 Codex 自主取舍，里程碑再回查收益、数值结果与工作流反馈。
 - 每包对应一个已确认问题和明确目标；非阻断审查建议进入候选清单，不自动扩大当前工作包。
@@ -108,14 +110,16 @@ Codex 负责目标与范围控制、科学和数值判断、任务分解、独�
 | 2026-10-12 | P0-1／P0-2／P0-3 | 读取恢复、旧进度核对、Studio 合并和相关分支整理 | 已完成并推送，旧分支已清理；不启动阶段 1–8，不重开已暂缓的 RZ 长程 |
 | 2026-10-12 | R1 | 完成全仓路径分类、模块／构建／生成边界地图；阶段 1 尚未整体完成 | 下一轮建议只追踪 R1-C01：Hydro 重构→通量→状态更新的 CPU/GPU 公共调用；R2 不自动开始，其他候选仅记录 |
 | 2026-10-12 | 整个 R1／阶段 1 | 用户随后要求持续完成第一阶段、取消本轮时间限制，并增加文件归属与注释要求；原 R1 结构任务记为 R1.1，继续完成 R1.2–R1.8 | 本阶段已收敛；实际配置／静态证据与未执行验收分开；下一步 R2.1 基线身份与代表集，本轮停止，不自动开始 |
+| 2026-10-12 | R2.1 | 用户授权启动身份与代表集，数值正确性优先，异常慢可截断；允许整理历史文档 | 已完成现存 ELF／Core 树、六组代表／10个case及资源依赖核验；归档前置与R1、保存Cellular报告，文档/清单检查通过；停止于R2.1，不进入R2.2 |
 
 ## 待核实事项与工作流反馈
 
 | 事项 | 当前结论 | 下一步 |
 |---|---|---|
 | `compute/optim` 分支与工作区 | 已核实并绑定当前工作区；主目录保留原执行物 | 后续从本文件与前置记录恢复，不依据旧窗口推断分支 |
-| 项目 Skill、构建、测试和实现架构 | 阶段 1 静态调查完整：全路径、主要共享核心、实际构建闭包和条件测试已查；仍无全路由数学／运行等价性证明 | 从 R2.1 选择代表集，优先 Hydro 公共核心；不把静态检查当作科学通过 |
-| 数值验收和性能非回归标准 | 已定位现有契约及 RZ 原预算；现代化比较范围待选 | 阶段 2 冻结代表工作负载与适用身份，不能降低旧门槛 |
+| 项目 Skill、构建、测试和实现架构 | 阶段 1 静态调查完整：全路径、主要共享核心、实际构建闭包和条件测试已查；仍无全路由数学／运行等价性证明 | R2.1 已选六组，R2.2 先执行 Hydro 公共核心及原数值断言；本轮未产生数值运行通过 |
+| 数值验收和性能非回归标准 | 已定位现有契约及 RZ 原预算；R2.1 比较范围已选，实际轨迹待 R2.2 | 按 R2.1 身份和原门槛推进 R2.2；缺失执行物定点补建，不启动旧长程 |
 | 工作流维护反馈 | 普通沙箱与 Windows node_repl 的 Linux cwd 接入异常已确认 | 采用已验证 WSL 入口；全局 Skill／MCP 不在本轮修改 |
 | R1 协作反馈 | 两项只读调查的首轮交付有格式／篇幅问题，保留完整产物并各作一次定点返修；采用范围由 Codex 源码核对限定 | 沿用现有全局记录，不为本项目另建交付框架；历史 results 含活跃复现代码，不能按目录名统一清理 |
+| R2.1 运行与资料恢复 | CPU 76项命令可解析；CUDA/cuDSS143项中68项缺命令；Helmholtz表已本地恢复；实际WSL约7.7GiB、3060Ti8GiB，宿主E盘快照约21.9GiB | R2.2先数值正确性，异常慢可截断；约余1GiB时预警，原长程不自动重启 |
 | R1 后续协作／保留候选 | 深入调查的三项首交付存在格式问题，均一次定点返修；拒绝无依据的全仓零重复／目录等于测试覆盖等推断；Cellular 唯一报告分支保留 | 只采用独立核验的范围，保留失败与超长交付反馈；阶段 2／3 核对适用身份，不自动合并或放宽标准 |

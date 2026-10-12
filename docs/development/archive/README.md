@@ -24,3 +24,21 @@ Moving a note here changes its location, not the source identity of its
 measurements. Inputs, machine-readable results and failed-attempt records keep
 their established validation paths so that reproducible commands and provenance
 remain valid. Do not link an intermediate observation as the current result.
+
+## Modernization checkpoints
+
+The current [modernization plan](../../../ARCH_MODERNIZATION_PLAN.md) owns execution order; these completed records retain their original inspected or accepted scope.
+
+| Record | Purpose |
+| --- | --- |
+| [Preflight](modernization/Preflight-20261012.zh-CN.md) | Working entry, old progress, Studio integration and branch cleanup |
+| [Stage 1 completion](modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md) | Shared-core map, coverage limits and subsequent work |
+| [Original repository map](modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md) | Earlier R1.1 snapshot: 11,076 paths; later 11,078 includes two documentation files |
+| [Cellular burn-rate audit](modernization/CellularBurnRateCpuCudaAudit-20261008.zh-CN.md) | Original report imported byte-for-byte from commit `110e769ddbf4bad6a8aafef744dffe4c7aadf27f`; executed reproduction is `ee091b35c`, not the report branch |
+
+<details>
+<summary>Stage 1 machine evidence</summary>
+
+[Path coverage](modernization/ModernizationR1-RepositoryCoverage-20261012.json) and [build inventory](modernization/ModernizationR1-BuildInventory-20261012.json) retain the original baseline counts, production closure and configured tests.
+
+</details>

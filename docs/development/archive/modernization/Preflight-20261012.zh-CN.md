@@ -1,6 +1,8 @@
 # 现代化前置整理（2026-10-12）
 
-本轮只恢复工作入口、核对旧进度、集成已完成的 Studio review 并清理已合并分支。正式路线与后续工作包以[现代化计划](../../ARCH_MODERNIZATION_PLAN.md)为入口，阶段 1–8 尚未开始。原始讨论附件现已完整读到，路径为 `/mnt/c/Users/26428/.codex/attachments/e9f9cda2-2c55-4206-aa77-61785c917a6b/已粘贴的文本.txt`。
+> 已完成阶段的历史快照；状态和下一工作包以[现代化主计划](../../../../ARCH_MODERNIZATION_PLAN.md)为准。归档仅调整阅读位置与相对链接，原调查／验收身份保留。
+
+本轮只恢复工作入口、核对旧进度、集成已完成的 Studio review 并清理已合并分支。正式路线与后续工作包以[现代化计划](../../../../ARCH_MODERNIZATION_PLAN.md)为入口，阶段 1–8 尚未开始。原始讨论附件现已完整读到，路径为 `/mnt/c/Users/26428/.codex/attachments/e9f9cda2-2c55-4206-aa77-61785c917a6b/已粘贴的文本.txt`。
 
 ## 入口与环境
 
@@ -8,7 +10,7 @@
 |---|---|
 | 当前工作区 | `/home/shiroakane/.codex/worktrees/d7a6/ARCH`，已绑定 `compute/optim` |
 | 前置基线 | `9aaa5addde2cda05bf88b209ce46d1c82b33df93` |
-| 路径读取 | WSL `/bin/bash` 与 `/mnt/c/Users/26428/...` 已实读成功；普通沙箱启动错误与 Windows Node 的 Linux cwd 兼容问题尚未根治，可用工具参数见 [AGENTS.md](../../AGENTS.md) |
+| 路径读取 | WSL `/bin/bash` 与 `/mnt/c/Users/26428/...` 已实读成功；普通沙箱启动错误与 Windows Node 的 Linux cwd 兼容问题尚未根治，可用工具参数见 [AGENTS.md](../../../../AGENTS.md) |
 | Python | 默认输入 `work`，即已有 `conda activate work` 别名；Python 3.12.14、NumPy、h5py 已验证，缺包可在该环境安装 |
 | 进程工具例外 | 当前 `work` 缺两个 pidfd 标准库接口；仅资源护栏及依赖这些接口的工具沿用已验证的 `/usr/bin/python3`，科学 Python 默认仍为 `work` |
 | Studio | 已有 Linux Node 24.21.0 / npm 11.19.0；应先把用户级 Node 目录前置到 PATH；当前工作区按锁文件独立安装依赖 |
@@ -19,7 +21,7 @@
 
 ## 旧进度核对
 
-依据基线中的 [O 总表](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)、[release 当前出口](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)及各自处理后 receipt；本轮未重跑 CPU/CUDA 科学测试。历史复选框、移交分工和约 75% 的旧工程粗估不构成新的任务清单。
+依据基线中的 [O 总表](../../ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)、[release 当前出口](../../ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)及各自处理后 receipt；本轮未重跑 CPU/CUDA 科学测试。历史复选框、移交分工和约 75% 的旧工程粗估不构成新的任务清单。
 
 | 范围 | 可复用的已验事实 | 缺口／本轮处理 |
 |---|---|---|
@@ -33,7 +35,7 @@
 
 RZ 成本的已测归因：16×16 均匀网格自然 `dt≈398.183 s`；重复 primary 最后 90 次场调用中 source/boundary 占记录引力阶段约 99.985%，中位 7.804 s，Poisson 中位 0.000902 s。OMP8 生效而热点主要串行；该记录含准备成本、未定位具体缓存失效，也不是公平 benchmark。后续可优先检查共享环积分执行、精确缓存与调度的真实调用成本，本轮不确定具体优化方案、不改数学或门槛。
 
-原始定义与完整身份继续引用[公共消费者摘要](../../validation/backend/results/release-closure-20261009/native-public-consumer-summary.json)、[O9 账本摘要](../../validation/backend/results/release-closure-20261009/o9-endpoint-ledger-summary.json)、[Studio 工程摘要](../../validation/backend/results/release-closure-20261009/studio-engineering-summary.json)。R1–R6 尚未全部关闭，完整 release 仍未签收。
+原始定义与完整身份继续引用[公共消费者摘要](../../../../validation/backend/results/release-closure-20261009/native-public-consumer-summary.json)、[O9 账本摘要](../../../../validation/backend/results/release-closure-20261009/o9-endpoint-ledger-summary.json)、[Studio 工程摘要](../../../../validation/backend/results/release-closure-20261009/studio-engineering-summary.json)。R1–R6 尚未全部关闭，完整 release 仍未签收。
 
 ## Studio 集成与分支清理
 
@@ -77,4 +79,4 @@ main 及全部既有标签保持。只存在当前工作区与主仓库两个 ch
 
 本机证据目录：`/mnt/c/Users/26428/.codex/visualizations/2026/10/11/01a12b15-a669-76a0-b053-6fd9e79a6b50/preflight-20261012`，含 before、retirement-candidates-before、Studio 检查日志、首轮 LFS 失败及多模型原始产物；已补 retirement-receipt／after 清单。仓库只保留本页和必要薄摘要，不纳入 H5、依赖目录或全量运行日志。
 
-下一轮从[总计划](../../ARCH_MODERNIZATION_PLAN.md)阶段 1 的完整覆盖检查开始，按已验身份复用旧结果；RZ 长程和正式性能实现仍需按计划选入具体工作包，本轮不自动启动。
+下一轮从[总计划](../../../../ARCH_MODERNIZATION_PLAN.md)阶段 1 的完整覆盖检查开始，按已验身份复用旧结果；RZ 长程和正式性能实现仍需按计划选入具体工作包，本轮不自动启动。
