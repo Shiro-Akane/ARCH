@@ -1,0 +1,732 @@
+{
+  "schema": "arch-r7-completion-and-r8-readiness-v1",
+  "recorded_utc": "2026-10-13T09:02:16.522472+00:00",
+  "status": "ACCEPT_SCOPED_R5_R7_COMPLETE_R8_PREREQUISITES_READY",
+  "R8_final_acceptance": "NOT_EXECUTED_THIS_TURN",
+  "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "name_correction": "Latest user correction is R8 final convergence. O8 is an existing physical-boundary module, not a new campaign. The initial start-identity scope label mentioning O8 is superseded here; raw start record is preserved.",
+  "contract": {
+    "physics_math_tolerances_O7": "UNCHANGED",
+    "CPU_GPU_shared_math": "PRESERVED",
+    "backward_compatibility": "NOT_REQUIRED; no new compatibility/fallback layer",
+    "old_long_RZ": "NOT_RERUN_NOT_SIGNED",
+    "LFS_network": "NO_FETCH_OR_PULL",
+    "data_disk": "Actual E host checked once before H5 batch:23604969472 bytes;1GiB warning/stop-new-large-output policy retained",
+    "heavy_scheduling": "Serial heavy batches and resource lease; initial CPUj2 headroom close to guard, following buildsj1",
+    "python": "work science; /usr/bin/python3 process/resource guard"
+  },
+  "this_turn_changes": {
+    "new_production_math_changes": [],
+    "new_build_owner_fix": "Four-line exact exclusion of current generated identity output from its own inputs in cmake/project/BuildIdentity.cmake; real source/network headers retained.",
+    "regression": "One real-CMake temp fixture in existing provenance unittest: old module fails; repeat configure/source edit+restore/actual network retention pass.",
+    "human_entries": [
+      "ARCH_MODERNIZATION_PLAN.md",
+      "AGENTS.md",
+      "docs/development/README.md"
+    ],
+    "new_machine_receipt": "This file only; no new dated human report or new production abstraction."
+  },
+  "adopted_source_and_test_identities": [
+    {
+      "path": "cmake/project/BuildIdentity.cmake",
+      "sha256": "b8d3ac1c7619f2fcf22e99efe3e8324a3ad50adb4aaa651b031852b0f8acce29",
+      "bytes": 9170
+    },
+    {
+      "path": "tests/tooling/validation/test_validation_provenance.py",
+      "sha256": "912a1e7b0526d35858f084f66531d0542e832ba2563b9aacb0dbddacec8c4299",
+      "bytes": 41832
+    },
+    {
+      "path": "cmake/tests/CudaTests.cmake",
+      "sha256": "3d9afbe518fbc86add06b2ef29bc22ee497774d2c6d06e7a48cf4b6a047cfecb",
+      "bytes": 30319
+    },
+    {
+      "path": "src/numerics/reconstruction/RzCellPolynomial.h",
+      "sha256": "2e11b1f25006311bed49fe3c5333bce3eba9e8ff224becbc2ca9676678c5bbba",
+      "bytes": 18222
+    },
+    {
+      "path": "src/physics/gravity/FiniteRingBoundaryMath.h",
+      "sha256": "da7dd2cc7145fff0c2c37611971261c23a18cdb31820ca1ef5cd877cbfd32995",
+      "bytes": 72313
+    },
+    {
+      "path": "tests/host/gravity/test_composite_poisson.cpp",
+      "sha256": "b8eb8ab4e0a27da1e2152922640b1803eb9eaced46a3bb506763de8373a6b628",
+      "bytes": 283477
+    },
+    {
+      "path": "tests/cuda/numerics/test_diffusion_rkl_parity.cu",
+      "sha256": "ea93d0f8ab0017bb99f61f8c9edb46dfbe7f76d74de98055f105a4eb6b3a7956",
+      "bytes": 77776
+    },
+    {
+      "path": "tests/cuda/numerics/test_diffusion_rkl_tabular.cu",
+      "sha256": "53dfd814e8e5cd2a91f8180fc02a70cc93de90b3fa12a99b4ee6157e7dacf61e",
+      "bytes": 11617
+    },
+    {
+      "path": "tests/cuda/numerics/DiffusionRklTestSupport.cuh",
+      "sha256": "9bed3c6df58d3648e460aca1e123c1585845cd56a5e52e2f95c5930bc2130b2e",
+      "bytes": 6650
+    },
+    {
+      "path": "tools/validate_backend_results.py",
+      "sha256": "74ebcf961fc497b0a3ec759eac0836a9de4ef6b1134a3e4e4e8c2eb6bcff6a12",
+      "bytes": 64064
+    },
+    {
+      "path": "validation/backend/cases.json",
+      "sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+      "bytes": 11552
+    }
+  ],
+  "preservation": {
+    "start": {
+      "path": "output/modernization/r7-completion-20261013/start-identity.json",
+      "sha256": "cb0f5503f14976563129cf9ba8dc93263a478407aa13680590abe102357eb6a0",
+      "bytes": 8996
+    },
+    "prior_machine_receipts": {
+      "docs/development/modernization/R31AuditTriage-20261013.json": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      "docs/development/modernization/R1R4Foundation-20261013.json": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+      "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+      "docs/development/modernization/R5BuildEfficiency-20261013.json": "ca5255222a7590951d727fdf1f3b8c0c573fb416b7672559ce561a2b6eb4bbbf",
+      "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "docs/development/modernization/R6SharedBounds-20261013.json": "86b944b336a3c790c22a7013dac35c2f8b42d4b4e299e0e1a0f10c58857170e7",
+      "docs/development/modernization/BaselineIdentity-20261012.json": "e8ad61c49a7c970ccae1ece92a6214b511214abee8096fd288679e5ee2b0a48d",
+      "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+      "docs/development/modernization/R41R42Implementation-20261013.json": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+      "docs/development/modernization/R67RzPerformance-20261013.json": "8f096825b9dac93623dc9ff5a1be66f15bc3d379d3f7c9cf0c68cfc75766931b",
+      "docs/development/modernization/R22NumericalChecks-20261012.json": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd"
+    },
+    "all11_prior_receipts_bytes_unchanged": true,
+    "preexisting_files_unchanged_except_current_entries": {
+      ".github/workflows/ci.yml": "7139a124c7bf6b907fd0e73d2db93a3312561e2dc9066cd8b2ca7bdb751ccce8",
+      "EOS_toolkit/README.md": "b346cc070ecb3fadda6b2f662c6309e027740b8795715aa29efd163982afed8c",
+      "EOS_toolkit/README.zh-CN.md": "8d6c35ec95e353e030c1eb6272fca304ae6886857d0248ef3f12ebb108a36af1",
+      "EOS_toolkit/tables/baryon/README.md": "76b3f9c4b291dde59304d79c9eef0cc84f14f61baeebfebf2eef2c36ba7d0357",
+      "cmake/tests/CudaTests.cmake": "3d9afbe518fbc86add06b2ef29bc22ee497774d2c6d06e7a48cf4b6a047cfecb",
+      "docs/development/ConfigurationContractPlan.zh-CN.md": "5dec05d7b4e90a119f93094de702c97437336bd4b6f0d5a75c94ee4f3068fafd",
+      "docs/development/ImplementationOwnership.md": "3eec50c5d0fb39f3beb99032c2f81daff3a2adc8391a20bb6b6b22dbf94968e7",
+      "docs/development/archive/README.md": "ebc17839818f7ff171fe038b967bea38bd9669c1520450416000946acae7e18f",
+      "docs/guides/Build.md": "5f12ad02f851c09e9d0ffd440f21c77f2a39b95cf361ecec4cba38f25f0955b5",
+      "docs/guides/Build.zh-CN.md": "32b62479aeef9c465533d03ffc63defb02f289633e643cc548fdfd3dadc3f4ec",
+      "src/numerics/flux/README.md": "746990b93926fe72e0625f6835472f9fe297285807f9a5b883a1551aef3693c0",
+      "src/numerics/reconstruction/RzCellPolynomial.h": "2e11b1f25006311bed49fe3c5333bce3eba9e8ff224becbc2ca9676678c5bbba",
+      "src/physics/gravity/FiniteRingBoundaryMath.h": "da7dd2cc7145fff0c2c37611971261c23a18cdb31820ca1ef5cd877cbfd32995",
+      "tests/cuda/README.md": "e78efeff622388545234ce57fcd5864002b4ad21ee16d919fabbbc86228a3fe4",
+      "tests/cuda/numerics/test_diffusion_rkl_parity.cu": "ea93d0f8ab0017bb99f61f8c9edb46dfbe7f76d74de98055f105a4eb6b3a7956",
+      "tests/host/gravity/test_composite_poisson.cpp": "b8eb8ab4e0a27da1e2152922640b1803eb9eaced46a3bb506763de8373a6b628",
+      "tests/tooling/validation/test_validate_backend_results.py": "23d04850a56eee1807dcab550f601037a61e25795740c4a97e96e7fed4a34b09",
+      "tools/validate_backend_results.py": "74ebcf961fc497b0a3ec759eac0836a9de4ef6b1134a3e4e4e8c2eb6bcff6a12",
+      "validation/backend/README.md": "a2df6c0fffd122abd31ba4d238f708a061ec2e394f451ae11ef0a429c79419e8",
+      "validation/hydro/README.md": "28bba3d8d085768677000a9d32291d62caec893a39d72c9239e9c3f8b07d2967",
+      "validation/hydro/README.zh-CN.md": "c35e94153b913aa57551776852c26a3f006de93efb81a3354259b6504171c0e2",
+      "validation/hydro/inputs/muscl_n128.par": "0d87f62ae6a5dbcce5e6f856010f5b48d2ab967f861a9985a04eadfa30eeae98",
+      "validation/hydro/inputs/muscl_n256.par": "910ab4c3edb6e2bdf2d7552877dc9ba93f16d526c24469cff8c4c3dfc4abea65",
+      "validation/hydro/inputs/muscl_n64.par": "3d95697ad6bab9d35beea0c214e681085e860edb15240c42a2f7f76a9f046734",
+      "validation/hydro/inputs/pcm_n128.par": "9a63c880063fc650203820e8c36d15c9036cb81a92ef56fa8f5b5002cf80fa96",
+      "validation/hydro/inputs/pcm_n256.par": "d8b746daa696fa0520149d254f5c10a5cdae7020d590d798091047ffbd0ed6f2",
+      "validation/hydro/inputs/pcm_n64.par": "23050033889fa1fb6392111a24a59161cfa93a7b0090c01d3a4f458396b67aef",
+      "validation/hydro/inputs/ppm_n128.par": "1095754ef1de2641aaabe54a733b56c8f55d6b8b2b74dc3883a5e4bd1acbd5e6",
+      "validation/hydro/inputs/ppm_n256.par": "fe71c18f60c19d2242151e726f7081dc16c48ac8c5ac2663c3da3fd15b8a473c",
+      "validation/hydro/inputs/ppm_n64.par": "02b27411c470f741f8efa0b1bd49b772b84017eead2f25e07ced4f873164182c",
+      "validation/hydro/inputs/sod_ppm_n128.par": "97b748c01ce48cca32659b8a3b19f7ec68da81ab4636525bdb4f76d4945de18e",
+      "validation/hydro/inputs/sod_ppm_n256.par": "9c3e0a80d5a0a9466cb6698ed36054173b4b2abfa198761d32da42bf945c7dcc",
+      "validation/hydro/inputs/sod_ppm_n64.par": "5f8dd0b8d9bab83b82a4f884eb1c7be78a1b89db56e2e4ef83279f14e582d293",
+      "docs/development/archive/modernization/BaselineIdentity-20261012.zh-CN.md": "767800fabb0c228c9d6ace612d7fc0b01478554229b8ce972e25e20d3786eb01",
+      "docs/development/archive/modernization/R22NumericalChecks-20261012.zh-CN.md": "e99fb33119ecb31411d882b8878dadaa5d501c89e55d1fd176d715ee11efde80",
+      "docs/development/archive/modernization/R23PerformanceAndConfiguration-20261012.zh-CN.md": "1d5cb7c5d3448a4137d3aa22aab5b12c23bb737c64e79c81808c492094a9336b",
+      "docs/development/archive/modernization/R31AuditTriage-20261013.zh-CN.md": "72dc57efa698c06102160554919711a6cc03620428bb846a299996e1d66b879d",
+      "docs/development/archive/modernization/R32RklCompilationAndInactiveIdentity-20261013.zh-CN.md": "75f9f53287b9cf2abf0cdd941187f647e7369fd2e65f0043036f2aaeaa7ebb8e",
+      "docs/development/archive/modernization/R33CloseoutAndR4Handoff-20261013.zh-CN.md": "01a3bfc25c96b74d2123094f3600bef20999ebbd78166f7fc3f6d4a8d35a1d27",
+      "docs/development/archive/modernization/R41R42Implementation-20261013.zh-CN.md": "fac6bae230d02854a0620876bb2181d401fca7b5ad32deda96051839a1641ee9",
+      "docs/development/modernization/R1R4Foundation-20261013.json": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+      "docs/development/modernization/R1R4Foundation-20261013.zh-CN.md": "d519710df733fba85a63611c723be533ace9351d9c4328e0f3d28529a3022287",
+      "docs/development/modernization/R22NumericalChecks-20261012.json": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd",
+      "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "docs/development/modernization/R31AuditTriage-20261013.json": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+      "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+      "docs/development/modernization/R41R42Implementation-20261013.json": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+      "docs/development/modernization/R5BuildEfficiency-20261013.json": "ca5255222a7590951d727fdf1f3b8c0c573fb416b7672559ce561a2b6eb4bbbf",
+      "docs/development/modernization/R67RzPerformance-20261013.json": "8f096825b9dac93623dc9ff5a1be66f15bc3d379d3f7c9cf0c68cfc75766931b",
+      "docs/development/modernization/R6SharedBounds-20261013.json": "86b944b336a3c790c22a7013dac35c2f8b42d4b4e299e0e1a0f10c58857170e7",
+      "tests/cuda/numerics/DiffusionRklTestSupport.cuh": "9bed3c6df58d3648e460aca1e123c1585845cd56a5e52e2f95c5930bc2130b2e",
+      "tests/cuda/numerics/test_diffusion_rkl_tabular.cu": "53dfd814e8e5cd2a91f8180fc02a70cc93de90b3fa12a99b4ee6157e7dacf61e"
+    },
+    "allowed_current_entry_updates": [
+      "AGENTS.md",
+      "ARCH_MODERNIZATION_PLAN.md",
+      "docs/development/README.md"
+    ]
+  },
+  "CPU_build": {
+    "final": {
+      "status": "PASS_NOOP_STABLE",
+      "executable": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/bin/ARCH",
+      "sha256": "955234e185ad0bf7632fa9e956fadb410fa87988dab22831b911054fde7bc6b9",
+      "mtime_ns": 1791880642471948478,
+      "generated_identity_sha256": "f8b8d7efce9b72660fde245ce55f7f69659865ffc51057fd0c69dfb36d958ac5",
+      "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "cmake_cache": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/CMakeCache.txt"
+    },
+    "actual_current_CMake_source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+    "registered_CTest_count": 76,
+    "selected_unique_CTest_pass_count": 24,
+    "selected_passed_tests": [
+      "amr_flux_surface_plan",
+      "backend_validation_contract",
+      "boundary_plan",
+      "checkpoint_compatibility",
+      "checkpoint_temporal_comparison",
+      "configuration_api_contract",
+      "configuration_entry_contract",
+      "configuration_v3_contract",
+      "conservative_acceptance",
+      "conservative_flux_limiter",
+      "curvilinear_metrics",
+      "generated_nse",
+      "helm_components",
+      "input_resolution",
+      "native_tabular_eos",
+      "ppm_limiter_math",
+      "preview_api_contract",
+      "preview_cellular_2d",
+      "preview_full_model_contract",
+      "rkl_repair_weights",
+      "same_level_exchange_plan",
+      "shared_stage_scheduler",
+      "topology_transaction",
+      "validation_provenance_contract"
+    ],
+    "initial_ARCH_build": {
+      "elapsed_seconds": 281.52,
+      "user_seconds": 1263.85,
+      "system_seconds": 57.61,
+      "max_process_rss_kib": 2279180,
+      "exit_code": 0
+    },
+    "representative_target_build": {
+      "elapsed_seconds": 168.91,
+      "max_process_rss_kib": 799764,
+      "exit_code": 0
+    },
+    "identity_fix_rebuild": {
+      "elapsed_seconds": 64.1,
+      "user_seconds": 841.31,
+      "system_seconds": 28.94,
+      "max_process_rss_kib": 404872,
+      "exit_code": 0
+    },
+    "boundaries": [
+      "CPU application target/dependency graph only, not all-project cold build.",
+      "GNUtime and guard clocks/RSS scopes differ; raw preserved, no substitution.",
+      "No old primary-root CTest used to accept current edits."
+    ]
+  },
+  "build_identity_fix": {
+    "before": {
+      "path": "output/modernization/r7-completion-20261013/identity-self-input-before.json",
+      "sha256": "88ee770f0de94f3c783b33ad5092a7f6c3f817727d1baec64246460753325f34",
+      "bytes": 1597
+    },
+    "after": {
+      "path": "output/modernization/r7-completion-20261013/identity-self-input-after.json",
+      "sha256": "cbac0235ef3fa67a73c56f1b58168612779cc2e40806c14501281432e0b5389e",
+      "bytes": 2089
+    },
+    "review": {
+      "path": "output/modernization/r7-completion-20261013/identity-independent-review.json",
+      "sha256": "294b35241817ee46899355d0ced319b4ba564e2f5d53bcfcd2d062f896c8a378",
+      "bytes": 4352
+    },
+    "provenance_unittests": 41,
+    "three_actual_source_profile_header_identities_stable": true,
+    "actual_noop_ELF_hash_mtime_stable": true,
+    "schema_version_fields_comparisons": "UNCHANGED",
+    "actual_consumer": "ConfigurationIdentity/Plot SourceIdentity and verification; native checkpoint build-id gate is absent, not inferred."
+  },
+  "application_acceptance": {
+    "record": {
+      "path": "output/modernization/r7-completion-20261013/applications/acceptance.json",
+      "sha256": "58e2c296bd60396db6de6d5561d94afc0bde8fb74215eb82cbf128891ae7171f",
+      "bytes": 7291
+    },
+    "per_case_original_qualifications": true,
+    "case_count": 4,
+    "endpoints": [
+      0.1,
+      0.2,
+      0.1,
+      0.1
+    ],
+    "steps": [
+      397,
+      561,
+      38,
+      152
+    ],
+    "old_R23_exact_Data_datasets": 30,
+    "old_R23_exact_numerical_metrics": 69,
+    "all_repairs_zero": true,
+    "GPU_lanes": 0,
+    "new_convergence_group_acceptance": false,
+    "new_performance_claim": false
+  },
+  "RZ_short": {
+    "record": {
+      "path": "output/modernization/r7-completion-20261013/rz-short/scientific-check-results.json",
+      "sha256": "785d9db7f935e8f62637b99b45aef8c365078b982b37c9b96f88ccef5e25af63",
+      "bytes": 123472
+    },
+    "fixture": "NEW16x16/256cells/cylindricalRK2 isolatedselfgravity; tmax700, explicitnewgravity_rtol1e-8, not historical long input",
+    "paired_full_runs": 4,
+    "physical_terminal": 700,
+    "terminal_step": 2,
+    "gravity_solves_per_full_run": 8,
+    "original_residual_and_non_timing_trace": "PASS_EXACT_UNCHANGED",
+    "max_mass_relative_drift": 8.544565944705396e-19,
+    "original_mass_limit": 1e-12,
+    "Plot_physical_exact_comparisons": 9,
+    "SourceIdentity": "retained genuine differences, actual ELF/rawconfig bound",
+    "own_fresh_midpoint": 398.19867758046195,
+    "own_fresh_full_native_checkpoint": {
+      "left": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r7-completion-20261013/rz-short/candidate-3/GravityBox_chk_0002.h5",
+      "right": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r7-completion-20261013/rz-short/candidate-fresh/GravityBox_chk_0002.h5",
+      "datasets": 24,
+      "attributes": 33,
+      "stored_elements": 2104,
+      "exact": true,
+      "scope": "all native checkpoint nodes/attrs/dataset types/shapes/payload; no exclusions"
+    },
+    "timing": {
+      "status": "PASS_SCOPED_NUMERICS_AND_TIMING_OBSERVATION",
+      "order": "BAAB",
+      "OMP_NUM_THREADS": 4,
+      "rows": {
+        "baseline-1": {
+          "elapsed_seconds": 18.71,
+          "source_boundary_seconds": 18.564272487,
+          "poisson_seconds": 0.008579264,
+          "force_seconds": 0.00080727,
+          "solve_calls": 8,
+          "max_process_rss_kib": 31612
+        },
+        "baseline-2": {
+          "elapsed_seconds": 20.43,
+          "source_boundary_seconds": 19.079744571,
+          "poisson_seconds": 0.008550311,
+          "force_seconds": 0.000810031,
+          "solve_calls": 8,
+          "max_process_rss_kib": 31100
+        },
+        "candidate-2": {
+          "elapsed_seconds": 13.96,
+          "source_boundary_seconds": 12.521783249,
+          "poisson_seconds": 0.00929178,
+          "force_seconds": 0.0010215,
+          "solve_calls": 8,
+          "max_process_rss_kib": 31616
+        },
+        "candidate-3": {
+          "elapsed_seconds": 11.65,
+          "source_boundary_seconds": 11.511596916,
+          "poisson_seconds": 0.008731032,
+          "force_seconds": 0.0008771370000000001,
+          "solve_calls": 8,
+          "max_process_rss_kib": 31092
+        }
+      },
+      "old_mean_seconds": 19.57,
+      "new_mean_seconds": 12.805,
+      "observed_process_reduction_percent": 34.56821665815023,
+      "old_source_boundary_mean_seconds": 18.822008529,
+      "new_source_boundary_mean_seconds": 12.0166900825,
+      "observed_source_boundary_reduction_percent": 36.15617555381887,
+      "science_trace_non_timing_exact": true,
+      "mass_relative_drift_max": 8.544565944705396e-19,
+      "strict_own_fresh": {
+        "left": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r7-completion-20261013/rz-short/candidate-3/GravityBox_chk_0002.h5",
+        "right": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r7-completion-20261013/rz-short/candidate-fresh/GravityBox_chk_0002.h5",
+        "datasets": 24,
+        "attributes": 33,
+        "stored_elements": 2104,
+        "exact": true,
+        "scope": "all native checkpoint nodes/attrs/dataset types/shapes/payload; no exclusions"
+      },
+      "limits": [
+        "NEW short physical endpoint700, not original historical long trajectory.",
+        "Old/new production CMake profiles differ in Studio availability and build/source paths; new build identity fix and R5 CMake/test source changes are retained. Application result is bounded observation, not isolated attribution.",
+        "Two samples per build; ranges retained; no general stable CPU/GPU speedup claim.",
+        "Isolated direct-owner attribution remains R67 original paired evidence."
+      ]
+    },
+    "new_energy_or_reference_budget": false
+  },
+  "CUDA_acceptance": {
+    "record": {
+      "path": "output/modernization/r7-completion-20261013/cuda-owner-acceptance.json",
+      "sha256": "015a282bdeb8676ec4f8d077e9115e47a89a113ba0963d933caf844c2460db51",
+      "bytes": 3074
+    },
+    "actual_graph": {
+      "path": "output/modernization/r7-completion-20261013/cuda-current-graph.json",
+      "sha256": "3e5532623c6a2ae182f2d02c33f3fa3b26ff10d9e2a5f53915b3ae4f7f9ab98f",
+      "bytes": 528
+    },
+    "elapsed_seconds": 134.91,
+    "test_seconds": 1.7,
+    "actual_GPU": true,
+    "NVCC_TUs": 2,
+    "full_CUDA_ARCH_or_RKL_built": false,
+    "acceptance": "Original raw/typed owner and reduction suite; fullbudget/globalorder/invalid-zero-work/receipt/lifetime gates retained. field_qualified/runtime_qualified remain0 in typed sentinel.",
+    "GPU_speedup_claim": false
+  },
+  "module_decisions": [
+    {
+      "module": "Hydro/reconstruction/BC",
+      "decision": "RETAIN",
+      "current": "Current PPM256/Sod256 physical endpoints and original per-case qualification; limiter/flux/conservative/metrics/BC representatives.",
+      "reuse": "Unchanged shared Hydro and original R4 four CPU/CUDA convergence groups by their recorded source/input identities.",
+      "trigger": "Concrete changed flux/dispatch path or measured new hotspot; current single resolution is not new group convergence."
+    },
+    {
+      "module": "EOS/Burn/network/NSE",
+      "decision": "RETAIN",
+      "current": "Current Helm components/native tabular/generated NSE representatives and current full CPU application build.",
+      "reuse": "Unchanged original strong reaction/Burn owner and energy/EOS authority.",
+      "trigger": "Actual coupled workload or EOS/network change; Cellular science and cost discrepancy is separate, not closed."
+    },
+    {
+      "module": "Diffusion/RKL",
+      "decision": "CLOSE_R5_AND_RETAIN_PRODUCTION",
+      "current": "Current RKL1n64/RKL2n256 original endpoints; real CUDA diffusion reduction consumer; repair weights.",
+      "reuse": "R5 full10-entry40RKL+8operator exact coverage and isolated compile/RAM experiment.",
+      "trigger": "Changed RKL/shared-header or actual execution hotspot; no repeat closed R3/R5 attribution."
+    },
+    {
+      "module": "Gravity/RZ",
+      "decision": "CLOSE_P_RZ_02_RETAIN_DEVICE_EXECUTION",
+      "current": "Two full CPU short steps to700, all physical Plot exact, original Poisson targets/RZ mass, own-fresh fullnativeCHK, current raw/typed realDevice owner.",
+      "reuse": "R6/R67 isolated original math/probe/bit oracle and attributed direct-ring cost.",
+      "trigger": "P-RZ-03 requires actual single-lane/upload/join cost before a new device optimisation; no face parallelism or weakened budget/memo."
+    },
+    {
+      "module": "AMR/grid/lifecycle",
+      "decision": "RETAIN",
+      "current": "Current same-level exchange/topology/AMRfluxsurface/stage scheduler representatives.",
+      "reuse": "Unchanged original Host mixed-level/restart and migration evidence in original scope.",
+      "trigger": "Actual changed state/regrid/ghost/reflux path; no new mixed-level route signed by uniform root shortRZ."
+    },
+    {
+      "module": "I-O/checkpoint/config/API",
+      "decision": "CLOSE_SELF_INPUT_BUG_RETAIN_STRICT_CONTRACT",
+      "current": "Current checkpoint/API/tool tests and short exactnativefresh; source/header/profile repeat-configure stability.",
+      "reuse": "Unchanged O7 active missing/error rejection and25 registered auxiliary-default provenance; inactive controls retain source=input semantics.",
+      "trigger": "Actual interface or controller need; A04 remains strict. Native CHK has no build/source/profile gate, Plot does."
+    },
+    {
+      "module": "Studio/tooling/CI",
+      "decision": "RETAIN_DEFER_EXTERNAL_EXITS",
+      "current": "Current Core configuration/preview and repaired missing reference-program test dependency; no frontend changes.",
+      "reuse": "Earlier385test video review and native workflow evidence only at their original identity.",
+      "trigger": "Actual public API/UI flow changes; hostedCI and humanWSLg remain not executed."
+    }
+  ],
+  "independent_acceptance": {
+    "identity": {
+      "path": "output/modernization/r7-completion-20261013/identity-independent-review.json",
+      "sha256": "294b35241817ee46899355d0ced319b4ba564e2f5d53bcfcd2d062f896c8a378",
+      "bytes": 4352
+    },
+    "RZ_science_timing": {
+      "path": "output/modernization/r7-completion-20261013/rz-short/independent-review.json",
+      "sha256": "908fc72a4611a9d3fa54aa382962ac9f126f4a8b57f10e10562045ed782235fb",
+      "bytes": 8096
+    },
+    "cross_module": {
+      "path": "output/modernization/r7-completion-20261013/cross-module-independent-review.json",
+      "sha256": "7505ab8de741bf575b0945a5d351a6963c6b10a8089d50ae559ffbe0f9319e9a",
+      "bytes": 11831
+    }
+  },
+  "multimodel": {
+    "owner": "arch-r7-completion-20261013",
+    "max_calls": 10,
+    "actual_jobs": [
+      {
+        "id": "0ecb9296a7a9447eb5c631ab4d332aca",
+        "provider": "DeepSeek Flash high",
+        "elapsed_seconds": 24.942833498,
+        "decision": "ACCEPT",
+        "scope": "evidence_only self-input diagnosis and minimal boundary"
+      },
+      {
+        "id": "08193e3aacbc479fbf199c06cf3fb9cb",
+        "provider": "DeepSeek Flash high",
+        "elapsed_seconds": 48.152701697,
+        "decision": "ACCEPT",
+        "scope": "evidence_only numerical/performance/scope caution; API-repeat suggestion dismissed via actual same-test retest; pending-at-packet CUDA subsequently actually passed"
+      },
+      {
+        "id": "d960f6efbfde4534b250af7f4ff9bdd8",
+        "provider": "official Gemini3.8Flashmedium",
+        "elapsed_seconds": 50.749638768,
+        "decision": "ACCEPT",
+        "scope": "selected frozen closeout prose only; manager two clarity edits"
+      }
+    ],
+    "failed_before_inference": "One text packet rejected locally for complexity=low; corrected to simple and CLI short_report before any provider run. Original logical goal and cap retained.",
+    "fallback": "NO_ACCOUNT_SWITCH_NO_API_BILLING_FALLBACK",
+    "raw_job_artifacts": "Retained in global gateway state by jobid; no raw H5/checkpoint/credentials sent",
+    "passive_metrics": {
+      "path": "output/modernization/r7-completion-20261013/multimodel-passive-metrics.json",
+      "sha256": "0ea7fffa2dbd68704a29d8fd2e511f60d742b8d3e4287f2c12d69813f4630e93",
+      "bytes": 4152
+    },
+    "self_optimization": "No extra sampling or repeated unchanged broad reviews. One useful math-identity diagnosis, one bounded evidence review, one frozen text edit; adequate candidate accepted once. Manager/token cost remains unknown where not reported."
+  },
+  "failures_and_resolution": [
+    {
+      "issue": "Representative CTest name mistakenly passed as target arch_ppm_limiter_math",
+      "resolution": "Ninja rejected before compilation; corrected to actual target arch_ppm_limiter. Failed logs retained; not numerical failure."
+    },
+    {
+      "issue": "preview_cellular_2d missing current arch_preview_cellular_reference",
+      "resolution": "Initial FileNotFound preserved; correct helper built current-source, original failed test rerun PASS;9 unchanged earlier API gates retained."
+    },
+    {
+      "issue": "Self-generated identity causes no-change drift",
+      "resolution": "Actual before failure and after full41 tests, three configure stability, finalrebuild/no-op and independentACCEPT. No weakened identity fields."
+    }
+  ],
+  "R8_prerequisites": [
+    {
+      "id": "P1",
+      "state": "READY",
+      "scope": "Actual changed owners/source/ELF/input binding"
+    },
+    {
+      "id": "P2",
+      "state": "READY",
+      "scope": "Associated original math/config/field/fresh/device-owner checks"
+    },
+    {
+      "id": "P3",
+      "state": "READY",
+      "scope": "Build/RAM costs, isolateddirect-owner gain, scopedapplication observation and retained variance"
+    },
+    {
+      "id": "P4",
+      "state": "READY",
+      "scope": "Seven module retained/closed/deferred decisions without speculative rewrite"
+    },
+    {
+      "id": "P5",
+      "state": "READY",
+      "scope": "Independent reviews, onecurrentplan/newmachineindex, oldfailures/11receipts preserved"
+    }
+  ],
+  "deferred_not_passed": [
+    "Original RZ five-sound-crossing and its own long-fresh trajectory",
+    "Complete Native CUDA Hydro/public coupled four-module fresh and associated release science",
+    "Cellular scientific/cost discrepancy",
+    "Hosted CI/clean runner and human platform acceptance",
+    "P-RZ-03 Device performance attribution/optimisation absent measured application need",
+    "A04 inactive restart identity redesign absent real requirement"
+  ],
+  "next": "Stop this turn at R8 prerequisites. FinalR8 reviews actual final diff and associated evidence only; reopen tests or implementations for actual changes/failures, not to fill module coverage.",
+  "artifacts": [
+    {
+      "path": "output/modernization/r7-completion-20261013/start-identity.json",
+      "sha256": "cb0f5503f14976563129cf9ba8dc93263a478407aa13680590abe102357eb6a0",
+      "bytes": 8996
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/final-cpu-identity.json",
+      "sha256": "9d44c994d6985dadc5fc4aac5c226a0307098b9df7ec1a1990e358b082cfbbb7",
+      "bytes": 512
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/production-binary-provenance-final.json",
+      "sha256": "14b5a9128d520c4a63a32db05b6304e42b0f100a6587b89860fa9503fc9100d6",
+      "bytes": 219200
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cpu-application-build.time.json",
+      "sha256": "71c147d3cfc07a94d78b11ca5b99c88b9582ca5861b262f49bbd604b0e93bf9b",
+      "bytes": 117
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cpu-application-build.guard.log",
+      "sha256": "b1b5b927142e20743c3096348044ec751b83934008d0cf4755fb0f732f200d42",
+      "bytes": 18542
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/representative-build-corrected.time.json",
+      "sha256": "f3608188ec77df39ba53d1eb6ce0de58226bdcebe213b30d62b4c67a40749e62",
+      "bytes": 70
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/representative-ctest.log",
+      "sha256": "6528855b04a08e3757189ef33b759203bf61a57debdf0b335853695cfe6c1b91",
+      "bytes": 1780
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/api-checkpoint-ctest.log",
+      "sha256": "b2dc68b154c55350cc2958afb556bfd46339e1319d8c559ae92b30febb3b947d",
+      "bytes": 2963
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cellular-reference-build.time.json",
+      "sha256": "7c020d50d88cbe07ad99569347cc3aa76f1518c251d1dc71d41ae6d3cb54b127",
+      "bytes": 69
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cellular-reference-retest.log",
+      "sha256": "2197f172af3ef8671ccb9fa627c998ffe2da0f7e7ca3593964342e4971125ca3",
+      "bytes": 374
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/identity-self-input-before.json",
+      "sha256": "88ee770f0de94f3c783b33ad5092a7f6c3f817727d1baec64246460753325f34",
+      "bytes": 1597
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/identity-self-input-after.json",
+      "sha256": "cbac0235ef3fa67a73c56f1b58168612779cc2e40806c14501281432e0b5389e",
+      "bytes": 2089
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/identity-regression-before.log",
+      "sha256": "39b97a156730f33c51266e1240957ce2718c095a376511bf3115d712ed143138",
+      "bytes": 821
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/provenance-tooling-after.log",
+      "sha256": "3831dd7591fb04c0f1c93dee7c612beea042ae193b94365e68dd0e56e3645bf8",
+      "bytes": 140
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/identity-fix-rebuild.time.json",
+      "sha256": "d5115235945c51d09bbd7156410e54e8820bfcbe81691b0e6fb4203084a0430e",
+      "bytes": 114
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/identity-fix-rebuild.guard.log",
+      "sha256": "691affb8807e818b1b708b01b8ab7a34c5b259e25bbc171fc94e3e2110e3e4f8",
+      "bytes": 580
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/noop-build.log",
+      "sha256": "c2ed93ffd93c840755c0e91392ae593b1b52de9b7aaf6c208123feaceb1dde2e",
+      "bytes": 63
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/identity-independent-review.json",
+      "sha256": "294b35241817ee46899355d0ced319b4ba564e2f5d53bcfcd2d062f896c8a378",
+      "bytes": 4352
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cross-module-independent-review.json",
+      "sha256": "7505ab8de741bf575b0945a5d351a6963c6b10a8089d50ae559ffbe0f9319e9a",
+      "bytes": 11831
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cuda-owner-readiness.json",
+      "sha256": "3ad4367d0d227f0c9f4409f460d6f0d2b570bf43d55ed9a2514b5f9e53a4846e",
+      "bytes": 19241
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cuda-current-graph.json",
+      "sha256": "3e5532623c6a2ae182f2d02c33f3fa3b26ff10d9e2a5f53915b3ae4f7f9ab98f",
+      "bytes": 528
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cuda-owner-build.time.json",
+      "sha256": "4dc50b318eb16fc1470c28aafcdfe405af82bc45b1ea1f6410d9ae2650788aad",
+      "bytes": 115
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cuda-owner-build.guard.log",
+      "sha256": "a6dec07736bb2c0a483f4e1bf5f43bdf77037fb6fa626726272c25d5f832cd06",
+      "bytes": 60539
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cuda-owner-ctest.log",
+      "sha256": "63f8aa5846068655805fa843ccf8123d4ea2b08e76697a87f9ee23d96ea8a4f0",
+      "bytes": 382
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/cuda-owner-acceptance.json",
+      "sha256": "015a282bdeb8676ec4f8d077e9115e47a89a113ba0963d933caf844c2460db51",
+      "bytes": 3074
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/applications/acceptance.json",
+      "sha256": "58e2c296bd60396db6de6d5561d94afc0bde8fb74215eb82cbf128891ae7171f",
+      "bytes": 7291
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/applications/runs.json",
+      "sha256": "fd6d64a1c7343cd5a120b5a21dcc429e3cc78d174f27a24371bfd892ba1511ed",
+      "bytes": 11244
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/application-representative-contract.json",
+      "sha256": "74c220a47d5641e91b9bbd316ae9c2dfcf33b60036b977ce8953c0adcca382fd",
+      "bytes": 23013
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/input-template.par",
+      "sha256": "7cc2d0a4f12cf2d45665fa2f69414f7a1fa9aaa0c8d042507cadb9b9eeaae03d",
+      "bytes": 1680
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/input-contract.json",
+      "sha256": "37a91b08dd2c6bb5f5d783e418d82bfe159021fc31a2699dad78b77f62938311",
+      "bytes": 12081
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/runs.json",
+      "sha256": "22983e17cb6ba45bd6ba88e4eee3dfa9451aa91e604644db4ba19083833d5d41",
+      "bytes": 8228
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/check-results.py",
+      "sha256": "409720b4d67362b5d1e46bffb51e11c846fea2fd569835ccd7baec432bbe9d7a",
+      "bytes": 21458
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/scientific-check-results.json",
+      "sha256": "785d9db7f935e8f62637b99b45aef8c365078b982b37c9b96f88ccef5e25af63",
+      "bytes": 123472
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/timing-summary.json",
+      "sha256": "3b6f6d7c07e22fd998090631a7fc390d773ee071291a67e3749acc95e5eb5153",
+      "bytes": 2479
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/rz-short/independent-review.json",
+      "sha256": "908fc72a4611a9d3fa54aa382962ac9f126f4a8b57f10e10562045ed782235fb",
+      "bytes": 8096
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/module-prerequisites.json",
+      "sha256": "99d344a8a92f63bcb9bcbd9db0f170cd74fe8573ca6b7d2442ebfd2d51359417",
+      "bytes": 13868
+    },
+    {
+      "path": "output/modernization/r7-completion-20261013/multimodel-passive-metrics.json",
+      "sha256": "0ea7fffa2dbd68704a29d8fd2e511f60d742b8d3e4287f2c12d69813f4630e93",
+      "bytes": 4152
+    }
+  ]
+}

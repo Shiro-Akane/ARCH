@@ -12,27 +12,42 @@ not another implementation or a declaration that validation passed.
 For general directory navigation, please start with the [source guide](../../src/README.md).
 The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host control, hydrodynamics, burning, AMR, and diffusion, placing thin built-in bindings under `burn/routes`. The public backend and storage entry paths remain unchanged. Additionally, the [maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md) documents path mappings and measured build checks. Please note that EOS declarations remain strictly separated from complete selected implementations; therefore, changes to common policy headers may trigger rebuilds across several routes without implying a leaked EOS dependency.
 
+Coordinate layout, measures, geometric sources and stress share the four
+headers in [curvilinear](../../src/numerics/curvilinear/README.md).
+`Reconstruction.h` and `InvariantDomainFlux.h` own selected methods and face
+assembly. Runtime and the common scheduler bind stage storage, domain boundary
+work and publication; the numerical-state and EOS owners validate physical states.
+Current verification, source identities and costs are maintained in the
+[release plan](../../ARCH_RELEASE_PLAN.md).
+
 | Responsibility | Single mathematical/control authority | Allowed adapters / consumers |
 |---|---|---|
 | Policy names, factory routes, capabilities | `src/driver/dispatch/PolicyDescriptor.h`, `BackendCapabilities.h` | Resolve configuration names and backend support once; burn, diffusion and gravity factories consume resolved policy IDs. CPU dispatch TUs and generated CUDA wrappers bind implementations without a second string-selection path. |
 | Compiled CUDA image compatibility | `cmake/cuda/CudaCodeImages.cmake` resolves the configured image set; `RuntimeProbe.cpp::cuda_image_compatible` checks ordinary SASS/PTX eligibility | Image metadata is private to the probe translation unit. Descriptors retain genuine feature requirements, not a local GPU-model floor. Existing startup resolver owns strict CUDA rejection / pre-construction Auto fallback. |
 | AMR selected fields and indicator | `src/amr/refinement/RefinementIndicatorMath.h` | `AmrTree.h`, `cuda/amr/RefinementIndicators.cu` |
-| AMR conservative transfer | `src/amr/transfer/RegridTransferMath.h` | CPU prolong/restrict, CUDA migration kernels |
+| AMR conservative transfer | `src/amr/transfer/RegridTransferMath.h` | Shared ordinary conservative prolongation/restriction. Host migration/ghost gathers and CUDA kernels supply measures, readers and scratch storage; Runtime owns topology/storage publication; transfer operators retain their original admissibility and conservation contracts. |
 | AMR coarse/fine ghost reconstruction and restriction | `src/amr/transfer/LimitedLinearProlongation.h`, `ConservativeRestriction.h` | `GhostExchange.h` and CUDA `CoarseFineExchangeKernels.cuh` bind samples to the same scalar/species helpers. Ghost reconstruction and full regrid-family migration retain their distinct admissibility and conservation contracts. |
 | AMR singular-coordinate chart ghosts | `src/amr/exchange/CoordinateSeamPlan.h`, `CoordinateSeamMath.h` | The topology plan owns physical donor lookup and basis signs; Host and `src/cuda/runtime/amr/CudaBackendCoordinateSeam.cpp` apply the same admissibility and interpolation math. The CUDA adapter binds device slots and uploads only stencil metadata, outside the gravity source. |
 | AMR flux registration and reflux | `src/amr/flux/AmrFluxMath.h` | Host `FluxRegister.h` and CUDA `AmrFluxSurfaceKernels.cuh` use the same orientation, stage-weight and conserved-species corrections; route plans and storage traversal are separate. |
 | Topology/Morton and transaction plans | `src/amr/topology/Morton.h`, `AmrTree.h`, `RegridExecutionPlan.h` | Host control and atomic plan/publication lifecycle; CUDA adapters own D2D migration/storage, not a second tree or Morton implementation. |
-| Physical volume/area/length | `src/grid/GridMetrics.h`, `GridGeometryView.h` | Driver CFL, GPU metric cache, hydro/diffusion/AMR |
-| Hydro CFL and cell divergence | `src/driver/DriverUtils.h::{evaluate_cfl_cell_dt,finalize_cfl_dt}`, `src/numerics/integrator/TimeIntegratorHelper.h::accumulate_cell_divergence` | Host traversal and CUDA `HydroStateKernels.cuh` share the cell formulas; physical spacing/areas come from GridMetrics or its device cache. |
+| Physical volume/area/length | `src/numerics/curvilinear/GridMetrics.h`, `GridGeometryView.h` | Driver CFL, GPU metric cache, hydro/diffusion/AMR |
+| Hydro CFL and cell divergence | `src/driver/DriverUtils.h::{evaluate_cfl_cell_dt,finalize_cfl_dt}`, `src/numerics/integrator/HydroCellUpdate.h::accumulate_cell_divergence` | Host traversal and CUDA `HydroStateKernels.cuh` share the cell formulas; physical spacing/areas come from GridMetrics or its device cache. |
 | Hydro/RKL stages and state publication | `src/driver/schedule/StageScheduler.h`, `src/numerics/diffusion/DiffFunction.cpp`, `DiffusionAMRStages.h` | Common scheduling owns hydro weights and slot/ghost/reflux ordering; DiffFunction owns RKL coefficients and DiffusionAMRStages the shared cell updates. Host and CUDA executors bind those descriptors and helpers. |
 | Shared run orchestration and resources | `src/driver/Driver.h`, `DriverRuntime.h/.cpp`, `DriverBoundary.cpp`, `DriverRegrid.cpp`, `DriverIO.h/.cpp` | One loop and one runtime own active identities, ledger, clock and backend. Boundary completion is distinct from Host materialization; regrid retains transactional publication/rollback. IO consumes the existing serializers. Implementations are linked with `arch_solver_dispatch`. |
 | Split-stage execution binding | `src/driver/stages/DriverStages.h` | EOS-dependent CFL, Hydro, RKL and a single Burn-half executor share runtime scratch. First/Second Burn retain distinct reduction identities; `DriverBurn` and numerical modules keep cell mathematics. |
-| Domain Hydro preparation and gravity identity (P1) | `StageScheduler.h::HydroStagePreparation`, `src/grid/ScalarFieldView.h`, `src/physics/gravity/GravitySolveTypes.h` | Prepare once per actual RK stage after all input validation and before block execution. Borrow scalar storage; identify every density input and publish only completed metadata. No production field service or Poisson/MG solver is enabled in P1. |
+| Domain Hydro preparation and gravity identity | `StageScheduler.h::HydroStagePreparation`, `src/grid/ScalarFieldView.h`, `src/physics/gravity/GravitySolveTypes.h` | Prepare once per actual RK stage after input validation and before block execution. Borrow scalar storage; identify every density input and publish only completed metadata. The gravity Runtime supplies the optional field service; this scheduling/data boundary owns no Poisson/MG mathematics. |
 | Gaussian problem envelope | `simulation/GaussianPulse/Gaussian.cpp` | One physical Cartesian distance from `Grid::GetPhysicalCoords`; species and optional pressure/native-velocity amplitudes share the envelope before either backend runs. No coordinate conversion or backend branch in the problem. |
 | Independent thin-shell/polar measures (tests only) | `validation/amr/geometry_reference.py`, data and shared test in `tests/math/geometry/CurvilinearMetricCases.h` | CPU metric and CUDA geometry tests; 70/90-digit defining integrals, not sampled production output |
-| Geometric momentum source | `src/numerics/integrator/GeometricSources.h` | CPU time helpers, `cuda/hydro/kernels/HydroSourceKernels.cuh` |
+| Physical-state bounds validity | `src/numerics/state/StateAdmissibility.h::valid_bounds` | Shared state acceptance checks finite bounds, nonnegative floors and max>=min before thermodynamic completion; no default or implicit repair. |
+
+| Coordinate layout and measures | `src/numerics/curvilinear/GridGeometryView.h`, `GridMetrics.h` | Cartesian/spherical 1D–3D and cylindrical 1D/3D roles, volumes, areas and lengths. Grid storage/topology, complete EOS implementations and resource owners remain outside geometry. Cylindrical 2D rejects explicitly. |
+
+| Selected physical reconstruction | `src/numerics/reconstruction/Reconstruction.h` | Common PCM/MUSCL/PPM traces and their existing limiter contracts. Host and Device bind the same mathematics; patch-stage storage remains with the caller. |
+| Geometric momentum source | `src/numerics/curvilinear/GeometricSources.h` | CPU time helpers, `cuda/hydro/kernels/HydroSourceKernels.cuh` |
 | Roe-Glaister thermodynamic average | `src/numerics/flux/FluxFunctions.h::calc_glaister_state` | HLL/HLLC/Roe on both backends use the same symmetric fixed-composition pressure secants, derivative limits and enthalpy-consistent acoustic relation. Existing face species output supplies temporary averaged-composition storage; no new allocation or EOS implementation. |
-| Face traversal and mean thermodynamics | `src/numerics/flux/FluxSweep.h`, `InvariantDomainFlux.h::MeanThermoView` | CPU prepares exact immutable-stage mean P/c once; CUDA binds resident arrays. All five flux policies retain shared reconstruction and conservative limiting. HLL/HLLC select Roe–Glaister or Davis bounds with the same full EOS. |
+| Face traversal, thermodynamics and conservative assembly | `src/numerics/flux/FluxSweep.h`, `InvariantDomainFlux.h` | Shared selected reconstruction, point flux and conservative limiter. Ordinary mean P/c preparation is immutable-stage work; HLL/HLLC retain Roe–Glaister or Davis bounds. |
+| Stationary wall law and selected wall assembly | `src/numerics/flux/StationarySlipWallFlux.h`; `InvariantDomainFlux.h::{selected_wall_point_blend,assemble_wall_point}` | The low leaf owns reflection, exact gamma-law or actual general-EOS pressure traction. The common flux owner owns high/baseline assembly, shared factor and publication checks; there is no inverse Wall-to-Invariant include. Runtime/boundary authority stays upstream. |
+| Curvilinear viscous stress and work | `src/numerics/curvilinear/CurvilinearViscousStress.h`, `diffusion/NewtonianViscousStress.h` | One Stokes constitutive law with polar/3D cylindrical frame connections, face traction, geometric terms, work and stability bounds. EOS, coefficients, BC and RKL acceptance keep their owners. |
 | HLLC star-region flux | `src/numerics/flux/FluxHLLC.h::calc_star_flux` | One Rankine-Hugoniot state and contact pressure give mass/energy fluxes factored by contact speed. CPU/CUDA use the same expression; the prior subtractive star-state assembly is retired except for its unchanged guarded degenerate limit. |
 | Velocity derivatives | `src/physics/diagnostics/VelocityDiagnostics.h` | CPU/device refinement and diffusion |
 | External gravity | `src/physics/gravity/GravitySource.h` | CPU `ExternalGravity.h`, CUDA source kernel; same per-stage update |
@@ -102,10 +117,12 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 | Runtime resolved-policy acceptance | `tools/validate_backend_results.py::validate_plan_values` | Live matrix runner and `qualify_cuda_amr_evidence.py` recheck the same declared policy expectations; provider expectations may differ by backend, math/input budgets may not |
 | Complete runtime evidence coverage | `tools/qualify_cuda_amr_evidence.py::runtime_matrix_contract` | Full-runtime requires the canonical Cartesian/curved/uniform/generated manifests and both restart reports. It reuses existing case, provider, physics-budget and identity checks. |
 | Compiler evidence attribution | `tools/summarize_cuda_compile_memory.py` | GNU time per-command maxima or historical uniquely attributed process-group samples, explicitly labeled; the same memory guard owns safety. Ambiguous multi-TU process groups fail closed |
+| Stationary slip-wall point flux and selected baseline | `src/numerics/flux/StationarySlipWallFlux.h` | Explicit gamma-law capability selects the original exact reflected-wave pressure; other EOS use actual point pressure as a numerical boundary law. Host and Device traversals share actual high/mean-low data, original two-bar admission and one factor. Required invalid baselines reject; this owner neither authenticates wall identity nor changes CFL, geometry measures or resource lifetimes. |
 | Header-layer audit | `tools/audit_architecture.py::audit_header_dependencies` | Reuses one source snapshot; local-cycle and indirect catalogue regression checks |
 | Independent NSE/EOS acceptance data (tests only) | `validation/network/nse_reference.py`, `validation/eos/helm_reference.py` | Small immutable `tests/fixtures/{Nse,Helm}Reference.h` data; high-precision Saha roots / monomial endpoint fits do not call production math |
 | Built-in independent time-integration acceptance (tests only) | `tests/fixtures/burn/BurnTimeReference.h`, `validation/burn/time_reference.py` | Existing `test_burn_mainline_reference.cpp` serves the shared RHS read-only and tests current integrators. DOP853/Radau are independent in TIME, not reaction data. Historical `BurnMainlineReference.h` numbers/checker stay intact; CUDA short-step parity is separate |
 | Independent Urca trajectories and evidence (tests only) | `validation/network/weak_reference.py`, `run_weak_validation.py` | Original Suzuki data, independent SciPy interpolation / DOP853 and Radau; archive reuses `validation_provenance` and `run_arch_with_logs`, not another hashing/process infrastructure |
+| CUDA diffusion/RKL parity and EOS failure acceptance (tests only) | `tests/cuda/numerics/test_diffusion_rkl_parity.cu`, `test_diffusion_rkl_tabular.cu`, `DiffusionRklTestSupport.cuh` | One executable/CTest and failure counter. Core owns frozen references, common assertions and main; Tabular owns both 3D/4D failure/recovery instantiations; private support owns shared device fixtures once. Shared diffusion header edits rebuild both TUs; no production math or independent oracle duplication. |
 | Independent hydro temporal acceptance (tests only) | `validation/hydro/time_reference.py` | Exact Fourier exponential of the PCM contact's upwind semi-discrete operator; actual CPU/CUDA ARCH runs use the existing runtime validators. Separates time error from spatial error without calling a production integrator for expected values. |
 | Independent Roe-family flux acceptance (tests only) | `validation/hydro/roe_reference.py`, `tests/fixtures/hydro/RoeFluxReference.h`, `tests/math/RoeThermodynamicCases.h` | A 70/90-digit Euler eigenbasis solve, conservative jump identity and Rankine-Hugoniot relations define immutable ideal-gas fixtures. The existing hydro leaf test checks Host/Device reflection, cyclic rotation and thermodynamic identities; unchanged limiter, reconstruction and SW/VL snapshots remain intact. |
 | Independent planar Sedov acceptance (tests only) | `validation/hydro/sedov_reference.py` | Kamm's closed-form similarity profile, converged energy integral and shock-split finite-volume quadrature. Published profile values, independent Euler-similarity DOP853/Radau normalization and swept mass check the oracle; ordinary runtime/provenance helpers own CPU/CUDA execution. No production formula or process infrastructure is duplicated. |
@@ -116,8 +133,9 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 1. Identify its mathematical/control responsibility in the map above.
 2. Search its symbol and equivalent operation in that directory and direct
    consumers. Similar names are not proof of equivalent units/conventions.
-3. Prefer reusing or moving the authority. A compatibility alias/delegating
-   wrapper is acceptable; a copied formula with another name is not.
+3. Prefer reusing or moving the authority and update its current consumers
+   directly. Do not retain compatibility aliases or wrappers solely for old
+   callers. Never copy a formula under another name.
 4. Keep truly independent test oracles independent. Do not make expected values
    call the implementation being tested merely to eliminate apparent duplication.
 5. Record moved symbols, remaining aliases, retired implementations and tests
@@ -139,8 +157,12 @@ its direct callers, includes/imports and actual CMake or Studio build entry.
 Choose the existing owner with the same mathematics, data lifetime or control
 boundary. A new directory needs a coherent responsibility; file count, file
 length and visual symmetry are not sufficient reasons. Keep related work
-together and preserve public case/API/CLI entry paths unless their contract is
-explicitly being changed.
+together. The user has authorized retiring old case/API/CLI paths and facilities
+without backward compatibility; update current consumers, builds, tests and
+documentation together. Unsupported inputs or restart artifacts must fail
+explicitly. Physical definitions, numerical acceptance and historical evidence
+provenance remain required; the existing interface map describes the current
+implementation rather than a promise to retain legacy formats or entry points.
 
 | Responsibility | Existing location and boundary |
 | --- | --- |
@@ -449,6 +471,27 @@ inputs and outputs follow the existing CGS contract, including IdealGas.
 
 ## Composite self gravity (P3–P7)
 
+Geometry and gravity are separate physical responsibilities. `GridMetrics`,
+`GeometricSources` and `HydroGeometryBinding` own measures, chart selection and
+geometric source terms; none selects an external/self field. The gravity-owned
+`HydroSourceBinding.h` owns Host source discovery, actual patch claims, source
+work and source receipt completion. Hydro preserves the execution order; AMR's
+optional Energy receipt protocol owns no gravitational formula or concrete
+frame. The driver still owns field preparation and lifetime. Disabling gravity
+leaves the geometric path operational, including EOS/boundary and conservation
+checks. Retired cylindrical 2D ring kernels and memoization are absent; their
+historical evidence is indexed by the release plan.
+
+The common `TimeIntegratorHelper` deduces its caller-owned source adapter;
+`HydroSolverImpl` includes and constructs the concrete binding. Diffusion imports
+neither that binding nor a concrete gravity solver. `IHydroSolver` carries only
+borrowed declarations, not the configuration loader. `FluidState` forward-declares
+its existing transient boundary attachments; their actual users include complete
+boundary definitions directly. This narrows headers without moving per-block
+ownership, stage aliases, rollback or regrid. The maintained architecture audit
+checks these transitive boundaries while permitting the existing lightweight
+gravity views/interfaces and the actual composition owners.
+
 | Owner | Consumers and boundary |
 | --- | --- |
 | `numerics/elliptic/CompositePoisson` | Dyadic leaf geometry, shared coarse/fine subfaces, quadratic interface gradients, volume norms; no fluid state or AMR tree. |
@@ -472,7 +515,7 @@ CUDA runs keep iteration vectors resident and use the existing stream/allocation
 | --- | --- | --- |
 | Typed callback data / portable registration | `physics/boundary/BoundaryTypes.h`, `UserBoundary.h` | Public two-header case interface, Driver, restart |
 | Origin/pole identity | `grid/CoordinateBoundary.h` | Physical ghosts, AMR coordinate seam, composite Poisson |
-| EOS ghost and transport-flux rules | `physics/boundary/PhysicalBoundary.h`, `BoundaryFlux.h` | Host loop and CUDA surface adapter share these leaves |
+| EOS ghost and transport-flux rules | `physics/boundary/PhysicalBoundary.h`, `BoundaryFlux.h` | Physical point-law resolution, diffusion capture and shared flux selection. Publication and stage completion remain with boundary manager and Runtime; optional physics owns its own fields. |
 | Actual surface observation and quadrature | `BoundaryDiagnostics.h`, `DriverBoundaryDiagnostics.cpp` | Host/CUDA actual face kernels, Driver IO |
 | Potential side policy / field exchange | `gravity/self/GravityUserBoundary.*`, `GravityBoundaryDiagnostics.h` | Existing composite operator / gravity execution |
 | CUDA storage and gather/scatter | `cuda/runtime/boundary/CudaBackendBoundary.cu` | Surface-only callback snapshots and observer planes |

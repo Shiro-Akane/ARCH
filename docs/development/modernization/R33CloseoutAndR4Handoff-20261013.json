@@ -1,0 +1,660 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "status": "COMPLETE",
+  "stage3_status": "COMPLETE_WITH_RECORDED_SCOPE",
+  "R3.3_status": "COMPLETE",
+  "stage4_status": "READY_NOT_STARTED",
+  "scope": {
+    "task": "R3 closeout: disposition, historical input provenance, R4 work packages and verification handoff",
+    "production_edit": false,
+    "canonical_input_edit": false,
+    "tool_test_edit": false,
+    "build_executed": false,
+    "test_suite_executed": false,
+    "simulation_executed": false,
+    "hosted_CI_executed": false,
+    "RZ_long_repeated": false,
+    "LFS_fetch_pull_or_network": false,
+    "only_new_environment_observation": "Read-only GPU visibility metadata; not runtime proof"
+  },
+  "scientific_contract": {
+    "numerical_thresholds_changed": false,
+    "physics_changed": false,
+    "FP_flags_changed": false,
+    "O7_critical_missing_invalid_rejection_preserved": true,
+    "production_defaults_restored": false,
+    "restart_revision_or_comparison_changed": false,
+    "compatibility_required": false,
+    "provenance_is_scientific_PASS": false,
+    "legacy_scientific_open_items_closed": false,
+    "prior_acceptance_bound_to_original_source_binary_input": true
+  },
+  "identity": {
+    "frozen_prior_files": {
+      "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "docs/development/modernization/R31AuditTriage-20261013.json": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+      ".github/workflows/ci.yml": "7139a124c7bf6b907fd0e73d2db93a3312561e2dc9066cd8b2ca7bdb751ccce8",
+      "validation/backend/cases.json": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+      "tools/validate_backend_results.py": "d1b9d4589444e37548e3d4a27b500a3586a64ca544591f2fc0b7d3cabe62fa79"
+    },
+    "protected_source_regions_unchanged": [
+      "src",
+      "include",
+      "simulation",
+      "studio",
+      "cmake",
+      "tests",
+      "tools",
+      ".agents",
+      ".gitattributes",
+      "validation/hydro/inputs",
+      "validation/backend/cases.json"
+    ],
+    "source_tree_oids": {
+      "src": "e0757c64defadb6bbad2912c1452dbd21662d449",
+      "include": "40fd2cffc1323f1b08a918b4a2200574ed51e484",
+      "simulation": "31f82322521d9d207a8ac1de6249d70d80f9e34d",
+      "studio": "de9e37c3c23fb92c8560ae48bb71c1ba15d95d50",
+      "cmake": "6fa71aba8cca8a86e7904afa0bcea681bd03c73b",
+      "tests": "826a5ef701b9ab6ec347670272bc2ce3df41cfc5",
+      "tools": "08559146a4501eff0640d13ad50f2a715aa61a98"
+    },
+    "execution_artifacts_rechecked": [
+      {
+        "kind": "production",
+        "backend": "cpu",
+        "path": "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+        "sha256": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9",
+        "bytes": 16649928,
+        "unchanged_from_R22": true
+      },
+      {
+        "kind": "production",
+        "backend": "cuda",
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+        "sha256": "0828b3c8644333d446a044b555c15681e9277a10217d3fac6e129ccf14ba861c",
+        "bytes": 368728472,
+        "unchanged_from_R22": true
+      },
+      {
+        "kind": "checkpoint_comparator",
+        "backend": "cpu",
+        "path": "/home/shiroakane/ARCH/build-release-cpu/arch_cuda_single_level_validation",
+        "sha256": "f4a1d73a5dd3fadc453e1ed34db302bc0af7c2439f16839349c34004b688b5d6",
+        "bytes": 434680,
+        "unchanged_from_R22": true
+      },
+      {
+        "kind": "checkpoint_comparator",
+        "backend": "cuda",
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+        "sha256": "d7e7df392e4ca6b3cf532059006f47eb9c71c71ed01f895fd327d536534a76a3",
+        "bytes": 464536,
+        "unchanged_from_R22": true
+      }
+    ],
+    "existing_dirty_work_preserved": true,
+    "R33_initial_git_status_receipt": "output/modernization/r33-20261013/start-identity.json"
+  },
+  "R3_completion_checklist": [
+    {
+      "item": "R3.1 joint audit",
+      "status": "COMPLETE",
+      "receipt": "docs/development/modernization/R31AuditTriage-20261013.json",
+      "limits": "Representative shared mathematics/state/dependencies/validation audit, not every route equivalence."
+    },
+    {
+      "item": "R3.2 bounded RKL attribution",
+      "status": "COMPLETE",
+      "receipt": "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json",
+      "limits": "Two diagnostic compiler profiles; device stage sum share91.24%, not wall decomposition; ablation reduces coverage and is not an adopted optimization."
+    },
+    {
+      "item": "R3.2 inactive identity assessment",
+      "status": "COMPLETE",
+      "receipt": "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json",
+      "limits": "Controlled diagnostic14+inspection8; actual conservative restart restriction, no scientific trajectory or universal absence of fallback proof."
+    },
+    {
+      "item": "R3.3 historical input provenance",
+      "status": "COMPLETE",
+      "receipt": "output/modernization/r33-20261013/hydro-input-provenance.json",
+      "limits": "12 own historical byte matches and6 shared source anchors; not current numerical acceptance."
+    },
+    {
+      "item": "R3.3 priorities and R4 handoff",
+      "status": "COMPLETE",
+      "receipt": "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.zh-CN.md",
+      "limits": "Owners, dependencies, tests, rollback and scope frozen; no R4 changes or execution."
+    }
+  ],
+  "candidate_disposition": [
+    {
+      "id": "R3-A02",
+      "destination": "R4.1",
+      "decision": "REPAIR_ORIGINAL_RUNNER",
+      "reason": "Reproduced explicit case selection bypasses all convergence groups."
+    },
+    {
+      "id": "R3-A01",
+      "destination": "R4.2",
+      "decision": "MAINTAIN_12_CURRENT_INPUTS_EXPLICITLY",
+      "reason": "Current canonical inputs reject two missing critical declarations; per-input historical provenance proven."
+    },
+    {
+      "id": "R3-A03",
+      "R1_id": "C04",
+      "destination": "CONDITIONAL_R5",
+      "decision": "DEFER_TEST_RESPONSIBILITY_SPLIT",
+      "release_if": "Demonstrated common-edit incremental benefit, aggregate cold/build and RAM acceptable, original full coverage and floating-point flags maintained."
+    },
+    {
+      "id": "R3-A04",
+      "destination": "DEFER_TO_CONCRETE_NEED",
+      "decision": "KEEP_CURRENT_STRICT_IDENTITY",
+      "release_if": "Narrow activity projection and version/contract defined for an actual need; full audit identity preserved; protected contract decisions remain reserved."
+    },
+    {
+      "id": "R3-A05",
+      "R1_id": "C05",
+      "destination": "LOW_PRIORITY_LOCAL_MAINTENANCE",
+      "decision": "USE_EXISTING_OWNERSHIP_AND_COMMENT_STYLE",
+      "release_if": "Concrete reading or ownership obstacle; no speculative directory reshuffle."
+    }
+  ],
+  "R1_candidate_crosswalk": [
+    {
+      "id": "C01",
+      "topic": "shared Hydro mathematics",
+      "disposition": "KEEP_SHARED_IMPLEMENTATION_AND_PROTECT_VALIDATION"
+    },
+    {
+      "id": "C02",
+      "topic": "RZ source/boundary cost",
+      "disposition": "DEFER_BOUNDED_COST_PACKET_PRESERVE_OLD_TRUNCATIONS"
+    },
+    {
+      "id": "C03",
+      "topic": "Cellular rate discrepancy",
+      "disposition": "KEEP_ORIGINAL_FAILURE_AND_SCIENTIFIC_EXIT_OPEN"
+    },
+    {
+      "id": "C04",
+      "topic": "build throughput/dependencies",
+      "disposition": "R3_A03_ATTRIBUTED_CONDITIONAL_R5"
+    },
+    {
+      "id": "C05",
+      "topic": "directory/comment ownership",
+      "disposition": "R3_A05_LOCAL_ONLY"
+    },
+    {
+      "id": "C06",
+      "topic": "optional capabilities/generated networks",
+      "disposition": "KEEP_CURRENT_SELECTED_CAPABILITY_IDENTITY_VERIFY_IF_TOUCHED"
+    },
+    {
+      "id": "C07",
+      "topic": "lifecycle/coupled scientific exits",
+      "disposition": "KEEP_OWNER_AND_UNFINISHED_EXITS_OPEN"
+    },
+    {
+      "id": "C08",
+      "topic": "backend forwarding/independent oracles",
+      "disposition": "KEEP_JUSTIFIED_LAYERS_REOPEN_ON_NEW_EVIDENCE"
+    }
+  ],
+  "R4_packages": [
+    {
+      "id": "R4.1",
+      "status": "READY_NOT_STARTED",
+      "owner": "W2",
+      "unique_write_paths": [
+        "tools/validate_backend_results.py",
+        "tests/tooling/validation/test_validate_backend_results.py"
+      ],
+      "optional_write_scope": "Necessary existing runner usage docs, coordinated by Codex",
+      "dependencies": [],
+      "goal": "Original full/complete-selected-group convergence gate without new runner or evidence schema",
+      "minimum_tests": [
+        "implicit and explicit all selection equivalence",
+        "complete group positive",
+        "per-case acceptable but CPU or CUDA convergence fails and no successful publication",
+        "partial or mixed group selection rejects before execution/provenance/evidence and lists missing IDs",
+        "ungrouped scoped result remains rejected by full-matrix qualifier",
+        "unknown ID and missing/nonfinite scientific metric cannot publish success"
+      ],
+      "rollback": "Revert only package tool/tests/docs; original selection defect reopens and is not a repaired state."
+    },
+    {
+      "id": "R4.2",
+      "status": "READY_NOT_STARTED",
+      "owner": "W1",
+      "unique_write_paths": [
+        "validation/hydro/inputs/muscl_n128.par",
+        "validation/hydro/inputs/muscl_n256.par",
+        "validation/hydro/inputs/muscl_n64.par",
+        "validation/hydro/inputs/pcm_n128.par",
+        "validation/hydro/inputs/pcm_n256.par",
+        "validation/hydro/inputs/pcm_n64.par",
+        "validation/hydro/inputs/ppm_n128.par",
+        "validation/hydro/inputs/ppm_n256.par",
+        "validation/hydro/inputs/ppm_n64.par",
+        "validation/hydro/inputs/sod_ppm_n128.par",
+        "validation/hydro/inputs/sod_ppm_n256.par",
+        "validation/hydro/inputs/sod_ppm_n64.par"
+      ],
+      "optional_write_scope": "validation/hydro README English/Chinese and current HLL input wording in src/numerics/flux/README.md; no production default change",
+      "dependencies": [],
+      "goal": "Explicit roe/1e-10 declarations with per-input provenance and historical immutable identity retained",
+      "minimum_checks": [
+        "12 current template and13 consumer coverage, existing overrides/effective controls",
+        "actual CPU ELF inspection shows both explicit input sources",
+        "representative SmoothAdvection/Sod missing and invalid controls reject under original O7"
+      ],
+      "comment_requirement": "Short estimator/energy-floor/unit explanation per input; central provenance, no repeated history dump",
+      "rollback": "Revert package declarations/docs only; known old input rejection remains; raw historic evidence never rewritten."
+    },
+    {
+      "id": "R4.3",
+      "status": "READY_NOT_STARTED",
+      "owner": "Codex",
+      "independent_reviewer": "W3",
+      "dependencies": [
+        "R4.1 INDEPENDENT_ACCEPT",
+        "R4.2 INDEPENDENT_ACCEPT"
+      ],
+      "goal": "Fresh associated scientific acceptance and minimum existing CI discovery",
+      "scientific_scope": {
+        "groups": [
+          "smooth_pcm",
+          "smooth_muscl",
+          "smooth_ppm",
+          "sod_ppm"
+        ],
+        "case_ids": [
+          "hydro_pcm_n64",
+          "hydro_pcm_n128",
+          "hydro_pcm_n256",
+          "hydro_muscl_n64",
+          "hydro_muscl_n128",
+          "hydro_muscl_n256",
+          "hydro_ppm_n64",
+          "hydro_ppm_n128",
+          "hydro_ppm_n256",
+          "sod_ppm_n64",
+          "sod_ppm_n128",
+          "sod_ppm_n256"
+        ],
+        "case_count": 12,
+        "backends": [
+          "cpu",
+          "cuda"
+        ],
+        "order": "Tool/config CPU checks first, original paired CPU then CUDA lane; heavy work serial",
+        "original_threshold_source": "validation/backend/cases.json + original validate_resolution_groups",
+        "new_full_matrix_PASS": false,
+        "excluded_replays": [
+          "whole22-case matrix",
+          "hydro_periodic_1000",
+          "diffusion_rkl2 scientific group",
+          "old RZ long run",
+          "R2 whole suite"
+        ]
+      },
+      "exit": "Packages accepted, all four related new-canonical/new-entry groups complete at original gates, no unexplained skip/failure, O7 intact, source/artifact identity recorded, local versus hosted CI stated separately",
+      "failure_policy": "Affected package remains incomplete; preserve minimal reproduction or slow-run truncation; never lower thresholds, copy CPU as CUDA, silently shrink required scope or relabel old-input PASS."
+    }
+  ],
+  "R4_runner_selection_contract": {
+    "manifest_cases": 22,
+    "canonical_groups": {
+      "smooth_pcm": [
+        "hydro_pcm_n64",
+        "hydro_pcm_n128",
+        "hydro_pcm_n256"
+      ],
+      "smooth_muscl": [
+        "hydro_muscl_n64",
+        "hydro_muscl_n128",
+        "hydro_muscl_n256"
+      ],
+      "smooth_ppm": [
+        "hydro_ppm_n64",
+        "hydro_ppm_n128",
+        "hydro_ppm_n256"
+      ],
+      "sod_ppm": [
+        "sod_ppm_n64",
+        "sod_ppm_n128",
+        "sod_ppm_n256"
+      ],
+      "diffusion_rkl2": [
+        "diffusion_rkl2_n64",
+        "diffusion_rkl2_n128",
+        "diffusion_rkl2_n256"
+      ]
+    },
+    "ungrouped_ids": [
+      "external_gravity_rk2",
+      "external_gravity_rk3",
+      "diffusion_rkl1_n64",
+      "diffusion_rkl1_n128",
+      "diffusion_rkl1_n256",
+      "burn_bd_two_block",
+      "hydro_periodic_1000"
+    ],
+    "implicit_all": "Original full manifest and original group function",
+    "explicit_all": "Same original group validation as implicit all",
+    "complete_selected_groups": "Determine completeness from canonical full manifest, invoke original group validator on complete selected members",
+    "any_touched_partial_group": "REJECT_BEFORE_EXECUTION_PROVENANCE_EVIDENCE_AND_LIST_MISSING_IDS",
+    "ungrouped_only": "Scoped per-case result with empty groups; not full-matrix qualification",
+    "group_summary_schema": "Original resolutions/orders only",
+    "no_new_diagnostic_mode_or_compatibility_path": true,
+    "full_matrix_consumer": "tools/qualify_cuda_amr_evidence.py:145-215 check_matrix remains exact-count/set/hash/runtime-input/group gate",
+    "unit_test_flag": "Manifest-only mode, not science"
+  },
+  "R4_input_provenance": {
+    "source_receipt": "output/modernization/r33-20261013/hydro-input-provenance.json",
+    "historical_commit": "c8f7c048ca7b384126547934946a3c4d595f6e99",
+    "own_input_byte_matches": 12,
+    "shared_policy_sources_verified": 6,
+    "consumers": 13,
+    "proposed_explicit_values": {
+      "hll_wave_speed": "roe",
+      "min_eint": "1e-10 erg/g"
+    },
+    "current_inputs_modified_or_accepted": false,
+    "R2_science": "PPM/Sod6 only via traceable derived overrides; PCM/MUSCL6 still need current acceptance",
+    "historical_release_874": "Same input bytes, relevant dirty source; not current PASS",
+    "thirteenth_consumer": {
+      "id": "hydro_periodic_1000",
+      "input": "validation/hydro/inputs/ppm_n64.par",
+      "scientific_time": 2.05,
+      "minimum_scientific_steps": 1000,
+      "explicit_manifest_overrides_dictionary": false,
+      "new_independent_input_file": false,
+      "R4_scope": "Static effective-config/consumer coverage only; no sustained replay by default"
+    },
+    "CellularFlash2D_manual_template": "Missing11 critical declarations, retains research README use; independent defer/retirement decision, not this Hydro packet"
+  },
+  "planned_commands_not_executed": {
+    "cwd": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+    "tool_tests_argv": [
+      [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "-B",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/tooling/validation/test_validate_backend_results.py"
+      ],
+      [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "-B",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/tooling/validation/test_validation_provenance.py"
+      ],
+      [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "-B",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/tooling/validation/test_validation_subprocess_logs.py"
+      ]
+    ],
+    "ctest": "Conditional only when actual registered source path matches current worktree. Existing CPU/CUDA CTest points to main checkout and cannot sign current worktree tool edits. No rebuild needed for Python checks.",
+    "ctest_binding_receipt": "output/modernization/r33-20261013/ctest-source-binding.json",
+    "four_group_integration_argv_template": [
+      "/home/shiroakane/miniconda3/envs/work/bin/python",
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/validate_backend_results.py",
+      "--manifest",
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/validation/backend/cases.json",
+      "--source-root",
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "--build-dir",
+      "/home/shiroakane/ARCH/build-rt-cuda",
+      "--arch",
+      "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+      "--checkpoint-validator",
+      "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+      "--output-root",
+      "<new-empty-output-root>",
+      "--case",
+      "hydro_pcm_n64",
+      "--case",
+      "hydro_pcm_n128",
+      "--case",
+      "hydro_pcm_n256",
+      "--case",
+      "hydro_muscl_n64",
+      "--case",
+      "hydro_muscl_n128",
+      "--case",
+      "hydro_muscl_n256",
+      "--case",
+      "hydro_ppm_n64",
+      "--case",
+      "hydro_ppm_n128",
+      "--case",
+      "hydro_ppm_n256",
+      "--case",
+      "sod_ppm_n64",
+      "--case",
+      "sod_ppm_n128",
+      "--case",
+      "sod_ppm_n256"
+    ],
+    "integration_requirements": [
+      "After R4.1 and R4.2 independent acceptance only",
+      "Recheck source/binary/comparator/new input identities and device visibility",
+      "Fresh output-root, existing resource guard and serial scheduler",
+      "No --backend option exists; original paired lane and group semantics",
+      "Prebatch host E disk capacity; ~1GiB warning/stop new large outputs, not continuous polling"
+    ]
+  },
+  "CI_and_resources": {
+    "existing_tooling_discovery_reused": true,
+    "new_job_platform_validator_required": false,
+    "hosted_CI_status": "NOT_RUN",
+    "existing_LFS_cache_patch": "Unchanged from start; local offline evidence only; no push/hosted run",
+    "local_LFS_pins": "Reuse prior pointer-matched ordinary copies/shared objects; no automatic fetch/pull",
+    "GPU_metadata_observed": {
+      "name": "NVIDIA GeForce RTX 3060 Ti",
+      "memory_MiB": 8192,
+      "driver": "610.47",
+      "observation_kind": "nvidia-smi read-only visibility, not CUDA runtime validation"
+    },
+    "full_CUDA_build_required": false
+  },
+  "delegation": {
+    "owner": "arch-modernization-r33-20261013",
+    "manager_max_calls": 4,
+    "provider_inference_calls": 1,
+    "jobs": [
+      {
+        "job_id": "3603a1ab063247a6bce522e3ca8eaa6d",
+        "task_id": "r33-roadmap-review-1",
+        "logical_task_id": "r33-roadmap-review",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "api",
+        "execution_status": "READY_FOR_REVIEW",
+        "delivery_state": "complete",
+        "elapsed_seconds": 75.1289434069995,
+        "reported_usage": {
+          "input_tokens": 2143,
+          "cached_input_tokens": 0,
+          "output_tokens": 13930,
+          "reasoning_tokens": 13223,
+          "visible_output_tokens": 707,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "review_reference": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/review.json",
+        "artifacts": [
+          {
+            "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/delivery.txt",
+            "sha256": "7fd7ff38f3c4b3528f8d891a3252851473c7c46c504ffa1d7a902d08105f4dc0",
+            "bytes": 3117
+          },
+          {
+            "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/executor.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          {
+            "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/provider.json",
+            "sha256": "f397082324ef30741db23a99b2fd9f81e310b1b0de8f8c5f9c088065f9ed770a",
+            "bytes": 365
+          },
+          {
+            "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/result.json",
+            "sha256": "c8f3e56633eb6375803cf345f69500419e25795e7fd23b8800a4f93699ab4587",
+            "bytes": 1102
+          },
+          {
+            "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/review.json",
+            "sha256": "5fe3ac5e727e2f485fd94e7655519ccc3467862a733945d4a25b25b1088ff664",
+            "bytes": 1595
+          },
+          {
+            "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/task.json",
+            "sha256": "e81e17b06899345488fcea328f4b1ea17d74c978d5631e928728da96e57dcaf4",
+            "bytes": 7386
+          }
+        ]
+      }
+    ],
+    "native_Codex_workers": [
+      "/root/hydro_input_provenance: per-input history/loading and13-consumer mapping, manager checked",
+      "/root/r4_runner_readiness: runner/CI readiness, one comparator-path correction, final bounded ACCEPT; not final machine-index review"
+    ],
+    "Gemini": "Not dispatched; no additional frozen-text editing benefit after clear accepted roadmap",
+    "passive_metrics_read_once": true,
+    "unknown_costs": "Manager cost and unreported monetary costs remain unknown",
+    "feedback": [
+      "Provider current-bug versus future-plan blocker distinguished; no paid format/style loop",
+      "Original comparator is build-root, not bin; corrected future templates",
+      "Old build CTest binds main checkout tests; use direct current-worktree tool tests",
+      "No generic defense schema added without a reproducible producer path",
+      "No change to global Skill/MCP infrastructure"
+    ],
+    "self_work_reason": "Independent readiness and roadmap results accepted; manager performs deterministic evidence indexing and documentation QA only",
+    "next_recheck": "Actual user-authorized R4 implementation or new concrete blocker; no automatic R4 or more roadmap reviews"
+  },
+  "evidence": [
+    {
+      "path": "docs/development/modernization/R22NumericalChecks-20261012.json",
+      "sha256": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd",
+      "bytes": 73199
+    },
+    {
+      "path": "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json",
+      "sha256": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "bytes": 376806
+    },
+    {
+      "path": "docs/development/modernization/R31AuditTriage-20261013.json",
+      "sha256": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      "bytes": 37108
+    },
+    {
+      "path": "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json",
+      "sha256": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+      "bytes": 106154
+    },
+    {
+      "path": "docs/development/archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md",
+      "sha256": "7521bb6302eb409156082134509e80bf9cc6c24572572b4e53120e113eb57168",
+      "bytes": 32357
+    },
+    {
+      "path": "output/modernization/r33-20261013/start-identity.json",
+      "sha256": "2bfb3ff86eb9db87abf7778a714c46fa7e1a3bc24a6932c010932b586c000229",
+      "bytes": 2571
+    },
+    {
+      "path": "output/modernization/r33-20261013/hydro-input-provenance.json",
+      "sha256": "d6f1f3c0a88eb31e98ced1c601221691c5a3b6f6358cad4ee85fd7b21f44d9f0",
+      "bytes": 41898
+    },
+    {
+      "path": "output/modernization/r33-20261013/runner-readiness.json",
+      "sha256": "44c012e65efecdcfd79638fcf9dad64ef01ee930a8b49cbf26ceb0a9a39bb8a9",
+      "bytes": 19610
+    },
+    {
+      "path": "output/modernization/r33-20261013/manager-readiness-review.json",
+      "sha256": "baa3bf459677f4826eb3a61cfb7e73eac9f958a9a86a7406717515961145f073",
+      "bytes": 1044
+    },
+    {
+      "path": "output/modernization/r33-20261013/ctest-source-binding.json",
+      "sha256": "c3cd668f18afae64f06f4a3c0273b7c1bebd10bf005824395aef8243e0fab8f5",
+      "bytes": 2148
+    },
+    {
+      "path": "output/modernization/r33-20261013/native-final-review.json",
+      "sha256": "b16fa6a067af56738fca364dfd8bca4c74af9bbd7fd2978e8f68837807cf18ca",
+      "bytes": 4524
+    },
+    {
+      "path": "output/modernization/r33-20261013/final-index-recipe.py",
+      "sha256": "0224328f279157e3f53e8cab5571b8699154b1be0ce3d609489edaeacfe0e110",
+      "bytes": 17830
+    },
+    {
+      "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/delivery.txt",
+      "sha256": "7fd7ff38f3c4b3528f8d891a3252851473c7c46c504ffa1d7a902d08105f4dc0",
+      "bytes": 3117
+    },
+    {
+      "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/executor.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/provider.json",
+      "sha256": "f397082324ef30741db23a99b2fd9f81e310b1b0de8f8c5f9c088065f9ed770a",
+      "bytes": 365
+    },
+    {
+      "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/result.json",
+      "sha256": "c8f3e56633eb6375803cf345f69500419e25795e7fd23b8800a4f93699ab4587",
+      "bytes": 1102
+    },
+    {
+      "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/review.json",
+      "sha256": "5fe3ac5e727e2f485fd94e7655519ccc3467862a733945d4a25b25b1088ff664",
+      "bytes": 1595
+    },
+    {
+      "path": "output/modernization/r33-20261013/workers/3603a1ab063247a6bce522e3ca8eaa6d/task.json",
+      "sha256": "e81e17b06899345488fcea328f4b1ea17d74c978d5631e928728da96e57dcaf4",
+      "bytes": 7386
+    },
+    {
+      "path": "output/modernization/r33-20261013/docs-qa-recipe.py",
+      "sha256": "2dca7f0218e995081f5df9d04eb48aefc90941727c5981351ad4f211743a917a",
+      "bytes": 6060
+    }
+  ],
+  "completed_utc": "2026-10-13T03:59:22.945541+00:00",
+  "mechanical_qa": {
+    "status": "PASS",
+    "receipt": "output/modernization/r33-20261013/final-qa.json",
+    "recipe": "output/modernization/r33-20261013/docs-qa-recipe.py",
+    "markdown_files": 16,
+    "local_links": 279,
+    "heading_anchors": 36,
+    "tables": 53,
+    "evidence_hashes": 19,
+    "frozen_start_files": 6,
+    "execution_artifacts_checked": 4,
+    "candidate_ids_covered": 13,
+    "limits": "Documentation/evidence/Git and command-template consistency only; no scientific or tooling test suites, builds, simulation or hosted CI run in R33."
+  }
+}

@@ -4,7 +4,7 @@
  *
  * Three-dimensional native axes are Cartesian (x,y,z), cylindrical (R,z,phi),
  * or spherical (r,theta,phi). Two-dimensional spherical grids use the polar
- * plane (r,phi); cylindrical grids use the full-ring meridian (r,z). Angular
+ * plane (r,phi); cylindrical 1D/3D grids use (R,z,phi). Angular
  * coordinates are in radians and meridional coordinates are in cm. GridMetrics owns physical
  * volumes, face areas, and orthonormal spacing derived from this geometry.
  *
@@ -23,7 +23,7 @@
 
 #include "amr/topology/AmrDefines.h"
 #include "data/GlobalDefs.h"
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 
 // One physical point expressed in each supported coordinate system.
 struct PointCoords
@@ -70,8 +70,6 @@ struct Grid
     // Native coordinate system used by coordinate conversion and metric views.
     std::string geometry = "cartesian"; ///< "cartesian", "cylindrical", "spherical"
 
-    // Value-only actual native AMR generation provenance; ordinary grids stay unbound.
-    GridMetrics::DyadicGridIdentity dyadic_identity{};
 
     Grid() : dim(3), nblockx1(1), nblockx2(1), nblockx3(1), ng(0), x1_min(0), x2_min(0), x3_min(0), x1_max(0), x2_max(0), x3_max(0), geometry("cartesian") {}
 
@@ -96,20 +94,17 @@ private:
     /**
      * @brief Validate physical-domain bounds and reject invalid geometry.
      */
-    void RequireGeometrySemantics(GridMetrics::GeometrySemantics semantics) const
+    /** Reject every unsupported storage chart, including any two-dimensional
+     * cylindrical grid: the legacy polar/RZ reinterpretation is retired.
+     */
+    void RequireSupportedChart() const
     {
-        if (semantics == GridMetrics::GeometrySemantics::Existing) {
-            if (dim == 2 && geometry == "cylindrical")
-                throw std::invalid_argument("Two-dimensional cylindrical grids require the RZ chart; the polar chart is retired");
-            return;
-        }
-        if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz ||
-            dim != 2 || geometry != "cylindrical")
-            throw std::invalid_argument("RZ coordinates require cylindrical dimension 2");
+        if (dim == 2 && geometry == "cylindrical")
+            throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported; the legacy polar/RZ chart is retired");
     }
-    void ValidateDomain(GridMetrics::GeometrySemantics semantics) const
+    void ValidateDomain() const
     {
-        RequireGeometrySemantics(semantics);
+        RequireSupportedChart();
         // 0. Dimensionality and topology checks
         if (amr::BLOCK_NX < 1 || amr::BLOCK_NY < 1 || amr::BLOCK_NZ < 1)
             throw std::invalid_argument("Grid Error: BLOCK dimensions must be >= 1.");
@@ -153,7 +148,7 @@ private:
             if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: R_min cannot be negative.");
 
-            // RZ x2 is an unrestricted axial length; only 3D has an active phi axis.
+            // x2 is an unrestricted axial length; only 3D has an active phi axis.
             if (dim == 3)
             {
                 if ((x3_max - x3_min) > 2.0 * arch::constants::math::pi + eps)
@@ -166,25 +161,13 @@ public:
      * @brief Computes dimensions, steps, and memory strides.
      * Centralized to avoid duplicated code in constructors.
      */
-    void InitializeTopology(GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+    void InitializeTopology()
     {
-        RequireGeometrySemantics(semantics);
+        RequireSupportedChart();
         // Step Length
         dx1 = (amr::BLOCK_NX > 0) ? (x1_max - x1_min) / amr::BLOCK_NX : 0.0;
         dx2 = (amr::BLOCK_NY > 1 && dim >= 2) ? (x2_max - x2_min) / amr::BLOCK_NY : 0.0;
         dx3 = (amr::BLOCK_NZ > 1 && dim == 3) ? (x3_max - x3_min) / amr::BLOCK_NZ : 0.0;
-
-        // Workflow: ordinary spacing arithmetic remains unchanged. A bound
-        // native block authenticates canonical endpoints/representative dx;
-        // all actual faces, centers and metric widths use the shared root leaf.
-        if (dyadic_identity.bound) {
-            if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
-                || nblockx1 != dyadic_identity.root_blocks[0]
-                || nblockx2 != dyadic_identity.root_blocks[1]
-                || !GridMetrics::matches_identity(dyadic_identity,
-                    {x1_min,x2_min},{x1_max,x2_max},{dx1,dx2}))
-                throw std::invalid_argument("Native RZ grid generation identity does not match actual bounds/spacing");
-        }
 
         // Total length including NG cells (only for logical info if needed, memory is fixed)
         total_x_ = amr::BLOCK_NX + 2 * ng;
@@ -197,20 +180,7 @@ public:
         total_size = amr::PAD_NX * total_y_ * total_z_;
 
         // Check Domain
-        ValidateDomain(semantics);
-        if(dyadic_identity.bound) {
-            // Reject every real interior/ghost cell whose canonical faces or
-            // midpoint collapse. No nominal dx or floor repairs coordinates.
-            for(int axis=0;axis<2;++axis) {
-                const int cells=axis==0?amr::BLOCK_NX:amr::BLOCK_NY;
-                for(std::int64_t cell=-std::int64_t(ng);cell<cells+std::int64_t(ng);++cell) {
-                    double left=0.,right=0.,center=0.,width=0.;
-                    if(!GridMetrics::canonical_axis_cell(dyadic_identity,axis,cell,
-                        left,right,center,width))
-                        throw std::invalid_argument("Native RZ canonical cell faces are not representable");
-                }
-            }
-        }
+        ValidateDomain();
     }
 
     int GetTotalX() const { return total_x_; }
@@ -223,11 +193,8 @@ public:
     /**
      * @brief Return physical axis names for HDF5/XDMF post-processing.
      */
-    std::vector<std::string> GetAxisNames(GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) const
+    std::vector<std::string> GetAxisNames() const
     {
-        RequireGeometrySemantics(semantics);
-        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
-            return {"r_cy", "z_cy"};
         if (geometry == "spherical")
         {
             if (dim == 1)
@@ -256,33 +223,19 @@ public:
      * The result exposes a common physical-coordinate view independent of the
      * grid's native Cartesian, cylindrical, or spherical coordinates.
      */
-    PointCoords GetPhysicalCoords(int i, int j = 0, int k = 0,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) const
+    PointCoords GetPhysicalCoords(int i, int j = 0, int k = 0) const
     {
         return PhysicalCoordsFromNative(dim, geometry, GetCellCenterX(i),
-                                        GetCellCenterY(j), GetCellCenterZ(k), semantics);
+                                        GetCellCenterY(j), GetCellCenterZ(k));
     }
 
     // Shared coordinate expansion for grid cells and initial-preview samples.
     // This does not allocate a grid or change sampling resolution.
     static PointCoords PhysicalCoordsFromNative(int dim, const std::string &geometry,
-                                                double cx, double cy = 0.0, double cz = 0.0,
-                                                GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                                                double cx, double cy = 0.0, double cz = 0.0)
     {
-        if (dim == 2 && geometry == "cylindrical"
-            && semantics == GridMetrics::GeometrySemantics::Existing)
-            throw std::invalid_argument("Two-dimensional cylindrical coordinates require the RZ chart; the polar chart is retired");
-        if (semantics != GridMetrics::GeometrySemantics::Existing) {
-            if (semantics != GridMetrics::GeometrySemantics::AxisymmetricRz ||
-                dim != 2 || geometry != "cylindrical")
-                throw std::invalid_argument("RZ coordinates require cylindrical dimension 2");
-            PointCoords rz{};
-            rz.x=cx; rz.y=0.; rz.z=cy;
-            rz.r_cy=cx; rz.z_cy=cy; rz.phi_cy=0.;
-            rz.r=std::hypot(cx,cy); // Spherical radius, never the native r axis.
-            rz.theta=std::atan2(cx,cy); rz.phi=0.;
-            return rz;
-        }
+        if (dim == 2 && geometry == "cylindrical")
+            throw std::invalid_argument("Two-dimensional cylindrical coordinates are unsupported; the legacy polar/RZ chart is retired");
         PointCoords coords{};
 
         // Supply deterministic inactive-coordinate values for 1D and 2D grids.
@@ -337,7 +290,7 @@ public:
         }
         else if (geometry == "cylindrical")
         {
-            // The RZ branch above owns 2D; 1D/3D retain their native expansion.
+            // 1D/3D retain their native cylindrical expansion.
             coords.r_cy = cx;
             coords.z_cy = cy;
             coords.phi_cy = cz;
@@ -374,50 +327,13 @@ public:
      * @param i Block-local x1 index, including ghost cells (not a flat offset).
      * @return The physical x-coordinate.
      */
-    /** Bound face wrapper; an invalid chart/index returns nonfinite geometry,
-     * never an ordinary-grid fallback. Both backends borrow the same leaf.
-     */
-    double CanonicalFace(int axis,std::int64_t local_face) const
-    {
-        double result=0.;
-        if(geometry!="cylindrical"||dim!=2||!GridMetrics::canonical_axis_face(dyadic_identity,axis,local_face,result))
-            return std::numeric_limits<double>::quiet_NaN();
-        return result;
-    }
-
-    /** Resolve one axial/radial cell endpoint with its represented cell owner.
-     * Periodic axial ghosts select both source-domain endpoints together; the
-     * upper face of the last alias cell stays root_upper. Descriptor faces use
-     * CanonicalFace separately and never wrap their root/block identities.
-     */
-    double CanonicalCellFace(int axis,std::int64_t local_cell,bool upper) const
-    {
-        double left=0.,right=0.,middle=0.,width=0.;
-        if(geometry!="cylindrical"||dim!=2||!GridMetrics::canonical_axis_cell(dyadic_identity,axis,
-            local_cell,left,right,middle,width))return std::numeric_limits<double>::quiet_NaN();
-        return upper?right:left;
-    }
-
-    /** Bound cell width/center wrapper with actual face representability. */
-    double CanonicalCellValue(int axis,std::int64_t local_cell,bool center) const
-    {
-        double left=0.,right=0.,middle=0.,width=0.;
-        if(geometry!="cylindrical"||dim!=2||!GridMetrics::canonical_axis_cell(dyadic_identity,axis,
-            local_cell,left,right,middle,width))return std::numeric_limits<double>::quiet_NaN();
-        return center?middle:width;
-    }
-
     double GetCellCenterX(int i) const
     {
         // Formula: x1_min + (local_index * dx1) + half_cell
-        if(dyadic_identity.bound)
-            return CanonicalCellValue(0,std::int64_t(i)-ng,true);
         return x1_min + (i - ng) * dx1 + 0.5 * dx1;
     }
     double GetCellCenterY(int j) const
     {
-        if(dyadic_identity.bound)
-            return CanonicalCellValue(1,std::int64_t(j)-ng,true);
         if (dim < 2)
             return 0.0;
         return x2_min + (j - ng) * dx2 + 0.5 * dx2;
@@ -432,40 +348,30 @@ public:
     /// Left face position of cell i in x-direction (r_{i-1/2})
     double GetFacePosL(int i) const
     {
-        if(dyadic_identity.bound)return CanonicalFace(0,std::int64_t(i)-ng);
         return x1_min + (i - ng) * dx1;
     }
     /// Right face position of cell i in x-direction (r_{i+1/2})
     double GetFacePosR(int i) const
     {
-        if(dyadic_identity.bound)return CanonicalFace(0,std::int64_t(i)-ng+1);
         return x1_min + (i - ng + 1) * dx1;
     }
 
-    /** Axial CELL bounds in the same represented chart as center and width.
-     * Paired-periodic ghosts are source-domain aliases; real descriptor faces
-     * remain unwrapped. Unbound grids retain their original local formula.
-     */
+    /** Axial cell bounds in x2 for the ordinary band/curvilinear metrics. */
     double GetAxialFacePosL(int j) const
     {
-        if(dyadic_identity.bound)return CanonicalCellFace(1,std::int64_t(j)-ng,false);
         return x2_min + (j - ng) * dx2;
     }
     double GetAxialFacePosR(int j) const
     {
-        if(dyadic_identity.bound)return CanonicalCellFace(1,std::int64_t(j)-ng,true);
         return x2_min + (j - ng + 1) * dx2;
     }
 
-    /** Actual cell length for finite-volume metrics; dx stays representative. */
+    /** Cell length along one axis; dx1/dx2/dx3 stay representative. */
     double CellWidth(int axis,int index) const
     {
-        if(dyadic_identity.bound)
-            return CanonicalCellValue(axis,std::int64_t(index)-ng,false);
         return axis==0?dx1:axis==1?dx2:axis==2?dx3:
             std::numeric_limits<double>::quiet_NaN();
     }
-
     // -- Loop Bounds for Physical Domain --
 
     // X-direction bounds

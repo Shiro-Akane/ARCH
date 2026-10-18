@@ -3,7 +3,7 @@
 The Runtime-only owner keeps concrete policy instantiations outside private
 fixtures. Legal weak template definitions alone prove neither stale objects nor
 an ODR defect. This helper keeps configured LTO/FP flags and library order;
-it does not configure/rebuild production, copy ARCH, or qualify scientific RZ.
+it does not configure/rebuild production, copy ARCH, or qualify complete scientific evolution.
 """
 from __future__ import annotations
 
@@ -24,8 +24,6 @@ TARGET = "arch_gravity_stage_contract"
 ORIGINAL_FIXTURES = (
     "tests/host/gravity/test_gravity_stage_contract.cpp",
     "tests/host/driver/test_host_hydro_transaction.cpp",
-    "tests/host/driver/test_rz_runtime_boundary.cpp",
-    "tests/host/driver/test_rz_runtime_external.cpp",
 )
 LINK_PRODUCTION_SOURCES = (
     "src/amr/elliptic/EllipticMeshAdapter.cpp",
@@ -34,7 +32,6 @@ LINK_PRODUCTION_SOURCES = (
 # Exact current CMake owner: test TUs are replaced, real production TUs retained.
 ORIGINAL_FIXTURE_OBJECTS = tuple(f"CMakeFiles/{TARGET}.dir/{name}.o" for name in ORIGINAL_FIXTURES)
 LINK_PRODUCTION_OBJECTS = tuple(f"CMakeFiles/{TARGET}.dir/{name}.o" for name in LINK_PRODUCTION_SOURCES)
-EMBEDDED_FIXTURE_DEFINE = "-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1"
 RUNTIME_SOURCES = ("src/driver/runtime/DriverRuntime.cpp",
     "src/driver/runtime/DriverBoundary.cpp", "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
     "src/physics/boundary/PhysicalBoundaryHandler.cpp", "src/driver/runtime/DriverRegrid.cpp")
@@ -47,8 +44,7 @@ REUSABLE_SOURCES = {name: "ARCH" for name in (
     "src/io/plot/PlotIO.cpp", "src/core/files/BuildIdentity.cpp",
     "src/core/config/ConfigurationIdentity.cpp")}
 REUSABLE_SOURCES["src/driver/io/DriverIO.cpp"] = "arch_solver_dispatch"
-IO_FIXTURES = {"tests/host/io/test_driver_checkpoint_geometry.cpp",
-               "tests/host/driver/test_rz_checkpoint_continuation.cpp"}
+IO_FIXTURES = {"tests/host/io/test_driver_checkpoint_geometry.cpp"}
 CONTROL_TOKENS = {"&&", ";", "|", ">", "<", "||", "&"}
 
 
@@ -104,14 +100,6 @@ def fixture_compile_recipe(entry: dict[str, Any], production: dict[str, Any],
     if "-DARCH_CUDA_BUILD_ENABLED=0" not in tokens or \
             "-DARCH_CUDA_BUILD_ENABLED=0" not in production_tokens:
         raise RuntimeError("CPU compile contract required")
-    # The target embeds Runtime test bodies, but a private fixture has its own
-    # unchanged main. Strip only this known target-local switch; preserve all
-    # strict-FP/LTO/hardware/physics controls, and reject unknown variants.
-    embedded = [t for t in tokens if t.startswith("-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED")]
-    if embedded not in ([], [EMBEDDED_FIXTURE_DEFINE]):
-        raise RuntimeError("unexpected embedded Runtime fixture definition")
-    if embedded:
-        tokens.remove(EMBEDDED_FIXTURE_DEFINE)
     additions = []
     if recipe == "production":
         for token in command_tokens(entry["command"]):
@@ -454,7 +442,7 @@ def build_cpu_fixture(*, build: Path, output: Path, source: Path,
     """Compile only the fixture and reuse a frozen real CTest library owner.
 
     This is a corrected engineering link shape, not proof that an earlier LTO
-    problem is fixed or that native-RZ physical release qualification passed.
+    problem is fixed or that complete physical release qualification passed.
     Caller retains the same CLI/output root and separately executes its fixture.
     """
     root = Path(__file__).resolve().parents[1]
@@ -507,10 +495,6 @@ def build_cpu_fixture(*, build: Path, output: Path, source: Path,
               "compileRecipeSource": production["file"] if compile_recipe == "production" else originals[0]["file"],
               "compileArgv": compile_tokens, "linkArgv": link_tokens,
               "productionOpenMPControlsAdded": additions,
-              "standaloneFixtureDefinesRemoved": [EMBEDDED_FIXTURE_DEFINE]
-                  if EMBEDDED_FIXTURE_DEFINE in command_tokens(
-                      production["command"] if compile_recipe == "production" else originals[0]["command"])
-                  else [],
               "replacedTestOwnerSources": list(ORIGINAL_FIXTURES),
               "retainedCompiledOwnerSources": [{**p,
                   "sourceSha256": before["files"][str((root / p["source"]).resolve())]["sha256"],

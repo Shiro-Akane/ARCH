@@ -12,12 +12,13 @@
 
 #include <vector>
 
-#include "amr/AMRControl.h"
-#include "core/config/RuntimeParams.h"
-#include "data/FluidState.h"
-#include "grid/Grid.h"
-#include "physics/gravity/IGravityPolicy.h"
-
+// Borrowed declarations keep storage, field owners and parsing in their actual consumers.
+struct FluidState;
+struct FluidVector;
+struct Grid;
+struct NumericsConfig;
+namespace amr { struct AMRControl; }
+namespace Physical::Gravity { class IGravityPolicy; }
 namespace arch::boundary { class HostHydroBoundaryAuthority; }
 
 namespace Numerics {
@@ -37,13 +38,6 @@ public:
     /** Qualified updates keep all conserved/species allocations and only rotate whole slots. */
     virtual HostHydroStorageContract host_storage_contract() const noexcept {
         return HostHydroStorageContract::Unavailable;
-    }
-
-    // Internal chart identity. Existing bindings retain their historical chart;
-    // Host RZ bindings must report the same profile used by patch mathematics.
-    virtual GridMetrics::GeometrySemantics geometry_semantics() const noexcept
-    {
-        return GridMetrics::GeometrySemantics::Existing;
     }
 
     /**

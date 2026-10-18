@@ -41,7 +41,6 @@
 #include "data/GlobalDefs.h"
 #include "data/StateDiagnostics.h"
 #include "grid/Grid.h"
-#include "numerics/state/RzNativeClosure.h"
 #include "physics/diagnostics/VelocityDiagnostics.h"
 #include "physics/species/Species.h"
 
@@ -98,13 +97,10 @@ private:
 
     // Global Domain (root-level grid topology)
     Grid root_grid;
-    GridMetrics::GeometrySemantics root_semantics=GridMetrics::GeometrySemantics::Existing;
     double root_dx1, root_dx2, root_dx3;
     std::vector<int> refinement_species_indices;
     using ThermodynamicEvaluator = std::function<void(const FluidState&,const Grid&,
-        GridMetrics::GeometrySemantics,const arch::state::Bounds&,
-        std::vector<double>*,std::vector<double>*,std::vector<double>*,
-        std::array<std::vector<double>,3>*)>;
+        std::vector<double>*,std::vector<double>*,std::vector<double>*)>;
     ThermodynamicEvaluator thermodynamic_evaluator;
     using JeansEvaluator = std::function<JeansDiagnostics::Resolution(
         const FluidVector&, const double*, const GridMetrics::GeometryView&, int, int)>;
@@ -117,7 +113,6 @@ public:
     int GetRootGridDim() const { return root_grid.dim; }
     /** Immutable native domain identity for IO; no geometry reconstruction. */
     const Grid& GetRootGrid() const { return root_grid; }
-    GridMetrics::GeometrySemantics GetGeometrySemantics() const { return root_semantics; }
     /**
      * @brief Installs the EOS-backed pressure/temperature batch evaluator.
      *
@@ -136,10 +131,6 @@ public:
     }
 
     /** Inspect active accepted cells only, through authoritative EOS and metrics.
-     * Native RZ Workflow: borrow the actual completed density support, derive
-     * its shared effective mean, and pass only that temporary EOS input to the
-     * same Jeans evaluator. Runtime owns the ghost/version/bounds qualification;
-     * this reader neither publishes a witness nor changes evolved native U.
      */
     double MinimumJeansCells(const Block& block) const
     {
@@ -147,7 +138,7 @@ public:
             throw std::runtime_error("JENS requires the current EOS evaluator before regridding.");
         const auto& state = block.fluid_state;
         const auto& grid = block.grid;
-        const auto geometry = GridMetrics::make_geometry_view(grid,root_semantics);
+        const auto geometry = GridMetrics::make_geometry_view(grid);
         std::vector<double> fractions(state.GetNumSpecies());
         double minimum = std::numeric_limits<double>::infinity();
         for (int k=grid.Ks();k<grid.Ke();++k)
@@ -157,21 +148,7 @@ public:
                     for (int species=0;species<state.GetNumSpecies();++species)
                         fractions[species]=state.X(species,cell);
                     const auto value=[&] {
-                        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                            const int nx=grid.GetTotalX();
-                            if(nx<3||nx>grid.stride_y||i<0||i>=nx)
-                                throw std::logic_error("Native RZ JENS requires the actual logical density support");
-                            const auto read=[&state](int index) {return state.get(index);};
-                            // Default leaf bounds derive only the numerical mean.
-                            // Genuine Runtime EOS/configured bounds already own
-                            // source acceptance; this is not a new source gate.
-                            const auto closure=RzThermodynamics::make_cell_supported(
-                                read,cell,geometry,i,std::clamp(i-1,0,nx-3));
-                            if(!closure.valid())
-                                throw std::runtime_error("Native RZ JENS rejected the actual density/inertia closure");
-                            return jeans_evaluator(closure.effective_mean,
-                                fractions.data(),geometry,i,j);
-                        }
+
                         return jeans_evaluator(state.get(cell),fractions.data(),geometry,i,j);
                     }();
                     if (value.status!=JeansDiagnostics::Status::valid)
@@ -206,16 +183,11 @@ public:
         candidate.logical_x1=first.logical_x1>>1;
         candidate.logical_x2=first.logical_x2>>1;
         candidate.logical_x3=first.logical_x3>>1;
-        candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3,root_semantics);
+        candidate.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3);
         return candidate;
     }
 
     /** Preflight the real restricted parent without publishing a pool block.
-     * Native RZ only checks conservative finite/rho/simplex provisional state.
-     * It has no completed parent ghosts, hence no authority to certify thermal
-     * closure or JENS. Runtime must complete and validate the whole candidate
-     * before publication, and attribute any qualified local coarsening veto.
-     * Existing geometry retains its original temporary-parent EOS/JENS path.
      */
     bool CandidateParentResolved(const SimConfig& config, std::span<const int> siblings) const
     {
@@ -227,12 +199,8 @@ public:
         for (std::size_t child=0;child<siblings.size();++child)
             children[child]=&pool->GetBlock(siblings[child]);
         const auto status=candidate.TryAverageToCoarse(children,root_grid.dim,
-            config.numerics.sml_rho,config.numerics.min_eint,root_semantics);
-        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            if(status!=regrid_math::Status::Ok)
-                throw std::runtime_error(regrid_math::status_message(status));
-            return true; // provisional only; genuine final EOS/JENS is still pending
-        }
+            config.numerics.sml_rho,config.numerics.min_eint);
+
         // Existing-geometry inadmissible parents retain their original local
         // preflight veto; other contract failures remain fatal.
         if(status==regrid_math::Status::CoarseFluid) return false;
@@ -275,19 +243,9 @@ public:
     /**
      * @brief Initialize the Level 0 root blocks.
      */
-    void InitRootGrid(const SimConfig& config, int n_species,
-                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) {
-        // Preflight explicit RZ domain before changing root/active storage.
-        // Default polar creation retains its historical per-block validation.
-        if (semantics != GridMetrics::GeometrySemantics::Existing) {
-            Grid candidate(MAX_NG, config.grid.x1_min, config.grid.x1_max,
-                config.grid.x2_min, config.grid.x2_max,
-                config.grid.x3_min, config.grid.x3_max,
-                config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3);
-            candidate.dim=config.grid.dim;
-            candidate.geometry=config.grid.geometry;
-            candidate.InitializeTopology(semantics);
-        }
+    void InitRootGrid(const SimConfig& config, int n_species) {
+        if (config.grid.geometry=="cylindrical" && config.grid.dim==2)
+            throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported");
         if (config.amr.lrefinemin < 0 ||
             config.amr.lrefinemax < config.amr.lrefinemin ||
             config.amr.lrefinemax > kMaxRefinementLevel) {
@@ -305,7 +263,6 @@ public:
             throw std::invalid_argument("AMR root-block extent exceeds the 20-bit Morton coordinate range at lrefinemax.");
         }
 
-        root_semantics=semantics;
         // Populate root grid from user config
         root_grid = Grid(amr::MAX_NG,
                          config.grid.x1_min, config.grid.x1_max,
@@ -314,12 +271,7 @@ public:
                          config.grid.nblockx1, config.grid.nblockx2, config.grid.nblockx3);
         root_grid.dim = config.grid.dim;
         root_grid.geometry = config.grid.geometry;
-        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            const bool lower=config.grid.x2l_boundary_type=="periodic";
-            const bool upper=config.grid.x2r_boundary_type=="periodic";
-            if(lower!=upper)throw std::invalid_argument("Native RZ axial periodic boundaries must be paired");
-            root_grid.dyadic_identity.periodic_axial=lower;
-        }
+
 
         // Root-level cell spacing
         double total_x1_len = config.grid.x1_max - config.grid.x1_min;
@@ -349,7 +301,7 @@ public:
                     b.logical_x2 = j;
                     b.logical_x3 = k;
                     b.morton_code = encodeMorton(0, i, j, k);
-                    b.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3, semantics);
+                    b.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
                     b.fluid_state.InitSpecies(n_species);
                     b.state_next.InitSpecies(n_species);
                     b.state_scratch.InitSpecies(n_species);
@@ -378,8 +330,7 @@ public:
                       const std::vector<int>& levels,
                       const std::vector<uint32_t>& logical_x1,
                       const std::vector<uint32_t>& logical_x2,
-                      const std::vector<uint32_t>& logical_x3,
-                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                      const std::vector<uint32_t>& logical_x3)
     {
         const size_t count = levels.size();
         if (count == 0 || logical_x1.size() != count || logical_x2.size() != count ||
@@ -387,7 +338,7 @@ public:
             throw std::invalid_argument("Checkpoint AMR leaf metadata is inconsistent.");
         }
 
-        InitRootGrid(config, n_species, semantics);
+        InitRootGrid(config, n_species);
         for (const int root_id : active_blocks) pool->FreeBlock(root_id);
         active_blocks.clear();
 
@@ -404,7 +355,7 @@ public:
             block.logical_x3 = logical_x3[index];
             block.morton_code = encodeMorton(block.level, block.logical_x1,
                                              block.logical_x2, block.logical_x3);
-            block.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3, semantics);
+            block.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
             block.fluid_state.InitSpecies(n_species);
             block.state_next.InitSpecies(n_species);
             block.state_scratch.InitSpecies(n_species);
@@ -489,12 +440,7 @@ public:
         const bool needs_temperature = config.amr.refine_on_temp;
         const bool needs_gamma1 = config.amr.refine_on_entropy;
         const bool needs_thermodynamics = needs_pressure || needs_temperature || needs_gamma1;
-        const bool needs_physical_velocity = root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-            && (config.amr.refine_on_velx || config.amr.refine_on_vely || config.amr.refine_on_velz
-                || config.amr.refine_on_vorticity || config.amr.refine_on_div_v);
-        const arch::state::Bounds bounds{config.numerics.sml_rho,
-            config.numerics.min_eint,config.numerics.max_eint};
-        if ((needs_thermodynamics || needs_physical_velocity) && !thermodynamic_evaluator)
+        if (needs_thermodynamics && !thermodynamic_evaluator)
             throw std::runtime_error(
                 "EOS-backed AMR indicators require the thermodynamic evaluator before regridding.");
 
@@ -511,30 +457,22 @@ public:
                 const FluidState& state = block.fluid_state;
                 const int total = grid.GetTotalSize();
                 std::vector<double> pressure, temperature, gamma1;
-                std::array<std::vector<double>,3> physical_velocity;
-                if (needs_thermodynamics || needs_physical_velocity) {
-                    thermodynamic_evaluator(state,grid,root_semantics,bounds,
+                if (needs_thermodynamics) {
+                    thermodynamic_evaluator(state,grid,
                         needs_pressure ? &pressure : nullptr,needs_temperature ? &temperature : nullptr,
-                        needs_gamma1 ? &gamma1 : nullptr,needs_physical_velocity ? &physical_velocity : nullptr);
+                        needs_gamma1 ? &gamma1 : nullptr);
                     if ((needs_pressure && pressure.size() != static_cast<std::size_t>(total))
                         || (needs_temperature && temperature.size() != static_cast<std::size_t>(total))
                         || (needs_gamma1 && gamma1.size() != static_cast<std::size_t>(total)))
                         throw std::runtime_error("EOS evaluator returned an invalid AMR buffer.");
-                    if (needs_physical_velocity)
-                        for (const auto& component : physical_velocity)
-                            if (component.size()!=static_cast<std::size_t>(total))
-                                throw std::runtime_error("AMR evaluator returned an invalid physical velocity buffer.");
                 }
                 const indicator::StateView view{
                     state.rho.data(), {state.mom_u.data(), state.mom_v.data(), state.mom_w.data()},
                     state.eng.data(), state.enuc_rate.data(), state.mass_fractions.data(),
                     pressure.data(), temperature.data(), gamma1.data(), total,
                     grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(),
-                    config.numerics.sml_rho,state.GetNumSpecies(),
-                    {needs_physical_velocity?physical_velocity[0].data():nullptr,
-                     needs_physical_velocity?physical_velocity[1].data():nullptr,
-                     needs_physical_velocity?physical_velocity[2].data():nullptr}};
-                const auto geometry = GridMetrics::make_geometry_view(grid,root_semantics);
+                    config.numerics.sml_rho,state.GetNumSpecies()};
+                const auto geometry = GridMetrics::make_geometry_view(grid);
                 double maximum = 0.0;
                 for (int k = grid.Ks(); k < grid.Ke(); ++k)
                     for (int j = grid.Js(); j < grid.Je(); ++j)
@@ -715,8 +653,7 @@ public:
                     proposed_lowering.at(group.destination.handle))
                     .InterpolateFromCoarse(
                         parent, group.child_index, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics,
-                        config_.numerics.max_eint);
+                        config_.numerics.sml_rho, config_.numerics.min_eint);
             }
             for (const auto& group : groups.restrictions) {
                 const Block* children[8]{};
@@ -726,7 +663,7 @@ public:
                 owner_->pool->GetBlock(proposed_lowering.at(group.destination.handle))
                     .AverageToCoarse(
                         children, owner_->root_grid.dim,
-                        config_.numerics.sml_rho, config_.numerics.min_eint,owner_->root_semantics);
+                        config_.numerics.sml_rho, config_.numerics.min_eint);
             }
             migration_complete_ = true;
         }
@@ -984,59 +921,8 @@ public:
         bool retired_released_ = false;
     };
 
-private:
-    /** Apply exact caller-vetoed native parent families before balance ripple.
-     * Workflow: validate every key and complete active sibling family first;
-     * then clear only coarsen (-1) flags. Refine decisions remain authoritative.
-     * The borrowed span is not stored, and no live prepared relation is edited.
-     */
-    void ApplyCoarseningVetoes(std::span<const LogicalBlockKey> vetoed)
-    {
-        if(vetoed.empty())return;
-        if(root_semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::invalid_argument("coarsening vetoes require explicit Native RZ geometry");
-        const int dimension=root_grid.dim;
-        if(dimension!=2)
-            throw std::logic_error("Native RZ coarsening requires the actual two-dimensional tree");
-        std::set<LogicalBlockKey> seen;
-        std::vector<int> children_to_keep;
-        for(const auto& key:vetoed) {
-            amr_plan_detail::validate_logical_key(key,dimension);
-            if(!seen.insert(key).second)
-                throw std::invalid_argument("duplicate native coarsening veto key");
-            if(key.level==std::numeric_limits<int>::max()
-                ||key.logical_x1>std::numeric_limits<std::uint32_t>::max()/2
-                ||key.logical_x2>std::numeric_limits<std::uint32_t>::max()/2)
-                throw std::invalid_argument("native coarsening veto key exceeds exact child coordinates");
-            bool has_coarsen=false;
-            for(int ordinal=0;ordinal<(1<<dimension);++ordinal) {
-                const LogicalBlockKey child_key{dimension,key.level+1,
-                    key.logical_x1*2+std::uint32_t(ordinal&1),
-                    key.logical_x2*2+std::uint32_t((ordinal>>1)&1),0};
-                const int id=FindBlock(child_key.level,child_key.logical_x1,
-                    child_key.logical_x2,child_key.logical_x3);
-                if(id<0||PreparedRegrid::logical_key(pool->GetBlock(id),dimension)!=child_key)
-                    throw std::invalid_argument("native coarsening veto has no exact complete active child family");
-                const int flag=pool->GetBlock(id).refine_flag;
-                has_coarsen=has_coarsen||flag==-1;
-                children_to_keep.push_back(id);
-            }
-            if(!has_coarsen)
-                throw std::invalid_argument("native coarsening veto family has no coarsening candidate");
-        }
-        for(const int id:children_to_keep) {
-            auto& block=pool->GetBlock(id);
-            if(block.refine_flag==-1)block.refine_flag=0;
-        }
-    }
-
 public:
     /** Prepare conservative topology/transfer relations without publication.
-     * A Runtime retry may supply exact native parent vetoes after restoring its
-     * frozen indicator flags. Apply those vetoes before the unchanged 2:1 ripple;
-     * final completed-state EOS/JENS acceptance remains Runtime-owned. A Native
-     * Device callback is provisional only and must accompany that real staged
-     * Runtime finalizer; it never grants completed parent EOS/JENS acceptance.
      */
     PreparedRegrid PrepareRegrid(
         const SimConfig& config,
@@ -1044,14 +930,12 @@ public:
         const StagedAllocationObserver& allocation_observer = {},
         const std::function<void()>& evaluate_indicators = {},
         bool jeans_repair_only = false,
-        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {},
-        std::span<const LogicalBlockKey> vetoed_coarsenings = {})
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
     {
         PreparedRegrid prepared(*this, config);
         if (evaluate_indicators) evaluate_indicators();
         else if (jeans_repair_only) EvaluateJeansRepair(config);
         else EvaluateRefinement(config);
-        ApplyCoarseningVetoes(vetoed_coarsenings);
         RippleCheck();
         if (observer) observer(*this);
 
@@ -1083,7 +967,7 @@ public:
                         child.level, child.logical_x1,
                         child.logical_x2, child.logical_x3);
                     child.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3,root_semantics);
+                        root_grid, root_dx1, root_dx2, root_dx3);
                     const int species = block.fluid_state.GetNumSpecies();
                     child.fluid_state.InitSpecies(species);
                     child.state_next.InitSpecies(species);
@@ -1118,12 +1002,8 @@ public:
                         siblings.push_back(sibling);
                     }
                 }
-                if (can_merge && (config.amr.refine_on_jeans
-                    || root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)) {
+                if (can_merge && config.amr.refine_on_jeans) {
                     if(candidate_parent) {
-                        // Native Device validates the actual child leases and
-                        // defers EOS/JENS to Runtime's completed staged candidate,
-                        // matching the provisional-only default Native hook.
                         can_merge=candidate_parent(CandidateParentGeometry(siblings),siblings);
                     } else can_merge=CandidateParentResolved(config,siblings);
                 }
@@ -1144,7 +1024,7 @@ public:
                         parent.level, parent.logical_x1,
                         parent.logical_x2, parent.logical_x3);
                     parent.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3,root_semantics);
+                        root_grid, root_dx1, root_dx2, root_dx3);
                     const int species = block.fluid_state.GetNumSpecies();
                     parent.fluid_state.InitSpecies(species);
                     parent.state_next.InitSpecies(species);
@@ -1174,9 +1054,6 @@ public:
     bool Regrid(const SimConfig& config,
                 const PreApplyRegridObserver& observer = {})
     {
-        if(root_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-            &&config.amr.refine_on_jeans)
-            throw std::logic_error("Native RZ JENS regrid requires the actual completed Runtime candidate finalizer");
         auto prepared = PrepareRegrid(config, observer);
         if (!prepared.topology_changed()) {
             prepared.PublishNoChangeNoexcept();

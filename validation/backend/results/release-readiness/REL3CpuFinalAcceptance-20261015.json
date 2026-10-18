@@ -1,0 +1,2580 @@
+{
+  "schema": "arch-release-cpu-final-acceptance-1",
+  "stage": "REL-3",
+  "client_date": "2026-10-15",
+  "timezone": "Asia/Tokyo",
+  "recorded_utc": "2026-10-14T18:24:54.176207+00:00",
+  "decision": "ACCEPT_REL3_CPU_FOUNDATION_WITH_INHERITED_SCOPES",
+  "REL3_complete": true,
+  "REL4_started": false,
+  "full_release_qualified": false,
+  "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "candidate": {
+    "ARCH": {
+      "path": "build-modernization-cpu/bin/ARCH",
+      "sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+      "bytes": 16350136
+    },
+    "validator": {
+      "path": "build-modernization-cpu/arch_cuda_single_level_validation",
+      "sha256": "e12048ddfa4a442c86daed678963d38a23e9f6b49af005c26f1cbb9af8655f85",
+      "bytes": 446520
+    },
+    "compiler": "Existing Release/GCC13 strictFP, CUDA OFF; unchanged real profile independently bound",
+    "uncommitted_changes_included": true,
+    "source_freezes_verified": [
+      {
+        "manifest": {
+          "path": "output/release/rel3-final-20261014/build/source-freeze.json",
+          "sha256": "9b45dd08ffb431888802153ef1fa9c06a13acb4ad98a67f8fdba921f70e0b113",
+          "bytes": 153414
+        },
+        "members": 957,
+        "unchanged": true
+      },
+      {
+        "manifest": {
+          "path": "output/release/rel3-final-20261014/cpu-gates/execution-freeze.json",
+          "sha256": "d688186ca07c33f9f4f70778a38761b5064f8269b291bff38fb277377c117ad7",
+          "bytes": 130905
+        },
+        "members": 816,
+        "unchanged": true
+      },
+      {
+        "manifest": {
+          "path": "output/release/rel3-final-20261014/rz/original-long-current/execution-freeze.json",
+          "sha256": "b1f0f2aab9cdd99e3698db1eb4ab988d256b6d32b0c3f8d60c4d1f51b447beb6",
+          "bytes": 132012
+        },
+        "members": 822,
+        "unchanged": true
+      },
+      {
+        "manifest": {
+          "path": "output/release/rel3-final-20261014/rz/original-long-current/fresh/fresh-freeze.json",
+          "sha256": "7ed5af751dee6829a039056df47b29bcbffb2c2b1dd01954a30650313f4df8a9",
+          "bytes": 2683
+        },
+        "members": 15,
+        "unchanged": true
+      }
+    ]
+  },
+  "preserved_prior_receipts": [
+    {
+      "path": "validation/backend/results/release-readiness/REL1Overview-20261014.json",
+      "sha256": "3b1c435cd2d7b87cda9915a6f3145b4b312dec4d51c9c7f55519340944f07b4c",
+      "bytes": 2006317
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json",
+      "sha256": "6bc27ed53b8d686abd228bfaa0c7eca7105d2f6fa0b778af4be97ec67d71a5e4",
+      "bytes": 936427
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json",
+      "sha256": "4d97e580ec1a75a1612b81f78a7223ede0f57c51e33bdacd101bec83725bd016",
+      "bytes": 740378
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL2InputsAndCpuEfficiency-20261014.json",
+      "sha256": "f38f5a08047823203bb55b388b3cb4cfdb883a4b6ea56bac4f9fb58c0b7bc42f",
+      "bytes": 1954003
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json",
+      "sha256": "df640d6449bcf0dae7fdbd2eede6d9a6343632d4dcb984decd58dd076abf5ac7",
+      "bytes": 1809614
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL3ModuleBoundaryImplementation-20261014.json",
+      "sha256": "1bb50b328a49811ad23984043dc04c98190380517086bc9b93d8fdbb9841efcf",
+      "bytes": 344071
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL3ModuleCouplingAudit-20261014.json",
+      "sha256": "4cac02d9f638c58a59a9a868e5f7bed7a7092e4205f3736552fafbd92d213c64",
+      "bytes": 63832
+    }
+  ],
+  "production_delta": {
+    "utc": "2026-10-14T12:46:06.951261+00:00",
+    "accepted_files": [
+      {
+        "path": "src/numerics/flux/StationarySlipWallFlux.h",
+        "before": "aec718d3b3b475409673d7cf39572692af8b37b371fee8fabd5aaa2fd60eb4e7",
+        "after": "4ed9f28b7a73cd9dc90a4c933590ad6213927a437fbbee44964e09179c17cd02"
+      },
+      {
+        "path": "src/numerics/flux/RzNativeFaceFlux.h",
+        "before": "cae7a5906395a7ed2c21797ef7596aa760e6f9ec66320be83d21b9b8d8368cb4",
+        "after": "9c5db4d0efbdd29a0a3bcd3b075dde2fd57f4c3cace0561fa1e26faee49996d8"
+      },
+      {
+        "path": "tests/host/numerics/test_flux_limiter.cpp",
+        "before": "b4b4e1d9858819a233ac9c02ae75043c3963ee3895b87cc40cda32463b613edc",
+        "after": "86537c906d6f6dfc163313b636b72fce4866e795ab38721d2ce6f14cac2de2f1"
+      }
+    ],
+    "manager_test_review": "ACCEPT independent shifted-EOS shock/fan integrals and actual conservative FV cases; 218697 checks/zero failures; both refinements decrease both waves; original gamma and required-negative cases retained",
+    "production_review": "wall/production-independent-review.json",
+    "RZ_inline": "REJECT_NO_MEASURED_BENEFIT_AND_RESTORED"
+  },
+  "current_checks": {
+    "existing_CPU_CTests": 12,
+    "additional_original_Production_owner_mode": "public-native-self: current RK2 single/staticCF Euler/RK3 wrongdtrollback; not newdynamicAMR/physicalenergy/filepublication/thermalretry grant",
+    "architecture_tooling_tests": 129,
+    "private_flux_owner_checks": 218697,
+    "no_claim_of_rerunning_all68_or_GPU": true
+  },
+  "public_wall_runs": {
+    "cellular_flash2d": {
+      "evidence": {
+        "path": "output/release/rel3-final-20261014/cpu-gates/cellular_flash2d/measurement.json",
+        "sha256": "c4bca90939bae16b0188db197a79e31626255ea031c3ecfb3e386cf60c0b9bfb",
+        "bytes": 40358
+      },
+      "actual_steps": 138,
+      "GNU_time_raw": "{\"elapsed_seconds\":7.10,\"user_seconds\":20.99,\"system_seconds\":0.14,\"max_process_rss_kib\":63600,\"exit_code\":0}\n",
+      "scope": "Original Flash2D physical endpoint"
+    },
+    "cellular_public": {
+      "evidence": {
+        "path": "output/release/rel3-final-20261014/cpu-gates/cellular_public/measurement.json",
+        "sha256": "00000514044fd46b0e1d4c39df73b80745d7bbba3ae8269423eed6054078439b",
+        "bytes": 53280
+      },
+      "actual_steps": 200,
+      "GNU_time_raw": "{\"elapsed_seconds\":2.58,\"user_seconds\":4.19,\"system_seconds\":0.15,\"max_process_rss_kib\":172904,\"exit_code\":0}\n",
+      "scope": "Original200step cap; not5e-8physical endpoint"
+    }
+  },
+  "SNIa": {
+    "acceptance": {
+      "path": "output/release/rel3-final-20261014/snia/final-candidate-binding.json",
+      "sha256": "2c9e5f586c33371c4c142ba81d65f717f8b8b785a3043b00a8bffd80223de1e9",
+      "bytes": 14536
+    },
+    "basis": "Exact recovered oldRuntime, current actualELF/source/profile and periodic inactive-wall path; inherited original CPU main/halfCFL/L2supplement/oldsameproducerOMP8fresh, not a new currentELF long run",
+    "retained_limits": [
+      "Original main repeated-AMR FAIL remains",
+      "Original main thermal-activity GAP remains",
+      "L2supplement qualifies only its original accepted scope",
+      "Old processed evidence and retained H5 limits remain"
+    ]
+  },
+  "RZ": {
+    "main": {
+      "schema": "arch-rel3-rz-original-main-qualification-1",
+      "started_utc": "2026-10-14T17:01:55.676652+00:00",
+      "status": "PASS_ORIGINAL_MAIN_PENDING_OWN_FRESH",
+      "qualification_helper_freeze_before": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/fresh-freeze.json",
+        "sha256": "7ed5af751dee6829a039056df47b29bcbffb2c2b1dd01954a30650313f4df8a9",
+        "members": 15,
+        "unchanged": true
+      },
+      "scientific_freeze_before": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/execution-freeze.json",
+        "sha256": "b1f0f2aab9cdd99e3698db1eb4ab988d256b6d32b0c3f8d60c4d1f51b447beb6",
+        "members": 822,
+        "unchanged": true
+      },
+      "execution": {
+        "receipt": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run-receipt.json",
+        "receipt_sha256": "d5531d70d1aae3adf8b9b86a610bd4fab22a4574929d054e19b2bc8e2a037fa6",
+        "completed_steps": 1068,
+        "GNU_time_raw": "elapsed_seconds=14765.52\nuser_seconds=14756.30\nsystem_seconds=64.21\nmax_process_rss_kib=37652\nexit=0\n",
+        "resources": [
+          "MEMORY_GUARD_RESULT min_available_kib=6192980 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=40696 elapsed_seconds=14337.506 stop_reason=none",
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=10.0 samples=1426 rows=4276 valid_rows=4276 missing=0 skipped=0 peak_process_rss_kib=37324 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.014 peak_io_full_percent=12.044 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=14256 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current device=2096 inode=837464 budget_bytes=1073741824 reserve_bytes=536870912 current_bytes=2345212 peak_bytes=2345212 samples=14257 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=8589934592 reserve_bytes=536870912 initial_free_bytes=23463010304 minimum_free_bytes=23436275712 samples=14257 complete=True"
+        ]
+      },
+      "gravity": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/gravity_solves.tsv",
+        "sha256": "8bcb02c7abf9b5be9bb1557496c4660ecfce9e855b56e8c864dc94a6b5e3ba13",
+        "complete_rows": 3206,
+        "maximum_residual_over_actual_target": 0.5866760954097026,
+        "time_range": [
+          0.0,
+          424745.2560858262
+        ],
+        "cells_each": 256,
+        "device_each": 0,
+        "timing_sums_seconds": {
+          "setup_seconds": 0.011022540999999931,
+          "solve_seconds": 14312.427359039008,
+          "source_boundary_seconds": 14308.56639843298,
+          "poisson_seconds": 3.3313880480000075,
+          "force_seconds": 0.3796674290000001
+        },
+        "scope": "Every completed solve; no short-fixture call count imposed"
+      },
+      "outputs": {
+        "resolved_backend_plan": {
+          "schema": "1",
+          "requested": "cpu",
+          "resolved": "cpu",
+          "capability_code": "0",
+          "fallback_reason": "",
+          "device_ordinal": "0",
+          "device_name": "",
+          "compute_capability": "0.0",
+          "runtime_version": "0",
+          "driver_version": "0",
+          "flux": "hllc",
+          "reconstruction": "plm",
+          "limiter": "mc",
+          "time": "rk2",
+          "eos": "ideal",
+          "network": "none",
+          "ode": "none",
+          "linear": "none",
+          "diffusion": "none"
+        },
+        "checkpoints": [
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0000.h5",
+            "sha256": "b264b01b34c5696ca6c5bc575c92774a99080ae48da389f909a65a6249df9362",
+            "time": 0.0,
+            "step": 0,
+            "resume_after_regrid": false,
+            "chk_index": 0,
+            "plt_index": 1,
+            "dt_old": 1e-16,
+            "dt_burn": 1e+99,
+            "checkpoint_version": 7,
+            "stored_state_controls": [
+              3.0,
+              1e-20,
+              1e-10,
+              1e+21,
+              0.3,
+              1e-16,
+              1e-20,
+              1.2,
+              100000.0,
+              1e-20,
+              1000000000.0,
+              1e-10,
+              1e+30,
+              0.0001,
+              1e-08,
+              -1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "stored_gravity_controls": [
+              6.6743e-08,
+              1e-10,
+              0.0,
+              200.0
+            ]
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0001.h5",
+            "sha256": "df14a6b0e71ba37099f24613dc5129695c49c79626e8bcd260a6daaa608214e9",
+            "time": 212372.6280429131,
+            "step": 534,
+            "resume_after_regrid": true,
+            "chk_index": 1,
+            "plt_index": 3,
+            "dt_old": 398.18544668682324,
+            "dt_burn": 1e+99,
+            "checkpoint_version": 7,
+            "stored_state_controls": [
+              3.0,
+              1e-20,
+              1e-10,
+              1e+21,
+              0.3,
+              1e-16,
+              1e-20,
+              1.2,
+              100000.0,
+              1e-20,
+              1000000000.0,
+              1e-10,
+              1e+30,
+              0.0001,
+              1e-08,
+              -1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "stored_gravity_controls": [
+              6.6743e-08,
+              1e-10,
+              0.0,
+              200.0
+            ]
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0002.h5",
+            "sha256": "5f0feeef2f885b6da542df540bd2033ca0d94ab303fae6e4990b4d36c5763dcd",
+            "time": 424745.2560858262,
+            "step": 1068,
+            "resume_after_regrid": false,
+            "chk_index": 2,
+            "plt_index": 5,
+            "dt_old": 398.19471976686344,
+            "dt_burn": 1e+99,
+            "checkpoint_version": 7,
+            "stored_state_controls": [
+              3.0,
+              1e-20,
+              1e-10,
+              1e+21,
+              0.3,
+              1e-16,
+              1e-20,
+              1.2,
+              100000.0,
+              1e-20,
+              1000000000.0,
+              1e-10,
+              1e+30,
+              0.0001,
+              1e-08,
+              -1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "stored_gravity_controls": [
+              6.6743e-08,
+              1e-10,
+              0.0,
+              200.0
+            ]
+          }
+        ],
+        "plots": [
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0000.h5",
+            "sha256": "3c58dd8bd2df474a5ed0e5d1f11d84d508522a7cc2b978e83f4292bd638baabc",
+            "time": 0.0,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0001.h5",
+            "sha256": "83e8fe93288f6e204ad8f24d4bf9664144947b8c984ff9455fb6206e44bad69b",
+            "time": 106186.31402145655,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0002.h5",
+            "sha256": "9a59fea192f810f8d69e8ef25c2378162e705cd7bc07dc94340a97a82594cf56",
+            "time": 212372.6280429131,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0003.h5",
+            "sha256": "156100b7f2c7ea75373ad2cb98ada9ab1330fe35de1091254f14a8f1e3567282",
+            "time": 318558.9420643697,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0004.h5",
+            "sha256": "a93393967ba51a792fa8e530e2f43b675c8d8c05006560f048ef82ba71b852fd",
+            "time": 424745.2560858262,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          }
+        ],
+        "terminal_checkpoint": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0002.h5",
+          "sha256": "5f0feeef2f885b6da542df540bd2033ca0d94ab303fae6e4990b4d36c5763dcd",
+          "time": 424745.2560858262,
+          "step": 1068,
+          "resume_after_regrid": false,
+          "chk_index": 2,
+          "plt_index": 5,
+          "dt_old": 398.19471976686344,
+          "dt_burn": 1e+99,
+          "checkpoint_version": 7,
+          "stored_state_controls": [
+            3.0,
+            1e-20,
+            1e-10,
+            1e+21,
+            0.3,
+            1e-16,
+            1e-20,
+            1.2,
+            100000.0,
+            1e-20,
+            1000000000.0,
+            1e-10,
+            1e+30,
+            0.0001,
+            1e-08,
+            -1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          "stored_gravity_controls": [
+            6.6743e-08,
+            1e-10,
+            0.0,
+            200.0
+          ]
+        },
+        "terminal_runtime_metadata": {
+          "step": 1068,
+          "time": 424745.2560858262,
+          "resume_after_regrid": false,
+          "chk_file_index": 2,
+          "plt_file_index": 5,
+          "measure": "physical_cell_volume",
+          "geometry": "cylindrical",
+          "parameter_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+          "checkpoint_sha256": "5f0feeef2f885b6da542df540bd2033ca0d94ab303fae6e4990b4d36c5763dcd",
+          "command": [
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_cuda_single_level_validation",
+            "--metrics",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0002.h5",
+            "--parameters",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/input.par"
+          ]
+        },
+        "terminal_plot": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0004.h5",
+          "sha256": "a93393967ba51a792fa8e530e2f43b675c8d8c05006560f048ef82ba71b852fd",
+          "time": 424745.2560858262,
+          "finite_float_elements": 5636,
+          "SourceIdentity_attrs": {
+            "binary_scope": "main-executable-only",
+            "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+            "binary_source": "Linux /proc/self/exe",
+            "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+            "build_identity_scope": "project-source-and-configured-compiler-profile",
+            "build_identity_version": "arch-build-identity-1",
+            "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+            "build_source": "CMake-embedded-project-source-and-compiler-profile",
+            "case_id": "GravityBox",
+            "case_source": "ConfigurationInput.case_id",
+            "case_source_identity_source": "compiled-case-registration",
+            "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+            "effective_config_sha256": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+            "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+            "effective_config_version": "arch-effective-configuration-1",
+            "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+            "eos_identity_version": "arch-eos-identity-1",
+            "eos_source": "resolved-runtime-checkpoint-provenance",
+            "eos_table_identity_kind": "not-applicable",
+            "eos_table_sha256": "unknown",
+            "eos_table_state": "not-applicable",
+            "eos_type": "ideal",
+            "eos_unit_system": "cgs",
+            "ideal_gamma": 1.6666666666666667,
+            "ideal_gamma_available": 1,
+            "raw_config_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+            "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+            "resolved_backend": "cpu",
+            "run_id": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+            "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+            "scope": "resolved-runtime",
+            "source_git_dirty": "true",
+            "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+            "source_git_source": "optional-build-time-annotation",
+            "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+            "species_count": 1,
+            "species_identity_state": "recorded",
+            "species_properties_source": "resolved-runtime-checkpoint-provenance",
+            "species_properties_state": "recorded",
+            "species_properties_version": "checkpoint-species-1",
+            "version": "arch-plot-identity-1"
+          },
+          "SourceIdentity_records": {
+            "build_profile_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+            },
+            "effective_config_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db"
+            },
+            "eos_identity_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+            },
+            "source_manifest_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+            },
+            "species_A": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+            },
+            "species_Cv": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+            },
+            "species_Z": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "species_gamma": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+            },
+            "species_names": {
+              "dtype": "object",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+            }
+          }
+        },
+        "terminal_repairs": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/state_repairs.txt",
+          "sha256": "3f2ba583d21070007fe4bbfa18cb9fe2c274ca90a613dd9bcbc6dfbf2a54d82b",
+          "events": 0
+        },
+        "counter_policy": "Original scheduled-half saved counters; constructor advances chk once; no terminal-source offsets"
+      },
+      "reference_execution": {
+        "command": [
+          "/usr/bin/python3",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/run_memory_guarded.py",
+          "--min-available-mib",
+          "1536",
+          "--max-swap-growth-mib",
+          "256",
+          "--pressure-guard",
+          "--log",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/reference/guard.log",
+          "--process-samples",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/reference/process.tsv",
+          "--process-sample-seconds",
+          "10",
+          "--output-root",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current",
+          "--max-output-mib",
+          "1024",
+          "--host-storage-root",
+          "/mnt/e",
+          "--min-host-free-mib",
+          "8192",
+          "--next-write-reserve-mib",
+          "512",
+          "--",
+          "/usr/bin/time",
+          "-o",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/reference/time.raw",
+          "-f",
+          "elapsed_seconds=%e\nuser_seconds=%U\nsystem_seconds=%S\nmax_process_rss_kib=%M\nexit=%x",
+          "/usr/bin/timeout",
+          "--signal=TERM",
+          "--kill-after=20s",
+          "32400s",
+          "/home/shiroakane/miniconda3/envs/work/bin/python",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/validation/gravity/rz_scalar_energy_reference.py",
+          "--closed-run",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run",
+          "--parameters",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/input.par",
+          "--contract",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/contract-current.json",
+          "--output",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/reference/independent-energy.json"
+        ],
+        "cwd": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+        "environment": {
+          "OMP_NUM_THREADS": "4",
+          "OMP_DYNAMIC": "FALSE"
+        },
+        "started_utc": "2026-10-14T17:01:57.043719+00:00",
+        "status": "EXECUTION_COMPLETE_PENDING_SCIENCE",
+        "cost_scope": "This lane's own clock/resource log; overlapping clocks are not serial elapsed or stable performance comparisons",
+        "exit_code": 0,
+        "scientific_frozen_unchanged_after": true,
+        "outer_seconds": 87.09886046099564,
+        "finished_utc": "2026-10-14T17:03:26.487517+00:00",
+        "time_raw": "elapsed_seconds=88.32\nuser_seconds=82.07\nsystem_seconds=7.39\nmax_process_rss_kib=61384\nexit=0\n",
+        "resource_summary_lines": [
+          "MEMORY_GUARD_RESULT min_available_kib=6336516 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=64568 elapsed_seconds=86.549 stop_reason=none",
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=10.0 samples=9 rows=25 valid_rows=25 missing=0 skipped=0 peak_process_rss_kib=61320 peak_process_fd_count=4 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.346 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=87 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current device=2096 inode=837464 budget_bytes=1073741824 reserve_bytes=536870912 current_bytes=2375982 peak_bytes=2375982 samples=88 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=8589934592 reserve_bytes=536870912 initial_free_bytes=23451926528 minimum_free_bytes=23451918336 samples=88 complete=True"
+        ]
+      },
+      "physical_reference": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/reference/independent-energy.json",
+        "sha256": "3694d6a8fc0290121575bf095db3703f9c1fe8c72e093b72a4f2dfa85be47c12",
+        "status": "PASS_CLOSED_UNIFORM_OBSERVED_GATES",
+        "endpoint_reached": true,
+        "core_binding_scope": "Actual completed main command + whole source freeze + authenticated Plot identity",
+        "reference_core_binding_qualified": false
+      },
+      "scientific_freeze_after": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/execution-freeze.json",
+        "sha256": "b1f0f2aab9cdd99e3698db1eb4ab988d256b6d32b0c3f8d60c4d1f51b447beb6",
+        "members": 822,
+        "unchanged": true
+      },
+      "qualification_helper_freeze_after": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/fresh-freeze.json",
+        "sha256": "7ed5af751dee6829a039056df47b29bcbffb2c2b1dd01954a30650313f4df8a9",
+        "members": 15,
+        "unchanged": true
+      },
+      "finished_utc": "2026-10-14T17:03:27.004840+00:00"
+    },
+    "own_fresh": {
+      "schema": "arch-rel3-rz-original-own-fresh-qualification-1",
+      "started_utc": "2026-10-14T18:18:43.312424+00:00",
+      "status": "PASS_ORIGINAL_FIVE_CROSSING_AND_OWN_FRESH",
+      "main_qualification": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/qualification.json",
+        "sha256": "0d990ca5835e0bee1c0da48e0a656cc9b716f02ff4a6420f7177ba53925e634e"
+      },
+      "execution": {
+        "receipt": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run-receipt.json",
+        "receipt_sha256": "ab146b62e09f9dd067f01152fc012c1205a40d8dcbb2cf47142ad86a4472aca7",
+        "completed_steps": 1068,
+        "GNU_time_raw": "elapsed_seconds=8530.82\nuser_seconds=8511.07\nsystem_seconds=43.50\nmax_process_rss_kib=37444\nexit=0\n",
+        "resources": [
+          "MEMORY_GUARD_RESULT min_available_kib=6236108 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=40564 elapsed_seconds=8250.621 stop_reason=none",
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=10.0 samples=821 rows=2461 valid_rows=2461 missing=0 skipped=0 peak_process_rss_kib=37288 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=18.097 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=8204 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current device=2096 inode=837464 budget_bytes=1073741824 reserve_bytes=536870912 current_bytes=3121138 peak_bytes=3121138 samples=8205 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=8589934592 reserve_bytes=536870912 initial_free_bytes=23452495872 minimum_free_bytes=22550261760 samples=8205 complete=True"
+        ]
+      },
+      "restore_witness": "[IO] Restored CHK: /home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0001.h5 at step 534 with ",
+      "restored_runtime_metadata": {
+        "step": 534,
+        "time": 212372.6280429131,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cylindrical",
+        "parameter_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+        "checkpoint_sha256": "df14a6b0e71ba37099f24613dc5129695c49c79626e8bcd260a6daaa608214e9",
+        "command": [
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/input.par"
+        ]
+      },
+      "gravity": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/gravity_solves.tsv",
+        "sha256": "8c1185444c451f96d6f64ab19f8069cda3215fef45a3626df5e76b7b55e05cb6",
+        "complete_rows": 1604,
+        "maximum_residual_over_actual_target": 0.5866760954097026,
+        "time_range": [
+          212372.6280429131,
+          424745.2560858262
+        ],
+        "cells_each": 256,
+        "device_each": 0,
+        "timing_sums_seconds": {
+          "setup_seconds": 0.008099641000000029,
+          "solve_seconds": 8239.622475564016,
+          "source_boundary_seconds": 8237.855394533006,
+          "poisson_seconds": 1.551187249,
+          "force_seconds": 0.15886175299999977
+        },
+        "scope": "Every completed solve; no short-fixture call count imposed"
+      },
+      "outputs": {
+        "resolved_backend_plan": {
+          "schema": "1",
+          "requested": "cpu",
+          "resolved": "cpu",
+          "capability_code": "0",
+          "fallback_reason": "",
+          "device_ordinal": "0",
+          "device_name": "",
+          "compute_capability": "0.0",
+          "runtime_version": "0",
+          "driver_version": "0",
+          "flux": "hllc",
+          "reconstruction": "plm",
+          "limiter": "mc",
+          "time": "rk2",
+          "eos": "ideal",
+          "network": "none",
+          "ode": "none",
+          "linear": "none",
+          "diffusion": "none"
+        },
+        "checkpoints": [
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_chk_0002.h5",
+            "sha256": "d912a0348d9d006acb7b2c9fb9e79eab6c58e7dae3a78ec9487a2656771e262c",
+            "time": 424745.2560858262,
+            "step": 1068,
+            "resume_after_regrid": false,
+            "chk_index": 2,
+            "plt_index": 5,
+            "dt_old": 398.19471976686344,
+            "dt_burn": 1e+99,
+            "checkpoint_version": 7,
+            "stored_state_controls": [
+              3.0,
+              1e-20,
+              1e-10,
+              1e+21,
+              0.3,
+              1e-16,
+              1e-20,
+              1.2,
+              100000.0,
+              1e-20,
+              1000000000.0,
+              1e-10,
+              1e+30,
+              0.0001,
+              1e-08,
+              -1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "stored_gravity_controls": [
+              6.6743e-08,
+              1e-10,
+              0.0,
+              200.0
+            ]
+          }
+        ],
+        "plots": [
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_HLLC_plt_0003.h5",
+            "sha256": "22f989dde96b334cf386d3f12846c30de898ddfbd01ba9f000db333a9298e97f",
+            "time": 318558.9420643697,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "25067791ba95bf8da722a24e928af0980dd293020254519d49092addf54f280f",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "858781c77eb83285122b027705a0682b4359c043249400ebb277976fd2b0cad7",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "407ae6ae-29f5-40da-a2ec-da95338fe2d3",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "3961d1590eb6fccc4f61a10c63a8d39cc7ed67b00ebee653bd109c13b5c55c01"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          },
+          {
+            "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_HLLC_plt_0004.h5",
+            "sha256": "fa788b854b918ddd4d85b17bf8b523159f776a9735630535ba409a4432f041fb",
+            "time": 424745.2560858262,
+            "finite_float_elements": 5636,
+            "SourceIdentity_attrs": {
+              "binary_scope": "main-executable-only",
+              "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+              "binary_source": "Linux /proc/self/exe",
+              "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+              "build_identity_scope": "project-source-and-configured-compiler-profile",
+              "build_identity_version": "arch-build-identity-1",
+              "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+              "build_source": "CMake-embedded-project-source-and-compiler-profile",
+              "case_id": "GravityBox",
+              "case_source": "ConfigurationInput.case_id",
+              "case_source_identity_source": "compiled-case-registration",
+              "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+              "effective_config_sha256": "25067791ba95bf8da722a24e928af0980dd293020254519d49092addf54f280f",
+              "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+              "effective_config_version": "arch-effective-configuration-1",
+              "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+              "eos_identity_version": "arch-eos-identity-1",
+              "eos_source": "resolved-runtime-checkpoint-provenance",
+              "eos_table_identity_kind": "not-applicable",
+              "eos_table_sha256": "unknown",
+              "eos_table_state": "not-applicable",
+              "eos_type": "ideal",
+              "eos_unit_system": "cgs",
+              "ideal_gamma": 1.6666666666666667,
+              "ideal_gamma_available": 1,
+              "raw_config_sha256": "858781c77eb83285122b027705a0682b4359c043249400ebb277976fd2b0cad7",
+              "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+              "resolved_backend": "cpu",
+              "run_id": "407ae6ae-29f5-40da-a2ec-da95338fe2d3",
+              "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+              "scope": "resolved-runtime",
+              "source_git_dirty": "true",
+              "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+              "source_git_source": "optional-build-time-annotation",
+              "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+              "species_count": 1,
+              "species_identity_state": "recorded",
+              "species_properties_source": "resolved-runtime-checkpoint-provenance",
+              "species_properties_state": "recorded",
+              "species_properties_version": "checkpoint-species-1",
+              "version": "arch-plot-identity-1"
+            },
+            "SourceIdentity_records": {
+              "build_profile_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+              },
+              "effective_config_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "3961d1590eb6fccc4f61a10c63a8d39cc7ed67b00ebee653bd109c13b5c55c01"
+              },
+              "eos_identity_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+              },
+              "source_manifest_record": {
+                "dtype": "object",
+                "shape": [],
+                "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+              },
+              "species_A": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+              },
+              "species_Cv": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+              },
+              "species_Z": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+              },
+              "species_gamma": {
+                "dtype": "float64",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+              },
+              "species_names": {
+                "dtype": "object",
+                "shape": [
+                  1
+                ],
+                "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+              }
+            }
+          }
+        ],
+        "terminal_checkpoint": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_chk_0002.h5",
+          "sha256": "d912a0348d9d006acb7b2c9fb9e79eab6c58e7dae3a78ec9487a2656771e262c",
+          "time": 424745.2560858262,
+          "step": 1068,
+          "resume_after_regrid": false,
+          "chk_index": 2,
+          "plt_index": 5,
+          "dt_old": 398.19471976686344,
+          "dt_burn": 1e+99,
+          "checkpoint_version": 7,
+          "stored_state_controls": [
+            3.0,
+            1e-20,
+            1e-10,
+            1e+21,
+            0.3,
+            1e-16,
+            1e-20,
+            1.2,
+            100000.0,
+            1e-20,
+            1000000000.0,
+            1e-10,
+            1e+30,
+            0.0001,
+            1e-08,
+            -1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          "stored_gravity_controls": [
+            6.6743e-08,
+            1e-10,
+            0.0,
+            200.0
+          ]
+        },
+        "terminal_runtime_metadata": {
+          "step": 1068,
+          "time": 424745.2560858262,
+          "resume_after_regrid": false,
+          "chk_file_index": 2,
+          "plt_file_index": 5,
+          "measure": "physical_cell_volume",
+          "geometry": "cylindrical",
+          "parameter_sha256": "858781c77eb83285122b027705a0682b4359c043249400ebb277976fd2b0cad7",
+          "checkpoint_sha256": "d912a0348d9d006acb7b2c9fb9e79eab6c58e7dae3a78ec9487a2656771e262c",
+          "command": [
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_cuda_single_level_validation",
+            "--metrics",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_chk_0002.h5",
+            "--parameters",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/input.par"
+          ]
+        },
+        "terminal_plot": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_HLLC_plt_0004.h5",
+          "sha256": "fa788b854b918ddd4d85b17bf8b523159f776a9735630535ba409a4432f041fb",
+          "time": 424745.2560858262,
+          "finite_float_elements": 5636,
+          "SourceIdentity_attrs": {
+            "binary_scope": "main-executable-only",
+            "binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+            "binary_source": "Linux /proc/self/exe",
+            "build_id": "5f493ed587d77eeaa5900030764abdc425654050dc488a6caa5b90797415e796",
+            "build_identity_scope": "project-source-and-configured-compiler-profile",
+            "build_identity_version": "arch-build-identity-1",
+            "build_profile_sha256": "b750dafbc8f765199386a79a1567d4a96f5b3c5e2d6dc4c0beed67dc49dd302b",
+            "build_source": "CMake-embedded-project-source-and-compiler-profile",
+            "case_id": "GravityBox",
+            "case_source": "ConfigurationInput.case_id",
+            "case_source_identity_source": "compiled-case-registration",
+            "case_source_sha256": "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff",
+            "effective_config_sha256": "25067791ba95bf8da722a24e928af0980dd293020254519d49092addf54f280f",
+            "effective_config_source": "immutable-runtime-config-and-resolved-plan",
+            "effective_config_version": "arch-effective-configuration-1",
+            "eos_identity_sha256": "a11de4ca7690c585a177e997556c475f520138f1f802b165e72f56faf526eca1",
+            "eos_identity_version": "arch-eos-identity-1",
+            "eos_source": "resolved-runtime-checkpoint-provenance",
+            "eos_table_identity_kind": "not-applicable",
+            "eos_table_sha256": "unknown",
+            "eos_table_state": "not-applicable",
+            "eos_type": "ideal",
+            "eos_unit_system": "cgs",
+            "ideal_gamma": 1.6666666666666667,
+            "ideal_gamma_available": 1,
+            "raw_config_sha256": "858781c77eb83285122b027705a0682b4359c043249400ebb277976fd2b0cad7",
+            "raw_config_source": "ConfigurationInput.raw_text; exact parser bytes",
+            "resolved_backend": "cpu",
+            "run_id": "407ae6ae-29f5-40da-a2ec-da95338fe2d3",
+            "run_id_source": "DriverIO output session; OS-generated UUIDv4",
+            "scope": "resolved-runtime",
+            "source_git_dirty": "true",
+            "source_git_head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+            "source_git_source": "optional-build-time-annotation",
+            "source_manifest_sha256": "06b6779d36078144548dcbbbc2bd16bd9ac61b1b56886a4dfcac07f9db3b8b17",
+            "species_count": 1,
+            "species_identity_state": "recorded",
+            "species_properties_source": "resolved-runtime-checkpoint-provenance",
+            "species_properties_state": "recorded",
+            "species_properties_version": "checkpoint-species-1",
+            "version": "arch-plot-identity-1"
+          },
+          "SourceIdentity_records": {
+            "build_profile_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "bb74ba78baba82a2e342b413bab03680a6b76fa02b5b2076a293888d17bdaa57"
+            },
+            "effective_config_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "3961d1590eb6fccc4f61a10c63a8d39cc7ed67b00ebee653bd109c13b5c55c01"
+            },
+            "eos_identity_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "464f434ef8fb844619b5eb56badecf18004e08220fd5f856fd663373967b1c9a"
+            },
+            "source_manifest_record": {
+              "dtype": "object",
+              "shape": [],
+              "payload_sha256": "c0f56ff52d90846c2ce70371b67025d943b2ac37b7aad2dcfeb4a295024f2cd0"
+            },
+            "species_A": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712"
+            },
+            "species_Cv": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "0eae4ed2748e55cf56f3a82ccaffc00bf9f3a1c711adfc8a314ee9c794881861"
+            },
+            "species_Z": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+            },
+            "species_gamma": {
+              "dtype": "float64",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "96542d0fe44f54657e1f488ed217d297e5c4dd875a570a50ace39bef57f231cd"
+            },
+            "species_names": {
+              "dtype": "object",
+              "shape": [
+                1
+              ],
+              "payload_sha256": "be6214d62b8b15d2af1250603fbd14c00bea96d69ea7ece97626bc13518fcdd7"
+            }
+          }
+        },
+        "terminal_repairs": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/state_repairs.txt",
+          "sha256": "3f2ba583d21070007fe4bbfa18cb9fe2c274ca90a613dd9bcbc6dfbf2a54d82b",
+          "events": 0
+        },
+        "counter_policy": "Original scheduled-half saved counters; constructor advances chk once; no terminal-source offsets"
+      },
+      "checkpoint_all_nodes_exact": {
+        "left": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0002.h5",
+        "right": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_chk_0002.h5",
+        "datasets": 24,
+        "attributes": 33,
+        "stored_elements": 2104,
+        "exact": true,
+        "audited_SourceIdentity_differences": null,
+        "scope": "all native checkpoint nodes/attrs/dataset types/shapes/payload; no exclusions"
+      },
+      "Plot_physics_exact": {
+        "left": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0004.h5",
+        "right": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/fresh/run/RzClosedUniform_HLLC_plt_0004.h5",
+        "datasets": 27,
+        "attributes": 106,
+        "stored_elements": 5637,
+        "exact": true,
+        "audited_SourceIdentity_differences": {
+          "attributes": {
+            "effective_config_sha256": {
+              "left": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+              "right": "25067791ba95bf8da722a24e928af0980dd293020254519d49092addf54f280f",
+              "reason": "Effective record includes actual output/restart session; its complete payload hash retained."
+            },
+            "raw_config_sha256": {
+              "left": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+              "right": "858781c77eb83285122b027705a0682b4359c043249400ebb277976fd2b0cad7",
+              "reason": "Complete template bytes verified; output absolute directory and explicit fresh controls differ."
+            },
+            "run_id": {
+              "left": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+              "right": "407ae6ae-29f5-40da-a2ec-da95338fe2d3",
+              "reason": "OS-generated output-session UUID differs across processes."
+            }
+          },
+          "datasets": {
+            "effective_config_record": {
+              "left_payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db",
+              "right_payload_sha256": "3961d1590eb6fccc4f61a10c63a8d39cc7ed67b00ebee653bd109c13b5c55c01",
+              "reason": "Actual full output/restart configuration retained; complete raw template construction verified."
+            }
+          }
+        },
+        "scope": "all Plot physical/native nodes and attrs; SourceIdentity audited separately"
+      },
+      "Plot_SourceIdentity_separate": {
+        "attributes": {
+          "effective_config_sha256": {
+            "left": "a3df41080a9b7194ba102eb4ec37e20550efa130d21d6578e2116afcfbe2e734",
+            "right": "25067791ba95bf8da722a24e928af0980dd293020254519d49092addf54f280f",
+            "reason": "Effective record includes actual output/restart session; its complete payload hash retained."
+          },
+          "raw_config_sha256": {
+            "left": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+            "right": "858781c77eb83285122b027705a0682b4359c043249400ebb277976fd2b0cad7",
+            "reason": "Complete template bytes verified; output absolute directory and explicit fresh controls differ."
+          },
+          "run_id": {
+            "left": "b3db4f86-7300-4745-a7bd-cc8e33788923",
+            "right": "407ae6ae-29f5-40da-a2ec-da95338fe2d3",
+            "reason": "OS-generated output-session UUID differs across processes."
+          }
+        },
+        "datasets": {
+          "effective_config_record": {
+            "left_payload_sha256": "1cec2d563b8c1b7db4271138b8ac984a1f9f071f7497915e36a5a4944c4b05db",
+            "right_payload_sha256": "3961d1590eb6fccc4f61a10c63a8d39cc7ed67b00ebee653bd109c13b5c55c01",
+            "reason": "Actual full output/restart configuration retained; complete raw template construction verified."
+          }
+        }
+      },
+      "physical_reference_transfer": {
+        "main": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/reference/independent-energy.json",
+          "sha256": "3694d6a8fc0290121575bf095db3703f9c1fe8c72e093b72a4f2dfa85be47c12",
+          "status": "PASS_CLOSED_UNIFORM_OBSERVED_GATES",
+          "endpoint_reached": true,
+          "core_binding_scope": "Actual completed main command + whole source freeze + authenticated Plot identity",
+          "reference_core_binding_qualified": false
+        },
+        "scope": "Original complete main physical gates plus bit-exact own-fresh final CHK and Plot physics; no suffix-only reference or mixed output session"
+      },
+      "scientific_freeze_after": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/execution-freeze.json",
+        "sha256": "b1f0f2aab9cdd99e3698db1eb4ab988d256b6d32b0c3f8d60c4d1f51b447beb6",
+        "members": 822,
+        "unchanged": true
+      },
+      "finished_utc": "2026-10-14T18:18:44.438108+00:00"
+    },
+    "physical_reference": {
+      "schema": "arch-rz-closed-uniform-reference-1",
+      "status": "PASS_CLOSED_UNIFORM_OBSERVED_GATES",
+      "endpoint_reached": true,
+      "samples": [
+        {
+          "time": 0.0,
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0000.h5",
+          "sha256": "3c58dd8bd2df474a5ed0e5d1f11d84d508522a7cc2b978e83f4292bd638baabc",
+          "cells": 256,
+          "Egas": "3.9180982018883631874e+38",
+          "mass": "3.1415926535897927215e+26",
+          "discrete_Wh": "-4.1653701306636954433e+34",
+          "DeltaEgas": "0.0",
+          "Uround": "1.3919881076732434577e+24",
+          "residual": "0.0",
+          "scale": "0.0",
+          "mass_relative_error": 0.0,
+          "field_min_max": {
+            "DENS": [
+              9.999999999999997e-08,
+              1e-07
+            ],
+            "ENER": [
+              124716.93926999996,
+              124716.93927
+            ],
+            "GPOT": [
+              -331013694.09961075,
+              -203402595.94282606
+            ],
+            "TEMP": [
+              9999.999999999998,
+              10000.0
+            ],
+            "PRES": [
+              83144.62617999999,
+              83144.62618
+            ]
+          },
+          "gates": {
+            "mass": true,
+            "signal": false,
+            "reference": false,
+            "energy": false
+          },
+          "levels": [
+            {
+              "degree": 12,
+              "I_DD": 1.247521444138966e+56,
+              "S": 0.0,
+              "linear_delta_W": -0.0
+            },
+            {
+              "degree": 24,
+              "I_DD": 1.24752146042833e+56,
+              "S": 0.0,
+              "linear_delta_W": -0.0
+            },
+            {
+              "degree": 48,
+              "I_DD": 1.2475214611201881e+56,
+              "S": 0.0,
+              "linear_delta_W": -0.0
+            }
+          ],
+          "S": 0.0,
+          "a": 2.6469779601696886e-23,
+          "a_exact": "1/37778931862957161709568",
+          "initial_a": 2.6469779601696886e-23,
+          "initial_a_exact": "1/37778931862957161709568",
+          "quadratic_delta_W_interval": [
+            -2916.9192386778413,
+            2916.9192386778413
+          ],
+          "DeltaWcenter": 0.0,
+          "Uref": 2916.9192386778413,
+          "quadrature_I_estimate": 2.7674327534831406e+47,
+          "quadrature_linear_estimate": 0.0,
+          "quadrature_monotone": true,
+          "uncertainty_kind": "signed PSD density bound with numerical convergence estimates, not outward quadrature enclosure"
+        },
+        {
+          "time": 106186.31402145655,
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0001.h5",
+          "sha256": "83e8fe93288f6e204ad8f24d4bf9664144947b8c984ff9455fb6206e44bad69b",
+          "cells": 256,
+          "Egas": "3.918098204114153823e+38",
+          "mass": "3.1415926535897929953e+26",
+          "discrete_Wh": "-4.1653925440440918875e+34",
+          "DeltaEgas": "2.225790635770252614e+29",
+          "Uround": "1.3919881080686232996e+24",
+          "residual": "-1.5968250328757537655e+26",
+          "scale": "2.2273874608031283678e+29",
+          "mass_relative_error": 8.715457263599505e-17,
+          "field_min_max": {
+            "DENS": [
+              9.999534976884357e-08,
+              1.0000446671248192e-07
+            ],
+            "ENER": [
+              124707.27339457461,
+              124726.22405061178
+            ],
+            "GPOT": [
+              -331016356.21856564,
+              -203402412.89547446
+            ],
+            "TEMP": [
+              9999.68998346729,
+              10000.29777900203
+            ],
+            "PRES": [
+              83138.18226168168,
+              83150.8159943664
+            ]
+          },
+          "gates": {
+            "mass": true,
+            "signal": true,
+            "reference": true,
+            "energy": true
+          },
+          "levels": [
+            {
+              "degree": 12,
+              "I_DD": 1.247521444138966e+56,
+              "S": 3.336585433904375e+43,
+              "linear_delta_W": -2.2269372161507972e+29
+            },
+            {
+              "degree": 24,
+              "I_DD": 1.24752146042833e+56,
+              "S": 3.3365855989475427e+43,
+              "linear_delta_W": -2.2269373263055586e+29
+            },
+            {
+              "degree": 48,
+              "I_DD": 1.2475214611201881e+56,
+              "S": 3.336585598102473e+43,
+              "linear_delta_W": -2.2269373257415337e+29
+            }
+          ],
+          "S": 3.336585598102473e+43,
+          "a": 4.6502311564228675e-12,
+          "a_exact": "351361532011/75557863725914323419136",
+          "initial_a": 2.6469779601696886e-23,
+          "initial_a_exact": "1/37778931862957161709568",
+          "quadratic_delta_W_interval": [
+            -9.00270123188963e+25,
+            2916.9192386778413
+          ],
+          "DeltaWcenter": -2.2273874608031284e+29,
+          "Uref": 4.501373176938255e+25,
+          "quadrature_I_estimate": 2.7674327534831406e+47,
+          "quadrature_linear_estimate": 2.2560993439545033e+20,
+          "quadrature_monotone": true,
+          "uncertainty_kind": "signed PSD density bound with numerical convergence estimates, not outward quadrature enclosure"
+        },
+        {
+          "time": 212372.6280429131,
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0002.h5",
+          "sha256": "9a59fea192f810f8d69e8ef25c2378162e705cd7bc07dc94340a97a82594cf56",
+          "cells": 256,
+          "Egas": "3.9180982056391060795e+38",
+          "mass": "3.141592653589792775e+26",
+          "discrete_Wh": "-4.165407832240631047e+34",
+          "DeltaEgas": "3.7507428920544513492e+29",
+          "Uround": "1.3919881083395092366e+24",
+          "residual": "-3.4850397370490610225e+26",
+          "scale": "3.7542279317915004102e+29",
+          "mass_relative_error": 1.7089131889410794e-17,
+          "field_min_max": {
+            "DENS": [
+              9.999318148954389e-08,
+              1.0000940697551212e-07
+            ],
+            "ENER": [
+              124702.76656143664,
+              124736.49337683477
+            ],
+            "GPOT": [
+              -331019396.45241386,
+              -203402263.5778128
+            ],
+            "TEMP": [
+              9999.545429894079,
+              10000.627122426406
+            ],
+            "PRES": [
+              83135.17770652332,
+              83157.6622510928
+            ]
+          },
+          "gates": {
+            "mass": true,
+            "signal": true,
+            "reference": true,
+            "energy": true
+          },
+          "levels": [
+            {
+              "degree": 12,
+              "I_DD": 1.247521444138966e+56,
+              "S": 5.622141210913122e+43,
+              "linear_delta_W": -3.752385708399746e+29
+            },
+            {
+              "degree": 24,
+              "I_DD": 1.24752146042833e+56,
+              "S": 5.622141520169706e+43,
+              "linear_delta_W": -3.752385914806867e+29
+            },
+            {
+              "degree": 48,
+              "I_DD": 1.2475214611201881e+56,
+              "S": 5.622141519181955e+43,
+              "linear_delta_W": -3.7523859141476125e+29
+            }
+          ],
+          "S": 5.622141519181955e+43,
+          "a": 9.406975512122964e-12,
+          "a_exact": "355385486909/37778931862957161709568",
+          "initial_a": 2.6469779601696886e-23,
+          "initial_a_exact": "1/37778931862957161709568",
+          "quadratic_delta_W_interval": [
+            -3.684035287776274e+26,
+            2916.9192386778413
+          ],
+          "DeltaWcenter": -3.7542279317915004e+29,
+          "Uref": 1.8420202809061596e+26,
+          "quadrature_I_estimate": 2.7674327534831406e+47,
+          "quadrature_linear_estimate": 2.6370180225621505e+20,
+          "quadrature_monotone": true,
+          "uncertainty_kind": "signed PSD density bound with numerical convergence estimates, not outward quadrature enclosure"
+        },
+        {
+          "time": 318558.9420643697,
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0003.h5",
+          "sha256": "156100b7f2c7ea75373ad2cb98ada9ab1330fe35de1091254f14a8f1e3567282",
+          "cells": 256,
+          "Egas": "3.9180982043293307737e+38",
+          "mass": "3.1415926535897927128e+26",
+          "discrete_Wh": "-4.165394687332967584e+34",
+          "DeltaEgas": "2.4409675862694171153e+29",
+          "Uround": "1.3919881081068464043e+24",
+          "residual": "-1.864923837013084153e+26",
+          "scale": "2.4428325101064301995e+29",
+          "mass_relative_error": 2.776983932029254e-18,
+          "field_min_max": {
+            "DENS": [
+              9.999546098185431e-08,
+              1.0000584850429526e-07
+            ],
+            "ENER": [
+              124707.50458453782,
+              124729.0963066124
+            ],
+            "GPOT": [
+              -331017275.95303345,
+              -203402395.23338726
+            ],
+            "TEMP": [
+              9999.697399845207,
+              10000.389897022495
+            ],
+            "PRES": [
+              83138.33638685508,
+              83152.7308708477
+            ]
+          },
+          "gates": {
+            "mass": true,
+            "signal": true,
+            "reference": true,
+            "energy": true
+          },
+          "levels": [
+            {
+              "degree": 12,
+              "I_DD": 1.247521444138966e+56,
+              "S": 3.65899101527252e+43,
+              "linear_delta_W": -2.4421203733233383e+29
+            },
+            {
+              "degree": 24,
+              "I_DD": 1.24752146042833e+56,
+              "S": 3.658991212614735e+43,
+              "linear_delta_W": -2.4421205050354526e+29
+            },
+            {
+              "degree": 48,
+              "I_DD": 1.2475214611201881e+56,
+              "S": 3.658991211881556e+43,
+              "linear_delta_W": -2.4421205045461073e+29
+            }
+          ],
+          "S": 3.658991211881556e+43,
+          "a": 5.8485042952642396e-12,
+          "a_exact": "220950245271/37778931862957161709568",
+          "initial_a": 2.6469779601696886e-23,
+          "initial_a_exact": "1/37778931862957161709568",
+          "quadratic_delta_W_interval": [
+            -1.4240111206459845e+26,
+            2916.9192386778413
+          ],
+          "DeltaWcenter": -2.4428325101064302e+29,
+          "Uref": 7.120075177042024e+25,
+          "quadrature_I_estimate": 2.7674327534831406e+47,
+          "quadrature_linear_estimate": 1.9573812101705525e+20,
+          "quadrature_monotone": true,
+          "uncertainty_kind": "signed PSD density bound with numerical convergence estimates, not outward quadrature enclosure"
+        },
+        {
+          "time": 424745.2560858262,
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_HLLC_plt_0004.h5",
+          "sha256": "a93393967ba51a792fa8e530e2f43b675c8d8c05006560f048ef82ba71b852fd",
+          "cells": 256,
+          "Egas": "3.9180982027477635454e+38",
+          "mass": "3.1415926535897927255e+26",
+          "discrete_Wh": "-4.1653788338119787495e+34",
+          "DeltaEgas": "8.594003580199037967e+28",
+          "Uround": "1.391988107825903628e+24",
+          "residual": "-7.6571314399756869926e+25",
+          "scale": "8.601660711639013654e+28",
+          "mass_relative_error": 1.2816848917058094e-18,
+          "field_min_max": {
+            "DENS": [
+              9.99969641069728e-08,
+              1.0000201497380909e-07
+            ],
+            "ENER": [
+              124710.62891709202,
+              124721.12766245613
+            ],
+            "GPOT": [
+              -331014159.08460784,
+              -203402522.16085538
+            ],
+            "TEMP": [
+              9999.79760895371,
+              10000.134331696114
+            ],
+            "PRES": [
+              83140.41927639017,
+              83147.41844081211
+            ]
+          },
+          "gates": {
+            "mass": true,
+            "signal": true,
+            "reference": true,
+            "energy": true
+          },
+          "levels": [
+            {
+              "degree": 12,
+              "I_DD": 1.247521444138966e+56,
+              "S": 1.2884859920050398e+43,
+              "linear_delta_W": -8.599742056439238e+28
+            },
+            {
+              "degree": 24,
+              "I_DD": 1.24752146042833e+56,
+              "S": 1.2884860125766896e+43,
+              "linear_delta_W": -8.5997421937406e+28
+            },
+            {
+              "degree": 48,
+              "I_DD": 1.2475214611201881e+56,
+              "S": 1.2884860120253656e+43,
+              "linear_delta_W": -8.599742190060898e+28
+            }
+          ],
+          "S": 1.2884860120253656e+43,
+          "a": 3.0358930271916474e-12,
+          "a_exact": "229385591635/75557863725914323419136",
+          "initial_a": 2.6469779601696886e-23,
+          "initial_a_exact": "1/37778931862957161709568",
+          "quadratic_delta_W_interval": [
+            -3.8370431562314472e+25,
+            2916.9192386778413
+          ],
+          "DeltaWcenter": -8.601660711639014e+28,
+          "Uref": 1.9185362969207633e+25,
+          "quadrature_I_estimate": 2.7674327534831406e+47,
+          "quadrature_linear_estimate": 1.471880503966061e+20,
+          "quadrature_monotone": true,
+          "uncertainty_kind": "signed PSD density bound with numerical convergence estimates, not outward quadrature enclosure"
+        }
+      ],
+      "contract": {
+        "schema": "arch-rz-closed-uniform-long-contract-1",
+        "utc": "2026-10-10T07:00:18.305724+00:00",
+        "status": "ROOT_BOUND_FINAL_CURRENT_PRODUCER_BEFORE_FIRST_OBSERVATION",
+        "model": "GravityBox",
+        "rho0": 1e-07,
+        "G": 6.6743e-08,
+        "root_bounds": [
+          0.0,
+          100000000000.0,
+          -50000000000.0,
+          50000000000.0
+        ],
+        "t_end": 424745.2560858262,
+        "acoustic_crossing_seconds": 84949.05121716524,
+        "acoustic_crossings": 5,
+        "gravity_dynamic_seconds": 12240443.065054426,
+        "gravity_pressure_ratio": 4.816402675658767e-05,
+        "physical_budget": 0.02,
+        "reference_budget": 0.002,
+        "mass_budget": 1e-12,
+        "signal_ratio": 100.0,
+        "roundoff_observation_multiplier": 8.0,
+        "quadrature_degrees": [
+          12,
+          24,
+          48
+        ],
+        "zero_repairs": true,
+        "checkpoint_time": 212372.6280429131,
+        "physical_endpoint_time_relative_budget": 2e-10,
+        "max_steps": -1,
+        "integrated_energy_definition": "Actual stored ENER times stored native cell_measure; rho V-mean as true PWC gravity source",
+        "reference_definition": "Actual initial/final PWC O(N) linear Newton integral plus signed PSD difference-of-quadratics interval; three-order quadrature uncertainty remains estimate, not outward certificate",
+        "boundary_definition": "stationary reflecting insulated fluid walls; isolated field from interior source; existing real wall flux owners reused, no external field/wall work",
+        "coverage": "Unique RZ axis/geometry/self-exchange durability; does not repeat Cartesian four modules or grant J/AMR/backend coverage",
+        "budget_reason": "New five-acoustic-crossing, second-order 16x16 bounded weak-self ideal-gas trajectory. Two-percent resolved gravitational exchange and one-tenth reference allocation fixed independently of future data; original finite Euler1% gate unchanged.",
+        "input": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/input.par",
+          "sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97"
+        },
+        "expected_binary_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+        "binary_binding": "Bind once after frozen prior ELF consumers finish and current genuine ARCH rebuild, before first production observation. Never substitute old candidate qualification.",
+        "short_pilot": "At most two natural steps, unchanged physical parameters; cost/initialvalidity only; no t_end/CFL/scientific budget adjustment from resulting error. Full end remains5 sound crossings.",
+        "resource_contract": {
+          "cpu_threads": 8,
+          "affinity": "4-11",
+          "timeout_seconds": 21600,
+          "min_available_mib": 768,
+          "max_swap_growth_mib": 512,
+          "min_host_free_mib": 8192,
+          "next_write_reserve_mib": 512,
+          "max_output_mib": 1024,
+          "max_output_payload_mib": 512,
+          "affinity_note": "Eight dedicated CPU IDs for long run; independent low-density uses0-3 and serial NVCC uses12-15. Same eight OMP threads; administrative resource placement only."
+        },
+        "raw_upload": false,
+        "physics_changed": false,
+        "bound_utc": "2026-10-10T07:23:37.172184+00:00",
+        "resource_preflight_correction": {
+          "utc": "2026-10-10T07:25:05.115134+00:00",
+          "previous_contract_sha256": "f9acb44b232123573a826100cad2f54e68e90fe8171b7acbb12ffa6c5c53e50c",
+          "reason": "Existing guard includes next-write reserve in total logical output budget. 512MiB payload +512MiB reserve needs1024MiB total. Preflight refused before launching any Core process; physical input, endpoint and all scientific budgets unchanged."
+        },
+        "producer_identity_history": [
+          {
+            "contract_sha256": "cf6d2583859fa4519f9e5547bd896893260c75ee36ea50d2bb54027e7d25c7c5",
+            "previous_expected_binary_sha256": "bc1bacfc27ff945f27d4b822ea50fe98d5669c94262012423c911c2af3a818e3",
+            "pilot_binary_sha256": "bc1bacfc27ff945f27d4b822ea50fe98d5669c94262012423c911c2af3a818e3",
+            "reason": "Actual original Studio Build compiled only BuildIdentity.cpp and linked production ARCH. Scientific source, input, endpoint and budgets unchanged; old pilot/68CPU execution identities stay recorded independently. Bind full long before first observation to actual new producer."
+          }
+        ],
+        "full_run_bound_utc": "2026-10-10T07:38:09.380496+00:00",
+        "initial_pwc_reference_correction": {
+          "utc": "2026-10-10T07:46:48.703509+00:00",
+          "launch_contract_sha256": "a589a2d78079e8ee03ca09f63ea84985edf11e28224b3ae4502701fd63331a7c",
+          "actual_initial_density_range": [
+            9.999999999999997e-08,
+            1e-07
+          ],
+          "reason": "Ordinary native volume averaging stores several ULP of initial density variation. Exact initial/final Newton identity retains BOTH PWC endpoints instead of assuming bitwise uniform means. No production, physical input, endpoint or numerical acceptance change.",
+          "linear_term": "-G*rho0*sum_i[(rho_final_i-rho_initial_i)*I_cell_i,D], exact stored density differences; spatially varying kernel retained per cell",
+          "quadratic_interval": "[-G*a_final^2*I_DD/2,+G*a_initial^2*I_DD/2]",
+          "reference_source_sha256": "6da18835a86a0cdc550387976f5627c57156b85016e380d3628ee8c3271cfb68",
+          "owner_source_sha256": "7fddf6c7b3cb75dab3b56f0294de77b33f4279743aa36df8d19ef876b96349a7",
+          "owner": "91/91; original uniform/signed cases retained, endpoint reversal and mismatched partition edges added",
+          "thresholds_unchanged": true,
+          "finite_time_error_observed_before_correction": false
+        },
+        "resource_budget_review": {
+          "utc": "2026-10-10T07:49:56.305889+00:00",
+          "previous_contract_sha256": "798419f31b2d3adc9a5832e6cd4e7619167426927e0729e2d89c3fd7f6ff30ea",
+          "previous_manager_timeout_seconds": 10800,
+          "partial_attempt_elapsed_seconds": 632.524,
+          "reason": "Measured ordinary source-boundary work6–8s per Current andfinalRKstage plus2–3s firstRKstage; ~1067 unchanged natural steps predict>10800s. Manager wall allocation raised to21600s before the full replacement run; no user hard time budget and no scientific gate/endpoint/input change.",
+          "partial_evidence_directory": "studio/.local/release-closure-20261006/math-closure-20261009/rz-closed-long/full-budget-review-attempt1",
+          "first_partial_scientific_acceptance": false,
+          "attempts_repair_limit": "Exactly one resource-allocation replacement; no further short pilots or repeated source implementation."
+        },
+        "parent_original_contract": {
+          "path": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/math-closure-20261009/rz-closed-long/prospective.contract.json",
+          "sha256": "95b8850ed7a57df1adba0128aad23dc378a9b9d47be995e0f62693899f336bd1"
+        }
+      },
+      "parameter_sha256": "b2866ebecd66d5ffbc3863e7861cd6c7de4687ed3b77937cd7dd49b44a510f97",
+      "contract_sha256": "5286923950e66bd8d13aee9e835bef364659208c24e9cd473408cb617d4587ea",
+      "terminal_repair_events": 0,
+      "terminal_repairs_path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/state_repairs.txt",
+      "terminal_repairs_sha256": "3f2ba583d21070007fe4bbfa18cb9fe2c274ca90a613dd9bcbc6dfbf2a54d82b",
+      "repair_identity_scope": "terminal original report; Root production receipt binds run directory, no embedded binary/config identity",
+      "boundary_scope": "stationary reflecting insulated input and original wall owners; plot does not independently observe zero face flux",
+      "roundoff_kind": "8eps64 absolute-energy sensitivity estimate, not a strict rounding certificate",
+      "core_binding_qualified": false,
+      "reference_scope": "formal plot PWC mathematics, not Runtime issuer; numerical uncertainty estimates only",
+      "energy_budget_scope": "actual final endpoint; all written samples retain observations and require mass/finite-positive fields",
+      "wall_seconds": 85.78644195999368
+    },
+    "independent_acceptance": {
+      "path": "output/release/rel3-final-20261014/rz/final-independent-review.json",
+      "sha256": "c04d308df9b9f73c4eb09d55a1288d406365703bdc7cd41f98cb473b89133f22",
+      "bytes": 31565
+    },
+    "no_endpoint_or_budget_relaxation": true,
+    "original_endpoint": 424745.2560858262,
+    "gravity_rtol": 1e-10,
+    "physical_budget": 0.02,
+    "reference_budget": 0.002,
+    "mass_budget": 1e-12,
+    "zero_repairs": true,
+    "cost_scope": "One fixed256 main and own scheduled-half fresh overlap after a measured small-memory/~onecore precheck. Individual GNU/guard clocks retained; not summed as serial walltime or claimed a stable speedup. Late adaptive source-boundary cost remains a measured performance follow-up, not hidden or optimized by relaxing accuracy."
+  },
+  "optimization_dispositions": {
+    "inline": "Two bounded attempts; no actual benefit; candidate fully restored",
+    "prefix_cache": "Observed mixed-prefix six-tuples unique; not extrapolated to fixed256",
+    "memo_headroom": "DEFER: first-success recovery/fenv/allocation/extra-work proof not complete; no new source/cache implemented",
+    "scheduling": "One justified fixed256 main/ownfresh pair; original per-laneOMP4/guards/source/physics/cadence unchanged"
+  },
+  "costs": {
+    "build": {
+      "started_utc": "2026-10-14T12:46:17.181070+00:00",
+      "finished_utc": "2026-10-14T12:49:48.022388+00:00",
+      "exit_code": 0,
+      "command": [
+        "/usr/bin/python3",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--poll-seconds",
+        "0.25",
+        "--pressure-guard",
+        "--log",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/build/guard.log",
+        "--",
+        "/usr/bin/timeout",
+        "--signal=TERM",
+        "--kill-after=5s",
+        "1200s",
+        "/usr/bin/time",
+        "-f",
+        "{\"elapsed_seconds\":%e,\"user_seconds\":%U,\"system_seconds\":%S,\"max_process_rss_kib\":%M,\"exit_code\":%x}",
+        "-o",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/build/time.txt",
+        "cmake",
+        "--build",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu",
+        "--parallel",
+        "2",
+        "--target",
+        "ARCH",
+        "arch_cuda_single_level_validation",
+        "arch_curvilinear_metrics",
+        "arch_shared_stage_scheduler",
+        "arch_gravity_stage_contract",
+        "arch_resolved_execution_plan",
+        "arch_amr_operation_plans",
+        "arch_amr_flux_surface_plan",
+        "arch_compute_backend",
+        "arch_boundary_plan",
+        "arch_flux_limiter",
+        "arch_rkl_repair_weights"
+      ],
+      "outer_seconds": 204.38035929199395,
+      "time_raw": "{\"elapsed_seconds\":210.67,\"user_seconds\":1391.49,\"system_seconds\":86.96,\"max_process_rss_kib\":2271632,\"exit_code\":0}\n",
+      "source_frozen_unchanged_after": true,
+      "after_ARCH_sha256": "3f53c11f299bf41147044c8d6516298885b6fdcffae236732046abc527b54cf1",
+      "after_validator_sha256": "e12048ddfa4a442c86daed678963d38a23e9f6b49af005c26f1cbb9af8655f85",
+      "guard_log_sha256": "a9cc244545f16dfd33085384bfc35c645fb5a022c86b07cdb8ade342333c6bbf",
+      "outer_log_sha256": "6b137250d65ddb0b3f52cb749a21c58c12a7bd2a81d0ba584928b4c992c6cd9a",
+      "status": "BUILT_CPU_OWNERSHIP_CANDIDATE"
+    },
+    "leaf": {
+      "path": "output/release/rel3-final-20261014/wall/leaf/result.json",
+      "sha256": "7c656c44fd3c5d1e14185a1308cf0c440cd0db452f9560e8707ed40c8a9a2d76",
+      "bytes": 32451
+    },
+    "CPU_owners": {
+      "path": "output/release/rel3-final-20261014/verify/result.json",
+      "sha256": "031a13babda5106052a98f95c6e87686d51b000495f730cac6757474a2534033",
+      "bytes": 37868
+    },
+    "RZ_main": {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/main/run-receipt.json",
+      "sha256": "d5531d70d1aae3adf8b9b86a610bd4fab22a4574929d054e19b2bc8e2a037fa6",
+      "bytes": 1764
+    },
+    "RZ_fresh": {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/fresh/run-receipt.json",
+      "sha256": "ab146b62e09f9dd067f01152fc012c1205a40d8dcbb2cf47142ad86a4472aca7",
+      "bytes": 3361
+    },
+    "clocks_and_failed_attempts_retained": true,
+    "no_stable_global_speedup_claim": true
+  },
+  "delegation": {
+    "real_providers_this_round": 0,
+    "gateway_goal": {
+      "owner": "arch-rel3-cpu-science-20261014",
+      "cumulative_calls_used": 6,
+      "frozen_cap": 6,
+      "remaining_calls": 0,
+      "reason_not_dispatched": "Gateway enforces frozen goal cap; preserve accumulated costs and prior accepted provider evidence. Use independent native workers and deterministic checks; no budget reset or global infrastructure edits."
+    },
+    "native_independent_reviews": "Separate wall/source/publicscience, recoveredSNIa/sourcebinding, RZrecipe/helper writer, remainingCPUgates and finalRZreview; root integrates/accepts",
+    "no_global_Skill_MCP_or_budget_reset": true
+  },
+  "later_release_work": [
+    "REL4 actualCUDA kernels/resources/integration and affected numerical parity, including originalCellular rate screen",
+    "REL5 documentation/comments/testCI consolidation, including misleading gravity-extra species warning with actualfields present",
+    "REL6 finalfrozenbuild/package/platform/hostedCI and measured performance follow-ups"
+  ],
+  "raw_evidence_policy": "Local output tree retains commands/source/inputs/ELFs/H5/failures. Seven old machine receipts unchanged. This is CPU stage acceptance, not all-platform/backend/variant release publication.",
+  "artifacts": [
+    {
+      "path": "output/release/rel3-final-20261014/start.json",
+      "sha256": "2c3dab42996adb83111f4d5344f62cacf6b5404efbb53bfdba4ea76256ac1d33",
+      "bytes": 114484
+    },
+    {
+      "path": "output/release/rel3-final-20261014/wall/integration.json",
+      "sha256": "52ff0f7e34ce115ec08fd48511e80fb36c890185408edb1b53b89e2f2a5ff485",
+      "bytes": 1140
+    },
+    {
+      "path": "output/release/rel3-final-20261014/wall/production-independent-review.json",
+      "sha256": "e78df03c9fdffe9ef593c6baf9b250689c5c6032525705a74c3c1055d8a15a83",
+      "bytes": 4600
+    },
+    {
+      "path": "output/release/rel3-final-20261014/wall/test-writer-report.json",
+      "sha256": "630c815386544ca8c38be190125fa0b229cb7aae094164e251e9200fcb6e4685",
+      "bytes": 4312
+    },
+    {
+      "path": "output/release/rel3-final-20261014/wall/leaf/result.json",
+      "sha256": "7c656c44fd3c5d1e14185a1308cf0c440cd0db452f9560e8707ed40c8a9a2d76",
+      "bytes": 32451
+    },
+    {
+      "path": "output/release/rel3-final-20261014/wall/public-science-independent-review.json",
+      "sha256": "81775e2c9b624987c45bcc499f55c692bebd49913415e0e4786392bba0bf6bfe",
+      "bytes": 21915
+    },
+    {
+      "path": "output/release/rel3-final-20261014/build/result.json",
+      "sha256": "875fda8f102c2a81a9815d9efe977db0819566d1d0e0b5730d894c4ed5dc4d1f",
+      "bytes": 2004
+    },
+    {
+      "path": "output/release/rel3-final-20261014/verify/result.json",
+      "sha256": "031a13babda5106052a98f95c6e87686d51b000495f730cac6757474a2534033",
+      "bytes": 37868
+    },
+    {
+      "path": "output/release/rel3-final-20261014/cpu-gates/approved-binding.json",
+      "sha256": "6d567697dcb7561049540b4dfe0df4faaee3c2ca405c54e9ef811262baf84f37",
+      "bytes": 484
+    },
+    {
+      "path": "output/release/rel3-final-20261014/snia/exact-runtime-recovery.json",
+      "sha256": "ea074a0ac1e62f06c7237da17355dd137b4951cb7114cc73ca2474f3db0de02a",
+      "bytes": 9580
+    },
+    {
+      "path": "output/release/rel3-final-20261014/snia/independent-reuse-review.json",
+      "sha256": "5acd2211f78978d2cb4bdeb70ab2ac0bd6cba40a5c492fcc98ff882cbf1f7aa1",
+      "bytes": 47151
+    },
+    {
+      "path": "output/release/rel3-final-20261014/snia/wall-extension-precheck.json",
+      "sha256": "ac07ba34d670594e699375e3d91d1be8ec1837414d8559701d9b1541c1978b37",
+      "bytes": 11002
+    },
+    {
+      "path": "output/release/rel3-final-20261014/snia/final-candidate-binding.json",
+      "sha256": "2c9e5f586c33371c4c142ba81d65f717f8b8b785a3043b00a8bffd80223de1e9",
+      "bytes": 14536
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/mixed-profile/result.json",
+      "sha256": "84b7abc439aa59112ba6448fe0fea22e3c1b5fc31e86736dc853ac30e9a44281",
+      "bytes": 37308
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/cross-generation-readonly.json",
+      "sha256": "75f5d2f6221cc0225bdbe974cc18dcb10fb97744982dd855f3cf9c18afe36255",
+      "bytes": 28574
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/forced-inline/cumulative-cost-index.json",
+      "sha256": "0c33a0c0e3d2af7161f7b503806f74828ada8302d5f423e48c1824b8b152704c",
+      "bytes": 837
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/forced-inline/restoration.json",
+      "sha256": "a4b0e377fa78b938ea368e6762d2dbf1b695f7b21a8c06f9e52da0636d069a6c",
+      "bytes": 763
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/memo-headroom-design-20261015.json",
+      "sha256": "db34f44a952a4ac8e4fa51e126c4df42b0e63d2b18db4784a58709d428fe627f",
+      "bytes": 8402
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-recipe.json",
+      "sha256": "1076909300a5e051e1272a6222c2a0ac1b0a7c8763e38d3114eb8f6bce331aff",
+      "bytes": 35664
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/bounded-pair-resource-precheck.json",
+      "sha256": "e9732304fc4583686fd92d45eb3685a452e9b82ed3819df73a46939586b14a69",
+      "bytes": 1046
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/root-fresh-dispatch-acceptance.json",
+      "sha256": "12b29bf26cdb23fbc82546ec435fd8f5acc40970a99e9a6f4c7f420128c792a9",
+      "bytes": 3221
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/own-fresh-prefix-independent.json",
+      "sha256": "f41f52ad9d2243bef586071111e5d6b858ba53c5345dfa75df4aba1b6580fd33",
+      "bytes": 42781
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/main/run-receipt.json",
+      "sha256": "d5531d70d1aae3adf8b9b86a610bd4fab22a4574929d054e19b2bc8e2a037fa6",
+      "bytes": 1764
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/fresh/preparation.json",
+      "sha256": "b77ddeb69ba82cf66dc09df6b4e04b95366d3f829af8a1fe26d36f1c80628124",
+      "bytes": 8832
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/fresh/pre-dispatch-correction.json",
+      "sha256": "f411e2b34cf97b5eabc759b57ea21ae6249985c03ba2b6d8d3f3e5f43aa9f6da",
+      "bytes": 1661
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/fresh/run-receipt.json",
+      "sha256": "ab146b62e09f9dd067f01152fc012c1205a40d8dcbb2cf47142ad86a4472aca7",
+      "bytes": 3361
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/main-qualification-1/qualification.json",
+      "sha256": "0d990ca5835e0bee1c0da48e0a656cc9b716f02ff4a6420f7177ba53925e634e",
+      "bytes": 44186
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/original-long-current/fresh-qualification-1/qualification.json",
+      "sha256": "8d16e0c26bfba3c4eec6950bd2c7aeee3708eb361489abbc4167b28b62194c01",
+      "bytes": 27565
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/final-independent-review.json",
+      "sha256": "c04d308df9b9f73c4eb09d55a1288d406365703bdc7cd41f98cb473b89133f22",
+      "bytes": 31565
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/public-native-self-current/plan.json",
+      "sha256": "8d261c006d75820b20a1d7bbfd7937f8681f4a0a6d8eb63f23c499944d55b22f",
+      "bytes": 2430
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/public-native-self-current/result.json",
+      "sha256": "afe043b6defe72838d17101fbed409489d69538dea068ec6bed04351834b6410",
+      "bytes": 1769
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/public-native-self-current/source-freeze.json",
+      "sha256": "6d72103e92f968a045a2ceecf68dc71a817a5aff6990abbf8c20cdcb09abaafa",
+      "bytes": 153765
+    },
+    {
+      "path": "output/release/rel3-final-20261014/remaining-cpu-gate-review.json",
+      "sha256": "2c6b45b16acaec9ffc82bfc09691086f75c2377d1c51b47466097f16cc12de82",
+      "bytes": 27920
+    },
+    {
+      "path": "output/release/rel3-final-20261014/remaining-cpu-gate-closure-review.json",
+      "sha256": "38378a3c43018284caa0dfb9bbc9b8f000f8fd8a07bd7b757c2e801719c3813c",
+      "bytes": 33784
+    },
+    {
+      "path": "output/release/rel3-final-20261014/seal-final.py",
+      "sha256": "ce910862168b2db26a0dcbd3d87cfd03a2a480c16c2cff9034927a3ae02a123f",
+      "bytes": 9122
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/observe-and-qualify.py",
+      "sha256": "531c6239b28badde24cf0562c66da6fa6a5752e4209e8c860333f09684782e83",
+      "bytes": 2920
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/final-qualification-precheck.json",
+      "sha256": "797e1f7f8d86e79e03cfc90e92c7a2d26103e01c7102d7a6fb5d37f039da2abf",
+      "bytes": 13909
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rel4-handoff-review.json",
+      "sha256": "4283273c6e538d5ebfa79b68bb92cbc4d8f4b7dbffaac34457472cd445ba0abf",
+      "bytes": 18361
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/own-fresh-cost-observation.json",
+      "sha256": "12d4b1158650d4411afd4ebf41cf65792cf735acf6787ff5ea9363628b17698a",
+      "bytes": 496
+    },
+    {
+      "path": "output/release/rel3-final-20261014/rz/own-fresh-quarter-observation.json",
+      "sha256": "f4e4a7d28851968b8e726c74db56ef22ca09eafc7011ad876ec4e4889cadeff7",
+      "bytes": 2732
+    }
+  ]
+}

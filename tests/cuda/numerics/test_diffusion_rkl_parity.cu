@@ -1,10 +1,13 @@
-#include "fixtures/eos/FreeEnergyFixture.h"
 /**
  * @file test_diffusion_rkl_parity.cu
  * @brief Compare CPU/CUDA diffusion operators and RKL stage updates.
  *
  * Check directional timestep limits, EOS failures, state-buffer preparation
  * and every stage against the shared host calculation and reference cases.
+ *
+ * Build-cost split: the shared helpers, the single failure counter and main()
+ * stay here. The tabular-EOS latch body lives in test_diffusion_rkl_tabular.cu;
+ * both TUs share DiffusionRklTestSupport.cuh and one failure owner.
  */
 #include <cuda_runtime.h>
 
@@ -22,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#include "DiffusionRklTestSupport.cuh"
 #include "cuda/diffusion/DiffusionKernels.cuh"
 #include "cuda/diffusion/DiffusionBatchKernels.cuh"
 #include "numerics/diffusion/DiffFlux.h"
@@ -29,10 +33,8 @@
 #include "numerics/diffusion/DiffusionAMRStages.h"
 #include "physics/diffusionCoe/diffusion_math.hpp"
 #include "physics/eos/IdealGas.h"
-#include "physics/eos/tabular/Tabular3DEOS.h"
-#include "physics/eos/tabular/Tabular4DEOS.h"
 
-namespace {
+namespace diffusion_rkl_test {
 
 int failures = 0;
 
@@ -180,7 +182,7 @@ void expect_bits(const char* label, double actual, std::uint64_t expected)
 }
 
 void expect_close(const char* label, double actual, double expected,
-                  double relative_limit = 5.0e-12)
+                  double relative_limit)
 {
     if (std::isnan(expected)) {
         if (!std::isnan(actual)) fail(std::string(label) + " expected NaN");
@@ -367,7 +369,7 @@ void compare_frozen_rkl_state(
     }
 }
 
-Grid make_grid(int dimension, double cell_width = 0.01)
+Grid make_grid(int dimension, double cell_width)
 {
     Grid grid(2,
               0.0, amr::BLOCK_NX * cell_width,
@@ -643,135 +645,6 @@ void verify_frozen_host_authority()
                 0x7fefffffffffffffULL);
 }
 
-template <class T>
-struct DeviceArray
-{
-    T* pointer = nullptr;
-    std::size_t count = 0;
-
-    DeviceArray() = default;
-    explicit DeviceArray(std::size_t size) : count(size)
-    {
-        if (count > 0) require_cuda(
-            cudaMalloc(reinterpret_cast<void**>(&pointer), count * sizeof(T)),
-            "cudaMalloc");
-    }
-    DeviceArray(const DeviceArray&) = delete;
-    DeviceArray& operator=(const DeviceArray&) = delete;
-    DeviceArray(DeviceArray&& other) noexcept
-        : pointer(std::exchange(other.pointer, nullptr)), count(other.count) {}
-    ~DeviceArray() { if (pointer) cudaFree(pointer); }
-
-    void upload(const T* source, std::size_t size)
-    {
-        require_cuda(cudaMemcpy(pointer, source, size * sizeof(T),
-                                cudaMemcpyHostToDevice), "upload");
-    }
-    void download(T* destination, std::size_t size) const
-    {
-        require_cuda(cudaMemcpy(destination, pointer, size * sizeof(T),
-                                cudaMemcpyDeviceToHost), "download");
-    }
-};
-
-struct DeviceStateOwner
-{
-    DeviceArray<double> rho, mom_u, mom_v, mom_w, eng, enuc, species;
-    arch::cuda::DeviceStateView view{};
-
-    DeviceStateOwner(int total, int n_species)
-        : rho(total), mom_u(total), mom_v(total), mom_w(total), eng(total),
-          enuc(total), species(static_cast<std::size_t>(total) * n_species)
-    {
-        view = {rho.pointer, mom_u.pointer, mom_v.pointer, mom_w.pointer,
-                eng.pointer, enuc.pointer, species.pointer, total, n_species};
-    }
-
-    void upload(const FluidState& state)
-    {
-        const std::size_t total = state.rho.size();
-        rho.upload(state.rho.data(), total);
-        mom_u.upload(state.mom_u.data(), total);
-        mom_v.upload(state.mom_v.data(), total);
-        mom_w.upload(state.mom_w.data(), total);
-        eng.upload(state.eng.data(), total);
-        enuc.upload(state.enuc_rate.data(), total);
-        if (!state.mass_fractions.empty())
-            species.upload(state.mass_fractions.data(), state.mass_fractions.size());
-    }
-
-    FluidState download() const
-    {
-        FluidState state;
-        state.Preallocate(view.total_size);
-        state.InitSpecies(view.n_species);
-        rho.download(state.rho.data(), state.rho.size());
-        mom_u.download(state.mom_u.data(), state.mom_u.size());
-        mom_v.download(state.mom_v.data(), state.mom_v.size());
-        mom_w.download(state.mom_w.data(), state.mom_w.size());
-        eng.download(state.eng.data(), state.eng.size());
-        enuc.download(state.enuc_rate.data(), state.enuc_rate.size());
-        if (!state.mass_fractions.empty())
-            species.download(state.mass_fractions.data(), state.mass_fractions.size());
-        return state;
-    }
-};
-
-struct DeviceFixture
-{
-    Grid grid = make_grid(1);
-    FluidState host_state = make_state(grid, 2);
-    DeviceStateOwner state{grid.GetTotalSize(), 2};
-    DeviceStateOwner output{grid.GetTotalSize(), 2};
-    DeviceStateOwner flux{grid.GetTotalSize(), 2};
-    DeviceArray<double> candidates{static_cast<std::size_t>(
-        (grid.Ie() - grid.Is()) * (grid.Je() - grid.Js()) *
-        (grid.Ke() - grid.Ks()))};
-    DeviceArray<double> result{1};
-    DeviceArray<int> status{1};
-    DeviceArray<double> volume{static_cast<std::size_t>(grid.GetTotalSize())};
-    DeviceArray<double> lower{static_cast<std::size_t>(grid.GetTotalSize())};
-    DeviceArray<double> upper{static_cast<std::size_t>(grid.GetTotalSize())};
-    DeviceArray<double> A{2}, Z{2}, gamma{2}, cv{2};
-    IdealGasView eos{};
-    arch::cuda::DeviceGridView device_grid{};
-    arch::cuda::DiffusionWorkspaceView workspace{};
-
-    DeviceFixture()
-    {
-        state.upload(host_state);
-        FluidState sentinel = make_state(grid, 2);
-        std::fill(sentinel.rho.begin(), sentinel.rho.end(), -101.0);
-        std::fill(sentinel.mom_u.begin(), sentinel.mom_u.end(), -102.0);
-        std::fill(sentinel.mom_v.begin(), sentinel.mom_v.end(), -103.0);
-        std::fill(sentinel.mom_w.begin(), sentinel.mom_w.end(), -104.0);
-        std::fill(sentinel.eng.begin(), sentinel.eng.end(), -105.0);
-        std::fill(sentinel.enuc_rate.begin(), sentinel.enuc_rate.end(), -777.0);
-        std::fill(sentinel.mass_fractions.begin(), sentinel.mass_fractions.end(), -106.0);
-        output.upload(sentinel);
-        flux.upload(sentinel);
-
-        std::vector<double> metric(grid.GetTotalSize(), grid.dx1);
-        std::vector<double> area(grid.GetTotalSize(), 1.0);
-        volume.upload(metric.data(), metric.size());
-        lower.upload(area.data(), area.size());
-        upper.upload(area.data(), area.size());
-        device_grid = arch::cuda::make_device_grid_view(grid);
-        device_grid.cell_volume = volume.pointer;
-        device_grid.face_area_lower[0] = lower.pointer;
-        device_grid.face_area_upper[0] = upper.pointer;
-
-        const double hA[2] = {1.0, 4.0};
-        const double hZ[2] = {1.0, 2.0};
-        const double hgamma[2] = {1.4, 1.5};
-        const double hcv[2] = {3.5, 7.25};
-        A.upload(hA, 2); Z.upload(hZ, 2); gamma.upload(hgamma, 2); cv.upload(hcv, 2);
-        eos.species = {A.pointer, Z.pointer, gamma.pointer, cv.pointer, 2};
-        eos.global_gamma = 1.37;
-        workspace = {flux.view, candidates.pointer, result.pointer, status.pointer};
-    }
-};
-
 __global__ void conductivity_probe(double* result)
 {
     const double composition[3] = {0.2, 0.3, 0.5};
@@ -858,190 +731,6 @@ struct StellarOverrideProbeEos
         state.cv = 1.0;
     }
 };
-
-template<class Eos>
-void verify_tabular_diffusion_latch(Eos eos, int compositions)
-{
-    DeviceFixture fixture;
-    DeviceFixture second;
-    DeviceStateOwner first_stage(fixture.grid.GetTotalSize(), 2);
-    DeviceStateOwner second_stage(second.grid.GetTotalSize(), 2);
-    for (int cell = 0; cell < fixture.grid.GetTotalSize(); ++cell) {
-        fixture.host_state.rho[cell] = 1.0;
-        fixture.host_state.mom_u[cell] = fixture.host_state.mom_v[cell]
-            = fixture.host_state.mom_w[cell] = 0.0;
-        fixture.host_state.eng[cell] = 100.0;
-    }
-    fixture.state.upload(fixture.host_state);
-    second.state.upload(fixture.host_state);
-    first_stage.upload(fixture.host_state);
-    second_stage.upload(fixture.host_state);
-    std::array<arch::cuda::DeviceDiffusionBatchBlock, 2> bindings{};
-    for (int i = 0; i < 2; ++i) {
-        auto& f = i == 0 ? fixture : second;
-        auto& b = bindings[i];
-        b.input = b.state_n = b.previous = b.older = f.state.view;
-        b.output = i == 0 ? first_stage.view : second_stage.view;
-        b.delta = b.initial_delta = f.output.view;
-        b.grid = f.device_grid;
-        b.workspace = {f.flux.view, f.candidates.pointer, f.result.pointer, f.status.pointer, {}};
-    }
-    DeviceArray<arch::cuda::DeviceDiffusionBatchBlock> device_bindings(2);
-    device_bindings.upload(bindings.data(), bindings.size());
-    const auto batch_plan = arch::scheduler::make_rkl_plan(arch::scheduler::RklMethod::RKL1, 1);
-    const int extent = 4 * compositions;
-    std::vector<double> table(tabular_eos::FieldCount * extent);
-    DeviceArray<double> device_table(table.size());
-
-    const auto config = DiffFlux::make_diffusion_config_view(make_config(true, false, false));
-    double previous_dt = 0.0;
-    for (const bool invalid : {true, false, false}) {
-        // Exact Hermite polynomial F=100+2r+r*t-1.5t^2, r=ln(rho), t=ln(T).
-        // At T=1: e=100+r, Cv=3-r, with a unique root in the source domain.
-        for (int ir=0; ir<2; ++ir)
-            for (int it=0; it<2; ++it) {
-                const double r=ir*std::log(10.0), t=it*.2*std::log(10.0);
-                const double jets[]{100.+2*r+r*t-1.5*t*t, 2.+t, r-3*t,
-                                    0.,1.,-3.,0.,0.,0.};
-                for (int field=0; field<tabular_eos::FieldCount; ++field)
-                    std::fill_n(table.data()+field*extent+(ir*2+it)*compositions,
-                                compositions, jets[field]);
-                // Cv=(Fy-Fyy)/T: make only the lower-T endpoint invalid.
-                if (invalid && it==0)
-                    std::fill_n(table.data()+tabular_eos::Fyy*extent+ir*2*compositions,
-                                compositions, r);
-            }
-        Eos host = eos;
-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
-            host.free_energy_fields[field] = table.data() + field * extent;
-        bool host_threw = false;
-        try { static_cast<void>(host.get_temperature(1.0, 100.0, nullptr)); }
-        catch (const std::runtime_error&) { host_threw = true; }
-        if (host_threw != invalid) fail("Diffusion Tabular fixture missed the Host failure boundary");
-        device_table.upload(table.data(), table.size());
-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
-            eos.free_energy_fields[field] = device_table.pointer + field * extent;
-
-        const auto operation = arch::cuda::launch_diffusion_operator(
-            fixture.state.view, fixture.output.view, eos, fixture.eos.species,
-            fixture.device_grid, config, fixture.workspace, nullptr);
-        require_cuda(operation.error, "Tabular diffusion operator latch");
-        require_cuda(cudaDeviceSynchronize(), "Tabular diffusion operator sync");
-        int status = -1;
-        fixture.status.download(&status, 1);
-        if (status != (invalid ? 1 : 0))
-            fail("Diffusion operator concealed an intermediate EOS failure or failed to reset status");
-        const auto output = fixture.output.download();
-        for (int i = fixture.grid.Is(); i < fixture.grid.Ie(); ++i)
-            if (!std::isfinite(output.eng[fixture.grid.GetIndex(i, 0, 0)]))
-                fail("Diffusion fixture did not retain finite operator output");
-
-        const auto timestep = arch::cuda::launch_raw_diffusion_dt(
-            fixture.state.view, eos, fixture.eos.species, fixture.device_grid,
-            config, fixture.workspace, nullptr);
-        require_cuda(timestep.error, "Tabular diffusion dt latch");
-        require_cuda(cudaDeviceSynchronize(), "Tabular diffusion dt sync");
-        fixture.status.download(&status, 1);
-        double dt = 0.0;
-        fixture.result.download(&dt, 1);
-        if (status != (invalid ? 1 : 0) || !std::isfinite(dt))
-            fail("Diffusion dt reduction concealed an intermediate EOS failure or failed to reset status");
-        const auto batch_dt = arch::cuda::launch_diffusion_dt_batch(bindings, device_bindings.pointer,
-            eos, fixture.eos.species, config, nullptr);
-        require_cuda(batch_dt.error, "Batched Tabular diffusion dt latch");
-        require_cuda(cudaDeviceSynchronize(), "Batched Tabular diffusion dt sync");
-        for (auto* f : {&fixture, &second}) {
-            f->status.download(&status, 1);
-            if (status != (invalid ? 1 : 0)) fail("Batched diffusion dt concealed a block's EOS failure");
-        }
-        const auto batch_stage = arch::cuda::launch_diffusion_stage_batch(batch_plan, batch_plan.stages[0],
-            bindings, device_bindings.pointer, eos, fixture.eos.species, config, 1e-6, nullptr);
-        require_cuda(batch_stage.error, "Batched Tabular diffusion stage latch");
-        require_cuda(cudaDeviceSynchronize(), "Batched Tabular diffusion stage sync");
-        for (auto* f : {&fixture, &second}) {
-            f->status.download(&status, 1);
-            if (status != (invalid ? 1 : 0)) fail("Batched diffusion stage concealed a block's EOS failure");
-        }
-        // A late invalid binding must reject the WHOLE launch before clearing
-        // even the first block's status, rather than partially updating a wave.
-        auto invalid_bindings = bindings;
-        invalid_bindings[1].output = invalid_bindings[1].state_n;
-        require_cuda(cudaMemset(fixture.status.pointer, 0x7f, sizeof(int)), "poison batch status");
-        const auto rejected = arch::cuda::launch_diffusion_stage_batch(batch_plan, batch_plan.stages[0],
-            invalid_bindings, device_bindings.pointer, eos, fixture.eos.species, config, 1e-6, nullptr);
-        fixture.status.download(&status, 1);
-        if (rejected.error != cudaErrorInvalidValue || rejected.kernels_launched != 0 || status != 0x7f7f7f7f)
-            fail("Batched diffusion late-alias preflight wrote an earlier block");
-        if (!invalid) {
-            // An invalid EOS payload is rejected by its status, not a physical
-            // timestep reference. Check recovery against the uniform-capacity
-            // analytic limit, then bitwise repeatability of two valid runs.
-            expect_close("Tabular recovered uniform-capacity dt", dt,
-                         fixture.grid.dx1*fixture.grid.dx1/(2.*config.alpha_therm));
-            if (previous_dt > 0. && std::bit_cast<std::uint64_t>(dt)
-                != std::bit_cast<std::uint64_t>(previous_dt))
-                fail("Tabular valid timestep is not repeatable after recovery");
-            previous_dt = dt;
-        }
-    }
-    // Only rho=1's lower-T knot is invalid. At rho=10 the original Host
-    // evaluator must remain valid, so one failed block cannot poison its peer.
-    std::fill_n(table.data() + tabular_eos::Fyy * extent, compositions, 0.0);
-    Eos mixed_host = eos;
-    for (int field = 0; field < tabular_eos::FieldCount; ++field)
-        mixed_host.free_energy_fields[field] = table.data() + field * extent;
-    bool lower_failed = false;
-    try { static_cast<void>(mixed_host.get_temperature(1.0, 100.0, nullptr)); }
-    catch (const std::runtime_error&) { lower_failed = true; }
-    if (!lower_failed || !std::isfinite(mixed_host.get_temperature(10.0, 100.0+std::log(10.0), nullptr)))
-        fail("Mixed Tabular fixture did not isolate an invalid and valid density endpoint");
-    auto valid_peer = fixture.host_state;
-    for (int cell = 0; cell < fixture.grid.GetTotalSize(); ++cell) {
-        valid_peer.rho[cell] = 10.0;
-        valid_peer.eng[cell] = 10.0*(100.0+std::log(10.0));
-    }
-    second.state.upload(valid_peer);
-    device_table.upload(table.data(), table.size());
-    for (int ordering = 0; ordering < 2; ++ordering) {
-        if (ordering) std::swap(bindings[0], bindings[1]);
-        device_bindings.upload(bindings.data(), bindings.size());
-        const auto dt_result = arch::cuda::launch_diffusion_dt_batch(bindings, device_bindings.pointer,
-            eos, fixture.eos.species, config, nullptr);
-        require_cuda(dt_result.error, "Mixed block diffusion dt");
-        require_cuda(cudaDeviceSynchronize(), "Mixed block diffusion dt sync");
-        int failed_status = -1, valid_status = -1;
-        fixture.status.download(&failed_status, 1);
-        second.status.download(&valid_status, 1);
-        if (failed_status != 1 || valid_status != 0)
-            fail("Diffusion dt failure crossed block status ownership");
-        const auto stage_result = arch::cuda::launch_diffusion_stage_batch(batch_plan, batch_plan.stages[0],
-            bindings, device_bindings.pointer, eos, fixture.eos.species, config, 1e-6, nullptr);
-        require_cuda(stage_result.error, "Mixed block diffusion stage");
-        require_cuda(cudaDeviceSynchronize(), "Mixed block diffusion stage sync");
-        fixture.status.download(&failed_status, 1);
-        second.status.download(&valid_status, 1);
-        if (failed_status != 1 || valid_status != 0)
-            fail("Diffusion stage failure crossed block status ownership");
-    }
-}
-
-void verify_tabular_diffusion_failures()
-{
-    BasicTabular3DEOSView<arch::test::FixedTableComposition> eos3{};
-    eos3.n_rho = eos3.n_T = eos3.n_X = 2;
-    eos3.log_rho_max = eos3.dlog_rho = 1.0;
-    eos3.log_T_max = eos3.dlog_T = .2;
-    eos3.X_max = eos3.dX = 1.0;
-    eos3.target_species_id = -1;
-    verify_tabular_diffusion_latch(eos3, 2);
-    BasicTabular4DEOSView<arch::test::FixedTableComposition> eos4{};
-    eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
-    eos4.log_rho_max = eos4.dlog_rho = 1.0;
-    eos4.log_T_max = eos4.dlog_T = .2;
-    eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
-    eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
-    verify_tabular_diffusion_latch(eos4, 4);
-}
 
 void compare_operator_state(
     const FluidState& device, const FluidState& host, const Grid& grid,
@@ -1565,143 +1254,9 @@ void verify_rkl_stages()
     }
 }
 
-/** Exercise the real first/recursive output consumers on raw native means.
- * A constant-density rigid rotation has m_phi=J/W and E=E/V. Independent
- * antiderivatives give m_phi=3*omega*(a+b)*(a^2+b^2)/(4*(a^2+a*b+b^2))
- * and E=e+omega^2*(a^2+b^2)/4 for rho=1. At this distant annulus, raw
- * Cartesian recovery rejects E-m_phi^2/2 while the native inertia leaves e>0.
- * Zero operators preserve the stationary RKL identity exactly. This is an
- * output-kernel precheck, not a completed Runtime BC/EOS acceptance fixture.
- */
-void verify_native_rkl_output_precheck()
-{
-    constexpr auto native = GridMetrics::GeometrySemantics::AxisymmetricRz;
-    Grid grid(amr::MAX_NG, 8., 24., 0., 16., 0., 1.);
-    grid.dim = 2; grid.geometry = "cylindrical";
-    grid.InitializeTopology(native);
-    grid.dyadic_identity.bound = true;
-    grid.dyadic_identity.root_lower = {8., 0.};
-    grid.dyadic_identity.root_upper = {24., 16.};
-    grid.dyadic_identity.root_blocks = {1, 1};
-    grid.dyadic_identity.level = 0;
-    grid.dyadic_identity.logical = {0, 0};
-    grid.InitializeTopology(native);
-    const auto device_grid = arch::cuda::make_device_grid_view(grid, native);
-    const auto geometry = GridMetrics::make_geometry_view(grid, native);
-    const int extent = grid.GetTotalSize();
-    const int probe = grid.GetIndex(grid.Is(), grid.Js(), grid.Ks());
-    FluidState initial, increment;
-    initial.Preallocate(extent); initial.InitSpecies(2);
-    increment.Preallocate(extent); increment.InitSpecies(2);
-    constexpr long double omega = 64.L;
-    for (int cell = 0; cell < extent; ++cell) {
-        initial.set(cell, {1., 0., 0., 0., 1.});
-        initial.X(0, cell) = .25; initial.X(1, cell) = .75;
-        initial.enuc_rate[cell] = 700000. + cell;
-        const int i = cell % grid.stride_y;
-        if (i >= grid.GetTotalX()) continue; // allocation padding is not a cell.
-        const long double a = grid.GetFacePosL(i), b = grid.GetFacePosR(i);
-        initial.mom_w[cell] = static_cast<double>(.75L * omega * (a+b)
-            * (a*a+b*b) / (a*a+a*b+b*b));
-        initial.eng[cell] = static_cast<double>(1.L+.25L*omega*omega*(a*a+b*b));
-    }
-    const arch::state::Bounds bounds{.75, .25, 2.};
-    const auto closure = RzThermodynamics::make_cell(
-        [&](int cell) { return initial.get(cell); }, probe, geometry, grid.Is(), bounds);
-    if (!closure.valid() || !(closure.internal > .5))
-        fail("native annulus reference lost positive effective thermal energy");
-    double ordinary_x[]{.25, .75};
-    const auto ordinary = arch::state::accept_conservative_state(initial.get(probe),
-        ordinary_x, 2, 1, bounds.density, bounds.internal_min,
-        bounds.internal_max, GridMetrics::CellVolume(geometry, grid.Is(), grid.Js(), grid.Ks()),
-        {}, probe);
-    if (ordinary != arch::state::Status::unresolved_energy)
-        fail("native annulus no longer separates raw and effective kinetic recovery");
+} // namespace diffusion_rkl_test
 
-    DeviceStateOwner input(extent, 2), delta(extent, 2), output(extent, 2);
-    DeviceArray<int> status(1);
-    arch::state::RepairBudget repairs(2, arch::state::RepairSemantics::RzVolumeAngular);
-    DeviceArray<double> device_repairs(repairs.values.size());
-    arch::cuda::DeviceDiffusionBatchBlock binding{};
-    binding.state_n = binding.previous = binding.older = input.view;
-    binding.delta = binding.initial_delta = delta.view;
-    binding.output = output.view; binding.grid = device_grid;
-    binding.workspace.status = status.pointer; binding.bounds = bounds;
-    binding.repairs = {device_repairs.pointer, 2, repairs.semantics};
-    DeviceArray<arch::cuda::DeviceDiffusionBatchBlock> device_binding(1);
-    device_binding.upload(&binding, 1);
-    delta.upload(increment);
-    const std::array<arch::state::Status, 7> expected{
-        arch::state::Status::valid, arch::state::Status::nonfinite,
-        arch::state::Status::nonpositive_density, arch::state::Status::invalid_thermodynamics,
-        arch::state::Status::invalid_composition, arch::state::Status::invalid_composition,
-        arch::state::Status::invalid_composition};
-    for (int route = 0; route < 3; ++route) {
-        for (std::size_t scenario = 0; scenario < expected.size(); ++scenario) {
-            FluidState trial = initial;
-            if (scenario == 1) trial.eng[probe] = std::numeric_limits<double>::infinity();
-            if (scenario == 2) trial.rho[probe] = 0.;
-            if (scenario == 3) trial.rho[probe] = .5;
-            if (scenario == 4) {
-                trial.X(0, probe) = -std::numeric_limits<double>::epsilon();
-                trial.X(1, probe) = 1.+std::numeric_limits<double>::epsilon();
-            }
-            if (scenario == 5) trial.X(1, probe) = .5;
-            if (scenario == 6) trial.X(0, probe) = std::numeric_limits<double>::quiet_NaN();
-            input.upload(trial); output.upload(initial);
-            const int zero = 0;
-            status.upload(&zero, 1);
-            device_repairs.upload(repairs.values.data(), repairs.values.size());
-            const dim3 cells(arch::cuda::detail::hydro_launch_blocks(device_grid.active_cell_count(), 128));
-            if (route == 0) {
-                const auto coefficients = DiffFunction::get_rkl_coeffs(DiffFunction::RKLOrder::First, 1, 5);
-                arch::cuda::detail::first_rkl_stage_kernel<<<cells, 128>>>(
-                    input.view, delta.view, output.view, device_grid,
-                    coefficients.tilde_mu*.125, device_binding.pointer);
-            } else {
-                const bool second_order = route == 2;
-                const auto coefficients = DiffFunction::get_rkl_coeffs(second_order
-                    ? DiffFunction::RKLOrder::Second : DiffFunction::RKLOrder::First, 3, 5);
-                arch::cuda::detail::recursive_rkl_stage_kernel<<<cells, 128>>>(
-                    input.view, input.view, input.view, delta.view, delta.view,
-                    output.view, device_grid, coefficients, second_order, .125, false,
-                    device_binding.pointer);
-            }
-            require_cuda(cudaGetLastError(), "native RKL output launch");
-            require_cuda(cudaDeviceSynchronize(), "native RKL output sync");
-            int reported = 0; status.download(&reported, 1);
-            const int expected_code = expected[scenario] == arch::state::Status::valid
-                ? 0 : 100+static_cast<int>(expected[scenario]);
-            if (reported != expected_code) fail("native RKL output status hid or invented a failure");
-            const auto result = output.download();
-            for (int cell = 0; cell < extent; ++cell) {
-                const auto actual = result.get(cell), seed = initial.get(cell);
-                const std::array<double, 6> actual_fields{actual.rho, actual.mom_u,
-                    actual.mom_v, actual.mom_w, actual.eng, result.enuc_rate[cell]};
-                const std::array<double, 6> seed_fields{seed.rho, seed.mom_u,
-                    seed.mom_v, seed.mom_w, seed.eng, initial.enuc_rate[cell]};
-                for (std::size_t field = 0; field < actual_fields.size(); ++field)
-                    expect_bits("native RKL stationary/failed output raw field", actual_fields[field],
-                        std::bit_cast<std::uint64_t>(seed_fields[field]));
-                if (scenario == 0 || cell != probe)
-                    for (int species = 0; species < 2; ++species)
-                        expect_bits("native RKL stationary/ghost species", result.X(species, cell),
-                            std::bit_cast<std::uint64_t>(initial.X(species, cell)));
-            }
-            if (scenario == 4 || scenario == 5)
-                for (int species = 0; species < 2; ++species)
-                    expect_bits("native RKL rejected fractions remain unprojected", result.X(species, probe),
-                        std::bit_cast<std::uint64_t>(trial.X(species, probe)));
-            if (scenario == 6 && !std::isnan(result.X(0, probe)))
-                fail("native RKL replaced a nonfinite fraction");
-            device_repairs.download(repairs.values.data(), repairs.values.size());
-            for (double value : repairs.values)
-                expect_bits("native RKL does not repair raw V/W state", value, 0);
-        }
-    }
-}
-
-} // namespace
+using namespace diffusion_rkl_test;
 
 int main()
 {
@@ -1719,6 +1274,5 @@ int main()
     verify_preflight_and_master_off();
     verify_buffer_initialization();
     verify_rkl_stages();
-    verify_native_rkl_output_precheck();
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

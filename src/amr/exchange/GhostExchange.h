@@ -31,9 +31,8 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/transfer/LimitedLinearProlongation.h"
-#include "amr/transfer/NativeRzRegridTransfer.h"
+#include "amr/transfer/RegridTransferMath.h"
 #include "data/GlobalDefs.h"
-#include "numerics/state/RzNativeClosure.h"
 
 namespace amr {
 
@@ -51,14 +50,13 @@ public:
     // One entry per exchange owner, not one entry per historical topology.
     // Logical plans contain no storage/view pointers. Slots, generations,
     // layouts and physical measures are deliberately rebound by each executor.
-    // Native geometry/chart also keys this cache because seam stencils store
-    // physical donor weights; field/slot contents remain outside the key.
+    // Geometry keys this cache because seam stencils store physical donor
+    // weights; field/slot contents remain outside the key.
     // The returned reference is valid until the next cache miss on this owner.
     const CachedPlans& GetPlans(
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
-        std::span<const BlockHandle> handles,
-        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart) const
+        std::span<const BlockHandle> handles) const
     {
         if (!pool || !tree || dim < 1 || dim > 3)
             throw std::invalid_argument("invalid exchange plan cache context");
@@ -70,7 +68,6 @@ public:
         key.reserve(3 + active.size() * 72);
         key.push_back(static_cast<std::uint64_t>(dim));
         key.push_back(active.size());
-        key.push_back(static_cast<std::uint64_t>(chart));
         for (std::size_t i = 0; i < active.size(); ++i) {
             if (!is_valid(handles[i]))
                 throw std::invalid_argument("exchange cache has invalid handle");
@@ -90,11 +87,7 @@ public:
             for (double value : {grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,
                     grid.x3_min,grid.x3_max,grid.dx1,grid.dx2,grid.dx3})
                 key.push_back(std::bit_cast<std::uint64_t>(value));
-            if(chart==CoordinateSeamGeometry::RzAxisymmetric) {
-                block.RequireNativeGeometryIdentity();
-                const auto provenance=GridMetrics::identity_words(grid.dyadic_identity);
-                key.insert(key.end(),provenance.begin(),provenance.end());
-            }
+
             key.insert(key.end(), {static_cast<std::uint64_t>(grid.dim),
                 static_cast<std::uint64_t>(grid.nblockx1),
                 static_cast<std::uint64_t>(grid.nblockx2),
@@ -119,7 +112,7 @@ public:
         candidate->same_level = BuildSameLevelPlans(pool, tree, dim, handles);
         candidate->coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
         candidate->coordinate_seam = make_coordinate_seam_plan(
-            pool, active, dim, chart);
+            pool, active, dim);
         std::map<BlockHandle, std::size_t> indices;
         for (std::size_t i = 0; i < handles.size(); ++i)
             if (!indices.emplace(handles[i], i).second)
@@ -344,9 +337,7 @@ public:
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
         FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles,
-        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart,
-        arch::state::Bounds bounds = {})
+        std::span<const BlockHandle> handles)
     {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (state_ptr == nullptr || plan.dimension != dim
@@ -365,20 +356,7 @@ public:
             std::uint8_t source_count = 0;
             double source_measure_sum = 0.0;
             RefinementRule rule = RefinementRule::CoarseGhostInjection;
-            std::size_t rz_geometry = std::numeric_limits<std::size_t>::max();
         };
-        struct RzTransferGeometry {
-            regrid_math::NativeRzProlongationContext prolongation{};
-            regrid_math::RestrictionGeometry restriction{};
-            int fine_child = 0;
-        };
-        const bool rz=chart==CoordinateSeamGeometry::RzAxisymmetric;
-        if(rz && (dim!=2 || !std::isfinite(bounds.density) || bounds.density<0.0
-            || !std::isfinite(bounds.internal_min) || bounds.internal_min<0.0
-            || !std::isfinite(bounds.internal_max)
-            || bounds.internal_max<bounds.internal_min))
-            throw std::invalid_argument("RZ ghost exchange requires valid borrowed state bounds");
-        std::vector<RzTransferGeometry> rz_geometries;
         std::map<LogicalBlockKey, std::size_t> active_index;
         int species_count = -1;
         for (std::size_t index = 0; index < active_blocks.size(); ++index) {
@@ -456,13 +434,7 @@ public:
             for (std::size_t cell = 0; cell < lowered.source_count; ++cell) {
                 lowered.source_cells[cell] = cell_index(
                     source_block.grid, transfer.source_cells[cell]);
-                if(rz&&lowered.rule==RefinementRule::FineGhostAverage) {
-                    const auto& logical=transfer.source_cells[cell];
-                    if(logical[0]<0||logical[0]>=source_block.grid.Ie()-source_block.grid.Is()
-                        ||logical[1]<0||logical[1]>=source_block.grid.Je()-source_block.grid.Js()
-                        ||logical[2]!=0)
-                        throw std::invalid_argument("Native restriction overlay requires actual fine interior donors");
-                }
+
                 // Cartesian fine cells have one common measure, so unit
                 // weights preserve the existing arithmetic.  Curvilinear
                 // restriction must use physical cell volumes.
@@ -471,10 +443,7 @@ public:
                     const LogicalAmrCell& logical =
                         transfer.source_cells[cell];
                     measure = GridMetrics::CellVolume(
-                        GridMetrics::make_geometry_view(source_block.grid,
-                            chart==CoordinateSeamGeometry::RzAxisymmetric
-                                ? GridMetrics::GeometrySemantics::AxisymmetricRz
-                                : GridMetrics::GeometrySemantics::Existing),
+                        GridMetrics::make_geometry_view(source_block.grid),
                         source_block.grid.Is() + logical[0],
                         source_block.grid.Js() + logical[1],
                         source_block.grid.Ks() + logical[2]);
@@ -495,55 +464,7 @@ public:
                 || lowered.source_measure_sum <= 0.0)
                 throw std::invalid_argument(
                     "coarse-fine Host source measure sum is invalid");
-            if(rz) {
-                RzTransferGeometry geometry{};
-                source_block.RequireNativeGeometryIdentity();destination_block.RequireNativeGeometryIdentity();
-                const auto source_view=GridMetrics::make_geometry_view(source_block.grid,
-                    GridMetrics::GeometrySemantics::AxisymmetricRz);
-                const auto destination_view=GridMetrics::make_geometry_view(destination_block.grid,
-                    GridMetrics::GeometrySemantics::AxisymmetricRz);
-                if(lowered.rule==RefinementRule::CoarseGhostInjection) {
-                    auto& context=geometry.prolongation;
-                    context.source_geometry=source_view;
-                    context.logical_nx=source_block.grid.GetTotalX();
-                    context.logical_ny=source_block.grid.GetTotalY();
-                    context.radial_i=source_block.grid.Is()+transfer.source_cells[0][0];
-                    context.axial_j=source_block.grid.Js()+transfer.source_cells[0][1];
-                    geometry.fine_child=(transfer.fine_position[0]>0.0?1:0)
-                        |(transfer.fine_position[1]>0.0?2:0);
-                    // The selected member is the actual destination ghost.
-                    // The other intervals are its real 2:1 spatial siblings;
-                    // no sibling array/virtual halo is read or written here.
-                    const int fi=destination_block.grid.Is()+transfer.destination_cell[0]
-                        -(geometry.fine_child&1);
-                    const int fj=destination_block.grid.Js()+transfer.destination_cell[1]
-                        -((geometry.fine_child>>1)&1);
-                    context.has_destination_geometry=true;context.destination_geometry=destination_view;
-                    context.destination_nx=destination_block.grid.GetTotalX();
-                    context.destination_ny=destination_block.grid.GetTotalY();context.fine_i=fi;context.fine_j=fj;
-                    for(int child=0;child<4;++child) {
-                        const int ci=fi+(child&1),cj=fj+((child>>1)&1);
-                        context.children[child]={destination_view.GetFacePosL(ci),destination_view.GetFacePosR(ci),
-                            destination_view.GetAxialFacePosL(cj),destination_view.GetAxialFacePosR(cj)};
-                    }
-                } else {
-                    auto& rg=geometry.restriction;
-                    rg.count=lowered.source_count;rg.angular_momentum=true;
-                    const int i=destination_block.grid.Is()+transfer.destination_cell[0];
-                    const int j=destination_block.grid.Js()+transfer.destination_cell[1];
-                    rg.coarse_volume=GridMetrics::CellVolume(destination_view,i,j,0);
-                    rg.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(destination_view,i,j);
-                    for(int c=0;c<rg.count;++c) {
-                        const int fi=source_block.grid.Is()+transfer.source_cells[c][0];
-                        const int fj=source_block.grid.Js()+transfer.source_cells[c][1];
-                        rg.source_cells[c]=lowered.source_cells[c];
-                        rg.volumes[c]=lowered.source_measures[c];
-                        rg.angular_measures[c]=GridMetrics::Rz::AngularMomentumMeasure(source_view,fi,fj);
-                    }
-                }
-                lowered.rz_geometry=rz_geometries.size();
-                rz_geometries.push_back(geometry);
-            }
+
             compiled.push_back(lowered);
         }
 
@@ -553,91 +474,12 @@ public:
         };
         std::vector<GatheredTransfer> gathered;
         gathered.reserve(compiled.size());
-        std::vector<double> rz_workspace(rz
-            ? static_cast<std::size_t>(species_count)*regrid_math::prolongation_workspace_per_species : 0);
 
         // Gather the complete plan before scattering.  Besides matching the
         // CUDA two-kernel execution, this prevents the fine-to-coarse route
         // from overwriting a coarse stencil needed by its reciprocal
         // coarse-to-fine route.
-        if(rz) {
-            // Workflow: first gather every fine->coarse result from immutable
-            // fine interiors, then lend that sparse same-frame density/U/X
-            // overlay to all coarse->fine readers. All candidates remain local
-            // until both passes succeed; final scatter and seam order stay as
-            // before. No full-state copy or previous-stage field cache is used.
-            gathered.resize(compiled.size());
-            using OverlayKey=std::pair<int,int>; // actual pool id + flat cell, one frozen slot
-            std::map<OverlayKey,std::size_t> restriction_overlay;
-            /** Validate only native finite/rho/simplex and ENUC; actual thermal
-             * closure/EOS follows genuine final hierarchy ghost completion. */
-            const auto validate_provisional=[&](const GatheredTransfer& values) {
-                const auto& u=values.fields;
-                const FluidVector native{u[0],u[1],u[2],u[3],u[4]};
-                if(!std::isfinite(u[5])||RzThermodynamics::provisional_native_state(native,
-                    values.mass_fractions.data(),species_count,1,bounds)!=arch::state::Status::valid)
-                    throw std::runtime_error("RZ ghost transfer violates borrowed provisional state bounds");
-            };
-            for(std::size_t n=0;n<compiled.size();++n) {
-                const auto& transfer=compiled[n];
-                if(transfer.rule!=RefinementRule::FineGhostAverage)continue;
-                const auto& source=pool->GetBlock(transfer.source_id).*state_ptr;
-                const auto& geometry=rz_geometries.at(transfer.rz_geometry);
-                regrid_math::RestrictionResult result{};
-                const auto status=regrid_math::restrict_family(regrid_state_view(source),
-                    geometry.restriction,species_count,bounds.density,bounds.internal_min,
-                    rz_workspace.data(),result);
-                if(status!=regrid_math::Status::Ok)
-                    throw std::runtime_error(regrid_math::status_message(status));
-                auto& values=gathered[n];const auto& fluid=result.fluid;
-                values.fields={fluid.rho,fluid.mom_u,fluid.mom_v,fluid.mom_w,fluid.eng,result.enuc};
-                values.mass_fractions.resize(static_cast<std::size_t>(species_count));
-                for(int sp=0;sp<species_count;++sp)values.mass_fractions[sp]=result.fractions[sp];
-                validate_provisional(values);
-                if(!restriction_overlay.emplace(OverlayKey{transfer.destination_id,
-                    transfer.destination_cell},n).second)
-                    throw std::logic_error("Native restriction overlay has duplicate actual destination");
-            }
-            for(std::size_t n=0;n<compiled.size();++n) {
-                const auto& transfer=compiled[n];
-                if(transfer.rule==RefinementRule::FineGhostAverage)continue;
-                if(transfer.rule!=RefinementRule::CoarseGhostInjection)
-                    throw std::logic_error("Native transfer has an unknown real refinement rule");
-                const auto& source=pool->GetBlock(transfer.source_id).*state_ptr;
-                const auto& geometry=rz_geometries.at(transfer.rz_geometry);
-                /** Read the same immutable candidate overlay before actual live seed data. */
-                const auto overlay=[&](int index)->const GatheredTransfer* {
-                    const auto entry=restriction_overlay.find(OverlayKey{transfer.source_id,index});
-                    return entry==restriction_overlay.end()?nullptr:&gathered[entry->second];
-                };
-                const auto read=[&](int index) {
-                    if(const auto* value=overlay(index)) {
-                        const auto& u=value->fields;return FluidVector{u[0],u[1],u[2],u[3],u[4]};
-                    }
-                    return source.get(index);
-                };
-                const auto enuc=[&](int index) {
-                    if(const auto* value=overlay(index))return value->fields[5];
-                    return source.enuc_rate[index];
-                };
-                const auto fraction=[&](int sp,int index) {
-                    if(const auto* value=overlay(index))return value->mass_fractions[sp];
-                    return source.X(sp,index);
-                };
-                regrid_math::ProlongationResult result{};
-                const auto status=regrid_math::prolong_native_family(geometry.prolongation,
-                    read,enuc,fraction,species_count,bounds,rz_workspace.data(),result);
-                if(status!=regrid_math::Status::Ok)
-                    throw std::runtime_error(regrid_math::status_message(status));
-                const int child=geometry.fine_child;const auto& fluid=result.fluid[child];
-                auto& values=gathered[n];
-                values.fields={fluid.rho,fluid.mom_u,fluid.mom_v,fluid.mom_w,fluid.eng,result.enuc[child]};
-                values.mass_fractions.resize(static_cast<std::size_t>(species_count));
-                for(int sp=0;sp<species_count;++sp)values.mass_fractions[sp]=result.rhoX[
-                    static_cast<std::size_t>(sp)*regrid_math::maximum_children+child]/fluid.rho;
-                validate_provisional(values);
-            }
-        } else {
+
         for (const CompiledTransfer& transfer : compiled) {
             const FluidState& source =
                 pool->GetBlock(transfer.source_id).*state_ptr;
@@ -710,7 +552,7 @@ public:
             gathered.push_back(std::move(values));
         }
 
-        }
+        
 
         for (std::size_t index = 0; index < compiled.size(); ++index) {
             const CompiledTransfer& transfer = compiled[index];
@@ -732,9 +574,7 @@ public:
     void ExecuteExchange(
         std::shared_ptr<MemoryPool> pool, std::shared_ptr<AmrTree> tree,
         int dim, FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles = {},
-        CoordinateSeamGeometry chart = CoordinateSeamGeometry::ExistingChart,
-        arch::state::Bounds bounds = {})
+        std::span<const BlockHandle> handles = {})
     {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (handles.empty() || handles.size() != active_blocks.size())
@@ -772,7 +612,7 @@ public:
             view.species_stride = block.grid.GetTotalSize();
             views.push_back(view);
         }
-        const auto& plans = GetPlans(pool, tree, dim, handles, chart);
+        const auto& plans = GetPlans(pool, tree, dim, handles);
         host_compiled_.resize(plans.same_level.size());
         std::vector<HostExchangeBlockView> level_views;
         for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
@@ -808,29 +648,8 @@ public:
                 *compiled, level_views, host_workspace_);
         }
         ExecuteCoarseFinePlan(
-            plans.coarse_fine, pool, tree, dim, state_ptr, handles, chart,bounds);
-        if (chart == CoordinateSeamGeometry::RzAxisymmetric) {
-            // Workflow: coarse-fine radial publication follows the original
-            // X/Y sweep and refreshes only active axial tangent rows. Native
-            // axial donor closures also read radial rho in axial ghosts. At
-            // a T junction those corners must therefore borrow the newly
-            // published radial halo, rather than the earlier Y copy. Replay
-            // exactly the already-validated Y phase; do not iterate exchange.
-            // Y gathers every source before scatter, reads active axial rows,
-            // and writes axial ghosts only: active U/X and refreshed radial
-            // coarse-fine rows remain immutable. No new math/cache is added.
-            // The first complete sweep already reserved level_views and both
-            // shared workspace vectors for every level/phase. The same views,
-            // sizes and immutable plans cannot grow during this replay.
-            for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
-                level_views.clear();
-                for (const auto index : plans.level_indices[group])
-                    level_views.push_back(views[index]);
-                exchange_detail::execute_prevalidated_host_exchange_plan(
-                    *host_compiled_[group], level_views, host_workspace_,
-                    ExchangePhaseId::Y);
-            }
-        }
+            plans.coarse_fine, pool, tree, dim, state_ptr, handles);
+
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 

@@ -43,6 +43,19 @@ comparisons, including six actual CUDA processes with complete clean reports
 per sanitizer. Each record keeps its tested source and binary identity; the
 details are grouped at the end of this page.
 
+## Current CPU continuations
+
+The [current CPU record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+checks RT, BurnGradient, CooperativeHotspots and Cartesian four-module SNIa
+from both post-regrid and terminal checkpoints in fresh processes. Accepted
+fixtures pass the original time, controller, topology, scientific-identity and
+actual output-history gates; all native physical arrays match bit for bit.
+SNIa matches both checkpoint and plot boundaries. Earlier unmatched-boundary
+numerical/bitwise and output-history results remain recorded without changing
+the solver-history policy or comparison budgets. These short checks do not
+renew historical long trajectories, the original SNIa `1e-8 s` qualification,
+or CUDA execution evidence.
+
 <a id="completed-checks-on-the-release-candidate"></a>
 
 ## Accepted CPU/CUDA checks

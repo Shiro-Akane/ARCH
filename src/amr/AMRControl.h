@@ -20,7 +20,7 @@
 #include "amr/exchange/GhostExchange.h"
 #include "amr/storage/MemoryPool.h"
 
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 
@@ -77,32 +77,29 @@ struct AMRControl {
     }
 
     const AmrFluxTopologyPlan& RequireFluxTopologyPlan(int species_count,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-        int source_block = -1, bool angular_transport = false)
+        int source_block = -1)
     {
         const auto handles = ActiveHandles();
         const int dimension = tree->GetRootGridDim();
         auto cached = std::atomic_load_explicit(
             &flux_topology_plan_, std::memory_order_acquire);
         if (cached && cached->species_count == species_count
-            && cached->angular_transport == angular_transport
             && cached->dimension == dimension
             && cached->epoch == handles.front().epoch
-            && matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),semantics,source_block))
+            && matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),source_block))
             return *cached;
 
         std::lock_guard lock(flux_plan_mutex_);
         cached = std::atomic_load_explicit(
             &flux_topology_plan_, std::memory_order_acquire);
         if (!cached || cached->species_count != species_count
-            || cached->angular_transport != angular_transport
             || cached->dimension != dimension
             || cached->epoch != handles.front().epoch
-            || !matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),semantics,source_block)) {
+            || !matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),source_block)) {
             cached = std::make_shared<const AmrFluxTopologyPlan>(
                 build_amr_flux_topology_plan(
                     *pool, tree->GetActiveBlocks(), handles,
-                    dimension, species_count,semantics,angular_transport));
+                    dimension, species_count));
             std::atomic_store_explicit(
                 &reflux_topology_plan_,
                 std::shared_ptr<const CachedRefluxPlan>{},
@@ -113,11 +110,9 @@ struct AMRControl {
         return *cached;
     }
 
-    const RefluxPlan& RequireRefluxTopologyPlan(int species_count,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-        bool angular_transport = false)
+    const RefluxPlan& RequireRefluxTopologyPlan(int species_count)
     {
-        const auto& topology = RequireFluxTopologyPlan(species_count,semantics,-1,angular_transport);
+        const auto& topology = RequireFluxTopologyPlan(species_count,-1);
         auto cached = std::atomic_load_explicit(
             &reflux_topology_plan_, std::memory_order_acquire);
         if (cached && cached->topology_fingerprint == topology.fingerprint)
@@ -136,19 +131,15 @@ struct AMRControl {
     }
 
 
-    void ApplyReflux(double dt, FluidState Block::* state_ptr = &Block::fluid_state,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-        bool angular_transport = false) {
+    void ApplyReflux(double dt, FluidState Block::* state_ptr = &Block::fluid_state) {
         const auto& active_blocks = tree->GetActiveBlocks();
         const auto& plan = RequireRefluxTopologyPlan(
-            flux_register.GetNumSpecies(),semantics,angular_transport);
+            flux_register.GetNumSpecies());
         const auto& topology=RequireFluxTopologyPlan(
-            flux_register.GetNumSpecies(),semantics,-1,angular_transport);
-        flux_register.ValidateTopologyIdentity(topology.fingerprint,
-            !plan.operations.empty()
-                && semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+            flux_register.GetNumSpecies(),-1);
+        flux_register.ValidateTopologyIdentity(topology.fingerprint);
         flux_register.ExecuteRefluxPlan(
-            plan, pool, active_blocks, ActiveHandles(), state_ptr, dt, &topology);
+            plan, pool, active_blocks, ActiveHandles(), state_ptr, dt);
     }
 
     AMRControl(int max_blocks, int dim) {

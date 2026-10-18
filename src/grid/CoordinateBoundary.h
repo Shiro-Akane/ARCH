@@ -17,7 +17,7 @@
 
 #include <cmath>
 
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 
 namespace GridMetrics {
 /** Identify exact zero-area native chart endpoints before evaluating a flux. */

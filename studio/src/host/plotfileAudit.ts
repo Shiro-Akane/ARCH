@@ -12,14 +12,14 @@ import {record} from './previewValidation.ts';
 export interface SliceSelection {field:string;block:number;start:number[];count:number[]}
 export type RawPlotNumber=number|'NaN'|'Infinity'|'-Infinity';
 export interface CandidateNativeGrid {
- version:'candidate-cartesian-1'|'arch-native-cartesian-1'|'arch-native-curvilinear-1'|'arch-native-axisymmetric-rz-2';measureSource:'GridMetrics::CellVolume';
- measureConvention:'active-coordinate-product; inactive-measures-omitted'|'GridMetrics-native-coordinate-integral'|'full-rotation-axisymmetric-ring';
+ version:'candidate-cartesian-1'|'arch-native-cartesian-1'|'arch-native-curvilinear-1';measureSource:'GridMetrics::CellVolume';
+ measureConvention:'active-coordinate-product; inactive-measures-omitted'|'GridMetrics-native-coordinate-integral';
  measureUnit:'cm'|'cm^2'|'cm^3'|null;measureNormalization?:string|null;
- geometry?:'cartesian'|'cylindrical'|'spherical';axes?:string[];axisUnits?:string[];chart?:'existing'|'axisymmetric-rz';
+ geometry?:'cartesian'|'cylindrical'|'spherical';axes?:string[];axisUnits?:string[];chart?:'existing';
 }
 export interface NativePlotCells extends CandidateNativeGrid {
  identityScope:'file-local';logicalKey:string;level:number;logicalCoordinates:number[];
- lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];angularMeasure?:number[];mPhi?:number[];angularMomentumDensity?:number[];
+ lower:Record<'x1'|'x2'|'x3',number[]>;upper:Record<'x1'|'x2'|'x3',number[]>;cellMeasure:number[];
 }
 export interface PlotfileAudit {
  pointEvidence?:PlotfilePointEvidence;
@@ -38,21 +38,21 @@ function rawCoordinates(v:unknown,n:number){if(!record(v))return false;return ['
 function nativeHeaderValid(v:unknown):v is CandidateNativeGrid {
  if(!record(v)||v.measureSource!=='GridMetrics::CellVolume'||!validMeasureLabels(v.measureUnit,v.measureNormalization))return false;
  if(v.version==='candidate-cartesian-1')return v.measureConvention==='active-coordinate-product; inactive-measures-omitted';
- if(!['arch-native-cartesian-1','arch-native-curvilinear-1','arch-native-axisymmetric-rz-2'].includes(String(v.version))||
+ if(!['arch-native-cartesian-1','arch-native-curvilinear-1'].includes(String(v.version))||
   !['cartesian','cylindrical','spherical'].includes(String(v.geometry))||!Array.isArray(v.axes)||!Array.isArray(v.axisUnits)||
   v.axes.length!==3||v.axisUnits.length!==3||!v.axes.every(x=>typeof x==='string')||
   !v.axisUnits.every(x=>['cm','rad','inactive'].includes(String(x))))return false;
- const dimension=v.axes.filter(x=>x!=='inactive').length,rz=v.version==='arch-native-axisymmetric-rz-2';
- if(dimension<1||dimension>3||v.chart!==(rz?'axisymmetric-rz':'existing')||
+ const dimension=v.axes.filter(x=>x!=='inactive').length;
+ if(dimension<1||dimension>3||v.chart!=='existing'||
   v.version==='arch-native-cartesian-1'&&v.geometry!=='cartesian'||
   v.version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(String(v.geometry))||
-  rz&&(v.geometry!=='cylindrical'||dimension!==2))return false;
- const axes=v.geometry==='cartesian'?['x','y','z']:rz?['r','z','inactive']:
+  v.geometry==='cylindrical'&&dimension===2)return false;
+ const axes=v.geometry==='cartesian'?['x','y','z']:
   dimension===3?(v.geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
  const units:string[]=axes.map(x=>['theta','phi'].includes(x)?'rad':'cm');
  for(let i=0;i<3;i++){if(i>=dimension){axes[i]='inactive';units[i]='inactive';}
   if(v.axes[i]!==axes[i]||v.axisUnits[i]!==units[i])return false;}
- const convention=rz?'full-rotation-axisymmetric-ring':v.geometry==='cartesian'?
+ const convention=v.geometry==='cartesian'?
   'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral';
  return v.measureConvention===convention&&validMeasureLabels(v.measureUnit,v.measureNormalization,dimension);
 }
@@ -63,10 +63,6 @@ function nativeCellsValid(v:unknown,header:unknown,n:number,dimension:number):v 
     v.logicalKey!==[v.level,...v.logicalCoordinates].join('/')||
     !record(v.lower)||!record(v.upper)||!Array.isArray(v.cellMeasure)||v.cellMeasure.length!==n||
     v.cellMeasure.some(x=>typeof x!=='number'||!Number.isFinite(x)||x<=0))return false;
- if(v.chart==='axisymmetric-rz'&&(!Array.isArray(v.angularMeasure)||v.angularMeasure.length!==n||
-   !v.angularMeasure.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>0)||
-   ['mPhi','angularMomentumDensity'].some(key=>!Array.isArray(v[key])||v[key].length!==n||
-    !v[key].every((x:unknown)=>typeof x==='number'&&Number.isFinite(x)))))return false;
  const lower=v.lower,upper=v.upper;
  return ['x1','x2','x3'].every((key,axis)=>{
   const lo=lower[key],hi=upper[key];
@@ -102,6 +98,7 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
     !record(a.scientificIdentity)||
     !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||![null,'cm'].includes(a.coordinates.units as null|'cm'))
   throw Error('Unsupported or malformed Plotfile audit response.');
+ if(a.geometry==='cylindrical'&&a.dimension===2)throw Error('Two-dimensional cylindrical plotfiles are unsupported.');
  if(a.coordinates.units==='cm'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Coordinate units lack matching recorded unit system.');
  if(a.timeUnit==='s'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Time units lack matching recorded unit system.');
  if(a.timeUnit!==undefined&&a.timeUnit!==null&&a.timeUnit!=='s')throw Error('Invalid recorded time unit.');
@@ -192,7 +189,7 @@ export function validatePlotfilePoint(value:unknown,projectId:string,relativePat
  const selection={field:request.field,block:p.block,start:p.start as number[],count:p.shape as number[]};
  const response=validatePlotfileAudit({...value,result:{...result,schemaVersion:'audit-slice-1'}},projectId,relativePath,selection,sha);
  // Point permission follows recorded publication/provenance, independently
- // of render eligibility. A partial native RZ slice cannot become a point claim.
+ // of render eligibility, with the same formal source identity.
  const native=response.audit.candidateNativeGrid;
  const formal=response.audit.candidateSourceIdentity?.version==='arch-plot-identity-1';
  const legacyPoint=native?.version==='candidate-cartesian-1'&&response.audit.geometry==='cartesian'&&[1,2].includes(response.audit.dimension);

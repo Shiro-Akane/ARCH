@@ -55,33 +55,10 @@ An unfiltered local CTest run includes them. The two hosted jobs cover the
 existing contracts once, and CTest failures cannot disappear by applying
 different discovery and execution selections.
 
-The exact native-reference tooling owner keeps its standard-library, rational
-and synthetic engineering checks in default discovery. Its one actual
-Machin/arb arithmetic witness is a maintainer opt-in:
-`ARCH_VALIDATE_OPTIONAL_REFERENCES=1`. Default selection records that witness
-as `NOT_REQUESTED` / `NOT_RUN`; it produces no skip or numerical pass. Explicit
-selection requires an already installed flint backend and fails when it is
-unavailable. ARCH build and hosted CI require no flint installation. The
-module reports its actual selected inventory in the test log; selected-suite
-completeness and all numerical assertions remain unchanged.
-
-For a local default check from the repository root:
-
-```bash
-env -u PYTHONPATH -u ARCH_VALIDATE_OPTIONAL_REFERENCES python3 -B -m unittest discover \
-  -s tests/tooling -p test_rz_matched_native_reference.py -v
-```
-
-A maintainer with a preexisting backend can select the same owner explicitly:
-
-```bash
-ARCH_VALIDATE_OPTIONAL_REFERENCES=1 python3 -B -m unittest discover \
-  -s tests/tooling -p test_rz_matched_native_reference.py -v
-```
-
-The selection JSON in the test log distinguishes a requested pending witness
-from unrequested evidence. Its actual unittest result supplies execution
-success or failure; neither result grants Core/Runtime science qualification.
+Two-dimensional cylindrical support and its dedicated reference runners are
+retired. Default discovery must contain only active owners; a deleted runner
+must not remain as an empty command that appears to pass. Historical reference
+results retain their original identities in the release evidence index.
 
 The CPU job also runs the 72-case positive-density physical matrix in
 `validation/low_density`, using its unchanged scientific budgets and a fresh
@@ -177,11 +154,9 @@ and consolidate repeated coverage before delivery. Completion checks account
 for every test in each selected inventory; long-run and performance campaigns
 retain their separate scientific records and resource limits.
 
-Current Native RZ source/field and energy comparisons, short dynamic coupling,
-warm fresh-process restart, actual Native Device qualification and desktop
-interactions use their existing owners or explicit maintainer modes. Hosted
-unit/API/tooling completion does not complete these scientific and application
-exits. Sustained CPU/GPU runs and alternating timings at the same physical
+Current device, public integration and desktop qualification follow the
+[release plan](../../ARCH_RELEASE_PLAN.md). Hosted unit/API/tooling completion
+does not complete scientific and application exits. Sustained CPU/GPU runs and alternating timings at the same physical
 endpoint remain maintenance campaigns, with frozen inputs, all measurements
 retained and compilation excluded from timing. Their inputs and processed
 provenance can be archived compactly after every consumer finishes; raw

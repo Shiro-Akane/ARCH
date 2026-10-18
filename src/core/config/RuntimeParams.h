@@ -26,7 +26,7 @@
 #include "core/config/ConfigValidation.h"
 #include "core/config/ConfigurationInput.h"
 #include "core/config/RefinementSelection.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 class RuntimeParams
 {
@@ -405,12 +405,7 @@ private:
         };
         if (cfg.io.vars.enuc && !cfg.physics.burn.use_burn) { warn_plot_disabled("ENUC", "the nuclear reaction network is not enabled"); cfg.io.vars.enuc = false; }
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
-        // Spatial dimension and velocity-component count differ for full-ring
-        // RZ: J/W is active azimuthal momentum even on a two-axis mesh.
-        // Use the same chart authority as initialization and PlotIO.
-        const bool rz = GridMetrics::resolve_public_chart(cfg.grid.geometry, cfg.grid.dim)
-            == GridMetrics::GeometrySemantics::AxisymmetricRz;
-        if (cfg.io.vars.w && cfg.grid.dim < 3 && !rz) { warn_plot_disabled("VELZ", "the selected chart has no active third velocity component"); cfg.io.vars.w = false; }
+        if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the selected chart has no active third velocity component"); cfg.io.vars.w = false; }
         if (cfg.io.vars.jens)
             if (cfg.physics.gravity.type!="self"
                 || !arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry))

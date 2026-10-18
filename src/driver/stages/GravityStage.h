@@ -22,55 +22,20 @@
 #include "physics/gravity/GravitySourceTypes.h"
 #include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
-namespace Physical::Gravity { struct NativeRzSourceInspectionView; class IGravityPolicy; class SelfGravity; class NativeExternalStageFrame; class NativeSelfStageFrame; struct NativeSelfStageObservation; struct NativeRzFieldInspection; class NativeRzSolutionInspection; }
+namespace Physical::Gravity { class IGravityPolicy; class SelfGravity; }
 namespace arch::driver {
 class DriverRuntime;
 class GravityStage final : public scheduler::HydroStagePreparation {
 public:
-    // Production uses the actual Runtime/configuration route; remaining profiles
-    // are internal Host scientific diagnostics, never selected from SimConfig.
-    enum class Qualification { Production, NativeRzCandidate, NativeRzSelfHydroCandidate };
-    GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*,
-        Qualification = Qualification::Production);
-    ~GravityStage() override;
-    /** Internal materialized-source inspection only; quiescent Native candidate.
-     * Caller payload outlives each synchronous solve. It may copy a pending
-     * local record but cannot label it Runtime-checked until completed() below.
-     * No SimConfig/UI callback or physical field publication is introduced.
-     */
-    using NativeSourceInspectionSink=void(*)(void*,const Physical::Gravity::NativeRzSourceInspectionView&);
-    void set_native_rz_source_inspection(NativeSourceInspectionSink,void*);
-    /** Let internal diagnostics reject another existing synchronous sink owner. */
-    bool native_rz_source_inspection_attached() const noexcept {return source_inspection_sink_!=nullptr;}
-    /** True only after actual Runtime pre -> callback -> post checks all return.
-     * Reset at every solve/setter. A later budget/field solve can still fail;
-     * this bit identifies source materialization only, never science or field.
-     */
-    bool native_rz_source_inspection_completed() const noexcept {return source_inspection_completed_;}
-    /** Internal SAME-operation diagnostics, attached only while this actual
-     * private Native Self service is quiescent. Payload must be thread-safe and
-     * outlive all synchronous events; this does not grant physical capability.
-     */
-    using NativeSelfFluxObservationSink=void(*)(void*,const Physical::Gravity::NativeSelfStageObservation&);
-    void set_native_self_flux_observation(NativeSelfFluxObservationSink,void*);
+    GravityStage(DriverRuntime&, const Physical::Gravity::IGravityPolicy*);
+    ~GravityStage() override = default;
     state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest&) override;
     void prepare_current(double time, bool reset_solver_history);
-    /** Internal issued-Current numerical reads; these retain Candidate scope
-     * and never select the ordinary Driver/public physical CFL/plot route.
-     */
-    Physical::Gravity::NativeRzFieldInspection native_current_field() const;
-    /** Copy one actual issued Current field with its exact source/geometry.
-     * No preparing callback is broadened and no second field is solved.
-     */
-    Physical::Gravity::NativeRzSolutionInspection native_current_source_and_field() const;
-    double native_current_timestep() const;
     void invalidate() const override;
     double timestep() const;
     std::vector<io::PlotScalarField> plot_fields() const;
-    bool active() const { return gravity_!=nullptr||native_external(); }
-    /** Four accepted body-source integrals; no potential/self-gravity accounting. */
-    std::array<long double,4> external_source_budget() const noexcept { return external_accepted_; }
-    /** Journal capability is independent of the physical field/RZ qualification gate. */
+    bool active() const { return gravity_!=nullptr; }
+    /** Journal capability is independent of the physical field qualification gate. */
     bool supports_macro_step_journal(state::ExecutionSide) const noexcept override;
     /** Freeze accepted observer state before any macro-step fluid producer runs. */
     void begin_macro_step() override;
@@ -82,49 +47,9 @@ public:
     /** Flush an already accepted macro-step; an I/O failure remains an explicit run failure. */
     void flush_committed_diagnostics();
 private:
-    struct RuntimeSourceLease;
-    struct DeviceSourceLease;
-    // Frozen metadata outlives the Device frame that borrows its span entries.
-    mutable std::unique_ptr<DeviceSourceLease> device_source_lease_;
-    using NativeSourceInspection=RuntimeSourceLease;
-    // The nonmoving issuer owns metadata only, not fluid or another density cache.
-    mutable std::unique_ptr<RuntimeSourceLease> runtime_source_lease_;
-    bool source_prepare_running_=false;
-    /** Revalidate the actual source/Runtime on both sides of the synchronous sink. */
-    static void inspect_native_source(void*,const Physical::Gravity::NativeRzSourceInspectionView&);
-    NativeSourceInspectionSink source_inspection_sink_=nullptr;
-    void* source_inspection_payload_=nullptr;
-    bool source_inspection_active_=false;
-    mutable bool source_inspection_completed_=false;
-    NativeSelfFluxObservationSink native_flux_observation_sink_=nullptr;
-    void* native_flux_observation_payload_=nullptr;
-    /** Route the actual Production RZ external configuration to the existing issuer. */
-    bool native_external() const noexcept;
-    /** RZ source/work receipts cover real prescribed fields and isolated diagnostics. */
-    bool native_self() const noexcept;
-    /** Only explicit internal profiles select ring-integration diagnostics. */
-    bool native_candidate() const noexcept {
-        return qualification_==Qualification::NativeRzCandidate
-            ||qualification_==Qualification::NativeRzSelfHydroCandidate;
-    }
-    /** Require the actual macro transaction before constructing a solved-field frame. */
-    void require_native_self_preparation(const scheduler::HydroStagePreparationRequest&) const;
-    state::CompletionToken prepare_native_external(const scheduler::HydroStagePreparationRequest&);
-    /** Prepare only actual resident input metadata; side-aware journal remains required. */
-    state::CompletionToken prepare_native_external_device(const scheduler::HydroStagePreparationRequest&);
-    state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int,
-        Physical::Gravity::GravityFieldPurpose);
-    Qualification qualification_;
+    state::CompletionToken solve(state::StateSlot, const state::StateResidencyLedger&, double, int);
     DriverRuntime& runtime_;
-    const Physical::Gravity::IGravityPolicy* policy_;
     const Physical::Gravity::SelfGravity* gravity_;
-    std::unique_ptr<Physical::Gravity::NativeExternalStageFrame> external_frame_;
-    std::unique_ptr<Physical::Gravity::NativeSelfStageFrame> self_frame_;
-    // Metadata-only borrows into the authentic prepared resident field. Retire
-    // and destroy the previous frame before replacing this stable span storage.
-    std::vector<Physical::Gravity::GravityPatchView> self_device_fields_;
-    std::array<std::array<long double,4>,3> external_pending_{};
-    std::array<long double,4> external_accepted_{};
     amr::TopologyEpoch epoch_{};
     std::uint64_t generation_=0;
     std::ofstream diagnostics_,boundary_diagnostics_;

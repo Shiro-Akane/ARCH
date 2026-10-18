@@ -13,7 +13,7 @@
 ## 已标识源码的 CPU/CUDA 结果
 
 下列验证保留其原始源码与输入身份。使用极坐标图的圆柱二维记录属于历史结果；
-现行轴对称 `(r,z)` 检查见[引力摘要](gravity/README.md#axisymmetric-rz-verification)。
+二维柱坐标已退役；旧 RZ 科学记录仅按原身份保留，见[当前发布计划](../ARCH_RELEASE_PLAN.md)。
 
 | 区域 | 已记录的 CPU/CUDA 检查 | 记录 |
 | --- | --- | --- |
@@ -52,11 +52,11 @@ CPU KLU 与 GPU cuDSS。各模块摘要链接独立科学检查，并保留原�
 
 ## 当前验证选择
 
-当前 CTest 配置清单包含 76 个入口：68 个数值／API 检查与八个工具契约包装。
+当前 CTest 配置清单包含 75 个入口：68 个数值／API 检查与七个工具契约包装。
 注册入口本身不是执行结果。托管 CI 只执行一次数值／API 清单，工具检查由独立任务
 执行；[CI 说明](../.github/workflows/README.md)给出一致的发现与完成判定规则。
 
-现行 Native RZ 记录包含共享数学、真实所有者检查以及短时的四模块 AMR 运行。Cartesian 完整应力及 RZ 方位牵引与配对功已具备相应范围的证据；但完整曲线 Newtonian 面牵引、几何体项、同一应力的功、粗细耦合及真实的稳定性行界仍待验收。连续自引力/能量的独立验收、全新进程的暖态重启、Native Device 耦合、真实的桌面交互、长时运行和正式配对计时均保留独立的验收出口。其适用范围请参见[引力摘要](gravity/README.md#axisymmetric-rz-verification)和[发布验证计划](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md)。
+当前验证范围见[发布计划](../ARCH_RELEASE_PLAN.md)。RZ 的原 PASS／FAIL／GAP 与成本记录保留，不作为当前支持或待运行项目。其余坐标和共享模块沿用原数值标准。
 
 ## 误差约定
 

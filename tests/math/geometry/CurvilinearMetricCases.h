@@ -1,7 +1,7 @@
 // Independent finite-volume witnesses, consumed by Host and actual CUDA tests.
 #pragma once
 
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 #include <algorithm>
 #include <cmath>

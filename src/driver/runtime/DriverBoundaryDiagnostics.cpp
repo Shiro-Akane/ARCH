@@ -2,19 +2,9 @@
  * @file DriverBoundaryDiagnostics.cpp
  * @brief Integrate actual domain-face fluxes without changing evolved fields.
  *
- * Workflow:
- * 1. Allocate actual physical-surface observers for native RZ or selected callbacks;
- *    prewarm Device native planes before the resident macro savepoint is armed.
- * 2. Set weights from the existing RK/RKL descriptors before face evaluation.
- * 3. Integrate ordinary fields with actual face area, and native phi with torque measure.
- * 4. Accumulate Hydro quadrature and the unchanged RKL accounting recurrence.
- *
- * B_out = integral(dt * sum_faces A * F_out); native phi uses integral r dA
- * instead of A. Its captured F_W is already a normalized face average, so
- * this owner applies the sole torque measure once. Positive entries leave the
- * domain. Momentum entries are native components; curved-basis source terms
- * must be accounted for separately. Totals start at this process, including
- * when the simulation continues a checkpoint. No field repair occurs here.
+ * Workflow: allocate selected callback observers, weight the original RK/RKL
+ * fluxes, integrate with physical face area and accumulate the accepted budget.
+ * Positive entries leave the domain. Totals begin with this process.
  */
 #include <algorithm>
 #include <cmath>
@@ -25,7 +15,7 @@
 
 #include "amr/AMRControl.h"
 #include "driver/runtime/DriverRuntime.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "physics/boundary/BoundaryDiagnostics.h"
 #include "physics/boundary/UserBoundary.h"
@@ -102,7 +92,6 @@ void DriverRuntime::prepare_boundary_capture(double weight, double initial_weigh
 /** Sum physical-surface rows in fixed block/axis/side/tangential-cell order. */
 std::vector<double> DriverRuntime::integrate_boundary_capture() {
     const int fields=6+specs.count();
-    const bool native_rz=geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
     std::vector<double> result(fields,0.);
     std::vector<backend::BoundaryFluxPlanes> device_planes;
     std::map<amr::BlockHandle,const backend::BoundaryFluxPlanes*> device_by_block;
@@ -119,10 +108,6 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
     const auto& active=amr_ctrl.tree->GetActiveBlocks();
     for (std::size_t b=0;b<active.size();++b) {
         const auto& block=amr_ctrl.pool->GetBlock(active[b]); const auto& grid=block.grid;
-        // Explicit Runtime semantics match the producer; a cylindrical geometry
-        // string alone must never switch the ordinary polar-plane observer.
-        GridMetrics::GeometryView native_geometry{};
-        if(native_rz)native_geometry=GridMetrics::make_geometry_view(grid,geometry_semantics());
         const auto& planes=compute_backend ? device_by_block.at(stage_handles[b])->stage
             : block.fluid_state.boundary_flux_capture->stage;
         const int lower[]{grid.Is(),grid.Js(),grid.Ks()}, upper[]{grid.Ie(),grid.Je(),grid.Ke()};
@@ -135,25 +120,13 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
             std::size_t row=0;
             for (cell[c]=lower[c];cell[c]<upper[c];++cell[c])
                 for (cell[a]=lower[a];cell[a]<upper[a];++cell[a],++row) {
-                    const double area=native_rz
-                        ?GridMetrics::FaceArea(native_geometry,axis,cell[0],cell[1],cell[2],side!=0)
-                        :GridMetrics::FaceArea(grid,axis,cell[0],cell[1],cell[2],side!=0);
+                    const double area=GridMetrics::FaceArea(grid,axis,cell[0],cell[1],cell[2],side!=0);
                     if (!std::isfinite(area) || area<0.) throw std::logic_error("Invalid boundary accounting face area");
                     const double measure=(side?1.:-1.)*area;
-                    // F_phi is physical on r faces and W-normalized on z
-                    // faces. J_out=sum integral(r dA)*F_phi, not A*F_phi;
-                    // energy/species/heat retain their actual V face measure.
-                    const double torque=native_rz
-                        ?GridMetrics::Rz::FaceTorqueMeasure(native_geometry,axis,cell[0],cell[1],side!=0)
-                        :0.;
-                    if(native_rz&&(!std::isfinite(torque)||torque<0.))
-                        throw std::logic_error("Invalid boundary accounting torque measure");
-                    const double signed_torque=(side?1.:-1.)*torque;
                     for (int field=0;field<fields;++field) {
                         const double value=planes[face][row*fields+field];
                         if (!std::isfinite(value)) throw std::runtime_error("Nonfinite actual boundary flux");
-                        if(native_rz&&field==3)result[field]+=signed_torque*value;
-                        else result[field]+=measure*value;
+                        result[field]+=measure*value;
                     }
                 }
         }
@@ -161,34 +134,20 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
     return result;
 }
 
-/** Attach the original surface callbacks and prewarm actual Device native owners.
- * The existing preparation helper initializes both effective plane sets before
- * the savepoint freezes their layout; stage callbacks later overwrite weights
- * and values. Prewarming changes diagnostic scratch, never accepted budgets.
- * Native RZ observes built-in faces; ordinary activation remains unchanged.
- */
 void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& context) {
-    if(runtime_state_transaction_)throw std::logic_error("Boundary accounting must bind before Host Hydro transaction");
     const auto* selected=boundary::CurrentUserBoundaries();
-    const bool native_rz=geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    if (!native_rz && (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity))) return;
+    if (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity)) return;
     const int fields=6+specs.count();
     if (hydro_boundary_budget_.empty()) {
         hydro_boundary_budget_.assign(fields,0.); diffusion_boundary_budget_.assign(fields,0.);
     }
-    if(native_rz&&compute_backend) {
-        // This binder is still unarmed. Reuse the exact whole-domain layout
-        // helper, not Host epoch metadata as a substitute for Device capacity.
-        // Initialize effective initial planes as well as stage planes so the
-        // resident savepoint captures actual configured values in every slot.
-        prepare_boundary_capture(0.,0.,true);
-    }
+
     context.hydro_flux_capture_begin=[this](const scheduler::StageDescriptor& stage) {
         prepare_boundary_capture(stage.flux_register_weight,0.,false);
     };
     context.hydro_flux_capture_accept=[this,&context](const scheduler::StageDescriptor&) {
         const auto rate=integrate_boundary_capture();
-        auto& budget=tentative_hydro_boundary_budget_ ? *tentative_hydro_boundary_budget_ : hydro_boundary_budget_;
+        auto& budget=hydro_boundary_budget_;
         if(budget.size()!=rate.size())throw std::logic_error("Hydro boundary receipt extent changed");
         for (std::size_t k=0;k<rate.size();++k) budget[k]+=context.step_dt*rate[k];
     };
@@ -212,10 +171,8 @@ void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& c
             +(stage.stage>1 ? coefficients.mu*boundary_rkl_previous_[k]+coefficients.nu*boundary_rkl_older_[k] : 0.);
         boundary_rkl_older_=boundary_rkl_previous_; boundary_rkl_previous_=budget;
         if (stage.stage==static_cast<int>(plan.stages.size())) {
-            // Both RKL halves remain tentative inside the native macro owner;
-            // the unchanged recurrence above still integrates each dt/2.
-            auto& accepted=tentative_diffusion_boundary_budget_
-                ?*tentative_diffusion_boundary_budget_:diffusion_boundary_budget_;
+            // The unchanged recurrence above integrates each dt/2.
+            auto& accepted=diffusion_boundary_budget_;
             if(accepted.size()!=budget.size())
                 throw std::logic_error("RKL boundary receipt owner layout mismatch");
             for (std::size_t k=0;k<budget.size();++k) accepted[k]+=budget[k];

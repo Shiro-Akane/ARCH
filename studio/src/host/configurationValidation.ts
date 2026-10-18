@@ -107,6 +107,7 @@ export function validateInspectionResponse(v:unknown,request:ConfigurationReques
 
 export function validateCoordinates(v:unknown){
  if(!record(v)||!strings(v,['geometry','unitSystem'])||![1,2,3].includes(Number(v.dimension))||!Array.isArray(v.axes)||v.axes.length!==3)throw new Error('Invalid Core coordinates.');
+ if(v.geometry==='cylindrical'&&v.dimension===2)throw new Error('Two-dimensional cylindrical coordinates are unsupported.');
  for(const [i,a] of v.axes.entries())if(!record(a)||!strings(a,['key','displayName','nativeName','kind','blocksKey','minKey','maxKey','lowerBoundaryKey','upperBoundaryKey'])||a.key!==`x${i+1}`||typeof a.active!=='boolean'||typeof a.blocks!=='number'||(a.unit!==null&&typeof a.unit!=='string'))throw new Error('Invalid Core axis.');
 }
 function validatePathChecks(v:unknown):NonNullable<InspectionResponse['pathChecks']>{

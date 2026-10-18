@@ -6,6 +6,16 @@ and scientific comparison budgets. The shared
 [backend runner](../../tools/validate_backend_results.py) executes that matrix;
 the owning physics modules describe its reference methods.
 
+Selection is scoped, never partial. With no `--case` the runner validates the
+whole matrix, and while explicit `--case` runs keep the per-case checks, every
+touched `qualification_group` must be selected in full. A partial or
+complete-plus-partial group is rejected before any output-root, provenance,
+runtime-input-hash, execution or evidence side effect, listing the missing case
+IDs. Complete selected groups still pass the unchanged frozen convergence gate,
+deciding completeness from the original manifest rather than the requested
+subset. Results scoped to ungrouped cases carry no group summaries and are
+refused by the full-matrix qualifier.
+
 Related coverage is kept with its module:
 
 - [AMR](../amr/README.md): Cartesian and curvilinear meshes, runtime topology
@@ -14,6 +24,16 @@ Related coverage is kept with its module:
 - [Restart](../restart/README.md): native restore and continuation across backends.
 
 ## Configuration and application integration
+
+For cancellation-sensitive nuclear-mass balances, call
+`read_conservation_metrics(..., preserve_total_precision=True)`. The validator
+prints native long-double totals as round-trip decimal numbers; the reader
+preserves their integer/float tokens and requires the explicit encoding marker.
+Metadata keeps its ordinary types. Old narrowed totals are rejected for this
+scientific mode. The [current CPU receipt](results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+records the serialization defect, saved-output requalification under the
+unchanged `1e-12` law, all six enabled-transport endpoints and four active-ENUC
+continuations. It does not qualify a new CUDA run.
 
 The [Core/Studio configuration audit](results/studio-config-contract-audit-20261001/README.md)
 records the inspected main and locally available Studio checkpoints, exact-input
@@ -39,6 +59,13 @@ and source-pinned real-output readback. The checks use existing NumPy/h5py and
 tooling discovery, without new CI lanes or a production writer change.
 
 ## Optimization and coupled checks
+
+The [release plan](../../ARCH_RELEASE_PLAN.md) owns current qualification work.
+Its [CPU follow-up record](results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+links the original receipt and adds six burn–diffusion combinations, sixteen
+built-in NSE applications, four short fresh-process continuation protocols,
+and bounded Cellular/RZ diagnostics. Accepted numerical scopes, retained
+failures and still-open long/device gates are recorded separately.
 
 The [HPC-CUDA evidence index](results/hpc-cuda-optimization/README.md) summarizes
 the completed optimization campaign and links its original source-pinned data.

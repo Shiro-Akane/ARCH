@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {catalog,catalogCoordinates,parameterUnit} from '../src/data/parameterCatalog.ts';
 import {validateConfigurationSchema} from '../src/host/configurationValidation.ts';
 import {loadPar,editPar,exportPar} from '../src/state/parState.ts';
-const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')));
+const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')));
 
 test('current schema is dynamic, retired aliases are not destinations, missing values stay blank',()=>{
  const rows=catalog(schema.parameters,{timeintegrator:'RK1'});
@@ -29,18 +29,13 @@ test('current schema is dynamic, retired aliases are not destinations, missing v
  const larger=structuredClone(schema);larger.parameters.push({...larger.parameters[0],key:'future_parameter'});
  assert.equal(validateConfigurationSchema(larger).parameters.length,schema.parameters.length+1);
 });
-test('coordinate layout follows all nine Core conventions and never consumes transient invalid block tokens',()=>{
+test('coordinate layout follows all eight supported Core conventions and never consumes transient invalid block tokens',()=>{
  for(const geometry of ['cartesian','cylindrical','spherical'])for(const dimension of [1,2,3]){
   const c=catalogCoordinates(schema,{geometry,nblockx1:'2',nblockx2:dimension>=2?'1':'0',nblockx3:dimension===3?'2':'0'});
-  assert.equal(c?.dimension,dimension);assert.equal(c?.axes.filter(a=>a.active).length,dimension);
   if(geometry==='cylindrical'&&dimension===2){
-   // Current live Core uses the meridional chart; this checked schema must be
-   // regenerated from its real ELF, not translated by a client-side fallback.
-   const active=c!.axes.filter(a=>a.active);
-   assert.deepEqual(active.map(a=>a.displayName),['r','z']);
-   assert.deepEqual(active.map(a=>a.nativeName),['r_cy','z_cy']);
-   assert.deepEqual(active.map(a=>a.kind),['length','length']);
-   assert.deepEqual(active.map(a=>a.unit),['cm','cm']);
+   assert.equal(c,undefined,'retired chart must have no catalog destination');
+  }else{
+   assert.equal(c?.dimension,dimension);assert.equal(c?.axes.filter(a=>a.active).length,dimension);
   }
  }
  for(const value of ['','-','1.','1.5','-1','2147483648'])assert.equal(catalogCoordinates(schema,{nblockx1:'1',nblockx2:value,nblockx3:'0'}),undefined);

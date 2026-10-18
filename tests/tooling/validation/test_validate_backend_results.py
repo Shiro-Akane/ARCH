@@ -22,7 +22,82 @@ def load_module():
     return module
 
 
+def load_qualification_module():
+    """Load the unchanged full-matrix consumer through the shared tooling path."""
+    spec = importlib.util.spec_from_file_location(
+        "qualify_cuda_amr_evidence",
+        ROOT / "tools" / "qualify_cuda_amr_evidence.py")
+    module = importlib.util.module_from_spec(spec)
+    with mock.patch.object(sys, "path", [str(MODULE_PATH.parent), *sys.path]):
+        spec.loader.exec_module(module)
+    return module
+
+
 class BackendValidationTests(unittest.TestCase):
+    GROUP_METRICS = {
+        64: {"l1": 4.0e-2, "l2": 8.0e-2},
+        128: {"l1": 2.0e-2, "l2": 4.0e-2},
+        256: {"l1": 1.0e-2, "l2": 2.0e-2},
+    }
+
+    def group_run_case(self, arch, checkpoint_validator, source_root, case,
+                       output_root, sanitizer):
+        # Process boundary stub: only the original group gate is exercised.
+        result = {"id": case["id"]}
+        if "scientific_time" in case and "resolution" in case:
+            metrics = self.GROUP_METRICS[int(case["resolution"])]
+            result["scientific"] = {"cpu_qualification": dict(metrics),
+                                    "cuda_qualification": dict(metrics)}
+        return result
+
+    def write_group_fixture(self, root):
+        """Two frozen groups of three resolutions plus one ungrouped case."""
+        cases = []
+        for group in ("alpha", "beta"):
+            for resolution in (64, 128, 256):
+                identifier = f"{group}_n{resolution}"
+                (root / f"{identifier}.par").write_text(
+                    "eos_type=ideal\n", encoding="utf-8")
+                cases.append({
+                    "id": identifier, "input": f"{identifier}.par",
+                    "resolution": resolution, "qualification_group": group,
+                    "scientific_time": 0.1, "accepted_steps": [1],
+                    "reduction_policy": {"rtol": 1.0e-9, "atol": 1.0e-12},
+                    "qualification": {"minimum_l1_order": 0.9,
+                                      "convergence_pairs": "final"},
+                })
+        (root / "solo.par").write_text("eos_type=ideal\n", encoding="utf-8")
+        cases.append({"id": "solo", "input": "solo.par", "accepted_steps": [1],
+                      "reduction_policy": {"rtol": 1.0e-9, "atol": 1.0e-12}})
+        manifest_path = root / "cases.json"
+        manifest_path.write_text(
+            json.dumps({"schema": 1, "cases": cases}), encoding="utf-8")
+        return manifest_path, cases
+
+    def backend_arguments(self, manifest_path, output_root, selection, source_root):
+        arguments = ["--manifest", str(manifest_path),
+                     "--arch", str(source_root / "unused-ARCH"),
+                     "--checkpoint-validator", str(source_root / "unused-validator"),
+                     "--build-dir", str(source_root / "unused-build"),
+                     "--output-root", str(output_root),
+                     "--source-root", str(source_root)]
+        for identifier in selection:
+            arguments += ["--case", identifier]
+        return arguments
+
+    def run_backend_main(self, module, manifest_path, output_root, selection,
+                         run_case=None, source_root=ROOT):
+        """Run main with only process/provenance boundaries stubbed."""
+        executed = run_case or self.group_run_case
+        with mock.patch.object(module, "run_case", side_effect=executed) as run_mock, \
+                mock.patch.object(
+                    module.provenance, "capture",
+                    return_value={"artifacts": {"arch_sha256": "0" * 64}}), \
+                mock.patch.object(module.provenance, "write_evidence") as write_mock:
+            status = module.main(
+                self.backend_arguments(manifest_path, output_root, selection, source_root))
+        return status, run_mock, write_mock
+
     def test_terminal_lane_selects_actual_hdf5_time_not_output_index(self):
         import h5py
         module = load_module()
@@ -112,7 +187,7 @@ class BackendValidationTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('user_boundary_reader_controls', script)
         reader = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(reader)
-        parameters = dict(geometry='cylindrical', x1_min=0, x1_max=1,
+        parameters = dict(geometry='cartesian', x1_min=0, x1_max=1,
                           x2_min=-.5, x2_max=.5, x3_min=0, x3_max=1,
                           nblockx1=1, nblockx2=1, nblockx3=0)
         fields = ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng', 'rhoX', 'X', 'enuc_rate')
@@ -120,8 +195,7 @@ class BackendValidationTests(unittest.TestCase):
             path = Path(directory)/'native-checkpoint.h5'
             with h5py.File(path, 'w') as h:
                 h.attrs.update(dim=2, time=0., step=0, boundary_identity='test',
-                               geometry_chart='axisymmetric-rz',
-                               state_semantics='rz-m-phi-j-over-w-v1')
+                               geometry_chart='existing')
                 for key in ('level', 'logical_x1', 'logical_x2', 'logical_x3'):
                     h.create_dataset('Blocks/'+key, data=np.array([0], dtype=np.int32))
                 h.create_dataset('state_repairs', data=np.zeros(1))
@@ -359,6 +433,46 @@ class BackendValidationTests(unittest.TestCase):
             with mock.patch.object(module.subprocess, "run", return_value=completed), \
                     self.assertRaisesRegex(RuntimeError, "did not provide physical"):
                 module.read_conservation_metrics(Path("validator"), Path("checkpoint.h5"), parameter)
+
+    def test_precise_totals_keep_decimal_tokens_and_metadata_types(self):
+        module = load_module()
+        text = ('{"totals_encoding":"native_long_double_roundtrip_decimal",'
+                '"step":71,"time":1e-10,"resume_after_regrid":false,'
+                '"chk_file_index":2,"plt_file_index":3,"blocks":8,'
+                '"mass":10000000000000001,"mom_u":0,"mom_v":0,"mom_w":0,'
+                '"energy":10000000000000000.25,"rhoX":[0.40000000000000000001,1e-30]}')
+        completed = mock.Mock(returncode=0, stderr="", stdout=text)
+        with mock.patch.object(module.subprocess, "run", return_value=completed):
+            precise = module.read_conservation_metrics(
+                Path("validator"), Path("checkpoint.h5"), preserve_total_precision=True)
+            ordinary = module.read_conservation_metrics(Path("validator"), Path("checkpoint.h5"))
+        self.assertEqual(precise["mass"], "10000000000000001")
+        self.assertEqual(precise["mom_u"], "0")
+        self.assertEqual(precise["energy"], "10000000000000000.25")
+        self.assertEqual(precise["rhoX"], ["0.40000000000000000001", "1e-30"])
+        self.assertEqual(ordinary["energy"], 10000000000000000.)
+        self.assertNotEqual(str(ordinary["energy"]), precise["energy"])
+        for field in ("step", "chk_file_index", "plt_file_index", "blocks"):
+            self.assertIs(type(precise[field]), int)
+        self.assertIs(type(precise["time"]), float)
+        self.assertIs(type(precise["resume_after_regrid"]), bool)
+        self.assertEqual(json.loads(json.dumps(precise)), precise)
+
+    def test_precise_totals_reject_old_or_malformed_metrics(self):
+        module = load_module()
+        original = dict(totals_encoding="native_long_double_roundtrip_decimal",
+                        mass=1, mom_u=0, mom_v=0, mom_w=0, energy=10, rhoX=[0.5, 0.5])
+        invalid = [dict(original, totals_encoding="binary64"),
+                   {key: value for key, value in original.items() if key != "totals_encoding"},
+                   {key: value for key, value in original.items() if key != "energy"},
+                   dict(original, energy="10"), dict(original, rhoX=[True, 0.5])]
+        for metrics in invalid:
+            with self.subTest(metrics=metrics):
+                completed = mock.Mock(returncode=0, stderr="", stdout=json.dumps(metrics))
+                with mock.patch.object(module.subprocess, "run", return_value=completed), \
+                        self.assertRaisesRegex(RuntimeError, "validator did not provide"):
+                    module.read_conservation_metrics(
+                        Path("validator"), Path("checkpoint.h5"), preserve_total_precision=True)
 
     def test_parameter_mutation_during_metrics_is_rejected(self):
         module = load_module()
@@ -790,6 +904,131 @@ class BackendValidationTests(unittest.TestCase):
                 module.validate_cuda_diffusion_schedule(
                     schedule, 1,
                     {"order": 2, "stages": 3, "lanes_per_step": 2})
+
+
+    def test_partial_and_mixed_group_selection_rejects_before_any_boundary(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest_path, _ = self.write_group_fixture(root)
+            output_root = root / "evidence"
+            for selection, missing in (
+                (["alpha_n64", "alpha_n128"], "alpha_n256"),
+                (["alpha_n64", "alpha_n128", "alpha_n256",
+                  "beta_n64", "beta_n128"], "beta_n256"),
+                (["alpha_n64", "alpha_n128", "alpha_n256", "beta_n256"],
+                 "beta_n64, beta_n128"),
+                (["alpha_n64", "beta_n64"], "alpha_n128"),
+            ):
+                with self.subTest(selection=selection), \
+                        mock.patch.object(module, "require_empty_output_root") as empty_mock, \
+                        mock.patch.object(module, "runtime_case_inputs") as runtime_mock, \
+                        mock.patch.object(module, "run_case") as run_mock, \
+                        mock.patch.object(module.provenance, "capture") as capture_mock, \
+                        mock.patch.object(module.provenance, "write_evidence") as write_mock:
+                    with self.assertRaisesRegex(
+                            RuntimeError, "must be selected completely") as rejected:
+                        module.main(self.backend_arguments(
+                            manifest_path, output_root, selection, root))
+                    self.assertIn(missing, str(rejected.exception))
+                    for boundary in (empty_mock, runtime_mock, run_mock,
+                                     capture_mock, write_mock):
+                        boundary.assert_not_called()
+                    self.assertFalse(output_root.exists())
+            with mock.patch.object(module, "run_case") as run_mock:
+                with self.assertRaisesRegex(RuntimeError, "case is absent"):
+                    module.main(self.backend_arguments(
+                        manifest_path, output_root, ["alpha_n64", "ghost-case"], root))
+                run_mock.assert_not_called()
+            self.assertFalse(output_root.exists())
+
+    def test_complete_group_and_explicit_all_match_implicit_all_gate(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest_path, cases = self.write_group_fixture(root)
+            identifiers = [case["id"] for case in cases]
+            scoped = [case["id"] for case in cases
+                      if case.get("qualification_group") == "alpha"]
+            reports = {}
+            for label, selection in (("implicit", []), ("explicit", identifiers),
+                                     ("scoped", scoped)):
+                status, run_mock, write_mock = self.run_backend_main(
+                    module, manifest_path, root / ("evidence-" + label),
+                    selection, source_root=root)
+                self.assertEqual(status, 0)
+                self.assertEqual(run_mock.call_count, len(selection) or len(identifiers))
+                write_mock.assert_called_once()
+                reports[label] = write_mock.call_args[0][1]
+            self.assertEqual(reports["implicit"]["resolution_groups"],
+                             reports["explicit"]["resolution_groups"])
+            self.assertEqual(sorted(reports["implicit"]["resolution_groups"]),
+                             ["alpha", "beta"])
+            self.assertEqual(sorted(reports["scoped"]["resolution_groups"]), ["alpha"])
+            self.assertNotIn("beta", reports["scoped"]["resolution_groups"])
+            for group in ("alpha", "beta"):
+                summary = reports["implicit"]["resolution_groups"][group]
+                self.assertEqual(summary["resolutions"], [64, 128, 256])
+                for backend in ("cpu", "cuda"):
+                    self.assertEqual(summary["orders"][backend],
+                                     {"l1": [1.0, 1.0], "l2": [1.0, 1.0]})
+
+    def test_group_gate_failure_rejects_without_publishing_success_evidence(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest_path, cases = self.write_group_fixture(root)
+            selection = [case["id"] for case in cases
+                         if case.get("qualification_group") == "alpha"]
+            missing = object()
+            for label, backend, value, message in (
+                    ("cpu-convergence", "cpu", 9.9e-2, "L1 convergence gate failed"),
+                    ("cuda-convergence", "cuda", 9.9e-2, "L1 convergence gate failed"),
+                    ("cuda-nonfinite", "cuda", float("nan"), "L1 is invalid"),
+                    ("missing-l1", "cpu", missing, "l1")):
+                def broken(arch, checkpoint_validator, source_root, case,
+                           output_root, sanitizer, backend=backend, value=value):
+                    result = self.group_run_case(arch, checkpoint_validator,
+                                                 source_root, case, output_root, sanitizer)
+                    if case.get("resolution") == 256:
+                        metrics = result["scientific"][backend + "_qualification"]
+                        if value is missing:
+                            del metrics["l1"]
+                        else:
+                            metrics["l1"] = value
+                    return result
+                error = KeyError if value is missing else RuntimeError
+                with self.subTest(label=label), \
+                        mock.patch.object(module, "run_case", side_effect=broken) as run_mock, \
+                        mock.patch.object(
+                            module.provenance, "capture",
+                            return_value={"artifacts": {"arch_sha256": "0" * 64}}), \
+                        mock.patch.object(module.provenance, "write_evidence") as write_mock:
+                    with self.assertRaisesRegex(error, message):
+                        module.main(self.backend_arguments(
+                            manifest_path, root / ("evidence-" + label),
+                            selection, root))
+                    self.assertEqual(run_mock.call_count, len(selection))
+                    write_mock.assert_not_called()
+
+    def test_ungrouped_selection_has_no_group_summaries_and_full_matrix_rejects_subset(self):
+        module = load_module()
+        manifest_path = ROOT / "validation" / "backend" / "cases.json"
+        manifest = module.load_manifest(manifest_path)
+        ungrouped = [case["id"] for case in manifest["cases"]
+                     if case.get("qualification_group") is None]
+        self.assertEqual(len(ungrouped), 7)
+        with tempfile.TemporaryDirectory() as directory:
+            status, run_mock, write_mock = self.run_backend_main(
+                module, manifest_path, Path(directory) / "evidence", ungrouped)
+            self.assertEqual(status, 0)
+            self.assertEqual(run_mock.call_count, len(ungrouped))
+            report = write_mock.call_args[0][1]
+            self.assertEqual(report["resolution_groups"], {})
+            self.assertEqual({case["id"] for case in report["cases"]}, set(ungrouped))
+        qualification = load_qualification_module()
+        with self.assertRaisesRegex(RuntimeError, "matrix is incomplete"):
+            qualification.check_matrix(report, manifest_path, ROOT)
 
 
 if __name__ == "__main__":

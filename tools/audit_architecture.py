@@ -527,7 +527,7 @@ def _is_pod_geometry_adapter(relative: str, content: str) -> bool:
     expected = """
 #pragma once
 #include "cuda/common/CudaCommon.cuh"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 namespace arch::cuda {
 ARCH_HOST_DEVICE inline GridMetrics::GeometryView make_grid_geometry_view(
     const DeviceGridView& grid) {
@@ -539,8 +539,7 @@ ARCH_HOST_DEVICE inline GridMetrics::GeometryView make_grid_geometry_view(
                 ? GridMetrics::Geometry::Spherical : GridMetrics::Geometry::Unsupported;
     return {kind, grid.dim, grid.ng, grid.stride_y, grid.stride_z,
             grid.total_size, grid.dx1, grid.dx2, grid.dx3,
-            grid.x1_min, grid.x2_min, grid.x3_min, grid.semantics,
-            {grid.x1_max, grid.x2_max}, grid.dyadic_identity};
+            grid.x1_min, grid.x2_min, grid.x3_min};
 }
 }
 """
@@ -655,6 +654,31 @@ def audit_header_dependencies(root: pathlib.Path, sources):
                      "numerics/burnsolver/ode/ode_ros4.h"):
         if catalogue in dependencies(relative):
             violations.append("generic burn mathematics must not include the network catalogue: " + relative)
+
+    # Shared operators borrow a source adapter only at instantiation. Necessary
+    # nonowning source views and the virtual policy declaration remain legal;
+    # field owners and Runtime source authority do not belong in this closure.
+    # An allowed declaration is still traversed, so forwarding to an owner
+    # cannot hide behind a reviewed filename. Unknown gravity headers fail closed.
+    gravity_declarations = {root / "src/physics/gravity" / name for name in
+                            ("GravitySourceTypes.h", "IGravityPolicy.h")}
+    for relative in ("numerics/integrator/TimeIntegratorHelper.h",
+                     "numerics/diffusion/DiffFlux.h"):
+        if any(path.is_relative_to(root / "src/physics/gravity")
+               and path not in gravity_declarations
+               for path in dependencies(relative)):
+            violations.append("shared flux operators must not import concrete gravity ownership: " + relative)
+
+    # FluidState retains shared_ptr attachments without defining their policies.
+    # Complete storage/face types belong in their actual dereferencing consumers;
+    # moving an include through an innocently named bridge must still be caught.
+    if any(path.is_relative_to(root / "src/physics/boundary")
+           for path in dependencies("data/FluidState.h")):
+        violations.append("shared fluid storage must not import boundary implementations: data/FluidState.h")
+    parsers = {root / "src" / name for name in
+               ("core/config/RuntimeParams.h", "io/ConfigParser.h")}
+    if dependencies("numerics/integrator/IHydroSolver.h") & parsers:
+        violations.append("Hydro interface must not import configuration parsing: numerics/integrator/IHydroSolver.h")
 
     # Interface/storage declarations must not pull the numerical graph back
     # into every dispatch TU. A real owner may include complete EOS types;
@@ -804,35 +828,6 @@ def audit_tree(root: pathlib.Path):
                                 (stage_loop and stage_work)):
             violations.append(f"complete CUDA RK/RKL controller is forbidden: {relative}")
         boundary_code = semantic_code
-        if relative == "src/cuda/hydro/boundary/Boundary.cuh":
-            # These reviewed names delegate positive-r projection to the one
-            # shared native_rz_math owner. Exempt the identifiers, not the file
-            # or function bodies: local BC dispatch/sign rules remain scanned.
-            boundary_code = re.sub(
-                r"\b(?:native_reflecting_candidates_kernel|launch_native_reflecting_candidates)\b",
-                "", boundary_code)
-            boundary_code = re.sub(r"\bmath\s*::\s*reflect_cell\b", "", boundary_code)
-        native_storage_identifiers = {
-            "src/cuda/runtime/CudaBackend.h": ("prepare_native_reflecting_layer",),
-            "src/cuda/runtime/boundary/CudaBackendBoundary.cu": (
-                "prepare_native_reflecting_layer", "native_reflecting_lanes",
-                "native_reflecting", "launch_native_reflecting_candidates"),
-            "src/cuda/runtime/control/CudaBackendInternal.h": (
-                "NativeReflectingScratch", "native_reflecting",
-                "prepare_native_reflecting_layer"),
-        }
-        # Real backend services only allocate/transport provisional surfaces;
-        # their reviewed identifiers do not implement a second reflecting law.
-        # Keep the complete bodies scanned, including BC enums and sign rules.
-        for identifier in native_storage_identifiers.get(relative, ()):
-            boundary_code = re.sub(r"\b" + identifier.lower() + r"\b", "", boundary_code)
-        if relative == "src/cuda/runtime/control/CudaBackendResources.cpp":
-            # The actual factory borrows one shared physical-face selector.
-            # Exempt only its qualified call, leaving local BC enum dispatch,
-            # sign rules and same-named local functions fully scanned.
-            boundary_code = re.sub(
-                r"\b(?:arch\s*::\s*)?boundary\s*::\s*native_rz_math\s*::\s*"
-                r"bound_reflecting_faces\b(?=\s*\()", "", boundary_code)
         boundary_mapping = any(token in boundary_code for token in
                                ("outflow", "reflect", "periodic", "physical boundary", "boundary_type",
                                 "x1l_boundary", "x1r_boundary", "grid boundary"))

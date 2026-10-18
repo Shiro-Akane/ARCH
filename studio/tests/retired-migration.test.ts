@@ -5,7 +5,7 @@ import {validateConfigurationSchema} from '../src/host/configurationValidation.t
 import {isRetiredParameter,loadPar,editPar,removeRetiredParameter,exportPar,exportDraft,parErrors,revertPar,parStatus} from '../src/state/parState.ts';
 import {serializePar} from '../src/data/ParDocument.ts';
 import {EditHistory} from '../src/state/editHistory.ts';
-const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')));
+const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')));
 const retiredKeys=schema.retiredKeys;
 for(const key of retiredKeys)test('explicit migration preserves raw / comments / duplicates / Undo / reopen: '+key,()=>{
  const raw='# before\r\n'+key+' = false # retained note\r\nunknown = keep\r\n'+key+' = true\r\nnblockx2=0\r\nnblockx3=0';

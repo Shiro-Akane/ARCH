@@ -12,7 +12,7 @@ dependencies centrally.
 | EOS views, ownership and failures | [EOS parity](microphysics/eos/test_eos_host_device_parity.cu), [table owner](microphysics/eos/test_tabular_free_energy_owner.cu), [native table owner](microphysics/eos/test_native_tabular_owner.cu), [completed strict tables](microphysics/eos/test_tabular_completion_device.cu), [hydro failure](hydro/test_hydro_eos_failure.cu), [burn failure](microphysics/burn/test_burn_eos_failure.cu) |
 | AMR transactions and migration | [transaction](amr/test_cuda_regrid_transaction.cpp), [migration](amr/test_cuda_regrid_migration.cu), [composition](amr/test_cuda_amr_composition.cu), [store lifecycle](runtime/test_cuda_store_lifecycle.cpp) |
 | AMR indicators, ghosts and boundaries | [indicators](amr/test_refinement_indicators.cpp), [exchange](amr/test_cuda_amr_exchange.cpp), [boundary parity](grid/test_boundary_plan_parity.cu) |
-| Geometry and diffusion | [metric cache](grid/test_grid_metrics_cache.cu), [geometry witnesses](grid/test_curvilinear_geometry_smoke.cu), [RKL parity](numerics/test_diffusion_rkl_parity.cu), [multiblock diffusion](numerics/test_cuda_multiblock_diffusion.cu) |
+| Geometry and diffusion | [metric cache](grid/test_grid_metrics_cache.cu), [geometry witnesses](grid/test_curvilinear_geometry_smoke.cu), [RKL core](numerics/test_diffusion_rkl_parity.cu), [Tabular diffusion failures](numerics/test_diffusion_rkl_tabular.cu), [multiblock diffusion](numerics/test_cuda_multiblock_diffusion.cu) |
 | Burn algorithms and controller | [thermal math](microphysics/burn/test_burn_thermal_math.cu), [derivatives](microphysics/network/test_network_derivative.cu), [policy parity](microphysics/burn/test_burn_policy_parity.cu), [controller parity](microphysics/burn/test_burn_controller_parity.cu), [multiblock burn](microphysics/burn/test_cuda_multiblock_burn.cu) |
 | Sparse solve and continuation | [cuDSS solver](microphysics/linalg/test_cudss_sparse_solver.cpp), [sparse batch](microphysics/linalg/test_sparse_be_nr_batch.cu), [burn factory](microphysics/linalg/test_cuda_sparse_burn_factory.cpp) |
 | Generated networks, weak rates and NSE | [generated math](generated/test_generated_network_math.cu), [sparse integration](generated/test_generated_sparse_burn.cpp), [weak factory](generated/test_generated_weak_factory.cu), [weak trajectory](generated/test_generated_weak_trajectory.cu), [built-in NSE](microphysics/network/test_network_nse_device.cu), [generated NSE witnesses](generated/test_generated_nse_device.cu) |
@@ -22,6 +22,14 @@ dependencies centrally.
 dependencies. [Network validation](../../validation/network/README.md) supplies
 the generated-package setup. The shared [math witnesses](../math/README.md) and
 [fixtures](../fixtures/README.md) own reusable test data.
+
+The two RKL sources form one `arch_cuda_diffusion_rkl_parity` executable and
+one `diffusion_rkl_parity` CTest. The core owns frozen references, shared
+assertions, the failure counter and main; the Tabular source owns the 3D/4D
+EOS failure/recovery checks. Their [test-private support](numerics/DiffusionRklTestSupport.cuh)
+holds device fixture ownership once. Core-only test edits rebuild that source;
+common diffusion or support header edits still rebuild both. Run the complete
+existing CTest to retain all checks.
 
 An individual test checks its stated contract. Full application coverage,
 sanitizer results and combined acceptance are recorded in

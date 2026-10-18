@@ -107,20 +107,13 @@ add_test(NAME runtime_validation_inputs_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_runtime_validation_inputs.py)
 set_tests_properties(runtime_validation_inputs_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME rz_qualification_runner_contract
-    COMMAND ${Python3_EXECUTABLE} -B -m unittest discover
-        -s tests/tooling -p test_rz_qualification_runners.py)
-set_tests_properties(rz_qualification_runner_contract PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
 # Hosted CI runs these runner contracts in its complete Tooling job. Labeling
 # keeps them available to an unfiltered local CTest run while avoiding a second
 # execution in the CPU numerical/API lane.
 set(ARCH_HOST_TOOLING_TESTS
     portable_network_generator cuda_amr_smoke_runner_contract
     curvilinear_manifest_contract backend_validation_contract
-    validation_provenance_contract runtime_validation_inputs_contract
-    rz_qualification_runner_contract)
+    validation_provenance_contract runtime_validation_inputs_contract)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND ARCH_HOST_TOOLING_TESTS memory_guard_contract)
 endif()
@@ -257,14 +250,8 @@ add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 add_executable(arch_gravity_stage_contract
     tests/host/gravity/test_gravity_stage_contract.cpp
     tests/host/driver/test_host_hydro_transaction.cpp
-    tests/host/driver/test_rz_runtime_boundary.cpp
-    tests/host/driver/test_rz_runtime_external.cpp
     src/amr/elliptic/EllipticMeshAdapter.cpp
     src/driver/stages/GravityStage.cpp)
-# Reuse this one lane for bounded angular/external/coupled Runtime contracts;
-# standalone diagnostic EOS/geometry matrices retain their own main and assertions.
-target_compile_definitions(arch_gravity_stage_contract PRIVATE
-    ARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1)
 target_link_libraries(arch_gravity_stage_contract PRIVATE arch_driver_runtime arch_gravity_cpu)
 arch_configure_host_test(arch_gravity_stage_contract)
 add_test(NAME gravity_stage_contract COMMAND arch_gravity_stage_contract)

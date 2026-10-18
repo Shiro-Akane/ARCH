@@ -5,7 +5,7 @@
  * The runtime supplies state, selected fields, scratch arrays and a stream.
  * The launch produces one block error; its owner fences the stream and checks
  * EOS status before using that scalar to make host-side topology decisions.
- * Native RZ charts borrow the shared density/inertia closure and its physical
+ * Native charts borrow the shared density/inertia closure and its physical
  * center baseline; Existing input keeps its original padded point-EOS batches.
  */
 
@@ -38,13 +38,6 @@ struct DeviceIndicatorWorkspace {
     double* cell_errors = nullptr;
     double* block_error = nullptr;
     int* eos_status = nullptr;
-    // Actual physical bounds of this launch; the Native closure and its
-    // conservative center baseline are rejected against these, never against a
-    // silently copied floor.
-    arch::state::Bounds bounds{};
-    // Borrowed per-block physical center planes, Native chart only. Null
-    // pointers preserve the original point-momentum quotient route.
-    double* physical_velocity[3] = {nullptr, nullptr, nullptr};
 };
 
 struct DeviceIndicatorBatchBlock {
@@ -55,19 +48,13 @@ struct DeviceIndicatorBatchBlock {
 static_assert(std::is_trivially_copyable_v<DeviceIndicatorBatchBlock>);
 
 // Limit optional cross-block scratch, not the already-required single-block
-// allocation. One borrowed error plane always exists; a Native evaluation adds
-// three mean-thermodynamics planes plus species composition, and a requested
-// physical observer adds three non-overlapping center-velocity planes in the
-// same fixed budget. Layout/stencil ownership remains with the Host runtime.
 inline std::size_t indicator_wave_capacity(std::size_t cells, int species,
-                                          bool thermodynamics, std::size_t blocks,
-                                          bool physical_velocity = false)
+                                          bool thermodynamics, std::size_t blocks)
 {
     if (!cells || species < 0 || !blocks)
         throw std::invalid_argument("invalid indicator batch extent");
     const std::size_t fields = 1
-        + ((thermodynamics || physical_velocity) ? 3 + static_cast<std::size_t>(species) : 0)
-        + (physical_velocity ? 3 : 0);
+        + (thermodynamics ? 3 + static_cast<std::size_t>(species) : 0);
     if (cells > std::numeric_limits<std::size_t>::max() / fields / sizeof(double))
         throw std::overflow_error("indicator scratch extent overflow");
     constexpr std::size_t scratch_budget = 64 * 1024 * 1024;

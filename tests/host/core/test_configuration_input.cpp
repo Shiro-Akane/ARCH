@@ -98,16 +98,21 @@ int main(int argc, char** argv) {
                 "output-only JENS incorrectly required target");
         require(!has(inspect(fixture),"jeans_cells","MISSING_PARAMETER"),
                 "disabled JENS incorrectly required target");
-        // A two-axis RZ mesh carries all three physical velocity components.
+        // A two-axis cylindrical mesh rejects before output selection.
         std::string two_axis = fixture;
         for (const auto* key : {"geometry", "nblockx1", "nblockx2", "nblockx3",
                 "x1_min", "x1_max", "x2_min", "x2_max", "plt_variables"})
             two_axis = without(two_axis, key);
         two_axis += "nblockx1=2\nnblockx2=1\nnblockx3=0\nx1_min=.25\nx1_max=1.25\n"
                     "x2_min=.4\nx2_max=1.4\nplt_variables=VELZ\n";
-        const auto rz_output = RuntimeParams::LoadText(two_axis+"geometry=cylindrical\n",
-            "declared-test", ConfigurationPurpose::InitialState);
-        require(rz_output.io.vars.w, "public RZ azimuthal output was disabled by spatial dimension");
+        require(has(inspect(two_axis+"geometry=cylindrical\n",ConfigurationPurpose::InitialState),
+            "geometry","INVALID_RANGE"),"retired cylindrical two-dimensional chart passed loading");
+        SimConfig direct;direct.grid.dim=2;direct.grid.geometry="cylindrical";
+        direct.grid.nblockx1=direct.grid.nblockx2=1;direct.grid.nblockx3=0;
+        bool direct_rejected=false;
+        try {arch::config::ValidateControls(direct);}
+        catch(const ConfigValueError& error) {direct_rejected=error.key=="geometry"&&error.code=="INVALID_RANGE";}
+        require(direct_rejected,"direct typed controls accepted retired cylindrical two-dimensional geometry");
         const auto planar_output = RuntimeParams::LoadText(two_axis+"geometry=cartesian\n",
             "declared-test", ConfigurationPurpose::InitialState);
         require(!planar_output.io.vars.w, "planar Cartesian acquired an inactive velocity component");

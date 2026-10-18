@@ -28,9 +28,6 @@ export function PlotfileNativeInspector({samples,row}:{samples:AuditResponse;row
      <dd>[{formatPlotfileRawValue(n.lower[axis][row])}, {formatPlotfileRawValue(n.upper[axis][row])}]</dd>
     </div>)}
     <dt>Stored cell measure · {n.measureUnit??'unit unknown'}</dt><dd>{formatPlotfileRawValue(n.cellMeasure[row])}</dd>
-    {n.angularMeasure&&<><dt>Angular measure W · cm^4 · integral r dV</dt><dd>{formatPlotfileRawValue(n.angularMeasure[row])}</dd></>}
-    {n.mPhi&&<><dt>Stored m_phi · J/W · g/(cm^2 s)</dt><dd>{formatPlotfileRawValue(n.mPhi[row])}</dd></>}
-    {n.angularMomentumDensity&&<><dt>Derived J/V · g/(cm s)</dt><dd>{formatPlotfileRawValue(n.angularMomentumDensity[row])}</dd></>}
     <dt>Measure normalization</dt><dd>{n.measureNormalization??'unknown'}</dd>
     <dt>Measure source / convention</dt><dd>{n.measureSource} · {n.measureConvention}</dd>
    </>}

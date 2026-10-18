@@ -4,7 +4,9 @@ import argparse,json,subprocess
 from decimal import Decimal as D,localcontext
 from fractions import Fraction as F
 from pathlib import Path
-from rz_ring_axis_reference import PI
+# Same independent high-precision Decimal pi as the retired RZ module;
+# restated here so this ordinary oracle keeps no RZ dependency.
+PI = D("3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359")
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--probe',required=True,type=Path)

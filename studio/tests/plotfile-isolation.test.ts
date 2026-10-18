@@ -49,7 +49,7 @@ function formalResponse(dimension:number,geometry='cartesian'){
 
 test('isolated response gate accepts formal Cartesian display and curved/3D Inspector semantics',()=>{
  for(const [dimension,geometry,render] of [[1,'cartesian',true],[2,'cartesian',true],
-  [3,'cartesian',false],[2,'cylindrical',false],[3,'spherical',false]] as const){
+  [3,'cartesian',false],[2,'spherical',false],[3,'cylindrical',false],[3,'spherical',false]] as const){
   const response=formalResponse(dimension,geometry),before=JSON.stringify(response);
   const result=validateIsolatedPlotfileResult(response);
   assert.equal(result.renderEligible,render);assert.equal(result.completion.state,'complete');
@@ -89,6 +89,7 @@ test('isolated response gate rejects completion, render and source/native identi
   {...response,candidateNativeGrid:{...response.candidateNativeGrid,geometry:'spherical'}},
   {...response,nativeCellGeometry:{bounds:'unavailable',volume:'recorded'}},
   {...formalResponse(3),renderEligible:true},
+  formalResponse(2,'cylindrical'),
   {...formalResponse(2,'cylindrical'),renderEligible:true},
  ])assert.throws(()=>validateIsolatedPlotfileResult(invalid));
 });

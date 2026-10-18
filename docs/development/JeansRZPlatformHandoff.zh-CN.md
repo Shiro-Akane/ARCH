@@ -132,7 +132,7 @@ RZ 制造解和球对称映射可按第 4 节继续；环体源近远场方法�
 
 | 实现点 | 现有位置与复用要求 | 必需证据 |
 | --- | --- | --- |
-| 数学叶函数 | [physics/diagnostics](../../src/physics/diagnostics)、[RefinementIndicatorMath](../../src/amr/refinement/RefinementIndicatorMath.h)、[GridMetrics](../../src/grid/GridMetrics.h) | 一个 CPU/device 可调用公式；IdealGas 独立缩放、一般 EOS 及低密度参考 |
+| 数学叶函数 | [physics/diagnostics](../../src/physics/diagnostics)、[RefinementIndicatorMath](../../src/amr/refinement/RefinementIndicatorMath.h)、[GridMetrics](../../src/numerics/curvilinear/GridMetrics.h) | 一个 CPU/device 可调用公式；IdealGas 独立缩放、一般 EOS 及低密度参考 |
 | 指标与标志 | [amr/refinement](../../src/amr/refinement)、[AmrTree](../../src/amr/topology/AmrTree.h) | 均匀零曲率但欠分辨也细化；多指标任一细化、全部允许才粗化 |
 | 粗化／发布 | 既有 regrid 事务和保守迁移 | 用候选父态及父尺度判断；阈值附近不来回振荡；原守恒预算 |
 | 状态生命周期 | 已接受宏步、EOS 工作区、AMR epoch | 初始及每个接受宏步检查，必要细化在下一步前完成；不在未提交 RK／burn／RKL 子阶段改树 |
@@ -182,8 +182,8 @@ HDF5 与分析器对外都采用同一完整环体约定。
 
 | 模块／所有者 | 必须同步 | 验收关注点 |
 | --- | --- | --- |
-| [GridMetrics](../../src/grid/GridMetrics.h)、[GridGeometryView](../../src/grid/GridGeometryView.h)、[Grid](../../src/grid/Grid.h) | 位置、体积、两向面积、间距、体积平均几何系数 | dr／dz 与真实环体一致；不能只改 CFL |
-| [GeometricSources](../../src/numerics/integrator/GeometricSources.h) | 第二动量 z、第三动量 phi；无方位导数但保留旋流 | 静止恒压相消、z 平移、离心与角动量预算；保持一个源入口 |
+| [GridMetrics](../../src/numerics/curvilinear/GridMetrics.h)、[GridGeometryView](../../src/numerics/curvilinear/GridGeometryView.h)、[Grid](../../src/grid/Grid.h) | 位置、体积、两向面积、间距、体积平均几何系数 | dr／dz 与真实环体一致；不能只改 CFL |
+| [GeometricSources](../../src/numerics/curvilinear/GeometricSources.h) | 第二动量 z、第三动量 phi；无方位导数但保留旋流 | 静止恒压相消、z 平移、离心与角动量预算；保持一个源入口 |
 | 既有扩散、梯度和诊断 | 标量梯度、矢量基、黏性几何、div／vorticity | 适用材料的解析检查；Helm 缺失的物性不会因坐标改动自动补齐 |
 | [CoordinateSeamPlan](../../src/amr/exchange/CoordinateSeamPlan.h)／[Math](../../src/amr/exchange/CoordinateSeamMath.h) | 按几何识别方位和轴线，RZ 不走跨半圈 donor | 标量／z 偶、r／phi 奇；轴 r=0 与非零内边界区分 |
 | AMR transfer／flux | 环体 restriction／prolongation／reflux 和粗细面唯一通量 | 同层与多层迁移、质量／角动量、真实混合网格、拓扑事务 |

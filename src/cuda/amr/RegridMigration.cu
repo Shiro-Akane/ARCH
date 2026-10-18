@@ -3,16 +3,14 @@
  * @brief Device execution of conservative parent/child regrid transfers.
  *
  * Workflow:
- * 1. Authenticate borrowed layouts/charts and native parent/child identities.
+ * 1. Authenticate borrowed layouts and parent/child storage.
  * 2. Gather one immutable source family and actual destination cell bounds.
- * 3. Invoke the same ordinary or native reconstruction/restriction as Host.
+ * 3. Invoke the same reconstruction/restriction as Host.
  * 4. Write only provisional interiors; latch the first mathematical failure.
  * 5. Let the transaction owner complete real ghosts/EOS before publication.
- * Native restriction stores q=J/W using W, while rho,mr,mz,E use V.
- * No new reconstruction, inertia closure, EOS or species policy is defined here.
  */
 
-#include "amr/transfer/NativeRzRegridTransfer.h"
+#include "amr/transfer/RegridTransferMath.h"
 #include "cuda/amr/RegridMigration.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 
@@ -74,44 +72,11 @@ __global__ void prolong_regrid_families(
             * amr::regrid_math::prolongation_workspace_per_species * species : nullptr;
     amr::regrid_math::ProlongationResult result{};
     amr::regrid_math::Status outcome;
-    if (src.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        // Bind exactly the same physical family and actual geometry as Block's
-        // Host adapter. Shared native reconstruction owns all V/W integrals,
-        // density/inertia closure, primitive bounds and positivity contraction.
-        amr::regrid_math::NativeRzProlongationContext context{};
-        context.source_geometry = make_grid_geometry_view(src);
-        context.logical_nx = src.total_x;
-        context.logical_ny = src.total_y;
-        context.radial_i = ci;
-        context.axial_j = cj;
-        context.has_destination_geometry = true;
-        context.destination_geometry = make_grid_geometry_view(dst);
-        context.destination_nx = dst.total_x;
-        context.destination_ny = dst.total_y;
-        context.fine_i = dst.is + 2 * i;
-        context.fine_j = dst.js + 2 * j;
-        for (int child = 0; child < 4; ++child) {
-            const int fi = context.fine_i + (child & 1);
-            const int fj = context.fine_j + ((child >> 1) & 1);
-            context.children[child] = {
-                context.destination_geometry.GetFacePosL(fi),
-                context.destination_geometry.GetFacePosR(fi),
-                context.destination_geometry.GetAxialFacePosL(fj),
-                context.destination_geometry.GetAxialFacePosR(fj)};
-        }
-        const auto read = [&](int cell) { return source.state.load(cell); };
-        const auto enuc = [&](int cell) { return source.state.enuc_rate[cell]; };
-        const auto fraction = [&](int sp, int cell) {
-            return source.state.species(sp, cell);
-        };
-        outcome = amr::regrid_math::prolong_native_family(
-            context, read, enuc, fraction, species, bounds, scratch, result);
 
-    } else {
         outcome = amr::regrid_math::prolong_family(
             samples(source.state), geometry, species, bounds.density,
             bounds.internal_min, scratch, result);
-    }
+    
     if (outcome != amr::regrid_math::Status::Ok) {
         atomicCAS(status, 0, static_cast<int>(outcome));
         return;
@@ -151,22 +116,12 @@ __global__ void restrict_regrid_families(
     amr::regrid_math::RestrictionGeometry geometry{};
     geometry.count = 1 << dst.dim;
     geometry.coarse_volume = dst.cell_volume[target];
-    geometry.angular_momentum =
-        dst.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
-    const auto coarse_geometry = make_grid_geometry_view(dst);
-    const auto fine_geometry = make_grid_geometry_view(source.grid);
-    if (geometry.angular_momentum)
-        geometry.coarse_angular_measure = GridMetrics::Rz::AngularMomentumMeasure(
-            coarse_geometry, dst.is + i, dst.js + j);
     for (int child = 0; child < geometry.count; ++child) {
         const int fi = source.grid.is + ibase + (child & 1);
         const int fj = source.grid.js + jbase + (dst.dim >= 2 ? (child >> 1) & 1 : 0);
         const int fk = source.grid.ks + kbase + (dst.dim == 3 ? (child >> 2) & 1 : 0);
         geometry.source_cells[child] = source.grid.index(fi, fj, fk);
         geometry.volumes[child] = source.grid.cell_volume[geometry.source_cells[child]];
-        if (geometry.angular_momentum)
-            geometry.angular_measures[child] =
-                GridMetrics::Rz::AngularMomentumMeasure(fine_geometry, fi, fj);
     }
     const int species = destination.state.n_species;
     double* scratch = species > 0
@@ -224,34 +179,10 @@ bool same_layout(const DeviceRegridBlock& source, const DeviceRegridBlock& desti
     return valid_block(source) && valid_block(destination)
         && source.state.n_species == destination.state.n_species
         && source.grid.geometry == destination.grid.geometry
-        && source.grid.semantics == destination.grid.semantics
         && source.grid.dim == destination.grid.dim
         && source.grid.ie - source.grid.is == destination.grid.ie - destination.grid.is
         && source.grid.je - source.grid.js == destination.grid.je - destination.grid.js
         && source.grid.ke - source.grid.ks == destination.grid.ke - destination.grid.ks;
-}
-
-/** Verify native parent/child topology using the existing exact root identity.
- * The transaction owns handles/generation and disjoint allocations; this POD
- * binding can authenticate only the represented geometry and child ordering.
- */
-bool actual_child(const DeviceRegridBlock& parent,
-                  const DeviceRegridBlock& child, int child_index)
-{
-    if (parent.grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
-        return true;
-    const auto& coarse = parent.grid.dyadic_identity;
-    const auto& fine = child.grid.dyadic_identity;
-    if (fine.level != coarse.level + 1) return false;
-    auto root = fine;
-    root.level = coarse.level;
-    root.logical = coarse.logical;
-    if (!GridMetrics::equal_identity(coarse, root)) return false;
-    for (int axis = 0; axis < 2; ++axis)
-        if (static_cast<std::uint64_t>(fine.logical[axis])
-            != 2 * static_cast<std::uint64_t>(coarse.logical[axis])
-                + ((child_index >> axis) & 1)) return false;
-    return true;
 }
 
 /** Validate caller-owned reusable scratch with overflow-safe extent products. */
@@ -279,8 +210,7 @@ cudaError_t launch_cuda_regrid_prolongation(
     std::size_t workspace_scalars, int* status, cudaStream_t stream)
 {
     if (!same_layout(source, destination) || !valid_limits(bounds)
-        || !status || child_index < 0 || child_index >= (1 << destination.grid.dim)
-        || !actual_child(source, destination, child_index))
+        || !status || child_index < 0 || child_index >= (1 << destination.grid.dim))
         return cudaErrorInvalidValue;
     const auto& grid = source.grid;
     // The full reconstruction needs one coarse ghost sample on each axis.
@@ -306,8 +236,7 @@ cudaError_t validate_cuda_regrid_restriction(
     if (!valid_block(destination) || !valid_limits(bounds) || !status)
         return cudaErrorInvalidValue;
     for (int child = 0; child < (1 << destination.grid.dim); ++child)
-        if (!same_layout(children.blocks[child], destination)
-            || !actual_child(destination, children.blocks[child], child))
+        if (!same_layout(children.blocks[child], destination))
             return cudaErrorInvalidValue;
     const int cells = destination.grid.active_cell_count();
     if (!valid_workspace(cells, destination.state.n_species,

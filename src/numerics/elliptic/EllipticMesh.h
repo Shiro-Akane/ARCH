@@ -12,7 +12,7 @@
 #include <array>
 
 #include "core/ArchPortability.h"
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 
 namespace arch::elliptic {
 enum class Geometry { Cartesian, Cylindrical, Spherical };
@@ -23,14 +23,6 @@ struct EllipticMesh {
     std::array<double, 3> spacing{1., 1., 1.};
     std::array<double, 3> origin{};
     Geometry geometry = Geometry::Cartesian;
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
-    /** Actual configured native domain, supplied explicitly by the AMR owner.
-     * The flag only selects the shared face generator; validation still checks
-     * the root endpoints and exact logical mapping. Ordinary/unbound meshes
-     * preserve origin/spacing arithmetic. Never infer this from old spacing.
-     */
-    bool native_canonical_domain = false;
-    std::array<double,3> root_upper{};
     /** Return the number of root logical cells. */
     ARCH_HOST_DEVICE int size() const { return cells[0] * cells[1] * cells[2]; }
     /** Flatten x-fast logical cell coordinates. */

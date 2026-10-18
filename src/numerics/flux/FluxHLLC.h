@@ -31,6 +31,8 @@ struct FluxHLLC
 {
     static std::string name() { return "HLLC + " + ReconstructPolicy::name(); }
     static constexpr int NG = ReconstructPolicy::NG;
+    static constexpr bool prepared_endpoint_thermo=true; // Actual directional endpoint role.
+    static constexpr bool prepared_endpoint_input=true; // Actual owner supplies complete endpoint inputs.
 
     // Construct the flux in an HLLC star region from its contact speed and
     // pressure. This is algebraically F_K + S_K*(U*_K - U_K), but avoids
@@ -82,24 +84,29 @@ struct FluxHLLC
             mass_flux * ut1_K, mass_flux * ut2_K, S_star * (eng_star + pressure_star), dir);
     }
 
+private:
+    /** Sole HLLC mathematical core. Raw queries remain left-first with their
+     * original equal-state early return; prepared physical owners supply the
+     * same actual directional inputs without repeating lookup/recovery. */
     template <typename EosType>
-    static ARCH_INLINE void compute_face_flux(
+    static ARCH_INLINE void compute_face_flux_core(
         const FluidVector& U_L, const FluidVector& U_R,
         const double* Xi_L, const double* Xi_R, int n_spec,
         const EosType& eos, int dir, double /* coefficient */,
         FluidVector& flux_out, double* species_flux_out,
-        const FluxAdmissibility::MeanThermoView* mean_view = nullptr,
-        int left_cell = -1, int right_cell = -1)
+        const FluxAdmissibility::MeanThermoView* mean_view,
+        int left_cell, int right_cell)
     {
         // 2. Thermodynamics Preparation
         // Left
-        double rho_L = U_L.rho;
-        double un_L = get_un(U_L, dir);
-        double ut1_L = get_ut1(U_L, dir);
-        double ut2_L = get_ut2(U_L, dir);
+        double rho_L, un_L, ut1_L, ut2_L, e_L;
+        rho_L = U_L.rho;
+        un_L = get_un(U_L, dir);
+        ut1_L = get_ut1(U_L, dir);
+        ut2_L = get_ut2(U_L, dir);
         double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
 
-        double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+        e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
 
         // Consistency of the Riemann problem: F_HLLC(U,U) = F(U). Compare
         // every conservative component and species before using this exact
@@ -119,7 +126,7 @@ struct FluxHLLC
             // State equality is the original identity path, independent of
             // how directional primitive recovery rounds intermediate energy.
             const bool reused_mean = mean_view && mean_view->query(
-                U_L, Xi_L, n_spec, left_cell, right_cell, pressure, sound_speed);
+                U_L,Xi_L,n_spec,left_cell,right_cell,pressure,sound_speed);
             if (!reused_mean)
                 calc_endpoint_thermo(U_L, e_L, Xi_L, eos,
                                      pressure, sound_speed);
@@ -136,13 +143,14 @@ struct FluxHLLC
         FluxAdmissibility::face_thermo(U_L,e_L,Xi_L,n_spec,eos,mean_view,left_cell,p_L,c_L);
 
         // Right
-        double rho_R = U_R.rho;
-        double un_R = get_un(U_R, dir);
-        double ut1_R = get_ut1(U_R, dir);
-        double ut2_R = get_ut2(U_R, dir);
+        double rho_R, un_R, ut1_R, ut2_R, e_R;
+        rho_R = U_R.rho;
+        un_R = get_un(U_R, dir);
+        ut1_R = get_ut1(U_R, dir);
+        ut2_R = get_ut2(U_R, dir);
         double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
 
-        double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
+        e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
         double p_R, c_R;
         FluxAdmissibility::face_thermo(U_R,e_R,Xi_R,n_spec,eos,mean_view,right_cell,p_R,c_R);
 
@@ -223,6 +231,22 @@ struct FluxHLLC
             // the same side test used for the hydrodynamic flux.
             species_flux_out[s] = mass_flux * chosen_Xi[s];
         }
+    }
+
+public:
+    /** Genuine ordinary/raw input route. EOS order and endpoint expressions
+     * remain those of the sole original HLLC core. */
+    template <typename EosType>
+    static ARCH_INLINE void compute_face_flux(
+        const FluidVector& U_L, const FluidVector& U_R,
+        const double* Xi_L, const double* Xi_R, int n_spec,
+        const EosType& eos, int dir, double coefficient,
+        FluidVector& flux_out, double* species_flux_out,
+        const FluxAdmissibility::MeanThermoView* mean_view = nullptr,
+        int left_cell = -1, int right_cell = -1)
+    {
+        compute_face_flux_core(U_L,U_R,Xi_L,Xi_R,n_spec,eos,dir,coefficient,
+            flux_out,species_flux_out,mean_view,left_cell,right_cell);
     }
 
     /** Bind this mathematical policy to the common host face sweep. */

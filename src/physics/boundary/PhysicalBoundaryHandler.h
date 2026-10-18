@@ -6,12 +6,9 @@
  * 1. Compile the existing logical plan, retaining its built-in fast path.
  *    Epoch preparation reserves only unbound physical-control capacity,
  *    preserving actual values/bindings before any resident macro savepoint.
- * 2. Bind the chosen EOS for callback-free native reflecting point laws and
- *    the optional immutable case callback once per simulation.
- * 3. For native RZ, domain ownership separates builtin/exchange seed,
- *    immutable builtin/user layers per axis, validation and no-throw scatter.
- * 4. Complete shared axis parity; the Runtime checks final actual EOS before
- *    scheduler GhostValid. Existing and device gather/scatter retain their path.
+ * 2. Bind the optional immutable case callback to the selected EOS.
+ * 3. Apply callbacks in their existing face order and retain separate
+ *    diffusion face controls. Runtime owns final boundary acceptance.
  */
 #pragma once
 
@@ -31,7 +28,6 @@
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "driver/runtime/ComputeBackend.h"
 #include "physics/boundary/BoundaryFlux.h"
-#include "physics/boundary/NativeRzBoundary.h"
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/UserBoundary.h"
 
@@ -39,33 +35,10 @@ namespace arch::boundary { class HostHydroBoundaryAuthority; class HostHydroBoun
 
 /** Boundary adapter used by all Host integrators and the shared CUDA driver. */
 struct BCHandler {
-    explicit BCHandler(const SimConfig& config,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
-    GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return semantics_; }
-    /** Bind native point EOS even when the simulation has no user callback.
-     * Workflow: invalidate prior native EOS leases -> bind the callback-free
-     * reflector -> preserve the existing optional user conversion path.
-     */
+    explicit BCHandler(const SimConfig& config);
+    /** Bind the original optional user conversion path. */
     template<class Eos> void bind(const Eos& eos, const SpeciesManager& species) {
-        if (semantics_ == GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            if (binding_revision_ == std::numeric_limits<std::uint64_t>::max())
-                throw std::overflow_error("Native boundary binding revision exhausted");
-            // A new borrowed EOS lifetime invalidates every prepared surface.
-            ++binding_revision_;
-            native_reflecting_evaluate_ = [this, &eos, &species](const Grid& grid,
-                const arch::boundary::NativeRzBoundaryRequest& request,
-                const NativeConservedReader& read, const NativeFractionReader& fraction) {
-                return arch::boundary::EvaluateNativeRzReflectingCell(grid, request,
-                    *config_, species, eos, read, fraction);
-            };
-            if (callback_)
-                native_evaluate_ = [this, &eos, &species](const Grid& grid,
-                    const arch::boundary::NativeRzBoundaryRequest& request,
-                    const NativeConservedReader& read, const NativeFractionReader& fraction) {
-                    return arch::boundary::EvaluateNativeRzBoundaryCell(grid, request,
-                        *config_, species, eos, callback_, read, fraction);
-                };
-        }
+
         if (!callback_) return;
         evaluate_ = [this, &eos, &species](const arch::boundary::BoundaryCoordinates& coordinates,
             const FluidVector& interior, std::span<const double> composition,
@@ -81,23 +54,21 @@ struct BCHandler {
         friend struct BCHandler;
         double time_;
         std::uint64_t revision_;
-        std::uint64_t binding_revision_;
         arch::boundary::BoundaryPurpose purpose_;
-        StageContextSnapshot(double t,std::uint64_t r,std::uint64_t binding,
+        StageContextSnapshot(double t,std::uint64_t r,
             arch::boundary::BoundaryPurpose p)
-            : time_(t),revision_(r),binding_revision_(binding),purpose_(p) {}
+            : time_(t),revision_(r),purpose_(p) {}
     public:
         /** Query actual immutable snapshot data, never stage authority. The
          * owner must still check stage_context_matches and its real binding. */
         double time() const noexcept {return time_;}
         arch::boundary::BoundaryPurpose purpose() const noexcept {return purpose_;}
         std::uint64_t revision() const noexcept {return revision_;}
-        std::uint64_t binding_revision() const noexcept {return binding_revision_;}
 
     };
     /** Capture a context identity at a quiescent Host scheduler boundary. */
     StageContextSnapshot snapshot_stage_context() const noexcept {
-        return {time_,stage_revision_,binding_revision_,purpose_};
+        return {time_,stage_revision_,purpose_};
     }
     /** Restore the context paired with the restored original ghost fields. */
     void restore_stage_context_noexcept(const StageContextSnapshot& s) noexcept {
@@ -106,30 +77,23 @@ struct BCHandler {
     /** Inspect all context fields, including time/purpose hidden behind revision. */
     bool stage_context_matches(const StageContextSnapshot& s) const noexcept {
         return time_==s.time_&&stage_revision_==s.revision_
-            &&binding_revision_==s.binding_revision_&&purpose_==s.purpose_;
+            &&purpose_==s.purpose_;
     }
     /** Identity of the exact time/purpose snapshot; equal requests may reuse ghosts. */
     std::uint64_t stage_revision() const noexcept { return stage_revision_; }
-    /** Whether empty native Hydro leases can authenticate the real point EOS.
-     * This is binding availability only, never a numerical acceptance result.
-     */
-    bool native_point_eos_bound() const noexcept { return bool(native_reflecting_evaluate_); }
 private:
     friend class arch::boundary::HostHydroBoundaryAuthority;
     friend class arch::boundary::HostHydroBoundaryDomainAuthority;
     /** One borrowed metadata identity; never owns scientific surface payload. */
     struct InputIdentity {
         const BCHandler* owner_ = nullptr;
-        std::uint64_t binding_revision_ = 0;
         const FluidState* state_ = nullptr;
         const Grid* grid_ = nullptr;
         arch::boundary::host::HostBoundaryLayout layout_{};
         std::array<const double*,7> pointers_{};
         std::array<std::size_t,7> sizes_{};
-        std::array<std::uint64_t,20> geometry_{};
-        std::array<std::uint64_t,7> root_context_{};
-        std::array<std::uint64_t,12> full_root_{};
-        GridMetrics::GeometrySemantics semantics_ = GridMetrics::GeometrySemantics::Existing;
+        std::array<std::uint64_t,9> geometry_{};
+        std::array<std::uint64_t,11> full_root_{};
         GridMetrics::Geometry chart_ = GridMetrics::Geometry::Cartesian;
         int dimension_ = 0;
         std::uint64_t revision_ = 0, time_bits_ = 0;
@@ -157,82 +121,6 @@ public:
         HydroInputFrame(const HydroInputFrame&)=delete;
         HydroInputFrame& operator=(const HydroInputFrame&)=delete;
     };
-    /** Opaque numerical surface candidate. No GhostValid publication is implied.
-     * It borrows one exact seed layout/frame until domain-wide preparation joins.
-     */
-    class NativeCandidate {
-        friend struct BCHandler;
-        struct Entry {
-            int destination;
-            FluidVector conserved;
-            std::vector<double> fractions;
-            double enuc;
-        };
-        InputIdentity identity_{};
-        std::vector<Entry> entries_;
-        std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> storage_;
-        bool publish_controls_ = false;
-    public:
-        NativeCandidate() = default;
-        NativeCandidate(NativeCandidate&&) noexcept = default;
-        NativeCandidate& operator=(NativeCandidate&&) noexcept = default;
-        NativeCandidate(const NativeCandidate&) = delete;
-        NativeCandidate& operator=(const NativeCandidate&) = delete;
-    };
-    /** Move-only unpublished Native Device surface, tied to an actual store.
-     * Frame identity uses the real backend/access, optional exact staged store,
-     * and Grid/stage/root words. No Host FluidState pointers, whole resident
-     * arrays or scientific authority are stored. Committed writes belong to
-     * the Runtime savepoint; unpublished writes belong to candidate disposal.
-     */
-    class NativeDeviceCandidate {
-        friend struct BCHandler;
-        const BCHandler* owner_ = nullptr;
-        arch::backend::ComputeBackend* backend_ = nullptr;
-        arch::backend::BackendTopologyStoreTransaction* staged_ = nullptr;
-        arch::backend::BackendStateAccess access_{};
-        const Grid* grid_ = nullptr;
-        arch::boundary::host::HostBoundaryLayout layout_{};
-        std::array<std::uint64_t,20> geometry_{};
-        std::array<std::uint64_t,7> root_context_{};
-        std::array<std::uint64_t,12> full_root_{};
-        std::optional<StageContextSnapshot> context_;
-        std::vector<int> destinations_;
-        arch::backend::BoundaryCells values_;
-        std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> storage_;
-        bool need_controls_ = false;
-    public:
-        NativeDeviceCandidate() = default;
-        NativeDeviceCandidate(NativeDeviceCandidate&&) noexcept = default;
-        NativeDeviceCandidate& operator=(NativeDeviceCandidate&&) noexcept = default;
-        NativeDeviceCandidate(const NativeDeviceCandidate&) = delete;
-        NativeDeviceCandidate& operator=(const NativeDeviceCandidate&) = delete;
-    };
-    /** Prepare readonly actual-store layers x1 builtin/user, then x2 builtin/user.
-     * Builtin layers use the backend's selected EOS; user layers borrow one
-     * compact seed gather and the original bound Host callback/point law.
-     * An explicit staged store accepts Current only and never reads the
-     * committed namespace as fallback; nullptr preserves committed dispatch.
-     */
-    NativeDeviceCandidate prepare_native_device(arch::backend::ComputeBackend&,
-        arch::backend::BackendStateAccess,const Grid&,
-        arch::backend::BackendTopologyStoreTransaction* staged=nullptr) const;
-    /** Recheck actual backend/access and exact staged-store pointer, followed
-     * by the original stage/binding/root/Grid and surface identity. This
-     * validates provisional payload only; it grants no GhostValid or completed
-     * cell EOS acceptance. Validate ALL domains before any scatter.
-     */
-    void validate_native_device_candidate(const NativeDeviceCandidate&,
-        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&,
-        arch::backend::BackendTopologyStoreTransaction* staged=nullptr) const;
-    /** Scatter through the existing fallible backend operation. Committed
-     * writes require the Runtime resident savepoint; unpublished staged writes
-     * require the topology candidate disposal owner. Failure can follow earlier
-     * domain writes. Final exchange/axis/EOS and publication remain external.
-     */
-    void publish_native_device(NativeDeviceCandidate&&,
-        arch::backend::ComputeBackend&,arch::backend::BackendStateAccess,const Grid&,
-        arch::backend::BackendTopologyStoreTransaction* staged=nullptr) const;
     /** Freeze only actual input metadata at the completed Hydro snapshot.
      * No wall, ledger or scientific permission follows from this public observation.
      */
@@ -241,25 +129,10 @@ public:
     void require_hydro_input_frame(const HydroInputFrame&,const FluidState&,const Grid&,double expected_time) const;
     /** Fill only the original logical seeds; scientific acceptance stays pending. */
     void apply_builtin(FluidState& state, const Grid& grid) const;
-    /** Prepare ordered x1/x2 surface values from immutable seed/candidate views. */
-    NativeCandidate prepare_native(const FluidState& state, const Grid& grid) const;
-    /** Reject frame/layout drift before any domain callback value is scattered. */
-    void validate_native_candidate(const NativeCandidate&,const FluidState&,const Grid&) const;
-    /** Scatter a prevalidated candidate without callbacks, allocation or throws.
-     * Caller must validate every domain candidate first and retain exclusive state.
-     */
-    void publish_native_noexcept(NativeCandidate&&,FluidState&) const noexcept;
-    /** Complete only shared RzAxis operations, including positive-source corners. */
-    void complete_axis(FluidState& state,const Grid& grid) const;
     void apply(FluidState& state, const Grid& grid) const;
     /** Gather/scatter a boundary slice; active domain arrays stay on device. */
     void apply_device(arch::backend::ComputeBackend&, arch::backend::BackendStateAccess,
                       const Grid&) const;
-    /** Return physical Diffusion face capacities without callback/EOS or state.
-     * The explicit original face enumerator does not modify this BC stage.
-     * No user callback yields zero counts; Runtime owns epoch preparation.
-     */
-    std::array<std::size_t,6> native_device_control_extents(const Grid&,int species) const;
     bool has_user() const noexcept { return bool(callback_); }
     const arch::boundary::BoundaryPlan& logical_plan() const noexcept { return logical_plan_; }
     const arch::boundary::BoundaryPlan& logical_plan(const Grid&) const;
@@ -269,7 +142,6 @@ private:
         int face, plane;
         bool first_active_layer;
         arch::boundary::BoundaryCoordinates coordinates;
-        std::array<int,2> source_logical, destination_logical;
     };
     static arch::boundary::BoundaryPlan make_logical_plan(const SimConfig&);
     std::vector<Ghost> ghosts(const Grid&) const;
@@ -279,44 +151,23 @@ private:
     std::vector<Ghost> ghosts(const Grid&,arch::boundary::BoundaryPurpose) const;
     /** Shared actual face/count recipe for capacity and real control storage. */
     std::array<std::size_t,6> diffusion_control_extents(const Grid&,int species) const;
-    /** Shared allocation-free selection of authenticated physical reflecting faces. */
-    arch::boundary::HydroBoundaryView native_reflecting_faces(const Grid&) const;
-    /** Enumerate only genuine positive Native physical reflecting surfaces. */
-    std::vector<Ghost> reflecting_ghosts(const Grid&) const;
-    /** Recheck the actual root/config context before surface preparation/publication. */
-    void require_native_root_frame(const Grid&) const;
     std::shared_ptr<arch::boundary::DiffusionBoundaryStorage> make_diffusion_storage(const Grid&, int) const;
     void store_conditions(arch::boundary::DiffusionBoundaryStorage&, const Ghost&,
                           const arch::boundary::PhysicalBoundaryData&, int) const;
     /** Capture the same borrowed storage/chart identity for either private role. */
     InputIdentity capture_input_identity(const FluidState&,const Grid&) const;
-    /** Require common metadata; Native science prerequisites remain role-specific. */
+    /** Require the same actual input metadata before publication. */
     void validate_input_identity(const InputIdentity&,const FluidState&,const Grid&) const;
     /** Exact three-axis configured root identity, with no face-string copies. */
-    std::array<std::uint64_t,12> input_root_identity() const;
-    void capture_native_frame(NativeCandidate&,const FluidState&,const Grid&) const;
-    /** Common immutable frame validation; final candidate entries stay separate. */
-    void validate_native_frame(const NativeCandidate&,const FluidState&,const Grid&) const;
-    using NativeConservedReader = std::function<FluidVector(int)>;
-    using NativeFractionReader = std::function<double(int,int)>;
-    std::function<arch::boundary::PhysicalBoundaryEvaluation(const Grid&,
-        const arch::boundary::NativeRzBoundaryRequest&,
-        const NativeConservedReader&,const NativeFractionReader&)> native_evaluate_;
-    std::function<arch::boundary::PhysicalBoundaryEvaluation(const Grid&,
-        const arch::boundary::NativeRzBoundaryRequest&,
-        const NativeConservedReader&,const NativeFractionReader&)> native_reflecting_evaluate_;
+    std::array<std::uint64_t,11> input_root_identity() const;
     const SimConfig* config_;
-    GridMetrics::GeometrySemantics semantics_;
     arch::boundary::BoundaryPlan logical_plan_;
     arch::boundary::host::HostCompiledBoundaryPlan compiled_;
-    std::optional<arch::boundary::BoundaryPlan> axis_plan_;
-    std::optional<arch::boundary::host::HostCompiledBoundaryPlan> axis_compiled_;
     arch::boundary::PhysicalBoundaryFunction callback_;
     std::function<arch::boundary::PhysicalBoundaryEvaluation(
         const arch::boundary::BoundaryCoordinates&, const FluidVector&, std::span<const double>,
         const FluidVector*, std::span<const double>)> evaluate_;
     double time_ = 0.;
     std::uint64_t stage_revision_ = 1;
-    std::uint64_t binding_revision_ = 1;
     arch::boundary::BoundaryPurpose purpose_ = arch::boundary::BoundaryPurpose::Hydro;
 };

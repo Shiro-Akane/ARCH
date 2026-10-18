@@ -626,7 +626,7 @@ SelfGravity在未完成finite-ring/native force-work/runtime consumer前明确�
 旧publication失效及Cartesian恢复通过，不宣布RZ科学完成。
 原CPU生命周期1/1、实际Cartesian Runtime7gather与CUDA-enabled Host1/1通过；
 旧工程非法AMR阈值对修正并以Core关系检查，原科学门槛不变。
-见RZEllipticChartBindingNode-20261005.zh-CN.md及processed summary。
+见[历史记录](archive/histroy/rz/RZEllipticChartBindingNode-20261005.zh-CN.md)及processed summary。
 未变CPU ELF复用receipt；JENS门槛候选未应用，完整CUDA冻结包等待明确本地验证授权。
 raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。
 
@@ -637,7 +637,7 @@ raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。
 Existing原center/公式不变；3584真实root/mixed cell与所有边界face检查通过。
 原CPU self-gravity1/1、actualCartesian Runtime7gather/time0、CUDA-enabled Host1/1 PASS，
 不是Device RZ或完整RZ Runtime/science。原bind/regrid/JENS gate保持。
-见RZGravityWorkspaceChartNode-20261005.zh-CN.md及processed summary。
+见[历史记录](archive/histroy/rz/RZGravityWorkspaceChartNode-20261005.zh-CN.md)及processed summary。
 CPU ELF未变receipt复用、raw/ELF本机；完整finite-ring runtime/force-work/科学/长跑仍未签收。
 
 
@@ -678,7 +678,7 @@ CUDA9+9候选仍待明确本地验证授权；原科学gate保持，不开展Win
 normal-only Phi_face切向偏置（work=-.6772486772486772，native reference0）。
 原CompositePoisson用同一neighborhood/LU修正affine再现，原断言不变；
 face/work/actual Host cell force/dz timestep、CPU4CTest、actualCartesian Runtime7gather、
-CUDA-enabled Host1CTest通过。见RZNativeFaceWorkNode-20261005.zh-CN.md和summary。
+CUDA-enabled Host1CTest通过。见[历史记录](archive/histroy/rz/RZNativeFaceWorkNode-20261005.zh-CN.md)和summary。
 只关闭该affine scope，RZ typed ring boundary/publication/连续科学/axis/viscosity gate保持。
 生产ELF未变receipt复用，raw/ELF本机，无Windows或新长跑。
 
@@ -690,6 +690,6 @@ source/generation、stale/missing/WorkLimit诊断通过16-cell原预算源验证
 legacy工作项携带真实chart，Host/CUDA拒绝RZ log；实机Device拒绝typed ring，
 零kernel/transfer/fence增量、无Host fallback且旧证书退役，原36 reduction边界case通过。
 CPU1CTest、CUDA-enabled2CTest与actualCartesian Runtime7gather通过；
-见RZTypedRingExecutionNode-20261005.zh-CN.md及processed summary。
+见[历史记录](archive/histroy/rz/RZTypedRingExecutionNode-20261005.zh-CN.md)及processed summary。
 SelfGravity RZ完整source/RHS/solve/publication和科学gate仍未签收；公开JENS CUDA门槛不变。
 生产ELF未变，raw/ELF本机，不开展Windows或新长跑。

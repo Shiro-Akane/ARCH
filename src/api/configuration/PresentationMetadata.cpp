@@ -16,7 +16,7 @@
 #include "data/FieldUnits.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace arch::api {
 using detail::Json;
@@ -46,10 +46,7 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
     if (known_geometry)
         std::transform(grid.geometry.begin(),grid.geometry.end(),grid.geometry.begin(),
             dispatch::ascii_lower);
-    const auto geometry_semantics=known_geometry && g.dim>=1 && g.dim<=3
-        ? GridMetrics::resolve_public_chart(grid.geometry,g.dim)
-        : GridMetrics::GeometrySemantics::Existing;
-    const auto names = grid.GetAxisNames(geometry_semantics);
+    const auto names = grid.GetAxisNames();
     const int blocks[] = {g.nblockx1, g.nblockx2, g.nblockx3};
     auto axes = Json::array();
     for (int i = 0; i < 3; ++i) {

@@ -16,7 +16,7 @@
 #include "api/preview/ResourceEstimates.h"
 #include "driver/DriverUtils.h"
 #include "driver/initialization/InitialMesh.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace arch::api {
 struct MeshResult { detail::Json data; bool complete; bool constructed; };
@@ -28,8 +28,6 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
                            const SpeciesManager& species, dispatch::EosId eos_id,
                            const Eos& eos, const PreviewRequest& request) {
     using detail::Json;
-    const auto geometry_semantics=GridMetrics::resolve_public_chart(
-        config.grid.geometry,config.grid.dim);
     const auto start = std::chrono::steady_clock::now();
     const auto check_time = [&] {
         if (std::chrono::steady_clock::now() - start > std::chrono::seconds(contract::mesh_seconds))
@@ -65,22 +63,17 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
     amr::AMRControl control(capacity, config.grid.dim);
     control.tree->ConfigureRefinementSpecies(config.amr, species);
     driver::InitializeRootState(control, problem, config, species,
-        {eos_id,geometry_semantics});
-    // Preview owns no qualified Runtime. Native active initialization uses the
-    // selected EOS and true V/W means, but must not borrow legacy raw-state
-    // refinement/physical fill as completed Native domain authority.
-    if (geometry_semantics==GridMetrics::GeometrySemantics::Existing)
-        amr::BindRefinementThermodynamics(*control.tree, eos);
-    BCHandler boundaries(config,geometry_semantics);
-    bool complete = geometry_semantics==GridMetrics::GeometrySemantics::Existing
-        || config.amr.lrefinemax<=0;
-    if (!complete) result["limitedReason"] = "native-rz-amr-preview-not-qualified";
+        {eos_id});
+    // Initialize through the shared point-state owner, then bind the same
+    // EOS used by the bounded refinement pass. Preview enters no time loop.
+    amr::BindRefinementThermodynamics(*control.tree, eos);
+    BCHandler boundaries(config);
+    bool complete = true;
     int passes = 0;
     std::uint64_t epoch = 1;
     try {
         for (int pass = 0;
-             geometry_semantics==GridMetrics::GeometrySemantics::Existing
-                 && pass < config.amr.lrefinemax; ++pass) {
+             pass < config.amr.lrefinemax; ++pass) {
             check_time();
             std::vector<amr::BlockHandle> handles;
             for (int id : control.tree->GetActiveBlocks()) {
@@ -137,8 +130,7 @@ MeshResult BuildInitialMesh(ProblemGenerator& problem, const SimConfig& config,
     result["leaves"] = leaves; result["levelCounts"] = counts;
     result["leafCount"] = std::int64_t(control.tree->GetActiveBlocks().size());
     result["complete"] = complete; result["completedPasses"] = passes;
-    result["snapshot"] = geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-        ? "native-root-topology-active-initialization-only" : "last-completed-balanced-hierarchy";
+    result["snapshot"] = "last-completed-balanced-hierarchy";
     return {std::move(result), complete, true};
 }
 } // namespace arch::api

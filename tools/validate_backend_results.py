@@ -82,6 +82,45 @@ def select_cases(manifest: dict[str, Any], requested: list[str]) -> list[dict[st
     return cases
 
 
+def resolution_group_members(
+    manifest: dict[str, Any]
+) -> dict[str, list[dict[str, Any]]]:
+    """Frozen qualification groups; membership never depends on a selection."""
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for case in manifest["cases"]:
+        group = case.get("qualification_group")
+        if group is not None:
+            grouped.setdefault(str(group), []).append(case)
+    return grouped
+
+
+def selected_resolution_group_cases(
+    manifest: dict[str, Any], requested: list[str]
+) -> list[dict[str, Any]]:
+    """Return the frozen group members a request may gate, refusing partial groups.
+
+    Resolution groups are all-or-nothing: a request that touches a group must
+    select every member, so the unchanged convergence gate always sees the
+    complete frozen group. Completeness is derived from the original manifest,
+    and any missing member rejects before execution or provenance work.
+    """
+    grouped = resolution_group_members(manifest)
+    if not requested:
+        return [case for members in grouped.values() for case in members]
+    selected = set(requested)
+    complete: list[dict[str, Any]] = []
+    for group, members in grouped.items():
+        if not any(case["id"] in selected for case in members):
+            continue
+        missing = [case["id"] for case in members if case["id"] not in selected]
+        if missing:
+            raise RuntimeError(
+                f"resolution group {group} must be selected completely; "
+                f"missing case IDs: {', '.join(missing)}")
+        complete.extend(members)
+    return complete
+
+
 def read_parameter_map(path: Path) -> dict[str, str]:
     """Read unambiguous raw assignments; Core still owns semantic validation."""
     result: dict[str, str] = {}
@@ -346,8 +385,14 @@ def compare_hdf5_checkpoints(
 
 
 def read_conservation_metrics(
-    checkpoint_validator: Path, checkpoint: Path, parameter_file: Path | None = None
+    checkpoint_validator: Path, checkpoint: Path, parameter_file: Path | None = None,
+    *, preserve_total_precision: bool = False,
 ) -> dict[str, Any]:
+    """Read totals; opt-in decimal strings avoid an intermediate binary64 round.
+
+    Metadata retains ordinary JSON types. The explicit encoding contract rejects
+    old validators whose totals were already narrowed before JSON serialization.
+    """
     command = [str(checkpoint_validator), "--metrics", str(checkpoint)]
     parameter_sha256 = None
     if parameter_file is not None:
@@ -364,6 +409,20 @@ def read_conservation_metrics(
     if not lines:
         raise RuntimeError("checkpoint metrics produced no JSON summary")
     result = json.loads(lines[-1])
+    if preserve_total_precision:
+        if result.get("totals_encoding") != "native_long_double_roundtrip_decimal":
+            raise RuntimeError("checkpoint validator did not provide round-trip native long-double totals")
+        decimal_tokens = json.loads(lines[-1], parse_float=str, parse_int=str)
+        for field in ("mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"):
+            values = result.get(field)
+            tokens = decimal_tokens.get(field)
+            if field != "rhoX":
+                values, tokens = [values], [tokens]
+            if (not isinstance(values, list) or not isinstance(tokens, list)
+                    or any(type(value) not in (int, float) for value in values)
+                    or any(not isinstance(token, str) for token in tokens)):
+                raise RuntimeError(f"checkpoint validator did not provide numeric totals: {field}")
+            result[field] = decimal_tokens[field]
     if parameter_file is not None:
         if _sha256(parameter_file) != parameter_sha256:
             raise RuntimeError("conservation parameter file changed while computing metrics")
@@ -1198,7 +1257,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, required=True,
                         help="canonical case manifest with inputs and acceptance budgets")
     parser.add_argument("--case", action="append", default=[],
-                        help="run only this case ID; repeat to select several cases")
+                        help="run only this case ID; repeat to select several cases. "
+                             "A qualification group is all-or-nothing: selecting any "
+                             "resolution of a group requires selecting every member")
     parser.add_argument("--arch", type=Path, help="ARCH executable from the selected build")
     parser.add_argument("--checkpoint-validator", type=Path,
                         help="arch_cuda_single_level_validation from the same build")
@@ -1221,8 +1282,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.output_root is None or args.build_dir is None:
         parser.error(
             "release validation requires --arch, --checkpoint-validator, --build-dir and --output-root")
-    selected = set(args.case)
     cases = select_cases(manifest, args.case)
+    group_cases = selected_resolution_group_cases(manifest, args.case)
     require_empty_output_root(args.output_root)
     identity_arguments = {
         "arch": args.arch.resolve(),
@@ -1248,8 +1309,8 @@ def main(argv: list[str] | None = None) -> int:
             args.arch.resolve(), args.checkpoint_validator.resolve(),
             args.source_root.resolve(), case,
             args.output_root.resolve(), sanitizer))
-    evidence["resolution_groups"] = (
-        {} if selected else validate_resolution_groups(cases, evidence["cases"]))
+    evidence["resolution_groups"] = validate_resolution_groups(
+        group_cases, evidence["cases"])
     args.output_root.mkdir(parents=True, exist_ok=True)
     evidence_path = args.output_root / "backend-validation-evidence.json"
     if evidence["manifest_sha256"] != _sha256(args.manifest) or any(

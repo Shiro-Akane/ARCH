@@ -103,11 +103,11 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 笛卡尔三维 | `isolated` | 物理流体面可流出或反射；引力由有限质量分布设边界 |
 | 柱／球坐标一维径向 | `isolated` | 半径非负，径向内流体面反射 |
 | 球坐标二维赤道极平面 `(r,phi)` | `isolated` | 方位角覆盖完整一周且流体面周期，径向内面反射 |
-| 轴对称柱坐标二维 `(r,z)` | Host：`dirichlet`、`neumann`、`user` | 完整环体积与正则轴接合；适用后端见[功能清单](Features.zh-CN.md#自引力计算域) |
+
 | 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
 | 三类几何已验收的一至三维范围 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
 
-所有自引力域的根网格各轴单元数必须为二的幂，根网格间距比不超过 2，且 AMR 叶子保持 2:1 平衡。`gravity_boundary` 必须与流体面拓扑匹配。`user` 边界可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，适用于有效的环域／扇区／楔域；坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势由密度相对体积平均值的偏差驱动，孤立势使用完整密度。二维球坐标极平面采用单位轴向长度质量的对数核；轴对称 `(r,z)` 采用完整环体积。计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域)，残差控制见[引力参数](#eos-与重力)。
+所有自引力域的根网格各轴单元数必须为二的幂，根网格间距比不超过 2，且 AMR 叶子保持 2:1 平衡。`gravity_boundary` 必须与流体面拓扑匹配。`user` 边界可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，适用于有效的环域／扇区／楔域；坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势由密度相对体积平均值的偏差驱动，孤立势使用完整密度。二维球坐标极平面采用单位轴向长度质量的对数核；二维柱坐标不再支持。计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域)，残差控制见[引力参数](#eos-与重力)。
 
 ### 方法与物理模块的组合
 
@@ -311,9 +311,9 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi | r, theta, phi |
-| Cylindrical | r | r, z | r, z, phi |
+| Cylindrical | r | 不支持 | r, z, phi |
 
-转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点。二维柱坐标把 `(r,z)` 展开为 `point.x=r`、`point.y=0`、`point.z=z`，且 `point.phi_cy=0`；径向、轴向和方位速度仍是三个物理分量。
+转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点，按表中的逻辑轴生成物理及原生坐标；不支持的维度／几何组合在转换前拒绝。
 
 所有 `bool` 参数均不区分大小写地接受 `true` 或 `false`，例如 `TRUE`、`False` 和 `tRuE`。数值 `0/1`、`on/off`、`yes/no`、部分匹配及其他拼写都会被拒绝，错误信息会指出参数名。
 
@@ -495,7 +495,7 @@ BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE �
 | `DENS` | 质量密度 | 是 | 是 | 所有模型 |
 | `PRES` | 活动 EOS 的压力 | 是 | 是 | 所有 EOS |
 | `TEMP` | 活动 EOS 的温度 | 是 | 是 | 所有 EOS |
-| `VELX/Y/Z` | 所选计算坐标中的物理速度分量 | 是 | 是 | RZ 可输出三个分量；Cartesian 平面按活动维度选择，分量含义随计算坐标变化 |
+| `VELX/Y/Z` | 所选计算坐标中的物理速度分量 | 是 | 是 | 按活动维度选择输出分量，分量含义随计算坐标变化 |
 | `ENER` | 总能量密度 | 是 | 是 | 所有模型 |
 | `VORT` | 考虑度量的旋度模 | 是 | 是 | 已实现几何 |
 | `DIVV` | 考虑度量的速度散度 | 是 | 是 | 已实现几何 |
@@ -583,7 +583,7 @@ struct PointCoords {
 };
 ```
 
-二维 spherical 的计算平面是 `(r,phi)`，二维 cylindrical 的计算平面是轴对称 `(r,z)`；RZ 的两个逻辑轴均为长度，三个物理速度分量仍存在。其代表子午面点满足 `(x,y,z)=(r,0,z)`。
+二维 spherical 保留 `(r,phi)` 极平面。cylindrical 仅支持一维径向和三维 `(r,z,phi)`；二维柱坐标明确拒绝。受支持网格仍保留三个物理动量分量。
 
 `Grid::GetPhysicalCoords` 填充所有表示。以原点为球心的三维球对称密度分布为例，设 `rho_bg > 0`、`rho_peak > 0` 和 `width > 0` 为算例采用的 CGS 参数。在 `Init` 中，先用笛卡尔坐标写：
 
@@ -608,7 +608,7 @@ center_x_ = config.grid.x1_min;
 center_y_ = config.grid.x2_min;
 ```
 
-`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 cylindrical 的第二个逻辑坐标为轴向 `z`，二维 spherical 的第二个逻辑坐标为平面方位角 `phi`。
+`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 spherical 的第二个逻辑坐标为平面方位角 `phi`；二维 cylindrical 不支持。
 
 ### `PrimitiveData`
 

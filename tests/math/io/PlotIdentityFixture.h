@@ -16,8 +16,7 @@
 
 /** Register a named synthetic IO producer; it never masquerades as a physical case. */
 inline io::PlotSourceIdentity fixture_plot_identity(
-    const SimConfig& controls,const SpeciesManager& species,
-    GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing)
+    const SimConfig& controls,const SpeciesManager& species)
 {
     constexpr const char* case_id="SyntheticIoFixture";
     ProblemRegistry::Get().Register(case_id,[] { return std::unique_ptr<ProblemGenerator>{}; },
@@ -82,5 +81,5 @@ restart=false
     const auto provenance=io::inspect_checkpoint_provenance(effective,species,plan.value.eos,
         false,"none",false);
     return arch::config::make_plot_source_identity(effective,provenance,plan.value,
-        arch::dispatch::ComputeBackend::Cpu,semantics);
+        arch::dispatch::ComputeBackend::Cpu);
 }

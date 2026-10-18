@@ -12,9 +12,10 @@ The [gravity summary](gravity/README.md) covers external and self gravity, inclu
 
 ## Source-identified CPU/CUDA results
 
-The campaigns below retain their original source and input identities. Curved
-2D cylindrical records that used a polar chart are historical; the current
-axisymmetric `(r,z)` checks are described in the [gravity summary](gravity/README.md#axisymmetric-rz-verification).
+The campaigns below retain their original source and input identities.
+Two-dimensional cylindrical support is retired. Both former RZ and older
+polar-alias records retain their original source and binary identities; see the
+[current release plan](../ARCH_RELEASE_PLAN.md).
 
 | Area | Recorded CPU/CUDA checks | Record |
 | --- | --- | --- |
@@ -56,13 +57,13 @@ measurements are available in the detailed records below.
 
 ## Current verification selection
 
-The current configured CTest list contains 76 entries: 68 numerical/API checks
-and eight tooling wrappers. Registration alone is not an execution result.
+The current configured CTest list contains 75 entries: 68 numerical/API checks
+and seven tooling wrappers. Registration alone is not an execution result.
 Hosted CI selects the numerical/API entries once and runs their tooling owners
 in its separate job; [the CI guide](../.github/workflows/README.md) explains the
 matching discovery and completion checks.
 
-Current Native RZ records include shared mathematical and owner checks, plus a short four-module AMR run. Cartesian full-stress checks and RZ azimuthal traction with paired work have scoped evidence. Full curvilinear Newtonian face traction, geometric volume terms, work from the same stress, coarse-fine coupling, and the actual stability row bound still require acceptance. Independent continuous self-gravity/energy acceptance, warm fresh-process restart, Native Device coupling, real desktop interactions, sustained execution, and formal paired timings retain separate exits. See the [gravity summary](gravity/README.md#axisymmetric-rz-verification) and [release verification plan](../docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md) for their scopes.
+The [release plan](../ARCH_RELEASE_PLAN.md) owns current verification scope. Historical RZ PASS/FAIL/GAP and cost records remain evidence for their recorded implementations. Other coordinates and shared modules retain their existing numerical criteria.
 
 ## Error conventions
 

@@ -74,7 +74,7 @@ NVIDIA CUDA 工具链、该工具链支持的宿主编译器及兼容的 NVIDIA 
 声明位于 [cmake/dependencies/Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake)；CUDA 专用
 求解库（包括 cuDSS）的发现仍由 [cmake/cuda/CudaBackend.cmake](../../cmake/cuda/CudaBackend.cmake)
 通过 [FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake)等查找逻辑处理。
-通过 Git LFS 管理的 EOS 资源需要先执行 `git lfs pull`，再使用相应表格。
+通过 Git LFS 管理的 EOS 资源若已有本地对象，优先用离线 `git lfs checkout` 实体化；读取已下载表格不消耗 LFS 流量。
 
 构建监控和测试工具需要 **Python 3.10 或更高版本**，ARCH 可执行文件本身不依赖
 Python 运行。生成反应网络使用独立的 Python 环境，配置方法见
@@ -84,16 +84,37 @@ Python 运行。生成反应网络使用独立的 Python 环境，配置方法�
 不要在 WSL 内安装 Linux 显示驱动。具体步骤见
 [NVIDIA 的 WSL 安装指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
 
+## 离线表与 LFS 流量
+
+必要表应在构建／输出目录和 Git LFS 对象库之外保留经过核验的普通文件副本，
+避免清理输出或 LFS prune 后丢失唯一的本机数据。恢复到新检出前，按该版本的
+`git show HEAD:EOS_toolkit/tables/helmholtz/helm_table.dat` 指针核对字节数和 SHA-256，
+并保留表的来源与许可。
+
+需要关闭本仓库自动下载时使用：
+
+```bash
+git config --local filter.lfs.smudge 'git-lfs smudge --skip -- %f'
+git config --local filter.lfs.process 'git-lfs filter-process --skip'
+git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+```
+
+本地配置覆盖本仓库关联的 worktree；`checkout`只展开已有对象，不下载缺失对象。
+对象缺失应明确报告，不能用 EOS 默认或自动网络重试掩盖。确需下载时限定路径：
+`git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""`。
+避免不带范围的全量 pull。CPU CI 按指针身份缓存所需表，缓存首次缺失或被驱逐时
+仍可能需要一次定点下载；本地读取已下载表不会消耗 LFS 流量。
+
 ## 源码包与 EOS 表
 
 不含 `.git` 的 ZIP／tar 源码目录可以正常构建，但不能直接用 `git lfs pull`
 补齐数据。首行是 `version https://git-lfs.github.com/spec/v1` 的文件是指针，
 不是 EOS 表。CPU 构建或 Sod 运行成功也不代表表数据已经可用。
 
-建议使用所选发行版本的 Git 检出并拉取 LFS 数据。若保留已经解压的源码包，
-从**同一标签或完整提交**的独立检出取得所需表，再复制到包内对应位置。
-从解压后的 ARCH 根目录运行以下示例；把 `YOUR_RELEASE_TAG_OR_COMMIT`
-替换为该源码包的版本身份：
+建议使用所选发行版本的 Git 检出并先复用已有本地 LFS 数据。若保留已经解压的源码包，
+先复制经过核验、与**同一标签或完整提交**匹配的本地表到包内对应位置。
+仅当本机没有该版本数据时，从解压后的 ARCH 根目录运行以下定点下载示例；
+把 `YOUR_RELEASE_TAG_OR_COMMIT` 替换为该源码包的版本身份：
 
 ```bash
 git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables

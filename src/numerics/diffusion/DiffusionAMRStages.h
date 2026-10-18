@@ -15,10 +15,6 @@
  * 3. Evaluate the same RKL polynomial in centered conserved increments,
  *    retaining exact stationary identities and original operator dt grouping.
  * 4. Return a conservative composite hierarchy state to the driver.
- * Native RZ requires a Host scheduler binding and Runtime post-boundary EOS
- * owner before any stage copy or flux mutation. Its provisional stage/reflux
- * checks preserve V/W means and RzVolumeAngular receipts without point-energy
- * repair; actual completed boundary/exchange supplies thermal acceptance.
  */
 
 #pragma once
@@ -38,37 +34,12 @@ namespace Numerics::Diffusion {
 
 namespace detail {
 
-/** Require native execution ownership before any RKL output or flux mutation.
- * Callback presence is a preflight only; the actual Runtime callback checks
- * its ledger, slot/version, domain and bound EOS after real boundary exchange.
- */
-inline void require_native_stage_binding(GridMetrics::GeometrySemantics semantics,
-                                         std::size_t expected_handles)
-{
-    if(semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz) return;
-    const auto& binding=arch::scheduler::current_stage_binding();
-    if(binding.context.side!=arch::state::ExecutionSide::Host)
-        throw std::logic_error("Native RZ RKL requires a Host stage binding");
-    if(!binding.context.post_boundary_acceptance)
-        throw std::logic_error("Native RZ RKL requires post-boundary acceptance");
-    if(expected_handles==0||binding.handles.size()!=expected_handles)
-        throw std::logic_error("Native RZ RKL stage domain extent mismatch");
-}
-
 template<typename BCPolicy>
-inline void validate_geometry(const Grid& grid,const BCPolicy& boundary,
-    GridMetrics::GeometrySemantics semantics)
+inline void validate_geometry(const Grid& grid,const BCPolicy& boundary)
 {
-    (void)GridMetrics::make_geometry_view(grid,semantics);
-    if constexpr(requires { boundary.geometry_semantics(); }) {
-        if(boundary.geometry_semantics()!=semantics)
-            throw std::invalid_argument("Diffusion/boundary chart mismatch");
-    } else if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::invalid_argument("RZ diffusion boundary identity missing");
+    (void)GridMetrics::make_geometry_view(grid);
     if constexpr(requires { boundary.logical_plan(grid); })
         (void)boundary.logical_plan(grid);
-    else if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::invalid_argument("RZ diffusion boundary preflight missing");
 }
 
 // First-stage expression leaves retain their original arithmetic. Recursive
@@ -415,8 +386,7 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
                                          double dt, double flux_weight,
                                          std::vector<FluidVector>& dU,
                                          std::vector<double>& d_species,
-                                         bool capture_budget = true,
-                                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                                         bool capture_budget = true)
 {
     const int n_species = state.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
@@ -428,16 +398,14 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
     for (int dir = 0; dir < grid.dim; ++dir) {
         std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector{});
         std::fill(species_flux_buffer.begin(), species_flux_buffer.end(), 0.0);
-        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, capture_budget, semantics);
+        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, capture_budget);
         TimeIntegration::accumulate_divergence(dU, d_species, flux_buffer, species_flux_buffer,
-                                               grid, dt, dir, n_species, semantics,
-            semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+                                               grid, dt, dir, n_species);
         amr::RegisterCoarseFineFluxes(amr_ctrl, block_id, grid, dir, flux_buffer,
-                                      species_flux_buffer, n_species, flux_weight, semantics,
-            semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+                                      species_flux_buffer, n_species, flux_weight);
     }
 
-    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt, semantics);
+    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt);
 }
 
 inline void apply_first_rkl_stage(const FluidState& state_n, FluidState& destination,
@@ -516,16 +484,14 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
 
 template <typename BCPolicy>
 inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
-                        FluidState amr::Block::* state_ptr,
-                        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-                        arch::state::Bounds bounds = {})
+                        FluidState amr::Block::* state_ptr)
 {
     const auto& binding = arch::scheduler::current_stage_binding();
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (binding.handles.size() != active_blocks.size())
         throw std::logic_error("RKL exchange handle count mismatch");
     TimeIntegration::synchronize_domain_boundary(amr_ctrl, boundary_condition,
-        state_ptr, binding.handles, semantics, bounds);
+        state_ptr, binding.handles);
 }
 
 inline FluidState& state_for(amr::Block& block,
@@ -584,12 +550,9 @@ template <typename EosType, typename BCPolicy>
 inline void advance_single_rkl(
     amr::Block& block, const EosType& eos, const Grid& grid,
     const SimConfig& config, double dt, double dt_diff_fe,
-    BCPolicy& boundary_condition, arch::scheduler::RklMethod method,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-    amr::AMRControl* native_owner = nullptr)
+    BCPolicy& boundary_condition, arch::scheduler::RklMethod method)
 {
-    validate_geometry(grid,boundary_condition,semantics);
-    require_native_stage_binding(semantics,1);
+    validate_geometry(grid,boundary_condition);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = order_for(method);
@@ -601,37 +564,9 @@ inline void advance_single_rkl(
     const StageBinding& binding = current_stage_binding();
     if (binding.handles.size() != 1)
         throw std::logic_error("single RKL requires one scheduler handle");
-    // Native single-patch synchronization borrows the actual domain owner.
-    // Validate it after the original native scheduler preflight and before
-    // any slot, ghost, or copy writes. Existing never requires this owner.
-    if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        if (!native_owner || !native_owner->pool || !native_owner->tree
-            || native_owner->tree->GetRootGridDim()!=2
-            || native_owner->tree->GetActiveBlocks().size()!=1
-            || &native_owner->pool->GetBlock(native_owner->tree->GetActiveBlocks().front())!=&block
-            || &grid!=&block.grid)
-            throw std::logic_error("Native single RKL requires its actual one-patch AMR owner");
-        const auto actual_handles=native_owner->ActiveHandles();
-        if (actual_handles.size()!=1 || actual_handles.front()!=binding.handles.front())
-            throw std::logic_error("Native single RKL owner/scheduler handle mismatch");
-        const int extent=grid.GetTotalSize();
-        const int species=block.fluid_state.GetNumSpecies();
-        const auto& state=block.fluid_state;
-        if (extent<=0 || species<0 || state.block_total_size_!=extent
-            || state.rho.size()!=static_cast<std::size_t>(extent)
-            || state.mom_u.size()!=state.rho.size() || state.mom_v.size()!=state.rho.size()
-            || state.mom_w.size()!=state.rho.size() || state.eng.size()!=state.rho.size()
-            || state.enuc_rate.size()!=state.rho.size()
-            || state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent)
-            throw std::logic_error("Native single RKL actual state/grid layout mismatch");
-    }
-    /** Synchronize the selected actual slot; only Existing uses the old local fill. */
+    /** Synchronize the selected actual slot using the original local fill. */
     const auto synchronize_single=[&](StateSlot slot) {
-        if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-            TimeIntegration::synchronize_domain_boundary(*native_owner, boundary_condition,
-                TimeIntegration::hydro_boundary_state_member(slot), binding.handles, semantics,
-                {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
-        else boundary_condition.apply(state_for(block,slot),grid);
+        boundary_condition.apply(state_for(block,slot),grid);
     };
     const auto current = binding.context.ledger.inspect(
         {binding.handles.front(), StateSlot::Current});
@@ -671,10 +606,7 @@ inline void advance_single_rkl(
                 FluidState& previous = state_for(block, descriptor.previous_slot);
                 FluidState& older = state_for(block, descriptor.older_slot);
                 FluidState& output = state_for(block, descriptor.output_slot);
-                output.stage_repairs.reset(output.GetNumSpecies(),
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-                        ? arch::state::RepairSemantics::RzVolumeAngular
-                        : arch::state::RepairSemantics::ExistingVolume);
+                output.stage_repairs.reset(output.GetNumSpecies());
                 const DiffFunction::RKLCoeffs coefficients =
                     DiffFunction::get_rkl_coeffs(
                         order, descriptor.stage, stages);
@@ -685,7 +617,7 @@ inline void advance_single_rkl(
 
                 if (descriptor.stage == 1) {
                     DiffFlux::compute_diffusion_operator(
-                        state_n, increment_initial, eos, grid, config, semantics);
+                        state_n, increment_initial, eos, grid, config);
 #pragma omp parallel for schedule(static)
                     for (int index = 0; index < grid.GetTotalSize(); ++index) {
                         const FluidVector seed = state_n.get(index);
@@ -729,7 +661,7 @@ inline void advance_single_rkl(
                 }
 
                 DiffFlux::compute_diffusion_operator(
-                    previous, increment_previous, eos, grid, config, semantics);
+                    previous, increment_previous, eos, grid, config);
 #pragma omp parallel for schedule(static)
                 for (int index = 0; index < grid.GetTotalSize(); ++index) {
                     const int species_count = state_n.GetNumSpecies();
@@ -758,7 +690,7 @@ inline void advance_single_rkl(
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 TimeIntegration::accept_stage_state(state_for(block, descriptor.output_slot),
-                    grid, config.numerics,semantics);
+                    grid, config.numerics);
                 return token;
             };
     const auto boundary =
@@ -792,13 +724,11 @@ template <typename EosType, typename BCPolicy>
 inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff_fe,
                             BCPolicy& boundary_condition, const EosType& eos,
                             const SimConfig& config,
-                            arch::scheduler::RklMethod method,
-                            GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                            arch::scheduler::RklMethod method)
 {
-    detail::require_native_stage_binding(semantics,amr_ctrl.tree->GetActiveBlocks().size());
     for(int id:amr_ctrl.tree->GetActiveBlocks())
         detail::validate_geometry(amr_ctrl.pool->GetBlock(id).grid,
-            boundary_condition,semantics);
+            boundary_condition);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = detail::order_for(method);
@@ -815,8 +745,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
         throw std::logic_error("AMR RKL scheduler handle count mismatch");
     amr_ctrl.flux_register.EnsureSpecies(
         amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies());
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics,
-        {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
     const arch::state::StateVersion current_version =
         binding.context.ledger.inspect(
             {binding.handles.front(), StateSlot::Current}).interior.version;
@@ -865,23 +794,20 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::state_for(block, descriptor.older_slot);
                     FluidState& output =
                         detail::state_for(block, descriptor.output_slot);
-                    output.stage_repairs.reset(output.GetNumSpecies(),
-                        semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-                            ? arch::state::RepairSemantics::RzVolumeAngular
-                            : arch::state::RepairSemantics::ExistingVolume);
+                    output.stage_repairs.reset(output.GetNumSpecies());
                     std::vector<FluidVector> d_previous;
                     std::vector<double> d_species_previous;
                     detail::evaluate_diffusion_increment(
                         amr_ctrl, block_id, previous, eos, block.grid,
                         config, dt, coefficients.tilde_mu, d_previous,
-                        d_species_previous, /*capture_budget=*/true, semantics);
+                        d_species_previous, /*capture_budget=*/true);
 
                     if (descriptor.stage == 1) {
                         detail::apply_first_rkl_stage(
                             state_n, output, d_previous,
                             d_species_previous, block.grid,
                             coefficients.tilde_mu);
-                        TimeIntegration::accept_stage_state(output, block.grid, config.numerics,semantics);
+                        TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                         continue;
                     }
 
@@ -891,7 +817,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::evaluate_diffusion_increment(
                             amr_ctrl, block_id, state_n, eos, block.grid,
                             config, dt, coefficients.gamma, d_initial,
-                            d_species_initial, /*capture_budget=*/false, semantics);
+                            d_species_initial, /*capture_budget=*/false);
                     } else {
                         d_initial.assign(block.grid.GetTotalSize(),
                                          FluidVector{});
@@ -905,7 +831,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         d_species_previous, d_initial, d_species_initial,
                         block.grid, coefficients,
                         selected_plan.second_order);
-                    TimeIntegration::accept_stage_state(output, block.grid, config.numerics,semantics);
+                    TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                 }
                 return token;
             };
@@ -913,18 +839,16 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(
-                    dt, detail::member_for(descriptor.output_slot), semantics,
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
+                    dt, detail::member_for(descriptor.output_slot));
                 TimeIntegration::accept_reflux_state(amr_ctrl,config.numerics,
-                    detail::member_for(descriptor.output_slot), false,semantics);
+                    detail::member_for(descriptor.output_slot), false);
                 return token;
             };
     const auto boundary =
             [&](StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
                 detail::synchronize(amr_ctrl, boundary_condition,
-                                    detail::member_for(output), semantics,
-                    {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+                                    detail::member_for(output));
                 return token;
             };
     const auto rotate = [&](arch::state::SlotRotation rotation) {
@@ -944,8 +868,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
             binding.context, binding.handles, stages, executor, reflux,
             boundary, rotate);
     }
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state, semantics,
-        {config.numerics.sml_rho,config.numerics.min_eint,config.numerics.max_eint});
+    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
     const arch::state::StateVersion final_version =
         binding.context.ledger.inspect(
             {binding.handles.front(), StateSlot::Current}).interior.version;

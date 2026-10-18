@@ -8,10 +8,8 @@
  * Numerical values come from the shared geometry, EOS and policy authorities.
  * Workflow for immutable boundary payloads:
  * 1. Resolve actual block/grid ownership and compile the original logical plan.
- * 2. Cache Native signed-axis/corner lowering, original physical wall flags
- *    and configured Bounds in that same actual block factory.
- * 3. Upload member-owned transfer arrays once for this storage generation.
- * 4. Fence construction/publication before exposing or retiring these views.
+ * 2. Upload member-owned transfer arrays once for this storage generation.
+ * 3. Fence construction/publication before exposing or retiring these views.
  */
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
@@ -25,7 +23,7 @@
 #include "cuda/common/GridMetricsCache.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/microphysics/common.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "physics/species/Species.h"
 
 namespace arch::cuda {
@@ -430,25 +428,6 @@ CudaBlockRuntime::CudaBlockRuntime(
                            * sizeof(DeviceBoundaryTransfer),
                        stream, counters,
                    "upload boundary transfers");
-        // The original logical plan is the sole authority for this immutable
-        // final-axis subset. Ordinary geometry keeps its existing allocation
-        // and launch route unchanged; off-axis Native owns an empty cache.
-        if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            native_hydro_bounds = {launch.density_floor,
-                launch.minimum_internal_energy, launch.maximum_internal_energy};
-            if (!state::valid_bounds(native_hydro_bounds))
-                throw std::invalid_argument("invalid Native Hydro configured Bounds");
-            native_hydro_walls = boundary::native_rz_math::bound_reflecting_faces(
-                logical_boundary, make_grid_geometry_view(grid));
-            native_axis_boundary = compile_rz_axis_boundary_plan(logical_boundary, grid);
-            if (!native_axis_boundary.transfers.empty()) {
-                native_axis_boundary_transfers.allocate(native_axis_boundary.transfers.size());
-                enqueue_cuda_metadata_upload(native_axis_boundary_transfers.get(),
-                    native_axis_boundary.transfers.data(),
-                    native_axis_boundary.transfers.size() * sizeof(DeviceBoundaryTransfer),
-                    stream, counters, "upload Native final axis transfers");
-            }
-        }
         // All asynchronous inputs/destinations are member-owned. The enclosing
         // store construction/publication fences the batch; no local Host metric
         // buffers require a normal-path fence for each individual block.
@@ -660,8 +639,6 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
     result->reflux_fingerprint = reflux.fingerprint;
     result->dimension = topology.dimension;
     result->species_count = topology.species_count;
-    result->semantics = topology.semantics;
-    result->angular_transport = topology.angular_transport;
     result->runtime_blocks.reserve(topology.active_endpoints.size());
     result->host_blocks.reserve(topology.active_endpoints.size());
     std::vector<amr::AmrFluxEndpointBinding> bindings;
@@ -675,7 +652,6 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
                 "CUDA AMR flux endpoint is not staged");
         CudaBlockRuntime& runtime = *found->second;
         if (runtime.grid.dim != topology.dimension
-            || runtime.grid.semantics != topology.semantics
             || runtime.face_flux.species_count != topology.species_count)
             throw std::invalid_argument("CUDA AMR flux layout drifted");
         DeviceAmrFluxBlockView block{};
@@ -756,7 +732,7 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
     }
 
     result->compiled_reflux = amr::compile_amr_reflux_plan(
-        reflux, bindings, topology.species_count,&topology);
+        reflux, bindings, topology.species_count);
     if (!result->compiled_reflux.targets.empty()) {
         if (result->compiled_reflux.contributions.empty())
             throw std::invalid_argument("CUDA AMR reflux has no contributions");
@@ -871,21 +847,13 @@ CudaBackend::Impl::~Impl() noexcept
 }
 
 /** Allocate the sole bounded species arena for the actual resident consumers.
- * Workflow: inspect factory-owned charts; preserve Existing local/five-plane
- * scratch, or reserve 41*S per Native face lane; apply the same memory/64,
- * physical-warp and useful-work caps. Ordered kernels borrow the same bytes
- * array-major for mean/source/diffusion and lane-major for Native faces.
- * Positive Native S never spills a 41x30 local array or adds a second allocator.
+ * Workflow: use local scratch for small compositions; otherwise allocate five
+ * arrays per lane under the existing memory and useful-work caps. Ordered
+ * kernels share this stream-owned arena.
  */
 void CudaBackend::Impl::initialize_species_workspace()
 {
-    const bool native = std::any_of(active_resources.begin(), active_resources.end(),
-        [](const auto& entry) {
-            return entry.second && entry.second->grid.semantics
-                == GridMetrics::GeometrySemantics::AxisymmetricRz;
-        });
-    if (species_count == 0
-        || (!native && species_count <= kLocalSpeciesScratchCapacity)) return;
+    if (species_count <= kLocalSpeciesScratchCapacity) return;
     cudaDeviceProp properties{};
     check_cuda(cudaGetDeviceProperties(&properties, device_ordinal),
                "query species workspace device properties");
@@ -900,7 +868,7 @@ void CudaBackend::Impl::initialize_species_workspace()
     // when memory is plentiful. Blocks execute serially on the owner stream;
     // neither the number of blocks nor all hardware threads require scratch.
     constexpr std::size_t scratch_budget_divisor = 64;
-    const int scratch_arrays = native ? 41 : 5; // same pool, actual widest consumer
+    constexpr int scratch_arrays = 5;
     const std::size_t species = static_cast<std::size_t>(species_count);
     if (species > std::numeric_limits<std::size_t>::max()
             / (scratch_arrays * sizeof(double))

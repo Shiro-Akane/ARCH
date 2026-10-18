@@ -27,7 +27,7 @@ async function moduleUrl(url:URL):Promise<string>{
  const result='data:text/javascript;base64,'+Buffer.from(text).toString('base64');cache.set(url.href,result);return result;
 }
 const Catalog=(await import(await moduleUrl(new URL('../src/components/ParameterPanel/StandardCatalog.tsx',import.meta.url)))).StandardCatalog;
-const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')) as ConfigurationSchema;
+const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')) as ConfigurationSchema;
 function render(extra:object={},selected:ConfigurationSchema=schema){
  return renderToStaticMarkup(createElement(Catalog,{schema:selected,values:{geometry:'cartesian',nblockx1:'1',nblockx2:'1',nblockx3:'0'},inspection:undefined,pathChecks:undefined,errors:{},onEdit:()=>{},onSelect:()=>{},...extra}));
 }

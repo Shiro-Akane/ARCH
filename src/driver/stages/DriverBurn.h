@@ -7,7 +7,6 @@
  * 2. Distribute bounded cell ranges across one host worker team. Every cell
  *    uses DriverBurnPolicy preparation, the original ODE, and checked commit.
  * 3. Reduce each patch's timestep advice with the shared reduction contract.
- * 4. A patch may request the native full-ring RZ geometry view. The shared
  *    density/closure leaves then supply the ordinary thermodynamic mean while
  *    the native conserved moments stay authoritative and unwritten.
  *
@@ -29,16 +28,13 @@
 #include "data/FluidState.h"
 #include "driver/stages/DriverBurnPolicy.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
-#include "numerics/state/RzNativeClosure.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace DriverBurn {
 
 struct HostBurnPatch {
     FluidState* state;
     const Grid* grid;
-    GridMetrics::GeometrySemantics geometry_semantics =
-        GridMetrics::GeometrySemantics::Existing;
 };
 
 /** Resolve the selected ODE extent without imposing a compact-network limit. */
@@ -123,50 +119,14 @@ private:
 };
 
 /** Integrate and publish one cell only after all physical checks have passed.
- * The native cell state is authoritative for rho, the momenta, eng and X and is
- * never replaced. When a native RZ geometry view is supplied, the shared
- * density reconstruction and RzThermodynamics closure derive ONLY the ordinary
- * mean the strict DriverBurnPolicy preparation/handoff consume; the chosen
- * energy and the original composition/enuc diagnostics are then published back
- * onto the untouched native moments. A null view is the legacy path and keeps
- * the exact original operations and call counts.
  */
 template<class Eos, class Burner>
 double advance_host_burn_cell(FluidState& state, int cell, double interval,
     const Eos& eos, Burner& burn, const SimConfig& config,
-    const BurnConfigView& controls, std::vector<double>& packed, HostBurnMemo& memo,
-    const GridMetrics::GeometryView* native_geometry = nullptr,
-    int radial_index = 0)
+    const BurnConfigView& controls, std::vector<double>& packed, HostBurnMemo& memo)
 {
     FluidVector fluid = state.get(cell);
-    // Legacy input is the ordinary fluid; the native RZ path replaces this
-    // mean with the closure of the actual center density of this cell.
-    FluidVector thermo = fluid;
-    if (native_geometry != nullptr) {
-        if (native_geometry->semantics
-                != GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::runtime_error(
-                "Native burn geometry requires AxisymmetricRz semantics at cell "
-                + std::to_string(cell));
-        // Read ONLY the immutable density storage. state.get() of a neighbor
-        // would race parallel workers rewriting their own eng/species, so the
-        // reader returns rho alone and leaves every other moment zero.
-        const auto density_reader = [&state](int native_index) {
-            FluidVector sample{};
-            sample.rho = state.rho[native_index];
-            return sample;
-        };
-        const auto density = RzDensity::density_cell(
-            density_reader, cell, *native_geometry, radial_index);
-        const auto closure = RzThermodynamics::from_density(fluid, density,
-            {config.numerics.sml_rho, config.numerics.min_eint,
-             config.numerics.max_eint});
-        if (!closure.valid())
-            throw std::runtime_error(
-                "Invalid native RZ thermodynamic closure at cell "
-                + std::to_string(cell));
-        thermo = closure.effective_mean;
-    }
+    const FluidVector thermo = fluid;
     if (check_burn_density(thermo, controls) == BurnCellDisposition::BelowDensity)
         return INACTIVE_LIMITER_CANDIDATE;
     std::fill(packed.begin(), packed.end(), 0.0);
@@ -262,26 +222,15 @@ void execute_host_burn_batch(std::span<const HostBurnPatch> patches,
                 const auto range = ranges[range_index];
                 auto& state = *patches[range.patch].state;
                 const auto& grid = *patches[range.patch].grid;
-                const auto semantics = patches[range.patch].geometry_semantics;
                 const int nx = grid.Ie() - grid.Is(), ny = grid.Je() - grid.Js();
                 try {
-                    // One real view per patch, built by the shared factory from
-                    // the actual grid and requested semantics; an unknown
-                    // enumeration is rejected there instead of inventing a
-                    // coordinate. Legacy semantics never expose a native view,
-                    // so no density or closure read is introduced for them.
-                    const auto native_view =
-                        GridMetrics::make_geometry_view(grid, semantics);
-                    const GridMetrics::GeometryView* native_geometry =
-                        semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
-                        ? &native_view : nullptr;
                     for (int linear = range.begin; linear < range.end; ++linear) {
                         const int i = grid.Is() + linear % nx;
                         const int j = grid.Js() + (linear / nx) % ny;
                         const int k = grid.Ks() + linear / (nx * ny);
                         const double candidate = advance_host_burn_cell(state,
                             grid.GetIndex(i, j, k), interval, eos, burn, config, controls,
-                            packed, memo, native_geometry, i);
+                            packed, memo);
                         amr::CellLogicalKey key{};
                         key.logical_i = i; key.logical_j = j; key.logical_k = k;
                         key.component = BURN_LIMITER_COMPONENT;
@@ -312,17 +261,12 @@ void execute_host_burn_batch(std::span<const HostBurnPatch> patches,
 } // namespace DriverBurn
 
 /** Preserve the single-patch caller through the same batch/cell implementation.
- * The optional semantics argument keeps every existing call unchanged; the
- * stage owner that already guarantees same-level RZ state and ghost layout
- * passes the real semantics so the batch can expose the native geometry view.
  */
 template<class Eos, class Burner>
 void execute_burn_step(FluidState& state, double interval, const Eos& eos,
                        Burner& burn, const Grid& grid, const SimConfig& config,
-                       double& limit,
-                       GridMetrics::GeometrySemantics semantics =
-                           GridMetrics::GeometrySemantics::Existing)
+                       double& limit)
 {
-    const DriverBurn::HostBurnPatch patch{&state, &grid, semantics};
+    const DriverBurn::HostBurnPatch patch{&state, &grid};
     DriverBurn::execute_host_burn_batch({&patch, 1}, interval, eos, burn, config, {&limit, 1});
 }

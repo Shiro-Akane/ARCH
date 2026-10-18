@@ -304,10 +304,6 @@ struct StageExecutionContext {
     std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_begin;
     std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_accept;
     std::function<void(const RklStageDescriptor&)> rkl_acceptance;
-    // Optional candidate-state gate after real whole-domain boundary work and
-    // before ghost readiness. Empty preserves the existing execution sequence.
-    std::function<void(const StageExecutionContext&, state::StateSlot,
-                       state::StateVersion)> post_boundary_acceptance;
     // Configure only the actual physical time/purpose snapshot. The selected
     // plan calls this before the real boundary callback; it never fills arrays
     // or publishes readiness, unlike physical_boundary_preparation.
@@ -540,8 +536,6 @@ state::CompletionToken execute_completed_boundary(
     if(rkl&&rkl->context==&context&&rkl->descriptor->output_slot==slot) {
         rkl->slot=slot;rkl->version=version;rkl->completion=completed;rkl->completed=true;
     }
-    if (context.post_boundary_acceptance)
-        context.post_boundary_acceptance(context, slot, version);
     if(rkl&&rkl->context==&context)rkl->completed=false;
     publish_ghost_batch(context, handles, slot, version, completed);
     return completed;
@@ -583,7 +577,7 @@ StageExecutionResult execute_stage(StageExecutionContext& context,
     detail::publish_interior_batch(context, handles, descriptor.output_slot,
                                    witness);
     StageExecutionResult result{witness.version, witness.completion, {}};
-    if (descriptor.refresh_ghost_after || context.post_boundary_acceptance) {
+    if (descriptor.refresh_ghost_after) {
         result.ghost_completion = detail::execute_completed_boundary(
             context, handles, descriptor.output_slot, witness.version,
             std::forward<Boundary>(boundary));
@@ -739,19 +733,6 @@ HydroExecutionResult execute_hydro_plan(
         detail::publish_interior_batch(
             context, handles, state::StateSlot::Current, witness);
         result.final_reflux = witness;
-        if (context.post_boundary_acceptance)
-            (void)detail::execute_completed_boundary(
-                context, handles, state::StateSlot::Current, witness.version,
-                [&](state::StateSlot slot, state::StateVersion version,
-                    state::CompletionToken token) {
-                    // Reflux corrects the completed macro-state; it does not
-                    // advance an additional interval or change its endpoint.
-                    if (context.configure_boundary_context)
-                        context.configure_boundary_context(
-                            context.step_start_time + context.step_dt,
-                            arch::boundary::BoundaryPurpose::Hydro);
-                    return boundary(slot, version, token);
-                });
     }
     return result;
 }

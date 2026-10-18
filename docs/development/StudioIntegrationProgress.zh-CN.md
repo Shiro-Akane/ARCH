@@ -2571,7 +2571,7 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 
 ## 2026-10-04 RZ finite-ring axis reference candidate
 
-独立Decimal轴线解析参考8例80/120位收敛，完整环体势/力/质量与有界tensor积分对照；源内/边缘发现较慢收敛，保留具体误差，不冻结生产阶数或科学预算。5项工具检查PASS。见 RZFiniteRingAxisReference-20261004.zh-CN.md / Summary；生产Core/capability未改、未ARCH运行/Build/CUDA。
+独立Decimal轴线解析参考8例80/120位收敛，完整环体势/力/质量与有界tensor积分对照；源内/边缘发现较慢收敛，保留具体误差，不冻结生产阶数或科学预算。5项工具检查PASS。见 [历史记录](archive/histroy/rz/RZFiniteRingAxisReference-20261004.zh-CN.md) / Summary；生产Core/capability未改、未ARCH运行/Build/CUDA。
 
 
 ## 2026-10-04：Linux 3D mixed AMR desktop 补证
@@ -2587,7 +2587,7 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 新增独立Decimal K/E有限环体离轴点值参考与direct 3D Newton积分对照；
 六例60/100位算术一致，固定源分区揭示近外缘整体64阶仍有约1.98e-15 cm/s²径向力变化。
 完整旋转质量/四极矩给远场候选误差，未冻结生产阶数/开角/预算。8项工具检查与diff PASS。
-见RZFiniteRingOffAxisReference-20261004.zh-CN.md/Summary。未改生产Core/capability/Build/ARCH运行/CUDA/push。
+见[历史记录](archive/histroy/rz/RZFiniteRingOffAxisReference-20261004.zh-CN.md)/Summary。未改生产Core/capability/Build/ARCH运行/CUDA/push。
 
 
 ## 2026-10-04 RZ full-rotation metric primitives
@@ -2595,7 +2595,7 @@ DriverIO输出会话UUID贯通writer/Host/client/Viewer，legacy unknown兼容�
 在现有GridMetrics所有者下实现显式CPU/device完整环体volume、radial/axial face area与r/z spacing。
 10组独立70/100位参考一致；现有CPU curvilinear_metrics定向构建/CTest通过，
 RZ最大relative error1.64562e-16，旧metric3.03178e-16。未切GeometryView dispatch或开放RZ；
-未编ARCH/演化/CUDA/push。见RZMetricPrimitives-20261004.zh-CN.md/Summary。
+未编ARCH/演化/CUDA/push。见[历史记录](archive/histroy/rz/RZMetricPrimitives-20261004.zh-CN.md)/Summary。
 O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
 
 
@@ -2603,55 +2603,55 @@ O7.1科学规则、RZ整条接线/近场预算和最终平台出口仍待。
 
 显式 r/z/phi 适配与旧圆柱源项共用数学入口；生产二维 dispatch 不变。
 限定 CPU curvilinear_metrics 1/1 PASS，包含旧 1/2/3D 非零旋流公式精确回归。
-详见 RZGeometricSourcePrimitives-20261004.zh-CN.md / Summary.json；完整 RZ、CUDA 与科学 gates 尚未关闭。
+详见 [历史记录](archive/histroy/rz/RZGeometricSourcePrimitives-20261004.zh-CN.md) / Summary.json；完整 RZ、CUDA 与科学 gates 尚未关闭。
 
 
 ## 2026-10-04 RZ 轴线 topology/ghost 增量
 
 显式 RZ seam chart 已复用现有 donor/transfer executor，默认 polar chart 不变。
 真实均匀与混合 L0/L1 轴 parity、非零内边界及旧 seam 回归 CPU 1/1 PASS。
-详见 RZAxisSeam-20261004.zh-CN.md / Summary.json；生产调度、CUDA、完整 RZ 演化仍待接入。
+详见 [历史记录](archive/histroy/rz/RZAxisSeam-20261004.zh-CN.md) / Summary.json；生产调度、CUDA、完整 RZ 演化仍待接入。
 
 
 ## 2026-10-04 RZ Host exchange/cache 身份
 
 显式 chart 已贯穿 GetPlans/ExecuteExchange，native geometry 进入 exact cache key。
 真实均匀/混合 topology 的切换、命中、bounds 失效和完整 Host 轴 ghost 执行 CPU 1/1 PASS。
-详见 RZExchangeIdentity-20261004.zh-CN.md / Summary；不代表 RZ 保守 AMR/CUDA/演化出口通过。
+详见 [历史记录](archive/histroy/rz/RZExchangeIdentity-20261004.zh-CN.md) / Summary；不代表 RZ 保守 AMR/CUDA/演化出口通过。
 
 
 ## 2026-10-04 RZ 共享 GeometryView
 
 内部显式 chart 已贯穿 metric/source/代表位置转换，旧 Grid/default chart 保持。
 CPU curvilinear_metrics + amr_operation_plans 2/2 PASS。
-详见 RZGeometryView-20261004.zh-CN.md / Summary；运输/AMR/elliptic/IO/CUDA 与科学出口未关闭。
+详见 [历史记录](archive/histroy/rz/RZGeometryView-20261004.zh-CN.md) / Summary；运输/AMR/elliptic/IO/CUDA 与科学出口未关闭。
 
 
 ## 2026-10-04 RZ velocity diagnostics
 
 修复显式 RZ view 误走 2D polar curl；复用既有 3D cylindrical 公式。
 轴正则旋流/轴向结构 27-cell 解析 div/curl 和受影响 CPU regression 2/2 PASS。
-详见 RZVelocityDiagnostics-20261004.zh-CN.md / Summary；黏性未解析方位连接及全路径仍待接线。
+详见 [历史记录](archive/histroy/rz/RZVelocityDiagnostics-20261004.zh-CN.md) / Summary；黏性未解析方位连接及全路径仍待接线。
 
 
 ## 2026-10-04 RZ 黏性连接
 
 显式 RZ 未解析 phi 连接复用 3D cylindrical 数学，源项及 row bound 同步。
 Cartesian 线性场对应的 RZ 局部 shared face/source momentum/work flux 检查通过，CPU 2/2 PASS。
-详见 RZViscousConnection-20261004.zh-CN.md / Summary；完整运输/变系数演化/CUDA 与科学出口未关闭。
+详见 [历史记录](archive/histroy/rz/RZViscousConnection-20261004.zh-CN.md) / Summary；完整运输/变系数演化/CUDA 与科学出口未关闭。
 
 
 ## 2026-10-04 RZ composite Poisson/MG
 
 显式 mesh 身份贯穿完整环体 volume/face、dr/dz、轴线与物理 z 边界，沿用现有 coarse hierarchy。
 四组规则/混合制造解与旧 contract/curved/singular 回归通过，求解后 force/phi 指标单独报告。
-详见 RZCompositePoisson-20261004.zh-CN.md / Summary；生产环体边界与科学预算仍未获验收。
+详见 [历史记录](archive/histroy/rz/RZCompositePoisson-20261004.zh-CN.md) / Summary；生产环体边界与科学预算仍未获验收。
 
 
 ## 2026-10-04 RZ isolated boundary guard
 
 发现新内部 RZ mesh 可误入旧 2D log 核；构造与 cached values 双入口已明确拒绝。
-RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZBoundaryGuard-20261004.zh-CN.md / Summary。
+RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 [历史记录](archive/histroy/rz/RZBoundaryGuard-20261004.zh-CN.md) / Summary。
 有限环体生产方案和预算尚待 Core review，未 fallback/开放能力。
 
 
@@ -2659,54 +2659,54 @@ RZ analytic operator 继续通过；旧 boundary/curved 回归保持。详见 RZ
 
 显式 chart 贯穿 face/divergence/source/operator/dt，真实 padded 512 active-cell 线性场及独立 dt 一致。
 变密度/动态黏度 work 的原生 volume-average 参考三分辨率二阶，CPU 受影响检查通过。
-详见 RZHostDiffusion-20261004.zh-CN.md / Summary；实际边界/AMR/RKL演化、其它材料/CUDA/科学出口未关闭。
+详见 [历史记录](archive/histroy/rz/RZHostDiffusion-20261004.zh-CN.md) / Summary；实际边界/AMR/RKL演化、其它材料/CUDA/科学出口未关闭。
 
 ## 2026-10-04 RZ Block / coarse-fine 环体测度
 显式 chart 贯穿 Block prolong/restrict 与 Host coarse-fine source weights，复用既有 shared transfer。
 真实 parent/four-child/restored-parent 体积积分工程检查与 CPU regression 2/2 PASS。
 精确 r*dV 角动量 finding：细化相对改变 4.9850588267931159e-4 / 1.0396136426979989e-4，
 粗化恢复不代表 AMR 演化守恒；未改阈值或科学状态，需 Core discrete transfer contract。
-详见 RZBlockTransfer-20261004.zh-CN.md / Summary；完整 RZ/capability/CUDA/科学出口未关闭。
+详见 [历史记录](archive/histroy/rz/RZBlockTransfer-20261004.zh-CN.md) / Summary；完整 RZ/capability/CUDA/科学出口未关闭。
 
 ## 2026-10-04 RZ Host Hydro 组合层
 同一显式 chart 接通真实 face traversal/divergence/source 与 stage repair 的完整环体计量。
 真实 HLLC/PCM/IdealGas 768-cell 压力/轴向/旋流组合及预算反例、CPU 2/2 PASS。
 显式 RZ gravity/AMR reflux 未迁移时先拒绝；生产 IHydroSolver/runtime 未切换。
-详见 RZHostHydro-20261004.zh-CN.md / Summary；角动量 AMR finding、实际演化/CUDA/科学出口仍待。
+详见 [历史记录](archive/histroy/rz/RZHostHydro-20261004.zh-CN.md) / Summary；角动量 AMR finding、实际演化/CUDA/科学出口仍待。
 
 ## 2026-10-04 RZ Host acoustic CFL
 显式 RZ chart 贯穿 Hydro dt 的 dr/dz 与原 shared归约；非等距1024-cell夹具串/并行一致，
 最大独立参考差4.33681e-19。发现并修复单 invalid active cell 被Ignore-NaN掩盖，
 legacy反例与36项归约边界/CPU2/2通过；不修改共享归约数学。
-详见 RZHostCfl-20261004.zh-CN.md / Summary；强旋流source稳定性/全路径/CUDA/科学出口未完成。
+详见 [历史记录](archive/histroy/rz/RZHostCfl-20261004.zh-CN.md) / Summary；强旋流source稳定性/全路径/CUDA/科学出口未完成。
 
 ## 2026-10-04 RZ AMR flux/reflux
 共享 topology/native view 接通完整环体注册面与 reflux A/V，chart/bounds纳入缓存身份；
 累计通量不能跨chart/geometry消费，显式Clear重注册恢复，uniform empty计划no-op。
 四组真实L0/L1 radial/axial实际Host修正和CPU3/3通过，最大积分算术差3.53183e-17。
-详见 RZReflux-20261004.zh-CN.md / Summary；实际scheduler调用/演化/CUDA和角动量科学finding仍未关闭。
+详见 [历史记录](archive/histroy/rz/RZReflux-20261004.zh-CN.md) / Summary；实际scheduler调用/演化/CUDA和角动量科学finding仍未关闭。
 
 ## 2026-10-04 RZ mixed Hydro stage
 共享 Hydro registration 已传同一chart，解除内部AMR guard，保留未迁移gravity拒绝。
 四组真实5-leaf/5120-cell exchange→HLLC/PCM→stage→reflux联动及CPU3/3通过，
-final最大常态误差3.55618e-17。详见 RZMixedHydro-20261004.zh-CN.md / Summary。
+final最大常态误差3.55618e-17。详见 [历史记录](archive/histroy/rz/RZMixedHydro-20261004.zh-CN.md) / Summary。
 生产scheduler、物理边界/非均匀演化、扩散/RKL、gravity/IO/checkpoint/CUDA与angular finding仍待。
 
 ## 2026-10-04 RZ 物理 BC
 内部logical axis规则/实际BCHandler按native r=0选择，scalar/z even、r/phi odd，无half turn；
 272个ghost/corner/signed-zero逐位参考、nonzero inner普通BC及旧冻结指纹保持通过。
 CPU3/3与随后仅变化mixed Hydro BC→exchange→stage→BC→exchange→reflux检查通过。
-详见 RZPhysicalBoundary-20261004.zh-CN.md / Summary；production scheduler/科学出口/CUDA与angular finding未关闭。
+详见 [历史记录](archive/histroy/rz/RZPhysicalBoundary-20261004.zh-CN.md) / Summary；production scheduler/科学出口/CUDA与angular finding未关闭。
 
 
 ## 2026-10-04 RZ Host Hydro policy
 
-真实 HydroSolverImpl 已传递固定内部 chart 并通过 IHydroSolver 暴露身份。四个 mixed-AMR fixture 改经真实虚接口，CPU scoped 3/3 PASS；详见 RZHydroPolicy-20261004.zh-CN.md。Euler/RK scheduler chart propagation 仍待完成，不宣称生产 RZ/演化验收。
+真实 HydroSolverImpl 已传递固定内部 chart 并通过 IHydroSolver 暴露身份。四个 mixed-AMR fixture 改经真实虚接口，CPU scoped 3/3 PASS；详见 [历史记录](archive/histroy/rz/RZHydroPolicy-20261004.zh-CN.md)。Euler/RK scheduler chart propagation 仍待完成，不宣称生产 RZ/演化验收。
 
 
 ## 2026-10-04 RZ actual Host scheduler
 
-Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-AMR实际ledger测试通过。错误BC profile保留clock/ledger与既有flux。受影响scoped4/4及最终flux guard1/1 PASS；详见RZScheduledHydro-20261004.zh-CN.md。公共runtime/CUDA/科学验收仍未完成。
+Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-AMR实际ledger测试通过。错误BC profile保留clock/ledger与既有flux。受影响scoped4/4及最终flux guard1/1 PASS；详见[历史记录](archive/histroy/rz/RZScheduledHydro-20261004.zh-CN.md)。公共runtime/CUDA/科学验收仍未完成。
 
 
 ## 2026-10-04 RZ DriverRuntime Host halo
@@ -2716,29 +2716,29 @@ Euler/RK2/RK3 真实lane统一preflight、exchange和reflux chart；12组mixed-A
 
 ## 2026-10-04 RZ Driver timestep candidates
 
-真实calculate_timestep_candidates的Hydro/diffusion调用已传Runtime chart。mixed-AMR四组独立Hydro参考maxabs1.0842e-19，8组RKL候选路由接线一致；active NaN明确失败。scoped3/3 PASS。实际RKL evolution尚待迁移；详见RZRuntimeTimestep-20261004.zh-CN.md。
+真实calculate_timestep_candidates的Hydro/diffusion调用已传Runtime chart。mixed-AMR四组独立Hydro参考maxabs1.0842e-19，8组RKL候选路由接线一致；active NaN明确失败。scoped3/3 PASS。实际RKL evolution尚待迁移；详见[历史记录](archive/histroy/rz/RZRuntimeTimestep-20261004.zh-CN.md)。
 
 
 ## 2026-10-04 RZ actual Driver RKL
 
-真实single/composite RKL1/2贯通统一RZ operator/source/register/reflux/halo；16组常态零算子实际scheduler检查通过（RKL1两stages/RKL2五stages），maxerror1.42109e-14，scoped4/4 PASS。不是非零演化/科学验收；详见RZRuntimeRkl-20261004.zh-CN.md。
+真实single/composite RKL1/2贯通统一RZ operator/source/register/reflux/halo；16组常态零算子实际scheduler检查通过（RKL1两stages/RKL2五stages），maxerror1.42109e-14，scoped4/4 PASS。不是非零演化/科学验收；详见[历史记录](archive/histroy/rz/RZRuntimeRkl-20261004.zh-CN.md)。
 
 
 ## 2026-10-04 RZ nonzero actual RKL
 
-非零quadratic热方程实际Driver RKL独立参考8组通过，maxabs5.68434e-14；nonzero mixed-AMR闭域full-ring能量收支8组maxrelative2.38262e-17。原16组零算子同fixture通过。仅工程证据，不替代科学场值/长期验收；见RZNonzeroRkl-20261004.zh-CN.md。
+非零quadratic热方程实际Driver RKL独立参考8组通过，maxabs5.68434e-14；nonzero mixed-AMR闭域full-ring能量收支8组maxrelative2.38262e-17。原16组零算子同fixture通过。仅工程证据，不替代科学场值/长期验收；见[历史记录](archive/histroy/rz/RZNonzeroRkl-20261004.zh-CN.md)。
 
 
 ## 2026-10-04 RZ checkpoint geometry identity
-独立 revision/chart 保护已接入 HDF 与 Host read_chk；旧二维 cylindrical 文件不能按 RZ 恢复。checkpoint_compatibility scoped PASS，公共 RZ write/restart 尚未完成。见 RZCheckpointIdentity-20261004.zh-CN.md。未 push/tag。
+独立 revision/chart 保护已接入 HDF 与 Host read_chk；旧二维 cylindrical 文件不能按 RZ 恢复。checkpoint_compatibility scoped PASS，公共 RZ write/restart 尚未完成。见 [历史记录](archive/histroy/rz/RZCheckpointIdentity-20261004.zh-CN.md)。未 push/tag。
 
 
 ## 2026-10-04 native RZ checkpoint writer binding
-DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。实际二维 native FP64/controller roundtrip scoped PASS；DriverIO CPU TU 编译成功。公共 dispatch/restart/evolution 未因此完成。见 RZCheckpointWriter-20261004.zh-CN.md 与 Summary.json。未 push/tag。
+DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。实际二维 native FP64/controller roundtrip scoped PASS；DriverIO CPU TU 编译成功。公共 dispatch/restart/evolution 未因此完成。见 [历史记录](archive/histroy/rz/RZCheckpointWriter-20261004.zh-CN.md) 与 Summary.json。未 push/tag。
 
 
 ## 2026-10-04 actual Driver checkpoint profile evidence
-当前 Driver/Runtime/IO 源码重编后，Cartesian 与内部 RZ 两例实际写出/恢复 PASS；time=0 step=0，原生字段与 controller 未变。补齐此前仅 TU 编译的缺口。首次 fixture ledger 初始化缺失及修正保留证据。见 RZDriverCheckpoint-20261004.zh-CN.md / Summary。公共 RZ 演化/CUDA 未验收，未 push/tag。
+当前 Driver/Runtime/IO 源码重编后，Cartesian 与内部 RZ 两例实际写出/恢复 PASS；time=0 step=0，原生字段与 controller 未变。补齐此前仅 TU 编译的缺口。首次 fixture ledger 初始化缺失及修正保留证据。见 [历史记录](archive/histroy/rz/RZDriverCheckpoint-20261004.zh-CN.md) / Summary。公共 RZ 演化/CUDA 未验收，未 push/tag。
 
 
 ## 2026-10-04 checkpoint failure index
@@ -2746,19 +2746,19 @@ DriverIO 传递 Runtime profile，write_chk 写前校验并记录几何身份。
 
 
 ## 2026-10-04 native RZ coordinates
-Grid 显式profile轴名/物理坐标/domain 已接入；PointCoords.r 保持球半径，x2=z长度不受角度限幅。旧路径不变，3/3相关CPU scoped checks PASS。PopulateState authoritative context 接线尚待执行，不能声称模型IC贯通。见 RZNativeCoordinates-20261004.zh-CN.md / Summary。未 push/tag。
+Grid 显式profile轴名/物理坐标/domain 已接入；PointCoords.r 保持球半径，x2=z长度不受角度限幅。旧路径不变，3/3相关CPU scoped checks PASS。PopulateState authoritative context 接线尚待执行，不能声称模型IC贯通。见 [历史记录](archive/histroy/rz/RZNativeCoordinates-20261004.zh-CN.md) / Summary。未 push/tag。
 
 
 ## 2026-10-04 authoritative RZ initial population
-ProblemInitializationContext explicit profile 已接真实 PopulateState，坐标和 repair volume同一 chart；RZ z-dependent场/完整环体repair与legacy polar四例PASS，3项初始化API scoped regressions PASS。真实注册模型/public RZ演化未验收。见 RZInitialPopulation-20261004.zh-CN.md / Summary。未 push/tag。
+ProblemInitializationContext explicit profile 已接真实 PopulateState，坐标和 repair volume同一 chart；RZ z-dependent场/完整环体repair与legacy polar四例PASS，3项初始化API scoped regressions PASS。真实注册模型/public RZ演化未验收。见 [历史记录](archive/histroy/rz/RZInitialPopulation-20261004.zh-CN.md) / Summary。未 push/tag。
 
 
 ## 2026-10-04 RZ native AMR length domain
-shared Block/root/leaf creation已传explicit profile；真实5leaf mixed checkpoint z[-10,10]重建PASS，shared初始化z[-4,4]及full-ring repair PASS。3项相关CPU scoped regressions PASS；不是refine/coarsen角动量或演化验收。见 RZNativeAmrDomain-20261004.zh-CN.md / Summary。未 push/tag。
+shared Block/root/leaf creation已传explicit profile；真实5leaf mixed checkpoint z[-10,10]重建PASS，shared初始化z[-4,4]及full-ring repair PASS。3项相关CPU scoped regressions PASS；不是refine/coarsen角动量或演化验收。见 [历史记录](archive/histroy/rz/RZNativeAmrDomain-20261004.zh-CN.md) / Summary。未 push/tag。
 
 
 ## 2026-10-04 registered Gaussian RZ init + GravityBox finding
-source-verified实际注册Gaussian严格Setup/Init/sharedEOS链PASS，256原生cells组分mapping误差0。GravityBox isolated二维遍历x/y漏RZ z，待Core明确center参数/profile，不自行改物理。见 RZRegisteredInitialization-20261004.zh-CN.md / Summary。非科学演化验收，未push/tag。
+source-verified实际注册Gaussian严格Setup/Init/sharedEOS链PASS，256原生cells组分mapping误差0。GravityBox isolated二维遍历x/y漏RZ z，待Core明确center参数/profile，不自行改物理。见 [历史记录](archive/histroy/rz/RZRegisteredInitialization-20261004.zh-CN.md) / Summary。非科学演化验收，未push/tag。
 
 
 ## 2026-10-04 current full CPU ARCH rebuild
@@ -3426,7 +3426,7 @@ SelfGravity在未完成finite-ring/native force-work/runtime consumer前明确�
 旧publication失效及Cartesian恢复通过，不宣布RZ科学完成。
 原CPU生命周期1/1、实际Cartesian Runtime7gather与CUDA-enabled Host1/1通过；
 旧工程非法AMR阈值对修正并以Core关系检查，原科学门槛不变。
-见RZEllipticChartBindingNode-20261005.zh-CN.md及processed summary。
+见[历史记录](archive/histroy/rz/RZEllipticChartBindingNode-20261005.zh-CN.md)及processed summary。
 未变CPU ELF复用receipt；JENS门槛候选未应用，完整CUDA冻结包等待明确本地验证授权。
 raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。
 
@@ -3437,7 +3437,7 @@ raw数据本机；整体目标、RZ科学、long-run/benchmark仍未完成。
 Existing原center/公式不变；3584真实root/mixed cell与所有边界face检查通过。
 原CPU self-gravity1/1、actualCartesian Runtime7gather/time0、CUDA-enabled Host1/1 PASS，
 不是Device RZ或完整RZ Runtime/science。原bind/regrid/JENS gate保持。
-见RZGravityWorkspaceChartNode-20261005.zh-CN.md及processed summary。
+见[历史记录](archive/histroy/rz/RZGravityWorkspaceChartNode-20261005.zh-CN.md)及processed summary。
 CPU ELF未变receipt复用、raw/ELF本机；完整finite-ring runtime/force-work/科学/长跑仍未签收。
 
 
@@ -3476,7 +3476,7 @@ CUDA9+9候选仍待明确本地验证授权；原科学gate保持，不开展Win
 
 RZ-BOUNDARY-DISPATCH-01 OPEN：EvaluateBoundary缺少chart身份，二维无条件走旧log kernel；
 当前bind gate已阻止生产进入，不能把finite-ring数学PASS冒充此Runtime已接通。
-见RZRuntimeBoundaryDispatchAudit-20261005.zh-CN.md；下一节点先原face-row制造势映射，
+见[历史记录](archive/histroy/rz/RZRuntimeBoundaryDispatchAudit-20261005.zh-CN.md)；下一节点先原face-row制造势映射，
 再typed ring/RHS/force-work/publication，原科学出口保持，无新演化/阈值/Windows工作。
 
 
@@ -3486,7 +3486,7 @@ RZ-BOUNDARY-DISPATCH-01 OPEN：EvaluateBoundary缺少chart身份，二维无条�
 normal-only Phi_face切向偏置（work=-.6772486772486772，native reference0）。
 原CompositePoisson用同一neighborhood/LU修正affine再现，原断言不变；
 face/work/actual Host cell force/dz timestep、CPU4CTest、actualCartesian Runtime7gather、
-CUDA-enabled Host1CTest通过。见RZNativeFaceWorkNode-20261005.zh-CN.md和summary。
+CUDA-enabled Host1CTest通过。见[历史记录](archive/histroy/rz/RZNativeFaceWorkNode-20261005.zh-CN.md)和summary。
 只关闭该affine scope，RZ typed ring boundary/publication/连续科学/axis/viscosity gate保持。
 生产ELF未变receipt复用，raw/ELF本机，无Windows或新长跑。
 
@@ -3498,6 +3498,6 @@ source/generation、stale/missing/WorkLimit诊断通过16-cell原预算源验证
 legacy工作项携带真实chart，Host/CUDA拒绝RZ log；实机Device拒绝typed ring，
 零kernel/transfer/fence增量、无Host fallback且旧证书退役，原36 reduction边界case通过。
 CPU1CTest、CUDA-enabled2CTest与actualCartesian Runtime7gather通过；
-见RZTypedRingExecutionNode-20261005.zh-CN.md及processed summary。
+见[历史记录](archive/histroy/rz/RZTypedRingExecutionNode-20261005.zh-CN.md)及processed summary。
 SelfGravity RZ完整source/RHS/solve/publication和科学gate仍未签收；公开JENS CUDA门槛不变。
 生产ELF未变，raw/ELF本机，不开展Windows或新长跑。

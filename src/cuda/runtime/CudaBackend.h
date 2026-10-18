@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "physics/boundary/BoundaryFlux.h"
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 #include "driver/runtime/ComputeBackend.h"
@@ -118,20 +119,6 @@ public:
         std::span<const backend::BackendStateAccess>, std::span<const int>,
         const amr::CoordinateSeamPlan&, state::StateSlot,
         state::StateVersion, state::CompletionToken) override;
-    state::CompletionToken execute_native_axis_boundary_batch(
-        backend::BackendTopologyStoreTransaction&,
-        std::span<const backend::BackendStateAccess>,
-        state::StateVersion, state::CompletionToken) override;
-    std::optional<backend::NativeEosFailure> validate_completed_native_eos_batch(
-        backend::BackendTopologyStoreTransaction&,
-        std::span<const backend::BackendStateAccess>, const state::Bounds&) override;
-    std::optional<backend::NativeEosFailure> inspect_native_restricted_interiors(
-        backend::BackendTopologyStoreTransaction&,
-        std::span<const backend::BackendStateAccess>, const state::Bounds&) override;
-    backend::BoundaryCells prepare_native_reflecting_layer(
-        backend::BackendTopologyStoreTransaction&, backend::BackendStateAccess,
-        std::span<const boundary::native_rz_math::Request>, const state::Bounds&,
-        std::span<const int> = {}, const backend::BoundaryCells* = nullptr) override;
     backend::BoundaryCells read_boundary_cells(
         backend::BackendTopologyStoreTransaction&, backend::BackendStateAccess,
         std::span<const int>, state::StateRegion = state::StateRegion::Interior) override;
@@ -139,9 +126,6 @@ public:
         backend::BackendTopologyStoreTransaction&, backend::BackendStateAccess,
         std::span<const int>, const backend::BoundaryCells&,
         const boundary::DiffusionBoundaryStorage&) override;
-    std::vector<double> evaluate_jeans_resolution(
-        backend::BackendTopologyStoreTransaction&,
-        std::span<const backend::BackendStateAccess>) override;
     std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() override;
     const double* gravity_density(backend::BackendStateAccess) override;
     void publish_gravity(backend::BackendStateAccess,Physical::Gravity::GravityPatchView) override;
@@ -153,8 +137,7 @@ public:
     state::CompletionToken execute_hydro_stage_batch(
         std::span<const backend::BackendStateAccess> currents,
         const scheduler::StageDescriptor& descriptor,
-        double dt, state::CompletionToken expected,
-        const Physical::Gravity::IGravityPolicy* prepared_source = nullptr) override;
+        double dt, state::CompletionToken expected) override;
     state::CompletionToken execute_hydro_stage(
         backend::BackendStateAccess current,
         const scheduler::StageDescriptor& descriptor,
@@ -165,17 +148,6 @@ public:
     state::CompletionToken execute_physical_boundary_batch(
         std::span<const backend::BackendStateAccess> accesses,
         state::StateVersion version, state::CompletionToken expected) override;
-    state::CompletionToken execute_native_axis_boundary_batch(
-        std::span<const backend::BackendStateAccess> accesses,
-        state::StateVersion version, state::CompletionToken expected) override;
-    std::optional<backend::NativeEosFailure> validate_completed_native_eos_batch(
-        std::span<const backend::BackendStateAccess>, const state::Bounds&) override;
-    backend::NativeActiveThermalInspection classify_completed_native_active_thermal(
-        std::span<const backend::BackendStateAccess>, const state::Bounds&,
-        const backend::NativeEosFailure&) override;
-    backend::BoundaryCells prepare_native_reflecting_layer(
-        backend::BackendStateAccess, std::span<const boundary::native_rz_math::Request>,
-        const state::Bounds&, std::span<const int> = {}, const backend::BoundaryCells* = nullptr) override;
     backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
         std::span<const int>, state::StateRegion = state::StateRegion::Interior) override;
     void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,
@@ -231,13 +203,6 @@ public:
     void enqueue_upload_slot(
         backend::BackendStateAccess access, state::StateRegion region,
         backend::HostStateTransferView host) override;
-    /** Reserve epoch control capacity without reading or binding stage values. */
-    void prepare_boundary_control_capacity(
-        std::span<const backend::BackendStateAccess> currents,
-        std::span<const std::array<std::size_t,6>> face_counts) override;
-    std::unique_ptr<backend::BackendMacroStateTransaction>
-    begin_macro_state_transaction(
-        std::span<const backend::BackendStateAccess> currents) override;
     bool supports_dynamic_topology_store() const noexcept override;
     std::unique_ptr<backend::BackendTopologyStoreTransaction>
     begin_topology_store_transaction(
@@ -260,8 +225,7 @@ public:
         const amr::CoarseFineTransferPlan&,
         std::span<const int> = {},
         std::span<const amr::BlockHandle> = {},
-        const amr::CoordinateSeamPlan* = nullptr,
-        const backend::StagedBoundaryCompletion& = {}) override;
+        const amr::CoordinateSeamPlan* = nullptr) override;
     void stage_amr_flux_plan(
         backend::BackendTopologyStoreTransaction& transaction,
         const amr::AmrFluxTopologyPlan& topology,
@@ -306,8 +270,7 @@ public:
         const amr::CoarseFineTransferPlan&,
         std::span<const int> = {},
         std::span<const amr::BlockHandle> = {},
-        const amr::CoordinateSeamPlan* = nullptr,
-        const std::function<void()>& = {});
+        const amr::CoordinateSeamPlan* = nullptr);
     void abort_store_transaction(StoreTransaction&& transaction);
     void publish_store_transaction(
         StoreTransaction&& transaction, DeviceRetirementFence fence);

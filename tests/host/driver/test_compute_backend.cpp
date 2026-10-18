@@ -5,6 +5,7 @@
  * Mock-backed cases check generation ownership, device-store identities,
  * transfer completion and topology rejection without requiring a CUDA device.
  */
+#include "physics/boundary/BoundaryFlux.h"
 #include "driver/runtime/ComputeBackend.h"
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"

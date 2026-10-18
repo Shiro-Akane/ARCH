@@ -11,11 +11,28 @@ periodic/Dirichlet convergence and solver failure handling; its
 [discretization record](../../docs/development/P2PoissonMultigrid.zh-CN.md)
 preserves the original budgets. Production AMR and device evidence are linked below.
 
-## Current bounded Host RZ evidence
+## Retired two-dimensional cylindrical route
 
-The [Host scenario summary](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json) records prescribed potential/flux and user boundaries, dynamic mixed AMR, JENS and strict restart. [Isolated-field convergence](results/release-closure-20261007/native-density-certificate-20261009-summary.json) and [finite-Euler continuum energy](results/release-closure-20261007/native-continuous-energy-20261009-summary.json) are accepted within their frozen scopes. The shared completed-EOS [resident service and burn consumers](results/release-closure-20261007/native-device-resident-burn-20261009-summary.json) pass actual device checks; the complete Device production chain, coarse/fine faces and long coupled runs retain separate gates. Each record preserves its actual chart, inputs, source and binary identity.
+Cylindrical 2D is unsupported. Spherical 2D `(r,phi)`, radial 1D and full 3D
+curvilinear routes keep their own mathematical and execution contracts.
+Historical RZ records, including [Host scenarios](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json),
+[isolated-field convergence](results/release-closure-20261007/native-density-certificate-20261009-summary.json),
+[finite-Euler energy](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)
+and [final CPU science](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json),
+retain their recorded source, executable, inputs and numerical scope. Their
+original failures, interrupted costs and device gaps are preserved; retired
+runners and ring references are no longer current execution instructions.
+The [release plan](../../ARCH_RELEASE_PLAN.md) tracks retirement and remaining
+release work; this change does not claim a performance improvement.
 
 ## Constant external gravity
+
+The active uniform inputs explicitly declare former loader controls. Coupled
+Gaussian inputs use their actual `p0` and four explicitly zero hydrodynamic
+amplitudes; obsolete `pressure0`/`velocity_x0` overrides were removed. The
+checkpoint reference rejects mixed or incomplete model parameter contracts.
+Historical receipts keep their original identities; current CPU migration checks
+are indexed in the [release plan](../../ARCH_RELEASE_PLAN.md).
 
 The external-source tests below apply a prescribed acceleration; they do not solve
 for the gravity produced by the fluid itself. The force should change momentum
@@ -101,7 +118,7 @@ report and input identities. Keep the same build and data for both commands.
 ## Uniform source test
 
 The `ExternalGravity` problem in `simulation/ExternalGravity/` and the
-immutable parameters in [`inputs/`](inputs) isolate the gravity source on a
+explicit parameters in [`inputs/`](inputs) isolate the gravity source on a
 uniform mesh. The application record
 reproduces the values below and in metrics.csv, with both backends
 reaching the prescribed physical endpoint.
@@ -150,10 +167,9 @@ restart evidence remain attached to those inputs and binaries: see the
 [curved-coordinate CPU record](results/p11-p12-20260923/README.md) and
 [curved-coordinate CUDA record](results/p13-20260924/README.md).
 
-Current two-dimensional cylindrical geometry resolves to axisymmetric `(r,z)`.
-The historical polar records therefore do not qualify this route; its current
-scope is described [below](#axisymmetric-rz-verification). The curved-coordinate
-records also cover Dirichlet, Neumann, linear Robin and user potential
+Two-dimensional cylindrical configurations are rejected. Historical cylindrical
+2D polar records cannot qualify a current route. The curved-coordinate records
+also cover Dirichlet, Neumann, linear Robin and user potential
 conditions in their stated geometries. Isolated mass sources require the full
 azimuth; external mass is outside those isolated-source records. Jeans
 refinement diagnostics have their own current checks. Start with
@@ -209,26 +225,3 @@ scheduling after the user-boundary baseline. Matched-endpoint CPU/FLASH costs,
 unchanged-budget field comparisons and five-step 2D/3D coupled checks have
 separate scopes. Its unresolved cost targets remain visible; FLASH comparisons
 are optional developer work, independent of ARCH build, tests and CI.
-
-## Axisymmetric `(r,z)` verification
-
-Native self-gravity remains an internal verification candidate. The
-axisymmetric route uses physical `(r,z)` coordinates, volume-weighted
-mass/energy and angular-momentum measures. Its CPU records cover shared
-reconstruction and thermodynamic checks, real reflecting/user boundaries,
-Euler/RK2/RK3 external-source stages, angular diffusion rejection/rollback and
-AMR transfer/accounting. The [external-source CPU record](results/release-closure-20261007/native-external-angular-cpu-summary.json)
-identifies its tested source and original budgets.
-
-A [short dynamic four-module CPU run](results/release-closure-20261007/native-dynamic-four-module-complete-summary.json)
-completed two macros with an actual regrid, coarse-fine routes and five genuine
-self-gravity fields. This verifies the recorded activity and accounting at its
-short physical endpoint. Independent continuous self-gravity and total-energy
-acceptance, warm fresh-process restart and Native Device coupling remain
-separate exits. The complete release also requires current GUI interactions,
-sustained runs and same-endpoint performance records; historical polar results
-and lower-level Device checks do not supply these outcomes.
-
-The optional [full-ring reference](rz_ring_surface_reference.py) computes outward intervals for potential and both force components from explicit dense piecewise-constant ring sources, including contact sites. It requires an already installed `python-flint` backend; ARCH construction and CI have no such dependency. Exact supplied geometry, complete coverage and shared work limits are checked. Mathematical intervals qualify the supplied input only; actual Core source/observer identity and physical error must be checked separately. The [reference record](results/release-closure-20261007/ring-surface-reference-summary.json) preserves this scope.
-
-The [scalar continuous-energy reference](rz_scalar_energy_reference.py) consumes actual source means and original per-face mass fluxes. It integrates volume energy changes and full boundary-face potential work, reuses exact constant-density unions, and bounds the small quadratic increment with the positive Newton kernel. Independent unreduced volume/face rules are checked in the existing tooling owner. Quadrature convergence estimates and the exact density inequality are reported separately. The [finite Euler record](results/release-closure-20261007/native-continuous-energy-20261009-summary.json) passes its predeclared exchange-scale budget; mixed AMR, long-time and Device coupling retain their own acceptance scopes. Hosted CI requires neither FLASH nor flint.

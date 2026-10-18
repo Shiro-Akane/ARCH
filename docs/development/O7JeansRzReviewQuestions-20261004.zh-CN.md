@@ -316,7 +316,7 @@ $$
 轴线 far/thin enclosure、原生 exterior face 消费已分别提交处理后证据。
 本次补完整常密度单叶的 monopole/quadrupole outward evaluation 与批准的
 偶次 Legendre tail，18个离轴 Newton 高精度诊断/原生消费反例及 scoped CPU
-回归通过，见 RZRingFarLeafEnclosureNode-20261005.zh-CN.md。
+回归通过，见 [历史记录](archive/histroy/rz/RZRingFarLeafEnclosureNode-20261005.zh-CN.md)。
 这不是新的科学阈值或批准：一般父节点仍不假定反演对称，近场严格预算、
 完整 assembly/residual certificate 和实际 AMR source publication 尚未完成。
 production RZ gate 继续保留；实际未变化的 ARCH ELF 沿用匹配的 JENS frozen receipt。
@@ -324,18 +324,18 @@ production RZ gate 继续保留；实际未变化的 ARCH ELF 沿用匹配的 JE
 非接触源积分新增 enclosed 两点 tensor Gauss 与独立推导的四阶余项界；
 四个源外样本在原内部1e-10预算下通过，4096-work-limit失败保留为反例。
 实际 K 调用/AGM iterations 已贯通源和原生 face consumer；
-详见 RZSeparatedGaussEnclosureNode-20261005.zh-CN.md。
+详见 [历史记录](archive/histroy/rz/RZSeparatedGaussEnclosureNode-20261005.zh-CN.md)。
 这不关闭 contact/inside 严格积分或完整 production residual finding。
 
 接触对数主项可用解析 quadrant log primitive 与 K complementary-root 收敛级数可靠上下界；
 20个高精度primitive检查和3个独立Duffy诊断通过。fixed16384-work的3个全源样本
 仍WorkLimit，仅上界缩紧约4%～7%；严格contact/inside未签收。
-见 RZContactLogMainPartNode-20261005.zh-CN.md，production gate保持。
+见 [历史记录](archive/histroy/rz/RZContactLogMainPartNode-20261005.zh-CN.md)，production gate保持。
 
 后续三点Gauss六阶可靠余项已贯通原owner：同一16384-work、1e-10 target的
 三个matched全源contact/inside样本由WorkLimit转为Bounded，独立singularity-subtracted
 Duffy/Decimal诊断包含于区间。非接触四例由数千boxes降为44～104。
-见 RZGauss3ContactBudgetNode-20261005.zh-CN.md；这是这些数学输入的预算验证，
+见 [历史记录](archive/histroy/rz/RZGauss3ContactBudgetNode-20261005.zh-CN.md)；这是这些数学输入的预算验证，
 不是general parent、full RHS/residual、实际AMR消费者或完整RZ科学签收。
 
 实际CompositePoisson owner新增stored-coefficient RHS assembly/residual evaluation companion
@@ -366,7 +366,7 @@ stored weight/geometry/full RHS identity 仍独立待证明，production RZ/CUDA
 按完整 interval/source-count budget 判定，失败下树，generation/topology 和 WorkLimit 保留。
 116 nodes/2320 独立矩比较、24 高精度尾界、16 Decimal Newton diagnostics、四个
 真实 tree 查询与8 scoped CTest通过；同 production ELF 沿用匹配冻结 JENS9+9。
-见 RZRingParentEnclosureNode-20261005.zh-CN.md。范围为 exact stored edges/density；
+见 [历史记录](archive/histroy/rz/RZRingParentEnclosureNode-20261005.zh-CN.md)。范围为 exact stored edges/density；
 canonical geometry/volume/coefficient、完整 RHS/residual、实际AMR source publication 与
 Phi/force 科学签收仍待贯通，production RZ gate保持。
 
@@ -374,20 +374,20 @@ Phi/force 科学签收仍待贯通，production RZ gate保持。
 source、boundary、assembly 逐cell合并，evaluation单列，再执行原T_safe。
 8组176 cells独立Fraction/100、140位source检查通过，6项CTest与新binary冻结JENS9+9通过。
 scope显式 StoredNativeOperator，physical_status=UncertifiedInput；未知geometry/coefficient/
-weights构造不填零。见 RZRingRhsCompositionNode-20261005.zh-CN.md。
+weights构造不填零。见 [历史记录](archive/histroy/rz/RZRingRhsCompositionNode-20261005.zh-CN.md)。
 production RZ、完整物理RHS与Phi/force及CUDA/long-run gate仍保持。
 
 native volume/weights 构造与理想 native RMS 现已在 CompositePoisson owner 提供独立
 外界：12组264 cells，Fraction normalized weights/RMS及100、140位volume检查通过。
 不把stored geometry当精确值；真实存储误差单列，零RMS精确零。见
-RZNativeMeasureConstructionNode-20261005.zh-CN.md。face fit/LU/fallback、
+[历史记录](archive/histroy/rz/RZNativeMeasureConstructionNode-20261005.zh-CN.md)。face fit/LU/fallback、
 source/observer坐标差异和完整physical RHS组合仍待证明，production gate保持。
 
 真实face新增最终stencil构造分支身份；独立Fraction重建root-coordinate
 weighted Gram和exact solve，24组1416面8268 coefficient terms参考检查通过。
 876 two-point、540 polynomial fit、0 recovery；本组不宣称覆盖recovery。
 实际系数/坐标/constant defect分列且不拟合阈值，新binary冻结JENS9+9与
-6项CTest通过。见 RZStencilConstructionReferenceNode-20261005.zh-CN.md。
+6项CTest通过。见 [历史记录](archive/histroy/rz/RZStencilConstructionReferenceNode-20261005.zh-CN.md)。
 任意mesh的outward coefficient certificate及完整physical RHS仍未签收。
 
 理想root-dyadic最终stencil已有outward系数区间：复用DenseLU候选，
@@ -395,13 +395,13 @@ weighted Gram和exact solve，24组1416面8268 coefficient terms参考检查通�
 lambda error，再传播boundary/anchor/coefficients。38个真实operator、
 7464面38752 terms独立Fraction包含和exact inverse norm检查通过，
 覆盖10个真实派生coarse operator、最大spacing ratio4；recovery实际仍为0。
-见 RZStencilEnclosureNode-20261005.zh-CN.md。未松动请求或physical root规则，
+见 [历史记录](archive/histroy/rz/RZStencilEnclosureNode-20261005.zh-CN.md)。未松动请求或physical root规则，
 完整face/source/observer/RHS/Phi/force及production gate仍待签收。
 
 face center/area/A-V及signed B构造区间已接到真实canonical effective_rhs：
 38个operator/3288 cells/7464面（1632boundary），独立Fraction和100/140位
 面积参考、native RMS的construction+actual assembly误差检查通过。
-见 RZFaceBoundaryMapEnclosureNode-20261005.zh-CN.md。manufactured面值
+见 [历史记录](archive/histroy/rz/RZFaceBoundaryMapEnclosureNode-20261005.zh-CN.md)。manufactured面值
 不等于真实势签收；后续e_f必须用ideal B传播或显式保留交叉项，
 不能直接拼旧stored-B误差漏项。source/observer、interior A及完整physical
 residual/Phi/force和production gate仍待完成。
@@ -411,14 +411,14 @@ CertifiedAbsolute；Unknown/Estimate/invalid/overflow均拒绝，zero精确零�
 construction+potential+assembly的38组完整manufactured boundary box已独立
 Fraction验证，真实ring ideal-error producer仍未完成，不自动提升旧stored
 坐标误差。精确integer-dyadic basis normalization只收紧proof，不改production
-系数/阈值。见 RZIdealPotentialPropagationNode-20261005.zh-CN.md。
+系数/阈值。见 [历史记录](archive/histroy/rz/RZIdealPotentialPropagationNode-20261005.zh-CN.md)。
 interior A、完整physical residual/Phi/force及production gate仍待完成。
 
 native A construction与actual residual evaluation已单列并组合：
 同owner的anchored gradient、homogeneous boundary项、native A-V及ideal
 stencil区间贯通；38组3288 cells7464面独立Fraction检查construction、
 stored arithmetic、ideal evaluation和完整manufactured residual box通过。
-见 RZNativeResidualEvaluationNode-20261005.zh-CN.md。未将制造array当
+见 [历史记录](archive/histroy/rz/RZNativeResidualEvaluationNode-20261005.zh-CN.md)。未将制造array当
 物理解；真实source/observer producer、原请求physical RHS/Phi/force及
 RZ全消费者/natural recovery/axis/viscosity gate仍待完成。
 
@@ -426,7 +426,7 @@ RZ全消费者/natural recovery/axis/viscosity gate仍待完成。
 exterior face坐标消费current operator/density/generation；FMA/TwoSum残差为零
 才提升显式root scope。12组264 cells176 exterior faces独立Fraction通过，
 8组精确坐标可传播ideal B，4组真实舍入坐标继续Unknown；Estimate、missing、
-stale、异operator拒绝。见RZRootProducerIdentityNode-20261005.zh-CN.md。
+stale、异operator拒绝。见[历史记录](archive/histroy/rz/RZRootProducerIdentityNode-20261005.zh-CN.md)。
 这只贯通精确坐标子集，不关闭general geometry error、真实求解Phi/force或
 完整physical residual/RZ gate；相同生产ELF沿用冻结JENS9+9，不改阈值。
 
@@ -434,7 +434,7 @@ stale、异operator拒绝。见RZRootProducerIdentityNode-20261005.zh-CN.md。
 已接入ideal native RMS及原T_safe，8组176 cells独立归约检查通过，4舍入组
 继续拒绝。真实axis 4x4非零源检查在1e-18 face budget、65536 boxes/leaf下
 触发WorkLimit，尚未进入Poisson；2x2插值退化诊断同时保留。
-见RZNativePhysicalRhsAssessmentNode-20261005.zh-CN.md。不以scoped
+见[历史记录](archive/histroy/rz/RZNativePhysicalRhsAssessmentNode-20261005.zh-CN.md)。不以scoped
 composition PASS冒充actual solved Phi/force或完整科学签收，不改阈值，gate保持。
 
 前一真实axis4x4 WorkLimit已在相同1e-18 face target、65536 boxes/leaf、
@@ -442,7 +442,7 @@ composition PASS冒充actual solved Phi/force或完整科学签收，不改阈�
 720次独立Fraction workspace替换、9项原数学合同、6项Core scoped回归通过。
 实际axis/off-axis两例32 cells native source→ring→RHS→solve→apply/residual的
 独立Fraction original-request检查PASS，rtol1e-10、atol0未变。
-见RZRingBalancedWorkspaceNode-20261005.zh-CN.md。只关闭记录的uniform
+见[历史记录](archive/histroy/rz/RZRingBalancedWorkspaceNode-20261005.zh-CN.md)。只关闭记录的uniform
 exact-coordinate预算finding，不关闭continuous Phi/force、一般geometry、mixed
 实际AMR solve、2x2 interpolation或全RZ科学gate；production/CUDA/long-run gate保持。
 
@@ -450,7 +450,7 @@ exact-coordinate预算finding，不关闭continuous Phi/force、一般geometry�
 56 cells132 faces的独立Fraction native original request验证PASS，rtol1e-10、
 atol0及原ring预算保持。实际density/time/version/storage update后旧source
 证书/request失效、新generation绑定；wrong AMR epoch及失败update拒绝通过。
-见RZNativeMixedSolveNode-20261005.zh-CN.md。这不等于Runtime真实regrid/
+见[历史记录](archive/histroy/rz/RZNativeMixedSolveNode-20261005.zh-CN.md)。这不等于Runtime真实regrid/
 全block依赖收集、continuous Phi/force或完整科学发布；production gate保持。
 
 ## 8. RZ 角动量：单一表示与贯通实施节点
@@ -579,7 +579,7 @@ state_semantics=rz-m-phi-j-over-w-v1，mom_w 原 bits 表示 m_phi=J/W。
 旧 RZ revision 1、missing/wrong/future tag 明确拒绝，live state/原文件不变；
 existing revision 1兼容不变。实际非零 raw round-trip、DriverIO、
 4例 internal zero-rotation continuation（41040 words）、新CPU ELF的冻结JENS9+9通过。
-见 RZAngularCheckpointIdentityNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZAngularCheckpointIdentityNode-20261005.zh-CN.md)。
 RZ-CHK-MEASURE-01（domain/root counts与W身份）及其余 C/D仍待贯通；
 不解除production RZ gate，不授予旋转科学/CUDA/long-run PASS。
 
@@ -590,7 +590,7 @@ RZ-CHK-MEASURE-01 的 domain/root-count/cell-shape 绑定已实现：writer从�
 发布，拒绝异域config；reader恢复前匹配，missing/invalid不猜测。
 6类config变化+7类HDF腐损反例通过，1280 native W与非零J恢复前后完全一致。
 实际DriverIO、4例internal zero-rotation continuation及新CPU binary的冻结JENS9+9通过。
-详见RZCheckpointMeasureIdentityNode-20261005.zh-CN.md。
+详见[历史记录](archive/histroy/rz/RZCheckpointMeasureIdentityNode-20261005.zh-CN.md)。
 这是native measure身份范围的关闭，不授予独立几何精度、完整C/D、旋转科学、
 CUDA或long-run PASS；production gate保持，其余消费链继续推进。
 
@@ -599,7 +599,7 @@ CUDA或long-run PASS；production gate保持，其余消费链继续推进。
 内部RZ候选新增原生W、raw m_phi=J/W、派生J/V，VELZ明确为代表速度；
 DENS/ENER与EOS诊断平均语义分开，FP64不改。256-cell独立读回、10类发布前
 拒绝、86项Plotfile/Host回归及新CPU ELF匹配冻结JENS9+9通过。
-详见 RZAngularPlotfileConsumerNode-20261005.zh-CN.md 与处理后summary。
+详见 [历史记录](archive/histroy/rz/RZAngularPlotfileConsumerNode-20261005.zh-CN.md) 与处理后summary。
 当前Cartesian reader仍明确拒绝内部RZ；不伪装RZ Viewer/Inspector已支持。
 此节点不关闭Init/BC/其他API、轴/viscosity finding、完整C/D或CUDA/long-run，
 production gate保持。
@@ -610,7 +610,7 @@ production gate保持。
 6个独立单项式参考、45/56旋转参考、不可解析代表闭合拒绝通过。
 包含axis的初始化closure一致性order约1.99898/1.99975，满足原至少1.8要求，
 不等于演化/力收敛。实际ARCH重编ELF不变，沿用匹配JENS9+9。
-见RZCellInitialConversionNode-20261005.zh-CN.md。
+见[历史记录](archive/histroy/rz/RZCellInitialConversionNode-20261005.zh-CN.md)。
 RZ-INIT-W-01真实PopulateState仍midpoint，RZ-INIT-REPAIR-01须同批迁移账本/ghost；
 新candidate尚未接入，不宣称C完成，production gate保持。
 
@@ -622,7 +622,7 @@ geometry并借用原BC，真实Runtime topology/exchange在发布前填好块间
 不可解析/repair-required/错误species/数组候选不部分发布。
 注册Gaussian单元平均由独立erf积分验证，order3.9855/3.9961，原至少1.8不变。
 最终CPU ELF7c4d8d3c...的冻结JENS9+9和7项API回归通过。
-见RZPopulationAngularIntegrationNode-20261005.zh-CN.md。
+见[历史记录](archive/histroy/rz/RZPopulationAngularIntegrationNode-20261005.zh-CN.md)。
 RZ-INIT-W-01关闭，RZ-INIT-REPAIR-01仅初始化范围关闭；
 运行期repair/checkpoint ledger、axis/viscosity与完整C/D尚未签收，production gate保持。
 
@@ -634,14 +634,14 @@ Existing legacy 保持兼容，严格 RZ 未解析候选仍拒绝、不授权 he
 非零 HDF restore、写出不截断、错 tag/混合/overflow 反例、真实 DriverIO、4 internal
 零 phi continuation、初始求积及新 ELF 冻结 JENS 9+9 通过。
 71 CTest 经初次完整 suite 与修改项定向复测全部取得 PASS；旧 catalog/reflux 软件夹具已迁移。
-见 RZRepairLedgerIdentityNode-20261005.zh-CN.md；完整旋转/viscosity/axis-force 科学门槛、
+见 [历史记录](archive/histroy/rz/RZRepairLedgerIdentityNode-20261005.zh-CN.md)；完整旋转/viscosity/axis-force 科学门槛、
 完整环体 RHS 和 CUDA/长跑门槛仍保持，不以此节点代替科学签收。
 
 ### 环体 matched-source 独立工具节点（2026-10-05）
 
 显式逐叶 bounds/rho/sourceId 的 Decimal 组合工具已实现；轴线解析、源外离轴、
 异密度叠加和失败保留共20相关工具测试通过，阶数与精度诊断分别记录。
-见 RZMatchedSourceReferenceNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZMatchedSourceReferenceNode-20261005.zh-CN.md)。
 当前为独立fixture，尚未验证真实Runtime density publication；
 不得由Poisson RHS反推density冒充接线。inside/contact离轴力继续拒绝，
 连续科学预算和production/CUDA/long-run gate保持。
@@ -654,7 +654,7 @@ mixed实际probe直接导出tree.update密度、当前ring source stamp、实际
 真实28边界点包含接触源；16/32阶势估计与实际值分别记录，
 32阶最大差约3.76047e-15；选中contact点改变分区仍变化2.82002e-15，
 不能称独立可靠参考已达到1e-18或关闭连续科学gate。
-见RZMatchedNativeSourceNode-20261005.zh-CN.md与scalar summary。
+见[历史记录](archive/histroy/rz/RZMatchedNativeSourceNode-20261005.zh-CN.md)与scalar summary。
 无零面积轴面，初始0点axis结果明确排除；static abstract dependency不替代
 Runtime all-block stage/regrid身份。force/连续空间/CPU完整RZ门槛保持。
 
@@ -683,7 +683,7 @@ RZ-ELLIPTIC-SEMANTICS-01在adapter范围关闭：真实root/mixed tree chart、
 full-ring V、native offset和z Dirichlet共3584cells通过。
 SelfGravity尚未接完整finite-ring/native force/work/runtime消费者，显式gate保持。
 原CPU生命周期及实际Cartesian Runtime回归、CUDA-enabled Host构建兼容通过，
-均不冒称RZ科学/device签收。见RZEllipticChartBindingNode-20261005.zh-CN.md。
+均不冒称RZ科学/device签收。见[历史记录](archive/histroy/rz/RZEllipticChartBindingNode-20261005.zh-CN.md)。
 原科学阈值未改；完整8.4 A→B→C→D与连续环体budget仍未完成。
 
 ### 原重力workspace的RZ geometry producer证据（2026-10-05）
@@ -691,7 +691,7 @@ SelfGravity尚未接完整finite-ring/native force/work/runtime消费者，显�
 原构造器物理距离/边界观察点接显式chart：dr/dz及(r,0,z)在3584实际tree cell通过。
 Existing旧数学保留，CPU/实际Cartesian Runtime/CUDA-enabled Host scoped回归通过。
 完整RZ Runtime仍在bind gate前停止，不冒称source/RHS/force-work或Device科学签收。
-见RZGravityWorkspaceChartNode-20261005.zh-CN.md；原8.4与连续环体科学出口不变。
+见[历史记录](archive/histroy/rz/RZGravityWorkspaceChartNode-20261005.zh-CN.md)；原8.4与连续环体科学出口不变。
 
 ### 共享 SelfGravity 请求入口身份检查（2026-10-05）
 
@@ -709,7 +709,7 @@ solved record 重建 K=norm_native(abs(B)*1)，K约47.43–49.12 cm^-2，
 缩放列只是线性数学诊断、未运行新物理样本；100位sqrt不是outward证书。
 下一步在原 Workspace/SelfGravity 贯通全块身份、动态内部份额、原请求完整
 ledger和force/work/publication资格；不能以再加抽象fixture替代真实Runtime。
-见 RZRuntimeBudgetIntegrationAudit-20261005.zh-CN.md；公开RZ/连续势力/axis/
+见 [历史记录](archive/histroy/rz/RZRuntimeBudgetIntegrationAudit-20261005.zh-CN.md)；公开RZ/连续势力/axis/
 viscosity/angular/CUDA/long-run科学门槛保持，原阈值不变。
 
 ### RZ 原所有者动态初始预算节点（2026-10-05）
@@ -719,7 +719,7 @@ source/G/原rtol-atol生成向下舍入的初始half份额，状态仅Proposed�
 不是最终RHS或发布证书。四例实际uniform/mixed共88cells，以动态target
 约8.54e-19–8.84e-19完成原请求；独立Fraction完整residual及budget上界PASS，
 原CPU/CUDA-enabled Host lifecycle和actualCartesianRuntime回归PASS。
-见RZDynamicInitialBudgetNode-20261005.zh-CN.md。
+见[历史记录](archive/histroy/rz/RZDynamicInitialBudgetNode-20261005.zh-CN.md)。
 生产SelfGravity尚未消费该接口，完整RZ Runtime、continuous势力/axis/viscosity/
 angular A→D及Device/long-run门槛保留，原科学阈值未改。
 
@@ -731,7 +731,7 @@ angular A→D及Device/long-run门槛保留，原科学阈值未改。
 真实2-block/512-cell非零源在target6.185029400051462e-20下WorkLimit：
 leaf40960、parent13680、242.433秒；未进入Poisson，没有native成功publication。
 RZ-NATIVE-SERVICE-BUDGET-01 OPEN。零源按原正密度条件拒绝，未替代非零验证。
-见RZNativeServiceCandidateNode-20261005.zh-CN.md。
+见[历史记录](archive/histroy/rz/RZNativeServiceCandidateNode-20261005.zh-CN.md)。
 完整Runtime/连续势力/axis/viscosity/角动量/CUDA/long-run门槛保持，原阈值/cap未改。
 
 ### RZ 正孤立 RHS 原预算节点（2026-10-05）
@@ -743,7 +743,7 @@ RZ-NATIVE-SERVICE-BUDGET-01 OPEN。零源按原正密度条件拒绝，未替代
 原两块512-cell service成功，residual upper4.443476783658658e-15
 <= safe1.4684682266979847e-14，113.252秒，普通physical reader仍拒绝candidate。
 RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保留。
-见 RZPositiveIsolatedRhsBudgetNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZPositiveIsolatedRhsBudgetNode-20261005.zh-CN.md)。
 完整Runtime/连续势力/axis/viscosity/angular/CUDA/long-run科学门槛保持。
 
 ### RZ 真实三状态buffer / 失败恢复节点（2026-10-05）
@@ -752,7 +752,7 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 非活动rho=NaN，选中rho1。非首slot/view失配原入口零委托工作拒绝，
 旧场退役后合法恢复；source generation=2/3/4，每次原conditional Accepted。
 465.035秒、swap0，physical读取消费始终拒绝candidate；CPU生命周期回归PASS。
-见 RZNativeSlotLifecycleNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZNativeSlotLifecycleNode-20261005.zh-CN.md)。
 版本/storage身份由fixture给定，不代表DriverRuntime真实租约/regrid事务；
 连续势力/Hydro守恒/axis/viscosity/Device/long-run科学门槛保持。
 
@@ -763,7 +763,7 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 未发布/非首未发布Scratch在gather前拒绝、旧场退役、合法发布恢复。
 原完整conditional residual PASS，普通plot/CFL/Hydro消费者拒绝candidate，
 默认生产RZ bind/Device/regrid门槛保持。实际Cartesian4→8→4/7gather回归PASS。
-见 RZActualRuntimeCandidateNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZActualRuntimeCandidateNode-20261005.zh-CN.md)。
 只覆盖真实root Runtime三槽，不代表混合拓扑迁移或连续势力/守恒/Device/长跑签收。
 
 ### RZ 实际Runtime原AMR事务 / 父态veto（2026-10-05）
@@ -773,7 +773,7 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 独立V/W收支七行max2.5020639583995762e-17，原1e-12短transfer预算不改；
 零J严格零。冻结W-parent -111/8、eint=-9/128实际group veto，
 8→5混合leaf，四原children bits保留、不补热/改J；合法新输入恢复5→2。
-见 RZActualRuntimeRegridNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZActualRuntimeRegridNode-20261005.zh-CN.md)。
 混合mesh field solve/fatal rollback/Hydro力矩/连续势力/axis/viscosity/Device/
 完整科学出口及长跑仍待验证，不以AMR transfer代替演化签收。
 
@@ -784,7 +784,7 @@ RZ-NATIVE-SERVICE-BUDGET-01仅在该输入预算范围关闭，旧WorkLimit保�
 target4.7082587313629388e-18；没有Poisson或field成功publication，粗化后段未执行。
 RZ-MIXED-RUNTIME-WORK-01 OPEN；rtol/atol/caps/域不变，
 range/kernel/box计数与source-tree visits区分。
-见 RZMixedRuntimeFieldFinding-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZMixedRuntimeFieldFinding-20261005.zh-CN.md)。
 下一步审计原所有者严格等密度完整相邻分区的等价积分复用；
 方案尚未实施，不以架构PASS或之前root/transfer成功替代mixed科学证据。
 
@@ -797,7 +797,7 @@ range/kernel/box计数与source-tree visits区分。
 仅在该记录uniform输入范围关闭，旧失败保留。
 四例88cells原完整账本和四子分区独立Fraction PASS，
 非均匀/不精确坐标拒绝合并，CPU及CUDA-enabled Host回归PASS。
-见 RZUniformQuartetIntegrationNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZUniformQuartetIntegrationNode-20261005.zh-CN.md)。
 generic非均匀费用/continuous势力/fatal rollback/Hydro角动量/axis/viscosity/
 Device/long-run科学出口仍开放，生产门槛保持。
 
@@ -808,7 +808,7 @@ Device/long-run科学出口仍开放，生产门槛保持。
 重新gather核对当前指针/ledger，512cell原完整残差
 4.4674101534278339e-15 <= 1.4586002329335141e-14；invalidate退役旧场，合法2→8重试PASS。
 默认Cartesian4→8→4/7gather及架构审计PASS。
-见 RZActualRuntimeRollbackNode-20261005.zh-CN.md。
+见 [历史记录](archive/histroy/rz/RZActualRuntimeRollbackNode-20261005.zh-CN.md)。
 仅t=0注入工程故障；RepairBudget元数据不在数组bits断言范围，
 continuous势力/Hydro角动量/axis/viscosity/Device/long-run科学出口仍开放。
 
@@ -817,14 +817,14 @@ continuous势力/Hydro角动量/axis/viscosity/Device/long-run科学出口仍开
 RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
 真实正距离误拒绝；exterior Phi/force和contact Phi改按§7.2直接q=d²/s²。
 六q/三精度K高精度对照、五非法反例、五实际积分精度检查PASS。
-见 RZReferenceComplementNode-20261005.zh-CN.md；只关闭参考算术finding，
+见 [历史记录](archive/histroy/rz/RZReferenceComplementNode-20261005.zh-CN.md)；只关闭参考算术finding，
 没有认证quadrature/contact force/空间误差，Core与科学门槛不变。
 
 ### 全部实际面梯度映射检查（2026-10-05）
 
 四组88 cells/208 faces，独立重建 anchored/Neumaier gradient逐bit一致，
 200个非零错误力符号反例可辨；Fraction stored-stencil算术偏差单列。
-见 RZFaceGradientMappingNode-20261005.zh-CN.md。只证明实际导出映射，
+见 [历史记录](archive/histroy/rz/RZFaceGradientMappingNode-20261005.zh-CN.md)。只证明实际导出映射，
 不签收continuous/contact force；全量连续参考差分诊断仍单独运行。
 
 ### 当前 CPU Release 科学复验（2026-10-05）
@@ -841,7 +841,7 @@ RZ-REFERENCE-COMPLEMENT-01：80位R=1/dr1e-60/dz2e-60时旧m舍入1，
 原数组hash匹配quartet receipt，负梯度消费正确；RMS diagnostic delta约
 8.81e-10至1.17e-9 cm/s²，order drift约2.5e-9、precision drift约2e-82。
 RZ-CONTINUOUS-FORCE-REFERENCE-01 OPEN：求积/差分尚未解析，不判Core科学FAIL/PASS。
-见RZAllFaceForceReferenceFinding-20261005.zh-CN.md。原阈值/所有面保留，gate保持。
+见[历史记录](archive/histroy/rz/RZAllFaceForceReferenceFinding-20261005.zh-CN.md)。原阈值/所有面保留，gate保持。
 
 ### 当前同源码 CUDA 原子组复验（2026-10-05）
 

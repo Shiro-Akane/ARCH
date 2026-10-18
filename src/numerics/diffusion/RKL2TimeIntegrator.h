@@ -1,7 +1,5 @@
 /**
  * @file RKL2TimeIntegrator.h
- * Native single-patch integration requires a borrowed actual AMR owner;
- * the default absent owner remains valid only for the Existing chart.
  * @brief Second-order RKL production adapters for the shared stage scheduler.
  */
 
@@ -14,13 +12,11 @@ struct RKL2TimeIntegrator
     static void integrate(amr::Block& block, const auto& eos,
                           const Grid& grid, const SimConfig& config,
                           double dt_hydro, double dt_diff,
-                          const auto& bc_handler,
-                          GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-                          amr::AMRControl* native_owner = nullptr)
+                          const auto& bc_handler)
     {
         Numerics::Diffusion::detail::advance_single_rkl(
             block, eos, grid, config, dt_hydro, dt_diff, bc_handler,
-            arch::scheduler::RklMethod::RKL2, semantics, native_owner);
+            arch::scheduler::RklMethod::RKL2);
     }
 };
 
@@ -31,11 +27,10 @@ inline void advance_amr_rkl2(amr::AMRControl& amr_ctrl, double dt,
                              double dt_diff_fe,
                              BCPolicy& boundary_condition,
                              const EosType& eos,
-                             const SimConfig& config,
-                             GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                             const SimConfig& config)
 {
     advance_amr_rkl(amr_ctrl, dt, dt_diff_fe, boundary_condition, eos,
-                    config, arch::scheduler::RklMethod::RKL2, semantics);
+                    config, arch::scheduler::RklMethod::RKL2);
 }
 
 } // namespace Numerics::Diffusion

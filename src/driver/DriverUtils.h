@@ -16,8 +16,7 @@
 #include "data/FluidState.h"
 
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
-#include "numerics/state/RzNativeClosure.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 #include <bit>
 #include <cmath>
@@ -182,10 +181,9 @@ ARCH_INLINE double finalize_cfl_dt(double cfl_number, double minimum)
  */
 template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number,
-                          bool parallel_rows = true,
-                          GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                          bool parallel_rows = true)
 {
-    const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
+    const auto geometry = GridMetrics::make_geometry_view(grid);
     arch::state::HostFailure failure;
     int n_species = state.GetNumSpecies();
     const auto reduction_spec = arch::reduction::minimum_spec(
@@ -216,21 +214,8 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
                 if (is_cfl_cell_active(U)) {
                     for (int s = 0; s < n_species; ++s)
                         Xi_cache[s] = state.X(s, idx);
-                    FluidVector eos_mean=U;
-                    if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                        // Only the EOS kinetic interpretation changes. The
-                        // active r/z velocities and physical spacing retain
-                        // the original two-face CFL formula; phi is inactive.
-                        const auto read=[&state](int cell) {return state.get(cell);};
-                        const auto closure=RzThermodynamics::make_cell(read,idx,geometry,i);
-                        if (!closure.valid())
-                            throw std::runtime_error("Invalid native RZ hydro CFL closure: cell="
-                                +std::to_string(idx));
-                        eos_mean=closure.effective_mean;
-                    }
                     cell_dt = evaluate_cfl_cell_dt(
-                        eos_mean, Xi_cache.data(), eos,
-                        geometry, i, j);
+                        U, Xi_cache.data(), eos, geometry, i, j);
                 }
                 if (!(cell_dt > 0.0) || !std::isfinite(cell_dt))
                     throw std::runtime_error("Invalid active hydro CFL candidate: cell="

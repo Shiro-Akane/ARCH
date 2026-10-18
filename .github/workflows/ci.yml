@@ -89,7 +89,43 @@ jobs:
       CCACHE_MAXSIZE: 1G
       CCACHE_COMPILERCHECK: content
     steps:
-      - name: Check out source and the required EOS table
+      - name: Check out source without downloading LFS objects
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env:
+          GIT_LFS_SKIP_SMUDGE: '1'
+        with:
+          persist-credentials: false
+          lfs: false
+
+      - name: Identify the exact Helmholtz table cache
+        id: eos-pointer
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import os
+          import re
+          import subprocess
+
+          path = "EOS_toolkit/tables/helmholtz/helm_table.dat"
+          pointer = subprocess.check_output(["git", "show", "HEAD:" + path])
+          if not re.fullmatch(
+              rb"version https://git-lfs.github.com/spec/v1\noid sha256:[0-9a-f]{64}\nsize [1-9][0-9]*\n",
+              pointer,
+          ):
+              raise SystemExit("The required Helmholtz table has no canonical LFS pointer.")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("sha256=" + hashlib.sha256(pointer).hexdigest() + "\n")
+          PY
+
+      - name: Restore the exact Helmholtz LFS object
+        id: eos-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/lfs/objects
+          key: arch-helmholtz-lfs-v1-${{ steps.eos-pointer.outputs.sha256 }}
+
+      - name: Download the required EOS table only on a cache miss
+        if: steps.eos-cache.outputs.cache-hit != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         env:
           # Limit LFS hydration while checkout still owns its temporary auth.
@@ -102,6 +138,47 @@ jobs:
         with:
           persist-credentials: false
           lfs: true
+
+      - name: Hydrate the cached Helmholtz table offline and verify its identity
+        run: |
+          git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+          python3 - <<'PY'
+          import hashlib
+          import re
+          import subprocess
+          from pathlib import Path
+
+          path = Path("EOS_toolkit/tables/helmholtz/helm_table.dat")
+          pointer = subprocess.check_output(["git", "show", "HEAD:" + path.as_posix()])
+          identity = re.fullmatch(
+              rb"version https://git-lfs.github.com/spec/v1\noid sha256:([0-9a-f]{64})\nsize ([1-9][0-9]*)\n",
+              pointer,
+          )
+          if identity is None:
+              raise SystemExit("The required Helmholtz table has no canonical LFS pointer.")
+          expected_sha256 = identity[1].decode("ascii")
+          expected_size = int(identity[2])
+          if not path.is_file():
+              raise SystemExit("The required Helmholtz table is absent after offline LFS checkout.")
+          actual_size = path.stat().st_size
+          if actual_size != expected_size:
+              raise SystemExit(
+                  f"The required Helmholtz table is a pointer or has the wrong size: {actual_size} != {expected_size}."
+              )
+          with path.open("rb") as table:
+              actual_sha256 = hashlib.file_digest(table, "sha256").hexdigest()
+          if actual_sha256 != expected_sha256:
+              raise SystemExit("The required Helmholtz table does not match its LFS SHA-256.")
+          print(f"Verified Helmholtz table: {actual_size} bytes, SHA-256 {actual_sha256}.")
+          PY
+
+      # Retain the verified table even if later compilation or science fails.
+      - name: Save the verified Helmholtz LFS object
+        if: success() && steps.eos-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .git/lfs/objects
+          key: ${{ steps.eos-cache.outputs.cache-primary-key }}
 
       - name: Prepare the CPU toolchain
         run: |

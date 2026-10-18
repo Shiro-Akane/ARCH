@@ -11,12 +11,6 @@
  * carry rho*X, then recover mass fractions after the density update and state
  * admissibility repairs. Host traversal calls these leaves and registers
  * coarse-fine fluxes; the integrator supplies weights and the driver schedules exchange.
- * Workflow for native RZ candidates:
- * 1. Combine conserved V/W means and species densities without floor repairs.
- * 2. Precheck finite fields, positive density and the shared mass-fraction simplex.
- * 3. Collect completed RK receipts before slot rotation; start a separate reflux row.
- * 4. After actual whole-domain BC/exchange, the Runtime-owned EOS gate validates
- *    thermal bounds with the same-stage density closure before ghost publication.
  */
 
 #pragma once
@@ -42,19 +36,17 @@
 #endif
 
 #include "amr/AMRControl.h"
-#include "amr/flux/AMRFluxRegistering.h"
 #include "data/FluidState.h"
 #include "driver/runtime/StateResidency.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/flux/InvariantDomainFlux.h"
-#include "numerics/integrator/GeometricSources.h"
+#include "numerics/reconstruction/Reconstruction.h"
+#include "numerics/curvilinear/GeometricSources.h"
 #include "numerics/integrator/HydroCellUpdate.h"
-#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
-#include "physics/gravity/IGravityPolicy.h"
-#include "physics/gravity/NativeExternalSource.h"
-#include "physics/gravity/NativeSelfStage.h"
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include "physics/boundary/BoundaryFlux.h"
 
 namespace TimeIntegration
 {
@@ -92,211 +84,14 @@ namespace TimeIntegration
         failure.rethrow();
     }
 
-    /** Synchronize one actual Host domain without owning GhostValid publication.
-     * Workflow: Existing apply->exchange is unchanged. Native preflights the
-     * actual domain/layout/chart and BC frame; applies builtin seeds; performs
-     * actual exchange; prepares all immutable per-patch candidates; validates
-     * all frames/candidates; publishes every surface noexcept; exchanges again
-     * and completes axis corners. The existing caller owns final EOS/rollback.
-     * Only small metadata/surface candidates are retained, never a U/X clone.
-     * prepare_native borrows const state and its callback must remain pure.
-     */
+    /** Synchronize one actual Host domain without owning GhostValid publication. */
     template<class BCPolicy>
     inline void synchronize_domain_boundary(amr::AMRControl& control,BCPolicy& boundary,
-        FluidState amr::Block::* member,std::span<const amr::BlockHandle> handles,
-        GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing,
-        arch::state::Bounds bounds={})
+        FluidState amr::Block::* member,std::span<const amr::BlockHandle> handles)
     {
-        if(semantics==GridMetrics::GeometrySemantics::Existing) {
-            apply_domain_boundary(control,boundary,member);
-            control.ghost_exchange.ExecuteExchange(control.pool,control.tree,
-                control.tree->GetRootGridDim(),member,handles,
-                amr::CoordinateSeamGeometry::ExistingChart,bounds);
-            return;
-        }
-        if(semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::invalid_argument("Unknown Host domain boundary chart");
-        using Service=std::remove_cvref_t<BCPolicy>;
-        if constexpr(requires(BCPolicy& service,FluidState& state,const FluidState& input,
-            const Grid& grid,typename Service::NativeCandidate& candidate) {
-            {service.geometry_semantics()} -> std::same_as<GridMetrics::GeometrySemantics>;
-            service.logical_plan(grid);service.snapshot_stage_context();
-            {service.stage_context_matches(service.snapshot_stage_context())} -> std::convertible_to<bool>;
-            service.apply_builtin(state,grid);
-            {service.prepare_native(input,grid)} -> std::same_as<typename Service::NativeCandidate>;
-            service.validate_native_candidate(candidate,input,grid);
-            {service.publish_native_noexcept(std::move(candidate),state)} noexcept -> std::same_as<void>;
-            service.complete_axis(state,grid);
-        }) {
-            if(member!=&amr::Block::fluid_state&&member!=&amr::Block::state_next
-                &&member!=&amr::Block::state_scratch)
-                throw std::invalid_argument("Native boundary selected unknown actual state member");
-            const auto pool=control.pool;const auto tree=control.tree;
-            if(!pool||!tree||tree->GetRootGridDim()!=2||!arch::state::valid_bounds(bounds))
-                throw std::invalid_argument("Native boundary requires actual RZ domain and bounds");
-            const auto& active=tree->GetActiveBlocks();
-            if(active.empty()||handles.size()!=active.size()||boundary.geometry_semantics()!=semantics)
-                throw std::invalid_argument("Native boundary domain/handles/chart mismatch");
-            const std::vector<int> ids(active.begin(),active.end());
-            const std::vector<amr::BlockHandle> saved_handles(handles.begin(),handles.end());
-            const auto bc_frame=boundary.snapshot_stage_context();
-            using Field=std::vector<double> FluidState::*;
-            constexpr std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,
-                &FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,
-                &FluidState::enuc_rate,&FluidState::mass_fractions};
-            struct PatchFrame {
-                amr::Block* block;Grid grid;int species,id,level,parent,active_index;
-                bool active;std::uint64_t morton;std::array<std::uint32_t,3> logical;
-                std::array<int,8> children;std::array<amr::Block::FaceNeighbors,6> neighbours;
-                std::array<const double*,7> addresses;std::array<std::size_t,7> sizes;
-            };
-            std::vector<PatchFrame> frames;frames.reserve(ids.size());
-            for(std::size_t n=0;n<ids.size();++n) {
-                auto& block=pool->GetBlock(ids[n]);const auto& state=block.*member;
-                (void)GridMetrics::make_geometry_view(block.grid,semantics);
-                (void)boundary.logical_plan(block.grid);
-                const int extent=block.grid.GetTotalSize(),species=state.GetNumSpecies();
-                if(!amr::is_valid(handles[n])||handles[n].epoch!=handles.front().epoch
-                    ||extent<=0||species<0||state.block_total_size_!=extent
-                    ||state.rho.size()!=static_cast<std::size_t>(extent)
-                    ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
-                    ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size()
-                    ||state.enuc_rate.size()!=state.rho.size()
-                    ||state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent
-                    ||(n&&species!=frames.front().species))
-                    throw std::invalid_argument("Native boundary actual patch layout/handle mismatch");
-                PatchFrame f{&block,block.grid,species,block.id,block.level,block.parent_id,
-                    block.active_index,block.active,block.morton_code,
-                    {block.logical_x1,block.logical_x2,block.logical_x3},{},{},{},{}};
-                std::copy(std::begin(block.children_id),std::end(block.children_id),f.children.begin());
-                std::copy(std::begin(block.face_neighbors),std::end(block.face_neighbors),f.neighbours.begin());
-                for(std::size_t k=0;k<fields.size();++k) {
-                    const auto& values=state.*fields[k];f.addresses[k]=values.data();f.sizes[k]=values.size();
-                }
-                frames.push_back(std::move(f));
-            }
-            // Metadata preflight never reads unfinished rho or changes U/X.
-            (void)control.ghost_exchange.GetPlans(pool,tree,2,handles,
-                amr::CoordinateSeamGeometry::RzAxisymmetric);
-            std::vector<typename Service::NativeCandidate> candidates(ids.size());
-            /** Compare complete geometry by exact FP64 bits, including signed zero. */
-            const auto same_grid=[](const Grid& a,const Grid& b) {
-                if(a.geometry!=b.geometry||a.dim!=b.dim||a.ng!=b.ng
-                    ||a.nblockx1!=b.nblockx1||a.nblockx2!=b.nblockx2||a.nblockx3!=b.nblockx3
-                    ||a.stride_y!=b.stride_y||a.stride_z!=b.stride_z||a.total_size!=b.total_size
-                    ||a.GetTotalX()!=b.GetTotalX()||a.GetTotalY()!=b.GetTotalY()
-                    ||a.GetTotalZ()!=b.GetTotalZ())return false;
-                for(double Grid::* f:std::array<double Grid::*,9>{&Grid::x1_min,&Grid::x1_max,
-                    &Grid::x2_min,&Grid::x2_max,&Grid::x3_min,&Grid::x3_max,&Grid::dx1,&Grid::dx2,&Grid::dx3})
-                    if(std::bit_cast<std::uint64_t>(a.*f)!=std::bit_cast<std::uint64_t>(b.*f))return false;
-                if(!GridMetrics::equal_identity(a.dyadic_identity,b.dyadic_identity))return false;
-                return std::equal(std::begin(a.amr_coarse_fine_face),std::end(a.amr_coarse_fine_face),
-                    std::begin(b.amr_coarse_fine_face));
-            };
-            /** Recheck borrowed domain/BC/array ownership before candidate scatter. */
-            const auto require_frame=[&] {
-                if(control.pool!=pool||control.tree!=tree||tree->GetActiveBlocks()!=ids
-                    ||handles.size()!=saved_handles.size()
-                    ||!std::equal(handles.begin(),handles.end(),saved_handles.begin())
-                    ||boundary.geometry_semantics()!=semantics||!boundary.stage_context_matches(bc_frame))
-                    throw std::logic_error("Native boundary domain or BC frame changed during preparation");
-                for(std::size_t n=0;n<frames.size();++n) {
-                    const auto& f=frames[n];const auto& block=pool->GetBlock(ids[n]);const auto& state=block.*member;
-                    if(&block!=f.block||!same_grid(block.grid,f.grid)||block.id!=f.id
-                        ||block.level!=f.level||block.parent_id!=f.parent||block.active_index!=f.active_index
-                        ||block.active!=f.active||block.morton_code!=f.morton
-                        ||block.logical_x1!=f.logical[0]||block.logical_x2!=f.logical[1]||block.logical_x3!=f.logical[2]
-                        ||state.GetNumSpecies()!=f.species||state.block_total_size_!=f.grid.GetTotalSize()
-                        ||!std::equal(std::begin(block.children_id),std::end(block.children_id),f.children.begin()))
-                        throw std::logic_error("Native boundary actual patch topology/layout changed");
-                    for(std::size_t face=0;face<f.neighbours.size();++face) {
-                        const auto& a=block.face_neighbors[face];const auto& b=f.neighbours[face];
-                        if(a.count!=b.count||a.level_diff!=b.level_diff
-                            ||!std::equal(std::begin(a.ids),std::end(a.ids),std::begin(b.ids)))
-                            throw std::logic_error("Native boundary actual neighbour topology changed");
-                    }
-                    for(std::size_t k=0;k<fields.size();++k) {
-                        const auto& values=state.*fields[k];
-                        if(values.data()!=f.addresses[k]||values.size()!=f.sizes[k])
-                            throw std::logic_error("Native boundary actual field allocation changed");
-                    }
-                }
-            };
-            /** Join all patch failures before advancing the synchronization phase. */
-            const auto joined=[&](const auto& operation) {
-                arch::state::HostFailure failure;
-#pragma omp parallel for schedule(dynamic,1)
-                for(std::size_t n=0;n<frames.size();++n) {
-                    try {operation(n);}catch(...) {failure.capture_current();}
-                }
-                failure.rethrow();
-            };
-            require_frame();
-            joined([&](std::size_t n) {auto& b=*frames[n].block;boundary.apply_builtin(b.*member,b.grid);});
-            require_frame();
-            control.ghost_exchange.ExecuteExchange(pool,tree,2,member,handles,
-                amr::CoordinateSeamGeometry::RzAxisymmetric,bounds);
-            require_frame();
-            joined([&](std::size_t n) {
-                const auto& b=*frames[n].block;
-                candidates[n]=boundary.prepare_native(static_cast<const FluidState&>(b.*member),b.grid);
-            });
-            require_frame();
-            joined([&](std::size_t n) {
-                const auto& b=*frames[n].block;
-                // Config and overlay-frame authenticity remain the service's
-                // existing frozen candidate contract, not a new config owner.
-                boundary.validate_native_candidate(candidates[n],b.*member,b.grid);
-            });
-            require_frame();
-            // Every candidate's fallible work is finished before first scatter.
-            for(std::size_t n=0;n<frames.size();++n)
-                boundary.publish_native_noexcept(std::move(candidates[n]),(*frames[n].block).*member);
-            control.ghost_exchange.ExecuteExchange(pool,tree,2,member,handles,
-                amr::CoordinateSeamGeometry::RzAxisymmetric,bounds);
-            require_frame();
-            joined([&](std::size_t n) {auto& b=*frames[n].block;boundary.complete_axis(b.*member,b.grid);});
-            require_frame();
-        } else throw std::logic_error("Native RZ boundary requires the phased candidate service");
-    }
-
-    /**
-     * Check one native RZ patch before its genuine post-boundary EOS gate.
-     * rho and E are V means, while m_phi=J/W; their thermal state cannot be
-     * recovered by subtracting point kinetic energy from this raw vector.
-     * Validate the actual complete layout and interior finite/rho/simplex
-     * values through the common scalar leaf. No floor, repair, normalization,
-     * thermal acceptance or publication occurs here.
-     */
-    inline void validate_provisional_rz_stage_state(
-        const FluidState& state, const Grid& grid, const NumericsConfig& config)
-    {
-        (void)GridMetrics::make_geometry_view(grid,
-            GridMetrics::GeometrySemantics::AxisymmetricRz);
-        const int extent=grid.GetTotalSize();
-        const int species=state.GetNumSpecies();
-        const arch::state::Bounds bounds{
-            config.sml_rho,config.min_eint,config.max_eint};
-        if(!arch::state::valid_bounds(bounds)||extent<=0||species<0
-            ||state.block_total_size_!=extent
-            ||state.rho.size()!=static_cast<std::size_t>(extent)
-            ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
-            ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size()
-            ||state.enuc_rate.size()!=state.rho.size()
-            ||state.mass_fractions.size()!=static_cast<std::size_t>(species)*extent)
-            throw std::invalid_argument("RZ stage precheck requires the actual complete patch layout/bounds");
-        for(int k=grid.Ks();k<grid.Ke();++k)
-            for(int j=grid.Js();j<grid.Je();++j)
-                for(int i=grid.Is();i<grid.Ie();++i) {
-                    const int cell=grid.GetIndex(i,j,k);
-                    const auto status=RzThermodynamics::provisional_native_state(
-                        state.get(cell),species ? state.mass_fractions.data()+cell : nullptr,
-                        species,extent,bounds);
-                    if(status!=arch::state::Status::valid)
-                        throw std::runtime_error("Invalid provisional RZ stage state: cell="
-                            +std::to_string(cell)+" status="
-                            +std::to_string(static_cast<int>(status)));
-                }
+        apply_domain_boundary(control,boundary,member);
+        control.ghost_exchange.ExecuteExchange(control.pool,control.tree,
+            control.tree->GetRootGridDim(),member,handles);
     }
 
     /** Describe a rejected composition without changing its values or tolerance.
@@ -332,18 +127,10 @@ namespace TimeIntegration
         return message.str();
     }
 
-    /** Repair Existing trace errors; native RZ only prechecks before Runtime EOS. */
+    /** Repair trace errors with the existing conservative-state acceptance. */
     inline void accept_stage_state(FluidState& state, const Grid& grid,
-                                   const NumericsConfig& config,
-                                   GridMetrics::GeometrySemantics semantics =
-                                       GridMetrics::GeometrySemantics::Existing)
+                                   const NumericsConfig& config)
     {
-        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            validate_provisional_rz_stage_state(state,grid,config);
-            return;
-        }
-        if(semantics!=GridMetrics::GeometrySemantics::Existing)
-            throw std::invalid_argument("Unknown stage acceptance chart");
         const auto geometry = GridMetrics::make_geometry_view(grid);
         for (int k = grid.Ks(); k < grid.Ke(); ++k)
             for (int j = grid.Js(); j < grid.Je(); ++j)
@@ -368,54 +155,16 @@ namespace TimeIntegration
     inline void accept_reflux_state(amr::AMRControl& control,
                                     const NumericsConfig& config,
                                     FluidState amr::Block::* slot = &amr::Block::fluid_state,
-                                    bool reset_receipt = true,
-                                    GridMetrics::GeometrySemantics semantics =
-                                        GridMetrics::GeometrySemantics::Existing)
+                                    bool reset_receipt = true)
     {
-        if(semantics!=GridMetrics::GeometrySemantics::Existing
-            &&semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::invalid_argument("Unknown reflux acceptance chart");
-        const auto repair_semantics=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-            ? arch::state::RepairSemantics::RzVolumeAngular
-            : arch::state::RepairSemantics::ExistingVolume;
         for (int id : control.tree->GetActiveBlocks()) {
             auto& block = control.pool->GetBlock(id);
             auto& state = block.*slot;
-            if (reset_receipt) state.stage_repairs.reset(state.GetNumSpecies(),repair_semantics);
-            try { accept_stage_state(state, block.grid, config,semantics); }
+            if (reset_receipt) state.stage_repairs.reset(state.GetNumSpecies());
+            try { accept_stage_state(state, block.grid, config); }
             catch (const std::exception& error) {
                 throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
             }
-        }
-    }
-
-    /**
-     * Begin the native RZ Hydro reflux receipt after all RK stages are accepted.
-     * The scheduler has rotated the final output to Current; its completed RK
-     * receipt already belongs to the driver's pending stage budget. Start an
-     * independent reflux row so the later Current collection cannot count that
-     * final-stage correction again. This clears no accepted history and performs
-     * no state repair; RKL deliberately retains its stage row through reflux.
-     */
-    inline void begin_rz_hydro_reflux_receipts(amr::AMRControl& control)
-    {
-        // Validate every row before clearing any block: an invalid measure or
-        // species layout is an owner error, never a reason to erase evidence.
-        for (int id : control.tree->GetActiveBlocks()) {
-            const auto& state = control.pool->GetBlock(id).fluid_state;
-            const int species = state.GetNumSpecies();
-            if (species < 0
-                || state.stage_repairs.semantics
-                    != arch::state::RepairSemantics::RzVolumeAngular
-                || state.stage_repairs.values.size()
-                    != static_cast<std::size_t>(arch::state::RepairView::fixed_size)
-                        + 2 * static_cast<std::size_t>(species))
-                throw std::invalid_argument("RZ Hydro reflux receipt measure/layout mismatch");
-        }
-        for (int id : control.tree->GetActiveBlocks()) {
-            auto& state = control.pool->GetBlock(id).fluid_state;
-            state.stage_repairs.reset(state.GetNumSpecies(),
-                arch::state::RepairSemantics::RzVolumeAngular);
         }
     }
 
@@ -436,41 +185,13 @@ namespace TimeIntegration
                 }
     }
 
-    /**
-     * Precheck the native RZ reflux candidate without point-state energy recovery.
-     * The three Host Hydro callers select this owner only for explicit native RZ.
-     * m_phi=J/W and E=E_V have different measures; only the subsequent actual
-     * Current BC/exchange and Runtime EOS gate can accept their thermal closure.
-     * This function performs no repair, heating, normalization or publication.
-     */
-    inline void validate_reflux_state(const amr::AMRControl& control,
-                                      const NumericsConfig& config,
-                                      FluidState amr::Block::* slot = &amr::Block::fluid_state)
-    {
-        for (int id : control.tree->GetActiveBlocks()) {
-            const auto& block = control.pool->GetBlock(id);
-            try {
-                validate_provisional_rz_stage_state(block.*slot,block.grid,config);
-            }
-            catch (const std::exception& error) {
-                throw std::runtime_error("AMR block=" + std::to_string(id) + ": " + error.what());
-            }
-        }
-    }
-
     // Helper 1: Accumulate Flux Divergence
     inline void accumulate_divergence(
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         const std::vector<FluidVector> &fluxes, const std::vector<double> &spec_fluxes,
-        const Grid &grid, double dt, int dir, int n_spec,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-        bool angular_transport = false)
+        const Grid &grid, double dt, int dir, int n_spec)
     {
-        const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
-        // Hydro opts in only after its curvature source migration. The existing
-        // viscous stress/source consumer must migrate together in its own node.
-        const bool torque=angular_transport
-            && semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
+        const auto geometry=GridMetrics::make_geometry_view(grid);
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
         int total_size = grid.GetTotalSize();
 
@@ -487,9 +208,9 @@ namespace TimeIntegration
             {
                 int idx = grid.GetIndex(i, j, k);
 
-                const double volume = GridMetrics::CellVolume(geometry, i, j, k);
-                const double area_l = GridMetrics::FaceArea(geometry, dir, i, j, k, false);
-                const double area_r = GridMetrics::FaceArea(geometry, dir, i, j, k, true);
+                const double volume = GridMetrics::CellVolume(geometry,i,j,k);
+                const double area_l = GridMetrics::FaceArea(geometry,dir,i,j,k,false);
+                const double area_r = GridMetrics::FaceArea(geometry,dir,i,j,k,true);
 
                 const double* lower_species_flux = n_spec > 0
                     ? spec_fluxes.data() + idx : nullptr;
@@ -497,13 +218,11 @@ namespace TimeIntegration
                     ? spec_fluxes.data() + idx + stride : nullptr;
                 double* species_delta = n_spec > 0
                     ? d_spec.data() + idx : nullptr;
-                const NativeAngularDivergence angular{&geometry,dir,i,j};
-                if(!accumulate_cell_divergence(
+                accumulate_cell_divergence(
                     fluxes[idx], fluxes[idx + stride],
                     lower_species_flux, upper_species_flux,
                     n_spec, total_size, area_l, area_r, volume, dt,
-                    dU[idx], species_delta,torque ? &angular : nullptr))
-                    throw std::runtime_error("Invalid native angular flux divergence: cell="+std::to_string(idx));
+                    dU[idx], species_delta);
             }
             } catch (...) { failure.capture_current(); }
         };
@@ -531,10 +250,9 @@ namespace TimeIntegration
         const FluidState &state,
         const EosType &eos,
         const Grid &grid,
-        double dt,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+        double dt)
     {
-        const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
+        const auto geometry=GridMetrics::make_geometry_view(grid);
         arch::state::HostFailure failure;
         if (grid.geometry == "cartesian")
             return;
@@ -557,13 +275,7 @@ namespace TimeIntegration
                     {
                         int idx = grid.GetIndex(i, j, k);
                         state.get_species_to_buffer(idx, Xi.data());
-                        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                            if(!add_rz_integrated_geometric_source(
-                                [&state](int c){return state.get(c);},
-                                [&state](int k,int c){return state.X(k,c);},
-                                idx,n_spec,eos,geometry,i,dt,Xi.data(),dU[idx]))
-                                throw std::runtime_error("RZ geometric source has an inadmissible point/stencil");
-                        } else add_geometric_source_cell(
+                        add_geometric_source_cell(
                             state.get(idx), Xi.data(), eos, geometry, i, j, dt, dU[idx]);
                     }
 
@@ -574,29 +286,14 @@ namespace TimeIntegration
         failure.rethrow();
     }
 
-    // Helper: Physical Source Terms (Gravity)
-    inline void add_gravity_sources(
-        std::vector<FluidVector> &dU,
-        const FluidState &state,
-        const Grid &grid,
-        double dt,
-        const Physical::Gravity::IGravityPolicy* gravity)
-    {
-        // Gravity policies own the patch loop; this call preserves the same
-        // source-term contract for host and backend-specific implementations.
-        if (gravity) {
-            gravity->add_sources_on_patch(dU, state, grid, dt, nullptr);
-        }
-    }    // ---------------------------------------------------------
     // Helper 2: Generalized Weighted RK Update
     inline void perform_stage_update(
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
         const std::vector<FluidVector> &dU, const std::vector<double> &d_spec,
         const Grid &grid, double weight_n, double weight_flux,
-        double sml_rho, double min_eint, double max_eint,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+        double sml_rho, double min_eint, double max_eint)
     {
-        const auto geometry = GridMetrics::make_geometry_view(grid, semantics);
+        const auto geometry = GridMetrics::make_geometry_view(grid);
         int n_spec = u_n.GetNumSpecies();
         int total_size = grid.GetTotalSize();
 
@@ -607,9 +304,7 @@ namespace TimeIntegration
         const int nk = ke - ks;
         const int nj = je - js;
 
-        const auto repair_profile=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-            ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
-        u_dest.stage_repairs.reset(n_spec,repair_profile);
+        u_dest.stage_repairs.reset(n_spec);
         int invalid_count = 0;
         const auto update_row = [&](int kj, arch::state::RepairBudget& local,
                                     int& local_invalid) {
@@ -634,10 +329,7 @@ namespace TimeIntegration
                     U_old, U_curr, dU[idx], Xi_old, Xi_curr, species_delta,
                     n_spec, total_size, weight_n, weight_flux,
                     sml_rho, min_eint, max_eint, U_new, Xi_new, local.view(),
-                    GridMetrics::CellVolume(geometry, i, j, k), idx,
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-                        ? GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j) : 0.0);
+                    GridMetrics::CellVolume(geometry, i, j, k), idx);
                 if (!arch::state::accepted(status)) ++local_invalid;
                 u_dest.set(idx, U_new);
                 // Hydro updates U/rhoX, not the last burn half's diagnostic.
@@ -653,7 +345,7 @@ namespace TimeIntegration
         if (parallel_rows) {
 #pragma omp parallel reduction(+:invalid_count)
             {
-                arch::state::RepairBudget local(n_spec,repair_profile);
+                arch::state::RepairBudget local(n_spec);
 #pragma omp for schedule(static)
                 for (int kj = 0; kj < nk * nj; ++kj)
                     update_row(kj, local, invalid_count);
@@ -661,7 +353,7 @@ namespace TimeIntegration
                 u_dest.stage_repairs.combine(local);
             }
         } else {
-            arch::state::RepairBudget local(n_spec,repair_profile);
+            arch::state::RepairBudget local(n_spec);
             for (int kj = 0; kj < nk * nj; ++kj)
                 update_row(kj, local, invalid_count);
             u_dest.stage_repairs.combine(local);
@@ -712,50 +404,29 @@ namespace TimeIntegration
         }
     }
 
-    /** Apply the original selected Hydro patch math under a real source receipt.
-     * Workflow: preflight chart/source/input/interval/bounds before clearing
-     * outputs/cache; compute each selected flux; accumulate original divergence;
-     * consume same-stage self face work and paired AMR Energy registration;
-     * retain geometric sources; finally apply external original body math OR
-     * self momentum and complete the patch. The registry alone applies original
-     * area/sign/RK weights and reflux dt. No potential history is retained here.
+    /** Apply the selected Hydro patch math with a caller-owned source adapter.
+     * Workflow: preflight geometry before clearing outputs/cache; compute
+     * each selected flux; accumulate original divergence and same-stage face
+     * work; register coarse-fine fluxes; apply geometry and body sources.
+     * The registry alone applies original
+     * area/sign/RK weights and reflux dt. Source type deduction keeps concrete
+     * field ownership and potential history in the Hydro composition owner;
+     * diffusion can reuse divergence without importing that source owner.
      */
     // FluxSchemePolicy supplies compute_fluxes for the selected reconstruction.
-    template <typename FluxSchemePolicy, typename EosType>
+    template <typename FluxSchemePolicy, typename EosType, typename SourceType>
     inline void evaluate_all_dimensions(
         amr::AMRControl* amr_ctrl, int block_id,
         const FluidState &state, const EosType &eos, const Grid &grid, double dt,
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         std::vector<FluidVector> &flux_buffer, std::vector<double> &spec_flux_buffer,
-        const Physical::Gravity::IGravityPolicy* gravity,
+        SourceType& source,
         double entropy_fix_coeff, double flux_weight = 1.0, bool roe_wave_speed = true,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-        arch::state::Bounds physical_bounds = {},
-        const arch::boundary::HydroBoundaryView& hydro_boundary = {},
-        Physical::Gravity::NativeExternalStageFrame::PatchReceipt* native_source = nullptr,
-        Physical::Gravity::NativeSelfStageFrame::PatchReceipt* native_self = nullptr)
+        const arch::boundary::HydroBoundaryView& hydro_boundary = {})
     {
         // Validate the chart and reject consumers not yet migrated before any
         // output/cache mutation. Runtime Grid still uses its existing chart.
-        (void)GridMetrics::make_geometry_view(grid, semantics);
-        const bool rz=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
-        if(native_source&&native_self)
-            throw std::invalid_argument("Native gravity supplied both external and self receipts");
-        if((native_source||native_self)&&(!rz||!gravity))
-            throw std::invalid_argument("Native gravity consumer lacks its actual source receipt");
-        if(rz&&gravity) {
-            using Physical::Gravity::GravitySourceOrigin;
-            const auto origin=gravity->source_descriptor().origin;
-            if(origin!=GravitySourceOrigin::NativeExternalOrthonormal&&origin!=GravitySourceOrigin::NativeSelfComposite)
-                throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
-            if((origin==GravitySourceOrigin::NativeExternalOrthonormal&&(!native_source||native_self))
-                ||(origin==GravitySourceOrigin::NativeSelfComposite&&(!native_self||native_source)))
-                throw std::invalid_argument("Native gravity consumer lacks its actual source receipt");
-        }
-        if(native_source)native_source->require_application(state,grid,
-            GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds);
-        if(native_self)native_self->require_application(state,grid,
-            GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds);
+        (void)GridMetrics::make_geometry_view(grid);
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
         std::fill(d_spec.begin(), d_spec.end(), 0.0);
@@ -766,8 +437,6 @@ namespace TimeIntegration
         static thread_local FluxAdmissibility::MeanThermoCache mean_cache;
         mean_cache.reset(grid.GetTotalSize());
         mean_cache.roe_wave_speed = roe_wave_speed;
-        mean_cache.geometry_semantics = semantics;
-        mean_cache.physical_bounds = physical_bounds;
         mean_cache.hydro_boundary = hydro_boundary;
 
         for (int dir = 0; dir < grid.dim; ++dir)
@@ -780,31 +449,20 @@ namespace TimeIntegration
 
             capture_hydro_surface_flux(state, grid, dir, flux_buffer, spec_flux_buffer);
 
-            accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec, semantics,true);
+            accumulate_divergence(dU,d_spec,flux_buffer,spec_flux_buffer,grid,dt,dir,n_spec);
 
-            // Same actual stage: self work consumes this axis's immutable
+            // Same actual stage: source work consumes this axis's immutable
             // Riemann mass flux immediately after its original divergence.
-            if(native_self)native_self->add_flux_work(dU,flux_buffer,dir);
-            else if (gravity&&!native_source) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
+            source.add_flux_work(dU,flux_buffer,state,grid,dt,dir);
 
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
-                amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,
-                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight, semantics,
-                    semantics==GridMetrics::GeometrySemantics::AxisymmetricRz,native_self);
+                source.register_coarse_fine_fluxes(*amr_ctrl,block_id,grid,dir,
+                    flux_buffer,spec_flux_buffer,n_spec,flux_weight);
             }
         }
 
-        add_geometric_sources(dU, state, eos, grid, dt, semantics);
-        if(native_source)
-            Physical::Gravity::add_native_external_sources(dU,flux_buffer,spec_flux_buffer,
-                state,eos,grid,GridMetrics::make_geometry_view(grid,semantics),dt,physical_bounds,*native_source);
-        else if(native_self) {
-            // The frame owns dt and the actual prepared force. No external
-            // rho*u dot g, stage weight or second compatible-work pass occurs.
-            native_self->add_momentum(dU);
-            native_self->commit();
-        }
-        else add_gravity_sources(dU, state, grid, dt, gravity);
+        add_geometric_sources(dU,state,eos,grid,dt);
+        source.add_sources(dU,state,grid,dt);
     }
 } // namespace TimeIntegration

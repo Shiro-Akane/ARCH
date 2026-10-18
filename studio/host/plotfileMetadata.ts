@@ -188,7 +188,7 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
   const cfg=typedRecord(identityRecord(e,'effective_config_record',evidence.effectiveConfigSha256));
   const eos=typedRecord(identityRecord(e,'eos_identity_record',evidence.eosIdentitySha256));
   for(const [key,type] of effectiveConfigurationFields)if(cfg.get(key)?.type!==type)throw Error('Incomplete formal effective configuration: '+key);
-  for(const name of ['version','case.id','case.compiled-source','resolved-execution.version','backend','geometry-semantics',
+  for(const name of ['version','case.id','case.compiled-source','resolved-execution.version','backend',
    'flux','reconstruction','limiter','time','eos','network','ode','linear','diffusion','boundary-identity'])
    if(cfg.get(name)?.type!=='s')throw Error('Incomplete resolved execution identity: '+name);
   for(const name of ['amr.refine_species_names','io.plot_species_names']){
@@ -208,7 +208,6 @@ function sourceEvidence(file:InstanceType<typeof h5.File>){
     cfg.get('case.compiled-source')?.value!==evidence.caseSourceSha256||cfg.get('backend')?.value!==evidence.resolvedBackend||
     eos.get('version')?.value!=='arch-eos-identity-1'||eos.get('type')?.value!==evidence.eosType||
     cfg.get('grid.dim')?.value!==String(scalar(file,'dim'))||cfg.get('grid.geometry')?.value!==scalar(file,'geometry')||
-    cfg.get('geometry-semantics')?.value!==(scalar(file,'geometry_semantics_revision')===2?'axisymmetric-rz-2':'existing-1')||
     eos.get('accepted-table-fingerprint')?.value!==(evidence.eosTableSha256??'')||
     evidence.eosType==='ideal'&&(eos.get('ideal-gamma')?.value!==floatBits(evidence.idealGamma as number)||
      cfg.get('physics.gamma')?.value!==floatBits(evidence.idealGamma as number)))throw Error('Contradictory formal runtime identity');
@@ -241,19 +240,14 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  if(entity===null)return null;
  if(!(entity instanceof h5.Group))throw Error('Invalid local NativeGrid group.');
  const version=scalar(entity,'version'),formal=typeof version==='string'&&version.startsWith('arch-native-');
- const rz=version==='arch-native-axisymmetric-rz-2';
- const partialRz=rz&&scalar(file,'plot_publication_version')==='candidate-1'&&
-  scalar(group(file,'SourceIdentity'),'version')==='candidate-identity-1';
  const dimension=shape.length-1;
  if(!formal&&(version!=='candidate-cartesian-1'||geometry!=='cartesian'||![1,2].includes(dimension)))
   throw Error('Unsupported candidate native geometry.');
- if(formal&&(!['arch-native-cartesian-1','arch-native-curvilinear-1','arch-native-axisymmetric-rz-2'].includes(String(version))||
+ if(formal&&(!['arch-native-cartesian-1','arch-native-curvilinear-1'].includes(String(version))||
    scalar(entity,'native_geometry')!==geometry||version==='arch-native-cartesian-1'&&geometry!=='cartesian'||
    version==='arch-native-curvilinear-1'&&(!['cylindrical','spherical'].includes(geometry)||
-     geometry==='cylindrical'&&dimension===2)||
-   rz&&(geometry!=='cylindrical'||dimension!==2||scalar(file,'geometry_semantics_revision')!==2||
-     scalar(file,'geometry_chart')!=='axisymmetric-rz')))throw Error('Invalid formal native geometry profile');
- const convention=rz?'full-rotation-axisymmetric-ring':geometry==='cartesian'?
+     geometry==='cylindrical'&&dimension===2)))throw Error('Invalid formal native geometry profile');
+ const convention=geometry==='cartesian'?
   'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral';
  const expected:Record<string,string|number>={centering:'cell',ghost_cells:0,block_kind:'active-leaf',
   center_basis:'cartesian',measure_source:'GridMetrics::CellVolume',measure_convention:convention,
@@ -268,7 +262,7 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  if(formal){
   axes=[1,2,3].map(axis=>scalar(entity,'x'+axis+'_axis') as string);
   axisUnits=[1,2,3].map(axis=>scalar(entity,'x'+axis+'_unit') as string);
-  const expectedAxes=geometry==='cartesian'?['x','y','z']:rz?['r','z','inactive']:
+  const expectedAxes=geometry==='cartesian'?['x','y','z']:
    dimension===3?(geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
   const expectedUnits:string[]=expectedAxes.map(axis=>['phi','theta'].includes(axis)?'rad':'cm');
   for(let axis=0;axis<3;axis++){
@@ -276,28 +270,12 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
    if(axes[axis]!==expectedAxes[axis]||axisUnits[axis]!==expectedUnits[axis])throw Error('Invalid native coordinate axes/units');
   }
  }
- const publication:Record<string,string>={plot_publication_version:formal&&!partialRz?'arch-plot-publication-1':'candidate-1',
+ const publication:Record<string,string>={plot_publication_version:formal?'arch-plot-publication-1':'candidate-1',
   plot_publication_state:'complete',plot_publication_method:'checked-close-atomic-replace',plot_storage_order:'x1-fastest'};
  for(const [name,value] of Object.entries(publication))
   if(scalar(file,name)!==value)throw Error('Invalid native publication: '+name);
- if(rz){
-  const state=group(file,'NativeState'),w=dataset(entity,'angular_measure');
-  for(const [key,value] of Object.entries({unit:'cm^4',meaning:'integral-r-dV',source:'GridMetrics::Rz::AngularMomentumMeasure',normalization:'full_rotation'}))
-   if(scalar(w,key)!==value)throw Error('Invalid RZ angular measure semantics');
-  const expected={version:partialRz?'candidate-rz-angular-1':'arch-rz-angular-1',state_semantics:'rz-m-phi-j-over-w-v1',
-   storage_order:'same-as-Data; x1-fastest',evolved_state:'m_phi only; J/V is derived output'};
-  for(const [name,value] of Object.entries(expected))if(scalar(state,name)!==value)throw Error('Invalid RZ recorded state semantics');
-  if(scalar(file,'state_semantics')!=='rz-m-phi-j-over-w-v1')throw Error('Invalid RZ root state semantics');
-  for(const name of ['m_phi','angular_momentum_density']){
-   const d=dataset(state,name),ds=shapeOf(d,'NativeState/'+name),m=name==='m_phi';
-   if(d.metadata.type!==1||d.metadata.size!==8||JSON.stringify(ds)!==JSON.stringify(shape))throw Error('Invalid RZ native state shape/type');
-   for(const [key,value] of Object.entries({unit:m?'g/(cm^2*s)':'g/(cm*s)',basis:'local-orthonormal-r-z-phi',centering:'cell',
-    meaning:m?'J-cell-over-W':'J-cell-over-V',averaging:m?'r-dV-weighted-angular-momentum-component':'native-volume-angular-momentum-density',
-    source:m?'FluidState::mom_w':'arch::state::rz_angular_density'}))if(scalar(d,key)!==value)throw Error('Invalid RZ native field semantics');
-  }
- }
  const cells=shape.reduce((a,b)=>a*b,1);
- for(const name of ['x1_lower','x1_upper','x2_lower','x2_upper','x3_lower','x3_upper','cell_measure',...(rz?['angular_measure']:[])]){
+ for(const name of ['x1_lower','x1_upper','x2_lower','x2_upper','x3_lower','x3_upper','cell_measure']){
   const d=dataset(entity,name),ds=shapeOf(d,'NativeGrid/'+name);
   if(d.metadata.type!==1||d.metadata.size!==8||ds.length!==1||ds[0]!==cells)
    throw Error('Native dataset shape/type mismatch: '+name);
@@ -309,7 +287,7 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  }
  return {version:String(version),measureSource:'GridMetrics::CellVolume',measureConvention:convention,
   measureUnit:measureUnit as 'cm'|'cm^2'|'cm^3'|null,measureNormalization:measureNormalization as string|null,
-  ...(formal?{geometry,axes,axisUnits,chart:rz?'axisymmetric-rz':'existing'}:{})};
+  ...(formal?{geometry,axes,axisUnits,chart:'existing'}:{})};
 }
 type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
 function rawNumbers(value:unknown,expected:number):RawNumber[] {
@@ -354,7 +332,6 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
   version:string;identityScope:string;logicalKey:string;level:number;logicalCoordinates:number[];
   lower:Record<string,number[]>;upper:Record<string,number[]>;cellMeasure:number[];
   measureSource:string;measureConvention:string;measureUnit:'cm'|'cm^2'|'cm^3'|null;measureNormalization?:string|null;
-  angularMeasure?:number[];mPhi?:number[];angularMomentumDensity?:number[];
  }=null;
  if(native){
   const ng=group(file,'NativeGrid');
@@ -377,17 +354,6 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
      throw Error('Invalid candidate native bounds: '+name);
   }
   const cellMeasure=readRows('cell_measure');
-  let angular:Record<string,number[]>={};
-  if(native.chart==='axisymmetric-rz'){
-   const angularMeasure=readRows('angular_measure');
-   if(angularMeasure.some(value=>value<=0))throw Error('Invalid native angular measure');
-   const state=group(file,'NativeState'),readState=(name:string)=>{
-    const raw=rawNumbers(dataset(state,name).slice([[block,block+1],...start.map((n,i)=>[n,n+count[i]] as [number,number])]),cells);
-    if(raw.some(value=>typeof value!=='number'))throw Error('Nonfinite RZ angular state');
-    return raw as number[];
-   };
-   angular={angularMeasure,mPhi:readState('m_phi'),angularMomentumDensity:readState('angular_momentum_density')};
-  }
   if(cellMeasure.some(v=>v<=0))throw Error('Invalid native cell measure.');
   const readBlock=(g:InstanceType<typeof h5.Group>,name:string)=>{
    const d=dataset(g,name);
@@ -399,8 +365,7 @@ function readSlice(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
   const level=readBlock(grid,'level');
   const logicalCoordinates=['logical_x1','logical_x2','logical_x3'].map(name=>readBlock(ng,name));
   nativeCells={...native,identityScope:'file-local',logicalKey:[level,...logicalCoordinates].join('/'),
-   level,logicalCoordinates,lower,upper,cellMeasure,
-   ...angular};
+   level,logicalCoordinates,lower,upper,cellMeasure};
  }
  const nonFinite=values.some(v=>typeof v!=='number')||Object.values(coordinates).some(a=>a.some(v=>typeof v!=='number'));
  return {field,block,start:[...start],shape:[...count],order:'x1-fastest',linearIndices:indices,values,coordinates,
@@ -551,6 +516,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
       ![1,2,3].includes(Number(dimension))||typeof dimension!=='number'||
       typeof geometry!=='string'||!['cartesian','cylindrical','spherical'].includes(geometry))
     throw new Error('Invalid ARCH plotfile metadata.');
+   if(geometry==='cylindrical'&&dimension===2)throw Error('Two-dimensional cylindrical plotfiles are unsupported.');
    const grid=group(file,'Grid'),data=group(file,'Data');
    const names=data.keys();
    if(!names.length||names.length>MAX_FIELDS)throw new Error('Invalid field count or field audit budget exceeded.');
@@ -571,8 +537,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
    const formal=candidateSourceIdentity?.version==='arch-plot-identity-1';
    if(formal&&(!candidateNativeGrid||!candidateNativeGrid.version.startsWith('arch-native-'))||
-     candidateNativeGrid?.version.startsWith('arch-native-')&&!formal&&
-      !(candidateNativeGrid.version==='arch-native-axisymmetric-rz-2'&&scalar(file,'plot_publication_version')==='candidate-1'&&candidateSourceIdentity?.version==='candidate-identity-1'))throw Error('Formal publication lacks matching runtime/native identities');
+     candidateNativeGrid?.version.startsWith('arch-native-')&&!formal)throw Error('Formal publication lacks matching runtime/native identities');
    if(candidateNativeGrid){
     // Candidate writer contract preserves raw binary64 fields and centers.
     // Legacy structure inspection has no such precision claim.
@@ -586,8 +551,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    }
    if(request){if(!names.includes(request.field))throw Error('Unknown stored field.');payload=readSlice(file,shape,request,candidateNativeGrid);}
    if(pointRequest){
-    // Formal native charts may be inspected by intrinsic point; partial RZ
-    // remains Inspector-slice-only and does not inherit Cartesian permission.
+    // Formal native charts use intrinsic points with matching source identity.
     const legacyPoint=candidateNativeGrid?.version==='candidate-cartesian-1'&&geometry==='cartesian'&&[1,2].includes(dimension);
     if(!candidateNativeGrid||!(formal&&candidateNativeGrid.version.startsWith('arch-native-')||legacyPoint)||!names.includes(pointRequest.field))throw Error('Point read requires formal native bounds or legacy candidate Cartesian 1D/2D and a stored field.');
     ({payload,pointEvidence}=readPoint(file,shape,pointRequest,candidateNativeGrid));

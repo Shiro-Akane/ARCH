@@ -11,7 +11,7 @@
 
 #include "amr/flux/AmrFluxMath.h"
 #include "amr/storage/MemoryPool.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 #include <algorithm>
 #include <array>
@@ -54,8 +54,6 @@ struct AmrFluxTopologyPlan {
     std::vector<AmrFluxRegistrationRoute> routes;
     std::map<AmrFluxRouteKey, std::size_t> route_index;
     std::uint64_t fingerprint = 0;
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
-    bool angular_transport = false; // MomW register is torque/coarse area.
     // Exact native geometry snapshots, not field values or storage pointers.
     std::vector<Grid> native_grids;
     std::map<int,std::size_t> native_grid_index;
@@ -79,16 +77,11 @@ inline LogicalBlockKey logical_key(const Block& block, int dimension)
             block.logical_x2, block.logical_x3};
 }
 
-/** Compare the existing local contract and, only for explicit native RZ,
- * the complete shared root/level/logical identity. Equality of an unbound seed
- * does not authenticate a hierarchy; it only prevents stale cached provenance.
+/** Compare the local geometry contract so an unbound cached seed cannot
+ * authenticate a drifted hierarchy.
  */
-inline bool same_grid_contract(const Grid& left, const Grid& right,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) noexcept
+inline bool same_grid_contract(const Grid& left, const Grid& right) noexcept
 {
-    if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
-        && !GridMetrics::equal_identity(left.dyadic_identity,right.dyadic_identity))
-        return false;
     return left.dim == right.dim && left.ng == right.ng
         && left.stride_y == right.stride_y
         && left.stride_z == right.stride_z
@@ -153,8 +146,7 @@ inline std::array<std::int32_t, 3> face_cell_coordinates(
 }
 
 inline double coarse_face_area(const Block& coarse, int normal_direction,
-                               int coarse_face, int face_cell,
-                               GridMetrics::GeometrySemantics semantics)
+                               int coarse_face, int face_cell)
 {
     const int ny = coarse.grid.dim >= 2 ? BLOCK_NY : 1;
     int i = coarse.grid.Is();
@@ -174,7 +166,7 @@ inline double coarse_face_area(const Block& coarse, int normal_direction,
         k += coarse_face % 2 == 0 ? 0 : BLOCK_NZ - 1;
     }
     return GridMetrics::FaceArea(
-        GridMetrics::make_geometry_view(coarse.grid, semantics),
+        GridMetrics::make_geometry_view(coarse.grid),
         normal_direction, i, j, k, coarse_face % 2 == 1);
 }
 
@@ -217,9 +209,7 @@ inline std::uint64_t compute_fingerprint(const AmrFluxTopologyPlan& plan)
     noexcept
 {
     Fingerprint hash;
-    hash.u64(3); // Chart/native geometry and angular register identity.
-    hash.u64(plan.angular_transport);
-    hash.u64(static_cast<std::uint64_t>(plan.semantics));
+    hash.u64(3); // Native geometry snapshot identity.
     hash.u64(plan.native_grids.size());
     for (const auto& grid : plan.native_grids) {
         hash.u64(grid.geometry.size());
@@ -230,11 +220,6 @@ inline std::uint64_t compute_fingerprint(const AmrFluxTopologyPlan& plan)
         for (double value : {grid.dx1,grid.dx2,grid.dx3,
                 grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,grid.x3_min,grid.x3_max})
             hash.u64(std::bit_cast<std::uint64_t>(value));
-        // Native generation context is part of the borrowed Grid identity.
-        // Ordinary plans retain their existing hash stream byte for byte.
-        if (plan.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
-            for (auto word : GridMetrics::identity_words(grid.dyadic_identity))
-                hash.u64(word);
     }
     hash.u64(static_cast<std::uint64_t>(plan.dimension));
     hash.u64(static_cast<std::uint64_t>(plan.species_count));
@@ -252,10 +237,9 @@ inline std::uint64_t compute_fingerprint(const AmrFluxTopologyPlan& plan)
 
 inline bool matches_amr_flux_geometry(
     const AmrFluxTopologyPlan& plan, const MemoryPool& pool,
-    std::span<const int> active, GridMetrics::GeometrySemantics semantics,
-    int source_block = -1)
+    std::span<const int> active, int source_block = -1)
 {
-    if (plan.semantics != semantics || plan.native_grids.size() != active.size()
+    if (plan.native_grids.size() != active.size()
         || plan.active_blocks.size() != active.size()
         || plan.native_grid_index.size() != active.size())
         return false;
@@ -263,7 +247,7 @@ inline bool matches_amr_flux_geometry(
         if (plan.active_blocks[index] != id) return false;
         const auto& current=pool.GetBlock(id).grid;
         const auto& saved=plan.native_grids[index];
-        return flux_plan_detail::same_grid_contract(saved,current,semantics)
+        return flux_plan_detail::same_grid_contract(saved,current)
             && saved.nblockx1 == current.nblockx1
             && saved.nblockx2 == current.nblockx2
             && saved.nblockx3 == current.nblockx3;
@@ -289,19 +273,13 @@ inline void validate_amr_flux_topology_plan(const AmrFluxTopologyPlan& plan)
         || plan.route_index.size() != plan.routes.size())
         throw std::invalid_argument("invalid AMR flux topology plan");
 
-    if (plan.semantics != GridMetrics::GeometrySemantics::Existing
-        && plan.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::invalid_argument("invalid AMR flux chart");
-    if (plan.angular_transport && (plan.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz
-        || plan.native_grids.empty()))
-        throw std::invalid_argument("angular AMR transport requires native RZ geometry");
     // Small synthetic logical-plan fixtures have no physical Grid snapshots.
     if (plan.native_grid_index.size() != plan.native_grids.size()
         || (!plan.native_grids.empty()
             && plan.native_grids.size() != plan.active_blocks.size()))
         throw std::invalid_argument("incomplete AMR flux geometry snapshots");
     for (std::size_t index=0;index<plan.native_grids.size();++index) {
-        (void)GridMetrics::make_geometry_view(plan.native_grids[index],plan.semantics);
+        (void)GridMetrics::make_geometry_view(plan.native_grids[index]);
         const auto found=plan.native_grid_index.find(plan.active_blocks[index]);
         if (found==plan.native_grid_index.end() || found->second!=index)
             throw std::invalid_argument("invalid AMR native geometry index");
@@ -350,9 +328,7 @@ inline void validate_amr_flux_topology_plan(const AmrFluxTopologyPlan& plan)
 inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
     const MemoryPool& pool, std::span<const int> active_blocks,
     std::span<const BlockHandle> active_handles, int dimension,
-    int species_count,
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-    bool angular_transport = false)
+    int species_count)
 {
     using namespace flux_plan_detail;
     if (dimension < 1 || dimension > 3 || species_count < 0
@@ -363,8 +339,6 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
     AmrFluxTopologyPlan result{};
     result.dimension = dimension;
     result.species_count = species_count;
-    result.semantics = semantics;
-    result.angular_transport = angular_transport;
     result.epoch = active_handles.front().epoch;
     if (!is_valid(result.epoch))
         throw std::invalid_argument("invalid AMR flux topology epoch");
@@ -388,7 +362,7 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
         if (!active_index.emplace(block_id, index).second
             || !result.pool_lowering.emplace(endpoint, block_id).second)
             throw std::invalid_argument("AMR flux lowering is not bijective");
-        (void)GridMetrics::make_geometry_view(block.grid,semantics);
+        (void)GridMetrics::make_geometry_view(block.grid);
         result.native_grid_index.emplace(block_id,result.native_grids.size());
         result.native_grids.push_back(block.grid);
         result.active_endpoints.push_back(endpoint);
@@ -455,7 +429,7 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                                     && k != (side == 0 ? 0 : nz - 1)))
                                 continue;
                             const double fine_area = GridMetrics::FaceArea(
-                                GridMetrics::make_geometry_view(block.grid,semantics),
+                                GridMetrics::make_geometry_view(block.grid),
                                 direction, block.grid.Is() + i,
                                 block.grid.Js() + j, block.grid.Ks() + k,
                                 side == 1);
@@ -498,7 +472,7 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                                 const int coarse_face =
                                     2 * direction + (side == 0 ? 1 : 0);
                                 const double coarse_area = coarse_face_area(
-                                    coarse, direction, coarse_face, coarse_cell,semantics);
+                                    coarse, direction, coarse_face, coarse_cell);
                                 if (!amr_plan_detail::is_finite_binary64(
                                         coarse_area)
                                     || coarse_area <= 0.0)
@@ -564,57 +538,6 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
     return result;
 }
 
-/** Native chart binding used by both Host and compiled/device plans. */
-inline const Grid& angular_native_grid(
-    const AmrFluxTopologyPlan& topology,const AmrEndpoint& endpoint)
-{
-    const auto lowered=topology.pool_lowering.find(endpoint);
-    if(lowered==topology.pool_lowering.end())
-        throw std::invalid_argument("angular AMR endpoint is not bound");
-    const auto found=topology.native_grid_index.find(lowered->second);
-    if(found==topology.native_grid_index.end())
-        throw std::invalid_argument("angular AMR native geometry is missing");
-    return topology.native_grids.at(found->second);
-}
-
-inline double angular_registration_lever(const AmrFluxTopologyPlan& topology,
-    const AmrEndpoint& source,const LogicalAmrBox& face,AmrAxis axis)
-{
-    if(!topology.angular_transport) return 1.;
-    if(axis!=AmrAxis::X && axis!=AmrAxis::Y)
-        throw std::invalid_argument("angular AMR face axis is not R/Z");
-    const auto& native=angular_native_grid(topology,source);
-    const auto geometry=GridMetrics::make_geometry_view(native,topology.semantics);
-    // Source boxes denote the physical face, including upper scratch face.
-    const int i=native.Is()+face.first[0];
-    const double lever=axis==AmrAxis::X ? geometry.GetFacePosL(i)
-        : GridMetrics::Rz::VolumeCentroidRadius(
-            geometry.GetFacePosL(i),geometry.GetFacePosR(i));
-    if(!amr_plan_detail::is_finite_binary64(lever)||lever<0.)
-        throw std::invalid_argument("invalid angular AMR face lever");
-    return lever;
-}
-
-inline double angular_reflux_factor(const AmrFluxTopologyPlan& topology,
-    const AmrEndpoint& destination,const LogicalAmrBox& cell)
-{
-    if(!topology.angular_transport) return 1.;
-    const auto& native=angular_native_grid(topology,destination);
-    const auto geometry=GridMetrics::make_geometry_view(native,topology.semantics);
-    const int i=native.Is()+cell.first[0];
-    const double left=geometry.GetFacePosL(i),right=geometry.GetFacePosR(i);
-    const int j=native.Js()+cell.first[1];
-    const double V=GridMetrics::CellVolume(geometry,i,j,0);
-    const double W=GridMetrics::Rz::AngularMomentumMeasure(geometry,i,j);
-    if(!amr_plan_detail::is_finite_binary64(V)||V<=0.
-        ||!amr_plan_detail::is_finite_binary64(W)||W<=0.)
-        throw std::invalid_argument("invalid angular AMR cell measure");
-    const double factor=flux_math::angular_reflux_coefficient(1.,V,W);
-    if(!amr_plan_detail::is_finite_binary64(factor)||factor<=0.)
-        throw std::invalid_argument("invalid angular AMR reflux factor");
-    return factor;
-}
-
 /**
  * Build the reflux geometry directly from coarse-fine topology.  The returned
  * plan stores area/volume only; callers pass dt to their executor.  It does
@@ -627,7 +550,7 @@ inline RefluxPlan build_amr_reflux_topology_plan(
     using namespace flux_plan_detail;
     validate_amr_flux_topology_plan(topology);
     if (!topology.native_grids.empty() && !matches_amr_flux_geometry(
-            topology,pool,topology.active_blocks,topology.semantics))
+            topology,pool,topology.active_blocks))
         throw std::invalid_argument("AMR reflux topology native geometry drifted");
     RefluxPlan result{};
     result.dimension = topology.dimension;
@@ -657,11 +580,11 @@ inline RefluxPlan build_amr_reflux_topology_plan(
                 const int j = block.grid.Js() + logical[1];
                 const int k = block.grid.Ks() + logical[2];
                 const double area = GridMetrics::FaceArea(
-                    GridMetrics::make_geometry_view(block.grid,topology.semantics),
+                    GridMetrics::make_geometry_view(block.grid),
                     axis_value(axis), i, j, k,
                     side == AmrSide::Upper);
                 const double volume = GridMetrics::CellVolume(
-                    GridMetrics::make_geometry_view(block.grid,topology.semantics), i, j, k);
+                    GridMetrics::make_geometry_view(block.grid), i, j, k);
                 if (!amr_plan_detail::is_finite_binary64(area)
                     || !amr_plan_detail::is_finite_binary64(volume)
                     || area <= 0.0 || volume <= 0.0)

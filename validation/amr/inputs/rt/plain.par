@@ -1,5 +1,6 @@
 # Reproduction input from codex/rt-amr-validation-notes-20261003 at 2ee826655.
-# Only runtime paths, step limit and checkpoint cadence are adjusted.
+# Runtime paths, step limit and checkpoint cadence are adjusted.
+# Former implicit controls are explicit below; the original effective methods remain.
 # ==============================================================================
 # ARCH Simulation Configuration File
 # Case: Rayleigh-Taylor Instability (2D/3D Benchmark)
@@ -36,10 +37,17 @@ x3l_boundary_type = reflect
 # [Numerics]
 # ------------------------------------------------------------------------------
 solver          = HLLC       # Options: SW, VL, Roe, HLL, HLLC
+# Original Roe-Glaister HLL-family wave-speed estimate, now explicit.
+hll_wave_speed = roe
 reconstruct     = ppm        # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
 time_integrator = RK3        # Options: RK2, RK3, Euler/RK1
-limiter         = none       # Options: minmod, superbee, vanleer, mc, none
+# The old unregistered token "none" selected MinMod; it never disabled limiting.
+limiter         = minmod     # Options: minmod, superbee, vanleer, mc
 cfl             = 0.4        # Keep lower (<0.5) for multi-D instability tracking
+# Original admissible-state controls: density [g/cm^3], specific energy [erg/g].
+sml_rho = 1e-12
+min_eint = 1e-10
+max_eint = 1e21
 
 EntropyFix = true
 EntropyFixCoefficient = 0.1
@@ -83,6 +91,9 @@ gamma = 1.4
 
 gravity_type = external
 gravity_g_y  = -0.1      # Standard RT dimensionless gravity
+# The original force acts only along y; transverse accelerations are zero [cm/s^2].
+gravity_g_x = 0.0
+gravity_g_z = 0.0
 
 
 

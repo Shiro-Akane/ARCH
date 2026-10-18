@@ -1,7 +1,7 @@
 # 计算优化后续计划：配置契约、Jeans 分辨率、轴对称几何与边界
 
-本文维护 `compute/optim` 合入 `main` 前的工作顺序和发布出口。
-[当前执行校准](#当前执行校准2026-10-08)是任务入口，
+本文保留原计算优化的科学要求、已验范围与独立发布出口。当前唯一推进表为[发布计划](../../ARCH_RELEASE_PLAN.md)；REL-2已完成，REL-3首批CPU已验但原科学出口未关，REL-4未启动。
+[执行校准快照](#当前执行校准2026-10-08)用于继承原要求，
 [发布验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)保存证据及其源码、执行物和输入身份。
 维护者在唯一工作区负责工程实现与科学验收；用户控制最终合并，原人类 GUI 协作范围为 UI 改善；已授权的工程 MCP 分工沿用 [AGENTS.md](../../AGENTS.md)。
 
@@ -16,8 +16,8 @@ O7.0–O7.5、O8 与 Studio 已有实现和移交记录，当前工作以现有�
 
 ## 当前执行校准（2026-10-08）
 
-本节是既有 release 验收范围与剩余出口的总表，科学状态最新复核为2026-10-10；现代化当前工作顺序以[主计划](../../ARCH_MODERNIZATION_PLAN.md)为准。后方原设计、移交分工和逐轮记录按其日期保存。
-2026-10-12 前置核对见[工作入口与进度记录](archive/modernization/Preflight-20261012.zh-CN.md)：本轮未重跑科学检查；Studio UI 合并后完整 385/385、lint 与类型／生产构建通过，未重签原生运行；既有科学已验范围保持原身份，当前总计划见[现代化计划](../../ARCH_MODERNIZATION_PLAN.md)。
+本节是既有 release 验收范围与剩余出口的总表，科学状态最新复核为2026-10-10；现代化已按采用范围结案，当前发布工作顺序以[发布计划](../../ARCH_RELEASE_PLAN.md)为准。后方原设计、移交分工和逐轮记录按其日期保存。
+2026-10-12 前置核对见[工作入口与进度记录](archive/modernization/Preflight-20261012.zh-CN.md)：本轮未重跑科学检查；Studio UI 合并后完整 385/385、lint 与类型／生产构建通过，未重签原生运行；既有科学已验范围保持原身份，现代化结案见[原计划](../../ARCH_MODERNIZATION_PLAN.md)，当前接续见[发布计划](../../ARCH_RELEASE_PLAN.md)。
 [release 验收记录](ComputeStudioReleasePlan-20261006.zh-CN.md#当前验收出口)
 提供当前证据与身份，[配置契约](ConfigurationContractPlan.zh-CN.md)和
 [Core RZ 契约](CoreRZDecisions-20261006.zh-CN.md)提供定义及门槛。

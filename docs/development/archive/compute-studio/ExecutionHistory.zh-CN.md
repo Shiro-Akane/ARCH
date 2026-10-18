@@ -1970,37 +1970,37 @@ architecture audit 通过，详见 O7JeansConditionalInputIdentity-20261004.zh-C
 九通道短演化/真实checkpoint续算 PASS，见 O7JeansUniformLifecycle-20261004.zh-CN.md。
 关闭的只是均匀态CPU短包；其他EOS/非均匀/CUDA/开销验收仍待完成。
 RZ-A前置W/centroid/torque测度及单一状态无存储转换已经通过现有CPU数学测试，
-见 RZAngularMeasureNode-20261004.zh-CN.md；真实transfer和其余消费者仍未迁移，
+见 [历史记录](../histroy/rz/RZAngularMeasureNode-20261004.zh-CN.md)；真实transfer和其余消费者仍未迁移，
 完整RZ门槛继续保留。
 
 2026-10-04 RZ-A CPU全单元传递节点：真实W restriction/prolongation、
 同一candidate parent positivity→EOS/JENS→migration、非法父态veto及joint theta
 通过CPU fixtures。最终ELF的冻结JENS九组演化/续算回归PASS。
-详见 RZAngularTransferNode-20261004.zh-CN.md。AMR ghost和B/C/D消费者
+详见 [历史记录](../histroy/rz/RZAngularTransferNode-20261004.zh-CN.md)。AMR ghost和B/C/D消费者
 仍待贯通，完整RZ能力门槛保留，尚未开展CUDA/RZ新长跑。
 
 2026-10-04 RZ-A CPU coarse/fine ghost节点：复用同一W/V family数学，
 径向/轴向1536 injection及768 average、三状态槽、非法父态/borrowed bounds失败
 无部分coarse/fine scatter通过；新ELF的JENS冻结九组演化与续算回归PASS。
-见 RZAngularGhostNode-20261004.zh-CN.md。B/C/D与CUDA仍待贯通，
+见 [历史记录](../histroy/rz/RZAngularGhostNode-20261004.zh-CN.md)。B/C/D与CUDA仍待贯通，
 不把本节点作为完整RZ科学签收或长跑许可。
 
 2026-10-04 RZ-B CPU hydro torque增量：共享J/W divergence、去除重复phi curvature、
 严格无floor候选验证及独立closed/open/HLLC六组收支通过，最大相对误差8.6803e-18。
-新ELF冻结JENS九组演化/续算回归PASS。见 RZHydroTorqueNode-20261004.zh-CN.md。
+新ELF冻结JENS九组演化/续算回归PASS。见 [历史记录](../histroy/rz/RZHydroTorqueNode-20261004.zh-CN.md)。
 AMR signed torque/W reflux与C/D仍待贯通；变量mu应力finding RZ-VISC-01交Core确认，
 其余批准节点继续，完整RZ能力gate保留，不启动新RZ长跑。
 
 2026-10-04 finite-ring前置节点：同一GravityBoundary tree缓存axis-centered full-ring
 analytic十个矩和真实support；uniform/mixed parent翻译、signed absolute-mass与
-远场q=.01/.2/.7/.95余项包络验证PASS。见 RZFiniteRingMomentNode-20261004.zh-CN.md。
+远场q=.01/.2/.7/.95余项包络验证PASS。见 [历史记录](../histroy/rz/RZFiniteRingMomentNode-20261004.zh-CN.md)。
 constructor可建立内部缓存，production values双向chart gate继续拒绝RZ；
 near/contact kernel、rounding/global error ledger与完整科学签收尚未完成。
 
 2026-10-04 finite-ring kernel/contact数学节点：唯一shared complementary-root AGM、
 精确axis limit、split+Duffy及显式工作/精度上限通过独立Decimal参考。
 8个axis样本、3个contact样本分别核对精度/分区；default contact仍明确WorkLimit，
-所有near结果estimate-only，不填certified residual。见 RZFiniteRingKernelNode-20261004.zh-CN.md。
+所有near结果estimate-only，不填certified residual。见 [历史记录](../histroy/rz/RZFiniteRingKernelNode-20261004.zh-CN.md)。
 production values gate保留，可靠near bound/global ledger及RZ B/C/D仍待贯通。
 
 

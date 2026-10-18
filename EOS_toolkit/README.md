@@ -74,8 +74,8 @@ the two unmodified main-table members through Git LFS at:
 | `tables/baryon/eos2.tab` | 143,166,842 | `d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58` |
 | `tables/baryon/eos4.tab` | 143,167,115 | `5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34` |
 
-The two unpacked tables total 286,333,957 bytes. Download their LFS contents
-before use; a pointer-only checkout does not contain usable EOS data. An
+The two unpacked tables total 286,333,957 bytes. Reuse verified local copies or
+LFS objects first; only missing contents need a scoped download. A pointer-only checkout does not contain usable EOS data. An
 external path to the identical member is also valid. Unpacking changes neither
 their samples nor their license. Attribution is to H. Shen, F. Ji, J. N. Hu
 and K. Sumiyoshi, *Equation of state for simulations
@@ -89,4 +89,4 @@ Processed HShen HDF5 data are not bundled. Their EOSDriver format has been
 investigated for compatibility, but their distributor's separate terms must
 be checked; the original archive's CC BY license does not relicense them.
 
-The file `helm_table.dat` is the specific table member extracted from the project's downloaded Timmes `helmholtz.tar.xz` archive. It is strictly tracked through Git LFS, meaning the large table data is stored entirely separately from the small pointer found in an ordinary Git checkout. You must explicitly download the LFS data before attempting to run any case that relies on the Helmholtz EOS. Essential provenance, redistribution scope, required size constraints, and checksums are rigorously recorded in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and [`validation/burn/README.md`](../validation/burn/README.md).
+The file `helm_table.dat` is the specific table member extracted from the project's downloaded Timmes `helmholtz.tar.xz` archive. It is strictly tracked through Git LFS, meaning the large table data is stored entirely separately from the small pointer found in an ordinary Git checkout. A Helmholtz run requires the actual table. Reuse existing objects with offline `git lfs checkout` or a verified local copy; download only when the required object is absent. See the [offline table guide](../docs/guides/Build.md#offline-tables-and-lfs-bandwidth). Essential provenance, redistribution scope, required size constraints, and checksums are rigorously recorded in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and [`validation/burn/README.md`](../validation/burn/README.md).

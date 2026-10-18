@@ -76,7 +76,7 @@ int main(int argc,char** argv) {
     auto pressure=+[](const FluidVector&,const double*,const void*){return 1.;};
     auto temperature=+[](const FluidVector&,const double*,const void*){return 2.5;};
     auto gamma=+[](const FluidVector&,const double*,const void*){return 1.4;};
-    const auto plot_identity=fixture_plot_identity(config,species,GridMetrics::GeometrySemantics::Existing);
+    const auto plot_identity=fixture_plot_identity(config,species);
         arch::driver::DriverIO output(runtime,counters,provenance,plot_identity,pressure,temperature,gamma,nullptr);
     auto target=[&](){
         std::ostringstream name;name<<"fixture_HLLC_plt_"<<std::setw(4)<<std::setfill('0')<<counters.plt_file_index<<".h5";

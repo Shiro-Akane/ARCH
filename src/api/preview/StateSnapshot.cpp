@@ -12,7 +12,7 @@
 
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace arch::api {
 using detail::Json;
@@ -28,10 +28,7 @@ Json grid_snapshot(const SimConfig &config) {
     const std::string upper[] = {g.x1r_boundary_type, g.x2r_boundary_type, g.x3r_boundary_type};
     Grid native; native.geometry = g.geometry; native.dim = g.dim;
     const bool known_geometry = dispatch::parse_geometry(g.geometry).ok;
-    const auto geometry_semantics=known_geometry && g.dim>=1 && g.dim<=3
-        ? GridMetrics::resolve_public_chart(g.geometry,g.dim)
-        : GridMetrics::GeometrySemantics::Existing;
-    const auto names = native.GetAxisNames(geometry_semantics);
+    const auto names = native.GetAxisNames();
     auto axes = Json::array();
     for (int axis = 0; axis < g.dim; ++axis) {
         const std::int64_t n = std::int64_t(blocks[axis]) * cells[axis];

@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -19,6 +20,50 @@ import validation_provenance as provenance
 
 
 class ProvenanceTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("cmake"), "CMake is required for identity generation")
+    def test_generated_identity_is_not_its_own_source_input(self):
+        # Exercise the real generator without compiling or modifying project source.
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary)
+            build = source / "build"
+            (source / "src/core/files").mkdir(parents=True)
+            (source / "src/core/files/BuildIdentity.cpp").write_text("int identity_fixture;\n")
+            input_header = source / "src/example.h"
+            original = "#pragma once\n"
+            input_header.write_text(original)
+            registry = build / "generated"
+            registry.mkdir(parents=True)
+            for name in ("CustomNetworks.generated.h", "CustomNetworkRegistry.generated.h"):
+                (registry / name).write_text("#pragma once\n")
+            (source / "CMakeLists.txt").write_text("""
+cmake_minimum_required(VERSION 3.22)
+project(IdentityFixture LANGUAGES CXX)
+add_library(arch_build_contract STATIC src/core/files/BuildIdentity.cpp)
+foreach(name ARCH arch_driver_runtime arch_solver_dispatch arch_gravity_cpu arch_diffusion_math)
+    add_library(${name} INTERFACE)
+endforeach()
+set(ARCH_CUSTOM_REGISTRY_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+include("@MODULE@")
+""".replace("@MODULE@", (ROOT / "cmake/project/BuildIdentity.cmake").as_posix()))
+
+            def configure():
+                result = subprocess.run(["cmake", "-S", str(source), "-B", str(build)],
+                    capture_output=True, text=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                return (registry / "identity/BuildIdentity.generated.h").read_bytes()
+
+            first = configure()
+            self.assertEqual(first, configure())
+            self.assertEqual(first, configure())
+            self.assertNotIn(b"generated/identity/BuildIdentity.generated.h\t", first)
+            for name in ("CustomNetworks.generated.h", "CustomNetworkRegistry.generated.h"):
+                self.assertIn(("generated/" + name + "\t").encode(), first)
+            self.assertIn(b"src/example.h\t", first)
+            input_header.write_text(original + "// actual source change\n")
+            self.assertNotEqual(first, configure())
+            input_header.write_text(original)
+            self.assertEqual(first, configure())
+
     def test_focused_identity_tracks_configured_sources_and_artifact_replacement(self):
         def capture():
             return provenance.capture_focused(artifacts={"probe": self.arch},

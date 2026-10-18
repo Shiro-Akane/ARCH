@@ -1,0 +1,2106 @@
+{
+  "schema": 1,
+  "work_package": "R2.2",
+  "recorded_date": "2026-10-12",
+  "recorded_utc": "2026-10-12T06:14:30.524468+00:00",
+  "status": "COMPLETED_REPRESENTATIVE_CHECKS_WITH_THREE_CONDITIONAL_CUDA_BUILD_DEFERRALS",
+  "branch": "compute/optim",
+  "source_commit_at_start": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "primary_checkout_commit": "9aaa5addde2cda05bf88b209ce46d1c82b33df93",
+  "production_tree_oids": {
+    "src": "e0757c64defadb6bbad2912c1452dbd21662d449",
+    "include": "40fd2cffc1323f1b08a918b4a2200574ed51e484",
+    "simulation": "31f82322521d9d207a8ac1de6249d70d80f9e34d",
+    "studio": "de9e37c3c23fb92c8560ae48bb71c1ba15d95d50",
+    "cmake": "6fa71aba8cca8a86e7904afa0bcea681bd03c73b",
+    "tests": "826a5ef701b9ab6ec347670272bc2ce3df41cfc5",
+    "tools": "08559146a4501eff0640d13ad50f2a715aa61a98",
+    ".github": "07f1130743bd067f3d8e9df609a57920d4550d3f"
+  },
+  "relevant_trees_equal_to_r21": true,
+  "executables": {
+    "cpu": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+      "sha256": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9",
+      "bytes": 16649928
+    },
+    "cuda": {
+      "path": "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+      "sha256": "0828b3c8644333d446a044b555c15681e9277a10217d3fac6e129ccf14ba861c",
+      "bytes": 368728472
+    }
+  },
+  "comparators": {
+    "cpu": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu/arch_cuda_single_level_validation",
+      "sha256": "f4a1d73a5dd3fadc453e1ed34db302bc0af7c2439f16839349c34004b688b5d6"
+    },
+    "cuda": {
+      "path": "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+      "sha256": "d7e7df392e4ca6b3cf532059006f47eb9c71c71ed01f895fd327d536534a76a3"
+    }
+  },
+  "cpu": {
+    "total": 27,
+    "groups": [
+      {
+        "id": "G1",
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0,
+        "owners": [
+          {
+            "name": "ppm_limiter_math",
+            "seconds": 0.00415335,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "conservative_flux_limiter",
+            "seconds": 0.0193093,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "conservative_acceptance",
+            "seconds": 0.00176143,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "shared_stage_scheduler",
+            "seconds": 0.00528093,
+            "status": "run",
+            "result": "PASS"
+          }
+        ],
+        "junit": "output/modernization/r22-20261012/cpu-G1/junit.xml"
+      },
+      {
+        "id": "G2",
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0,
+        "owners": [
+          {
+            "name": "helm_components",
+            "seconds": 0.946088,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "native_tabular_eos",
+            "seconds": 0.0210408,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "burn_mainline_reference",
+            "seconds": 41.0249,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "generated_nse",
+            "seconds": 0.00300886,
+            "status": "run",
+            "result": "PASS"
+          }
+        ],
+        "junit": "output/modernization/r22-20261012/cpu-G2/junit.xml"
+      },
+      {
+        "id": "G3",
+        "tests": 5,
+        "failures": 0,
+        "skipped": 0,
+        "owners": [
+          {
+            "name": "same_level_exchange_plan",
+            "seconds": 0.00189873,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "amr_flux_surface_plan",
+            "seconds": 0.145107,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "topology_transaction",
+            "seconds": 0.035893,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "checkpoint_compatibility",
+            "seconds": 0.112997,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "checkpoint_temporal_comparison",
+            "seconds": 0.00496856,
+            "status": "run",
+            "result": "PASS"
+          }
+        ],
+        "junit": "output/modernization/r22-20261012/cpu-G3/junit.xml"
+      },
+      {
+        "id": "G4",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "owners": [
+          {
+            "name": "rkl_repair_weights",
+            "seconds": 0.0585561,
+            "status": "run",
+            "result": "PASS"
+          }
+        ],
+        "junit": "output/modernization/r22-20261012/cpu-G4/junit.xml"
+      },
+      {
+        "id": "G5",
+        "tests": 7,
+        "failures": 0,
+        "skipped": 0,
+        "owners": [
+          {
+            "name": "poisson_multigrid_contract",
+            "seconds": 0.422165,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "poisson_multigrid_analytic",
+            "seconds": 4.49748,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "composite_poisson_contract",
+            "seconds": 2.16049,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "composite_poisson_analytic",
+            "seconds": 8.31737,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "self_gravity_lifecycle",
+            "seconds": 14.3104,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "self_gravity_physics",
+            "seconds": 11.5469,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "rz_qualification_runner_contract",
+            "seconds": 0.153692,
+            "status": "run",
+            "result": "PASS"
+          }
+        ],
+        "junit": "output/modernization/r22-20261012/cpu-G5/junit.xml"
+      },
+      {
+        "id": "G6",
+        "tests": 6,
+        "failures": 0,
+        "skipped": 0,
+        "owners": [
+          {
+            "name": "configuration_api_contract",
+            "seconds": 19.1438,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "configuration_entry_contract",
+            "seconds": 0.11493,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "configuration_v3_contract",
+            "seconds": 2.87667,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "preview_api_contract",
+            "seconds": 1.64699,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "preview_full_model_contract",
+            "seconds": 16.3927,
+            "status": "run",
+            "result": "PASS"
+          },
+          {
+            "name": "preview_cellular_2d",
+            "seconds": 13.6999,
+            "status": "run",
+            "result": "PASS"
+          }
+        ],
+        "junit": "output/modernization/r22-20261012/cpu-G6/junit.xml"
+      }
+    ]
+  },
+  "cuda_owner_groups": [
+    {
+      "id": "G1",
+      "tests": 3,
+      "failures": 0,
+      "skipped": 0,
+      "owners": [
+        {
+          "name": "hydro_leaf_parity",
+          "seconds": 0.541507,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        },
+        {
+          "name": "cuda_conservative_acceptance",
+          "seconds": 0.227152,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        },
+        {
+          "name": "cuda_ppm_limiter_math",
+          "seconds": 0.206689,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "G2",
+      "tests": 4,
+      "failures": 0,
+      "skipped": 0,
+      "owners": [
+        {
+          "name": "native_tabular_device",
+          "seconds": 0.255099,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        },
+        {
+          "name": "generated_nse_device",
+          "seconds": 0.214164,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        },
+        {
+          "name": "network_nse_device",
+          "seconds": 0.49925,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        },
+        {
+          "name": "burn_controller_parity",
+          "seconds": 1.81246,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "G3",
+      "tests": 2,
+      "failures": 0,
+      "skipped": 0,
+      "owners": [
+        {
+          "name": "cuda_amr_exchange",
+          "seconds": 2.3535,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        },
+        {
+          "name": "cuda_regrid_transaction",
+          "seconds": 1.12528,
+          "status": "run",
+          "failure": null,
+          "skipped": null,
+          "result": "PASS"
+        }
+      ]
+    }
+  ],
+  "applications": {
+    "completed_cases": 10,
+    "comparison_pairs": 51,
+    "cases": [
+      {
+        "id": "hydro_ppm_n64",
+        "steps": {
+          "cpu": 100,
+          "cuda": 100
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 100,
+          "time": 0.1,
+          "l1": 2.472783005563056e-07,
+          "l2": 2.7472326601424323e-07,
+          "linf": 3.88483276103635e-07,
+          "mean": 1,
+          "mass": 1,
+          "mom_u": 1,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.9999999999999996,
+          "min_rho": 0.8000899488548847,
+          "min_eng": 2.9000449744274426,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 100,
+          "time": 0.1,
+          "l1": 2.472783005563056e-07,
+          "l2": 2.7472326601424323e-07,
+          "linf": 3.88483276103635e-07,
+          "mean": 1,
+          "mass": 1,
+          "mom_u": 1,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.9999999999999996,
+          "min_rho": 0.8000899488548847,
+          "min_eng": 2.9000449744274426,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+        "evidence_path": "output/modernization/r22-20261012/app-ppm-replay/backend-validation-evidence.json"
+      },
+      {
+        "id": "hydro_ppm_n128",
+        "steps": {
+          "cpu": 199,
+          "cuda": 199
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 199,
+          "time": 0.1,
+          "l1": 1.5476261327161678e-08,
+          "l2": 1.7190466842556716e-08,
+          "linf": 2.431023959914569e-08,
+          "mean": 0.9999999999999999,
+          "mass": 0.9999999999999999,
+          "mom_u": 1,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 3.000000000000002,
+          "min_rho": 0.8000417625387632,
+          "min_eng": 2.9000208812693837,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 199,
+          "time": 0.1,
+          "l1": 1.5476261327161678e-08,
+          "l2": 1.7190466842556716e-08,
+          "linf": 2.431023959914569e-08,
+          "mean": 0.9999999999999999,
+          "mass": 0.9999999999999999,
+          "mom_u": 1,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 3.000000000000002,
+          "min_rho": 0.8000417625387632,
+          "min_eng": 2.9000208812693837,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+        "evidence_path": "output/modernization/r22-20261012/app-ppm-replay/backend-validation-evidence.json"
+      },
+      {
+        "id": "hydro_ppm_n256",
+        "steps": {
+          "cpu": 397,
+          "cuda": 397
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 397,
+          "time": 0.1,
+          "l1": 9.67676448086069e-10,
+          "l2": 1.0747918787694268e-09,
+          "linf": 1.5198917679981605e-09,
+          "mean": 0.9999999999999996,
+          "mass": 0.9999999999999996,
+          "mom_u": 0.9999999999999993,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 3.0000000000000004,
+          "min_rho": 0.8000056222971043,
+          "min_eng": 2.900002811148551,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "smooth",
+          "step": 397,
+          "time": 0.1,
+          "l1": 9.67676448086069e-10,
+          "l2": 1.0747918787694268e-09,
+          "linf": 1.5198917679981605e-09,
+          "mean": 0.9999999999999996,
+          "mass": 0.9999999999999996,
+          "mom_u": 0.9999999999999993,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 3.0000000000000004,
+          "min_rho": 0.8000056222971043,
+          "min_eng": 2.900002811148551,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+        "evidence_path": "output/modernization/r22-20261012/app-ppm-replay/backend-validation-evidence.json"
+      },
+      {
+        "id": "sod_ppm_n64",
+        "steps": {
+          "cpu": 138,
+          "cuda": 138
+        },
+        "time": 0.2,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "sod",
+          "step": 138,
+          "time": 0.2,
+          "l1": 0.00458341167556159,
+          "l2": 0.009999175911122126,
+          "rho_l1": 0.00458341167556159,
+          "rho_l2": 0.009999175911122126,
+          "velocity_l1": 0.008170561944456688,
+          "velocity_l2": 0.025757956268880593,
+          "pressure_l1": 0.0032385129828055516,
+          "pressure_l2": 0.00685621629936063,
+          "energy_l1": 0.008429564161907228,
+          "energy_l2": 0.01670781326306232,
+          "shock_position": 0.84375,
+          "shock_position_error_cells": 0.4275933699862833,
+          "min_rho": 0.12456489240870451,
+          "min_eng": 0.24878577170237248,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "sod",
+          "step": 138,
+          "time": 0.2,
+          "l1": 0.00458341167556159,
+          "l2": 0.009999175911122126,
+          "rho_l1": 0.00458341167556159,
+          "rho_l2": 0.009999175911122126,
+          "velocity_l1": 0.008170561944456688,
+          "velocity_l2": 0.025757956268880593,
+          "pressure_l1": 0.0032385129828055516,
+          "pressure_l2": 0.00685621629936063,
+          "energy_l1": 0.008429564161907228,
+          "energy_l2": 0.01670781326306232,
+          "shock_position": 0.84375,
+          "shock_position_error_cells": 0.4275933699862833,
+          "min_rho": 0.12456489240870451,
+          "min_eng": 0.24878577170237248,
+          "species_sum_error": 0
+        },
+        "parity_passed": true,
+        "step_pair_count": 5,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+        "evidence_path": "output/modernization/r22-20261012/app-sod/backend-validation-evidence.json"
+      },
+      {
+        "id": "sod_ppm_n128",
+        "steps": {
+          "cpu": 279,
+          "cuda": 279
+        },
+        "time": 0.2,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "sod",
+          "step": 279,
+          "time": 0.2,
+          "l1": 0.0024231185774203183,
+          "l2": 0.0065917403576354235,
+          "rho_l1": 0.0024231185774203183,
+          "rho_l2": 0.0065917403576354235,
+          "velocity_l1": 0.0037092033869055765,
+          "velocity_l2": 0.021188235559913383,
+          "pressure_l1": 0.0017341985406558046,
+          "pressure_l2": 0.0048512461947122516,
+          "energy_l1": 0.0047274491655234,
+          "energy_l2": 0.013169960600936234,
+          "shock_position": 0.8515625,
+          "shock_position_error_cells": 0.14481326002743344,
+          "min_rho": 0.12482080186288672,
+          "min_eng": 0.24949876260857748,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "sod",
+          "step": 279,
+          "time": 0.2,
+          "l1": 0.0024231185774203183,
+          "l2": 0.0065917403576354235,
+          "rho_l1": 0.0024231185774203183,
+          "rho_l2": 0.0065917403576354235,
+          "velocity_l1": 0.0037092033869055765,
+          "velocity_l2": 0.021188235559913383,
+          "pressure_l1": 0.0017341985406558046,
+          "pressure_l2": 0.0048512461947122516,
+          "energy_l1": 0.0047274491655234,
+          "energy_l2": 0.013169960600936234,
+          "shock_position": 0.8515625,
+          "shock_position_error_cells": 0.14481326002743344,
+          "min_rho": 0.12482080186288672,
+          "min_eng": 0.24949876260857748,
+          "species_sum_error": 0
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+        "evidence_path": "output/modernization/r22-20261012/app-sod/backend-validation-evidence.json"
+      },
+      {
+        "id": "sod_ppm_n256",
+        "steps": {
+          "cpu": 561,
+          "cuda": 561
+        },
+        "time": 0.2,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "sod",
+          "step": 561,
+          "time": 0.2,
+          "l1": 0.0011126923774764231,
+          "l2": 0.004096281739131744,
+          "rho_l1": 0.0011126923774764231,
+          "rho_l2": 0.004096281739131744,
+          "velocity_l1": 0.0018495195977672905,
+          "velocity_l2": 0.01186826580578372,
+          "pressure_l1": 0.0007765426074181854,
+          "pressure_l2": 0.0024601022867476135,
+          "energy_l1": 0.002130202465327539,
+          "energy_l2": 0.006614387780206276,
+          "shock_position": 0.8515625,
+          "shock_position_error_cells": 0.2896265200548669,
+          "min_rho": 0.12479677874780107,
+          "min_eng": 0.24943542934526075,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "sod",
+          "step": 561,
+          "time": 0.2,
+          "l1": 0.0011126923774764231,
+          "l2": 0.004096281739131744,
+          "rho_l1": 0.0011126923774764231,
+          "rho_l2": 0.004096281739131744,
+          "velocity_l1": 0.0018495195977672905,
+          "velocity_l2": 0.01186826580578372,
+          "pressure_l1": 0.0007765426074181854,
+          "pressure_l2": 0.0024601022867476135,
+          "energy_l1": 0.002130202465327539,
+          "energy_l2": 0.006614387780206276,
+          "shock_position": 0.8515625,
+          "shock_position_error_cells": 0.2896265200548669,
+          "min_rho": 0.12479677874780107,
+          "min_eng": 0.24943542934526075,
+          "species_sum_error": 0
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+        "evidence_path": "output/modernization/r22-20261012/app-sod/backend-validation-evidence.json"
+      },
+      {
+        "id": "diffusion_rkl1_n64",
+        "steps": {
+          "cpu": 38,
+          "cuda": 38
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 38,
+          "time": 0.1,
+          "l1": 3.282197595546113e-06,
+          "l2": 3.6441410430744223e-06,
+          "linf": 5.147385957249284e-06,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.26005804119427567,
+          "max_fraction": 0.7399419588057247,
+          "species_sum_error": 4.440892098500626e-16
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 38,
+          "time": 0.1,
+          "l1": 3.282197595546113e-06,
+          "l2": 3.6441410430744223e-06,
+          "linf": 5.147385957249284e-06,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.26005804119427567,
+          "max_fraction": 0.7399419588057247,
+          "species_sum_error": 4.440892098500626e-16
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+        "evidence_path": "output/modernization/r22-20261012/app-rkl1-replay/backend-validation-evidence.json"
+      },
+      {
+        "id": "diffusion_rkl2_n64",
+        "steps": {
+          "cpu": 38,
+          "cuda": 38
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 38,
+          "time": 0.1,
+          "l1": 4.850034384569664e-06,
+          "l2": 5.3848706077464585e-06,
+          "linf": 7.606184014297135e-06,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.2600555823962183,
+          "max_fraction": 0.7399444176037809,
+          "species_sum_error": 8.881784197001252e-16
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 38,
+          "time": 0.1,
+          "l1": 4.85003438470237e-06,
+          "l2": 5.384870607900917e-06,
+          "linf": 7.606184014630202e-06,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.2600555823962183,
+          "max_fraction": 0.739944417603782,
+          "species_sum_error": 8.881784197001252e-16
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+        "evidence_path": "output/modernization/r22-20261012/app-rkl2/backend-validation-evidence.json"
+      },
+      {
+        "id": "diffusion_rkl2_n128",
+        "steps": {
+          "cpu": 76,
+          "cuda": 76
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 76,
+          "time": 0.1,
+          "l1": 1.2127865546118083e-06,
+          "l2": 1.3469319329324069e-06,
+          "linf": 1.9042757023468582e-06,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.25977192135684096,
+          "max_fraction": 0.7402280786431593,
+          "species_sum_error": 6.661338147750939e-16
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 76,
+          "time": 0.1,
+          "l1": 1.2127865545927263e-06,
+          "l2": 1.3469319328900425e-06,
+          "linf": 1.9042757021248136e-06,
+          "mean": 0.5,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.25977192135684113,
+          "max_fraction": 0.7402280786431591,
+          "species_sum_error": 6.661338147750939e-16
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+        "evidence_path": "output/modernization/r22-20261012/app-rkl2/backend-validation-evidence.json"
+      },
+      {
+        "id": "diffusion_rkl2_n256",
+        "steps": {
+          "cpu": 152,
+          "cuda": 152
+        },
+        "time": 0.1,
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 152,
+          "time": 0.1,
+          "l1": 3.032140440933223e-07,
+          "l2": 3.367776726006098e-07,
+          "linf": 4.762396894619769e-07,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.2597009759629279,
+          "max_fraction": 0.7402990240370723,
+          "species_sum_error": 6.661338147750939e-16
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "diffusion",
+          "step": 152,
+          "time": 0.1,
+          "l1": 3.0321404413365463e-07,
+          "l2": 3.367776726610143e-07,
+          "linf": 4.762396895174881e-07,
+          "mean": 0.5000000000000001,
+          "mass": 1,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 2.5000000000000004,
+          "min_rho": 1,
+          "min_eng": 2.5000000000000004,
+          "min_fraction": 0.2597009759629277,
+          "max_fraction": 0.740299024037072,
+          "species_sum_error": 6.661338147750939e-16
+        },
+        "parity_passed": true,
+        "step_pair_count": 4,
+        "scientific_pair_count": 1,
+        "identity_verified_after_run": true,
+        "manifest_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+        "evidence_path": "output/modernization/r22-20261012/app-rkl2/backend-validation-evidence.json"
+      }
+    ],
+    "group_convergence": {
+      "smooth_ppm": {
+        "resolutions": [
+          64,
+          128,
+          256
+        ],
+        "orders": {
+          "cpu": {
+            "l1": [
+              3.9980067441879936,
+              3.9993884355743075
+            ],
+            "l2": [
+              3.9982984660418777,
+              3.9994794942298477
+            ]
+          },
+          "cuda": {
+            "l1": [
+              3.9980067441879936,
+              3.9993884355743075
+            ],
+            "l2": [
+              3.9982984660418777,
+              3.9994794942298477
+            ]
+          }
+        }
+      },
+      "sod_ppm": {
+        "resolutions": [
+          64,
+          128,
+          256
+        ],
+        "orders": {
+          "cpu": {
+            "l1": [
+              0.9195568663059347,
+              1.122810215561965
+            ],
+            "l2": [
+              0.6011497818356729,
+              0.6863444710445368
+            ]
+          },
+          "cuda": {
+            "l1": [
+              0.9195568663059347,
+              1.122810215561965
+            ],
+            "l2": [
+              0.6011497818356729,
+              0.6863444710445368
+            ]
+          }
+        }
+      },
+      "diffusion_rkl2": {
+        "resolutions": [
+          64,
+          128,
+          256
+        ],
+        "orders": {
+          "cpu": {
+            "l1": [
+              1.9996693109232528,
+              1.9999171823873558
+            ],
+            "l2": [
+              1.9992347326859357,
+              1.9998085460759367
+            ]
+          },
+          "cuda": {
+            "l1": [
+              1.9996693109854273,
+              1.999917182172755
+            ],
+            "l2": [
+              1.999234732772694,
+              1.9998085457717982
+            ]
+          }
+        }
+      }
+    }
+  },
+  "hydro_replay_controls": {
+    "original_manifest": "validation/backend/cases.json",
+    "original_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+    "derived_manifest": "output/modernization/r22-20261012/hydro-replay-manifest.json",
+    "derived_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+    "affected_cases": [
+      "hydro_ppm_n64",
+      "hydro_ppm_n128",
+      "hydro_ppm_n256",
+      "sod_ppm_n64",
+      "sod_ppm_n128",
+      "sod_ppm_n256"
+    ],
+    "only_added_overrides": {
+      "hll_wave_speed": "roe",
+      "min_eint": "1e-10"
+    },
+    "historical_controls_source_commit": "c8f7c048ca7b384126547934946a3c4d595f6e99",
+    "historical_controls_source": [
+      "src/core/config/StandardParameters.h:53",
+      "src/data/GlobalDefs.h:80"
+    ],
+    "acceptance_physics_and_original_input_bytes_unchanged": true
+  },
+  "canonical_input_inspection": [
+    {
+      "id": "hydro_ppm_n64",
+      "input": "validation/hydro/inputs/ppm_n64.par",
+      "exit": 3,
+      "status": "error",
+      "diagnostic_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ]
+    },
+    {
+      "id": "hydro_ppm_n128",
+      "input": "validation/hydro/inputs/ppm_n128.par",
+      "exit": 3,
+      "status": "error",
+      "diagnostic_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ]
+    },
+    {
+      "id": "hydro_ppm_n256",
+      "input": "validation/hydro/inputs/ppm_n256.par",
+      "exit": 3,
+      "status": "error",
+      "diagnostic_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ]
+    },
+    {
+      "id": "sod_ppm_n64",
+      "input": "validation/hydro/inputs/sod_ppm_n64.par",
+      "exit": 3,
+      "status": "error",
+      "diagnostic_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ]
+    },
+    {
+      "id": "sod_ppm_n128",
+      "input": "validation/hydro/inputs/sod_ppm_n128.par",
+      "exit": 3,
+      "status": "error",
+      "diagnostic_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ]
+    },
+    {
+      "id": "sod_ppm_n256",
+      "input": "validation/hydro/inputs/sod_ppm_n256.par",
+      "exit": 3,
+      "status": "error",
+      "diagnostic_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ]
+    },
+    {
+      "id": "diffusion_rkl1_n64",
+      "input": "validation/diffusion/inputs/rkl1_n64.par",
+      "exit": 0,
+      "status": "ok",
+      "diagnostic_keys": []
+    },
+    {
+      "id": "diffusion_rkl2_n64",
+      "input": "validation/diffusion/inputs/rkl2_n64.par",
+      "exit": 0,
+      "status": "ok",
+      "diagnostic_keys": []
+    },
+    {
+      "id": "diffusion_rkl2_n128",
+      "input": "validation/diffusion/inputs/rkl2_n128.par",
+      "exit": 0,
+      "status": "ok",
+      "diagnostic_keys": []
+    },
+    {
+      "id": "diffusion_rkl2_n256",
+      "input": "validation/diffusion/inputs/rkl2_n256.par",
+      "exit": 0,
+      "status": "ok",
+      "diagnostic_keys": []
+    }
+  ],
+  "comparator_replacement": {
+    "configured_path": "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+    "original_backup": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/retained-originals/cuda-arch_cuda_single_level_validation",
+    "original_sha256": "9ccfbdca99bb17dcaa877b217ef9476d8042e1a84830f80e6cbf939fd66f5c09",
+    "fresh_build_source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_single_level_validation/arch_cuda_single_level_validation",
+    "new_sha256": "d7e7df392e4ca6b3cf532059006f47eb9c71c71ed01f895fd327d536534a76a3",
+    "reason": "Old configured comparator rejects production state-control revision3 as revision2; target-only two-TU rebuild with original flags; original bytes retained.",
+    "initial_cuda_dependency_index_omitted_this_auxiliary": true,
+    "old_revision_observed": 2,
+    "current_revision": 3,
+    "current_header_sha256": "dd44b7a9cc7bf20773552ea124fcf2b24ceab25f4bd39c0be1d1b91845941bfa",
+    "fresh_compiler_recipe": "focused-cuda/commands.json",
+    "original_object_source_relation": {
+      "HDF5Writer_object_utc": "2026-10-03T07:02:52Z",
+      "ConfigValidation_header_utc": "2026-10-06T09:12:15Z"
+    },
+    "source_worktree_equivalence": "Relevant Core tree OIDs verified equal separately; source root remains main checkout."
+  },
+  "focused_builds_operational_observations_only": [
+    {
+      "target": "arch_self_gravity",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 7.9721846640004514,
+      "source_file": "/home/shiroakane/ARCH/tests/host/gravity/test_self_gravity.cpp",
+      "recorded_command_sha256": "08e55d9d2d1b0f8261a09c27351de5ff914744fec93fc665be3929298ad325aa"
+    },
+    {
+      "target": "arch_self_gravity",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 2.8207639020001807,
+      "source_file": "/home/shiroakane/ARCH/src/amr/elliptic/EllipticMeshAdapter.cpp",
+      "recorded_command_sha256": "cc472cee3328e82d53e79912d0319d00f92a9906302f4f053f24c8a6b10b48ee"
+    },
+    {
+      "target": "arch_self_gravity",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 7.155379396999706,
+      "source_file": "/home/shiroakane/ARCH/src/driver/stages/GravityStage.cpp",
+      "recorded_command_sha256": "699b44582a1afa63118fe29bbed088a02865d6bfbf9b1c05b18259091bb15cde"
+    },
+    {
+      "target": "arch_self_gravity",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 5.517057777999071,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cpu/arch_self_gravity/arch_self_gravity",
+      "sha256": "e44be0f41014c44ecb65d3e5baa47abb175b1ede0941204f08f0016f921a3c51",
+      "bytes": 1746616,
+      "source_file": null,
+      "recorded_command_sha256": "c09085dc61422dc2c13825fb9312885e8f11e6a0f6e0e09389076e25496d52a1"
+    },
+    {
+      "target": "arch_cuda_single_level_validation",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 4.401384959999632,
+      "source_file": "/home/shiroakane/ARCH/tests/host/io/test_cuda_single_level_validation.cpp",
+      "recorded_command_sha256": "facac65adcc675b9fa19840d8b6ced07a5596f3ce56a7ad835674c2f9f233c5d"
+    },
+    {
+      "target": "arch_cuda_single_level_validation",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 3.477651158000299,
+      "source_file": "/home/shiroakane/ARCH/src/io/hdf5/HDF5Writer.cpp",
+      "recorded_command_sha256": "74d0bd55378a7a761da9eb789bf9a45eb7cfeef16807754f250fba5ba0823bae"
+    },
+    {
+      "target": "arch_cuda_single_level_validation",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 1.9271199549984885,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_single_level_validation/arch_cuda_single_level_validation",
+      "sha256": "d7e7df392e4ca6b3cf532059006f47eb9c71c71ed01f895fd327d536534a76a3",
+      "bytes": 464536,
+      "source_file": null,
+      "recorded_command_sha256": "e1a473a2fd5da127049190b93dfc084d52daa38161379de28927971189e34f03"
+    },
+    {
+      "target": "arch_cuda_ppm_limiter",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 3.6101138240010187,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/numerics/test_ppm_limiter.cu",
+      "recorded_command_sha256": "c536d5bae61cd0e84f6dacca8ed8493d1ef4565a7ff5649e5b5a6fdb7df82505"
+    },
+    {
+      "target": "arch_cuda_ppm_limiter",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 0.11635007000040787,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_ppm_limiter/arch_cuda_ppm_limiter",
+      "sha256": "ee556777a98fd1e25a7ec0493aec176b8d253e752364de9b8e47b7e020800c4c",
+      "bytes": 48560,
+      "source_file": null,
+      "recorded_command_sha256": "a53b00e6595051e08dd428f31e08f435e7ff99b2893225b58a4852aff2c1c98f"
+    },
+    {
+      "target": "arch_cuda_conservative_acceptance",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 3.125107048001155,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/numerics/test_conservative_acceptance.cu",
+      "recorded_command_sha256": "1029210455bfd790e97a887b97c4a23e4472d0154ba14650e867882c9cd9c957"
+    },
+    {
+      "target": "arch_cuda_conservative_acceptance",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 0.10977808999996341,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_conservative_acceptance/arch_cuda_conservative_acceptance",
+      "sha256": "9715b8d05e0e012a533737232bb9a978b9d0c21708920808b59b1a024ffeaa00",
+      "bytes": 58808,
+      "source_file": null,
+      "recorded_command_sha256": "08ef935d40c52bc48201b0e9726c643154cead0752abac45801582d39a350f98"
+    },
+    {
+      "target": "arch_cuda_hydro_leaf_parity",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 259.6981498169989,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/hydro/test_hydro_leaf_parity.cu",
+      "recorded_command_sha256": "6c33e8cdb09e584be55bae1551ab841d362a528e7ed122d772d953897f389965"
+    },
+    {
+      "target": "arch_cuda_hydro_leaf_parity",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 0.15910005099976843,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_hydro_leaf_parity/arch_cuda_hydro_leaf_parity",
+      "sha256": "bdb1285ea54f35a94950b44083870f5267f8a2d72138aa499130cc3ea941d99f",
+      "bytes": 13405024,
+      "source_file": null,
+      "recorded_command_sha256": "bf7e06576a0f0965a3dceeedacf0c5fa37024ed98edd886ca2f0ceba4690243e"
+    },
+    {
+      "target": "arch_cuda_burn_controller_parity",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 53.25362716499876,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/microphysics/burn/test_burn_controller_parity.cu",
+      "recorded_command_sha256": "4dea85a299d9c5920147a03d35860ce519a3f973b4f8ab1507a18f89301128fb"
+    },
+    {
+      "target": "arch_cuda_burn_controller_parity",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 2.0172659149993706,
+      "source_file": "/home/shiroakane/ARCH/src/core/config/CompositionInput.cpp",
+      "recorded_command_sha256": "c67273e1bef273233cc5ca899540cfd2ebfe6156180e269236dc842f16a447be"
+    },
+    {
+      "target": "arch_cuda_burn_controller_parity",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 0.8311798460017599,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_burn_controller_parity/arch_cuda_burn_controller_parity",
+      "sha256": "bce02981b8f11d247c4076cf29c3a7fd3f3b4327beae01d91e39bf3956472b5d",
+      "bytes": 3374568,
+      "source_file": null,
+      "recorded_command_sha256": "03bf86d67a6b130de61da94fa842827dfe365938d2d39c231109d86e7017df88"
+    },
+    {
+      "target": "arch_cuda_generated_nse",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 7.036850504999165,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/generated/test_generated_nse_device.cu",
+      "recorded_command_sha256": "705687bef50c7ee7820b405023e80a1b5a5a3d5e76db605db8b41d742975afcf"
+    },
+    {
+      "target": "arch_cuda_generated_nse",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 0.1241885999988881,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_generated_nse/arch_cuda_generated_nse",
+      "sha256": "559f18d44b16fd0b6f7b2ac8d7bd5490b3499095ec0ec1c108ff7685f421f87b",
+      "bytes": 373968,
+      "source_file": null,
+      "recorded_command_sha256": "ac5dbd40cd0543c03e4a31b1b69ee71a36a4a35acf8c5284ee91970eb3346893"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 11.333517779999966,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/microphysics/eos/test_native_tabular_owner.cu",
+      "recorded_command_sha256": "3c39ddc99fd0eefeda3ff17d937f0eb4904254de64827d17321294df09f914b5"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 0.7823641279992444,
+      "source_file": "/home/shiroakane/ARCH/src/core/files/FileFingerprint.cpp",
+      "recorded_command_sha256": "f6d104197ea3e4c7fd4e93510416b7d0048056bfa7313aa3e300d6c3bd55bb29"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 1.6843947209999897,
+      "source_file": "/home/shiroakane/ARCH/src/physics/eos/sources/Tabular3DEOS.cpp",
+      "recorded_command_sha256": "e4db483423f976095c76150a0fa316e3b08ad3d1a563dcab4fecf0565e831a39"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 5.504116406000321,
+      "source_file": "/home/shiroakane/ARCH/src/physics/eos/eosdispatch.cpp",
+      "recorded_command_sha256": "a3f2083fc04638a75c693da9289343815fe48331c673a6f1c475161f0ecc5cd7"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 0.8699964839997847,
+      "source_file": "/home/shiroakane/ARCH/src/physics/eos/sources/TabularBaryonSource.cpp",
+      "recorded_command_sha256": "08ea26cdd02d83221ae098b4b1d11105a885e2eba9e778003d8265f143c9a902"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 1.1328187819999584,
+      "source_file": "/home/shiroakane/ARCH/src/physics/eos/sources/TabularCompletion.cpp",
+      "recorded_command_sha256": "305801a90f10ae1ecc99e3a1d9f8f4bb2d27419a549eedcaafc7b3c0e5bb3a72"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 0.9263223719990492,
+      "source_file": "/home/shiroakane/ARCH/src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp",
+      "recorded_command_sha256": "4653a659f1db6f8a56a433c5765c7f0e87ea31b7f42bfc9899db5fcb1ece31c5"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 0.5798014810006862,
+      "source_file": "/home/shiroakane/ARCH/src/cuda/microphysics/eos/device_eos_owner_utils.cpp",
+      "recorded_command_sha256": "f1dba6089b6961d30e68f42431c02adf5a3974b4db4c86d2ca1af40265a667d9"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 0.8649230930004705,
+      "source_file": "/home/shiroakane/ARCH/src/cuda/microphysics/network/device_species_owner.cpp",
+      "recorded_command_sha256": "654dce94c08fdf5db5b90eb8a8d606e975b2055103304b00eef920a41f9efafd"
+    },
+    {
+      "target": "arch_cuda_native_tabular",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 1.6304160769996088,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_native_tabular/arch_cuda_native_tabular",
+      "sha256": "7d8cde6ea9daf922f09c249afb824335f236c6eb90d2fe296a9f17acb62c640d",
+      "bytes": 969848,
+      "source_file": null,
+      "recorded_command_sha256": "8b2b92826c714bc61eaa97c19dbde379302af52c413cbf0a82093aa9be8974ad"
+    },
+    {
+      "target": "arch_cuda_network_nse_device",
+      "kind": "compile",
+      "exit": 0,
+      "elapsed_seconds": 292.7348791259992,
+      "source_file": "/home/shiroakane/ARCH/tests/cuda/microphysics/network/test_network_nse_device.cu",
+      "recorded_command_sha256": "14f305a5bea86a5dc1fedd6fed06cc9448d3b81074196c37815b196ae12d92b7"
+    },
+    {
+      "target": "arch_cuda_network_nse_device",
+      "kind": "link",
+      "exit": 0,
+      "elapsed_seconds": 0.14397437000116042,
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/focused-cuda/arch_cuda_network_nse_device/arch_cuda_network_nse_device",
+      "sha256": "4129a9d7e6be9280b05d9cc7c9b04694924c1d703d541703b2540e1d6dd90e8f",
+      "bytes": 15291152,
+      "source_file": null,
+      "recorded_command_sha256": "2ecfd9b5de0d016ac95c5a01cd831cee2e61498527294276864c632d9cc67ddf"
+    }
+  ],
+  "gravity_quick": {
+    "status": "passed",
+    "acceptance_records": 60,
+    "jeans": {
+      "name": "jeans-64",
+      "solves": 262,
+      "last_time": 0.1,
+      "density_relative_rms": 0.0015957884778255889,
+      "mass_relative_drift": 2.91038304567337e-17,
+      "energy_over_initial_potential": 3.424792860457379e-10,
+      "initial_net_force": 4.991630708391401e-18,
+      "final_net_force": 4.85732306740418e-18
+    }
+  },
+  "host_storage_prebatch": {
+    "total": 270142779392,
+    "used": 246643113984,
+    "free": 23499665408
+  },
+  "scientific_runs_stopped": false,
+  "full_cuda_production_build": false,
+  "production_source_changed": false,
+  "formal_performance_baseline_measured": false,
+  "rz_long_repeated": false,
+  "no_automatic_next_stage": "R2.3",
+  "coverage_limits": [
+    "Native tabular default owner excludes optional external real EOSDriver table.",
+    "Generated/built-in NSE only original selected owners, not all custom network combinations.",
+    "Burn original owner; no new optional short application replay.",
+    "Composite Poisson original ci reduced sweep and gravity quick only.",
+    "No full Native Device four-module/fresh restart or old RZ five-crossing campaign.",
+    "No all-flux/EOS Hydro matrix or Cellular burn-rate reproduction or new native GUI UAT.",
+    "Selected field parity uses original rtol/atol; not blanket stored-bit identity.",
+    "RKL Ideal constant species diffusion only; RKL1 one resolution no convergence claim."
+  ],
+  "local_evidence": [
+    {
+      "path": "output/modernization/r22-20261012/app-ppm-replay/backend-validation-evidence.json",
+      "sha256": "53fc52d328bd4faeeccc617dd7703c32d076dea3b287f5f515d427ae85d834d4",
+      "bytes": 151532
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-ppm-replay/convergence-receipt.json",
+      "sha256": "b41c1e89db3898d7fb21938800005325854922945ccffed35a70eaf0baf05eac",
+      "bytes": 956
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-ppm-replay.guard.log",
+      "sha256": "08d094bc674867fc4d64faee48797bbbb026f0545173870c3a1cdbb94acf1ef9",
+      "bytes": 819
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-ppm.guard.log",
+      "sha256": "55095901be0cc9530779a02bfb20120999fff3e16f7f9f33ce3c0888a9e896e4",
+      "bytes": 691
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-rkl1-replay/backend-validation-evidence.json",
+      "sha256": "026a7a4311d9cfb4df1040fe746631ad53c11b10a03e17981f821ad0f170c063",
+      "bytes": 55902
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-rkl1-replay.guard.log",
+      "sha256": "79dcb4cc1e83e9f22f2751a4c76164c3d91a0b9fd224bc41e6af092e1eb050ee",
+      "bytes": 819
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-rkl1.guard.log",
+      "sha256": "7d98ca5ca2314bb1ae364a53621bf0606205aae0fcf328c9dc39269246e64650",
+      "bytes": 947
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-rkl2/backend-validation-evidence.json",
+      "sha256": "e6a9355cdf0d62dc59652edf7f14105a98647f101f4d0a7ecdd654dac251a742",
+      "bytes": 153861
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-rkl2/convergence-receipt.json",
+      "sha256": "88ff65f6520b473826b365d07b7980c28bf09477b88833c3d05789bf9a6e2227",
+      "bytes": 973
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-rkl2.guard.log",
+      "sha256": "e64443d37dde5445e884c12473af11788f57d9088af570479104cd48892ecdca",
+      "bytes": 807
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-sod/backend-validation-evidence.json",
+      "sha256": "0bd2adaf81210851e1e07542d97e96a614a2a1e575aa02b5623c0e7d2450f4cb",
+      "bytes": 164217
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-sod/convergence-receipt.json",
+      "sha256": "10f23ff12d493e15a5a901c32e96f4ffb381e2246e725e3afdfb654eadb7712f",
+      "bytes": 945
+    },
+    {
+      "path": "output/modernization/r22-20261012/app-sod.guard.log",
+      "sha256": "0fa4c6d548e0b19b02c66be23a136651a2ff179e22c44b84c35d38a3f6176f69",
+      "bytes": 805
+    },
+    {
+      "path": "output/modernization/r22-20261012/application-results-processed.json",
+      "sha256": "5499c2b6406491bc3232d251cca97fecff2060cee4f8e11cf97999b01224ee42",
+      "bytes": 19153
+    },
+    {
+      "path": "output/modernization/r22-20261012/artifact-closure-binding.json",
+      "sha256": "042db82c1de06eb12ec2c5db3d1d3653819b91fc612d95575eece1a64b36a67d",
+      "bytes": 10156
+    },
+    {
+      "path": "output/modernization/r22-20261012/artifact-dependency-binding.json",
+      "sha256": "cb85c9367554a9ce9f7e49abe434edcf5c3f83ab8910536d733d769a8742e520",
+      "bytes": 63258
+    },
+    {
+      "path": "output/modernization/r22-20261012/canonical-input-inspection.json",
+      "sha256": "6cd154228d22b647e9fa3a7c3470c96c3a60a41216c58f05da8f2b0ab4e3edb3",
+      "bytes": 7061
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G1/commands.json",
+      "sha256": "a3a82f3d147cd252d1155844f6826786ea54b1a8f20a64db03bb062af2df8e8b",
+      "bytes": 1701
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G1/guard.log",
+      "sha256": "3934d8a17371d4d761103b72627cdb0930229b34007739c74b388b0b1a8329a8",
+      "bytes": 1136
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G1/junit.xml",
+      "sha256": "3dcd7fd83f600625f3d5465e49366c8241f6597d5a2925a39340d6666407081b",
+      "bytes": 3412
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G2/commands.json",
+      "sha256": "ea8896deba426109472e6eb51b8cab465adb42b204a70bc31accdec9cec99117",
+      "bytes": 2015
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G2/guard.log",
+      "sha256": "111bde682493376eb94468c0a43fef5ce00a36af1b35e0ebc41649e8ebc08c02",
+      "bytes": 1337
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G2/junit.xml",
+      "sha256": "dee60f7c380460bd899f193e246a0c09d415e8d8a7b93c38324bb50f9c05aa0e",
+      "bytes": 3437
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G3/commands.json",
+      "sha256": "f8935eea2c24d49839e38cbbfe33ea8c5dc7e0def1c445e3507a1256cddcacde",
+      "bytes": 2463
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G3/guard.log",
+      "sha256": "9f3052f17652210735d5274187b5138debc5d1679369b27222a775ce21edff73",
+      "bytes": 1470
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G3/junit.xml",
+      "sha256": "d9d83c7939b49df932be0da024e61539cd75f95985932ad805f7aba375cb633e",
+      "bytes": 3374
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G4/commands.json",
+      "sha256": "12f083facc715bbccb4c05274125e8da639df509a9a20e1839ee96956779831e",
+      "bytes": 426
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G4/guard.log",
+      "sha256": "68b30a547d231fff666157d092df6f98e7aa9e97834f8b03736dc25671f3dfc1",
+      "bytes": 819
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G4/junit.xml",
+      "sha256": "4a3d1fdb31a94d9da3eb945f9a007abdeac6c5694f7556bbb4f7a34aef02b73a",
+      "bytes": 397
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G5/commands.json",
+      "sha256": "ebf85a36a795dfb284d4c0b9e70d6b374a646bd9fdf3b1da1a8e7977a4a1f932",
+      "bytes": 4070
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G5/guard.log",
+      "sha256": "3ec00be00812d7d14208e5bd47c4b991d82ee12715e0c664b964640476b1454a",
+      "bytes": 1775
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G5/junit.xml",
+      "sha256": "76c7981a68f5f313a56365fe82a2825d59b38630d47c27c0c33e4d301191189e",
+      "bytes": 6130
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G6/commands.json",
+      "sha256": "fbfbe3011d743af0a91fda2f4c7c07f366695e800de3b23ce92b30ecc90757a0",
+      "bytes": 4922
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G6/guard.log",
+      "sha256": "96a3e1a09d50023308e2dd762cc6dfb4867741c3c4c054a227243341c815dd90",
+      "bytes": 1365
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-G6/junit.xml",
+      "sha256": "299d062424dfc44c3277c5968c41b567e5f8abf7b5ff83b2e765102e1258359a",
+      "bytes": 1867
+    },
+    {
+      "path": "output/modernization/r22-20261012/cpu-results-processed.json",
+      "sha256": "6b06aa8f918da66baa21aa846f488f3b9bb0bc2e06a6ce284a4bbe84bd651480",
+      "bytes": 4458
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G1/commands.json",
+      "sha256": "77717cdc5927752c9687f4ad9e720c867c93500808133ca0c048f2cb487a36b1",
+      "bytes": 1674
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G1/deferred.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G1/guard.log",
+      "sha256": "352fa6f233414284e0f44b16ccb120ad27301b3473af1751f4e820d9e3cbe30d",
+      "bytes": 1042
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G1/junit.xml",
+      "sha256": "9dc8bee82b91e477787b5fa458fd454a91a980d3c99d2de89cafa404d501d680",
+      "bytes": 1935
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G2/commands.json",
+      "sha256": "8192ef2b12480035ddf05615defde255f1f9a7ff5a2c3bec2079cd3ac9765f71",
+      "bytes": 2153
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G2/deferred.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G2/guard.log",
+      "sha256": "602a84c3a6f6aaeb476c978dad2e8ebf7a2710bc29de3e3f475d6227a9f72f82",
+      "bytes": 1356
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G2/junit.xml",
+      "sha256": "5822c4d01d575218e99a579c621e1147b0f8929fd7085cf7ea867f6bd7c84ff2",
+      "bytes": 2266
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G3/commands.json",
+      "sha256": "46be32e61016de28b8654b0758fe0ee31a2ea9b573856f90eb99c3238cf5056e",
+      "bytes": 949
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G3/deferred.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G3/guard.log",
+      "sha256": "09059c6c711f92acb56470cb28ebd896b8fd1e76cdff0a83d1a8af9f0dbfb933",
+      "bytes": 934
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G3/junit.xml",
+      "sha256": "d7a96dc7a0c8d1a962db039ade10b45d55b7630fbc88f4fce458a11c4ec1690e",
+      "bytes": 2738
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G4/commands.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-G4/deferred.json",
+      "sha256": "a324987f2ae2dfff3e25d173dd86dd5c853372c74392386db718c09819c99f70",
+      "bytes": 674
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-comparator-replacement.json",
+      "sha256": "4353324cf80a7955f7f0579c4a47f540b1c86598e7c07d10bebcd0f2cbee7098",
+      "bytes": 1335
+    },
+    {
+      "path": "output/modernization/r22-20261012/dependency-closure-recipe.py",
+      "sha256": "9eaba0798d5f09c8d3eed53a614e2202671f26e303a142e5976ba0175e46637d",
+      "bytes": 2118
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-build-recipe.py",
+      "sha256": "554357651ba70536a5792290de0f0ff14912119070515b9fbcc80e1f39f6d9fb",
+      "bytes": 2475
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-cpu/commands.json",
+      "sha256": "25ec96fb2b39866dab9e39980261f2f67630ff1a1447e3bc801975aef703dab0",
+      "bytes": 7616
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-cpu-build.log",
+      "sha256": "8c3ced0be67edc17df5ab19cedcbb3d02448697fcaf4b6b34dc93d97fe288bd4",
+      "bytes": 733
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-cuda/commands.json",
+      "sha256": "a77053d1aa2e2cefd9b1ebf68d707702bc6f461b885062505b714ba6b021663c",
+      "bytes": 51494
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-cuda-comparator-build.log",
+      "sha256": "bff98389ad37330d91836a6d9a86be49873e89f592348f400998a9db88a751e6",
+      "bytes": 793
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-cuda-eos-nse-build.log",
+      "sha256": "71de395ad93342d7ab2952aa48ec854b5a05c38fb74b91add87c0b7c3bef20b0",
+      "bytes": 69617
+    },
+    {
+      "path": "output/modernization/r22-20261012/focused-cuda-owners-build.log",
+      "sha256": "7d8eb0bfbed9799116febbf025be59d8f9d4dd920fb126c977248aeaa4c3239e",
+      "bytes": 711390
+    },
+    {
+      "path": "output/modernization/r22-20261012/hydro-replay-controls.json",
+      "sha256": "7469edd13d8b8389a28fb6a6929b35251021983c4a729d4a946f7fa054dafbb6",
+      "bytes": 823
+    },
+    {
+      "path": "output/modernization/r22-20261012/hydro-replay-manifest.json",
+      "sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+      "bytes": 16141
+    },
+    {
+      "path": "output/modernization/r22-20261012/prepare-cuda-recipe.py",
+      "sha256": "5db3a639a7113e95f4999002e72b3cc9e0aa80cd8841473e501e70b319b79de0",
+      "bytes": 2216
+    },
+    {
+      "path": "output/modernization/r22-20261012/prepare-recipe.py",
+      "sha256": "4a18f1025f22cc1dbfaa9e70b909b3bc6b01cb43f3b5298f062b717b48e1fe76",
+      "bytes": 4184
+    },
+    {
+      "path": "output/modernization/r22-20261012/start-identity.json",
+      "sha256": "e65ca366172bfce8099e336f7c2ac8bd4a9b5df0be6ba1d638237308a422bd8c",
+      "bytes": 1100
+    },
+    {
+      "path": "output/modernization/r22-20261012/executed-application-commands.json",
+      "sha256": "94a38acfe1452b8b4515f72ade4b43dfeb6f75b9a2b6f92188cb8e88cfe5f0cd",
+      "bytes": 5051
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-owner-build-stop.json",
+      "sha256": "155234f45b6da3b3da7f71c6c1f57a6b64e9fec9e4968acb93fa38f8d4ae5aee",
+      "bytes": 1243
+    },
+    {
+      "path": "output/modernization/r22-20261012/cuda-results-processed.json",
+      "sha256": "1d2f3c0dd410c11b1f1fb43dfa8cbea925d779574ef7fbc6d24babea3c38574f",
+      "bytes": 1078
+    }
+  ],
+  "delegation": [
+    {
+      "job_id": "081009ca93d64d7a828d34dc8d751730",
+      "provider": "deepseek",
+      "purpose": "G1 target/source binding",
+      "adoption": "evidence_only",
+      "excluded": "Incorrect baseline lacks test-ELF hashes inference and cache-reconfigure suggestion."
+    },
+    {
+      "job_id": "49dc22c43e17487d8abaa14fbb4fedc7",
+      "provider": "deepseek",
+      "purpose": "G2/G3/G5 oracle and fixed-output risks",
+      "adoption": "evidence_only"
+    },
+    {
+      "job_id": "40c6dbd6eb0d4ca1bbb76062634aafa6",
+      "provider": "deepseek",
+      "purpose": "Selected-case convergence gates",
+      "adoption": "none",
+      "review": "REPAIR_REQUIRED",
+      "reason": "Wrong bin path/ancestry-derived identity mismatch and unnecessary approval claim."
+    },
+    {
+      "job_id": "ad355fa249104374b4352a86f5136b35",
+      "provider": "deepseek",
+      "purpose": "Consolidated convergence review repair",
+      "execution_status": "FAILED_invalid_delivery",
+      "adoption": "evidence_only",
+      "reason": "Intact six-key response preceded by prose; complete raw response preserved, only checked scope adopted."
+    },
+    {
+      "job_id": "73641f57969444058f5267ec37bda7de",
+      "provider": "deepseek",
+      "purpose": "Independent math on actual processed metrics and original policies",
+      "adoption": "evidence_only",
+      "boundary": "No raw H5/field-vector parity recomputation; local comparator owns those receipts."
+    },
+    {
+      "job_id": "7b267a359d90433e881478562fb93ff0",
+      "provider": "antigravity",
+      "purpose": "Frozen selected prose clarity",
+      "adoption": "full_selected_text",
+      "source_sha256": "61235874e2955df30810642b36e206167f6d10aee6875820579bb32a297556b5",
+      "candidate_sha256": "6d68cf356a18e4a2fbb532a9443b41fb379cec9be34aec7d086f902721b4d6be",
+      "checks": "Numeric/code/protected clauses and semantics preserved; first/final paragraphs used."
+    }
+  ],
+  "cuda": {
+    "executed": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "groups": [
+      {
+        "id": "G1",
+        "tests": 3,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "id": "G2",
+        "tests": 4,
+        "failures": 0,
+        "skipped": 0
+      },
+      {
+        "id": "G3",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0
+      }
+    ],
+    "deferred": [
+      {
+        "name": "diffusion_rkl_parity",
+        "target": "arch_cuda_diffusion_rkl_parity",
+        "status": "DEFERRED_BUILD_BUDGET",
+        "reason": "Focused optional build was time-bounded; no old stale ELF execution or PASS."
+      },
+      {
+        "name": "cuda_backend_diffusion_rkl1",
+        "target": "arch_cuda_hydro_block",
+        "status": "DEFERRED_BUILD_BUDGET",
+        "reason": "Focused optional build was time-bounded; no old stale ELF execution or PASS."
+      },
+      {
+        "name": "cuda_backend_diffusion_rkl2",
+        "target": "arch_cuda_hydro_block",
+        "status": "DEFERRED_BUILD_BUDGET",
+        "reason": "Focused optional build was time-bounded; no old stale ELF execution or PASS."
+      }
+    ]
+  },
+  "optional_cuda_build_stop": {
+    "scope": "optional_cuda_owner_focused_build",
+    "command": "nine original targets,18 direct translation units,serialized,original flags",
+    "exit_code": 124,
+    "elapsed_seconds": 600.021,
+    "stop_reason": "operational_timeout_SIGTERM_owned_guard",
+    "scientific_or_runtime_failure": false,
+    "completed_targets": [
+      "arch_cuda_ppm_limiter",
+      "arch_cuda_conservative_acceptance",
+      "arch_cuda_hydro_leaf_parity",
+      "arch_cuda_burn_controller_parity"
+    ],
+    "incomplete_target": "arch_cuda_diffusion_rkl_parity",
+    "current_stage": "nvcc compilation",
+    "not_started_targets": [
+      "arch_cuda_hydro_block",
+      "arch_cuda_generated_nse",
+      "arch_cuda_native_tabular",
+      "arch_cuda_network_nse_device"
+    ],
+    "status": "INCOMPLETE_NEEDS_EXECUTION_OPTIMIZATION",
+    "peak_owned_rss_kib": 4602252,
+    "min_available_kib": 2359164,
+    "peak_swap_kib": 1292,
+    "baseline_swap_kib": 0,
+    "no_retrial_this_round": [
+      "arch_cuda_diffusion_rkl_parity",
+      "arch_cuda_hydro_block"
+    ],
+    "independent_missing_eos_nse_followup": "three original targets only,360s bounded,not a retrial of timed-out math target",
+    "cause": "Compilation template/optimization cost suspected; root cause not profiled; no numerical regression inferred."
+  },
+  "optional_compile_stopped": true,
+  "canonical_hydro_inputs_status": "FAIL_CONFIG_PRESERVED_DERIVED_REPLAY_PASS",
+  "executed_application_commands": [
+    {
+      "batch": "app-ppm-replay",
+      "command": [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "tools/validate_backend_results.py",
+        "--manifest",
+        "output/modernization/r22-20261012/hydro-replay-manifest.json",
+        "--case",
+        "hydro_ppm_n64",
+        "--case",
+        "hydro_ppm_n128",
+        "--case",
+        "hydro_ppm_n256",
+        "--arch",
+        "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build-rt-cuda",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--output-root",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/app-ppm-replay"
+      ],
+      "working_directory": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "environment": {
+        "OMP_NUM_THREADS": "4"
+      },
+      "operational_timeout_seconds": 600,
+      "exit_code": 0,
+      "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+      "identity_verified_after_run": true,
+      "evidence": "output/modernization/r22-20261012/app-ppm-replay/backend-validation-evidence.json",
+      "convergence_receipt": "output/modernization/r22-20261012/app-ppm-replay/convergence-receipt.json"
+    },
+    {
+      "batch": "app-sod",
+      "command": [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "tools/validate_backend_results.py",
+        "--manifest",
+        "output/modernization/r22-20261012/hydro-replay-manifest.json",
+        "--case",
+        "sod_ppm_n64",
+        "--case",
+        "sod_ppm_n128",
+        "--case",
+        "sod_ppm_n256",
+        "--arch",
+        "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build-rt-cuda",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--output-root",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/app-sod"
+      ],
+      "working_directory": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "environment": {
+        "OMP_NUM_THREADS": "4"
+      },
+      "operational_timeout_seconds": 600,
+      "exit_code": 0,
+      "manifest_sha256": "3e12221ad02d408d66cda97b4b35e89b03ccbc9028ddf1d804bbb4e4931fff62",
+      "identity_verified_after_run": true,
+      "evidence": "output/modernization/r22-20261012/app-sod/backend-validation-evidence.json",
+      "convergence_receipt": "output/modernization/r22-20261012/app-sod/convergence-receipt.json"
+    },
+    {
+      "batch": "app-rkl1-replay",
+      "command": [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "tools/validate_backend_results.py",
+        "--manifest",
+        "validation/backend/cases.json",
+        "--case",
+        "diffusion_rkl1_n64",
+        "--arch",
+        "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build-rt-cuda",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--output-root",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/app-rkl1-replay"
+      ],
+      "working_directory": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "environment": {
+        "OMP_NUM_THREADS": "4"
+      },
+      "operational_timeout_seconds": 600,
+      "exit_code": 0,
+      "manifest_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+      "identity_verified_after_run": true,
+      "evidence": "output/modernization/r22-20261012/app-rkl1-replay/backend-validation-evidence.json",
+      "convergence_receipt": null
+    },
+    {
+      "batch": "app-rkl2",
+      "command": [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "tools/validate_backend_results.py",
+        "--manifest",
+        "validation/backend/cases.json",
+        "--case",
+        "diffusion_rkl2_n64",
+        "--case",
+        "diffusion_rkl2_n128",
+        "--case",
+        "diffusion_rkl2_n256",
+        "--arch",
+        "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/shiroakane/ARCH/build-rt-cuda/arch_cuda_single_level_validation",
+        "--build-dir",
+        "/home/shiroakane/ARCH/build-rt-cuda",
+        "--source-root",
+        "/home/shiroakane/ARCH",
+        "--output-root",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r22-20261012/app-rkl2"
+      ],
+      "working_directory": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "environment": {
+        "OMP_NUM_THREADS": "4"
+      },
+      "operational_timeout_seconds": 600,
+      "exit_code": 0,
+      "manifest_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+      "identity_verified_after_run": true,
+      "evidence": "output/modernization/r22-20261012/app-rkl2/backend-validation-evidence.json",
+      "convergence_receipt": "output/modernization/r22-20261012/app-rkl2/convergence-receipt.json"
+    }
+  ],
+  "source_binding_boundary": "Source tree equality, actual Ninja dependency freshness, target-only fresh rebuilds and runtime auxiliary revision checked separately. Initial CUDA application comparator omitted from direct index; corrected explicitly.",
+  "closing_self_work": {
+    "reason": "All selected CPU and analytic runs and nine bounded device checks have receipts; final integration and mechanical document QA remain. No benefit from another broad review of unchanged scope.",
+    "next_recheck": "New numerical failure or user-authorized R2.3/scope change."
+  },
+  "application_initial_failures": [
+    {
+      "batch": "app-ppm",
+      "case": "hydro_ppm_n64",
+      "phase": "configuration before first step",
+      "exit": 1,
+      "error": "Missing required hll_wave_speed/min_eint",
+      "physical_endpoint_reached": false,
+      "H5_created": false,
+      "preserved": true
+    },
+    {
+      "batch": "app-rkl1",
+      "case": "diffusion_rkl1_n64",
+      "phase": "step1 CPU/CUDA checkpoint comparison",
+      "exit": 1,
+      "error": "Old helper expects state-control revision2; produced revision3",
+      "scientific_endpoint_reached": false,
+      "preserved": true,
+      "correction": "Target-only fresh helper and new replay directory; old failed evidence retained."
+    }
+  ],
+  "local_h5": {
+    "files": 651,
+    "logical_bytes": 80589096,
+    "submitted_to_git": false,
+    "delegated_raw_data": false
+  },
+  "final_integrity_check": {
+    "path": "output/modernization/r22-20261012/final-integrity-check.json",
+    "sha256": "a52f607a973fa4c8eee6deebb5cf5c7d70ef44b84320544f94ca09efbc4173a7",
+    "result": {
+      "status": "PASS",
+      "checks": {
+        "ctest_partition": {
+          "cpu_pass": 27,
+          "cuda_pass": 9,
+          "cuda_deferred": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        "derived_manifest_only_two_frozen_controls": true,
+        "application_exact_scope_and_receipt_integrity": {
+          "cases": 10,
+          "comparison_pairs": 51,
+          "convergence_groups": 3
+        },
+        "local_evidence_hashes_checked": 67,
+        "production_arch_elf_and_comparator_identities": true,
+        "production_and_test_source_git_diff": "unchanged",
+        "changed_doc_local_file_links": {
+          "checked": 107,
+          "broken": 0,
+          "orphan_table_rows": 0
+        },
+        "scope_stop_and_failure_semantics": true
+      }
+    }
+  }
+}

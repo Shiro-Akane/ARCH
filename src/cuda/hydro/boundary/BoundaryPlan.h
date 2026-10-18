@@ -30,52 +30,6 @@
 
 namespace arch::cuda
 {
-/** Read preceding completed layers by their actual sorted ghost offsets.
- * This is an allocation adapter, not a BC or EOS authority. Host control owns
- * sorted/unique offsets, full cell-major X extents and buffer lifetime. The
- * resident input accessor retains its own species-major storage convention.
- */
-struct NativeBoundaryPrefixView {
-    const int* indices = nullptr;
-    const FluidVector* conserved = nullptr;
-    const double* fractions = nullptr;
-    const double* enuc = nullptr;
-    int count = 0;
-    int species = 0;
-
-    /** Lower-bound lookup; the empty view never dereferences null storage. */
-    ARCH_INLINE int find(int index) const {
-        int lo = 0, hi = count;
-        while (lo < hi) {
-            const int mid = lo + (hi - lo) / 2;
-            if (indices[mid] < index) lo = mid + 1;
-            else hi = mid;
-        }
-        return lo < count && indices[lo] == index ? lo : -1;
-    }
-    /** Borrow the completed prefix mean, else the immutable resident cell. */
-    template<class Input>
-    ARCH_INLINE FluidVector read(const Input& input, int index) const {
-        const int ordinal = find(index);
-        return ordinal >= 0 ? conserved[ordinal] : input.load(index);
-    }
-    /** Read X in cell-major prefix or through the resident species accessor. */
-    template<class Input>
-    ARCH_INLINE double fraction(const Input& input, int species_index, int index) const {
-        const int ordinal = find(index);
-        if (ordinal >= 0)
-            return fractions[static_cast<std::size_t>(ordinal) * static_cast<std::size_t>(species)
-                + static_cast<std::size_t>(species_index)];
-        return input.species(species_index,index);
-    }
-    /** ENUC inherits from the same donor prefix as U/X, without reintegration. */
-    template<class Input>
-    ARCH_INLINE double enuc_value(const Input& input, int index) const {
-        const int ordinal = find(index);
-        return ordinal >= 0 ? enuc[ordinal] : input.enuc_rate[index];
-    }
-};
-
 struct DeviceBoundaryTransfer {
     std::uint64_t logical_ordinal;
     int source_index;
@@ -175,58 +129,6 @@ inline DeviceCompiledBoundaryPlan compile_boundary_plan(
         compiled.transfers.push_back(detail::compile_boundary_transfer(operation, grid));
     return compiled;
 }
-/** Lower only final Native RZ axis copies and their shared axial corners.
- * Authenticate the original logical plan against the actual Native grid first;
- * obtain original RzAxis transfers from its ordinary lowering, and obtain all
- * extra corners from the sole rz_axis_corner_operations producer. The compact
- * ordinals identify this upload list, never a new logical boundary authority.
- *
- * The existing launch_boundary_plan executor consumes this list after the
- * second domain exchange: X completes original axis rows, Y supplies the next
- * stream barrier for the corner list, and Z is empty. Corner operations retain
- * their original logical X phase and parity; phase labels here only sequence
- * launches. No ordinary outer radial or axial physical seed is relaunched.
- * Off-axis Native blocks return an empty list that the caller must skip. The
- * runtime still owns the actual state lease/grid binding, join and final EOS.
- */
-inline DeviceCompiledBoundaryPlan compile_rz_axis_boundary_plan(
-    const boundary::BoundaryPlan& logical, const DeviceGridView& grid)
-{
-    if (grid.semantics != GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::invalid_argument("Final RZ axis lowering requires the actual Native grid");
-    const auto original = compile_boundary_plan(logical, grid);
-    const bool at_axis = grid.x1_min == 0.;
-    if (at_axis != (logical.input().faces[0] == boundary::BoundaryType::RzAxis))
-        throw std::invalid_argument("Final RZ axis logical plan differs from the actual radial origin");
-    DeviceCompiledBoundaryPlan compiled{};
-    compiled.logical_fingerprint = logical.fingerprint();
-    compiled.total_size = grid.total_size;
-    compiled.phases = {boundary::BoundaryPhase{boundary::BoundaryPhaseId::X, 0, 0},
-        boundary::BoundaryPhase{boundary::BoundaryPhaseId::Y, 0, 0},
-        boundary::BoundaryPhase{boundary::BoundaryPhaseId::Z, 0, 0}};
-    if (!at_axis) return compiled;
-    const auto corners = boundary::rz_axis_corner_operations(logical);
-    for (std::size_t ordinal = 0; ordinal < logical.operations().size(); ++ordinal) {
-        if (logical.operations()[ordinal].type != boundary::BoundaryType::RzAxis) continue;
-        auto transfer = original.transfers[ordinal];
-        transfer.logical_ordinal = compiled.transfers.size();
-        compiled.transfers.push_back(transfer);
-    }
-    const std::size_t axis_count = compiled.transfers.size();
-    for (const auto& corner : corners) {
-        auto transfer = detail::compile_boundary_transfer(corner, grid);
-        transfer.logical_ordinal = compiled.transfers.size();
-        compiled.transfers.push_back(transfer);
-    }
-    if (compiled.transfers.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw std::overflow_error("Final RZ axis transfer count exceeds the device launch extent");
-    compiled.phases[0].count = axis_count;
-    compiled.phases[1].first = axis_count;
-    compiled.phases[1].count = corners.size();
-    compiled.phases[2].first = compiled.transfers.size();
-    return compiled;
-}
-
 inline cudaError_t validate_boundary_launch(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,
     const DeviceCompiledBoundaryPlan& compiled)

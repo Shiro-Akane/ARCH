@@ -20,6 +20,7 @@
 #include "api/protocol/Response.h"
 #include "core/config/RuntimeParams.h"
 #include "core/files/FileFingerprint.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "physics/eos/eosdispatch.h"
 
 namespace arch::api {

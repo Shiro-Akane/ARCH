@@ -13,6 +13,11 @@ requests. It uses the same evaluator on CPU and CUDA boundary snapshots.
 [BoundaryFlux.h](BoundaryFlux.h) is the lightweight shared transport control
 leaf. [BoundaryDiagnostics.h](BoundaryDiagnostics.h) observes actual face fluxes;
 stage scheduling, metric integration and IO remain in the Driver.
+The common fluid header only forward-declares the existing transient storage.
+The boundary/driver owners and flux consumers include their complete definitions
+where needed; stage-slot sharing, regeneration and rollback retain their existing
+owners. A runtime consumer of `BCHandler` includes `PhysicalBoundaryHandler.h`
+directly rather than obtaining it through a numerical helper.
 Potential conditions feed the existing `gravity/self` and composite Poisson
 owners, rather than a second elliptic solver.
 

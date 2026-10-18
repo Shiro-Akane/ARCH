@@ -9,7 +9,8 @@ shared driver. Choose a directory by responsibility:
 | [api](api/README.md) | Configuration schema, inspection and bounded CPU preview for GUI clients |
 | [interface](interface/README.md) | Problem setup and initialization contracts |
 | [data](data/README.md) | State records and configuration types |
-| [grid](grid/README.md) | Grid layout and shared physical geometry |
+| [grid](grid/README.md) | Grid layout and topology |
+| [curvilinear coordinates](numerics/curvilinear/README.md) | Shared layouts, measures, state representation, sources and coordinate stress |
 | [amr](amr/README.md) | Mesh topology, conservative transfers and exchange plans |
 | [driver](driver/README.md) | Backend selection, stage scheduling and state lifetime |
 | [numerics](numerics/README.md) | Shared numerical algorithms |
@@ -18,6 +19,13 @@ shared driver. Choose a directory by responsibility:
 | [io](io/README.md) | Configuration parsing, diagnostics and shared HDF5 IO |
 
 To trace a calculation end-to-end, start with the initialization in `main.cpp`, proceed to the stage scheduling in `driver/`, and examine the specific numerical or physical routines for the features you are interested in.
+
+Spherical 2D polar `(r,phi)` and full 3D cylindrical flow share the existing
+[reconstruction](numerics/reconstruction/Reconstruction.h),
+[face admissibility/assembly](numerics/flux/InvariantDomainFlux.h) and integration
+owners. Cylindrical grids support radial 1D and full 3D only; 2D cylindrical
+configuration and direct construction reject explicitly. Runtime retains Host
+completed-patch EOS gates and acceptance ownership.
 
 Before adding any new implementations, always consult the [ownership map](../docs/development/ImplementationOwnership.md) to understand module boundaries. As a core design principle, both CPU and CUDA call the exact same mathematical bodies: backend-specific execution paths handle execution flow and resource management, including memory allocation, kernel launches, and synchronization; however, if you are modifying a physical equation or numerical method, focus directly on the shared routines. Note that build and run instructions are maintained in the central [project guide](../README.md), rather than within the source directories.
 

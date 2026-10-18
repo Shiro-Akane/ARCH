@@ -1200,177 +1200,9 @@ void test_scheduler_owned_reflux_and_runtime_lane_traces()
     emit("bookkeeping", "burn-second", {burn_bookkeeping.back()});
 }
 
-/** Every Hydro output and final reflux completes boundary work before the optional gate. */
-void test_post_boundary_acceptance_order_and_hydro_reflux()
-{
-    using namespace arch::scheduler;
-    for (const HydroMethod method : {HydroMethod::Euler, HydroMethod::RK2,
-                                     HydroMethod::RK3}) {
-        ReadyLedger ready(ExecutionSide::Host);
-        StageExecutionContext context{ExecutionSide::Host, ready.ledger,
-                                      ready.clock};
-        const std::vector handles{ready.handle};
-        const HydroPlan plan = make_hydro_plan(method);
-        std::vector<std::string> order;
-        std::array<StateVersion, 3> completed_boundary{};
-        int owner_calls = 0, boundary_calls = 0, gate_calls = 0;
-        context.hydro_acceptance = [&](const StageDescriptor& stage) {
-            expect(owner_calls < static_cast<int>(plan.stages.size()),
-                   "post-boundary hook adds no Hydro receipt owner invocation");
-            expect(same_stage_descriptor(stage, plan.stages[owner_calls]),
-                   "post-boundary hook preserves frozen Hydro descriptor");
-            ++owner_calls;
-            order.push_back("owner");
-        };
-        const auto boundary = [&](StateSlot slot, StateVersion version,
-                                  CompletionToken token) {
-            const auto before = ready.ledger.inspect({ready.handle, slot});
-            expect(before.interior.version == version
-                       && before.ghost.residency == StateResidency::Invalid,
-                   "actual Hydro boundary starts after interior publication");
-            // This payload models work performed by the callable, separately
-            // from the readiness ledger and the later completion token.
-            completed_boundary[static_cast<std::size_t>(slot)] = version;
-            ++boundary_calls;
-            order.push_back("boundary");
-            return token;
-        };
-        context.post_boundary_acceptance = [&](const StageExecutionContext& actual,
-                                               StateSlot slot,
-                                               StateVersion version) {
-            expect(&actual == &context, "Hydro gate receives the actual execution context");
-            const auto before = ready.ledger.inspect({ready.handle, slot});
-            expect(completed_boundary[static_cast<std::size_t>(slot)] == version
-                       && before.interior.version == version
-                       && before.ghost.residency == StateResidency::Invalid,
-                   "Hydro gate sees boundary payload before ghost publication");
-            expect(owner_calls == static_cast<int>(plan.stages.size())
-                       || owner_calls == gate_calls + 1,
-                   "stage receipt owner remains before the independent gate");
-            ++gate_calls;
-            order.push_back("science");
-        };
-        const auto executor = [&](const StageDescriptor&, CompletionToken token) {
-            order.push_back("execute");
-            return token;
-        };
-        const auto rotation = [&](arch::state::SlotRotation selected) {
-            const auto final = ready.ledger.inspect(
-                {ready.handle, selected.current_from});
-            expect(final.ghost.residency == StateResidency::HostValid
-                       && final.ghost_source_version == final.interior.version,
-                   "final Hydro stage is gated and ghost-ready before rotation");
-            order.push_back("rotate");
-        };
-        const auto reflux = [&](const HydroPlan& selected, StateSlot slot,
-                                CompletionToken token) {
-            expect(selected.method == method && slot == StateSlot::Current,
-                   "optional gate preserves final Hydro reflux owner");
-            order.push_back("reflux");
-            return token;
-        };
-        HydroExecutionResult result;
-        if (method == HydroMethod::Euler)
-            result = execute_euler_lane(context, handles, executor, boundary,
-                                        rotation, reflux);
-        else if (method == HydroMethod::RK2)
-            result = execute_rk2_lane(context, handles, executor, boundary,
-                                      rotation, reflux);
-        else
-            result = execute_rk3_lane(context, handles, executor, boundary,
-                                      rotation, reflux);
-        std::vector<std::string> expected;
-        for (std::size_t stage = 0; stage < plan.stages.size(); ++stage)
-            expected.insert(expected.end(), {"execute", "owner", "boundary", "science"});
-        expected.insert(expected.end(), {"rotate", "reflux", "boundary", "science"});
-        expect(order == expected && boundary_calls == owner_calls + 1
-                   && gate_calls == owner_calls + 1,
-               "every Hydro stage and final reflux use boundary then gate exactly once");
-        for (const auto& stage : result.stages)
-            expect(arch::state::is_complete(stage.ghost_completion),
-                   "optional gate refreshes even the frozen final descriptor");
-        const auto current = ready.ledger.inspect({ready.handle, StateSlot::Current});
-        expect(current.interior.version == result.final_reflux.version
-                   && current.ghost_source_version == result.final_reflux.version
-                   && current.ghost.residency == StateResidency::HostValid,
-               "final reflux ghost readiness follows its own successful gate");
-    }
-}
 
-/** RKL keeps its reflux/receipt ownership while sharing the later boundary gate. */
-void test_post_boundary_acceptance_rkl_order()
-{
-    using namespace arch::scheduler;
-    for (const RklMethod method : {RklMethod::RKL1, RklMethod::RKL2})
-        for (const bool multi : {false, true}) {
-            ReadyLedger ready(ExecutionSide::Host);
-            StageExecutionContext context{ExecutionSide::Host, ready.ledger,
-                                          ready.clock};
-            const std::vector handles{ready.handle};
-            (void)copy_slot(context, handles, StateSlot::Current, StateSlot::Scratch, [] {});
-            (void)copy_slot(context, handles, StateSlot::Current, StateSlot::Next, [] {});
-            std::vector<std::string> order;
-            std::array<StateVersion, 3> completed_boundary{};
-            int owner_calls = 0, gate_calls = 0;
-            context.rkl_acceptance = [&](const RklStageDescriptor& stage) {
-                expect(stage.stage == ++owner_calls,
-                       "RKL receipt owner sees each original stage once");
-                order.push_back("owner");
-            };
-            const auto executor = [&](const RklPlan& selected,
-                                      const RklStageDescriptor&, CompletionToken token) {
-                expect(selected.method == method, "RKL selected method is unchanged");
-                order.push_back("execute");
-                return token;
-            };
-            const auto reflux = [&](const RklPlan&, const RklStageDescriptor&,
-                                    CompletionToken token) {
-                order.push_back("reflux");
-                return token;
-            };
-            const auto boundary = [&](StateSlot slot, StateVersion version,
-                                      CompletionToken token) {
-                completed_boundary[static_cast<std::size_t>(slot)] = version;
-                order.push_back("boundary");
-                return token;
-            };
-            context.post_boundary_acceptance = [&](const StageExecutionContext& actual,
-                                                   StateSlot slot, StateVersion version) {
-                expect(&actual == &context, "RKL gate receives the actual execution context");
-                const auto before = ready.ledger.inspect({ready.handle, slot});
-                expect(completed_boundary[static_cast<std::size_t>(slot)] == version
-                           && before.interior.version == version
-                           && before.ghost.residency == StateResidency::Invalid
-                           && owner_calls == gate_calls + 1,
-                       "RKL gate follows actual boundary and receipt, before ghost readiness");
-                ++gate_calls;
-                order.push_back("science");
-            };
-            const auto rotation = [&](arch::state::SlotRotation) {
-                order.push_back("rotate");
-            };
-            RklExecutionResult result;
-            if (!multi && method == RklMethod::RKL1)
-                result = execute_single_rkl1_lane(context, handles, 2, executor,
-                                                  reflux, boundary, rotation);
-            else if (!multi && method == RklMethod::RKL2)
-                result = execute_single_rkl2_lane(context, handles, 2, executor,
-                                                  reflux, boundary, rotation);
-            else if (method == RklMethod::RKL1)
-                result = execute_multi_rkl1_lane(context, handles, 2, executor,
-                                                 reflux, boundary, rotation);
-            else
-                result = execute_multi_rkl2_lane(context, handles, 2, executor,
-                                                 reflux, boundary, rotation);
-            const auto current = ready.ledger.inspect({ready.handle, StateSlot::Current});
-            expect(order == std::vector<std::string>{"execute", "reflux", "owner", "boundary", "science",
-                                                     "execute", "reflux", "owner", "boundary", "science", "rotate"}
-                       && owner_calls == 2 && gate_calls == 2
-                       && current.ghost.residency == StateResidency::HostValid
-                       && current.ghost_source_version == result.stages.back().version,
-                   "all four RKL lanes retain old owners and gate both completed outputs");
-        }
-}
+
+
 
 /** Actual selected Hydro callbacks see the Shu–Osher output clocks before BC work. */
 void test_hydro_physical_boundary_times()
@@ -1393,24 +1225,21 @@ void test_hydro_physical_boundary_times()
             context.step_start_time = 2.; context.step_dt = .125;
             const std::vector handles{ready.handle};
             const auto plan = make_hydro_plan(selected.method);
-            int configured = 0, executed = 0, inputs = 0, boundaries = 0, gates = 0;
-            bool output_pending = false, reflux_pending = false;
+            int configured = 0, executed = 0, inputs = 0, boundaries = 0;
+            bool output_pending = false;
             double snapshot_time = std::numeric_limits<double>::quiet_NaN();
             BoundaryPurpose snapshot_purpose = BoundaryPurpose::Gravity;
-            StateVersion completed_boundary{};
             context.configure_boundary_context = [&](double time, BoundaryPurpose purpose) {
                 expect(purpose == BoundaryPurpose::Hydro,
                        "selected Hydro time configuration preserves its physical purpose");
                 if (output_pending) {
-                    const auto slot = reflux_pending ? StateSlot::Current
-                        : plan.stages[static_cast<std::size_t>(executed - 1)].output_slot;
-                    const auto state = ready.ledger.inspect({ready.handle, slot});
-                    expect(state.ghost.residency == StateResidency::Invalid,
-                           "configuring Hydro output never publishes candidate ghosts");
-                    const double fraction = reflux_pending ? 1.
-                        : selected.output[static_cast<std::size_t>(executed - 1)];
-                    expect(time == 2. + .125 * fraction && boundaries == gates,
-                           "Hydro output configuration precedes one real boundary and gate");
+                    const auto& descriptor = plan.stages[static_cast<std::size_t>(executed - 1)];
+                    const auto state = ready.ledger.inspect({ready.handle, descriptor.output_slot});
+                    expect(descriptor.refresh_ghost_after
+                               && state.ghost.residency == StateResidency::Invalid
+                               && boundaries == executed - 1
+                               && time == 2. + .125 * selected.output[static_cast<std::size_t>(executed - 1)],
+                           "Hydro output clock precedes only its scheduled boundary refresh");
                 } else {
                     expect(executed < selected.stages
                                && time == 2. + .125 * selected.input[static_cast<std::size_t>(executed)],
@@ -1425,49 +1254,46 @@ void test_hydro_physical_boundary_times()
                        "real Hydro input preparation borrows the just-configured snapshot");
                 ++inputs;
             };
-            context.post_boundary_acceptance = [&](const StageExecutionContext& actual,
-                                                   StateSlot slot, StateVersion version) {
-                const auto state = ready.ledger.inspect({ready.handle, slot});
-                expect(&actual == &context && &actual.ledger == &ready.ledger
-                           && &actual.clock == &ready.clock && actual.side == side
-                           && completed_boundary == version && state.interior.version == version
-                           && state.ghost.residency == StateResidency::Invalid
-                           && boundaries == gates + 1,
-                       "timed Hydro gate sees actual owner and boundary before readiness");
-                ++gates;
-            };
             const auto executor = [&](const StageDescriptor& descriptor, CompletionToken token) {
                 expect(descriptor.stage == executed + 1 && inputs == executed + 1
-                           && snapshot_time == 2. + .125 * selected.input[static_cast<std::size_t>(executed)],
-                       "Hydro execution keeps its original input time and preparation count");
+                           && snapshot_time == 2. + .125 * selected.input[static_cast<std::size_t>(executed)]
+                           && hydro_output_time_fraction(selected.method, descriptor)
+                                == selected.output[static_cast<std::size_t>(executed)],
+                       "Hydro execution retains its original input and Shu-Osher output clocks");
                 ++executed; output_pending = true; return token;
             };
             const auto boundary = [&](StateSlot slot, StateVersion version, CompletionToken token) {
-                const double fraction = reflux_pending ? 1.
-                    : selected.output[static_cast<std::size_t>(executed - 1)];
-                expect(output_pending && snapshot_time == 2. + .125 * fraction
+                const auto& descriptor = plan.stages[static_cast<std::size_t>(executed - 1)];
+                const auto state = ready.ledger.inspect({ready.handle, slot});
+                expect(output_pending && descriptor.refresh_ghost_after
+                           && slot == descriptor.output_slot
+                           && snapshot_time == 2. + .125 * selected.output[static_cast<std::size_t>(executed - 1)]
                            && snapshot_purpose == BoundaryPurpose::Hydro
-                           && ready.ledger.inspect({ready.handle, slot}).ghost.residency
-                                == StateResidency::Invalid,
-                       "actual Hydro boundary receives the physical output clock before publication");
-                completed_boundary = version; ++boundaries; output_pending = false; return token;
+                           && state.interior.version == version
+                           && state.ghost.residency == StateResidency::Invalid,
+                       "actual Hydro boundary receives the scheduled output clock and version before publication");
+                ++boundaries; output_pending = false; return token;
             };
+            const double final_input_time = 2. + .125 * selected.input[static_cast<std::size_t>(selected.stages - 1)];
             const auto result = execute_hydro_plan(context, handles, plan, executor, boundary,
                 [&]() {
-                    expect(executed == selected.stages && gates == selected.stages
-                               && snapshot_time == 2.125,
-                           "Hydro rotation changes storage while retaining the endpoint time");
+                    const auto final = ready.ledger.inspect({ready.handle, plan.final_rotation.current_from});
+                    expect(executed == selected.stages && boundaries == selected.stages - 1
+                               && snapshot_time == final_input_time
+                               && final.ghost.residency == StateResidency::Invalid,
+                           "Hydro rotation retains final interior and its descriptor-selected ghost state");
                 },
                 [&](const HydroPlan&, StateSlot slot, CompletionToken token) {
-                    expect(slot == StateSlot::Current, "timed reflux corrects actual Current");
-                    reflux_pending = true; output_pending = true; return token;
+                    expect(slot == StateSlot::Current && snapshot_time == final_input_time,
+                           "timed reflux corrects actual Current without another boundary clock");
+                    return token;
                 });
             const auto current = ready.ledger.inspect({ready.handle, StateSlot::Current});
-            expect(configured == 2 * selected.stages + 1 && inputs == selected.stages
-                       && boundaries == selected.stages + 1 && gates == boundaries
-                       && snapshot_time == 2.125 && current.ghost_source_version == result.final_reflux.version
-                       && current.interior.version == result.final_reflux.version,
-                   "timed Hydro performs no duplicate boundary work and binds final reflux version");
+            expect(configured == 2 * selected.stages - 1 && inputs == selected.stages
+                       && boundaries == selected.stages - 1 && snapshot_time == final_input_time
+                       && current.interior.version == result.final_reflux.version
+                       && current.ghost.residency == StateResidency::Invalid,
+                   "timed Hydro follows frozen refresh descriptors and publishes final reflux interior");
         }
 }
 
@@ -1509,10 +1335,9 @@ void test_rkl_physical_boundary_times()
                 context.step_start_time = -10.; context.step_dt = 3.;
                 const std::vector handles{ready.handle};
                 const auto plan = make_rkl_plan(selected.method, selected.stages);
-                int configured = 0, executed = 0, inputs = 0, boundaries = 0, gates = 0;
+                int configured = 0, executed = 0, inputs = 0, boundaries = 0;
                 bool output_pending = false;
                 double snapshot_time = std::numeric_limits<double>::quiet_NaN();
-                StateVersion completed_boundary{};
                 context.configure_boundary_context = [&](double time, BoundaryPurpose purpose) {
                     expect(purpose == BoundaryPurpose::Diffusion,
                            "RKL configuration keeps the diffusion physical channel");
@@ -1523,7 +1348,7 @@ void test_rkl_physical_boundary_times()
                     if (output_pending) {
                         const auto slot = plan.stages[static_cast<std::size_t>(executed - 1)].output_slot;
                         expect(ready.ledger.inspect({ready.handle, slot}).ghost.residency
-                                   == StateResidency::Invalid && boundaries == gates,
+                                   == StateResidency::Invalid && boundaries == executed - 1,
                                "RKL output configuration does not publish or repeat physical work");
                     }
                     snapshot_time = time; ++configured;
@@ -1538,16 +1363,6 @@ void test_rkl_physical_boundary_times()
                                && time == snapshot_time && purpose == BoundaryPurpose::Diffusion,
                            "actual RKL input preparation keeps the previous-stage snapshot");
                     ++inputs;
-                };
-                context.post_boundary_acceptance = [&](const StageExecutionContext& actual,
-                                                       StateSlot slot, StateVersion version) {
-                    const auto state = ready.ledger.inspect({ready.handle, slot});
-                    expect(&actual == &context && actual.side == side
-                               && completed_boundary == version && state.interior.version == version
-                               && state.ghost.residency == StateResidency::Invalid
-                               && boundaries == gates + 1,
-                           "RKL output EOS hook receives its actual completed boundary owner");
-                    ++gates;
                 };
                 const auto executor = [&](const RklPlan& actual, const RklStageDescriptor& descriptor,
                                           CompletionToken token) {
@@ -1566,13 +1381,14 @@ void test_rkl_physical_boundary_times()
                 const auto boundary = [&](StateSlot slot, StateVersion version, CompletionToken token) {
                     expect(output_pending && snapshot_time == 2. + .25 * static_cast<double>(
                                selected.fraction[static_cast<std::size_t>(executed)])
+                               && ready.ledger.inspect({ready.handle, slot}).interior.version == version
                                && ready.ledger.inspect({ready.handle, slot}).ghost.residency
                                     == StateResidency::Invalid,
                            "real RKL boundary receives c_j before candidate ghost publication");
-                    completed_boundary = version; ++boundaries; output_pending = false; return token;
+                    ++boundaries; output_pending = false; return token;
                 };
                 const auto rotation = [&](arch::state::SlotRotation) {
-                    expect(snapshot_time == 2.25 && gates == selected.stages,
+                    expect(snapshot_time == 2.25 && boundaries == selected.stages,
                            "RKL final rotation keeps the completed diffusion endpoint");
                 };
                 RklExecutionResult result;
@@ -1590,7 +1406,7 @@ void test_rkl_physical_boundary_times()
                         executor, reflux, boundary, rotation);
                 const auto current = ready.ledger.inspect({ready.handle, StateSlot::Current});
                 expect(configured == 2 * selected.stages && inputs == selected.stages
-                           && boundaries == selected.stages && gates == boundaries
+                           && boundaries == selected.stages
                            && current.ghost_source_version == result.stages.back().version,
                        "all shared RKL routes configure clocks without extra boundary publications");
             }
@@ -1691,93 +1507,46 @@ void test_physical_boundary_time_failure_contract()
         StageExecutionContext context{ExecutionSide::Host, ready.ledger, ready.clock};
         context.step_start_time = 2.; context.step_dt = .125;
         const std::vector handles{ready.handle};
-        int configured = 0, boundaries = 0, gates = 0;
+        int configured = 0, boundaries = 0;
         context.configure_boundary_context = [&](double, BoundaryPurpose) {
             if (++configured == 2) throw std::runtime_error("OUTPUT_CONTEXT_REJECTED");
         };
-        context.post_boundary_acceptance = [&](const StageExecutionContext&, StateSlot, StateVersion) { ++gates; };
         expect_throws<std::runtime_error>([&] {
-            (void)execute_euler_lane(context, handles,
+            (void)execute_rk2_lane(context, handles,
                 [](const StageDescriptor&, CompletionToken t) { return t; },
                 [&](StateSlot, StateVersion, CompletionToken t) { ++boundaries; return t; },
                 [](arch::state::SlotRotation) {},
                 [](const HydroPlan&, StateSlot, CompletionToken t) { return t; });
-        }, "output snapshot rejection blocks actual BC and its EOS hook");
-        expect(configured == 2 && boundaries == 0 && gates == 0
-                   && ready.ledger.inspect({ready.handle, StateSlot::Next}).ghost.residency
+        }, "output snapshot rejection blocks its scheduled boundary work");
+        expect(configured == 2 && boundaries == 0
+                   && ready.ledger.inspect({ready.handle, StateSlot::Scratch}).ghost.residency
                         == StateResidency::Invalid,
                "failed output configuration never publishes candidate ghosts");
     }
 }
 
-/** Direct whole-domain completion uses the same boundary/gate/publication ordering. */
-void test_post_boundary_direct_completion_order()
-{
-    using namespace arch::scheduler;
-    ReadyLedger ready(ExecutionSide::Host);
-    StageExecutionContext context{ExecutionSide::Host, ready.ledger, ready.clock};
-    const std::vector handles{ready.handle};
-    const auto witness = publish_completed_interior(context, handles, StateSlot::Current);
-    std::vector<std::string> order;
-    StateVersion actual_boundary_version{};
-    context.post_boundary_acceptance = [&](const StageExecutionContext& actual,
-                                           StateSlot slot, StateVersion version) {
-        expect(&actual == &context, "direct gate receives the actual execution context");
-        const auto before = ready.ledger.inspect({ready.handle, slot});
-        expect(slot == StateSlot::Current && actual_boundary_version == version
-                   && version == witness.version
-                   && before.ghost.residency == StateResidency::Invalid,
-               "direct boundary hook sees completed payload before readiness");
-        order.push_back("science");
-    };
-    const auto completion = complete_boundary(context, handles, StateSlot::Current,
-        witness.version, [&](StateSlot slot, StateVersion version, CompletionToken token) {
-            expect(slot == StateSlot::Current && version == witness.version,
-                   "direct boundary receives original whole-domain frame");
-            actual_boundary_version = version;
-            order.push_back("boundary");
-            return token;
-        });
-    const auto after = ready.ledger.inspect({ready.handle, StateSlot::Current});
-    expect(order == std::vector<std::string>{"boundary", "science"}
-               && after.ghost.residency == StateResidency::HostValid
-               && after.ghost.completion == completion
-               && after.ghost_source_version == witness.version,
-           "direct completion publishes ghosts only after the completed boundary gate");
-}
 
-/** Bad actual completion or a rejecting gate never advertises target ghost readiness. */
-void test_post_boundary_failures_never_publish_ghost()
+
+/** Wrong, pending or failed actual completion never advertises target ghost readiness. */
+void test_boundary_completion_failures_never_publish_ghost()
 {
     using namespace arch::scheduler;
-    // Paths: forced final Euler stage, direct whole-domain completion, final Hydro reflux.
-    // Faults: wrong token, pending token, gate rejection, actual boundary rejection.
-    for (const int path : {0, 1, 2}) for (const int fault : {0, 1, 2, 3}) {
+    for (const int path : {0, 1}) for (const int fault : {0, 1, 2}) {
         ReadyLedger ready(ExecutionSide::Host);
         StageExecutionContext context{ExecutionSide::Host, ready.ledger, ready.clock};
         const std::vector handles{ready.handle};
-        const auto plan = make_hydro_plan(HydroMethod::Euler);
-        const StateSlot target = path == 0 ? StateSlot::Next : StateSlot::Current;
-        int owners = 0, boundaries = 0, target_gates = 0, prefix_gates = 0;
-        context.hydro_acceptance = [&](const StageDescriptor&) { ++owners; };
-        context.post_boundary_acceptance = [&](const StageExecutionContext& actual,
-                                               StateSlot slot, StateVersion version) {
-            expect(&actual == &context, "rejecting gate receives the actual execution context");
-            const auto before = ready.ledger.inspect({ready.handle, slot});
-            expect(before.interior.version == version
-                       && before.ghost.residency == StateResidency::Invalid,
-                   "rejecting hook still runs strictly before ghost publication");
-            if (slot != target) { ++prefix_gates; return; }
-            ++target_gates;
-            if (fault == 2) throw std::logic_error("optional gate rejected");
-        };
-        const auto boundary = [&](StateSlot slot, StateVersion, CompletionToken token) {
+        const auto plan = make_hydro_plan(HydroMethod::RK2);
+        const StateSlot target = path == 0 ? StateSlot::Scratch : StateSlot::Current;
+        int owners = 0, boundaries = 0;
+        const auto boundary = [&](StateSlot slot, StateVersion version, CompletionToken token) -> CompletionToken {
             ++boundaries;
-            if (slot != target) return token;
-            if (fault == 0) return CompletionToken{token.value + 1, CompletionState::Complete};
-            if (fault == 1) return CompletionToken{token.value, CompletionState::Pending};
-            if (fault == 3) throw std::logic_error("actual boundary rejected");
-            return token;
+            const auto before = ready.ledger.inspect({ready.handle, slot});
+            expect(slot == target && before.interior.version == version
+                       && before.ghost.residency == StateResidency::Invalid,
+                   "actual boundary failure starts from the published interior and invalid ghosts");
+            if (fault == 0) return {token.value + 1, CompletionState::Complete};
+            if (fault == 1) return {token.value, CompletionState::Pending};
+            throw std::logic_error("actual boundary rejected");
         };
         const auto executor = [](const StageDescriptor&, CompletionToken token) { return token; };
         StateVersion version{};
@@ -1786,19 +1555,12 @@ void test_post_boundary_failures_never_publish_ghost()
             if (path == 0)
                 (void)execute_stage(context, handles, plan.stages[0], executor,
                     [&](const StageDescriptor&, CompletionToken token) { ++owners; return token; }, boundary);
-            else if (path == 1)
-                (void)complete_boundary(context, handles, target, version, boundary);
             else
-                (void)execute_euler_lane(context, handles, executor, boundary,
-                    [](arch::state::SlotRotation) {},
-                    [](const HydroPlan&, StateSlot, CompletionToken token) { return token; });
-        }, "completion or gate rejection reaches the real scheduler failure path");
+                (void)complete_boundary(context, handles, target, version, boundary);
+        }, "actual boundary completion rejection reaches the scheduler failure path");
         expect(ready.ledger.inspect({ready.handle, target}).ghost.residency == StateResidency::Invalid
-                   && target_gates == (fault == 2 ? 1 : 0)
-                   && prefix_gates == (path == 2 ? 1 : 0)
-                   && owners == (path == 1 ? 0 : 1)
-                   && boundaries == (path == 2 ? 2 : 1),
-               "failed boundary/gate cannot publish ghosts or consume another stage owner");
+                   && owners == (path == 1 ? 0 : 1) && boundaries == 1,
+               "failed boundary completion cannot publish ghosts or consume another stage owner");
     }
 }
 
@@ -2345,6 +2107,34 @@ void test_rkl_production_lanes_use_shared_plan()
 
 void test_production_lane_fingerprints_and_authority_absence()
 {
+    const std::string geometry_binding = read_source(
+        "src/numerics/integrator/HydroGeometryBinding.h");
+    expect(geometry_binding.find("physics/gravity/") == std::string::npos
+               && geometry_binding.find("source_descriptor") == std::string::npos
+               && geometry_binding.find("deferred_native_source") == std::string::npos,
+           "geometry binding does not select or borrow a gravity implementation");
+    const auto solver_required = geometry_binding.find("if (!hydro)");
+    const auto active_domain = geometry_binding.find("for (int id:control.tree->GetActiveBlocks())");
+    const auto grid_checked = geometry_binding.find("GridMetrics::make_geometry_view(grid)", active_domain);
+    const auto boundary_checked = geometry_binding.find("boundary.logical_plan(grid)", grid_checked);
+    expect(solver_required != std::string::npos && active_domain != std::string::npos
+               && grid_checked != std::string::npos && boundary_checked != std::string::npos
+               && solver_required < active_domain && active_domain < grid_checked
+               && grid_checked < boundary_checked,
+           "shared Hydro domain owner requires its solver and checks every actual grid and boundary plan");
+    const std::string registering = read_source("src/amr/flux/AMRFluxRegistering.h");
+    expect(registering.find("physics/gravity/") == std::string::npos
+               && registering.find("Physical::Gravity::") == std::string::npos
+               && registering.find("NativeExternal") == std::string::npos
+               && registering.find("NativeSelf") == std::string::npos
+               && registering.find("native_reflux_energy(") == std::string::npos,
+           "AMR registration owns routes and weights without gravity frames or potential math");
+    const auto energy_read = registering.find("energy_receipt->registered_energy(");
+    const auto registration_apply = registering.find("flux_register.ApplyRegistrationPlan(");
+    const auto receipt_commit = registering.find("energy_receipt->commit_registration(");
+    expect(energy_read != std::string::npos && energy_read < registration_apply
+               && registration_apply < receipt_commit,
+           "caller-owned Energy is gathered before registration and committed only after it succeeds");
     const std::string euler = read_source(
         "src/numerics/integrator/TimeIntegratorEuler.h");
     const std::string rk2 = read_source(
@@ -2352,19 +2142,24 @@ void test_production_lane_fingerprints_and_authority_absence()
     const std::string rk3 = read_source(
         "src/numerics/integrator/TimeIntegratorRK3.h");
     for (const std::string* lane : {&euler, &rk2, &rk3}) {
+        const auto domain = lane->find("require_hydro_geometry_domain(");
+        const auto clear = lane->find("amr_ctrl.flux_register.Clear()");
+        expect(domain != std::string::npos && clear != std::string::npos && domain < clear
+                   && lane->find("require_hydro_geometry_domain(amr_ctrl,boundary_condition,hydro)")
+                        != std::string::npos,
+               "actual solver and domain preflight precede register mutation");
         expect(source_occurrences(*lane, "execute_stage(") == 0
                    && source_occurrences(*lane, "rotate_slots(") == 0,
                "each Hydro adapter delegates scheduler ordering");
-        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,") == 1,
+        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state)") == 1,
                "each Hydro physical adapter supplies one reflux callback");
-        expect(source_occurrences(*lane, "bind_hydro_geometry(") == 1
+        expect(source_occurrences(*lane, "require_hydro_geometry_domain(") == 1
                    && source_occurrences(*lane, "TimeIntegration::synchronize_domain_boundary(") == 1
-                   && lane->find("output_member, binding.handles, geometry.semantics,") != std::string::npos
+                   && lane->find("output_member, binding.handles)") != std::string::npos
                    && source_occurrences(*lane, "ghost_exchange.ExecuteExchange(") == 0,
-               "each Host Hydro lane passes its actual slot/handles/chart to the shared boundary owner");
-        expect(lane->find("hydro_boundary_state_member(output)") != std::string::npos
-                   && source_occurrences(*lane, "begin_rz_hydro_reflux_receipts(amr_ctrl)") == 1,
-               "Current post-reflux boundary and the independent native reflux receipt keep actual owners");
+               "each Host Hydro lane passes its actual slot/handles to the shared boundary owner");
+        expect(lane->find("hydro_boundary_state_member(output)") != std::string::npos,
+               "post-reflux boundary synchronization names its actual state slot");
         expect(source_occurrences(*lane, "publish_completed_interior(") == 0,
                "Hydro adapters cannot publish around the scheduler seam");
         expect(lane->find("descriptor.old_slot") != std::string::npos
@@ -2378,19 +2173,36 @@ void test_production_lane_fingerprints_and_authority_absence()
 
     const std::string boundary_helper=read_source(
         "src/numerics/integrator/TimeIntegratorHelper.h");
+    const std::string hydro_solver = read_source("src/numerics/integrator/HydroSolverImpl.h");
+    // Protect the direction of ownership, not the gravity owner's internals:
+    // shared Hydro may call its adapter, but cannot select or consume concrete frames.
+    for (const std::string* adapter : {&hydro_solver, &boundary_helper}) {
+        expect(adapter->find("NativeExternal") == std::string::npos
+                   && adapter->find("NativeSelf") == std::string::npos
+                   && adapter->find("GravitySourceOrigin") == std::string::npos
+                   && adapter->find("source_descriptor(") == std::string::npos
+                   && adapter->find("prepared_native_external(") == std::string::npos
+                   && adapter->find("prepared_native_self(") == std::string::npos
+                   && adapter->find("add_native_external_sources(") == std::string::npos
+                   && adapter->find("add_flux_work_on_patch(") == std::string::npos
+                   && adapter->find("add_sources_on_patch(") == std::string::npos,
+               "shared Hydro delegates source selection, claims and source math to the physics owner");
+    }
     const auto sync_begin=boundary_helper.find("inline void synchronize_domain_boundary(");
-    const auto sync_end=boundary_helper.find("inline void validate_provisional_rz_stage_state(",sync_begin);
+    const auto sync_end=boundary_helper.find("inline std::string rejected_stage_composition(",sync_begin);
     expect(sync_begin!=std::string::npos&&sync_end!=std::string::npos,
            "one actual-domain boundary helper remains discoverable");
     const auto sync=boundary_helper.substr(sync_begin,sync_end-sync_begin);
+    const auto physical_boundary = sync.find("apply_domain_boundary(control,boundary,member)");
+    const auto exchange = sync.find("ghost_exchange.ExecuteExchange(");
     expect(source_occurrences(boundary_helper,"inline void synchronize_domain_boundary(")==1
-               && sync.find("CoordinateSeamGeometry::ExistingChart")!=std::string::npos
-               && sync.find("CoordinateSeamGeometry::RzAxisymmetric")!=std::string::npos
-               && sync.find("apply_domain_boundary(control,boundary,member)")!=std::string::npos
-               && sync.find("publish_native_noexcept")!=std::string::npos
-               && sync.find("complete_axis")!=std::string::npos
+               && physical_boundary!=std::string::npos && exchange!=std::string::npos
+               && physical_boundary<exchange
+               && source_occurrences(sync,"apply_domain_boundary(control,boundary,member)")==1
+               && source_occurrences(sync,"ghost_exchange.ExecuteExchange(")==1
+               && sync.find("member,handles)")!=std::string::npos
                && sync.find("publish_ghost(")==std::string::npos,
-           "shared real boundary owner selects the native chart while scheduler owns GhostValid");
+           "shared boundary owner completes actual physical/exchange data while scheduler owns GhostValid");
 
     const std::string rkl1 = read_source(
         "src/numerics/diffusion/RKL1TimeIntegrator.h");
@@ -2468,53 +2280,25 @@ void test_production_lane_fingerprints_and_authority_absence()
                && source_occurrences(host_ledger, "topology_witness.completion") == 1,
            "initial and regridded Host authority each fan out one actual batch witness");
 
-    // Native registers completed migrated interiors in a PRIVATE ledger before
-    // its real boundary/EOS callback; ordinary migration registers both states
-    // only after its own ghost completion. Do not conflate their first matches.
-    const auto migration = driver_regrid.find("compute_backend->migrate_staged_current(");
-    const auto native_begin = driver_regrid.find("if (native_staged) {", migration);
-    const auto ordinary_completion = driver_regrid.find(
-        "} else {\n                compute_backend->complete_staged_current_ghosts(", native_begin);
-    const auto migration_complete = driver_regrid.find("prepared.CompleteDeviceMigration()", ordinary_completion);
-    const auto ordinary_begin = driver_regrid.find("if (!native_staged) {", migration_complete);
-    const auto ready = driver_regrid.find("transaction.mark_ready()", ordinary_begin);
-    expect(migration != std::string::npos && native_begin != std::string::npos
-               && ordinary_completion != std::string::npos && migration_complete != std::string::npos
-               && ordinary_begin != std::string::npos && ready != std::string::npos
-               && migration < native_begin && native_begin < ordinary_completion
-               && ordinary_completion < migration_complete && migration_complete < ordinary_begin
-               && ordinary_begin < ready,
-           "Native and ordinary staged completion owners precede one transactional readiness gate");
-    const auto native_device = driver_regrid.substr(native_begin, ordinary_completion - native_begin);
-    const auto ordinary_device = driver_regrid.substr(ordinary_begin, ready - ordinary_begin);
-    const auto native_registration = native_device.find("payload.ledger->register_block(");
-    const auto native_binding = native_device.find("bind_native_boundary_acceptance(staged_context");
-    const auto native_completion = native_device.find("compute_backend->complete_staged_current_ghosts(");
-    const auto native_boundary = native_device.find("scheduler::complete_boundary(staged_context");
-    const auto native_execution = native_device.find("execute_device_boundary_domain(", native_boundary);
-    const auto native_readable = native_device.find("staged_ledger->require_readable({handle,StateSlot::Current}", native_execution);
-    expect(source_occurrences(native_device, "payload.ledger->register_block(") == 1
-               && native_device.find("payload.topology_witness.completion, ExecutionSide::Device)") != std::string::npos
-               && native_device.find("const auto migrated = payload.topology_witness;") != std::string::npos
-               && native_binding != std::string::npos && native_completion != std::string::npos
-               && native_boundary != std::string::npos && native_execution != std::string::npos
-               && native_readable != std::string::npos
-               && native_registration < native_binding && native_binding < native_completion
-               && native_completion < native_boundary && native_boundary < native_execution
-               && native_execution < native_readable
-               && native_device.find("residency_ledger.get() == staged_ledger") != std::string::npos
-               && native_device.find("publish_ghost(") == std::string::npos,
-           "Native staged Device ledger publishes ghosts only through real boundary/EOS completion before readiness");
-    const auto ordinary_registration = ordinary_device.find("payload.ledger->register_block(");
-    const auto ordinary_ghost = ordinary_device.find("payload.ledger->publish_ghost(");
-    expect(source_occurrences(ordinary_device, "payload.ledger->register_block(") == 1
-               && source_occurrences(ordinary_device, "payload.ledger->publish_ghost(") == 1
-               && ordinary_registration < ordinary_ghost
-               && ordinary_device.find("payload.topology_witness.completion, ExecutionSide::Device)") != std::string::npos
-               && ordinary_device.find("ExecutionSide::Device, payload.topology_witness.version,") != std::string::npos
-               && ordinary_device.find("payload.topology_witness.completion);", ordinary_ghost) != std::string::npos
-               && source_occurrences(driver_regrid, "register_block(") == 3,
-           "ordinary completed Device migration registers interiors then migrated ghosts with the same witness");
+    const auto migration=driver_regrid.find("compute_backend->migrate_staged_current(");
+    const auto completion=driver_regrid.find("compute_backend->complete_staged_current_ghosts(",migration);
+    const auto migration_complete=driver_regrid.find("prepared.CompleteDeviceMigration()",completion);
+    const auto registration=driver_regrid.find("payload.ledger->register_block(",migration_complete);
+    const auto ghost=driver_regrid.find("payload.ledger->publish_ghost(",registration);
+    const auto ready=driver_regrid.find("transaction.mark_ready()",ghost);
+    expect(migration!=std::string::npos && completion!=std::string::npos
+               && migration_complete!=std::string::npos && registration!=std::string::npos
+               && ghost!=std::string::npos && ready!=std::string::npos
+               && migration<completion && completion<migration_complete
+               && migration_complete<registration && registration<ghost && ghost<ready,
+           "completed Device migration registers interiors and ghosts before transactional readiness");
+    const auto completed_device=driver_regrid.substr(migration_complete,ready-migration_complete);
+    expect(source_occurrences(completed_device,"payload.ledger->register_block(")==1
+               && source_occurrences(completed_device,"payload.ledger->publish_ghost(")==1
+               && completed_device.find("payload.topology_witness.completion, ExecutionSide::Device)")!=std::string::npos
+               && completed_device.find("ExecutionSide::Device, payload.topology_witness.version,")!=std::string::npos
+               && completed_device.find("payload.topology_witness.completion);")!=std::string::npos,
+           "completed Device migration publishes its actual batch witness and original state identities");
     expect(driver.find("handle.uid.value") == std::string::npos,
            "registration batch witnesses never depend on handle identity");
     expect(driver.find("scheduler_clock =") == std::string::npos,
@@ -2575,13 +2359,10 @@ int main()
     test_full_logical_slot_copy();
     test_fake_cuda_rkl_uses_shared_descriptors();
     test_scheduler_owned_reflux_and_runtime_lane_traces();
-    test_post_boundary_acceptance_order_and_hydro_reflux();
-    test_post_boundary_acceptance_rkl_order();
     test_hydro_physical_boundary_times();
     test_rkl_physical_boundary_times();
     test_physical_boundary_time_failure_contract();
-    test_post_boundary_direct_completion_order();
-    test_post_boundary_failures_never_publish_ghost();
+    test_boundary_completion_failures_never_publish_ghost();
     test_boundary_failure_blocks_next_stage_and_rotation();
     test_rkl_acceptance_ordering_and_failure();
     test_real_registration_batches_across_topology_epoch();

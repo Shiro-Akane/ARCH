@@ -81,7 +81,7 @@ ARCH --preview-amr CellularDet --config-stdin \
 metadata 的 dimension/geometry/active axes 应与 mesh 和 state.grid 一致。
 Cartesian 轴为长度，通常 cm；角度轴使用 Core 发布的 rad。曲线网格 data.unit=null，
 不能将所有 bounds/spacing 都标成 cm，也不能把原生轴绘图误称笛卡尔位置。
-二维 `cylindrical` 使用轴对称 `(r,z)`，二维 `spherical` 保持极平面构型；客户端读取实际坐标元数据区分。当前 RZ 初始 AMR 查询在要求细化时返回根网格快照、`complete=false` 与 `limitedReason=native-rz-amr-preview-not-qualified`；该快照不能显示为已完成细化。
+二维 cylindrical 已退役，配置、初始采样及 AMR 查询明确拒绝该组合。二维 spherical 保留 `(r,phi)` 极平面，柱坐标一维／三维沿用现有坐标转换。历史 RZ 结果只适用于原源码和执行物。
 三维视图沿所选原生轴取切面，仅过滤已有叶块，不重新调用 Init/AMR；
 切面内边界半开、最外侧边界包含。保持原始 logicalKey、level、三轴 bounds/shape/spacing。
 

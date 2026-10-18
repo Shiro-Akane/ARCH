@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
@@ -24,7 +26,6 @@
 #include "cuda/common/DeviceAllocation.h"
 #include "cuda/microphysics/eos/helm_eos_loader.h"
 #include "cuda/microphysics/network/device_network_owner.h"
-#include "physics/boundary/NativeRzBoundaryMath.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/tabular/Tabular3DEOS.h"
@@ -205,16 +206,8 @@ struct CudaBlockRuntime {
     Physical::Gravity::GravityPatchView self_gravity{};
     std::uint64_t gravity_generation=0;
     DeviceGridView grid{};
-    // Original logical plan + actual bound grid determine physical Hydro walls.
-    arch::boundary::HydroBoundaryView native_hydro_walls{};
-    state::Bounds native_hydro_bounds{};
     DeviceCompiledBoundaryPlan boundary;
     DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
-    // Immutable subset compiled from this factory's original logical authority
-    // and actual Native grid. Storage follows this block generation; off-axis
-    // Native and ordinary blocks never allocate a final-axis transfer payload.
-    DeviceCompiledBoundaryPlan native_axis_boundary{};
-    DeviceAllocation<DeviceBoundaryTransfer> native_axis_boundary_transfers;
 
     CudaBlockRuntime(
         const amr::Block& block, amr::BlockHandle requested_handle,
@@ -247,10 +240,6 @@ struct CudaAmrFluxPlanRuntime {
     std::uint64_t reflux_fingerprint = 0;
     int dimension = 0;
     int species_count = 0;
-    // Inspect the actual immutable topology mode; this is no new permission or
-    // identity. Hydro/reflux must consume the original Native torque lowering.
-    GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing;
-    bool angular_transport = false;
     std::vector<CudaBlockRuntime*> runtime_blocks;
     std::vector<DeviceAmrFluxBlockView> host_blocks;
     DeviceAllocation<DeviceAmrFluxBlockView> device_blocks;
@@ -327,48 +316,9 @@ struct CudaBackend::Impl {
             dt.swap(next_dt);
             status.swap(next_status);
         }
-        // Compact Native external observer rows: four measured doubles per
-        // block, never field storage. Only the qualified external Native path
-        // calls this; no other consumer allocates or grows this capacity.
-        std::unique_ptr<DeviceAllocation<double>> native_external_budget;
-        std::vector<double> host_native_external_budget;
-        void ensure_native_external_budget(std::size_t count)
-        {
-            if (count > std::numeric_limits<std::size_t>::max() / 4)
-                throw std::invalid_argument(
-                    "invalid Native external budget extent");
-            const auto size = count * 4;
-            host_native_external_budget.resize(size);
-            if (size == 0
-                || (native_external_budget && native_external_budget->size() >= size))
-                return;
-            auto next = std::make_unique<DeviceAllocation<double>>();
-            next->allocate(size);
-            native_external_budget.swap(next);
-        }
-        // One metadata-only original-operation → resident-psi-row map for the
-        // actual synchronous Native Self batch. The numerical psi stays with
-        // its original Gravity workspace, and reuse follows stream quiescence.
-        ReusableDeviceAllocation<std::size_t> native_self_rows;
     } hydro_batch;
     HydroBatchScratch diffusion_batch;
     HydroBatchScratch reflux_batch;
-    // Compact Native acceptance diagnostics; shares hydro_batch.status only
-    // after prior synchronous batches drained. No evolved field is staged here.
-    ReusableDeviceAllocation<RzThermodynamics::AcceptanceDiagnostic> native_eos_diagnostics;
-    // One unpublished reflector layer, reused only after owner-stream quiescence.
-    // Native math needs 11*N contiguous doubles per lane even when N fits the
-    // local species fast path. The existing five-array transport owner remains
-    // independent; only requested surfaces and immutable ghost prefixes stage.
-    struct NativeReflectingScratch {
-        ReusableDeviceAllocation<boundary::native_rz_math::Request> requests;
-        ReusableDeviceAllocation<int> prefix_indices;
-        ReusableDeviceAllocation<FluidVector> prefix_conserved, conserved;
-        ReusableDeviceAllocation<double> prefix_fractions, prefix_enuc, fractions, enuc;
-        ReusableDeviceAllocation<double> workspace_storage;
-        ReusableDeviceAllocation<int> failed;
-        SpeciesWorkspaceView workspace{};
-    } native_reflecting;
     ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
     ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
     // Optional endpoint diagnostic only: compact bindings/results, no field
@@ -410,32 +360,6 @@ struct CudaBackend::Impl {
     std::uint64_t immutable_owner_constructions = 0;
     std::uint64_t next_retirement_fence = 1;
     std::size_t staged_resource_count = 0;
-    /**
-     * @brief Grow-only resident storage for one non-reentrant macro savepoint.
-     *
-     * Logical views and valid plane extents live in the transaction, never in
-     * capacity. Private state allocations may exceed the current block extent;
-     * copy views use the actual saved extent. Transient scalar controls retain
-     * only originally bound records, not unread/unbound allocation capacity.
-     */
-    struct MacroStateScratch {
-        struct Block {
-            std::array<std::unique_ptr<DeviceStateStorage>, 3> states;
-            std::array<ReusableDeviceAllocation<double>, 6> observer_stage,
-                observer_initial, amr_register, amr_initial;
-            std::array<std::array<ReusableDeviceAllocation<boundary::ScalarBoundaryCondition>, 6>, 3>
-                controls;
-        };
-        std::vector<std::unique_ptr<Block>> blocks;
-        bool active = false;
-
-        /** Reject namespace/allocation changes while original owners are pinned. */
-        void require_idle() const
-        {
-            if (active)
-                throw std::logic_error("CUDA macro state savepoint is active");
-        }
-    } macro_state;
     std::vector<DeviceStoreEntry> initial_entries;
     DeviceBlockStoreLifecycle store;
     std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>
@@ -466,25 +390,6 @@ struct CudaBackend::Impl {
     state::CompletionToken execute_physical_boundary_batch(
         std::span<const backend::BackendStateAccess>, state::StateVersion,
         state::CompletionToken, const BlockResolver&);
-    state::CompletionToken execute_native_axis_boundary_batch(
-        std::span<const backend::BackendStateAccess>, state::StateVersion,
-        state::CompletionToken, const BlockResolver&);
-    // Workflow: authenticate the entire actual domain, select one traversal,
-    // then join the same compact diagnostics. Failure-only modes publish no
-    // state, completion or retry authority; the Runtime owns their policy.
-    enum class NativeAcceptanceMode { Completed, RestrictedInterior, ClassifyActiveThermal };
-    struct NativeAcceptanceResult {
-        std::optional<backend::NativeEosFailure> failure;
-        bool requested_failure = false;
-    };
-    NativeAcceptanceResult validate_native_acceptance_batch(
-        std::span<const backend::BackendStateAccess>, const state::Bounds&,
-        const BlockResolver&, NativeAcceptanceMode,
-        const backend::NativeEosFailure* original_refusal = nullptr);
-    backend::BoundaryCells prepare_native_reflecting_layer(
-        backend::BackendStateAccess, std::span<const boundary::native_rz_math::Request>,
-        const state::Bounds&, std::span<const int>, const backend::BoundaryCells*,
-        const BlockResolver&);
     backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
         std::span<const int>, state::StateRegion, const BlockResolver&);
     void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,

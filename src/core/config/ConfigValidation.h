@@ -100,6 +100,8 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     require(c.grid.nblockx2 >= 0, "nblockx2", "Block count cannot be negative.");
     require(relations::AxisTopology(c.grid.nblockx2, c.grid.nblockx3),
             "nblockx3", "Third axis requires an active second axis.");
+    require(!relations::RetiredCylindrical2d(c.grid.geometry, c.grid.dim),
+            "geometry", "Two-dimensional cylindrical support is retired; use one or three dimensions.");
     scalar(c.grid.amr_max_blocks, "max_blocks");
     const double lower[]{c.grid.x1_min, c.grid.x2_min, c.grid.x3_min};
     const double upper[]{c.grid.x1_max, c.grid.x2_max, c.grid.x3_max};

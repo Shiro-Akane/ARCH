@@ -5,8 +5,9 @@
 The checkout includes test code, small independent references, manufactured
 problems, validation manifests and network-generation recipes. Build test
 executables locally. Generated packages, external libraries, large simulation
-outputs and profiler data are not bundled as prebuilt dependencies. Run
-`git lfs pull` before tests or cases that use the tracked EOS table.
+outputs and profiler data are not bundled as prebuilt dependencies. Before checks that need EOS tables, verify the required pointer identity and
+reuse matching local data as described in [offline tables and LFS bandwidth](../docs/guides/Build.md#offline-tables-and-lfs-bandwidth).
+Download only explicitly selected missing assets; do not repeatedly fetch all LFS data.
 
 ARCH tests use repository-owned analytical/independent references and ordinary
 build dependencies. Configuring tests, running them and completing release

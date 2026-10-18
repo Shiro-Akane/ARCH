@@ -1,26 +1,32 @@
 /**
  * @file Reconstruction.h
- * @brief Spatial reconstruction from cell averages to interface states.
+ * @brief Shared selected-method reconstruction of physical coordinate traces.
  *
  * Workflow:
- * 1. Select the existing PCM, MUSCL limiter or PPM reconstruction policy.
- * 2. Gather required conservative/primitive cell means and actual EOS pressure.
- * 3. Build the selected scalar/primitive endpoints with shared Host/device math.
- * 4. Probe reconstructed EOS energy; the calling owner handles trial fallback.
- * PPM exposes both endpoints of one owning cell from its existing five-value
- * stencil, so geometry adapters need no extra seventh axial stencil value.
+ * 1. Select the configured PCM, MUSCL limiter or PPM and actual AMR support.
+ * 2. Reconstruct ordinary conservative/primitive traces with their
+ *    authoritative limiter math and physical EOS inputs.
+ * 3. Publish a bounded finite trace only after its trial-state path returns
+ *    physical nodes. Face averaging, flux policy and Runtime publication
+ *    remain consumers.
  */
-
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <utility>
 
-#include "numerics/reconstruction/Limiters.h"
-
+#include "core/ArchPortability.h"
 #include "data/FluidState.h"
+#include "numerics/curvilinear/GridMetrics.h"
+#include "numerics/reconstruction/Limiters.h"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace ReconstructionMath {

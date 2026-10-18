@@ -11,8 +11,8 @@
  *
  * This is a centimetre-scale coupled execution example, not a stellar
  * white-dwarf model. Cartesian 2D periodic gravity has translation-invariant
- * source units. Cylindrical 2D uses an axisymmetric full-ring (r,z) domain;
- * its isolated potential and all 3D isolated runs have finite Newtonian mass.
+ * source units. Supported 3D isolated runs have finite Newtonian mass.
+ * Shared configuration and Grid checks reject unsupported coordinate pairs.
  * Scientific/backend qualification is owned by Core, not this initializer.
  */
 
@@ -35,7 +35,6 @@ class SNIaCoupledProblem
     double center_y_ = 0.5;
     double center_z_ = 0.5;
     int dimension_ = 2;
-    bool axisymmetric_rz_ = false;
     std::vector<double> fractions_;
 
 public:
@@ -80,8 +79,6 @@ public:
                 "SNIaCoupled requires supported 2D/3D self gravity, Helmholtz EOS, "
                 "aprox13/19 burning and thermal diffusion");
         dimension_=config.grid.dim;
-        axisymmetric_rz_=GridMetrics::resolve_public_chart(config.grid.geometry,dimension_)
-            ==GridMetrics::GeometrySemantics::AxisymmetricRz;
         // Global config validation owns the detailed fluid/gravity face contract.
         // This case only owns the physical initial state.
 
@@ -101,25 +98,16 @@ public:
             || peak_temperature_ < background_temperature_
             || density_amplitude_ < 0.0 || width_ <= 0.0)
             throw std::invalid_argument("SNIaCoupled requires finite positive hotspot inputs");
-
-        // An RZ hotspot is a ring about the z axis, not an off-axis 3D sphere.
-        // center_x is its radial centre and center_z its axial centre; center_y
-        // must vanish because this chart has no independent azimuthal offset.
-        if (axisymmetric_rz_ && center_y_!=0.)
-            throw std::invalid_argument("SNIaCoupled RZ ring requires center_y=0");
         ProblemHelper::SetupNetworkAndFractions(config, species, fractions_);
     }
 
     /** Supply smooth primitive fields; the shared EOS converts T and X to e. */
     void Init(const PointCoords& point, PrimitiveData& state) const
     {
-        const double dx = ((axisymmetric_rz_ ? point.r_cy : point.x)-center_x_)/width_;
-        const double dy = axisymmetric_rz_ ? 0. : (point.y-center_y_)/width_;
-        const double dz = axisymmetric_rz_
-            ? (point.z_cy-center_z_)/width_
-            : (dimension_==3 ? (point.z-center_z_)/width_ : 0.);
-        // Cartesian/3D: q=exp[-|x-x_c|^2/(2 sigma^2)]. RZ ring:
-        // q=exp[-((r-r_c)^2+(z-z_c)^2)/(2 sigma^2)], independent of phi.
+        const double dx = (point.x-center_x_)/width_;
+        const double dy = (point.y-center_y_)/width_;
+        const double dz = dimension_==3 ? (point.z-center_z_)/width_ : 0.;
+        // Ordinary Cartesian hotspot: q=exp[-|x-x_c|^2/(2 sigma^2)].
         const double hotspot = std::exp(-0.5 * (dx * dx + dy * dy + dz * dz));
         // rho = rho_0 (1 + A q), T = T_0 + (T_peak-T_0) q.
         state.rho = density_ * (1.0 + density_amplitude_ * hotspot);

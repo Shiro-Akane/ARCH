@@ -107,11 +107,11 @@ POST /api/plotfile/audit-point uses the same protected origin/protocol and file 
      "pointQuery":{"field":"DENS","point":[0.5,6.5]}}
 
 Formal arch-native-* bounds with arch-plot-identity-1 source evidence support
-1D/2D/3D intrinsic point queries in Cartesian, cylindrical and spherical charts.
-Point entries are the recorded x1/x2/x3 axes in their recorded units: explicit
-axisymmetric RZ uses [r,z], independently of stored Cartesian cell centers.
+intrinsic point queries in Cartesian/spherical 1D–3D and cylindrical 1D/3D.
+Point entries are the recorded x1/x2/x3 axes in their recorded units.
+Cylindrical 2D files are rejected explicitly.
 Point length equals the file dimension. Legacy candidate-cartesian-1 1D/2D
-queries retain their existing scope; partial candidate RZ identities reject.
+queries retain their existing scope.
 Cell bounds are half-open, with the full-domain maximum included.
 One exact match returns audit-point-1, a single raw slice plus pointEvidence.
 No interpolation, nearest-cell or guessed-level fallback. NO_NATIVE_CELL and
@@ -119,8 +119,7 @@ AMBIGUOUS_NATIVE_CELL fail; current worker-error mapping is HTTP422.
 Inspector validates the echoed request/coverage/boundary rule and the returned
 cell bounds. Each point read currently scans bounds and hashes the full file;
 fixed response size does not imply indexed or cheap reads. Formal point/slice
-queries retain the stored FP64 values, native cell bounds, V/W and angular
-momentum semantics; this query capability does not enable a curved or 3D
+queries retain the stored FP64 values, native cell bounds and field units; this query capability does not enable a curved or 3D
 overview renderer and does not certify the producing simulation.
 
 

@@ -3,16 +3,13 @@
  * @brief Companion error ledgers for the actual Poisson density source.
  *
  * Workflow:
- * 1. Select the source contract by actual all-periodic boundary topology.
- * 2. Keep rho unchanged for isolated or prescribed flux/value boundaries;
- *    wholly periodic gravity instead uses rho minus its normalized mean.
+ * 1. Require actual all-periodic boundary topology.
+ * 2. Compare the final periodic source with rho minus its normalized mean.
  * 3. Enclose shared CGS G, mathematical pi and the same supplied FP64 rho.
- * 4. Compare against the actual produced source and bound stored-weight RMS.
- * 5. Reject missing, nonfinite or collapsed positive uncentered sources.
+ * 4. Bound stored-weight RMS without altering the produced source.
  *
- * A=-Laplacian: b=-4*pi*G*rho or b=-4*pi*G*(rho-mean(rho)). A Neumann
- * constant nullspace does not authorize background subtraction: actual flux
- * compatibility and field existence remain the operator/solve owner's duty.
+ * A=-Laplacian: b=-4*pi*G*(rho-mean(rho)) for this periodic companion.
+ * Actual source construction and field existence remain with the solver.
  * These are error companions, not a second producer or a field capability.
  */
 #pragma once
@@ -30,57 +27,9 @@ enum class GravitySourceBoundStatus {
 struct GravitySourceBounds {
     GravitySourceBoundStatus status=GravitySourceBoundStatus::InvalidInput;
     std::vector<double> lower,upper,cell_bounds;
-    // Norm is conditional on stored native weights, not ideal geometry.
+    // Norm is conditional on the stored weights, not ideal geometry.
     double norm_upper=std::numeric_limits<double>::infinity();
 };
-/** Enclose b=-4*pi*G*rho for every nonperiodic source without altering rho.
- * A pure-flux operator may have a free gauge; this certificate alone proves
- * neither its Gauss compatibility nor its solved potential/force accuracy.
- */
-inline GravitySourceBounds bound_uncentered_gravity_source(
-    const arch::elliptic::CompositePoisson& op,std::span<const double> density,
-    std::span<const double> computed_source) {
-    GravitySourceBounds result{};
-    if(op.periodic_boundary()) {
-        result.status=GravitySourceBoundStatus::UnsupportedPeriodic;return result;
-    }
-    if(density.size()!=static_cast<std::size_t>(op.size())
-        ||computed_source.size()!=density.size())return result;
-    const auto down=[](double v){return v<=0.?0.:std::nextafter(v,0.);};
-    const auto product_upper=[](double a,double b){
-        return a==0.||b==0.?0.:std::nextafter(a*b,std::numeric_limits<double>::infinity());
-    };
-    const double pi=arch::constants::math::pi;
-    const double G=arch::constants::gravity::cgs::gravitational_constant;
-    const double factor_lower=down(down(4.*down(pi))*G);
-    const double factor_upper=product_upper(product_upper(4.,
-        std::nextafter(pi,std::numeric_limits<double>::infinity())),G);
-    result.lower.resize(density.size());result.upper.resize(density.size());
-    result.cell_bounds.resize(density.size());
-    for(std::size_t i=0;i<density.size();++i) {
-        const double rho=density[i],actual=computed_source[i];
-        if(!std::isfinite(rho)||rho<0.||!std::isfinite(actual))return result;
-        if(rho>0.&&actual==0.) {
-            result.status=GravitySourceBoundStatus::CollapsedToZero;return result;
-        }
-        const double lo=rho==0.?0.:-product_upper(factor_upper,rho);
-        const double hi=rho==0.?0.:-down(factor_lower*rho);
-        result.lower[i]=lo;result.upper[i]=hi;
-        const double distance=std::max(std::abs(actual-lo),std::abs(actual-hi));
-        result.cell_bounds[i]=distance==0.?0.:
-            std::nextafter(distance,std::numeric_limits<double>::infinity());
-        if(!std::isfinite(lo)||!std::isfinite(hi)||!std::isfinite(result.cell_bounds[i])) {
-            result.status=GravitySourceBoundStatus::Overflow;return result;
-        }
-    }
-    const auto norm=op.norm_interval(result.cell_bounds);
-    if(norm.status!=arch::elliptic::BoundaryErrorStatus::Bounded) {
-        result.status=norm.status==arch::elliptic::BoundaryErrorStatus::Overflow?
-            GravitySourceBoundStatus::Overflow:GravitySourceBoundStatus::InvalidInput;
-        return result;
-    }
-    result.norm_upper=norm.upper;result.status=GravitySourceBoundStatus::Bounded;return result;
-}
 namespace gravity_source_detail {
 struct Range {double lo=0.,hi=0.;};
 inline bool finite(Range x) {return std::isfinite(x.lo)&&std::isfinite(x.hi)&&x.lo<=x.hi;}
@@ -102,7 +51,7 @@ inline Range product(Range a,Range b) {
 }
 }
 /** Compare actual final periodic source with -4*pi*G*(rho-normalized_mean(rho)).
- * The normalized mean uses stored native weights, NOT ideal geometry. Capture
+ * The normalized mean uses the stored weights, NOT ideal geometry. Capture
  * all actual mean/subtraction/multiplication/final projection errors together.
  * Centering is an exact algebraic reference transformation, never a replacement
  * for the production source algorithm or a new density/physics definition.

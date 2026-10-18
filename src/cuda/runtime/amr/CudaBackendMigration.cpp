@@ -5,7 +5,7 @@
  * The active store remains the migration source while the private candidate
  * receives survivor copies and parent/child transfers. Completion and EOS status
  * are checked before candidate ghosts are completed and the runtime may publish
- * the new topology; these methods do not retire the old store. Native completion
+ * the new topology; these methods do not retire the old store. Completion
  * borrows Runtime's ordered boundary/EOS owner before marking Current complete.
  */
 #include "amr/exchange/CoordinateSeamPlan.h"
@@ -200,8 +200,7 @@ void CudaBackend::complete_staged_current_ghosts(
     const amr::CoarseFineTransferPlan& coarse_fine,
     std::span<const int> active_ids,
     std::span<const amr::BlockHandle> active_handles,
-    const amr::CoordinateSeamPlan* coordinate_seam,
-    const std::function<void()>& native_completion)
+    const amr::CoordinateSeamPlan* coordinate_seam)
 {
     if (!transaction.impl_ || transaction.impl_->consumed
         || transaction.impl_->owner.get() != impl_.get())
@@ -238,15 +237,6 @@ void CudaBackend::complete_staged_current_ghosts(
     };
     if (accesses.empty())
         throw std::invalid_argument("staged CUDA boundary domain is empty");
-    const auto semantics = resolve(accesses.front()).grid.semantics;
-    for (const auto& access : accesses)
-        if (resolve(access).grid.semantics != semantics)
-            throw std::invalid_argument("mixed staged CUDA boundary charts");
-    const bool native = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
-    if (native && !native_completion)
-        throw std::invalid_argument("Native staged CUDA ghosts require Runtime completion");
-    if (!native && native_completion)
-        throw std::invalid_argument("Existing staged CUDA ghosts reject Native completion");
     std::vector<int> ids_for_access;
     if (coordinate_seam && !coordinate_seam->transfers.empty()) {
         if (active_ids.size() != active_handles.size()
@@ -266,10 +256,7 @@ void CudaBackend::complete_staged_current_ghosts(
     impl_->select_device();
     CudaQuiescenceGuard guard{*impl_};
     try {
-        // Runtime owns ordered Native surfaces, both exchanges, final axis and EOS.
-        if (native) {
-            native_completion();
-        } else {
+
             std::uint64_t kernels = 0;
             for (const auto& access : accesses) {
                 auto& block = resolve(access);
@@ -289,7 +276,7 @@ void CudaBackend::complete_staged_current_ghosts(
                     accesses, ids_for_access, *coordinate_seam,
                     state::StateSlot::Current, resolve);
             }
-        }
+        
         impl_->checked_quiesce("complete staged CUDA Current ghosts");
         guard.completed = true;
         for (auto& [arena, initialized] : staged.uploaded_current)

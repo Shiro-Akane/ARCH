@@ -36,14 +36,6 @@ struct DeviceHydroBatchBlock {
     double* mean_pressure = nullptr;
     double* mean_sound_speed = nullptr;
     bool roe_wave_speed = true;
-    // Immutable values from the actual block factory, never a caller-selected
-    // boundary authority. Bounds are the existing configured numerics limits.
-    arch::boundary::HydroBoundaryView native_walls{};
-    state::Bounds native_bounds{};
-    // Compact 4-double per-block observed Native external source impulse/work
-    // [radial, axial, torque, work]. It is a measured consumer output only:
-    // never an authority, an evolved field or a completion witness.
-    double* native_external_budget = nullptr;
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 

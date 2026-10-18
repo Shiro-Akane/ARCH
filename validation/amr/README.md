@@ -9,6 +9,17 @@ physical quantities carried by those cells. The records therefore check both
 the refine/coarsen sequence and the fields after transfer, using physical cell
 volumes when computing conservation in curved coordinates.
 
+Active inputs explicitly declare the controls formerly supplied by the old
+loader. Their current hashes differ from historical receipts; configuration
+acceptance alone does not renew those scientific results. Current migration and
+CPU evidence are indexed in the [release plan](../../ARCH_RELEASE_PLAN.md).
+
+Current CPU checks add six original burn–species-diffusion endpoints with
+runtime regridding, plus both checkpoint source phases in RT and BurnGradient
+continuations. The [burn](../burn/README.md) and [restart](../restart/README.md)
+guides define their gates and limits; these checks do not renew the historical
+CUDA or longer-trajectory qualifications below.
+
 Each detailed record identifies its tested source, executable and inputs.
 The [validation overview](../README.md) brings together the module results.
 
@@ -272,6 +283,4 @@ These data files support reproduction and independent review; they are not setup
 
 </details>
 
-The current bound RZ transfer consumer has its own [processed record](results/release-closure-20261009/native-device-migration-summary.json): native prolongation/restriction, exact identity counterexamples, low density and species-storage cases use the same Host/device mathematics. The historical curved application rows retain their recorded chart and source identities; they do not qualify the current complete RZ Device Runtime. That runtime follows the [current release exits](../../docs/development/ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核).
-
-The [positive-radius RZ reflecting-candidate record](results/release-closure-20261009/native-device-reflector-summary.json) exercises the same Host/device point law and V/W integral in the existing boundary owner, including cold flow, low density, larger compositions and failure before candidate writes. Ordered boundary completion and runtime publication follow the release exits above.
+Historical [RZ transfer](results/release-closure-20261009/native-device-migration-summary.json) and [reflector](results/release-closure-20261009/native-device-reflector-summary.json) records retain their original source and binary identities. Cylindrical 2D and its dedicated consumers are retired; current AMR verification follows the [release plan](../../ARCH_RELEASE_PLAN.md).

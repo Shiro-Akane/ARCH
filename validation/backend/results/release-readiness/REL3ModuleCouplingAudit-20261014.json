@@ -1,0 +1,1516 @@
+{
+  "schema": "arch-read-only-targeted-module-coupling-audit",
+  "recorded_utc": "2026-10-14T10:32:08.346868+00:00",
+  "status": "SOURCE_INSPECTION_COMPLETE_NO_IMPLEMENTATION",
+  "identity": {
+    "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+    "branch": "compute/optim",
+    "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+    "baseline": {
+      "requested_standard": "main",
+      "actual_available_local_ref": "origin/main",
+      "commit": "25adec4224497981a0c124a3485f786194975be4",
+      "commit_date": "2026-09-28 00:39:09 +0900",
+      "remote_ref_fetched_this_turn": false,
+      "limitations": [
+        "No local main branch exists; local origin/main is explicitly a cached 2026-09-28 baseline, not a claim about latest remote main.",
+        "Main is a structural comparison standard; it contains retired silent defaults and must not be blanket-restored."
+      ]
+    },
+    "initial_source_freeze": {
+      "path": "output/release/rel3-coupling-audit-20261014/source-freeze.json",
+      "sha256": "9a887938f755b5bc96b7f198145482685307076b45750e22d72c1c970e0542de",
+      "bytes": 59192
+    },
+    "frozen_CPP_CUDA_header_CMake_files": 460,
+    "source_modified_this_round": false,
+    "build_performed_this_round": false,
+    "scientific_runtime_performed_this_round": false,
+    "source_freeze_qualification": "Read-only audit window, not release qualification or permission to lower numerical acceptance. Initial source hash set covers named source suffixes, not every repository data asset.",
+    "baseline_GlobalDefs_blob": "9a02413f088f1ac685754a74874e96ff5b425b30",
+    "baseline_public_GlobalDefs_blob": "50f0b5a9cb30289f4dc047f3edf0c32cd0f0e24d",
+    "public_GlobalDefs_unchanged_from_main": true,
+    "prior_receipts_unchanged": [
+      {
+        "path": "docs/development/modernization/BaselineIdentity-20261012.json",
+        "sha256": "e8ad61c49a7c970ccae1ece92a6214b511214abee8096fd288679e5ee2b0a48d",
+        "bytes": 49008
+      },
+      {
+        "path": "docs/development/modernization/R1R4Foundation-20261013.json",
+        "sha256": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+        "bytes": 76161
+      },
+      {
+        "path": "docs/development/modernization/R22NumericalChecks-20261012.json",
+        "sha256": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd",
+        "bytes": 73199
+      },
+      {
+        "path": "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json",
+        "sha256": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+        "bytes": 376806
+      },
+      {
+        "path": "docs/development/modernization/R31AuditTriage-20261013.json",
+        "sha256": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+        "bytes": 37108
+      },
+      {
+        "path": "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json",
+        "sha256": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+        "bytes": 106154
+      },
+      {
+        "path": "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json",
+        "sha256": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+        "bytes": 27501
+      },
+      {
+        "path": "docs/development/modernization/R41R42Implementation-20261013.json",
+        "sha256": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+        "bytes": 51008
+      },
+      {
+        "path": "docs/development/modernization/R5BuildEfficiency-20261013.json",
+        "sha256": "ca5255222a7590951d727fdf1f3b8c0c573fb416b7672559ce561a2b6eb4bbbf",
+        "bytes": 30929
+      },
+      {
+        "path": "docs/development/modernization/R67RzPerformance-20261013.json",
+        "sha256": "8f096825b9dac93623dc9ff5a1be66f15bc3d379d3f7c9cf0c68cfc75766931b",
+        "bytes": 37709
+      },
+      {
+        "path": "docs/development/modernization/R6SharedBounds-20261013.json",
+        "sha256": "86b944b336a3c790c22a7013dac35c2f8b42d4b4e299e0e1a0f10c58857170e7",
+        "bytes": 43362
+      },
+      {
+        "path": "docs/development/modernization/R7CompletionAndR8Readiness-20261013.json",
+        "sha256": "1ee9c068d07539fccf5bbd50c16e583f4019eb2df3c3a6d8f308eb67f61cf461",
+        "bytes": 37404
+      },
+      {
+        "path": "docs/development/modernization/R8FinalAcceptance-20261014.json",
+        "sha256": "e5ea4d1c23263b04283ef8bf794730ddfb3a2cd80912d81f498b9782bff5c62a",
+        "bytes": 44522
+      },
+      {
+        "path": "validation/backend/results/release-readiness/REL1Overview-20261014.json",
+        "sha256": "3b1c435cd2d7b87cda9915a6f3145b4b312dec4d51c9c7f55519340944f07b4c",
+        "bytes": 2006317
+      },
+      {
+        "path": "validation/backend/results/release-readiness/REL2InputsAndCpuEfficiency-20261014.json",
+        "sha256": "f38f5a08047823203bb55b388b3cb4cfdb883a4b6ea56bac4f9fb58c0b7bc42f",
+        "bytes": 1954003
+      },
+      {
+        "path": "validation/backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json",
+        "sha256": "df640d6449bcf0dae7fdbd2eede6d9a6343632d4dcb984decd58dd076abf5ac7",
+        "bytes": 1809614
+      },
+      {
+        "path": "validation/backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json",
+        "sha256": "6bc27ed53b8d686abd228bfaa0c7eca7105d2f6fa0b778af4be97ec67d71a5e4",
+        "bytes": 936427
+      },
+      {
+        "path": "validation/backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json",
+        "sha256": "4d97e580ec1a75a1612b81f78a7223ede0f57c51e33bdacd101bec83725bd016",
+        "bytes": 740378
+      }
+    ]
+  },
+  "scope": {
+    "inspected": "GlobalDefs complete 18 top-level types and nested state/value types; direct/indirect consumers; shared state, geometry/reconstruction/flux leaves, diffusion-Hydro imports, Jeans callback, actual Host/Device owner interfaces.",
+    "not_claimed": [
+      "Whole-project dynamic plugin unloading",
+      "All configurations or runtime dependency combinations",
+      "Numerical/build performance requalification",
+      "Latest remote main identity"
+    ],
+    "static_dependency_index": {
+      "method": "Textual quoted local includes across src C++/CUDA headers/sources and .inc. Includes conditional branches conservatively; resolves current-directory then src-root paths. Counts include each starting file itself.",
+      "current_files": 429,
+      "baseline_files": 356,
+      "globaldefs_direct_consumers_current": 40,
+      "globaldefs_direct_consumers_main": 31,
+      "closures": [
+        {
+          "path": "src/data/GlobalDefs.h",
+          "main_present": true,
+          "main_count_including_self": 5,
+          "current_count_including_self": 9,
+          "main_local_includes": [
+            "src/core/ArchPortability.h",
+            "src/data/StateDiagnostics.h",
+            "src/interface/PreviewMetadata.h",
+            "src/physics/constant/PhysicalConstants.h"
+          ],
+          "current_local_includes": [
+            "src/core/ArchPortability.h",
+            "src/core/config/ParameterKeys.h",
+            "src/data/MaterialValue.h",
+            "src/data/StateDiagnostics.h",
+            "src/interface/PreviewMetadata.h",
+            "src/physics/constant/PhysicalConstants.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [],
+          "added_headers": [
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/data/MaterialValue.h",
+            "src/io/ConfigParser.h"
+          ]
+        },
+        {
+          "path": "src/data/FluidState.h",
+          "main_present": true,
+          "main_count_including_self": 4,
+          "current_count_including_self": 6,
+          "main_local_includes": [
+            "src/amr/topology/AmrDefines.h",
+            "src/core/ArchPortability.h",
+            "src/data/StateDiagnostics.h"
+          ],
+          "current_local_includes": [
+            "src/amr/topology/AmrDefines.h",
+            "src/core/ArchPortability.h",
+            "src/data/StateDiagnostics.h",
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [],
+          "added_headers": [
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h"
+          ]
+        },
+        {
+          "path": "src/numerics/diffusion/DiffFlux.h",
+          "main_present": true,
+          "main_count_including_self": 44,
+          "current_count_including_self": 106,
+          "main_local_includes": [
+            "src/data/FluidState.h",
+            "src/data/GlobalDefs.h",
+            "src/driver/schedule/ReductionSpec.h",
+            "src/grid/Grid.h",
+            "src/numerics/diffusion/DiffusionTypes.h",
+            "src/numerics/integrator/TimeIntegratorHelper.h",
+            "src/physics/diffusionCoe/diffusion_math.hpp",
+            "src/physics/eos/eos_state.h",
+            "src/physics/species/Species.h"
+          ],
+          "current_local_includes": [
+            "src/data/FluidState.h",
+            "src/data/GlobalDefs.h",
+            "src/driver/schedule/ReductionSpec.h",
+            "src/grid/Grid.h",
+            "src/numerics/diffusion/CurvilinearViscousStress.h",
+            "src/numerics/diffusion/DiffusionTypes.h",
+            "src/numerics/diffusion/NewtonianViscousStress.h",
+            "src/numerics/diffusion/RzViscousStress.h",
+            "src/numerics/integrator/TimeIntegratorHelper.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/physics/diffusionCoe/diffusion_math.hpp",
+            "src/physics/eos/eos_state.h",
+            "src/physics/species/Species.h"
+          ],
+          "main_gravity_headers": [
+            "src/physics/gravity/IGravityPolicy.h"
+          ],
+          "current_gravity_headers": [
+            "src/physics/gravity/FiniteRingBoundaryMath.h",
+            "src/physics/gravity/GravityBoundary.h",
+            "src/physics/gravity/GravityExecution.h",
+            "src/physics/gravity/GravitySolveTypes.h",
+            "src/physics/gravity/GravitySource.h",
+            "src/physics/gravity/GravitySourceBounds.h",
+            "src/physics/gravity/GravitySourceTypes.h",
+            "src/physics/gravity/HydroSourceBinding.h",
+            "src/physics/gravity/IGravityPolicy.h",
+            "src/physics/gravity/NativeExternalSource.h",
+            "src/physics/gravity/NativeExternalSourceMath.h",
+            "src/physics/gravity/NativeExternalStage.h",
+            "src/physics/gravity/NativeSelfStage.h",
+            "src/physics/gravity/self/GravityBoundaryDiagnostics.h",
+            "src/physics/gravity/self/GravityWorkspace.h",
+            "src/physics/gravity/self/SelfGravity.h"
+          ],
+          "added_headers": [
+            "src/amr/elliptic/EllipticMeshAdapter.h",
+            "src/amr/exchange/BoundaryPlan.h",
+            "src/amr/exchange/HostBoundaryPlan.h",
+            "src/amr/transfer/NativeRzRegridTransfer.h",
+            "src/core/CompensatedSum.h",
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/core/config/StandardParameters.h",
+            "src/core/problem/InitialStateConversion.h",
+            "src/data/MaterialValue.h",
+            "src/data/UserTypes.h",
+            "src/driver/dispatch/PolicyDescriptor.h",
+            "src/driver/dispatch/capability/ResolvedExecutionPlan.h",
+            "src/driver/runtime/ComputeBackend.h",
+            "src/driver/runtime/StateResidency.h",
+            "src/driver/schedule/StageScheduler.h",
+            "src/grid/CoordinateBoundary.h",
+            "src/grid/DyadicGridIdentity.h",
+            "src/grid/ScalarFieldView.h",
+            "src/io/ConfigParser.h",
+            "src/numerics/diffusion/CurvilinearViscousStress.h",
+            "src/numerics/diffusion/NewtonianViscousStress.h",
+            "src/numerics/diffusion/RzViscousStress.h",
+            "src/numerics/elliptic/CartesianPoisson.h",
+            "src/numerics/elliptic/CompositePoisson.h",
+            "src/numerics/elliptic/EllipticMesh.h",
+            "src/numerics/integrator/HydroBoundaryAuthority.h",
+            "src/numerics/integrator/HydroCellUpdate.h",
+            "src/numerics/multigrid/CompositeExecution.h",
+            "src/numerics/multigrid/CompositeMultigrid.h",
+            "src/numerics/multigrid/MultigridTypes.h",
+            "src/numerics/reconstruction/RzCellPolynomial.h",
+            "src/numerics/reconstruction/RzDensityMoments.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h",
+            "src/numerics/state/RzCellAverage.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h",
+            "src/physics/boundary/BoundaryTypes.h",
+            "src/physics/boundary/NativeRzBoundary.h",
+            "src/physics/boundary/NativeRzBoundaryMath.h",
+            "src/physics/boundary/PhysicalBoundary.h",
+            "src/physics/boundary/PhysicalBoundaryHandler.h",
+            "src/physics/boundary/UserBoundary.h",
+            "src/physics/diagnostics/JeansDiagnostics.h",
+            "src/physics/eos/eos.h",
+            "src/physics/eos/eos_Utils.h",
+            "src/physics/gravity/FiniteRingBoundaryMath.h",
+            "src/physics/gravity/GravityBoundary.h",
+            "src/physics/gravity/GravityExecution.h",
+            "src/physics/gravity/GravitySolveTypes.h",
+            "src/physics/gravity/GravitySource.h",
+            "src/physics/gravity/GravitySourceBounds.h",
+            "src/physics/gravity/GravitySourceTypes.h",
+            "src/physics/gravity/HydroSourceBinding.h",
+            "src/physics/gravity/NativeExternalSource.h",
+            "src/physics/gravity/NativeExternalSourceMath.h",
+            "src/physics/gravity/NativeExternalStage.h",
+            "src/physics/gravity/NativeSelfStage.h",
+            "src/physics/gravity/self/GravityBoundaryDiagnostics.h",
+            "src/physics/gravity/self/GravityWorkspace.h",
+            "src/physics/gravity/self/SelfGravity.h"
+          ]
+        },
+        {
+          "path": "src/numerics/diffusion/DiffusionTypes.h",
+          "main_present": true,
+          "main_count_including_self": 6,
+          "current_count_including_self": 10,
+          "main_local_includes": [
+            "src/data/GlobalDefs.h"
+          ],
+          "current_local_includes": [
+            "src/core/ArchPortability.h",
+            "src/data/GlobalDefs.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [],
+          "added_headers": [
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/data/MaterialValue.h",
+            "src/io/ConfigParser.h"
+          ]
+        },
+        {
+          "path": "src/numerics/integrator/HydroGeometryBinding.h",
+          "main_present": false,
+          "main_count_including_self": null,
+          "current_count_including_self": 74,
+          "main_local_includes": null,
+          "current_local_includes": [
+            "src/driver/schedule/StageScheduler.h",
+            "src/numerics/integrator/IHydroSolver.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [
+            "src/physics/gravity/GravitySourceTypes.h",
+            "src/physics/gravity/IGravityPolicy.h"
+          ],
+          "added_headers": [
+            "src/amr/AMRControl.h",
+            "src/amr/exchange/CoarseFineCellPlan.h",
+            "src/amr/exchange/CoordinateSeamMath.h",
+            "src/amr/exchange/CoordinateSeamPlan.h",
+            "src/amr/exchange/ExchangePlan.h",
+            "src/amr/exchange/GhostExchange.h",
+            "src/amr/flux/AmrFluxMath.h",
+            "src/amr/flux/AmrFluxPlan.h",
+            "src/amr/flux/FluxRegister.h",
+            "src/amr/refinement/RefinementIndicatorMath.h",
+            "src/amr/storage/Block.h",
+            "src/amr/storage/MemoryPool.h",
+            "src/amr/topology/AmrDefines.h",
+            "src/amr/topology/AmrTree.h",
+            "src/amr/topology/BlockHandle.h",
+            "src/amr/topology/Morton.h",
+            "src/amr/transfer/AmrTransferPlans.h",
+            "src/amr/transfer/ConservativeRestriction.h",
+            "src/amr/transfer/LimitedLinearProlongation.h",
+            "src/amr/transfer/NativeRzRegridTransfer.h",
+            "src/amr/transfer/RegridExecutionPlan.h",
+            "src/amr/transfer/RegridTransferMath.h",
+            "src/core/ArchPortability.h",
+            "src/core/CompensatedSum.h",
+            "src/core/config/CaseConfiguration.h",
+            "src/core/config/CompositionInput.h",
+            "src/core/config/ConfigValidation.h",
+            "src/core/config/ConfigurationInput.h",
+            "src/core/config/ControlRelations.h",
+            "src/core/config/InputResolution.h",
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/PreparedConfiguration.h",
+            "src/core/config/RefinementSelection.h",
+            "src/core/config/RuntimeParams.h",
+            "src/core/config/ScalarControlValidation.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/core/config/StandardParameters.h",
+            "src/core/problem/ProblemRegistry.h",
+            "src/data/FluidState.h",
+            "src/data/GlobalDefs.h",
+            "src/data/MaterialValue.h",
+            "src/data/StateDiagnostics.h",
+            "src/data/UserTypes.h",
+            "src/driver/dispatch/PolicyDescriptor.h",
+            "src/driver/dispatch/capability/ResolvedExecutionPlan.h",
+            "src/driver/runtime/StateResidency.h",
+            "src/driver/schedule/StageScheduler.h",
+            "src/grid/CoordinateBoundary.h",
+            "src/grid/DyadicGridIdentity.h",
+            "src/grid/Grid.h",
+            "src/grid/GridGeometryView.h",
+            "src/grid/GridMetrics.h",
+            "src/interface/PreviewMetadata.h",
+            "src/interface/ProblemGenerator.h",
+            "src/io/ConfigParser.h",
+            "src/numerics/integrator/HydroGeometryBinding.h",
+            "src/numerics/integrator/IHydroSolver.h",
+            "src/numerics/reconstruction/RzDensityMoments.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h",
+            "src/numerics/state/RzCellAverage.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/numerics/state/StateAdmissibility.h",
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h",
+            "src/physics/constant/PhysicalConstants.h",
+            "src/physics/diagnostics/JeansDiagnostics.h",
+            "src/physics/diagnostics/VelocityDiagnostics.h",
+            "src/physics/eos/IdealGas.h",
+            "src/physics/eos/eos.h",
+            "src/physics/eos/eos_Utils.h",
+            "src/physics/eos/eos_state.h",
+            "src/physics/gravity/GravitySourceTypes.h",
+            "src/physics/gravity/IGravityPolicy.h",
+            "src/physics/species/Species.h"
+          ]
+        },
+        {
+          "path": "src/grid/GridMetrics.h",
+          "main_present": true,
+          "main_count_including_self": 9,
+          "current_count_including_self": 16,
+          "main_local_includes": [
+            "src/grid/Grid.h",
+            "src/grid/GridGeometryView.h"
+          ],
+          "current_local_includes": [
+            "src/grid/Grid.h",
+            "src/grid/GridGeometryView.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [],
+          "added_headers": [
+            "src/amr/topology/Morton.h",
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/data/MaterialValue.h",
+            "src/grid/DyadicGridIdentity.h",
+            "src/io/ConfigParser.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h"
+          ]
+        },
+        {
+          "path": "src/numerics/state/RzNativeClosure.h",
+          "main_present": false,
+          "main_count_including_self": null,
+          "current_count_including_self": 22,
+          "main_local_includes": null,
+          "current_local_includes": [
+            "src/core/ArchPortability.h",
+            "src/data/FluidState.h",
+            "src/grid/GridMetrics.h",
+            "src/numerics/reconstruction/RzDensityMoments.h",
+            "src/numerics/state/StateAdmissibility.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [],
+          "added_headers": [
+            "src/amr/topology/AmrDefines.h",
+            "src/amr/topology/Morton.h",
+            "src/core/ArchPortability.h",
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/data/FluidState.h",
+            "src/data/GlobalDefs.h",
+            "src/data/MaterialValue.h",
+            "src/data/StateDiagnostics.h",
+            "src/grid/DyadicGridIdentity.h",
+            "src/grid/Grid.h",
+            "src/grid/GridGeometryView.h",
+            "src/grid/GridMetrics.h",
+            "src/interface/PreviewMetadata.h",
+            "src/io/ConfigParser.h",
+            "src/numerics/reconstruction/RzDensityMoments.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/numerics/state/StateAdmissibility.h",
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h",
+            "src/physics/constant/PhysicalConstants.h"
+          ]
+        },
+        {
+          "path": "src/numerics/integrator/IHydroSolver.h",
+          "main_present": true,
+          "main_count_including_self": 41,
+          "current_count_including_self": 71,
+          "main_local_includes": [
+            "src/amr/AMRControl.h",
+            "src/core/config/RuntimeParams.h",
+            "src/data/FluidState.h",
+            "src/grid/Grid.h",
+            "src/physics/gravity/IGravityPolicy.h"
+          ],
+          "current_local_includes": [
+            "src/amr/AMRControl.h",
+            "src/core/config/RuntimeParams.h",
+            "src/data/FluidState.h",
+            "src/grid/Grid.h",
+            "src/physics/gravity/IGravityPolicy.h"
+          ],
+          "main_gravity_headers": [
+            "src/physics/gravity/IGravityPolicy.h"
+          ],
+          "current_gravity_headers": [
+            "src/physics/gravity/GravitySourceTypes.h",
+            "src/physics/gravity/IGravityPolicy.h"
+          ],
+          "added_headers": [
+            "src/amr/transfer/NativeRzRegridTransfer.h",
+            "src/core/CompensatedSum.h",
+            "src/core/config/CaseConfiguration.h",
+            "src/core/config/CompositionInput.h",
+            "src/core/config/ConfigurationInput.h",
+            "src/core/config/ControlRelations.h",
+            "src/core/config/InputResolution.h",
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/PreparedConfiguration.h",
+            "src/core/config/RefinementSelection.h",
+            "src/core/config/ScalarControlValidation.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/core/problem/ProblemRegistry.h",
+            "src/data/MaterialValue.h",
+            "src/data/UserTypes.h",
+            "src/grid/CoordinateBoundary.h",
+            "src/grid/DyadicGridIdentity.h",
+            "src/interface/ProblemGenerator.h",
+            "src/numerics/reconstruction/RzDensityMoments.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h",
+            "src/numerics/state/RzCellAverage.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h",
+            "src/physics/diagnostics/JeansDiagnostics.h",
+            "src/physics/eos/IdealGas.h",
+            "src/physics/eos/eos.h",
+            "src/physics/eos/eos_Utils.h",
+            "src/physics/eos/eos_state.h",
+            "src/physics/gravity/GravitySourceTypes.h"
+          ]
+        },
+        {
+          "path": "src/amr/topology/AmrTree.h",
+          "main_present": true,
+          "main_count_including_self": 24,
+          "current_count_including_self": 37,
+          "main_local_includes": [
+            "src/amr/refinement/RefinementIndicatorMath.h",
+            "src/amr/storage/MemoryPool.h",
+            "src/amr/topology/Morton.h",
+            "src/amr/transfer/AmrTransferPlans.h",
+            "src/amr/transfer/RegridExecutionPlan.h",
+            "src/data/GlobalDefs.h",
+            "src/data/StateDiagnostics.h",
+            "src/grid/Grid.h",
+            "src/physics/diagnostics/VelocityDiagnostics.h",
+            "src/physics/species/Species.h"
+          ],
+          "current_local_includes": [
+            "src/amr/refinement/RefinementIndicatorMath.h",
+            "src/amr/storage/MemoryPool.h",
+            "src/amr/topology/Morton.h",
+            "src/amr/transfer/AmrTransferPlans.h",
+            "src/amr/transfer/RegridExecutionPlan.h",
+            "src/data/GlobalDefs.h",
+            "src/data/StateDiagnostics.h",
+            "src/grid/Grid.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/physics/diagnostics/JeansDiagnostics.h",
+            "src/physics/diagnostics/VelocityDiagnostics.h",
+            "src/physics/species/Species.h"
+          ],
+          "main_gravity_headers": [],
+          "current_gravity_headers": [],
+          "added_headers": [
+            "src/amr/transfer/NativeRzRegridTransfer.h",
+            "src/core/config/ParameterKeys.h",
+            "src/core/config/StandardParameterEntries.inc",
+            "src/data/MaterialValue.h",
+            "src/grid/DyadicGridIdentity.h",
+            "src/io/ConfigParser.h",
+            "src/numerics/reconstruction/RzDensityMoments.h",
+            "src/numerics/reconstruction/RzPolynomialMoments.h",
+            "src/numerics/state/RzCellAverage.h",
+            "src/numerics/state/RzNativeClosure.h",
+            "src/physics/boundary/BoundaryDiagnostics.h",
+            "src/physics/boundary/BoundaryFlux.h",
+            "src/physics/diagnostics/JeansDiagnostics.h"
+          ]
+        }
+      ],
+      "paths": [
+        {
+          "start": "src/numerics/diffusion/DiffFlux.h",
+          "target": "src/physics/gravity/NativeSelfStage.h",
+          "current": [
+            "src/numerics/diffusion/DiffFlux.h",
+            "src/numerics/integrator/TimeIntegratorHelper.h",
+            "src/physics/gravity/HydroSourceBinding.h",
+            "src/physics/gravity/NativeSelfStage.h"
+          ],
+          "main": null
+        },
+        {
+          "start": "src/numerics/diffusion/DiffFlux.h",
+          "target": "src/numerics/elliptic/CompositePoisson.h",
+          "current": [
+            "src/numerics/diffusion/DiffFlux.h",
+            "src/numerics/integrator/TimeIntegratorHelper.h",
+            "src/physics/gravity/HydroSourceBinding.h",
+            "src/physics/gravity/NativeSelfStage.h",
+            "src/physics/gravity/self/SelfGravity.h",
+            "src/numerics/elliptic/CompositePoisson.h"
+          ],
+          "main": null
+        },
+        {
+          "start": "src/data/GlobalDefs.h",
+          "target": "src/io/ConfigParser.h",
+          "current": [
+            "src/data/GlobalDefs.h",
+            "src/interface/PreviewMetadata.h",
+            "src/io/ConfigParser.h"
+          ],
+          "main": null
+        },
+        {
+          "start": "src/numerics/integrator/HydroGeometryBinding.h",
+          "target": "src/core/config/RuntimeParams.h",
+          "current": [
+            "src/numerics/integrator/HydroGeometryBinding.h",
+            "src/numerics/integrator/IHydroSolver.h",
+            "src/core/config/RuntimeParams.h"
+          ],
+          "main": null
+        }
+      ],
+      "limitations": [
+        "Not compiler-preprocessed dependencies or a runtime call graph.",
+        "No third-party/system include cost attribution.",
+        "Closure growth includes legitimate new geometry/boundary/numerical code and cannot all be assigned to gravity.",
+        "No numerical or compile-throughput conclusion from include counts."
+      ]
+    },
+    "native_selected_identity_counts": {
+      "structural_review": 18,
+      "consumer_review": 36
+    },
+    "corrected_gravity_header_count": {
+      "main": 1,
+      "current": 16,
+      "net_added": 15,
+      "qualification": "Conservative lexical local header set, not preprocessed dependency or measured compile cost.",
+      "raw_delivery_limit": "Earlier status/selected DeepSeek context said 16 added. Raw artifacts preserved; final indexed sets establish current16 and net15. DeepSeek did not independently verify counts."
+    }
+  },
+  "globaldefs_types": [
+    {
+      "type": "GridConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 37,
+        "end_line": 63,
+        "SHA256": "b5f81fdf60d1bca45ea420a9ff9f8b232b00b3168417ceb8ac65c10ec85d87cf"
+      },
+      "baseline_definition": {
+        "start_line": 32,
+        "end_line": 57,
+        "SHA256": "fe78480ecefee015118eaf77462164af9d14c3cbd8fc38cac425ded4c3871059"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Grid topology, chart token, physical domain and boundary selection; declarative configuration.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "NumericsConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 66,
+        "end_line": 89,
+        "SHA256": "1004fe0b7c23d85ebf9394f838e27a5a72b79c54d4ce7e1ccb5b5076378239d3"
+      },
+      "baseline_definition": {
+        "start_line": 60,
+        "end_line": 82,
+        "SHA256": "9e59c5c7f6a21d46d99b5d2fde281c7197a7e5a916417dfb146f5f6ca15b4e60"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Hydrodynamic discretization, accepted-state bounds and macro timestep controls.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "ExecutionConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 92,
+        "end_line": 100,
+        "SHA256": "83c2bd1610e0913c8d4d9bf9ab68fe5bfbce8eb21db28d23b59e2e0dae291827"
+      },
+      "baseline_definition": {
+        "start_line": 85,
+        "end_line": 92,
+        "SHA256": "1902afdafec1d518f0f64166b7803461ab5589efc0ef3ef7aeb03fe233afb51e"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Backend/device selection; no backend instance or allocation.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "OdeConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 103,
+        "end_line": 122,
+        "SHA256": "876f13f7b7225ace1d844bd3d5ff97473b87ba3131bcd024411af8ab194bb6a3"
+      },
+      "baseline_definition": {
+        "start_line": 95,
+        "end_line": 113,
+        "SHA256": "288567b542eb1b960d1cbf8a3a3c70d31982e8d2a97d0df72bf13706be767595"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "ODE method and numerical controls; no ODE solver state.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "BurnLimits",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 124,
+        "end_line": 141,
+        "SHA256": "f40641b3c33e780ba3a2b88aad18023fbc78cb66879bf9ba1bcc98bf5e70b6a7"
+      },
+      "baseline_definition": {
+        "start_line": 115,
+        "end_line": 132,
+        "SHA256": "f40641b3c33e780ba3a2b88aad18023fbc78cb66879bf9ba1bcc98bf5e70b6a7"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": true,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": false,
+      "current_responsibility": "Existing compact ODE matrix capacity and safe equation-count leaves.",
+      "classification": "preexisting_shared_state_or_numeric_contract"
+    },
+    {
+      "type": "OdeConfigView",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 147,
+        "end_line": 157,
+        "SHA256": "a79ba29f16428c81b6f42cfb1be74287782ecaf9a0af55ce5d9150ff923476dc"
+      },
+      "baseline_definition": {
+        "start_line": 138,
+        "end_line": 148,
+        "SHA256": "a79ba29f16428c81b6f42cfb1be74287782ecaf9a0af55ce5d9150ff923476dc"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": true,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": false,
+      "current_responsibility": "Existing plain numeric Host/Device ODE control view.",
+      "classification": "preexisting_shared_state_or_numeric_contract"
+    },
+    {
+      "type": "BurnConfigView",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 162,
+        "end_line": 174,
+        "SHA256": "5c3d4febb8e42052f6e637b6ad5dc60f86c89328901708b9a3df161575b6428b"
+      },
+      "baseline_definition": {
+        "start_line": 153,
+        "end_line": 165,
+        "SHA256": "5c3d4febb8e42052f6e637b6ad5dc60f86c89328901708b9a3df161575b6428b"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": true,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": false,
+      "current_responsibility": "Existing plain numeric Host/Device burn controls including OdeConfigView.",
+      "classification": "preexisting_shared_state_or_numeric_contract"
+    },
+    {
+      "type": "BurnOdeStatus",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 176,
+        "end_line": 184,
+        "SHA256": "2779e59c71717eac36d3477fd0e00a173c6794b3fda80c30fb07f84145e35851"
+      },
+      "baseline_definition": {
+        "start_line": 167,
+        "end_line": 175,
+        "SHA256": "2779e59c71717eac36d3477fd0e00a173c6794b3fda80c30fb07f84145e35851"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": true,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": false,
+      "current_responsibility": "Existing shared burn outcome enumeration.",
+      "classification": "preexisting_shared_state_or_numeric_contract"
+    },
+    {
+      "type": "BurnOdeReport",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 186,
+        "end_line": 204,
+        "SHA256": "27aa05edf39af1e558342b987d63bf91212a29f9ae2abb2751db2914e7199290"
+      },
+      "baseline_definition": {
+        "start_line": 177,
+        "end_line": 195,
+        "SHA256": "27aa05edf39af1e558342b987d63bf91212a29f9ae2abb2751db2914e7199290"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": true,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": false,
+      "current_responsibility": "Existing burn outcome/counters/energy/timestep report.",
+      "classification": "preexisting_shared_state_or_numeric_contract"
+    },
+    {
+      "type": "BurnConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 206,
+        "end_line": 228,
+        "SHA256": "28e1bd19051f16e2d1444399f743cba7311b18e7272b0c03817618fba13a5f1c"
+      },
+      "baseline_definition": {
+        "start_line": 197,
+        "end_line": 218,
+        "SHA256": "ce1d1f7c40334eb3ece968195ea306efbaacbe8b9737238420b5ba3873ba4317"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Burn module controls and nested ODE controls.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "GravityConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 256,
+        "end_line": 272,
+        "SHA256": "a3bce5b34bd921c4ae1d54b7ba64960e72277baafa1fdc470715ec8ed253377d"
+      },
+      "baseline_definition": {
+        "start_line": 246,
+        "end_line": 262,
+        "SHA256": "06091d27e474eb4d2a16e022d6cfeb57ee3ec1e7fa4ab13f9effc034b944624b"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [
+        "G_const"
+      ],
+      "added_default_equality": true,
+      "current_responsibility": "Gravity type, constant external acceleration and Poisson convergence controls; no fields/solver/memo.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "DiffusionConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 275,
+        "end_line": 293,
+        "SHA256": "a855cce9ddf5e0083cbc2911d3011160e70bd140cb24a600051d5bbe2a136c0c"
+      },
+      "baseline_definition": {
+        "start_line": 265,
+        "end_line": 282,
+        "SHA256": "e513bc5fdc4362d18776075ac892da14a3bba263abc5dd6b3e65777e9e8f4365"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Diffusion stage controls, operator switches and coefficient overrides.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "PhysicsConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 295,
+        "end_line": 307,
+        "SHA256": "93578f8c2f4f19cc2c312625ea36e9870f076af535b1f4bad76e1c4a6b2bb396"
+      },
+      "baseline_definition": {
+        "start_line": 284,
+        "end_line": 295,
+        "SHA256": "c1d800a17ec5dc0eda25c4518790e15cd9f0690bc50645024b9f21b7f71428ad"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Intentional configuration aggregate for EOS, gravity, burn and diffusion.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "AmrConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 310,
+        "end_line": 337,
+        "SHA256": "bb4b5e4867da326961233bb81453ba20c36591c3effc4762a6c869b93e6cfa79"
+      },
+      "baseline_definition": {
+        "start_line": 298,
+        "end_line": 321,
+        "SHA256": "935fa717a10096d99fedf41610add4aed37191597fde77acf01f451c6f8115cd"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [
+        "jeans_cells"
+      ],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "AMR policy selections and thresholds, including conditional Jeans criterion.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "OutputVariables",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 340,
+        "end_line": 356,
+        "SHA256": "3e7308905053deed823171f84c9906f227f15da2f5470e291f1a35b355dbf14e"
+      },
+      "baseline_definition": {
+        "start_line": 324,
+        "end_line": 339,
+        "SHA256": "729cd95c0c04a6428dc9724d1b0099c538b669d554897df1b4ad91fbd78e35c0"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Declarative output-field selection.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "IOConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 358,
+        "end_line": 380,
+        "SHA256": "07d141498031368bf1792f9c1bbdbe68ab6b152e2eeb65b254934a47a33063ca"
+      },
+      "baseline_definition": {
+        "start_line": 341,
+        "end_line": 362,
+        "SHA256": "03afc726dde692239d0c3936a81eb011cb5f33a776e6ddaa3c11ddd62bb34548"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": true,
+      "current_responsibility": "Termination/cadence/output/restart path selections.",
+      "classification": "configuration_control_not_algorithm_or_resource"
+    },
+    {
+      "type": "RunState",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 382,
+        "end_line": 395,
+        "SHA256": "5206006cad579870517dd2d0f46a54a71ccf8f6e39e6366e4ba3264154dab9fa"
+      },
+      "baseline_definition": {
+        "start_line": 364,
+        "end_line": 377,
+        "SHA256": "5206006cad579870517dd2d0f46a54a71ccf8f6e39e6366e4ba3264154dab9fa"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": true,
+      "added_data_members": [],
+      "removed_data_members": [],
+      "added_default_equality": false,
+      "current_responsibility": "Run controller restart seed and repair/provenance evidence, no module implementation resources.",
+      "classification": "preexisting_shared_state_or_numeric_contract"
+    },
+    {
+      "type": "SimConfig",
+      "current_definition": {
+        "path": "src/data/GlobalDefs.h",
+        "start_line": 398,
+        "end_line": 544,
+        "SHA256": "0a75ddd0c266d00ad421fb46b3f45858b3da39bd9eb4b14d861163f79ff85e97"
+      },
+      "baseline_definition": {
+        "start_line": 380,
+        "end_line": 439,
+        "SHA256": "0b8b5d07768e27f09ae62d968eedc0ae5ce59f5bc517e1636947b0a8c654b4cb"
+      },
+      "baseline_present": true,
+      "definition_block_byte_equal": false,
+      "added_data_members": [
+        "loaded_input_",
+        "loaded_case_id_",
+        "loaded_values_",
+        "resolved_case_values_",
+        "material_inputs_",
+        "material_model_owner_",
+        "material_model_identity_"
+      ],
+      "removed_data_members": [
+        "custom_params",
+        "custom_string_params"
+      ],
+      "added_default_equality": false,
+      "current_responsibility": "Typed configuration aggregate plus O7 checked input/value/material provenance and optional inspection trace.",
+      "classification": "O7_provenance_preserve"
+    }
+  ],
+  "nested_state_types": [
+    {
+      "type": "FluidVector",
+      "path": "src/data/FluidState.h",
+      "current_lines": [
+        24,
+        52
+      ],
+      "added_data_members": [],
+      "removed_data_members": [],
+      "definition_byte_equal_to_baseline": true,
+      "role": "Five conserved cell components and arithmetic; no gravitational potential/source/solver identity."
+    },
+    {
+      "type": "FluidState",
+      "path": "src/data/FluidState.h",
+      "current_lines": [
+        66,
+        180
+      ],
+      "added_data_members": [
+        "shared_ptr<const boundary::DiffusionBoundaryStorage> diffusion_boundary",
+        "shared_ptr<boundary::BoundaryFluxCaptureStorage> boundary_flux_capture"
+      ],
+      "removed_data_members": [],
+      "unchanged_storage": [
+        "rho",
+        "mom_u",
+        "mom_v",
+        "mom_w",
+        "eng",
+        "enuc_rate",
+        "mass_fractions",
+        "n_species_",
+        "block_total_size_",
+        "stage_repairs"
+      ],
+      "role": "Host conserved arrays plus newly attached ephemeral boundary control and observation storage."
+    },
+    {
+      "type": "HostFailure",
+      "path": "src/data/StateDiagnostics.h",
+      "current_lines": [
+        27,
+        38
+      ],
+      "added_data_members": [],
+      "role": "Existing Host OpenMP error relay; no new gravity dependency."
+    },
+    {
+      "type": "RepairSemantics",
+      "path": "src/data/StateDiagnostics.h",
+      "current_lines": [
+        44,
+        53
+      ],
+      "new_type": true,
+      "role": "Explicit numerical measure identity ExistingVolume/RzVolumeAngular; required to avoid merging incompatible conserved-momentum ledgers."
+    },
+    {
+      "type": "RepairView",
+      "path": "src/data/StateDiagnostics.h",
+      "current_lines": [
+        54,
+        108
+      ],
+      "added_data_members": [
+        "RepairSemantics semantics"
+      ],
+      "role": "Borrowed numeric ledger. conserved_density receives V/W as scalar arguments; it does not own GridMetrics or gravity."
+    },
+    {
+      "type": "RepairBudget",
+      "path": "src/data/StateDiagnostics.h",
+      "current_lines": [
+        110,
+        159
+      ],
+      "added_data_members": [
+        "RepairSemantics semantics"
+      ],
+      "role": "Existing compact repair accumulation with new explicit identity guard; no potential/cache/solver."
+    },
+    {
+      "type": "MaterialValue",
+      "path": "src/data/MaterialValue.h",
+      "current_lines": [
+        10,
+        29
+      ],
+      "new_type": true,
+      "members": [
+        "value",
+        "origin",
+        "owner",
+        "source_identity",
+        "parameter_key"
+      ],
+      "role": "Host material input/network/model provenance. No material transport evaluator, table allocation or mesh resource."
+    }
+  ],
+  "runstate_limit": "RunState definition block equals main; nested RepairBudget gained RepairSemantics, so recursive representation/ABI equality is not claimed. Geometry-measure accounting is a necessary shared state contract, not a gravity source owner.",
+  "confirmed_nonissues": [
+    {
+      "scope": "GlobalDefs runtime gravity resources",
+      "evidence": "src/data/GlobalDefs.h:255-307,382-460",
+      "fact": "GravityConfig is declarative and PhysicsConfig intentionally aggregates config sections. No GravityStage/Poisson field/finite-ring/AGM/memo object or allocation is embedded."
+    },
+    {
+      "scope": "RunState changes",
+      "evidence": "src/data/GlobalDefs.h:382-395; baseline src/data/GlobalDefs.h:364-377",
+      "fact": "Entire RunState definition block is byte-identical. dt_burn and EOS restart digest were already in main. Nested RepairBudget gained explicit RZ measure identity, not gravity resources."
+    },
+    {
+      "scope": "FluidVector/evolved state",
+      "evidence": "src/data/FluidState.h:24-52,73-89",
+      "fact": "FluidVector unchanged, original evolved arrays unchanged. New observer/controls are ephemeral; there is no additional potential/Poisson array."
+    },
+    {
+      "scope": "Existing shared burn numeric helpers",
+      "evidence": "src/data/GlobalDefs.h:124-253",
+      "fact": "BurnLimits, OdeConfigView, BurnConfigView, BurnOdeStatus, BurnOdeReport and make_burn_config_view already exist unchanged in main; their central placement is legacy shared ABI, not newly introduced module mixing."
+    },
+    {
+      "scope": "O7 provenance and private loaded-value snapshot",
+      "evidence": "src/data/GlobalDefs.h:398-448; src/core/config/RuntimeParams.h:63-71,82-94",
+      "fact": "Input identity, frozen-value copy and material provenance replace silent custom fallback maps. Loader captures snapshot before assigning loaded_values_, so no recursive self-ownership is introduced."
+    },
+    {
+      "scope": "Gravity G constant",
+      "evidence": "src/data/GlobalDefs.h:256-272; baseline src/data/GlobalDefs.h:257",
+      "fact": "Writable GravityConfig.G_const removed; physical constant remains single shared authority. No rollback warranted."
+    },
+    {
+      "scope": "AMR Jeans configuration",
+      "evidence": "src/data/GlobalDefs.h:327-331; src/core/config/StandardParameterEntries.inc:85; src/core/config/RefinementSelection.h:97-98",
+      "fact": "jeans_cells is the explicit conditional AMR criterion threshold; zero denotes absence, and activity requires valid explicit threshold. It does not add an AMR-resident gravity solver."
+    },
+    {
+      "scope": "RZ state conversions and repair measures",
+      "evidence": "src/data/FluidState.h:182-202; src/data/StateDiagnostics.h:85-101",
+      "fact": "Angular momentum conversion and V/W repair accounting are geometric state semantics. They take scalar measures from geometry owner and have no gravity dependency; they must not be confused with isolated self-gravity optimization."
+    }
+  ],
+  "findings": [
+    {
+      "id": "CPL-01",
+      "priority": "first",
+      "classification": "confirmed_avoidable_concrete_header_dependency",
+      "scope": "compile_dependency_not_observed_runtime_physics",
+      "title": "Diffusion inherits concrete gravity source owners through a broad Hydro helper",
+      "evidence": [
+        {
+          "path": "src/numerics/diffusion/DiffFlux.h",
+          "line": 28
+        },
+        {
+          "path": "src/numerics/diffusion/DiffFlux.h",
+          "line": 1202
+        },
+        {
+          "path": "src/numerics/integrator/TimeIntegratorHelper.h",
+          "line": 54
+        },
+        {
+          "path": "src/physics/gravity/HydroSourceBinding.h",
+          "line": 29
+        },
+        {
+          "path": "src/physics/gravity/NativeSelfStage.h",
+          "line": 50
+        },
+        {
+          "path": "src/physics/gravity/self/SelfGravity.h",
+          "line": 26
+        }
+      ],
+      "baseline": "DiffFlux -> TimeIntegratorHelper existed in main; abstract gravity dependency existed. Current helper imports concrete Native source stages and domain solver declarations. Do not reverse the preceding geometry/gravity ownership repair.",
+      "impact": "Unrelated diffusion includes/rebuilds can depend on concrete gravity headers. No compile cost, runtime regression or gravity activation was measured in this audit.",
+      "smallest_later_action": "Keep one shared divergence implementation in an existing numerical owner; narrow its include boundary or move only Hydro-source composition to its existing Hydro binding. Preserve arithmetic order, actual source receipts and O7. No universal source/plugin framework.",
+      "disposition": "DEFER_IMPLEMENTATION_UNTIL_SEPARATE_PACKAGE"
+    },
+    {
+      "id": "CPL-02",
+      "priority": "second",
+      "classification": "confirmed_typed_attachment_and_lifecycle_coupling_candidate",
+      "scope": "common_state_ownership",
+      "title": "FluidState attaches concrete ephemeral boundary-control and observer storage",
+      "evidence": [
+        {
+          "path": "src/data/FluidState.h",
+          "line": 18
+        },
+        {
+          "path": "src/data/FluidState.h",
+          "line": 69
+        },
+        {
+          "path": "src/data/FluidState.h",
+          "line": 72
+        },
+        {
+          "path": "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
+          "line": 82
+        },
+        {
+          "path": "src/driver/runtime/RuntimeStateTransaction.h",
+          "line": 83
+        },
+        {
+          "path": "src/driver/runtime/DriverRegrid.cpp",
+          "line": 100
+        }
+      ],
+      "baseline": "Both shared_ptr attachments were absent in main, introduced by d45ea29562ca8d637454cb2fb9504e10bccdc299 for typed user boundaries, distinct from later RZ angular state leaves.",
+      "impact": "Universal fluid storage carries concrete boundary header dependencies and stage/regrid/rollback lifetime requirements. Actual per-block sharing is functional and must be retained. No gravity fields or incorrect observer numerics were found.",
+      "smallest_later_action": "First evaluate forward declarations plus direct memory include for header narrowing. If pure evolved-state ownership is required, separately evaluate existing block/runtime-owned per-block attachments and explicit borrowed views; preserve three-slot aliasing, rollback/regrid and CPU/CUDA mapping. Forward declarations alone do not remove lifecycle coupling. Never move per-block storage blindly to per-run RunState or add opaque type erasure merely for style.",
+      "disposition": "DEFER_MINIMAL_OWNERSHIP_DESIGN"
+    },
+    {
+      "id": "CPL-03",
+      "priority": "low",
+      "classification": "configuration_header_and_type_ownership_candidate",
+      "scope": "O7_semantics_preserved",
+      "title": "GlobalDefs resolved values borrow preview type and indirectly include the whole parser",
+      "evidence": [
+        {
+          "path": "src/data/GlobalDefs.h",
+          "line": 405
+        },
+        {
+          "path": "src/interface/PreviewMetadata.h",
+          "line": 26
+        },
+        {
+          "path": "src/io/ConfigParser.h",
+          "line": 29
+        }
+      ],
+      "baseline": "GlobalDefs -> PreviewMetadata was already present. PreviewMetadata -> ConfigParser is new; current local closure adds ParameterKeys, StandardParameterEntries.inc, MaterialValue and ConfigParser but no concrete physics owner.",
+      "impact": "Configuration value/trace/error and parser implementation responsibilities share a broad public header path. No GUI dependency or scientific fallback inferred.",
+      "smallest_later_action": "If narrowed, give scalar values/errors/strict conversion one existing core/config owner shared by loader and inspector. Retain all O7 presence/type/source/preparation checks and exact diagnostics; do not restore old custom maps or defaults.",
+      "disposition": "DEFER_NO_O7_ROLLBACK"
+    },
+    {
+      "id": "CPL-04",
+      "priority": "low",
+      "classification": "shared_mathematics_header_placement_candidate",
+      "scope": "geometry_reconstruction",
+      "title": "GridMetrics imports reconstruction moments solely for shared Gauss-4 data",
+      "evidence": [
+        {
+          "path": "src/grid/GridMetrics.h",
+          "line": 24
+        },
+        {
+          "path": "src/grid/GridMetrics.h",
+          "line": 228
+        },
+        {
+          "path": "src/numerics/reconstruction/RzPolynomialMoments.h",
+          "line": 207
+        }
+      ],
+      "baseline": "New relative to main. Current header also carries cubic reconstruction helpers; the actual Gauss nodes/weights must remain shared.",
+      "impact": "Geometry sees reconstruction implementation details; no concrete gravity/EOS owner or algorithm change shown.",
+      "smallest_later_action": "Consider a common low-level mathematical owner only when existing ownership or measured dependency benefit justifies it. Keep one set of exact nodes/weights; do not duplicate constants or create a new file merely for visual purity.",
+      "disposition": "DEFER_LOW_BENEFIT_PLACEMENT"
+    },
+    {
+      "id": "CPL-05",
+      "priority": "low",
+      "classification": "preexisting_loader_header_dependency",
+      "scope": "Hydro_interface",
+      "title": "IHydroSolver imports RuntimeParams despite requiring numeric configuration declarations",
+      "evidence": [
+        {
+          "path": "src/numerics/integrator/IHydroSolver.h",
+          "line": 16
+        },
+        {
+          "path": "src/numerics/integrator/IHydroSolver.h",
+          "line": 65
+        }
+      ],
+      "baseline": "Same RuntimeParams include already present in main. Not newly introduced by RZ or the latest source repair.",
+      "impact": "An interface intended as a compilation boundary inherits concrete configuration-loader dependencies. No behavioral failure shown.",
+      "smallest_later_action": "Use existing configuration declarations/direct minimal includes or forward declarations where valid, retaining the same interface and strict loader behavior.",
+      "disposition": "DEFER_PREEXISTING_HYGIENE"
+    }
+  ],
+  "Jeans_disposition": {
+    "classification": "necessary_scientific_callback_no_concrete_gravity_owner",
+    "evidence": [
+      "src/physics/diagnostics/JeansDiagnostics.h:34",
+      "src/amr/refinement/RefinementThermodynamics.h:33",
+      "src/amr/topology/AmrTree.h:144"
+    ],
+    "optional_placement_note": "Active-cell traversal and RZ input adaptation may later move within existing AMR refinement responsibility if worthwhile; no mandatory refactor or removal of G/EOS/metrics."
+  },
+  "static_audit": {
+    "manager_execution": {
+      "command": [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "tools/audit_architecture.py",
+        "."
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "tool_wall_seconds": 3.463999593
+    },
+    "independent_worker_execution": {
+      "command": [
+        "/home/shiroakane/miniconda3/envs/work/bin/python",
+        "tools/audit_architecture.py",
+        "."
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 3.4536352600007376,
+      "result": "PASS",
+      "coverage_limit": "The existing audit checks selected cycles/owner/ABI/catalogue/strict-FP/CMake rules. PASS does not prove global modularity; specifically it does not reject the CPL-01 diffusion-to-concrete-gravity transitive dependency."
+    },
+    "qualification": "Selected existing architectural rules PASS; CPL-01 not included in those rules. No CTest, compiler or simulation was run."
+  },
+  "reviews": {
+    "structural": {
+      "artifact": {
+        "path": "output/release/rel3-coupling-audit-20261014/globaldefs-structure-review.json",
+        "sha256": "b407215be5fb4e806cb8911bbf2e634093da744e0d5fe5d7a6059b3b8839c838",
+        "bytes": 35949
+      },
+      "manager_decision": "ACCEPT_EVIDENCE_ONLY"
+    },
+    "consumer": {
+      "artifact": {
+        "path": "output/release/rel3-coupling-audit-20261014/module-consumer-review.json",
+        "sha256": "6288f4e700c7d96517a87fdade4749856a1c9fe690322512726a1453c2c1ef77",
+        "bytes": 43580
+      },
+      "manager_decision": "ACCEPT_EVIDENCE_ONLY"
+    },
+    "real_DeepSeek": {
+      "job_id": "7fc635d2d06f4ee6a41f544c6c3500bb",
+      "owner_goal": "arch-rel3-cpu-science-20261014",
+      "goal_call_cap": 6,
+      "known_calls_used_cumulative": 5,
+      "known_calls_remaining": 1,
+      "elapsed_seconds": 11.803123598998354,
+      "delivery_SHA256": "43009fb748a9b5e6e5feb956280ebc3dfa93a19997e613c02954dd50f6debd1f",
+      "delivery_chars": 4081,
+      "provider_metadata_SHA256": "33c7b33fa740dd70544b11e8da43cc86a8bdb0c8b34ec317558209c240dd7dc6",
+      "usage": {
+        "input_tokens": 3493,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 1795,
+        "output_tokens_details": {
+          "reasoning_tokens": 849
+        },
+        "total_tokens": 5288
+      },
+      "adoption_scope": "evidence_only",
+      "manager_decision": "ACCEPT",
+      "adopted": "DiffFlux lexical dependency and FluidState attachment facts; new ConfigParser edge baseline correction.",
+      "excluded": "Opaque type-erasure or per-run RunState attachment relocation; unproved compiler/runtime impact; claim that source adapter only supports RZ. No implementation is adopted.",
+      "pre_dispatch_failure": "First oversized packet rejected before a job was created; narrowed same logical task accepted, no inference for rejection.",
+      "artifact": {
+        "path": "output/release/rel3-coupling-audit-20261014/deepseek-review-raw.json",
+        "sha256": "834c7e58e63fe7ff25046968478c1fa8407e855fc8356dec1b79fe3dc9605a52",
+        "bytes": 5554
+      }
+    },
+    "Gemini": "Not dispatched; no frozen language editing need. Native agents are explicitly separate from real DeepSeek."
+  },
+  "documentation": {
+    "main_plan": {
+      "path": "ARCH_RELEASE_PLAN.md",
+      "sha256": "3bfcc19aa1e08cbc2190521d1a553083480ba46ed8d5ad7a70f7e4be17dd2bdb",
+      "bytes": 52487
+    },
+    "new_human_documents": 0,
+    "new_test_families": 0
+  },
+  "artifact_index": [
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/source-freeze.json",
+      "sha256": "9a887938f755b5bc96b7f198145482685307076b45750e22d72c1c970e0542de",
+      "bytes": 59192
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/baseline-src_data_GlobalDefs.h",
+      "sha256": "ecdd49ba7fe2ff7abc7d9e2087e13ed327dfe3727b63fd4e9fb2f017823af4e1",
+      "bytes": 17341
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/baseline-include_GlobalDefs.h",
+      "sha256": "3d556d37e299654c8b9ab2b98549f5d094912d0ac3f9d0d9da01f73ff812a753",
+      "bytes": 578
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/GlobalDefs-main-to-worktree.diff",
+      "sha256": "a0a6f97faeff4c3430e8e7dda58e3fc7311ff4c471a1b9237db93fbfe8575664",
+      "bytes": 15352
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/globaldefs-structure-review.json",
+      "sha256": "b407215be5fb4e806cb8911bbf2e634093da744e0d5fe5d7a6059b3b8839c838",
+      "bytes": 35949
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/module-consumer-review.json",
+      "sha256": "6288f4e700c7d96517a87fdade4749856a1c9fe690322512726a1453c2c1ef77",
+      "bytes": 43580
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/deepseek-selected-context.json",
+      "sha256": "8e99331d01fcaa959290b92280f6a7177e2821bb76c73f56a65bdbbaaee27efe",
+      "bytes": 9854
+    },
+    {
+      "path": "output/release/rel3-coupling-audit-20261014/deepseek-review-raw.json",
+      "sha256": "834c7e58e63fe7ff25046968478c1fa8407e855fc8356dec1b79fe3dc9605a52",
+      "bytes": 5554
+    }
+  ],
+  "implementation_started": false,
+  "REL3_complete": false,
+  "REL4_started": false,
+  "release_qualified": false,
+  "final_audit": {
+    "decision": "ACCEPT_READ_ONLY_TARGETED_AUDIT",
+    "accepted_utc": "2026-10-14T10:35:25.946682+00:00",
+    "reviewed_payload_canonical_SHA256_excluding_final_audit": "aafc1a5706c14d1d266b18134518ac7659e4ad67b340c79296553aa121ced60c",
+    "root_checks": {
+      "path": "output/release/rel3-coupling-audit-20261014/root-final-checks.json",
+      "sha256": "f05592075d521abd3c6a6d5a4fbbd4eed8e8cd08e732e1a4d01cb7be278fa2ca",
+      "bytes": 751
+    },
+    "independent_summary_review": {
+      "path": "output/release/rel3-coupling-audit-20261014/final-summary-review.json",
+      "sha256": "a016173394d3781aae7cf4af95b5baf234b73811cad19995c5fe63c6c051d58c",
+      "bytes": 2173
+    },
+    "frozen_source_files_unchanged": 460,
+    "prior_evidence_records_unchanged": 18,
+    "git_diff_check": "PASS",
+    "audit_window_elapsed_seconds": 852.168319,
+    "elapsed_scope": "Source-freeze-to-audit-acceptance wall window, including parallel review; not active CPU time or full-turn cost.",
+    "manager_token_cost": null,
+    "implementation_started": false,
+    "numerics_requalified": false,
+    "REL3_complete": false,
+    "REL4_started": false,
+    "release_qualified": false
+  }
+}

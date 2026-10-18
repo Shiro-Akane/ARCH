@@ -5,8 +5,8 @@
  * State, geometry and scratch pointers are borrowed from the transaction owner.
  * Workflow: authenticate borrowed chart/layout and actual parent/child identity;
  * gather immutable old-state families; invoke the existing shared ordinary or
- * native RZ transfer; write provisional destination interiors and sticky status.
- * RegridTransferMath and NativeRzRegridTransfer supply all numerical operations.
+ * shared native transfer; write provisional destination interiors and sticky status.
+ * RegridTransferMath supplies ordinary and native numerical operations.
  * Actual completed ghosts/EOS and topology publication belong to the caller.
  */
 #pragma once

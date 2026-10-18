@@ -1,0 +1,1065 @@
+{
+  "schema": "ARCH R6 R7 RZ performance package v1",
+  "recorded_utc": "2026-10-13T08:04:25.969817+00:00",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "decision": "ACCEPT_AND_INTEGRATE_P_RZ_01_ONLY",
+  "stage_scope": {
+    "R6_first_package_preserved": true,
+    "R6_R7_joint_first_package_complete": true,
+    "R6_R7_whole_stages_declared_complete": false,
+    "R8_started": false
+  },
+  "source_changes": {
+    "production": {
+      "path": "src/physics/gravity/FiniteRingBoundaryMath.h",
+      "sha256": "da7dd2cc7145fff0c2c37611971261c23a18cdb31820ca1ef5cd877cbfd32995",
+      "bytes": 72313
+    },
+    "baseline_sha256": "13ce5c44e6f8deb93fdd06a9803b95280aaf6cc9e79db21dc563720b84b355e7",
+    "test_fixture": {
+      "path": "tests/host/gravity/test_composite_poisson.cpp",
+      "sha256": "b8eb8ab4e0a27da1e2152922640b1803eb9eaced46a3bb506763de8373a6b628",
+      "bytes": 283477
+    },
+    "description": "One exact normal-interior binary64 neighbor helper; only representation casts differ by backend. Original expressions/guards/intersections/AGM/adaptive sequence/counters unchanged. Test corrects pre-existing stored-rectangle eligibility assumption and adds one-ULP rejection.",
+    "numerical_criteria_changed": false,
+    "O7_changed": false,
+    "memo_history_changed": false,
+    "CUDA_faces_or_sync_changed": false,
+    "manager_verified_replaced_call_sites": 10,
+    "worker_report_site_count_9_not_adopted": true
+  },
+  "measurements": {
+    "production16": {
+      "summary": {
+        "CALL_seconds_total": {
+          "original": {
+            "samples": [
+              7.6485543819999995,
+              7.740953698999999
+            ],
+            "mean": 7.6947540404999994,
+            "minimum": 7.6485543819999995,
+            "maximum": 7.740953698999999
+          },
+          "candidate": {
+            "samples": [
+              4.259739915,
+              4.258748935
+            ],
+            "mean": 4.259244425,
+            "minimum": 4.258748935,
+            "maximum": 4.259739915
+          },
+          "reduction_fraction": 0.4464742599201731,
+          "speedup": 1.8066007189761124
+        },
+        "GNU_process_seconds": {
+          "original": {
+            "samples": [
+              7.65,
+              7.74
+            ],
+            "mean": 7.695,
+            "minimum": 7.65,
+            "maximum": 7.74
+          },
+          "candidate": {
+            "samples": [
+              4.26,
+              5.27
+            ],
+            "mean": 4.765,
+            "minimum": 4.26,
+            "maximum": 5.27
+          },
+          "reduction_fraction": 0.3807667316439247,
+          "speedup": 1.614900314795383
+        },
+        "GNU_user_seconds": {
+          "original": {
+            "samples": [
+              7.88,
+              7.97
+            ],
+            "mean": 7.925,
+            "minimum": 7.88,
+            "maximum": 7.97
+          },
+          "candidate": {
+            "samples": [
+              4.39,
+              4.38
+            ],
+            "mean": 4.385,
+            "minimum": 4.38,
+            "maximum": 4.39
+          },
+          "reduction_fraction": 0.4466876971608833,
+          "speedup": 1.8072976054732042
+        },
+        "max_process_rss_kib": {
+          "original": {
+            "samples": [
+              11728,
+              11864
+            ],
+            "mean": 11796,
+            "minimum": 11728,
+            "maximum": 11864
+          },
+          "candidate": {
+            "samples": [
+              11864,
+              11728
+            ],
+            "mean": 11796,
+            "minimum": 11728,
+            "maximum": 11864
+          },
+          "reduction_fraction": 0.0,
+          "speedup": 1.0
+        }
+      },
+      "per_call_phase": [
+        {
+          "call": 0,
+          "mode": "cold",
+          "original_seconds": {
+            "samples": [
+              7.439763799,
+              7.53151984
+            ],
+            "mean": 7.4856418195,
+            "minimum": 7.439763799,
+            "maximum": 7.53151984
+          },
+          "candidate_seconds": {
+            "samples": [
+              4.158156847,
+              4.157674274
+            ],
+            "mean": 4.157915560499999,
+            "minimum": 4.157674274,
+            "maximum": 4.158156847
+          },
+          "reduction_fraction": 0.4445478877083481
+        },
+        {
+          "call": 1,
+          "mode": "warm",
+          "original_seconds": {
+            "samples": [
+              0.004048688,
+              0.004096075
+            ],
+            "mean": 0.0040723815,
+            "minimum": 0.004048688,
+            "maximum": 0.004096075
+          },
+          "candidate_seconds": {
+            "samples": [
+              0.003058789,
+              0.003000564
+            ],
+            "mean": 0.0030296765,
+            "minimum": 0.003000564,
+            "maximum": 0.003058789
+          },
+          "reduction_fraction": 0.2560430549053422
+        },
+        {
+          "call": 2,
+          "mode": "scalar-density-change",
+          "original_seconds": {
+            "samples": [
+              0.004198165,
+              0.004158478
+            ],
+            "mean": 0.0041783215,
+            "minimum": 0.004158478,
+            "maximum": 0.004198165
+          },
+          "candidate_seconds": {
+            "samples": [
+              0.003038411,
+              0.00305452
+            ],
+            "mean": 0.0030464654999999997,
+            "minimum": 0.003038411,
+            "maximum": 0.00305452
+          },
+          "reduction_fraction": 0.27088772369479
+        },
+        {
+          "call": 3,
+          "mode": "heterogeneous-change",
+          "original_seconds": {
+            "samples": [
+              0.20054373,
+              0.201179306
+            ],
+            "mean": 0.20086151800000002,
+            "minimum": 0.20054373,
+            "maximum": 0.201179306
+          },
+          "candidate_seconds": {
+            "samples": [
+              0.095485868,
+              0.095019577
+            ],
+            "mean": 0.0952527225,
+            "minimum": 0.095019577,
+            "maximum": 0.095485868
+          },
+          "reduction_fraction": 0.5257791365491922
+        }
+      ],
+      "scope": "Dynamic heterogeneous direct ring source using the original production budget proposal function, rtol1e-8; NOT an entire macrostep/application/field solve."
+    },
+    "fixed4": {
+      "summary": {
+        "CALL_seconds_total": {
+          "original": {
+            "samples": [
+              18.566852725,
+              18.606518485
+            ],
+            "mean": 18.586685605,
+            "minimum": 18.566852725,
+            "maximum": 18.606518485
+          },
+          "candidate": {
+            "samples": [
+              8.703644253,
+              8.714970543
+            ],
+            "mean": 8.709307398,
+            "minimum": 8.703644253,
+            "maximum": 8.714970543
+          },
+          "reduction_fraction": 0.531422245843707,
+          "speedup": 2.1341175314661913
+        },
+        "GNU_process_seconds": {
+          "original": {
+            "samples": [
+              18.56,
+              19.66
+            ],
+            "mean": 19.11,
+            "minimum": 18.56,
+            "maximum": 19.66
+          },
+          "candidate": {
+            "samples": [
+              9.7,
+              8.71
+            ],
+            "mean": 9.205,
+            "minimum": 8.71,
+            "maximum": 9.7
+          },
+          "reduction_fraction": 0.5183150183150182,
+          "speedup": 2.0760456273764256
+        },
+        "GNU_user_seconds": {
+          "original": {
+            "samples": [
+              19.14,
+              19.17
+            ],
+            "mean": 19.155,
+            "minimum": 19.14,
+            "maximum": 19.17
+          },
+          "candidate": {
+            "samples": [
+              8.94,
+              8.95
+            ],
+            "mean": 8.945,
+            "minimum": 8.94,
+            "maximum": 8.95
+          },
+          "reduction_fraction": 0.5330200991908118,
+          "speedup": 2.141419787590833
+        },
+        "max_process_rss_kib": {
+          "original": {
+            "samples": [
+              16320,
+              16288
+            ],
+            "mean": 16304,
+            "minimum": 16288,
+            "maximum": 16320
+          },
+          "candidate": {
+            "samples": [
+              16372,
+              16352
+            ],
+            "mean": 16362,
+            "minimum": 16352,
+            "maximum": 16372
+          },
+          "reduction_fraction": -0.0035574092247301348,
+          "speedup": 0.9964552010756631
+        }
+      },
+      "per_call_phase": [
+        {
+          "call": 0,
+          "mode": "cold",
+          "original_seconds": {
+            "samples": [
+              4.015366661,
+              4.019177361
+            ],
+            "mean": 4.017272010999999,
+            "minimum": 4.015366661,
+            "maximum": 4.019177361
+          },
+          "candidate_seconds": {
+            "samples": [
+              1.87727792,
+              1.891118321
+            ],
+            "mean": 1.8841981205,
+            "minimum": 1.87727792,
+            "maximum": 1.891118321
+          },
+          "reduction_fraction": 0.5309757180144303
+        },
+        {
+          "call": 1,
+          "mode": "warm",
+          "original_seconds": {
+            "samples": [
+              3.0233e-05,
+              2.9551e-05
+            ],
+            "mean": 2.9891999999999998e-05,
+            "minimum": 2.9551e-05,
+            "maximum": 3.0233e-05
+          },
+          "candidate_seconds": {
+            "samples": [
+              2.2706e-05,
+              2.2903e-05
+            ],
+            "mean": 2.28045e-05,
+            "minimum": 2.2706e-05,
+            "maximum": 2.2903e-05
+          },
+          "reduction_fraction": 0.2371035728623042
+        },
+        {
+          "call": 2,
+          "mode": "scalar-density-change",
+          "original_seconds": {
+            "samples": [
+              4.015832219,
+              4.037057839
+            ],
+            "mean": 4.026445029,
+            "minimum": 4.015832219,
+            "maximum": 4.037057839
+          },
+          "candidate_seconds": {
+            "samples": [
+              1.881772477,
+              1.881323476
+            ],
+            "mean": 1.8815479764999998,
+            "minimum": 1.881323476,
+            "maximum": 1.881772477
+          },
+          "reduction_fraction": 0.5327024303204513
+        },
+        {
+          "call": 3,
+          "mode": "heterogeneous-change",
+          "original_seconds": {
+            "samples": [
+              10.535623612,
+              10.550253734
+            ],
+            "mean": 10.542938673,
+            "minimum": 10.535623612,
+            "maximum": 10.550253734
+          },
+          "candidate_seconds": {
+            "samples": [
+              4.94457115,
+              4.942505843
+            ],
+            "mean": 4.9435384965,
+            "minimum": 4.942505843,
+            "maximum": 4.94457115
+          },
+          "reduction_fraction": 0.5311043106833028
+        }
+      ],
+      "scope": "Fixed1e-18 four-cell-per-axis direct-owner diagnostic, independently summarized; not production target policy."
+    }
+  },
+  "numerical_acceptance": {
+    "final_Host_original_candidate_case_pairs": 11,
+    "all_22_exit_zero": true,
+    "all_11_stdout_exact": true,
+    "primitive_corpus_rows": 72764,
+    "operations_per_row": 4,
+    "host_round_modes": 4,
+    "host_bits_nan_and_fenv_flags_match": true,
+    "real_CUDA_primitive_bits_match": true,
+    "CUDA_exception_flags_not_observable": true,
+    "primitive_comparisons": 1455280,
+    "negative_bit_controls_detected": true,
+    "original_CUDA_raw_owner_lanes": 9,
+    "both_original_candidate_Device_pass": true,
+    "original_Newton_reference_and_work_gates_preserved": true,
+    "source_and_binary_identities": "See numerical-scope.json and listed recipes; current CMake/CTest application registration was not rebuilt."
+  },
+  "decisions": {
+    "scratch_initialization": "DEFER: 0.2931336% of measured fixed4 ring time; not implemented",
+    "Gauss2_Gauss3": "RETAIN: existing intersection/failure and 28-per-separated-range diagnostics preserved",
+    "density_memo_headroom": "NOT_IMPLEMENTED: literal-target scalar experiment not a production invalidation proof; actual production-budget workload measured instead",
+    "normal_neighbor": "ACCEPT one candidate with clear owner and short-process benefit; stop optimization attempts"
+  },
+  "open_scientific_exits": {
+    "original_RZ_five_sound_crossing_seconds": 424745.2560858262,
+    "own_midpoint_fresh_strict_terminal_comparison": "UNPASSED_UNCHANGED",
+    "accepted_historical_PWC_scope": "0/1.25/2.5 crossings retain original identities and gates; not current full trajectory",
+    "production_CUDA_and_public_four_module_fresh": "UNCHANGED_OPEN",
+    "Cellular_and_other_release_exits": "UNCHANGED_OPEN"
+  },
+  "limitations": [
+    "Direct source-boundary owner, not complete macro-step or application benchmark. No GPU performance claim.",
+    "Two matched pairs per workload; process wall-time variation including about one extra second is retained, not adjusted.",
+    "Only verified GNU13 Host/GNU12+CUDA12.3 sm86 binary64 behavior including tested NaN/fenv; no cross-platform payload guarantee.",
+    "No full CUDA build, old RZ long run, new H5 batch, LFS fetch/pull or hosted CI.",
+    "Commands retain their actual historical source/include paths. After integration/isolated-tree archive, baseline reproduction must first select the preserved original header overlay and candidate reproduction current exact header; do not run historical scripts against changed headers without remapping and hash checks."
+  ],
+  "next_packages": [
+    {
+      "id": "P-RZ-02",
+      "goal": "Match current production CPU source/executable/config; bounded same-input macro-step numerical and end-to-end cost check",
+      "roles": {
+        "Codex": "identity/integration/acceptance",
+        "W1": "affected CMake target and bounded incremental build",
+        "W2": "short actual workload and resource observation",
+        "W3": "independent fields/conservation/refusal/provenance"
+      },
+      "run_segment_seconds_guidance": [
+        60,
+        120
+      ],
+      "longrun_not_automatically_started": true
+    },
+    {
+      "id": "P-RZ-03",
+      "goal": "Measure actual Device ring preparation, transfer/fence and serial-kernel costs before changes",
+      "condition": "Useful after CPU short production package; keep global face/DFS cap/order and borrowed buffer completion."
+    }
+  ],
+  "artifact_index": [
+    {
+      "path": "output/modernization/r67-rz-20261013/start-identity.json",
+      "sha256": "bb1210e53d1cc93f4345f1b49d7d96236a6b16dd57f47c9579642bbd1c6ec704",
+      "bytes": 12228
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/runtime-map.json",
+      "sha256": "a7241e7d1b24e0157d7d6deb9bad40286297a6184e6e73a4eb7fbb7149540c5d",
+      "bytes": 19900
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/attribution-check.json",
+      "sha256": "34aa37ba134b273cdbd7e48c089cc8b2907936c25bdfc2ec3e232c392de9caab",
+      "bytes": 12730
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/neighbor-source-review.json",
+      "sha256": "6f452653226c93279df3d2e94fd036480238de2e83899a3b0344229cdf4be49d",
+      "bytes": 3202
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/numerical-scope.json",
+      "sha256": "6e9703e2bdbf9cecff20b0dde37d6752086e423033818bc013b00473e3c04381",
+      "bytes": 45966
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/paired-acceptance.json",
+      "sha256": "ee4677195a0b7c39079ee548806c5f72151ebbb07d285cffeb4615221c4a071c",
+      "bytes": 69555
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/fixture-defect.json",
+      "sha256": "bc0ad92142eafbb1f0174f44ce39a3cf0659f5eec2de7614f77a51265a21501b",
+      "bytes": 4816
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/quartet-fixture-repair.json",
+      "sha256": "dd109235b7a2600fdadbad82936ea4a35ae7f4964e2db43f3e400f3f7b7f7ee6",
+      "bytes": 3332
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/integration.json",
+      "sha256": "10d622748eb77c0248ab364d0ebd97fee3939d707a41f70d800690652985d6f1",
+      "bytes": 656
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/delegation.json",
+      "sha256": "daef0d25344e6fc54aeda0dee9909bb1d3c0182f795080fe48a3f3933e364402",
+      "bytes": 8659
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/probe-recipe.json",
+      "sha256": "cd755deaa8fe2414dc7573140d8ccfccd4b65c07cfe2fd551a48692bc9d669f1",
+      "bytes": 10188
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/math-recipe.json",
+      "sha256": "82f466caec5b9867550d2679770cdb459b4861557e52ea585c739f5ba8c523bd",
+      "bytes": 13684
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/candidate-recipe.json",
+      "sha256": "9222356e598a3a66bf25baa6ea0f42263131c5138c8e41b699b8354b0ef20a9c",
+      "bytes": 5341
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/comparison-recipe.json",
+      "sha256": "87c2957847412345e51b23adbc73807c707d17adc807da088b5501bdc32ce7d6",
+      "bytes": 13023
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/science2-results.json",
+      "sha256": "a11a223ce0bd806d95275cd9dd9327fca368a71245a03eacc0d8b01e0414e895",
+      "bytes": 5318
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/science3-results.json",
+      "sha256": "bc2eb3eae8d2e9bd9034ed21c06a56932b910a0584f31aaeb23bdbb8ee1cb842",
+      "bytes": 5300
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/paired-results.json",
+      "sha256": "9373a69c528e3e097fd9470333ba72c77b483901a46cb50d4ff0a78835205366",
+      "bytes": 8181
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/cuda-owner-extraction.json",
+      "sha256": "9b90d40764d04b381ed366ffd960badfe555daf006356c4cd2818fc2ffccf040",
+      "bytes": 787
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/neighbor-run.guard.log",
+      "sha256": "cb06af669dc2819cf43482a6c1ecc1b9981ac1c57b8db2c9b997aa0ec6d6588d",
+      "bytes": 1255
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/cuda-ring-run.guard.log",
+      "sha256": "51437cce8c39691ca0a26220cd677038b36e49a67c9f39e80f2ed5d0aa74fc4c",
+      "bytes": 798
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/sampling-functions.txt",
+      "sha256": "a45c7c8f43863384df5ea216367ff0a57df011821a68eaf1cfbccd48b7bbbe02",
+      "bytes": 2954
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/integrated.patch",
+      "sha256": "fecb64a6ffe3b61648e1741832478bc5afce665b734d655457f76bed7805656e",
+      "bytes": 7754
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/FiniteRingBoundaryMath.original.h",
+      "sha256": "13ce5c44e6f8deb93fdd06a9803b95280aaf6cc9e79db21dc563720b84b355e7",
+      "bytes": 71416
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/FiniteRingBoundaryMath.candidate.h",
+      "sha256": "da7dd2cc7145fff0c2c37611971261c23a18cdb31820ca1ef5cd877cbfd32995",
+      "bytes": 72313
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/NeighborProbe.cu",
+      "sha256": "44107b91f9617a80e0afaf87912005cea7afa9681fed3bcd5bee02c0922612b8",
+      "bytes": 10008
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/OriginalCudaRingOwner.cu",
+      "sha256": "7833a0f986f948ac67b82fbb68d58bd13715cf90ffeeeaeeef8c9583176fa4a1",
+      "bytes": 9135
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/RingBoundaryProbe.cpp",
+      "sha256": "88cdeee8a5322eab13ffeeaff07e5507325b8eedadeb70419eb52303c2433c53",
+      "bytes": 12177
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/RingBoundaryProductionProbe.cpp",
+      "sha256": "cfda4db6d1cbe7f3fe0d99a341048208aea616e7f5df7f23bb49e41777754da9",
+      "bytes": 17767
+    }
+  ],
+  "executables": [
+    {
+      "path": "output/modernization/r67-rz-20261013/baseline-probe",
+      "sha256": "995c3adb1d140a50a6f0737505052e1872ecf231cf635aef157e57fd34ab6286",
+      "bytes": 314168
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/candidate-probe",
+      "sha256": "100f498335d5cbd3d8a5309da26d670df42aef572a3d007e85cea90e56b6dcbd",
+      "bytes": 306744
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/production-probe",
+      "sha256": "d7929b966634efc6cf5c2bdd184f8cc118be999d48ad5693bdb1ebd7611bf1dd",
+      "bytes": 336552
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/production-candidate-probe",
+      "sha256": "60f68bc9f448868ae9654aa2aa9a04e47ef25d76c054472a3ee3a311596872d1",
+      "bytes": 336864
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/math-fixture-original",
+      "sha256": "1d72336fa382ecc02144695bc52c576c75ddc2a1ef8e0cdcf7f9255cd70eedf4",
+      "bytes": 934240
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/math-fixture-candidate",
+      "sha256": "f9f189f7d950daae59e9bae1d8453e25d153a0236f0c46e335294c39d571a5b8",
+      "bytes": 934520
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/neighbor-probe",
+      "sha256": "ac74a5cb138019e2273fd7f5fbe13abbe54a61ddc5301de00ea3f506e5f36754",
+      "bytes": 1015600
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/cuda-ring-original",
+      "sha256": "1d135b41adf4c5242c0dad3dabe003c804c1602d4b137bff2822b4c864899473",
+      "bytes": 1693960
+    },
+    {
+      "path": "output/modernization/r67-rz-20261013/cuda-ring-candidate",
+      "sha256": "0306a5c67845a8ed9cc43a91080dd5ef9f8746a04021202711603b695062cf9b",
+      "bytes": 1890568
+    }
+  ],
+  "prior_machine_receipts": [
+    {
+      "path": "docs/development/modernization/R31AuditTriage-20261013.json",
+      "sha256": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R1R4Foundation-20261013.json",
+      "sha256": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json",
+      "sha256": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R5BuildEfficiency-20261013.json",
+      "sha256": "ca5255222a7590951d727fdf1f3b8c0c573fb416b7672559ce561a2b6eb4bbbf",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json",
+      "sha256": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R6SharedBounds-20261013.json",
+      "sha256": "86b944b336a3c790c22a7013dac35c2f8b42d4b4e299e0e1a0f10c58857170e7",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/BaselineIdentity-20261012.json",
+      "sha256": "e8ad61c49a7c970ccae1ece92a6214b511214abee8096fd288679e5ee2b0a48d",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json",
+      "sha256": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R41R42Implementation-20261013.json",
+      "sha256": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R22NumericalChecks-20261012.json",
+      "sha256": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd",
+      "unchanged": true
+    }
+  ],
+  "preserved_existing_dirty_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "before_sha256": "7139a124c7bf6b907fd0e73d2db93a3312561e2dc9066cd8b2ca7bdb751ccce8",
+      "unchanged": true
+    },
+    {
+      "path": "EOS_toolkit/README.md",
+      "before_sha256": "b346cc070ecb3fadda6b2f662c6309e027740b8795715aa29efd163982afed8c",
+      "unchanged": true
+    },
+    {
+      "path": "EOS_toolkit/README.zh-CN.md",
+      "before_sha256": "8d6c35ec95e353e030c1eb6272fca304ae6886857d0248ef3f12ebb108a36af1",
+      "unchanged": true
+    },
+    {
+      "path": "EOS_toolkit/tables/baryon/README.md",
+      "before_sha256": "76b3f9c4b291dde59304d79c9eef0cc84f14f61baeebfebf2eef2c36ba7d0357",
+      "unchanged": true
+    },
+    {
+      "path": "cmake/tests/CudaTests.cmake",
+      "before_sha256": "3d9afbe518fbc86add06b2ef29bc22ee497774d2c6d06e7a48cf4b6a047cfecb",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/ConfigurationContractPlan.zh-CN.md",
+      "before_sha256": "5dec05d7b4e90a119f93094de702c97437336bd4b6f0d5a75c94ee4f3068fafd",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/README.md",
+      "before_sha256": "ebc17839818f7ff171fe038b967bea38bd9669c1520450416000946acae7e18f",
+      "unchanged": true
+    },
+    {
+      "path": "docs/guides/Build.md",
+      "before_sha256": "5f12ad02f851c09e9d0ffd440f21c77f2a39b95cf361ecec4cba38f25f0955b5",
+      "unchanged": true
+    },
+    {
+      "path": "docs/guides/Build.zh-CN.md",
+      "before_sha256": "32b62479aeef9c465533d03ffc63defb02f289633e643cc548fdfd3dadc3f4ec",
+      "unchanged": true
+    },
+    {
+      "path": "src/numerics/flux/README.md",
+      "before_sha256": "746990b93926fe72e0625f6835472f9fe297285807f9a5b883a1551aef3693c0",
+      "unchanged": true
+    },
+    {
+      "path": "src/numerics/reconstruction/RzCellPolynomial.h",
+      "before_sha256": "2e11b1f25006311bed49fe3c5333bce3eba9e8ff224becbc2ca9676678c5bbba",
+      "unchanged": true
+    },
+    {
+      "path": "tests/cuda/README.md",
+      "before_sha256": "e78efeff622388545234ce57fcd5864002b4ad21ee16d919fabbbc86228a3fe4",
+      "unchanged": true
+    },
+    {
+      "path": "tests/cuda/numerics/test_diffusion_rkl_parity.cu",
+      "before_sha256": "ea93d0f8ab0017bb99f61f8c9edb46dfbe7f76d74de98055f105a4eb6b3a7956",
+      "unchanged": true
+    },
+    {
+      "path": "tests/tooling/validation/test_validate_backend_results.py",
+      "before_sha256": "23d04850a56eee1807dcab550f601037a61e25795740c4a97e96e7fed4a34b09",
+      "unchanged": true
+    },
+    {
+      "path": "tools/validate_backend_results.py",
+      "before_sha256": "74ebcf961fc497b0a3ec759eac0836a9de4ef6b1134a3e4e4e8c2eb6bcff6a12",
+      "unchanged": true
+    },
+    {
+      "path": "validation/backend/README.md",
+      "before_sha256": "a2df6c0fffd122abd31ba4d238f708a061ec2e394f451ae11ef0a429c79419e8",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/README.md",
+      "before_sha256": "28bba3d8d085768677000a9d32291d62caec893a39d72c9239e9c3f8b07d2967",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/README.zh-CN.md",
+      "before_sha256": "c35e94153b913aa57551776852c26a3f006de93efb81a3354259b6504171c0e2",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/muscl_n128.par",
+      "before_sha256": "0d87f62ae6a5dbcce5e6f856010f5b48d2ab967f861a9985a04eadfa30eeae98",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/muscl_n256.par",
+      "before_sha256": "910ab4c3edb6e2bdf2d7552877dc9ba93f16d526c24469cff8c4c3dfc4abea65",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/muscl_n64.par",
+      "before_sha256": "3d95697ad6bab9d35beea0c214e681085e860edb15240c42a2f7f76a9f046734",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/pcm_n128.par",
+      "before_sha256": "9a63c880063fc650203820e8c36d15c9036cb81a92ef56fa8f5b5002cf80fa96",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/pcm_n256.par",
+      "before_sha256": "d8b746daa696fa0520149d254f5c10a5cdae7020d590d798091047ffbd0ed6f2",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/pcm_n64.par",
+      "before_sha256": "23050033889fa1fb6392111a24a59161cfa93a7b0090c01d3a4f458396b67aef",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/ppm_n128.par",
+      "before_sha256": "1095754ef1de2641aaabe54a733b56c8f55d6b8b2b74dc3883a5e4bd1acbd5e6",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/ppm_n256.par",
+      "before_sha256": "fe71c18f60c19d2242151e726f7081dc16c48ac8c5ac2663c3da3fd15b8a473c",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/ppm_n64.par",
+      "before_sha256": "02b27411c470f741f8efa0b1bd49b772b84017eead2f25e07ced4f873164182c",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/sod_ppm_n128.par",
+      "before_sha256": "97b748c01ce48cca32659b8a3b19f7ec68da81ab4636525bdb4f76d4945de18e",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/sod_ppm_n256.par",
+      "before_sha256": "9c3e0a80d5a0a9466cb6698ed36054173b4b2abfa198761d32da42bf945c7dcc",
+      "unchanged": true
+    },
+    {
+      "path": "validation/hydro/inputs/sod_ppm_n64.par",
+      "before_sha256": "5f8dd0b8d9bab83b82a4f884eb1c7be78a1b89db56e2e4ef83279f14e582d293",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/BaselineIdentity-20261012.zh-CN.md",
+      "before_sha256": "767800fabb0c228c9d6ace612d7fc0b01478554229b8ce972e25e20d3786eb01",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/R22NumericalChecks-20261012.zh-CN.md",
+      "before_sha256": "e99fb33119ecb31411d882b8878dadaa5d501c89e55d1fd176d715ee11efde80",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/R23PerformanceAndConfiguration-20261012.zh-CN.md",
+      "before_sha256": "1d5cb7c5d3448a4137d3aa22aab5b12c23bb737c64e79c81808c492094a9336b",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/R31AuditTriage-20261013.zh-CN.md",
+      "before_sha256": "72dc57efa698c06102160554919711a6cc03620428bb846a299996e1d66b879d",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/R32RklCompilationAndInactiveIdentity-20261013.zh-CN.md",
+      "before_sha256": "75f9f53287b9cf2abf0cdd941187f647e7369fd2e65f0043036f2aaeaa7ebb8e",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/R33CloseoutAndR4Handoff-20261013.zh-CN.md",
+      "before_sha256": "01a3bfc25c96b74d2123094f3600bef20999ebbd78166f7fc3f6d4a8d35a1d27",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/archive/modernization/R41R42Implementation-20261013.zh-CN.md",
+      "before_sha256": "fac6bae230d02854a0620876bb2181d401fca7b5ad32deda96051839a1641ee9",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R1R4Foundation-20261013.json",
+      "before_sha256": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R1R4Foundation-20261013.zh-CN.md",
+      "before_sha256": "d519710df733fba85a63611c723be533ace9351d9c4328e0f3d28529a3022287",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R22NumericalChecks-20261012.json",
+      "before_sha256": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json",
+      "before_sha256": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R31AuditTriage-20261013.json",
+      "before_sha256": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json",
+      "before_sha256": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json",
+      "before_sha256": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R41R42Implementation-20261013.json",
+      "before_sha256": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R5BuildEfficiency-20261013.json",
+      "before_sha256": "ca5255222a7590951d727fdf1f3b8c0c573fb416b7672559ce561a2b6eb4bbbf",
+      "unchanged": true
+    },
+    {
+      "path": "docs/development/modernization/R6SharedBounds-20261013.json",
+      "before_sha256": "86b944b336a3c790c22a7013dac35c2f8b42d4b4e299e0e1a0f10c58857170e7",
+      "unchanged": true
+    },
+    {
+      "path": "tests/cuda/numerics/DiffusionRklTestSupport.cuh",
+      "before_sha256": "9bed3c6df58d3648e460aca1e123c1585845cd56a5e52e2f95c5930bc2130b2e",
+      "unchanged": true
+    },
+    {
+      "path": "tests/cuda/numerics/test_diffusion_rkl_tabular.cu",
+      "before_sha256": "53dfd814e8e5cd2a91f8180fc02a70cc93de90b3fa12a99b4ee6157e7dacf61e",
+      "unchanged": true
+    }
+  ],
+  "delegation": {
+    "owner": "arch-r67-rz-20261013",
+    "goal_call_cap": 8,
+    "provider_jobs": [
+      {
+        "id": "815b1794579c4981a703b3a643636f2a",
+        "provider": "DeepSeek Flash high API",
+        "scope": "evidence_only scratch strategy"
+      },
+      {
+        "id": "4faceab45af2447f8223092d4801af31",
+        "provider": "DeepSeek Flash high CLI",
+        "scope": "accepted one header"
+      },
+      {
+        "id": "5c05dbc2daa94ef3b8661b557c5bdd56",
+        "provider": "Official Gemini3.8 Flash high Antigravity",
+        "scope": "accepted frozen short prose"
+      }
+    ],
+    "formal_repairs": 0,
+    "manager_cost": "UNKNOWN",
+    "workflow_feedback": "No extra inference sampled. CLI reported input293091/cache276224/output9292; for future tiny representation edits prefer bounded inline verification plus manager mechanical replacement when equivalent, retaining independent numerical/device acceptance. Record feedback only; no global policy changes. Tool approval timeouts retried only as permitted; no permanent entry repair claimed.",
+    "passive_metrics": {
+      "jobs": [
+        {
+          "job_id": "815b1794579c4981a703b3a643636f2a",
+          "usage": {
+            "input_tokens": 1402,
+            "cached_input_tokens": 0,
+            "output_tokens": 12554,
+            "reasoning_tokens": 11767,
+            "visible_output_tokens": 787,
+            "cost_usd": null,
+            "cost_kind": "not_quoted"
+          }
+        },
+        {
+          "job_id": "4faceab45af2447f8223092d4801af31",
+          "usage": {
+            "input_tokens": 293091,
+            "cached_input_tokens": 276224,
+            "output_tokens": 9292,
+            "reasoning_tokens": 4701,
+            "visible_output_tokens": 4591,
+            "cost_usd": null,
+            "cost_kind": "not_quoted"
+          }
+        },
+        {
+          "job_id": "5c05dbc2daa94ef3b8661b557c5bdd56",
+          "usage": {
+            "input_tokens": 3881,
+            "cached_input_tokens": null,
+            "output_tokens": 18658,
+            "reasoning_tokens": 18038,
+            "visible_output_tokens": 620,
+            "cost_usd": null,
+            "cost_kind": "subscription_not_attributed"
+          },
+          "tool_events": 0,
+          "project_writes": false,
+          "paid_credit_fallback": false
+        }
+      ],
+      "provider_calls": 3,
+      "formal_repairs": 0,
+      "manager_cost": "UNKNOWN",
+      "additional_paid_sampling": 0,
+      "policy_changed": false
+    }
+  },
+  "current_document_identities": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "cbca9779541ec966af25008cce8866ac55da2195b569135df5413995fbec62f0",
+      "bytes": 11302
+    },
+    {
+      "path": "ARCH_MODERNIZATION_PLAN.md",
+      "sha256": "438f8dd4c306db74edb7b50022b3aa4f4d9fd8bd178f9e6c4b8598220326f27e",
+      "bytes": 14773
+    },
+    {
+      "path": "docs/development/ImplementationOwnership.md",
+      "sha256": "3eec50c5d0fb39f3beb99032c2f81daff3a2adc8391a20bb6b6b22dbf94968e7",
+      "bytes": 60362
+    },
+    {
+      "path": "docs/development/README.md",
+      "sha256": "5df8a600ebda30bbde206dfc3ce2d65ce4245e09520d64efadcb49381dbf9ed7",
+      "bytes": 11956
+    }
+  ],
+  "cleanup": {
+    "isolated_worktree": "/home/shiroakane/.codex/worktrees/r67-ring-neighbors/ARCH",
+    "state": "ARCHIVED_RECOVERABLE",
+    "candidate_header_preserved": "output/modernization/r67-rz-20261013/FiniteRingBoundaryMath.candidate.h",
+    "baseline_header_preserved": "output/modernization/r67-rz-20261013/FiniteRingBoundaryMath.original.h",
+    "resource_lease_released": true,
+    "no_commit_or_push_in_current_workspace": true,
+    "initial_release_missing_required_reason_no_mutation": true
+  },
+  "final_independent_qa": {
+    "path": "output/modernization/r67-rz-20261013/final-independent-qa.json",
+    "sha256": "05af1af80b3bddfb203e8ccd0c3ae0c0932c2e9ae57ad4f522da98cc82642a1c",
+    "bytes": 54621,
+    "summary": "PASS:102 artifact/source/history hashes,94 local Markdown links,10 tables/180 rows. No new science/compile run. Added usage/cleanup metadata does not rewrite audited artifacts."
+  }
+}

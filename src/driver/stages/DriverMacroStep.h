@@ -1,22 +1,18 @@
 /**
  * @file DriverMacroStep.h
- * @brief Execute the existing symmetric split with one actual native endpoint owner.
+ * @brief Execute the existing symmetric split with one actual endpoint owner.
  *
  * Workflow:
  * 1. Borrow the actual Runtime StageBinding and the already-bound diagnostics.
- * 2. For native RZ, preflight the actual side/source and acquire the same
- *    complete transaction before any B/2-D/2-H-D/2-B/2 field or receipt write.
- *    Actual source journals retain the backend's private frame authentication.
+ * 2. Preflight the actual side/source before any B/2-D/2-H-D/2-B/2 field or
+ *    receipt write. Actual source journals retain the backend's own frame
+ *    authentication.
  * 3. Execute the same two half-steps and full Hydro step through their original
  *    callables and CPU measurement intervals; no time tableau is introduced.
  * 4. Complete real Current ghosts/EOS at Hydro(t_n+dt), check exact ledger and
  *    BC identity, then publish both boundary budgets and repair/source receipts.
- * 5. On rejection, the one owner restores fields/leases/metadata. The separately
- *    scoped advice guard restores accepted timestep advice, not completed I/O.
- *
- * Existing charts retain their original sequence. Native sides retry only an
- * actual Runtime-qualified active thermal refusal after complete rollback;
- * Device classification and the endpoint retain their actual resident fields.
+ * 5. On rejection the original Runtime/boundary owners unwind the failed
+ *    attempt; no completed I/O is reused by a later attempt.
  */
 #pragma once
 
@@ -31,93 +27,30 @@
 
 #include "driver/io/DriverIO.h"
 #include "driver/runtime/DriverRuntime.h"
-#include "driver/runtime/RuntimeStateTransaction.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverStages.h"
 
 namespace arch::driver {
 
-/** Save accepted dt growth/burn advice before a native timestep proposal.
- * The guard owns only two scalars. Old-state output indices and consumed CPU
- * time remain with their actual owners; no retry or cache reset is performed.
- */
-class NativeMacroStepAdvice final {
-    SimulationController& controller_;
-    double& burn_advice_;
-    bool active_;
-    double old_dt_,old_burn_;
-public:
-    NativeMacroStepAdvice(const DriverRuntime& runtime,SimulationController& controller,
-        double& burn_advice) noexcept
-        : controller_(controller),burn_advice_(burn_advice),
-          active_(runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz),
-          old_dt_(active_?controller.dt_old:0.),old_burn_(active_?burn_advice:0.) {}
-    NativeMacroStepAdvice(const NativeMacroStepAdvice&)=delete;
-    NativeMacroStepAdvice& operator=(const NativeMacroStepAdvice&)=delete;
-    /** Retain the proposal only after the full native endpoint was accepted. */
-    void commit() noexcept {active_=false;}
-    /** Restore exact accepted scalar values when proposal or split work throws. */
-    ~NativeMacroStepAdvice() noexcept {
-        if(active_) {controller_.dt_old=old_dt_;burn_advice_=old_burn_;}
-    }
-};
-
-/** Try the original complete macro from the same accepted entry.
- * Workflow: Advice -> original proposal/alignment -> fresh caller-owned context
- * and unique macro transaction -> accept once, or fully unwind -> dt/2.
- * Only the actual Runtime-qualified exception reaches retry on either Native
- * side. Advice/admissible alignment apply on both sides. Caps include attempted
- * wall work; failed source state is not read.
+/** Propose, align and execute the original complete macro once.
+ * The original calculate_next_dt/sync_dt semantics are unchanged: one proposal,
+ * one aligned step, then the actual split callables.
  */
 template<class Attempt>
 double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController& controller,
     double& burn_advice,double accepted_dt_cap,Attempt&& execute)
 {
-    const bool native=runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    const int maximum_attempts=native?16:1;
-    double retry_cap=accepted_dt_cap;
-    const double accepted_time=controller.t_current;
-    const int accepted_step=controller.step_count;
-    std::string first_failure;
-    for(int index=1;index<=maximum_attempts;++index) {
-        double actual_dt=0.;
-        try {
-            NativeMacroStepAdvice advice(runtime,controller,burn_advice);
-            const double proposal=controller.calculate_next_dt(std::min(accepted_dt_cap,retry_cap),burn_advice);
-            burn_advice=1e99;actual_dt=controller.sync_dt(proposal);
-            // The first legal output/final-time aligned short step preserves
-            // original sync_dt semantics; only retries enforce the aligned floor.
-            // The original calculate_next_dt still checks the proposal floor.
-            if(native&&(!std::isfinite(actual_dt)||!(actual_dt>0.)
-                ||(index>1&&actual_dt<runtime.configuration().numerics.dt_min)
-                ||!std::isfinite(accepted_time+actual_dt)||!(accepted_time+actual_dt>accepted_time)))
-                throw std::runtime_error("Native macro aligned timestep is not admissible");
-            std::forward<Attempt>(execute)(actual_dt,static_cast<std::uint64_t>(index));
-            advice.commit();return actual_dt;
-        } catch(const NativeThermalStepRejection& error) {
-            // All nested transaction/binding/context/advice lifetimes already
-            // unwound. The failed version cannot be reauthenticated now.
-            if(!native||!error.belongs_to(runtime,index,accepted_time,actual_dt)
-                ||runtime.active_runtime_state_transaction()||runtime.native_macro_retry_attempt()
-                ||controller.step_count!=accepted_step
-                ||std::bit_cast<std::uint64_t>(controller.t_current)!=std::bit_cast<std::uint64_t>(accepted_time))throw;
-            if(first_failure.empty())first_failure=error.what();
-            retry_cap=.5*error.failed_aligned_dt();
-            const auto& numerics=runtime.configuration().numerics;
-            if(index==maximum_attempts||!std::isfinite(retry_cap)||!(retry_cap>0.)
-                ||retry_cap<numerics.dt_min||!(accepted_time+retry_cap>accepted_time))
-                throw std::runtime_error("Native macro thermal retry exhausted at attempt "+std::to_string(index)
-                    +"; original refusal: "+first_failure+"; last refusal: "+error.what());
-        }
-    }
-    throw std::logic_error("Native macro retry has no accepted exit");
+    const double proposal=controller.calculate_next_dt(accepted_dt_cap,burn_advice);
+    burn_advice=1e99;
+    const double actual_dt=controller.sync_dt(proposal);
+    std::forward<Attempt>(execute)(actual_dt,1u);
+    return actual_dt;
 }
 
 /** Execute the unique Driver five-segment sequence.
  * burn(half,dt/2,token), diffusion(dt/2), hydro(dt) call the existing owners.
  * measure(CpuStage,callable) preserves the existing nonoverlapping CPU timers.
- * Native sides borrow the same owner; Device requires positive dt before split
- * work. The final Current check uses the actual field side and source journal.
+ * The final Current check uses the actual field side and source journal.
  * Injected callables in engineering tests exercise rollback only; they do not
  * replace a scientific qualification of the actual Burn/Diffusion/source math.
  */
@@ -126,30 +59,8 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
     const Numerics::IHydroSolver* hydro,bool has_burn,BurnExecutor&& burn,
     DiffusionExecutor&& diffusion,HydroExecutor&& advance_hydro,Measure&& measure)
 {
-    const bool native=runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    if(native&&runtime.backend()) {
-        // The shared transaction also serves dt=0 boundary refresh. A macro is
-        // a genuine numerical advance and cannot borrow that zero-dt allowance.
-        if(!std::isfinite(context.step_dt)||!(context.step_dt>0.))
-            throw std::logic_error("Native Device macro requires a finite positive timestep");
-    }
-    // SourceNone needs no source journal. Every configured body force must
-    // bring its actual preparation owner before any savepoint or split work;
-    // otherwise a changed configuration could advance a source-free macro.
-    if(native&&!context.hydro_preparation
-        &&runtime.configuration().physics.gravity.type!="none")
-        throw std::invalid_argument("Native macro requires its actual prepared source contract before split work");
-    std::optional<RuntimeStateTransaction> transaction;
-    if(native) {
-        // Presence is a necessary preflight, not scientific authority. The
-        // subsequent Runtime boundary work authenticates its actual EOS/BC
-        // and domain, including failures after the second burn publication.
-        if(!hydro||!context.post_boundary_acceptance||!context.configure_boundary_context
-            ||context.hydro_acceptance||context.rkl_acceptance
-            ||!std::isfinite(context.step_start_time+context.step_dt))
-            throw std::logic_error("Native macro endpoint requires its genuine boundary/stage owners");
-        transaction.emplace(runtime,context,hydro);
-    }
+    const bool has_diff=runtime.configuration().physics.diffusion.use_diffusion;
+    (void)hydro;
     std::array<std::optional<backend::DiffusionActivityReceipt>,2> activity_halves;
     // Scalars are owned by this original macro attempt; any exception/retry
     // destroys them. This guard clears only the unconsumed diagnostic scratch.
@@ -165,27 +76,18 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
         (void)scheduler::execute_burn_first_lane(context,runtime.handles(),
             [&](state::CompletionToken token) {return burn(BurnHalf::First,half_dt,token);});
     });
-    measure(CpuStage::Diffusion,[&] {
+    if(has_diff)measure(CpuStage::Diffusion,[&] {
         context.boundary_start_time=start;context.boundary_step_dt=half_dt;
-        // Native RKL completes Current boundaries before its first recurrence
-        // stage. Refresh the genuine Runtime EOS snapshot at this half's
-        // input time before that initial completion, not only inside stages.
-        if(native)context.configure_boundary_context(start,boundary::BoundaryPurpose::Diffusion);
-        else boundaries.configure_stage(start,boundary::BoundaryPurpose::Diffusion);
-        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(1,half_dt);
+        boundaries.configure_stage(start,boundary::BoundaryPurpose::Diffusion);
         diffusion(half_dt);
         activity_halves[0]=runtime.take_diffusion_activity_half();
-        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->end_diffusion_half();
     });
     measure(CpuStage::Hydro,[&] {advance_hydro(dt);});
-    measure(CpuStage::Diffusion,[&] {
+    if(has_diff)measure(CpuStage::Diffusion,[&] {
         context.boundary_start_time=start+half_dt;context.boundary_step_dt=half_dt;
-        if(native)context.configure_boundary_context(start+half_dt,boundary::BoundaryPurpose::Diffusion);
-        else boundaries.configure_stage(start+half_dt,boundary::BoundaryPurpose::Diffusion);
-        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->begin_diffusion_half(2,half_dt);
+        boundaries.configure_stage(start+half_dt,boundary::BoundaryPurpose::Diffusion);
         diffusion(half_dt);
         activity_halves[1]=runtime.take_diffusion_activity_half();
-        if(auto* attempt=runtime.native_macro_retry_attempt())attempt->end_diffusion_half();
     });
     if(has_burn)measure(CpuStage::BurnSecond,[&] {
         // Burn has no spatial boundary channel. Its existing fixed-density
@@ -194,26 +96,8 @@ void execute_driver_macro_step(DriverRuntime& runtime,StageExecutionContext& con
         (void)scheduler::execute_burn_second_lane(context,runtime.handles(),
             [&](state::CompletionToken token) {return burn(BurnHalf::Second,half_dt,token);});
     });
-    if(transaction) {
-        // Pure configure first, then ACTUAL whole-domain BC/exchange/EOS. A
-        // ghost-valid Hydro intermediate cannot accept later D/B updates.
-        context.configure_boundary_context(start+dt,boundary::BoundaryPurpose::Hydro);
-        const auto boundary_frame=boundaries.snapshot_stage_context();
-        runtime.ensure_fluid_ghosts(state::StateSlot::Current);
-        if(!boundaries.stage_context_matches(boundary_frame))
-            throw std::logic_error("Native macro endpoint boundary frame changed");
-        for(const auto handle:runtime.handles()) {
-            const state::StateKey key{handle,state::StateSlot::Current};
-            const auto coherence=context.ledger.inspect(key);
-            scheduler::detail::require_settled_destination(coherence);
-            context.ledger.require_readable(key,
-                {context.side,coherence.interior.version,true,true});
-        }
-        transaction->validate_storage();
-    }
-    // Finish potentially-throwing scalar checks before the real native commit.
+    // Finish potentially-throwing scalar checks before publication.
     const auto activity=runtime.prepare_diffusion_activity_promotion(activity_halves);
-    if(transaction)transaction->commit();
     runtime.promote_diffusion_activity(activity);
 }
 } // namespace arch::driver

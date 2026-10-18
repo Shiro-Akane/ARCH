@@ -38,11 +38,10 @@ struct SolverEuler
                       const Numerics::IHydroSolver* hydro,
                       const NumericsConfig &num_cfg)
     {
-        const auto geometry=TimeIntegration::bind_hydro_geometry(
-            amr_ctrl,boundary_condition,hydro,gravity);
-        if(!geometry.deferred_native_source)amr_ctrl.flux_register.Clear();
+        TimeIntegration::require_hydro_geometry_domain(amr_ctrl,boundary_condition,hydro);
+        amr_ctrl.flux_register.Clear();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
-        if (!geometry.deferred_native_source&&!active_blocks.empty()) {
+        if (!active_blocks.empty()) {
             amr_ctrl.flux_register.EnsureSpecies(amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
         }
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
@@ -73,25 +72,9 @@ struct SolverEuler
                 std::optional<arch::boundary::HostHydroBoundaryDomainAuthority> wall_domain;
                 const arch::boundary::HostHydroBoundaryDomainAuthority* wall_domain_ptr=nullptr;
                 if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>) {
-                        if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-                            &&geometry.deferred_native_source) {
-                            // Borrow exactly the private prepared external OR
-                            // self frame's original boundary authority; never
-                            // reconstruct or relabel a source wall domain.
-                            wall_domain_ptr=&TimeIntegration::prepared_native_boundary_domain(*gravity);
-                            // The private actual Runtime source frame precedes
-                            // all Native register/output/cache mutation.
-                            if(descriptor.stage==1) {
-                                amr_ctrl.flux_register.Clear();
-                                if(!active_blocks.empty())amr_ctrl.flux_register.EnsureSpecies(
-                                    amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
-                            }
-                        } else {
-                            wall_domain.emplace(boundary_condition,amr_ctrl,binding,descriptor);
-                            wall_domain_ptr=&*wall_domain;
-                        }
-                } else if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-                    throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
+                    wall_domain.emplace(boundary_condition,amr_ctrl,binding,descriptor);
+                    wall_domain_ptr=&*wall_domain;
+                }
 #pragma omp parallel
                 {
                     int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -110,8 +93,6 @@ struct SolverEuler
                         std::optional<arch::boundary::HostHydroBoundaryAuthority> wall;
                         if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>)
                             wall.emplace(*wall_domain_ptr,i,active_blocks[i],input_state,b.grid);
-                        else if(geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-                            throw std::invalid_argument("Native Hydro requires the actual physical boundary authority");
                         hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr,wall?&*wall:nullptr);
                         hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
                         } catch (...) {
@@ -138,8 +119,7 @@ struct SolverEuler
                 const auto output_member =
                     TimeIntegration::hydro_boundary_state_member(output);
                 TimeIntegration::synchronize_domain_boundary(amr_ctrl, boundary_condition,
-                    output_member, binding.handles, geometry.semantics,
-                    {num_cfg.sml_rho,num_cfg.min_eint,num_cfg.max_eint});
+                    output_member, binding.handles);
                 return token;
             },
             [&](arch::state::SlotRotation rotation) {
@@ -160,13 +140,8 @@ struct SolverEuler
             },
             [&](const HydroPlan&, arch::state::StateSlot,
                 arch::state::CompletionToken token) {
-                if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-                    TimeIntegration::begin_rz_hydro_reflux_receipts(amr_ctrl);
-                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state,geometry.semantics,
-                    geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz);
-                if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-                    TimeIntegration::validate_reflux_state(amr_ctrl,num_cfg);
-                else TimeIntegration::accept_reflux_state(amr_ctrl,num_cfg);
+                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state);
+                TimeIntegration::accept_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });
     }

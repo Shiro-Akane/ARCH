@@ -6,6 +6,14 @@
 单元。改变网格时必须保留单元承载的物理量，因此记录既检查细化／粗化过程，也检查
 迁移后的场数据；曲线坐标下的守恒计算使用单元的实际物理体积。
 
+活动输入已显式声明旧加载器曾补入的控制值，当前哈希与历史收据分别保留。
+配置检查通过不等于重新签收历史科学结果；迁移与本轮CPU证据见
+[发布计划](../../ARCH_RELEASE_PLAN.md)。
+
+当前CPU检查新增六组原燃烧／组分扩散终点及真实运行期重网格，并验证RT与
+BurnGradient两种检查点来源相位的新进程续算。门槛及限制见[燃烧](../burn/README.zh-CN.md)
+与[重启](../restart/README.zh-CN.md)说明；不据此重新授予下方历史CUDA或更长轨迹资格。
+
 各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
 [验证总览](../README.zh-CN.md)中。
 
@@ -197,6 +205,4 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 
 </details>
 
-当前真实绑定的RZ传递消费者另有[处理记录](results/release-closure-20261009/native-device-migration-summary.json)：原生prolongation／restriction、严格身份反例、低密度及组分存储复用同一Host/device数学。历史曲线应用行保留各自chart和源码身份，其结果不代签当前完整RZ Device Runtime；完整运行链按[当前发布出口](../../docs/development/ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)验收。
-
-实际正半径RZ反射候选的[处理记录](results/release-closure-20261009/native-device-reflector-summary.json)复用同一Host/device点律与V/W积分，在原边界owner内检查冷流、低密度、大组分数和写前失败；完整有序边界及运行期发布沿上述发布出口验收。
+旧 [RZ 迁移](results/release-closure-20261009/native-device-migration-summary.json)及[反射](results/release-closure-20261009/native-device-reflector-summary.json)记录按原身份保留。二维柱坐标与专用消费者已退役，当前 AMR 验证范围见[主计划](../../ARCH_RELEASE_PLAN.md)。

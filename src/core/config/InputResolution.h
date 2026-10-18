@@ -282,6 +282,13 @@ inline void validate_relations(StandardInputResolution& result) {
     const auto* third = get<int>(result, "nblockx3");
     if (second && third && !relations::AxisTopology(*second, *third))
         fail("nblockx3", "Third axis requires an active second axis.", {"nblockx2"});
+    const auto* geometry_text = get<std::string>(result, "geometry");
+    if (geometry_text && second && third && relations::AxisTopology(*second, *third)) {
+        const int dimension = *second == 0 ? 1 : *third == 0 ? 2 : 3;
+        if (relations::RetiredCylindrical2d(*geometry_text, dimension))
+            fail("geometry", "Two-dimensional cylindrical support is retired; use one or three dimensions.",
+                 {"nblockx2", "nblockx3"});
+    }
     const auto* lower = get<int>(result, "lrefinemin");
     const auto* upper = get<int>(result, "lrefinemax");
     if (lower && upper && !relations::RefinementLevels(*lower, *upper))

@@ -138,6 +138,69 @@ target_sources(arch_cuda_backend PRIVATE $<TARGET_OBJECTS:${{route_target}}>)
             "src/numerics/burnsolver/ode/ode_bd.h": '#include "external/Networks.h"\n',
         })
 
+    def test_shared_flux_operators_cannot_import_gravity_through_bridge(self):
+        for operator in ("numerics/integrator/TimeIntegratorHelper.h",
+                         "numerics/diffusion/DiffFlux.h"):
+            for owner in ("HydroSourceBinding.h", "SelfGravity.h",
+                          "GravitySolveTypes.h", "NewSourceOwner.h"):
+                with self.subTest(operator=operator, owner=owner):
+                    self.assert_rejected_with({
+                        "src/" + operator: '#include "Bridge.h"\n',
+                        "src/Bridge.h": f'#include "physics/gravity/{owner}"\n',
+                        "src/physics/gravity/" + owner: '// fixture owner\n',
+                    }, "shared flux operators must not import concrete gravity ownership")
+
+    def test_shared_state_cannot_import_boundary_definition_indirectly(self):
+        for owner in ("BoundaryDiagnostics.h", "BoundaryFlux.h", "NewWallOwner.h"):
+            with self.subTest(owner=owner):
+                self.assert_rejected_with({
+                    "src/data/FluidState.h": '#include "Bridge.h"\n',
+                    "src/Bridge.h": f'#include "physics/boundary/{owner}"\n',
+                    "src/physics/boundary/" + owner: '// fixture owner\n',
+                }, "shared fluid storage must not import boundary implementations")
+
+    def test_hydro_interface_cannot_import_parser_through_value_bridge(self):
+        for parser in ("core/config/RuntimeParams.h", "io/ConfigParser.h"):
+            with self.subTest(parser=parser):
+                self.assert_rejected_with({
+                    "src/numerics/integrator/IHydroSolver.h": '#include "Values.h"\n',
+                    "src/numerics/integrator/Values.h": f'#include "{parser}"\n',
+                    "src/" + parser: '// fixture parser\n',
+                }, "Hydro interface must not import configuration parsing")
+
+    def test_actual_source_owner_and_forward_declared_attachments_are_allowed(self):
+        for operator in ("numerics/integrator/TimeIntegratorHelper.h",
+                         "numerics/diffusion/DiffFlux.h"):
+            for declaration in ("GravitySourceTypes.h", "IGravityPolicy.h"):
+                with self.subTest(operator=operator, declaration=declaration):
+                    files = {
+                        "src/" + operator: '#include "Bridge.h"\n',
+                        "src/Bridge.h": f'#include "physics/gravity/{declaration}"\n',
+                        "src/physics/gravity/" + declaration: '// borrowed interface/view\n',
+                    }
+                    self.assert_accepted(files)
+                    # A permitted interface cannot launder a concrete owner.
+                    self.assert_rejected_with({
+                        **files,
+                        "src/physics/gravity/" + declaration:
+                            '#include "SelfGravity.h"\n',
+                        "src/physics/gravity/SelfGravity.h": '// field owner\n',
+                    }, "shared flux operators must not import concrete gravity ownership")
+        self.assert_accepted({
+            "src/numerics/integrator/HydroSolverImpl.h":
+                '#include "TimeIntegratorHelper.h"\n'
+                '#include "physics/gravity/HydroSourceBinding.h"\n',
+            "src/numerics/integrator/TimeIntegratorHelper.h":
+                'template<class Source> void evaluate(Source& source);\n',
+            "src/physics/gravity/HydroSourceBinding.h": '// actual source owner\n',
+            "src/data/FluidState.h":
+                '#include <memory>\n'
+                'namespace arch::boundary { struct BoundaryFluxCaptureStorage; }\n'
+                'struct FluidState { std::shared_ptr<arch::boundary::BoundaryFluxCaptureStorage> capture; };\n',
+            "src/numerics/integrator/IHydroSolver.h": 'struct NumericsConfig;\n',
+            "src/physics/boundary/BoundaryDiagnostics.h": '// actual face owner\n',
+        })
+
     def test_declaration_abi_cannot_import_eos_indirectly(self):
         self.assert_rejected_with({
             "src/cuda/runtime/burn/CudaBackendBurn.h": '#include "Helper.h"\n',
@@ -299,7 +362,7 @@ target_link_options(arch_build_contract INTERFACE
         source = (ROOT / relative).read_text(encoding="utf-8")
         dependencies = {
             "src/cuda/common/CudaCommon.cuh": "// fixture device records\n",
-            "src/grid/GridMetrics.h": "// fixture shared metric interface\n",
+            "src/numerics/curvilinear/GridMetrics.h": "// fixture shared metric interface\n",
         }
         self.assert_accepted({**dependencies, relative: source})
         for mutation in (
@@ -308,20 +371,6 @@ target_link_options(arch_build_contract INTERFACE
                 source.replace("Geometry::Unsupported", "Geometry::Cartesian"),
                 source.replace("grid.x1_min, grid.x2_min", "grid.x2_min, grid.x1_min")):
             with self.subTest(mutation=mutation[-100:]):
-                self.assert_rejected_with({**dependencies, relative: mutation}, "formula-copy filename")
-
-    def test_pod_geometry_bridge_rejects_semantics_root_and_identity_remapping(self):
-        relative = "src/cuda/hydro/GridGeometryAdapter.cuh"
-        source = (ROOT / relative).read_text(encoding="utf-8")
-        dependencies = {
-            "src/cuda/common/CudaCommon.cuh": "// fixture device records\n",
-            "src/grid/GridMetrics.h": "// fixture shared metric interface\n",
-        }
-        for mutation in (
-                source.replace("grid.x3_min, grid.semantics", "grid.x3_min, GridMetrics::GeometrySemantics::Existing"),
-                source.replace("{grid.x1_max, grid.x2_max}", "{grid.x2_max, grid.x1_max}"),
-                source.replace("grid.dyadic_identity", "GridMetrics::DyadicGridIdentity{}")):
-            with self.subTest(mutation=mutation[-160:]):
                 self.assert_rejected_with({**dependencies, relative: mutation}, "formula-copy filename")
 
     def test_gravity_pod_split_does_not_authorize_grid_import_into_launch_abi(self):
@@ -407,57 +456,6 @@ const char* explanation = R"note(physical boundary "outflow"
 
     def test_rejects_cuda_boundary_duplication(self):
         self.assert_rejected("src/cuda/Boundary.cuh", "void fill_boundary() {}")
-
-    def test_shared_native_boundary_delegate_keeps_local_rules_forbidden(self):
-        path = "src/cuda/hydro/boundary/Boundary.cuh"
-        delegate = """
-namespace math = arch::boundary::native_rz_math;
-void native_reflecting_candidates_kernel() { math::reflect_cell(); }
-void launch_native_reflecting_candidates() { native_reflecting_candidates_kernel(); }
-"""
-        self.assert_accepted({path: delegate})
-        self.assert_rejected(path, delegate + "\nif (type == BoundaryType::Reflecting) copy();")
-        self.assert_rejected("src/cuda/halo.cuh", delegate)
-        owners = {
-            "src/cuda/runtime/CudaBackend.h": "void prepare_native_reflecting_layer();",
-            "src/cuda/runtime/boundary/CudaBackendBoundary.cu": """
-void native_reflecting_lanes();
-void prepare_native_reflecting_layer() {
-    auto& scratch = impl.native_reflecting;
-    launch_native_reflecting_candidates();
-}
-""",
-            "src/cuda/runtime/control/CudaBackendInternal.h": """
-struct NativeReflectingScratch {};
-NativeReflectingScratch native_reflecting;
-void prepare_native_reflecting_layer();
-""",
-        }
-        for owner, storage in owners.items():
-            with self.subTest(owner=owner):
-                self.assert_accepted({owner: storage})
-                self.assert_rejected(owner,
-                    storage + "\nif (type == BoundaryType::Reflecting) copy();")
-        self.assert_rejected("src/cuda/halo.cuh", owners[
-            "src/cuda/runtime/boundary/CudaBackendBoundary.cu"])
-        internal = "src/cuda/runtime/control/CudaBackendInternal.h"
-        for dispatch in ('if (mode == "reflect") copy();',
-                         'if ("periodic" != mode) copy();'):
-            with self.subTest(dispatch=dispatch):
-                self.assert_rejected_with({internal: owners[internal] + dispatch},
-                    "CUDA boundary-rule duplication is forbidden")
-        factory = "src/cuda/runtime/control/CudaBackendResources.cpp"
-        shared_selector = """
-void bind_actual_factory() {
-    walls = boundary::native_rz_math::bound_reflecting_faces(plan, grid);
-}
-"""
-        self.assert_accepted({factory: shared_selector})
-        self.assert_rejected(factory, shared_selector
-            + "\nif (type == BoundaryType::Reflecting) copy();")
-        self.assert_rejected(factory,
-            "void bound_reflecting_faces() { copy(); }")
-        self.assert_rejected("src/cuda/halo.cuh", shared_selector)
 
     def test_rejects_production_cuda_glob(self):
         self.assert_rejected("CMakeLists.txt", "file(GLOB_RECURSE cuda *.cu)\nadd_executable(ARCH ${cuda})")

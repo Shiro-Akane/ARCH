@@ -3,7 +3,7 @@
  *
  * Workflow:
  * 1. Convert a native composite face through its actual chart into the shared
- *    read-only callback input; RZ axial length is never an azimuthal angle.
+ *    read-only callback input in physical Cartesian coordinates.
  * 2. Validate the coercive per-side coefficients once per stage.
  * 3. Return the datum c at the actual physical face center.
  */
@@ -34,13 +34,13 @@ Grid coordinate_authority(const arch::elliptic::EllipticMesh& mesh) {
 }
 
 /** Expand a face with the same geometry/chart authority as physical boundaries.
- * RZ at phi=0 has (x,y,z)=(r,0,z); spherical polar expansion keeps the
- * existing coordinate rules. No second coordinate conversion is introduced.
+ * Supported cylindrical and spherical expansions keep the existing coordinate
+ * rules. No second coordinate conversion is introduced.
  */
 PointCoords native_point(const arch::elliptic::EllipticMesh& mesh,
     const std::array<double, 3>& native) {
     return Grid::PhysicalCoordsFromNative(mesh.dimension, native_geometry(mesh.geometry),
-        native[0], native[1], native[2], mesh.semantics);
+        native[0], native[1], native[2]);
 }
 
 /** Outward unit normal of a physical coordinate face. Grid owns the axis and
@@ -49,8 +49,7 @@ std::array<double, 3> outward_normal(const arch::elliptic::EllipticMesh& mesh, i
     const std::array<double, 3>& native) {
     return arch::boundary::BoundaryCartesianNormal(coordinate_authority(mesh),
         native_point(mesh, native), static_cast<arch::boundary::BoundaryAxis>(axis),
-        side ? arch::boundary::BoundarySide::Upper : arch::boundary::BoundarySide::Lower,
-        mesh.semantics);
+        side ? arch::boundary::BoundarySide::Upper : arch::boundary::BoundarySide::Lower);
 }
 
 /** Build the immutable read-only callback input for one native face center. */

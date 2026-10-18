@@ -11,7 +11,7 @@
 #include "cuda/hydro/boundary/BoundaryPlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/schedule/StageScheduler.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/burnsolver/Networks.h"
 #include "physics/eos/HelmEos.h"
@@ -788,7 +788,7 @@ void run_lifetime_and_hydro_witness()
             return left.size()==right.size()&&std::equal(left.begin(),left.end(),right.begin(),same_double);
         };
         const auto same_repairs=[&](const auto& left,const auto& right){
-            return same_values(left.values,right.values)&&left.semantics==right.semantics
+            return same_values(left.values,right.values)
                 &&left.block_uid==right.block_uid&&left.stage==right.stage&&same_double(left.time,right.time)
                 &&same_double(left.position[0],right.position[0])
                 &&same_double(left.position[1],right.position[1])

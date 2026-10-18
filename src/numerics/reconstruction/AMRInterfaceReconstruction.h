@@ -17,8 +17,7 @@
 
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 #include "numerics/reconstruction/Reconstruction.h"
-#include "numerics/reconstruction/RzSelectedReconstruction.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "grid/Grid.h"
 
 /**
@@ -44,42 +43,8 @@ template <typename ReconstructPolicy, typename EosType>
 inline void reconstruct_face(const FluidState& state, const EosType& eos, const Grid& grid,
                              int dir, int i, int j, int k, int idx, int stride,
                              int n_spec, double* Xi_L, double* Xi_R, double* Xi_cell,
-                             FluidVector& U_L, FluidVector& U_R,
-                             GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing,
-                             const arch::state::Bounds* physical_bounds=nullptr)
+                             FluidVector& U_L, FluidVector& U_R)
 {
-    // Native full faces use the selected bundle owner in RzNativeFaceFlux.
-    // This scalar interface can expose a genuine radial trace only; an axial
-    // face needs four V/W Gauss points and must never pretend to be one mean.
-    if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        if(dir!=0)throw std::invalid_argument("Native axial reconstruction requires complete V/W face integration");
-        if(!physical_bounds||!arch::state::valid_bounds(*physical_bounds))
-            throw std::invalid_argument("Native radial trace requires explicit physical bounds");
-        const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
-        const RzSelectedReconstruction::Context context{
-            geometry,grid.Ie()+grid.ng,grid.Je()+grid.ng,i,j,dir,n_spec,*physical_bounds};
-        const auto count=static_cast<std::size_t>(n_spec);
-        if(count>std::numeric_limits<std::size_t>::max()/35)
-            throw std::length_error("Native reconstruction species workspace overflow");
-        std::vector<double> scratch(35*count);
-        const auto read=[&state](int cell){return state.get(cell);};
-        const auto fraction=[&state](int species,int cell){return state.X(species,cell);};
-        const auto selected=needs_tvd_interface_reconstruction<ReconstructPolicy>(grid,dir,i,j,k)
-            ?RzSelectedReconstruction::reconstruct_face<MusclReconstruction<MinMod>>(
-                read,fraction,context,eos,count?scratch.data():nullptr,
-                count?scratch.data()+16*count:nullptr,19*count)
-            :RzSelectedReconstruction::reconstruct_face<ReconstructPolicy>(
-                read,fraction,context,eos,count?scratch.data():nullptr,
-                count?scratch.data()+16*count:nullptr,19*count);
-        if(selected.status!=arch::state::Status::valid)
-            throw std::runtime_error("Native selected radial donor failed required acceptance");
-        U_L=selected.donor[0].point[1];U_R=selected.donor[1].point[0];
-        for(int species=0;species<n_spec;++species) {
-            Xi_L[species]=scratch[count+species]/U_L.rho;
-            Xi_R[species]=scratch[8*count+species]/U_R.rho;
-        }
-        return;
-    }
     if (needs_tvd_interface_reconstruction<ReconstructPolicy>(grid, dir, i, j, k))
     {
         auto reconstructed = MusclReconstruction<MinMod>::run(state, idx, stride);

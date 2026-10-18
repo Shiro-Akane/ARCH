@@ -9,7 +9,7 @@
 #include "core/config/ConfigValidation.h"
 #include "core/files/FileFingerprint.h"
 #include "io/IO.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "physics/species/Species.h"
@@ -628,7 +628,7 @@ void test_host_restart(const std::filesystem::path& directory)
     };
     // Actual HDF/read_chk path: missing/partial/future/RZ chart must reject
     // before replacing this populated live hierarchy or controller.
-    for (int corruption = 0; corruption < 5; ++corruption) {
+    for (int corruption = 0; corruption < 4; ++corruption) {
         io::write_hdf5_chk_impl(path.string(), checkpoint);
         {
             HighFive::File file(path.string(), HighFive::File::ReadWrite);
@@ -644,57 +644,11 @@ void test_host_restart(const std::filesystem::path& directory)
             // Legacy Cartesian v6 remains readable by the existing chart.
             const auto legacy = io::read_hdf5_chk_impl(path.string());
             io::require_checkpoint_geometry_compatible(legacy.dim, legacy.geometry, legacy.geometry_identity);
-        } else if (corruption == 4) {
-            expect_rejected([&] { read_chk(path.string(), protected_tree, protected_state,
-                config, species, identity, io::current_rz_checkpoint_geometry()); },
-                "legacy checkpoint accepted as RZ");
         } else {
             reject_unchanged(identity, "invalid geometry identity");
         }
         expect(snapshot() == before, "geometry rejection modified live state");
     }
-    // HDF roundtrip of explicit internal RZ identity; not public RZ restart.
-    auto rz_payload = checkpoint;
-    rz_payload.dim = 2;
-    rz_payload.geometry = "cylindrical";
-    rz_payload.geometry_identity = io::current_rz_checkpoint_geometry();
-    rz_payload.repairs.bind_semantics(arch::state::RepairSemantics::RzVolumeAngular);
-    rz_payload.native_domain={{0.,1.,0.,1.},{1,1},{static_cast<int>(rz_payload.cells_per_block),1}};
-    const auto rz_path = directory / "internal-rz-identity.h5";
-    io::write_hdf5_chk_impl(rz_path.string(), rz_payload);
-    const auto rz = io::read_hdf5_chk_impl(rz_path.string());
-    io::require_checkpoint_geometry_compatible(2, "cylindrical", rz.geometry_identity,
-                                               io::current_rz_checkpoint_geometry());
-    expect_rejected([&] { io::require_checkpoint_geometry_compatible(
-        2, "cylindrical", rz.geometry_identity); }, "RZ accepted as legacy polar");
-    expect_rejected([&] { io::require_checkpoint_geometry_compatible(
-        2, "cylindrical", {}, io::current_rz_checkpoint_geometry()); }, "legacy polar accepted as RZ");
-    // Real old cylindrical HDF is refused by a legitimate populated RZ receiver.
-    {
-        HighFive::File file(rz_path.string(), HighFive::File::ReadWrite);
-        file.deleteAttribute("geometry_semantics_revision");
-        file.deleteAttribute("geometry_chart");
-        file.deleteAttribute("repair_semantics");
-    }
-    auto rz_config = config;
-    rz_config.grid.dim = 2;
-    rz_config.grid.geometry = "cylindrical";
-    rz_config.grid.nblockx2 = 1;
-    amr::AMRControl rz_receiver(rz_config.grid.amr_max_blocks, 2);
-    rz_receiver.tree->InitRootGrid(rz_config, species.count(),
-        GridMetrics::GeometrySemantics::AxisymmetricRz);
-    const auto rz_ids = rz_receiver.tree->GetActiveBlocks();
-    auto& rz_fluid = rz_receiver.pool->GetBlock(rz_ids.front()).fluid_state;
-    std::fill(rz_fluid.rho.begin(), rz_fluid.rho.end(), 19.0);
-    const auto rz_rho = rz_fluid.rho;
-    RunState rz_state = state;
-    expect_rejected([&] { read_chk(rz_path.string(), rz_receiver, rz_state,
-        rz_config, species, identity, io::current_rz_checkpoint_geometry()); },
-        "actual legacy polar file accepted as RZ", "no authoritative RZ");
-    expect(rz_receiver.tree->GetActiveBlocks() == rz_ids && rz_fluid.rho == rz_rho
-        && rz_state.time == state.time && rz_state.step == state.step
-        && rz_state.chk_idx == state.chk_idx && rz_state.plt_idx == state.plt_idx,
-        "legacy polar rejection changed live state");
     auto invalid_geometry = checkpoint;
     invalid_geometry.geometry_identity = {2, "existing"};
     io::write_hdf5_chk_impl(path.string(), checkpoint);
@@ -799,206 +753,6 @@ void test_host_restart(const std::filesystem::path& directory)
     reject_unchanged(identity, "incompatible spatial dimension");
 }
 
-void test_native_rz_checkpoint(const std::filesystem::path& directory)
-{
-    SimConfig config;
-    config.grid.dim = 2;
-    config.grid.geometry = "cylindrical";
-    config.grid.nblockx1 = 2;
-    config.grid.nblockx2 = 1;
-    config.grid.nblockx3 = 0;
-    config.grid.x2_min = -10.;
-    config.grid.x2_max = 10.;
-    config.grid.amr_max_blocks = 16;
-    config.amr.lrefinemax = 1;
-    config.io.out_dir = (directory / "native-rz").string();
-    config.io.base_name = "rz";
-    const auto species = make_species();
-    const auto provenance = io::inspect_checkpoint_provenance(
-        config, species, EosId::Ideal, false, "none", false);
-    amr::AMRControl source(config.grid.amr_max_blocks, 2);
-    source.tree->LoadLeafGrid(config, species.count(), {1,1,1,1,0},
-        {0,1,0,1,1}, {0,0,1,1,0}, {0,0,0,0,0},
-        GridMetrics::GeometrySemantics::AxisymmetricRz);
-    for (int id : source.tree->GetActiveBlocks()) {
-    auto& block = source.pool->GetBlock(id);
-    auto& fluid = block.fluid_state;
-    const auto& grid = block.grid;
-    for (int j=grid.Js(); j<grid.Je(); ++j)
-        for (int i=grid.Is(); i<grid.Ie(); ++i) {
-            const int c=grid.GetIndex(i,j,grid.Ks());
-            fluid.rho[c]=2.;
-            fluid.mom_u[c]=.1;
-            fluid.mom_v[c]=.2;
-            fluid.mom_w[c]=.3;
-            fluid.eng[c]=100.;
-            fluid.enuc_rate[c]=-.5;
-            fluid.X(0,c)=.25;
-            fluid.X(1,c)=.75;
-        }
-    }
-    arch::state::RepairBudget repairs;
-    repairs.reset(species.count(),arch::state::RepairSemantics::RzVolumeAngular);
-    expect(repairs.view().conserved_density(.5,1.,-2.,3.,4.,2.,5.),"RZ repair density recording failed");
-    repairs.view().event(2.,7);
-    write_chk(source, 3, 4, 7, .25, .01, .02, true,
-              config, species, provenance, repairs, io::current_rz_checkpoint_geometry());
-    const auto file = directory / "native-rz/rz_chk_0003.h5";
-    const auto payload=io::read_hdf5_chk_impl(file.string());
-    expect(payload.geometry_identity.revision==io::rz_checkpoint_revision &&
-           payload.geometry_identity.chart=="axisymmetric-rz",
-           "native writer lost explicit RZ identity");
-    amr::AMRControl restored(config.grid.amr_max_blocks,2);
-    RunState state;
-    read_chk(file.string(), restored, state, config, species, provenance,
-             io::current_rz_checkpoint_geometry());
-    expect(payload.repairs.semantics==arch::state::RepairSemantics::RzVolumeAngular
-        && state.repairs.semantics==payload.repairs.semantics
-        && state.repairs.values==repairs.values && state.repairs.values[6]==15.,
-        "RZ checkpoint did not preserve nonzero J repair ledger identity");
-    expect(restored.tree->GetActiveBlocks().size()==5,
-           "mixed RZ checkpoint changed leaf count");
-    for (int id : restored.tree->GetActiveBlocks()) {
-    const auto& rb=restored.pool->GetBlock(id);
-    const double lower=-10.+rb.logical_x2*20./(1<<rb.level);
-    expect(rb.grid.x2_min == lower && rb.grid.x2_max == lower+20./(1<<rb.level),
-           "mixed RZ native leaf restore lost physical z domain");
-    for (int j=rb.grid.Js(); j<rb.grid.Je(); ++j)
-        for (int i=rb.grid.Is(); i<rb.grid.Ie(); ++i) {
-            const int c=rb.grid.GetIndex(i,j,rb.grid.Ks());
-            expect(rb.fluid_state.rho[c]==2. && rb.fluid_state.mom_u[c]==.1 &&
-                   rb.fluid_state.mom_v[c]==.2 && rb.fluid_state.mom_w[c]==.3 &&
-                   rb.fluid_state.eng[c]==100. && rb.fluid_state.enuc_rate[c]==-.5 &&
-                   rb.fluid_state.X(0,c)==.25 && rb.fluid_state.X(1,c)==.75,
-                   "native RZ checkpoint restore changed original FP64 state");
-        }
-    }
-    expect(state.time==.25 && state.step==7 && state.chk_idx==3 &&
-           state.plt_idx==4 && state.dt_old==.01 && state.dt_burn==.02 &&
-           state.resume_after_regrid, "native RZ controller changed");
-    const auto native_angular_identity=[](const amr::AMRControl& control) {
-        std::vector<double> weights;long double angular=0.;
-        for(int id:control.tree->GetActiveBlocks()) {
-            const auto& b=control.pool->GetBlock(id);const auto& g=b.grid;
-            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
-                const double w=GridMetrics::Rz::AngularMomentumMeasure(g.GetFacePosL(i),g.GetFacePosR(i),g.dx2);
-                weights.push_back(w);
-                angular+=static_cast<long double>(b.fluid_state.mom_w[g.GetIndex(i,j,g.Ks())])*w;
-            }
-        }
-        return std::make_pair(weights,angular);
-    };
-    const auto [source_weights,source_angular]=native_angular_identity(source);
-    const auto [restored_weights,restored_angular]=native_angular_identity(restored);
-    expect(source_weights==restored_weights && source_angular==restored_angular,
-        "native RZ checkpoint reinterpreted W or J");
-    std::cout<<std::setprecision(21)<<"RZ_CHECKPOINT_NATIVE_W_J_PASS cells="<<source_weights.size()
-        <<" source_J="<<source_angular<<" restored_J="<<restored_angular<<"\n";
-
-    const auto digest=arch::core::file_sha256(file.string());
-    auto wrong_repair_profile=payload;
-    wrong_repair_profile.repairs.semantics=arch::state::RepairSemantics::ExistingVolume;
-    expect_rejected([&]{io::write_hdf5_chk_impl(file.string(),wrong_repair_profile);},
-        "RZ writer accepted ordinary volume repair identity");
-    expect(arch::core::file_sha256(file.string())==digest,
-        "wrong repair identity writer truncated previous checkpoint");
-    const auto snapshot_restored=[&] {
-        std::vector<double> words;
-        for(int id:restored.tree->GetActiveBlocks()) {
-            const auto& f=restored.pool->GetBlock(id).fluid_state;
-            for(const auto* v:{&f.rho,&f.mom_u,&f.mom_v,&f.mom_w,&f.eng,&f.enuc_rate,&f.mass_fractions})
-                words.insert(words.end(),v->begin(),v->end());
-        }
-        return words;
-    };
-    const auto before=snapshot_restored();
-    // Preserve earlier local evidence when this scoped fixture is rerun.
-    const auto fresh_corruption_copy=[&](const std::string& prefix,int test) {
-        auto bad=directory/(prefix+"-"+std::to_string(test)+".h5");
-        for(int suffix=1;std::filesystem::exists(bad);++suffix)
-            bad=directory/(prefix+"-"+std::to_string(test)+"-"+std::to_string(suffix)+".h5");
-        std::filesystem::copy_file(file,bad);return bad;
-    };
-    for(int corruption=0;corruption<7;++corruption) {
-        const auto bad=fresh_corruption_copy("rz-state-corruption",corruption);
-        {
-            HighFive::File hdf(bad.string(),HighFive::File::ReadWrite);
-            if(corruption==0)hdf.getAttribute("geometry_semantics_revision").write(1);
-            if(corruption==1)hdf.deleteAttribute("state_semantics");
-            if(corruption==2)hdf.getAttribute("state_semantics").write(std::string("volume-average-momentum-phi-v1"));
-            if(corruption==3)hdf.deleteAttribute("repair_semantics");
-            if(corruption==4)hdf.getAttribute("repair_semantics").write(std::string("existing-volume-v1"));
-            if(corruption==5)hdf.getAttribute("repair_semantics").write(std::string("rz-native-V-angular-J-v2"));
-            if(corruption==6) {
-                hdf.deleteAttribute("repair_semantics");
-                hdf.getDataSet("state_repairs").write(std::vector<double>(repairs.values.size(),0.));
-            }
-        }
-        expect_rejected([&]{read_chk(bad.string(),restored,state,config,species,provenance,
-            io::current_rz_checkpoint_geometry());},"RZ state identity corruption accepted");
-        expect(snapshot_restored()==before && state.time==.25 && state.step==7 &&
-            state.chk_idx==3 && state.plt_idx==4,"RZ state rejection mutated live state");
-        expect(arch::core::file_sha256(file.string())==digest,"RZ rejection modified original checkpoint");
-    }
-    // Active config must not reinterpret native W or the flattening geometry.
-    for(int change=0;change<6;++change) {
-        auto different=config;
-        if(change==0)different.grid.x1_min+=.125;
-        if(change==1)different.grid.x1_max+=.25;
-        if(change==2)different.grid.x2_min-=1.;
-        if(change==3)different.grid.x2_max+=1.;
-        if(change==4)different.grid.nblockx1+=1;
-        if(change==5)different.grid.nblockx2+=1;
-        expect_rejected([&]{read_chk(file.string(),restored,state,different,species,provenance,
-            io::current_rz_checkpoint_geometry());},"wrong native domain accepted","native domain/measure");
-        expect(snapshot_restored()==before && state.time==.25 && state.step==7,
-            "wrong-domain restore mutated live state");
-        expect_rejected([&]{write_chk(source,3,4,7,.25,.01,.02,true,
-            different,species,provenance,repairs,io::current_rz_checkpoint_geometry());},
-            "writer mislabeled actual tree with changed config","native domain/measure");
-        expect(arch::core::file_sha256(file.string())==digest,
-            "wrong-domain writer replaced previous checkpoint");
-    }
-    for(int corruption=0;corruption<7;++corruption) {
-        const auto bad=fresh_corruption_copy("rz-domain-corruption",corruption);
-        {
-            HighFive::File hdf(bad.string(),HighFive::File::ReadWrite);
-            if(corruption==0)hdf.unlink("NativeDomain");
-            else {
-                auto domain=hdf.getGroup("NativeDomain");
-                if(corruption==1) {domain.unlink("bounds");domain.createDataSet("bounds",std::vector<double>{0.,1.,-10.});}
-                if(corruption==2) {
-                    auto bounds=payload.native_domain.bounds;bounds[0]=std::numeric_limits<double>::quiet_NaN();
-                    domain.getDataSet("bounds").write(bounds);
-                }
-                if(corruption==3)domain.getAttribute("coordinate_unit").write(std::string("code_length"));
-                if(corruption==4)domain.getAttribute("measure_normalization").write(std::string("per_radian"));
-                if(corruption==5)domain.getAttribute("version").write(2);
-                if(corruption==6)domain.getDataSet("cell_shape").write(
-                    std::vector<int>{amr::BLOCK_NX*2,amr::BLOCK_NY/2});
-            }
-        }
-        expect_rejected([&]{read_chk(bad.string(),restored,state,config,species,provenance,
-            io::current_rz_checkpoint_geometry());},"corrupt native domain accepted");
-        expect(snapshot_restored()==before && state.time==.25 && state.step==7 &&
-            state.chk_idx==3 && state.plt_idx==4,"domain rejection mutated live state");
-        expect(arch::core::file_sha256(file.string())==digest,"domain rejection changed source checkpoint");
-    }
-    std::cout<<"RZ_NATIVE_DOMAIN_IDENTITY_PASS changed-config=6 corrupted-hdf=7\n";
-    expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
-        config,species,provenance,repairs,{3,"axisymmetric-rz"}); },
-        "native writer accepted future chart revision");
-    expect(arch::core::file_sha256(file.string())==digest,
-           "rejected native writer changed previous output");
-    auto invalid=config;
-    invalid.grid.geometry="cartesian";
-    invalid.io.out_dir=(directory/"invalid-rz").string();
-    expect_rejected([&] { write_chk(source,3,4,7,.25,.01,.02,true,
-        invalid,species,provenance,repairs,io::current_rz_checkpoint_geometry()); },
-        "native writer accepted Cartesian RZ chart");
-    expect(!std::filesystem::exists(invalid.io.out_dir),
-           "invalid geometry created output directory");
-}
 
 } // namespace
 
@@ -1026,28 +780,15 @@ int main(int argc, char** argv)
         test_hdf5_round_trip(directory);
         test_native_composition(directory);
         test_host_restart(directory);
-        // Exact synthetic units distinguish V=2 from W=5 without invoking floors.
-        arch::state::RepairBudget volume(0),angular(0,arch::state::RepairSemantics::RzVolumeAngular);
+        arch::state::RepairBudget volume(0);
         expect(volume.view().conserved_density(.5,1.,-2.,3.,4.,2.),"volume ledger failed");
-        expect(angular.view().conserved_density(.5,1.,-2.,3.,4.,2.,5.),"angular ledger failed");
-        expect(volume.values[2]==1. && angular.values[2]==1.
-            &&volume.values[6]==6. &&angular.values[6]==15.
-            &&angular.values[4]==2. &&angular.values[5]==-4. &&angular.values[7]==8.,
-            "repair ledger confused V-integrated momentum and W-integrated J");
-        const auto before_angular=angular.values;
-        expect_rejected([&]{angular.combine(volume);},"mixed measure ledger merge accepted");
-        expect(angular.values==before_angular,"rejected merge changed ledger");
-        expect_rejected([&]{volume.bind_semantics(arch::state::RepairSemantics::RzVolumeAngular);},
-            "nonzero historical volume ledger reinterpreted as J");
-        expect(!angular.view().conserved_density(0.,0.,0.,3.,0.,2.,0.)
-            &&!angular.view().conserved_density(0.,0.,0.,3.,0.,2.,std::numeric_limits<double>::infinity())
-            &&!angular.view().conserved_density(0.,0.,0.,std::numeric_limits<double>::max(),0.,2.,5.)
-            &&angular.values==before_angular,"invalid W/product altered repair ledger");
-        arch::state::RepairBudget second=angular;
-        angular.combine(second,.5);
-        expect(angular.values[6]==22.5,"RK weighted J ledger changed units");
-        std::cout<<"REPAIR_V_W_IDENTITY_PASS\n";
-        test_native_rz_checkpoint(directory);
+        expect(volume.values[2]==1. && volume.values[4]==2. &&volume.values[5]==-4.
+            &&volume.values[6]==6. &&volume.values[7]==8.,
+            "ordinary repair ledger changed volume-integrated conserved units");
+        expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{});},
+            "legacy cylindrical two-dimensional checkpoint accepted");
+        expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{3,"axisymmetric-rz"});},
+            "retired cylindrical two-dimensional checkpoint accepted");
         std::cout << "checkpoint compatibility tests passed\n";
         return 0;
     } catch (const std::exception& error) {

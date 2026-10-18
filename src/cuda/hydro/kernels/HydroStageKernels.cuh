@@ -21,10 +21,8 @@ namespace arch::cuda
 namespace detail
 {
 /** Combine the unchanged selected stage using the common conservative leaf.
- * Native uses strict provisional checks and actual V/W measures: J/W is not an
- * ordinary point momentum and is never repaired through raw kinetic energy.
- * Completed BC/EOS owns final thermal acceptance. Existing retains its default
- * update, repair accounting, species transport, failure poison and store order.
+ * Preserve update, repair accounting, species transport, failure poison and
+ * store order.
  */
 static __device__ inline void hydro_single_stage_update_kernel_work(
     DeviceStateView old_state, DeviceStateView current_state,
@@ -38,9 +36,6 @@ static __device__ inline void hydro_single_stage_update_kernel_work(
         return;
     const int cell = grid.active_cell(linear);
     FluidVector updated;
-    const bool native = grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
-    const auto geometry = make_grid_geometry_view(grid);
-    const int i = cell % grid.stride_y, j = (cell % grid.stride_z) / grid.stride_y;
     const auto accepted = TimeIntegration::update_stage_cell(
         old_state.load(cell), current_state.load(cell), delta.load(cell),
         old_state.n_species > 0 ? old_state.mass_fractions + cell : nullptr,
@@ -52,8 +47,7 @@ static __device__ inline void hydro_single_stage_update_kernel_work(
         updated,
         destination.n_species > 0 ? destination.mass_fractions + cell : nullptr,
         repairs, GridMetrics::CellVolume(make_grid_geometry_view(grid),
-            cell % grid.stride_y, (cell % grid.stride_z) / grid.stride_y, cell / grid.stride_z), cell,
-        native, native ? GridMetrics::Rz::AngularMomentumMeasure(geometry, i, j) : 0.0);
+            cell % grid.stride_y, (cell % grid.stride_z) / grid.stride_y, cell / grid.stride_z), cell);
     if (!state::accepted(accepted) && status) atomicExch(status, 100 + static_cast<int>(accepted));
     destination.store(cell, updated);
 }
@@ -82,8 +76,6 @@ inline cudaError_t launch_hydro_single_stage_update(
         || !valid_hydro_view(destination)
         || !valid_hydro_view(delta)
         || !valid_hydro_grid(grid)
-        // Native execution belongs to the actual status-owning batch consumer.
-        || grid.semantics != GridMetrics::GeometrySemantics::Existing
         || old_state.n_species != current_state.n_species
         || old_state.n_species != destination.n_species
         || old_state.n_species != delta.n_species

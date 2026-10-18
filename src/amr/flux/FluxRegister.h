@@ -32,7 +32,7 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 
@@ -206,10 +206,9 @@ public:
 
     int GetNumSpecies() const { return num_species_; }
 
-    void ValidateTopologyIdentity(std::uint64_t fingerprint, bool required = false) const {
+    void ValidateTopologyIdentity(std::uint64_t fingerprint) const {
         std::lock_guard lock(identity_mutex_);
-        if ((!topology_identity_ && required)
-            || (topology_identity_ && *topology_identity_ != fingerprint))
+        if (topology_identity_ && *topology_identity_ != fingerprint)
             throw std::invalid_argument("AMR accumulated flux topology identity mismatch; Clear required");
     }
 
@@ -428,8 +427,7 @@ public:
     RefluxPlan BuildRefluxPlan(
         const std::shared_ptr<MemoryPool>& pool,
         std::span<const int> active_blocks,
-        std::span<const BlockHandle> handles, int dim, double dt,
-        GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing) const
+        std::span<const BlockHandle> handles, int dim, double dt) const
     {
         if (dim != dim_ || handles.size() != active_blocks.size()
             || handles.empty()
@@ -461,11 +459,11 @@ public:
                     const int j = block.grid.Js() + logical[1];
                     const int k = block.grid.Ks() + logical[2];
                     const double area = GridMetrics::FaceArea(
-                        GridMetrics::make_geometry_view(block.grid,semantics),
+                        GridMetrics::make_geometry_view(block.grid),
                         axis_value(axis), i, j, k,
                         side == AmrSide::Upper);
                     const double volume = GridMetrics::CellVolume(
-                        GridMetrics::make_geometry_view(block.grid,semantics), i, j, k);
+                        GridMetrics::make_geometry_view(block.grid), i, j, k);
                     if (!amr_plan_detail::is_finite_binary64(area)
                         || !amr_plan_detail::is_finite_binary64(volume)
                         || area <= 0.0 || volume <= 0.0)
@@ -502,8 +500,7 @@ public:
         std::span<const int> active_blocks,
         std::span<const BlockHandle> handles,
         FluidState Block::* state_ptr,
-        double timestep_scale = 1.0,
-        const AmrFluxTopologyPlan* topology = nullptr)
+        double timestep_scale = 1.0)
     {
         validate_amr_plan(plan);
         if (handles.size() != active_blocks.size())
@@ -526,7 +523,6 @@ public:
             int cell = -1;
             double weight = 0.0;
             double sign = 1.0;
-            double angular_factor = 1.0;
             std::array<bool, 5> fluid_fields{};
             std::vector<bool> species_fields;
         };
@@ -564,8 +560,6 @@ public:
                 group.cell = cell;
                 group.weight = operation.weight;
                 group.sign = operation.sign;
-                group.angular_factor=topology ? angular_reflux_factor(
-                    *topology,operation.destination,operation.destination_box) : 1.;
                 group.species_fields.assign(
                     static_cast<std::size_t>(species), false);
             } else if (group.block_id != active_blocks[found->second]
@@ -635,7 +629,7 @@ public:
             state.mom_v[index] = flux_math::reflux_conserved(
                 state.mom_v[index], correction, delta.mom_v);
             state.mom_w[index] = flux_math::reflux_conserved(
-                state.mom_w[index], correction*group.angular_factor, delta.mom_w);
+                state.mom_w[index], correction, delta.mom_w);
             state.eng[index] = flux_math::reflux_conserved(
                 state.eng[index], correction, delta.eng);
             for (int species = 0; species < state.GetNumSpecies(); ++species) {

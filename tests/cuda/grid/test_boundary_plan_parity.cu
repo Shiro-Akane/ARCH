@@ -6,6 +6,7 @@
  * values, component handling and rejection of invalid input layouts.
  */
 #include "amr/exchange/BoundaryPlan.h"
+#include "amr/exchange/HostBoundaryPlan.h"
 #include "cuda/hydro/boundary/Boundary.cuh"
 #include "driver/DriverUtils.h"
 
@@ -23,9 +24,6 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
-
-// The native candidate consumer is kept separate from ordinary raw-plan parity.
-void test_native_rz_reflecting_candidates();
 
 namespace
 {
@@ -324,11 +322,7 @@ void run_cuda_lowering_and_execution(
     auto grid = make_device_grid(dimension);
     grid.geometry = static_cast<int>(geometry);
     if (geometry == arch::cuda::DeviceGeometry::Cylindrical && dimension == 2) {
-        // This deliberately hand-built POD remains Existing, so cylindrical
-        // 2D must reject before lowering or launch. It has neither a real RZ
-        // root identity nor a Native field/boundary lease; do not forge either.
-        require(grid.semantics == GridMetrics::GeometrySemantics::Existing,
-                "retired polar POD fixture unexpectedly acquired Native semantics");
+        // Typed cylindrical two-dimensional data reject before lowering or launch.
         require(!arch::cuda::valid_hydro_grid(grid),
                 "CUDA boundary POD accepted retired cylindrical2D polar chart");
         bool rejected = false;
@@ -583,7 +577,6 @@ int main()
     try {
         test_cuda_lowering_and_execution();
         test_invalid_cuda_inputs();
-        test_native_rz_reflecting_candidates();
         std::cout << "boundary plan CUDA contract passed\n";
         return 0;
     } catch (const std::exception& error) {

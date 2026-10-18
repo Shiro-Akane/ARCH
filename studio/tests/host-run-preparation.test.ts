@@ -7,7 +7,7 @@ import {RunPreparationRunner} from '../host/runPreparation.ts';
 import {readConfig} from '../host/config.ts';
 async function fixture(){
  const root=await mkdtemp(path.join(os.tmpdir(),'run prepare 中文 '));
- const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
+ const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
  const inspection=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/sod-valid.json',import.meta.url),'utf8'));
  const registry={schemaVersion:'1.0',version:'1',kind:'registered-cases',status:'ok',setup:'not_executed',cuda:'not_initialized',cases:[
   {caseId:'Sod',initialFieldPreview:true,initialAmrPreview:true,previewDimensions:[1],inspection:{registered:true,command:'--inspect-case',workerPlatform:'linux',setupReads:true,primitiveSinkProbe:true,automaticExpressionInference:false,hostWallTimeoutSeconds:10,coverage:'fixture',reviewedUnitEvidence:'fixture',sourceFile:null,compiledSourceSha256:null}}]};

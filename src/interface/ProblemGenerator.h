@@ -32,7 +32,6 @@
 struct ProblemInitializationContext
 {
     arch::dispatch::EosId eos = arch::dispatch::EosId::Ideal;
-    GridMetrics::GeometrySemantics geometry_semantics = GridMetrics::GeometrySemantics::Existing;
 };
 
 class ProblemRegistry;

@@ -4,7 +4,7 @@
  *
  * Workflow:
  * 1. Receive a resolved configuration, stage request and current state identity.
- * 2. Complete actual native RZ ghosts through the Runtime materialization owner.
+ * 2. Complete actual ghosts through the Runtime materialization owner.
  * 3. Validate an ephemeral shared thermodynamic mean with the bound EOS, while
  *    retaining the original V/W-averaged conserved state for persistence.
  * 4. Publish plots/checkpoints only after serialization and close succeed.
@@ -25,7 +25,6 @@
 #include "driver/runtime/DriverRuntime.h"
 #include "io/plot/PlotGridMetadata.h"
 #include "driver/schedule/DriverControl.h"
-#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "physics/species/Species.h"
 
@@ -41,26 +40,22 @@ void close_diagnostic(std::ofstream& output, const char* description)
     if (!output)
         throw std::runtime_error(std::string("cannot close ") + description);
 }
-/** Reject invalid native closure, composition or EOS state before persistence.
- * RZ uses the actual density stencil to recover J^2/(2*I_*V), rather than
- * treating m_phi=J/W as an ordinary point momentum. The transient effective
- * mean is only an EOS input; this traversal never changes stored native U.
- * Runtime materialization must have completed the actual Current ghosts.
+/** Reject invalid composition or EOS state before persistence.
+ * This traversal never changes stored native U. Runtime materialization must
+ * have completed the actual Current ghosts.
  */
 void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                           TemperatureFunc temperature, Gamma1Func gamma1, const void* eos)
 {
     const auto& limits=runtime.configuration().numerics;
     const int species=runtime.species().count();
-    const auto semantics=runtime.geometry_semantics();
-    const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
     std::vector<double> fractions(species);
     auto& control=runtime.control();
     for (int id : control.tree->GetActiveBlocks()) {
         const auto& block=control.pool->GetBlock(id);
         const auto& grid=block.grid;
         const auto& state=block.fluid_state;
-        const auto geometry=GridMetrics::make_geometry_view(grid,semantics);
+        const auto geometry=GridMetrics::make_geometry_view(grid);
         const auto read=[&state](int index) { return state.get(index); };
         for (int k=grid.Ks(); k<grid.Ke(); ++k)
             for (int j=grid.Js(); j<grid.Je(); ++j)
@@ -68,13 +63,7 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                     const int cell=grid.GetIndex(i,j,k);
                     try {
                         state.get_species_to_buffer(cell,fractions.data());
-                        FluidVector eos_mean=read(cell);
-                        if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                            const auto closure=RzThermodynamics::make_cell(read,cell,geometry,i,bounds);
-                            if (!closure.valid())
-                                throw std::runtime_error("Invalid native RZ output closure");
-                            eos_mean=closure.effective_mean;
-                        }
+                        const FluidVector eos_mean=read(cell);
                         if (arch::state::validate(eos_mean,fractions.data(),species,1,
                             limits.sml_rho,limits.min_eint,limits.max_eint)!=arch::state::Status::valid)
                             throw std::runtime_error("Invalid conserved output state");
@@ -101,15 +90,15 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
     if (plot_run_id_.empty()) plot_run_id_ = arch::core::new_run_identity();
     write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index,
               ctrl.t_current, config, specs, extra_fields, &checkpoint_provenance,
-              plot_run_id_, runtime.geometry_semantics(), &plot_source_identity);
+              plot_run_id_, &plot_source_identity);
     // A failed write/close/publication must not consume the next output identity.
     ++ctrl.plt_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
 /** Persist original native restart means after closure/EOS validation.
- * Materialization already performs ensure_fluid_ghosts first, so native RZ
- * takes that single owned path; an extra call would resample user BC twice.
+ * Materialization already performs ensure_fluid_ghosts first; an extra call
+ * would resample user BC twice.
  */
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {
@@ -117,16 +106,10 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
-    if (runtime.backend()
-        || runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
+    if (runtime.backend())
         runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
-    const auto semantics = runtime.geometry_semantics();
-    io::CheckpointGeometryIdentity geometry_identity{1, "existing"};
-    if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
-        geometry_identity = io::current_rz_checkpoint_geometry();
-    else if (semantics != GridMetrics::GeometrySemantics::Existing)
-        throw std::runtime_error("Unsupported runtime checkpoint geometry profile");
+    const io::CheckpointGeometryIdentity geometry_identity{1, "existing"};
     write_chk(amr_ctrl, ctrl.chk_file_index, ctrl.plt_file_index,
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
@@ -151,7 +134,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         const auto& grid=runtime.control().pool->GetBlock(leaves.front()).grid;
         io::PlotNativeGrid measure;
         // Reuse the existing measure/normalization owner for one actual cell.
-        io::append_plot_native_cell(measure,grid,grid.Is(),grid.Js(),grid.Ks(),runtime.geometry_semantics());
+        io::append_plot_native_cell(measure,grid,grid.Is(),grid.Js(),grid.Ks());
         std::ofstream activity(config.io.out_dir+"/diffusion_activity.tsv");
         if(!activity)throw std::runtime_error("Cannot write diffusion activity diagnostics");
         activity << "# scope=since-process-start; quantity=endpoint-energy-redistribution; units=CGS\n"
@@ -160,8 +143,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                  << "# excludes-intermediate-excursions=true; not-cumulative-heat-flux=true; "
                     "accepted-state-includes-existing-repairs=true; thermal-only-operator=" << thermal_only << '\n'
                  << "# geometry=" << grid.geometry << "; dimension=" << grid.dim
-                 << "; chart=" << (runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz
-                     ? "AxisymmetricRz" : "Existing")
+                 << "; chart=" << "Existing"
                  << "; cell_measure_unit=" << measure.measure_unit
                  << "; normalization=" << measure.normalization
                  << "; measure_convention=" << measure.measure_convention
@@ -228,27 +210,11 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         close_diagnostic(timing, "CPU stage timings");
     }
     {
-        const bool rz = runtime.geometry_semantics()
-            == GridMetrics::GeometrySemantics::AxisymmetricRz;
-        const auto expected_repairs=rz ? state::RepairSemantics::RzVolumeAngular
-            : state::RepairSemantics::ExistingVolume;
-        if(ctrl.repairs.semantics!=expected_repairs)
-            throw std::runtime_error("Repair report measure identity differs from runtime chart");
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");
         report << std::setprecision(17) << "revision=P1.5-v1 units=CGS\n";
-        // RZ slot 6 is J=W*m_phi; other conserved deltas use V.
-        if(rz) report << "repair_semantics=" << state::repair_semantics_name(ctrl.repairs.semantics) << "\n";
-        if (rz)
-            report << "geometry_semantics_revision=2\ngeometry_chart=axisymmetric-rz\n"
-                   << "momentum_basis=local-orthonormal-r-z-phi\n"
-                   << "measure_unit=cm^3\nmeasure_normalization=full_rotation\n"
-                   << "mass_unit=g\nmomentum_unit=g*cm/s\nenergy_unit=erg\n"
-                   << "angular_momentum_unit=g*cm^2/s\nstate_semantics=rz-m-phi-j-over-w-v1\n";
         const char* names[]{"events","affected_volume","mass_signed","mass_absolute",
-            rz ? "momentum_r" : "momentum_x",
-            rz ? "momentum_z" : "momentum_y",
-            rz ? "angular_momentum_signed" : "momentum_z",
+            "momentum_x", "momentum_y", "momentum_z",
             "energy_signed","energy_absolute","local_cell"};
         for (int i=0;i<state::RepairView::fixed_size;++i) report << names[i] << "=" << ctrl.repairs.values[i] << "\n";
         for (int i=0;i<ctrl.repairs.species();++i) {

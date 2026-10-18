@@ -13,7 +13,7 @@
 #include "cuda/amr/RegridMigration.h"
 #include "cuda/common/GridMetricsCache.h"
 #include "amr/storage/Block.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include <cmath>
 
 namespace arch::cuda {
@@ -44,40 +44,6 @@ std::vector<double> CudaBackend::evaluate_jeans_resolution(
         });
 }
 
-/** Read staged Native Current device state into the same ordered JENS minima.
- * Authenticate the caller's exact unpublished candidate before any return or
- * device work, then reject the whole batch unless every access names an actual
- * AxisymmetricRz Current block and no block repeats. That cold preflight,
- * including the original duplicate-handle rejection, completes before any
- * allocation or launch, and the staged resolver never falls back to committed
- * storage.
- */
-std::vector<double> CudaBackend::evaluate_jeans_resolution(
-    backend::BackendTopologyStoreTransaction& transaction,
-    std::span<const backend::BackendStateAccess> accesses)
-{
-    auto& staged = require_staged_boundary_transaction(transaction);
-    std::vector<amr::BlockHandle> handles;
-    handles.reserve(accesses.size());
-    for (const auto access : accesses) {
-        if (access.slot != state::StateSlot::Current)
-            throw std::invalid_argument("staged JENS requires Current");
-        const auto& block = resolve_staged_block(staged, access);
-        if (static_cast<int>(block.grid.semantics)
-            != static_cast<int>(GridMetrics::GeometrySemantics::AxisymmetricRz))
-            throw std::invalid_argument(
-                "staged JENS requires the actual AxisymmetricRz chart");
-        handles.push_back(access.block);
-    }
-    std::sort(handles.begin(), handles.end());
-    if (std::adjacent_find(handles.begin(), handles.end()) != handles.end())
-        throw std::invalid_argument("Duplicate Hydro batch block");
-    return impl_->evaluate_jeans_resolution(accesses,
-        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
-            return resolve_staged_block(staged, access);
-        });
-}
-
 /** Read current device state into compact, ordered JENS minima without Host EOS.
  * Validate the entire access/layout batch before enqueueing; the Driver owns
  * StateVersion/publication readiness. Sequential kernels reuse one arena only
@@ -93,25 +59,13 @@ std::vector<double> CudaBackend::Impl::evaluate_jeans_resolution(
     std::vector<CudaBlockRuntime*> blocks;
     std::vector<DeviceStateView> views;
     std::size_t largest_cells = 0;
-    // This accepted observer serves the original Cartesian chart and the actual
-    // Native full-ring RZ chart, whose accepted conserved means are V/W means
-    // and therefore go through the shared closure. The chart is read from each
-    // actual grid, and a batch never silently mixes the two routes. The Native
-    // dim-2 complete logical layout stays enforced by the launch binding.
-    bool native = false;
     for (const auto& access : accesses) {
         auto& block = resolve(access);
         const auto view = block.require_access(access);
-        const bool block_native = static_cast<int>(block.grid.semantics)
-            == static_cast<int>(GridMetrics::GeometrySemantics::AxisymmetricRz);
-        if (blocks.empty()) native = block_native;
         if (!valid_hydro_view(view) || !valid_hydro_grid(block.grid)
             || view.total_size != block.grid.total_size
             || block.grid.active_cell_count() <= 0
-            || (block.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
-                && !block_native)
-            || (block_native && block.grid.ng < 1)
-            || block_native != native
+            || block.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
             || view.n_species != species_count)
             throw std::invalid_argument("invalid CUDA JENS accepted-state layout");
         largest_cells = std::max(largest_cells, static_cast<std::size_t>(block.grid.total_size));
@@ -266,28 +220,10 @@ std::vector<double> CudaBackend::evaluate_refinement_indicators(
     for (int index : species)
         if (index < 0 || index >= impl_->species_count)
             throw std::invalid_argument("invalid CUDA refinement species");
-    // The Native full-ring RZ chart carries V/W conserved means, not ordinary
-    // point states, so its curvature thermodynamics and physical center
-    // velocities must go through the shared closure instead of the padded
-    // point-EOS batch. Detect that chart from the actual grid, require the same
-    // chart/dimension and Current handle across the batch, and request the
-    // physical observer exactly for the velocity, curl and div(v) indicators
-    // that consume it. No new flag, cache or user knob is introduced.
-    const bool native = static_cast<int>(first.grid.semantics)
-        == static_cast<int>(GridMetrics::GeometrySemantics::AxisymmetricRz);
-    const bool physical_velocity = native
-        && (config.refine_on_velx || config.refine_on_vely || config.refine_on_velz
-            || config.refine_on_vorticity || config.refine_on_div_v);
-    const arch::state::Bounds bounds{impl_->launch.density_floor,
-        impl_->launch.minimum_internal_energy, impl_->launch.maximum_internal_energy};
-    if (native && (!arch::state::valid_bounds(bounds) || bounds.density != density_floor))
-        throw std::invalid_argument("invalid CUDA Native refinement bounds");
     std::size_t largest_cells = 0;
     for (const auto& access : accesses) {
         const auto& block = impl_->require_block(access);
-        if (access.slot != state::StateSlot::Current || block.grid.dim != first.grid.dim
-            || (static_cast<int>(block.grid.semantics)
-                == static_cast<int>(GridMetrics::GeometrySemantics::AxisymmetricRz)) != native)
+        if (access.slot != state::StateSlot::Current || block.grid.dim != first.grid.dim)
             throw std::invalid_argument("invalid CUDA refinement source");
         largest_cells = std::max(largest_cells, static_cast<std::size_t>(block.grid.total_size));
     }
@@ -298,40 +234,27 @@ std::vector<double> CudaBackend::evaluate_refinement_indicators(
     workspace.pressure = config.refine_on_p || config.refine_on_entropy;
     workspace.temperature = config.refine_on_temp;
     workspace.gamma1 = config.refine_on_entropy;
-    if (native) workspace.bounds = bounds;
     double* summary = reserve_indicator_scratch(scratch.summary, accesses.size());
     auto* device_selection = reserve_indicator_scratch(scratch.selection,
         selection.size() * sizeof(amr::indicator::Selection));
     const bool thermo = workspace.pressure || workspace.temperature || workspace.gamma1;
-    // One Native plane set serves the mean thermodynamics and the physical
-    // observer; a physical-only request still needs the closure's mean EOS gate
-    // and the composition scratch that gate reads.
-    const bool evaluation = thermo || physical_velocity;
     const auto wave_capacity = indicator_wave_capacity(largest_cells, impl_->species_count,
-        thermo, accesses.size(), physical_velocity);
+        thermo, accesses.size());
     const auto scratch_cells = largest_cells * wave_capacity;
     const auto scratch_fields = 1
-        + (evaluation ? 3 + static_cast<std::size_t>(impl_->species_count) : 0)
-        + (physical_velocity ? 3 : 0);
+        + (thermo ? 3 + static_cast<std::size_t>(impl_->species_count) : 0);
     // A single high-water arena prevents separately retained thermo/error
     // allocations from exceeding the optional scratch budget after a route
     // change. Compact metadata, output summaries and a required oversized
     // single-block allocation are not claims of a total-VRAM cap.
     auto* arena = reserve_indicator_scratch(scratch.arena, scratch_cells * scratch_fields);
     workspace.cell_errors = arena;
-    if (evaluation) {
+    if (thermo) {
         workspace.thermodynamics = arena + scratch_cells;
         if (impl_->species_count > 0)
             workspace.composition = arena + 4 * scratch_cells;
     }
-    if (physical_velocity) {
-        // Three private planes per block, placed after the existing error,
-        // mean-thermodynamics and composition planes, so no borrowed region
-        // overlaps another wave or another route.
-        double* center = arena + (4 + static_cast<std::size_t>(impl_->species_count)) * scratch_cells;
-        for (int component = 0; component < 3; ++component)
-            workspace.physical_velocity[component] = center + component * scratch_cells;
-    }
+
     workspace.selection = reinterpret_cast<const amr::indicator::Selection*>(device_selection);
     std::vector<DeviceIndicatorBatchBlock> bindings;
     bindings.reserve(accesses.size());
@@ -340,16 +263,12 @@ std::vector<double> CudaBackend::evaluate_refinement_indicators(
         auto block_workspace = workspace;
         const auto offset = (index % wave_capacity) * largest_cells;
         block_workspace.cell_errors += offset;
-        if (evaluation) {
+        if (thermo) {
             block_workspace.thermodynamics += 3 * offset;
             if (impl_->species_count > 0)
                 block_workspace.composition += offset * static_cast<std::size_t>(impl_->species_count);
         }
-        if (physical_velocity) {
-            double* center = workspace.physical_velocity[0] + 3 * offset;
-            for (int component = 0; component < 3; ++component)
-                block_workspace.physical_velocity[component] = center + component * largest_cells;
-        }
+
         block_workspace.block_error = summary + index;
         block_workspace.eos_status = block.cfl_status.get();
         bindings.push_back({block.require_access(accesses[index]), block.grid, block_workspace});

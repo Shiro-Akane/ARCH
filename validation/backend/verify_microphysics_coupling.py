@@ -133,8 +133,8 @@ def nuclear_energy_delta(data, delta_mass):
 def balance(validator,initial,final,parameter):
     import nse_reference
     data=nse_reference.burn_energy_data('aprox13')
-    before=runtime.read_conservation_metrics(validator,initial,parameter)
-    after=runtime.read_conservation_metrics(validator,final,parameter)
+    before=runtime.read_conservation_metrics(validator,initial,parameter,preserve_total_precision=True)
+    after=runtime.read_conservation_metrics(validator,final,parameter,preserve_total_precision=True)
     mass=np.asarray(data['arrays']['AION'],dtype=np.longdouble)
     charge=np.asarray(data['arrays']['ZION'],dtype=np.longdouble)/mass
     # Physical-volume integrals from the shared checkpoint geometry reader.

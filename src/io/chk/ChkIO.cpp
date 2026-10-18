@@ -5,9 +5,8 @@
  * Workflow:
  * 1. Write synchronized Host interiors with native composition and identities.
  * 2. Read and check the exact geometry/schema, provenance and incoming layout.
- * 3. Check native RZ finite/rho/simplex bounds provisionally: serialized cells
- *    lack the real density ghosts needed for I_* and J^2/(2*I_*V).
- * 4. Restore original native V/W means and timestep/output controller state.
+ * 3. Check the serialized finite/rho/composition contract strictly.
+ * 4. Restore original state means and timestep/output controller state.
  * 5. The Runtime binds the same actual EOS and completes real BC/exchange before
  *    its post-ghost thermal acceptance. This reader does not certify that EOS
  *    gate, perform backend transfers, repair energy or advance a trajectory.
@@ -24,7 +23,6 @@
 #include "data/GlobalDefs.h"
 
 #include "io/IO.h"
-#include "numerics/state/RzNativeClosure.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "io/hdf5/HDF5Writer.h"
@@ -35,11 +33,6 @@ namespace fs = std::filesystem;
 // Checkpoint output for restart.
 namespace {
 
-/** Copy identity values only; metric formulas remain in GridMetrics. */
-io::CheckpointNativeDomainIdentity rz_config_domain(const SimConfig& config) {
-    return {{config.grid.x1_min,config.grid.x1_max,config.grid.x2_min,config.grid.x2_max},
-        {config.grid.nblockx1,config.grid.nblockx2},{amr::BLOCK_NX,amr::BLOCK_NY}};
-}
 size_t checkpoint_cells_per_block(int dim)
 {
     return static_cast<size_t>(amr::BLOCK_NX)
@@ -62,19 +55,6 @@ void write_chk(amr::AMRControl &amr_ctrl,
 {
     io::require_checkpoint_geometry_compatible(config.grid.dim, config.grid.geometry,
                                                geometry_identity, geometry_identity);
-    const auto expected_repairs=geometry_identity.chart=="axisymmetric-rz"
-        ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
-    if(repairs.semantics!=expected_repairs)
-        throw std::runtime_error("Checkpoint repair measure identity differs from source chart");
-    io::CheckpointNativeDomainIdentity native_domain;
-    if(geometry_identity.chart=="axisymmetric-rz") {
-        if(amr_ctrl.tree->GetGeometrySemantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::runtime_error("RZ checkpoint source tree has no authoritative RZ geometry");
-        const auto& root=amr_ctrl.tree->GetRootGrid();
-        native_domain={{root.x1_min,root.x1_max,root.x2_min,root.x2_max},
-            {root.nblockx1,root.nblockx2},{amr::BLOCK_NX,amr::BLOCK_NY}};
-        io::require_rz_checkpoint_domain_compatible(native_domain,rz_config_domain(config));
-    }
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
 
     std::ostringstream filename;
@@ -99,7 +79,6 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.dim = dim;
     checkpoint.geometry = config.grid.geometry;
     checkpoint.geometry_identity = geometry_identity;
-    checkpoint.native_domain = native_domain;
     checkpoint.cells_per_block = cells_per_block;
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = resume_after_regrid;
@@ -168,9 +147,6 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
     io::require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                                                checkpoint.geometry_identity, expected_geometry);
-    // Bind W/native indexing before any live tree reconstruction or mutation.
-    if(expected_geometry.chart=="axisymmetric-rz")
-        io::require_rz_checkpoint_domain_compatible(checkpoint.native_domain,rz_config_domain(config));
     if (checkpoint.state_controls != arch::config::StateControlIdentity(config))
         throw std::runtime_error("Checkpoint state controls differ from the active configuration");
     const int expected_species = specs.count();
@@ -181,14 +157,10 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     }
     const bool verified_identity = io::require_checkpoint_provenance_compatible(
         checkpoint.provenance, expected_provenance);
-    // Native RZ stores m_phi=J/W alongside E/V. Before the actual leaf/ghost
-    // stencil exists it is impossible to recover J^2/(2*I_*V); check only the
-    // shared finite/rho/composition contract here. Runtime initialization owns
-    // actual post-ghost mean/point EOS acceptance before any evolution starts.
-    // Existing charts retain their original strict raw-state validation.
+    // Serialized cells carry no ghost stencil, so check the original strict
+    // raw-state finite/rho/composition contract here. Runtime initialization
+    // owns actual post-ghost mean/point EOS acceptance before evolution.
     const auto& limits = config.numerics;
-    const bool native_rz=expected_geometry.chart=="axisymmetric-rz";
-    const arch::state::Bounds bounds{limits.sml_rho,limits.min_eint,limits.max_eint};
     const size_t incoming_cells = checkpoint.rho.size();
     if (checkpoint.repairs.species() != expected_species)
         throw std::runtime_error("Checkpoint repair ledger and species count disagree");
@@ -196,20 +168,14 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
         const FluidVector fluid{checkpoint.rho[cell], checkpoint.mom_u[cell],
             checkpoint.mom_v[cell], checkpoint.mom_w[cell], checkpoint.eng[cell]};
         const double* fractions=expected_species ? checkpoint.mass_fractions.data()+cell : nullptr;
-        const auto status = native_rz
-            ? RzThermodynamics::provisional_native_state(fluid,fractions,expected_species,
-                static_cast<int>(incoming_cells),bounds)
-            : arch::state::validate(fluid,fractions,expected_species,
-                static_cast<int>(incoming_cells),limits.sml_rho,limits.min_eint,limits.max_eint);
+        const auto status = arch::state::validate(fluid,fractions,expected_species,
+            static_cast<int>(incoming_cells),limits.sml_rho,limits.min_eint,limits.max_eint);
         if (status != arch::state::Status::valid || !std::isfinite(checkpoint.enuc_rate[cell]))
             throw std::runtime_error("Invalid checkpoint state at cell " + std::to_string(cell));
     }
 
     amr_ctrl.tree->LoadLeafGrid(config, expected_species, checkpoint.levels,
-                                checkpoint.logical_x1, checkpoint.logical_x2, checkpoint.logical_x3,
-                                expected_geometry.chart == "axisymmetric-rz"
-                                    ? GridMetrics::GeometrySemantics::AxisymmetricRz
-                                    : GridMetrics::GeometrySemantics::Existing);
+                                checkpoint.logical_x1, checkpoint.logical_x2, checkpoint.logical_x3);
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (active_blocks.size() != checkpoint.levels.size())
         throw std::runtime_error("Checkpoint AMR leaf reconstruction changed the block count.");

@@ -59,7 +59,7 @@ public:
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         // Stratification and perturbations belong to Cartesian physical axes.
-        // Retain the existing dimension handling; do not reinterpret y as RZ z.
+        // Retain the existing dimension handling; x2 keeps its ordinary meaning.
         if (config.grid.geometry!="cartesian")
             throw std::invalid_argument("RT requires Cartesian geometry");
         // 1. Grid bounds for wave number calculation

@@ -37,17 +37,62 @@ fixture. The density, temperature, initial composition, physical endpoint and
 ODE tolerances retain the reference problem specified above.
 
 Historical results retain their recorded source and input identities. Current
-configuration loading does not establish a new scientific trajectory or CUDA
+configuration loading alone does not establish a new scientific trajectory or CUDA
 result. Replays use the recorded numerical/EOS controls and table identity;
 longer physical endpoints need their own independent reference and budgets.
+
+## Current CPU reliability check
+
+The [one-zone CPU receipt](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json) records fresh
+BE_NR, BD and ROS4 runs through the original one-zone endpoint and CPU
+cross-solver/closure budgets. It preserves the historical records below and
+does not qualify a new CUDA run.
+
+The [CPU coupling and NSE record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+adds six BurnGradient combinations of the three ODE methods with RKL1/RKL2
+species diffusion at the original `t=1e-10 s`. The original nuclear-mass energy,
+mass and charge budgets of `1e-12`, pointwise state checks and actual AMR changes
+pass. Sixteen application runs cover aprox13, aprox19, aprox21 and iso7, each
+with an NSE-disabled BE_NR control and enabled BE_NR, BD and ROS4. They retain
+the original `1e-12` energy/charge checks and composition contrast above `1e-3`.
+These are CPU scopes; independent time references and new CUDA runs remain separate.
+
+An earlier one-dimensional Cellular diagnostic explicitly restores eleven
+former effective controls, including `use_nse=true`, and completes one step to
+`t=1e-16 s` in 2.13 seconds of application wall time with zero repairs. This
+input differs from the two-dimensional `CellularFlash2D.par` FLASH comparison.
+The actual second burn half-step reports `NseSuccess`: one NSE attempt, no
+NSE failure and no BD substep. Replaying its captured inputs through the same
+shared BD/NSE implementation reproduces the packed state, report and energy
+handoff bit for bit. This is a shared-code replay, not an independent NSE
+reference. A separate independent Saha and Helmholtz-EOS audit at the actual
+density, input composition and accepted temperature agrees at 60/80 digits.
+Species Linf is `8.54e-15` and relative thermal-closure residual `2.28e-14`,
+within the original `1e-12` limits. This audits the accepted output; it does
+not measure the producer's internal Ye/old EOS energy or derive a unique
+preferred thermal root. Pure-ODE integration does not represent this route.
+The [current CPU receipt](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+extends this one-dimensional input to its original endpoint in 24 steps
+(4.01 seconds, 25 checkpoints, zero repairs); its first saved state matches
+the independently audited state exactly. It also qualifies six enabled-transport
+endpoints and four active-ENUC continuations under the original budgets, after
+repairing precision loss in the conservation observer without changing physics.
+The original CPU/CUDA `enuc_rate` screening and the separate public/2D trajectories remain open;
+the older cross-identity scalar difference does not close them. `ENUC`/`enuc_rate` has units
+`erg g^-1 s^-1`: it is the last burn half-step's accepted energy increment
+divided by that half-step's duration, not a whole-macro-step energy ledger.
 
 ## Helmholtz table identity
 
 The only source used for this record is the `helm_table.dat` member of the
 `helmholtz.tar.xz` package downloaded from the
 [Timmes EOS website](https://cococubed.com/code_pages/eos.shtml). The runtime
-path is `EOS_toolkit/tables/helmholtz/helm_table.dat`; Git LFS must
-materialize it before the run.
+path is `EOS_toolkit/tables/helmholtz/helm_table.dat`. Restore a matching,
+verified local copy or materialize an existing local LFS object using the
+[offline table guide](../../docs/guides/Build.md#offline-tables-and-lfs-bandwidth).
+Keep a verified copy outside build/output directories and the LFS object store.
+Report a missing object rather than automatically downloading it; reading a
+materialized table uses no LFS bandwidth.
 
 | Property | Required value |
 | --- | --- |
@@ -65,7 +110,7 @@ and a Python environment with NumPy and h5py. Verify the table identity, then
 run the archived recipe with a new output directory:
 
 ```bash
-git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat"
+git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
 sha256sum EOS_toolkit/tables/helmholtz/helm_table.dat
 python3 validation/burn/results/application-first-law-20260907/replay.py \
   --build-dir build-cuda \

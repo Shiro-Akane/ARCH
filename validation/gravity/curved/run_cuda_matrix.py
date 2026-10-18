@@ -2,8 +2,7 @@
 """Run reproducible CPU/CUDA curved four-module pairs with one Release binary.
 
 Usage: run_cuda_matrix.py --arch build-ci/cuda-focused/bin/ARCH \
-    --pair polar:validation/gravity/curved/inputs/rz_origin.par:3 \
-    --pair regular:validation/gravity/curved/inputs/rz_origin_regular_4x4.par:3:regular \
+    --pair wedge:validation/gravity/curved/inputs/p12_cylindrical_3d_axis_mixed.par:3 \
     --output /tmp/arch-p13-matrix --cpu-threads 16 --repeats 3
 
 Endpoint mode: replace --pair with --endpoint-pair label:input.par:T_END[:amr|regular].

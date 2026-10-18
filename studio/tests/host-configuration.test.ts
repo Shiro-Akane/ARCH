@@ -28,7 +28,7 @@ import {createHash} from 'node:crypto';
 test('fixed inspection process returns exact stdin identity, retains structured errors and rejects changed build',async()=>{
  const f=await previewFixture();try{
   const payload=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/sod-valid.json',import.meta.url),'utf8'));
-  const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
+  const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
   const script=`#!${process.execPath}
 if(process.argv[2]==='--preview-capabilities'){console.log(JSON.stringify({schemaVersion:'1.0',kind:'preview-capabilities',cases:['Sod'],dimensions:[1]}));process.exit(0);}
 if(process.argv[2]==='--config-schema'){process.stdout.write(JSON.stringify(${JSON.stringify(schema)}),()=>process.exit(0));}const crypto=require('node:crypto');let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',b=>input+=b);process.stdin.on('end',()=>{if(process.argv[2]!=='--inspect-config'||process.argv[4]!=='--config-stdin'||process.argv[5]!=='--request-id')process.exit(2);const result=${JSON.stringify(payload)};result.identity={caseId:process.argv[3],requestId:process.argv[6],configRevision:crypto.createHash('sha256').update(input).digest('hex')};if(input.includes('invalid')){result.status='error';result.completeness.state='invalid';result.diagnostics=[{severity:'error',code:'INVALID_INTEGER',parameterKey:'nblockx1',message:'invalid',module:'Grid',conditionId:'always',expected:{type:'int',units:null},locations:[],relatedKeys:[]}];process.exitCode=3;}setTimeout(()=>console.log(JSON.stringify(result)),input.includes('slow')?100:0);});`;
@@ -47,7 +47,7 @@ test('static registry survives overlapping schema requests without enabling Prev
  const f=await previewFixture();
  try{
   const registry=JSON.parse(await readFile(new URL('../../src/api/examples/local-workflow/registered-cases.json',import.meta.url),'utf8'));
-  const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8'));
+  const schema=JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8'));
   const script='#!'+process.execPath+'\nconst fs=require("node:fs");fs.appendFileSync("static-commands.log",process.argv[2]+"\\n");const result=process.argv[2]==="--list-cases"?'+JSON.stringify(registry)+':'+JSON.stringify(schema)+';setTimeout(()=>console.log(JSON.stringify(result)),100);\n';
   await writeFile(f.root+'/build/bin/ARCH',script,{mode:0o755});
   const adapter=new ConfigurationAdapter({root:f.root,projectId:'p',binaryRelativePath:'build/bin/ARCH'});

@@ -2,8 +2,9 @@
  * @file RegridTransferMath.h
  * @brief One Host/device authority for conservative regrid cell-family math.
  *
- * These are full-cell migration operations, not coarse/fine ghost filling.
- * Backends supply samples, physical V/W measures, and scratch storage; the limited
+ * Cell-family mathematics serves migration and coarse/fine ghost gathering.
+ * Callers own the destination frame, gather/scatter and publication. Backends
+ * supply samples, physical cell volumes, and scratch storage; the limited
  * reconstruction, conservation correction, fluid admissibility, and simplex
  * projection are identical on both backends. Morton/topology is not included.
  * Workflow:
@@ -17,8 +18,7 @@
 #include "core/ArchPortability.h"
 #include "data/FluidState.h"
 #include "numerics/state/StateAdmissibility.h"
-#include "numerics/state/RzNativeClosure.h"
-#include "numerics/state/RzCellAverage.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 #include <array>
 #include <cmath>
@@ -47,8 +47,6 @@ enum class Status : int {
     RestrictionEnuc,
     SpeciesIntegral,
     SpeciesClosure,
-    NativeSource,
-    NativeDestination,
 };
 
 inline const char* status_message(Status status)
@@ -68,8 +66,6 @@ inline const char* status_message(Status status)
     case Status::RestrictionEnuc: return "AMR restriction produced invalid ENUC state.";
     case Status::SpeciesIntegral: return "AMR transfer produced an invalid or unrepresentable species integral.";
     case Status::SpeciesClosure: return "AMR restriction requires species mass to close to density.";
-    case Status::NativeSource: return "Native RZ restriction requires finite source fields, positive density and the actual composition simplex.";
-    case Status::NativeDestination: return "Native RZ restriction produced invalid provisional fields or composition; actual target EOS is required after ghost completion.";
     }
     return "AMR migration returned an unknown mathematical status.";
 }
@@ -318,9 +314,6 @@ struct RestrictionGeometry {
     int source_cells[maximum_children]{};
     double volumes[maximum_children]{};
     double coarse_volume = 0.0;
-    bool angular_momentum = false;
-    double angular_measures[maximum_children]{};
-    double coarse_angular_measure = 0.0;
 };
 
 struct RestrictionResult {
@@ -338,84 +331,28 @@ ARCH_HOST_DEVICE inline Status restrict_family(
         || species < 0 || (species > 0 && workspace == nullptr)
         || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
-    if(geometry.angular_momentum &&
-       (geometry.count!=4 || !std::isfinite(geometry.coarse_angular_measure)
-        || geometry.coarse_angular_measure<=0.0))
-        return Status::InvalidGeometry;
-    const arch::state::Bounds native_bounds{density_floor,min_eint,
-        std::numeric_limits<double>::max()};
-    if(geometry.angular_momentum && (!arch::state::valid_bounds(native_bounds)
-        || source.species_stride>static_cast<std::size_t>(std::numeric_limits<int>::max())
-        || (species>0 && (!source.fractions || source.species_stride==0))))
-        return Status::InvalidGeometry;
     FluidVector integral{};
-    double angular_integral = 0.0;
     double enuc_integral = 0.0;
     for (int sp = 0; sp < species; ++sp) workspace[sp] = 0.0;
     for (int cell = 0; cell < geometry.count; ++cell) {
         const int index = geometry.source_cells[cell];
         const double volume = geometry.volumes[cell];
         if (!std::isfinite(volume) || volume <= 0.0) return Status::InvalidGeometry;
-        if(geometry.angular_momentum && (index<0
-            ||static_cast<std::size_t>(index)>=source.species_stride))
-            return Status::InvalidGeometry;
         FluidVector sample=source.fluid(index);
-        if(geometry.angular_momentum) {
-            // Source EOS belongs to the accepted hierarchy. Here only the
-            // genuine mixed-measure fields/simplex may be prechecked: using
-            // m_phi=J/W as a Cartesian point momentum is mathematically wrong.
-            if(index<0 || RzThermodynamics::provisional_native_state(sample,
-                species>0 ? source.fractions+index : nullptr,species,
-                species>0 ? static_cast<int>(source.species_stride) : 1,native_bounds)
-                !=arch::state::Status::valid)
-                return Status::NativeSource;
-            sample.mom_w=0.0;
-        }
+
         integral = integral + sample * volume;
-        if(geometry.angular_momentum) {
-            const double measure=geometry.angular_measures[cell];
-            if(!std::isfinite(measure) || measure<=0.0) return Status::InvalidGeometry;
-            angular_integral+=source.fields[3][index]*measure;
-        }
+
         enuc_integral += source.fields[5][index] * volume;
-        if(!geometry.angular_momentum)
             for (int sp = 0; sp < species; ++sp)
                 workspace[sp] += restriction_math::weighted_species_density(
                     source.fields[0][index], source.fraction(sp, index), volume);
     }
     result.fluid = integral * (1.0 / geometry.coarse_volume);
-    if(geometry.angular_momentum)
-        result.fluid.mom_w=angular_integral/geometry.coarse_angular_measure;
-    if(geometry.angular_momentum) {
-        // V-weighted rho,m_r,m_z,E and W-weighted m_phi are conservative,
-        // provisional means. I_* must come from the real completed target
-        // density stencil; no raw/effective-parent copy is a thermal gate.
-        if(RzThermodynamics::provisional_native_state(result.fluid,nullptr,0,1,native_bounds)
-            !=arch::state::Status::valid)return Status::NativeDestination;
-    } else if (!is_admissible_conserved_state(result.fluid, density_floor, min_eint))
+    if (!is_admissible_conserved_state(result.fluid, density_floor, min_eint))
         return Status::CoarseFluid;
     result.enuc = enuc_integral / geometry.coarse_volume;
     if (!std::isfinite(result.enuc)) return Status::RestrictionEnuc;
-    if(geometry.angular_momentum) {
-        // Xi=sum(V*rho*Xi)/sum(V*rho), using the shared exponent-scaled
-        // positive ratio. Do not lose a representable trace Xi by multiplying
-        // V*rho*Xi first, and never clip/renormalize a restricted simplex.
-        std::array<double,4> weights{},densities{};
-        for(int c=0;c<4;++c) {
-            weights[c]=geometry.volumes[c];
-            densities[c]=source.fields[0][geometry.source_cells[c]];
-        }
-        for(int sp=0;sp<species;++sp) {
-            const auto mean=RzCellAverage::fraction_mean(weights,densities,
-                [&](std::size_t c){return source.fraction(sp,geometry.source_cells[c]);});
-            if(!mean.valid())return Status::SpeciesIntegral;
-            workspace[sp]=mean.value;
-        }
-        if(RzThermodynamics::provisional_native_state(result.fluid,workspace,species,1,native_bounds)
-            !=arch::state::Status::valid)return Status::NativeDestination;
-        result.fractions=workspace;
-        return Status::Ok;
-    }
+
     double total = 0.0;
     for (int sp = 0; sp < species; ++sp) {
         if (!std::isfinite(workspace[sp]) || workspace[sp] < 0.0) return Status::SpeciesIntegral;

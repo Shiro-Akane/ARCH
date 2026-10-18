@@ -307,14 +307,11 @@ std::string canonical_configuration_record(const SimConfig& config)
 io::PlotSourceIdentity make_plot_source_identity(
     const SimConfig& config,const io::CheckpointProvenance& provenance,
     const arch::dispatch::ResolvedExecutionPlan& plan,
-    arch::dispatch::ComputeBackend backend,GridMetrics::GeometrySemantics semantics)
+    arch::dispatch::ComputeBackend backend)
 {
     using namespace arch::dispatch;
     if(!provenance.available || provenance.eos_type.empty() || backend==ComputeBackend::Auto)
         throw std::invalid_argument("Output identity requires accepted EOS and actual resolved backend");
-    if(semantics!=GridMetrics::GeometrySemantics::Existing &&
-       semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-        throw std::invalid_argument("Unknown output geometry identity");
     io::PlotSourceIdentity result;
     result.formal=true;
     const auto input=config.LoadedInput();
@@ -323,8 +320,6 @@ io::PlotSourceIdentity make_plot_source_identity(
     Record runtime("arch-resolved-execution-1","resolved-execution.version");
     result.resolved_backend=backend==ComputeBackend::Cuda?"cuda":"cpu";
     runtime.add("backend",result.resolved_backend);
-    runtime.add("geometry-semantics",semantics==GridMetrics::GeometrySemantics::AxisymmetricRz?
-        std::string("axisymmetric-rz-2"):std::string("existing-1"));
     runtime.add("flux",policy<FluxPolicies>(plan.flux));
     runtime.add("reconstruction",policy<ReconstructionPolicies>(plan.reconstruction));
     runtime.add("limiter",policy<LimiterPolicies>(plan.limiter));

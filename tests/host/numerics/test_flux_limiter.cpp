@@ -12,19 +12,21 @@
  * The shared 64-epsilon trace band is unchanged. Reflections exchange the cells
  * and reverse normal velocity, rather than merely swapping the input states.
  */
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "grid/Grid.h"
 #include "numerics/diffusion/DiffFlux.h"
-#include "numerics/flux/RzNativeFaceFlux.h"
+#include "numerics/flux/InvariantDomainFlux.h"
 #include "numerics/flux/StationarySlipWallFlux.h"
 #include "physics/eos/IdealGas.h"
 #include "numerics/flux/FluxHLLC.h"
-#include "numerics/flux/InvariantDomainFlux.h"
 #include "numerics/state/StateAdmissibility.h"
 
 #include <algorithm>
 #include <array>
 #include <bit>
 #include <cmath>
+#include <cfenv>
 #include <cstdio>
 #include <cstdint>
 #include <iostream>
@@ -203,253 +205,6 @@ void check_fluid_blend(const Face& f, const FluidVector& high, double theta,
 
 const char* kConePlus = "shifted cone bar + theta*C";
 
-// Independent native wall mathematics on a bound annulus. These exact V/W
-// ghost integrals are prescribed fixture data; no BCHandler, scheduler or
-// Runtime authority is mocked or certified by the flat mathematical flags.
-struct NativeWallFixture {
-    static constexpr auto semantics=GridMetrics::GeometrySemantics::AxisymmetricRz;
-    static constexpr long double internal=1.L/64.L;
-    SpeciesManager species;
-    IdealGas eos;
-    Grid grid{amr::MAX_NG,1.,3.,-.5,.5,0.,1.};
-    FluidState state;
-    arch::state::Bounds bounds{1.e-14,0.,1.};
-
-    static SpeciesManager materials() {
-        SpeciesManager result;
-        result.add_species("wall_a",1.,1.,1.4,2.);
-        result.add_species("wall_b",4.,2.,1.4,2.);
-        return result;
-    }
-    // Integrate (c+d*r) and its square with the actual W/V measures. The
-    // physical tangential velocity reflects across a radial wall without
-    // changing its sign; radial/axial normal velocities are genuinely zero.
-    static FluidVector integral(double lower,double upper,long double c,long double d) {
-        const long double a=lower,b=upper;
-        const long double volume=(b*b-a*a)/2.L;
-        const long double angular=(b*b*b-a*a*a)/3.L;
-        const long double mphi=(c*(b*b*b-a*a*a)/3.L
-            +d*(b*b*b*b-a*a*a*a)/4.L)/angular;
-        const long double squared=(c*c*(b*b-a*a)/2.L
-            +2.L*c*d*(b*b*b-a*a*a)/3.L
-            +d*d*(b*b*b*b-a*a*a*a)/4.L)/volume;
-        return {1.,0.,0.,double(mphi),double(internal+.5L*squared)};
-    }
-    NativeWallFixture():species(materials()),eos(1.4,species) {
-        grid.dim=2;grid.geometry="cylindrical";
-        grid.InitializeTopology(semantics);
-        grid.dyadic_identity.bound=true;
-        grid.dyadic_identity.root_lower={1.,-.5};
-        grid.dyadic_identity.root_upper={3.,.5};
-        grid.dyadic_identity.root_blocks={1,1};
-        grid.dyadic_identity.level=0;grid.dyadic_identity.logical={0,0};
-        grid.InitializeTopology(semantics);
-        check(GridMetrics::matches_identity(GridMetrics::make_geometry_view(grid,semantics)),
-            "native wall fixture authenticates its actual bound annular grid");
-        state.Preallocate(grid.GetTotalSize());state.InitSpecies(kSpecies);
-        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
-            long double c=0.L,d=1.L;
-            if(i<grid.Is()){c=2.L*grid.x1_min;d=-1.L;}
-            else if(i>=grid.Ie()){c=2.L*grid.x1_max;d=-1.L;}
-            const int index=grid.GetIndex(i,j);
-            state.set(index,integral(grid.GetFacePosL(i),grid.GetFacePosR(i),c,d));
-            state.X(0,index)=.75;state.X(1,index)=.25;state.enuc_rate[index]=0.;
-        }
-    }
-    arch::boundary::HydroBoundaryView walls() const {
-        arch::boundary::HydroBoundaryView result;
-        result.reflecting={true,true,true,true,false,false};return result;
-    }
-    RzSelectedReconstruction::Context context(int direction,int side) const {
-        const int i=direction==0?(side?grid.Ie()-1:grid.Is()-1):grid.Is()+3;
-        const int j=direction==1?(side?grid.Je()-1:grid.Js()-1):grid.Js()+3;
-        return {GridMetrics::make_geometry_view(grid,semantics),grid.GetTotalX(),
-            grid.GetTotalY(),i,j,direction,kSpecies,bounds};
-    }
-};
-
-// The whole logical fixture, including real endpoint halos, is checked with
-// the actual selected IdealGas at all six shared baseline physical points.
-void check_native_wall_required_eos(const NativeWallFixture& fixture) {
-    const auto geometry=GridMetrics::make_geometry_view(fixture.grid,NativeWallFixture::semantics);
-    const auto read=[&](int index){return fixture.state.get(index);};
-    const double xi[kSpecies]{.75,.25};
-    for(int j=0;j<fixture.grid.GetTotalY();++j)for(int i=0;i<fixture.grid.GetTotalX();++i) {
-        int begin=i-1;begin=std::max(0,std::min(begin,fixture.grid.GetTotalX()-3));
-        const int index=fixture.grid.GetIndex(i,j);
-        const auto cell=RzThermodynamics::make_cell_supported(read,index,geometry,i,begin,fixture.bounds);
-        check(cell.valid(),"independent wall halo has a valid real density/inertia closure");
-        if(!cell.valid())continue;
-        for(int n=0;n<6;++n)
-            check(arch::state::validate_eos(RzThermodynamics::base_point(cell,
-                RzThermodynamics::physical_node_radius(cell,n)),xi,kSpecies,fixture.bounds,fixture.eos)
-                ==arch::state::Status::valid,"every actual wall-halo baseline point passes real IdealGas/bounds");
-    }
-}
-
-// Borrow only real state readers and caller-owned, non-overlapping workspaces.
-// The view has Native semantics so all physical points query the actual EOS;
-// its Roe-wave option remains explicit rather than being lost through nullptr.
-template<class Reconstruction>
-arch::state::Status native_wall_compute(const NativeWallFixture& fixture,
-    const RzSelectedReconstruction::Context& context,
-    const arch::boundary::HydroBoundaryView* boundary,FluidVector& flux,
-    std::array<double,kSpecies>& species_flux,
-    GridMetrics::GeometrySemantics mean_semantics=NativeWallFixture::semantics) {
-    std::array<double,16*kSpecies> rhoX{};
-    std::array<double,19*kSpecies> reconstruction{};
-    std::array<double,kSpecies> left{},right{},candidate{},high{},low{};
-    RzNativeFaceFlux::Scratch scratch{rhoX.data(),reconstruction.data(),reconstruction.size(),
-        left.data(),right.data(),candidate.data(),high.data(),low.data()};
-    FluxAdmissibility::MeanThermoView means;means.geometry_semantics=mean_semantics;
-    means.roe_wave_speed=false;
-    const auto read=[&](int index){return fixture.state.get(index);};
-    const auto fraction=[&](int s,int index){return fixture.state.X(s,index);};
-    const int left_cell=context.geometry.GetIndex(context.face_i,context.face_j);
-    const int right_cell=left_cell+(context.direction==0?1:context.geometry.stride_y);
-    if(boundary)return RzNativeFaceFlux::compute<FluxHLLC<Reconstruction>,Reconstruction>(
-        read,fraction,context,fixture.eos,0.,&means,left_cell,right_cell,scratch,flux,
-        species_flux.data(),*boundary);
-    return RzNativeFaceFlux::compute<FluxHLLC<Reconstruction>,Reconstruction>(
-        read,fraction,context,fixture.eos,0.,&means,left_cell,right_cell,scratch,flux,species_flux.data());
-}
-
-// Zero normal velocity is chosen deliberately: independent wall mass/work and
-// tangential advective/species fluxes are zero. Normal pressure traction stays
-// positive; it is not forcibly equated to the mean pressure for high profiles.
-template<class Reconstruction>
-void check_native_wall_face(const NativeWallFixture& fixture,int direction,int side,bool pcm_pressure) {
-    const auto context=fixture.context(direction,side);const auto wall=fixture.walls();
-    FluidVector flux;std::array<double,kSpecies> species_flux{};
-    const auto status=native_wall_compute<Reconstruction>(fixture,context,&wall,flux,species_flux);
-    check(status==arch::state::Status::valid&&finite_state(flux),
-        "actual native reflected face returns a finite publishable mathematical flux");
-    if(status!=arch::state::Status::valid)return;
-    const double traction=direction==0?flux.mom_u:flux.mom_v;
-    const double tangent=direction==0?flux.mom_v:flux.mom_u;
-    // Reuse the original 64-epsilon band, in this fixture's unit-scale flux.
-    const double roundoff=kBand*std::max(1.,std::abs(traction));
-    check(traction>0.,"reflecting wall retains positive normal pressure traction");
-    check(std::abs(flux.rho)<=roundoff&&std::abs(flux.eng)<=roundoff
-        &&std::abs(flux.mom_w)<=roundoff&&std::abs(tangent)<=roundoff,
-        "four-wall cold rotation has zero mass/work/angular/tangent advective flux");
-    check(std::abs(species_flux[0])<=roundoff&&std::abs(species_flux[1])<=roundoff,
-        "reflecting wall does not transport either actual species");
-    if(pcm_pressure) {
-        const long double expected=(1.4L-1.L)*NativeWallFixture::internal;
-        const int interior=context.geometry.GetIndex(context.face_i+(direction==0&&!side?1:0),
-            context.face_j+(direction==1&&!side?1:0));
-        // Independent antiderivative E includes the rotational cancellation
-        // scale. The same original 64eps budget covers represented EOS energy.
-        const double scale=std::max(std::abs(double(expected)),std::abs(fixture.state.get(interior).eng));
-        check(std::abs(traction-double(expected))<=kBand*scale,
-            "PCM no-normal-flow wall traction matches independent constant internal-energy pressure");
-    }
-}
-
-/** Cold rotating wall with actual nonzero axial away speed.
- * Independent ideal-gas rarefaction invariant and shock-jump quadratic supply
- * pressure; the source V/W antiderivatives and existing 64-epsilon band stay.
- * These flat flags qualify point/face math only, not Runtime wall authority.
- */
-void test_native_gamma_wall_away_pressure() {
-    NativeWallFixture fixture;
-    constexpr double velocity=.125;
-    for(int j=0;j<fixture.grid.GetTotalY();++j)for(int i=0;i<fixture.grid.GetTotalX();++i) {
-        const int cell=fixture.grid.GetIndex(i,j);
-        auto state=fixture.state.get(cell);
-        state.mom_v=velocity;
-        state.eng+=.5*velocity*velocity;
-        fixture.state.set(cell,state);
-    }
-    check_native_wall_required_eos(fixture);
-    const long double gm1=.4L,gamma=1.4L,P=gm1*NativeWallFixture::internal;
-    const long double c=std::sqrt(gamma*P),mach=velocity/c;
-    const long double rarefaction=P*std::pow(1.L-gm1*mach/2.L,2.L*gamma/gm1);
-    const long double K=gamma*(gamma+1.L)*mach*mach/2.L,B=gm1/(gamma+1.L);
-    const long double compression=P*(1.L+K/2.L+std::sqrt(K*K/4.L+K*(1.L+B)));
-    const auto wall=fixture.walls();
-    for(int side=0;side<2;++side) {
-        FluidVector flux{};std::array<double,kSpecies> species_flux{};
-        const auto context=fixture.context(1,side);
-        const auto status=native_wall_compute<PCMReconstruction>(fixture,context,&wall,flux,species_flux);
-        check(status==arch::state::Status::valid,"cold away/compression gamma-law wall produces a valid flux");
-        if(status!=arch::state::Status::valid)continue;
-        const double expected=double(side==0?rarefaction:compression);
-        const int interior=context.geometry.GetIndex(context.face_i,context.face_j+(side==0));
-        const double scale=std::max(std::abs(expected),std::abs(fixture.state.get(interior).eng));
-        check(flux.mom_v>0.&&std::abs(flux.mom_v-expected)<=kBand*scale,
-            "cold gamma-law wall pressure matches independent rarefaction/shock jump");
-        check(flux.rho==0.&&flux.eng==0.&&flux.mom_u==0.&&flux.mom_w==0.
-            &&species_flux[0]==0.&&species_flux[1]==0.,
-            "stationary gamma-law wall has exactly zero advective/work/species flux");
-    }
-    // Independent one-sided baseline states from the frozen wall pressure.
-    // This checks the actual prerequisite, rather than borrowing an LLF bar.
-    const double speed=double(c),pressure=double(P),wall_pressure=double(rarefaction);
-    const FluidVector left{1.,0.,-velocity,0.,double(NativeWallFixture::internal+.5L*velocity*velocity)};
-    const FluidVector right{1.,0.,velocity,0.,left.eng};
-    const double a=velocity+speed;
-    const FluidVector wall_flux{0.,0.,wall_pressure,0.,0.};
-    const FluidVector left_physical{-velocity,0.,velocity*velocity+pressure,0.,-velocity*(left.eng+pressure)};
-    const FluidVector right_physical{velocity,0.,velocity*velocity+pressure,0.,velocity*(right.eng+pressure)};
-    const auto bl=left+(left_physical-wall_flux)/a;
-    const auto br=right+(wall_flux-right_physical)/a;
-    check(FluxAdmissibility::valid(bl)&&FluxAdmissibility::valid(br),
-        "independent cold exact wall has two admissible baseline states");
-    const double xi[kSpecies]{.75,.25},zero[kSpecies]{0.,0.};
-    const auto selected=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
-        left,right,xi,xi,kSpecies,pressure,speed,pressure,speed,1,
-        wall_flux,zero,wall_flux,zero);
-    check(selected.valid&&selected.theta==1.&&selected.low.mom_v==wall_pressure,
-        "selected-baseline factor binds its actual wall low and equal high");
-    for(int species=0;species<kSpecies;++species) {
-        const double ql=left.rho*xi[species]+left_physical.rho*xi[species]/a;
-        const double qr=right.rho*xi[species]-right_physical.rho*xi[species]/a;
-        check(ql>0.&&qr>0.&&std::abs(ql-bl.rho*xi[species])<=kBand*std::abs(ql)
-            &&std::abs(qr-br.rho*xi[species])<=kBand*std::abs(qr),
-            "both actual selected wall species bases retain positive constant fractions");
-    }
-    const double nan=std::numeric_limits<double>::quiet_NaN();
-    const FluidVector bad_high{nan,0.,0.,0.,nan};
-    const double bad_species[kSpecies]{nan,nan};
-    const auto trial_rejected=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
-        left,right,xi,xi,kSpecies,pressure,speed,pressure,speed,1,
-        bad_high,bad_species,wall_flux,zero);
-    check(trial_rejected.valid&&trial_rejected.theta==0.
-        &&trial_rejected.low.mom_v==wall_pressure,
-        "nonfinite optional high chooses theta0 of the actual admissible wall baseline");
-    // A legitimate gamma-law exact wall alone cannot guarantee the fixed-a
-    // one-sided bases. Independent gamma=10, compressive Mach=-10 witness
-    // has a negative internal energy; the factor must fail without raising a.
-    const long double stiff_gamma=10.L,stiff_gm1=9.L,stiff_p=1.L;
-    const long double stiff_c=std::sqrt(stiff_gamma*stiff_p),stiff_v=-10.L*stiff_c;
-    const long double stiff_K=stiff_gamma*(stiff_gamma+1.L)*100.L/2.L;
-    const long double stiff_B=stiff_gm1/(stiff_gamma+1.L);
-    const double stiff_wall=double(stiff_p*(1.L+stiff_K/2.L
-        +std::sqrt(stiff_K*stiff_K/4.L+stiff_K*(1.L+stiff_B))));
-    const double u=double(stiff_v),es=double(stiff_p/stiff_gm1+.5L*stiff_v*stiff_v);
-    const FluidVector stiff_left{1.,0.,-u,0.,es},stiff_right{1.,0.,u,0.,es};
-    const FluidVector stiff_low{0.,0.,stiff_wall,0.,0.};
-    const double stiff_a=std::abs(u)+double(stiff_c);
-    const FluidVector stiff_fl{-u,0.,u*u+1.,0.,-u*(es+1.)};
-    const auto stiff_bar=stiff_left+(stiff_fl-stiff_low)/stiff_a;
-    check(stiff_bar.eng/stiff_bar.rho-.5*stiff_bar.mom_v*stiff_bar.mom_v
-        /(stiff_bar.rho*stiff_bar.rho)<0.,
-        "independent stiff compressive wall really has an inadmissible fixed-a base");
-    const auto baseline_rejected=FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
-        stiff_left,stiff_right,xi,xi,kSpecies,1.,double(stiff_c),1.,double(stiff_c),1,
-        stiff_low,zero,stiff_low,zero);
-    check(!baseline_rejected.valid,
-        "inadmissible selected wall prerequisite fails closed without an acoustic-speed increase");
-    double untouched=123.;
-    check(!StationarySlipWallFlux::gamma_wall_pressure(.4,.00625,.1,
-        std::numeric_limits<double>::infinity(),untouched)&&untouched==123.,
-        "nonfinite gamma wall input rejects without publishing");
-    check(StationarySlipWallFlux::gamma_wall_pressure(.4,.00625,.1,1.,untouched)&&untouched==0.,
-        "true gamma-law vacuum has zero traction without a pressure floor");
-}
-
 /** Independent dyadic rarefaction reference: gm=2^-10 and v/c=2^10
  * give b=1/2 and 2*gamma/gm=2050 exactly, so P_wall=P*2^-2050.
  * These point-range witnesses have finite compatible rho/momentum/energy;
@@ -522,7 +277,7 @@ void test_shared_gamma_wall_third_direction() {
         pressure/.4+.5*rho*normal_velocity*normal_velocity};
     for(int side:{0,1}) {
         FluidVector flux{123.,234.,345.,456.,567.};
-        check(StationarySlipWallFlux::gamma_wall_flux(point,xi,kEos,2,side,
+        check(StationarySlipWallFlux::point_wall_flux(point,xi,kEos,2,side,
             pressure,double(sound),flux),"third-direction stationary gamma-law wall resolves");
         check(close_rel(flux.mom_w,double(side==0?rare:shock)),
             "third-direction pressure matches independent rarefaction/shock reference");
@@ -533,19 +288,19 @@ void test_shared_gamma_wall_third_direction() {
         check(xi[0]==.75&&xi[1]==.25,"point-wall leaf modified borrowed composition");
     }
     FluidVector resting{rho,0.,0.,0.,pressure/.4},flux{};
-    check(StationarySlipWallFlux::gamma_wall_flux(resting,xi,kEos,2,0,
+    check(StationarySlipWallFlux::point_wall_flux(resting,xi,kEos,2,0,
         pressure,double(sound),flux)&&flux.mom_w==pressure,
         "third-direction exact rest preserves the original pressure bits");
     const FluidVector sentinel{123.,234.,345.,456.,567.};
     for(const auto invalid:std::array<std::array<int,2>,3>{{{{-1,0}},{{3,0}},{{2,2}}}}) {
         flux=sentinel;
-        check(!StationarySlipWallFlux::gamma_wall_flux(point,xi,kEos,invalid[0],invalid[1],
+        check(!StationarySlipWallFlux::point_wall_flux(point,xi,kEos,invalid[0],invalid[1],
             pressure,double(sound),flux)&&max_abs_diff(flux,sentinel)==0.,
             "invalid wall direction/side rejects without publishing");
     }
     // All input reads precede publication, including actual third momentum.
     auto alias=point;
-    check(StationarySlipWallFlux::gamma_wall_flux(alias,xi,kEos,2,0,
+    check(StationarySlipWallFlux::point_wall_flux(alias,xi,kEos,2,0,
         pressure,double(sound),alias)&&close_rel(alias.mom_w,double(rare))&&alias.eng==0.,
         "third-direction point/output alias preserves physical input evaluation");
 }
@@ -581,7 +336,7 @@ void test_shared_gamma_selected_point_blend() {
         const auto left=point(dir,un_left,energy),right=point(dir,un_right,energy);
         const auto expected=traction(dir,double(side==0?rare:shock));
         double baseline[kSpecies]{123.,456.};
-        const auto factor=StationarySlipWallFlux::gamma_selected_point_blend(
+        const auto factor=FluxAdmissibility::selected_wall_point_blend(
             left,right,xi,xi,kSpecies,pressure,double(c),pressure,double(c),
             kEos,dir,side,expected,zero,baseline);
         check(factor.valid,"three-direction exact wall selected baseline is admissible");
@@ -600,7 +355,7 @@ void test_shared_gamma_selected_point_blend() {
         check(FluxAdmissibility::valid(bar_left)&&FluxAdmissibility::valid(bar_right),
             "independent exact selected wall has two admissible physical bars");
         const FluidVector bad_high{nan,0.,0.,0.,nan};const double bad_species[kSpecies]{nan,nan};
-        const auto rejected_high=StationarySlipWallFlux::gamma_selected_point_blend(
+        const auto rejected_high=FluxAdmissibility::selected_wall_point_blend(
             left,right,xi,xi,kSpecies,pressure,double(c),pressure,double(c),kEos,
             dir,side,bad_high,bad_species,baseline);
         check(rejected_high.valid&&rejected_high.theta==0.
@@ -609,7 +364,7 @@ void test_shared_gamma_selected_point_blend() {
         for(int failure:{0,1,2}) {
             baseline[0]=123.;baseline[1]=456.;
             const double bad_xi[kSpecies]{nan,.25};
-            const auto bad=StationarySlipWallFlux::gamma_selected_point_blend(
+            const auto bad=FluxAdmissibility::selected_wall_point_blend(
                 left,right,failure==2?bad_xi:xi,xi,kSpecies,
                 failure==0?nan:pressure,failure==1?nan:double(c),pressure,double(c),
                 kEos,dir,side,expected,zero,baseline);
@@ -624,7 +379,7 @@ void test_shared_gamma_selected_point_blend() {
         const auto left=point(2,-speed_normal,energy),right=point(2,speed_normal,energy);
         const auto high=traction(2,double(rare));
         double* scratch=alias_kind==0?xl:alias_kind==1?xr:high_species;
-        const auto factor=StationarySlipWallFlux::gamma_selected_point_blend(
+        const auto factor=FluxAdmissibility::selected_wall_point_blend(
             left,right,xl,xr,kSpecies,pressure,double(c),pressure,double(c),kEos,
             2,0,high,high_species,scratch);
         check(!factor.valid&&xl[0]==.75&&xl[1]==.25&&xr[0]==.75&&xr[1]==.25
@@ -639,7 +394,7 @@ void test_shared_gamma_selected_point_blend() {
     for(int dir:{0,1,2}) {
         const auto left=point(dir,-double(u),stiff_energy),right=point(dir,double(u),stiff_energy);
         const auto high=traction(dir,stiff_wall);double baseline[kSpecies]{123.,456.};
-        const auto factor=StationarySlipWallFlux::gamma_selected_point_blend(
+        const auto factor=FluxAdmissibility::selected_wall_point_blend(
             left,right,xi,xi,kSpecies,1.,double(stiff_c),1.,double(stiff_c),
             stiff,dir,0,high,zero,baseline);
         check(!factor.valid,"stiff gamma10 compressive wall rejects invalid two-sided fixed-a base");
@@ -745,7 +500,7 @@ void test_ordinary_wall_sweeps() {
  * This is shared point wiring/atomicity, not a Runtime boundary certificate.
  */
 void test_shared_point_wall_assembler() {
-    using Status=StationarySlipWallFlux::PointWallStatus;
+    using Status=FluxAdmissibility::PointWallStatus;
     constexpr double pressure=.00625;
     const double sound=std::sqrt(1.4*pressure),true_xi[2]{.75,.25};
     const FluidVector point{1.,0.,0.,0.,pressure/.4};
@@ -764,7 +519,7 @@ void test_shared_point_wall_assembler() {
             FluxHLLC<PCMReconstruction>::compute_face_flux(L,R,xl,xr,2,eos,dir,1.,high,species);
         };
         FluidVector output{123.,456.,789.,123.,456.};
-        const auto status=StationarySlipWallFlux::assemble_point(point,point,point,point,
+        const auto status=FluxAdmissibility::assemble_wall_point(point,point,point,point,
             dir,side,2,pressure,sound,kEos,left,right,low,high_species,read_base,high_compute,output);
         check(status==Status::valid&&high_seen&&base_reads==2,
             "shared point wall consumes original high then true base exactly once");
@@ -783,14 +538,331 @@ void test_shared_point_wall_assembler() {
         ++high_calls;FluxHLLC<PCMReconstruction>::compute_face_flux(L,R,xl,xr,2,eos,0,1.,high,species);
     };
     const FluidVector sentinel{123.,456.,789.,123.,456.};auto output=sentinel;
-    check(StationarySlipWallFlux::assemble_point(point,point,point,point,3,0,2,
+    check(FluxAdmissibility::assemble_wall_point(point,point,point,point,3,0,2,
         pressure,sound,kEos,left,right,low,high_species,read_base,high_compute,output)
             ==Status::invalid_metadata&&high_calls==0&&max_abs_diff(output,sentinel)==0.,
         "shared wall invalid direction rejects before callback/output publication");
-    check(StationarySlipWallFlux::assemble_point(point,point,point,point,0,0,2,
+    check(FluxAdmissibility::assemble_wall_point(point,point,point,point,0,0,2,
         -pressure,sound,kEos,left,right,low,high_species,read_base,high_compute,output)
             !=Status::valid&&max_abs_diff(output,sentinel)==0.,
         "invalid actual baseline pressure rejects without fluid publication");
+}
+
+/** Analytic stiffened-gas closure, deliberately without gamma-law capability.
+ * p=(g-1)*rho*e-g*p_inf and c^2=g*(p+p_inf)/rho; e=T+p_inf/rho
+ * sets cv=1. The pressure offset makes this a real non-gamma-law test EOS,
+ * not a replacement Helm model. Only grouped optional trials can be injected.
+ */
+struct StiffenedWallEos {
+    static constexpr double gamma=1.5,pressure_offset=1./32.;
+    bool trial=false,fail_trial=false;
+    bool* trial_seen=nullptr;
+    int* trial_queries=nullptr;
+    double* trial_fraction=nullptr;
+
+    StiffenedWallEos candidate_view() const {
+        auto result=*this;result.trial=true;return result;
+    }
+    double get_pressure_from_rho_e(double rho,double e,const double*) const {
+        return (gamma-1.)*rho*e-gamma*pressure_offset;
+    }
+    double get_pressure(const FluidVector& point,const double* xi) const {
+        const double u=point.mom_u/point.rho,v=point.mom_v/point.rho,w=point.mom_w/point.rho;
+        return get_pressure_from_rho_e(point.rho,point.eng/point.rho-.5*(u*u+v*v+w*w),xi);
+    }
+    double get_sound_speed(const FluidVector& point,double pressure,const double*) const {
+        return std::sqrt(gamma*(pressure+pressure_offset)/point.rho);
+    }
+    void get_pressure_and_sound_speed(double rho,double e,const double* xi,
+        double& pressure,double& speed) const {
+        if(trial) {
+            if(trial_seen)*trial_seen=true;
+            if(trial_queries)++*trial_queries;
+            if(trial_fraction)*trial_fraction=xi[0];
+            if(fail_trial)throw std::runtime_error("documented optional wall EOS trial failure");
+        }
+        pressure=get_pressure_from_rho_e(rho,e,xi);
+        speed=std::sqrt(gamma*(pressure+pressure_offset)/rho);
+    }
+    double get_temperature(double rho,double e,const double*) const {
+        return e-pressure_offset/rho;
+    }
+    double get_total_energy_primitive(double rho,double u,double v,double w,
+        double pressure,const double*) const {
+        return (pressure+gamma*pressure_offset)/(gamma-1.)+.5*rho*(u*u+v*v+w*w);
+    }
+    double get_dp_drho_e(double,double e,const double*) const {return (gamma-1.)*e;}
+    double get_dp_de_rho(double rho,double,const double*) const {return (gamma-1.)*rho;}
+};
+
+// Independent point and physical flux arithmetic for the selected wall bars.
+FluidVector stiffened_wall_point(double rho,double normal,double pressure,int direction) {
+    double velocity[3]{1./16.,-1./32.,3./64.};velocity[direction]=normal;
+    return {rho,rho*velocity[0],rho*velocity[1],rho*velocity[2],
+        (pressure+3./64.)/.5+.5*rho*(velocity[0]*velocity[0]
+            +velocity[1]*velocity[1]+velocity[2]*velocity[2])};
+}
+FluidVector wall_reflection(FluidVector point,int direction) {
+    if(direction==0)point.mom_u=-point.mom_u;
+    else if(direction==1)point.mom_v=-point.mom_v;else point.mom_w=-point.mom_w;
+    return point;
+}
+FluidVector wall_physical_flux(const FluidVector& point,double pressure,int direction) {
+    const double normal=(direction==0?point.mom_u:direction==1?point.mom_v:point.mom_w)/point.rho;
+    FluidVector flux{point.rho*normal,point.mom_u*normal,point.mom_v*normal,
+        point.mom_w*normal,(point.eng+pressure)*normal};
+    if(direction==0)flux.mom_u+=pressure;
+    else if(direction==1)flux.mom_v+=pressure;else flux.mom_w+=pressure;
+    return flux;
+}
+long double wall_internal_density(const FluidVector& point) {
+    const long double u=point.mom_u,v=point.mom_v,w=point.mom_w;
+    return static_cast<long double>(point.eng)-(u*u+v*v+w*w)/(2.L*point.rho);
+}
+double wall_traction(const FluidVector& flux,int direction) {
+    return direction==0?flux.mom_u:direction==1?flux.mom_v:flux.mom_w;
+}
+void check_wall_zeros(const FluidVector& flux,const double* species,int direction) {
+    check(flux.rho==0.&&flux.eng==0.&&(direction==0||flux.mom_u==0.)
+        &&(direction==1||flux.mom_v==0.)&&(direction==2||flux.mom_w==0.),
+        "general-EOS selected wall has exact zero mass/work/tangential advection");
+    for(int s=0;s<kSpecies;++s)check(species[s]==0.,
+        "general-EOS selected wall has exact zero species advection");
+}
+
+/** Physical-pressure H and L come from distinct actual EOS inputs. Inspect
+ * emitted bars independently, including a large finite H that needs limiting.
+ * The distinct opposite donor is not used instead of the true interior point.
+ */
+void test_general_eos_point_wall_assembler() {
+    using Status=FluxAdmissibility::PointWallStatus;
+    constexpr double pressure=.25,rho=2.,normal_speed=.125;
+    const double sound=std::sqrt(1.5*(pressure+1./32.)/rho),true_xi[2]{.75,.25};
+    const FluidVector sentinel{123.,456.,789.,123.,456.};
+    for(int direction=0;direction<3;++direction)for(int side=0;side<2;++side)
+        for(double sign:{-1.,1.})for(double high_pressure:{.375,4.})for(bool fail:{false,true}) {
+        const double normal=(side==0?sign:-sign)*normal_speed;
+        const auto base=stiffened_wall_point(rho,normal,pressure,direction);
+        const auto high_point=stiffened_wall_point(1.5,normal,high_pressure,direction);
+        const auto decoy=stiffened_wall_point(3.,-.25,.625,direction);
+        bool trial_seen=false;int trial_queries=0,base_reads=0,policy_calls=0;double trial_fraction=0.;
+        StiffenedWallEos eos;eos.fail_trial=fail;eos.trial_seen=&trial_seen;
+        eos.trial_queries=&trial_queries;eos.trial_fraction=&trial_fraction;
+        double left[2]{side==0?.625:.25,side==0?.375:.75};
+        double right[2]{side==0?.25:.625,side==0?.75:.375};
+        double low_species[2]{123.,456.},species_flux[2]{123.,456.};
+        const auto read_base=[&](int species) {
+            check(trial_seen,"general-EOS true mean species are consumed after the optional physical-point EOS");
+            ++base_reads;return true_xi[species];
+        };
+        const auto forbidden_policy=[&](const auto&,const auto&,const auto*,const auto*,
+            const auto&,auto&,auto*) {++policy_calls;};
+        auto output=sentinel;
+        const auto status=FluxAdmissibility::assemble_wall_point(side==0?decoy:base,
+            side==0?base:decoy,side==0?decoy:high_point,side==0?high_point:decoy,
+            direction,side,kSpecies,pressure,sound,eos,left,right,low_species,species_flux,
+            read_base,forbidden_policy,output);
+        check(status==Status::valid&&trial_seen&&trial_queries==1&&base_reads==kSpecies
+            &&policy_calls==0&&trial_fraction==.25,
+            "general-EOS wall queries true H once and bypasses the mirrored selected high policy");
+        if(status!=Status::valid)continue;
+        check(left[0]==.75&&right[0]==.75&&left[1]==.25&&right[1]==.25,
+            "general-EOS wall baseline uses immutable true mean composition on both sides");
+        check_wall_zeros(output,species_flux,direction);
+        const double emitted=wall_traction(output,direction);
+        const double theta=fail?0.:(emitted-pressure)/(high_pressure-pressure);
+        check(std::isfinite(theta)&&theta>=0.&&theta<=1.,
+            "general-EOS pressure is the single selected low/high convex blend");
+        if(fail)check(emitted==pressure,"optional general-EOS failure selects actual mean pressure baseline");
+        else if(high_pressure==4.)check(theta>0.&&theta<1.,
+            "large finite reconstructed pressure activates the original joint limiter");
+        else check(close_rel(emitted,high_pressure),
+            "admissible reconstructed pressure is retained instead of the mean pressure");
+        const auto L=side==0?wall_reflection(base,direction):base;
+        const auto R=side==0?base:wall_reflection(base,direction);
+        const auto fl=wall_physical_flux(L,pressure,direction),fr=wall_physical_flux(R,pressure,direction);
+        const double a=std::abs(normal)+sound;
+        FluidVector low{};if(direction==0)low.mom_u=pressure;
+        else if(direction==1)low.mom_v=pressure;else low.mom_w=pressure;
+        const auto bl=L+(fl-low)/a,br=R+(low-fr)/a;
+        const auto accepted_left=L+(fl-output)/a,accepted_right=R+(output-fr)/a;
+        check(bl.rho>0.&&br.rho>0.&&wall_internal_density(bl)>0.L&&wall_internal_density(br)>0.L,
+            "independently recomputed selected physical-pressure baseline has two positive bars");
+        check(accepted_left.rho>0.&&accepted_right.rho>0.
+            &&wall_internal_density(accepted_left)>0.L&&wall_internal_density(accepted_right)>0.L,
+            "actual emitted general-EOS wall flux has two independently positive bars");
+        const double signed_away=sign*normal_speed,b=a-signed_away;
+        const long double e=wall_internal_density(base)/rho;
+        const double expected_internal=double(e-signed_away*pressure/(rho*b));
+        check(close_rel(double(wall_internal_density(bl)/bl.rho),expected_internal)
+            &&close_rel(double(wall_internal_density(br)/br.rho),expected_internal),
+            "physical-pressure two-bar internal energy matches the independent signed-away formula");
+        for(int s=0;s<kSpecies;++s)check((true_xi[s]+kBand)*accepted_left.rho>=0.
+            &&(true_xi[s]+kBand)*accepted_right.rho>=0.,
+            "zero species wall flux preserves both actual shifted trace cones");
+    }
+    // Required cache data and fixed-a baseline rejection stay strict. The cold
+    // witness is an EOS-valid input; positivity of P_wall alone cannot pass it.
+    for(int direction=0;direction<3;++direction)for(int side=0;side<2;++side) {
+        const auto base=stiffened_wall_point(1.,side==0?2.:-2.,1./16.,direction);
+        const double cold_sound=.375;
+        check(wall_internal_density(base)>0.L,"cold strong-away wall witness has positive input internal energy");
+        for(double required_pressure:{1./16.,-1./16.}) {
+            double left[2]{.75,.25},right[2]{.75,.25},low[2]{123.,456.},species[2]{123.,456.};
+            const auto read_base=[&](int s){return true_xi[s];};
+            const auto forbidden_policy=[](const auto&,const auto&,const auto*,const auto*,const auto&,auto&,auto*){};
+            auto output=sentinel;
+            const auto status=FluxAdmissibility::assemble_wall_point(base,base,base,base,
+                direction,side,kSpecies,required_pressure,cold_sound,StiffenedWallEos{},
+                left,right,low,species,read_base,forbidden_policy,output);
+            check(status==Status::inadmissible_baseline&&max_abs_diff(output,sentinel)==0.,
+                "cold strong-away or bad required pressure rejects without raising a or publishing");
+        }
+        check(7.L/32.L-2.L*(1.L/16.L)/(.375L)<0.L,
+            "independent cold strong-away fixed-a physical-pressure bar is really inadmissible");
+    }
+}
+
+/** Independent stiffened-gas reflected-wave cell integrals. For gamma=3/2,
+ * rho=rho0*z^4 and q=(p+p_inf)=q0*z^6 in the expansion fan, so all conserved
+ * components have explicit polynomial antiderivatives. No production wall
+ * pressure or flux routine supplies this reference. Compression is a single
+ * Rankine-Hugoniot shock; the integration splits at its actual position.
+ */
+std::array<long double,3> stiffened_wall_reference_integral(
+    long double lower,long double upper,long double time,long double away) {
+    constexpr long double gamma=1.5L,gm=.5L,rho0=1.L,p0=.125L,pinf=1.L/32.L;
+    constexpr long double q0=p0+pinf;
+    const long double c0=std::sqrt(gamma*q0/rho0);
+    const long double far_energy=(p0+gamma*pinf)/gm+.5L*rho0*away*away;
+    std::array<long double,3> result{};
+    const auto uniform=[&](long double begin,long double end,long double rho,
+        long double momentum,long double energy) {
+        const long double width=std::max(0.L,std::min(upper,end)-std::max(lower,begin));
+        result[0]+=width*rho;result[1]+=width*momentum;result[2]+=width*energy;
+    };
+    if(away<0.L) {
+        const long double mach=away/c0,K=.5L*gamma*(gamma+1.L)*mach*mach;
+        const long double B=gm/(gamma+1.L);
+        const long double ratio=1.L+K/2.L+std::sqrt(K*K/4.L+K*(1.L+B));
+        const long double rho_wall=rho0*(ratio+B)/(B*ratio+1.L);
+        const long double shock=-rho0*away/(rho_wall-rho0),position=shock*time;
+        uniform(lower,position,rho_wall,0.L,q0*ratio/gm+pinf);
+        uniform(position,upper,rho0,rho0*away,far_energy);
+        return result;
+    }
+    const long double cw=c0-.5L*gm*away,z_wall=cw/c0;
+    const long double rho_wall=rho0*std::pow(z_wall,4),q_wall=q0*std::pow(z_wall,6);
+    const long double tail=cw*time,head=(away+c0)*time;
+    uniform(lower,tail,rho_wall,0.L,q_wall/gm+pinf);
+    uniform(head,upper,rho0,rho0*away,far_energy);
+    const long double begin=std::max(lower,tail),end=std::min(upper,head);
+    if(end>begin) {
+        const long double d=away-2.L*c0/gm,k=2.L*c0/gm,D=(gamma+1.L)*c0/gm;
+        const auto primitive=[&](long double x) {
+            const long double z=(2.L*c0+gm*(x/time-away))/((gamma+1.L)*c0);
+            const long double z2=z*z,z4=z2*z2,z5=z4*z,z6=z5*z,z7=z6*z;
+            return std::array<long double,3>{D*rho0*z5/5.L,
+                D*rho0*(d*z5/5.L+k*z6/6.L),
+                D*((q0/gm+.5L*rho0*k*k)*z7/7.L+rho0*d*k*z6/6.L
+                    +.5L*rho0*d*d*z5/5.L+pinf*z)};
+        };
+        const auto a=primitive(begin),b=primitive(end);
+        for(int field=0;field<3;++field)result[field]+=time*(b[field]-a[field]);
+    }
+    return result;
+}
+
+/** Small actual first-order FV evolution: shared PCM/HLLC, current limiter,
+ * left stationary wall and right outflow. Real EOS/trace checks and physical
+ * boundary ledgers accompany the independent reflected-wave convergence test.
+ * This private loop qualifies the numerical wall, not Runtime/AMR scheduling.
+ */
+double stiffened_wall_fv_error(int cells,double away) {
+    constexpr double final_time=.4,pressure=.125;
+    const double dx=1./cells,sound=std::sqrt(1.5*(pressure+1./32.));
+    const FluidVector initial{1.,away,0.,0.,(pressure+3./64.)/.5+.5*away*away};
+    const StiffenedWallEos eos;
+    std::vector<FluidVector> state(cells,initial),next(cells),flux(cells+1);
+    std::vector<std::array<double,kSpecies>> fraction(cells,{.75,.25}),next_fraction(cells),species_flux(cells+1);
+    std::vector<double> p(cells),c(cells);
+    std::array<long double,4> outflow{};
+    double time=0.;int face_visits=0;
+    while(time<final_time&&face_visits<1000000) {
+        double fastest=0.;
+        for(int cell=0;cell<cells;++cell) {
+            const auto& u=state[cell];
+            FluxAdmissibility::required_mean_thermo(u,fraction[cell].data(),eos,p[cell],c[cell]);
+            fastest=std::max(fastest,std::abs(u.mom_u/u.rho)+c[cell]);
+        }
+        check(std::isfinite(fastest)&&fastest>0.,"actual stiffened wall FV has valid acoustic CFL data");
+        if(!std::isfinite(fastest)||!(fastest>0.))return std::numeric_limits<double>::infinity();
+        const double dt=std::min(.25*dx/fastest,final_time-time);
+        double left[kSpecies]{fraction[0][0],fraction[0][1]},right[kSpecies]{left[0],left[1]},low[kSpecies]{};
+        const auto base_species=[&](int s){return fraction[0][s];};
+        const auto high_policy=[&](const auto& L,const auto& R,const double* xl,const double* xr,
+            const auto& trial,FluidVector& high,double* species) {
+            FluxHLLC<PCMReconstruction>::compute_face_flux(L,R,xl,xr,kSpecies,trial,0,0.,high,species);
+        };
+        const auto wall_status=FluxAdmissibility::assemble_wall_point(state[0],state[0],state[0],state[0],
+            0,0,kSpecies,p[0],c[0],eos,left,right,low,species_flux[0].data(),base_species,high_policy,flux[0]);
+        check(wall_status==FluxAdmissibility::PointWallStatus::valid,
+            "actual stiffened wall FV accepts the selected wall baseline");
+        if(wall_status!=FluxAdmissibility::PointWallStatus::valid)return std::numeric_limits<double>::infinity();
+        check_wall_zeros(flux[0],species_flux[0].data(),0);
+        const auto trial=arch::state::candidate_eos(eos);
+        for(int face=1;face<=cells;++face) {
+            const int l=face-1,r=std::min(face,cells-1);
+            FluxAdmissibility::compute_candidate([&] {
+                FluxHLLC<PCMReconstruction>::compute_face_flux(state[l],state[r],fraction[l].data(),
+                    fraction[r].data(),kSpecies,trial,0,0.,flux[face],species_flux[face].data());
+            },flux[face],species_flux[face].data(),kSpecies);
+            FluxAdmissibility::limit_face_with_thermo(state[l],state[r],fraction[l].data(),
+                fraction[r].data(),kSpecies,p[l],c[l],p[r],c[r],0,flux[face],species_flux[face].data());
+        }
+        face_visits+=cells+1;
+        outflow[0]+=static_cast<long double>(dt)*flux[cells].rho;
+        outflow[1]+=static_cast<long double>(dt)*flux[cells].eng;
+        for(int s=0;s<kSpecies;++s)outflow[2+s]+=static_cast<long double>(dt)*species_flux[cells][s];
+        for(int cell=0;cell<cells;++cell) {
+            next[cell]=state[cell]-(dt/dx)*(flux[cell+1]-flux[cell]);
+            for(int s=0;s<kSpecies;++s)next_fraction[cell][s]=
+                (state[cell].rho*fraction[cell][s]-(dt/dx)*(species_flux[cell+1][s]-species_flux[cell][s]))/next[cell].rho;
+            const auto status=arch::state::validate_eos(next[cell],next_fraction[cell].data(),
+                kSpecies,arch::state::Bounds{},eos);
+            check(status==arch::state::Status::valid,"every actual stiffened wall FV step has positive EOS/closed species states");
+            if(status!=arch::state::Status::valid)return std::numeric_limits<double>::infinity();
+        }
+        state.swap(next);fraction.swap(next_fraction);time+=dt;
+    }
+    check(time==final_time&&face_visits<1000000,"bounded stiffened reflected wave reaches its original fixed terminal time");
+    check(final_time*(sound+3.*std::abs(away))<1.,"independent reflected wave remains away from the right boundary");
+    long double error=0.;std::array<long double,4> totals{};
+    for(int cell=0;cell<cells;++cell) {
+        const auto exact=stiffened_wall_reference_integral(static_cast<long double>(cell)/cells,
+            static_cast<long double>(cell+1)/cells,final_time,away);
+        error+=std::abs(static_cast<long double>(state[cell].rho)*dx-exact[0]);
+        error+=std::abs(static_cast<long double>(state[cell].mom_u)*dx-exact[1])/sound;
+        error+=std::abs(static_cast<long double>(state[cell].eng)*dx-exact[2])/(initial.eng+pressure+1./32.);
+        totals[0]+=static_cast<long double>(state[cell].rho)*dx;
+        totals[1]+=static_cast<long double>(state[cell].eng)*dx;
+        for(int s=0;s<kSpecies;++s)totals[2+s]+=static_cast<long double>(state[cell].rho)*fraction[cell][s]*dx;
+    }
+    const long double expected[4]{1.L,initial.eng,.75L,.25L};
+    for(int field=0;field<4;++field)check(std::abs(totals[field]+outflow[field]-expected[field])
+        <=kBand*std::max(std::abs(totals[field])+std::abs(outflow[field]),std::abs(expected[field])),
+        "actual reflected wave conserves mass/E/species with its measured outflow ledger");
+    std::printf("stiffened_wall away=%+.3f cells=%d faces=%d L1=%.9g\n",away,cells,face_visits,double(error));
+    return double(error);
+}
+void test_general_eos_reflected_wave_convergence() {
+    for(double away:{-.125,.125}) {
+        const double coarse=stiffened_wall_fv_error(64,away),middle=stiffened_wall_fv_error(128,away),
+            fine=stiffened_wall_fv_error(256,away);
+        check(std::isfinite(coarse)&&std::isfinite(middle)&&std::isfinite(fine)
+            &&coarse>middle&&middle>fine&&fine>0.,
+            "actual stiffened-gas compression/expansion L1 decreases through three refinements");
+    }
 }
 
 /** The finite optional H is canonicalized before factor/publication; an
@@ -815,208 +887,6 @@ void test_stationary_candidate_projection() {
             &&bad.rho==3.&&bad.eng==4.&&finite_species[0]==.4,
             "negative finite wall traction rejects without publication");
     }
-}
-
-void test_native_reflecting_face_math() {
-    NativeWallFixture fixture;check_native_wall_required_eos(fixture);
-    const auto source_rho=fixture.state.rho,source_u=fixture.state.mom_u,
-        source_v=fixture.state.mom_v,source_w=fixture.state.mom_w,
-        source_e=fixture.state.eng,source_x=fixture.state.mass_fractions;
-    for(int direction=0;direction<2;++direction)for(int side=0;side<2;++side) {
-        check_native_wall_face<MusclReconstruction<McLimiter>>(fixture,direction,side,false);
-        check_native_wall_face<PCMReconstruction>(fixture,direction,side,true);
-    }
-    check_native_wall_face<PPMReconstruction>(fixture,1,0,false);
-
-    const arch::boundary::HydroBoundaryView empty{};const auto wall=fixture.walls();
-    auto internal=fixture.context(0,0);internal.face_i=fixture.grid.Is()+5;
-    FluidVector omitted{},explicit_empty{},flagged_internal{};
-    std::array<double,kSpecies> omitted_x{},empty_x{},internal_x{};
-    const auto a=native_wall_compute<PCMReconstruction>(fixture,internal,nullptr,omitted,omitted_x);
-    const auto b=native_wall_compute<PCMReconstruction>(fixture,internal,&empty,explicit_empty,empty_x);
-    const auto c=native_wall_compute<PCMReconstruction>(fixture,internal,&wall,flagged_internal,internal_x);
-    check(a==arch::state::Status::valid&&b==a&&c==a
-        &&max_abs_diff(omitted,explicit_empty)==0.&&max_abs_diff(omitted,flagged_internal)==0.
-        &&omitted_x==empty_x&&omitted_x==internal_x,
-        "empty/default wall view and dormant internal-face flags preserve exact original face results");
-
-    const FluidVector sentinel{123.,-456.,789.,-321.,654.};
-    const std::array<double,kSpecies> sentinel_x{17.,19.};
-    auto reject=[&](RzSelectedReconstruction::Context context,arch::boundary::HydroBoundaryView view,
-        GridMetrics::GeometrySemantics semantics,const char* message) {
-        auto flux=sentinel;auto species_flux=sentinel_x;
-        const auto status=native_wall_compute<PCMReconstruction>(fixture,context,&view,flux,species_flux,semantics);
-        check(status!=arch::state::Status::valid&&max_abs_diff(flux,sentinel)==0.&&species_flux==sentinel_x,message);
-    };
-    auto bad_direction=fixture.context(0,0);bad_direction.direction=2;
-    reject(bad_direction,wall,NativeWallFixture::semantics,"malformed native wall direction rejects without publishing");
-    auto x3=wall;x3.reflecting[4]=true;
-    reject(fixture.context(0,0),x3,NativeWallFixture::semantics,"native 2D x3 wall flags reject without publishing");
-    auto bad_normal=fixture.context(0,0);bad_normal.face_i=fixture.grid.Is()-2;
-    reject(bad_normal,wall,NativeWallFixture::semantics,"wall face outside actual active normal bounds rejects without publishing");
-    auto bad_tangent=fixture.context(0,0);bad_tangent.face_j=fixture.grid.Js()-1;
-    reject(bad_tangent,wall,NativeWallFixture::semantics,"wall tangent ghost-plane request rejects without publishing");
-    reject(fixture.context(0,0),wall,GridMetrics::GeometrySemantics::Existing,
-        "foreign ordinary mean cache cannot certify mirrored native physical points");
-
-    int side=91;
-    check(!wall.reflecting_side(-1,4,4,20,side)&&side==91,
-        "flat view checked lookup rejects invalid direction without changing output");
-    check(!wall.reflecting_side(0,4,20,4,side)&&side==91,
-        "flat view checked lookup rejects reversed active bounds");
-    check(wall.reflecting_side(0,5,4,20,side)&&side==-1,
-        "flat view internal face has no physical wall authority");
-
-    // Preserve the independent cold raw-mean counterexample: physical wall
-    // points do not make raw mixed-measure U a legal generic point LLF state.
-    const FluidVector raw{1.,0.,0.,3./4.,17./64.};
-    const double xi[kSpecies]{.75,.25};const double p=(1.4-1.)/64.;
-    const double sound=std::sqrt(1.4*p);
-    check(arch::state::recover(raw).status==arch::state::Status::unresolved_energy,
-        "cold raw native mean remains outside the generic point thermal domain");
-    const FluidVector high{0.,p,0.,0.,0.};const double species_high[kSpecies]{0.,0.};
-    const auto factor=FluxAdmissibility::point_face_blend_with_thermo(raw,raw,xi,xi,kSpecies,
-        p,sound,p,sound,0,high,species_high);
-    check(!factor.valid,"raw cold mean generic LLF remains rejected independently of physical-wall face success");
-    check(fixture.state.rho==source_rho&&fixture.state.mom_u==source_u
-        &&fixture.state.mom_v==source_v&&fixture.state.mom_w==source_w
-        &&fixture.state.eng==source_e&&fixture.state.mass_fractions==source_x,
-        "all native wall face and failure requests preserve actual source arrays");
-}
-
-
-// Actual native axial producer -> actual physical-face override. Independent
-// V/W antiderivatives own the expected mechanical work; there is no mocked
-// Native frame or Runtime acceptance, and no full-tensor physics assertion.
-void test_native_diffusion_boundary_work()
-{
-    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
-    SpeciesManager species;species.add_species("work_a",1.,1.,1.4,2.);
-    species.add_species("work_b",4.,2.,1.4,2.);
-    IdealGas eos(1.4,species);
-    Grid grid(amr::MAX_NG,4.,20.,-.5,.5,0.,1.);
-    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology(native);
-    grid.dyadic_identity.bound=true;grid.dyadic_identity.root_lower={4.,-.5};
-    grid.dyadic_identity.root_upper={20.,.5};grid.dyadic_identity.root_blocks={1,1};
-    grid.dyadic_identity.level=0;grid.dyadic_identity.logical={0,0};
-    grid.InitializeTopology(native);
-    check(GridMetrics::matches_identity(GridMetrics::make_geometry_view(grid,native)),
-        "native viscous work fixture has actual bound root geometry");
-    FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(kSpecies);
-    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
-        const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
-        const long double capacity=(b*b*b*b-a*a*a*a)/4.L;
-        const long double torque_measure=(b*b*b-a*a*a)/3.L;
-        const long double omega=j<grid.Js()?1.L:2.L;
-        const int index=grid.GetIndex(i,j);
-        state.set(index,{1.,0.,0.,double(omega*capacity/torque_measure),10000.});
-        state.X(0,index)=.75;state.X(1,index)=.25;state.enuc_rate[index]=0.;
-    }
-    const std::array<std::vector<double>,7> inputs{state.rho,state.mom_u,state.mom_v,
-        state.mom_w,state.eng,state.enuc_rate,state.mass_fractions};
-    const std::array<const double*,7> pointers{state.rho.data(),state.mom_u.data(),
-        state.mom_v.data(),state.mom_w.data(),state.eng.data(),state.enuc_rate.data(),
-        state.mass_fractions.data()};
-    SimConfig config;config.physics.diffusion.use_diffusion=true;
-    config.physics.diffusion.use_viscous_diffusion=true;
-    // The heat-flux channel is genuinely enabled, with zero conductivity.
-    // This permits its zero prescription under the actual callback contract.
-    config.physics.diffusion.use_thermal_diffusion=true;
-    config.physics.diffusion.alpha_therm=0.;
-    config.physics.diffusion.use_species_diffusion=false;
-    constexpr double nu=.01;config.physics.diffusion.nu_visc=nu;
-    const int i=grid.Is()+1,j=grid.Js(),face=grid.GetIndex(i,j);
-    check(grid.GetFacePosL(i)==5.&&grid.GetFacePosR(i)==6.,
-        "native viscous work independent reference uses real cell [5,6]");
-    // For rho=1 on [5,6]: C=int r^3 dr=671/4, M2=int r^2 dr=91/3,
-    // M1=int r dr=11/2. Across this actual axial face Omega_L=1,Omega_R=2.
-    // F_phi=-nu*C*(Omega_R-Omega_L)/(dz*M2); F_E/F_phi=1.5*M2/M1=91/11.
-    // Raw average (J/W)/rho instead gives 1.5*C/M2=6039/728; the exact
-    // difference is 181/8008. This reference never divides production E/F.
-    constexpr long double capacity=671.L/4.L,torque_measure=91.L/3.L;
-    constexpr long double volume_measure=11.L/2.L;
-    constexpr long double work_velocity=91.L/11.L,raw_velocity=6039.L/728.L;
-    check(close_rel(double(raw_velocity-work_velocity),double(181.L/8008.L)),
-        "native work witness separates raw velocity from independent physical work");
-    const long double spacing=grid.GetAxialFacePosR(j)-grid.GetAxialFacePosL(j);
-    const double expected_phi=double(-static_cast<long double>(nu)*capacity/(spacing*torque_measure));
-    const double expected_energy=double(-static_cast<long double>(nu)*capacity*1.5L/(spacing*volume_measure));
-    std::vector<FluidVector> flux(grid.GetTotalSize());
-    std::vector<double> species_flux(grid.GetTotalSize()*kSpecies,0.);
-    DiffFlux::compute_fluxes(state,eos,grid,config,flux,species_flux,1,false,native);
-    const FluidVector baseline=flux[face];
-    check(close_rel(baseline.mom_w,expected_phi)&&close_rel(baseline.eng,expected_energy),
-        "actual native axial stress and area work match independent C/M2/M1");
-    check(close_rel(baseline.eng,double(static_cast<long double>(baseline.mom_w)*work_velocity)),
-        "actual native axial face work uses independent 91/11 carrier");
-    for(int mode=0;mode<4;++mode) {
-        auto controls=std::make_shared<arch::boundary::DiffusionBoundaryStorage>();
-        controls->faces[2].resize((grid.Ie()-grid.Is())*(4+kSpecies));
-        for(int plane=0;plane<grid.Ie()-grid.Is();++plane) {
-            auto* values=controls->faces[2].data()+plane*(4+kSpecies);
-            if(mode&1)values[0]={arch::boundary::ScalarBoundaryKind::OutwardFlux,0.};
-            if(mode&2)values[3]={arch::boundary::ScalarBoundaryKind::OutwardFlux,0.};
-        }
-        const auto saved_controls=controls->faces[2];
-        state.diffusion_boundary=controls;
-        // Real observer storage, owned exactly as a physical lower-Y plane.
-        // Its default weight=1/initial_weight=0 captures the published face,
-        // and NaN sentinels make an unexecuted observer impossible to pass.
-        auto capture=std::make_shared<arch::boundary::BoundaryFluxCaptureStorage>();
-        constexpr int captured_fields=6+kSpecies;
-        capture->stage[2].assign((grid.Ie()-grid.Is())*captured_fields,
-            std::numeric_limits<double>::quiet_NaN());
-        state.boundary_flux_capture=capture;
-        std::fill(flux.begin(),flux.end(),FluidVector{});
-        std::fill(species_flux.begin(),species_flux.end(),0.);
-        DiffFlux::compute_fluxes(state,eos,grid,config,flux,species_flux,1,true,native);
-        const auto result=flux[face];
-        const double* observed=capture->stage[2].data()+(i-grid.Is())*captured_fields;
-        check(std::isfinite(observed[captured_fields-1])
-            &&std::abs(observed[captured_fields-1])<=band_of(baseline.eng,expected_energy),
-            "actual native observer captures zero heat with the original reference-scaled band");
-        check(observed[0]==result.rho&&observed[1]==result.mom_u
-            &&observed[2]==result.mom_v&&observed[3]==result.mom_w
-            &&observed[4]==result.eng,
-            "actual native observer traction and total energy agree with the published face");
-        for(int sp=0;sp<kSpecies;++sp)
-            check(observed[5+sp]==species_flux[sp*grid.GetTotalSize()+face],
-                "actual native observer keeps each emitted species flux in its real field");
-        check(finite_state(result)&&result.rho==0.&&result.mom_u==0.&&result.mom_v==0.,
-            "native controlled work preserves absent transport components");
-        if(mode&2) {
-            check(result.mom_w==0.,"native zero prescribed phi traction is realized");
-            // With no thermal diffusion, changing phi traction to zero must
-            // remove all its work, rather than reclassify a residual as heat.
-            check(std::abs(result.eng)<=band_of(baseline.eng,expected_energy),
-                "native zero phi traction leaves zero area work and zero heat");
-        } else {
-            check(close_rel(result.mom_w,expected_phi)&&close_rel(result.eng,expected_energy),
-                "native zero heat or inherited controls preserve actual paired mechanical work");
-        }
-        for(int sp=0;sp<kSpecies;++sp)
-            check(species_flux[sp*grid.GetTotalSize()+face]==0.,
-                "native work controls preserve zero species diffusion");
-        bool controls_unchanged=controls->faces[2].size()==saved_controls.size();
-        for(std::size_t n=0;n<saved_controls.size();++n)
-            controls_unchanged=controls_unchanged
-                &&controls->faces[2][n].kind==saved_controls[n].kind
-                &&std::bit_cast<std::uint64_t>(controls->faces[2][n].value)
-                    ==std::bit_cast<std::uint64_t>(saved_controls[n].value);
-        check(controls_unchanged,"actual native boundary producer leaves callback controls immutable");
-    }
-    const std::array<const std::vector<double>*,7> fields{&state.rho,&state.mom_u,&state.mom_v,
-        &state.mom_w,&state.eng,&state.enuc_rate,&state.mass_fractions};
-    bool immutable=true;
-    for(std::size_t field=0;field<fields.size();++field) {
-        immutable=immutable&&fields[field]->data()==pointers[field]
-            &&fields[field]->size()==inputs[field].size();
-        for(std::size_t n=0;n<inputs[field].size();++n)
-            immutable=immutable&&std::bit_cast<std::uint64_t>((*fields[field])[n])
-                ==std::bit_cast<std::uint64_t>(inputs[field][n]);
-    }
-    check(immutable,"all native diffusion face/control requests preserve seven real input arrays and leases");
-    std::cout<<"RZ_NATIVE_DIFFUSION_BOUNDARY_WORK modes=4 PASS_IF_ALL_CHECKS\n";
 }
 
 } // namespace
@@ -1247,15 +1117,14 @@ int main()
         }
     }
 
-    test_native_reflecting_face_math();
-    test_native_gamma_wall_away_pressure();
     test_gamma_wall_positive_product_range();
     test_shared_gamma_wall_third_direction();
     test_shared_gamma_selected_point_blend();
     test_ordinary_wall_sweeps();
     test_shared_point_wall_assembler();
+    test_general_eos_point_wall_assembler();
+    test_general_eos_reflected_wave_convergence();
     test_stationary_candidate_projection();
-    test_native_diffusion_boundary_work();
 
     ok = failures == 0;
     std::printf("checks=%d failures=%d result=%s\n", checks, failures,

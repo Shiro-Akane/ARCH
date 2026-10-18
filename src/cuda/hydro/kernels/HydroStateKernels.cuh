@@ -19,7 +19,6 @@
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "driver/DriverUtils.h"
 #include "numerics/integrator/HydroCellUpdate.h"
-#include "numerics/state/RzNativeClosure.h"
 #include "physics/gravity/GravitySource.h"
 
 namespace arch::cuda
@@ -48,22 +47,8 @@ __device__ inline void hydro_cfl_candidates_work(
         const int j = (cell - k * grid.stride_z) / grid.stride_y;
         const int i = cell - k * grid.stride_z - j * grid.stride_y;
         const auto geometry=make_grid_geometry_view(grid);
-        FluidVector eos_mean=value;
-        if (geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            // Workflow: interpret actual resident V/W means through the same
-            // rho/inertia closure as Host adaptive_dt. Only the EOS input
-            // changes; r/z velocities and the two-face CFL formula do not.
-            const auto read=[state](int index) {return state.load(index);};
-            const auto closure=RzThermodynamics::make_cell(read,cell,geometry,i);
-            if (!closure.valid()) {
-                // Preserve the original checked NaN reduction failure lane.
-                candidates[linear]=std::numeric_limits<double>::quiet_NaN();
-                continue;
-            }
-            eos_mean=closure.effective_mean;
-        }
         candidates[linear] = evaluate_cfl_cell_dt(
-            eos_mean, state.n_species > 0 ? composition : nullptr, eos,
+            value, state.n_species > 0 ? composition : nullptr, eos,
             geometry, i, j);
     }
 }
@@ -129,14 +114,7 @@ static __device__ inline void hydro_divergence_kernel_work(
     const int cell = grid.active_cell(linear);
     const int stride = grid.stride(direction);
     FluidVector cell_delta = delta.load(cell);
-    // Workflow: Native J/W uses the same conditioned endpoint formula as
-    // Host, cancelling the full-ring measure without large torque products.
-    // Other fields retain the immutable V/face-area cache and shared leaf.
-    const auto geometry=make_grid_geometry_view(grid);
-    const bool native=geometry.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    const int i=cell%grid.stride_y,j=(cell%grid.stride_z)/grid.stride_y;
-    const TimeIntegration::NativeAngularDivergence angular{&geometry,direction,i,j};
-    const bool divergence_valid=TimeIntegration::accumulate_cell_divergence(
+    TimeIntegration::accumulate_cell_divergence(
         flux.load(cell), flux.load(cell + stride),
         flux.n_species > 0 ? flux.mass_fractions + cell : nullptr,
         flux.n_species > 0 ? flux.mass_fractions + cell + stride : nullptr,
@@ -144,12 +122,7 @@ static __device__ inline void hydro_divergence_kernel_work(
         grid.face_area_lower[direction][cell],
         grid.face_area_upper[direction][cell], grid.cell_volume[cell], dt,
         cell_delta,
-        delta.n_species > 0 ? delta.mass_fractions + cell : nullptr,
-        native ? &angular : nullptr);
-    // This existing kernel has no status latch. Explicit nonfinite output
-    // reaches its original accepted-state rejection; this is not an atomic
-    // whole-stage/device qualification and must not be ignored by its caller.
-    if(!divergence_valid) cell_delta.mom_w=std::numeric_limits<double>::quiet_NaN();
+        delta.n_species > 0 ? delta.mass_fractions + cell : nullptr);
     // w_low/high belong to this cell, even where the physical face is shared.
     // Host and Device apply the identical dt/2 mass-flux work leaf.
     if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(
@@ -222,11 +195,6 @@ inline cudaError_t launch_compute_hydro_dt(
     if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
         || !valid_species_workspace(workspace.species_workspace, state.n_species, 1)
         || state.total_size != grid.total_size
-        // Native rho/inertia closure reads the true columns i-1,i,i+1.
-        // Geometry lowering permits no-halo mathematical grids; this launch
-        // needs actual logical support before even clearing its status latch.
-        || (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
-            && (grid.ng < 1 || grid.is < 1 || grid.ie >= grid.total_x))
         || workspace.cfl_candidates == nullptr
         || workspace.cfl_result == nullptr
         || workspace.cfl_status == nullptr)

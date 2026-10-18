@@ -1,0 +1,2877 @@
+{
+  "schema": "arch-rz-retirement-acceptance-1",
+  "updated_utc": "2026-10-18T04:22:33.642941+00:00",
+  "reporting_date_jst": "2026-10-18",
+  "decision": "ACCEPT_RZ_RETIREMENT_AFFECTED_SCOPE",
+  "REL3_original_CPU_scope_closed": true,
+  "REL35_closed_under_user_retirement_scope": true,
+  "REL4_started": false,
+  "RZ_reimplementation_started": false,
+  "scope_change": "Original RZ performance target superseded by explicit user retirement, not achieved as a performance improvement. Reject all cylindrical+dim2 including former polar reinterpretation. Retain other charts/math/physics/O7 and immutable history.",
+  "verification_scope_authority": "User explicitly requested necessary compilation and affected-module short runs only, no full regression or old RZ long runs; later explicitly authorized one commit and push.",
+  "workspace": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "candidate_git_base": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "build_git_annotation": "Executed before the final commit with actual dirty/base annotations; no post-commit clean rebuild claimed.",
+  "commit_push_record": "output/release/rz-retirement-implementation-20261016/push-receipt.json",
+  "source_freeze": {
+    "path": "output/release/rz-retirement-implementation-20261016/source-freeze15.json",
+    "sha256": "1d926259e33d68a818be7043ecf1a510760d432af43499885096a25e2fbf9595",
+    "members": 1207,
+    "resumed_identity_check_utc": "2026-10-18T04:11:38.663997+00:00",
+    "mismatches": 0
+  },
+  "executables": {
+    "build-modernization-cpu/bin/ARCH": {
+      "path": "build-modernization-cpu/bin/ARCH",
+      "sha256": "d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487"
+    },
+    "build-modernization-cpu/arch_cuda_single_level_validation": {
+      "path": "build-modernization-cpu/arch_cuda_single_level_validation",
+      "sha256": "bed49e522814100530599457ed8484f5c0d5c1d18fce9fd12d04cb2a3595845a"
+    },
+    "build-modernization-cuda/arch_cuda_boundary_plan_parity": {
+      "path": "build-modernization-cuda/arch_cuda_boundary_plan_parity",
+      "sha256": "35714bec6aab56518cdfd8d52e004b4bee3232b23abd14fb4d584fff3390a368"
+    },
+    "build-modernization-cuda/arch_cuda_curvilinear_geometry_smoke": {
+      "path": "build-modernization-cuda/arch_cuda_curvilinear_geometry_smoke",
+      "sha256": "2d37142af18bd837b28f539b8347ac01c5e927835ffc42d478dc80f577963e4d"
+    },
+    "build-modernization-cuda/arch_cuda_grid_metrics_cache": {
+      "path": "build-modernization-cuda/arch_cuda_grid_metrics_cache",
+      "sha256": "a8c4c8bcdbb1a04460fba7b41bf544a3f258e10afb1699116a65ae6447ad8caf"
+    },
+    "build-modernization-cuda/arch_cuda_hydro_eos_failure": {
+      "path": "build-modernization-cuda/arch_cuda_hydro_eos_failure",
+      "sha256": "827ce87831ea53bf523da4f4b14d5da9aff0813a7f54ffcf5d423dbbaca48d62"
+    },
+    "build-modernization-cuda/arch_cuda_hydro_leaf_parity": {
+      "path": "build-modernization-cuda/arch_cuda_hydro_leaf_parity",
+      "sha256": "d1c04d3dbd8218d90b3332d25519bac33d7e52123416bf752a1e89e3538309bc"
+    },
+    "build-modernization-cuda/arch_cuda_reduction_contract": {
+      "path": "build-modernization-cuda/arch_cuda_reduction_contract",
+      "sha256": "8636e5bd8aead71e46b1071b7ceafd39fbef3aeea0cd3791ec53b0ea903f4fd1"
+    },
+    "build-modernization-cuda/arch_cuda_refinement_indicators": {
+      "path": "build-modernization-cuda/arch_cuda_refinement_indicators",
+      "sha256": "396bf215700806300a0f31e628ba672e8df6f0a181f0ed5971020f3b8549a19a"
+    },
+    "build-modernization-cuda/arch_cuda_regrid_migration": {
+      "path": "build-modernization-cuda/arch_cuda_regrid_migration",
+      "sha256": "3e0244baaad5fccb661e1e4c0a11c3378a8f9db575124c96a1518d78e3dde7a8"
+    }
+  },
+  "supported_charts": {
+    "cartesian": [
+      1,
+      2,
+      3
+    ],
+    "spherical": [
+      1,
+      2,
+      3
+    ],
+    "cylindrical": [
+      1,
+      3
+    ]
+  },
+  "deleted_paths": {
+    "whole_production_files_to_delete": [
+      "src/cuda/microphysics/burn/NativeBurnState.cuh",
+      "src/cuda/runtime/control/CudaBackendMacroStep.cpp",
+      "src/driver/runtime/RuntimeStateTransaction.h",
+      "src/numerics/curvilinear/CurvilinearState.h",
+      "src/physics/boundary/NativeRzBoundaryMath.h",
+      "src/physics/gravity/FiniteRingBoundaryMath.h",
+      "src/physics/gravity/NativeExternalSource.h",
+      "src/physics/gravity/NativeExternalSourceMath.h",
+      "src/physics/gravity/NativeExternalStage.h",
+      "src/physics/gravity/NativeSelfStage.h"
+    ],
+    "dedicated_test_files_to_retire": [
+      "tests/tooling/test_rz_qualification_runners.py",
+      "tests/tooling/validation/test_rz_matched_source_reference.py",
+      "tests/tooling/validation/test_rz_matched_native_reference.py",
+      "tests/tooling/validation/test_rz_ring_axis_reference.py",
+      "tests/tooling/validation/test_rz_ring_offaxis_reference.py",
+      "tests/host/gravity/test_rz_runtime_rollback_contract.cpp",
+      "tests/host/gravity/test_gravity_runtime_rz_contract.cpp",
+      "tests/host/gravity/test_rz_runtime_regrid_contract.cpp",
+      "tests/host/gravity/NativeActiveFourModuleWitness.h",
+      "tests/host/gravity/NativeSelfEnergyWitness.h",
+      "tests/host/gravity/NativeActiveAmrWitness.h",
+      "tests/host/gravity/RzMaterializedSourceRecord.h",
+      "tests/host/grid/test_rz_initial_population.cpp",
+      "tests/host/grid/test_registered_rz_initialization.cpp",
+      "tests/host/driver/RzRuntimeWitness.h",
+      "tests/host/driver/test_rz_runtime_external.cpp",
+      "tests/host/driver/test_rz_checkpoint_continuation.cpp",
+      "tests/host/driver/test_rz_runtime_boundary.cpp",
+      "tests/cuda/grid/test_native_rz_reflection.cu",
+      "tests/math/geometry/RzMetricCases.h",
+      "tests/math/geometry/RzEquilibriumCases.h",
+      "tests/math/geometry/RzMeridionalCases.h",
+      "tests/math/geometry/RzViscousCases.h",
+      "tests/math/geometry/RzReconstructionCases.h"
+    ],
+    "active_RZ_validators_to_retire": [
+      "validation/amr/run_registered_rz_initialization.py",
+      "validation/amr/run_rz_initial_population.py",
+      "validation/amr/run_rz_runtime_boundary.py",
+      "validation/amr/rz_metric_reference.py",
+      "validation/core_contracts/rz/README.zh-CN.md",
+      "validation/core_contracts/rz/analytic_reference.py",
+      "validation/core_contracts/rz/benchmark-input-audit.json",
+      "validation/core_contracts/rz/run_frozen_rz_closure.py",
+      "validation/core_contracts/rz/run_patch_producer_mutations.py",
+      "validation/core_contracts/rz/run_production_binding_mutations.py",
+      "validation/core_contracts/rz/run_stage_integral_mutations.py",
+      "validation/core_contracts/rz/test_analytic_reference.py",
+      "validation/core_contracts/rz/test_candidate_patch_producer.cpp",
+      "validation/core_contracts/rz/test_candidate_scheduler_preflight.cpp",
+      "validation/core_contracts/rz/test_candidate_stage_integrals.cpp",
+      "validation/gravity/rz_boundary_budget_audit.py",
+      "validation/gravity/rz_face_gradient_mapping_audit.py",
+      "validation/gravity/rz_face_map_enclosure_reference.py",
+      "validation/gravity/rz_ideal_potential_propagation_reference.py",
+      "validation/gravity/rz_matched_face_force_reference.py",
+      "validation/gravity/rz_matched_native_reference.py",
+      "validation/gravity/rz_matched_source_reference.py",
+      "validation/gravity/rz_native_measure_reference.py",
+      "validation/gravity/rz_native_residual_reference.py",
+      "validation/gravity/rz_native_ring_composition_reference.py",
+      "validation/gravity/rz_native_ring_solved_reference.py",
+      "validation/gravity/rz_reference_complement_audit.py",
+      "validation/gravity/rz_ring_axis_enclosure_reference.py",
+      "validation/gravity/rz_ring_axis_reference.py",
+      "validation/gravity/rz_ring_balanced_reduction_reference.py",
+      "validation/gravity/rz_ring_contact_log_reference.py",
+      "validation/gravity/rz_ring_enclosure_reference.py",
+      "validation/gravity/rz_ring_far_leaf_reference.py",
+      "validation/gravity/rz_ring_k_interval_reference.py",
+      "validation/gravity/rz_ring_offaxis_reference.py",
+      "validation/gravity/rz_ring_parent_reference.py",
+      "validation/gravity/rz_ring_rhs_composition_reference.py",
+      "validation/gravity/rz_ring_surface_reference.py",
+      "validation/gravity/rz_root_producer_reference.py",
+      "validation/gravity/rz_scalar_energy_reference.py",
+      "validation/gravity/rz_stencil_construction_reference.py",
+      "validation/gravity/rz_stencil_enclosure_reference.py",
+      "validation/gravity/rz_uniform_quartet_reference.py",
+      "validation/io/run_rz_checkpoint_continuation.py",
+      "validation/io/verify_rz_driver_plot.py",
+      "validation/io/verify_rz_plot_reader_gate.mjs"
+    ],
+    "active_CYL2_input_files": [
+      "simulation/SNIaCoupled/SNIaCoupled_2d_rz_amr.par",
+      "validation/gravity/curved/inputs/rz_origin_amr_4x4.par",
+      "validation/gravity/curved/inputs/rz_origin.par",
+      "validation/gravity/curved/inputs/rz_low_density.par",
+      "validation/gravity/curved/inputs/rz_origin_regular_4x4.par",
+      "validation/amr/inputs/gaussian_rz_init_probe.par"
+    ],
+    "already_absent_paths_do_not_restore": [
+      "src/amr/transfer/NativeRzRegridTransfer.h",
+      "src/grid/DyadicGridIdentity.h",
+      "src/grid/GridGeometryView.h",
+      "src/grid/GridMetrics.h",
+      "src/numerics/diffusion/CurvilinearViscousStress.h",
+      "src/numerics/diffusion/RzViscousStress.h",
+      "src/numerics/flux/RzNativeFaceFlux.h",
+      "src/numerics/integrator/GeometricSources.h",
+      "src/numerics/reconstruction/RzCellPolynomial.h",
+      "src/numerics/reconstruction/RzDensityMoments.h",
+      "src/numerics/reconstruction/RzParityReconstruction.h",
+      "src/numerics/reconstruction/RzPolynomialMoments.h",
+      "src/numerics/reconstruction/RzSelectedReconstruction.h",
+      "src/numerics/reconstruction/RzWeightedReconstruction.h",
+      "src/numerics/state/RzCellAverage.h",
+      "src/numerics/state/RzNativeClosure.h",
+      "src/physics/boundary/NativeRzBoundary.h"
+    ]
+  },
+  "embedded_retirement": [
+    "Shared Grid/geometry/state/reconstruction/flux/source/diffusion/AMR/IO and API consumers",
+    "Host RZ domain acceptance/transaction hooks and only-RZ macro savepoints",
+    "CUDA RZ exchange wrapper, burn state, ring controller, visitor arm and resident caches",
+    "Active case catalogs/inputs/validators/build registration; historical captures retained as history"
+  ],
+  "critical_preservation": [
+    "Cyl3 coordinate seam real regression caught and fixed; original uniform/mixed positive assertions retained",
+    "True Sphere2 Rphi; 3D CylindricalRZPhi basis and physical r_cy/z_cy",
+    "Three momenta/three state slots, generic mean P/c and native tabular EOS, ordinary BC/capture, stream/events/residency and AMR lifecycle",
+    "Shared numerical definitions, tolerances, FP and conservative physics coupling",
+    "Source/build/profile and typed configuration coverage; only retired geometry-semantics runtime tag emitter and matched coverage removed"
+  ],
+  "O7_registration": {
+    "src/core/config/StandardParameterEntries.inc": {
+      "baseline_sha256": "a57bb8d16f2f86506496c4d96af8aaf0298cef7f3252c097cc2d4eb36f32449a",
+      "current_sha256": "a57bb8d16f2f86506496c4d96af8aaf0298cef7f3252c097cc2d4eb36f32449a"
+    },
+    "src/core/config/StandardParameters.h": {
+      "baseline_sha256": "50f44cd6a67bc9535798b231e127256333ba232a738ea4195027280f3e919eb8",
+      "current_sha256": "50f44cd6a67bc9535798b231e127256333ba232a738ea4195027280f3e919eb8"
+    }
+  },
+  "verification": {
+    "CPU_CTest_passed": 20,
+    "CUDA_CTest_passed": 8,
+    "CUDA_production_objects_compiled": 21,
+    "Studio_tests_passed": 104,
+    "Studio_typecheck": "PASS",
+    "tooling_tests_passed": {
+      "architecture": 127,
+      "curvilinear_manifest": 9,
+      "runtime_inputs": 76
+    },
+    "architecture_audit": "PASS",
+    "generic_independent_oracles": {
+      "isolated_cells": 28,
+      "periodic_cases": 36,
+      "decimal_precision": [
+        100,
+        140
+      ],
+      "original_error_bounds": "unchanged"
+    },
+    "short_CPU_comparisons": {
+      "status": "PASS",
+      "comparisons": [
+        {
+          "id": "hydro_ppm_n256",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.0005044964906143608,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/eng",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        },
+        {
+          "id": "sod_ppm_n256",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.0011744995854777137,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/X",
+              "shape": [
+                1,
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/eng",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rhoX",
+              "shape": [
+                1,
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        },
+        {
+          "id": "diffusion_rkl1_n64",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.005282214092053229,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/X",
+              "shape": [
+                2,
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/eng",
+              "shape": [
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rhoX",
+              "shape": [
+                2,
+                4,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                4
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                4
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                4
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                4
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        },
+        {
+          "id": "diffusion_rkl2_n256",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.0013205535230133073,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/X",
+              "shape": [
+                2,
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/eng",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rhoX",
+              "shape": [
+                2,
+                16,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        },
+        {
+          "id": "cylindrical_amr_rkl2_annulus_1d",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.0006835937500000001,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/X",
+              "shape": [
+                2,
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/eng",
+              "shape": [
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rhoX",
+              "shape": [
+                2,
+                6,
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                6
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                6
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                6
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                6
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        },
+        {
+          "id": "spherical_amr_rkl2_wedge_2d",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.0022422697607841235,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/X",
+              "shape": [
+                2,
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/eng",
+              "shape": [
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rhoX",
+              "shape": [
+                2,
+                8,
+                256
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                8
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                8
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                8
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                8
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        },
+        {
+          "id": "cylindrical_amr_rkl2_wedge_3d",
+          "status": "PASS",
+          "scope": "two-step affected-module stored-data comparison",
+          "step": 2,
+          "time": 0.0012319959876296355,
+          "state_repairs_zero": true,
+          "arrays": [
+            {
+              "path": "Data/X",
+              "shape": [
+                2,
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/eng",
+              "shape": [
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/enuc_rate",
+              "shape": [
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_u",
+              "shape": [
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_v",
+              "shape": [
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/mom_w",
+              "shape": [
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rho",
+              "shape": [
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Data/rhoX",
+              "shape": [
+                2,
+                16,
+                4096
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/level",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x1",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x2",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            },
+            {
+              "path": "Blocks/logical_x3",
+              "shape": [
+                16
+              ],
+              "stored_bits_equal": true
+            }
+          ]
+        }
+      ],
+      "executions": [
+        {
+          "id": "hydro_ppm_n256",
+          "variant": "before",
+          "stage": "short-01-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/hydro_ppm_n256/before/run/SmoothAdvection_chk_0001.h5",
+          "checkpoint_sha256": "70ff925314147a6b0be6526527cf8831a651760a2640614e16e45dd29c82f26f"
+        },
+        {
+          "id": "hydro_ppm_n256",
+          "variant": "retired",
+          "stage": "short-02-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/hydro_ppm_n256/retired/run/SmoothAdvection_chk_0001.h5",
+          "checkpoint_sha256": "3d298ae294b836614bfe35a22c9265c459ac9087ff9688c60519ae7022f37fa6"
+        },
+        {
+          "id": "sod_ppm_n256",
+          "variant": "before",
+          "stage": "short-03-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/sod_ppm_n256/before/run/SodPpmN256_chk_0001.h5",
+          "checkpoint_sha256": "0f05c577d3f17c33dfd11d1deb74c915d91fa463a8a4e177fa5816b9db4aab36"
+        },
+        {
+          "id": "sod_ppm_n256",
+          "variant": "retired",
+          "stage": "short-04-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/sod_ppm_n256/retired/run/SodPpmN256_chk_0001.h5",
+          "checkpoint_sha256": "178268848e1bab3ec2412b8e182f838c5968f8497d596d67f95c188968807cf9"
+        },
+        {
+          "id": "diffusion_rkl1_n64",
+          "variant": "before",
+          "stage": "short-05-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/diffusion_rkl1_n64/before/run/DiffusionMode_chk_0001.h5",
+          "checkpoint_sha256": "4ec07c5a1f0b2b9f33ec9b304116dedf86b1b303df4d9de93ef596bed07a736f"
+        },
+        {
+          "id": "diffusion_rkl1_n64",
+          "variant": "retired",
+          "stage": "short-06-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/diffusion_rkl1_n64/retired/run/DiffusionMode_chk_0001.h5",
+          "checkpoint_sha256": "7eef88e432c6a34d4717a14ec6893aadfeb4d3c5e8c2223161acfbadddee33c1"
+        },
+        {
+          "id": "diffusion_rkl2_n256",
+          "variant": "before",
+          "stage": "short-07-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/diffusion_rkl2_n256/before/run/DiffusionMode_chk_0001.h5",
+          "checkpoint_sha256": "6c66ac243c4aa59ff7e5f83c3cbed86df22011d370fb470acccf1fdddbb1c91e"
+        },
+        {
+          "id": "diffusion_rkl2_n256",
+          "variant": "retired",
+          "stage": "short-08-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/diffusion_rkl2_n256/retired/run/DiffusionMode_chk_0001.h5",
+          "checkpoint_sha256": "0b1c734d48f0046a87865f7efa6976d1c201e8f367ef9984e8960aa63c2ea2a8"
+        },
+        {
+          "id": "cylindrical_amr_rkl2_annulus_1d",
+          "variant": "before",
+          "stage": "short-09-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/cylindrical_amr_rkl2_annulus_1d/before/run/GaussianDiffusionAMR_chk_0001.h5",
+          "checkpoint_sha256": "7109593f0f00a41447f2e92905eadbf8c6ac0502e14a4bfeff98296990c4ee07"
+        },
+        {
+          "id": "cylindrical_amr_rkl2_annulus_1d",
+          "variant": "retired",
+          "stage": "short-10-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/cylindrical_amr_rkl2_annulus_1d/retired/run/GaussianDiffusionAMR_chk_0001.h5",
+          "checkpoint_sha256": "26b3269f02e25af3ebfc968e5f0d356e2c91fc142f40cc300fd9c4703e01b3d9"
+        },
+        {
+          "id": "spherical_amr_rkl2_wedge_2d",
+          "variant": "before",
+          "stage": "short-11-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/spherical_amr_rkl2_wedge_2d/before/run/GaussianDiffusionAMR_chk_0001.h5",
+          "checkpoint_sha256": "dd62ebc0f447f1dd1345999c2d12e648df7a1655d8754e748315c0baddf77751"
+        },
+        {
+          "id": "spherical_amr_rkl2_wedge_2d",
+          "variant": "retired",
+          "stage": "short-12-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/spherical_amr_rkl2_wedge_2d/retired/run/GaussianDiffusionAMR_chk_0001.h5",
+          "checkpoint_sha256": "def8abc6de26ab24eb232ccf35073e7da3c7929f460cb25669d53ff1d0a1a076"
+        },
+        {
+          "id": "cylindrical_amr_rkl2_wedge_3d",
+          "variant": "before",
+          "stage": "short-13-before",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/cylindrical_amr_rkl2_wedge_3d/before/run/GaussianDiffusionAMR_chk_0001.h5",
+          "checkpoint_sha256": "e97566115e8ace32fd641d197ea4e4762fa2bbfc6d8cb4fa281e84d86ee61f39"
+        },
+        {
+          "id": "cylindrical_amr_rkl2_wedge_3d",
+          "variant": "retired",
+          "stage": "short-14-retired",
+          "exit": 0,
+          "checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rz-retirement-implementation-20261016/short-physics/cylindrical_amr_rkl2_wedge_3d/retired/run/GaussianDiffusionAMR_chk_0001.h5",
+          "checkpoint_sha256": "39dc07d2e4ab2c8fa51e301436d7600095c605b544e09dadbfbbb4ec1b78accc"
+        }
+      ],
+      "before_ELF_sha256": "1b5856a5b34017058da6640f3d2d6ccaa1cd598b05a65500e89ee606fa401873",
+      "retired_ELF_sha256": "d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487",
+      "freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "limits": "Affected module two-step comparison only; not original endpoints/convergence, no RZ runs, no CUDA release acceptance."
+    },
+    "actual_Core_schema_matches_active_fixture": true,
+    "skipped_in_selected_tests": 0
+  },
+  "carry_forward": {
+    "exact_file_changes": {
+      "source9_to_source15": [
+        "simulation/SNIaCoupled/SNIaCoupled.cpp",
+        "src/amr/exchange/CoordinateSeamPlan.h",
+        "src/api/inspection/CaseUnitEvidence.cpp",
+        "src/cuda/runtime/control/CudaBackendResources.cpp",
+        "src/cuda/runtime/gravity/CudaGravityExecution.cu",
+        "src/physics/boundary/BoundaryTypes.h",
+        "src/physics/boundary/PhysicalBoundary.h",
+        "src/physics/gravity/self/GravityUserBoundary.cpp",
+        "studio/tests/fixtures/mainline-config-schema.json",
+        "tests/api/configuration/test_configuration_v3.py",
+        "tests/cuda/grid/test_boundary_plan_parity.cu",
+        "tests/host/amr/test_amr_operation_plans.cpp",
+        "tests/host/driver/test_shared_stage_scheduler.cpp",
+        "tools/audit_architecture.py"
+      ],
+      "source10_to_source15": [
+        "src/cuda/runtime/control/CudaBackendResources.cpp",
+        "src/cuda/runtime/gravity/CudaGravityExecution.cu",
+        "src/physics/boundary/BoundaryTypes.h",
+        "src/physics/boundary/PhysicalBoundary.h",
+        "src/physics/gravity/self/GravityUserBoundary.cpp",
+        "studio/tests/fixtures/mainline-config-schema.json",
+        "tests/cuda/grid/test_boundary_plan_parity.cu",
+        "tools/audit_architecture.py"
+      ],
+      "source11_to_source15": [
+        "src/cuda/runtime/control/CudaBackendResources.cpp",
+        "src/cuda/runtime/gravity/CudaGravityExecution.cu",
+        "studio/tests/fixtures/mainline-config-schema.json",
+        "tests/cuda/grid/test_boundary_plan_parity.cu"
+      ],
+      "source13_to_source15": [
+        "studio/tests/fixtures/mainline-config-schema.json",
+        "tests/cuda/grid/test_boundary_plan_parity.cu"
+      ],
+      "source14_to_source15": [
+        "studio/tests/fixtures/mainline-config-schema.json"
+      ]
+    },
+    "rules": [
+      "All 21 actual CUDA objects compiled at source13. To final source15, only a CUDA test direct include and Studio JSON model source hash changed; production bytes unchanged.",
+      "CPU20 and CUDA8 executed at source14. To source15 only Studio schema SNIa source hash changed; those tests and their production sources unchanged.",
+      "Final Studio104 rerun at source15 and actual schema bytes match. Earlier typecheck and tooling apply to unchanged relevant TypeScript/tool source; precise freeze differences retained.",
+      "Seven CPU pairs ran on source14 plus uniquely frozen inputs and same final CPU ELF; only Studio fixture changed later. None of the short records replaces original long endpoints."
+    ]
+  },
+  "successful_stages": [
+    {
+      "name": "build-cpu-retired-final",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-retired-final/receipt.json",
+        "sha256": "998dcadab27eb64362e458df0a3d1f34df9d74eb28ac5fd320488bf6f5c3db5a"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "e9a566618d2766c43f12e8650e6fe43b4bf682cf8c2b85f2123c865eacf105ef",
+      "gnu": {
+        "elapsed_seconds": "174.82",
+        "user_seconds": "720.44",
+        "system_seconds": "39.87",
+        "max_process_rss_kib": "1374576",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "3944948",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "2668820",
+        "elapsed_seconds": "175.149",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "final-cpu-identity-noop",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/final-cpu-identity-noop/receipt.json",
+        "sha256": "bbc89b3375e3cf3800dfc6bf4a203de1307da3caf062a6a61a5ff4a34532f9bd"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "1d926259e33d68a818be7043ecf1a510760d432af43499885096a25e2fbf9595",
+      "gnu": {
+        "elapsed_seconds": "0.16",
+        "user_seconds": "0.02",
+        "system_seconds": "0.07",
+        "max_process_rss_kib": "18176",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6998360",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.035",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cpu-affected-short-tests-final",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cpu-affected-short-tests-final/receipt.json",
+        "sha256": "c65a4345737da5c553b154973e468f5123d77b9724773a98a98a2e1713bdde39"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "e9a566618d2766c43f12e8650e6fe43b4bf682cf8c2b85f2123c865eacf105ef",
+      "gnu": {
+        "elapsed_seconds": "26.27",
+        "user_seconds": "51.27",
+        "system_seconds": "3.71",
+        "max_process_rss_kib": "716520",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5775900",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "775200",
+        "elapsed_seconds": "26.494",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-affected-leaf-build-corrected",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-affected-leaf-build-corrected/receipt.json",
+        "sha256": "59003c5948a369b027e56f2ca26b72f1d8c09544dbda45cefb75d458d24aec20"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "e9a566618d2766c43f12e8650e6fe43b4bf682cf8c2b85f2123c865eacf105ef",
+      "gnu": {
+        "elapsed_seconds": "14.41",
+        "user_seconds": "7.47",
+        "system_seconds": "1.75",
+        "max_process_rss_kib": "500096",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5966416",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "545672",
+        "elapsed_seconds": "15.274",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-affected-short-tests",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-affected-short-tests/receipt.json",
+        "sha256": "d4820d4630e29b1bab8674ae66acdb48215bcdcac4b9bbe5ad65071d66b1b000"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "e9a566618d2766c43f12e8650e6fe43b4bf682cf8c2b85f2123c865eacf105ef",
+      "gnu": {
+        "elapsed_seconds": "3.75",
+        "user_seconds": "1.58",
+        "system_seconds": "0.88",
+        "max_process_rss_kib": "148720",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6296016",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "169456",
+        "elapsed_seconds": "4.069",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "studio-targeted-checks-final",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/studio-targeted-checks-final/receipt.json",
+        "sha256": "21302141571efc82b580575e588c6595d89e5ff7cfcc506a55bf14a84555a871"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "1d926259e33d68a818be7043ecf1a510760d432af43499885096a25e2fbf9595",
+      "gnu": {
+        "elapsed_seconds": "4.85",
+        "user_seconds": "20.31",
+        "system_seconds": "5.29",
+        "max_process_rss_kib": "226292",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5935300",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1039172",
+        "elapsed_seconds": "5.134",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "studio-typecheck",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/studio-typecheck/receipt.json",
+        "sha256": "a5584413ddbf3f588ecc44a89ef503cc860e5d55d85397abf0e2ff6037620f5f"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "2bc8720ecb8b6c800ca761d70727a629160a9b98f96d105d8b44df90498ac3e5",
+      "gnu": {
+        "elapsed_seconds": "6.46",
+        "user_seconds": "9.43",
+        "system_seconds": "1.14",
+        "max_process_rss_kib": "503628",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "4194740",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "570720",
+        "elapsed_seconds": "7.117",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "tooling-affected-checks",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/tooling-affected-checks/receipt.json",
+        "sha256": "7f949701e7d38512972826f648c4dd49b7a13479989a54dce8ef9eadd9b2988e"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "5.66",
+        "user_seconds": "4.03",
+        "system_seconds": "1.62",
+        "max_process_rss_kib": "35824",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6028616",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "50008",
+        "elapsed_seconds": "6.104",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "architecture-audit-corrected",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/architecture-audit-corrected/receipt.json",
+        "sha256": "29135a51a7f05e082aa5a37b845b9cd7b5e6dfbff248a2e2d866cb6512b8603d"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "50c7f473693e09a06d2df95ff7d1e0f9baa3ea694fc95e99fa6b8fdd2aba66dd",
+      "gnu": {
+        "elapsed_seconds": "2.14",
+        "user_seconds": "1.96",
+        "system_seconds": "0.18",
+        "max_process_rss_kib": "31740",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6457212",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "34940",
+        "elapsed_seconds": "3.050",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "generic-gravity-independent-oracles",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/generic-gravity-independent-oracles/receipt.json",
+        "sha256": "d9395235c1a943810135fb77e2abf52f82af198e213a9500bd2463fe7ff28462"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "e9a566618d2766c43f12e8650e6fe43b4bf682cf8c2b85f2123c865eacf105ef",
+      "gnu": {
+        "elapsed_seconds": "0.16",
+        "user_seconds": "0.14",
+        "system_seconds": "0.01",
+        "max_process_rss_kib": "15104",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6479092",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.036",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    }
+  ],
+  "CUDA_objects": [
+    {
+      "name": "cuda-production-v2-01",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-01/receipt.json",
+        "sha256": "c9128adb423559ee72c22506409f1a89cc04a0889ada00a1eb9664eb7e67897c"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "6.55",
+        "user_seconds": "5.75",
+        "system_seconds": "0.82",
+        "max_process_rss_kib": "514304",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6094248",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "430116",
+        "elapsed_seconds": "7.107",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-02",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-02/receipt.json",
+        "sha256": "b343d38f36578cffb8e38b9c059330081ee07c2ad48d02db352b6738ffdf33a9"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "3.45",
+        "user_seconds": "3.13",
+        "system_seconds": "0.33",
+        "max_process_rss_kib": "418832",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6116792",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "398096",
+        "elapsed_seconds": "4.062",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-03",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-03/receipt.json",
+        "sha256": "672db1694f59dc48d82bc9529d79c9551a59dd21cf150374651a9b8179774f05"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "5.14",
+        "user_seconds": "4.81",
+        "system_seconds": "0.35",
+        "max_process_rss_kib": "482892",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6021884",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "496460",
+        "elapsed_seconds": "6.087",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-04",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-04/receipt.json",
+        "sha256": "54b33ccb14a6843b1111c8192cbbb4b013ebeaa0d9f02e15eadad0a3b995509a"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "3.65",
+        "user_seconds": "3.29",
+        "system_seconds": "0.37",
+        "max_process_rss_kib": "417496",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6134572",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "383960",
+        "elapsed_seconds": "4.069",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-05",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-05/receipt.json",
+        "sha256": "0dffc56907eb678f2d2b33d998091f451cc65588afc832d1c08f3f3a930efc66"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "3.43",
+        "user_seconds": "3.12",
+        "system_seconds": "0.25",
+        "max_process_rss_kib": "415756",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6115508",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "400908",
+        "elapsed_seconds": "4.072",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-06",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-06/receipt.json",
+        "sha256": "d4a52e1a1e1e363b7241ae343b67ea4082b22e1ccc762316cd0ccff3887b299c"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "4.68",
+        "user_seconds": "4.28",
+        "system_seconds": "0.36",
+        "max_process_rss_kib": "456748",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6055608",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "459948",
+        "elapsed_seconds": "5.096",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-07",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-07/receipt.json",
+        "sha256": "ed6b0280ff00642fe0d911f48de8024acb3307ab971501f4f75b75bbd17de2ff"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "4.58",
+        "user_seconds": "4.13",
+        "system_seconds": "0.44",
+        "max_process_rss_kib": "446532",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6028148",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "447124",
+        "elapsed_seconds": "5.080",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-08",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-08/receipt.json",
+        "sha256": "adfe051c61f1f404bfe5d8baa7d67ef4566eca915a4007ada6d926c1acc6e7cd"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "4.39",
+        "user_seconds": "4.10",
+        "system_seconds": "0.30",
+        "max_process_rss_kib": "445288",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6064568",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "453336",
+        "elapsed_seconds": "5.079",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-09",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-09/receipt.json",
+        "sha256": "838f7b828cd7e64daebfa1431e48f2932730a5e899ac3f53ca5a41995a24c193"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "3.73",
+        "user_seconds": "3.31",
+        "system_seconds": "0.42",
+        "max_process_rss_kib": "435428",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6118008",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "395148",
+        "elapsed_seconds": "4.069",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-10",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-10/receipt.json",
+        "sha256": "b6f5159610d12d1f82ceed4f36fc614efc67eaadccd5e6dc9b407e1bc18e7fd5"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "4.31",
+        "user_seconds": "3.98",
+        "system_seconds": "0.34",
+        "max_process_rss_kib": "455724",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6050656",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "466120",
+        "elapsed_seconds": "5.083",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-11",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-11/receipt.json",
+        "sha256": "fc90906f7204edea553db51b84e82da61a249f96bd28dcaa2182088083f9709c"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "3.65",
+        "user_seconds": "3.32",
+        "system_seconds": "0.34",
+        "max_process_rss_kib": "426784",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6125092",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "391456",
+        "elapsed_seconds": "4.068",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-12",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-12/receipt.json",
+        "sha256": "6e37192b0779e2ff610ec7bbe09008730a96d2a5f191d10f939dc705467cb57c"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "5.89",
+        "user_seconds": "5.03",
+        "system_seconds": "0.78",
+        "max_process_rss_kib": "487040",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6080156",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "426496",
+        "elapsed_seconds": "6.136",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-13",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-13/receipt.json",
+        "sha256": "4ef336ddb585f439a3567d088cf463b74e2bdd03dba1169a552400f9b3c3cc9f"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "14.35",
+        "user_seconds": "12.79",
+        "system_seconds": "1.57",
+        "max_process_rss_kib": "846248",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5647484",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "867240",
+        "elapsed_seconds": "15.214",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-14",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-14/receipt.json",
+        "sha256": "df83266e7de0533cbb41b871b22a2985b6954ec278a6ad590fd3490a5b2b1b92"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "8.57",
+        "user_seconds": "7.54",
+        "system_seconds": "1.07",
+        "max_process_rss_kib": "615040",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5907376",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "589568",
+        "elapsed_seconds": "9.133",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-15",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-15/receipt.json",
+        "sha256": "d6c61c28bb479c6722a3bf72fe7cb4a4b91547aab1bbefb5fc9605b20c991900"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "16.15",
+        "user_seconds": "15.15",
+        "system_seconds": "0.94",
+        "max_process_rss_kib": "534784",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5945292",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "555904",
+        "elapsed_seconds": "16.253",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-16",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-16/receipt.json",
+        "sha256": "17f0f0808a81e87c2107030cceafc0ad5039fa3d167cda7448e9b9f48326e3e0"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "5.34",
+        "user_seconds": "4.79",
+        "system_seconds": "0.58",
+        "max_process_rss_kib": "470528",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6075288",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "424576",
+        "elapsed_seconds": "6.097",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-17",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-17/receipt.json",
+        "sha256": "605092dbbebbb16bd786ee6dc9aa7524a1789b1b7b7dee0c030124ba5120a351"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "5.01",
+        "user_seconds": "4.35",
+        "system_seconds": "0.68",
+        "max_process_rss_kib": "468864",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6148884",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "357760",
+        "elapsed_seconds": "5.096",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-18",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-18/receipt.json",
+        "sha256": "5e2e93d46b829a440beb99649c28dc952aaf9797afc80e2402ce0a1dce13e8f9"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "4.90",
+        "user_seconds": "4.25",
+        "system_seconds": "0.67",
+        "max_process_rss_kib": "484480",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6142648",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "361216",
+        "elapsed_seconds": "5.082",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-19",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-19/receipt.json",
+        "sha256": "523cfc8d649e83947d389a920158f5af1df9325c63bf96035aa7a2162981c7c5"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "40.40",
+        "user_seconds": "39.22",
+        "system_seconds": "1.09",
+        "max_process_rss_kib": "543616",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5942408",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "564480",
+        "elapsed_seconds": "40.664",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-20",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-20/receipt.json",
+        "sha256": "8e0c943191ec0f832c296f58a7642abc34ddbacf6788b02463dc17eacc1babf1"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "31.80",
+        "user_seconds": "30.78",
+        "system_seconds": "1.03",
+        "max_process_rss_kib": "543360",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5930952",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "564224",
+        "elapsed_seconds": "32.462",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "cuda-production-v2-21",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-v2-21/receipt.json",
+        "sha256": "46e4822ba936275de05b35a5ddc72f2b30765d5425e833ab3408abb64eed5bb1"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "67.52",
+        "user_seconds": "65.36",
+        "system_seconds": "2.16",
+        "max_process_rss_kib": "859692",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "5646812",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "880556",
+        "elapsed_seconds": "68.005",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    }
+  ],
+  "short_process_metrics": [
+    {
+      "name": "short-01-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-01-before/receipt.json",
+        "sha256": "cd80382a06f61a33bca4166e0c10496a29aa4472beba57cc6e9e8677929430c5"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.28",
+        "user_seconds": "0.13",
+        "system_seconds": "0.15",
+        "max_process_rss_kib": "23076",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6445216",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.035",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-02-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-02-retired/receipt.json",
+        "sha256": "f720a49bff89cd202a4b8bf46cc6c9c50631475f99185eda63325295da1befcf"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.05",
+        "user_seconds": "0.04",
+        "system_seconds": "0.02",
+        "max_process_rss_kib": "21540",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6445468",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.030",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-03-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-03-before/receipt.json",
+        "sha256": "4f55a22454f37ec748d1fd935a613db3cb3c6e4b8ea5c7b803d8c4167fd533e8"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.09",
+        "user_seconds": "0.09",
+        "system_seconds": "0.01",
+        "max_process_rss_kib": "23404",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6444576",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.033",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-04-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-04-retired/receipt.json",
+        "sha256": "e15cacfba80f22e5cd61d83a7ad987e4ab7fc9fe791d994b92f1cfed1f27d38c"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.05",
+        "user_seconds": "0.05",
+        "system_seconds": "0.00",
+        "max_process_rss_kib": "21480",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6376712",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.036",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-05-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-05-before/receipt.json",
+        "sha256": "08e9494441d771f8c2ca2b94c311166c3b70ce1ab7d129d4b21f5f2a80c43748"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.09",
+        "user_seconds": "0.09",
+        "system_seconds": "0.00",
+        "max_process_rss_kib": "23568",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6342228",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.033",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-06-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-06-retired/receipt.json",
+        "sha256": "39120bfa5b8aab590f66654c3cdf6a6fc1288e776374e1f57296b28350b81217"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.05",
+        "user_seconds": "0.06",
+        "system_seconds": "0.00",
+        "max_process_rss_kib": "21700",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6396480",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.039",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-07-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-07-before/receipt.json",
+        "sha256": "fd879acc5598e9c28412bc9640ad3c477637516a6f7fa50072f987dca91c32a1"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.09",
+        "user_seconds": "0.10",
+        "system_seconds": "0.00",
+        "max_process_rss_kib": "23896",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6400420",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.033",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-08-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-08-retired/receipt.json",
+        "sha256": "34413886aa5571e15db24aebe7800ed2a591d89901967134ff111680d9accf79"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.05",
+        "user_seconds": "0.06",
+        "system_seconds": "0.00",
+        "max_process_rss_kib": "21944",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6328680",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.037",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-09-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-09-before/receipt.json",
+        "sha256": "1128226ca5a732ec75b2d3e62a5f238bddacc4df9f80346d5e453a0de73679fc"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.10",
+        "user_seconds": "0.09",
+        "system_seconds": "0.02",
+        "max_process_rss_kib": "24100",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6328092",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.035",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-10-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-10-retired/receipt.json",
+        "sha256": "8657df965beda9fc9d0e4d27b94346f91dc0c209dcc506545a9761b0a548f03b"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.05",
+        "user_seconds": "0.06",
+        "system_seconds": "0.01",
+        "max_process_rss_kib": "22100",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6334480",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.037",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-11-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-11-before/receipt.json",
+        "sha256": "794a2a692fba64cc99667d8de558bfb0c3e56153c0cc23f10c85fcd1caed3521"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.11",
+        "user_seconds": "0.20",
+        "system_seconds": "0.00",
+        "max_process_rss_kib": "26124",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6323008",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.034",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-12-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-12-retired/receipt.json",
+        "sha256": "c98c6c49851ec8350146e598ddeebe939d18103c76fe781d886e7fb88a16a417"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "0.09",
+        "user_seconds": "0.17",
+        "system_seconds": "0.02",
+        "max_process_rss_kib": "24600",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6320744",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1408",
+        "elapsed_seconds": "1.036",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-13-before",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-13-before/receipt.json",
+        "sha256": "fabcefcc1ba5f72ef8d43dec7bfc652c2555bd4e5ecdfd34987d2eb78e71d6d1"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "1.09",
+        "user_seconds": "3.03",
+        "system_seconds": "0.09",
+        "max_process_rss_kib": "150556",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6205064",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "152248",
+        "elapsed_seconds": "2.057",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    },
+    {
+      "name": "short-14-retired",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/short-14-retired/receipt.json",
+        "sha256": "b0734f13fe785a4b9eb16a0b5a79998e2e4de101ef9e55d01d6e95788be20775"
+      },
+      "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "exit": 0,
+      "source_freeze_sha256": "27e3f6d9239297731868f0c30892cd8c4cbba37cd7ea83c3fb5a4f6ccb6d6b3b",
+      "gnu": {
+        "elapsed_seconds": "1.07",
+        "user_seconds": "3.13",
+        "system_seconds": "0.07",
+        "max_process_rss_kib": "148432",
+        "exit": "0"
+      },
+      "memory_guard": {
+        "min_available_kib": "6211892",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "150120",
+        "elapsed_seconds": "2.056",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt."
+    }
+  ],
+  "failed_attempts": [
+    {
+      "name": "architecture-audit",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/architecture-audit/receipt.json",
+        "sha256": "bd79d3393e484c0f1706b935aaeb9d4c8a5d70d431540d1ba5418ea12f53ffdb"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "2bc8720ecb8b6c800ca761d70727a629160a9b98f96d105d8b44df90498ac3e5",
+      "gnu": {
+        "elapsed_seconds": "2.97",
+        "user_seconds": "2.36",
+        "system_seconds": "0.59",
+        "max_process_rss_kib": "31620",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "4334880",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "34436",
+        "elapsed_seconds": "3.083",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Exact reviewed geometry POD adapter snapshot still required deleted RZ fields; synchronized exact ordinary field bridge, kept all negative controls."
+    },
+    {
+      "name": "build-cpu-1",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-1/receipt.json",
+        "sha256": "1a2d6613888f9e11c35fab8a7bd89531d9532d4a980cffcebff57cd7dd45be1a"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "767b3aafc2c3d6a9b760e023a05b33919714987b0350326b8f735756e5f4e534",
+      "gnu": {
+        "elapsed_seconds": "5.00",
+        "user_seconds": "5.36",
+        "system_seconds": "0.90",
+        "max_process_rss_kib": "241012",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "6018220",
+        "baseline_swap_kib": "32248",
+        "peak_swap_kib": "32248",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "267040",
+        "elapsed_seconds": "5.200",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Cartesian Poisson retained a deleted local RZ selector; removed dead condition."
+    },
+    {
+      "name": "build-cpu-2",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-2/receipt.json",
+        "sha256": "e1988f2c01b5715e70415eaad59d74be7848415925fb0d08878ce300b17a6d89"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "4ed77a9d5f0d978f3544cb6701c2bb3a4f60e640385d19c6c83f4f672b93101c",
+      "gnu": {
+        "elapsed_seconds": "24.91",
+        "user_seconds": "27.10",
+        "system_seconds": "5.51",
+        "max_process_rss_kib": "342396",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "4151232",
+        "baseline_swap_kib": "31992",
+        "peak_swap_kib": "31992",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "683140",
+        "elapsed_seconds": "24.999",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Ordinary PhysicalPosition caller retained deleted chart argument."
+    },
+    {
+      "name": "build-cpu-3",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-3/receipt.json",
+        "sha256": "e9addcc8dc46d674e8441f567156ee38bf407169440c5ee52a33741101fc5b3b"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "7ddcd1d731509bef50c9117a1c00e6b78e3c01352bf7f2e05b923898a54a2135",
+      "gnu": {
+        "elapsed_seconds": "11.79",
+        "user_seconds": "12.06",
+        "system_seconds": "2.37",
+        "max_process_rss_kib": "455416",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "4536904",
+        "baseline_swap_kib": "31992",
+        "peak_swap_kib": "31992",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "731864",
+        "elapsed_seconds": "12.197",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Orphan comment terminator, ghost bounds parameter and missing ordinary geometry accessor."
+    },
+    {
+      "name": "build-cpu-4",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-4/receipt.json",
+        "sha256": "98004d42d7e63ec3f82441f85dd150823294ed786e18b50a0b675a32a800ff3a"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "8b2e3901a341a04fcab4b2ea386aa0593aceecfae51fc855220abf89a19ac9fe",
+      "gnu": {
+        "elapsed_seconds": "247.87",
+        "user_seconds": "462.44",
+        "system_seconds": "55.18",
+        "max_process_rss_kib": "785804",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "3529164",
+        "baseline_swap_kib": "31992",
+        "peak_swap_kib": "34296",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1533504",
+        "elapsed_seconds": "248.524",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Collected real declaration/signature/comment/test seams after large retirement; repaired without compatibility stubs."
+    },
+    {
+      "name": "build-cpu-5",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-5/receipt.json",
+        "sha256": "ab2000b0579e3d320f114ac49fe593c5f12381ea9992eaa53c91557c5fa93400"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "7d007f4ac73bf855037586b580401f7370908c6b28b02276a89a95cc407dfbed",
+      "gnu": {
+        "elapsed_seconds": "70.46",
+        "user_seconds": "171.53",
+        "system_seconds": "11.97",
+        "max_process_rss_kib": "855160",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "4936128",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1676264",
+        "elapsed_seconds": "71.277",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Three ordinary diffusion synchronization callers retained retired bounds argument."
+    },
+    {
+      "name": "build-cpu-6",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-6/receipt.json",
+        "sha256": "8a871956dac7b45ed0574e2492c62ebc3778a29cd15f20e40fb4cbfe7d6bbbb9"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "b2641b7598db1b6420a6f5585edb0d5730f0bbbbfebe84f9ad491def70665263",
+      "gnu": {
+        "elapsed_seconds": "4.46",
+        "user_seconds": "0.93",
+        "system_seconds": "0.60",
+        "max_process_rss_kib": "57136",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "6502788",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "50908",
+        "elapsed_seconds": "5.070",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Manager named a non-existent standalone Hydro test target; real source already owned by gravity_stage_contract, corrected invocation."
+    },
+    {
+      "name": "build-cpu-7",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/build-cpu-7/receipt.json",
+        "sha256": "dc053606e2abc548fc46e9009a750d31fbaa2b9afa271389c5f82ef2fdf1c0fd"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "b2641b7598db1b6420a6f5585edb0d5730f0bbbbfebe84f9ad491def70665263",
+      "gnu": {
+        "elapsed_seconds": "99.60",
+        "user_seconds": "574.59",
+        "system_seconds": "34.49",
+        "max_process_rss_kib": "1374440",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "3897680",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "2738444",
+        "elapsed_seconds": "100.624",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Direct AMR test used BCHandler without including its defining header."
+    },
+    {
+      "name": "cpu-affected-short-tests-1",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cpu-affected-short-tests-1/receipt.json",
+        "sha256": "f629c899742bc5e9ff0aad6a405deb21126ce9ae3b5aa627b09a20e2944a9907"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 8,
+      "source_freeze_sha256": "052a5aa968e558712f0775d920301fe77a0335134883b4dd92dba567dd208485",
+      "gnu": {
+        "elapsed_seconds": "24.96",
+        "user_seconds": "48.67",
+        "system_seconds": "3.30",
+        "max_process_rss_kib": "716652",
+        "exit": "8"
+      },
+      "memory_guard": {
+        "min_available_kib": "5789372",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "794020",
+        "elapsed_seconds": "25.365",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "16/20 passed, four failed: real Cyl3 seam mistakenly excluded, stale scheduler fingerprints, SNIa input count, and exact case-unit review stamps. Restored Cyl3 ordinary eligibility, retained numeric gates, updated consumers and independently reviewed units."
+    },
+    {
+      "name": "cuda-affected-leaf-build",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-affected-leaf-build/receipt.json",
+        "sha256": "7b646880621fb35ba25b747702aab38a6be5f72e572b0697840aae56f480e497"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "80ca5b638389097e562ea2d251f2238235e79a5af337a81f349b84af0a71e2e1",
+      "gnu": {
+        "elapsed_seconds": "174.42",
+        "user_seconds": "208.95",
+        "system_seconds": "16.66",
+        "max_process_rss_kib": "873460",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "4918652",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1654844",
+        "elapsed_seconds": "175.273",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "7 leaf owners built; boundary test lacked its direct HostBoundaryPlan include. Full failed cost retained; subsequent original target set succeeds."
+    },
+    {
+      "name": "cuda-production-final-03",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-final-03/receipt.json",
+        "sha256": "059d8b3d91800ec570d81b4080cf578dce1764ff4443f5fbd8b62b44d96f8c36"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "f71054ee51773aaf96e038564230a6b71bf02f9b57120a03f46ced1793cd83d3",
+      "gnu": {
+        "elapsed_seconds": "4.02",
+        "user_seconds": "3.68",
+        "system_seconds": "0.31",
+        "max_process_rss_kib": "444336",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "6115936",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "400036",
+        "elapsed_seconds": "4.067",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Ordinary CUDA reflux consumer retained retired RZ topology argument."
+    },
+    {
+      "name": "cuda-production-object-01",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/cuda-production-object-01/receipt.json",
+        "sha256": "1c17af7942ebccf82ac92d1e49cf263ff666d6a23d0470b228b74bcd4cfdf42e"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 2,
+      "source_freeze_sha256": "50c7f473693e09a06d2df95ff7d1e0f9baa3ea694fc95e99fa6b8fdd2aba66dd",
+      "gnu": {
+        "elapsed_seconds": "1.90",
+        "user_seconds": "1.35",
+        "system_seconds": "0.48",
+        "max_process_rss_kib": "504448",
+        "exit": "2"
+      },
+      "memory_guard": {
+        "min_available_kib": "6032416",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "331008",
+        "elapsed_seconds": "2.051",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "CUDA gravity visitor retained a deleted RZ-only semantics guard after ring owner removal."
+    },
+    {
+      "name": "studio-targeted-checks-1",
+      "receipt": {
+        "path": "output/release/rz-retirement-implementation-20261016/studio-targeted-checks-1/receipt.json",
+        "sha256": "ca891598470f140c39ec489024f92de3b37b70f5d086a6f6b8f44ad73ef025f7"
+      },
+      "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "exit": 1,
+      "source_freeze_sha256": "a9cfb3877fc7a7e8e8c96fbe27a15bd32a4d65be14aa78ec504e12c561703bdb",
+      "gnu": {
+        "elapsed_seconds": "1.86",
+        "user_seconds": "3.25",
+        "system_seconds": "0.60",
+        "max_process_rss_kib": "164584",
+        "exit": "1"
+      },
+      "memory_guard": {
+        "min_available_kib": "6406720",
+        "baseline_swap_kib": "34040",
+        "peak_swap_kib": "34040",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "198056",
+        "elapsed_seconds": "2.038",
+        "stop_reason": "none"
+      },
+      "resource_sampling_limit": "Owned-descendant RSS is sampled, not an exact simultaneous allocation peak or proof of leak freedom. Original per-process missing/exit samples and pressure observations remain in the raw receipt.",
+      "cause_and_disposition": "Current consumers still read immutable historical nine-chart schema; moved consumers to actual eight-chart Core export and retained immutable capture."
+    }
+  ],
+  "cost_summary": {
+    "final_CPU_build_GNU_seconds": 174.82,
+    "CUDA21_object_GNU_seconds_sum": 247.49,
+    "CUDA8_leaf_build_failed_then_repaired_GNU_seconds": [
+      174.42,
+      14.41
+    ],
+    "CPU20_tests_GNU_seconds": 26.27,
+    "GPU8_tests_GNU_seconds": 3.75,
+    "short14_process_GNU_seconds_sum": 3.26,
+    "failed_stage_count": 13,
+    "failed_stage_GNU_seconds_sum": 674.22,
+    "claim": "No stable speedup or whole-project cold/incremental build claim; build attempts used different source windows/actions. Row sums exclude outer guard/review overhead and are not measured project end-to-end wall time."
+  },
+  "history_integrity": {
+    "protected_records": 42,
+    "archived_documents": 107,
+    "original_failures_and_limits": "Original RZ NOT_MET, OMP4 mixed strict FAIL, long/fresh identities and SNIa main FAIL/thermal GAP retained without relabeling.",
+    "all_frozen_versions_match": true,
+    "protected_original_byte_equal": 42,
+    "archived_original_byte_equal": 99,
+    "archived_link_only_rebased": 8,
+    "archive_reference": "REL35DocumentationRelocation-20261016.json records prior and current hashes; no new archive mutation in this package."
+  },
+  "external_collaboration": {
+    "owner_goal": "arch-rel35-perf-20261015",
+    "softcap": 28,
+    "budget_reset": false,
+    "retirement_inference_calls": 8,
+    "CLI_implementation_and_repair_attempts": 6,
+    "independent_API_reviews": 2,
+    "implementation_deliveries": "No external implementation delivery directly accepted; partial material retained, isolated Codex completion integrated and independently qualified. Parent repair-required history and final defer chain retained.",
+    "accepted_review_jobs": [
+      "67f8e7afc07a43a799f9c3082343a35e",
+      "d26498bb3dd043b2ae71443bd58188f2"
+    ],
+    "review_adoption_scope": "evidence_only; source-qualified findings, actual numerical acceptance retained by manager",
+    "not_adopted": "Literal oldpolar alias speculation and duplicate per-model guards: actual name registry and common SetupChecked prevalidation inspected; no new alias/fallback/defensive layer.",
+    "workflow_feedback": "For future CLI implementation packets, keep the actual changed-file report within the existing 20-file delivery bound. Current large delivery mismatches and their repairs are retained. No global skill/MCP infrastructure change.",
+    "cost_unknown": "Unreported provider token/currency and manager inference cost remain unknown.",
+    "final_dispatch_decision": "Mechanical final identity/document/Git checks have no useful new provider assignment; recheck only on a concrete new semantic or numerical blocker."
+  },
+  "evidence_index": [
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/final-history-integrity.json",
+      "sha256": "53c51c9579f698ac943d51e75e0f57d0fb68e604ec42e4aa7a6826de0948e508"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/final-retirement-scope.json",
+      "sha256": "b8fffd7c10c5bdedca1d2af3954207c78439415fa00f366d3826265b1d48b2aa"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/model-unit-review-manager.json",
+      "sha256": "5a9e11facfd13430956ca413be6325f9ecdc6dcd729152142827d451927ea822"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/model-unit-review-delivery.json",
+      "sha256": "7304158242d84a10a2824390c82222b03369dcc3b9d44cd8c3878f8d2ea3643b"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/entry-identity-review-inputs.json",
+      "sha256": "6946b2b0b2be809cb71e6943fd521ae517d8850ff171a1a0e6acddcc41032130"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/multimodel-final-status-20261018.json",
+      "sha256": "90b343b32b14f13fb8420039ed6027c5b4c9c23f5d5fa2542f22039e548e6d35"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/pi-reference-identity.json",
+      "sha256": "0c650479d9489bc8e25005e63bc6e640fd61d159c973de8bd03ba8a18d852976"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/short-physics-plan.json",
+      "sha256": "cf652e92ef4b8e442b547a29468c37d940515390e7213d423d665956dab635e4"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/short-physics-comparison.json",
+      "sha256": "fc8f22164d16b302ae1430732f2848f3b8f20d1e39492446dbec998b6a87bc51"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/cuda-object-plan.json",
+      "sha256": "d730c968fed437f24f637c38edd848065dcd439af32db8178c00246582b08f14"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/cuda-production-objects-v2.json",
+      "sha256": "b3098fad5e61f8def2752f0d0d58239c3848fd52027edc07b43f98d8039f618b"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/final-fixture-synchronization.json",
+      "sha256": "115fbab7bb5ad64201533a86b88e87d26c7ac58831ef99f51f6a316779a4e11c"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/security/false-positive-review.json",
+      "sha256": "bc770130e5d5bc39958af2b5f360f36c71343a40699de93ba41b06f3938fa75d"
+    },
+    {
+      "path": "output/release/rz-retirement-implementation-20261016/security/trusted-policy-installation.json",
+      "sha256": "1a973656896f2a5291af52d5fecc574aca6a50247f7e0bf6525385c4a5ec65b9"
+    }
+  ],
+  "documentation": {
+    "ARCH_RELEASE_PLAN.md": {
+      "path": "ARCH_RELEASE_PLAN.md",
+      "sha256": "b60cfe478ace69da07726f02f5a50e6c2b914c17f1ff2ac844e0ec32950b7c06"
+    },
+    "AGENTS.md": {
+      "path": "AGENTS.md",
+      "sha256": "1e672e2a00605a17686bd03c5f07b834537c2fde2c5080b5c19be83494d883ab"
+    },
+    "docs/development/ImplementationOwnership.md": {
+      "path": "docs/development/ImplementationOwnership.md",
+      "sha256": "c2d2554bb6fd49ee8a95c037e742251674019a443aad727b3df8bf9a444b586e"
+    },
+    "src/physics/gravity/README.md": {
+      "path": "src/physics/gravity/README.md",
+      "sha256": "caa69e63147ca05590f71d68ad5103ea14516361a98248ffc9e0fd5da14abaef"
+    },
+    "validation/README.md": {
+      "path": "validation/README.md",
+      "sha256": "22f222ae66443ac01d4312ed8152053915cff87f916caed1194148ec40318410"
+    },
+    "validation/README.zh-CN.md": {
+      "path": "validation/README.zh-CN.md",
+      "sha256": "76d7ccb551ce1bbd76a7a576d9123460f591621c9d266777f1500d295e0d1e13"
+    }
+  },
+  "not_qualified": [
+    "Full CUDA application/archive and all EOS/network instantiation matrix",
+    "Full Store lifecycle, dynamic multicomponent public AMR/checkpoint/new-process fresh and all device release science",
+    "Hosted CI/actionlint, platform/GUI package and formal release",
+    "Original RZ runtime optimization and any replacement RZ implementation"
+  ],
+  "next": "Stop after the authorized one commit/push and recording it; REL-4 requires subsequent user instruction.",
+  "precommit_review": {
+    "source_index_check": "All 1207 frozen tracked inputs match staged bytes. The initial basic pattern scan found no credential patterns or raw H5/table/build payloads; the repository hook and the separately verified exact false-positive resolution are recorded below.",
+    "whitespace": "13 trailing-whitespace findings, exclusively blank source lines; deferred nonblocking to existing REL5 bulk comment/format batch. Two current Markdown EOF blank lines removed. No scientific code or verification thresholds changed.",
+    "details": {
+      "path": "output/release/rz-retirement-implementation-20261016/precommit-source-and-credential-check.json",
+      "sha256": "5e615972b40f8e6d0f7e03753c66db0ebbb0b2a073adda5492be690c1f91ef7e"
+    },
+    "repository_secret_hook": {
+      "first_commit_attempt": "REJECTED_WITHOUT_COMMIT_OR_PUSH",
+      "initial_findings": 13,
+      "classification": "All 13 are immutable historical scientific SHA-256 entries, each independently derived from its local artifact bytes; none is a credential.",
+      "review": {
+        "path": "output/release/rz-retirement-implementation-20261016/security/false-positive-review.json",
+        "sha256": "bc770130e5d5bc39958af2b5f360f36c71343a40699de93ba41b06f3938fa75d"
+      },
+      "installation": {
+        "path": "output/release/rz-retirement-implementation-20261016/security/trusted-policy-installation.json",
+        "sha256": "1a973656896f2a5291af52d5fecc574aca6a50247f7e0bf6525385c4a5ec65b9"
+      },
+      "candidate_staged_scan": {
+        "findings": 0,
+        "exit_code": 0
+      },
+      "negative_and_positive_control_groups": 6,
+      "scope": "generic-api-key only; exact receipt path AND exact full artifact-key/hash JSON line",
+      "default_detection_rules_preserved": true,
+      "commit_hook_and_LFS_prepush_hook_unchanged": true,
+      "historical_receipts_changed": false,
+      "normal_commit_hook_still_required": true
+    }
+  }
+}

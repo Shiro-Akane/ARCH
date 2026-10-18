@@ -134,11 +134,11 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cartesian 3D | `isolated` | Physical fluid faces may be outflow or reflecting; gravity uses a finite-mass boundary |
 | Cylindrical/spherical radial 1D | `isolated` | Nonnegative radius and reflecting inner radial fluid face |
 | Spherical equatorial polar 2D `(r,phi)` | `isolated` | Full azimuth with periodic fluid faces; reflecting inner radial face |
-| Axisymmetric cylindrical 2D `(r,z)` | Host: `dirichlet`, `neumann`, `user` | Full-ring volume and regular axis joins; see the [feature list](Features.md#self-gravity-domains) for backend scope |
+
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
 | Qualified scopes of all three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 
-Every self-gravity root axis needs a power-of-two cell extent. Root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. User boundaries combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions on valid annuli, sectors or wedges; coordinate singularities retain regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). Periodic gravity responds to density relative to its volume mean; isolated gravity uses the full density. The spherical polar 2D potential uses a logarithmic kernel with mass per unit axial length; axisymmetric `(r,z)` uses full-ring volume. See the [feature list](Features.md#self-gravity-domains) for domain/backend scope and [gravity parameters](#eos-and-gravity) for residual controls.
+Every self-gravity root axis needs a power-of-two cell extent. Root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. User boundaries combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions on valid annuli, sectors or wedges; coordinate singularities retain regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). Periodic gravity responds to density relative to its volume mean; isolated gravity uses the full density. The spherical polar 2D potential uses a logarithmic kernel with mass per unit axial length; cylindrical 2D is unsupported. See the [feature list](Features.md#self-gravity-domains) for domain/backend scope and [gravity parameters](#eos-and-gravity) for residual controls.
 
 ### Combining methods and physics
 
@@ -424,9 +424,9 @@ Logical coordinate meanings are:
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi | r, theta, phi |
-| Cylindrical | r | r, z | r, z, phi |
+| Cylindrical | r | Unsupported | r, z, phi |
 
-For converted `PointCoords`, the origin is fixed at `(0,0,0)`. Cylindrical 2D expands `(r,z)` as `point.x=r`, `point.y=0`, `point.z=z`, with `point.phi_cy=0`; radial, axial and azimuthal velocities remain three physical components.
+Converted `PointCoords` use the fixed origin `(0,0,0)`. The logical axes in the table determine the physical Cartesian and native coordinate fields; unsupported geometry/dimension combinations reject before conversion.
 
 Every `bool` parameter accepts `true` or `false` case-insensitively (for example,
 `TRUE`, `False`, and `tRuE`). Numeric `0/1`, `on/off`, `yes/no`, partial matches,
@@ -665,7 +665,7 @@ include `rho`, `p`, `u`, `v`, `w`, and `eng`.
 | `DENS` | mass density | yes | yes | all models |
 | `PRES` | pressure from active EOS | yes | yes | all EOS |
 | `TEMP` | temperature from active EOS | yes | yes | all EOS |
-| `VELX/Y/Z` | physical velocity components in the selected computational chart | yes | yes | RZ exposes all three components; Cartesian planes select active dimensions; component meaning follows the chart |
+| `VELX/Y/Z` | physical velocity components in the selected computational chart | yes | yes | Output selects active dimensions; physical component meaning follows the chart |
 | `ENER` | total energy density | yes | yes | all models |
 | `VORT` | metric-aware curl magnitude | yes | yes | implemented geometries |
 | `DIVV` | metric-aware velocity divergence | yes | yes | implemented geometries |
@@ -781,7 +781,7 @@ struct PointCoords {
 };
 ```
 
-Two-dimensional spherical geometry uses the polar plane `(r,phi)`, while two-dimensional cylindrical geometry uses the axisymmetric plane `(r,z)`. Both RZ axes are lengths, all three physical velocity components remain present, and a representative meridian point has `(x,y,z)=(r,0,z)`.
+Spherical 2D uses the polar `(r,phi)` plane. Cylindrical grids support radial 1D and full 3D `(r,z,phi)`; cylindrical 2D is explicitly rejected. All supported grids retain three physical momentum components.
 
 `Grid::GetPhysicalCoords` populates every representation. For a 3D spherical
 density profile centered at the origin, let `rho_bg > 0`, `rho_peak > 0`, and
@@ -824,7 +824,7 @@ center_y_ = config.grid.x2_min;
 measures from the global `(0,0,0)` origin. Shifting the physical profile does
 not shift the origin or axis of the curved grid metric; on a curved grid,
 `x1_min` is a native radial bound. See the [case guide](guides/SimulationCase.md#pointcoords)
-for a complete example. The second logical coordinate is axial `z` in cylindrical 2D and planar azimuth `phi` in spherical 2D.
+for a complete example. The second logical coordinate is planar azimuth `phi` in spherical 2D; cylindrical 2D is unsupported.
 
 ### `PrimitiveData`
 

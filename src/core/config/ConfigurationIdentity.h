@@ -14,7 +14,7 @@
 #include <string>
 
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 #include "io/hdf5/HDF5Writer.h"
 
 struct SimConfig;
@@ -27,6 +27,5 @@ std::string canonical_configuration_record(const SimConfig& config);
 io::PlotSourceIdentity make_plot_source_identity(
     const SimConfig& config, const io::CheckpointProvenance& provenance,
     const arch::dispatch::ResolvedExecutionPlan& plan,
-    arch::dispatch::ComputeBackend backend,
-    GridMetrics::GeometrySemantics semantics);
+    arch::dispatch::ComputeBackend backend);
 } // namespace arch::config

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "data/FluidState.h"
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 #include "grid/Grid.h"
 #include "numerics/diffusion/NewtonianViscousStress.h"
 #include <algorithm>
@@ -140,8 +140,7 @@ void convergence(const char* backend, Evaluate evaluate)
     for (int dimension : {1, 2, 3})
     for (double density_slope : {0., .1})
     for (bool uniform : {false, true}) {
-        // The former cylindrical polar problem is retired. Genuine RZ tensor
-        // and angular-moment witnesses belong to the existing RzViscousCases owner.
+        // Cylindrical two-dimensional geometry is retired.
         if (dimension==2 && std::string_view(name)=="cylindrical") continue;
         if (dimension == 1 && uniform) continue;
         double previous = 0.;
@@ -370,7 +369,7 @@ void density_stability(const char* backend, Evaluate evaluate)
 }
 
 /** Independent point-law inputs/closed analytical expectations, not a PDE oracle.
- * In RZ the physical component order is (r,z,phi). Gradients below include
+ * In cylindrical 3D the physical component order is (r,z,phi). Gradients below include
  * the true connections G_rphi=-u_phi/r and G_phiphi=u_r/r through their exact
  * regular polynomial values, including r=0; the production law divides by no
  * radius. mu=rho*nu varies with z in the shear/swirl examples. Cartesian 1D

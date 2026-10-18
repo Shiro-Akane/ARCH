@@ -32,6 +32,15 @@ memcheck/racecheck 四组检查各完成十二次执行和九次严格比较；�
 实际 CUDA 进程，报告完整且无报错。各记录保留实际受测源码与程序的身份，详细入口
 集中在本页末尾。
 
+## 当前 CPU 续算
+
+[当前 CPU 记录](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+覆盖 RT、BurnGradient、CooperativeHotspots 和 Cartesian 四模块 SNIa，分别从
+重网格后及终态检查点启动新进程。采用的夹具通过原时间、控制器、拓扑、物理配置身份
+与实际输出历史门槛，全部原生物理数组逐位相同。SNIa 同时匹配 checkpoint 和 plot
+边界；此前边界不匹配的数值／存储位及输出历史结果原样保留，求解器历史策略和比较
+预算未改。这些短检查不重新授予历史长程、原 SNIa `1e-8 s` 资格或 CUDA 执行证据。
+
 <a id="发布候选版本已完成的检查"></a>
 
 ## CPU/CUDA 已通过的检查

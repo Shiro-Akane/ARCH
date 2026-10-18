@@ -75,8 +75,11 @@ class CoupledMicrophysicsTests(unittest.TestCase):
             burn_energy_weights=[rest-2.,rest-6.],burn_energy_conversion=-1.,
             burn_energy_basis='nuclear_mass'))
         with patch.dict(sys.modules,{'nse_reference':reference}), \
-             patch.object(module.runtime,'read_conservation_metrics',side_effect=snapshots):
-            return module.balance(Path('validator'),Path('initial'),Path('final'),Path('par'))
+             patch.object(module.runtime,'read_conservation_metrics',side_effect=snapshots) as read:
+            result=module.balance(Path('validator'),Path('initial'),Path('final'),Path('par'))
+        self.assertEqual([call.kwargs for call in read.call_args_list],
+                         [dict(preserve_total_precision=True)]*2)
+        return result
 
     def test_source_aware_balance_accepts_nonzero_nuclear_energy(self):
         result=self.balance(self.snapshots())
@@ -92,6 +95,46 @@ class CoupledMicrophysicsTests(unittest.TestCase):
     def test_zero_burn_cannot_qualify_coupled_case(self):
         initial=self.snapshots()[0]
         with self.assertRaises(ArithmeticError): self.balance([initial,copy.deepcopy(initial)])
+
+    def test_first_law_preserves_totals_before_nuclear_mass_subtraction(self):
+        # Decimal totals from the BE_NR/RKL2 physical-transport precision
+        # counterexample. The original nuclear-mass law and 1e-12 gate pass
+        # native totals, while a binary64 JSON intermediate fails that gate.
+        trace='9.999999999999999046e-14'
+        initial=[trace,'4999999.9999999999995','4999999.9999999999995']+[trace]*10
+        final=['0.9088699791900990678','4999994.5465962490316',
+               '4999999.9847386983815','4.535217129777006291',
+               '0.01134121643859876336','0.0132360660654031431875',
+               '6.5941065166456121506e-07','1.00571778964579291427e-13',
+               '1.0000000002662455299e-13','1.000000000000404511e-13',
+               '1.000000000000759261e-13','1.0000000000007510236e-13',
+               '1.00000000000058748566e-13']
+        def text(mass,energy,species):
+            return ('{"totals_encoding":"native_long_double_roundtrip_decimal",'
+                    '"measure":"physical_cell_volume","geometry":"cartesian",'
+                    '"mass":'+mass+',"energy":'+energy+','
+                    '"mom_u":0,"mom_v":0,"mom_w":0,"rhoX":['+','.join(species)+']}')
+        outputs=[text('9999999.999999999999','1.8220881033635051481e+24',initial),
+                 text('9999999.999999998239','1.8220891244737399267e+24',final)]
+        responses=[SimpleNamespace(returncode=0,stderr='',stdout=output) for output in outputs]
+        with tempfile.TemporaryDirectory() as directory:
+            parameters=Path(directory)/'actual.par'
+            parameters.write_text('geometry = cartesian\n')
+            args=(Path('validator'),Path('initial'),Path('final'),parameters)
+            with patch.object(module.runtime.subprocess,'run',side_effect=responses):
+                result=module.balance(*args)
+            self.assertLess(result['energy_relative'],1e-12)
+            self.assertEqual(result['budget'],1e-12)
+            self.assertEqual(result['before']['energy'],'1.8220881033635051481e+24')
+            json.dumps(result)
+            reader=module.runtime.read_conservation_metrics
+            def binary64_reader(*args,**kwargs):
+                kwargs['preserve_total_precision']=False
+                return reader(*args,**kwargs)
+            with patch.object(module.runtime.subprocess,'run',side_effect=responses), \
+                 patch.object(module.runtime,'read_conservation_metrics',side_effect=binary64_reader), \
+                 self.assertRaisesRegex(ArithmeticError,'first-law'):
+                module.balance(*args)
 
     def test_binding_only_balance_cannot_hide_rest_mass_drift(self):
         records=self.snapshots()

@@ -25,12 +25,11 @@
 
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/topology/Morton.h"
-#include "amr/transfer/NativeRzRegridTransfer.h"
 #include "amr/transfer/RegridTransferMath.h"
 
 #include "data/FluidState.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 
@@ -50,17 +49,6 @@ struct Block {
 
     // Grid topology object (used by physics modules)
     Grid grid;
-
-    /** Verify that a bound native Grid belongs to this actual Block.
-     * Unbound standalone mathematical fixtures retain exact physical partition
-     * checks; they cannot acquire authenticated hierarchy provenance here.
-     */
-    void RequireNativeGeometryIdentity() const {
-        const auto& identity=grid.dyadic_identity;
-        if(identity.bound && (identity.level!=level
-            ||identity.logical!=std::array<std::uint32_t,2>{logical_x1,logical_x2}))
-            throw std::invalid_argument("Native RZ Grid is bound to a different Block identity");
-    }
 
     // Data payload
     FluidState fluid_state;
@@ -120,9 +108,7 @@ struct Block {
      */
     void InterpolateFromCoarse(const Block& coarse, int child_idx, int dim,
                                double density_floor,
-                               double min_specific_internal_energy,
-                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-                         double max_specific_internal_energy = std::numeric_limits<double>::max());
+                               double min_specific_internal_energy);
 
     /**
      * @brief Volume average data from child blocks to this coarse block.
@@ -131,13 +117,11 @@ struct Block {
      */
     void AverageToCoarse(const Block* children[], int dim,
                          double density_floor,
-                         double min_specific_internal_energy,
-                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+                         double min_specific_internal_energy);
     // Candidate-parent preflight returns the shared mathematical status.
     // It never mutates source children or allocates/publishes a pool block.
     regrid_math::Status TryAverageToCoarse(const Block* children[], int dim,
-                         double density_floor, double min_specific_internal_energy,
-                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing);
+                         double density_floor, double min_specific_internal_energy);
 
 
 
@@ -185,37 +169,9 @@ public:
      * @param root_dx1/2/3  Root-level cell spacing (computed by AmrTree)
      */
     void InitGeometry(const Grid& root_grid,
-                      double root_dx1, double root_dx2, double root_dx3,
-                      GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing)
+                      double root_dx1, double root_dx2, double root_dx3)
     {
-        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-            // Workflow: bind the immutable real root and logical block first;
-            // derive both block endpoints from the same canonical face owner;
-            // retain dx only as a representative layout descriptor. Runtime
-            // physics/transfer use actual cell faces and widths from this Grid.
-            if(root_grid.dim!=2||root_grid.geometry!="cylindrical")
-                throw std::invalid_argument("Native RZ Block requires cylindrical dimension 2");
-            GridMetrics::DyadicGridIdentity identity{};
-            identity.bound=true;
-            identity.root_lower={root_grid.x1_min,root_grid.x2_min};
-            identity.root_upper={root_grid.x1_max,root_grid.x2_max};
-            identity.root_blocks={root_grid.nblockx1,root_grid.nblockx2};
-            identity.level=level;identity.logical={logical_x1,logical_x2};
-            identity.periodic_axial=root_grid.dyadic_identity.periodic_axial;
-            double rlo=0.,rhi=0.,dr=0.,zlo=0.,zhi=0.,dz=0.;
-            if(!GridMetrics::expected_axis(identity,0,rlo,rhi,dr)
-               ||!GridMetrics::expected_axis(identity,1,zlo,zhi,dz))
-                throw std::invalid_argument("Native RZ canonical Block geometry is invalid");
-            // The inactive third-coordinate arithmetic stays the existing one.
-            const double factor=1.0/(1<<level),dx3=root_dx3*factor;
-            const double x3_min=root_grid.x3_min+logical_x3*BLOCK_NZ*dx3;
-            const double x3_max=x3_min+BLOCK_NZ*dx3;
-            grid=Grid(MAX_NG,rlo,rhi,zlo,zhi,x3_min,x3_max,
-                root_grid.nblockx1,root_grid.nblockx2,root_grid.nblockx3);
-            grid.geometry=root_grid.geometry;grid.dim=root_grid.dim;
-            grid.dyadic_identity=identity;
-            grid.InitializeTopology(semantics);return;
-        }
+
         const auto metadata=ordinary_logical_geometry(root_grid,root_dx1,root_dx2,root_dx3);
         // Initialize local grid topology wrapper
         grid = Grid(MAX_NG,
@@ -225,23 +181,21 @@ public:
                     root_grid.nblockx1, root_grid.nblockx2, root_grid.nblockx3);
         grid.geometry = root_grid.geometry;
         grid.dim = root_grid.dim;
-        grid.InitializeTopology(semantics);
+        grid.InitializeTopology();
     }
     /** Require exact root/logical/local geometry identity, without BC authority.
      * Workflow: validate chart and checked integer topology -> generate the
-     * original ordinary endpoint metadata or authenticate Native canonical
-     * metadata -> check represented local spacings and fixed storage layout.
+     * original endpoint metadata -> check represented local spacings and fixed
+     * storage layout.
      * Root spacing follows AmrTree's actual root construction; active counts
      * and all logical coordinates are checked BEFORE Morton masking/shifts.
      * This proves numerical geometry only; the caller must separately own the
      * real Tree/block/handle/slot/epoch and completed ghost publication.
      */
-    void RequireLogicalGeometryIdentity(const Grid& root,
-        GridMetrics::GeometrySemantics semantics=GridMetrics::GeometrySemantics::Existing) const
+    void RequireLogicalGeometryIdentity(const Grid& root) const
     {
-        using Semantics=GridMetrics::GeometrySemantics;
-        if((semantics!=Semantics::Existing&&semantics!=Semantics::AxisymmetricRz)
-            ||root.dim<1||root.dim>3||grid.dim!=root.dim||grid.geometry!=root.geometry
+        if(root.dim<1||root.dim>3||grid.dim!=root.dim||grid.geometry!=root.geometry
+            ||(root.geometry=="cylindrical"&&root.dim==2)
             ||GridMetrics::geometry_from_name(root.geometry)==GridMetrics::Geometry::Unsupported
             ||level<0||level>kMaxRefinementLevel)
             throw std::invalid_argument("Logical Block chart/level identity is invalid");
@@ -276,26 +230,12 @@ public:
         const double root_dx3=root.nblockx3>0
             ?(root.x3_max-root.x3_min)/(root.nblockx3*BLOCK_NZ):0.;
         const auto metadata=ordinary_logical_geometry(root,root_dx1,root_dx2,root_dx3);
-        if(semantics==Semantics::AxisymmetricRz) {
-            if(root.dim!=2||root.geometry!="cylindrical"||!grid.dyadic_identity.bound)
-                throw std::invalid_argument("Logical Native Block requires its real canonical root");
-            RequireNativeGeometryIdentity();
-            const auto& identity=grid.dyadic_identity;
-            if(identity.root_blocks!=std::array<int,2>{count[0],count[1]}
-                ||identity.periodic_axial!=root.dyadic_identity.periodic_axial)
-                throw std::invalid_argument("Logical Native Block root topology changed");
-            for(int axis=0;axis<2;++axis)
-                if(!same(identity.root_lower[axis],lower[axis])
-                    ||!same(identity.root_upper[axis],upper[axis]))
-                    throw std::invalid_argument("Logical Native Block canonical root bounds changed");
-            (void)GridMetrics::make_geometry_view(grid,semantics);
-        } else {
-            if(grid.dyadic_identity.bound
-                ||!same(grid.x1_min,metadata.x1_min)||!same(grid.x1_max,metadata.x1_max)
+
+            if(!same(grid.x1_min,metadata.x1_min)||!same(grid.x1_max,metadata.x1_max)
                 ||!same(grid.x2_min,metadata.x2_min)||!same(grid.x2_max,metadata.x2_max))
                 throw std::invalid_argument("Logical ordinary Block endpoints changed");
-        }
-        // Native and ordinary share the unchanged inactive x3 constructor.
+        
+        // Keep the inactive x3 constructor arithmetic unchanged.
         if(!same(grid.x3_min,metadata.x3_min)||!same(grid.x3_max,metadata.x3_max)
             ||!same(grid.dx1,(grid.x1_max-grid.x1_min)/BLOCK_NX)
             ||!same(grid.dx2,root.dim>=2?(grid.x2_max-grid.x2_min)/BLOCK_NY:0.)
@@ -329,14 +269,10 @@ inline regrid_math::ConstStateView regrid_state_view(const FluidState& state)
 
 inline void Block::InterpolateFromCoarse(
     const Block& coarse, int child_idx, int dim, double density_floor,
-    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics,
-    double max_specific_internal_energy)
+    double min_specific_internal_energy)
 {
-    if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        RequireNativeGeometryIdentity();coarse.RequireNativeGeometryIdentity();
-    }
-    const auto fine_view=GridMetrics::make_geometry_view(grid,semantics);
-    const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid,semantics);
+    const auto fine_view=GridMetrics::make_geometry_view(grid);
+    const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid);
     const int nx = BLOCK_NX / 2;
     const int ny = dim >= 2 ? BLOCK_NY / 2 : 1;
     const int nz = dim == 3 ? BLOCK_NZ / 2 : 1;
@@ -352,50 +288,7 @@ inline void Block::InterpolateFromCoarse(
     std::vector<double> workspace(static_cast<std::size_t>(species)
         * regrid_math::prolongation_workspace_per_species);
     const auto source = regrid_state_view(coarse.fluid_state);
-    if (semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        // Workflow: bind actual source/child geometry and immutable readers;
-        // integrate the shared native family; write only provisional interiors.
-        // Actual complete hierarchy ghosts/EOS remain the Runtime finalizer's
-        // authority. No raw mixed-mean Cartesian energy recovery is performed.
-        const arch::state::Bounds bounds{
-            density_floor,min_specific_internal_energy,max_specific_internal_energy};
-        const auto read=[&](int index){return coarse.fluid_state.get(index);};
-        const auto enuc=[&](int index){return coarse.fluid_state.enuc_rate[index];};
-        const auto fraction=[&](int sp,int index){return coarse.fluid_state.X(sp,index);};
-        for (int j=0;j<ny;++j)for (int i=0;i<nx;++i) {
-            regrid_math::NativeRzProlongationContext context{};
-            context.source_geometry=coarse_view;
-            context.logical_nx=coarse.grid.GetTotalX();
-            context.logical_ny=coarse.grid.GetTotalY();
-            context.radial_i=coarse.grid.Is()+offset_x+i;
-            context.axial_j=coarse.grid.Js()+offset_y+j;
-            context.has_destination_geometry=true;context.destination_geometry=fine_view;
-            context.destination_nx=grid.GetTotalX();context.destination_ny=grid.GetTotalY();
-            context.fine_i=grid.Is()+2*i;context.fine_j=grid.Js()+2*j;
-            std::array<int,4> destination{};
-            for (int child=0;child<4;++child) {
-                const int fi=grid.Is()+2*i+(child&1);
-                const int fj=grid.Js()+2*j+((child>>1)&1);
-                destination[child]=grid.GetIndex(fi,fj,0);
-                context.children[child]={fine_view.GetFacePosL(fi),fine_view.GetFacePosR(fi),
-                    fine_view.GetAxialFacePosL(fj),fine_view.GetAxialFacePosR(fj)};
-            }
-            regrid_math::ProlongationResult result{};
-            const auto status=regrid_math::prolong_native_family(context,read,enuc,fraction,
-                species,bounds,workspace.data(),result);
-            if (status!=regrid_math::Status::Ok)
-                throw std::runtime_error(regrid_math::status_message(status));
-            for (int child=0;child<4;++child) {
-                fluid_state.set(destination[child],result.fluid[child]);
-                fluid_state.enuc_rate[destination[child]]=result.enuc[child];
-                for (int sp=0;sp<species;++sp)
-                    fluid_state.X(sp,destination[child])=result.rhoX[
-                        static_cast<std::size_t>(sp)*regrid_math::maximum_children+child]
-                        /result.fluid[child].rho;
-            }
-        }
-        return;
-    }
+
     for (int k = 0; k < nz; ++k) {
         for (int j = 0; j < ny; ++j) {
             for (int i = 0; i < nx; ++i) {
@@ -442,23 +335,19 @@ inline void Block::InterpolateFromCoarse(
 
 inline void Block::AverageToCoarse(
     const Block* children[], int dim, double density_floor,
-    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
+    double min_specific_internal_energy)
 {
     const auto status=TryAverageToCoarse(children,dim,density_floor,
-                                       min_specific_internal_energy,semantics);
+                                       min_specific_internal_energy);
     if(status!=regrid_math::Status::Ok)
         throw std::runtime_error(regrid_math::status_message(status));
 }
 
 inline regrid_math::Status Block::TryAverageToCoarse(
     const Block* children[], int dim, double density_floor,
-    double min_specific_internal_energy, GridMetrics::GeometrySemantics semantics)
+    double min_specific_internal_energy)
 {
-    // Native bound ownership is checked against this actual Block, not merely
-    // a self-consistent Grid descriptor; unbound standalone fixtures stay unbound.
-    if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-        RequireNativeGeometryIdentity();
-    const auto coarse_view=GridMetrics::make_geometry_view(grid,semantics);
+    const auto coarse_view=GridMetrics::make_geometry_view(grid);
     std::array<GridMetrics::GeometryView,8> fine_views{};
     const int nx = BLOCK_NX;
     const int ny = dim >= 2 ? BLOCK_NY : 1;
@@ -471,9 +360,7 @@ inline regrid_math::Status Block::TryAverageToCoarse(
             || children[child]->fluid_state.GetNumSpecies() != species)
             throw std::invalid_argument("invalid Host AMR restriction binding");
     for (int child=0;child<(1<<dim);++child) {
-        if(semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-            children[child]->RequireNativeGeometryIdentity();
-        fine_views[child]=GridMetrics::make_geometry_view(children[child]->grid,semantics);
+        fine_views[child]=GridMetrics::make_geometry_view(children[child]->grid);
     }
     std::vector<double> workspace(static_cast<std::size_t>(species));
     for (int k = 0; k < nz; ++k) {
@@ -492,17 +379,12 @@ inline regrid_math::Status Block::TryAverageToCoarse(
                 regrid_math::RestrictionGeometry geometry{};
                 geometry.count = 1 << dim;
                 geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
-                geometry.angular_momentum=semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
-                if(geometry.angular_momentum)
-                    geometry.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(coarse_view,ci,cj);
                 for (int cell = 0; cell < geometry.count; ++cell) {
                     const int fi = child.grid.Is() + ibase + (cell & 1);
                     const int fj = child.grid.Js() + jbase + (dim >= 2 ? (cell >> 1) & 1 : 0);
                     const int fk = child.grid.Ks() + kbase + (dim == 3 ? (cell >> 2) & 1 : 0);
                     geometry.source_cells[cell] = child.grid.GetIndex(fi, fj, fk);
                     geometry.volumes[cell] = GridMetrics::CellVolume(fine_views[child_index], fi, fj, fk);
-                    if(geometry.angular_momentum)
-                        geometry.angular_measures[cell]=GridMetrics::Rz::AngularMomentumMeasure(fine_views[child_index],fi,fj);
                 }
                 regrid_math::RestrictionResult result{};
                 const auto status = regrid_math::restrict_family(

@@ -14,7 +14,7 @@
 #include "amr/elliptic/EllipticMeshAdapter.h"
 
 #include "amr/AMRControl.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 /** Bind every valid AMR leaf to one x-fast composite Poisson cell and native storage offset. */
@@ -24,14 +24,13 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
     EllipticMeshBinding result;
     auto& base=result.base;
     base.dimension=config.dim;
-    // Tree owns the explicit chart identity; do not reinterpret internal RZ
-    // leaves as legacy cylindrical/azimuthal geometry during scalar binding.
-    base.semantics=control.tree->GetGeometrySemantics();
     if(config.geometry=="cartesian")base.geometry=arch::elliptic::Geometry::Cartesian;
     else if(config.geometry=="cylindrical")base.geometry=arch::elliptic::Geometry::Cylindrical;
     else if(config.geometry=="spherical")base.geometry=arch::elliptic::Geometry::Spherical;
     else throw std::invalid_argument("Unsupported elliptic geometry");
     if (base.dimension<1 || base.dimension>3) throw std::invalid_argument("Invalid elliptic dimension");
+    if (config.geometry=="cylindrical" && base.dimension==2)
+        throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported");
     const int roots[]{config.nblockx1,config.nblockx2,config.nblockx3};
     const int block_cells[]{BLOCK_NX,BLOCK_NY,BLOCK_NZ};
     for (int axis=0;axis<base.dimension;++axis) {
@@ -49,10 +48,6 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
     }
     base.origin={config.x1_min,config.x2_min,config.x3_min};
     const double ends[]{config.x1_max,config.x2_max,config.x3_max};
-    if (base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        base.native_canonical_domain=true;
-        base.root_upper={config.x1_max,config.x2_max,config.x3_max};
-    }
     for (int a=0;a<base.dimension;++a) base.spacing[a]=(ends[a]-base.origin[a])/base.cells[a];
     arch::elliptic::validate_mesh(base);
     const auto& active=control.tree->GetActiveBlocks();
@@ -64,19 +59,6 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
         const auto& block=control.pool->GetBlock(active[b]); const auto& grid=block.grid;
         if (grid.geometry!=config.geometry || grid.dim!=base.dimension)
             throw std::invalid_argument("Composite gravity geometry differs from native binding");
-        if (base.native_canonical_domain) {
-            block.RequireNativeGeometryIdentity();
-            const auto& identity=grid.dyadic_identity;
-            if (!identity.bound||identity.root_blocks!=std::array<int,2>{roots[0],roots[1]}
-                ||identity.periodic_axial!=result.periodic[1])
-                throw std::logic_error("Native elliptic binding does not own the actual root rules");
-            for (int axis=0;axis<2;++axis)
-                if (!GridMetrics::dyadic_identity_detail::same_binary64(
-                        identity.root_lower[axis],base.origin[axis])
-                    ||!GridMetrics::dyadic_identity_detail::same_binary64(
-                        identity.root_upper[axis],base.root_upper[axis]))
-                    throw std::logic_error("Native elliptic root endpoints differ from actual configuration");
-        }
         result.grids.push_back(&grid);
         for (int k=grid.Ks();k<grid.Ke();++k) for (int j=grid.Js();j<grid.Je();++j)
             for (int i=grid.Is();i<grid.Ie();++i) {
@@ -94,23 +76,9 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
                     :(base.geometry==arch::elliptic::Geometry::Cylindrical
                         ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
                 auto fragment=GridMetrics::make_geometry_view(geometry,base.dimension,lower,widths);
-                if(base.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz)
-                    fragment=GridMetrics::make_rz_geometry_view(fragment);
                 double composite=GridMetrics::CellVolume(fragment,0,0,0);
-                if (base.native_canonical_domain) {
-                    std::array<double,2> left{},right{};
-                    for (int axis=0;axis<2;++axis)
-                        if (!GridMetrics::canonical_dyadic_face(base.origin[axis],base.root_upper[axis],
-                                static_cast<std::uint64_t>(base.cells[axis]),cell.level,
-                                static_cast<std::int64_t>(cell.index[axis]),left[axis])
-                            ||!GridMetrics::canonical_dyadic_face(base.origin[axis],base.root_upper[axis],
-                                static_cast<std::uint64_t>(base.cells[axis]),cell.level,
-                                static_cast<std::int64_t>(cell.index[axis])+1,right[axis]))
-                            throw std::logic_error("Invalid native elliptic canonical cell endpoints");
-                    composite=GridMetrics::Rz::CellVolume(left[0],right[0],right[1]-left[1]);
-                }
                 const double native=GridMetrics::CellVolume(
-                    GridMetrics::make_geometry_view(grid,base.semantics),i,j,k);
+                    GridMetrics::make_geometry_view(grid),i,j,k);
                 if(std::abs(native-composite)>64*std::numeric_limits<double>::epsilon()*composite)
                     throw std::logic_error("Elliptic cell volume differs from native metrics");
                 result.cells.push_back(cell);

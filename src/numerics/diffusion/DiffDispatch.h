@@ -29,7 +29,7 @@ namespace Numerics
         // Dummy struct for no diffusion
         struct NoDiffusionIntegrator
         {
-            static void integrate(amr::Block&, const auto&, const Grid&, const SimConfig&, double, double, const auto&, GridMetrics::GeometrySemantics = GridMetrics::GeometrySemantics::Existing, amr::AMRControl* = nullptr)
+            static void integrate(amr::Block&, const auto&, const Grid&, const SimConfig&, double, double, const auto&, amr::AMRControl* = nullptr)
             {
                 // Do nothing
             }

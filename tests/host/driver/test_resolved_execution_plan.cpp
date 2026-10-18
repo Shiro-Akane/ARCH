@@ -730,8 +730,8 @@ void test_factory_routes_preserved()
     config.physics.gravity.type = "none";
     selected = resolve_cpu_factory(0);
     gravity = Physical::Gravity::make_gravity(config, selected.requirements.gravity);
-    expect(dynamic_cast<const Physical::Gravity::GravityNone*>(gravity.get()) != nullptr,
-           "resolved disabled gravity binds GravityNone");
+    expect(!gravity,
+           "resolved disabled gravity has no source or preparation contract");
 
     const auto expect_hydro_route = []<class ExpectedFlux, class ExpectedReconstruction>(
                                         ResolvedExecutionPlan plan) {

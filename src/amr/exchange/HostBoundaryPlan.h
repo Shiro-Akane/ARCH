@@ -151,8 +151,8 @@ inline int flatten_checked(
     return static_cast<int>(index);
 }
 
-/** Compile one original logical mapping into validated Host offsets/signs.
- * Ordinary and RZ-corner callers share the same flattening/component mapping.
+/** Compile one original logical mapping into validated Host offsets/signs,
+ * including the shared flattening/component mapping.
  */
 inline HostCompiledBoundaryTransfer compile_transfer(
     const BoundaryOperation& operation, const HostBoundaryLayout& layout)
@@ -250,9 +250,7 @@ inline double signed_copy(double value, std::int8_t sign) noexcept
 }
 
 /** Copy one already validated logical transfer with its compiled field signs.
- * Both complete and axis-only executors own preflight and phase barriers.
- * RZ axis parity reuses the logical mapping: m_r/m_phi odd, all other fields
- * even; this leaf contains no separate geometry or sign policy.
+ * This leaf contains no separate geometry or sign policy.
  */
 inline void execute_transfer(const HostCompiledBoundaryTransfer& transfer,
     FluidState& state, int n_species)
@@ -295,65 +293,6 @@ inline void execute(
                 execute_transfer(transfer, state, n_species);
             }
         }
-    }
-}
-/** Complete the original RZ axis parity once, including axial ghost corners.
- * Workflow: authenticate the full logical/compiled binding, build and validate
- * shared logical corner transfers before writing, execute only original axis
- * transfers, then the corner list. No Y/Z or ordinary outer radial BC executes.
- * Field copies/signs are identical to execute: m_r/m_phi odd, others even.
- * The caller owns completed positive-r axial ghosts and final EOS/publication.
- */
-inline void execute_rz_axis(const BoundaryPlan& logical,
-    const HostCompiledBoundaryPlan& compiled, FluidState& state)
-{
-    validate_compiled_plan(compiled);
-    validate_state(compiled,state);
-    validate_layout(logical,compiled.layout);
-    if (logical.fingerprint() != compiled.logical_fingerprint
-        || logical.operations().size() != compiled.transfers.size())
-        throw std::invalid_argument("RZ axis logical/compiled plan identity mismatch");
-    for (std::size_t phase = 0;phase < compiled.phases.size();++phase)
-        if (logical.phases()[phase] != compiled.phases[phase])
-            throw std::invalid_argument("RZ axis logical/compiled phase mismatch");
-    // A fingerprint is not enough to authenticate a mutable compiled value.
-    // Validate every actual source/destination/sign against its logical owner.
-    for (std::size_t ordinal = 0;ordinal < compiled.transfers.size();++ordinal) {
-        const auto expected = compile_transfer(logical.operations()[ordinal],compiled.layout);
-        const auto& actual = compiled.transfers[ordinal];
-        if (expected.logical_ordinal != actual.logical_ordinal
-            || expected.source_index != actual.source_index
-            || expected.destination_index != actual.destination_index
-            || expected.conserved_signs != actual.conserved_signs
-            || expected.species_sign != actual.species_sign)
-            throw std::invalid_argument("RZ axis compiled transfer differs from logical owner");
-    }
-    const auto corners = rz_axis_corner_operations(logical);
-    HostCompiledBoundaryPlan corner_compiled{};
-    corner_compiled.logical_fingerprint = logical.fingerprint();
-    corner_compiled.layout = compiled.layout;
-    corner_compiled.phases = {BoundaryPhase{BoundaryPhaseId::X,0,corners.size()},
-        BoundaryPhase{BoundaryPhaseId::Y,corners.size(),0},
-        BoundaryPhase{BoundaryPhaseId::Z,corners.size(),0}};
-    corner_compiled.transfers.reserve(corners.size());
-    for (const auto& corner : corners)
-        corner_compiled.transfers.push_back(compile_transfer(corner,compiled.layout));
-    validate_compiled_plan(corner_compiled);
-    validate_state(corner_compiled,state);
-    const int species = state.GetNumSpecies();
-#pragma omp parallel
-    {
-#pragma omp for schedule(static)
-        for (std::ptrdiff_t ordinal = 0;
-             ordinal < static_cast<std::ptrdiff_t>(compiled.transfers.size());++ordinal)
-            if (logical.operations()[static_cast<std::size_t>(ordinal)].type == BoundaryType::RzAxis)
-                execute_transfer(compiled.transfers[static_cast<std::size_t>(ordinal)],state,species);
-        // The preceding implicit barrier completes all interior-row axis
-        // writes before the distinct corner destination list is published.
-#pragma omp for schedule(static)
-        for (std::ptrdiff_t ordinal = 0;
-             ordinal < static_cast<std::ptrdiff_t>(corner_compiled.transfers.size());++ordinal)
-            execute_transfer(corner_compiled.transfers[static_cast<std::size_t>(ordinal)],state,species);
     }
 }
 } // namespace arch::boundary::host

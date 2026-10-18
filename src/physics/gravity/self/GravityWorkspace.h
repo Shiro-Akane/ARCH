@@ -31,7 +31,7 @@
 
 namespace Physical::Gravity {
 /** Original workspace geometry producers. The caller owns topology/storage
- * validation; these functions do not publish a field or qualify RZ runtime.
+ * validation; these functions do not publish a field.
  */
 GravityCell gravity_cell_geometry(amr::EllipticCellBinding,
     const arch::elliptic::CompositePoisson&,int cell);
@@ -39,7 +39,7 @@ BoundaryPoint gravity_boundary_point(const arch::elliptic::CompositePoisson&,int
 /** Original face-row plan, owned by the workspace geometry producer.
  * Acceleration rows act on increasing-coordinate face gradients.
  * Potential/boundary work rows keep signed 2*A/V*(Phi_face-Phi_cell).
- * This plan does not qualify RZ source, solve or publication.
+ * This plan does not solve or publish a field.
  */
 struct GravityFaceRows {
     arch::multigrid::SparseStorage acceleration,potential_work,boundary_work;
@@ -53,46 +53,9 @@ GravityFaceRows gravity_face_rows(const arch::elliptic::CompositePoisson&);
  */
 arch::multigrid::SparseStorage gravity_patch_work_rows(
     const amr::EllipticMeshBinding&,const std::vector<int>& patch_offsets,int native_size);
-/** One topology-only Energy registration row, indexed by the ORIGINAL route
- * operation. No stage potential, dt, RK coefficient or register metric is owned.
- */
-struct GravityRefluxRowIdentity {
-    amr::AmrFluxRouteKey route;
-    amr::TopologyEpoch epoch;
-    std::uint64_t topology_fingerprint=0,route_fingerprint=0;
-    std::size_t operation_index=0;
-    int source_flux_offset=-1,coarse_cell_index=-1;
-    amr::AmrTransferOperation operation;
-};
-/** Geometry-only paired work rows. Row r evaluates
- * Dphi=sum_f(A_f/A_source)*Phi_value_row_f-Phi_destination_coarse,
- * plus an INDEPENDENT datum row acting on the same face-indexed boundary data.
- * The existing register alone applies +/-A_source/A_coarse, stage weight and dt.
- */
-struct GravityRefluxRows {
-    std::vector<GravityRefluxRowIdentity> identity;
-    arch::multigrid::SparseStorage potential,boundary;
-};
-/** Authenticate the actual Native RZ binding/operator/route geometry, prove
- * complete dyadic face coverage, and compile immutable paired rows. Workflow:
- * validate root+UID/epoch+all storage; join integer CF cell incidences; check
- * actual fragment areas; append the target coarse potential counterterm.
- * This does not attach a consumer, solve, cache stage Phi or qualify physics.
- */
-GravityRefluxRows gravity_reflux_rows(const amr::EllipticMeshBinding&,
-    const arch::elliptic::CompositePoisson&,const amr::AmrFluxTopologyPlan&);
-
 struct SelfGravity::Workspace {
     using Vector=arch::multigrid::Vector;
     template<class T> using Array=arch::multigrid::Array<T>;
-    // Topology-only paired rows are reused; stage values always follow the
-    // exact solved generation. No whole-field download or persistent U copy.
-    const amr::AmrFluxTopologyPlan* reflux_topology=nullptr;
-    GravityRefluxRows reflux_rows;
-    arch::multigrid::SparseArray reflux_phi_rows,reflux_datum_rows;
-    Vector reflux_values;
-    std::uint64_t reflux_topology_fingerprint=0,reflux_field_generation=0;
-    amr::TopologyEpoch reflux_epoch{};
     amr::EllipticMeshBinding binding;
     std::shared_ptr<GravityExecution> execution;
     // Explicit per-side policy (dirichlet/neumann/user) resolved for this
@@ -137,13 +100,6 @@ struct SelfGravity::Workspace {
     double boundary_time=0.;
     GravityFieldValidity validity;
     GravitySolveIdentity source;
-    GravityFieldScope scope=GravityFieldScope::ExistingPhysics;
-    std::optional<GravityFieldPurpose> purpose;
-    const RuntimeGravitySourceLease* runtime_lease=nullptr; // Borrowed; field invalidation precedes issuer destruction.
-    std::unique_ptr<GravityBoundary> ring_source;
-    RingBoundaryControl ring_limits;
-    RingBoundaryEvaluation ring;
-    RingRhsAssessment ring_assessment;
     std::uint64_t generation=0;
     bool ready=false;
     mutable bool downloaded=false;
@@ -155,19 +111,8 @@ struct SelfGravity::Workspace {
     Workspace(amr::EllipticMeshBinding,arch::elliptic::BoundaryKind,
         arch::elliptic::CompositeBoundary,std::shared_ptr<GravityExecution>);
     /** Reject access unless the workspace holds a matching completed gravity field. */
-    void require(GravityFieldScope requested=GravityFieldScope::ExistingPhysics) const {
-        if(!ready||!validity.matches(source,generation,requested))throw std::logic_error("Self-gravity field is not published for this input");
-    }
-    /** Require an issued Runtime purpose while retaining the immutable scope.
-     * Full domain validation occurs before/after solve and joined acceptance;
-     * this borrowed per-patch fence adds no domain scan to worker consumption.
-     */
-    void require_runtime_purpose(GravityFieldPurpose expected) const {
-        require(scope);
-        if(!runtime_lease||purpose!=expected
-            ||!validity.matches_runtime(source,generation,scope,expected,runtime_lease->generation()))
-            throw std::logic_error("Gravity field lacks its actual Runtime purpose lease");
-        runtime_lease->require(expected);
+    void require() const {
+        if(!ready||!validity.matches(source,generation))throw std::logic_error("Self-gravity field is not published for this input");
     }
     /** Return a patch view only for the bound native density allocation. */
     const GravityPatchView& patch(const Grid& grid,const FluidState& state) const {
@@ -176,30 +121,6 @@ struct SelfGravity::Workspace {
             throw std::logic_error("Self-gravity patch uses a different density allocation/slot");
         return patches[it->second];
     }
-    /** Borrow the exact prepared RZ patch on the explicitly requested side.
-     * Workflow: require original field validity; require the actual requested
-     * execution side and original RZ chart; resolve the original Grid pointer;
-     * require its exact resident density allocation; return immutable views.
-     * The density pointer is borrowed from the authentic source lease; this
-     * lookup grants no Runtime authority of its own.
-     */
-    const GravityPatchView& native_patch(const Grid& grid,const double* density,
-        bool expected_device) const {
-        require(scope);
-        if(solver.execution().device()!=expected_device
-        ||solver.op().base().semantics!=GridMetrics::GeometrySemantics::AxisymmetricRz)
-            throw std::logic_error("Prepared RZ patch requires its actual requested-side chart");
-        const auto found=lookup.find(&grid);
-        if(found==lookup.end()||patches[found->second].density!=density)
-            throw std::logic_error("Native private patch changed its original density allocation");
-        return patches[found->second];
-    }
-    /** Original Host caller: borrow the exact Host-side prepared RZ patch. */
-    const GravityPatchView& native_patch(const Grid& grid,const FluidState& state) const {
-        return native_patch(grid,state.rho.data(),false);
-    }
-    /** Cache genuine geometry rows and evaluate same-stage Dphi once. */
-    const GravityRefluxRows& prepare_native_reflux(const amr::AmrFluxTopologyPlan&);
     /** Allocate/reset the bounded per-patch receipt before any fluid producer runs. */
     void begin_host_consumption(double step_dt) {
         if(solver.execution().device())
@@ -243,8 +164,8 @@ struct SelfGravity::Workspace {
                 throw std::logic_error("Gravity Host receipt has an unconsumed patch force/work");
     }
     /** Materialize potential and acceleration lazily for host output. */
-    void download(GravityFieldScope requested=GravityFieldScope::ExistingPhysics) const {
-        require(requested);if(downloaded)return;
+    void download() const {
+        require();if(downloaded)return;
         auto& e=solver.execution();host_phi=e.download(solver.resident_potential());
         const auto acceleration=e.download(g);const int n=solver.op().size();
         for(int a=0;a<3;++a)host_g[a].assign(acceleration.begin()+a*n,acceleration.begin()+(a+1)*n);

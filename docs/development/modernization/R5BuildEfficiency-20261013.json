@@ -1,0 +1,670 @@
+{
+  "schema": "ARCH R5 build efficiency evaluation and adopted test split v1",
+  "recorded_utc": "2026-10-13T06:06:12.164565+00:00",
+  "phase": "R5",
+  "status": "COMPLETE_ADOPTED_MINIMAL_SPLIT",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "next_phase": "R6_NOT_STARTED_NO_AUTOMATIC_ADVANCE",
+  "decision": {
+    "adopt": true,
+    "reason": "Clear scoped core-test edit benefit and lower peak RAM; no observed complete-target cold penalty, complete coverage retained, no new executable/test/framework.",
+    "independent_source_review": "ACCEPT_SOURCE_COVERAGE_AND_BUILD_DECLARATIONS_ONLY;23/23",
+    "independent_benefit_review": "ACCEPT_FOR_MINIMAL_TEST_RESPONSIBILITY_SPLIT",
+    "numerical_contract_changed": false,
+    "O7_changed": false,
+    "production_code_changed": false
+  },
+  "integrated_files": {
+    "tests/cuda/numerics/test_diffusion_rkl_parity.cu": "ea93d0f8ab0017bb99f61f8c9edb46dfbe7f76d74de98055f105a4eb6b3a7956",
+    "tests/cuda/numerics/test_diffusion_rkl_tabular.cu": "53dfd814e8e5cd2a91f8180fc02a70cc93de90b3fa12a99b4ee6157e7dacf61e",
+    "tests/cuda/numerics/DiffusionRklTestSupport.cuh": "9bed3c6df58d3648e460aca1e123c1585845cd56a5e52e2f95c5930bc2130b2e",
+    "cmake/tests/CudaTests.cmake": "3d9afbe518fbc86add06b2ef29bc22ee497774d2c6d06e7a48cf4b6a047cfecb"
+  },
+  "unchanged_registration": {
+    "executable": "arch_cuda_diffusion_rkl_parity",
+    "CTest": "diffusion_rkl_parity",
+    "verify_entrypoints_in_order": [
+      "verify_budget_comparator_special_values",
+      "verify_frozen_host_authority",
+      "verify_device_conductivity_and_floor",
+      "verify_device_operator_and_dt",
+      "verify_tabular_diffusion_failures",
+      "verify_device_dt_dimensions",
+      "verify_preflight_and_master_off",
+      "verify_buffer_initialization",
+      "verify_rkl_stages",
+      "verify_native_rkl_output_precheck"
+    ],
+    "failure_ownership": "One counter and fail definition in core, Tabular calls same linked fail; complete main final exit unchanged.",
+    "math_preservation": "32 original function/type bodies,3 remaining structs,5 frozen arrays,7 budget constants,main complete tokens/4 static assertions; default arguments relocated once into declarations only.",
+    "CMake": "Only add Tabular CUDA source to original executable; strict FP/link/CTest/jobpool unchanged."
+  },
+  "measurement_scope": {
+    "kind": "Full RKL test-target objects/ELF cold and source-local incremental, fixed prebuilt libraries; not full-project cold or production shared-header rebuild.",
+    "environment": {
+      "WSL_memory_mib": 7892,
+      "observed_available_before_mib": 6054,
+      "swap_total_mib": 2048,
+      "swap_used_before_mib": 0,
+      "GPU": "RTX3060Ti8GiB",
+      "nvcc": "12.3",
+      "host_compiler": "g++12",
+      "architecture": "sm86",
+      "optimization": "O3",
+      "jobs": 1,
+      "ccache": "bypassed equally; no global cache reset",
+      "OS_cache": "not dropped, OS/toolchain cold not claimed"
+    },
+    "guard": {
+      "min_available_mib": 1536,
+      "max_swap_growth_mib": 256,
+      "poll_seconds": 0.25,
+      "pressure_guard": true,
+      "timeouts_seconds": {
+        "baseline_cold": 650,
+        "candidate_all_cold": 1000,
+        "candidate_core_edit": 650,
+        "leaf_test": 60
+      }
+    },
+    "GNU_time_precision_seconds": 0.01,
+    "RAM_definition": "max_process_rss_kib is maximum individual descendant/process from GNU time; guard peak_owned_rss_kib is separately sampled owned-tree total. Neither sums maxima across serial TUs or proves leak freedom.",
+    "time_boundaries": "GNU time command elapsed and guard monotonic elapsed differ slightly in this batch. Cause not attributed; do not explain as startup/tracking overhead or silently mix clocks. Uniform GNU time used for tabulated comparisons; independent guard trend agrees on large local benefit and no observed aggregate penalty. No stable cold gain claimed."
+  },
+  "commands": {
+    "compile_argv_template": [
+      "/usr/local/cuda-12.3/bin/nvcc",
+      "-forward-unknown-to-host-compiler",
+      "-ccbin=/usr/bin/g++-12",
+      "-DARCH_CUDA_BUILD_ENABLED=1",
+      "-DARCH_HAS_CUDSS_PROVIDER=1",
+      "-DARCH_HAS_KLU=1",
+      "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/src",
+      "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests",
+      "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/include",
+      "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/cases",
+      "-I/home/shiroakane/ARCH/build-rt-cuda/generated",
+      "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+      "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+      "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+      "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+      "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+      "-O3",
+      "-DNDEBUG",
+      "-std=c++20",
+      "--generate-code=arch=compute_86,code=[compute_86,sm_86]",
+      "--expt-relaxed-constexpr",
+      "-Xcompiler=-march=native",
+      "--fmad=false",
+      "--ftz=false",
+      "--prec-div=true",
+      "--prec-sqrt=true",
+      "-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off",
+      "-MD",
+      "-MT",
+      "{object}",
+      "-MF",
+      "{depfile}",
+      "-x",
+      "cu",
+      "-c",
+      "{source}",
+      "-o",
+      "{object}"
+    ],
+    "link_cwd": "/home/shiroakane/ARCH/build-rt-cuda",
+    "link_argv_template": [
+      "/usr/bin/g++-12",
+      "-O3",
+      "-march=native",
+      "-DNDEBUG",
+      "-flto=auto",
+      "-fno-fat-lto-objects",
+      "-fuse-ld=mold",
+      "-fno-fast-math",
+      "-fno-math-errno",
+      "-ffp-contract=off",
+      "{objects...}",
+      "-o",
+      "{elf}",
+      "-L/usr/local/cuda-12.3/targets/x86_64-linux/lib/stubs",
+      "-L/usr/local/cuda-12.3/targets/x86_64-linux/lib",
+      "-Wl,-rpath,/usr/local/cuda-12.3/targets/x86_64-linux/lib",
+      "libarch_cuda_backend.a",
+      "libarch_diffusion_math.a",
+      "libarch_cuda_sparse_provider.a",
+      "_deps/suitesparse-build/KLU/libklu.a",
+      "_deps/suitesparse-build/AMD/libamd.a",
+      "_deps/suitesparse-build/COLAMD/libcolamd.a",
+      "_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+      "_deps/suitesparse-build/BTF/libbtf.a",
+      "-lm",
+      "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcudart.so",
+      "-ldl",
+      "-lcudadevrt",
+      "-lcudart_static",
+      "-lrt",
+      "-lpthread",
+      "-ldl"
+    ],
+    "variants": {
+      "baseline": {
+        "measured_source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+        "existing_library_root": "/home/shiroakane/ARCH/build-rt-cuda",
+        "ninja_argv": [
+          "ninja",
+          "-C",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/baseline",
+          "-j1",
+          "-v"
+        ],
+        "compile_units": [
+          {
+            "source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/sources/baseline/test_diffusion_rkl_parity.cu",
+            "source_sha256": "90eeb8795a0bfad75d9169fd8807429fdf85757df6e5bdf0dd389a308bac719e",
+            "object": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/baseline/1-1-test_diffusion_rkl_parity.cu.o",
+            "depfile": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/baseline/1-1-test_diffusion_rkl_parity.cu.o.d"
+          }
+        ],
+        "elf": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/baseline/arch_cuda_diffusion_rkl_parity"
+      },
+      "candidate": {
+        "measured_source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+        "existing_library_root": "/home/shiroakane/ARCH/build-rt-cuda",
+        "ninja_argv": [
+          "ninja",
+          "-C",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate",
+          "-j1",
+          "-v"
+        ],
+        "compile_units": [
+          {
+            "source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/sources/candidate/test_diffusion_rkl_parity.cu",
+            "source_sha256": "ea93d0f8ab0017bb99f61f8c9edb46dfbe7f76d74de98055f105a4eb6b3a7956",
+            "object": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-1-test_diffusion_rkl_parity.cu.o",
+            "depfile": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-1-test_diffusion_rkl_parity.cu.o.d"
+          },
+          {
+            "source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/sources/candidate/test_diffusion_rkl_tabular.cu",
+            "source_sha256": "53dfd814e8e5cd2a91f8180fc02a70cc93de90b3fa12a99b4ee6157e7dacf61e",
+            "object": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-2-test_diffusion_rkl_tabular.cu.o",
+            "depfile": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-2-test_diffusion_rkl_tabular.cu.o.d"
+          }
+        ],
+        "elf": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/arch_cuda_diffusion_rkl_parity"
+      }
+    },
+    "fixed_libraries": [
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/libarch_cuda_backend.a",
+        "bytes": 360704470,
+        "sha256": "a11f589d119c24bf67896bae662feaae249d4c802d9046de7d05e11200f8d20f"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/libarch_diffusion_math.a",
+        "bytes": 37178,
+        "sha256": "f9a80679400ea4be8928062673be3fd1a1f621763bf0723fc20d6e8e6896c66b"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/libarch_cuda_sparse_provider.a",
+        "bytes": 299362,
+        "sha256": "471ef2914113dc0abbe09511b4e76d2d2e8370ad704f9556b35f38bd290839ae"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/KLU/libklu.a",
+        "bytes": 930648,
+        "sha256": "178944600fb9231da84d20317093a2ca27c15afe419764d154d1b2ea0d6c2fba"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/AMD/libamd.a",
+        "bytes": 193146,
+        "sha256": "c1b39adb51ced614eaf6dbaad0049da1616f753c85a7a400c1059c1c33c2bd03"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/COLAMD/libcolamd.a",
+        "bytes": 110214,
+        "sha256": "0e3140e0cbdf12b945649519b44b74008bc67131ac7a7d7492072d34b4e7abec"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+        "bytes": 32698,
+        "sha256": "4569ff99afeb04996cd1f85cae35838bfd362a888ecf00446392307510e700d6"
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/BTF/libbtf.a",
+        "bytes": 53370,
+        "sha256": "40b2eac61f9cf3dd760172c6e436af8f57197f4ee93a456852bba34f990f32d4"
+      },
+      {
+        "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcudart.so",
+        "bytes": 703808,
+        "sha256": "c64a25f35ec55af9f0aeb0079fc6a285e3620d8c4acb0632c3e23b9a8926610f"
+      }
+    ],
+    "guard_invocation_owner": "tools/run_memory_guarded.py via /usr/bin/python3, each actual command/timeout saved in local logs and receipts; science Python remains work."
+  },
+  "measurements": {
+    "baseline-cold": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 485.67,
+        "user_seconds": 478.73,
+        "system_seconds": 5.68,
+        "max_process_rss_kib": 1512372,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "4636188",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1527092",
+        "elapsed_seconds": "470.359",
+        "stop_reason": "none"
+      },
+      "actions": {
+        "1-1-test_diffusion_rkl_parity.cu.o.time.json": {
+          "elapsed_seconds": 485.36,
+          "user_seconds": 478.65,
+          "system_seconds": 5.63,
+          "max_process_rss_kib": 1512372,
+          "exit_code": 0
+        },
+        "arch_cuda_diffusion_rkl_parity.time.json": {
+          "elapsed_seconds": 0.3,
+          "user_seconds": 0.07,
+          "system_seconds": 0.04,
+          "max_process_rss_kib": 36472,
+          "exit_code": 0
+        }
+      },
+      "guard_log_sha256": "1a97762a7fc0a8ad020b4a37b5cb1c5f8f27bac43ad91c107d2020296f70dacb"
+    },
+    "candidate-cold": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 469.46,
+        "user_seconds": 460.16,
+        "system_seconds": 8.43,
+        "max_process_rss_kib": 1205316,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "4951948",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1221696",
+        "elapsed_seconds": "459.670",
+        "stop_reason": "none"
+      },
+      "actions": {
+        "1-1-test_diffusion_rkl_parity.cu.o.time.json": {
+          "elapsed_seconds": 204.19,
+          "user_seconds": 199.13,
+          "system_seconds": 4.44,
+          "max_process_rss_kib": 1155488,
+          "exit_code": 0
+        },
+        "arch_cuda_diffusion_rkl_parity.time.json": {
+          "elapsed_seconds": 0.24,
+          "user_seconds": 0.05,
+          "system_seconds": 0.04,
+          "max_process_rss_kib": 37112,
+          "exit_code": 0
+        },
+        "1-2-test_diffusion_rkl_tabular.cu.o.time.json": {
+          "elapsed_seconds": 265.01,
+          "user_seconds": 260.96,
+          "system_seconds": 3.94,
+          "max_process_rss_kib": 1205316,
+          "exit_code": 0
+        }
+      },
+      "guard_log_sha256": "447379e4c50a03d3359774fe9274a1f6f98ad66d80b08a509c4b99c644b94c5f"
+    },
+    "candidate-core-edit": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 214.77,
+        "user_seconds": 209.74,
+        "system_seconds": 4.94,
+        "max_process_rss_kib": 1155204,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "4982428",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1171588",
+        "elapsed_seconds": "209.718",
+        "stop_reason": "none"
+      },
+      "actions": {
+        "1-1-test_diffusion_rkl_parity.cu.o.time.json": {
+          "elapsed_seconds": 214.55,
+          "user_seconds": 209.7,
+          "system_seconds": 4.88,
+          "max_process_rss_kib": 1155204,
+          "exit_code": 0
+        },
+        "arch_cuda_diffusion_rkl_parity.time.json": {
+          "elapsed_seconds": 0.21,
+          "user_seconds": 0.03,
+          "system_seconds": 0.05,
+          "max_process_rss_kib": 36732,
+          "exit_code": 0
+        }
+      },
+      "guard_log_sha256": "c2a4c089d33e8e59ac382ecd0193874ad68eac2a669616d0108ddb38342e689b"
+    }
+  },
+  "benefits_and_limits": {
+    "core_edit_wall_reduction_percent": 55.77861510902464,
+    "core_edit_process_peak_rss_reduction_percent": 23.616411835183403,
+    "full_collection_process_peak_rss_reduction_percent": 20.302941339829093,
+    "single_pair_cold_wall_difference_percent": 3.3376572569852048,
+    "cold_claim": "Single observation only; do not claim stable cold speedup. No observed aggregate cost regression in this pair.",
+    "baseline_edit_basis": "Measured original full cold action reused by action equivalence: original core-source or common-header edit schedules the same one-TU compile/link with cache bypassed. No fresh original incremental replay claimed.",
+    "candidate_edit_basis": "Actual output-only core source timestamp invalidation, unchanged bytes, Ninja dry-run and real core+link only; Tabular bytes/SHA/mtime retained.",
+    "shared_header_basis": "Actual dependency records show both candidate objects invalidate for DiffusionKernels.cuh, DiffFlux.h and support header; full-cold compile/link action set reused by equivalence, not rerun or measured separately. Other production library rebuilding excluded identically.",
+    "separate_guard_monotonic_crosscheck": {
+      "baseline_seconds": 470.359,
+      "candidate_all_seconds": 459.67,
+      "candidate_core_seconds": 209.718,
+      "core_edit_wall_reduction_percent": 55.41320565780605,
+      "single_pair_all_difference_percent": 2.2725195010619426,
+      "causal_explanation": "not investigated; bounded optimization does not open a new clock attribution task."
+    }
+  },
+  "test_storage_tradeoff": {
+    "baseline_test_elf_bytes": 8546384,
+    "candidate_test_elf_bytes": 17860400,
+    "test_elf_growth_mib": 8.882537841796875,
+    "baseline_objects_bytes": 8698584,
+    "candidate_objects_bytes": 18066384,
+    "explanation": "Internal/static CUDA header kernels emitted in both TUs; test-only storage overhead accepted for measured local edit and peak RAM benefits. Production executable unchanged; no speculative factoring added."
+  },
+  "noops": {
+    "baseline": {
+      "status": "PASS",
+      "command": [
+        "ninja",
+        "-C",
+        "output/modernization/r5-20261013/build/baseline",
+        "-j1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.004029947998787975,
+      "stdout": "ninja: Entering directory `output/modernization/r5-20261013/build/baseline'\nninja: no work to do.\n",
+      "stderr": "",
+      "precision": "Python monotonic high-resolution command wall",
+      "compiled_actions": 0
+    },
+    "candidate_cold": {
+      "status": "PASS",
+      "command": [
+        "ninja",
+        "-C",
+        "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate",
+        "-j1",
+        "-v"
+      ],
+      "elapsed_seconds": 0.004406436000863323,
+      "exit_code": 0,
+      "stdout": "ninja: Entering directory `/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate'\nninja: no work to do.\n",
+      "stderr": "",
+      "compiled_actions": 0,
+      "precision": "Python high-resolution monotonic command wall; not compiler speed"
+    },
+    "candidate_incremental": {
+      "status": "PASS",
+      "command": [
+        "ninja",
+        "-C",
+        "output/modernization/r5-20261013/build/candidate",
+        "-j1",
+        "-v"
+      ],
+      "elapsed_seconds": 0.004914369999823975,
+      "stdout": "ninja: Entering directory `output/modernization/r5-20261013/build/candidate'\nninja: no work to do.\n",
+      "compiled_actions": 0,
+      "tabular_object_hash_size_mtime_unchanged": true,
+      "core_source_bytes_unchanged": true
+    }
+  },
+  "complete_numerical_runs": {
+    "baseline-test": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 1.05,
+        "user_seconds": 0.8,
+        "system_seconds": 0.11,
+        "max_process_rss_kib": 145116,
+        "exit_code": 0
+      },
+      "guard_log_sha256": "a7cda4ec1ebc92474b618535219c5e074a1ad8f995bfc90a78868203ed79c347",
+      "RKL_envelope_rows": 40,
+      "operator_envelope_rows": 8,
+      "all_48_rows_equal_to_matched_baseline": true
+    },
+    "candidate-cold-test": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 1.03,
+        "user_seconds": 0.75,
+        "system_seconds": 0.11,
+        "max_process_rss_kib": 153868,
+        "exit_code": 0
+      },
+      "guard_log_sha256": "419355552c1db5c47791886a7896c2a3f9380ed705b6e9f93f34904f8fa5ed1d",
+      "RKL_envelope_rows": 40,
+      "operator_envelope_rows": 8,
+      "all_48_rows_equal_to_matched_baseline": true
+    },
+    "candidate-core-edit-test": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 1.08,
+        "user_seconds": 0.74,
+        "system_seconds": 0.15,
+        "max_process_rss_kib": 154080,
+        "exit_code": 0
+      },
+      "guard_log_sha256": "5b7c1d0f9fb37a1b07c344b7235f641c614ec139b29c6f66083a585018adbfba",
+      "RKL_envelope_rows": 40,
+      "operator_envelope_rows": 8,
+      "all_48_rows_equal_to_matched_baseline": true
+    }
+  },
+  "artifacts": {
+    "baseline": {
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/baseline/1-1-test_diffusion_rkl_parity.cu.o": {
+        "bytes": 8698584,
+        "sha256": "7bb200c4277e9b7f253700bed4890c20c777d587dece7a59d0683fe1e91f59a0"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/baseline/arch_cuda_diffusion_rkl_parity": {
+        "bytes": 8546384,
+        "sha256": "d0b0dc4057606829d54e876296b2e82b437b9c62d7d67382498f21293f157ea8"
+      }
+    },
+    "candidate_cold": {
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-1-test_diffusion_rkl_parity.cu.o": {
+        "bytes": 7788888,
+        "sha256": "c1793e691cf49639d435c0ec29fe9f9f094ca9890897332cc02c847ea4ff7628",
+        "mtime_ns": 1791870636888523724
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-2-test_diffusion_rkl_tabular.cu.o": {
+        "bytes": 10277496,
+        "sha256": "c06df529beeff8f1b9d850183415579f0e5096df2383c5b7569bf36835893f59",
+        "mtime_ns": 1791870901904227538
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/arch_cuda_diffusion_rkl_parity": {
+        "bytes": 17860400,
+        "sha256": "74f7687bbe33cdc3e2c45260cf3b061720b6bb972b787a5461c3221106b0741c",
+        "mtime_ns": 1791870902163405312
+      }
+    },
+    "candidate_incremental": {
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-1-test_diffusion_rkl_parity.cu.o": {
+        "bytes": 7788888,
+        "sha256": "29c9acbafaf368d1416b8d9393e59493545ad591f4b3d06f5673357cb376f5cb",
+        "mtime_ns": 1791871267278571010
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/1-2-test_diffusion_rkl_tabular.cu.o": {
+        "bytes": 10277496,
+        "sha256": "c06df529beeff8f1b9d850183415579f0e5096df2383c5b7569bf36835893f59",
+        "mtime_ns": 1791870901904227538
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r5-20261013/build/candidate/arch_cuda_diffusion_rkl_parity": {
+        "bytes": 17860400,
+        "sha256": "89d0f8588388da0f0b689cd768b1fb2d7283f5afe35cf0a8f09cb1b9af591f6b",
+        "mtime_ns": 1791871267497280571
+      }
+    },
+    "phase_storage": "Candidate core object/ELF were normally overwritten by the scheduled incremental rebuild; pre-rebuild byte/hash identities are preserved in phase receipts, current incremental binary and Tabular object retained. Existing primary builds/ELF/libraries never overwritten."
+  },
+  "prior_machine_receipts_preserved": {
+    "docs/development/modernization/R31AuditTriage-20261013.json": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+    "docs/development/modernization/R1R4Foundation-20261013.json": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+    "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+    "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+    "docs/development/modernization/BaselineIdentity-20261012.json": "e8ad61c49a7c970ccae1ece92a6214b511214abee8096fd288679e5ee2b0a48d",
+    "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+    "docs/development/modernization/R41R42Implementation-20261013.json": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+    "docs/development/modernization/R22NumericalChecks-20261012.json": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd"
+  },
+  "delegation": {
+    "owner": "arch-r5-rkl-20261013",
+    "job": "7e7534a89f464902be7c6102c8479e47",
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "effort": "high",
+    "elapsed_seconds": 307.86856704800084,
+    "calls": 1,
+    "repair_calls": 0,
+    "gateway_review": "ACCEPT/full isolated candidate",
+    "usage": {
+      "input_tokens": 2967863,
+      "cached_input_tokens": 2907264,
+      "output_tokens": 44864,
+      "reasoning_tokens": 34814,
+      "visible_output_tokens": 10050,
+      "cost_usd": null,
+      "cost_kind": "not_quoted"
+    },
+    "Codex_review": "Independent native scope/measurement workers plus manager actual complete CUDA execution; native workers are not external providers.",
+    "Gemini": "No frozen prose task required; not invoked.",
+    "manager_usage_cost": "unknown",
+    "workflow_adjustment": "One candidate, three heavy measurement launches, action-equivalence reuse avoids redundant full compiles; passive metrics read once, no global policy changes."
+  },
+  "evidence_index": {
+    "evaluation-contract.json": {
+      "path": "output/modernization/r5-20261013/evaluation-contract.json",
+      "sha256": "1f69efa19cf4f9e031fd0ac0c63e96e09f8d759c05a10e7c6949ff388f666980"
+    },
+    "measurement-design.json": {
+      "path": "output/modernization/r5-20261013/measurement-design.json",
+      "sha256": "cd90626b098a1d8d13342676d4127d936449ab0745b615c0a2b9383c75f0e82b"
+    },
+    "scope-coverage-proposal.json": {
+      "path": "output/modernization/r5-20261013/scope-coverage-proposal.json",
+      "sha256": "83387a1488d4f3f074f893d156db335be30d0499e576da9ff71940fcd51c0be9"
+    },
+    "candidate-coverage-review.json": {
+      "path": "output/modernization/r5-20261013/candidate-coverage-review.json",
+      "sha256": "3ee3ef543bf83ee77fa3e3c3f3367c2d1fbace593df330b0fc747fce0845be01"
+    },
+    "independent-benefit-review.json": {
+      "path": "output/modernization/r5-20261013/independent-benefit-review.json",
+      "sha256": "f4caa7bb52424863027ccda5b8ef4f756f38e5de26329e3e43c13fea54edd793"
+    },
+    "recipe-equivalence.json": {
+      "path": "output/modernization/r5-20261013/recipe-equivalence.json",
+      "sha256": "af4763aa27b9b2bfc519c8106ee60b5835c2bba9b9f8156bdb435cd1fac41b16"
+    },
+    "candidate-runtime-and-deps.json": {
+      "path": "output/modernization/r5-20261013/candidate-runtime-and-deps.json",
+      "sha256": "11425760fe6da40ba4fdd47d3a19f0281f97d229035bdd002d9b5a25284fd2f5"
+    },
+    "candidate-core-edit-before.json": {
+      "path": "output/modernization/r5-20261013/candidate-core-edit-before.json",
+      "sha256": "48d2452f216d3c390be78d4bab021c669dfaba1f5c454350545b89f508136c7b"
+    },
+    "candidate-core-edit.artifacts.json": {
+      "path": "output/modernization/r5-20261013/candidate-core-edit.artifacts.json",
+      "sha256": "6d1167f527def15fee91ad7cc0e1f70a6861835aa73bb1221f9414d3ff16de6e"
+    },
+    "baseline-noop.json": {
+      "path": "output/modernization/r5-20261013/baseline-noop.json",
+      "sha256": "52b5b9917d7064623b539b047301e7b377d1bc72eb1d1ec308f39fcee1565da9"
+    },
+    "candidate-cold.noop.json": {
+      "path": "output/modernization/r5-20261013/candidate-cold.noop.json",
+      "sha256": "d99e053b3b5f05bca9d34b55dc7431a6c3002831ad6b64b8667ce5416353e862"
+    },
+    "candidate-core-edit.noop.json": {
+      "path": "output/modernization/r5-20261013/candidate-core-edit.noop.json",
+      "sha256": "6fbc0e8559ada4e7a2b010698a9a38e2c427c1d5bd2ff62a8d25fe09c9ebe832"
+    },
+    "compile-diagnostics.json": {
+      "path": "output/modernization/r5-20261013/compile-diagnostics.json",
+      "sha256": "5d1405a0ffe2d535af208130948c28b54396884c0e5341bba3c3992eb4fdd9ef"
+    },
+    "integration.json": {
+      "path": "output/modernization/r5-20261013/integration.json",
+      "sha256": "a0f0d75b4f760bcf269c0850a33e16317ce968a4123f15cb192cc816e687c901"
+    },
+    "deepseek-delivery.json": {
+      "path": "output/modernization/r5-20261013/deepseek-delivery.json",
+      "sha256": "bc675a4eb75bf573aeaba975035018b98a304407ff58dbe315fc43648d05d69d"
+    },
+    "deepseek-summary.json": {
+      "path": "output/modernization/r5-20261013/deepseek-summary.json",
+      "sha256": "61f2fcc585a7bace678687b8e406e814ce517ffe826ba54ab3028600a51c8100"
+    },
+    "deepseek-review.json": {
+      "path": "output/modernization/r5-20261013/deepseek-review.json",
+      "sha256": "d42b4949af884661985222327f3bac59a621fa001f945a721faf1ff568c0efcc"
+    },
+    "candidate-tracked.patch": {
+      "path": "output/modernization/r5-20261013/candidate-tracked.patch",
+      "sha256": "f430870ed93055e93b4f73168585cace996f85e5d44368f449c4873f62e87cb4"
+    },
+    "prepare-measurement-harness.py": {
+      "path": "output/modernization/r5-20261013/prepare-measurement-harness.py",
+      "sha256": "48dc15925faa37cd2e9087b6841605e12842f2c3949a1f8bda8ade9c56e74c19"
+    },
+    "snapshot-phase.py": {
+      "path": "output/modernization/r5-20261013/snapshot-phase.py",
+      "sha256": "1c3e6f8010fcebba9cd4c7c088c8910471fb66070add80f144c77dce6b671c6a"
+    }
+  },
+  "preserved_and_not_run": [
+    "No R3 compiler-phase attribution/EOS ablation repeated.",
+    "No old RZ/Cellular/periodic long science validation.",
+    "No full production CUDA build or full-project cold timing.",
+    "No fresh whole70-key O7 replay or lowered numerical/FP criterion.",
+    "No LFS network/download, no H5/checkpoint production by this leaf test.",
+    "Hosted CI not run; existing local CI/LFS patch remains independent."
+  ],
+  "follow_up": "R5 closed for exact accepted source/toolchain scope. Reopen only changed actual maintenance workload/build identity or demonstrated aggregate/RAM issue; do not automatically optimize duplicated header kernels or enter R6.",
+  "final_qa": {
+    "status": "PASS",
+    "path": "output/modernization/r5-20261013/final-independent-qa.json",
+    "sha256": "587c2e6daeb33a1debb0b95b6e78af9495d67c03bc71b4f27ccdb3b3925fdd4f",
+    "checks_summary": "13 boundary checks;51 targeted hashes (20 evidence,8 prior JSON,4 integrated,7 previous runner/guard,12 inputs);24 changed Markdown,422 local links,25 anchors,70 tables.",
+    "checked_index_before_closure_sha256": "564f4703450084f98bb17f419db76782e98f0527ac66a1b23ad5798e5cf55bfd",
+    "closure_delta": "Only this final QA pointer and worktree cleanup state appended after QA; measured/source/scientific content unchanged."
+  },
+  "evaluation_worktree_cleanup": {
+    "root": "/home/shiroakane/.codex/worktrees/r5-rkl-evaluation/ARCH",
+    "archive_tool_result": "queued",
+    "physical_removal_confirmed": true,
+    "retained_candidate": "Exact three CUDA source/header copies, 4-file patch and identity under output/modernization/r5-20261013; adopted files in current worktree."
+  }
+}

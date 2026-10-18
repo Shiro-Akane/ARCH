@@ -78,7 +78,7 @@ inline void require_configuration_identity_coverage(const IdentityFields& fields
 #include "core/config/ConfigurationIdentityFields.inc"
 #undef ARCH_CONFIGURATION_IDENTITY_FIELD
     for(const auto* name:{"version","case.id","case.compiled-source","resolved-execution.version","backend",
-        "geometry-semantics","flux","reconstruction","limiter","time","eos","network","ode","linear","diffusion","boundary-identity"})
+        "flux","reconstruction","limiter","time","eos","network","ode","linear","diffusion","boundary-identity"})
         (void)identity_value(fields,name,'s');
     for(const auto* name:{"amr.refine_species_names","io.plot_species_names"}) {
         const auto& count=identity_value(fields,std::string(name)+".count",'i');

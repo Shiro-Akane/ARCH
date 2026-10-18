@@ -5,7 +5,10 @@ Does not import the production source/interval routines. Arrays stay local.
 import argparse,json,subprocess
 from decimal import Decimal as D,localcontext
 from pathlib import Path
-from rz_ring_axis_reference import PI
+# The existing ordinary periodic source oracle owns the independent
+# high-precision Decimal pi; this oracle imports that same constant so the
+# retired RZ module leaves no duplicate or downgraded reference behind.
+from periodic_gravity_source_reference import PI
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--probe',type=Path,required=True)

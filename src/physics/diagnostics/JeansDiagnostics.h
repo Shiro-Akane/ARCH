@@ -12,7 +12,7 @@
 
 #include <cmath>
 #include "core/ArchPortability.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "physics/constant/PhysicalConstants.h"
 
 namespace JeansDiagnostics {
@@ -61,7 +61,7 @@ ARCH_INLINE Resolution evaluate(double density, double sound_speed_squared,
 
 /**
  * @brief Bind resolution to the largest existing active physical grid spacing.
- * Uses the maintained GridMetrics geometry semantics, including current 2-D
+ * Uses the maintained GridMetrics measures, including spherical 2-D
  * polar conventions. Inactive axes never affect the result. Invalid active
  * spacing is rejected rather than hidden by max or an absolute-value repair.
  * Callers retain ownership of accepted-state/EOS identity and cell eligibility.

@@ -7,7 +7,7 @@ import {validateConfigurationSchema,validateConfigurationInspection} from '../sr
 import {loadPar,editPar,removeForbiddenParameter} from '../src/state/parState.ts';
 import {serializePar} from '../src/data/ParDocument.ts';
 import {EditHistory} from '../src/state/editHistory.ts';
-const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/schema.json',import.meta.url),'utf8')));
+const schema=validateConfigurationSchema(JSON.parse(await readFile(new URL('./fixtures/mainline-config-schema.json',import.meta.url),'utf8')));
 const rawInspection=JSON.parse(await readFile(new URL('../../src/api/examples/configuration-v3/sod-valid.json',import.meta.url),'utf8'));
 test('Runtime ordering is presentation only; unknown schema additions remain reachable',()=>{
  const rows=catalog(schema.parameters,{});

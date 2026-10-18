@@ -237,9 +237,7 @@ void run_dimension(int dimension, const std::string& geometry)
     amr::AMRControl control(64, dimension);
     const LeafGrid leaves = mixed_corner_grid(dimension);
     if (geometry == "cylindrical" && dimension == 2) {
-        // Workflow: the default Existing fixture denotes the retired (r,phi)
-        // chart. Require its real topology construction to reject; choosing
-        // Native RZ here would grant an unrelated fixture a false state lease.
+        // The actual topology owner rejects cylindrical two-dimensional input.
         bool rejected = false;
         try {
             control.tree->LoadLeafGrid(
@@ -584,8 +582,7 @@ int main()
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension)
                 run_dimension(dimension, geometry);
-        // The retired 2D cylindrical angular seam is not a CUDA RZ seam test.
-        // Its Existing topology rejection is exercised in the matrix above.
+        // The matrix above checks retired cylindrical two-dimensional topology rejection.
         run_coordinate_seam(3, "cylindrical");
         run_coordinate_seam(3, "spherical");
         return 0;

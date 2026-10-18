@@ -365,9 +365,9 @@ Logical axes depend on geometry and dimension:
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi (polar plane) | r, theta, phi |
-| Cylindrical | r | r, z (axisymmetric plane) | r, z, phi |
+| Cylindrical | r | Unsupported | r, z, phi |
 
-Computational geometry determines the logical grid axes, measures, and conserved-state representation. Two-dimensional spherical geometry uses the polar plane (r,phi), while two-dimensional cylindrical geometry uses the axisymmetric plane (r,z) (RZ). In RZ, both r and z axes are lengths; although phi is inactive as a grid direction, all three physical velocity components remain present. Three-dimensional cylindrical geometry uses (r,z,phi).
+Spherical 2D uses the polar `(r,phi)` plane. Cylindrical grids support radial 1D and full 3D `(r,z,phi)`; cylindrical 2D is explicitly rejected. All supported grids retain three physical momentum components.
 
 For a 3D spherical density profile centered at the origin, reuse `rho0_`,
 `amplitude_`, and `width_` from the case above. In `Init`, the Cartesian form is:

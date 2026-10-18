@@ -23,7 +23,7 @@
 #include "driver/stages/GravityStage.h"
 #include "driver/io/DriverIO.h"
 #include "amr/refinement/RefinementThermodynamics.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/state/StateAdmissibility.h"
 #include <iostream>
 #include <limits>
@@ -67,9 +67,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     using namespace arch::driver;
     using arch::scheduler::ScopedStageBinding;
     SimulationController ctrl(config, start_state);
-    const auto geometry_semantics=GridMetrics::resolve_public_chart(
-        config.grid.geometry,config.grid.dim);
-    BCHandler bc_handler{config,geometry_semantics};
+    BCHandler bc_handler{config};
     bc_handler.bind(eos, specs);
     bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
     // Runtime binds the receipt measure before initial budgets are combined.
@@ -100,14 +98,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // provenance once. Each published output reuses this immutable run record.
     const auto plot_source_identity = arch::config::make_plot_source_identity(
         config, checkpoint_provenance, *resolved_plan,
-        backend_resolution->resolved_backend, runtime.geometry_semantics());
+        backend_resolution->resolved_backend);
     DriverIO output(runtime, ctrl, checkpoint_provenance, plot_source_identity,
                     p_func, t_func, gamma1_func, &eos);
     CpuStageTimings cpu_stages;
     const bool time_cpu_stages = backend_resolution->resolved_backend
         == arch::dispatch::ComputeBackend::Cpu;
     const int deferred_initial_passes = amr_ctrl.tree->ConsumeDeferredInitialRefinement();
-    runtime.bind_native_rz_eos(eos);
     runtime.initialize_topology();
     // Complete deferred thermodynamic regrids through the same transaction
     // coordinator used by production regrids before the first output/step.
@@ -209,10 +206,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             stage_context.configure_boundary_context = [&](double time,
                 arch::boundary::BoundaryPurpose purpose) {
                 bc_handler.configure_stage(time, purpose);
-                runtime.bind_native_boundary_acceptance(stage_context, runtime.handles());
             };
-            if (bc_handler.has_user()
-                ||runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz)
+            if (bc_handler.has_user())
                 stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
                     arch::boundary::BoundaryPurpose purpose) {
                     stage_context.configure_boundary_context(time, purpose);
@@ -220,19 +215,6 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 };
             runtime.bind_boundary_accounting(stage_context);
             ScopedStageBinding stage_binding(stage_context, runtime.handles());
-            std::optional<NativeMacroRetryAttempt> retry_attempt;
-            if(runtime.geometry_semantics()==GridMetrics::GeometrySemantics::AxisymmetricRz) {
-                std::optional<arch::scheduler::RklMethod> method;
-                if(config.physics.diffusion.use_diffusion) {
-                    if(resolved_plan->diffusion_integrator==arch::dispatch::DiffusionIntegratorId::Rkl1)
-                        method=arch::scheduler::RklMethod::RKL1;
-                    else if(resolved_plan->diffusion_integrator==arch::dispatch::DiffusionIntegratorId::Rkl2)
-                        method=arch::scheduler::RklMethod::RKL2;
-                    else throw std::logic_error("Native retry has no selected supported RKL method");
-                }
-                retry_attempt.emplace(runtime,stage_context,attempt_index,method,candidates.diffusion_forward_euler);
-            }
-
             execute_driver_macro_step(runtime,stage_context,hydro,has_burn,
                 [&](BurnHalf half,double half_dt,arch::state::CompletionToken token) {
                     return execute_burn_half(runtime,workspace,eos,burn,half,half_dt,dt_burn_global,token);

@@ -1,21 +1,38 @@
 /**
  * @file InvariantDomainFlux.h
- * @brief Limit face fluxes when the high-order update leaves the admissible state domain.
+ * @brief Shared point admissibility and conservative face assembly.
  *
  * Workflow:
- * 1. Receive an explicit mesh/operator and signed cell-centered fields.
- * 2. Limit face fluxes when the high-order update leaves the admissible state domain.
- * 3. Return corrections or fluxes through the shared numerical contract.
+ * 1. Consume the selected reconstruction and actual required endpoint EOS data.
+ * 2. Evaluate the configured point flux and the one shared bar/segment factor;
+ *    selected walls lend their physical reflection/pressure law to this owner.
+ * 3. Every retained chart consumes one physical point per face; the same
+ *    conservative blend is returned for fluid and species.
+ * 4. Return one complete fluid/species face; traversal, measures, AMR
+ *    registration and Runtime state/EOS publication remain with their owners.
+ *
+ * Canonical required and directional Riemann EOS inputs retain their roles;
+ * completed density/EOS acceptance remains mandatory.
  */
 
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 #include "physics/boundary/BoundaryFlux.h"
 #include "numerics/flux/FluxFunctions.h"
+#include "numerics/flux/StationarySlipWallFlux.h"
+#include "numerics/reconstruction/Reconstruction.h"
+
+struct IdealGas;
 
 // Conservative convex limiting against a local Lax-Friedrichs bar state.
 // One theta modifies the shared face flux for BOTH neighbouring cells and all
@@ -56,17 +73,33 @@ ARCH_INLINE void compute_candidate(Compute&& compute, FluidVector& high,
 ARCH_INLINE bool valid(const FluidVector& state)
 { return arch::state::recover(state).status == arch::state::Status::valid; }
 
-/** Bisect the largest admissible fraction along a conserved-state segment. */
-ARCH_INLINE double segment_fraction(const FluidVector& mean, const FluidVector& offset)
+namespace point_face_detail {
+/** The same segment owner has already rejected its full trial and accepted
+ * its immutable mean. Only the original bisection remains to be performed. */
+ARCH_INLINE double bisect_valid_mean(const FluidVector& mean, const FluidVector& offset)
 {
-    if (valid(mean + offset)) return 1.0;
-    if (!valid(mean)) return 0.0;
     double lo = 0.0, hi = 1.0;
     for (int iteration = 0; iteration < 54; ++iteration) {
         const double mid = lo + 0.5 * (hi - lo);
         if (valid(mean + mid * offset)) lo = mid; else hi = mid;
     }
     return lo * (1.0 - 16.0 * std::numeric_limits<double>::epsilon());
+}
+/** A point-face owner may consume its own already accepted bar state. New
+ * correction states still take the original full-trial/bisection checks. */
+ARCH_INLINE double segment_from_valid_mean(const FluidVector& mean, const FluidVector& offset)
+{
+    if (valid(mean + offset)) return 1.0;
+    return bisect_valid_mean(mean, offset);
+}
+} // namespace point_face_detail
+
+/** Bisect the largest admissible fraction along a conserved-state segment. */
+ARCH_INLINE double segment_fraction(const FluidVector& mean, const FluidVector& offset)
+{
+    if (valid(mean + offset)) return 1.0;
+    if (!valid(mean)) return 0.0;
+    return point_face_detail::bisect_valid_mean(mean, offset);
 }
 
 // Reconstructed states are limited along the ray from their conserved mean.
@@ -81,9 +114,8 @@ ARCH_INLINE void limit_reconstruction(const FluidVector& mean, FluidVector& face
     }
 }
 
-/** Recover required mean thermodynamics from the caller's ordinary EOS input.
- * Legacy callers supply the original mean; native RZ callers supply the shared
- * closure's effective_mean, without replacing their evolved conserved state.
+/** Recover required mean thermodynamics from the caller's ordinary EOS input:
+ * the actual cell mean, without replacing the evolved conserved state.
  */
 template<class Eos>
 ARCH_INLINE void required_mean_thermo(const FluidVector& mean,
@@ -116,9 +148,6 @@ struct MeanThermoView {
     const unsigned char* ready = nullptr;
     int cells = 0, species = 0;
     bool roe_wave_speed = true;
-    // Appended default preserves Existing semantics for older Host/device
-    // aggregate initializers. Native RZ mean EOS inputs are not point states.
-    GridMetrics::GeometrySemantics geometry_semantics = GridMetrics::GeometrySemantics::Existing;
 
     /** Apply the original complete conserved-state/composition equality test. */
     ARCH_INLINE bool matches(int cell, const FluidVector& state,
@@ -133,14 +162,9 @@ struct MeanThermoView {
         return true;
     }
 
-    /** Reuse an identical ordinary mean; native RZ always requires point EOS. */
+    /** Reuse an identical ordinary mean for one face endpoint query. */
     ARCH_INLINE bool query(const FluidVector& state, const double* composition,
                            int count, int left, int right, double& p, double& c) const {
-        // Native U stores m_phi=J/W. Its cached EOS uses effective_mean and
-        // the density-inertia closure, so equal U bytes do not prove equal
-        // point (rho,e,X). This also protects HLLC's direct equal-state query.
-        if (geometry_semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
-            return false;
         const int cell = matches(left,state,composition,count) ? left
             : matches(right,state,composition,count) ? right : -1;
         if (cell < 0) return false;
@@ -158,8 +182,7 @@ ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
     if constexpr (requires {
         eos.get_pressure_and_sound_speed(state.rho,energy,composition,pressure,sound);
     }) {
-        // Ordinary means use recover(state).internal; native RZ query rejects
-        // reuse and reaches the original point EOS below. Directional primitive
+        // Ordinary means use recover(state).internal. Directional primitive
         // arithmetic can round an equal conserved state to a different e;
         // reuse only the same (rho,e,X) query, not merely the same U and X.
         if (means && means->query(state,composition,count,cell,cell,pressure,sound)
@@ -171,9 +194,7 @@ ARCH_INLINE void face_thermo(const FluidVector& state, double energy,
 // One host patch-stage owns this cache. A value is published only after the
 // complete EOS query succeeds; the caller resets validity on every RK stage.
 struct MeanThermoCache {
-    GridMetrics::GeometrySemantics geometry_semantics=GridMetrics::GeometrySemantics::Existing;
     bool roe_wave_speed = true;
-    arch::state::Bounds physical_bounds{}; // Actual numerics bounds, not a GUI policy.
     arch::boundary::HydroBoundaryView hydro_boundary{}; // Scoped mathematical view; owner authenticates it.
     std::vector<double> pressure;
     std::vector<double> sound_speed;
@@ -188,8 +209,8 @@ struct MeanThermoCache {
 };
 
 /** Physical point LLF baseline and the unchanged joint face factor.
- * valid certifies only the original wave/bar prerequisite, not an EOS table,
- * native mixed-measure whole-stage domain or scheduler publication.
+ * valid certifies only the original wave/bar prerequisite, not an EOS table
+ * domain or scheduler publication.
  */
 struct PointFaceBlend {
     FluidVector low{};
@@ -231,7 +252,7 @@ ARCH_INLINE PointFaceBlend evaluate(const FluidVector& left,const FluidVector& r
     result.low=low;
     if (!valid(bar)) return result;
     const auto correction = (low - high) / a;
-    double theta = std::min(segment_fraction(bar, correction), segment_fraction(bar, -1.0 * correction));
+    double theta = std::min(segment_from_valid_mean(bar, correction), segment_from_valid_mean(bar, -1.0 * correction));
     for (int s = 0; s < species; ++s) {
         const double ql = left.rho * x_left[s], qr = right.rho * x_right[s];
         const double f_l = fl.rho * x_left[s], f_r = fr.rho * x_right[s];
@@ -305,8 +326,8 @@ ARCH_INLINE PointFaceBlend point_face_blend_with_baseline_and_thermo(
     const auto bar_right=right+(low-fr)/a;
     if(!valid(bar_left)||!valid(bar_right))return result;
     const auto correction=(low-high)/a;
-    double theta=std::min(segment_fraction(bar_left,correction),
-                          segment_fraction(bar_right,-1.*correction));
+    double theta=std::min(point_face_detail::segment_from_valid_mean(bar_left,correction),
+                          point_face_detail::segment_from_valid_mean(bar_right,-1.*correction));
     for(int s=0;s<species;++s) {
         if(!std::isfinite(species_low[s]))return result;
         const double bar_species_left=left.rho*x_left[s]
@@ -369,4 +390,175 @@ ARCH_INLINE void limit_face(const FluidVector& left, const FluidVector& right,
                            p_left, c_left, p_right, c_right, direction,
                            high, species_flux);
 }
+
+/** Bind the selected stationary-wall low to the original joint point factor.
+ * Workflow: validate required metadata/acoustics/composition pointers; select
+ * the actual lower-right or upper-left immutable interior; construct its exact
+ * canonical wall traction (exact gamma-law or actual general-EOS pressure);
+ * initialize caller-owned zero species baseline;
+ * invoke the sole original selected-baseline limiter without altering a/CFL.
+ * B_L=U_L+(F_L-L)/a and B_R=U_R+(L-F_R)/a must BOTH be admissible before
+ * any high correction is accepted. The returned factor always refers to this
+ * same L; an LLF low/bar factor cannot be borrowed for a different wall flux.
+ * Caller retains required EOS queries, explicit EOS-capability dispatch,
+ * high-at-rest policy and candidate_eos semantics. Nonfinite optional high is
+ * allowed to contract to theta=0; required failures return valid=false.
+ * Scratch is S unpublished baseline species entries, no allocation or copies.
+ * Its actual half-open array must be disjoint from XiL/XiR/highSpecies; checked
+ * count/address arithmetic rejects overlap or unrepresentable ranges before writes.
+ * Input Xi retains the existing signed trace cone: no normalization, clipping
+ * or additional simplex tolerance is introduced. No Runtime authority follows.
+ */
+template<class Eos>
+ARCH_INLINE FluxAdmissibility::PointFaceBlend selected_wall_point_blend(
+    const FluidVector& base_left,const FluidVector& base_right,
+    const double* x_left,const double* x_right,int species,
+    double p_left,double c_left,double p_right,double c_right,
+    const Eos& eos,int direction,int side,const FluidVector& high,
+    const double* species_high,double* species_low)
+{
+    FluxAdmissibility::PointFaceBlend invalid;
+    if(direction<0||direction>2||(side!=0&&side!=1)||species<0
+        ||(species&&(!x_left||!x_right||!species_high||!species_low))
+        ||!StationarySlipWallFlux::detail::finite_point(base_left)||!StationarySlipWallFlux::detail::finite_point(base_right)
+        ||!(base_left.rho>0.)||!(base_right.rho>0.)
+        ||!std::isfinite(p_left)||!(p_left>0.)||!std::isfinite(c_left)||!(c_left>0.)
+        ||!std::isfinite(p_right)||!(p_right>0.)||!std::isfinite(c_right)||!(c_right>0.))
+        return invalid;
+    if(!StationarySlipWallFlux::detail::species_scratch_disjoint(species,species_low,x_left,x_right,species_high))
+        return invalid;
+    for(int s=0;s<species;++s)
+        if(!std::isfinite(x_left[s])||!std::isfinite(x_right[s]))return invalid;
+    // This workspace remains provisional even if the two baseline bars reject.
+    for(int s=0;s<species;++s)species_low[s]=0.;
+    FluidVector canonical_low{};
+    const auto& interior=side==0?base_right:base_left;
+    const double* xi=side==0?x_right:x_left;
+    if(!StationarySlipWallFlux::point_wall_flux(interior,xi,eos,direction,side,
+        side==0?p_right:p_left,side==0?c_right:c_left,canonical_low))return invalid;
+    return FluxAdmissibility::point_face_blend_with_baseline_and_thermo(
+        base_left,base_right,x_left,x_right,species,p_left,c_left,p_right,c_right,
+        direction,high,species_high,canonical_low,species_low);
+}
+
+/** Point-only result: Host owns exception translation and publication. */
+enum class PointWallStatus : unsigned char {
+    valid,invalid_metadata,invalid_high_traction,inadmissible_baseline,
+    invalid_pressure_traction,nonfinite_flux,nonfinite_species
+};
+
+/** Assemble one stationary ordinary point wall with the existing selected law.
+ * Workflow: mirror actual interior H and immutable B independently; dispatch
+ * explicit gamma-law moving walls or the general-EOS physical-pressure law;
+ * evaluate optional H through the actual candidate EOS/selected policy; canonicalize FINITE H before its factor; then
+ * replace both Xi arrays with true B composition read in original species order.
+ * Required P/c are the actual already prepared interior mean cache values.
+ * Selected wall laws use the sole selected-baseline factor; gamma-law at rest
+ * retains its original mirrored-policy LLF low and original bar/factor. Apply
+ * the same theta to all fluid/species and publish fluid ONLY after every check.
+ * No post-factor projection, effective-gamma substitute or second limiter.
+ *
+ * BaseSpecies(s) reads immutable true interior fractions AFTER high computation.
+ * HighCompute(left,right,XiL,XiR,trialEOS,H,highSpecies) owns the selected policy
+ * and any exact caller cache indices/coefficient, never Runtime wall authority.
+ * Four caller-owned S planes XiL/XiR/Xi_cell/highSpecies remain unpublished
+ * scratch, with actual disjoint extents; zero species permits null pointers.
+ * Input points are value copies for alias-safe mirroring. Fluid output can alias
+ * an input; it is assigned only after full success. Scratch may change on failure.
+ * This shared Host/device leaf owns no Grid, storage, boundary identity or EOS
+ * qualification. The caller retains actual required EOS preparation and guards.
+ */
+template<class Eos,class BaseSpecies,class HighCompute>
+ARCH_INLINE PointWallStatus assemble_wall_point(FluidVector base_left,FluidVector base_right,
+    FluidVector U_L,FluidVector U_R,int dir,int wall_side,int n_spec,
+    double pressure,double speed,const Eos& eos,double* Xi_L,double* Xi_R,
+    double* Xi_cell,double* face_species_flux,const BaseSpecies& base_species,
+    const HighCompute& high_compute,FluidVector& output)
+{
+    if(dir<0||dir>2||(wall_side!=0&&wall_side!=1)||n_spec<0
+        ||(n_spec&&(!Xi_L||!Xi_R||!Xi_cell||!face_species_flux)))
+        return PointWallStatus::invalid_metadata;
+    if(wall_side==0) {
+        U_L=StationarySlipWallFlux::reflected_point(U_R,dir);
+        base_left=StationarySlipWallFlux::reflected_point(base_right,dir);
+        for(int s=0;s<n_spec;++s)Xi_L[s]=Xi_R[s];
+    } else {
+        U_R=StationarySlipWallFlux::reflected_point(U_L,dir);
+        base_right=StationarySlipWallFlux::reflected_point(base_left,dir);
+        for(int s=0;s<n_spec;++s)Xi_R[s]=Xi_L[s];
+    }
+    bool gamma_wall=false;
+    if constexpr(requires {eos.roe_gamma_minus_one(Xi_L);}) {
+        const auto& h=wall_side==0?U_R:U_L;
+        const auto& base=wall_side==0?base_right:base_left;
+        gamma_wall=(dir==0?h.mom_u:dir==1?h.mom_v:h.mom_w)!=0.
+            ||(dir==0?base.mom_u:dir==1?base.mom_v:base.mom_w)!=0.;
+    }
+    constexpr bool pressure_wall=!requires {eos.roe_gamma_minus_one(Xi_L);};
+    FluidVector high;
+    const auto& trial_eos=arch::state::candidate_eos(eos);
+    FluxAdmissibility::compute_candidate([&] {
+        if(gamma_wall||pressure_wall) {
+            const auto& interior=wall_side==0?U_R:U_L;
+            const double* xi=wall_side==0?Xi_R:Xi_L;
+            double pressure=0.,speed=0.;
+            FluxAdmissibility::required_mean_thermo(interior,xi,trial_eos,pressure,speed);
+            if(StationarySlipWallFlux::point_wall_flux(interior,xi,trial_eos,
+                dir,wall_side,pressure,speed,high)) {
+                for(int s=0;s<n_spec;++s)face_species_flux[s]=0.;
+            } else {
+                high=FluidVector(arch::state::invalid(),0.,0.,0.,arch::state::invalid());
+                for(int s=0;s<n_spec;++s)face_species_flux[s]=arch::state::invalid();
+            }
+            return;
+        }
+        high_compute(U_L,U_R,Xi_L,Xi_R,trial_eos,high,face_species_flux);
+    },high,face_species_flux,n_spec);
+    if(StationarySlipWallFlux::stationary_candidate(
+        dir,high,face_species_flux,n_spec)
+            ==StationarySlipWallFlux::StationaryCandidateStatus::invalid)
+        return PointWallStatus::invalid_high_traction;
+    for(int s=0;s<n_spec;++s)Xi_L[s]=base_species(s);
+    for(int s=0;s<n_spec;++s)Xi_R[s]=Xi_L[s];
+    FluxAdmissibility::PointFaceBlend factor;
+    if(gamma_wall||pressure_wall) {
+        factor=FluxAdmissibility::selected_wall_point_blend(
+                base_left,base_right,Xi_L,Xi_R,n_spec,
+                pressure,speed,pressure,speed,eos,dir,wall_side,
+                high,face_species_flux,Xi_cell);
+    } else {
+        factor=FluxAdmissibility::point_face_blend_with_thermo(
+            base_left,base_right,Xi_L,Xi_R,n_spec,
+            pressure,speed,pressure,speed,dir,high,face_species_flux);
+    }
+    if(!factor.valid||!StationarySlipWallFlux::finite_flux(factor.low)
+        ||!std::isfinite(factor.theta)||factor.theta<0.||factor.theta>1.)
+        return PointWallStatus::inadmissible_baseline;
+    const double hp=dir==0?high.mom_u:dir==1?high.mom_v:high.mom_w;
+    const double lp=dir==0?factor.low.mom_u:dir==1?factor.low.mom_v:factor.low.mom_w;
+    if(hp<0.||(!std::isfinite(hp)&&factor.theta!=0.)||!std::isfinite(lp)||lp<0.)
+        return PointWallStatus::invalid_pressure_traction;
+    const auto blended=factor.theta==0.?factor.low:factor.theta==1.?high:
+        factor.low+factor.theta*(high-factor.low);
+    if(!StationarySlipWallFlux::finite_flux(blended))
+        return PointWallStatus::nonfinite_flux;
+    // Publish exactly the H/low blend verified above. No
+    // post-factor projection may change the verified object.
+    const double flrho=dir==0?base_left.mom_u:dir==1?base_left.mom_v:base_left.mom_w;
+    const double frrho=dir==0?base_right.mom_u:dir==1?base_right.mom_v:base_right.mom_w;
+    for(int s=0;s<n_spec;++s) {
+        const double low_species=(gamma_wall||pressure_wall)?0.:
+            .5*flrho*Xi_L[s]+.5*frrho*Xi_R[s]
+            -(.5*factor.wave_speed)*(base_right.rho*Xi_R[s]-base_left.rho*Xi_L[s]);
+        const double value=factor.theta==0.?low_species:
+            factor.theta==1.?face_species_flux[s]:
+            low_species+factor.theta*(face_species_flux[s]-low_species);
+        if(!std::isfinite(value))
+            return PointWallStatus::nonfinite_species;
+        face_species_flux[s]=value;
+    }
+    output=blended;
+    return PointWallStatus::valid;
+}
+
 } // namespace FluxAdmissibility

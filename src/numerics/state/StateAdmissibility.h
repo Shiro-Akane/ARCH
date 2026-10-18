@@ -119,6 +119,22 @@ ARCH_INLINE Kinematics recover(const FluidVector& state)
     return result;
 }
 
+/** Numerical outputs of one successful actual physical-node EOS query.
+ * The caller owns its immutable point/composition and query role. This value
+ * grants no state/ghost publication authority and failed queries write nothing.
+ */
+struct Thermodynamics {
+    Kinematics recovery{};
+    double temperature=0.,pressure=0.,sound_speed=0.;
+    bool valid=false;
+};
+/** Directional Riemann endpoints and required canonical P/c have distinct
+ * owners; energy records the actual input, never a substituted canonical e. */
+struct EndpointThermodynamics {
+    double energy=0.,pressure=0.,sound_speed=0.;
+    bool ready=false;
+};
+
 struct Repair {
     Status status = Status::valid;
     FluidVector delta{};
@@ -155,13 +171,18 @@ ARCH_INLINE Repair apply_bounds(FluidVector& state, double density_floor,
 // These operations may fail; a hidden projection would break conservation.
 ARCH_INLINE Status validate(const FluidVector& fluid, const double* fractions,
                             int species, int stride, double density_floor,
-                            double energy_floor, double energy_ceiling)
+                            double energy_floor, double energy_ceiling,
+                            Kinematics* accepted_recovery = nullptr)
 {
     const auto k=recover(fluid);
     if (k.status!=Status::valid) return k.status;
     if (k.internal>energy_ceiling) return Status::energy_ceiling;
     if (fluid.rho<density_floor || k.internal<energy_floor) return Status::invalid_thermodynamics;
-    return validate_composition(fractions,species,stride);
+    const auto status=validate_composition(fractions,species,stride);
+    // A same-call EOS consumer may borrow this exact successful recovery.
+    // No state/version history is retained, and failed validation writes nothing.
+    if (status==Status::valid && accepted_recovery) *accepted_recovery=k;
+    return status;
 }
 
 /** Check an actual physical/EOS-input state with contiguous mass fractions.
@@ -169,20 +190,20 @@ ARCH_INLINE Status validate(const FluidVector& fluid, const double* fractions,
  * then require finite positive T(rho,e,X), P(U,X), and c(U,P,X) from the
  * selected EOS. The original 8*epsilon thermal-resolution rule is retained.
  * EOS exceptions propagate to the transaction owner; no fallback, repair or
- * publication occurs here. A native mixed-measure mean must first be mapped
- * to its effective EOS state by its geometry-specific closure.
+ * publication occurs here; the given state is the actual EOS input state.
  */
 template<class Eos>
 ARCH_INLINE Status validate_eos(const FluidVector& fluid,
-    const double* contiguous_fractions,int species,const Bounds& bounds,const Eos& eos)
+    const double* contiguous_fractions,int species,const Bounds& bounds,const Eos& eos,
+    Thermodynamics* output=nullptr)
 {
     if (!valid_bounds(bounds)) return Status::invalid_thermodynamics;
     if (species < 0 || (species > 0 && !contiguous_fractions))
         return Status::invalid_composition;
+    Kinematics thermal;
     const auto status = validate(fluid,contiguous_fractions,species,1,
-        bounds.density,bounds.internal_min,bounds.internal_max);
+        bounds.density,bounds.internal_min,bounds.internal_max,&thermal);
     if (status != Status::valid) return status;
-    const auto thermal = recover(fluid);
     const double temperature = eos.get_temperature(fluid.rho,thermal.internal,
         contiguous_fractions);
     const double pressure = eos.get_pressure(fluid,contiguous_fractions);
@@ -191,6 +212,7 @@ ARCH_INLINE Status validate_eos(const FluidVector& fluid,
         || !std::isfinite(pressure) || !(pressure > 0.0)
         || !std::isfinite(sound) || !(sound > 0.0))
         return Status::invalid_thermodynamics;
+    if(output)*output={thermal,temperature,pressure,sound,true};
     return Status::valid;
 }
 

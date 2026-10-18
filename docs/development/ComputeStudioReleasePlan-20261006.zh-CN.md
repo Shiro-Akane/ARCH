@@ -1,6 +1,6 @@
 # compute/optim 与 Studio 集成及 release 收束计划
 
-本计划记录唯一工作区内的工程交付约束与已验收证据。既有 release 的未关闭事项和复查规则见[O 总表](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)。现代化当前实施顺序由[主计划](../../ARCH_MODERNIZATION_PLAN.md)维护。历史状态及逐轮过程保存在[执行历史](archive/compute-studio/ExecutionHistory.zh-CN.md)，按其源码、输入与执行物身份查阅。
+本计划记录唯一工作区内的工程交付约束与已验收证据。既有 release 的未关闭事项和复查规则见[O 总表](ComputeOptimizationPlan.zh-CN.md#发布进度与剩余出口2026-10-09复核)。现代化已按采用范围结案；当前唯一推进表为[发布计划](../../ARCH_RELEASE_PLAN.md)，REL-2已完成，REL-3首批CPU已验但原科学出口未关，REL-4未启动。下列旧出口按原身份继承，不另排平行阶段。历史状态及逐轮过程保存在[执行历史](archive/compute-studio/ExecutionHistory.zh-CN.md)，按其源码、输入与执行物身份查阅。
 
 ## 当前验收出口
 

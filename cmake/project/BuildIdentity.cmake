@@ -52,6 +52,10 @@ endforeach()
 list(TRANSFORM arch_identity_inputs PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/"
     REGEX "^[^/].*")
 list(REMOVE_DUPLICATES arch_identity_inputs)
+# The generated identity is an output of these inputs, never one of its own
+# sources. Keep actual generated network/registry headers in the fingerprint.
+list(REMOVE_ITEM arch_identity_inputs
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/identity/BuildIdentity.generated.h")
 list(SORT arch_identity_inputs)
 set(arch_identity_source "arch-project-source-manifest-1\n")
 foreach(path IN LISTS arch_identity_inputs)

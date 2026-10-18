@@ -39,7 +39,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"noiseAmplitude", "1"},
         {"shock_dir", "1"},
     }}},
-    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "32a5f58224a372ae9bffc22e169153db00225d3b909989adcef78c36b64d8313", {
+    {"Gaussian", {"simulation/GaussianPulse/Gaussian.cpp", "ca23bbbb7aef9332ca2eb9be9e468e97eb8fcaf3154d4c162e458dc6a4ea8f5d", {
         {"rho0", "g/cm^3"},
         {"p0", "erg/cm^3"},
         {"amp", "1"},
@@ -62,7 +62,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"ambient_pressure", "erg/cm^3"},
         {"explosion_energy", "dimension-dependent-energy"},
     }}},
-    {"RT", {"simulation/RTinstability/RT_instab.cpp", "a35f0c9fb67fbd226726b182a06afc76210006a3c9dfd0cd1b6b96efc6d0c9b5", {
+    {"RT", {"simulation/RTinstability/RT_instab.cpp", "c2aa30d0958d1a7f835cff66be919a0e81037d15f5e61e00522400b01144aacf", {
         {"rho_heavy", "g/cm^3"},
         {"rho_light", "g/cm^3"},
         {"y_int", "cm"},
@@ -76,7 +76,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "c21cc2c4e55a455d81e058295befefd672aafee7e6b2e22ce8cc5b7d5b75efff", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "2566ca650a41c4e576e9cde8054c0889f9bb20822baea32a748eb0608895fcf4", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
@@ -109,7 +109,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"center_x", "cm"},
         {"width", "cm"},
     }}},
-    {"CooperativeHotspots", {"simulation/CooperativeHotspots/CooperativeHotspots.cpp", "dd6b0a29ee35da013ce712892a1c8de73e5c5e5124ff0f2efcbf950a3650698d", {
+    {"CooperativeHotspots", {"simulation/CooperativeHotspots/CooperativeHotspots.cpp", "1d7e7fadb06035ce057b17f07bc587adf14cafe6e636a3d12d9c5f37172a0ca2", {
         {"ambient_density", "g/cm^3"},
         {"ambient_temperature", "K"},
         {"hotspot_temperature", "K"},
@@ -124,7 +124,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
     {"UserGravity", {"simulation/UserGravity/case.cpp", "8d0254f84d93ffdf62ff42ed677c5d2181bac326a35a9f9f64c02e2b3a285a69", {
         {"user_boundary_heat_flux", "erg/(cm^2 s)"},
     }}},
-    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "d44b7189471e59045f81644069230315e6c73d6bab074d8c604e620ce20e0921", {
+    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "26960832cc6ecaf79e7b7c7d6cc0cf2cedaf80659a0478d2e8fe3c402479b223", {
         {"rho0", "g/cm^3"},
         {"temperature0", "K"},
         {"temperature_peak", "K"},

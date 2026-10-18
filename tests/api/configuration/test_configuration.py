@@ -237,7 +237,7 @@ class ConfigurationContract(unittest.TestCase):
 
     def test_geometry_and_units_in_all_dimensions(self):
         names = {'cartesian': {1:['x'],2:['x','y'],3:['x','y','z']},
-                 'cylindrical': {1:['r'],2:['r','z'],3:['r','z','phi']},
+                 'cylindrical': {1:['r'],3:['r','z','phi']},
                  'spherical': {1:['r'],2:['r','phi'],3:['r','theta','phi']}}
         for geometry, dims in names.items():
             for dim, labels in dims.items():
@@ -248,6 +248,7 @@ class ConfigurationContract(unittest.TestCase):
                     self.assertEqual([a['key'] for a in axes], ['x1','x2','x3'])
                     self.assertEqual([a['unit'] for a in axes if a['active']], ['rad' if x in ['phi','theta'] else 'cm' for x in labels])
                     self.assertTrue(all(a['unit'] is None for a in axes if not a['active']))
+        self.inspect('geometry=cylindrical\nnblockx2=1\nnblockx3=0',code=3)
         r=self.inspect('nblockx2=0\nnblockx3=0')
         self.assertEqual(r['unitSystem'], 'cgs')
         self.assertEqual(r['coordinates']['axes'][0]['unit'], 'cm')

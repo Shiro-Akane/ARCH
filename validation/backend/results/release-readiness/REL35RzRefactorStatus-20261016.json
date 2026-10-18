@@ -1,0 +1,51 @@
+{
+  "schema": "arch-rel35-current-refactor-status-1",
+  "updated_utc": "2026-10-18T04:22:33.642941+00:00",
+  "status": "RZ_FULL_RETIREMENT_ACCEPTED_AFFECTED_SCOPE",
+  "REL3_closed_original_CPU_scope": true,
+  "REL35_closed": true,
+  "REL4_started": false,
+  "RZ_reimplementation_started": false,
+  "workspace": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "acceptance": {
+    "path": "validation/backend/results/release-readiness/RzRetirementAcceptance-20261018.json",
+    "sha256": "8f14050771776f0146cfee13e48209dce8e6ab77c6528519f10c313f64f0f65f"
+  },
+  "current_source": {
+    "path": "output/release/rz-retirement-implementation-20261016/source-freeze15.json",
+    "sha256": "1d926259e33d68a818be7043ecf1a510760d432af43499885096a25e2fbf9595",
+    "members": 1207,
+    "resumed_identity_check_utc": "2026-10-18T04:11:38.663997+00:00",
+    "mismatches": 0
+  },
+  "CPU_ARCH": {
+    "path": "build-modernization-cpu/bin/ARCH",
+    "sha256": "d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487"
+  },
+  "Host_comparator": {
+    "path": "build-modernization-cpu/arch_cuda_single_level_validation",
+    "sha256": "bed49e522814100530599457ed8484f5c0d5c1d18fce9fd12d04cb2a3595845a"
+  },
+  "verification_summary": "CPU20/GPU8/Studio104/tooling212 pass; 21 actual CUDA units compile; seven two-step CPU pairs exact and zero repairs; generic p100/p140 oracles pass. All original scopes/limits preserved.",
+  "previous_status_backup": {
+    "path": "output/release/rz-retirement-implementation-20261016/before-final-records-20261018/validation/backend/results/release-readiness/REL35RzRefactorStatus-20261016.json",
+    "sha256": "de63f275aada319332b0b5a50a11bdc2964e48eb0ece544f41614d1e46058d67"
+  },
+  "historical_inventory": {
+    "path": "validation/backend/results/release-readiness/RzRetirementInventory-20261016.json",
+    "sha256": "f249f9d6c55ca0727465ccdc75a325818b099b39f5086b1beb61131495cd4a78"
+  },
+  "history": {
+    "protected_records": 42,
+    "archived_documents": 107,
+    "original_failures_and_limits": "Original RZ NOT_MET, OMP4 mixed strict FAIL, long/fresh identities and SNIa main FAIL/thermal GAP retained without relabeling.",
+    "all_frozen_versions_match": true,
+    "protected_original_byte_equal": 42,
+    "archived_original_byte_equal": 99,
+    "archived_link_only_rebased": 8,
+    "archive_reference": "REL35DocumentationRelocation-20261016.json records prior and current hashes; no new archive mutation in this package."
+  },
+  "push_record": "output/release/rz-retirement-implementation-20261016/push-receipt.json",
+  "next": "Stop after the authorized one commit/push and recording it; REL-4 requires subsequent user instruction."
+}

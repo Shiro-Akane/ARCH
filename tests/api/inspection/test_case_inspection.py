@@ -1,6 +1,7 @@
 """Every built-in model uses the same CPU read/Init inspection boundary."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -117,6 +118,37 @@ class Inspection(unittest.TestCase):
         obj = self.call('Gaussian', edit(CASES['Gaussian'][1], geometry='spherical', nblockx2=0, x1_min=.1, x1_max=1))
         self.assertEqual(obj['data']['sampleCount'], 3)
         self.assertAlmostEqual(obj['data']['samples'][0]['cartesianPosition'][0], .325)
+
+    def test_polar_inspection_points(self):
+        common = edit(CASES['GravityBox'][1], nblockx1=1, nblockx2=1, nblockx3=0,
+                      x1_min=1, x1_max=2, x2_min=-.5, x2_max=.5,
+                      gravity_type='none', gravity_boundary='isolated',
+                      rho0=2, temperature0=8, amplitude=.25, temperature_amplitude=.125,
+                      velocity0=0, width=.5, center_x=1.5, center_y=0, center_z=.125,
+                      hydrostatic_radial='false')
+        for geometry in ('spherical',):
+            with self.subTest(geometry=geometry):
+                obj = self.call('GravityBox', edit(common, geometry=geometry))
+                self.assertEqual(obj['status'], 'ok')
+                self.assertEqual(obj['data']['sampleCount'], 9)
+                self.assertEqual(obj['execution']['eosConversion'], 'not_executed')
+                self.assertEqual(obj['state']['grid']['hierarchy'], 'not_constructed')
+                for j, transverse in enumerate((-.25, 0, .25)):
+                    for i, radius in enumerate((1.25, 1.5, 1.75)):
+                        sample = obj['data']['samples'][3*j+i]
+                        expected_position = (radius*math.cos(transverse),
+                                             radius*math.sin(transverse), 0)
+                        x, y, _ = expected_position
+                        distance_squared = ((x-1.5)/.5)**2 + (y/.5)**2
+                        for actual, expected in zip(sample['cartesianPosition'], expected_position):
+                            self.assertAlmostEqual(actual, expected, places=12)
+                        self.assertEqual(sample['positionUnit'], 'cm')
+                        # Independent Gaussian in Cartesian x/y for the spherical Rphi section.
+                        mode = math.exp(-.5*distance_squared)
+                        fields = {field['key']:field for field in sample['fields']}
+                        self.assertEqual(sample['thermodynamicInput'], 'temperature')
+                        self.assertAlmostEqual(fields['DENS']['value'], 2*(1+.25*mode), places=12)
+                        self.assertAlmostEqual(fields['TEMP']['value'], 8*(1+.125*mode), places=12)
 
     def test_explicit_defaults_and_string_metadata(self):
         obj = self.call('Sod', edit(BASE, x_pos=.3))

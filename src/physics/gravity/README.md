@@ -4,13 +4,23 @@ This directory provides the configured gravity policy and its source coupling.
 
 - [IGravityPolicy.h](IGravityPolicy.h) is the host patch interface.
 - [GravityDispatch.h](GravityDispatch.h) binds the resolved `GravityId` through
-  `make_gravity(config, GravityId)` and owns the compact disabled policy; names are parsed by the shared resolver.
+  `make_gravity(config, GravityId)`; disabled gravity returns no policy. Names
+  are parsed by the shared resolver, and unknown names remain errors.
 - [ExternalGravity.h](ExternalGravity.h) traverses host patches;
   [GravitySource.h](GravitySource.h) owns the shared cell update.
 
 The external constant-acceleration source uses the same mathematics on CPU and
 CUDA; device kernels handle traversal and state access. Hydro stage scheduling
 remains in the common integrator and driver modules.
+
+[HydroSourceBinding.h](HydroSourceBinding.h) owns Host source discovery and each
+patch's borrowed source claim. It selects the actual prepared external or self
+field, validates its operands, consumes face-flux work, supplies AMR's optional
+Energy interpretation and commits the original receipt. Hydro controls when
+these operations run; it does not select concrete gravity frames. Geometric
+sources and physical cell/face measures stay in the geometry owners and run
+with gravity disabled as well. Two-dimensional cylindrical support and its
+specialized ring boundary kernels have been retired.
 
 [UniformGravity.h](UniformGravity.h) is the standalone P2 CPU adapter from a
 borrowed Host density view to CGS potential and acceleration. It owns the

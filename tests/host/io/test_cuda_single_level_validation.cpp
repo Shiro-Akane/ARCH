@@ -739,15 +739,19 @@ void print_conservation_metrics(const std::filesystem::path& checkpoint_path,
               << ",\"chk_file_index\":" << checkpoint.chk_file_index
               << ",\"plt_file_index\":" << checkpoint.plt_file_index
               << ",\"blocks\":" << blocks
-              << ",\"mass\":" << static_cast<double>(totals.mass)
-              << ",\"mom_u\":" << static_cast<double>(totals.mom_u)
-              << ",\"mom_v\":" << static_cast<double>(totals.mom_v)
-              << ",\"mom_w\":" << static_cast<double>(totals.mom_w)
-              << ",\"energy\":" << static_cast<double>(totals.energy)
+              // First-law residuals subtract large nuclear-mass integrals;
+              // rounding these long-double totals to double can dominate them.
+              << ",\"totals_encoding\":\"native_long_double_roundtrip_decimal\""
+              << std::setprecision(std::numeric_limits<long double>::max_digits10)
+              << ",\"mass\":" << totals.mass
+              << ",\"mom_u\":" << totals.mom_u
+              << ",\"mom_v\":" << totals.mom_v
+              << ",\"mom_w\":" << totals.mom_w
+              << ",\"energy\":" << totals.energy
               << ",\"rhoX\":[";
     for (std::size_t component = 0; component < totals.species.size(); ++component) {
         if (component != 0) std::cout << ',';
-        std::cout << static_cast<double>(totals.species[component]);
+        std::cout << totals.species[component];
     }
     std::cout << ']';
     if (parameter_path != nullptr)
@@ -1073,19 +1077,107 @@ void qualify_sod_checkpoint(const io::CheckpointData& checkpoint)
               << ",\"species_sum_error\":0}\n";
 }
 
+/** Read the two explicitly supported uniform hydrodynamic initial states.
+ * Native CHK does not store the model name for periodic, callback-free cases.
+ * Select an unambiguous parameter contract from the actual run input instead:
+ * ExternalGravity owns pressure0/velocity_x0; Gaussian owns p0 and all four
+ * pulse amplitudes. The latter is uniform only when every amplitude is zero.
+ * Missing or mixed controls are errors, never aliases or model defaults.
+ */
+std::array<double, 2> gravity_initial_conditions(
+    const ConfigParser& parser, const checkpoint_analysis::Inputs& inputs)
+{
+    constexpr std::array gaussian_keys{
+        "p0", "pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"};
+    const bool gaussian = std::any_of(gaussian_keys.begin(), gaussian_keys.end(),
+        [&](const char* key) { return parser.HasKey(key); });
+    const bool external = parser.HasKey("pressure0") || parser.HasKey("velocity_x0");
+    require(gaussian != external,
+            "gravity reference requires exactly one explicit Gaussian or ExternalGravity input contract");
+    if (external)
+        return {inputs.case_number("pressure0"), inputs.case_number("velocity_x0")};
+    const double pressure = inputs.case_number("p0");
+    for (const char* key : {"pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"})
+        require(inputs.case_number(key) == 0.0,
+                "uniform Gaussian gravity reference requires explicit zero hydrodynamic pulse amplitudes");
+    // Gaussian Init multiplies these amplitudes by the same envelope. Exact
+    // zeros therefore define stationary flow; no velocity input is invented.
+    return {pressure, 0.0};
+}
+
+void test_gravity_reference_inputs()
+{
+    const auto read = [](const std::string& text) {
+        std::istringstream raw(text);
+        ConfigParser parser;
+        parser.Read(raw, "gravity-reference-self-test");
+        std::istringstream resolved(parser.InputText());
+        const checkpoint_analysis::Inputs inputs(resolved, "gravity-reference-self-test");
+        return gravity_initial_conditions(parser, inputs);
+    };
+    const auto rejected = [&](const std::string& text) {
+        bool failed = false;
+        try { (void)read(text); }
+        catch (const std::exception&) { failed = true; }
+        require(failed, "invalid gravity reference input was accepted");
+    };
+    const std::string gaussian = "p0=2\npressure_amplitude=0\nu_amplitude=0\n"
+                                 "v_amplitude=0\nw_amplitude=0\n";
+    const std::string external = "pressure0=3\nvelocity_x0=0.125\n";
+    require(read(gaussian) == std::array{2.0, 0.0},
+            "Gaussian reference did not use its actual uniform p0 and zero amplitudes");
+    require(read(external) == std::array{3.0, 0.125},
+            "ExternalGravity reference changed its explicit pressure or initial velocity");
+    // Every branch input is required even when its physical value is zero.
+    for (const std::string key : {"p0", "pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"}) {
+        auto missing = gaussian;
+        const auto first = missing.find(key + "="), last = missing.find('\n', first);
+        missing.erase(first, last - first + 1);
+        rejected(missing);
+    }
+    for (const std::string key : {"pressure0", "velocity_x0"}) {
+        auto missing = external;
+        const auto first = missing.find(key + "="), last = missing.find('\n', first);
+        missing.erase(first, last - first + 1);
+        rejected(missing);
+    }
+    for (const std::string key : {"pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"}) {
+        auto nonuniform = gaussian;
+        const auto value = nonuniform.find(key + "=") + key.size() + 1;
+        nonuniform.replace(value, 1, "0.01");
+        rejected(nonuniform);
+    }
+    for (const auto& text : {std::string{}, gaussian + external,
+                            gaussian + "pressure0=2\n", gaussian + "velocity_x0=0\n",
+                            external + "p0=3\n", gaussian + "p0=2\n"})
+        rejected(text);
+    auto malformed = gaussian;
+    malformed.replace(malformed.find("u_amplitude=0"), 13, "u_amplitude=nan");
+    rejected(malformed);
+    std::cout << "checkpoint gravity reference input controls passed\n";
+}
+
 void qualify_gravity_checkpoint(const io::CheckpointData& checkpoint, const char* parameter_path)
 {
     require(parameter_path != nullptr, "gravity reference requires actual run parameters");
-    const auto inputs = checkpoint_analysis::Inputs::File(parameter_path);
+    // Parse once from disk, then resolve the same immutable bytes through the
+    // shared strict metric parser; presence checks never supply missing values.
+    std::ifstream source(parameter_path, std::ios::binary);
+    require(static_cast<bool>(source), "cannot open gravity reference parameters");
+    ConfigParser parser;
+    parser.Read(source, parameter_path);
+    std::istringstream resolved(parser.InputText());
+    const checkpoint_analysis::Inputs inputs(resolved, parameter_path);
     require(inputs.standard_token("gravity_type") == "external"
                 && inputs.standard_token("eos_type") == "ideal"
                 && inputs.standard_token("geometry") == "cartesian",
             "gravity reference requires Cartesian constant external acceleration and ideal gas");
     const double rho0 = inputs.case_number("rho0");
-    const double pressure0 = inputs.case_number("pressure0");
+    const auto initial = gravity_initial_conditions(parser, inputs);
+    const double pressure0 = initial[0];
     const double gamma = inputs.standard<double>("gamma");
     const std::array velocity{
-        inputs.case_number("velocity_x0") + inputs.standard<double>("gravity_g_x") * checkpoint.time,
+        initial[1] + inputs.standard<double>("gravity_g_x") * checkpoint.time,
         inputs.standard<double>("gravity_g_y") * checkpoint.time,
         inputs.standard<double>("gravity_g_z") * checkpoint.time};
     const double energy = pressure0 / (gamma - 1.0)
@@ -1270,6 +1362,7 @@ int run_validation(int argc, char** argv)
     }
     if (argc == 2 && std::string(argv[1]) == "--test-time-comparison") {
         test_evolution_timing();
+        test_gravity_reference_inputs();
         return 0;
     }
     if (argc == 8 && std::string(argv[1]) == "--compare-step-diagnostic") {

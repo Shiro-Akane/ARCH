@@ -9,14 +9,20 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <memory>
 #include <vector>
 
 #include "amr/topology/AmrDefines.h"
 #include "core/ArchPortability.h"
 #include "data/StateDiagnostics.h"
-#include "physics/boundary/BoundaryDiagnostics.h"
-#include "physics/boundary/BoundaryFlux.h"
+// The shared slots retain these attachments without defining boundary policy.
+// Consumers that inspect the face records include their boundary owner directly.
+namespace arch::boundary {
+struct DiffusionBoundaryStorage;
+struct BoundaryFluxCaptureStorage;
+}
 
 /**
  * @brief Represents the conserved variables at a single point.
@@ -178,25 +184,3 @@ struct FluidState
         eng[i] += val.eng;
     }
 };
-
-/**
- * RZ single-state conversions. These leaves do not own another J/ell array.
- * Callers provide the positive V/W measures from GridMetrics and validate the
- * state before EOS use. Geometry consumers migrate together behind the RZ gate.
- */
-namespace arch::state {
-ARCH_INLINE double rz_angular_integral(double m_phi, double angular_measure) noexcept
-{
-    return m_phi * angular_measure;
-}
-ARCH_INLINE double rz_angular_density(double m_phi, double angular_measure,
-                                     double volume) noexcept
-{
-    return rz_angular_integral(m_phi, angular_measure) / volume;
-}
-ARCH_INLINE double rz_representative_azimuthal_velocity(double m_phi,
-                                                       double density) noexcept
-{
-    return m_phi / density;
-}
-} // namespace arch::state

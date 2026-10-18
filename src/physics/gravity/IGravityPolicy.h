@@ -6,7 +6,7 @@
  * CUDA execution uses plain views and shared cell mathematics rather than
  * invoking these virtual methods over Host-owned vectors.
  * Workflow:
- * 1. Receive one native hydro patch and its stage fluxes.
+ * 1. Receive one hydro patch and its stage fluxes.
  * 2. Accumulate the selected gravity momentum and energy contributions.
  * 3. Keep backend launch/storage and domain solves in their concrete owners.
  */
@@ -14,41 +14,14 @@
 #pragma once
 
 #include <cstddef>
-#include <span>
 #include <vector>
 
 #include "data/FluidState.h"
 #include "grid/Grid.h"
 #include "physics/gravity/GravitySourceTypes.h"
 
-namespace arch::driver { class GravityStage; }
-namespace arch::backend { struct BackendStateAccess; }
-
 namespace Physical {
 namespace Gravity {
-
-/** Borrowed Device identities for one synchronous private gravity stage.
- * Runtime callbacks authenticate the actual Runtime/backend/transaction owner.
- * The owner retains both spans until every receipt and real stream has joined;
- * these metadata alone certify neither numerical execution nor field scope.
- */
-struct NativeGravityDeviceDomain {
-    const void* owner{};
-    void (*require_domain)(const void*){};
-    void (*require_patch)(const void*,std::size_t,arch::backend::BackendStateAccess,
-        const GridMetrics::GeometryView&){};
-    std::span<const arch::backend::BackendStateAccess> accesses{};
-    std::span<const GridMetrics::GeometryView> geometries{};
-};
-
-class NativeExternalStageFrame;
-class NativeSelfStageFrame;
-/** Source description is data discovery, never authority to consume a stage. */
-enum class GravitySourceOrigin : unsigned char { Unknown, NativeExternalOrthonormal, NativeSelfComposite };
-struct GravitySourceDescriptor {
-    GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
-    ExternalGravityView external{};
-};
 
 /**
  * @brief Pure virtual interface for gravity models.
@@ -58,18 +31,6 @@ struct GravitySourceDescriptor {
 class IGravityPolicy {
 public:
     virtual ~IGravityPolicy() = default;
-    /** Unknown is deliberately the default for every unqualified/custom policy. */
-    virtual GravitySourceDescriptor source_descriptor() const noexcept { return {}; }
-    /** Borrow only the actual GravityStage publication; construction is private. */
-    const NativeExternalStageFrame* prepared_native_external() const noexcept {
-        return native_external_frame_;
-    }
-    /** Borrow only the private actual solved Native RZ Hydro-stage frame.
-     * Discovery data and diagnostic candidates cannot attach this authority.
-     */
-    const NativeSelfStageFrame* prepared_native_self() const noexcept {
-        return native_self_frame_;
-    }
     // Optional work from the actual Riemann mass flux. Existing external gravity
     // retains its cell source; self gravity supplies this compatible face work.
     virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
@@ -83,10 +44,6 @@ public:
      */
     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
                                       const Grid& grid, double dt, void* execution_stream = nullptr) const = 0;
-private:
-    friend class arch::driver::GravityStage;
-    mutable const NativeExternalStageFrame* native_external_frame_=nullptr;
-    mutable const NativeSelfStageFrame* native_self_frame_=nullptr;
 };
 
 } // namespace Gravity

@@ -12,13 +12,17 @@ failure using ideal-gas hydrodynamics, PPM, HLLC, RK3 and external gravity:
 
 The physics, boundary conditions and refinement criteria come from the four
 files supplied on `codex/rt-amr-validation-notes-20261003` at `2ee826655`.
-Only output paths, the step limit and checkpoint cadence have been adjusted.
+Output paths, the step limit and checkpoint cadence were adjusted for replay.
+The active inputs also spell out previously implicit standard controls. The old
+unregistered `limiter=none` selected MinMod through the former policy loader;
+`limiter=minmod` now records that effective method explicitly. It does not mean
+unlimited reconstruction. Historical receipts retain their original input hashes.
 The files explicitly disable burning, as in the reported experiment.
 
 From the repository root, run a case with a locally built executable:
 
 ```bash
-bin/ARCH RT validation/amr/inputs/rt/plain.par
+build-modernization-cpu/bin/ARCH RT validation/amr/inputs/rt/plain.par
 ```
 
 Each input runs 256 steps and writes a checkpoint every 32 steps. Keep outputs

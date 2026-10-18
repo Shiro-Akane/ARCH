@@ -143,13 +143,9 @@ struct VelocityView {
     const double* momentum = nullptr;
     const double* density = nullptr;
     double density_floor = 0.0;
-    const double* physical = nullptr;
 
-    /** Read a physical center view when supplied; otherwise keep the original
-     * point-momentum quotient, including its unchanged nonpositive-rho gate.
-     */
+    /** Keep the original momentum quotient and nonpositive-density gate. */
     ARCH_INLINE double operator[](int cell) const {
-        if (physical) return physical[cell];
         return density[cell] > 0.0 ? momentum[cell] / density[cell] : std::numeric_limits<double>::quiet_NaN();
     }
 };
@@ -168,12 +164,10 @@ struct StateView {
     double density_floor = 0.0;
     // Runtime metadata, not a compile-time species ceiling.
     int species_count = 0;
-    // Borrowed per-batch physical velocities, never evolved Native momenta.
-    const double* physical_velocity[3]{};
 
     /** Select one common physical-velocity reader for VEL, curl and div(v). */
     ARCH_INLINE VelocityView velocity(int component) const {
-        return {momentum[component],density,density_floor,physical_velocity[component]};
+        return {momentum[component],density,density_floor};
     }
 
     ARCH_INLINE bool valid_entropy(int cell) const {

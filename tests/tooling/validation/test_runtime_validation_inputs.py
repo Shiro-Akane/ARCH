@@ -277,8 +277,6 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
     originals = [
         "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/gravity/test_gravity_stage_contract.cpp.o",
         "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_host_hydro_transaction.cpp.o",
-        "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_rz_runtime_boundary.cpp.o",
-        "CMakeFiles/arch_gravity_stage_contract.dir/tests/host/driver/test_rz_runtime_external.cpp.o",
     ]
     production_objects = [
         "CMakeFiles/arch_gravity_stage_contract.dir/src/amr/elliptic/EllipticMeshAdapter.cpp.o",
@@ -360,22 +358,6 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
         self.assertIn("-ffp-contract=off", result)
         self.assertEqual(result[result.index("-c") + 1], "/source/fixture.cpp")
 
-    def test_private_standalone_removes_only_exact_embedded_switch(self):
-        entry = {"command": "c++ -DARCH_CUDA_BUILD_ENABLED=0 -DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1 "
-                 "-DARCH_HAS_KLU=1 -O3 -flto=auto -fno-fast-math -ffp-contract=off -o x.o -c x.cpp"}
-        production = {"command": "c++ -DARCH_CUDA_BUILD_ENABLED=0 -fopenmp -o main.o -c main.cpp"}
-        tokens, added = fixture_build.fixture_compile_recipe(entry, production, Path("fixture.cpp"), Path("0.o"))
-        self.assertNotIn("-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1", tokens)
-        for original in ("-DARCH_HAS_KLU=1", "-O3", "-flto=auto", "-fno-fast-math", "-ffp-contract=off"):
-            self.assertIn(original, tokens)
-        self.assertEqual(added, ["-fopenmp"])
-        for bad in ("-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=0", "-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED",
-                    "-DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1 -DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1"):
-            with self.subTest(bad=bad), self.assertRaisesRegex(RuntimeError, "unexpected embedded"):
-                fixture_build.fixture_compile_recipe(
-                    {"command": "c++ -DARCH_CUDA_BUILD_ENABLED=0 " + bad + " -o x.o -c x.cpp"},
-                    production, Path("fixture.cpp"), Path("0.o"))
-
     def test_openmp_is_neither_invented_nor_duplicated(self):
         base = "c++ -DARCH_CUDA_BUILD_ENABLED=0 -o original.o -c original.cpp"
         for suffix, expected in (("", []), (" -fopenmp -DARCH_OPENMP_ENABLED=1", [])):
@@ -444,7 +426,7 @@ class PrivateFixtureRecipeTests(unittest.TestCase):
                 fixture_build.verify_fixture_inputs(frozen, path, before)
 
     def test_reused_owner_is_not_reported_as_recompiled_production(self):
-        runner = (ROOT / "validation/amr/run_rz_runtime_boundary.py").read_text()
+        runner = (ROOT / "validation/io/run_driver_checkpoint_geometry.py").read_text()
         self.assertIn('"recompiledSources":{source:source_sha(source)}', runner)
         self.assertIn('"reusedCompiledOwner":build_record["reusedCompiledOwner"]', runner)
         self.assertNotIn('"ninja","-t","commands","ARCH"', runner)
@@ -497,7 +479,7 @@ class PrivateRetainedOwnerTests(unittest.TestCase):
         self.root = Path(self.directory.name) / "source"
         self.build = Path(self.directory.name) / "build"
         self.entries = []
-        controls = "-DARCH_CUDA_BUILD_ENABLED=0 -DARCH_RZ_RUNTIME_CONTRACT_EMBEDDED=1 " \
+        controls = "-DARCH_CUDA_BUILD_ENABLED=0 " \
             "-O3 -flto=auto -fno-fast-math -fno-math-errno -ffp-contract=off"
         self.template = {"command": "/usr/bin/c++ " + controls + " -o template.o -c template.cpp"}
         for name, target in zip(fixture_build.LINK_PRODUCTION_SOURCES, fixture_build.LINK_PRODUCTION_OBJECTS):
@@ -661,102 +643,14 @@ class PrivateProviderReuseTests(unittest.TestCase):
             fixture_build.fixture_identity_defines(self.root, self.source, {"gamma": "2"})
 
     def test_three_runner_contracts_recompile_only_fixture_and_keep_declared_run_controls(self):
-        for path in ("validation/amr/run_rz_initial_population.py",
-                     "validation/io/run_driver_checkpoint_geometry.py",
-                     "validation/io/run_rz_checkpoint_continuation.py"):
-            text = (ROOT / path).read_text()
-            with self.subTest(path=path):
-                self.assertIn('"recompiledSources":{source:source_sha(source)}', text)
-                self.assertIn('compile_recipe="production"', text)
-                self.assertIn('"OMP_NUM_THREADS":"2"', text)
-                if path != "validation/io/run_rz_checkpoint_continuation.py":
-                    self.assertIn('timeout=30', text)
-                self.assertIn('verify_fixture_inputs(frozen,exe', text)
-                self.assertNotIn('"ninja","-t","commands","ARCH"', text)
-        continuation = (ROOT / "validation/io/run_rz_checkpoint_continuation.py").read_text()
-        self.assertIn('"--initial-thermal-rejection"', continuation)
-        self.assertNotIn('"--repair-position"', continuation)
-
-    def test_warm_checkpoint_deadline_charges_compile_and_retains_frozen_providers(self):
-        # Source-level runner contract only: no compile, process or model is run.
-        # Inspect its actual AST so ordinary30 and warm2400 remain two explicit
-        # resource modes, with compilation charged before the remaining run time.
-        text = (ROOT / "validation/io/run_rz_checkpoint_continuation.py").read_text()
-        tree = ast.parse(text)
-        body = tree.body
-        def assignment(name):
-            found = [(index, node) for index, node in enumerate(body)
-                     if isinstance(node, ast.Assign)
-                     and any(isinstance(target, ast.Name) and target.id == name
-                             for target in node.targets)]
-            self.assertEqual(len(found), 1, name)
-            return found[0]
-        def named_call(node, name):
-            return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == name
-        started_index, started = assignment("started")
-        self.assertEqual(ast.unparse(started.value), "time.monotonic()")
-        remaining_index, remaining = assignment("remaining")
-        self.assertIsInstance(remaining.value, ast.IfExp)
-        self.assertEqual(ast.unparse(remaining.value.test), "table")
-        self.assertEqual(remaining.value.orelse.value, 30.)
-        self.assertEqual(ast.unparse(remaining.value.body), "2400.0 - (time.monotonic() - started)")
-        builds = [(index, node.value) for index, node in enumerate(body)
-                  if isinstance(node, ast.Assign) and named_call(node.value, "build_cpu_fixture")]
-        self.assertEqual(len(builds), 1)
-        build_index, build = builds[0]
-        self.assertLess(started_index, build_index)
-        self.assertLess(build_index, remaining_index)
-        keywords = {item.arg: ast.unparse(item.value) for item in build.keywords}
-        self.assertEqual(keywords["reuse_compiled_sources"], "providers")
-        self.assertEqual(keywords["owner_sources"], "list(RUNTIME_SOURCES)")
-        self.assertEqual(keywords["compile_recipe"], "'production'")
-        runs = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
-                and node.func.value.id == "subprocess" and node.func.attr == "run"]
-        self.assertEqual(len(runs), 1)
-        self.assertEqual({item.arg: ast.unparse(item.value) for item in runs[0].keywords}["timeout"], "remaining")
-        # Exercise only the real parser declarations, without importing or
-        # executing fixture/build code. All three modes must be selectable
-        # alone and mutually exclusive; the old warm/rejection rule remains.
-        import contextlib, io, itertools
-        setup = [node for node in body if
-                 (isinstance(node, ast.Assign) and any(
-                     isinstance(target, ast.Name) and target.id in ("p", "modes")
-                     for target in node.targets)) or
-                 (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
-                  and isinstance(node.value.func, ast.Attribute)
-                  and isinstance(node.value.func.value, ast.Name)
-                  and node.value.func.value.id in ("p", "modes"))]
-        namespace = {"argparse": __import__("argparse"),
-                     "pathlib": __import__("pathlib"), "__doc__": "parser contract"}
-        exec(compile(ast.Module(body=setup, type_ignores=[]), "runner-parser", "exec"), namespace)
-        parser = namespace["p"]
-        common = ["--build", "unused-build", "--output-root", "unused-output"]
-        modes = [["--initial-thermal-rejection"], ["--warm-native-active", "actual-table"],
-                 ["--public-native-active", "actual-table"]]
-        for mode in modes:
-            parser.parse_args(common + mode)
-        for left, right in itertools.combinations(modes, 2):
-            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
-                parser.parse_args(common + left + right)
-            self.assertEqual(error.exception.code, 2)
-        exhausted = [(index, node) for index, node in enumerate(body) if isinstance(node, ast.If)
-                     and ast.unparse(node.test) == "remaining <= 0.0"]
-        self.assertEqual(len(exhausted), 1)
-        self.assertIsInstance(exhausted[0][1].body[0], ast.Raise)
-        tries = [index for index, node in enumerate(body) if isinstance(node, ast.Try)]
-        self.assertEqual(len(tries), 1)
-        self.assertLess(remaining_index, exhausted[0][0])
-        self.assertLess(exhausted[0][0], tries[0])
-        fences = [(index, node.value) for index, node in enumerate(body)
-                  if isinstance(node, ast.Expr) and named_call(node.value, "verify_fixture_inputs")]
-        self.assertEqual(len(fences), 1)
-        self.assertGreater(fences[0][0], tries[0])
-        self.assertEqual([ast.unparse(argument) for argument in fences[0][1].args],
-                         ["frozen", "exe", "build_record['executableIdentity']"])
-        self.assertIn('"prospectiveCompileAndRunCapSeconds":2400 if table else None', text)
-        self.assertIn('table_identity(table)!=table_before', text)
-
+        path = "validation/io/run_driver_checkpoint_geometry.py"
+        text = (ROOT / path).read_text()
+        self.assertIn('"recompiledSources":{source:source_sha(source)}', text)
+        self.assertIn('compile_recipe="production"', text)
+        self.assertIn('"OMP_NUM_THREADS":"2"', text)
+        self.assertIn('timeout=30', text)
+        self.assertIn('verify_fixture_inputs(frozen,exe', text)
+        self.assertNotIn('"ninja","-t","commands","ARCH"', text)
 
 class PrivateFixtureFreshnessTests(unittest.TestCase):
     """Regeneration metadata counterexamples only; every subprocess is mocked."""

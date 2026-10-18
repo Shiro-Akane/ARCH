@@ -21,7 +21,7 @@
 
 namespace {
 /** Compare real conservative restriction + EOS against independent caloric integrals.
- * This is a bounded static parent-state gate, not lifecycle or RZ swirl acceptance.
+ * This is a bounded static parent-state gate, not a lifecycle or evolution qualification.
  */
 void tree_transaction_contract()
 {
@@ -155,126 +155,6 @@ void frozen_uniform_tree_gate()
 }
 
 
-/** Observe the real IdealGas inputs of an actual Native refinement batch.
- * Expected caloric e0 and gamma come from independent integrated initial
- * data. The existing 16-epsilon arithmetic window scales with E/K operations;
- * it is not a scientific convergence budget or a source-publication grant.
- */
-struct NativeRefinementEosWitness {
-    const IdealGas& actual;
-    double internal;
-    double energy_scale;
-    mutable int pressures=0,temperatures=0,sounds=0;
-    void check(bool condition,const char* message) const {
-        if(!condition)throw std::runtime_error(message);
-    }
-    double get_pressure(const FluidVector& u,const double* xi) const {
-        ++pressures;
-        check(u.rho==1.&&xi&&xi[0]==.25&&xi[1]==.75,
-            "Native refinement evaluated padding or changed source fractions");
-        const double expected=.5*internal;
-        const double value=actual.get_pressure(u,xi);
-        check(std::isfinite(value)&&std::abs(value-expected)<=
-            16.*std::numeric_limits<double>::epsilon()*.5*energy_scale,
-            "Native refinement pressure used raw mixed-measure kinetic energy");
-        return value;
-    }
-    double get_temperature(double rho,double e,const double* xi) const {
-        ++temperatures;
-        check(rho==1.&&xi&&xi[0]==.25&&xi[1]==.75,
-            "Native refinement temperature read nonlogical padding");
-        const double value=actual.get_temperature(rho,e,xi);
-        check(std::isfinite(value)&&std::abs(value-internal/2.)<=
-            16.*std::numeric_limits<double>::epsilon()*energy_scale/2.,
-            "Native refinement temperature did not use the physical mean e0");
-        return value;
-    }
-    double get_sound_speed(const FluidVector& u,double pressure,const double* xi) const {
-        ++sounds;
-        return actual.get_sound_speed(u,pressure,xi);
-    }
-};
-
-/** Actual bound Native axis Tree with independently integrated cold rotation.
- * The first positive cell has unresolved generic raw e, while the real Native
- * mean and all physical centers have e0>0. Pitch padding stays poison. No
- * Runtime/EOS/source authority is manufactured by this standalone reader test.
- */
-void native_refinement_batch_contract()
-{
-    SimConfig config;
-    config.grid.dim=2;config.grid.geometry="cylindrical";
-    config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
-    config.grid.x1_min=0.;config.grid.x1_max=1.;
-    config.grid.x2_min=-.5;config.grid.x2_max=.5;
-    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
-    config.amr.refine_on_rho=false;config.amr.refine_on_jeans=false;
-    config.amr.refine_on_p=true;config.amr.refine_on_temp=true;
-    config.amr.refine_on_entropy=true;config.amr.refine_on_vorticity=true;
-    config.amr.refine_on_div_v=true;config.amr.refine_threshold=.1;
-    config.amr.derefine_threshold=.02;
-    config.numerics.sml_rho=1.e-14;config.numerics.min_eint=1.e-14;
-    config.numerics.max_eint=1.e3;
-    SpeciesManager species;
-    species.add_species("first",1.,1.,1.5,2.);
-    species.add_species("second",2.,1.,1.5,2.);
-    IdealGas actual(1.5,species);
-    auto pool=std::make_shared<amr::MemoryPool>(8,2);
-    amr::AmrTree tree(pool);
-    constexpr auto native=GridMetrics::GeometrySemantics::AxisymmetricRz;
-    tree.InitRootGrid(config,2,native);
-    auto& block=pool->GetBlock(tree.GetActiveBlocks().front());
-    const auto& grid=block.grid;
-    const long double h=1.L/amr::BLOCK_NX;
-    const double e0=static_cast<double>(h*h/64.L);
-    const double bad=std::numeric_limits<double>::quiet_NaN();
-    for(auto* values:{&block.fluid_state.rho,&block.fluid_state.mom_u,
-        &block.fluid_state.mom_v,&block.fluid_state.mom_w,&block.fluid_state.eng,
-        &block.fluid_state.mass_fractions})std::fill(values->begin(),values->end(),bad);
-    for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
-        const int cell=grid.GetIndex(i,j,0);
-        const long double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
-        const long double lo=std::min(std::abs(left),std::abs(right));
-        const long double hi=std::max(std::abs(left),std::abs(right));
-        const long double v=(hi*hi-lo*lo)/2.L;
-        const long double w=(hi*hi*hi-lo*lo*lo)/3.L;
-        const long double inertia=(std::pow(hi,4)-std::pow(lo,4))/4.L;
-        const long double sign=right<=0.?-1.L:1.L;
-        block.fluid_state.set(cell,{1.,0.,0.,static_cast<double>(sign*inertia/w),
-            static_cast<double>(e0+.5L*inertia/v)});
-        block.fluid_state.X(0,cell)=.25;block.fluid_state.X(1,cell)=.75;
-    }
-    const int first=grid.GetIndex(grid.Is(),grid.Js(),0);
-    const auto cold=block.fluid_state.get(first);
-    const long double raw=static_cast<long double>(cold.eng)-
-        .5L*cold.mom_w*cold.mom_w;
-    if(!(raw<0.)||arch::state::recover(cold).status!=arch::state::Status::unresolved_energy)
-        throw std::runtime_error("Native refinement fixture lost the independent raw negative-e witness");
-    const auto saved=block.fluid_state;
-    // Largest actual ghost |r| is 1+ng/16. The independent E operation scale
-    // is fixed before evaluation, rather than selected from an observed error.
-    const double radius=1.+static_cast<double>(grid.ng)/amr::BLOCK_NX;
-    NativeRefinementEosWitness witness{actual,e0,e0+.5*radius*radius};
-    amr::BindRefinementThermodynamics(tree,witness);
-    tree.EvaluateRefinement(config);
-    if(block.refine_flag!=0||witness.pressures<=0||witness.temperatures<=0||witness.sounds<=0)
-        throw std::runtime_error("Native constant cold thermodynamic/curl fields requested artificial refinement");
-    // Audit every source bit, including the deliberately nonlogical NaN pitch.
-    const auto same=[](const std::vector<double>& a,const std::vector<double>& b) {
-        return a.size()==b.size()&&std::equal(a.begin(),a.end(),b.begin(),
-            [](double x,double y){return std::bit_cast<std::uint64_t>(x)==std::bit_cast<std::uint64_t>(y);});
-    };
-    for(auto member:{&FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,
-                    &FluidState::mom_w,&FluidState::eng,&FluidState::mass_fractions})
-        if(!same(block.fluid_state.*member,saved.*member))
-            throw std::runtime_error("Native refinement mutated physical means/composition/padding");
-    config.numerics.min_eint=2.*e0;
-    bool rejected=false;
-    try{tree.EvaluateRefinement(config);}catch(const std::runtime_error&){rejected=true;}
-    if(!rejected)throw std::runtime_error("Native refinement discarded actual configured internal-energy bound");
-    std::cout<<"NATIVE_REFINEMENT_MEAN_BATCH_PASS\n";
-}
-
 void parent_state_reference()
 {
     constexpr long double pi=3.141592653589793238462643383279502884L;
@@ -292,13 +172,11 @@ void parent_state_reference()
     IdealGas mixture(1.4,species);
     double maximum=0.;
     int cases=0;
-    for(int chart=0;chart<3;++chart) for(bool mixed:{false,true}) {
-        const bool rz=chart!=0;
-        const double radius=chart==2?2.:0.;
+    for(bool mixed:{false,true}) {
+        const double radius=0.;
         auto grid=GridMetrics::make_geometry_view(
-            rz?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Cartesian,
+            GridMetrics::Geometry::Cartesian,
             2,{radius,0.,0.},{1.,1.,1.});
-        if(rz)grid=GridMetrics::make_rz_geometry_view(grid);
         auto coarse=grid;coarse.dx1=2.;coarse.dx2=2.;
         std::array<std::array<double,4>,6> fields{};
         std::array<double,8> fractions{};
@@ -307,32 +185,22 @@ void parent_state_reference()
         source.fractions=fractions.data();source.species_stride=4;
         amr::regrid_math::RestrictionGeometry geometry{};
         geometry.count=4;geometry.coarse_volume=GridMetrics::CellVolume(coarse,0,0,0);
-        geometry.angular_momentum=rz;
-        if(rz)geometry.coarse_angular_measure=GridMetrics::Rz::AngularMomentumMeasure(
-            radius,radius+2.,2.);
         std::array<long double,5> integral{};
         std::array<long double,2> species_integral{};
-        long double volume=0., internal_integral=0., angular_measure=0., angular_integral=0.;
+        long double volume=0., internal_integral=0.;
         for(int cell=0;cell<4;++cell) {
             const int i=cell%2,j=cell/2;
             const double density=i?2.:1., velocity=(j?-1.:1.)*(i?1.:2.);
             const double internal=i?8.:4.;
             fields[0][cell]=density;fields[1][cell]=density*velocity;
-            const double swirl=rz?(i?-1.:2.):0.;
+            const double swirl=0.;
             fields[3][cell]=density*swirl;
             fields[4][cell]=density*(internal+.5*(velocity*velocity+swirl*swirl));
             fractions[cell]=i?.25:.75;fractions[4+cell]=1.-fractions[cell];
             geometry.source_cells[cell]=cell;
             geometry.volumes[cell]=GridMetrics::CellVolume(grid,i,j,0);
-            const long double left=radius+i,right=left+1.;
-            const long double measure=rz?pi*(right*right-left*left):1.L;
-            if(rz) {
-                geometry.angular_measures[cell]=GridMetrics::Rz::AngularMomentumMeasure(
-                    static_cast<double>(left),static_cast<double>(right),1.);
-                // Independent integral 2*pi*int r^2 dr, not the production helper.
-                const long double w=(2.L/3.L)*pi*(right*right*right-left*left*left);
-                angular_measure+=w;angular_integral+=w*fields[3][cell];
-            }
+            const long double measure=1.L;
+
             volume+=measure;internal_integral+=measure*density*internal;
             for(int f=0;f<5;++f)integral[f]+=measure*fields[f][cell];
             for(int sp=0;sp<2;++sp)
@@ -344,11 +212,9 @@ void parent_state_reference()
                 0.,0.,workspace,parent)!=amr::regrid_math::Status::Ok)
             throw std::runtime_error("Jeans parent restriction rejected bounded fixture");
         const long double rho=integral[0]/volume;
-        const long double azimuth_m=rz?angular_integral/angular_measure:integral[3]/volume;
+        const long double azimuth_m=integral[3]/volume;
         const long double kinetic=(integral[1]*integral[1]+integral[2]*integral[2])
             /(2*integral[0]*integral[0])+.5L*(azimuth_m/rho)*(azimuth_m/rho);
-        if(rz && std::abs(parent.fluid.mom_w-azimuth_m)>bound*std::max(1.L,std::abs(azimuth_m)))
-            throw std::runtime_error("Jeans RZ parent bypassed W angular restriction");
         const long double internal=integral[4]/integral[0]-kinetic;
         if(!(internal>internal_integral/integral[0]))
             throw std::runtime_error("opposite-velocity parent lost unresolved kinetic energy");
@@ -369,8 +235,7 @@ void parent_state_reference()
         const double error=static_cast<double>(std::abs(actual.cells-expected)/expected);
         maximum=std::max(maximum,error);
         if(actual.status!=JeansDiagnostics::Status::valid || error>bound) {
-            std::cerr<<std::setprecision(20)<<"JEANS_PARENT_FAILURE chart="<<chart
-                <<" mixed="<<mixed<<" error="<<error<<" bound="<<bound
+            std::cerr<<std::setprecision(20)<<"JEANS_PARENT_FAILURE mixed="<<mixed<<" error="<<error<<" bound="<<bound
                 <<" actual="<<actual.cells<<" expected="<<expected
                 <<" rho="<<parent.fluid.rho<<" mphi="<<parent.fluid.mom_w
                 <<" E="<<parent.fluid.eng<<" internal_ref="<<internal
@@ -466,9 +331,6 @@ int main()
     if (JeansDiagnostics::evaluate_cell(1,1,grid,0,0).status !=
             JeansDiagnostics::Status::invalid_input)
         throw std::runtime_error("Retired cylindrical 2-D polar spacing accepted");
-    grid=GridMetrics::make_rz_geometry_view(grid);
-    check_spacing(3.0); // (r,z), axial physical length dz=3, without r*dphi.
-    grid.semantics=GridMetrics::GeometrySemantics::Existing;
     grid.dim = 3; check_spacing(8.0); // (r,z,phi), largest r*dphi.
     grid.geometry = GridMetrics::Geometry::Spherical;
     grid.dim = 2; check_spacing(6.0); // Existing 2-D polar specialization.
@@ -546,6 +408,5 @@ int main()
     parent_state_reference();
     tree_transaction_contract();
     frozen_uniform_tree_gate();
-    native_refinement_batch_contract();
     std::cout << "JEANS_DIAGNOSTICS_NUMERIC_PASS\n";
 }

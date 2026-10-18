@@ -27,7 +27,7 @@
 #include "core/config/RuntimeConfiguration.h"
 #include "data/FluidState.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "interface/ProblemGenerator.h"
 #include "physics/boundary/UserBoundary.h"
 #include "io/IO.h"
@@ -134,11 +134,6 @@ void write_backend_sidecar(
  */
 const char* axis_label(const SimConfig& config, int axis)
 {
-    if (GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim)
-        == GridMetrics::GeometrySemantics::AxisymmetricRz) {
-        static constexpr const char* rz[] = {"r", "z"};
-        return rz[axis];
-    }
     if (config.grid.geometry == "cartesian") {
         static constexpr const char* cartesian[] = {"x", "y", "z"};
         return cartesian[axis];
@@ -285,9 +280,8 @@ void DispatchSolver(ProblemGenerator &problem,
         backend.resolved_backend == ComputeBackend::Cpu
             ? cpu_candidate.value : cuda_candidate.value;
     write_backend_sidecar(config, plan, backend);
-    // Carry the same derived chart into actual root geometry and cell averages.
-    const ProblemInitializationContext initialization{plan.eos,
-        GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim)};
+    // The shared Grid owner validates the retained chart; initialization lends only EOS identity.
+    const ProblemInitializationContext initialization{plan.eos};
 
     const int required_ng = requirements.required_ghost_depth;
     if (required_ng > amr::MAX_NG) {
@@ -309,12 +303,9 @@ void DispatchSolver(ProblemGenerator &problem,
             config, specs, plan.eos, requirements.burn,
             canonical_policy_name<NetworkPolicies>(plan.network),
             requirements.use_nse);
-        // The same resolved chart owns fresh initialization and strict restart.
-        // Legacy polar input never acquires RZ J/W semantics by filename alone.
-        const auto expected_geometry =
-            initialization.geometry_semantics==GridMetrics::GeometrySemantics::AxisymmetricRz
-                ? io::current_rz_checkpoint_geometry()
-                : io::CheckpointGeometryIdentity{1,"existing"};
+        // The same resolved identity owns fresh initialization and strict
+        // restart; a legacy filename never acquires a new chart by itself.
+        const io::CheckpointGeometryIdentity expected_geometry{1,"existing"};
         read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs,
                  expected_provenance, expected_geometry);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim

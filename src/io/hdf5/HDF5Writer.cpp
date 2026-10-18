@@ -218,14 +218,9 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::map<std::string, std::vector<double>>& data_map,
                          const PlotNativeGrid* native_grid,
                          const PlotSourceIdentity* source_identity,
-                         const std::map<std::string, PlotFieldMetadata>* field_metadata,
-                         GridMetrics::GeometrySemantics semantics,
-                         const PlotRzAngularState* rz_angular_state)
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata)
 {
-    const bool rz = semantics == GridMetrics::GeometrySemantics::AxisymmetricRz;
-    if ((semantics != GridMetrics::GeometrySemantics::Existing && !rz)
-        || (rz && (dim != 2 || geom != "cylindrical"))
-        || (!rz && dim == 2 && geom == "cylindrical"))
+    if (dim == 2 && geom == "cylindrical")
         throw std::invalid_argument("Unsupported Plotfile geometry profile.");
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
@@ -242,21 +237,6 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
     for (const auto& [name, buffer] : data_map)
         if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
             throw std::invalid_argument("Invalid plotfile field name/length.");
-    if (rz && (!native_grid || !rz_angular_state))
-        throw std::invalid_argument("RZ Plotfile requires native W and m_phi state payload.");
-    if (!rz && (rz_angular_state || (native_grid && !native_grid->angular_measure.empty())))
-        throw std::invalid_argument("RZ angular payload on existing Plotfile geometry.");
-    if (rz) {
-        if (native_grid->angular_measure.size()!=cells
-            || rz_angular_state->m_phi.size()!=cells
-            || rz_angular_state->angular_momentum_density.size()!=cells)
-            throw std::invalid_argument("Invalid RZ angular payload length.");
-        for (size_t i=0;i<cells;++i)
-            if (!std::isfinite(native_grid->angular_measure[i]) || native_grid->angular_measure[i]<=0.
-                || !std::isfinite(rz_angular_state->m_phi[i])
-                || !std::isfinite(rz_angular_state->angular_momentum_density[i]))
-                throw std::invalid_argument("Invalid RZ angular measure/state.");
-    }
     if (native_grid) {
         if ((geom!="cartesian" && geom!="cylindrical" && geom!="spherical") || native_grid->cell_measure.size() != cells)
             throw std::invalid_argument("Invalid candidate native grid geometry/length.");
@@ -268,29 +248,22 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             for (size_t cell = 0; cell < cells; ++cell) {
                 double lo = native_grid->lower[axis][cell], hi = native_grid->upper[axis][cell];
                 if (!std::isfinite(lo) || !std::isfinite(hi)
-                    || (rz && axis == 0 && lo < 0.)
                     || (axis < static_cast<size_t>(dim) ? hi <= lo : lo != 0. || hi != 0.))
                     throw std::invalid_argument("Invalid native cell bounds.");
             }
         }
-        const auto expected_unit=rz?"cm^3":geom=="cartesian"?(dim==1?"cm":dim==2?"cm^2":"cm^3"):
+        const auto expected_unit=geom=="cartesian"?(dim==1?"cm":dim==2?"cm^2":"cm^3"):
             dim==3 || (geom=="spherical" && dim==1)?"cm^3":"cm^2";
-        const auto expected_normalization=rz?"full_rotation":geom=="cartesian"?
+        const auto expected_normalization=geom=="cartesian"?
             (dim==1?"per_unit_transverse_area":dim==2?"per_unit_transverse_length":"full_volume"):
             dim==3?"full_volume":geom=="spherical" && dim==1?"per_unit_solid_angle":
             dim==1?"per_unit_azimuth_and_axial_length":"per_unit_transverse_length";
-        if ((rz || native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
+        if ((native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
             && (native_grid->measure_unit!=expected_unit || native_grid->normalization!=expected_normalization))
             throw std::invalid_argument("Invalid native measure declaration.");
         for (double measure : native_grid->cell_measure)
             if (!std::isfinite(measure) || measure <= 0.)
                 throw std::invalid_argument("Invalid native cell measure.");
-        if (rz)
-            for (size_t i=0;i<cells;++i)
-                if (rz_angular_state->angular_momentum_density[i]
-                    != arch::state::rz_angular_density(rz_angular_state->m_phi[i],
-                        native_grid->angular_measure[i],native_grid->cell_measure[i]))
-                    throw std::invalid_argument("RZ J/V differs from supplied m_phi, W and V.");
     }
     if (field_metadata) {
         const auto text_ok=[](const std::string& v) {
@@ -353,7 +326,6 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             || arch::config::identity_value(config_fields,"backend",'s')!=id.resolved_backend
             || arch::config::identity_value(config_fields,"grid.dim",'i')!=std::to_string(dim)
             || arch::config::identity_value(config_fields,"grid.geometry",'s')!=geom
-            || arch::config::identity_value(config_fields,"geometry-semantics",'s')!=(rz?"axisymmetric-rz-2":"existing-1")
             || arch::config::identity_value(eos_fields,"version",'s')!="arch-eos-identity-1"
             || arch::config::identity_value(eos_fields,"type",'s')!=id.eos_type
             || arch::config::identity_value(eos_fields,"accepted-table-fingerprint",'s')!=id.eos_table_sha256
@@ -405,7 +377,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         }
         if(native_grid) {
             const std::array<std::string,3> axes=geom=="cartesian"?std::array<std::string,3>{"x","y","z"}:
-                rz?std::array<std::string,3>{"r","z","inactive"}:dim==3?
+                dim==3?
                 (geom=="cylindrical"?std::array<std::string,3>{"r","z","phi"}:std::array<std::string,3>{"r","theta","phi"}):
                 std::array<std::string,3>{"r","phi","inactive"};
             for(int i=0;i<3;++i) {
@@ -414,7 +386,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                 if(native_grid->axes[i]!=axis||native_grid->axis_units[i]!=unit)
                     throw std::invalid_argument("Contradictory formal native coordinate declaration");
             }
-            const std::string convention=rz?"full-rotation-axisymmetric-ring":geom=="cartesian"?
+            const std::string convention=geom=="cartesian"?
                 "active-coordinate-product; inactive-measures-omitted":"GridMetrics-native-coordinate-integral";
             if(native_grid->measure_convention!=convention)
                 throw std::invalid_argument("Contradictory formal native measure convention");
@@ -470,12 +442,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         file.createAttribute("time", current_time);
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
-        if (rz) {
-            file.createAttribute("geometry_semantics_revision",2);
-            file.createAttribute("geometry_chart",std::string("axisymmetric-rz"));
-            file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
-        }
-        if (!rz && source_identity && source_identity->formal) {
+        if (source_identity && source_identity->formal) {
             file.createAttribute("geometry_semantics_revision",1);
             file.createAttribute("geometry_chart",std::string("existing"));
         }
@@ -580,19 +547,13 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 
         if (native_grid) {
             Group native = file.createGroup("NativeGrid");
-            native.createAttribute("version", std::string(rz ? (formal?"arch-native-axisymmetric-rz-2":"candidate-axisymmetric-rz-2") :
-                (formal?(geom=="cartesian"?"arch-native-cartesian-1":"arch-native-curvilinear-1"):"candidate-cartesian-1")));
-            if (rz) {
-                native.createAttribute("x1_axis",std::string(formal?"r":"r_cy"));
-                native.createAttribute("x2_axis",std::string(formal?"z":"z_cy"));
-                native.createAttribute("x3_axis",std::string("inactive"));
-                native.createAttribute("native_coordinate_unit",std::string("cm"));
-            }
+            native.createAttribute("version", std::string(
+                formal?(geom=="cartesian"?"arch-native-cartesian-1":"arch-native-curvilinear-1"):"candidate-cartesian-1"));
             if(formal) {
                 native.createAttribute("native_geometry",geom);
                 for(std::size_t axis=0;axis<3;++axis) {
                     const std::string key="x"+std::to_string(axis+1);
-                    if(!rz)native.createAttribute(key+"_axis",native_grid->axes[axis]);
+                    native.createAttribute(key+"_axis",native_grid->axes[axis]);
                     native.createAttribute(key+"_unit",native_grid->axis_units[axis]);
                 }
             }
@@ -602,7 +563,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             native.createAttribute("center_basis", std::string("cartesian"));
             native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
             native.createAttribute("measure_convention",
-                std::string(rz ? "full-rotation-axisymmetric-ring" : formal?native_grid->measure_convention:
+                std::string(formal?native_grid->measure_convention:
                     "active-coordinate-product; inactive-measures-omitted"));
             native.createAttribute("measure_unit", native_grid->measure_unit);
             native.createAttribute("measure_normalization", native_grid->normalization);
@@ -615,34 +576,6 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                 native.createDataSet("logical_" + name, native_grid->logical[axis]);
             }
             native.createDataSet("cell_measure", native_grid->cell_measure);
-            if (rz) {
-                auto w = native.createDataSet("angular_measure",native_grid->angular_measure);
-                w.createAttribute("unit",std::string("cm^4"));
-                w.createAttribute("meaning",std::string("integral-r-dV"));
-                w.createAttribute("source",std::string("GridMetrics::Rz::AngularMomentumMeasure"));
-                w.createAttribute("normalization",std::string("full_rotation"));
-            }
-        }
-
-        if (rz) {
-            auto state = file.createGroup("NativeState");
-            state.createAttribute("version",std::string(source_identity && source_identity->formal ? "arch-rz-angular-1" : "candidate-rz-angular-1"));
-            state.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
-            state.createAttribute("storage_order",std::string("same-as-Data; x1-fastest"));
-            state.createAttribute("evolved_state",std::string("m_phi only; J/V is derived output"));
-            for (const auto& [name, values] : std::map<std::string,const std::vector<double>*>{
-                {"m_phi",&rz_angular_state->m_phi},
-                {"angular_momentum_density",&rz_angular_state->angular_momentum_density}}) {
-                auto ds = state.createDataSet<double>(name,DataSpace(dims));
-                ds.write_raw(values->data());
-                const bool m = name=="m_phi";
-                ds.createAttribute("unit",std::string(m ? "g/(cm^2*s)" : "g/(cm*s)"));
-                ds.createAttribute("basis",std::string("local-orthonormal-r-z-phi"));
-                ds.createAttribute("centering",std::string("cell"));
-                ds.createAttribute("meaning",std::string(m ? "J-cell-over-W" : "J-cell-over-V"));
-                ds.createAttribute("averaging",std::string(m ? "r-dV-weighted-angular-momentum-component" : "native-volume-angular-momentum-density"));
-                ds.createAttribute("source",std::string(m ? "FluidState::mom_w" : "arch::state::rz_angular_density"));
-            }
         }
 
         for (const auto& [name, buffer] : data_map) {
@@ -679,17 +612,6 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         ? CheckpointGeometryIdentity{1, "existing"} : checkpoint.geometry_identity;
     require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                                           geometry_identity, geometry_identity);
-    if(geometry_identity.chart=="axisymmetric-rz") {
-        require_valid_rz_checkpoint_domain(checkpoint.native_domain);
-        const auto& shape=checkpoint.native_domain.cell_shape;
-        if(checkpoint.cells_per_block/static_cast<std::size_t>(shape[0])!=static_cast<std::size_t>(shape[1])
-            ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
-            throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
-    }
-    const auto expected_repairs=geometry_identity.chart=="axisymmetric-rz"
-        ? arch::state::RepairSemantics::RzVolumeAngular : arch::state::RepairSemantics::ExistingVolume;
-    if(checkpoint.repairs.semantics!=expected_repairs)
-        throw std::invalid_argument("Checkpoint repair measure identity differs from source chart");
     const size_t blocks = checkpoint.levels.size();
     if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
@@ -718,7 +640,7 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
         file.createAttribute("checkpoint_version", checkpoint_format_version);
         file.createDataSet("state_repairs", checkpoint.repairs.values);
-        file.createAttribute("repair_semantics",std::string(arch::state::repair_semantics_name(checkpoint.repairs.semantics)));
+        file.createAttribute("repair_semantics",std::string("existing-volume-v1"));
         file.createDataSet("state_controls", checkpoint.state_controls);
         file.createAttribute("repair_block_uid", checkpoint.repairs.block_uid);
         file.createAttribute("repair_stage", checkpoint.repairs.stage);
@@ -735,17 +657,6 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("geometry", checkpoint.geometry);
         file.createAttribute("geometry_semantics_revision", geometry_identity.revision);
         file.createAttribute("geometry_chart", geometry_identity.chart);
-        if(geometry_identity.chart=="axisymmetric-rz") {
-            file.createAttribute("state_semantics",std::string(rz_checkpoint_state_semantics));
-            auto domain=file.createGroup("NativeDomain");
-            domain.createAttribute("version",1);
-            domain.createAttribute("bounds_order",std::string("r_min,r_max,z_min,z_max"));
-            domain.createAttribute("coordinate_unit",std::string("cm"));
-            domain.createAttribute("measure_normalization",std::string("full_rotation"));
-            domain.createDataSet("bounds",checkpoint.native_domain.bounds);
-            domain.createDataSet("root_blocks",checkpoint.native_domain.root_blocks);
-            domain.createDataSet("cell_shape",checkpoint.native_domain.cell_shape);
-        }
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
@@ -851,50 +762,16 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             file.getAttribute("geometry_chart").read(checkpoint.geometry_identity.chart);
             require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                 checkpoint.geometry_identity, checkpoint.geometry_identity);
-            if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {
-                if(!file.hasAttribute("state_semantics"))
-                    throw std::runtime_error("RZ checkpoint missing mandatory m_phi=J/W state semantics");
-                std::string state_semantics;
-                file.getAttribute("state_semantics").read(state_semantics);
-                if(state_semantics!=rz_checkpoint_state_semantics)
-                    throw std::runtime_error("RZ checkpoint state semantics mismatch: expected m_phi=J/W");
-                if(!file.exist("NativeDomain"))
-                    throw std::runtime_error("RZ checkpoint native domain identity missing");
-                auto domain=file.getGroup("NativeDomain");
-                int version=0;std::string order,unit,normalization;
-                domain.getAttribute("version").read(version);
-                domain.getAttribute("bounds_order").read(order);
-                domain.getAttribute("coordinate_unit").read(unit);
-                domain.getAttribute("measure_normalization").read(normalization);
-                if(version!=1||order!="r_min,r_max,z_min,z_max"||unit!="cm"||normalization!="full_rotation")
-                    throw std::runtime_error("RZ checkpoint native domain contract mismatch");
-                domain.getDataSet("bounds").read(checkpoint.native_domain.bounds);
-                domain.getDataSet("root_blocks").read(checkpoint.native_domain.root_blocks);
-                domain.getDataSet("cell_shape").read(checkpoint.native_domain.cell_shape);
-                require_valid_rz_checkpoint_domain(checkpoint.native_domain);
-            }
         }
-        const bool rz_repairs=checkpoint.geometry_identity.chart=="axisymmetric-rz";
-        const auto repair_profile=rz_repairs ? arch::state::RepairSemantics::RzVolumeAngular
-            : arch::state::RepairSemantics::ExistingVolume;
-        if(!file.hasAttribute("repair_semantics")) {
-            if(rz_repairs) throw std::runtime_error("RZ checkpoint missing mandatory repair measure identity");
-        } else {
+        if(file.hasAttribute("repair_semantics")) {
             std::string saved_repairs;
             file.getAttribute("repair_semantics").read(saved_repairs);
-            if(saved_repairs!=arch::state::repair_semantics_name(repair_profile))
+            if(saved_repairs!="existing-volume-v1")
                 throw std::runtime_error("Checkpoint repair measure identity mismatch");
         }
         // Identity has been validated; never infer a historical nonzero ledger from its values.
-        checkpoint.repairs.semantics=repair_profile;
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
-        if(checkpoint.geometry_identity.chart=="axisymmetric-rz") {
-            const auto& shape=checkpoint.native_domain.cell_shape;
-            if(checkpoint.cells_per_block/static_cast<std::size_t>(shape[0])!=static_cast<std::size_t>(shape[1])
-                ||checkpoint.cells_per_block%static_cast<std::size_t>(shape[0])!=0)
-                throw std::runtime_error("RZ checkpoint native cell shape differs from payload");
-        }
         int burn_enabled = 0;
         int nse_enabled = 0;
         checkpoint.provenance.available = true;

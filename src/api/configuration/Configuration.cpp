@@ -362,6 +362,8 @@ Json ConfigurationSchema() {
     auto coordinates = Json::array();
     for (const auto geometry : {"cartesian", "cylindrical", "spherical"}) {
         for (int dim = 1; dim <= 3; ++dim) {
+            // Two-dimensional cylindrical support is retired; omit its row.
+            if (dim == 2 && std::string(geometry) == "cylindrical") continue;
             GridConfig grid; grid.geometry = geometry; grid.dim = dim;
             grid.nblockx2 = dim >= 2 ? 1 : 0; grid.nblockx3 = dim == 3 ? 1 : 0;
             coordinates.push(CoordinateMetadata(grid, "cgs"));

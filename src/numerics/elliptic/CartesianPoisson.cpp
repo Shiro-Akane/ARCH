@@ -23,11 +23,8 @@ namespace arch::elliptic {
 /** Reject non-Cartesian mesh extents and spacing before building an operator. */
 void detail::validate_mesh_geometry(const CartesianMesh& m, bool full_angular_domain)
 {
-    const bool rz=m.semantics==GridMetrics::GeometrySemantics::AxisymmetricRz;
-    if (m.geometry==Geometry::Cylindrical && m.dimension==2 && !rz)
-        throw std::invalid_argument("Two-dimensional cylindrical Poisson requires RZ; the polar mesh is retired");
-    if (rz && (m.dimension!=2 || m.geometry!=Geometry::Cylindrical))
-        throw std::invalid_argument("RZ elliptic mesh requires cylindrical dimension 2");
+    if (m.geometry==Geometry::Cylindrical && m.dimension==2)
+        throw std::invalid_argument("Two-dimensional cylindrical Poisson meshes are unsupported; the legacy polar/RZ chart is retired");
     if (m.dimension < 1 || m.dimension > 3) throw std::invalid_argument("Poisson dimension must be 1..3");
     std::size_t count = 1;
     double diagonal_bound = 0.;
@@ -53,7 +50,7 @@ void detail::validate_mesh_geometry(const CartesianMesh& m, bool full_angular_do
     if (m.geometry != Geometry::Cartesian) {
         if (m.origin[0] < 0.)
             throw std::invalid_argument("Curvilinear gravity requires nonnegative radius");
-        if (m.dimension >= 2 && !rz) {
+        if (m.dimension >= 2) {
             const int azimuth=m.dimension-1;
             const double turn=2.*std::acos(-1.), span=m.cells[azimuth]*m.spacing[azimuth];
             const double roundoff=64.*std::numeric_limits<double>::epsilon()*turn;

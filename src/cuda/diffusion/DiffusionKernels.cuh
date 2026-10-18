@@ -6,24 +6,21 @@
  * 1. Borrow the runtime's existing state, species scratch, grid metrics and
  *    physical boundary controls; the kernels neither allocate nor publish them.
  * 2. Read each face's states and call DiffFlux for its physical distance,
- *    native thermal closure, material coefficients, traction and matched work.
+ *    material coefficients, traction and matched work.
  * 3. Apply the shared prescribed-flux boundary owner, then capture the actual
  *    oriented flux used by divergence/reflux: q = F_E - sum_i F_mom_i*v_i.
  * 4. Borrow the same shared geometry/source and stability-row owners for the
  *    operator and timestep; DiffusionAMRStages owns the RKL-stage arithmetic.
- *    Native outputs receive only its shared provisional finite/rho/simplex
- *    check; the completed Runtime BC/EOS gate owns thermal acceptance.
  * 5. Return queued-kernel status and write extent. The runtime owns streams,
  *    workspaces, EOS failure checks, halo exchange and logical-slot publication.
  *
- * CPU and CUDA share all transport and integration mathematics. In native RZ,
- * angular momentum and energy use W and V measures respectively; the shared
- * face owner supplies the physical work velocity rather than J/(W*rho).
+ * CPU and CUDA share all transport and integration mathematics.
  * A successful interior update does not make the surrounding ghosts valid.
  */
 
 #pragma once
 
+#include "physics/boundary/BoundaryDiagnostics.h"
 #include <cuda_runtime.h>
 
 #include <cstddef>
@@ -38,7 +35,6 @@
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 #include "numerics/diffusion/DiffFlux.h"
 #include "numerics/diffusion/DiffusionAMRStages.h"
-#include "numerics/state/RzNativeClosure.h"
 #include "physics/species/Species.h"
 
 namespace arch::cuda
@@ -226,16 +222,11 @@ __global__ void diffusion_face_kernel(
         const int nj = grid.je - grid.js + (direction == 1 ? 1 : 0);
         const int i = grid.is + linear % ni;
         const int j = grid.js + (linear / ni) % nj;
-        // Borrow the same physical face distance and EOS-only native closure
-        // as Host. Conserved V/W means stay in the original device buffers.
+        // Borrow the same physical face distance as Host.
         const double spacing = DiffFlux::diffusion_face_spacing(geometry,direction,i,j);
         const FluidVector left = state.load(left_cell);
         const FluidVector right = state.load(right_cell);
         const DiffusionStateReader read{state};
-        const auto thermal_left=DiffFlux::diffusion_thermal_input(
-            left,read,geometry,left_cell,i-(direction==0?1:0));
-        const auto thermal_right=DiffFlux::diffusion_thermal_input(
-            right,read,geometry,right_cell,i);
         DiffFlux::DiffusionFaceProperties properties{};
         const DiffFlux::DiffusionFaceStatus face_status =
             DiffFlux::evaluate_diffusion_face(
@@ -251,8 +242,7 @@ __global__ void diffusion_face_kernel(
                     ? flux.mass_fractions + right_cell : nullptr,
                 flux.total_size, config.use_viscous_diffusion
                     ? DiffFlux::viscous_basis_rotation(geometry, direction, i, j)
-                    : DiffFlux::ViscousBasisRotation{}, &properties,
-                &thermal_left,&thermal_right);
+                    : DiffFlux::ViscousBasisRotation{}, &properties);
         if (!face_status.valid) {
             atomicExch(status, 1);
             continue;
@@ -267,9 +257,8 @@ __global__ void diffusion_face_kernel(
             const int k = grid.ks + linear / (ni * nj);
             const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
                 grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
-            const bool native=GridMetrics::is_axisymmetric_rz(geometry);
             const bool radial=geometry.geometry!=GridMetrics::Geometry::Cartesian&&geometry.dim==1;
-            const bool matched_work=native||radial;
+            const bool matched_work=radial;
             double work_velocity[3]{};
             if(matched_work) {
                 work_velocity[0]=.5*(left.mom_u/left.rho+right.mom_u/right.rho);
@@ -277,17 +266,8 @@ __global__ void diffusion_face_kernel(
                 work_velocity[2]=.5*(left.mom_w/left.rho+right.mom_w/right.rho);
             }
             if(!DiffFlux::replace_curvilinear_viscous_flux(read,right_cell,geometry,direction,i,j,
-                config,properties,face_flux,radial?work_velocity:nullptr)) {
-                atomicExch(status,1);continue;
-            }
-            // The existing shared leaf replaces angular traction and its work
-            // once. nu=0 still supplies the physical work velocity needed by
-            // a prescribed native traction; no new stress formula lives here.
-            if((config.use_viscous_diffusion||(native&&controls))
-                &&!DiffFlux::replace_rz_azimuthal_flux(read,right_cell,geometry,
-                    direction,i,spacing,config.use_viscous_diffusion
-                        ?properties.coefficients.nu_visc:0.,face_flux,
-                    native?&work_velocity[2]:nullptr)) {
+                config,properties,face_flux,
+                radial?work_velocity:nullptr)) {
                 atomicExch(status,1);continue;
             }
             const int coordinate[3]{i,j,k}, lower[3]{grid.is,grid.js,grid.ks};
@@ -299,8 +279,7 @@ __global__ void diffusion_face_kernel(
             flux.store(right_cell, face_flux);
             // Observe the actual post-override flux: heat follows the shared
             // DiffFlux convention F_E - sum_i F_mom_i * matched face velocity.
-            // Native torque and work use different W/V measures; reuse the
-            // same physical velocity that supplied the boundary work above.
+            // Reuse the physical velocity that supplied boundary work above.
             if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1]) {
                 const double velocity[3]{
                     matched_work?work_velocity[0]:0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
@@ -432,11 +411,6 @@ static __global__ void diffusion_dt_reduce_kernel(
 }
 
 /** Check one RKL output in its actual conserved representation.
- * Workflow: native J/W and E/V receive the shared finite/rho/simplex-only
- * provisional check, without raw kinetic recovery, repair or projection.
- * Existing outputs retain their original volume-weighted repair owner.
- * A valid native result still requires the Runtime's completed BC/EOS gate;
- * this cell check publishes neither thermal acceptance nor ghost validity.
  */
 ARCH_INLINE state::Status check_rkl_stage_output(
     const FluidVector& updated, DeviceStateView destination,
@@ -444,9 +418,6 @@ ARCH_INLINE state::Status check_rkl_stage_output(
 {
     double* fractions = destination.n_species
         ? destination.mass_fractions + cell : nullptr;
-    if (grid.semantics == GridMetrics::GeometrySemantics::AxisymmetricRz)
-        return RzThermodynamics::provisional_native_state(updated, fractions,
-            destination.n_species, destination.total_size, binding.bounds);
     const int k = cell / grid.stride_z;
     const int j = (cell - k * grid.stride_z) / grid.stride_y;
     const int i = cell - k * grid.stride_z - j * grid.stride_y;

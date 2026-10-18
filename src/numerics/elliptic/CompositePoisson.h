@@ -82,11 +82,6 @@ struct CompositeFace {
     std::vector<int> value_samples;    // Radial face-potential interpolation.
     std::vector<double> value_coefficients;
     double value_boundary_coefficient = 0.;
-    // Actual native face-fragment endpoints. The normal endpoints coincide;
-    // tangential bounds retain their original bits, never center +/- width/2.
-    bool native_bounds = false;
-    std::array<double,3> fragment_lower{};
-    std::array<double,3> fragment_upper{};
 };
 enum class BoundaryErrorQuality { CertifiedAbsolute, Estimate, Unknown };
 struct BoundaryPotentialError {
@@ -113,102 +108,11 @@ struct PoissonArithmeticError {
     std::vector<double> cell_bounds;
     double norm_upper=std::numeric_limits<double>::infinity();
 };
-/** Exact full-ring measures from the dyadic mesh identity, not stored weights.
- * Transient proof data only; this does not certify face-fit/stencil construction.
- */
-struct NativeRzMeasureEnclosure {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::vector<double> volume_lower,volume_upper,volume_error_upper;
-    std::vector<double> weight_lower,weight_upper,weight_error_upper;
-    double total_volume_lower=0.,total_volume_upper=0.;
-};
-/** Proof of the ideal root-dyadic final RZ stencil; not a Phi/force certificate.
- * The construction enum chooses the actual fitted or recovered policy.
- */
-struct NativeRzStencilEnclosure {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    FaceStencilConstruction construction=FaceStencilConstruction::TwoPoint;
-    std::size_t face_index=0;
-    std::vector<double> coefficient_lower,coefficient_upper,coefficient_error_upper;
-    double boundary_lower=0.,boundary_upper=0.,boundary_error_upper=0.;
-    // Final eliminated anchor k: flux rows store k=-alpha*q separately from beta.
-    double anchor_lower=0.,anchor_upper=0.,anchor_error_upper=0.;
-    double inverse_residual_upper=0.,inverse_norm_upper=0.,lambda_error_upper=0.;
-};
-/** Ideal root-dyadic face geometry and signed native boundary-map factors.
- * Side arrays correspond to left/right cells; absent/interior boundary terms
- * are exact zero. Source/observer potential differences remain separate.
- */
-struct NativeRzFaceEnclosure {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::size_t face_index=0;
-    std::array<double,2> center_lower{},center_upper{},center_error_upper{};
-    double area_lower=0.,area_upper=0.,area_error_upper=0.;
-    std::array<double,2> area_over_volume_lower{},area_over_volume_upper{},area_over_volume_error_upper{};
-    std::array<double,2> boundary_map_lower{},boundary_map_upper{},boundary_map_error_upper{};
-};
-/** B construction error for supplied stored face values, in ideal native RMS.
- * Does not certify those values at ideal source/observer coordinates.
- */
-struct NativeRzBoundaryConstructionError {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::vector<double> cell_bounds;
-    double native_norm_upper=std::numeric_limits<double>::infinity();
-};
-// Distinct input prevents accidentally lifting stored-coordinate ring errors
-// into ideal-source/observer errors. Root scope must be supplied explicitly.
-enum class NativeRzPotentialScope { Unknown, RootDyadicSourceAndObserver };
-struct NativeRzFacePotentialError {
-    BoundaryPotentialError error;
-    NativeRzPotentialScope scope=NativeRzPotentialScope::Unknown;
-};
-/** Uniform potential-error sensitivity of the ideal native boundary map.
- * Units are inverse length squared; this is geometry, not a source certificate.
- */
-struct NativeRzBoundarySensitivity {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::vector<double> cell_coefficients;
-    double native_norm_upper=std::numeric_limits<double>::infinity();
-};
-struct NativeRzBoundaryPotentialError {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::vector<double> cell_bounds;
-    double native_norm_upper=std::numeric_limits<double>::infinity();
-};
-/** Ideal final native A vs exact stored-coefficient A, for supplied phi.
- * Does not certify the continuous PDE or a RHS source/potential producer.
- */
-struct NativeRzOperatorConstructionError {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::vector<double> cell_bounds;
-    double native_norm_upper=std::numeric_limits<double>::infinity();
-};
-struct NativeRzResidualEvaluationError {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    NativeRzOperatorConstructionError construction;
-    PoissonArithmeticError arithmetic;
-    std::vector<double> cell_bounds;
-    double native_norm_upper=std::numeric_limits<double>::infinity();
-};
-/** Complete native residual error, distinct from an RHS-only error ledger.
- * Source, boundary potential, assembly/apply arithmetic and the jointly
- * constructed A*phi-B*datum are included once by the authenticated producer.
- * This certifies a discrete residual; continuous physics stays separate.
- */
-struct NativeRzCompleteResidualError {
-    BoundaryErrorStatus status=BoundaryErrorStatus::InvalidInput;
-    std::vector<double> cell_bounds;
-    double native_norm_upper=std::numeric_limits<double>::infinity();
-};
-enum class ResidualErrorComposition { SeparateRhsAndOperator, CorrelatedPrescribedBoundary };
-enum class BoundaryResidualNormScope { StoredNativeWeights, RootDyadicRzWeights };
 enum class BoundaryResidualStatus {
     Accepted, ResidualTooLarge, InvalidInput, UncertifiedInput, Overflow
 };
 struct BoundaryResidualAssessment {
     BoundaryResidualStatus status=BoundaryResidualStatus::InvalidInput;
-    ResidualErrorComposition error_composition=ResidualErrorComposition::SeparateRhsAndOperator;
-    double complete_residual_error_upper=std::numeric_limits<double>::infinity();
     double tolerance_safe=0.;
     double rhs_norm_lower=0.,rhs_norm_upper=std::numeric_limits<double>::infinity();
     double residual_norm_upper=std::numeric_limits<double>::infinity();
@@ -262,28 +166,6 @@ public:
     BoundaryRhsError propagate_boundary_error(
         std::span<const BoundaryPotentialError> face_errors) const;
     WeightedNormInterval norm_interval(std::span<const double> x) const;
-    NativeRzMeasureEnclosure native_rz_measure_enclosure() const;
-    NativeRzStencilEnclosure native_rz_stencil_enclosure(std::size_t face_index) const;
-    NativeRzFaceEnclosure native_rz_face_enclosure(std::size_t face_index) const;
-    NativeRzBoundaryConstructionError native_rz_boundary_construction_error(
-        std::span<const double> boundary_values) const;
-    NativeRzBoundarySensitivity native_rz_boundary_sensitivity() const;
-    NativeRzBoundaryPotentialError native_rz_propagate_potential_error(
-        std::span<const NativeRzFacePotentialError> face_errors) const;
-    NativeRzOperatorConstructionError native_rz_operator_construction_error(
-        std::span<const double> potential) const;
-    NativeRzResidualEvaluationError native_rz_residual_evaluation_error(
-        std::span<const double> potential,std::span<const double> computed_rhs,
-        std::span<const double> computed_residual) const;
-    // Joint construction of A*phi-B*datum keeps the SAME boundary coefficient
-    // correlated; the original homogeneous construction API remains unchanged.
-    NativeRzOperatorConstructionError native_rz_prescribed_residual_construction_error(
-        std::span<const double> potential,std::span<const double> boundary_values) const;
-    BoundaryResidualAssessment assess_native_rz_correlated_residual(
-        std::span<const double> approximate_rhs,std::span<const double> computed_residual,
-        const BoundaryRhsError& rhs_error,const NativeRzCompleteResidualError& complete_error,
-        double rtol,double atol) const;
-    WeightedNormInterval native_rz_norm_interval(std::span<const double> x) const;
     PoissonArithmeticError bound_rhs_assembly_roundoff(
         std::span<const double> source,std::span<const double> boundary_values,
         std::span<const double> computed_rhs) const;
@@ -297,8 +179,7 @@ public:
         std::span<const double> computed_residual,
         const BoundaryRhsError& face_error,
         double rhs_assembly_error_upper,double residual_evaluation_error_upper,
-        BoundaryErrorQuality evaluation_quality,double rtol,double atol,
-        BoundaryResidualNormScope norm_scope=BoundaryResidualNormScope::StoredNativeWeights) const;
+        BoundaryErrorQuality evaluation_quality,double rtol,double atol) const;
     // Compare the actual projection with P_w*x=x-sum(stored_weight*x).
     // Does not certify weight construction or physical source preprocessing.
     PoissonArithmeticError bound_constant_mode_projection_roundoff(
@@ -309,18 +190,6 @@ public:
     void project(std::span<double> x) const;
 private:
     friend class arch::multigrid::CompositeMultigrid;
-    /** Build owned geometry-only proofs after all final face recovery decisions.
-     * Density, potential, boundary values and field generations are not cached.
-     */
-    void prepare_native_rz_geometry_cache();
-    /** Original outward measure construction, also used by uncached MG levels. */
-    NativeRzMeasureEnclosure compute_native_rz_measure_enclosure() const;
-    /** Original final-sample stencil proof, without changing its fit or status. */
-    NativeRzStencilEnclosure compute_native_rz_stencil_enclosure(std::size_t face_index) const;
-    /** Original face geometry proof; reuse completed stencil records if present. */
-    NativeRzFaceEnclosure compute_native_rz_face_enclosure(std::size_t face_index) const;
-    NativeRzOperatorConstructionError native_rz_operator_construction_error_impl(
-        std::span<const double> potential,std::span<const double> boundary_values) const;
     // Only the hierarchy owner can construct a derived operator from a real
     // fine operator. No public flag or AMR leaf level grants this provenance.
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
@@ -337,13 +206,6 @@ private:
     std::vector<CompositeFace> faces_;
     std::vector<std::vector<int>> neighbors_;
     int max_level_ = 0;
-    // Owned immutable payloads move/copy with the same final operator geometry.
-    // Derived MG levels keep these vectors empty and use the original routines.
-    NativeRzMeasureEnclosure native_rz_measure_cache_;
-    std::vector<NativeRzStencilEnclosure> native_rz_stencil_cache_;
-    std::vector<NativeRzFaceEnclosure> native_rz_face_cache_;
-    bool native_rz_stencil_cache_ready_ = false;
-    bool native_rz_geometry_cache_ready_ = false;
     CompositePoisson(CartesianMesh base, std::vector<CompositeCell> cells,
                      BoundaryKind kind, CompositeBoundary boundary, const CompositePoisson* fine);
     void prepare_boundary();
@@ -354,9 +216,6 @@ private:
     void build_faces();
     void fit_interface(CompositeFace& face) const;
     void fit_curved_face_value(CompositeFace& face) const;
-    /** Bind exact normal/tangential endpoints before forming a native area. */
-    void bind_native_face_bounds(CompositeFace& face, int tangent_owner,
-                                 double normal_coordinate) const;
     double face_area(const CompositeFace& face) const;
     double face_metric(const CompositeFace& face,int axis) const;
 };

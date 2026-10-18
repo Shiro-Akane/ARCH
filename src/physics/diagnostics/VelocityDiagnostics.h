@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace VelocityDiagnostics {
 
@@ -31,8 +31,8 @@ struct Values {
  *
  * Momentum storage follows the hydro source-term convention: VELX is radial for
  * curvilinear grids; VELY is azimuthal in spherical 2-D polar grids and polar
- * in spherical 3-D grids. Cylindrical RZ and 3-D grids use VELY=axial and
- * VELZ=azimuthal; spherical 3-D also uses VELZ=azimuthal. RZ has no phi derivative.
+ * in spherical 3-D grids. Cylindrical 3-D grids use VELY=axial and
+ * VELZ=azimuthal; spherical 3-D also uses VELZ=azimuthal.
  * Logical-grid indices are materialized once because this routine is called in the
  * AMR and PLT inner loops; the component derivatives then reuse the same stencil.
  */
@@ -82,20 +82,7 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
     add_face_flux(0, vel_x, x_minus, x_plus);
     if (grid.dim >= 2) add_face_flux(1, vel_y, y_minus, y_plus);
     if (grid.dim == 3) add_face_flux(2, vel_z, z_minus, z_plus);
-    const bool native=GridMetrics::is_axisymmetric_rz(grid);
-    if (native) {
-        // Negative-r axis ghosts are a signed coordinate extension: their
-        // oriented face flux and r*dr volume have the same sign. The ratio
-        // reproduces the even physical divergence; this does not authorize
-        // a negative physical integration measure or a ghost publication.
-        if (!std::isfinite(volume) || volume==0.0) {
-            const double invalid=std::numeric_limits<double>::quiet_NaN();
-            return {invalid,invalid};
-        }
-        result.divergence=face_flux/volume;
-    } else {
-        result.divergence = volume > 0.0 ? face_flux / volume : 0.0;
-    }
+    result.divergence = volume > 0.0 ? face_flux / volume : 0.0;
 
     if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cartesian) {
         const double omega_x = ddy(vel_z) - ddz(vel_y);
@@ -105,20 +92,12 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
         return result;
     }
 
-    // Native reflected ghosts retain signed r and signed physical u_phi.
-    // The same cylindrical curl formula uses u_phi/r; taking |r| would turn
-    // a rigid-rotation ghost curl from 2*Omega into zero. Existing charts
-    // retain their original absolute-radius numerical convention exactly.
-    const double radius = native ? grid.GetCellCenterX(i)
-        : std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
-    if (native && (!std::isfinite(radius) || radius==0.0)) {
-        const double invalid=std::numeric_limits<double>::quiet_NaN();
-        return {invalid,invalid};
-    }
+    // Existing charts retain their original absolute-radius numerical
+    // convention exactly.
+    const double radius = std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
     if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical
-        && (grid.dim == 3 || GridMetrics::is_axisymmetric_rz(grid))) {
-        // Logical axes are (r,z,phi), or explicit axisymmetric (r,z).
-        // RZ retains v_phi; ddz above is zero because there is no phi axis.
+        && grid.dim == 3) {
+        // Logical axes are (r,z,phi).
         const double omega_r = ddz(vel_y) / radius - ddy(vel_z);
         const double omega_phi = ddy(vel_x) - ddx(vel_y);
         const double omega_z = vel_z_center / radius + ddx(vel_z) - ddz(vel_x) / radius;
@@ -128,7 +107,6 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
 
     if (grid.dim <= 2) {
         // The spherical 2-D specialization is polar (r,phi).
-        // Cylindrical RZ has already used its three-component curl above.
         const double omega = (vel_y_center + radius * ddx(vel_y) - ddy(vel_x)) / radius;
         result.vorticity = std::abs(omega);
         return result;

@@ -9,7 +9,7 @@
 
 #pragma once
 #include <cstdint>
-#include "grid/GridGeometryView.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 #include "io/chk/CheckpointGeometryIdentity.h"
 #include <array>
 #include "data/StateDiagnostics.h"
@@ -56,7 +56,6 @@ struct CheckpointData {
     int num_species = 0;
     std::string geometry;
     CheckpointGeometryIdentity geometry_identity;
-    CheckpointNativeDomainIdentity native_domain; // mandatory for current RZ, empty for existing
     std::size_t cells_per_block = 0;
     bool has_timestep_state = false;
     bool resume_after_regrid = false;
@@ -97,7 +96,7 @@ struct PlotSourceIdentity {
     std::vector<double> species_A, species_Z, species_gamma, species_Cv;
 };
 
-// Candidate native metadata for Cartesian 1D/2D or explicit RZ leaf interiors.
+// Candidate native metadata for retained leaf interiors.
 // Cell arrays use exactly the Data field flattening; inactive bounds are zero.
 struct PlotNativeGrid {
     std::array<std::string,3> axes{"x","y","z"};
@@ -105,15 +104,8 @@ struct PlotNativeGrid {
     std::string measure_convention="active-coordinate-product; inactive-measures-omitted";
     std::array<std::vector<double>,3> lower, upper;
     std::vector<double> cell_measure;
-    std::vector<double> angular_measure; // RZ only: W=int r*dV; same cell order
     std::array<std::vector<uint32_t>,3> logical;
     std::string measure_unit = "unknown", normalization = "unknown";
-};
-
-// RZ output view, not a second evolved state. The producer copies m_phi from
-// mom_w and derives J/V using the shared conversion and native W/V.
-struct PlotRzAngularState {
-    std::vector<double> m_phi, angular_momentum_density;
 };
 
 // Declarations come from the actual producer, not inferred by the HDF serializer.
@@ -132,9 +124,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const std::map<std::string, std::vector<double>>& data_map,
                          const PlotNativeGrid* native_grid = nullptr,
                          const PlotSourceIdentity* source_identity = nullptr,
-                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr,
-                         GridMetrics::GeometrySemantics semantics = GridMetrics::GeometrySemantics::Existing,
-                         const PlotRzAngularState* rz_angular_state = nullptr);
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);

@@ -9,11 +9,23 @@
 [离散记录](../../docs/development/P2PoissonMultigrid.zh-CN.md)
 保留原始预算。生产 AMR 与设备证据见下文。
 
-## 当前Host RZ有限记录
+## 已退役的二维柱坐标路线
 
-[Host场景摘要](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json)记录指定势／通量和用户边界、动态混合AMR、JENS与严格续算。[孤立场收敛](results/release-closure-20261007/native-density-certificate-20261009-summary.json)及[有限Euler连续能量](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)按各自冻结范围签收。共享完成态EOS的[resident服务与燃烧消费者](results/release-closure-20261007/native-device-resident-burn-20261009-summary.json)通过实际设备检查；完整Device生产链、粗细面与长时耦合保持独立出口。各记录保留实际坐标、输入、源码和执行物身份。
+二维柱坐标不再支持。球坐标二维 `(r,phi)`、一维径向和三维曲线坐标保留原契约。
+旧 RZ [Host 场景](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json)、
+[孤立场收敛](results/release-closure-20261007/native-density-certificate-20261009-summary.json)、
+[有限 Euler 能量](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)
+及[最终 CPU 科学签收](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)
+按原源码、执行物、输入和门槛保留；原失败、中断成本及设备缺口不改写。
+专用 runner 和环核参考已退出当前执行入口。退役与剩余发布工作见
+[主计划](../../ARCH_RELEASE_PLAN.md)，不把退役记为性能提速。
 
 ## 常外部重力
+
+活动均匀输入已显式声明旧加载器控制值。耦合Gaussian使用真实的`p0`和四个
+显式为零的流体扰动幅值，删除失效的`pressure0`／`velocity_x0`覆盖；检查点参考
+明确拒绝混合或缺项契约。历史收据身份保持，当前CPU迁移核验见
+[发布计划](../../ARCH_RELEASE_PLAN.md)。
 
 下方外部源项测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期
 改变动量与能量，而不改变总质量。耦合案例进一步检查网格细化和组分扩散时
@@ -85,7 +97,7 @@ python3 validation/gravity/results/coupled-final-20260907/check_terminal.py \
 ## 均匀源项测试
 
 `simulation/ExternalGravity/` 中的 `ExternalGravity` 算例和 [`inputs/`](inputs)
-中的不可变参数，在均匀网格上单独验证重力源项。
+中的显式参数，在均匀网格上单独验证重力源项。
 应用记录
 复现了下表及 metrics.csv 中的数值，两个后端均到达指定物理终点。
 
@@ -165,11 +177,3 @@ Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收�
 同状态 EOS 复用、原始表读取和多重网格 Host 调度。相同物理终点的 CPU/FLASH
 整程成本、原预算下的字段对照及 2D/3D 四模块五步检查分别说明范围，并保留未达到
 的性能目标。FLASH 对比属于可选的维护者工作，ARCH 的构建、测试和 CI 独立运行。
-
-## 轴对称 `(r,z)` 验证
-
-Host轴对称指定势／外力路线已有公开运行与续算记录；原生孤立自引力继续按实际消费者进行内部验收。CPU 检查覆盖真实反射／用户边界、原 Euler／RK2／RK3 外力阶段以及方位扩散拒绝与回滚。连续自引力、完整耦合和设备发布分别具有验收出口；[当前 CPU 记录](results/release-closure-20261007/native-external-angular-cpu-summary.json)保存实际源码身份和原预算。
-
-可选[完整环源参考](rz_ring_surface_reference.py)从显式、完整的分片常密度环源计算势及两个力分量的向外区间，包含接触位置。它使用已安装的 `python-flint`，ARCH 构建和 CI 独立运行。工具检查实际输入几何、完整覆盖与共同工作上限；数学区间仅认证输入本身，真实 Core 源／观测点身份及物理误差另行核对。[参考记录](results/release-closure-20261007/ring-surface-reference-summary.json)保留此范围。
-
-[连续标量能量参考](rz_scalar_energy_reference.py)使用原实际源和真实逐面质量通量，计算连续体积势能变化与完整边界面平均势功。它复用精确常密度环片合并，以正Newton核约束小二次项；独立未降维积分检查归入既有tooling owner，CI继续不依赖FLASH或flint。积分收敛估计与严格密度不等式分别记录；[有限Euler补测](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)通过预先冻结的交换量预算，长时、混层和Device耦合各自验收。
