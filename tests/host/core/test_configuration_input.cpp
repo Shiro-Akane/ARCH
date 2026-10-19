@@ -98,21 +98,39 @@ int main(int argc, char** argv) {
                 "output-only JENS incorrectly required target");
         require(!has(inspect(fixture),"jeans_cells","MISSING_PARAMETER"),
                 "disabled JENS incorrectly required target");
-        // A two-axis cylindrical mesh rejects before output selection.
+        // The current cylindrical chart retains azimuthal momentum in (r,z).
+        // Loading only checks inputs: it must not construct geometry or gravity.
         std::string two_axis = fixture;
         for (const auto* key : {"geometry", "nblockx1", "nblockx2", "nblockx3",
                 "x1_min", "x1_max", "x2_min", "x2_max", "plt_variables"})
             two_axis = without(two_axis, key);
         two_axis += "nblockx1=2\nnblockx2=1\nnblockx3=0\nx1_min=.25\nx1_max=1.25\n"
                     "x2_min=.4\nx2_max=1.4\nplt_variables=VELZ\n";
-        require(has(inspect(two_axis+"geometry=cylindrical\n",ConfigurationPurpose::InitialState),
-            "geometry","INVALID_RANGE"),"retired cylindrical two-dimensional chart passed loading");
-        SimConfig direct;direct.grid.dim=2;direct.grid.geometry="cylindrical";
-        direct.grid.nblockx1=direct.grid.nblockx2=1;direct.grid.nblockx3=0;
+        inspect(two_axis+"geometry=cylindrical\n",ConfigurationPurpose::InitialState)
+            .RequireDeclaredInputs();
+        const auto cylindrical_output = RuntimeParams::LoadText(two_axis+"geometry=cylindrical\n",
+            "declared-test", ConfigurationPurpose::InitialState);
+        require(cylindrical_output.grid.geometry=="cylindrical"
+                && cylindrical_output.grid.dim==2 && cylindrical_output.io.vars.w
+                && cylindrical_output.physics.gravity.type=="none",
+                "cylindrical loading lost its azimuthal velocity or enabled gravity");
+        require(has(inspect(without(two_axis,"x2_max")+"geometry=cylindrical\n",
+                ConfigurationPurpose::InitialState),
+            "x2_max","MISSING_PARAMETER"),"cylindrical axial extent acquired a silent default");
+        SimConfig direct=cylindrical_output;
+        arch::config::ValidateControls(direct);
+        // Physical invalidity remains a rejection; chart availability is no
+        // longer the retired implementation's blanket dimension prohibition.
+        direct.grid.x1_min=-0.25;
         bool direct_rejected=false;
         try {arch::config::ValidateControls(direct);}
-        catch(const ConfigValueError& error) {direct_rejected=error.key=="geometry"&&error.code=="INVALID_RANGE";}
-        require(direct_rejected,"direct typed controls accepted retired cylindrical two-dimensional geometry");
+        catch(const ConfigValueError& error) {direct_rejected=error.key=="x1_min"&&error.code=="INVALID_RANGE";}
+        require(direct_rejected,"direct typed controls accepted a negative cylindrical radius");
+        direct.grid.x1_min=0.0;
+        direct_rejected=false;
+        try {arch::config::ValidateControls(direct);}
+        catch(const ConfigValueError& error) {direct_rejected=error.key=="x1l_boundary_type"&&error.code=="INVALID_RANGE";}
+        require(direct_rejected,"direct typed controls accepted an axis without reflecting parity");
         const auto planar_output = RuntimeParams::LoadText(two_axis+"geometry=cartesian\n",
             "declared-test", ConfigurationPurpose::InitialState);
         require(!planar_output.io.vars.w, "planar Cartesian acquired an inactive velocity component");

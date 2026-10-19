@@ -1,8 +1,8 @@
 {
   "schema": "arch-release-readiness-1",
   "stage": "REL-5",
-  "recorded_utc": "2026-10-19T09:50:33.626021+00:00",
-  "decision": "REL5_PUBLISHED_HOSTED_FAILURE_DIAGNOSIS",
+  "recorded_utc": "2026-10-19T10:10:05.428740+00:00",
+  "decision": "REL5_HOSTED_ROOT_CAUSES_FIXED_PENDING_FULL_RECHECK",
   "phase_closed": false,
   "REL6_started": false,
   "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
@@ -23,8 +23,8 @@
   "pending": [
     {
       "id": "hosted-ci",
-      "status": "FAILED_DIAGNOSIS_REQUIRED",
-      "action": "Preserve first real hosted failures, publish bounded checker annotations, diagnose exact cases without weakening contracts; require all actual jobs successful before closing REL5."
+      "status": "LOCAL_FIX_READY_HOSTED_RECHECK_PENDING",
+      "action": "Run complete hosted Tooling/CPU/Studio/required after explicit Host toolchain and current-chart test fixes; preserve both failed runs. No weakening or REL6."
     },
     {
       "id": "draft-pr",
@@ -69,7 +69,9 @@
     "publication checkpoint": "output/release/rel5-20261019/publication-checkpoint.json",
     "current trigger Tooling": "output/release/rel5-20261019/tooling-hosted-trigger-run.json",
     "hosted failure diagnostics": "output/release/rel5-20261019/hosted-admission/diagnostic-update/run.json",
-    "clean locked Studio repetition": "output/release/rel5-20261019/studio-clean-repro/run-02/run.json"
+    "clean locked Studio repetition": "output/release/rel5-20261019/studio-clean-repro/run-02/run.json",
+    "root cause local test": "output/release/rel5-20261019/hosted-admission/root-cause-fix/verified-local.json",
+    "hosted annotated failures": "output/release/rel5-20261019/hosted-admission/read_failures.py"
   },
   "scientific_contract": {
     "ENUC_relative": 5e-09,
@@ -82,8 +84,8 @@
     "production_compile_scope": "Hosted CPU source3459049, successful build only; local original CPU/CUDA ELF bytes unchanged; no CUDA build"
   },
   "hosted_CI": {
-    "status": "FIRST_REAL_RUN_FAILED",
-    "reason": "Tooling passed and clean CPU build completed, then CPU CTest and Studio failed. Public logs403/artifact401: no credential bypass. Diagnostics only; no root cause or hosted pass claimed.",
+    "status": "ROOT_CAUSES_FIXED_LOCALLY_PENDING_RECHECK",
+    "reason": "CPU first failure is obsolete retirement-era universal rejection of now-supported native cylindrical2D; Studio fails because explicit /usr/bin/cmake is absent. Existing production configuration/identity behavior unchanged; test contract updated and CI deps made explicit. Later CPU cases were not observed under stop-on-failure, so next run completes inventory under same timeouts.",
     "readonly_preflight": "output/release/rel5-20261019/hosted-ci-readonly-preflight.json",
     "publication_proposal": "output/release/rel5-20261019/publication-review.md",
     "route": "Normal SSH push of compute/optim triggers existing full readonly GHA after narrow trigger addition; no API credential or browser session required.",
@@ -115,6 +117,27 @@
       "wall_seconds": 50.34991264800192,
       "record": "output/release/rel5-20261019/studio-clean-repro/run-02/run.json",
       "prior_sandbox_attempt": "Local socket EPERM reproduced; not accepted as source or hosted reproduction"
+    },
+    "latest_diagnostic_commit": "0ac9b9f4a34805aab05715922a9390d4584f00fa",
+    "diagnostic_run_id": 39233159754,
+    "diagnostic_run_url": "https://github.com/Shiro-Akane/ARCH/actions/runs/39233159754",
+    "diagnostic_root_causes": [
+      {
+        "owner": "Studio CI preparation",
+        "evidence": "ENOENT /usr/bin/cmake in real host-build-real/host-build tests",
+        "fix": "apt build-essential cmake ninja-build, record explicit /usr/bin versions; test list/behavior unchanged"
+      },
+      {
+        "owner": "tests/host/core/test_configuration_input.cpp",
+        "evidence": "retired cylindrical two-dimensional chart passed loading",
+        "fix": "Use current native-chart acceptance plus retained no-gravity/azimuthal component and missing axial extent, negative-radius, axis parity rejection. No production edits; old CHK identity negatives unchanged."
+      }
+    ],
+    "diagnostic_costs": {
+      "configure_step_seconds": 31,
+      "CPU_build_step_seconds": 578,
+      "failed_CTest_step_seconds": 44,
+      "measurement": "Actions public step timestamps; no GNU/RAM/cache-hit inference"
     }
   },
   "archive": {
@@ -2541,6 +2564,17 @@
       "focused_tests": 23,
       "full_tooling_before_final_diagnostic_attribute_adjustment": 618,
       "final_focused_and_actionlint": "PASS"
+    },
+    "native_contract_fix": {
+      "path": "tests/host/core/test_configuration_input.cpp",
+      "contract": "CYL0-6 frozen support; InitialState loading with existing throwing model factory creates no model",
+      "production_files_changed": false,
+      "original_O7_checks_retained": true,
+      "old_checkpoint_identity_rejections_retained": true,
+      "local_first_CTest_seconds": 0.03,
+      "final_local_record": "output/release/rel5-20261019/hosted-admission/root-cause-fix/verified-local.json",
+      "worker_review": "4a769d718b024953b85837a09f281d73 ACCEPT evidence_only",
+      "CTest_failure_collection": "Complete existing inventory after a failed case; same600s per-case/180min job timeout and unchanged nonzero/skip gates"
     }
   },
   "documentation": {
@@ -2620,7 +2654,8 @@
     "maintenance_reduction": "One complete Tooling selection for CI/CTest, one Studio test owner, one narrow verified-asset action; original non-tooling command/properties and scientific gates retained.",
     "nonblocking_candidate": "Vite existing6382.46kB main chunk warning retained; no speculative code-splitting work started.",
     "continuation_source_freeze_unchanged": true,
-    "first_hosted_CPU_build_step_seconds": 504
+    "first_hosted_CPU_build_step_seconds": 504,
+    "second_hosted_CPU_build_step_seconds": 578
   },
   "preservation": {
     "protected_history_unchanged": 157,

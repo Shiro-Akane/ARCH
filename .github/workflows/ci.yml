@@ -176,7 +176,7 @@ jobs:
         run: |
           set -euo pipefail
           test_status=0
-          ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 --stop-on-failure \
+          ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 \
             --no-tests=error --output-on-failure \
             --output-junit "$PWD/build-ci/reports/ctest.xml" \
             2>&1 | tee build-ci/reports/ctest.log || test_status=$?
@@ -281,6 +281,17 @@ jobs:
         with:
           node-version: '24.21.0'
           package-manager-cache: false
+
+      - name: Prepare the Host fixture toolchain
+        if: steps.scope.outputs.required == 'true'
+        run: |
+          # Host tests perform small real builds and bind explicit /usr/bin
+          # tools. A runner's preinstalled CMake elsewhere is not that contract.
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build
+          /usr/bin/cmake --version
+          /usr/bin/ninja --version
+          /usr/bin/c++ --version
 
       - name: Record identity and install locked dependencies
         if: steps.scope.outputs.required == 'true'
