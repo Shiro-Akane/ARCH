@@ -28,16 +28,6 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 在参数文件中用 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。自动选择只发生在启动阶段；细节见[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)。
 
-## ARCH Studio
-
-ARCH Studio 是用于准备本机计算和检查输出的选配桌面工作台。它整合分组参数编辑、配置与编译、Core 真实初始场和初始 AMR 预览、显式确认的运行与重启，以及只读 Plotfile 查看，可检查存储单元值、已记录的单位与来源信息。
-
-![ARCH Studio 的 Plotfile 工作区，显示已记录的引力势场与原生 AMR 叶块轮廓](docs/guides/images/studio-plotfile.png)
-
-*Plotfile 工作区：已记录的势场与原生 AMR 叶块轮廓。*
-
-安装、界面导航与完整操作流程见 [Studio 使用指南](docs/guides/Studio.zh-CN.md#界面导航)。
-
 ## 构建
 
 在 Linux 或 WSL2 终端中构建。按所选后端准备 Core 依赖：
@@ -120,6 +110,16 @@ SodBeginner_chk_0000.h5
 `simulation/Sedov/` 则提供爆炸波示例。
 
 **初学者下一步：** 请从[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续。它以刚运行的 Sod 算例为起点，按顺序解释网格与参数、如何检查输出和进行受控实验，最后带你编写自己的算例。
+
+## ARCH Studio
+
+ARCH Studio 是用于准备本机计算和检查输出的选配桌面工作台。它整合分组参数编辑、配置与编译、Core 真实初始场和初始 AMR 预览、显式确认的运行与重启，以及只读 Plotfile 查看，可检查存储单元值、已记录的单位与来源信息。
+
+![ARCH Studio 的 Plotfile 工作区，显示已记录的引力势场与原生 AMR 叶块轮廓](docs/guides/images/studio-plotfile.png)
+
+*Plotfile 工作区：已记录的势场与原生 AMR 叶块轮廓。*
+
+安装、界面导航与完整操作流程见 [Studio 使用指南](docs/guides/Studio.zh-CN.md#界面导航)。
 
 ## 扩展模型
 

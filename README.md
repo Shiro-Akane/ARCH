@@ -29,16 +29,6 @@ for inflow, transport flux and potential conditions.
 
 Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automatic selection occurs at startup; see the [CUDA guide](docs/CudaBackendStatus.md) for details.
 
-## ARCH Studio
-
-ARCH Studio is an optional desktop workbench for preparing local calculations and inspecting their output. It combines grouped parameter editing, Configure/Build, previews of real Core initial fields and initial AMR, confirmed Run/Restart, and read-only Plotfile views with stored cell values, recorded units and provenance.
-
-![ARCH Studio Plotfile workspace showing a recorded gravitational potential field and native AMR leaf outlines](docs/guides/images/studio-plotfile.png)
-
-*Plotfile workspace: a recorded potential field with native AMR leaf outlines.*
-
-See the [Studio user guide](docs/guides/Studio.md#workspaces) for installation, workspace navigation and the complete workflow.
-
 ## Build
 
 Build in a Linux or WSL2 terminal. Prepare the Core dependencies for your backend:
@@ -124,6 +114,16 @@ the data format used for these binary files. This example uses 64 cells;
 `simulation/Sedov/` contains a blast-wave example.
 
 **New to ARCH? Continue with the [ARCH Simulation Case Guide](docs/guides/SimulationCase.md).** It starts from the Sod case you just ran, then explains the mesh and settings, output checks, controlled experiments and writing your own case.
+
+## ARCH Studio
+
+ARCH Studio is an optional desktop workbench for preparing local calculations and inspecting their output. It combines grouped parameter editing, Configure/Build, previews of real Core initial fields and initial AMR, confirmed Run/Restart, and read-only Plotfile views with stored cell values, recorded units and provenance.
+
+![ARCH Studio Plotfile workspace showing a recorded gravitational potential field and native AMR leaf outlines](docs/guides/images/studio-plotfile.png)
+
+*Plotfile workspace: a recorded potential field with native AMR leaf outlines.*
+
+See the [Studio user guide](docs/guides/Studio.md#workspaces) for installation, workspace navigation and the complete workflow.
 
 ## Extended models
 
