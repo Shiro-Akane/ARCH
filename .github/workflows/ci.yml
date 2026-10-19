@@ -112,7 +112,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               output.write("required=" + str(scope["required"]).lower() + "\n")
           if not scope["required"]:
-              print("CPU: NOT_APPLICABLE to this documentation diff; no test pass is claimed.")
+              print("CPU: NOT_APPLICABLE to this nonnative diff; no test pass is claimed.")
           PY
 
       - name: Prepare the verified Helmholtz table

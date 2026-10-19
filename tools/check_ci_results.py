@@ -247,7 +247,7 @@ def _valid_scope_path(path):
 
 
 def scope_path_requires_native(path):
-    """Omit native builds for documentation/recorded outcomes, never numerical code.
+    """Omit native builds only for known documentation, outcomes and Node tests.
 
     Studio's numerical/validation skip prefixes are deliberately irrelevant:
     those paths can change the application or its scientific acceptance.
@@ -261,6 +261,10 @@ def scope_path_requires_native(path):
     if name in SCOPE_PROTECTED_NAMES or path.startswith(SCOPE_PROTECTED_PREFIXES):
         return True
     if path.rpartition("/")[0] == SCOPE_RELEASE_RECORD_DIRECTORY and name.endswith(".json"):
+        return False
+    # Flat TypeScript tests/helpers are owned only by npm test. Native recipes
+    # do not consume them; mixed changes, data and nested/unknown paths stay full.
+    if path.rpartition("/")[0] == "studio/tests" and name.endswith(".ts"):
         return False
     if name.endswith(SCOPE_DOC_SUFFIXES):
         return False
@@ -285,7 +289,7 @@ def check_studio_scope(base, head, repo_root=None):
 
 
 def check_native_scope(base, head, repo_root=None):
-    """Conservative docs-only fast path; it does not certify any native tests."""
+    """Conservative nonnative scope decision; never a native test certificate."""
     return _check_scope(base, head, repo_root, scope_path_requires_native, "native")
 
 

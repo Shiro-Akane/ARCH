@@ -1,8 +1,8 @@
 {
   "schema": "arch-release-readiness-1",
   "stage": "REL-5",
-  "recorded_utc": "2026-10-19T10:55:21.628099+00:00",
-  "decision": "REL5_COMPLETE_HOSTED_FAILURE_SET_FIXED_LOCAL_ACCEPTANCE_READY",
+  "recorded_utc": "2026-10-19T11:14:44.745219+00:00",
+  "decision": "REL5_REAL_CPU_ACCEPTED_STUDIO_BOUNDED_WAIT_FIX_READY",
   "phase_closed": false,
   "REL6_started": false,
   "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
@@ -17,15 +17,15 @@
     "593 C++/CUDA/inc paths indexed;20 comment edits have identical noncomment tokens",
     "Fixed asset owner verifies actual Helm/Sod data offline; five controls passed, old Helm cache identity preserved",
     "157 protected historical records,3475 baseline result paths, original protocol evidence and both production apps unchanged",
-    "202 maintained pages/2253 local destinations pass;323 archived repository-local link sets valid; prose and code-fence bytes unchanged",
+    "202 maintained pages/2254 local destinations pass;323 archived repository-local link sets valid; prose and code-fence bytes unchanged",
     "Approved323 historical moves/3 index removals complete; verified pre-existing owner link repaired; main plan372->130lines",
-    "Real hosted failures drove current-chart/Jeans/preview/validator fixes and explicit seven-source unit re-review; four focused CTests and native3/6step budgets/fresh passed. Full hosted rerun remains required."
+    "Actual source f1f9532a hosted complete CPU inventory and original low-density matrix passed. Studio only failed its one-second shared fixture wait; finite five-second wait retains all identity/specs assertions, and local full383 passed. Full new-source hosted recheck still required."
   ],
   "pending": [
     {
       "id": "hosted-ci",
-      "status": "LOCAL_FIX_READY_HOSTED_RECHECK_PENDING",
-      "action": "Commit locally accepted full failure-consumer package and run actual all four hosted gates; no REL6."
+      "status": "CPU_REAL_ACCEPTED_STUDIO_WAIT_FIX_READY",
+      "action": "Commit reviewed finite test wait and narrow Node-test-only native scope, then require all four actual hosted jobs. No REL6."
     },
     {
       "id": "draft-pr",
@@ -56,7 +56,7 @@
       "output/release/rel5-20261019/lfs-studio-verified.json"
     ],
     "final static checks": "output/release/rel5-20261019/final-static-checks.json",
-    "current source identity": "output/release/rel5-20261019/final-source-and-tooling-identity.json",
+    "current source identity": "output/release/rel5-20261019/hosted-admission/publication-source-and-tooling-identity.json",
     "own changes relative to dirty entry": "output/release/rel5-20261019/own-change-map.json",
     "multimodel": "output/release/rel5-20261019/collaboration/acceptance-summary.json",
     "archive integrity": "output/release/rel5-20261019/archive-integrity-review.json",
@@ -78,7 +78,10 @@
     "current CPU build": "output/release/rel5-20261019/hosted-admission/current-cpu/build-result.json",
     "affected current CTests": "output/release/rel5-20261019/hosted-admission/current-cpu/affected-ctest.json",
     "bounded native consumers": "output/release/rel5-20261019/hosted-admission/current-cpu/affected-boundaries.json",
-    "manual dimensional re-review": "output/release/rel5-20261019/hosted-admission/current-case-unit-review.json"
+    "manual dimensional re-review": "output/release/rel5-20261019/hosted-admission/current-case-unit-review.json",
+    "original prepublication identity": "output/release/rel5-20261019/final-source-and-tooling-identity.json",
+    "bounded Studio wait full suite": "output/release/rel5-20261019/hosted-admission/studio-bounded-wait/run.json",
+    "actual complete CPU hosted pass": "output/release/rel5-20261019/hosted-admission/fourth-run-observation.json"
   },
   "scientific_contract": {
     "ENUC_relative": 5e-09,
@@ -88,19 +91,19 @@
     "geometry_gravity_decoupled": true,
     "production_compile_executed": true,
     "science_replays_executed": true,
-    "production_compile_scope": "Hosted CPU source3459049, successful build only; local original CPU/CUDA ELF bytes unchanged; no CUDA build",
+    "production_compile_scope": "Real hosted source f1f9532a CPU build, full CTest and low-density matrix passed; local separate-output app has precommit source-freeze identity; original local CPU/CUDA ELF bytes preserved. No CUDA build this phase.",
     "science_scope": "Affected3/6-step CPU boundary/AMR/JENS/fresh only; original gates unchanged; no long-run/CUDA replay"
   },
   "hosted_CI": {
-    "status": "COMPLETE_FAILURE_SET_FIXED_LOCALLY_WAITING_FULL_HOSTED_RECHECK",
-    "reason": "CPU first failure is obsolete retirement-era universal rejection of now-supported native cylindrical2D; Studio fails because explicit /usr/bin/cmake is absent. Existing production configuration/identity behavior unchanged; test contract updated and CI deps made explicit. Later CPU cases were not observed under stop-on-failure, so next run completes inventory under same timeouts.",
+    "status": "CPU_COMPLETE_ACCEPTED_STUDIO_FINITE_WAIT_PENDING_RECHECK",
+    "reason": "GNU identity test shared fixture expired at about one second while final component/specs hashing remained active; finite five-second monotonic test wait retains all assertions.",
     "readonly_preflight": "output/release/rel5-20261019/hosted-ci-readonly-preflight.json",
     "publication_proposal": "output/release/rel5-20261019/publication-review.md",
     "route": "Normal SSH push of compute/optim triggers existing full readonly GHA after narrow trigger addition; no API credential or browser session required.",
     "PR_status": "USER_CREATING_DRAFT",
-    "source_commit": "34590494896dc084ea9e313565b00e206205e007",
-    "run_id": 39209650587,
-    "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/39209650587",
+    "source_commit": "f1f9532a963490e6202f944610b3caca2f6a5ebe",
+    "run_id": 39241556910,
+    "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/39241556910",
     "conclusion": "failure",
     "first_run": {
       "Tooling": "success",
@@ -163,6 +166,22 @@
         "self_gravity_physics",
         "preview_cellular_2d"
       ]
+    },
+    "fourth_run": {
+      "source_commit": "f1f9532a963490e6202f944610b3caca2f6a5ebe",
+      "run_id": 39241556910,
+      "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/39241556910",
+      "conclusion": "failure",
+      "jobs": {
+        "Tooling": "success",
+        "Studio and Host": "failure",
+        "CPU Release": "success",
+        "CI required": "failure"
+      },
+      "CPU_complete_inventory_and_original_low_density_passed": true,
+      "remaining_failure": "GNU identity test shared fixture expired at about one second while final component/specs hashing remained active; finite five-second monotonic test wait retains all assertions.",
+      "measurement": "Public API timestamp walls only; GNU/RAM/cache-hit rates unknown",
+      "raw_public_metadata": "output/release/rel5-20261019/hosted-admission/f1f9532a963490e6202f944610b3caca2f6a5ebe.latest.json"
     }
   },
   "archive": {
@@ -3065,7 +3084,58 @@
       }
     },
     "production_build_scope": "Separate local CPU app+3target incremental graph,79actions; no CUDA; operational cost includes overlap with41.16s Tooling, not a speedup benchmark",
-    "timing_clock_note": "Local build GNU237.16s versus wrapper235.32/guard235.18s are separate recorded clocks; retain raw values, no forced reconciliation or speedup comparison."
+    "timing_clock_note": "Local build GNU237.16s versus wrapper235.32/guard235.18s are separate recorded clocks; retain raw values, no forced reconciliation or speedup comparison.",
+    "hosted_fourth_run": {
+      "Tooling": {
+        "job_seconds": 52.0,
+        "steps": {
+          "Run the existing Python suite without skips": {
+            "conclusion": "success",
+            "seconds": 26.0
+          }
+        }
+      },
+      "Studio and Host": {
+        "job_seconds": 83.0,
+        "steps": {
+          "Run the full Studio suite including Host exactly once": {
+            "conclusion": "failure",
+            "seconds": 53.0
+          }
+        }
+      },
+      "CPU Release": {
+        "job_seconds": 601.0,
+        "steps": {
+          "Build the application and existing CPU validation suite": {
+            "conclusion": "success",
+            "seconds": 382.0
+          },
+          "Run every configured CPU numerical and API test": {
+            "conclusion": "success",
+            "seconds": 147.0
+          },
+          "Validate low-density physical trajectories and repair accounting": {
+            "conclusion": "success",
+            "seconds": 7.0
+          }
+        }
+      },
+      "CI required": {
+        "job_seconds": 3.0,
+        "steps": {}
+      }
+    },
+    "studio_bounded_wait": {
+      "GNU_wall_seconds": 59.25,
+      "guard_wall_seconds": 58.423,
+      "wrapper_wall_seconds": 58.47763784900599,
+      "guard_peak_owned_rss_kib": 391848,
+      "swap_growth_kib": 0,
+      "clock_measurement": "Independent observed clocks retained; not normalized or summed",
+      "record": "output/release/rel5-20261019/hosted-admission/studio-bounded-wait/run.json"
+    },
+    "hosted_fourth_run_measurement": "Public API job/selected step timestamps; detailed metadata in fourth-run raw reference, GNU/RAM/cache-hit rates unknown"
   },
   "preservation": {
     "protected_history_unchanged": 157,
@@ -3102,8 +3172,8 @@
     "scientific_replay_scope": "Only affected bounded3/6step checks; original frozen receipts/results untouched"
   },
   "collaboration": {
-    "scope_calls": 13,
-    "scope_provider_seconds": 845.2949230600061,
+    "scope_calls": 14,
+    "scope_provider_seconds": 889.3817488429922,
     "accepted_jobs": [
       {
         "job_id": "158a4ff00b36456d94944032e5ad3195",
@@ -3195,16 +3265,23 @@
         "provider": "deepseek",
         "review": "ACCEPT",
         "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "a4195f3034af4812bf314538cf8370a1",
+        "logical_task_id": "rel5-node-wait-scope-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
       }
     ],
     "cumulative_budget": {
       "goal_id": "arch-rz-reintroduction-20261018",
       "manager_max_calls": 68,
       "user_max_calls": null,
-      "calls_used_or_reserved": 67,
-      "calls_remaining": 1,
-      "elapsed_seconds_recorded": 9834.407654567996,
-      "output_tokens_reported": 1487342,
+      "calls_used_or_reserved": 68,
+      "calls_remaining": 0,
+      "elapsed_seconds_recorded": 9878.494480350982,
+      "output_tokens_reported": 1496695,
       "started_calls_with_unknown_output": 6,
       "cost_money": null,
       "attempt_allowances_reset": false
@@ -3224,7 +3301,8 @@
     "Continuation metadata repairs: skip pre-existing absent legacy pinned README; MCP review phase final corrected to finish without inference.",
     "Pre-existing GridMetrics owner link corrected; original prose and numeric evidence unchanged. One original host-local FLASH artifact reference retained as historical external provenance.",
     "Final byte seal caught seven result README link-only edits; temporary versions saved locally and original bytes restored. All3475 result files match baseline.",
-    "Git-visible inventory caught28 archived build Markdown hidden by inherited build/ ignore rule; narrow archive-only exceptions added, all323 destinations now public Git-visible."
+    "Git-visible inventory caught28 archived build Markdown hidden by inherited build/ ignore rule; narrow archive-only exceptions added, all323 destinations now public Git-visible.",
+    "Hosted f1f9532a complete CPU+lowdensity passed; Studio shared fixture one-second wait failed. Fixed only finite completion budget to5s; Node-only scope still runs fullStudio and mixed/classifier edits remain fullCPU. Full383 local pass and23 scope/result controls; no numerical or identity gates removed."
   ],
   "source_identity_manifest_sha256": "8b6a4c4123015e0f5b6f917c819cd8bff8904486985d693d11ce9c727c696574",
   "security_preflight": {

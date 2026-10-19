@@ -40,7 +40,8 @@ class CiResultTests(unittest.TestCase):
     def test_native_scope_excludes_docs_but_keeps_all_scientific_and_build_inputs(self):
         for path in ("README.md", "docs/Reference.md", "docs/notes.txt", "NOTICE.txt",
                      "studio/README.md", "src/api/docs/PreviewApi.md", "tools/README.md", ".github/workflows/README.md",
-                     "validation/backend/results/release-readiness/Acceptance.json"):
+                     "validation/backend/results/release-readiness/Acceptance.json",
+                     "studio/tests/build-fixture.ts", "studio/tests/host-build.test.ts"):
             with self.subTest(document=path):
                 self.assertFalse(scope_path_requires_native(path))
         for path in ("src/numerics/update.h", "src/physics/gravity.cpp", "src/cuda/update.cu",
@@ -51,7 +52,10 @@ class CiResultTests(unittest.TestCase):
                      "validation/backend/results/release-readiness.json",
                      "CMakeLists.txt", "cmake/notes.md",
                      ".github/workflows/ci.yml", "config/parameters.txt", "unknown",
-                     "requirements.txt", "notes/todo.txt"):
+                     "requirements.txt", "notes/todo.txt", "studio/src/App.tsx",
+                     "studio/host/buildRunner.ts", "studio/tests/nested/helper.ts",
+                     "studio/tests/fixtures/schema.json", "studio/tests/fixture.mjs",
+                     "studio/tests/native.cpp", "studio/tests/input.par"):
             with self.subTest(native_input=path):
                 self.assertTrue(scope_path_requires_native(path))
 
@@ -90,6 +94,12 @@ class CiResultTests(unittest.TestCase):
         recorded = self.head_of(root)
         for check in (check_native_scope, check_studio_scope):
             self.assertFalse(check(docs, recorded, repo_root=root)["required"])
+        (root / "studio/tests").mkdir()
+        (root / "studio/tests/helper.ts").write_text("export const testOnly = true;\n")
+        git("add", "-A"); git("commit", "-qm", "change Node test helper")
+        node_tests = self.head_of(root)
+        self.assertFalse(check_native_scope(recorded, node_tests, repo_root=root)["required"])
+        self.assertTrue(check_studio_scope(recorded, node_tests, repo_root=root)["required"])
         # The same record accompanied by an input change still requires CPU.
         (root / "simulation").mkdir()
         (root / "simulation/input.par").write_text("density = 1\n")
