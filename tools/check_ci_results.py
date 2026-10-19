@@ -160,6 +160,10 @@ STUDIO_SCOPE_ALWAYS_PREFIXES = ("studio/", "src/api/")
 SCOPE_README_NAMES = frozenset({"README.md", "README.zh-CN.md"})
 SCOPE_PROTECTED_NAMES = frozenset({"CMakeLists.txt"})
 SCOPE_PROTECTED_PREFIXES = ("cmake/", "tools/", "config/", "build/", ".github/")
+# Flat release-readiness JSON files are recorded outcomes, not application
+# inputs. Tooling always runs; editing a receipt alone cannot require compiling
+# unchanged solvers. Case manifests, fixtures and nested inputs stay conservative.
+SCOPE_RELEASE_RECORD_DIRECTORY = "validation/backend/results/release-readiness"
 STUDIO_SCOPE_SKIP_PREFIXES = (
     "src/numerics/", "src/physics/", "src/cuda/",
     "tests/host/", "tests/cuda/", "validation/",
@@ -207,7 +211,7 @@ def _valid_scope_path(path):
 
 
 def scope_path_requires_native(path):
-    """Omit native builds only for recognized documentation, never numerical code.
+    """Omit native builds for documentation/recorded outcomes, never numerical code.
 
     Studio's numerical/validation skip prefixes are deliberately irrelevant:
     those paths can change the application or its scientific acceptance.
@@ -220,6 +224,8 @@ def scope_path_requires_native(path):
         return False
     if name in SCOPE_PROTECTED_NAMES or path.startswith(SCOPE_PROTECTED_PREFIXES):
         return True
+    if path.rpartition("/")[0] == SCOPE_RELEASE_RECORD_DIRECTORY and name.endswith(".json"):
+        return False
     if name.endswith(SCOPE_DOC_SUFFIXES):
         return False
     return not (name.endswith(SCOPE_TXT_SUFFIX)

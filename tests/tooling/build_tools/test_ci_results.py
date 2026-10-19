@@ -38,12 +38,16 @@ class CiResultTests(unittest.TestCase):
 
     def test_native_scope_excludes_docs_but_keeps_all_scientific_and_build_inputs(self):
         for path in ("README.md", "docs/Reference.md", "docs/notes.txt", "NOTICE.txt",
-                     "studio/README.md", "src/api/docs/PreviewApi.md", "tools/README.md", ".github/workflows/README.md"):
+                     "studio/README.md", "src/api/docs/PreviewApi.md", "tools/README.md", ".github/workflows/README.md",
+                     "validation/backend/results/release-readiness/Acceptance.json"):
             with self.subTest(document=path):
                 self.assertFalse(scope_path_requires_native(path))
         for path in ("src/numerics/update.h", "src/physics/gravity.cpp", "src/cuda/update.cu",
                      "tests/host/case.cpp", "tests/cuda/case.cu", "tests/tooling/check.py",
                      "validation/amr/gpu_cases.json", "simulation/Sod/Sod.par",
+                     "validation/backend/results/release-readiness/input.par",
+                     "validation/backend/results/release-readiness/inputs/config.json",
+                     "validation/backend/results/release-readiness.json",
                      "CMakeLists.txt", "cmake/notes.md",
                      ".github/workflows/ci.yml", "config/parameters.txt", "unknown",
                      "requirements.txt", "notes/todo.txt"):
@@ -78,6 +82,18 @@ class CiResultTests(unittest.TestCase):
             self.assertFalse(check(base, docs, repo_root=root)["required"])
             self.assertTrue(check(docs, docs, repo_root=root)["required"])
             self.assertTrue(check("0" * 40, docs, repo_root=root)["required"])
+        records = root / "validation/backend/results/release-readiness"
+        records.mkdir(parents=True)
+        (records / "Acceptance.json").write_text('{"recorded": true}\n')
+        git("add", "-A"); git("commit", "-qm", "record outcomes")
+        recorded = self.head_of(root)
+        for check in (check_native_scope, check_studio_scope):
+            self.assertFalse(check(docs, recorded, repo_root=root)["required"])
+        # The same record accompanied by an input change still requires CPU.
+        (root / "simulation").mkdir()
+        (root / "simulation/input.par").write_text("density = 1\n")
+        git("add", "-A"); git("commit", "-qm", "change input")
+        self.assertTrue(check_native_scope(recorded, self.head_of(root), repo_root=root)["required"])
         # Deleting numerical code remains a native change, even if every
         # surviving changed file is documentation.
         git("rm", "src/numerics/operator.h"); git("commit", "-qm", "delete operator")

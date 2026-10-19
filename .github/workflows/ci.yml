@@ -3,6 +3,8 @@ name: ARCH CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [compute/optim]
 
 # Public PRs run only on disposable GitHub-hosted machines, without secrets or
 # write permissions. Do not change this to pull_request_target to run PR code.
@@ -94,11 +96,11 @@ jobs:
       - name: Decide whether native checks apply
         id: native-scope
         env:
-          ARCH_CI_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ARCH_CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           mkdir -p build-ci/reports
           python3 tools/check_ci_results.py --scope native \
-            --base "$ARCH_CI_PR_BASE_SHA" --head HEAD > build-ci/reports/scope.json
+            --base "$ARCH_CI_BASE_SHA" --head HEAD > build-ci/reports/scope.json
           python3 - <<'PY'
           import json
           import os
@@ -240,12 +242,12 @@ jobs:
       - name: Decide affected-module scope
         id: scope
         env:
-          ARCH_CI_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ARCH_CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           set -euo pipefail
           mkdir -p build-ci/studio
           python3 tools/check_ci_results.py \
-            --scope studio --base "$ARCH_CI_PR_BASE_SHA" --head HEAD \
+            --scope studio --base "$ARCH_CI_BASE_SHA" --head HEAD \
             > build-ci/studio/scope.json
           python3 - <<'PY'
           import json

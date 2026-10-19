@@ -25,7 +25,7 @@ ownership and review expectations.
 
 [ARCH CI](workflows/ci.yml) runs the existing tooling suite and a CPU Release
 build with KLU on GitHub-hosted Ubuntu machines. It is triggered by pull requests
-targeting `main`; its applicability decisions keep required checks present
+targeting `main` and pushes to `compute/optim`; its applicability decisions keep required checks present
 while omitting explicitly unrelated work.
 The [workflow guide](workflows/README.md) describes coverage, resource limits,
 artifacts and the maintainer setup. CUDA execution remains a separate GPU

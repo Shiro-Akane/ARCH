@@ -2,7 +2,7 @@
 
 [Local tests](../../tests/README.md) · [中文](../../tests/README.zh-CN.md#github-持续集成)
 
-[ci.yml](ci.yml) runs on pull requests targeting `main`, using disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels an older run for the same PR. Tests and scientific criteria remain in their existing owners.
+[ci.yml](ci.yml) runs on pull requests targeting `main` and pushes to the engineering branch `compute/optim`, using disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels an older run for the same event and branch/PR. Tests and scientific criteria remain in their existing owners. The branch trigger permits hosted acceptance through ordinary SSH pushes without adding account credentials or changing repository settings.
 
 ## What runs
 
@@ -28,7 +28,9 @@ python3 tools/check_ci_results.py --scope native --base FULL_BASE_SHA --head HEA
 python3 tools/check_ci_results.py --scope studio --base FULL_BASE_SHA --head HEAD
 ```
 
-Recognized documentation changes can omit native work; Studio/API documentation can also omit Node work. Maintained README filenames are documentation even beside build tools. Other build/tool/config/workflow paths remain conservative. Scientific source, tests, parameter inputs and unknown paths still require native work. Standalone numerical/Device/Validation changes can omit Studio; Core interfaces, data/grid/AMR/driver/IO, model and build changes require it.
+Recognized documentation changes and flat JSON outcome receipts under `validation/backend/results/release-readiness/` can omit native work; Tooling still runs. These receipts are not application inputs. Nested files, parameter inputs, case manifests and other JSON paths remain conservative. Studio/API documentation can also omit Node work. Maintained README filenames are documentation even beside build tools. Other build/tool/config/workflow paths remain conservative. Scientific source, tests, parameter inputs and unknown paths still require native work. Standalone numerical/Device/Validation changes can omit Studio; Core interfaces, data/grid/AMR/driver/IO, model and build changes require it.
+
+The comparison base is the PR base SHA or the push event's actual `before` SHA. Missing ancestors in a shallow checkout select complete work; they never certify a documentation-only change.
 
 Malformed/missing refs, failed diffs, non-UTF-8 paths, empty change lists and escaping/unknown paths select the complete lane. Rename detection is disabled so a deleted source path cannot disappear behind a new documentation name. Omitted work records `NOT_APPLICABLE`; it creates no passing JUnit/TAP report. The required aggregate still requires each job's actual success.
 
@@ -46,4 +48,4 @@ Tooling/CPU diagnostic artifacts retain identity, logs, inventory and JUnit for 
 
 This workflow does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, packaging or native desktop acceptance. The [release plan](../../ARCH_RELEASE_PLAN.md) records their actual qualification. Local actionlint/tests do not establish a hosted passing result for an unpublished working tree.
 
-Use a normal PR targeting `main`. Actions are pinned to full commits; actionlint's release archive has a fixed checksum. After a real successful run, maintainers may require **CI required** in the main ruleset. Human approval and merge/publication remain separate decisions. Do not run public PR code on a persistent personal GPU runner; this workflow uses neither `pull_request_target` nor repository secrets.
+Use a normal PR targeting `main` for integration; engineering-branch pushes can execute the same checks before that PR exists. Actions are pinned to full commits; actionlint's release archive has a fixed checksum. After a real successful run, maintainers may require **CI required** in the main ruleset. Human approval and merge/publication remain separate decisions. Do not run public PR code on a persistent personal GPU runner; this workflow uses neither `pull_request_target` nor repository secrets.

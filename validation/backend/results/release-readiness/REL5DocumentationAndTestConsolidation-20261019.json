@@ -1,8 +1,8 @@
 {
   "schema": "arch-release-readiness-1",
   "stage": "REL-5",
-  "recorded_utc": "2026-10-19T06:11:26.230994+00:00",
-  "decision": "REL5_PUBLISHING_AUTHORIZED_LOCAL_CONTENT_ACCEPTED",
+  "recorded_utc": "2026-10-19T06:22:33.754072+00:00",
+  "decision": "REL5_CHECKPOINT_COMMITTED_HOSTED_TRIGGER_PREPARED",
   "phase_closed": false,
   "REL6_started": false,
   "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
@@ -23,11 +23,8 @@
   "pending": [
     {
       "id": "hosted-ci",
-      "status": "AUTHORIZED_EXECUTION_PENDING",
-      "action": "Trusted staged checks, commit/push reviewed accumulated compute/optim changes and create draft main PR, then run actual required hosted jobs. No merge/tag/release/REL6.",
-      "reason": "User explicitly authorized commit/publication in response to the prepared proposal; no further archive or commit confirmation needed.",
-      "proposal": "output/release/rel5-20261019/publication-review.md",
-      "manifest": "output/release/rel5-20261019/publication-proposal.json"
+      "status": "AUTHORIZED_PUSH_PENDING",
+      "action": "Commit reviewed CI trigger/scope changes; normal push, wait for real Tooling/CPU/Studio/required acceptance and record measured evidence. No merge/tag/REL6."
     }
   ],
   "recovery": "output/release/rel5-20261019/progress.json",
@@ -63,7 +60,9 @@
     "code consumers of retired docs": "output/release/rel5-20261019/retired-doc-code-consumers.json",
     "publication security preflight": "output/release/rel5-20261019/security-preflight/final-summary.json",
     "frozen result link restoration": "output/release/rel5-20261019/historical-result-links-restored.json",
-    "archive Git visibility": "output/release/rel5-20261019/archive-git-visibility.json"
+    "archive Git visibility": "output/release/rel5-20261019/archive-git-visibility.json",
+    "publication checkpoint": "output/release/rel5-20261019/publication-checkpoint.json",
+    "current trigger Tooling": "output/release/rel5-20261019/tooling-hosted-trigger-run.json"
   },
   "scientific_contract": {
     "ENUC_relative": 5e-09,
@@ -75,10 +74,12 @@
     "science_replays_executed": false
   },
   "hosted_CI": {
-    "status": "NOT_RUN_AUTHORIZED_TO_EXECUTE",
-    "reason": "Publishing reviewed source and obtaining actual required CI; no open PR at entry. Linux gh/API credentials absent; existing SSH remote read succeeds.",
+    "status": "TRIGGER_PREPARED_PENDING_PUSH",
+    "reason": "User authorized execution. Existing workflow expanded to engineering-branch push to obtain actual same hosted gates without account/security changes.",
     "readonly_preflight": "output/release/rel5-20261019/hosted-ci-readonly-preflight.json",
-    "publication_proposal": "output/release/rel5-20261019/publication-review.md"
+    "publication_proposal": "output/release/rel5-20261019/publication-review.md",
+    "route": "Normal SSH push of compute/optim triggers existing full readonly GHA after narrow trigger addition; no API credential or browser session required.",
+    "PR_status": "NOT_CREATED_NO_API_OR_BROWSER_SESSION"
   },
   "archive": {
     "status": "COMPLETED_USER_APPROVED",
@@ -2423,7 +2424,7 @@
     "prior_automatic_review_rejection_resolved": true
   },
   "unpublished_authorized_working_tree": true,
-  "committed": false,
+  "committed": true,
   "pushed": false,
   "test_and_ci": {
     "CTest": {
@@ -2475,7 +2476,7 @@
       "test_glob_owner": "studio/package.json",
       "file_concurrency": 1
     },
-    "CI_scope": "Required still requires three actual successful jobs. Explicit docs-only applicability permits NOT_APPLICABLE within jobs; unknown/mixed/code/config/build paths remain conservative. No shortened numerical endpoints or deleted unique controls.",
+    "CI_scope": "Required still requires three actual successful jobs. Explicit docs-only applicability permits NOT_APPLICABLE within jobs; unknown/mixed/code/config/build paths remain conservative. No shortened numerical endpoints or deleted unique controls. Flat release-readiness JSON receipts are recorded outcomes; only Tooling runs for receipt-only changes, nested/config/code changes remain full. Real Git controls expanded, no assertions dropped.",
     "LFS_assets": {
       "owners": [
         "helmholtz",
@@ -2486,6 +2487,17 @@
       "old_helm_cache_identity_preserved": true,
       "local_network_LFS_fetches": 0,
       "hosted_cache_hit_auth_behavior": "NOT_RUN"
+    },
+    "hosted_trigger": {
+      "events": [
+        "pull_request targeting main",
+        "push compute/optim"
+      ],
+      "base": "PR.base.sha or push.before; missing/zero/unavailable refs select full",
+      "scoped_repo_permissions": "contents:read",
+      "worker_review": "0101fdf73bc342ca865ecf18fc35c3bb ACCEPT evidence_only",
+      "local_full_tooling": 618,
+      "local_focused_checks": 23
     }
   },
   "documentation": {
@@ -2664,5 +2676,6 @@
       "Tag/formal release",
       "REL6 work"
     ]
-  }
+  },
+  "checkpoint_commit": "4394c067aa14791ce97c0972fae2b7f522a3f8d8"
 }

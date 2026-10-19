@@ -2,7 +2,7 @@
 
 本文件是唯一当前推进表。现代化和二维柱坐标重植按各自原范围结案；过程记录集中在[历史档案](docs/histroy/README.md)，原始科学收据不改签。当前任务是可靠发布、清晰文档与可维护的验证流程，不另开全仓架构重构。
 
-**当前：REL-5归档和本地整理已完成，托管CI出口待执行；不自动进入REL-6。** 当前工作区`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，分支`compute/optim`，本批入场基线`45b92535e8efe78728bb67b0415c148854a63f9c`；用户已授权提交当前累计状态、正常推送及main草稿PR的真实托管CI，实际提交身份查收据与Git。详见[整理收据](validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json)，本机恢复`output/release/rel5-20261019/progress.json`。
+**当前：REL-5归档和本地整理已完成，托管CI出口待执行；不自动进入REL-6。** 当前工作区`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，分支`compute/optim`，本批入场基线`45b92535e8efe78728bb67b0415c148854a63f9c`；用户已授权提交当前累计状态和正常推送；检查点为`4394c067…`，现有CI增加仅限该分支的push入口执行真实托管验收，实际提交／运行身份查收据与Git。详见[整理收据](validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json)，本机恢复`output/release/rel5-20261019/progress.json`。
 
 ## 发布目标与判定
 
@@ -114,7 +114,7 @@ W0为Codex，负责标准、唯一集成和独立验收；W1核科学／共享�
 | 模块／真实后端 | 受影响科学owner、独立oracle、AMR／边界／IO／fresh及真实CUDA生命周期；复用原runner，不为参数另建重编译程序 |
 | 最终发布资格 | 冻结候选的完整所需清单、公开模型／算法及必要耦合、未决科学资格、实际包／平台／托管结果；长程不进每PR |
 
-[CI入口](.github/workflows/README.md)定义适用性与完成检查。三个必需job真实成功才能汇总；`NOT_APPLICABLE`不产生虚假JUnit／TAP。空组、缺项、失败、skip、TODO、取消和截断均不能通过。先映射独有断言再合并；独立参考不能复用生产算法制造共同错误。保留已测RKL职责拆分，不合回超重单元。
+[CI入口](.github/workflows/README.md)定义适用性与完成检查。main PR及工程分支push均执行同一汇总门；三个必需job真实成功才能汇总；`NOT_APPLICABLE`不产生虚假JUnit／TAP。空组、缺项、失败、skip、TODO、取消和截断均不能通过。先映射独有断言再合并；独立参考不能复用生产算法制造共同错误。保留已测RKL职责拆分，不合回超重单元。
 
 ## 执行边界与最终签收
 
