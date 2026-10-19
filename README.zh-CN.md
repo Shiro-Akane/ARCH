@@ -1,6 +1,8 @@
 # ARCH：自适应反应流 CUDA 流体力学框架
 
-英文原文：[README.md](README.md) · [文档总览](docs/README.zh-CN.md)
+[English](README.md) · [English index](docs/README.md)
+
+[索引](docs/README.zh-CN.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -25,6 +27,16 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 入流、热通量与势边界的写法见[用户边界指南](docs/guides/UserBoundaries.zh-CN.md)。
 
 在参数文件中用 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。自动选择只发生在启动阶段；细节见[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)。
+
+## ARCH Studio
+
+ARCH Studio 是用于准备本机计算和检查输出的选配桌面工作台。它整合分组参数编辑、配置与编译、Core 真实初始场和初始 AMR 预览、显式确认的运行与重启，以及只读 Plotfile 查看，可检查存储单元值、已记录的单位与来源信息。
+
+![ARCH Studio 的 Plotfile 工作区，显示已记录的引力势场与原生 AMR 叶块轮廓](docs/guides/images/studio-plotfile.png)
+
+*Plotfile 工作区：已记录的势场与原生 AMR 叶块轮廓。*
+
+安装、界面导航与完整操作流程见 [Studio 使用指南](docs/guides/Studio.zh-CN.md#界面导航)。
 
 ## 构建
 

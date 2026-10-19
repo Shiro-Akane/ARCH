@@ -4,6 +4,17 @@
 
 Studio 是可选的桌面组件，Core 的 CPU／CUDA 构建与运行可独立使用。它用于编辑 `.par`、核对初始场与网格、编译已注册的模型，以及准备本机运行和续算。Core 在 Linux/WSL 编译和运行；这一阶段按 Linux 桌面交付。
 
+## 界面导航
+
+用右上角的 **Workspace** 选择器切换工作区：
+
+- **Config：** 分组编辑参数，预览 Core 真实初始场与初始 AMR；修改源码后执行 Configure/Build，再用已保存输入确认 Run/Restart。
+- **Plotfile：** 打开已发布的输出，选择字段，查看原生 AMR 叶块轮廓，并检查存储单元、已记录的单位与来源信息。读取不会修改文件。
+
+![Studio 的 Plotfile 界面，显示已记录的引力势与原生 AMR 叶块轮廓](images/studio-plotfile.png)
+
+*示例：只读 Plotfile 工作区中的势场与原生 AMR 叶块轮廓。*
+
 ## 构建并呼出界面
 
 环境需准备 Linux、Node 24+ 与图形环境；运行终端另需 `xterm` 和 `flock`。在 ARCH 根目录下执行：

@@ -1,6 +1,8 @@
 # ARCH: Adaptive Reactive CUDA Hydrodynamics
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md) · [Documentation overview](docs/README.md)
+[简体中文](README.zh-CN.md) · [中文索引](docs/README.zh-CN.md)
+
+[Index](docs/README.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -26,6 +28,16 @@ existing two public headers. See [user boundaries](docs/guides/UserBoundaries.md
 for inflow, transport flux and potential conditions.
 
 Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automatic selection occurs at startup; see the [CUDA guide](docs/CudaBackendStatus.md) for details.
+
+## ARCH Studio
+
+ARCH Studio is an optional desktop workbench for preparing local calculations and inspecting their output. It combines grouped parameter editing, Configure/Build, previews of real Core initial fields and initial AMR, confirmed Run/Restart, and read-only Plotfile views with stored cell values, recorded units and provenance.
+
+![ARCH Studio Plotfile workspace showing a recorded gravitational potential field and native AMR leaf outlines](docs/guides/images/studio-plotfile.png)
+
+*Plotfile workspace: a recorded potential field with native AMR leaf outlines.*
+
+See the [Studio user guide](docs/guides/Studio.md#workspaces) for installation, workspace navigation and the complete workflow.
 
 ## Build
 

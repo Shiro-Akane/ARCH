@@ -4,6 +4,19 @@
 
 Studio is an optional desktop component; Core CPU/CUDA builds and runs work independently. It provides a parameter workspace, controlled build, real initial fields/AMR and read-only Plotfile queries. Scientific Core execution stays on Linux/WSL. Linux Node 24+ and a graphical session are required; Run/Restart also use `xterm` and Linux `flock`.
 
+## Workspaces
+
+Use the **Workspace** selector at the top right to switch views:
+
+- **Config:** edit grouped parameters; request real Core initial fields and initial AMR; Configure/Build after source edits, then confirm Run/Restart with saved input.
+- **Plotfile:** open published output, choose a field, view native AMR leaf outlines and inspect stored cells, recorded units and source information. Reads leave the file unchanged.
+
+![Studio Plotfile view with recorded gravitational potential and native AMR leaf outlines](images/studio-plotfile.png)
+
+*Example: the read-only Plotfile workspace, with a recorded potential field and native AMR leaf outlines.*
+
+## Build and launch
+
 ```bash
 cmake --preset studio-cpu-release -DARCH_STUDIO_NODE=/absolute/path/to/node
 cmake --build build-studio-cpu --parallel 2
