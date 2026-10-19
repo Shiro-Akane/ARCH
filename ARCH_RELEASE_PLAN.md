@@ -2,7 +2,7 @@
 
 本文件是唯一当前推进表。现代化和二维柱坐标重植按各自原范围结案；过程记录集中在[历史档案](docs/histroy/README.md)，原始科学收据不改签。当前任务是可靠发布、清晰文档与可维护的验证流程，不另开全仓架构重构。
 
-**当前：REL-5已闭合；REL-6未启动。** 文档归档、测试职责收拢和真实托管出口已签收。工作区`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，分支`compute/optim`；完整源码验收提交`21ca1cc6721a`，运行[39243412776](https://github.com/Shiro-Akane/ARCH/actions/runs/39243412776)。当前Git还可能包含随后同步收据的纯记录提交，两者不混作同一构建。详见[整理收据](validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json)，本机恢复`output/release/rel5-20261019/progress.json`。
+**当前：REL-5已闭合；REL-6未启动。** 文档归档、测试职责收拢和真实托管出口已签收。工作区`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，分支`compute/optim`；完整源码验收提交`21ca1cc6721a`，运行[39243412776](https://github.com/Shiro-Akane/ARCH/actions/runs/39243412776)。该完整签收仅适用于上述提交；后续补充按定点收据和PR当前提交的检查判定。详见[整理收据](validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json)，本机恢复`output/release/rel5-20261019/progress.json`。
 
 ## 发布目标与判定
 
@@ -43,6 +43,8 @@ W0为Codex，负责标准、唯一集成和独立验收；W1核科学／共享�
 本地GNU墙钟：CPU／CUDA重新配置4.78／6.46秒，归档后Tooling CTest31.90秒、Studio测试47.92秒、lint9.47秒、typed build5.44秒。Studio三项护栏树峰为383032／1077920／726560KiB，无swap增长、无截断。最终真实托管步骤墙钟：CPU构建371秒、完整CTest117秒、低密度矩阵7秒，Tooling21秒、Studio测试55秒、lint＋typed build18秒，全部通过；这是API时间戳，GNU／RAM及缓存命中未知。此前失败、定点修正和逐项成本保存在收据及本机`cost-ledger.json`；缺少同条件完整前后样本，不宣称全CI提速。
 
 原四个工具失败仅在内存测试夹具中补第7步采样与当前输入SHA，真实资格器、科学清单及冻结协议未改。启动前输出预留拒绝、观察器纠正和原失败保留。真实托管暴露的退役旧断言、验证器旧chart／2π口径、Preview非法输入和单位印记已定点修正；源项／求解器数学及原门不变。Studio显式准备CMake／Ninja／C++／mold；真实CPU完整库存和低密度矩阵已通过，Studio夹具保留全部身份断言，将1秒等待改为有限5秒，本地完整383项通过。纯Node测试改动仅触发Studio／Tooling，混合及未知路径仍保守全跑。7个失效单位印记经源码单位复核后手动更新，源码SHA等式与全部current断言保留；旧CHK／Plot拒绝扩充。独立输出的受影响CPU应用与3测试目标共79动作，GNU237.16秒、采样树峰2.59GiB、无swap增长；4个既有CTest19.59秒及原3／6步边界／AMR／JENS fresh通过。不编译CUDA、不重跑长程；旧ELF原位保留，新应用有独立身份。Vite现存大chunk提示只留后续成本候选。
+
+2026-10-20 PR#12定点补充：三处独立参考乘法在首个操作数显式提升为`long double`；Host Hydro复用FluidState的长度校验，保留现有`int`索引范围，负数／溢出／布局不匹配在分配和输出前拒绝。原门槛、O7和CodeQL规则不变。既有CPU曲线坐标／Poisson两项及真实CUDA曲线坐标smoke均通过，零跳过；两组编译19.27／44.27秒，测试4.01／1.21秒，无swap增长。明细在整理收据的`post_closure_followups`，最新托管结果以[PR当前检查](https://github.com/Shiro-Akane/ARCH/pull/12/checks)对应的提交为准；不重跑长程，不进入REL-6。
 
 ## 已完成证据与限定资格
 

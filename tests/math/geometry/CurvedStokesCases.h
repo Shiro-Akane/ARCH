@@ -195,7 +195,9 @@ void cylindrical_axis_energy(const char* backend,double nu,Evaluate evaluate)
             const int index=grid.GetIndex(i,j,k);const auto& d=actual.derivative[index];
             const long double V=volume(grid,i,j),rho=state.rho[index],u=state.mom_u[index]/rho;
             Kdot+=V*u*d.mom_u;before+=rho*V*u*u/2.L;Eflux+=V*d.eng;
-            const long double trial=u+actual.raw_dt*d.mom_u/rho;
+            // Match the independent energy sums' long-double arithmetic from
+            // the first multiply, rather than widening an already rounded product.
+            const long double trial=u+static_cast<long double>(actual.raw_dt)*d.mom_u/rho;
             after+=rho*V*trial*trial/2.L;
             if(d.rho!=0.||d.mom_v!=0.||d.mom_w!=0.)
                 throw std::runtime_error("axisymmetric radial diffusion changed mass/transverse momentum");
@@ -242,7 +244,9 @@ void axisymmetric_angular(const char* backend,double nu,Evaluate evaluate)
         double largest=0.;
         for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
             const int c=grid.GetIndex(i,j,0);const auto m=measures(i);const auto u=state.get(c);const auto d=actual.derivative[c];
-            jdot+=d.mom_w*m[1];jnorm+=std::abs(u.mom_w)*m[1];kdot+=u.mom_w*d.mom_w*m[0];
+            jdot+=d.mom_w*m[1];jnorm+=std::abs(u.mom_w)*m[1];
+            // Use the same long-double polynomial work as the kinetic sum below.
+            kdot+=static_cast<long double>(u.mom_w)*d.mom_w*m[0];
             kinetic+=.5L*u.mom_w*u.mom_w*m[0];energy+=d.eng*m[0];
             const long double trial=u.mom_w+.8L*actual.raw_dt*d.mom_w;after+=.5L*trial*trial*m[0];
             largest=std::max(largest,std::abs(d.mom_w));

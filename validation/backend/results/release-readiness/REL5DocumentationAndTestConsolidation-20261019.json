@@ -3418,5 +3418,147 @@
   },
   "checkpoint_commit": "4394c067aa14791ce97c0972fae2b7f522a3f8d8",
   "entry_baseline_head": "45b92535e8efe78728bb67b0415c148854a63f9c",
-  "accepted_source_commit": "21ca1cc6721a9e24b458f6683d2b570a17d80a5b"
+  "accepted_source_commit": "21ca1cc6721a9e24b458f6683d2b570a17d80a5b",
+  "post_closure_followups": [
+    {
+      "id": "codeql-precision-and-storage-20261020",
+      "recorded_utc": "2026-10-19T16:39:59.898172+00:00",
+      "baseline_head": "a9edebfbcfec4810cd43aa3fe26cfdc45daf70d6",
+      "scope": "Four PR12 CodeQL warnings: three independent reference products and one Host Hydro species allocation, including its FluidState size/index owner. No numerical algorithm or threshold change.",
+      "changes": [
+        "Promote the first multiplicative operand in the Poisson quadrature weight and two Stokes work/FE reference products; preserve binary64 input definitions and all original assertions.",
+        "FluidState owns one checked nonnegative species/cell product, computed as size_t and bounded by the existing int flattened-index range; Preallocate and InitSpecies reject invalid extents before mutation/allocation.",
+        "Hydro reuses that count and rejects a state/Grid stride mismatch or undersized species storage before gravity binding, flux scratch, EOS work or derivative publication.",
+        "Keep zero-species and deferred empty-state initialization. Add allocation-free int-limit/negative/resize and Hydro rejection controls to the existing curvilinear_metrics executable; no new test registrations.",
+        "Keep the existing CodeQL rule, query selection, CI gates, O7, geometry/gravity separation and every numerical threshold."
+      ],
+      "source_file_sha256": {
+        "src/data/FluidState.h": "993b6d4a69494f451c1ce44003cb38d48be3cb6513d0cabc751e6d1a7e3a8da4",
+        "src/numerics/integrator/HydroSolverImpl.h": "feacbcf949a6db4331f1e9c715867b9fdb238b57e3c85ed1aa079659538ed01b",
+        "tests/host/gravity/test_composite_poisson.cpp": "2c24728605253f9e3f8b107686f8ce0bc91e5580f0ebf6670b5448973a665fda",
+        "tests/math/geometry/CurvedStokesCases.h": "46c78d89e72d4f52a4437e3be90b9293e63baf9610e4a5169aea84f25b27164e",
+        "tests/host/grid/test_curvilinear_metrics.cpp": "c8ae02a39780cf54e6b55be8a92b26456ff749935344927dba771d47667aca01"
+      },
+      "source_identity_note": "Local tests use the frozen edited source manifest above, not a clean postcommit application build. The enclosing commit identifies this patch after publication.",
+      "tests": [
+        {
+          "name": "curvilinear_metrics",
+          "seconds": 0.874575,
+          "result": "PASS",
+          "skipped": false
+        },
+        {
+          "name": "composite_poisson_contract",
+          "seconds": 3.13073,
+          "result": "PASS",
+          "skipped": false
+        },
+        {
+          "name": "cuda_curvilinear_geometry_smoke",
+          "seconds": 1.20629,
+          "result": "PASS",
+          "skipped": false
+        }
+      ],
+      "costs": [
+        {
+          "id": "build-cpu",
+          "command": "cmake --build build-modernization-cpu --target arch_curvilinear_metrics arch_composite_poisson --parallel 2",
+          "wall_seconds": 19.27,
+          "gnu_max_rss_kib": 487932,
+          "memory_guard": {
+            "min_available_kib": "5944280",
+            "baseline_swap_kib": "0",
+            "peak_swap_kib": "0",
+            "guard_stopped": "False",
+            "peak_owned_rss_kib": "840000",
+            "elapsed_seconds": "20.153",
+            "stop_reason": "none"
+          }
+        },
+        {
+          "id": "cpu-tests",
+          "command": "ctest --test-dir build-modernization-cpu -R ^(curvilinear_metrics|composite_poisson_contract)$ --parallel 1 --timeout 600 --no-tests=error --output-on-failure --output-junit /home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/codeql-fix-20261020/cpu-tests.xml",
+          "wall_seconds": 4.03,
+          "gnu_max_rss_kib": 433024,
+          "memory_guard": {
+            "min_available_kib": "6623484",
+            "baseline_swap_kib": "0",
+            "peak_swap_kib": "0",
+            "guard_stopped": "False",
+            "peak_owned_rss_kib": "87124",
+            "elapsed_seconds": "5.008",
+            "stop_reason": "none"
+          }
+        },
+        {
+          "id": "build-cuda",
+          "command": "cmake --build build-modernization-cuda --target arch_cuda_curvilinear_geometry_smoke --parallel 2",
+          "wall_seconds": 44.27,
+          "gnu_max_rss_kib": 842928,
+          "memory_guard": {
+            "min_available_kib": "5910764",
+            "baseline_swap_kib": "0",
+            "peak_swap_kib": "0",
+            "guard_stopped": "False",
+            "peak_owned_rss_kib": "882092",
+            "elapsed_seconds": "44.221",
+            "stop_reason": "none"
+          }
+        },
+        {
+          "id": "cuda-test",
+          "command": "ctest --test-dir build-modernization-cuda -R ^cuda_curvilinear_geometry_smoke$ --parallel 1 --timeout 180 --no-tests=error --output-on-failure --output-junit /home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/codeql-fix-20261020/cuda-test.xml",
+          "wall_seconds": 1.22,
+          "gnu_max_rss_kib": 144512,
+          "memory_guard": {
+            "min_available_kib": "6590576",
+            "baseline_swap_kib": "0",
+            "peak_swap_kib": "0",
+            "guard_stopped": "False",
+            "peak_owned_rss_kib": "136828",
+            "elapsed_seconds": "2.151",
+            "stop_reason": "none"
+          }
+        }
+      ],
+      "resources": {
+        "science_OMP_threads": 4,
+        "OMP_DYNAMIC": false,
+        "build_jobs": 2,
+        "heavy_CUDA_pool": 1,
+        "swap_growth_kib": 0,
+        "truncated": false,
+        "GPU_memory_scope": "Whole device, includes unrelated desktop baseline",
+        "GPU_baseline_used_mib": 1377,
+        "GPU_peak_used_mib": 1580,
+        "GPU_total_mib": 8192
+      },
+      "preservation": {
+        "original_apps_unchanged": {
+          "build-modernization-cpu/bin/ARCH": "fe09bf2e251a41b52f5e74fde337085e0daf6bc61b9c99799a6a128bc09a9888",
+          "build-modernization-cuda/bin/ARCH": "b1143d8aa6a26617a8d533d0a8fc5559fb7ccbb8955fcff1407b45a42d439a2b"
+        },
+        "all_original_numerical_gates": true,
+        "CodeQL_rule_suppression": false,
+        "full_application_rebuild": false,
+        "long_scientific_replay": false,
+        "REL6_started": false
+      },
+      "hosted_admission": {
+        "PR": "https://github.com/Shiro-Akane/ARCH/pull/12",
+        "checks": "https://github.com/Shiro-Akane/ARCH/pull/12/checks",
+        "criterion": "Read actual results for this patch commit; old-head success, queued jobs and neutral scans do not certify it. The local progress record retains the observed exact run IDs and timestamps."
+      },
+      "local_evidence_root": "output/release/rel5-20261019/hosted-admission/codeql-fix-20261020",
+      "cost_qualification": "GNU command wall and max child RSS are separate from sampled owned-tree peak and whole-device GPU observations. No full-CI speedup claim.",
+      "remaining_compiler_warnings": "CUDA compile reports existing unused/host-device warnings in unmodified diffusion/curvilinear/flux headers; no warning suppression added. Target compilation and actual smoke succeeded.",
+      "independent_review": {
+        "provider": "DeepSeek",
+        "adopted": "Static patch review, independently checked against source and manager-run CPU/CUDA tests.",
+        "first_attempt": "Truncated without visible delivery; not accepted.",
+        "continuation": "One bounded same-task repair accepted as evidence only; raw metadata retained locally."
+      }
+    }
+  ]
 }

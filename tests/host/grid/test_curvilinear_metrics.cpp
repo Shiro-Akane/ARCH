@@ -54,6 +54,62 @@ struct PressurelessEos {
     double get_sound_speed(const FluidVector&, double, const double*) const { return 1.0; }
 };
 
+/** Exercise index limits without allocating enormous synthetic species arrays. */
+void test_species_storage_bounds(const IdealGas& eos)
+{
+    const auto rejects = [](auto action, const char* message) {
+        try { action(); }
+        catch (const std::invalid_argument&) { return; }
+        catch (const std::length_error&) { return; }
+        throw std::runtime_error(message);
+    };
+    constexpr int maximum = std::numeric_limits<int>::max();
+    if (FluidState::CheckedSpeciesSize(0, 0) != 0 ||
+        FluidState::CheckedSpeciesSize(0, maximum) != 0 ||
+        FluidState::CheckedSpeciesSize(maximum, 1) != static_cast<std::size_t>(maximum))
+        throw std::runtime_error("species size rejected a representable or empty extent");
+    rejects([] { (void)FluidState::CheckedSpeciesSize(-1, 1); }, "negative species count accepted");
+    rejects([] { (void)FluidState::CheckedSpeciesSize(1, -1); }, "negative cell count accepted");
+    rejects([] { (void)FluidState::CheckedSpeciesSize(2, maximum / 2 + 1); },
+            "species product outside the int index range accepted");
+
+    FluidState small; small.Preallocate(8); small.InitSpecies(2);
+    small.X(1, 7) = .75;
+    const auto fractions = small.mass_fractions;
+    rejects([&] { small.InitSpecies(-1); }, "negative species initialization accepted");
+    rejects([&] { small.InitSpecies(maximum); }, "overflowing species initialization accepted");
+    rejects([&] { small.Preallocate(-1); }, "negative field allocation accepted");
+    rejects([&] { small.Preallocate(maximum); }, "overflowing existing-species resize accepted");
+    if (small.n_species_ != 2 || small.block_total_size_ != 8 || small.rho.size() != 8 ||
+        small.mass_fractions != fractions || small.X(1, 7) != .75)
+        throw std::runtime_error("rejected species extent mutated existing storage");
+    FluidState empty; empty.InitSpecies(maximum);
+    rejects([&] { empty.Preallocate(2); }, "deferred species extent bypassed allocation bounds");
+    if (empty.block_total_size_ != 0 || !empty.rho.empty())
+        throw std::runtime_error("rejected deferred extent allocated fields");
+
+    Grid grid(amr::MAX_NG, 0., 1., 0., 0., 0., 0.);
+    FluidState state; state.Preallocate(grid.GetTotalSize()); state.InitSpecies(1);
+    Numerics::HydroSolverImpl<IdealGas, FluxHLLC<PCMReconstruction>> hydro(eos);
+    std::vector<FluidVector> delta(1, {1., 2., 3., 4., 5.});
+    std::vector<double> species_delta{6.};
+    NumericsConfig config{};
+    const auto evaluate = [&] {
+        hydro.evaluate_patch(nullptr, 0, state, grid, .1, delta, species_delta, nullptr, config);
+    };
+    state.n_species_ = -1;
+    rejects(evaluate, "Hydro accepted a negative species count");
+    state.n_species_ = maximum;
+    rejects(evaluate, "Hydro accepted an overflowing species extent");
+    state.n_species_ = 1; --state.block_total_size_;
+    rejects(evaluate, "Hydro accepted a state/Grid stride mismatch");
+    ++state.block_total_size_; state.mass_fractions.pop_back();
+    rejects(evaluate, "Hydro accepted undersized species storage");
+    if (delta.size() != 1 || delta[0].eng != 5. || species_delta != std::vector<double>{6.})
+        throw std::runtime_error("rejected Hydro extent wrote derivatives");
+    std::cout << "SPECIES_STORAGE_BOUNDS_PASS\n";
+}
+
 /** Native geometry is inspectable while unqualified public solvers stay closed. */
 void test_axisymmetric_geometry()
 {
@@ -688,6 +744,7 @@ int main(int argc,char** argv)
     SpeciesManager species;
     species.add_species("gas", 1., 1., 1.4, 3.);
     IdealGas eos(1.4, species);
+    test_species_storage_bounds(eos);
     SimConfig config{};
     config.physics.diffusion.use_diffusion = true;
     config.physics.diffusion.use_viscous_diffusion = true;

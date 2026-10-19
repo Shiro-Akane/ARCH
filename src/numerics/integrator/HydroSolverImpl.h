@@ -50,12 +50,15 @@ public:
         const auto walls=boundary
             ? boundary->require_view(amr_ctrl,block_id,state,grid)
             : arch::boundary::HydroBoundaryView{};
+        const int total_size = grid.GetTotalSize();
+        const int n_spec = state.GetNumSpecies();
+        const auto species_size = FluidState::CheckedSpeciesSize(n_spec, total_size);
+        if (state.block_total_size_ != total_size || state.mass_fractions.size() < species_size)
+            throw std::invalid_argument("Hydro state species storage does not match the Grid extent");
         Physical::Gravity::HydroPatchSource source(gravity);
-        int total_size = grid.GetTotalSize();
-        int n_spec = state.GetNumSpecies();
 
         std::vector<FluidVector> flux_buffer(total_size);
-        std::vector<double> spec_flux_buffer(n_spec * total_size);
+        std::vector<double> spec_flux_buffer(species_size);
 
         const auto evaluate = [&] {
             TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(

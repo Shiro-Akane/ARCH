@@ -1478,7 +1478,9 @@ double axisymmetric_direct_potential(const elliptic::CompositePoisson& op,
         const auto center=op.center(c);long double integral=0.,normal=0.;
         for(int i=0;i<count;++i)for(int j=0;j<count;++j) {
             const double r=center[0]+.5*op.width(c,0)*x[i],z=center[1]+.5*op.width(c,1)*x[j];
-            const long double weight=w[i]*w[j]*r;long double angle_sum=0.;
+            // Preserve the binary64 inputs, but form the independent reference
+            // product in long double before accumulating the quadrature.
+            const long double weight=static_cast<long double>(w[i])*w[j]*r;long double angle_sum=0.;
             for(int p=0;p<azimuths;++p) {
                 const double dx=point[0]-r*cosine[p],dy=point[1]-r*sine[p],dz=point[2]-z;
                 angle_sum+=1./std::sqrt(dx*dx+dy*dy+dz*dz);
