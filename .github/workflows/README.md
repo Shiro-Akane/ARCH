@@ -13,6 +13,8 @@
 | Studio and Host | Applicable changes install locked dependencies, run the complete `npm --silent test` once, lint and build production assets; the build includes TypeScript checking |
 | CI required | Requires all three jobs to succeed; failure, cancellation or a skipped job cannot pass |
 
+A failed CTest or npm command still invokes the existing report checker to publish bounded, escaped failure excerpts in check annotations. The original pipeline status is retained: a complete report cannot hide a nonzero command. Raw JUnit/TAP remain authoritative; annotations only aid diagnosis when runner-log downloads need authentication.
+
 The Python suite has one CTest entry, `tooling_contracts`, for local use. CPU discovery and execution both exclude `-LE '^tooling$'` because Tooling already owns those assertions. The sparse-transcript parser controls are in that same suite. Numerical/API CTests and independent scientific oracles retain their responsibilities; a smaller number of wrapper entries is not a smaller assertion set.
 
 Documentation checking includes the living [history index](../../docs/histroy/README.md) and its [fixed-evidence index](../../docs/development/archive/README.md). Archived bodies and immutable scientific receipts retain their original basis; they are not rewritten or counted as current instructions.

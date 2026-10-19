@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -160,6 +161,15 @@ class CiResultTests(unittest.TestCase):
             with contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(["--node-tap", str(report)]), 1)
                 self.assertEqual(main(["--node-tap", str(report), "--junit", "unused"]), 1)
+            report.write_text(self.node_report(failed=1).replace(
+                "ok 1 - first", "not ok 1 - first%\n  error: broken\n::notice::injected"),
+                encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}), \
+                    contextlib.redirect_stderr(io.StringIO()) as output:
+                self.assertEqual(main(["--node-tap", str(report)]), 1)
+            self.assertIn("::error title=CI result failure::not ok 1 - first%25%0A", output.getvalue())
+            self.assertIn("%0A::notice::injected", output.getvalue())
+            self.assertNotIn("\n::notice::injected", output.getvalue())
 
     def inventory(self, names=None):
         return {"tests": [{"name": name} for name in sorted(
@@ -267,6 +277,19 @@ class CiResultTests(unittest.TestCase):
                 inventory.write_text("[]", encoding="utf-8")
                 self.assertEqual(main(["--inventory", str(inventory)]), 1)
                 self.assertEqual(main(["--inventory", str(inventory.with_name("missing"))]), 1)
+            inventory.write_text(json.dumps(self.inventory()), encoding="utf-8")
+            failed = self.report()
+            ET.SubElement(failed[0], "failure", message="assertion summary").text = "original numerical assertion"
+            ET.SubElement(failed[0], "system-out").text = "expected 1e-12; observed failure%\n::notice::injected"
+            ET.ElementTree(failed).write(report, encoding="unicode")
+            with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}), \
+                    contextlib.redirect_stderr(io.StringIO()) as output:
+                self.assertEqual(main(["--inventory", str(inventory), "--junit", str(report)]), 1)
+            self.assertIn(failed[0].get("name"), output.getvalue())
+            self.assertIn("original numerical assertion", output.getvalue())
+            self.assertIn("assertion summary", output.getvalue())
+            self.assertIn("expected 1e-12; observed failure%25%0A::notice::injected", output.getvalue())
+            self.assertNotIn("\n::notice::injected", output.getvalue())
 
     def git_repo(self):
         """Create a throwaway repo so scope tests exercise real git diff output."""

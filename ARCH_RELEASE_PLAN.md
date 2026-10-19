@@ -2,7 +2,7 @@
 
 本文件是唯一当前推进表。现代化和二维柱坐标重植按各自原范围结案；过程记录集中在[历史档案](docs/histroy/README.md)，原始科学收据不改签。当前任务是可靠发布、清晰文档与可维护的验证流程，不另开全仓架构重构。
 
-**当前：REL-5归档和本地整理已完成，托管CI出口待执行；不自动进入REL-6。** 当前工作区`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，分支`compute/optim`，本批入场基线`45b92535e8efe78728bb67b0415c148854a63f9c`；用户已授权提交当前累计状态和正常推送；检查点为`4394c067…`，现有CI增加仅限该分支的push入口执行真实托管验收，实际提交／运行身份查收据与Git。详见[整理收据](validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json)，本机恢复`output/release/rel5-20261019/progress.json`。
+**当前：REL-5归档和本地整理已完成，真实托管CI失败定位中；不自动进入REL-6。** 当前工作区`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，分支`compute/optim`，本批入场基线`45b92535e8efe78728bb67b0415c148854a63f9c`；用户已授权提交当前累计状态和正常推送；检查点为`4394c067…`，现有CI增加仅限该分支的push入口执行真实托管验收，实际提交／运行身份查收据与Git。详见[整理收据](validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json)，本机恢复`output/release/rel5-20261019/progress.json`。
 
 ## 发布目标与判定
 
@@ -26,7 +26,7 @@ W0为Codex，负责标准、唯一集成和独立验收；W1核科学／共享�
 | REL-2 最小复现 | 修13份活动输入和消费者后冻结；复现CPU短例、轻图编译与并行成本 | W1标准；W2执行；W3说明；W0验收 | 已完成本包，原标准保持 |
 | REL-3 CPU科学 | 补公共模型、新chart、显式中心输入及受影响fresh；复用适用终点 | W1／W2执行；W3归一；W0验收 | 已按声明CPU范围闭合；下方限定资格继续有效 |
 | REL-4 CUDA集成 | 核真实设备索引、资源、stream、AMR／fresh及公共集成；定点修复原ENUC问题 | W2设备；W1数学；W3说明；W0验收 | 已按本机单GPU原范围闭合，不代表最终分发包 |
-| REL-5 文档与验证收敛 | 合并主题、归档历史、补源码可读性；按独有断言收拢Tooling／Studio／CI | W3文档；W2测试CI；W1常量依据；W0验收 | 本地内容和归档完成；真实托管CI待执行，阶段暂未闭合 |
+| REL-5 文档与验证收敛 | 合并主题、归档历史、补源码可读性；按独有断言收拢Tooling／Studio／CI | W3文档；W2测试CI；W1常量依据；W0验收 | 本地内容和归档完成；首轮真实托管CPU／Studio失败，阶段暂未闭合 |
 | REL-6 候选版本验收 | 冻结候选，干净配置／所需构建／安装；从实际包核CPU／CUDA、科学资格、成本与平台 | W2产物；W1科学；W3实际说明；W0最终review | 未启动；依赖REL-3／4／5出口，须用户另行启动 |
 | REL-7 发布与结案 | 整理支持矩阵、变更、限制、资产许可及复现入口；准备合入、标签和发行物 | W0协调；W1／W2／W3确认出口 | 未启动；正式合入／发布由负责人决定 |
 
@@ -38,9 +38,9 @@ W0为Codex，负责标准、唯一集成和独立验收；W1核科学／共享�
 | Studio | 完整383项零跳过、lint和typed build通过；136文件生成JS AST等价，20文件排版，Host／桌面／浏览器注释补齐 | `npm test`唯一持有完整选择、TAP与文件并发1；build包含类型检查，Host子集不在CI重复跑 |
 | 源码说明 | 593份C++／CUDA及inc建立归属索引；20份定点补注释，非注释token相同 | 保留既有Workflow；解释数学、常量类别、单位和生命周期，不编造经验参数最优性，不冒称全算法重新证明 |
 | 文档归档 | 按已确认清单迁移323份记录至`docs/histroy/`，合并三个冗余索引；当前主题和历史入口分开 | 148个固定路径排除；157份冻结历史、3475份入场结果、原协议及原执行物保持。详细映射和SHA见整理收据 |
-| CI与资产 | 保守判定适用范围；Helm表和Studio14KiB夹具统一定向缓存、离线物化及大小／SHA校验 | 原Helm缓存身份保持，本机零LFS下载；actionlint和本地控制通过；真实托管冷／热缓存及完整工作流尚未验收 |
+| CI与资产 | 保守判定适用范围；Helm表和Studio14KiB夹具统一定向缓存、离线物化及大小／SHA校验 | 原Helm缓存身份保持，本机零LFS下载；actionlint和本地控制通过；首轮托管资产准备通过；命中状态未知，完整工作流尚未通过 |
 
-本轮GNU墙钟：CPU／CUDA重新配置4.78／6.46秒，归档后Tooling CTest31.90秒、Studio测试47.92秒、lint9.47秒、typed build5.44秒。Studio三项护栏树峰为383032／1077920／726560KiB，无swap增长、无截断。逐项口径在本机`cost-ledger.json`；没有完整托管前后样本，不宣称全CI提速。
+本轮GNU墙钟：CPU／CUDA重新配置4.78／6.46秒，归档后Tooling CTest31.90秒、Studio测试47.92秒、lint9.47秒、typed build5.44秒。Studio三项护栏树峰为383032／1077920／726560KiB，无swap增长、无截断。逐项口径在本机`cost-ledger.json`；首轮托管CPU构建步骤504秒、配置37秒，CTest48秒后失败，Studio测试40秒失败；这是API步骤墙钟，GNU／RAM及缓存命中未知。托管日志下载需鉴权，现有检查器补有界转义失败注解以定点定位；没有完整前后样本，不宣称全CI提速。
 
 原四个工具失败仅在内存测试夹具中补第7步采样与当前输入SHA，真实资格器、科学清单及冻结协议未改。启动前输出预留拒绝、观察器纠正和原失败保留。未编译新生产C++／CUDA或重跑科学长程；纯注释仍改变源身份，旧ELF不能代签当前源码构建。Vite现存大chunk提示只留后续成本候选。
 

@@ -9,6 +9,7 @@ It does not create or replace scientific Validation evidence.
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 import subprocess
@@ -142,6 +143,39 @@ def check_tooling_result(result):
     if not result.wasSuccessful() or not result.testsRun or result.skipped:
         raise ValueError("Tooling requires a nonempty successful suite with no skipped controls")
     return result.testsRun
+
+
+def _annotate_failed_report(args, message):
+    """Expose bounded failure details in Actions checks without changing a gate.
+
+    Public check annotations remain readable when downloading runner logs needs
+    authentication. Escape workflow-command data so test text cannot add commands.
+    Raw TAP/JUnit remain the authority; this is only a diagnostic excerpt.
+    """
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return
+    details = [message]
+    try:
+        if args.node_tap is not None:
+            lines = args.node_tap.read_text(encoding="utf-8").splitlines()
+            failures = [index for index, line in enumerate(lines)
+                        if re.match(r"\s*(?:not ok\b|Bail out!)", line)]
+            details += ["\n".join(lines[index:index + 30]) for index in failures[:4]]
+        elif args.junit is not None:
+            for case in ET.parse(args.junit).getroot().findall("testcase"):
+                if any(case.find(marker) is not None for marker in ("failure", "error")):
+                    messages = [case.get("name", "<unnamed>")]
+                    messages += [marker.get("message", "") for marker in case
+                                 if marker.tag in ("failure", "error")]
+                    details.append("\n".join(messages + list(case.itertext())))
+                    if len(details) == 5:
+                        break
+    except (OSError, ValueError, ET.ParseError):
+        # A missing or malformed report must still fail with the original error.
+        pass
+    for detail in details:
+        escaped = detail[:4000].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print("::error title=CI result failure::" + escaped, file=sys.stderr)
 
 
 # Affected-module CI scope: triage whether a revision can skip the full Studio
@@ -327,6 +361,7 @@ def main(argv=None):
         profile = (args.scope if args.scope is not None else "studio" if args.node_tap is not None
                    else args.profile)
         print(f"{profile} result check failed: {error}", file=sys.stderr)
+        _annotate_failed_report(args, str(error))
         return 1
     return 0
 
