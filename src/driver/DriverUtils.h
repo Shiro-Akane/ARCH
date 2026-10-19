@@ -17,6 +17,7 @@
 
 #include "grid/Grid.h"
 #include "numerics/curvilinear/GridMetrics.h"
+#include "numerics/curvilinear/GeometricSources.h"
 
 #include <bit>
 #include <cmath>
@@ -137,10 +138,16 @@ ARCH_INLINE double evaluate_cfl_cell_dt(
     const FluidVector& U, const double* composition, const EosType& eos,
     const GridMetrics::GeometryView& grid, int i, int j)
 {
-    return evaluate_cfl_cell_dt(U, composition, eos, grid.dim,
+    const double spatial=evaluate_cfl_cell_dt(U, composition, eos, grid.dim,
         GridMetrics::PhysicalSpacing(grid, 0, i, j),
         grid.dim >= 2 ? GridMetrics::PhysicalSpacing(grid, 1, i, j) : grid.dx2,
         grid.dim == 3 ? GridMetrics::PhysicalSpacing(grid, 2, i, j) : grid.dx3);
+    if(grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2) {
+        const double source=TimeIntegration::cylindrical_rotation_source_dt(U,grid,i);
+        if(!std::isfinite(source))return arch::state::invalid();
+        return std::min(spatial,source);
+    }
+    return spatial;
 }
 
 ARCH_INLINE bool cfl_value_is_nan(double value)

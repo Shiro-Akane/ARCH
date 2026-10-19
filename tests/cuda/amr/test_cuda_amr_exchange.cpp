@@ -236,20 +236,6 @@ void run_dimension(int dimension, const std::string& geometry)
 
     amr::AMRControl control(64, dimension);
     const LeafGrid leaves = mixed_corner_grid(dimension);
-    if (geometry == "cylindrical" && dimension == 2) {
-        // The actual topology owner rejects cylindrical two-dimensional input.
-        bool rejected = false;
-        try {
-            control.tree->LoadLeafGrid(
-                config, 4, leaves.level, leaves.x, leaves.y, leaves.z);
-        } catch (const std::invalid_argument&) {
-            rejected = true;
-        }
-        require(rejected,
-                "CUDA AMR fixture accepted retired cylindrical2D polar topology");
-        std::cout << "CUDA_AMR_RETIRED_POLAR_REJECTION dimension=2\n";
-        return;
-    }
     control.tree->LoadLeafGrid(
         config, 4, leaves.level, leaves.x, leaves.y, leaves.z);
     const auto& active = control.tree->GetActiveBlocks();
@@ -284,7 +270,7 @@ void run_dimension(int dimension, const std::string& geometry)
     for (std::size_t index = 0; index < active.size(); ++index) {
         bindings.push_back({
             &control.pool->GetBlock(active[index]), handles[index],
-            storage[index], &boundary});
+            storage[index], &boundary, arch::boundary::HydroBoundaryView{}});
     }
     auto backend = arch::cuda::make_cuda_backend(
         bindings, 0, make_launch_config(), species, eos);

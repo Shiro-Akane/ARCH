@@ -252,6 +252,34 @@ class BackendValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'actual run parameters'):
             module.qualify_checkpoint(Path('validator'), Path('checkpoint'), {'qualification': policy})
 
+    def test_native_axial_reference_requires_bound_parameters_and_matching_axis(self):
+        module = load_module()
+        case = {"qualification_axis": 2,
+                "qualification": {"reference": "periodic_entropy_wave",
+                                  "mass_relative_drift_max": 1e-12}}
+        with self.assertRaisesRegex(RuntimeError, "actual run parameters"):
+            module.qualify_checkpoint(Path("validator"), Path("checkpoint"), case)
+        wrong_reference = {"reference_axis": 1}
+        process = mock.Mock(returncode=0, stdout=json.dumps(wrong_reference), stderr="")
+        with mock.patch.object(module.subprocess, "run", return_value=process) as run:
+            with self.assertRaisesRegex(RuntimeError, "axis does not match"):
+                module.qualify_checkpoint(Path("validator"), Path("checkpoint"), case,
+                                          parameter_file=Path("actual.par"))
+            self.assertEqual(run.call_args.args[0][-2:], ["--parameters", "actual.par"])
+        with self.assertRaisesRegex(RuntimeError, "must be 2"):
+            module.qualify_checkpoint(Path("validator"), Path("checkpoint"),
+                                      dict(case, qualification_axis=3))
+
+    def test_native_axial_momentum_conservation_uses_physical_axial_slot(self):
+        module = load_module()
+        policy = {"mass_relative_drift_max": 1e-12,
+                  "momentum_absolute_drift_max": 1e-12}
+        metrics = dict(reference_axis=2, min_rho=0.8, min_eng=2.9,
+                       mean=1., mass=1., mom_u=0., mom_v=1., mom_w=0., eng_total=3.)
+        module.validate_qualification_metrics(metrics, policy, "smooth")
+        with self.assertRaisesRegex(RuntimeError, "mom_v"):
+            module.validate_qualification_metrics(dict(metrics, mom_v=1.+1e-9), policy, "smooth")
+
     def test_whole_regrid_costs_are_checked_without_double_counting(self):
         module = load_module()
         row = dict(macro_step=0, physical_time=0.0, backend='cuda', old_blocks=1, new_blocks=2,
@@ -1017,7 +1045,7 @@ class BackendValidationTests(unittest.TestCase):
         manifest = module.load_manifest(manifest_path)
         ungrouped = [case["id"] for case in manifest["cases"]
                      if case.get("qualification_group") is None]
-        self.assertEqual(len(ungrouped), 7)
+        self.assertEqual(len(ungrouped), 10)  # Original seven plus native RKL1 at three resolutions.
         with tempfile.TemporaryDirectory() as directory:
             status, run_mock, write_mock = self.run_backend_main(
                 module, manifest_path, Path(directory) / "evidence", ungrouped)

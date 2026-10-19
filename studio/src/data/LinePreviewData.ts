@@ -1,3 +1,8 @@
+/**
+ * Adapt a sampled one-dimensional field to line display and nearest-sample inspection.
+ * Coordinates remain sample locations; selecting a point does not interpolate
+ * a new scientific state or alter the stored field.
+ */
 export interface LinePreviewData {
   kind: 'line';
   field: string;

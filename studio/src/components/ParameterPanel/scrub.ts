@@ -1,3 +1,6 @@
+/**
+ * Translate a pointer gesture into a candidate numeric edit. This display interaction does not bypass the control's domain checks or commit directly to disk.
+ */
 export function scrubValue(raw:string,dx:number,fine:boolean,integer:boolean,range?:readonly [number,number]):string {
  if(!raw.trim()||!Number.isFinite(Number(raw))||Math.abs(dx)<4)return raw;
  const start=Number(raw); const sensitivity=(Math.abs(start)||1)*0.01*(fine?0.1:1);

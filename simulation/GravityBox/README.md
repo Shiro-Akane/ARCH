@@ -9,27 +9,30 @@
 请将程序路径替换为实际构建位置。所有输入与 EOS 均使用 **CGS**：长度 cm、
 时间 s、密度 g/cm³、温度 K、势 cm²/s²、加速度 cm/s²。
 本案例仅负责初始场，直接使用正式 Hydro、AMR、EOS、燃烧、扩散和引力实现。
-默认参数是周期的一维微扰，CPU 与 CUDA 使用同一个参数文件，仅切换
+所附参数文件声明周期的一维微扰，CPU 与 CUDA 使用同一个参数文件，仅切换
 `compute_backend=cpu` 或 `cuda`。GPU 小网格通常更慢，不能据此判断数学错误。
 
 ## 初始场与参数
 
-| 参数 | 含义与默认值 |
+| 显式参数 | 含义与条件 |
 | --- | --- |
-| `rho0` | 正密度背景，`1e7` |
-| `temperature0` | 正温度背景，`1e7` |
-| `amplitude` | 密度扰动相对背景的幅度，`1e-3`；周期模式须小于 1 |
-| `temperature_amplitude` | 温度相对扰动，默认 0，绝对值须小于 1 |
-| `velocity0` | x 方向正弦速度幅度，默认 0 |
-| `width` | 孤立高斯标准差，默认 x 域长的 0.08 倍 |
-| `center_x/y/z` | 孤立源的物理中心；Cartesian 为物理 x/y/z，一维径向以原点为中心 |
-| `gas_cv` | 无核网络时单组分理想气体的比热，默认 `1.2471693927e8` erg/g/K |
-| `hydrostatic_radial` | 算例专用的一维均匀密度静水平衡参考开关，默认 `false`；不属于全局引力求解参数 |
+| `rho0`、`temperature0` | 正密度／正温度背景；所附文件声明`1e7 g/cm³`／`1e7 K` |
+| `amplitude`、`temperature_amplitude` | 相对密度／温度扰动；所附文件为`1e-3`／`0`。周期密度幅度须小于1，温度幅度绝对值小于1 |
+| `velocity0` | 第一存储方向正弦速度幅度，所附文件显式为0 |
+| `width` | 孤立高斯标准差，单位cm；所附文件显式为`8e6` |
+| `center_x/y/z` | 物理中心；x始终必需，y在第二轴活动时必需，z在第三轴活动或二维柱坐标时必需。二维柱坐标必须`center_y=0` |
+| `gas_cv` | `network_name=none`时必须声明的单组分理想气体比热，单位erg/(g*K) |
+| `hydrostatic_radial` | 必须显式声明的算例一维静水参考开关，所附文件为`false`；不属于全局引力求解参数 |
+
+上述数值是所附输入的声明，不是缺键回退；活动关键键缺失或显错由配置契约拒绝。
 
 周期模式为 `rho=rho0*(1+amplitude*cos(2*pi*x/L))`；坐标从域左侧计。
 孤立模式将余弦替换为高斯：Cartesian 三维按三轴半径，一维球/柱按原生径向坐标。
-二维柱坐标不再支持；球坐标二维极平面与柱坐标一维／三维保留各自定义。
-默认温度使用同一形状函数；静水参考模式改用下述独立温度剖面。
+二维柱坐标复用Grid给出的`(r,0,z)`点，高斯形状为
+`exp(-((r-center_x)^2+(z-center_z)^2)/(2*width^2))`，保留轴向剖面。
+该剖面对应轴对称全环分布；完整环质量、势边界与求解由引力模块负责。
+球坐标二维极平面与柱坐标一维／三维保持原定义。
+温度扰动使用同一形状函数；静水参考模式改用下述独立温度剖面。
 启用核网络时复用标准 `network_name`、`xhe4`、`xc12`、`xo16` 等组分入口，
 不用 `gas_cv` 代替核物质 EOS；已验收的燃烧示例使用 Helmholtz。
 
@@ -41,9 +44,15 @@
 nblockx1=2
 nblockx2=2
 nblockx3=2
+x1_min=0
 x1_max=1
+x2_min=0
 x2_max=1
+x3_min=0
 x3_max=1
+center_x=0.5
+center_y=0.5
+center_z=0.5
 gravity_boundary=isolated
 x1l_boundary_type=reflecting
 x1r_boundary_type=reflecting
@@ -86,6 +95,7 @@ x1r_boundary_type=reflecting
 gravity_boundary=isolated
 rho0=1e7
 amplitude=0.2
+center_x=0
 width=2e7
 lrefinemax=1
 refine_threshold=0.004
@@ -135,5 +145,9 @@ Helmholtz 输运系数由状态决定，不应再填理想气体的常系数覆�
 调用输出函数之前的引力字段下载仍计入总时间，未计入该输出子项。
 
 Cartesian 使用边界与 CPU/GPU 记录见
-[笛卡尔自引力验收记录](../../docs/development/P5P7GravityAcceptance.zh-CN.md)；曲线坐标的受测范围与性能见
+[笛卡尔自引力验收记录](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)；曲线坐标的受测范围与性能见
 [曲线重力验证](../../validation/gravity/README.zh-CN.md)。
+
+当前二维柱坐标初始化器、非零轴向中心、CPU短演化／fresh及显式输入迁移见
+[当前CPU签收](../../validation/backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)。CUDA共享owner证据仍按原范围复用；
+本轮Host初始化器修正须在下一阶段补建CUDA应用后做必要场对照。

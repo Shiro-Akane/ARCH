@@ -1,3 +1,8 @@
+/**
+ * Inspect the selected sample in bounded demo Preview data.
+ * Selection reports existing array values and indices; it does not reconstruct
+ * a physical solution between samples or modify configuration.
+ */
 import type { PreviewFields } from './PreviewData';
 export interface SelectedPoint { x: number; y: number; index: number; density: number; temperature: number; pressure: number }
 export function inspectPoint(data: PreviewFields, x: number, y: number): SelectedPoint | null {

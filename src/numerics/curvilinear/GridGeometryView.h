@@ -3,8 +3,9 @@
  * @brief Allocation-free native-grid geometry shared by Host and device math.
  *
  * Workflow: derive cell centers, faces and widths from the configured spacing
- * and lend them to measures and physical consumers. Every two-dimensional
- * cylindrical view is refused here; only the retained charts are represented.
+ * and lend them to measures and physical consumers. The axisymmetric
+ * cylindrical chart resolves (r,z), while retaining the physical phi component.
+ * A geometry view grants no solver, backend or restart qualification.
  */
 #pragma once
 
@@ -43,17 +44,15 @@ struct CoordinateLayout {
     bool valid = false;
 };
 
-/** Resolve the public chart without changing GeometryView or validating fields.
- * Cylindrical 1D/3D use (r,z,phi) and spherical 2D is the existing polar
- * (r,phi,z) specialization. Spherical 1D/3D retain (r,theta,phi). Every
- * cylindrical two-dimensional chart has no usable layout here; the grid,
- * binding and raw-metric owners reject that storage explicitly as well.
+/** Resolve a native layout without validating fields or enabling a solver.
+ * Cylindrical charts use (r,z,phi); in 2D only the r,z derivatives are resolved.
+ * Spherical 2D is the existing polar (r,phi,z) specialization, while spherical
+ * 1D/3D retain (r,theta,phi). Unresolved derivatives do not remove vector slots.
  */
 ARCH_HOST_DEVICE constexpr CoordinateLayout resolve_coordinate_layout(
     Geometry geometry, int dimension)
 {
     if(dimension<1||dimension>3)return {};
-    if(geometry==Geometry::Cylindrical&&dimension==2)return {};
     CoordinateLayout result{};
     result.resolved_derivatives={true,dimension>=2,dimension==3};
     if(geometry==Geometry::Cartesian) {
@@ -152,19 +151,18 @@ ARCH_HOST_DEVICE inline Geometry geometry_kind(const GeometryView& grid)
     return grid.geometry;
 }
 
-/** Convert native coordinates to the Cartesian position used by gravity kernels. */
+/** Embed a native sample in Cartesian coordinates, without assigning mass.
+ * An axisymmetric (r,z) sample uses phi=0. Gravity owns the ring distribution;
+ * this representative point alone cannot define an isolated gravity boundary.
+ */
 ARCH_HOST_DEVICE inline std::array<double,3> PhysicalPosition(
     Geometry geometry, int dimension, const std::array<double,3>& native) {
     if (geometry == Geometry::Cartesian) return native;
     const double r = native[0];
     if (dimension == 1) return {r,0.,0.};
     if (dimension == 2) {
-        // Two-dimensional cylindrical storage is retired: fail closed rather
-        // than reinterpret the pair as an old polar or meridian chart.
         if (geometry == Geometry::Cylindrical)
-            return {std::numeric_limits<double>::quiet_NaN(),
-                    std::numeric_limits<double>::quiet_NaN(),
-                    std::numeric_limits<double>::quiet_NaN()};
+            return {r, 0., native[1]};
         return {r*std::cos(native[1]), r*std::sin(native[1]), 0.};
     }
     if (geometry == Geometry::Cylindrical)

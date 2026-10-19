@@ -1,3 +1,8 @@
+/**
+ * Send typed configuration read/save requests and validate their exact responses.
+ * Preserve project, path and fingerprint association; conflict diagnostics remain
+ * explicit. Host owns atomic publication and Core owns scientific interpretation.
+ */
 import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';import type {ConfigReadResponse,ConfigWriteResponse,OpenConfigRequest,SaveConfigRequest,SaveConfigAsRequest,ConfigFileError} from './contracts.ts';import {validateSnapshot} from './LocalHostAdapter.ts';
 export class ConfigRequestError extends Error { info:ConfigFileError;constructor(info:ConfigFileError){super(info.message);this.info=info;} }

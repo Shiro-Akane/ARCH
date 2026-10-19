@@ -2,6 +2,7 @@
 #include <array>
 #include <bit>
 #include <cfenv>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <functional>
@@ -15,6 +16,9 @@
 #include <vector>
 
 #include "numerics/multigrid/CompositeMultigrid.h"
+#if ARCH_CUDA_BUILD_ENABLED
+#include "cuda/runtime/gravity/CudaGravityExecution.h"
+#endif
 #include "physics/constant/PhysicalConstants.h"
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/gravity/GravitySourceBounds.h"
@@ -1347,6 +1351,244 @@ void curved_manufactured(bool singular=false, bool seam_refined=false) {
         }
 }
 
+/** Axisymmetric -Laplacian on the existing V/A composite operator.
+ * Phi=a(r^2+z^2) has source -6a. An even quartic perturbation provides
+ * an independent truncation/convergence check on the axis and mixed AMR.
+ * z spans eight length units deliberately: it is never an azimuthal turn.
+ */
+void axisymmetric_prescribed_poisson(bool device=false) {
+    using K=elliptic::FaceBoundaryKind;
+    std::shared_ptr<multigrid::CompositeExecution> execution;
+    if(device) {
+#if ARCH_CUDA_BUILD_ENABLED
+        // Reuse the production executor; the same independent field/flux and
+        // Gauss assertions below apply to both backends at their original limits.
+        execution=cuda::make_cuda_gravity_execution(nullptr,0,{})->numeric();
+#else
+        throw std::runtime_error("Device Poisson requires a CUDA build");
+#endif
+    }
+    for(double inner:{0.,.5})for(bool refined:{false,true})for(bool quartic:{false,true}) {
+        double previous_phi=0.,previous_flux=0.;
+        for(int n:{8,16,32}) {
+            auto base=base_mesh(2,n);base.geometry=elliptic::Geometry::Cylindrical;
+            base.origin={inner,-4.,0.};base.spacing={1./n,8./n,1.};
+            elliptic::CompositeBoundary boundary;
+            boundary.sides={K::Neumann,K::Dirichlet,K::Dirichlet,K::Dirichlet,K::Neumann,K::Neumann};
+            if(inner>0.)boundary.sides[0]=K::Dirichlet;
+            for(int side=0;side<6;++side)boundary.conditions[side]={boundary.sides[side],
+                boundary.sides[side]==K::Dirichlet?1.:0.,boundary.sides[side]==K::Dirichlet?0.:1.};
+            const double perturbation=quartic?.1:0.;
+            const auto exact=[=](const std::array<double,3>& x) {
+                const double r2=x[0]*x[0],z2=x[1]*x[1];
+                return r2+z2+perturbation*(r2*r2+z2*z2);
+            };
+            const auto gradient=[=](const std::array<double,3>& x) {
+                return std::array<double,3>{2.*x[0]+4.*perturbation*x[0]*x[0]*x[0],
+                    2.*x[1]+4.*perturbation*x[1]*x[1]*x[1],0.};
+            };
+            multigrid::CompositeMultigrid solver(base,make_cells(base,refined),boundary,execution);
+            const auto& op=solver.op();std::vector<double> rhs(op.size()),error(op.size());
+            for(int c=0;c<op.size();++c) {const auto x=op.center(c);
+                rhs[c]=-6.-perturbation*(16.*x[0]*x[0]+12.*x[1]*x[1]);}
+            const auto values=continuum_boundary_values(op,boundary,exact,gradient);
+            const auto result=solver.solve(op.effective_rhs(rhs,values),{1e-12,0.,300});
+            require(result.report.status==multigrid::SolveStatus::Converged&&result.report.residual<=result.report.target,
+                "axisymmetric prescribed Poisson solve failed");
+            for(int c=0;c<op.size();++c)error[c]=result.potential[c]-exact(op.center(c));
+            const double phi=op.norm(error);double flux=0.;
+            continuum_face_error(op,result.potential,values,gradient,flux);
+            long double source=0.,surface=0.;
+            for(int c=0;c<op.size();++c)source-=static_cast<long double>(rhs[c])*op.volumes()[c];
+            for(std::size_t f=0;f<op.faces().size();++f)if(op.faces()[f].boundary_side>=0) {
+                const auto& face=op.faces()[f];
+                surface+=(face.boundary_side%2?1.L:-1.L)*face.area*op.face_gradient(result.potential,face,values[f]);
+            }
+            const double gauss=static_cast<double>(std::abs(surface-source)/std::abs(source));
+            require(gauss<5e-10,"axisymmetric prescribed Gauss balance failed");
+            if(!quartic)require(phi<1e-8&&flux<1e-7,"axisymmetric quadratic exactness budget");
+            double phi_order=0.,flux_order=0.;
+            if(quartic&&previous_phi>0.) {
+                phi_order=std::log2(previous_phi/phi);flux_order=std::log2(previous_flux/flux);
+                require(phi_order>=1.8&&flux_order>=1.8,"axisymmetric prescribed second order budget");
+            }
+            std::cout<<"AXISYMMETRIC_POISSON device="<<device<<" inner="<<inner<<" mixed="<<refined<<" quartic="<<quartic
+                <<" n="<<n<<" cells="<<op.size()<<" cycles="<<result.report.cycles
+                <<" phi_error="<<phi<<" flux_error="<<flux<<" phi_order="<<phi_order<<" flux_order="<<flux_order
+                <<" gauss_error="<<gauss<<'\n';
+            previous_phi=phi;previous_flux=flux;
+        }
+    }
+    std::cout<<"AXISYMMETRIC_PRESCRIBED_POISSON_PASS\n";
+}
+
+/** Binary64 inputs and independently rounded 500-digit mpmath elliptic-K values. */
+void test_complete_elliptic_oracles() {
+    constexpr double oracle[][2]{
+        {0x1.0000000000000p+0,0x1.921fb54442d18p+0},
+        {0x1.fffffffffffffp-1,0x1.921fb54442d18p+0},
+        {0x1.ccccccccccccdp-1,0x1.9cc8f4cb78b28p+0},
+        {0x1.0000000000000p-1,0x1.daa4a35759e4bp+0},
+        {0x1.fffffffffffffp-2,0x1.daa4a35759e4bp+0},
+        {0x1.0000000000001p-1,0x1.daa4a35759e4bp+0},
+        {0x1.999999999999ap-4,0x1.49feec2073f58p+1},
+        {0x1.47ae147ae147bp-7,0x1.d90aa525f5669p+1},
+        {0x1.a36e2eb1c432dp-14,0x1.7f763323228b6p+2},
+        {0x1.5798ee2308c3ap-27,0x1.5317a1c62b262p+3},
+        {0x1.cd2b297d889bcp-54,0x1.3ce95eba4f8b5p+4},
+        {0x1.dee7a4ad4b81fp-167,0x1.d79b7cd4326c1p+5},
+        {0x1.bff2ee48e0530p-333,0x1.d20fec1473dd9p+6},
+        {0x1.87e92154ef7acp-665,0x1.cf4a23b494965p+7},
+        {0x1.56e1fc2f8f359p-997,0x1.5ac628af779efp+8},
+        {0x0.0000000000001p-1022,0x1.759b3876c6bfdp+8},
+    };
+    double maximum=0.;
+    for(const auto& row:oracle) {
+        const double actual=Physical::Gravity::complete_elliptic_first_kind(row[0]);
+        require(std::isfinite(actual),"elliptic K oracle produced nonfinite");
+        maximum=std::max(maximum,std::abs(actual/row[1]-1.));
+    }
+    require(maximum<2e-15,"elliptic K high precision oracle mismatch");
+    for(double invalid:{0.,-1.,2.,std::numeric_limits<double>::quiet_NaN()})
+        require(std::isnan(Physical::Gravity::complete_elliptic_first_kind(invalid)),"invalid K silently repaired");
+    require(std::isnan(Physical::Gravity::ring_average_inverse_distance(1.,1.,0.)),"singular ring silently softened");
+    for(double separation:{1e-200,1e-300,std::numeric_limits<double>::denorm_min()}) {
+        const double expected=(std::log(8.)-std::log(separation))/pi;
+        const double actual=Physical::Gravity::ring_average_inverse_distance(1.,1.,separation);
+        require(std::isfinite(actual)&&std::abs(actual/expected-1.)<2e-15,"noncoincident near ring was rejected");
+    }
+    std::cout<<"ELLIPTIC_K_ORACLE_PASS samples="<<std::size(oracle)<<" max_relative="<<maximum<<'\n';
+}
+
+/** Independent full-phi quadrature for the three-dimensional Newton kernel.
+ * It uses neither the elliptic series nor tree moments. The five-point
+ * meridional rule also checks the production three-point leaf quadrature.
+ */
+double axisymmetric_direct_potential(const elliptic::CompositePoisson& op,
+    std::span<const double> density,const std::array<double,3>& point,int azimuths,bool fifth) {
+    constexpr double x3[]{-.7745966692414834,0.,.7745966692414834};
+    constexpr double w3[]{5./9.,8./9.,5./9.};
+    constexpr double x5[]{-.9061798459386640,-.5384693101056831,0.,.5384693101056831,.9061798459386640};
+    constexpr double w5[]{.2369268850561891,.4786286704993665,.5688888888888889,.4786286704993665,.2369268850561891};
+    const int count=fifth?5:3;const double* x=fifth?x5:x3;const double* w=fifth?w5:w3;
+    std::vector<double> cosine(azimuths),sine(azimuths);
+    for(int p=0;p<azimuths;++p) {const double angle=2.*pi*(p+.5)/azimuths;cosine[p]=std::cos(angle);sine[p]=std::sin(angle);}
+    long double potential=0.;
+    for(int c=0;c<op.size();++c) {
+        const auto center=op.center(c);long double integral=0.,normal=0.;
+        for(int i=0;i<count;++i)for(int j=0;j<count;++j) {
+            const double r=center[0]+.5*op.width(c,0)*x[i],z=center[1]+.5*op.width(c,1)*x[j];
+            const long double weight=w[i]*w[j]*r;long double angle_sum=0.;
+            for(int p=0;p<azimuths;++p) {
+                const double dx=point[0]-r*cosine[p],dy=point[1]-r*sine[p],dz=point[2]-z;
+                angle_sum+=1./std::sqrt(dx*dx+dy*dy+dz*dz);
+            }
+            integral+=weight*angle_sum/azimuths;normal+=weight;
+        }
+        potential-=2.L*pi*density[c]*op.volumes()[c]*integral/normal;
+    }
+    return static_cast<double>(potential);
+}
+
+void axisymmetric_isolated_boundary() {
+    using namespace Physical::Gravity;
+    test_complete_elliptic_oracles();
+    for(double inner:{0.,.5})for(bool refined:{false,true}) {
+        auto base=base_mesh(2,8);base.geometry=elliptic::Geometry::Cylindrical;
+        base.origin={inner,-.5,0.};base.spacing={.125,.125,1.};
+        elliptic::CompositePoisson op(base,make_cells(base,refined),elliptic::BoundaryKind::CurvilinearIsolated);
+        require(op.boundary().sides[2]==elliptic::FaceBoundaryKind::Dirichlet&&
+            op.boundary().sides[3]==elliptic::FaceBoundaryKind::Dirichlet,"axisymmetric isolated z became periodic");
+        std::vector<double> rho(op.size());long double full_mass=0.;
+        for(int c=0;c<op.size();++c) {
+            const auto center=op.center(c);rho[c]=1.+.2*center[0]+.1*center[1];
+            full_mass+=2.L*pi*rho[c]*op.volumes()[c];
+        }
+        GravityBoundary tree(op);tree.update(rho);
+        require(std::abs(tree.moments().front().value[0]/full_mass-1.L)<1e-14L,"axisymmetric tree lost full ring mass");
+        const auto values=tree.values(op,1.),tight=tree.values(op,1.,.125),direct=tree.values(op,1.,0.);
+        long double ordinary_error=0.,tight_error=0.,quadrature_error=0.,kernel_error=0.,scale=0.;int count=0;
+        for(std::size_t f=0;f<op.faces().size();++f)if(op.faces()[f].boundary_side>=0) {
+            // Sample one face per side strip; the full production surface is
+            // still evaluated above, including every mixed-level fragment.
+            if((count++%4)!=0)continue;
+            const auto native=op.faces()[f].center;const std::array<double,3> point{native[0],0.,native[1]};
+            const double reference3=axisymmetric_direct_potential(op,rho,point,4096,false);
+            const double reference5=axisymmetric_direct_potential(op,rho,point,4096,true);
+            ordinary_error+=(values[f]-reference5)*(values[f]-reference5);
+            tight_error+=(tight[f]-reference5)*(tight[f]-reference5);
+            quadrature_error+=(direct[f]-reference5)*(direct[f]-reference5);
+            kernel_error+=(direct[f]-reference3)*(direct[f]-reference3);
+            scale+=reference5*reference5;
+        }
+        const double ordinary=std::sqrt(ordinary_error/scale),tighter=std::sqrt(tight_error/scale),
+            spatial=std::sqrt(quadrature_error/scale),kernel=std::sqrt(kernel_error/scale);
+        require(ordinary<.03&&tighter<.03,"axisymmetric isolated boundary physical quadrature budget");
+        require(kernel<2e-10,"axisymmetric ring reduction differs from full-phi Newton oracle");
+        const std::array<double,3> far{0.,0.,32.};
+        const double far_value=isolated_potential(tree.nodes().data(),tree.moments().data(),tree.nodes().size(),far.data(),1.,.25,2,GridMetrics::Geometry::Cylindrical,2);
+        const double far_reference=axisymmetric_direct_potential(op,rho,far,256,true);
+        require(std::abs(far_value/far_reference-1.)<1e-5,"axisymmetric far Newton multipole mismatch");
+        std::cout<<"AXISYMMETRIC_BOUNDARY inner="<<inner<<" mixed="<<refined<<" cells="<<op.size()
+            <<" faces="<<count<<" full_mass="<<static_cast<double>(full_mass)<<" relative="<<ordinary
+            <<" tighter="<<tighter<<" spatial_rule_difference="<<spatial<<" ring_kernel_error="<<kernel
+            <<" far_error="<<std::abs(far_value/far_reference-1.)<<'\n';
+    }
+    std::cout<<"AXISYMMETRIC_ISOLATED_BOUNDARY_PASS\n";
+}
+
+/** Smooth spherical Gaussian represented on a meridional cylindrical mesh.
+ * Its independent infinite-space Newton potential is -M*erf(d/sigma)/d,
+ * M=pi^(3/2)*sigma^3. The box truncates beyond four Gaussian scales; its
+ * exponentially small omitted mass is reported as a reference limitation.
+ */
+void axisymmetric_isolated_gaussian() {
+    constexpr double sigma=.25;const double mass=std::pow(pi,1.5)*sigma*sigma*sigma;
+    for(bool refined:{false,true}) {
+        double previous_phi=0.,previous_force=0.;
+        for(int n:{16,32,64}) {
+            auto base=base_mesh(2,n);base.geometry=elliptic::Geometry::Cylindrical;
+            base.origin={0.,-1.,0.};base.spacing={1./n,2./n,1.};
+            const auto begin=std::chrono::steady_clock::now();
+            multigrid::CompositeMultigrid solver(base,make_cells(base,refined),elliptic::BoundaryKind::CurvilinearIsolated);
+            const auto& op=solver.op();std::vector<double> rho(op.size()),rhs(op.size()),error(op.size()),exact(op.size());
+            const auto potential=[=](const std::array<double,3>& x) {
+                const double d=std::hypot(x[0],x[1]);return d==0.?-2.*pi*sigma*sigma:-mass*std::erf(d/sigma)/d;
+            };
+            const auto gradient=[=](const std::array<double,3>& x) {
+                const double d=std::hypot(x[0],x[1]),q=d/sigma;
+                const double factor=d==0.?0.:mass*(std::erf(q)-2.*q*std::exp(-q*q)/std::sqrt(pi))/(d*d*d);
+                return std::array<double,3>{factor*x[0],factor*x[1],0.};
+            };
+            long double physical_mass=0.;
+            for(int c=0;c<op.size();++c) {const auto x=op.center(c);rho[c]=std::exp(-(x[0]*x[0]+x[1]*x[1])/(sigma*sigma));
+                rhs[c]=-4.*pi*rho[c];exact[c]=potential(x);physical_mass+=2.L*pi*rho[c]*op.volumes()[c];}
+            Physical::Gravity::GravityBoundary tree(op);tree.update(rho);const auto values=tree.values(op,1.);
+            const auto boundary_done=std::chrono::steady_clock::now();
+            const auto result=solver.solve(op.effective_rhs(rhs,values),{1e-12,0.,300});
+            require(result.report.status==multigrid::SolveStatus::Converged&&result.report.residual<=result.report.target,"axisymmetric Gaussian solve failed");
+            for(int c=0;c<op.size();++c)error[c]=result.potential[c]-exact[c];
+            const double phi=op.norm(error)/op.norm(exact);double force=0.;continuum_face_error(op,result.potential,values,gradient,force);
+            long double surface=0.;
+            for(std::size_t f=0;f<op.faces().size();++f)if(op.faces()[f].boundary_side>=0) {
+                const auto& face=op.faces()[f];surface+=(face.boundary_side%2?1.L:-1.L)*face.area*op.face_gradient(result.potential,face,values[f]);}
+            const double gauss=static_cast<double>(std::abs(2.L*pi*surface-4.L*pi*physical_mass)/(4.L*pi*physical_mass));
+            require(gauss<5e-10,"axisymmetric Gaussian Gauss balance failed");
+            double phi_order=0.,force_order=0.;
+            if(previous_phi>0.) {phi_order=std::log2(previous_phi/phi);force_order=std::log2(previous_force/force);
+                require(phi_order>=1.8&&force_order>=1.8,"axisymmetric isolated Gaussian second order budget");}
+            const auto end=std::chrono::steady_clock::now();
+            std::cout<<"AXISYMMETRIC_GAUSSIAN mixed="<<refined<<" n="<<n<<" cells="<<op.size()<<" cycles="<<result.report.cycles
+                <<" phi_relative="<<phi<<" force_error="<<force<<" phi_order="<<phi_order<<" force_order="<<force_order
+                <<" mass_relative="<<static_cast<double>(physical_mass/mass-1.L)<<" gauss_error="<<gauss
+                <<" setup_boundary_seconds="<<std::chrono::duration<double>(boundary_done-begin).count()
+                <<" poisson_seconds="<<std::chrono::duration<double>(end-boundary_done).count()<<'\n'<<std::flush;
+            previous_phi=phi;previous_force=force;
+        }
+    }
+    std::cout<<"AXISYMMETRIC_ISOLATED_GAUSSIAN_PASS\n";
+}
+
 /** A tiny annular physical surface must not disappear under an area threshold. */
 void tiny_physical_boundary() {
     auto base=base_mesh(1,16);
@@ -1419,8 +1661,12 @@ int main(int argc,char** argv) {
         if(argc>1 && std::string(argv[1])=="boundary-ledger") {boundary_error_ledger_contract();return 0;}
         std::cout<<std::setprecision(17);
         if(argc>1 && std::string(argv[1])=="coarse-diagnostic") {coarse_mesh_diagnostic();return 0;}
-        if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); return 0; }
+        if (argc>1 && std::string(argv[1])=="contract") { contract(); coarse_mesh_diagnostic(); radial_convergence(); axisymmetric_prescribed_poisson();axisymmetric_isolated_boundary();return 0; }
         if(argc>1 && std::string(argv[1])=="radial") {radial_convergence();return 0;}
+        if(argc>1 && std::string(argv[1])=="axisymmetric-boundary") {axisymmetric_isolated_boundary();return 0;}
+        if(argc>1 && std::string(argv[1])=="axisymmetric-isolated") {axisymmetric_isolated_gaussian();return 0;}
+        if(argc>1 && std::string(argv[1])=="axisymmetric-device") {axisymmetric_prescribed_poisson(true);return 0;}
+        if(argc>1 && std::string(argv[1])=="axisymmetric") {axisymmetric_prescribed_poisson();return 0;}
         if(argc>1 && std::string(argv[1])=="curved") {curved_manufactured();curved_boundary_integral();return 0;}
         if(argc>1 && std::string(argv[1])=="singular") {curved_manufactured(true);curved_manufactured(true,true);return 0;}
         if(argc>1 && std::string(argv[1])=="gauss") {curved_gauss_law();return 0;}
@@ -1436,7 +1682,7 @@ int main(int argc,char** argv) {
             // Reuse the existing analytic owner for native point-stencil,
             // certificate and physical-volume-source convergence checks.
             boundary_convergence(16);isolated_boundary();averaged_source_exactness();
-            convergence(2);radial_convergence();curved_manufactured();
+            convergence(2);radial_convergence();axisymmetric_prescribed_poisson();axisymmetric_isolated_boundary();axisymmetric_isolated_gaussian();curved_manufactured();
             curved_boundary_integral();curved_domain_extension();curved_gauss_law();curved_manufactured(true);curved_manufactured(true,true);
             mixed_cartesian_boundary();curved_mixed_boundary();
             pure_neumann_compatibility();extreme_flux_boundary();boundary_policy_rejection();return 0;

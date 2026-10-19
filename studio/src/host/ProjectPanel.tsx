@@ -1,3 +1,8 @@
+/**
+ * Show selected source, configuration and executable file identities.
+ * Refresh is explicit and reports missing/changed files; displaying a digest
+ * does not claim a compiled model is fresh or scientifically validated.
+ */
 import {hostEndpoint} from './desktop';
 import {SourceView} from './SourceView';
 import {BuildPanel} from './BuildPanel';

@@ -212,4 +212,113 @@ void cylindrical_axis_energy(const char* backend,double nu,Evaluate evaluate)
             <<" raw_dt="<<actual.raw_dt<<std::endl;
     }
 }
+/** Independent PWC angular capacities, torques and physical kinetic work.
+ * The reference integrates polynomials directly in long double; it does not
+ * call the production moment/stress/divergence helpers. Outer zero-velocity
+ * ghosts exert a measurable torque/work, so their flux belongs in the balance.
+ */
+template<class Evaluate>
+void axisymmetric_angular(const char* backend,double nu,Evaluate evaluate)
+{
+    for(double inner:{0.,1.})for(int mode:{0,1}) {
+        Grid grid(amr::MAX_NG,inner,inner+1.,0.,1.,0.,0.,1,1,0);
+        grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+        FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+        auto measures=[&](int i) {
+            const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+            return std::array<long double,2>{(b*b-a*a)*grid.dx2/2.L,
+                (b*b*b-a*a*a)*grid.dx2/3.L};
+        };
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const auto m=measures(i);const bool active=i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je();
+            // Mode zero is exactly the declared PWC rigid-rotation projection.
+            const double omega=mode==0?.2:active?.2*std::sin((i-grid.Is()+.5)*std::numbers::pi/amr::BLOCK_NX)
+                *std::sin((j-grid.Js()+.5)*std::numbers::pi/amr::BLOCK_NY):0.;
+            const double uphi=omega*static_cast<double>(m[1]/m[0]);
+            const int c=grid.GetIndex(i,j,0);state.set(c,{1.,0.,0.,uphi,10.+.5*uphi*uphi});state.X(0,c)=1.;
+        }
+        const auto actual=evaluate(state,grid);
+        long double jdot=0.,jnorm=0.,kdot=0.,kinetic=0.,after=0.,energy=0.,dissipation=0.,torque_out=0.,power_in=0.;
+        double largest=0.;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const int c=grid.GetIndex(i,j,0);const auto m=measures(i);const auto u=state.get(c);const auto d=actual.derivative[c];
+            jdot+=d.mom_w*m[1];jnorm+=std::abs(u.mom_w)*m[1];kdot+=u.mom_w*d.mom_w*m[0];
+            kinetic+=.5L*u.mom_w*u.mom_w*m[0];energy+=d.eng*m[0];
+            const long double trial=u.mom_w+.8L*actual.raw_dt*d.mom_w;after+=.5L*trial*trial*m[0];
+            largest=std::max(largest,std::abs(d.mom_w));
+            if(d.rho!=0.||d.mom_u!=0.||d.mom_v!=0.)
+                throw std::runtime_error("angular diffusion contaminated meridional fields");
+        }
+        for(int dir=0;dir<2;++dir)for(int j=grid.Js();j<grid.Je()+(dir==1);++j)
+            for(int i=grid.Is();i<grid.Ie()+(dir==0);++i) {
+                const int il=i-(dir==0),jl=j-(dir==1);const auto ml=measures(il),mr=measures(i);
+                const long double radius=grid.GetFacePosL(i),a=grid.GetFacePosL(i),b=grid.GetFacePosR(i);
+                const long double area=dir==0?radius*grid.dx2:(b*b-a*a)/2.L;
+                if(area==0.)continue;
+                const long double t=dir==0?radius*radius*grid.dx2:(b*b*b-a*a*a)/3.L;
+                const long double omega_l=state.get(grid.GetIndex(il,jl,0)).mom_w/(ml[1]/ml[0]);
+                const long double omega_r=state.get(grid.GetIndex(i,j,0)).mom_w/(mr[1]/mr[0]);
+                const long double delta=omega_r-omega_l,C=nu*(t/area)*t/(dir==0?grid.dx1:grid.dx2),torque=C*delta;
+                dissipation+=C*delta*delta;
+                const bool low=dir==0?i==grid.Is():j==grid.Js(),high=dir==0?i==grid.Ie():j==grid.Je();
+                // Physical diffusive flux is -tau: low traction removes and
+                // high traction supplies angular momentum to the active domain.
+                if(low||high) {const int sign=low?-1:1;torque_out-=sign*torque;power_in+=sign*.5L*(omega_l+omega_r)*torque;}
+            }
+        std::cout<<"AXISYMMETRIC_ANGULAR_RAW inner="<<inner<<" mode="<<mode
+            <<" Jdot="<<static_cast<double>(jdot)<<" torque_out="<<static_cast<double>(torque_out)
+            <<" Kdot="<<static_cast<double>(kdot)<<" D="<<static_cast<double>(dissipation)
+            <<" E="<<static_cast<double>(energy)<<" power="<<static_cast<double>(power_in)
+            <<" K="<<static_cast<double>(kinetic)<<" K_after="<<static_cast<double>(after)<<std::endl;
+        if(!std::isfinite(actual.raw_dt)||!(actual.raw_dt>0.)||
+           std::abs(jdot+torque_out)>1.e-12L*(jnorm+std::abs(torque_out))||
+           std::abs(kdot+dissipation)>2.e-12L*(mode==0?kinetic:dissipation)||
+           std::abs(energy-power_in)>2.e-12L*(mode==0?kinetic:dissipation)||
+           after-kinetic>2.e-12L*kinetic|| (mode==0&&largest>2.e-12))
+            throw std::runtime_error("axisymmetric angular torque/work/FE identity");
+        std::cout<<"AXISYMMETRIC_ANGULAR backend="<<backend<<" inner="<<inner<<" mode="<<mode
+            <<" J_error="<<static_cast<double>(std::abs(jdot+torque_out)/(jnorm+std::abs(torque_out)))
+            <<" Kdot="<<static_cast<double>(kdot)<<" dissipation="<<static_cast<double>(dissipation)
+            <<" E_dot="<<static_cast<double>(energy)<<" boundary_power="<<static_cast<double>(power_in)
+            <<" raw_dt="<<actual.raw_dt<<std::endl;
+    }
+}
+/** Refine the same radial domain with ordinary block-local grids and exact
+ * analytic ghost/projection data. For u_phi=a*r+b*r^3, constant rho=1 and
+ * viscosity nu, the physical Stokes derivative is 8*nu*b*r. Its cell average
+ * is 8*nu*b*ell. This tests PDE consistency separately from torque identity.
+ */
+template<class Evaluate>
+void axisymmetric_convergence(const char* backend,double nu,Evaluate evaluate)
+{
+    for(double inner:{0.,1.}) {
+        double previous=0.;
+        for(int patches:{1,2,4}) {
+            long double error=0.,norm=0.;
+            for(int patch=0;patch<patches;++patch) {
+                Grid grid(amr::MAX_NG,inner+double(patch)/patches,inner+double(patch+1)/patches,
+                    0.,1.,0.,0.,1,1,0);grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+                FluidState state;state.Preallocate(grid.GetTotalSize());state.InitSpecies(1);
+                for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                    const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i),Q=(b*b-a*a)/2.L;
+                    const double uphi=static_cast<double>((.1L*(b*b*b-a*a*a)/3.L+
+                        .2L*(std::pow(b,5)-std::pow(a,5))/5.L)/Q);
+                    const int c=grid.GetIndex(i,j,0);state.set(c,{1.,0.,0.,uphi,10.+.5*uphi*uphi});state.X(0,c)=1.;
+                }
+                const auto actual=evaluate(state,grid);
+                for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                    const long double a=grid.GetFacePosL(i),b=grid.GetFacePosR(i),Q=(b*b-a*a)/2.L;
+                    const long double lever=(b*b*b-a*a*a)/(3.L*Q),exact=8.L*nu*.2L*lever,V=Q*grid.dx2;
+                    error+=std::abs(actual.derivative[grid.GetIndex(i,j,0)].mom_w-exact)*V;norm+=std::abs(exact)*V;
+                }
+            }
+            const double relative=static_cast<double>(error/norm);
+            if(!std::isfinite(relative)||!(relative>0.)||(previous>0.&&relative>previous*.3))
+                throw std::runtime_error("axisymmetric manufactured radial shear convergence");
+            std::cout<<"AXISYMMETRIC_CONVERGENCE backend="<<backend<<" inner="<<inner
+                <<" radial_cells="<<patches*amr::BLOCK_NX<<" relative_L1="<<relative<<std::endl;
+            previous=relative;
+        }
+    }
+}
 } // namespace CurvedStokesCases

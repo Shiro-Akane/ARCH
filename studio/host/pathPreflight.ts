@@ -1,3 +1,8 @@
+/**
+ * Check active filesystem parameters using Core's schema/inspection metadata.
+ * Paths resolve against the declared working directory. This checks availability
+ * and ownership before a request, without loading an EOS or inventing missing keys.
+ */
 import {stat,lstat,access} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {resolve,dirname} from 'node:path';

@@ -1,0 +1,2668 @@
+{
+  "schema": "arch-release-readiness-1",
+  "stage": "REL-5",
+  "recorded_utc": "2026-10-19T06:11:26.230994+00:00",
+  "decision": "REL5_PUBLISHING_AUTHORIZED_LOCAL_CONTENT_ACCEPTED",
+  "phase_closed": false,
+  "REL6_started": false,
+  "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "head": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "scope": "Documentation/comments, assertion-preserving test/CI consolidation, Studio included; no production numerical behavior change or scientific replay.",
+  "local_result_summary": [
+    "CPU75->68 and CUDA142->135 registrations; other commands/properties unchanged, not all numerical tests rerun",
+    "Complete Tooling618: all593 baseline IDs, nine moved sparse methods and16 new controls; zero skips",
+    "Studio383 TAP/no skips, lint and typed production build passed on frozen Node inputs",
+    "136 Studio emitted-JS ASTs equivalent;20 files formatted",
+    "593 C++/CUDA/inc paths indexed;20 comment edits have identical noncomment tokens",
+    "Fixed asset owner verifies actual Helm/Sod data offline; five controls passed, old Helm cache identity preserved",
+    "157 protected historical records,3475 baseline result paths, original protocol evidence and both production apps unchanged",
+    "202 maintained pages/2253 local destinations pass;323 archived repository-local link sets valid; prose and code-fence bytes unchanged",
+    "Approved323 historical moves/3 index removals complete; verified pre-existing owner link repaired; main plan372->130lines"
+  ],
+  "pending": [
+    {
+      "id": "hosted-ci",
+      "status": "AUTHORIZED_EXECUTION_PENDING",
+      "action": "Trusted staged checks, commit/push reviewed accumulated compute/optim changes and create draft main PR, then run actual required hosted jobs. No merge/tag/release/REL6.",
+      "reason": "User explicitly authorized commit/publication in response to the prepared proposal; no further archive or commit confirmation needed.",
+      "proposal": "output/release/rel5-20261019/publication-review.md",
+      "manifest": "output/release/rel5-20261019/publication-proposal.json"
+    }
+  ],
+  "recovery": "output/release/rel5-20261019/progress.json",
+  "evidence_index": {
+    "assertions": "output/release/rel5-20261019/assertion-coverage.json",
+    "CTest registrations": "output/release/rel5-20261019/test-registration-equivalence.json",
+    "Studio equivalence": "output/release/rel5-20261019/studio-behavior-equivalence.json",
+    "C++ equivalence": "output/release/rel5-20261019/cpp-comment-equivalence.json",
+    "source readability map": "output/release/rel5-20261019/source-readability-map.json",
+    "preservation": "output/release/rel5-20261019/preservation-checks.json",
+    "engineering runs": "output/release/rel5-20261019/engineering-checks.json",
+    "archive review": "output/release/rel5-20261019/documentation-relocation-review.md",
+    "archive plan": "output/release/rel5-20261019/documentation-relocation-plan.json",
+    "approval state": "output/release/rel5-20261019/approval-state.json",
+    "cost ledger": "output/release/rel5-20261019/cost-ledger.json",
+    "final complete Tooling log": "output/release/rel5-20261019/tooling-after-archive-LastTest.log",
+    "final Tooling JUnit": "output/release/rel5-20261019/tooling-after-archive.xml",
+    "Studio complete TAP": "output/release/rel5-20261019/studio-tests.tap",
+    "frozen Studio inputs": "output/release/rel5-20261019/studio-check-freeze.json",
+    "offline asset materialization": "output/release/rel5-20261019/lfs-offline-checkout.json",
+    "local asset identities": [
+      "output/release/rel5-20261019/lfs-helmholtz-verified.json",
+      "output/release/rel5-20261019/lfs-studio-verified.json"
+    ],
+    "final static checks": "output/release/rel5-20261019/final-static-checks.json",
+    "current source identity": "output/release/rel5-20261019/final-source-and-tooling-identity.json",
+    "own changes relative to dirty entry": "output/release/rel5-20261019/own-change-map.json",
+    "multimodel": "output/release/rel5-20261019/collaboration/acceptance-summary.json",
+    "archive integrity": "output/release/rel5-20261019/archive-integrity-review.json",
+    "actual archive mapping": "output/release/rel5-20261019/documentation-relocation.json",
+    "current documentation metrics": "output/release/rel5-20261019/documentation-final-metrics.json",
+    "postarchive source freeze": "output/release/rel5-20261019/after-archive-source-freeze.json",
+    "code consumers of retired docs": "output/release/rel5-20261019/retired-doc-code-consumers.json",
+    "publication security preflight": "output/release/rel5-20261019/security-preflight/final-summary.json",
+    "frozen result link restoration": "output/release/rel5-20261019/historical-result-links-restored.json",
+    "archive Git visibility": "output/release/rel5-20261019/archive-git-visibility.json"
+  },
+  "scientific_contract": {
+    "ENUC_relative": 5e-09,
+    "ENUC_absolute": 5e-12,
+    "angular_momentum": 1e-12,
+    "O7_unchanged": true,
+    "geometry_gravity_decoupled": true,
+    "production_compile_executed": false,
+    "science_replays_executed": false
+  },
+  "hosted_CI": {
+    "status": "NOT_RUN_AUTHORIZED_TO_EXECUTE",
+    "reason": "Publishing reviewed source and obtaining actual required CI; no open PR at entry. Linux gh/API credentials absent; existing SSH remote read succeeds.",
+    "readonly_preflight": "output/release/rel5-20261019/hosted-ci-readonly-preflight.json",
+    "publication_proposal": "output/release/rel5-20261019/publication-review.md"
+  },
+  "archive": {
+    "status": "COMPLETED_USER_APPROVED",
+    "moves_proposed": 323,
+    "merged_index_removals": 3,
+    "fixed_paths_excluded": 148,
+    "actual_moves_or_deletions": 326,
+    "backups_verified": true,
+    "automatic_review_rejection": "Specific broad batch mapping requires review and confirmation; no bypass attempted.",
+    "actual_history_moves": 323,
+    "actual_index_removals": 3,
+    "approval": "Direct user approval authorizes this concrete mapping/mutation scope; prior automatic rejection resolved",
+    "relocations": [
+      {
+        "from": "docs/development/ARCH_STUDIO_LOCAL_LAUNCH_AMR_UX_REQUIREMENTS.zh-CN.md",
+        "to": "docs/histroy/studio/ARCH_STUDIO_LOCAL_LAUNCH_AMR_UX_REQUIREMENTS.zh-CN.md",
+        "original_sha256": "b83a0ca6e19a8990945f0d7cb79f4cea2176b19cac01ffdd5c77aa1a76f1a0f1",
+        "archived_sha256": "8feca98320c6025ba07f46693e6ea58910b98c5991aed55440b86f4890976134",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/ApprovedCpuCudaLeaves-20261005.zh-CN.md",
+        "to": "docs/histroy/science/ApprovedCpuCudaLeaves-20261005.zh-CN.md",
+        "original_sha256": "3407ade5ce31c3fe2200f7d3fb0e0e6d323dcf2321eaf4eb2b72f6a80ce804a0",
+        "archived_sha256": "3407ade5ce31c3fe2200f7d3fb0e0e6d323dcf2321eaf4eb2b72f6a80ce804a0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BenchmarkInputProposals-20261006.zh-CN.md",
+        "to": "docs/histroy/science/BenchmarkInputProposals-20261006.zh-CN.md",
+        "original_sha256": "6aae7d9e3346fbae82d4d9bcd0f497bf7dc2bc86dfd2dcf4af942c7973b64c37",
+        "archived_sha256": "6aae7d9e3346fbae82d4d9bcd0f497bf7dc2bc86dfd2dcf4af942c7973b64c37",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BoxFullCpuAdditions-20261004.zh-CN.md",
+        "to": "docs/histroy/science/BoxFullCpuAdditions-20261004.zh-CN.md",
+        "original_sha256": "dbe42e4d4432fe0a6a9b48f09ad2998906aaef6fe6837f5211ccfac9e906e0c7",
+        "archived_sha256": "dbe42e4d4432fe0a6a9b48f09ad2998906aaef6fe6837f5211ccfac9e906e0c7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BoxRadialExistingCpuGates-20261005.zh-CN.md",
+        "to": "docs/histroy/science/BoxRadialExistingCpuGates-20261005.zh-CN.md",
+        "original_sha256": "4f396cb2e2e672f9a9003d8e021c5c2bdece37e50f485d4af6d5c0f5bcacfe78",
+        "archived_sha256": "50cfd88a4f4270167af852ecb833c5695c45f02628dccd03a5617d613e9d0311",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/BuildCmakeManifestInputs-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildCmakeManifestInputs-20261003.zh-CN.md",
+        "original_sha256": "10ca0d6afd9adb8f10249ba717982058e25cafe6348120dd80f67025e58e9523",
+        "archived_sha256": "10ca0d6afd9adb8f10249ba717982058e25cafe6348120dd80f67025e58e9523",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildGeneratorIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildGeneratorIdentity-20261004.zh-CN.md",
+        "original_sha256": "9fa8003dd8438bee56d4f5c383ab4f856c51454fa81d86eda915596df6e35653",
+        "archived_sha256": "9fa8003dd8438bee56d4f5c383ab4f856c51454fa81d86eda915596df6e35653",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildGeneratorManifest-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildGeneratorManifest-20261004.zh-CN.md",
+        "original_sha256": "32b74b462e9fd00f5c261fdec0a7f8072a48be87c4ab121afbe335af614e47bf",
+        "archived_sha256": "32b74b462e9fd00f5c261fdec0a7f8072a48be87c4ab121afbe335af614e47bf",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildGeneratorRealBuild-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildGeneratorRealBuild-20261004.zh-CN.md",
+        "original_sha256": "7a5ae205da0eab17ba9f9cfe2a68709cd8b207c539522b016b16f54ecb013af0",
+        "archived_sha256": "7a5ae205da0eab17ba9f9cfe2a68709cd8b207c539522b016b16f54ecb013af0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildLinkReproIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildLinkReproIdentity-20261004.zh-CN.md",
+        "original_sha256": "31fb4886ac0a37dac7189ca773e3ed61308a1a9c4c9d97f21fc9adc1c72f60d2",
+        "archived_sha256": "31fb4886ac0a37dac7189ca773e3ed61308a1a9c4c9d97f21fc9adc1c72f60d2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildLtoProvenanceGap-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildLtoProvenanceGap-20261003.zh-CN.md",
+        "original_sha256": "c25b1e5d483ef93bab5853af804c3b376806483cb664654ede601c204fb64f79",
+        "archived_sha256": "c25b1e5d483ef93bab5853af804c3b376806483cb664654ede601c204fb64f79",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildLtoRetentionIntegration-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildLtoRetentionIntegration-20261003.zh-CN.md",
+        "original_sha256": "b4682ae2c1e16b838fdf664dfe7134628bdc3e0fb871f08dfd1b9bc494d74642",
+        "archived_sha256": "b4682ae2c1e16b838fdf664dfe7134628bdc3e0fb871f08dfd1b9bc494d74642",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildLtoRetentionProbe-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildLtoRetentionProbe-20261003.zh-CN.md",
+        "original_sha256": "2e866742217694eaaaffbc7976b1b213daf3b273a8f69d235994bf2957fa7a0b",
+        "archived_sha256": "2e866742217694eaaaffbc7976b1b213daf3b273a8f69d235994bf2957fa7a0b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildRuntimeRealBuild-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildRuntimeRealBuild-20261004.zh-CN.md",
+        "original_sha256": "528c0fedb0b8db7c9188fea68ae31f890a7a7b96417ffa7e4ecad546d1ab1da6",
+        "archived_sha256": "528c0fedb0b8db7c9188fea68ae31f890a7a7b96417ffa7e4ecad546d1ab1da6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildSelectedLinkerEvidence-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildSelectedLinkerEvidence-20261003.zh-CN.md",
+        "original_sha256": "2fe90a56f3b58a9ceda216fc422281d2a005a0522c1c2afd90eb071cf512c290",
+        "archived_sha256": "2fe90a56f3b58a9ceda216fc422281d2a005a0522c1c2afd90eb071cf512c290",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildSelectedLinkerIntegration-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildSelectedLinkerIntegration-20261003.zh-CN.md",
+        "original_sha256": "cb2c50ed40d80ca95fdd5285fe137156d922e60c7bc3a8adf7a07fda89ea424c",
+        "archived_sha256": "cb2c50ed40d80ca95fdd5285fe137156d922e60c7bc3a8adf7a07fda89ea424c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildSelectedLinkerManifest-20261003.zh-CN.md",
+        "to": "docs/histroy/build/BuildSelectedLinkerManifest-20261003.zh-CN.md",
+        "original_sha256": "521b061684e558e8b71d49d6276495a33e82094f3a4985a0b31bd7ba631098f6",
+        "archived_sha256": "521b061684e558e8b71d49d6276495a33e82094f3a4985a0b31bd7ba631098f6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildToolRuntimeEvidence-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildToolRuntimeEvidence-20261004.zh-CN.md",
+        "original_sha256": "238256b0e22e7c517ae5b08b5ceef2734629cc8801aeb6df7cd84f9c0da79758",
+        "archived_sha256": "238256b0e22e7c517ae5b08b5ceef2734629cc8801aeb6df7cd84f9c0da79758",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/BuildToolRuntimeHost-20261004.zh-CN.md",
+        "to": "docs/histroy/build/BuildToolRuntimeHost-20261004.zh-CN.md",
+        "original_sha256": "4bf5ff6baf77510ae4ec8f2db508cbe2a097e2b922d96d97df74f9ce3b50e62c",
+        "archived_sha256": "4bf5ff6baf77510ae4ec8f2db508cbe2a097e2b922d96d97df74f9ce3b50e62c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CellularPlotMarginNative-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/CellularPlotMarginNative-20261004.zh-CN.md",
+        "original_sha256": "32309b93f2798bc92aef317d3adfbe84ee8d69dd40f668fce194dc8e2b6d8d6a",
+        "archived_sha256": "32309b93f2798bc92aef317d3adfbe84ee8d69dd40f668fce194dc8e2b6d8d6a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CheckpointFailureIndex-20261004.zh-CN.md",
+        "to": "docs/histroy/science/CheckpointFailureIndex-20261004.zh-CN.md",
+        "original_sha256": "76702c666cd8d7d6a4eeb4802734b44815eb4c595c94ec18a45cb6ff5ce451f6",
+        "archived_sha256": "76702c666cd8d7d6a4eeb4802734b44815eb4c595c94ec18a45cb6ff5ce451f6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CiConfigurationCoverageNode-20261005.zh-CN.md",
+        "to": "docs/histroy/build/CiConfigurationCoverageNode-20261005.zh-CN.md",
+        "original_sha256": "d473947c2e0db688f5b4424dcf7d5cf18f6ccc1a6e9944abfd3f9217c70f6cf0",
+        "archived_sha256": "d473947c2e0db688f5b4424dcf7d5cf18f6ccc1a6e9944abfd3f9217c70f6cf0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/ComputeOptimConsolidation-20261006.zh-CN.md",
+        "to": "docs/histroy/integration/ComputeOptimConsolidation-20261006.zh-CN.md",
+        "original_sha256": "8e8f0d9de01614289e1f004ba1fd85b23f211f93bae205b1e94bca1d148d8d24",
+        "archived_sha256": "1c252ebb09ba5861710254798c6f134694c151efc7adc5f937c75690adfa2b86",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/ComputeOptimizationPlan.zh-CN.md",
+        "to": "docs/histroy/integration/ComputeOptimizationPlan.zh-CN.md",
+        "original_sha256": "e48ec5fa857a5302eef6c0729cd729554050ef4d3d07caf8a7a598658a2f4fff",
+        "archived_sha256": "f1091f996ac53d42776be270a1c7754bf31d7b6208ae30fa2ebd4ab466ea6411",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/ComputeStudioIntegrationReport-20261006.zh-CN.md",
+        "to": "docs/histroy/integration/ComputeStudioIntegrationReport-20261006.zh-CN.md",
+        "original_sha256": "c73923cdfe5b6efcfbf1d9a99279231fe706529ec420b5844f9bf083a03f82d5",
+        "archived_sha256": "afed10fc01529c46ad41f063def4b8c2852927a783dc43a7c82208c6da884cea",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/ComputeStudioReleasePlan-20261006.zh-CN.md",
+        "to": "docs/histroy/integration/ComputeStudioReleasePlan-20261006.zh-CN.md",
+        "original_sha256": "1e2931113cba620209677ed86abf787eed5b5227bf37097e07dcc0072550093d",
+        "archived_sha256": "592127e9267b19a89deb380bd83339c73cc6614d659aea922a5c556826e88f29",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/ConfigurationMigrationAudit.zh-CN.md",
+        "to": "docs/histroy/configuration/ConfigurationMigrationAudit.zh-CN.md",
+        "original_sha256": "b70048c084afd68684e6f8669b44d3532300fa7eb0001df984c6583be005e06e",
+        "archived_sha256": "b70048c084afd68684e6f8669b44d3532300fa7eb0001df984c6583be005e06e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/ConfigurationRuntimeBoundaryAudit.zh-CN.md",
+        "to": "docs/histroy/configuration/ConfigurationRuntimeBoundaryAudit.zh-CN.md",
+        "original_sha256": "8c6e2ea4599e3a7906e8dda69ef68968b016319c647de773f1015632ec5a094c",
+        "archived_sha256": "8c6e2ea4599e3a7906e8dda69ef68968b016319c647de773f1015632ec5a094c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/ConstantModeProjectionLedgerNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/ConstantModeProjectionLedgerNode-20261005.zh-CN.md",
+        "original_sha256": "b6b34809641462ec8c1747da93391f1350e2401295e13440efe26fa47395583d",
+        "archived_sha256": "b6b34809641462ec8c1747da93391f1350e2401295e13440efe26fa47395583d",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CoreRZDecisions-20261006.zh-CN.md",
+        "to": "docs/histroy/science/CoreRZDecisions-20261006.zh-CN.md",
+        "original_sha256": "4ce312302920e072d95dd2fe1d0e7d05e7e63df9f2260ad8fb15000292b689fa",
+        "archived_sha256": "528386332da4d7a11083d7d26a043360a94799eaabafd6209d9c3bd62cfcb723",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CoreRZIntegrationNode-20261006.zh-CN.md",
+        "to": "docs/histroy/science/CoreRZIntegrationNode-20261006.zh-CN.md",
+        "original_sha256": "b22199cf258835eb9a17e832037c053355dce26409ae7c35d27205476f38a089",
+        "archived_sha256": "b22199cf258835eb9a17e832037c053355dce26409ae7c35d27205476f38a089",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CpuDriverDiagnosticsIntegration-20261004.zh-CN.md",
+        "to": "docs/histroy/science/CpuDriverDiagnosticsIntegration-20261004.zh-CN.md",
+        "original_sha256": "db486c94b34c024e6508d769c29042506847ea0d89183d337b319ddda37c7c8b",
+        "archived_sha256": "db486c94b34c024e6508d769c29042506847ea0d89183d337b319ddda37c7c8b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CpuRzSourceRebuild-20261004.zh-CN.md",
+        "to": "docs/histroy/science/CpuRzSourceRebuild-20261004.zh-CN.md",
+        "original_sha256": "835acb6a91a008b5dd2727d513cce5e0dbcd2ebef4181fe16c16baef95e9beb5",
+        "archived_sha256": "835acb6a91a008b5dd2727d513cce5e0dbcd2ebef4181fe16c16baef95e9beb5",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CudaJeansAcceptedCellNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CudaJeansAcceptedCellNode-20261005.zh-CN.md",
+        "original_sha256": "23c61d5897216a5762f929c29602e38ac3a68ee39404bf507fff7e589c4eb00c",
+        "archived_sha256": "23c61d5897216a5762f929c29602e38ac3a68ee39404bf507fff7e589c4eb00c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CudaJeansBackendConsumerNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CudaJeansBackendConsumerNode-20261005.zh-CN.md",
+        "original_sha256": "ea72cc21e946fa7feec1f3507e12f0d63de399759ab40c420209d23a3f6b2e4b",
+        "archived_sha256": "ea72cc21e946fa7feec1f3507e12f0d63de399759ab40c420209d23a3f6b2e4b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CurrentCoreCpuShortGates-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCoreCpuShortGates-20261005.zh-CN.md",
+        "original_sha256": "226a76001b1900564e8300b4932e6046c652a0812561c25765a583694f8cf326",
+        "archived_sha256": "047c3251a17a81cb5c46574bb682b20ccbf4d793b45139be61448d5a7954c4c2",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CurrentCpuPlotfileT0-20261004.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCpuPlotfileT0-20261004.zh-CN.md",
+        "original_sha256": "573fdaf61785868f4ee227f78595325e4c08dc6472cb93263456ff2d772c0bd7",
+        "archived_sha256": "573fdaf61785868f4ee227f78595325e4c08dc6472cb93263456ff2d772c0bd7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CurrentCpuReleaseScientificCheckpoint-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCpuReleaseScientificCheckpoint-20261005.zh-CN.md",
+        "original_sha256": "68fab4a0788e6fb84bf11e3ce70d1a7eb5aec2770ff004083f477e49b6920f85",
+        "archived_sha256": "2c9c9dbd6a3dc35d8cb42821750af707ccb718ab4c1a37662fe84b1d2236e15d",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CurrentCpuSourceIdentityNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCpuSourceIdentityNode-20261005.zh-CN.md",
+        "original_sha256": "dd76b9292ffce99732fe16d7bc58310dbbf7a63ff67f590147890320f1a00497",
+        "archived_sha256": "fb04f739ca1e9dd2b8176cef4770a033673c56d6108aadd85273738955ba2ecc",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CurrentCudaOriginalFullNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCudaOriginalFullNode-20261005.zh-CN.md",
+        "original_sha256": "ce8324202ae1b24c2dea4b81bbaca5811c82946cca5a54dc3527ca7a009c5f33",
+        "archived_sha256": "61ea2da07d4bab073ed52c959f5cbc02bf27a6ad93f5265a4e3a62c656261ed8",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CurrentCudaOriginalShortNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCudaOriginalShortNode-20261005.zh-CN.md",
+        "original_sha256": "60fca86acbbaeb8cd5fe7c2f348a47c068cc482e8fbc80bde61b771398b63840",
+        "archived_sha256": "3282fa17faaf46c7e98e5fb19ee53778aef6fb2fba1a04d89c6398c5b943ecdc",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CurrentCudaReleaseScientificCheckpoint-20261005.zh-CN.md",
+        "to": "docs/histroy/science/CurrentCudaReleaseScientificCheckpoint-20261005.zh-CN.md",
+        "original_sha256": "7c46674173367d028da465663d6ba1ca9ee5a66fa774a77933e06c212b1e7beb",
+        "archived_sha256": "a34304e7e5adc23068f15055ac58d269e70eb99eeec1719f5e48c029112dba20",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/CurrentFullCpuRegression-20261004.zh-CN.md",
+        "to": "docs/histroy/science/CurrentFullCpuRegression-20261004.zh-CN.md",
+        "original_sha256": "03dd9ad2dbb6dd6cdb57dfb22e15ad2602961d8bc1a228059756effdf79f378b",
+        "archived_sha256": "03dd9ad2dbb6dd6cdb57dfb22e15ad2602961d8bc1a228059756effdf79f378b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/CurvilinearGravityPlan.zh-CN.md",
+        "to": "docs/histroy/science/CurvilinearGravityPlan.zh-CN.md",
+        "original_sha256": "ac21af035c0358908ec0daf6853dd4609182a105710af6f91c5462da91d9265c",
+        "archived_sha256": "5a28d8048a63fb4ba2f41372db93d1b0c20b1df5f9d1e6a80ecaa6b85f6e1c93",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/DriverDiagnosticClose-20261004.zh-CN.md",
+        "to": "docs/histroy/science/DriverDiagnosticClose-20261004.zh-CN.md",
+        "original_sha256": "c2203a26b677210f918ff128c5b9ea30a038446726d2ea18070da7567151037e",
+        "archived_sha256": "c2203a26b677210f918ff128c5b9ea30a038446726d2ea18070da7567151037e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/DriverDiagnosticMainCpu-20261004.zh-CN.md",
+        "to": "docs/histroy/science/DriverDiagnosticMainCpu-20261004.zh-CN.md",
+        "original_sha256": "484dd8243fdf5747514eaccbef3dd782b60d4cbaa39b71c8132c85453c549e23",
+        "archived_sha256": "484dd8243fdf5747514eaccbef3dd782b60d4cbaa39b71c8132c85453c549e23",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FlashComparisonOptimizationPlan.zh-CN.md",
+        "to": "docs/histroy/science/FlashComparisonOptimizationPlan.zh-CN.md",
+        "original_sha256": "3aaaf45aa8e0a7d7f1baf0e2a4b60291ee6fc12533140dfec614d078f38bd041",
+        "archived_sha256": "01438cfea0d6975d2ece6a978912fc81a34b5ed38a805d8f081f9174a14b7f9a",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/FullModel3DMixedAmr-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModel3DMixedAmr-20261004.zh-CN.md",
+        "original_sha256": "af0f7c2ade0e8388e886799f6dedf712fa16f3d4dafa6d0b883ca691cef051da",
+        "archived_sha256": "af0f7c2ade0e8388e886799f6dedf712fa16f3d4dafa6d0b883ca691cef051da",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModel3DMixedAmrDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModel3DMixedAmrDesktop-20261004.zh-CN.md",
+        "original_sha256": "f5be639f9ed31908e318b51ed6093776a69e6f9f728dc6dfb9b8f20eaa9e0bc3",
+        "archived_sha256": "f5be639f9ed31908e318b51ed6093776a69e6f9f728dc6dfb9b8f20eaa9e0bc3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelAdvectionDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelAdvectionDesktop-20261004.zh-CN.md",
+        "original_sha256": "f6aeafa0ca457c2831f4a975ea1b4f4afda8b62ad903d60af9166ac98754a2cf",
+        "archived_sha256": "f6aeafa0ca457c2831f4a975ea1b4f4afda8b62ad903d60af9166ac98754a2cf",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelAmrDisplayProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelAmrDisplayProgress.zh-CN.md",
+        "original_sha256": "284087f96e44f5a90d2db82d0c849fc983db30ad7960d8aacbf91c76734eda55",
+        "archived_sha256": "284087f96e44f5a90d2db82d0c849fc983db30ad7960d8aacbf91c76734eda55",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelBurnGradientDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelBurnGradientDesktop-20261004.zh-CN.md",
+        "original_sha256": "d2e2baf7ea0a59a98dc3baeaa005295a7fef90e5bfc5e52eb0846ff4a8b0f905",
+        "archived_sha256": "d2e2baf7ea0a59a98dc3baeaa005295a7fef90e5bfc5e52eb0846ff4a8b0f905",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelCurrentInputAudit-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelCurrentInputAudit-20261004.zh-CN.md",
+        "original_sha256": "61962aa57a2832fe2e2494a038c17467d1cbe4d1f83d913a2a365a553355e479",
+        "archived_sha256": "61962aa57a2832fe2e2494a038c17467d1cbe4d1f83d913a2a365a553355e479",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelDiffusionDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelDiffusionDesktop-20261004.zh-CN.md",
+        "original_sha256": "3dbff15f702654e6f549516fe83ec32bc9c82ae66462cebceb88f848c2c8fc72",
+        "archived_sha256": "3dbff15f702654e6f549516fe83ec32bc9c82ae66462cebceb88f848c2c8fc72",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelDimensionalSamplingProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelDimensionalSamplingProgress.zh-CN.md",
+        "original_sha256": "28a4d1b367c59e44e0d4f7772f36a7c43f0f8de2c27ef4cd82f09c3efe6ab8a6",
+        "archived_sha256": "28a4d1b367c59e44e0d4f7772f36a7c43f0f8de2c27ef4cd82f09c3efe6ab8a6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelExternalGravityDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelExternalGravityDesktop-20261004.zh-CN.md",
+        "original_sha256": "427c7e93ae865f656c8151b944125034902976ef359180202f05afd2055e22f7",
+        "archived_sha256": "427c7e93ae865f656c8151b944125034902976ef359180202f05afd2055e22f7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelGravityBoxDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelGravityBoxDesktop-20261004.zh-CN.md",
+        "original_sha256": "67ff999918f5e6ac6b45ed570c5e1fffb05f20436bf13a4c8be39150436f68eb",
+        "archived_sha256": "67ff999918f5e6ac6b45ed570c5e1fffb05f20436bf13a4c8be39150436f68eb",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelHostIntegrationProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelHostIntegrationProgress.zh-CN.md",
+        "original_sha256": "270306d012ebdf95a0e391d76f36158742c7ced776341f9912dbe593f470bfd3",
+        "archived_sha256": "270306d012ebdf95a0e391d76f36158742c7ced776341f9912dbe593f470bfd3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelHotspotsDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelHotspotsDesktop-20261004.zh-CN.md",
+        "original_sha256": "2293a103bb18c657798cadb4bddc00c9851c231bd51c4c4a9821cf8a421b0e07",
+        "archived_sha256": "2293a103bb18c657798cadb4bddc00c9851c231bd51c4c4a9821cf8a421b0e07",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelInitialAndPlotContractAudit.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelInitialAndPlotContractAudit.zh-CN.md",
+        "original_sha256": "6a9683568c9f4f897b4dba6aac38c2bf1649899de3a156ade9611467285f9f1f",
+        "archived_sha256": "6a9683568c9f4f897b4dba6aac38c2bf1649899de3a156ade9611467285f9f1f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelInitialGenerationProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelInitialGenerationProgress.zh-CN.md",
+        "original_sha256": "9c4d64b5e85d8cea44b7f174d4a5afb98c178f5d174995917b6a92cb70c91a63",
+        "archived_sha256": "9c4d64b5e85d8cea44b7f174d4a5afb98c178f5d174995917b6a92cb70c91a63",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelJeansDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelJeansDesktop-20261004.zh-CN.md",
+        "original_sha256": "e549c129f7f8800faa2bb775a05c435505f2744995454618122b113c5bc97e18",
+        "archived_sha256": "e549c129f7f8800faa2bb775a05c435505f2744995454618122b113c5bc97e18",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelNativeDesktopProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelNativeDesktopProgress.zh-CN.md",
+        "original_sha256": "25a6fdd46f6f45e6d7226068a6cc60401e8e678758a95ba90696c6ae417681a8",
+        "archived_sha256": "25a6fdd46f6f45e6d7226068a6cc60401e8e678758a95ba90696c6ae417681a8",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelNativeWheelDelivery-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelNativeWheelDelivery-20261003.zh-CN.md",
+        "original_sha256": "b94664f1da8898fc0e3e0e525d9329fca61ffa238fb8a1f5b5173e442d979f95",
+        "archived_sha256": "b94664f1da8898fc0e3e0e525d9329fca61ffa238fb8a1f5b5173e442d979f95",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelNativeWheelDiagnostic-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelNativeWheelDiagnostic-20261003.zh-CN.md",
+        "original_sha256": "d0b0d077642097974581ae9bac037b4e842c001282bc48a09efb6c0c67168186",
+        "archived_sha256": "d0b0d077642097974581ae9bac037b4e842c001282bc48a09efb6c0c67168186",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelNativeWheelRecheck-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelNativeWheelRecheck-20261003.zh-CN.md",
+        "original_sha256": "1290b98bff66a59abb1e11a1c798878759dd41b57726adce89a7747b0b3edfa7",
+        "archived_sha256": "1290b98bff66a59abb1e11a1c798878759dd41b57726adce89a7747b0b3edfa7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelProductionHostProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelProductionHostProgress.zh-CN.md",
+        "original_sha256": "ff838bd76cdb4504b2ed0c1c2e2e082f9efb4536068a626299286d993b2a2671",
+        "archived_sha256": "ff838bd76cdb4504b2ed0c1c2e2e082f9efb4536068a626299286d993b2a2671",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelRTDesktopProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelRTDesktopProgress.zh-CN.md",
+        "original_sha256": "c60edc2a83268ea2c90e5bee1f80b250f25ce487bad927757f7ab323c4d229a6",
+        "archived_sha256": "c60edc2a83268ea2c90e5bee1f80b250f25ce487bad927757f7ab323c4d229a6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelRTNativeFit-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelRTNativeFit-20261004.zh-CN.md",
+        "original_sha256": "17b01b29adbfa839e54e1e12e71f0e53d24bb1e74021e946b73445ed1dd69bed",
+        "archived_sha256": "17b01b29adbfa839e54e1e12e71f0e53d24bb1e74021e946b73445ed1dd69bed",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelRendererWheelDiagnostic-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelRendererWheelDiagnostic-20261003.zh-CN.md",
+        "original_sha256": "8b04ea975df78d52650a7c6f4fc2ab500531f51f04752fb457276dda744f075a",
+        "archived_sha256": "8b04ea975df78d52650a7c6f4fc2ab500531f51f04752fb457276dda744f075a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelSNIaDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelSNIaDesktop-20261004.zh-CN.md",
+        "original_sha256": "f001282fe7e348b0990aea150e4f6aae63e1f5cd678a5ec52392b4efcfe9445f",
+        "archived_sha256": "f001282fe7e348b0990aea150e4f6aae63e1f5cd678a5ec52392b4efcfe9445f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelSedovDesktop-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelSedovDesktop-20261004.zh-CN.md",
+        "original_sha256": "6487a8920ba5af48124b720015a73d2b59cc38b8a431356e4bfb97e1349611e3",
+        "archived_sha256": "6487a8920ba5af48124b720015a73d2b59cc38b8a431356e4bfb97e1349611e3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelSphericalDesktopProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelSphericalDesktopProgress.zh-CN.md",
+        "original_sha256": "9ba45afcf5b0cb7533f8fe15290484012c6a600327be67e6e96e48def94c0980",
+        "archived_sha256": "9ba45afcf5b0cb7533f8fe15290484012c6a600327be67e6e96e48def94c0980",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelThreeAxisGridProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelThreeAxisGridProgress.zh-CN.md",
+        "original_sha256": "e43d559c92d81e2873c5ceef76e1cf0c0d779d6af7f31aecf3aa326233d9da51",
+        "archived_sha256": "e43d559c92d81e2873c5ceef76e1cf0c0d779d6af7f31aecf3aa326233d9da51",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelUniformStateDesktopProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelUniformStateDesktopProgress.zh-CN.md",
+        "original_sha256": "8b46aa18ba221cfaffb665a00f38bc905ac9bdebcc3381aef628db69aab84e29",
+        "archived_sha256": "8b46aa18ba221cfaffb665a00f38bc905ac9bdebcc3381aef628db69aab84e29",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/FullModelWorkspaceProgress.zh-CN.md",
+        "to": "docs/histroy/studio/FullModelWorkspaceProgress.zh-CN.md",
+        "original_sha256": "1006ceede0485bc27902485a240c664714dec7cdbcb35300092aa69296044821",
+        "archived_sha256": "1006ceede0485bc27902485a240c664714dec7cdbcb35300092aa69296044821",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/GompProductionTeamObservation-20261005.zh-CN.md",
+        "to": "docs/histroy/build/GompProductionTeamObservation-20261005.zh-CN.md",
+        "original_sha256": "cdba2276a5e169f7e85ffb1a9c818d73bf7b36b677014f215f62d9678fbce63d",
+        "archived_sha256": "90e6cce753e3f92a9b6c104b3b6fc40f845bf061e045c2433e3ff35b5185bbd7",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/GravityConstantInputMigrationPending.zh-CN.md",
+        "to": "docs/histroy/configuration/GravityConstantInputMigrationPending.zh-CN.md",
+        "original_sha256": "6383c1733eed051f6a9b223582bad84843c26afa35bc63000589a936bf3d88b6",
+        "archived_sha256": "6383c1733eed051f6a9b223582bad84843c26afa35bc63000589a936bf3d88b6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/GravityNegativeContracts-20261004.zh-CN.md",
+        "to": "docs/histroy/science/GravityNegativeContracts-20261004.zh-CN.md",
+        "original_sha256": "f414aca7d0bc5bb4981bf1ada6294ccbc8834803d47332bfae413efd10b3b625",
+        "archived_sha256": "f414aca7d0bc5bb4981bf1ada6294ccbc8834803d47332bfae413efd10b3b625",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/GravityQuickInputMigration-20261004.zh-CN.md",
+        "to": "docs/histroy/science/GravityQuickInputMigration-20261004.zh-CN.md",
+        "original_sha256": "1f070047202adb7a96718bfc6b730e18a238ff583b117c3ba803d4dc2c7cf21b",
+        "archived_sha256": "1f070047202adb7a96718bfc6b730e18a238ff583b117c3ba803d4dc2c7cf21b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/GravityRequestPreflightNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/GravityRequestPreflightNode-20261005.zh-CN.md",
+        "original_sha256": "0e79dc0c327e46b69f3e523e5256672dc63fa83686666af0a86dff8880c6b1cd",
+        "archived_sha256": "6d5bf207a22a2f52d7176324f8c3b193b9ba0f4fb6e4a8368f47c35f06a5e13c",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/GravityRuntimeCoarsenNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/GravityRuntimeCoarsenNode-20261005.zh-CN.md",
+        "original_sha256": "5e500dc0ecd10847582add36550a286e58205ef7584a2652e48aefd152ffcb54",
+        "archived_sha256": "5e500dc0ecd10847582add36550a286e58205ef7584a2652e48aefd152ffcb54",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/GravityRuntimePublicationNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/GravityRuntimePublicationNode-20261005.zh-CN.md",
+        "original_sha256": "bffdc3aa34b49a3247debdd553175ead2f7bb1caaa20fe09225946390a6304fe",
+        "archived_sha256": "bffdc3aa34b49a3247debdd553175ead2f7bb1caaa20fe09225946390a6304fe",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/GuiBranchRetirement-20261006.zh-CN.md",
+        "to": "docs/histroy/studio/GuiBranchRetirement-20261006.zh-CN.md",
+        "original_sha256": "76b7265392667c17e5d59fc0311783904b86e935e579788c0a46d3a207e621a6",
+        "archived_sha256": "e0754ed213019ea61596ee79b03bd12630a2317d356c3491ea54c32a3fa9317a",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/HostCleanCpuBuild-20261004.zh-CN.md",
+        "to": "docs/histroy/build/HostCleanCpuBuild-20261004.zh-CN.md",
+        "original_sha256": "c52bf47cd3758c49c035774f97a8fdb642739a840eb3772ae92220eb4f03b3e6",
+        "archived_sha256": "c52bf47cd3758c49c035774f97a8fdb642739a840eb3772ae92220eb4f03b3e6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/HostedCiCostEvidenceGap-20261005.zh-CN.md",
+        "to": "docs/histroy/build/HostedCiCostEvidenceGap-20261005.zh-CN.md",
+        "original_sha256": "9f2df5610023a5292f53c1148eda63164c8262debf1e3a4fbeaf7397d1114bde",
+        "archived_sha256": "9f2df5610023a5292f53c1148eda63164c8262debf1e3a4fbeaf7397d1114bde",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/HpcCudaIntegration.md",
+        "to": "docs/histroy/integration/HpcCudaIntegration.md",
+        "original_sha256": "09ec802f103bfcbbaddb78fd7453e5e51f4bbe5b18315b717ff0926c296a8567",
+        "archived_sha256": "edc153211b0eab828a8d8eb66465a5914b48363389f480a9feb747534988d94c",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/InitProbeCompositionIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/InitProbeCompositionIdentity-20261004.zh-CN.md",
+        "original_sha256": "8206cb8453ff5b20f72975e47e39cdbb3b550f17b93b13340ebcf6ae5b1707c3",
+        "archived_sha256": "8206cb8453ff5b20f72975e47e39cdbb3b550f17b93b13340ebcf6ae5b1707c3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/IsolatedGravitySourceBoundNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/IsolatedGravitySourceBoundNode-20261005.zh-CN.md",
+        "original_sha256": "3f77aac6e54ebae52a2496c8737f01e67d87c6ec3f2353e75cdfe61c4ffdf064",
+        "archived_sha256": "3f77aac6e54ebae52a2496c8737f01e67d87c6ec3f2353e75cdfe61c4ffdf064",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansDeviceCandidateParentNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/JeansDeviceCandidateParentNode-20261005.zh-CN.md",
+        "original_sha256": "d4069489802dd293b986935af7328b51da5a654ad39305b95e134edcd15617bf",
+        "archived_sha256": "d4069489802dd293b986935af7328b51da5a654ad39305b95e134edcd15617bf",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansExistingFullCpuGates-20261005.zh-CN.md",
+        "to": "docs/histroy/science/JeansExistingFullCpuGates-20261005.zh-CN.md",
+        "original_sha256": "06dc185417be6becf33d14f9abfd6d4b8dc9059d5258ab5fd7033bf961f4afe9",
+        "archived_sha256": "95256a0c3a7e255779110c797e5ed355ebcc1feb73aed7996ee4bd9ccfc2ac0d",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/JeansExponentGrid-20261004.zh-CN.md",
+        "to": "docs/histroy/science/JeansExponentGrid-20261004.zh-CN.md",
+        "original_sha256": "de52313f8b48af80996d39e056388e8424dbfe152c4c1e50d019ba3879c3e1c5",
+        "archived_sha256": "de52313f8b48af80996d39e056388e8424dbfe152c4c1e50d019ba3879c3e1c5",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansFullCpuFinding-20261004.zh-CN.md",
+        "to": "docs/histroy/science/JeansFullCpuFinding-20261004.zh-CN.md",
+        "original_sha256": "1af391dc2470ad4070187e1a928a697bc2d628dbb342bc7e764cf8dce9d9f6a5",
+        "archived_sha256": "1af391dc2470ad4070187e1a928a697bc2d628dbb342bc7e764cf8dce9d9f6a5",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansIdealGasReference-20261003.zh-CN.md",
+        "to": "docs/histroy/science/JeansIdealGasReference-20261003.zh-CN.md",
+        "original_sha256": "a1257b856dc91ffdb0515c3f823711bd84fd1cd069614cc29974c9c6509918dd",
+        "archived_sha256": "a1257b856dc91ffdb0515c3f823711bd84fd1cd069614cc29974c9c6509918dd",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansNativeTabularReference-20261003.zh-CN.md",
+        "to": "docs/histroy/science/JeansNativeTabularReference-20261003.zh-CN.md",
+        "original_sha256": "aa3df25202c361f7938397b66dbe9367e3d311d0597001cf31d7aa391eb4cafd",
+        "archived_sha256": "aa3df25202c361f7938397b66dbe9367e3d311d0597001cf31d7aa391eb4cafd",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansNumericLeaf-20261003.zh-CN.md",
+        "to": "docs/histroy/science/JeansNumericLeaf-20261003.zh-CN.md",
+        "original_sha256": "8b42b616839af834d658eaf62cd1a0a4405dc1b4a6d4d1eb770624d16a57efd2",
+        "archived_sha256": "8b42b616839af834d658eaf62cd1a0a4405dc1b4a6d4d1eb770624d16a57efd2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansPhysicalSpacing-20261003.zh-CN.md",
+        "to": "docs/histroy/science/JeansPhysicalSpacing-20261003.zh-CN.md",
+        "original_sha256": "41090a8ce79d538112bc47ea0793f2e90b7aaec0eca0a4f510e3980d53e7ecb2",
+        "archived_sha256": "41090a8ce79d538112bc47ea0793f2e90b7aaec0eca0a4f510e3980d53e7ecb2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansRZPlatformHandoff.zh-CN.md",
+        "to": "docs/histroy/science/JeansRZPlatformHandoff.zh-CN.md",
+        "original_sha256": "b69289325339fe2cb228ac6243d1082edfbef1c146fa1f2d47ccab02e63db77b",
+        "archived_sha256": "214df63e524ca4c66b215bb84e28211fc6f4eb7dca6a5285b30bf01cbb0984bf",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/JeansRuntimeAcceptedLeaseNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/JeansRuntimeAcceptedLeaseNode-20261005.zh-CN.md",
+        "original_sha256": "0a9f021178eacce61b640d2ec2ef575927bd3d353d9ba024001f1e1462829dc6",
+        "archived_sha256": "0a9f021178eacce61b640d2ec2ef575927bd3d353d9ba024001f1e1462829dc6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/JeansRuntimeDeviceTransactionsNode-20261005.zh-CN.md",
+        "original_sha256": "843bc418d10d89ceced6da84b358e1f23b3c3b850a2fafb2182aaf3ab51e494d",
+        "archived_sha256": "843bc418d10d89ceced6da84b358e1f23b3c3b850a2fafb2182aaf3ab51e494d",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JensCudaCandidateCpuNode-20261006.zh-CN.md",
+        "to": "docs/histroy/science/JensCudaCandidateCpuNode-20261006.zh-CN.md",
+        "original_sha256": "c7a5d823d0628fd34b5425cd55e3c67de0c49e8ab220e80af9e53af7402f49f7",
+        "archived_sha256": "c7a5d823d0628fd34b5425cd55e3c67de0c49e8ab220e80af9e53af7402f49f7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JensCudaCandidateCudaNode-20261006.zh-CN.md",
+        "to": "docs/histroy/science/JensCudaCandidateCudaNode-20261006.zh-CN.md",
+        "original_sha256": "7165b8345c79f053bfd36aa0dc9f9453790e91b3e6e3f942cd007adfd833c27c",
+        "archived_sha256": "7165b8345c79f053bfd36aa0dc9f9453790e91b3e6e3f942cd007adfd833c27c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/JensCudaCandidatePlan-20261006.zh-CN.md",
+        "to": "docs/histroy/science/JensCudaCandidatePlan-20261006.zh-CN.md",
+        "original_sha256": "9353e6fa9c30426725b619418154b6414bd4571d0fe4064332677baf5662b423",
+        "archived_sha256": "9353e6fa9c30426725b619418154b6414bd4571d0fe4064332677baf5662b423",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/MainMaintainabilityAudit.zh-CN.md",
+        "to": "docs/histroy/integration/MainMaintainabilityAudit.zh-CN.md",
+        "original_sha256": "8ecf23d83c355558987df3ec7b858445c42ff58757cc1ab950d8962635f60927",
+        "archived_sha256": "05a03822c3c042e33ec4e2753f8de40e571b61873c83f6960ad2c366e00bb638",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/NativeGravityWorkLayoutNode-20261007.zh-CN.md",
+        "to": "docs/histroy/science/NativeGravityWorkLayoutNode-20261007.zh-CN.md",
+        "original_sha256": "89b8fa612774410861095073b9c5b13f598beae6cd69dd7bae0b21506191a730",
+        "archived_sha256": "fabc223d7e9937bc04b2f7745c9254158f41a242bfd10ad66998d331b51449ac",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/NativePoissonArithmeticLedgerNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/NativePoissonArithmeticLedgerNode-20261005.zh-CN.md",
+        "original_sha256": "098e7bf6b5b61aa150e307e328ea65aa5a7bf3f9b5774ca857905510214d9d68",
+        "archived_sha256": "098e7bf6b5b61aa150e307e328ea65aa5a7bf3f9b5774ca857905510214d9d68",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/NativeWheelRoutingDiagnostic-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/NativeWheelRoutingDiagnostic-20261004.zh-CN.md",
+        "original_sha256": "d86dfb381246db4393e796cfa2f5ef76b562ad1c6835aa8fc9849703430eccdf",
+        "archived_sha256": "d86dfb381246db4393e796cfa2f5ef76b562ad1c6835aa8fc9849703430eccdf",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7ApprovedArchitectureAndJeansParent-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7ApprovedArchitectureAndJeansParent-20261004.zh-CN.md",
+        "original_sha256": "83cf356d52945b857996c3cff24a8c5c9a59a26f05a54f50a100434de8bfb4f3",
+        "archived_sha256": "83cf356d52945b857996c3cff24a8c5c9a59a26f05a54f50a100434de8bfb4f3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7ArchitectureAuditMigrationReview.zh-CN.md",
+        "to": "docs/histroy/configuration/O7ArchitectureAuditMigrationReview.zh-CN.md",
+        "original_sha256": "39f995211fab9b876235efceea185002492acf93ea963cca371a936623628cf5",
+        "archived_sha256": "39f995211fab9b876235efceea185002492acf93ea963cca371a936623628cf5",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7ArchitectureCurrentAudit-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7ArchitectureCurrentAudit-20261004.zh-CN.md",
+        "original_sha256": "b79b3b3db212d6b1e9ed2760e52a03241cc3b9b858f69a01851f646d424b63b8",
+        "archived_sha256": "b79b3b3db212d6b1e9ed2760e52a03241cc3b9b858f69a01851f646d424b63b8",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7ArchitectureRulesReview-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7ArchitectureRulesReview-20261004.zh-CN.md",
+        "original_sha256": "59e312ca5344f9056cd580b8d62bffff4b915ac5d0cc208ca061f0cb123b4a32",
+        "archived_sha256": "59e312ca5344f9056cd580b8d62bffff4b915ac5d0cc208ca061f0cb123b4a32",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansAcceptedStateLifecycle-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansAcceptedStateLifecycle-20261004.zh-CN.md",
+        "original_sha256": "93ba3064a812ff2502f6aa25cb4001963d43f2967bc0f9f7c22dc1c9446c4062",
+        "archived_sha256": "93ba3064a812ff2502f6aa25cb4001963d43f2967bc0f9f7c22dc1c9446c4062",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansConditionalInputIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansConditionalInputIdentity-20261004.zh-CN.md",
+        "original_sha256": "ec351f2e3d5d3236a16a9ed855635557b1152a56f3137a2e726b5314ad91e0fd",
+        "archived_sha256": "ec351f2e3d5d3236a16a9ed855635557b1152a56f3137a2e726b5314ad91e0fd",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansNativePlotConsumer-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansNativePlotConsumer-20261004.zh-CN.md",
+        "original_sha256": "244bd3f0b97f6a634f7d9ecf9182807141934746b2ea0a5765d5432bed994d9c",
+        "archived_sha256": "244bd3f0b97f6a634f7d9ecf9182807141934746b2ea0a5765d5432bed994d9c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansNativeReview-20261005.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansNativeReview-20261005.zh-CN.md",
+        "original_sha256": "0414460aaf2eb539d4ca1cd8991f9cde086c9dcd1ad3624078f9217306b82e3c",
+        "archived_sha256": "0414460aaf2eb539d4ca1cd8991f9cde086c9dcd1ad3624078f9217306b82e3c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansRzReviewQuestions-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansRzReviewQuestions-20261004.zh-CN.md",
+        "original_sha256": "51280a4f50b78a607eaf6d6c685fb7ea3f67c3e98ad362243aae831f1e2cb394",
+        "archived_sha256": "a3627bb6c1b1e05068592e5b5598a4ad846cbb0f1334042de34ad5b658d60203",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/O7JeansStudioContract-20261005.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansStudioContract-20261005.zh-CN.md",
+        "original_sha256": "b1aa2c4c0251eb6896afcc73eb1daf04b9b2ac11d5a1599a36dc8289ef586549",
+        "archived_sha256": "b1aa2c4c0251eb6896afcc73eb1daf04b9b2ac11d5a1599a36dc8289ef586549",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansTreeTransaction-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansTreeTransaction-20261004.zh-CN.md",
+        "original_sha256": "f67cfd0810b7f536cf8c81edc3cc69c53d90c769e7e0cd7a6d38d0df99ea21b6",
+        "archived_sha256": "f67cfd0810b7f536cf8c81edc3cc69c53d90c769e7e0cd7a6d38d0df99ea21b6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7JeansUniformLifecycle-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7JeansUniformLifecycle-20261004.zh-CN.md",
+        "original_sha256": "5757f4f1f325964d0d2a6592f6372e0018a00fad73e8c727d0bf6a4ac0103f34",
+        "archived_sha256": "5757f4f1f325964d0d2a6592f6372e0018a00fad73e8c727d0bf6a4ac0103f34",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7ResumeDecision-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7ResumeDecision-20261004.zh-CN.md",
+        "original_sha256": "fc567bf0c9ad58a9fe8623e4f68daf34bceca85502a0550a0418b177ac7e9d39",
+        "archived_sha256": "fc567bf0c9ad58a9fe8623e4f68daf34bceca85502a0550a0418b177ac7e9d39",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7ResumeShortGates-20261004.zh-CN.md",
+        "to": "docs/histroy/configuration/O7ResumeShortGates-20261004.zh-CN.md",
+        "original_sha256": "06aa10dc8b4df0d80bbcf4d9a5760c38aaf1204e5293fa4450ece29fe0efc9bf",
+        "archived_sha256": "06aa10dc8b4df0d80bbcf4d9a5760c38aaf1204e5293fa4450ece29fe0efc9bf",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/O7_1_JENS_IMPLEMENTATION_MAP.zh-CN.md",
+        "to": "docs/histroy/configuration/O7_1_JENS_IMPLEMENTATION_MAP.zh-CN.md",
+        "original_sha256": "6ed0b740a5201d464da041fa102e38780eaeb17fc340f14bd7b0b38bf9912492",
+        "archived_sha256": "b974b35720d2d5abe2bfda8421536ef67e0a8f18592ff55aecc54acc985a8598",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/O7_RZ_IMPLEMENTATION_MAP.zh-CN.md",
+        "to": "docs/histroy/configuration/O7_RZ_IMPLEMENTATION_MAP.zh-CN.md",
+        "original_sha256": "838e7236c498091f5d939261e4913e27d19c482b7e42f140b8ccc27341d7417b",
+        "archived_sha256": "0c26a851376c3a1752e966ebefea6e5d6fe646f25528d291e6fb813d6aa1a415",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/OpenmpPlatformPreflightNode-20261005.zh-CN.md",
+        "to": "docs/histroy/build/OpenmpPlatformPreflightNode-20261005.zh-CN.md",
+        "original_sha256": "d4f1073a8dbcf4f59bca3aa8f814aeca4223f06dbd9d7bcc0c0c90b1205c549b",
+        "archived_sha256": "d4f1073a8dbcf4f59bca3aa8f814aeca4223f06dbd9d7bcc0c0c90b1205c549b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/P3P4CompositeGravity.zh-CN.md",
+        "to": "docs/histroy/science/P3P4CompositeGravity.zh-CN.md",
+        "original_sha256": "56eb1e5a988ea03fa8bb39d75a931b5d5ef251dde73bf9da8faed21f36f41e01",
+        "archived_sha256": "ad34c99cb5e456b3a1036e12386f6e3f8dc032e2b10c1a9e9260af99cb30a6d4",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/P5P7GravityAcceptance.zh-CN.md",
+        "to": "docs/histroy/science/P5P7GravityAcceptance.zh-CN.md",
+        "original_sha256": "f0c24a9e6bff6cca0ed32dd38b064a708204f1bed93710faf4af46ee2d2da959",
+        "archived_sha256": "84a3323e98ee96f01f731c44e134af8082312e6d6d72377bbb765dc85a51fbaf",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/PeriodicGravitySourceNode-20261005.zh-CN.md",
+        "to": "docs/histroy/science/PeriodicGravitySourceNode-20261005.zh-CN.md",
+        "original_sha256": "7332f80bc62c15d9d9a0c6d38bac783feed5918c1dbcd2839bb3fe6eb841ed19",
+        "archived_sha256": "7332f80bc62c15d9d9a0c6d38bac783feed5918c1dbcd2839bb3fe6eb841ed19",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PhysicalEndpointAffinity-20261004.zh-CN.md",
+        "to": "docs/histroy/build/PhysicalEndpointAffinity-20261004.zh-CN.md",
+        "original_sha256": "ff366e0e82c54c2c7178ab58409cb0bfe14a3500014e39fad9f7c8a0afff1990",
+        "archived_sha256": "ff366e0e82c54c2c7178ab58409cb0bfe14a3500014e39fad9f7c8a0afff1990",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PhysicalEndpointCpuBaseline-20261004.zh-CN.md",
+        "to": "docs/histroy/build/PhysicalEndpointCpuBaseline-20261004.zh-CN.md",
+        "original_sha256": "cec5a81578198127ef7d9fd01f5af455ce0bdcdf5571dce2a1af1a8b0c5235ef",
+        "archived_sha256": "cec5a81578198127ef7d9fd01f5af455ce0bdcdf5571dce2a1af1a8b0c5235ef",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PhysicalEndpointInputFreeze-20261004.zh-CN.md",
+        "to": "docs/histroy/build/PhysicalEndpointInputFreeze-20261004.zh-CN.md",
+        "original_sha256": "46ea55d0474c379e2d3ade27c7a10706e497481a6c07d045788b5c9c3d9da8ff",
+        "archived_sha256": "46ea55d0474c379e2d3ade27c7a10706e497481a6c07d045788b5c9c3d9da8ff",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PhysicalEndpointRunnerProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/build/PhysicalEndpointRunnerProgress-20261003.zh-CN.md",
+        "original_sha256": "9d0c100579061350eeb96b368ade2ea3a2196d598f16ff2158952e4487dcf86b",
+        "archived_sha256": "9d0c100579061350eeb96b368ade2ea3a2196d598f16ff2158952e4487dcf86b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PhysicalEndpointScheduleProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/build/PhysicalEndpointScheduleProgress-20261003.zh-CN.md",
+        "original_sha256": "734aaf2e973738ab4dee4bdfe17c235d5fdcf286a5221bc057497ff109ed7b73",
+        "archived_sha256": "734aaf2e973738ab4dee4bdfe17c235d5fdcf286a5221bc057497ff109ed7b73",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PhysicalEndpointStreamLog-20261005.zh-CN.md",
+        "to": "docs/histroy/build/PhysicalEndpointStreamLog-20261005.zh-CN.md",
+        "original_sha256": "114d60a5a01e9966c314ce55e99b840a55a44b2259ec5deb0edfd64271d90df8",
+        "archived_sha256": "6d1af526eccc4825135930ebf3c43fdddf8d45c8b207e71caedfbb0e3d8a83e3",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/PlatformFrozenInputReadiness-20261005.zh-CN.md",
+        "to": "docs/histroy/build/PlatformFrozenInputReadiness-20261005.zh-CN.md",
+        "original_sha256": "d448bc20bd51efe26dbbec8a65784446a7606d3f7f005d3ef7e75c694f0efbeb",
+        "archived_sha256": "d448bc20bd51efe26dbbec8a65784446a7606d3f7f005d3ef7e75c694f0efbeb",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlatformIdentityCorrection-20261004.zh-CN.md",
+        "to": "docs/histroy/build/PlatformIdentityCorrection-20261004.zh-CN.md",
+        "original_sha256": "d98eba489dcd2c682b5a278fb7cc57bc7043b86c27eaca7409af95b864e06f1e",
+        "archived_sha256": "d98eba489dcd2c682b5a278fb7cc57bc7043b86c27eaca7409af95b864e06f1e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlatformPreflight-20261004.zh-CN.md",
+        "to": "docs/histroy/build/PlatformPreflight-20261004.zh-CN.md",
+        "original_sha256": "dde236543c79d5e9abaa5bcfa87bccd4c66010db54bb83dbb2b66db1e0a7daa3",
+        "archived_sha256": "dde236543c79d5e9abaa5bcfa87bccd4c66010db54bb83dbb2b66db1e0a7daa3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileActualEnospcPublicationNode-20261006.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileActualEnospcPublicationNode-20261006.zh-CN.md",
+        "original_sha256": "ea8dd447c26f1e0c81105841df91fd7c67207f4018be7360cfe0b977e41156fe",
+        "archived_sha256": "ea8dd447c26f1e0c81105841df91fd7c67207f4018be7360cfe0b977e41156fe",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileAdapterDelivery-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileAdapterDelivery-20261004.zh-CN.md",
+        "original_sha256": "48bc73261c647682628c7a7f4007ad86254176dda608e63dae41e8cd3eb459cc",
+        "archived_sha256": "3aedbc54f4d30b70faf515a699fc7072f8ccdcab95f4833b322883623c719f88",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/PlotfileAllFieldsFaceRepair-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileAllFieldsFaceRepair-20261004.zh-CN.md",
+        "original_sha256": "62bd98807650cd69b7fcb9af178ccb1dd27de95d95d1b7876dc6f436a40d76c3",
+        "archived_sha256": "62bd98807650cd69b7fcb9af178ccb1dd27de95d95d1b7876dc6f436a40d76c3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileBoundedSliceProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileBoundedSliceProgress-20261003.zh-CN.md",
+        "original_sha256": "22b96f6352dae0c0654ab5d94bbda8abbe5354b3a2d5a0a94f25eaedd7a977ca",
+        "archived_sha256": "22b96f6352dae0c0654ab5d94bbda8abbe5354b3a2d5a0a94f25eaedd7a977ca",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileCanonicalT0-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileCanonicalT0-20261003.zh-CN.md",
+        "original_sha256": "f35f07ef92933cea6404b1b18dc5eeb119549f32adaf5315be638f6f07f0638f",
+        "archived_sha256": "f35f07ef92933cea6404b1b18dc5eeb119549f32adaf5315be638f6f07f0638f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileCoreIntegrationHandoff-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileCoreIntegrationHandoff-20261004.zh-CN.md",
+        "original_sha256": "375856a2f750010b14ed1be41b19d963b72f4c082b8ba9a5d4959f88446f3009",
+        "archived_sha256": "375856a2f750010b14ed1be41b19d963b72f4c082b8ba9a5d4959f88446f3009",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileCoreIoContractProposal.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileCoreIoContractProposal.zh-CN.md",
+        "original_sha256": "71bd8bb4f53f07c2cf23ebc33d559e9548a11e5ff8aed69ab3b39a2411eacdc2",
+        "archived_sha256": "71bd8bb4f53f07c2cf23ebc33d559e9548a11e5ff8aed69ab3b39a2411eacdc2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileCurrentCpuBuild-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileCurrentCpuBuild-20261004.zh-CN.md",
+        "original_sha256": "e55caa91754393f9f96d9cb25a582aebb8c6e5717deeed064795c2bc30170485",
+        "archived_sha256": "e55caa91754393f9f96d9cb25a582aebb8c6e5717deeed064795c2bc30170485",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileDriverFailurePropagation-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileDriverFailurePropagation-20261003.zh-CN.md",
+        "original_sha256": "a17a677045eecfb257bd193207ff60f912625ebc2d883925fd7afa482dbfebcb",
+        "archived_sha256": "a17a677045eecfb257bd193207ff60f912625ebc2d883925fd7afa482dbfebcb",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileEmptyGridPublication-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileEmptyGridPublication-20261004.zh-CN.md",
+        "original_sha256": "b15ceb52d62d3c1b08133f209ce0da3f3ddea54756bcef2e2dcd2c30a6b6a11a",
+        "archived_sha256": "b15ceb52d62d3c1b08133f209ce0da3f3ddea54756bcef2e2dcd2c30a6b6a11a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileEosConstituents-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileEosConstituents-20261003.zh-CN.md",
+        "original_sha256": "49a6c18f6353e6d3baa9b6ba7363304c43c84d1ef742aae6a7839bd956f06afb",
+        "archived_sha256": "49a6c18f6353e6d3baa9b6ba7363304c43c84d1ef742aae6a7839bd956f06afb",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileEosSourceUi-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileEosSourceUi-20261003.zh-CN.md",
+        "original_sha256": "e91aa15e05dcb939703616fe00328e6955376f78a8a31034347638caedfe647b",
+        "archived_sha256": "e91aa15e05dcb939703616fe00328e6955376f78a8a31034347638caedfe647b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileEvolvedReader-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileEvolvedReader-20261004.zh-CN.md",
+        "original_sha256": "c2ca7944cf9550964d192c7d16ea2fca60dc6306786aedbe00d229a70e8015ea",
+        "archived_sha256": "c2ca7944cf9550964d192c7d16ea2fca60dc6306786aedbe00d229a70e8015ea",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileEvolvedRestartIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileEvolvedRestartIdentity-20261004.zh-CN.md",
+        "original_sha256": "2c1c6704bd136adaf9c69d42fba30d96a6014eeec5bea4df9c7cb2099bfc258e",
+        "archived_sha256": "2c1c6704bd136adaf9c69d42fba30d96a6014eeec5bea4df9c7cb2099bfc258e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileFieldDeclarations-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileFieldDeclarations-20261003.zh-CN.md",
+        "original_sha256": "c4d76ad43bdd22c62446890437e10103fa5da2227e90000611a39048936681e0",
+        "archived_sha256": "c4d76ad43bdd22c62446890437e10103fa5da2227e90000611a39048936681e0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileFieldRealT0-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileFieldRealT0-20261003.zh-CN.md",
+        "original_sha256": "230a1487d4020c6c662a40e41c136fe750413d08ccd3333cd1c73e19ea61b8c7",
+        "archived_sha256": "230a1487d4020c6c662a40e41c136fe750413d08ccd3333cd1c73e19ea61b8c7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileFp64Wire-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileFp64Wire-20261003.zh-CN.md",
+        "original_sha256": "5dbb9fb139fad228be5aed4452883e06a436d3c1d66486767f737580d76933bd",
+        "archived_sha256": "5dbb9fb139fad228be5aed4452883e06a436d3c1d66486767f737580d76933bd",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileFullCoverage-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileFullCoverage-20261004.zh-CN.md",
+        "original_sha256": "b721c8fe9efdc22cc4a8836a701e78b35b51f28638f8457baeb3ee8512130829",
+        "archived_sha256": "b721c8fe9efdc22cc4a8836a701e78b35b51f28638f8457baeb3ee8512130829",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileGlobalOverviewProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileGlobalOverviewProgress-20261003.zh-CN.md",
+        "original_sha256": "8f42327d7bbd8993813b1d92d51b2b074b2800c058897b3cb92dc6d378d81778",
+        "archived_sha256": "8f42327d7bbd8993813b1d92d51b2b074b2800c058897b3cb92dc6d378d81778",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileHandoffReadback-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileHandoffReadback-20261004.zh-CN.md",
+        "original_sha256": "2a56e3fbf548a9fe83d49051003e8b538ba8cf59d3ee21de552b03d6497f0cd6",
+        "archived_sha256": "2a56e3fbf548a9fe83d49051003e8b538ba8cf59d3ee21de552b03d6497f0cd6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileHostAuditApiProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileHostAuditApiProgress-20261003.zh-CN.md",
+        "original_sha256": "dc184f488a192f9f292d9d7fe3ed2339b2ee7e2b3c5253e6cf367eead4a17061",
+        "archived_sha256": "dc184f488a192f9f292d9d7fe3ed2339b2ee7e2b3c5253e6cf367eead4a17061",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileHttpAllFieldsNode-20261005.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileHttpAllFieldsNode-20261005.zh-CN.md",
+        "original_sha256": "bc0e0c271bb2e4ae3a2717d86f76ef0013b518e87af72a31fbd472eece36f1e2",
+        "archived_sha256": "bc0e0c271bb2e4ae3a2717d86f76ef0013b518e87af72a31fbd472eece36f1e2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileHttpDisconnectVerification-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileHttpDisconnectVerification-20261003.zh-CN.md",
+        "original_sha256": "4365279696ac9116c3d60da94d636d4b7ecc160d206175fffd00c4fc4b231686",
+        "archived_sha256": "4365279696ac9116c3d60da94d636d4b7ecc160d206175fffd00c4fc4b231686",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileIdentityReasons-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileIdentityReasons-20261004.zh-CN.md",
+        "original_sha256": "8ee6861204ac4d36cb5e84ae282e16ea9def0b4651a5cadd2e3679596fec1a5f",
+        "archived_sha256": "8ee6861204ac4d36cb5e84ae282e16ea9def0b4651a5cadd2e3679596fec1a5f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileIsolatedSliceProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileIsolatedSliceProgress-20261003.zh-CN.md",
+        "original_sha256": "a88e52098fd462bb7920720132727845fe5a75b1e787dab479e63ac75fad6d6f",
+        "archived_sha256": "a88e52098fd462bb7920720132727845fe5a75b1e787dab479e63ac75fad6d6f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileIsolatedWorkerCost-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileIsolatedWorkerCost-20261003.zh-CN.md",
+        "original_sha256": "2afb87164c0577195f8a95eb6c2d8e5e9a9f1a235c63fa45f8cbeb7db7c0d506",
+        "archived_sha256": "2afb87164c0577195f8a95eb6c2d8e5e9a9f1a235c63fa45f8cbeb7db7c0d506",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileLargeQuery-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileLargeQuery-20261004.zh-CN.md",
+        "original_sha256": "b4d888435089396cf92530c999345e7bad9ae694e12d514e371a414c76e7996a",
+        "archived_sha256": "b4d888435089396cf92530c999345e7bad9ae694e12d514e371a414c76e7996a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileLeafOutlinesProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileLeafOutlinesProgress-20261003.zh-CN.md",
+        "original_sha256": "2e894450106cef6e782659fc50b3a09145114f661f7cb5551eb8ede7de9981be",
+        "archived_sha256": "2e894450106cef6e782659fc50b3a09145114f661f7cb5551eb8ede7de9981be",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileMetadataPrototype.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileMetadataPrototype.zh-CN.md",
+        "original_sha256": "adf6f2b4a355b4e073d51aba44304b7045be3daabe468dea86160574e0e94054",
+        "archived_sha256": "adf6f2b4a355b4e073d51aba44304b7045be3daabe468dea86160574e0e94054",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileMultiFieldT0-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileMultiFieldT0-20261003.zh-CN.md",
+        "original_sha256": "e0da73e6f80c79f2f1936df404e8fe93051837c7abb9d604af1766a30936e1b0",
+        "archived_sha256": "e0da73e6f80c79f2f1936df404e8fe93051837c7abb9d604af1766a30936e1b0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeDesktopFindings-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeDesktopFindings-20261003.zh-CN.md",
+        "original_sha256": "4d2f6a27184f998af9f225eb64d45ae6cec049b3175368368456c340b8707bbc",
+        "archived_sha256": "4d2f6a27184f998af9f225eb64d45ae6cec049b3175368368456c340b8707bbc",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeFailureRetention-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeFailureRetention-20261004.zh-CN.md",
+        "original_sha256": "f87fde992678631548deebcb95a0eec5717f8b09048413ef570cef5cb4a060e1",
+        "archived_sha256": "f87fde992678631548deebcb95a0eec5717f8b09048413ef570cef5cb4a060e1",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeGridProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeGridProgress-20261003.zh-CN.md",
+        "original_sha256": "243c39b64f3bd2a7df4024ff740c3c7a013348bed5a039b3e3ddbc3f992e8055",
+        "archived_sha256": "243c39b64f3bd2a7df4024ff740c3c7a013348bed5a039b3e3ddbc3f992e8055",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeInspectorProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeInspectorProgress-20261003.zh-CN.md",
+        "original_sha256": "07d4d3ce2faff09512917969532f65052abbd501091a2001eebf7fb1e90fee05",
+        "archived_sha256": "07d4d3ce2faff09512917969532f65052abbd501091a2001eebf7fb1e90fee05",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativePointProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativePointProgress-20261003.zh-CN.md",
+        "original_sha256": "115f5f62660015c3ede09d7c80dd62f021539d8a3b42169dbaeddf1f33667213",
+        "archived_sha256": "115f5f62660015c3ede09d7c80dd62f021539d8a3b42169dbaeddf1f33667213",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeQueryProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeQueryProgress-20261003.zh-CN.md",
+        "original_sha256": "59a7b0f4957e13b4c0567f3d6c185316f89a6198af8351712f2f96963dad3fd9",
+        "archived_sha256": "59a7b0f4957e13b4c0567f3d6c185316f89a6198af8351712f2f96963dad3fd9",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeRace-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeRace-20261004.zh-CN.md",
+        "original_sha256": "23181da12e4211a14baa4528ebd1e456e36227b1c15662b6af93c5827f269e45",
+        "archived_sha256": "23181da12e4211a14baa4528ebd1e456e36227b1c15662b6af93c5827f269e45",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeUnitUat-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeUnitUat-20261003.zh-CN.md",
+        "original_sha256": "3172c68564d02b2f206f37718d79a0aaa5ea90d3c612dd356fb95a0b96ac535e",
+        "archived_sha256": "3172c68564d02b2f206f37718d79a0aaa5ea90d3c612dd356fb95a0b96ac535e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileNativeViewProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileNativeViewProgress-20261003.zh-CN.md",
+        "original_sha256": "83c6c172a5be0100f3c60f8b024a270e930d4884a1baac453480df64777c1621",
+        "archived_sha256": "83c6c172a5be0100f3c60f8b024a270e930d4884a1baac453480df64777c1621",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileProjectAuditUiProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileProjectAuditUiProgress-20261003.zh-CN.md",
+        "original_sha256": "2e96ff8f97d42eaa8a3a7a9a45349f741935baf768795a013548b11631e26739",
+        "archived_sha256": "2e96ff8f97d42eaa8a3a7a9a45349f741935baf768795a013548b11631e26739",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileProjectHttpRendererNode-20261005.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileProjectHttpRendererNode-20261005.zh-CN.md",
+        "original_sha256": "49da2082b8f5c5c661c1540935937d676acd7e99be8641c08358d1ba7ef4c344",
+        "archived_sha256": "49da2082b8f5c5c661c1540935937d676acd7e99be8641c08358d1ba7ef4c344",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfilePublicationFaultsProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfilePublicationFaultsProgress-20261003.zh-CN.md",
+        "original_sha256": "7b40e328f19dc38afee9b7ecc090da4a572f43efccbdc8989302d9526a34439d",
+        "archived_sha256": "7b40e328f19dc38afee9b7ecc090da4a572f43efccbdc8989302d9526a34439d",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfilePublicationProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfilePublicationProgress-20261003.zh-CN.md",
+        "original_sha256": "2023985fe976676c4fd20f3ea25357055b3e13eee5e2e2fddd78050e3719f986",
+        "archived_sha256": "2023985fe976676c4fd20f3ea25357055b3e13eee5e2e2fddd78050e3719f986",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileQueryCostProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileQueryCostProgress-20261003.zh-CN.md",
+        "original_sha256": "c76e6fe3ddddb2c90068faa6c165462af46629f928387b5ee3ad912497d4f0a2",
+        "archived_sha256": "c76e6fe3ddddb2c90068faa6c165462af46629f928387b5ee3ad912497d4f0a2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRawConfigProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRawConfigProgress-20261003.zh-CN.md",
+        "original_sha256": "95f9f4ff25161de865a2bee6e71f428b440a92838129b51d4908b2687015ea22",
+        "archived_sha256": "95f9f4ff25161de865a2bee6e71f428b440a92838129b51d4908b2687015ea22",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileReaderAdapterHandoff-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileReaderAdapterHandoff-20261003.zh-CN.md",
+        "original_sha256": "28b1c7bc9e733385e86cb9f48ddad484005fe0d56b6f5bc5379513d35001b189",
+        "archived_sha256": "28b1c7bc9e733385e86cb9f48ddad484005fe0d56b6f5bc5379513d35001b189",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileReaderFp64Contract-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileReaderFp64Contract-20261004.zh-CN.md",
+        "original_sha256": "d6e6746b0b05160ea8fb6e380f1fd05f79457358075a8704faca1ed755d2c981",
+        "archived_sha256": "d6e6746b0b05160ea8fb6e380f1fd05f79457358075a8704faca1ed755d2c981",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRealRendererReadbackNode-20261005.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRealRendererReadbackNode-20261005.zh-CN.md",
+        "original_sha256": "1715979caf138ac32da9367c965593ece6acadcc4aac9e921db17aba98e40dd6",
+        "archived_sha256": "1715979caf138ac32da9367c965593ece6acadcc4aac9e921db17aba98e40dd6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRealT0Progress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRealT0Progress-20261003.zh-CN.md",
+        "original_sha256": "4f2914eb2129a2fcfa5b2254da0df39dde7807bc3035266b10edf6c89ab887e0",
+        "archived_sha256": "4f2914eb2129a2fcfa5b2254da0df39dde7807bc3035266b10edf6c89ab887e0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRendererEventsNode-20261005.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRendererEventsNode-20261005.zh-CN.md",
+        "original_sha256": "a5bc76579284fe42853d77adadfbeaa08e166680157db695c85dfe8efbb21610",
+        "archived_sha256": "a5bc76579284fe42853d77adadfbeaa08e166680157db695c85dfe8efbb21610",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRunIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRunIdentity-20261004.zh-CN.md",
+        "original_sha256": "0ecf96c6edcc87773277cc8edf5c21afdce47592eb755c116d868cd04c061975",
+        "archived_sha256": "0ecf96c6edcc87773277cc8edf5c21afdce47592eb755c116d868cd04c061975",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRunInterference-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRunInterference-20261004.zh-CN.md",
+        "original_sha256": "7a85714a52ce9d1d92532c87961571908d57692fbb8524578ceb2bfc2a0289ea",
+        "archived_sha256": "7a85714a52ce9d1d92532c87961571908d57692fbb8524578ceb2bfc2a0289ea",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileRunningBinaryProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileRunningBinaryProgress-20261003.zh-CN.md",
+        "original_sha256": "6d0cd3f4ddc4670af6dd7dccd0b12b5e1891239aa94d20e1f440dd95224adac0",
+        "archived_sha256": "6d0cd3f4ddc4670af6dd7dccd0b12b5e1891239aa94d20e1f440dd95224adac0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileSharedFaceRepair-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileSharedFaceRepair-20261004.zh-CN.md",
+        "original_sha256": "970e227d5fe19180dea14b01c2d3fb3c60b220687ec70ac54d50a72006bcd11e",
+        "archived_sha256": "970e227d5fe19180dea14b01c2d3fb3c60b220687ec70ac54d50a72006bcd11e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileSourceEvidenceUiProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileSourceEvidenceUiProgress-20261003.zh-CN.md",
+        "original_sha256": "a04e0f6400dc69f5aa6efb2dcd33dc125b6ea40777cfe7d5e5c5f3af6046396c",
+        "archived_sha256": "a04e0f6400dc69f5aa6efb2dcd33dc125b6ea40777cfe7d5e5c5f3af6046396c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileSourceIdentityProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileSourceIdentityProgress-20261003.zh-CN.md",
+        "original_sha256": "ddf1a7956fba9fe6ae62e994a2f1aee708053d98b950da5c3388c9fcbd6a05ec",
+        "archived_sha256": "ddf1a7956fba9fe6ae62e994a2f1aee708053d98b950da5c3388c9fcbd6a05ec",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileStickyCancel-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileStickyCancel-20261004.zh-CN.md",
+        "original_sha256": "96ec2c1e8da92845d40a873ed625365a9eae55f39a9eec6a054205766f92228c",
+        "archived_sha256": "96ec2c1e8da92845d40a873ed625365a9eae55f39a9eec6a054205766f92228c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileStorageLayoutCost-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileStorageLayoutCost-20261004.zh-CN.md",
+        "original_sha256": "6d61642d1f82c60cdd920f62b0ae923d7ddd7623594eaae89ec8ff8347b881ba",
+        "archived_sha256": "6d61642d1f82c60cdd920f62b0ae923d7ddd7623594eaae89ec8ff8347b881ba",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PlotfileViewportProgress-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/PlotfileViewportProgress-20261003.zh-CN.md",
+        "original_sha256": "f4e1210de3e5d61f24f6259a531dd72b35dd30410a9ba369a587fb07cdfb78c2",
+        "archived_sha256": "f4e1210de3e5d61f24f6259a531dd72b35dd30410a9ba369a587fb07cdfb78c2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/PoissonCoarseDiagnostic-20261004.zh-CN.md",
+        "to": "docs/histroy/science/PoissonCoarseDiagnostic-20261004.zh-CN.md",
+        "original_sha256": "392766e6d8b640ab1adc0b12d2989af2aa7994fa65bacad000cfde4e0a56fa63",
+        "archived_sha256": "392766e6d8b640ab1adc0b12d2989af2aa7994fa65bacad000cfde4e0a56fa63",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/RTAmrValidationIssues-20261003.zh-CN.md",
+        "to": "docs/histroy/science/RTAmrValidationIssues-20261003.zh-CN.md",
+        "original_sha256": "8b8149c3b65f4ca587bb6ca03d3fe233ad32312b769de38e312f7214cfa83eec",
+        "archived_sha256": "fcde54f2a450609444f6e8bc28e913ae5ac5b773a81211680adc62d2243e0faf",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/RTAmrValidationIssues-20261003/ledger-audit-20261004.zh-CN.md",
+        "to": "docs/histroy/science/RTAmrValidationIssues-20261003/ledger-audit-20261004.zh-CN.md",
+        "original_sha256": "41bc033ad0b86f61d4dd493616c1d61e4beb0f06208984903b75dbc60a09a434",
+        "archived_sha256": "688a4b204347afa28bd5f17dea9df3b6a44a0fa4c8331bcececb222e4f6f0590",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/RTAmrValidationIssues-20261003/ledger-audit-summary-20261004.zh-CN.md",
+        "to": "docs/histroy/science/RTAmrValidationIssues-20261003/ledger-audit-summary-20261004.zh-CN.md",
+        "original_sha256": "a82ccb5f9f9d088321757af4cd25e674de62067270388aae72be57da42b643e2",
+        "archived_sha256": "9085e90bb1741f6793456240aceb7463ba679434ac594bcad501abeb923efec6",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/RadialFullCpuAdditions-20261004.zh-CN.md",
+        "to": "docs/histroy/science/RadialFullCpuAdditions-20261004.zh-CN.md",
+        "original_sha256": "7ea5dc455dcab8606e75dbe57eaf8c31735f9801d461764e3889bed09c25ccac",
+        "archived_sha256": "7ea5dc455dcab8606e75dbe57eaf8c31735f9801d461764e3889bed09c25ccac",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/RadialInputMigration-20261004.zh-CN.md",
+        "to": "docs/histroy/science/RadialInputMigration-20261004.zh-CN.md",
+        "original_sha256": "968dfd8b9b09b37c27177d819e252a2b593fc8644eb494fc6b160af959a43ac6",
+        "archived_sha256": "968dfd8b9b09b37c27177d819e252a2b593fc8644eb494fc6b160af959a43ac6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/RepairPositionCpuIntegration-20261004.zh-CN.md",
+        "to": "docs/histroy/science/RepairPositionCpuIntegration-20261004.zh-CN.md",
+        "original_sha256": "b4d5f0ff4f7c166f06b57698c28b3ad2c5ee3aca4d0804a1c7790543b15d8f7d",
+        "archived_sha256": "b4d5f0ff4f7c166f06b57698c28b3ad2c5ee3aca4d0804a1c7790543b15d8f7d",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/SelfGravityImplementationPlan.zh-CN.md",
+        "to": "docs/histroy/science/SelfGravityImplementationPlan.zh-CN.md",
+        "original_sha256": "e28764147af651ad66fe83403e5614a7c8feb6d60f71a2e17c1e2925f4759790",
+        "archived_sha256": "89193ec0b17874e13053b0e6f06de0d4c2e01c2d03f08e7c8bc0b53ace6656c3",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/SelfGravityP1Handoff.zh-CN.md",
+        "to": "docs/histroy/science/SelfGravityP1Handoff.zh-CN.md",
+        "original_sha256": "6e7aea1b340f06d7a9a1f290c3a9607a341207a3deadce7d5f20bb4d61a2a42b",
+        "archived_sha256": "58a21a802810be729db99c849c0f6a25355496bf3424df5925a781ccc75a9ad3",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/Studio3CExitAudit.zh-CN.md",
+        "to": "docs/histroy/studio/Studio3CExitAudit.zh-CN.md",
+        "original_sha256": "1ddeded280f6b4d5a0bdbb04578e15988f8d5eaa0ee612c34994879b95d7e015",
+        "archived_sha256": "1ddeded280f6b4d5a0bdbb04578e15988f8d5eaa0ee612c34994879b95d7e015",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioBuildProjectIdentity-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/StudioBuildProjectIdentity-20261004.zh-CN.md",
+        "original_sha256": "6831d3ce1af89fc05a640cc190e56907b79a579bb9546e5ca560cdb5fba5f382",
+        "archived_sha256": "6831d3ce1af89fc05a640cc190e56907b79a579bb9546e5ca560cdb5fba5f382",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioBuildToolchainStability.zh-CN.md",
+        "to": "docs/histroy/studio/StudioBuildToolchainStability.zh-CN.md",
+        "original_sha256": "6bed22af6cc443583ce852e739ae26a95f7c7c7c7cdf3b188fa29e8a54505b88",
+        "archived_sha256": "6bed22af6cc443583ce852e739ae26a95f7c7c7c7cdf3b188fa29e8a54505b88",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioCellularZoomControls-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/StudioCellularZoomControls-20261004.zh-CN.md",
+        "original_sha256": "932ea517faf6f96746dbfe8d11bbd2391ffa3351df72bb11c751d3a974979837",
+        "archived_sha256": "932ea517faf6f96746dbfe8d11bbd2391ffa3351df72bb11c751d3a974979837",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioCiIntegration-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/StudioCiIntegration-20261004.zh-CN.md",
+        "original_sha256": "86d9b16a01933f9f6ce260833dc8e17a4752b9c6e65b92f3f0e2ab2766033c50",
+        "archived_sha256": "86d9b16a01933f9f6ce260833dc8e17a4752b9c6e65b92f3f0e2ab2766033c50",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioComputeRoundClosure-20261006.zh-CN.md",
+        "to": "docs/histroy/studio/StudioComputeRoundClosure-20261006.zh-CN.md",
+        "original_sha256": "a60f6fc090ecb3532a3ec6bdf3f5411727379325e447d671bcbe8a56caf19c25",
+        "archived_sha256": "d0dac457d429b2991ab4b9dc215f47659470d4ecdee72513241f769ad09fe22f",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/StudioConfigurationHandoff.zh-CN.md",
+        "to": "docs/histroy/studio/StudioConfigurationHandoff.zh-CN.md",
+        "original_sha256": "f57eedcb4d5ed33a88334e53dcb1d42f1a96bd02934355674479232b1d241fe9",
+        "archived_sha256": "d044284551ca20028181084136277e998edc367c70df02e4f993195897fcb549",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/StudioCpuPreviewIntegrationAudit.md",
+        "to": "docs/histroy/studio/StudioCpuPreviewIntegrationAudit.md",
+        "original_sha256": "132ff662f20adbcfe8f991ebe9aed89b8a61cb0d69bd88758cbd274834dee6fe",
+        "archived_sha256": "132ff662f20adbcfe8f991ebe9aed89b8a61cb0d69bd88758cbd274834dee6fe",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioDesktopBuildRefresh-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/StudioDesktopBuildRefresh-20261004.zh-CN.md",
+        "original_sha256": "97cedd4c8198cfa10578d9243d4d5dd37d888c9714550678a349024878bc6bc2",
+        "archived_sha256": "97cedd4c8198cfa10578d9243d4d5dd37d888c9714550678a349024878bc6bc2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioGnuToolchainComponentEvidence.zh-CN.md",
+        "to": "docs/histroy/studio/StudioGnuToolchainComponentEvidence.zh-CN.md",
+        "original_sha256": "a36fe8f76ec1b115fc1aae51785b95633fc1078c553776fb4af3d3f8474ec0f0",
+        "archived_sha256": "a36fe8f76ec1b115fc1aae51785b95633fc1078c553776fb4af3d3f8474ec0f0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioHostCloseSurvivalUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioHostCloseSurvivalUat.zh-CN.md",
+        "original_sha256": "524fbcfc5de41e015a4e15fd00ed9bc9bf8be315391e7e336caa48ba66e07c9a",
+        "archived_sha256": "524fbcfc5de41e015a4e15fd00ed9bc9bf8be315391e7e336caa48ba66e07c9a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioHostStopLifecycleUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioHostStopLifecycleUat.zh-CN.md",
+        "original_sha256": "74937f7ae64f70d512ab0258d189dce9ba3f659aa4bb4051dc72af6a82288a50",
+        "archived_sha256": "74937f7ae64f70d512ab0258d189dce9ba3f659aa4bb4051dc72af6a82288a50",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioIntegrationProgress.zh-CN.md",
+        "to": "docs/histroy/studio/StudioIntegrationProgress.zh-CN.md",
+        "original_sha256": "5692f4048a9271286456caef3b44fa782a6ed91f149c15be8059f624d93cf638",
+        "archived_sha256": "68e9886f57594344cbd582689601bc2c373389eb00d426c0d5a9d4b41ccc984f",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/StudioNativeActiveCloseAttempt.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeActiveCloseAttempt.zh-CN.md",
+        "original_sha256": "b5e4b2612a34cdf3b9674baa487e24a77238362c638c00d2fa6df601e7f5852f",
+        "archived_sha256": "b5e4b2612a34cdf3b9674baa487e24a77238362c638c00d2fa6df601e7f5852f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeActiveRunCloseUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeActiveRunCloseUat.zh-CN.md",
+        "original_sha256": "201d52e83d178566518f81b6f134d46533b9563204c56aa492aebbbdd82568b3",
+        "archived_sha256": "201d52e83d178566518f81b6f134d46533b9563204c56aa492aebbbdd82568b3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeConfigureUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeConfigureUat.zh-CN.md",
+        "original_sha256": "25d1589bb279f25011b136e89c4d75f6761b1a95efdb455480bf66f32e3977e2",
+        "archived_sha256": "25d1589bb279f25011b136e89c4d75f6761b1a95efdb455480bf66f32e3977e2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeCurrentHostRelaunch.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeCurrentHostRelaunch.zh-CN.md",
+        "original_sha256": "0be7aa838d302496fe3a3eee2c8662284ec19313bc1b6bd72d4b367d2fdaaa52",
+        "archived_sha256": "0be7aa838d302496fe3a3eee2c8662284ec19313bc1b6bd72d4b367d2fdaaa52",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeFileLifecycleUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeFileLifecycleUat.zh-CN.md",
+        "original_sha256": "7c8f090c9be2ae89c6e8ccc1679b73d97d129dfd8c5a361b8ad25aeb48b2d6c7",
+        "archived_sha256": "8d0575e2193d75fa5417c310b0fc3514b10498216c98d3abb429e79d48d8553c",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/StudioNativeOverwriteUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeOverwriteUat.zh-CN.md",
+        "original_sha256": "179d3ee05ce6a24174747814964c90d8d334feb842b328dfaf6048ac42a04fe4",
+        "archived_sha256": "179d3ee05ce6a24174747814964c90d8d334feb842b328dfaf6048ac42a04fe4",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativePreviewCloseAttempt.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativePreviewCloseAttempt.zh-CN.md",
+        "original_sha256": "58e87cb04ac335f3b65a7b32393b621ac76c30966e1ca6a46d8562034507b869",
+        "archived_sha256": "58e87cb04ac335f3b65a7b32393b621ac76c30966e1ca6a46d8562034507b869",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeStalledAmrClose.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeStalledAmrClose.zh-CN.md",
+        "original_sha256": "debd32806530a4a68968700ee3a82807611d74a9368d64e72462fb2c41ff5f3b",
+        "archived_sha256": "debd32806530a4a68968700ee3a82807611d74a9368d64e72462fb2c41ff5f3b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeStalledPreviewClose.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeStalledPreviewClose.zh-CN.md",
+        "original_sha256": "f4f510578e63819fa8fa03e156a0061e0dcb69153f231c6248899611ef28d5a2",
+        "archived_sha256": "f4f510578e63819fa8fa03e156a0061e0dcb69153f231c6248899611ef28d5a2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeStopAttempt.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeStopAttempt.zh-CN.md",
+        "original_sha256": "470844dd50cff2606410b7e7f01cc8ef8e46d852fbb93f32a510dd7053d4b7b3",
+        "archived_sha256": "470844dd50cff2606410b7e7f01cc8ef8e46d852fbb93f32a510dd7053d4b7b3",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeStopFocusedAttempt.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeStopFocusedAttempt.zh-CN.md",
+        "original_sha256": "a5371d9d18ffe6f9cb53582e61d821260f9e3bb4f68de5f68918ee1075cc2985",
+        "archived_sha256": "a5371d9d18ffe6f9cb53582e61d821260f9e3bb4f68de5f68918ee1075cc2985",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeStopUat.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeStopUat.zh-CN.md",
+        "original_sha256": "474ef957398656cdd8d533996f1f46feb4185c1d633f6efa933cd5f904223d38",
+        "archived_sha256": "474ef957398656cdd8d533996f1f46feb4185c1d633f6efa933cd5f904223d38",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeToolchainBuild.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeToolchainBuild.zh-CN.md",
+        "original_sha256": "f60bfc903531d6ab052d84a62535bf81787b3b304b80c9d857329351f20ce5bd",
+        "archived_sha256": "f60bfc903531d6ab052d84a62535bf81787b3b304b80c9d857329351f20ce5bd",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioNativeZoomControls-20261004.zh-CN.md",
+        "to": "docs/histroy/studio/StudioNativeZoomControls-20261004.zh-CN.md",
+        "original_sha256": "dfd01949474b4ff4e00eef6c2394a5e3596c7ec02296d5b21c042164bf3dede9",
+        "archived_sha256": "dfd01949474b4ff4e00eef6c2394a5e3596c7ec02296d5b21c042164bf3dede9",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioRoundClosure-20261006.zh-CN.md",
+        "to": "docs/histroy/studio/StudioRoundClosure-20261006.zh-CN.md",
+        "original_sha256": "4573d8ea19df3ba9b2401f9716bb0a4296c0933e476cd6bc8d5455c6efb04ce1",
+        "archived_sha256": "712b99ec243893b945173d55244a6b47709f1f609d3db944fe0053a146ea5ce3",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/StudioRunPreviewProjectIsolation.zh-CN.md",
+        "to": "docs/histroy/studio/StudioRunPreviewProjectIsolation.zh-CN.md",
+        "original_sha256": "782c5e77eef636951ec2acffc7689ca243d0038a30810ae7fc53dac0435183b9",
+        "archived_sha256": "782c5e77eef636951ec2acffc7689ca243d0038a30810ae7fc53dac0435183b9",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioStartupFreshnessConcurrency-20261003.zh-CN.md",
+        "to": "docs/histroy/studio/StudioStartupFreshnessConcurrency-20261003.zh-CN.md",
+        "original_sha256": "6830e2a94e525010a6e9b49643b8bc7b6f5d6ceddf7e36676e5694b3f727a7c7",
+        "archived_sha256": "6830e2a94e525010a6e9b49643b8bc7b6f5d6ceddf7e36676e5694b3f727a7c7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/StudioWslgVisibilityBlocker.md",
+        "to": "docs/histroy/studio/StudioWslgVisibilityBlocker.md",
+        "original_sha256": "03831c69c01f99845718281658183526d0ca0b4ada8fb27ed1e4b5197905e61a",
+        "archived_sha256": "03831c69c01f99845718281658183526d0ca0b4ada8fb27ed1e4b5197905e61a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/UpstreamO8RTImpactAudit-20261003.zh-CN.md",
+        "to": "docs/histroy/science/UpstreamO8RTImpactAudit-20261003.zh-CN.md",
+        "original_sha256": "687a2c01e509a86f9e13e7aea12207f62de7e318ac680b06dc2b153e115f4bf6",
+        "archived_sha256": "687a2c01e509a86f9e13e7aea12207f62de7e318ac680b06dc2b153e115f4bf6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "docs/development/UserBoundaryImplementation.zh-CN.md",
+        "to": "docs/histroy/science/UserBoundaryImplementation.zh-CN.md",
+        "original_sha256": "3fa7f5da4584b552ee74deb1ac7436e647b63cdf75c49b441ddcc22c2c302fc0",
+        "archived_sha256": "9d0233b8c72459ba9d67c712a152f5ae54698115030ed8e28afc8aae404dcb95",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/AmrIndicatorNoiseReview.md",
+        "to": "docs/histroy/AmrIndicatorNoiseReview.md",
+        "original_sha256": "ea6e6b676021538c8f0c978531d3b15412ec067222e6bddfe6bbe4d00127b55d",
+        "archived_sha256": "f5f7783202084789b9831a31b8709a71cbb1fc2dd3685c0976540d407b3cfedf",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/CudaBackendEvidence.md",
+        "to": "docs/histroy/CudaBackendEvidence.md",
+        "original_sha256": "d9ccc3b7a5e1f43b763510646ee57f4f7a9633c8a5af54044488c6a1f2d61300",
+        "archived_sha256": "932bffb6e3ad48412106d43d5d5fabf859d0097e8833da208883e145d249e3a1",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/CudaBackendEvidence.zh-CN.md",
+        "to": "docs/histroy/CudaBackendEvidence.zh-CN.md",
+        "original_sha256": "c07adbe240101591d45412519330e592d23e10f8932f8af67c3c58929ba6c162",
+        "archived_sha256": "60eb58940b825f2fb1c4eb31b4bb8d0c8b026c095dde94aad56090f83aa8f2c9",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/CudaRefactorSmoke.md",
+        "to": "docs/histroy/CudaRefactorSmoke.md",
+        "original_sha256": "1aaadbf82951ab93a8daab906c3caaa54b9f162cb317d7e8e822b4c90f51df18",
+        "archived_sha256": "3219e8b73f82716aa43249b9577ebe69ee91b462d7f754269c340184789a5bda",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/CudaReleaseStandard.md",
+        "to": "docs/histroy/CudaReleaseStandard.md",
+        "original_sha256": "227f15ad4b337b0885dfe7b1c95bedfc912376a91f902cede24fafbff5e9fcc1",
+        "archived_sha256": "57ba3d2a2da1c85932c612c2e655b20574f86d3d54f5d21d32067a872fb3d6c5",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/CurvilinearMetricReview.md",
+        "to": "docs/histroy/CurvilinearMetricReview.md",
+        "original_sha256": "497ad675a81152a8f364bff04668dc99908008f5255c0d3dbe3efddc12cd4bdc",
+        "archived_sha256": "487b85cac5d32fa83efaf522ea0c1647df451c667b0fc364af47b347e62287d4",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/DiffusionCoefficientAlignment.md",
+        "to": "docs/histroy/DiffusionCoefficientAlignment.md",
+        "original_sha256": "490aaf6382442ac9e73a117902c7ab24c111e6a7de2587cc476015e5b4d77b82",
+        "archived_sha256": "c928cb729f65e52456b1ca0a871399eae0c4683de7715e25b9fab19e34a2cecd",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/DiffusionCoefficientAlignment.zh-CN.md",
+        "to": "docs/histroy/DiffusionCoefficientAlignment.zh-CN.md",
+        "original_sha256": "c7c7f7633343af5a67abd80d025454e74a8f49dcc86e1802654186cfbfd1724c",
+        "archived_sha256": "90365ac59d9ccf8e18ef44e4d561eb6a6d06843dfe9cb84bc85ce7dbd0e1efdb",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/compute-studio/ExecutionHistory.zh-CN.md",
+        "to": "docs/histroy/compute-studio/ExecutionHistory.zh-CN.md",
+        "original_sha256": "8638f1496529af365298a783f633c4720993383adce23ec1bf53866476f2db69",
+        "archived_sha256": "4b73b5d92ea73fb16e978d61441098a2ddc3c7e64a8f680493fb252968c6207e",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/low-density/ImplementationReport.zh-CN.md",
+        "to": "docs/histroy/low-density/ImplementationReport.zh-CN.md",
+        "original_sha256": "f4c437216cbb9428b855bd20c8667693003679d3b8e80cab2a03f50a9f17ed00",
+        "archived_sha256": "8cbb43f96d61e017aed4741bd8222644e60ada5f5bc299f93476440164813f77",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/low-density/ParameterRetirementAudit.zh-CN.md",
+        "to": "docs/histroy/low-density/ParameterRetirementAudit.zh-CN.md",
+        "original_sha256": "f2f36978c538894fa8698cdf494102b95a040ecf4ecfdadf0eec9881639faa43",
+        "archived_sha256": "6f6922d12734b196f36f1adc884115d243dbfb1a8987f65c84a2397a74376724",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/low-density/RobustnessPlan.zh-CN.md",
+        "to": "docs/histroy/low-density/RobustnessPlan.zh-CN.md",
+        "original_sha256": "72f02f4f8eb66fc3bdb29456910abe056d608646c6d5e7cf6b7d3383369be6ff",
+        "archived_sha256": "9b00155767edc9ba79cc92a4533a95302ecb7bcd9f7947fd14bc82a9d57bf32c",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md",
+        "to": "docs/histroy/modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md",
+        "original_sha256": "f908002e5335b0c0523baff96eee9c19a8fd6ea67c3931dfa968482411729999",
+        "archived_sha256": "9aaed70131e8ae34d58b41a1315dcdc85178ee6791909fef300fce7a8f4c44fc",
+        "edit": "relative_link_rebase_and_verified_owner_link_correction",
+        "additional_link_correction": {
+          "old": "../../../src/grid/GridMetrics.h",
+          "new": "../../../src/numerics/curvilinear/GridMetrics.h",
+          "reason": "The old repository map already linked a retired GridMetrics owner; verified current owner exists. Original prose and numeric evidence unchanged."
+        }
+      },
+      {
+        "from": "docs/development/archive/modernization/Preflight-20261012.zh-CN.md",
+        "to": "docs/histroy/modernization/Preflight-20261012.zh-CN.md",
+        "original_sha256": "22df5083d8e486305811203ecb3192c8b4cc61021f683907205fb9b0e3d26cbe",
+        "archived_sha256": "c3cc9de3c0ebd5b442741cf04ed00c8e5fb02121a32f83ae2e6c82d29ea1919d",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "docs/development/archive/optimization/ImplementationAndAcceptancePlan.zh-CN.md",
+        "to": "docs/histroy/optimization/ImplementationAndAcceptancePlan.zh-CN.md",
+        "original_sha256": "3adcaf5295aeed719dcedda61b652be0b8db8cff9056d26a553adeebbfc82e41",
+        "archived_sha256": "b2b5de59817a5cf9d3540b981b5d1a56d5e0eae88c31210776a980ff376a5c57",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "src/api/docs/archive/CORE_A_HANDOFF.md",
+        "to": "docs/histroy/studio/core-api/CORE_A_HANDOFF.md",
+        "original_sha256": "601f1a349c0a657aef6bccbabc7101574412e801ec370d67697df1b313efdf05",
+        "archived_sha256": "89047c986259f24d654c22738cb80d97d4598f7d7e668a8d85f2af2610c26365",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "src/api/docs/archive/CORE_B_HANDOFF.md",
+        "to": "docs/histroy/studio/core-api/CORE_B_HANDOFF.md",
+        "original_sha256": "72d04d990bae9a644271d1e28b8d396f40c8dfa93e695e1e1031ccfe84120df1",
+        "archived_sha256": "e8dd4f2d1d90e155e9994334981f0d1ae2fe5bff39a4ccd590906c647e1a251c",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "src/api/docs/archive/CORE_UI_HANDOFF.md",
+        "to": "docs/histroy/studio/core-api/CORE_UI_HANDOFF.md",
+        "original_sha256": "7abd3f19c8ef1b5231abdbd5776bbc406c03bedc1af0846d261f3ece8df14a2d",
+        "archived_sha256": "04bb9704b38dbbff89c3880b4c81fe87f9c93f5210279bf35a963d971164bdc9",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "src/api/docs/archive/LOCAL_WORKFLOW_HANDOFF.md",
+        "to": "docs/histroy/studio/core-api/LOCAL_WORKFLOW_HANDOFF.md",
+        "original_sha256": "db182544a11f8312a148d65102a6a01d6046fdf8a792d8a0bde620446508856f",
+        "archived_sha256": "3f74fbb3251f75c09fbffeb0e06c150241e327bdbed3d92effeac55666c61a69",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "src/api/docs/archive/PREVIEW_SESSION_HANDOFF.md",
+        "to": "docs/histroy/studio/core-api/PREVIEW_SESSION_HANDOFF.md",
+        "original_sha256": "95b2e680d036974ef0ff0a0c492286a9cf2c36d7befc56367fb270e55010d461",
+        "archived_sha256": "8b5f79dc34c7e7a7101269bc0c8d6e983a563782c6413cb21d826bf9689530cc",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "src/api/docs/archive/STUDIO_UI_REVIEW_2026-09-20.zh-CN.md",
+        "to": "docs/histroy/studio/core-api/STUDIO_UI_REVIEW_2026-09-20.zh-CN.md",
+        "original_sha256": "724723d6e7a59722788c40de14d3745d8d8ddf8e6359dd7464e70b6b23243716",
+        "archived_sha256": "d28ced4e41beca6ade40230492b624cf0db9d8c40d2687e6892dfae4b70fcf9c",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "studio/docs/archive/MANUAL_UAT_CANDIDATE.md",
+        "to": "docs/histroy/studio/MANUAL_UAT_CANDIDATE.md",
+        "original_sha256": "4668860ec925e5f8b30047bceec089e48a8fda7cae79868b8b8324f1e1d30e74",
+        "archived_sha256": "4668860ec925e5f8b30047bceec089e48a8fda7cae79868b8b8324f1e1d30e74",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/ORIGINAL_REQUIREMENT_CLOSURE_REPORT.md",
+        "to": "docs/histroy/studio/ORIGINAL_REQUIREMENT_CLOSURE_REPORT.md",
+        "original_sha256": "e8eecea6c2cee42f9637f82d7c238590f94ddfd3905993e91eb14b9f6551c9f5",
+        "archived_sha256": "e8eecea6c2cee42f9637f82d7c238590f94ddfd3905993e91eb14b9f6551c9f5",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE0_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE0_COMPLETION_REPORT.md",
+        "original_sha256": "f10005a2574e38fe15a092c85b43f8340e25219e71f9660daa49d5c337e493e9",
+        "archived_sha256": "f8376c513c0d7aefcf5413032d761e18ddce349e81726a3f7f0b1c4725ef504d",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1A_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE1A_COMPLETION_REPORT.md",
+        "original_sha256": "904b5a73b16f730c77e26c08993361b9463b9c8ac9f1f2214d2fba0426fc9f1a",
+        "archived_sha256": "904b5a73b16f730c77e26c08993361b9463b9c8ac9f1f2214d2fba0426fc9f1a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1A_M5_REPORT.md",
+        "to": "docs/histroy/studio/PHASE1A_M5_REPORT.md",
+        "original_sha256": "b9e9894396a54ef33cd5b228bdd30b5b5b23da925d6b405d3e8f1e25ff54cdad",
+        "archived_sha256": "b9e9894396a54ef33cd5b228bdd30b5b5b23da925d6b405d3e8f1e25ff54cdad",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1A_TARGET.md",
+        "to": "docs/histroy/studio/PHASE1A_TARGET.md",
+        "original_sha256": "4a1ee074e490753793ecd34deb75999715417cb36392bad83c227942c91507d6",
+        "archived_sha256": "4a1ee074e490753793ecd34deb75999715417cb36392bad83c227942c91507d6",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1B_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE1B_COMPLETION_REPORT.md",
+        "original_sha256": "9bff9c1f9407bbf33590d87312d393958fab6b9ba9d9acf757d9097a60c9d371",
+        "archived_sha256": "9bff9c1f9407bbf33590d87312d393958fab6b9ba9d9acf757d9097a60c9d371",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1B_TARGET.md",
+        "to": "docs/histroy/studio/PHASE1B_TARGET.md",
+        "original_sha256": "ff46393c1c96f3d698a270cbbf3c5cec8fc0f27d17138e8c702610a73cb2b6f4",
+        "archived_sha256": "ff46393c1c96f3d698a270cbbf3c5cec8fc0f27d17138e8c702610a73cb2b6f4",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1C1_CONTROL_POLISH_REPORT.md",
+        "to": "docs/histroy/studio/PHASE1C1_CONTROL_POLISH_REPORT.md",
+        "original_sha256": "fe77da6479345ef028f6c5344b23548123cdb68d9613ba89fca003ae65cbc944",
+        "archived_sha256": "fe77da6479345ef028f6c5344b23548123cdb68d9613ba89fca003ae65cbc944",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1C1_TARGET.md",
+        "to": "docs/histroy/studio/PHASE1C1_TARGET.md",
+        "original_sha256": "b7fe4135e4aa9b01094177daed347f9a25bee106792bc661c503be23e5d2fffb",
+        "archived_sha256": "b7fe4135e4aa9b01094177daed347f9a25bee106792bc661c503be23e5d2fffb",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1C_TARGET.md",
+        "to": "docs/histroy/studio/PHASE1C_TARGET.md",
+        "original_sha256": "922216b9800c57a4098ebd6b090e9a3c37895d13c707933ee07f6adbbc55c233",
+        "archived_sha256": "922216b9800c57a4098ebd6b090e9a3c37895d13c707933ee07f6adbbc55c233",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE1C_UI_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE1C_UI_COMPLETION_REPORT.md",
+        "original_sha256": "6abd3019664dbbc9e260363505b73b2526d9ba6412b026b8e2f9c366ecb03b8d",
+        "archived_sha256": "6abd3019664dbbc9e260363505b73b2526d9ba6412b026b8e2f9c366ecb03b8d",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2B_CONFIG_LIFECYCLE_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2B_CONFIG_LIFECYCLE_REPORT.md",
+        "original_sha256": "d692def7e2a3412cda010bd10fbb6adacf1a754e953990103db21c61c620003c",
+        "archived_sha256": "d692def7e2a3412cda010bd10fbb6adacf1a754e953990103db21c61c620003c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2B_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2B_TARGET.md",
+        "original_sha256": "df88dc2ab6249854763504bc0c9b8f868dbdc1eecff6a915e045129569c287ed",
+        "archived_sha256": "df88dc2ab6249854763504bc0c9b8f868dbdc1eecff6a915e045129569c287ed",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2C_BUILD_INTEGRATION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2C_BUILD_INTEGRATION_REPORT.md",
+        "original_sha256": "111668735ed09840258746c68f0ccc8b4a1d05af84e79f147d7680afef05c313",
+        "archived_sha256": "111668735ed09840258746c68f0ccc8b4a1d05af84e79f147d7680afef05c313",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2C_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2C_TARGET.md",
+        "original_sha256": "f778b57c9a084c717b18a8226b682d130690c3ecd2ec68567d527aa884d929f7",
+        "archived_sha256": "f778b57c9a084c717b18a8226b682d130690c3ecd2ec68567d527aa884d929f7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2D_CORE_PREVIEW_CONTRACT_GAP.md",
+        "to": "docs/histroy/studio/PHASE2D_CORE_PREVIEW_CONTRACT_GAP.md",
+        "original_sha256": "2d3c1689f813a2d359a35322d133a3a172da016da1e0176117254d852a665744",
+        "archived_sha256": "2d3c1689f813a2d359a35322d133a3a172da016da1e0176117254d852a665744",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2D_REAL_IC_PREVIEW_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2D_REAL_IC_PREVIEW_REPORT.md",
+        "original_sha256": "c788ee0b9bae7b5f497a4c1c553e4757c48cfee127011608b2d1df8903aff29f",
+        "archived_sha256": "c788ee0b9bae7b5f497a4c1c553e4757c48cfee127011608b2d1df8903aff29f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2D_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2D_TARGET.md",
+        "original_sha256": "2fb45fb04d50967a51c875826f5e6286e9a42add46208e3b03aba1e120b4923b",
+        "archived_sha256": "2fb45fb04d50967a51c875826f5e6286e9a42add46208e3b03aba1e120b4923b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2D_UPSTREAM_PREVIEW_API_AUDIT.md",
+        "to": "docs/histroy/studio/PHASE2D_UPSTREAM_PREVIEW_API_AUDIT.md",
+        "original_sha256": "91fd7e5dde6d0bd30fdca31958a8fc4bb358607b917106850a1f026cf7412724",
+        "archived_sha256": "91fd7e5dde6d0bd30fdca31958a8fc4bb358607b917106850a1f026cf7412724",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2E_A_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2E_A_COMPLETION_REPORT.md",
+        "original_sha256": "5773d1df3cc9ac3995f24c22bd57849c1bffe0a1affcc0642e106f41c0bde948",
+        "archived_sha256": "5773d1df3cc9ac3995f24c22bd57849c1bffe0a1affcc0642e106f41c0bde948",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2E_B_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2E_B_COMPLETION_REPORT.md",
+        "original_sha256": "3eea48a76d74edd00bde2f0d54ef3d8e89b54289ef7512f1cd7e0723863b3e8f",
+        "archived_sha256": "3eea48a76d74edd00bde2f0d54ef3d8e89b54289ef7512f1cd7e0723863b3e8f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2E_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2E_COMPLETION_REPORT.md",
+        "original_sha256": "c9a978e6a72eea197c53d94490761dad5412f0a417d07486409017c2ae2c048a",
+        "archived_sha256": "c9a978e6a72eea197c53d94490761dad5412f0a417d07486409017c2ae2c048a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2E_CORE_CONTRACT_GAP.md",
+        "to": "docs/histroy/studio/PHASE2E_CORE_CONTRACT_GAP.md",
+        "original_sha256": "73285126101b4cfd4c1ae9e2186e9559765c8e66fcfb1014da0caa717e0b0528",
+        "archived_sha256": "73285126101b4cfd4c1ae9e2186e9559765c8e66fcfb1014da0caa717e0b0528",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2E_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2E_TARGET.md",
+        "original_sha256": "c3dcb1d07c048947800ba696eb46cf396a816f38f82391698c7af2f60f2c9c6b",
+        "archived_sha256": "c3dcb1d07c048947800ba696eb46cf396a816f38f82391698c7af2f60f2c9c6b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2F_A_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2F_A_COMPLETION_REPORT.md",
+        "original_sha256": "d2a24b4dc6335a97b0726ea98c39ea9332f0aa4f7013e473b2029b56886bd3a1",
+        "archived_sha256": "d2a24b4dc6335a97b0726ea98c39ea9332f0aa4f7013e473b2029b56886bd3a1",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2F_B_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2F_B_COMPLETION_REPORT.md",
+        "original_sha256": "a0baf043b3a8177fde9aafbaeb860113a25c314ca01c3b43dfd72f7112c22671",
+        "archived_sha256": "a0baf043b3a8177fde9aafbaeb860113a25c314ca01c3b43dfd72f7112c22671",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2F_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2F_COMPLETION_REPORT.md",
+        "original_sha256": "1835958ac73db506d10b46a10fee9c14d83dcef9ff15686855372dbed41b39c9",
+        "archived_sha256": "1835958ac73db506d10b46a10fee9c14d83dcef9ff15686855372dbed41b39c9",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2F_REQUIREMENTS.md",
+        "to": "docs/histroy/studio/PHASE2F_REQUIREMENTS.md",
+        "original_sha256": "9e0401dc1f134b2154963b602f4ff09c905e825990f0012926141ccafe37eeff",
+        "archived_sha256": "9e0401dc1f134b2154963b602f4ff09c905e825990f0012926141ccafe37eeff",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2F_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2F_TARGET.md",
+        "original_sha256": "a67bc3264d67df6c106c85afea7046d77644cac8bb107c00f3b5a8c35fd69c2a",
+        "archived_sha256": "a67bc3264d67df6c106c85afea7046d77644cac8bb107c00f3b5a8c35fd69c2a",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2F_UI_REVIEW_CLOSURE_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2F_UI_REVIEW_CLOSURE_REPORT.md",
+        "original_sha256": "87e44d98524f280761f855d9afc6c21f5286d37b2cb544bda640c77cf2af2eb0",
+        "archived_sha256": "87e44d98524f280761f855d9afc6c21f5286d37b2cb544bda640c77cf2af2eb0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_A_SESSION_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2G_A_SESSION_COMPLETION_REPORT.md",
+        "original_sha256": "ed86f9d963d87f434172840d23c473da339e154d6192e2cb0fe9f19812ec58c2",
+        "archived_sha256": "ed86f9d963d87f434172840d23c473da339e154d6192e2cb0fe9f19812ec58c2",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_B_AMR_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2G_B_AMR_COMPLETION_REPORT.md",
+        "original_sha256": "6521d2017296cd28bc6438ab1f44b0177430c9f82ba4373eb3927c2ed21f69a8",
+        "archived_sha256": "6521d2017296cd28bc6438ab1f44b0177430c9f82ba4373eb3927c2ed21f69a8",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2G_COMPLETION_REPORT.md",
+        "original_sha256": "3f5fdd4e41ad958994c6fa7537fe9e85f537e11476e74fd2960d99c24600dc49",
+        "archived_sha256": "3f5fdd4e41ad958994c6fa7537fe9e85f537e11476e74fd2960d99c24600dc49",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_CONTINUOUS_PREVIEW_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2G_CONTINUOUS_PREVIEW_REPORT.md",
+        "original_sha256": "cf2a1e3d6c176cf79a3b9262cefd7ef18e109f33a8977df154825a05f43babec",
+        "archived_sha256": "cf2a1e3d6c176cf79a3b9262cefd7ef18e109f33a8977df154825a05f43babec",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_C_DESKTOP_ARCHITECTURE_AUDIT.md",
+        "to": "docs/histroy/studio/PHASE2G_C_DESKTOP_ARCHITECTURE_AUDIT.md",
+        "original_sha256": "76fd2c68785a3e937980c55d8206344ea6348aae4eb8db7539043d6e5f2781d8",
+        "archived_sha256": "76fd2c68785a3e937980c55d8206344ea6348aae4eb8db7539043d6e5f2781d8",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_DESKTOP_LAUNCH_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2G_DESKTOP_LAUNCH_REPORT.md",
+        "original_sha256": "fcb6c4d2c54a4ef4ab3ad412053ea6d86e2be3cc976ae451225d2cd925ecb7a0",
+        "archived_sha256": "fcb6c4d2c54a4ef4ab3ad412053ea6d86e2be3cc976ae451225d2cd925ecb7a0",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_INITIAL_AMR_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2G_INITIAL_AMR_REPORT.md",
+        "original_sha256": "352d06757ee104a73d9c31a3384d89f159bafeb68e8c2d85adc0b6327b260c2c",
+        "archived_sha256": "352d06757ee104a73d9c31a3384d89f159bafeb68e8c2d85adc0b6327b260c2c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2G_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2G_TARGET.md",
+        "original_sha256": "a766483f70d7d605b3c419da871fc75791a4161cd0794d1fb45477ec8c9d937f",
+        "archived_sha256": "a766483f70d7d605b3c419da871fc75791a4161cd0794d1fb45477ec8c9d937f",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2H_A_MAINLINE_SYNC_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2H_A_MAINLINE_SYNC_REPORT.md",
+        "original_sha256": "8149b5d876c17c15c9d5df12762ed98ce611c38e8d62fc0ef037a2b101991913",
+        "archived_sha256": "8149b5d876c17c15c9d5df12762ed98ce611c38e8d62fc0ef037a2b101991913",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2H_B_CAPABILITY_MIGRATION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2H_B_CAPABILITY_MIGRATION_REPORT.md",
+        "original_sha256": "a01ff2d41761215a068d4fd167656deee503071960ecfc55b5b6e395617a2d78",
+        "archived_sha256": "a01ff2d41761215a068d4fd167656deee503071960ecfc55b5b6e395617a2d78",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2H_COMPLETION_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2H_COMPLETION_REPORT.md",
+        "original_sha256": "5e58f7a531dca753bb881e33294f96484ae7d678d465f5ddc4caa6e869c519b5",
+        "archived_sha256": "5e58f7a531dca753bb881e33294f96484ae7d678d465f5ddc4caa6e869c519b5",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2H_MAINLINE_COMPATIBILITY_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2H_MAINLINE_COMPATIBILITY_REPORT.md",
+        "original_sha256": "e7d6b5ce903611449723d6f3e67bec0d3d485231b76fd9eb195a1cdc67013241",
+        "archived_sha256": "e7d6b5ce903611449723d6f3e67bec0d3d485231b76fd9eb195a1cdc67013241",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2H_MAINLINE_SYNC_AUDIT.md",
+        "to": "docs/histroy/studio/PHASE2H_MAINLINE_SYNC_AUDIT.md",
+        "original_sha256": "019953bfcd07d04babf1499516a02af3505a77f36a04f3fa8389e50cffadf0d4",
+        "archived_sha256": "019953bfcd07d04babf1499516a02af3505a77f36a04f3fa8389e50cffadf0d4",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2H_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2H_TARGET.md",
+        "original_sha256": "ad8a0a5597727ea717d6642390a65330104542d81ae64ba7ff0ce0a308995100",
+        "archived_sha256": "ad8a0a5597727ea717d6642390a65330104542d81ae64ba7ff0ce0a308995100",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2_LOCAL_HOST_REPORT.md",
+        "to": "docs/histroy/studio/PHASE2_LOCAL_HOST_REPORT.md",
+        "original_sha256": "d400f04f806b2c2291d442c74cf784bd947dacdbba159d7d0c48e70cc2536717",
+        "archived_sha256": "d400f04f806b2c2291d442c74cf784bd947dacdbba159d7d0c48e70cc2536717",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE2_TARGET.md",
+        "to": "docs/histroy/studio/PHASE2_TARGET.md",
+        "original_sha256": "a33444fc0da738383b4997d82a1a4c7b29fff006048c6533b223864f869e0093",
+        "archived_sha256": "a33444fc0da738383b4997d82a1a4c7b29fff006048c6533b223864f869e0093",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE3A_MAIN_ALIGNMENT_REPORT.md",
+        "to": "docs/histroy/studio/PHASE3A_MAIN_ALIGNMENT_REPORT.md",
+        "original_sha256": "31f7c6a87f5aa156be3e88d8a5a2533ed74da4d47ab80b0c58eed89c653d2e84",
+        "archived_sha256": "31f7c6a87f5aa156be3e88d8a5a2533ed74da4d47ab80b0c58eed89c653d2e84",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE3A_MAIN_BASED_INTEGRATION_AUDIT.md",
+        "to": "docs/histroy/studio/PHASE3A_MAIN_BASED_INTEGRATION_AUDIT.md",
+        "original_sha256": "566bb401fa3dc44b57272e124067b52696e6dcd596646bf000f0d46ab4c092df",
+        "archived_sha256": "566bb401fa3dc44b57272e124067b52696e6dcd596646bf000f0d46ab4c092df",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE3B_PARAMETER_WORKSPACE_REPORT.md",
+        "to": "docs/histroy/studio/PHASE3B_PARAMETER_WORKSPACE_REPORT.md",
+        "original_sha256": "a8ec2d2a22e1e0741a16feccdd9abf98d7cbb964b2acf3e7cf6c58d330597c90",
+        "archived_sha256": "a8ec2d2a22e1e0741a16feccdd9abf98d7cbb964b2acf3e7cf6c58d330597c90",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE3_REQUIREMENTS.zh-CN.md",
+        "to": "docs/histroy/studio/PHASE3_REQUIREMENTS.zh-CN.md",
+        "original_sha256": "5edda8f95392a53986c8f3ea5e9921115a3ba64d5b62efa52212b3134f0ce46c",
+        "archived_sha256": "5edda8f95392a53986c8f3ea5e9921115a3ba64d5b62efa52212b3134f0ce46c",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/PHASE3_TARGET.md",
+        "to": "docs/histroy/studio/PHASE3_TARGET.md",
+        "original_sha256": "59dbde5ede37b9e230dfa9f4d20af9e806169b7d6eb756fcb419e420eb030747",
+        "archived_sha256": "59dbde5ede37b9e230dfa9f4d20af9e806169b7d6eb756fcb419e420eb030747",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/QA-M0.md",
+        "to": "docs/histroy/studio/QA-M0.md",
+        "original_sha256": "dd5bba1f76fd206980c3efe1049964b8b9e0eed5a709725ac3443f538fb4e52e",
+        "archived_sha256": "dd5bba1f76fd206980c3efe1049964b8b9e0eed5a709725ac3443f538fb4e52e",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/QA-M2.md",
+        "to": "docs/histroy/studio/QA-M2.md",
+        "original_sha256": "5311eb4d0cb077551c4192a43d7c11f1a1da03739bca3074109276ebd5be75cb",
+        "archived_sha256": "5311eb4d0cb077551c4192a43d7c11f1a1da03739bca3074109276ebd5be75cb",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/STUDIO_3B_LINUX_REVALIDATION.md",
+        "to": "docs/histroy/studio/STUDIO_3B_LINUX_REVALIDATION.md",
+        "original_sha256": "57ee9ce8ae21d1eeca7dd912b46f5d6f8cbf234711976a2e7c4b69308f1ffa56",
+        "archived_sha256": "57ee9ce8ae21d1eeca7dd912b46f5d6f8cbf234711976a2e7c4b69308f1ffa56",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/TARGET.md",
+        "to": "docs/histroy/studio/TARGET.md",
+        "original_sha256": "4a1dcd3c7eecd055b6812a6835cc43d03a82eda3f2da7b0b1e9fb2ea086c3b9d",
+        "archived_sha256": "4a1dcd3c7eecd055b6812a6835cc43d03a82eda3f2da7b0b1e9fb2ea086c3b9d",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/TARGETED_FIX_REGRESSION_REPORT.md",
+        "to": "docs/histroy/studio/TARGETED_FIX_REGRESSION_REPORT.md",
+        "original_sha256": "d621a0407e2a150ee2ed9bab6b5a5e59bf37e94fd3932ce6833e680ba9a1e108",
+        "archived_sha256": "d621a0407e2a150ee2ed9bab6b5a5e59bf37e94fd3932ce6833e680ba9a1e108",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/UAT_FIX_TARGET.md",
+        "to": "docs/histroy/studio/UAT_FIX_TARGET.md",
+        "original_sha256": "016c60e8aae1bfab99bd3a49ce885a3b88181d0f6b2ad53b7fbcbc72da8b66a7",
+        "archived_sha256": "016c60e8aae1bfab99bd3a49ce885a3b88181d0f6b2ad53b7fbcbc72da8b66a7",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/checkpoint-README.md",
+        "to": "docs/histroy/studio/checkpoint-README.md",
+        "original_sha256": "ed93edc32a199f13c55098f4fc5cc2b1f3a627029c3e7b281e158fe6eaf70831",
+        "archived_sha256": "a01c3d10fdf5bc5c6c3617f65b7911dbb2b433430b120b74ff96d055537fb8eb",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "studio/docs/archive/checkpoint-STATUS.md",
+        "to": "docs/histroy/studio/checkpoint-STATUS.md",
+        "original_sha256": "836fd2fa16139f19983192d84d9f72edcb2a80e9cd640e74fb35a862d1bb6e3b",
+        "archived_sha256": "836fd2fa16139f19983192d84d9f72edcb2a80e9cd640e74fb35a862d1bb6e3b",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/desktop-checkpoint-history.md",
+        "to": "docs/histroy/studio/desktop-checkpoint-history.md",
+        "original_sha256": "d544c4e0ccff5d2eef19ad26bf011f67cb4e9f2f5220ed38602820b3e45c10a6",
+        "archived_sha256": "dcefe43e5c659bdcb9e55e9b8d46a10f5fa658634f03f80d8b0ca9150dfdae76",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "studio/docs/archive/retired-branches-20261006/ARCH_STUDIO_CORE_CONTRACT_A_PARAMETER_METADATA_SOD_BINDING.md",
+        "to": "docs/histroy/studio/retired-branches-20261006/ARCH_STUDIO_CORE_CONTRACT_A_PARAMETER_METADATA_SOD_BINDING.md",
+        "original_sha256": "9d21f9c10ec0b5bc69443361580a2091d0f7bfa0f62a74652f94734d07a2f293",
+        "archived_sha256": "9d21f9c10ec0b5bc69443361580a2091d0f7bfa0f62a74652f94734d07a2f293",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/retired-branches-20261006/ARCH_STUDIO_CORE_CONTRACT_B_CELLULARDET_2D_PREVIEW.md",
+        "to": "docs/histroy/studio/retired-branches-20261006/ARCH_STUDIO_CORE_CONTRACT_B_CELLULARDET_2D_PREVIEW.md",
+        "original_sha256": "bf6ddd6d49339e8194b564aac91bde8ab697987d5a880286a37c5a96959468f1",
+        "archived_sha256": "bf6ddd6d49339e8194b564aac91bde8ab697987d5a880286a37c5a96959468f1",
+        "edit": "byte_identical"
+      },
+      {
+        "from": "studio/docs/archive/retired-branches-20261006/MAIN_SYNC_HANDOFF-20260924.md",
+        "to": "docs/histroy/studio/retired-branches-20261006/MAIN_SYNC_HANDOFF-20260924.md",
+        "original_sha256": "9c9af3fbdbc38547f0752594513bed6a223454d3576bc9cbc8dc7d9ede002abf",
+        "archived_sha256": "c8af09b440fbffa82cc8d8a8472bef653000d7eb775ef3b6b9d28294beb85407",
+        "edit": "relative_link_rebase_only"
+      },
+      {
+        "from": "studio/STATUS.md",
+        "to": "docs/histroy/studio/Status-20261010.md",
+        "original_sha256": "2b119fd1f319934496629dd00e1d8f22e0d8ca049696fa368bb7930fe67c55f4",
+        "archived_sha256": "cc019657c53e434d9a9e127be2740f588c40c0683a469a2411ba44637662cde7",
+        "edit": "relative_link_rebase_only"
+      }
+    ],
+    "removed_index_records": [
+      {
+        "path": "src/api/docs/archive/README.md",
+        "original_sha256": "facf38e4eaa68514703d743c5188eb6a74ba3949743299df22f734a04d97134b",
+        "replacement": "docs/histroy/README.md#studio"
+      },
+      {
+        "path": "studio/docs/archive/README.md",
+        "original_sha256": "df7a05a2c8f231ca595b497c5414c400bea97d599b18451757e8c27e97c2af24",
+        "replacement": "docs/histroy/README.md#studio"
+      },
+      {
+        "path": "studio/docs/archive/retired-branches-20261006/README.md",
+        "original_sha256": "f8a02d5790e54bd034f8633301d12f3ab9733447d5191129e21e654564bc49fd",
+        "replacement": "docs/histroy/README.md#studio"
+      }
+    ],
+    "replacement_targets": {
+      "src/api/docs/archive/README.md": "docs/histroy/README.md#studio",
+      "studio/docs/archive/README.md": "docs/histroy/README.md#studio",
+      "studio/docs/archive/retired-branches-20261006/README.md": "docs/histroy/README.md#studio",
+      "studio/STATUS.md": "studio/README.md#current-qualification"
+    },
+    "byte_frozen_records_unchanged": 157,
+    "integrity": {
+      "moved": 323,
+      "old_paths_absent": true,
+      "all_destinations_exist": true,
+      "three_deleted_indexes": [
+        "src/api/docs/archive/README.md",
+        "studio/docs/archive/README.md",
+        "studio/docs/archive/retired-branches-20261006/README.md"
+      ],
+      "replacement_aliases": 4,
+      "protected_bytes_unchanged": 157,
+      "nonlink_body_differences": [],
+      "fenced_code_differences": [],
+      "nested_parenthesis_link_candidates": [],
+      "newly_broken_links": [],
+      "preexisting_unresolved_links": [
+        {
+          "from": "docs/development/archive/modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md",
+          "old_destination": "../../../../src/grid/GridMetrics.h",
+          "new_destination": "../../../src/numerics/curvilinear/GridMetrics.h",
+          "still_unresolved": false,
+          "resolution": "Corrected destination only to verified current shared-curvilinear owner"
+        }
+      ],
+      "comparison_scope": "Archived323 original documents only; maintained paths checked independently. Historical command text is not changed to current-source instructions.",
+      "verified_supplemental_link_corrections": 1,
+      "archived_repository_local_destinations_and_anchors_valid": true,
+      "historical_external_artifact_references": [
+        {
+          "old": "docs/development/archive/optimization/ImplementationAndAcceptancePlan.zh-CN.md",
+          "new": "docs/histroy/optimization/ImplementationAndAcceptancePlan.zh-CN.md",
+          "reference": "/home/shiroakane/FLASH4.8_code.tar.gz",
+          "basis": "Original host-local external source artifact; retained historical reference, not portable current instructions"
+        }
+      ],
+      "rechecked_utc": "2026-10-19T05:36:14.604504+00:00"
+    },
+    "prior_automatic_review_rejection_resolved": true
+  },
+  "unpublished_authorized_working_tree": true,
+  "committed": false,
+  "pushed": false,
+  "test_and_ci": {
+    "CTest": {
+      "removed_wrappers": [
+        "backend_validation_contract",
+        "cuda_amr_smoke_runner_contract",
+        "curvilinear_manifest_contract",
+        "memory_guard_contract",
+        "portable_network_generator",
+        "runtime_validation_inputs_contract",
+        "sparse_validation_contract",
+        "validation_provenance_contract"
+      ],
+      "added": "tooling_contracts",
+      "cpu_before": 75,
+      "cpu_after": 68,
+      "cuda_before": 142,
+      "cuda_after": 135,
+      "all_other_commands_and_properties_identical": true,
+      "moved_network_parser_present": true,
+      "installed_generated_cuda_network_package_present": false,
+      "generated_network_scope_basis": "REL4: no installed generated CUDA network package discovered. Parser presence is not a production network installation."
+    },
+    "Tooling": {
+      "baseline": 593,
+      "preserved_baseline": 593,
+      "moved_sparse": 9,
+      "new_controls": 16,
+      "passed": 618,
+      "skipped": 0,
+      "final_ctest_testcases": 1,
+      "empty_failed_or_skipped_rejected": true,
+      "initial_failure": {
+        "tests": 593,
+        "skipped": 0,
+        "failures": 1,
+        "errors": 3,
+        "wall_seconds": 31.207225434001884,
+        "successful": false
+      },
+      "fixture_repair_scope": "In-memory test assembly only; step7 parity and current input SHA mirrored, production qualifier and scientific manifest unchanged."
+    },
+    "Studio": {
+      "passed": 383,
+      "skipped": 0,
+      "todos": 0,
+      "lint": "PASS",
+      "typed_build": "PASS",
+      "test_glob_owner": "studio/package.json",
+      "file_concurrency": 1
+    },
+    "CI_scope": "Required still requires three actual successful jobs. Explicit docs-only applicability permits NOT_APPLICABLE within jobs; unknown/mixed/code/config/build paths remain conservative. No shortened numerical endpoints or deleted unique controls.",
+    "LFS_assets": {
+      "owners": [
+        "helmholtz",
+        "studio-sod"
+      ],
+      "local_status": "ACCEPT",
+      "helper_scope": "Only exact canonical HEAD pointers; narrow checkout on hosted cache miss; offline checkout and actual size/SHA on hit and miss.",
+      "old_helm_cache_identity_preserved": true,
+      "local_network_LFS_fetches": 0,
+      "hosted_cache_hit_auth_behavior": "NOT_RUN"
+    }
+  },
+  "documentation": {
+    "current_pages": 202,
+    "local_destinations": 2253,
+    "link_errors": 0,
+    "current_owners": [
+      "docs/development/README.md",
+      "tests/README.md",
+      "tests/README.zh-CN.md",
+      ".github/workflows/README.md",
+      "studio/README.md",
+      "studio/tests/README.md",
+      "docs/development/ImplementationOwnership.md",
+      "docs/development/CommentAndDocumentationStyle.md"
+    ],
+    "current_and_history_paths_separate": true,
+    "batch_archive_executed": true,
+    "main_plan_history_condensation": "COMPLETED",
+    "protected_fixed_paths_excluded_from_move_map": 148,
+    "source_readability": {
+      "indexed_cpp_cuda_inc": 593,
+      "scope": "Whole-path owner/reader inventory plus targeted comment and nontrivial literal-neighborhood review. Not a new independent scientific proof of every algorithm.",
+      "comment_only_cpp_cuda_files": 20,
+      "emitted_JS_equivalent_studio_files": 136,
+      "formatted_studio_files": 20,
+      "numerical_tokens_values_types_order_changed": false
+    },
+    "metrics": {
+      "entry_markdown_files": 717,
+      "current_markdown_files": 716,
+      "entry_development_root_markdown": 244,
+      "current_development_root_markdown": 9,
+      "entry_main_plan_lines": 372,
+      "current_main_plan_lines": 130,
+      "current_maintained_pages": 202,
+      "current_local_destinations": 2253,
+      "current_link_errors": 0,
+      "archive_moves": 323,
+      "removed_indexes": 3
+    },
+    "history_index": "docs/histroy/README.md",
+    "fixed_evidence_index": "docs/development/archive/README.md",
+    "axisymmetric_math_owner": "src/numerics/curvilinear/README.md#axisymmetric-cylindrical-contract",
+    "git_visibility": {
+      "all323_archive_destinations_git_visible": true,
+      "narrow_ignore_exception": "docs/histroy/build/",
+      "reason": "The inherited unanchored build/ rule hid28 moved Markdown records. Narrow exceptions publish only the archive, retaining ordinary build-output ignores.",
+      "root_gitignore_sha256": "566299021ae096af5bff98a3265a8f5ab2a1052fda5e35dc8bd1502be44fe0f4"
+    }
+  },
+  "costs": {
+    "ledger": "output/release/rel5-20261019/cost-ledger.json",
+    "GNU_wall_seconds": {
+      "configure-cpu": 4.78,
+      "configure-cuda": 6.46,
+      "tooling-ctest": 32.45,
+      "studio-test": 47.92,
+      "studio-lint": 9.47,
+      "studio-build": 5.44,
+      "tooling-final-618": 31.91,
+      "tooling-after-archive-618": 31.9
+    },
+    "guard_peak_owned_rss_kib": {
+      "configure-cpu": 72728,
+      "configure-cuda": 33124,
+      "tooling-ctest": 142328,
+      "studio-test": 383032,
+      "studio-lint": 1077920,
+      "studio-build": 726560,
+      "tooling-final-618": 156744,
+      "tooling-after-archive-618": 141888
+    },
+    "production_cpp_cuda_build_seconds": null,
+    "hosted_ci_seconds": null,
+    "hosted_speedup_demonstrated": false,
+    "maintenance_reduction": "One complete Tooling selection for CI/CTest, one Studio test owner, one narrow verified-asset action; original non-tooling command/properties and scientific gates retained.",
+    "nonblocking_candidate": "Vite existing6382.46kB main chunk warning retained; no speculative code-splitting work started.",
+    "continuation_source_freeze_unchanged": true
+  },
+  "preservation": {
+    "protected_history_unchanged": 157,
+    "REL4_receipt_bytes_unchanged": true,
+    "REL4_scientific_artifacts_unchanged": 217,
+    "historical_code_unchanged": 16,
+    "protocol_fixture_files_unchanged": 4,
+    "production_cpp_cuda_compile_executed": false,
+    "scientific_replays_executed": false,
+    "original_cpp_and_cuda_executables": {
+      "cpu": {
+        "path": "build-modernization-cpu/bin/ARCH",
+        "sha256": "fe09bf2e251a41b52f5e74fde337085e0daf6bc61b9c99799a6a128bc09a9888",
+        "mode": "0o755"
+      },
+      "cuda": {
+        "path": "build-modernization-cuda/bin/ARCH",
+        "sha256": "b1143d8aa6a26617a8d533d0a8fc5559fb7ccbb8955fcff1407b45a42d439a2b",
+        "mode": "0o755"
+      }
+    },
+    "rechecked_utc": "2026-10-19T05:36:14.604504+00:00",
+    "all_baseline_result_paths_bytes_unchanged": 3475,
+    "original_protocol_fixture_files_unchanged": 3,
+    "studio_non_markdown_input_freeze_unchanged": 262,
+    "original_protocol_jsons_unchanged": 3,
+    "protocol_checksum_manifest": {
+      "path": "tests/fixtures/validation_provenance/final-artifacts.sha256",
+      "sha256": "6c3e55ca13354d91c7335e72d309cbd2cdc0a014b487b3b206cb2b5d8c6c3747",
+      "baseline": "HEAD bytes verified equal; entry git status confirms no inherited edit"
+    },
+    "current_assertion_signature": "618 complete test labels plus terminal OK/no skips,1/1 actual JUnit, nine moved method bodies AST identical"
+  },
+  "collaboration": {
+    "goal_id": "arch-rz-reintroduction-20261018",
+    "new_calls": 7,
+    "DeepSeek": 6,
+    "official_Gemini": 1,
+    "all_independently_accepted_in_recorded_scope": true,
+    "index": "output/release/rel5-20261019/collaboration/acceptance-summary.json",
+    "budget": {
+      "goal_id": "arch-rz-reintroduction-20261018",
+      "manager_max_calls": 62,
+      "user_max_calls": null,
+      "calls_used_or_reserved": 61,
+      "calls_remaining": 1,
+      "elapsed_seconds_recorded": 9475.417684322976,
+      "output_tokens_reported": 1411984,
+      "started_calls_with_unknown_output": 6,
+      "cost_money": null,
+      "attempt_allowances_reset": false
+    },
+    "root_model_and_money_cost": null,
+    "continuation_review_job": "158a4ff00b36456d94944032e5ad3195"
+  },
+  "retained_failures_and_corrections": [
+    "Original593-test baseline:1 failure,3 errors from stale test-fixture assembly; preserved without changing scientific qualifier or frozen fixture bytes.",
+    "Prelaunch output reserve512MiB exceeded initial512MiB cap with existing backup; rejection retained, budget increased to1024MiB without changing host1GiB boundary.",
+    "First formatting observer incorrectly counted SourceFile text; corrected AST observer, first result retained.",
+    "Outer guard stdout is resource summary, not TAP; corrected reader consumed preserved child output; no Node rerun.",
+    "Metadata ID reader and application locator corrected; negative-control diagnostic interleaving is not a test failure.",
+    "Gemini prose artifact is candidate, not delivery; unavailable-artifact response retained in tool history and correct candidate exported; no inference retry.",
+    "Initial archive auto-review rejection preserved; user subsequently approved exact mapping, migration complete.",
+    "Continuation metadata repairs: skip pre-existing absent legacy pinned README; MCP review phase final corrected to finish without inference.",
+    "Pre-existing GridMetrics owner link corrected; original prose and numeric evidence unchanged. One original host-local FLASH artifact reference retained as historical external provenance.",
+    "Final byte seal caught seven result README link-only edits; temporary versions saved locally and original bytes restored. All3475 result files match baseline.",
+    "Git-visible inventory caught28 archived build Markdown hidden by inherited build/ ignore rule; narrow archive-only exceptions added, all323 destinations now public Git-visible."
+  ],
+  "source_identity_manifest_sha256": "8b6a4c4123015e0f5b6f917c819cd8bff8904486985d693d11ce9c727c696574",
+  "security_preflight": {
+    "scope": "Read-only export of refreshed1047 intended publication paths, including28 previously ignored archive build notes and final receipt. Not actual staged-hook or hosted acceptance.",
+    "scanner_version": "8.30.1",
+    "copied_files": 720,
+    "deleted_paths": 327,
+    "raw_hdf_table_binary_artifacts": 0,
+    "wall_seconds": 0.8569145249930443,
+    "exit_code": 0,
+    "redacted_findings": 0,
+    "proposal_sha256": "58a3a33d707bb41a61eaf34b693011211f08baae17ea0b1d2c352609c3c244f8",
+    "recorded_utc": "2026-10-19T05:38:30.791904+00:00",
+    "no_policy_ignore_exception_changes": true,
+    "actual_staged_hook_still_required": true
+  },
+  "publication_authorization": {
+    "recorded_utc": "2026-10-19T06:11:26.230994+00:00",
+    "user_instruction": "那么可以提交当前状态，闭合rel5并做出更新",
+    "context": "Affirmative response to the pending explicit request to commit/push compute/optim and create a draft main PR for actual hostedCI.",
+    "authorized": [
+      "Commit reviewed accumulated state",
+      "Ordinary push to compute/optim",
+      "Draft PR targeting main and actual hostedCI",
+      "Update scoped REL5 evidence and closure when required checks pass"
+    ],
+    "not_authorized": [
+      "Merge main",
+      "Force push",
+      "Tag/formal release",
+      "REL6 work"
+    ]
+  }
+}

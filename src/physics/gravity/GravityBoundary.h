@@ -25,6 +25,7 @@
 #include "numerics/curvilinear/GridGeometryView.h"
 #include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/elliptic/CompositePoisson.h"
+#include "physics/constant/PhysicalConstants.h"
 
 namespace Physical::Gravity {
 struct BoundaryMoments { double value[10]{}; }; // M, dipole[3], symmetric second moment[6].
@@ -79,6 +80,59 @@ ARCH_INLINE BoundaryMoments combine_boundary_moments(const BoundaryTreeNode* nod
     for(int q=0;q<10;++q) result.value[q]=sum[q].value();
     return result;
 }
+/** Complete elliptic K from its complementary parameter delta=1-k^2.
+ * DLMF 19.5.1 and 19.12.1/3 (https://dlmf.nist.gov/19.12) give two
+ * convergent positive series. Choose the expansion variable <=1/2, so the
+ * remaining exact tail is at most the last term. The epsilon/4 stop leaves
+ * summation/recurrence roundoff to independent oracle verification; it is
+ * not a certified floating-point error bound. Sixty-four terms bound work
+ * even at the crossover (the tail then falls below 2^-64).
+ * This dimensionless leaf has no AGM, allocation, memo or solver state.
+ */
+ARCH_INLINE double complete_elliptic_first_kind(double delta) {
+    if(!(delta>0.) || delta>1. || !std::isfinite(delta))
+        return std::numeric_limits<double>::quiet_NaN();
+    const bool regular=delta>=.5;
+    const double variable=regular?1.-delta:delta;
+    const double logarithm=regular?1.:std::log(4.)-.5*std::log(delta);
+    arch::math::CompensatedSum sum;sum.add(logarithm);
+    double coefficient=1.,harmonic=0.;
+    for(int n=1;n<=64;++n) {
+        const double ratio=(n-.5)/n;
+        coefficient*=variable*ratio*ratio;
+        // 2*(H_(2n)-H_n) advances by 1/[n*(2n-1)].
+        if(!regular)harmonic+=1./(n*(2.*n-1.));
+        const double term=coefficient*(regular?1.:logarithm-harmonic);
+        sum.add(term);
+        if(term<=.25*std::numeric_limits<double>::epsilon()*sum.value())
+            return (regular?.5*arch::constants::math::pi:1.)*sum.value();
+    }
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
+/** Average 1/|x-x'| over a full physical ring in 3D Newton gravity.
+ * Integral_phi/2pi = 2*K(k)/(pi*sqrt(D)), D=(r+s)^2+dz^2.
+ * Form the complementary modulus from distances to avoid cancellation at
+ * k~=1. A coincident point ring is singular and is explicitly rejected;
+ * physical boundary quadrature nodes lie strictly inside their source cell.
+ */
+ARCH_INLINE double ring_average_inverse_distance(double r,double s,double dz) {
+    if(!(r>=0.) || !(s>=0.) || !std::isfinite(r) || !std::isfinite(s) || !std::isfinite(dz))
+        return std::numeric_limits<double>::quiet_NaN();
+    const double distance=std::hypot(r+s,dz);
+    const double separation=std::hypot(r-s,dz);
+    if(!(distance>0.) || !std::isfinite(distance) || !(separation>0.))
+        return std::numeric_limits<double>::quiet_NaN();
+    const double complement=separation/distance,delta=complement*complement;
+    // If delta underflows, every higher complementary-series term is below
+    // binary64 resolution. Evaluate its leading logarithm from the original
+    // distances, which still distinguish a very near ring from coincidence.
+    const double elliptic=delta==0.
+        ? std::log(4.)+std::log(distance)-std::log(separation)
+        : complete_elliptic_first_kind(delta);
+    return (2./arch::constants::math::pi)*elliptic/distance;
+}
+
 /** Integrate only a near-field curved leaf, avoiding a singular point-mass approximation. */
 ARCH_INLINE double near_leaf_potential(const BoundaryTreeNode& node,double mass,
     const double* point,double G,double reference_radius,
@@ -99,9 +153,11 @@ ARCH_INLINE double near_leaf_potential(const BoundaryTreeNode& node,double mass,
                 jacobian*=native[0]*std::sin(native[1]);
             const double weight=weights[u]*weights[v]*(dimension==3?weights[w]:1.)*jacobian;
             denominator.add(weight);
-            numerator.add(weight*(dimension==2
-                ?2.*G*std::log(std::sqrt(r2)/reference_radius)
-                :-G/std::sqrt(r2)));
+            const bool axisymmetric=geometry==GridMetrics::Geometry::Cylindrical&&dimension==2;
+            const double kernel=axisymmetric
+                ? -G*ring_average_inverse_distance(std::hypot(point[0],point[1]),native[0],point[2]-native[1])
+                : (dimension==2?2.*G*std::log(std::sqrt(r2)/reference_radius):-G/std::sqrt(r2));
+            numerator.add(weight*kernel);
         }
     return mass*numerator.value()/denominator.value();
 }

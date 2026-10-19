@@ -75,7 +75,8 @@ cudaError_t launch_jeans(DeviceStateView state, DeviceGridView grid, Eos eos,
                          DeviceJeansWorkspace workspace, cudaStream_t stream)
 {
     if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
-        || grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+        || (grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+            && !(grid.dim == 2 && grid.geometry == static_cast<int>(DeviceGeometry::Cylindrical)))
         || state.total_size != grid.total_size || grid.active_cell_count() <= 0
         || !workspace.cell_resolution || !workspace.block_minimum
         || !workspace.eos_status || (state.n_species && !workspace.composition))

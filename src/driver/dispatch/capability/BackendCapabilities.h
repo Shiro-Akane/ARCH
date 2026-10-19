@@ -276,16 +276,6 @@ inline CapabilityResult query_support(
         || !detail::plans_share_non_linear_policy(cpu_plan, cuda_plan))
         return result;
 
-    // Two-dimensional cylindrical support is retired. Reject it on every
-    // requested backend (CPU, CUDA and Auto) without a fallback chart.
-    if (requirements.dimension == 2 && requirements.geometry == GeometryId::Cylindrical) {
-        result.cpu_supported = false;
-        result.cpu_code = BackendCapabilityCode::UnsupportedGeometry;
-        result.cuda_supported = false;
-        result.cuda_code = BackendCapabilityCode::UnsupportedGeometry;
-        return result;
-    }
-
     if (cpu_plan.linear_solver == LinearSolverId::CuDss) {
         result.cpu_code = BackendCapabilityCode::CuDssRequiresCuda;
     } else {

@@ -141,8 +141,29 @@ int main(int argc, char** argv) {
         const auto forbidden = resolve("use_diffusion=true\neos_type=helmholtz\nalpha_therm=0\nnu_visc=0\nD_spec=0");
         for (const auto key : {"alpha_therm", "nu_visc", "D_spec"})
             require(error(forbidden, key, "INAPPLICABLE_PARAMETER"), "explicit forbidden zero accepted");
-        const auto tabular = resolve("use_diffusion=true\neos_type=tabular\nuse_thermal_diff=true");
-        require(!tabular.parameters.at("alpha_therm").requirement.value, "unknown material transport guessed");
+        // All current Tabular views require explicit constant transport.
+        // Missing coefficients remain errors, not unresolved material guesses.
+        expect_missing("use_diffusion=true\neos_type=tabular\nuse_thermal_diff=true\nuse_viscous_diff=true\nuse_species_diff=true",
+            {"alpha_therm","nu_visc","D_spec"});
+        const auto tabular = resolve("use_diffusion=true\neos_type=TaBuLaR\nuse_thermal_diff=true\nuse_viscous_diff=true\nuse_species_diff=true\nalpha_therm=2\nnu_visc=3\nD_spec=4");
+        for (const auto key : {"alpha_therm", "nu_visc", "D_spec"}) {
+            const auto& record = tabular.parameters.at(key);
+            require(record.requirement.value == true && record.resolved
+                    && record.source == InputValueSource::Input,
+                    "explicit tabular constant transport not resolved from input");
+        }
+        require(std::get<double>(*tabular.parameters.at("alpha_therm").resolved) == 2.0
+                && std::get<double>(*tabular.parameters.at("nu_visc").resolved) == 3.0
+                && std::get<double>(*tabular.parameters.at("D_spec").resolved) == 4.0,
+                "tabular constants were substituted or exchanged");
+        const auto negative_transport = resolve("use_diffusion=true\neos_type=tabular\nuse_thermal_diff=true\nuse_viscous_diff=true\nuse_species_diff=true\nalpha_therm=-1\nnu_visc=-1\nD_spec=-1");
+        for (const auto key : {"alpha_therm", "nu_visc", "D_spec"})
+            require(error(negative_transport, key, "INVALID_RANGE"),
+                    "negative explicit tabular transport coefficient accepted");
+        require(!resolve("use_diffusion=true\nuse_thermal_diff=true").parameters.at("alpha_therm").requirement.value,
+                "missing EOS transport was guessed");
+        require(!resolve("use_diffusion=true\neos_type=tabularx\nuse_thermal_diff=true").parameters.at("alpha_therm").requirement.value,
+                "unknown EOS transport was guessed");
         require(error(resolve("timeintegrator=RK2\ngravity_G=1"), "gravity_G", "RETIRED_PARAMETER"), "G not retired");
         require(error(resolve("timeintegrator=RK2"), "timeintegrator", "RETIRED_PARAMETER"), "old alias restored");
         const auto bad_ranges = resolve(
@@ -192,10 +213,11 @@ int main(int argc, char** argv) {
         for (const auto& diagnostic : valid_relations.diagnostics)
             require(diagnostic.code != "INVALID_RANGE", "legal relation boundary rejected");
         for(const char* policy:{"periodic","isolated","dirichlet"}) {
-            const auto retired=resolve(std::string("geometry=cylindrical\nnblockx1=1\nnblockx2=1\nnblockx3=0\n")
+            const auto native=resolve(std::string("geometry=cylindrical\nnblockx1=1\nnblockx2=1\nnblockx3=0\n")
                 +"x1_min=1\nx1_max=2\nx2_min=-2\nx2_max=2\ngravity_type=self\ngravity_boundary="+policy,sod);
-            require(error(retired,"geometry","INVALID_RANGE"),
-                "retired cylindrical two-dimensional chart passed input resolution");
+            require(!error(native,"geometry","INVALID_RANGE"), "native Cyl2 geometry rejected");
+            require(error(native,"gravity_boundary","INVALID_RANGE") == (std::string(policy)=="periodic"),
+                    "Cyl2 axial topology mistaken for periodic azimuth");
         }
         const auto unknown_gravity = resolve("gravity_type=self\nx1_min=-1", sod);
         require(!error(unknown_gravity, "x1_min", "INVALID_RANGE"),

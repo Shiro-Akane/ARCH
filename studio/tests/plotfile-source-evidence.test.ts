@@ -7,7 +7,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import h5 from 'h5wasm/node';
 import {sourceEvidenceValid} from '../src/host/plotfileSourceIdentity.ts';
-import {inspectPlotfileMetadata,readPlotfileFieldSlice,readPlotfilePoint} from '../host/plotfileMetadata.ts';
+import {inspectPlotfileMetadata,readPlotfileFieldSlice,readPlotfilePoint,readPlotfileOverview} from '../host/plotfileMetadata.ts';
 import {validatePlotfileAudit,validatePlotfilePoint} from '../src/host/plotfileAudit.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 const valid={version:'candidate-identity-1',scope:'partial',caseId:'Sod',caseSource:'ConfigurationInput.case_id',
@@ -169,11 +169,12 @@ const bits=(value:number)=>{const b=Buffer.alloc(8);b.writeDoubleBE(value);retur
 type IdentityField={type:string;value:string};
 const encode=(fields:Map<string,IdentityField>)=>Array.from(fields,([name,{type,value}])=>`${Buffer.byteLength(name)}:${name}${type}${Buffer.byteLength(value)}:${value}\n`).join('');
 async function formalFixture(run:(path:string)=>Promise<void>,options:{dimension?:number;geometry?:string;partialIdentity?:boolean;candidatePublication?:boolean;gammaOnly?:boolean;
+ rootChange?:(root:InstanceType<typeof h5.File>)=>void;nativeChange?:(native:InstanceType<typeof h5.Group>)=>void;
  sourceChange?:(source:InstanceType<typeof h5.Group>)=>void;
  // Optional rectilinear stored bounds exercise format lookup, not physical chart measures.
  pointBounds?:boolean;boundChange?:(axis:number,index:number,upper:boolean,value:number)=>number;
  recordChange?:(config:Map<string,IdentityField>,eos:Map<string,IdentityField>)=>void;attrs?:Record<string,string|number>}={}){
- const dimension=options.dimension??2,geometry=options.geometry??'cartesian',shape=dimension===1?[1,5]:dimension===2?[1,3,5]:[1,2,3,5];
+ const dimension=options.dimension??2,geometry=options.geometry??'cartesian',axisymmetric=geometry==='cylindrical'&&dimension===2,shape=dimension===1?[1,5]:dimension===2?[1,3,5]:[1,2,3,5];
  const speciesNames=options.gammaOnly?[]:['first','second'],idealGamma=options.gammaOnly?5/3:1.4;
  const count=shape.reduce((a,b)=>a*b,1),dir=await mkdtemp(join(tmpdir(),'arch-formal-plot-')),path=join(dir,'fixture.h5');
  const attributes=(g:InstanceType<typeof h5.Group>|InstanceType<typeof h5.Dataset>,values:Record<string,string|number>)=>{for(const [key,value] of Object.entries(values))g.create_attribute(key,value);};
@@ -183,6 +184,7 @@ async function formalFixture(run:(path:string)=>Promise<void>,options:{dimension
    attributes(f,{time:.25,time_unit:'s',dim:dimension,geometry,
     plot_identity_state:options.partialIdentity?'unknown':'recorded',plot_publication_version:options.candidatePublication?'candidate-1':'arch-plot-publication-1',plot_publication_state:'complete',
     plot_publication_method:'checked-close-atomic-replace',plot_storage_order:'x1-fastest'});
+   attributes(f,{geometry_semantics_revision:1,geometry_chart:axisymmetric?'cylindrical-rz-pwc':'existing'});
    const grid=f.create_group('Grid');grid.create_attribute('coordinate_unit','cm');
    for(const axis of ['x','y','z'])grid.create_dataset({name:axis,data:Float64Array.from({length:count},(_,i)=>i+.25)});
    for(const name of ['level','morton'])grid.create_dataset({name,data:new Int32Array([0])});
@@ -220,10 +222,10 @@ async function formalFixture(run:(path:string)=>Promise<void>,options:{dimension
    if(speciesNames.length){id.create_dataset({name:'species_names',data:speciesNames});writeProperties(id);}
    options.sourceChange?.(id);
    if(!options.partialIdentity)for(const [name,text] of Object.entries({effective_config_record:configText,eos_identity_record:eosText,source_manifest_record:source,build_profile_record:profile}))id.create_dataset({name,data:text});
-   const native=f.create_group('NativeGrid'),axes=geometry==='cartesian'?['x','y','z']:dimension===3?(geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
+   const native=f.create_group('NativeGrid'),axes=geometry==='cartesian'?['x','y','z']:dimension===3?(geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r',axisymmetric?'z':'phi','inactive'];
    attributes(native,{version:geometry==='cartesian'?'arch-native-cartesian-1':'arch-native-curvilinear-1',native_geometry:geometry,centering:'cell',ghost_cells:0,
     block_kind:'active-leaf',center_basis:'cartesian',measure_source:'GridMetrics::CellVolume',measure_convention:geometry==='cartesian'?'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral',
-    measure_unit:dimension===3?'cm^3':dimension===1?'cm':'cm^2',measure_normalization:dimension===3?'full_volume':dimension===1?'per_unit_transverse_area':'per_unit_transverse_length',
+    measure_unit:axisymmetric?'cm^3':dimension===3?'cm^3':dimension===1?'cm':'cm^2',measure_normalization:axisymmetric?'per_unit_azimuth':dimension===3?'full_volume':dimension===1?'per_unit_transverse_area':'per_unit_transverse_length',
     logical_identity:'file-local level/logical_x1/logical_x2/logical_x3'});
    for(let axis=0;axis<3;axis++){
     const label=axis<dimension?axes[axis]:'inactive',unit=axis>=dimension?'inactive':['theta','phi'].includes(label)?'rad':'cm';
@@ -240,6 +242,7 @@ async function formalFixture(run:(path:string)=>Promise<void>,options:{dimension
     native.create_dataset({name:'logical_x'+(axis+1),data:new Int32Array([0])});
    }
    native.create_dataset({name:'cell_measure',data:new Float64Array(count).fill(.5**dimension)});
+   options.nativeChange?.(native);options.rootChange?.(f);
   }finally{f.close();}
   await run(path);
  }finally{await rm(dir,{recursive:true,force:true});}
@@ -307,10 +310,27 @@ test('formal digests cannot certify incomplete, nonfinite or contradictory confi
  for(const attrs of [{effective_config_sha256:'e'.repeat(64)},{build_id:'e'.repeat(64)},{case_id:'another-case'}])
   await formalFixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/formal|identity|digest/i);},{attrs});
 });
-test('formal 2D cylindrical polar is retired and rejected while spherical 2D polar stays a valid formal profile',async()=>{
+test('formal Cyl2 requires new chart, r/z length axes and per-azimuth volume; spherical polar stays unchanged',async()=>{
  await formalFixture(async path=>{
-  await assert.rejects(inspectPlotfileMetadata(path),/cylindrical.*unsupported/);
- },{geometry:'cylindrical'});
+  const metadata=await inspectPlotfileMetadata(path);assert.equal(metadata.renderEligible,true);
+  assert.deepEqual(metadata.candidateNativeGrid?.axes,['r','z','inactive']);
+  assert.deepEqual(metadata.candidateNativeGrid?.axisUnits,['cm','cm','inactive']);
+  assert.equal(metadata.candidateNativeGrid?.chart,'cylindrical-rz-pwc');
+  assert.equal(metadata.candidateNativeGrid?.measureUnit,'cm^3');
+  assert.equal(metadata.candidateNativeGrid?.measureNormalization,'per_unit_azimuth');
+  assert.equal(validatePlotfileAudit({protocolVersion:PROTOCOL_VERSION,projectId:'session',relativePath:'formal.h5',metadata},'session','formal.h5').audit.completion.state,'complete');
+  const overview=await readPlotfileOverview(path,{field:'DENS',width:3,height:2});
+  assert.equal(overview.overview?.dimension,2);
+ },{geometry:'cylindrical',pointBounds:true});
+ for(const mutation of [(f:InstanceType<typeof h5.File>)=>f.delete_attribute('geometry_chart'),
+  (f:InstanceType<typeof h5.File>)=>{f.delete_attribute('geometry_chart');f.create_attribute('geometry_chart','axisymmetric-rz');},
+  (f:InstanceType<typeof h5.File>)=>{f.delete_attribute('geometry_semantics_revision');f.create_attribute('geometry_semantics_revision',2);},
+  (f:InstanceType<typeof h5.File>)=>{f.delete_attribute('geometry_chart');f.delete_attribute('geometry_semantics_revision');}])
+  await formalFixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/chart|attribute|missing/i);},
+   {geometry:'cylindrical',rootChange:mutation});
+ for(const key of ['x2_axis','x2_unit','measure_normalization'])
+  await formalFixture(async path=>{await assert.rejects(inspectPlotfileMetadata(path),/axes|measure|coordinate/i);},
+   {geometry:'cylindrical',nativeChange:g=>{g.delete_attribute(key);g.create_attribute(key,key==='x2_axis'?'phi':key==='x2_unit'?'rad':'full_rotation');}});
  await formalFixture(async path=>{
   const metadata=await inspectPlotfileMetadata(path);assert.equal(metadata.renderEligible,false);
   assert.deepEqual(metadata.candidateNativeGrid?.axes,['r','phi','inactive']);assert.equal(metadata.candidateNativeGrid?.chart,'existing');

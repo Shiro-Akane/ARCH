@@ -1,3 +1,9 @@
+/**
+ * Compose a canonical project reader from existing Host service owners.
+ * Bind selected files, build/configuration/Preview and run controllers to one
+ * project identity. This composition layer supplies services to HTTP; it does
+ * not duplicate their filesystem rules or Core numerical decisions.
+ */
 import {RunController} from './runController.ts';
 import {RunPreparationRunner} from './runPreparation.ts';
 import {LOCAL_CPU_PROFILE_ID,localCpuProfile} from './localBuildProfile.ts';

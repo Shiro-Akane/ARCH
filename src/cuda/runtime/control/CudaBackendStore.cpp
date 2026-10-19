@@ -158,7 +158,7 @@ CudaBackend::StoreTransaction CudaBackend::begin_store_transaction(
             resource_slot->second = std::make_unique<CudaBlockRuntime>(
                 *binding.block, entry.record.handle, entry.record.storage,
                 impl_->species_count, impl_->device_ordinal,
-                *binding.physical_boundary,
+                *binding.physical_boundary, binding.hydro_boundary,
                 impl_->launch, impl_->stream.get(), impl_->runtime_counters);
             static_cast<void>(upload_slot);
         }
@@ -360,7 +360,7 @@ CudaBackend::begin_topology_store_transaction(
     for (const auto& binding : bindings) {
         cuda_bindings.push_back({
             binding.block, binding.handle, binding.storage,
-            binding.physical_boundary});
+            binding.physical_boundary, binding.hydro_boundary});
     }
     return std::make_unique<CudaTopologyStoreTransaction>(
         begin_store_transaction(scope, cuda_bindings));

@@ -19,7 +19,7 @@ EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、He
 与重子格式遵循各自的数据契约。当前规范化夹具和拒绝测试位于
 `tests/host/eos` 与 `tests/cuda/microphysics/eos`，通过下方 CTest 目标运行。
 输入规则见[表格数据参考](../../src/physics/eos/TabularEOS.zh-CN.md)；
-[迁移记录](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)
+[迁移记录](../../docs/histroy/low-density/ImplementationReport.zh-CN.md)
 保存实施与验收历史。
 
 下方应用结果与重放脚本属于 `2226456c1f87415a317dd6a2a96053a7e154b949`

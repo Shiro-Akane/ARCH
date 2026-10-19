@@ -51,15 +51,21 @@ CompositeBoundary resolve_boundary(const EllipticMesh& mesh,BoundaryKind kind) {
         // face receives the free-space potential of the actual leaf mass.
         result.sides[0]=mesh.origin[0]==0. ? FaceBoundaryKind::Neumann : FaceBoundaryKind::Dirichlet;
         result.sides[1]=FaceBoundaryKind::Dirichlet;
-        if(mesh.dimension==3) {
+        if(mesh.dimension==3 || (mesh.geometry==Geometry::Cylindrical && mesh.dimension==2)) {
             const bool spherical=mesh.geometry==Geometry::Spherical;
             const double polar_high=mesh.origin[1]+mesh.cells[1]*mesh.spacing[1];
             result.sides[2]=spherical && mesh.origin[1]==0. ? FaceBoundaryKind::Neumann : FaceBoundaryKind::Dirichlet;
+            // Within 1e-14 rad, identify the upper spherical pole as a
+            // zero-area exterior face. This boundary classification is
+            // independent of the iterative solver's residual acceptance.
             result.sides[3]=spherical && std::abs(polar_high-arch::constants::math::pi)<1e-14
                 ? FaceBoundaryKind::Neumann : FaceBoundaryKind::Dirichlet;
         }
-        {
-            const int azimuth=mesh.dimension-1;
+        const auto geometry=mesh.geometry==Geometry::Cylindrical
+            ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical;
+        const auto layout=GridMetrics::resolve_coordinate_layout(geometry,mesh.dimension);
+        if(layout.azimuth>=0 && layout.azimuth<mesh.dimension) {
+            const int azimuth=layout.azimuth;
             result.sides[2*azimuth]=FaceBoundaryKind::Periodic;
             result.sides[2*azimuth+1]=FaceBoundaryKind::Periodic;
         }

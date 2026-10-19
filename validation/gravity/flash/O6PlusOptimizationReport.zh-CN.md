@@ -3,7 +3,7 @@
 2026-09-27，`compute/optim` 工作区；源基线为 `main` 的
 `48f6d357d6b8085501d2012d70e923080bae3402`。本报告属于本轮工作树，
 此前的 [O6 报告](O6OptimizationReport.zh-CN.md)保持原版本和原计时身份。
-对应的[执行计划与尝试账本](../../../docs/development/ComputeOptimizationPlan.zh-CN.md)
+对应的[执行计划与尝试账本](../../../docs/histroy/integration/ComputeOptimizationPlan.zh-CN.md)
 会随验收状态回查。**目前不能签收 O6／O6+：完整 Cellular A/B 和 Helm 无燃烧
 的同资源 CPU 整程耗时都没有达到 FLASH 的两倍以内，A/B 尚缺共同科学误差预算。**
 这里的 `tmax` 是模拟的物理终点，以下「秒数」均为程序开始至退出的真实墙钟。

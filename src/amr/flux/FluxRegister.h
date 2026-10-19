@@ -472,21 +472,40 @@ public:
                     LogicalAmrBox box{
                         {logical[0], logical[1], logical[2]}, {1, 1, 1}};
                     const double weight = dt * area / volume;
+                    double moment_weight = weight;
+                    if (dim == 2 && block.grid.geometry == "cylindrical") {
+                        const double moment =
+                            GridMetrics::AngularMomentumFaceMoment(
+                                GridMetrics::make_geometry_view(block.grid),
+                                axis_value(axis), i, j, k,
+                                side == AmrSide::Upper);
+                        const double volume_moment =
+                            GridMetrics::AngularMomentumVolumeMoment(
+                                GridMetrics::make_geometry_view(block.grid),
+                                i, j, k);
+                        if (!amr_plan_detail::is_finite_binary64(moment)
+                            || !amr_plan_detail::is_finite_binary64(volume_moment)
+                            || moment <= 0.0 || volume_moment <= 0.0)
+                            throw std::invalid_argument(
+                                "reflux azimuthal moment is nonpositive or nonfinite");
+                        moment_weight = dt * moment / volume_moment;
+                    }
                     const double sign = side == AmrSide::Lower ? 1.0 : -1.0;
-                    const auto append = [&](AmrField field, int component) {
+                    const auto append = [&](AmrField field, int component,
+                                            double field_weight) {
                         plan.operations.push_back({
                             0, endpoint, endpoint, box, box, axis, side,
                             field, component,
                             RefinementRule::RefluxCorrection,
-                            weight, sign});
+                            field_weight, sign});
                     };
-                    append(AmrField::Rho, -1);
-                    append(AmrField::MomU, -1);
-                    append(AmrField::MomV, -1);
-                    append(AmrField::MomW, -1);
-                    append(AmrField::Energy, -1);
+                    append(AmrField::Rho, -1, weight);
+                    append(AmrField::MomU, -1, weight);
+                    append(AmrField::MomV, -1, weight);
+                    append(AmrField::MomW, -1, moment_weight);
+                    append(AmrField::Energy, -1, weight);
                     for (int component = 0; component < species; ++component)
-                        append(AmrField::Species, component);
+                        append(AmrField::Species, component, weight);
                 }
             }
         }
@@ -522,6 +541,9 @@ public:
             int face = -1;
             int cell = -1;
             double weight = 0.0;
+            double moment_weight = 0.0;
+            bool has_weight = false;
+            bool has_moment_weight = false;
             double sign = 1.0;
             std::array<bool, 5> fluid_fields{};
             std::vector<bool> species_fields;
@@ -558,18 +580,35 @@ public:
                 group.block_id = active_blocks[found->second];
                 group.face = face;
                 group.cell = cell;
-                group.weight = operation.weight;
                 group.sign = operation.sign;
                 group.species_fields.assign(
                     static_cast<std::size_t>(species), false);
             } else if (group.block_id != active_blocks[found->second]
                        || group.face != face || group.cell != cell
-                       || std::bit_cast<std::uint64_t>(group.weight)
-                           != std::bit_cast<std::uint64_t>(operation.weight)
                        || std::bit_cast<std::uint64_t>(group.sign)
                            != std::bit_cast<std::uint64_t>(operation.sign)) {
                 throw std::invalid_argument(
                     "reflux logical group metadata is inconsistent");
+            }
+
+            if (operation.field == AmrField::MomW) {
+                if (!group.has_moment_weight) {
+                    group.moment_weight = operation.weight;
+                    group.has_moment_weight = true;
+                } else if (std::bit_cast<std::uint64_t>(group.moment_weight)
+                           != std::bit_cast<std::uint64_t>(operation.weight)) {
+                    throw std::invalid_argument(
+                        "reflux moment weight is inconsistent");
+                }
+            } else {
+                if (!group.has_weight) {
+                    group.weight = operation.weight;
+                    group.has_weight = true;
+                } else if (std::bit_cast<std::uint64_t>(group.weight)
+                           != std::bit_cast<std::uint64_t>(operation.weight)) {
+                    throw std::invalid_argument(
+                        "reflux logical group metadata is inconsistent");
+                }
             }
 
             if (operation.field == AmrField::Species) {
@@ -601,7 +640,8 @@ public:
                              [](bool present) { return present; })
                 || !std::all_of(group.species_fields.begin(),
                                 group.species_fields.end(),
-                                [](bool present) { return present; }))
+                                [](bool present) { return present; })
+                || !group.has_weight || !group.has_moment_weight)
                 throw std::invalid_argument("reflux field group is incomplete");
             groups.push_back(std::move(group));
         }
@@ -621,6 +661,8 @@ public:
                 group.block_id, group.face, group.cell);
             const double correction =
                 timestep_scale * group.sign * group.weight;
+            const double moment_correction =
+                timestep_scale * group.sign * group.moment_weight;
             const double rho_before = state.rho[index];
             state.rho[index] = flux_math::reflux_conserved(
                 rho_before, correction, delta.rho);
@@ -629,7 +671,7 @@ public:
             state.mom_v[index] = flux_math::reflux_conserved(
                 state.mom_v[index], correction, delta.mom_v);
             state.mom_w[index] = flux_math::reflux_conserved(
-                state.mom_w[index], correction, delta.mom_w);
+                state.mom_w[index], moment_correction, delta.mom_w);
             state.eng[index] = flux_math::reflux_conserved(
                 state.eng[index], correction, delta.eng);
             for (int species = 0; species < state.GetNumSpecies(); ++species) {

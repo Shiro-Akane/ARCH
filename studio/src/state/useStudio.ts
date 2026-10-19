@@ -1,3 +1,8 @@
+/**
+ * Coordinate local demo parameter edits, field selection and asynchronous previews.
+ * Cancel superseded work and publish only the current display generation. Real
+ * Core requests and saved Run/Restart use their separate Host-bound workflows.
+ */
 import { useEffect, useReducer } from 'react';
 import { initialState, studioReducer } from './studioState';
 import { generateMockPreview } from '../data/MockPreviewProvider';

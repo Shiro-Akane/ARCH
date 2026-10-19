@@ -1,3 +1,6 @@
+/**
+ * Display the bounded Cartesian block overview returned by Host. Overview limits and cell selection do not change the saved AMR topology.
+ */
 import {useEffect,useId,useRef,useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import type {AuditResponse} from '../host/plotfileAudit';
@@ -119,8 +122,8 @@ function Overview({samples,disabled,onInspect,onPoint,fullSamples,onRefine,onFit
     <text x={frame.left+f*frame.width} y={335} textAnchor="middle">{plotValue(f,view.x).toPrecision(4)}</text>
     <text x={65} y={frame.top+(1-f)*frame.height+4} textAnchor="end">{plotValue(f,view.y).toPrecision(4)}</text>
    </g>)}
-   <text x={460} y={363} textAnchor="middle" fill="#d5e2eb">x1 · {coordinateUnit}</text>
-   <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{o.dimension===2?'x2 · '+coordinateUnit:o.field+' · display mean · '+unit}</text>
+   <text x={460} y={363} textAnchor="middle" fill="#d5e2eb">{samples.audit.candidateNativeGrid?.axes?.[0]??'x1'} · {coordinateUnit}</text>
+   <text x={16} y={165} transform="rotate(-90 16 165)" textAnchor="middle" fill="#d5e2eb">{o.dimension===2?(samples.audit.candidateNativeGrid?.axes?.[1]??'x2')+' · '+coordinateUnit:o.field+' · display mean · '+unit}</text>
   </svg>
   {o.dimension===2&&range&&<p>Viridis display means: {range[0]} → {range[1]} · {unit}.</p>}
   {leaves&&<details><summary>Native leaf block Inspector</summary>

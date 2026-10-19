@@ -144,7 +144,7 @@ void run(int dimension, const std::string& geometry) {
     config.refine_on_velz = dimension == 3;
     config.refine_on_entropy = config.refine_on_enuc = config.refine_on_species = true;
     const int species[] = {0, 1};
-    const auto selections = amr::indicator::make_selection(config, dimension, species);
+    const auto selections = amr::indicator::make_selection(config, dimension, species,GridMetrics::geometry_kind(grid));
     constexpr double density_floor = 1.e-12;
     const amr::indicator::StateView host{
         fields.data(), {fields.data() + cells, fields.data() + 2 * cells,
@@ -399,14 +399,6 @@ int main() {
         return 1;
     }
     try {
-        // Actual Grid construction rejects the retired chart before GPU work.
-        Grid retired_grid(2, 1.0, 2.0, 0.4, 1.1, 0.2, 0.8);
-        retired_grid.dim = 2;
-        retired_grid.geometry = "cylindrical";
-        bool retired_polar_rejected = false;
-        try { retired_grid.InitializeTopology(); }
-        catch (const std::invalid_argument&) { retired_polar_rejected = true; }
-        require(retired_polar_rejected, "retired cylindrical 2D polar indicator fixture accepted");
         verify_cuda_jeans_resolution();
         require(std::abs(amr::indicator::loehner_error(1.0, 2.0, 4.0) - 1.0 / 3.09) < 1.e-15,
             "frozen Lohner stencil changed");
@@ -414,7 +406,6 @@ int main() {
             "refinement equality boundary changed");
         for (int dimension = 1; dimension <= 3; ++dimension)
             for (const auto* geometry : {"cartesian", "cylindrical", "spherical"}) {
-                if (std::string(geometry) == "cylindrical" && dimension == 2) continue;
                 run(dimension, geometry);
             }
         test_tabular_temperature_failures();

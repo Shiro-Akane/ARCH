@@ -55,6 +55,8 @@ test('field meaning/basis/unknown reasons and low-dimensional measures remain di
  assert.equal(validFieldDeclaration({...declaration,unit:null,unitReason:null}),false);
  assert.ok(validMeasureLabels('cm','per_unit_transverse_area',1));
  assert.ok(validMeasureLabels('cm^2','per_unit_transverse_length',2));
+ assert.ok(validMeasureLabels('cm^3','per_unit_azimuth',2));
+ assert.equal(validMeasureLabels('cm^3','per_unit_azimuth',3),false);
  assert.equal(validMeasureLabels('cm^2','per_unit_transverse_length',1),false);
  assert.equal(validMeasureLabels('cm','total_3d_volume',1),false);
  assert.equal(validMeasureLabels(null,'per_unit_transverse_area'),false);

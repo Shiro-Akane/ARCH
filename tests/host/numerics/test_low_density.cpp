@@ -328,7 +328,7 @@ void check_rkl_stationary_cell_reference() {
     std::cout<<"RKL_STATIONARY_CELL_REFERENCE checked_nonbinary_seed=true active_hex=true alias=true physics_qualified=false\n";
 }
 
-/** Exercise the actual Host AMR scaled adapter with output==older, not only
+/** Exercise the actual Host AMR unscaled adapter with output==older, not only
  * the cell wrapper. Logical halos, padding, ENUC and source leases are fixed.
  * It is a stage-arithmetic fixture, not BC/EOS or full evolution qualification.
  */
@@ -349,16 +349,19 @@ void check_rkl_stationary_host_alias_reference() {
     for(bool second:{false,true}) {
         older=n;const auto addresses=arrays(older);
         const auto c=DiffFunction::get_rkl_coeffs(second?DiffFunction::RKLOrder::Second:DiffFunction::RKLOrder::First,2,5);
-        Numerics::Diffusion::detail::apply_recursive_rkl_stage(n,p,older,older,rhs,sx,initial,sx,grid,c,second);
+        Numerics::Diffusion::detail::apply_recursive_rkl_stage(n,p,older,older,rhs,sx,initial,sx,grid,c,second,.5);
         require(arrays(older)==addresses,"RKL Host older-alias replaced an owned allocation");
         for(int i=0;i<total;++i) {
             const bool active=i>=grid.GetIndex(grid.Is(),grid.Js(),grid.Ks())&&i<grid.GetIndex(grid.Ie(),grid.Js(),grid.Ks());
             require(bits(older.rho[i])==bits(seed.rho)&&bits(older.mom_u[i])==bits(seed.mom_u)
                 &&bits(older.mom_v[i])==bits(seed.mom_v)&&bits(older.mom_w[i])==bits(seed.mom_w),
-                "Host scaled RKL stationary conserved field changed");
+                "Host RKL stationary conserved field changed");
             require(bits(older.X(0,i))==bits(.37)&&bits(older.X(1,i))==bits(1.-.37)
                 &&bits(older.enuc_rate[i])==bits(n.enuc_rate[i]),"Host RKL stationary Xi/ENUC changed");
-            if(active)require(older.eng[i]!=seed.eng,"Host RKL active E RHS was lost");
+            // dt=1/2 and RHS=2 give exactly one tilde_mu increment for
+            // either RKL order. A pre-scaled/ignored-dt adapter fails this.
+            if(active)require(bits(older.eng[i])==bits(seed.eng+c.tilde_mu),
+                "Host RKL did not apply its actual unscaled RHS interval");
             else require(bits(older.eng[i])==bits(seed.eng),"Host RKL changed a logical halo/padding energy");
         }
     }

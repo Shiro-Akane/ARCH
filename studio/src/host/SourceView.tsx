@@ -1,3 +1,8 @@
+/**
+ * Display the selected C++ source as read-only project evidence.
+ * Source editing and compilation occur through their own explicit workflows;
+ * viewing text does not change the executable used for Preview or Run.
+ */
 import {useState} from 'react';import {useHost} from './hostContext';import {buildRequest,validateSource} from './BuildAdapter';import type {SourceResponse} from './contracts';
 export function SourceView(){const {snapshot,connected}=useHost();const [source,setSource]=useState<SourceResponse>();const [search,setSearch]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);const id=snapshot?.session.projectId;const visible=source?.projectId===id?source:undefined;
  async function load(){if(!id||busy)return;setBusy(true);try{setSource(validateSource(await buildRequest('/api/source'),id));setError('');}catch(e){setError(e instanceof Error?e.message:'Source unavailable');}finally{setBusy(false);}}

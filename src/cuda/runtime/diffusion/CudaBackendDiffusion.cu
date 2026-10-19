@@ -28,6 +28,9 @@ namespace {
 __global__ void diffusion_activity_kernel(const DeviceDiffusionActivityBlock* bindings,
     DeviceDiffusionActivityResult* results)
 {
+    // Four 32-lane warps, matching this kernel's 128-thread launch below.
+    // Shared arrays and the fixed compensated join use exactly these lanes;
+    // changing the size also changes summation grouping and needs parity checks.
     constexpr int threads = 128;
     __shared__ double signed_part[threads], absolute_part[threads];
     __shared__ std::uint64_t cells_part[threads];

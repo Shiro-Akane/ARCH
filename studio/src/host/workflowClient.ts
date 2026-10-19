@@ -1,3 +1,8 @@
+/**
+ * Validate discovery and initial-field/AMR responses for one compiled configuration scope.
+ * Match acknowledgements and final results to their request identities before
+ * publishing; structurally valid data from another generation remains stale.
+ */
 import {PROTOCOL_VERSION} from './contracts.ts';
 import {record} from './previewValidation.ts';
 import {sameBuildScope} from './configurationContracts.ts';

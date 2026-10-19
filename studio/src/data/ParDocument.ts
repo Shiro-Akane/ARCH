@@ -1,3 +1,8 @@
+/**
+ * Preserve a parameter file's raw lines while applying explicit textual edits.
+ * Parsing identifies entries and effective occurrences for the editor; Core's
+ * schema/inspection remains the authority for required keys and physical validity.
+ */
 export interface ParEntry { key: string; value: string; start: number; end: number; line: number }
 export interface ParDocument { raw: string; entries: ParEntry[]; rawLines: number[] }
 

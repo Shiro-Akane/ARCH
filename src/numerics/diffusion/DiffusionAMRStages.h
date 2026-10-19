@@ -380,14 +380,18 @@ ARCH_INLINE void apply_recursive_rkl_stage_cell(
 }
 
 template <typename EosType>
-inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id,
+inline void evaluate_amr_diffusion_operator(amr::AMRControl& amr_ctrl, int block_id,
                                          const FluidState& state, const EosType& eos,
                                          const Grid& grid, const SimConfig& config,
-                                         double dt, double flux_weight,
+                                         double flux_weight,
                                          std::vector<FluidVector>& dU,
                                          std::vector<double>& d_species,
                                          bool capture_budget = true)
 {
+    // Publish L(U), as the single-block and CUDA adapters already do.
+    // RKL applies the physical interval in its shared stage formula. The
+    // independent flux_weight and ApplyReflux(real_dt) retain time budgets.
+    constexpr double operator_interval = 1.0;
     const int n_species = state.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
     dU.assign(total_size, FluidVector{});
@@ -400,12 +404,12 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
         std::fill(species_flux_buffer.begin(), species_flux_buffer.end(), 0.0);
         DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, capture_budget);
         TimeIntegration::accumulate_divergence(dU, d_species, flux_buffer, species_flux_buffer,
-                                               grid, dt, dir, n_species);
+                                               grid, operator_interval, dir, n_species);
         amr::RegisterCoarseFineFluxes(amr_ctrl, block_id, grid, dir, flux_buffer,
                                       species_flux_buffer, n_species, flux_weight);
     }
 
-    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt);
+    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, operator_interval);
 }
 
 inline void apply_first_rkl_stage(const FluidState& state_n, FluidState& destination,
@@ -449,7 +453,7 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
                                       const std::vector<FluidVector>& d_initial,
                                       const std::vector<double>& d_species_initial,
                                       const Grid& grid, const DiffFunction::RKLCoeffs& coeffs,
-                                      bool second_order)
+                                      bool second_order, double dt)
 {
     const int n_species = state_n.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
@@ -463,9 +467,10 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
         for (int i = grid.Is(); i < grid.Ie(); ++i) {
             const int idx = grid.GetIndex(i, j, k);
             FluidVector updated;
-            // The adapter captures all fluid values by value; every old rhoX
+            // This is the same unscaled RHS/time grouping as single-block
+            // and CUDA RKL. Capture all fluid values by value; every old rhoX
             // is read before destination.set can replace an aliased older rho.
-            apply_recursive_rkl_stage_cell_impl<true>(
+            apply_recursive_rkl_stage_cell_impl<false>(
                 second_order ? state_n.get(idx) : FluidVector{},
                 second_order && n_species > 0 ? state_n.mass_fractions.data() + idx : nullptr,
                 state_previous.get(idx),
@@ -475,7 +480,7 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
                 d_previous[idx], n_species > 0 ? d_species_previous.data() + idx : nullptr,
                 second_order ? d_initial[idx] : FluidVector{},
                 second_order && n_species > 0 ? d_species_initial.data() + idx : nullptr,
-                n_species, total_size, coeffs, second_order, 0.0, updated,
+                n_species, total_size, coeffs, second_order, dt, updated,
                 n_species > 0 ? destination.mass_fractions.data() + idx : nullptr);
             destination.set(idx, updated);
         }
@@ -797,16 +802,16 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                     output.stage_repairs.reset(output.GetNumSpecies());
                     std::vector<FluidVector> d_previous;
                     std::vector<double> d_species_previous;
-                    detail::evaluate_diffusion_increment(
+                    detail::evaluate_amr_diffusion_operator(
                         amr_ctrl, block_id, previous, eos, block.grid,
-                        config, dt, coefficients.tilde_mu, d_previous,
+                        config, coefficients.tilde_mu, d_previous,
                         d_species_previous, /*capture_budget=*/true);
 
                     if (descriptor.stage == 1) {
                         detail::apply_first_rkl_stage(
                             state_n, output, d_previous,
                             d_species_previous, block.grid,
-                            coefficients.tilde_mu);
+                            coefficients.tilde_mu * dt);
                         TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                         continue;
                     }
@@ -814,9 +819,9 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                     std::vector<FluidVector> d_initial;
                     std::vector<double> d_species_initial;
                     if (selected_plan.second_order) {
-                        detail::evaluate_diffusion_increment(
+                        detail::evaluate_amr_diffusion_operator(
                             amr_ctrl, block_id, state_n, eos, block.grid,
-                            config, dt, coefficients.gamma, d_initial,
+                            config, coefficients.gamma, d_initial,
                             d_species_initial, /*capture_budget=*/false);
                     } else {
                         d_initial.assign(block.grid.GetTotalSize(),
@@ -830,7 +835,7 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         state_n, previous, older, output, d_previous,
                         d_species_previous, d_initial, d_species_initial,
                         block.grid, coefficients,
-                        selected_plan.second_order);
+                        selected_plan.second_order, dt);
                     TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                 }
                 return token;

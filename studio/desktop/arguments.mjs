@@ -1,3 +1,8 @@
+/**
+ * Parse the desktop's explicit launch selection and Windows/WSL file association.
+ * Return paths and options for the existing launcher; project validation and Core
+ * identity are checked by Host before scientific actions become available.
+ */
 import path from 'node:path';
 export function parseLaunchArgs(args,cwd){
  const result={cwd};const seen=new Set();const allowed=new Set(['project','binary','case','config','source','distro','cwd','build-dir']);

@@ -53,19 +53,12 @@ jobs:
         run: |
           python3 tools/audit_architecture.py . \
             2>&1 | tee build-ci/tooling/architecture.log
+          python3 tools/check_documentation.py . \
+            2>&1 | tee build-ci/tooling/documentation.log
 
       - name: Run the existing Python suite without skips
         run: |
-          python3 - <<'PY' 2>&1 | tee build-ci/tooling/unittest.log
-          import sys
-          import unittest
-
-          suite = unittest.defaultTestLoader.discover("tests/tooling", pattern="test_*.py")
-          result = unittest.TextTestRunner(verbosity=2).run(suite)
-          if not result.testsRun or result.skipped:
-              print("CI requires a nonempty tooling suite with no skipped controls.")
-          sys.exit(0 if result.wasSuccessful() and result.testsRun and not result.skipped else 1)
-          PY
+          python3 -B tests/tooling 2>&1 | tee build-ci/tooling/unittest.log
 
       - name: Retain tooling diagnostics
         if: always()
@@ -96,91 +89,38 @@ jobs:
         with:
           persist-credentials: false
           lfs: false
+          fetch-depth: 2
 
-      - name: Identify the exact Helmholtz table cache
-        id: eos-pointer
-        run: |
-          python3 - <<'PY'
-          import hashlib
-          import os
-          import re
-          import subprocess
-
-          path = "EOS_toolkit/tables/helmholtz/helm_table.dat"
-          pointer = subprocess.check_output(["git", "show", "HEAD:" + path])
-          if not re.fullmatch(
-              rb"version https://git-lfs.github.com/spec/v1\noid sha256:[0-9a-f]{64}\nsize [1-9][0-9]*\n",
-              pointer,
-          ):
-              raise SystemExit("The required Helmholtz table has no canonical LFS pointer.")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write("sha256=" + hashlib.sha256(pointer).hexdigest() + "\n")
-          PY
-
-      - name: Restore the exact Helmholtz LFS object
-        id: eos-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .git/lfs/objects
-          key: arch-helmholtz-lfs-v1-${{ steps.eos-pointer.outputs.sha256 }}
-
-      - name: Download the required EOS table only on a cache miss
-        if: steps.eos-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Decide whether native checks apply
+        id: native-scope
         env:
-          # Limit LFS hydration while checkout still owns its temporary auth.
-          # Do not fetch historical HDF5 results or unused large EOS tables.
-          GIT_CONFIG_COUNT: '2'
-          GIT_CONFIG_KEY_0: lfs.fetchinclude
-          GIT_CONFIG_VALUE_0: EOS_toolkit/tables/helmholtz/helm_table.dat
-          GIT_CONFIG_KEY_1: lfs.fetchexclude
-          GIT_CONFIG_VALUE_1: ''
-        with:
-          persist-credentials: false
-          lfs: true
-
-      - name: Hydrate the cached Helmholtz table offline and verify its identity
+          ARCH_CI_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+          mkdir -p build-ci/reports
+          python3 tools/check_ci_results.py --scope native \
+            --base "$ARCH_CI_PR_BASE_SHA" --head HEAD > build-ci/reports/scope.json
           python3 - <<'PY'
-          import hashlib
-          import re
-          import subprocess
+          import json
+          import os
           from pathlib import Path
 
-          path = Path("EOS_toolkit/tables/helmholtz/helm_table.dat")
-          pointer = subprocess.check_output(["git", "show", "HEAD:" + path.as_posix()])
-          identity = re.fullmatch(
-              rb"version https://git-lfs.github.com/spec/v1\noid sha256:([0-9a-f]{64})\nsize ([1-9][0-9]*)\n",
-              pointer,
-          )
-          if identity is None:
-              raise SystemExit("The required Helmholtz table has no canonical LFS pointer.")
-          expected_sha256 = identity[1].decode("ascii")
-          expected_size = int(identity[2])
-          if not path.is_file():
-              raise SystemExit("The required Helmholtz table is absent after offline LFS checkout.")
-          actual_size = path.stat().st_size
-          if actual_size != expected_size:
-              raise SystemExit(
-                  f"The required Helmholtz table is a pointer or has the wrong size: {actual_size} != {expected_size}."
-              )
-          with path.open("rb") as table:
-              actual_sha256 = hashlib.file_digest(table, "sha256").hexdigest()
-          if actual_sha256 != expected_sha256:
-              raise SystemExit("The required Helmholtz table does not match its LFS SHA-256.")
-          print(f"Verified Helmholtz table: {actual_size} bytes, SHA-256 {actual_sha256}.")
+          scope = json.loads(Path("build-ci/reports/scope.json").read_text())
+          assert type(scope["required"]) is bool
+          print(json.dumps(scope, indent=2))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("required=" + str(scope["required"]).lower() + "\n")
+          if not scope["required"]:
+              print("CPU: NOT_APPLICABLE to this documentation diff; no test pass is claimed.")
           PY
 
-      # Retain the verified table even if later compilation or science fails.
-      - name: Save the verified Helmholtz LFS object
-        if: success() && steps.eos-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Prepare the verified Helmholtz table
+        if: steps.native-scope.outputs.required == 'true'
+        uses: ./.github/actions/lfs-asset
         with:
-          path: .git/lfs/objects
-          key: ${{ steps.eos-cache.outputs.cache-primary-key }}
+          asset: helmholtz
 
       - name: Prepare the CPU toolchain
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
@@ -193,6 +133,7 @@ jobs:
           free -h
 
       - name: Identify native compiler targets for the cache
+        if: steps.native-scope.outputs.required == 'true'
         id: compiler
         run: |
           # Release uses -march=native. Never share its cached objects across
@@ -201,6 +142,7 @@ jobs:
           echo "target=$identity" >> "$GITHUB_OUTPUT"
 
       - name: Restore compiler cache
+        if: steps.native-scope.outputs.required == 'true'
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -210,6 +152,7 @@ jobs:
             arch-cpu-ubuntu24-gcc12-${{ steps.compiler.outputs.target }}-${{ hashFiles('CMakeLists.txt', 'cmake/**') }}-
 
       - name: Configure the existing CPU Release preset with tests and KLU
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           cmake --preset cpu-release -B build-ci/cpu \
             -DBUILD_TESTING=ON -DARCH_ENABLE_KLU=ON -DARCH_FETCH_SUITESPARSE=ON \
@@ -219,6 +162,7 @@ jobs:
           python3 tools/check_ci_results.py --inventory build-ci/reports/inventory.json
 
       - name: Build the application and existing CPU validation suite
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           python3 tools/run_memory_guarded.py \
             --min-available-mib 1536 --max-swap-growth-mib 512 --pressure-guard \
@@ -226,6 +170,7 @@ jobs:
             cmake --build build-ci/cpu --parallel 2
 
       - name: Run every configured CPU numerical and API test
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 --stop-on-failure \
             --no-tests=error --output-on-failure \
@@ -235,6 +180,7 @@ jobs:
             --inventory build-ci/reports/inventory.json --junit build-ci/reports/ctest.xml
 
       - name: Validate low-density physical trajectories and repair accounting
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           /usr/bin/python3 validation/low_density/run.py \
             --arch "$PWD/build-ci/cpu/bin/ARCH" --backend cpu \
@@ -249,7 +195,7 @@ jobs:
 
       # Save only the current PR cache namespace after all CPU gates pass.
       - name: Save the successful PR compiler cache
-        if: success() && steps.cache.outputs.cache-hit != 'true'
+        if: steps.native-scope.outputs.required == 'true' && success() && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: build-ci/ccache
@@ -284,6 +230,8 @@ jobs:
     steps:
       - name: Check out the tested revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env:
+          GIT_LFS_SKIP_SMUDGE: '1'
         with:
           persist-credentials: false
           # Include both merge parents; unavailable refs conservatively run Studio.
@@ -297,7 +245,7 @@ jobs:
           set -euo pipefail
           mkdir -p build-ci/studio
           python3 tools/check_ci_results.py \
-            --studio-scope-base "$ARCH_CI_PR_BASE_SHA" --studio-scope-head HEAD \
+            --scope studio --base "$ARCH_CI_PR_BASE_SHA" --head HEAD \
             > build-ci/studio/scope.json
           python3 - <<'PY'
           import json
@@ -312,6 +260,12 @@ jobs:
           if not scope["required"]:
               print("Studio: NOT_APPLICABLE to this diff; no test pass is claimed.")
           PY
+
+      - name: Prepare the verified Studio reader fixture
+        if: steps.scope.outputs.required == 'true'
+        uses: ./.github/actions/lfs-asset
+        with:
+          asset: studio-sod
 
       - name: Prepare the declared Node runtime
         if: steps.scope.outputs.required == 'true'
@@ -336,7 +290,7 @@ jobs:
         working-directory: studio
         run: |
           set -euo pipefail
-          /usr/bin/time -p node --test --test-concurrency=1 --test-reporter=tap tests/*.test.ts \
+          /usr/bin/time -p npm --silent test \
             2> ../build-ci/studio/test-time.log | tee ../build-ci/studio/tests.tap
           python3 ../tools/check_ci_results.py --node-tap ../build-ci/studio/tests.tap
 

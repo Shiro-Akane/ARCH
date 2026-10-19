@@ -1,3 +1,6 @@
+/**
+ * Present Host-prepared Run/Restart proposals and explicit confirmation. Saved input and selected compiled binary identities remain visible before launch.
+ */
 import {RunHistory} from './RunHistory';
 import {useEffect,useRef,useState} from 'react';
 import type {ReactNode} from 'react';

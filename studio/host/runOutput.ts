@@ -1,3 +1,9 @@
+/**
+ * Reserve canonical output directories for cooperating Studio-managed runs.
+ * Resolve aliases before taking advisory file locks and release acquired handles
+ * on failure. Reservations coordinate owners; they never permit overwriting an
+ * existing simulation or constrain unrelated external processes.
+ */
 import {spawn} from 'node:child_process';
 import {mkdir,lstat,open,realpath} from 'node:fs/promises';
 import type {FileHandle} from 'node:fs/promises';

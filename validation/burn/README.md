@@ -41,7 +41,28 @@ configuration loading alone does not establish a new scientific trajectory or CU
 result. Replays use the recorded numerical/EOS controls and table identity;
 longer physical endpoints need their own independent reference and budgets.
 
-## Current CPU reliability check
+The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+closes the declared single-GPU scope. The original private Cellular 24-step run
+and all 25 checkpoints now pass the unchanged ENUC `5e-9` relative plus `5e-12`
+absolute gate; ENUC is byte-identical between current CPU and Device runs.
+Both backends also pass their own CHK12-to24 fresh process, with 21 checkpoint
+and 43 physical Plot datasets identical to continuous evolution.
+
+Actual capture of both accepted burn halves and identical-input replay isolated
+roundoff amplification in Saha arithmetic and a different Host AMR RKL time
+multiplication order. The existing NSE owner now shares conditioned arithmetic;
+the Host AMR owner consumes unscaled `L(U)` and applies the real interval once.
+Current built-in/generated NSE authorities, A19 policy cases, original RKL entry
+and rotating AMR consumers pass. The 6859-point current-function bridge retains
+the independent precision reference. Equations, ODE controls, fixed-point zero
+energy, source definition and original conservation tolerances are unchanged.
+ENUC remains the last accepted burn-half nuclear-energy increment divided by its
+half interval. The earlier step-1/terminal failures (`4.3878863852117646e-7` /
+`1.1197942950938268e-7`) keep their original identity in the record.
+The [release plan](../../ARCH_RELEASE_PLAN.md) lists build costs and remaining
+CPU, platform and distribution qualification boundaries.
+
+## CPU science evidence
 
 The [one-zone CPU receipt](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json) records fresh
 BE_NR, BD and ROS4 runs through the original one-zone endpoint and CPU
@@ -71,14 +92,14 @@ Species Linf is `8.54e-15` and relative thermal-closure residual `2.28e-14`,
 within the original `1e-12` limits. This audits the accepted output; it does
 not measure the producer's internal Ye/old EOS energy or derive a unique
 preferred thermal root. Pure-ODE integration does not represent this route.
-The [current CPU receipt](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+The [earlier CPU receipt](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
 extends this one-dimensional input to its original endpoint in 24 steps
 (4.01 seconds, 25 checkpoints, zero repairs); its first saved state matches
 the independently audited state exactly. It also qualifies six enabled-transport
 endpoints and four active-ENUC continuations under the original budgets, after
 repairing precision loss in the conservation observer without changing physics.
-The original CPU/CUDA `enuc_rate` screening and the separate public/2D trajectories remain open;
-the older cross-identity scalar difference does not close them. `ENUC`/`enuc_rate` has units
+The current Device record above owns the completed CPU/CUDA rate screening and
+public/2D acceptance; this earlier CPU receipt retains its original source identity. `ENUC`/`enuc_rate` has units
 `erg g^-1 s^-1`: it is the last burn half-step's accepted energy increment
 divided by that half-step's duration, not a whole-macro-step energy ledger.
 

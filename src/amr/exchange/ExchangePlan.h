@@ -342,6 +342,42 @@ inline SameLevelExchangePlan make_same_level_exchange_plan(
     return plan;
 }
 
+/** Complete 2-D mixed-level corners after all face halos are current.
+ * A transverse viscous stencil sees the same two cells from both neighboring
+ * patches only when each normal ghost's transverse halo is also current.
+ * Coarse-fine transfers fill face interiors; the original X/Y sweep precedes
+ * them and therefore cannot publish these final corners. Copy only the two
+ * transverse ghost strips from each same-level neighbor's now-valid face.
+ * Sources have an active normal coordinate and a ghost transverse coordinate;
+ * no source corner or active destination is used. The existing phased gather /
+ * scatter and fingerprint validation serve both Host and Device executors.
+ */
+inline SameLevelExchangePlan make_same_level_corner_completion_plan(
+    const SameLevelExchangePlan& faces)
+{
+    if(faces.dimension!=2||faces.fingerprint==0||
+       compute_same_level_exchange_fingerprint(faces)!=faces.fingerprint)
+        throw std::invalid_argument("corner completion requires a valid 2-D face plan");
+    auto corners=faces;corners.operations.clear();
+    for(int axis=0;axis<3;++axis) {
+        const auto first=corners.operations.size();
+        if(axis<2)for(const auto& original:faces.operations) {
+            if(original.phase!=static_cast<ExchangePhaseId>(axis))continue;
+            for(int side=0;side<2;++side) {
+                auto operation=original;const int tangent=1-axis;
+                operation.source_box.first[tangent]=operation.destination_box.first[tangent]=
+                    side?corners.active_extent[tangent]:-static_cast<int>(corners.ghost_depth);
+                operation.source_box.extent[tangent]=operation.destination_box.extent[tangent]=corners.ghost_depth;
+                operation.ordinal=corners.operations.size();corners.operations.push_back(operation);
+            }
+        }
+        corners.phases[axis]={static_cast<ExchangePhaseId>(axis),first,corners.operations.size()-first};
+    }
+    corners.fingerprint=compute_same_level_exchange_fingerprint(corners);
+    if(corners.fingerprint==0)throw std::overflow_error("corner plan fingerprint is invalid");
+    return corners;
+}
+
 struct HostExchangeLayout {
     int dimension = 0;
     std::array<std::int32_t, 3> active_origin{};

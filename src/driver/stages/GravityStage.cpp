@@ -274,7 +274,12 @@ std::vector<io::PlotScalarField> GravityStage::plot_fields() const {
     if (!gravity_) return {};
     std::vector<io::PlotScalarField> fields{{"GPOT",gravity_->potential()}};
     const char* names[]{"GACX","GACY","GACZ"};
-    for(int a=0;a<runtime_.configuration().grid.dim;++a) fields.push_back({names[a],gravity_->acceleration()[a]});
+    const auto& grid=runtime_.configuration().grid;
+    // Cyl2 resolves two coordinates but retains three physical components.
+    // The self-gravity owner already provides a zero phi field; publish it
+    // from the existing storage without allocating another numerical field.
+    const int components=grid.dim==2&&grid.geometry=="cylindrical"?3:grid.dim;
+    for(int a=0;a<components;++a) fields.push_back({names[a],gravity_->acceleration()[a]});
     return fields;
 }
 }

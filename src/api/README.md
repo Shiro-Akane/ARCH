@@ -23,6 +23,6 @@
 - [Studio 指南](../../docs/guides/Studio.zh-CN.md)：介绍用户工作流。
 - [工程测试](../../studio/tests/README.md)：说明 Host 与界面的检查边界。
 - [验证索引](../../validation/README.zh-CN.md)：提供数值验证入口。
-- [archive](docs/archive/README.md)：保存历史交接材料。
+- [archive](../../docs/histroy/README.md#studio)：保存历史交接材料。
 
 示例按各目录标注的程序与输入身份使用。

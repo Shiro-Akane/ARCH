@@ -1,3 +1,6 @@
+/**
+ * Present workspace selection and project context. Switching the visible workspace does not implicitly save input, compile or launch a simulation.
+ */
 import type { WorkingCopy } from '../data/RealInitPreviewProvider';
 import { useCoreParameters } from '../state/coreParameters';
 import { workspaceOptions } from '../data/workspacePresentation';

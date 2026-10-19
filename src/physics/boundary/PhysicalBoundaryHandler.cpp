@@ -21,6 +21,7 @@
 #include <omp.h>
 #endif
 
+#include "amr/topology/AmrTree.h"
 #include "data/StateDiagnostics.h"
 #include "driver/runtime/ComputeBackend.h"
 #include "grid/CoordinateBoundary.h"
@@ -216,6 +217,30 @@ void BCHandler::store_conditions(arch::boundary::DiffusionBoundaryStorage& stora
     for (int s = 0; s < species; ++s)
         destination[4 + s] = data.species.empty() ? arch::boundary::ScalarBoundaryCondition{} : data.species[s];
 }
+
+/** Reuse the exact Host face ownership law for both backend bindings. */
+arch::boundary::HydroBoundaryView BCHandler::hydro_physical_faces(
+    const amr::AmrTree& tree,const amr::Block& block) const {
+        const auto& root=tree.GetRootGrid();
+        block.RequireLogicalGeometryIdentity(root);
+        if(tree.FindBlock(block.level,block.logical_x1,block.logical_x2,block.logical_x3)!=block.id)
+            throw std::logic_error("Hydro boundary logical block is not its actual Tree member");
+        const auto& plan=logical_plan(block.grid).input();
+        const int roots[3]{root.nblockx1,root.nblockx2,root.nblockx3};
+        const std::uint32_t logical[3]{block.logical_x1,block.logical_x2,block.logical_x3};
+        const double lower[3]{root.x1_min,root.x2_min,root.x3_min};
+        const double upper[3]{root.x1_max,root.x2_max,root.x3_max};
+        const auto chart=GridMetrics::geometry_from_name(root.geometry);
+        arch::boundary::HydroBoundaryView result;
+        for(int axis=0;axis<root.dim;++axis)for(int side=0;side<2;++side) {
+            const bool root_face=side?std::uint64_t(logical[axis])+1
+                ==(std::uint64_t(roots[axis])<<block.level):logical[axis]==0;
+            result.reflecting[2*axis+side]=root_face
+                &&plan.faces[2*axis+side]==arch::boundary::BoundaryType::Reflecting
+                &&!GridMetrics::IsCoordinateJoin(chart,root.dim,axis,side?upper[axis]:lower[axis]);
+        }
+        return result;
+    }
 
 const arch::boundary::BoundaryPlan& BCHandler::logical_plan(const Grid& grid) const {
     if (!(arch::boundary::host::make_layout(grid) == compiled_.layout))

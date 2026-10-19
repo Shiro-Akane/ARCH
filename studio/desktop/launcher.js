@@ -1,3 +1,8 @@
+/**
+ * Collect the desktop's project/source/build selection in the launcher form.
+ * Submit only the declared launch envelope through the preload bridge. Host checks
+ * canonical paths, build freshness and model identity before Core use.
+ */
 const api=window.archDesktop;
 if(api.platform==='linux')document.getElementById('distro-field').hidden=true;
 document.getElementById('pick').onclick=async()=>{

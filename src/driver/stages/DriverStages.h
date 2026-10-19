@@ -610,7 +610,7 @@ void start_compute_backend(DriverRuntime& runtime, const EosPolicy& eos,
         std::vector<cuda::CudaBlockBinding> bindings;
         bindings.reserve(topology.size());
         for (const auto& block : topology)
-            bindings.push_back({block.block, block.handle, block.storage, block.physical_boundary});
+            bindings.push_back({block.block, block.handle, block.storage, block.physical_boundary, block.hydro_boundary});
         runtime.install_backend(cuda::make_cuda_backend(bindings, resolution.device.ordinal,
             cuda::make_cuda_launch_config(plan, runtime.configuration()), runtime.species(), eos));
         order.record(dispatch::StartupEvent::Constructed);

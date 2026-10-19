@@ -1,3 +1,6 @@
+/**
+ * Present metadata and values from the selected read-only Plotfile response. Stored values and source evidence stay distinct from a displayed rendering.
+ */
 import type { PlotfileMetadata } from '../../data/PlotfilePreviewProvider';
 import type { LinePreviewData } from '../../data/LinePreviewData';
 export function PlotfileInspector({ info, line, selected, onSelect }: { info: PlotfileMetadata; line: LinePreviewData | null; selected: number | null; onSelect: (index: number) => void }) {

@@ -16,6 +16,14 @@ on either backend when the destination build supports its physics and required
 data. The tests compare resumed runs with uninterrupted runs, including dynamic
 refinement and burning. Overall acceptance is tracked in the [validation index](../README.md).
 
+The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+adds four original 256-step RT GPU continuations, a five-step four-module AMR
+continuation and the rebuilt native axial model. Own-backend fresh retains
+strict controller/field checks and all-checkpoint/physical-Plot dataset equality.
+Independent CPU/GPU endpoints with different natural CFL clocks use actual
+common-time supplements, not time relabelling or a relaxed fresh contract.
+The separate private Cellular ENUC parity failure remains open.
+
 ## What a checkpoint preserves
 
 An ARCH checkpoint stores AMR leaf topology, conserved fields, native mass fractions and the

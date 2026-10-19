@@ -530,10 +530,18 @@ void boundary_normals() {
     rejects([&]{arch::boundary::BoundaryCartesianNormal(oblique,far,arch::boundary::BoundaryAxis::X1,
         arch::boundary::BoundarySide::Lower);},"normal from an unsupported geometry accepted");
     const double sixth=constants::math::pi/6.;
-    rejects([&]{Grid::PhysicalCoordsFromNative(2,"cylindrical",2.,sixth,0.);},
-        "retired cylindrical two-dimensional coordinates accepted");
-    // The oblique normal coverage supplied by the retired polar azimuth is
-    // preserved by the two-dimensional spherical polar section at phi=pi/6.
+    Grid meridional;meridional.dim=2;meridional.geometry="cylindrical";
+    const auto meridional_point=Grid::PhysicalCoordsFromNative(2,"cylindrical",2.,sixth,0.);
+    require(meridional_point.x==2.&&meridional_point.y==0.&&meridional_point.z==sixth,
+        "axisymmetric axial length was interpreted as an azimuth");
+    check(meridional,meridional_point,arch::boundary::BoundaryAxis::X1,arch::boundary::BoundarySide::Upper,
+        {1.,0.,0.},"axisymmetric radial normal");
+    check(meridional,meridional_point,arch::boundary::BoundaryAxis::X2,arch::boundary::BoundarySide::Upper,
+        {0.,0.,1.},"axisymmetric axial normal");
+    rejects([&]{arch::boundary::BoundaryCartesianNormal(meridional,meridional_point,
+        arch::boundary::BoundaryAxis::X3,arch::boundary::BoundarySide::Upper);},
+        "axisymmetric inactive phi normal accepted");
+    // The spherical polar section supplies independent oblique normals.
     Grid spherical_section;spherical_section.dim=2;spherical_section.geometry="spherical";
     const auto oblique_point=Grid::PhysicalCoordsFromNative(2,"spherical",2.,sixth,0.);
     check(spherical_section,oblique_point,arch::boundary::BoundaryAxis::X1,arch::boundary::BoundarySide::Upper,
@@ -763,7 +771,93 @@ void user_green_accounting() {
     rejects([&]{(void)gravity_boundary_exchange(coarse,fine);},"missing surface child silently dropped work");
 }
 
+/** Actual native binding: CGS density creates the independent quadratic
+ * potential a(r^2+z^2). Check its force, field energy and original face-flux
+ * work, plus isolated periodic-z rejection before a workspace can exist.
+ */
+void axisymmetric_field_and_work() {
+    constexpr double a=.01,dt=.125,flux_density=.37;
+    SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=config.grid.nblockx2=2;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=1.;config.grid.x2_min=-.5;config.grid.x2_max=.5;
+    config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+    config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="reflecting";
+    config.physics.gravity.boundary="user";config.physics.gravity.relative_tolerance=1e-12;
+    config.physics.gravity.absolute_tolerance=0.;config.physics.gravity.max_cycles=300;
+    SpeciesManager species;
+    boundary::ResolvedUserBoundaries callbacks;
+    callbacks.gravity=[](const boundary::GravityBoundaryContext& context) {
+        const auto& x=context.native_position;
+        return boundary::GravityBoundaryData::Dirichlet(a*(x[0]*x[0]+x[1]*x[1]));
+    };
+    boundary::ScopedUserBoundarySelection selection(std::move(callbacks),config,species);
+    amr::AMRControl control(16,2);control.tree->InitRootGrid(config,0);
+    std::vector<amr::BlockHandle> handles;std::vector<GravityDensityView> views;
+    GravitySolveIdentity identity;identity.topology={1};identity.gravitational_constant=constants::gravity::cgs::gravitational_constant;
+    identity.operator_revision=identity.boundary_revision=identity.accuracy_revision=1;
+    const double rho=6.*a/(4.*constants::math::pi*constants::gravity::cgs::gravitational_constant);
+    for(int id:control.tree->GetActiveBlocks()) {
+        auto& block=control.pool->GetBlock(id);handles.push_back({{static_cast<std::uint64_t>(id+1)},{1}});
+        const GravityInputIdentity input{handles.back(),state::StateSlot::Current,{1},1};identity.inputs.push_back(input);
+        views.push_back({input,{block.fluid_state.rho.data(),block.fluid_state.rho.size(),amr::native_scalar_layout(block.grid),grid::FieldMemory::Host,1}});
+        for(int c=0;c<block.grid.GetTotalSize();++c)block.fluid_state.set(c,{rho,.1*rho,-.2*rho,.3*rho,20.*rho});
+    }
+    auto binding=amr::bind_elliptic_mesh(control,config.grid,handles);
+    auto isolated_config=config.physics.gravity;isolated_config.boundary="isolated";
+    SelfGravity rejected(isolated_config);auto periodic=binding;periodic.periodic[1]=true;
+    rejects([&]{rejected.bind(periodic);},"isolated native periodic z accepted");
+    rejects([&]{(void)rejected.cell_count();},"rejected isolated binding allocated a field workspace");
+    SelfGravity gravity(config.physics.gravity);gravity.bind(binding);gravity.prepare({identity,views});
+    const auto& phi=gravity.potential();const auto& g=gravity.acceleration();
+    double phi_error=0.,force_error=0.,work_error=0.;long double expected_energy=0.;
+    std::size_t cell=0;
+    for(int id:control.tree->GetActiveBlocks()) {
+        const auto& block=control.pool->GetBlock(id);const auto& grid=block.grid;
+        std::vector<FluidVector> delta(grid.GetTotalSize()),flux(grid.GetTotalSize());
+        for(auto& face:flux)face.rho=flux_density;
+        gravity.add_sources_on_patch(delta,block.fluid_state,grid,dt);
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i,++cell) {
+            const int c=grid.GetIndex(i,j,0);const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j),exact=a*(r*r+z*z);
+            phi_error=std::max(phi_error,std::abs(phi[cell]-exact));
+            force_error=std::max({force_error,std::abs(g[0][cell]+2.*a*r),std::abs(g[1][cell]+2.*a*z)});
+            require(g[2][cell]==0.&&delta[c].mom_w==0.&&delta[c].eng==0.,"self gravity introduced phi torque or duplicate energy work");
+            require(std::abs(delta[c].mom_u-dt*rho*g[0][cell])<1e-12*rho&&std::abs(delta[c].mom_v-dt*rho*g[1][cell])<1e-12*rho,"native force used wrong momentum slots");
+            expected_energy+=.5L*rho*exact*GridMetrics::CellVolume(grid,i,j,0);
+        }
+        for(int axis=0;axis<2;++axis) {
+            for(auto& value:delta)value={};gravity.add_flux_work_on_patch(delta,flux,block.fluid_state,grid,dt,axis);
+            for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+                const int c=grid.GetIndex(i,j,0);const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+                const double h=axis==0?grid.dx1:grid.dx2,coordinate=axis==0?r:z;
+                // Existing multidimensional gravity work shares a LINEAR
+                // interior face potential: averaging this quadratic adds
+                // a*h^2/4 to its point-face value. Physical Dirichlet faces
+                // use the prescribed point datum. Keep that original scheme.
+                const double domain_lo=axis==0?config.grid.x1_min:config.grid.x2_min;
+                const double domain_hi=axis==0?config.grid.x1_max:config.grid.x2_max;
+                const bool physical_lo=coordinate-.5*h==domain_lo,physical_hi=coordinate+.5*h==domain_hi;
+                const double low=a*(-h*coordinate+(physical_lo?.25:.5)*h*h),
+                    high=a*(h*coordinate+(physical_hi?.25:.5)*h*h);
+                const double exact=dt*flux_density*(GridMetrics::FaceArea(grid,axis,i,j,0,false)*low-GridMetrics::FaceArea(grid,axis,i,j,0,true)*high)/GridMetrics::CellVolume(grid,i,j,0);
+                work_error=std::max(work_error,std::abs(delta[c].eng-exact));
+            }
+        }
+    }
+    std::cout<<"AXISYMMETRIC_FIELD_WORK_ERRORS phi="<<phi_error<<" force="<<force_error<<" work="<<work_error<<'\n';
+    require(phi_error<1e-8&&force_error<1e-7&&work_error<1e-8,"native quadratic field/force/work budget");
+    const auto snapshot=gravity.boundary_snapshot();
+    const double energy_error=static_cast<double>(std::abs(snapshot.potential_energy-expected_energy)/std::abs(expected_energy));
+    require(energy_error<1e-8,"native field energy lost per-radian normalization");
+    gravity.invalidate();rejects([&]{gravity.potential();},"native invalidated field remained readable");
+    gravity.prepare({identity,views});auto bad=identity;bad.inputs.back().version={0};
+    rejects([&]{gravity.prepare({bad,views});},"native invalid density identity accepted");
+    rejects([&]{gravity.potential();},"native failed solve retained publication");
+    std::cout<<"AXISYMMETRIC_FIELD_WORK_PASS cells="<<cell<<" phi_error="<<phi_error<<" force_error="<<force_error
+        <<" work_error="<<work_error<<" field_energy_relative="<<energy_error<<" phi_torque=0 periodic_z_rejected=1 invalidation=1\n";
+}
+
 int main(int argc,char** argv) { try {
+    axisymmetric_field_and_work();
     dirichlet_quadratic();neumann_compatibility();mixed_periodic();
     user_robin_time();user_rejections();user_periodic_mismatch();boundary_normals();user_nonfinite();
     user_structure_rebuild();user_restart_time();user_periodic_payload();user_green_accounting();

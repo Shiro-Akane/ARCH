@@ -1,0 +1,54 @@
+name: Verified required LFS asset
+description: Reuse one pointer-keyed object cache and verify materialized bytes
+inputs:
+  asset:
+    description: Required asset owner, helmholtz or studio-sod
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Read the tested revision's exact pointer
+      id: identity
+      shell: bash
+      env:
+        ARCH_CI_ASSET: ${{ inputs.asset }}
+      run: python3 "$GITHUB_ACTION_PATH/identity.py" pointer --asset "$ARCH_CI_ASSET"
+
+    - name: Restore only the matching object cache
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .git/lfs/objects
+        key: ${{ steps.identity.outputs.cache_key }}
+
+    - name: Download the required asset only on a cache miss
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      env:
+        GIT_CONFIG_COUNT: '2'
+        GIT_CONFIG_KEY_0: lfs.fetchinclude
+        GIT_CONFIG_VALUE_0: ${{ steps.identity.outputs.path }}
+        GIT_CONFIG_KEY_1: lfs.fetchexclude
+        GIT_CONFIG_VALUE_1: ''
+      with:
+        persist-credentials: false
+        # Retain earlier scope/identity reports; the source revision is unchanged.
+        clean: false
+        fetch-depth: 2
+        lfs: true
+
+    - name: Hydrate offline and verify actual size and SHA-256
+      shell: bash
+      env:
+        ARCH_CI_ASSET: ${{ inputs.asset }}
+        ARCH_CI_ASSET_PATH: ${{ steps.identity.outputs.path }}
+      run: |
+        git lfs checkout "$ARCH_CI_ASSET_PATH"
+        python3 "$GITHUB_ACTION_PATH/identity.py" verify --asset "$ARCH_CI_ASSET"
+
+    - name: Save the verified object even if later builds fail
+      if: success() && steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .git/lfs/objects
+        key: ${{ steps.identity.outputs.cache_key }}

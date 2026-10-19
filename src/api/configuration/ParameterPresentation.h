@@ -112,9 +112,9 @@ inline detail::Json ParameterPresentation(const config::ParameterDefinition& def
         {"x3_max", {"Axis 3 maximum", "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm."}},
         {"x3l_boundary_type", {"Axis 3 lower boundary", "Boundary behavior at the lower end of this active axis."}},
         {"x3r_boundary_type", {"Axis 3 upper boundary", "Boundary behavior at the upper end of this active axis."}},
-        {"gravity_g_x", {"External x acceleration", "Constant acceleration component used by external gravity."}},
-        {"gravity_g_y", {"External y acceleration", "Constant acceleration component used by external gravity."}},
-        {"gravity_g_z", {"External z acceleration", "Constant acceleration component used by external gravity."}},
+        {"gravity_g_x", {"External acceleration: first component", "Constant acceleration in the first native orthonormal momentum slot: Cartesian x or cylindrical radial r."}},
+        {"gravity_g_y", {"External acceleration: second component", "Constant acceleration in the second native orthonormal momentum slot: Cartesian y or cylindrical axial z."}},
+        {"gravity_g_z", {"External acceleration: third component", "Constant acceleration in the third native orthonormal momentum slot: Cartesian z or cylindrical azimuthal phi, including cylindrical 2D."}},
     };
     const std::string key(definition.key);
     const auto& entry = text.at(key);

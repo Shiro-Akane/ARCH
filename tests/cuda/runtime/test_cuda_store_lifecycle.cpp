@@ -607,12 +607,12 @@ bool unchanged_counters_after_query(const arch::backend::ComputeBackend& backend
     return backend.counters()==expected;
 }
 
-/** Exercise the actual resident savepoint through public field/surface consumers.
- * The three real cyclic rotations expose each slot as Current, then restore
- * the original map. Host padding remains sentinel; resident padding is not
- * observable through these region transfers and is not qualified here.
+/** Exercise live resident controls, observer planes and all three slots.
+ * Three real cyclic rotations expose each physical owner and restore the map.
+ * Explicit test uploads restore replay inputs; they are not a production
+ * rollback or a replacement for the retired macro-savepoint facility.
  */
-void run_resident_macro_savepoint(int device_count)
+void run_resident_controls_and_rotations(int device_count)
 {
     using namespace arch;using state::StateSlot;using state::StateRegion;
     constexpr state::SlotRotation cycle{StateSlot::Next,StateSlot::Scratch,StateSlot::Current};
@@ -660,7 +660,6 @@ void run_resident_macro_savepoint(int device_count)
         for(int b=0;b<2;++b){layout[b].block=handles[b];for(int face:{0,1})layout[b].stage[face].resize(6+count);}
         backend->configure_boundary_flux_capture(layout,1.,0.,true);
         const auto hydro=scheduler::make_hydro_plan(scheduler::HydroMethod::Euler).stages.front();
-        (void)backend->execute_hydro_stage_batch(accesses,hydro,1.e-4,{1,state::CompletionState::Complete});backend->quiesce();
         const auto all_slots=[&] {
             std::array<std::array<FluidState,3>,2> result;
             for(int slot=0;slot<3;++slot)for(int b=0;b<2;++b) {
@@ -673,94 +672,66 @@ void run_resident_macro_savepoint(int device_count)
         };
         const auto same_slots=[&](const auto& expected) {
             const auto observed=all_slots();for(int b=0;b<2;++b)for(int slot=0;slot<3;++slot)
-                require(same_bits(observed[b][slot],expected[b][slot]),"resident rollback changed an original logical slot or Host padding");
+                require(same_bits(observed[b][slot],expected[b][slot]),"resident consumer changed an original logical slot or Host padding");
         };
         const auto same_surfaces=[](const auto& actual,const auto& expected) {
-            require(actual.size()==expected.size(),"resident rollback changed observer owner count");
+            require(actual.size()==expected.size(),"resident consumer changed observer owner count");
             for(std::size_t b=0;b<actual.size();++b) {
-                require(actual[b].block==expected[b].block,"resident rollback changed observer identity");
+                require(actual[b].block==expected[b].block,"resident consumer changed observer identity");
                 for(int face=0;face<6;++face)for(int plane=0;plane<2;++plane) {
                     const auto& a=plane?actual[b].initial[face]:actual[b].stage[face];
                     const auto& e=plane?expected[b].initial[face]:expected[b].stage[face];
-                    require(a.size()==e.size(),"resident rollback changed observer active shape");
+                    require(a.size()==e.size(),"resident consumer changed observer active shape");
                     for(std::size_t n=0;n<a.size();++n)require(std::bit_cast<std::uint64_t>(a[n])==std::bit_cast<std::uint64_t>(e[n]),
-                        "resident rollback failed to restore genuine observer plane bits");
+                        "resident replay changed genuine observer plane bits");
                 }
             }
         };
+        // Check rotation against independently seeded Host slot values before
+        // any stage can overwrite Next. A no-op rotation cannot pass this.
+        const auto initial_slots=all_slots();
+        for(int b=0;b<2;++b) {
+            const std::array<const FluidState*,3> expected{&blocks[b].fluid_state,&blocks[b].state_next,&blocks[b].state_scratch};
+            for(int slot=0;slot<3;++slot)require(same_bits(initial_slots[b][slot],*expected[slot]),"resident rotation lost original physical slot identity");
+        }
+        (void)backend->execute_hydro_stage_batch(accesses,hydro,1.e-4,{1,state::CompletionState::Complete});backend->quiesce();
         const auto baseline=all_slots();const auto surfaces=backend->download_boundary_flux_capture();
         require(std::any_of(surfaces[0].stage[0].begin(),surfaces[0].stage[0].end(),[](double x){return x!=0.;}),
             "resident observer reference remained zero");
         const auto rejects_no_work=[&](auto&& operation) {
-            const auto before=backend->counters();require_rejected(operation,"invalid resident savepoint/namespace accepted");
+            const auto before=backend->counters();require_rejected(operation,"invalid resident namespace accepted");
             require(unchanged_counters_after_query(*backend,before),"resident preflight rejection enqueued partial work");
         };
-        // Both real blocks already bind face0 on all three physical owners.
-        // Reserve only that existing shape so face1 remains an unbound growth case.
-        std::array<std::array<std::size_t,6>,2> retained_control_counts{};
-        for(auto& face_counts:retained_control_counts)face_counts[0]=4+static_cast<std::size_t>(count);
         auto stale=accesses;stale[1].storage.value+=99;
-        rejects_no_work([&]{backend->begin_macro_state_transaction(stale);});
-        rejects_no_work([&]{backend->prepare_boundary_control_capacity(stale,retained_control_counts);});
-        auto inactive_control_counts=retained_control_counts;inactive_control_counts[1][2]=1;
-        rejects_no_work([&]{backend->prepare_boundary_control_capacity(accesses,inactive_control_counts);});
-        auto duplicate=accesses;duplicate[1]=duplicate[0];rejects_no_work([&]{backend->begin_macro_state_transaction(duplicate);});
-        rejects_no_work([&]{backend->begin_macro_state_transaction(std::span<const backend::BackendStateAccess>(accesses.data(),1));});
-        rejects_no_work([&]{backend->begin_macro_state_transaction({});});
-        auto wrong=accesses;wrong[1].slot=StateSlot::Next;rejects_no_work([&]{backend->begin_macro_state_transaction(wrong);});
+        rejects_no_work([&]{backend->rotate_slots(stale[1],cycle);});
+        const std::array outside{blocks[0].grid.GetTotalSize()};
+        rejects_no_work([&]{(void)backend->read_boundary_cells(accesses[0],outside,StateRegion::Ghost);});
+        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
         const auto rkl=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,1);
         const auto diffuse=[&]{(void)backend->execute_diffusion_stage_batch(accesses,rkl,rkl.stages.front(),1.e-4,1.,{2,state::CompletionState::Complete});};
-        std::array<std::array<FluidState,3>,2> control_reference;std::vector<backend::BoundaryFluxPlanes> surface_reference;
-        {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();control_reference=all_slots();surface_reference=backend->download_boundary_flux_capture();}
-        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
-        // Capacity is sufficient and genuinely bound: prewarm is metadata-only.
-        // Replay the original Diffusion consumer instead of inspecting raw pointers.
-        const auto before_capacity=backend->counters();
-        backend->prepare_boundary_control_capacity(accesses,retained_control_counts);
-        require(unchanged_counters_after_query(*backend,before_capacity),
-            "bound resident control prewarm enqueued work despite sufficient capacity");
-        {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();same_slots(control_reference);
-            same_surfaces(backend->download_boundary_flux_capture(),surface_reference);savepoint->validate_storage();}
-        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
-        const auto before_save=backend->counters();
-        bool exception_seen=false;
-        try {
-            select_device_probe(device_count);auto savepoint=backend->begin_macro_state_transaction(accesses);
-            require_backend_device_selected("resident savepoint did not restore selected device");
-            const auto saved=backend->counters();
-            require(saved.bytes_h2d==before_save.bytes_h2d&&saved.bytes_d2h==before_save.bytes_d2h
-                &&saved.kernel_count==before_save.kernel_count&&saved.stream_sync_count>before_save.stream_sync_count,
-                "resident savepoint added a field transfer or false kernel");
-            rejects_no_work([&]{backend->begin_macro_state_transaction(accesses);});
-            rejects_no_work([&]{backend->begin_store_transaction({1,{31},{32}},bindings);});
-            auto changed_layout=layout;changed_layout[1].stage[0].clear();
-            rejects_no_work([&]{backend->configure_boundary_flux_capture(changed_layout,.25,.5,false);});
-            same_surfaces(backend->download_boundary_flux_capture(),surfaces);
-            auto growing=controls;growing.faces[1].resize(4+count);
-            const std::array ghost{blocks[0].grid.GetIndex(0)};
-            const auto values=backend->read_boundary_cells(accesses[0],ghost,StateRegion::Ghost);
-            auto rejected_values=values;rejected_values.conserved[0].eng+=37.;
-            rejects_no_work([&]{backend->write_boundary_cells(accesses[0],ghost,rejected_values,growing);});
-            same_slots(baseline);
-            for(int b=0;b<2;++b)for(auto slot:{StateSlot::Current,StateSlot::Next,StateSlot::Scratch}) {
-                auto changed=baseline[b][static_cast<int>(slot)];for(double& value:changed.eng)value+=17.;upload(b,slot,changed);
-            }
-            controls.faces[0][0].value=7.;
-            for(int b=0;b<2;++b){const std::array g{blocks[b].grid.GetIndex(0)};const auto v=backend->read_boundary_cells(accesses[b],g,StateRegion::Ghost);
-                backend->write_boundary_cells(accesses[b],g,v,controls);backend->rotate_slots(accesses[b],cycle);}
-            backend->configure_boundary_flux_capture(layout,.25,.5,false);diffuse();
-            // Remove a real binding after overwrite; restoring capacity alone cannot pass replay.
-            boundary::DiffusionBoundaryStorage none;backend->write_boundary_cells(accesses[0],ghost,values,none);
-            savepoint->validate_storage();throw std::runtime_error("resident rollback scope fault");
-        }catch(const std::runtime_error& error){exception_seen=std::string(error.what())=="resident rollback scope fault";if(!exception_seen)throw;}
-        require(exception_seen&&backend->counters().bytes_h2d>before_save.bytes_h2d
-            &&backend->counters().kernel_count>before_save.kernel_count,"rollback erased actual work counters");
-        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
-        {auto savepoint=backend->begin_macro_state_transaction(accesses);diffuse();same_slots(control_reference);
-            same_surfaces(backend->download_boundary_flux_capture(),surface_reference);savepoint->validate_storage();savepoint->commit();}
-        same_slots(control_reference); // Commit kept the real changed output rather than restoring baseline.
-        {auto savepoint=backend->begin_macro_state_transaction(accesses);backend->copy_state_slot(accesses[0],{handles[0],storage[0],StateSlot::Scratch});}
-        same_slots(control_reference); // The same grow-only savepoint can be reused immediately.
+        diffuse();const auto reference=all_slots();const auto reference_surfaces=backend->download_boundary_flux_capture();
+        // Replay from exact uploaded inputs through the current public APIs.
+        for(int b=0;b<2;++b)for(int slot=0;slot<3;++slot) {
+            auto restored=baseline[b][slot];upload(b,static_cast<StateSlot>(slot),restored);
+        }
+        backend->quiesce();backend->configure_boundary_flux_capture(layout,1.,0.,true);
+        diffuse();same_slots(reference);same_surfaces(backend->download_boundary_flux_capture(),reference_surfaces);
+        // Growth is legal without a pinned savepoint. Verify the real binding
+        // and field update, rather than testing a removed capacity-prewarm API.
+        auto growing=controls;growing.faces[1].resize(4+count);
+        growing.faces[1][0]={boundary::ScalarBoundaryKind::OutwardFlux,.0625};
+        const std::array ghost{blocks[0].grid.GetIndex(0)};
+        auto values=backend->read_boundary_cells(accesses[0],ghost,StateRegion::Ghost);
+        values.conserved[0].eng+=37.;
+        select_device_probe(device_count);
+        backend->write_boundary_cells(accesses[0],ghost,values,growing);
+        require_backend_device_selected("resident control growth did not restore device selection");
+        const auto written=backend->read_boundary_cells(accesses[0],ghost,StateRegion::Ghost);
+        require(written.conserved[0].eng==values.conserved[0].eng,"resident boundary write lost a field update");
+        diffuse();const auto grown_surfaces=backend->download_boundary_flux_capture();
+        require(grown_surfaces[0].stage[1]!=reference_surfaces[0].stage[1],"new upper heat-flux control was not consumed");
+        std::cout<<"RESIDENT_CONTROLS_ROTATIONS_PASS species="<<count
+            <<" slots=3 controls_replay=1 growth=1 observers=1 stale_reject=1\n";
     }
 }
 
@@ -848,7 +819,7 @@ int main()
     try {
         run_region_transfers(device_count);
         run_store_lifecycle(device_count);
-        run_resident_macro_savepoint(device_count);
+        run_resident_controls_and_rotations(device_count);
         run_resident_diffusion_activity();
         std::cout << "CUDA store lifecycle passed\n";
         return 0;

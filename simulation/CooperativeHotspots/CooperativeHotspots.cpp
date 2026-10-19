@@ -177,6 +177,8 @@ public:
 
         const double pressure_mismatch =
             std::abs(pressure_hot_ - pressure_ambient_) / pressure_ambient_;
+        // Relative isobaric-initialization acceptance against the ambient EOS
+        // pressure. This 1e-10 model consistency gate is not a burn/ODE tolerance.
         if (!std::isfinite(pressure_mismatch) || pressure_mismatch > 1.0e-10)
             throw std::runtime_error("Isobaric hotspot solve did not converge.");
 

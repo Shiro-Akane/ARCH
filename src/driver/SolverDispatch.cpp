@@ -139,11 +139,11 @@ const char* axis_label(const SimConfig& config, int axis)
         return cartesian[axis];
     }
     if (axis == 0) return "r";
-    if (config.grid.dim == 2) return "phi";
     if (config.grid.geometry == "cylindrical") {
         static constexpr const char* cylindrical[] = {"r", "z", "phi"};
         return cylindrical[axis];
     }
+    if (config.grid.dim == 2) return "phi";
     static constexpr const char* spherical[] = {"r", "theta", "phi"};
     return spherical[axis];
 }
@@ -305,7 +305,7 @@ void DispatchSolver(ProblemGenerator &problem,
             requirements.use_nse);
         // The same resolved identity owns fresh initialization and strict
         // restart; a legacy filename never acquires a new chart by itself.
-        const io::CheckpointGeometryIdentity expected_geometry{1,"existing"};
+        const auto expected_geometry = io::checkpoint_geometry_identity(config.grid.dim, config.grid.geometry);
         read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs,
                  expected_provenance, expected_geometry);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim

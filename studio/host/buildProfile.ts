@@ -1,3 +1,9 @@
+/**
+ * Describe approved build recipes and validate their project-relative paths.
+ * Profile validation checks the source/build/output boundary before any command
+ * is launched. This module selects build inputs; BuildRunner owns execution and
+ * the Core still owns numerical configuration and backend eligibility.
+ */
 import path from 'node:path';
 import {access,readFile,stat} from 'node:fs/promises';
 import {constants} from 'node:fs';

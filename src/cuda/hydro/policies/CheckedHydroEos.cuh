@@ -43,6 +43,16 @@ public:
     ARCH_INLINE bool required_query_failed() const
     { return status_ != nullptr && *status_ != 0; }
 
+    /** Reject a shared face assembly before the Runtime publishes this stage. */
+    ARCH_INLINE void report_failure() const {
+        if (!status_) return;
+#ifdef __CUDA_ARCH__
+        atomicExch(status_,1);
+#else
+        *status_=1;
+#endif
+    }
+
     ARCH_INLINE CheckedHydroEosView candidate_view() const
     {
         auto candidate = *this;

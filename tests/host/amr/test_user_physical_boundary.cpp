@@ -168,18 +168,17 @@ void test_geometry_normals()
         std::array<double, 3> face;
     };
     // Nontrivial angles: theta = 1.0 rad, phi = 0.7 rad.
-    const std::array<GeometryCase, 8> cases{{
+    const std::array<GeometryCase, 9> cases{{
         {1, "cartesian", {7.3, 0.0, 0.0}},
         {2, "cartesian", {7.3, 1.4, 0.0}},
         {3, "cartesian", {7.3, 1.4, 0.7}},
         {1, "cylindrical", {7.3, 0.0, 0.0}},
+        {2, "cylindrical", {7.3, 1.4, 0.0}},
         {3, "cylindrical", {7.3, 1.4, 0.7}},
         {1, "spherical", {7.3, 0.0, 0.0}},
         {2, "spherical", {7.3, 0.9, 0.0}},
         {3, "spherical", {7.3, 1.0, 0.7}},
     }};
-    require_rejected([&] { (void)make_grid(2, "cylindrical"); },
-        "retired cylindrical 2D polar grid accepted");
     for (const GeometryCase& item : cases) {
         const Grid grid = make_grid(item.dimension, item.geometry);
         for (int axis = 0; axis < item.dimension; ++axis) {
@@ -329,6 +328,19 @@ void test_coordinate_dimensions()
     for (int component = 0; component < 3; ++component)
         close(z_face.cartesian_normal[component], component == 2 ? 1.0 : 0.0, 1.0e-15,
               "cylindrical z normal is e_z");
+
+    // Independent native meridional reference: spatial axis2 is z, with
+    // length distance and Cartesian normal e_z; phi has no spatial face.
+    const Grid cylindrical_2d = make_grid(2, "cylindrical");
+    const auto native_z = MakeBoundaryCoordinates(cylindrical_2d, {1.5, 0.4, 0.0},
+        BoundaryAxis::X2, BoundarySide::Upper, 0.0, 1, BoundaryPurpose::Diffusion, {1.5, 0.6, 0.0});
+    close(native_z.physical_distance, 0.2, 1.0e-15, "native cylindrical z distance");
+    for (int component = 0; component < 3; ++component)
+        close(native_z.cartesian_normal[component], component == 2 ? 1.0 : 0.0,
+              1.0e-15, "native cylindrical z normal is e_z");
+    require_rejected([&] { (void)MakeBoundaryCoordinates(cylindrical_2d, {1.5, 0.4, 0.0},
+        BoundaryAxis::X3, BoundarySide::Upper, 0.0); },
+        "native cylindrical inactive phi face accepted");
 }
 
 // Independent meridional chart expectations: x=r, y=0, z=z_native,

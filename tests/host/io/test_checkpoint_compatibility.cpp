@@ -477,6 +477,72 @@ void test_native_composition(const std::filesystem::path& directory)
                     "reader accepted an unsupported conserved-only composition payload");
 }
 
+// Actual serializer and restore boundary, including a populated live target.
+// This verifies native PWC three-momentum bytes, not a trajectory tolerance.
+void test_cylindrical_restart(const std::filesystem::path& directory)
+{
+    SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=1.;config.grid.x1_max=2.;config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.amr_max_blocks=4;config.amr.lrefinemin=config.amr.lrefinemax=0;
+    config.io.out_dir=directory.string();config.io.base_name="native-cylinder";
+    const auto species=make_species();
+    const auto provenance=io::inspect_checkpoint_provenance(config,species,EosId::Ideal,false,"none",false);
+    const auto chart=io::checkpoint_geometry_identity(2,"cylindrical");
+    amr::AMRControl source(4,2);source.tree->InitRootGrid(config,species.count());
+    for(int id:source.tree->GetActiveBlocks()) {
+        auto& b=source.pool->GetBlock(id);
+        for(int q=0;q<b.grid.GetTotalSize();++q) {
+            b.fluid_state.set(q,{2.,.125,-.25,.75,10.});
+            b.fluid_state.X(0,q)=.25;b.fluid_state.X(1,q)=.75;
+        }
+    }
+    write_chk(source,0,0,3,.03,.01,.01,false,config,species,provenance,arch::state::RepairBudget(2),chart);
+    const auto path=directory/"native-cylinder_chk_0000.h5";
+    const auto saved=io::read_hdf5_chk_impl(path.string());
+    expect(saved.geometry_identity.revision==1 && saved.geometry_identity.chart=="cylindrical-rz-pwc",
+           "new native checkpoint chart missing");
+    amr::AMRControl target(4,2);target.tree->InitRootGrid(config,species.count());RunState state;
+    read_chk(path.string(),target,state,config,species,provenance,chart);
+    for(int id:target.tree->GetActiveBlocks()) {
+        const auto& b=target.pool->GetBlock(id);
+        for(int j=b.grid.Js();j<b.grid.Je();++j)for(int i=b.grid.Is();i<b.grid.Ie();++i) {
+            const int q=b.grid.GetIndex(i,j,0);const auto u=b.fluid_state.get(q);
+            expect(u.rho==2.&&u.mom_u==.125&&u.mom_v==-.25&&u.mom_w==.75&&u.eng==10.
+                &&b.fluid_state.X(0,q)==.25&&b.fluid_state.X(1,q)==.75,"native Cyl2 restart state changed");
+        }
+    }
+    const auto snapshot=[&] {
+        const auto ids=target.tree->GetActiveBlocks();const auto& f=target.pool->GetBlock(ids.front()).fluid_state;
+        return std::make_tuple(ids,f.rho,f.mom_u,f.mom_v,f.mom_w,f.eng,f.mass_fractions,
+                               state.time,state.step,state.dt_old,state.dt_burn,state.chk_idx,state.plt_idx);
+    };
+    const auto before=snapshot();
+    for(int corruption=0;corruption<6;++corruption) {
+        io::write_hdf5_chk_impl(path.string(),saved);
+        {
+            HighFive::File file(path.string(),HighFive::File::ReadWrite);
+            if(corruption==0) {file.getAttribute("geometry_semantics_revision").write(2);
+                file.getAttribute("geometry_chart").write(std::string("axisymmetric-rz"));}
+            if(corruption==1) file.getAttribute("geometry_chart").write(std::string("existing"));
+            if(corruption==2) {file.deleteAttribute("geometry_semantics_revision");file.deleteAttribute("geometry_chart");}
+            if(corruption==3) file.deleteAttribute("geometry_chart");
+            if(corruption==4) file.getAttribute("geometry_chart").write(std::string());
+            if(corruption==5) file.getAttribute("geometry_semantics_revision").write(3);
+        }
+        expect_rejected([&]{read_chk(path.string(),target,state,config,species,provenance,chart);},
+                        "old/empty/wrong Cyl2 identity accepted");
+        expect(snapshot()==before,"invalid Cyl2 identity mutated populated live hierarchy");
+    }
+    for(const auto invalid: {io::CheckpointGeometryIdentity{},io::CheckpointGeometryIdentity{2,"axisymmetric-rz"},
+                            io::CheckpointGeometryIdentity{1,"existing"}}) {
+        auto bad=saved;bad.geometry_identity=invalid;
+        const auto digest=arch::core::file_sha256(path.string());
+        expect_rejected([&]{io::write_hdf5_chk_impl(path.string(),bad);},"invalid Cyl2 writer identity accepted");
+        expect(arch::core::file_sha256(path.string())==digest,"invalid Cyl2 writer truncated saved file");
+    }
+}
+
 void test_host_restart(const std::filesystem::path& directory)
 {
     SimConfig config;
@@ -780,6 +846,7 @@ int main(int argc, char** argv)
         test_hdf5_round_trip(directory);
         test_native_composition(directory);
         test_host_restart(directory);
+        test_cylindrical_restart(directory);
         arch::state::RepairBudget volume(0);
         expect(volume.view().conserved_density(.5,1.,-2.,3.,4.,2.),"volume ledger failed");
         expect(volume.values[2]==1. && volume.values[4]==2. &&volume.values[5]==-4.
@@ -787,7 +854,7 @@ int main(int argc, char** argv)
             "ordinary repair ledger changed volume-integrated conserved units");
         expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{});},
             "legacy cylindrical two-dimensional checkpoint accepted");
-        expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{3,"axisymmetric-rz"});},
+        expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{2,"axisymmetric-rz"});},
             "retired cylindrical two-dimensional checkpoint accepted");
         std::cout << "checkpoint compatibility tests passed\n";
         return 0;

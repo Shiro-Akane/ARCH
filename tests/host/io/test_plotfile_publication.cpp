@@ -108,11 +108,18 @@ int main(int argc, char** argv) {
             // it does not upgrade the partial source/publication identity below.
             for(const auto* geometry:{"cylindrical","spherical"}) {
                 grid.geometry=geometry;
-                if(dimension==2 && grid.geometry=="cylindrical") {
-                    require(!io::supports_plot_native_grid(grid),
-                        "retired cylindrical polar Plotfile chart accepted");
-                } else require(io::supports_plot_native_grid(grid),
+                require(io::supports_plot_native_grid(grid),
                     "known curved native chart unsupported");
+            }
+            if(dimension==2) {
+                grid.geometry="cylindrical";io::PlotNativeGrid cylinder;
+                const int i=grid.Is(),j=grid.Js();io::append_plot_native_cell(cylinder,grid,i,j,0);
+                const double lo=grid.GetFacePosL(i),hi=grid.GetFacePosR(i);
+                const double volume=(hi*hi-lo*lo)*.5*grid.dx2;
+                require(cylinder.axes==std::array<std::string,3>{"r","z","inactive"}
+                    &&cylinder.axis_units==std::array<std::string,3>{"cm","cm","inactive"}
+                    &&cylinder.measure_unit=="cm^3"&&cylinder.normalization=="per_unit_azimuth"
+                    &&cylinder.cell_measure.front()==volume,"native Cyl2 measure/axes changed");
             }
             grid.geometry="unknown-chart";
             require(!io::supports_plot_native_grid(grid),"unknown native chart accepted");
@@ -148,9 +155,9 @@ int main(int argc, char** argv) {
             try {io::write_hdf5_plt_impl(path.string(),0,2,"cylindrical",native_dims,
                 cx,cy,cz,{0,0},{0,0},{{"DENS",field}},&native,nullptr,nullptr);}
             catch(const std::invalid_argument&) {rejected=true;}
-            require(rejected,"retired cylindrical two-dimensional writer accepted");
+            require(rejected,"partial Cyl2 writer accepted without formal identity");
             require(arch::core::file_sha256(path.string())==digest,
-                "retired cylindrical writer replaced published ordinary data");
+                "partial Cyl2 writer replaced published ordinary data");
         }
         {
             HighFive::File f(path.string(),HighFive::File::ReadOnly);

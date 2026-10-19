@@ -1,3 +1,6 @@
+/**
+ * Present retained run records and owned Stop actions. A recorded running label alone does not prove a supervisor is live or the computation completed.
+ */
 import {useEffect,useState} from 'react';
 import {buildRequest} from '../host/BuildAdapter';
 import {validateRunHistory} from '../host/RunAdapter';

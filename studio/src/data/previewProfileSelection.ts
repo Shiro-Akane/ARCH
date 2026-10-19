@@ -1,3 +1,8 @@
+/**
+ * Choose a Preview profile only when its model, dimension and build match inspection.
+ * An unavailable match remains unavailable; a nearby sampling shape cannot grant
+ * a capability the compiled model did not advertise.
+ */
 import type {InspectionResponse} from '../host/configurationContracts.ts';
 import type {PreviewProfile} from '../host/previewContracts.ts';
 export function previewProfileForConfiguration(profiles:PreviewProfile[],inspection:InspectionResponse|null,

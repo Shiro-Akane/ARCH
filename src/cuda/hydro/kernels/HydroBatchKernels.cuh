@@ -143,7 +143,7 @@ __global__ void hydro_batch_sources(const DeviceHydroBatchBlock* blocks, Eos eos
     const auto& b = blocks[blockIdx.y];
     if (b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled)
         hydro_source_kernel_work(b.input, b.delta, b.grid,
-            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity);
+            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity, b.input.hydro_boundary);
     const int linear=blockIdx.x*blockDim.x+threadIdx.x;
     if(b.self_gravity.enabled() && linear<b.grid.active_cell_count()) {
         const int c=b.grid.active_cell(linear);FluidVector delta=b.delta.load(c);

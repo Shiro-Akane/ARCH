@@ -1,3 +1,8 @@
+/**
+ * Share initial-field/AMR action state across the workbench.
+ * Provider state associates an operation with its typed identity and errors;
+ * execution and cancellation ownership remain in the Host workflow controller.
+ */
 import {createContext,useContext,useState} from 'react';
 import type {ReactNode} from 'react';
 export interface PreviewAction {enabled:boolean;state:string;reason:string;generate:()=>void}

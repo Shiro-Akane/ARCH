@@ -1,3 +1,6 @@
+/**
+ * Derive display text for schema, values and diagnostics. Preserve explicit/unknown provenance and use the supplied Core contract rather than inferring physics.
+ */
 import {matchesParameter} from './panelPresentation.ts';
 import type {CoordinateSystem,InspectionParameter,StandardParameter} from '../../host/configurationContracts.ts';
 

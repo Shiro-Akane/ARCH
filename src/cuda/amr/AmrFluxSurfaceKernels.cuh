@@ -116,13 +116,16 @@ __global__ void register_route_kernel(
         const auto term = terms[target.first_term + offset];
         const double coefficient = amr::flux_math::registration_coefficient(
             target.rule, term.geometric_weight, stage_weight);
+        const double moment_coefficient =
+            amr::flux_math::registration_coefficient(
+                target.rule, term.moment_geometric_weight, stage_weight);
         const int cell = source_kind == AmrFluxSource::StageScratch
             ? term.source_cell : term.source_surface_cell;
         if (source_kind == AmrFluxSource::StageScratch) {
             rho += coefficient * stage_source.rho[cell];
             mom_u += coefficient * stage_source.mom_u[cell];
             mom_v += coefficient * stage_source.mom_v[cell];
-            mom_w += coefficient * stage_source.mom_w[cell];
+            mom_w += moment_coefficient * stage_source.mom_w[cell];
 
                 eng += coefficient * stage_source.eng[cell];
             
@@ -130,7 +133,7 @@ __global__ void register_route_kernel(
             rho += coefficient * surface_source.rho[cell];
             mom_u += coefficient * surface_source.mom_u[cell];
             mom_v += coefficient * surface_source.mom_v[cell];
-            mom_w += coefficient * surface_source.mom_w[cell];
+            mom_w += moment_coefficient * surface_source.mom_w[cell];
             eng += coefficient * surface_source.eng[cell];
         }
     }
@@ -185,6 +188,8 @@ __global__ void reflux_kernel(
         const int flux_cell = contribution.register_cell;
         const double correction =
             dt * contribution.sign * contribution.geometric_weight;
+        const double moment_correction =
+            dt * contribution.sign * contribution.moment_geometric_weight;
         const double rho_before = state.rho[state_cell];
         const double rho_after = amr::flux_math::reflux_conserved(
             rho_before, correction, flux.rho[flux_cell]);
@@ -194,7 +199,7 @@ __global__ void reflux_kernel(
         state.mom_v[state_cell] = amr::flux_math::reflux_conserved(
             state.mom_v[state_cell], correction, flux.mom_v[flux_cell]);
         state.mom_w[state_cell] = amr::flux_math::reflux_conserved(
-            state.mom_w[state_cell], correction,
+            state.mom_w[state_cell], moment_correction,
             flux.mom_w[flux_cell]);
         state.eng[state_cell] = amr::flux_math::reflux_conserved(
             state.eng[state_cell], correction, flux.eng[flux_cell]);

@@ -1,3 +1,8 @@
+/**
+ * Implement the fixed browser-to-loopback Host request surface.
+ * Validate project snapshots and capabilities before publication; the renderer
+ * receives typed file state rather than Node filesystem/process access.
+ */
 import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import type {LocalHostAdapter,ProjectSnapshot} from './contracts.ts';

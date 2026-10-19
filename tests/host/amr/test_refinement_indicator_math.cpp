@@ -27,6 +27,16 @@ void require(bool condition, const char* message) {
 int main()
 {
     using namespace amr::indicator;
+    // Public native selector must preserve VELZ and reject it on the retained
+    // two-component charts; no default geometry is supplied to this API.
+    AmrConfig selected;selected.refine_on_rho=false;selected.refine_on_velz=true;
+    const auto native=make_selection(selected,2,{},GridMetrics::Geometry::Cylindrical);
+    require(native.size()==1 && native.front().field==Field::VelocityZ,"native Cyl2 VELZ selector lost phi");
+    for(const auto geometry:{GridMetrics::Geometry::Cartesian,GridMetrics::Geometry::Spherical}) {
+        bool rejected=false;
+        try{(void)make_selection(selected,2,{},geometry);}catch(const std::invalid_argument&){rejected=true;}
+        require(rejected,"retained two-component chart accepted VELZ");
+    }
     require(loehner_error(0, 0, 0) == 0, "zero field");
     require(std::abs(loehner_error(1, 2, 4) - 1.0 / 3.09) < 1.e-15,
             "ordinary scalar formula changed");

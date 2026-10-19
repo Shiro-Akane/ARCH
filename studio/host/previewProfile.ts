@@ -1,3 +1,8 @@
+/**
+ * Build Preview sampling profiles from the selected Core's capabilities.
+ * Dimension-specific limits come from that model response. A display profile
+ * does not grant unsupported geometry, sampling or scientific runtime capability.
+ */
 import {PREVIEW_BUILD_PROFILE} from './buildProfile.ts';
 import {samplingForDimension} from '../src/host/previewContracts.ts';
 import type {ModelCapability,PreviewProfile} from '../src/host/previewContracts.ts';

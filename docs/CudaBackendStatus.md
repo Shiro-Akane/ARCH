@@ -18,7 +18,7 @@ technical results and combined acceptance status.
 | Facility | Implementation scope |
 |---|---|
 | Hydrodynamics | Van Leer, Steger-Warming, Roe, HLL, HLLC; PCM/MUSCL/PPM; MinMod/MC/SuperBee/Van Leer limiters; Euler/SSPRK2/SSPRK3 |
-| Mesh and geometry | Established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical block meshes with common CPU conventions; axisymmetric cylindrical 2D Device qualification is in progress |
+| Mesh and geometry | Established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical block meshes with common CPU conventions; native cylindrical 2D shares geometry/transport math and has scoped wall, indexing, residency, regrid and fresh checks |
 | Boundaries | Periodic, outflow, reflecting and user physical/potential conditions; Host callbacks exchange surface slices using shared EOS/face mathematics; see [user boundaries](guides/UserBoundaries.md) |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
@@ -46,7 +46,13 @@ the isotope set of the selected supported network: a built-in network or an
 explicitly certified generated model.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
-Public cylindrical 2D uses axisymmetric `(r,z)`, expanded as `x=r`, `y=0`, `z=z` at `phi=0`, with three physical velocity components. Spherical 2D uses the equatorial `(r,phi)` plane; 3D cylindrical/spherical grids use `(r,z,phi)` / `(r,theta,phi)`. Full Native RZ field/energy, reacting dynamic AMR/continuation and Device acceptance remain in progress; Runtime capability checks govern execution. Historical cylindrical 2D polar records retain their original chart and do not qualify Native RZ.
+Public cylindrical 2D uses axisymmetric `(r,z)`, expanded as `x=r`, `y=0`, `z=z` at `phi=0`, with three physical velocity components. Spherical 2D uses the equatorial `(r,phi)` plane; 3D cylindrical/spherical grids use `(r,z,phi)` / `(r,theta,phi)`. Native wall, RK/RKL, regrid, prescribed Poisson, isolated self-gravity and fresh checks are recorded in [validation](../validation/README.md). The [current device record](../validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) adds rebuilt GravityBox/SNIaCoupled axial fields, explicit centre-input qualification and common physical-wall bindings across all nine legal chart combinations. It covers device contracts, original public endpoints, actual regridding and fresh. The shared NSE and Host AMR RKL repair has current numerical and integration acceptance: the original private Cellular ENUC gate of `5e-9` plus `5e-12` passes across all 25 checkpoints, with matching ENUC bytes and own-backend fresh. Unchanged geometry and resource owners retain scoped reuse; the declared single-GPU device phase is closed. Historical cylindrical 2D polar records retain their original chart and do not qualify the native chart.
+
+## Build and device requirements
+
+Use the [build guide](guides/Build.md) with a CUDA toolkit and supported Host compiler, explicit device code images, and matching numerical libraries. The current tested profile is Release, GCC 12, NVCC 12.3 and `sm86` on an RTX 3060 Ti with 8 GiB device memory. ARCH numerical translation units retain strict floating-point flags; linked vendor-library profiles are recorded separately. CPU GCC 13 and CUDA GCC 12 LTO archives must not be mixed.
+
+On this 7.7 GiB WSL instance, heavy builds use two jobs with a one-job CUDA heavy pool. The current incremental application/test builds and no-op checks passed; they do not establish a clean-build or other-platform qualification. Actual Ninja rules use ccache. Explicit CUDA or optional-solver requests are checked before execution and must reject unavailable routes. The shared-NSE-header incremental rebuild required 52 actions and 3040.45 seconds; its dependency/instantiation cost is recorded for later frozen build evaluation. The [release plan](../ARCH_RELEASE_PLAN.md) records measured costs, retained CPU limits and multi-GPU/platform qualification boundaries.
 
 ## GPU-AMR execution model
 

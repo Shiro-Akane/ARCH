@@ -55,8 +55,6 @@ inline Grid checkpoint_root_grid(const GridConfig& config)
     root.geometry = config.geometry;
     require(GridMetrics::geometry_kind(root) != GridMetrics::Geometry::Unsupported,
             "conservation parameter geometry is unsupported");
-    require(!(config.dim==2 && config.geometry=="cylindrical"),
-            "conservation cylindrical two-dimensional geometry is unsupported");
     root.InitializeTopology();
     return root;
 }
@@ -82,6 +80,7 @@ inline Totals compute(const io::CheckpointData& checkpoint,
                 && checkpoint.eng.size() == cells
                 && checkpoint.rhoX.size() == species_count * cells,
             "conservation checkpoint field shape drifted");
+    io::require_checkpoint_geometry_compatible(checkpoint.dim,checkpoint.geometry,checkpoint.geometry_identity);
     Grid root;
     double root_dx1 = 0.0, root_dx2 = 0.0, root_dx3 = 0.0;
     if (physical_grid != nullptr) {

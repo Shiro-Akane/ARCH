@@ -1,3 +1,9 @@
+/**
+ * Read actual CMake File API/cache evidence for a configured build.
+ * Trace source inputs, generator and compiler identities through bounded stable
+ * reads; ambiguous or incomplete evidence is an error or unknown freshness, not
+ * a reason to infer the toolchain from a profile label.
+ */
 import path from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';

@@ -22,4 +22,4 @@ Begin with [build and first run](../README.md#build), then use the [case guide](
 
 ## Develop and discuss
 
-The [contributor guide](development/README.md) covers implementation ownership, ongoing gravity/GUI work and historical records. Use the [test guide](../tests/README.md) and [tool index](../tools/README.md) when editing source. The [reporting guide](guides/Reporting.md) helps prepare a reproducible build, runtime or numerical question.
+The [contributor guide](development/README.md) covers implementation ownership, current verification workflow and historical records. Use the [test guide](../tests/README.md) and [tool index](../tools/README.md) when editing source. The [reporting guide](guides/Reporting.md) helps prepare a reproducible build, runtime or numerical question.

@@ -117,7 +117,7 @@ void run_jeans_runtime_lease()
     const auto topology=runtime.prepare_backend_bindings();
     std::vector<arch::cuda::CudaBlockBinding> bindings;
     for(const auto& b:topology)
-        bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary});
+        bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary,b.hydro_boundary});
     runtime.install_backend(arch::cuda::make_cuda_backend(bindings,0,
         launch_config(config),species,eos));
     runtime.upload_initial_state();
@@ -177,7 +177,7 @@ void run_jeans_runtime_lease()
 // Internal Runtime transaction qualification from the frozen uniform state's
 // geometry/material. No public configuration/startup capability is opened here;
 // no gravity solve, timestep or checkpoint is claimed.
-void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false)
+void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false,bool native=false)
 {
     auto config=configuration();
     config.grid.dim=dimension;
@@ -189,6 +189,11 @@ void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false)
     config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="periodic";
     config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="periodic";
     config.grid.x3l_boundary_type=config.grid.x3r_boundary_type="periodic";
+    if(native) {
+        config.grid.geometry="cylindrical";
+        config.grid.x1_min=1.;config.grid.x1_max=2.;
+        config.grid.x1l_boundary_type=config.grid.x1r_boundary_type="reflecting";
+    }
     config.grid.amr_max_blocks=capacity_failure?8:64;
     config.physics.gravity.type="self";
     config.execution.compute_backend="cuda";
@@ -222,7 +227,17 @@ void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false)
     const auto topology=runtime.prepare_backend_bindings();
     std::vector<arch::cuda::CudaBlockBinding> bindings;
     for(const auto& b:topology)
-        bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary});
+        bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary,b.hydro_boundary});
+    if(native) {
+        auto missing=bindings;missing.front().hydro_boundary.reset();
+        bool refused=false;
+        try {(void)arch::cuda::make_cuda_backend(missing,0,launch_config(config),species,eos);}
+        catch(const std::invalid_argument& error) {
+            refused=std::string(error.what()).find("prepared physical wall metadata")!=std::string::npos;
+        }
+        require(refused,"native Device silently substituted open faces for missing wall metadata");
+        std::cout<<"NATIVE_DEVICE_MISSING_WALL_METADATA_REJECTION_PASS\n";
+    }
     runtime.install_backend(arch::cuda::make_cuda_backend(bindings,0,
         launch_config(config),species,eos));
     runtime.upload_initial_state();
@@ -304,7 +319,7 @@ void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false)
         "target 64 coarsen changed the uniform accepted state");
     require(counters.t_current==0. && counters.step_count==0,"transaction fixture advanced simulation");
     std::cout<<"CUDA_JEANS_RUNTIME_TRANSACTIONS_PASS dimension="<<dimension
-        <<" root_blocks=4 refined_blocks="<<refined_count
+        <<" native="<<native<<" root_blocks=4 refined_blocks="<<refined_count
         <<" parent_veto=1 equality_coarsen=1 target64_coarsen=1 nextafter_refine=1 finest_reject=1 stale_host=1"
         <<" time=0 steps=0\n";
 }
@@ -607,6 +622,8 @@ int main()
         run_jeans_runtime_lease();
         for(int dimension=1;dimension<=3;++dimension)run_jeans_runtime_transactions(dimension);
         run_jeans_runtime_transactions(1,true);
+        run_jeans_runtime_transactions(2,false,true);
+        run_jeans_runtime_transactions(2,true,true);
         run(4);
         run(41);
         return 0;

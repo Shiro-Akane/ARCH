@@ -1,3 +1,8 @@
+/**
+ * Parse Ninja's recorded compiler dependencies into stable input identities.
+ * Keep the build directory as the path basis and compare the complete snapshot.
+ * Absent dependency evidence cannot be replaced by a guessed source-file list.
+ */
 import {open} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {createHash} from 'node:crypto';

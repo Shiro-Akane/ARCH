@@ -28,11 +28,22 @@ BE_NR、BD 和 ROS4 参数文件显式声明当前配置契约所需的
 不代表新的科学轨迹或 CUDA 结果。回放应使用记录的数值／EOS 控制与表身份；
 更长物理终点需要单独的独立参考及误差预算。
 
-## 当前 CPU 可靠性复核
+[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+已按声明的单GPU范围签收。当前原私有Cellular24步／全部25CHK通过原`5e-9`＋绝对项`5e-12`门，
+ENUC在CPU／Device间逐位一致；各后端CHK12→新进程24的21项CHK／43项物理Plot也与自身连续运行一致。
+
+真实两次burn-half输入／接受能量捕获及同输入交叉回放定位到Saha舍入放大和Host AMR RKL预乘时间的顺序差。
+修复收敛在现有NSE与AMR RKL所有者；共享条件化数学，使用未缩放`L(U)`并应用真实步长一次。
+当前内建／生成NSE数学、A19策略、原RKL与旋转AMR消费者通过；6859点当前函数桥接复用独立高精度参照。
+方程、ODE控制、固定点零源、原守恒标准和源项定义保持：ENUC仍为最后接受的半步核能增量除以该半步时长。
+原第1步／终态`4.3878863852117646e-7`／`1.1197942950938268e-7`失败保留原身份。
+[主计划](../../ARCH_RELEASE_PLAN.md)统一记录编译成本和仍需后续签收的CPU限定／平台／分发范围。
+
+## CPU 科学依据
 
 [单区 CPU 收据](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json)记录 BE_NR、BD、ROS4
 按原单区终点及 CPU 跨求解器／组分闭合预算完成的新运行。下方历史证据保留；
-本轮没有新的 CUDA 签收。
+该CPU记录不签收CUDA；当前设备结果见上方。
 
 [CPU 耦合与 NSE 记录](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
 补充三种 ODE 与 RKL1／RKL2 组分扩散组成的六组 BurnGradient，均推进至原
@@ -51,11 +62,11 @@ packed 状态、报告及能量交接逐位相同。这是共享实现回放，�
 参考一致；组分Linf为`8.54e-15`，热闭合相对残差为`2.28e-14`，均满足原
 `1e-12`门槛。它核验已接受输出，不冒称观测了生产者内部Ye／旧EOS内能，
 也未另求唯一偏好的热根。纯ODE积分不代表此路线。
-[当前CPU收据](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+[较早CPU收据](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
 将该一维输入推进到原终点：24步、4.01秒、25个CHK、零修复；首步保存状态
 与独立审计状态精确相同。六组全输运控制终点及四条活动ENUC续算也通过原标准，
-其中守恒观测器的精度丢失已修复，物理公式／门槛未改。原CPU/CUDA `enuc_rate`
-筛查及不同的公开／二维轨迹仍未关闭，旧跨身份单点差异不能关闭这些门槛。
+其中守恒观测器的精度丢失已修复，物理公式／门槛未改。当前CPU/CUDA `enuc_rate`
+及公开／二维资格由上方设备签收统一记录；该较早CPU收据保留原源码身份。
 `ENUC`／`enuc_rate` 的单位为 `erg g^-1 s^-1`，表示最后一个燃烧半步的已接受
 能量增量除以该半步时长，不能直接作为整宏步的能量收支账本。
 

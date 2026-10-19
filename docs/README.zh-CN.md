@@ -23,4 +23,4 @@
 
 ## 开发与交流
 
-[开发者指南](development/README.md)说明代码归属、进行中的自引力／GUI 工作和历史记录。[测试指南](../tests/README.zh-CN.md)与[工具索引](../tools/README.md)供修改源码时使用。构建、运行或数值问题可按[反馈指南](guides/Reporting.zh-CN.md)整理可复现材料。
+[开发者指南](development/README.md)说明代码归属、当前验证流程与历史记录。[测试指南](../tests/README.zh-CN.md)与[工具索引](../tools/README.md)供修改源码时使用。构建、运行或数值问题可按[反馈指南](guides/Reporting.zh-CN.md)整理可复现材料。

@@ -1,3 +1,8 @@
+/**
+ * Describe registered models, bounded resource estimates and initial AMR requests.
+ * Native cell bounds and request/build identity travel with results. Estimates
+ * are query planning information, not evolved meshes or runtime performance claims.
+ */
 import type {ConfigurationBuildScope,ConfigurationIdentity,CoordinateSystem} from './configurationContracts';
 export type WorkflowOperation='inspect-case'|'amr-resources'|'preview-amr';
 export interface RegisteredCase {

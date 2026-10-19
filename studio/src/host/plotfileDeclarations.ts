@@ -16,6 +16,7 @@ export function validMeasureLabels(unit:unknown,normalization:unknown,dimension?
  return unit==='cm'&&normalization==='per_unit_transverse_area'&&(dimension===undefined||dimension===1)||
   unit==='cm^2'&&normalization==='per_unit_transverse_length'&&(dimension===undefined||dimension===2)||
   unit==='cm^3'&&normalization==='full_volume'&&(dimension===undefined||dimension===3)||
+  unit==='cm^3'&&normalization==='per_unit_azimuth'&&(dimension===undefined||dimension===2)||
   unit==='cm^3'&&normalization==='full_rotation'&&(dimension===undefined||dimension===2)||
   unit==='cm^3'&&normalization==='per_unit_solid_angle'&&(dimension===undefined||dimension===1)||
   unit==='cm^2'&&normalization==='per_unit_azimuth_and_axial_length'&&(dimension===undefined||dimension===1);

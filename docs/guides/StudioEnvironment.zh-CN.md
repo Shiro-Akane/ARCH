@@ -106,4 +106,4 @@ ldd studio/node_modules/electron/dist/electron
 
 `ldd` 中出现 `not found` 时，先补齐对应系统库再启动。`DISPLAY` 未配置时先恢复 Linux 图形会话或 WSLg。包内 Electron 路径改为发行目录的 `arch-studio-bin`。缺少 Core binary 时先完成上面的 CPU 构建；未注册的新源码需重新配置并编译，旧 binary 不能提供它的 Preview。
 
-本机验收包括两条真实桌面启动路径、包外 HDF5 读取，以及真实 xterm 中的短运行和 checkpoint 续算。完整参数点击、原生选择器与全部显示组合仍须按[集成报告](../development/ComputeStudioIntegrationReport-20261006.zh-CN.md)执行人工验收。
+本机验收包括两条真实桌面启动路径、包外 HDF5 读取，以及真实 xterm 中的短运行和 checkpoint 续算。完整参数点击、原生选择器与全部显示组合仍须按[集成报告](../histroy/integration/ComputeStudioIntegrationReport-20261006.zh-CN.md)执行人工验收。

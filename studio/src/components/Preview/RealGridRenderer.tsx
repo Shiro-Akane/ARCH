@@ -1,3 +1,6 @@
+/**
+ * Bind real initial-grid samples, native labels and optional AMR overlay to PhysicalPlot. This view adapter neither runs Core nor resamples the supplied field.
+ */
 import type {AmrOverlayProps} from './AmrOverlay';
 import type {Range} from '../../data/plotPresentation';
 import type {RealGrid} from '../../data/RealInitPreviewProvider';

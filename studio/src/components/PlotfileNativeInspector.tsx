@@ -1,3 +1,6 @@
+/**
+ * Show exact stored native-cell data and typed query evidence. Displayed rows remain read-only and are not interpolated physical solutions.
+ */
 import {formatPlotfileRawValue} from '../host/plotfileRawValue';
 import {PlotfileSourceEvidence} from './PlotfileSourceEvidence';
 import {storedCellIndices} from '../host/plotfileAudit';

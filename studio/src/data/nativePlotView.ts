@@ -1,3 +1,8 @@
+/**
+ * Map stored native-cell bounds to a display viewport and exact cell selection.
+ * Zoom/pan affect the spatial view only; a one-dimensional ordinate remains a
+ * field value. Boundary ties choose the first stored row and gaps create no cell.
+ */
 import type {NativePlotCells,RawPlotNumber} from '../host/plotfileAudit.ts';
 
 export type PlotView={x:[number,number];y:[number,number]};
@@ -6,6 +11,8 @@ export function finitePlotRange(values:RawPlotNumber[]):[number,number]|null {
  if(!finite.length)return null;
  const lo=Math.min(...finite),hi=Math.max(...finite);
  if(lo!==hi)return Number.isFinite(hi-lo)?[lo,hi]:null;
+ // A constant field gets 5% display headroom (half a unit at zero). This only
+ // prevents a degenerate viewport; raw values and explicit query bounds stay exact.
  const pad=Math.abs(lo)*.05||.5;
  return Number.isFinite(lo-pad)&&Number.isFinite(hi+pad)?[lo-pad,hi+pad]:null;
 }

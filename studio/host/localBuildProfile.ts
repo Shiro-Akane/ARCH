@@ -1,3 +1,8 @@
+/**
+ * Derive the local CPU recipe for the selected source root.
+ * This is a profile description shared by launch/Configure; command execution
+ * and successful-build evidence remain with their existing Host owners.
+ */
 import type {BuildProfile} from '../src/host/contracts.ts';
 import type {ConfigureProfile} from './configureRunner.ts';
 /** Host-owned CPU workflow; separate from existing scientific validation trees. */

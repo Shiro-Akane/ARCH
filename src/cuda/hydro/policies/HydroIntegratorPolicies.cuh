@@ -186,7 +186,7 @@ cudaError_t launch_bounded_hydro_stage(
     }
     if (grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled) {
         error = launch_hydro_sources(input, delta, grid, eos, dt, stream,
-                                     species_workspace, gravity);
+                                     species_workspace, gravity, input.hydro_boundary);
         if (error != cudaSuccess) return error;
         ++kernels_launched;
     }

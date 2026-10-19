@@ -336,7 +336,7 @@ class ConfigurationV3(unittest.TestCase):
 
     def test_snia_geometry_examples_keep_complete_explicit_inputs(self):
         paths = sorted((ROOT / "simulation/SNIaCoupled").glob("*.par"))
-        self.assertEqual(len(paths), 5, "retired CYL2 input is excluded; keep all five supported examples explicit")
+        self.assertEqual(len(paths), 5, "keep the five maintained SNIa examples explicit; new chart science qualifications are separate")
         for path in paths:
             with self.subTest(path=path.name):
                 data = self.inspect(path.read_text(), case="SNIaCoupled")
@@ -351,13 +351,13 @@ class ConfigurationV3(unittest.TestCase):
 
     def test_coordinates_use_only_valid_explicit_topology(self):
         labels = {"cartesian": {1:["x"],2:["x", "y"],3:["x", "y", "z"]},
-                  "cylindrical": {1:["r"],3:["r", "z", "phi"]},
+                  "cylindrical": {1:["r"],2:["r", "z"],3:["r", "z", "phi"]},
                   "spherical": {1:["r"],2:["r", "phi"],3:["r", "theta", "phi"]}}
         for geometry, dimensions in labels.items():
             for dim, expected in dimensions.items():
                 text = edit(edit(edit(BASE, "geometry", geometry),
                                  "nblockx2", int(dim >= 2)), "nblockx3", int(dim == 3))
-                data = self.inspect(text)
+                data = self.inspect(edit(edit(text,"x1_min",1),"x1_max",2))
                 axes = data["coordinates"]["axes"]
                 self.assertEqual([a["key"] for a in axes], ["x1", "x2", "x3"])
                 self.assertEqual([a["displayName"] for a in axes if a["active"]], expected)
@@ -365,8 +365,7 @@ class ConfigurationV3(unittest.TestCase):
                                  ["rad" if x in ["phi", "theta"] else "cm" for x in expected])
         for text in [edit(BASE, "geometry"), edit(BASE, "nblockx2"),
                      edit(BASE, "nblockx2", "bad"), edit(BASE, "nblockx3", 1),
-                     edit(BASE, "geometry", "bad"),
-                     edit(edit(edit(BASE,"geometry","cylindrical"),"nblockx2",1),"nblockx3",0)]:
+                     edit(BASE, "geometry", "bad")]:
             self.assertIsNone(self.inspect(text, expected=3)["coordinates"])
         # Unrelated missing physical parameters must not erase valid topology.
         data = self.inspect(edit(BASE, "eos_type"), expected=3)

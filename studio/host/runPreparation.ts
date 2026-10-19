@@ -1,3 +1,9 @@
+/**
+ * Build a confirmation-bound Run/Restart proposal from saved inputs and Core inspection.
+ * Check binary/configuration/checkpoint identity and output paths before handing
+ * the proposal to RunController. Preparation never launches evolution and cannot
+ * replace the user's explicit confirmation of the compiled version.
+ */
 import {canonicalOutputDirectory} from './runOutput.ts';
 import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
 import {execFile} from 'node:child_process';

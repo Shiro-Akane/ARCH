@@ -213,7 +213,7 @@ struct CudaBlockRuntime {
         const amr::Block& block, amr::BlockHandle requested_handle,
         backend::StorageGeneration requested_generation,
         int expected_species_count, int device_ordinal,
-        const boundary::BoundaryPlan& logical_boundary,
+        const boundary::BoundaryPlan& logical_boundary, std::optional<boundary::HydroBoundaryView> hydro_boundary,
         const CudaLaunchConfig& launch, cudaStream_t stream,
         backend::BackendCounters& counters);
 

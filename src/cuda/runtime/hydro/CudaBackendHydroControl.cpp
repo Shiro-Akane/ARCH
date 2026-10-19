@@ -232,6 +232,8 @@ state::CompletionToken CudaBackend::clear_amr_flux_register(
     if (plan == nullptr)
         throw std::logic_error("CUDA AMR flux plan is unavailable");
 
+    // The caller may have selected another device; launches use our stream.
+    impl_->select_device();
     int kernels = 0;
     for (const auto& requirement : plan->surface_requirements) {
         const auto register_role = static_cast<std::uint8_t>(
@@ -278,6 +280,7 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
             || block->slots[slot_index(slot)].total_size != block->grid.total_size)
             throw std::logic_error("CUDA AMR reflux actual owner/chart/shape drifted");
     }
+    impl_->select_device();
     auto& scratch = impl_->reflux_batch;
     const int species_count = impl_->species_view.count;
     reflux_repairs.reset(species_count);
@@ -352,6 +355,7 @@ state::CompletionToken CudaBackend::execute_physical_boundary(
     const DeviceStateView selected = block.require_access(access);
     if (!state::is_valid(version) || !complete_token(expected))
         throw std::invalid_argument("invalid boundary completion contract");
+    impl_->select_device();
     check_cuda(launch_cuda_backend_boundary_plan(
                    selected, block.boundary_transfers.get(),
                    block.boundary, impl_->stream.get()),
@@ -786,6 +790,18 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
                 throw std::invalid_argument("CUDA coarse-fine source measure is invalid");
             lowered.source_measures[cell] = measure;
             lowered.source_measure_sum += measure;
+            // The gather carries ordinary V here; the shared kernel recovers
+            // the optional Mphi W from this same native grid descriptor.
+            if (transfer.rule == amr::RefinementRule::FineGhostAverage
+                && source_grid.dim == 2
+                && source_geometry.geometry == GridMetrics::Geometry::Cylindrical) {
+                const double moment = GridMetrics::AngularMomentumVolumeMoment(
+                    source_geometry, source_grid.is + logical[0],
+                    source_grid.js + logical[1], source_grid.ks + logical[2]);
+                if (!std::isfinite(moment) || moment <= 0.0)
+                    throw std::invalid_argument(
+                        "CUDA coarse-fine source moment is invalid");
+            }
         }
         if (!std::isfinite(lowered.source_measure_sum) || lowered.source_measure_sum <= 0.0)
             throw std::invalid_argument("CUDA coarse-fine source measure sum is invalid");

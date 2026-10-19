@@ -1,3 +1,10 @@
+/**
+ * Decode completed published Plotfiles and bounded native-cell queries.
+ * Workflow: validate publication/schema/coordinate identity, read declared stored
+ * fields and topology, then form metadata, point, slice or Cartesian overview
+ * responses. Preserve nonfinite classifications and physical units; rendering
+ * limits do not authorize resampling or modifying the scientific file.
+ */
 import {effectiveConfigurationFields} from './configurationIdentityFields.ts';
 import {validFieldDeclaration,validMeasureLabels} from '../src/host/plotfileDeclarations.ts';
 import type {PlotfileFieldDeclaration} from '../src/host/plotfileDeclarations.ts';
@@ -240,13 +247,12 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  if(entity===null)return null;
  if(!(entity instanceof h5.Group))throw Error('Invalid local NativeGrid group.');
  const version=scalar(entity,'version'),formal=typeof version==='string'&&version.startsWith('arch-native-');
- const dimension=shape.length-1;
+ const dimension=shape.length-1,axisymmetric=geometry==='cylindrical'&&dimension===2;
  if(!formal&&(version!=='candidate-cartesian-1'||geometry!=='cartesian'||![1,2].includes(dimension)))
   throw Error('Unsupported candidate native geometry.');
  if(formal&&(!['arch-native-cartesian-1','arch-native-curvilinear-1'].includes(String(version))||
    scalar(entity,'native_geometry')!==geometry||version==='arch-native-cartesian-1'&&geometry!=='cartesian'||
-   version==='arch-native-curvilinear-1'&&(!['cylindrical','spherical'].includes(geometry)||
-     geometry==='cylindrical'&&dimension===2)))throw Error('Invalid formal native geometry profile');
+   version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(geometry)))throw Error('Invalid formal native geometry profile');
  const convention=geometry==='cartesian'?
   'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral';
  const expected:Record<string,string|number>={centering:'cell',ghost_cells:0,block_kind:'active-leaf',
@@ -257,13 +263,15 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  const rawUnit=scalar(entity,'measure_unit'),measureUnit=rawUnit==='unknown'?null:rawUnit;
  const rawNormalization=entity.attrs.measure_normalization?scalar(entity,'measure_normalization'):null;
  const measureNormalization=rawNormalization==='unknown'?null:rawNormalization;
+ if(axisymmetric&&(measureUnit!=='cm^3'||measureNormalization!=='per_unit_azimuth')||
+   !axisymmetric&&measureNormalization==='per_unit_azimuth')throw Error('Invalid native chart measure.');
  if(!validMeasureLabels(measureUnit,measureNormalization,dimension))throw Error('Invalid native measure labels.');
  let axes:string[]|undefined,axisUnits:string[]|undefined;
  if(formal){
   axes=[1,2,3].map(axis=>scalar(entity,'x'+axis+'_axis') as string);
   axisUnits=[1,2,3].map(axis=>scalar(entity,'x'+axis+'_unit') as string);
   const expectedAxes=geometry==='cartesian'?['x','y','z']:
-   dimension===3?(geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
+   dimension===3?(geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r',axisymmetric?'z':'phi','inactive'];
   const expectedUnits:string[]=expectedAxes.map(axis=>['phi','theta'].includes(axis)?'rad':'cm');
   for(let axis=0;axis<3;axis++){
    if(axis>=dimension){expectedAxes[axis]='inactive';expectedUnits[axis]='inactive';}
@@ -287,7 +295,7 @@ function nativeHeader(file:InstanceType<typeof h5.File>,shape:number[],geometry:
  }
  return {version:String(version),measureSource:'GridMetrics::CellVolume',measureConvention:convention,
   measureUnit:measureUnit as 'cm'|'cm^2'|'cm^3'|null,measureNormalization:measureNormalization as string|null,
-  ...(formal?{geometry,axes,axisUnits,chart:'existing'}:{})};
+  ...(formal?{geometry,axes,axisUnits,chart:axisymmetric?'cylindrical-rz-pwc':'existing'}:{})};
 }
 type RawNumber=number|'NaN'|'Infinity'|'-Infinity';
 function rawNumbers(value:unknown,expected:number):RawNumber[] {
@@ -516,7 +524,9 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
       ![1,2,3].includes(Number(dimension))||typeof dimension!=='number'||
       typeof geometry!=='string'||!['cartesian','cylindrical','spherical'].includes(geometry))
     throw new Error('Invalid ARCH plotfile metadata.');
-   if(geometry==='cylindrical'&&dimension===2)throw Error('Two-dimensional cylindrical plotfiles are unsupported.');
+   const axisymmetric=geometry==='cylindrical'&&dimension===2;
+   if(axisymmetric&&(scalar(file,'geometry_semantics_revision')!==1||scalar(file,'geometry_chart')!=='cylindrical-rz-pwc'))
+    throw Error('Unsupported cylindrical native chart identity.');
    const grid=group(file,'Grid'),data=group(file,'Data');
    const names=data.keys();
    if(!names.length||names.length>MAX_FIELDS)throw new Error('Invalid field count or field audit budget exceeded.');
@@ -536,6 +546,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
    const candidateSourceIdentity=sourceEvidence(file);
    const candidateNativeGrid=nativeHeader(file,shape,geometry);
    const formal=candidateSourceIdentity?.version==='arch-plot-identity-1';
+   if(axisymmetric&&(!formal||!candidateNativeGrid?.version.startsWith('arch-native-')))throw Error('Cylindrical2D requires formal native chart identity.');
    if(formal&&(!candidateNativeGrid||!candidateNativeGrid.version.startsWith('arch-native-'))||
      candidateNativeGrid?.version.startsWith('arch-native-')&&!formal)throw Error('Formal publication lacks matching runtime/native identities');
    if(candidateNativeGrid){
@@ -557,7 +568,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
     ({payload,pointEvidence}=readPoint(file,shape,pointRequest,candidateNativeGrid));
    }
    if(overviewRequest){
-    if(!candidateNativeGrid||geometry!=='cartesian'||![1,2].includes(dimension)||!names.includes(overviewRequest.field))throw Error('Overview requires candidate native Cartesian 1D/2D metadata and a stored field.');
+    if(!candidateNativeGrid||!(geometry==='cartesian'&&[1,2].includes(dimension)||axisymmetric)||!names.includes(overviewRequest.field))throw Error('Overview requires supported native 1D/2D metadata and a stored field.');
     overview=readOverview(file,shape,overviewRequest);
    }
    const coordinateUnit=grid.attrs.coordinate_unit?scalar(grid,'coordinate_unit'):null;
@@ -575,7 +586,7 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
      {case:null,config:null,build:null,binary:null,eos:null},
     nativeCellGeometry:candidateSourceIdentity?.version==='arch-plot-identity-1'&&candidateNativeGrid?
      {bounds:'recorded',volume:'recorded'}:{bounds:'unavailable',volume:'unavailable'},
-    renderEligible:candidateSourceIdentity?.version==='arch-plot-identity-1'&&!!candidateNativeGrid&&geometry==='cartesian'&&[1,2].includes(dimension),
+    renderEligible:candidateSourceIdentity?.version==='arch-plot-identity-1'&&!!candidateNativeGrid&&(geometry==='cartesian'&&[1,2].includes(dimension)||axisymmetric),
     diagnostics:[request?'FIELD_SLICE_AUDIT':'METADATA_ONLY',...(formal?['SCOPED_RUNTIME_IDENTITY_RECORDED','NATIVE_CELL_GEOMETRY_RECORDED','NUMERICAL_QUALIFICATION_SEPARATE']:['OUTPUT_COMPLETION_UNVERIFIED',fields.every(f=>f.unit===null)?'UNITS_UNAVAILABLE':'RECORDED_UNITS_REVIEW_PENDING','SCIENTIFIC_IDENTITY_UNAVAILABLE',...(candidateNativeGrid?['CANDIDATE_NATIVE_GRID_REVIEW_PENDING']:['NATIVE_CELL_GEOMETRY_UNAVAILABLE'])])]};
   } finally {if(file.file_id>=0n)file.close();}
   const hash=createHash('sha256'),buffer=Buffer.alloc(64*1024);

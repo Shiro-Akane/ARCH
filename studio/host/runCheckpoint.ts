@@ -1,3 +1,9 @@
+/**
+ * Fingerprint the checkpoint selected for an explicitly confirmed restart.
+ * Use opened-file and filesystem identity checks around bounded reads, preserving
+ * the actual checkpoint bytes. Core owns format and physical compatibility; a
+ * Host filesystem fingerprint does not add a new checkpoint acceptance rule.
+ */
 import {createHash} from 'node:crypto';
 import {constants,type BigIntStats} from 'node:fs';
 import fs from 'node:fs/promises';

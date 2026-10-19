@@ -9,16 +9,25 @@
 [离散记录](../../docs/development/P2PoissonMultigrid.zh-CN.md)
 保留原始预算。生产 AMR 与设备证据见下文。
 
-## 已退役的二维柱坐标路线
+## 原生二维柱坐标
 
-二维柱坐标不再支持。球坐标二维 `(r,phi)`、一维径向和三维曲线坐标保留原契约。
-旧 RZ [Host 场景](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json)、
-[孤立场收敛](results/release-closure-20261007/native-density-certificate-20261009-summary.json)、
-[有限 Euler 能量](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)
-及[最终 CPU 科学签收](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)
-按原源码、执行物、输入和门槛保留；原失败、中断成本及设备缺口不改写。
-专用 runner 和环核参考已退出当前执行入口。退役与剩余发布工作见
-[主计划](../../ARCH_RELEASE_PLAN.md)，不把退役记为性能提速。
+二维柱坐标采用`cylindrical-rz-pwc` chart、`(r,z)`轴和三个物理动量分量。
+公共Grid只负责几何；可选引力负责场、全环质量、势边界与做功。
+[CPU引力](../backend/results/release-readiness/Cyl3OptionalGravity-20261018.json)、
+[设备owner](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)及
+[综合准入](../backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)
+按原数值门槛与身份解释；关闭引力时零求解／专属数值分配。
+
+[当前CPU签收](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)
+补齐GravityBox／SNIaCoupled轴向剖面、显式中心输入与短fresh。
+[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+已将两个Host修正纳入重建的CUDA应用，并验证受影响场与fresh。未变引力kernel、关闭分配与能量证据保留原身份范围；
+球坐标二维`(r,phi)`、一维径向及三维曲线坐标保留各自契约。独立的私有Cellular源项率门仍限制完整设备发布资格。
+
+[旧CPU科学](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)与
+[旧实现退役](../backend/results/release-readiness/RzRetirementAcceptance-20261018.json)只保留历史身份，
+失败和中断不改签；旧runner／checkpoint不是当前执行入口。剩余发布工作见
+[主计划](../../ARCH_RELEASE_PLAN.md)。
 
 ## 常外部重力
 
@@ -140,8 +149,8 @@ CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 对照、双向跨后端续算与本机性能见 [曲线坐标 CUDA 记录](results/p13-20260924/README.md)。
 指定 Dirichlet／Neumann／线性 Robin 及用户势边界支持三类几何和有效扇区；孤立质量模型仍要求完整方位角。域外质量源和 Jeans 专用细化指标未纳入此范围。
 可从 [GravityBox](../../simulation/GravityBox/README.md)
-的示例输入开始。[笛卡尔自引力验收](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
-记录数值、耦合、重启与设备检查；早期 [周期场记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)
+的示例输入开始。[笛卡尔自引力验收](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
+记录数值、耦合、重启与设备检查；早期 [周期场记录](../../docs/histroy/science/P3P4CompositeGravity.zh-CN.md)
 保留其 CPU 周期范围；[径向场与 AMR 记录](results/p8-p10-20260923/README.md)保存椭圆与 AMR 指标。
 
 `run_self_gravity.py --arch <ARCH> --output <新目录>` 检查 Jeans 波、能量、时间阶、

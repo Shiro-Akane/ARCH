@@ -1,3 +1,6 @@
+/**
+ * Present the current initialization workflow actions and state. Action callbacks preserve request identity and leave execution to the owning controller.
+ */
 import {RunControls} from './RunControls';
 import type {WorkingCopy} from '../data/RealInitPreviewProvider';
 import {useConfigure} from '../host/useConfigure';

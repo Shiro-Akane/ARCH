@@ -39,7 +39,7 @@ struct EvaluateBoundary {
     double G,reference_radius;double* values;
     /** Evaluate one isolated face value from the current multipole tree. */
     ARCH_INLINE void operator()(int i) const {
-        values[points[i].face]=dimension==2
+        values[points[i].face]=dimension==2 && geometry==GridMetrics::Geometry::Spherical
             ?isolated_log_potential(nodes,moments,node_count,points[i].position,G,reference_radius,.25,2,geometry)
             :isolated_potential(nodes,moments,node_count,points[i].position,G,.25,2,geometry,dimension);
     }

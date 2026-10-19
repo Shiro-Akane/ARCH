@@ -41,6 +41,20 @@ void expect(bool condition, const std::string& message)
     if (!condition) throw std::runtime_error(message);
 }
 
+template <typename Function>
+void expect_rejected(Function&& function, const std::string& message)
+{
+    bool rejected = false;
+    try {
+        function();
+    } catch (const std::invalid_argument&) {
+        rejected = true;
+    } catch (const std::overflow_error&) {
+        rejected = true;
+    }
+    expect(rejected, message);
+}
+
 bool close(double left, double right)
 {
     return std::abs(left - right) < 1.0e-13;
@@ -500,11 +514,164 @@ void test_real_2d_topology_surface_partition()
            "real 2D reflux did not lower to one race-free correction per cell");
 }
 
+/** Per-field moment weights must not depend on which field seeds a group. */
+void test_moment_group_order_invariance()
+{
+    Fixture fixture;
+    const auto bindings=amr::flux_execution_detail::index_bindings(
+        fixture.bindings,2,Fixture::species_count);
+    const amr::LogicalAmrBox box{{0,0,0},{1,1,1}};
+    const auto make_plan=[&](bool moment_first) {
+        amr::RefluxPlan plan{};
+        plan.dimension=2;
+        plan.scope={0,fixture.epoch,fixture.epoch};
+        const auto append=[&](amr::AmrField field,int component,double weight) {
+            plan.operations.push_back({
+                0,fixture.coarse,fixture.coarse,box,box,
+                amr::AmrAxis::X,amr::AmrSide::Lower,field,component,
+                amr::RefinementRule::RefluxCorrection,weight,1.0});
+        };
+        if(moment_first) append(amr::AmrField::MomW,-1,0.25);
+        append(amr::AmrField::Rho,-1,0.5);
+        append(amr::AmrField::MomU,-1,0.5);
+        append(amr::AmrField::MomV,-1,0.5);
+        if(!moment_first) append(amr::AmrField::MomW,-1,0.25);
+        append(amr::AmrField::Energy,-1,0.5);
+        append(amr::AmrField::Species,0,0.5);
+        append(amr::AmrField::Species,1,0.5);
+        for(std::size_t index=0;index<plan.operations.size();++index)
+            plan.operations[index].ordinal=index;
+        return plan;
+    };
+    for(const bool moment_first:{true,false}) {
+        const auto plan=make_plan(moment_first);
+        const auto groups=amr::flux_execution_detail::group_fields(
+            plan,bindings,Fixture::species_count);
+        expect(groups.size()==1
+                && groups.front().weight==0.5
+                && groups.front().moment_weight==0.25,
+            "Mphi-first operation order changed the ordinary/moment group weights");
+    }
+    auto repeated=make_plan(true);
+    auto duplicate=repeated.operations.front();
+    duplicate.weight=0.125;
+    duplicate.ordinal=repeated.operations.size();
+    repeated.operations.push_back(duplicate);
+    expect_rejected([&] {
+        (void)amr::flux_execution_detail::group_fields(
+            repeated,bindings,Fixture::species_count);
+    },"inconsistent repeated Mphi weight was silently accepted");
+}
 
+/** Native CYL-2 plan weights: fragment T for axial registration and coarse
+ * T/W for radial reflux, without a separate Rz facility or evolved moment. */
+void test_axisymmetric_surface_moment_plan()
+{
+    SimConfig config{};
+    config.grid.dim=2;
+    config.grid.geometry="cylindrical";
+    config.grid.nblockx1=2;
+    config.grid.nblockx2=2;
+    config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=2.;
+    config.grid.x2_min=0.;config.grid.x2_max=2.;
+    config.grid.amr_max_blocks=64;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
 
+    amr::AMRControl control(64,2);
+    control.tree->LoadLeafGrid(config,0,
+        std::vector<int>{1,1,1,1,1,1,1,1,0,0},
+        std::vector<std::uint32_t>{0,1,0,1,2,3,2,3,1,0},
+        std::vector<std::uint32_t>{2,2,3,3,0,0,1,1,1,0},
+        std::vector<std::uint32_t>{0,0,0,0,0,0,0,0,0,0});
+    const auto& active=control.tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    for(std::size_t index=0;index<active.size();++index)
+        handles.push_back({{4000+index},{93}});
+    control.BindActiveHandles(handles);
 
-// Independent finite-ring integral reference. These tests qualify scalar
-// normalization only, not the still-unmigrated runtime register consumers.
+    const auto topology=amr::build_amr_flux_topology_plan(
+        *control.pool,active,handles,2,0);
+    const auto same_group=[](const amr::AmrTransferOperation& left,
+                             const amr::AmrTransferOperation& right) {
+        return left.source==right.source
+            && left.destination==right.destination
+            && left.source_box==right.source_box
+            && left.destination_box==right.destination_box
+            && left.axis==right.axis && left.side==right.side
+            && left.rule==right.rule;
+    };
+    bool fine_moment=false;
+    for(const auto& route:topology.routes)
+        for(const auto& operation:route.plan.operations) {
+            if(operation.field!=amr::AmrField::MomW
+                || operation.rule!=amr::RefinementRule::FineFluxContribution)
+                continue;
+            const auto rho=std::find_if(
+                route.plan.operations.begin(),route.plan.operations.end(),
+                [&](const amr::AmrTransferOperation& candidate) {
+                    return candidate.field==amr::AmrField::Rho
+                        && same_group(candidate,operation);
+                });
+            expect(rho!=route.plan.operations.end(),
+                "CYL-2 registration lost its ordinary field control");
+            if(std::abs(operation.weight-rho->weight)
+                >1.e-13*std::max(1.,std::abs(rho->weight)))
+                fine_moment=true;
+        }
+    expect(fine_moment,
+        "CYL-2 axial fragment registration reused the ordinary area weight");
+
+    const auto reflux=amr::build_amr_reflux_topology_plan(
+        *control.pool,topology);
+    bool radial_moment=false;
+    for(const auto& operation:reflux.operations) {
+        if(operation.field!=amr::AmrField::MomW) continue;
+        const auto block_id=topology.pool_lowering.at(operation.destination);
+        const auto& block=control.pool->GetBlock(block_id);
+        const auto view=GridMetrics::make_geometry_view(block.grid);
+        const int i=block.grid.Is()+operation.destination_box.first[0];
+        const int j=block.grid.Js()+operation.destination_box.first[1];
+        const int k=block.grid.Ks()+operation.destination_box.first[2];
+        const int axis=amr::axis_value(operation.axis);
+        const bool high=operation.side==amr::AmrSide::Upper;
+        const double moment=GridMetrics::AngularMomentumFaceMoment(
+            view,axis,i,j,k,high);
+        const double volume_moment=GridMetrics::AngularMomentumVolumeMoment(
+            view,i,j,k);
+        const double area=GridMetrics::FaceArea(view,axis,i,j,k,high);
+        const double volume=GridMetrics::CellVolume(view,i,j,k);
+        expect(std::abs(operation.weight-moment/volume_moment)
+                <=2.e-14*std::max(1.,std::abs(operation.weight)),
+            "CYL-2 reflux did not use the exact coarse T/W moment");
+        if(operation.axis==amr::AmrAxis::X) {
+            expect(std::abs(operation.weight-area/volume)
+                    >1.e-13*std::max(1.,std::abs(operation.weight)),
+                "CYL-2 radial reflux collapsed to ordinary A/V");
+            radial_moment=true;
+        }
+    }
+    expect(radial_moment,
+        "CYL-2 reflux fixture emitted no radial moment correction");
+
+    std::vector<amr::AmrFluxEndpointBinding> bindings;
+    for(std::size_t index=0;index<active.size();++index)
+        bindings.push_back({topology.active_endpoints[index],
+            static_cast<int>(index),0,
+            amr::make_amr_flux_grid_layout(
+                control.pool->GetBlock(active[index]).grid)});
+    const auto compiled=amr::compile_amr_flux_topology_plan(
+        topology,bindings);
+    bool compiled_moment=false;
+    for(const auto& route:compiled.routes)
+        for(const auto& term:route.terms)
+            if(std::abs(term.moment_geometric_weight-term.geometric_weight)
+                >1.e-13*std::max(1.,std::abs(term.geometric_weight)))
+                compiled_moment=true;
+    expect(compiled_moment,
+        "compiled CYL-2 surface terms lost the per-field moment weight");
+}
+
 
 
 
@@ -731,8 +898,10 @@ int main()
         test_zero_activation_and_signed_execution();
         test_corner_reflux_grouping();
         test_real_2d_topology_surface_partition();
-        for(int direction:{0,1})for(double inner:{0.,1.})
-        for(int direction:{0,1})for(double inner:{0.,1.})for(double stage:{1.,-.375})
+        test_moment_group_order_invariance();
+        test_axisymmetric_surface_moment_plan();
+        // The retired ring tests left unused loop headers here. This ordinary
+        // polar witness has no such parameters; execute its full coverage once.
         test_spherical_polar_real_mixed_rkl2();
         std::cout << "AMR_FLUX_SURFACE_PLAN_PASS\n";
         return 0;

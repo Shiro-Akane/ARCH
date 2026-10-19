@@ -195,7 +195,6 @@ public:
     void RequireLogicalGeometryIdentity(const Grid& root) const
     {
         if(root.dim<1||root.dim>3||grid.dim!=root.dim||grid.geometry!=root.geometry
-            ||(root.geometry=="cylindrical"&&root.dim==2)
             ||GridMetrics::geometry_from_name(root.geometry)==GridMetrics::Geometry::Unsupported
             ||level<0||level>kMaxRefinementLevel)
             throw std::invalid_argument("Logical Block chart/level identity is invalid");
@@ -273,6 +272,8 @@ inline void Block::InterpolateFromCoarse(
 {
     const auto fine_view=GridMetrics::make_geometry_view(grid);
     const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid);
+    const bool angular_momentum =
+        fine_view.geometry==GridMetrics::Geometry::Cylindrical && dim==2;
     const int nx = BLOCK_NX / 2;
     const int ny = dim >= 2 ? BLOCK_NY / 2 : 1;
     const int nz = dim == 3 ? BLOCK_NZ / 2 : 1;
@@ -305,6 +306,10 @@ inline void Block::InterpolateFromCoarse(
                 geometry.neighbours[4] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck - 1) : geometry.center;
                 geometry.neighbours[5] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck + 1) : geometry.center;
                 geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
+                geometry.angular_momentum = angular_momentum;
+                if (angular_momentum)
+                    geometry.coarse_moment =
+                        GridMetrics::AngularMomentumVolumeMoment(coarse_view, ci, cj, ck);
 
                 int destination[8]{};
                 for (int child = 0; child < (1 << dim); ++child) {
@@ -313,6 +318,9 @@ inline void Block::InterpolateFromCoarse(
                     const int fk = grid.Ks() + 2 * k + (dim == 3 ? (child >> 2) & 1 : 0);
                     destination[child] = grid.GetIndex(fi, fj, fk);
                     geometry.fine_volumes[child] = GridMetrics::CellVolume(fine_view, fi, fj, fk);
+                    if (angular_momentum)
+                        geometry.fine_moments[child] =
+                            GridMetrics::AngularMomentumVolumeMoment(fine_view, fi, fj, fk);
 
                 }
                 regrid_math::ProlongationResult result{};
@@ -348,6 +356,8 @@ inline regrid_math::Status Block::TryAverageToCoarse(
     double min_specific_internal_energy)
 {
     const auto coarse_view=GridMetrics::make_geometry_view(grid);
+    const bool angular_momentum =
+        coarse_view.geometry==GridMetrics::Geometry::Cylindrical && dim==2;
     std::array<GridMetrics::GeometryView,8> fine_views{};
     const int nx = BLOCK_NX;
     const int ny = dim >= 2 ? BLOCK_NY : 1;
@@ -379,12 +389,20 @@ inline regrid_math::Status Block::TryAverageToCoarse(
                 regrid_math::RestrictionGeometry geometry{};
                 geometry.count = 1 << dim;
                 geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
+                geometry.angular_momentum = angular_momentum;
+                if (angular_momentum)
+                    geometry.coarse_moment =
+                        GridMetrics::AngularMomentumVolumeMoment(coarse_view, ci, cj, ck);
                 for (int cell = 0; cell < geometry.count; ++cell) {
                     const int fi = child.grid.Is() + ibase + (cell & 1);
                     const int fj = child.grid.Js() + jbase + (dim >= 2 ? (cell >> 1) & 1 : 0);
                     const int fk = child.grid.Ks() + kbase + (dim == 3 ? (cell >> 2) & 1 : 0);
                     geometry.source_cells[cell] = child.grid.GetIndex(fi, fj, fk);
                     geometry.volumes[cell] = GridMetrics::CellVolume(fine_views[child_index], fi, fj, fk);
+                    if (angular_momentum)
+                        geometry.moments[cell] =
+                            GridMetrics::AngularMomentumVolumeMoment(
+                                fine_views[child_index], fi, fj, fk);
                 }
                 regrid_math::RestrictionResult result{};
                 const auto status = regrid_math::restrict_family(

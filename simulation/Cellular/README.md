@@ -26,7 +26,7 @@ original ODE tolerances. These differ from the separate `Cellular.par` family.
 Configuration or initial-state acceptance does not close the outstanding
 long-evolution energy-generation comparison.
 
-The [current burn checks](../../validation/burn/README.md#current-cpu-reliability-check)
+The [current burn checks](../../validation/burn/README.md#cpu-science-evidence)
 identify the separate one-dimensional diagnostic's actual second-half NSE
 projection, exact replay and original 24-step endpoint. They retain the original rate-comparison gate and
 do not qualify this two-dimensional FLASH trajectory.

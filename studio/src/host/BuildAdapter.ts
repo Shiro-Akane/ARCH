@@ -1,3 +1,8 @@
+/**
+ * Validate browser-side build, event and source responses before using them.
+ * Requests address fixed Host routes; Host owns commands and filesystem access.
+ * A malformed or mismatched response cannot establish build freshness.
+ */
 import {hostEndpoint} from './desktop.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import type {BuildSnapshot,BuildEvents,SourceResponse} from './contracts.ts';

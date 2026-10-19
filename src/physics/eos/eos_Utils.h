@@ -172,6 +172,8 @@ namespace eos_utils
 
         const double log_rho_reference = std::log(reference_rho);
         const double log_temperature_reference = std::log(reference_temperature);
+        // Local search domain in ln(rho), corresponding to a density ratio
+        // exp(+-0.25). It limits this isentropic helper, not the EOS table domain.
         constexpr double max_log_density_distance = 0.25;
 
         const auto log_temperature_on_isentrope = [&](double log_rho_target) {
@@ -180,6 +182,9 @@ namespace eos_utils
                 throw std::runtime_error(
                     "Isentropic pressure solve left its supported local neighborhood.");
             }
+            // Existing RK4 quadrature resolution: |Delta ln(rho)| per panel
+            // is at most 1e-4, with at least eight panels near the reference.
+            // These fixed accuracy/work controls are not physical constants.
             const int steps = std::max(
                 8, static_cast<int>(std::ceil(std::abs(interval) / 1.0e-4)));
             const double step = interval / static_cast<double>(steps);
@@ -212,10 +217,14 @@ namespace eos_utils
 
         double log_rho = log_rho_reference + std::log(pressure_factor) / gamma1_reference;
         eos_state_t state{};
+        // Twelve Newton attempts bound this local solve; failure remains an
+        // error. The 2e-13 log-pressure residual below is its separate criterion.
         for (int iteration = 0; iteration < 12; ++iteration) {
             const double temperature = std::exp(log_temperature_on_isentrope(log_rho));
             state = evaluate(std::exp(log_rho), temperature);
             const double residual = std::log(state.P / target_pressure);
+            // ln(P/P_target) is dimensionless and approximates relative
+            // pressure error near the root; do not use this as a field budget.
             if (std::abs(residual) <= 2.0e-13) {
                 return {
                     state.rho,

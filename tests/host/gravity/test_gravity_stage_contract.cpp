@@ -46,6 +46,11 @@
 #include "physics/gravity/self/SelfGravity.h"
 
 void test_host_hydro_transaction();
+void test_curved_no_gravity(bool cost);
+void test_curved_reference_stress();
+void test_curved_optional_gravity();
+void test_curved_device_runtime();
+void test_curved_device_cost();
 namespace {
 using namespace arch::scheduler;
 using namespace arch::state;
@@ -205,9 +210,17 @@ void test_field_identity() {
 
 } // namespace
 
-int main() {
+int main(int argc,char** argv) {
     try {
+        if(argc==2&&std::string(argv[1])=="--curvilinear-device-cost") {test_curved_device_cost();return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-device") {test_curved_device_runtime();return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-gravity") {test_curved_optional_gravity();return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-no-gravity") {test_curved_no_gravity(false);return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-cost") {test_curved_no_gravity(true);return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-reference") {test_curved_reference_stress();return 0;}
+        if(argc!=1)throw std::invalid_argument("Unknown gravity-stage contract mode");
         test_preparation();test_failures();test_field_identity();test_host_hydro_transaction();
+        test_curved_no_gravity(false);test_curved_optional_gravity();
     } catch (const std::exception& e) { std::cerr<<e.what()<<'\n';return 1; }
     std::cout<<"Gravity stage preparation and field identity contracts passed\n";
 }

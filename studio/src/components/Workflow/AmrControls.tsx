@@ -1,3 +1,6 @@
+/**
+ * Submit explicit initial-AMR query controls through the typed workflow. Resource estimates and native mesh results describe initialization, not time evolution.
+ */
 import type {AmrMesh} from '../../host/workflowContracts';
 import {amrAxisLabel,amrAxisUnit,amrLevelColor} from '../../data/amrGeometry';
 export function AmrControls({mesh,levels,cells,selecting,selected,onLevels,onCells,onSelecting,onSelect}:{mesh:AmrMesh;levels:ReadonlySet<number>;cells:boolean;selecting:boolean;selected:string|null;onLevels:(v:Set<number>)=>void;onCells:(v:boolean)=>void;onSelecting:(v:boolean)=>void;onSelect:(v:string)=>void}){

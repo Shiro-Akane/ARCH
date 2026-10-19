@@ -5,6 +5,10 @@ bin/
 *.o
 *.out
 
+# Archived build investigations are maintained text, not compiler output.
+!docs/histroy/build/
+!docs/histroy/build/**
+
 # 本地模拟输出
 output/
 

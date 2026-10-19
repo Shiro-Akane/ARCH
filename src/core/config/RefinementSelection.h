@@ -19,6 +19,7 @@
 #include <string_view>
 
 #include "data/GlobalDefs.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 
 namespace arch::config {
 /** Check the requested JENS route; this does not probe a device or certify EOS. */
@@ -33,7 +34,8 @@ inline constexpr const char* JeansBackendRequirement =
 /** Parse indicator names and reject unavailable selections before initialization. */
 inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
                                        bool burn_enabled, bool emit_warnings = true,
-                                       bool self_gravity = false, bool jeans_backend = false) {
+                                       bool self_gravity = false, bool jeans_backend = false,
+                                       std::string_view geometry = {}) {
         std::replace(a.refine_var.begin(), a.refine_var.end(), '+', ',');
         a.refine_on_rho = false;
         a.refine_on_p = false;
@@ -90,7 +92,7 @@ inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
             warn_amr_disabled("ENUC", "the nuclear reaction network is not enabled"); a.refine_on_enuc = false;
         }
         if (a.refine_on_vely && dimension < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); a.refine_on_vely = false; }
-        if (a.refine_on_velz && dimension < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); a.refine_on_velz = false; }
+        if (a.refine_on_velz && dimension < 3 && !(dimension == 2 && dispatch::ascii_iequals(geometry,"cylindrical"))) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); a.refine_on_velz = false; }
         if (a.refine_on_jeans) {
             if (!self_gravity || !jeans_backend)
                 throw std::invalid_argument(std::string("JENS refinement ") + JeansBackendRequirement + ".");

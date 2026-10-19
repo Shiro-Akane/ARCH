@@ -1,0 +1,2173 @@
+{
+  "schema": "arch-release-cyl4-acceptance-1",
+  "updated_utc": "2026-10-18T11:26:00.316827+00:00",
+  "stage": "CYL-4",
+  "stage_complete": true,
+  "decision": "ACCEPT_WITH_DECLARED_SCOPE",
+  "acceptance_owner": "Codex independent integration and acceptance",
+  "workspace": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "HEAD": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "uncommitted_CYL1_to_4_changes_preserved": true,
+  "scope": "Public CPU native Cyl2 configuration/capabilities, API/schema, CHK/Plot/diagnostics, Studio and bounded current ARCH/fresh; no CYL5 or REL4",
+  "source_identity": {
+    "entry_freeze": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/entry-freeze.json",
+    "entry_sha256": "e3d65c5e84f13f1189fa37b7f81fec156151f01192d54e0efc7c344e6788d9bf",
+    "final_freeze": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/candidate-freeze8.json",
+    "final_sha256": "76b67ade70022495f5c0510b9bdb4bf3dc95746cfcdfe9547303aa48828d4798",
+    "files": 1208,
+    "full_local_snapshot": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/final-source",
+    "reversible_phase_patch": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/accepted-CYL4.patch",
+    "patch_sha256": "24b030d75125976774dde92605ac63215bce5f036c5c5f20c0a10e343043a5cd",
+    "changed_scientific_files": [
+      "src/amr/refinement/RefinementIndicatorMath.h",
+      "src/amr/topology/AmrTree.h",
+      "src/api/Configuration.h",
+      "src/api/Preview.h",
+      "src/api/configuration/Configuration.cpp",
+      "src/api/configuration/ParameterPresentation.h",
+      "src/api/configuration/PresentationMetadata.cpp",
+      "src/api/preview/Preview.cpp",
+      "src/core/config/ConfigValidation.h",
+      "src/core/config/ConfigurationInput.h",
+      "src/core/config/ControlRelations.h",
+      "src/core/config/InputResolution.h",
+      "src/core/config/RefinementSelection.h",
+      "src/core/config/RuntimeParams.h",
+      "src/core/problem/ProblemHelper.cpp",
+      "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+      "src/driver/SolverDispatch.cpp",
+      "src/driver/dispatch/capability/BackendCapabilities.h",
+      "src/driver/io/DriverIO.cpp",
+      "src/driver/runtime/DriverRegrid.cpp",
+      "src/driver/stages/GravityStage.cpp",
+      "src/io/chk/CheckpointGeometryIdentity.h",
+      "src/io/hdf5/HDF5Writer.cpp",
+      "src/io/plot/PlotGridMetadata.h",
+      "src/io/plot/PlotIO.cpp",
+      "src/physics/diagnostics/VelocityDiagnostics.h",
+      "studio/host/plotfileMetadata.ts",
+      "studio/src/components/PlotfileNativeView.tsx",
+      "studio/src/components/PlotfileOverviewView.tsx",
+      "studio/src/components/ProjectPlotfileAudit.tsx",
+      "studio/src/host/configurationContracts.ts",
+      "studio/src/host/configurationValidation.ts",
+      "studio/src/host/plotfileAudit.ts",
+      "studio/src/host/plotfileDeclarations.ts",
+      "studio/src/host/previewValidation.ts",
+      "studio/src/host/workflowValidation.ts",
+      "studio/tests/amr-native-volume.test.ts",
+      "studio/tests/fixtures/mainline-config-schema.json",
+      "studio/tests/parameter-catalog.test.ts",
+      "studio/tests/plotfile-declarations.test.ts",
+      "studio/tests/plotfile-isolation.test.ts",
+      "studio/tests/plotfile-overview.test.ts",
+      "studio/tests/plotfile-source-evidence.test.ts",
+      "tests/api/configuration/test_configuration.py",
+      "tests/api/configuration/test_configuration_v3.py",
+      "tests/api/preview/test_full_model_preview.py",
+      "tests/cuda/amr/test_refinement_indicators.cpp",
+      "tests/fixtures/io/checkpoint_conservation_metrics.h",
+      "tests/host/amr/test_refinement_indicator_math.cpp",
+      "tests/host/core/test_input_resolution.cpp",
+      "tests/host/driver/test_runtime_probe_and_capabilities.cpp",
+      "tests/host/grid/test_curvilinear_metrics.cpp",
+      "tests/host/io/test_checkpoint_compatibility.cpp",
+      "tests/host/io/test_checkpoint_conservation_metrics.cpp",
+      "tests/host/io/test_plotfile_publication.cpp",
+      "validation/restart/inputs/cylindrical.par"
+    ],
+    "changed_production_files": [
+      "src/amr/refinement/RefinementIndicatorMath.h",
+      "src/amr/topology/AmrTree.h",
+      "src/api/Configuration.h",
+      "src/api/Preview.h",
+      "src/api/configuration/Configuration.cpp",
+      "src/api/configuration/ParameterPresentation.h",
+      "src/api/configuration/PresentationMetadata.cpp",
+      "src/api/preview/Preview.cpp",
+      "src/core/config/ConfigValidation.h",
+      "src/core/config/ConfigurationInput.h",
+      "src/core/config/ControlRelations.h",
+      "src/core/config/InputResolution.h",
+      "src/core/config/RefinementSelection.h",
+      "src/core/config/RuntimeParams.h",
+      "src/core/problem/ProblemHelper.cpp",
+      "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+      "src/driver/SolverDispatch.cpp",
+      "src/driver/dispatch/capability/BackendCapabilities.h",
+      "src/driver/io/DriverIO.cpp",
+      "src/driver/runtime/DriverRegrid.cpp",
+      "src/driver/stages/GravityStage.cpp",
+      "src/io/chk/CheckpointGeometryIdentity.h",
+      "src/io/hdf5/HDF5Writer.cpp",
+      "src/io/plot/PlotGridMetadata.h",
+      "src/io/plot/PlotIO.cpp",
+      "src/physics/diagnostics/VelocityDiagnostics.h"
+    ],
+    "new_production_files": [],
+    "unchanged_owners_and_contracts": {
+      "src/data/GlobalDefs.h": {
+        "sha256": "f4e86646747c90c47f888a4b3aea9597841da439b967d8bada1f07d34a42e645",
+        "unchanged_from_CYL3": true
+      },
+      "src/grid/Grid.h": {
+        "sha256": "9554d0519bc4f38e22ead5c4d3aaa5ecfe49c538cacc0403dd8856cb77f77a2d",
+        "unchanged_from_CYL3": true
+      },
+      "src/numerics/curvilinear/GridGeometryView.h": {
+        "sha256": "65d2892405aa500633a76ad47a743241f5b64927775eddbe0aa56ce1ca8fb662",
+        "unchanged_from_CYL3": true
+      },
+      "src/numerics/curvilinear/GridMetrics.h": {
+        "sha256": "9c9e82f5716dae922be92c394ba05edb256b2828560f091d927a0001485e5fdc",
+        "unchanged_from_CYL3": true
+      },
+      "src/numerics/curvilinear/GeometricSources.h": {
+        "sha256": "71c9439239c15c46e372a39ea38d87b63bac339cdedf4b17c68a288a1e757345",
+        "unchanged_from_CYL3": true
+      },
+      "src/physics/gravity/self/SelfGravity.cpp": {
+        "sha256": "b0c6154458f942746b140b9c651f42141c1aa04db0831a63f54d8298568ee690",
+        "unchanged_from_CYL3": true
+      },
+      "src/core/config/StandardParameterEntries.inc": {
+        "sha256": "a57bb8d16f2f86506496c4d96af8aaf0298cef7f3252c097cc2d4eb36f32449a",
+        "unchanged_from_CYL3": true
+      },
+      "src/core/config/StandardParameters.h": {
+        "sha256": "50f44cd6a67bc9535798b231e127256333ba232a738ea4195027280f3e919eb8",
+        "unchanged_from_CYL3": true
+      }
+    },
+    "schema_generation": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/schema-generation.json",
+      "sha256": "5fc2ebd8e876df06e200073d4e3a8eefe168c9913b4766b3ffd531be5da8a6ca"
+    }
+  },
+  "executables": {
+    "ARCH": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/bin/ARCH",
+      "sha256": "8d21f5f62e0929f7c0938dd1b9232a783e9a59f8301adf41dcf1c59fc38d0d02",
+      "executable_mode": "0o755"
+    },
+    "arch_cuda_single_level_validation": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_cuda_single_level_validation",
+      "sha256": "85f38cda400656f387b7c2da9e5ae8cd3a91e8ece4c329f538a7b64b3e74fa66",
+      "executable_mode": "0o755"
+    },
+    "arch_checkpoint_compatibility": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_checkpoint_compatibility",
+      "sha256": "29befbef667ae9807ccd665a87146e6e3505110584a585fd391f62fabaa5c143",
+      "executable_mode": "0o755"
+    },
+    "arch_plotfile_publication": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_plotfile_publication",
+      "sha256": "3ae6299a482723b9db8e95de310982ff1127409195c2f95e6a9d911f650c3a23",
+      "executable_mode": "0o755"
+    },
+    "arch_runtime_probe_capabilities": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_runtime_probe_capabilities",
+      "sha256": "a9918df7877a2187b9ce5b15a13ef20c2625e8ad05bfa12692405bc3ec3687c2",
+      "executable_mode": "0o755"
+    },
+    "arch_input_resolution": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_input_resolution",
+      "sha256": "5fd508802675bee82c6d20af7190e45eaf1a9a64a5acdfb86c10eb9a9e20f11f",
+      "executable_mode": "0o755"
+    },
+    "arch_curvilinear_metrics": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_curvilinear_metrics",
+      "sha256": "a0fdb9714a4a6d3e67290a16bc02e963bc9d4c05a35b9661bbf76977b884e14b",
+      "executable_mode": "0o755"
+    },
+    "arch_checkpoint_conservation_metrics": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_checkpoint_conservation_metrics",
+      "sha256": "bdc0c9c5390148c047b817d1858ec89957b16710d26af09500a58c0b8482e064",
+      "executable_mode": "0o755"
+    },
+    "arch_refinement_indicator_math": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_refinement_indicator_math",
+      "sha256": "36871e776f63271b1888318eb2097bad0406058e055914a9e9f24e2fe794bdf8",
+      "executable_mode": "0o755"
+    },
+    "arch_amr_operation_plans": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_amr_operation_plans",
+      "sha256": "e9c53f91498d20791e3c70d90693424c774d214c52704d56c884c63819b6cbd8",
+      "executable_mode": "0o755"
+    },
+    "arch_gravity_stage_contract": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/build-modernization-cpu/arch_gravity_stage_contract",
+      "sha256": "cf4174eb2bcd55f822e165858c9229b96205cbebbd49847bd514787e265db591",
+      "executable_mode": "0o755"
+    }
+  },
+  "contract": {
+    "authority": "Cyl0ContractAndBaselines-20261018.json frozen_contract unchanged",
+    "spatial": [
+      "r",
+      "z",
+      "inactive"
+    ],
+    "physical_momenta": [
+      "rho*u_r",
+      "rho*u_z",
+      "rho*u_phi"
+    ],
+    "new_geometry_identity": {
+      "revision": 1,
+      "chart": "cylindrical-rz-pwc"
+    },
+    "retained_eight_identity_rules": "revision1 existing; legacy empty still accepted where established",
+    "measure": "V=integral r dr dz; W=integral r^2 dr dz, per unit azimuth; full integrals multiply2pi",
+    "angular_standard": "1e-12 unchanged",
+    "CHK_build_gate": "None added; Plot existing source/build/profile checks preserved",
+    "gravity": "Optional physics remains separate; existing self g_phi=0 array published; off/external zero-solve/allocation witness reused and re-executed via final gravity_stage_contract"
+  },
+  "verification": {
+    "CPU_contracts": {
+      "count": 13,
+      "passed": 13,
+      "skipped": 0,
+      "receipt": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/final-CPU-contracts/receipt.json"
+    },
+    "label_only_final_API_contracts": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/latest-API-label-contracts/receipt.json",
+    "latest_Studio_catalog_contracts": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/latest-Studio-catalog-contracts/receipt.json",
+    "label_only_delta": "Final API display names use native orthonormal slots; numerical code unchanged. Full13CPU/95Studio scope retained; affected API/catalog and all short/current-artifact checks rerun at final identity.",
+    "Studio_contracts": {
+      "count": 95,
+      "passed": 95,
+      "skipped": 0,
+      "receipt": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/final-Studio-contracts/receipt.json"
+    },
+    "Studio_build": "TypeScript/Vite succeeded in studio-final-checks before unrelated old-regex test failure; no production UI changes afterward",
+    "module_boundary_audit": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/module-boundary-audit/receipt.json",
+    "O7_and_actual_initial_AMR": {
+      "decision": "PASS",
+      "binary_sha256": "8d21f5f62e0929f7c0938dd1b9232a783e9a59f8301adf41dcf1c59fc38d0d02",
+      "native_missing_key_rejections": 43,
+      "invalid_value_rejections": 9,
+      "actual_phi_refined_leaves": 16,
+      "rows": [
+        {
+          "name": "native-inspect",
+          "elapsed_seconds": 0.008246467001299607,
+          "exit": 0,
+          "status": "ok",
+          "input_sha256": "68e5862d3f994499d4dddc9f9364c5be7e740a7e6756808a66cd6909f0438066",
+          "diagnostics": []
+        },
+        {
+          "name": "missing-cfl",
+          "elapsed_seconds": 0.007833851999748731,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "d769bd46ed9ada74d1757bbbdf9e13fce87b682835cab46c71e6359e59a57838",
+          "diagnostics": [
+            {
+              "key": "cfl",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-compute_backend",
+          "elapsed_seconds": 0.007841217000532197,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "658d20ca9efb604e53176bc85455a8cb75bcb3d9b4e6953727eed4987b341658",
+          "diagnostics": [
+            {
+              "key": "compute_backend",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-eos_type",
+          "elapsed_seconds": 0.007675176002521766,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "2a350a4237012ca272ee4118c8dbbd5989044704d69bc2036d86f3c06206c8dd",
+          "diagnostics": [
+            {
+              "key": "eos_type",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "eos_coulomb_mult",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "eos_table_path",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gamma",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-gamma",
+          "elapsed_seconds": 0.007707026998104993,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "17ca3fd5ae13a1bf6a44d651e7110cd96017839cab2cc7c28bc80a0fc08d1020",
+          "diagnostics": [
+            {
+              "key": "gamma",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-geometry",
+          "elapsed_seconds": 0.007720607998635387,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "66962482c3c6dfa12e263891e91d6c300c513d5c61e35cbc21a4fb5aa44889a7",
+          "diagnostics": [
+            {
+              "key": "geometry",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-gravity_type",
+          "elapsed_seconds": 0.007920698000816628,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "3f461b9f7057d91992459f7c9f5f156581d1c8316a049c2b0f544f2474923929",
+          "diagnostics": [
+            {
+              "key": "gravity_type",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "gravity_atol",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_boundary",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_g_x",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_g_y",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_g_z",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_rtol",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-hll_wave_speed",
+          "elapsed_seconds": 0.007601720997627126,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "c53c4c5260aa6497d1d82cd8ea39ede98ddfc49a581a1535d2f6ec122fc083e7",
+          "diagnostics": [
+            {
+              "key": "hll_wave_speed",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-limiter",
+          "elapsed_seconds": 0.008015865998459049,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "c56f8f37dcf9f0db2d5760e1a41c4cbdc94a9edf71629536e200ebeeedef4654",
+          "diagnostics": [
+            {
+              "key": "limiter",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-lrefinemax",
+          "elapsed_seconds": 0.007840070000384003,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "72514f192144440cd64a8ea5e3914b3febc37c1f25a2e23e1bf3e6008aa71e66",
+          "diagnostics": [
+            {
+              "key": "lrefinemax",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "derefine_threshold",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "refine_threshold",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "refine_var",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "regrid_interval",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-lrefinemin",
+          "elapsed_seconds": 0.007733138001640327,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "83674943d59b1c162968e31eae614a4ea9543675f61856515d21282ab603f5f6",
+          "diagnostics": [
+            {
+              "key": "lrefinemin",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "derefine_threshold",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "refine_threshold",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "refine_var",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "regrid_interval",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-max_eint",
+          "elapsed_seconds": 0.007761257998936344,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "5ed5b49895e8fadb70fed5d469cb827159637e9f66b2f60180360cfd4bb3cd9b",
+          "diagnostics": [
+            {
+              "key": "max_eint",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-min_eint",
+          "elapsed_seconds": 0.007666473000426777,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "e4a7d5ee429cb899c50a2d0d270d3ae66068b94e43d0adca93435b5214136bd9",
+          "diagnostics": [
+            {
+              "key": "min_eint",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-nblockx1",
+          "elapsed_seconds": 0.007769769999868004,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "e7f0371f2a4d293990d4c6ea6162382cf80d607e250ba3a59086de0824b28b80",
+          "diagnostics": [
+            {
+              "key": "nblockx1",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "x1_max",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x1_min",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x1l_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x1r_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-nblockx2",
+          "elapsed_seconds": 0.007649448001757264,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "6cd03bddc39837aeb4da16cbd7478a4d678f6251c29bac7219fb3daf74b15fa9",
+          "diagnostics": [
+            {
+              "key": "nblockx2",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "x2_max",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x2_min",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x2l_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x2r_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-nblockx3",
+          "elapsed_seconds": 0.0074891449985443614,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "bd03f9660f4d70365e047d23b1526592c524371431b4a9a9c6db563c832d9923",
+          "diagnostics": [
+            {
+              "key": "nblockx3",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "x3_max",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x3_min",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x3l_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x3r_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-network_name",
+          "elapsed_seconds": 0.007893917998444522,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "b4dbad9c045a19860bf8ca2757e45c8f9bd2b20418b18859726818a085015793",
+          "diagnostics": [
+            {
+              "key": "network_name",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "smallx",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gas_cv",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-reconstruct",
+          "elapsed_seconds": 0.007751215001917444,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "a843ca4c6c637f89455de1e66b349083be8ecdbe3a9224eb5c4c3b0ca2662691",
+          "diagnostics": [
+            {
+              "key": "reconstruct",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "limiter",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-sml_rho",
+          "elapsed_seconds": 0.007545194002887001,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "3370fee0713c45b4672340cb52fc8166c45a66e97831cb28e52479d1c18f9bfa",
+          "diagnostics": [
+            {
+              "key": "sml_rho",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-solver",
+          "elapsed_seconds": 0.007706930999120232,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "51bf793ef4e45367af095aca7130788fa47316f9c44d378be7786431c52ad47f",
+          "diagnostics": [
+            {
+              "key": "solver",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "EntropyFix",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "hll_wave_speed",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-time_integrator",
+          "elapsed_seconds": 0.007734094000625191,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "483e371a27cc9e05f136f5a217e947e32d8f721b706a8f3a542383e09971a136",
+          "diagnostics": [
+            {
+              "key": "time_integrator",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-tmax",
+          "elapsed_seconds": 0.007772352000756655,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "1d4b2d929b6c360ccc7c03534ab40bed72071239c732b402643905592f7b1aac",
+          "diagnostics": [
+            {
+              "key": "tmax",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-use_burn",
+          "elapsed_seconds": 0.007845808999263681,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "e5ccd9ed119f058f4548424aaaedd4f1e481c275bbfc0a7d64b3d3d0c970cc98",
+          "diagnostics": [
+            {
+              "key": "use_burn",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "dt_init",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "enucDtFactor",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "nseDensThreshold",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "nseTempThreshold",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "nuclearDensMin",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "nuclearTempMin",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "ode_atol",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "ode_rtol",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "ode_solver",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "smallt",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "smallx",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "use_nse",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-use_diffusion",
+          "elapsed_seconds": 0.007886361003329512,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "7cc6c663d8a7b473b317b858f676e04cb269bfccbcc4973380326ae8b3344175",
+          "diagnostics": [
+            {
+              "key": "use_diffusion",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            },
+            {
+              "key": "D_spec",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "alpha_therm",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "diff_cfl",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "diff_integrator",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "nu_visc",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "use_species_diff",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "use_thermal_diff",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "use_viscous_diff",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "missing-x1_max",
+          "elapsed_seconds": 0.008684429001732497,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "c61ba70eaee8d064328eacf756a15be2cddf9684b62d7a0b36a49f897dcba293",
+          "diagnostics": [
+            {
+              "key": "x1_max",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x1_min",
+          "elapsed_seconds": 0.007674985001358436,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "20e6abcf66d2f8ecdd3145fbad834bbc12f9c1893e86546a79e6f0100059ec14",
+          "diagnostics": [
+            {
+              "key": "x1_min",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x1l_boundary_type",
+          "elapsed_seconds": 0.007597702999191824,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "6466124ba6f76112dd4e5416c51c80dc3d9cbc61897db9ba3ba8b3b85bb364ab",
+          "diagnostics": [
+            {
+              "key": "x1l_boundary_type",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x1r_boundary_type",
+          "elapsed_seconds": 0.007707503998972243,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "721e3822860dd044b4857f61792f0a459a04b648d9a73b50122f2ff55c3b768a",
+          "diagnostics": [
+            {
+              "key": "x1r_boundary_type",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x2_max",
+          "elapsed_seconds": 0.007973017000040272,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "5f956f9a7dc9933714e01262fb229f71c2c419e576f0273e46504738da094606",
+          "diagnostics": [
+            {
+              "key": "x2_max",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x2_min",
+          "elapsed_seconds": 0.007624388003023341,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "d5ca8856c0d0bea986335fbfb9a3487f8b27ad68e265bc1907273f81e57f9ab6",
+          "diagnostics": [
+            {
+              "key": "x2_min",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x2l_boundary_type",
+          "elapsed_seconds": 0.007779048002703348,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "7508393430a64adeecaf3887a5c13bd5dba5c8acff73ecc2049277a336a0bffe",
+          "diagnostics": [
+            {
+              "key": "x2l_boundary_type",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-x2r_boundary_type",
+          "elapsed_seconds": 0.007776272999763023,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "62fcd93c24702584ebe28b6a4ed54b086b17eab92d0628d916a0277d2f0ff4c7",
+          "diagnostics": [
+            {
+              "key": "x2r_boundary_type",
+              "code": "MISSING_PARAMETER",
+              "message": "Required input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-rho0",
+          "elapsed_seconds": 0.008484337999107083,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "846144dfb2cc79854638a5d606dcdcd2b9877a0872d250c581c31811579d8014",
+          "diagnostics": [
+            {
+              "key": "rho0",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-p0",
+          "elapsed_seconds": 0.007743850001133978,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "28e2e76f936a66b7601c573c71d91ade687d515a7eef56279efd8bf02efb2c61",
+          "diagnostics": [
+            {
+              "key": "p0",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-amp",
+          "elapsed_seconds": 0.008022082998650149,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "68d59b817c8e63db0738367df91b9441f02f68da957a86beb1d8a6fb3c316825",
+          "diagnostics": [
+            {
+              "key": "amp",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-width",
+          "elapsed_seconds": 0.007783255998219829,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "9deb43f95f39c318e9feb0d098661d20120cbfed325b9281ec9fb7d7c96f6594",
+          "diagnostics": [
+            {
+              "key": "width",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-xc",
+          "elapsed_seconds": 0.007805541998095578,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "054b4fa5c690681cb9ee8514b860a489bd38ec47de2dae9666f3d0527c0e58c4",
+          "diagnostics": [
+            {
+              "key": "xc",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-yc",
+          "elapsed_seconds": 0.007678620000660885,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "a85ac12f59a4c7c65002f495a2f2e6ccbfe15c0a520a1cc3e15cf52071f2f125",
+          "diagnostics": [
+            {
+              "key": "yc",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-zc",
+          "elapsed_seconds": 0.007773213001200929,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "60783a9bbd313b888fd799a486a2d58fd1467b2d78793a918dbbc4cd7d959652",
+          "diagnostics": [
+            {
+              "key": "zc",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-pressure_amplitude",
+          "elapsed_seconds": 0.007967374000145355,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "042c0cd77c68a19fc78b3d2986ae41359bdf18e25abb183593ab6a6005a88717",
+          "diagnostics": [
+            {
+              "key": "pressure_amplitude",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-u_amplitude",
+          "elapsed_seconds": 0.007676803001231747,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "8544a18db2b386d9a2ed51bec45dcc2f1b5b54ae9ef494edcc3190ddc2a2aca0",
+          "diagnostics": [
+            {
+              "key": "u_amplitude",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-v_amplitude",
+          "elapsed_seconds": 0.007524534998083254,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "749bfb263300506a46729a468274b7d32f48ded7ce2068451f87f4a24d0e542d",
+          "diagnostics": [
+            {
+              "key": "v_amplitude",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-w_amplitude",
+          "elapsed_seconds": 0.007841695001843618,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "13c229f613e51c56372324928c6da980a77bed4e8cdbe9567228b8c6f69d762d",
+          "diagnostics": [
+            {
+              "key": "w_amplitude",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "missing-gas_cv",
+          "elapsed_seconds": 0.011479289001727011,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "393fc40cb99de424ba55bdb94d12a36fae9d0acffc0b6b3429bdd219190ecd8d",
+          "diagnostics": [
+            {
+              "key": "gas_cv",
+              "code": "MISSING_PARAMETER",
+              "message": "Required case input has no declared value."
+            }
+          ]
+        },
+        {
+          "name": "invalid-geometry",
+          "elapsed_seconds": 0.009701811002742033,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "d5065cfa59ddcbd6b5dd13bca563eefc494c5a03360dfd21b47bb9acbe84afde",
+          "diagnostics": [
+            {
+              "key": "geometry",
+              "code": "INVALID_OPTION",
+              "message": "Config parameter 'geometry': Unknown registered option."
+            }
+          ]
+        },
+        {
+          "name": "invalid-x1_min",
+          "elapsed_seconds": 0.007906446997367311,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "082736b7a9b3f2ead1a474523f589abd2881b81b1e1740629f3855ef7ab4d7b3",
+          "diagnostics": [
+            {
+              "key": "x1_min",
+              "code": "INVALID_RANGE",
+              "message": "Cylindrical radius must be nonnegative."
+            }
+          ]
+        },
+        {
+          "name": "invalid-x2_max",
+          "elapsed_seconds": 0.007822758001566399,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "9f77cec1ccab4a170bd1be859277cb06eec5d02bdaa9b1fbf81d4071526ef15b",
+          "diagnostics": [
+            {
+              "key": "x2_max",
+              "code": "INVALID_RANGE",
+              "message": "Active axis must have finite positive extent."
+            }
+          ]
+        },
+        {
+          "name": "invalid-x2_min",
+          "elapsed_seconds": 0.007654230001207907,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "51ce6a26f6ac765eec6544cc53ae59d0047b9c8f443db007f249c552a3a46dc9",
+          "diagnostics": [
+            {
+              "key": "x2_min",
+              "code": "INVALID_NUMBER",
+              "message": "Config parameter 'x2_min': Expected a complete finite decimal or scientific-notation number."
+            }
+          ]
+        },
+        {
+          "name": "invalid-nblockx2",
+          "elapsed_seconds": 0.007875937000790145,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "c2c8263ef54fef5a288a752c924c8f8bcd376e0cbd2cee7d700ea53cc957dda5",
+          "diagnostics": [
+            {
+              "key": "nblockx2",
+              "code": "INVALID_INTEGER",
+              "message": "Config parameter 'nblockx2': Expected a complete 32-bit integer."
+            },
+            {
+              "key": "x2_max",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x2_min",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x2l_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "x2r_boundary_type",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "invalid-x2l_boundary_type",
+          "elapsed_seconds": 0.0076559520020964555,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "8d47534c529cbfb5fe81bdb355f1dabc0ddc1e3e6a98f7ac37eec8a6bd953cee",
+          "diagnostics": [
+            {
+              "key": "x2l_boundary_type",
+              "code": "INVALID_OPTION",
+              "message": "Config parameter 'x2l_boundary_type': Unknown registered option."
+            }
+          ]
+        },
+        {
+          "name": "invalid-gravity_type",
+          "elapsed_seconds": 0.00790415200026473,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "88bd894a69b61b77e7e8e3969d2cd73b87191fd70d5ffbac499cd44336684904",
+          "diagnostics": [
+            {
+              "key": "gravity_type",
+              "code": "INVALID_OPTION",
+              "message": "Config parameter 'gravity_type': Unknown registered option."
+            },
+            {
+              "key": "gravity_atol",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_boundary",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_g_x",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_g_y",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_g_z",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            },
+            {
+              "key": "gravity_rtol",
+              "code": "UNRESOLVED_DEPENDENCY",
+              "message": "Requirement cannot be evaluated until its dependencies are resolved."
+            }
+          ]
+        },
+        {
+          "name": "invalid-w_amplitude",
+          "elapsed_seconds": 0.005059746999904746,
+          "exit": 3,
+          "status": "error",
+          "input_sha256": "c24a95c9814bf46b38dc8fc07d78ab5ce84d63b8bddaf1577248e302ce8425d5",
+          "diagnostics": [
+            {
+              "key": null,
+              "code": "INVALID_CONFIGURATION",
+              "message": "Config parameter 'w_amplitude': INVALID_NUMBER [w_amplitude]: Config parameter 'w_amplitude': Expected a complete finite decimal or scientific-notation number."
+            }
+          ]
+        },
+        {
+          "name": "invalid-gas_cv",
+          "elapsed_seconds": 0.005272464000881882,
+          "exit": 5,
+          "status": "error",
+          "input_sha256": "7564a9a336df5cdc07b31269b36ad339f3628fb9e0ddd850ff64e80d2e530e85",
+          "diagnostics": [
+            {
+              "key": null,
+              "code": "SETUP_FAILED",
+              "message": "Gaussian gas_cv must be finite and positive"
+            }
+          ]
+        },
+        {
+          "name": "casefold-cylindrical",
+          "elapsed_seconds": 0.007724625997070689,
+          "exit": 0,
+          "status": "ok",
+          "input_sha256": "806106b14e0948cc261dd0c2ee3173538e216e30cb3603d533e120949cc7e4fb",
+          "diagnostics": []
+        },
+        {
+          "name": "casefold-CYLINDRICAL",
+          "elapsed_seconds": 0.007655664998310385,
+          "exit": 0,
+          "status": "ok",
+          "input_sha256": "4f7b29d33ce9357c0e1af38a012f658fa3ff93a43fc0e7ff8704939f4ac0b579",
+          "diagnostics": []
+        },
+        {
+          "name": "casefold-CyLiNdRiCaL",
+          "elapsed_seconds": 0.008006492997083114,
+          "exit": 0,
+          "status": "ok",
+          "input_sha256": "0055c6421804e884695057c99f7fcf2f334f5e1028b8ad4b5403028aedb95962",
+          "diagnostics": []
+        },
+        {
+          "name": "real-phi-refinement",
+          "elapsed_seconds": 0.011563170002773404,
+          "exit": 0,
+          "status": "ok",
+          "input_sha256": "133431c7a568c91dcd66212397cd98c737693d6dcb6bf966acafe78bd97036a9",
+          "diagnostics": [
+            {
+              "key": null,
+              "code": "CORE_LOG",
+              "message": "[EOS Dispatch] Resolving EOS Policy: ideal\n[EOS Dispatch] Resolving EOS Policy: ideal\n"
+            }
+          ]
+        },
+        {
+          "name": "native-preview",
+          "elapsed_seconds": 0.00570640699879732,
+          "exit": 0,
+          "status": "ok",
+          "input_sha256": "68e5862d3f994499d4dddc9f9364c5be7e740a7e6756808a66cd6909f0438066",
+          "diagnostics": [
+            {
+              "key": null,
+              "code": "CORE_LOG",
+              "message": "[EOS Dispatch] Resolving EOS Policy: ideal\n"
+            }
+          ]
+        }
+      ]
+    },
+    "fresh": {
+      "decision": "PASS",
+      "phase": "current CPU ARCH full-process fresh interface witness",
+      "reference": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/continuous/CylindricalPwc_chk_0002.h5",
+      "fresh": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/fresh/CylindricalPwc_chk_0002.h5",
+      "reference_sha256": "2840d470505fb6a411171d1e24e0693ac151e30f327d5723ff2556d30b067fc8",
+      "fresh_sha256": "f8391b9fe6d4d36fb61987a05f1636a3ab5e9eb9085b5db29fea65f959f5c3ee",
+      "checkpoint_datasets_bitwise": [
+        "Blocks/level",
+        "Blocks/logical_x1",
+        "Blocks/logical_x2",
+        "Blocks/logical_x3",
+        "Data/X",
+        "Data/eng",
+        "Data/enuc_rate",
+        "Data/mom_u",
+        "Data/mom_v",
+        "Data/mom_w",
+        "Data/rho",
+        "Data/rhoX",
+        "gravity_controls",
+        "repair_position",
+        "state_controls",
+        "state_repairs"
+      ],
+      "plot_datasets_bitwise": [
+        "Data/DENS",
+        "Data/DIVV",
+        "Data/ENER",
+        "Data/PRES",
+        "Data/TEMP",
+        "Data/VELX",
+        "Data/VELY",
+        "Data/VELZ",
+        "Data/VORT",
+        "Grid/level",
+        "Grid/morton",
+        "Grid/x",
+        "Grid/y",
+        "Grid/z",
+        "NativeGrid/cell_measure",
+        "NativeGrid/logical_x1",
+        "NativeGrid/logical_x2",
+        "NativeGrid/logical_x3",
+        "NativeGrid/x1_lower",
+        "NativeGrid/x1_upper",
+        "NativeGrid/x2_lower",
+        "NativeGrid/x2_upper",
+        "NativeGrid/x3_lower",
+        "NativeGrid/x3_upper"
+      ],
+      "angular_error_relative_to_initial_absJ": "1.5205406652668682469e-18",
+      "angular_standard": "1e-12 unchanged",
+      "totals_preserve_long_double_decimal": {
+        "initial": {
+          "rho": "1.5",
+          "mom_u": "0.0",
+          "mom_v": "0.012261619118013209786",
+          "mom_w": "0.08174412745342140637",
+          "eng": "3.8054193756855119882",
+          "J": "0.124781523124646620104",
+          "absJ": "0.124781523124646620104",
+          "species": [
+            "1.4182558725465785943",
+            "0.08174412745342140637"
+          ]
+        },
+        "final": {
+          "rho": "1.4999999999999999927",
+          "mom_u": "1.0404549053351501909e-05",
+          "mom_v": "0.012261619118013209716",
+          "mom_w": "0.081744127361918035286",
+          "eng": "3.8054193756855119613",
+          "J": "0.124781523124646619914",
+          "absJ": "0.124781523124646619914",
+          "species": [
+            "1.4182558725465785894",
+            "0.08174412745342140621"
+          ]
+        }
+      },
+      "absolute_mass_energy_axial_errors": {
+        "rho": "7.264154555652879708e-18",
+        "eng": "2.6888213877640509963e-17",
+        "mom_v": "6.9456701674852627804e-20"
+      },
+      "mass_energy_axial_standard": "2e-11 + 2e-12*abs(initial), same as native Runtime contract",
+      "qualification_boundary": "Six steps and fresh equivalence only; no full scientific endpoint/GPU acceptance."
+    },
+    "old_chart_and_CUDA_rejections": {
+      "decision": "PASS",
+      "binary_sha256": "8d21f5f62e0929f7c0938dd1b9232a783e9a59f8301adf41dcf1c59fc38d0d02",
+      "new_chk_unchanged_sha256": "625217c3df70f65d17e4e8d2b1fada392b256b5cd5ea016403324170789497c8",
+      "negative_processes": [
+        {
+          "name": "old-rz",
+          "exit": 1,
+          "elapsed_seconds": 0.00977059199794894,
+          "diagnostic": "[Fatal Error] Checkpoint geometry semantics mismatch: expected cylindrical-rz-pwc",
+          "mutated_artifact_sha256": "436ca540703535be2d3a5a59a2d702562762d374f90153a33b2e94385da155ca",
+          "input_sha256": "df02f9885330aab36583cb8e1052db5e10372cd9d1cc03f2efad678c500080a7"
+        },
+        {
+          "name": "legacy-empty",
+          "exit": 1,
+          "elapsed_seconds": 0.00863847800064832,
+          "diagnostic": "[Fatal Error] Checkpoint geometry semantics mismatch: expected cylindrical-rz-pwc",
+          "mutated_artifact_sha256": "6a32c8057b037da9baf2405b66b086057f81d769b72af289aa09780d3b2b5489",
+          "input_sha256": "42cbad25090d047dbb189b5aa04c1d0c5340ecd692a1aae99ed484cd2c40aeb1"
+        },
+        {
+          "name": "blank-chart",
+          "exit": 1,
+          "elapsed_seconds": 0.007632037999428576,
+          "diagnostic": "[Fatal Error] Checkpoint geometry semantics mismatch: expected cylindrical-rz-pwc",
+          "mutated_artifact_sha256": "7d1d0f159eb6559dc23dc7820853cc77427c190f6b7fe476587a5fd2ff31bda7",
+          "input_sha256": "332b130756fd7ef32a2f2c1f9c78a897864bf2244579402a147e7ab98cd8cbcc"
+        },
+        {
+          "name": "wrong-chart",
+          "exit": 1,
+          "elapsed_seconds": 0.007900313001300674,
+          "diagnostic": "[Fatal Error] Checkpoint geometry semantics mismatch: expected cylindrical-rz-pwc",
+          "mutated_artifact_sha256": "afd1825274393200148de6669e97488a7d106cc4aa00e460b43bfef7a702b26b",
+          "input_sha256": "e2c08c05991a1627db5e1ef484be2e9d46c5a8cd636bcbd724cc0f1da8ed1cc5"
+        },
+        {
+          "name": "partial",
+          "exit": 1,
+          "elapsed_seconds": 0.00728485700165038,
+          "diagnostic": "[Fatal Error] Incomplete checkpoint geometry identity",
+          "mutated_artifact_sha256": "182cb377c819078bf1e61f46341ecca1b148e63bda75e87edb0f9edc0783d8d1",
+          "input_sha256": "319c7fc8a375c30eb2dded0b1fb3cc0495af1fd48b27991c780d42ed5ecffdd1"
+        },
+        {
+          "name": "future",
+          "exit": 1,
+          "elapsed_seconds": 0.007881472000008216,
+          "diagnostic": "[Fatal Error] Checkpoint geometry semantics mismatch: expected cylindrical-rz-pwc",
+          "mutated_artifact_sha256": "7c72f90948789f593627de6ebe50b08d8f96df9afb0f7f51a9412b7eac94d84c",
+          "input_sha256": "13b3c0e477c57e28e74e1faf2ec4f2afd5fdf9e88d06a409e3e8bd3bca0ab661"
+        },
+        {
+          "name": "native-CUDA-gate",
+          "exit": 1,
+          "diagnostic": "[Fatal Error] geometry unsupported"
+        }
+      ],
+      "live_state_mutation_boundary": "Covered separately by native actual read_chk populated-target C++ contract; these processes produced no H5"
+    },
+    "actual_Studio_Core_artifacts": {
+      "decision": "PASS",
+      "source": "actual current CPU ARCH outputs; real h5wasm Host reader and client validation",
+      "actual_preview_and_phi_amr": true,
+      "rows": [
+        {
+          "name": "continuous",
+          "sha256": "96be7658541be2cc6453d9bd33ba623875f64b80887218abfc8ed0cd4033aba6",
+          "chart": "cylindrical-rz-pwc",
+          "axes": [
+            "r",
+            "z",
+            "inactive"
+          ],
+          "axisUnits": [
+            "cm",
+            "cm",
+            "inactive"
+          ],
+          "measureUnit": "cm^3",
+          "normalization": "per_unit_azimuth",
+          "renderEligible": true,
+          "fields": [
+            "DENS",
+            "DIVV",
+            "ENER",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "VELY",
+            "VELZ",
+            "VORT"
+          ]
+        },
+        {
+          "name": "self-public",
+          "sha256": "2080035b80f00ff5720a0ff5c1d2c8759f0595099639f7e7520749cf1242bb2f",
+          "chart": "cylindrical-rz-pwc",
+          "axes": [
+            "r",
+            "z",
+            "inactive"
+          ],
+          "axisUnits": [
+            "cm",
+            "cm",
+            "inactive"
+          ],
+          "measureUnit": "cm^3",
+          "normalization": "per_unit_azimuth",
+          "renderEligible": true,
+          "fields": [
+            "DENS",
+            "DIVV",
+            "ENER",
+            "GACX",
+            "GACY",
+            "GACZ",
+            "GPOT",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "VELY",
+            "VELZ",
+            "VORT"
+          ]
+        },
+        {
+          "name": "rphi-control",
+          "sha256": "ad9cad3d0ac700a95de436cbcc3cbcad8e5941aa8e9d20e44ab77a146c876b35",
+          "chart": "existing",
+          "axes": [
+            "r",
+            "phi",
+            "inactive"
+          ],
+          "axisUnits": [
+            "cm",
+            "rad",
+            "inactive"
+          ],
+          "measureUnit": "cm^2",
+          "normalization": "per_unit_transverse_length",
+          "renderEligible": false,
+          "fields": [
+            "DENS",
+            "DIVV",
+            "ENER",
+            "PRES",
+            "VELX",
+            "VELY",
+            "VORT"
+          ]
+        },
+        {
+          "name": "cyl3-control",
+          "sha256": "b2cdac696f080ed5e8ec768defc48dd636ec049f71059404d218b4d75ac2292f",
+          "chart": "existing",
+          "axes": [
+            "r",
+            "z",
+            "phi"
+          ],
+          "axisUnits": [
+            "cm",
+            "cm",
+            "rad"
+          ],
+          "measureUnit": "cm^3",
+          "normalization": "full_volume",
+          "renderEligible": false,
+          "fields": [
+            "DENS",
+            "DIVV",
+            "ENER",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "VELY",
+            "VELZ",
+            "VORT"
+          ]
+        }
+      ],
+      "scope": "Validated native slices/overview/point contracts and UI build; no manual desktop visual acceptance."
+    },
+    "self_output_gphi_exact_zero": true,
+    "source_public_runs": [
+      {
+        "name": "continuous",
+        "terminal_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/continuous/CylindricalPwc_chk_0002.h5",
+        "sha256": "2840d470505fb6a411171d1e24e0693ac151e30f327d5723ff2556d30b067fc8",
+        "steps": 6,
+        "time": 0.0006,
+        "zero_repairs": true,
+        "geometry": "cylindrical",
+        "dimension": 2,
+        "backend_plan": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/continuous/CylindricalPwc_backend_plan.txt",
+          "sha256": "57090d85a6540026eb6b06d9d50dcb0a256798bd67630561c8e541bdad501236",
+          "values": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk3",
+            "eos": "ideal",
+            "network": "none",
+            "ode": "none",
+            "linear": "none",
+            "diffusion": "none"
+          }
+        }
+      },
+      {
+        "name": "fresh",
+        "terminal_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/fresh/CylindricalPwc_chk_0002.h5",
+        "sha256": "f8391b9fe6d4d36fb61987a05f1636a3ab5e9eb9085b5db29fea65f959f5c3ee",
+        "steps": 6,
+        "time": 0.0006,
+        "zero_repairs": true,
+        "geometry": "cylindrical",
+        "dimension": 2,
+        "backend_plan": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/fresh/CylindricalPwc_backend_plan.txt",
+          "sha256": "57090d85a6540026eb6b06d9d50dcb0a256798bd67630561c8e541bdad501236",
+          "values": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk3",
+            "eos": "ideal",
+            "network": "none",
+            "ode": "none",
+            "linear": "none",
+            "diffusion": "none"
+          }
+        }
+      },
+      {
+        "name": "rphi-control",
+        "terminal_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/rphi-control/CylindricalPwc_chk_0002.h5",
+        "sha256": "508a6d51907b021902cb47180a84474c204c7f1885d0fac5dba414ebbb006934",
+        "steps": 6,
+        "time": 0.0006,
+        "zero_repairs": true,
+        "geometry": "spherical",
+        "dimension": 2,
+        "backend_plan": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/rphi-control/CylindricalPwc_backend_plan.txt",
+          "sha256": "57090d85a6540026eb6b06d9d50dcb0a256798bd67630561c8e541bdad501236",
+          "values": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk3",
+            "eos": "ideal",
+            "network": "none",
+            "ode": "none",
+            "linear": "none",
+            "diffusion": "none"
+          }
+        }
+      },
+      {
+        "name": "cyl3-control",
+        "terminal_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/cyl3-control/CylindricalPwc_chk_0001.h5",
+        "sha256": "8339ca56f2dc5079c0fe40ba48df0f580b3cafc9e26006f58f6f0aed09d34a68",
+        "steps": 2,
+        "time": 0.0002,
+        "zero_repairs": true,
+        "geometry": "cylindrical",
+        "dimension": 3,
+        "backend_plan": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/cyl3-control/CylindricalPwc_backend_plan.txt",
+          "sha256": "57090d85a6540026eb6b06d9d50dcb0a256798bd67630561c8e541bdad501236",
+          "values": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk3",
+            "eos": "ideal",
+            "network": "none",
+            "ode": "none",
+            "linear": "none",
+            "diffusion": "none"
+          }
+        }
+      },
+      {
+        "name": "self-public",
+        "terminal_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/self-public/CylindricalPwc_chk_0002.h5",
+        "sha256": "1f575af7e1884c51a46c7b25beed2ba35035ee18a87aaad3a162f87c8277fcec",
+        "steps": 2,
+        "time": 0.0002,
+        "zero_repairs": true,
+        "geometry": "cylindrical",
+        "dimension": 2,
+        "backend_plan": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/self-public/CylindricalPwc_backend_plan.txt",
+          "sha256": "57090d85a6540026eb6b06d9d50dcb0a256798bd67630561c8e541bdad501236",
+          "values": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk3",
+            "eos": "ideal",
+            "network": "none",
+            "ode": "none",
+            "linear": "none",
+            "diffusion": "none"
+          }
+        }
+      },
+      {
+        "name": "auto",
+        "terminal_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/auto/CylindricalPwc_chk_0001.h5",
+        "sha256": "bee87090b87434323f89555e3fa934655270d16daf3451d802a671cf3d75c300",
+        "steps": 2,
+        "time": 0.0002,
+        "zero_repairs": true,
+        "geometry": "cylindrical",
+        "dimension": 2,
+        "backend_plan": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/runs-final/auto/CylindricalPwc_backend_plan.txt",
+          "sha256": "535c6e5608113b0480cd6c3dd2797ece506a543073afa81a6cb7dc05d3f3deb9",
+          "values": {
+            "schema": "1",
+            "requested": "auto",
+            "resolved": "cpu",
+            "capability_code": "16",
+            "fallback_reason": "geometry unsupported",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk3",
+            "eos": "ideal",
+            "network": "none",
+            "ode": "none",
+            "linear": "none",
+            "diffusion": "none"
+          }
+        }
+      }
+    ],
+    "Host_comparator_zero_tolerance": {
+      "receipt": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/latest-Host-comparator/receipt.json",
+      "max_abs": 0,
+      "max_rel": 0,
+      "controller_matches": true,
+      "output_indices_match": true
+    },
+    "final_source_freeze_for_full_contracts": "candidate-freeze6.json; later presentation-only Header/actual schema delta at candidate-freeze8.json rechecked by latest-API-label-contracts and latest-Studio-catalog-contracts. No numerical behavior changed."
+  },
+  "runtime_and_build_cost": {
+    "GNU_time_is_command_wall_seconds": "Stored separately from monotonic guard elapsed; no summing concurrent lanes into a speedup",
+    "CPU_builds": {
+      "build-public-cpu-2": {
+        "elapsed_seconds": 178.05,
+        "user_seconds": 662.89,
+        "system_seconds": 33.23,
+        "max_process_rss_kib": 1378424.0,
+        "exit": 0.0
+      },
+      "build-public-cpu-3": {
+        "elapsed_seconds": 33.48,
+        "user_seconds": 321.92,
+        "system_seconds": 11.4,
+        "max_process_rss_kib": 470332.0,
+        "exit": 0.0
+      },
+      "build-review-repair": {
+        "elapsed_seconds": 169.61,
+        "user_seconds": 662.29,
+        "system_seconds": 35.8,
+        "max_process_rss_kib": 1378108.0,
+        "exit": 0.0
+      },
+      "final-cpu-integration-build": {
+        "elapsed_seconds": 14.92,
+        "user_seconds": 41.67,
+        "system_seconds": 2.55,
+        "max_process_rss_kib": 486580.0,
+        "exit": 0.0
+      },
+      "public-label-CPU-build": {
+        "elapsed_seconds": 32.13,
+        "user_seconds": 293.54,
+        "system_seconds": 9.92,
+        "max_process_rss_kib": 466080.0,
+        "exit": 0.0
+      },
+      "latest-CPU-noop": {
+        "elapsed_seconds": 0.03,
+        "user_seconds": 0.01,
+        "system_seconds": 0.01,
+        "max_process_rss_kib": 18432.0,
+        "exit": 0.0
+      }
+    },
+    "compile_actions": {
+      "build-public-cpu-2": 75,
+      "build-public-cpu-3": 6,
+      "build-review-repair": 59,
+      "final-cpu-integration-build": 6,
+      "public-label-CPU-build": 3,
+      "latest-CPU-noop": 0,
+      "shared-selector-CUDA-host-object": 1,
+      "final-CPU-noop": 0,
+      "final-thin-CUDA-noop": 0
+    },
+    "peak_build_tree_rss_kib_sampled": 2686220,
+    "peak_build_process_rss_kib_GNU": 1378424.0,
+    "science_runs": {
+      "latest-continuous-cpu": {
+        "elapsed_seconds": 0.09,
+        "user_seconds": 0.09,
+        "system_seconds": 0.04,
+        "max_process_rss_kib": 24332.0,
+        "exit": 0.0
+      },
+      "latest-fresh-cpu": {
+        "elapsed_seconds": 0.06,
+        "user_seconds": 0.06,
+        "system_seconds": 0.01,
+        "max_process_rss_kib": 24828.0,
+        "exit": 0.0
+      },
+      "latest-self-public-cpu": {
+        "elapsed_seconds": 1.2,
+        "user_seconds": 1.28,
+        "system_seconds": 0.02,
+        "max_process_rss_kib": 27980.0,
+        "exit": 0.0
+      },
+      "latest-rphi-public-control": {
+        "elapsed_seconds": 0.08,
+        "user_seconds": 0.12,
+        "system_seconds": 0.01,
+        "max_process_rss_kib": 24128.0,
+        "exit": 0.0
+      },
+      "latest-cyl3-public-control": {
+        "elapsed_seconds": 0.12,
+        "user_seconds": 0.13,
+        "system_seconds": 0.04,
+        "max_process_rss_kib": 70964.0,
+        "exit": 0.0
+      },
+      "latest-auto-public-cpu": {
+        "elapsed_seconds": 0.06,
+        "user_seconds": 0.04,
+        "system_seconds": 0.03,
+        "max_process_rss_kib": 24392.0,
+        "exit": 0.0
+      }
+    },
+    "resource_qualification": "OMP4 scientific runs; j2 heavy build. No guard stops or swap growth in successful attempts; short-run process sampling may miss actual process peaks, GNU RSS is per process. Not a leak-free proof.",
+    "non_regression_scope": "CYL2 qualified matched-workload performance retained; CYL4 short samples are not stable speedup claims or full-science endpoints. Shared header repair caused59compile actions; LTO link CPU time and actual memory recorded without in-measurement tuning.",
+    "truncated_scientific_runs": 0,
+    "host_storage_preflight": {
+      "host_mount": "/mnt/e",
+      "host_free_bytes": 23211180032,
+      "warning_stop_bytes": 1073741824,
+      "estimated_new_h5_bytes_upper": 33554432,
+      "input_freeze_sha256": "9b92da5955f5724119be2ee6992af3924081c6ba8fa33a7186af2c325270acd9"
+    }
+  },
+  "all_attempts": {
+    "guarded_attempts": 46,
+    "failed_attempts": 3,
+    "index": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/all-attempt-index.json",
+    "index_sha256": "91f18558db95447993fc7ac250ec4141976fe136c47ff36be5fcf757bc3896ba",
+    "failure_resolutions": {
+      "build-public-cpu-1": "Unregistered target; no compilation/science. Corrected actual target list in build-public-cpu-2.",
+      "cpu-interface-tests-1": "One stale retired-CPU-chart assertion; corrected and final13CPU contracts pass.",
+      "studio-final-checks": "94/95 pass; remaining rejection behaved correctly but test expected old error wording. Fixed assertion; final95pass."
+    },
+    "wrapper_scientific_PASS_note": "Raw wrapper flags remain false/pending by design; this independent receipt accepts only checked scope."
+  },
+  "external_collaboration": {
+    "owner_goal": "arch-rz-reintroduction-20261018",
+    "phase_calls": 3,
+    "phase_elapsed_seconds": 677.4762774089977,
+    "cumulative_calls": 22,
+    "soft_total_max": 22,
+    "user_hard_call_limit": null,
+    "cumulative_elapsed_seconds": 5529.5926578399985,
+    "cumulative_reported_tokens": 773697,
+    "started_calls_unknown_output": 3,
+    "money": null,
+    "attempts": [
+      {
+        "job_id": "3b46e3b393b04b42a85f9e2433cee6e0",
+        "task": "cyl4-public-entry-audit-1",
+        "result": {
+          "task_id": "cyl4-public-entry-audit-1",
+          "status": "READY_FOR_REVIEW",
+          "summary": "Read-only audit at 45b92535e8efe78728bb67b0415c148854a63f9c. No files written; no build, test, lint, or runtime command executed.\n\nPUBLIC/CONFIG\n- Preview.h:63-64 rejects every 2D cylindrical domain; remove only that guard. Configuration.cpp:362-370 omits the Cyl2 schema row, so publish the ninth convention. PresentationMetadata.cpp:39-69 derives r,z,inactive and cm,cm from Grid; keep the existing inactive-axis encoding (active=false, unit=null).\n- Update tests/api/configuration/test_configuration.py:238-251, tests/api/configuration/test_configuration_v3.py:352-370, and studio/tests/parameter-catalog.test.ts:32-43 (8 to 9 conventions; remove the Cyl2 retired case).\n- Preserve O7: tests/host/core/test_input_resolution.cpp:64-67,97-98,114-140 still require missing/invalid active keys to fail with no fallback. Add Cyl2 cases for missing/invalid x2_min/x2_max and active x2 boundary keys.\n- Configuration.cpp:73,468-472 only expose a requested backend and cuda:not_initialized. Add a negative Setup/evolution test that Cyl2+cuda rejects until CYL5, plus a CPU Cyl2 success; preview must remain CPU and claim no GPU support.\n\nVECTORS/DIAGNOSTICS\n- PlotIO.cpp:226-233 emits VELZ only when dim==3, dropping the physical phi slot for Cyl2. Emit all three slots r,z,phi; ensure output selection enables w for Cyl2.\n- PlotIO.cpp:181-183,189-191 maps mom_u/v/w into vel_x/y/z; use an explicit Cyl2 r,z,phi mapping before velocity diagnostics.\n- PlotIO.cpp:334-335 labels Cyl2 as local-orthonormal-r-phi-inactive; change to local-orthonormal-r-z-inactive (RZPhi). Keep gravity GPOT/GAC semantics separate (PlotFieldMetadata.h:30-34).\n- tests/api/preview/test_full_model_preview.py:48-80,101-119,166-205 assumes 5+dim fields and skips Cyl2. Add Cyl2 with nonzero u/v/w, all three VELX/Y/Z values, and analytic VORT/DIVV checks that detect r/z/phi swaps.\n\nCHECKPOINT IDENTITY\n- CheckpointGeometryIdentity.h:25-26 blanket-rejects Cyl2; remove it. Lines 20-39 hardcode {1,\"existing\"} and accept legacy empty. Cyl2 must require saved=expected={1,\"cylindrical-rz-pwc\"} and reject {2,\"axisymmetric-rz\"}, {0,\"\"}, {1,\"\"}, and every wrong chart. The other eight conventions retain {1,\"existing\"} plus the existing legacy-empty rule.\n- ChkIO.cpp:56-57,148-149 must use the canonical expected identity for both write and read.\n- Extend tests/host/io/test_checkpoint_compatibility.cpp:629-657,788-791, tests/host/io/test_driver_checkpoint_geometry.cpp:152-153, and test_checkpoint_conservation_metrics.cpp:122-126,181-182 for actual Cyl2 round-trip and old/new chart rejection.\n\nPLOT ARTIFACT METADATA\n- PlotGridMetadata.h:18-23 rejects Cyl2; remove that only. Lines 35-48 would currently leave axis2 inactive and emit cm^2/per_unit_transverse_length. Special-case Cyl2 to axes r,z,inactive, units cm,cm,inactive, measure_unit cm^3, normalization per_unit_azimuth.\n- Remove Cyl2 rejects at studio/host/plotfileMetadata.ts:246-249,519; studio/src/host/plotfileAudit.ts:49,101; studio/src/host/workflowValidation.ts:35; studio/src/host/configurationValidation.ts:110.\n- Fix expected axes at studio/host/plotfileMetadata.ts:265-266 and studio/src/host/plotfileAudit.ts:50-54. Chart is hardcoded existing at plotfileMetadata.ts:290; carry cylindrical-rz-pwc and permit it at plotfileAudit.ts:18,46.\n- Render/overview gates at plotfileMetadata.ts:560,578 and plotfileAudit.ts:115 are Cartesian-only. Add Cyl2 only; do not broaden the retained 3D/curved charts.\n- The validMeasureLabels call sites (plotfileMetadata.ts:260, plotfileAudit.ts:39,57) must accept cm^3/per_unit_azimuth; add coverage in studio/tests/plotfile-declarations.test.ts:52-61.\n- Replace rejection assertions in studio/tests/plotfile-source-evidence.test.ts:310-318, studio/tests/plotfile-isolation.test.ts:30-47,92-94, studio/tests/amr-native-volume.test.ts:20-23, and plotfile-overview tests with Cyl2 acceptance plus exact axes/measure/chart/render checks.\n- Replace C++ rejection tests at tests/host/io/test_plotfile_publication.cpp:109-115,145-153 with Cyl2 writer acceptance and exact identity/measure assertions; retain spherical2 chart=existing and fail-closed old/empty/wrong chart tests.\n- Update stale statements in src/io/plot/README.md:10 and src/io/chk/README.md:19.",
+          "checks": [
+            "Read-only source and test inspection at baseline 45b92535e8efe78728bb67b0415c148854a63f9c; no workspace writes.",
+            "Confirmed pre-existing dirty worktree with git status; audited paths have no diff from HEAD.",
+            "No build, test, lint, or runtime execution; only read-only shell inspection was performed."
+          ],
+          "changed_files": [],
+          "conflicts": [
+            "Plot artifact chart/revision identity is not visible in the audited C++ producer paths; Studio synthesizes 'existing' at studio/host/plotfileMetadata.ts:290. Root must add/verify writer-side chart identity outside this read-only scope.",
+            "Cyl2 CUDA rejection is not visible in the audited API/configuration files; Configuration.cpp:73,468-472 only expose the requested backend and cuda:not_initialized. Root must verify the Setup/evolution gate rejects Cyl2+cuda while CPU succeeds."
+          ],
+          "usage": {
+            "input_tokens": 1512190,
+            "cached_input_tokens": 1385216,
+            "output_tokens": 24828,
+            "reasoning_tokens": 13371,
+            "visible_output_tokens": 11457,
+            "cost_usd": null,
+            "cost_kind": "not_quoted"
+          },
+          "observed_model": "deepseek-flash",
+          "model_evidence": "explicit isolated CLI configuration",
+          "finish_reason": "cli_exit_0",
+          "failure_kind": null,
+          "artifact": "delivery.txt",
+          "delivery_normalization": null
+        },
+        "review": {
+          "decision": "ACCEPT",
+          "evidence": "Root independently located config/schema/Preview/CHK/Plot/Studio gates, VELZ filtering and field-count risks. Adopt consumer/test inventory only. Correct worker basis suggestion to local-orthonormal-r-z-phi (third physical component retained); PlotIO diagnostic mapping already r,z,phi and shared VelocityDiagnostics needs cylinder dim>=2. Renderer enablement only after native-bounds checks/tests; no blanket geometry promotion. No execution or implementation acceptance supplied by this audit.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "bounded_consumer_audit",
+          "validation_kind": "independent_source_inspection",
+          "self_work_reason": "Root is sole writer across coupled chart/IO/API semantics; next independent worker reviews frozen implementation after initial targeted checks",
+          "next_recheck": "frozen CYL4 production diff before final CPU qualification"
+        },
+        "archive_manifest": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/collaboration/3b46e3b393b04b42a85f9e2433cee6e0/manifest.json",
+        "archive_manifest_sha256": "8d3e442f524a8ff35adc38465dcec17da968c723a53dd5e0ba922ba0291b383b"
+      },
+      {
+        "job_id": "a96dfe22f1a942bba59beff9d7fe01eb",
+        "task": "cyl4-frozen-production-review-1",
+        "result": {
+          "task_id": "cyl4-frozen-production-review-1",
+          "status": "BLOCKED",
+          "summary": "Read-only review of the frozen 20-file production patch and review manifest; all 20 snapshot SHA-256 values match the manifest. No build, execution, network, edit, commit, or GPU qualification was performed. Found one blocker and one accepted-input consistency regression. BLOCKER: the patch enables CYL2 VELZ in configuration, Preview, and Plot, but the AMR indicator executor still hard-rejects VELZ whenever dimension < 3, so a valid CYL2 AMR request aborts instead of refining on the third velocity. SECOND: accepted mixed-case geometry tokens are not canonicalized on the inspection/analysis path, so VELZ is silently disabled and reported unavailable while runtime canonicalization keeps it. Cyl2 checkpoint chart identity, legacy-empty rejection for the new chart, retained-chart legacy acceptance, plot native axes/measure, cylindrical curl with zero phi partial, and the CPU/CUDA/Auto capability paths showed no concrete frozen-diff defect.",
+          "checks": [
+            "actual: read review-production.patch and review-production-manifest.json; verified all 20 review-source files against manifest SHA-256 hashes",
+            "actual: traced CYL2 VELZ from RefinementSelection/RuntimeParams through AMR indicator selection and Preview; inspected unchanged headers needed to resolve the call path",
+            "actual: checked checkpoint geometry identity write/read validation, legacy-empty handling, and retained-chart compatibility",
+            "actual: checked plot native axes, measure unit/normalization, field basis, cylindrical curl terms, and backend CUDA rejection/Auto fallback reason",
+            "actual: confirmed src/amr/refinement/RefinementIndicatorMath.h is outside the frozen 20-file manifest and has no working-tree diff",
+            "proposed: add and run a CYL2 regression with lrefinemax>0 and refine_var=VELZ",
+            "proposed: add and run an inspect-config regression with geometry=CYLINDRICAL and refine_var=VELZ"
+          ],
+          "changed_files": [],
+          "conflicts": [
+            "[BLOCKER] CYL2 VELZ is accepted by configuration but rejected by the AMR indicator executor. src/core/config/RefinementSelection.h:94 keeps refine_on_velz when dimension==2 and geometry==\"cylindrical\", and src/core/config/RuntimeParams.h:314 passes the canonical geometry, but src/amr/refinement/RefinementIndicatorMath.h:51 still throws when refine_on_velz && dimension<3; make_selection has no geometry parameter. Static repro: geometry=cylindrical, nblockx2=1, nblockx3=0, lrefinemax=1, refine_var=VELZ; config validation and Preview selection succeed, then EvaluateRefinement/PrepareRegrid calls make_selection(config.amr,2,...) and throws std::invalid_argument(\"VELZ AMR indicator requires three spatial dimensions.\"). The third velocity does not survive AMR selection.",
+            "[MAJOR/O7] Mixed-case geometry accepted by the parser is not canonicalized on the inspection path. src/core/config/ConfigurationInput.h:104 and src/api/configuration/Configuration.cpp:486 pass the raw input token to exact comparisons at src/core/config/RefinementSelection.h:94 and src/api/configuration/PresentationMetadata.cpp:78. Repro: geometry=CYLINDRICAL (accepted by src/driver/dispatch/PolicyDescriptor.h:620), nblockx2=1, nblockx3=0, refine_var=VELZ; --inspect-config clears VELZ and reports it unavailable, while src/core/config/RuntimeParams.h:183 canonicalizes the geometry and keeps VELZ for the run. This violates the third-velocity contract by silently downgrading a valid accepted input."
+          ],
+          "usage": {
+            "input_tokens": 6329331,
+            "cached_input_tokens": 6187904,
+            "output_tokens": 47129,
+            "reasoning_tokens": 28051,
+            "visible_output_tokens": 19078,
+            "cost_usd": null,
+            "cost_kind": "not_quoted"
+          },
+          "observed_model": "deepseek-flash",
+          "model_evidence": "explicit isolated CLI configuration",
+          "finish_reason": "cli_exit_0",
+          "failure_kind": null,
+          "artifact": "delivery.txt",
+          "delivery_normalization": null
+        },
+        "review": {
+          "decision": "REPAIR_REQUIRED",
+          "evidence": "Root independently reproduced both findings using current CPU ARCH: --preview-amr with native Cyl2 lrefinemax1/refine_var VELZ rejects in RefinementIndicatorMath; --inspect-config with geometry CYLINDRICAL and DENS,VELZ reports VELZ unavailable while runtime canonicalizes it. Raw evidence output/release/cyl4-20261018/reproduced-review-findings.json. Root will repair shared selector and all five consumers, preserve charts/O7, then return exact frozen repair for one consolidated read-only review.",
+          "adoption_scope": "none",
+          "reason_code": "confirmed_public_amr_selector_failure",
+          "validation_kind": "current_binary_reproduction",
+          "self_work_reason": "Readonly review task cannot write production; Root integrates shared selector/consumer fix with regression tests",
+          "next_recheck": "one same-logical-task repair review after source freeze and targeted checks"
+        },
+        "archive_manifest": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/collaboration/a96dfe22f1a942bba59beff9d7fe01eb/manifest.json",
+        "archive_manifest_sha256": "26e9a465732e907d85729e5ee968343d65acfed360e4b38ef93f82c348377101"
+      },
+      {
+        "job_id": "bcdea621af7a4d97aee23b9e9e2b2077",
+        "task": "cyl4-frozen-production-review-repair-1",
+        "result": {
+          "status": "FAILED",
+          "summary": "time_limit",
+          "failure_kind": "time_limit",
+          "remote_status": "unknown",
+          "usage": null,
+          "automatic_retry": false
+        },
+        "review": {
+          "decision": "REJECT",
+          "evidence": "The single bounded repair review timed out after300.042s with no complete delivery and unknown output usage; not an acceptance and no further retries. Root independently verified all five enum-aware make_selection consumers and case-insensitive predicates, passed actual native AMR refinement to16leaves, 43 O7 missing-key/9invalid-value refusals, mixed-case provenance checks, six-step current-ARCH run and bitwise16CHK/24Plot datasets vs fresh, J error1.52054e-18. Root retains integration/acceptance authority; initial reproduced blocker and failed review metadata preserved.",
+          "adoption_scope": "none",
+          "reason_code": "bounded_repair_review_timeout_no_adoption",
+          "validation_kind": "missing_worker_delivery_and_independent_root_checks",
+          "self_work_reason": "Repair allowance used; current concrete Root checks cover both findings. No repeat broad audit or prose task needed.",
+          "next_recheck": "CYL5 device stage only when authorized; stop atCYL4"
+        },
+        "archive_manifest": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/collaboration/bcdea621af7a4d97aee23b9e9e2b2077/manifest.json",
+        "archive_manifest_sha256": "6584400148b4ad683179979b0881deca44b336b5c88074f9f8b1c47831d5a7cf"
+      }
+    ],
+    "root_resolution": "Both concrete original findings reproduced and fixed; final AMR/provenance/current-binary checks passed. Repair review timed out with no adoption; it does not unlock a dependency or act as approval.",
+    "self_work_reason": "Root sole writer across coupled interfaces; no extra broad audits or language-polish calls. Stage is independently accepted by Root from actual evidence."
+  },
+  "history_integrity": {
+    "protected": 42,
+    "archived": 107,
+    "previous_CYL_receipts": 4,
+    "status": "PASS unchanged",
+    "manifest": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/history-before-doc-update.json",
+    "manifest_sha256": "d14ec66c6733d666b33aeeae7017d9b82649986995c26f950c33345029803b51"
+  },
+  "documents": {
+    "main_plan": "ARCH_RELEASE_PLAN.md",
+    "recovery": "AGENTS.md",
+    "active_guides_updated": [
+      "docs/Features.md",
+      "docs/Reference.zh-CN.md",
+      "docs/Reference.md",
+      "docs/Features.zh-CN.md",
+      "src/api/docs/PreviewApi.md",
+      "src/api/docs/INITIAL_AMR_API.md",
+      "src/io/chk/README.md",
+      "src/io/plot/README.md",
+      "src/physics/gravity/README.md",
+      "src/numerics/curvilinear/README.md",
+      "docs/guides/UserBoundaries.md",
+      "docs/guides/SimulationCase.zh-CN.md",
+      "docs/guides/UserBoundaries.zh-CN.md",
+      "docs/guides/Studio.zh-CN.md",
+      "docs/guides/Studio.md",
+      "docs/guides/SimulationCase.md",
+      "docs/development/ImplementationOwnership.md"
+    ],
+    "no_new_parallel_narrative_report": true
+  },
+  "remaining_qualification": {
+    "CYL5": "Not started. Native CUDA still refused; one changed backend Host C++ object compiled only. Real kernel/index/residency/stream/wall/regrid/fresh require separate device acceptance.",
+    "CYL6": "Not started. Broader algorithm/EOS/reacting/diffusion science endpoints remain their matrix.",
+    "REL4": "Not started. Full CUDA release/scientific and lifecycle matrix not signed.",
+    "Studio_manual_visual": "Not performed; real reader/client contracts and UI build qualified, no manual desktop visual signoff claimed.",
+    "known_compiler_notes": "Existing incomplete BCHandler warnings in DriverStages/DriverMacroStep appear when rebuilding gravity-stage test; compiled/passed, not altered in this interface package."
+  },
+  "next": "Stop at CYL4; await user authorization for CYL5/REL4.",
+  "local_verification_helpers": {
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_fresh.py": "27d45d296cd989d16c5029529ed6a2cc20479fc1599c4cce55006730e29d9790",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_studio_artifacts.ts": "ebdf697b489cc2b2e8668a3400912eba990570c3f079a4bcb14aadf473ec041c",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_fresh_final.py": "f995d27edd9a598fdb1818e1ac496c4b5a034279c566157cc8a2c842b265ed0d",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/reproduce_review_findings.py": "63f6f09970420c71c007400bb3ffeba5e333c0d2bea4f0658a5f0df737c242d2",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_public_entry_final.py": "3af8bfd1a9c5be2a902374bf9b296927cf9d75fa8be042c12fe7cff098361872",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/prepare_runs.py": "d170dd674b3439d6320af1deaf22c728fdbafed29e4d421a6ea886d1ffca3286",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_studio_artifacts_final.ts": "c747694395558a830bf8ccd6a310854260e042e63e11bd0db57a7858f5bca4b5",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/stages.py": "b575b01b3f15e185f5155fe59763dba96834c77d878747a195c289ab3f1c47ff",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/assemble_acceptance.py": "f57c30c77a6b912173eb9310c6a734a3b22c52d126e766707d9014632bf5834c",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_rejections.py": "0825c977c928a1053b8e1f095b146a4455a7ae8c3f81e2a77a0135bd199233b8",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_public_entry.py": "eb6b5fe546b3e804c3f52563d29fb3963995d4e049bf1b0503f2a65d110348e7",
+    "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl4-20261018/check_rejections_final.py": "7b66e0ce7df43ef5c97fbf086086bf476057cf497ff3b20d89bf8fc15b5b9687"
+  }
+}

@@ -65,16 +65,17 @@ Json CoordinateMetadata(const GridConfig& g, const std::string& system) {
             {"upperBoundaryKey", raw+"r_boundary_type"}}));
     }
     return Json::object({{"geometry", g.geometry}, {"dimension", g.dim},
-        {"axes", axes}, {"activation", "positive-block-count"}, {"disabledBlockCount", 0},
+        {"axes", axes}, {"chart", grid.geometry == "cylindrical" && g.dim == 2 ? "cylindrical-rz-pwc" : "existing"},
+        {"geometrySemanticsRevision", 1}, {"activation", "positive-block-count"}, {"disabledBlockCount", 0},
         {"thirdAxisRequiresSecond", true}, {"unitSystem", system}});
 }
 /** Summarize requested AMR routes; no runtime probe or EOS qualification occurs here. */
-Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bool self_gravity, bool jeans_backend) {
+Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bool self_gravity, bool jeans_backend, std::string_view geometry) {
     struct Item { const char* name; bool selected; const char* unavailable; };
     const Item items[] = {{"DENS", a.refine_on_rho, ""}, {"PRES", a.refine_on_p, ""},
         {"TEMP", a.refine_on_temp, ""}, {"VELX", a.refine_on_velx, ""},
         {"VELY", a.refine_on_vely, dimension < 2 ? "requires at least 2D" : ""},
-        {"VELZ", a.refine_on_velz, dimension < 3 ? "requires 3D" : ""},
+        {"VELZ", a.refine_on_velz, dimension < 3 && !(dimension == 2 && dispatch::ascii_iequals(geometry,"cylindrical")) ? "requires a third physical velocity component" : ""},
         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
         {"ENUC", a.refine_on_enuc, !burn_enabled ? "requires reactions" : ""},
@@ -92,7 +93,7 @@ Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bo
 Json RefinementMetadata(const SimConfig& c) {
     return RefinementMetadata(c.amr, c.grid.dim, c.physics.burn.use_burn,
         c.physics.gravity.type=="self",
-        config::SupportsJeansBackend(c.execution.compute_backend,c.grid.geometry));
+        config::SupportsJeansBackend(c.execution.compute_backend,c.grid.geometry),c.grid.geometry);
 }
 /** Expose the applicable diffusion controls and their state. */
 Json DiffusionMetadata(const std::string& eos_type, bool enabled) {

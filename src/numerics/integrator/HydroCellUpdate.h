@@ -23,16 +23,36 @@
 
 namespace TimeIntegration
 {
-    /** Add V-measure fields/species divergence to one cell accumulator. */
+    /** Add physical flux divergence, using the actual chart's conserved measure.
+     * Axisymmetric azimuthal momentum stores a PWC coefficient with J=W*Mphi:
+     * its divergence is (Tl*Fl-Tr*Fr)/W. Other fields/species use A/V. The
+     * angular curvature is already absorbed here, so no second phi source is
+     * permitted. Geometry supplies moments; no angular state/cache is owned.
+     */
     ARCH_INLINE void accumulate_cell_divergence(
         const FluidVector& lower_flux, const FluidVector& upper_flux,
         const double* lower_species_flux, const double* upper_species_flux,
         int n_spec, int species_stride,
         double area_l, double area_r, double volume, double dt,
-        FluidVector& dU, double* d_spec)
+        FluidVector& dU, double* d_spec,
+        const GridMetrics::GeometryView& geometry, int direction, int i, int j, int k)
     {
         double dt_over_vol = dt / volume;
-        dU = dU + (lower_flux * area_l - upper_flux * area_r) * dt_over_vol;
+        if (geometry.geometry==GridMetrics::Geometry::Cylindrical && geometry.dim==2) {
+            // Suppress the ordinary azimuthal term before arithmetic, rather
+            // than computing an irrelevant A/V term and cancelling it later.
+            FluidVector lower=lower_flux,upper=upper_flux;
+            lower.mom_w=upper.mom_w=0.;
+            FluidVector increment=(lower*area_l-upper*area_r)*dt_over_vol;
+            const double moment=GridMetrics::AngularMomentumVolumeMoment(geometry,i,j,k);
+            const double torque_l=GridMetrics::AngularMomentumFaceMoment(geometry,direction,i,j,k,false);
+            const double torque_r=GridMetrics::AngularMomentumFaceMoment(geometry,direction,i,j,k,true);
+            increment.mom_w=(lower_flux.mom_w*torque_l-upper_flux.mom_w*torque_r)*(dt/moment);
+            dU=dU+increment;
+        } else {
+            // Retained charts preserve their exact operation order.
+            dU = dU + (lower_flux * area_l - upper_flux * area_r) * dt_over_vol;
+        }
         for (int s = 0; s < n_spec; ++s)
         {
             int off = s * species_stride;

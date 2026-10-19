@@ -1,3 +1,8 @@
+/**
+ * Produce explicitly synthetic demo fields for interface development.
+ * These values exercise rendering and cancellation only; real initial fields
+ * come from the selected Core through RealInitPreviewProvider.
+ */
 import { validate } from '../state/studioState.ts';
 import type { Parameters } from '../state/studioState.ts';
 import type { PreviewData, PreviewFields } from './PreviewData';

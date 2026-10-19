@@ -1,3 +1,6 @@
+/**
+ * Navigate the editor's parameter sections and focus callbacks. Navigation neither changes parameter requiredness nor executes configuration.
+ */
 import {useEffect,useRef,useState} from 'react';
 import type { CoreGroup } from '../../data/parSchema';
 import { coreBlocks } from './panelPresentation';

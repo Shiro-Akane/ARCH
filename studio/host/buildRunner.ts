@@ -1,3 +1,9 @@
+/**
+ * Own one build operation and its evidence lifecycle.
+ * Workflow: validate the selected profile, snapshot dependencies, launch the
+ * controlled toolchain, collect bounded events, and publish freshness only after
+ * success and stable input checks. Closing a client does not abandon a compiler.
+ */
 import {readToolRuntimeEvidence,toolRuntimeRoots,changedRuntimeInputs,runtimeFingerprint} from './toolRuntimeEvidence.ts';
 import {mkdir,stat} from 'node:fs/promises';
 import {checkedPath} from './files.ts';

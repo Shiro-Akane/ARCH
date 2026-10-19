@@ -464,7 +464,7 @@ void test_resolved_dispatch_source_boundary()
         require_not_contains(dispatch, removed_entry);
     }
 
-    // Startup display retains spherical polar coordinate names and rejects Cyl2.
+    // Startup display separates native axial coordinates from spherical polar names.
     // Inspect this presentation-only branch; no duplicate geometry is evaluated.
     require_contains(root / "src/driver/SolverDispatch.cpp",
                      "if (config.grid.dim == 2) return \"phi\";");
@@ -476,10 +476,9 @@ void test_resolved_dispatch_source_boundary()
     Grid cylindrical(4, 0.0, 1.0, -0.5, 0.5);
     cylindrical.dim = 2;
     cylindrical.geometry = "cylindrical";
-    bool retired_polar_rejected = false;
-    try { (void)cylindrical.GetAxisNames(); }
-    catch (const std::invalid_argument&) { retired_polar_rejected = true; }
-    require(retired_polar_rejected, "retired cylindrical 2D polar display accepted");
+    // Grid retains its canonical suffixed labels; NativeGrid IO publishes r/z.
+    require(cylindrical.GetAxisNames()==std::vector<std::string>{"r_cy","z_cy"},
+            "native cylindrical 2D display must name the axial coordinate z");
 }
 
 } // namespace

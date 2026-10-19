@@ -1,3 +1,8 @@
+/**
+ * Arrange supplied parameter rows into common, advanced or inactive sections.
+ * Placement uses inspection requirements and errors; hiding an inactive control
+ * does not erase its explicit input or change Core requiredness.
+ */
 import type {ConfigurationInspection,CoordinateSystem} from '../host/configurationContracts.ts';
 import {catalog} from './parameterCatalog.ts';
 export type CatalogRow=ReturnType<typeof catalog>[number];

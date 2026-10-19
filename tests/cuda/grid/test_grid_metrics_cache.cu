@@ -205,10 +205,6 @@ void run_invalid_inputs()
     bad_grid.geometry = -1;
     reject(bad_grid, cache.view, "unsupported geometry");
     bad_grid = grid;
-    bad_grid.geometry = static_cast<int>(GridMetrics::Geometry::Cylindrical);
-    bad_grid.dim = 2;
-    reject(bad_grid, cache.view, "retired cylindrical two-dimensional chart");
-    bad_grid = grid;
     bad_grid.dim = 4;
     reject(bad_grid, cache.view, "unsupported dimension");
     bad_grid = grid;
@@ -253,12 +249,11 @@ int main()
         check(cudaSetDevice(0));
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dim = 1; dim <= 3; ++dim) {
-                if (geometry == "cylindrical" && dim == 2) continue;
                 for (int variant = 0; variant < 3; ++variant)
                     run_parity(dim, geometry, variant);
             }
         run_invalid_inputs();
-        std::cout << "Grid metric cache: 24 shared-math parity layouts and invalid-input guards passed\n";
+        std::cout << "Grid metric cache: 27 shared-math parity layouts and invalid-input guards passed\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "Grid metric cache failure: " << error.what() << '\n';

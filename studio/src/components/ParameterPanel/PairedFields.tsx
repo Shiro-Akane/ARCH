@@ -1,3 +1,6 @@
+/**
+ * Arrange paired parameter controls for a shared editing task. Each key keeps its own schema, explicit text and diagnostics.
+ */
 import type { ReactNode } from 'react';
 import type { ParEntry } from '../../data/ParDocument';
 const pairs: [string,string,string][] = [

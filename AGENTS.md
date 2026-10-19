@@ -7,7 +7,7 @@
 - 本项目在 WSL Ubuntu 中执行，shell 为 `/bin/bash`。Windows C 盘文件通过 `/mnt/c/Users/26428/...` 访问，切勿将 `C:\Users\26428\...` 直接交给 Linux 命令。
 - 当前工作区为 `/home/shiroakane/.codex/worktrees/d7a6/ARCH`，主仓库目录为 `/home/shiroakane/ARCH`。恢复上下文后先读取本文件和 `ARCH_RELEASE_PLAN.md`，需要现代化结案依据再查 `ARCH_MODERNIZATION_PLAN.md`，再用 `git status --short --branch`、`git worktree list` 确认实际分支和目录，不凭旧聊天推断。
 - 若普通 `exec_command` 在启动进程前报 `CreateProcess ... No such file or directory (os error 2)`，不要反复替换 bash／PowerShell 路径。已验证的恢复入口为：`shell="/bin/bash"`、`login=false`、真实 WSL `workdir`，并通过工具审批使用 `sandbox_permissions="require_escalated"`。审批拒绝时按拒绝理由处理；本记录不授权绕过审批或永久关闭沙箱。
-- Windows `node_repl` 会拒绝 `file:///home/...` 的 `sandboxCwd`，这不证明文件不存在。WSL 项目文件须通过上述 WSL 命令入口读取，不在该 Windows Node 会话中反复尝试 Linux 路径。常规沙箱启动与 Windows Node 路径兼容问题尚未根治。
+- Windows `node_repl` 会拒绝 `file:///home/...` 的 `sandboxCwd`，这不证明文件不存在。WSL 项目文件须通过上述 WSL 命令入口读取，不在该 Windows Node 会话中反复尝试 Linux 路径。2026-10-19本轮普通沙箱的`/bin/bash`、`login=false`和真实WSL工作目录已可启动，优先使用普通入口；仅复现启动错误时再按上条恢复，不宣称全局兼容问题已永久修复。
 
 ## Python 与 Studio 工具环境
 
@@ -15,22 +15,22 @@
 - 自动化命令需要别名时使用 `bash -ic 'work; python -c "import sys; print(sys.executable)"'`（非交互 bash 不保证加载该别名）；也可按既有环境指南显式初始化 conda 并激活 `work`。
 - 已核实 `work` 的 Python 3.12.14、NumPy、h5py 可用。该 Python 当前缺少 `os.pidfd_open` 和 `signal.pidfd_send_signal`；资源护栏及必须使用这些 Linux 进程接口的工具沿用 `/usr/bin/python3`（已核实提供这两个接口）。此例外不改变科学 Python 默认使用 `work`，也不能用安装普通包代替标准库接口检查。
 - Studio 使用 Linux Node 24+。本机现成入口为 `/home/shiroakane/.local/opt/node-studio/bin`（已核实 Node 24.21.0），运行 npm 前将整个目录前置到 `PATH`。切勿只调用该目录的 npm 而仍让其选中 `/usr/bin/node` 18。详细环境要求见 `docs/guides/StudioEnvironment.zh-CN.md`。
+- 本机未安装`tsx`；本轮Studio Host只读`.ts`脚本已由上述Node24原生入口直接执行通过，不要假定存在`studio/node_modules/tsx/dist/loader.mjs`。UI／JSX沿现有项目构建入口。
 
 ## 进度恢复
 
-- **REL-3.5已按二维柱坐标全面退役的新范围签收；REL-4未启动。** 先读`ARCH_RELEASE_PLAN.md`与`validation/backend/results/release-readiness/RzRetirementAcceptance-20261018.json`，不要凭旧聊天重启RZ性能调查。当前源码已删除RZ专用文件、公共分支／传参／缓存及专用测试、输入和构建入口；不重新实现RZ。
-- 所有`Cylindrical&&dim2`明确拒绝，含旧polar解释。保留八种合法组合、真Sphere2 Rphi和Cyl1／3，尤其不误删3D `CylindricalRZPhi`基底、物理`r_cy/z_cy`、三动量、三槽、通用mean P/c／EOS附件及普通守恒与资源生命周期。Cyl3轴线拼接误排除已经修复并通过原正例。
-- 当前CPU `build-modernization-cpu/bin/ARCH` SHA256为`d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487`；同build根的Host比较器`arch_cuda_single_level_validation`为`bed49e522814100530599457ed8484f5c0d5c1d18fce9fd12d04cb2a3595845a`。本机原始记录和1207份源码冻结见`output/release/rz-retirement-implementation-20261016/`；最终为`source-freeze15.json`，推送结果见`push-receipt.json`。
-- 本包CPU20项、GPU8项、Studio104项及212项相关工具短测通过；七组旧新两步Data／Blocks逐位一致、零修复。CUDA21个生产单元已编译，完整CUDA应用／网络矩阵／Store及公共fresh仍未签收，不能把本包当REL-4或完整release。
-- REL-3、现代化R1–R8及旧RZ科学结果各保留原源码／执行物身份，索引分别见发布计划、`ARCH_MODERNIZATION_PLAN.md`和对应机器收据。42份冻结证据原字节、107份`docs/development/archive/histroy/rz/`归档的迁移冻结版本均未变（8份历史文档曾仅重定位链接）；旧NOT_MET／FAIL／GAP不改签，不重复旧RZ长程。
-- 当前CPU／CUDA CMake源均为本工作区；CPU用GCC13／CUDA OFF，CUDA用GCC12／NVCC12.3／sm86，严格FP。CPU与CUDA的LTO库不能混用；旧主目录CTest只属于历史来源。重构建j2、CUDA重型pool1及护栏；科学短例OMP4并尊重owner明确OMP1。编译、科学运行和只读核验分开记账，冻结测量期间不编辑源码。
-- 保持O7：活动关键键缺失或显式错误必须拒绝；25项登记辅助默认、具名模型和显式auto来源可追溯。未活动显式值仍为source=input，只有省略且无默认才为null。两份登记定义本包未改；不恢复旧Hydro／Cellular默认。Plot的source/build/profile身份检查保留；原生CHK没有build/source/profile gate，不推断新增规则。
-- 原核质量／能量核对继续使用`preserve_total_precision=True`与`native_long_double_roundtrip_decimal`，不降精度或放宽原门槛。旧历史空复选框不等于待重跑项目；按原身份复用、分别记录失败／截断／未覆盖。
+- **当前只收尾REL-5，未进入REL-6。** 唯一计划`ARCH_RELEASE_PLAN.md`已收为130行；本轮收据`validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json`，恢复`output/release/rel5-20261019/progress.json`。分支`compute/optim`，本批入场基线`45b92535e8efe78728bb67b0415c148854a63f9c`；恢复后核实实际HEAD。用户已明确授权提交当前累计状态、正常推送该分支及创建main草稿PR完成真实托管CI；不合并／强推／打标签／正式发布，不进入REL-6。2026-10-19续轮用户已批准具体清单，323份历史迁移、三个索引删除及相对链接修正已实施；唯一人类历史入口`docs/histroy/README.md`，固定历史例外原位。本地内容已验收，当前执行提交／推送及托管验收；只读查询入场时没有compute/optim→main的开放PR，不得把本地检查转签托管通过。
+- CTest仅将八个Python wrapper收为唯一`tooling_contracts`，CPU75→68、CUDA142→135，其余命令／属性逐项相同。最终完整Tooling618项、Studio383项零跳过、lint／typed build通过；原593个工具ID及9个迁移方法均保留，新增16个控制。`npm test`唯一持有Node完整选择、TAP与文件并发1。当前文档／架构／actionlint本地通过；文档范围的`NOT_APPLICABLE`不是测试PASS。成本统一查本轮`cost-ledger.json`；完整CI收益尚未实测。
+- 136个Studio改动文件生成JS语法树等价，20文件仅排版；593份C++／CUDA及inc有归属索引，20份C++／CUDA改动的非注释token相同。原CPU／CUDA应用`fe09bf2e251a…`／`b1143d8aa6a2…`和Host比较器`13e91fba6e38…`未重编；注释改变源字节／BuildId，不能把旧无动作构建或旧ELF冒称新源码编译签收。REL-4完整身份和原72.11／3040.45秒增量构建成本只查原收据；后续需授权后冻结并构建，不在本轮自动触发。
+- REL-3／4及二维柱坐标重植保持其原范围闭合；依次查`REL3CurrentCpuClosure-20261019.json`、`REL4CudaDeviceAndIntegration-20261019.json`及CYL-0至6七份收据。原私有Cellular24步／25CHK ENUC与两后端自身fresh、受影响旋转AMR已按原门通过，不重跑长程。原高压近零动量parity `NOT_MET`、SNIa main AMR `FAIL`／thermal `GAP`仍限制发布声明，不由设备或缩放正例转签。
+- 保持O7及原`5e-9`＋`5e-12`源项门、`1e-12`角动量、质量／电荷等各自原标准。`SimConfig::Get`第二参数是审计元数据，不授权关键缺项回退；未活动显式值仍为input，省略且无默认才为null。新chart为revision1 `cylindrical-rz-pwc`、轴`r,z,inactive`，`mom_w`为方位动量，`J=sum(mom_w*W)`、全环质量`2*pi*V`、Poisson`-4*pi*G*rho`；几何／可选引力解耦，关闭时零求解／专属数组，不恢复Rz生产设施／AGM／memo／savepoint或GlobalDefs字段。模型使用Grid的`(r,0,z)`点，`center_y=0`、`center_z`显式必需；旧chart／非法活动路由拒绝。原生CHK不新增build/source/profile gate。核质量／能量保持`preserve_total_precision=True`与`native_long_double_roundtrip_decimal`。
+- 冻结157份历史及原科学产物、协议夹具和两个旧ELF保留原字节／权限；3475份入场结果文件均已重新对照独立备份。不运行旧REL-4组装／最终核验脚本覆盖其收据。新CI固定资产owner在`.github/actions/lfs-asset/`：Helm旧cache key保持，Studio14KiB Sod夹具同样定向物化／验大小和SHA；本地五项控制及实际离线物化通过，托管冷／热缓存与鉴权尚待执行。本机仅复用已校验数据，禁止自动LFS拉取。`run_memory_guarded.py --log`是子进程正文加护栏的文本，外层stdout主要是资源摘要；不要因旧私有`.guard.json`后缀误按JSON解析或拿它当TAP。
+- 两个build的真实CMake源均为本工作区；CPU Release／GCC13／CUDA OFF，CUDA GCC12／NVCC12.3／sm86严格FP。LTO库不可跨图混用，旧主目录CTest不签当前源码。重型j2、CUDA heavy pool1及现有护栏，科学OMP4并尊重owner明确OMP1；计时窗口不编辑相应源码。前置本批输出预算因已有独立备份＋512MiB预留由512调至1024MiB；宿主1GiB边界不变。
 
 ## 本地数据与执行证据
 
 - 2026-10-13收到LFS流量预警后，三张表`helm_table.dat`／`eos2.tab`／`eos4.tab`及`studio/tests/fixtures/sod-1d.h5`均已从现有对象离线展开并核对当前指针SHA-256／字节数。独立普通文件副本固定在`/home/shiroakane/.local/share/arch-data/`下的同名仓库相对路径，`manifest.json`保留身份；不放入Git、build或output，不由LFS prune管理。新工作区先核对所需版本指针，再复用匹配副本／本地对象。
-- 本仓库已配置`filter.lfs.smudge = git-lfs smudge --skip -- %f`与`filter.lfs.process = git-lfs filter-process --skip`，覆盖关联worktree，未改全局配置。读取本地表不消耗LFS流量；默认不自动下载。对象缺失明确报告路径与大小，不自动退回`git lfs fetch/pull`；确需下载另行限定路径和流量范围。保留LFS指针、来源与许可。离线命令见`docs/guides/Build.zh-CN.md`；当前CI缓存补丁见R3.1记录，尚未执行托管验收。
+- 本仓库已配置`filter.lfs.smudge = git-lfs smudge --skip -- %f`与`filter.lfs.process = git-lfs filter-process --skip`，覆盖关联worktree，未改全局配置。读取本地表不消耗LFS流量；默认不自动下载。对象缺失明确报告路径与大小，不自动退回`git lfs fetch/pull`；确需下载另行限定路径和流量范围。保留LFS指针、来源与许可。离线命令见`docs/guides/Build.zh-CN.md`；当前CI资产实现见`.github/actions/lfs-asset/`及`.github/workflows/README.md`，托管冷／热缓存尚待实际验收。
 - 保存可执行基线须保留执行位并核对SHA；启动失败不算数值或性能样本。CTest枚举会覆盖可变`LastTest.log`，先保存旧引用原字节，新包使用独有日志。
 - 本轮所有原始日志、集成前字节、失败与多模型产物保留在本机输出目录；历史冻结记录只链接，不重写。源码签收身份与提交号分开记录，不能把提交前执行物冒称提交后干净构建。
 
@@ -45,8 +45,8 @@
 ## 文件归属与注释
 
 - 公共数值／状态头检查传递依赖和实际解引用消费者：DiffFlux不再通过helper导入具体引力owner，IHydroSolver不含RuntimeParams，FluidState只前声明边界storage；实际消费者直接include定义。现有架构审计覆盖这些边界。前声明不等于附件所有权已迁移；三槽共享／回滚／regrid生命周期仍保持，配置parser与共享求积归属收窄按主计划后置，不为形式整齐扩大重构。
-- 几何与引力职责严格分离：GridMetrics／GeometricSources／HydroGeometryBinding只管度量、坐标／边界与几何源项；引力的实际场、来源选择、patch claim、做功、能量修正与receipt完成归physics/gravity。Host Hydro组合层保留既定时序，AMR只通过可选通用Energy receipt登记，不识别具体引力帧或势公式；Device的场借用与执行适配仍由后端组合层负责。关闭引力必须能独立运行几何路径，仍执行EOS／边界与守恒检查；未知活动引力必须拒绝。二维柱坐标专属环核／AGM／boundary memo已退役，不恢复；其余受支持坐标的物理守恒耦合仍归实际physics owner。
+- 几何与引力职责严格分离：GridMetrics／GeometricSources／HydroGeometryBinding只管度量、坐标／边界与几何源项；引力的实际场、来源选择、patch claim、做功、能量修正与receipt完成归physics/gravity。Host Hydro组合层保留既定时序，AMR只通过可选通用Energy receipt登记，不识别具体引力帧或势公式；Device的场借用与执行适配仍由后端组合层负责。关闭引力必须能独立运行几何路径，仍执行EOS／边界与守恒检查；未知活动引力必须拒绝。旧二维柱坐标专属文件、AGM控制栈和boundary memo已退役，不恢复；所需全环Newton数学只扩展现有gravity owner，其余坐标的物理守恒耦合保持。
 
-- 后续现代化改动无需保持向后兼容：旧接口、配置格式、脚本、构建入口及重复设施可直接退役，不为旧调用方保留兼容层、别名或双轨实现；用户已授权，无需为兼容性再次请求批准。同步更新当前消费者、构建、测试与文档；不再支持的输入／重启产物明确拒绝，禁止静默转换或补默认。数值正确性、物理定义和验收标准保持；历史证据保留来源与适用身份。详见主计划“目标与硬约束”第4项。
+- 后续现代化改动无需保持向后兼容：旧接口、配置格式、脚本、构建入口及重复设施可直接退役，不为旧调用方保留兼容层、别名或双轨实现；用户已授权，无需为兼容性再次请求批准。同步更新当前消费者、构建、测试与文档；不再支持的输入／重启产物明确拒绝，禁止静默转换或补默认。数值正确性、物理定义和验收标准保持；历史证据保留来源与适用身份。详见`ARCH_RELEASE_PLAN.md`“发布目标与判定”。
 - 新增、拆分或移动文件前，按 `docs/development/ImplementationOwnership.md` 核对目录、文件职责、调用方和构建归属；优先复用现有所有者，不以文件数或文件大小决定拆分。
 - 冻结行为的源码注释按 `docs/development/CommentAndDocumentationStyle.md` 说明职责、流程、数学约定和资源生命周期。原始结果、签收记录及锁定字节的文件保留原文；已授权的历史说明可纠正、合并或归档，并保留来源、数值与失败记录；注释改善不授权数值、接口或验收变化。

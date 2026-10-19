@@ -1,3 +1,8 @@
+/**
+ * Bind a source-selected workspace to the binary's registered model identity.
+ * Require an unambiguous matching source/case and reject conflicts; registration
+ * and source digest checks do not claim the model has completed a simulation.
+ */
 import path from 'node:path';
 import {fingerprint} from './files.ts';
 import type {RegisteredCase} from '../src/host/workflowContracts.ts';

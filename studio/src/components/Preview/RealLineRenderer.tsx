@@ -1,3 +1,6 @@
+/**
+ * Bind a real initial one-dimensional field and parameter-position marker to the shared display. Candidate edits stay separate from committed configuration.
+ */
 import type {AmrOverlayProps} from './AmrOverlay';
 import type {Range} from '../../data/plotPresentation';
 import type {LinePreviewData} from '../../data/LinePreviewData';

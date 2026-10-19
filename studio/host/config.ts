@@ -1,8 +1,16 @@
+/**
+ * Validate configuration paths, UTF-8 text and optimistic-save fingerprints.
+ * Reads return exact text with its file identity. Writes must validate that same
+ * identity before atomicConfig publishes; this layer neither fills missing
+ * scientific options nor certifies Setup or runtime readiness.
+ */
 import {constants} from 'node:fs';
 import {open,realpath,stat,access} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {checkedPath,selectedPath} from './files.ts';
 import type {ConfigFileError,ConfigFileErrorCode,ConfigReadResponse,FileFingerprint} from '../src/host/contracts.ts';
+// One MiB of UTF-8 parameter text is the existing editor/HTTP work allowance;
+// it is separate from Core's per-key requirements and physical domain checks.
 export const CONFIG_LIMIT=1024*1024;
 export class ConfigError extends Error {
  readonly info:ConfigFileError;

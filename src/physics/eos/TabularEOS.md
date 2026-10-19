@@ -93,12 +93,14 @@ All table routes also reject Steger-Warming flux splitting and
 automatic stellar conductivity, including nonequilibrium tables. Use a
 general-EOS flux and an explicitly chosen constant thermal diffusivity, or
 disable thermal diffusion. Permission to use a kinetic energy source is not
-proof of compatibility with every weak reaction: tabular views do not yet
-provide the electron chemical-potential diagnostic `eta`. In particular,
-`aprox19`/`aprox21` electron-capture terms that require a physical `eta` are not
-qualified with an arbitrary tabular EOS. The existing Helmholtz routes retain
-their electron diagnostics; this change does not add a second diagnostic table
-or silently substitute a model for missing weak-process inputs.
+proof of compatibility with every weak reaction: tabular views do not provide
+the physical electron chemical-potential diagnostic `eta`. Active burning with
+`aprox19` or `aprox21` is therefore explicitly rejected during EOS coupling
+validation on both backends. A zero diagnostic must not feed their
+electron-capture terms. Nonequilibrium tables can use the qualified `iso7` and
+`aprox13` strong-reaction routes within the declared table domain. Helmholtz
+retains its electron diagnostics and weak-network routes. No substitute
+electron model or diagnostic table is selected automatically.
 
 Uncommitted ODE trials and NSE line-search queries use a local failure status
 so the original rejection, retry or damping rule can recover. Required initial

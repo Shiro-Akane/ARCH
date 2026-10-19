@@ -109,6 +109,8 @@ struct BackendTopologyBinding {
     amr::BlockHandle handle{};
     StorageGeneration storage{};
     const boundary::BoundaryPlan* physical_boundary = nullptr;
+    // Presence is distinct from an explicitly prepared open-face view.
+    std::optional<boundary::HydroBoundaryView> hydro_boundary{};
 };
 
 class BackendTopologyStoreTransaction {

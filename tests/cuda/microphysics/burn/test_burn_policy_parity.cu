@@ -161,9 +161,10 @@ void require_close(double actual, double expected, double relative,
 using BurnMainlineReference::make_config;
 using BurnMainlineReference::make_state;
 
-template<class Net, template<class, class, class> class Solver>
+template<class Net, template<class, class, class> class Solver,
+         int MatrixExtent = BurnLimits::MAX_ODE_NEQ>
 __global__ void policy_kernel(arch::cuda::BurnPolicyCell* result,
-                              arch::cuda::BurnOdeMatrixWorkspace* workspace,
+                              arch::cuda::BurnOdeMatrixWorkspaceFor<MatrixExtent>* workspace,
                               HelmEosView eos, BurnConfigView config)
 {
     if (threadIdx.x == 0 && blockIdx.x == 0)
@@ -734,6 +735,102 @@ void check_workspace_contract()
         throw std::runtime_error("burn ODE workspace preflight contract drifted");
 }
 
+// Prepared Aprox19 X/T inputs, in canonical species order plus temperature.
+// These two real near-equilibrium states exposed log cancellation and capped
+// Newton-direction roundoff. The hex words freeze INPUTS, not expected solver
+// output; independent Saha-reference accuracy remains in network_nse_device.
+// A tiny accepted energy needs the original 5e-9 source parity, even when
+// bulk energy and composition already satisfy their ordinary NSE budgets.
+void check_near_equilibrium_sources(const HelmEos& eos, HelmEosView device_eos,
+                                    cudaStream_t stream)
+{
+    struct Input {
+        const char* label;
+        double rho, interval;
+        std::array<double, NetAprox19::ODE_NEQ> state;
+    };
+    const Input inputs[]{
+        {"logarithmic cancellation", 0x1.49be0dcd93147p+25, 0x1.cd2b297d889bcp-55, {
+            0x0p+0, 0x1.920f8e1316815p-29, 0x1.554331c7e826cp-2, 0x1.1fd490bb5c131p-16,
+            0x1.2dde623299fa5p-29, 0x1.21d87337e474ap-15, 0x1.9eb3d111095b3p-21, 0x1.d3399a1d18f0bp-15,
+            0x1.958ef2ded9524p-7, 0x1.7b989124c049dp-7, 0x1.8b01e71375aedp-8, 0x1.9613944edb9ep-8,
+            0x1.a9f50dd38b137p-13, 0x1.50c0f32cf6113p-11, 0x1.96c00cb8ac7bbp-9, 0x1.2d33f1fad9d94p-1,
+            0x1.0b796cbc7df2cp-6, 0x1.89317befe79a6p-15, 0x1.65bfc972efb3p-6, 0x1.837e6ed332cd1p+32
+        }},
+        {"capped chemical-potential step", 0x1.49be0986629fap+25, 0x1.598c0bae480e1p-56, {
+            0x0p+0, 0x1.920f7d175afbcp-29, 0x1.55432bf7efd72p-2, 0x1.1fd485b8a002fp-16,
+            0x1.2dde4f89c2177p-29, 0x1.21d86a6df7ee7p-15, 0x1.9eb3c27a28836p-21, 0x1.d33992ac18da6p-15,
+            0x1.958ef5a631529p-7, 0x1.7b9896543c5cap-7, 0x1.8b01ee861bf86p-8, 0x1.96139eed16f8p-8,
+            0x1.a9f517c6d205ap-13, 0x1.50c0fea8ae9b5p-11, 0x1.96c01f7d33854p-9, 0x1.2d33f3f9bf02fp-1,
+            0x1.0b797c6088229p-6, 0x1.8931604811b05p-15, 0x1.65bfcbc29d2c5p-6, 0x1.837e6e3db78f1p+32
+        }}
+    };
+    BurnConfig controls = make_config();
+    controls.use_burn = true;
+    controls.nuclearTempMin = 1.0e9;
+    controls.nuclearDensMin = 1.0e-10;
+    controls.smallt = 1.0e5;
+    controls.smallx = 1.0e-20;
+    controls.enucDtFactor = 0.05;
+    controls.use_nse = true;
+    controls.nseTempThreshold = 4.5e9;
+    controls.nseDensThreshold = 1.0e6;
+    controls.odeconfig.rtol = 1.0e-4;
+    controls.odeconfig.atol = 1.0e-8;
+    controls.odeconfig.max_newton_iter = 50;
+    controls.odeconfig.max_substeps = 10000;
+    controls.odeconfig.dt_safe_factor = 0.9;
+    controls.odeconfig.dt_fac_max = 2.0;
+    controls.odeconfig.dt_fac_min = 0.1;
+    controls.odeconfig.initial_dt_frac = 1.0;
+    const auto config = make_burn_config_view(controls);
+    using Workspace = arch::cuda::BurnOdeMatrixWorkspaceFor<NetAprox19::ODE_NEQ>;
+    arch::cuda::BurnPolicyCell* device = nullptr;
+    Workspace* device_workspace = nullptr;
+    cuda_check(cudaMalloc(&device, sizeof(*device)), "allocate near-NSE result");
+    cuda_check(cudaMalloc(&device_workspace, sizeof(*device_workspace)),
+               "allocate near-NSE compact workspace");
+    for (const auto& input : inputs) {
+        arch::cuda::BurnPolicyCell initial{};
+        initial.fluid.rho = input.rho;
+        initial.burn_dt = input.interval;
+        std::copy(input.state.begin(), input.state.end(), initial.state);
+        auto host = initial;
+        Workspace host_workspace{};
+        arch::cuda::execute_ode_policy<NetAprox19, Solver_BD>(
+            host, host_workspace, eos.get_view(), config);
+        cuda_check(cudaMemcpyAsync(device, &initial, sizeof(initial),
+                                   cudaMemcpyHostToDevice, stream), "upload near-NSE input");
+        policy_kernel<NetAprox19, Solver_BD, NetAprox19::ODE_NEQ><<<1, 1, 0, stream>>>(
+            device, device_workspace, device_eos, config);
+        cuda_check(cudaGetLastError(), "launch near-NSE policy");
+        arch::cuda::BurnPolicyCell result{};
+        cuda_check(cudaMemcpyAsync(&result, device, sizeof(result),
+                                   cudaMemcpyDeviceToHost, stream), "read near-NSE output");
+        cuda_check(cudaStreamSynchronize(stream), "complete near-NSE policy");
+        for (const auto* value : {&host, &result}) {
+            if (value->ode.status != BurnOdeStatus::NseSuccess
+                || value->ode.nse_attempts != 1 || value->ode.nse_failures != 0
+                || value->ode.attempted_substeps != 0
+                || !std::isfinite(value->ode.energy_change)
+                || !(value->ode.energy_change > 0.0))
+                throw std::runtime_error(std::string(input.label) + " lost accepted NSE identity");
+        }
+        // Both intervals are exactly the same positive value. Comparing the
+        // integral therefore enforces the original ENUC rate budget without
+        // subtracting two EOS energies or introducing a small-source cutoff.
+        constexpr double source_rtol = 5.0e-9, source_atol = 5.0e-12;
+        if (std::abs(result.ode.energy_change - host.ode.energy_change)
+            > source_atol + source_rtol * std::abs(host.ode.energy_change))
+            throw std::runtime_error(std::string(input.label) + " violates original small-source parity");
+        for (int i = 0; i < NetAprox19::ODE_NEQ; ++i)
+            require_close(result.state[i], host.state[i], 2.0e-12,
+                          std::string(input.label) + ".NSE.state." + std::to_string(i));
+    }
+    cuda_check(cudaFree(device_workspace), "free near-NSE workspace");
+    cuda_check(cudaFree(device), "free near-NSE result");
+}
+
 template<class Net, template<class, class, class> class Solver>
 void run_route(const RouteAuthority& authority, int variant,
                cudaStream_t stream)
@@ -749,6 +846,10 @@ void run_route(const RouteAuthority& authority, int variant,
     // do not repeat its expensive first-order accuracy integration per GPU route.
     arch::cuda::HelmEosDeviceOwner owner(eos, stream);
     check_route<Net, Solver>(authority, variant, eos, owner.view(), stream);
+    if constexpr (std::is_same_v<Net, NetAprox19>) {
+        if (std::string(authority.name) == "aprox19.bd")
+            check_near_equilibrium_sources(eos, owner.view(), stream);
+    }
     std::cout << authority.name << " passed\n";
 }
 

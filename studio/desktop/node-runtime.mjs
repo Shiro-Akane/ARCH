@@ -1,3 +1,9 @@
+/**
+ * Select a supported Linux Node runtime for the Host process.
+ * An explicit runtime is validated and must fail visibly when invalid. Otherwise
+ * the packaged runtime and declared local candidates are inspected in order;
+ * this selection does not install packages or change the scientific environment.
+ */
 import path from 'node:path';
 
 export async function selectLinuxNode({explicit, bundled, searchPath = '', home, probe}) {

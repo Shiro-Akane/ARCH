@@ -1,3 +1,8 @@
+/**
+ * Check that the AMR overlay and sampled initial fields belong to one request scope.
+ * A mesh from another model, configuration or compiled build must not be overlaid
+ * merely because its coordinates happen to fit the current view.
+ */
 import type {WorkflowResult} from '../host/workflowContracts.ts';
 import type {RealPreviewResult} from '../host/previewContracts.ts';
 import {record} from '../host/previewValidation.ts';

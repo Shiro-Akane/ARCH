@@ -1,3 +1,9 @@
+/**
+ * Execute one fixed read-only Plotfile query in the isolated reader process.
+ * The parent owns path scope, cancellation and resource limits. Copy the typed
+ * request, invoke the shared reader, serialize one bounded result and exit;
+ * no arbitrary module, command or scientific Core request is accepted.
+ */
 import {stringifyPlotfile} from './plotfileJson.ts';
 import {copyPointRequest} from '../src/host/plotfilePoint.ts';
 /** Fixed Host-owned reader worker. No scientific Core execution. */

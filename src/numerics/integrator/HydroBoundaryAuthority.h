@@ -153,25 +153,7 @@ private:
      */
     static HydroBoundaryView physical_faces(const BCHandler& boundary,
         const amr::AmrTree& tree,const amr::Block& block) {
-        const auto& root=tree.GetRootGrid();
-        block.RequireLogicalGeometryIdentity(root);
-        if(tree.FindBlock(block.level,block.logical_x1,block.logical_x2,block.logical_x3)!=block.id)
-            throw std::logic_error("Hydro boundary logical block is not its actual Tree member");
-        const auto& plan=boundary.logical_plan(block.grid).input();
-        const int roots[3]{root.nblockx1,root.nblockx2,root.nblockx3};
-        const std::uint32_t logical[3]{block.logical_x1,block.logical_x2,block.logical_x3};
-        const double lower[3]{root.x1_min,root.x2_min,root.x3_min};
-        const double upper[3]{root.x1_max,root.x2_max,root.x3_max};
-        const auto chart=GridMetrics::geometry_from_name(root.geometry);
-        HydroBoundaryView result;
-        for(int axis=0;axis<root.dim;++axis)for(int side=0;side<2;++side) {
-            const bool root_face=side?std::uint64_t(logical[axis])+1
-                ==(std::uint64_t(roots[axis])<<block.level):logical[axis]==0;
-            result.reflecting[2*axis+side]=root_face
-                &&plan.faces[2*axis+side]==BoundaryType::Reflecting
-                &&!GridMetrics::IsCoordinateJoin(chart,root.dim,axis,side?upper[axis]:lower[axis]);
-        }
-        return result;
+        return boundary.hydro_physical_faces(tree,block);
     }
     /** Stable exact three-axis root values; no uninitialized root metric fields. */
     static std::array<std::uint64_t,11> root_words(const amr::AmrTree& tree) {

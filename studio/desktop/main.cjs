@@ -1,3 +1,10 @@
+/**
+ * Own the Electron window, launch selection and managed loopback Host.
+ * Resolve the Linux project/runtime, authenticate the preload/Host bootstrap and
+ * serve built renderer assets. Closing the window cancels owned Preview/Configure
+ * and closes Host; Build drains and confirmed terminal runs retain their separate
+ * supervisor. Renderer code receives bounded capabilities through preload.
+ */
 const {app,BrowserWindow,ipcMain,dialog}=require('electron');
 const {spawn,execFile}=require('node:child_process');
 const {createServer,request:httpRequest}=require('node:http');

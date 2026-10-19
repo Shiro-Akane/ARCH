@@ -35,6 +35,7 @@ io::CheckpointData checkpoint(const GridConfig& config,
     io::CheckpointData result;
     result.dim = config.dim;
     result.geometry = config.geometry;
+    result.geometry_identity=io::checkpoint_geometry_identity(config.dim,config.geometry);
     result.num_species = 2;
     result.cells_per_block = amr::BLOCK_NX
         * (config.dim >= 2 ? amr::BLOCK_NY : 1)
@@ -123,7 +124,6 @@ void check_retained_geometries_and_cell_order()
 {
     for (const std::string name : {"cartesian", "cylindrical", "spherical"}) {
         for (int dim = 1; dim <= 3; ++dim) {
-            if(dim==2 && name=="cylindrical")continue;
             const auto parameters = config(dim, name);
             auto data = checkpoint(parameters);
             const Grid grid = checkpoint_metrics::checkpoint_root_grid(parameters);
@@ -178,8 +178,10 @@ void check_mixed_annulus_and_shell()
 
 void check_invalid_metadata()
 {
-    auto retired=config(2,"cylindrical");
-    rejected([&] {checkpoint_metrics::compute(checkpoint(retired),&retired);});
+    auto native=config(2,"cylindrical");
+    auto legacy=checkpoint(native);legacy.geometry_identity={2,"axisymmetric-rz"};
+    rejected([&] {checkpoint_metrics::compute(legacy,&native);});
+    legacy.geometry_identity={};rejected([&] {checkpoint_metrics::compute(legacy,&native);});
     auto parameters = config(1, "cylindrical");
     auto data = checkpoint(parameters);
     auto invalid = parameters;

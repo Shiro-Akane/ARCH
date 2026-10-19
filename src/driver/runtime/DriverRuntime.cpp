@@ -377,7 +377,11 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
         backend_storage.push_back(storage);
         bindings.push_back({
             &amr_ctrl.pool->GetBlock(active[index]), stage_handles[index],
-            storage, &bc_handler.logical_plan(amr_ctrl.pool->GetBlock(active[index]).grid)});
+            storage, &bc_handler.logical_plan(amr_ctrl.pool->GetBlock(active[index]).grid),
+            // Physical wall ownership is common to every chart; BCHandler
+            // excludes coordinate joins before supplying the shared wall law.
+            bc_handler.hydro_physical_faces(
+                *amr_ctrl.tree, amr_ctrl.pool->GetBlock(active[index]))});
     }
     return bindings;
 }

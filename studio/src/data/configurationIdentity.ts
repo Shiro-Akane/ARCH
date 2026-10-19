@@ -1,3 +1,8 @@
+/**
+ * Resolve source-bound model selection and match Preview metadata to its build scope.
+ * Conflicts stay explicit instead of selecting a plausible model by filename.
+ * A matching identity is an association check, not a scientific qualification.
+ */
 import type {ConfigurationBuildScope,ConfigurationCase} from '../host/configurationContracts.ts';
 import {sameBuildScope} from '../host/configurationContracts.ts';
 import type {RealPreviewResult} from '../host/previewContracts.ts';

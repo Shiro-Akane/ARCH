@@ -1,3 +1,8 @@
+/**
+ * Recover the actual executable's link dependencies from recorded build evidence.
+ * Parse and fingerprint stable inputs, then compare snapshots for freshness.
+ * This is dependency provenance, not a second linker or an execution policy.
+ */
 import {constants} from 'node:fs';
 import {open,realpath} from 'node:fs/promises';
 import {createHash} from 'node:crypto';

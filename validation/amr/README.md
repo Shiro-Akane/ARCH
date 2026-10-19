@@ -20,6 +20,14 @@ continuations. The [burn](../burn/README.md) and [restart](../restart/README.md)
 guides define their gates and limits; these checks do not renew the historical
 CUDA or longer-trajectory qualifications below.
 
+The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+adds Store/exchange/regrid-transaction contracts, common physical-wall metadata
+from the actual proposed Tree, and four-module GPU fresh. The existing one-dimensional
+regrid-cycle case now also samples step 7: the original 1/5/10/20 snapshots missed
+an actual coarsening transition. Eight completed lanes were reused and only the
+missing CPU/GPU pair was added. Original field, conservation and explicit
+parent/children topology gates pass; this does not renew the entire historical matrix.
+
 Each detailed record identifies its tested source, executable and inputs.
 The [validation overview](../README.md) brings together the module results.
 
@@ -283,4 +291,4 @@ These data files support reproduction and independent review; they are not setup
 
 </details>
 
-Historical [RZ transfer](results/release-closure-20261009/native-device-migration-summary.json) and [reflector](results/release-closure-20261009/native-device-reflector-summary.json) records retain their original source and binary identities. Cylindrical 2D and its dedicated consumers are retired; current AMR verification follows the [release plan](../../ARCH_RELEASE_PLAN.md).
+Historical [RZ transfer](results/release-closure-20261009/native-device-migration-summary.json) and [reflector](results/release-closure-20261009/native-device-reflector-summary.json) records retain their original source and binary identities. Native cylindrical 2D now reuses the shared transfer, reflux and regrid owners; see [CPU conservation](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json) and [device migration/fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json). Old dedicated consumers remain retired. Current input/source applicability follows the [CPU closure](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json) and [release plan](../../ARCH_RELEASE_PLAN.md).

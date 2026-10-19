@@ -18,6 +18,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <span>
 #include <stdexcept>
@@ -145,39 +146,57 @@ inline std::array<std::int32_t, 3> face_cell_coordinates(
     throw std::invalid_argument("invalid AMR flux face");
 }
 
+struct CoarseFaceIndex {
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    bool high = false;
+};
+
+inline CoarseFaceIndex coarse_face_index(
+    const Block& coarse, int normal_direction, int coarse_face, int face_cell)
+{
+    const int ny = coarse.grid.dim >= 2 ? BLOCK_NY : 1;
+    CoarseFaceIndex index{coarse.grid.Is(), coarse.grid.Js(), coarse.grid.Ks(),
+                          coarse_face % 2 == 1};
+    if (normal_direction == 0) {
+        index.j += face_cell % ny;
+        index.k += face_cell / ny;
+        index.i += coarse_face % 2 == 0 ? 0 : BLOCK_NX - 1;
+    } else if (normal_direction == 1) {
+        index.i += face_cell % BLOCK_NX;
+        index.k += face_cell / BLOCK_NX;
+        index.j += coarse_face % 2 == 0 ? 0 : BLOCK_NY - 1;
+    } else {
+        index.i += face_cell % BLOCK_NX;
+        index.j += face_cell / BLOCK_NX;
+        index.k += coarse_face % 2 == 0 ? 0 : BLOCK_NZ - 1;
+    }
+    return index;
+}
+
 inline double coarse_face_area(const Block& coarse, int normal_direction,
                                int coarse_face, int face_cell)
 {
-    const int ny = coarse.grid.dim >= 2 ? BLOCK_NY : 1;
-    int i = coarse.grid.Is();
-    int j = coarse.grid.Js();
-    int k = coarse.grid.Ks();
-    if (normal_direction == 0) {
-        j += face_cell % ny;
-        k += face_cell / ny;
-        i += coarse_face % 2 == 0 ? 0 : BLOCK_NX - 1;
-    } else if (normal_direction == 1) {
-        i += face_cell % BLOCK_NX;
-        k += face_cell / BLOCK_NX;
-        j += coarse_face % 2 == 0 ? 0 : BLOCK_NY - 1;
-    } else {
-        i += face_cell % BLOCK_NX;
-        j += face_cell / BLOCK_NX;
-        k += coarse_face % 2 == 0 ? 0 : BLOCK_NZ - 1;
-    }
+    const auto index = coarse_face_index(
+        coarse, normal_direction, coarse_face, face_cell);
     return GridMetrics::FaceArea(
         GridMetrics::make_geometry_view(coarse.grid),
-        normal_direction, i, j, k, coarse_face % 2 == 1);
+        normal_direction, index.i, index.j, index.k, index.high);
 }
 
 inline void append_fields(FluxRegistrationPlan& plan,
                           const AmrTransferOperation& prototype,
-                          int species_count)
+                          int species_count,
+                          double moment_weight
+                              = std::numeric_limits<double>::quiet_NaN())
 {
     const auto append = [&](AmrField field, int component) {
         auto operation = prototype;
         operation.field = field;
         operation.component = component;
+        if (field == AmrField::MomW && std::isfinite(moment_weight))
+            operation.weight = moment_weight;
         plan.operations.push_back(std::move(operation));
     };
     append(AmrField::Rho, -1);
@@ -471,13 +490,50 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                                     coarse_cell = coarse_j * nx + coarse_i;
                                 const int coarse_face =
                                     2 * direction + (side == 0 ? 1 : 0);
-                                const double coarse_area = coarse_face_area(
+                                const auto coarse_location = coarse_face_index(
                                     coarse, direction, coarse_face, coarse_cell);
+                                const double coarse_area =
+                                    GridMetrics::FaceArea(
+                                        GridMetrics::make_geometry_view(
+                                            coarse.grid),
+                                        direction, coarse_location.i,
+                                        coarse_location.j,
+                                        coarse_location.k,
+                                        coarse_location.high);
                                 if (!amr_plan_detail::is_finite_binary64(
                                         coarse_area)
                                     || coarse_area <= 0.0)
                                     throw std::invalid_argument(
                                         "invalid coarse flux metric");
+                                double moment_weight =
+                                    std::numeric_limits<double>::quiet_NaN();
+                                if (dimension == 2
+                                    && block.grid.geometry == "cylindrical") {
+                                    const double fine_moment =
+                                        GridMetrics::AngularMomentumFaceMoment(
+                                            GridMetrics::make_geometry_view(
+                                                block.grid),
+                                            direction, block.grid.Is() + i,
+                                            block.grid.Js() + j,
+                                            block.grid.Ks() + k, side == 1);
+                                    const double coarse_moment =
+                                        GridMetrics::AngularMomentumFaceMoment(
+                                            GridMetrics::make_geometry_view(
+                                                coarse.grid),
+                                            direction, coarse_location.i,
+                                            coarse_location.j,
+                                            coarse_location.k,
+                                            coarse_location.high);
+                                    if (!amr_plan_detail::is_finite_binary64(
+                                            fine_moment)
+                                        || !amr_plan_detail::is_finite_binary64(
+                                            coarse_moment)
+                                        || fine_moment <= 0.0
+                                        || coarse_moment <= 0.0)
+                                        throw std::invalid_argument(
+                                            "invalid azimuthal face moment");
+                                    moment_weight = fine_moment / coarse_moment;
+                                }
                                 if (direction == 0)
                                     coarse_i = coarse_face % 2 == 0
                                         ? 0 : nx - 1;
@@ -500,7 +556,8 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                                     RefinementRule::FineFluxContribution,
                                     fine_area / coarse_area, 1.0};
                                 append_fields(
-                                    route.plan, prototype, species_count);
+                                    route.plan, prototype, species_count,
+                                    moment_weight);
                             } else {
                                 const AmrTransferOperation prototype{
                                     0, source_endpoint, source_endpoint,
@@ -590,22 +647,42 @@ inline RefluxPlan build_amr_reflux_topology_plan(
                     || area <= 0.0 || volume <= 0.0)
                     throw std::invalid_argument(
                         "AMR reflux metric is nonpositive or nonfinite");
+                double moment_weight = area / volume;
+                if (topology.dimension == 2
+                    && block.grid.geometry == "cylindrical") {
+                    const double moment = GridMetrics::AngularMomentumFaceMoment(
+                        GridMetrics::make_geometry_view(block.grid),
+                        axis_value(axis), i, j, k,
+                        side == AmrSide::Upper);
+                    const double volume_moment =
+                        GridMetrics::AngularMomentumVolumeMoment(
+                            GridMetrics::make_geometry_view(block.grid),
+                            i, j, k);
+                    if (!amr_plan_detail::is_finite_binary64(moment)
+                        || !amr_plan_detail::is_finite_binary64(volume_moment)
+                        || moment <= 0.0 || volume_moment <= 0.0)
+                        throw std::invalid_argument(
+                            "AMR reflux azimuthal moment is nonpositive or nonfinite");
+                    moment_weight = moment / volume_moment;
+                }
                 const LogicalAmrBox box{logical, {1, 1, 1}};
-                const auto append = [&](AmrField field, int component) {
+                const auto append = [&](AmrField field, int component,
+                                        double weight) {
                     result.operations.push_back({
                         0, endpoint, endpoint, box, box, axis, side,
                         field, component, RefinementRule::RefluxCorrection,
-                        area / volume,
+                        weight,
                         side == AmrSide::Lower ? 1.0 : -1.0});
                 };
-                append(AmrField::Rho, -1);
-                append(AmrField::MomU, -1);
-                append(AmrField::MomV, -1);
-                append(AmrField::MomW, -1);
-                append(AmrField::Energy, -1);
+                const double weight = area / volume;
+                append(AmrField::Rho, -1, weight);
+                append(AmrField::MomU, -1, weight);
+                append(AmrField::MomV, -1, weight);
+                append(AmrField::MomW, -1, moment_weight);
+                append(AmrField::Energy, -1, weight);
                 for (int species = 0;
                      species < topology.species_count; ++species)
-                    append(AmrField::Species, species);
+                    append(AmrField::Species, species, weight);
             }
         }
     }

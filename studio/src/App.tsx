@@ -1,3 +1,8 @@
+/**
+ * Compose the selected workspaces, project providers and top-level status UI.
+ * Keep demo/sample, real initial fields and read-only Plotfile workflows distinct.
+ * Scientific execution is delegated through the typed Host actions, never React.
+ */
 import {BuildProvider} from './host/BuildProvider';
 import {WorkflowProvider} from './state/workflowContext';
 import {WorkflowBar} from './components/WorkflowBar';

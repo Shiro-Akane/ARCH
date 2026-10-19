@@ -4,7 +4,7 @@ This suite tests finite, positive-density IdealGas states. Its scientific
 scope excludes exact vacuum, cancellation-dominated thermal energy and
 extrapolation beyond a table EOS domain. The current state and repair contract
 is in the [reference](../../docs/Reference.md#low-density-states-and-repair-accounting);
-the [migration record](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)
+the [migration record](../../docs/histroy/low-density/ImplementationReport.zh-CN.md)
 preserves implementation history.
 
 `manifest.json` fixes density scales and scientific budgets. `run.py` executes

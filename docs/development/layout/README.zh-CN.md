@@ -79,5 +79,5 @@ CaseUnitEvidence 摘要；[对应记录](evidence/case-evidence-path-refresh.jso
   按用户最新要求，目录和 include 整理以 CPU 编译验收；P1 GPU 运行证据仍绑定整理前提交。
 - 未重跑 GUI 既有专项测试和 CPU/GPU 数值对照。远端自动 CI 仍按原规则执行完整工具和 CPU 清单。
 
-[主实施计划](../SelfGravityImplementationPlan.zh-CN.md)与 [P1 交接](../SelfGravityP1Handoff.zh-CN.md)
+[主实施计划](../../histroy/science/SelfGravityImplementationPlan.zh-CN.md)与 [P1 交接](../../histroy/science/SelfGravityP1Handoff.zh-CN.md)
 共同约束后续阶段，当前没有进入 P2 的授权。

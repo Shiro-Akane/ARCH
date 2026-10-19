@@ -1463,6 +1463,82 @@ void test_coordinate_seam_case(int dimension, bool spherical, bool mixed)
 
 
 
+/** Exercise the ordinary donor plan on axisymmetric native block geometry.
+ * The same package also initializes the ordinary AMR root natively; this
+ * donor check independently prescribes the odd radial/azimuthal and even
+ * axial continuation on both geometry levels.
+ */
+void test_axisymmetric_coordinate_seam(bool mixed)
+{
+    Grid root(amr::MAX_NG,0.,1.,-4.,6.,0.,0.,1,2,0);
+    root.dim=2;root.geometry="cylindrical";root.InitializeTopology();
+    auto pool=std::make_shared<amr::MemoryPool>(8,2);
+    std::vector<int> active;
+    const auto append=[&](int level,int radial,int axial) {
+        const int id=pool->AllocateBlock();active.push_back(id);
+        auto& block=pool->GetBlock(id);
+        block.level=level;block.logical_x1=radial;block.logical_x2=axial;
+        block.logical_x3=0;
+        block.morton_code=amr::encodeMorton(level,radial,axial,0);
+        block.InitGeometry(root,1./amr::BLOCK_NX,10./(2*amr::BLOCK_NY),0.);
+        block.RequireLogicalGeometryIdentity(root);
+        block.fluid_state.InitSpecies(2);
+        const Grid& grid=block.grid;
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const int cell=grid.GetIndex(i,j,0);
+            block.fluid_state.rho[cell]=2.;
+            block.fluid_state.mom_u[cell]=.1*grid.GetCellCenterX(i);
+            block.fluid_state.mom_v[cell]=.3+.01*grid.GetCellCenterY(j);
+            block.fluid_state.mom_w[cell]=.2*grid.GetCellCenterX(i);
+            block.fluid_state.eng[cell]=10.;
+            block.fluid_state.enuc_rate[cell]=.125;
+            block.fluid_state.X(0,cell)=.6;block.fluid_state.X(1,cell)=.4;
+        }
+    };
+    if(mixed)for(int j=0;j<2;++j)for(int i=0;i<2;++i)append(1,i,j);
+    else append(0,0,0);
+    append(0,0,1);
+    const auto plan=amr::make_coordinate_seam_plan(pool,active,2);
+    expect(!plan.transfers.empty(),"axisymmetric radial seam missing on non-angular z domain");
+    amr::execute_coordinate_seam_plan(plan,pool,&amr::Block::fluid_state);
+    std::set<int> levels;
+    for(const auto& transfer:plan.transfers) {
+        const auto& block=pool->GetBlock(transfer.destination_id);
+        const auto& donor=pool->GetBlock(transfer.source_id);
+        const auto& grid=block.grid;
+        const int j=transfer.destination_cell/grid.stride_y;
+        const int i=transfer.destination_cell-j*grid.stride_y;
+        const int source_j=transfer.source_center/donor.grid.stride_y;
+        const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+        expect(r<0. && transfer.source_id==transfer.destination_id &&
+            donor.grid.GetCellCenterY(source_j)==z &&
+            transfer.momentum_sign==std::array<std::int8_t,3>{-1,1,-1},
+            "axisymmetric donor must mirror r without moving/wrapping z");
+        const int cell=transfer.destination_cell;
+        expect(std::abs(block.fluid_state.mom_u[cell]-.1*r)<2e-12 &&
+            std::abs(block.fluid_state.mom_v[cell]-(.3+.01*z))<2e-12 &&
+            std::abs(block.fluid_state.mom_w[cell]-.2*r)<2e-12,
+            "axisymmetric three-component parity");
+        expect(block.fluid_state.rho[cell]==2. && block.fluid_state.eng[cell]==10. &&
+            block.fluid_state.enuc_rate[cell]==.125 && block.fluid_state.X(0,cell)==.6 &&
+            block.fluid_state.X(1,cell)==.4,"axisymmetric even scalar/composition continuation");
+        levels.insert(block.level);
+    }
+    expect(levels.size()==(mixed?2:1),"axisymmetric fixture lost a native geometry level");
+    SimConfig config{};
+    config.grid.geometry="cylindrical";config.grid.dim=2;
+    config.grid.nblockx1=1;config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=1.;
+    config.grid.x2_min=-4.;config.grid.x2_max=6.;
+    config.grid.amr_max_blocks=8;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=0;
+    amr::AMRControl qualified(8,2);
+    qualified.tree->InitRootGrid(config,2);
+    expect(!qualified.tree->GetActiveBlocks().empty(),
+        "native axisymmetric InitRootGrid did not publish the root block");
+    std::cout<<"AXISYMMETRIC_SEAM mixed="<<mixed<<" transfers="<<plan.transfers.size()<<" PASS\n";
+}
+
 void test_coordinate_seam_mapping()
 {
     // Spherical 2D polar Hydro may use a partial wedge with physical side
@@ -1493,6 +1569,8 @@ void test_coordinate_seam_mapping()
     test_coordinate_seam_case(3, false, true);
     test_coordinate_seam_case(3, true, false);
     test_coordinate_seam_case(3, true, true);
+    test_axisymmetric_coordinate_seam(false);
+    test_axisymmetric_coordinate_seam(true);
 }
 
 
@@ -1502,8 +1580,7 @@ void test_coordinate_seam_mapping()
  */
 void test_ordinary_logical_geometry_identity() {
     for(int dim=1;dim<=3;++dim)for(const char* chart:{"cartesian","cylindrical","spherical"}) {
-        // Cylindrical two-dimensional geometry is retired.
-        if(dim==2 && std::string(chart)=="cylindrical")continue;
+        // Native block identity does not grant Tree/transfer qualification.
         Grid root(amr::MAX_NG,1.,4.,.2,1.2,.1,1.1,3,dim>=2?2:0,dim==3?2:0);
         root.dim=dim;root.geometry=chart;
         amr::Block block;block.Reset();block.level=2;
@@ -1536,6 +1613,539 @@ void test_ordinary_logical_geometry_identity() {
     }
 }
 
+Grid make_cyl2_root(const char* geometry)
+{
+    Grid root(amr::MAX_NG,0.,2.,0.,1.,0.,0.,1,1,0);
+    root.dim=2;root.geometry=geometry;root.InitializeTopology();
+    return root;
+}
+
+void init_logical_block(amr::Block& block, const Grid& root, int level,
+                        int logical_x1, int logical_x2, int species)
+{
+    block.Reset();
+    block.level=level;
+    block.logical_x1=logical_x1;
+    block.logical_x2=logical_x2;
+    block.logical_x3=0;
+    block.morton_code=amr::encodeMorton(level,logical_x1,logical_x2,0);
+    const double root_dx1=(root.x1_max-root.x1_min)
+        /(root.nblockx1*amr::BLOCK_NX);
+    const double root_dx2=(root.x2_max-root.x2_min)
+        /(root.nblockx2*amr::BLOCK_NY);
+    block.InitGeometry(root,root_dx1,root_dx2,0.);
+    block.fluid_state.Preallocate(block.grid.GetTotalSize());
+    block.fluid_state.InitSpecies(species);
+}
+
+void fill_axisymmetric_state(amr::Block& block)
+{
+    const auto view=GridMetrics::make_geometry_view(block.grid);
+    for(int j=block.grid.Js();j<block.grid.Je();++j)
+        for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+            const int cell=block.grid.GetIndex(i,j,0);
+            const double r=view.GetCellCenterX(i);
+            const double z=view.GetCellCenterY(j);
+            const double rho=1.+0.2*r+0.3*z;
+            block.fluid_state.rho[cell]=rho;
+            block.fluid_state.mom_u[cell]=0.1*rho*r;
+            block.fluid_state.mom_v[cell]=-0.05*rho*z;
+            block.fluid_state.mom_w[cell]=rho*(2.+0.5*r);
+            block.fluid_state.eng[cell]=rho*10.;
+            block.fluid_state.enuc_rate[cell]=0.25+0.05*r;
+            const double x0=0.7+0.05*r;
+            block.fluid_state.X(0,cell)=x0;
+            block.fluid_state.X(1,cell)=1.-x0;
+        }
+}
+
+double block_rotation_integral(const amr::Block& block)
+{
+    const auto view=GridMetrics::make_geometry_view(block.grid);
+    double total=0.;
+    for(int j=block.grid.Js();j<block.grid.Je();++j)
+        for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+            const int cell=block.grid.GetIndex(i,j,0);
+            total+=block.fluid_state.mom_w[cell]
+                *GridMetrics::AngularMomentumVolumeMoment(view,i,j,0);
+        }
+    return total;
+}
+
+struct FineCellAverages {
+    double moment=0.;
+    double volume=0.;
+};
+
+FineCellAverages fine_cell_averages(
+    const std::array<amr::Block,4>& children,int i,int j)
+{
+    FineCellAverages result{};
+    const int nx=amr::BLOCK_NX,ny=amr::BLOCK_NY;
+    for(int cell=0;cell<4;++cell) {
+        const int child_index=(i>=nx/2?1:0)|((j>=ny/2?1:0)<<1);
+        const amr::Block& child=children[child_index];
+        const auto view=GridMetrics::make_geometry_view(child.grid);
+        const int fi=child.grid.Is()+2*(i%(nx/2))+(cell&1);
+        const int fj=child.grid.Js()+2*(j%(ny/2))+((cell>>1)&1);
+        const int index=child.grid.GetIndex(fi,fj,0);
+        const double volume=GridMetrics::CellVolume(view,fi,fj,0);
+        const double moment=GridMetrics::AngularMomentumVolumeMoment(
+            view,fi,fj,0);
+        result.moment+=child.fluid_state.mom_w[index]*moment;
+        result.volume+=child.fluid_state.mom_w[index]*volume;
+    }
+    return result;
+}
+
+/** Existing eight retained charts keep volume-weighted Mphi transfer; only
+ * native axisymmetric (r,z) enables the W measure. */
+void test_axisymmetric_regrid_moments()
+{
+    constexpr double floor=1.e-12;
+    const Grid root=make_cyl2_root("cylindrical");
+    amr::Block coarse;
+    init_logical_block(coarse,root,0,0,0,2);
+    fill_axisymmetric_state(coarse);
+
+    std::array<amr::Block,4> children;
+    for(int child=0;child<4;++child) {
+        init_logical_block(children[child],root,1,child&1,(child>>1)&1,2);
+        children[child].InterpolateFromCoarse(coarse,child,2,floor,floor);
+    }
+
+    double coarse_rotation=block_rotation_integral(coarse);
+    double fine_rotation=0.;
+    for(const auto& child:children) fine_rotation+=block_rotation_integral(child);
+    expect(std::abs(fine_rotation-coarse_rotation)
+            <=1.e-12*std::max(1.,std::abs(coarse_rotation)),
+        "axisymmetric prolongation did not conserve total W-weighted Mphi");
+
+    const std::array<std::pair<int,int>,4> samples{
+        {{0,0},{4,0},{0,amr::BLOCK_NY/2},{4,amr::BLOCK_NY/2}}};
+    for(const auto& sample:samples) {
+        const int i=sample.first,j=sample.second;
+        const auto averages=fine_cell_averages(children,i,j);
+        const int nx=amr::BLOCK_NX,ny=amr::BLOCK_NY;
+        int cells=0;
+        double moment_sum=0.,volume_sum=0.;
+        for(int cell=0;cell<4;++cell) {
+            const int child_index=(i>=nx/2?1:0)|((j>=ny/2?1:0)<<1);
+            const amr::Block& child=children[child_index];
+            const auto view=GridMetrics::make_geometry_view(child.grid);
+            const int fi=child.grid.Is()+2*(i%(nx/2))+(cell&1);
+            const int fj=child.grid.Js()+2*(j%(ny/2))+((cell>>1)&1);
+            moment_sum+=GridMetrics::AngularMomentumVolumeMoment(view,fi,fj,0);
+            volume_sum+=GridMetrics::CellVolume(view,fi,fj,0);
+            ++cells;
+        }
+        const double moment_average=averages.moment/moment_sum;
+        const double volume_average=averages.volume/volume_sum;
+        const int coarse_cell=coarse.grid.GetIndex(
+            coarse.grid.Is()+i,coarse.grid.Js()+j,0);
+        expect(std::abs(moment_average-coarse.fluid_state.mom_w[coarse_cell])
+                <=2.e-12*std::max(1.,std::abs(moment_average)),
+            "prolongated Mphi W-mean did not match the coarse coefficient");
+        expect(std::abs(moment_average-volume_average)
+                >1.e-12*std::max(1.,std::abs(moment_average)),
+            "axisymmetric moment test could not distinguish W from V weighting");
+        expect(cells==4,"axisymmetric cell family lost a fine cell");
+    }
+
+    amr::Block recovered;
+    init_logical_block(recovered,root,0,0,0,2);
+    const amr::Block* child_ptrs[4]{
+        &children[0],&children[1],&children[2],&children[3]};
+    expect(recovered.TryAverageToCoarse(child_ptrs,2,floor,floor)
+            ==amr::regrid_math::Status::Ok,
+        "axisymmetric restriction rejected an admissible family");
+    for(int j=recovered.grid.Js();j<recovered.grid.Je();++j)
+        for(int i=recovered.grid.Is();i<recovered.grid.Ie();++i) {
+            const int cell=recovered.grid.GetIndex(i,j,0);
+            expect(std::abs(recovered.fluid_state.mom_w[cell]
+                        -coarse.fluid_state.mom_w[cell])
+                    <=2.e-12*std::max(1.,std::abs(coarse.fluid_state.mom_w[cell])),
+                "axisymmetric refine-only coarsen changed the W-weighted Mphi");
+            expect(std::abs(recovered.fluid_state.rho[cell]
+                        -coarse.fluid_state.rho[cell])
+                    <=2.e-12*std::max(1.,std::abs(coarse.fluid_state.rho[cell])),
+                "axisymmetric refine-only coarsen changed density");
+            expect(std::abs(recovered.fluid_state.X(0,cell)
+                        -coarse.fluid_state.X(0,cell))
+                    <=2.e-12,"axisymmetric composition restriction drifted");
+        }
+
+    std::array<amr::Block,4> inadmissible;
+    for(auto& child:inadmissible) {
+        init_logical_block(child,root,1,0,0,2);
+        for(std::size_t cell=0;cell<child.fluid_state.rho.size();++cell) {
+            child.fluid_state.rho[cell]=1.;
+            child.fluid_state.mom_u[cell]=0.;
+            child.fluid_state.mom_v[cell]=0.;
+            child.fluid_state.mom_w[cell]=0.;
+            child.fluid_state.eng[cell]=-1.;
+            child.fluid_state.X(0,cell)=1.;
+            child.fluid_state.X(1,cell)=0.;
+        }
+    }
+    const amr::Block* inadmissible_ptrs[4]{
+        &inadmissible[0],&inadmissible[1],&inadmissible[2],&inadmissible[3]};
+    amr::Block veto;
+    init_logical_block(veto,root,0,0,0,2);
+    expect(veto.TryAverageToCoarse(inadmissible_ptrs,2,floor,floor)
+            ==amr::regrid_math::Status::CoarseFluid,
+        "inadmissible axisymmetric coarsen was not vetoed");
+}
+
+/** Actual coarse/fine ghost executor on native CYL-2 leaf blocks. The fine
+ * sources are deliberately nonconstant and span the axis and an annulus, so
+ * W-weighted Mphi cannot be mistaken for the ordinary V average. */
+void test_axisymmetric_host_ghost_moments()
+{
+    SimConfig config{};
+    config.grid.dim=2;
+    config.grid.geometry="cylindrical";
+    config.grid.nblockx1=1;
+    config.grid.nblockx2=2;
+    config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=2.;
+    config.grid.x2_min=0.;config.grid.x2_max=2.;
+    config.grid.amr_max_blocks=16;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+
+    amr::AMRControl control(16,2);
+    auto pool=control.pool;
+    auto tree=control.tree;
+    tree->LoadLeafGrid(config,2,
+        std::vector<int>{1,1,1,1,0},
+        std::vector<std::uint32_t>{0,1,0,1,0},
+        std::vector<std::uint32_t>{0,0,1,1,1},
+        std::vector<std::uint32_t>{0,0,0,0,0});
+    const auto& active=tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    handles.reserve(active.size());
+    for(std::size_t index=0;index<active.size();++index) {
+        handles.push_back({{6000+index},{81}});
+        amr::Block& block=pool->GetBlock(active[index]);
+        const auto view=GridMetrics::make_geometry_view(block.grid);
+        for(int j=block.grid.Js();j<block.grid.Je();++j)
+            for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+                const int cell=block.grid.GetIndex(i,j,0);
+                const double r=view.GetCellCenterX(i);
+                block.fluid_state.rho[cell]=1.+0.5*r;
+                block.fluid_state.mom_u[cell]=0.2*r;
+                block.fluid_state.mom_v[cell]=-0.1;
+                block.fluid_state.mom_w[cell]=1.+3.*r;
+                block.fluid_state.eng[cell]=5.;
+                block.fluid_state.enuc_rate[cell]=-0.25;
+                block.fluid_state.X(0,cell)=0.4;
+                block.fluid_state.X(1,cell)=0.6;
+            }
+    }
+    control.BindActiveHandles(handles);
+
+    const auto plan=control.ghost_exchange.BuildCoarseFinePlan(
+        pool,tree,2,handles);
+    const auto cell_plan=amr::compile_coarse_fine_cell_plan(plan,2);
+    const amr::CoarseFineCellTransfer* axis=nullptr;
+    const amr::CoarseFineCellTransfer* annulus=nullptr;
+    for(const auto& transfer:cell_plan.transfers) {
+        if(transfer.rule!=amr::RefinementRule::FineGhostAverage) continue;
+        if(transfer.destination_cell[0]==0) axis=&transfer;
+        if(transfer.destination_cell[0]==amr::BLOCK_NX/2) annulus=&transfer;
+    }
+    expect(axis!=nullptr&&annulus!=nullptr,
+        "axisymmetric ghost fixture lacks axis/annulus average transfers");
+
+    const auto block_for=[&](const amr::BlockHandle handle) -> const amr::Block& {
+        for(std::size_t index=0;index<handles.size();++index)
+            if(handles[index]==handle) return pool->GetBlock(active[index]);
+        throw std::runtime_error("axisymmetric ghost handle is missing");
+    };
+    const auto expected_average=[&](const amr::CoarseFineCellTransfer& transfer,
+                                    bool moment,bool density) {
+        const amr::Block& source=block_for(transfer.source.handle);
+        const auto view=GridMetrics::make_geometry_view(source.grid);
+        double integral=0.,measure_sum=0.;
+        for(std::size_t cell=0;cell<transfer.source_count;++cell) {
+            const auto& logical=transfer.source_cells[cell];
+            const int i=source.grid.Is()+logical[0];
+            const int j=source.grid.Js()+logical[1];
+            const int index=source.grid.GetIndex(i,j,0);
+            const double measure=moment
+                ? GridMetrics::AngularMomentumVolumeMoment(view,i,j,0)
+                : GridMetrics::CellVolume(view,i,j,0);
+            integral+=(density?source.fluid_state.rho[index]
+                              :source.fluid_state.mom_w[index])*measure;
+            measure_sum+=measure;
+        }
+        return integral/measure_sum;
+    };
+    struct Expectation {
+        const amr::CoarseFineCellTransfer* transfer;
+        double moment;
+        double volume;
+        double density;
+        int cell;
+    } expectations[2]{
+        {axis,expected_average(*axis,true,false),
+         expected_average(*axis,false,false),
+         expected_average(*axis,false,true),-1},
+        {annulus,expected_average(*annulus,true,false),
+         expected_average(*annulus,false,false),
+         expected_average(*annulus,false,true),-1}};
+    for(auto& expectation:expectations) {
+        const amr::Block& destination=block_for(expectation.transfer->destination.handle);
+        const auto& logical=expectation.transfer->destination_cell;
+        expectation.cell=destination.grid.GetIndex(
+            destination.grid.Is()+logical[0],
+            destination.grid.Js()+logical[1],
+            destination.grid.Ks()+logical[2]);
+        expect(std::abs(expectation.moment-expectation.volume)
+                >1.e-12*std::max(1.,std::abs(expectation.moment)),
+            "axisymmetric ghost moment control cannot distinguish W from V");
+    }
+
+    control.ghost_exchange.ExecuteCoarseFinePlan(
+        plan,pool,tree,2,&amr::Block::fluid_state,handles);
+    for(const auto& expectation:expectations) {
+        const amr::Block& destination=block_for(expectation.transfer->destination.handle);
+        expect(destination.fluid_state.mom_w[expectation.cell]==expectation.moment,
+            "fine-to-coarse ghost Mphi did not use the exact W average");
+        expect(destination.fluid_state.rho[expectation.cell]==expectation.density,
+            "fine-to-coarse ghost density stopped using the ordinary V average");
+    }
+}
+
+bool same_flux_group(const amr::AmrTransferOperation& left,
+                     const amr::AmrTransferOperation& right)
+{
+    return left.source==right.source && left.destination==right.destination
+        && left.source_box==right.source_box
+        && left.destination_box==right.destination_box
+        && left.axis==right.axis && left.side==right.side
+        && left.rule==right.rule;
+}
+
+/** Actual CYL-2 face/T registration and coarse W reflux, plus the ordinary
+ * area/volume controls that must remain distinct on an axial fragment. */
+void test_axisymmetric_flux_moments()
+{
+    SimConfig config{};
+    config.grid.dim=2;
+    config.grid.geometry="cylindrical";
+    config.grid.nblockx1=2;
+    config.grid.nblockx2=2;
+    config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=2.;
+    config.grid.x2_min=0.;config.grid.x2_max=2.;
+    config.grid.amr_max_blocks=32;
+    config.amr.lrefinemin=0;config.amr.lrefinemax=1;
+
+    amr::AMRControl control(32,2);
+    auto pool=control.pool;
+    auto tree=control.tree;
+    tree->LoadLeafGrid(config,0,
+        std::vector<int>{1,1,1,1,1,1,1,1,0,0},
+        std::vector<std::uint32_t>{0,1,0,1,2,3,2,3,1,0},
+        std::vector<std::uint32_t>{2,2,3,3,0,0,1,1,1,0},
+        std::vector<std::uint32_t>{0,0,0,0,0,0,0,0,0,0});
+    const auto& active=tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    for(std::size_t index=0;index<active.size();++index)
+        handles.push_back({{3000+index},{91}});
+    control.BindActiveHandles(handles);
+    control.flux_register.EnsureSpecies(0);
+
+    const auto topology=amr::build_amr_flux_topology_plan(
+        *pool,active,handles,2,0);
+    bool saw_registration_moment=false;
+    for(const auto& route:topology.routes) {
+        for(const auto& operation:route.plan.operations) {
+            if(operation.field!=amr::AmrField::MomW) continue;
+            const auto rho=std::find_if(
+                route.plan.operations.begin(),route.plan.operations.end(),
+                [&](const amr::AmrTransferOperation& candidate) {
+                    return candidate.field==amr::AmrField::Rho
+                        && same_flux_group(candidate,operation);
+                });
+            expect(rho!=route.plan.operations.end(),
+                "axisymmetric flux plan lost its ordinary Mphi control");
+            if(operation.rule==amr::RefinementRule::FineFluxContribution
+                && std::abs(operation.weight-rho->weight)
+                    >1.e-13*std::max(1.,std::abs(rho->weight))) {
+                saw_registration_moment=true;
+                const amr::Block& fine=pool->GetBlock(
+                    topology.pool_lowering.at(operation.source));
+                const amr::Block& coarse=pool->GetBlock(
+                    topology.pool_lowering.at(operation.destination));
+                const double fine_moment=GridMetrics::AngularMomentumFaceMoment(
+                    GridMetrics::make_geometry_view(fine.grid),
+                    amr::axis_value(operation.axis),
+                    fine.grid.Is()+operation.source_box.first[0],
+                    fine.grid.Js()+operation.source_box.first[1],
+                    fine.grid.Ks()+operation.source_box.first[2],
+                    operation.side==amr::AmrSide::Lower);
+                const double coarse_moment=GridMetrics::AngularMomentumFaceMoment(
+                    GridMetrics::make_geometry_view(coarse.grid),
+                    amr::axis_value(operation.axis),
+                    coarse.grid.Is()+operation.destination_box.first[0],
+                    coarse.grid.Js()+operation.destination_box.first[1],
+                    coarse.grid.Ks()+operation.destination_box.first[2],
+                    operation.side==amr::AmrSide::Upper);
+                expect(std::bit_cast<std::uint64_t>(operation.weight)
+                        ==std::bit_cast<std::uint64_t>(
+                            fine_moment/coarse_moment),
+                    "axisymmetric registration moment weight is not the exact T/T ratio");
+            }
+        }
+    }
+    expect(saw_registration_moment,
+        "axisymmetric fine registration reused ordinary area weights for Mphi");
+
+    const auto reflux=amr::build_amr_reflux_topology_plan(*pool,topology);
+    bool saw_reflux_moment=false;
+    for(const auto& operation:reflux.operations) {
+        if(operation.field!=amr::AmrField::MomW) continue;
+        const auto rho=std::find_if(
+            reflux.operations.begin(),reflux.operations.end(),
+            [&](const amr::AmrTransferOperation& candidate) {
+                return candidate.field==amr::AmrField::Rho
+                    && same_flux_group(candidate,operation);
+            });
+        expect(rho!=reflux.operations.end(),
+            "axisymmetric reflux plan lost its ordinary Mphi control");
+        const auto block_id=topology.pool_lowering.at(operation.destination);
+        const amr::Block& block=pool->GetBlock(block_id);
+        const auto view=GridMetrics::make_geometry_view(block.grid);
+        const int i=block.grid.Is()+operation.destination_box.first[0];
+        const int j=block.grid.Js()+operation.destination_box.first[1];
+        const int k=block.grid.Ks()+operation.destination_box.first[2];
+        const double moment=GridMetrics::AngularMomentumFaceMoment(
+            view,amr::axis_value(operation.axis),i,j,k,
+            operation.side==amr::AmrSide::Upper);
+        const double volume_moment=GridMetrics::AngularMomentumVolumeMoment(
+            view,i,j,k);
+        const double area=GridMetrics::FaceArea(
+            view,amr::axis_value(operation.axis),i,j,k,
+            operation.side==amr::AmrSide::Upper);
+        const double volume=GridMetrics::CellVolume(view,i,j,k);
+        expect(std::abs(operation.weight-moment/volume_moment)
+                <=2.e-14*std::max(1.,std::abs(operation.weight)),
+            "axisymmetric reflux did not use the exact T/W moment");
+        if(operation.axis==amr::AmrAxis::X) {
+            expect(std::abs(operation.weight-area/volume)
+                    >1.e-13*std::max(1.,std::abs(operation.weight)),
+                "axisymmetric radial reflux moment collapsed to ordinary A/V");
+            saw_reflux_moment=true;
+        }
+    }
+    expect(saw_reflux_moment,
+        "axisymmetric reflux plan emitted no Mphi correction");
+
+    int coarse_id=-1;
+    for(const int id:active) {
+        const auto& block=pool->GetBlock(id);
+        if(block.level==0 && block.face_neighbors[0].count>0
+            && block.face_neighbors[0].level_diff==1
+            && block.face_neighbors[2].count>0
+            && block.face_neighbors[2].level_diff==1) {
+            coarse_id=id;
+            break;
+        }
+    }
+    expect(coarse_id>=0,"axisymmetric flux fixture has no axial coarse face");
+    const amr::Block& coarse=pool->GetBlock(coarse_id);
+    const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid);
+    const auto logical=amr::flux_plan_detail::face_cell_coordinates(
+        0,amr::AmrAxis::X,amr::AmrSide::Lower,2);
+    const int i=coarse.grid.Is()+logical[0];
+    const int j=coarse.grid.Js()+logical[1];
+    const int k=coarse.grid.Ks()+logical[2];
+    const int state_index=coarse.grid.GetIndex(i,j,k);
+    FluidState& state=pool->GetBlock(coarse_id).fluid_state;
+    state.rho[state_index]=1.;
+    state.mom_u[state_index]=0.;
+    state.mom_v[state_index]=0.;
+    state.mom_w[state_index]=0.;
+    state.eng[state_index]=1.;
+
+    control.flux_register.Clear();
+    FluidVector delta{};
+    delta.mom_w=1.;
+    control.flux_register.AddRegisteredFlux(
+        coarse_id,0,0,delta,1.0);
+    const auto reflux_plan=control.flux_register.BuildRefluxPlan(
+        pool,active,handles,2,1.0);
+    control.flux_register.ExecuteRefluxPlan(
+        reflux_plan,pool,active,handles,&amr::Block::fluid_state,1.0);
+    const double moment=GridMetrics::AngularMomentumFaceMoment(
+        coarse_view,0,i,j,k,false);
+    const double volume_moment=GridMetrics::AngularMomentumVolumeMoment(
+        coarse_view,i,j,k);
+    const double area=GridMetrics::FaceArea(coarse_view,0,i,j,k,false);
+    const double volume=GridMetrics::CellVolume(coarse_view,i,j,k);
+    expect(std::abs(state.mom_w[state_index]-moment/volume_moment)
+            <=2.e-13*std::max(1.,moment/volume_moment),
+        "Host reflux did not correct Mphi with the coarse T/W ratio");
+    expect(std::abs(moment/volume_moment-area/volume)
+            >1.e-12*std::max(1.,moment/volume_moment),
+        "axisymmetric reflux negative control could not detect wrong V");
+
+    const amr::AmrFluxRegistrationRoute* selected=nullptr;
+    for(const auto& route:topology.routes)
+        if(route.key.axis==amr::AmrAxis::Y) {
+            const bool has_fine=std::any_of(
+                route.plan.operations.begin(),route.plan.operations.end(),
+                [](const amr::AmrTransferOperation& operation) {
+                    return operation.rule
+                        ==amr::RefinementRule::FineFluxContribution
+                        && operation.field==amr::AmrField::MomW;
+                });
+            if(has_fine) {selected=&route;break;}
+        }
+    expect(selected!=nullptr,
+        "axisymmetric flux fixture has no fine axial moment route");
+    control.flux_register.Clear();
+    std::vector<double> values(selected->plan.operations.size());
+    for(std::size_t index=0;index<values.size();++index) {
+        const auto& operation=selected->plan.operations[index];
+        values[index]=1.+operation.source_box.first[0];
+    }
+    control.flux_register.ApplyRegistrationPlan(
+        selected->plan,values,topology.pool_lowering,1.0);
+    struct RegisterExpectation { double rho=0.; double moment=0.; };
+    std::map<std::tuple<int,int,int>,RegisterExpectation> expected;
+    for(std::size_t index=0;index<selected->plan.operations.size();++index) {
+        const auto& operation=selected->plan.operations[index];
+        if(operation.field!=amr::AmrField::Rho
+            && operation.field!=amr::AmrField::MomW)
+            continue;
+        const int destination=topology.pool_lowering.at(operation.destination);
+        const int face=2*amr::axis_value(operation.axis)
+            +amr::side_value(operation.side);
+        const int cell=amr::flux_plan_detail::face_cell_index(
+            operation.destination_box,operation.axis);
+        auto& entry=expected[std::tuple{destination,face,cell}];
+        const double coefficient=amr::flux_math::registration_coefficient(
+            operation.rule,operation.weight,1.0);
+        if(operation.field==amr::AmrField::MomW)
+            entry.moment+=coefficient*values[index];
+        else
+            entry.rho+=coefficient*values[index];
+    }
+    for(const auto& [key,entry]:expected) {
+        const auto [destination,face,cell]=key;
+        const auto flux=control.flux_register.GetSummedFlux(
+            destination,face,cell);
+        expect(std::abs(flux.rho-entry.rho)
+                <=2.e-13*std::max(1.,std::abs(entry.rho))
+                && std::abs(flux.mom_w-entry.moment)
+                    <=2.e-13*std::max(1.,std::abs(entry.moment)),
+            "Host flux registration did not apply the per-field Mphi weight");
+    }
+}
+
 } // namespace
 
 int main()
@@ -1554,6 +2164,9 @@ int main()
         test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
         test_coordinate_seam_mapping();
+        test_axisymmetric_regrid_moments();
+        test_axisymmetric_host_ghost_moments();
+        test_axisymmetric_flux_moments();
         const auto ordinary = ordinary_plan();
         const auto migration = migration_plan();
         std::cout << "AMR_PLAN_CONTRACT_PASS ordinary="

@@ -17,3 +17,10 @@ Change mathematical methods in their shared owners: [numerics](../numerics/READM
 CUDA callers supply device data and execution order, not another copy of a formula.
 See the [capability guide](../../docs/CudaBackendStatus.md) for supported configurations
 and [CUDA tests](../../tests/cuda/README.md) for focused checks.
+
+Native cylindrical 2D retains r/z indices, one inactive plane and three physical
+momenta. Kernels consume the existing shared V/A/W/T geometry and transport
+mathematics. BCHandler/topology prepare physical wall metadata before native
+state allocation; an explicitly prepared empty view means open faces, while
+missing metadata is rejected. Gravity retains its optional execution owner.
+The [validation index](../../validation/README.md) records actual-device scope.

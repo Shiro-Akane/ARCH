@@ -244,8 +244,6 @@ public:
      * @brief Initialize the Level 0 root blocks.
      */
     void InitRootGrid(const SimConfig& config, int n_species) {
-        if (config.grid.geometry=="cylindrical" && config.grid.dim==2)
-            throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported");
         if (config.amr.lrefinemin < 0 ||
             config.amr.lrefinemax < config.amr.lrefinemin ||
             config.amr.lrefinemax > kMaxRefinementLevel) {
@@ -420,7 +418,7 @@ public:
     /** Repair accepted-state JENS deficits without changing ordinary cadence. */
     void EvaluateJeansRepair(const SimConfig& config)
     {
-        (void)indicator::make_selection(config.amr,root_grid.dim,refinement_species_indices);
+        (void)indicator::make_selection(config.amr,root_grid.dim,refinement_species_indices,GridMetrics::geometry_kind(root_grid));
         for (int id:active_blocks) {
             auto& block=pool->GetBlock(id);
             block.refine_flag=0;
@@ -435,7 +433,7 @@ public:
 
     void EvaluateRefinement(const SimConfig& config) {
         const auto selection = indicator::make_selection(
-            config.amr, root_grid.dim, refinement_species_indices);
+            config.amr, root_grid.dim, refinement_species_indices,GridMetrics::geometry_kind(root_grid));
         const bool needs_pressure = config.amr.refine_on_p || config.amr.refine_on_entropy;
         const bool needs_temperature = config.amr.refine_on_temp;
         const bool needs_gamma1 = config.amr.refine_on_entropy;

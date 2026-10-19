@@ -1,3 +1,8 @@
+/**
+ * Keep bounded build output and event offsets for the Host client.
+ * The compiler process belongs to BuildRunner; this buffer truncates presentation
+ * without changing process success or asserting that the output is complete.
+ */
 import type {BuildEvent,BuildEvents,BuildState} from '../src/host/contracts.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 import {stripVTControlCharacters} from 'node:util';

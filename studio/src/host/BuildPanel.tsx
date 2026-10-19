@@ -1,3 +1,8 @@
+/**
+ * Present the selected build profile, operation and bounded output controls.
+ * Actions delegate to BuildProvider/Host; the component never assembles a shell
+ * command or infers scientific readiness from a displayed success label.
+ */
 import {useEffect} from 'react';
 import {useHost} from './hostContext';
 import {useBuild} from './BuildProvider';

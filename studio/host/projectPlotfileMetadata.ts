@@ -1,3 +1,9 @@
+/**
+ * Bind Plotfile queries to the selected project and file fingerprint.
+ * Validate scope before isolated reading and recheck identity afterwards so a
+ * concurrent file/project change cannot publish a response for another selection.
+ * Typed query validation and HDF decoding remain in their existing owners.
+ */
 import {copyPointRequest} from '../src/host/plotfilePoint.ts';
 import {copyOverviewRequest} from '../src/host/plotfileOverview.ts';
 /** Project-scoped read audit, not a scientific result provider. */

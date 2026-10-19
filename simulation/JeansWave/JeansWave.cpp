@@ -18,6 +18,9 @@
 #include <GlobalDefs.h>
 
 class JeansWaveProblem {
+    // Construction/audit scales use g/cm^3 and erg/cm^3; amplitude is a
+    // dimensionless density perturbation. Required explicit Setup input
+    // replaces these seeds; Get's audit argument is not a missing-key default.
     double rho_ = 1e7, pressure_ = 6e6, amplitude_ = 1e-4;
     double velocity_ = 0.0, phase_ = 0.0, gamma_ = 5.0 / 3.0;
     double x_min_ = 0.0, wave_number_ = 0.0, average_ = 1.0;

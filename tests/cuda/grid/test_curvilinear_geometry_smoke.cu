@@ -333,7 +333,7 @@ std::vector<double> device_diffusion_operator(
     return actual;
 }
 
-void run_case(const char* geometry_name, int dimension, int species_count = 2)
+void run_case(const char* geometry_name, int dimension, int species_count = 2,bool walls=false)
 {
     Grid grid(amr::MAX_NG, 1.0, 2.0, 0.25, 1.25, 0.0, 1.0);
     grid.dim = dimension;
@@ -413,10 +413,13 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
             }
     DeviceState input(cells, species_count), output(cells, species_count), face_flux(cells, species_count);
     input.storage.upload(pack(state));
+    // Mathematical flags are explicit in this leaf; Runtime authority is
+    // checked separately by the resident whole-domain tests.
+    if(walls)input.view.hydro_boundary.reflecting[0]=input.view.hydro_boundary.reflecting[1]=true;
     std::vector<FluidVector> host_delta(cells);
-    TimeIntegration::add_geometric_sources(host_delta, state, host_eos, grid, 0.01);
+    TimeIntegration::add_geometric_sources(host_delta, state, host_eos, grid, 0.01,input.view.hydro_boundary);
     check(arch::cuda::launch_hydro_sources(input.view, output.view, device_grid,
-                                                   device_eos, 0.01, nullptr, species_workspace));
+                                                   device_eos, 0.01, nullptr, species_workspace, {},input.view.hydro_boundary));
     auto actual = output.storage.download();
     double radial_source = 0.0;
     for (int linear = 0; linear < device_grid.active_cell_count(); ++linear) {
@@ -434,7 +437,7 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
     const Physical::Gravity::ExternalGravityView gravity{.2, -.3, .4, true};
     check(arch::cuda::clear_hydro_buffer(output.view, nullptr));
     check(arch::cuda::launch_hydro_sources(input.view, output.view, device_grid,
-        device_eos, .01, nullptr, species_workspace, gravity));
+        device_eos, .01, nullptr, species_workspace, gravity,input.view.hydro_boundary));
     actual = output.storage.download();
     for (int linear = 0; linear < device_grid.active_cell_count(); ++linear) {
         const int cell = device_grid.active_cell(linear);
@@ -455,8 +458,10 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
     for (int direction = 0; direction < dimension; ++direction) {
         std::vector<FluidVector> host_flux(cells);
         std::vector<double> host_species_flux(static_cast<std::size_t>(cells) * species_count);
+        FluxAdmissibility::MeanThermoCache means;means.reset(cells);
+        means.hydro_boundary=input.view.hydro_boundary;
         FluxHLL<PCMReconstruction>::compute_fluxes(
-            state, host_eos, grid, host_flux, host_species_flux, direction, 0.0);
+            state, host_eos, grid, host_flux, host_species_flux, direction, 0.0,&means);
         check(arch::cuda::launch_hydro_faces<arch::cuda::CudaPcmReconstruction, arch::cuda::CudaHllFlux>(
             input.view, face_flux.view, device_grid, device_eos, direction, 0.0, nullptr, species_workspace));
         actual = face_flux.storage.download();
@@ -464,6 +469,11 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
         for (int linear = 0; linear < faces; ++linear) {
             const int cell = arch::cuda::detail::diffusion_face_cell(device_grid, direction, linear);
             const auto& flux = host_flux[cell];
+            if(walls && direction==0 && (cell%grid.stride_y==grid.Is()||cell%grid.stride_y==grid.Ie())) {
+                require(actual[cell]==0. && actual[3*cells+cell]==0. && actual[4*cells+cell]==0.,
+                    "Device reflecting wall leaked mass, torque or energy");
+                for(int sp=0;sp<species_count;++sp)require(actual[(6+sp)*cells+cell]==0.,"Device wall leaked species");
+            }
             const double fields[]{flux.rho, flux.mom_u, flux.mom_v, flux.mom_w, flux.eng};
             for (int field = 0; field < 5; ++field)
                 close(actual[field * cells + cell], fields[field], "hydro face parity");
@@ -473,6 +483,15 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
         }
     }
 
+    if(walls) {
+        auto open=input.view;open.hydro_boundary={};
+        check(arch::cuda::launch_hydro_faces<arch::cuda::CudaPcmReconstruction,arch::cuda::CudaHllFlux>(
+            open,face_flux.view,device_grid,device_eos,0,0.,nullptr,species_workspace));
+        const auto unbound=face_flux.storage.download();
+        const int face=grid.GetIndex(grid.Is(),grid.Js(),0);
+        require(std::abs(unbound[face])>0.,"default-open negative control failed to detect advective wall leakage");
+        std::cout<<"DEVICE_CLOSED_WALL_FLUX_PASS species="<<species_count<<" default_open_negative=1\n";
+    }
     SimConfig config{};
     auto& diffusion = config.physics.diffusion;
     diffusion.use_diffusion = diffusion.use_thermal_diffusion = true;
@@ -607,9 +626,10 @@ void scalar_diffusion_convergence(const char* name, int dimension, bool thermal)
             if (dimension >= 2) laplacian -= .01*std::cos(theta);
             if (dimension == 3) laplacian -= .02*std::cos(phi);
         } else if (grid.geometry == "cylindrical" || dimension == 2) {
-            // Cylindrical 3D is (r,z,phi); spherical 2D is polar (r,phi).
+            // Cylindrical 2D/3D share axial z; spherical 2D is polar (r,phi).
             laplacian = .016*radius*radius;
-            if (dimension == 2) laplacian -= .01*std::cos(theta)/(radius*radius);
+            if (dimension == 2) laplacian -= grid.geometry=="cylindrical"
+                ? .01*std::cos(theta) : .01*std::cos(theta)/(radius*radius);
             if (dimension == 3)
                 laplacian -= .01*std::cos(theta) + .02*std::cos(phi)/(radius*radius);
         } else {
@@ -682,6 +702,13 @@ void viscous_diffusion_convergence()
     RadialStokesCases::density_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
     CurvedStokesCases::density_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
     CurvedStokesCases::cylindrical_axis_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
+    Grid native(amr::MAX_NG,0.,1.,0.,1.,0.,0.,1,1,0);
+    native.dim=2;native.geometry="cylindrical";native.InitializeTopology();
+    const auto lowered=arch::cuda::make_device_grid_view(native);
+    require(arch::cuda::valid_hydro_grid(lowered) && lowered.total_z==1
+        && lowered.active_cell_count()==amr::BLOCK_NX*amr::BLOCK_NY,
+        "native axisymmetric Device indexing lost its inactive plane");
+    std::cout<<"AXISYMMETRIC_DEVICE_LAYOUT_PASS\n";
 }
 
 } // namespace
@@ -704,16 +731,14 @@ int main()
         viscous_diffusion_convergence();
         for (const char* geometry : {"cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension) {
-                if (std::string_view(geometry) == "cylindrical" && dimension == 2)
-                    continue;
                 run_case(geometry, dimension);
             }
+        run_case("cylindrical",2,2,true);
+        run_case("cylindrical",2,41,true);
         run_case("cartesian", 2, 41);
         run_case("spherical", 3, 41);
         for (const char* geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension) {
-                if (std::string_view(geometry) == "cylindrical" && dimension == 2)
-                    continue;
                 for (bool thermal : {false, true})
                     scalar_diffusion_convergence(geometry, dimension, thermal);
             }

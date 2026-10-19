@@ -683,7 +683,8 @@ namespace DiffFlux
             const double factor=viscosity/grid.GetCellCenterX(i);
             const auto frame=CurvilinearViscousStress::frame(grid);
             if(frame==NewtonianViscousStress::Frame::CylindricalRZPhi) {
-                curved_rows[0]+=factor*sums[8];curved_rows[2]+=factor*sums[2];
+                curved_rows[0]+=factor*sums[8];
+                if(grid.dim!=2)curved_rows[2]+=factor*sums[2];
             } else if(frame==NewtonianViscousStress::Frame::CylindricalRPhiZ) {
                 curved_rows[0]+=factor*sums[4];curved_rows[1]+=factor*sums[1];
             } else {
@@ -773,6 +774,12 @@ inline void capture_diffusion_surface_flux(
                         [&state](int c){return state.get(c);},index,geometry,face[0],0.);
                     if(!work.valid)throw std::runtime_error("Invalid radial diffusion boundary work observation");
                     for(int component=0;component<3;++component)velocity[component]=work.work_velocity[component];
+                }
+                if(geometry.geometry==DiffusionGeometry::Cylindrical&&geometry.dim==2) {
+                    double shear=0.;
+                    if(!CurvilinearViscousStress::angular_face_kinematics(geometry,dir,
+                        face[0],face[1],face[2],lef.mom_w/lef.rho,rig.mom_w/rig.rho,
+                        shear,velocity[2]))throw std::runtime_error("Invalid angular diffusion boundary work observation");
                 }
                 const FluidVector& flux = flux_buffer[index];
                 const double heat = flux.eng - flux.mom_u * velocity[0]
@@ -873,19 +880,20 @@ inline void capture_diffusion_surface_flux(
                                     grid.Is(),grid.Ie(),grid.Js(),grid.Je(),grid.Ks(),grid.Ke(),n_species):nullptr;
                             const bool radial=geometry_view.geometry!=DiffusionGeometry::Cartesian
                                 &&geometry_view.dim==1;
+                            const bool moment_work=radial||(geometry_view.geometry==DiffusionGeometry::Cylindrical&&geometry_view.dim==2);
                             double work_velocity[3]{.5*(U_L.mom_u/U_L.rho+U_R.mom_u/U_R.rho),
                                 .5*(U_L.mom_v/U_L.rho+U_R.mom_v/U_R.rho),
                                 .5*(U_L.mom_w/U_L.rho+U_R.mom_w/U_R.rho)};
                             if(!replace_curvilinear_viscous_flux(read,idx_R,geometry_view,dir,i,j,
                                 diffusion_config,properties,F_diff,
-                                radial?work_velocity:nullptr))
+                                moment_work?work_velocity:nullptr))
                                 throw std::runtime_error("Invalid curvilinear Newtonian traction or paired work");
                             if (controls) {
                                 const int coordinate[3]{i,j,k}, lower[3]{grid.Is(),grid.Js(),grid.Ks()};
                                 arch::boundary::ApplyDiffusionBoundaryFlux(controls,
                                     coordinate[dir] == lower[dir] ? -1. : 1., U_L, U_R, F_diff,
                                     n_species ? spec_flux_out.data() + idx_R : nullptr, n_species, grid.GetTotalSize(),
-                                    radial?work_velocity:nullptr);
+                                    moment_work?work_velocity:nullptr);
                             }
                             flux_out[idx_R] = F_diff;
                         }

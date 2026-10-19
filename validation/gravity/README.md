@@ -11,19 +11,31 @@ periodic/Dirichlet convergence and solver failure handling; its
 [discretization record](../../docs/development/P2PoissonMultigrid.zh-CN.md)
 preserves the original budgets. Production AMR and device evidence are linked below.
 
-## Retired two-dimensional cylindrical route
+## Native cylindrical meridian
 
-Cylindrical 2D is unsupported. Spherical 2D `(r,phi)`, radial 1D and full 3D
-curvilinear routes keep their own mathematical and execution contracts.
-Historical RZ records, including [Host scenarios](results/release-closure-20261007/host-prescribed-rz-shared-runtime-summary.json),
-[isolated-field convergence](results/release-closure-20261007/native-density-certificate-20261009-summary.json),
-[finite-Euler energy](results/release-closure-20261007/native-continuous-energy-20261009-summary.json)
-and [final CPU science](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json),
-retain their recorded source, executable, inputs and numerical scope. Their
-original failures, interrupted costs and device gaps are preserved; retired
-runners and ring references are no longer current execution instructions.
-The [release plan](../../ARCH_RELEASE_PLAN.md) tracks retirement and remaining
-release work; this change does not claim a performance improvement.
+Cylindrical 2D uses the `cylindrical-rz-pwc` chart with `(r,z)` axes and three
+physical momentum components. The shared Grid supplies geometry; optional
+gravity owns the field, full-ring mass, potential boundary and work. Scoped
+[CPU gravity](../backend/results/release-readiness/Cyl3OptionalGravity-20261018.json),
+[device owners](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)
+and [comprehensive admission](../backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)
+retain their numerical budgets and source identities. Gravity disabled means
+no gravity solves or dedicated numerical allocations.
+
+The [current CPU closure](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)
+adds corrected axial GravityBox/SNIaCoupled profiles, explicit centre inputs and
+short fresh checks. The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+includes these Host changes in the rebuilt CUDA application and qualifies the
+affected fields and fresh. Unchanged gravity kernels, disabled-module allocation
+and energy checks retain their identified earlier scope. Spherical 2D `(r,phi)`,
+radial 1D and full 3D routes retain their own contracts; the unrelated private
+Cellular source-rate gate still limits full device release acceptance.
+
+[Old CPU science](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)
+and [implementation retirement](../backend/results/release-readiness/RzRetirementAcceptance-20261018.json)
+are historical evidence only. Failed or interrupted runs stay unchanged; old
+RZ runners and checkpoints are not current execution instructions. The
+[release plan](../../ARCH_RELEASE_PLAN.md) owns remaining release work.
 
 ## Constant external gravity
 
@@ -173,9 +185,9 @@ also cover Dirichlet, Neumann, linear Robin and user potential
 conditions in their stated geometries. Isolated mass sources require the full
 azimuth; external mass is outside those isolated-source records. Jeans
 refinement diagnostics have their own current checks. Start with
-[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md)
+[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
 records numerical, coupling, restart and device checks. The [radial field and AMR record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The
-[earlier periodic solver record](../../docs/development/P3P4CompositeGravity.zh-CN.md) retains its CPU
+[earlier periodic solver record](../../docs/histroy/science/P3P4CompositeGravity.zh-CN.md) retains its CPU
 periodic scope.
 
 `run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,

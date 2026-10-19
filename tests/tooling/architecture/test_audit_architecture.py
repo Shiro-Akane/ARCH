@@ -419,6 +419,31 @@ const char* explanation = R"note(physical boundary "outflow"
             with self.subTest(source=source):
                 self.assert_rejected_with({"src/cuda/transport.cu": source}, expected)
 
+    def test_shared_wall_lookup_is_delegation_not_a_copied_boundary_rule(self):
+        path="src/cuda/hydro/kernels/HydroFaceKernel.cuh"
+        call="state.hydro_boundary.reflecting_side(direction, face_coordinate, lower, upper, wall_side);"
+        self.assert_accepted({path:"void face() {"+call+"}"})
+        for body in (call+'if (mode == "reflect") update();',
+                     call.replace("state.hydro_boundary", "local"),
+                     call.replace("face_coordinate", "guessed_face")):
+            with self.subTest(body=body):
+                self.assert_rejected_with({path:"void face() {"+body+"}"}, "boundary-rule duplication")
+        self.assert_rejected_with({"src/cuda/transport.cu":"void face() {"+call+"}"}, "boundary-rule duplication")
+
+    def test_device_poisson_reuses_only_the_original_executor_object(self):
+        sources=("tests/host/gravity/test_composite_poisson.cpp "
+                 "src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp "
+                 "src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/CompositeMultigrid.cpp "
+                 "src/numerics/multigrid/CompositeExecution.cpp src/physics/gravity/GravityBoundary.cpp")
+        declaration="add_executable(arch_composite_poisson "+sources+")"
+        link="target_link_libraries(arch_composite_poisson PRIVATE arch_cuda_gravity_execution CUDA::cudart)"
+        self.assert_accepted({"CMakeLists.txt":declaration,"cmake/Tests.cmake":link})
+        for bad_declaration,bad_link in ((declaration.replace("test_composite_poisson.cpp","other.cpp"),link),
+                (declaration.replace(sources,sources+" extra.cpp"),link),
+                (declaration,link.replace("arch_cuda_gravity_execution","arch_cuda_backend_core"))):
+            with self.subTest(link=bad_link):
+                self.assert_rejected_with({"CMakeLists.txt":bad_declaration,"cmake/Tests.cmake":bad_link},"canonical owner")
+
     def test_rejects_device_formula_copy(self):
         self.assert_rejected("src/cuda/diffusion_device.cuh", "double vie = iec * zbar;")
 

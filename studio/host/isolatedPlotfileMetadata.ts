@@ -1,3 +1,9 @@
+/**
+ * Own a bounded subprocess for read-only HDF inspection.
+ * Workflow: copy and validate a typed query, launch the fixed reader worker,
+ * limit output/time, parse its result and validate the returned identity/shape.
+ * Cancellation owns only that worker; no Core solver is invoked.
+ */
 import {copyPointRequest} from '../src/host/plotfilePoint.ts';
 import type {PlotfilePointRequest} from '../src/host/plotfilePoint.ts';
 import {copyOverviewRequest} from '../src/host/plotfileOverview.ts';
@@ -19,6 +25,8 @@ export class PlotfileReadError extends Error {
  constructor(code:PlotfileReadCode,message:string){super(message);this.name='PlotfileReadError';this.code=code;}
 }
 let active=false;
+// Bound the worker's serialized response to 64 KiB; large scientific arrays
+// require a bounded typed selection rather than an unbounded metadata reply.
 const OUTPUT_LIMIT=64*1024;
 
 /**
@@ -51,6 +59,8 @@ export function validateIsolatedPlotfileResult(result:unknown,slice?:PlotfileSli
 
 /** Options are Host-owned. The browser must not supply execution settings. */
 function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={},slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Promise<Metadata>{
+ // Fifteen seconds is the maximum wall budget for this interactive read, in
+ // milliseconds. Timeout is an explicit failure, never a partial success.
  const timeoutMs=options.timeoutMs??15_000;
  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>15_000)
   return Promise.reject(new RangeError('Metadata timeout must be 1..15000 ms.'));

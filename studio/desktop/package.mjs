@@ -1,3 +1,9 @@
+/**
+ * Assemble a Linux x64 desktop from locked production assets.
+ * Workflow: recreate only the owned staging tree, copy renderer/Host/runtime and
+ * license files, then package Electron. Tests, historical reports and scientific
+ * outputs are excluded. The Core and system GUI/terminal requirements stay external.
+ */
 import {packager} from '@electron/packager';
 import {mkdir,cp,writeFile,readFile,rm} from 'node:fs/promises';
 import path from 'node:path';

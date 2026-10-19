@@ -1,3 +1,8 @@
+/**
+ * Project an initial AMR mesh into native-plane display and selection coordinates.
+ * Filter visible levels/slices and find stored leaves without changing topology.
+ * Cell-line thinning is a pixel-density display choice, not mesh coarsening.
+ */
 import type {AmrMesh,AmrLeaf} from '../host/workflowContracts.ts';
 export function amrAt(mesh:AmrMesh,x:number,y:number,levels:ReadonlySet<number>,slice?:AmrSlice):AmrLeaf|undefined{
  if(!Number.isFinite(x)||!Number.isFinite(y))return;

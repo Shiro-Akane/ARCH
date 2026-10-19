@@ -1,10 +1,10 @@
 # 配置完整性与缺失输入重构计划
 
-2026-09-28。基于 v1.2.1，作为[计算优化后续计划](ComputeOptimizationPlan.zh-CN.md)
+2026-09-28。基于 v1.2.1，作为[计算优化后续计划](../histroy/integration/ComputeOptimizationPlan.zh-CN.md)
 中O7.0的原始设计。当前已有受控`PreparedConfiguration`、配置扩展3、nullable诊断、G退役和用途响应的实现及分项验证；本文件保存参数条件、允许默认及原迁移要求，不能作为重新构建配置系统的清单。
-2026-10-01 补充[Core／Studio 联合交付计划](StudioConfigurationHandoff.zh-CN.md)：
+2026-10-01 补充[Core／Studio 联合交付计划](../histroy/studio/StudioConfigurationHandoff.zh-CN.md)：
 由一位实现负责人贯通配置与客户端，维护者保留科学规则和最终验收。
-本文继续作为参数条件和允许默认的设计清单；运行权威是现有Core注册表和所选binary的正式响应，客户端不复制另一套必填判断。当前任务与状态见[发布计划](../../ARCH_RELEASE_PLAN.md)，原科学要求沿[优化表](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)继承，证据见[release记录](ComputeStudioReleasePlan-20261006.zh-CN.md)。下方键数与版本称呼保留设计快照身份，当前运行判断以Core注册表和实际响应为准。
+本文继续作为参数条件和允许默认的设计清单；运行权威是现有Core注册表和所选binary的正式响应，客户端不复制另一套必填判断。当前任务与状态见[发布计划](../../ARCH_RELEASE_PLAN.md)，原科学要求沿[优化表](../histroy/integration/ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08)继承，证据见[release记录](../histroy/integration/ComputeStudioReleasePlan-20261006.zh-CN.md)。下方键数与版本称呼保留设计快照身份，当前运行判断以Core注册表和实际响应为准。
 
 2026-10-12的[R2.3复核](archive/modernization/R23PerformanceAndConfiguration-20261012.zh-CN.md#o7是否仍有静默回退)在两个生产binary上检查全部70个活动必需／条件必需键的缺项拒绝、176个显式错误及25项登记默认来源；在该范围内未发现关键科学配置静默回退。旧输入缺项仍硬失败，不能以恢复生产默认处理；未活动存储值的身份语义列后续维护候选。下方设计快照继续保留原迁移原因。
 

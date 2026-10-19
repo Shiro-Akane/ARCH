@@ -138,7 +138,7 @@ External gravity supplies an acceleration. Self gravity solves a composite AMR P
 | Cylindrical `(r,z,phi)` / spherical `(r,theta,phi)` 3D | `isolated` | Full azimuth; inner radial and tested axis/pole singular faces reflect |
 | Qualified scopes of all three geometries, 1D–3D | `dirichlet`, `neumann`, `user` | Per-side potential/outward gradient/linear Robin; paired periodic directions and regular coordinate joins |
 
-Every self-gravity root axis needs a power-of-two cell extent. Root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. User boundaries combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions on valid annuli, sectors or wedges; coordinate singularities retain regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). Periodic gravity responds to density relative to its volume mean; isolated gravity uses the full density. The spherical polar 2D potential uses a logarithmic kernel with mass per unit axial length; cylindrical 2D is unsupported. See the [feature list](Features.md#self-gravity-domains) for domain/backend scope and [gravity parameters](#eos-and-gravity) for residual controls.
+Every self-gravity root axis needs a power-of-two cell extent. Root spacing ratios are at most two, and AMR leaves maintain 2:1 balance. `gravity_boundary` must match fluid-face topology. User boundaries combine per-side Dirichlet, Neumann, linear Robin and paired periodic directions on valid annuli, sectors or wedges; coordinate singularities retain regularity joins. See [boundary interfaces and compatibility](guides/UserBoundaries.md). Periodic gravity responds to density relative to its volume mean; isolated gravity uses the full density. The spherical polar 2D potential uses a logarithmic kernel with mass per unit axial length; native cylindrical 2D on CPU/CUDA uses full-ring three-dimensional Newton physics with measures per unit azimuth, physical r/z boundaries and `g_phi=0`. See the [feature list](Features.md#self-gravity-domains) for domain/backend scope and [gravity parameters](#eos-and-gravity) for residual controls.
 
 ### Combining methods and physics
 
@@ -393,7 +393,7 @@ Inspect configuration diagnostics before startup. Legal aliases and explicit aut
 
 Current inputs use `time_integrator` for hydro stepping. The former standard keys `timeintegrator`, `enforce_mass_conservation`, `burn_verbose_level`, `ode_use_numerical_jac` and `ode_freeze_jacobian` produce a `RETIRED_PARAMETER` diagnostic. Remove them from older case files and choose the intended physical and numerical settings from the current tables below.
 
-Normalized tabular EOS data require an explicit free-energy potential, physical component declarations and nuclear-equilibrium metadata. Native EOSDriver total tables and supported original baryon tables retain their own contracts. Earlier normalized direct tables should be prepared to the current [table data contract](../src/physics/eos/TabularEOS.md). Checkpoints resume only with matching scientific identity; use the originating executable for an earlier trajectory or initialize a new current case. The completed migration evidence remains in the [historical implementation record](development/archive/low-density/ImplementationReport.zh-CN.md).
+Normalized tabular EOS data require an explicit free-energy potential, physical component declarations and nuclear-equilibrium metadata. Native EOSDriver total tables and supported original baryon tables retain their own contracts. Earlier normalized direct tables should be prepared to the current [table data contract](../src/physics/eos/TabularEOS.md). Checkpoints resume only with matching scientific identity; use the originating executable for an earlier trajectory or initialize a new current case. The completed migration evidence remains in the [historical implementation record](histroy/low-density/ImplementationReport.zh-CN.md).
 
 ## Parameter reference
 
@@ -424,7 +424,7 @@ Logical coordinate meanings are:
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi | r, theta, phi |
-| Cylindrical | r | Unsupported | r, z, phi |
+| Cylindrical | r | r, z (CPU) | r, z, phi |
 
 Converted `PointCoords` use the fixed origin `(0,0,0)`. The logical axes in the table determine the physical Cartesian and native coordinate fields; unsupported geometry/dimension combinations reject before conversion.
 
@@ -482,7 +482,7 @@ tabular component discovery or electron completion.
 | `eos_coulomb_mult` | double | Required: Helmholtz | Helmholtz ion Coulomb correction fraction, finite `[0,1]`; nondefault values require Helmholtz; independent of electron completion |
 | `gamma` | double | Required: IdealGas | ideal-gas model gamma |
 | `gravity_type` | string | Required | `none`, `external`, `self`; see the [feature list](Features.md#self-gravity-domains) for self-gravity domains and backends |
-| `gravity_g_x/y/z` | expression | Required: external gravity; all components | used for external gravity |
+| `gravity_g_x/y/z` | expression | Required: external gravity; all components | Native orthonormal momentum slots; cylindrical `(r,z,phi)`, including 2D. No Cartesian projection |
 | `gravity_G` | expression | Retired; rejected | Reports RETIRED_PARAMETER; no input override |
 | `gravity_boundary` | string | Required: self gravity | `periodic`: remove volume-mean density; `isolated`: existing finite-mass/radial/logarithmic closure; `dirichlet`: zero potential; `neumann`: zero outward gradient with Gauss compatibility; `user`: per-side data from `gravity_boundary.cpp` |
 | `gravity_rtol` | float | Required: self gravity | Positive relative volume RMS residual target, smaller than one |
@@ -781,7 +781,7 @@ struct PointCoords {
 };
 ```
 
-Spherical 2D uses the polar `(r,phi)` plane. Cylindrical grids support radial 1D and full 3D `(r,z,phi)`; cylindrical 2D is explicitly rejected. All supported grids retain three physical momentum components.
+Spherical 2D uses the polar `(r,phi)` plane. Cylindrical 2D uses `(r,z)` on CPU and CUDA, retaining physical momenta `(rho*u_r,rho*u_z,rho*u_phi)` and the `cylindrical-rz-pwc` artifact identity. Geometry and optional gravity use separate owners. Method/EOS combinations and scientific endpoints require their own [validation](../validation/README.md); radial 1D and full 3D retain their established routes.
 
 `Grid::GetPhysicalCoords` populates every representation. For a 3D spherical
 density profile centered at the origin, let `rho_bg > 0`, `rho_peak > 0`, and
@@ -824,7 +824,7 @@ center_y_ = config.grid.x2_min;
 measures from the global `(0,0,0)` origin. Shifting the physical profile does
 not shift the origin or axis of the curved grid metric; on a curved grid,
 `x1_min` is a native radial bound. See the [case guide](guides/SimulationCase.md#pointcoords)
-for a complete example. The second logical coordinate is planar azimuth `phi` in spherical 2D; cylindrical 2D is unsupported.
+for a complete example. The second logical coordinate is planar azimuth `phi` in spherical 2D and axial length `z` in native cylindrical 2D.
 
 ### `PrimitiveData`
 

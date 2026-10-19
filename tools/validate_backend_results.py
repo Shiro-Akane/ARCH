@@ -600,8 +600,8 @@ def validate_qualification_metrics(
             raise RuntimeError(f"hydro mass drift gate failed: {drift}")
         expected = {
             "mass": 1.0,
-            "mom_u": 1.0,
-            "mom_v": 0.0,
+            "mom_u": 0.0 if metrics.get("reference_axis") == 2 else 1.0,
+            "mom_v": 1.0 if metrics.get("reference_axis") == 2 else 0.0,
             "mom_w": 0.0,
             "eng_total": 3.0,
         }
@@ -712,9 +712,12 @@ def qualify_checkpoint(
         return {"status": "not-requested"}
     mode = qualification_mode(qualification)
     command = [str(checkpoint_validator), "--qualify", str(checkpoint), mode]
-    if mode == 'gravity':
+    reference_axis = case.get("qualification_axis")
+    if reference_axis is not None and reference_axis != 2:
+        raise RuntimeError('native axial qualification_axis must be 2')
+    if mode == 'gravity' or reference_axis is not None:
         if parameter_file is None:
-            raise RuntimeError('gravity reference requires actual run parameters')
+            raise RuntimeError('parameter-bound reference requires actual run parameters')
         command += ['--parameters', str(parameter_file)]
     completed = subprocess.run(
         command,
@@ -727,6 +730,8 @@ def qualify_checkpoint(
     if not lines:
         raise RuntimeError("scientific qualifier produced no JSON summary")
     metrics = json.loads(lines[-1])
+    if reference_axis is not None and metrics.get("reference_axis") != reference_axis:
+        raise RuntimeError('scientific reference axis does not match the manifest')
     validate_qualification_metrics(
         metrics, qualification, mode, scientific=scientific)
     return metrics

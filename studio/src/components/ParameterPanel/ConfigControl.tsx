@@ -1,3 +1,6 @@
+/**
+ * Render one typed configuration control from the supplied schema and current text. Edits flow through the working-copy callback; Core retains validation authority.
+ */
 import { NumericInput } from './NumericInput';
 import { enumControls, rawOption } from './controlContract';
 import type { ParameterMeta } from '../../data/parSchema';

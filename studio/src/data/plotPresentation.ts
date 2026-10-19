@@ -24,6 +24,8 @@ export function lineFieldRange(s:FieldSetting,automatic:Range):Range {
  const r=fieldRange(s,automatic);
  if(s.manual||s.lower||s.upper)return r;
  const lo=s.scale==='log'?Math.log10(r[0]):r[0],hi=s.scale==='log'?Math.log10(r[1]):r[1];
+ // Five percent of the transformed span gives automatic plots visible headroom;
+ // it is a display choice, never a field tolerance or an explicit-limit change.
  const pad=(hi-lo)*.05;
  const candidate:Range=s.scale==='log'?[10**(lo-pad),10**(hi+pad)]:[lo-pad,hi+pad];
  // Extreme finite inputs must not acquire an unrepresentable display domain.
@@ -38,6 +40,7 @@ export function projection(domain:Range,scale:Scale,view:Range=[0,1]){
  return {forward:(v:number)=>((transform(v)-lo)/span-view[0])/(view[1]-view[0]),inverse:(fraction:number)=>inverse(lo+(view[0]+fraction*(view[1]-view[0]))*span)};
 }
 function bounded(a:number,b:number):Range {const span=Math.min(1,b-a);const start=Math.max(0,Math.min(1-span,a));return [start,start+span];}
+// 1e-6 is the minimum normalized viewport span, limiting interactive zoom only.
 export function zoomView(view:Range,anchor:number,factor:number):Range {const span=Math.max(1e-6,Math.min(1,(view[1]-view[0])*factor));const fixed=view[0]+anchor*(view[1]-view[0]);return bounded(fixed-anchor*span,fixed+(1-anchor)*span);}
 export function panView(view:Range,fraction:number):Range {const delta=fraction*(view[1]-view[0]);return bounded(view[0]-delta,view[1]-delta);}
 export function paddedRange(min:number,max:number):Range {if(min!==max)return [min,max];if(min>0)return [min*.95,min*1.05];const pad=Math.max(1,Math.abs(min)*.05);return [min-pad,max+pad];}
@@ -54,6 +57,8 @@ export function formatPlotTicks(values:readonly number[]):string[] {
  const format=(value:number,precision:number)=>Object.is(value,-0)?'-0':
   value!==0&&(Math.abs(value)>=1e5||Math.abs(value)<1e-3)?
    value.toExponential(precision-1):Number(value.toPrecision(Math.max(5,precision))).toString();
+ // Start with compact labels; 17 significant digits cover a binary64 roundtrip.
+ // The 1e5/1e-3 thresholds above select notation, not numerical rounding of data.
  for(let precision=4;precision<=17;precision++){
   const labels=values.map(value=>format(value,precision));
   if(labels.every((label,i)=>values.every((other,j)=>Object.is(values[i],other)||label!==labels[j])))return labels;

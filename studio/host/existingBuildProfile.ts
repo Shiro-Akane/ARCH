@@ -1,3 +1,9 @@
+/**
+ * Adopt an explicitly selected in-project Ninja build without changing its mode.
+ * Read canonical cache identities and CPU/CUDA settings, then validate paths.
+ * Adoption describes the existing recipe; successful Studio Build must still
+ * provide the dependency evidence needed to enable fresh Core actions.
+ */
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {readFile,stat} from 'node:fs/promises';

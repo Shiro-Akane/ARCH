@@ -91,7 +91,8 @@ void DriverRuntime::evaluate_device_regrid_indicators(bool jeans_repair_only)
 {
     const auto old_active=amr_ctrl.tree->GetActiveBlocks();
     (void)amr::indicator::make_selection(
-        config.amr,config.grid.dim,amr_ctrl.tree->RefinementSpecies());
+        config.amr,config.grid.dim,amr_ctrl.tree->RefinementSpecies(),
+        GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim));
     std::vector<double> errors;
     if(!jeans_repair_only) {
         complete_device_boundary(StateSlot::Current);
@@ -240,6 +241,11 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
             // Activate only Host topology/neighbor metadata. Old accepted
             // device sources remain immutable throughout this transaction.
             prepared.ActivateForDeviceMigration();
+            // Candidate Tree membership is authentic only after activation.
+            // Failure still rolls this unpublished topology/store back together.
+            for (auto& binding : payload.bindings)
+                binding.hydro_boundary=bc_handler.hydro_physical_faces(
+                    *amr_ctrl.tree,*binding.block);
             payload.store_transaction =
                 compute_backend->begin_topology_store_transaction(scope, payload.bindings);
             const auto staged_flux_plan = amr::build_amr_flux_topology_plan(

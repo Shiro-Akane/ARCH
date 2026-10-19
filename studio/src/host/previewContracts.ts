@@ -1,5 +1,13 @@
+/**
+ * Describe Core initial-field responses and their Host request association.
+ * Sampling uses x1-fastest bin centres and native orthonormal velocity metadata.
+ * Preview performs Setup/Init on CPU, not time stepping or scientific output;
+ * resource and capability fields describe only the advertised query scope.
+ */
 import type {BuildManifest} from './contracts.ts';
 export const PREVIEW_SCHEMA='1.0';
+// Eight MiB is the framed Preview transport allowance, not a field error budget.
+// Core capabilities can advertise a smaller request/response scope.
 export const MAX_PREVIEW_BYTES=8*1024*1024;
 export interface PreviewProfile { id:string; displayName:string; buildProfileId:string; caseId:string; dimension:1|2|3; defaultSampleCount:number; maxSampleCount:number; defaultShape?:number[]; maxPerAxis?:number; runnerKind:'existing-arch-cli'; configured:boolean }
 export interface RealPreviewRequest { projectId:string; profileId:string; configText:string; configRevision:string; requestedSampleCount?:number; requestedShape?:number[] }

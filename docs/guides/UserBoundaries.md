@@ -89,7 +89,7 @@ For `gravity_type=self`, `gravity_boundary` accepts:
 | Setting | Meaning |
 | --- | --- |
 | `periodic` | Fully periodic source with volume-mean density removed and zero-mean potential gauge |
-| `isolated` | Existing finite-mass, radial or 2D logarithmic exterior model; curved domains require full azimuth |
+| `isolated` | Finite-mass/full-ring Newton, radial or spherical-polar logarithmic exterior model; require full azimuth only when that coordinate is resolved |
 | `dirichlet` | Zero potential on nonperiodic physical faces |
 | `neumann` | Zero outward potential gradient; usually incompatible with positive total mass |
 | `user` | Conditions from `gravity_boundary.cpp`, including paired periodic directions |
@@ -148,7 +148,18 @@ state and random draws must not determine boundary data.
 | Cylindrical | r | (r,z) | (r,z,phi) |
 | Spherical | r | Equatorial (r,phi) | (r,theta,phi) |
 
-Cylindrical 2D is unsupported and rejects before physical-boundary evaluation. Spherical 2D keeps the polar `(r,phi)` chart; cylindrical radial 1D and 3D retain their existing coordinate conversion.
+Cylindrical 2D uses native `(r,z)` on CPU/CUDA, both measured in cm,
+retaining `(rho*u_r,rho*u_z,rho*u_phi)` and azimuthal kinetic energy at the
+unresolved azimuth `phi=0`. CPU/CUDA share geometry, flux and source mathematics;
+gravity is an independent optional module. Boundary and topology owners prepare
+physical walls; the regular axis is a coordinate join with reflecting parity.
+Missing native Device wall metadata is rejected instead of treated as an open
+view. Isolated self gravity has physical r/z boundaries and no active periodic
+phi direction. Artifacts require `chart=cylindrical-rz-pwc`, revision=1;
+legacy `axisymmetric-rz` and absent/invalid native identities are rejected.
+NativeGrid Plotfile readers also reject wrong axis names or units. CHK retains
+its existing restart contracts without a build/source/profile gate. Spherical
+2D remains the `(r,phi)` polar plane.
 
 Explicit potential data permits valid annuli, azimuthal sectors and spherical
 wedges. Existing root-grid and 2:1 AMR constraints still apply. Origin, axis and
@@ -173,6 +184,22 @@ can dominate tiny grids; measure matched physical endpoints and domain sizes.
   times can reverse order. This alone is not a macro-step total-energy proof;
   open mass flux, gauge and fluid gravitational work need joint analysis.
 - CUDA observer transfers, kernels and synchronization are reported separately.
+
+Callbacks enable boundary accounting automatically. To observe builtin faces,
+set the environment variable `ARCH_BOUNDARY_FLUX_DIAGNOSTICS=1`; absent or `0`
+leaves this optional observer off, and any other value is rejected. Native
+cylindrical 2-D appends `angular_momentum_z` after the heat column. It integrates
+outgoing torque impulse per unit azimuth using the existing face moment
+`T=integral(r dA)`, including the actual RK/RKL weights. The native momentum
+columns still use ordinary face area. Other coordinate charts keep their
+existing columns.
+
+For `J=sum(mom_phi W)`, compare `DeltaJ + outward_torque_impulse -
+body_torque_impulse` with the initial absolute angular momentum plus the
+absolute impulses, using the original `1e-12` normalized criterion. A zero
+normalization requires zero residual. A reflecting viscous wall can transmit
+torque; reflection alone does not imply constant J. Observation does not alter
+the evolved fluxes or stage coefficients.
 
 Budgets start at process launch and restart their accumulation after resume.
 Native curved-coordinate momenta are not global Cartesian conserved components.

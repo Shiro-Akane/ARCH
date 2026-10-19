@@ -229,7 +229,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (vars.v && dim >= 2)
         extract_and_store("VELY", [](const FluidState &s,int idx) { return s.mom_v[idx]/s.rho[idx]; });
 
-    if (vars.w && dim == 3)
+    if (vars.w && (dim == 3 || (dim == 2 && geom == "cylindrical")))
         extract_and_store("VELZ", [](const FluidState &s,int idx) { return s.mom_w[idx]/s.rho[idx]; });
 
     if (vars.entr) {
@@ -331,7 +331,7 @@ void write_plt(amr::AMRControl &amr_ctrl,
     for (const auto& [name, values] : data_map) {
         auto declaration = io::plot_field_metadata(name, geom == "cartesian");
         if (geom!="cartesian" && is_directional_component(name))
-            declaration.basis=dim==3?(geom=="cylindrical"?"local-orthonormal-r-z-phi":"local-orthonormal-r-theta-phi"):
+            declaration.basis=geom=="cylindrical" && dim>=2?"local-orthonormal-r-z-phi":dim==3?(geom=="cylindrical"?"local-orthonormal-r-z-phi":"local-orthonormal-r-theta-phi"):
                 dim==2?"local-orthonormal-r-phi-inactive":"local-orthonormal-r-inactive-inactive";
         field_metadata.emplace(name,std::move(declaration));
     }

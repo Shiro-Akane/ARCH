@@ -237,21 +237,32 @@ class ConfigurationContract(unittest.TestCase):
 
     def test_geometry_and_units_in_all_dimensions(self):
         names = {'cartesian': {1:['x'],2:['x','y'],3:['x','y','z']},
-                 'cylindrical': {1:['r'],3:['r','z','phi']},
+                 'cylindrical': {1:['r'],2:['r','z'],3:['r','z','phi']},
                  'spherical': {1:['r'],2:['r','phi'],3:['r','theta','phi']}}
         for geometry, dims in names.items():
             for dim, labels in dims.items():
                 with self.subTest(geometry=geometry, dim=dim):
-                    r = self.inspect(f'geometry={geometry}\nnblockx2={int(dim>=2)}\nnblockx3={int(dim==3)}\neos_type=helmholtz\neos_coulomb_mult=1\neos_table_path=/absent')
+                    r = self.inspect(f'geometry={geometry}\nnblockx2={int(dim>=2)}\nnblockx3={int(dim==3)}\nx1_min=1\nx1_max=2\neos_type=helmholtz\neos_coulomb_mult=1\neos_table_path=/absent')
                     axes=r['coordinates']['axes']
                     self.assertEqual([a['displayName'] for a in axes if a['active']], labels)
                     self.assertEqual([a['key'] for a in axes], ['x1','x2','x3'])
                     self.assertEqual([a['unit'] for a in axes if a['active']], ['rad' if x in ['phi','theta'] else 'cm' for x in labels])
                     self.assertTrue(all(a['unit'] is None for a in axes if not a['active']))
-        self.inspect('geometry=cylindrical\nnblockx2=1\nnblockx3=0',code=3)
+        native=self.inspect('geometry=cylindrical\nnblockx2=1\nnblockx3=0\nx1_min=1\nx1_max=2\nrefine_var=VELZ')
+        self.assertEqual(native['coordinates']['chart'],'cylindrical-rz-pwc')
+        self.assertTrue(next(c for c in native['amrIndicators']['choices'] if c['value']=='VELZ')['available'])
         r=self.inspect('nblockx2=0\nnblockx3=0')
         self.assertEqual(r['unitSystem'], 'cgs')
         self.assertEqual(r['coordinates']['axes'][0]['unit'], 'cm')
+
+    def test_cylindrical_case_insensitive_phi_indicator_keeps_o7_input_source(self):
+        for geometry in ("cylindrical","CYLINDRICAL","CyLiNdRiCaL"):
+            native=self.inspect(f'geometry={geometry}\nnblockx2=1\nnblockx3=0\nx1_min=1\nx1_max=2\nrefine_var=DENS,VELZ')
+            phi=next(c for c in native['amrIndicators']['choices'] if c['value']=='VELZ')
+            self.assertTrue(phi['selected']);self.assertTrue(phi['available'])
+            row=next(p for p in native['parameters'] if p['key']=='geometry')
+            self.assertEqual(row['valueSource'],'input');self.assertEqual(row['resolvedValue'],geometry)
+            self.assertEqual(native['coordinates']['chart'],'cylindrical-rz-pwc')
 
     def test_constraints_and_forbidden_diffusion_are_structured(self):
         for text,key in [('nblockx2=-1\nnblockx3=0','nblockx2'),

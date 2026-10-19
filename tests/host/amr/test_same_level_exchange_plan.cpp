@@ -368,6 +368,51 @@ void test_host_executor_bitwise_and_pitch()
     }
 }
 
+/** A coarse-fine Y fill happens after the ordinary face sweep. Its fresh edge
+ * values must reach both X-neighbors' corners before a transverse face stencil
+ * runs. Poisoned old corners are the negative control; active cells and face
+ * interiors must remain bit-identical during this final corner-only copy.
+ */
+void test_mixed_face_corner_completion()
+{
+    std::vector<SameLevelTopologyEntry> topology{
+        entry(key(2,0,0),51,13),entry(key(2,1,0),52,13)};
+    connect(topology[0],ExchangeFace::X1Upper,topology[1],ExchangeFace::X1Lower);
+    const auto faces=amr::make_same_level_exchange_plan(topology,2,{4,4,1},2,TopologyEpoch{13});
+    const auto corners=amr::make_same_level_corner_completion_plan(faces);
+    require(corners.fingerprint==amr::compute_same_level_exchange_fingerprint(corners),"corner fingerprint drifted");
+    std::array<OwnedHostBlock,2> blocks;
+    for(int n=0;n<2;++n) {
+        auto& block=blocks[n];block.logical=topology[n].logical;block.handle=topology[n].handle;
+        const int pitch=8+2*n,total=8*pitch;
+        block.layout={2,{2,2,0},{8,8,1},{1,pitch,total},total};block.species_count=2;
+        for(auto& field:block.conserved)field.assign(total,-777.-n);
+        block.species.assign(2*total,-888.-n);
+        // Simulate the completed coarse-fine face fill, including distinct
+        // values in every field/species at the two transverse edges.
+        for(int j:{-2,-1,4,5})for(int i=0;i<4;++i) {
+            const int cell=(j+2)*pitch+i+2;
+            for(int field=0;field<6;++field)block.conserved[field][cell]=10000.*n+1000.*field+100.*(j+2)+i;
+            for(int sp=0;sp<2;++sp)block.species[sp*total+cell]=20000.*n+1000.*sp+100.*(j+2)+i;
+        }
+    }
+    const auto before=blocks;
+    std::array<amr::HostExchangeBlockView,2> views{blocks[0].view(),blocks[1].view()};
+    const auto compiled=amr::compile_host_exchange_plan(corners,views);
+    amr::execute_host_exchange_plan(compiled,views);
+    for(int n=0;n<2;++n)for(int j=-2;j<6;++j)for(int i=-2;i<6;++i) {
+        const auto& block=blocks[n];const auto& donor=before[1-n];const auto& old=before[n];
+        const int cell=(j+2)*block.layout.stride[1]+i+2;
+        const bool copied=(j<0||j>=4)&&(n==0?i>=4:i<0);
+        const int from=(j+2)*donor.layout.stride[1]+(n==0?i-4:i+4)+2;
+        for(int field=0;field<6;++field)require(bits(block.conserved[field][cell])==
+            bits(copied?donor.conserved[field][from]:old.conserved[field][cell]),"corner completion changed a non-corner or missed fresh donor");
+        for(int sp=0;sp<2;++sp)require(bits(block.species[sp*block.layout.total_size+cell])==
+            bits(copied?donor.species[sp*donor.layout.total_size+from]:old.species[sp*old.layout.total_size+cell]),"corner species copy drifted");
+    }
+    require(before[0].conserved[4][6]!=blocks[0].conserved[4][6],"poisoned corner negative control was ineffective");
+}
+
 } // namespace
 
 int main()
@@ -379,6 +424,7 @@ int main()
         test_invalid_topology_rejected();
         test_logical_only_bootstrap_plan();
         test_host_executor_bitwise_and_pitch();
+        test_mixed_face_corner_completion();
         std::cout << "same-level exchange plan contract passed\n";
         return 0;
     } catch (const std::exception& error) {

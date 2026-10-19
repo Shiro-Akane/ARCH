@@ -13,6 +13,11 @@ CPU 与 CUDA 共用一种检查点格式和读取器。只要目标构建支持�
 就可以从检查点切换后端继续运行。验证将续算与不间断运行进行比较，包含动态加密和
 燃烧。整体验收状态统一见[验证索引](../README.zh-CN.md)。
 
+[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+补齐四组原256步RT GPU续算、五步四模块AMR续算及已重建的轴向模型。
+自身fresh保持严格控制器／场检查、全部CHK及Plot物理数据集逐位一致；独立CPU／GPU自然CFL终点不同者补实际同时间对照，
+不改时间或放宽fresh契约。私有Cellular ENUC跨后端门仍独立保持未通过。
+
 ## 检查点保存什么
 
 ARCH 检查点保存 AMR 叶块拓扑、守恒场、原始质量分数和用于加密判据的 `ENUC`，同时保存时间步

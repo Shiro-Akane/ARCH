@@ -1,3 +1,6 @@
+/**
+ * Render the named SVG interface glyph with the supplied presentation properties. Icon selection has no numerical or action authority.
+ */
 type IconName = 'grid' | 'layers' | 'crosshair' | 'play' | 'save' | 'reset' | 'build' | 'monitor' | 'chevron' | 'expand';
 const paths: Record<IconName, string> = {
   grid: 'M3 3h18v18H3z M3 9h18 M3 15h18 M9 3v18 M15 3v18',

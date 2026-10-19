@@ -73,52 +73,14 @@ arch_configure_host_test(arch_preview_mesh_geometry)
 target_link_libraries(arch_preview_mesh_geometry PRIVATE arch_build_contract)
 add_test(NAME preview_mesh_geometry COMMAND arch_preview_mesh_geometry)
 
-add_test(NAME portable_network_generator
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/network/test_portable_network_generator.py)
-set_tests_properties(portable_network_generator PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME cuda_amr_smoke_runner_contract
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_smoke_cuda_amr_runtime.py)
-add_test(NAME curvilinear_manifest_contract
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_curvilinear_manifest.py)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_test(NAME memory_guard_contract
-        COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/resources/test_run_memory_guarded.py)
-endif()
-add_test(NAME backend_validation_contract
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_validate_backend_results.py)
-set_tests_properties(backend_validation_contract PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME sparse_validation_contract
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/validation/network/test_sparse_validation.py)
-add_test(NAME validation_provenance_contract
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_validation_provenance.py)
-set_tests_properties(validation_provenance_contract PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME runtime_validation_inputs_contract
-    COMMAND ${Python3_EXECUTABLE} -B
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/validation/test_runtime_validation_inputs.py)
-set_tests_properties(runtime_validation_inputs_contract PROPERTIES
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-# Hosted CI runs these runner contracts in its complete Tooling job. Labeling
-# keeps them available to an unfiltered local CTest run while avoiding a second
-# execution in the CPU numerical/API lane.
-set(ARCH_HOST_TOOLING_TESTS
-    portable_network_generator cuda_amr_smoke_runner_contract
-    curvilinear_manifest_contract backend_validation_contract
-    validation_provenance_contract runtime_validation_inputs_contract)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    list(APPEND ARCH_HOST_TOOLING_TESTS memory_guard_contract)
-endif()
-set_property(TEST ${ARCH_HOST_TOOLING_TESTS} APPEND PROPERTY LABELS tooling)
-
+# One complete discovery entry serves local CTest and the hosted Tooling job.
+# It rejects empty/skipped suites. CPU CI excludes this label in both inventory
+# and execution, so each Python assertion runs once per hosted workflow.
+add_test(NAME tooling_contracts
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling)
+set_tests_properties(tooling_contracts PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    LABELS tooling)
 
 # Syntax is checked before any model, EOS or device resource is constructed.
 add_executable(arch_config_input_records tests/host/io/test_config_input_records.cpp)
@@ -253,6 +215,9 @@ add_executable(arch_gravity_stage_contract
     src/amr/elliptic/EllipticMeshAdapter.cpp
     src/driver/stages/GravityStage.cpp)
 target_link_libraries(arch_gravity_stage_contract PRIVATE arch_driver_runtime arch_gravity_cpu)
+if(ARCH_ENABLE_CUDA)
+    target_link_libraries(arch_gravity_stage_contract PRIVATE arch_cuda_backend CUDA::cudart)
+endif()
 arch_configure_host_test(arch_gravity_stage_contract)
 add_test(NAME gravity_stage_contract COMMAND arch_gravity_stage_contract)
 
@@ -510,6 +475,9 @@ add_executable(arch_composite_poisson tests/host/gravity/test_composite_poisson.
     src/numerics/multigrid/CompositeExecution.cpp
     src/physics/gravity/GravityBoundary.cpp)
 arch_configure_host_test(arch_composite_poisson)
+if(ARCH_ENABLE_CUDA)
+    target_link_libraries(arch_composite_poisson PRIVATE arch_cuda_gravity_execution CUDA::cudart)
+endif()
 add_test(NAME composite_poisson_analytic COMMAND arch_composite_poisson ci)
 set_tests_properties(composite_poisson_analytic PROPERTIES TIMEOUT 600)
 

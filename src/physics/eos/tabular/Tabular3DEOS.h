@@ -201,6 +201,8 @@ struct BasicTabular3DEOSView
         const double temperature = std::pow(10.0, root);
         const double recovered = interpolate_3d(field, rho, temperature, x);
         if (!std::isfinite(recovered)
+            // Require the same relative recovered-energy consistency as the
+            // shared table inversion; this is not a global EOS field budget.
             || std::abs(recovered - energy) > 2.0e-12 * std::max(std::abs(energy), std::abs(recovered)))
             return native_failure(tabular_eos::FreeEnergyStatus::invalid_temperature_inversion);
         return temperature;

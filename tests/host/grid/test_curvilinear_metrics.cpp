@@ -10,6 +10,7 @@
 #include "driver/DriverUtils.h"
 #include "numerics/curvilinear/GeometricSources.h"
 #include "numerics/integrator/HydroSolverImpl.h"
+#include "numerics/integrator/HydroGeometryBinding.h"
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
@@ -32,6 +33,7 @@
 #include <cstdint>
 #include <limits>
 #include <mutex>
+#include <numbers>
 #include <span>
 #include <stdexcept>
 #include <vector>
@@ -46,6 +48,418 @@ struct ConstantEos {
     double get_pressure(const FluidVector&, const double*) const { return 5.0; }
     double get_sound_speed(const FluidVector&, double, const double*) const { return 2.0; }
 };
+
+struct PressurelessEos {
+    double get_pressure(const FluidVector&, const double*) const { return 0.0; }
+    double get_sound_speed(const FluidVector&, double, const double*) const { return 1.0; }
+};
+
+/** Native geometry is inspectable while unqualified public solvers stay closed. */
+void test_axisymmetric_geometry()
+{
+    using namespace GridMetrics;
+    Grid grid(amr::MAX_NG,0.,1.,-8.,8.,0.,0.,1,1,0);
+    grid.dim=2;grid.geometry="cylindrical";grid.InitializeTopology();
+    const auto view=make_geometry_view(grid);
+    const auto layout=resolve_coordinate_layout(view.geometry,2);
+    if(!layout.valid || layout.basis!=CoordinateLayout::Basis::CylindricalRZPhi ||
+       layout.radial!=0 || layout.axial!=1 || layout.azimuth!=2 ||
+       layout.resolved_derivatives!=std::array<bool,3>{true,true,false} ||
+       grid.dx3!=0. || grid.GetTotalZ()!=1 || grid.Ks()!=0 || grid.Ke()!=1 ||
+       grid.GetAxisNames()!=std::vector<std::string>{"r_cy","z_cy"})
+        throw std::runtime_error("axisymmetric layout/inactive storage");
+    const auto fragment=make_geometry_view(Geometry::Cylindrical,2,{0.,-8.,0.},{grid.dx1,grid.dx2,0.});
+    close(CellVolume(fragment,0,0,0),CellVolume(view,grid.Is(),grid.Js(),0),"native/fragment geometry agreement");
+    for(const auto rz: {std::array<double,2>{3.,-4.}, {1.e-100,0.}, {0.,-4.}, {0.,0.}}) {
+        const auto p=Grid::PhysicalCoordsFromNative(2,"cylindrical",rz[0],rz[1],99.);
+        const auto x=PhysicalPosition(Geometry::Cylindrical,2,{rz[0],rz[1],99.});
+        if(p.x!=rz[0] || p.y!=0. || p.z!=rz[1] || p.phi!=0. ||
+           p.phi_cy!=0. || p.r_cy!=rz[0] || p.z_cy!=rz[1] ||
+           x!=std::array<double,3>{rz[0],0.,rz[1]})
+            throw std::runtime_error("axisymmetric representative point");
+        if(rz[0]==3.)close(p.r,5.,"native spherical radius");
+        if(rz[0]==1.e-100)close(p.theta,arch::constants::math::pi/2.,"small native polar angle must not be floored");
+    }
+    for(int direction=0;direction<2;++direction)for(auto side:{arch::boundary::BoundarySide::Lower,arch::boundary::BoundarySide::Upper}) {
+        const auto face=Grid::PhysicalCoordsFromNative(2,"cylindrical",.5,-3.);
+        const auto normal=arch::boundary::BoundaryCartesianNormal(grid,face,
+            direction==0?arch::boundary::BoundaryAxis::X1:arch::boundary::BoundaryAxis::X2,side);
+        const double sign=side==arch::boundary::BoundarySide::Lower?-1.:1.;
+        if(normal!=std::array<double,3>{direction==0?sign:0.,0.,direction==1?sign:0.})
+            throw std::runtime_error("axisymmetric physical boundary normal");
+    }
+    if(FaceArea(view,0,grid.Is(),grid.Js(),0,false)!=0. ||
+       AngularMomentumFaceMoment(view,0,grid.Is(),grid.Js(),0,false)!=0. ||
+       PhysicalSpacing(view,2,grid.Is(),grid.Js())!=0. ||
+       std::isfinite(AngularMomentumFaceMoment(view,2,grid.Is(),grid.Js(),0,false)))
+        throw std::runtime_error("axis/inactive face moment");
+    arch::boundary::HydroBoundaryView walls;walls.reflecting[0]=walls.reflecting[1]=true;
+    for(int i=grid.Is();i<grid.Ie();++i) {
+        bool lower=true,upper=true;
+        if(!walls.advective_faces_open(0,i,grid.Is(),grid.Ie(),lower,upper)||
+           lower!=(i!=grid.Is())||upper!=(i!=grid.Ie()-1))
+            throw std::runtime_error("shared advective face identity");
+    }
+    bool lower=false,upper=true;
+    if(walls.advective_faces_open(0,grid.Ie(),grid.Is(),grid.Ie(),lower,upper)||lower||!upper)
+        throw std::runtime_error("invalid face identity silently became open");
+    FluidVector source{};
+    TimeIntegration::add_geometric_source_cell(FluidVector{2.,.6,-.4,1.4,20.},nullptr,
+        ConstantEos{},view,grid.Is(),grid.Js(),.125,source);
+    const double inverse_r=2./grid.dx1;
+    close(source.mom_u,.125*(2.*.7*.7+5.)*inverse_r,"radial rotation source");
+    if(source.mom_v!=0. || source.mom_w!=0. || source.rho!=0. || source.eng!=0.)
+        throw std::runtime_error("torque divergence must not receive a second phi source");
+    bool rejected=false;
+    if(resolve_public_chart("cylindrical",2)!=Geometry::Cylindrical)
+        throw std::runtime_error("native cylindrical chart identity");
+    // Native no-gravity Hydro can now request ordinary boundary authority.
+    // Public input/backend and checkpoint qualification retain their own gates.
+    SpeciesManager species;species.add_species("gas",1.,1.,1.4,3.);
+    IdealGas eos(1.4,species);
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> hydro(eos);
+    amr::AMRControl control(4,2);
+    SimConfig config{};config.grid.dim=2;config.grid.geometry="cartesian";
+    config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=0.;config.grid.x1_max=1.;
+    config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    control.tree->InitRootGrid(config,1);
+    for(int id:control.tree->GetActiveBlocks())control.pool->GetBlock(id).grid.geometry="cylindrical";
+    struct BoundaryProbe {
+        mutable bool called=false;
+        int logical_plan(const Grid&)const {called=true;return 0;}
+    } boundary;
+    rejected=false;
+    try{TimeIntegration::require_hydro_geometry_domain(control,boundary,&hydro);}
+    catch(const std::invalid_argument&){rejected=true;}
+    if(rejected || !boundary.called)throw std::runtime_error("native Hydro preflight boundary");
+    auto& block=control.pool->GetBlock(control.tree->GetActiveBlocks().front());
+    const FluidVector input{2.,.4,-.6,.8,20.};
+    for(int c=0;c<block.grid.GetTotalSize();++c) {
+        block.fluid_state.set(c,input);block.fluid_state.X(0,c)=1.;
+    }
+    std::vector<FluidVector> off(block.grid.GetTotalSize()),on(off.size());
+    std::vector<double> off_species(off.size()),on_species(off.size());
+    Physical::Gravity::ExternalGravity optional_gravity(.3,-.2,.4);
+    hydro.evaluate_patch(nullptr,block.id,block.fluid_state,block.grid,.1,
+        off,off_species,nullptr,config.numerics);
+    hydro.evaluate_patch(nullptr,block.id,block.fluid_state,block.grid,.1,
+        on,on_species,&optional_gravity,config.numerics);
+    for(int j=block.grid.Js();j<block.grid.Je();++j)for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+        const int c=block.grid.GetIndex(i,j,0);
+        close(on[c].mom_u-off[c].mom_u,.1*input.rho*.3,"external radial impulse");
+        close(on[c].mom_v-off[c].mom_v,-.1*input.rho*.2,"external axial impulse");
+        close(on[c].mom_w-off[c].mom_w,.1*input.rho*.4,"external torque impulse");
+        close(on[c].eng-off[c].eng,.1*(input.mom_u*.3-input.mom_v*.2+input.mom_w*.4),"external work");
+        if(on[c].rho!=off[c].rho||on_species[c]!=off_species[c])
+            throw std::runtime_error("external gravity changed mass/species");
+    }
+    // Unresolved swirl does not invent a third spatial acoustic direction.
+    const FluidVector quiet{1.,0.,0.,0.,20.},swirl{1.,0.,0.,.1,20.005};
+    if(evaluate_cfl_cell_dt(quiet,nullptr,ConstantEos{},view,grid.Is(),grid.Js())!=
+       evaluate_cfl_cell_dt(swirl,nullptr,ConstantEos{},view,grid.Is(),grid.Js()))
+        throw std::runtime_error("unresolved azimuth entered spatial CFL");
+    for(double radial:{-3.,0.,3.}) {
+        // Independent specific-energy reference: rho=2, e=3, uphi=20.
+        const FluidVector fast{2.,2.*radial,0.,40.,6.+radial*radial+400.};
+        const double bound=TimeIntegration::cylindrical_rotation_source_dt(fast,view,grid.Is());
+        const long double a=400.L*inverse_r,impulse=a*bound;
+        if(!std::isfinite(bound)||!(bound>0.)||std::abs(radial)*impulse+.5L*impulse*impulse>1.5L*(1.L+2.e-12L))
+            throw std::runtime_error("centrifugal impulse consumed its thermal margin");
+    }
+    if(TimeIntegration::cylindrical_rotation_source_dt(quiet,view,grid.Is())!=std::numeric_limits<double>::max()||
+       !std::isnan(TimeIntegration::cylindrical_rotation_source_dt(FluidVector{1.,0.,0.,20.,1.},view,grid.Is())))
+        throw std::runtime_error("rotation timestep zero/invalid contract");
+    for(int failure=0;failure<4;++failure) {
+        Grid invalid=grid;
+        if(failure==0)invalid.x1_min=-1.;
+        if(failure==1)invalid.x2_max=invalid.x2_min;
+        if(failure==2)invalid.x2_min=std::numeric_limits<double>::quiet_NaN();
+        if(failure==3)invalid.x1_max=std::numeric_limits<double>::infinity();
+        rejected=false;try{invalid.InitializeTopology();}catch(const std::invalid_argument&){rejected=true;}
+        if(!rejected)throw std::runtime_error("invalid native axisymmetric domain accepted");
+    }
+    std::cout<<"AXISYMMETRIC_NATIVE_GEOMETRY_PASS\n";
+}
+
+/** Actual HLLC patch increments must reduce to the retained 1-D operator.
+ * Axial contact/acoustic data are constant in r; radial data are constant in z.
+ * This catches an invented phi derivative, an axial geometric source, changed
+ * component ordering or an accidental V/W weight on ordinary rho/E/rhoX.
+ */
+void test_axisymmetric_one_dimensional_reductions()
+{
+    SpeciesManager species;species.add_species("X",1.,1.,1.4,1.);species.add_species("Y",1.,1.,1.4,1.);
+    constexpr double gamma=1.4;IdealGas eos(gamma,species);NumericsConfig numerics{};numerics.hll_roe_wave_speed=true;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> pcm(eos);
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<MusclReconstruction<McLimiter>>> muscl(eos);
+    for(bool axial:{false,true})for(double inner:{0.,1.})for(bool acoustic:{false,true})
+    for(const Numerics::IHydroSolver* hydro:{static_cast<const Numerics::IHydroSolver*>(&pcm),static_cast<const Numerics::IHydroSolver*>(&muscl)}) {
+        Grid plane(amr::MAX_NG,inner,inner+1.,0.,1.,0.,0.,1,1,0);
+        plane.dim=2;plane.geometry="cylindrical";plane.InitializeTopology();
+        Grid line(amr::MAX_NG,axial?0.:inner,axial?1.:inner+1.,0.,0.,0.,0.,1,0,0);
+        line.dim=1;line.geometry=axial?"cartesian":"cylindrical";line.InitializeTopology();
+        FluidState states[2];const Grid* grids[]{&line,&plane};
+        for(int n=0;n<2;++n) {
+            const auto& grid=*grids[n];auto& state=states[n];state.Preallocate(grid.GetTotalSize());state.InitSpecies(2);
+            for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+                const double x=n==1&&axial?grid.GetCellCenterY(j):grid.GetCellCenterX(i);
+                const double wave=std::cos(2.*std::numbers::pi*x),rho=1.+.1*wave;
+                const double velocity=axial?.12:.02*x;
+                const double pressure=2.+(acoustic?.05*wave:0.);
+                const int cell=grid.GetIndex(i,j,0);
+                state.set(cell,{rho,n==1&&axial?0.:rho*velocity,n==1&&axial?rho*velocity:0.,0.,pressure/(gamma-1.)+.5*rho*velocity*velocity});
+                state.X(0,cell)=.4+.03*wave;state.X(1,cell)=1.-state.X(0,cell);
+            }
+        }
+        std::vector<FluidVector> delta[2];std::vector<double> composition[2];
+        for(int n=0;n<2;++n) {
+            delta[n].resize(grids[n]->GetTotalSize());composition[n].resize(2*grids[n]->GetTotalSize());
+            hydro->evaluate_patch(nullptr,-1,states[n],*grids[n],.001,delta[n],composition[n],nullptr,numerics);
+        }
+        for(int j=plane.Js();j<plane.Je();++j)for(int i=plane.Is();i<plane.Ie();++i) {
+            const int cell=plane.GetIndex(i,j,0),reference=line.GetIndex(axial?j:i,0,0);
+            const auto actual=delta[1][cell],expected=delta[0][reference];
+            close(actual.rho,expected.rho,"axisymmetric 1-D density reduction");
+            close(actual.eng,expected.eng,"axisymmetric 1-D energy reduction");
+            close(axial?actual.mom_v:actual.mom_u,expected.mom_u,"axisymmetric 1-D momentum reduction");
+            close(axial?actual.mom_u:actual.mom_v,0.,"axisymmetric inactive momentum source");
+            close(actual.mom_w,0.,"axisymmetric unresolved angular derivative");
+            for(int sp=0;sp<2;++sp)close(composition[1][sp*plane.GetTotalSize()+cell],composition[0][sp*line.GetTotalSize()+reference],"axisymmetric 1-D rhoX reduction");
+        }
+    }
+    std::cout<<"AXISYMMETRIC_ONE_DIMENSIONAL_REDUCTIONS_PASS\n";
+}
+
+/** Independent discrete angular-work identity for the native (r,z) stage.
+ * One explicit mass/torque/radial update is compared with the angular kinetic
+ * energy carried by the energy flux. The point oracle above stays untouched;
+ * this exercises the separate work-adjoint quadrature and its wall closure.
+ */
+void test_axisymmetric_angular_work()
+{
+    using namespace GridMetrics;
+    for (double lower : {0., 1., 2.5})
+    for (double width : {.2, .05}) {
+        GeometryView grid{};
+        grid.geometry=Geometry::Cylindrical; grid.dim=2;
+        grid.dx1=width; grid.dx2=.09; grid.dx3=0.;
+        grid.x1_min=lower; grid.x2_min=-.3;
+        const int i=0;
+        const double volume=CellVolume(grid,i,0,0);
+        const double moment=AngularMomentumVolumeMoment(grid,i,0,0);
+        const double area_l=FaceArea(grid,0,i,0,0,false);
+        const double area_r=FaceArea(grid,0,i,0,0,true);
+        const double torque_l=AngularMomentumFaceMoment(grid,0,i,0,0,false);
+        const double torque_r=AngularMomentumFaceMoment(grid,0,i,0,0,true);
+        const double inverse_radius=InverseRadiusVolumeAverage(grid,i);
+        const double open=TimeIntegration::axisymmetric_centrifugal_work_coefficient(
+            grid,i,true,true);
+        close(open,2.*volume/moment-inverse_radius,"work-adjoint open coefficient");
+        if (lower>0.) {
+            if (!(open<inverse_radius))
+                throw std::runtime_error("open work coefficient exceeds point average");
+            const double upper_only=TimeIntegration::axisymmetric_centrifugal_work_coefficient(
+                grid,i,false,true);
+            const double lower_only=TimeIntegration::axisymmetric_centrifugal_work_coefficient(
+                grid,i,true,false);
+            if (!(upper_only>0. && upper_only<inverse_radius)
+                || !(lower_only>0. && lower_only<inverse_radius))
+                throw std::runtime_error("wall work coefficient is not a positive face lever");
+            if (std::abs(upper_only+lower_only-open)>2.e-12*open)
+                throw std::runtime_error("open coefficient is not the two-face sum");
+        }
+        const double rho=1.3, radial_velocity=.21, angular_velocity=1.7;
+        const double radial_mass_flux=rho*radial_velocity;
+        auto work=[&](bool lower_open,bool upper_open,const char* name) {
+            const double coefficient=TimeIntegration::axisymmetric_centrifugal_work_coefficient(
+                grid,i,lower_open,upper_open);
+            if (!std::isfinite(coefficient)) throw std::runtime_error(name);
+            const double mass_l=lower_open?area_l*radial_mass_flux:0.;
+            const double mass_r=upper_open?area_r*radial_mass_flux:0.;
+            const double torque_lower=lower_open?torque_l*radial_mass_flux*angular_velocity:0.;
+            const double torque_upper=upper_open?torque_r*radial_mass_flux*angular_velocity:0.;
+            // Exact time derivative of K_phi=0.5*V*M_phi^2/rho under the
+            // discrete mass and torque updates, independent of the source algebra.
+            const double kinetic_rate=volume*angular_velocity
+                *(torque_lower-torque_upper)/moment
+                -.5*volume*angular_velocity*angular_velocity*(mass_l-mass_r)/volume;
+            const double source_work=volume*radial_velocity*rho
+                *angular_velocity*angular_velocity*coefficient;
+            const double expected=.5*radial_mass_flux*angular_velocity*angular_velocity
+                *((lower_open?area_l:0.)-(upper_open?area_r:0.));
+            const double scale=std::max({1.,std::abs(source_work),std::abs(expected)});
+            if (std::abs(kinetic_rate+source_work-expected)>2.e-12*scale)
+                throw std::runtime_error(name);
+        };
+        work(true,true,"open-cell angular work balance");
+        if (lower>0.) {
+            work(false,true,"lower-wall angular work balance");
+            work(true,false,"upper-wall angular work balance");
+        }
+        // Zero-pressure one-step check: adiabatic uniform transport must leave
+        // internal energy unchanged. The counterfactual point source is retained
+        // only to demonstrate that the original quadrature drains thermal energy.
+        const double internal=2.4;
+        const double energy=rho*(internal+.5*(radial_velocity*radial_velocity
+            +angular_velocity*angular_velocity));
+        const double radial_flux=rho*radial_velocity*radial_velocity;
+        const double energy_flux=energy*radial_velocity;
+        const double dt=5.e-7;
+        auto thermal=[&](bool lower_open,bool upper_open,bool corrected,const char* name) {
+            FluidVector source{};
+            TimeIntegration::add_axisymmetric_work_source_cell(
+                FluidVector{rho,rho*radial_velocity,0.,rho*angular_velocity,energy},
+                nullptr,PressurelessEos{},grid,i,0,dt,lower_open,upper_open,source);
+            if (source.rho!=0.||source.mom_v!=0.||source.mom_w!=0.||source.eng!=0.)
+                throw std::runtime_error("axisymmetric source added a second phi/energy term");
+            const double coefficient=corrected
+                ?TimeIntegration::axisymmetric_centrifugal_work_coefficient(
+                    grid,i,lower_open,upper_open)
+                :inverse_radius;
+            if (corrected) {
+                if (std::abs(source.mom_u-dt*rho*angular_velocity*angular_velocity*coefficient)
+                    >2.e-12*std::max(1.,std::abs(source.mom_u)))
+                    throw std::runtime_error("stage source did not use the work coefficient");
+            } else {
+                // Counterfactual only: the pre-repair point quadrature.
+                source.mom_u=dt*rho*angular_velocity*angular_velocity*coefficient;
+            }
+            const double rho_new=rho+dt*((lower_open?area_l*radial_mass_flux:0.)
+                -(upper_open?area_r*radial_mass_flux:0.))/volume;
+            const double radial_new=rho*radial_velocity
+                +dt*((lower_open?area_l*radial_flux:0.)
+                -(upper_open?area_r*radial_flux:0.))/volume
+                +dt*rho*angular_velocity*angular_velocity*coefficient;
+            const double angular_new=rho*angular_velocity
+                +dt*((lower_open?torque_l*radial_mass_flux*angular_velocity:0.)
+                -(upper_open?torque_r*radial_mass_flux*angular_velocity:0.))/moment;
+            const double energy_new=energy+dt*((lower_open?area_l*energy_flux:0.)
+                -(upper_open?area_r*energy_flux:0.))/volume;
+            const double internal_new=energy_new/rho_new
+                -.5*(radial_new*radial_new+angular_new*angular_new)/(rho_new*rho_new);
+            if (!std::isfinite(internal_new)) throw std::runtime_error(name);
+            return std::abs(internal_new-internal)/internal;
+        };
+        if (thermal(true,true,true,"open thermal consistency")>2.e-10)
+            throw std::runtime_error("corrected open source drained thermal energy");
+        if (lower>0.) {
+            if (thermal(false,true,true,"wall thermal consistency")>2.e-10)
+                throw std::runtime_error("corrected wall source drained thermal energy");
+            if (thermal(false,true,false,"point wall counterexample")<5.e-11)
+                throw std::runtime_error("point wall source no longer shows the work defect");
+        }
+    }
+    // Independent Decimal120 moment quotients, rounded once to binary64.
+    // Tiny/huge and one-ULP rings expose cancellation in T/W - A/V; ordinary
+    // absolute-error checks would silently accept a completely lost coefficient.
+    const double connection_oracle[][4]{
+        {0, 0.125, 0, 8},
+        {1e-100, 0.125, 1.28e-98, 8},
+        {1e-100, 1.2689709186578246e-116, 4.9999999999999991e+99, 5.0000000000000001e+99},
+        {1, 0.125, 0.45107075088099757, 0.48793711032800219},
+        {1, 2.2204460492503131e-16, 0.49999999999999989, 0.5},
+        {10000000000, 1250000000, 4.5107075088099754e-11, 4.8793711032800216e-11},
+        {10000000000, 1.9073486328125e-06, 4.9999999999999989e-11, 4.9999999999999995e-11},
+        {1e+100, 1.2500000000000007e+99, 4.5107075088099753e-101, 4.8793711032800215e-101},
+        {1e+100, 1.9426688922257291e+84, 4.9999999999999988e-101, 4.9999999999999995e-101},
+    };
+    for(const auto& row:connection_oracle) {
+        GeometryView grid{};grid.geometry=Geometry::Cylindrical;grid.dim=2;
+        grid.x1_min=row[0];grid.dx1=row[1];grid.dx2=1.;
+        const double actual[2]{
+            TimeIntegration::axisymmetric_centrifugal_work_coefficient(grid,0,true,false),
+            TimeIntegration::axisymmetric_centrifugal_work_coefficient(grid,0,false,true)};
+        for(int side=0;side<2;++side) {
+            const double expected=row[2+side];
+            if(!std::isfinite(actual[side])||(expected==0.?actual[side]!=0.:
+                std::abs(actual[side]-expected)>2.e-12*std::abs(expected)))
+                throw std::runtime_error("work coefficient failed true-relative Decimal120 oracle");
+        }
+    }
+    // Smooth radial profile: interior corrected quadrature keeps midpoint order;
+    // the one-cell wall closure error is the expected shrinking O(dr) integral.
+    const auto profile=[](double r) {
+        return (1.+.3*r+.1*r*r)*(.5+.7*r)*(.5+.7*r);
+    };
+    const auto primitive=[](double r) {
+        return .25*r+.3875*r*r+(0.725/3.)*r*r*r+(0.217/4.)*r*r*r*r
+            +(0.049/5.)*r*r*r*r*r;
+    };
+    double previous_open=0.,previous_wall=0.;
+    for (double h : {.2,.1,.05,.025}) {
+        GeometryView grid{};
+        grid.geometry=Geometry::Cylindrical; grid.dim=2;
+        grid.dx1=h; grid.dx2=1.; grid.dx3=0.; grid.x1_min=1.; grid.x2_min=0.;
+        const int i=0;
+        const double volume=CellVolume(grid,i,0,0);
+        const double exact=primitive(1.+h)-primitive(1.);
+        const double sampled=profile(1.+.5*h);
+        const double open_error=std::abs(volume
+            *TimeIntegration::axisymmetric_centrifugal_work_coefficient(grid,i,true,true)
+            *sampled-exact);
+        const double wall_error=std::abs(volume
+            *TimeIntegration::axisymmetric_centrifugal_work_coefficient(grid,i,false,true)
+            *sampled-exact);
+        if (h<.2) {
+            if (!(open_error<previous_open/5.))
+                throw std::runtime_error("interior corrected quadrature lost second order");
+            const double ratio=wall_error/previous_wall;
+            if (!(ratio>0.3&&ratio<0.8))
+                throw std::runtime_error("wall closure error is not a shrinking O(dr) cell contribution");
+        }
+        previous_open=open_error; previous_wall=wall_error;
+    }
+    // Every retained chart must re-enter the old source arithmetic exactly.
+    for (const auto& retained : {
+            make_geometry_view(Geometry::Spherical,2,{1.,0.,0.},{.2,.3,0.}),
+            make_geometry_view(Geometry::Cylindrical,3,{1.,0.,0.},{.2,.3,.1}),
+            make_geometry_view(Geometry::Spherical,3,{1.,0.,0.},{.2,.3,.1})}) {
+        FluidVector old_source{},new_source{};
+        const FluidVector probe{2.,.6,.4,1.4,20.};
+        TimeIntegration::add_geometric_source_cell(
+            probe,nullptr,ConstantEos{},retained,0,0,.125,old_source);
+        TimeIntegration::add_axisymmetric_work_source_cell(
+            probe,nullptr,ConstantEos{},retained,0,0,.125,false,false,new_source);
+        if (old_source.rho!=new_source.rho||old_source.mom_u!=new_source.mom_u
+            ||old_source.mom_v!=new_source.mom_v||old_source.mom_w!=new_source.mom_w
+            ||old_source.eng!=new_source.eng)
+            throw std::runtime_error("retained chart source arithmetic changed");
+    }
+    std::cout<<"AXISYMMETRIC_ANGULAR_WORK_PASS\n";
+}
+
+/** Constant-capacity scalar modes use V and the ordinary axial Laplacian.
+ * Equal species masses/gammas make cv constant, so energy and rho*X have
+ * independent exact discrete cosine eigenvalues. Rotation remains present.
+ */
+void test_axisymmetric_scalar_diffusion()
+{
+    SpeciesManager species;species.add_species("X",1.,1.,1.4,1.);species.add_species("Y",1.,1.,1.4,1.);
+    IdealGas eos(1.4,species);SimConfig c{};
+    c.physics.diffusion.use_diffusion=c.physics.diffusion.use_thermal_diffusion=c.physics.diffusion.use_species_diffusion=true;
+    c.physics.diffusion.alpha_therm=.015;c.physics.diffusion.D_spec=.02;
+    Grid g(amr::MAX_NG,0.,1.,0.,1.,0.,0.,1,1,0);g.dim=2;g.geometry="cylindrical";g.InitializeTopology();
+    FluidState u,d;u.Preallocate(g.GetTotalSize());u.InitSpecies(2);d.Preallocate(g.GetTotalSize());d.InitSpecies(2);
+    for(int j=0;j<g.GetTotalY();++j)for(int i=0;i<g.GetTotalX();++i) {
+        const int cell=g.GetIndex(i,j,0);const double wave=std::cos(2.*std::numbers::pi*g.GetCellCenterY(j));
+        const double uphi=.2*GridMetrics::AngularMomentumVolumeMoment(g,i,j,0)/GridMetrics::CellVolume(g,i,j,0);
+        u.set(cell,{1.,0.,0.,uphi,5.+.1*wave+.5*uphi*uphi});u.X(0,cell)=.4+.03*wave;u.X(1,cell)=1.-u.X(0,cell);
+    }
+    DiffFlux::compute_diffusion_operator(u,d,eos,g,c);
+    const double eigenvalue=-4.*std::pow(std::sin(std::numbers::pi*g.dx2),2)/(g.dx2*g.dx2);
+    for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+        const int cell=g.GetIndex(i,j,0);const double wave=std::cos(2.*std::numbers::pi*g.GetCellCenterY(j));
+        close(d.eng[cell],c.physics.diffusion.alpha_therm*eigenvalue*.1*wave,"axial thermal eigenvalue");
+        close(d.X(0,cell),c.physics.diffusion.D_spec*eigenvalue*.03*wave,"axial species eigenvalue");
+        close(d.X(0,cell)+d.X(1,cell),0.,"species flux closure");
+        if(d.mom_u[cell]!=0.||d.mom_v[cell]!=0.||d.mom_w[cell]!=0.||d.rho[cell]!=0.)
+            throw std::runtime_error("scalar diffusion contaminated momentum/density");
+    }
+    const double dt=DiffFlux::adaptive_dt_diff(u,eos,g,c,.8);
+    if(!std::isfinite(dt)||!(dt>0.))throw std::runtime_error("scalar diffusion timestep");
+    std::cout<<"AXISYMMETRIC_SCALAR_DIFFUSION eigenvalue="<<eigenvalue<<" dt="<<dt<<'\n';
+}
 
 /** Actual canonical single-block Cartesian BC -> diffusion -> FE work witnesses.
  * The Grid/BCHandler contract fixes 16 cells per active axis (not a fabricated
@@ -186,25 +600,39 @@ void test_cartesian_real_diffusion_boundaries()
 
 } // namespace
 
+// Independent curl oracle: u_r=a*r, u_z=b*r, u_phi=Omega*r+c*z.
+// Cyl2 resolves z, not phi: curl=(-c, -b, 2*Omega+c*z/r) in
+// (r,phi,z) physical order. Constant pressure/EOS are irrelevant here.
+static void test_axisymmetric_velocity_diagnostics()
+{
+    for(double inner:{0.,1.}) {
+        Grid grid;grid.dim=2;grid.geometry="cylindrical";grid.ng=2;
+        grid.x1_min=inner;grid.x1_max=inner+1.;grid.x2_min=-1.;grid.x2_max=1.;
+        grid.InitializeTopology();
+        std::vector<double> ur(grid.GetTotalSize()),uz(ur.size()),uphi(ur.size());
+        constexpr double a=.2,b=.3,omega=.4,c=.15;
+        for(int j=0;j<grid.GetTotalY();++j)for(int i=0;i<grid.GetTotalX();++i) {
+            const int q=grid.GetIndex(i,j,0);const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+            ur[q]=a*r;uz[q]=b*r;uphi[q]=omega*r+c*z;
+        }
+        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
+            const double r=grid.GetCellCenterX(i),z=grid.GetCellCenterY(j);
+            const auto d=VelocityDiagnostics::evaluate(grid,ur,uz,uphi,i,j,0);
+            const double axial=2*omega+c*z/r;
+            if(std::abs(d.divergence-2*a)>2e-12 || std::abs(d.vorticity-std::sqrt(c*c+b*b+axial*axial))>2e-12)
+                throw std::runtime_error("Cyl2 diagnostic r/z/phi mapping changed");
+        }
+    }
+}
+
 int main(int argc,char** argv)
 {
     using namespace GridMetrics;
-    {
-        GeometryView retired{};retired.geometry=Geometry::Cylindrical;retired.dim=2;
-        retired.dx1=retired.dx2=retired.dx3=1.;retired.x1_min=1.;
-        if(resolve_coordinate_layout(retired.geometry,retired.dim).valid
-           ||std::isfinite(CellVolume(retired,0,0,0))
-           ||std::isfinite(FaceArea(retired,0,0,0,0,false))
-           ||std::isfinite(PhysicalSpacing(retired,0,0,0)))
-            throw std::runtime_error("retired cylindrical two-dimensional raw layout/metrics accepted");
-        Grid grid(amr::MAX_NG,1.,2.,-.5,.5,0.,1.);grid.dim=2;grid.geometry="cylindrical";
-        bool grid_rejected=false,coordinates_rejected=false;
-        try {grid.InitializeTopology();}catch(const std::invalid_argument&) {grid_rejected=true;}
-        try {(void)Grid::PhysicalCoordsFromNative(2,"cylindrical",1.5,0.,0.);}
-        catch(const std::invalid_argument&) {coordinates_rejected=true;}
-        if(!grid_rejected||!coordinates_rejected)
-            throw std::runtime_error("retired cylindrical two-dimensional Host grid/coordinates accepted");
-    }
+    test_axisymmetric_geometry();
+    test_axisymmetric_velocity_diagnostics();
+    test_axisymmetric_one_dimensional_reductions();
+    test_axisymmetric_angular_work();
+    test_axisymmetric_scalar_diffusion();
     const double conditioning = CurvilinearMetricCases::conditioning_error();
     if (!std::isfinite(conditioning) || conditioning > 2.e-12)
         throw std::runtime_error("independent thin-shell/polar measures");
@@ -215,10 +643,7 @@ int main(int argc,char** argv)
     for (int dimension : {1, 2, 3})
     for (double radius : {0.0, 1.0, 10.0})
     for (double theta_left : {0.0, pi/3, pi/2, 5*pi/6}) {
-        // Two-dimensional cylindrical support is retired; this ordinary metric
-        // matrix enumerates the retained Cartesian, spherical and one-/three-
-        // dimensional cylindrical charts only.
-        if (geometry == Geometry::Cylindrical && dimension == 2) continue;
+        // Native geometry can be checked before its public evolution is qualified.
         GeometryView grid{};
         grid.geometry = geometry; grid.dim = dimension;
         grid.dx1 = .25; grid.dx2 = pi/6; grid.dx3 = .2;
@@ -287,4 +712,6 @@ int main(int argc,char** argv)
     RadialStokesCases::density_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
     CurvedStokesCases::density_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
     CurvedStokesCases::cylindrical_axis_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::axisymmetric_angular("cpu",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::axisymmetric_convergence("cpu",ViscousGeometryCases::viscosity,evaluate);
 }

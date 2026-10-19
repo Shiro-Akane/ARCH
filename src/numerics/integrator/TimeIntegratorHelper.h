@@ -222,7 +222,7 @@ namespace TimeIntegration
                     fluxes[idx], fluxes[idx + stride],
                     lower_species_flux, upper_species_flux,
                     n_spec, total_size, area_l, area_r, volume, dt,
-                    dU[idx], species_delta);
+                    dU[idx], species_delta, geometry, dir, i, j, k);
             }
             } catch (...) { failure.capture_current(); }
         };
@@ -250,7 +250,8 @@ namespace TimeIntegration
         const FluidState &state,
         const EosType &eos,
         const Grid &grid,
-        double dt)
+        double dt,
+        const arch::boundary::HydroBoundaryView &hydro_boundary = {})
     {
         const auto geometry=GridMetrics::make_geometry_view(grid);
         arch::state::HostFailure failure;
@@ -275,8 +276,17 @@ namespace TimeIntegration
                     {
                         int idx = grid.GetIndex(i, j, k);
                         state.get_species_to_buffer(idx, Xi.data());
-                        add_geometric_source_cell(
-                            state.get(idx), Xi.data(), eos, geometry, i, j, dt, dU[idx]);
+                        // Only an authenticated reflecting radial face closes its
+                        // advective contribution.  The native axis supplies A=T=0,
+                        // so marking it open is algebraically neutral.
+                        bool lower_open=true,upper_open=true;
+                        if(geometry.geometry==GridMetrics::Geometry::Cylindrical
+                           &&geometry.dim==2&&!hydro_boundary.empty()&&
+                           !hydro_boundary.advective_faces_open(0,i,grid.Is(),grid.Ie(),lower_open,upper_open))
+                            throw std::invalid_argument("Hydro wall view has an invalid radial face");
+                        add_axisymmetric_work_source_cell(
+                            state.get(idx), Xi.data(), eos, geometry, i, j, dt,
+                            lower_open, upper_open, dU[idx]);
                     }
 
                 } catch (...) { failure.capture_current(); }
@@ -462,7 +472,7 @@ namespace TimeIntegration
             }
         }
 
-        add_geometric_sources(dU,state,eos,grid,dt);
+        add_geometric_sources(dU,state,eos,grid,dt,hydro_boundary);
         source.add_sources(dU,state,grid,dt);
     }
 } // namespace TimeIntegration

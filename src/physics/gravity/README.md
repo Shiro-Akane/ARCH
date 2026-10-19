@@ -19,10 +19,15 @@ field, validates its operands, consumes face-flux work, supplies AMR's optional
 Energy interpretation and commits the original receipt. Hydro controls when
 these operations run; it does not select concrete gravity frames. Geometric
 sources and physical cell/face measures stay in the geometry owners and run
-with gravity disabled as well. Two-dimensional cylindrical support and its
-specialized ring boundary kernels have been retired.
+with gravity disabled as well. Native cylindrical 2D composes optional CPU
+external or self gravity through these same owners. Its isolated source uses
+three-dimensional full-ring physics; `g_phi=0` and field energy/output measures
+are per unit azimuth. The retired RZ-specific solver/cache infrastructure is
+absent. Native cylindrical 2D also uses the existing CUDA gravity owner; scoped
+field, work and continuation evidence is indexed in the [release plan](../../../ARCH_RELEASE_PLAN.md).
+The resolved execution plan still rejects unsupported routes.
 
-[UniformGravity.h](UniformGravity.h) is the standalone P2 CPU adapter from a
+[UniformGravity.h](UniformGravity.h) is the standalone uniform CPU adapter from a
 borrowed Host density view to CGS potential and acceleration. It owns the
 physical source and periodic density-mean removal; the Poisson operator and MG
 cycle live in `numerics/elliptic` and `numerics/multigrid`. It supports one
@@ -63,4 +68,4 @@ See [user boundaries](../../../docs/guides/UserBoundaries.md).
 
 See [GravityBox](../../../simulation/GravityBox/README.md), the
 [Reference](../../../docs/Reference.md) and
-[P5–P7 acceptance](../../../docs/development/P5P7GravityAcceptance.zh-CN.md).
+[P5–P7 acceptance](../../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md).

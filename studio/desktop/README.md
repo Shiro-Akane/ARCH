@@ -23,6 +23,6 @@ From `studio/`, run `npm run desktop:package`, or use `cmake --build build-studi
 
 The default package version remains development `0.0.0`. Set `ARCH_STUDIO_VERSION` only after the release version has been frozen. Preserve `LICENSE.arch`, Electron's `LICENSE`/`LICENSES.chromium.html`, and the dependency notices; ARCH's MIT license does not replace third-party licenses. Packaging is not signing, an installer or a release tag.
 
-Native Windows packaging is outside this Linux delivery. Earlier platform/checkpoint instructions remain in the [historical archive](../docs/archive/desktop-checkpoint-history.md).
+Native Windows packaging is outside this Linux delivery. Earlier platform/checkpoint instructions remain in the [historical archive](../../docs/histroy/studio/desktop-checkpoint-history.md).
 
 Environment setup and troubleshooting: [Linux/WSL requirements](../../docs/guides/StudioEnvironment.zh-CN.md).

@@ -1,3 +1,14 @@
+/**
+ * @file CheckpointGeometryIdentity.h
+ * @brief Native chart identity, independent of CHK layout and build identity.
+ * Workflow:
+ * 1. Select the current chart from the requested geometry and dimension.
+ * 2. Require exact stored/current semantics before reading or mutating state.
+ * 3. Permit legacy empty identity only for the eight retained charts.
+ *
+ * The retired polar and axisymmetric RZ artifacts cannot be reinterpreted as
+ * the new three-momentum PWC chart. No source/build/profile gate is added to CHK.
+ */
 #pragma once
 #include <string>
 #include <string_view>
@@ -5,37 +16,34 @@
 #include <vector>
 #include <cmath>
 namespace io {
-// Independent of checkpoint layout/config versions. Empty chart means legacy,
-// never authoritative geometry; the retained charts share the revision-1
-// "existing" identity. Retired computational cylindrical2D polar has no
-// remaining source representation, so it is refused before any state
-// mutation instead of being migrated to another chart.
 struct CheckpointGeometryIdentity {
     int revision = 0;
     std::string chart;
 };
 
+inline CheckpointGeometryIdentity checkpoint_geometry_identity(int dim, std::string_view geometry)
+{
+    return {1, dim == 2 && geometry == "cylindrical" ? "cylindrical-rz-pwc" : "existing"};
+}
+
 inline void require_checkpoint_geometry_compatible(
     int dim, std::string_view geometry,
     const CheckpointGeometryIdentity& saved,
-    const CheckpointGeometryIdentity& expected = {1, "existing"})
+    const CheckpointGeometryIdentity& expected)
 {
-    // Retired computational cylindrical2D polar (r,phi) has no authoritative
-    // source identity any more; it is refused rather than implicitly mapped.
-    if (dim == 2 && geometry == "cylindrical")
-        throw std::runtime_error("Cylindrical2D checkpoints are no longer supported");
-    const auto valid = [](const CheckpointGeometryIdentity& id) {
-        return id.revision == 1 && id.chart == "existing";
-    };
-    if (!valid(expected))
+    const auto current = checkpoint_geometry_identity(dim, geometry);
+    if (expected.revision != current.revision || expected.chart != current.chart)
         throw std::runtime_error("Unsupported expected checkpoint geometry semantics");
-    if (saved.revision == 0 && saved.chart.empty()) {
-        if (expected.chart == "existing") return;
-        throw std::runtime_error("Legacy checkpoint has no authoritative geometry identity");
-    }
-    if (!valid(saved))
-        throw std::runtime_error("Unsupported checkpoint geometry semantics");
-    if (saved.revision != expected.revision || saved.chart != expected.chart)
-        throw std::runtime_error("Checkpoint geometry semantics mismatch");
+    if (saved.revision == 0 && saved.chart.empty() && current.chart == "existing")
+        return;
+    if (saved.revision != current.revision || saved.chart != current.chart)
+        throw std::runtime_error("Checkpoint geometry semantics mismatch: expected " + current.chart);
+}
+
+inline void require_checkpoint_geometry_compatible(
+    int dim, std::string_view geometry, const CheckpointGeometryIdentity& saved)
+{
+    require_checkpoint_geometry_compatible(dim, geometry, saved,
+                                          checkpoint_geometry_identity(dim, geometry));
 }
 } // namespace io

@@ -1,3 +1,6 @@
+/**
+ * Coordinate initial-field and initial-AMR requests with the current model/text/build identity. Keep separate results matched and surface explicit cancellation/failure.
+ */
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {useCoreParameters} from '../../state/coreParameters';
 import {sameBuildScope} from '../../host/configurationContracts';

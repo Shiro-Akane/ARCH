@@ -14,6 +14,11 @@
 BurnGradient两种检查点来源相位的新进程续算。门槛及限制见[燃烧](../burn/README.zh-CN.md)
 与[重启](../restart/README.zh-CN.md)说明；不据此重新授予下方历史CUDA或更长轨迹资格。
 
+[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+补齐Store／交换／重网格事务、来自实际候选Tree的公共物理壁面元数据与四模块GPU fresh。
+既有一维重网格案例增加第7步采样：原1／5／10／20快照漏掉实际粗化，复用八次已完成运行，仅补缺失CPU／GPU两次。
+原场、守恒和显式父子拓扑门通过，不据此转签整份历史矩阵。
+
 各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
 [验证总览](../README.zh-CN.md)中。
 
@@ -205,4 +210,4 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 
 </details>
 
-旧 [RZ 迁移](results/release-closure-20261009/native-device-migration-summary.json)及[反射](results/release-closure-20261009/native-device-reflector-summary.json)记录按原身份保留。二维柱坐标与专用消费者已退役，当前 AMR 验证范围见[主计划](../../ARCH_RELEASE_PLAN.md)。
+旧 [RZ 迁移](results/release-closure-20261009/native-device-migration-summary.json)及[反射](results/release-closure-20261009/native-device-reflector-summary.json)记录按原身份保留。原生二维柱坐标现复用公共转移、reflux和重网格owner，见[CPU守恒](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json)及[设备迁移／fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧专用消费者仍退役；当前输入／源码适用范围见[CPU签收](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)与[主计划](../../ARCH_RELEASE_PLAN.md)。

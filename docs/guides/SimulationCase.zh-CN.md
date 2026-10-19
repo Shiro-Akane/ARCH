@@ -309,9 +309,9 @@ point.r_cy, point.phi_cy, point.z_cy
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi（极平面） | r, theta, phi |
-| Cylindrical | r | 不支持 | r, z, phi |
+| Cylindrical | r | r, z（CPU） | r, z, phi |
 
-二维 spherical 保留 `(r,phi)` 极平面。cylindrical 仅支持一维径向和三维 `(r,z,phi)`；二维柱坐标明确拒绝。受支持网格仍保留三个物理动量分量。
+二维 spherical 保留 `(r,phi)` 极平面。二维 cylindrical 在 CPU／CUDA 上使用 `(r,z)`，保留 `(rho*u_r,rho*u_z,rho*u_phi)` 三物理动量及 `cylindrical-rz-pwc` 产物身份；几何与可选引力各有独立所有者。方法／EOS 组合与科学终点须有各自的[验证](../../validation/README.zh-CN.md)，一维径向与三维路径保持原范围。
 
 以原点为球心的三维球对称密度分布为例，沿用上方算例中的 `rho0_`、`amplitude_` 和 `width_`。在 `Init` 中，可以先用笛卡尔坐标写：
 
@@ -408,7 +408,7 @@ const ProblemHelper::IsentropicState compressed =
 - 命令行问题名必须与注册字符串一致。
 - 所有路径相对于进程工作目录解析。
 - 使用维护中的 MUSCL limiter；`none` 会选择 MinMod fallback。
-- 二维 spherical 几何中的 `x2` 表示平面 `phi`。
+- 二维 spherical 的 `x2` 为平面 `phi`；二维 cylindrical 的 `x2` 为轴向 `z`，`u/v/w` 依次为径向／轴向／方位速度。
 - 所有模型与材料输入使用 CGS，包括 IdealGas；显式比热不自动换算。
 - 对 Helmholtz 验证运行，用 Git LFS 实体化 `EOS_toolkit/tables/helmholtz/helm_table.dat` 并核对 checksum。
 - 组分索引前必须确认 `GetSpeciesID >= 0`。

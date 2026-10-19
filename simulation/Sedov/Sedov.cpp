@@ -24,6 +24,8 @@ class SedovProblem
     double center_z_ = 0.0;
     double deposit_radius_ = 0.0;
     double ambient_density_ = 1.0;
+    // Conventional low-background benchmark scale in erg/cm^3, retained for
+    // construction/audit metadata. Active input must explicitly supply it.
     double ambient_pressure_ = 1.0e-5;
     double deposit_pressure_ = 0.0;
     int gas_id_ = -1;

@@ -1,3 +1,6 @@
+/**
+ * Display Core-reported initialization resource estimates and observed counts. Unknown measurements stay unknown; estimates are not benchmarked runtime costs.
+ */
 import type {ResourceEstimate} from '../../host/workflowContracts';
 const count=(n:number|null)=>n===null?'Unavailable / overflow':Number.isSafeInteger(n)?n.toLocaleString():'≈ '+n.toExponential(6);
 export function ResourceTable({data}:{data:ResourceEstimate}){

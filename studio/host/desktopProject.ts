@@ -1,3 +1,9 @@
+/**
+ * Resolve an Electron launch into one canonical project and Host reader.
+ * Workflow: discover or validate the root, bind an explicit source/build/binary,
+ * and expose only the selected case/configuration. A missing build leaves Core
+ * actions unavailable instead of selecting an unrelated executable.
+ */
 import path from 'node:path';
 import {realpath,stat} from 'node:fs/promises';
 import {BUILD_PROFILES} from './buildProfile.ts';

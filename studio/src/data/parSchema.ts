@@ -1,3 +1,8 @@
+/**
+ * Supply local editor hints for known parameter names and scalar controls.
+ * The selected Core schema and inspection own complete requirements, units and
+ * validity. Hints do not authorize default values or replace strict Core checks.
+ */
 export type CoreGroup = 'Grid'|'EOS'|'Network'|'Runtime';
 export interface ParameterMeta { group: CoreGroup; type: 'text'|'int'|'float'|'bool'|'expression'; range?: readonly [number,number]; options?: readonly string[]; evidence: string }
 export const parSchema: Record<string,ParameterMeta> = Object.create(null);

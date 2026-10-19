@@ -41,15 +41,19 @@ struct Selection { Field field; int species = -1; };
 
 // Selection and threshold policy are independent of the storage/executor.
 inline std::vector<Selection> make_selection(
-    const AmrConfig& config, int dimension, std::span<const int> species)
+    const AmrConfig& config, int dimension, std::span<const int> species,
+    GridMetrics::Geometry geometry)
 {
     if (config.refine_on_jeans &&
         (!std::isfinite(config.jeans_cells) || config.jeans_cells < 4.0))
         throw std::invalid_argument("JENS requires explicit finite jeans_cells >= 4.");
     if (config.refine_on_vely && dimension < 2)
         throw std::invalid_argument("VELY AMR indicator requires at least two spatial dimensions.");
-    if (config.refine_on_velz && dimension < 3)
-        throw std::invalid_argument("VELZ AMR indicator requires three spatial dimensions.");
+    // Spatial derivatives and physical vector slots are separate: native
+    // Cyl2 retains the phi velocity even though only r,z are resolved.
+    if (config.refine_on_velz && dimension < 3
+        && !(dimension == 2 && geometry == GridMetrics::Geometry::Cylindrical))
+        throw std::invalid_argument("VELZ AMR indicator requires a third physical velocity component.");
     std::vector<Selection> result;
     const auto add = [&](bool enabled, Field field) {
         if (enabled) result.push_back({field});

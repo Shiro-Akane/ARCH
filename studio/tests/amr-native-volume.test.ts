@@ -17,9 +17,18 @@ function mesh3(){
   lower:[1,.1,k],upper:[3,.5,k+1],cellShape:[4,2,2],cellSpacing:[.5,.2,.5]}));
  return m;
 }
-test('two-dimensional cylindrical AMR meshes reject explicitly',()=>{
- const m=mesh3();m.geometry='cylindrical';m.dimension=2;
- assert.throws(()=>validateMesh(m,'ok'),/cylindrical/);
+test('native cylindrical r-z AMR mesh accepts only new chart and correct length axes',()=>{
+ const m=mesh3();m.geometry='cylindrical';m.dimension=2;m.resources.dimension=2;
+ m.coordinates.metadata.geometry='cylindrical';m.coordinates.metadata.dimension=2;
+ m.coordinates.metadata.chart='cylindrical-rz-pwc';m.coordinates.metadata.geometrySemanticsRevision=1;
+ m.coordinates.metadata.axes.forEach((a:Record<string,unknown>,i:number)=>Object.assign(a,{nativeName:['r_cy','z_cy','x3'][i],displayName:['r','z','x3'][i],active:i<2,unit:i<2?'cm':null}));
+ m.leaves.forEach((l:Record<string,unknown>)=>Object.assign(l,{lower:[1,-1],upper:[3,1],cellShape:[4,2],cellSpacing:[.5,1]}));
+ assert.equal(validateMesh(m,'ok').geometry,'cylindrical');
+ for(const mutate of [(v:typeof m)=>v.coordinates.metadata.chart='axisymmetric-rz',
+  (v:typeof m)=>v.coordinates.metadata.axes[1].unit='rad',
+  (v:typeof m)=>v.coordinates.metadata.axes[1].nativeName='phi_cy']){
+  const bad=structuredClone(m);mutate(bad);assert.throws(()=>validateMesh(bad,'ok'),/chart/);
+ }
 });
 test('native three-axis AMR mesh requires authoritative matching coordinates, resources and state',()=>{
  assert.equal(validateMesh(mesh3(),'ok').dimension,3);

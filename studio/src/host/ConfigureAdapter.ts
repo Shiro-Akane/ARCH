@@ -1,3 +1,8 @@
+/**
+ * Validate Configure status against the selected project and operation identity.
+ * A completed Configure describes a build tree, not a fresh executable or an
+ * approved simulation input.
+ */
 import {PROTOCOL_VERSION} from './contracts.ts';
 export interface ConfigureStatus {
  protocolVersion:string;projectId:string;active:boolean;available?:false;profileId?:string;operationId?:string;

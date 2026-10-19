@@ -179,10 +179,6 @@ namespace ProblemHelper
         arch::config::ValidateControls(config, specs.count());
         int n_species = specs.count();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
-        // Reject every two-dimensional cylindrical chart before any model
-        // callback runs or any block is mutated; the legacy RZ chart is retired.
-        if (config.grid.dim == 2 && config.grid.geometry == "cylindrical")
-            throw std::invalid_argument("Two-dimensional cylindrical initialization is unsupported; the legacy polar/RZ chart is retired");
         for (int id : active_blocks) {
             const auto& block = amr_ctrl.pool->GetBlock(id);
             const auto& grid = block.grid;

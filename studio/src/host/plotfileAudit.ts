@@ -15,7 +15,7 @@ export interface CandidateNativeGrid {
  version:'candidate-cartesian-1'|'arch-native-cartesian-1'|'arch-native-curvilinear-1';measureSource:'GridMetrics::CellVolume';
  measureConvention:'active-coordinate-product; inactive-measures-omitted'|'GridMetrics-native-coordinate-integral';
  measureUnit:'cm'|'cm^2'|'cm^3'|null;measureNormalization?:string|null;
- geometry?:'cartesian'|'cylindrical'|'spherical';axes?:string[];axisUnits?:string[];chart?:'existing';
+ geometry?:'cartesian'|'cylindrical'|'spherical';axes?:string[];axisUnits?:string[];chart?:'existing'|'cylindrical-rz-pwc';
 }
 export interface NativePlotCells extends CandidateNativeGrid {
  identityScope:'file-local';logicalKey:string;level:number;logicalCoordinates:number[];
@@ -43,17 +43,19 @@ function nativeHeaderValid(v:unknown):v is CandidateNativeGrid {
   v.axes.length!==3||v.axisUnits.length!==3||!v.axes.every(x=>typeof x==='string')||
   !v.axisUnits.every(x=>['cm','rad','inactive'].includes(String(x))))return false;
  const dimension=v.axes.filter(x=>x!=='inactive').length;
- if(dimension<1||dimension>3||v.chart!=='existing'||
+ const axisymmetric=v.geometry==='cylindrical'&&dimension===2;
+ if(dimension<1||dimension>3||v.chart!==(axisymmetric?'cylindrical-rz-pwc':'existing')||
   v.version==='arch-native-cartesian-1'&&v.geometry!=='cartesian'||
-  v.version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(String(v.geometry))||
-  v.geometry==='cylindrical'&&dimension===2)return false;
+  v.version==='arch-native-curvilinear-1'&&!['cylindrical','spherical'].includes(String(v.geometry)))return false;
  const axes=v.geometry==='cartesian'?['x','y','z']:
-  dimension===3?(v.geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
+  dimension===3?(v.geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r',axisymmetric?'z':'phi','inactive'];
  const units:string[]=axes.map(x=>['theta','phi'].includes(x)?'rad':'cm');
  for(let i=0;i<3;i++){if(i>=dimension){axes[i]='inactive';units[i]='inactive';}
   if(v.axes[i]!==axes[i]||v.axisUnits[i]!==units[i])return false;}
  const convention=v.geometry==='cartesian'?
   'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral';
+ if(axisymmetric&&(v.measureUnit!=='cm^3'||v.measureNormalization!=='per_unit_azimuth'))return false;
+ if(!axisymmetric&&v.measureNormalization==='per_unit_azimuth')return false;
  return v.measureConvention===convention&&validMeasureLabels(v.measureUnit,v.measureNormalization,dimension);
 }
 function nativeCellsValid(v:unknown,header:unknown,n:number,dimension:number):v is NativePlotCells {
@@ -98,7 +100,7 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
     !record(a.scientificIdentity)||
     !record(a.coordinates)||a.coordinates.storedBasis!=='cartesian'||a.coordinates.centering!=='cell-center'||![null,'cm'].includes(a.coordinates.units as null|'cm'))
   throw Error('Unsupported or malformed Plotfile audit response.');
- if(a.geometry==='cylindrical'&&a.dimension===2)throw Error('Two-dimensional cylindrical plotfiles are unsupported.');
+
  if(a.coordinates.units==='cm'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Coordinate units lack matching recorded unit system.');
  if(a.timeUnit==='s'&&(!record(a.candidateSourceIdentity)||a.candidateSourceIdentity.eosUnitSystem!=='cgs'))throw Error('Time units lack matching recorded unit system.');
  if(a.timeUnit!==undefined&&a.timeUnit!==null&&a.timeUnit!=='s')throw Error('Invalid recorded time unit.');
@@ -110,9 +112,10 @@ export function validatePlotfileAudit(value:unknown,projectId:string,relativePat
    a.candidateNativeGrid.version==='candidate-cartesian-1'&&(a.geometry!=='cartesian'||![1,2].includes(Number(a.dimension)))||
    a.candidateNativeGrid.version!=='candidate-cartesian-1'&&a.candidateNativeGrid.geometry!==a.geometry))
   throw Error('Invalid native header.');
+ if(a.geometry==='cylindrical'&&a.dimension===2&&(!formal||!hasNative))throw Error('Cylindrical2D requires formal native chart identity.');
  if(formal){
   const source=a.candidateSourceIdentity as unknown as PlotfileSourceEvidence;
-  if(!hasNative||a.completion.state!=='complete'||a.renderEligible!==(a.geometry==='cartesian'&&[1,2].includes(Number(a.dimension)))||
+  if(!hasNative||a.completion.state!=='complete'||a.renderEligible!==((a.geometry==='cartesian'&&[1,2].includes(Number(a.dimension)))||(a.geometry==='cylindrical'&&a.dimension===2))||
    Object.entries({case:source.caseId,config:source.effectiveConfigSha256,build:source.buildId,
     binary:source.binarySha256,eos:source.eosIdentitySha256}).some(([key,value])=>!record(a.scientificIdentity)||a.scientificIdentity[key]!==value)||
    !record(a.nativeCellGeometry)||a.nativeCellGeometry.bounds!=='recorded'||a.nativeCellGeometry.volume!=='recorded')throw Error('Formal publication/provenance mismatch');

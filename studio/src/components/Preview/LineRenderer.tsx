@@ -1,3 +1,6 @@
+/**
+ * Render one-dimensional preview samples and selection callbacks. The adapter preserves sampled values and performs no scientific reconstruction.
+ */
 import type {CoreBinding} from '../../host/previewContracts';
 import { useEffect, useMemo, useRef } from 'react';
 import { LineVis, Annotation, useCanvasEvent, useVisCanvasContext, useCameraState } from '@h5web/lib';

@@ -16,6 +16,9 @@ are rejected explicitly; boundary budgets restart at process launch.
 
 Actual serialization is delegated entirely to the adjacent [HDF5 writer](../hdf5/README.md). Note that native composition, conserved species, controller states, and output phases are strict restart contracts, not opportunities for backend-specific state reconstruction. Refer to [restart validation](../../../validation/restart/README.md) for the exact recovery and forward-continuation checks, bearing in mind that these possess distinct acceptance criteria.
 
-Two-dimensional cylindrical files are unsupported and are rejected explicitly.
-Historical files remain evidence for their recorded source and executable;
-the current reader does not reinterpret or convert their coordinate/state data.
+Native cylindrical 2D checkpoints store PWC momenta `(rho*u_r,rho*u_z,rho*u_phi)`
+and require `geometry_semantics_revision=1`, `geometry_chart=cylindrical-rz-pwc`.
+The reader rejects retired `axisymmetric-rz`, empty, partial or wrong identities
+before replacing live state. The eight retained charts keep their existing
+identity and legacy-empty rules. CHK adds no source/build/profile requirement.
+See the bounded [CPU fresh fixture](../../../validation/restart/inputs/cylindrical.par).

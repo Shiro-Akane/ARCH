@@ -1,5 +1,12 @@
-/** CGS gas box: periodic modes or an isolated Gaussian cloud. Physical
- * operators, composition/EOS conversion and AMR use the production interfaces.
+/** CGS gas box: periodic modes or an isolated Gaussian cloud.
+ *
+ * Workflow:
+ * 1. DescribeConfiguration(): require physical profile centres for the chart.
+ * 2. Setup(): validate the profile and load composition through common owners.
+ * 3. Init(): evaluate the ordinary Cartesian-point Gaussian or periodic mode.
+ * A cylindrical meridian is embedded by Grid as (r,0,z), so its isolated
+ * profile retains all three Cartesian coordinates with centre_y fixed to zero.
+ * Geometry, gravity operators, EOS conversion and AMR retain their own owners.
  */
 #include <algorithm>
 #include <cmath>
@@ -9,11 +16,14 @@
 #include <GlobalDefs.h>
 #include <UserInterface.h>
 class GravityBoxProblem {
+    // Construction seeds/audited example scales: rho in g/cm^3, T in K and
+    // perturbations dimensionless. Setup reads the explicitly required input;
+    // these values do not authorize a missing-key fallback.
     double rho_=1e7,temperature_=1e7,amplitude_=1e-3,temperature_amplitude_=0.;
     double velocity_=0.,width_=0.;
     double lower_[3]{},length_[3]{},center_[3]{};
     bool isolated_=false,radial_=false,hydrostatic_radial_=false;
-    int dimension_=1;double hydrostatic_drop_=0.;
+    int dimension_=1,profile_dimension_=1;double hydrostatic_drop_=0.;
     std::vector<double> fractions_;
 public:
     static arch::config::CaseConfiguration DescribeConfiguration(
@@ -46,9 +56,16 @@ public:
             if (parameter.key == "center_y")
                 parameter.requirement = arch::config::input_detail::condition(
                     arch::config::InputCondition::Axis2, inputs, result.consumers);
-            if (parameter.key == "center_z")
-                parameter.requirement = arch::config::input_detail::condition(
-                    arch::config::InputCondition::Axis3, inputs, result.consumers);
+            if (parameter.key == "center_z") {
+                // x2 of a cylindrical meridian is physical z, even though the
+                // third computational direction is inactive. No fallback centre.
+                using namespace arch::config::input_detail;
+                parameter.requirement = combine(
+                    condition(arch::config::InputCondition::Axis3, inputs, result.consumers),
+                    combine(choice(inputs,"geometry",{"cylindrical"}),
+                        condition(arch::config::InputCondition::Axis2, inputs, result.consumers),true),
+                    false);
+            }
         }
         return result;
     }
@@ -60,6 +77,9 @@ public:
         if(config.grid.geometry!="cartesian" && !curved)
             throw std::invalid_argument("GravityBox requires Cartesian, cylindrical or spherical geometry");
         isolated_=config.physics.gravity.boundary=="isolated";dimension_=config.grid.dim;
+        const bool meridian=config.grid.geometry=="cylindrical" && dimension_==2;
+        // Reuse the 3D physical-point profile; Grid supplies (r,0,z) in 2D.
+        profile_dimension_=meridian?3:dimension_;
         radial_=radial;
         const auto hydrostatic=config.Get<std::string>("hydrostatic_radial","false");
         if(hydrostatic!="true" && hydrostatic!="false")
@@ -74,10 +94,12 @@ public:
         lower_[0]=config.grid.x1_min;lower_[1]=config.grid.x2_min;lower_[2]=config.grid.x3_min;
         length_[0]=config.grid.x1_max-lower_[0];length_[1]=config.grid.x2_max-lower_[1];length_[2]=config.grid.x3_max-lower_[2];
         const char* keys[]{"center_x","center_y","center_z"};
-        for(int a=0;a<dimension_;++a)
+        for(int a=0;a<profile_dimension_;++a)
             center_[a]=config.Get<double>(keys[a],radial?0.:
                 curved?(a==0?lower_[0]+0.5*length_[0]:0.)
                       :lower_[a]+0.5*length_[a]);
+        if(meridian && center_[1]!=0.)
+            throw std::invalid_argument("GravityBox cylindrical meridian requires center_y=0; center_x is radial and center_z is axial");
         width_=config.Get<double>("width",0.08*length_[0]);
         for(double v:{rho_,temperature_,amplitude_,temperature_amplitude_,velocity_,width_,center_[0],center_[1],center_[2]})
             if(!std::isfinite(v))throw std::invalid_argument("GravityBox parameters must be finite");
@@ -110,7 +132,8 @@ public:
         double mode;
         if(isolated_){
             const double coords[]{p.x,p.y,p.z};double r2=0.;
-            for(int a=0;a<dimension_;++a){const double q=(coords[a]-center_[a])/width_;r2+=q*q;}
+            for(int a=0;a<profile_dimension_;++a){const double q=(coords[a]-center_[a])/width_;r2+=q*q;}
+            // width_ is the Gaussian standard deviation: exp(-|x-xc|^2/(2 width_^2)).
             mode=std::exp(-0.5*r2);
         }else mode=std::cos(2.*arch::constants::math::pi*(p.x-lower_[0])/length_[0]);
         state.rho=rho_*(1.+amplitude_*mode);state.p=0.;

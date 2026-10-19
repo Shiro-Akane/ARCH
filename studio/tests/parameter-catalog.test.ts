@@ -29,14 +29,11 @@ test('current schema is dynamic, retired aliases are not destinations, missing v
  const larger=structuredClone(schema);larger.parameters.push({...larger.parameters[0],key:'future_parameter'});
  assert.equal(validateConfigurationSchema(larger).parameters.length,schema.parameters.length+1);
 });
-test('coordinate layout follows all eight supported Core conventions and never consumes transient invalid block tokens',()=>{
+test('coordinate layout follows all nine supported Core conventions and never consumes transient invalid block tokens',()=>{
  for(const geometry of ['cartesian','cylindrical','spherical'])for(const dimension of [1,2,3]){
   const c=catalogCoordinates(schema,{geometry,nblockx1:'2',nblockx2:dimension>=2?'1':'0',nblockx3:dimension===3?'2':'0'});
-  if(geometry==='cylindrical'&&dimension===2){
-   assert.equal(c,undefined,'retired chart must have no catalog destination');
-  }else{
-   assert.equal(c?.dimension,dimension);assert.equal(c?.axes.filter(a=>a.active).length,dimension);
-  }
+  assert.equal(c?.dimension,dimension);assert.equal(c?.axes.filter(a=>a.active).length,dimension);
+  if(geometry==='cylindrical'&&dimension===2){assert.equal(c?.chart,'cylindrical-rz-pwc');assert.equal(c?.axes[1].displayName,'z');}
  }
  for(const value of ['','-','1.','1.5','-1','2147483648'])assert.equal(catalogCoordinates(schema,{nblockx1:'1',nblockx2:value,nblockx3:'0'}),undefined);
  assert.equal(catalogCoordinates(schema,{nblockx1:'1',nblockx2:'0',nblockx3:'1'}),undefined);

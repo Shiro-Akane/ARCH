@@ -44,6 +44,16 @@ storage, launches and synchronization rather than restating an independent
 version of the formula. Similar-looking helpers with different admissibility or
 conservation requirements need those differences stated explicitly.
 
+Classify a non-obvious literal before explaining it: physical datum or upstream
+fit, mathematical coefficient, accepted residual/admission threshold, work budget,
+protocol/index convention, or display geometry. State the implemented units and
+source beside the group or expression. A controller-history floor or initial
+seed clamp is not a new physical abundance floor; an interactive byte/time cap
+is not a scientific tolerance. Do not unify unrelated constants merely because
+their digits match. Retained numerical controls may have no evidence of optimal
+calibration: explain their actual role and keep that uncertainty explicit rather
+than inventing a derivation. Preserve upstream coefficient and license provenance.
+
 ## Keep prose durable
 
 Prefer complete, direct sentences over noun lists and unexplained abbreviations.

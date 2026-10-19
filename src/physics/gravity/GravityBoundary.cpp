@@ -34,6 +34,18 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     moments.value[0]=op.volumes()[cell];
 
     if(base.geometry==Geometry::Cartesian)return moments;
+    if(base.geometry==Geometry::Cylindrical && base.dimension==2) {
+        // Grid volume is per radian; free-space Newton gravity sees the
+        // complete ring. About (0,0,z_mid), odd/cross moments vanish exactly.
+        const double r=op.center(cell)[0],dr=op.width(cell,0),dz=op.width(cell,1);
+        const double lo=r-.5*dr,hi=r+.5*dr;
+        const double mass=2.*arch::constants::math::pi*moments.value[0];
+        moments.value[0]=mass;
+        moments.value[second_moment_index(0,0)]=mass*(hi*hi+lo*lo)/4.;
+        moments.value[second_moment_index(1,1)]=moments.value[second_moment_index(0,0)];
+        moments.value[second_moment_index(2,2)]=mass*dz*dz/12.;
+        return moments;
+    }
     const auto center=op.center(cell);
     constexpr double nodes[]{-0.7745966692414834,0.,0.7745966692414834};
     constexpr double weights[]{5./9.,8./9.,5./9.};
@@ -74,8 +86,8 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
      volumes_(op.volumes()) {
     using namespace arch::elliptic;
     if((dimension_!=2 && dimension_!=3) ||
-       (dimension_==2 && op.base().geometry!=Geometry::Spherical))
-        throw std::invalid_argument("Isolated gravity requires spherical 2D polar or 3D space");
+       (dimension_==2 && op.base().geometry==Geometry::Cartesian))
+        throw std::invalid_argument("Isolated gravity requires a curved 2D chart or 3D space");
     int root_level=0;
     // Round UP: a 48-cell axis needs a 64-cell tree root. Flooring this
     // depth would silently omit mass in the outermost root cells.
@@ -95,6 +107,13 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
             if(op.base().geometry==Geometry::Cartesian) {
                 node.center=native;
                 for(int a=0;a<3;++a)node.radius_squared+=0.25*width[a]*width[a];
+            } else if(op.base().geometry==Geometry::Cylindrical && dimension_==2) {
+                // A meridional leaf represents a complete ring, centered on
+                // the physical axis. Its enclosing sphere also contains
+                // every parent ring; no phi=0 point source approximation.
+                node.center={0.,0.,native[1]};
+                const double outer=native[0]+.5*width[0];
+                node.radius_squared=outer*outer+.25*width[1]*width[1];
             } else {
                 const auto geometry=op.base().geometry==Geometry::Cylindrical
                     ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical;
@@ -168,7 +187,7 @@ std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoiss
             : (op.base().geometry==arch::elliptic::Geometry::Cylindrical
                 ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
         const auto point=GridMetrics::PhysicalPosition(geometry,dimension_,op.faces()[i].center);
-        result[i]=dimension_==2
+        result[i]=dimension_==2 && geometry==GridMetrics::Geometry::Spherical
             ?isolated_log_potential(nodes_.data(),moments_.data(),static_cast<int>(nodes_.size()),
                                     point.data(),G,reference_radius_,theta,order,geometry)
             :isolated_potential(nodes_.data(),moments_.data(),static_cast<int>(nodes_.size()),

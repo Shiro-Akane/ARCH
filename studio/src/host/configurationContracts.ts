@@ -58,5 +58,5 @@ export interface InspectionResponse {protocolVersion:string;identity:Configurati
 export function sameBuildScope(a:ConfigurationBuildScope|null|undefined,b:ConfigurationBuildScope|null|undefined){return !!a&&!!b&&a.projectId===b.projectId&&a.buildId===b.buildId&&a.binarySha256===b.binarySha256;}
 
 export interface CoordinateAxis {key:string;displayName:string;nativeName:string;active:boolean;kind:string;unit:string|null;blocks:number;blocksKey:string;minKey:string;maxKey:string;lowerBoundaryKey:string;upperBoundaryKey:string}
-export interface CoordinateSystem {geometry:string;dimension:number;unitSystem:string;axes:CoordinateAxis[]}
+export interface CoordinateSystem {geometry:string;dimension:number;unitSystem:string;axes:CoordinateAxis[];chart?:'existing'|'cylindrical-rz-pwc';geometrySemanticsRevision?:number}
 export interface PathCheck {key:string;role:'input-file'|'output-directory';cwd:string;resolvedPath:string|null;status:'ok'|'error'|'not-set'|'unable-to-check';message:string;exists?:boolean;regularFile?:boolean;readable?:boolean;parent?:string;writable?:boolean}

@@ -323,13 +323,18 @@ CudaBlockRuntime::CudaBlockRuntime(
     const amr::Block& block, amr::BlockHandle requested_handle,
     backend::StorageGeneration requested_generation,
     int expected_species_count, int device_ordinal,
-    const boundary::BoundaryPlan& logical_boundary,
+    const boundary::BoundaryPlan& logical_boundary, std::optional<boundary::HydroBoundaryView> hydro_boundary,
     const CudaLaunchConfig& launch, cudaStream_t stream,
     backend::BackendCounters& counters)
     : handle(requested_handle), generation(requested_generation)
 {
     if (device_ordinal < 0)
         throw std::invalid_argument("negative CUDA block device ordinal");
+    // Native wall/source quadrature cannot infer authority from zero flags.
+    // Reject an omitted frame before allocating numerical state/scratch; an
+    // explicitly prepared empty frame is the legitimate open-face case.
+    if(block.grid.dim==2 && block.grid.geometry=="cylindrical" && !hydro_boundary)
+        throw std::invalid_argument("Native Cyl2 CUDA topology requires prepared physical wall metadata");
     check_cuda(cudaSetDevice(device_ordinal),
                "select CUDA block construction device");
     try {
@@ -349,6 +354,7 @@ CudaBlockRuntime::CudaBlockRuntime(
         for (auto& storage : state_storage) storage.allocate(total, count);
         for (std::size_t slot = 0; slot < slots.size(); ++slot)
             slots[slot] = state_storage[slot].view();
+        for (auto& slot : slots) slot.hydro_boundary=hydro_boundary.value_or(arch::boundary::HydroBoundaryView{});
         face_flux.allocate(total, count);
         hydro_delta.allocate(total, count);
         diffusion_delta.allocate(total, count);
@@ -827,7 +833,7 @@ CudaBackend::Impl::Impl(
             slot->second = std::make_unique<CudaBlockRuntime>(
                 *binding.block, entry.record.handle, entry.record.storage,
                 species_count, device_ordinal,
-                *binding.physical_boundary, launch, stream.get(), runtime_counters);
+                *binding.physical_boundary, binding.hydro_boundary, launch, stream.get(), runtime_counters);
         }
         initialize_species_workspace();
         checked_quiesce(

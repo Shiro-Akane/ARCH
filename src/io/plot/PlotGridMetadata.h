@@ -16,9 +16,6 @@
 
 namespace io {
 inline bool supports_plot_native_grid(const Grid& grid) {
-    // A two-dimensional cylinder has no retained native chart identity.
-    // Reject the retired polar identity before appending any native bounds.
-    if (grid.geometry == "cylindrical" && grid.dim == 2) return false;
     return (grid.geometry == "cartesian" || grid.geometry == "cylindrical"
         || grid.geometry == "spherical") && grid.dim >= 1 && grid.dim <= 3;
 }
@@ -34,8 +31,9 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
         output.normalization=grid.dim==1?"per_unit_transverse_area":grid.dim==2?"per_unit_transverse_length":"full_volume";
     } else {
         output.axes[0]="r"; output.axis_units[0]="cm";
-        if(grid.dim==2 && grid.geometry=="spherical") {
-            output.axes[1]="phi";output.axis_units[1]="rad";
+        if(grid.dim==2) {
+            output.axes[1]=grid.geometry=="cylindrical"?"z":"phi";
+            output.axis_units[1]=grid.geometry=="cylindrical"?"cm":"rad";
         }
         if(grid.dim==3) {
             output.axes[1]=grid.geometry=="cylindrical"?"z":"theta";
@@ -43,9 +41,9 @@ inline void append_plot_native_cell(PlotNativeGrid& output, const Grid& grid,
             output.axes[2]="phi";output.axis_units[2]="rad";
         }
         output.measure_convention="GridMetrics-native-coordinate-integral";
-        output.measure_unit=grid.dim==3 || (grid.geometry=="spherical" && grid.dim==1)?"cm^3":"cm^2";
+        output.measure_unit=grid.dim==3 || (grid.geometry=="spherical" && grid.dim==1) || (grid.geometry=="cylindrical" && grid.dim==2)?"cm^3":"cm^2";
         output.normalization=grid.dim==3?"full_volume":grid.geometry=="spherical" && grid.dim==1?
-            "per_unit_solid_angle":grid.dim==1?"per_unit_azimuth_and_axial_length":"per_unit_transverse_length";
+            "per_unit_solid_angle":grid.geometry=="cylindrical" && grid.dim==2?"per_unit_azimuth":grid.dim==1?"per_unit_azimuth_and_axial_length":"per_unit_transverse_length";
     }
     output.lower[0].push_back(grid.GetFacePosL(i));
     output.upper[0].push_back(grid.GetFacePosR(i));

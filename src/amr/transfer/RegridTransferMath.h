@@ -139,6 +139,13 @@ struct ProlongationGeometry {
     int neighbours[6]{};
     double coarse_volume = 0.0;
     double fine_volumes[maximum_children]{};
+    // Axisymmetric cylindrical (r,z) carries an extra radial lever arm for
+    // the PWC azimuthal momentum coefficient. V=r dr dz for ordinary
+    // conserved fields and W=r^2 dr dz for Mphi. Other charts leave this
+    // disabled so their existing volume arithmetic is bit-identical.
+    bool angular_momentum = false;
+    double coarse_moment = 0.0;
+    double fine_moments[maximum_children]{};
 };
 
 struct ProlongationResult {
@@ -188,6 +195,9 @@ ARCH_HOST_DEVICE inline Status prolong_family(
         || (species > 0 && workspace == nullptr)
         || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
+    if (geometry.angular_momentum
+        && (!std::isfinite(geometry.coarse_moment) || geometry.coarse_moment <= 0.0))
+        return Status::InvalidGeometry;
     const int cells = 1 << geometry.dimension;
     result.rhoX = workspace;
     double* deviation = species > 0 ? workspace
@@ -197,6 +207,9 @@ ARCH_HOST_DEVICE inline Status prolong_family(
     for (int cell = 0; cell < cells; ++cell) {
         if (!std::isfinite(geometry.fine_volumes[cell]) || geometry.fine_volumes[cell] <= 0.0)
             return Status::InvalidGeometry;
+        if (geometry.angular_momentum
+            && (!std::isfinite(geometry.fine_moments[cell]) || geometry.fine_moments[cell] <= 0.0))
+            return Status::InvalidGeometry;
         for (int field = 0; field < 5; ++field)
             component(result.fluid[cell], field) = reconstruct(source, geometry, field, cell);
         result.enuc[cell] = reconstruct(source, geometry, 5, cell);
@@ -204,10 +217,16 @@ ARCH_HOST_DEVICE inline Status prolong_family(
             result.rhoX[static_cast<std::size_t>(sp) * maximum_children + cell] = reconstruct(source, geometry, 6 + sp, cell);
     }
     for (int field = 0; field < 5; ++field) {
+        const bool moment_field = geometry.angular_momentum && field == 3;
+        const double coarse_measure = moment_field
+            ? geometry.coarse_moment : geometry.coarse_volume;
         double integral = 0.0;
-        for (int cell = 0; cell < cells; ++cell)
-            integral += component(result.fluid[cell], field) * geometry.fine_volumes[cell];
-        const double shift = source.fields[field][geometry.center] - integral / geometry.coarse_volume;
+        for (int cell = 0; cell < cells; ++cell) {
+            const double measure = moment_field
+                ? geometry.fine_moments[cell] : geometry.fine_volumes[cell];
+            integral += component(result.fluid[cell], field) * measure;
+        }
+        const double shift = source.fields[field][geometry.center] - integral / coarse_measure;
         for (int cell = 0; cell < cells; ++cell)
             component(result.fluid[cell], field) += shift;
     }
@@ -314,6 +333,9 @@ struct RestrictionGeometry {
     int source_cells[maximum_children]{};
     double volumes[maximum_children]{};
     double coarse_volume = 0.0;
+    bool angular_momentum = false;
+    double moments[maximum_children]{};
+    double coarse_moment = 0.0;
 };
 
 struct RestrictionResult {
@@ -331,6 +353,9 @@ ARCH_HOST_DEVICE inline Status restrict_family(
         || species < 0 || (species > 0 && workspace == nullptr)
         || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
+    if (geometry.angular_momentum
+        && (!std::isfinite(geometry.coarse_moment) || geometry.coarse_moment <= 0.0))
+        return Status::InvalidGeometry;
     FluidVector integral{};
     double enuc_integral = 0.0;
     for (int sp = 0; sp < species; ++sp) workspace[sp] = 0.0;
@@ -338,9 +363,22 @@ ARCH_HOST_DEVICE inline Status restrict_family(
         const int index = geometry.source_cells[cell];
         const double volume = geometry.volumes[cell];
         if (!std::isfinite(volume) || volume <= 0.0) return Status::InvalidGeometry;
+        const double moment = geometry.angular_momentum
+            ? geometry.moments[cell] : volume;
+        if (geometry.angular_momentum
+            && (!std::isfinite(moment) || moment <= 0.0))
+            return Status::InvalidGeometry;
         FluidVector sample=source.fluid(index);
 
-        integral = integral + sample * volume;
+        if (!geometry.angular_momentum) {
+            integral = integral + sample * volume;
+        } else {
+            integral.rho += sample.rho * volume;
+            integral.mom_u += sample.mom_u * volume;
+            integral.mom_v += sample.mom_v * volume;
+            integral.mom_w += sample.mom_w * moment;
+            integral.eng += sample.eng * volume;
+        }
 
         enuc_integral += source.fields[5][index] * volume;
             for (int sp = 0; sp < species; ++sp)
@@ -348,6 +386,8 @@ ARCH_HOST_DEVICE inline Status restrict_family(
                     source.fields[0][index], source.fraction(sp, index), volume);
     }
     result.fluid = integral * (1.0 / geometry.coarse_volume);
+    if (geometry.angular_momentum)
+        result.fluid.mom_w = integral.mom_w * (1.0 / geometry.coarse_moment);
     if (!is_admissible_conserved_state(result.fluid, density_floor, min_eint))
         return Status::CoarseFluid;
     result.enuc = enuc_integral / geometry.coarse_volume;

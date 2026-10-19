@@ -31,6 +31,7 @@
 #include "physics/boundary/PhysicalBoundary.h"
 #include "physics/boundary/UserBoundary.h"
 
+namespace amr { class AmrTree; struct Block; }
 namespace arch::boundary { class HostHydroBoundaryAuthority; class HostHydroBoundaryDomainAuthority; }
 
 /** Boundary adapter used by all Host integrators and the shared CUDA driver. */
@@ -136,6 +137,11 @@ public:
     bool has_user() const noexcept { return bool(callback_); }
     const arch::boundary::BoundaryPlan& logical_plan() const noexcept { return logical_plan_; }
     const arch::boundary::BoundaryPlan& logical_plan(const Grid&) const;
+    /** Select physical walls from exact Tree membership, never patch proximity.
+     * The caller owns the completed stage lease; regular axes are chart joins.
+     */
+    arch::boundary::HydroBoundaryView hydro_physical_faces(
+        const amr::AmrTree&, const amr::Block&) const;
 private:
     struct Ghost {
         int source, destination;

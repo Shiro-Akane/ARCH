@@ -1,3 +1,8 @@
+/**
+ * Check whether the current textual edits can form a Preview request.
+ * Use observed parameter metadata for an early user-facing diagnostic. Core's
+ * inspection and Setup/Init still decide whether the actual request is valid.
+ */
 import {effectiveEntries,parsePar} from './ParDocument.ts';
 import type {CoreParameter} from '../host/previewContracts.ts';
 import {standardValueError} from './standardValidation.ts';

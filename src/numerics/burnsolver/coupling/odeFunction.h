@@ -233,6 +233,9 @@ namespace OdeMath
 
     ARCH_INLINE bool pi_uses_small_error_branch(double err_n)
     {
+        // Dimensionless WRMS branch threshold for the PI controller. It avoids
+        // using the general error-ratio expression for an almost zero error;
+        // actual step acceptance retains the caller's original WRMS criterion.
         return err_n < 1.0e-10;
     }
 

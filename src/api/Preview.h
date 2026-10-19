@@ -60,8 +60,6 @@ struct InitialPreviewDomain {
     bool curved = false;
     bool uniform_state = false;
     bool accepts(int dimension, std::string_view geometry) const {
-        // Two-dimensional cylindrical support is retired; no fallback chart.
-        if (dimension == 2 && geometry == "cylindrical") return false;
         return dimension >= 1 && dimension <= 3 && (dimensions & (1u << dimension))
             && (geometry == "cartesian" || (curved
                 && (geometry == "spherical" || geometry == "cylindrical")));

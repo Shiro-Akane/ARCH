@@ -1209,11 +1209,146 @@ void qualify_gravity_checkpoint(const io::CheckpointData& checkpoint, const char
               << ",\"pressure_linf\":" << errors[4] << ",\"energy_linf\":" << errors[5] << "}\n";
 }
 
+// Workflow: bind the actual run input, verify the uniform native r-z topology,
+// and integrate an independent axial finite-volume reference with physical V.
+// The reference is the existing unit-period, first-mode benchmark. It is not
+// an AMR profile oracle: root-cell sinc averages cannot certify child averages.
+void qualify_native_axial_checkpoint(const io::CheckpointData& checkpoint,
+                                     const std::string& mode, const char* parameter_path)
+{
+    require(parameter_path != nullptr, "native axial reference requires actual run parameters");
+    const auto inputs = checkpoint_analysis::Inputs::File(parameter_path);
+    const auto grid = inputs.grid();
+    require(grid.geometry == "cylindrical" && grid.dim == 2
+                && grid.nblockx1 > 0 && grid.nblockx2 > 0
+                && inputs.case_number("mode_axis") == 2.0
+                && inputs.case_number("mode") == 1.0
+                && grid.x1_min >= 0.0 && grid.x1_max > grid.x1_min
+                && grid.x2_min == 0.0 && grid.x2_max == 1.0
+                && inputs.standard<int>("lrefinemin") == 0
+                && inputs.standard<int>("lrefinemax") == 0
+                && inputs.standard_token("x2l_boundary_type") == "periodic"
+                && inputs.standard_token("x2r_boundary_type") == "periodic",
+            "native axial reference inputs do not match the frozen benchmark");
+    require(inputs.case_number("pressure0") == 1.0,
+            "native axial reference pressure changed");
+    if (mode == "smooth") {
+        require(inputs.case_number("rho_mean") == 1.0
+                    && inputs.case_number("rho_amplitude") == 0.2
+                    && inputs.case_number("velocity0") == 1.0,
+                "native advection reference parameters changed");
+    } else {
+        require(mode == "diffusion" && inputs.case_number("rho0") == 1.0
+                    && inputs.case_number("tracer_mean") == 0.5
+                    && inputs.case_number("tracer_amplitude") == 0.25
+                    && inputs.standard<double>("D_spec") == 0.01,
+                "native diffusion reference parameters changed");
+    }
+    const std::size_t local_cells = amr::BLOCK_NX * amr::BLOCK_NY;
+    const std::size_t blocks = checkpoint.levels.size();
+    const std::size_t cells = blocks * local_cells;
+    require(checkpoint.dim == 2 && checkpoint.geometry == "cylindrical"
+                && checkpoint.cells_per_block == local_cells
+                && blocks == static_cast<std::size_t>(grid.nblockx1 * grid.nblockx2)
+                && checkpoint.logical_x1.size() == blocks
+                && checkpoint.logical_x2.size() == blocks
+                && checkpoint.rho.size() == cells && checkpoint.eng.size() == cells
+                && checkpoint.mom_u.size() == cells && checkpoint.mom_v.size() == cells
+                && checkpoint.mom_w.size() == cells,
+            "native axial checkpoint topology or field shape drifted");
+    require(mode != "diffusion" || (checkpoint.num_species == 2
+                && checkpoint.rhoX.size() == 2 * cells),
+            "native diffusion species layout drifted");
+    const int axial_cells = grid.nblockx2 * amr::BLOCK_NY;
+    const long double dr = (grid.x1_max - grid.x1_min)
+        / static_cast<long double>(grid.nblockx1 * amr::BLOCK_NX);
+    const long double dz = 1.0L / axial_cells;
+    constexpr long double pi = 3.141592653589793238462643383279502884L;
+    const long double half_phase = pi / axial_cells;
+    const long double average = std::sin(half_phase) / half_phase;
+    std::vector<bool> seen(blocks, false);
+    long double volume = 0.0L, l1 = 0.0L, l2 = 0.0L, linf = 0.0L, mean = 0.0L;
+    std::array<long double, 5> totals{};
+    double min_rho = std::numeric_limits<double>::infinity();
+    double min_eng = min_rho, min_fraction = min_rho, max_fraction = -min_rho;
+    double species_sum_error = 0.0;
+    for (std::size_t block = 0; block < blocks; ++block) {
+        const int bi = checkpoint.logical_x1[block], bj = checkpoint.logical_x2[block];
+        require(checkpoint.levels[block] == 0 && bi >= 0 && bi < grid.nblockx1
+                    && bj >= 0 && bj < grid.nblockx2,
+                "native axial reference requires uniform root blocks");
+        const auto root_index = static_cast<std::size_t>(bj * grid.nblockx1 + bi);
+        require(!seen[root_index], "native axial checkpoint has duplicate root blocks");
+        seen[root_index] = true;
+        for (std::size_t local = 0; local < local_cells; ++local) {
+            const auto offset = block * local_cells + local;
+            const int i = bi * amr::BLOCK_NX + static_cast<int>(local % amr::BLOCK_NX);
+            const int j = bj * amr::BLOCK_NY + static_cast<int>(local / amr::BLOCK_NX);
+            const long double rlo = grid.x1_min + i * dr, rhi = rlo + dr;
+            // Per unit azimuth: integral(r dr dz), independent of Grid helpers.
+            const long double weight = 0.5L * (rhi * rhi - rlo * rlo) * dz;
+            const long double z = (j + 0.5L) * dz;
+            const double rho = checkpoint.rho[offset], eng = checkpoint.eng[offset];
+            require(std::isfinite(rho) && std::isfinite(eng) && rho > 0.0 && eng > 0.0,
+                    "native axial positivity failed");
+            min_rho = std::min(min_rho, rho); min_eng = std::min(min_eng, eng);
+            const std::array<double, 5> values{rho, checkpoint.mom_u[offset],
+                checkpoint.mom_v[offset], checkpoint.mom_w[offset], eng};
+            for (std::size_t field = 0; field < values.size(); ++field) {
+                require(std::isfinite(values[field]), "native axial field is not finite");
+                totals[field] += weight * values[field];
+            }
+            long double observed = rho;
+            long double expected = 1.0L + 0.2L * average
+                * std::sin(2.0L * pi * (z - checkpoint.time));
+            if (mode == "diffusion") {
+                observed = checkpoint.rhoX[cells + offset] / rho;
+                min_fraction = std::min(min_fraction, static_cast<double>(observed));
+                max_fraction = std::max(max_fraction, static_cast<double>(observed));
+                expected = 0.5L + 0.25L * average
+                    * std::exp(-0.01L * 4.0L * pi * pi * checkpoint.time)
+                    * std::cos(2.0L * pi * z);
+            }
+            require(std::isfinite(observed), "native axial observed profile is not finite");
+            const long double error = std::abs(observed - expected);
+            l1 += weight * error; l2 += weight * error * error;
+            linf = std::max(linf, error); mean += weight * observed; volume += weight;
+            if (checkpoint.num_species > 0) {
+                double sum = 0.0;
+                require(checkpoint.rhoX.size() == checkpoint.num_species * cells,
+                        "native axial species shape drifted");
+                for (int species = 0; species < checkpoint.num_species; ++species)
+                    sum += checkpoint.rhoX[static_cast<std::size_t>(species) * cells + offset] / rho;
+                require(std::isfinite(sum), "native axial species sum is not finite");
+                species_sum_error = std::max(species_sum_error, std::abs(sum - 1.0));
+            }
+        }
+    }
+    require(volume > 0.0L && std::isfinite(volume), "native axial volume is invalid");
+    std::cout << "{\"status\":\"pass\",\"mode\":\"" << mode
+              << "\",\"reference_axis\":2,\"measure\":\"physical_cell_volume_normalized\""
+              << ",\"step\":" << checkpoint.step_count << ",\"time\":" << checkpoint.time
+              << ",\"l1\":" << l1 / volume << ",\"l2\":" << std::sqrt(l2 / volume)
+              << ",\"linf\":" << linf << ",\"mean\":" << mean / volume
+              << ",\"mass\":" << totals[0] / volume << ",\"mom_u\":" << totals[1] / volume
+              << ",\"mom_v\":" << totals[2] / volume << ",\"mom_w\":" << totals[3] / volume
+              << ",\"eng_total\":" << totals[4] / volume
+              << ",\"min_rho\":" << min_rho << ",\"min_eng\":" << min_eng
+              << ",\"min_fraction\":" << (mode == "diffusion" ? min_fraction : 0.0)
+              << ",\"max_fraction\":" << (mode == "diffusion" ? max_fraction : 0.0)
+              << ",\"species_sum_error\":" << species_sum_error << "}\n";
+}
+
 void qualify_real_checkpoint(const std::filesystem::path& checkpoint_path,
                              const std::string& mode, const char* parameter_path = nullptr)
 {
     const io::CheckpointData checkpoint =
         io::read_hdf5_chk_impl(checkpoint_path.string());
+    if (checkpoint.dim == 2 && checkpoint.geometry == "cylindrical"
+            && (mode == "smooth" || mode == "diffusion")) {
+        qualify_native_axial_checkpoint(checkpoint, mode, parameter_path);
+        return;
+    }
     require(checkpoint.dim == 1 && checkpoint.geometry == "cartesian"
                 && checkpoint.cells_per_block > 0
                 && checkpoint.levels.size() == checkpoint.logical_x1.size()

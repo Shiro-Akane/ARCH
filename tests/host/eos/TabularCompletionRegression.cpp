@@ -478,6 +478,7 @@ void coupling_controls()
             source.nuclear_equilibrium = equilibrium;
             source.components = {true, complete, complete};
             SimConfig config;
+            config.physics.burn.network_name = "aprox13";
             config.physics.burn.use_burn = false;
             config.physics.diffusion.use_diffusion = false;
             EOSDispatcher::validate_coupling(config, source, false);
@@ -505,6 +506,7 @@ void coupling_controls()
     }
     TabularSourceInfo legacy;
     SimConfig config;
+    config.physics.burn.network_name = "aprox13";
     config.physics.burn.use_burn = true;
     config.physics.diffusion.use_diffusion = true;
     config.physics.diffusion.use_thermal_diffusion = true;
@@ -518,6 +520,23 @@ void coupling_controls()
     config.physics.burn.use_burn = false;
     rejects([&] { EOSDispatcher::validate_coupling(config, legacy, false); },
         "electron diagnostics", "equilibrium-only metadata failed to constrain conductivity");
+
+    TabularSourceInfo kinetic;
+    kinetic.nuclear_equilibrium = false;
+    kinetic.components = {true, true, true};
+    config.physics.diffusion.use_diffusion = false;
+    for (const char* network : {"aprox19", "APROX21"}) {
+        config.physics.burn.network_name = network;
+        config.physics.burn.use_burn = false;
+        EOSDispatcher::validate_coupling(config, kinetic, false);
+        config.physics.burn.use_burn = true;
+        rejects([&] { EOSDispatcher::validate_coupling(config, kinetic, false); },
+            "diagnostic eta", "missing electron chemical potential silently became zero weak rates");
+    }
+    for (const char* network : {"aprox13", "ISO7"}) {
+        config.physics.burn.network_name = network;
+        EOSDispatcher::validate_coupling(config, kinetic, false);
+    }
 }
 } // namespace
 

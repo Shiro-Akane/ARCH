@@ -1,3 +1,6 @@
+/**
+ * Edit numeric text while preserving the user's intermediate input. Commit and validation are explicit; formatting must not invent a missing physical value.
+ */
 import {useRef} from 'react';
 import {scrubValue} from './scrub';
 export function NumericInput({name,value,onChange,integer=false,range,error}:{name:string;value:string;onChange:(v:string)=>void;integer?:boolean;range?:readonly [number,number];error?:string}) {

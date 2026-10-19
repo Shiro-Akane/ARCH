@@ -6,8 +6,8 @@
  * transfer, sources, and stability estimates. Inactive-coordinate measures
  * are omitted consistently: spherical 1D uses volume per solid angle, while
  * Spherical 2D describes a polar plane, not an (r,theta) slice. Every
- * cylindrical two-dimensional chart is refused outright. Explicit storage
- * views retain their field and AMR qualification gates.
+ * cylindrical two-dimensional cell uses volume per unit azimuth. Native
+ * storage views do not grant field, solver, AMR or backend qualification.
  * Face fluxes and vector components use the local orthonormal basis.
  */
 
@@ -35,9 +35,8 @@ inline Geometry geometry_from_name(const std::string& geometry) {
 }
 
 /** Resolve the public computational chart after typed configuration validation.
- * Workflow: reject unknown canonical geometry/dimension and every cylindrical
- * two-dimensional request; return the validated canonical geometry kind, which
- * selects the coordinates and measures of the retained charts. This derived
+ * Workflow: reject unknown canonical geometry/dimension; return the validated
+ * native geometry kind for coordinates, measures and boundary construction. This derived
  * identity grants no backend, AMR, source-field or scientific capability and
  * changes no internal Grid default.
  */
@@ -46,8 +45,6 @@ inline Geometry resolve_public_chart(const std::string& geometry, int dimension)
     const auto kind=geometry_from_name(geometry);
     if (kind==Geometry::Unsupported || dimension<1 || dimension>3)
         throw std::invalid_argument("Public chart requires a known canonical geometry and dimension 1..3");
-    if (kind==Geometry::Cylindrical && dimension==2)
-        throw std::invalid_argument("Two-dimensional cylindrical charts are unsupported; the legacy polar/RZ chart is retired");
     return kind;
 }
 
@@ -55,26 +52,21 @@ inline Geometry geometry_kind(const Grid& grid) {
     return geometry_from_name(grid.geometry);
 }
 
-/** Borrow actual geometry and the configured spacing of one real Grid.
- * Workflow: preserve ordinary fields and refuse every cylindrical
- * two-dimensional grid before a view exists. A view owns no state, field or
- * AMR authority; it only lends the checked geometry of its owner.
+/** Borrow actual geometry and configured spacing, including inactive dx3=0.
+ * A view owns no state, field or AMR authority; it only lends native geometry.
+ * Public chart selection and each solver retain their own qualification gate.
  */
 inline GeometryView make_geometry_view(const Grid& grid) {
-    if (geometry_kind(grid)==Geometry::Cylindrical && grid.dim==2)
-        throw std::invalid_argument("Two-dimensional cylindrical geometry views are unsupported; the legacy polar/RZ chart is retired");
     return {geometry_kind(grid), grid.dim, grid.ng, grid.stride_y,
             grid.stride_z, grid.GetTotalSize(), grid.dx1, grid.dx2, grid.dx3,
             grid.x1_min, grid.x2_min, grid.x3_min};
 }
 
 /** Describe one logical finite-volume fragment without allocating a native Grid.
- * Raw cylindrical two-dimensional fragments are refused here as well.
+ * Widths belong to the caller; no fake unit width is assigned to an inactive axis.
  */
 inline GeometryView make_geometry_view(Geometry geometry, int dimension,
     const std::array<double,3>& lower, const std::array<double,3>& width) {
-    if (geometry==Geometry::Cylindrical && dimension==2)
-        throw std::invalid_argument("Two-dimensional cylindrical geometry views are unsupported; the legacy polar/RZ chart is retired");
     return {geometry, dimension, 0, 0, 0, 0, width[0], width[1], width[2],
             lower[0], lower[1], lower[2]};
 }
@@ -112,8 +104,6 @@ ARCH_HOST_DEVICE inline double polar_angle_measure(double theta_left, double the
 }
 
 ARCH_HOST_DEVICE inline double CellVolume(const GeometryView& grid, int i, int j, int /*k*/) {
-    if (grid.geometry==Geometry::Cylindrical && grid.dim==2)
-        return std::numeric_limits<double>::quiet_NaN();
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
     if (grid.geometry == Geometry::Cartesian) {
@@ -140,7 +130,8 @@ ARCH_HOST_DEVICE inline double CellVolume(const GeometryView& grid, int i, int j
 }
 
 ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i, int j, int /*k*/, bool high_face) {
-    if (grid.geometry==Geometry::Cylindrical && grid.dim==2)
+    if (grid.geometry==Geometry::Cylindrical && grid.dim==2 &&
+        (dir<0 || dir>=grid.dim))
         return std::numeric_limits<double>::quiet_NaN();
     const double r_left = grid.GetFacePosL(i);
     const double r_right = grid.GetFacePosR(i);
@@ -153,7 +144,7 @@ ARCH_HOST_DEVICE inline double FaceArea(const GeometryView& grid, int dir, int i
     if (grid.geometry == Geometry::Cylindrical) {
         const double annulus = cylindrical_annulus_volume(r_left, r_right);
         if (dir == 0) return r_face * (grid.dim >= 2 ? grid.dx2 : 1.0) * (grid.dim == 3 ? grid.dx3 : 1.0);
-        if (dir == 1) return annulus * grid.dx3;
+        if (dir == 1) return annulus * (grid.dim == 2 ? 1.0 : grid.dx3);
         return (r_right - r_left) * grid.dx2;
     }
 
@@ -181,11 +172,11 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
     if (geometry == Geometry::Cartesian)
         return direction == 0 ? dx1 : (direction == 1 ? dx2 : dx3);
     if (geometry == Geometry::Cylindrical) {
-        // No two-dimensional cylindrical spacing exists: only the radial 1D
-        // band and the full (r,z,phi) 3D band keep their physical widths.
-        if (dim == 2) return std::numeric_limits<double>::quiet_NaN();
         if (direction == 0) return dx1;
         if (direction == 1) return dx2;
+        // Axisymmetry has no phi distance/CFL contribution, irrespective of
+        // any unused raw-view width supplied by a caller.
+        if (dim == 2) return 0.0;
         return radius * dx3;
     }
     if (geometry == Geometry::Spherical) {
@@ -199,8 +190,6 @@ ARCH_HOST_DEVICE inline double PhysicalSpacing(
 ARCH_HOST_DEVICE inline double PhysicalSpacing(
     const GeometryView& grid, int direction, int i, int j)
 {
-    if (grid.geometry==Geometry::Cylindrical && grid.dim==2)
-        return std::numeric_limits<double>::quiet_NaN();
     return PhysicalSpacing(grid.geometry, grid.dim, direction,
         grid.dx1, grid.dx2, grid.dx3, grid.GetCellCenterX(i), grid.SourceTheta(j));
 }
@@ -221,8 +210,6 @@ ARCH_HOST_DEVICE inline double CellPairDistance(
 ARCH_HOST_DEVICE inline double InverseRadiusVolumeAverage(
     const GeometryView& grid, int i)
 {
-    if (grid.geometry==Geometry::Cylindrical && grid.dim==2)
-        return std::numeric_limits<double>::quiet_NaN();
     if (grid.geometry == Geometry::Cartesian) return 0.0;
     const double left = grid.GetFacePosL(i);
     const double right = grid.GetFacePosR(i);
@@ -239,5 +226,56 @@ inline double FaceArea(const Grid& grid, int dir, int i, int j, int k, bool high
     return FaceArea(make_geometry_view(grid), dir, i, j, k, high_face);
 }
 
+/** Moment W=integral r dV for a PWC azimuthal momentum coefficient.
+ * Only cylindrical and polar orthonormal charts share this lever arm. W has
+ * one extra length factor relative to V; no new evolved J/ell field is needed.
+ * A full axisymmetric physical integral multiplies both V and W by 2*pi.
+ */
+ARCH_HOST_DEVICE inline double AngularMomentumVolumeMoment(
+    const GeometryView& grid, int i, int /*j*/, int /*k*/)
+{
+    const auto layout=resolve_coordinate_layout(grid.geometry,grid.dim);
+    using Basis=CoordinateLayout::Basis;
+    if (grid.dim<2 || (layout.basis!=Basis::CylindricalRZPhi &&
+                      layout.basis!=Basis::CylindricalRPhiZ))
+        return std::numeric_limits<double>::quiet_NaN();
+    // Integral r^2 dr uses the existing factored polynomial for thin rings.
+    double moment=radial_shell_volume(grid.GetFacePosL(i),grid.GetFacePosR(i))*grid.dx2;
+    if (grid.dim==3) moment*=grid.dx3;
+    return moment;
+}
+
+/** Face moment T=integral r dA for transport/traction of azimuthal momentum.
+ * In (r,z), Tr=r_face^2*dz and Tz=integral r^2 dr. The polar phi face
+ * integrates r dr, while a resolved cylindrical phi face also includes dz.
+ * Multiplying an ordinary face area by r_mid is not this integral. Unsupported
+ * bases or unresolved face directions return NaN, not a plausible fallback.
+ */
+ARCH_HOST_DEVICE inline double AngularMomentumFaceMoment(
+    const GeometryView& grid, int dir, int i, int /*j*/, int /*k*/, bool high_face)
+{
+    const auto layout=resolve_coordinate_layout(grid.geometry,grid.dim);
+    using Basis=CoordinateLayout::Basis;
+    if (grid.dim<2 || dir<0 || dir>=grid.dim ||
+        (layout.basis!=Basis::CylindricalRZPhi && layout.basis!=Basis::CylindricalRPhiZ))
+        return std::numeric_limits<double>::quiet_NaN();
+    const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
+    if (dir==0) {
+        const double face=high_face?right:left;
+        double moment=face*face*grid.dx2;
+        if (grid.dim==3) moment*=grid.dx3;
+        return moment;
+    }
+    if (dir==layout.axial)
+        return radial_shell_volume(left,right)*(grid.dim==3?grid.dx3:1.0);
+    return cylindrical_annulus_volume(left,right)*(grid.dim==3?grid.dx2:1.0);
+}
+
+inline double AngularMomentumVolumeMoment(const Grid& grid,int i,int j,int k) {
+    return AngularMomentumVolumeMoment(make_geometry_view(grid),i,j,k);
+}
+inline double AngularMomentumFaceMoment(const Grid& grid,int dir,int i,int j,int k,bool high_face) {
+    return AngularMomentumFaceMoment(make_geometry_view(grid),dir,i,j,k,high_face);
+}
 
 } // namespace GridMetrics

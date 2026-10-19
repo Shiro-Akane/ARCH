@@ -11,7 +11,7 @@ CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算�
 | 模块 | 已有实现范围 |
 |---|---|
 | 流体 | Van Leer、Steger-Warming、Roe、HLL、HLLC；PCM/MUSCL/PPM；MinMod/MC/SuperBee/Van Leer 限制器；Euler/SSPRK2/SSPRK3 |
-| 网格与几何 | 既有笛卡尔、径向、球坐标极平面及三维柱／球坐标块网格采用共用坐标约定；轴对称二维柱坐标 Device 验收进行中 |
+| 网格与几何 | 既有笛卡尔、径向、球坐标极平面及三维柱／球坐标块网格采用共用坐标约定；原生二维柱坐标复用公共几何／输运数学，已有壁面、索引、驻留、重网格与 fresh 的定点设备证据 |
 | 边界 | 周期、流出、反射及用户物理／势边界；Host 回调只交换所需边界片，共用 EOS 与面通量规则；成本见[用户边界](guides/UserBoundaries.zh-CN.md) |
 | 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
 | EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
@@ -33,7 +33,13 @@ HLLC/MUSCL/RK2、BD、RKL2 热扩散、自引力 MG 与 AMR 已有代表性 CPU/
 平衡组分；网络可以是内置网络或明确认证的生成模型。具体配置见
 [API 与参数参考](Reference.zh-CN.md)。
 
-公开二维柱坐标采用轴对称 `(r,z)`，在 `phi=0` 处展开为 `x=r`、`y=0`、`z=z`，并保留三个物理速度分量。二维球坐标采用赤道极平面 `(r,phi)`；三维柱／球坐标为 `(r,z,phi)`／`(r,theta,phi)`。Native RZ 完整场／能量、动态反应 AMR／续算及 Device 验收仍在进行，运行受能力检查约束。历史二维柱坐标极平面记录保持原坐标语义，不作为 Native RZ 证据。
+公开二维柱坐标采用轴对称 `(r,z)`，在 `phi=0` 处展开为 `x=r`、`y=0`、`z=z`，保留三个物理速度分量。二维球坐标采用赤道极平面 `(r,phi)`；三维柱／球坐标为 `(r,z,phi)`／`(r,theta,phi)`。原生壁面、RK/RKL、重网格、规定边界Poisson、孤立自引力与fresh见[验证记录](../validation/README.zh-CN.md)。[当前设备记录](../validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)补齐已重建的GravityBox／SNIa轴向场、显式中心输入与九种合法几何的公共真实壁面绑定；覆盖设备契约、原公共终点、真实重网格与fresh。当前NSE及Host AMR RKL修复已独立验收，原私有Cellular的25CHK均通过原`5e-9`＋`5e-12`源项门，ENUC逐位一致，并通过自身fresh；未变几何与资源owner按范围复用，本机单GPU设备阶段已闭合。历史二维柱坐标极平面记录保留原语义，不转签当前原生chart。
+
+## 构建与设备要求
+
+按[构建指南](guides/Build.zh-CN.md)选择CUDA工具链及受支持的Host编译器、显式设备代码映像和匹配数值库。本机已测配置为Release、GCC12、NVCC12.3、`sm86`及RTX3060Ti 8GiB。ARCH数值单元保持严格浮点标志，链接的第三方库配置分别记录；CPU GCC13与CUDA GCC12的LTO归档不能混用。
+
+本机WSL约7.7GiB，重构建采用j2与CUDA重型pool1。当前应用／测试增量构建及无动作检查通过，不代签干净构建或其他平台；实际Ninja规则使用ccache。显式CUDA或可选求解器请求须在执行前检查，不可用路径明确拒绝。本轮共享NSE头修改触发52动作、3040.45秒增量重建，其依赖／实例化成本留后续冻结评估。[主计划](../ARCH_RELEASE_PLAN.md)记录实际成本、原CPU限定及多GPU／平台资格边界。
 
 ## GPU-AMR 执行方式
 

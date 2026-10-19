@@ -109,7 +109,7 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     if (runtime.backend())
         runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
-    const io::CheckpointGeometryIdentity geometry_identity{1, "existing"};
+    const auto geometry_identity = io::checkpoint_geometry_identity(config.grid.dim, config.grid.geometry);
     write_chk(amr_ctrl, ctrl.chk_file_index, ctrl.plt_file_index,
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
@@ -167,14 +167,19 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         std::ofstream fluxes(config.io.out_dir+"/boundary_fluxes.tsv");
         if (!fluxes) throw std::runtime_error("Cannot write boundary flux diagnostics");
         fluxes << "# scope=since-process-start; positive=outgoing; momentum=native; "
-                  "energy=fluid-total; gravity-work=separate; units=CGS\n";
+                  "energy=fluid-total; gravity-work=separate; units=CGS";
+        const bool angular=config.grid.geometry=="cylindrical" && config.grid.dim==2;
+        if (angular) fluxes << "; angular_z=outgoing-torque-impulse; normalization=per-unit-azimuth";
+        fluxes << '\n';
         const auto& observer=runtime.boundary_observer_operations();
         fluxes << "# observer_bytes_h2d=" << observer.bytes_h2d << "; observer_bytes_d2h=" << observer.bytes_d2h
             << "; observer_kernels=" << observer.kernel_count << "; observer_synchronizations=" << observer.stream_sync_count << '\n';
         fluxes << "time\toperator\tmass\tmomentum_x1\tmomentum_x2\tmomentum_x3\tenergy";
         for (const auto& species:runtime.species().species_list)
             fluxes << "\tspecies_" << species.name;
-        fluxes << "\theat\n" << std::setprecision(17);
+        fluxes << "\theat";
+        if (angular) fluxes << "\tangular_momentum_z";
+        fluxes << '\n' << std::setprecision(17);
         for (int kind=0;kind<3;++kind) {
             fluxes << ctrl.t_current << '\t' << (kind==0 ? "hydro" : kind==1 ? "diffusion" : "total");
             for (std::size_t k=0;k<hydro_budget.size();++k)

@@ -1,3 +1,8 @@
+/**
+ * Mount the browser application and shared stylesheet into the root element.
+ * Application providers own state and Host negotiation; this entry performs no
+ * filesystem access, scientific initialization or backend selection.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';

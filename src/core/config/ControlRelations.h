@@ -33,11 +33,6 @@ inline bool Coulomb(double factor, std::string_view eos) {
 inline bool AxisTopology(int second, int third) {
     return third >= 0 && (third == 0 || second > 0);
 }
-// Two-dimensional cylindrical support is retired. The predicate is explicit at
-// every owner boundary; it never substitutes a fallback chart or dimension.
-inline bool RetiredCylindrical2d(std::string_view geometry, int dimension) {
-    return dimension == 2 && dispatch::ascii_iequals(geometry, "cylindrical");
-}
 inline bool ActiveExtent(double lower, double upper) {
     return std::isfinite(lower) && std::isfinite(upper - lower) && upper > lower;
 }
@@ -79,9 +74,12 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
             report("x1l_boundary_type", "The radial inner boundary requires reflecting fluid flow.",
                    std::vector<std::string>{"gravity_type", "geometry"});
         if (g.boundary && *g.boundary == "isolated" && g.dimension && *g.dimension > 1) {
-            const int azimuth = *g.dimension - 1;
+            const int azimuth = GridMetrics::resolve_coordinate_layout(
+                *g.geometry == "cylindrical" ? GridMetrics::Geometry::Cylindrical
+                                             : GridMetrics::Geometry::Spherical,
+                *g.dimension).azimuth;
             const double turn = arch::constants::math::two_pi;
-            if (g.lower[azimuth] && g.upper[azimuth]
+            if (azimuth < *g.dimension && g.lower[azimuth] && g.upper[azimuth]
                 && !(std::abs((*g.upper[azimuth] - *g.lower[azimuth]) - turn)
                      <= 64.0 * std::numeric_limits<double>::epsilon() * turn))
                 report(azimuth == 1 ? "x2_max" : "x3_max",
@@ -98,6 +96,9 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
                     report("x2l_boundary_type",
                            "The north pole requires reflecting fluid flow with coordinate-seam mapping.",
                            std::vector<std::string>{"geometry", "x2_min"});
+                // Recognize the supplied south-pole bound within 1e-12 rad.
+                // This input/topology tolerance is not a Poisson residual or
+                // a spatial-accuracy budget; the exact lower pole is zero.
                 if (g.upper[1] && std::abs(*g.upper[1] - pi) <= 1e-12
                     && g.faces[3] && !reflecting(*g.faces[3]))
                     report("x2r_boundary_type",
@@ -111,8 +112,11 @@ void CheckGravityTopology(const GravityTopology& g, Report report) {
                std::vector<std::string>{"geometry", "nblockx2", "nblockx3"});
     if (!g.dimension || !g.boundary) return;
     if (*g.boundary == "user") return; // Side topology is checked by the compiled callback owner.
-    const int azimuth = curved && *g.boundary == "isolated"
-        && *g.dimension > 1 ? *g.dimension - 1 : -1;
+    const auto layout = GridMetrics::resolve_coordinate_layout(
+        *g.geometry == "cylindrical" ? GridMetrics::Geometry::Cylindrical
+                                     : GridMetrics::Geometry::Spherical, *g.dimension);
+    const int azimuth = curved && *g.boundary == "isolated" && *g.dimension > 1
+        && layout.azimuth < *g.dimension ? layout.azimuth : -1;
     for (int axis = 0; axis < 2 * *g.dimension; ++axis) {
         if (!g.faces[axis]) continue;
         const bool periodic = *g.boundary == "periodic" || axis / 2 == azimuth;

@@ -122,6 +122,10 @@ ARCH_INLINE BurnCellPreparation prepare_burn_cell(
     prepared.composition_min = composition_min;
     prepared.composition_max = composition_max;
 
+    // Retained preparation gate: sum(X) may differ from unity by at most 1e-6
+    // before normalization. The -64*epsilon check above admits only the existing
+    // tiny negative roundoff band. Neither value is a final mass/charge/energy
+    // conservation tolerance or permission to fill missing configuration keys.
     const bool composition_is_valid = composition_is_finite
         && !composition_has_negative && std::isfinite(composition_sum)
         && composition_sum > 0.0

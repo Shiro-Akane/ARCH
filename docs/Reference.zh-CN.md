@@ -65,7 +65,7 @@ ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩
 | 自重力 | `gravity_type = self` | CPU、CUDA | 周期笛卡尔、孤立三维笛卡尔，以及受测径向和完整方位角曲线坐标域；具体条件见[自引力计算域](#自引力计算域)。 |
 | Jeans 场与细化 | `JENS` | CPU 已接线；CUDA 工程候选 | 要求自引力和显式后端；适用条件与验收范围见 [AMR 与 plot 变量词汇](#amr-与-plot-变量词汇)。 |
 
-CUDA 已实现既有笛卡尔、径向、球坐标极平面及三维柱／球坐标流体路径，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
+CUDA 已实现笛卡尔、径向、球坐标极平面、原生二维柱坐标及三维柱／球坐标流体路径，提供已注册的通量、重构和时间推进路径，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。被动输运与 AMR 的临时存储按运行时组分数量分配；DenseLU 则有独立的 31 个总 ODE 方程限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
 
 四个内置燃烧网络支持 DenseLU、可选的 cuDSS 求解及 NSE。生成网络包通过 CMake 的
 [设备数学包契约检查](../src/physics/network/custom/README.md)，且清单声明
@@ -107,7 +107,7 @@ CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在�
 | 三维柱 `(r,z,phi)`／球 `(r,theta,phi)` | `isolated` | 完整方位角；径向内面及受测轴线／极点奇点面反射 |
 | 三类几何已验收的一至三维范围 | `dirichlet`、`neumann`、`user` | 逐面指定势／外梯度／线性 Robin；周期方向成对匹配，奇点保持正则性 |
 
-所有自引力域的根网格各轴单元数必须为二的幂，根网格间距比不超过 2，且 AMR 叶子保持 2:1 平衡。`gravity_boundary` 必须与流体面拓扑匹配。`user` 边界可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，适用于有效的环域／扇区／楔域；坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势由密度相对体积平均值的偏差驱动，孤立势使用完整密度。二维球坐标极平面采用单位轴向长度质量的对数核；二维柱坐标不再支持。计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域)，残差控制见[引力参数](#eos-与重力)。
+所有自引力域的根网格各轴单元数必须为二的幂，根网格间距比不超过 2，且 AMR 叶子保持 2:1 平衡。`gravity_boundary` 必须与流体面拓扑匹配。`user` 边界可组合逐面 Dirichlet、Neumann、线性 Robin 与成对周期方向，适用于有效的环域／扇区／楔域；坐标奇点保持正则性接合。见[边界接口与良定性](guides/UserBoundaries.zh-CN.md)。周期势由密度相对体积平均值的偏差驱动，孤立势使用完整密度。二维球坐标极平面采用单位轴向长度质量的对数核；原生二维柱坐标 CPU／CUDA 使用三维全环 Newton 物理、单位方位角测度及物理 r/z 边界，`g_phi=0`。计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域)，残差控制见[引力参数](#eos-与重力)。
 
 ### 方法与物理模块的组合
 
@@ -280,7 +280,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 现行输入使用 `time_integrator` 选择流体时间推进。`timeintegrator`、`enforce_mass_conservation`、`burn_verbose_level`、`ode_use_numerical_jac` 和 `ode_freeze_jacobian` 是已退役的标准键；配置解析会报告 `RETIRED_PARAMETER`。修改旧算例时，应移除这些键，并按下文当前参数表重新选择所需的物理与数值设置。
 
-规范化表格 EOS 使用明确的自由能势、物理分量和核平衡声明；原生 EOSDriver 总表及受支持的原始重子表保留各自的数据契约。早期规范化 direct 表应根据[表格式契约](../src/physics/eos/TabularEOS.zh-CN.md)重新准备数据。检查点按保存的科学身份恢复；旧格式或不一致的控制身份须用生成它的程序续算，或从当前算例的新初态开始。完成这次迁移时的验证结果保存在[历史实施记录](development/archive/low-density/ImplementationReport.zh-CN.md)。
+规范化表格 EOS 使用明确的自由能势、物理分量和核平衡声明；原生 EOSDriver 总表及受支持的原始重子表保留各自的数据契约。早期规范化 direct 表应根据[表格式契约](../src/physics/eos/TabularEOS.zh-CN.md)重新准备数据。检查点按保存的科学身份恢复；旧格式或不一致的控制身份须用生成它的程序续算，或从当前算例的新初态开始。完成这次迁移时的验证结果保存在[历史实施记录](histroy/low-density/ImplementationReport.zh-CN.md)。
 
 ## 参数参考
 
@@ -311,7 +311,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi | r, theta, phi |
-| Cylindrical | r | 不支持 | r, z, phi |
+| Cylindrical | r | r, z（CPU） | r, z, phi |
 
 转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点，按表中的逻辑轴生成物理及原生坐标；不支持的维度／几何组合在转换前拒绝。
 
@@ -364,7 +364,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_coulomb_mult` | double | 条件必填：Helmholtz | Helmholtz 离子 Coulomb 修正比例，有限 `[0,1]`；非默认值仅限 Helmholtz；不是电子补齐开关 |
 | `gamma` | double | 条件必填：IdealGas | 理想气体模型 gamma |
 | `gravity_type` | string | 必填 | `none`、`external`、`self`；self 的计算域与后端范围见[功能清单](Features.zh-CN.md#自引力计算域) |
-| `gravity_g_x/y/z` | expression | 条件必填：外部引力；全部分量 | 外部重力分量 |
+| `gravity_g_x/y/z` | expression | 条件必填：外部引力；全部分量 | 原生正交动量槽位；柱坐标含二维均为 `(r,z,phi)`，不作笛卡尔投影 |
 | `gravity_G` | expression | 已退役；拒绝 | 报 RETIRED_PARAMETER；不可由输入覆盖 |
 | `gravity_boundary` | string | 条件必填：自引力 | `periodic` 去除体积平均密度；`isolated` 为现有有限质量／径向／二维对数核；`dirichlet` 零势；`neumann` 零外法向梯度且检查 Gauss 相容性；`user` 从 `gravity_boundary.cpp` 返回逐面条件 |
 | `gravity_rtol` | float | 条件必填：自引力 | 大于零且小于一的体积 RMS 相对残差 |
@@ -583,7 +583,7 @@ struct PointCoords {
 };
 ```
 
-二维 spherical 保留 `(r,phi)` 极平面。cylindrical 仅支持一维径向和三维 `(r,z,phi)`；二维柱坐标明确拒绝。受支持网格仍保留三个物理动量分量。
+二维 spherical 保留 `(r,phi)` 极平面。二维 cylindrical 在 CPU／CUDA 上使用 `(r,z)`，保留 `(rho*u_r,rho*u_z,rho*u_phi)` 三物理动量及 `cylindrical-rz-pwc` 产物身份；几何与可选引力各有独立所有者。方法／EOS 组合与科学终点须有各自的[验证](../validation/README.zh-CN.md)，一维径向与三维路径保持原范围。
 
 `Grid::GetPhysicalCoords` 填充所有表示。以原点为球心的三维球对称密度分布为例，设 `rho_bg > 0`、`rho_peak > 0` 和 `width > 0` 为算例采用的 CGS 参数。在 `Init` 中，先用笛卡尔坐标写：
 
@@ -608,7 +608,7 @@ center_x_ = config.grid.x1_min;
 center_y_ = config.grid.x2_min;
 ```
 
-`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 spherical 的第二个逻辑坐标为平面方位角 `phi`；二维 cylindrical 不支持。
+`Setup` 写入后，同一对象的 `Init` 读取这些成员；`Init` 没有 `config` 参数。在 `Init` 中使用 $r_{\mathrm{local}}^2=(x-x_c)^2+(y-y_c)^2$，其中 `x/y` 是 `point.x/y`，`x_c/y_c` 是上面保存的中心坐标。`point.r` 仍表示到全局 `(0,0,0)` 的距离；平移物理分布不会平移曲线网格的度量原点和轴线。在曲线网格中，`x1_min` 是原生径向轴下界。完整算例见[模拟算例指南的 `PointCoords` 小节](guides/SimulationCase.zh-CN.md#pointcoords)。二维 spherical 的第二个逻辑坐标为平面方位角 `phi`；原生二维 cylindrical 为轴向长度 `z`。
 
 ### `PrimitiveData`
 

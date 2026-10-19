@@ -1,8 +1,16 @@
+/**
+ * Resolve and fingerprint regular project-owned files.
+ * Reject path traversal and symlink components, open without following links,
+ * and compare descriptor/path identities before and after bounded streaming
+ * reads. Every opened handle is closed; a missing file remains a typed observation.
+ */
 import { constants } from 'node:fs';
 import { lstat, open, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import type { ProjectFileRef } from '../src/host/contracts.ts';
+// Streaming fingerprint admission: 64 MiB for ordinary project files. This is
+// a Host work bound, not the simulation's output or scientific precision limit.
 export const MAX_FILE_BYTES = 64 * 1024 * 1024;
 export function selectedPath(value: string): string {
   if (!value || value.includes('\\') || value.includes('%') || value.includes(':') || value.includes('\0') || path.isAbsolute(value) || value.split('/').some(x=>x==='..'||x==='.'||x==='')) throw new Error('Selected file must be a plain project-relative path without traversal');
@@ -23,6 +31,8 @@ export async function checkedPath(root:string,relative:string):Promise<string> {
 }
 export async function fingerprint(root:string,relative:string,kind:ProjectFileRef['kind']):Promise<ProjectFileRef> {
   selectedPath(relative);
+  // Executables receive a separate 512 MiB fingerprint allowance; scientific
+  // HDF reads have their own owner and are not admitted through this exception.
   const limit=kind==='executable'?512*1024*1024:MAX_FILE_BYTES;
   try {
     const target=await checkedPath(root,relative);
@@ -32,6 +42,8 @@ export async function fingerprint(root:string,relative:string,kind:ProjectFileRe
       if (process.platform==='linux') {const actual=await realpath(`/proc/self/fd/${handle.fd}`);if(actual!==target)throw new Error('Selected file identity changed during open');}
       const before=await handle.stat();if(!before.isFile())throw new Error('Selected object is not a regular file');
       if(before.size>limit)throw new Error(`Selected file exceeds ${limit/1024/1024} MiB fingerprint limit`);
+      // A 64 KiB streaming chunk bounds temporary memory independently of file
+      // size. Chunk boundaries do not alter the resulting SHA-256 identity.
       const hash=createHash('sha256');const buffer=Buffer.alloc(65536);let bytes=0;
       while(true){const result=await handle.read(buffer,0,buffer.length,null);if(!result.bytesRead)break;bytes+=result.bytesRead;if(bytes>limit)throw new Error('File grew beyond fingerprint limit');hash.update(buffer.subarray(0,result.bytesRead));}
       const after=await handle.stat();const latest=await stat(await checkedPath(root,relative));

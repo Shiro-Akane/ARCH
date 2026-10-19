@@ -4,7 +4,7 @@
  *
  * Three-dimensional native axes are Cartesian (x,y,z), cylindrical (R,z,phi),
  * or spherical (r,theta,phi). Two-dimensional spherical grids use the polar
- * plane (r,phi); cylindrical 1D/3D grids use (R,z,phi). Angular
+ * plane (r,phi); cylindrical 2D resolves (R,z) at representative phi=0. Angular
  * coordinates are in radians and meridional coordinates are in cm. GridMetrics owns physical
  * volumes, face areas, and orthonormal spacing derived from this geometry.
  *
@@ -91,20 +91,16 @@ struct Grid
 
 
 private:
-    /**
-     * @brief Validate physical-domain bounds and reject invalid geometry.
-     */
-    /** Reject every unsupported storage chart, including any two-dimensional
-     * cylindrical grid: the legacy polar/RZ reinterpretation is retired.
-     */
-    void RequireSupportedChart() const
-    {
-        if (dim == 2 && geometry == "cylindrical")
-            throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported; the legacy polar/RZ chart is retired");
-    }
+    /** Validate native extents; configuration and solvers own capability gates. */
     void ValidateDomain() const
     {
-        RequireSupportedChart();
+        // Both axisymmetric coordinates are lengths. A finite, nonnegative
+        // radial domain and finite axial bounds are required before a view is
+        // lent; zero radius belongs to a face, never a centered active cell.
+        if (dim == 2 && geometry == "cylindrical" &&
+            (!std::isfinite(x1_min) || !std::isfinite(x1_max) ||
+             !std::isfinite(x2_min) || !std::isfinite(x2_max)))
+            throw std::invalid_argument("Domain Error: cylindrical radial and axial bounds must be finite.");
         // 0. Dimensionality and topology checks
         if (amr::BLOCK_NX < 1 || amr::BLOCK_NY < 1 || amr::BLOCK_NZ < 1)
             throw std::invalid_argument("Grid Error: BLOCK dimensions must be >= 1.");
@@ -163,7 +159,6 @@ public:
      */
     void InitializeTopology()
     {
-        RequireSupportedChart();
         // Step Length
         dx1 = (amr::BLOCK_NX > 0) ? (x1_max - x1_min) / amr::BLOCK_NX : 0.0;
         dx2 = (amr::BLOCK_NY > 1 && dim >= 2) ? (x2_max - x2_min) / amr::BLOCK_NY : 0.0;
@@ -207,6 +202,8 @@ public:
         {
             if (dim == 1)
                 return {"r_cy"};
+            if (dim == 2)
+                return {"r_cy", "z_cy"};
             return {"r_cy", "z_cy", "phi_cy"};
         }
 
@@ -234,8 +231,6 @@ public:
     static PointCoords PhysicalCoordsFromNative(int dim, const std::string &geometry,
                                                 double cx, double cy = 0.0, double cz = 0.0)
     {
-        if (dim == 2 && geometry == "cylindrical")
-            throw std::invalid_argument("Two-dimensional cylindrical coordinates are unsupported; the legacy polar/RZ chart is retired");
         PointCoords coords{};
 
         // Supply deterministic inactive-coordinate values for 1D and 2D grids.
@@ -256,6 +251,9 @@ public:
             coords.z = cz;
 
             coords.r = std::sqrt(cx * cx + cy * cy + cz * cz);
+            // Existing coordinate-query convention: choose theta=0 within
+            // 1e-14 cm of the origin, where the exact zero-radius angle is
+            // undefined. Radius and finite-volume measures are not floored.
             coords.theta = (coords.r > 1e-14) ? std::acos(cz / coords.r) : 0.0;
             coords.phi = std::atan2(cy, cx);
 
@@ -290,7 +288,8 @@ public:
         }
         else if (geometry == "cylindrical")
         {
-            // 1D/3D retain their native cylindrical expansion.
+            // The unresolved phi of an axisymmetric sample is zero; its
+            // second native coordinate remains z, including negative z.
             coords.r_cy = cx;
             coords.z_cy = cy;
             coords.phi_cy = cz;
@@ -300,8 +299,17 @@ public:
             coords.z = coords.z_cy;
 
             // Derive spherical coordinates from cylindrical coordinates.
-            coords.r = std::sqrt(coords.r_cy * coords.r_cy + coords.z_cy * coords.z_cy);
-            coords.theta = (coords.r > 1e-14) ? std::acos(coords.z_cy / coords.r) : 0.0;
+            if (dim == 2) {
+                // atan2(r,z) preserves the polar angle of an arbitrarily small
+                // nonzero sample and avoids dividing by a rounded radius.
+                coords.r = std::hypot(coords.r_cy, coords.z_cy);
+                coords.theta = coords.r > 0.0 ? std::atan2(coords.r_cy, coords.z_cy) : 0.0;
+            } else {
+                coords.r = std::sqrt(coords.r_cy * coords.r_cy + coords.z_cy * coords.z_cy);
+                // Same 1e-14 cm angle convention as the Cartesian embedding;
+                // the native 2D branch above instead uses nonzero-radius atan2.
+                coords.theta = (coords.r > 1e-14) ? std::acos(coords.z_cy / coords.r) : 0.0;
+            }
             coords.phi = coords.phi_cy;
         }
 

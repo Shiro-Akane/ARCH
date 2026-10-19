@@ -1,115 +1,46 @@
-# Contributor guide and working records
+# Contributing to ARCH
 
-The [release plan](../../ARCH_RELEASE_PLAN.md) is the sole current work index for release qualification, source/documentation readability and test/CI consolidation. REL-2 and the scoped REL-3 CPU foundation are complete. The [final CPU acceptance](../../validation/backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json) binds the current Flash2D fix, CPU contracts, original RZ five-crossing endpoint and its own scheduled-half fresh continuation. SNIa historical Cartesian evidence has an independently reviewed equivalence binding; its original failures and qualification limits remain recorded. Actual costs, source identities and immutable prior receipts remain in that one plan. REL-4 has not started; complete Device, documentation/test/CI and distribution qualification remain in the subsequent phases.
+The [release plan](../../ARCH_RELEASE_PLAN.md) is the sole current work index. Scoped CPU and CUDA qualification and the axisymmetric cylindrical implementation have accepted evidence; final distribution, hosted CI and human platform acceptance remain separate. Near-zero-momentum and SNIa qualification limits remain in that plan. A completed implementation or unit test does not establish an unrestricted scientific release.
 
-RZ cost reduction remains open. Current implementation entry points are in the
-[ownership map](ImplementationOwnership.md); dated RZ reports have moved to
-[implementation history](archive/README.md#rz-implementation-history). Deleting
-a retired header does not by itself establish reduced numerical work.
+Start from the [implementation ownership map](ImplementationOwnership.md) when changing code. Grid and curvilinear numerics own coordinates, measures and geometric terms; optional gravity owns its field, solver and energy work. Shared numerical bodies serve Host and Device. CUDA owners manage launches, storage and synchronization. Studio separates Electron, the Linux Host service, browser contracts and rendering.
 
-The [modernization plan](../../ARCH_MODERNIZATION_PLAN.md) and [R8 acceptance record](modernization/R8FinalAcceptance-20261014.json) preserve the completed modernization scope and its original identities. They do not grant complete Device applications, hosted CI or platform release qualification.
+## Find the maintained owner
 
-The [R1–R4 foundation](modernization/R1R4Foundation-20261013.zh-CN.md) and its [machine index](modernization/R1R4Foundation-20261013.json), [R5 build split](modernization/R5BuildEfficiency-20261013.json), [R6 shared bounds](modernization/R6SharedBounds-20261013.json), [R67 exact RZ primitive](modernization/R67RzPerformance-20261013.json) and [R7 current-source integration](modernization/R7CompletionAndR8Readiness-20261013.json) preserve their original evidence and limits. Dated human checkpoints remain in the [archive](archive/README.md#modernization-checkpoints); all 12 prior machine receipts retain their bytes. Reuse existing ownership/comment rules and the single plan instead of creating another current progress or policy document.
+| Task | Read or change here | Verification |
+| --- | --- | --- |
+| Build, dependencies and local resources | [Build guide](../guides/Build.md), [CMake](../../cmake/README.md) | Affected configure/target; record compiler, jobs, time and RAM |
+| Configuration and public API | [Strict input contract](ConfigurationContractPlan.zh-CN.md), [API](../../src/api/README.md), [Reference](../Reference.md) | Existing parser, missing/invalid-input and API contracts |
+| Mathematical or physical method | [Source map](../../src/README.md), [ownership](ImplementationOwnership.md), [physics](../physics/README.md) | Owning Host/Device leaf and independent scientific reference |
+| AMR, execution or resources | [AMR](../../src/amr/README.md), [driver](../../src/driver/README.md), [CUDA](../../src/cuda/README.md) | Existing schedule, transaction, failure and resource checks |
+| Files and continuation | [IO](../../src/io/README.md), [restart validation](../../validation/restart/README.md) | Publication failure, identity rejection and applicable fresh comparison |
+| Studio | [Studio source boundaries](../../studio/README.md#source-and-evidence-layout), [tests](../../studio/tests/README.md) | Typed request/response, owned lifecycle, lint and typed build |
+| Documentation and comments | [Writing guidance](CommentAndDocumentationStyle.md) | Current claims, local links and non-comment behavior equivalence |
 
-The [prior scientific acceptance table](ComputeOptimizationPlan.zh-CN.md#当前执行校准2026-10-08) and [release evidence record](ComputeStudioReleasePlan-20261006.zh-CN.md) preserve accepted requirements, checks and unresolved scientific exits. Current priorities and inherited release blockers are maintained in the release plan above, rather than in parallel execution tables. Configuration and scientific contracts define requirements; dated implementation maps and reports retain their original source, binary and platform identities. The [integration report](ComputeStudioIntegrationReport-20261006.zh-CN.md) and [consolidation record](ComputeOptimConsolidation-20261006.zh-CN.md) preserve handover provenance; dedicated GNN work remains separate.
+Choose the owner by responsibility, data lifetime, actual callers and build entry. Keep mathematical algorithms shared; add backend code only for execution or demonstrated resource requirements. A new file should serve a coherent responsibility, rather than a desired file length. Geometry must still work independently when optional gravity is disabled.
 
-The [GUI branch retirement record](GuiBranchRetirement-20261006.zh-CN.md) makes `origin/compute/optim` the shared baseline for new short-lived Studio/Host tasks, preserves old contract documents and records the recovery bundle. Completed GUI branches are not parallel development baselines.
+## Check a change
 
-Start with [implementation ownership](ImplementationOwnership.md) before changing shared mathematics, backend storage or execution. The map identifies the maintained owner and its CPU/CUDA consumers. The [acceptance checklist](CudaReleaseStandard.md) describes validation and publication requirements; [comment and documentation style](CommentAndDocumentationStyle.md) covers source comments and reader-facing documentation.
+The [test guide](../../tests/README.md) explains how to run engineering checks; [Validation](../../validation/README.md) explains scientific references, measured errors, accepted budgets and limits. Extend the existing assertion owner and keep independent oracles independent. Tooling, CPU, Device and Studio have distinct responsibilities. A lane marked `NOT_APPLICABLE` has no test result; it is not evidence that tests ran.
 
-The [self-gravity implementation plan](SelfGravityImplementationPlan.zh-CN.md) and [curvilinear gravity plan](CurvilinearGravityPlan.zh-CN.md) remain active references for field ownership, AMR coupling and geometry. GUI and Core contracts remain with the [API module](../../src/api/README.md).
+Keep inputs, numerical standards, physical definitions and failure handling intact. Use focused verification for the affected path; reuse accepted evidence only within its original identity and scope. Do not rerun historical long campaigns for prose or infer device qualification from Host tests. Build measurements freeze source/configuration first and distinguish cold, no-op and incremental work.
 
-The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md) records the delivered configuration, Jeans-resolution, axisymmetric-geometry and boundary interfaces, their remaining acceptance, and the model-specific long-duration/CI work. The [execution-cost follow-up](../../validation/gravity/flash/results/cpu-followup-20261003/README.md) records exact-state reuse and scheduling changes, original scientific budgets and remaining performance targets. The [configuration contract plan](ConfigurationContractPlan.zh-CN.md) classifies every standard parameter by requiredness, permitted defaults and physical ownership. The [archived implementation ledger](archive/optimization/ImplementationAndAcceptancePlan.zh-CN.md) preserves the completed optimization campaign. The [FLASH comparison record](FlashComparisonOptimizationPlan.zh-CN.md) describes optional developer comparisons; ARCH build, test, CI and release requirements are independent of external simulation programs. The [validation index](../../validation/README.md) links measured results.
+Comments explain workflow, units, mathematical conventions, non-obvious constants and resource lifetimes beside the implementation. They do not repeat repair history or invent physical reasons for work limits. Frozen scientific data and upstream fits retain their original attribution and coefficients. Pure comments still change source digests; old binary measurements retain their original identities.
 
-The [joint delivery record](StudioConfigurationHandoff.zh-CN.md) preserves the handover scope, configuration/API and Studio workflow, and evidence requirements. Core, field semantics and scientific acceptance now belong to the current maintainer; the original human GUI handoff covers UI improvements. Authorized engineering MCP work follows [AGENTS.md](../../AGENTS.md) and the modernization plan, with integration and acceptance retained by the maintainer. Current Linux usage is in the [Studio guide](../guides/Studio.md), with [tests](../../studio/tests/README.md) and [historical checkpoints](../../studio/docs/archive/README.md) kept separately. Native Windows adaptation is outside this delivery. The [Jeans, RZ and second-platform execution guide](JeansRZPlatformHandoff.zh-CN.md) records the delivered O7.1–O7.5 implementation and approved O9 subset on an i7-14700K/RTX 4070 Ti system. Existing implementations are the acceptance baseline; concrete reproduced defects trigger repairs in their maintained owners. Maintainers approve scientific rules, references and budgets. Process raw outputs locally and upload only reviewed summaries, metrics, figures and bounded diagnostic extracts; HDF5, plotfiles, checkpoints and full arrays stay on the producing machine. The [current contract audit](../../validation/backend/results/studio-config-contract-audit-20261001/README.md) preserves the inspected baseline; it does not certify the unpushed Studio checkpoint or future contract.
+## Documentation and evidence
 
-The [Plotfile validation bridge](PlotfileValidationContract.zh-CN.md) supplies small
-counterexamples, adjustable HDF path mappings and native-cell readback for the joint
-Viewer work. It checks local reader consistency; the current maintainer owns
-production writer/query semantics and publication/failure acceptance, while UI changes can be reviewed with the UI collaborator.
+Current usage belongs in the [guides](../guides/README.md), configuration/API contracts in their maintained owners, and source reasoning beside the implementation. Current results belong in each [Validation summary](../../validation/README.md); detailed receipts stay under its `results/` directory. Raw HDF5, checkpoints and full logs remain local.
 
-The [historical archive](archive/README.md) preserves completed low-density/EOS migration, implementation decisions and earlier backend reviews. Current user-facing behavior is described by the [feature list](../Features.md) and [reference](../Reference.md).
+[Historical development records](../histroy/README.md) explain past decisions and qualification limits. Their pending items are dated observations, not a second current execution plan. Fixed-path receipts and original failures retain their bytes and provenance during documentation cleanup. The [modernization closeout](../../ARCH_MODERNIZATION_PLAN.md) preserves the completed architecture scope.
 
-The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.
+## Reporting and review
 
-When changing a module, identify its owner and callers, explain the inputs and
-assumptions that must stay valid, then select the relevant tests. Update the
-public description when behavior changes and retain a separate record of the
-verification. The [comment and documentation guide](CommentAndDocumentationStyle.md)
-describes how to explain this flow without turning source comments into a change log.
+Use the [reporting guide](../guides/Reporting.md) for a small reproducer, source identity, command, expected result and bounded logs. [CODEOWNERS](../../.github/CODEOWNERS) identifies the reviewer; implementation ownership is a separate map. [CI](../../.github/workflows/README.md) defines automated coverage, applicability and required-result handling.
 
-## Reporting problems and contributing
-
-Use Issues for build, runtime and numerical questions, with a small reproducer,
-the tested commit and the expected behavior. Follow the
-[research computing and reporting guide](../guides/Reporting.md)
-([中文](../guides/Reporting.zh-CN.md)) when preparing inputs and logs for sharing.
-Problems involving unintended file access, credentials or effects on other users'
-jobs need private coordination; ordinary numerical discrepancies do not.
-
-[CODEOWNERS](../../.github/CODEOWNERS) names the default reviewer; it is separate
-from the implementation ownership map and does not itself require approval.
-For changes to build tools or dependencies, describe what will execute and any
-new access it needs. Run contributed code only in an environment appropriate
-for its trust level, without exposing credentials. Follow the existing
-[test guide](../../tests/README.md) and keep each contribution focused.
-
-Before sharing a checkout, scan its history for accidentally committed credentials
-with [Gitleaks](https://github.com/gitleaks/gitleaks). The maintained
-[configuration](../../.gitleaks.toml) uses the scanner's standard rules without
-blanket exclusions or a baseline of ignored findings. With Gitleaks installed,
-run these commands from the repository root:
+Before publishing source or history, use the maintained [.gitleaks.toml](../../.gitleaks.toml) rules with Gitleaks. From the repository root:
 
 ```bash
 gitleaks git --log-opts="--all --diff-merges=separate" --config .gitleaks.toml --redact .
 gitleaks git --pre-commit --staged --config .gitleaks.toml --redact .
 ```
 
-The first command includes merge differences in the locally available history;
-the second checks staged changes. Fetch the intended remote branches first.
-Git-diff scanning does not replace checking materialized LFS assets and archive
-contents. Keep detailed reports outside the published source and do not paste
-credentials into an issue. Revoke an exposed credential before addressing its
-history. Commit hooks are local setup: cloning the repository does not install
-them, and they supplement rather than replace GitHub push protection.
-
-## Maintained contributor references
-
-- [RT/AMR data-correctness repair](RTAmrDataCorrectnessRepair.zh-CN.md): shared
-  acceptance rules, RKL correction accounting, portable replay inputs and the
-  current GNN collection-admission decision. This is a targeted development
-  record, not an additional release-wide validation claim.
-- [Current interface review](ImplementationOwnership.md#current-interface-and-compatibility-review): the complete ARCH checkpoint
-  contract, removal of unused solver-selection members, retained API boundaries
-  and the focused verification record.
-- [Acceptance checklist](CudaReleaseStandard.md): implementation invariants,
-  required checks, resource policy and publication boundaries.
-- [Build guide](../guides/Build.md): configurable compilation and memory controls.
-- [Tests](../../tests/README.md) and [tools](../../tools/README.md): choose focused
-  checks by responsibility and reuse the existing execution/evidence helpers.
-- [Validation](../../validation/README.md): the combined acceptance record and
-  links to scientific, runtime, instrumentation and resource measurements.
-
-<details>
-<summary>Integration review and historical investigations — for contributors</summary>
-
-- [Integration record](HpcCudaIntegration.md): exact source and binary identities,
-  bounded implementation changes, local checks and publication scope.
-- [Historical development archive](archive/README.md): intermediate backend,
-  AMR, geometry and diffusion reviews, plus the superseded acceptance ledger.
-- [Core-build measurement](../../validation/backend/results/cold-core-first-law-20260907/release-909/README.md):
-  identified cold, no-op and incremental builds; the recorded concurrency is a
-  machine-specific reference, not a universal optimum.
-
-These records explain development decisions. User-facing results remain in the
-validation summaries; an archived pending item is not necessarily a current defect.
-
-</details>
-
-User documentation lives in the project README, [API reference](../Reference.md)
-and [backend capabilities](../CudaBackendStatus.md). Quantitative evidence uses
-the existing [validation tree](../../validation/README.md): curated module
-summaries link to detailed results, input identities and hardware metadata.
-Keep reusable helpers in their owning module and run-specific evidence under
-`validation/**/results/`. Link the existing user contract rather than copying a
-second feature or acceptance checklist into a working note.
+Inspect materialized assets and archives as well as Git differences; keep detailed scanner reports local. Hooks are local setup and supplement hosted checks. Source sharing and formal publication follow the current task authorization.

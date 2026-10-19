@@ -1,3 +1,8 @@
+/**
+ * Track inspection generations across model, text and build changes.
+ * Only the latest ticket can publish a response, including when text returns to
+ * an earlier value; validation still checks the full Core request scope.
+ */
 import type {ConfigurationBuildScope,ConfigurationRequest,InspectionResponse} from '../host/configurationContracts.ts';
 import {validateInspectionResponse} from '../host/configurationValidation.ts';
 /** Invalidated on every model/text/build transition, including transitions back to earlier text. */

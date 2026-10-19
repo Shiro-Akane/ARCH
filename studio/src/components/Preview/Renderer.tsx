@@ -1,3 +1,6 @@
+/**
+ * Render explicitly synthetic demo heatmaps using h5web. Coordinate sampling and point selection serve the demo UI, not production field initialization.
+ */
 import { useMemo, useRef } from 'react';
 import { HeatmapVis, Annotation, useCanvasEvent, Html } from '@h5web/lib';
 import ndarray from 'ndarray';

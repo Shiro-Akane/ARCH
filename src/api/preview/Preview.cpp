@@ -206,7 +206,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         std::vector<double> x_coordinates, y_coordinates, z_coordinates;
         // A three-axis mesh carries three physical velocity components; a
         // two-axis mesh carries two and a single-axis mesh carries one.
-        const std::size_t field_count = config.grid.dim==3 ? 8 : config.grid.dim==2 ? 7 : 6;
+        const std::size_t field_count = config.grid.dim==3 || (config.grid.dim==2 && config.grid.geometry=="cylindrical") ? 8 : config.grid.dim==2 ? 7 : 6;
         std::vector<std::vector<double>> values(field_count);
         for (auto &field_values : values) field_values.reserve(sampling.count);
         EOSDispatcher::dispatch_eos(eos_id, config, specs, [&](auto &&eos, std::string_view fingerprint) {
@@ -311,7 +311,8 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             std::string display_name = names[j];
             if (config.grid.geometry != "cartesian" && (j == 3 || j == 6 || j == 7)) {
                 const int axis = j == 3 ? 0 : j == 6 ? 1 : 2;
-                display_name = "Native " + axis_names.at(axis) + " velocity";
+                display_name = "Native " + (config.grid.geometry == "cylindrical" && axis == 2
+                    ? std::string("phi_cy") : axis_names.at(axis)) + " velocity";
             }
             fields.push(field(keys[j], display_name.c_str(), values[j], UnitSystem(config)));
         }
@@ -339,9 +340,9 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                 if (config.grid.dim == 1)
                     fixed.push(Json::object({{"name", "phi"}, {"value", 0}, {"unit", "rad"}}));
             } else {
-                fixed.push(Json::object({{"name", "z_cy"}, {"value", 0}, {"unit", "cm"}}));
                 if (config.grid.dim == 1)
-                    fixed.push(Json::object({{"name", "phi_cy"}, {"value", 0}, {"unit", "rad"}}));
+                    fixed.push(Json::object({{"name", "z_cy"}, {"value", 0}, {"unit", "cm"}}));
+                fixed.push(Json::object({{"name", "phi_cy"}, {"value", 0}, {"unit", "rad"}}));
             }
             result["data"]["sampling"]["fixedCoordinates"] = fixed;
         }

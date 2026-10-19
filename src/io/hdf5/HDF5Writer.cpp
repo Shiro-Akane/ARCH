@@ -220,8 +220,11 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
                          const PlotSourceIdentity* source_identity,
                          const std::map<std::string, PlotFieldMetadata>* field_metadata)
 {
-    if (dim == 2 && geom == "cylindrical")
-        throw std::invalid_argument("Unsupported Plotfile geometry profile.");
+    const bool axisymmetric = dim == 2 && geom == "cylindrical";
+    // New Cyl2 publications always carry authoritative native bounds/identity;
+    // a legacy/partial writer cannot silently publish this chart.
+    if (axisymmetric && (!native_grid || !source_identity || !source_identity->formal))
+        throw std::invalid_argument("Cylindrical2D Plotfile requires formal native chart identity.");
     if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
         || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
         throw std::invalid_argument("Invalid plotfile dimensions/time/fields.");
@@ -253,10 +256,10 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             }
         }
         const auto expected_unit=geom=="cartesian"?(dim==1?"cm":dim==2?"cm^2":"cm^3"):
-            dim==3 || (geom=="spherical" && dim==1)?"cm^3":"cm^2";
+            dim==3 || (geom=="spherical" && dim==1) || axisymmetric?"cm^3":"cm^2";
         const auto expected_normalization=geom=="cartesian"?
             (dim==1?"per_unit_transverse_area":dim==2?"per_unit_transverse_length":"full_volume"):
-            dim==3?"full_volume":geom=="spherical" && dim==1?"per_unit_solid_angle":
+            dim==3?"full_volume":axisymmetric?"per_unit_azimuth":geom=="spherical" && dim==1?"per_unit_solid_angle":
             dim==1?"per_unit_azimuth_and_axial_length":"per_unit_transverse_length";
         if ((native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
             && (native_grid->measure_unit!=expected_unit || native_grid->normalization!=expected_normalization))
@@ -379,7 +382,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             const std::array<std::string,3> axes=geom=="cartesian"?std::array<std::string,3>{"x","y","z"}:
                 dim==3?
                 (geom=="cylindrical"?std::array<std::string,3>{"r","z","phi"}:std::array<std::string,3>{"r","theta","phi"}):
-                std::array<std::string,3>{"r","phi","inactive"};
+                std::array<std::string,3>{"r",axisymmetric?"z":"phi","inactive"};
             for(int i=0;i<3;++i) {
                 const std::string axis=i<dim?axes[i]:"inactive";
                 const std::string unit=i>=dim?"inactive":axis=="theta"||axis=="phi"?"rad":"cm";
@@ -443,8 +446,9 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
         if (source_identity && source_identity->formal) {
-            file.createAttribute("geometry_semantics_revision",1);
-            file.createAttribute("geometry_chart",std::string("existing"));
+            const auto chart = checkpoint_geometry_identity(dim,geom);
+            file.createAttribute("geometry_semantics_revision",chart.revision);
+            file.createAttribute("geometry_chart",chart.chart);
         }
         file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
@@ -608,7 +612,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint)
 {
-    const auto geometry_identity = (checkpoint.geometry_identity.revision == 0 && checkpoint.geometry_identity.chart.empty())
+    const auto geometry_identity = (checkpoint.geometry_identity.revision == 0 && checkpoint.geometry_identity.chart.empty()
+        && !(checkpoint.dim == 2 && checkpoint.geometry == "cylindrical"))
         ? CheckpointGeometryIdentity{1, "existing"} : checkpoint.geometry_identity;
     require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                                           geometry_identity, geometry_identity);
@@ -760,9 +765,11 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         if (has_revision) {
             file.getAttribute("geometry_semantics_revision").read(checkpoint.geometry_identity.revision);
             file.getAttribute("geometry_chart").read(checkpoint.geometry_identity.chart);
-            require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
-                checkpoint.geometry_identity, checkpoint.geometry_identity);
         }
+        // Validate even when both attributes are absent: legacy Cyl2 is never
+        // promoted to the new chart merely because its payload shape fits.
+        require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                               checkpoint.geometry_identity);
         if(file.hasAttribute("repair_semantics")) {
             std::string saved_repairs;
             file.getAttribute("repair_semantics").read(saved_repairs);

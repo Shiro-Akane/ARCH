@@ -1,3 +1,8 @@
+/**
+ * Validate Preview capabilities, fields, sampling and request identity.
+ * Array extents, finite data and scope are checked before presentation. This
+ * transport check preserves Core diagnostics and does not certify later evolution.
+ */
 import {PROTOCOL_VERSION} from './contracts.ts';
 import type {CorePreview,PreviewIdentity,RealPreviewResult,PreviewStatus,ModelCapability} from './previewContracts.ts';
 export function record(v:unknown):v is Record<string,unknown>{return !!v&&typeof v==='object'&&!Array.isArray(v);}
@@ -28,8 +33,10 @@ export function validateCorePreview(v:unknown,id:Pick<PreviewIdentity,'requestId
  if(s.fixedCoordinates!==undefined)need(Array.isArray(s.fixedCoordinates)&&s.fixedCoordinates.length<=3&&s.fixedCoordinates.every(c=>record(c)&&text(c.name)&&typeof c.value==='number'&&Number.isFinite(c.value)&&(c.unit===null||text(c.unit))),'fixed coordinates');
  if(id.caseId==='CellularDet')need(dim===2&&Array.isArray(s.fixedCoordinates)&&s.fixedCoordinates.length===1&&record(s.fixedCoordinates[0])&&s.fixedCoordinates[0].name==='x3'&&s.fixedCoordinates[0].value===0,'Cellular inactive coordinate');
  if(d.coordinates!==undefined){
-  const c=d.coordinates;need(record(c)&&c.version==='1'&&c.basis==='native-grid'&&c.velocityBasis==='native-orthonormal'&&['cartesian','cylindrical','spherical'].includes(String(c.geometry))&&['uniform-state','spatial-samples'].includes(String(c.representation))&&!(c.geometry==='cylindrical'&&dim===2)&&record(c.metadata)&&c.metadata.dimension===dim&&c.metadata.geometry===c.geometry&&Array.isArray(c.metadata.axes)&&c.metadata.axes.length===3,'coordinate metadata');
-  for(let i=0;i<3;i++){const a=c.metadata.axes[i];need(record(a)&&a.key==='x'+(i+1)&&a.active===(i<dim)&&text(a.displayName)&&text(a.nativeName)&&(a.unit===null||text(a.unit)),'coordinate axis metadata');}
+  const c=d.coordinates;need(record(c)&&c.version==='1'&&c.basis==='native-grid'&&c.velocityBasis==='native-orthonormal'&&['cartesian','cylindrical','spherical'].includes(String(c.geometry))&&['uniform-state','spatial-samples'].includes(String(c.representation))&&record(c.metadata)&&c.metadata.dimension===dim&&c.metadata.geometry===c.geometry&&Array.isArray(c.metadata.axes)&&c.metadata.axes.length===3,'coordinate metadata');
+  if(c.geometry==='cylindrical'&&dim===2)need(c.metadata.chart==='cylindrical-rz-pwc'&&c.metadata.geometrySemanticsRevision===1,'native chart identity');
+  for(let i=0;i<3;i++){const a=c.metadata.axes[i];need(record(a)&&a.key==='x'+(i+1)&&a.active===(i<dim)&&text(a.displayName)&&text(a.nativeName)&&(a.unit===null||text(a.unit)),'coordinate axis metadata');
+   if(c.geometry==='cylindrical'&&dim===2)need(a.nativeName===['r_cy','z_cy','x3'][i]&&a.unit===(i<2?'cm':null),'native chart axes');}
   if(record(v.state)&&record(v.state.grid))need(v.state.grid.geometry===c.geometry,'grid/data geometry');
  }else need(dim<3&&(id.caseId==='Sod'||id.caseId==='CellularDet'),'new model requires coordinate contract');
  need(Array.isArray(d.axes)&&d.axes.length===dim,'axes');

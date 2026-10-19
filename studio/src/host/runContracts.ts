@@ -1,3 +1,8 @@
+/**
+ * Define preparation, explicit confirmation and observed Run/Restart states.
+ * Identity binds a proposal to saved input and compiled binary. These message
+ * types confer no shell access and do not turn an unknown outcome into success.
+ */
 import type {FileFingerprint} from './contracts.ts';
 import type {ConfigurationInspection,PathCheck} from './configurationContracts.ts';
 export interface PrepareRunRequest {projectId:string;caseId:string;configRevision:string;mode:'run'|'restart'}

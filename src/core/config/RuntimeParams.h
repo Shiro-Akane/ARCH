@@ -313,7 +313,7 @@ private:
         assign(cfg.amr.refine_var, "refine_var");
         arch::config::ResolveRefinementSelection(cfg.amr, cfg.grid.dim, cfg.physics.burn.use_burn,true,
             cfg.physics.gravity.type=="self",
-            arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry));
+            arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry),cfg.grid.geometry);
         assign(cfg.amr.refine_threshold, "refine_threshold");
         assign(cfg.amr.derefine_threshold, "derefine_threshold");
         // Time limits and output configuration.
@@ -405,7 +405,7 @@ private:
         };
         if (cfg.io.vars.enuc && !cfg.physics.burn.use_burn) { warn_plot_disabled("ENUC", "the nuclear reaction network is not enabled"); cfg.io.vars.enuc = false; }
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
-        if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the selected chart has no active third velocity component"); cfg.io.vars.w = false; }
+        if (cfg.io.vars.w && cfg.grid.dim < 3 && !(cfg.grid.dim == 2 && cfg.grid.geometry == "cylindrical")) { warn_plot_disabled("VELZ", "the selected chart has no active third velocity component"); cfg.io.vars.w = false; }
         if (cfg.io.vars.jens)
             if (cfg.physics.gravity.type!="self"
                 || !arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry))

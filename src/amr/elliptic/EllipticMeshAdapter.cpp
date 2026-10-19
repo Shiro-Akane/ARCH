@@ -29,8 +29,6 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
     else if(config.geometry=="spherical")base.geometry=arch::elliptic::Geometry::Spherical;
     else throw std::invalid_argument("Unsupported elliptic geometry");
     if (base.dimension<1 || base.dimension>3) throw std::invalid_argument("Invalid elliptic dimension");
-    if (config.geometry=="cylindrical" && base.dimension==2)
-        throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported");
     const int roots[]{config.nblockx1,config.nblockx2,config.nblockx3};
     const int block_cells[]{BLOCK_NX,BLOCK_NY,BLOCK_NZ};
     for (int axis=0;axis<base.dimension;++axis) {

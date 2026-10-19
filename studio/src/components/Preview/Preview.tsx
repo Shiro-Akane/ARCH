@@ -1,3 +1,6 @@
+/**
+ * Coordinate the demo preview view, selected field and status. Real Core initial-state requests and saved simulations retain their separate workflows.
+ */
 import { Component, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from '../Icon';

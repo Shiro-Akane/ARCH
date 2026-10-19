@@ -1,3 +1,6 @@
+/**
+ * Display the bundled historical one-dimensional Cellular sample without running Core. Preserve its stopped-at-200-steps qualification and original field provenance.
+ */
 import { useState } from 'react';
 import sample from '../samples/cellular.json';
 const fields = { DENS: ['Density', 'g/cm³'], TEMP: ['Temperature', 'K'], PRES: ['Pressure', 'erg/cm³'] } as const;

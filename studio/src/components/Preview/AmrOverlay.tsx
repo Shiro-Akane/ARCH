@@ -1,3 +1,6 @@
+/**
+ * Draw the selected initial AMR leaves over a matching native plane. Level/slice filtering changes visibility only; selection reports an existing logical key.
+ */
 import type {AmrMesh} from '../../host/workflowContracts';
 import {amrPlaneAxes,amrPlaneLeaves,amrLevelColor,visibleCellCoordinates} from '../../data/amrGeometry';
 import type {AmrSlice} from '../../data/amrGeometry';

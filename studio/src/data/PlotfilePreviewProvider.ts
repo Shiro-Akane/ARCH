@@ -1,3 +1,8 @@
+/**
+ * Read a user-selected local Plotfile for browser-side field inspection.
+ * Use the shared local HDF lifetime owner and preserve stored sample values.
+ * Project-scoped formal/native queries use the separate typed Host audit route.
+ */
 import h5wasm from 'h5wasm';
 import { withLocalHdf5 } from './localHdf5.ts';
 import { adaptUniformLine } from './LinePreviewData.ts';

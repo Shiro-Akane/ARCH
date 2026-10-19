@@ -151,6 +151,8 @@ ARCH_HEAVY_INLINE TemperatureInverse invert_free_energy_temperature(
             if (physical.status != FreeEnergyStatus::success) continue;
             const double recovered = value(temperature);
             if (!std::isfinite(recovered) || std::abs(recovered - target) >
+                // Original relative recovered-interpolant residual; it is not
+                // the independent scientific error budget of an EOS table.
                 2.0e-12 * std::max(std::abs(target), std::abs(recovered))) continue;
             if (temperature == last_temperature) continue;
             last_temperature = temperature;

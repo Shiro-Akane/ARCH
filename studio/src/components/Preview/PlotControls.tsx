@@ -1,3 +1,6 @@
+/**
+ * Edit display ranges, scales and color settings. Logarithmic display rejects incompatible values instead of changing the underlying scientific data.
+ */
 import {plotColor} from '../../data/plotColors';
 import type {AxisSetting,FieldSetting} from '../../data/plotPresentation';
 import {axisDefault,fieldDefault} from '../../data/plotPresentation';

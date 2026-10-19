@@ -148,6 +148,9 @@ struct BasicHelmEosView {
             state.ytot += X[k] * inverse_a;
             state.ye += X[k] * specs.get_Z(k) * inverse_a;
         }
+        // Numerical lower bound on dimensionless Ye for the rho*Ye table axis.
+        // Keep whether the actual charge exceeded that guard for derivatives;
+        // 1e-16 is not a new physical composition requirement.
         state.charge_active = state.ye > 1.0e-16;
         state.ye = std::max(1.0e-16, state.ye);
     }
@@ -564,6 +567,7 @@ struct BasicHelmEosView {
             ytot += Xi[k] * inv_A;
             ye += Xi[k] * specs.get_Z(k) * inv_A;
         }
+        // Same electron-table argument guard as prepare_composition.
         ye = std::max(1.0e-16, ye);
 
         double din = rho * ye;
@@ -1186,6 +1190,7 @@ struct BasicHelmEosView {
             ytot += state.Xi[k] * inv_A;
             ye += state.Xi[k] * specs.get_Z(k) * inv_A;
         }
+        // Same Ye convention used by the thermodynamic and get_eta paths.
         ye = std::max(1.0e-16, ye);
 
         double pele, E_ele;

@@ -1,3 +1,8 @@
+/**
+ * Validate Core schema and inspection payloads at the browser contract boundary.
+ * Check typed values, requirement/source metadata and full request/build identity
+ * before accepting data. Unknown or missing evidence is not a numerical default.
+ */
 import {PROTOCOL_VERSION} from './contracts.ts';
 import {record} from './previewValidation.ts';
 import type {ConfigurationBuildScope,ConfigurationInspection,ConfigurationSchema,ConfigurationRequest,InspectionResponse,SchemaResponse} from './configurationContracts.ts';
@@ -107,8 +112,15 @@ export function validateInspectionResponse(v:unknown,request:ConfigurationReques
 
 export function validateCoordinates(v:unknown){
  if(!record(v)||!strings(v,['geometry','unitSystem'])||![1,2,3].includes(Number(v.dimension))||!Array.isArray(v.axes)||v.axes.length!==3)throw new Error('Invalid Core coordinates.');
- if(v.geometry==='cylindrical'&&v.dimension===2)throw new Error('Two-dimensional cylindrical coordinates are unsupported.');
+
  for(const [i,a] of v.axes.entries())if(!record(a)||!strings(a,['key','displayName','nativeName','kind','blocksKey','minKey','maxKey','lowerBoundaryKey','upperBoundaryKey'])||a.key!==`x${i+1}`||typeof a.active!=='boolean'||typeof a.blocks!=='number'||(a.unit!==null&&typeof a.unit!=='string'))throw new Error('Invalid Core axis.');
+ // Cyl2 has two spatial lengths and three physical velocity slots. A stale
+ // polar catalog must not be displayed as the newly qualified native chart.
+ if(String(v.geometry).toLowerCase()==='cylindrical'&&v.dimension===2){
+  if(v.chart!=='cylindrical-rz-pwc'||v.geometrySemanticsRevision!==1||v.axes.some((a,i)=>
+   !record(a)||a.active!==(i<2)||a.nativeName!==['r_cy','z_cy','x3'][i]||a.unit!==(i<2?'cm':null)))
+   throw new Error('Invalid cylindrical native chart axes/identity.');
+ }
 }
 function validatePathChecks(v:unknown):NonNullable<InspectionResponse['pathChecks']>{
  if(!Array.isArray(v)||v.length>4096)throw new Error('Invalid Host path checks.');

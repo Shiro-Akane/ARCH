@@ -40,11 +40,14 @@ namespace ConductivityMath {
         constexpr double zbound = 0.1;
         constexpr double t7peek = 1.0e20;
         constexpr double k2c    = 4.0 / 3.0 * a_rad * c_light;
+        // Named prefactors of the pinned upstream stellar transport fits.
+        // Retain their fitted coefficients/scales together; these are not
+        // independently updated universal constants from PhysicalConstants.
         constexpr double meff   = 1.194648642401440e-10;
         constexpr double weid   = 6.884326138694269e-5;
         constexpr double iec    = 1.754582332329132e16;
         constexpr double xec    = 4.309054377592449e-7;
-        constexpr double rt3    = 1.7320508075688772;
+        constexpr double rt3    = 1.7320508075688772; // sqrt(3), rounded binary64.
         constexpr double con2   = 1.07726359439811217e-7;
         constexpr double t6_switch1 = 0.5;
         constexpr double t6_switch2 = 0.9;
@@ -101,6 +104,8 @@ namespace ConductivityMath {
         }
         abar = 1.0 / ytot1;
         zbar = zbar * abar;
+        // Upstream dimensionless temperature scales: t6=T/(1e6 K); the
+        // later t4 and T*1e-7 expressions use 1e4 K and 1e7 K respectively.
         double t6 = T * 1.0e-6;
 
         double xh = w[0];
@@ -111,6 +116,9 @@ namespace ConductivityMath {
         auto powi3 = [](double val) { return val * val * val; };
         auto powi4 = [](double val) { return val * val * val * val; };
 
+        // xh is the H mass fraction; 1e-5 selects the upstream H-poor fit,
+        // rather than removing hydrogen from the simulation. The 1e-99 guard
+        // protects this fit's square-root intermediate, not a species abundance.
         if (xh < 1.0e-5) {
             double xmu = std::max(1.0e-99, w[3] + w[4] + w[5] - 1.0);
             double xkc = std::pow((2.019e-4 * rho / std::pow(t6, 1.7)), 2.425);

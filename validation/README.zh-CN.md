@@ -13,10 +13,13 @@
 ## 已标识源码的 CPU/CUDA 结果
 
 下列验证保留其原始源码与输入身份。使用极坐标图的圆柱二维记录属于历史结果；
-二维柱坐标已退役；旧 RZ 科学记录仅按原身份保留，见[当前发布计划](../ARCH_RELEASE_PLAN.md)。
+原生二维柱坐标使用 `cylindrical-rz-pwc` chart，CPU／CUDA定点证据见[设备签收](backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧RZ与极平面别名只保留原身份，不转签新chart。[综合准入收据](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)补齐轴向科学终点、声明的方法／EOS、必要耦合与fresh，保留失败输入和表域边界；[当前CPU签收](backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)补齐两个轴向初始化器、显式中心输入及受影响原CPU终点／fresh。
+
+[当前设备记录](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)已按声明的单GPU范围签收。原17项资源／批次契约、九种合法几何壁面、公共终点、重网格、输入／拒绝及Studio真实产物按原owner／执行物身份保留。当前NSE及Host AMR RKL修复通过9项数学CTest、原私有Cellular24步／25CHK的原ENUC门（`5e-9`＋`5e-12`，现逐位一致）、两后端自身fresh及三对旋转AMR的原`1e-12`标准。[燃烧指南](burn/README.zh-CN.md)说明未变的源项含义；[主计划](../ARCH_RELEASE_PLAN.md)统一给出成本、原CPU限定及后续平台／分发资格。旧缺`center_z`均匀输入保持历史范围。
 
 | 区域 | 已记录的 CPU/CUDA 检查 | 记录 |
 | --- | --- | --- |
+| 原生二维柱坐标综合准入 | 15个原终点轴向案例、306个合法方法／EOS组合对、源项准入、必要耦合与当前多物理fresh；表域范围和原门槛不变 | [综合收据](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |
 | 光滑流体 | PCM/MUSCL/PPM 在 64/128/256 单元上的空间收敛；独立 Euler/RK2/RK3 时间精度；1,016 步周期平流 | [hydro](hydro/README.zh-CN.md) |
 | Riemann 与强激波 | Sod 和平面 Sedov 解析剖面、三档分辨率收敛与激波位置 | [hydro](hydro/README.zh-CN.md#sod-激波管) |
 | 组分扩散 | 三档分辨率的 RKL1/RKL2 应用；RKL2 二阶空间收敛 | [diffusion](diffusion/README.zh-CN.md) |
@@ -52,7 +55,7 @@ CPU KLU 与 GPU cuDSS。各模块摘要链接独立科学检查，并保留原�
 
 ## 当前验证选择
 
-当前 CTest 配置清单包含 75 个入口：68 个数值／API 检查与七个工具契约包装。
+当前CPU CTest清单包含75个入口：68个数值／API检查与七个工具包装；CUDA缓存142个入口，其中52个名称含cuda。
 注册入口本身不是执行结果。托管 CI 只执行一次数值／API 清单，工具检查由独立任务
 执行；[CI 说明](../.github/workflows/README.md)给出一致的发现与完成判定规则。
 
@@ -157,7 +160,7 @@ ARCH 的[表数据契约](../src/physics/eos/TabularEOS.zh-CN.md)包含规范化
 下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
 
 - [源码交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/README.zh-CN.md)：详细证据清单和源码资产检查。
-- [集成审阅](../docs/development/HpcCudaIntegration.md)：代码调整、测试选择及精确身份。
+- [集成审阅](../docs/histroy/integration/HpcCudaIntegration.md)：代码调整、测试选择及精确身份。
 - [维护与构建记录](backend/results/maintenance-freeze-20260908/README.zh-CN.md)：特定源码的分发、重启检查和较早的 RTX 3060 Ti 计时。优化前的计时不用于推算当前代码性能。
 
 - [集成回归记录 (JSON)](backend/results/hpc-cuda-optimization/integration.json)

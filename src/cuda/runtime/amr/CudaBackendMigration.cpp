@@ -271,6 +271,11 @@ void CudaBackend::complete_staged_current_ghosts(
                 impl_->execute_same_level_exchange(level_accesses[index], same_level[index],
                     state::StateSlot::Current, resolve);
             impl_->execute_coarse_fine_exchange(accesses, coarse_fine, state::StateSlot::Current, resolve);
+            if(coarse_fine.dimension==2&&!coarse_fine.operations.empty())
+                for(std::size_t index=0;index<same_level.size();++index)
+                    impl_->execute_same_level_exchange(level_accesses[index],
+                        amr::make_same_level_corner_completion_plan(same_level[index]),
+                        state::StateSlot::Current,resolve);
             if (coordinate_seam && !coordinate_seam->transfers.empty()) {
                 impl_->execute_coordinate_seam_exchange(
                     accesses, ids_for_access, *coordinate_seam,

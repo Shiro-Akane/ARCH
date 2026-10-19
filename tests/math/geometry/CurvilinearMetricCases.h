@@ -47,9 +47,55 @@ inline constexpr MeasureCase cases[]{
     // END INDEPENDENT MEASURE DATA
 };
 
+/** Independent polynomial data also fixes cylindrical volume and torque moments.
+ * The shell/annulus columns are integral r^2 dr / r dr, not production-helper
+ * output. Exercise unresolved phi, resolved phi, and the retained polar face.
+ */
+ARCH_HOST_DEVICE inline double cylindrical_conditioning_error(const MeasureCase& sample)
+{
+    double maximum=0.;
+    for (int chart=0;chart<3;++chart) {
+        GridMetrics::GeometryView grid{};
+        grid.geometry=chart==2?GridMetrics::Geometry::Spherical:GridMetrics::Geometry::Cylindrical;
+        grid.dim=chart==1?3:2;
+        grid.x1_min=sample.radius;grid.dx1=sample.radial_width;
+        grid.dx2=.25;grid.dx3=grid.dim==3?.125:0.;
+        const double angular=grid.dim==3?grid.dx3:1.;
+        const double left=sample.radius,right=left+sample.radial_width;
+        const double actual[]{
+            GridMetrics::CellVolume(grid,0,0,0),
+            GridMetrics::FaceArea(grid,0,0,0,0,false),
+            GridMetrics::FaceArea(grid,0,0,0,0,true),
+            GridMetrics::FaceArea(grid,1,0,0,0,false),
+            GridMetrics::AngularMomentumVolumeMoment(grid,0,0,0),
+            GridMetrics::AngularMomentumFaceMoment(grid,0,0,0,0,false),
+            GridMetrics::AngularMomentumFaceMoment(grid,0,0,0,0,true),
+            GridMetrics::AngularMomentumFaceMoment(grid,1,0,0,0,false),
+            GridMetrics::InverseRadiusVolumeAverage(grid,0)};
+        const double expected[]{sample.annulus*grid.dx2*angular,
+            left*grid.dx2*angular,right*grid.dx2*angular,
+            chart==2?right-left:sample.annulus*angular,
+            sample.shell*grid.dx2*angular,left*left*grid.dx2*angular,
+            right*right*grid.dx2*angular,
+            chart==2?sample.annulus:sample.shell*angular,
+            (right-left)/sample.annulus};
+        for (unsigned n=0;n<sizeof(actual)/sizeof(actual[0]);++n) {
+            if (!std::isfinite(actual[n]) || (expected[n]==0. && actual[n]!=0.))
+                return std::numeric_limits<double>::infinity();
+            if(expected[n]!=0.)maximum=std::max(maximum,std::abs((actual[n]-expected[n])/expected[n]));
+        }
+        if(grid.dim==3) {
+            const double actual_phi=GridMetrics::AngularMomentumFaceMoment(grid,2,0,0,0,false);
+            const double expected_phi=sample.annulus*grid.dx2;
+            maximum=std::max(maximum,std::abs((actual_phi-expected_phi)/expected_phi));
+        }
+    }
+    return maximum;
+}
+
 ARCH_HOST_DEVICE inline double conditioning_error(const MeasureCase& sample)
 {
-    double maximum = 0.0;
+    double maximum = cylindrical_conditioning_error(sample);
     GridMetrics::GeometryView grid{};
     grid.geometry = GridMetrics::Geometry::Spherical;
     grid.dim = 3;

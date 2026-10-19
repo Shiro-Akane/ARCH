@@ -31,7 +31,7 @@ struct Values {
  *
  * Momentum storage follows the hydro source-term convention: VELX is radial for
  * curvilinear grids; VELY is azimuthal in spherical 2-D polar grids and polar
- * in spherical 3-D grids. Cylindrical 3-D grids use VELY=axial and
+ * in spherical 3-D grids. Cylindrical 2-D/3-D grids use VELY=axial and
  * VELZ=azimuthal; spherical 3-D also uses VELZ=azimuthal.
  * Logical-grid indices are materialized once because this routine is called in the
  * AMR and PLT inner loops; the component derivatives then reuse the same stencil.
@@ -96,8 +96,9 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
     // convention exactly.
     const double radius = std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
     if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical
-        && grid.dim == 3) {
-        // Logical axes are (r,z,phi).
+        && grid.dim >= 2) {
+        // Logical axes are (r,z,phi); in 2D ddz is the unresolved phi
+        // partial and vanishes, while all three physical curl slots remain.
         const double omega_r = ddz(vel_y) / radius - ddy(vel_z);
         const double omega_phi = ddy(vel_x) - ddx(vel_y);
         const double omega_z = vel_z_center / radius + ddx(vel_z) - ddz(vel_x) / radius;

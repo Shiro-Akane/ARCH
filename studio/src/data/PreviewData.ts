@@ -1,3 +1,7 @@
+/**
+ * Describe the bounded grid fields consumed by the demo renderer.
+ * This display shape carries no Core configuration, process or runtime authority.
+ */
 export interface PreviewData {
   width: number; height: number;
   xRange: [number, number]; yRange: [number, number];

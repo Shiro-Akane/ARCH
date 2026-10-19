@@ -1,3 +1,8 @@
+/**
+ * Reconcile saved configuration association with current project fingerprints.
+ * Track external changes separately from unsaved edits. A refresh cannot silently
+ * replace the working copy or accept a conflicting save.
+ */
 import {loadPar} from '../state/parState.ts';
 import type {ParState} from '../state/parState.ts';
 import type {ConfigLifecycleState,ConfigReadResponse,FileFingerprint,ProjectSnapshot} from './contracts.ts';

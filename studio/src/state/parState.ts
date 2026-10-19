@@ -1,3 +1,8 @@
+/**
+ * Track raw parameter text, pending edits, save association and editor diagnostics.
+ * Preserve parser/retired-key errors instead of silently normalizing input. Core
+ * inspection remains authoritative for active requirements and physical ranges.
+ */
 import type {StandardParameter} from '../host/configurationContracts.ts';
 import {standardValueError} from '../data/standardValidation.ts';
 import { parSchema } from '../data/parSchema.ts';

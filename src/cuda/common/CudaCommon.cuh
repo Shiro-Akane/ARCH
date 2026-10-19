@@ -7,7 +7,7 @@
  * Species scratch uses local or caller-owned storage without changing the
  * numerical policy. Passing a view transfers neither ownership nor completion.
  * Workflow: lower the ordinary Host layout and recheck its dimensions and
- * geometry before launch. Two-dimensional cylindrical grids are refused.
+ * geometry before launch; native Cyl2 retains one inactive spatial plane.
  */
 
 #pragma once
@@ -122,6 +122,9 @@ struct DeviceStateView
     int n_species;
 
     arch::boundary::DiffusionBoundaryView diffusion_boundary{};
+    // Topology-owned physical walls, shared by all slots. The Runtime stage
+    // lease authenticates ghost completion before these scalar flags are read.
+    arch::boundary::HydroBoundaryView hydro_boundary{};
     // Block-owned physical-surface observer planes. Ordinary runs leave this
     // view empty, so kernels neither allocate, transfer nor synchronize.
     arch::boundary::BoundaryFluxCaptureView capture{};
@@ -241,9 +244,7 @@ inline bool valid_hydro_view(const DeviceStateView& view)
 inline bool valid_device_grid_geometry(const DeviceGridView& grid)
 {
     return grid.geometry >= static_cast<int>(DeviceGeometry::Cartesian)
-        && grid.geometry <= static_cast<int>(DeviceGeometry::Spherical)
-        && !(grid.geometry == static_cast<int>(DeviceGeometry::Cylindrical)
-            && grid.dim == 2);
+        && grid.geometry <= static_cast<int>(DeviceGeometry::Spherical);
 }
 
 inline bool valid_hydro_grid(const DeviceGridView& grid)
@@ -288,8 +289,6 @@ static_assert(std::is_trivially_copyable_v<SpeciesWorkspaceView>);
 template <class HostGrid>
 inline DeviceGridView make_device_grid_view(const HostGrid& grid)
 {
-    if (grid.geometry == "cylindrical" && grid.dim == 2)
-        throw std::invalid_argument("Two-dimensional cylindrical grids are unsupported");
     if (grid.geometry != "cartesian" && grid.geometry != "cylindrical"
         && grid.geometry != "spherical")
         throw std::invalid_argument("CUDA grid lowering received unknown geometry");

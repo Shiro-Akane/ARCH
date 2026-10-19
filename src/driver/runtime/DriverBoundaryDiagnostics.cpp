@@ -2,12 +2,15 @@
  * @file DriverBoundaryDiagnostics.cpp
  * @brief Integrate actual domain-face fluxes without changing evolved fields.
  *
- * Workflow: allocate selected callback observers, weight the original RK/RKL
- * fluxes, integrate with physical face area and accumulate the accepted budget.
- * Positive entries leave the domain. Totals begin with this process.
+ * Workflow: allocate callback or explicitly requested diagnostic observers,
+ * weight the original RK/RKL fluxes, and accumulate physical surface budgets.
+ * Ordinary fields use face area; native axisymmetric angular momentum uses
+ * the same T face moment as its W-weighted update. Positive entries leave the
+ * domain. Totals begin with this process; capture never edits evolved fields.
  */
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
 #include <map>
 #include <stdexcept>
@@ -92,7 +95,8 @@ void DriverRuntime::prepare_boundary_capture(double weight, double initial_weigh
 /** Sum physical-surface rows in fixed block/axis/side/tangential-cell order. */
 std::vector<double> DriverRuntime::integrate_boundary_capture() {
     const int fields=6+specs.count();
-    std::vector<double> result(fields,0.);
+    const bool angular=config.grid.geometry=="cylindrical" && config.grid.dim==2;
+    std::vector<double> result(fields+(angular?1:0),0.);
     std::vector<backend::BoundaryFluxPlanes> device_planes;
     std::map<amr::BlockHandle,const backend::BoundaryFluxPlanes*> device_by_block;
     if (compute_backend) {
@@ -128,6 +132,16 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
                         if (!std::isfinite(value)) throw std::runtime_error("Nonfinite actual boundary flux");
                         result[field]+=measure*value;
                     }
+                    if (angular) {
+                        // The captured component is the actual physical F_phi,
+                        // not an already integrated torque. Its lever measure
+                        // is T=integral r dA, matching Delta(Mphi*W), not A.
+                        const double torque=GridMetrics::AngularMomentumFaceMoment(
+                            grid,axis,cell[0],cell[1],cell[2],side!=0);
+                        if (!std::isfinite(torque) || torque<0.)
+                            throw std::logic_error("Invalid boundary angular face moment");
+                        result.back()+=(side?1.:-1.)*torque*planes[face][row*fields+3];
+                    }
                 }
         }
     }
@@ -136,8 +150,15 @@ std::vector<double> DriverRuntime::integrate_boundary_capture() {
 
 void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& context) {
     const auto* selected=boundary::CurrentUserBoundaries();
-    if (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity)) return;
-    const int fields=6+specs.count();
+    // Instrumentation only: ordinary builtin runs retain their resident fast
+    // path. Opt-in uses the existing face capture and adds no physics control.
+    const char* requested=std::getenv("ARCH_BOUNDARY_FLUX_DIAGNOSTICS");
+    if (requested && std::string_view(requested)!="0" && std::string_view(requested)!="1")
+        throw std::invalid_argument("ARCH_BOUNDARY_FLUX_DIAGNOSTICS must be 0 or 1");
+    const bool explicit_capture=requested && std::string_view(requested)=="1";
+    if (!explicit_capture && (!selected || (!selected->callbacks.physical && !selected->callbacks.gravity))) return;
+    const int fields=6+specs.count()
+        + (config.grid.geometry=="cylindrical" && config.grid.dim==2 ? 1 : 0);
     if (hydro_boundary_budget_.empty()) {
         hydro_boundary_budget_.assign(fields,0.); diffusion_boundary_budget_.assign(fields,0.);
     }
@@ -153,7 +174,7 @@ void DriverRuntime::bind_boundary_accounting(scheduler::StageExecutionContext& c
     };
     context.rkl_flux_capture_begin=[this](const scheduler::RklStageDescriptor& stage,const scheduler::RklPlan& plan) {
         if (stage.stage==1) {
-            boundary_rkl_previous_.assign(6+specs.count(),0.); boundary_rkl_older_=boundary_rkl_previous_;
+            boundary_rkl_previous_.assign(diffusion_boundary_budget_.size(),0.); boundary_rkl_older_=boundary_rkl_previous_;
         }
         const auto coefficients=DiffFunction::get_rkl_coeffs(plan.second_order ? DiffFunction::RKLOrder::Second
             : DiffFunction::RKLOrder::First,stage.stage,static_cast<int>(plan.stages.size()));

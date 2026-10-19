@@ -1,3 +1,6 @@
+/**
+ * Present demo parameter editing and selection state. The real configuration editor uses Core's schema and strict input workflow.
+ */
 import { NumericInput } from './NumericInput';
 import { useState } from 'react';
 import { matchesParameter } from './panelPresentation';

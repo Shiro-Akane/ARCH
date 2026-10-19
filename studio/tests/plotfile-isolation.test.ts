@@ -27,8 +27,9 @@ function formalResponse(dimension:number,geometry='cartesian'){
   buildId:sha('e'),sourceManifestSha256:sha('f'),buildProfileSha256:sha('0'),sourceGitHead:null,
   sourceGitDirty:'unknown',sourceGitSource:'optional-build-time-annotation',eosIdentityVersion:'arch-eos-identity-1',
   eosIdentitySha256:sha('1'),eosTableIdentityKind:'not-applicable',resolvedBackend:'cpu',recordsVerified:true,eosUnitSystem:'cgs'};
+ const axisymmetric=geometry==='cylindrical'&&dimension===2;
  const axes=geometry==='cartesian'?['x','y','z']:dimension===3?
-  (geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r','phi','inactive'];
+  (geometry==='cylindrical'?['r','z','phi']:['r','theta','phi']):['r',axisymmetric?'z':'phi','inactive'];
  const axisUnits=axes.map((axis,index)=>index>=dimension?'inactive':['theta','phi'].includes(axis)?'rad':'cm');
  for(let index=dimension;index<3;index++)axes[index]='inactive';
  const cellShape=Array<number>(dimension).fill(2);
@@ -39,17 +40,17 @@ function formalResponse(dimension:number,geometry='cartesian'){
    version:geometry==='cartesian'?'arch-native-cartesian-1':'arch-native-curvilinear-1',
    measureSource:'GridMetrics::CellVolume',measureConvention:geometry==='cartesian'?
     'active-coordinate-product; inactive-measures-omitted':'GridMetrics-native-coordinate-integral',
-   measureUnit:dimension===1?'cm':dimension===2?'cm^2':'cm^3',measureNormalization:dimension===1?
-    'per_unit_transverse_area':dimension===2?'per_unit_transverse_length':'full_volume',geometry,axes,axisUnits,chart:'existing'},
+   measureUnit:axisymmetric?'cm^3':dimension===1?'cm':dimension===2?'cm^2':'cm^3',measureNormalization:axisymmetric?'per_unit_azimuth':dimension===1?
+    'per_unit_transverse_area':dimension===2?'per_unit_transverse_length':'full_volume',geometry,axes,axisUnits,chart:axisymmetric?'cylindrical-rz-pwc':'existing'},
   completion:{state:'complete',reason:'Synthetic parser fixture, not a publication receipt.'},
   scientificIdentity:{case:source.caseId,config:source.effectiveConfigSha256,build:source.buildId,
    binary:source.binarySha256,eos:source.eosIdentitySha256},nativeCellGeometry:{bounds:'recorded',volume:'recorded'},
-  renderEligible:geometry==='cartesian'&&[1,2].includes(dimension)};
+  renderEligible:geometry==='cartesian'&&[1,2].includes(dimension)||axisymmetric};
 }
 
 test('isolated response gate accepts formal Cartesian display and curved/3D Inspector semantics',()=>{
  for(const [dimension,geometry,render] of [[1,'cartesian',true],[2,'cartesian',true],
-  [3,'cartesian',false],[2,'spherical',false],[3,'cylindrical',false],[3,'spherical',false]] as const){
+  [3,'cartesian',false],[2,'cylindrical',true],[2,'spherical',false],[3,'cylindrical',false],[3,'spherical',false]] as const){
   const response=formalResponse(dimension,geometry),before=JSON.stringify(response);
   const result=validateIsolatedPlotfileResult(response);
   assert.equal(result.renderEligible,render);assert.equal(result.completion.state,'complete');
@@ -89,8 +90,8 @@ test('isolated response gate rejects completion, render and source/native identi
   {...response,candidateNativeGrid:{...response.candidateNativeGrid,geometry:'spherical'}},
   {...response,nativeCellGeometry:{bounds:'unavailable',volume:'recorded'}},
   {...formalResponse(3),renderEligible:true},
-  formalResponse(2,'cylindrical'),
-  {...formalResponse(2,'cylindrical'),renderEligible:true},
+  {...formalResponse(2,'cylindrical'),candidateNativeGrid:{...formalResponse(2,'cylindrical').candidateNativeGrid,chart:'existing'}},
+  {...formalResponse(2,'cylindrical'),renderEligible:false},
  ])assert.throws(()=>validateIsolatedPlotfileResult(invalid));
 });
 

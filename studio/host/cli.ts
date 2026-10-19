@@ -1,3 +1,8 @@
+/**
+ * Start the development loopback Host from explicit project arguments.
+ * Project construction resolves capabilities and selected files before the HTTP
+ * listener is exposed. Electron uses the separate desktop bootstrap envelope.
+ */
 import {parseArgs} from 'node:util';
 import {openProject} from './project.ts';import {createHostServer,listenLocal} from './server.ts';
 try {

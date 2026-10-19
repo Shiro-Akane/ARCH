@@ -1,3 +1,8 @@
+/**
+ * Validate registered-model and initial-AMR payloads against the expected scope.
+ * Check logical keys, native bounds, coordinates and complete array shapes before
+ * rendering. This does not refine a mesh or duplicate Core's geometric mathematics.
+ */
 import {validateCoordinates} from './configurationValidation.ts';
 import {record} from './previewValidation.ts';
 import type {RegisteredCase,ResourceEstimate,AmrMesh,WorkflowCore,WorkflowOperation,CaseProbe,InspectionSpecies} from './workflowContracts.ts';
@@ -32,7 +37,6 @@ export function validateResources(value:unknown):ResourceEstimate{
 }
 export function validateMesh(value:unknown,status:string):AmrMesh{
  if(!record(value)||value.version!=='1'||value.kind!=='amr-leaf-mesh'||![1,2,3].includes(Number(value.dimension))||!['cartesian','spherical','cylindrical'].includes(String(value.geometry))||(value.unit!==null&&typeof value.unit!=='string')||typeof value.complete!=='boolean'||!integer(value.completedPasses)||!integer(value.leafCount,0,1024)||!Array.isArray(value.leaves)||value.leaves.length!==value.leafCount||!Array.isArray(value.levelCounts)||!integer(value.configuredMaxBlocks,1)||!integer(value.workingCapacity,0,1024)||!['none','last-completed-balanced-hierarchy'].includes(String(value.snapshot))||(value.limitedReason!==null&&typeof value.limitedReason!=='string'))invalid('Invalid initial AMR mesh.');
- if(value.geometry==='cylindrical'&&value.dimension===2)invalid('Two-dimensional cylindrical mesh is unsupported.');
  if((status==='ok')!==value.complete||(value.complete&&(value.snapshot==='none'||value.limitedReason!==null))||(!value.complete&&typeof value.limitedReason!=='string')||(value.snapshot==='none'&&value.leafCount!==0))invalid('Contradictory AMR completion state.');
  if(value.coordinates!==undefined){
   const c=value.coordinates;

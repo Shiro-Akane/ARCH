@@ -258,7 +258,7 @@ __global__ void diffusion_face_kernel(
             const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
                 grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
             const bool radial=geometry.geometry!=GridMetrics::Geometry::Cartesian&&geometry.dim==1;
-            const bool matched_work=radial;
+            const bool matched_work=radial||(geometry.geometry==GridMetrics::Geometry::Cylindrical&&geometry.dim==2);
             double work_velocity[3]{};
             if(matched_work) {
                 work_velocity[0]=.5*(left.mom_u/left.rho+right.mom_u/right.rho);
@@ -267,7 +267,7 @@ __global__ void diffusion_face_kernel(
             }
             if(!DiffFlux::replace_curvilinear_viscous_flux(read,right_cell,geometry,direction,i,j,
                 config,properties,face_flux,
-                radial?work_velocity:nullptr)) {
+                matched_work?work_velocity:nullptr)) {
                 atomicExch(status,1);continue;
             }
             const int coordinate[3]{i,j,k}, lower[3]{grid.is,grid.js,grid.ks};

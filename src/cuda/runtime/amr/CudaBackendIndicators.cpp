@@ -12,6 +12,7 @@
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/amr/RegridMigration.h"
 #include "cuda/common/GridMetricsCache.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "amr/storage/Block.h"
 #include "numerics/curvilinear/GridMetrics.h"
 #include <cmath>
@@ -65,7 +66,8 @@ std::vector<double> CudaBackend::Impl::evaluate_jeans_resolution(
         if (!valid_hydro_view(view) || !valid_hydro_grid(block.grid)
             || view.total_size != block.grid.total_size
             || block.grid.active_cell_count() <= 0
-            || block.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+            || (block.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+                && !(block.grid.dim == 2 && block.grid.geometry == static_cast<int>(DeviceGeometry::Cylindrical)))
             || view.n_species != species_count)
             throw std::invalid_argument("invalid CUDA JENS accepted-state layout");
         largest_cells = std::max(largest_cells, static_cast<std::size_t>(block.grid.total_size));
@@ -120,7 +122,9 @@ std::optional<double> CudaBackend::evaluate_jeans_parent(
     std::span<const backend::BackendStateAccess> accesses, const amr::Block& geometry)
 {
     auto grid=make_device_grid_view(geometry.grid);
-    if (!valid_hydro_grid(grid) || grid.geometry!=static_cast<int>(DeviceGeometry::Cartesian)
+    if (!valid_hydro_grid(grid)
+        || (grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+            && !(grid.dim == 2 && grid.geometry == static_cast<int>(DeviceGeometry::Cylindrical)))
         || accesses.size()!=static_cast<std::size_t>(1<<grid.dim))
         throw std::invalid_argument("invalid CUDA JENS candidate-parent geometry");
     validate_hydro_batch_accesses(accesses);
@@ -128,7 +132,7 @@ std::optional<double> CudaBackend::evaluate_jeans_parent(
     for (std::size_t child=0;child<accesses.size();++child) {
         auto& block=impl_->require_block(accesses[child]);
         children.blocks[child]={block.require_access(accesses[child]),block.grid};
-        if(block.grid.geometry!=static_cast<int>(DeviceGeometry::Cartesian)
+        if(block.grid.geometry!=grid.geometry
             || block.grid.dim!=grid.dim || block.grid.dx1*2!=grid.dx1
             || (grid.dim>=2 && block.grid.dx2*2!=grid.dx2)
             || (grid.dim==3 && block.grid.dx3*2!=grid.dx3))
@@ -216,7 +220,8 @@ std::vector<double> CudaBackend::evaluate_refinement_indicators(
     validate_hydro_batch_accesses(accesses);
     impl_->select_device();
     const auto& first = impl_->require_block(accesses.front());
-    const auto selection = amr::indicator::make_selection(config, first.grid.dim, species);
+    const auto selection = amr::indicator::make_selection(
+        config, first.grid.dim, species,make_grid_geometry_view(first.grid).geometry);
     for (int index : species)
         if (index < 0 || index >= impl_->species_count)
             throw std::invalid_argument("invalid CUDA refinement species");

@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -38,6 +39,8 @@ struct CudaBlockBinding {
     amr::BlockHandle handle{};
     backend::StorageGeneration storage{};
     const boundary::BoundaryPlan* physical_boundary = nullptr;
+    // Presence is distinct from an explicitly prepared open-face view.
+    std::optional<boundary::HydroBoundaryView> hydro_boundary{};
 };
 
 /**

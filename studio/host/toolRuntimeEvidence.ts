@@ -1,3 +1,8 @@
+/**
+ * Fingerprint actual compiler runtime libraries from ELF and cache evidence.
+ * Use bounded tool output and stable file reads; unresolved evidence stays
+ * unknown. These identities support build freshness, not a new runtime loader.
+ */
 import path from 'node:path';
 import {open,realpath} from 'node:fs/promises';
 import {constants} from 'node:fs';

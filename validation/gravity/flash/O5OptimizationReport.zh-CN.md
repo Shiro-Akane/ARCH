@@ -1,7 +1,7 @@
 # O0–O5 优化实施与 ARCH–FLASH 4.8 对照记录
 
 2026-09-24，`physics/selfgravity`。本记录对应
-[实施计划](../../../docs/development/FlashComparisonOptimizationPlan.zh-CN.md)。
+[实施计划](../../../docs/histroy/science/FlashComparisonOptimizationPlan.zh-CN.md)。
 **结论：共享数学优化、CUDA 正向加速和现有四模块耦合已通过本机复验；
 O5 的完整跨软件、等误差签收尚未完成。** 这两款程序的强燃烧方程、时间分裂和
 动态 AMR 决策并不相同，不能用墙钟比值单独宣称算法优劣。

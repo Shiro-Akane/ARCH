@@ -46,10 +46,10 @@ struct BoundaryCoordinates {
 
 /** Outward Cartesian unit normal from the existing native orthonormal basis.
  * Cartesian e_i; cylindrical e_R/e_z/e_phi; spherical e_r/e_theta/e_phi.
- * Grid remains the coordinate authority. Retired computational cylindrical2D
- * polar (r,phi) has no chart, so every two-dimensional cylindrical grid is
- * refused by the shared view before a normal is formed. This is a coordinate
- * helper, not an EOS or native-moment conversion.
+ * Grid remains the coordinate authority. Axisymmetric cylindrical (r,z)
+ * uses its representative phi=0 basis; the second normal is e_z. This
+ * coordinate helper grants no boundary-EOS or solver qualification and
+ * performs no native-moment conversion.
  */
 inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const PointCoords& face,
     BoundaryAxis axis, BoundarySide side)
@@ -76,8 +76,7 @@ inline std::array<double, 3> BoundaryCartesianNormal(const Grid& grid, const Poi
         if (direction == 0) normal = {cosine, sine, 0.0};
         else if (direction == 1) normal = {0.0, 0.0, 1.0};
         else normal = {-sine, cosine, 0.0};
-        // The retired cylindrical2D polar azimuthal normal (dim == 2) is gone;
-        // a cylindrical grid reaching this branch is 1D e_R or 3D e_R/e_z/e_phi.
+        // Native order is e_R/e_z/e_phi; only active spatial axes are accepted.
         break;
     }
     case GridMetrics::Geometry::Spherical: {

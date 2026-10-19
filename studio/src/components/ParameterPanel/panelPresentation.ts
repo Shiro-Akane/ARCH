@@ -1,3 +1,6 @@
+/**
+ * Choose parameter-panel labels and layout from existing editor state. Presentation helpers do not supply scientific defaults or reinterpret input.
+ */
 import type { CoreGroup } from '../../data/parSchema.ts';
 export const coreBlocks: CoreGroup[] = ['Grid','EOS','Network','Runtime'];
 export function observedDimension(values: Record<string,string>): 1|2|3|null {

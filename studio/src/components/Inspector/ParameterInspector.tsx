@@ -1,3 +1,6 @@
+/**
+ * Present Core-provided parameter meaning, units, source and diagnostics for the focused key. Missing metadata remains visible rather than being guessed.
+ */
 import type {InspectionParameter} from '../../host/configurationContracts';
 import type {CoreParameter} from '../../host/previewContracts';
 export interface ParameterDetails { unit?:string; schemaDefault?:number|string|boolean;parsed?:InspectionParameter;key:string; label:string; value:string; raw:string; saved?:string;workingSource?:string; line:number; type:string; options?:readonly string[]; range?:readonly [number,number]; error?:string; evidence?:string }

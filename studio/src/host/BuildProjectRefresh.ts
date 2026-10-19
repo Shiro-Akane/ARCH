@@ -1,3 +1,8 @@
+/**
+ * Reconcile a successful managed build with the selected project executable.
+ * Refresh once per observed identity transition and reject a mismatched digest.
+ * Refreshing files never reads or saves the unsaved configuration working copy.
+ */
 import type {BuildSnapshot,ProjectSnapshot} from './contracts.ts';
 
 /** Reconcile only the selected output of a successful managed Build.

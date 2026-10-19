@@ -1,3 +1,6 @@
+/**
+ * Present the selected model's initial-state query, diagnostics and resource evidence. Successful sampling does not establish runtime or scientific readiness.
+ */
 import type {CaseProbe} from '../../host/workflowContracts';
 import {inspectionSpecies} from '../../host/workflowValidation';
 

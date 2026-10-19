@@ -71,6 +71,13 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
                 accesses, plans.coarse_fine, requested, version, token);
         if (coarse_fine_completed != token)
             throw std::logic_error("Device coarse-fine exchange returned incomplete work");
+        for(std::size_t group=0;group<plans.same_level_corners.size();++group) {
+            auto& level_accesses=boundary_level_accesses;level_accesses.clear();
+            for(const auto index:plans.level_indices[group])level_accesses.push_back(accesses[index]);
+            if(compute_backend->execute_same_level_exchange(level_accesses,
+                plans.same_level_corners[group],requested,version,token)!=token)
+                throw std::logic_error("Device corner completion returned incomplete work");
+        }
         if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
         // The original physical donor map serves Host and CUDA; only storage
         // and kernels differ, with no whole-state Host staging here.

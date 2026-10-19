@@ -1,3 +1,6 @@
+/**
+ * Summarize supplied editor, Preview and run status for the workbench. Display status does not replace a controller's completion or scientific acceptance.
+ */
 import type { StudioState } from '../../state/studioState';
 import { Icon } from '../Icon';
 export function StatusBar({ state, onPreview, onSave, onRevert }: { state: StudioState; onPreview: () => void; onSave: () => void; onRevert: () => void }) {

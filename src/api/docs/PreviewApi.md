@@ -81,7 +81,7 @@ order为x1-fastest，三维索引 (k*Ny+j)*Nx+i。
 
 data.coordinates.version="1"明确native-grid轴、native-orthonormal速度和原生轴单位；
 角坐标为rad、长度为cm。初始化点通过共享Grid展开为真实Cartesian PointCoords。
-二维 cylindrical 已退役，配置、初始采样及 AMR 查询明确拒绝该组合。二维 spherical 保留 `(r,phi)` 极平面，柱坐标一维／三维沿用现有坐标转换。历史 RZ 结果只适用于原源码和执行物。
+原生二维 cylindrical 使用 `(r,z)` 长度轴，保留三个物理速度与 `VELZ` 方位速度指标。初态／AMR 预览在 CPU 上执行；演化的 CPU／CUDA 受测范围见[功能清单](../../../docs/Features.zh-CN.md)。新 chart、三动量及旧产物拒绝规则统一见[坐标与边界约定](../../../docs/guides/UserBoundaries.zh-CN.md)，二维 spherical 保持 `(r,phi)` 极平面。
 非活动坐标由Grid的规则记录，不将所有x3一概解释为物理z。
 BurnOneZone标为uniform-state，不能把重复采样解释为反应轨迹。
 纯流体零物种继续使用共享IdealGas原有闭合，不注入虚构species或客户端物理默认。
@@ -301,7 +301,7 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 
 `preview_sampling_limits` 检查分配前数量限制、真实网格的非活动坐标、JSON 字节边界及超限状态保留。`preview_cellular_2d` 检查真实 CLI 的二维排列、两个方向、噪声影响、直接 Init/EOS 对照、实际 Helmholtz 输入、采样/响应限制、错误、取消及无文件输出。直接对照程序仅供测试，不是 Host 需要管理的另一个生产程序。
 
-历史初始采样与二维预览的实现记录见 [初始采样记录](archive/CORE_A_HANDOFF.md) 和 [二维预览记录](archive/CORE_B_HANDOFF.md)。CPU 预览的验证范围不包括 CUDA、完整模拟或 Studio UAT。
+历史初始采样与二维预览的实现记录见 [初始采样记录](../../../docs/histroy/studio/core-api/CORE_A_HANDOFF.md) 和 [二维预览记录](../../../docs/histroy/studio/core-api/CORE_B_HANDOFF.md)。CPU 预览的验证范围不包括 CUDA、完整模拟或 Studio UAT。
 
 ## 配置与物理下限契约
 
@@ -310,5 +310,5 @@ GUI 以 `--config-schema` 的实际响应取得标准参数目录。已退役的
 参数按物理模块归属。
 
 状态下限、EOS 与检查点格式见[参考手册](../../../docs/Reference.zh-CN.md)；
-[迁移记录](../../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)保留实施历史。
+[迁移记录](../../../docs/histroy/low-density/ImplementationReport.zh-CN.md)保留实施历史。
 [配置示例](../examples/configuration/README.md)与 Sod 初态检查 的无效数值响应已同步当前解析规则；其余 初始采样与二维预览 场景保留对应阶段的响应快照。

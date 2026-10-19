@@ -58,6 +58,12 @@ __global__ void prolong_regrid_families(
     geometry.neighbours[4] = dst.dim == 3 ? src.index(ci, cj, ck - 1) : geometry.center;
     geometry.neighbours[5] = dst.dim == 3 ? src.index(ci, cj, ck + 1) : geometry.center;
     geometry.coarse_volume = src.cell_volume[geometry.center];
+    const bool angular_momentum = dst.dim == 2
+        && dst.geometry == static_cast<int>(DeviceGeometry::Cylindrical);
+    geometry.angular_momentum = angular_momentum;
+    if (angular_momentum)
+        geometry.coarse_moment = GridMetrics::AngularMomentumVolumeMoment(
+            make_grid_geometry_view(src), ci, cj, ck);
     int targets[8]{};
     for (int child = 0; child < (1 << dst.dim); ++child) {
         const int fi = dst.is + 2 * i + (child & 1);
@@ -65,6 +71,9 @@ __global__ void prolong_regrid_families(
         const int fk = dst.ks + 2 * k + (dst.dim == 3 ? (child >> 2) & 1 : 0);
         targets[child] = dst.index(fi, fj, fk);
         geometry.fine_volumes[child] = dst.cell_volume[targets[child]];
+        if (angular_momentum)
+            geometry.fine_moments[child] = GridMetrics::AngularMomentumVolumeMoment(
+                make_grid_geometry_view(dst), fi, fj, fk);
     }
     const int species = destination.state.n_species;
     double* scratch = species > 0
@@ -116,12 +125,21 @@ __global__ void restrict_regrid_families(
     amr::regrid_math::RestrictionGeometry geometry{};
     geometry.count = 1 << dst.dim;
     geometry.coarse_volume = dst.cell_volume[target];
+    const bool angular_momentum = dst.dim == 2
+        && dst.geometry == static_cast<int>(DeviceGeometry::Cylindrical);
+    geometry.angular_momentum = angular_momentum;
+    if (angular_momentum)
+        geometry.coarse_moment = GridMetrics::AngularMomentumVolumeMoment(
+            make_grid_geometry_view(dst), dst.is + i, dst.js + j, dst.ks + k);
     for (int child = 0; child < geometry.count; ++child) {
         const int fi = source.grid.is + ibase + (child & 1);
         const int fj = source.grid.js + jbase + (dst.dim >= 2 ? (child >> 1) & 1 : 0);
         const int fk = source.grid.ks + kbase + (dst.dim == 3 ? (child >> 2) & 1 : 0);
         geometry.source_cells[child] = source.grid.index(fi, fj, fk);
         geometry.volumes[child] = source.grid.cell_volume[geometry.source_cells[child]];
+        if (angular_momentum)
+            geometry.moments[child] = GridMetrics::AngularMomentumVolumeMoment(
+                make_grid_geometry_view(source.grid), fi, fj, fk);
     }
     const int species = destination.state.n_species;
     double* scratch = species > 0

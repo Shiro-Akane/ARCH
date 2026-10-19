@@ -1,3 +1,8 @@
+/**
+ * Validate editor scalar syntax and constraints advertised by Core.
+ * Recognized expressions and numeric ranges support prompt input feedback; they
+ * do not fill absent parameters or replace case-aware Core validation.
+ */
 import type {StandardParameter} from '../host/configurationContracts.ts';
 const decimal=/^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/;
 function number(text:string):number|undefined {

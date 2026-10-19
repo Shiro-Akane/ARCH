@@ -365,9 +365,9 @@ Logical axes depend on geometry and dimension:
 | --- | --- | --- | --- |
 | Cartesian | x | x, y | x, y, z |
 | Spherical | r | r, phi (polar plane) | r, theta, phi |
-| Cylindrical | r | Unsupported | r, z, phi |
+| Cylindrical | r | r, z (CPU) | r, z, phi |
 
-Spherical 2D uses the polar `(r,phi)` plane. Cylindrical grids support radial 1D and full 3D `(r,z,phi)`; cylindrical 2D is explicitly rejected. All supported grids retain three physical momentum components.
+Spherical 2D uses the polar `(r,phi)` plane. Cylindrical 2D uses `(r,z)` on CPU and CUDA, retaining physical momenta `(rho*u_r,rho*u_z,rho*u_phi)` and the `cylindrical-rz-pwc` artifact identity. Geometry and optional gravity use separate owners. Method/EOS combinations and scientific endpoints require their own [validation](../../validation/README.md); radial 1D and full 3D retain their established routes.
 
 For a 3D spherical density profile centered at the origin, reuse `rho0_`,
 `amplitude_`, and `width_` from the case above. In `Init`, the Cartesian form is:

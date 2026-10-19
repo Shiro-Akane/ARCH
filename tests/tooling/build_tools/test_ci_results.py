@@ -17,10 +17,74 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS,
                               check_inventory, check_junit, check_node_tap,
-                              check_studio_scope, main, scope_path_requires_studio)
+                              check_studio_scope, check_native_scope, check_tooling_result, main,
+                              scope_path_requires_studio, scope_path_requires_native)
 
 
 class CiResultTests(unittest.TestCase):
+    def test_tooling_completion_rejects_empty_failed_and_skipped_suites(self):
+        result = unittest.TestResult()
+        with self.assertRaises(ValueError):
+            check_tooling_result(result)
+        result.testsRun = 2
+        self.assertEqual(check_tooling_result(result), 2)
+        result.skipped = [("control", "unavailable")]
+        with self.assertRaises(ValueError):
+            check_tooling_result(result)
+        result.skipped = []
+        result.errors = [("control", "error")]
+        with self.assertRaises(ValueError):
+            check_tooling_result(result)
+
+    def test_native_scope_excludes_docs_but_keeps_all_scientific_and_build_inputs(self):
+        for path in ("README.md", "docs/Reference.md", "docs/notes.txt", "NOTICE.txt",
+                     "studio/README.md", "src/api/docs/PreviewApi.md", "tools/README.md", ".github/workflows/README.md"):
+            with self.subTest(document=path):
+                self.assertFalse(scope_path_requires_native(path))
+        for path in ("src/numerics/update.h", "src/physics/gravity.cpp", "src/cuda/update.cu",
+                     "tests/host/case.cpp", "tests/cuda/case.cu", "tests/tooling/check.py",
+                     "validation/amr/gpu_cases.json", "simulation/Sod/Sod.par",
+                     "CMakeLists.txt", "cmake/notes.md",
+                     ".github/workflows/ci.yml", "config/parameters.txt", "unknown",
+                     "requirements.txt", "notes/todo.txt"):
+            with self.subTest(native_input=path):
+                self.assertTrue(scope_path_requires_native(path))
+
+    def test_both_scopes_reject_noncanonical_paths_and_malformed_refs(self):
+        for path in (None, "", "/README.md", "../README.md", "docs/../README.md",
+                     "docs//README.md", "./README.md", "docs\\README.md", "README.md\n"):
+            for predicate in (scope_path_requires_native, scope_path_requires_studio):
+                with self.subTest(path=path, predicate=predicate):
+                    self.assertTrue(predicate(path))
+        for check in (check_native_scope, check_studio_scope):
+            for base, head in ((None, "HEAD"), ("a" * 40, "HEAD\n"),
+                               ("a" * 40 + "\n", "HEAD"), ("a" * 40, "b" * 40 + "\n")):
+                with self.subTest(check=check, base=base, head=head):
+                    self.assertTrue(check(base, head)["required"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required for real diff semantics")
+    def test_native_real_git_docs_mixed_deleted_and_unknown_refs(self):
+        root, git = self.git_repo()
+        (root / "studio").mkdir()
+        (root / "src/numerics").mkdir(parents=True)
+        (root / "studio/README.md").write_text("guide\n")
+        (root / "src/numerics/operator.h").write_text("int active;\n")
+        git("add", "-A"); git("commit", "-qm", "base")
+        base = self.head_of(root)
+        (root / "studio/README.md").write_text("updated guide\n")
+        git("add", "-A"); git("commit", "-qm", "docs")
+        docs = self.head_of(root)
+        for check in (check_native_scope, check_studio_scope):
+            self.assertFalse(check(base, docs, repo_root=root)["required"])
+            self.assertTrue(check(docs, docs, repo_root=root)["required"])
+            self.assertTrue(check("0" * 40, docs, repo_root=root)["required"])
+        # Deleting numerical code remains a native change, even if every
+        # surviving changed file is documentation.
+        git("rm", "src/numerics/operator.h"); git("commit", "-qm", "delete operator")
+        mixed = check_native_scope(base, self.head_of(root), repo_root=root)
+        self.assertTrue(mixed["required"])
+        self.assertIn("src/numerics/operator.h", mixed["changed_paths"])
+
     def test_driver_cuda_requires_real_device_coverage_and_rejects_skips(self):
         # Independent literal prevents a self-consistent group union from
         # silently dropping the actual required-EOS failure CUDA owner.
@@ -212,7 +276,8 @@ class CiResultTests(unittest.TestCase):
         # Documentation outside Studio/API text, standalone numerical code,
         # Core-only tests and scientific validation tooling may skip Studio.
         for path in ("README.md", "docs/design.rst", "docs/notes.txt", "notes/guide.md",
-                     "README.txt", "LICENSE.txt", "NOTICE.txt",
+                     "README.txt", "LICENSE.txt", "NOTICE.txt", "studio/README.md", "src/api/README.md",
+                     "tools/README.md", "cmake/README.md", ".github/workflows/README.md",
                      "src/numerics/eos.py", "src/physics/gravity.cpp", "src/cuda/kernel.cu",
                      "tests/host/host_case.cpp", "tests/cuda/device_case.cu", "validation/run.py"):
             with self.subTest(skippable=path):
@@ -222,12 +287,11 @@ class CiResultTests(unittest.TestCase):
         # Protected build/tool/config/workflow directories win over any doc
         # suffix, and .txt is documentation only under docs/ or with an explicit
         # README/LICENSE/NOTICE basename, so ambiguous notes/todo.txt stays.
-        for path in ("studio/ui/main.cpp", "studio/README.md", "src/api/client.cpp",
-                     "src/api/README.md", "src/grid/grid.cpp", "src/amr/refine.cpp",
+        for path in ("studio/ui/main.cpp", "src/api/client.cpp", "src/grid/grid.cpp", "src/amr/refine.cpp",
                      "src/driver/step.cpp", "src/io/writer.cpp", "include/arch/header.hpp",
                      "simulation/run.cc", "CMakeLists.txt", "cmake/toolchain.cmake",
                      ".github/workflows/studio.yml", "tools/check_ci_results.py",
-                     "tools/requirements.txt", "tools/README.md", "cmake/config.txt",
+                     "tools/requirements.txt", "tools/not-a-readme.md", "cmake/config.txt",
                      "cmake/notes.txt", "config/settings.txt", "build/notes.txt",
                      ".github/workflows/notes.txt", "requirements.txt", "notes/todo.txt",
                      "src/numerics", "notes/todo.MD", "../escape.md", ""):
@@ -304,7 +368,7 @@ class CiResultTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as stdout:
             # The capsule is not a Git repository, so this exercises the diff
             # error fallback: exit 0 with a conservative JSON decision, no PASS.
-            code = main(["--studio-scope-base", "0" * 40, "--studio-scope-head", "HEAD"])
+            code = main(["--scope", "studio", "--base", "0" * 40, "--head", "HEAD"])
         self.assertEqual(code, 0)
         payload = json.loads(stdout.getvalue())
         self.assertEqual(set(payload), {"required", "reason", "changed_paths"})
@@ -312,14 +376,14 @@ class CiResultTests(unittest.TestCase):
         self.assertIsInstance(payload["reason"], str)
         # Base without head stays conservative: malformed-head rule, exit 0.
         with contextlib.redirect_stdout(io.StringIO()) as stdout:
-            self.assertEqual(main(["--studio-scope-base", "0" * 40]), 0)
+            self.assertEqual(main(["--scope", "studio", "--base", "0" * 40]), 0)
         self.assertTrue(json.loads(stdout.getvalue())["required"])
-        # --studio-scope-head is only valid with --studio-scope-base; alone or
+        # Revision arguments are valid only with a scope decision; alone or
         # paired with --node-tap/--inventory it is rejected, never ignored.
-        for argv in (["--studio-scope-head", "HEAD"],
-                     ["--node-tap", "unused", "--studio-scope-head", "HEAD"],
-                     ["--inventory", "unused", "--studio-scope-head", "HEAD"],
-                     ["--node-tap", "unused", "--studio-scope-base", "0" * 40]):
+        for argv in (["--head", "HEAD"],
+                     ["--node-tap", "unused", "--head", "HEAD"],
+                     ["--inventory", "unused", "--head", "HEAD"],
+                     ["--node-tap", "unused", "--scope", "studio", "--base", "0" * 40]):
             with self.subTest(argv=argv), contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit) as error:
                     main(argv)

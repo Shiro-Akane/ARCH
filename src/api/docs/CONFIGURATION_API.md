@@ -113,7 +113,7 @@ configuration_entry_contract 覆盖。它们的通过范围必须关联实际 so
 v2 证据，不作为当前客户端协议期望，也不因当前检查通过而改写历史文件。
 
 2026-10-04 旧输入快照的静态复验见
-[全模型输入审计](../../../docs/development/FullModelCurrentInputAudit-20261004.zh-CN.md)：
+[全模型输入审计](../../../docs/histroy/studio/FullModelCurrentInputAudit-20261004.zh-CN.md)：
 16 profiles 覆盖该 binary 的 14 个注册 case，15 份声明完整；旧 CellularDet 输入缺
 tmax，仍为失败。已批准的 t=0 替代输入与旧 burn-on 输入分开记录。
 该静态结果不执行 Setup/Init，也不证明 simulation readiness。

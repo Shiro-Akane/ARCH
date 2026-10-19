@@ -163,11 +163,14 @@ inline ConditionResult condition(InputCondition id, const StandardInputResolutio
     case C::Thermal: case C::Viscous: case C::Species: {
         const char* key = id == C::Thermal ? "use_thermal_diff"
                         : id == C::Viscous ? "use_viscous_diff" : "use_species_diff";
-        // Helmholtz forbids overrides; IdealGas has no stellar electron state.
-        // Tabular completion can supply stellar transport, so use its declaration.
+        // Helmholtz owns its stellar transport and forbids overrides.
+        // Current Ideal/Tabular views expose no stellar electron diagnostics:
+        // their supported transport requires explicit constant coefficients.
+        // Tabular coupling validation still rejects automatic thermal transport.
         auto material = unknown("eos_type");
         if (const auto* eos = get<std::string>(values, "eos_type")) {
-            if (dispatch::ascii_iequals(*eos, "ideal")) material = known(true);
+            if (dispatch::ascii_iequals(*eos, "ideal")
+                || dispatch::ascii_iequals(*eos, "tabular")) material = known(true);
             else if (dispatch::ascii_iequals(*eos, "helmholtz")) material = known(false);
             else material = case_need(id == C::Thermal ? context.constant_thermal
                                     : id == C::Viscous ? context.constant_viscous
@@ -285,9 +288,14 @@ inline void validate_relations(StandardInputResolution& result) {
     const auto* geometry_text = get<std::string>(result, "geometry");
     if (geometry_text && second && third && relations::AxisTopology(*second, *third)) {
         const int dimension = *second == 0 ? 1 : *third == 0 ? 2 : 3;
-        if (relations::RetiredCylindrical2d(*geometry_text, dimension))
-            fail("geometry", "Two-dimensional cylindrical support is retired; use one or three dimensions.",
-                 {"nblockx2", "nblockx3"});
+        if (dimension == 2 && dispatch::ascii_iequals(*geometry_text, "cylindrical")) {
+            const auto* radius = get<double>(result, "x1_min");
+            const auto* inner = get<std::string>(result, "x1l_boundary_type");
+            if (radius && !(*radius >= 0.0))
+                fail("x1_min", "Cylindrical radius must be nonnegative.", {"geometry"});
+            if (radius && *radius == 0.0 && inner && !dispatch::ascii_iequals(*inner, "reflecting"))
+                fail("x1l_boundary_type", "The cylindrical axis requires reflecting parity.", {"geometry", "x1_min"});
+        }
     }
     const auto* lower = get<int>(result, "lrefinemin");
     const auto* upper = get<int>(result, "lrefinemax");

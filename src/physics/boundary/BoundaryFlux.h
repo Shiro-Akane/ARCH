@@ -53,6 +53,20 @@ struct HydroBoundaryView {
         side=candidate>=0&&reflecting[2*direction+candidate]?candidate:-1;
         return true;
     }
+    /** Borrow the actual cell's two advective face identities. Both backends
+     * ask this owner rather than interpreting wall flags in their kernels.
+     * Invalid coordinates leave outputs unchanged; a closed marked face has
+     * no advective mass/torque flux, independently of geometric source math.
+     */
+    ARCH_INLINE bool advective_faces_open(int direction,int cell,int active_lower,
+        int active_upper,bool& lower_open,bool& upper_open) const {
+        if(cell<active_lower||cell>=active_upper)return false;
+        int lower_side=-1,upper_side=-1;
+        if(!reflecting_side(direction,cell,active_lower,active_upper,lower_side)||
+           !reflecting_side(direction,cell+1,active_lower,active_upper,upper_side))return false;
+        lower_open=lower_side!=0;upper_open=upper_side!=1;return true;
+    }
+
 };
 
 /** Non-owning face planes: temperature, three velocities, then species. */

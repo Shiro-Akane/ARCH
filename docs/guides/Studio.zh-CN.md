@@ -1,6 +1,6 @@
 # ARCH Studio：本地配置、预览与运行
 
-[English](Studio.md) · [首页](../../README.zh-CN.md) · [Studio 状态](../../studio/STATUS.md)
+[English](Studio.md) · [首页](../../README.zh-CN.md) · [Studio 状态](../../studio/README.md#current-qualification)
 
 Studio 是可选的桌面组件，Core 的 CPU／CUDA 构建与运行可独立使用。它用于编辑 `.par`、核对初始场与网格、编译已注册的模型，以及准备本机运行和续算。Core 在 Linux/WSL 编译和运行；这一阶段按 Linux 桌面交付。
 
@@ -33,13 +33,13 @@ Studio 构建选项默认关闭，普通 Core 编译不会安装网页依赖。�
 
 所有 Core 量都按 CGS；长度 `cm`，密度 `g/cm³`，压力 `erg/cm³`，温度 `K`，速度 `cm/s`，角度 `rad`。标准参数说明来自 Core。custom 单位来自已审阅的声明和源码证据；普通数值采样不能可靠反推出任意 C++ 的量纲。修改源码后旧单位证据须重新审阅。
 
-系统在运行时会协商每个模型支持的维数、几何和字段。注册新的 `.cpp` 后，还须具备完整的参数声明及初始采样／AMR 能力，才能显示真实预览。二维柱坐标已退役，相应配置、采样和初始 AMR 请求明确拒绝。模型与后端的支持范围见[功能清单](../Features.zh-CN.md)。
+系统在运行时会协商每个模型支持的维数、几何和字段。注册新的 `.cpp` 后，还须具备完整的参数声明及初始采样／AMR 能力，才能显示真实预览。二维柱坐标 CPU 使用 r/z 长度轴和三个物理速度，方位速度可作为 AMR 指标；旧 RZ chart 产物明确拒绝。模型与后端的支持范围见[功能清单](../Features.zh-CN.md)。
 
 ## 查看 Plotfile
 
-完整 `plt_XXXX.h5` 仍是权威数据，Studio 只读。总览支持笛卡尔一维和二维的已发布叶块，可用较低显示分辨率。正式发布文件支持按所记录的原生坐标查询笛卡尔／球坐标一至三维及柱坐标一维／三维单元；二维柱坐标文件明确拒绝。查询保留文件中的 native bounds、单位和身份；曲线/三维渲染与模拟的物理验收分别处理。Inspector 回查原文件中的 native cell。字段来自文件而非初始采样。
+完整 `plt_XXXX.h5` 仍是权威数据，Studio 只读。总览支持笛卡尔一维／二维及原生柱坐标 r-z 的已发布叶块，按文件中的 native bounds 生成较低显示分辨率。正式发布文件支持按所记录的原生坐标查询笛卡尔／球坐标一至三维及柱坐标一至三维单元；新的二维柱坐标产物须具有准确 chart 身份和 cm^3／单位方位角测度。查询保留文件中的 native bounds、单位和身份；其余曲线／三维渲染与模拟的物理验收分别处理。Inspector 回查原文件中的 native cell。字段来自文件而非初始采样。
 
-XDMF、可重建查询索引、有界跨查询缓存、更多几何/三维格式和完整全应用验收按[下一阶段计划](../development/ComputeStudioReleasePlan-20261006.zh-CN.md)闭环。交互检查图不代替科研分析或演化验证。
+XDMF、可重建查询索引、有界跨查询缓存、更多几何/三维格式和完整全应用验收按[下一阶段计划](../histroy/integration/ComputeStudioReleasePlan-20261006.zh-CN.md)闭环。交互检查图不代替科研分析或演化验证。
 
 ## 协作与验证入口
 
@@ -47,7 +47,7 @@ XDMF、可重建查询索引、有界跨查询缓存、更多几何/三维格式
 - [配置 v3 契约](../../src/api/docs/CONFIGURATION_API.md)
 - [Studio/Host 工程测试](../../studio/tests/README.md)
 - [科学验证](../../validation/README.zh-CN.md)
-- [本轮集成与发布计划](../development/ComputeStudioReleasePlan-20261006.zh-CN.md)
-- [历史交接与 UAT](../../studio/docs/archive/README.md)
+- [本轮集成与发布计划](../histroy/integration/ComputeStudioReleasePlan-20261006.zh-CN.md)
+- [历史交接与 UAT](../histroy/README.md#studio)
 
 环境安装、依赖检查和科学测试环境见[环境要求](StudioEnvironment.zh-CN.md)。

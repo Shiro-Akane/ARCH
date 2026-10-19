@@ -102,9 +102,42 @@ __device__ inline void hydro_face_kernel_work(
         reconstruct_amr_face<Reconstruction>(
             state, grid, direction, i, j, k, cell, stride, eos, left, right,
             species_left, species_right, species_cell);
+        int wall_side=-1;
+        const int face_coordinate=direction==0?i+1:direction==1?j+1:k+1;
+        const int lower=direction==0?grid.is:direction==1?grid.js:grid.ks;
+        const int upper=direction==0?grid.ie:direction==1?grid.je:grid.ke;
+        state.hydro_boundary.reflecting_side(direction,face_coordinate,lower,upper,wall_side);
+        FluidVector face_flux;
+        if (wall_side>=0) {
+            // Reuse the sole Host/device wall assembly and its selected EOS
+            // law. These four species planes are the existing lane scratch.
+            const int interior=wall_side==0?cell+stride:cell;
+            for (int sp=0;sp<state.n_species;++sp)
+                species_cell[sp]=state.species(sp,interior);
+            double pressure=0.,speed=0.;
+            if (mean_pressure && mean_sound_speed) {
+                pressure=mean_pressure[interior];speed=mean_sound_speed[interior];
+            } else FluxAdmissibility::required_mean_thermo(state.load(interior),
+                state.n_species?species_cell:nullptr,eos,pressure,speed);
+            const auto base_species=[&](int sp) {return state.species(sp,interior);};
+            const auto high_compute=[&](const FluidVector& l,const FluidVector& r,
+                const double* xl,const double* xr,const auto& trial,
+                FluidVector& high,double* high_species) {
+                Flux::compute(l,r,xl,xr,state.n_species,trial,direction,coefficient,
+                    high,high_species,&means,cell,cell+stride);
+            };
+            if(FluxAdmissibility::assemble_wall_point(state.load(cell),state.load(cell+stride),
+                left,right,direction,wall_side,state.n_species,pressure,speed,eos,
+                species_left,species_right,species_cell,face_species_flux,
+                base_species,high_compute,face_flux)!=FluxAdmissibility::PointWallStatus::valid) {
+                if constexpr(requires {eos.report_failure();})eos.report_failure();
+                face_flux=FluidVector(arch::state::invalid(),arch::state::invalid(),
+                    arch::state::invalid(),arch::state::invalid(),arch::state::invalid());
+                for(int sp=0;sp<state.n_species;++sp)face_species_flux[sp]=arch::state::invalid();
+            }
+        } else {
         FluxAdmissibility::limit_reconstruction(state.load(cell), left);
         FluxAdmissibility::limit_reconstruction(state.load(cell + stride), right);
-        FluidVector face_flux;
         if constexpr (requires {
             eos.bind_mean_thermodynamics(state, cell, cell + stride,
                                          mean_pressure, mean_sound_speed);
@@ -133,6 +166,7 @@ __device__ inline void hydro_face_kernel_work(
             FluxAdmissibility::limit_face(state.load(cell), state.load(cell + stride),
                 species_left, species_right, state.n_species, eos, direction,
                 face_flux, face_species_flux);
+        }
         }
         const int face = cell + stride;
         flux.store(face, face_flux);

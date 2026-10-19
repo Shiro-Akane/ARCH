@@ -4,7 +4,8 @@
  *
  * Workflow:
  * 1. Inspect committed leaf geometry for an origin or spherical pole. The
- *    retained angular charts (spherical2D/3D) require a full turn.
+ *    resolved angular charts require a full turn; an axisymmetric chart
+ *    mirrors r alone without requiring an angular domain.
  * 2. Map each singular-face ghost center through the regular coordinate chart
  *    and locate its active AMR donor. Record native-vector basis signs.
  * 3. On every Host or CUDA stage, apply shared reconstruction after ordinary
@@ -44,16 +45,22 @@ namespace seam_detail {
 
 /** Bring a ghost center into the regular chart and record native basis flips. */
 inline std::array<double, 3> regular_position(
-    std::array<double, 3> point, int dimension, bool spherical,
+    std::array<double, 3> point, int dimension, GridMetrics::Geometry geometry,
     double phi_lower, double phi_width, std::array<std::int8_t, 3>& signs)
 {
     const double pi = arch::constants::math::pi;
-    const int azimuth = dimension - 1;
+    const auto layout=GridMetrics::resolve_coordinate_layout(geometry,dimension);
+    const int azimuth=layout.azimuth;
+    const bool spherical=geometry==GridMetrics::Geometry::Spherical;
+    const bool resolved_azimuth=layout.resolved_derivatives[azimuth];
     // Across r=0: (r,phi) -> (-r,phi+pi); for a sphere also
     // (theta,phi) -> (pi-theta,phi+pi). Basis signs follow those maps.
     if (point[0] < 0.) {
         point[0] = -point[0];
-        point[azimuth] += pi;
+        // Axisymmetric basis continuation reverses ur/uphi at the radial
+        // mirror, but z is unchanged. There is no resolved phi coordinate to
+        // shift or wrap; in particular dimension-1 is z, not azimuth.
+        if (resolved_azimuth) point[azimuth] += pi;
         signs[0] = -signs[0];
         signs[azimuth] = -signs[azimuth];
         if (spherical && dimension == 3) point[1] = pi - point[1];
@@ -73,9 +80,10 @@ inline std::array<double, 3> regular_position(
             signs[2] = -signs[2];
         }
     }
-    point[azimuth] = phi_lower
-        + std::fmod(std::fmod(point[azimuth] - phi_lower, phi_width)
-                    + phi_width, phi_width);
+    if (resolved_azimuth)
+        point[azimuth] = phi_lower
+            + std::fmod(std::fmod(point[azimuth] - phi_lower, phi_width)
+                        + phi_width, phi_width);
     return point;
 }
 
@@ -126,6 +134,9 @@ inline void donor_stencil(const Grid& grid,
         if (adjacent < 0 || adjacent >= extent[axis])
             adjacent = local + (displacement < 0. ? 1 : -1);
         neighbor[axis] = origin[axis] + adjacent;
+        // Displacement is a fraction of a logical cell. Treat a centre match
+        // within 1e-12 cell as zero neighbor weight; this is not a physical
+        // distance tolerance. Edge donors can still require extrapolation.
         transfer.neighbor_weight[axis] = std::abs(displacement) < 1e-12
             ? 0. : displacement / static_cast<double>(adjacent - local);
     }
@@ -140,8 +151,9 @@ inline void donor_stencil(const Grid& grid,
 } // namespace seam_detail
 
 /** Build immutable singular-face operations from the current active hierarchy.
- * Retired computational cylindrical2D has no seam: it is refused rather than
- * reinterpreted. Every retained geometry keeps its ordinary angular join.
+ * Resolved angular charts keep their ordinary full-turn joins. Axisymmetric
+ * cylindrical storage uses the same donor machinery for a radial parity
+ * mirror, with no extra coordinate, state or reconstruction hierarchy.
  */
 inline CoordinateSeamPlan make_coordinate_seam_plan(
     const std::shared_ptr<MemoryPool>& pool,
@@ -150,11 +162,10 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     CoordinateSeamPlan plan;
     if (active_blocks.empty() || dimension < 2 || dimension > 3) return plan;
     const Grid& first = pool->GetBlock(active_blocks.front()).grid;
-    if (first.geometry == "cylindrical" && dimension == 2)
-        throw std::invalid_argument(
-            "Coordinate seam is not defined for retired cylindrical2D");
     const bool spherical = first.geometry == "spherical";
     if (!spherical && first.geometry != "cylindrical") return plan;
+    const auto geometry=GridMetrics::geometry_from_name(first.geometry);
+    const auto layout=GridMetrics::resolve_coordinate_layout(geometry,dimension);
     const double pi = arch::constants::math::pi;
     std::array<double, 3> lower{
         std::numeric_limits<double>::infinity(),
@@ -185,12 +196,14 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
     const bool south = spherical && dimension == 3
         && GridMetrics::IsCoordinateJoin(GridMetrics::Geometry::Spherical,dimension,1,upper[1]);
     if (!origin && !north && !south) return plan;
-    const int azimuth = dimension - 1;
-    const double phi_width = upper[azimuth] - lower[azimuth];
+    const int azimuth=layout.azimuth;
+    const bool resolved_azimuth=layout.resolved_derivatives[azimuth];
+    const double phi_width=resolved_azimuth?upper[azimuth]-lower[azimuth]:0.;
     // A partial wedge is still a valid pre-existing Hydro boundary problem.
     // Only full turns have a physical phi+pi donor. Explicit potential
     // boundaries may use sectors, whose regularity does not imply this join.
-    if (std::abs(phi_width - 2. * pi) > 64.*std::numeric_limits<double>::epsilon()*2.*pi) return plan;
+    if (resolved_azimuth &&
+        std::abs(phi_width - 2. * pi) > 64.*std::numeric_limits<double>::epsilon()*2.*pi) return plan;
 
     // Leaf lookup is needed for a singular full-turn chart. Ordinary curved
     // domains retain their previous construction cost.
@@ -213,7 +226,7 @@ inline CoordinateSeamPlan make_coordinate_seam_plan(
             grid.GetCellCenterX(i), grid.GetCellCenterY(j),
             grid.GetCellCenterZ(k)};
         const auto mapped = seam_detail::regular_position(ghost, dimension,
-            spherical, lower[azimuth], phi_width, transfer.momentum_sign);
+            geometry, resolved_azimuth?lower[azimuth]:0., phi_width, transfer.momentum_sign);
         transfer.source_id = seam_detail::locate_donor(leaves, mapped,
             lower, upper, root_blocks, dimension, max_level);
         seam_detail::donor_stencil(

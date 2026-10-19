@@ -129,6 +129,14 @@ _CUDA_FOCUSED_OBJECT_CONSUMERS = {
 }
 
 _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
+    # Existing independent field/flux/Gauss cases now borrow the same compiled
+    # Device executor. Exact sources/object remain pinned, as for reduction tests.
+    "arch_composite_poisson": (
+        ("tests/host/gravity/test_composite_poisson.cpp",
+         "src/numerics/elliptic/cartesianpoisson.cpp", "src/numerics/elliptic/compositepoisson.cpp",
+         "src/numerics/multigrid/hostmultigrid.cpp", "src/numerics/multigrid/compositemultigrid.cpp",
+         "src/numerics/multigrid/compositeexecution.cpp", "src/physics/gravity/gravityboundary.cpp"),
+        ("arch_cuda_gravity_execution",)),
     "arch_cuda_reduction_contract": (
         ("tests/cuda/runtime/test_cuda_reduction_contract.cu",),
         ("arch_cuda_gravity_execution",)),
@@ -828,6 +836,14 @@ def audit_tree(root: pathlib.Path):
                                 (stage_loop and stage_work)):
             violations.append(f"complete CUDA RK/RKL controller is forbidden: {relative}")
         boundary_code = semantic_code
+        if lowered == "src/cuda/hydro/kernels/hydrofacekernel.cuh":
+            # This exact typed call delegates face identity to the shared owner;
+            # it contains no boundary-policy dispatch or reflection formula.
+            # Remove only the call, so any adjacent copied rule still fails.
+            boundary_code = re.sub(
+                r"\bstate\s*\.\s*hydro_boundary\s*\.\s*reflecting_side\s*\(\s*"
+                r"direction\s*,\s*face_coordinate\s*,\s*lower\s*,\s*upper\s*,\s*wall_side\s*\)\s*;",
+                "", boundary_code)
         boundary_mapping = any(token in boundary_code for token in
                                ("outflow", "reflect", "periodic", "physical boundary", "boundary_type",
                                 "x1l_boundary", "x1r_boundary", "grid boundary"))

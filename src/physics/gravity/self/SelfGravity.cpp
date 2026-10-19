@@ -67,8 +67,9 @@ void SelfGravity::bind(amr::EllipticMeshBinding binding,double time) const {
     invalidate();
     if (binding.grids.empty() || binding.grids.size()!=binding.handles.size()
         || binding.cells.size()!=binding.storage.size()) throw std::invalid_argument("Invalid gravity mesh binding");
-    if(binding.base.geometry==arch::elliptic::Geometry::Cylindrical&&binding.base.dimension==2)
-        throw std::invalid_argument("Two-dimensional cylindrical self-gravity is unsupported");
+    const bool axisymmetric=binding.base.geometry==arch::elliptic::Geometry::Cylindrical&&binding.base.dimension==2;
+    if(axisymmetric && config_.boundary=="isolated" && (binding.periodic[0]||binding.periodic[1]))
+        throw std::invalid_argument("Isolated axisymmetric gravity requires nonperiodic radius and axial topology");
     std::size_t cell=0;
     for (std::size_t b=0;b<binding.grids.size();++b) {
         if (!binding.grids[b] || !amr::is_valid(binding.handles[b])

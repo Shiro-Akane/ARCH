@@ -1,3 +1,6 @@
+/**
+ * Present typed Plotfile producer/source association and its limitations. A source digest describes provenance, not a fresh scientific validation.
+ */
 import type {PlotfileSourceEvidence as Evidence} from '../host/plotfileSourceIdentity';
 export function PlotfileSourceEvidence({evidence}:{evidence?:Evidence|null}){
  if(!evidence)return <p>Source identity was not recorded; no association is inferred from this project.</p>;

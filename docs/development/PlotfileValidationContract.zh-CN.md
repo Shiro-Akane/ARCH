@@ -1,6 +1,6 @@
 # Plotfile 扩展的联合验证
 
-本说明承接[Studio 联合交付入口](StudioConfigurationHandoff.zh-CN.md#43-全模型预览与-plt分开验收)。
+本说明承接[Studio 联合交付入口](../histroy/studio/StudioConfigurationHandoff.zh-CN.md#43-全模型预览与-plt分开验收)。
 合作者负责共享 writer、只读查询和 Viewer 的连贯试做，维护者核对科学语义与独立证据。
 首批范围是 Sod 一维和笛卡尔二维 AMR；文件组织与界面布局通过实际交付收敛。
 

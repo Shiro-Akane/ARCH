@@ -1,3 +1,9 @@
+/**
+ * Persist and compare build evidence for one selected project/profile.
+ * Workflow: fingerprint declared inputs, validate compiler/link/runtime evidence,
+ * and publish the manifest in the owned state directory. Missing or changed
+ * evidence keeps freshness unknown; a matching binary name alone proves nothing.
+ */
 import {readToolRuntimeEvidence,toolRuntimeRoots,sameRuntimeInputs,validRuntimeEvidence} from './toolRuntimeEvidence.ts';
 import {fingerprintLinkDependencies} from './linkDependencies.ts';
 import path from 'node:path';

@@ -321,20 +321,6 @@ void run_cuda_lowering_and_execution(
     const auto plan = make_plan(dimension);
     auto grid = make_device_grid(dimension);
     grid.geometry = static_cast<int>(geometry);
-    if (geometry == arch::cuda::DeviceGeometry::Cylindrical && dimension == 2) {
-        // Typed cylindrical two-dimensional data reject before lowering or launch.
-        require(!arch::cuda::valid_hydro_grid(grid),
-                "CUDA boundary POD accepted retired cylindrical2D polar chart");
-        bool rejected = false;
-        try {
-            (void)arch::cuda::compile_boundary_plan(plan, grid);
-        } catch (const std::invalid_argument&) {
-            rejected = true;
-        }
-        require(rejected,
-                "CUDA boundary lowerer accepted retired cylindrical2D polar chart");
-        return;
-    }
     const auto device_compiled = arch::cuda::compile_boundary_plan(plan, grid);
     const auto host_compiled = arch::boundary::host::compile(
         plan, host_layout(grid));

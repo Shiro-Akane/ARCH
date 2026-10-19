@@ -1,3 +1,9 @@
+/**
+ * Translate typed Core Preview responses into line/grid presentation data.
+ * Requests retain project, build, configuration revision and sampling identity;
+ * acceptance helpers reject stale results. Conversion changes display layout,
+ * not the physical values produced by Setup/Init and EOS conversion.
+ */
 import {hostEndpoint} from '../host/desktop.ts';
 import {PROTOCOL_VERSION} from '../host/contracts.ts';
 import {MAX_PREVIEW_BYTES} from '../host/previewContracts.ts';

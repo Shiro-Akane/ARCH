@@ -1,3 +1,8 @@
+/**
+ * Build editor rows, units and coordinate labels from the supplied Core schema.
+ * Keep explicit input/alias provenance and resolve dimension from block counts.
+ * Unit labels and option lists describe the negotiated contract without changing it.
+ */
 import type {StandardParameter,ConfigurationSchema,CoordinateSystem,InspectionParameter} from '../host/configurationContracts.ts';
 export const parameterGroups=['Grid','EOS','Network','Gravity','Diffusion','Runtime'] as const;
 export function catalog(schema:StandardParameter[],values:Record<string,string>){
@@ -10,6 +15,8 @@ export function catalog(schema:StandardParameter[],values:Record<string,string>)
 export function catalogCoordinates(schema:ConfigurationSchema,values:Record<string,string>):CoordinateSystem|undefined {
  const rows=catalog(schema.parameters,values);const value=(key:string)=>rows.find(r=>r.parameter.key===key)?.value??'';
  const blocks=[1,2,3].map(i=>value(`nblockx${i}`));
+ // 2147483647 is the positive signed-32-bit bound of Core's integer block
+ // controls. JavaScript's wider exact-integer domain must not admit more here.
  if(blocks.some(v=>!/^[+-]?\d+$/.test(v)||!Number.isSafeInteger(Number(v))||Number(v)<0||Number(v)>2147483647)||Number(blocks[0])<1||Number(blocks[2])>0&&Number(blocks[1])===0)return;
  const dimension=Number(blocks[2])>0?3:Number(blocks[1])>0?2:1;
  return schema.coordinateSystems?.find(c=>c.geometry===value('geometry').toLowerCase()&&c.dimension===dimension);

@@ -1,3 +1,8 @@
+/**
+ * Define local presentation/demo state and its initial selections.
+ * These UI defaults must not be interpreted as missing scientific configuration
+ * values; the real workflow uses the selected Core's strict schema and inputs.
+ */
 import { inspectPoint } from '../data/selection.ts';
 import type { SelectedPoint } from '../data/selection';
 import type { PreviewFields } from '../data/PreviewData';

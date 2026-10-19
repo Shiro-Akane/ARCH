@@ -81,7 +81,6 @@ ARCH_INLINE bool spacings(const GridMetrics::GeometryView& grid,
     if(grid.dim<1||grid.dim>3||
        grid.geometry==GridMetrics::Geometry::Cartesian||
        grid.geometry==GridMetrics::Geometry::Unsupported||
-       (grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2)||
        !std::isfinite(radius)||!(radius>0.))return false;
     std::array<double,3> candidate{};
     for(int axis=0;axis<grid.dim;++axis) {
@@ -173,6 +172,34 @@ ARCH_INLINE void face_point(const GridMetrics::GeometryView& grid,
         theta=grid.x2_min+(j-grid.ng)*grid.dx2;
 }
 
+/** Work-conjugate angular face kinematics for an unresolved azimuth.
+ * PWC momentum has lever ell=W/V, so its angular speed is u_phi/ell.
+ * The face lever is L=T/A: r_face radially and (integral r^2 dr)/Q
+ * axially. The same shear and work speed must feed stress, energy and
+ * boundary heat observation. No evolved angular field is introduced.
+ */
+ARCH_INLINE bool angular_face_kinematics(const GridMetrics::GeometryView& grid,
+    int direction,int i,int j,int k,double left_phi,double right_phi,
+    double& shear,double& work)
+{
+    if(grid.geometry!=GridMetrics::Geometry::Cylindrical||grid.dim!=2||
+       direction<0||direction>1||!std::isfinite(left_phi)||!std::isfinite(right_phi))return false;
+    const double area=GridMetrics::FaceArea(grid,direction,i,j,k,false);
+    if(direction==0&&grid.GetFacePosL(i)==0.) {shear=0.;work=0.;return true;}
+    const int il=i-(direction==0),jl=j-(direction==1);
+    const double vl=GridMetrics::CellVolume(grid,il,jl,k),vr=GridMetrics::CellVolume(grid,i,j,k);
+    const double wl=GridMetrics::AngularMomentumVolumeMoment(grid,il,jl,k);
+    const double wr=GridMetrics::AngularMomentumVolumeMoment(grid,i,j,k);
+    const double torque=GridMetrics::AngularMomentumFaceMoment(grid,direction,i,j,k,false);
+    const double h=direction==0?grid.dx1:grid.dx2;
+    if(!(area>0.)||!(vl>0.)||!(vr>0.)||!(wl>0.)||!(wr>0.)||!(torque>0.)||!(h>0.))return false;
+    const double omega_l=left_phi/(wl/vl),omega_r=right_phi/(wr/vr),lever=torque/area;
+    const double candidate_shear=lever*((omega_r-omega_l)/h);
+    const double candidate_work=lever*(.5*(omega_l+omega_r));
+    if(!std::isfinite(candidate_shear)||!std::isfinite(candidate_work))return false;
+    shear=candidate_shear;work=candidate_work;return true;
+}
+
 /** Pair the actual cell-volume products before selecting face traction.
  * D_i=V_i*(tau(G_i):G_i+mu_i*sum a_ij*(dplus_ij-dminus_ij)^2/4),
  * a_jj=4/3 and a_ij=1 otherwise. The latter is the variance of the SAME
@@ -234,7 +261,17 @@ ARCH_INLINE bool face_traction(const StateReader& read,int right_cell,
             +vr/(2.*hr[direction])*tr[3*component+direction])/area;
         if(!std::isfinite(candidate[component]))return false;
     }
-    traction=candidate;work_velocity=mean;return true;
+    Vector work=mean;
+    if(grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2) {
+        double shear=0.;
+        if(!angular_face_kinematics(grid,direction,i,j,k,left[2],right[2],shear,work[2]))return false;
+        // Replace the angular column, rather than adding it to the point
+        // connection stencil. The common Newtonian law supplies tau=mu*shear.
+        Gradient angular{};angular[6+direction]=shear;Tensor stress{};
+        if(!NewtonianViscousStress::stress(angular,.5*(mu_left+mu_right),stress))return false;
+        candidate[2]=stress[6+direction];
+    }
+    traction=candidate;work_velocity=work;return true;
 }
 
 /** One-dimensional radial strains in a common physical edge trace.
@@ -387,7 +424,7 @@ ARCH_INLINE bool connection_source(const Tensor& tau,
     if(!std::isfinite(inverse)||!(inverse>0.))return false;
     Vector candidate{};
     const auto basis=frame(grid);
-    if(basis==Frame::CylindricalRZPhi)candidate={-inverse*tau[8],0.,inverse*tau[2]};
+    if(basis==Frame::CylindricalRZPhi)candidate={-inverse*tau[8],0.,grid.dim==2?0.:inverse*tau[2]};
     else if(basis==Frame::CylindricalRPhiZ)candidate={-inverse*tau[4],inverse*tau[1],0.};
     else {
         const double theta=grid.SourceTheta(j),cot=grid.dim==3?std::cos(theta)/std::sin(theta):0.;
@@ -455,15 +492,24 @@ ARCH_INLINE bool face_row_sums(const GridMetrics::GeometryView& grid,
        !stress_row_sums(grid,ir,jr,direction,nr))return false;
     Vector candidate=output;
     for(int a=0;a<3;++a) {
+        if(a==2&&grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2)continue;
         candidate[a]+=(mu_left*vl/(2.*std::abs(hl[direction]))*nl[3*a+direction]
             +mu_right*vr/(2.*std::abs(hr[direction]))*nr[3*a+direction])/(rho*volume);
+    }
+    if(grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2) {
+        const double wl=GridMetrics::AngularMomentumVolumeMoment(grid,il,jl,kl);
+        const double wr=GridMetrics::AngularMomentumVolumeMoment(grid,ir,jr,kr);
+        const double capacity=GridMetrics::AngularMomentumVolumeMoment(grid,i,j,k);
+        const double torque=GridMetrics::AngularMomentumFaceMoment(grid,direction,i,j,k,high);
+        const double h=direction==0?grid.dx1:grid.dx2;
+        if(!(area>0.)||!(wl>0.)||!(wr>0.)||!(capacity>0.)||!(torque>0.)||!(h>0.))return false;
+        // Absolute velocity row, consumed as dt<=1/row by DiffFlux. For
+        // equal levers this is twice the off-diagonal diffusion row sum.
+        const double conductance=.5*(mu_left+mu_right)*(torque/area)*torque/h;
+        candidate[2]+=conductance/(rho*capacity)*(vl/wl+vr/wr);
     }
     for(double value:candidate)if(!std::isfinite(value)||value<0.)return false;
     output=candidate;return true;
 }
-
-/** Native cylindrical angular stress uses signed density capacities and omega.
- * Its torque, paired work and row bound share this common stress owner with
- * the meridional tensor; no EOS, evolved angular array or heating source is added. */
 
 } // namespace CurvilinearViscousStress

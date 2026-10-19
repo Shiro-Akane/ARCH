@@ -1,3 +1,8 @@
+/**
+ * Define the browser/Host project, file, build and save message shapes.
+ * These declarations describe transport and identity; Linux Host owns resource
+ * lifetimes and the selected Core owns model/numerical semantics.
+ */
 import type {ToolRuntimeEvidence} from '../../host/toolRuntimeEvidence.ts';
 import type {CMakeConfigurationEvidence} from '../../host/cmakeEvidence.ts';
 export const PROTOCOL_VERSION = '1.3';

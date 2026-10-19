@@ -1,3 +1,8 @@
+/**
+ * Maintain bounded local edit history and interpret undo/redo shortcuts.
+ * History applies to editor state, not saved files, build operations or simulation
+ * rollback; publication remains an explicit configuration workflow.
+ */
 export class EditHistory<T> {
  past:T[]=[]; future:T[]=[]; private transaction:{start:T;latest:T}|null=null;
  same(a:T,b:T){return JSON.stringify(a)===JSON.stringify(b);}

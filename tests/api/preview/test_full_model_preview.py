@@ -8,6 +8,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import runpy
 import subprocess
 import sys
@@ -100,7 +101,6 @@ class FullInitialPreview(unittest.TestCase):
         for case in ('UserBoundary', 'UserGravity'):
             for geometry in ('cartesian', 'cylindrical', 'spherical'):
                 for dim in (1, 2, 3):
-                    if geometry=="cylindrical" and dim==2:continue
                     with self.subTest(case=case, geometry=geometry, dimension=dim):
                         text = edit(CASES[case][1], geometry=geometry, nblockx1=1,
                                     nblockx2=int(dim>=2), nblockx3=int(dim==3),
@@ -202,7 +202,6 @@ class FullInitialPreview(unittest.TestCase):
     def test_curved_inactive_coordinates_and_mesh_units(self):
         for geometry in ("spherical", "cylindrical"):
             for dim in (1,2):
-                if geometry=="cylindrical" and dim==2:continue
                 text = self.gaussian(geometry,dim)
                 options = ["--samples","3"] if dim == 1 else ["--samples-x1","3","--samples-x2","2"]
                 result = self.call("Gaussian",text,*options)
@@ -211,12 +210,88 @@ class FullInitialPreview(unittest.TestCase):
                     self.assertEqual(fixed["theta"]["unit"],"rad")
                     self.assertAlmostEqual(fixed["theta"]["value"],math.pi/2)
                     if dim == 1: self.assertEqual(fixed["phi"]["value"],0)
-                elif dim == 1:
-                    self.assertEqual(fixed["z_cy"]["value"],0)
+                else:
+                    self.assertEqual(fixed["phi_cy"]["value"],0)
+                    self.assertEqual(fixed["phi_cy"]["unit"],"rad")
+                    if dim == 1: self.assertEqual(fixed["z_cy"]["value"],0)
+                    else:
+                        self.assertNotIn("z_cy",fixed)
+                        self.assertEqual(len(result["data"]["fields"]),8)
+                        self.assertEqual(result["data"]["coordinates"]["metadata"]["chart"],"cylindrical-rz-pwc")
+                        fields={f["key"]:f["values"] for f in result["data"]["fields"]}
+                        r,z=[a["values"] for a in result["data"]["axes"]]
+                        for j,axial in enumerate(z):
+                            for i,radius in enumerate(r):
+                                pulse=math.exp(-((radius-.4)**2+.1**2+(axial-.3)**2))
+                                for key,amplitude in (("VELX",.2),("VELY",.3),("VELZ",.4)):
+                                    self.assertTrue(math.isclose(fields[key][j*len(r)+i],amplitude*pulse,
+                                                                 rel_tol=2e-13,abs_tol=1e-14),(key,radius,axial))
                 mesh = self.call("Gaussian",text,"--mesh-max-blocks","8",
                                  "--mesh-memory-mib","256",command="--preview-amr")
                 self.assertIsNone(mesh["data"]["unit"])
                 self.assertEqual(mesh["data"]["coordinates"]["basis"],"native-grid")
+
+    def meridional_gravity_profile(self, case):
+        source = ("simulation/GravityBox/GravityBox.par" if case == "GravityBox"
+                  else "simulation/SNIaCoupled/SNIaCoupled_3d_cylindrical_amr.par")
+        width = "width" if case == "GravityBox" else "hotspot_width"
+        values={width:.1}
+        if case=="SNIaCoupled":
+            values["eos_table_path"]=str(ROOT/"EOS_toolkit/tables/helmholtz/helm_table.dat")
+        return edit((ROOT/source).read_text(), geometry="cylindrical",
+                    nblockx1=1, nblockx2=1, nblockx3=0, max_blocks=32,
+                    x1_min=.5, x1_max=1.5, x2_min=-.5, x2_max=.5,
+                    x1l_boundary_type="reflecting", x1r_boundary_type="reflecting",
+                    x2l_boundary_type="reflecting", x2r_boundary_type="reflecting",
+                    gravity_boundary="isolated", lrefinemin=0, lrefinemax=0,
+                    center_x=.75, center_y=0, center_z=.18, **values)
+
+    def test_meridional_gravity_profiles_keep_the_shifted_axial_centre(self):
+        for case in ("GravityBox", "SNIaCoupled"):
+            with self.subTest(case=case):
+                result=self.call(case,self.meridional_gravity_profile(case),
+                                 "--samples-x1","3","--samples-x2","3")
+                fields={f["key"]:f["values"] for f in result["data"]["fields"]}
+                radii,axial=[a["values"] for a in result["data"]["axes"]]
+                amplitude=.001 if case=="GravityBox" else .05
+                for j,z in enumerate(axial):
+                    for i,r in enumerate(radii):
+                        # Independent sigma=.1 meridional Gaussian, not the
+                        # producer's PointCoords/profile-dimension selection.
+                        pulse=math.exp(-.5*(((r-.75)/.1)**2+((z-.18)/.1)**2))
+                        index=j*len(radii)+i
+                        self.assertTrue(math.isclose(fields["DENS"][index],1e7*(1+amplitude*pulse),
+                                                     rel_tol=2e-13,abs_tol=1e-14),(case,r,z))
+                        temperature=1e7 if case=="GravityBox" else 1e9+2e9*pulse
+                        # Keep the EOS reference budget separately from sampling.
+                        self.assertTrue(math.isclose(fields["TEMP"][index],temperature,
+                                                     rel_tol=2e-12,abs_tol=0),(case,r,z))
+                self.assertNotEqual(fields["DENS"][:3],fields["DENS"][-3:])
+                mixed=self.call(case,edit(self.meridional_gravity_profile(case),geometry="CyLiNdRiCaL"),
+                                "--samples-x1","3","--samples-x2","3")
+                self.assertEqual(mixed["data"]["fields"],result["data"]["fields"])
+
+    def test_meridional_gravity_centres_are_explicit_and_axisymmetric(self):
+        options=("--samples-x1","3","--samples-x2","3")
+        for case in ("GravityBox","SNIaCoupled"):
+            with self.subTest(case=case):
+                text=self.meridional_gravity_profile(case)
+                missing=re.sub(r"^center_z\s*=.*\n?","",text,flags=re.M)
+                result=self.call(case,missing,*options,code=3)
+                # Preview wraps typed configuration diagnostics in its own error
+                # envelope; the missing-input code and actual key must survive.
+                self.assertIn("MISSING_PARAMETER",str(result["diagnostics"]))
+                self.assertIn("center_z",str(result["diagnostics"]))
+                result=self.call(case,edit(self.meridional_gravity_profile(case),center_y=.1),
+                                 *options,code=5)
+                self.assertIn("requires center_y=0",str(result["diagnostics"]))
+
+    def test_cylindrical_phi_refinement_reaches_the_real_amr_executor(self):
+        text=edit(self.gaussian("cylindrical",2),lrefinemax=1,max_blocks=64,
+                  refine_var="VELZ",refine_threshold=.02,derefine_threshold=.001)
+        mesh=self.call("Gaussian",text,"--mesh-max-blocks","64","--mesh-memory-mib","256",command="--preview-amr")
+        self.assertGreater(mesh["data"]["leafCount"],1)
+        self.assertTrue(any(leaf["level"]==1 for leaf in mesh["data"]["leaves"]))
 
     def test_limits_and_unapproved_domains(self):
         for options in [

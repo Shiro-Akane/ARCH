@@ -1,3 +1,6 @@
+/**
+ * Present the selected sample's existing field values and coordinates. Selection and display do not modify the underlying Preview data.
+ */
 import type { StudioState } from '../../state/studioState';
 import { Icon } from '../Icon';
 function Readout({ name, symbol, value }: { name: string; symbol?: string; value?: number }) {

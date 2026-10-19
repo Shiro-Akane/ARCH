@@ -174,8 +174,7 @@ int main()
         check(probe);
         for (const char* geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension)
-                if (!(dimension==2 && std::string(geometry)=="cylindrical"))
-                    run(dimension, 4, geometry);
+                run(dimension, 4, geometry);
         run(1, 0, "cartesian");
         run(2, 21, "cartesian");
         run(2, 41, "cartesian");

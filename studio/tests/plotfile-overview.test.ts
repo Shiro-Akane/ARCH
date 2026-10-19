@@ -32,7 +32,7 @@ test('nonfinite overlap masks a display pixel; empty pixels stay null; native st
 });
 test('legacy files cannot acquire guessed native bounds through the overview endpoint',async()=>{
  await assert.rejects(readPlotfileOverview(new URL('./fixtures/sod-1d.h5',import.meta.url).pathname,
- {field:'DENS',width:4,height:1}),/native Cartesian/);
+ {field:'DENS',width:4,height:1}),/supported native/);
 });
 
 import h5 from 'h5wasm/node';

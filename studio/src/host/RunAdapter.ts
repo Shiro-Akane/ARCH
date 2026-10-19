@@ -1,3 +1,8 @@
+/**
+ * Validate prepared/confirmed Run and Restart messages and persisted run state.
+ * Check project, input, executable and operation association on fixed Host routes.
+ * Host retains launch/Stop authority; client records cannot prove a process is live.
+ */
 import type {FileFingerprint} from './contracts.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import {record} from './previewValidation.ts';

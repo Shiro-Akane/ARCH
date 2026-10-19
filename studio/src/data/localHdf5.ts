@@ -1,6 +1,13 @@
+/**
+ * Own a browser File's temporary HDF/WASM handle for one read operation.
+ * Close and remove the owned virtual file on success or failure. The callback
+ * reads scientific data; this lifecycle wrapper never runs Core or rewrites HDF5.
+ */
 import h5wasm from 'h5wasm';
 let nextFile = 0;
 export async function withLocalHdf5<T>(file: File, read: (handle: InstanceType<typeof h5wasm.File>) => T): Promise<T> {
+  // The browser makes a complete ArrayBuffer/WASM copy. Sixteen MiB limits this
+  // interactive local-file route; project Host readers have their own limits.
   if (file.size === 0 || file.size > 16 * 1024 * 1024) throw new Error('Choose a non-empty local HDF5 file of at most 16 MiB.');
   const bytes = new Uint8Array(await file.arrayBuffer());
   const { FS } = await h5wasm.ready;
