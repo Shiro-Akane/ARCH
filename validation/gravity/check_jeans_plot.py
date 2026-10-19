@@ -32,13 +32,24 @@ def qualify(path, previous=None):
         if not np.isfinite(gamma) or gamma<=1:
             raise ValueError("invalid authoritative species gamma")
         dim=int(h.attrs["dim"])
+        if dim == 2 and h.attrs["geometry"] == "cylindrical":
+            if (int(h.attrs.get("geometry_semantics_revision", 0)),
+                    h.attrs.get("geometry_chart")) != (1, "cylindrical-rz-pwc"):
+                raise ValueError("expected current cylindrical chart identity")
+            native = h.get("NativeGrid")
+            if native is None or any(native.attrs.get(key) != value for key, value in {
+                    "version": "arch-native-curvilinear-1", "native_geometry": "cylindrical",
+                    "center_basis": "cartesian", "x1_axis": "r", "x2_axis": "z",
+                    "x3_axis": "inactive", "x1_unit": "cm", "x2_unit": "cm"}.items()):
+                raise ValueError("expected current cylindrical native grid metadata")
+            if any(key not in h["Data"] for key in ("VELX", "VELY", "VELZ")):
+                raise ValueError("missing current cylindrical native velocity evidence")
         spacing=[]
         grid_evidence="explicit-native-bounds"
         if "NativeGrid" in h:
             chart=h["NativeGrid"].attrs.get("center_basis")
-            if chart not in ("cartesian","local-orthonormal-r-z-phi","axisymmetric-rz","cylindrical-r-z"):
-                if h["NativeGrid"].attrs.get("version")!="candidate-rz-1":
-                    raise ValueError(f"unsupported reference chart: {chart}")
+            if chart not in ("cartesian","local-orthonormal-r-z-phi"):
+                raise ValueError(f"unsupported reference chart: {chart}")
             native=h["NativeGrid"]
             for axis in range(1,dim+1):
                 lo=np.asarray(native[f"x{axis}_lower"]).reshape(-1)

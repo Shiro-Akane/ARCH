@@ -90,6 +90,10 @@ class Inspection(unittest.TestCase):
                 self.assertEqual(obj['state']['grid']['hierarchy'], 'not_constructed')
                 self.assertEqual(obj['capability']['compiledSourceSha256'], hashlib.sha256((ROOT/source).read_bytes()).hexdigest())
                 self.assertEqual(obj['capability']['reviewedUnitEvidence'], 'current')
+                if case in ('SmoothAdvection', 'DiffusionMode'):
+                    self.assertIn('mode_axis', obj['capability']['reviewedUnitKeys'])
+                if case == 'GravityBox':
+                    self.assertIn('hydrostatic_radial', obj['capability']['reviewedUnitKeys'])
                 self.assertFalse(obj['capability']['automaticExpressionInference'])
                 metadata = obj['parameterMetadata']
                 self.assertNotIn('future_knob', metadata['unobservedInputKeys'])

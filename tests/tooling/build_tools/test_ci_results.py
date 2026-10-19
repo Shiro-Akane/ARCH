@@ -280,6 +280,7 @@ class CiResultTests(unittest.TestCase):
             inventory.write_text(json.dumps(self.inventory()), encoding="utf-8")
             failed = self.report()
             ET.SubElement(failed[0], "failure", message="assertion summary").text = "original numerical assertion"
+            ET.SubElement(failed[1], "failure").text = "second independent failure"
             ET.SubElement(failed[0], "system-out").text = "expected 1e-12; observed failure%\n::notice::injected"
             ET.ElementTree(failed).write(report, encoding="unicode")
             with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}), \
@@ -288,6 +289,8 @@ class CiResultTests(unittest.TestCase):
             self.assertIn(failed[0].get("name"), output.getvalue())
             self.assertIn("original numerical assertion", output.getvalue())
             self.assertIn("assertion summary", output.getvalue())
+            self.assertIn("failed CTests (2)", output.getvalue())
+            self.assertIn(failed[1].get("name"), output.getvalue())
             self.assertIn("expected 1e-12; observed failure%25%0A::notice::injected", output.getvalue())
             self.assertNotIn("\n::notice::injected", output.getvalue())
 

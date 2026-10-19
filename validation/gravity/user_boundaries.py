@@ -47,14 +47,14 @@ def checkpoint(path, parameters):
                       repair=np.array(file['state_repairs']), levels=levels, state=state)
         chart = file.attrs.get('geometry_chart', '')
         chart = chart.decode() if isinstance(chart, bytes) else str(chart)
-        native_rz = chart == 'axisymmetric-rz'
+        revision = int(file.attrs.get('geometry_semantics_revision', 0))
+        native_rz = chart == 'cylindrical-rz-pwc' and revision == 1
         require(native_rz == (parameters['geometry'] == 'cylindrical' and dim == 2),
                 str(path)+': checkpoint chart differs from the configured public geometry')
-        if native_rz:
-            semantics = file.attrs.get('state_semantics', '')
-            semantics = semantics.decode() if isinstance(semantics, bytes) else str(semantics)
-            require(semantics == 'rz-m-phi-j-over-w-v1',
-                    str(path)+': missing native angular state semantics')
+        if not native_rz:
+            require((revision == 1 and chart == 'existing') or
+                    (revision == 0 and chart == ''),
+                    str(path)+': unsupported checkpoint chart identity')
     volume, angular_measure = [], []
     for block, level in enumerate(levels):
         widths = [(float(parameters[f'x{a}_max'])-float(parameters[f'x{a}_min'])) /
@@ -67,13 +67,14 @@ def checkpoint(path, parameters):
         if geom == 'cartesian':
             measure = np.full(x.shape, math.prod(widths))
         elif native_rz:
-            # RZ is a full ring, not a polar wedge: V=integral(2*pi*r dr dz).
-            # Its evolved mom_w is m_phi=J/W; W=integral(r dV), not V.
+            # Current finite-volume state and captured A/T budgets are per
+            # unit azimuth: V=integral(r dr dz), W=integral(r^2 dr dz).
+            # A physical full-ring report multiplies both sides by 2*pi;
+            # applying that factor only to state totals breaks conservation.
             lower = x.astype(np.longdouble)
             upper = lower + np.longdouble(widths[0])
-            pi = np.longdouble(math.pi)
-            measure = pi*(upper*upper-lower*lower)*np.longdouble(widths[1])
-            angular_measure.append((2*pi/3*(upper**3-lower**3)*np.longdouble(widths[1])).ravel())
+            measure = (upper*upper-lower*lower)/2*np.longdouble(widths[1])
+            angular_measure.append(((upper**3-lower**3)/3*np.longdouble(widths[1])).ravel())
         elif geom == 'cylindrical' or (geom == 'spherical' and dim == 2):
             measure = .5*((x+widths[0])**2-x**2) * widths[1] * widths[2]
         elif dim == 1:
@@ -259,7 +260,7 @@ class UserBoundaryCampaign:
         continued, _, _, _ = self.restart_pair('rz-amr-restart',
             geometry='cylindrical', dimension=2, nblockx1=2,
             x1_min=0, x1_max=1, x2_min=-.5, x2_max=.5,
-            x1l_boundary_type='reflect', x2l_boundary_type='periodic', x2r_boundary_type='periodic',
+            x1l_boundary_type='reflecting', x2l_boundary_type='periodic', x2r_boundary_type='periodic',
             lrefinemax=1, max_blocks=16, regrid_interval=1,
             refine_var='ENER', refine_threshold='1e-8', derefine_threshold='1e-9')
         folder=self.output/'rz-amr-restart-continuous'
@@ -292,7 +293,7 @@ class UserBoundaryCampaign:
         continued, _, parameters, _ = self.restart_pair('rz-jeans-restart',
             geometry='cylindrical', dimension=2, nblockx1=2,
             x1_min=0, x1_max=1, x2_min=-.5, x2_max=.5,
-            x1l_boundary_type='reflect', x2l_boundary_type='periodic', x2r_boundary_type='periodic',
+            x1l_boundary_type='reflecting', x2l_boundary_type='periodic', x2r_boundary_type='periodic',
             lrefinemax=1, max_blocks=16, regrid_interval=2,
             refine_var='JENS', jeans_cells=target, use_diffusion=False,
             user_boundary_heat_flux=0, plt_dstep=1,
@@ -325,12 +326,12 @@ class UserBoundaryCampaign:
         for geometry, dimension in shapes:
             self.run(f'{geometry}-{dimension}d', geometry, dimension)
         self.run('cylindrical-axis-join', 'cylindrical', 2, x1_min=0, x1_max=4,
-                 x2_min=0, x2_max=2*math.pi, x1l_boundary_type='reflect',
+                 x2_min=0, x2_max=2*math.pi, x1l_boundary_type='reflecting',
                  x2l_boundary_type='periodic', x2r_boundary_type='periodic')
         if not quick:
             self.run('spherical-axis-pole-join', 'spherical', 3, x1_min=0, x1_max=4,
                 x2_min=0, x2_max=math.pi, x3_min=0, x3_max=2*math.pi,
-                x1l_boundary_type='reflect', x2l_boundary_type='reflect', x2r_boundary_type='reflect',
+                x1l_boundary_type='reflecting', x2l_boundary_type='reflecting', x2r_boundary_type='reflecting',
                 x3l_boundary_type='periodic', x3r_boundary_type='periodic')
         self.run('function-registration', 'cylindrical', case='UserGravity')
         self.run('heat-ledger', gravity_type='none')

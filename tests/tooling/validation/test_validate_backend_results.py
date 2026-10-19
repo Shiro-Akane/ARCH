@@ -195,7 +195,7 @@ class BackendValidationTests(unittest.TestCase):
             path = Path(directory)/'native-checkpoint.h5'
             with h5py.File(path, 'w') as h:
                 h.attrs.update(dim=2, time=0., step=0, boundary_identity='test',
-                               geometry_chart='existing')
+                               geometry_semantics_revision=1, geometry_chart='existing')
                 for key in ('level', 'logical_x1', 'logical_x2', 'logical_x3'):
                     h.create_dataset('Blocks/'+key, data=np.array([0], dtype=np.int32))
                 h.create_dataset('state_repairs', data=np.zeros(1))
@@ -216,6 +216,80 @@ class BackendValidationTests(unittest.TestCase):
                     reader.checkpoint(path, parameters)
                 with h5py.File(path, 'r+') as h:
                     h.create_dataset('Data/'+field, data=saved)
+            # Independent constant-state meridian integrals, per unit azimuth:
+            # r in [1/4,5/4], z in [-1/2,1/2], rho=m_phi=1 give V=3/4,
+            # W=31/48. These literal integrals do not call production metrics.
+            native = parameters | dict(geometry='cylindrical', x1_min=.25, x1_max=1.25)
+            with h5py.File(path, 'r+') as h:
+                h.attrs['geometry_chart'] = 'cylindrical-rz-pwc'
+            totals = reader.checkpoint(path, native)['totals']
+            self.assertLessEqual(abs(totals[0]-np.longdouble(3)/4), np.longdouble('1e-18'))
+            self.assertLessEqual(abs(totals[3]-np.longdouble(31)/48), np.longdouble('1e-18'))
+            for revision, chart in ((2, 'axisymmetric-rz'), (1, 'axisymmetric-rz'),
+                                    (1, 'existing'), (0, ''), (2, 'cylindrical-rz-pwc')):
+                with self.subTest(revision=revision, chart=chart):
+                    with h5py.File(path, 'r+') as h:
+                        h.attrs['geometry_semantics_revision'] = revision
+                        h.attrs['geometry_chart'] = chart
+                    with self.assertRaisesRegex(RuntimeError, 'checkpoint chart'):
+                        reader.checkpoint(path, native)
+            # Only the retained charts admit an unstamped legacy identity.
+            with h5py.File(path, 'r+') as h:
+                del h.attrs['geometry_semantics_revision']
+                del h.attrs['geometry_chart']
+            reader.checkpoint(path, parameters)
+            with self.assertRaisesRegex(RuntimeError, 'checkpoint chart'):
+                reader.checkpoint(path, native)
+
+    def test_jeans_plot_requires_current_native_chart_and_three_velocities(self):
+        import h5py
+        import numpy as np
+        spec = importlib.util.spec_from_file_location('jeans_plot_identity_controls',
+            ROOT/'validation/gravity/check_jeans_plot.py')
+        reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reader)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'bounded-native-plot.h5'
+            with h5py.File(path, 'w') as h:
+                h.attrs.update(plot_publication_state='complete', dim=2, geometry='cylindrical',
+                    geometry_semantics_revision=1, geometry_chart='cylindrical-rz-pwc')
+                source = h.create_group('SourceIdentity')
+                source.attrs.update(eos_type='ideal', species_count=1)
+                source.create_dataset('species_gamma', data=[2.])
+                native = h.create_group('NativeGrid')
+                native.attrs.update(version='arch-native-curvilinear-1', native_geometry='cylindrical',
+                    center_basis='cartesian', x1_axis='r', x2_axis='z', x3_axis='inactive',
+                    x1_unit='cm', x2_unit='cm')
+                for axis, lower in ((1, .25), (2, -.5)):
+                    native.create_dataset(f'x{axis}_lower', data=[lower])
+                    native.create_dataset(f'x{axis}_upper', data=[lower+1.])
+                # First independent 80/120-digit JeansNumericCases.h reference:
+                # rho=cs^2=h=1; gamma=2 and E=1/2 give cs^2=1 with zero velocity.
+                for key, value in {'DENS': 1., 'ENER': .5, 'VELX': 0., 'VELY': 0., 'VELZ': 0.,
+                                   'JENS': float.fromhex('0x1.accc1f12f6cbdp+12')}.items():
+                    ds = h.create_dataset('Data/'+key, data=np.array([[value]], dtype=np.float64))
+                    if key == 'JENS':
+                        ds.attrs.update(unit='1', basis='scalar', centering='cell',
+                            meaning='jeans_length_over_max_active_physical_spacing')
+            reader.qualify(path)
+            for revision, chart in ((2, 'axisymmetric-rz'), (0, ''), (1, 'existing')):
+                with self.subTest(revision=revision, chart=chart):
+                    with h5py.File(path, 'r+') as h:
+                        h.attrs['geometry_semantics_revision'] = revision
+                        h.attrs['geometry_chart'] = chart
+                    with self.assertRaisesRegex(ValueError, 'current cylindrical chart identity'):
+                        reader.qualify(path)
+            with h5py.File(path, 'r+') as h:
+                h.attrs['geometry_semantics_revision'] = 1
+                h.attrs['geometry_chart'] = 'cylindrical-rz-pwc'
+                h['NativeGrid'].attrs['version'] = 'candidate-rz-1'
+            with self.assertRaisesRegex(ValueError, 'current cylindrical native grid metadata'):
+                reader.qualify(path)
+            with h5py.File(path, 'r+') as h:
+                h['NativeGrid'].attrs['version'] = 'arch-native-curvilinear-1'
+                del h['Data/VELZ']
+            with self.assertRaisesRegex(ValueError, 'native velocity evidence'):
+                reader.qualify(path)
 
     def test_hydro_temporal_reference_and_order_negative_controls(self):
         import math

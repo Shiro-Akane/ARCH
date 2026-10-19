@@ -288,10 +288,11 @@ jobs:
           # Host tests perform small real builds and bind explicit /usr/bin
           # tools. A runner's preinstalled CMake elsewhere is not that contract.
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build
+          sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build mold
           /usr/bin/cmake --version
           /usr/bin/ninja --version
           /usr/bin/c++ --version
+          /usr/bin/ld.mold --version
 
       - name: Record identity and install locked dependencies
         if: steps.scope.outputs.required == 'true'

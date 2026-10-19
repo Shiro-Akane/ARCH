@@ -134,8 +134,8 @@ test('GNU subprocess/specs drift invalidates persisted Build identity and legacy
   const runner=new BuildRunner(root,'p',profile,{spawn:fakeSpawn(root)});
   await runner.start('p',profile.id);await finished(runner);
   const manifest=runner.snapshot().lastSuccessfulBuild!;
-  assert.equal(manifest.compilerDrivers?.[0].components?.length,7);
-  assert.equal(manifest.preBuildCompilerDrivers?.[0].components?.length,7);
+  assert.equal(manifest.compilerDrivers?.[0].components?.length,7,runner.snapshot().freshnessReason);
+  assert.equal(manifest.preBuildCompilerDrivers?.[0].components?.length,7,runner.snapshot().freshnessReason);
   assert.equal(manifest.compilerDriversStableDuringBuild,true);
   const legacyLinker=structuredClone(manifest);
   legacyLinker.compilerDrivers![0].components=legacyLinker.compilerDrivers![0].components!.filter(c=>!c.role.startsWith('selected-'));

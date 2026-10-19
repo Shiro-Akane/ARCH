@@ -1,30 +1,31 @@
 {
   "schema": "arch-release-readiness-1",
   "stage": "REL-5",
-  "recorded_utc": "2026-10-19T10:10:05.428740+00:00",
-  "decision": "REL5_HOSTED_ROOT_CAUSES_FIXED_PENDING_FULL_RECHECK",
+  "recorded_utc": "2026-10-19T10:55:21.628099+00:00",
+  "decision": "REL5_COMPLETE_HOSTED_FAILURE_SET_FIXED_LOCAL_ACCEPTANCE_READY",
   "phase_closed": false,
   "REL6_started": false,
   "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
   "branch": "compute/optim",
   "head": "45b92535e8efe78728bb67b0415c148854a63f9c",
-  "scope": "Documentation/comments, assertion-preserving test/CI consolidation, Studio included; no production numerical behavior change or scientific replay.",
+  "scope": "Documentation/comment/test/CI consolidation plus necessary current-chart validator/test consumers and explicitly re-reviewed unit-provenance metadata. No production numerical algorithms or tolerances changed; bounded affected CPU checks only.",
   "local_result_summary": [
     "CPU75->68 and CUDA142->135 registrations; other commands/properties unchanged, not all numerical tests rerun",
-    "Complete Tooling618: all593 baseline IDs, nine moved sparse methods and16 new controls; zero skips",
+    "Current complete Tooling619: all593 baseline IDs, nine moved sparse methods and17 new controls; zero skips; final diagnostic-only collector has23 focused passes",
     "Studio383 TAP/no skips, lint and typed production build passed on frozen Node inputs",
     "136 Studio emitted-JS ASTs equivalent;20 files formatted",
     "593 C++/CUDA/inc paths indexed;20 comment edits have identical noncomment tokens",
     "Fixed asset owner verifies actual Helm/Sod data offline; five controls passed, old Helm cache identity preserved",
     "157 protected historical records,3475 baseline result paths, original protocol evidence and both production apps unchanged",
     "202 maintained pages/2253 local destinations pass;323 archived repository-local link sets valid; prose and code-fence bytes unchanged",
-    "Approved323 historical moves/3 index removals complete; verified pre-existing owner link repaired; main plan372->130lines"
+    "Approved323 historical moves/3 index removals complete; verified pre-existing owner link repaired; main plan372->130lines",
+    "Real hosted failures drove current-chart/Jeans/preview/validator fixes and explicit seven-source unit re-review; four focused CTests and native3/6step budgets/fresh passed. Full hosted rerun remains required."
   ],
   "pending": [
     {
       "id": "hosted-ci",
       "status": "LOCAL_FIX_READY_HOSTED_RECHECK_PENDING",
-      "action": "Run complete hosted Tooling/CPU/Studio/required after explicit Host toolchain and current-chart test fixes; preserve both failed runs. No weakening or REL6."
+      "action": "Commit locally accepted full failure-consumer package and run actual all four hosted gates; no REL6."
     },
     {
       "id": "draft-pr",
@@ -71,7 +72,13 @@
     "hosted failure diagnostics": "output/release/rel5-20261019/hosted-admission/diagnostic-update/run.json",
     "clean locked Studio repetition": "output/release/rel5-20261019/studio-clean-repro/run-02/run.json",
     "root cause local test": "output/release/rel5-20261019/hosted-admission/root-cause-fix/verified-local.json",
-    "hosted annotated failures": "output/release/rel5-20261019/hosted-admission/read_failures.py"
+    "hosted annotated failures": "output/release/rel5-20261019/hosted-admission/read_failures.py",
+    "named GNU identity control": "output/release/rel5-20261019/hosted-admission/root-cause-fix/GNU-identity-named.json",
+    "full current Tooling619": "output/release/rel5-20261019/hosted-admission/tooling-full-current/run.json",
+    "current CPU build": "output/release/rel5-20261019/hosted-admission/current-cpu/build-result.json",
+    "affected current CTests": "output/release/rel5-20261019/hosted-admission/current-cpu/affected-ctest.json",
+    "bounded native consumers": "output/release/rel5-20261019/hosted-admission/current-cpu/affected-boundaries.json",
+    "manual dimensional re-review": "output/release/rel5-20261019/hosted-admission/current-case-unit-review.json"
   },
   "scientific_contract": {
     "ENUC_relative": 5e-09,
@@ -80,11 +87,12 @@
     "O7_unchanged": true,
     "geometry_gravity_decoupled": true,
     "production_compile_executed": true,
-    "science_replays_executed": false,
-    "production_compile_scope": "Hosted CPU source3459049, successful build only; local original CPU/CUDA ELF bytes unchanged; no CUDA build"
+    "science_replays_executed": true,
+    "production_compile_scope": "Hosted CPU source3459049, successful build only; local original CPU/CUDA ELF bytes unchanged; no CUDA build",
+    "science_scope": "Affected3/6-step CPU boundary/AMR/JENS/fresh only; original gates unchanged; no long-run/CUDA replay"
   },
   "hosted_CI": {
-    "status": "ROOT_CAUSES_FIXED_LOCALLY_PENDING_RECHECK",
+    "status": "COMPLETE_FAILURE_SET_FIXED_LOCALLY_WAITING_FULL_HOSTED_RECHECK",
     "reason": "CPU first failure is obsolete retirement-era universal rejection of now-supported native cylindrical2D; Studio fails because explicit /usr/bin/cmake is absent. Existing production configuration/identity behavior unchanged; test contract updated and CI deps made explicit. Later CPU cases were not observed under stop-on-failure, so next run completes inventory under same timeouts.",
     "readonly_preflight": "output/release/rel5-20261019/hosted-ci-readonly-preflight.json",
     "publication_proposal": "output/release/rel5-20261019/publication-review.md",
@@ -138,6 +146,23 @@
       "CPU_build_step_seconds": 578,
       "failed_CTest_step_seconds": 44,
       "measurement": "Actions public step timestamps; no GNU/RAM/cache-hit inference"
+    },
+    "last_source_commit": "4e24a0284a8a89be963199669f3d52e63552c3f6",
+    "third_run": {
+      "run_id": 39235575667,
+      "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/39235575667",
+      "Tooling": "success",
+      "CPU": "failure after complete inventory",
+      "Studio": "failure",
+      "observed_case": "GNU subprocess/specs drift invalidates persisted Build identity and legacy evidence stays unknown",
+      "observation": "Required7 GNU components unavailable; fixture explicitly selects ld.mold, missing CI mold dependency identified from source/setup; package fix pending actual hosted proof",
+      "fix": "Install mold and record ld.mold version; keep all7 component/specs drift checks; print existing freshness reason on failure",
+      "additional_CPU_failures": [
+        "jeans_diagnostics",
+        "case_inspection_contract",
+        "self_gravity_physics",
+        "preview_cellular_2d"
+      ]
     }
   },
   "archive": {
@@ -2511,8 +2536,8 @@
       "baseline": 593,
       "preserved_baseline": 593,
       "moved_sparse": 9,
-      "new_controls": 16,
-      "passed": 618,
+      "new_controls": 17,
+      "passed": 619,
       "skipped": 0,
       "final_ctest_testcases": 1,
       "empty_failed_or_skipped_rejected": true,
@@ -2524,7 +2549,10 @@
         "wall_seconds": 31.207225434001884,
         "successful": false
       },
-      "fixture_repair_scope": "In-memory test assembly only; step7 parity and current input SHA mirrored, production qualifier and scientific manifest unchanged."
+      "fixture_repair_scope": "In-memory test assembly only; step7 parity and current input SHA mirrored, production qualifier and scientific manifest unchanged.",
+      "retained_original618": true,
+      "complete_current_log": "output/release/rel5-20261019/hosted-admission/tooling-full-current/tooling.log",
+      "final_diagnostic_collector_adjustment": "Focused23 passed after full619; no gate change, now lists up to32 failing CTest names before4 detail excerpts"
     },
     "Studio": {
       "passed": 383,
@@ -2533,7 +2561,17 @@
       "lint": "PASS",
       "typed_build": "PASS",
       "test_glob_owner": "studio/package.json",
-      "file_concurrency": 1
+      "file_concurrency": 1,
+      "additional_diagnostic_test_edit": {
+        "path": "studio/tests/host-build.test.ts",
+        "scope": "Two existing assertions only add original Host freshness reason to failure text; no assertion/count/threshold weakened",
+        "outside_original136_JS_AST_equivalence_set": true,
+        "exact_named_test": "GNU subprocess/specs drift invalidates persisted Build identity and legacy evidence stays unknown",
+        "local_named_pass_record": "output/release/rel5-20261019/hosted-admission/root-cause-fix/GNU-identity-named.json",
+        "local_wall_seconds": 2.8100176010048017,
+        "focused_lint": "PASS",
+        "does_not_replace_full383_gate": true
+      }
     },
     "CI_scope": "Required still requires three actual successful jobs. Explicit docs-only applicability permits NOT_APPLICABLE within jobs; unknown/mixed/code/config/build paths remain conservative. No shortened numerical endpoints or deleted unique controls. Flat release-readiness JSON receipts are recorded outcomes; only Tooling runs for receipt-only changes, nested/config/code changes remain full. Real Git controls expanded, no assertions dropped.",
     "LFS_assets": {
@@ -2574,12 +2612,350 @@
       "local_first_CTest_seconds": 0.03,
       "final_local_record": "output/release/rel5-20261019/hosted-admission/root-cause-fix/verified-local.json",
       "worker_review": "4a769d718b024953b85837a09f281d73 ACCEPT evidence_only",
-      "CTest_failure_collection": "Complete existing inventory after a failed case; same600s per-case/180min job timeout and unchanged nonzero/skip gates"
+      "CTest_failure_collection": "Complete existing inventory after a failed case; same600s per-case/180min job timeout and unchanged nonzero/skip gates",
+      "final_local_CTest_pass": true,
+      "final_test_source_sha256": "fb5942ce2429c9e61daa30438a9695b1e8bbd1efe18947467f1cc361699dacd0"
+    },
+    "current_unit_re_review": {
+      "recorded_utc": "2026-10-19T10:35:10.936060+00:00",
+      "cases": [
+        {
+          "case": "Sedov",
+          "path": "simulation/Sedov/Sedov.cpp",
+          "reviewed_sha256": "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6",
+          "current_sha256": "ab92f813d868cf44b26af0585c7b74d774c82cd9e8d8ee583c3551be0ac3a18e",
+          "dirty_entry_sha256": "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6",
+          "reviewed_matches_entry": true,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Original reviewed source and current file have identical noncomment tokens; prior dimensional evidence carried after explicit equality check"
+        },
+        {
+          "case": "SmoothAdvection",
+          "path": "simulation/SmoothAdvection/SmoothAdvection.cpp",
+          "reviewed_sha256": "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a",
+          "current_sha256": "21aaf2c1f2b1dad3ab37ea9aac27b95125b7cb96c0e7c807d29de72ae98edf83",
+          "dirty_entry_sha256": "21aaf2c1f2b1dad3ab37ea9aac27b95125b7cb96c0e7c807d29de72ae98edf83",
+          "reviewed_matches_entry": false,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Independent manager plus DPS frozen current DescribeConfiguration/Setup/Init dimensional audit"
+        },
+        {
+          "case": "GravityBox",
+          "path": "simulation/GravityBox/GravityBox.cpp",
+          "reviewed_sha256": "2566ca650a41c4e576e9cde8054c0889f9bb20822baea32a748eb0608895fcf4",
+          "current_sha256": "cdeee8453bf636545a8d3a1e84a7c9e0a4b29752b8838c1a6e7206ae6d839e9c",
+          "dirty_entry_sha256": "7d0d143b261b04e78b46468c22e958afaaf8bd328e1c39d94d3ab249f393b589",
+          "reviewed_matches_entry": false,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Independent manager plus DPS frozen current DescribeConfiguration/Setup/Init dimensional audit"
+        },
+        {
+          "case": "JeansWave",
+          "path": "simulation/JeansWave/JeansWave.cpp",
+          "reviewed_sha256": "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab",
+          "current_sha256": "beb898277d86e85b2ed609cba801c72cc8d82c1ba83ac3a209976f0e68c4ac7b",
+          "dirty_entry_sha256": "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab",
+          "reviewed_matches_entry": true,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Original reviewed source and current file have identical noncomment tokens; prior dimensional evidence carried after explicit equality check"
+        },
+        {
+          "case": "DiffusionMode",
+          "path": "simulation/DiffusionMode/DiffusionMode.cpp",
+          "reviewed_sha256": "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842",
+          "current_sha256": "07e253d8d7ede7f42fb65531b6298c0c1dd27ad0f9b701ce2f57a48694383e26",
+          "dirty_entry_sha256": "07e253d8d7ede7f42fb65531b6298c0c1dd27ad0f9b701ce2f57a48694383e26",
+          "reviewed_matches_entry": false,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Independent manager plus DPS frozen current DescribeConfiguration/Setup/Init dimensional audit"
+        },
+        {
+          "case": "CooperativeHotspots",
+          "path": "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+          "reviewed_sha256": "1d7e7fadb06035ce057b17f07bc587adf14cafe6e636a3d12d9c5f37172a0ca2",
+          "current_sha256": "3fe9f8154ecbcf3e3b76b43e3d476efe6c3294cc473fe080826142b72a50a18b",
+          "dirty_entry_sha256": "1d7e7fadb06035ce057b17f07bc587adf14cafe6e636a3d12d9c5f37172a0ca2",
+          "reviewed_matches_entry": true,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Original reviewed source and current file have identical noncomment tokens; prior dimensional evidence carried after explicit equality check"
+        },
+        {
+          "case": "SNIaCoupled",
+          "path": "simulation/SNIaCoupled/SNIaCoupled.cpp",
+          "reviewed_sha256": "26960832cc6ecaf79e7b7c7d6cc0cf2cedaf80659a0478d2e8fe3c402479b223",
+          "current_sha256": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78",
+          "dirty_entry_sha256": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78",
+          "reviewed_matches_entry": false,
+          "reviewed_matches_entry_HEAD": true,
+          "adoption": "Explicit current-source dimensional review only; current SHA match gate unchanged; not a physics or trajectory certificate",
+          "review_basis": "Independent manager plus DPS frozen current DescribeConfiguration/Setup/Init dimensional audit"
+        }
+      ],
+      "review_jobs": [
+        "c31309d0377042d9ac6618c65bf38c83",
+        "f49a9e17e1774914a9e3b70ebbd9a357"
+      ],
+      "manual_metadata_file": "src/api/inspection/CaseUnitEvidence.cpp",
+      "before_sha256": "d9b5b24a32071aa338aa18799f45aa0045cec3ab4e1a1de6086788fc23eca26a",
+      "after_sha256": "72746077f3b501dcd49e2ace940eff14d57aad7f2f324c1bfa7a25d434980022",
+      "added_units": {
+        "SmoothAdvection.mode_axis": "1",
+        "DiffusionMode.mode_axis": "1",
+        "GravityBox.hydrostatic_radial": "1"
+      },
+      "capability_and_attachment_function_bodies_unchanged": true,
+      "automatic_refresh_implemented": false,
+      "physics_qualification_changed": false
+    },
+    "current_chart_consumers": {
+      "Jeans": "Native max(dr,dz)=3 and poisoned inactivephi; all old16eps/reference cases retained",
+      "CHK_reader": "Exact current revision1/chart, oldnative rejects; V/W perazimuth matches A/T; independent3/4 and31/48 controls",
+      "Cellular_preview": "Valid annulus retains unsupported4, invalidaxis separately rejects3 withparameterkey",
+      "Plot_reference": "Current native chart/grid and all3 velocities required; retiredchart/candidate-RZ rejection; 16eps unchanged",
+      "current_four_CTests": {
+        "command": [
+          "/usr/bin/python3",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/run_memory_guarded.py",
+          "--min-available-mib",
+          "1536",
+          "--max-swap-growth-mib",
+          "256",
+          "--pressure-guard",
+          "--log",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-ctest.log",
+          "--process-samples",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-ctest-process.tsv",
+          "--",
+          "/usr/bin/time",
+          "-v",
+          "-o",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-ctest.time",
+          "ctest",
+          "--test-dir",
+          "build-modernization-cpu",
+          "-R",
+          "^(jeans_diagnostics|case_inspection_contract|preview_cellular_2d|initialization_probe)$",
+          "--parallel",
+          "1",
+          "--timeout",
+          "180",
+          "--no-tests=error",
+          "--output-on-failure",
+          "--output-junit",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-ctest.xml"
+        ],
+        "started_utc": "2026-10-19T10:49:06.619724+00:00",
+        "wrapper_wall_seconds": 20.148095109994756,
+        "exit_code": 0,
+        "cases": [
+          "case_inspection_contract",
+          "initialization_probe",
+          "jeans_diagnostics",
+          "preview_cellular_2d"
+        ],
+        "junit": {
+          "tests": "4",
+          "failures": "0",
+          "errors": null,
+          "skipped": "0"
+        },
+        "app_sha256": "ff8da6938cc67919a0b7796d0837785199934575d2f81302bebdcba5cc662f69",
+        "scope": "Four affected existing CTests only; API child owners explicitly retain OMP1"
+      },
+      "boundary_run": {
+        "command": [
+          "/usr/bin/python3",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/run_memory_guarded.py",
+          "--min-available-mib",
+          "1536",
+          "--max-swap-growth-mib",
+          "256",
+          "--pressure-guard",
+          "--log",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-boundaries.log",
+          "--process-samples",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-boundaries-process.tsv",
+          "--output-root",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu",
+          "--max-output-mib",
+          "512",
+          "--host-storage-root",
+          "/mnt/e",
+          "--min-host-free-mib",
+          "1024",
+          "--next-write-reserve-mib",
+          "128",
+          "--",
+          "/usr/bin/time",
+          "-v",
+          "-o",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/current-cpu/affected-boundaries.time",
+          "/home/shiroakane/miniconda3/envs/work/bin/python",
+          "-B",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel5-20261019/hosted-admission/run_affected_boundaries.py"
+        ],
+        "started_utc": "2026-10-19T10:50:22.224536+00:00",
+        "wrapper_wall_seconds": 2.073300014002598,
+        "exit_code": 0,
+        "concurrency_note": "Overlaps four focused API/math CTests; operational cost only, ownerOMP1 retained; no longRZ/CUDA"
+      },
+      "boundary_summary": {
+        "status": "PASS",
+        "accepted_scope": "Existing per-case 3/6-step gates; not long-run or full gravity campaign",
+        "threads": 1,
+        "owner_reason": "self_gravity_physics explicitly owns OMP1",
+        "elapsed_seconds": 1.3689192650053883,
+        "rows": [
+          {
+            "name": "retained-cartesian",
+            "geometry": "cartesian",
+            "dimension": 1,
+            "backend": "cpu",
+            "wall_seconds": 0.06087213900173083,
+            "steps": 3,
+            "final_time": 0.0003,
+            "mass_budget_error": 1.0716402106565801e-16,
+            "energy_budget_error": null,
+            "final_blocks": 1,
+            "minimum_density": 0.9999999806199306
+          },
+          {
+            "name": "native-annulus",
+            "geometry": "cylindrical",
+            "dimension": 2,
+            "backend": "cpu",
+            "wall_seconds": 0.08043358399299905,
+            "steps": 3,
+            "final_time": 0.0003,
+            "mass_budget_error": 3.646071767583796e-17,
+            "energy_budget_error": null,
+            "final_blocks": 1,
+            "minimum_density": 0.9999999602070313
+          },
+          {
+            "name": "native-axis-wall",
+            "geometry": "cylindrical",
+            "dimension": 2,
+            "backend": "cpu",
+            "wall_seconds": 0.06720460900396574,
+            "steps": 3,
+            "final_time": 0.0003,
+            "mass_budget_error": 5.880344442693856e-17,
+            "energy_budget_error": null,
+            "final_blocks": 1,
+            "minimum_density": 0.9999999793064591
+          },
+          {
+            "name": "rz-amr-restart-continuous",
+            "geometry": "cylindrical",
+            "dimension": 2,
+            "backend": "cpu",
+            "wall_seconds": 0.15799236699240282,
+            "steps": 6,
+            "final_time": 0.0006,
+            "mass_budget_error": 8.551508977858958e-17,
+            "energy_budget_error": null,
+            "final_blocks": 5,
+            "minimum_density": 0.9999993473065688
+          },
+          {
+            "name": "rz-amr-restart-resumed",
+            "geometry": "cylindrical",
+            "dimension": 2,
+            "backend": "cpu",
+            "wall_seconds": 0.11544099501043092,
+            "steps": 6,
+            "final_time": 0.0006,
+            "mass_budget_error": 2.8671701305088543e-18,
+            "energy_budget_error": null,
+            "final_blocks": 5,
+            "minimum_density": 0.9999993473065688
+          },
+          {
+            "name": "rz-amr-restart-identity",
+            "source_backend": "cpu",
+            "target_backend": "cpu",
+            "bitwise_equal": true
+          },
+          {
+            "name": "rz-amr-lifecycle",
+            "dynamic_mixed": true,
+            "source_epochs": [
+              1,
+              2
+            ],
+            "source_cells": [
+              512,
+              1280
+            ],
+            "accepted_steps": 6,
+            "final_time": 0.0006
+          },
+          {
+            "name": "rz-jeans-restart-continuous",
+            "geometry": "cylindrical",
+            "dimension": 2,
+            "backend": "cpu",
+            "wall_seconds": 0.20743827200203668,
+            "steps": 6,
+            "final_time": 0.0006,
+            "mass_budget_error": 1.1300822595855372e-16,
+            "energy_budget_error": null,
+            "final_blocks": 8,
+            "minimum_density": 0.9999999999977177
+          },
+          {
+            "name": "rz-jeans-restart-resumed",
+            "geometry": "cylindrical",
+            "dimension": 2,
+            "backend": "cpu",
+            "wall_seconds": 0.12431379000190645,
+            "steps": 6,
+            "final_time": 0.0006,
+            "mass_budget_error": 1.1730984860483357e-17,
+            "energy_budget_error": null,
+            "final_blocks": 8,
+            "minimum_density": 0.9999999999977177
+          },
+          {
+            "name": "rz-jeans-restart-identity",
+            "source_backend": "cpu",
+            "target_backend": "cpu",
+            "bitwise_equal": true
+          },
+          {
+            "name": "rz-jeans-lifecycle",
+            "initial_resolution": 129884.12561252475,
+            "target": 200000.0,
+            "initial_repair_leaves": [
+              2,
+              8
+            ],
+            "accepted_plots": 7,
+            "max_reference_relative_error": 3.525956864126943e-16,
+            "reference_bound": 3.552713678800501e-15,
+            "scope": "short public Host RZ nonrotating IdealGas repair/output/restart; not collapse accuracy or long-run"
+          },
+          {
+            "name": "rz-jeans-finest-deficit",
+            "rejected": true,
+            "reason": "JENS remains underresolved at lrefinemax"
+          }
+        ],
+        "recorded_utc": "2026-10-19T10:50:24.052002+00:00"
+      },
+      "scope_limits": "Not new trajectory science or general curvilinear3D JENS Plot oracle certification"
     }
   },
   "documentation": {
     "current_pages": 202,
-    "local_destinations": 2253,
+    "local_destinations": 2254,
     "link_errors": 0,
     "current_owners": [
       "docs/development/README.md",
@@ -2611,7 +2987,7 @@
       "entry_main_plan_lines": 372,
       "current_main_plan_lines": 130,
       "current_maintained_pages": 202,
-      "current_local_destinations": 2253,
+      "current_local_destinations": 2254,
       "current_link_errors": 0,
       "archive_moves": 323,
       "removed_indexes": 3
@@ -2648,14 +3024,48 @@
       "tooling-final-618": 156744,
       "tooling-after-archive-618": 141888
     },
-    "production_cpp_cuda_build_seconds": null,
+    "production_cpp_cuda_build_seconds": 237.16,
     "hosted_ci_seconds": null,
     "hosted_speedup_demonstrated": false,
     "maintenance_reduction": "One complete Tooling selection for CI/CTest, one Studio test owner, one narrow verified-asset action; original non-tooling command/properties and scientific gates retained.",
     "nonblocking_candidate": "Vite existing6382.46kB main chunk warning retained; no speculative code-splitting work started.",
     "continuation_source_freeze_unchanged": true,
     "first_hosted_CPU_build_step_seconds": 504,
-    "second_hosted_CPU_build_step_seconds": 578
+    "second_hosted_CPU_build_step_seconds": 578,
+    "affected_local_CPU_and_checks": {
+      "configure": {
+        "GNU_wall_seconds": 8.92,
+        "GNU_max_rss_kib": 56896,
+        "time_record": "hosted-admission/current-cpu/configure.time"
+      },
+      "build": {
+        "GNU_wall_seconds": 237.16,
+        "GNU_max_rss_kib": 1378956,
+        "time_record": "hosted-admission/current-cpu/build.time",
+        "actions": 79,
+        "guard_sampled_owned_peak_rss_kib": 2711400,
+        "guard_process_rows_complete": false,
+        "missing_process_rows": 1,
+        "baseline_and_peak_swap_kib": 0,
+        "scope": "Existing graph current CPU app plus3 existing test/reference targets; not single-edit performance comparison"
+      },
+      "affected-ctest": {
+        "GNU_wall_seconds": 19.59,
+        "GNU_max_rss_kib": 106164,
+        "time_record": "hosted-admission/current-cpu/affected-ctest.time",
+        "cases": 4
+      },
+      "affected-boundaries": {
+        "GNU_wall_seconds": 1.8,
+        "GNU_max_rss_kib": 48808,
+        "time_record": "hosted-admission/current-cpu/affected-boundaries.time",
+        "owner_elapsed_seconds": 1.3689192650053883,
+        "summary_rows": 12,
+        "scope": "Retained Cartesian plus native annulus/axis and3/6-step AMR/JENS fresh/rejection; not full gravity campaign or long RZ"
+      }
+    },
+    "production_build_scope": "Separate local CPU app+3target incremental graph,79actions; no CUDA; operational cost includes overlap with41.16s Tooling, not a speedup benchmark",
+    "timing_clock_note": "Local build GNU237.16s versus wrapper235.32/guard235.18s are separate recorded clocks; retain raw values, no forced reconciliation or speedup comparison."
   },
   "preservation": {
     "protected_history_unchanged": 157,
@@ -2664,7 +3074,7 @@
     "historical_code_unchanged": 16,
     "protocol_fixture_files_unchanged": 4,
     "production_cpp_cuda_compile_executed": true,
-    "scientific_replays_executed": false,
+    "scientific_replays_executed": true,
     "original_cpp_and_cuda_executables": {
       "cpu": {
         "path": "build-modernization-cpu/bin/ARCH",
@@ -2688,29 +3098,120 @@
       "baseline": "HEAD bytes verified equal; entry git status confirms no inherited edit"
     },
     "current_assertion_signature": "618 complete test labels plus terminal OK/no skips,1/1 actual JUnit, nine moved method bodies AST identical",
-    "compile_scope": "Hosted CPU only; local original executables and frozen scientific receipts unchanged"
+    "compile_scope": "Local separate-output CPU app/API/reference/Jeans targets and prior hostedCPU; old local CPU/CUDA apps preserved; no CUDA compilation",
+    "scientific_replay_scope": "Only affected bounded3/6step checks; original frozen receipts/results untouched"
   },
   "collaboration": {
-    "goal_id": "arch-rz-reintroduction-20261018",
-    "new_calls": 7,
-    "DeepSeek": 6,
-    "official_Gemini": 1,
-    "all_independently_accepted_in_recorded_scope": true,
-    "index": "output/release/rel5-20261019/collaboration/acceptance-summary.json",
-    "budget": {
+    "scope_calls": 13,
+    "scope_provider_seconds": 845.2949230600061,
+    "accepted_jobs": [
+      {
+        "job_id": "158a4ff00b36456d94944032e5ad3195",
+        "logical_task_id": "rel5-archive-closure-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "1e7aaa78676f4bec8737b67e620fadf0",
+        "logical_task_id": "rel5-lfs-ci-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "d61d1fab6b134e27a91e0f88218f0d88",
+        "logical_task_id": "rel5-numeric-comment-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "partial"
+      },
+      {
+        "job_id": "746a8dc7d5fb4398a17265ab23cb57a7",
+        "logical_task_id": "rel5-integrated-ci-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "2d01aa48f16544718db0a57e412e014e",
+        "logical_task_id": "rel5-contributor-prose",
+        "provider": "antigravity",
+        "review": "ACCEPT",
+        "adoption_scope": "partial"
+      },
+      {
+        "job_id": "70f14c778e6b4728be9607cf6fa5f261",
+        "logical_task_id": "rel5-fixture-drift-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "ff0878d6c6f14fa68c5dea59418169f7",
+        "logical_task_id": "rel5-tests-ci-map",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "f49a9e17e1774914a9e3b70ebbd9a357",
+        "logical_task_id": "rel5-mode-unit-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "c31309d0377042d9ac6618c65bf38c83",
+        "logical_task_id": "rel5-profile-unit-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "cb657f693ebe4ac18aec381fe7639367",
+        "logical_task_id": "rel5-cyl-consumer-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "4a769d718b024953b85837a09f281d73",
+        "logical_task_id": "rel5-hosted-root-cause-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "920edbc0e9db4763b35d0505c112fa45",
+        "logical_task_id": "rel5-hosted-failure-diagnostics-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      },
+      {
+        "job_id": "0101fdf73bc342ca865ecf18fc35c3bb",
+        "logical_task_id": "rel5-hosted-trigger-review",
+        "provider": "deepseek",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only"
+      }
+    ],
+    "cumulative_budget": {
       "goal_id": "arch-rz-reintroduction-20261018",
-      "manager_max_calls": 62,
+      "manager_max_calls": 68,
       "user_max_calls": null,
-      "calls_used_or_reserved": 61,
+      "calls_used_or_reserved": 67,
       "calls_remaining": 1,
-      "elapsed_seconds_recorded": 9475.417684322976,
-      "output_tokens_reported": 1411984,
+      "elapsed_seconds_recorded": 9834.407654567996,
+      "output_tokens_reported": 1487342,
       "started_calls_with_unknown_output": 6,
       "cost_money": null,
       "attempt_allowances_reset": false
     },
-    "root_model_and_money_cost": null,
-    "continuation_review_job": "158a4ff00b36456d94944032e5ad3195"
+    "money_cost": null,
+    "root_model_cost": null,
+    "evidence": "output/release/rel5-20261019/collaboration/acceptance-summary.json"
   },
   "retained_failures_and_corrections": [
     "Original593-test baseline:1 failure,3 errors from stale test-fixture assembly; preserved without changing scientific qualifier or frozen fixture bytes.",

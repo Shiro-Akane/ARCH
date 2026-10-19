@@ -161,7 +161,10 @@ class CellularPreviewContract(unittest.TestCase):
             ({'shock_dir': -1}, 4, 'UNSUPPORTED_PREVIEW'),
             ({'nblockx2': 0}, 4, 'UNSUPPORTED_PREVIEW'),
             ({'nblockx3': 1, 'x3l_boundary_type': 'outflow', 'x3r_boundary_type': 'outflow'}, 4, 'UNSUPPORTED_PREVIEW'),
-            ({'geometry': 'cylindrical'}, 4, 'UNSUPPORTED_PREVIEW'),
+            # A valid annulus reaches the explicit Cartesian-only preview gate.
+            ({'geometry': 'cylindrical', 'x1_min': .25}, 4, 'UNSUPPORTED_PREVIEW'),
+            # The original axis/outflow input is invalid before support dispatch.
+            ({'geometry': 'cylindrical'}, 3, 'INVALID_CONFIGURATION'),
             ({'x2_max': 0}, 3, 'INVALID_CONFIGURATION'),
             ({'max_blocks': 1}, 3, 'INVALID_CONFIGURATION'),
             ({'shock_dir': '1e100'}, 3, 'INVALID_CONFIGURATION'),
@@ -172,6 +175,9 @@ class CellularPreviewContract(unittest.TestCase):
                 result = self.invoke(config(**values), expected=code)
                 self.assertIsNone(result['data'])
                 self.assertEqual(result['diagnostics'][0]['code'], diagnostic)
+                if values == {'geometry': 'cylindrical'}:
+                    self.assertEqual(result['stage'], 'configuration')
+                    self.assertEqual(result['diagnostics'][0]['parameterKey'], 'x1l_boundary_type')
 
     def test_eos_and_sampling_failures_keep_confirmed_state(self):
         result = self.invoke(config(eos_type='helmholtz', eos_table_path='absent.dat'), expected=5)

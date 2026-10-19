@@ -328,9 +328,10 @@ int main()
     grid.dx3 = 4.0; grid.dim = 3; check_spacing(4.0);
     grid.geometry = GridMetrics::Geometry::Cylindrical;
     grid.dim = 2;
-    if (JeansDiagnostics::evaluate_cell(1,1,grid,0,0).status !=
-            JeansDiagnostics::Status::invalid_input)
-        throw std::runtime_error("Retired cylindrical 2-D polar spacing accepted");
+    check_spacing(3.0); // Native (r,z): max(dr,dz), no azimuthal distance.
+    grid.dx3 = std::numeric_limits<double>::quiet_NaN();
+    check_spacing(3.0); // An inactive phi width cannot affect the diagnostic.
+    grid.dx3 = 4.0;
     grid.dim = 3; check_spacing(8.0); // (r,z,phi), largest r*dphi.
     grid.geometry = GridMetrics::Geometry::Spherical;
     grid.dim = 2; check_spacing(6.0); // Existing 2-D polar specialization.

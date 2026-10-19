@@ -84,7 +84,7 @@ ctest --test-dir build-release-cpu --output-on-failure -j 2
 
 完整 Tooling 检查还要求 Linux Python 提供 `os.pidfd_open` 与 `signal.pidfd_send_signal`，用于确认只终止本次任务拥有的进程。本机 `work` 的 Python 3.12.14 未提供这两个接口，系统 `/usr/bin/python3` 提供。因此科学 CTest 使用 `work`，完整 Tooling 与资源保护器使用系统 Python；这两类环境不能只凭版本号互相替代。
 
-开发者执行完整 Tooling 时，Ubuntu 24.04 可补齐以下依赖。`mold`、`shellcheck` 用于对应工具检查，不是桌面用户的必需组件。
+开发者执行完整 Tooling 或 Studio／Host 测试时，Ubuntu 24.04 可补齐以下依赖。`mold`、`shellcheck` 用于对应工具与构建身份检查，不是桌面用户的必需组件。
 
 ```bash
 sudo apt-get install --no-install-recommends \

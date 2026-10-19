@@ -162,14 +162,16 @@ def _annotate_failed_report(args, message):
                         if re.match(r"\s*(?:not ok\b|Bail out!)", line)]
             details += ["\n".join(lines[index:index + 30]) for index in failures[:4]]
         elif args.junit is not None:
-            for case in ET.parse(args.junit).getroot().findall("testcase"):
-                if any(case.find(marker) is not None for marker in ("failure", "error")):
-                    messages = [case.get("name", "<unnamed>")]
-                    messages += [marker.get("message", "") for marker in case
-                                 if marker.tag in ("failure", "error")]
-                    details.append("\n".join(messages + list(case.itertext())))
-                    if len(details) == 5:
-                        break
+            failed = [case for case in ET.parse(args.junit).getroot().findall("testcase")
+                      if any(case.find(marker) is not None for marker in ("failure", "error"))]
+            if failed:
+                details[0] += f"; failed CTests ({len(failed)}): " + ", ".join(
+                    case.get("name", "<unnamed>") for case in failed[:32])
+            for case in failed[:4]:
+                messages = [case.get("name", "<unnamed>")]
+                messages += [marker.get("message", "") for marker in case
+                             if marker.tag in ("failure", "error")]
+                details.append("\n".join(messages + list(case.itertext())))
     except (OSError, ValueError, ET.ParseError):
         # A missing or malformed report must still fail with the original error.
         pass

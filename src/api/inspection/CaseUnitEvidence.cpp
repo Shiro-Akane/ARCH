@@ -53,7 +53,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"w_amplitude", "cm/s"},
         {"gas_cv", "erg/(g*K)"},
     }}},
-    {"Sedov", {"simulation/Sedov/Sedov.cpp", "4f91941fabb5183233b7b211f1ff61eccaefa1496c4d1e161fe214b2ce3bbae6", {
+    {"Sedov", {"simulation/Sedov/Sedov.cpp", "ab92f813d868cf44b26af0585c7b74d774c82cd9e8d8ee583c3551be0ac3a18e", {
         {"center_x", "cm"},
         {"center_y", "cm"},
         {"center_z", "cm"},
@@ -69,19 +69,21 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"p_int", "erg/cm^3"},
         {"amplitude", "cm/s"},
     }}},
-    {"SmoothAdvection", {"simulation/SmoothAdvection/SmoothAdvection.cpp", "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a", {
+    {"SmoothAdvection", {"simulation/SmoothAdvection/SmoothAdvection.cpp", "21aaf2c1f2b1dad3ab37ea9aac27b95125b7cb96c0e7c807d29de72ae98edf83", {
         {"rho_mean", "g/cm^3"},
         {"rho_amplitude", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"velocity0", "cm/s"},
         {"mode", "1"},
+        {"mode_axis", "1"},
     }}},
-    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "2566ca650a41c4e576e9cde8054c0889f9bb20822baea32a748eb0608895fcf4", {
+    {"GravityBox", {"simulation/GravityBox/GravityBox.cpp", "cdeee8453bf636545a8d3a1e84a7c9e0a4b29752b8838c1a6e7206ae6d839e9c", {
         {"rho0", "g/cm^3"}, {"temperature0", "K"}, {"amplitude", "1"},
         {"temperature_amplitude", "1"}, {"velocity0", "cm/s"}, {"width", "cm"},
         {"center_x", "cm"}, {"center_y", "cm"}, {"center_z", "cm"}, {"gas_cv", "erg/(g*K)"},
+        {"hydrostatic_radial", "1"},
     }}},
-    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab", {
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "beb898277d86e85b2ed609cba801c72cc8d82c1ba83ac3a209976f0e68c4ac7b", {
         {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
         {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
         {"standing_wave", "1"},
@@ -91,12 +93,13 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"pressure0", "erg/cm^3"},
         {"velocity_x0", "cm/s"},
     }}},
-    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842", {
+    {"DiffusionMode", {"simulation/DiffusionMode/DiffusionMode.cpp", "07e253d8d7ede7f42fb65531b6298c0c1dd27ad0f9b701ce2f57a48694383e26", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},
         {"tracer_mean", "1"},
         {"tracer_amplitude", "1"},
         {"mode", "1"},
+        {"mode_axis", "1"},
     }}},
     {"BurnOneZone", {"simulation/BurnOneZone/BurnOneZone.cpp", "52cb9928a8afcd8437d6c3b99149112bd310bbb9cbe47ea7d034bd6e41b503c3", {
         {"rho0", "g/cm^3"},
@@ -109,7 +112,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"center_x", "cm"},
         {"width", "cm"},
     }}},
-    {"CooperativeHotspots", {"simulation/CooperativeHotspots/CooperativeHotspots.cpp", "1d7e7fadb06035ce057b17f07bc587adf14cafe6e636a3d12d9c5f37172a0ca2", {
+    {"CooperativeHotspots", {"simulation/CooperativeHotspots/CooperativeHotspots.cpp", "3fe9f8154ecbcf3e3b76b43e3d476efe6c3294cc473fe080826142b72a50a18b", {
         {"ambient_density", "g/cm^3"},
         {"ambient_temperature", "K"},
         {"hotspot_temperature", "K"},
@@ -124,7 +127,7 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
     {"UserGravity", {"simulation/UserGravity/case.cpp", "8d0254f84d93ffdf62ff42ed677c5d2181bac326a35a9f9f64c02e2b3a285a69", {
         {"user_boundary_heat_flux", "erg/(cm^2 s)"},
     }}},
-    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "26960832cc6ecaf79e7b7c7d6cc0cf2cedaf80659a0478d2e8fe3c402479b223", {
+    {"SNIaCoupled", {"simulation/SNIaCoupled/SNIaCoupled.cpp", "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78", {
         {"rho0", "g/cm^3"},
         {"temperature0", "K"},
         {"temperature_peak", "K"},

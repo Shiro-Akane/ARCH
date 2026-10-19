@@ -10,7 +10,7 @@
 | --- | --- |
 | Tooling | Workflow syntax, shared-implementation/header audit, current documentation links, and the complete `python3 -B tests/tooling` suite; empty/skipped suites fail |
 | CPU Release | Applicable changes build ARCH and all configured CPU tests with KLU, run the complete non-Tooling CTest inventory and the original low-density physical matrix |
-| Studio and Host | Applicable changes prepare the explicit Host fixture CMake/Ninja/C++ tools, install locked Node dependencies, run the complete `npm --silent test` once, lint and build production assets; the build includes TypeScript checking |
+| Studio and Host | Applicable changes prepare the explicit Host fixture CMake/Ninja/C++/mold tools, install locked Node dependencies, run the complete `npm --silent test` once, lint and build production assets; the build includes TypeScript checking |
 | CI required | Requires all three jobs to succeed; failure, cancellation or a skipped job cannot pass |
 
 A failed CTest or npm command still invokes the existing report checker to publish bounded, escaped failure excerpts in check annotations. The original pipeline status is retained: a complete report cannot hide a nonzero command. CTest completes the configured inventory even after a failed case, keeping the existing per-case and job timeouts, so one obsolete assertion does not hide later failures behind another full rebuild. Raw JUnit/TAP remain authoritative; annotations only aid diagnosis when runner-log downloads need authentication.
