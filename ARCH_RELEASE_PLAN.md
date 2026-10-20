@@ -55,7 +55,7 @@ W0为Codex，负责标准、唯一集成和独立验收；W1核科学／共享�
 
 2026-10-20 用户授权完成 REL-7：合并 `compute/optim` 指向 `main` 的 PR#12，版本号 `v1.3.0`，沿历史 GitHub 源码发布模式；不附预编译科学库或原始 H5。中英文说明按 `docs/releases/` 的既有格式，重点为可选 Studio GUI、共享架构整理与关键配置静默回退的移除；允许默认值／auto 的来源、平台和科学限定仍如实说明。
 
-当前分工为 DPS 核发布声明与原收据的一致性、Gemini 核冻结双语文案、Codex 负责独立验收与 Git／发行操作。远端 main 的预合并树已确认未额外改变生产或 Studio 实现；不为文档发布重跑既有长程、CUDA 全编译或旧 RZ 验证。Windows 原生工具入口不扩大 ARCH 的计算平台声明。 `main` 已确认受保护，保持正常 PR 合并，不绕过规则或直接强推。托管 CI 补 main 的原检查入口；一次性 `v1.3.0` 发布 workflow 只在该标签与已验收 PR 合并／main 完全一致、main CI／CodeQL 通过且候选源码和收据未漂移时，使用 GitHub 临时凭据生成源码 Release。
+当前分工为 DPS 核发布声明与原收据的一致性、Gemini 核冻结双语文案、Codex 负责独立验收与 Git／发行操作。远端 main 的预合并树已确认未额外改变生产或 Studio 实现；不为文档发布重跑既有长程、CUDA 全编译或旧 RZ 验证。Windows 原生工具入口不扩大 ARCH 的计算平台声明。 `main` 已确认受保护，保持正常 PR 合并，不绕过规则或直接强推。托管 CI 补 main 与显式调度入口；本次一次性发布 workflow 等当前 head 的 PR／push CI 和完整 CodeQL 均通过后，以正常 API 合并 PR，完全遵守保护规则。main 全部文件树必须与该扫描 head 完全相同，再显式调度 main 的完整 CI；通过后生成带注释的 `v1.3.0` 标签与源码 Release。CodeQL 按相同完整文件树明确继承，不冒称新增扫描；候选源码／收据及原数值标准保持。
 
 顺序为：文案／链接与源码身份核对 → 正常提交推送 → PR 当前 head 的适用 CI／CodeQL → 合并 main → 核合并提交的适用检查 → v1.3.0 标签与 GitHub Release → 验证公开状态并回写结案。源代码标签、候选执行物与发布后记录分别保留身份。临时恢复与双模型产物归 `output/release/rel7-20261020/`；既有科学收据不重写。中英文说明见[发布索引](docs/releases/README.md)，托管操作与最终结案统一记入[发布记录](validation/backend/results/release-readiness/REL7ReleaseRecord-20261020.json)，当前尚未标记为已发布。
 

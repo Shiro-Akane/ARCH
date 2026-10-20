@@ -3,7 +3,7 @@
   "phase": "REL-7",
   "version": "v1.3.0",
   "status": "IN_PROGRESS",
-  "updated_utc": "2026-10-20T08:42:16.424833+00:00",
+  "updated_utc": "2026-10-20T08:58:27.468507+00:00",
   "authority": {
     "source": "direct user request 2026-10-20",
     "authorized": [
@@ -63,8 +63,9 @@
     "state_source": "Remote state must be verified after each action; this record is not publication.",
     "automation": {
       "path": ".github/workflows/release-v1.3.0.yml",
-      "scope": "Only preexisting v1.3.0 tag equal to current main and PR#12 merge, after exact-main CI four jobs/CodeQL and candidate/notes identity checks. Ordinary PR jobs remain read-only; no branch rule changes or tag creation.",
-      "workflow_sha256": "5402ca02f7e46c9313d65e333315e0ea2003088c8ce9814548f8f11efa3ebc28"
+      "scope": "One explicitly authorized release from trusted engineering-branch workflow update: current-head PR/push CI and all CodeQL analyses/comparison -> normal protected PR merge -> identical complete file-tree proof -> actual main full CI by explicit dispatch -> annotated tag -> formal source-only release. No credential export, branch-rule bypass, overwritten tag/release or weakened numerical criterion.",
+      "workflow_sha256": "1c933c16ea6140f51828b14a19521667a922c03e0c697e40a7087583700de403",
+      "security_evidence": "Accepted PR full-tree CodeQL reused only if merged tree is byte-identical across all tracked files; this is not a new main scan."
     }
   },
   "independent_review": [
@@ -138,6 +139,35 @@
       ],
       "pr_comparison_summary_on_main": false,
       "correction": "Require the exact-main real default-setup workflow and all three language jobs instead of the PR-only CodeQL aggregate."
+    },
+    "orchestrator": {
+      "offline_controls": 40,
+      "result": "PASS",
+      "checks": [
+        {
+          "name": "actionlint",
+          "wall_seconds": 0.1523749959997076,
+          "exit_code": 0
+        },
+        {
+          "name": "documentation",
+          "wall_seconds": 0.5161482580006123,
+          "exit_code": 0
+        },
+        {
+          "name": "architecture",
+          "wall_seconds": 2.3783259609990637,
+          "exit_code": 0
+        },
+        {
+          "name": "diff",
+          "wall_seconds": 0.010848039000848075,
+          "exit_code": 0
+        }
+      ],
+      "controls": "output/release/rel7-20261020/orchestrator-offline-controls.json",
+      "hosted_execution": "NOT_EXECUTED_YET",
+      "evidence_reuse": "Entire merged file tree must equal the successfully scanned PR tree; main full CI is separately executed."
     }
   },
   "additional_review": {

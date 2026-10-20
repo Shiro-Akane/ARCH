@@ -54,21 +54,27 @@ Use a normal PR targeting `main` for integration; engineering-branch pushes can 
 
 ## v1.3.0 source publication
 
-[release-v1.3.0.yml](release-v1.3.0.yml) handles only the explicitly authorized
-`v1.3.0` tag after PR #12 is merged normally. It requires that tag to equal
-current main and the PR merge, the exact main revision to have successful
-Tooling/CPU/Studio/required jobs and the actual default-setup CodeQL run with
-all three language analyses, and the original candidate source
-and acceptance receipt to remain unchanged. Push the tag only after these
-checks finish. The PR comparison summary is evaluated before merging; main
-has analysis jobs rather than that PR-only summary. Ordinary PR CI retains
-read-only permissions.
+[release-v1.3.0.yml](release-v1.3.0.yml) is a one-shot, explicitly authorized
+release from `compute/optim`, triggered only when that workflow file changes.
+It waits for the exact head's PR and push CI, all three default-setup CodeQL
+analyses and the original PR comparison gate; missing, skipped, cancelled or
+failed results cannot unlock it. The original candidate and note digests must
+match. Existing releases/tags are never replaced.
 
-The publication job alone uses GitHub's temporary repository token with release
-write permission. It verifies an existing tag, publishes the reviewed English
-notes with tag-pinned links to the Chinese notes and guides, and adds no binary
-or simulation-data assets. It does not merge a protected branch, create or move
-a tag, reduce checks, or alter repository rules. An existing release causes
-creation to fail rather than being silently replaced. See the [GitHub token
-permissions guide](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)
+The isolated publication job uses GitHub's temporary repository token to update
+PR #12 and call the normal merge API with the accepted head SHA. It has no
+admin/bypass operation and does not alter branch rules. Ordinary public PR CI
+remains read-only. After merging, the entire tracked file tree must exactly
+match the scanned head. The workflow explicitly dispatches the existing full
+CI on the actual main commit, since token-generated pushes do not trigger
+other workflows. Missing dispatch-base information conservatively selects
+complete CPU and Studio work.
+
+Only successful main CI allows the annotated `v1.3.0` tag and formal source
+release. Security qualification explicitly reuses the accepted identical file
+tree; it does not invent a new main scan. Notes use tag-pinned English/Chinese
+guide links and the existing GUI screenshot, with actual CI/security identities
+appended. No prebuilt scientific binaries or raw simulation outputs are assets.
+A failure stops the current stage; no tag is moved and no rule is weakened.
+See [GitHub token behavior](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)
 and [release command](https://cli.github.com/manual/gh_release_create).
