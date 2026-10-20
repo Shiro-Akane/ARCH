@@ -1,19 +1,15 @@
-# ARCH：Zenodo 作者与贡献说明（发布前草稿）
+# ARCH 1.3.0 作者与贡献
 
-信息来源：维护者于 2026-10-05 提供并确认的姓名、ORCID、职责与最终作者顺序。本项目为个人项目，按维护者要求暂不填写机构；下表按最终署名顺序排列。
+作者姓名、ORCID、最终顺序及暂不填写机构的安排已由维护者确认。本项目为个人项目。
 
-| 人员 | ORCID | 主要贡献 |
-| --- | --- | --- |
-| Haonan Ye | [0009-0002-0706-1183](https://orcid.org/0009-0002-0706-1183) | 项目架构讨论及其余开发工作；其余工作的细分描述在发布前由维护者核对。 |
-| Enjie Jiang | [0009-0000-8768-9557](https://orcid.org/0009-0000-8768-9557) | 本次发布范围内的 CUDA 开发与优化。 |
-| Yu Ding | [0009-0003-3677-6441](https://orcid.org/0009-0003-3677-6441) | GUI 开发、完善与优化。 |
+| 顺序 | 姓名 | ORCID | 主要贡献 |
+| --- | --- | --- | --- |
+| 1 | Haonan Ye | [0009-0002-0706-1183](https://orcid.org/0009-0002-0706-1183) | 整体架构设计与讨论，以及下述分工以外的项目开发工作。 |
+| 2 | Enjie Jiang | [0009-0000-8768-9557](https://orcid.org/0009-0000-8768-9557) | CUDA 开发与优化。 |
+| 3 | Yu Ding | [0009-0003-3677-6441](https://orcid.org/0009-0003-3677-6441) | GUI 开发、完善与优化。 |
 
-三位主要开发者列入 Zenodo 的 Creators，确保他们出现在软件引用中；维护者已确认最终署名顺序为 Haonan Ye、Enjie Jiang、Yu Ding。提交版本为 GUI 彻底收尾完成后的版本，GNN 不在本次范围内。维护者此前说明的 Enjie Jiang 的 GNN 开发工作属于项目其他工作，不计入本次发布贡献说明。贡献说明用于交代职责，不表示当前 GUI 已完成验收。
+三人均按此顺序填入 Zenodo 的 Creators；机构字段留空。GNN 开发不属于本次发布贡献范围。AI 辅助工作的使用范围及人类架构责任见 [AI 使用说明](AI_USAGE.md)。
 
-## 英文贡献说明候选
+## English contribution statement
 
-Haonan Ye (ORCID: 0009-0002-0706-1183) is responsible for architecture discussions and the remaining project work. Enjie Jiang (ORCID: 0009-0000-8768-9557) is primarily responsible for CUDA development and optimization. Yu Ding (ORCID: 0009-0003-3677-6441) is primarily responsible for GUI development, refinement, and optimization.
-
-发布前核对表单和引用文件沿用已确认的作者顺序，并核对发布版本确实包含的功能。GNN 不加入本次发布的功能、关键词或贡献描述。机构字段按维护者要求省略，不填入虚构机构或占位文字。
-
-参考：[Zenodo Creators](https://help.zenodo.org/docs/deposit/describe-records/creators/)。
+Haonan Ye is responsible for the overall software architecture, architecture discussions, and the remaining project development. Enjie Jiang is primarily responsible for CUDA development and optimization. Yu Ding is primarily responsible for GUI development, refinement, and optimization.
