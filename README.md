@@ -196,6 +196,14 @@ Self-gravity already covers the validated domains listed in the [feature list](d
 
 MPI would distribute calculations across processes and machines. Later exploration may consider graph neural networks, selectable floating-point precision, and GPU ray-tracing hardware where it fits an algorithm. Numerical accuracy, performance, memory use, build efficiency and documentation remain ongoing work alongside these proposals.
 
+## Citation
+
+For ARCH 1.3.0, please cite:
+
+Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamics* (Version 1.3.0) [Computer software]. Zenodo. [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925).
+
+Machine-readable metadata is available in [CITATION.cff](CITATION.cff). See the [Zenodo publication guide](docs/zenodo/README.md) for the record and all-version DOI. Cite the specific version used for your results.
+
 ## License
 
 ARCH-owned code uses the [MIT License](LICENSE). Third-party scientific code and data retain their original provenance and terms; see the [third-party notices](THIRD_PARTY_NOTICES.md) and [license directory](LICENSES).
