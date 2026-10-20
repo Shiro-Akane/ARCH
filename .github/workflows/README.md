@@ -57,9 +57,12 @@ Use a normal PR targeting `main` for integration; engineering-branch pushes can 
 [release-v1.3.0.yml](release-v1.3.0.yml) handles only the explicitly authorized
 `v1.3.0` tag after PR #12 is merged normally. It requires that tag to equal
 current main and the PR merge, the exact main revision to have successful
-Tooling/CPU/Studio/required jobs and CodeQL, and the original candidate source
+Tooling/CPU/Studio/required jobs and the actual default-setup CodeQL run with
+all three language analyses, and the original candidate source
 and acceptance receipt to remain unchanged. Push the tag only after these
-checks finish. Ordinary PR CI retains read-only permissions.
+checks finish. The PR comparison summary is evaluated before merging; main
+has analysis jobs rather than that PR-only summary. Ordinary PR CI retains
+read-only permissions.
 
 The publication job alone uses GitHub's temporary repository token with release
 write permission. It verifies an existing tag, publishes the reviewed English

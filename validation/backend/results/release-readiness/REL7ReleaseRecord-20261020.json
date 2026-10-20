@@ -3,7 +3,7 @@
   "phase": "REL-7",
   "version": "v1.3.0",
   "status": "IN_PROGRESS",
-  "updated_utc": "2026-10-20T08:38:07.060236+00:00",
+  "updated_utc": "2026-10-20T08:42:16.424833+00:00",
   "authority": {
     "source": "direct user request 2026-10-20",
     "authorized": [
@@ -64,7 +64,7 @@
     "automation": {
       "path": ".github/workflows/release-v1.3.0.yml",
       "scope": "Only preexisting v1.3.0 tag equal to current main and PR#12 merge, after exact-main CI four jobs/CodeQL and candidate/notes identity checks. Ordinary PR jobs remain read-only; no branch rule changes or tag creation.",
-      "workflow_sha256": "6a667d4fffd94e5b9b3f732e39a5b444eba321cc52243c918fa2e29641e9b412"
+      "workflow_sha256": "5402ca02f7e46c9313d65e333315e0ea2003088c8ce9814548f8f11efa3ebc28"
     }
   },
   "independent_review": [
@@ -100,24 +100,45 @@
     "diff_check": "PASS",
     "publisher_actionlint": "PASS; pinned 1.7.12 archive SHA verified",
     "publisher_offline_controls": {
-      "count": 11,
+      "count": 20,
       "result": "PASS",
       "cases": [
-        "valid publication",
-        "tag differs from main",
-        "wrong version tag",
-        "PR not merged",
-        "wrong PR merge identity",
-        "newer CI still running",
-        "skipped CI job",
-        "missing CI job",
-        "failed CodeQL",
-        "missing CodeQL",
-        "changed production source"
-      ]
+        "success_without_pr_only_aggregate",
+        "tag_not_main",
+        "wrong_tag",
+        "unmerged_pr",
+        "wrong_merge",
+        "running_latest_ci",
+        "skipped_ci_job",
+        "missing_ci_job",
+        "failed_codeql",
+        "missing_codeql",
+        "changed_source",
+        "wrong_codeql_owner",
+        "wrong_codeql_branch",
+        "newer_codeql_running",
+        "failed_language",
+        "missing_language",
+        "skipped_language",
+        "duplicate_language",
+        "bad_candidate_receipt",
+        "changed_notes"
+      ],
+      "evidence": "output/release/rel7-20261020/workflow-offline-gates-v2.json"
     },
     "production_identity": "No diff versus REL-6 frozen source across scientific source/build and Studio implementation paths",
-    "new_scientific_runs": false
+    "new_scientific_runs": false,
+    "main_codeql_shape": {
+      "observed_main": "25adec4224497981a0c124a3485f786194975be4",
+      "actual_workflow_path": "dynamic/github-code-scanning/codeql",
+      "actual_jobs": [
+        "Analyze (actions)",
+        "Analyze (c-cpp)",
+        "Analyze (python)"
+      ],
+      "pr_comparison_summary_on_main": false,
+      "correction": "Require the exact-main real default-setup workflow and all three language jobs instead of the PR-only CodeQL aggregate."
+    }
   },
   "additional_review": {
     "topic": "Publisher workflow advisory audit",

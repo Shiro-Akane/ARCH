@@ -19,7 +19,6 @@ jobs:
     permissions:
       contents: write
       actions: read
-      checks: read
       pull-requests: read
     env:
       GH_TOKEN: ${{ github.token }}
@@ -66,11 +65,17 @@ jobs:
           for name in ("Tooling", "CPU Release", "Studio and Host", "CI required"):
               selected = [job for job in jobs if job["name"] == name]
               assert len(selected) == 1 and selected[0]["status"] == "completed" and selected[0]["conclusion"] == "success", name
-          checks = api(f"commits/{sha}/check-runs?per_page=100")["check_runs"]
-          scans = [check for check in checks if check["name"] == "CodeQL" and check["app"]["slug"] == "github-advanced-security"]
-          assert scans, "Main must retain the CodeQL acceptance gate."
-          scan = max(scans, key=lambda check: check["id"])
+          # The PR-only CodeQL comparison check is absent on main. Require
+          # the real default-setup analysis run and all three language jobs.
+          security_runs = api(f"actions/runs?head_sha={sha}&branch=main&per_page=100")["workflow_runs"]
+          scans = [run for run in security_runs if run["path"] == "dynamic/github-code-scanning/codeql" and run["head_branch"] == "main"]
+          assert scans, "Main must have its own CodeQL analysis."
+          scan = max(scans, key=lambda run: run["run_number"])
           assert scan["head_sha"] == sha and scan["status"] == "completed" and scan["conclusion"] == "success"
+          scan_jobs = api(f"actions/runs/{scan['id']}/jobs?per_page=100")["jobs"]
+          for name in ("Analyze (actions)", "Analyze (c-cpp)", "Analyze (python)"):
+              selected = [job for job in scan_jobs if job["name"] == name]
+              assert len(selected) == 1 and selected[0]["status"] == "completed" and selected[0]["conclusion"] == "success", name
           original = Path("validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json")
           assert hashlib.sha256(original.read_bytes()).hexdigest() == "18d7dfb93e2413065da3c7c86ca70212f4da7e0af071ce262cb9d66a4a0540fd"
           production = ["src", "include", "simulation", "cmake", "CMakeLists.txt", "CMakePresets.json", "studio/src", "studio/host", "studio/desktop", "studio/package.json", "studio/package-lock.json"]
@@ -94,7 +99,7 @@ jobs:
           text = text.replace("## ARCH Studio\n", "## ARCH Studio\n\n![ARCH Studio Plotfile workspace](https://raw.githubusercontent.com/Shiro-Akane/ARCH/v1.3.0/docs/guides/images/studio-plotfile.png)\n", 1)
           text += "\n**Full changelog:** [v1.2.1...v1.3.0](https://github.com/Shiro-Akane/ARCH/compare/v1.2.1...v1.3.0)\n"
           Path(os.environ["RUNNER_TEMP"], "arch-release-notes.md").write_text(text)
-          print(json.dumps({"tag": "v1.3.0", "main": sha, "ci_run": latest["html_url"], "codeql": scan["details_url"]}))
+          print(json.dumps({"tag": "v1.3.0", "main": sha, "ci_run": latest["html_url"], "codeql": scan["html_url"]}))
           PY
 
       - name: Publish the existing tag as a formal source-only release
