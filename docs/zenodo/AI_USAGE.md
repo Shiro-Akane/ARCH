@@ -8,6 +8,6 @@ AI 辅助用于 bug 追踪与修复、完整 CTest 测试集的容差设置核�
 
 ## English disclosure
 
-AI-assisted tools were used for bug tracking and fixes, review of tolerance settings across the complete CTest suite, editing selected documentation, code completion, and engineering and security checks. The overall software architecture was designed and built by the human contributors. Human maintainers retain responsibility for scientific definitions, numerical acceptance criteria, review, and release decisions.
+AI-assisted tools were used for bug tracking and fixes, review of tolerance settings across the complete CTest suite, editing selected documentation, code completion, and engineering and security checks. The overall software architecture was designed and built by human contributors. Human maintainers retain responsibility for scientific definitions, numerical acceptance criteria, code review, and release decisions.
 
 Tolerance review describes the assisted activity; test outcomes and scientific qualifications are those recorded in the release evidence. Engineering and security checks are bounded by their recorded scope.

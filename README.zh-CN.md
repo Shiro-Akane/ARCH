@@ -192,6 +192,14 @@ ARCH/
 
 MPI 用于将计算分配到多个进程和机器。后续探索还可能包括图神经网络（GNN）、浮点精度选择，以及在适合的算法中使用 GPU 光线追踪核心（RT Core）。数值精度、性能、内存、编译效率和文档也会随项目持续改进。
 
+## 引用
+
+使用 ARCH 1.3.0 时，请引用：
+
+Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamics* (Version 1.3.0) [Computer software]. Zenodo. [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925)。
+
+机器可读引用见 [CITATION.cff](CITATION.cff)；正式记录及全版本 DOI 见 [Zenodo 发布说明](docs/zenodo/README.md)。具体计算结果应引用实际使用的版本。
+
 ## 许可证
 
 ARCH 自有代码采用 [MIT License](LICENSE)。第三方科学代码和数据保留其来源与条款，见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)及[许可证目录](LICENSES)。
