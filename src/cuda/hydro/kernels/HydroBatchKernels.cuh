@@ -133,7 +133,8 @@ static __global__ void hydro_batch_divergence(const DeviceHydroBatchBlock* block
 {
     const auto& b = blocks[blockIdx.y];
     if (direction < b.grid.dim)
-        hydro_divergence_kernel_work(b.face_flux, b.delta, b.grid, dt, direction,b.self_gravity);
+        hydro_divergence_kernel_work(b.face_flux, b.delta, b.grid, dt, direction,
+            b.self_gravity, b.mean_pressure);
 }
 
 template<class Eos>
@@ -143,7 +144,8 @@ __global__ void hydro_batch_sources(const DeviceHydroBatchBlock* blocks, Eos eos
     const auto& b = blocks[blockIdx.y];
     if (b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled)
         hydro_source_kernel_work(b.input, b.delta, b.grid,
-            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity, b.input.hydro_boundary);
+            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity,
+            b.input.hydro_boundary, b.mean_pressure != nullptr);
     const int linear=blockIdx.x*blockDim.x+threadIdx.x;
     if(b.self_gravity.enabled() && linear<b.grid.active_cell_count()) {
         const int c=b.grid.active_cell(linear);FluidVector delta=b.delta.load(c);
@@ -170,8 +172,13 @@ static __global__ void hydro_batch_update(const DeviceHydroBatchBlock* blocks,
 template<class Reconstruction>
 bool valid_hydro_batch_block(const DeviceHydroBatchBlock& b, SpeciesWorkspaceView workspace)
 {
+    const auto geometry = make_grid_geometry_view(b.grid);
+    const bool radial_pressure_balance = geometry.geometry == GridMetrics::Geometry::Cylindrical
+        || (geometry.geometry == GridMetrics::Geometry::Spherical && geometry.dim == 2);
     if (!valid_hydro_grid(b.grid) || !b.eos_status
         || !valid_species_workspace(workspace, b.input.n_species, 4)
+        || ((b.mean_pressure == nullptr) != (b.mean_sound_speed == nullptr))
+        || (radial_pressure_balance && !b.mean_pressure)
         || b.grid.ng < Reconstruction::ghost_depth || !b.grid.cell_volume
         || make_grid_geometry_view(b.grid).geometry == GridMetrics::Geometry::Unsupported)
         return false;

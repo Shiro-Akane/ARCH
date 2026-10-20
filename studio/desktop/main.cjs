@@ -16,7 +16,8 @@ const root=__dirname;
 const linux=process.platform==='linux';
 const contentRoot=app.isPackaged?root:path.dirname(root);
 const singleInstance=app.requestSingleInstanceLock();
-app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.focus();void dialog.showMessageBox(win,{message:'ARCH Studio is already open.',detail:'Close the current project window before launching another project.'});}});
+function liveWindow(candidate=win){return candidate&&typeof candidate.isDestroyed==='function'&&!candidate.isDestroyed()?candidate:undefined;}
+app.on('second-instance',()=>{const current=liveWindow();if(current){if(current.isMinimized())current.restore();current.focus();void dialog.showMessageBox(current,{message:'ARCH Studio is already open.',detail:'Close the current project window before launching another project.'});}});
 const log=async(message)=>{await mkdir(app.getPath('userData'),{recursive:true});await appendFile(path.join(app.getPath('userData'),'desktop.log'),new Date().toISOString()+' '+message+'\n');};
 function exec(program,args){return new Promise((resolve,reject)=>execFile(program,args,{windowsHide:true,encoding:'utf8',timeout:15000,maxBuffer:1024*1024},(e,out,err)=>e?reject(new Error(err.trim()||e.message)):resolve(out.trim())));}
 async function wsl(args){if(linux)return exec(args[0],args.slice(1));try{return await exec('wsl.exe',[...(distro?['-d',distro]:[]),...(linuxUser?['-u',linuxUser]:[]),'--exec',...args]);}catch(error){throw new Error('WSL environment '+(distro??'(default distribution)')+' could not complete this operation. Check WSL installation, selected distribution and project path, then retry. '+error.message,{cause:error});}}
@@ -75,20 +76,30 @@ async function launch(options){
 async function createWindow(bootstrap,page){
  const old=win;
  win=new BrowserWindow({width:1440,height:940,minWidth:1000,minHeight:640,title:'ARCH Studio',show:false,webPreferences:{preload:path.join(root,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,additionalArguments:['--arch-bootstrap='+JSON.stringify({...bootstrap,platform:process.platform})]}});
- win.on('page-title-updated',event=>event.preventDefault());
- win.setTitle(bootstrap.project?'ARCH Studio — '+path.posix.basename(bootstrap.project):'ARCH Studio — Open project');
- win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
- win.webContents.on('will-navigate',(event,url)=>{if(new URL(url).origin!==origin)event.preventDefault();});
- win.on('close',event=>{if(closing)return;event.preventDefault();void shutdown();});
- await win.loadURL(origin+page);win.setTitle(bootstrap.project?'ARCH Studio — '+path.posix.basename(bootstrap.project):'ARCH Studio — Open project');win.show();if(old)old.destroy();
+ const created=win;
+ created.on('page-title-updated',event=>event.preventDefault());
+ created.setTitle(bootstrap.project?'ARCH Studio — '+path.posix.basename(bootstrap.project):'ARCH Studio — Open project');
+ created.webContents.setWindowOpenHandler(()=>({action:'deny'}));
+ created.webContents.on('will-navigate',(event,url)=>{if(new URL(url).origin!==origin)event.preventDefault();});
+ created.on('close',event=>{if(closing)return;event.preventDefault();void shutdown();});
+ await created.loadURL(origin+page);
+ const current=liveWindow(created);
+ if(current){current.setTitle(bootstrap.project?'ARCH Studio — '+path.posix.basename(bootstrap.project):'ARCH Studio — Open project');current.show();}
+ if(old&&!old.isDestroyed())old.destroy();
+}
+async function closeOwned({window,isDirty,stopHost,closeAssets,quit,showMessageBox,log,setClosing}){
+ const live=()=>liveWindow(window());
+ if(isDirty()){const current=live();if(current){const choice=await showMessageBox(current,{type:'warning',buttons:['Keep editing','Discard unsaved copy and close'],defaultId:0,cancelId:0,message:'The Working Copy has unsaved changes.'});if(live()&&choice.response===0)return;}}
+ setClosing(true);
+ const current=live();if(current)current.setTitle('ARCH Studio — shutting down Host (waiting for active Build if needed)');
+ try{let failure;try{await stopHost();}catch(error){failure=error;}try{await closeAssets();}catch(error){failure??=error;}if(failure)throw failure;await log('desktop clean shutdown');const final=live();if(final)final.destroy();quit();}
+ catch(error){setClosing(false);await log('shutdown failed: '+error.message);const failed=live();const options={type:'error',message:failed?'Shutdown failed; window kept open.':'Shutdown failed; application could not close cleanly.',detail:error.message};if(failed)await showMessageBox(failed,options);else await showMessageBox(undefined,options);}
 }
 async function shutdown(){
  if(closing)return;
- if(dirty){const choice=await dialog.showMessageBox(win,{type:'warning',buttons:['Keep editing','Discard unsaved copy and close'],defaultId:0,cancelId:0,message:'The Working Copy has unsaved changes.'});if(choice.response===0)return;}
- closing=true;win?.setTitle('ARCH Studio — shutting down Host (waiting for active Build if needed)');
- try{await stopHost();const {closeAssets}=await import('./close-assets.mjs');await closeAssets(assets);await log('desktop clean shutdown');win?.destroy();app.quit();}catch(e){closing=false;await dialog.showMessageBox(win,{type:'error',message:'Shutdown failed; window kept open.',detail:e.message});}
+ await closeOwned({window:()=>win,isDirty:()=>dirty,stopHost,closeAssets:async()=>{const {closeAssets:close}=await import('./close-assets.mjs');await close(assets);},quit:()=>app.quit(),showMessageBox:(target,options)=>target?dialog.showMessageBox(target,options):dialog.showMessageBox(options),log:message=>log(message).catch(error=>console.error(error)),setClosing:value=>{closing=value;}});
 }
-function senderAllowed(event){if(event.sender!==win?.webContents||new URL(event.senderFrame.url).origin!==origin)throw new Error('Unexpected desktop sender.');}
+function senderAllowed(event){if(!liveWindow()||event.sender!==win.webContents||new URL(event.senderFrame.url).origin!==origin)throw new Error('Unexpected desktop sender.');}
 app.whenReady().then(async()=>{
  if(!singleInstance){closing=true;app.quit();return;}
  assets=createServer(async(req,res)=>{
@@ -120,7 +131,7 @@ app.whenReady().then(async()=>{
  });
  ipcMain.handle('desktop:pick-project',async event=>{senderAllowed(event);const d=await dialog.showOpenDialog(win,{title:'Choose managed ARCH project',properties:['openDirectory']});return d.canceled?null:d.filePaths[0];});
  ipcMain.handle('desktop:launch',async(event,options)=>{senderAllowed(event);try{await launch(options);return {};}catch(e){return {error:e.message};}});
- ipcMain.handle('desktop:save-path',async(event,name)=>{senderAllowed(event);if(!ready||typeof name!=='string')throw new Error('No managed project.');const distribution=linux?'':distro||await exec('wsl.exe',['--exec','/usr/bin/printenv','WSL_DISTRO_NAME']);const rootWin=linux?ready.project:'\\\\wsl.localhost\\'+distribution+ready.project.replaceAll('/','\\');const d=await dialog.showSaveDialog(win,{title:'Save new project configuration',defaultPath:path.join(rootWin,path.basename(name)),filters:[{name:'ARCH configuration',extensions:['par']}]});if(d.canceled||!d.filePath)return null;const mapped=await mapPath(d.filePath);const relative=path.posix.relative(ready.project,mapped);if(relative.startsWith('../')||path.posix.isAbsolute(relative)||!relative.endsWith('.par'))throw new Error('Save As must select a new .par inside the managed project.');return relative;});
+ ipcMain.handle('desktop:save-path',async(event,name)=>{senderAllowed(event);if(!ready||typeof name!=='string')throw new Error('No managed project.');const distribution=linux?'':distro||await exec('wsl.exe',['--exec','/usr/bin/printenv','WSL_DISTRO_NAME']);const rootWin=linux?ready.project:'\\\\wsl.localhost\\'+distribution+ready.project.replaceAll('/','\\');const parent=liveWindow();if(!parent)throw new Error('Window closed.');const d=await dialog.showSaveDialog(parent,{title:'Save new project configuration',defaultPath:path.join(rootWin,path.basename(name)),filters:[{name:'ARCH configuration',extensions:['par']}]});if(d.canceled||!d.filePath)return null;const mapped=await mapPath(d.filePath);const relative=path.posix.relative(ready.project,mapped);if(relative.startsWith('../')||path.posix.isAbsolute(relative)||!relative.endsWith('.par'))throw new Error('Save As must select a new .par inside the managed project.');return relative;});
  ipcMain.on('desktop:dirty',(event,value)=>{senderAllowed(event);dirty=value===true;});
  const {parseLaunchArgs}=await import('./arguments.mjs');
  try{const entryIndex=process.argv.findIndex((value,index)=>index>0&&path.resolve(value)===__filename);
@@ -129,3 +140,4 @@ app.whenReady().then(async()=>{
 }).catch(async e=>{await log(e.message);app.quit();});
 app.on('window-all-closed',()=>{if(!closing)void shutdown();});
 app.on('before-quit',event=>{if(!closing){event.preventDefault();void shutdown();}});
+module.exports={closeOwned};

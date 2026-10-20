@@ -6,7 +6,8 @@
 import path from 'node:path';
 export function parseLaunchArgs(args,cwd){
  const result={cwd};const seen=new Set();const allowed=new Set(['project','binary','case','config','source','distro','cwd','build-dir']);
- for(let i=0;i<args.length;i++){const key=args[i].replace(/^--/,'');if(!args[i].startsWith('--')||!allowed.has(key)||seen.has(key)||!args[i+1]||args[i+1].startsWith('--')||(Object.hasOwn(result,key)&&key!=='cwd'))throw new Error('Use --project / --binary / --case / --config / --source / --build-dir / --distro with one value each.');seen.add(key);result[key]=args[++i];}
+ const delimiter=args.indexOf('--');const selection=delimiter<0?args:args.slice(delimiter+1);
+ for(let i=0;i<selection.length;i++){const key=selection[i].replace(/^--/,'');if(!selection[i].startsWith('--')||!allowed.has(key)||seen.has(key)||!selection[i+1]||selection[i+1].startsWith('--')||(Object.hasOwn(result,key)&&key!=='cwd'))throw new Error('Use --project / --binary / --case / --config / --source / --build-dir / --distro with one value each.');seen.add(key);result[key]=selection[++i];}
  return result;
 }
 export function windowsAssociation(value,distro){

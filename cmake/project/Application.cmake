@@ -1,6 +1,8 @@
 # Collect application sources and establish the shared compilation contract.
 # Target ownership stays in the project directory, including when tests are off.
 
+include(GNUInstallDirs)
+
 set(APP_SRC_DIRS
     "src/api"
     "src/core"
@@ -211,3 +213,37 @@ endforeach()
 # build concurrency, rather than runtime optimization, bounds build memory.
 
 set_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")
+
+install(TARGETS ARCH
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    COMPONENT Runtime)
+
+set(ARCH_INSTALL_DATADIR "${CMAKE_INSTALL_DATADIR}/arch")
+install(FILES
+    simulation/Sod/Sod_beginner.par
+    simulation/Sod/Sod.par
+    DESTINATION "${ARCH_INSTALL_DATADIR}/simulation/Sod"
+    COMPONENT Runtime)
+install(FILES
+    EOS_toolkit/tables/helmholtz/helm_table.dat
+    DESTINATION "${ARCH_INSTALL_DATADIR}/EOS_toolkit/tables/helmholtz"
+    COMPONENT Runtime)
+install(FILES
+    EOS_toolkit/tables/baryon/eos2.tab
+    EOS_toolkit/tables/baryon/eos4.tab
+    EOS_toolkit/tables/baryon/LICENSE-CC-BY-4.0.txt
+    DESTINATION "${ARCH_INSTALL_DATADIR}/EOS_toolkit/tables/baryon"
+    COMPONENT Runtime)
+install(FILES
+    LICENSE
+    THIRD_PARTY_NOTICES.md
+    THIRD_PARTY_NOTICES.zh-CN.md
+    DESTINATION "${ARCH_INSTALL_DATADIR}"
+    COMPONENT Runtime)
+install(FILES
+    LICENSES/README.md
+    LICENSES/AMReX-Astro-Microphysics.txt
+    LICENSES/LGPL-2.1.txt
+    LICENSES/SuiteSparse-KLU.txt
+    DESTINATION "${ARCH_INSTALL_DATADIR}/LICENSES"
+    COMPONENT Runtime)

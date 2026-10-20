@@ -189,7 +189,8 @@ namespace TimeIntegration
     inline void accumulate_divergence(
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         const std::vector<FluidVector> &fluxes, const std::vector<double> &spec_fluxes,
-        const Grid &grid, double dt, int dir, int n_spec)
+        const Grid &grid, double dt, int dir, int n_spec,
+        const double* pressure = nullptr)
     {
         const auto geometry=GridMetrics::make_geometry_view(grid);
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
@@ -222,7 +223,8 @@ namespace TimeIntegration
                     fluxes[idx], fluxes[idx + stride],
                     lower_species_flux, upper_species_flux,
                     n_spec, total_size, area_l, area_r, volume, dt,
-                    dU[idx], species_delta, geometry, dir, i, j, k);
+                    dU[idx], species_delta, geometry, dir, i, j, k,
+                    pressure ? pressure[idx] : 0.0);
             }
             } catch (...) { failure.capture_current(); }
         };
@@ -251,7 +253,8 @@ namespace TimeIntegration
         const EosType &eos,
         const Grid &grid,
         double dt,
-        const arch::boundary::HydroBoundaryView &hydro_boundary = {})
+        const arch::boundary::HydroBoundaryView &hydro_boundary = {},
+        bool pressure_in_divergence = false)
     {
         const auto geometry=GridMetrics::make_geometry_view(grid);
         arch::state::HostFailure failure;
@@ -286,7 +289,8 @@ namespace TimeIntegration
                             throw std::invalid_argument("Hydro wall view has an invalid radial face");
                         add_axisymmetric_work_source_cell(
                             state.get(idx), Xi.data(), eos, geometry, i, j, dt,
-                            lower_open, upper_open, dU[idx]);
+                            lower_open, upper_open, dU[idx],
+                            pressure_in_divergence);
                     }
 
                 } catch (...) { failure.capture_current(); }
@@ -459,7 +463,8 @@ namespace TimeIntegration
 
             capture_hydro_surface_flux(state, grid, dir, flux_buffer, spec_flux_buffer);
 
-            accumulate_divergence(dU,d_spec,flux_buffer,spec_flux_buffer,grid,dt,dir,n_spec);
+            accumulate_divergence(dU,d_spec,flux_buffer,spec_flux_buffer,grid,dt,dir,
+                n_spec,mean_cache.pressure.data());
 
             // Same actual stage: source work consumes this axis's immutable
             // Riemann mass flux immediately after its original divergence.
@@ -472,7 +477,7 @@ namespace TimeIntegration
             }
         }
 
-        add_geometric_sources(dU,state,eos,grid,dt,hydro_boundary);
+        add_geometric_sources(dU,state,eos,grid,dt,hydro_boundary,true);
         source.add_sources(dU,state,grid,dt);
     }
 } // namespace TimeIntegration

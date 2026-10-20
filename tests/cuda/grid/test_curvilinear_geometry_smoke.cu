@@ -99,6 +99,10 @@ struct ConstantGeometryEos {
     ARCH_INLINE void evaluate_state(eos_state_t&) const {}
 };
 
+struct HighPressureGeometryEos {
+    ARCH_INLINE double get_pressure(const FluidVector&, const double*) const { return 3e24; }
+};
+
 __global__ void independent_metrics_kernel(
     const CurvilinearMetricCases::MeasureCase* cases, int count, double* error)
 {
@@ -302,6 +306,105 @@ void cache_metrics(arch::cuda::DeviceGridView& grid, DeviceBuffer<double>& metri
         grid.face_area_lower[direction] = metrics.get() + (1 + direction) * grid.total_size;
         grid.face_area_upper[direction] = metrics.get() + (4 + direction) * grid.total_size;
     }
+}
+
+/** Production CUDA pressure balance on cylindrical and spherical-rphi charts.
+ * Fixture matches the original high-pressure report: rho=1e7, p=3e24,
+ * dt=1e-10, r=1e8..2e8. Uniform pressure must produce exact zero radial
+ * impulse; nonuniform faces are compared with the long-double unreduced
+ * divergence plus p*(A_R-A_L)/V source. Non-radial fields/species stay raw.
+ */
+void pressure_balanced_curvilinear_divergence()
+{
+    constexpr double high_pressure=3e24, density=1e7, dt=1e-10;
+    constexpr double radial_left=1e8, radial_right=2e8;
+    struct Case { const char* geometry; int dim; };
+    for (const Case& chart : {Case{"cylindrical",1},Case{"cylindrical",2},
+             Case{"cylindrical",3},Case{"spherical",2}}) {
+        Grid grid(amr::MAX_NG,radial_left,radial_right,0.,1.,0.,1.,1,1,1);
+        grid.dim=chart.dim;grid.geometry=chart.geometry;grid.InitializeTopology();
+        const int cells=grid.GetTotalSize();
+        auto device_grid=arch::cuda::make_device_grid_view(grid);
+        DeviceBuffer<double> metrics(7*cells);
+        cache_metrics(device_grid,metrics);
+        DeviceState flux(cells,1),delta(cells,1),baseline(cells,1);
+        DeviceBuffer<double> mean_pressure(cells);
+        std::vector<double> packed((6+1)*cells,0.),pressures(cells,high_pressure);
+        for(int cell=0;cell<cells;++cell)packed[cells+cell]=high_pressure;
+        flux.storage.upload(packed);mean_pressure.upload(pressures);
+        // The leaf accumulates into delta; never rely on allocator contents.
+        check(arch::cuda::clear_hydro_buffer(delta.view,nullptr));
+
+        check(arch::cuda::launch_hydro_divergence(
+            flux.view,delta.view,device_grid,dt,0,nullptr,mean_pressure.get()));
+        auto actual=delta.storage.download();
+        for(int linear=0;linear<device_grid.active_cell_count();++linear) {
+            const int cell=device_grid.active_cell(linear);
+            require(actual[cells+cell]==0.,"uniform CUDA pressure produced radial impulse");
+            require(actual[cell]==0.&&actual[2*cells+cell]==0.&&actual[3*cells+cell]==0.
+                &&actual[4*cells+cell]==0.&&actual[6*cells+cell]==0.,
+                "uniform CUDA pressure changed another conserved field");
+        }
+
+        FluidState state;initialize(state,cells,1);
+        for(int cell=0;cell<cells;++cell) {
+            state.set(cell,{density,0.,0.,0.,density*10.});
+            state.X(0,cell)=1.;
+        }
+        DeviceState input(cells,1),source_offset(cells,1);
+        input.storage.upload(pack(state));
+        check(arch::cuda::clear_hydro_buffer(source_offset.view,nullptr));
+        check(arch::cuda::launch_hydro_sources(input.view,source_offset.view,device_grid,
+            HighPressureGeometryEos{},dt,nullptr,{}, {}, {},true));
+        const auto source=source_offset.storage.download();
+        for(int linear=0;linear<device_grid.active_cell_count();++linear) {
+            const int cell=device_grid.active_cell(linear);
+            require(source[cell]==0.&&source[cells+cell]==0.&&source[4*cells+cell]==0.
+                &&source[2*cells+cell]==0.&&source[3*cells+cell]==0.
+                &&source[6*cells+cell]==0.,"uniform CUDA pressure source impulse");
+        }
+
+        for(int cell=0;cell<cells;++cell) {
+            const double face_pressure=high_pressure*(1.+1.e-3*(cell%7-3));
+            packed[cell]=1.2;packed[cells+cell]=face_pressure;
+            packed[2*cells+cell]=.4;packed[3*cells+cell]=.2;
+            packed[4*cells+cell]=3.;packed[6*cells+cell]=.7;
+        }
+        flux.storage.upload(packed);
+        check(arch::cuda::clear_hydro_buffer(baseline.view,nullptr));
+        check(arch::cuda::clear_hydro_buffer(delta.view,nullptr));
+        check(arch::cuda::launch_hydro_divergence(
+            flux.view,baseline.view,device_grid,dt,0,nullptr));
+        check(arch::cuda::launch_hydro_divergence(
+            flux.view,delta.view,device_grid,dt,0,nullptr,mean_pressure.get()));
+        check(arch::cuda::launch_hydro_sources(input.view,delta.view,device_grid,
+            HighPressureGeometryEos{},dt,nullptr,{}, {}, {},true));
+        actual=delta.storage.download();
+        const auto raw=baseline.storage.download();
+        for(int linear=0;linear<device_grid.active_cell_count();++linear) {
+            const int cell=device_grid.active_cell(linear);
+            require(actual[cell]==raw[cell]&&actual[2*cells+cell]==raw[2*cells+cell]
+                &&actual[3*cells+cell]==raw[3*cells+cell]
+                &&actual[4*cells+cell]==raw[4*cells+cell]
+                &&actual[6*cells+cell]==raw[6*cells+cell],
+                "CUDA pressure reduction changed T/W or passive fields");
+            const int k=cell/device_grid.stride_z;
+            const int j=(cell-k*device_grid.stride_z)/device_grid.stride_y;
+            const int i=cell-k*device_grid.stride_z-j*device_grid.stride_y;
+            const long double area_l=GridMetrics::FaceArea(grid,0,i,j,k,false);
+            const long double area_r=GridMetrics::FaceArea(grid,0,i,j,k,true);
+            const long double volume=GridMetrics::CellVolume(grid,i,j,k);
+            const long double expected=dt/volume*(area_l*packed[cells+cell]
+                -area_r*packed[cells+cell+1]
+                +static_cast<long double>(high_pressure)*(area_r-area_l));
+            const double value=actual[cells+cell];
+            require(std::isfinite(value)
+                &&std::abs(static_cast<long double>(value)-expected)
+                    <=2.e-13L*std::max(1.L,std::abs(expected)),
+                "CUDA reduced pressure gradient differs from unreduced oracle");
+        }
+    }
+    std::cout<<"PRESSURE_BALANCED_CURVILINEAR_PASS\n";
 }
 
 std::vector<double> device_diffusion_operator(
@@ -728,6 +831,7 @@ int main()
         independent_metrics();
         independent_newtonian();
         analytic_geometry_examples();
+        pressure_balanced_curvilinear_divergence();
         viscous_diffusion_convergence();
         for (const char* geometry : {"cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension) {

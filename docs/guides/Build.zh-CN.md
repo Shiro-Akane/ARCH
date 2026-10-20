@@ -129,6 +129,21 @@ cp ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables
 测试；只有后者会检查表格依赖。preset 的程序路径分别是 `build-cpu/bin/ARCH`
 和 `build-cuda/bin/ARCH`；自定义构建输出路径也须显式传给比较脚本。
 
+## 安装运行包
+
+构建应用并按上文物化、核对三张表后，可安装 `Runtime` 组件。它包含程序、
+Sod 输入、EOS 表及其许可；系统 HDF5／OpenMP、CUDA 和可选 cuDSS 仍需由运行环境提供。
+
+```bash
+cmake --install build-cpu --prefix "$PWD/arch-install" --component Runtime
+cd arch-install/share/arch
+../../bin/ARCH Sod simulation/Sod/Sod_beginner.par
+```
+
+CUDA 应用将构建目录换为 `build-cuda`。安装前缀可以移动，但输入中的相对表路径、
+输出与重启路径仍以启动时的工作目录为准；也可显式使用绝对路径。程序不会从安装
+前缀自动寻找缺失配置或表。Studio 是独立的可选桌面包，见下方构建说明。
+
 ## cuDSS 与稀疏燃烧
 
 CUDA 构建中的 `ARCH_ENABLE_CUDSS=ON` 启用可选库发现。适配器使用 **cuDSS 0.8

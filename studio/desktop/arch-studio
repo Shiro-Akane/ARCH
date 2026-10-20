@@ -3,7 +3,10 @@
 set -eu
 here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 if [ -x "$here/arch-studio-bin" ]; then
-  exec "$here/arch-studio-bin" "$@"
+  if [ "$#" -gt 0 ]; then
+    exec "$here/arch-studio-bin" -- "$@"
+  fi
+  exec "$here/arch-studio-bin"
 fi
 runtime="$here/../node_modules/electron/dist/electron"
 if [ ! -x "$runtime" ]; then

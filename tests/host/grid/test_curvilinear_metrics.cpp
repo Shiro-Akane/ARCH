@@ -485,6 +485,99 @@ void test_axisymmetric_angular_work()
     std::cout<<"AXISYMMETRIC_ANGULAR_WORK_PASS\n";
 }
 
+/** Algebraically balanced radial pressure for cylindrical and rphi charts.
+ * The fixture keeps the original high-pressure scale: rho=1e7, p=3e24,
+ * dt=1e-10 and r=1e8..2e8. A uniform pressure must now cancel exactly before
+ * the area products. A nonuniform face pressure is checked against the
+ * independent long-double unreduced divergence plus p*(A_R-A_L)/V source.
+ */
+void test_pressure_balanced_curvilinear_divergence()
+{
+    using namespace GridMetrics;
+    struct FixedPressureEos {
+        double pressure;
+        double get_pressure(const FluidVector&, const double*) const { return pressure; }
+    };
+    constexpr double high_pressure=3e24, density=1e7, dt=1e-10;
+    constexpr double radial_left=1e8, radial_right=2e8;
+    struct Case { Geometry geometry; int dim; };
+    for (const Case& chart : {Case{Geometry::Cylindrical,1},
+             Case{Geometry::Cylindrical,2},Case{Geometry::Cylindrical,3},
+             Case{Geometry::Spherical,2}}) {
+        GeometryView grid{};
+        grid.geometry=chart.geometry; grid.dim=chart.dim;
+        grid.dx1=radial_right-radial_left;
+        grid.dx2=chart.dim>=2?.7:0.; grid.dx3=chart.dim==3?.4:0.;
+        grid.x1_min=radial_left; grid.x2_min=0.;
+        const int i=0;
+        const double area_l=FaceArea(grid,0,i,0,0,false);
+        const double area_r=FaceArea(grid,0,i,0,0,true);
+        const double volume=CellVolume(grid,i,0,0);
+        const double pressure_flux_measure=(area_r-area_l)/volume;
+        const auto divergence=[&](const FluidVector& lower,const FluidVector& upper,
+                                  double cell_pressure,
+                                  const std::array<double,2>& lower_species,
+                                  const std::array<double,2>& upper_species,
+                                  FluidVector& out,std::array<double,2>& species_out) {
+            FluidVector lower_copy=lower,upper_copy=upper;
+            std::array<double,2> species_delta{};
+            out=FluidVector{};species_out.fill(0.);
+            TimeIntegration::accumulate_cell_divergence(
+                lower_copy,upper_copy,lower_species.data(),upper_species.data(),
+                2,1,area_l,area_r,volume,dt,out,species_delta.data(),grid,0,i,0,0,
+                cell_pressure);
+            species_out=species_delta;
+        };
+
+        FluidVector uniform_lower{},uniform_upper{};
+        uniform_lower.mom_u=uniform_upper.mom_u=high_pressure;
+        FluidVector uniform_delta{};std::array<double,2> uniform_species{};
+        const std::array<double,2> no_species{0.,0.};
+        divergence(uniform_lower,uniform_upper,high_pressure,no_species,no_species,
+                   uniform_delta,uniform_species);
+        FluidVector source{};
+        const FluidVector state{density,0.,0.,0.,density*10.};
+        TimeIntegration::add_axisymmetric_work_source_cell(
+            state,nullptr,FixedPressureEos{high_pressure},grid,i,0,dt,true,true,
+            source,true);
+        if (uniform_delta.mom_u!=0.||uniform_delta.rho!=0.
+            ||uniform_delta.eng!=0.||uniform_delta.mom_v!=0.
+            ||uniform_delta.mom_w!=0.
+            ||source.rho!=0.||source.mom_u!=0.||source.mom_v!=0.
+            ||source.mom_w!=0.||source.eng!=0.
+            ||uniform_species[0]!=0.||uniform_species[1]!=0.)
+            throw std::runtime_error("uniform high pressure produced a radial impulse");
+
+        const double p_l=high_pressure*(1.+2.e-3),p_r=high_pressure*(1.-1.e-3);
+        FluidVector lower{1.2,p_l,.4,.1,3.},upper{.8,p_r,.6,.2,4.};
+        FluidVector balanced{},unreduced{};
+        std::array<double,2> balanced_species{},unreduced_species{};
+        const std::array<double,2> lower_species{1.1,2.2},upper_species{1.3,2.1};
+        divergence(lower,upper,high_pressure,lower_species,upper_species,
+                   balanced,balanced_species);
+        divergence(lower,upper,0.,lower_species,upper_species,
+                   unreduced,unreduced_species);
+        if (balanced.rho!=unreduced.rho||balanced.mom_v!=unreduced.mom_v
+            ||balanced.mom_w!=unreduced.mom_w||balanced.eng!=unreduced.eng
+            ||balanced_species!=unreduced_species)
+            throw std::runtime_error("pressure reduction changed non-radial/species increments");
+        FluidVector pressure_source{};
+        TimeIntegration::add_axisymmetric_work_source_cell(
+            state,nullptr,FixedPressureEos{high_pressure},grid,i,0,dt,true,true,
+            pressure_source,true);
+        const long double expected=static_cast<long double>(dt)/volume
+            *(static_cast<long double>(area_l)*p_l-static_cast<long double>(area_r)*p_r
+              +static_cast<long double>(high_pressure)*(area_r-area_l));
+        const double actual=balanced.mom_u+pressure_source.mom_u;
+        if (!std::isfinite(actual)||std::abs(static_cast<long double>(actual)-expected)
+            >2.e-13L*std::max(1.L,std::abs(expected)))
+            throw std::runtime_error("reduced pressure gradient differs from unreduced oracle");
+        if (actual==0.||pressure_flux_measure==0.)
+            throw std::runtime_error("nonuniform pressure gradient was lost");
+    }
+    std::cout<<"PRESSURE_BALANCED_CURVILINEAR_PASS\n";
+}
+
 /** Constant-capacity scalar modes use V and the ordinary axial Laplacian.
  * Equal species masses/gammas make cv constant, so energy and rho*X have
  * independent exact discrete cosine eigenvalues. Rotation remains present.
@@ -688,6 +781,7 @@ int main(int argc,char** argv)
     test_axisymmetric_velocity_diagnostics();
     test_axisymmetric_one_dimensional_reductions();
     test_axisymmetric_angular_work();
+    test_pressure_balanced_curvilinear_divergence();
     test_axisymmetric_scalar_diffusion();
     const double conditioning = CurvilinearMetricCases::conditioning_error();
     if (!std::isfinite(conditioning) || conditioning > 2.e-12)

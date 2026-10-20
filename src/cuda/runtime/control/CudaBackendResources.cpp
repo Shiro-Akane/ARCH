@@ -390,7 +390,14 @@ CudaBlockRuntime::CudaBlockRuntime(
         if (active <= 0)
             throw std::invalid_argument("CUDA block has no active cells");
         cfl_candidates.allocate(active);
-        if (launch.plan.eos != dispatch::EosId::Ideal) {
+        // Cylindrical/rphi hydro balances its radial pressure before area
+        // products. Lend the existing stage thermodynamics also for IdealGas
+        // on those charts, matching Host; Cartesian Ideal keeps its lean path.
+        // The two existing arrays cost 2*sizeof(double) per stored cell and
+        // follow this block's normal allocation/regrid/retirement lifetime.
+        const bool radial_pressure_balance = block.grid.geometry == "cylindrical"
+            || (block.grid.geometry == "spherical" && block.grid.dim == 2);
+        if (launch.plan.eos != dispatch::EosId::Ideal || radial_pressure_balance) {
             mean_pressure.allocate(total);
             mean_sound_speed.allocate(total);
         }

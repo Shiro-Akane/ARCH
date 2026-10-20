@@ -150,6 +150,25 @@ exercises the table dependency. Presets put the applications in
 `build-cpu/bin/ARCH` and `build-cuda/bin/ARCH`; explicit custom build paths must
 also be supplied to the comparison scripts.
 
+## Install a runtime package
+
+After building the application and materializing and verifying the three tables
+above, install the `Runtime` component. It contains the application, Sod inputs,
+EOS tables and licenses. The runtime environment must still provide system
+HDF5/OpenMP, CUDA and optional cuDSS dependencies.
+
+```bash
+cmake --install build-cpu --prefix "$PWD/arch-install" --component Runtime
+cd arch-install/share/arch
+../../bin/ARCH Sod simulation/Sod/Sod_beginner.par
+```
+
+Use `build-cuda` for the CUDA application. The installation prefix can move;
+relative table, output and restart paths in an input still resolve against the
+launch working directory. Explicit absolute paths also work. ARCH does not
+search the installation prefix for missing configuration or tables. Studio is
+a separate optional desktop package; see its build instructions below.
+
 ## cuDSS and sparse burning
 
 `ARCH_ENABLE_CUDSS=ON` enables optional discovery in a CUDA build. The adapter

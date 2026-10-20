@@ -106,7 +106,8 @@ static __global__ void hydro_cfl_reduce_kernel(
 
 static __device__ inline void hydro_divergence_kernel_work(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction, Physical::Gravity::GravityPatchView gravity = {})
+    double dt, int direction, Physical::Gravity::GravityPatchView gravity = {},
+    const double* mean_pressure = nullptr)
 {
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     if (linear >= grid.active_cell_count())
@@ -124,7 +125,8 @@ static __device__ inline void hydro_divergence_kernel_work(
         cell_delta,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr,
         make_grid_geometry_view(grid), direction,
-        cell % grid.stride_y, (cell % grid.stride_z) / grid.stride_y, cell / grid.stride_z);
+        cell % grid.stride_y, (cell % grid.stride_z) / grid.stride_y, cell / grid.stride_z,
+        mean_pressure ? mean_pressure[cell] : 0.0);
     // w_low/high belong to this cell, even where the physical face is shared.
     // Host and Device apply the identical dt/2 mass-flux work leaf.
     if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(
@@ -135,9 +137,9 @@ static __device__ inline void hydro_divergence_kernel_work(
 
 static __global__ void hydro_divergence_kernel(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction)
+    double dt, int direction, const double* mean_pressure = nullptr)
 {
-    hydro_divergence_kernel_work(flux, delta, grid, dt, direction);
+    hydro_divergence_kernel_work(flux, delta, grid, dt, direction, {}, mean_pressure);
 }
 } // namespace detail
 
@@ -162,7 +164,8 @@ inline cudaError_t clear_hydro_buffer(
 
 inline cudaError_t launch_hydro_divergence(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction, cudaStream_t stream)
+    double dt, int direction, cudaStream_t stream,
+    const double* mean_pressure = nullptr)
 {
     const int directional_end = direction == 0 ? grid.ie
         : (direction == 1 ? grid.je : grid.ke);
@@ -185,7 +188,7 @@ inline cudaError_t launch_hydro_divergence(
         return cudaSuccess;
     detail::hydro_divergence_kernel
         <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
-            flux, delta, grid, dt, direction);
+            flux, delta, grid, dt, direction, mean_pressure);
     return cudaGetLastError();
 }
 

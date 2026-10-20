@@ -35,13 +35,26 @@ namespace TimeIntegration
         int n_spec, int species_stride,
         double area_l, double area_r, double volume, double dt,
         FluidVector& dU, double* d_spec,
-        const GridMetrics::GeometryView& geometry, int direction, int i, int j, int k)
+        const GridMetrics::GeometryView& geometry, int direction, int i, int j, int k,
+        double cell_pressure = 0.0)
     {
         double dt_over_vol = dt / volume;
+        FluidVector lower = lower_flux, upper = upper_flux;
+        // On cylindrical charts the radial face measure is A_r=r_face*S with
+        // transverse S=1,dz,dz*dphi for dim 1/2/3, and on spherical-rphi
+        // S=dphi; V=annulus*S, so (A_R-A_L)/V=2/(rL+rR). Exactly
+        //   dt/V*(A_L*p-A_R*p) + dt*p*(A_R-A_L)/V == 0.
+        // Subtract the same stage cell pressure from copies before the area
+        // products; canonical face fluxes and reflux registration stay original.
+        if (direction == 0 &&
+            (geometry.geometry == GridMetrics::Geometry::Cylindrical ||
+             (geometry.geometry == GridMetrics::Geometry::Spherical && geometry.dim == 2))) {
+            lower.mom_u -= cell_pressure;
+            upper.mom_u -= cell_pressure;
+        }
         if (geometry.geometry==GridMetrics::Geometry::Cylindrical && geometry.dim==2) {
             // Suppress the ordinary azimuthal term before arithmetic, rather
             // than computing an irrelevant A/V term and cancelling it later.
-            FluidVector lower=lower_flux,upper=upper_flux;
             lower.mom_w=upper.mom_w=0.;
             FluidVector increment=(lower*area_l-upper*area_r)*dt_over_vol;
             const double moment=GridMetrics::AngularMomentumVolumeMoment(geometry,i,j,k);
@@ -51,7 +64,7 @@ namespace TimeIntegration
             dU=dU+increment;
         } else {
             // Retained charts preserve their exact operation order.
-            dU = dU + (lower_flux * area_l - upper_flux * area_r) * dt_over_vol;
+            dU = dU + (lower * area_l - upper * area_r) * dt_over_vol;
         }
         for (int s = 0; s < n_spec; ++s)
         {

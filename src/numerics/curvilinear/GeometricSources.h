@@ -70,13 +70,19 @@ template <typename EosType>
 ARCH_HOST_DEVICE inline void add_geometric_source_cell(
     const FluidVector& U, const double* composition, const EosType& eos,
     const GridMetrics::GeometryView& grid, int i, int j, double dt,
-    FluidVector& delta)
+    FluidVector& delta, bool pressure_in_divergence = false)
 {
     using GridMetrics::Geometry;
     if (grid.geometry == Geometry::Cartesian) return;
     const double r = grid.GetCellCenterX(i);
     if (r == 0.0) return;
-    const double p = eos.get_pressure(U, composition);
+    // With the reduced radial pressure flux in the cell leaf, the matching
+    // p*(A_R-A_L)/V source is omitted. The centrifugal/angular terms below are
+    // unchanged. Other charts retain their original source arithmetic.
+    const bool omit_pressure = pressure_in_divergence &&
+        (grid.geometry == Geometry::Cylindrical ||
+         (grid.geometry == Geometry::Spherical && grid.dim == 2));
+    const double p = omit_pressure ? 0.0 : eos.get_pressure(U, composition);
     const double rho = U.rho;
     const double v_x = U.mom_u / rho;
     const double v_y = U.mom_v / rho;
@@ -176,25 +182,28 @@ template <typename EosType>
 ARCH_HOST_DEVICE inline void add_axisymmetric_work_source_cell(
     const FluidVector& U, const double* composition, const EosType& eos,
     const GridMetrics::GeometryView& grid, int i, int j, double dt,
-    bool lower_open, bool upper_open, FluidVector& delta)
+    bool lower_open, bool upper_open, FluidVector& delta,
+    bool pressure_in_divergence = false)
 {
     using GridMetrics::Geometry;
     using Basis=GridMetrics::CoordinateLayout::Basis;
     const auto layout=GridMetrics::resolve_coordinate_layout(grid.geometry,grid.dim);
     if (grid.geometry!=Geometry::Cylindrical || grid.dim!=2 ||
         layout.basis!=Basis::CylindricalRZPhi) {
-        add_geometric_source_cell(U,composition,eos,grid,i,j,dt,delta);
+        add_geometric_source_cell(U,composition,eos,grid,i,j,dt,delta,
+            pressure_in_divergence);
         return;
     }
     const double rho=U.rho;
-    const double pressure=eos.get_pressure(U,composition);
+    const double pressure=pressure_in_divergence ? 0. :
+        eos.get_pressure(U,composition);
     const double azimuthal_speed=U.mom_w/rho;
     const double inverse_radius=GridMetrics::InverseRadiusVolumeAverage(grid,i);
     const double coefficient=axisymmetric_centrifugal_work_coefficient(
         grid,i,lower_open,upper_open);
     // The torque divergence already absorbs -rho*u_r*u_phi/r; no second phi
-    // source and no energy source are added.  Pressure keeps the established
-    // <1/r> quadrature used by the constant-pressure equilibrium identity.
+    // source and no energy source are added. When the reduced radial pressure
+    // flux is active, its matching p*(A_R-A_L)/V source is omitted exactly.
     delta.mom_u+=dt*(rho*azimuthal_speed*azimuthal_speed*coefficient
         +pressure*inverse_radius);
 }
