@@ -1,0 +1,2343 @@
+{
+  "schema": "ARCH.release-readiness.REL6CandidateAcceptance.1",
+  "phase": "REL-6",
+  "recorded_utc": "2026-10-20T07:17:15.026186+00:00",
+  "decision": "ACCEPT_SCOPED_CANDIDATE",
+  "phase_closed": true,
+  "REL7_started": false,
+  "acceptance_owner": "Codex; worker execution/review is supporting evidence, not sole acceptance",
+  "branch": "compute/optim",
+  "candidate_source_commit": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+  "scope": "One frozen source candidate, CPU and CUDA Runtime installs plus optional Linux Studio; applicable prior science reused by owner/active-path review and affected current gates. No merge, tag, formal release or REL7.",
+  "candidate": {
+    "source": {
+      "source_commit": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+      "archive": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel6-20261020/ARCH-candidate-7e1dca167.tar.gz",
+      "archive_sha256": "6403686faa0dd6b14d35a2b7cd5e9fa9a061bef79dc1d4903bc14917dcaaaf5f",
+      "archive_bytes": 21522732,
+      "extracted_source": "/tmp/arch-rel6-20261020/source/ARCH",
+      "frozen_members_matched": 1120,
+      "mismatches": [],
+      "materialized": [
+        {
+          "path": "studio/tests/fixtures/sod-1d.h5",
+          "sha256": "dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+          "bytes": 14336,
+          "source": "verified existing worktree, no network"
+        },
+        {
+          "path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+          "bytes": 60242514,
+          "source": "verified existing worktree, no network"
+        },
+        {
+          "path": "EOS_toolkit/tables/baryon/eos2.tab",
+          "sha256": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+          "bytes": 143166842,
+          "source": "verified existing worktree, no network"
+        },
+        {
+          "path": "EOS_toolkit/tables/baryon/eos4.tab",
+          "sha256": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+          "bytes": 143167115,
+          "source": "verified existing worktree, no network"
+        }
+      ],
+      "git_directory_absent": true,
+      "network_access_used": false,
+      "candidate_builds": {
+        "cpu": "/tmp/arch-rel6-20261020/source/ARCH/build-cpu",
+        "cuda": "/tmp/arch-rel6-20261020/source/ARCH/build-cuda"
+      }
+    },
+    "final_frozen_member_check": {
+      "status": "PASS",
+      "source_commit": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+      "members_matched": 1117,
+      "external_members_matched": 25,
+      "build_identity_sha256": {
+        "cpu": "50a74bfc00ca2f7a994fef40431c4e0ed97a1e86dc1356607def9a12e1802f27",
+        "cuda": "b91ed70b85f005734e60691e686c82a929f747595828a2dee9df4aa00f35721b"
+      },
+      "no_git_directory": true,
+      "no_source_changes": true
+    },
+    "profiles": {
+      "cpu": {
+        "build_directory": "/tmp/arch-rel6-20261020/source/ARCH/build-cpu",
+        "selected_cache": {
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "ARCH_ENABLE_CUDA": "OFF",
+          "ARCH_ENABLE_KLU": "ON",
+          "ARCH_CUSTOM_NETWORKS": "nse_alpha",
+          "ARCH_EMIT_LINK_DEPENDENCIES": "ON",
+          "ARCH_RETAIN_LTO_LINK_INPUTS": "ON"
+        },
+        "cache_sha256": "df90aca7c2b422e08b24e06f49644f7ec0807ba9525ccd6c55c626090c890c16",
+        "build_manifest_header_sha256": "50a74bfc00ca2f7a994fef40431c4e0ed97a1e86dc1356607def9a12e1802f27"
+      },
+      "cuda": {
+        "build_directory": "/tmp/arch-rel6-20261020/source/ARCH/build-cuda",
+        "selected_cache": {
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.3/bin/nvcc",
+          "CMAKE_CUDA_ARCHITECTURES": "86",
+          "CMAKE_CUDA_FLAGS": "",
+          "ARCH_ENABLE_CUDA": "ON",
+          "ARCH_ENABLE_KLU": "ON",
+          "ARCH_CUSTOM_NETWORKS": "nse_alpha",
+          "ARCH_EMIT_LINK_DEPENDENCIES": "ON",
+          "ARCH_RETAIN_LTO_LINK_INPUTS": "ON"
+        },
+        "cache_sha256": "aa36469bfca1ea3d3210d7747faf80741e1adfc83e9749d2bc7b47ea07f5758b",
+        "build_manifest_header_sha256": "b91ed70b85f005734e60691e686c82a929f747595828a2dee9df4aa00f35721b"
+      }
+    },
+    "executable_sha256": {
+      "cpu_build": "c9a41a1b1518d44d3c047657998a3fcb5f3c203b5fe1fe20804601d7ec992458",
+      "cpu_installed": "3cfa5b15f10fd4179f710426836ebd7801ef057a9befbc40c95dc7e03a5b1af0",
+      "cuda_build": "f645036d5075342aec37b7ed446ace8fdd01f740b42b961a8b65285b0e94eed4",
+      "cuda_installed": "7378407973aa23b9743efe14a9287e8660494f418978c4361619d43186845a27"
+    },
+    "builds": {
+      "cpu": "Empty-object, CCACHE_DISABLE=1, actual ARCH build exit0",
+      "cuda": {
+        "status": "PASS_COMPLETE_BUILD",
+        "segments": [
+          {
+            "name": "cold-cuda-build",
+            "exit": 124,
+            "wall_seconds": 3600.468134424,
+            "ccache_disabled": true
+          },
+          {
+            "name": "cold-cuda-resume-1",
+            "exit": 0,
+            "wall_seconds": 686.6858478270005,
+            "ccache_disabled": true
+          }
+        ],
+        "initial_timeout_preserved": true,
+        "scope": "Same archive/graph/profile, no source or flags edited; terminal ARCH Ninja build exited0. Not a claim that the initial truncated segment passed."
+      }
+    },
+    "frozen_generated_network": "custom:nse_alpha, real pynucastro2.12.0 generation;25 external files fingerprinted before/after all compilation and runtime",
+    "provenance": "No .git directory in actual archive. Git archive, frozen source/input/table manifests and produced ELF identities establish candidate origin. Existing numerical validator library functions used unchanged; Git-only top-level provenance CLI was not run and is not claimed.",
+    "install": {
+      "component": "Runtime",
+      "prefixes_relocated": true,
+      "members_each": 14,
+      "cpu_members": [
+        {
+          "path": "bin/ARCH",
+          "bytes": 9197512,
+          "sha256": "3cfa5b15f10fd4179f710426836ebd7801ef057a9befbc40c95dc7e03a5b1af0"
+        },
+        {
+          "path": "share/arch/EOS_toolkit/tables/baryon/LICENSE-CC-BY-4.0.txt",
+          "bytes": 18657,
+          "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+        },
+        {
+          "path": "share/arch/EOS_toolkit/tables/baryon/eos2.tab",
+          "bytes": 143166842,
+          "sha256": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58"
+        },
+        {
+          "path": "share/arch/EOS_toolkit/tables/baryon/eos4.tab",
+          "bytes": 143167115,
+          "sha256": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34"
+        },
+        {
+          "path": "share/arch/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "bytes": 60242514,
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        },
+        {
+          "path": "share/arch/LICENSE",
+          "bytes": 1577,
+          "sha256": "3ba654131eb496eb3879e53a20270639ca688a05bd404a564ed971714d6189e9"
+        },
+        {
+          "path": "share/arch/LICENSES/AMReX-Astro-Microphysics.txt",
+          "bytes": 1857,
+          "sha256": "b1aa5f20ff0afe62d42587a3a1c005e3bdac00ceaf04526063cb01c14f59a125"
+        },
+        {
+          "path": "share/arch/LICENSES/LGPL-2.1.txt",
+          "bytes": 26530,
+          "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+        },
+        {
+          "path": "share/arch/LICENSES/README.md",
+          "bytes": 922,
+          "sha256": "98686c60bc8702c325c5cee71bb2f3149b61492354a887144774d6641e5e2ac8"
+        },
+        {
+          "path": "share/arch/LICENSES/SuiteSparse-KLU.txt",
+          "bytes": 6231,
+          "sha256": "f34add437e507b255c7256bcd2a4b6d766bf0d37f315575b0088eeadd0bec6ce"
+        },
+        {
+          "path": "share/arch/THIRD_PARTY_NOTICES.md",
+          "bytes": 9998,
+          "sha256": "5bbb454a0482c9a624fc480b942f45e1c0f14d8f84d992cf83893df7686e2461"
+        },
+        {
+          "path": "share/arch/THIRD_PARTY_NOTICES.zh-CN.md",
+          "bytes": 9044,
+          "sha256": "55057e8210baff21a086d569f76113deb570f07e48a7f97d55112ae33871c6b1"
+        },
+        {
+          "path": "share/arch/simulation/Sod/Sod.par",
+          "bytes": 1143,
+          "sha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843"
+        },
+        {
+          "path": "share/arch/simulation/Sod/Sod_beginner.par",
+          "bytes": 1235,
+          "sha256": "5e018386935b9be93dd35dcf2827e12f11757db11d2eeb50361fce1adb9ec146"
+        }
+      ],
+      "cuda_binary": {
+        "path": "bin/ARCH",
+        "sha256": "7378407973aa23b9743efe14a9287e8660494f418978c4361619d43186845a27",
+        "bytes": 323273280
+      },
+      "all_nonbinary_members_identical": true,
+      "cpu_install_transform": {
+        "build_executable_sha256": "c9a41a1b1518d44d3c047657998a3fcb5f3c203b5fe1fe20804601d7ec992458",
+        "changed_sections": [
+          ".dynstr",
+          ".dynamic"
+        ],
+        "all_other_file_backed_sections_identical": true,
+        "reason": "CMake removes build RUNPATH at install; installed artifact gets its own SHA"
+      },
+      "cuda_install_transform": {
+        "changed_sections": [
+          ".dynstr",
+          ".dynamic"
+        ],
+        "all_other_file_backed_sections_identical": true,
+        "reason": "Standard CMake build RUNPATH removal; separate artifact SHA retained"
+      },
+      "actual_launch": "Each actual relocated binary completed Sod from its own share/arch cwd; CPU also consumed its installed Helm table. No source-directory resource fallback.",
+      "dependency_scope": "ldd had no missing libraries locally. System HDF5/OpenMP and CUDA/optionalCuDSS remain declared external dependencies; no self-contained-any-host ABI claim.",
+      "licenses": "Project MIT, relevant four LICENSES notices, baryonCC-BY-4.0 and bothTHIRD_PARTY notices installed; original table identities retained."
+    }
+  },
+  "numerical_contract": {
+    "unchanged": true,
+    "O7": "Unknown/invalid active routes and missing active inputs reject; no restored default fallback or compatibility translation.",
+    "nuclear_and_ENUC": "Original5e-9+5e-12 source gate preserved; original case-specific strict2e-8+1e-12/ENUC5e-9 normalization used where required.",
+    "angular_momentum": "abs(DeltaJ+outward_torque_impulse-body_torque_impulse)/(initial_absJ+abs(outward_impulse)+abs(body_impulse))<=1e-12. Body torque is zero in current controls; boundary torque is not silently omitted.",
+    "closure_charge_mass": "Each original case-specific1e-12/closure requirement unchanged; no one tolerance substitutes for another.",
+    "geometry_gravity": "Grid/common geometry independent from optional gravity; canonical face flux/reflux/gravity mass work/T/W untouched, gravity-off path retains no solver/special allocation.",
+    "precision": "Existing native long_double decimal roundtrip retained; long_double reference casts and checked lengths from02eb88b remain."
+  },
+  "bounded_source_repairs": [
+    {
+      "owner": "Shared HydroCellUpdate / existing stage mean pressure",
+      "change": "For radial Cyl1/2/3 and Spherical2(rphi), subtract the same stage cell pressure from copies of left/right radial momentum fluxes before area weighting; remove its matching geometric pressure source.",
+      "basis": "Exact real-arithmetic identity (AR-AL)/V=2/(rL+rR); avoids subtracting two high-pressure terms after independent rounding.",
+      "limits": "No extra geometry-specific production file, no duplicated CPU/GPU math; spherical1/3 and Cartesian active equations unchanged. CUDA Ideal affected charts reuse meanP/c buffers, incremental16bytes per stored cell; invalid required buffers reject."
+    },
+    {
+      "owner": "Existing CMake application/install guide",
+      "change": "Minimal explicit Runtime installation and cwd-relative resource instructions; no new resolver or fallback."
+    },
+    {
+      "owner": "Existing Studio desktop transport/shutdown",
+      "change": "Standard -- delimiter protects public argv; destroyed-window-safe close still stops owned Host/assets.388fulltests and8targeted tests zero skip."
+    }
+  ],
+  "current_scientific_qualification": {
+    "pressure": {
+      "pairs": 2,
+      "raw_mom_u_maxima": {
+        "native-cpu": 0.0,
+        "rphi-cpu": 0.0,
+        "native-cuda": 0.0,
+        "rphi-cuda": 0.0
+      },
+      "original_policy": "2e-8+1e-12; explicitENUCscale5e-9",
+      "parity": {
+        "native": {
+          "status": "pass",
+          "step": 1,
+          "time": 1e-10,
+          "candidate_step": 1,
+          "candidate_time": 1e-10,
+          "comparison_mode": "reproducibility",
+          "target_time": 0,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 2,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 1e-10,
+          "candidate_dt_old": 1e-10,
+          "dt_burn": 1.0149105130823475e+25,
+          "candidate_dt_burn": 1.0149105130823342e+25,
+          "dt_burn_relative": 1.3118790716989745e-14,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 570425344,
+          "max_rel": 1.0951417653562437e-13,
+          "max_field_normalized": 1.2864989581364831e-14,
+          "max_enuc_normalized": 1.2864989581364831e-14,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12,
+            "enuc_scale_rtol": 5e-09,
+            "dt_burn_rtol": 5e-09
+          }
+        },
+        "rphi": {
+          "status": "pass",
+          "step": 1,
+          "time": 1e-10,
+          "candidate_step": 1,
+          "candidate_time": 1e-10,
+          "comparison_mode": "reproducibility",
+          "target_time": 0,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 2,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 1e-10,
+          "candidate_dt_old": 1e-10,
+          "dt_burn": 1.0149105130823475e+25,
+          "candidate_dt_burn": 1.0149105130823342e+25,
+          "dt_burn_relative": 1.3118790716989745e-14,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 570425344,
+          "max_rel": 1.0951417653562437e-13,
+          "max_field_normalized": 1.2864989581364831e-14,
+          "max_enuc_normalized": 1.2864989581364831e-14,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12,
+            "enuc_scale_rtol": 5e-09,
+            "dt_burn_rtol": 5e-09
+          }
+        }
+      }
+    },
+    "ideal_charts": {
+      "pairs": 4,
+      "all_three_momenta_exact_zero": true
+    },
+    "rotation_AMR_RKL": {
+      "paired_controls": [
+        "AMR",
+        "RKL1",
+        "RKL2",
+        "Helm reacting/thermal AMR"
+      ],
+      "J_boundary_budget_max": 7.306693332537892e-17,
+      "original_J_formula": "abs(DeltaJ+outward_torque_impulse)/(initial_absJ+abs(outward_impulse))<=1e-12, bodytorque0",
+      "fresh_comparisons": 4,
+      "fresh_max_abs": 0,
+      "Helm_transport_scope": "Three enabled flags; actual existing Helm stellar source thermal-only, nu/D zero. Nonzero three-channel controls are IdealRKL1/2; no claim of nonzero Helm viscosity/species.",
+      "prior_oracle_failure_preserved": "results-before-boundary-budget-correction.json; observer rerunRKL1CPU is bitwise equal for12Data/Blocks datasets; no codephysics change"
+    },
+    "generated_network": {
+      "cases": 7,
+      "ordinary_ODEs": [
+        "BE_NR",
+        "BD",
+        "ROS4"
+      ],
+      "ordinary_endpoint": 1e-08,
+      "hot_NSE_endpoint": 1e-16,
+      "actual_executions": 20,
+      "comparisons": 10,
+      "source_energy_max": 2.671866793021849e-16,
+      "charge_drift_max": 6.751869029153479e-17,
+      "NSE_disabled_contrast_min": 0.4999894618434804,
+      "gates": "original nuclear2e-8+1e-12; explicitENUCscale5e-9, energy/charge/closure1e-12"
+    },
+    "analytic_endpoints": {
+      "cases": 7,
+      "endpoint": 0.1,
+      "resolution_groups": {
+        "cyl_smooth_ppm": {
+          "resolutions": [
+            64,
+            128,
+            256
+          ],
+          "orders": {
+            "cpu": {
+              "l1": [
+                3.9979288518876217,
+                3.999438138658885
+              ],
+              "l2": [
+                3.998309584031683,
+                3.9994962971182737
+              ]
+            },
+            "cuda": {
+              "l1": [
+                3.9979288518876217,
+                3.999438138658885
+              ],
+              "l2": [
+                3.998309584031683,
+                3.9994962971182737
+              ]
+            }
+          }
+        },
+        "cyl_diffusion_rkl2": {
+          "resolutions": [
+            64,
+            128,
+            256
+          ],
+          "orders": {
+            "cpu": {
+              "l1": [
+                1.9996570587368843,
+                1.9999095025528906
+              ],
+              "l2": [
+                1.9992224805165129,
+                1.999800866214255
+              ]
+            },
+            "cuda": {
+              "l1": [
+                1.9996570587368843,
+                1.9999095025528906
+              ],
+              "l2": [
+                1.9992224805165129,
+                1.999800866214255
+              ]
+            }
+          }
+        }
+      },
+      "scope": "Existing native PPM64/128/256 and RKL2 64/128/256 groups with original final-pair order gates2.7/1.8; RKL1n256 originalLinf1e-5/drift1e-12. No fixed-step reruns or allmethods crossproduct claim."
+    },
+    "hotspots": {
+      "endpoint": 4.1e-09,
+      "both_backends_pass": true,
+      "parity": {
+        "status": "pass",
+        "step": 49,
+        "time": 4.1e-09,
+        "candidate_step": 49,
+        "candidate_time": 4.1e-09,
+        "comparison_mode": "physical-time",
+        "target_time": 4.1e-09,
+        "time_roundoff_matches": true,
+        "controller_matches": true,
+        "output_indices_match": true,
+        "native_composition_compared": true,
+        "dimension": 2,
+        "blocks": 12,
+        "min_level": 0,
+        "max_level": 0,
+        "dt_old": 1.5058969189725202e-10,
+        "candidate_dt_old": 1.505896918972519e-10,
+        "dt_burn": 4.053671961880743e-09,
+        "candidate_dt_burn": 4.053671961879443e-09,
+        "dt_burn_relative": 3.2077778743844356e-13,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "candidate_chk_file_index": 1,
+        "candidate_plt_file_index": 2,
+        "output_index_offsets": {
+          "checkpoint": 0,
+          "plot": 0
+        },
+        "resume_after_regrid": false,
+        "topology": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            3,
+            0,
+            0
+          ],
+          [
+            0,
+            2,
+            1,
+            0
+          ],
+          [
+            0,
+            3,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            1,
+            2,
+            0
+          ],
+          [
+            0,
+            2,
+            2,
+            0
+          ],
+          [
+            0,
+            3,
+            2,
+            0
+          ]
+        ],
+        "max_abs": 3744137740288,
+        "max_rel": 1.5272067667431124,
+        "max_field_normalized": 4.427725987701376e-13,
+        "max_enuc_normalized": 4.427725987701376e-13,
+        "passed": true,
+        "tolerance": {
+          "rtol": 5e-09,
+          "atol": 5e-12,
+          "enuc_scale_rtol": 5e-09,
+          "dt_burn_rtol": 5e-09
+        }
+      },
+      "scope": "Actual public singlehotspot endpoint only; originalfourmode geometry/function/fresh inherited, independent ignition mechanism not claimed."
+    },
+    "generated_execution_backend_scope": "Generated20executions/10pairs use CPU and realCUDA modes of installedCUDA-capable ELF73784079 under GCC12. CPU-only installed3cfa5b15 separately passed generatedHelm two-step smoke; not allthreeODE trajectories claimed from GCC13CPU-onlyELF.",
+    "package_CPU": {
+      "Sod_endpoint": 0.15,
+      "SNIa_scope": "20-step thermal/AMR prefix and independent-process strict fresh; original main endpoint and L2 repeated AMR inherited by user-authorized joint evidence, old main FAIL untouched",
+      "SNIa_fresh": {
+        "status": "pass",
+        "step": 20,
+        "time": 4.5970087205383985e-11,
+        "candidate_step": 20,
+        "candidate_time": 4.5970087205383985e-11,
+        "comparison_mode": "reproducibility",
+        "target_time": 0,
+        "time_roundoff_matches": true,
+        "controller_matches": true,
+        "output_indices_match": true,
+        "native_composition_compared": true,
+        "dimension": 2,
+        "blocks": 16,
+        "min_level": 1,
+        "max_level": 1,
+        "dt_old": 2.2814488975735516e-12,
+        "candidate_dt_old": 2.2814488975735516e-12,
+        "dt_burn": 1.2302721974729635e+25,
+        "candidate_dt_burn": 1.2302721974729635e+25,
+        "dt_burn_relative": 0,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "candidate_chk_file_index": 2,
+        "candidate_plt_file_index": 2,
+        "output_index_offsets": {
+          "checkpoint": 0,
+          "plot": 0
+        },
+        "resume_after_regrid": false,
+        "topology": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            2,
+            0,
+            0
+          ],
+          [
+            1,
+            3,
+            0,
+            0
+          ],
+          [
+            1,
+            2,
+            1,
+            0
+          ],
+          [
+            1,
+            3,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            2,
+            0
+          ],
+          [
+            1,
+            1,
+            2,
+            0
+          ],
+          [
+            1,
+            0,
+            3,
+            0
+          ],
+          [
+            1,
+            1,
+            3,
+            0
+          ],
+          [
+            1,
+            2,
+            2,
+            0
+          ],
+          [
+            1,
+            3,
+            2,
+            0
+          ],
+          [
+            1,
+            2,
+            3,
+            0
+          ],
+          [
+            1,
+            3,
+            3,
+            0
+          ]
+        ],
+        "max_abs": 0,
+        "max_rel": 0,
+        "max_field_normalized": 0,
+        "max_enuc_normalized": 0,
+        "passed": true,
+        "tolerance": {
+          "rtol": 5e-09,
+          "atol": 5e-12,
+          "enuc_scale_rtol": 0.001,
+          "dt_burn_rtol": 0.001,
+          "fields": [
+            "rho",
+            "mom_u",
+            "mom_v",
+            "mom_w",
+            "eng",
+            "enuc_rate",
+            "rhoX",
+            "X"
+          ]
+        },
+        "intermediate_source": {
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel6-20261020/cpu-package-runs-r3/snia-continuous/snia-continuous_chk_0001.h5",
+          "metadata": {
+            "step": 10,
+            "time": 2.3072904902997723e-11,
+            "resume_after_regrid": true,
+            "chk_file_index": 1,
+            "plt_file_index": 1,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "f8d3d259dfa73f406aaec1ab485093a7f91b8f0c143f1d4390e6f50408920f63",
+            "checkpoint_sha256": "33670c1b32fb623b0ef9d20226dd9aefc3050a3448686bfdbb50d4a6e130dd31",
+            "command": [
+              "/tmp/arch-rel6-20261020/source/ARCH/build-cpu/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel6-20261020/cpu-package-runs-r3/snia-continuous/snia-continuous_chk_0001.h5",
+              "--parameters",
+              "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel6-20261020/cpu-package-runs-r3/snia-continuous/snia-continuous.par"
+            ]
+          }
+        }
+      },
+      "thermal_activity": {
+        "status": "PASS",
+        "run_exit": 0,
+        "wall_seconds": null,
+        "cost_log": "cpu-package-final-controls.time (original execution with postprocess failure)",
+        "observer": "ARCH_TRACE_DIFFUSION_ACTIVITY=1, actual accepted increments only",
+        "source_checkpoint": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel6-20261020/cpu-package-runs-r3/snia-continuous/snia-continuous_chk_0001.h5",
+        "restart_step": 10,
+        "completed_step": 12,
+        "activity": {
+          "time": "2.76674796140107259767e-11",
+          "signed_energy_change": "-30539776",
+          "absolute_energy_change": "1426257233881726976",
+          "cell_visits": "13312",
+          "accepted_halves": "4",
+          "accepted_macros": "2"
+        },
+        "activity_sha256": "ad645264dc72bcef099ba8b1daba6e60bbec9062c8d2879e10456ca8a75786d6",
+        "scope": "Two current candidate steps supplement already passed20-step AMR/fresh; not a new main endpoint"
+      },
+      "O7_missing_gamma": {
+        "status": "PASS",
+        "expected_nonzero_exit": 1,
+        "stderr": "[Fatal Error] Config parameter 'gamma': MISSING_PARAMETER [gamma]: Required input has no declared value.\n",
+        "checkpoint_count": 0
+      }
+    },
+    "current_tests": {
+      "archive_CPU_CTest": "curvilinear_metrics and generated_nse_nse_alpha2/2zero skip; comparator temporal control separately executed, not a third CTest",
+      "archive_CUDA_CTest": "cuda_generated_math_nse_alpha, cuda_regrid_transaction, generated_nse_device3/3zero skip",
+      "curvilinear_device_owner": "Existing short arch_gravity_stage_contract --curvilinear-device:12 residency/Hostpoison/RK/AMR/reflux/RKL witnesses; no old reference long stress",
+      "preflight_separate_scope": "Real cuda_curvilinear_geometry_smoke and completeHostgeometry passed unchanged leaf before fullcandidate application; not substitutes for final ARCH runtime."
+    }
+  },
+  "public_model_coverage": [
+    {
+      "model": "BurnGradient",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/BurnGradient/BurnGradient.cpp",
+      "source_sha256": "4171da69285643702258f2ae4758fc0519dba7cadda40804f3aefff09b5055c8",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[10];REL3CpuScienceAndReliability-20261014.json#CPU_model_coverage[10]",
+      "accepted_scope": "Original four directions CPU/CUDA burn/AMR/nativeCHK and current diagnostic scope retained; no new longrun claim"
+    },
+    {
+      "model": "BurnOneZone",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/BurnOneZone/BurnOneZone.cpp",
+      "source_sha256": "52cb9928a8afcd8437d6c3b99149112bd310bbb9cbe47ea7d034bd6e41b503c3",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[9];Cyl6ComprehensiveAdmission-20261019.json#coverage.burn",
+      "accepted_scope": "Original built-in BE_NR/BD/ROS4 retained; actual generated custom:nse_alpha allthreeODE/NSE on-off endpoints qualified now"
+    },
+    {
+      "model": "CellularDet",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/Cellular/Cellular.cpp",
+      "source_sha256": "54cb01690f6879ba80d1e9d0179bd0e0416ea1e77e89cfe3a4886a027388a9cc",
+      "prior_receipt_refs": "REL4CudaDeviceAndIntegration-20261019.json#current_closure_child_measurements.original;REL3CurrentCpuClosure-20261019.json#coverage.public_original_endpoints",
+      "accepted_scope": "Original private24steps/25CHK ENUC and backend ownfresh retained; public original138/200step endpoints retained; no longrun repeated"
+    },
+    {
+      "model": "CooperativeHotspots",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "source_sha256": "3fe9f8154ecbcf3e3b76b43e3d476efe6c3294cc473fe080826142b72a50a18b",
+      "prior_receipt_refs": "REL3CpuScienceAndReliability-20261014.json#CPU_model_coverage[13]",
+      "accepted_scope": "Original four layouts4.1ns functional/fresh scope inherited; current publicsingle4.1ns bothbackends with original normalized parity, closure and zerorepairs; no independent ignition-mechanism claim"
+    },
+    {
+      "model": "DiffusionMode",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/DiffusionMode/DiffusionMode.cpp",
+      "source_sha256": "07e253d8d7ede7f42fb65531b6298c0c1dd27ad0f9b701ce2f57a48694383e26",
+      "prior_receipt_refs": "Cyl6ComprehensiveAdmission-20261019.json#coverage.retained_models",
+      "accepted_scope": "Current native RKL2 64/128/256 analytic endpoint .1 order>=1.8; RKL1n256 original Linf<=1e-5/drift1e-12; fixed-step evidence inherited"
+    },
+    {
+      "model": "ExternalGravity",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/ExternalGravity/ExternalGravity.cpp",
+      "source_sha256": "512ded6e1a5f447c7b580cf14cb21205942a3f550ff3d43a3bd6b839234d4dc2",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[6];Cyl6ComprehensiveAdmission-20261019.json#coverage.gravity",
+      "accepted_scope": "Original CPU/CUDA RK2/RK3 .1 and native optional-gravity coupled controls retained; no geometry/gravity ownership change"
+    },
+    {
+      "model": "Gaussian",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/GaussianPulse/Gaussian.cpp",
+      "source_sha256": "ca23bbbb7aef9332ca2eb9be9e468e97eb8fcaf3154d4c162e458dc6a4ea8f5d",
+      "prior_receipt_refs": "REL3CurrentCpuClosure-20261019.json#coverage.retained_model_endpoints;Cyl6ComprehensiveAdmission-20261019.json#coverage",
+      "accepted_scope": "Retained source/applicability; current four Ideal charts, rotating AMR/RKL1/RKL2 and Helm reacting/thermal controls plus fresh"
+    },
+    {
+      "model": "GravityBox",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/GravityBox/GravityBox.cpp",
+      "source_sha256": "cdeee8453bf636545a8d3a1e84a7c9e0a4b29752b8838c1a6e7206ae6d839e9c",
+      "prior_receipt_refs": "REL3CurrentCpuClosure-20261019.json#coverage.new_native_models",
+      "accepted_scope": "Native initializer/fresh retained; current original high-pressure near-zero native/rphi one-step input passes both backends and strict parity"
+    },
+    {
+      "model": "JeansWave",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/JeansWave/JeansWave.cpp",
+      "source_sha256": "beb898277d86e85b2ed609cba801c72cc8d82c1ba83ac3a209976f0e68c4ac7b",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[8]",
+      "accepted_scope": "Original CPU20T/10T scientific endpoints retained; GPU qualification through shared gravity owner, not a claimed new JeansWave GPU longrun"
+    },
+    {
+      "model": "RT",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/RTinstability/RT_instab.cpp",
+      "source_sha256": "c2aa30d0958d1a7f835cff66be919a0e81037d15f5e61e00522400b01144aacf",
+      "prior_receipt_refs": "REL4CudaDeviceAndIntegration-20261019.json#original_public_scope.RT_main_and_fresh",
+      "accepted_scope": "Original four directions x256 CPU/CUDA and own fresh retained; unchanged Cartesian active mathematics"
+    },
+    {
+      "model": "SNIaCoupled",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/SNIaCoupled/SNIaCoupled.cpp",
+      "source_sha256": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78",
+      "prior_receipt_refs": "REL3CpuFinalAcceptance-20261015.json#SNIa.retained_limits;REL4CudaDeviceAndIntegration-20261019.json#original_public_scope.SNIa_current_fresh",
+      "accepted_scope": "Direct human joint-evidence authorization; original main endpoint/conservation/fresh plus L2 repeated-regrid mechanism, oldmain FAIL/thermalGAP preserved; current20step/fresh/4thermalhalf supplement only"
+    },
+    {
+      "model": "Sedov",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/Sedov/Sedov.cpp",
+      "source_sha256": "ab92f813d868cf44b26af0585c7b74d774c82cd9e8d8ee583c3551be0ac3a18e",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[1];REL3CpuScienceAndReliability-20261014.json#CPU_model_coverage[1]",
+      "accepted_scope": "Original CPU/CUDA planar .1 resolution group plus original3D AMR; current initializer/API and short applicable evidence inherited"
+    },
+    {
+      "model": "SmoothAdvection",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "source_sha256": "21aaf2c1f2b1dad3ab37ea9aac27b95125b7cb96c0e7c807d29de72ae98edf83",
+      "prior_receipt_refs": "Cyl6ComprehensiveAdmission-20261019.json#coverage.retained_models",
+      "accepted_scope": "Retained chart shorts inherited; current native PPM64/128/256 analytic endpoint .1 and original final-pair order>=2.7"
+    },
+    {
+      "model": "Sod",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/Sod/Sod.cpp",
+      "source_sha256": "7867565cdbe801769c0860de8d4a41254aaaa7be354951bcab69dd042a242738",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[0]",
+      "accepted_scope": "Original CPU PPM256 endpoint .2; current installed CPU/CUDA quickstart .15 and actual Studio Run/10->104fresh .15"
+    },
+    {
+      "model": "UserBoundary",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/UserBoundary/case.cpp",
+      "source_sha256": "e1e8e2ba03f262bf1b0d77158815cc849f5d92186e24209a063391fb64cd362e",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[14];Cyl6ComprehensiveAdmission-20261019.json#coverage.current_callbacks",
+      "accepted_scope": "Original CPU24/CUDA45 and current native callback controls retained; no new dynamic-plugin/ABI portability claim"
+    },
+    {
+      "model": "UserGravity",
+      "status": "ACCEPT_SCOPED",
+      "source": "simulation/UserGravity/case.cpp",
+      "source_sha256": "8d0254f84d93ffdf62ff42ed677c5d2181bac326a35a9f9f64c02e2b3a285a69",
+      "prior_receipt_refs": "REL1Overview-20261014.json#model_matrix[15];Cyl6ComprehensiveAdmission-20261019.json#coverage.current_callbacks",
+      "accepted_scope": "Original callback science and current CPU/CUDA native optional-gravity controls retained"
+    }
+  ],
+  "necessary_module_coverage": {
+    "methods_EOS": "Cyl6 coverage.ideal_helm_methods162 and tabular_methods147, EOS_source_families21 and strong_tabular_burn8 retained in original scope; new affected analytic/geometry/application gates supplement. No all-feature Cartesian-product claim.",
+    "diffusion": "Cyl6 analytic/three-channel AMR and REL4rkl_repair_weights/diffusion_rkl_parity retained; current nonzero IdealRKL1/2 rotation qualified. Helm reacting control has three flags but actual source thermal only (nu/Dzero).",
+    "burn_NSE_sparse": "Cyl6 burn12/NSE16/sparse1 plus actual generated network,NSE-on/off contrast and originalCellular ENUC/fresh retained; no absent tables or unsupported weak route claimed.",
+    "gravity": "Cyl6 optional external/prescribed/isolated owners and REL4device gravity retained; current original high-pressure fixture now passes both charts. Gravity-off device no-gather/no-special-allocation witnesses retained/current short owner.",
+    "AMR_IO_boundary": "Cyl6 T/W/reflux/regrid/axis/strict-byte and callbacks retained; current rotating/regridded/fresh lanes plus actual Studio CHK->newprocess/Plot verified.",
+    "configuration": "Current archivedsource original O7 negatives, explicit center inputs, old-chart/oldPlot rejection and prior tooling619 retained within scoped identity. Hosted completecurrentCPU inventory/lowdensity andTooling independently green."
+  },
+  "SNIa_joint_acceptance": {
+    "authority": "Direct human asynchronous reply in this task2026-10-20: 允许联合证据，保留旧 FAIL",
+    "candidate_decision": "ACCEPT_JOINT_EVIDENCE",
+    "original_main": "t=1e-8,3997steps, endpoint/conservation/fresh accepted in original scope; repeated-AMR criterion remains FAIL: only1event, original>=2 unchanged; thermalGAP stays in that old receipt.",
+    "L2_supplement": "Previouslyauthorized t=1e-9,811steps,3postinitialregrids and thermal activity; mechanism supplement, not falsely same main endpoint.",
+    "current_candidate": "InstalledCPU20steps, strict10->20fresh max_abs0, zerorepairs;2stepfresh observer4acceptedthermalhalves. Not a new main/L2longrun.",
+    "no_numerical_or_endpoint_threshold_changed": true
+  },
+  "historical_failures_and_disposition": [
+    {
+      "original": "High-pressure near-zero raw momentum NOT_MET in old executables",
+      "disposition": "Old receipt/bytes preserved; current original input, unscaled physics and strict original comparator now PASS with exactzero momenta on both charts/backends."
+    },
+    {
+      "original": "SNIa original main repeated-AMR FAIL / thermal GAP",
+      "disposition": "Preserved without relabel; candidate admitted by explicit user joint-evidence decision above."
+    },
+    {
+      "original": "Initial cold CUDA exit124 after60min",
+      "disposition": "NOT_PASS segment retained; samefrozen source/graph/flags resumed to actual complete ARCH exit0. Build throughput remains nonblocking follow-up."
+    },
+    {
+      "original": "Private orchestration/fixture mistakes",
+      "disposition": "Failed RUNPATH expectation, invalid extra species/1Drefinement fields, missing thermal observer and omitted boundarytorque preserved in rawlogs. Only private harness/fixtures corrected, not production equations/acceptance gates."
+    },
+    {
+      "original": "Optional observer helper used mismatched old lane key",
+      "disposition": "No gate depends on branch. Manager independently verified12Data/Blocks bitwise equality afterrun; separate signed receipt referenced."
+    }
+  ],
+  "Studio": {
+    "status": "PASS_NATIVE_GUI_CURRENT_CANDIDATE",
+    "package_identity": {
+      "path": "output/release/rel6-20261020/studio-native/packaged-identity.json",
+      "sha256": "741dcd26f93f1a4f8112408660791943f5b3f84ece6e8db1aeb3c0cf5818f8ea",
+      "bytes": 23091
+    },
+    "workflow": [
+      "Real public canonical Sod Configure/Build no-op",
+      "Real current512sample initial preview",
+      "Inspect initialization and actual initial AMR 4L0leafblocks64cells",
+      "Separate Sod workingcopy with checkpoint cadence10",
+      "Saved-input/binary/output confirmation and actual independent terminalRun",
+      "RejectRestart without explicit savedtrue/checkpoint",
+      "GUIedit andSave private workingcopy, actual10->104newprocessRestart",
+      "Read actual finalPlotfile metadata and complete publication/source digests",
+      "Read bounded raw native cells and Inspector; rawdensity1g/cm^3,xcenter.0078125,cellmeasure.015625cm",
+      "Full-domain storedleafLOD plot and nativeInspector keptdistinct",
+      "Normal close, ownedHost exit, Electron process exit0"
+    ],
+    "runtime": {
+      "status": "PASS",
+      "source_commit": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+      "build_executable_sha256": "c9a41a1b1518d44d3c047657998a3fcb5f3c203b5fe1fe20804601d7ec992458",
+      "runs": {
+        "54b65c76-ed7e-4e69-94de-46429f45e7a5": {
+          "runId": "54b65c76-ed7e-4e69-94de-46429f45e7a5",
+          "state": "succeeded",
+          "workerPid": 84250,
+          "workerStartTicks": "1078046",
+          "bootId": "e80bc825-3fe7-4186-9ff4-8170b2fbf0ad",
+          "startedAt": "2026-10-20T07:04:26.053Z",
+          "processId": 84263,
+          "processStartTicks": "1078058",
+          "processIdentity": "captured",
+          "exitCode": 0,
+          "signal": null,
+          "finishedAt": "2026-10-20T07:04:26.517Z"
+        },
+        "2559cd4b-f60a-4e5f-b5d7-4827be35c76d": {
+          "runId": "2559cd4b-f60a-4e5f-b5d7-4827be35c76d",
+          "state": "succeeded",
+          "workerPid": 81888,
+          "workerStartTicks": "1067944",
+          "bootId": "e80bc825-3fe7-4186-9ff4-8170b2fbf0ad",
+          "startedAt": "2026-10-20T07:02:42.100Z",
+          "processId": 81907,
+          "processStartTicks": "1067957",
+          "processIdentity": "captured",
+          "exitCode": 0,
+          "signal": null,
+          "finishedAt": "2026-10-20T07:02:43.397Z"
+        }
+      },
+      "fresh_from_step": 10,
+      "final_step": 104,
+      "physical_endpoint": 0.15,
+      "fresh_max_abs": 0,
+      "datasets_equal": [
+        "Data/X",
+        "Data/eng",
+        "Data/enuc_rate",
+        "Data/mom_u",
+        "Data/mom_v",
+        "Data/mom_w",
+        "Data/rho",
+        "Data/rhoX",
+        "Blocks/level",
+        "Blocks/logical_x1",
+        "Blocks/logical_x2",
+        "Blocks/logical_x3"
+      ],
+      "scope": "Actual native GUI terminal handoff and independently compared fresh physics, distinct output directories",
+      "resources": {
+        "OMP_NUM_THREADS": 4,
+        "peak_RSS": null,
+        "peak_GPU": null,
+        "method": "Native UI wall interval plus Core run_timings, no GNU guard wrapping terminal handoff"
+      }
+    },
+    "negative_controls": {
+      "saved_restart_false_or_missing": "Explicit blockedplan and disabled launch; corrected savedinput reused successfully",
+      "preview_restart": "Initial-state preview explicitly does not loadRestart; old successful preview markedstale",
+      "renderer_forced_close": "Prior samepackage forcedrendererclose oldprofile-fixed successful; no destroyedwindow exception after boundedfix"
+    },
+    "close": {
+      "path": "profile-workflow/desktop.log",
+      "sha256": "00776dcb0c7b485f26249314c37eb0228a5a98a92cce6d7926e522fc389c283f",
+      "ownedHostExited": true,
+      "desktopExit": 0
+    },
+    "screenshots": {
+      "03-preview.png": {
+        "sha256": "84f2a8d13eec526a1a52f9832d5a4e0c2db15ada08ef2ffd9f248754b93dde75",
+        "bytes": 138659
+      },
+      "07-restart-rejected.png": {
+        "sha256": "7b41dd96781ff928338e0e757353fa05384bc0bf03515c688a575f939c27104b",
+        "bytes": 173606
+      },
+      "10-plot-lod.png": {
+        "sha256": "c767c211664af98a0ebac605a7f36247345d56153b6242c3db7963600a36fd59",
+        "bytes": 105448
+      },
+      "05-run-confirm.png": {
+        "sha256": "c7603f281fa125ccde7de9ff0cd4a092e56031459183c8fcf1852e7c7251add1",
+        "bytes": 163574
+      },
+      "04-amr.png": {
+        "sha256": "91595a53782468e1fc437e254ee13631a9ce5c04c4e5b01d3248624b9bf58d17",
+        "bytes": 140329
+      },
+      "08-restart-completed.png": {
+        "sha256": "4b38694230ce93456ec41f40880d0c0acc721cdc3d6b7f73f80cf8f500936002",
+        "bytes": 140985
+      },
+      "09-native-inspector.png": {
+        "sha256": "028126323450d8747ee10c9048ff33a8e98a153b6c35dcf468dc6b2a3826dfbe",
+        "bytes": 123491
+      },
+      "01-configure.png": {
+        "sha256": "b9b9bf6d7914d32eddc02276e8d72766c5d84b16d408697707310870f950b1e9",
+        "bytes": 161893
+      },
+      "06-run-completed.png": {
+        "sha256": "ac21c4988b97ef380706d552b36f242dbb33288a517f18ac1e8aa1351a51a199",
+        "bytes": 138918
+      }
+    },
+    "data_preservation": "56native GUI data/run-record members copied from temporaryproject into persistentoutput/studio-native; paths and digests in qualification.json.",
+    "tests": "388fulltests0skips, ESLint0warnings, typedVite build and LinuxElectron44.4.3 packaging PASS;8targetdesktop tests pass. Legacy localfile viewer limits distinct from current projectviewer, no changed scientific semantics."
+  },
+  "performance_and_resources": {
+    "status": "PASS_RUNTIME_NONREGRESSION_BUILD_COST_DEFERRED",
+    "matched_runtime": {
+      "status": "PASS",
+      "scope": "Existing fixed-work owner, two scales/four samples per chart. No physical endpoint or stable end-to-end speedup claim.",
+      "original_gates": "Samecandidate ratio<=2, originalCPU527.86/471.93ns upper anchors; anchors not imposed onGPU. Matched cells,EOS,species,RK2,MUSCL/MC,capacity,gravitynone/outputless.",
+      "source_commit": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+      "results": {
+        "cpu": {
+          "status": "PASS_ORIGINAL_MATCHED_COST_GATES",
+          "scales": [
+            {
+              "roots": 4,
+              "cell_stages": 524288,
+              "samples_seconds": {
+                "cylindrical": [
+                  0.11598639900000002,
+                  0.10613569200000003,
+                  0.10755510599999998,
+                  0.102693228
+                ],
+                "spherical": [
+                  0.09537703199999999,
+                  0.10771382999999998,
+                  0.09823612799999998,
+                  0.09529703700000001
+                ]
+              },
+              "median_hydro_seconds": {
+                "cylindrical": 0.10684539900000001,
+                "spherical": 0.09680657999999998
+              },
+              "ns_per_cell_stage": {
+                "cylindrical": 203.79142570495608,
+                "spherical": 184.64389801025385
+              },
+              "native_over_rphi_ratio": 1.1036997588387074,
+              "ratio_alarm": 2.0,
+              "original_cpu_absolute_upper_ns": 527.86,
+              "CV_percent": {
+                "cylindrical": 5.221980354149273,
+                "spherical": 5.91664479615844
+              }
+            },
+            {
+              "roots": 8,
+              "cell_stages": 2097152,
+              "samples_seconds": {
+                "cylindrical": [
+                  0.42874438500000006,
+                  0.4228906190000001,
+                  0.4119998759999999,
+                  0.4062253709999999
+                ],
+                "spherical": [
+                  0.4077358130000001,
+                  0.38757677700000004,
+                  0.398399635,
+                  0.38920811400000005
+                ]
+              },
+              "median_hydro_seconds": {
+                "cylindrical": 0.4174452475,
+                "spherical": 0.3938038745
+              },
+              "ns_per_cell_stage": {
+                "cylindrical": 199.05340552330017,
+                "spherical": 187.78032040596008
+              },
+              "native_over_rphi_ratio": 1.0600333682090273,
+              "ratio_alarm": 2.0,
+              "original_cpu_absolute_upper_ns": 471.93,
+              "CV_percent": {
+                "cylindrical": 2.446207878960526,
+                "spherical": 2.353736359561093
+              }
+            }
+          ]
+        },
+        "cuda": {
+          "status": "PASS_ORIGINAL_MATCHED_COST_GATES",
+          "scales": [
+            {
+              "roots": 4,
+              "cell_stages": 524288,
+              "samples_seconds": {
+                "cylindrical": [
+                  0.10659525999999998,
+                  0.08641045299999997,
+                  0.084380184,
+                  0.092247129
+                ],
+                "spherical": [
+                  0.08302588299999998,
+                  0.083477643,
+                  0.08411054500000001,
+                  0.08708165500000002
+                ]
+              },
+              "median_hydro_seconds": {
+                "cylindrical": 0.08932879099999999,
+                "spherical": 0.08379409400000001
+              },
+              "ns_per_cell_stage": {
+                "cylindrical": 170.38114738464353,
+                "spherical": 159.82455062866214
+              },
+              "native_over_rphi_ratio": 1.0660511586890595,
+              "ratio_alarm": 2.0,
+              "original_cpu_absolute_upper_ns": null,
+              "CV_percent": {
+                "cylindrical": 10.852532518631532,
+                "spherical": 2.163853537953929
+              }
+            },
+            {
+              "roots": 8,
+              "cell_stages": 2097152,
+              "samples_seconds": {
+                "cylindrical": [
+                  0.1903366860000001,
+                  0.184022551,
+                  0.18296040399999997,
+                  0.18011182900000003
+                ],
+                "spherical": [
+                  0.18543957899999985,
+                  0.18000222599999993,
+                  0.181763561,
+                  0.17972447500000008
+                ]
+              },
+              "median_hydro_seconds": {
+                "cylindrical": 0.1834914775,
+                "spherical": 0.18088289349999997
+              },
+              "ns_per_cell_stage": {
+                "cylindrical": 87.49555468559265,
+                "spherical": 86.2516849040985
+              },
+              "native_over_rphi_ratio": 1.0144213969023004,
+              "ratio_alarm": 2.0,
+              "original_cpu_absolute_upper_ns": null,
+              "CV_percent": {
+                "cylindrical": 2.340195666786515,
+                "spherical": 1.4478346545556364
+              }
+            }
+          ]
+        }
+      }
+    },
+    "measured_stages": [
+      {
+        "name": "archive-cpu-noop",
+        "exit": 0,
+        "wall_seconds": 1.0606438189997789,
+        "gnu_wall_seconds": 0.03,
+        "gnu_max_single_process_rss_kib": 18560,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6947144,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1408,
+            "elapsed_seconds": 1.014,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.0,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 2,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 13809242112,
+            "minimum_free_bytes": 13809242112,
+            "samples": 3,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "archive-cuda-noop",
+        "exit": 0,
+        "wall_seconds": 1.068865293998897,
+        "gnu_wall_seconds": 0.05,
+        "gnu_max_single_process_rss_kib": 18688,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6911376,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1408,
+            "elapsed_seconds": 1.017,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.0,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 2,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 12724908032,
+            "minimum_free_bytes": 12724908032,
+            "samples": 3,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-analytic-endpoints",
+        "exit": 0,
+        "wall_seconds": 27.519138997000482,
+        "gnu_wall_seconds": 28.2,
+        "gnu_max_single_process_rss_kib": 188156,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6755656,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 221724,
+            "elapsed_seconds": 27.42,
+            "stop_reason": "none"
+          },
+          "GPU_MEMORY_OBSERVATION": {
+            "scope": "whole_device",
+            "uuid": "GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0",
+            "total_mib": 8192,
+            "baseline_used_mib": 2346,
+            "peak_used_mib": 2521,
+            "min_free_mib": 5504,
+            "samples": 28,
+            "complete": true
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.01,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 27,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 10744750080,
+            "minimum_free_bytes": 10744745984,
+            "samples": 28,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-generated",
+        "exit": 0,
+        "wall_seconds": 59.11022089200014,
+        "gnu_wall_seconds": 59.23,
+        "gnu_max_single_process_rss_kib": 201940,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6783236,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 171504,
+            "elapsed_seconds": 59.007,
+            "stop_reason": "none"
+          },
+          "GPU_MEMORY_OBSERVATION": {
+            "scope": "whole_device",
+            "uuid": "GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0",
+            "total_mib": 8192,
+            "baseline_used_mib": 2346,
+            "peak_used_mib": 2487,
+            "min_free_mib": 5538,
+            "samples": 58,
+            "complete": true
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.043,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 57,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 10778304512,
+            "minimum_free_bytes": 10744750080,
+            "samples": 58,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-hotspots",
+        "exit": 0,
+        "wall_seconds": 33.0075201669988,
+        "gnu_wall_seconds": 33.33,
+        "gnu_max_single_process_rss_kib": 372860,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6625460,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 314108,
+            "elapsed_seconds": 32.904,
+            "stop_reason": "none"
+          },
+          "GPU_MEMORY_OBSERVATION": {
+            "scope": "whole_device",
+            "uuid": "GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0",
+            "total_mib": 8192,
+            "baseline_used_mib": 2346,
+            "peak_used_mib": 2771,
+            "min_free_mib": 5254,
+            "samples": 33,
+            "complete": true
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.005,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 32,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 10744745984,
+            "minimum_free_bytes": 10744741888,
+            "samples": 33,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-ideal-charts-r2",
+        "exit": 0,
+        "wall_seconds": 10.753889102999892,
+        "gnu_wall_seconds": 10.9,
+        "gnu_max_single_process_rss_kib": 372792,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6530332,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 375956,
+            "elapsed_seconds": 10.643,
+            "stop_reason": "none"
+          },
+          "GPU_MEMORY_OBSERVATION": {
+            "scope": "whole_device",
+            "uuid": "GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0",
+            "total_mib": 8192,
+            "baseline_used_mib": 2430,
+            "peak_used_mib": 2433,
+            "min_free_mib": 5592,
+            "samples": 12,
+            "complete": true
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.01,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 11,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 10811969536,
+            "minimum_free_bytes": 10811969536,
+            "samples": 12,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-pressure",
+        "exit": 0,
+        "wall_seconds": 27.345516175999364,
+        "gnu_wall_seconds": 27.5,
+        "gnu_max_single_process_rss_kib": 374340,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6583484,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 368596,
+            "elapsed_seconds": 27.219,
+            "stop_reason": "none"
+          },
+          "GPU_MEMORY_OBSERVATION": {
+            "scope": "whole_device",
+            "uuid": "GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0",
+            "total_mib": 8192,
+            "baseline_used_mib": 2427,
+            "peak_used_mib": 2719,
+            "min_free_mib": 5306,
+            "samples": 28,
+            "complete": true
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.362,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 27,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 10812260352,
+            "minimum_free_bytes": 10812252160,
+            "samples": 28,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-pressure-cpu-first",
+        "exit": 0,
+        "wall_seconds": 27.141202148000957,
+        "gnu_wall_seconds": 27.95,
+        "gnu_max_single_process_rss_kib": 68708,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6319028,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 94384,
+            "elapsed_seconds": 27.078,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 5.026,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 28,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 13399523328,
+            "minimum_free_bytes": 13399515136,
+            "samples": 29,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "candidate-rotation-r2",
+        "exit": 0,
+        "wall_seconds": 81.96640958099852,
+        "gnu_wall_seconds": 83.95,
+        "gnu_max_single_process_rss_kib": 377856,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6527460,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 380408,
+            "elapsed_seconds": 81.858,
+            "stop_reason": "none"
+          },
+          "GPU_MEMORY_OBSERVATION": {
+            "scope": "whole_device",
+            "uuid": "GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0",
+            "total_mib": 8192,
+            "baseline_used_mib": 2349,
+            "peak_used_mib": 3075,
+            "min_free_mib": 4950,
+            "samples": 79,
+            "complete": true
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.406,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 78,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 10811899904,
+            "minimum_free_bytes": 10778304512,
+            "samples": 79,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "cold-cpu-build",
+        "exit": 0,
+        "wall_seconds": null,
+        "gnu_wall_seconds": 172.62,
+        "gnu_max_single_process_rss_kib": 1351144,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 4367008,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 2661992,
+            "elapsed_seconds": 170.64,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 5.515,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 170,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 14541709312,
+            "minimum_free_bytes": 14105423872,
+            "samples": 171,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "cold-cuda-build",
+        "exit": 124,
+        "wall_seconds": 3600.468134424,
+        "gnu_wall_seconds": 3689.0,
+        "gnu_max_single_process_rss_kib": 1775248,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 5166740,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1812040,
+            "elapsed_seconds": 3600.342,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 19.178,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 3580,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 13775568896,
+            "minimum_free_bytes": 13399728128,
+            "samples": 3581,
+            "complete": true
+          }
+        },
+        "measurement_classification": "CONTROLLED_TIMEOUT_NOT_PASS: initial cold CUDA attempt exited124; monotonic guard3600.342s and GNU3689s disagree, both kept. Same frozen graph later resumed to actual success."
+      },
+      {
+        "name": "cold-cuda-resume-1",
+        "exit": 0,
+        "wall_seconds": 686.6858478270005,
+        "gnu_wall_seconds": 704.0,
+        "gnu_max_single_process_rss_kib": 1615176,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 5313200,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1647912,
+            "elapsed_seconds": 686.63,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 4.778,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 682,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 13399703552,
+            "minimum_free_bytes": 12724908032,
+            "samples": 683,
+            "complete": true
+          }
+        },
+        "measurement_classification": "SAME_GRAPH_COMPLETION_PASS: cache-disabled frozen resume exit0; overlaps27sec CPU-only pressure diagnostics (~94MiB). Not an isolated continuous cold-build sample."
+      },
+      {
+        "name": "cpu-main-recompile",
+        "exit": 0,
+        "wall_seconds": 34.907886131999476,
+        "gnu_wall_seconds": 34.67,
+        "gnu_max_single_process_rss_kib": 465072,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6117492,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1269612,
+            "elapsed_seconds": 34.86,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 2.055,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 35,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 13809209344,
+            "minimum_free_bytes": 13775654912,
+            "samples": 36,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "cpu-relink-qualified",
+        "exit": 0,
+        "wall_seconds": 27.10543220100044,
+        "gnu_wall_seconds": 26.86,
+        "gnu_max_single_process_rss_kib": 305060,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6079492,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1290128,
+            "elapsed_seconds": 27.052,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.035,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 27,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 13775572992,
+            "minimum_free_bytes": 13775568896,
+            "samples": 28,
+            "complete": true
+          }
+        },
+        "measurement_classification": "PURE_RELINK_VERIFIED: final output moved; log has one link action and no compile"
+      },
+      {
+        "name": "cuda-main-recompile",
+        "exit": 0,
+        "wall_seconds": 42.235508925999966,
+        "gnu_wall_seconds": 42.2,
+        "gnu_max_single_process_rss_kib": 500576,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6025996,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1410364,
+            "elapsed_seconds": 42.185,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.024,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 42,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 12724908032,
+            "minimum_free_bytes": 12456468480,
+            "samples": 43,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      },
+      {
+        "name": "cuda-relink-qualified",
+        "exit": 0,
+        "wall_seconds": 30.56326698799967,
+        "gnu_wall_seconds": 31.04,
+        "gnu_max_single_process_rss_kib": 161556,
+        "observations": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6062796,
+            "baseline_swap_kib": 12,
+            "peak_swap_kib": 12,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 1370080,
+            "elapsed_seconds": 30.514,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.124,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 30,
+            "complete": true
+          },
+          "HOST_STORAGE_OBSERVATION": {
+            "scope": "linux_mount",
+            "root": "/mnt/e",
+            "minimum_threshold_bytes": 1073741824,
+            "reserve_bytes": 536870912,
+            "initial_free_bytes": 12456468480,
+            "minimum_free_bytes": 12456448000,
+            "samples": 31,
+            "complete": true
+          }
+        },
+        "measurement_classification": "Actual bounded stage; inspect exit and scope"
+      }
+    ],
+    "interpretation": "Original native/rphi<=2 and CPUabsolute527.86/471.93ns/cell-stage anchors pass. Current smallshape CV5-11% precludes stable speedup claim. CPUcold GNU172.62s, representative main timestamp recompile34.67s, purelink26.86s. CUDA initial GNU3689s vs monotonic3600.342s preserved, resumeGNU704s vs monotonic686.63s; no fabricated common wallclock. CUDA main/relink42.24/30.56s orchestration wall. These probes are not optimization A/B comparisons.",
+    "resume_context": "Only completion segment overlaps27s CPU-only pressure diagnostic (~94MiB); source/config frozen. Not an isolated continuous cold-build sample; do not add overlapping intervals as tasktotal.",
+    "resources": "WSL~7.7GiB/RTX3060Ti8GiB; heavyparallel2/CUDAheavy1; OMP4except ownerexplicitOMP1; no sampled swap growth or resourceguard termination. GPU numbers wholedevice, not attributable solely to ARCH.",
+    "storage": "Actual host /mnt/e ~10GiB still free near finalH5;1GiB stop threshold retained. Offline four verified assets, noLFSfetch/pull.",
+    "unknown": {
+      "GUI_peak_RSS": null,
+      "hosted_RAM": null,
+      "hosted_cache_hit_rate": null,
+      "manager_tokens": null,
+      "money": null
+    }
+  },
+  "platform_support": {
+    "accepted": [
+      "Linuxx64/WSL2 CPU GCC13.3",
+      "Linuxx64/WSL2 CUDA12.3 GCC12 sm86 RTX3060Ti",
+      "Optional Linuxx64 Studio Electron44.4.3 bundledHost Node24"
+    ],
+    "not_newly_qualified": [
+      "Windowsnative",
+      "other GPU architectures or multiGPU",
+      "selfcontained arbitraryhost binary portability",
+      "general radiation transport",
+      "every EOS/network/method crossproduct",
+      "independent hotspot ignition science"
+    ],
+    "known_domain_limits": "Existing near-origin and table/material valid-domain limits remain as declared by original owners; no guessed safe radius or silent state repair."
+  },
+  "hosted_CI": {
+    "source_head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+    "PR": "https://github.com/Shiro-Akane/ARCH/pull/12",
+    "state_observed": "open;draft=false preexisting, unchanged by manager",
+    "runs": [
+      {
+        "id": 39376549328,
+        "name": "ARCH CI",
+        "event": "pull_request",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success"
+      },
+      {
+        "id": 39376546233,
+        "name": "PR #12",
+        "event": "dynamic",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success"
+      },
+      {
+        "id": 39376543196,
+        "name": "ARCH CI",
+        "event": "push",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success"
+      }
+    ],
+    "required_checks": [
+      {
+        "id": 118479701503,
+        "name": "CI required",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118478281127,
+        "name": "CI required",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118476017015,
+        "name": "CodeQL",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118475871098,
+        "name": "CPU Release",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118475871073,
+        "name": "Studio and Host",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118475870944,
+        "name": "Tooling",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118475864774,
+        "name": "Analyze (actions)",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 2
+      },
+      {
+        "id": 118475864759,
+        "name": "Analyze (c-cpp)",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 2
+      },
+      {
+        "id": 118475864588,
+        "name": "Analyze (python)",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 2
+      },
+      {
+        "id": 118475851690,
+        "name": "Tooling",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118475851654,
+        "name": "Studio and Host",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      },
+      {
+        "id": 118475851440,
+        "name": "CPU Release",
+        "head_sha": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+        "conclusion": "success",
+        "annotations": 0
+      }
+    ],
+    "CodeQL": "Currentsource7e1d success, no new alerts/zeroannotations on CodeQLsummary; no suppression or rule removal. Analyzeactions informational300file-diff limit andubuntu-latest migration notices preserved, not source alerts.",
+    "log_access": "Public read-only REST snapshots; authenticated logs unavailable and not repeatedly requested.",
+    "records_commit_policy": "This receipt and plan/AGENTS are postbuild records, not a rebuilt binary identity. After normalrecords push, exact latesthead jobs/aggregate/CodeQL are rechecked in persistentoutput; source CI above is not substituted for a newer failing or pending applicable gate."
+  },
+  "preservation": {
+    "old_executables": {
+      "status": "PASS",
+      "members": {
+        "CPU_original": {
+          "path": "build-modernization-cpu/bin/ARCH",
+          "sha256": "fe09bf2e251a41b52f5e74fde337085e0daf6bc61b9c99799a6a128bc09a9888",
+          "executable": true
+        },
+        "CUDA_original": {
+          "path": "build-modernization-cuda/bin/ARCH",
+          "sha256": "b1143d8aa6a26617a8d533d0a8fc5559fb7ccbb8955fcff1407b45a42d439a2b",
+          "executable": true
+        },
+        "REL5_CPU": {
+          "path": "output/release/rel5-20261019/hosted-admission/current-cpu/bin/ARCH",
+          "sha256": "ff8da6938cc67919a0b7796d0837785199934575d2f81302bebdcba5cc662f69",
+          "executable": true
+        },
+        "Host_comparator": {
+          "path": "build-modernization-cpu/arch_cuda_single_level_validation",
+          "sha256": "13e91fba6e383a900862ce2e576efe8e36382e0d5096071846384b1e7eed01a3",
+          "executable": true
+        }
+      }
+    },
+    "old_receipts": "REL1-5/Cyl0-6 original receipts and oldFAIL/NOT_MET retained; tracked scientific receipts/history/provenance fixtures rechecked against7e1d Gitblob identities in protected-tracked-final.json. No historical assembly or verification script rerun to rewrite them.",
+    "prior_untracked_directory": "native-self-hydro-owner/ retained untracked; not staged or deleted",
+    "no_raw_data_external_delegation": true
+  },
+  "collaboration": {
+    "provider": "Actual configuredDeepSeek Flashhigh CLI/MCP; no native agent substituted",
+    "accepted_jobs": {
+      "installation": "c7be65d8821440d7ad47833b6cfc1473",
+      "pressure_partial_plus_manager_integration": "3b885fccbf42440e94977b5579fb0cd2",
+      "desktop": "00607dcc1b5645b4b1d7715ad20296fb",
+      "pressure_independent_evidence": "e3ca404dc18244da97594830d5111077",
+      "coverage_applicability_evidence": "a0e57039fc3944958b4b16c645fa4e2f",
+      "final_scripted_contract_evidence": "a319e6a27ec941838bd334b8c3b8ecbe"
+    },
+    "manager_review": "Independent actual builds/installs/library numerics/nativeGUI/current CI; last DPS review ACCEPT evidence_only, does not certify unexecuted GUI or release. Read-only optional helper caveat independently checked.",
+    "budget": "Same cumulative owner/goalarch-rz-reintroduction-20261018;85callsused/reserved of manager soft86 across phases, no user hard ceiling specified, no reset. No extra call solely for style or sampling."
+  },
+  "documentation_verification": {
+    "status": "PASS",
+    "recorded_utc": "2026-10-20T07:17:14.949708+00:00",
+    "documentation": {
+      "pages": 202,
+      "local_destinations": 2263,
+      "errors": 0,
+      "log": {
+        "path": "output/release/rel6-20261020/final-documentation.log",
+        "sha256": "3e024e07f1c5715822b9481683f65b8f64829509b0d6f49486cff838c9052085"
+      }
+    },
+    "architecture": {
+      "exit": 0,
+      "log": {
+        "path": "output/release/rel6-20261020/final-architecture.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "living_records": {
+      "ARCH_RELEASE_PLAN.md": {
+        "sha256": "dc3f0fac518c5d04ba92c7708f5df13d21097e009b261a276fe22ef3d5e12a32",
+        "bytes": 23695
+      },
+      "AGENTS.md": {
+        "sha256": "f39e087cbdcd942a1563a07bf20eb6acba7bc4c83f80647e046024353abbfe49",
+        "bytes": 14788
+      }
+    },
+    "source_changes_after_candidate_freeze": false,
+    "acceptance": "All six scriptedgroups, runtimecost, relocatedCPU/CUDA, nativeGUI and independentDPS scopedreviews accepted; SNIajoint directhuman authorization. No unresolved currentcandidate blocker withindeclaredscope.",
+    "pending": "Normal recordscommit/push and exactlatesthead hostedrecheck; noREL7",
+    "cleanup": "Only three REL6-created managedworktrees archived with recoverable snapshots; unrelatedworktrees untouched"
+  },
+  "evidence_index": {
+    "archive-source.json": {
+      "path": "output/release/rel6-20261020/archive-source.json",
+      "sha256": "e17b635680f5cb4642285bde8afcc399ebd683009f89b06205c9b7da1813bd04",
+      "bytes": 1586
+    },
+    "candidate-source-freeze.json": {
+      "path": "output/release/rel6-20261020/candidate-source-freeze.json",
+      "sha256": "1681eec85d7a94c3ced36ea1db8c424b3e1f2fd264bd76211d2c76bd27868f08",
+      "bytes": 200503
+    },
+    "source-freeze-final.json": {
+      "path": "output/release/rel6-20261020/source-freeze-final.json",
+      "sha256": "e94a10bded104ab9ce1d94399db6c23466ce9499b2a41b1981197b836b5824dd",
+      "bytes": 396
+    },
+    "protected-executables-final.json": {
+      "path": "output/release/rel6-20261020/protected-executables-final.json",
+      "sha256": "38475de089e9a04870639a6f53692855401df12da378148fa3eb841f32ba7548",
+      "bytes": 854
+    },
+    "protected-tracked-final.json": {
+      "path": "output/release/rel6-20261020/protected-tracked-final.json",
+      "sha256": "f6923f662a89c90d8d767086b6090737ed7d96301bc28e26e45ad6bbcc436836",
+      "bytes": 292670
+    },
+    "cpu-package-qualification.json": {
+      "path": "output/release/rel6-20261020/cpu-package-qualification.json",
+      "sha256": "35efc158cee6a1dceb19d1ee8bce66c26f29acde6482a7c34d363b36983a798b",
+      "bytes": 22241
+    },
+    "cuda-package-qualification.json": {
+      "path": "output/release/rel6-20261020/cuda-package-qualification.json",
+      "sha256": "af969581ead9e889ce72e82efb9d4d035c9862f51d2b251c904ef7f0df018a22",
+      "bytes": 44701
+    },
+    "scripted-gates-summary.json": {
+      "path": "output/release/rel6-20261020/scripted-gates-summary.json",
+      "sha256": "ab41267e5554a5a5c854d94b06c5dc3ff5e475685554acd754e9b8f7cda1729f",
+      "bytes": 19157
+    },
+    "observer-noninvasive-independent.json": {
+      "path": "output/release/rel6-20261020/observer-noninvasive-independent.json",
+      "sha256": "c4825f4f1697561f035f3164fbd389d936fa66a9953dda2db73c1fe20b776242",
+      "bytes": 676
+    },
+    "current-runtime-cost-acceptance.json": {
+      "path": "output/release/rel6-20261020/current-runtime-cost-acceptance.json",
+      "sha256": "82fbd10b27b275598e580ec7079a9957439549870f96b5eb505a2f051c663cdd",
+      "bytes": 4643
+    },
+    "cold-cuda-build.json": {
+      "path": "output/release/rel6-20261020/cold-cuda-build.json",
+      "sha256": "cb91d5642dc0faeed74c3ae4ef0ee27cb71046c136de0be0a15b465b7962a96b",
+      "bytes": 1304
+    },
+    "cold-cuda-resume-1.json": {
+      "path": "output/release/rel6-20261020/cold-cuda-resume-1.json",
+      "sha256": "68b2402235a0acba695a0e2579bff3914e8cf72c8128b0055a4ee67e88d12e61",
+      "bytes": 1314
+    },
+    "cuda-build-completion.json": {
+      "path": "output/release/rel6-20261020/cuda-build-completion.json",
+      "sha256": "4a117c2b2ec7f3959c98fdb111085e7a01234c6dbeea737e2d5e5b8bda762285",
+      "bytes": 524
+    },
+    "cpu-incremental-identity.json": {
+      "path": "output/release/rel6-20261020/cpu-incremental-identity.json",
+      "sha256": "f2e62f4df37ce5da8a948e4200d279080a5a1b73aedf37b5282f0198ead8b93d",
+      "bytes": 908
+    },
+    "cuda-incremental-identity.json": {
+      "path": "output/release/rel6-20261020/cuda-incremental-identity.json",
+      "sha256": "fddbd06154ffaf04fc1839396fc3a52cd43892a1a80d075888604aae88552e2a",
+      "bytes": 914
+    },
+    "cost-ledger.json": {
+      "path": "output/release/rel6-20261020/cost-ledger.json",
+      "sha256": "1d5d3e1f7342411aa277a7b732a06c32087cf7dcdaa67aac8fd7a04557a19ef2",
+      "bytes": 108459
+    },
+    "studio-native/qualification.json": {
+      "path": "output/release/rel6-20261020/studio-native/qualification.json",
+      "sha256": "fac5d8ccf5a1eb32f93fea7087c43b96d1c603e5a919a42faa8848d55b87b565",
+      "bytes": 15308
+    },
+    "studio-native/packaged-identity.json": {
+      "path": "output/release/rel6-20261020/studio-native/packaged-identity.json",
+      "sha256": "741dcd26f93f1a4f8112408660791943f5b3f84ece6e8db1aeb3c0cf5818f8ea",
+      "bytes": 23091
+    },
+    "hosted-7e1dca167bd5-20261020T061557.json": {
+      "path": "output/release/rel6-20261020/hosted-7e1dca167bd5-20261020T061557.json",
+      "sha256": "9542f80699c33236a122bcd729a9bf36228d1261f2e955377000c87b207c70c3",
+      "bytes": 128093
+    },
+    "hosted-source-complete-jobs.json": {
+      "path": "output/release/rel6-20261020/hosted-source-complete-jobs.json",
+      "sha256": "c0a790a5b54eec8605d6ed9df9e6c7a413614eb00a6fbcb17730be808c76e38a",
+      "bytes": 48984
+    },
+    "final-record-verification.json": {
+      "path": "output/release/rel6-20261020/final-record-verification.json",
+      "sha256": "d0a65e0f0ed2b212e54d8722b1fea11a005668877beb28df19c6587cf8d74d6c",
+      "bytes": 1334
+    },
+    "candidate-runtime/pressure/results.json": {
+      "path": "output/release/rel6-20261020/candidate-runtime/pressure/results.json",
+      "sha256": "0c8d07ac90a1070c874656a980904d2be700ad32083222138f02126ab5df5eea",
+      "bytes": 25049
+    },
+    "candidate-runtime/ideal-charts/results.json": {
+      "path": "output/release/rel6-20261020/candidate-runtime/ideal-charts/results.json",
+      "sha256": "062245c8136a9b3ba6712a432ef5a16b881aa727fc56205048a986313409d03a",
+      "bytes": 55472
+    },
+    "candidate-runtime/rotation/results.json": {
+      "path": "output/release/rel6-20261020/candidate-runtime/rotation/results.json",
+      "sha256": "c2706a6550352f7d93e132003e51e2548e86d4ba092de8fed7ccd612b69f921b",
+      "bytes": 177392
+    },
+    "candidate-runtime/generated/results.json": {
+      "path": "output/release/rel6-20261020/candidate-runtime/generated/results.json",
+      "sha256": "d165ce246d31950b1ad9f11e1dcedfd567d89fea54d6031768ea10b3563a615f",
+      "bytes": 103662
+    },
+    "candidate-runtime/analytic-endpoints/results.json": {
+      "path": "output/release/rel6-20261020/candidate-runtime/analytic-endpoints/results.json",
+      "sha256": "1970fe2e55fb6ef5649272f9c59f5a716352fef93cfd9ccd49ec24334d6e4c20",
+      "bytes": 75769
+    },
+    "candidate-runtime/hotspots/results.json": {
+      "path": "output/release/rel6-20261020/candidate-runtime/hotspots/results.json",
+      "sha256": "b8d91bbeee271fb8edfcac3ad56ac904f4a551f3d2f9f70a4a4add7533100f07",
+      "bytes": 13379
+    }
+  },
+  "prior_receipts": [
+    "validation/backend/results/release-readiness/REL1Overview-20261014.json",
+    "validation/backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json",
+    "validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json",
+    "validation/backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json",
+    "validation/backend/results/release-readiness/REL5DocumentationAndTestConsolidation-20261019.json"
+  ],
+  "next_work_requires_new_phase": [
+    "REL7 release/merge/tag/publication preparation only when userstarts it",
+    "Freeze separate build-throughput investigation from measuredCUDAunit costs; do not repeatedly rerun all routes while editing"
+  ],
+  "stop_boundary": "REL6 candidate accepted in stated scope; noREL7,merge,forcepush,tag or formalrelease performed."
+}
