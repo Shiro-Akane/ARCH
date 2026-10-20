@@ -1,0 +1,132 @@
+{
+  "schema": "ARCH-release-record-1",
+  "phase": "REL-7",
+  "version": "v1.3.0",
+  "status": "IN_PROGRESS",
+  "updated_utc": "2026-10-20T08:38:07.060236+00:00",
+  "authority": {
+    "source": "direct user request 2026-10-20",
+    "authorized": [
+      "normal commit and push",
+      "merge PR#12 from compute/optim into main",
+      "create v1.3.0 tag",
+      "publish formal source-only GitHub release"
+    ],
+    "not_authorized": [
+      "force push or rewriting prior evidence",
+      "weaken numerical acceptance"
+    ]
+  },
+  "candidate": {
+    "source_commit": "7e1dca167bd5a348fbc1ba252de581a548cf40fa",
+    "entry_record_commit": "7fa1b7a78ca0a459c8d88e79782142fcb3335bcb",
+    "acceptance": "validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json",
+    "acceptance_sha256": "18d7dfb93e2413065da3c7c86ca70212f4da7e0af071ce262cb9d66a4a0540fd",
+    "requalified_here": false,
+    "reason": "Only release documentation and execution-entry records change; accepted applicable numerical/build/GUI evidence is retained under its original identities."
+  },
+  "release_notes": [
+    {
+      "path": "docs/releases/V1.3.0.md",
+      "sha256": "b5d30a9ac3e65882c6e2a7572c4c4177ce471a1044a96c7206491ae00a9c130a"
+    },
+    {
+      "path": "docs/releases/V1.3.0.zh-CN.md",
+      "sha256": "1ce3bb8d861e040aa63880877c09171b4519547afa09aa471ee5b91fee1b6292"
+    }
+  ],
+  "qualified_scope": {
+    "platform": [
+      "Linux",
+      "WSL2"
+    ],
+    "gpu": "RTX 3060 Ti / sm86",
+    "models": "All 16 public models with the applicable scoped evidence in candidate acceptance",
+    "studio": "Optional Linux desktop, 388 tests without skips and actual workflow accepted",
+    "configuration": "Reject missing or invalid active critical inputs and unsupported active routes; documented defaults and automatic choices remain traceable.",
+    "numerical_contract": "Existing ENUC 5e-9 plus 5e-12 and applicable 1e-12 angular momentum/mass/charge criteria unchanged.",
+    "scientific_qualifications": [
+      "User-authorized SNIa joint evidence; original main repeated-AMR FAIL and thermal GAP retained.",
+      "Hotspot functional endpoint does not establish a separate ignition-mechanism result.",
+      "CUDA complete cold-build cost remains a nonblocking follow-up; no generic speedup claim."
+    ]
+  },
+  "publication": {
+    "pull_request": "https://github.com/Shiro-Akane/ARCH/pull/12",
+    "target_branch": "main",
+    "tag": "v1.3.0",
+    "title": "ARCH v1.3.0",
+    "format": "Historical source-only GitHub Release; no custom prebuilt scientific binary or raw simulation output assets.",
+    "merged": false,
+    "tag_created": false,
+    "release_published": false,
+    "state_source": "Remote state must be verified after each action; this record is not publication.",
+    "automation": {
+      "path": ".github/workflows/release-v1.3.0.yml",
+      "scope": "Only preexisting v1.3.0 tag equal to current main and PR#12 merge, after exact-main CI four jobs/CodeQL and candidate/notes identity checks. Ordinary PR jobs remain read-only; no branch rule changes or tag creation.",
+      "workflow_sha256": "6a667d4fffd94e5b9b3f732e39a5b444eba321cc52243c918fa2e29641e9b412"
+    }
+  },
+  "independent_review": [
+    {
+      "provider": "DeepSeek",
+      "job": "7fbde0fdce474a83b07f243456ef5e85",
+      "decision": "ACCEPT",
+      "scope": "evidence_only: release statements versus frozen candidate and historical release practice"
+    },
+    {
+      "provider": "Gemini official native CLI",
+      "job": "1949b523058b4c05998205133de99445",
+      "decision": "ACCEPT",
+      "scope": "full bilingual text after independent exact-link/value and scientific-scope review",
+      "previous_job": "ab4e4a06cdce40adb376c0ccd721ed9a",
+      "previous_result": "prelaunch adapter error, REPAIR_REQUIRED; process-local PowerShell module environment fixed without global infrastructure changes"
+    }
+  ],
+  "evidence_index": {
+    "local": "output/release/rel7-20261020/",
+    "immutable_candidate": "validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json",
+    "notes": "docs/releases/README.md"
+  },
+  "cost_scope": "No scientific compilation, H5 generation, full CUDA build, old RZ or long scientific rerun in this documentation/publication phase. Hosted CI costs are recorded against each actual commit.",
+  "local_verification": {
+    "documentation": {
+      "pages": 202,
+      "local_destinations": 2266,
+      "errors": 0
+    },
+    "release_note_links": "English 10, Chinese 10, release index 12: all resolved",
+    "architecture_audit": "PASS",
+    "diff_check": "PASS",
+    "publisher_actionlint": "PASS; pinned 1.7.12 archive SHA verified",
+    "publisher_offline_controls": {
+      "count": 11,
+      "result": "PASS",
+      "cases": [
+        "valid publication",
+        "tag differs from main",
+        "wrong version tag",
+        "PR not merged",
+        "wrong PR merge identity",
+        "newer CI still running",
+        "skipped CI job",
+        "missing CI job",
+        "failed CodeQL",
+        "missing CodeQL",
+        "changed production source"
+      ]
+    },
+    "production_identity": "No diff versus REL-6 frozen source across scientific source/build and Studio implementation paths",
+    "new_scientific_runs": false
+  },
+  "additional_review": {
+    "topic": "Publisher workflow advisory audit",
+    "first_job": "ac5ff4760d944c7eb47b207d1b8d76a2",
+    "first_result": "180-second CLI timeout; no delivery, usage/remote status unknown",
+    "final_job": "9b08e601899145c18f97a8189d86a9a3",
+    "final_result": "REJECT/no adoption: output cap reached entirely in reasoning, 32768 reported output/reasoning tokens, 0 visible characters",
+    "attempts": 2,
+    "further_attempts": false,
+    "acceptance_effect": "No worker evidence adopted and no worker dependency unlocked. Manager-authored publisher has explicit local controls and must pass actual hosted workflow/remote publication checks."
+  }
+}

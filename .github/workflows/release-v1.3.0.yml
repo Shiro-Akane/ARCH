@@ -1,0 +1,105 @@
+name: Publish v1.3.0
+
+# One explicitly authorized source release. Ordinary PR CI remains read-only.
+on:
+  push:
+    tags: [v1.3.0]
+
+permissions: {}
+
+concurrency:
+  group: arch-release-v1.3.0
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish accepted source release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+      checks: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GIT_LFS_SKIP_SMUDGE: '1'
+    steps:
+      - name: Check out the existing tag without LFS downloads
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          lfs: false
+          persist-credentials: false
+
+      - name: Require the accepted main identity and prepare linked notes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import posixpath
+          import re
+          import subprocess
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          repo = os.environ["GH_REPO"]
+          assert repo == "Shiro-Akane/ARCH", "This release is authorized only for ARCH."
+          assert os.environ["GITHUB_REF"] == "refs/tags/v1.3.0"
+
+          def api(path):
+              return json.loads(subprocess.check_output(["gh", "api", f"repos/{repo}/{path}"], text=True))
+
+          sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          assert sha == api("commits/main")["sha"], "The tag must identify current main."
+          pr = api("pulls/12")
+          assert pr["merged"] and pr["base"]["ref"] == "main" and pr["head"]["ref"] == "compute/optim"
+          assert pr["merge_commit_sha"] == sha, "Publish the accepted PR merge, not another revision."
+          runs = api(f"actions/workflows/ci.yml/runs?head_sha={sha}&branch=main&event=push&per_page=10")["workflow_runs"]
+          assert runs, "Main must have its own hosted CI result."
+          latest = max(runs, key=lambda run: run["run_number"])
+          assert latest["head_sha"] == sha and latest["status"] == "completed" and latest["conclusion"] == "success"
+          jobs = api(f"actions/runs/{latest['id']}/jobs?per_page=100")["jobs"]
+          for name in ("Tooling", "CPU Release", "Studio and Host", "CI required"):
+              selected = [job for job in jobs if job["name"] == name]
+              assert len(selected) == 1 and selected[0]["status"] == "completed" and selected[0]["conclusion"] == "success", name
+          checks = api(f"commits/{sha}/check-runs?per_page=100")["check_runs"]
+          scans = [check for check in checks if check["name"] == "CodeQL" and check["app"]["slug"] == "github-advanced-security"]
+          assert scans, "Main must retain the CodeQL acceptance gate."
+          scan = max(scans, key=lambda check: check["id"])
+          assert scan["head_sha"] == sha and scan["status"] == "completed" and scan["conclusion"] == "success"
+          original = Path("validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json")
+          assert hashlib.sha256(original.read_bytes()).hexdigest() == "18d7dfb93e2413065da3c7c86ca70212f4da7e0af071ce262cb9d66a4a0540fd"
+          production = ["src", "include", "simulation", "cmake", "CMakeLists.txt", "CMakePresets.json", "studio/src", "studio/host", "studio/desktop", "studio/package.json", "studio/package-lock.json"]
+          subprocess.run(["git", "diff", "--exit-code", "7e1dca167bd5a348fbc1ba252de581a548cf40fa", sha, "--", *production], check=True)
+          record = json.loads(Path("validation/backend/results/release-readiness/REL7ReleaseRecord-20261020.json").read_text())
+          for note in record["release_notes"]:
+              assert hashlib.sha256(Path(note["path"]).read_bytes()).hexdigest() == note["sha256"]
+          text = Path("docs/releases/V1.3.0.md").read_text()
+
+          def absolute(match):
+              target = match.group(1)
+              url = urlsplit(target)
+              if url.scheme or url.netloc:
+                  return match.group(0)
+              path = posixpath.normpath(posixpath.join("docs/releases", url.path))
+              assert not path.startswith("../")
+              link = f"https://github.com/{repo}/blob/v1.3.0/{path}"
+              return "](" + link + ("#" + url.fragment if url.fragment else "") + ")"
+
+          text = re.sub(r"\]\(([^)]+)\)", absolute, text)
+          text = text.replace("## ARCH Studio\n", "## ARCH Studio\n\n![ARCH Studio Plotfile workspace](https://raw.githubusercontent.com/Shiro-Akane/ARCH/v1.3.0/docs/guides/images/studio-plotfile.png)\n", 1)
+          text += "\n**Full changelog:** [v1.2.1...v1.3.0](https://github.com/Shiro-Akane/ARCH/compare/v1.2.1...v1.3.0)\n"
+          Path(os.environ["RUNNER_TEMP"], "arch-release-notes.md").write_text(text)
+          print(json.dumps({"tag": "v1.3.0", "main": sha, "ci_run": latest["html_url"], "codeql": scan["details_url"]}))
+          PY
+
+      - name: Publish the existing tag as a formal source-only release
+        shell: bash
+        run: |
+          gh release create v1.3.0 --verify-tag --title 'ARCH v1.3.0' \
+            --notes-file "$RUNNER_TEMP/arch-release-notes.md" --latest
+          gh release view v1.3.0 --json url,tagName,isDraft,isPrerelease,publishedAt,assets

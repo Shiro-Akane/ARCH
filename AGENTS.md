@@ -2,12 +2,13 @@
 
 工程实现、审查、验证或性能工作使用项目 `arch-engineering` skill；需要外部协助时结合全局 `multimodel-engineering`。沿用现有物理定义、数值标准和验收，安装这些规则不授权源码或架构优化。
 
-## 本机路径与执行入口（2026-10-12 已核实）
+## 本机路径与执行入口（2026-10-20 Windows 原生模式已核实）
 
-- 本项目在 WSL Ubuntu 中执行，shell 为 `/bin/bash`。Windows C 盘文件通过 `/mnt/c/Users/26428/...` 访问，切勿将 `C:\Users\26428\...` 直接交给 Linux 命令。
-- 当前工作区为 `/home/shiroakane/.codex/worktrees/d7a6/ARCH`，主仓库目录为 `/home/shiroakane/ARCH`。恢复上下文后先读取本文件和 `ARCH_RELEASE_PLAN.md`，需要现代化结案依据再查 `ARCH_MODERNIZATION_PLAN.md`，再用 `git status --short --branch`、`git worktree list` 确认实际分支和目录，不凭旧聊天推断。
-- 若普通 `exec_command` 在启动进程前报 `CreateProcess ... No such file or directory (os error 2)`，不要反复替换 bash／PowerShell 路径。已验证的恢复入口为：`shell="/bin/bash"`、`login=false`、真实 WSL `workdir`，并通过工具审批使用 `sandbox_permissions="require_escalated"`。审批拒绝时按拒绝理由处理；本记录不授权绕过审批或永久关闭沙箱。
-- Windows `node_repl` 会拒绝 `file:///home/...` 的 `sandboxCwd`，这不证明文件不存在。WSL 项目文件须通过上述 WSL 命令入口读取，不在该 Windows Node 会话中反复尝试 Linux 路径。2026-10-19本轮普通沙箱的`/bin/bash`、`login=false`和真实WSL工作目录已可启动，优先使用普通入口；仅复现启动错误时再按上条恢复，不宣称全局兼容问题已永久修复。
+- Codex 工具宿主当前为 Windows 原生，执行入口用 `powershell.exe`、`login=false` 和真实 Windows 工作目录，例如 `C:/Users/26428`。`C:/home/shiroakane/.codex/worktrees/d7a6/ARCH` 是错误映射，不存在；不要创建同名镜像或将其当作仓库。
+- 实际仓库仍在 WSL Ubuntu：`/home/shiroakane/.codex/worktrees/d7a6/ARCH`，主目录 `/home/shiroakane/ARCH`。Windows 可通过 `\\wsl.localhost\Ubuntu\home\shiroakane\.codex\worktrees\d7a6\ARCH` 访问；Linux 命令显式使用 `wsl.exe -d Ubuntu -u shiroakane --exec ...`。Windows 工具宿主不代表 ARCH 已获 Windows 原生计算资格，科学运行沿用已验收 Linux／WSL2。
+- 恢复后先读本文件与 `ARCH_RELEASE_PLAN.md`，再显式在真实仓库核对 Git 状态、分支及 worktree。普通沙箱若对 WSL／UNC 报 `Wsl/E_ACCESSDENIED` 或返回不可访问，按工具审批后重核，不据此认定仓库丢失；不在 Windows 反复尝试 `/bin/bash` 作为工具 shell。
+- 多行脚本和含 Markdown 反引号、美元符号的文本，通过 UTF-8 无 BOM 脚本／数据文件传递，再由 `wsl.exe --exec /usr/bin/python3 /mnt/c/.../script.py` 执行。不要用跨 shell 的 `wsl.exe -- python -c` 内嵌这类文本；本轮已复现默认 shell 对反引号的误解析，修正草稿后才派发。
+- 全局多模型 MCP 未出现在本窗口时，Windows 显式调用既有 WSL `gateway.py`，不建立第二套队列。旧桥接固定使用 Windows PowerShell 5.1；本轮原生宿主的模块环境会使它找不到 `Get-FileHash`。调用该桥接的子进程可将 `PSModulePath` 限定为现有 `C:/WINDOWS/system32/WindowsPowerShell/v1.0/Modules` 并用 `WSLENV` 转发，保留原严格 profile／agent SHA 检查；只改本任务进程环境，不修改全局注册、登录、权限或计费策略。证据 `output/release/rel7-20261020/Gemini-process-environment-recovery.json`。
 
 ## Python 与 Studio 工具环境
 
@@ -19,7 +20,7 @@
 
 ## 进度恢复
 
-- **REL-6已闭合，REL-7未启动。** 唯一计划`ARCH_RELEASE_PLAN.md`；当前收据`validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json`，本机恢复`output/release/rel6-20261020/progress.json`。候选生产源码`7e1dca167bd5a348fbc1ba252de581a548cf40fa`，当前分支`compute/optim`。原始日志、完整成员清单、源／输入／表／执行物摘要分别索引；后续记录提交不冒称重新构建。用户授权提交与正常推送；不合并／强推／打标签／正式发布或自动进入REL-7。PR[#12](https://github.com/Shiro-Akane/ARCH/pull/12)已关联当前任务；实时状态为open、draft=false，由用户此前改变，agent未操作。托管验收仍核当前head的Tooling／CPU／Studio、汇总门及CodeQL；旧绿灯不能代签新提交。Linux无GitHub API写凭据，不反复操作登录、安全设置或下载需鉴权日志。
+- **REL-6已闭合；REL-7已由用户明确授权，v1.3.0 发布准备进行中。** 唯一计划 `ARCH_RELEASE_PLAN.md`；原科学依据为 `validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json`，当前恢复 `output/release/rel7-20261020/progress.json`。生产源码 `7e1dca167bd5a348fbc1ba252de581a548cf40fa`，入场记录提交 `7fa1b7a78ca0a459c8d88e79782142fcb3335bcb`；实际分支以 Git 核对为准。本轮用户授权正常提交／推送、合并 PR#12 至 main、创建 v1.3.0 标签并按历史源码模式正式发布，取代 REL-6 当时的停止边界；不授权强推、改签旧证据或降低数值标准。PR[#12](https://github.com/Shiro-Akane/ARCH/pull/12)已关联当前任务；合并／发布状态必须实时核对。旧科学产物与后续记录提交分开记身份，托管只认当前 head 的适用 job／汇总门／CodeQL。Windows 当前 GCM 尚无既有 GitHub 写入凭据，已提供官方 GitHub 连接入口；不重复自动登录或索取令牌。 main 的公开规则要求 PR／CI 并禁止删除和非快进更新；正常经 PR 合入，不改规则或走管理员绕过。正式 Release 可由本次单标签 workflow 使用托管临时凭据完成，不需要导出凭据。
 - **当前实际候选入口：** 从归档`output/release/rel6-20261020/ARCH-candidate-7e1dca167.tar.gz`在`/tmp/arch-rel6-20261020/source/ARCH`干净配置、无缓存构建；CPU／CUDA图分别为其中`build-cpu`／`build-cuda`。1117份源码／测试／配置及25份外部生成网络文件在末尾一致，无`.git`目录；使用归档／清单溯源，不冒称执行了需要Git的验证CLI主入口。实际持久安装在`output/release/rel6-20261020/relocated-cpu`／`relocated-cuda`，各14文件，分别从自身`share/arch`运行；CPU安装SHA`3cfa5b15f10f…`，CUDA`7378407973aa…`，构建ELF分别`c9a41a1b1518…`／`f645036d5075…`。安装只移除RUNPATH，代码等其他文件节完全相同，不能要求安装前后整个ELF摘要相同。临时目录丢失先从持久归档和匹配本地资产恢复，不回退旧ELF充当候选。
 - 原高压近零动量失败已用公共stage压力平衡定点修正；原输入与rphi对照在两后端均精确零动量，原比较门通过，旧`NOT_MET`保持历史身份。Cyl1/2/3与rphi复用已有P/c缓存，Ideal CUDA仅这些chart增加16字节／存储单元；完整面通量、reflux、T/W和引力做功不改。旋转角动量必须按原`DeltaJ+outward_torque-body_torque`预算验证，不能对有壁面粘性扭矩的算例错误要求`DeltaJ=0`；当前最大归一残差`7.31e-17`，原`1e-12`保持，四组fresh差异零。Helm反应算例实际热通道非零，不能由三个开关推断粘性／组分都活动。
 - **SNIa用户决议：** 2026-10-20直接授权“允许联合证据，保留旧 FAIL”。候选采用原主终点／守恒／fresh与已获准L2重复重网格机制联合证据；旧主算例一次重网格的`FAIL`及thermal `GAP`仍原样保留。当前安装CPU20步／自身fresh及另两步4个接受热扩散half只是补充，不冒称重跑原主终点。原私有Cellular24步／25CHK ENUC及两后端自身fresh沿REL-4适用证据复用，不重跑长程；16模型逐项归属与适用范围查REL-6收据，不能从旧输入目录自行扩大声明。

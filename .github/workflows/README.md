@@ -2,7 +2,7 @@
 
 [Local tests](../../tests/README.md) · [中文](../../tests/README.zh-CN.md#github-持续集成)
 
-[ci.yml](ci.yml) runs on pull requests targeting `main` and pushes to the engineering branch `compute/optim`, using disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels an older run for the same event and branch/PR. Tests and scientific criteria remain in their existing owners. The branch trigger permits hosted acceptance through ordinary SSH pushes without adding account credentials or changing repository settings.
+[ci.yml](ci.yml) runs on pull requests targeting `main` and pushes to `compute/optim` and merged `main`, using disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels an older run for the same event and branch/PR. Tests and scientific criteria remain in their existing owners. The branch trigger permits hosted acceptance through ordinary SSH pushes without adding account credentials or changing repository settings.
 
 ## What runs
 
@@ -51,3 +51,21 @@ Tooling/CPU diagnostic artifacts retain identity, logs, inventory and JUnit for 
 This workflow does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, packaging or native desktop acceptance. The [release plan](../../ARCH_RELEASE_PLAN.md) records their actual qualification. Local actionlint/tests do not establish a hosted passing result for an unpublished working tree.
 
 Use a normal PR targeting `main` for integration; engineering-branch pushes can execute the same checks before that PR exists. Actions are pinned to full commits; actionlint's release archive has a fixed checksum. After a real successful run, maintainers may require **CI required** in the main ruleset. Human approval and merge/publication remain separate decisions. Do not run public PR code on a persistent personal GPU runner; this workflow uses neither `pull_request_target` nor repository secrets.
+
+## v1.3.0 source publication
+
+[release-v1.3.0.yml](release-v1.3.0.yml) handles only the explicitly authorized
+`v1.3.0` tag after PR #12 is merged normally. It requires that tag to equal
+current main and the PR merge, the exact main revision to have successful
+Tooling/CPU/Studio/required jobs and CodeQL, and the original candidate source
+and acceptance receipt to remain unchanged. Push the tag only after these
+checks finish. Ordinary PR CI retains read-only permissions.
+
+The publication job alone uses GitHub's temporary repository token with release
+write permission. It verifies an existing tag, publishes the reviewed English
+notes with tag-pinned links to the Chinese notes and guides, and adds no binary
+or simulation-data assets. It does not merge a protected branch, create or move
+a tag, reduce checks, or alter repository rules. An existing release causes
+creation to fail rather than being silently replaced. See the [GitHub token
+permissions guide](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)
+and [release command](https://cli.github.com/manual/gh_release_create).

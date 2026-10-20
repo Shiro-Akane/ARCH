@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [compute/optim]
+    branches: [compute/optim, main]
 
 # Public PRs run only on disposable GitHub-hosted machines, without secrets or
 # write permissions. Do not change this to pull_request_target to run PR code.
