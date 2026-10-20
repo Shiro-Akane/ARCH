@@ -1,0 +1,72 @@
+{
+  "status": "INDEPENDENT_EXACT_CURRENT_PPM_UNSUPPORTED_STEP_ORACLE",
+  "atUtc": "2026-10-07T23:25:41.057935+00:00",
+  "facts": [
+    {
+      "sixMeans": [
+        "1",
+        "1",
+        "1",
+        "10",
+        "10",
+        "10"
+      ],
+      "exactProjectedFaces": [
+        "1",
+        "11/2",
+        "10"
+      ],
+      "leftOwnSupport": "0",
+      "rightOwnSupport": "0",
+      "CWOwnMeanEndpoints": [
+        "1",
+        "10"
+      ]
+    },
+    {
+      "sixMeans": [
+        "0",
+        "0",
+        "0",
+        "10",
+        "10",
+        "10"
+      ],
+      "exactProjectedFaces": [
+        "0",
+        "5",
+        "10"
+      ],
+      "leftOwnSupport": "0",
+      "rightOwnSupport": "0",
+      "CWOwnMeanEndpoints": [
+        "0",
+        "10"
+      ]
+    },
+    {
+      "sixMeans": [
+        "2",
+        "2",
+        "2",
+        "20",
+        "20",
+        "20"
+      ],
+      "exactProjectedFaces": [
+        "2",
+        "11",
+        "20"
+      ],
+      "leftOwnSupport": "0",
+      "rightOwnSupport": "0",
+      "CWOwnMeanEndpoints": [
+        "2",
+        "20"
+      ]
+    }
+  ],
+  "productionMethodUnchanged": true,
+  "oldSnapshotRetired": true,
+  "noToleranceInflation": true
+}

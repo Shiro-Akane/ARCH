@@ -66,7 +66,7 @@ strict compatibility gate and all analytic budgets remain unchanged.
   and the new Host target compile. See [CPU](compatibility/cpu-build.txt) and
   [CUDA build](compatibility/cuda-build.txt) logs.
 - Full CPU CTest result: **57/57 passed, zero skips**, 470.42 s. Its inventory (whitespace-normalized JSON with unchanged content), JUnit and raw output are in
-  [integration/](integration/). New P2 tests are also required CI coverage anchors.
+  [integration/](integration). New P2 tests are also required CI coverage anchors.
 - The CI result checker passes its existing **10** tool tests; the architecture
   audit and `-Wall -Wextra -Wpedantic` check complete with no diagnostics.
 - AddressSanitizer + UndefinedBehaviorSanitizer with leak detection pass both

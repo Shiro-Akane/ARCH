@@ -7,6 +7,8 @@
  * 2. Distribute bounded cell ranges across one host worker team. Every cell
  *    uses DriverBurnPolicy preparation, the original ODE, and checked commit.
  * 3. Reduce each patch's timestep advice with the shared reduction contract.
+ *    density/closure leaves then supply the ordinary thermodynamic mean while
+ *    the native conserved moments stay authoritative and unwritten.
  *
  * A range is an execution unit only: density, composition, temperature,
  * reaction integration and energy handoff retain their per-cell ownership.
@@ -26,6 +28,7 @@
 #include "data/FluidState.h"
 #include "driver/stages/DriverBurnPolicy.h"
 #include "grid/Grid.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace DriverBurn {
 
@@ -115,20 +118,22 @@ private:
     std::array<bool, slots> ready_{};
 };
 
-/** Integrate and publish one cell only after all physical checks have passed. */
+/** Integrate and publish one cell only after all physical checks have passed.
+ */
 template<class Eos, class Burner>
 double advance_host_burn_cell(FluidState& state, int cell, double interval,
     const Eos& eos, Burner& burn, const SimConfig& config,
     const BurnConfigView& controls, std::vector<double>& packed, HostBurnMemo& memo)
 {
     FluidVector fluid = state.get(cell);
-    if (check_burn_density(fluid, controls) == BurnCellDisposition::BelowDensity)
+    const FluidVector thermo = fluid;
+    if (check_burn_density(thermo, controls) == BurnCellDisposition::BelowDensity)
         return INACTIVE_LIMITER_CANDIDATE;
     std::fill(packed.begin(), packed.end(), 0.0);
     state.get_species_to_buffer(cell, packed.data());
     const int species = state.GetNumSpecies();
     const auto prepared = prepare_burn_cell(
-        fluid, packed.data(), species, eos, controls);
+        thermo, packed.data(), species, eos, controls);
     if (prepared.disposition == BurnCellDisposition::BelowTemperature)
         return INACTIVE_LIMITER_CANDIDATE;
     if (prepared.disposition == BurnCellDisposition::InvalidComposition)
@@ -140,24 +145,31 @@ double advance_host_burn_cell(FluidState& state, int cell, double interval,
                                  + std::to_string(cell));
 
     double recommended = interval, energy_change = 0.0;
+    // The ODE still integrates the actual cell density with the unmodified
+    // packed X/T and interval; no closure quantity reaches the ODE or the memo.
     if (!memo.integrate(packed, fluid.rho, interval, eos, burn,
                         config.physics.burn, recommended, energy_change))
         throw std::runtime_error("Burn solver failed at cell " + std::to_string(cell));
     // The ODE owns integral(delta e_nuc); the existing first-law handoff
     // combines it with the initial thermal energy and unchanged kinetic part.
     const auto handoff = compute_burn_energy_handoff(
-        fluid, packed.data(), species, prepared.internal_energy,
+        thermo, packed.data(), species, prepared.internal_energy,
         prepared.kinetic_energy, interval, eos, controls, energy_change);
     if (!handoff.valid)
         throw std::runtime_error("Invalid burn energy at cell " + std::to_string(cell));
-    commit_burn_energy(fluid, handoff);
-    if (arch::state::validate(fluid, packed.data(), species, 1,
+    // Validate the ordinary thermodynamic candidate with the same configured
+    // bounds and the same solved composition before anything is published.
+    FluidVector candidate = thermo;
+    commit_burn_energy(candidate, handoff);
+    if (arch::state::validate(candidate, packed.data(), species, 1,
             config.numerics.sml_rho, config.numerics.min_eint,
             config.numerics.max_eint) != arch::state::Status::valid)
         throw std::runtime_error("Burn state violates configured bounds at cell "
                                  + std::to_string(cell));
+    // Publish only the accepted thermodynamic energy, the original enuc rate
+    // and the original composition. Native momenta are never overwritten.
     state.set_species_from_buffer(cell, packed.data());
-    state.eng[cell] = fluid.eng;
+    state.eng[cell] = candidate.eng;
     state.enuc_rate[cell] = handoff.enuc_rate;
     return handoff.limiter_candidate;
 }
@@ -217,7 +229,8 @@ void execute_host_burn_batch(std::span<const HostBurnPatch> patches,
                         const int j = grid.Js() + (linear / nx) % ny;
                         const int k = grid.Ks() + linear / (nx * ny);
                         const double candidate = advance_host_burn_cell(state,
-                            grid.GetIndex(i, j, k), interval, eos, burn, config, controls, packed, memo);
+                            grid.GetIndex(i, j, k), interval, eos, burn, config, controls,
+                            packed, memo);
                         amr::CellLogicalKey key{};
                         key.logical_i = i; key.logical_j = j; key.logical_k = k;
                         key.component = BURN_LIMITER_COMPONENT;
@@ -247,7 +260,8 @@ void execute_host_burn_batch(std::span<const HostBurnPatch> patches,
 }
 } // namespace DriverBurn
 
-/** Preserve the single-patch caller through the same batch/cell implementation. */
+/** Preserve the single-patch caller through the same batch/cell implementation.
+ */
 template<class Eos, class Burner>
 void execute_burn_step(FluidState& state, double interval, const Eos& eos,
                        Burner& burn, const Grid& grid, const SimConfig& config,

@@ -55,7 +55,7 @@ int RunPreviewCommand(int argc, char **argv) {
             const std::string option = argv[i];
             if (!seen.insert(option).second) throw std::invalid_argument("Duplicate preview option");
             if (option == "--config-stdin") config_stdin = true;
-            else if (option == "--samples" || option == "--samples-x1" || option == "--samples-x2" || option == "--request-id" || option == "--mesh-max-blocks" || option == "--mesh-memory-mib") {
+            else if (option == "--samples" || option == "--samples-x1" || option == "--samples-x2" || option == "--samples-x3" || option == "--request-id" || option == "--mesh-max-blocks" || option == "--mesh-memory-mib") {
                 if (++i == argc) throw std::invalid_argument("Missing preview option value");
                 const std::string_view value = argv[i];
                 if (option == "--request-id") request.request_id = value;
@@ -77,6 +77,7 @@ int RunPreviewCommand(int argc, char **argv) {
                     } else if (mesh) throw std::invalid_argument("AMR mesh has no sampling shape options");
                     else if (option == "--samples-x1") request.samples_x1 = count;
                     else if (option == "--samples-x2") request.samples_x2 = count;
+                    else if (option == "--samples-x3") request.samples_x3 = count;
                     else { request.sample_count = count; request.sample_count_provided = true; }
                 }
             } else throw std::invalid_argument("Unknown preview option");

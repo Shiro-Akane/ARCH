@@ -1,0 +1,31 @@
+{
+  "accepted": true,
+  "acceptance_status": "ACCEPTED_PUBLIC_AXIAL_POTENTIAL_QUOTIENT_ONLY",
+  "independentChecks": {
+    "exactFractionTwoSumCases": 3000,
+    "finiteRoundedCollisionCounterexample": "c=1,d=2,Z=2^-55 and Z=0 collide under rounded subtraction, distinct exact deltas",
+    "subnormalCasesIncluded": true,
+    "proof": "Exact u=z-Z change-of-variable and even kernel: same exact relative edges or reflection give same potential integral; no radial translation"
+  },
+  "qualifications": [
+    "Same actual radial endpoints/observer/G; potential only, not axial-force sign or other source records",
+    "TwoSum strict RN-even finite/no-overflow arithmetic and gradual underflow; implementation should restrict supported exponent range or verify assumptions, fallback otherwise",
+    "Keep both hi and lo; no tolerance key, ordinary longdouble proof or density cutoff",
+    "Current density interval scaling/width/work/source/field/root checks retained; no algorithm/science/Device grant"
+  ],
+  "softwareAccepted": false,
+  "schema": 1,
+  "scope": "PUBLIC_MATHEMATICS_ONLY_NO_SOURCE_OR_RAW_EXPORT",
+  "workerSeconds": 45.82,
+  "inputTokens": 1596,
+  "cachedInputTokens": 384,
+  "outputTokens": 10568,
+  "reasoningTokens": 10252,
+  "visibleOutputTokens": 316,
+  "estimatedUsdRange": [
+    0.00652375,
+    0.0130475
+  ],
+  "invoice": "UNKNOWN",
+  "rootActiveCost": "UNKNOWN"
+}

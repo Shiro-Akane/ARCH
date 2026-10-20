@@ -1,14 +1,56 @@
 /** @file test_gravity_stage_contract.cpp
  * @brief Whole-domain preparation ordering and gravity publication validity.
  */
-#include "driver/schedule/StageScheduler.h"
-#include "physics/gravity/GravitySolveTypes.h"
+#include <algorithm>
 #include <array>
+#include <bit>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
+#include <variant>
 #include <vector>
 
+
+#include "amr/AMRControl.h"
+#include "amr/elliptic/EllipticMeshAdapter.h"
+#include "driver/DriverUtils.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+#include "driver/schedule/StageScheduler.h"
+#include "driver/stages/DriverMacroStep.h"
+#include "driver/stages/DriverStages.h"
+#include "driver/stages/GravityStage.h"
+#include "numerics/flux/FluxHLLC.h"
+#include "numerics/integrator/HydroSolverImpl.h"
+#include "numerics/integrator/TimeIntegratorEuler.h"
+#include "numerics/integrator/TimeIntegratorRK2.h"
+#include "numerics/integrator/TimeIntegratorRK3.h"
+#include "numerics/reconstruction/Reconstruction.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/gravity/GravityExecution.h"
+#include "physics/gravity/GravitySolveTypes.h"
+#include "physics/gravity/GravitySource.h"
+#include "physics/gravity/self/GravityWorkspace.h"
+#include "physics/gravity/self/SelfGravity.h"
+
+void test_host_hydro_transaction();
+void test_curved_no_gravity(bool cost);
+void test_curved_reference_stress();
+void test_curved_optional_gravity();
+void test_curved_device_runtime();
+void test_curved_device_cost();
 namespace {
 using namespace arch::scheduler;
 using namespace arch::state;
@@ -165,9 +207,20 @@ void test_field_identity() {
     field.invalidate();
     require(!field.matches(identity, 3), "explicit regrid/restart invalidation failed");
 }
+
 } // namespace
-int main() {
-    try { test_preparation(); test_failures(); test_field_identity(); }
-    catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
-    std::cout << "Gravity stage preparation and field identity contracts passed\n";
+
+int main(int argc,char** argv) {
+    try {
+        if(argc==2&&std::string(argv[1])=="--curvilinear-device-cost") {test_curved_device_cost();return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-device") {test_curved_device_runtime();return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-gravity") {test_curved_optional_gravity();return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-no-gravity") {test_curved_no_gravity(false);return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-cost") {test_curved_no_gravity(true);return 0;}
+        if(argc==2&&std::string(argv[1])=="--curvilinear-reference") {test_curved_reference_stress();return 0;}
+        if(argc!=1)throw std::invalid_argument("Unknown gravity-stage contract mode");
+        test_preparation();test_failures();test_field_identity();test_host_hydro_transaction();
+        test_curved_no_gravity(false);test_curved_optional_gravity();
+    } catch (const std::exception& e) { std::cerr<<e.what()<<'\n';return 1; }
+    std::cout<<"Gravity stage preparation and field identity contracts passed\n";
 }

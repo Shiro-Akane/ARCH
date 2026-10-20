@@ -1,0 +1,261 @@
+{
+  "scope": "RZ-B shared CPU hydro torque divergence/source and strict stage node; not full AMR/viscous or RZ science acceptance",
+  "coreAuthority": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "sourceHEADAtBuild": "2eb4134adc8430628bc1735ff79b3654fb4c844a",
+  "repositoryDirtyAtBuild": true,
+  "binarySha256": "0249942c26d084a8b502a10122d318bd46d9ec69cc07e0eab2d3aa8482d98028",
+  "deliveryFileFingerprints": {
+    "src/grid/GridMetrics.h": "7cbd716b799998e7cb1d6ed0494fd886d374ba6b872d1a2cc683236951ad0956",
+    "src/numerics/integrator/GeometricSources.h": "e92dfa171da99202b03b2ba2114dd6d4cd8c4edad2e62300366f31b5494a79f5",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "2c8bd65a18de82dd67bb89c5ef7eeacacd5d46046ca5ed3ec260ea99bda4e2d1",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "1adf7c78873dc5616b38271472e6cd1dfd347a684737cfd0784348e7319b60d4"
+  },
+  "angularBudget": {
+    "frozenThreshold": 1e-12,
+    "denominator": "initial integral abs(m_phi) W + abs(outward boundary torque impulse)",
+    "independentMeasure": "full-ring polynomial radial/axial face integrals and W; long double summation",
+    "cases": [
+      {
+        "innerRadius": 0.0,
+        "lane": "closed synthetic flux",
+        "angularBudgetRelativeError": 4.57993e-18,
+        "outwardBoundaryTorqueImpulse": 0.0
+      },
+      {
+        "innerRadius": 0.0,
+        "lane": "open synthetic flux",
+        "angularBudgetRelativeError": 8.6803e-18,
+        "outwardBoundaryTorqueImpulse": 0.1653
+      },
+      {
+        "innerRadius": 0.0,
+        "lane": "actual HLLC PCM stage",
+        "angularBudgetRelativeError": 4.4153e-20,
+        "outwardBoundaryTorqueImpulse": 0.0010463
+      },
+      {
+        "innerRadius": 1.0,
+        "lane": "closed synthetic flux",
+        "angularBudgetRelativeError": 9.57878e-19,
+        "outwardBoundaryTorqueImpulse": 0.0
+      },
+      {
+        "innerRadius": 1.0,
+        "lane": "open synthetic flux",
+        "angularBudgetRelativeError": 8.67895e-19,
+        "outwardBoundaryTorqueImpulse": 0.634968
+      },
+      {
+        "innerRadius": 1.0,
+        "lane": "actual HLLC PCM stage",
+        "angularBudgetRelativeError": 1.00133e-20,
+        "outwardBoundaryTorqueImpulse": 0.0159245
+      }
+    ]
+  },
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "amr_flux_surface_plan": "PASS",
+    "topology_transaction": "PASS",
+    "runtime_probe_and_capabilities": "PASS",
+    "preview_api_contract": "PASS",
+    "preview_session_contract": "PASS",
+    "self_gravity_lifecycle": "PASS",
+    "source_architecture": "PASS",
+    "diff_check": "PASS"
+  },
+  "firstFailure": {
+    "test": "curvilinear_metrics",
+    "message": "RZ Host swirl linear operator",
+    "cause": "viscosity reused divergence but its stress/source contract was not migrated",
+    "resolution": "explicit hydro torque opt-in; unchanged diffusion owner pending Core RZ-VISC-01 clarification",
+    "log": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/geometry-full.log"
+  },
+  "jeansUniformFinalBinary": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "0249942c26d084a8b502a10122d318bd46d9ec69cc07e0eab2d3aa8482d98028",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.11439921100100037,
+        "restart_elapsed_seconds": 0.0645590919884853,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-1d-active"
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.06417351799609605,
+        "restart_elapsed_seconds": 0.06435464399692137,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-1d-disabled"
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.11413395199633669,
+        "restart_elapsed_seconds": 0.06393841101089492,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-1d-output_only"
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.4150837430061074,
+        "restart_elapsed_seconds": 0.21419829801016022,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-2d-active"
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.11450936099572573,
+        "restart_elapsed_seconds": 0.11435135899228044,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-2d-disabled"
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.11479818799125496,
+        "restart_elapsed_seconds": 0.11401137500070035,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-2d-output_only"
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 22.116131934002624,
+        "restart_elapsed_seconds": 12.192295041008038,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-3d-active"
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 1.5177767509885598,
+        "restart_elapsed_seconds": 0.7656514519912889,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-3d-disabled"
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 1.5676773799932562,
+        "restart_elapsed_seconds": 0.8154338919994188,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004/jeans-regression/campaign/jeans-uniform-3d-output_only"
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "remaining": [
+    "signed torque AMR register and W reflux",
+    "viscous stress/source/work Core RZ-VISC-01",
+    "C Init/BC/EOS/IO/API/checkpoint semantics",
+    "D full CPU science then CUDA and approved long runs",
+    "finite-ring near bound and error ledger"
+  ],
+  "capabilityState": "full RZ gated; CUDA unqualified",
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-hydro-torque-20261004"
+}

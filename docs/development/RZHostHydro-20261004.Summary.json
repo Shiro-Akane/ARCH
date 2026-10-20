@@ -1,0 +1,56 @@
+{
+  "baseHead": "0d243744737c7bd948fa79e1491456ea3e8ff04b",
+  "dirtyInputs": {
+    "src/numerics/integrator/TimeIntegratorHelper.h": "62cff3045c03bf31283d09893b4b9941c0a8d4a925f3680beeffde7be8bfb111",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "cbb5bd1108116b3ebe5497889cd4cb3e4c99f52d087600e9db46a925287b64d5"
+  },
+  "testBinarySha256": "6cb8ad3459db4033de1b84751ebef17cc7e849c6c5f9dd89a08d8a05f336aaa5",
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "amr_operation_plans": "PASS",
+    "diffCheck": "PASS"
+  },
+  "fixture": {
+    "scheme": "real FluxHLLC<PCMReconstruction>, real IdealGas, shared Host face traversal",
+    "activeCellCount": 768,
+    "rho": 2,
+    "axialVelocity": 3,
+    "pressure": 5,
+    "dt": 0.001,
+    "states": "axis no swirl; non-axis no swirl; non-axis constant swirl=2",
+    "oracle": "delta momentum_r = dt*rho*vphi^2*2/(r_lower+r_upper); all other conservative/species delta=0",
+    "stage": "w_old=0,w_flux=1; existing update_stage_cell unchanged",
+    "repairWitness": "256 cells per fixture, rho .5 -> existing density floor 1; mass delta .5*full ring volume",
+    "repairVolumeReference": "pi*((r_inner+1)^2-r_inner^2), dz_domain=1"
+  },
+  "resultsRoundedByExistingStreamPrecision": [
+    {
+      "inner": 0.0,
+      "swirl": 0.0,
+      "max_radial_error": 1.30104e-17,
+      "repair_volume": 3.14159
+    },
+    {
+      "inner": 1.0,
+      "swirl": 0.0,
+      "max_radial_error": 1.38778e-17,
+      "repair_volume": 9.42478
+    },
+    {
+      "inner": 1.0,
+      "swirl": 2.0,
+      "max_radial_error": 1.30104e-17,
+      "repair_volume": 9.42478
+    }
+  ],
+  "exactEngineeringGate": "existing close: 2e-12*max(1,abs(reference))",
+  "failurePreserved": "initial test AMRControl lacked required (max_blocks,dim), fixed fixture only; build.log retained",
+  "limits": [
+    "internal opt-in, runtime Grid and IHydroSolver remain legacy",
+    "explicit RZ gravity or AMRControl rejected before clearing output; those consumers still need migration",
+    "analytic constant ghosts; no physical boundary evolution or long-time/reflux proof",
+    "RZ angular AMR finding remains open, not changed or accepted",
+    "no CUDA, full ARCH build, simulation or production capability opening",
+    "not all flux policies/reconstructions/materials independently verified"
+  ]
+}

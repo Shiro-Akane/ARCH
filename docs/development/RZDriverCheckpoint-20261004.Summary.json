@@ -1,0 +1,29 @@
+{
+  "scope": "Actual CPU DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+  "exitCode": 0,
+  "stdout": "[IO] Saved CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-driver-checkpoint-20261004-repair/evidence/cartesian/fixture_chk_0007.h5 at step 0 with 1 AMR leaves.\n[IO] Restored CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-driver-checkpoint-20261004-repair/evidence/cartesian/fixture_chk_0007.h5 at step 0 with 1 AMR leaves.\nPASS actual DriverIO Cartesian profile/native/controller time=0 step=0\n[IO] Saved CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-driver-checkpoint-20261004-repair/evidence/rz/fixture_chk_0007.h5 at step 0 with 1 AMR leaves.\n[IO] Restored CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-driver-checkpoint-20261004-repair/evidence/rz/fixture_chk_0007.h5 at step 0 with 1 AMR leaves.\nPASS actual DriverIO RZ profile/native/controller time=0 step=0\n",
+  "stderr": "",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "ca4f392f0e16df7dfec792e18095da2d99cc9b915a0560a75e7e245d2fef8d27",
+  "recompiledSources": {
+    "tests/host/io/test_driver_checkpoint_geometry.cpp": "1e36c41366aa494fa8d3144f4fa43939f724810c84b149fd061031641b1d094b",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69",
+    "src/driver/io/DriverIO.cpp": "078b2ffb251a9b380c62e81e3c99e0d680c04f61b56efeadefa5a1b57f843ef2",
+    "src/io/chk/ChkIO.cpp": "544132f085348d795d047684fed53b9021cfebfeccca650bae0a87e180b6d808",
+    "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+    "src/io/hdf5/HDF5Writer.cpp": "1ef3fa88d6f38c5497797dc17348989a9dffe41f94e06c946cda2b95a925ef18"
+  },
+  "limitations": [
+    "Public RZ dispatch still gated",
+    "No evolved restart acceptance",
+    "CUDA not qualified"
+  ],
+  "baseline": "119b173b65f1314f9202bcc0ade604eba4579e04",
+  "initialFailure": "Fixture omitted registered-species repair ledger initialization; writer correctly rejected before HDF output. Fixed fixture initialization only.",
+  "remoteRefs": {
+    "compute/optim": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+    "codex/o8-boundaries": "23ff77c4f08419de2b3c5eadee214da2af25784e"
+  }
+}

@@ -32,6 +32,11 @@ struct LinearWork {
     // y_i = a*x_i + b*z_i + c; absent inputs contribute zero.
     ARCH_INLINE void operator()(int i) const { out[i]=(x?a*x[i]:0.)+(y?b*y[i]:0.)+c; }
 };
+/** Scale a difference before multiplication; retain small x-offset contrasts. */
+struct DifferenceScaleWork {
+    int size;double* out;const double* x;double offset,scale;
+    ARCH_INLINE void operator()(int i) const {out[i]=(x[i]-offset)*scale;}
+};
 struct SparseView { const int* offsets; const int* columns; const double* values; };
 struct RowsWork {
     int size; SparseView rows; const double* x; double* out; double alpha=1.,beta=0.;
@@ -42,15 +47,45 @@ struct RowsWork {
         out[i]=alpha*sum.value()+(beta?beta*out[i]:0.);
     }
 };
-struct FaceView { SparseView stencil; const int* anchor; const double* boundary; };
-struct GradientWork {
+struct FaceView {
+    SparseView stencil; const int* anchor; const double* boundary;
+    // Explicit anchor weight of an eliminated Dirichlet/Neumann/Robin row;
+    // absent (null) for legacy periodic and interior faces.
+    const double* anchor_weight=nullptr;
+    // Existing Neumann/Robin side policies select direct boundary-data
+    // evaluation. Absent for a hierarchy containing only legacy side kinds.
+    const unsigned char* flux_boundary=nullptr;
+};
+/** Shared face-derivative work, instantiated once per level outside the face
+ *  loop. Both specializations call the SAME composite_face_gradient kernel
+ *  with the SAME field/coefficient arguments; only the eliminated-row anchor
+ *  weight and the flux-boundary selector differ.
+ *  FluxBoundary=true keeps the mixed Neumann/Robin evaluation exactly as
+ *  before: the per-face anchor weight and flux flag are read from FaceView.
+ *  FluxBoundary=false is the legacy periodic/Dirichlet specialization: it
+ *  passes compile-time constant zero anchor weight and flux_boundary=false, so
+ *  the compiler removes those branches and restores the ORIGINAL subtraction/
+ *  multiply/CompensatedSum sequence, including its zero terms. */
+template<bool FluxBoundary> struct GradientWorkImpl {
     int size; FaceView faces; const double* x; const double* boundary; double* out;
     ARCH_INLINE void operator()(int f) const {
         const int start=faces.stencil.offsets[f];
-        out[f]=elliptic::composite_face_gradient(x,faces.anchor[f],faces.stencil.columns+start,
-            faces.stencil.values+start,faces.stencil.offsets[f+1]-start,faces.boundary[f],boundary?boundary[f]:0.);
+        if constexpr(FluxBoundary) {
+            out[f]=elliptic::composite_face_gradient(x,faces.anchor[f],faces.stencil.columns+start,
+                faces.stencil.values+start,faces.stencil.offsets[f+1]-start,faces.boundary[f],
+                boundary?boundary[f]:0.,faces.anchor_weight?faces.anchor_weight[f]:0.,
+                faces.flux_boundary && faces.flux_boundary[f]);
+        } else {
+            out[f]=elliptic::composite_face_gradient(x,faces.anchor[f],faces.stencil.columns+start,
+                faces.stencil.values+start,faces.stencil.offsets[f+1]-start,faces.boundary[f],
+                boundary?boundary[f]:0.,0.,false);
+        }
     }
 };
+/** Retained mixed-flux name/aggregate for the existing boundary tests. */
+using GradientWork=GradientWorkImpl<true>;
+/** Legacy branch-free face work for a level without any flux-boundary data. */
+using LegacyGradientWork=GradientWorkImpl<false>;
 struct JacobiWork {
     int size; double* u; const double* rhs; const double* applied; const double* diagonal;
     // Damped Jacobi: u <- u + omega*D^-1*(b-Au), omega=0.6.
@@ -61,7 +96,7 @@ struct ProjectWork {
     // Periodic gauge: x_i <- x_i - <x>_volume.
     ARCH_INLINE void operator()(int i) const {x[i]-=(*scale)*(*sum);}
 };
-using CompositeWork=std::variant<LinearWork,RowsWork,GradientWork,JacobiWork,ProjectWork>;
+using CompositeWork=std::variant<LinearWork,DifferenceScaleWork,RowsWork,GradientWork,JacobiWork,ProjectWork,LegacyGradientWork>;
 enum class ReductionKind { Maximum, Product };
 struct Reduction {
     const double* x; const double* y; const double* weights; int size;
@@ -120,6 +155,9 @@ public:
     }
     void linear(Vector& out,double a,const Vector& x,double b=0.,const Vector& y={},double c=0.) {
         run(LinearWork{out.size,out.data,x.data,y.data,a,b,c});
+    }
+    void difference_scale(Vector& out,const Vector& x,double offset,double scale) {
+        run(DifferenceScaleWork{out.size,out.data,x.data,offset,scale});
     }
     void fill(Vector& out,double value=0.) { linear(out,0.,{},0.,{},value); }
     double maximum(const Vector& x) { return reduce({x.data,nullptr,nullptr,x.size,ReductionKind::Maximum}); }

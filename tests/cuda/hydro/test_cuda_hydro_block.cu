@@ -11,6 +11,7 @@
 #include "cuda/hydro/boundary/BoundaryPlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/schedule/StageScheduler.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/burnsolver/Networks.h"
 #include "physics/eos/HelmEos.h"
@@ -19,6 +20,7 @@
 #include "physics/eos/tabular/Tabular4DEOS.h"
 #include "physics/species/Species.h"
 
+#include <algorithm>
 #include <cmath>
 #include <array>
 #include <bit>
@@ -228,6 +230,26 @@ std::uint64_t run_hydro_route(
         arch::state::ExecutionSide::Device, ledger, clock};
     const std::array handles{handle};
     const double dt = 0.125 * backend->compute_hydro_dt(current, 0.8);
+    // Observe both actual Cartesian boundary faces through the production
+    // service. The cell-volume budget below detects a missing upper plane or
+    // observing a neighboring interior face, independently of route hashes.
+    arch::backend::BoundaryFluxPlanes capture;capture.block=handle;
+    capture.stage[0].resize(6);capture.stage[1].resize(6);
+    capture.initial[0].resize(6);capture.initial[1].resize(6);
+    const std::array layout{capture};
+    std::array<long double,5> boundary_budget{};
+    context.hydro_flux_capture_begin=[&](const arch::scheduler::StageDescriptor& stage) {
+        backend->configure_boundary_flux_capture(layout,stage.flux_register_weight,0.,false);
+    };
+    context.hydro_flux_capture_accept=[&](const arch::scheduler::StageDescriptor&) {
+        const auto planes=backend->download_boundary_flux_capture();
+        require(planes.size()==1,"hydro observer lost its physical block");
+        for(int side=0;side<2;++side) {
+            require(planes[0].stage[side].size()==6,"hydro observer lost an owned physical face");
+            for(int field=0;field<5;++field)
+                boundary_budget[field]+=static_cast<long double>(dt)*(side?1.:-1.)*planes[0].stage[side][field];
+        }
+    };
     const auto executor = [&] (
         const arch::scheduler::StageDescriptor& descriptor,
         arch::state::CompletionToken token) {
@@ -279,6 +301,25 @@ std::uint64_t run_hydro_route(
     (void)arch::backend::transfer_state_regions(
         *backend, ledger, clock, current, transfer_view(downloaded),
         arch::state::PendingTransferPhase::PendingD2H);
+
+    const auto totals=[&](const FluidState& state) {
+        std::array<long double,5> value{};
+        for(int i=block.grid.Is();i<block.grid.Ie();++i) {
+            const auto u=state.get(block.grid.GetIndex(i));
+            const double fields[]{u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng};
+            const long double volume=GridMetrics::CellVolume(block.grid,i,block.grid.Js(),block.grid.Ks());
+            for(int field=0;field<5;++field)value[field]+=volume*fields[field];
+        }
+        return value;
+    };
+    const auto initial_totals=totals(block.fluid_state),final_totals=totals(downloaded);
+    for(int field=0;field<5;++field) {
+        const long double error=final_totals[field]-initial_totals[field]+boundary_budget[field];
+        const long double scale=std::max({std::abs(initial_totals[field]),std::abs(final_totals[field]),
+            std::abs(boundary_budget[field])});
+        require(std::abs(error)<=128.*std::numeric_limits<double>::epsilon()*scale,
+            "actual hydro surface flux does not close the conserved cell-volume budget");
+    }
 
     std::uint64_t hash = 1469598103934665603ULL;
     for (int i = block.grid.Is(); i < block.grid.Ie(); ++i) {
@@ -714,6 +755,84 @@ void run_lifetime_and_hydro_witness()
         });
     const double dt = backend->compute_hydro_dt(current, 0.8);
     require(std::isfinite(dt) && dt > 0.0, "CUDA Hydro dt is invalid");
+
+    // Use the actual completed Current ghosts/access and a genuinely issued
+    // complete token. Only the canonical input-time fraction changes. Refusal
+    // must precede stage diagnostics, metadata upload and device kernel work;
+    // this is descriptor defense, not a new wall or Native scientific grant.
+    {
+        auto changed_clock=euler_descriptor;
+        changed_clock.input_time_fraction=std::nextafter(
+            euler_descriptor.input_time_fraction,std::numeric_limits<double>::infinity());
+        const auto completed=clock.next_completion();
+        const std::array keys{
+            arch::state::StateKey{current.block,arch::state::StateSlot::Current},
+            arch::state::StateKey{current.block,arch::state::StateSlot::Next},
+            arch::state::StateKey{current.block,arch::state::StateSlot::Scratch}};
+        const std::array before_ledger{ledger.inspect(keys[0]),ledger.inspect(keys[1]),ledger.inspect(keys[2])};
+        const auto before_trace_size=backend->trace_snapshot().size();
+        const auto before_stage_repairs=backend->stage_repairs;
+        const auto before_reflux_repairs=backend->reflux_repairs;
+        const std::array before_states{block.fluid_state,block.state_next,block.state_scratch};
+        using Field=std::vector<double> FluidState::*;
+        const std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,&FluidState::mom_v,
+            &FluidState::mom_w,&FluidState::eng,&FluidState::enuc_rate,&FluidState::mass_fractions};
+        const std::array<const FluidState*,3> states{&block.fluid_state,&block.state_next,&block.state_scratch};
+        std::array<std::array<const double*,7>,3> addresses{};
+        for(std::size_t slot=0;slot<states.size();++slot)for(std::size_t field=0;field<fields.size();++field)
+            addresses[slot][field]=(states[slot]->*fields[field]).data();
+        const auto same_double=[](double left,double right){
+            return std::bit_cast<std::uint64_t>(left)==std::bit_cast<std::uint64_t>(right);
+        };
+        const auto same_values=[&](const auto& left,const auto& right){
+            return left.size()==right.size()&&std::equal(left.begin(),left.end(),right.begin(),same_double);
+        };
+        const auto same_repairs=[&](const auto& left,const auto& right){
+            return same_values(left.values,right.values)
+                &&left.block_uid==right.block_uid&&left.stage==right.stage&&same_double(left.time,right.time)
+                &&same_double(left.position[0],right.position[0])
+                &&same_double(left.position[1],right.position[1])
+                &&same_double(left.position[2],right.position[2]);
+        };
+        const auto token_before=clock.last_token(),version_before=clock.last_version();
+        // Snapshot after trace inspection: both trace_snapshot() and counters()
+        // intentionally count their own reads. The final counter read below is
+        // the sole permitted getter increment; rejected work must add nothing.
+        const auto before_counters=backend->counters();
+        bool rejected=false;
+        try{(void)backend->execute_hydro_stage(current,changed_clock,0.1*dt,completed);}
+        catch(const std::invalid_argument& error){
+            rejected=std::string(error.what())=="invalid Hydro stage contract";
+            if(!rejected)throw;
+        }
+        require(rejected,"one-ULP Hydro input time fraction was accepted");
+        auto expected_counters=before_counters;
+        ++expected_counters.getter_count;
+        require(backend->counters()==expected_counters,
+            "invalid Hydro input clock launched kernels/transfers or changed observable counters");
+        const auto same_region=[](const auto& left,const auto& right){
+            return left.residency==right.residency&&left.version==right.version
+                &&left.completion==right.completion&&left.pending_transfer==right.pending_transfer;
+        };
+        for(std::size_t slot=0;slot<keys.size();++slot) {
+            const auto after=ledger.inspect(keys[slot]);
+            require(same_region(after.interior,before_ledger[slot].interior)
+                &&same_region(after.ghost,before_ledger[slot].ghost)
+                &&after.ghost_source_version==before_ledger[slot].ghost_source_version,
+                "invalid Hydro input clock changed real slot publication metadata");
+        }
+        require(clock.last_token()==token_before&&clock.last_version()==version_before,
+            "invalid Hydro input clock changed its actual clock");
+        require(backend->trace_snapshot().size()==before_trace_size
+                    &&same_repairs(backend->stage_repairs,before_stage_repairs)
+                    &&same_repairs(backend->reflux_repairs,before_reflux_repairs),
+            "invalid Hydro input clock changed observable trace/repair receipts");
+        for(std::size_t slot=0;slot<states.size();++slot)for(std::size_t field=0;field<fields.size();++field)
+            require((states[slot]->*fields[field]).data()==addresses[slot][field]
+                        &&same_values(states[slot]->*fields[field],before_states[slot].*fields[field]),
+                "invalid Hydro input clock changed original Host fields/leases");
+        std::cout<<"CUDA_HYDRO_INPUT_CLOCK_REJECTION_PASS observable_only=1 native_authority=0\n";
+    }
 
     (void)arch::scheduler::execute_euler_lane(
         context, handles,

@@ -36,7 +36,9 @@ x3l_boundary_type = reflect
 solver          = HLLC       # Options: SW, VL, Roe, HLL, HLLC
 reconstruct     = ppm        # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
 time_integrator = RK3        # Options: RK2, RK3, Euler/RK1
-limiter         = none       # Options: minmod, superbee, vanleer, mc, none
+# Legacy "none" resolved to MinMod through the old unknown-policy fallback.
+# State that previous effective policy explicitly; invalid names now fail.
+limiter         = minmod     # Options: minmod, superbee, vanleer, mc
 cfl             = 0.4        # Keep lower (<0.5) for multi-D instability tracking
 
 EntropyFix = true
@@ -92,3 +94,14 @@ rho_light = 1.0
 y_int     = 0.5
 p_int     = 2.5
 amplitude = 0.025        # Perturbation velocity amplitude
+
+# Explicit migration of the previous registered controls.
+compute_backend = cpu
+hll_wave_speed = roe
+sml_rho = 1e-12
+min_eint = 1e-10
+max_eint = 1e21
+gravity_g_x = 0.0
+gravity_g_z = 0.0
+use_burn = false
+use_diffusion = false

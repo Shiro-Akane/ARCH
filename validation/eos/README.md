@@ -22,7 +22,7 @@ physical declarations. The supported native EOSDriver and baryon formats retain
 their own data contracts. Current normalized fixtures and rejection checks live
 in `tests/host/eos` and `tests/cuda/microphysics/eos`; use the CTest targets below.
 The [data reference](../../src/physics/eos/TabularEOS.md) specifies inputs and
-the [migration record](../../docs/development/archive/low-density/ImplementationReport.zh-CN.md)
+the [migration record](../../docs/histroy/low-density/ImplementationReport.zh-CN.md)
 preserves implementation and acceptance history.
 
 The application results and replay scripts below belong to the source identified

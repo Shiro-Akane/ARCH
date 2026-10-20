@@ -1,0 +1,44 @@
+{
+  "scope": "Real kernel ENOSPC, CPU DriverIO/PlotIO/HDF publication mechanics only; t=0 step=0",
+  "fixtureSha256": "bd5d22b10b8e779794bae6743e4f210c6022f158c573f222bf2cddfa91128fbd",
+  "sourceHead": "e0507778028fac3ade77a7373b4325cfeb3d5870",
+  "sourceDirty": true,
+  "tmpfsLimitBytes": 4194304,
+  "privateMountNamespace": true,
+  "productionBinariesBefore": {
+    "build-cpu/bin/ARCH": "32f7b13972ac9381076b06e04c581900065a246796e911bdd161479d86f31b8e",
+    "build-cuda/bin/ARCH": "1cbbd6952f4970f89ef5071b9e3f18d9ec619ec92824f0ad9928455f6e27eb53"
+  },
+  "exitCode": 0,
+  "realHdfErrno28": true,
+  "status": "PASS",
+  "kernelErrno": 28,
+  "reservedBytes": 4169728,
+  "failedIndex": 18,
+  "retryNextIndex": 19,
+  "previousOutputSha256": "a57a3e36ec32157db3eace8371a6dcd42786ff537d4d9d00fad32541a64d8eb6",
+  "rawFilesRetainedLocally": true,
+  "productionBinariesAfter": {
+    "build-cpu/bin/ARCH": "32f7b13972ac9381076b06e04c581900065a246796e911bdd161479d86f31b8e",
+    "build-cuda/bin/ARCH": "1cbbd6952f4970f89ef5071b9e3f18d9ec619ec92824f0ad9928455f6e27eb53"
+  },
+  "tmpfsUnmounted": true,
+  "scriptSha256": {
+    "tests/host/io/test_driver_plot_publication.cpp": "41e3595b2c5b09d3cd2754dd75d8ed37dadbbe35d1c0320231f3e89ab7dc78ed",
+    "validation/io/run_driver_plot_publication.py": "e947d1abd4d7a5f816536ec494fe43f5fc9e037d4e5b0ebffb8cd7ab8060774d",
+    "validation/io/run_plotfile_enospc_namespace.py": "3fd6044776e6dde0c04e99e973a215a7211522b95ddca66ff248f9a05e3a4587"
+  },
+  "existingPublicationRegression": "PASS: empty-grid/write/flush/close/rename/create/same-index retry",
+  "rawHdfSha256": {
+    "fixture_HLLC_plt_0018.h5": "a57a3e36ec32157db3eace8371a6dcd42786ff537d4d9d00fad32541a64d8eb6",
+    "fixture_HLLC_plt_0017.h5": "a57a3e36ec32157db3eace8371a6dcd42786ff537d4d9d00fad32541a64d8eb6"
+  },
+  "projectUserCanReadPrivateRawEvidence": true,
+  "limits": [
+    "Real ENOSPC at HDF create/header write; not mid-large-dataset coverage",
+    "No fsync/power-loss/crash guarantee",
+    "No checkpoint guarantees",
+    "IO-only callbacks, not EOS oracle",
+    "No simulation/CUDA/long-run/benchmark"
+  ]
+}

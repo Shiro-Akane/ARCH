@@ -40,8 +40,10 @@
 
 namespace ProblemHelper
 {
-    void SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X)
+    static void SetupNetwork(SimConfig &config, SpeciesManager &specs,
+                             std::vector<double>* fractions)
     {
+        config.RequireLoadedValues();
         using namespace arch::dispatch;
         const std::string &net_type = config.physics.burn.network_name;
         const auto selected = parse_registered_policy<NetworkPolicies>(
@@ -66,13 +68,24 @@ namespace ProblemHelper
                                                  CpuNoNetworkBinding>) {
                     using Network = typename CpuNetworkType<Binding>::type;
                     if (specs.count() == 0) Network::RegisterSpecies(specs);
-                    Network::SetupInitialFractions(
-                        config, specs, default_X);
+                    if (fractions) Network::SetupInitialFractions(
+                        config, specs, *fractions);
                     setup = true;
                 }
             });
         if (!registered || !setup)
             throw std::logic_error("registered network has no CPU setup binding");
+    }
+
+    void SetupNetworkSpecies(SimConfig& config, SpeciesManager& specs)
+    {
+        SetupNetwork(config, specs, nullptr);
+    }
+
+    void SetupNetworkAndFractions(SimConfig& config, SpeciesManager& specs,
+                                  std::vector<double>& fractions)
+    {
+        SetupNetwork(config, specs, &fractions);
     }
 
     double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)
@@ -166,6 +179,13 @@ namespace ProblemHelper
         arch::config::ValidateControls(config, specs.count());
         int n_species = specs.count();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+        for (int id : active_blocks) {
+            const auto& block = amr_ctrl.pool->GetBlock(id);
+            const auto& grid = block.grid;
+            if (grid.dim != config.grid.dim || grid.geometry != config.grid.geometry)
+                throw std::invalid_argument("Initialization native grid/config geometry mismatch");
+            (void)GridMetrics::make_geometry_view(grid);
+        }
 
         EOSDispatcher::dispatch_eos(context.eos, config, specs, [&](auto &&eos) {
             std::exception_ptr initialization_failure;
@@ -209,7 +229,7 @@ namespace ProblemHelper
                                     && i >= b.grid.Is() && i < b.grid.Ie()
                                     && j >= b.grid.Js() && j < b.grid.Je()
                                     && k >= b.grid.Ks() && k < b.grid.Ke()) {
-                                    const double volume=GridMetrics::CellVolume(b.grid,i,j,k);
+                                    const double volume=GridMetrics::CellVolume(GridMetrics::make_geometry_view(b.grid),i,j,k);
                                     if (b.fluid_state.stage_repairs.values[0] == 0.0) {
                                         b.fluid_state.stage_repairs.position[0]=p.x;
                                         b.fluid_state.stage_repairs.position[1]=p.y;

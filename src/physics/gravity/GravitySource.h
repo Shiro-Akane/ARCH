@@ -11,17 +11,16 @@
  */
 #pragma once
 
+#include <array>
+#include <cmath>
+#include <cstddef>
+
 #include "core/ArchPortability.h"
 #include "data/FluidState.h"
+#include "numerics/curvilinear/GridMetrics.h"
+#include "physics/gravity/GravitySourceTypes.h"
 
 namespace Physical::Gravity {
-struct GravityPatchView {
-    const double* density=nullptr;
-    const double* faces[3]{};      // Physical acceleration at each native face.
-    const double* work_faces[3]{}; // Cell-side coefficient from Phi_face-Phi_cell.
-    /** Report whether a resident density and face field have been published. */
-    ARCH_INLINE bool enabled() const {return density!=nullptr;}
-};
 /** Apply the midpoint face-acceleration momentum source. */
 ARCH_INLINE double gravity_momentum(double low,double high,double rho,double dt) {
     // Delta(rho*u) = dt * rho * (g_left+g_right)/2.
@@ -35,10 +34,14 @@ ARCH_INLINE double gravity_flux_work(double low,double high,double flux_low,doub
     // face-acceleration coefficient.
     return 0.5*dt*(flux_low*low+flux_high*high);
 }
-struct ExternalGravityView {
-    double g_x = 0.0, g_y = 0.0, g_z = 0.0;
-    bool enabled = false;
-};
+/** Register the same-stage coarse-cell gravitational mass-flux work.
+ * FE_registered = FE + (sum_f A_f/A_source * Phi_f - Phi_coarse) * F_rho.
+ * The existing register applies its sign, area ratio, RK weight and dt once.
+ * This scalar shared leaf carries no Host/Device allocation or authority.
+ */
+ARCH_INLINE double native_reflux_energy(double energy,double potential_difference,double mass_flux) {
+    return energy+potential_difference*mass_flux;
+}
 /** Apply an external acceleration in the native orthonormal vector basis. */
 ARCH_INLINE void add_external_gravity_source_cell(
     const FluidVector& state, ExternalGravityView gravity, double dt,
@@ -51,4 +54,6 @@ ARCH_INLINE void add_external_gravity_source_cell(
     delta.mom_w += dt * rho * gravity.g_z;
     delta.eng += dt * (state.mom_u * gravity.g_x + state.mom_v * gravity.g_y + state.mom_w * gravity.g_z);
 }
+
+
 } // namespace Physical::Gravity

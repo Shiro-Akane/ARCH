@@ -1,0 +1,55 @@
+{
+  "baselineCommit": "00cad91c356896a7dadb208a00808aa578873fc0",
+  "confirmationDate": "2026-10-04",
+  "confirmationSource": "User explicitly corrected original description to RTX 4070 Ti",
+  "previousExpectedGpu": "NVIDIA GeForce RTX 5070 Ti",
+  "confirmedExpectedGpu": "NVIDIA GeForce RTX 4070 Ti",
+  "preflightExitCode": 0,
+  "platformMatch": true,
+  "observedGpu": {
+    "tool_sha256": "b08bd23ca62ad9797b60d14e79fb1ccc21fca858acef57fef473fd74b19f4af7",
+    "query": "uuid,name,memory.total,memory.used,power.draw,temperature.gpu,utilization.gpu",
+    "exit_code": 0,
+    "state": "observed",
+    "devices": [
+      {
+        "uuid": "GPU-597803c6-7939-63f9-f93f-671f90b13766",
+        "name": "NVIDIA GeForce RTX 4070 Ti",
+        "scope": "whole_device",
+        "memory_total_mib": {
+          "state": "observed",
+          "value": 12282.0
+        },
+        "memory_used_mib": {
+          "state": "observed",
+          "value": 2171.0
+        },
+        "power_draw_w": {
+          "state": "observed",
+          "value": 6.85
+        },
+        "temperature_c": {
+          "state": "observed",
+          "value": 38.0
+        },
+        "utilization_percent": {
+          "state": "observed",
+          "value": 5.0
+        }
+      }
+    ]
+  },
+  "architectureQuery": {
+    "name": "NVIDIA GeForce RTX 4070 Ti",
+    "computeCapability": "8.9",
+    "driverVersion": "617.14",
+    "source": "local nvidia-smi query; NVIDIA GPU table corroborates 8.9"
+  },
+  "officialReference": "https://developer.nvidia.com/cuda/gpus",
+  "historicalMismatchRecordPreserved": "PlatformPreflight-20261004.Summary.json",
+  "newBuild": false,
+  "cudaWorkloadExecuted": false,
+  "cpuScientificGatePassed": false,
+  "gpuAcceptancePassed": false,
+  "rawEvidenceLocal": "platform-identity-correction-20261004"
+}

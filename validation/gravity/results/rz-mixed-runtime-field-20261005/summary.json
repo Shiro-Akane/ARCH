@@ -1,0 +1,105 @@
+{
+  "status": "FAILED_ORIGINAL_GLOBAL_RING_WORK_LIMIT",
+  "baseline": "be3942016a6f80fbf59b5ad9d1e52ad600cc4514",
+  "finding": "RZ-MIXED-RUNTIME-WORK-01",
+  "actualRuntime": {
+    "scope": "Actual CPU RZ Runtime mixed/coarse AMR -> native field rebind; no timestep",
+    "exitCode": 1,
+    "stdout": "ACTUAL_RZ_REGRID_CONSERVATION phase=refine mass=4.9443359450135940218e-18 energy=5.8830633892218087959e-18 angular=1.0178367504159992958e-17 x0=1.3347385767055477273e-17 x1=1.3927706887362235913e-18 zero_rotation=0\nACTUAL_RZ_REGRID_CONSERVATION phase=frozen-parent-veto mass=1.3252311172764652747e-17 energy=1.2545550436611475183e-17 angular=0 x0=1.9958992955509264994e-17 x1=2.5020639583995762343e-17 zero_rotation=0\n",
+    "stderr": "Native RZ ring boundary failed: status=1 target=4.7082587313629388e-18 leaf=74984 parent=25016\n",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "executableSha256": "516f2f677274e416cbfaf3482b21afc12f35854781b8280114bb760f5e1990e7",
+    "recompiledSources": {
+      "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "89a4c05e865e365f21c9893aa6f09251ec5997fd217689965acc11a64cdf5091",
+      "src/driver/stages/GravityStage.cpp": "fc2336d88b6041fae7e9c4106f6796e268ec54d189a622bc42f517103f60d038",
+      "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "08f5d73713eadf576d9972f79ee2d5b71c28dc764ee42c153054c373339a62b8",
+      "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340"
+    },
+    "timestepHeaderSha256": "00f9e70c9ee177a76f01054e53b11f89ec02cd8f84dfaef974360b6aa38481ea",
+    "rklHeaderSha256": {
+      "src/numerics/diffusion/DiffDispatch.h": "349df128938e5237c861bee9de58f1e70f20841bdf22eb33bc164964d1088f09",
+      "src/numerics/diffusion/DiffusionAMRStages.h": "3f051214b754f42f4892081db0d07b19792a3cce1e757391fb6c4371403caf16",
+      "src/numerics/diffusion/RKL1TimeIntegrator.h": "b7673e0c3bc44e7df9d709a3e464e2e93032592d1c331018f66e8c6904653ccd",
+      "src/numerics/diffusion/RKL2TimeIntegrator.h": "28d4e56da8fc316e3a1ac01352c895381537acbbfeab42a8f316564cb1274e76"
+    },
+    "limitations": [
+      "Explicit candidate only; production physical readers/Device gates held",
+      "No continuous Phi/force or Hydro conservation/evolution science acceptance"
+    ]
+  },
+  "producer": {
+    "baseline": "be3942016a6f80fbf59b5ad9d1e52ad600cc4514",
+    "sourceSha256": {
+      "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "89a4c05e865e365f21c9893aa6f09251ec5997fd217689965acc11a64cdf5091",
+      "src/driver/stages/GravityStage.cpp": "fc2336d88b6041fae7e9c4106f6796e268ec54d189a622bc42f517103f60d038",
+      "src/driver/stages/GravityStage.h": "af5eae3d184a4ff795848a76e17524ac12b915f7f4c530f8fb4972798f4f9a4f",
+      "src/driver/runtime/DriverRegrid.cpp": "08f5d73713eadf576d9972f79ee2d5b71c28dc764ee42c153054c373339a62b8",
+      "src/driver/runtime/DriverRuntime.h": "0f03a78d461067cb2c4de0920a7a5027b0aa743b8824348ac217f6cb4738905d",
+      "src/physics/gravity/GravityBoundary.cpp": "0400aa84905b118a8f31fe8b4ef6e73baadbe531260d49864863f6c19a0fecd7",
+      "src/physics/gravity/self/SelfGravity.cpp": "2b42be22462e032713dfcd8a7ef732a28c4506fe98ba2c30863e287ca175a92a",
+      "validation/gravity/run_gravity_runtime_contract.py": "91213dda62652229182d7593d99e3d8bd49d3c8bbbc5ac480befd9596daaeeca"
+    },
+    "testElfSha256": "516f2f677274e416cbfaf3482b21afc12f35854781b8280114bb760f5e1990e7",
+    "command": [
+      "gravity-runtime-contract",
+      "runtime-output",
+      "--field-after-regrid"
+    ],
+    "scope": "Internal t=0 actual mixed/coarse Runtime field candidate",
+    "notes": [
+      "Identity only, no PASS claim before terminal result",
+      "Raw ELF and full logs local only"
+    ]
+  },
+  "mixedTopology": {
+    "blocks": 5,
+    "cells": 1280,
+    "nativeDomainR": [
+      0,
+      1
+    ],
+    "nativeDomainZ": [
+      -0.5,
+      0.5
+    ],
+    "density": 1,
+    "constructedByActualRuntimeTransactions": true
+  },
+  "failure": {
+    "status": "WorkLimit",
+    "faceAbsoluteTarget": 4.708258731362939e-18,
+    "leafEvaluations": 74984,
+    "parentEvaluations": 25016,
+    "globalWork": 100000,
+    "originalGlobalCap": 100000,
+    "originalPerLeafBoxCap": 65536,
+    "enteredPoisson": false,
+    "successfulFieldPublication": false,
+    "coarseFieldCheckReached": false,
+    "originalRtol": 1e-10,
+    "originalAtol": 0
+  },
+  "guard": {
+    "seconds": 122.228,
+    "peakOwnedRssKiB": 1302392,
+    "swapKiB": 0,
+    "guardStopped": false,
+    "scope": "runner compilation plus test, not benchmark"
+  },
+  "workCounterSemantics": "Source tree visits across boundary observers; adaptive kernel ranges/boxes have separate counters",
+  "checks": {
+    "actualRefineAndFrozenParentConservation": "PASS before field failure",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "nextAction": "Audit/prove same-density exactly tiled sibling coalescence in original finite-ring owner, preserving complete original source identity and ledger, all existing caps and thresholds",
+  "limitations": [
+    "No mixed or rebound coarse field PASS",
+    "No independent continuous Phi/force qualification",
+    "Failed publication getters not explicitly probed in this run; failure precedes original publication in code",
+    "No CUDA, simulation, long run or benchmark",
+    "No work cap increase or narrower geometry substitution"
+  ]
+}

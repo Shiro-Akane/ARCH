@@ -1,0 +1,59 @@
+{
+  "scope": "t=0 initial topology only; does not certify evolution, CUDA, or all scientific fields",
+  "sourceBaseCommit": "06e67f30ed2019ad0a19e585e94b85c25d1323f5",
+  "sourceState": "uncommitted G retirement and explicit configuration test migration at execution",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "buildConfiguration": {
+    "ARCH_ENABLE_CUDA:BOOL": "OFF",
+    "CMAKE_BUILD_TYPE:STRING": "Release",
+    "CMAKE_CXX_COMPILER:FILEPATH": "/usr/bin/c++",
+    "CMAKE_HOME_DIRECTORY:INTERNAL": "/home/arch/projects/ARCH-compute-optim"
+  },
+  "cases": [
+    {
+      "case": "Sod",
+      "scope": "t=0 initial topology only; no evolution acceptance",
+      "time": 0,
+      "productionLeafCount": 12,
+      "previewLeafCount": 12,
+      "logicalKeysEqual": true,
+      "inputSha256": "cb23fec12ae6384ba774aafb3a55d39cfd0c760f3e299b9aa5a95430dd55e27c",
+      "binarySha256": "13a9ded4a949a71f968a41d6631a0d2cf7bde78a9421c97577d0ff6fee086ca7",
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-r5g1ot2p"
+    },
+    {
+      "case": "CellularDet",
+      "scope": "t=0 initial topology only; no evolution acceptance",
+      "time": 0,
+      "productionLeafCount": 20,
+      "previewLeafCount": 20,
+      "logicalKeysEqual": true,
+      "inputSha256": "45b21a327cc54f974be506dda3b4db808b29d9b10110e06cc21b91d5f2184086",
+      "binarySha256": "13a9ded4a949a71f968a41d6631a0d2cf7bde78a9421c97577d0ff6fee086ca7",
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-gbya9tww"
+    }
+  ],
+  "tests": {
+    "firstCombinedCtest": "5/6 passed; ui_expansion had 8/9 methods pass, including both t=0 comparisons",
+    "failure": "migration assertion expected applicable instead of schema v3 satisfied",
+    "repairVerification": "only failed diffusion inspection method rerun: PASS",
+    "poissonMultigrid": "contract and analytic 2/2 PASS; budgets unchanged"
+  },
+  "changedSourceSha256": {
+    "simulation/GravityBox/GravityBox.cpp": "b6466696b0de2ef2efbdfb683934037f412cc73e1abff46fdd5929f006b3953c",
+    "simulation/JeansWave/JeansWave.cpp": "76f126a0799bbc56b9648c6d042f6d02b62f880fdcae934ad440c6cb13008114",
+    "src/api/configuration/Configuration.cpp": "03df1f382c16ddda0d38293a68c2ffd75122df2d88d552bae91f4709dcff47dc",
+    "src/api/configuration/ParameterPresentation.h": "70e53e97bd5bcc68787149db1ec589e72556c712ae4fe306ea700d367b847df8",
+    "src/api/inspection/CaseUnitEvidence.cpp": "76bea643395f074d24bdcc5aa3fdf50f36d6e11114044aaf9cb2c0031ae55714",
+    "src/core/config/ConfigValidation.h": "9f9bd96a74c03ee0b3b68c96877cde7e0b0bc8d63a40b037ad18c9bca494779d",
+    "src/core/config/ScalarControlValidation.h": "3f9a7c6578f7ba5f45dc229d75fe3e7001c415fa956ce73610c15a65c9f8b6b2",
+    "src/data/GlobalDefs.h": "bea07f3693d9392ee50983bab00a67751236e61d17fbb3fce9924740b25bdb66",
+    "src/driver/SolverDispatch.cpp": "709162943d02184dcb15bdf4d54cfccd06dd3ce0593cda2d15f178675a893323",
+    "src/driver/stages/GravityStage.cpp": "8820d7ba03478f00671b91ad8d43a2fe46b2450676a3ef4862f6950e2f029ea6",
+    "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+    "src/physics/gravity/UniformGravity.cpp": "af9c378f159188ce14f2aed6702922e01711cdbc987c69625dc9bf6eec7095d9",
+    "src/physics/gravity/UniformGravity.h": "77c44f3c0f96b8e45f5c499460973feddf86a70d0823881bb862d367cad1232b",
+    "src/physics/gravity/self/SelfGravity.cpp": "6fe64c95e3fa30272a655582b459dad1139e837bce048fcf91f717e5c09a41d5"
+  },
+  "cmakeCacheSha256": "bef7177be5822001632da27b5d0e4d5bc7450382ff7244aadff3626da7ecc377"
+}

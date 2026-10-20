@@ -57,10 +57,9 @@ std::vector<double> read_density(const elliptic::CartesianMesh& mesh, grid::Cons
 /** Build the physical Poisson source, solve, then derive checked face/cell acceleration. */
 UniformGravityResult solve_uniform_gravity(multigrid::HostMultigrid& solver,
     grid::ConstScalarFieldView view, const elliptic::BoundaryData& boundary,
-    multigrid::SolveControl control, double gravitational_constant, std::span<const double> initial)
+    multigrid::SolveControl control, std::span<const double> initial)
 {
-    if (!std::isfinite(gravitational_constant) || gravitational_constant <= 0.)
-        throw std::invalid_argument("Uniform gravity requires finite positive G");
+    constexpr double gravitational_constant = arch::constants::gravity::cgs::gravitational_constant;
     const auto& mesh = solver.mesh();
     auto rhs = read_density(mesh, view);
     UniformGravityResult result;

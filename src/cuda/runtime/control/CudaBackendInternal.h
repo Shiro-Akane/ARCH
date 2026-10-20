@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
@@ -122,6 +124,8 @@ struct DeviceStateStorage {
     DeviceAllocation<double> species;
     int total_size = 0;
     int species_count = 0;
+    // Baked into every derived view so configure refreshes slot bindings.
+    arch::boundary::BoundaryFluxCaptureView capture{};
 
     void allocate(int total, int count);
     DeviceStateView view() const noexcept;
@@ -147,6 +151,37 @@ struct CudaBlockRuntime {
     backend::StorageGeneration generation;
     std::array<DeviceStateStorage, 3> state_storage;
     std::array<DeviceStateView, 3> slots{};
+    /**
+     * @brief Lazily owned physical-surface observer, shared by all stage slots.
+     *
+     * One allocation set per block: the three slot views observe the same
+     * planes, so the cached initial F(Y0) stage stays a single shared leaf.
+     * Ordinary runs never configure it and keep null pointers.
+     */
+    struct BoundaryFluxObserverStorage {
+        std::array<ReusableDeviceAllocation<double>, 6> stage, initial;
+        std::array<bool, 6> owned{};
+        std::array<std::size_t, 6> active_elements{}; // Shape, independent of grow-only capacity.
+        double weight = 1., initial_weight = 0.;
+        bool save_initial = false;
+
+        arch::boundary::BoundaryFluxCaptureView view() const noexcept
+        {
+            arch::boundary::BoundaryFluxCaptureView result;
+            for (int face = 0; face < 6; ++face) {
+                result.stage[face] = owned[face] ? stage[face].get() : nullptr;
+                result.initial[face] = owned[face] ? initial[face].get() : nullptr;
+            }
+            result.weight = weight;
+            result.initial_weight = initial_weight;
+            result.save_initial = save_initial;
+            return result;
+        }
+    };
+    BoundaryFluxObserverStorage boundary_flux_observer;
+    std::array<std::array<ReusableDeviceAllocation<boundary::ScalarBoundaryCondition>, 6>, 3> user_boundary_controls;
+    ReusableDeviceAllocation<int> user_boundary_indices;
+    ReusableDeviceAllocation<double> user_boundary_values;
     DeviceStateStorage face_flux;
     DeviceStateStorage hydro_delta;
     DeviceStateStorage diffusion_delta;
@@ -178,7 +213,7 @@ struct CudaBlockRuntime {
         const amr::Block& block, amr::BlockHandle requested_handle,
         backend::StorageGeneration requested_generation,
         int expected_species_count, int device_ordinal,
-        const boundary::BoundaryPlan& logical_boundary,
+        const boundary::BoundaryPlan& logical_boundary, std::optional<boundary::HydroBoundaryView> hydro_boundary,
         const CudaLaunchConfig& launch, cudaStream_t stream,
         backend::BackendCounters& counters);
 
@@ -283,8 +318,13 @@ struct CudaBackend::Impl {
         }
     } hydro_batch;
     HydroBatchScratch diffusion_batch;
+    HydroBatchScratch reflux_batch;
     ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
     ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
+    // Optional endpoint diagnostic only: compact bindings/results, no field
+    // storage. Calls quiesce the owner stream before growth/reuse/destruction.
+    ReusableDeviceAllocation<DeviceDiffusionActivityBlock> diffusion_activity_bindings;
+    ReusableDeviceAllocation<DeviceDiffusionActivityResult> diffusion_activity_results;
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
     ReusableDeviceAllocation<DeviceBurnBatchBlock> burn_bindings;
     ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
@@ -342,8 +382,19 @@ struct CudaBackend::Impl {
     CudaBlockRuntime& require_block(backend::BackendStateAccess access);
     const CudaBlockRuntime& require_block(
         backend::BackendStateAccess access) const;
+    // Observer configuration names live blocks by handle, not by arena slot.
+    CudaBlockRuntime* find_block(amr::BlockHandle handle) noexcept;
     using BlockResolver = std::function<
         CudaBlockRuntime&(backend::BackendStateAccess)>;
+    // Existing boundary bodies share the same authenticated storage resolver.
+    state::CompletionToken execute_physical_boundary_batch(
+        std::span<const backend::BackendStateAccess>, state::StateVersion,
+        state::CompletionToken, const BlockResolver&);
+    backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
+        std::span<const int>, state::StateRegion, const BlockResolver&);
+    void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,
+        const backend::BoundaryCells&, const boundary::DiffusionBoundaryStorage&,
+        const BlockResolver&);
     // One lowering/execution path serves active slots and the unpublished
     // regrid namespace; only the validated storage resolver differs.
     void execute_same_level_exchange(
@@ -358,6 +409,10 @@ struct CudaBackend::Impl {
         std::span<const backend::BackendStateAccess>,
         std::span<const int>, const amr::CoordinateSeamPlan&,
         state::StateSlot, const BlockResolver&);
+    // The same accepted-state observer serves committed Current storage and the
+    // authenticated unpublished regrid namespace; only the resolver differs.
+    std::vector<double> evaluate_jeans_resolution(
+        std::span<const backend::BackendStateAccess>, const BlockResolver&);
     CudaBlockRuntime& first_block() noexcept;
     const CudaBlockRuntime& first_block() const noexcept;
 
@@ -401,5 +456,9 @@ struct CudaBackend::StoreTransaction::Impl {
 
     bool current_upload_complete() const noexcept;
 };
+
+// Resolve only this authenticated unpublished store; active storage is never a fallback.
+CudaBlockRuntime& resolve_staged_block(CudaBackend::StoreTransaction::Impl&,
+    backend::BackendStateAccess);
 
 } // namespace arch::cuda

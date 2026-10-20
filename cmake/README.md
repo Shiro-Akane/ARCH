@@ -15,6 +15,7 @@ change the scope of source-file properties.
 | [tests/HostTests.cmake](tests/HostTests.cmake) | Host contract tests and the deferred I/O regression registration |
 | [CudaBackend.cmake](cuda/CudaBackend.cmake) | CUDA/cuDSS discovery, explicit source owners, compile pools and phase barriers |
 | [tests/CudaTests.cmake](tests/CudaTests.cmake) | CUDA test executables and CTest cases, only when both CUDA and testing are enabled |
+| [studio/Studio.cmake](studio/Studio.cmake) | Optional Linux Electron assets, runtime, CLI entry and portable package |
 | [Dependencies.cmake](dependencies/Dependencies.cmake) | OpenMP, HDF5, HighFive and KLU linkage for declared targets |
 
 Host contract tests are declared before the optional CUDA backend. The
@@ -65,3 +66,23 @@ parallelism. The [test-module guide](tests/README.md) explains where to register
 new checks. Measured compilation costs remain in the
 [core-build reference](../validation/backend/results/cold-core-first-law-20260907/release-909/README.md);
 shortening CMake source alone does not reduce template-instantiation cost.
+
+Local provenance tooling may opt into ARCH_EMIT_LINK_DEPENDENCIES=ON. ARCH then asks the selected linker to write Makefile-style ARCH.link.d in the build directory. This is disabled by default and adds no numerical flags. A linker without --dependency-file support fails explicitly; absence of the file must not be treated as complete dependency coverage.
+
+GNU C++ provenance builds may additionally opt into
+ARCH_RETAIN_LTO_LINK_INPUTS=ON with ARCH_EMIT_LINK_DEPENDENCIES=ON.
+The GNU linker plugin's diagnostic retention option keeps its generated LTO
+inputs available for fingerprinting. It is OFF by default, does not disable IPO
+or change floating-point flags, and fails configuration for other compiler IDs
+or without link dependency emission. Retained objects consume local disk;
+use a Host-owned persistent TMPDIR before adopting it in a managed profile.
+The independent GCC 13/mold microprobe produced identical control/retention ELF
+bytes, but that is not an ARCH equivalence or complete build-coverage claim.
+Current Studio profiles do not enable this option. No existing build cache or
+Manifest is upgraded merely because this option exists.
+
+## Linux Studio components
+
+Use `cmake --preset studio-cpu-release -DARCH_STUDIO_NODE=/absolute/path/to/node` and `cmake --build build-studio-cpu --parallel 2` to build the scientific CPU executable and `build-studio-cpu/bin/arch-studio` together. This preset matches the Host-owned local build directory; arbitrary existing caches are not adopted silently. `ARCH_BUILD_STUDIO` defaults to OFF in ordinary scientific builds.
+
+The optional targets are `arch-studio-assets`, `arch-studio-runtime`, `arch-studio` (Core plus desktop entry), and `arch-studio-package` (portable Linux x64 package). The first build prepares locked npm dependencies and explicitly installs the locked Electron runtime even if npm lifecycle hooks are disabled. Packaging includes Host Node and h5wasm; no CUDA build is required. System graphical libraries, WSLg under WSL, and `/usr/bin/xterm` plus `flock` for Run/Restart are prerequisites. The source entry depends on the checkout; the package is a separate output under `studio/.local/desktop-release`. See the [Studio guide](../docs/guides/Studio.md).

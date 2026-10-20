@@ -1,0 +1,218 @@
+--- a/src/core/config/RefinementSelection.h
++++ b/src/core/config/RefinementSelection.h
+@@ -9,12 +9,21 @@
+ #include <iostream>
+ #include <sstream>
+ #include <stdexcept>
++#include <string_view>
+ #include "data/GlobalDefs.h"
+ 
+ namespace arch::config {
++/** Structural JENS execution capability; device/native scientific gates remain
++ * with the corresponding backend. Auto is deliberately not an explicit request.
++ */
++inline bool SupportsJeansBackend(std::string_view backend,std::string_view geometry) {
++    return backend=="cpu" || (backend=="cuda" && geometry=="cartesian");
++}
++inline constexpr const char* JeansBackendRequirement =
++    "requires self gravity and explicit CPU or Cartesian CUDA backend; auto and native-coordinate CUDA are not qualified";
+ inline void ResolveRefinementSelection(AmrConfig& a, int dimension,
+                                        bool burn_enabled, bool emit_warnings = true,
+-                                       bool self_gravity = false, bool cpu_backend = false) {
++                                       bool self_gravity = false, bool jeans_backend = false) {
+         std::replace(a.refine_var.begin(), a.refine_var.end(), '+', ',');
+         a.refine_on_rho = false;
+         a.refine_on_p = false;
+@@ -73,8 +82,8 @@
+         if (a.refine_on_vely && dimension < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); a.refine_on_vely = false; }
+         if (a.refine_on_velz && dimension < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); a.refine_on_velz = false; }
+         if (a.refine_on_jeans) {
+-            if (!self_gravity || !cpu_backend)
+-                throw std::invalid_argument("JENS refinement requires self gravity and explicit CPU backend; CUDA is not qualified.");
++            if (!self_gravity || !jeans_backend)
++                throw std::invalid_argument(std::string("JENS refinement ")+JeansBackendRequirement);
+             if (!std::isfinite(a.jeans_cells) || a.jeans_cells<4.)
+                 throw std::invalid_argument("JENS refinement requires explicit finite jeans_cells >= 4.");
+         }
+--- a/src/core/config/ConfigurationInput.h
++++ b/src/core/config/ConfigurationInput.h
+@@ -101,7 +101,7 @@
+         const auto* backend=input_detail::get<std::string>(result.standard,"compute_backend");
+         try {
+             ResolveRefinementSelection(selection, *x3 > 0 ? 3 : *x2 > 0 ? 2 : 1, *burn, false,
+-                gravity && *gravity=="self",backend && *backend=="cpu");
++                gravity && *gravity=="self",backend && SupportsJeansBackend(*backend,*geometry));
+             result.refinement_selection = std::move(selection);
+         } catch (const std::invalid_argument& error) {
+             auto& record = result.standard.parameters.at("refine_var");
+--- a/src/core/config/RuntimeParams.h
++++ b/src/core/config/RuntimeParams.h
+@@ -311,7 +311,7 @@
+         assign(cfg.amr.jeans_cells, "jeans_cells");
+         assign(cfg.amr.refine_var, "refine_var");
+         arch::config::ResolveRefinementSelection(cfg.amr, cfg.grid.dim, cfg.physics.burn.use_burn,true,
+-            cfg.physics.gravity.type=="self",cfg.execution.compute_backend=="cpu");
++            cfg.physics.gravity.type=="self",arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry));
+         assign(cfg.amr.refine_threshold, "refine_threshold");
+         assign(cfg.amr.derefine_threshold, "derefine_threshold");
+         // Time limits and output configuration.
+@@ -402,8 +402,9 @@
+         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
+         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
+         if (cfg.io.vars.jens)
+-            if (cfg.physics.gravity.type!="self" || cfg.execution.compute_backend!="cpu")
+-                throw std::invalid_argument("JENS output requires self gravity and explicit CPU backend; CUDA is not qualified.");
++            if (cfg.physics.gravity.type!="self"
++                || !arch::config::SupportsJeansBackend(cfg.execution.compute_backend,cfg.grid.geometry))
++                throw std::invalid_argument(std::string("JENS output ")+arch::config::JeansBackendRequirement);
+ 
+         arch::config::ValidateControls(cfg);
+         return cfg;
+--- a/src/api/Configuration.h
++++ b/src/api/Configuration.h
+@@ -17,7 +17,7 @@
+ namespace arch::api {
+ detail::Json ConfigurationSchema();
+ detail::Json RefinementMetadata(const SimConfig& config);
+-detail::Json RefinementMetadata(const AmrConfig& amr, int dimension, bool burn_enabled, bool self_gravity = false, bool cpu_backend = false);
++detail::Json RefinementMetadata(const AmrConfig& amr, int dimension, bool burn_enabled, bool self_gravity = false, bool jeans_backend = false);
+ detail::Json DiffusionMetadata(const SimConfig& config);
+ detail::Json DiffusionMetadata(const std::string& eos_type, bool enabled);
+ PreviewResponse InspectConfiguration(const PreviewRequest& request);
+--- a/src/api/configuration/PresentationMetadata.cpp
++++ b/src/api/configuration/PresentationMetadata.cpp
+@@ -12,6 +12,7 @@
+ #include "driver/dispatch/PolicyDescriptor.h"
+ #include "grid/Grid.h"
+ #include "data/FieldUnits.h"
++#include "core/config/RefinementSelection.h"
+ 
+ namespace arch::api {
+ using detail::Json;
+@@ -59,7 +60,7 @@
+         {"thirdAxisRequiresSecond", true}, {"unitSystem", system}});
+ }
+ /** Summarize AMR controls for the resolved configuration. */
+-Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bool self_gravity, bool cpu_backend) {
++Json RefinementMetadata(const AmrConfig& a, int dimension, bool burn_enabled, bool self_gravity, bool jeans_backend) {
+     struct Item { const char* name; bool selected; const char* unavailable; };
+     const Item items[] = {{"DENS", a.refine_on_rho, ""}, {"PRES", a.refine_on_p, ""},
+         {"TEMP", a.refine_on_temp, ""}, {"VELX", a.refine_on_velx, ""},
+@@ -68,7 +69,7 @@
+         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
+         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
+         {"ENUC", a.refine_on_enuc, !burn_enabled ? "requires reactions" : ""},
+-        {"JENS", a.refine_on_jeans, self_gravity && cpu_backend ? "" : "requires self gravity and explicit CPU backend; CUDA not qualified"},
++        {"JENS", a.refine_on_jeans, self_gravity && jeans_backend ? "" : config::JeansBackendRequirement},
+         {"SPECIES", a.refine_all_species, ""}};
+     auto choices = Json::array();
+     for (const auto& item : items)
+@@ -81,7 +82,7 @@
+ }
+ Json RefinementMetadata(const SimConfig& c) {
+     return RefinementMetadata(c.amr, c.grid.dim, c.physics.burn.use_burn,
+-        c.physics.gravity.type=="self",c.execution.compute_backend=="cpu");
++        c.physics.gravity.type=="self",config::SupportsJeansBackend(c.execution.compute_backend,c.grid.geometry));
+ }
+ /** Expose the applicable diffusion controls and their state. */
+ Json DiffusionMetadata(const std::string& eos_type, bool enabled) {
+--- a/src/api/configuration/Configuration.cpp
++++ b/src/api/configuration/Configuration.cpp
+@@ -476,10 +476,12 @@
+         const int x2 = *config::input_detail::get<int>(analysis.standard, "nblockx2");
+         const int x3 = *config::input_detail::get<int>(analysis.standard, "nblockx3");
+         const bool burn = *config::input_detail::get<bool>(analysis.standard, "use_burn");
++        const auto* requested_backend=config::input_detail::get<std::string>(analysis.standard,"compute_backend");
++        const auto* geometry=config::input_detail::get<std::string>(analysis.standard,"geometry");
+         result["amrIndicators"] = RefinementMetadata(
+             *analysis.refinement_selection, x3 > 0 ? 3 : x2 > 0 ? 2 : 1, burn,
+             config::input_detail::choice(analysis.standard,"gravity_type",{"self"}).value.value_or(false),
+-            config::input_detail::choice(analysis.standard,"compute_backend",{"cpu"}).value.value_or(false));
++            requested_backend && geometry && config::SupportsJeansBackend(*requested_backend,*geometry));
+     }
+     return SerializePreviewResponse(result, complete ? 0 : 3);
+ }
+--- a/src/driver/Driver.h
++++ b/src/driver/Driver.h
+@@ -122,11 +122,14 @@
+     bool has_burn = config.physics.burn.use_burn;
+     bool has_diff = config.physics.diffusion.use_diffusion;
+ 
+-    if (config.amr.refine_on_jeans
+-        && backend_resolution->resolved_backend != arch::dispatch::ComputeBackend::Cpu)
+-        throw std::logic_error("device JENS lifecycle is not qualified");
+-    runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
++    // CPU startup keeps its accepted Host transaction. CUDA first publishes
++    // resident Current, then qualifies/repairs through the same Runtime device
++    // consumers used before every subsequent advance and durable output.
++    if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cpu)
++        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
+     start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
++    if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cuda)
++        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
+     GravityStage gravity_stage(runtime, gravity);
+     {
+         CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
+--- a/validation/gravity/gravity_box.py
++++ b/validation/gravity/gravity_box.py
+@@ -131,7 +131,7 @@
+         from check_jeans_plot import qualify
+         contract=json.loads((ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json').read_text())
+         require(contract['contract_version']=='uniform-lifecycle-1','unknown Jeans contract')
+-        require(self.backend=='cpu','Jeans CUDA qualification is separate')
++        require(self.backend in ('cpu','cuda'),'Jeans requires an explicit qualified backend')
+         common={k:('true' if v else 'false') if isinstance(v,bool) else v
+                 for k,v in contract['common'].items()}
+         records=[]
+--- a/tests/api/configuration/test_configuration.py
++++ b/tests/api/configuration/test_configuration.py
+@@ -85,7 +85,7 @@
+         self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], len(keys))
+         self.assertEqual(caps['cases'], ['Sod'])
+ 
+-    def test_jeans_cpu_self_selection_is_authoritative(self):
++    def test_jeans_explicit_backend_self_selection_is_authoritative(self):
+         text=('lrefinemax=1\nmax_blocks=64\nrefine_var=JENS\njeans_cells=160\n'
+               'gravity_type=self\ngravity_boundary=periodic\ngravity_rtol=1e-10\n'
+               'gravity_atol=0\ngravity_max_cycles=100\ncompute_backend=cpu\n'
+@@ -97,10 +97,18 @@
+         target=next(p for p in result['parameters'] if p['key']=='jeans_cells')
+         self.assertEqual(target['parsedValue'],160)
+         self.assertEqual(target['valueSource'],'input')
+-        bad=self.inspect(text.replace('compute_backend=cpu','compute_backend=cuda'),code=3)
+-        self.assertIsNone(bad['amrIndicators'])
+-        self.assertTrue(any(d.get('parameterKey')=='refine_var' and
+-            d.get('code')=='INVALID_REFINEMENT_SELECTION' for d in bad['diagnostics']))
++        cuda=self.inspect(text.replace('compute_backend=cpu','compute_backend=cuda'))
++        cuda_choices={c['value']:c for c in cuda['amrIndicators']['choices']}
++        self.assertTrue(cuda_choices['JENS']['available'])
++        self.assertTrue(cuda_choices['JENS']['selected'])
++        for unavailable in [
++            text.replace('compute_backend=cpu','compute_backend=auto'),
++            text.replace('compute_backend=cpu','compute_backend=cuda')+'geometry=cylindrical\n',
++            text.replace('gravity_type=self','gravity_type=none')]:
++            bad=self.inspect(unavailable,code=3)
++            self.assertIsNone(bad['amrIndicators'])
++            self.assertTrue(any(d.get('parameterKey')=='refine_var' and
++                d.get('code')=='INVALID_REFINEMENT_SELECTION' for d in bad['diagnostics']))
+ 
+     def test_defaults_and_explicit_values_with_no_eos_or_device_access(self):
+         result = self.inspect('eos_type=helmholtz\neos_table_path=/not present/absent.dat\ncompute_backend=cuda\ncuda_device=999\node_rtol=2e-5\neos_coulomb_mult=1\nx_pos=0.2\n')
+--- a/tests/host/core/test_configuration_input.cpp
++++ b/tests/host/core/test_configuration_input.cpp
+@@ -104,6 +104,15 @@
+         const auto& definition=Definition("jeans_cells");
+         require(!definition.declared_default&&definition.condition==InputCondition::JeansAmr,
+                 "Jeans target acquired implicit default or wrong condition");
++        auto jeans_input=without(without(without(fixture,"refine_var"),"gravity_type"),"compute_backend")
++            +"refine_var=JENS\njeans_cells=160\ngravity_type=self\ncompute_backend=cuda\n";
++        const auto device_jeans=inspect(jeans_input);
++        require(device_jeans.refinement_selection && device_jeans.refinement_selection->refine_on_jeans,
++            "explicit Cartesian CUDA JENS rejected before setup");
++        require(has(inspect(without(jeans_input,"compute_backend")+"compute_backend=auto\n"),
++            "refine_var","INVALID_REFINEMENT_SELECTION"),"auto silently acquired JENS capability");
++        require(has(inspect(without(jeans_input,"geometry")+"geometry=cylindrical\n"),
++            "refine_var","INVALID_REFINEMENT_SELECTION"),"native-coordinate CUDA JENS acquired capability");
+         const auto unknown_amr = inspect(without(fixture, "nblockx2"));
+         require(!unknown_amr.refinement_selection
+                 && !has(unknown_amr, "refine_var", "INVALID_REFINEMENT_SELECTION"),

@@ -1,0 +1,40 @@
+{
+  "status": "FAILED_ORIGINAL_THERMAL_SPECIES_BIT_GATE",
+  "scienceQualified": false,
+  "completeFiveFieldsPassed": false,
+  "sourceBinaryEosFenceUnchanged": true,
+  "wallSeconds": 541.2459976419923,
+  "guardSeconds": 542.417,
+  "logicalRunBudgetSeconds": 1200,
+  "logicalRemainingSeconds": 657.583,
+  "completedGenuineFields": 3,
+  "failingMessage": "Thermal-only diffusion changed species",
+  "completedEvidence": {
+    "M0": "Actual two burn/two thermal diffusion/RK2 two Self fields, original activity and balance checks passed",
+    "regrid": "Actual Runtime DENS epoch1->2, leaves2->5,1280 cells,3 CF routes/48 energy operations",
+    "current": "Genuine AcceptedCurrent stage0/sourcegen1/fieldgen1 at controller1e-12, current conditional discrete budget passed; fluid bits unchanged"
+  },
+  "rootCause": "Shared zero-transport reflux independently exhibits 1 ULP rhoX/rho drift. Exact failed cell not captured before assertion; do not attribute definitively without later witness.",
+  "notPassed": [
+    "M1 first thermal species bit identity",
+    "Fourth and fifth Hydro fields",
+    "Dynamic four-module complete scientific qualification",
+    "Continuum fields/total energy",
+    "Restart/CUDA/long run"
+  ],
+  "source": {
+    "commit": "522ed4a9e9bc7486c87e27c3e11e813fd3fbab9c",
+    "dirty": true,
+    "worktree_sha256": "217246cbffc2adf1ff111fd32ce143a9423e233574fbee8e8aeabc2b644acec6"
+  },
+  "binary": {
+    "path": "/home/shiroakane/ARCH/build-release-cpu/arch_gravity_stage_contract",
+    "sha256": "1c0a09bd1529a381e232e7d3d68683e0e07a174b6ec18002f44ad88c8e998209"
+  },
+  "eos": {
+    "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "failedRawRetainedLocally": true,
+  "relaxedThresholds": false
+}

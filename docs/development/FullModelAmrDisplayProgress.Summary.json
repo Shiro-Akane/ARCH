@@ -1,0 +1,80 @@
+{
+  "implementationBase": "227b682e",
+  "scope": "CPU init-only AMR contract/display adapter; not desktop UAT or evolution",
+  "nativeRootMeshes": [
+    {
+      "geometry": "cartesian",
+      "dimension": 3,
+      "leafCount": 2,
+      "status": "ok"
+    },
+    {
+      "geometry": "spherical",
+      "dimension": 3,
+      "leafCount": 2,
+      "status": "ok"
+    },
+    {
+      "geometry": "cylindrical",
+      "dimension": 3,
+      "leafCount": 2,
+      "status": "ok"
+    }
+  ],
+  "mixedMeshes": [
+    {
+      "caseId": "Sod",
+      "configRevision": "1a16ac2295ea3a4fd12ecf91dc5f3775791f765d3d85f55385e30de524e05b71",
+      "status": "ok",
+      "leafCount": 10,
+      "levels": [
+        {
+          "leafBlocks": 2,
+          "level": 0
+        },
+        {
+          "leafBlocks": 2,
+          "level": 1
+        },
+        {
+          "leafBlocks": 2,
+          "level": 2
+        },
+        {
+          "leafBlocks": 4,
+          "level": 3
+        }
+      ]
+    },
+    {
+      "caseId": "CellularDet",
+      "configRevision": "ab9d9e0af1b8f92c26f28fddb3be0a128ea20dfcb35514f8db29f58f0bdfd48f",
+      "status": "ok",
+      "leafCount": 20,
+      "levels": [
+        {
+          "leafBlocks": 0,
+          "level": 0
+        },
+        {
+          "leafBlocks": 4,
+          "level": 1
+        },
+        {
+          "leafBlocks": 16,
+          "level": 2
+        }
+      ]
+    }
+  ],
+  "studioTests": {
+    "passed": 243,
+    "failed": 0
+  },
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "build": "PASS",
+  "diff": "PASS",
+  "rawLocalDirectory": "studio/.local/integration/full-model-amr-20261003",
+  "productionBinaryUpdated": false
+}

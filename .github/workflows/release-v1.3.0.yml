@@ -1,0 +1,242 @@
+name: Publish v1.3.0
+
+# One explicitly authorized release, from the trusted engineering branch.
+# A normal PR merge remains subject to the repository's protection rules.
+on:
+  push:
+    branches: [compute/optim]
+    paths: [.github/workflows/release-v1.3.0.yml]
+
+permissions: {}
+
+concurrency:
+  group: arch-release-v1.3.0
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Accept, merge and publish v1.3.0
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+      checks: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GIT_LFS_SKIP_SMUDGE: '1'
+    steps:
+      - name: Check out the exact engineering revision without LFS downloads
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          lfs: false
+          persist-credentials: false
+
+      - name: Complete the authorized release with explicit acceptance gates
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import posixpath
+          import re
+          import subprocess
+          import time
+          from pathlib import Path
+          from urllib.error import HTTPError
+          from urllib.parse import urlsplit
+          from urllib.request import Request, urlopen
+
+          repo = os.environ["GH_REPO"]
+          assert repo == "Shiro-Akane/ARCH"
+          assert os.environ["GITHUB_REF"] == "refs/heads/compute/optim"
+          head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          assert head == os.environ["GITHUB_SHA"] and re.fullmatch(r"[0-9a-f]{40}", head)
+          version = "v1.3.0"
+
+
+          def api(path, method="GET", payload=None, absent_ok=False):
+              data = json.dumps(payload).encode() if payload is not None else None
+              request = Request("https://api.github.com/repos/" + repo + "/" + path,
+                                data=data, method=method, headers={
+                                    "Accept": "application/vnd.github+json",
+                                    "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+                                    "X-GitHub-Api-Version": "2022-11-28",
+                                    "Content-Type": "application/json"})
+              try:
+                  with urlopen(request, timeout=30) as response:
+                      raw = response.read()
+                      return json.loads(raw) if raw else None
+              except HTTPError as error:
+                  if absent_ok and error.code == 404:
+                      return None
+                  raise RuntimeError(f"GitHub {method} {path}: HTTP {error.code}; no rule bypass or credential retry") from None
+
+
+          def jobs_pass(run, names):
+              jobs = api(f"actions/runs/{run['id']}/jobs?per_page=100")["jobs"]
+              for name in names:
+                  selected = [job for job in jobs if job["name"] == name]
+                  assert len(selected) == 1, "Missing or duplicate job: " + name
+                  assert selected[0]["status"] == "completed" and selected[0]["conclusion"] == "success", name
+              return run
+
+
+          def ci(sha, branch, event):
+              runs = api(f"actions/workflows/ci.yml/runs?head_sha={sha}&branch={branch}&event={event}&per_page=20")["workflow_runs"]
+              if not runs:
+                  return None
+              latest = max(runs, key=lambda run: run["run_number"])
+              assert latest["head_sha"] == sha
+              if latest["status"] != "completed":
+                  return None
+              assert latest["conclusion"] == "success", "CI did not succeed: " + latest["html_url"]
+              return jobs_pass(latest, ("Tooling", "CPU Release", "Studio and Host", "CI required"))
+
+
+          def security(sha):
+              runs = api(f"actions/runs?head_sha={sha}&per_page=100")["workflow_runs"]
+              scans = [run for run in runs if run["path"] == "dynamic/github-code-scanning/codeql"]
+              if not scans:
+                  return None
+              latest = max(scans, key=lambda run: run["run_number"])
+              assert latest["head_sha"] == sha
+              if latest["status"] != "completed":
+                  return None
+              assert latest["conclusion"] == "success", "CodeQL analysis failed"
+              jobs_pass(latest, ("Analyze (actions)", "Analyze (c-cpp)", "Analyze (python)"))
+              checks = api(f"commits/{sha}/check-runs?per_page=100")["check_runs"]
+              gates = [check for check in checks if check["name"] == "CodeQL" and check["app"]["slug"] == "github-advanced-security"]
+              if not gates:
+                  return None
+              gate = max(gates, key=lambda check: check["id"])
+              assert gate["head_sha"] == sha
+              if gate["status"] != "completed" or gate["conclusion"] == "neutral":
+                  return None
+              assert gate["conclusion"] == "success" and gate["output"]["annotations_count"] == 0, "PR CodeQL acceptance failed"
+              return latest
+
+
+          def wait_for(label, predicate, seconds=1200):
+              deadline = time.monotonic() + seconds
+              while time.monotonic() < deadline:
+                  value = predicate()
+                  if value:
+                      print(label + ": accepted", flush=True)
+                      return value
+                  time.sleep(30)
+              raise TimeoutError(label + ": bounded wait expired; not accepted")
+
+
+          # Every prerequisite below is read-only. No merge, tag or release before it.
+          existing_release = api("releases/tags/" + version, absent_ok=True)
+          existing_tag = api("git/ref/tags/" + version, absent_ok=True)
+          original = Path("validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json")
+          assert hashlib.sha256(original.read_bytes()).hexdigest() == "18d7dfb93e2413065da3c7c86ca70212f4da7e0af071ce262cb9d66a4a0540fd"
+          record = json.loads(Path("validation/backend/results/release-readiness/REL7ReleaseRecord-20261020.json").read_text())
+          assert record["version"] == version and record["status"] == "IN_PROGRESS"
+          expected_notes = {"docs/releases/V1.3.0.md", "docs/releases/V1.3.0.zh-CN.md"}
+          assert {note["path"] for note in record["release_notes"]} == expected_notes
+          for note in record["release_notes"]:
+              assert hashlib.sha256(Path(note["path"]).read_bytes()).hexdigest() == note["sha256"]
+          production = ["src", "include", "simulation", "cmake", "CMakeLists.txt", "CMakePresets.json", "studio/src", "studio/host", "studio/desktop", "studio/package.json", "studio/package-lock.json"]
+          subprocess.run(["git", "diff", "--exit-code", "7e1dca167bd5a348fbc1ba252de581a548cf40fa", head, "--", *production], check=True)
+          pr = api("pulls/12")
+          assert not pr["draft"] and pr["head"]["sha"] == head
+          assert pr["head"]["ref"] == "compute/optim" and pr["base"]["ref"] == "main"
+          base = api("commits/main")["sha"]
+          if not pr["merged"]:
+              assert pr["state"] == "open" and existing_release is None and existing_tag is None
+              assert pr["base"]["sha"] == base
+              subprocess.run(["git", "merge-base", "--is-ancestor", base, head], check=True)
+          else:
+              assert pr["merge_commit_sha"] == base, "Only the identical already-merged release can resume"
+
+
+          def accepted_head():
+              pr_ci = ci(head, "compute/optim", "pull_request")
+              if not pr_ci:
+                  return None
+              push_ci = ci(head, "compute/optim", "push")
+              if not push_ci:
+                  return None
+              scan = security(head)
+              return (pr_ci, push_ci, scan) if scan else None
+
+
+          pr_ci, push_ci, scan = wait_for("Exact-head CI and CodeQL", accepted_head)
+          assert api("pulls/12")["head"]["sha"] == head, "A newer source revision requires its own acceptance"
+          assert api("commits/main")["sha"] == base, "Main advanced; do not merge a stale acceptance"
+
+
+          def notes(ref):
+              text = Path("docs/releases/V1.3.0.md").read_text()
+
+              def absolute(match):
+                  target = match.group(1)
+                  url = urlsplit(target)
+                  if url.scheme or url.netloc:
+                      return match.group(0)
+                  path = posixpath.normpath(posixpath.join("docs/releases", url.path))
+                  assert not path.startswith("../")
+                  link = f"https://github.com/{repo}/blob/{ref}/{path}"
+                  return "](" + link + ("#" + url.fragment if url.fragment else "") + ")"
+
+              text = re.sub(r"\]\(([^)]+)\)", absolute, text)
+              text = text.replace("## ARCH Studio\n", f"## ARCH Studio\n\n![ARCH Studio Plotfile workspace](https://raw.githubusercontent.com/{repo}/{ref}/docs/guides/images/studio-plotfile.png)\n", 1)
+              return text
+
+
+          # Normal REST merge enforces repository rules; no admin or bypass parameter.
+          pr_body = notes(head) + f"\nRelease authorization: normal PR merge, {version} tag and formal source-only publication.\n\nCurrent-head checks: [PR CI]({pr_ci['html_url']}), [push CI]({push_ci['html_url']}), [CodeQL]({scan['html_url']}).\n"
+          if not pr["merged"]:
+              api("pulls/12", "PATCH", {"title": "Release v1.3.0: Studio GUI, architecture modernization and strict configuration", "body": pr_body})
+              merged = api("pulls/12/merge", "PUT", {"sha": head, "merge_method": "merge", "commit_title": "Merge PR #12: ARCH v1.3.0"})
+              assert merged["merged"] and re.fullmatch(r"[0-9a-f]{40}", merged["sha"])
+              merge_sha = merged["sha"]
+          else:
+              merge_sha = pr["merge_commit_sha"]
+          confirmed = api("pulls/12")
+          assert confirmed["merged"] and confirmed["merge_commit_sha"] == merge_sha
+          assert api("commits/main")["sha"] == merge_sha
+          subprocess.run(["git", "fetch", "--no-tags", "origin", "main"], check=True)
+          source_tree = subprocess.check_output(["git", "rev-parse", head + "^{tree}"], text=True).strip()
+          merge_tree = subprocess.check_output(["git", "rev-parse", merge_sha + "^{tree}"], text=True).strip()
+          assert merge_tree == source_tree, "Any changed file invalidates the inherited full-tree security evidence"
+          print(json.dumps({"merged_pr": 12, "main": merge_sha, "accepted_security_head": head, "identical_full_tree": source_tree}), flush=True)
+
+          # GITHUB_TOKEN-created pushes do not fan out other workflows. Explicit dispatch
+          # is a documented exception. Missing base selects the existing full CI lanes.
+          main_ci = ci(merge_sha, "main", "workflow_dispatch")
+          if main_ci is None:
+              api("actions/workflows/ci.yml/dispatches", "POST", {"ref": "main"})
+              main_ci = wait_for("Actual merged main CI", lambda: ci(merge_sha, "main", "workflow_dispatch"))
+          assert api("commits/main")["sha"] == merge_sha, "Main advanced before tagging"
+          tag = api("git/ref/tags/" + version, absent_ok=True)
+          if tag is None:
+              annotated = api("git/tags", "POST", {"tag": version, "message": f"ARCH {version}\n\nStudio GUI, shared architecture modernization and explicit critical configuration validation.\nAccepted main: {merge_sha}\nCI: {main_ci['html_url']}\n", "object": merge_sha, "type": "commit"})
+              api("git/refs", "POST", {"ref": "refs/tags/" + version, "sha": annotated["sha"]})
+              tag = api("git/ref/tags/" + version)
+          assert tag["object"]["type"] == "tag", "An existing incompatible tag cannot be changed"
+          annotated = api("git/tags/" + tag["object"]["sha"])
+          assert annotated["tag"] == version and annotated["object"]["type"] == "commit" and annotated["object"]["sha"] == merge_sha
+          body = notes(version)
+          body += f"\n**Full changelog:** [v1.2.1...{version}](https://github.com/{repo}/compare/v1.2.1...{version})\n"
+          body += f"\n## Publication acceptance\n\nPR [#12](https://github.com/{repo}/pull/12) merged as `{merge_sha}`. [Merged-main CI]({main_ci['html_url']}) passed its full Tooling, CPU, Studio and required jobs. [CodeQL]({scan['html_url']}) and its PR comparison passed at `{head}`; the merged commit has the identical complete tracked file tree `{source_tree}`. This is explicit reuse of unchanged-source security evidence, not a claim of a second scan. Original scientific criteria and qualifications in the acceptance record remain unchanged.\n"
+          notes_file = Path(os.environ["RUNNER_TEMP"], "arch-release-notes.md")
+          notes_file.write_text(body)
+          if existing_release is None:
+              subprocess.run(["gh", "release", "create", version, "--verify-tag", "--title", "ARCH v1.3.0", "--notes-file", str(notes_file), "--latest"], check=True)
+          release = api("releases/tags/" + version)
+          assert release["body"].startswith(notes(version)), "An existing different release cannot be overwritten"
+          assert release["tag_name"] == version and release["name"] == "ARCH v1.3.0"
+          assert not release["draft"] and not release["prerelease"] and release["published_at"] and release["assets"] == []
+          receipt = {"status": "PUBLISHED", "release": release["html_url"], "release_id": release["id"], "published_at": release["published_at"], "tag": version, "tag_object": annotated["sha"], "commit": merge_sha, "accepted_head": head, "full_tree": source_tree, "pr_ci": pr_ci["html_url"], "push_ci": push_ci["html_url"], "main_ci": main_ci["html_url"], "reused_codeql": scan["html_url"], "custom_assets": 0}
+          print(json.dumps(receipt, indent=2), flush=True)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("# ARCH v1.3.0 published\n\n```json\n" + json.dumps(receipt, indent=2) + "\n```\n")
+          PY

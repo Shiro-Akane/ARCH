@@ -1,5 +1,7 @@
 # Select a memory-efficient linker only after it links the selected compilers'
-# C and C++ LTO archives together. Keep the compiler default as a tested fallback.
+# C and C++ LTO archives together, including a native object that leaves both
+# archives unused (the CUDA leaf link shape). Keep the compiler default as a
+# tested fallback; a successful fully-LTO link alone does not establish this.
 include_guard(GLOBAL)
 
 function(arch_probe_ipo_linker link_option result output)
@@ -15,14 +17,22 @@ add_executable(probe main.cpp)
 set_property(TARGET probe_c probe_cxx probe
     PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_link_libraries(probe PRIVATE probe_c probe_cxx)
+# NVCC emits a native Host object. A native-only executable can leave every
+# LTO archive unextracted; some linker/plugin combinations fail this shape.
+add_executable(probe_unused native_main.cpp)
+set_property(TARGET probe_unused PROPERTY INTERPROCEDURAL_OPTIMIZATION FALSE)
+target_link_libraries(probe_unused PRIVATE probe_c probe_cxx)
 if(ARCH_PROBE_LINK_OPTION)
     target_link_options(probe PRIVATE "${ARCH_PROBE_LINK_OPTION}")
+    target_link_options(probe_unused PRIVATE "${ARCH_PROBE_LINK_OPTION}")
 endif()
 ]=])
     file(WRITE "${probe_dir}/src/value.c" "int c_value(void) { return 19; }\n")
     file(WRITE "${probe_dir}/src/value.cpp" "int cxx_value() { return 23; }\n")
     file(WRITE "${probe_dir}/src/main.cpp"
         "extern \"C\" int c_value(void);\nint cxx_value();\nint main() { return c_value() + cxx_value() != 42; }\n")
+
+    file(WRITE "${probe_dir}/src/native_main.cpp" "int main() { return 0; }\n")
 
     # Check the optimized flags, not a Debug-only IPO probe. Explicit forwarding
     # also works with the project's CMake 3.22 minimum (before CMP0138).
@@ -49,6 +59,17 @@ endif()
         ArchIpoLinkerProbe probe
         CMAKE_FLAGS ${probe_flags}
         OUTPUT_VARIABLE probe_output)
+    if(probe_passed)
+        try_compile(native_passed "${probe_dir}/build" "${probe_dir}/src"
+            ArchIpoLinkerProbe probe_unused
+            CMAKE_FLAGS ${probe_flags}
+            OUTPUT_VARIABLE native_output)
+        string(APPEND probe_output "\nNative object / unused LTO archive check:\n${native_output}")
+        if(NOT native_passed)
+            set(probe_passed FALSE)
+        endif()
+        unset(native_passed CACHE)
+    endif()
     set(${result} "${probe_passed}" PARENT_SCOPE)
     set(${output} "${probe_output}" PARENT_SCOPE)
     unset(probe_passed CACHE)

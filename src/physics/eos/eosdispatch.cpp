@@ -1,6 +1,9 @@
 /**
  * @file eosdispatch.cpp
  * @brief HDF5 rank inspection kept out of the templated EOS dispatcher.
+ *
+ * Workflow: inspect the declared source/rank, reject couplings that require
+ * unavailable physical diagnostics, and fingerprint the source interpretation.
  */
 
 #include "physics/eos/eosdispatch.h"
@@ -153,6 +156,19 @@ void EOSDispatcher::validate_coupling(const SimConfig& config,
             "This EOS source already includes nuclear-equilibrium binding energy. "
             "Independent kinetic burning/NSE would double-count nuclear energy; "
             "use_burn must be false until a consistent coupled model is supplied.");
+    if (config.physics.burn.use_burn) {
+        const auto network = arch::dispatch::parse_registered_policy<
+            arch::dispatch::NetworkPolicies>(config.physics.burn.network_name);
+        // Total pressure/free energy does not determine an electron chemical
+        // potential. The table view's unused eta placeholder must never feed
+        // the proton/electron and neutron/positron captures in these networks.
+        if (network.ok && (network.value == arch::dispatch::NetworkId::Aprox19
+                           || network.value == arch::dispatch::NetworkId::Aprox21))
+            throw std::invalid_argument(
+                "Tabular EOS does not provide the physical electron chemical-potential "
+                "diagnostic eta required by aprox19/aprox21 electron captures. "
+                "Disable burning for these networks or select an EOS with electron diagnostics.");
+    }
     if (requires_composition_gamma)
         throw std::invalid_argument(
             "Steger-Warming requires a composition-only gamma and is not compatible "

@@ -1,0 +1,108 @@
+{
+  "scope": "Linux native Electron RT 2D display/Inspector/Log rejection/Fit/owned cleanup; native wheel zoom/pan remains unverified",
+  "recordingHead": "5656f7b87abd075e464fbd48e1b98a82756949ba",
+  "launchStudioSourceBaseline": "4aea1139351157054a10e65a16b77e2701ccda79",
+  "physicalPlotLastCommit": "cf743de8d37ef7862f9721ab2c15025a02b8fb69",
+  "physicalPlotDesktopSessionCodeUnchangedSinceLaunch": true,
+  "managedProjectSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "configSha256": "aa72d96c240e3cd349fdae1f75bbd79a23a7b144fc926713fb00a0586f890602",
+  "sourceWorktree": "/home/arch/projects/ARCH-host-clean-build-20261004",
+  "windowId": 18350414,
+  "productionReactAssets": true,
+  "observations": {
+    "nativeScrollbarDrag": "PASS; main pane moved down and up, full plot brought into view",
+    "sampleHitTesting": {
+      "index": 8511,
+      "xIndex": 63,
+      "yIndex": 66,
+      "x": 0.12402344,
+      "y": 0.51953125,
+      "density": 2.0,
+      "pressure": 2.4960938,
+      "velocityY": -0.018645519,
+      "nativeIndexRelation": "66*128+63=8511",
+      "scope": "values rounded as displayed in UI; not independent scientific oracle"
+    },
+    "zeroCoordinateLog": "PASS; visible positive-range warning, plot withheld; raw Inspector retained",
+    "fitRecovery": "PASS from invalid Log to Linear/Auto plot and retained selection; not wheel zoom recovery",
+    "wheelPlot": "UNVERIFIED; focused plot scrollY=-600 did not visibly change axes",
+    "wheelControlPane": "UNVERIFIED; ordinary left parameter pane scrollY=600 also did not visibly scroll",
+    "pan": "UNVERIFIED; no observed wheel-zoom state, full-domain pan cannot prove pan behavior",
+    "diskConfigUnchanged": true,
+    "noConfigEditSaveOrSimulation": true
+  },
+  "cleanup": {
+    "launchSession": 43519,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1508103,
+        "parentPid": 1508102,
+        "startTicks": "6202479",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1508105,
+        "parentPid": 1508103,
+        "startTicks": "6202481",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1508106,
+        "parentPid": 1508103,
+        "startTicks": "6202481",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1508128,
+        "parentPid": 1508105,
+        "startTicks": "6202487",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1508130,
+        "parentPid": 1508103,
+        "startTicks": "6202487",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1508143,
+        "parentPid": 1508103,
+        "startTicks": "6202489",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1508509,
+        "parentPid": 1508106,
+        "startTicks": "6202956",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1509481,
+        "parentPid": 1508143,
+        "startTicks": "6204631",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allOwnedProcessesGone": true,
+    "windowAbsentAfterExit": true
+  },
+  "limitations": [
+    "Wheel injection vs application behavior unresolved; do not mark zoom/pan PASS",
+    "No browser substitute, JS event injection, new Preview, AMR, Run or Restart in this continuation",
+    "The reused window predates latest Plotfile Reader changes; not their native UAT",
+    "No full model desktop matrix or independent physics acceptance",
+    "Original older user Studio window was not in current window inventory; do not claim its earlier lifetime unchanged",
+    "Full dependency freshness remains unknown"
+  ]
+}

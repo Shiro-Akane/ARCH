@@ -21,6 +21,7 @@
 #include "core/config/RuntimeParams.h"
 #include "data/FluidState.h"
 #include "grid/Grid.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 // Flux and reconstruction policies.
 #include "numerics/flux/FluxHLL.h"
@@ -113,15 +114,15 @@ template <typename TimeIntegrator, typename FluxSchemePolicy, typename EosPolicy
 void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 const Physical::Gravity::IGravityPolicy* gravity,
                 const BurnerHandle<EosPolicy> &burn,
-                const SimConfig &config,
-                const SpeciesManager &specs, const RunState &run_state,
+                const arch::config::RuntimeConfiguration &runtime,
+                const RunState &run_state,
                 const arch::dispatch::ResolvedExecutionPlan& resolved_plan,
                 const arch::dispatch::ExecutionRequirements& requirements,
                 const arch::dispatch::BackendResolution& backend,
                 arch::dispatch::StartupOrder& startup_order,
                 const io::CheckpointProvenance& checkpoint_provenance)
 {
-    // Bind the selected EOS and flux policy behind the hydrodynamics interface.
+    // Bind the selected shared EOS and flux policies; Runtime owns the checked Grid.
     Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
 
     std::string integrator_name = TimeIntegrator::name() + " + " + FluxSchemePolicy::name();
@@ -129,7 +130,7 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // Pass the integrator entry point and the same context to the shared driver.
     run_simulation<EosPolicy>(amr_ctrl, eos, gravity, burn, &hydro_solver,
                               &TimeIntegrator::template solve<BCHandler>,
-                              integrator_name, config, specs, run_state,
+                              integrator_name, runtime, run_state,
                               checkpoint_provenance,
                               &resolved_plan, &requirements, &backend,
                               &startup_order);
@@ -139,8 +140,8 @@ template <typename TimeIntegrator, typename EosPolicy>
 void launch_resolved_run(
     amr::AMRControl& amr_ctrl, const EosPolicy& eos,
     const Physical::Gravity::IGravityPolicy* gravity,
-    const BurnerHandle<EosPolicy>& burn, const SimConfig& config,
-    const SpeciesManager& specs, const RunState& run_state,
+    const BurnerHandle<EosPolicy>& burn, const arch::config::RuntimeConfiguration& runtime,
+    const RunState& run_state,
     const io::CheckpointProvenance& checkpoint_provenance,
     const arch::dispatch::ResolvedExecutionPlan& plan,
     const arch::dispatch::ExecutionRequirements& requirements,
@@ -151,7 +152,7 @@ void launch_resolved_run(
         plan, [&]<typename Flux, typename Reconstruction>() {
             (void)sizeof(Reconstruction);
             launch_run<TimeIntegrator, Flux>(
-                amr_ctrl, eos, gravity, burn, config, specs, run_state,
+                amr_ctrl, eos, gravity, burn, runtime, run_state,
                 plan, requirements, backend, startup_order,
                 checkpoint_provenance);
         });

@@ -3,40 +3,131 @@
  * @brief Device traversal and block reduction for AMR refinement indicators.
  *
  * Optional thermodynamic fields are evaluated through shared EOS views, then
- * amr::indicator::cell_error evaluates the selected stencils. A final device
- * reduction preserves nonfinite/EOS failures. Launches enqueue work only;
- * runtime control owns buffers, synchronization and refine/derefine decisions.
+ * amr::indicator::cell_error evaluates the selected stencils using the original
+ * padded point-EOS arithmetic. A final device reduction preserves
+ * nonfinite/EOS failures. Launches enqueue work only; runtime control owns
+ * buffers, synchronization and refine/derefine decisions.
  */
 
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "physics/diagnostics/JeansDiagnostics.h"
 
 namespace arch::cuda {
 namespace {
 
+// Use the selected EOS and total positive density on active accepted cells.
+// No density floor, mean-density subtraction or copied sound-speed formula.
 template<class Eos>
-__global__ void thermodynamics_kernel(DeviceStateView state, Eos eos,
+__global__ void jeans_resolution_kernel(DeviceStateView state, DeviceGridView grid,
+                                        Eos eos, DeviceJeansWorkspace workspace)
+{
+    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
+    if (linear >= grid.active_cell_count()) return;
+    const int cell = grid.active_cell(linear);
+    const int k = cell / grid.stride_z;
+    const int j = (cell - k * grid.stride_z) / grid.stride_y;
+    const int i = cell - k * grid.stride_z - j * grid.stride_y;
+    double* fractions = state.n_species
+        ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species
+        : nullptr;
+    for (int species = 0; species < state.n_species; ++species)
+        fractions[species] = state.species(species, cell);
+    // The original point arithmetic of the Existing route, evaluated on the
+    // accepted state selected below for the actual chart.
+    const auto observe = [&](const auto& value) {
+        const double pressure = eos.get_pressure(value, fractions);
+        const double sound = eos.get_sound_speed(value, pressure, fractions);
+        const auto resolution = std::isfinite(pressure) && pressure > 0.0
+            && std::isfinite(sound) && sound > 0.0
+            ? JeansDiagnostics::evaluate_cell(value.rho,
+                sound * sound, make_grid_geometry_view(grid), i, j)
+            : JeansDiagnostics::Resolution{};
+        workspace.cell_resolution[linear] =
+            resolution.status == JeansDiagnostics::Status::valid
+            ? resolution.cells : std::numeric_limits<double>::quiet_NaN();
+    };
+    observe(state.load(cell));
+}
+
+__global__ void jeans_minimum_kernel(DeviceJeansWorkspace workspace, int count)
+{
+    if (blockIdx.x || threadIdx.x) return;
+    double minimum = std::numeric_limits<double>::infinity();
+    if (*workspace.eos_status != 0) {
+        *workspace.block_minimum = std::numeric_limits<double>::quiet_NaN();
+        return;
+    }
+    for (int cell = 0; cell < count; ++cell) {
+        const double value = workspace.cell_resolution[cell];
+        if (!std::isfinite(value) || value <= 0.0) {
+            *workspace.block_minimum = std::numeric_limits<double>::quiet_NaN();
+            return;
+        }
+        minimum = std::min(minimum, value);
+    }
+    *workspace.block_minimum = minimum;
+}
+
+template<class Eos>
+cudaError_t launch_jeans(DeviceStateView state, DeviceGridView grid, Eos eos,
+                         DeviceJeansWorkspace workspace, cudaStream_t stream)
+{
+    if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
+        || (grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)
+            && !(grid.dim == 2 && grid.geometry == static_cast<int>(DeviceGeometry::Cylindrical)))
+        || state.total_size != grid.total_size || grid.active_cell_count() <= 0
+        || !workspace.cell_resolution || !workspace.block_minimum
+        || !workspace.eos_status || (state.n_species && !workspace.composition))
+        return cudaErrorInvalidValue;
+    if constexpr (requires { eos.species.size(); }) {
+        if (eos.species.size() > 0 && eos.species.size() != state.n_species)
+            return cudaErrorInvalidValue;
+    }
+    auto error = cudaMemsetAsync(workspace.eos_status, 0, sizeof(int), stream);
+    if (error != cudaSuccess) return error;
+    int minimum_grid = 0, threads = 0;
+    error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &threads,
+        jeans_resolution_kernel<Eos>);
+    if (error != cudaSuccess) return error;
+    jeans_resolution_kernel<<<detail::hydro_launch_blocks(grid.active_cell_count(), threads),
+        threads, 0, stream>>>(state, grid, bind_device_eos_status(eos, workspace.eos_status), workspace);
+    error = cudaGetLastError();
+    if (error != cudaSuccess) return error;
+    jeans_minimum_kernel<<<1, 1, 0, stream>>>(workspace, grid.active_cell_count());
+    return cudaGetLastError();
+}
+
+template<class Eos>
+__global__ void thermodynamics_kernel(DeviceStateView state, DeviceGridView grid, Eos eos,
                                       DeviceIndicatorWorkspace workspace,
                                       const DeviceIndicatorBatchBlock* batch = nullptr)
 {
     if (batch) {
         state = batch[blockIdx.y].state;
+        grid = batch[blockIdx.y].grid;
         workspace = batch[blockIdx.y].workspace;
         eos = bind_device_eos_status(eos, workspace.eos_status);
+        // Each block keeps its own optional thermodynamic route and latch.
         if (!workspace.pressure && !workspace.temperature && !workspace.gamma1) return;
     }
     const int cell = blockIdx.x * blockDim.x + threadIdx.x;
     if (cell >= state.total_size) return;
-    double* composition = state.n_species > 0
-        ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species : nullptr;
-    for (int species = 0; species < state.n_species; ++species)
-        composition[species] = state.species(species, cell);
-    const auto value = amr::indicator::thermodynamics(state.load(cell), composition,
-        eos, workspace.pressure, workspace.temperature, workspace.gamma1);
-    workspace.thermodynamics[cell] = value.pressure;
-    workspace.thermodynamics[state.total_size + cell] = value.temperature;
-    workspace.thermodynamics[2 * state.total_size + cell] = value.gamma1;
+
+        // Original Existing arithmetic: every padded storage cell is one
+        // ordinary point EOS sample, exactly as before.
+        double* composition = state.n_species > 0
+            ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species : nullptr;
+        for (int species = 0; species < state.n_species; ++species)
+            composition[species] = state.species(species, cell);
+        const auto value = amr::indicator::thermodynamics(state.load(cell), composition,
+            eos, workspace.pressure, workspace.temperature, workspace.gamma1);
+        workspace.thermodynamics[cell] = value.pressure;
+        workspace.thermodynamics[state.total_size + cell] = value.temperature;
+        workspace.thermodynamics[2 * state.total_size + cell] = value.gamma1;
+        return;
+    
 }
 
 __global__ void indicators_kernel(DeviceStateView state, DeviceGridView grid,
@@ -105,13 +196,19 @@ __global__ void reset_batch_status(const DeviceIndicatorBatchBlock* batch)
 bool valid_indicator_binding(DeviceStateView state, DeviceGridView grid,
                              DeviceIndicatorWorkspace workspace)
 {
-    return valid_hydro_view(state) && valid_hydro_grid(grid)
-        && state.total_size == grid.total_size && workspace.selection_count >= 0
-        && (workspace.selection_count == 0 || workspace.selection != nullptr)
-        && workspace.cell_errors != nullptr && workspace.block_error != nullptr
-        && (!(workspace.pressure || workspace.temperature || workspace.gamma1)
-            || (workspace.thermodynamics && workspace.eos_status
-                && (state.n_species == 0 || workspace.composition)));
+    const bool thermodynamics = workspace.pressure || workspace.temperature || workspace.gamma1;
+    if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
+        || state.total_size != grid.total_size || workspace.selection_count < 0
+        || (workspace.selection_count != 0 && workspace.selection == nullptr)
+        || workspace.cell_errors == nullptr || workspace.block_error == nullptr)
+        return false;
+    if (!thermodynamics) return true;
+    // Both routes need the shared arena planes, the private EOS latch and the
+    // per-cell composition scratch the kernel writes.
+    if (workspace.thermodynamics == nullptr || workspace.eos_status == nullptr
+        || (state.n_species != 0 && workspace.composition == nullptr))
+        return false;
+    return true;
 }
 
 template<class Eos>
@@ -131,7 +228,7 @@ cudaError_t launch(DeviceStateView state, DeviceGridView grid, Eos eos,
             thermodynamics_kernel<Eos>);
         if (error != cudaSuccess) return error;
         thermodynamics_kernel<<<detail::hydro_launch_blocks(state.total_size, threads), threads, 0, stream>>>(
-            state, bind_device_eos_status(eos, workspace.eos_status), workspace);
+            state, grid, bind_device_eos_status(eos, workspace.eos_status), workspace);
         error = cudaGetLastError();
         if (error != cudaSuccess) return error;
     }
@@ -173,7 +270,8 @@ CudaBackendLaunchResult launch_batch(std::span<const DeviceIndicatorBatchBlock> 
         for (const auto& b : wave) {
             storage = std::max(storage, b.state.total_size);
             cells = std::max(cells, b.grid.active_cell_count());
-            thermo |= b.workspace.pressure || b.workspace.temperature || b.workspace.gamma1;
+            thermo |= b.workspace.pressure || b.workspace.temperature || b.workspace.gamma1
+;
         }
         if (thermo && thermo_threads == 0) {
             result.error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &thermo_threads,
@@ -187,7 +285,7 @@ CudaBackendLaunchResult launch_batch(std::span<const DeviceIndicatorBatchBlock> 
         if (!record()) return result;
         if (thermo) {
             thermodynamics_kernel<<<dim3(detail::hydro_launch_blocks(storage, thermo_threads),
-                static_cast<unsigned>(count)), thermo_threads, 0, stream>>>(b.state, eos, b.workspace, bindings);
+                static_cast<unsigned>(count)), thermo_threads, 0, stream>>>(b.state, b.grid, eos, b.workspace, bindings);
             if (!record()) return result;
         }
         indicators_kernel<<<dim3(detail::hydro_launch_blocks(cells, indicator_threads),
@@ -200,6 +298,17 @@ CudaBackendLaunchResult launch_batch(std::span<const DeviceIndicatorBatchBlock> 
 }
 
 } // namespace
+
+#define ARCH_DEFINE_JEANS_RESOLUTION(EOS) \
+cudaError_t launch_cuda_jeans_resolution( \
+    DeviceStateView state, DeviceGridView grid, EOS eos, \
+    DeviceJeansWorkspace workspace, cudaStream_t stream) \
+{ return launch_jeans(state, grid, eos, workspace, stream); }
+ARCH_DEFINE_JEANS_RESOLUTION(IdealGasView)
+ARCH_DEFINE_JEANS_RESOLUTION(HelmEosView)
+ARCH_DEFINE_JEANS_RESOLUTION(Tabular3DEOSView)
+ARCH_DEFINE_JEANS_RESOLUTION(Tabular4DEOSView)
+#undef ARCH_DEFINE_JEANS_RESOLUTION
 
 #define ARCH_DEFINE_REFINEMENT_INDICATORS(EOS) \
 cudaError_t launch_cuda_refinement_indicators( \

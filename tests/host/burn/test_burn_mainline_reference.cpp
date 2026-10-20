@@ -133,20 +133,38 @@ void check_network(const std::string& name, int variant, const std::string& path
 // Read-only interface for independent SciPy TIME integrators. This binary
 // already owns these types; no second library or reaction/EOS implementation.
 template<class Net>
-void serve_rhs(const std::string& path)
+void serve_rhs(const std::string& path, double rho = Ref::kRho,
+               double interval = Ref::kDt, bool read_initial = false)
 {
     const auto& reference = BurnTimeReference::find(Net::NETWORK_NAME);
     SpeciesManager species;
     Net::RegisterSpecies(species);
     HelmEos eos(path, &species);
     auto state = Ref::make_state<Net>(reference.variant);
+    auto expected = reference.state;
+    if (read_initial) {
+        double mass = 0.0;
+        for (int i = 0; i < Net::ODE_NEQ; ++i) {
+            if (!(std::cin >> state[i]) || !std::isfinite(state[i]))
+                throw std::runtime_error("invalid initial RHS state");
+            if (i < Net::NUM_SPECIES) {
+                if (state[i] < 0.0) throw std::runtime_error("negative initial abundance");
+                mass += state[i];
+            }
+        }
+        if (!(state[Net::NUM_SPECIES] > 0.0) || std::abs(mass - 1.0) > 1.e-12)
+            throw std::runtime_error("initial RHS state needs positive T and unit composition");
+        // Custom derivation has no pre-existing endpoint authority. Preserve
+        // the protocol extent; its second row is explicitly the initial state.
+        for (int i = 0; i < Net::ODE_NEQ; ++i) expected[i] = state[i];
+    }
     std::array<double, Net::ODE_NEQ> rhs{};
     std::cout << std::setprecision(std::numeric_limits<double>::max_digits10)
               << std::scientific;
-    std::cout << "BURN_RHS_READY " << Net::ODE_NEQ << ' ' << Ref::kRho << ' ' << Ref::kDt << '\n';
+    std::cout << "BURN_RHS_READY " << Net::ODE_NEQ << ' ' << rho << ' ' << interval << '\n';
     for (int i = 0; i < Net::ODE_NEQ; ++i) std::cout << state[i] << ' ';
     std::cout << '\n';
-    for (int i = 0; i < Net::ODE_NEQ; ++i) std::cout << reference.state[i] << ' ';
+    for (int i = 0; i < Net::ODE_NEQ; ++i) std::cout << expected[i] << ' ';
     std::cout << '\n';
     for (int i = 0; i < Net::NUM_SPECIES; ++i) std::cout << Net::aion(i) << ' ';
     std::cout << '\n';
@@ -157,12 +175,24 @@ void serve_rhs(const std::string& path)
             if (!(std::cin >> state[i])) throw std::runtime_error("incomplete RHS input");
         for (int i = 0; i < Net::ODE_NEQ; ++i)
             if (!std::isfinite(state[i])) throw std::runtime_error("nonfinite RHS input");
-        const auto burn = OdeMath::eval_burn_rhs<Net>(state.data(), Ref::kRho, eos, rhs.data());
+        const auto burn = OdeMath::eval_burn_rhs<Net>(state.data(), rho, eos, rhs.data());
         for (double value : rhs) std::cout << value << ' ';
-        std::cout << eos.get_eint_from_T(Ref::kRho, state[Net::NUM_SPECIES], state.data())
+        std::cout << eos.get_eint_from_T(rho, state[Net::NUM_SPECIES], state.data())
                   << ' ' << burn.energy << '\n' << std::flush;
     }
     if (!std::cin.eof()) throw std::runtime_error("invalid RHS request");
+}
+
+// Explicit scientific inputs for the independent reference service only;
+// neither the production model nor its fixed historical fixtures are changed.
+double positive_input(const char* text)
+{
+    std::size_t consumed = 0;
+    const std::string input(text);
+    const double value = std::stod(input, &consumed);
+    if (consumed != input.size() || !(value > 0.0) || !std::isfinite(value))
+        throw std::runtime_error("RHS density and interval must be finite and positive");
+    return value;
 }
 } // namespace
 
@@ -173,16 +203,20 @@ int main(int argc, char** argv)
             + "/EOS_toolkit/tables/helmholtz/helm_table.dat";
         if (arch::core::file_sha256(path) != Ref::kTableSha256)
             throw std::runtime_error("frozen-main Helmholtz table SHA-256 mismatch");
-        if (argc == 3 && std::string(argv[1]) == "--rhs") {
+        const bool custom = argc == 5 && std::string(argv[1]) == "--rhs-input";
+        if (custom || (argc == 3 && std::string(argv[1]) == "--rhs")) {
             const std::string name = argv[2];
-            if (name == NetAprox13::NETWORK_NAME) serve_rhs<NetAprox13>(path);
-            else if (name == NetAprox19::NETWORK_NAME) serve_rhs<NetAprox19>(path);
-            else if (name == NetAprox21::NETWORK_NAME) serve_rhs<NetAprox21>(path);
-            else if (name == NetIso7::NETWORK_NAME) serve_rhs<NetIso7>(path);
+            const double rho = custom ? positive_input(argv[3]) : Ref::kRho;
+            const double interval = custom ? positive_input(argv[4]) : Ref::kDt;
+            if (name == NetAprox13::NETWORK_NAME) serve_rhs<NetAprox13>(path, rho, interval, custom);
+            else if (name == NetAprox19::NETWORK_NAME) serve_rhs<NetAprox19>(path, rho, interval, custom);
+            else if (name == NetAprox21::NETWORK_NAME) serve_rhs<NetAprox21>(path, rho, interval, custom);
+            else if (name == NetIso7::NETWORK_NAME) serve_rhs<NetIso7>(path, rho, interval, custom);
             else throw std::runtime_error("unknown RHS network: " + name);
             return 0;
         }
-        if (argc != 1) throw std::runtime_error("usage: arch_burn_mainline_reference [--rhs NETWORK]");
+        if (argc != 1) throw std::runtime_error(
+            "usage: arch_burn_mainline_reference [--rhs NETWORK | --rhs-input NETWORK RHO INTERVAL]");
         std::cout << std::setprecision(std::numeric_limits<double>::max_digits10);
         check_network<NetAprox13>("aprox13", 0, path);
         check_network<NetAprox19>("aprox19", 1, path);

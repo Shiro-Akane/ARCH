@@ -11,6 +11,9 @@
 #pragma once
 
 #include <algorithm> // for std::max
+#include <bit>
+#include <cstddef>
+#include <cstdint>
 #include <cmath>
 #include <vector>
 

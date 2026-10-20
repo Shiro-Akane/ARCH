@@ -1,0 +1,221 @@
+{
+  "version": "isolated-plotfile-cost-1",
+  "node": "v24.21.0",
+  "rows": [
+    {
+      "case": "Sod",
+      "bytes": 55376,
+      "fields": 9,
+      "cells": 192,
+      "fileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+      "rawPoint": {
+        "value": 0.125,
+        "index": 186
+      },
+      "queries": [
+        {
+          "label": "metadata",
+          "elapsedMs": 169.40085100000002,
+          "responseBytes": 3673,
+          "fileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+          "scannedCells": null,
+          "observedWorkers": [
+            {
+              "pid": 886109,
+              "rssKiB": 119712,
+              "rchar": 4413194,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "overview-0",
+          "elapsedMs": 174.54150699999997,
+          "responseBytes": 6339,
+          "fileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+          "scannedCells": 192,
+          "observedWorkers": [
+            {
+              "pid": 886120,
+              "rssKiB": 119264,
+              "rchar": 4446418,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "overview-1",
+          "elapsedMs": 181.21811199999996,
+          "responseBytes": 6339,
+          "fileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+          "scannedCells": 192,
+          "observedWorkers": [
+            {
+              "pid": 886131,
+              "rssKiB": 120076,
+              "rchar": 4446410,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "point",
+          "elapsedMs": 169.03855399999998,
+          "responseBytes": 4593,
+          "fileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+          "scannedCells": null,
+          "observedWorkers": [
+            {
+              "pid": 886142,
+              "rssKiB": 120560,
+              "rchar": 4419882,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "cancel-after-worker-observed",
+          "elapsedMs": 3.6627010000000837,
+          "error": {
+            "code": "CANCELLED",
+            "message": "Metadata read cancelled."
+          },
+          "responseBytes": 0,
+          "fileSha256": null,
+          "scannedCells": null,
+          "observedWorkers": []
+        },
+        {
+          "label": "metadata-after-cancel",
+          "elapsedMs": 168.32025599999997,
+          "responseBytes": 3673,
+          "fileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+          "scannedCells": null,
+          "observedWorkers": [
+            {
+              "pid": 886155,
+              "rssKiB": 119416,
+              "rchar": 4413194,
+              "readBytes": 0
+            }
+          ]
+        }
+      ],
+      "cancelBusyRecovery": "PASS",
+      "rawFileUnchanged": true,
+      "independentH5RawPointBitMatch": true
+    },
+    {
+      "case": "CellularDet",
+      "bytes": 1599616,
+      "fields": 28,
+      "cells": 5120,
+      "fileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+      "rawPoint": {
+        "value": 43375362.843074,
+        "index": 3074
+      },
+      "queries": [
+        {
+          "label": "metadata",
+          "elapsedMs": 179.03159699999992,
+          "responseBytes": 7520,
+          "fileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+          "scannedCells": null,
+          "observedWorkers": [
+            {
+              "pid": 886167,
+              "rssKiB": 120720,
+              "rchar": 5975178,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "overview-0",
+          "elapsedMs": 199.52213700000016,
+          "responseBytes": 28512,
+          "fileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+          "scannedCells": 5120,
+          "observedWorkers": [
+            {
+              "pid": 886194,
+              "rssKiB": 127236,
+              "rchar": 9000242,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "overview-1",
+          "elapsedMs": 197.29883600000016,
+          "responseBytes": 28512,
+          "fileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+          "scannedCells": 5120,
+          "observedWorkers": [
+            {
+              "pid": 886221,
+              "rssKiB": 125404,
+              "rchar": 9027018,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "point",
+          "elapsedMs": 187.57671400000004,
+          "responseBytes": 8487,
+          "fileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+          "scannedCells": null,
+          "observedWorkers": [
+            {
+              "pid": 886232,
+              "rssKiB": 125640,
+              "rchar": 7957594,
+              "readBytes": 0
+            }
+          ]
+        },
+        {
+          "label": "cancel-after-worker-observed",
+          "elapsedMs": 2.6227779999999257,
+          "error": {
+            "code": "CANCELLED",
+            "message": "Metadata read cancelled."
+          },
+          "responseBytes": 0,
+          "fileSha256": null,
+          "scannedCells": null,
+          "observedWorkers": []
+        },
+        {
+          "label": "metadata-after-cancel",
+          "elapsedMs": 175.66344700000013,
+          "responseBytes": 7520,
+          "fileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+          "scannedCells": null,
+          "observedWorkers": [
+            {
+              "pid": 886244,
+              "rssKiB": 122480,
+              "rchar": 5975186,
+              "readBytes": 0
+            }
+          ]
+        }
+      ],
+      "cancelBusyRecovery": "PASS",
+      "rawFileUnchanged": true,
+      "independentH5RawPointBitMatch": true
+    }
+  ],
+  "limitations": [
+    "5ms observed worker HWM/counters may miss final peak and exit counters.",
+    "Worker counters include Node/import/WASM; rchar is not dataset-only reads.",
+    "Hash checks warm OS cache; not a cold-cache benchmark.",
+    "Each query starts a fresh worker; no cross-query cache; full digest and leaf scan remain.",
+    "No HTTP/native UAT, large-file scalability or simultaneous simulation claim."
+  ],
+  "sourceHead": "1b3dcc5b86398d97fb0ddca0d942236b7a2a4ec0",
+  "cancellationScope": "worker observed alive then cancelled at startup; not proven mid HDF scan"
+}

@@ -6,17 +6,21 @@
  * prolongation rules into borrowed scratch. A same-stream scatter writes
  * destinations only after a successful gather; runtime control checks the
  * completed status before publishing ghost validity.
+ *
  */
 
 #pragma once
 
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/transfer/LimitedLinearProlongation.h"
+#include "amr/transfer/RegridTransferMath.h"
 #include "cuda/common/DeviceStateFields.cuh"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 
 #include <cuda_runtime.h>
 
+#include <cmath>
 #include <cstdint>
 #include <limits>
 
@@ -31,6 +35,20 @@ prolong_device_stencil(
             static_cast<std::size_t>(source.total_size),
             transfer.source_cells[0], transfer.slope_cells,
             transfer.prolongation_dimension, species_count};
+}
+
+/** Shared W=integral r^2 dr dz for the azimuthal momentum coefficient. The
+ * existing DeviceCoarseFineTransfer POD carries ordinary V; this adapter
+ * recovers W from the same native grid descriptor before the shared gather. */
+__device__ inline double source_moment_measure(
+    const DeviceGridView& grid, int cell)
+{
+    const int k = cell / grid.stride_z;
+    const int remainder = cell - k * grid.stride_z;
+    const int j = remainder / grid.stride_y;
+    const int i = remainder - j * grid.stride_y;
+    return GridMetrics::AngularMomentumVolumeMoment(
+        make_grid_geometry_view(grid), i, j, k);
 }
 
 __global__ void gather_coarse_fine_exchange_kernel(
@@ -69,13 +87,29 @@ __global__ void gather_coarse_fine_exchange_kernel(
         return;
     }
     if (field < 6) {
+        const auto& source_grid = blocks[transfer.source_block].grid;
+        const bool angular_momentum = field == 3 && source_grid.dim == 2
+            && source_grid.geometry
+                == static_cast<int>(DeviceGeometry::Cylindrical);
+        double measure_sum = transfer.source_measure_sum;
+        if (angular_momentum) {
+            measure_sum = 0.0;
+            for (int cell = 0; cell < transfer.source_count; ++cell)
+                measure_sum += source_moment_measure(
+                    source_grid, transfer.source_cells[cell]);
+        }
         double integral = 0.0;
-        for (int cell = 0; cell < transfer.source_count; ++cell)
+        for (int cell = 0; cell < transfer.source_count; ++cell) {
+            const double measure = angular_momentum
+                ? source_moment_measure(
+                    source_grid, transfer.source_cells[cell])
+                : transfer.source_measures[cell];
             integral += amr::restriction_math::weighted_conserved_value(
                 device_state_field(source, field)[transfer.source_cells[cell]],
-                transfer.source_measures[cell]);
+                measure);
+        }
         scratch[linear] = amr::restriction_math::restricted_average(
-            integral, transfer.source_measure_sum);
+            integral, measure_sum);
         return;
     }
 
@@ -146,4 +180,5 @@ inline cudaError_t launch_coarse_fine_exchange(
     return cudaGetLastError();
 }
 
+// ---------------------------------------------------------------------------
 } // namespace arch::cuda

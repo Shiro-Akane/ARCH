@@ -1,0 +1,61 @@
+{
+  "timestampUtc": "2026-10-07T07:05:08.419620+00:00",
+  "owner": "arch_gravity_stage_contract",
+  "ownerStatus": "PASS_COMPLETE_EXISTING_OWNER",
+  "guardElapsedSeconds": 30.198,
+  "logSha256": "6a06343c66f0ebdaa0b6e4f90e5ab19edc97b262214cbe4493562f80b6729237",
+  "publicNativePhysicsQualified": false,
+  "releaseAccepted": false,
+  "thresholdsChanged": false,
+  "newCtestOwners": 0,
+  "rawH5Generated": 0,
+  "scope": "Actual native active thermal failure complete macro transaction retry and complete smaller macro acceptance",
+  "attempts": [
+    {
+      "dt": 0.2,
+      "rejected": true,
+      "seconds": 0.00884227
+    },
+    {
+      "dt": 0.1,
+      "rejected": false,
+      "seconds": 0.023672322
+    }
+  ],
+  "selectedDiffusion": "RKL1",
+  "acceptedStages": "B/2-D/2-H-D/2-B/2",
+  "burn": {
+    "network": "NetAprox13",
+    "method": "BE_NR",
+    "callsPerAcceptedMacro": 2,
+    "reactionActivated": false,
+    "activationThresholdChanged": false
+  },
+  "negativeAcceptance": [
+    "retry below dt_min rejects and exact restoration",
+    "original first legal end-aligned short step below dt_min preserved",
+    "bound EOS one ULP min_eint drift fatal before writes"
+  ],
+  "pending": [
+    "actual PrivateSelf Hydro and same-stage solved-potential AMR energy consumers",
+    "actual reactive four-module self-gravity trajectory",
+    "public Native/Device qualification"
+  ],
+  "sourceSha256": {
+    "src/driver/runtime/DriverRuntime.cpp": "edd16c8d65d9da5f736be90d00b16d41c070ed231ebe5813b2352d5146dc5598",
+    "src/driver/stages/DriverMacroStep.h": "9124a3b90a8e13a8f63a3e9cc8c6d307f7e976c99845bb0be760a85688e8611c",
+    "tests/host/driver/test_rz_runtime_external.cpp": "e87527d2a6b62f5b195dae5f9b22fbb73b77e8bf4e83a31f1b2f48d63856cb8b"
+  },
+  "postClassificationFenceAcceptance": {
+    "status": "PASS_ACTUAL_EXISTING_OWNER",
+    "guardElapsedSeconds": 33.213,
+    "ompThreads": 4,
+    "negativeCases": [
+      "actual IdealGas-forwarding nu one-ULP drift fatal/no retry/full owner restored",
+      "actual completed clock token drift fatal/no retry/full owner restored",
+      "later active same-patch provisional nonpositive density preserves actual pool UID slot version diagnostic"
+    ],
+    "crossPatchDiagnosticCovered": false,
+    "logSha256": "6611d5216b01e1b5763e7345563f02c01d90f459c4cc5d5c9b027e5fe125b296"
+  }
+}

@@ -2,8 +2,7 @@
  * @file test_cuda_regrid_migration.cu
  * @brief Compare production GPU regrid transfers with CPU results.
  *
- * Refinement and coarsening cases cover all supported coordinate systems,
- * dimensions and several species-storage sizes.
+ * Ordinary coordinate/dimension cases retain their existing windows.
  */
 #include "cuda/amr/RegridMigration.h"
 #include "fixtures/amr/regrid_migration_fixture.h"
@@ -11,7 +10,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -61,7 +62,8 @@ struct DeviceBlock {
         for (int k = host.grid.Ks(); k < host.grid.Ke(); ++k)
             for (int j = host.grid.Js(); j < host.grid.Je(); ++j)
                 for (int i = host.grid.Is(); i < host.grid.Ie(); ++i)
-                    volumes[host.grid.GetIndex(i, j, k)] = GridMetrics::CellVolume(host.grid, i, j, k);
+                    volumes[host.grid.GetIndex(i, j, k)] = GridMetrics::CellVolume(
+                        GridMetrics::make_geometry_view(host.grid), i, j, k);
         check(cudaMemcpy(volume.pointer, volumes.data(), volumes.size() * sizeof(double), cudaMemcpyHostToDevice));
         binding.grid.cell_volume = volume.pointer;
     }
@@ -75,8 +77,9 @@ struct DeviceBlock {
                 const double actual = packed[field * cells + cell];
                 const double reference = field < 6 ? fields[field][cell]
                     : expected.fluid_state.X(field - 6, cell);
+                const double allowance = 3.0e-14 * std::max(1.0, std::abs(reference));
                 require(std::isfinite(actual)
-                    && std::abs(actual - reference) <= 3.0e-14 * std::max(1.0, std::abs(reference)),
+                    && std::abs(actual - reference) <= allowance,
                     "device regrid migration differs from Host Block authority");
                 if (field >= 6) require(actual >= 0.0, "device migration produced negative species");
             }
@@ -105,7 +108,7 @@ void run(int dimension, int species, const std::string& geometry)
         children.back().InterpolateFromCoarse(parent, child, dimension, 1.0e-10, 1.0e-10);
         bindings.blocks[child] = device_children.back()->binding;
         check(arch::cuda::launch_cuda_regrid_prolongation(source.binding,
-            bindings.blocks[child], child, 1.0e-10, 1.0e-10,
+            bindings.blocks[child], child, {1.0e-10, 1.0e-10, 1.0e22},
             workspace.pointer, max_work, status.pointer, nullptr));
     }
     check(cudaDeviceSynchronize());
@@ -120,7 +123,7 @@ void run(int dimension, int species, const std::string& geometry)
     for (int child = 0; child < count; ++child) pointers[child] = &children[child];
     coarse.AverageToCoarse(pointers, dimension, 1.0e-10, 1.0e-10);
     check(arch::cuda::launch_cuda_regrid_restriction(bindings, destination.binding,
-        1.0e-10, 1.0e-10, workspace.pointer, max_work, status.pointer, nullptr));
+        {1.0e-10, 1.0e-10, 1.0e22}, workspace.pointer, max_work, status.pointer, nullptr));
     check(cudaDeviceSynchronize());
     check(cudaMemcpy(&result, status.pointer, sizeof(int), cudaMemcpyDeviceToHost));
     require(result == 0, "device restriction rejected valid family");
@@ -131,13 +134,13 @@ void run(int dimension, int species, const std::string& geometry)
     auto malformed = source.binding;
     malformed.grid.stride_y = malformed.grid.total_x - 1;
     require(arch::cuda::launch_cuda_regrid_prolongation(malformed,
-        bindings.blocks[0], 0, 1.0e-10, 1.0e-10,
+        bindings.blocks[0], 0, {1.0e-10, 1.0e-10, 1.0e22},
         workspace.pointer, max_work, status.pointer, nullptr) == cudaErrorInvalidValue,
         "invalid row stride was accepted by migration launcher");
     malformed = destination.binding;
     malformed.grid.stride_z = 0;
     require(arch::cuda::launch_cuda_regrid_restriction(bindings, malformed,
-        1.0e-10, 1.0e-10, workspace.pointer, max_work, status.pointer, nullptr)
+        {1.0e-10, 1.0e-10, 1.0e22}, workspace.pointer, max_work, status.pointer, nullptr)
         == cudaErrorInvalidValue, "invalid plane stride was accepted by migration launcher");
     destination.compare(coarse);
 
@@ -147,7 +150,7 @@ void run(int dimension, int species, const std::string& geometry)
     DeviceBlock bad_source(bad);
     check(cudaMemset(status.pointer, 0, sizeof(int)));
     check(arch::cuda::launch_cuda_regrid_prolongation(bad_source.binding,
-        bindings.blocks[0], 0, 1.0e-10, 1.0e-10,
+        bindings.blocks[0], 0, {1.0e-10, 1.0e-10, 1.0e22},
         workspace.pointer, max_work, status.pointer, nullptr));
     check(cudaDeviceSynchronize());
     check(cudaMemcpy(&result, status.pointer, sizeof(int), cudaMemcpyDeviceToHost));

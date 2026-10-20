@@ -1,0 +1,22 @@
+{
+  "baselineCommit": "0e722f06a4ce040e12fbdd7575d9c2593b3208b6",
+  "scope": "CPU-only baseline tooling, not measured benchmark or science acceptance",
+  "tests": {
+    "passed": 28,
+    "failed": 0,
+    "skipped": 0,
+    "newTests": 4
+  },
+  "codeSha256": {
+    "validation/gravity/curved/run_cuda_matrix.py": "a2a3b15797e925ef318e597fac2868ce3ff6e6c99f6864bf5ab372a02562b647",
+    "validation/gravity/curved/compare_backends.py": "df6241d6624a1f1fa4628caa54bca5d76535fcee59d2fcc8d2c699be69a55f4a",
+    "validation/gravity/curved/test_physical_endpoint.py": "f08f7ec8804eef8f1362817e214625801e17ea2f4612b611cc9acb0ea97fc3bf"
+  },
+  "newArchExecution": false,
+  "newBuild": false,
+  "cudaExecution": false,
+  "qualifiedBenchmark": false,
+  "cpuOnlyBuildKindVerification": "pending",
+  "scientificBudgetsChanged": false,
+  "rawEvidenceLocal": "endpoint-cpu-baseline-20261004"
+}

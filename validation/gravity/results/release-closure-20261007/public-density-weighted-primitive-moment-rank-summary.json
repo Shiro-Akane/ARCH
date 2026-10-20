@@ -1,0 +1,34 @@
+{
+  "status": "ACCEPTED_POSITIVE_DENSITY_WEIGHTED_MOMENT_RANK_ONLY",
+  "logical_task_id": "public-density-weighted-primitive-moment-rank-20261008",
+  "reviewed_at_utc": "2026-10-07T22:25:01.445464+00:00",
+  "independent_exact_fraction_cases": 64,
+  "proof": "Independent product-measure expansion of Vandermonde determinants is strictly positive a.e. for ordered nondegenerate intervals and positive actual numerical weights. Axis odd/even determinant expansions separately verified.",
+  "limits": [
+    "Does not certify conditioning or floating solve",
+    "Actual numerical density/moments must be supplied by owner",
+    "No continuity/AMR/quadrature/gradient/FV/stability/energy qualification"
+  ],
+  "worker_seconds": 26.86,
+  "reported_tokens": {
+    "input_tokens": 1507,
+    "cached_input_tokens": 384,
+    "output_tokens": 6170,
+    "noncached_input_tokens": 1123,
+    "reasoning_tokens": 5896,
+    "visible_output_tokens": 274
+  },
+  "estimated_usd": {
+    "currency": "USD",
+    "off_peak": 0.0038716,
+    "peak": 0.0077432,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  },
+  "actual_invoice": "UNKNOWN",
+  "root_active_token_cost": "UNKNOWN",
+  "source_raw_export": false,
+  "formal_repairs_used": 0,
+  "formal_repairs_remaining": 1,
+  "timing_limit": "Notice helper written after first actual artifact read; 831s recorded latency is not exact first-discovery latency; no backdating"
+}

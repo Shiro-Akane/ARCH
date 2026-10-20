@@ -1,0 +1,102 @@
+{
+  "status": "INTERNAL_NATIVE_SERVICE_PASS_PUBLIC_SCIENCE_GATES_HELD",
+  "baseline": "9976d722d5b881bfbf85c5e355d6fb4993cd4e35",
+  "sourceSha256": {
+    "src/physics/gravity/GravityBoundary.cpp": "0400aa84905b118a8f31fe8b4ef6e73baadbe531260d49864863f6c19a0fecd7",
+    "src/physics/gravity/GravityBoundary.h": "934c46828ba6b13e724e0b0f917a49209ad4484e919ab9e956d136bebc5e5260",
+    "src/physics/gravity/self/SelfGravity.cpp": "2b42be22462e032713dfcd8a7ef732a28c4506fe98ba2c30863e287ca175a92a",
+    "src/physics/gravity/self/GravityWorkspace.h": "ff49288e9b94fc3e9fa10e36525c18edbdeb352da4281f7ab58668fc99f542d7",
+    "tests/host/gravity/test_composite_poisson.cpp": "9a6c44bbf35578fb4998cb06127a5cb6e0948361e0a9192770cb0f6570353afa",
+    "tests/host/gravity/test_self_gravity.cpp": "1a59fa2a5ef1fa99252c524fde9f47615331810939b62684ffd67be1b2527ff2",
+    "validation/gravity/rz_boundary_budget_audit.py": "dc3006e387ece5c42fbf5aeeabb903899a79684824909b7dda5435f36fdf71c0"
+  },
+  "testElfSha256": "467c5ff8d370dea7d3b14339568df62901591dcd741b7d70ac06030e49422cd0",
+  "budgetProof": {
+    "basis": "PositiveIsolatedRhs",
+    "massLower": "down(sum(rho*V.lower))",
+    "distanceUpper": "up(sqrt((2*r_outer)^2+(z_high-z_low)^2))",
+    "potentialMagnitudeLower": "down(G*massLower/distanceUpper)",
+    "rhsCellLower": "down(sourceMagnitudeLower + potentialMagnitudeLower*sum(B.lower))",
+    "fallback": "SourceScale when strict geometry/measure/B-sign proof unavailable",
+    "proposalOnly": true
+  },
+  "nativeService": {
+    "blocks": 2,
+    "cells": 512,
+    "density": 1,
+    "radialDomain": [
+      0,
+      1
+    ],
+    "axialDomain": [
+      -0.5,
+      0.5
+    ],
+    "originalRtol": 1e-10,
+    "originalAtol": 0,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumWork": 100000,
+    "residualUpper": 4.443476783658658e-15,
+    "toleranceSafe": 1.4684682266979847e-14,
+    "seconds": 113.252,
+    "peakOwnedRssKiB": 20068,
+    "swapKiB": 0,
+    "guardStopped": false,
+    "sourceInputs": 2,
+    "sourceGeneration": 1,
+    "candidatePublication": true,
+    "ordinaryPhysicalReadersRejected": true,
+    "nonfirstStaleRejected": true,
+    "time": 0,
+    "steps": 0
+  },
+  "solvedFixtures": [
+    {
+      "name": "uniform",
+      "exitCode": 0,
+      "seconds": 20.48296890599886
+    },
+    {
+      "name": "mixed",
+      "exitCode": 0,
+      "seconds": 25.416660265997052
+    }
+  ],
+  "independentChecks": {
+    "solvedReference": "PASS uniform/mixed, four cases 88 cells",
+    "budgetReference": "PASS exact Fraction B/norm and independent mass/distance lower bound checks, four cases",
+    "heterogeneous": "PASS two cases 56 cells budget-only; no solve/evolution"
+  },
+  "regressions": {
+    "cpuCompositePoisson": "PASS 3.41s",
+    "cpuSelfGravityLifecycle": "PASS 13.50s",
+    "cudaEnabledHostSelfGravityLifecycle": "PASS 12.94s",
+    "actualCartesianRuntime": "PASS 4->8->4; seven gathers; t=0",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "rawEvidenceSha256": {
+    "outcome.json": "031a40c47b2b8e52d91b8a509bf6bf84905e99365b7b09b8b1dbdaeaf8044588",
+    "mixed-reference.json": "a058c4094b6f23a34d4aa87ca27cc3a0a49ae4b40d6db18f450ed5766af2a010",
+    "heterogeneous.json": "c38569fe53a23d956415790abe88b2b1edfbf6faf3ed5e7f319fa8d39c631c7b",
+    "mixed.json": "6c607f041d1a82b67cc1a6648d8e917818fb533a8d75561d5dc8e00600b7e2a8",
+    "heterogeneous-reference.json": "619122a235b5990ffc6d51906d68f1c84b091f3fb702e4b6cd9dd2f3a58963e2",
+    "budget-reference.json": "6b0fe9f025b6d0a7bde897a356b28d7aaed6db77a82f3197bc11c141d52c1d3f",
+    "uniform-reference.json": "70c618fa28045b2c1d119c66ba171bc55e9c9f0dd313d288b787f5f9cfb80ba5",
+    "uniform.json": "e044ab8c303bf8111e11eac1b4bce2e120aa4786d830d0977749e0cdea41417f"
+  },
+  "serviceLogSha256": "79688fa752282d6b81d9914b7c583fe5b673e218159cabb58d2d99806b541dc7",
+  "productionElfSha256": {
+    "build-cpu/bin/ARCH": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda/bin/ARCH": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "limitations": [
+    "512-cell service validated by original outward assessment; no separate full-array independent 512-cell reference",
+    "No continuous Phi/force or conservation scientific signoff",
+    "No DriverRuntime RZ regrid/all slots/recovery qualification",
+    "No Device RZ numerical qualification; CUDA build result is Host regression only",
+    "No simulation, checkpoint, long run or benchmark",
+    "Production binaries unchanged and not current-source freshness evidence",
+    "Existing WorkLimit and positive-density rejection evidence retained"
+  ]
+}

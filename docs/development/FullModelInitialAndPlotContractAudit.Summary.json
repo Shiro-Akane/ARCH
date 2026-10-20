@@ -1,0 +1,241 @@
+{
+  "date": "2026-10-03",
+  "baseline": "d81620ad817af9c2edb048b1260bfcc3b00c3ed5",
+  "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+  "registeredCases": [
+    {
+      "caseId": "BurnGradient",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "BurnOneZone",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "CellularDet",
+      "field": true,
+      "amr": true,
+      "dimensions": [
+        2
+      ],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "CooperativeHotspots",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "DiffusionMode",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "ExternalGravity",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "Gaussian",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "GravityBox",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "JeansWave",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "RT",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "SNIaCoupled",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "Sedov",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "SmoothAdvection",
+      "field": false,
+      "amr": false,
+      "dimensions": [],
+      "pointInitialization": true
+    },
+    {
+      "caseId": "Sod",
+      "field": true,
+      "amr": true,
+      "dimensions": [
+        1
+      ],
+      "pointInitialization": true
+    }
+  ],
+  "currentModelCapabilities": [
+    {
+      "caseId": "Sod",
+      "dimensions": [
+        1
+      ],
+      "fields": [
+        "DENS",
+        "PRES",
+        "TEMP",
+        "VELX",
+        "ENER",
+        "EINT"
+      ],
+      "geometries": [
+        "cartesian"
+      ],
+      "maxFields": 6,
+      "maxResponseBytes": 8388608,
+      "previewBackend": "cpu",
+      "sampling": {
+        "defaultShape": [
+          512
+        ],
+        "maxPerAxis": 4096,
+        "maxTotalSamples": 4096,
+        "minPerAxis": 2
+      }
+    },
+    {
+      "caseId": "CellularDet",
+      "dimensions": [
+        2
+      ],
+      "fields": [
+        "DENS",
+        "PRES",
+        "TEMP",
+        "VELX",
+        "ENER",
+        "EINT",
+        "VELY"
+      ],
+      "geometries": [
+        "cartesian"
+      ],
+      "maxFields": 7,
+      "maxResponseBytes": 8388608,
+      "previewBackend": "cpu",
+      "sampling": {
+        "defaultShape": [
+          128,
+          128
+        ],
+        "maxPerAxis": 256,
+        "maxTotalSamples": 65536,
+        "minPerAxis": 2
+      },
+      "supportedShockDirections": [
+        0,
+        1
+      ]
+    }
+  ],
+  "plotMetadata": {
+    "path": "studio/.local/integration/run-preview-project-isolation-550d3aff-ded7-4a35-b213-5173a673c20f/output/Sod_HLLC_plt_0004.h5",
+    "size": 241664,
+    "mtimeNs": 1791011611806553636,
+    "datasets": {
+      "Grid/x": {
+        "shape": [
+          4096
+        ]
+      },
+      "Grid/y": {
+        "shape": [
+          4096
+        ]
+      },
+      "Grid/z": {
+        "shape": [
+          4096
+        ]
+      },
+      "Grid/level": {
+        "shape": [
+          256
+        ]
+      },
+      "Grid/morton": {
+        "shape": [
+          256
+        ]
+      },
+      "Data/DENS": {
+        "shape": [
+          256,
+          16
+        ]
+      },
+      "Data/PRES": {
+        "shape": [
+          256,
+          16
+        ]
+      },
+      "Data/VELX": {
+        "shape": [
+          256,
+          16
+        ]
+      },
+      "Data/ENER": {
+        "shape": [
+          256,
+          16
+        ]
+      }
+    },
+    "time": 0.2,
+    "dim": 1,
+    "identityAttributesPresent": {
+      "caseId": false,
+      "configRevision": false,
+      "binarySha256": false,
+      "buildId": false,
+      "schemaVersion": false,
+      "geometry": true
+    }
+  },
+  "probeScope": "static runtime capability queries and read-only HDF5 metadata; no Setup/Init/new simulation/build",
+  "plotDatasetReads": "none; only attribute scalars and dataspaces"
+}

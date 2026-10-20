@@ -1,0 +1,107 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Gaussian Pulse Pure Diffusion Test (2D Spherical)
+# 
+# Workflow:
+# 1. Configures a 2D spherical/polar domain (n1=200, n2=200) with reflecting/periodic boundaries.
+# 2. Sets up standard hydro solvers (HLLC, muscl, RK2) but configures uniform initial conditions.
+# 3. Enables the explicit RKL2 diffusion solver with species diffusion active.
+# 4. Sets a Gaussian initial profile for the species scalar.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# Maps to config.grid.*
+# ------------------------------------------------------------------------------
+nblockx1 = 4
+nblockx2 = 8
+nblockx3 = 0
+max_blocks = 384
+
+x1_min    = 0.0
+x1_max    = 1.1
+x2_min    = 0.0
+x2_max    = 2*pi
+xc       = 0.0
+geometry = spherical # Options: cartesian, cylindrical, spherical
+
+x1l_boundary_type = reflect # Options: reflect, outflow, periodic
+x1r_boundary_type = outflow # Options: reflect, outflow, periodic
+x2l_boundary_type = periodic # Options: reflect, outflow, periodic
+x2r_boundary_type = periodic # Options: reflect, outflow, periodic
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# Maps to config.numerics.*
+# ------------------------------------------------------------------------------
+solver      = HLLC       # Options: SW, VL, Roe, HLL, HLLC
+reconstruct = muscl      # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
+time_integrator = RK2    # Options: RK2, RK3, Euler/RK1
+limiter     = mc         # Options: minmod, superbee, vanleer, mc, none
+cfl         = 0.4        # Keep < 0.5 for VL/HLLC
+
+# ------------------------------------------------------------------------------
+# [AMR]
+# Track the diffusing passive-gas concentration without refining the smooth background.
+# ------------------------------------------------------------------------------
+lrefinemin = 0
+lrefinemax = 2
+regrid_interval = 2
+refine_var = he4
+refine_threshold = 0.15
+derefine_threshold = 0.03
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# Maps to config.io.*
+# ------------------------------------------------------------------------------
+tmax         = 0.02
+max_steps    = -1           # Maximum number of iterations (-1 for infinite)
+restart      = false        # Options: false, true
+
+out_dir      = output
+base_name    = GaussianDiff2D # Base name for output files (e.g., GaussianDiff2D_HLLC_plt_0001.h5)
+
+plt_dt       = 0.02         # Output PLT based on physical time interval (-1.0 to disable)
+chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 to disable)
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# Maps to config.physics.*
+eos_type = helmholtz            # Options: ideal, tabular, helmholtz
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
+network_name = aprox19
+
+# ------------------------------------------------------------------------------
+# [Diffusion Configuration]
+# Maps to config.physics.diffusion.*
+# ------------------------------------------------------------------------------
+use_diffusion = true           # false disables, true enables diffusion
+diff_integrator = RKL2      # Options: RKL1, RKL2
+diff_cfl = 0.8              # Explicit CFL limit for diffusion steps
+diff_max_stages = 1024      # Maximum number of RKL super-time-stepping stages
+
+use_thermal_diff = true        # true enables heat conduction
+use_viscous_diff = true        # true enables viscous diffusion
+use_species_diff = true        # true enables species concentration diffusion
+
+# D_spec = 0.1
+# nu_visc = 0.1
+# alpha_therm = 0.1
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters: GaussianPulse]
+# ------------------------------------------------------------------------------
+rho0 = 1e6
+p0 = 1e23
+amp = 0.5
+width = 0.1
+# Pulse centre uses physical Cartesian coordinates; xc is set above.
+yc = 0.0
+zc = 0.0
+# Optional coupled perturbations use the same Gaussian envelope.
+# Pressure amplitude is fractional; u/v/w are native orthonormal velocities.
+pressure_amplitude = 0.0
+u_amplitude = 0.0
+v_amplitude = 0.0
+w_amplitude = 0.0

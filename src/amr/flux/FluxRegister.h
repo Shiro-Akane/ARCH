@@ -17,18 +17,22 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <exception>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <tuple>
 #include <vector>
 
 #include "amr/flux/AmrFluxMath.h"
+#include "amr/flux/AmrFluxPlan.h"
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/storage/Block.h"
 #include "amr/storage/MemoryPool.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 
@@ -48,6 +52,9 @@ private:
     std::vector<FluidVector> fluxes_; // [block][active face][face cell]
     std::vector<double> species_fluxes_; // [block][active face][face cell][species]
     std::vector<int> active_;         // [block][face], atomic write target
+    mutable std::mutex identity_mutex_;
+    std::optional<std::uint64_t> topology_identity_;
+
 
     void ConfigureLayout(int dim) {
         if (dim < 1 || dim > 3) {
@@ -95,6 +102,80 @@ private:
 
 public:
     FluxRegister() = default;
+    /** Complete Host flux owner backup; values live outside the original arena. */
+    class HostSnapshot {
+        friend class FluxRegister;
+        int dimension_,capacity_,stride_,species_;
+        std::array<int,6> cells_,offsets_;
+        std::vector<FluidVector> fluid_;
+        std::vector<double> composition_;
+        std::vector<int> active_;
+        std::optional<std::uint64_t> identity_;
+        const FluidVector* fluid_address_;
+        const double* composition_address_;
+        const int* active_address_;
+        explicit HostSnapshot(const FluxRegister& owner)
+            : dimension_(owner.dim_),capacity_(owner.capacity_),stride_(owner.block_stride_),
+              species_(owner.num_species_),cells_(owner.face_cells_),offsets_(owner.face_offsets_),
+              fluid_(owner.fluxes_),composition_(owner.species_fluxes_),active_(owner.active_),
+              identity_(owner.topology_identity_),fluid_address_(owner.fluxes_.data()),
+              composition_address_(owner.species_fluxes_.data()),active_address_(owner.active_.data()) {}
+    public:
+        HostSnapshot(const HostSnapshot&)=delete;
+        HostSnapshot& operator=(const HostSnapshot&)=delete;
+        HostSnapshot(HostSnapshot&&)=delete;
+        HostSnapshot& operator=(HostSnapshot&&)=delete;
+    };
+    /** Scheduler-barrier allocation before stages; no parallel registration may overlap it. */
+    HostSnapshot snapshot_host() const {
+        std::lock_guard lock(identity_mutex_);
+        if(host_snapshot_owner_)throw std::logic_error("Host flux backup already leased");
+        return HostSnapshot(*this);
+    }
+    /** Freeze arena extents; clearing and adding fixed-size stage fluxes remain legal. */
+    void freeze_host_snapshot(const HostSnapshot& snapshot) {
+        std::lock_guard lock(identity_mutex_);
+        if(host_snapshot_owner_||!host_snapshot_matches(snapshot))
+            throw std::logic_error("Host flux backup is stale or overlapping");
+        host_snapshot_owner_=&snapshot;
+    }
+    /** Restore into the original fluid/species/face arrays after all Host workers joined. */
+    void restore_host_snapshot_noexcept(const HostSnapshot& snapshot) noexcept {
+        if(host_snapshot_owner_!=&snapshot||!snapshot_layout_matches(snapshot))std::terminate();
+        std::copy(snapshot.fluid_.begin(),snapshot.fluid_.end(),fluxes_.begin());
+        std::copy(snapshot.composition_.begin(),snapshot.composition_.end(),species_fluxes_.begin());
+        std::copy(snapshot.active_.begin(),snapshot.active_.end(),active_.begin());
+        topology_identity_=snapshot.identity_;
+    }
+    /** Release the exact owner; called only outside registration worker regions. */
+    void release_host_snapshot(const HostSnapshot& snapshot) noexcept {
+        if(host_snapshot_owner_!=&snapshot)std::terminate();
+        host_snapshot_owner_=nullptr;
+    }
+    /** Compare metadata, original arena addresses and every FP64 payload bit. */
+    bool host_snapshot_matches(const HostSnapshot& snapshot,bool require_original_arena=true) const noexcept {
+        const auto bits=[](double a,double b){return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);};
+        if(!snapshot_layout_matches(snapshot,require_original_arena)||topology_identity_!=snapshot.identity_||active_!=snapshot.active_)return false;
+        for(std::size_t i=0;i<fluxes_.size();++i) {
+            const auto& a=fluxes_[i];const auto& b=snapshot.fluid_[i];
+            if(!bits(a.rho,b.rho)||!bits(a.mom_u,b.mom_u)||!bits(a.mom_v,b.mom_v)
+                ||!bits(a.mom_w,b.mom_w)||!bits(a.eng,b.eng))return false;
+        }
+        for(std::size_t i=0;i<species_fluxes_.size();++i)
+            if(!bits(species_fluxes_[i],snapshot.composition_[i]))return false;
+        return true;
+    }
+private:
+    const HostSnapshot* host_snapshot_owner_=nullptr;
+    /** Layout checks never allocate, resize or change the arena owner. */
+    bool snapshot_layout_matches(const HostSnapshot& s,bool require_original_arena=true) const noexcept {
+        return dim_==s.dimension_&&capacity_==s.capacity_&&block_stride_==s.stride_
+            &&num_species_==s.species_&&face_cells_==s.cells_&&face_offsets_==s.offsets_
+            &&fluxes_.size()==s.fluid_.size()&&species_fluxes_.size()==s.composition_.size()
+            &&active_.size()==s.active_.size()&&(!require_original_arena||(fluxes_.data()==s.fluid_address_
+            &&species_fluxes_.data()==s.composition_address_&&active_.data()==s.active_address_));
+    }
+public:
 
     void Resize(int max_blocks, int dim) {
         if (max_blocks < 0) {
@@ -102,12 +183,15 @@ public:
         }
         if (dim_ == dim && capacity_ >= max_blocks) return;
 
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes flux arena resize");
         ConfigureLayout(dim);
         dim_ = dim;
         capacity_ = max_blocks;
         fluxes_.assign(static_cast<size_t>(capacity_) * block_stride_, FluidVector{});
         active_.assign(static_cast<size_t>(capacity_) * 6, 0);
         species_fluxes_.assign(static_cast<size_t>(capacity_) * block_stride_ * num_species_, 0.0);
+        std::lock_guard lock(identity_mutex_);
+        topology_identity_.reset();
     }
 
     void EnsureSpecies(int num_species) {
@@ -115,13 +199,23 @@ public:
             throw std::invalid_argument("FluxRegister species count cannot be negative.");
         }
         if (num_species_ == num_species) return;
+        if(host_snapshot_owner_)throw std::logic_error("Host transaction excludes flux species resize");
         num_species_ = num_species;
         species_fluxes_.assign(static_cast<size_t>(capacity_) * block_stride_ * num_species_, 0.0);
     }
 
     int GetNumSpecies() const { return num_species_; }
 
+    void ValidateTopologyIdentity(std::uint64_t fingerprint) const {
+        std::lock_guard lock(identity_mutex_);
+        if (topology_identity_ && *topology_identity_ != fingerprint)
+            throw std::invalid_argument("AMR accumulated flux topology identity mismatch; Clear required");
+    }
+
     void Clear() {
+        // Clear/resize are scheduler barriers, never concurrent registration.
+        std::lock_guard lock(identity_mutex_);
+        topology_identity_.reset();
         for (int block_id = 0; block_id < capacity_; ++block_id) {
             for (int face_dir = 0; face_dir < 6; ++face_dir) {
                 const size_t face_slot = FaceSlot(block_id, face_dir);
@@ -232,7 +326,8 @@ public:
         const FluxRegistrationPlan& plan,
         std::span<const double> values,
         const std::map<AmrEndpoint, int>& pool_lowering,
-        double stage_weight = 1.0)
+        double stage_weight = 1.0,
+        std::optional<std::uint64_t> topology_fingerprint = std::nullopt)
     {
         validate_amr_plan(plan);
         if (values.size() != plan.operations.size())
@@ -297,6 +392,12 @@ public:
         // Zero-weight stages are a mathematical no-op and must not create a
         // false HasData witness in the Host register.
         if (stage_weight == 0.0) return;
+        if (topology_fingerprint) {
+            std::lock_guard lock(identity_mutex_);
+            if (topology_identity_ && *topology_identity_ != *topology_fingerprint)
+                throw std::invalid_argument("AMR accumulated flux topology identity mismatch; Clear required");
+            topology_identity_ = *topology_fingerprint;
+        }
         for (const auto& contribution : compiled) {
             if (contribution.field == AmrField::Species) {
                 AddRegisteredSpeciesFlux(
@@ -358,10 +459,11 @@ public:
                     const int j = block.grid.Js() + logical[1];
                     const int k = block.grid.Ks() + logical[2];
                     const double area = GridMetrics::FaceArea(
-                        block.grid, axis_value(axis), i, j, k,
+                        GridMetrics::make_geometry_view(block.grid),
+                        axis_value(axis), i, j, k,
                         side == AmrSide::Upper);
                     const double volume = GridMetrics::CellVolume(
-                        block.grid, i, j, k);
+                        GridMetrics::make_geometry_view(block.grid), i, j, k);
                     if (!amr_plan_detail::is_finite_binary64(area)
                         || !amr_plan_detail::is_finite_binary64(volume)
                         || area <= 0.0 || volume <= 0.0)
@@ -370,21 +472,40 @@ public:
                     LogicalAmrBox box{
                         {logical[0], logical[1], logical[2]}, {1, 1, 1}};
                     const double weight = dt * area / volume;
+                    double moment_weight = weight;
+                    if (dim == 2 && block.grid.geometry == "cylindrical") {
+                        const double moment =
+                            GridMetrics::AngularMomentumFaceMoment(
+                                GridMetrics::make_geometry_view(block.grid),
+                                axis_value(axis), i, j, k,
+                                side == AmrSide::Upper);
+                        const double volume_moment =
+                            GridMetrics::AngularMomentumVolumeMoment(
+                                GridMetrics::make_geometry_view(block.grid),
+                                i, j, k);
+                        if (!amr_plan_detail::is_finite_binary64(moment)
+                            || !amr_plan_detail::is_finite_binary64(volume_moment)
+                            || moment <= 0.0 || volume_moment <= 0.0)
+                            throw std::invalid_argument(
+                                "reflux azimuthal moment is nonpositive or nonfinite");
+                        moment_weight = dt * moment / volume_moment;
+                    }
                     const double sign = side == AmrSide::Lower ? 1.0 : -1.0;
-                    const auto append = [&](AmrField field, int component) {
+                    const auto append = [&](AmrField field, int component,
+                                            double field_weight) {
                         plan.operations.push_back({
                             0, endpoint, endpoint, box, box, axis, side,
                             field, component,
                             RefinementRule::RefluxCorrection,
-                            weight, sign});
+                            field_weight, sign});
                     };
-                    append(AmrField::Rho, -1);
-                    append(AmrField::MomU, -1);
-                    append(AmrField::MomV, -1);
-                    append(AmrField::MomW, -1);
-                    append(AmrField::Energy, -1);
+                    append(AmrField::Rho, -1, weight);
+                    append(AmrField::MomU, -1, weight);
+                    append(AmrField::MomV, -1, weight);
+                    append(AmrField::MomW, -1, moment_weight);
+                    append(AmrField::Energy, -1, weight);
                     for (int component = 0; component < species; ++component)
-                        append(AmrField::Species, component);
+                        append(AmrField::Species, component, weight);
                 }
             }
         }
@@ -420,6 +541,9 @@ public:
             int face = -1;
             int cell = -1;
             double weight = 0.0;
+            double moment_weight = 0.0;
+            bool has_weight = false;
+            bool has_moment_weight = false;
             double sign = 1.0;
             std::array<bool, 5> fluid_fields{};
             std::vector<bool> species_fields;
@@ -456,18 +580,35 @@ public:
                 group.block_id = active_blocks[found->second];
                 group.face = face;
                 group.cell = cell;
-                group.weight = operation.weight;
                 group.sign = operation.sign;
                 group.species_fields.assign(
                     static_cast<std::size_t>(species), false);
             } else if (group.block_id != active_blocks[found->second]
                        || group.face != face || group.cell != cell
-                       || std::bit_cast<std::uint64_t>(group.weight)
-                           != std::bit_cast<std::uint64_t>(operation.weight)
                        || std::bit_cast<std::uint64_t>(group.sign)
                            != std::bit_cast<std::uint64_t>(operation.sign)) {
                 throw std::invalid_argument(
                     "reflux logical group metadata is inconsistent");
+            }
+
+            if (operation.field == AmrField::MomW) {
+                if (!group.has_moment_weight) {
+                    group.moment_weight = operation.weight;
+                    group.has_moment_weight = true;
+                } else if (std::bit_cast<std::uint64_t>(group.moment_weight)
+                           != std::bit_cast<std::uint64_t>(operation.weight)) {
+                    throw std::invalid_argument(
+                        "reflux moment weight is inconsistent");
+                }
+            } else {
+                if (!group.has_weight) {
+                    group.weight = operation.weight;
+                    group.has_weight = true;
+                } else if (std::bit_cast<std::uint64_t>(group.weight)
+                           != std::bit_cast<std::uint64_t>(operation.weight)) {
+                    throw std::invalid_argument(
+                        "reflux logical group metadata is inconsistent");
+                }
             }
 
             if (operation.field == AmrField::Species) {
@@ -499,7 +640,8 @@ public:
                              [](bool present) { return present; })
                 || !std::all_of(group.species_fields.begin(),
                                 group.species_fields.end(),
-                                [](bool present) { return present; }))
+                                [](bool present) { return present; })
+                || !group.has_weight || !group.has_moment_weight)
                 throw std::invalid_argument("reflux field group is incomplete");
             groups.push_back(std::move(group));
         }
@@ -519,6 +661,8 @@ public:
                 group.block_id, group.face, group.cell);
             const double correction =
                 timestep_scale * group.sign * group.weight;
+            const double moment_correction =
+                timestep_scale * group.sign * group.moment_weight;
             const double rho_before = state.rho[index];
             state.rho[index] = flux_math::reflux_conserved(
                 rho_before, correction, delta.rho);
@@ -527,7 +671,7 @@ public:
             state.mom_v[index] = flux_math::reflux_conserved(
                 state.mom_v[index], correction, delta.mom_v);
             state.mom_w[index] = flux_math::reflux_conserved(
-                state.mom_w[index], correction, delta.mom_w);
+                state.mom_w[index], moment_correction, delta.mom_w);
             state.eng[index] = flux_math::reflux_conserved(
                 state.eng[index], correction, delta.eng);
             for (int species = 0; species < state.GetNumSpecies(); ++species) {

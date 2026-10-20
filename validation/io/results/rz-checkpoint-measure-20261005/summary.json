@@ -1,0 +1,458 @@
+{
+  "status": "RZ-CHK-MEASURE-01 DOMAIN/W IDENTITY PASS; FULL RZ C/D PENDING",
+  "baseline": "739065e82cd60894db19fd3aa6d0dd0d382d343f",
+  "sourceFingerprints": {
+    "src/amr/topology/AmrTree.h": "bc1cdca8e3eda16ce485307b756f3a2fd7bce893c4582a7f1fb3d652edfee6d8",
+    "src/io/chk/CheckpointGeometryIdentity.h": "228cdd9c61d1a4486d329ea60913cfd1f28f1554a2e7935bf10cafa94c18cb3b",
+    "src/io/hdf5/HDF5Writer.h": "a476a585dcd529446af8f40374697ac6e5849c0f8db865488e649ef8a79ab352",
+    "src/io/hdf5/HDF5Writer.cpp": "7f22e5b787d25e1993df177ea430022eeadc56242e000cbfe55a23959cc54838",
+    "src/io/chk/ChkIO.cpp": "72f49648dc61f3ed8737744f8cf833d84d844d31590966953c6d084bb332df21",
+    "tests/host/io/test_checkpoint_compatibility.cpp": "85e81b2da94f8d1d8f4f096ecc893b1e3b38eae7acbfe15f396c76ef35a1c811"
+  },
+  "binaryBefore": "1116a7d17d6d63ffa478fb73941be3799aa46b6ec51eee4b136f242a366d7575",
+  "binaryAfter": "44086004d1a3cc09411f13099e1ce6c906ba20d33e86a9e49bb154404b4b209d",
+  "findingId": "RZ-CHK-MEASURE-01",
+  "findingScopeClosed": "stored native domain/root block counts/axis cell shape binding at writer and before live restoration",
+  "nativeDomainContract": {
+    "version": 1,
+    "boundsOrder": "r_min,r_max,z_min,z_max",
+    "coordinateUnit": "cm",
+    "measureNormalization": "full_rotation",
+    "rootBlockAxes": "r,z",
+    "cellShapeAxes": "r,z"
+  },
+  "wjIdentity": {
+    "cells": "1280",
+    "source_J": "12.5663706143591711387",
+    "restored_J": "12.5663706143591711387"
+  },
+  "changedConfigNegatives": 6,
+  "corruptHdfNegatives": 7,
+  "checks": [
+    {
+      "check": "checkpoint-final",
+      "exitCode": 0
+    },
+    {
+      "check": "architecture",
+      "exitCode": 0
+    },
+    {
+      "check": "diff",
+      "exitCode": 0
+    },
+    {
+      "check": "checkpoint-native-W-J",
+      "exitCode": 0
+    }
+  ],
+  "readback": {
+    "status": "PASS",
+    "rows": [
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/driver-fixture/evidence/rz/fixture_chk_0007.h5",
+        "sha256": "a1aa8f59aa4fe353c1af2511f171509cb81dca5340d86678f7456b1bf772c330",
+        "bounds": [
+          0.0,
+          1.0,
+          -4.0,
+          4.0
+        ],
+        "rootBlocks": [
+          1,
+          1
+        ],
+        "cellShape": [
+          16,
+          16
+        ],
+        "nativeStateShape": [
+          1,
+          256
+        ],
+        "coordinateUnit": "cm",
+        "volumeUnit": "cm^3",
+        "angularMeasureUnit": "cm^4",
+        "normalization": "full_rotation"
+      },
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/continuation-fixture/evidence/0-0.000000/internal-rz_chk_0000.h5",
+        "sha256": "550ffb873e1b42883e3852bc2a1b9ed8fdc9058d1c1afa92ae7285496253d4ea",
+        "bounds": [
+          0.0,
+          2.0,
+          -1.0,
+          1.0
+        ],
+        "rootBlocks": [
+          2,
+          1
+        ],
+        "cellShape": [
+          16,
+          16
+        ],
+        "nativeStateShape": [
+          5,
+          256
+        ],
+        "coordinateUnit": "cm",
+        "volumeUnit": "cm^3",
+        "angularMeasureUnit": "cm^4",
+        "normalization": "full_rotation"
+      },
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/continuation-fixture/evidence/0-1.000000/internal-rz_chk_0000.h5",
+        "sha256": "8b53d5e798d28633167a7163dfea6c021dfd260eca71450a20da1cc27740f946",
+        "bounds": [
+          1.0,
+          3.0,
+          -1.0,
+          1.0
+        ],
+        "rootBlocks": [
+          2,
+          1
+        ],
+        "cellShape": [
+          16,
+          16
+        ],
+        "nativeStateShape": [
+          5,
+          256
+        ],
+        "coordinateUnit": "cm",
+        "volumeUnit": "cm^3",
+        "angularMeasureUnit": "cm^4",
+        "normalization": "full_rotation"
+      },
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/continuation-fixture/evidence/1-0.000000/internal-rz_chk_0000.h5",
+        "sha256": "ec76e1a89cbc8087729c8d1605e86e8295b1a991d326874349975f5db8f08a72",
+        "bounds": [
+          0.0,
+          2.0,
+          -1.0,
+          1.0
+        ],
+        "rootBlocks": [
+          1,
+          2
+        ],
+        "cellShape": [
+          16,
+          16
+        ],
+        "nativeStateShape": [
+          5,
+          256
+        ],
+        "coordinateUnit": "cm",
+        "volumeUnit": "cm^3",
+        "angularMeasureUnit": "cm^4",
+        "normalization": "full_rotation"
+      },
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/continuation-fixture/evidence/1-1.000000/internal-rz_chk_0000.h5",
+        "sha256": "aa4da3d975dc4288bd7109fb3347097326933f1c210cd3495b84db602381e3a9",
+        "bounds": [
+          1.0,
+          3.0,
+          -1.0,
+          1.0
+        ],
+        "rootBlocks": [
+          1,
+          2
+        ],
+        "cellShape": [
+          16,
+          16
+        ],
+        "nativeStateShape": [
+          5,
+          256
+        ],
+        "coordinateUnit": "cm",
+        "volumeUnit": "cm^3",
+        "angularMeasureUnit": "cm^4",
+        "normalization": "full_rotation"
+      }
+    ],
+    "existingChartUnchanged": true,
+    "scope": "independent on-disk expected-domain identity, FP64/layout check; not geometric formula accuracy"
+  },
+  "driverFixture": {
+    "exitCode": 0,
+    "scope": "Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+    "executableSha256": "2d06d339e255512a71a5da7c78558f4080c8f2cfcad7e877f0e0ed1a953fa271",
+    "recompiledSources": {
+      "tests/host/io/test_driver_checkpoint_geometry.cpp": "86010c3876c3d6caf6508d2bf4a51606c1264d138ea17e957e68b7b549c3d814",
+      "src/driver/runtime/DriverRuntime.cpp": "f0b3bbe379af900fb8f4c8e72f9dd1ba77e671ce3f95f9e175a5688a42d3d3bd",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "1af39912876480e6b264552ab495b544bc908310bd4d355f8d1b4ba667adcda8",
+      "src/driver/io/DriverIO.cpp": "783cc3f35513d7704761872470b3fa4e91028d61562025080217e9ebb76e5875",
+      "src/io/chk/ChkIO.cpp": "72f49648dc61f3ed8737744f8cf833d84d844d31590966953c6d084bb332df21",
+      "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+      "src/io/hdf5/HDF5Writer.cpp": "7f22e5b787d25e1993df177ea430022eeadc56242e000cbfe55a23959cc54838",
+      "src/io/plot/PlotIO.cpp": "b1e2f517e39f8bf273498d79424dd154effd99a2268165cda9385085b4df0227"
+    }
+  },
+  "continuationFixture": {
+    "exitCode": 0,
+    "scope": "Internal RZ actual Host RK2 -> checkpoint -> reconstructed Runtime -> next RK2 step; engineering fixture, no public simulation",
+    "executableSha256": "534ec07942cfff0cd28a75f73c0fdaa8057bf1b8c3564505ecf34a440d64a667",
+    "recompiledSources": {
+      "tests/host/driver/test_rz_checkpoint_continuation.cpp": "bd75de607cc502b9011871792f310eee25f054caf47a27c9013a3ad24488200c",
+      "src/driver/runtime/DriverRuntime.cpp": "f0b3bbe379af900fb8f4c8e72f9dd1ba77e671ce3f95f9e175a5688a42d3d3bd",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "1af39912876480e6b264552ab495b544bc908310bd4d355f8d1b4ba667adcda8",
+      "src/driver/io/DriverIO.cpp": "783cc3f35513d7704761872470b3fa4e91028d61562025080217e9ebb76e5875",
+      "src/io/chk/ChkIO.cpp": "72f49648dc61f3ed8737744f8cf833d84d844d31590966953c6d084bb332df21",
+      "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+      "src/io/hdf5/HDF5Writer.cpp": "7f22e5b787d25e1993df177ea430022eeadc56242e000cbfe55a23959cc54838",
+      "src/io/plot/PlotIO.cpp": "b1e2f517e39f8bf273498d79424dd154effd99a2268165cda9385085b4df0227"
+    },
+    "cases": [
+      {
+        "direction": "0",
+        "inner": "0",
+        "leaves": "5",
+        "split_time": "0.001",
+        "final_time": "0.002",
+        "final_step": "2",
+        "bit_words": "10260",
+        "checkpoint_sha": "550ffb873e1b42883e3852bc2a1b9ed8fdc9058d1c1afa92ae7285496253d4ea"
+      },
+      {
+        "direction": "0",
+        "inner": "1",
+        "leaves": "5",
+        "split_time": "0.001",
+        "final_time": "0.002",
+        "final_step": "2",
+        "bit_words": "10260",
+        "checkpoint_sha": "8b53d5e798d28633167a7163dfea6c021dfd260eca71450a20da1cc27740f946"
+      },
+      {
+        "direction": "1",
+        "inner": "0",
+        "leaves": "5",
+        "split_time": "0.001",
+        "final_time": "0.002",
+        "final_step": "2",
+        "bit_words": "10260",
+        "checkpoint_sha": "ec76e1a89cbc8087729c8d1605e86e8295b1a991d326874349975f5db8f08a72"
+      },
+      {
+        "direction": "1",
+        "inner": "1",
+        "leaves": "5",
+        "split_time": "0.001",
+        "final_time": "0.002",
+        "final_step": "2",
+        "bit_words": "10260",
+        "checkpoint_sha": "aa4da3d975dc4288bd7109fb3347097326933f1c210cd3495b84db602381e3a9"
+      }
+    ]
+  },
+  "frozenJens": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "44086004d1a3cc09411f13099e1ce6c906ba20d33e86a9e49bb154404b4b209d",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.06388103502104059,
+        "restart_elapsed_seconds": 0.06395864699152298,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-1d-active"
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.06433105102041736,
+        "restart_elapsed_seconds": 0.06415100899175741,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-1d-disabled"
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.06394940798054449,
+        "restart_elapsed_seconds": 0.03180590798729099,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-1d-output_only"
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.364658030011924,
+        "restart_elapsed_seconds": 0.21432637399993837,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-2d-active"
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.11403607198735699,
+        "restart_elapsed_seconds": 0.0641512839938514,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-2d-disabled"
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.11414998301188461,
+        "restart_elapsed_seconds": 0.06413005100330338,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-2d-output_only"
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 21.67142928999965,
+        "restart_elapsed_seconds": 13.652009012992494,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-3d-active"
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 1.417307947005611,
+        "restart_elapsed_seconds": 0.7658725240034983,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-3d-disabled"
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 1.3673746089916676,
+        "restart_elapsed_seconds": 0.7657421669864561,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005/frozen-jeans-campaign/jeans-uniform-3d-output_only"
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-checkpoint-measure-20261005",
+  "initialFailures": [
+    {
+      "kind": "fixture artifact name collision",
+      "preservedLog": "checkpoint.log",
+      "fix": "choose new corruption copy paths, preserve existing evidence"
+    },
+    {
+      "kind": "fixture W owner namespace compile error",
+      "preservedLog": "memory-wj.json",
+      "fix": "reference GridMetrics::Rz::AngularMomentumMeasure; no production geometry change"
+    }
+  ],
+  "limitations": [
+    "binding is identity, not independent native metric accuracy certificate",
+    "continuation fixture has zero angular motion, not rotational scientific acceptance",
+    "Init/BC/EOS/plot/API and full RZ D remain separately gated",
+    "no CUDA/long-run qualification"
+  ],
+  "productionRzGate": "retained"
+}

@@ -6,6 +6,7 @@
  * values, component handling and rejection of invalid input layouts.
  */
 #include "amr/exchange/BoundaryPlan.h"
+#include "amr/exchange/HostBoundaryPlan.h"
 #include "cuda/hydro/boundary/Boundary.cuh"
 #include "driver/DriverUtils.h"
 

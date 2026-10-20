@@ -23,6 +23,11 @@ once per rebuild; each solve uploads only borrowed patch pointers. Krylov decisi
 read scalar reductions; mean projection stays on device. Output explicitly
 materializes potential/acceleration, while checkpoint restart recomputes them.
 The backend cannot silently substitute a Host gravity solve.
+Every copy, launch, reduction, projection and fence selects the leased device.
+Growing reduction scratch fences existing work before retiring its old storage;
+within-capacity reuse keeps the existing asynchronous stream ordering. Current
+native 2D qualification uses one physical GPU; it does not certify multi-GPU
+execution.
 
 When a reduction's original 64-element partials fit within one 128-thread
 block, its final pass runs in that same block. Small periodic projections also

@@ -1,0 +1,205 @@
+{
+  "status": "PASS",
+  "cases": 12,
+  "cells": 264,
+  "rows": [
+    {
+      "mixed": false,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "maximumVolumeError": 1.3394574365674175e-17,
+      "maximumVolumeErrorUpper": 2.2204460492503136e-16,
+      "maximumWeightErrorUpper": 3.1918911957973255e-16,
+      "physicalNormLower": 1.8691575642518699,
+      "physicalNormUpper": 1.8691575642518792
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "maximumVolumeError": 8.445834942367679e-18,
+      "maximumVolumeErrorUpper": 3.469446951953615e-17,
+      "maximumWeightErrorUpper": 3.4694469519536147e-16,
+      "physicalNormLower": 1.8691575642518699,
+      "physicalNormUpper": 1.8691575642518792
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "maximumVolumeError": 7.655976809160296e-17,
+      "maximumVolumeErrorUpper": 5.551115123125784e-16,
+      "maximumWeightErrorUpper": 3.1918911957973255e-16,
+      "physicalNormLower": 1.8396670894485179,
+      "physicalNormUpper": 1.8396670894485283
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "maximumVolumeError": 3.035137472565404e-17,
+      "maximumVolumeErrorUpper": 9.714451465470121e-17,
+      "maximumWeightErrorUpper": 2.775557561562892e-16,
+      "physicalNormLower": 1.826882590644506,
+      "physicalNormUpper": 1.826882590644516
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "maximumVolumeError": 5.3365050733298303e-17,
+      "maximumVolumeErrorUpper": 4.440892098500627e-16,
+      "maximumWeightErrorUpper": 3.1918911957973255e-16,
+      "physicalNormLower": 1.847083850289418,
+      "physicalNormUpper": 1.8470838502894282
+    },
+    {
+      "mixed": false,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "maximumVolumeError": 1.462120719530401e-17,
+      "maximumVolumeErrorUpper": 5.551115123125784e-17,
+      "maximumWeightErrorUpper": 2.6367796834847473e-16,
+      "physicalNormLower": 1.8337120820892199,
+      "physicalNormUpper": 1.8337120820892299
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "maximumVolumeError": 1.3394574365674175e-17,
+      "maximumVolumeErrorUpper": 2.2204460492503136e-16,
+      "maximumWeightErrorUpper": 3.747002708109904e-16,
+      "physicalNormLower": 2.654624502636853,
+      "physicalNormUpper": 2.6546245026368687
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "maximumVolumeError": 8.445834942367679e-18,
+      "maximumVolumeErrorUpper": 3.469446951953615e-17,
+      "maximumWeightErrorUpper": 4.302114220422482e-16,
+      "physicalNormLower": 2.6546245026368522,
+      "physicalNormUpper": 2.6546245026368687
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "maximumVolumeError": 7.655976809160296e-17,
+      "maximumVolumeErrorUpper": 5.551115123125784e-16,
+      "maximumWeightErrorUpper": 3.8857805861880484e-16,
+      "physicalNormLower": 2.59658730355826,
+      "physicalNormUpper": 2.5965873035582776
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "maximumVolumeError": 3.035137472565404e-17,
+      "maximumVolumeErrorUpper": 9.714451465470121e-17,
+      "maximumWeightErrorUpper": 3.33066907387547e-16,
+      "physicalNormLower": 2.5713132414613047,
+      "physicalNormUpper": 2.571313241461322
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "maximumVolumeError": 5.3365050733298303e-17,
+      "maximumVolumeErrorUpper": 4.440892098500627e-16,
+      "maximumWeightErrorUpper": 3.8857805861880484e-16,
+      "physicalNormLower": 2.611217538094051,
+      "physicalNormUpper": 2.611217538094068
+    },
+    {
+      "mixed": true,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "maximumVolumeError": 1.462120719530401e-17,
+      "maximumVolumeErrorUpper": 5.551115123125784e-17,
+      "maximumWeightErrorUpper": 3.4694469519536147e-16,
+      "physicalNormLower": 2.584823494941184,
+      "physicalNormUpper": 2.584823494941201
+    }
+  ],
+  "probeSha256": "6b97cc01f768f29895cb557fbbbddba58fa7e977775e71498683a9573c585022",
+  "scope": "Ideal full-ring volumes and normalized physical RMS from exact dyadic root coordinates",
+  "limitations": [
+    "No face-coefficient/fit certificate, no physical RHS acceptance or force gate",
+    "No simulation, CUDA or long-run claim",
+    "Raw vectors retained only locally"
+  ],
+  "baselineCommit": "70ee1d3f894a97303f3a66fe70cac513d9e1e589",
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.h": "7e47adaebbdc2f308d91a9b64b07f63c77608961ac9e2fbd7c3990e3e6c20665",
+    "src/numerics/elliptic/CompositePoisson.cpp": "b0e9519e714e877abaa06d4f3a358b92148793e9d2e5fe18cc3f9825852a96b0",
+    "tests/host/gravity/test_composite_poisson.cpp": "3d43012d2e8d6cc2b0361122c758b3ef1b4d79b2ff9712388be3566bb577d34c",
+    "validation/gravity/rz_native_measure_reference.py": "f1310d7c9235043b0cb4594118726326181dd21ad4a4fce2412aa737a76cbf56"
+  },
+  "cpuArchSha256": "ea67946b8e14a32ec7829657708489e96ab013eb97ac3914133a7b300d38547b",
+  "checks": {
+    "affectedCoreCtest": "6/6 PASS",
+    "architectureAudit": "PASS",
+    "diffCheck": "PASS",
+    "build": "Existing CPU Release tree incremental PASS; parallel 28",
+    "memoryGuard": "not stopped; peak RSS 2578820 KiB; swap growth 0; 11.161 seconds",
+    "frozenJeans": "Reused identical ea67946... binary receipt from 70ee1d3f: 9 short + 9 actual restart PASS"
+  },
+  "geometryScope": "Ideal dyadic coordinates defined by stored root origin/spacing and integer leaf identity, with mathematical pi",
+  "remainingDependencies": [
+    "Stored leaf coordinate/ring observer geometry discrepancy",
+    "Boundary/interior polynomial fit and LU coefficient construction error",
+    "Physical source+boundary+operator error composition using ideal native weights",
+    "Independent continuous Phi/force and all RZ consumers, prior axis/viscosity findings"
+  ]
+}

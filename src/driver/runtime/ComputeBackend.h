@@ -13,29 +13,45 @@
 
 #pragma once
 
+#include "physics/boundary/BoundaryFlux.h"
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/topology/BlockHandle.h"
+#include "data/FluidState.h"
 #include "data/GlobalDefs.h"
 #include "grid/ScalarFieldView.h"
-#include "physics/gravity/GravitySource.h"
+#include "physics/gravity/GravitySourceTypes.h"
 #include "driver/schedule/StageScheduler.h"
 
 #include <cstddef>
 #include <algorithm>
 #include <cstdint>
 #include <array>
+#include <functional>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
 
-namespace Physical::Gravity { class GravityExecution; }
+namespace Physical::Gravity { class GravityExecution; class IGravityPolicy; }
 namespace amr { struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
 namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::backend {
+
+struct BoundaryFluxPlanes {
+    amr::BlockHandle block{};
+    std::array<std::vector<double>, 6> stage, initial;
+};
+
+/** Packed boundary snapshots; size is proportional to the requested surface. */
+struct BoundaryCells {
+    std::size_t species_count = 0;
+    std::vector<FluidVector> conserved;
+    std::vector<double> enuc, composition; // Cell-major boundary staging only.
+};
 
 struct StorageGeneration {
     std::uint64_t value = 0;
@@ -93,6 +109,8 @@ struct BackendTopologyBinding {
     amr::BlockHandle handle{};
     StorageGeneration storage{};
     const boundary::BoundaryPlan* physical_boundary = nullptr;
+    // Presence is distinct from an explicitly prepared open-face view.
+    std::optional<boundary::HydroBoundaryView> hydro_boundary{};
 };
 
 class BackendTopologyStoreTransaction {
@@ -201,6 +219,18 @@ inline void validate_host_state_transfer_view(
     }
 }
 
+/** Compact endpoint energy redistribution over actual leaf cell measures.
+ * The producer evaluates the shared V*(E_after-E_seed) term; this receipt
+ * carries signed and absolute endpoint sums, not cumulative face heat flux.
+ * Units follow the actual geometry measure. Scalar observation never publishes
+ * a state version or provides thermodynamic/stage acceptance.
+ */
+struct DiffusionActivityReceipt {
+    double signed_energy_change = 0.0;
+    double absolute_energy_change = 0.0;
+    std::uint64_t cells = 0;
+};
+
 struct BurnExecutionResult {
     double dt_recommended = 0.0;
     std::uint64_t failed_cells = 0;
@@ -257,6 +287,49 @@ public:
     virtual StorageGeneration storage_generation() const noexcept = 0;
     virtual bool contains(BackendStateAccess access) const noexcept = 0;
 
+    /** Explicit candidate namespace only; unsupported backends never fall back. */
+    virtual bool contains(BackendTopologyStoreTransaction&,
+        BackendStateAccess) const noexcept { return false; }
+    virtual state::CompletionToken execute_physical_boundary_batch(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged physical boundary is unavailable");
+    }
+    virtual state::CompletionToken execute_same_level_exchange(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        const amr::SameLevelExchangePlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged same-level exchange is unavailable");
+    }
+    virtual state::CompletionToken execute_coarse_fine_exchange(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        const amr::CoarseFineTransferPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged coarse-fine exchange is unavailable");
+    }
+    virtual state::CompletionToken execute_coordinate_seam_exchange(
+        BackendTopologyStoreTransaction&, std::span<const BackendStateAccess>,
+        std::span<const int>, const amr::CoordinateSeamPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error("backend staged coordinate seam exchange is unavailable");
+    }
+    virtual BoundaryCells read_boundary_cells(
+        BackendTopologyStoreTransaction&, BackendStateAccess,
+        std::span<const int>, state::StateRegion = state::StateRegion::Interior)
+    {
+        throw std::logic_error("backend staged boundary slice read is unavailable");
+    }
+    virtual void write_boundary_cells(
+        BackendTopologyStoreTransaction&, BackendStateAccess,
+        std::span<const int>, const BoundaryCells&,
+        const boundary::DiffusionBoundaryStorage&)
+    {
+        throw std::logic_error("backend staged boundary slice write is unavailable");
+    }
     virtual std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() { return {}; }
     virtual const double* gravity_density(BackendStateAccess) {
         throw std::logic_error("backend gravity density unavailable");
@@ -269,6 +342,7 @@ public:
     virtual double compute_hydro_dt(BackendStateAccess current,
                                     double cfl) = 0;
     state::RepairBudget stage_repairs; // Compact completed-stage diagnostics.
+    state::RepairBudget reflux_repairs; // Completed reflux, separate from stage receipts.
     virtual state::CompletionToken execute_hydro_stage(
         BackendStateAccess current,
         const scheduler::StageDescriptor& descriptor,
@@ -341,6 +415,15 @@ public:
     virtual void rotate_slots(BackendStateAccess current,
                               state::SlotRotation rotation) = 0;
     virtual double compute_diffusion_dt(BackendStateAccess current) = 0;
+    /** Observe resident completed Current against the RKL-retained input slot.
+     * Caller retains the actual input version and completed boundary/EOS owner;
+     * backend resolves storage and returns only compact measured scalars.
+     */
+    virtual DiffusionActivityReceipt reduce_diffusion_energy_activity_batch(
+        std::span<const BackendStateAccess>, state::StateSlot)
+    {
+        throw std::logic_error("backend diffusion energy activity unavailable");
+    }
     virtual void copy_state_slot(BackendStateAccess source,
                                  BackendStateAccess destination) = 0;
     virtual state::CompletionToken execute_diffusion_stage(
@@ -407,6 +490,24 @@ public:
     virtual void enqueue_upload_slot(
         BackendStateAccess access, state::StateRegion region,
         HostStateTransferView host) = 0;
+    /** Read only specified boundary donors through a validated slot lease. */
+    virtual BoundaryCells read_boundary_cells(BackendStateAccess, std::span<const int>,
+        state::StateRegion = state::StateRegion::Interior) {
+        throw std::logic_error("backend user boundary slice read is unavailable");
+    }
+    /** Publish only validated ghost cells and transient diffusion-face data. */
+    virtual void write_boundary_cells(BackendStateAccess, std::span<const int>,
+        const BoundaryCells&, const boundary::DiffusionBoundaryStorage&) {
+        throw std::logic_error("backend user boundary slice write is unavailable");
+    }
+    /** Configure the observer weights applied to the next observed stage. */
+    virtual void configure_boundary_flux_capture(std::span<const BoundaryFluxPlanes>, double, double, bool) {
+        throw std::logic_error("backend boundary flux capture is unavailable");
+    }
+    /** Transfer only block-owned physical-surface planes back to Host storage. */
+    virtual std::vector<BoundaryFluxPlanes> download_boundary_flux_capture() {
+        throw std::logic_error("backend boundary flux capture is unavailable");
+    }
     virtual bool supports_dynamic_topology_store() const noexcept
     {
         return false;
@@ -416,6 +517,22 @@ public:
         std::span<const int>)
     {
         throw std::logic_error("backend AMR indicators are unavailable");
+    }
+    // Accepted Current cells only; callers still own publication/version leases.
+    // A backend without this consumer must reject, never materialize Host state
+    // as an implicit fallback. Result order follows the supplied access order.
+    virtual std::vector<double> evaluate_jeans_resolution(
+        std::span<const BackendStateAccess>)
+    {
+        throw std::logic_error("backend JENS accepted-state consumer is unavailable");
+    }
+    // Geometric child order, accepted Current only. Restrict into unpublished
+    // scratch and evaluate that same parent through authoritative EOS/JENS.
+    // nullopt means the shared restriction CoarseFluid veto; other errors fail.
+    virtual std::optional<double> evaluate_jeans_parent(
+        std::span<const BackendStateAccess>, const amr::Block&)
+    {
+        throw std::logic_error("backend JENS candidate-parent consumer is unavailable");
     }
     virtual std::unique_ptr<BackendTopologyStoreTransaction>
     begin_topology_store_transaction(
@@ -510,6 +627,11 @@ protected:
     }
 };
 
+/** Synchronize valid interior/ghost regions through one checked transaction.
+ *  A boundary-only publication can leave the interior synchronized while
+ *  ghosts are valid only on the source side. Preserve the synchronized region
+ *  and transfer only the region that changed; stale/pending sources still fail
+ *  before any write, and a failed enqueue/fence never publishes completion. */
 inline state::CompletionToken transfer_state_regions(
     ComputeBackend& backend, state::StateResidencyLedger& ledger,
     scheduler::MonotonicSchedulerClock& clock, BackendStateAccess access,
@@ -534,7 +656,8 @@ inline state::CompletionToken transfer_state_regions(
             direction == state::PendingTransferPhase::PendingH2D
             ? state::StateResidency::HostValid
             : state::StateResidency::DeviceValid;
-        if (region.residency != expected
+        if ((region.residency != expected
+             && region.residency != state::StateResidency::Synchronized)
             || region.pending_transfer
                 != state::PendingTransferPhase::None
             || !state::is_complete(region.completion)
@@ -544,6 +667,14 @@ inline state::CompletionToken transfer_state_regions(
     };
     require_source(before.interior);
     require_source(before.ghost);
+    const auto needs_transfer = [&](state::StateRegion region) {
+        const auto& coherence = region == state::StateRegion::Interior
+            ? before.interior : before.ghost;
+        return coherence.residency != state::StateResidency::Synchronized;
+    };
+    if (!needs_transfer(state::StateRegion::Interior)
+        && !needs_transfer(state::StateRegion::Ghost))
+        throw std::logic_error("backend transfer source is already synchronized");
     if (before.ghost.version != before.interior.version
         || before.ghost_source_version != before.interior.version) {
         throw std::logic_error("backend transfer ghost is stale");
@@ -564,9 +695,11 @@ inline state::CompletionToken transfer_state_regions(
     constexpr std::array<state::StateRegion, 2> regions{
         state::StateRegion::Interior, state::StateRegion::Ghost};
     for (const auto region : regions)
-        ledger.begin_transfer(key, region, direction, pending);
+        if (needs_transfer(region))
+            ledger.begin_transfer(key, region, direction, pending);
 
     for (const auto region : regions) {
+        if (!needs_transfer(region)) continue;
         if (direction == state::PendingTransferPhase::PendingH2D)
             backend.enqueue_upload_slot(access, region, host);
         else
@@ -574,7 +707,8 @@ inline state::CompletionToken transfer_state_regions(
     }
     backend.quiesce();
     for (const auto region : regions)
-        ledger.complete_transfer(key, region, completed);
+        if (needs_transfer(region))
+            ledger.complete_transfer(key, region, completed);
     const BackendCounters counters_after = backend.counters();
     backend.append_trace({
         macro_step,

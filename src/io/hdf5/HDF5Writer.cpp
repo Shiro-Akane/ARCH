@@ -13,14 +13,25 @@
  */
 
 #include <algorithm>
+#include <bit>
+#include <charconv>
+#include <cstdint>
 #include <cmath>
+#include <filesystem>
+#include <system_error>
+#include <unistd.h>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <string>
 
 #include "io/hdf5/HDF5Writer.h"
+#include "io/chk/CheckpointCompatibility.h"
+#include "data/FluidState.h"
 #include "core/config/ConfigValidation.h"
+#include "core/config/ConfigurationRecord.h"
+#include "core/files/FileFingerprint.h"
+#include "core/files/RunIdentity.h"
 
 #include <highfive/H5DataSet.hpp>
 #include <highfive/H5DataSpace.hpp>
@@ -47,6 +58,9 @@ std::string state_control_error(const std::vector<double>& controls)
         return "Invalid checkpoint state-control length: expected "
             + std::to_string(arch::config::StateControlCount) + ", got "
             + std::to_string(controls.size()) + ".";
+    if ((controls[18] != 0.0 && controls[18] != 1.0)
+        || (controls[18] == 0.0 ? controls[19] != 0.0 : controls[19] < 4.0))
+        return "Invalid checkpoint Jeans resolution controls.";
     return {};
 }
 
@@ -138,12 +152,14 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
     const auto& gravity=provenance.gravity_controls;
     if (!std::all_of(gravity.begin(),gravity.end(),[](double x){return std::isfinite(x);})) return false;
     if (provenance.gravity_type=="self") {
-        if ((provenance.gravity_boundary!="periodic" && provenance.gravity_boundary!="isolated") || gravity.size()!=4 || gravity[0]<=0.
+        if ((provenance.gravity_boundary!="periodic" && provenance.gravity_boundary!="isolated"
+             && provenance.gravity_boundary!="dirichlet" && provenance.gravity_boundary!="neumann"
+             && provenance.gravity_boundary!="user") || gravity.size()!=4 || gravity[0]<=0.
             || gravity[1]<=0. || gravity[1]>=1. || gravity[2]<0. || gravity[3]<1. || std::floor(gravity[3])!=gravity[3]) return false;
     } else if (provenance.gravity_type=="external") {
         if (gravity.size()!=3 || provenance.gravity_boundary!="none") return false;
     } else if (provenance.gravity_type!="none" || !gravity.empty() || provenance.gravity_boundary!="none") return false;
-    if (!provenance.available || provenance.eos_type.empty()
+    if (!provenance.available || provenance.boundary_identity.empty() || provenance.eos_type.empty()
         || provenance.active_network.empty()
         || !is_canonical_identity(provenance.eos_type)
         || !is_canonical_identity(provenance.active_network)
@@ -183,22 +199,270 @@ bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
 
 } // namespace
 
+// Explicit close is required: HighFive destructor errors are only logged.
+class CheckedPlotFile final : public File {
+public:
+    using File::File;
+    void close_checked() {
+        if (H5Fget_obj_count(getId(), H5F_OBJ_ALL | H5F_OBJ_LOCAL) != 1)
+            throw std::runtime_error("Plotfile still has open child handles.");
+        if (H5Fclose(getId()) < 0) throw std::runtime_error("Plotfile close failed.");
+        _hid = H5I_INVALID_HID;
+    }
+};
+
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
-                         const std::map<std::string, std::vector<double>>& data_map)
+                         const std::map<std::string, std::vector<double>>& data_map,
+                         const PlotNativeGrid* native_grid,
+                         const PlotSourceIdentity* source_identity,
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata)
 {
-    try
-    {
-        File file(filepath, File::ReadWrite | File::Create | File::Truncate);
-
+    const bool axisymmetric = dim == 2 && geom == "cylindrical";
+    // New Cyl2 publications always carry authoritative native bounds/identity;
+    // a legacy/partial writer cannot silently publish this chart.
+    if (axisymmetric && (!native_grid || !source_identity || !source_identity->formal))
+        throw std::invalid_argument("Cylindrical2D Plotfile requires formal native chart identity.");
+    if (dim < 1 || dim > 3 || dims.size() != static_cast<size_t>(dim + 1)
+        || !std::isfinite(current_time) || dims.front() == 0 || data_map.empty())
+        throw std::invalid_argument("Invalid plotfile dimensions/time/fields.");
+    size_t cells = 1;
+    for (size_t extent : dims) {
+        if (extent == 0 || cells > std::numeric_limits<size_t>::max() / extent)
+            throw std::invalid_argument("Invalid plotfile shape.");
+        cells *= extent;
+    }
+    if (coord_x.size() != cells || coord_y.size() != cells || coord_z.size() != cells
+        || block_levels.size() != dims.front() || block_mortons.size() != dims.front())
+        throw std::invalid_argument("Inconsistent plotfile coordinate/block payload.");
+    for (const auto& [name, buffer] : data_map)
+        if (name.empty() || name.find('/') != std::string::npos || buffer.size() != cells)
+            throw std::invalid_argument("Invalid plotfile field name/length.");
+    if (native_grid) {
+        if ((geom!="cartesian" && geom!="cylindrical" && geom!="spherical") || native_grid->cell_measure.size() != cells)
+            throw std::invalid_argument("Invalid candidate native grid geometry/length.");
+        for (size_t axis = 0; axis < 3; ++axis) {
+            if (native_grid->lower[axis].size() != cells
+                || native_grid->upper[axis].size() != cells
+                || native_grid->logical[axis].size() != dims.front())
+                throw std::invalid_argument("Invalid native grid bounds/logical shape.");
+            for (size_t cell = 0; cell < cells; ++cell) {
+                double lo = native_grid->lower[axis][cell], hi = native_grid->upper[axis][cell];
+                if (!std::isfinite(lo) || !std::isfinite(hi)
+                    || (axis < static_cast<size_t>(dim) ? hi <= lo : lo != 0. || hi != 0.))
+                    throw std::invalid_argument("Invalid native cell bounds.");
+            }
+        }
+        const auto expected_unit=geom=="cartesian"?(dim==1?"cm":dim==2?"cm^2":"cm^3"):
+            dim==3 || (geom=="spherical" && dim==1) || axisymmetric?"cm^3":"cm^2";
+        const auto expected_normalization=geom=="cartesian"?
+            (dim==1?"per_unit_transverse_area":dim==2?"per_unit_transverse_length":"full_volume"):
+            dim==3?"full_volume":axisymmetric?"per_unit_azimuth":geom=="spherical" && dim==1?"per_unit_solid_angle":
+            dim==1?"per_unit_azimuth_and_axial_length":"per_unit_transverse_length";
+        if ((native_grid->measure_unit!="unknown" || native_grid->normalization!="unknown")
+            && (native_grid->measure_unit!=expected_unit || native_grid->normalization!=expected_normalization))
+            throw std::invalid_argument("Invalid native measure declaration.");
+        for (double measure : native_grid->cell_measure)
+            if (!std::isfinite(measure) || measure <= 0.)
+                throw std::invalid_argument("Invalid native cell measure.");
+    }
+    if (field_metadata) {
+        const auto text_ok=[](const std::string& v) {
+            return !v.empty() && v.size()<=256 && v.find(char(0))==std::string::npos;
+        };
+        for (const auto& [name,m] : *field_metadata) {
+            if (!data_map.contains(name) || !text_ok(m.unit) || !text_ok(m.basis)
+                || !text_ok(m.meaning) || !text_ok(m.averaging) || m.unit_reason.size()>256
+                || m.unit_reason.find(char(0))!=std::string::npos
+                || (m.unit=="unknown" && m.unit_reason.empty()))
+                throw std::invalid_argument("Invalid plot field metadata.");
+        }
+    }
+    if (source_identity) {
+        const auto& id=*source_identity;
+        if (!id.run_id.empty() && !arch::core::valid_run_identity(id.run_id))
+            throw std::invalid_argument("Invalid plot run identity.");
+        if (!id.unit_system.empty() && id.unit_system!="cgs")
+            throw std::invalid_argument("Unsupported plot unit system.");
+        const auto text_ok=[](const std::string& text) {
+            return text.size()<=128 && text.find(char(0))==std::string::npos;
+        };
+        if (!text_ok(id.case_id) || !text_ok(id.eos_type) || id.species_names.size()>128
+            || !std::all_of(id.species_names.begin(),id.species_names.end(),[&](const auto& n){return !n.empty()&&text_ok(n);}))
+            throw std::invalid_argument("Invalid plot source identity text.");
+        if (!id.eos_table_sha256.empty() &&
+            (id.eos_table_sha256.size()!=64 || !std::all_of(id.eos_table_sha256.begin(),id.eos_table_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid plot EOS table digest.");
+        if (!id.raw_config_sha256.empty() &&
+            (id.raw_config_sha256.size()!=64 || !std::all_of(id.raw_config_sha256.begin(),id.raw_config_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid raw config digest.");
+        if (!id.binary_sha256.empty() &&
+            (id.binary_sha256.size()!=64 || !std::all_of(id.binary_sha256.begin(),id.binary_sha256.end(),
+             [](char c){return (c>='0'&&c<='9')||(c>='a'&&c<='f');})))
+            throw std::invalid_argument("Invalid plot binary digest.");
+        if (id.eos_type=="ideal" && (!std::isfinite(id.ideal_gamma) || id.ideal_gamma<=1. || !id.eos_table_sha256.empty()))
+            throw std::invalid_argument("Invalid plot ideal EOS identity.");
+        if (id.eos_type.empty() && (!id.eos_table_sha256.empty() || !id.species_names.empty()))
+            throw std::invalid_argument("Plot EOS evidence requires its resolved policy.");
+        const bool has_properties=!id.species_A.empty() || !id.species_Z.empty()
+            || !id.species_gamma.empty() || !id.species_Cv.empty();
+        if (has_properties) {
+            for(const auto* values:{&id.species_A,&id.species_Z,&id.species_gamma,&id.species_Cv})
+                if (id.eos_type.empty() || id.species_names.empty()
+                    || values->size()!=id.species_names.size()
+                    || !std::all_of(values->begin(),values->end(),[](double v){return std::isfinite(v);}))
+                    throw std::invalid_argument("Invalid plot resolved species properties.");
+        }
+    }
+    if (source_identity && source_identity->formal) {
+        const auto& id=*source_identity;
+        const auto config_fields=arch::config::decode_identity_record(id.effective_config_record);
+        arch::config::require_configuration_identity_coverage(config_fields);
+        const auto eos_fields=arch::config::decode_identity_record(id.eos_identity_record);
+        if(arch::config::identity_value(config_fields,"version",'s')!="arch-effective-configuration-1"
+            || arch::config::identity_value(config_fields,"case.id",'s')!=id.case_id
+            || arch::config::identity_value(config_fields,"case.compiled-source",'s')!=id.case_source_sha256
+            || arch::config::identity_value(config_fields,"backend",'s')!=id.resolved_backend
+            || arch::config::identity_value(config_fields,"grid.dim",'i')!=std::to_string(dim)
+            || arch::config::identity_value(config_fields,"grid.geometry",'s')!=geom
+            || arch::config::identity_value(eos_fields,"version",'s')!="arch-eos-identity-1"
+            || arch::config::identity_value(eos_fields,"type",'s')!=id.eos_type
+            || arch::config::identity_value(eos_fields,"accepted-table-fingerprint",'s')!=id.eos_table_sha256
+            || arch::config::identity_value(config_fields,"physics.eos_coulomb_mult",'d')
+                !=arch::config::identity_value(eos_fields,"coulomb-multiplier",'d'))
+            throw std::invalid_argument("Contradictory formal configuration/EOS record");
+        // IEEE-754 binary64 bits, in fixed big-endian hexadecimal order, are
+        // identity evidence; decimal formatting must not round these fields.
+        const auto bits=[](double value) {
+            const auto number=std::bit_cast<std::uint64_t>(value);
+            const char* digits="0123456789abcdef";std::string encoded(16,'0');
+            for(int i=0;i<16;++i)encoded[15-i]=digits[(number>>(4*i))&15];
+            return encoded;
+        };
+        if(id.species_names.empty() && id.eos_type!="ideal")
+            throw std::invalid_argument("Formal table EOS provenance requires resolved constituents");
+        // A gamma-only IdealGas has a known, empty composition. Every ordered
+        // vector must explicitly record count zero; absent counts or extra
+        // indexed entries cannot certify that state.
+        for(const auto* name:{"names","A","Z","gamma","Cv"}) {
+            const std::string prefix="species."+std::string(name)+".";
+            if(arch::config::identity_value(eos_fields,prefix+"count",'i')!=std::to_string(id.species_names.size()))
+                throw std::invalid_argument("Contradictory formal EOS constituent count: "+std::string(name));
+            for(const auto& [key,value]:eos_fields) {
+                (void)value;
+                if(!key.starts_with(prefix) || key==prefix+"count")continue;
+                const auto index_text=std::string_view(key).substr(prefix.size());
+                std::size_t index=0;
+                const auto parsed=std::from_chars(index_text.data(),index_text.data()+index_text.size(),index);
+                if(parsed.ec!=std::errc{} || parsed.ptr!=index_text.data()+index_text.size()
+                    || index>=id.species_names.size() || index_text!=std::to_string(index))
+                    throw std::invalid_argument("Unexpected formal EOS constituent entry: "+key);
+            }
+        }
+        if(id.eos_type=="ideal" && (arch::config::identity_value(eos_fields,"ideal-gamma",'d')!=bits(id.ideal_gamma)
+            || arch::config::identity_value(config_fields,"physics.gamma",'d')!=bits(id.ideal_gamma)))
+            throw std::invalid_argument("Contradictory formal IdealGas gamma");
+        for(const auto* values:{&id.species_A,&id.species_Z,&id.species_gamma,&id.species_Cv})
+            if(values->size()!=id.species_names.size())
+                throw std::invalid_argument("Incomplete formal EOS constituent properties");
+        for(std::size_t i=0;i<id.species_names.size();++i) {
+            if(arch::config::identity_value(eos_fields,"species.names."+std::to_string(i),'s')!=id.species_names[i])
+                throw std::invalid_argument("Contradictory formal species name");
+            for(const auto& [name,values]:std::initializer_list<std::pair<const char*,const std::vector<double>*>>{
+                {"A",&id.species_A},{"Z",&id.species_Z},{"gamma",&id.species_gamma},{"Cv",&id.species_Cv}})
+                if(values->size()!=id.species_names.size() || arch::config::identity_value(eos_fields,
+                    "species."+std::string(name)+"."+std::to_string(i),'d')!=bits((*values)[i]))
+                    throw std::invalid_argument("Contradictory formal EOS constituent property");
+        }
+        if(native_grid) {
+            const std::array<std::string,3> axes=geom=="cartesian"?std::array<std::string,3>{"x","y","z"}:
+                dim==3?
+                (geom=="cylindrical"?std::array<std::string,3>{"r","z","phi"}:std::array<std::string,3>{"r","theta","phi"}):
+                std::array<std::string,3>{"r",axisymmetric?"z":"phi","inactive"};
+            for(int i=0;i<3;++i) {
+                const std::string axis=i<dim?axes[i]:"inactive";
+                const std::string unit=i>=dim?"inactive":axis=="theta"||axis=="phi"?"rad":"cm";
+                if(native_grid->axes[i]!=axis||native_grid->axis_units[i]!=unit)
+                    throw std::invalid_argument("Contradictory formal native coordinate declaration");
+            }
+            const std::string convention=geom=="cartesian"?
+                "active-coordinate-product; inactive-measures-omitted":"GridMetrics-native-coordinate-integral";
+            if(native_grid->measure_convention!=convention)
+                throw std::invalid_argument("Contradictory formal native measure convention");
+        }
+        const auto digest=[](const std::string& value) {
+            return value.size()==64 && std::all_of(value.begin(),value.end(),[](char c) {
+                return (c>='0'&&c<='9') || (c>='a'&&c<='f');
+            });
+        };
+        const auto record_ok=[&](const std::string& record,const std::string& hash) {
+            return !record.empty() && record.size()<=1024*1024 && record.find(char(0))==std::string::npos
+                && digest(hash) && arch::core::string_sha256(record)==hash;
+        };
+        if (!native_grid || !arch::core::valid_run_identity(id.run_id)
+            || id.case_id.empty() || !digest(id.case_source_sha256)
+            || !digest(id.raw_config_sha256) || !digest(id.binary_sha256)
+            || id.effective_config_version!="arch-effective-configuration-1"
+            || !record_ok(id.effective_config_record,id.effective_config_sha256)
+            || id.build_identity_version!="arch-build-identity-1"
+            || id.build_identity_scope!="project-source-and-configured-compiler-profile"
+            || !record_ok(id.source_manifest_record,id.source_manifest_sha256)
+            || !record_ok(id.build_profile_record,id.build_profile_sha256)
+            || !digest(id.build_id)
+            || arch::core::string_sha256(id.build_identity_version+"\n"+id.source_manifest_sha256
+                    +"\n"+id.build_profile_sha256+"\n")!=id.build_id
+            || id.eos_identity_version!="arch-eos-identity-1"
+            || !record_ok(id.eos_identity_record,id.eos_identity_sha256)
+            || id.eos_type.empty() || id.unit_system!="cgs"
+            || (id.eos_type!="ideal" && !digest(id.eos_table_sha256))
+            || (id.resolved_backend!="cpu" && id.resolved_backend!="cuda")
+            || (!id.source_git_head.empty() && (id.source_git_head.size()!=40
+                || !std::all_of(id.source_git_head.begin(),id.source_git_head.end(),[](char c) {
+                    return (c>='0'&&c<='9') || (c>='a'&&c<='f');
+                })))
+            || (id.source_git_dirty!="true" && id.source_git_dirty!="false" && id.source_git_dirty!="unknown"))
+            throw std::invalid_argument("Incomplete or inconsistent formal Plotfile provenance");
+    }
+    // Same-directory atomic replacement retains legacy overwrite semantics.
+    // Atomic visibility does not promise power-loss durability (no fsync).
+    std::string pattern = filepath + ".partial-XXXXXX";
+    std::vector<char> temporary(pattern.begin(), pattern.end());
+    temporary.push_back(0);
+    int fd = ::mkstemp(temporary.data());
+    if (fd < 0) throw std::system_error(errno, std::generic_category(), "Create plot temporary");
+    const std::filesystem::path temporary_path(temporary.data());
+    if (::close(fd) != 0) {
+        int error = errno;
+        std::error_code ignored; std::filesystem::remove(temporary_path, ignored);
+        throw std::system_error(error, std::generic_category(), "Close temporary descriptor");
+    }
+    try {
+        CheckedPlotFile file(temporary_path.string(), File::ReadWrite | File::Truncate);
         file.createAttribute("time", current_time);
         file.createAttribute("dim", dim);
         file.createAttribute("geometry", geom);
+        if (source_identity && source_identity->formal) {
+            const auto chart = checkpoint_geometry_identity(dim,geom);
+            file.createAttribute("geometry_semantics_revision",chart.revision);
+            file.createAttribute("geometry_chart",chart.chart);
+        }
+        file.createAttribute("time_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "s" : "unknown"));
 
+        {
+        const bool formal=source_identity && source_identity->formal;
+        file.createAttribute("plot_publication_version", std::string(formal?"arch-plot-publication-1":"candidate-1"));
+        file.createAttribute("plot_publication_state", std::string("complete"));
+        file.createAttribute("plot_publication_method", std::string("checked-close-atomic-replace"));
+        file.createAttribute("plot_storage_order", std::string("x1-fastest"));
+        file.createAttribute("plot_identity_state", std::string(formal?"recorded":"unknown"));
         Group grid_group = file.createGroup("Grid");
         Group data_group = file.createGroup("Data");
+        grid_group.createAttribute("coordinate_basis",std::string("cartesian"));
+        grid_group.createAttribute("coordinate_unit",std::string(source_identity && source_identity->unit_system=="cgs" ? "cm" : "unknown"));
 
         grid_group.createDataSet("x", coord_x);
         grid_group.createDataSet("y", coord_y);
@@ -206,21 +470,153 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
         grid_group.createDataSet("level", block_levels);
         grid_group.createDataSet("morton", block_mortons);
 
+        if (source_identity) {
+            const auto& id=*source_identity;
+            Group identity=file.createGroup("SourceIdentity");
+            identity.createAttribute("version",std::string(formal?"arch-plot-identity-1":"candidate-identity-1"));
+            identity.createAttribute("scope",std::string(formal?"resolved-runtime":"partial"));
+            identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
+            identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
+            identity.createAttribute("binary_sha256",id.binary_sha256.empty()?std::string("unknown"):id.binary_sha256);
+            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):std::string("Linux /proc/self/exe"));
+            identity.createAttribute("binary_scope",std::string("main-executable-only"));
+            identity.createAttribute("raw_config_sha256",id.raw_config_sha256.empty()?std::string("unknown"):id.raw_config_sha256);
+            identity.createAttribute("raw_config_source",id.raw_config_sha256.empty()?std::string("unknown"):
+                std::string("ConfigurationInput.raw_text; exact parser bytes"));
+            identity.createAttribute("eos_type",id.eos_type.empty()?std::string("unknown"):id.eos_type);
+            identity.createAttribute("eos_source",id.eos_type.empty()?std::string("unknown"):std::string("resolved-runtime-checkpoint-provenance"));
+            identity.createAttribute("eos_table_sha256",id.eos_table_sha256.empty()?std::string("unknown"):id.eos_table_sha256);
+            identity.createAttribute("eos_table_state",id.eos_type=="ideal"?std::string("not-applicable"):
+                id.eos_table_sha256.empty()?std::string("unknown"):std::string("recorded"));
+            identity.createAttribute("species_identity_state",id.eos_type.empty()?std::string("unknown"):std::string("recorded"));
+            identity.createAttribute("ideal_gamma_available",id.eos_type=="ideal"?1:0);
+            if(id.eos_type=="ideal")identity.createAttribute("ideal_gamma",id.ideal_gamma);
+            identity.createAttribute("species_count",static_cast<int>(id.species_names.size()));
+            if(!id.species_names.empty())identity.createDataSet("species_names",id.species_names);
+            const bool has_properties=!id.species_A.empty();
+            // Formal gamma-only IdealGas records an exact empty composition;
+            // omitting its zero-length datasets does not mean evidence is unknown.
+            const bool recorded_properties=has_properties || (formal && id.eos_type=="ideal" && id.species_names.empty());
+            identity.createAttribute("species_properties_version",std::string("checkpoint-species-1"));
+            identity.createAttribute("species_properties_state",std::string(recorded_properties?"recorded":"unknown"));
+            identity.createAttribute("species_properties_source",std::string(recorded_properties?
+                "resolved-runtime-checkpoint-provenance":"unknown"));
+            if(has_properties) {
+                identity.createDataSet("species_A",id.species_A);
+                identity.createDataSet("species_Z",id.species_Z);
+                identity.createDataSet("species_gamma",id.species_gamma);
+                identity.createDataSet("species_Cv",id.species_Cv);
+            } else if(!recorded_properties) {
+                identity.createAttribute("species_properties_reason",
+                    std::string("resolved species properties not supplied by caller"));
+            }
+            identity.createAttribute("run_id",id.run_id.empty()?std::string("unknown"):id.run_id);
+            identity.createAttribute("run_id_source",id.run_id.empty()?std::string("unknown"):
+                std::string("DriverIO output session; OS-generated UUIDv4"));
+            if(formal) {
+                identity.createAttribute("case_source_sha256",id.case_source_sha256);
+                identity.createAttribute("case_source_identity_source",std::string("compiled-case-registration"));
+                identity.createAttribute("effective_config_version",id.effective_config_version);
+                identity.createAttribute("effective_config_sha256",id.effective_config_sha256);
+                identity.createAttribute("effective_config_source",std::string("immutable-runtime-config-and-resolved-plan"));
+                identity.createAttribute("build_identity_version",id.build_identity_version);
+                identity.createAttribute("build_identity_scope",id.build_identity_scope);
+                identity.createAttribute("build_id",id.build_id);
+                identity.createAttribute("build_source",std::string("CMake-embedded-project-source-and-compiler-profile"));
+                identity.createAttribute("source_manifest_sha256",id.source_manifest_sha256);
+                identity.createAttribute("build_profile_sha256",id.build_profile_sha256);
+                identity.createAttribute("source_git_head",id.source_git_head.empty()?std::string("not-applicable"):id.source_git_head);
+                identity.createAttribute("source_git_dirty",id.source_git_dirty);
+                identity.createAttribute("source_git_source",std::string("optional-build-time-annotation"));
+                identity.createAttribute("eos_identity_version",id.eos_identity_version);
+                identity.createAttribute("eos_identity_sha256",id.eos_identity_sha256);
+                identity.createAttribute("eos_table_identity_kind",std::string(id.eos_type=="ideal"?"not-applicable":
+                    id.eos_type=="helmholtz"?"accepted-table-content":"accepted-table-content-and-component-interpretation"));
+                identity.createAttribute("resolved_backend",id.resolved_backend);
+                identity.createDataSet("effective_config_record",id.effective_config_record);
+                identity.createDataSet("source_manifest_record",id.source_manifest_record);
+                identity.createDataSet("build_profile_record",id.build_profile_record);
+                identity.createDataSet("eos_identity_record",id.eos_identity_record);
+            } else {
+                for(const auto& [name,reason]:std::map<std::string,std::string>{
+                    {"effective_config_sha256","authoritative effective-config identity not supplied to writer"},
+                    {"build_id","authoritative Build Manifest identity not supplied to writer"},
+                    {"source_git_head","authoritative source Git identity not supplied to writer"}}) {
+                    identity.createAttribute(name,std::string("unknown"));
+                    identity.createAttribute(name+"_reason",reason);
+                }
+            }
+            identity.createAttribute("eos_unit_system",id.unit_system.empty()?std::string("unknown"):id.unit_system);
+        }
+
+        if (native_grid) {
+            Group native = file.createGroup("NativeGrid");
+            native.createAttribute("version", std::string(
+                formal?(geom=="cartesian"?"arch-native-cartesian-1":"arch-native-curvilinear-1"):"candidate-cartesian-1"));
+            if(formal) {
+                native.createAttribute("native_geometry",geom);
+                for(std::size_t axis=0;axis<3;++axis) {
+                    const std::string key="x"+std::to_string(axis+1);
+                    native.createAttribute(key+"_axis",native_grid->axes[axis]);
+                    native.createAttribute(key+"_unit",native_grid->axis_units[axis]);
+                }
+            }
+            native.createAttribute("centering", std::string("cell"));
+            native.createAttribute("ghost_cells", 0);
+            native.createAttribute("block_kind", std::string("active-leaf"));
+            native.createAttribute("center_basis", std::string("cartesian"));
+            native.createAttribute("measure_source", std::string("GridMetrics::CellVolume"));
+            native.createAttribute("measure_convention",
+                std::string(formal?native_grid->measure_convention:
+                    "active-coordinate-product; inactive-measures-omitted"));
+            native.createAttribute("measure_unit", native_grid->measure_unit);
+            native.createAttribute("measure_normalization", native_grid->normalization);
+            native.createAttribute("logical_identity",
+                std::string("file-local level/logical_x1/logical_x2/logical_x3"));
+            for (size_t axis = 0; axis < 3; ++axis) {
+                const std::string name = "x" + std::to_string(axis+1);
+                native.createDataSet(name + "_lower", native_grid->lower[axis]);
+                native.createDataSet(name + "_upper", native_grid->upper[axis]);
+                native.createDataSet("logical_" + name, native_grid->logical[axis]);
+            }
+            native.createDataSet("cell_measure", native_grid->cell_measure);
+        }
+
         for (const auto& [name, buffer] : data_map) {
             DataSet ds = data_group.createDataSet<double>(name, DataSpace(dims));
             ds.write_raw(buffer.data());
+            PlotFieldMetadata metadata;
+            if (field_metadata) {
+                if (const auto it=field_metadata->find(name);it!=field_metadata->end()) metadata=it->second;
+            }
+            ds.createAttribute("metadata_version",std::string(formal?"arch-field-1":"candidate-field-1"));
+            ds.createAttribute("unit",metadata.unit);
+            ds.createAttribute("centering",std::string("cell"));
+            ds.createAttribute("basis",metadata.basis);
+            ds.createAttribute("meaning",metadata.meaning);
+            ds.createAttribute("averaging",metadata.averaging);
+            if (!metadata.unit_reason.empty()) ds.createAttribute("unit_reason",metadata.unit_reason);
         }
 
-        std::cout << "[IO] Saved PLT: " << filepath << " at t=" << current_time << std::endl;
+        }
+        file.flush();
+        file.close_checked();
+        std::filesystem::rename(temporary_path, filepath);
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(temporary_path, ignored);
+        throw;
     }
-    catch (Exception &err)
-    {
-        std::cerr << "[IO Error] PLT write failed: " << err.what() << std::endl;
-    }
+    std::cout << "[IO] Saved PLT: " << filepath << " at t=" << current_time << std::endl;
 }
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint)
 {
+    const auto geometry_identity = (checkpoint.geometry_identity.revision == 0 && checkpoint.geometry_identity.chart.empty()
+        && !(checkpoint.dim == 2 && checkpoint.geometry == "cylindrical"))
+        ? CheckpointGeometryIdentity{1, "existing"} : checkpoint.geometry_identity;
+    require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                          geometry_identity, geometry_identity);
     const size_t blocks = checkpoint.levels.size();
     if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
@@ -249,6 +645,7 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
         file.createAttribute("checkpoint_version", checkpoint_format_version);
         file.createDataSet("state_repairs", checkpoint.repairs.values);
+        file.createAttribute("repair_semantics",std::string("existing-volume-v1"));
         file.createDataSet("state_controls", checkpoint.state_controls);
         file.createAttribute("repair_block_uid", checkpoint.repairs.block_uid);
         file.createAttribute("repair_stage", checkpoint.repairs.stage);
@@ -263,9 +660,12 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("plt_index", checkpoint.plt_file_index);
         file.createAttribute("dim", checkpoint.dim);
         file.createAttribute("geometry", checkpoint.geometry);
+        file.createAttribute("geometry_semantics_revision", geometry_identity.revision);
+        file.createAttribute("geometry_chart", geometry_identity.chart);
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
         file.createAttribute("eos_type", checkpoint.provenance.eos_type);
+        file.createAttribute("boundary_identity", checkpoint.provenance.boundary_identity);
         file.createAttribute("gravity_type", checkpoint.provenance.gravity_type);
         file.createAttribute("gravity_boundary", checkpoint.provenance.gravity_boundary);
         file.createDataSet("gravity_controls", checkpoint.provenance.gravity_controls);
@@ -358,12 +758,32 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         file.getAttribute("plt_index").read(checkpoint.plt_file_index);
         file.getAttribute("dim").read(checkpoint.dim);
         file.getAttribute("geometry").read(checkpoint.geometry);
+        const bool has_revision = file.hasAttribute("geometry_semantics_revision");
+        const bool has_chart = file.hasAttribute("geometry_chart");
+        if (has_revision != has_chart)
+            throw std::runtime_error("Incomplete checkpoint geometry identity");
+        if (has_revision) {
+            file.getAttribute("geometry_semantics_revision").read(checkpoint.geometry_identity.revision);
+            file.getAttribute("geometry_chart").read(checkpoint.geometry_identity.chart);
+        }
+        // Validate even when both attributes are absent: legacy Cyl2 is never
+        // promoted to the new chart merely because its payload shape fits.
+        require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                               checkpoint.geometry_identity);
+        if(file.hasAttribute("repair_semantics")) {
+            std::string saved_repairs;
+            file.getAttribute("repair_semantics").read(saved_repairs);
+            if(saved_repairs!="existing-volume-v1")
+                throw std::runtime_error("Checkpoint repair measure identity mismatch");
+        }
+        // Identity has been validated; never infer a historical nonzero ledger from its values.
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
         int burn_enabled = 0;
         int nse_enabled = 0;
         checkpoint.provenance.available = true;
         file.getAttribute("eos_type").read(checkpoint.provenance.eos_type);
+        file.getAttribute("boundary_identity").read(checkpoint.provenance.boundary_identity);
         file.getAttribute("gravity_type").read(checkpoint.provenance.gravity_type);
         file.getAttribute("gravity_boundary").read(checkpoint.provenance.gravity_boundary);
         file.getDataSet("gravity_controls").read(checkpoint.provenance.gravity_controls);

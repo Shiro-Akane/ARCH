@@ -1,0 +1,288 @@
+# Plotfile 读取适配对接：当前候选实现
+
+## 2026-10-04 最新增量（优先于历史记录）
+
+累积源码 73ef212266f9103ed8146a151a86626ed148cde3。
+writer unknown reason 增量 6b291494d5de8168e50ed57718a0a3cee7c3bd4c，
+Reader FP64 增量 5656f7b87abd075e464fbd48e1b98a82756949ba。
+新 writer 已有三个逐项 unknown reason；下面“没有 reason”的描述仅指旧样本与当时版本，
+不可作为当前 writer 状态。主科学 ELF 和既有真实样本未因此重新生成。
+最新脚本和逐字段单元摘要见 PlotfileHandoffReadback-20261004.zh-CN.md。
+
+## 当前读取适配引用（2026-10-04 最新核对）
+
+本节优先于下面按时间保留的历史构建记录。
+
+- 已完整读取 owner contract：23ff77c4f08419de2b3c5eadee214da2af25784e。
+- 累积实现源码 SHA：691f563d54bb0b038151f2f2eb0641bf7e464a94；
+  分支 studio/compute-optim-integration；核对时 working tree clean，尚未 push。
+  这是准确的本地源码引用，不能称为 owner 已能 fetch 的远程引用。
+- 当前主 CPU executable 构建源码：b82205e2c6414f2d8783063d6ff086c06f66404c；
+  SHA-256：7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4；
+  size：7409736 bytes。本次读取实际 ELF 再次核对；后续改动为测试/验证/文档。
+  构建与真实 CLI 失败/恢复证据见 DriverDiagnosticMainCpu-20261004.Summary.json。
+- 对接入口：src/io/hdf5/HDF5Writer.cpp、src/io/plot/PlotIO.cpp、
+  src/io/plot/PlotFieldMetadata.h、src/io/plot/PlotGridMetadata.h；
+  production query 为 studio/host/plotfileMetadata.ts 与 isolatedPlotfileMetadata.ts；
+  UI 为 studio/src/components/PlotfileWorkspace.tsx、PlotfileNativeView.tsx、
+  PlotfileNativeInspector.tsx。字段数组映射见本文件下表，未更改。
+- 首版范围仍是 Sod 1D + Cartesian CellularDet 2D AMR；内部 RZ 不能用于此次 Viewer 验收。
+- 本次只更新交付引用和真实属性说明；未重新 Build、生成科学输出或重跑已通过的基线。
+
+### Owner adapter 的发布与身份属性
+
+生产文件采用分散属性，没有 plotfile_candidate JSON。根属性为：
+plot_publication_version=candidate-1、plot_publication_state=complete、
+plot_publication_method=checked-close-atomic-replace、plot_storage_order=x1-fastest。
+NativeGrid/version=candidate-cartesian-1，block_kind=active-leaf、ghost_cells=0。
+complete 属性本身不能证明文件已发布；它在临时文件中也存在，必须结合正式路径、
+checked flush/close/rename 的生产证据，不能把 .partial 当作完成输出。
+
+根 plot_identity_state=unknown 是保留的整体不完整声明；不能据此丢弃
+SourceIdentity 中实际已记录的部分身份，也不能据部分身份把整体标成 verified。
+SourceIdentity/version=candidate-identity-1、scope=partial；
+case_id、raw_config_sha256、binary_sha256、run_id 及各 *_source 分别描述实际来源。
+binary_scope=main-executable-only；EOS 来自 resolved-runtime-checkpoint-provenance。
+
+effective_config_sha256、build_id、source_git_head 的生产属性仍为 unknown，
+且没有对应逐键 reason 属性。原因是 writer 尚未接入 authoritative effective-config、
+完整 Build 身份与 source provenance；这是明确的身份缺口，不得由 adapter 根据当前
+Git HEAD、文件名或外部猜测补成 known。外部可信 binary/config 期望仍应单独比对。
+SourceIdentity 属性与完整 build freshness 是不同验收项。
+
+### 当前验证边界
+
+已有真实 t=0 Sod 9 / Cellular 28 字段、原生 bounds/measure、点选、
+FP64/checkpoint 位级一致、真实发布故障及重试、固定终点 Sod restart 的处理后证据；
+原始 H5/plt/checkpoint 和完整数组留在 ignored studio/.local。
+同机 Reader 测量见 PlotfileRunInterference-20261004.Summary.json：
+三组小用例 paired median 比值 1.001356，仅覆盖 query lifecycle 重叠，
+不证明大 AMR 深度扫描与演化重叠，更不能作为性能验收。
+
+剩余 owner review：读取适配、单位/基底/低维积分、独立科学 oracle、
+完整来源身份及全域科学一致性。现有 full CPU regression 曾为 69/71，
+随后 ui_expansion scoped recheck 通过；self_gravity 输入迁移仍未闭合。
+这些状态不能由 Plotfile 局部通过升级为全项目 PASS。
+
+## 历史精确引用与交付边界
+
+- Owner contract：23ff77c4f08419de2b3c5eadee214da2af25784e，已完整阅读，未 merge。
+- 本地分支：studio/compute-optim-integration；尚未 push，不能称为远端可获取。
+- 当前 Plotfile writer / Driver / 查询 / Viewer 累积交付引用：e34c54f7405a6d9e2d8c481e32d4c57e782625c1（本地提交，尚未 push）。
+- writer / Driver 发布修复 / EOS 属性早期源码：568026113e09ebeb03eb0b92a55fa35096660d4e。
+- Host / Viewer EOS 属性消费：f86f9706756277550d43c5ab0b035140abfa358f。
+- FP64 signed-zero 传输与显示提交：33a49399cb5f1f671a9de3d575fc4137c989b271；见 PlotfileFp64Wire-20261003.zh-CN.md。
+- y-face 原生 bounds 修复：b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1；ALL 字段补证：01cbe4376b317e217333b1f75ba119a25eb43627。
+- output-session UUID 增量：e34c54f7405a6d9e2d8c481e32d4c57e782625c1。
+- 当前真实 EOS 属性文件的 CPU binary SHA：
+  325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b。
+  构建为 6c10cb2a 基线加记录在 PlotfileEosConstituents-20261003.Summary.json 中的 dirty writer inputs；
+  不把文档提交 HEAD 冒充编译输入身份。
+
+本轮范围仍是 Sod 1D 与 Cartesian CellularDet 2D AMR；曲线坐标、3D、XDMF 后续单独验收。
+原始 H5/plt/checkpoint/ELF/full arrays/logs 留在本机 ignored studio/.local。
+
+## 实际字段与数组映射
+
+| 语义 | HDF 路径/属性 | 类型与排列 |
+| --- | --- | --- |
+| 时间/维数/几何 | 根 time / dim / geometry，time_unit | 标量；CGS time 为 s |
+| 原始场 | /Data/<field> | FP64，1D [B,Nx]、2D [B,Ny,Nx]；i 最快，无 ghost |
+| 场声明 | field dataset 的 metadata_version、unit、centering、basis、meaning、unit_reason | candidate-field-1；cell；未知值不猜测 |
+| 笛卡尔中心 | /Grid/x、y、z；coordinate_unit、coordinate_basis | FP64[N]；field C-order 展平一致；cm/cartesian |
+| 原生 bounds | /NativeGrid/x1_lower、x1_upper；x2/x3 同规则 | FP64[N]；inactive 坐标均 0 |
+| 原生积分测度 | /NativeGrid/cell_measure | FP64[N]；实际 GridMetrics::CellVolume |
+| 测度声明 | NativeGrid measure_unit / measure_normalization | 1D cm / per_unit_transverse_area；2D cm^2 / per_unit_transverse_length |
+| block level / Morton | /Grid/level、morton | [B]；文件 block 顺序，不能按 Morton 重排 |
+| file-local logical key | /NativeGrid/logical_x1、logical_x2、logical_x3 | uint32[B]；与 level 组合，仅本文件身份 |
+| 来源身份 | /SourceIdentity 分散属性 | candidate-identity-1 / partial |
+| 组分名 | /SourceIdentity/species_names | string[Ns]；runtime 顺序 |
+| 组分属性 | /SourceIdentity/species_A、species_Z、species_gamma、species_Cv | FP64[Ns]；与 species_names 同序 |
+| 属性声明 | species_properties_version / state / source / reason | checkpoint-species-1；recorded 或 unknown |
+
+N=B*Nx 或 B*Ny*Nx。全局索引 1D b*Nx+i，2D (b*Ny+j)*Nx+i。
+Owner adapter 可将 lower/upper 组合为 [B,Ny,Nx,2,2]，末两轴为 axis、lower/upper；
+1D 对应 [B,Nx,1,2]；measure reshape 为 field shape；centers 保留三条展平数组。
+不要求生产文件复制候选 JSON；读取适配层归一分散属性。
+
+逐文件枚举 /Data，不要求全部字段都存在：
+DENS rho，g/cm^3；PRES、ENER erg/cm^3；TEMP K；VELX/Y/Z cm/s；
+ENTR 为 pressure_density_proxy，P/rho^Gamma1，unit unknown 并保留 reason；
+ENUC specific_burning_energy_rate，erg/g/s；VORT/DIVV 1/s；组分质量分数 1。
+标量 basis=scalar，Cartesian 速度使用实际分量声明；未知 ExtraPlotScalarField 不从名字猜语义。
+单位共用 src/data/FieldUnits.h，原数组不做单位换算。
+1D sum(rho*measure) 为 g/cm^2，2D 为 g/cm，不能标为三维质量。
+
+## 身份和发布
+
+case_id 来自 ConfigurationInput.case_id；raw_config_sha256 对实际 parser 字节；
+binary_sha256 来自 Linux /proc/self/exe，scope=main-executable-only。
+EOS/table/gamma/species 及四组属性取 resolved runtime checkpoint provenance。
+run_id 为 DriverIO 持有的 OS-generated UUIDv4；run_id_source 明确标识 output session。
+effective_config_sha256、build_id、source_git_head 仍 unknown，并保留原因；不由文件名/当前 HEAD 填充。
+EOS 属性精确记录不等于独立 EOS 科学认证。可信期望应来自文件外受控输入/构建记录。
+
+同目录 .partial → write → flush → checked H5Fclose → atomic rename。
+异常向 Driver 传播；只有成功返回才推进 plot index，保留旧正式文件并清理临时文件。
+真实 Driver write/flush/close/rename/create 失败及同编号重试已测。
+没有 fsync、真实 ENOSPC 或断电持久性声明；checkpoint 写出路径未因此改造。
+complete marker 必须与发布流程证据共同判断。
+
+## 当前查询与 Viewer
+
+metadata、bounded raw slice、global/viewport LOD、physical native point；
+Inspector 从 stored native bounds 定位单元并读取原始值，不使用 LOD 或插值。
+gap 与 multiple match 明确失败。叶块 outline 最多 128 个，limited 如实显示，不合成粗层场值。
+zoom/pan/Fit 重绘已有显示；viewport 细化为显式读取，保留 full-domain LOD、取消与 revision protection。
+LOD 为坐标重叠加权 display mean，不是科学积分或原生值。
+
+每次查询重做 whole-file digest，并扫描原生叶单元；没有跨查询 cache / spatial index。
+固定 32×24 响应只限制返回量，Cellular 示例仍扫描 5120 单元。
+真实 production worker 约 170–200 ms、观察到约 117–124 MiB 高水位，仅为这些小文件的证据，
+不外推大文件或与演化同机的资源影响。rchar 含 Node/WASM，不是纯 HDF I/O；
+read_bytes=0 不代表无逻辑扫描。启动期取消证据不代替 HDF 深度取消。
+见 PlotfileIsolatedWorkerCost-20261003.zh-CN.md / Summary.json。
+
+## 验证摘要与待 review
+
+- 真 t=0 Sod DENS [12,16] / Cellular DENS [20,16,16] 与 checkpoint 原值逐位一致；
+  四组 EOS 属性逐位一致。精确输入/文件/binary SHA 见 PlotfileEosConstituents-20261003.Summary.json。
+- 另有真 Sod 9 字段 / Cellular 28 字段，37 字段 Host/client 与原生点回查通过；
+  守恒量与组分逐单元对 checkpoint 位级一致，见 PlotfileCanonicalT0-20261003.Summary.json。
+  这些多字段文件来自早期 b360c662 构建，不冒充后续 EOS 属性文件。
+- center / measure 最大差 0；Cellular bounds 对 Preview 最大差 1.7763568394002505e-15，
+  原样交科学 review，不新增容差。
+- Linux native 已试用总览、缩放、平移、Fit、原生 Inspector 与 EOS 表格。
+- 本轮 FP64 JSON 反例修复：316/316 tests、lint/typecheck/build PASS；未新增 native desktop UAT。
+- 尚待 owner 完整读取 adapter、科学单位/基底/积分审查、PRES/TEMP/diagnostic 独立 oracle、
+  完整身份、全域 AMR 无遗漏/重叠、大文件成本与同机影响等验收。
+- owner 单点/header checker 通过不等于完整 AMR/科学验收。
+
+可复现脚本：validation/io/verify_initial_plotfile.py、verify_plotfile_blocks.py、
+verify_plotfile_fields.py、verify_plotfile_reader.mjs、run_driver_plot_publication.py、
+measure_plotfile_query.mjs、measure_plotfile_isolation.mjs。
+具体失败及处理后的摘要与脚本提交；原始科学输出不提交。
+
+
+## 2026-10-04 大查询工程增量
+
+两份合成 8192/524288 单元夹具补测读取成本，单次 query 内复用 bounds dataset 对象。
+三组配对大总览/point 中位下降约26%，完整响应与真实 Sod/Cellular 文件对基线一致。
+逻辑读调用仍高；没有 spatial index/cross-query cache。读取期取消/reap/recovery 已测，精确限定见
+PlotfileLargeQuery-20261004.zh-CN.md / Summary.json。此证据不替代真实 AMR、科学 review 或同机演化。
+
+
+## 2026-10-04 native y-face 修复
+
+当前 writer 增量 b26fb8a2f5967db15aec1b4f2bcd3ddafb9689f1：仅将Cartesian y upper按共享整数面索引求值。真实Sod/Cellular新t=0文件全叶bounds精确覆盖通过，旧文件gap/overlap保留反例；原场值/中心/测度及checkpoint数值未变。schema/字段数组映射不变。新binary1bdd71ed344f01dd9722898479d37780e81a834f4d0bdea501b23a933804e1a8；详细身份和限制见 PlotfileSharedFaceRepair-20261004.Summary.json。本地提交尚未push。
+
+
+## 2026-10-04 ALL 字段补证
+
+b26fb8a2 writer修复后新Sod9/Cellular28全部字段与早期canonical完整FP64数组bit一致；新ALL native bounds全域gap/overlap为0；37个字段production isolated point与client校验通过。schema/数组映射不变，精确input/file/binary身份与限制见 PlotfileAllFieldsFaceRepair-20261004.Summary.json。仍不把数值一致性升级为独立科学oracle验收。
+
+
+## 2026-10-04 Run output-session identity
+
+SourceIdentity/run_id不再固定unknown：DriverIO持有OS-generated UUIDv4；新增run_id_source="DriverIO output session; OS-generated UUIDv4"。旧文件unknown兼容。effective_config_sha256/build_id/source_git_head仍unknown。四次真实Sod/Cellular t=0与production isolated reader/client验证通过，37字段以及每次20个checkpoint数值dataset bit不变。映射/FP64/checkpoint语义不变，细节与真实build-input身份见 PlotfileRunIdentity-20261004.zh-CN.md / Summary。尚未push。
+
+
+## 2026-10-04 交给 owner 的读取适配入口
+
+已再次完整核对 owner 的 PlotfileValidationContract.zh-CN.md（23ff77c4f08419de2b3c5eadee214da2af25784e）。
+优先对照本文件“实际字段与数组映射”，将生产分散属性归一到 owner 的候选语义；
+无需生产 writer 另写一份 plotfile_candidate JSON。
+
+读取适配必须保留：
+1. publication 标记与 checked close / atomic rename 的共同证据，失败不得推进成功序号。
+2. 外部受控 input/binary 身份；unknown build/effective config/source HEAD 不冒充已验证。
+3. FP64 原始数组、文件 block 顺序、i-fastest、原生 bounds 与 Core cell measure。
+4. 单位、Cartesian 分量基底及低维积分归一化；ENTR 不冒称热力学熵。
+5. Inspector 回查原生叶单元；Native AMR 与 Displayed LOD 独立表达。
+6. 固定像素返回量不等于固定扫描成本；首次全域总览仍可能扫描全部叶单元。
+
+本次只核对和更新对接说明，未重新运行无变化的 baseline，也未生成新 H5/checkpoint。
+当前原始证据见 PlotfileRunIdentity-20261004.Summary.json 和
+PlotfileAllFieldsFaceRepair-20261004.Summary.json。37 字段 bit 一致和 checkpoint 20 个
+数值 dataset bit 一致是 t=0 工程证据；PRES/TEMP/diagnostics 独立科学 oracle、
+演化和真实 restart output-session identity 仍未因此获验收。
+原始文件、ELF 和日志留在 ignored studio/.local；本地提交尚未提供远端可获取引用。
+
+## 2026-10-04 当前 CPU 与 evolved Restart 补证
+
+当前完整CPU binary由869ae3d3构建，SHA
+f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44。
+Sod9/Cellular28个t=0字段与已有参考FP64逐位一致，production isolated reader/client点查询通过；
+见 CurrentCpuPlotfileT0-20261004。
+
+新增已有固定网格Sod .05/step67 → .2/step280续算验证：
+连续/续算最终21个checkpoint dataset一致，其中20个数值dataset逐位一致；
+四个最终Plotfile字段逐位一致。连续与续算分别使用不同output-session UUIDv4，
+各自session内部保持一致；输入checkpoint未改写。
+见 PlotfileEvolvedRestartIdentity-20261004.Summary.json 与同名报告。
+这补齐了该Sod用例的evolved/restart身份工程证据；
+不代表二维演化AMR、独立科学oracle或长期演化已验收。
+生产字段/数组映射与发布行为没有变化；本地交付仍未push。
+
+## 2026-10-04 evolved Plotfile production readback
+
+32c7d7e6既有Sod连续/续算8份文件，经production isolated worker与client validators，
+metadata/overview及128次field point通过独立h5py参考；raw FP64值/坐标/bounds/测度逐位一致，
+level/logical/index/来源身份匹配，原file SHA不变。
+固定32像素overview仍全扫128叶单元，不承诺大文件成本。
+没有production改动/新simulation/native UAT；completion unknown及未确认science身份保持。
+见 PlotfileEvolvedReader-20261004.zh-CN.md / Summary.json；联合目标仍未完成。
+
+## 当前对接引用（2026-10-04，供 Core adapter review）
+
+- 累积实现源码：50fd1968598636795e9f50b132aedaf030ac9cbe；
+  分支 studio/compute-optim-integration，本地 clean commit，尚未 push。
+  此 SHA 是源码引用，不是当前主 executable 的构建源码身份。
+- 当前主 CPU executable 编译源码：b38f44a8d51a97e19a0d133a5ab547390d01f53d；
+  ELF SHA-256：ca6437d283c23c8f94aa562b5678273b2c06e1c5df3cc79df38ebe40c7e2e069。
+  构建身份、tracked inputs 和真实发布故障摘要见 RZPlotCpuIntegration-20261004.Summary.json。
+  后续 50fd1968 的 Hydro repair position header 修复只经独立实际 Driver fixture 验证，
+  当前主 ELF 尚未包含该修复；不能把源码 HEAD 冒充 ELF 的构建身份。
+- 首版可接入范围仍是 Sod 1D + Cartesian CellularDet 2D AMR。
+  内部 RZ writer 增量属于后续几何工程；当前正式 Reader 明确拒绝该 schema，
+  不把它混入本轮 Cartesian Viewer 验收。
+
+数组映射沿用上文：/Data/<field> FP64，一维 [B,Nx]、二维 [B,Ny,Nx]；
+i-fastest、活动叶块、无 ghost，严格保留文件 block 顺序。
+/Grid/x,y,z 与场 C-order 展平一致；/NativeGrid 的各轴 lower/upper 和 cell_measure
+按相同顺序展平，level + logical_x1/x2/x3 为 file-local 原生块身份。
+Owner adapter 可组装 bounds [B,Ny,Nx,2,2] 和 measure [B,Ny,Nx]；
+不得按 Morton 排序后直接索引原数组。
+
+最新主 CPU 回归的 Sod 9 / Cellular 28 个 t=0 完整字段与旧参考 FP64 bits 一致，
+各自 checkpoint 的 20 个数值 dataset 亦逐位一致。
+真实 Driver write/flush/close/rename/create 故障、成功序号与同编号重试通过。
+既有固定网格 Sod 连续/续算文件另有独立 production-reader 点选证据，
+详见 PlotfileEvolvedReader-20261004.Summary.json。
+这些是记录范围内的工程证据，不能替代二维演化 AMR、独立 EOS 科学 oracle、
+完整身份或全域科学验收。
+
+发布仍为同目录临时文件 → checked flush/close → atomic rename；
+不声称 fsync、真实 ENOSPC 或断电持久性已验证，不改变 checkpoint 的既有语义。
+ENTR 保持 pressure_density_proxy、unknown unit/reason；原生场值和 FP64 不转换。
+首次全域总览仍可能扫描全部叶单元；固定响应像素数不等于固定读取或内存成本。
+原始 H5/plt/checkpoint/ELF/full arrays 留在本机 ignored studio/.local。
+下一步先由 Core 按此映射对接读取适配层，具体 finding 再做最小修改；
+不因已有单点检查通过而冻结全部布局或扩大几何范围。
+
+
+## 后续 CPU 构建身份更新
+
+主ARCH已从clean9fb34629981f434b8fc5d531adf44b3330c083c8增量构建，
+ELF SHA-256 e75300fc607f4f6078240e2a524c5b0d6085fd0d48b811369c6eaff0729ee8fc。
+相对此前592tracked inputs唯一变化为DriverStages.h，现纳入Hydro repair代表位置修复。
+上节“主ELF尚未包含该修复”是当时记录，已由此次构建补齐；不改变Cartesian Plotfile数组映射。
+定向scheduler/checkpoint与当前archive实际非零repair续接PASS；详见RepairPositionCpuIntegration-20261004。
+尚未push；完整source/binary科学身份、二维演化和独立oracle仍按此前边界待review。
+
+
+## 同机运行成本初步证据
+
+三组已有Sod固定终点Run与既有5120cell Cellular overview配对，median wall66.843/66.934ms；
+checkpoint/原场值位级一致，Reader与ARCH均清理。仅query lifecycle重叠，无深度HDF阶段重叠证明，
+不能外推大AMR/长期同机运行。具体输入、binary、测量源码和失败说明见PlotfileRunInterference-20261004。

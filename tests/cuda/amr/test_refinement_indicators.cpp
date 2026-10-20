@@ -8,6 +8,10 @@
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -15,6 +19,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+void verify_cuda_jeans_resolution();
 
 namespace {
 void check(cudaError_t status) {
@@ -138,7 +144,7 @@ void run(int dimension, const std::string& geometry) {
     config.refine_on_velz = dimension == 3;
     config.refine_on_entropy = config.refine_on_enuc = config.refine_on_species = true;
     const int species[] = {0, 1};
-    const auto selections = amr::indicator::make_selection(config, dimension, species);
+    const auto selections = amr::indicator::make_selection(config, dimension, species,GridMetrics::geometry_kind(grid));
     constexpr double density_floor = 1.e-12;
     const amr::indicator::StateView host{
         fields.data(), {fields.data() + cells, fields.data() + 2 * cells,
@@ -393,13 +399,15 @@ int main() {
         return 1;
     }
     try {
+        verify_cuda_jeans_resolution();
         require(std::abs(amr::indicator::loehner_error(1.0, 2.0, 4.0) - 1.0 / 3.09) < 1.e-15,
             "frozen Lohner stencil changed");
         require(amr::indicator::refinement_flag(0.8, 1, 0, 2, 0.8, 0.2) == 0,
             "refinement equality boundary changed");
         for (int dimension = 1; dimension <= 3; ++dimension)
-            for (const auto* geometry : {"cartesian", "cylindrical", "spherical"})
+            for (const auto* geometry : {"cartesian", "cylindrical", "spherical"}) {
                 run(dimension, geometry);
+            }
         test_tabular_temperature_failures();
         for (std::size_t count : {1,3,1024,1025}) test_batch_wave(count);
         require(arch::cuda::indicator_wave_capacity(1024,200,true,1024)<1024,

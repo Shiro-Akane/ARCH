@@ -16,6 +16,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <set>
 #include <span>
@@ -57,6 +58,11 @@ struct AmrFluxRegistrationTerm {
     int source_cell = -1;          // Full direction scratch.
     int source_surface_cell = -1;  // Compact initial-flux surface.
     double geometric_weight = 0.0;
+    // Axisymmetric Mphi uses face T / coarse face T; ordinary fields use
+    // geometric_weight. Non-moment charts keep the two values identical.
+    double moment_geometric_weight = 0.0;
+    // Original route.plan.operations position; never a compiled-term ordinal.
+    std::size_t energy_operation_index = std::numeric_limits<std::size_t>::max();
 };
 
 struct AmrFluxRegistrationTarget {
@@ -103,6 +109,7 @@ struct AmrRefluxContribution {
     int register_face = -1;
     int register_cell = -1;
     double geometric_weight = 0.0;
+    double moment_geometric_weight = 0.0;
     double sign = 1.0;
 };
 
@@ -270,7 +277,6 @@ struct RawKey {
     AmrAxis axis = AmrAxis::X;
     AmrSide side = AmrSide::Lower;
     RefinementRule rule = RefinementRule::FineFluxContribution;
-    double weight = 0.0;
     double sign = 1.0;
 
     friend bool operator<(const RawKey& left, const RawKey& right) noexcept
@@ -278,12 +284,10 @@ struct RawKey {
         return std::tuple{
             left.source, left.destination, left.source_box,
             left.destination_box, left.axis, left.side, left.rule,
-            std::bit_cast<std::uint64_t>(left.weight),
             std::bit_cast<std::uint64_t>(left.sign)}
             < std::tuple{
                 right.source, right.destination, right.source_box,
                 right.destination_box, right.axis, right.side, right.rule,
-                std::bit_cast<std::uint64_t>(right.weight),
                 std::bit_cast<std::uint64_t>(right.sign)};
     }
 };
@@ -292,9 +296,14 @@ struct RawGroup {
     RawKey key{};
     const AmrFluxEndpointBinding* source = nullptr;
     const AmrFluxEndpointBinding* destination = nullptr;
+    double weight = 0.0;
+    double moment_weight = 0.0;
+    bool has_weight = false;
+    bool has_moment_weight = false;
     std::array<bool, 5> conserved{};
     std::vector<bool> species;
     std::uint64_t first_ordinal = 0;
+    std::size_t energy_operation_index = std::numeric_limits<std::size_t>::max();
 };
 
 template <class Plan>
@@ -302,7 +311,9 @@ inline std::vector<RawGroup> group_fields(
     const Plan& plan, const BindingIndex& bindings, int species_count)
 {
     std::map<RawKey, RawGroup> grouped;
-    for (const auto& operation : plan.operations) {
+    for (std::size_t operation_index = 0; operation_index < plan.operations.size();
+         ++operation_index) {
+        const auto& operation = plan.operations[operation_index];
         const auto& source = require_binding(bindings, operation.source);
         const auto& destination = require_binding(
             bindings, operation.destination);
@@ -314,7 +325,7 @@ inline std::vector<RawGroup> group_fields(
             operation.source, operation.destination,
             operation.source_box, operation.destination_box,
             operation.axis, operation.side, operation.rule,
-            operation.weight, operation.sign};
+            operation.sign};
         auto [entry, inserted] = grouped.try_emplace(key);
         auto& group = entry->second;
         if (inserted) {
@@ -324,6 +335,27 @@ inline std::vector<RawGroup> group_fields(
             group.species.assign(
                 static_cast<std::size_t>(species_count), false);
             group.first_ordinal = operation.ordinal;
+            group.weight = operation.weight;
+            group.moment_weight = operation.weight;
+            group.has_weight = operation.field != AmrField::MomW;
+            group.has_moment_weight = operation.field == AmrField::MomW;
+        }
+        if (operation.field == AmrField::MomW) {
+            if (group.has_moment_weight
+                && std::bit_cast<std::uint64_t>(group.moment_weight)
+                    != std::bit_cast<std::uint64_t>(operation.weight))
+                throw std::invalid_argument(
+                    "inconsistent AMR moment geometric weight");
+            group.moment_weight = operation.weight;
+            group.has_moment_weight = true;
+        } else {
+            if (group.has_weight
+                && std::bit_cast<std::uint64_t>(group.weight)
+                    != std::bit_cast<std::uint64_t>(operation.weight))
+                throw std::invalid_argument(
+                    "inconsistent AMR geometric weight");
+            group.weight = operation.weight;
+            group.has_weight = true;
         }
         if (operation.field == AmrField::Species) {
             if (operation.component < 0
@@ -341,6 +373,8 @@ inline std::vector<RawGroup> group_fields(
                 throw std::invalid_argument(
                     "duplicate or invalid AMR conserved flux field");
             group.conserved[static_cast<std::size_t>(field)] = true;
+            if (operation.field == AmrField::Energy)
+                group.energy_operation_index = operation_index;
         }
     }
 
@@ -408,7 +442,9 @@ inline AmrCompiledFluxRegistrationRoute compile_route(
                 group.key.axis, true),
             checked_surface_cell(
                 group.source->grid, group.key.source_box, group.key.axis),
-            group.key.weight});
+            group.weight,
+            group.moment_weight,
+            group.energy_operation_index});
     }
 
     result.targets.reserve(targets.size());
@@ -521,7 +557,7 @@ inline AmrCompiledRefluxPlan compile_amr_reflux_plan(
             flux_execution_detail::checked_register_cell(
                 group.destination->grid, group.key.destination_box,
                 group.key.axis, group.key.side),
-            group.key.weight, group.key.sign});
+            group.weight, group.moment_weight, group.key.sign});
     }
 
     AmrCompiledRefluxPlan result{

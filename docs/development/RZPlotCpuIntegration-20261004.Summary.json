@@ -1,0 +1,73 @@
+{
+  "status": "PASS",
+  "build": {
+    "sourceHead": "b38f44a8d51a97e19a0d133a5ab547390d01f53d",
+    "buildExitCode": 0,
+    "elapsedSeconds": 21.01001286506653,
+    "beforeBinarySha256": "60892079fba9785c3691e2594fee2cd4aa4379cf9777637b2dd66a51c66328b5",
+    "afterBinarySha256": "ca6437d283c23c8f94aa562b5678273b2c06e1c5df3cc79df38ebe40c7e2e069",
+    "binarySize": 7408696,
+    "parallelism": 8,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu"
+  },
+  "sourceIdentity": {
+    "explicitTrackedInputCount": 592,
+    "explicitTrackedInputDigest": "086e433617459558fcaca0c2e8a9977e84d65e01980c1ea3ed2b36cb1bed815e",
+    "refsAfterFetch": {
+      "HEAD": "b38f44a8d51a97e19a0d133a5ab547390d01f53d",
+      "origin/compute/optim": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+      "origin/codex/o8-boundaries": "23ff77c4f08419de2b3c5eadee214da2af25784e"
+    },
+    "notClaimed": "Conservative tracked input inventory, not independent exact compiler/transitive shared-library closure"
+  },
+  "cartesianT0": [
+    {
+      "case": "Sod",
+      "runId": "6e89eb57-a3d7-4a18-86b6-8626a026807c",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-plot-cpu-integration-20261004/t0/Sod-0/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "c38fc2a0e3eecb19d3417dca1b09d236177221cb4bf65872f6444e1ca0c9aa46",
+      "inputSha256": "f90a1050996fc3d62f4beb6ceacf41005025c440bd14d75cf1ca863033f87406",
+      "binarySha256": "ca6437d283c23c8f94aa562b5678273b2c06e1c5df3cc79df38ebe40c7e2e069",
+      "fieldCount": 9,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true
+    },
+    {
+      "case": "CellularDet",
+      "runId": "05e9c2b2-3a0b-43f3-b1a6-3ca0c04f6140",
+      "plotfile": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-plot-cpu-integration-20261004/t0/CellularDet-0/output/reference_HLLC_plt_0000.h5",
+      "plotfileSha256": "6e94d795f07cca3d735e2e5dd6c1129b4efe6478af811fb95ffbcc2066fad755",
+      "inputSha256": "fc2dceda9ebc61c58c3c6cae1972a594c9deecd2113ab355e8006f5bc878009e",
+      "binarySha256": "ca6437d283c23c8f94aa562b5678273b2c06e1c5df3cc79df38ebe40c7e2e069",
+      "fieldCount": 28,
+      "checkpointNumericDatasets": 20,
+      "fieldAndCheckpointBitsUnchanged": true
+    }
+  ],
+  "actualDriverPublication": {
+    "scope": "real CPU DriverIO IO-only fixture; no timestep or EOS science acceptance",
+    "exitCode": 0,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "driverSourceSha256": "f4124a59694eb4bd9fd98dbfc6b8b3d872d0e1f88b22fe21e3400800f0906f59",
+    "dispatchLibrarySha256": "ba2d03a9811ba019394fbe23de8aa7fa48e3bca6ecbbb771d1336788e1cc0ff3",
+    "testExecutableSha256": "82a9a892894584a8aadc83a20e17c5c38d1cbfcb429fde19b19a9d73d00f4faa",
+    "fixtureSource": "/home/arch/projects/ARCH-compute-optim/tests/host/io/test_driver_plot_publication.cpp"
+  },
+  "publicationChecks": [
+    "write",
+    "flush",
+    "close",
+    "rename",
+    "create",
+    "failure index unchanged",
+    "same-index retry"
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-plot-cpu-integration-20261004",
+  "limitations": [
+    "Public RZ still gated",
+    "No new RZ evolution/Viewer",
+    "No scientific budget approval",
+    "No CUDA/O9 benchmark",
+    "No complete dependency freshness claim"
+  ]
+}

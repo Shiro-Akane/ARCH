@@ -1,0 +1,405 @@
+{
+  "scope": "Linux/WSL native captured Restart + exact fixed-grid CPU continuation; user-visible desktop acceptance pending",
+  "sourceHEAD": "cf572e0f48a7e025eac65fb10a9856b84e32d79b",
+  "sourceRunId": "795e6be7-105e-4b3d-a48a-eae68a6f4303",
+  "job": {
+    "version": "1",
+    "runId": "30db4e5c-7c43-4cac-8b30-9af8fad393db",
+    "projectRoot": "/home/arch/projects/ARCH-compute-optim",
+    "caseId": "Sod",
+    "mode": "restart",
+    "binaryRelativePath": "build-studio-cpu/bin/ARCH",
+    "binaryFingerprint": {
+      "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+      "size": 7177152,
+      "modifiedTime": "2026-10-03T04:11:50.885Z"
+    },
+    "configRelativePath": "studio/.local/UatSodRestart.par",
+    "configFingerprint": {
+      "sha256": "6f9943549d61aebc4879a150300901d7281f2c9c2bcb9bd825e01731d591647d",
+      "size": 1426,
+      "modifiedTime": "2026-10-03T03:55:22.986Z"
+    },
+    "inputRelativePath": "studio/.local/runs/30db4e5c-7c43-4cac-8b30-9af8fad393db/input.par",
+    "confirmedBinary": "compiled-version",
+    "createdAt": "2026-10-03T04:15:33.052Z",
+    "checkpoint": {
+      "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/source-output/Sod_chk_0001.h5",
+      "filesystemIdentity": "[\"/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/source-output/Sod_chk_0001.h5\",\"2096\",\"777332\",\"25496\",\"1790999621476709074\",\"1790999621476709074\"]"
+    },
+    "outputDirectories": [
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output",
+        "canonicalPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output"
+      },
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output",
+        "canonicalPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output"
+      }
+    ]
+  },
+  "state": {
+    "runId": "30db4e5c-7c43-4cac-8b30-9af8fad393db",
+    "state": "succeeded",
+    "workerPid": 13695,
+    "workerStartTicks": "250592",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T04:15:33.137Z",
+    "processId": 13707,
+    "processStartTicks": "250600",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T04:15:33.573Z"
+  },
+  "checkpointSHA256Unchanged": true,
+  "savedInputMatchesFrozenInput": true,
+  "initialCheckpointEndpoint": {
+    "time": 0.05,
+    "step": 67
+  },
+  "finalCheckpointEndpoint": {
+    "time": 0.2,
+    "step": 280
+  },
+  "comparison": {
+    "scope": "Exact final-checkpoint equality; not independent scientific accuracy or desktop UAT",
+    "status": "PASS",
+    "metadata": [
+      {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 4,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0007083134624507488,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 1,
+        "plt_index": 5,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 0,
+        "step": 280,
+        "time": 0.2
+      },
+      {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 4,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0007083134624507488,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 1,
+        "plt_index": 5,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 0,
+        "step": 280,
+        "time": 0.2
+      }
+    ],
+    "objectCount": 24,
+    "comparedDatasetCount": 21,
+    "comparisons": [
+      {
+        "path": "Blocks/level",
+        "shape": [
+          8
+        ],
+        "count": 8,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Blocks/logical_x1",
+        "shape": [
+          8
+        ],
+        "count": 8,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Blocks/logical_x2",
+        "shape": [
+          8
+        ],
+        "count": 8,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Blocks/logical_x3",
+        "shape": [
+          8
+        ],
+        "count": 8,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/X",
+        "shape": [
+          1,
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/eng",
+        "shape": [
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/enuc_rate",
+        "shape": [
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/mom_u",
+        "shape": [
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/mom_v",
+        "shape": [
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/mom_w",
+        "shape": [
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/rho",
+        "shape": [
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/rhoX",
+        "shape": [
+          1,
+          8,
+          16
+        ],
+        "count": 128,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Species/A",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Species/Cv",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Species/Z",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Species/gamma",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Species/name",
+        "shape": [
+          1
+        ],
+        "equal": true
+      },
+      {
+        "path": "gravity_controls",
+        "shape": [
+          0
+        ],
+        "count": 0,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "repair_position",
+        "shape": [
+          3
+        ],
+        "count": 3,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "state_controls",
+        "shape": [
+          18
+        ],
+        "count": 18,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "state_repairs",
+        "shape": [
+          12
+        ],
+        "count": 12,
+        "differences": 0,
+        "maxAbs": 0
+      }
+    ]
+  },
+  "processes": {
+    "workerExited": true,
+    "coreExited": true,
+    "completedTerminalHeld": true
+  },
+  "nativeEvidence": {
+    "confirmation": "captured",
+    "independentTerminal": "returned native window ARCH 30db4e5c-7c43-4cac-8b30-9af8fad393db",
+    "latestRunSucceeded": "captured",
+    "userVisibleWindow": "pending"
+  },
+  "diagnosticExcerpt": [
+    "[RuntimeParams] Restart Enabled. Target file: '/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/source-output/Sod_chk_0001.h5'",
+    "[Main] Console output is being recorded to log file: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_log.dat",
+    "[Dispatch] Restarting from checkpoint: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/source-output/Sod_chk_0001.h5",
+    "[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_HLLC_plt_0002.h5 at t=1.00000e-01",
+    "[IO] Saved CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_chk_0002.h5 at step 138 with 8 AMR leaves.",
+    "[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_HLLC_plt_0003.h5 at t=1.50000e-01",
+    "[IO] Saved CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_chk_0003.h5 at step 209 with 8 AMR leaves.",
+    "[IO] Saved PLT: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_HLLC_plt_0004.h5 at t=2.00000e-01",
+    "[IO] Saved CHK: /home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/restart-output/Sod_chk_0004.h5 at step 280 with 8 AMR leaves.",
+    "[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00",
+    ">>> Simulation Done. Total Steps: 280 | Final Time: 2.00000e-01"
+  ],
+  "rawLocalIndex": {
+    "run": "studio/.local/runs/30db4e5c-7c43-4cac-8b30-9af8fad393db",
+    "workflow": "studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844",
+    "restartOutputs": [
+      {
+        "name": "Sod_HLLC_plt_0002.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_HLLC_plt_0003.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_HLLC_plt_0004.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_backend_plan.txt",
+        "size": 267
+      },
+      {
+        "name": "Sod_chk_0002.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_chk_0003.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_chk_0004.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_log.dat",
+        "size": 14459
+      },
+      {
+        "name": "cpu_stage_timings.tsv",
+        "size": 203
+      },
+      {
+        "name": "run_timings.tsv",
+        "size": 87
+      },
+      {
+        "name": "state_repairs.txt",
+        "size": 252
+      }
+    ]
+  },
+  "notValidated": [
+    "independent scientific accuracy",
+    "adaptive AMR evolution",
+    "CUDA",
+    "full native cancellation/close/Stop matrix",
+    "complete dependency freshness"
+  ]
+}

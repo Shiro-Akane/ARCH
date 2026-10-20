@@ -1,0 +1,113 @@
+{
+  "kind": "actual H5, HTTP, client, SSR; no native desktop UAT",
+  "cases": [
+    {
+      "caseId": "Sod",
+      "dimension": 1,
+      "leafBlocks": 12,
+      "levels": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "scannedCells": 192,
+      "displayShape": [
+        1,
+        32
+      ],
+      "fileSha256": "3817608ba60fd43a905d39b9261a51c37b41a190e31891b98d6911855854ca8d",
+      "httpBytes": 4669,
+      "httpWallMs": 177.264862,
+      "rawRepresentativeIndex": 96,
+      "rawRepresentativeValue": 0.125,
+      "domain": {
+        "x": [
+          0,
+          1
+        ],
+        "y": [
+          0,
+          1
+        ]
+      },
+      "HTTP": "PASS",
+      "SVG_SSR": "PASS",
+      "rawInspector": "PASS",
+      "sourceUnchanged": true
+    },
+    {
+      "caseId": "CellularDet",
+      "dimension": 2,
+      "leafBlocks": 20,
+      "levels": [
+        1,
+        2
+      ],
+      "scannedCells": 5120,
+      "displayShape": [
+        24,
+        32
+      ],
+      "fileSha256": "78104fab2ea63a58fd15cb82a4c227e0fee3c5c8c1726091e65855ddcd4dd187",
+      "httpBytes": 23190,
+      "httpWallMs": 188.73317599999996,
+      "rawRepresentativeIndex": 3074,
+      "rawRepresentativeValue": 43375362.843074,
+      "domain": {
+        "x": [
+          0,
+          25.6
+        ],
+        "y": [
+          0,
+          12.8
+        ]
+      },
+      "HTTP": "PASS",
+      "SVG_SSR": "PASS",
+      "rawInspector": "PASS",
+      "sourceUnchanged": true
+    }
+  ],
+  "sourceBaseline": "a0a7564fb5c27f5480950423f6a566c72bf1ddfe",
+  "checks": {
+    "npmTest": {
+      "pass": 296,
+      "fail": 0
+    },
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "nativeDesktopUat": "NOT_RUN",
+    "limited129BlockFixture": "PASS"
+  },
+  "independentChecks": [
+    {
+      "scope": "t=0 stored leaf outlines only; no evolution or scientific tolerance acceptance",
+      "plotfileSha256": "3817608ba60fd43a905d39b9261a51c37b41a190e31891b98d6911855854ca8d",
+      "leafBlocks": 12,
+      "emittedBlocks": 12,
+      "complete": true,
+      "logicalKeysMatchStoredCheckpointAndPreview": true,
+      "blockBoundsExactlyMatchStoredNativeBounds": true,
+      "storedShapeAndFirstIndicesMatch": true,
+      "maxBoundsAbsDifferenceVsPreview": 0.0,
+      "scientificBoundsReview": "reported without adding tolerance",
+      "sourceUnchanged": true
+    },
+    {
+      "scope": "t=0 stored leaf outlines only; no evolution or scientific tolerance acceptance",
+      "plotfileSha256": "78104fab2ea63a58fd15cb82a4c227e0fee3c5c8c1726091e65855ddcd4dd187",
+      "leafBlocks": 20,
+      "emittedBlocks": 20,
+      "complete": true,
+      "logicalKeysMatchStoredCheckpointAndPreview": true,
+      "blockBoundsExactlyMatchStoredNativeBounds": true,
+      "storedShapeAndFirstIndicesMatch": true,
+      "maxBoundsAbsDifferenceVsPreview": 0.0,
+      "scientificBoundsReview": "reported without adding tolerance",
+      "sourceUnchanged": true
+    }
+  ]
+}

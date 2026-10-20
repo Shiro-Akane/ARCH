@@ -1,0 +1,574 @@
+{
+  "status": "PERIODIC SOURCE SCOPED PASS; FROZEN JENS PASS; FULL RZ PENDING",
+  "baseline": "674494a674bb553b82c289fc461e180a15581f40",
+  "findingId": "GRAV-PERIODIC-CONTRAST-01",
+  "finding": "separate factor*rho and factor*mean destroy small periodic density contrasts; corrected shared difference_scale retains subtraction before multiplication",
+  "sourceFingerprints": {
+    "src/physics/gravity/GravitySourceBounds.h": "2bd9b1c892e6dc939d1113cf9a93429b8904961b1bb43e04098511e24edaad23",
+    "src/numerics/multigrid/CompositeExecution.h": "5296d0319197930e0dac032a874eec5f79c028fc2137195682df5d7a6a9f4c81",
+    "src/physics/gravity/self/SelfGravity.cpp": "362566a56fac0b4f5814fbc3744f824d9f6dfe5698bfa99cdb49927ea78a9360",
+    "tests/host/gravity/test_composite_poisson.cpp": "9ba291a0b09eb213ec6bdbc3b0aaf663e1930e90fad60a1cc4412be842b989f7",
+    "validation/gravity/periodic_gravity_source_reference.py": "b60fb7e3d476f470ece93fce737d202a14f162ba05d224e2450ac1d602a74abc"
+  },
+  "binaryBefore": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "binaryAfter": "a6ce69f59969af7afd0ca35153f0afac0571f8af8a0812b7b81a120cddf52331",
+  "checks": [
+    {
+      "check": "reference-final",
+      "exitCode": 0
+    },
+    {
+      "check": "isolated-reference",
+      "exitCode": 0
+    },
+    {
+      "check": "ctest",
+      "exitCode": 0
+    },
+    {
+      "check": "architecture",
+      "exitCode": 0
+    },
+    {
+      "check": "diff",
+      "exitCode": 0
+    },
+    {
+      "check": "reference-production",
+      "exitCode": 0
+    },
+    {
+      "check": "ctest-production",
+      "exitCode": 0
+    },
+    {
+      "check": "architecture-production",
+      "exitCode": 0
+    },
+    {
+      "check": "diff-production",
+      "exitCode": 0
+    }
+  ],
+  "reference": {
+    "status": "PASS",
+    "precision": [
+      100,
+      140
+    ],
+    "cases": [
+      {
+        "mixed": false,
+        "lane": 0,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "0E-146",
+        "maxReferenceMagnitude": "0",
+        "normUpper": 0
+      },
+      {
+        "mixed": false,
+        "lane": 0,
+        "path": "scalar subtract-first/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "0E-146",
+        "maxReferenceMagnitude": "0",
+        "normUpper": 0
+      },
+      {
+        "mixed": false,
+        "lane": 0,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 16,
+        "maxObservedAbsoluteError": "0E-146",
+        "maxReferenceMagnitude": "0",
+        "normUpper": 0
+      },
+      {
+        "mixed": false,
+        "lane": 1,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "3.090527312262926838966063993105175945275097017802804440776303213101321115595584956166627356925002282151491097110787187669844E-23",
+        "maxReferenceMagnitude": "4.4556855176690511406363113813413133752487961722048971169262056865304440776303213101321115595584956166627356925002282151491097110787187669844E-7",
+        "normUpper": 1.2327611179085263e-21
+      },
+      {
+        "mixed": false,
+        "lane": 1,
+        "path": "scalar subtract-first/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "3.090527312262926838966063993105175945275097017802804440776303213101321115595584956166627356925002282151491097110787187669844E-23",
+        "maxReferenceMagnitude": "4.4556855176690511406363113813413133752487961722048971169262056865304440776303213101321115595584956166627356925002282151491097110787187669844E-7",
+        "normUpper": 1.2327611179085263e-21
+      },
+      {
+        "mixed": false,
+        "lane": 1,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 16,
+        "maxObservedAbsoluteError": "2.6766265399586884334994306695603196097048971169262056865304440776303213101321115595584956166627356925002282151491097110787187669844E-16",
+        "maxReferenceMagnitude": "4.4556855176690511406363113813413133752487961722048971169262056865304440776303213101321115595584956166627356925002282151491097110787187669844E-7",
+        "normUpper": 2.0828601714760534e-16
+      },
+      {
+        "mixed": false,
+        "lane": 2,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "1.509046539190882245588898434133386692028855965724025605847804303272129450974406716878236014123536270581782762261126556479416E-26",
+        "maxReferenceMagnitude": "2.1756276941743413772638239166705631715082012559594224203741238703761933972804303272129450974406716878236014123536270581782762261126556479416E-10",
+        "normUpper": 6.0148747822792e-25
+      },
+      {
+        "mixed": false,
+        "lane": 2,
+        "path": "scalar subtract-first/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "1.509046539190882245588898434133386692028855965724025605847804303272129450974406716878236014123536270581782762261126556479416E-26",
+        "maxReferenceMagnitude": "2.1756276941743413772638239166705631715082012559594224203741238703761933972804303272129450974406716878236014123536270581782762261126556479416E-10",
+        "normUpper": 6.0148747822792e-25
+      },
+      {
+        "mixed": false,
+        "lane": 2,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 16,
+        "maxObservedAbsoluteError": "2.981978946480234298650823333294368284917987440405775796258761296238066027195696727870549025593283121763985876463729418217237738873443520584E-11",
+        "maxReferenceMagnitude": "2.1756276941743413772638239166705631715082012559594224203741238703761933972804303272129450974406716878236014123536270581782762261126556479416E-10",
+        "normUpper": 2.320463149181554e-11
+      },
+      {
+        "mixed": false,
+        "lane": 3,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "115676632423386453371850966368605629612796010510170544991524856989343387408759.25027051115593071507431905211146561973247315148",
+        "maxReferenceMagnitude": "891137103533810415417351571960492085688951448349730543009848925671012993251638994342813579962.35030657931005481041756159239299436903013623835",
+        "normUpper": 2.472566273355263e+78
+      },
+      {
+        "mixed": false,
+        "lane": 3,
+        "path": "scalar subtract-first/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "115676632423386453371850966368605629612796010510170544991524856989343387408759.25027051115593071507431905211146561973247315148",
+        "maxReferenceMagnitude": "891137103533810415417351571960492085688951448349730543009848925671012993251638994342813579962.35030657931005481041756159239299436903013623835",
+        "normUpper": 2.472566273355263e+78
+      },
+      {
+        "mixed": false,
+        "lane": 3,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 16,
+        "maxObservedAbsoluteError": "7229308456403612743858518653704175691464442431237867315937250532589921120417.550018034077062047671621270140764374648831543432",
+        "maxReferenceMagnitude": "891137103533810415417351571960492085688951448349730543009848925671012993251638994342813579962.35030657931005481041756159239299436903013623835",
+        "normUpper": 2.515906373258802e+78
+      },
+      {
+        "mixed": false,
+        "lane": 4,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "2.2208219371652968728182828725541145473896167702527795653403201678722456737572140236193432174399897071279585283285677637660593152911410031212E-324",
+        "maxReferenceMagnitude": "8.9113710353380750564348226848944985933867107918636067849978248073058891920318885666485745755906224981975651508283362159448151740536961926831E-317",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": false,
+        "lane": 4,
+        "path": "scalar subtract-first/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "2.2208219371652968728182828725541145473896167702527795653403201678722456737572140236193432174399897071279585283285677637660593152911410031212E-324",
+        "maxReferenceMagnitude": "8.9113710353380750564348226848944985933867107918636067849978248073058891920318885666485745755906224981975651508283362159448151740536961926831E-317",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": false,
+        "lane": 4,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 16,
+        "maxObservedAbsoluteError": "4.1338474681464502580090440133543109240045438379739626539990545704810380180913282479246423673048459534830396588052917027502937371370086113607E-324",
+        "maxReferenceMagnitude": "8.9113710353380750564348226848944985933867107918636067849978248073058891920318885666485745755906224981975651508283362159448151740536961926831E-317",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": false,
+        "lane": 5,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "4.4028022859052973840262802282360645580335811768708960321483546978653347154302321193331421314109302005440796904253456700892975708636384732644E-330",
+        "maxReferenceMagnitude": "4.4028022859052973840262802282360645580335811768708960321483546978653347154302321193331421314109302005440796904253456700892975708636384732644E-330",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": false,
+        "lane": 5,
+        "path": "scalar subtract-first/project",
+        "cells": 16,
+        "maxObservedAbsoluteError": "4.4028022859052973840262802282360645580335811768708960321483546978653347154302321193331421314109302005440796904253456700892975708636384732644E-330",
+        "maxReferenceMagnitude": "4.4028022859052973840262802282360645580335811768708960321483546978653347154302321193331421314109302005440796904253456700892975708636384732644E-330",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": false,
+        "lane": 5,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 16,
+        "maxObservedAbsoluteError": "4.4028022859052973840262802282360645580335811768708960321483546978653347154302321193331421314109302005440796904253456700892975708636384732644E-330",
+        "maxReferenceMagnitude": "4.4028022859052973840262802282360645580335811768708960321483546978653347154302321193331421314109302005440796904253456700892975708636384732644E-330",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": true,
+        "lane": 0,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "0E-146",
+        "maxReferenceMagnitude": "0",
+        "normUpper": 0
+      },
+      {
+        "mixed": true,
+        "lane": 0,
+        "path": "scalar subtract-first/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "0E-146",
+        "maxReferenceMagnitude": "0",
+        "normUpper": 0
+      },
+      {
+        "mixed": true,
+        "lane": 0,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 28,
+        "maxObservedAbsoluteError": "0E-146",
+        "maxReferenceMagnitude": "0",
+        "normUpper": 0
+      },
+      {
+        "mixed": true,
+        "lane": 1,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "2.954180519074856537246972934585829947689430972899739538977348659582145184025191502218099679413605122644807666355899517625586E-23",
+        "maxReferenceMagnitude": "4.2591111565954165314905917615762554322231139881370340088265201415364538977348659582145184025191502218099679413605122644807666355899517625586E-7",
+        "normUpper": 2.0403198873235596e-21
+      },
+      {
+        "mixed": true,
+        "lane": 1,
+        "path": "scalar subtract-first/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "2.954180519074856537246972934585829947689430972899739538977348659582145184025191502218099679413605122644807666355899517625586E-23",
+        "maxReferenceMagnitude": "4.2591111565954165314905917615762554322231139881370340088265201415364538977348659582145184025191502218099679413605122644807666355899517625586E-7",
+        "normUpper": 2.0403198873235596e-21
+      },
+      {
+        "mixed": true,
+        "lane": 1,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 28,
+        "maxObservedAbsoluteError": "2.5585400749605110026097499047267760975120340088265201415364538977348659582145184025191502218099679413605122644807666355899517625586E-16",
+        "maxReferenceMagnitude": "4.2591111565954165314905917615762554322231139881370340088265201415364538977348659582145184025191502218099679413605122644807666355899517625586E-7",
+        "normUpper": 2.0645613144825143e-16
+      },
+      {
+        "mixed": true,
+        "lane": 2,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "1.442470956579519793577623503215737279145229967236200946766283525186594328137300538192431484088674376291409993337841561340618E-26",
+        "maxReferenceMagnitude": "2.0796441194313557282668905085821559727651923770200361371223242878595966297533525186594328137300538192431484088674376291409993337841561340618E-10",
+        "normUpper": 9.962499449822068e-25
+      },
+      {
+        "mixed": true,
+        "lane": 2,
+        "path": "scalar subtract-first/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "1.442470956579519793577623503215737279145229967236200946766283525186594328137300538192431484088674376291409993337841561340618E-26",
+        "maxReferenceMagnitude": "2.0796441194313557282668905085821559727651923770200361371223242878595966297533525186594328137300538192431484088674376291409993337841561340618E-10",
+        "normUpper": 9.962499449822068e-25
+      },
+      {
+        "mixed": true,
+        "lane": 2,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 28,
+        "maxObservedAbsoluteError": "2.850421051782576903122110539178440272348076229799638628776757121404033702466474813405671862699461807568515911325623708590006662158438659382E-11",
+        "maxReferenceMagnitude": "2.0796441194313557282668905085821559727651923770200361371223242878595966297533525186594328137300538192431484088674376291409993337841561340618E-10",
+        "normUpper": 2.3000694805249474e-11
+      },
+      {
+        "mixed": true,
+        "lane": 3,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "115667011022225641534207631481932106426089845997214710070863796404462575556161.18779305375225827466384563978742108804351258077",
+        "maxReferenceMagnitude": "851822231319083485325409590844588023085027119746065960230002649538468302372890215180630627905.18779305375225827466384563978742108804351258077",
+        "normUpper": 4.196021562974167e+78
+      },
+      {
+        "mixed": true,
+        "lane": 3,
+        "path": "scalar subtract-first/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "115667011022225641534207631481932106426089845997214710070863796404462575556161.18779305375225827466384563978742108804351258077",
+        "maxReferenceMagnitude": "851822231319083485325409590844588023085027119746065960230002649538468302372890215180630627905.18779305375225827466384563978742108804351258077",
+        "normUpper": 4.196021562974167e+78
+      },
+      {
+        "mixed": true,
+        "lane": 3,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 28,
+        "maxObservedAbsoluteError": "12666684040563621241981743462659944558792637475395603675947885367841660924887.612495491480734488082094682464808906337792114142",
+        "maxReferenceMagnitude": "851822231319083485325409590844588023085027119746065960230002649538468302372890215180630627905.18779305375225827466384563978742108804351258077",
+        "normUpper": 4.191634911125224e+78
+      },
+      {
+        "mixed": true,
+        "lane": 4,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "1.5907645652616919001943438268794882162115079048439313969689576525148446965397615970023606237695352039146616077018275753579722959901623435827E-324",
+        "maxReferenceMagnitude": "8.5182223131908070392391687429138589495608264922225653091890972422776881982657758357670198149028009173947313941741449123001909751983860665353E-317",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": true,
+        "lane": 4,
+        "path": "scalar subtract-first/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "1.5907645652616919001943438268794882162115079048439313969689576525148446965397615970023606237695352039146616077018275753579722959901623435827E-324",
+        "maxReferenceMagnitude": "8.5182223131908070392391687429138589495608264922225653091890972422776881982657758357670198149028009173947313941741449123001909751983860665353E-317",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": true,
+        "lane": 4,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 28,
+        "maxObservedAbsoluteError": "3.5037900962428452853851049676796845928264349725651144856276920551236370408738758213076597736343914502697427381785515143422067178360318518222E-324",
+        "maxReferenceMagnitude": "8.5182223131908070392391687429138589495608264922225653091890972422776881982657758357670198149028009173947313941741449123001909751983860665353E-317",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": true,
+        "lane": 5,
+        "path": "corrected host CompositeExecution difference_scale/mean/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "4.2085610085859460288486502181668264157673937720089447366123978729595111250436042317155035079663303387553702923183451258206520897961250112086E-330",
+        "maxReferenceMagnitude": "4.2085610085859460288486502181668264157673937720089447366123978729595111250436042317155035079663303387553702923183451258206520897961250112086E-330",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": true,
+        "lane": 5,
+        "path": "scalar subtract-first/project",
+        "cells": 28,
+        "maxObservedAbsoluteError": "4.2085610085859460288486502181668264157673937720089447366123978729595111250436042317155035079663303387553702923183451258206520897961250112086E-330",
+        "maxReferenceMagnitude": "4.2085610085859460288486502181668264157673937720089447366123978729595111250436042317155035079663303387553702923183451258206520897961250112086E-330",
+        "normUpper": 1.5e-323
+      },
+      {
+        "mixed": true,
+        "lane": 5,
+        "path": "legacy multiply-before-subtract diagnostic",
+        "cells": 28,
+        "maxObservedAbsoluteError": "4.2085610085859460288486502181668264157673937720089447366123978729595111250436042317155035079663303387553702923183451258206520897961250112086E-330",
+        "maxReferenceMagnitude": "4.2085610085859460288486502181668264157673937720089447366123978729595111250436042317155035079663303387553702923183451258206520897961250112086E-330",
+        "normUpper": 1.5e-323
+      }
+    ],
+    "scope": "-4 mathematical pi * stored shared G * normalized stored-weight density contrast; actual final arrays; ideal geometry and lifecycle uncertified"
+  },
+  "frozenJens": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "a6ce69f59969af7afd0ca35153f0afac0571f8af8a0812b7b81a120cddf52331",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.06414133301586844,
+        "restart_elapsed_seconds": 0.06407499499619007,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-1d-active"
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.06417924602283165,
+        "restart_elapsed_seconds": 0.06438360997708514,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-1d-disabled"
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.06462419597664848,
+        "restart_elapsed_seconds": 0.06388114200672135,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-1d-output_only"
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.41500401301891543,
+        "restart_elapsed_seconds": 0.21473849299945869,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-2d-active"
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.11478718699072488,
+        "restart_elapsed_seconds": 0.06480684800771996,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-2d-disabled"
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.11439556101686321,
+        "restart_elapsed_seconds": 0.06407288199989125,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-2d-output_only"
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 21.372824694000883,
+        "restart_elapsed_seconds": 11.647068944002967,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-3d-active"
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 1.4679521200014278,
+        "restart_elapsed_seconds": 0.7659162589989137,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-3d-disabled"
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 1.367252808995545,
+        "restart_elapsed_seconds": 0.7156794590118807,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005/frozen-jeans-campaign/jeans-uniform-3d-output_only"
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/periodic-gravity-source-20261005",
+  "productionRzGate": "retained",
+  "limitations": [
+    "normalized stored weights only; ideal geometry/weight construction still pending",
+    "companion not yet authoritative runtime source quality/identity publication",
+    "constant frozen lifecycle not all nonlinear or nonuniform JENS acceptance",
+    "shared host/device scalar math but CUDA not verified in this node",
+    "no changed physical G, thresholds, EOS, long-run budget or source reference"
+  ]
+}

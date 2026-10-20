@@ -1,0 +1,357 @@
+{
+  "status": "PASS",
+  "build": {
+    "sourceHead": "07d4bf2486c3c26774768212fb6009e7e0be6f1f",
+    "beforeBinarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+    "afterBinarySha256": "60892079fba9785c3691e2594fee2cd4aa4379cf9777637b2dd66a51c66328b5",
+    "binarySize": 7400552,
+    "buildExitCode": 0,
+    "elapsedSeconds": 9.745085716247559,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "parallelism": 8,
+    "configuration": "Existing CPU Release tree; no separate configure"
+  },
+  "runRestart": {
+    "status": "PASS",
+    "scope": "Existing fixed-grid CPU Sod engineering regression; no new desktop UAT or independent science acceptance",
+    "binarySha256": "60892079fba9785c3691e2594fee2cd4aa4379cf9777637b2dd66a51c66328b5",
+    "binarySize": 7400552,
+    "threads": 1,
+    "sourceHead": "07d4bf2486c3c26774768212fb6009e7e0be6f1f",
+    "frozenInputSha256": [
+      "381ceb60eb6cdbf7c99b43577ff0d94731144d655514c7a8194d09ce8d88644e",
+      "6f9943549d61aebc4879a150300901d7281f2c9c2bcb9bd825e01731d591647d"
+    ],
+    "split": {
+      "time": 0.05,
+      "step": 67,
+      "sha256": "b3c13893f492e43a622ac18092a687181bc547d04d3d3756600ff9777e49580d"
+    },
+    "final": {
+      "time": 0.2,
+      "step": 280
+    },
+    "sessions": [
+      {
+        "mode": "continuous",
+        "runId": "ea5b7ec0-08f5-43ef-b18b-8bb7ac08c794",
+        "inputSha256": "e7d5f4ceb895fc84411de2c0671750f60b9a4c1d5284c83e9458bcbaac2c094b",
+        "plotCount": 5,
+        "finalCheckpointSha256": "571b47d226f6359704d441a9adcabae862b6f9720515299764f91cdd41359d99",
+        "checkpoint": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-diagnostics-sod-restart-20261004/continuous/output/Sod_chk_0004.h5",
+        "finalPlot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-diagnostics-sod-restart-20261004/continuous/output/Sod_HLLC_plt_0004.h5"
+      },
+      {
+        "mode": "restart",
+        "runId": "a3361309-0b2f-467c-9887-a60a2adb59c4",
+        "inputSha256": "0bcfc7952b14c2efc94dc0270b28efcd25a3fcd8e6913c7997217d90ea11e77d",
+        "plotCount": 3,
+        "finalCheckpointSha256": "571b47d226f6359704d441a9adcabae862b6f9720515299764f91cdd41359d99",
+        "checkpoint": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-diagnostics-sod-restart-20261004/restart/output/Sod_chk_0004.h5",
+        "finalPlot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-cpu-diagnostics-sod-restart-20261004/restart/output/Sod_HLLC_plt_0004.h5"
+      }
+    ],
+    "checkpointComparisons": [
+      {
+        "path": "Blocks/level",
+        "shape": [
+          8
+        ],
+        "dtype": "int32",
+        "equal": true
+      },
+      {
+        "path": "Blocks/logical_x1",
+        "shape": [
+          8
+        ],
+        "dtype": "uint32",
+        "equal": true
+      },
+      {
+        "path": "Blocks/logical_x2",
+        "shape": [
+          8
+        ],
+        "dtype": "uint32",
+        "equal": true
+      },
+      {
+        "path": "Blocks/logical_x3",
+        "shape": [
+          8
+        ],
+        "dtype": "uint32",
+        "equal": true
+      },
+      {
+        "path": "Data/X",
+        "shape": [
+          1,
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/eng",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/enuc_rate",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/mom_u",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/mom_v",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/mom_w",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/rho",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/rhoX",
+        "shape": [
+          1,
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Species/A",
+        "shape": [
+          1
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Species/Cv",
+        "shape": [
+          1
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Species/Z",
+        "shape": [
+          1
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Species/gamma",
+        "shape": [
+          1
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Species/name",
+        "shape": [
+          1
+        ],
+        "dtype": "object",
+        "equal": true
+      },
+      {
+        "path": "gravity_controls",
+        "shape": [
+          0
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "repair_position",
+        "shape": [
+          3
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "state_controls",
+        "shape": [
+          18
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "state_repairs",
+        "shape": [
+          12
+        ],
+        "dtype": "float64",
+        "equal": true
+      }
+    ],
+    "oldReferenceDatasetCount": 21,
+    "fieldComparisons": [
+      {
+        "path": "Data/DENS",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/ENER",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/PRES",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      },
+      {
+        "path": "Data/VELX",
+        "shape": [
+          8,
+          16
+        ],
+        "dtype": "float64",
+        "equal": true
+      }
+    ],
+    "restartInputCheckpointUnchanged": true,
+    "frozenReferenceInputsAndCheckpointUnchanged": true,
+    "distinctOutputSessionIds": true,
+    "exclusions": [
+      "Cartesian 2D evolved AMR",
+      "independent pressure/temperature oracle",
+      "large-file cost",
+      "CUDA",
+      "RZ",
+      "long O9 endpoint",
+      "publication ENOSPC/power-loss"
+    ]
+  },
+  "diagnosticRegression": {
+    "status": "PASS",
+    "crossBuildPlotfields": [
+      {
+        "mode": "continuous",
+        "time": 0.0,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "continuous",
+        "time": 0.05,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "continuous",
+        "time": 0.1,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "continuous",
+        "time": 0.15000000000000002,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "continuous",
+        "time": 0.2,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "restart",
+        "time": 0.1,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "restart",
+        "time": 0.15000000000000002,
+        "fields": 4,
+        "bitsEqual": true
+      },
+      {
+        "mode": "restart",
+        "time": 0.2,
+        "fields": 4,
+        "bitsEqual": true
+      }
+    ],
+    "cartesianRepairReportBytesUnchanged": true,
+    "actualBinaryFailurePropagation": {
+      "exitCode": 1,
+      "diagnostic": "cannot flush state repair diagnostics",
+      "inputSha256": "12da266cff357ff09e74163f37bafcef85287313497bad4706a1f10c9cb29225",
+      "finalScientificCheckpoint": {
+        "time": 0.2,
+        "step": 280
+      },
+      "meaning": "Real production CLI fails when end-of-run diagnostics fail, even after scientific endpoint is reached",
+      "notClaimed": "Not real storage exhaustion or atomic rollback of scientific outputs"
+    }
+  },
+  "limitations": [
+    "No public RZ evolution",
+    "No new independent science acceptance",
+    "No CUDA/benchmark",
+    "No actual storage exhaustion, fsync, crash safety or scientific output rollback"
+  ]
+}

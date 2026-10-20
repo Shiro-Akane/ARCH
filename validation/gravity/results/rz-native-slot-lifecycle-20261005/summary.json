@@ -1,0 +1,88 @@
+{
+  "status": "INTERNAL_NATIVE_BUFFER_LIFECYCLE_PASS",
+  "baseline": "2e05e3e544934d8249861f1e20560d19f03867eb",
+  "producer": {
+    "baseline": "2e05e3e544934d8249861f1e20560d19f03867eb",
+    "sha256": {
+      "tests/host/gravity/test_self_gravity.cpp": "6189083053630871d85fa5f41b1c0f3564779f3ddb4baf42a20e25ffb35ba462",
+      "src/physics/gravity/self/SelfGravity.cpp": "2b42be22462e032713dfcd8a7ef732a28c4506fe98ba2c30863e287ca175a92a",
+      "src/physics/gravity/GravityBoundary.cpp": "0400aa84905b118a8f31fe8b4ef6e73baadbe531260d49864863f6c19a0fecd7",
+      "src/physics/gravity/GravityBoundary.h": "934c46828ba6b13e724e0b0f917a49209ad4484e919ab9e956d136bebc5e5260",
+      "build-cpu/arch_self_gravity": "d3d0ca60ede278df1f94b24c0a7028b0e5cc12777e00f9db6fb935212d7f65e8"
+    },
+    "command": [
+      "build-cpu/arch_self_gravity",
+      "native-rz-service-lifecycle"
+    ],
+    "scope": "Actual two-block 512-cell native service, real three slot allocations, t=0, no timestep",
+    "notes": [
+      "Producer identity only; not a PASS claim",
+      "Terminal result must be checked from session25918 and service log"
+    ]
+  },
+  "serviceLogSha256": "ee064d7388bba0db7dff667a1b4e6ad61ceaa0a3da0673677c5f807df406a8a0",
+  "testElfSha256": "d3d0ca60ede278df1f94b24c0a7028b0e5cc12777e00f9db6fb935212d7f65e8",
+  "actualBufferSequence": [
+    "Current",
+    "Scratch",
+    "Next",
+    "Current"
+  ],
+  "rows": [
+    {
+      "lane": 0,
+      "slot": 2,
+      "sourceGeneration": 2,
+      "residualUpper": 4.443476783658658e-15,
+      "toleranceSafe": 1.4684682266979847e-14
+    },
+    {
+      "lane": 1,
+      "slot": 1,
+      "sourceGeneration": 3,
+      "residualUpper": 4.443476783658658e-15,
+      "toleranceSafe": 1.4684682266979847e-14
+    },
+    {
+      "lane": 2,
+      "slot": 0,
+      "sourceGeneration": 4,
+      "residualUpper": 4.443476783658658e-15,
+      "toleranceSafe": 1.4684682266979847e-14
+    }
+  ],
+  "fixture": {
+    "blocks": 2,
+    "cells": 512,
+    "density": 1,
+    "inactiveBufferDensity": "NaN",
+    "rtol": 1e-10,
+    "atol": 0,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumWork": 100000,
+    "time": 0,
+    "steps": 0
+  },
+  "seconds": 465.035,
+  "peakOwnedRssKiB": 20380,
+  "swapKiB": 0,
+  "guardStopped": false,
+  "checks": {
+    "nonfirstSlotMismatch": "rejected before delegated work",
+    "oldAssessment": "unreadable after invalid request",
+    "validRecovery": "PASS",
+    "candidatePhysicalReaderIsolation": "PASS all selected slots",
+    "originalRequestAssessment": "PASS all selected slots",
+    "cpuDefaultLifecycle": "PASS 13.47s",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "limitations": [
+    "Service-level state buffers, not DriverRuntime residency-ledger/regrid transaction",
+    "Same positive density across slots; not distinct spatial density/force evolution",
+    "Assigned version/storage identities; no proof of actual Runtime lease publication",
+    "No continuous Phi/force, energy/angular conservation or scientific signoff",
+    "No CUDA numeric run, simulation, H5/plot/checkpoint, timing benchmark or long run",
+    "Public RZ gate unchanged; production ARCH ELFs not rebuilt"
+  ]
+}

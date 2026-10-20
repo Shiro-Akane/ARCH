@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -eu
+export ARCH_STUDIO_NODE='@ARCH_STUDIO_NODE_QUOTED@'
+exec '@ARCH_STUDIO_ENTRY_QUOTED@' "$@"

@@ -1,0 +1,30 @@
+{
+  "baselineHead": "6b3aa375e09f0bd473ac15d86061cf13f19a8363",
+  "validatedPatchSha256": {
+    "validation/gravity/curved/run_cuda_matrix.py": "2fe6fc26ba1f1ae3b2f1225c459f7af7b08a6de053ba5eec143f50a387bc347e",
+    "validation/gravity/curved/test_physical_endpoint.py": "ba22140ad0e6453eca933a919c0770ff16ecc7ade517d8ff73d2341e66e8dd91"
+  },
+  "tests": {
+    "count": 24,
+    "failed": 0,
+    "skipped": 0,
+    "newFreezeAndCollisionTests": 5
+  },
+  "checks": {
+    "existingSummaryBytesPreserved": true,
+    "existingSnapshotBytesPreserved": true,
+    "unsafeDuplicateAndReservedLabelsRejected": true,
+    "missingBinaryCreatesNoOutput": true,
+    "originalSourceEditCannotChangeCurrentPair": true,
+    "frozenTamperStopsBeforeNextBackend": true,
+    "help": "PASS",
+    "diffCheck": "PASS"
+  },
+  "scientificRunsExecuted": 0,
+  "limitations": [
+    "Freeze is per pair, not a complete external EOS/library/build closure",
+    "Raw snapshot is local provenance, not a scientific approval",
+    "No CPU-only baseline, resource sampling, approved campaign or measured speedup produced",
+    "CPU scientific gate remains unresolved; no CUDA/O9 execution"
+  ]
+}

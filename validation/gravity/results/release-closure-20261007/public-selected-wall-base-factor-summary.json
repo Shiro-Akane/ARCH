@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "decision": "accept",
+  "status": "ACCEPTED_SELECTED_BASE_POINT_ALGEBRA_ONLY",
+  "workflow": {
+    "adoption_scope": "evidence_only",
+    "review_kind": "initial",
+    "reused_evidence_count": 1
+  },
+  "rootIndependentChecks": {
+    "decimal90MirrorCases": 54,
+    "exactShockEnergyIdentities": 45,
+    "gammaAtMost3PrerequisitesPositive": true,
+    "arbitraryGammaInvalidBaseCounterexample": true
+  },
+  "proof": {
+    "rarefactionN": "1-(gamma-1)*q*Pi-(gamma-1)*(1-Pi)^2/(2*gamma); first negative term<=8/27 and second<1/2",
+    "shockN": "(1+2q)^2-(gamma-1)^2*q^2/4+(gamma-1)*q*[1+q*(7-gamma)/4]*Pi; strictlypositive for 1<gamma<=3",
+    "limiter": "Distinct B_L/B_R and species offset cone use selected baseline; same positive a and CFL owner; prerequisite rejection before theta"
+  },
+  "qualifications": [
+    "Not Native mixed-measure/source whole-stage proof",
+    "No generalEOS gamma substitution",
+    "No change to owning acoustic speed/CFL",
+    "No borrowing old LLF theta"
+  ],
+  "providerSeconds": 105.62,
+  "repairs": 0,
+  "actualCharge": "UNKNOWN",
+  "rootActiveCost": "UNKNOWN",
+  "providerUsage": {
+    "input_tokens": 1466,
+    "cached_input_tokens": 384,
+    "output_tokens": 26601,
+    "noncached_input_tokens": 1082,
+    "reasoning_tokens": 26268,
+    "visible_output_tokens": 333
+  },
+  "providerEstimatedUSD": {
+    "currency": "USD",
+    "off_peak": 0.01612405,
+    "peak": 0.0322481,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  }
+}

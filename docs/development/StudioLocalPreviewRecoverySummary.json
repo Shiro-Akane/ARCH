@@ -1,0 +1,189 @@
+{
+  "scope": "real CPU Host init-only cancellation and failure retention; not UI UAT",
+  "events": [
+    {
+      "step": "initial",
+      "state": "succeeded",
+      "identity": {
+        "requestId": "26285614-8069-4f3c-bee7-ba89627146c5",
+        "projectId": "53177034-8b07-4d5d-9edc-01ca11cbb141",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "595001d1c87d56fe9f0c3c4203bc36fc2c09fb425acd2f4dd29c42082bcec12b",
+        "buildId": "0e348e93-5fbe-4d0a-92b0-5d053f8764bf",
+        "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403"
+      }
+    },
+    {
+      "step": "cancel",
+      "state": "cancelled",
+      "retainedRequestId": "26285614-8069-4f3c-bee7-ba89627146c5"
+    },
+    {
+      "step": "recovery",
+      "state": "succeeded",
+      "identity": {
+        "requestId": "b5772606-de88-4bd0-8e26-cae7502ceafe",
+        "projectId": "53177034-8b07-4d5d-9edc-01ca11cbb141",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "c34cc347d7fdd996252d25e157014db1155cb6352b559f117ff44709081601bb",
+        "buildId": "0e348e93-5fbe-4d0a-92b0-5d053f8764bf",
+        "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403"
+      },
+      "session": {
+        "generation": 3,
+        "processToken": "session-id-2",
+        "stage": "complete",
+        "elapsedMilliseconds": 0.666878,
+        "sequence": 1,
+        "transportParseMilliseconds": 0.09344799999917086,
+        "resources": {
+          "clearedAfterError": false,
+          "fileContentMatches": 0,
+          "fileHashes": 0,
+          "resultReused": false,
+          "retainedFileBytes": 0,
+          "retainedTables": 0,
+          "sampleEvaluation": {
+            "eosConversions": 2,
+            "exactStateReuses": 30,
+            "initCalls": 32,
+            "maxRetainedStates": 1024,
+            "scope": "this-request-fixed-eos"
+          },
+          "tableHits": 0,
+          "tableLoads": 0
+        },
+        "stages": [
+          {
+            "stage": "request",
+            "milliseconds": 0.031819
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.308487
+          },
+          {
+            "stage": "support",
+            "milliseconds": 0.020044
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.00746
+          },
+          {
+            "stage": "setup",
+            "milliseconds": 0.067218
+          },
+          {
+            "stage": "eos",
+            "milliseconds": 0.017327
+          },
+          {
+            "stage": "sampling",
+            "milliseconds": 0.016661
+          },
+          {
+            "stage": "source-validation",
+            "milliseconds": 0.05188
+          },
+          {
+            "stage": "complete",
+            "milliseconds": 0.117893
+          }
+        ]
+      }
+    },
+    {
+      "step": "invalid-config",
+      "state": "failed",
+      "error": "Config parameter 'solver': DUPLICATE_PARAMETER [solver]: Duplicate parameter; no occurrence is selected.",
+      "retainedRequestId": "b5772606-de88-4bd0-8e26-cae7502ceafe"
+    },
+    {
+      "step": "final-recovery",
+      "state": "succeeded",
+      "identity": {
+        "requestId": "a3046006-f11c-48f1-b223-f878894df6d3",
+        "projectId": "53177034-8b07-4d5d-9edc-01ca11cbb141",
+        "profileId": "sod-initial-cpu",
+        "caseId": "Sod",
+        "configRevision": "aee294aa465aea1076a19c971123e15b49d93023ebba94218102b059b9610a3f",
+        "buildId": "0e348e93-5fbe-4d0a-92b0-5d053f8764bf",
+        "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403"
+      },
+      "session": {
+        "generation": 3,
+        "processToken": "session-id-2",
+        "stage": "complete",
+        "elapsedMilliseconds": 0.606541,
+        "sequence": 3,
+        "transportParseMilliseconds": 0.09143599999697472,
+        "resources": {
+          "clearedAfterError": false,
+          "fileContentMatches": 0,
+          "fileHashes": 0,
+          "resultReused": false,
+          "retainedFileBytes": 0,
+          "retainedTables": 0,
+          "sampleEvaluation": {
+            "eosConversions": 2,
+            "exactStateReuses": 30,
+            "initCalls": 32,
+            "maxRetainedStates": 1024,
+            "scope": "this-request-fixed-eos"
+          },
+          "tableHits": 0,
+          "tableLoads": 0
+        },
+        "stages": [
+          {
+            "stage": "request",
+            "milliseconds": 0.041652
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.274573
+          },
+          {
+            "stage": "support",
+            "milliseconds": 0.018225
+          },
+          {
+            "stage": "configuration",
+            "milliseconds": 0.007547
+          },
+          {
+            "stage": "setup",
+            "milliseconds": 0.062607
+          },
+          {
+            "stage": "eos",
+            "milliseconds": 0.006913
+          },
+          {
+            "stage": "sampling",
+            "milliseconds": 0.010411
+          },
+          {
+            "stage": "source-validation",
+            "milliseconds": 0.040731
+          },
+          {
+            "stage": "complete",
+            "milliseconds": 0.109931
+          }
+        ]
+      }
+    }
+  ],
+  "sourceCommit": "64148c7a1c6e7c718f14309c6115d51d8b74bad4",
+  "limitations": [
+    "Immediate cancellation after start acknowledgement; not proven mid-computation cancellation",
+    "Invalid config was rejected as duplicate solver, not unknown solver",
+    "Not desktop UAT or simulation",
+    "Session shutdown awaited in finally"
+  ],
+  "publicationNote": "Non-authentication process UUIDs replaced with stable session-id labels across these handover summaries; identity equality and generation/sequence observations preserved."
+}

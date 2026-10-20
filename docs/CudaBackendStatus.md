@@ -8,7 +8,8 @@ A *backend* refers to the specific execution engine in ARCH responsible for perf
 The CUDA backend executes hydrodynamics and adaptive-mesh numerical work on the
 GPU. CPU and CUDA share the same mathematical and physical implementations;
 device memory, kernels, streams and linear-solver libraries are backend-specific.
-Both backends support the feature scope below. The
+The components below follow the geometry and backend scope in the
+[feature list](Features.md). The
 [validation index](../validation/README.md) records the tested configurations,
 technical results and combined acceptance status.
 
@@ -17,12 +18,12 @@ technical results and combined acceptance status.
 | Facility | Implementation scope |
 |---|---|
 | Hydrodynamics | Van Leer, Steger-Warming, Roe, HLL, HLLC; PCM/MUSCL/PPM; MinMod/MC/SuperBee/Van Leer limiters; Euler/SSPRK2/SSPRK3 |
-| Mesh and geometry | One-, two- and three-dimensional block meshes; Cartesian, cylindrical and spherical geometry with the common CPU conventions |
-| Boundaries | Periodic, outflow and reflecting boundaries |
+| Mesh and geometry | Established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical block meshes with common CPU conventions; native cylindrical 2D shares geometry/transport math and has scoped wall, indexing, residency, regrid and fresh checks |
+| Boundaries | Periodic, outflow, reflecting and user physical/potential conditions; Host callbacks exchange surface slices using shared EOS/face mathematics; see [user boundaries](guides/UserBoundaries.md) |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
 | Diffusion | Species, thermal and viscous operators with RKL1/RKL2; the material closure determines active channels. The current Helmholtz stellar closure supplies thermal conduction only. |
-| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial and full-azimuth 2D/3D curved domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
+| Gravity | External stage sources and composite-AMR self-gravity: Cartesian periodic 1D–3D or isolated 3D, plus tested isolated 1D radial, spherical polar 2D and full-azimuth cylindrical/spherical 3D domains including coordinate joins; validated burn and thermal-diffusion combinations. See [gravity validation](../validation/gravity/README.md). |
 | Built-in burning | iso7, aprox13, aprox19, aprox21; BE_NR, BD, ROS4 and network-constrained NSE |
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
@@ -45,9 +46,13 @@ the isotope set of the selected supported network: a built-in network or an
 explicitly certified generated model.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
-In two dimensions, both cylindrical and spherical grids use the polar
-`(r, phi)` plane; `phi` is the azimuthal angle in radians. Three-dimensional
-spherical grids use `(r, theta, phi)`.
+Public cylindrical 2D uses axisymmetric `(r,z)`, expanded as `x=r`, `y=0`, `z=z` at `phi=0`, with three physical velocity components. Spherical 2D uses the equatorial `(r,phi)` plane; 3D cylindrical/spherical grids use `(r,z,phi)` / `(r,theta,phi)`. Native wall, RK/RKL, regrid, prescribed Poisson, isolated self-gravity and fresh checks are recorded in [validation](../validation/README.md). The [current device record](../validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) adds rebuilt GravityBox/SNIaCoupled axial fields, explicit centre-input qualification and common physical-wall bindings across all nine legal chart combinations. It covers device contracts, original public endpoints, actual regridding and fresh. The shared NSE and Host AMR RKL repair has current numerical and integration acceptance: the original private Cellular ENUC gate of `5e-9` plus `5e-12` passes across all 25 checkpoints, with matching ENUC bytes and own-backend fresh. Unchanged geometry and resource owners retain scoped reuse; the declared single-GPU device phase is closed. Historical cylindrical 2D polar records retain their original chart and do not qualify the native chart.
+
+## Build and device requirements
+
+Use the [build guide](guides/Build.md) with a CUDA toolkit and supported Host compiler, explicit device code images, and matching numerical libraries. The current tested profile is Release, GCC 12, NVCC 12.3 and `sm86` on an RTX 3060 Ti with 8 GiB device memory. ARCH numerical translation units retain strict floating-point flags; linked vendor-library profiles are recorded separately. CPU GCC 13 and CUDA GCC 12 LTO archives must not be mixed.
+
+On this 7.7 GiB WSL instance, heavy builds use two jobs with a one-job CUDA heavy pool. The current incremental application/test builds and no-op checks passed; they do not establish a clean-build or other-platform qualification. Actual Ninja rules use ccache. Explicit CUDA or optional-solver requests are checked before execution and must reject unavailable routes. The shared-NSE-header incremental rebuild required 52 actions and 3040.45 seconds; its dependency/instantiation cost is recorded for later frozen build evaluation. The [release plan](../ARCH_RELEASE_PLAN.md) records measured costs, retained CPU limits and multi-GPU/platform qualification boundaries.
 
 ## GPU-AMR execution model
 
@@ -66,11 +71,11 @@ Conversely, the GPU computes the actual cell indicators and transfers just one s
 
 The server measurements below retain their original source identity and
 transport configuration; they precede the current self-gravity work and do not
-establish that every present Helmholtz transport channel is active. Current
-workstation evidence and the controlled FLASH comparison are recorded in the
-[current acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
-Shared CPU optimizations change the comparison baseline. The current RTX
-workstation shows an end-to-end gain for the tested 2D four-module AMR case;
+establish that every present Helmholtz transport channel is active. Earlier
+workstation measurements and the controlled FLASH comparison are recorded in the
+[optimization acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
+Shared CPU optimizations change the comparison baseline. Those RTX
+measurements show an end-to-end gain for the tested 2D four-module AMR case;
 Cellular, Jeans and the 3D curved coupled case remain faster on CPU. Use the
 measured complete-task time for the actual input and scale.
 
@@ -135,7 +140,7 @@ Use the same physical input, AMR criteria and output settings on both backends
 when timing them. Self-gravity uses a real device solve on CUDA, but its
 extra setup can make small grids slower than CPU. The local RTX 3060 Ti
 [curved self-gravity record](../validation/gravity/results/p13-20260924/README.md)
-shows end-to-end coupled gains while separating the Poisson cost; use the
+preserves its original chart and source identity, showing end-to-end coupled gains while separating the Poisson cost; it is not Native RZ evidence. Use the
 [gravity acceptance](../validation/gravity/README.md) for tested limits.
 
 ### What the CUDA optimization changes

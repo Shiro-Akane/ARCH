@@ -1,0 +1,83 @@
+{
+  "scope": "CPU/Core/Studio engineering checkpoint only; RZ release science not accepted",
+  "status": "PASS_EXISTING_ENGINEERING_SELECTION",
+  "source_head_annotation": "8a13508c0db5aed423fd36876c8e2b8adfd42f1c",
+  "binary_sha256": "6cb72146b540f9b09b429d8a36d26dd207920e00e0ec23810552c63b83965900",
+  "cpu": {
+    "tests": 68,
+    "failures": 0,
+    "skips": 0,
+    "ctest_wall_seconds": 139.2,
+    "inventory_sha256": "92b1888231586bcda406891325ef04160dc982676959dea760ee7d979b97ea3e",
+    "junit_sha256": "4303af1781f65c9f92e7ccd1ef74211ac4058ebcbf9f4e6c457695ed4ee3f3b8"
+  },
+  "tooling": {
+    "tests": 527,
+    "failures": 0,
+    "skips": 0,
+    "unittest_wall_seconds": 29.011
+  },
+  "studio": {
+    "tests": 362,
+    "failures": 0,
+    "skips": 0,
+    "node_wall_seconds": 47.061643053,
+    "node_version": "24.21.0",
+    "concurrency": 1,
+    "lint": "PASS",
+    "typecheck_and_vite": "PASS",
+    "real_configuration_v3": "PASS;95parameters;inspection/staticrouteonly"
+  },
+  "storage": {
+    "host_mount": "/mnt/e",
+    "observed_free_bytes": 23919812608,
+    "minimum_host_free_bytes": 8589934592,
+    "new_raw_deleted_files": 464,
+    "new_raw_deleted_bytes": 33777608,
+    "failures_retained": true
+  },
+  "fresh_plot": {
+    "binary": "Fresh current CPU 6cb721 formal Sod t=0 writer \u2192 isolated child \u2192 client PASS; independent UTF8 identity and numerical storage checks PASS; raw deleted after receipts",
+    "datasets_numeric": 43,
+    "datasets_utf8": 6,
+    "native_storage_mismatches": 0,
+    "formal_isolated_reader_client": "PASS",
+    "scope": "t0identity/storageconsistency only"
+  },
+  "physics_limits": [
+    "Existingselection does not close RZ science/AMR/restart/device",
+    "No formalGPU/performance or4070 matchedspeed claim"
+  ],
+  "source_files_sha256": {
+    "src/numerics/state/RzNativeClosure.h": "3e95ccbd1ec3bca502b14aa509f2bf606f9b9d086b53407eff2fdb1f54562a70",
+    "src/grid/GridMetrics.h": "7e7765c022044047d89a697a525b2e9ddf285b399cad0f43489fccf6bf55aca9",
+    "src/driver/stages/DriverBurn.h": "38e5d26f51ccc8c1946b20d413855ebe263904f6ad454326bc43833ef14910a5",
+    "src/driver/DriverUtils.h": "d62eb01043a419040ce2ae97a6ee7d7c0054ca8b00fc0047180abc23521963cb",
+    "studio/host/isolatedPlotfileMetadata.ts": "4965dc4fdf74579d3e5f755374c3f61592e066abd8b5fdcd68aba9f8cd790a22",
+    "studio/host/runCheckpoint.ts": "440ff0aad9b03fca9cdcf4987fc390abb0b385a91381cfc46f045acd5195a782",
+    "tools/run_memory_guarded.py": "4caba801bee0b943a419c20787c63f3ac2af1ceb0ccdd120a1ae381c9bbd448c"
+  },
+  "low_density": {
+    "trajectories": 72,
+    "status": "PASS",
+    "guard_wall_seconds": 7.06,
+    "results_sha256": "071627d4a041d305fde2209c6db6e0fb9c4c61bd601ee7a4cf283fbf572236d3",
+    "original_thresholds_preserved": true
+  },
+  "self_gravity_quick": {
+    "status": "PASS",
+    "records": 51,
+    "physical_runs": 33,
+    "expected_rejections": 17,
+    "restart_identity_assertions": 1
+  },
+  "processed_output": {
+    "files": 462,
+    "bytes": 33650328,
+    "numeric_dataset_instances": 9672,
+    "utf8_dataset_instances": 1138,
+    "summary_sha256": "9b36283dbee59e04dde46cc3f57bd52d45bf437e66f4817b3785a8712681c02a",
+    "cleanup_receipt_sha256": "52615171b78619b94f4f1283982e1d0c9615dc8f29ee479dd2231b1d3e7bdf65",
+    "raw_deleted": true
+  }
+}

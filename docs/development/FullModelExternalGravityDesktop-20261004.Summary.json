@@ -1,0 +1,140 @@
+{
+  "scope": "ExternalGravity Linux production native initial field and initial AMR; zero external acceleration, no evolution acceptance",
+  "launchCommit": "e9a37026212b408914b0490463f30db0e3bdddfe",
+  "productionCodeCommit": "584508ea1d9fc23009da69973de7b13abf2fc00e",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "completeDependencyFreshness": "unknown",
+  "configSha256": "73f9a423fc378a1ac063d4190e022122c8db460298d524539ad958d19ee30a7d",
+  "windowId": 41813672,
+  "field": {
+    "sampleCount": 512,
+    "domainCm": [
+      0,
+      1
+    ],
+    "densityUniform": 1,
+    "selectedSample": {
+      "index": 255,
+      "xCm": 0.4990234375,
+      "uiDensity": 1,
+      "uiPressure": 1,
+      "uiTemperature": 3.4818942e-07,
+      "uiVelocityX": 0,
+      "uiEnergyDensity": 2.5,
+      "uiSpecificInternalEnergy": 2.5
+    },
+    "notIndependentEosOracle": true
+  },
+  "gravityUi": {
+    "mode": "external",
+    "observedAccelerationX": 0,
+    "unit": "cm/s^2",
+    "yZInputsUnchangedFromExistingConfig": 0,
+    "yZControlsNotFullyInspected": true,
+    "gravityFieldPreviewNotClaimed": true
+  },
+  "inspection": "Current; three raw probes reported but not expanded/reviewed",
+  "amr": {
+    "status": "Complete",
+    "leaves": 8,
+    "levelCounts": {
+      "0": 8
+    },
+    "completedPasses": 0,
+    "configuredMaxBlocks": 32,
+    "workingCapacity": 32,
+    "activeCells": 128,
+    "poolBaseBytes": 147456,
+    "levelBaseBytes": 36864,
+    "levelWithSpeciesBytes": 36864,
+    "speciesCount": 0,
+    "selectedBlock": {
+      "logicalKey": "0:0:0:0",
+      "level": 0,
+      "boundsCm": [
+        0,
+        0.125
+      ],
+      "cellShape": [
+        16
+      ],
+      "cellSpacingCm": [
+        0.0078125
+      ]
+    },
+    "fieldAndMeshIdentityUi": "matching field/config/build/EOS/native coordinates",
+    "cellFieldArrays": "not provided",
+    "notOomPrediction": true
+  },
+  "startup": "Preview preparing/current observed without Update Preview input",
+  "cleanup": {
+    "exitCode": 0,
+    "ownedIdentities": [
+      {
+        "pid": 1678883,
+        "ppid": 1678882,
+        "startTicks": "6771848",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1678886,
+        "ppid": 1678883,
+        "startTicks": "6771849",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1678887,
+        "ppid": 1678883,
+        "startTicks": "6771849",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1678912,
+        "ppid": 1678883,
+        "startTicks": "6771856",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1678925,
+        "ppid": 1678883,
+        "startTicks": "6771858",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1678910,
+        "ppid": 1678886,
+        "startTicks": "6771856",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1679290,
+        "ppid": 1678887,
+        "startTicks": "6772313",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1680265,
+        "ppid": 1678925,
+        "startTicks": "6773986",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allGone": true,
+    "configUnchanged": true,
+    "configuredScientificOutputAbsent": true,
+    "managedWorktreeClean": true
+  },
+  "sourceChanged": false,
+  "baselineRerun": false,
+  "pushTag": false
+}

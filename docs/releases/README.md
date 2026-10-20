@@ -1,5 +1,8 @@
 # Release notes
 
+- [v1.3.0](V1.3.0.md) · [中文](V1.3.0.zh-CN.md): ARCH Studio, shared
+  architecture modernization, explicit critical-configuration validation and
+  a consolidated documentation/verification workflow.
 - [v1.2.1 update notes](V1.2.1.md) · [中文](V1.2.1.zh-CN.md): shared
   execution work, configurable physical/numerical controls, checkpoint checks
   and clearer reader documentation.

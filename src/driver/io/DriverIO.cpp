@@ -4,26 +4,46 @@
  *
  * Workflow:
  * 1. Receive a resolved configuration, stage request and current state identity.
- * 2. Schedule plots, checkpoints and diagnostics from the current published state.
- * 3. Hand completed state and diagnostics to the next scheduled stage.
+ * 2. Complete actual ghosts through the Runtime materialization owner.
+ * 3. Validate an ephemeral shared thermodynamic mean with the bound EOS, while
+ *    retaining the original V/W-averaged conserved state for persistence.
+ * 4. Publish plots/checkpoints only after serialization and close succeed.
+ * 5. Hand completed state and diagnostics to the next scheduled stage.
  */
 
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
+#include <string>
 #include <vector>
 
 #include "driver/io/DriverIO.h"
+#include "core/files/RunIdentity.h"
 
 #include "amr/AMRControl.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "io/plot/PlotGridMetadata.h"
 #include "driver/schedule/DriverControl.h"
 #include "numerics/state/StateAdmissibility.h"
 #include "physics/species/Species.h"
 
 namespace arch::driver {
 namespace {
-/** Reject invalid conserved, composition or EOS state before serializing any plot. */
+/** Finish diagnostic streams explicitly; destructors cannot propagate buffered failures. */
+void close_diagnostic(std::ofstream& output, const char* description)
+{
+    output.flush();
+    if (!output)
+        throw std::runtime_error(std::string("cannot flush ") + description);
+    output.close();
+    if (!output)
+        throw std::runtime_error(std::string("cannot close ") + description);
+}
+/** Reject invalid composition or EOS state before persistence.
+ * This traversal never changes stored native U. Runtime materialization must
+ * have completed the actual Current ghosts.
+ */
 void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
                           TemperatureFunc temperature, Gamma1Func gamma1, const void* eos)
 {
@@ -35,17 +55,19 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
         const auto& block=control.pool->GetBlock(id);
         const auto& grid=block.grid;
         const auto& state=block.fluid_state;
+        const auto geometry=GridMetrics::make_geometry_view(grid);
+        const auto read=[&state](int index) { return state.get(index); };
         for (int k=grid.Ks(); k<grid.Ke(); ++k)
             for (int j=grid.Js(); j<grid.Je(); ++j)
                 for (int i=grid.Is(); i<grid.Ie(); ++i) {
                     const int cell=grid.GetIndex(i,j,k);
                     try {
                         state.get_species_to_buffer(cell,fractions.data());
-                        const auto fluid=state.get(cell);
-                        if (arch::state::validate(fluid,fractions.data(),species,1,
+                        const FluidVector eos_mean=read(cell);
+                        if (arch::state::validate(eos_mean,fractions.data(),species,1,
                             limits.sml_rho,limits.min_eint,limits.max_eint)!=arch::state::Status::valid)
                             throw std::runtime_error("Invalid conserved output state");
-                        io::require_output_thermodynamics(fluid,fractions.data(),pressure,temperature,gamma1,eos);
+                        io::require_output_thermodynamics(eos_mean,fractions.data(),pressure,temperature,gamma1,eos);
                     } catch (const std::exception& error) {
                         throw std::runtime_error("Output block="+std::to_string(id)+" cell="+
                             std::to_string(cell)+": "+error.what());
@@ -54,21 +76,30 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
     }
 }
 }
-/** Materialize the accepted state and write a validated plot with gravity fields. */
+/** Complete actual ghosts/materialization and publish a validated native plot. */
 void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
 {
     const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
     const auto& specs = runtime.species();
+    if (amr_ctrl.tree->GetActiveBlocks().empty())
+        throw std::invalid_argument("Cannot publish Plotfile without active leaf blocks.");
     runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
-    write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index++,
-              ctrl.t_current, config, specs, extra_fields);
+    if (plot_run_id_.empty()) plot_run_id_ = arch::core::new_run_identity();
+    write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index,
+              ctrl.t_current, config, specs, extra_fields, &checkpoint_provenance,
+              plot_run_id_, &plot_source_identity);
+    // A failed write/close/publication must not consume the next output identity.
+    ++ctrl.plt_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
-/** Write restart state and provenance at a completed step boundary. */
+/** Persist original native restart means after closure/EOS validation.
+ * Materialization already performs ensure_fluid_ghosts first; an extra call
+ * would resample user BC twice.
+ */
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {
     const auto start = Clock::now();
@@ -78,10 +109,13 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
     if (runtime.backend())
         runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
-    write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index,
+    const auto geometry_identity = io::checkpoint_geometry_identity(config.grid.dim, config.grid.geometry);
+    write_chk(amr_ctrl, ctrl.chk_file_index, ctrl.plt_file_index,
               ctrl.step_count, ctrl.t_current, ctrl.dt_old,
               dt_burn_global, resume_after_regrid, config, specs,
-              checkpoint_provenance, ctrl.repairs);
+              checkpoint_provenance, ctrl.repairs, geometry_identity);
+    // Reserve the identity until the serializer reports success.
+    ++ctrl.chk_file_index;
     output_seconds_ += std::chrono::duration<double>(Clock::now()-start).count();
     ++output_calls_;
 }
@@ -90,6 +124,70 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                                   const CpuStageTimings& cpu_stages)
 {
     const auto& config = runtime.configuration();
+    if(runtime.diffusion_activity_enabled()) {
+        const auto& value=runtime.diffusion_activity_totals();
+        const auto& diffusion=config.physics.diffusion;
+        const bool thermal_only=diffusion.use_thermal_diffusion
+            &&!diffusion.use_viscous_diffusion&&!diffusion.use_species_diffusion;
+        const auto& leaves=runtime.control().tree->GetActiveBlocks();
+        if(leaves.empty())throw std::logic_error("Diffusion activity output lacks an actual leaf");
+        const auto& grid=runtime.control().pool->GetBlock(leaves.front()).grid;
+        io::PlotNativeGrid measure;
+        // Reuse the existing measure/normalization owner for one actual cell.
+        io::append_plot_native_cell(measure,grid,grid.Is(),grid.Js(),grid.Ks());
+        std::ofstream activity(config.io.out_dir+"/diffusion_activity.tsv");
+        if(!activity)throw std::runtime_error("Cannot write diffusion activity diagnostics");
+        activity << "# scope=since-process-start; quantity=endpoint-energy-redistribution; units=CGS\n"
+                 << "# signed=sum_half,sum_leaf,sum_interior V*(E_after-E_seed); "
+                    "absolute=sum_half,sum_leaf,sum_interior V*abs(E_after-E_seed)\n"
+                 << "# excludes-intermediate-excursions=true; not-cumulative-heat-flux=true; "
+                    "accepted-state-includes-existing-repairs=true; thermal-only-operator=" << thermal_only << '\n'
+                 << "# geometry=" << grid.geometry << "; dimension=" << grid.dim
+                 << "; chart=" << "Existing"
+                 << "; cell_measure_unit=" << measure.measure_unit
+                 << "; normalization=" << measure.normalization
+                 << "; measure_convention=" << measure.measure_convention
+                 << "; quantity_unit=(erg/cm^3)*(" << measure.measure_unit << ")\n"
+                 << std::setprecision(std::numeric_limits<long double>::max_digits10)
+                 << "# process_start_time=" << value.process_start_time
+                 << "; process_start_step=" << value.process_start_step << '\n';
+        const auto& operations=runtime.diffusion_activity_operations();
+        activity << "# observer_bytes_h2d=" << operations.bytes_h2d
+                 << "; observer_bytes_d2h=" << operations.bytes_d2h
+                 << "; observer_kernels=" << operations.kernel_count
+                 << "; observer_synchronizations=" << operations.stream_sync_count << '\n'
+                 << "time\tsigned_energy_change\tabsolute_energy_change\tcell_visits\taccepted_halves\taccepted_macros\n"
+                 << ctrl.t_current << '\t' << value.signed_energy_change << '\t' << value.absolute_energy_change
+                 << '\t' << value.cells << '\t' << value.accepted_halves << '\t' << value.accepted_macros << '\n';
+        close_diagnostic(activity,"diffusion activity diagnostics");
+    }
+    const auto& hydro_budget=runtime.hydro_boundary_budget();
+    const auto& diffusion_budget=runtime.diffusion_boundary_budget();
+    if (!hydro_budget.empty()) {
+        std::ofstream fluxes(config.io.out_dir+"/boundary_fluxes.tsv");
+        if (!fluxes) throw std::runtime_error("Cannot write boundary flux diagnostics");
+        fluxes << "# scope=since-process-start; positive=outgoing; momentum=native; "
+                  "energy=fluid-total; gravity-work=separate; units=CGS";
+        const bool angular=config.grid.geometry=="cylindrical" && config.grid.dim==2;
+        if (angular) fluxes << "; angular_z=outgoing-torque-impulse; normalization=per-unit-azimuth";
+        fluxes << '\n';
+        const auto& observer=runtime.boundary_observer_operations();
+        fluxes << "# observer_bytes_h2d=" << observer.bytes_h2d << "; observer_bytes_d2h=" << observer.bytes_d2h
+            << "; observer_kernels=" << observer.kernel_count << "; observer_synchronizations=" << observer.stream_sync_count << '\n';
+        fluxes << "time\toperator\tmass\tmomentum_x1\tmomentum_x2\tmomentum_x3\tenergy";
+        for (const auto& species:runtime.species().species_list)
+            fluxes << "\tspecies_" << species.name;
+        fluxes << "\theat";
+        if (angular) fluxes << "\tangular_momentum_z";
+        fluxes << '\n' << std::setprecision(17);
+        for (int kind=0;kind<3;++kind) {
+            fluxes << ctrl.t_current << '\t' << (kind==0 ? "hydro" : kind==1 ? "diffusion" : "total");
+            for (std::size_t k=0;k<hydro_budget.size();++k)
+                fluxes << '\t' << (kind==0 ? hydro_budget[k] : kind==1 ? diffusion_budget[k]
+                    : hydro_budget[k]+diffusion_budget[k]);
+            fluxes << '\n';
+        }
+    }
     const auto* compute_backend = runtime.backend();
     const auto& regrid_measurements = runtime.regrid_records();
     const bool has_diff = config.physics.diffusion.use_diffusion;
@@ -99,6 +197,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                << std::chrono::duration<double>(Clock::now()-started_).count() << '\t'
                << output_seconds_ << '\t' << output_calls_ << '\n';
         if (!timing) throw std::runtime_error("cannot write run timings");
+        close_diagnostic(timing, "run timings");
     }
     // Stage clocks are wall intervals around synchronous CPU calls. They do
     // not include setup, output or miscellaneous Driver work; the existing
@@ -113,13 +212,15 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
             timing << names[i] << '\t' << cpu_stages.seconds[i]
                    << '\t' << cpu_stages.calls[i] << '\n';
         if (!timing) throw std::runtime_error("cannot write CPU stage timings");
+        close_diagnostic(timing, "CPU stage timings");
     }
     {
         std::ofstream report(config.io.out_dir + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");
         report << std::setprecision(17) << "revision=P1.5-v1 units=CGS\n";
         const char* names[]{"events","affected_volume","mass_signed","mass_absolute",
-            "momentum_x","momentum_y","momentum_z","energy_signed","energy_absolute","local_cell"};
+            "momentum_x", "momentum_y", "momentum_z",
+            "energy_signed","energy_absolute","local_cell"};
         for (int i=0;i<state::RepairView::fixed_size;++i) report << names[i] << "=" << ctrl.repairs.values[i] << "\n";
         for (int i=0;i<ctrl.repairs.species();++i) {
             report << "species_" << i << "_signed=" << ctrl.repairs.values[10+2*i] << "\n";
@@ -128,6 +229,8 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         report << "block_uid=" << ctrl.repairs.block_uid << "\nstage=" << ctrl.repairs.stage
                << "\ntime=" << ctrl.repairs.time << "\nposition=" << ctrl.repairs.position[0] << ","
                << ctrl.repairs.position[1] << "," << ctrl.repairs.position[2] << "\n";
+        // Buffered text failures must propagate before announcing diagnostics.
+        close_diagnostic(report, "state repair diagnostics");
         std::cout << "[State] floor repairs=" << ctrl.repairs.values[0]
                   << " delta_mass=" << ctrl.repairs.values[2]
                   << " delta_energy=" << ctrl.repairs.values[7] << std::endl;
@@ -148,6 +251,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                    << record.operations.kernel_count << '\t' << record.operations.stream_sync_count << '\n';
         }
         if (!output) throw std::runtime_error("failed writing regrid measurements");
+        close_diagnostic(output, "regrid measurements");
     }
 
     if (compute_backend) {
@@ -193,6 +297,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         }
         if (!trace_output)
             throw std::runtime_error("failed writing CUDA backend trace");
+        close_diagnostic(trace_output, "CUDA backend trace");
 
         if (has_diff) {
             const std::filesystem::path schedule_path = directory
@@ -220,6 +325,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
             if (!schedule_output || cuda_diffusion_schedule.empty())
                 throw std::runtime_error(
                     "failed writing CUDA diffusion schedule");
+            close_diagnostic(schedule_output, "CUDA diffusion schedule");
         }
     }
 

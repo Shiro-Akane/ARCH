@@ -13,6 +13,7 @@
 
 #include <UserInterface.h>
 #include <GlobalDefs.h>
+#include "Configuration.h"
 
 class BurnOneZoneProblem
 {
@@ -22,6 +23,12 @@ class BurnOneZoneProblem
     std::vector<double> mass_fractions_;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        return arch::cases::BurnOneZoneConfiguration(inputs);
+    }
+
     void Setup(SimConfig& config, SpeciesManager& species)
     {
         if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {

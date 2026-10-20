@@ -20,6 +20,10 @@ namespace arch::cuda
 {
 namespace detail
 {
+/** Combine the unchanged selected stage using the common conservative leaf.
+ * Preserve update, repair accounting, species transport, failure poison and
+ * store order.
+ */
 static __device__ inline void hydro_single_stage_update_kernel_work(
     DeviceStateView old_state, DeviceStateView current_state,
     DeviceStateView destination, DeviceStateView delta, DeviceGridView grid,

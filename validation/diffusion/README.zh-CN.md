@@ -13,7 +13,7 @@
 
 CPU 与 CUDA 均通过相同的解析误差、有界性和守恒检验。
 
-`DiffusionMode` 实现仍位于 `simulation/DiffusionMode/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们在静态、周期一维理想气体状态中推进有界 tracer 质量分数：
+`DiffusionMode` 实现仍位于 `simulation/DiffusionMode/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs)，它们在静态、周期一维理想气体状态中推进有界 tracer 质量分数：
 
 $$
 X(x,t)=0.5+0.25\exp[-D(2\pi)^2t]\cos(2\pi x),\qquad D=0.01.

@@ -1,0 +1,50 @@
+{
+  "observedAt": "2026-10-03T06:18:15.062623+00:00",
+  "sourceHead": "0ddc7ca6453bdbac59b693daac41c703b395a5a8",
+  "runId": "76f06645-6aa0-4d9d-b9df-f3b4f637fd83",
+  "state": {
+    "runId": "76f06645-6aa0-4d9d-b9df-f3b4f637fd83",
+    "state": "succeeded",
+    "workerPid": 53400,
+    "workerStartTicks": "922945",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T06:16:29.118Z",
+    "processId": 53412,
+    "processStartTicks": "922952",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T06:16:46.612Z"
+  },
+  "nativeShutdownAt": "2026-10-03T06:16:37.242Z",
+  "finishedAfterShutdownSeconds": 9.37,
+  "closeWindowObservedRunning": true,
+  "liveWorkerAfterShutdownCaptured": false,
+  "liveWorkerEvidenceLimit": "Read-only process observation happened after natural finish; no claim of live worker snapshot after close. Timestamped desktop shutdown precedes successful worker completion.",
+  "oldElectronAfter": null,
+  "oldHostAfter": null,
+  "oldWarmAfter": null,
+  "runWorkerAfter": null,
+  "runCoreAfter": null,
+  "newElectron": {
+    "pid": 53611,
+    "startTicks": "927372",
+    "ppid": 53606,
+    "pgrp": 53611
+  },
+  "newHost": {
+    "pid": 53657,
+    "startTicks": "927382",
+    "ppid": 53611,
+    "pgrp": 53611
+  },
+  "newPreviewOrigin": "http://127.0.0.1:32935",
+  "recoveredHistoryMatches": true,
+  "nativeHistory": "Sod succeeded 76f06645-6aa0-4d9d-b9df-f3b4f637fd83 visible in native saved history after relaunch",
+  "inputSha256": "9edb45ef29ce5bbf371f9145f5bc1dbb051ee31563472aaee865e159e59b3d16",
+  "savedFrozenEqual": true,
+  "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+  "localRawData": "studio/.local/integration/native-active-close-direct-0fffcf94-cea7-42b8-b360-c87397bc7d4d",
+  "rawUploaded": false,
+  "scope": "native active Run close: owned shutdown, delivered independent computation reaches natural success after shutdown, relaunch history recovery; not science accuracy/performance or active Preview/AMR shutdown"
+}

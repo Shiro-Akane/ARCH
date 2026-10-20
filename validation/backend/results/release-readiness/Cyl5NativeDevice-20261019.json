@@ -1,0 +1,607 @@
+{
+  "phase": "CYL-5",
+  "decision": "PASS",
+  "status": "CLOSED_IN_AUTHORIZED_SCOPE",
+  "client_date": "2026-10-19",
+  "recorded_at_utc": "2026-10-18T15:58:09.609175+00:00",
+  "scope": "Native cylindrical2D thin CUDA adaptation; actual one-GPU wall/index/residency/stream/regrid/fresh and CPU/GPU numerical checks. Not full CYL6 algorithm/EOS endpoints, multiGPU, or full REL4 release qualification.",
+  "acceptance_owner": "Codex independent integration and acceptance; worker execution alone is not acceptance",
+  "worktree": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "head": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "contains_authorized_uncommitted_changes": true,
+  "contracts": {
+    "native_chart": "cylindrical-rz-pwc",
+    "geometry_semantics_revision": 1,
+    "spatial_axes": [
+      "r",
+      "z",
+      "inactive"
+    ],
+    "physical_momenta": [
+      "rho*u_r",
+      "rho*u_z",
+      "rho*u_phi"
+    ],
+    "angular_momentum": "sum(mom_w*W)",
+    "original_angular_tolerance": "1e-12 unchanged",
+    "geometry_gravity_decoupled": true,
+    "gravity_off": "zero solves and dedicated gravity numerical allocations in native Runtime witnesses",
+    "O7": "active missing/invalid critical inputs reject; registered auxiliary/default/auto provenance unchanged",
+    "old_RZ_facilities_restored": false,
+    "retained_charts": 8,
+    "CHK_source_build_profile_gate_added": false
+  },
+  "source": {
+    "files": 1208,
+    "freeze_sha256": "bbab154ffad575d8b8d86d8202b2a0d4d942c0b476f6a285b94a1f843ad51f54",
+    "science_delta": 39,
+    "changed_production": [
+      "src/cuda/amr/RefinementIndicators.cu",
+      "src/cuda/common/CudaCommon.cuh",
+      "src/cuda/hydro/kernels/HydroBatchKernels.cuh",
+      "src/cuda/hydro/kernels/HydroFaceKernel.cuh",
+      "src/cuda/hydro/kernels/HydroSourceKernels.cuh",
+      "src/cuda/hydro/policies/CheckedHydroEos.cuh",
+      "src/cuda/hydro/policies/HydroIntegratorPolicies.cuh",
+      "src/cuda/runtime/CudaBackend.h",
+      "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+      "src/cuda/runtime/control/CudaBackendInternal.h",
+      "src/cuda/runtime/control/CudaBackendResources.cpp",
+      "src/cuda/runtime/control/CudaBackendStore.cpp",
+      "src/cuda/runtime/gravity/CudaGravityExecution.cu",
+      "src/driver/SolverDispatch.cpp",
+      "src/driver/dispatch/capability/BackendCapabilities.h",
+      "src/driver/runtime/ComputeBackend.h",
+      "src/driver/runtime/DriverRegrid.cpp",
+      "src/driver/runtime/DriverRuntime.cpp",
+      "src/driver/stages/DriverStages.h",
+      "src/numerics/integrator/HydroBoundaryAuthority.h",
+      "src/physics/boundary/PhysicalBoundaryHandler.cpp",
+      "src/physics/boundary/PhysicalBoundaryHandler.h",
+      "src/physics/gravity/self/SelfGravity.cpp"
+    ],
+    "final_snapshot": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/final-source",
+    "patch_sha256": "80946049fc2c94e9615ae9b0c096ff5c75168a441483c6542e8289d20e154a9c",
+    "history_frozen_unchanged": 154
+  },
+  "source_manifest": {
+    "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/candidate-freeze9.json",
+    "sha256": "bbab154ffad575d8b8d86d8202b2a0d4d942c0b476f6a285b94a1f843ad51f54"
+  },
+  "source_patch": {
+    "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/candidate5-final.patch",
+    "sha256": "80946049fc2c94e9615ae9b0c096ff5c75168a441483c6542e8289d20e154a9c"
+  },
+  "display_only_source_bridge": {
+    "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/final-display-only-change.json",
+    "sha256": "ad4fc72c17c0972676ba818dec1b4161e2893705025fda8e691ca86be14b87a8"
+  },
+  "actual_build_profiles": {
+    "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/final-build-profile.json",
+    "sha256": "9e1e75ba0b9f9f3d44acb97037f34231be80dfa181a96d54c60c7ea41efc663d"
+  },
+  "binaries": {
+    "build-modernization-cpu/bin/ARCH": {
+      "sha256": "4549e844fb7b7da1373d13c267fa313ef48ccf656bcb189abd78c1675cc53a50",
+      "bytes": 8891952
+    },
+    "build-modernization-cuda/bin/ARCH": {
+      "sha256": "fc3595542b5b61f391a00a2f39796b32db6f24c3f454fc8e21f6c10f18d04d0c",
+      "bytes": 297513864
+    },
+    "build-modernization-cpu/arch_cuda_single_level_validation": {
+      "sha256": "85f38cda400656f387b7c2da9e5ae8cd3a91e8ece4c329f538a7b64b3e74fa66",
+      "bytes": 428392
+    }
+  },
+  "acceptance": {
+    "wall_and_indices": {
+      "decision": "PASS",
+      "stages": [
+        "device-wall-smoke4",
+        "cuda-integration-tests7",
+        "cuda-repaired-tests8"
+      ],
+      "scope": "SP2/41 native physical wall/source parity, exact zero advective wall mass/species/torque/energy, open-view negative, nine-chart leaf checks, missing native metadata rejection"
+    },
+    "CUDA_build_CTest": {
+      "decision": "PASS",
+      "unique_entries": 11,
+      "scope": "nine successful entries of first batch plus two repaired entries; includes Host control tests, does not imply all11 are pure Device science"
+    },
+    "CPU_affected_CTest": {
+      "decision": "PASS",
+      "unique_entries": 7,
+      "stage": "cpu-final-tests9"
+    },
+    "resident_native_Runtime": {
+      "decision": "PASS",
+      "cases": 12,
+      "stage": "device-runtime8",
+      "axes_and_annuli": true,
+      "methods": [
+        "Euler",
+        "RK2",
+        "RK3",
+        "RKL1",
+        "RKL2"
+      ],
+      "nonzero_rotation": true,
+      "mixed_levels": true,
+      "actual_refine_and_coarsen": true,
+      "host_poisoned_before_device_stages": true,
+      "original_J_error_max_from_reported_native_long_double_check": "3.5242301588676031e-17",
+      "numeric_stage_budgets_unchanged": true
+    },
+    "prescribed_poisson": {
+      "decision": "PASS",
+      "cases": 24,
+      "stage": "device-poisson4",
+      "original_rtol": "1e-12",
+      "original_quadratic_phi_limit": "1e-8",
+      "original_quadratic_flux_limit": "1e-7",
+      "original_Gauss_limit": "5e-10",
+      "original_quartic_order_min": 1.8,
+      "max_reported_Gauss_error": 3.992634537814588e-11
+    },
+    "public_native": {
+      "decision": "PASS",
+      "actual_processes": 18,
+      "CPU_GPU_pairs": 7,
+      "comparison_standard": {
+        "rtol": 2e-10,
+        "atol": 2e-12,
+        "source": "validation/backend/cases.json original transport/reduction policy"
+      },
+      "CPU_to_GPU_fresh": true,
+      "report": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/native-run-comparisons.json",
+        "sha256": "089d29f913395d126762a8b2ab00f8b42d4cbffac043d4e659b624ef32374fb3"
+      }
+    },
+    "fresh_and_final_identity": {
+      "decision": "PASS",
+      "ordinary_datasets": {
+        "CHK": 16,
+        "Plot": 24
+      },
+      "self_datasets": {
+        "CHK": 16,
+        "Plot": 28
+      },
+      "final_label_only_bridge": {
+        "current_processes": 5,
+        "exact_CHK_Plot_comparisons": 10
+      },
+      "report": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/final9-binary-bridge.json",
+        "sha256": "d4c1c516bed31b992b9156a46de581bf7a080331945f620abb263ffb2c335d11"
+      },
+      "fresh_original_report": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/fresh-comparison.json",
+        "sha256": "6695206db1ef0f176dc37a3ee0f6120f90359d240f14ea815fb41637eaf537cf"
+      }
+    },
+    "optional_external_torque": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/external-J-processed.json",
+      "sha256": "1e418530e0243d8089459b2cbae3c743a949fd35f28debdf5fcd8e15b0e2848e"
+    },
+    "O7_and_identity": {
+      "decision": "PASS",
+      "required_key_negative_count": 43,
+      "invalid_value_negative_count": 9,
+      "old_wrong_identity_negative_count": 6,
+      "explicit_CUDA_on_CPU_build": "rejected with CUDA build disabled; no H5",
+      "auto": "actual GPU trace verified",
+      "config": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/public-entry-checks-final9.json",
+        "sha256": "aac001e3004ec5a123f36038fbeeb2dc3ed569828de4ce238129a0f55684a3c7"
+      },
+      "artifact_negatives": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/artifact-rejections-final9.json",
+        "sha256": "df48e84068bb04277c2a3eecbf4413b233aeec2f9365f69eb09371bdb1e89a46"
+      },
+      "backend_negative": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/cpu-cuda-negative.json",
+        "sha256": "b7171dcbf547070b83a5f14677826fb42712d988e55677e2cf7dd6eec8d20699"
+      }
+    },
+    "memory_and_synchronization": {
+      "decision": "PASS",
+      "actual_app_self_memcheck": "final9-gpu-self",
+      "native_Runtime_memcheck": "device-runtime-memcheck9",
+      "native_Runtime_synccheck": "device-runtime-synccheck9",
+      "all_error_summaries_zero": true,
+      "memcheck_leak_summaries_zero": true,
+      "scope": "selected complete real executions on oneGPU, not untested multiGPU, racecheck or every failure path"
+    },
+    "Studio_current_Device_files": {
+      "decision": "PASS",
+      "actual_artifacts": 5,
+      "report": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/studio-actual-device-artifacts.json",
+        "sha256": "e099cab98e651fdfe9c6551522b327e01f363557df42cbdc1483269d184f00a2"
+      },
+      "manual_desktop_visual_acceptance": false,
+      "C4_UI_and_schema_evidence": "Unchanged Studio source is reusable within original C4 scope; current Device outputs were read anew."
+    },
+    "architecture": {
+      "decision": "PASS",
+      "tests": 129,
+      "stages": [
+        "architecture-final9",
+        "module-boundaries-final9"
+      ],
+      "negative_controls": "exact shared reflecting-side call and existing Poisson test object accepted; copied boundary rule and unexpected owner remain rejected"
+    },
+    "documentation": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/documentation-acceptance.json",
+      "sha256": "e447050069f0708005484da86860c1ef9d4c12e314696bc2e80a9d1c875640b0"
+    },
+    "unchanged_math_evidence_reuse": {
+      "wall_source_math": {
+        "files_exact_f4_to_final9": {
+          "src/cuda/common/CudaCommon.cuh": "14a72500ccfb881dcea10932e46b3574a734291a729ca7512f763ac56f2a6af7",
+          "src/cuda/hydro/kernels/HydroFaceKernel.cuh": "b4db71ed9d2e28c0f553dc8e0e531382e88e21e2c152497151cb1d5c7a279f8d",
+          "src/cuda/hydro/kernels/HydroSourceKernels.cuh": "9abfd5744cfb54e74d249b243cd0a2bde3e69d44357c1dd732ced828b0a4b7b3",
+          "src/cuda/hydro/policies/CheckedHydroEos.cuh": "e62b129c0221fcc91d2aec7656d34b0e8a4000f357afd44bb3a9eeb6df6e8a5c",
+          "src/numerics/curvilinear/GridMetrics.h": "9c9e82f5716dae922be92c394ba05edb256b2828560f091d927a0001485e5fdc",
+          "src/numerics/curvilinear/GeometricSources.h": "71c9439239c15c46e372a39ea38d87b63bac339cdedf4b17c68a288a1e757345"
+        },
+        "qualification": "Real f4 Device leaf/prescribed-Poisson evidence retained only for these unchanged bodies; final metadata/topology consumers independently exercised in native Runtime and actual final ARCH."
+      },
+      "poisson_math_execution": {
+        "files_exact_f4_to_final9": {
+          "src/cuda/runtime/gravity/CudaGravityExecution.cu": "6541804eb2b3de3f2f66641495b161f3bf25321e998c689ce960d6c8abb0e6d0",
+          "src/numerics/elliptic/CompositePoisson.cpp": "3a7a997c75297e67c7cfe92d5d2732c446b15e96ed7299bee81f36e958499178",
+          "src/physics/gravity/self/SelfGravity.cpp": "37e2acd524fc9b4e3e1c4f8051f9f42be9a0adb31203f1a93fbca083f20d252d"
+        },
+        "qualification": "Real f4 Device leaf/prescribed-Poisson evidence retained only for these unchanged bodies; final metadata/topology consumers independently exercised in native Runtime and actual final ARCH."
+      }
+    }
+  },
+  "cost": {
+    "CPU_matched_work": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/cpu-matched-cost9.json",
+      "sha256": "200e3c1a9a4ee966c71b83dfbb6ab1b212aa75dddabb6fa37d8a3f365c4a2501"
+    },
+    "Device_matched_work": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/device-matched-cost.json",
+      "sha256": "e4748b0e1ddd79e4555c61209ee354114e9b19c0c122213f8b30a68c1d8fcceb"
+    },
+    "unchanged_ratio_warning_line": 2,
+    "CPU_original_absolute_anchors_retained": true,
+    "Device_max_sample_CV_percent": 13.523747819794965,
+    "stable_GPU_speedup_claimed": false,
+    "final_noop_both_graphs_GNU_seconds": 0.07,
+    "all_build_and_run_attempts": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/stage-index.json",
+      "sha256": "53a4019bb0c7e858553c70bdf48889874c8c3c5e1592f67a1eb1de2e2249196d"
+    },
+    "first_large_CUDA_build_clock_limit": "raw GNU2517.70 vs guard monotonic2400.126 seconds retained, discrepancy undiagnosed; timeout is not PASS",
+    "compile_cost_candidate": "common Device view/header propagation plus EOS/flux/reconstruction instantiations; no frozen clean A/B and no claimed build optimization",
+    "scientific_runs_truncated": false
+  },
+  "failed_or_incomplete_attempts_original": [
+    {
+      "attempt": "build-cuda-hydro-thin3",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 1,
+      "cause": "Existing Device test host consumer needed CUDA::cudart usage requirements explicitly",
+      "resolved_scope": "build-cuda-hydro-thin4",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/build-cuda-hydro-thin3/receipt.json",
+        "sha256": "c1bfdb5912dfa441c4d4df04c093ae0af440a8167b3dec7b0d3f24b062d1d324"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "build-cuda-runtime1",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 1,
+      "cause": "CTest name was used as a build target; corrected to actual CMake target, no numerical execution",
+      "resolved_scope": "build-cuda-test-tail7",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/build-cuda-runtime1/receipt.json",
+        "sha256": "c59010561e5e5005f07afc9264870d9aeaa3f71657bab4ea1228fed490b8da62"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "build-cuda-runtime2",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 143,
+      "cause": "Independent review found Root batch launch arity/undefined variable error; controlled own-process stop before wasting full build; corrected existing launch",
+      "resolved_scope": "build-cuda-hydro-thin4",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/build-cuda-runtime2/receipt.json",
+        "sha256": "45407264c65090e5b8aae77142d0a586bac5e092297b8309a16f33e455434624"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "build-cuda-runtime5",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 124,
+      "cause": "Controlled fixed-window compilation timeout124; completed objects retained, no scientific sample or speedup credit",
+      "resolved_scope": "build-cuda-test-tail7",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/build-cuda-runtime5/receipt.json",
+        "sha256": "c70af4b8a137a9d3ab32d0a39fd9d08318e2e5c270abeba8d4d00d49e94f6ccb"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "build-cuda-runtime6",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 1,
+      "cause": "CUDA ARCH linked, then stale test called retired macro-savepoint/capacity API; replaced obsolete assertions with present three-slot/control/observer/lifecycle checks, no old facility restored",
+      "resolved_scope": "build-cuda-test-tail7",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/build-cuda-runtime6/receipt.json",
+        "sha256": "76a03ea9548d0a2b7c2d7213a3f888e577080e1950e72cd7b3352c1d03e46a54"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "cuda-integration-tests7",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 8,
+      "cause": "Grid test used incorrect unsuffixed labels; native Jeans current/parent/launch consumers retained Cartesian-only gates",
+      "resolved_scope": "cuda-repaired-tests8",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/cuda-integration-tests7/receipt.json",
+        "sha256": "ee1579959ca31d943c02c81d960a3070b81290d633774900d82f8bebeb9998b7"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "cuda-leaf-tests1",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 8,
+      "cause": "Old native-Cyl2 invalid-cache assertion no longer matched implemented geometry; malformed-grid checks retained",
+      "resolved_scope": "cuda-integration-tests7",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/cuda-leaf-tests1/receipt.json",
+        "sha256": "0bd9318741bc6830756f3d445f4a4e4b144d31871d8b6db927c6ca0b9aa39eb1"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "device-runtime7",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 1,
+      "cause": "Host observer omitted materialization after actual Device coarsen; fixed observer, not a proven PDE defect",
+      "resolved_scope": "device-runtime8",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/device-runtime7/receipt.json",
+        "sha256": "bff5daa42150b4024b8d33290d96ec3983a859288045255f22c1e4891de00b65"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "module-boundary-audit5",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 1,
+      "cause": "Exact legitimate shared wall call and existing Poisson object owner needed narrow audit exceptions; two copied/unknown negative controls retained",
+      "resolved_scope": "module-boundaries-final9",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/module-boundary-audit5/receipt.json",
+        "sha256": "895ae2172628580c64ec59eba3931153cc7c2ead06fe5eb7ff6b18de437b61fa"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    },
+    {
+      "attempt": "temporary-presence-preflight5",
+      "original_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "original_exit": 1,
+      "cause": "Temporary path mapping also rewrote generated includes to a nonexistent path; corrected setup without production edit",
+      "resolved_scope": "temporary-presence-preflight5b",
+      "raw_receipt": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/temporary-presence-preflight5/receipt.json",
+        "sha256": "a7cd7a278b68683db82215e2891984f51b3066da9e7962508d5624c09df97bcc"
+      },
+      "numerical_threshold_changed": false,
+      "original_failure_preserved": true
+    }
+  ],
+  "resource_limits": {
+    "host_storage_root": "/mnt/e",
+    "warn_stop_near_free_bytes": 1073741824,
+    "pre_H5": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/pre-H5-storage.json",
+      "sha256": "8a7ff761ced72843a3ae09a6b86bf76567e372959c0af00963865f26e37440f7"
+    },
+    "heavy_build_jobs": 2,
+    "CUDA_heavy_pool": 1,
+    "scientific_OMP_threads": 4,
+    "swap_growth_observed": false,
+    "resource_guard_stops": false,
+    "CPU_build_sampling_limit": "build-cpu8 process samples incomplete: one disappearing-process row missing; sampled peaks are observations, not leak/peak proofs",
+    "per_stage_resources": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/stage-index.json",
+      "sha256": "53a4019bb0c7e858553c70bdf48889874c8c3c5e1592f67a1eb1de2e2249196d"
+    }
+  },
+  "history": {
+    "frozen_count": 154,
+    "history_protected": 42,
+    "history_archived": 107,
+    "prior_CYL_receipts": 5,
+    "all_hashes_unchanged": true,
+    "manifest": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/history-and-prior-freeze.json",
+      "sha256": "e50261348b5336856a5165f30d934050154c92807b7cbfee5e902b5581451f02"
+    },
+    "old_FAIL_NOT_MET_GAP_relabelled": false
+  },
+  "collaboration": {
+    "owner": "arch-rz-reintroduction-20261018",
+    "actual_jobs_this_phase": 8,
+    "jobs": [
+      {
+        "job_id": "503e7bd2a04b4967bc50362454240caf",
+        "task_id": "cyl5-jeans-geometry-review-1",
+        "logical_task_id": "cyl5-jeans-geometry-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 41.96914043099969,
+        "failure_kind": null,
+        "summary": "Verdict: Not fully certifiable from the supplied excerpts. The shared Jeans leaf already supports cylindrical dim2; the concrete omissions are the explicit Cart"
+      },
+      {
+        "job_id": "436ef213a0df49858da2ae462510b1d6",
+        "task_id": "cyl5-public-boundary-prose-repair-1",
+        "logical_task_id": "cyl5-public-boundary-prose",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "full",
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash-medium",
+        "effort": "medium",
+        "elapsed_seconds": 56.117339568001626,
+        "failure_kind": null,
+        "summary": "Text candidate produced; facts, semantics and adoption remain for independent manager review."
+      },
+      {
+        "job_id": "004c2269e1d843e0a8979bb33dd06f28",
+        "task_id": "cyl5-public-boundary-prose-1",
+        "logical_task_id": "cyl5-public-boundary-prose",
+        "status": "FAILED",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash-medium",
+        "effort": "medium",
+        "elapsed_seconds": 22.74751993799873,
+        "failure_kind": "invalid_delivery",
+        "summary": "Numbers changed, introduced, omitted or duplicated"
+      },
+      {
+        "job_id": "010b2c2d5430488987be710a3d42afe6",
+        "task_id": "cyl5-binding-candidate-review-repair-1",
+        "logical_task_id": "cyl5-binding-candidate-review",
+        "status": "BLOCKED",
+        "review": "REJECT",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 65.74460497899781,
+        "failure_kind": null,
+        "summary": "Blocking compile regression in frozen candidate2. review-source2/src/cuda/hydro/kernels/HydroBatchKernels.cuh:140-141 declares hydro_batch_sources(blocks, eos, "
+      },
+      {
+        "job_id": "c205a61d35f048ffa983365677374010",
+        "task_id": "cyl5-binding-candidate-review-1",
+        "logical_task_id": "cyl5-binding-candidate-review",
+        "status": "FAILED",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 240.01209987299808,
+        "failure_kind": "time_limit",
+        "summary": "time_limit"
+      },
+      {
+        "job_id": "29129037a0f74bfaa05a16e3f13abb62",
+        "task_id": "cyl5-device-lifecycle-audit-repair-1",
+        "logical_task_id": "cyl5-device-lifecycle-audit",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 198.53921507199993,
+        "failure_kind": null,
+        "summary": "Concrete blocker: native Cyl2 is still rejected before Device gravity/AMR can run. `src/cuda/common/CudaCommon.cuh:245-246` excludes Cylindrical+dim2 from `vali"
+      },
+      {
+        "job_id": "70e49f8578f448c2b6fc87e9b115b70f",
+        "task_id": "cyl5-device-lifecycle-audit-1",
+        "logical_task_id": "cyl5-device-lifecycle-audit",
+        "status": "FAILED",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 300.067335628999,
+        "failure_kind": "time_limit",
+        "summary": "time_limit"
+      },
+      {
+        "job_id": "b134e98204df48898ae4387ec61c20c9",
+        "task_id": "cyl5-device-wall-audit-1",
+        "logical_task_id": "cyl5-device-wall-audit",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 191.78486578700176,
+        "failure_kind": null,
+        "summary": "Read-only static audit of the frozen entry-source at HEAD 45b92535e8efe78728bb67b0415c148854a63f9c; no build/run/network/write/delegation and no live source use"
+      }
+    ],
+    "current_cumulative_budget": {
+      "goal_id": "arch-rz-reintroduction-20261018",
+      "manager_max_calls": 31,
+      "user_max_calls": null,
+      "calls_used_or_reserved": 30,
+      "calls_remaining": 1,
+      "elapsed_seconds_recorded": 6646.574779116995,
+      "output_tokens_reported": 893110,
+      "started_calls_with_unknown_output": 5,
+      "cost_money": null,
+      "attempt_allowances_reset": false
+    },
+    "phase_calls": 8,
+    "phase_sum_adapter_seconds_not_wall": 1116.9821212769948,
+    "phase_reported_output_tokens": 119413,
+    "phase_calls_with_unknown_reported_output": 2,
+    "manager_cost_and_money": null,
+    "Gemini_scope": "accepted bounded language package only, normalized existing chart terms; no science acceptance",
+    "DeepSeek_scope": "selected independent wall/lifecycle/Jeans findings adopted as evidence; rejected incomplete binding package still supplied Root-verified compile finding",
+    "status_artifact": {
+      "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl5-20261018/collaboration/final-status.json",
+      "sha256": "74af2b5996654117c4176d5bb753662d66546e76913d1fb619fbeda65e2fd99e"
+    },
+    "self_work_and_stopping": "Root sole writer/integration plus actual GPU acceptance; independent audits and language package complete. No additional useful task justifies consuming the remaining soft call."
+  },
+  "remaining_unresolved_blockers_in_CYL5": [],
+  "not_qualified_here": [
+    "full public method/EOS/network/burning scientific matrix and required coupled endpoints",
+    "multiGPU execution",
+    "full REL4 Device release matrix",
+    "manual Studio desktop visual inspection",
+    "stable end-to-end GPU speedup or whole-project compile speedup"
+  ],
+  "next_work_only_not_started": [
+    "CYL6 coverage map of each public method/EOS and necessary couplings; reuse applicable shared-math evidence",
+    "bounded nonuniform/high-rotation/physical endpoints only for demonstrated remaining gaps",
+    "qualified runtime/AMR/fresh for remaining diffusion/burn/network combinations, with original budgets and cost gates",
+    "then documentation/CI consolidation before separately authorized release Device phase"
+  ],
+  "CYL6_started": false,
+  "REL4_started": false,
+  "git_commit_or_push_in_this_phase": false
+}

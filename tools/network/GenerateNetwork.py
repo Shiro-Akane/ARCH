@@ -222,6 +222,7 @@ def write_adapter(stage, network_id, network, *, nse_metadata=None):
 #include "core/ArchPortability.h"
 #include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
+#include "physics/network/InitialComposition.h"
 #include "numerics/burnsolver/coupling/NetworkDerivative.h"
 
 namespace {detail} {{
@@ -247,23 +248,23 @@ struct {cls} {{
     static double energy_weight(int index) {{ return ENERGY_WEIGHTS[index]; }}
     static std::string get_network_name() {{ return NETWORK_NAME; }}
     static void RegisterSpecies(SpeciesManager& specs) {{
-        for (int i = 0; i < NUM_SPECIES; ++i)
-            specs.add_species(SPECIES_NAMES[i], AION[i], ZION[i], 5.0/3.0, 0.0);
+        for (int i = 0; i < NUM_SPECIES; ++i) {{
+            using arch::config::MaterialValue;
+            const std::string field = SPECIES_NAMES[i];
+            specs.add_species(field,
+                MaterialValue::Network(AION[i], NETWORK_NAME, field + ".AION"),
+                MaterialValue::Network(ZION[i], NETWORK_NAME, field + ".ZION"),
+                MaterialValue::NetworkConstant(5.0/3.0, NETWORK_NAME, "adapter.gamma_ref"),
+                MaterialValue::NetworkConstant(0.0, NETWORK_NAME, "adapter.Cv_ref"));
+        }}
     }}
     static void SetupInitialFractions(SimConfig& config, const SpeciesManager& specs,
                                       std::vector<double>& output) {{
+        const auto input = arch::network::ReadInitialComposition(config, specs);
         output.assign(specs.count(), config.physics.burn.smallx);
         double sum = 0.0;
         for (int i = 0; i < specs.count(); ++i) {{
-            std::string target = "x" + specs.get_name(i);
-            std::transform(target.begin(), target.end(), target.begin(),
-                [](unsigned char c) {{ return static_cast<char>(std::tolower(c)); }});
-            for (const auto& entry : config.custom_params) {{
-                std::string key = entry.first;
-                std::transform(key.begin(), key.end(), key.begin(),
-                    [](unsigned char c) {{ return static_cast<char>(std::tolower(c)); }});
-                if (key == target) {{ output[i] += entry.second; break; }}
-            }}
+            output[i] += input[i];
             sum += output[i];
         }}
         if (!(sum > 0.0)) throw std::runtime_error("custom network initial composition has zero sum");

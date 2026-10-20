@@ -6,9 +6,11 @@
  * completion before comparing the public boundary handler with reference data.
  */
 #include "amr/exchange/BoundaryPlan.h"
+#include "amr/exchange/HostBoundaryPlan.h"
 #include "driver/DriverUtils.h"
 #include "driver/schedule/StageScheduler.h"
 #include "driver/runtime/StateResidency.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 
 #include <array>
 #include <bit>
@@ -20,6 +22,10 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+
+void test_user_boundary_registry();
+void test_user_physical_boundary();
+void test_user_boundary_diagnostics();
 
 namespace
 {
@@ -743,11 +749,16 @@ void test_e0_e1_boundary_completion_contract()
         [](StateSlot, StateVersion, CompletionToken token) { return token; },
         {2}, "pending transfer allowed ghost publication");
 }
+
+
 } // namespace
 
 int main()
 {
     try {
+        test_user_boundary_registry();
+        test_user_physical_boundary();
+        test_user_boundary_diagnostics();
         test_public_numeric_contract();
         test_frozen_plan_fingerprints();
         test_sources_and_components();

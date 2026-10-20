@@ -13,10 +13,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace VelocityDiagnostics {
 
@@ -29,8 +30,9 @@ struct Values {
  * @brief Evaluates physical div(v) and |curl(v)| from orthonormal velocity components.
  *
  * Momentum storage follows the hydro source-term convention: VELX is radial for
- * curvilinear grids; VELY is azimuthal in 2-D polar/cylindrical grids and polar
- * in 3-D spherical grids; VELZ is azimuthal in 3-D cylindrical/spherical grids.
+ * curvilinear grids; VELY is azimuthal in spherical 2-D polar grids and polar
+ * in spherical 3-D grids. Cylindrical 2-D/3-D grids use VELY=axial and
+ * VELZ=azimuthal; spherical 3-D also uses VELZ=azimuthal.
  * Logical-grid indices are materialized once because this routine is called in the
  * AMR and PLT inner loops; the component derivatives then reuse the same stencil.
  */
@@ -90,23 +92,27 @@ ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
         return result;
     }
 
+    // Existing charts retain their original absolute-radius numerical
+    // convention exactly.
     const double radius = std::max(std::abs(grid.GetCellCenterX(i)), 0.5 * grid.dx1);
-    if (grid.dim <= 2) {
-        // Both 2-D cylindrical and the project's 2-D spherical specialization
-        // are polar (r, phi) grids with physical components (v_r, v_phi).
-        const double omega = (vel_y_center + radius * ddx(vel_y) - ddy(vel_x)) / radius;
-        result.vorticity = std::abs(omega);
-        return result;
-    }
-
-    if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical) {
-        // Logical axes are (r, z, phi), with stored components (v_r, v_z, v_phi).
+    if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical
+        && grid.dim >= 2) {
+        // Logical axes are (r,z,phi); in 2D ddz is the unresolved phi
+        // partial and vanishes, while all three physical curl slots remain.
         const double omega_r = ddz(vel_y) / radius - ddy(vel_z);
         const double omega_phi = ddy(vel_x) - ddx(vel_y);
         const double omega_z = vel_z_center / radius + ddx(vel_z) - ddz(vel_x) / radius;
         result.vorticity = std::sqrt(omega_r * omega_r + omega_phi * omega_phi + omega_z * omega_z);
         return result;
     }
+
+    if (grid.dim <= 2) {
+        // The spherical 2-D specialization is polar (r,phi).
+        const double omega = (vel_y_center + radius * ddx(vel_y) - ddy(vel_x)) / radius;
+        result.vorticity = std::abs(omega);
+        return result;
+    }
+
 
     // 3-D spherical logical axes are (r, theta, phi) with physical components
     // (v_r, v_theta, v_phi). The floor prevents numerical singularities in ghosts.

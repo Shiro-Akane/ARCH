@@ -1,24 +1,41 @@
-# Historical development records
+# Fixed historical evidence
 
-This directory is for contributors tracing earlier design decisions. Its notes
-retain intermediate findings, unresolved questions at the time, machine-specific
-observations and superseded plans. They are not setup instructions, current
-feature descriptions or additional acceptance requirements.
+The [historical-records index](../../histroy/README.md) owns the consolidated
+human archive. Only notes referenced at fixed paths by original receipts remain
+here; they retain their original bytes and scope. These are evidence exceptions,
+not a second current documentation tree. The [release plan](../../../ARCH_RELEASE_PLAN.md)
+owns current actions and the [validation summaries](../../../validation/README.md)
+own current scientific interpretation.
 
-For normal use, read the [backend guide](../../CudaBackendStatus.md). For measured
-results, start with [Validation](../../../validation/README.md). The maintained
-[acceptance checklist](../CudaReleaseStandard.md) governs current review work.
+## Modernization evidence
 
-| Subject | Preserved records |
+The completed [foundation report](../modernization/R1R4Foundation-20261013.zh-CN.md)
+connects these dated observations with their original machine receipts.
+
+| Fixed record | Scope at the time |
 | --- | --- |
-| Backend review and early runtime checks | [Backend evidence](CudaBackendEvidence.md) ([中文](CudaBackendEvidence.zh-CN.md)); [shared AMR, sparse burn and geometry refactor](CudaRefactorSmoke.md) |
-| Acceptance decisions and intermediate checks | [Historical acceptance checklist](CudaReleaseStandard.md) |
-| Geometry derivation and correction review | [Curvilinear metric review](CurvilinearMetricReview.md) |
-| Refinement-indicator roundoff analysis | [AMR indicator review](AmrIndicatorNoiseReview.md) |
-| Physical transport coefficient comparison | [Diffusion coefficient review](DiffusionCoefficientAlignment.md) ([中文](DiffusionCoefficientAlignment.zh-CN.md)) |
-| Low-density and configuration migration | [Implementation record](low-density/ImplementationReport.zh-CN.md), [robustness design](low-density/RobustnessPlan.zh-CN.md), [retired parameter audit](low-density/ParameterRetirementAudit.zh-CN.md) |
+| [Stage completion](modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md) | Shared-core map and coverage limits |
+| [Cellular audit](modernization/CellularBurnRateCpuCudaAudit-20261008.zh-CN.md) | Original source report and separate reproduction identity |
+| [Baseline identity](modernization/BaselineIdentity-20261012.zh-CN.md) | Source, executable and input identities |
+| [Numerical batch](modernization/R22NumericalChecks-20261012.zh-CN.md) | Accepted cases, failures and stopped builds |
+| [Configuration and cost](modernization/R23PerformanceAndConfiguration-20261012.zh-CN.md) | Runtime/build/RAM and input-contract observations |
+| [Audit triage](modernization/R31AuditTriage-20261013.zh-CN.md) | Candidate priorities and scientific gaps |
+| [RKL attribution](modernization/R32RklCompilationAndInactiveIdentity-20261013.zh-CN.md) | Compilation profiles and inactive input identity |
+| [Handoff](modernization/R33CloseoutAndR4Handoff-20261013.zh-CN.md) | Frozen work packages and provenance |
+| [Implementation acceptance](modernization/R41R42Implementation-20261013.zh-CN.md) | Tool/input changes and independent checks |
 
-Moving a note here changes its location, not the source identity of its
-measurements. Inputs, machine-readable results and failed-attempt records keep
-their established validation paths so that reproducible commands and provenance
-remain valid. Do not link an intermediate observation as the current result.
+[Path coverage](modernization/ModernizationR1-RepositoryCoverage-20261012.json)
+and [build inventory](modernization/ModernizationR1-BuildInventory-20261012.json)
+retain their original counts. Later measurements must not rewrite them.
+
+## RZ implementation history
+
+The 107 retired implementation notes remain under `histroy/rz/` because original
+receipts resolve these paths. See the original
+[relocation map](../../../validation/backend/results/release-readiness/REL35DocumentationRelocation-20261016.json),
+[physical source decision](histroy/rz/RZExternalSourceDecisionPackage-20261006.zh-CN.md),
+[viscous-law decision](histroy/rz/RZViscosityDecisionPackage-20261006.zh-CN.md),
+[axis reference](histroy/rz/RZAxisNeighborDecisionPackage-20261006.zh-CN.md) and
+[force reference](histroy/rz/RZContinuousPotentialForceReferenceContract-20261005.zh-CN.md).
+Original Summary JSON stays in `docs/development/`. These notes neither document
+the current cylindrical implementation nor reopen retired work.

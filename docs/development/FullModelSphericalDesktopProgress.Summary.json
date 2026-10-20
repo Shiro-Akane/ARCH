@@ -1,0 +1,102 @@
+{
+  "identity": {
+    "requestId": "7c0c2b3c-b8b4-41d7-97af-2a542da6be46",
+    "projectId": "478059f0-1ebc-4c33-bb2d-9d24ba44ffca",
+    "profileId": "initial-cpu-Gaussian-3d",
+    "caseId": "Gaussian",
+    "configRevision": "e1bb508885959ba48a7d41023a50635fcf35c57e2524ee10682a79ba937ce346",
+    "buildId": "b122233f-61aa-4fd5-932a-a27ded45e302",
+    "binarySha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a"
+  },
+  "shape": [
+    2,
+    3,
+    5
+  ],
+  "count": 30,
+  "dataSha256": "f53ab6e18119b328179c703535a2ba50a240caf99223dcaee0e463dfae4a3eec",
+  "diskConfigSha256": "e1bb508885959ba48a7d41023a50635fcf35c57e2524ee10682a79ba937ce346",
+  "axes": [
+    {
+      "name": "x1",
+      "unit": "cm",
+      "count": 5
+    },
+    {
+      "name": "x2",
+      "unit": "rad",
+      "count": 3
+    },
+    {
+      "name": "x3",
+      "unit": "rad",
+      "count": 2
+    }
+  ],
+  "selectedSample": {
+    "index": 12,
+    "indices": [
+      2,
+      2,
+      0
+    ],
+    "coordinates": [
+      0.6000000000000001,
+      2.1333333333333333,
+      0.07499999999999996
+    ],
+    "fields": {
+      "DENS": 2,
+      "PRES": 4.408374172896734,
+      "TEMP": 5.510467716120918,
+      "VELX": 0.13413087360921272,
+      "ENER": 11.151370843841823,
+      "EINT": 5.510467716120918,
+      "VELY": 0.20119631041381908,
+      "VELZ": 0.26826174721842544
+    }
+  },
+  "amrLeaf": {
+    "cellShape": [
+      16,
+      16,
+      16
+    ],
+    "cellSpacing": [
+      0.05,
+      0.1375,
+      0.11875
+    ],
+    "level": 0,
+    "logicalIndex": [
+      0,
+      0,
+      0
+    ],
+    "logicalKey": "0:0:0:0",
+    "lower": [
+      0.2,
+      0.3,
+      -0.4
+    ],
+    "upper": [
+      1,
+      2.5,
+      1.5
+    ]
+  },
+  "amrRequestId": "5a213348-83b5-4274-8bc6-aa3953f1fc5f",
+  "sourceCommit": "865f49bfb420d29568f1950d803e2c6f270d8177",
+  "geometry": "spherical",
+  "nativeSlicesObserved": [
+    "phi fixed: r/theta 5x3",
+    "r fixed: theta/phi 3x2"
+  ],
+  "rawInspectorRetainedOutsideSlice": true,
+  "fieldAndAmrOverlayObserved": true,
+  "displayOperationsPreserveRequestAndArrays": true,
+  "desktopExitCode": 0,
+  "electronAndHostGone": true,
+  "wheelZoom": "attempt produced no visible range change; not counted as PASS",
+  "coverage": "representative only; not complete full-model desktop matrix"
+}

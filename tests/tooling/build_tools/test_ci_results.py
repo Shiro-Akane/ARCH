@@ -3,23 +3,135 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS,
-                              check_inventory, check_junit, main)
+                              check_inventory, check_junit, check_node_tap,
+                              check_studio_scope, check_native_scope, check_tooling_result, main,
+                              scope_path_requires_studio, scope_path_requires_native)
 
 
 class CiResultTests(unittest.TestCase):
+    def test_tooling_completion_rejects_empty_failed_and_skipped_suites(self):
+        result = unittest.TestResult()
+        with self.assertRaises(ValueError):
+            check_tooling_result(result)
+        result.testsRun = 2
+        self.assertEqual(check_tooling_result(result), 2)
+        result.skipped = [("control", "unavailable")]
+        with self.assertRaises(ValueError):
+            check_tooling_result(result)
+        result.skipped = []
+        result.errors = [("control", "error")]
+        with self.assertRaises(ValueError):
+            check_tooling_result(result)
+
+    def test_native_scope_excludes_docs_but_keeps_all_scientific_and_build_inputs(self):
+        for path in ("README.md", "docs/Reference.md", "docs/notes.txt", "NOTICE.txt",
+                     "studio/README.md", "src/api/docs/PreviewApi.md", "tools/README.md", ".github/workflows/README.md",
+                     "validation/backend/results/release-readiness/Acceptance.json",
+                     "studio/tests/build-fixture.ts", "studio/tests/host-build.test.ts"):
+            with self.subTest(document=path):
+                self.assertFalse(scope_path_requires_native(path))
+        for path in ("src/numerics/update.h", "src/physics/gravity.cpp", "src/cuda/update.cu",
+                     "tests/host/case.cpp", "tests/cuda/case.cu", "tests/tooling/check.py",
+                     "validation/amr/gpu_cases.json", "simulation/Sod/Sod.par",
+                     "validation/backend/results/release-readiness/input.par",
+                     "validation/backend/results/release-readiness/inputs/config.json",
+                     "validation/backend/results/release-readiness.json",
+                     "CMakeLists.txt", "cmake/notes.md",
+                     ".github/workflows/ci.yml", "config/parameters.txt", "unknown",
+                     "requirements.txt", "notes/todo.txt", "studio/src/App.tsx",
+                     "studio/host/buildRunner.ts", "studio/tests/nested/helper.ts",
+                     "studio/tests/fixtures/schema.json", "studio/tests/fixture.mjs",
+                     "studio/tests/native.cpp", "studio/tests/input.par"):
+            with self.subTest(native_input=path):
+                self.assertTrue(scope_path_requires_native(path))
+
+    def test_both_scopes_reject_noncanonical_paths_and_malformed_refs(self):
+        for path in (None, "", "/README.md", "../README.md", "docs/../README.md",
+                     "docs//README.md", "./README.md", "docs\\README.md", "README.md\n"):
+            for predicate in (scope_path_requires_native, scope_path_requires_studio):
+                with self.subTest(path=path, predicate=predicate):
+                    self.assertTrue(predicate(path))
+        for check in (check_native_scope, check_studio_scope):
+            for base, head in ((None, "HEAD"), ("a" * 40, "HEAD\n"),
+                               ("a" * 40 + "\n", "HEAD"), ("a" * 40, "b" * 40 + "\n")):
+                with self.subTest(check=check, base=base, head=head):
+                    self.assertTrue(check(base, head)["required"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required for real diff semantics")
+    def test_native_real_git_docs_mixed_deleted_and_unknown_refs(self):
+        root, git = self.git_repo()
+        (root / "studio").mkdir()
+        (root / "src/numerics").mkdir(parents=True)
+        (root / "studio/README.md").write_text("guide\n")
+        (root / "src/numerics/operator.h").write_text("int active;\n")
+        git("add", "-A"); git("commit", "-qm", "base")
+        base = self.head_of(root)
+        (root / "studio/README.md").write_text("updated guide\n")
+        git("add", "-A"); git("commit", "-qm", "docs")
+        docs = self.head_of(root)
+        for check in (check_native_scope, check_studio_scope):
+            self.assertFalse(check(base, docs, repo_root=root)["required"])
+            self.assertTrue(check(docs, docs, repo_root=root)["required"])
+            self.assertTrue(check("0" * 40, docs, repo_root=root)["required"])
+        records = root / "validation/backend/results/release-readiness"
+        records.mkdir(parents=True)
+        (records / "Acceptance.json").write_text('{"recorded": true}\n')
+        git("add", "-A"); git("commit", "-qm", "record outcomes")
+        recorded = self.head_of(root)
+        for check in (check_native_scope, check_studio_scope):
+            self.assertFalse(check(docs, recorded, repo_root=root)["required"])
+        (root / "studio/tests").mkdir()
+        (root / "studio/tests/helper.ts").write_text("export const testOnly = true;\n")
+        git("add", "-A"); git("commit", "-qm", "change Node test helper")
+        node_tests = self.head_of(root)
+        self.assertFalse(check_native_scope(recorded, node_tests, repo_root=root)["required"])
+        self.assertTrue(check_studio_scope(recorded, node_tests, repo_root=root)["required"])
+        # The same record accompanied by an input change still requires CPU.
+        (root / "simulation").mkdir()
+        (root / "simulation/input.par").write_text("density = 1\n")
+        git("add", "-A"); git("commit", "-qm", "change input")
+        self.assertTrue(check_native_scope(recorded, self.head_of(root), repo_root=root)["required"])
+        # Deleting numerical code remains a native change, even if every
+        # surviving changed file is documentation.
+        git("rm", "src/numerics/operator.h"); git("commit", "-qm", "delete operator")
+        mixed = check_native_scope(base, self.head_of(root), repo_root=root)
+        self.assertTrue(mixed["required"])
+        self.assertIn("src/numerics/operator.h", mixed["changed_paths"])
+
     def test_driver_cuda_requires_real_device_coverage_and_rejects_skips(self):
+        # Independent literal prevents a self-consistent group union from
+        # silently dropping the actual required-EOS failure CUDA owner.
+        eos_owner = "cuda_hydro_eos_failure"
+        self.assertIn(eos_owner, DRIVER_CUDA_COVERAGE_ANCHORS)
         names = DRIVER_CUDA_COVERAGE_ANCHORS | {"additional_cuda_contract"}
         self.assertEqual(check_inventory(self.inventory(names), "driver-cuda"), names)
+        self.assertEqual(check_junit(self.report(names), names), len(names))
+        with self.assertRaisesRegex(ValueError, eos_owner):
+            check_inventory(self.inventory(names - {eos_owner}), "driver-cuda")
+        with self.assertRaisesRegex(ValueError, "complete CTest inventory"):
+            check_junit(self.report(names - {eos_owner}), names)
+        # Neither zero summary failure counters nor a present inventory entry
+        # can turn a skipped/failed required EOS control into device coverage.
+        for marker in ("skipped", "failure", "error"):
+            eos_report = self.report(names)
+            eos_case = next(case for case in eos_report if case.get("name") == eos_owner)
+            ET.SubElement(eos_case, marker)
+            with self.subTest(eos_marker=marker), self.assertRaisesRegex(ValueError, eos_owner):
+                check_junit(eos_report, names)
         with self.assertRaisesRegex(ValueError, "cuda_compile_probe"):
             check_inventory(self.inventory(CPU_COVERAGE_ANCHORS), "driver-cuda")
         report = self.report(names)
@@ -28,6 +140,46 @@ class CiResultTests(unittest.TestCase):
             check_junit(report, names)
         with self.assertRaisesRegex(ValueError, "unknown coverage profile"):
             check_inventory(self.inventory(), "typo")
+
+    def node_report(self, tests=2, passed=2, failed=0, cancelled=0, skipped=0, todo=0):
+        return (f"TAP version 13\nok 1 - first\nok 2 - second\n1..2\n"
+                f"# tests {tests}\n# suites 0\n# pass {passed}\n# fail {failed}\n"
+                f"# cancelled {cancelled}\n# skipped {skipped}\n# todo {todo}\n")
+
+    def test_node_report_rejects_empty_skipped_cancelled_todo_and_incomplete(self):
+        self.assertEqual(check_node_tap(self.node_report()), 2)
+        for report in ("", self.node_report(tests=0, passed=0),
+                       self.node_report(passed=1), self.node_report(failed=1),
+                       self.node_report(cancelled=1), self.node_report(skipped=1),
+                       self.node_report(todo=1), self.node_report().replace("1..2", "1..0"),
+                       self.node_report().replace("1..2", "1..1"),
+                       self.node_report().replace("ok 1 - first\n", ""),
+                       self.node_report().replace("ok 2 - second", "ok 1 - second"),
+                       self.node_report() + "# tests 2\n",
+                       self.node_report().replace("ok 1 - first", "not ok 1 - first"),
+                       self.node_report() + "Bail out! interrupted\n"):
+            with self.subTest(report=report), self.assertRaises(ValueError):
+                check_node_tap(report)
+
+    def test_node_cli_failure_controls(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "tests.tap"
+            report.write_text(self.node_report(), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["--node-tap", str(report)]), 0)
+            report.write_text(self.node_report(skipped=1), encoding="utf-8")
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(["--node-tap", str(report)]), 1)
+                self.assertEqual(main(["--node-tap", str(report), "--junit", "unused"]), 1)
+            report.write_text(self.node_report(failed=1).replace(
+                "ok 1 - first", "not ok 1 - first%\n  error: broken\n::notice::injected"),
+                encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}), \
+                    contextlib.redirect_stderr(io.StringIO()) as output:
+                self.assertEqual(main(["--node-tap", str(report)]), 1)
+            self.assertIn("::error title=CI result failure::not ok 1 - first%25%0A", output.getvalue())
+            self.assertIn("%0A::notice::injected", output.getvalue())
+            self.assertNotIn("\n::notice::injected", output.getvalue())
 
     def inventory(self, names=None):
         return {"tests": [{"name": name} for name in sorted(
@@ -40,9 +192,36 @@ class CiResultTests(unittest.TestCase):
             ET.SubElement(root, "testcase", name=name, status="run")
         return root
 
+    def test_migrated_configuration_preview_and_jens_cannot_disappear(self):
+        # Explicit requirement names are independent of the checker group unions.
+        required = {
+            "config_input_records", "input_resolution", "case_configuration", "configuration_input",
+            "configuration_api_contract", "configuration_entry_contract", "configuration_v3_contract",
+            "preview_initial_conversion", "preview_api_contract", "preview_full_model_contract",
+            "preview_parameter_reads", "preview_parameter_metadata", "preview_sampling_limits",
+            "preview_mesh_geometry", "case_inspection_contract", "preview_session_contract",
+            "preview_verified_resources", "preview_exact_sample_cache", "preview_cellular_2d",
+            "jeans_diagnostics", "refinement_indicator_math",
+        }
+        self.assertTrue(required <= CPU_COVERAGE_ANCHORS)
+        for name in sorted(required):
+            with self.subTest(missing=name), self.assertRaisesRegex(ValueError, name):
+                check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {name}))
+
     def test_low_density_math_cannot_disappear_from_the_cpu_gate(self):
         with self.assertRaisesRegex(ValueError, "low_density_math"):
             check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {"low_density_math"}))
+
+    def test_release_publication_conservation_and_boundary_contracts_are_required(self):
+        required = {
+            "plotfile_publication", "checkpoint_conservation_metrics",
+            "conservative_acceptance", "rkl_repair_weights",
+            "boundary_plan", "amr_flux_surface_plan",
+        }
+        self.assertTrue(required <= CPU_COVERAGE_ANCHORS)
+        for name in sorted(required):
+            with self.subTest(missing=name), self.assertRaisesRegex(ValueError, name):
+                check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {name}))
 
     def test_complete_report_accepts_new_tests_without_a_fixed_total(self):
         names = check_inventory(self.inventory(CPU_COVERAGE_ANCHORS | {"new_regression"}))
@@ -108,6 +287,159 @@ class CiResultTests(unittest.TestCase):
                 inventory.write_text("[]", encoding="utf-8")
                 self.assertEqual(main(["--inventory", str(inventory)]), 1)
                 self.assertEqual(main(["--inventory", str(inventory.with_name("missing"))]), 1)
+            inventory.write_text(json.dumps(self.inventory()), encoding="utf-8")
+            failed = self.report()
+            ET.SubElement(failed[0], "failure", message="assertion summary").text = "original numerical assertion"
+            ET.SubElement(failed[1], "failure").text = "second independent failure"
+            ET.SubElement(failed[0], "system-out").text = "expected 1e-12; observed failure%\n::notice::injected"
+            ET.ElementTree(failed).write(report, encoding="unicode")
+            with patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}), \
+                    contextlib.redirect_stderr(io.StringIO()) as output:
+                self.assertEqual(main(["--inventory", str(inventory), "--junit", str(report)]), 1)
+            self.assertIn(failed[0].get("name"), output.getvalue())
+            self.assertIn("original numerical assertion", output.getvalue())
+            self.assertIn("assertion summary", output.getvalue())
+            self.assertIn("failed CTests (2)", output.getvalue())
+            self.assertIn(failed[1].get("name"), output.getvalue())
+            self.assertIn("expected 1e-12; observed failure%25%0A::notice::injected", output.getvalue())
+            self.assertNotIn("\n::notice::injected", output.getvalue())
+
+    def git_repo(self):
+        """Create a throwaway repo so scope tests exercise real git diff output."""
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        env = dict(os.environ, GIT_AUTHOR_NAME="scope", GIT_AUTHOR_EMAIL="scope@example.com",
+                   GIT_COMMITTER_NAME="scope", GIT_COMMITTER_EMAIL="scope@example.com")
+
+        def git(*args):
+            subprocess.run(["git", *args], cwd=root, check=True, env=env,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        git("init", "-q")
+        return root, git
+
+    @staticmethod
+    def head_of(root):
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True,
+                              stdout=subprocess.PIPE, text=True).stdout.strip()
+
+    def test_studio_scope_only_known_unrelated_paths_may_skip(self):
+        # Documentation outside Studio/API text, standalone numerical code,
+        # Core-only tests and scientific validation tooling may skip Studio.
+        for path in ("README.md", "docs/design.rst", "docs/notes.txt", "notes/guide.md",
+                     "README.txt", "LICENSE.txt", "NOTICE.txt", "studio/README.md", "src/api/README.md",
+                     "tools/README.md", "cmake/README.md", ".github/workflows/README.md",
+                     "src/numerics/eos.py", "src/physics/gravity.cpp", "src/cuda/kernel.cu",
+                     "tests/host/host_case.cpp", "tests/cuda/device_case.cu", "validation/run.py"):
+            with self.subTest(skippable=path):
+                self.assertFalse(scope_path_requires_studio(path))
+        # Studio UI/API docs, interfaces, core/data/grid/amr/driver/io, include,
+        # simulation, cmake/workflow/config/build/tooling and unknown paths stay.
+        # Protected build/tool/config/workflow directories win over any doc
+        # suffix, and .txt is documentation only under docs/ or with an explicit
+        # README/LICENSE/NOTICE basename, so ambiguous notes/todo.txt stays.
+        for path in ("studio/ui/main.cpp", "src/api/client.cpp", "src/grid/grid.cpp", "src/amr/refine.cpp",
+                     "src/driver/step.cpp", "src/io/writer.cpp", "include/arch/header.hpp",
+                     "simulation/run.cc", "CMakeLists.txt", "cmake/toolchain.cmake",
+                     ".github/workflows/studio.yml", "tools/check_ci_results.py",
+                     "tools/requirements.txt", "tools/not-a-readme.md", "cmake/config.txt",
+                     "cmake/notes.txt", "config/settings.txt", "build/notes.txt",
+                     ".github/workflows/notes.txt", "requirements.txt", "notes/todo.txt",
+                     "src/numerics", "notes/todo.MD", "../escape.md", ""):
+            with self.subTest(required=path):
+                self.assertTrue(scope_path_requires_studio(path))
+
+    def test_studio_scope_malformed_refs_and_bad_diff_fall_back_to_studio(self):
+        good = "a" * 40
+        for base in ("HEAD", "abcdef1", "", None, "z" * 40, "a" * 39):
+            with self.subTest(base=base):
+                result = check_studio_scope(base, "HEAD")
+                self.assertTrue(result["required"])
+                self.assertEqual(set(result), {"required", "reason", "changed_paths"})
+                self.assertIsInstance(result["reason"], str)
+                self.assertEqual(result["changed_paths"], [])
+        for head in ("main", "abcdef1", "", None, "z" * 40):
+            with self.subTest(head=head):
+                self.assertTrue(check_studio_scope(good, head)["required"])
+        # A valid but non-repository root is a diff error, not a skip decision.
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertTrue(check_studio_scope(good, "HEAD", repo_root=directory)["required"])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required for real diff semantics")
+    def test_studio_scope_real_git_delete_missing_ref_and_empty_fall_back(self):
+        root, git = self.git_repo()
+        (root / "studio").mkdir()
+        (root / "README.md").write_text("docs\n", encoding="utf-8")
+        (root / "studio" / "engine.cpp").write_text("int main() {}\n", encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", "base")
+        base = self.head_of(root)
+
+        # Same refs produce an empty change list -> conservative Studio fallback.
+        empty = check_studio_scope(base, base, repo_root=root)
+        self.assertTrue(empty["required"])
+        self.assertEqual(empty["changed_paths"], [])
+
+        # An exact-content rename would hide the old Studio path in normal
+        # --name-only output; --no-renames must retain the deletion.
+        git("config", "diff.renames", "true")
+        (root / "src" / "numerics").mkdir(parents=True)
+        git("mv", "studio/engine.cpp", "src/numerics/engine.py")
+        git("add", "-A")
+        git("commit", "-q", "-m", "move")
+        moved = check_studio_scope(base, self.head_of(root), repo_root=root)
+        self.assertTrue(moved["required"])
+        self.assertIn("studio/engine.cpp", moved["changed_paths"])
+
+        # A well-formed but missing commit ref is a diff failure, not a skip.
+        missing = check_studio_scope("0" * 40, self.head_of(root), repo_root=root)
+        self.assertTrue(missing["required"])
+        self.assertEqual(missing["changed_paths"], [])
+
+    @unittest.skipUnless(shutil.which("git"), "git is required for real diff semantics")
+    def test_studio_scope_real_git_docs_only_change_may_skip(self):
+        root, git = self.git_repo()
+        (root / "README.md").write_text("docs\n", encoding="utf-8")
+        (root / "src" / "numerics").mkdir(parents=True)
+        (root / "src" / "numerics" / "eos.py").write_text("x = 1\n", encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", "base")
+        base = self.head_of(root)
+        (root / "README.md").write_text("more docs\n", encoding="utf-8")
+        (root / "src" / "numerics" / "eos.py").write_text("x = 2\n", encoding="utf-8")
+        git("add", "-A")
+        git("commit", "-q", "-m", "docs and numerics")
+        result = check_studio_scope(base, self.head_of(root), repo_root=root)
+        self.assertFalse(result["required"])
+        self.assertEqual(sorted(result["changed_paths"]),
+                         ["README.md", "src/numerics/eos.py"])
+        self.assertEqual(set(result), {"required", "reason", "changed_paths"})
+
+    def test_studio_scope_cli_emits_json_and_rejects_mixed_modes(self):
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            # The capsule is not a Git repository, so this exercises the diff
+            # error fallback: exit 0 with a conservative JSON decision, no PASS.
+            code = main(["--scope", "studio", "--base", "0" * 40, "--head", "HEAD"])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(set(payload), {"required", "reason", "changed_paths"})
+        self.assertIsInstance(payload["required"], bool)
+        self.assertIsInstance(payload["reason"], str)
+        # Base without head stays conservative: malformed-head rule, exit 0.
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            self.assertEqual(main(["--scope", "studio", "--base", "0" * 40]), 0)
+        self.assertTrue(json.loads(stdout.getvalue())["required"])
+        # Revision arguments are valid only with a scope decision; alone or
+        # paired with --node-tap/--inventory it is rejected, never ignored.
+        for argv in (["--head", "HEAD"],
+                     ["--node-tap", "unused", "--head", "HEAD"],
+                     ["--inventory", "unused", "--head", "HEAD"],
+                     ["--node-tap", "unused", "--scope", "studio", "--base", "0" * 40]):
+            with self.subTest(argv=argv), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    main(argv)
+            self.assertEqual(error.exception.code, 2)
 
 
 if __name__ == "__main__":

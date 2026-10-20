@@ -1,0 +1,26 @@
+[
+  {
+    "originalCommit": "31f6f8dbc7e6841c9c90992699b2a89f4dd58603",
+    "originalPath": "studio/ARCH_STUDIO_CORE_CONTRACT_A_PARAMETER_METADATA_SOD_BINDING.md",
+    "archivedPath": "ARCH_STUDIO_CORE_CONTRACT_A_PARAMETER_METADATA_SOD_BINDING.md",
+    "originalGitBlob": "aa86107f9b3b8d55d2d1188139f6f501240d846e",
+    "archivedGitBlob": "aa86107f9b3b8d55d2d1188139f6f501240d846e",
+    "editsForArchive": "None; original bytes preserved"
+  },
+  {
+    "originalCommit": "31f6f8dbc7e6841c9c90992699b2a89f4dd58603",
+    "originalPath": "studio/ARCH_STUDIO_CORE_CONTRACT_B_CELLULARDET_2D_PREVIEW.md",
+    "archivedPath": "ARCH_STUDIO_CORE_CONTRACT_B_CELLULARDET_2D_PREVIEW.md",
+    "originalGitBlob": "748277bdb848f6016bd83c1787c4ce9db76ea243",
+    "archivedGitBlob": "748277bdb848f6016bd83c1787c4ce9db76ea243",
+    "editsForArchive": "None; original bytes preserved"
+  },
+  {
+    "originalCommit": "502eadcb33a9e2d3c8bd079a10dbdc8af208ef10",
+    "originalPath": "src/api/MAIN_SYNC_HANDOFF.md",
+    "archivedPath": "MAIN_SYNC_HANDOFF-20260924.md",
+    "originalGitBlob": "80e8810024c329e0c8fa385491323c88f06f5148",
+    "archivedGitBlob": "50cb2d5009e5eb0b959b105e6d60d924a4becad2",
+    "editsForArchive": "Historical preface and relative links only"
+  }
+]

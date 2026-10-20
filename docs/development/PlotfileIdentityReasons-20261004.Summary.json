@@ -1,0 +1,59 @@
+{
+  "baselineCommit": "4aea1139351157054a10e65a16b77e2701ccda79",
+  "scope": "Plotfile unknown identity reasons only; C++ IO fixtures, no simulation or main ARCH rebuild",
+  "npmTestTail": [
+    "\u2714 cell-line LOD resolves only visible native cells and never changes leaf counts (0.728037ms)",
+    "\u2714 authoritative Cartesian reference has balanced 2:1 transitions (0.803944ms)",
+    "\u2139 tests 327",
+    "\u2139 suites 0",
+    "\u2139 pass 327",
+    "\u2139 fail 0",
+    "\u2139 cancelled 0",
+    "\u2139 skipped 0",
+    "\u2139 todo 0",
+    "\u2139 duration_ms 5736.092661"
+  ],
+  "cppReaderInterop": [
+    {
+      "dimension": 1,
+      "fileSha256": "7f80a883a3301d5f130547ddfd688e2eabb217e1a2c5cbbc93f2e906cb05a966",
+      "readerClientReasons": {
+        "effectiveConfigSha256": "authoritative effective-config identity not supplied to writer",
+        "buildId": "authoritative Build Manifest identity not supplied to writer",
+        "sourceGitHead": "authoritative source Git identity not supplied to writer"
+      },
+      "buildId": null,
+      "renderEligible": false,
+      "fileUnchanged": true
+    },
+    {
+      "dimension": 2,
+      "fileSha256": "10a2eed3fc0590b139d125fec8a48781bc20b745690cff873fa6d4d77588b82a",
+      "readerClientReasons": {
+        "effectiveConfigSha256": "authoritative effective-config identity not supplied to writer",
+        "buildId": "authoritative Build Manifest identity not supplied to writer",
+        "sourceGitHead": "authoritative source Git identity not supplied to writer"
+      },
+      "buildId": null,
+      "renderEligible": false,
+      "fileUnchanged": true
+    }
+  ],
+  "checks": {
+    "writerCTest": "1/1 PASS",
+    "sourceEvidenceTests": "9/9 PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS; existing chunk-size warning",
+    "diffCheck": "PASS"
+  },
+  "mainBinarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "changedSourceSha256": {
+    "src/io/hdf5/HDF5Writer.cpp": "9300dca49861a2e50acf0c4d9904f202b05e5f9f4721934626c1fd1aa7b24c8c",
+    "studio/host/plotfileMetadata.ts": "a13e93dc984a1e87169c0a5e1ad0b5135e04f452b2c7a0e5a44fd26a61bf5651",
+    "studio/src/host/plotfileSourceIdentity.ts": "116b3651732b4d0b730f83991a328fbc18d97db213a7b87f42d3ef687d494d1f",
+    "studio/src/components/PlotfileSourceEvidence.tsx": "48ebfaa304dee27eb5d005d841f77d6908214f5517e012a72a6cf8adb99ecd85",
+    "tests/host/io/test_plotfile_publication.cpp": "0421fe1476d9ba76d25f5ed8159912bd61e26cdb492ccf0845e593bac75679fd",
+    "studio/tests/plotfile-source-evidence.test.ts": "0a55aa8ccdcd2d1da74fb928bbccea8e04e3be151753195d18ffb46399a4cbf1"
+  }
+}

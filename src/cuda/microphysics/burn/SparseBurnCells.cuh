@@ -26,7 +26,7 @@ template <class Network, template <class, class, class> class Solver, class Eos>
 __global__ void prepare_cells(
     SparseOdeBatchView<Network, Solver> batch, SparseBurnCellRecord* records,
     DeviceStateView state, DeviceGridView grid, int first, int count,
-    double burn_dt, Eos eos, BurnConfigView config)
+    double burn_dt, Eos eos, BurnConfigView config, arch::state::Bounds bounds)
 {
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     if (lane >= count) return;
@@ -47,6 +47,7 @@ __global__ void prepare_cells(
     batch.densities[lane] = record.fluid.rho;
     batch.intervals[lane] = 0.0; // Inactive/invalid cells make no ODE progress.
     if (!config.use_burn) return;
+
     record.disposition = DriverBurn::check_burn_density(record.fluid, config);
     if (record.disposition != DriverBurn::BurnCellDisposition::Ready) return;
     record.prepared = DriverBurn::prepare_burn_cell(
@@ -139,7 +140,7 @@ void execute_sparse_burn_cells(
         const int threads = executor.launch_threads();
         const int blocks = (count + threads - 1) / threads;
         sparse_burn_detail::prepare_cells<Network, Solver>
-            <<<blocks, threads, 0, stream>>>(batch, records, state, grid, first, count, burn_dt, eos, config);
+            <<<blocks, threads, 0, stream>>>(batch, records, state, grid, first, count, burn_dt, eos, config, bounds);
         sparse_burn_detail::checked(cudaGetLastError(), "Sparse burn prepare launch");
         executor.execute(count, eos, config);
         sparse_burn_detail::commit_cells<Network, Solver>

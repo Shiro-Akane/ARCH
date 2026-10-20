@@ -1,0 +1,146 @@
+{
+  "sourceHead": "90e78f6110ed081fd019e19991e6fb2e6231aa9b",
+  "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "scope": "Three existing quick Cartesian thermal/burn samples; frozen inputs and budgets; no radial historical G conversion",
+  "inspection": [
+    {
+      "name": "thermal-linear-4",
+      "exitCode": 0,
+      "inputSha256": "a68cefd1610a314ba2a52c0e7bc63716b402c5ab12ae30da036f327cac89b2e4"
+    },
+    {
+      "name": "gravity-burn",
+      "exitCode": 0,
+      "inputSha256": "5149a21cd60bb4050e8fdb9c75df3f99576222e78d0b488e567701367848a408"
+    },
+    {
+      "name": "gravity-burn-diffusion",
+      "exitCode": 0,
+      "inputSha256": "3d1aac31bdcd4be68232a4312f3b54ef924f1595443d816550b8968debeb9533"
+    }
+  ],
+  "results": [
+    {
+      "name": "thermal-linear-4",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 0.06429958799708402,
+      "cells": 64,
+      "peak_rss_kib": 22036,
+      "driver_seconds": 0.034626217,
+      "output_seconds": 0.027469971,
+      "output_calls": 4.0,
+      "solves": 86,
+      "max_iterations": 1,
+      "setup_seconds": 0.000318452,
+      "solve_seconds": 0.001878928,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.000194491,
+      "poisson_seconds": 0.001486135,
+      "force_seconds": 0.000182504,
+      "stage_solves": 63,
+      "stage_poisson_seconds": 0.001014994,
+      "mass_relative_drift": 2.0489252655631063e-15,
+      "energy_minus_nuclear_over_initial_gas": 1.101125501470058e-15,
+      "nuclear_heat_over_initial_gas": 0.0,
+      "linear_relative_error": 0.0002614262792912606,
+      "independent_amplitudes": [
+        9.751409574395905e-06,
+        3.0700356824470664e-06,
+        1.6262192719576576e-05
+      ],
+      "measured_amplitudes": [
+        9.750430812486284e-06,
+        3.0745320380856117e-06,
+        1.626420315749701e-05
+      ],
+      "actualInputSha256": "a68cefd1610a314ba2a52c0e7bc63716b402c5ab12ae30da036f327cac89b2e4"
+    },
+    {
+      "name": "gravity-burn",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 1.5168767799987108,
+      "cells": 16,
+      "peak_rss_kib": 35328,
+      "driver_seconds": 0.041333328,
+      "output_seconds": 0.029283103,
+      "output_calls": 4.0,
+      "solves": 22,
+      "max_iterations": 1,
+      "setup_seconds": 7.4426e-05,
+      "solve_seconds": 0.00036597,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 5.3787e-05,
+      "poisson_seconds": 0.000277227,
+      "force_seconds": 2.9658e-05,
+      "stage_solves": 15,
+      "stage_poisson_seconds": 0.000167329,
+      "mass_relative_drift": 1.9792110658722883e-16,
+      "energy_minus_nuclear_over_initial_gas": 8.890582325747934e-13,
+      "nuclear_heat_over_initial_gas": 1.1066349097273818e-05,
+      "mean_composition_change": 2.413679328725434e-05,
+      "actualInputSha256": "5149a21cd60bb4050e8fdb9c75df3f99576222e78d0b488e567701367848a408"
+    },
+    {
+      "name": "gravity-burn-diffusion",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 1.5679158009952516,
+      "cells": 16,
+      "peak_rss_kib": 35812,
+      "driver_seconds": 0.047631179,
+      "output_seconds": 0.030528965999999998,
+      "output_calls": 4.0,
+      "solves": 22,
+      "max_iterations": 1,
+      "setup_seconds": 7.2903e-05,
+      "solve_seconds": 0.00039475999999999997,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 5.9573999999999996e-05,
+      "poisson_seconds": 0.000295676,
+      "force_seconds": 3.3189e-05,
+      "stage_solves": 15,
+      "stage_poisson_seconds": 0.000189446,
+      "mass_relative_drift": 3.376205565119861e-16,
+      "energy_minus_nuclear_over_initial_gas": 8.923497997310248e-13,
+      "nuclear_heat_over_initial_gas": 1.106634482463519e-05,
+      "mean_composition_change": 2.4136784043153983e-05,
+      "transport_relative_effect": 8.215896287276518e-07,
+      "actualInputSha256": "3d1aac31bdcd4be68232a4312f3b54ef924f1595443d816550b8968debeb9533"
+    }
+  ],
+  "status": "PASS",
+  "defaultSourceCommit": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "defaultSourceFiles": [
+    "src/data/GlobalDefs.h",
+    "src/core/config/StandardParameters.h",
+    "src/core/config/RuntimeParams.h"
+  ],
+  "generatorSha256": "649bc73a7058ddf46b6afd0fc24a73d3f894ab1b86fcbc9d56f0fb3a91c07e70",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/gravity-quick-input-migration-20261004",
+  "fullSelfGravityGate": "NOT_COMPLETE",
+  "preservedBudgets": {
+    "linearRelativeErrorMax": 0.02,
+    "energyMinusNuclearMax": 1e-06,
+    "massDriftMax": 1e-12,
+    "nuclearHeatMin": 1e-08,
+    "compositionChangeMin": 1e-08,
+    "transportRelativeEffectMin": 1e-08
+  },
+  "limitations": [
+    "Three pre-existing quick Cartesian trajectories only; not complete self_gravity_physics or CPU stage acceptance.",
+    "No change to Core, physical inputs other than explicit historic effective defaults, independent reference, or thresholds.",
+    "Historical radial gravity_G=1e-20 equivalent migration remains pending Core approval.",
+    "Original full-regression failing JUnit is preserved; no merged green result."
+  ]
+}

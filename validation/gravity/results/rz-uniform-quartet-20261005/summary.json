@@ -1,0 +1,202 @@
+{
+  "status": "EXACT_UNIFORM_QUARTET_AND_ACTUAL_MIXED_REBIND_PASS",
+  "baseline": "e490c58658bb30f03ac9e20c6dca455e688fd2ad",
+  "finding": {
+    "id": "RZ-MIXED-RUNTIME-WORK-01",
+    "state": "closed for original recorded five-leaf uniform-density input",
+    "priorFailurePreserved": true
+  },
+  "sourceSha256": {
+    "src/physics/gravity/GravityBoundary.cpp": "7d9b2a9a0c03e91ddb3cc694efe5be5514bed638853494491924f1b6b86f5ee2",
+    "src/physics/gravity/GravityBoundary.h": "16473da1805f04a3386fb46d73d6e04b02fa4ae5c35814a41a55940bd305e290",
+    "src/physics/gravity/self/SelfGravity.cpp": "2b42be22462e032713dfcd8a7ef732a28c4506fe98ba2c30863e287ca175a92a",
+    "tests/host/gravity/test_composite_poisson.cpp": "59e099cfba7aafa5fb04735fe0b74108dcf6b6b472679535ed182973474e8d14",
+    "validation/gravity/rz_uniform_quartet_reference.py": "b87f0b66a082a0b639a51f64c1fd25ec3a9ba72ee19f5efa896278da8b435f6f"
+  },
+  "actualRuntime": {
+    "scope": "Actual CPU RZ Runtime mixed/coarse AMR -> native field rebind; no timestep",
+    "exitCode": 0,
+    "stdout": "ACTUAL_RZ_REGRID_CONSERVATION phase=refine mass=4.9443359450135940218e-18 energy=5.8830633892218087959e-18 angular=1.0178367504159992958e-17 x0=1.3347385767055477273e-17 x1=1.3927706887362235913e-18 zero_rotation=0\nACTUAL_RZ_REGRID_CONSERVATION phase=frozen-parent-veto mass=1.3252311172764652747e-17 energy=1.2545550436611475183e-17 angular=0 x0=1.9958992955509264994e-17 x1=2.5020639583995762343e-17 zero_rotation=0\nACTUAL_RZ_REGRID_FIELD_PASS phase=mixed blocks=5 cells=1280 epoch=3 total=4.6056448529745771e-15 safe=1.6571030555802408e-14 time=0 steps=0\nACTUAL_RZ_RUNTIME_PARENT_VETO_PASS transaction_rejected=0 active_blocks=5 children=4 parent_m=-111/8 parent_eint=-9/128 time=0 steps=0\nACTUAL_RZ_REGRID_CONSERVATION phase=coarsen mass=8.6968292071268033686e-18 energy=8.7465253740246708054e-18 angular=4.1413472414889539839e-19 x0=1.2481560436154209007e-17 x1=9.3180312933501458466e-18 zero_rotation=0\nACTUAL_RZ_REGRID_FIELD_PASS phase=coarse blocks=2 cells=512 epoch=4 total=4.9809729219668673e-15 safe=1.4684682266926192e-14 time=0 steps=0\nACTUAL_RZ_REGRID_CONSERVATION phase=no-change mass=0 energy=0 angular=0 x0=0 x1=0 zero_rotation=0\nACTUAL_RZ_RUNTIME_REGRID_PASS omega=1 root_blocks=2 refined_blocks=8 coarse_blocks=2 actual_ledger=1 old_handle_rejected=1 no_change_identity=1 production_gate_held=1 time=0 steps=0\n",
+    "stderr": "",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "executableSha256": "5a5c7737dda581f092057dcd0a5a31c499ff35a209ada2a1dac9ba20cfe829bb",
+    "recompiledSources": {
+      "tests/host/gravity/test_rz_runtime_regrid_contract.cpp": "89a4c05e865e365f21c9893aa6f09251ec5997fd217689965acc11a64cdf5091",
+      "src/driver/stages/GravityStage.cpp": "fc2336d88b6041fae7e9c4106f6796e268ec54d189a622bc42f517103f60d038",
+      "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "08f5d73713eadf576d9972f79ee2d5b71c28dc764ee42c153054c373339a62b8",
+      "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340"
+    },
+    "timestepHeaderSha256": "00f9e70c9ee177a76f01054e53b11f89ec02cd8f84dfaef974360b6aa38481ea",
+    "rklHeaderSha256": {
+      "src/numerics/diffusion/DiffDispatch.h": "349df128938e5237c861bee9de58f1e70f20841bdf22eb33bc164964d1088f09",
+      "src/numerics/diffusion/DiffusionAMRStages.h": "3f051214b754f42f4892081db0d07b19792a3cce1e757391fb6c4371403caf16",
+      "src/numerics/diffusion/RKL1TimeIntegrator.h": "b7673e0c3bc44e7df9d709a3e464e2e93032592d1c331018f66e8c6904653ccd",
+      "src/numerics/diffusion/RKL2TimeIntegrator.h": "28d4e56da8fc316e3a1ac01352c895381537acbbfeab42a8f316564cb1274e76"
+    },
+    "limitations": [
+      "Explicit candidate only; production physical readers/Device gates held",
+      "No continuous Phi/force or Hydro conservation/evolution science acceptance"
+    ]
+  },
+  "stageDiagnosticRows": [
+    {
+      "time": "0",
+      "stage": "0",
+      "epoch": "3",
+      "lease": "1",
+      "cells": "1280",
+      "source_generation": "1",
+      "residual_upper": "4.6056448529745771e-15",
+      "tolerance_safe": "1.6571030555802408e-14",
+      "physical_qualified": "0"
+    },
+    {
+      "time": "0",
+      "stage": "0",
+      "epoch": "4",
+      "lease": "2",
+      "cells": "512",
+      "source_generation": "1",
+      "residual_upper": "4.9809729219668673e-15",
+      "tolerance_safe": "1.4684682266926192e-14",
+      "physical_qualified": "0"
+    }
+  ],
+  "guard": {
+    "seconds": 223.405,
+    "scope": "runner compile plus mixed/coarse check, not benchmark",
+    "peakOwnedRssKiB": 1283872,
+    "swapKiB": 0,
+    "guardStopped": false
+  },
+  "unchangedControls": {
+    "rtol": 1e-10,
+    "atol": 0,
+    "maximumBoxesPerIntegral": 65536,
+    "globalWorkCap": 100000,
+    "domainR": [
+      0,
+      1
+    ],
+    "domainZ": [
+      -0.5,
+      0.5
+    ]
+  },
+  "qualificationCases": [
+    {
+      "origin": 0,
+      "uniform": false,
+      "attempts": 0,
+      "accepted": 0
+    },
+    {
+      "origin": 0,
+      "uniform": true,
+      "attempts": 48,
+      "accepted": 48
+    },
+    {
+      "origin": 0.3,
+      "uniform": false,
+      "attempts": 0,
+      "accepted": 0
+    },
+    {
+      "origin": 0.3,
+      "uniform": true,
+      "attempts": 0,
+      "accepted": 0
+    }
+  ],
+  "independentQuartet": {
+    "status": "EXACT_NATIVE_QUARTET_UNION_PASS",
+    "records": [
+      {
+        "recordSha256": "d0920305673b978f3e6155804391ef9631b102ee0974fbc81bf8d06a5fec92b0",
+        "rows": [
+          {
+            "cells": 16,
+            "radialOrigin": 0,
+            "exactEligibleQuartets": 4,
+            "unequalDensityGroups": 0,
+            "acceptedObserverIntegrals": 48,
+            "representedOriginalLeaves": 192,
+            "exactUnionAndMoments": "PASS"
+          },
+          {
+            "cells": 16,
+            "radialOrigin": 0.5,
+            "exactEligibleQuartets": 4,
+            "unequalDensityGroups": 0,
+            "acceptedObserverIntegrals": 64,
+            "representedOriginalLeaves": 256,
+            "exactUnionAndMoments": "PASS"
+          }
+        ]
+      },
+      {
+        "recordSha256": "ef024cf06c28f6e6f2410b5ca3ceaf6b934bf2c450affec330bd3e667f50cf07",
+        "rows": [
+          {
+            "cells": 28,
+            "radialOrigin": 0,
+            "exactEligibleQuartets": 4,
+            "unequalDensityGroups": 0,
+            "acceptedObserverIntegrals": 48,
+            "representedOriginalLeaves": 192,
+            "exactUnionAndMoments": "PASS"
+          },
+          {
+            "cells": 28,
+            "radialOrigin": 0.5,
+            "exactEligibleQuartets": 4,
+            "unequalDensityGroups": 0,
+            "acceptedObserverIntegrals": 64,
+            "representedOriginalLeaves": 256,
+            "exactUnionAndMoments": "PASS"
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "Original small solved-record partition semantics only, not all Runtime arrays",
+      "No continuous potential/force or evolution acceptance"
+    ]
+  },
+  "independentSolvedReferences": {
+    "uniform": "PASS 2 cases / 32 cells",
+    "mixed": "PASS 2 cases / 56 cells",
+    "completeOriginalBudget": "PASS four cases"
+  },
+  "rawReferenceSha256": {
+    "outcome.json": "aaedbf8bbb53cbf102ba0c36d4d89d1a290b50aaacd74e7c4c79b7eae42da853",
+    "mixed-reference.json": "db49afd7e7c54087141e11c995ab432dd40644eb4b2c4f09734caae8a52e20f5",
+    "mixed.json": "ef024cf06c28f6e6f2410b5ca3ceaf6b934bf2c450affec330bd3e667f50cf07",
+    "budget-reference.json": "ee97926bb2eca58a9c5b9c0dcc9884c4d97a08739782aeb69d114c32ee824da6",
+    "uniform-reference.json": "69b3b71977be53c7a4a536661db3caa5701a52f5c0542060d33cd97b7b91fdc2",
+    "quartet-reference.json": "8cf6e3f96bd2b9802f8b793930f3f3e97ba1c124479d0be46e67ba444d62028b",
+    "uniform.json": "d0920305673b978f3e6155804391ef9631b102ee0974fbc81bf8d06a5fec92b0"
+  },
+  "regressions": {
+    "cpuCompositeAnalytic": "PASS 3.18s",
+    "cpuSelfGravity": "PASS 9.19s",
+    "cudaEnabledHostSelfGravity": "PASS 8.81s",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "productionElfSha256": {
+    "build-cpu/bin/ARCH": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda/bin/ARCH": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "limitations": [
+    "Only exact complete direct quartet with identical stored density; no generic source homogenization",
+    "Existing caps bound actual charged visits; no exact mixed-runtime visit count exported in this run",
+    "Independent quartet/full-array Fraction records cover small four cases, not all 1280 Runtime arrays",
+    "Native conditional solve, not continuous Phi/force or Hydro conservation/evolution scientific acceptance",
+    "Fatal finalizer rollback/axis/viscosity/full angular convergence/Device/long run remain open",
+    "Production binaries not rebuilt/current-source qualified"
+  ]
+}

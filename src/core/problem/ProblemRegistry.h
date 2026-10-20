@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "interface/ProblemGenerator.h"
+#include "core/config/CaseConfiguration.h"
 
 /**
  * @brief Callback signature to instantiate a specific problem generator.
@@ -28,6 +29,8 @@ using ProblemCreator = std::function<std::unique_ptr<ProblemGenerator>()>;
 struct ProblemRegistration {
     std::string source_file, source_sha256;
     bool point_initialization = false;
+    std::function<arch::config::CaseConfiguration(
+        const arch::config::StandardInputResolution&)> configuration_declaration;
 };
 
 class ProblemRegistry
@@ -62,12 +65,28 @@ public:
      */
     std::unique_ptr<ProblemGenerator> Create(const std::string &name)
     {
-        // Use C++20 contains() if available, otherwise use find()
-        if (creators_.find(name) != creators_.end())
+        const auto creator = creators_.find(name);
+        if (creator == creators_.end())
+            return nullptr; // Caller must check for validity!
+
+        std::unique_ptr<ProblemGenerator> generator = creator->second();
+        if (generator)
         {
-            return creators_[name]();
+            // The created case carries its own registration identity; the
+            // caller never has to re-read registry-owned state.
+            const auto registration = registrations_.find(name);
+            if (registration != registrations_.end())
+            {
+                generator->BindRegistration(name, registration->second.source_file,
+                                            registration->second.source_sha256);
+            }
+            else
+            {
+                generator->BindRegistration(name, {}, {});
+            }
+            generator->registered_case_id_ = name;
         }
-        return nullptr; // Caller must check for validity!
+        return generator;
     }
 
     // Registration names only: enumeration never constructs a case or calls Setup.
@@ -75,6 +94,14 @@ public:
         std::vector<std::string> result;
         for (const auto& [name, creator] : creators_) result.push_back(name);
         return result;
+    }
+
+    arch::config::CaseConfiguration DescribeConfiguration(
+        const std::string& name, const arch::config::StandardInputResolution& inputs) const {
+        const auto* info = Registration(name);
+        if (!info) throw std::invalid_argument("Unknown registered case: " + name);
+        if (!info->configuration_declaration) return {};
+        return info->configuration_declaration(inputs);
     }
 
     const ProblemRegistration* Registration(const std::string& name) const {

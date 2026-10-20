@@ -1,0 +1,57 @@
+{
+  "scope": "Actual Driver single/composite RKL stage kernels; constant zero-viscous-operator engineering fixture",
+  "exitCode": 0,
+  "stdout": "RZ_RUNTIME_DT direction=0 inner=0 rkl=1 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.1953125 diffusion_sts=5140\nRZ_RUNTIME_DT direction=0 inner=0 rkl=2 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.1953125 diffusion_sts=2549.921875\nRZ_RUNTIME_RKL mixed=0 direction=0 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=0 direction=0 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=0 inner=0 leaves=1 version=1 PASS\nRZ_RUNTIME_DT direction=0 inner=1 rkl=1 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.38927801724137934 diffusion_sts=10244.551724137933\nRZ_RUNTIME_DT direction=0 inner=1 rkl=2 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.38927801724137934 diffusion_sts=5082.2580818965525\nRZ_RUNTIME_RKL mixed=0 direction=0 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=0 direction=0 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=0 inner=1 leaves=1 version=1 PASS\nRZ_RUNTIME_DT direction=1 inner=0 rkl=1 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.1953125 diffusion_sts=5140\nRZ_RUNTIME_DT direction=1 inner=0 rkl=2 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.1953125 diffusion_sts=2549.921875\nRZ_RUNTIME_RKL mixed=0 direction=1 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=0 direction=1 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=1 inner=0 leaves=1 version=1 PASS\nRZ_RUNTIME_DT direction=1 inner=1 rkl=1 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.38927801724137934 diffusion_sts=10244.551724137933\nRZ_RUNTIME_DT direction=1 inner=1 rkl=2 hydro=0.0018097221480043075 independent_hydro=0.0018097221480043073 diffusion_fe=0.38927801724137934 diffusion_sts=5082.2580818965525\nRZ_RUNTIME_RKL mixed=0 direction=1 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=0 direction=1 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=1 inner=1 leaves=1 version=1 PASS\nRZ_RUNTIME_DT direction=0 inner=0 rkl=1 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.01502403846153846 diffusion_sts=395.38461538461536\nRZ_RUNTIME_DT direction=0 inner=0 rkl=2 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.01502403846153846 diffusion_sts=196.14783653846152\n[Diffusion] multi-block AMR uses composite RKL1 STS with stage ghost synchronization and reflux.\nRZ_RUNTIME_RKL mixed=1 direction=0 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=1 direction=0 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=0 inner=0 leaves=5 version=1 PASS\nRZ_RUNTIME_DT direction=0 inner=1 rkl=1 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.039047712700515783 diffusion_sts=1027.6108455969338\nRZ_RUNTIME_DT direction=0 inner=1 rkl=2 hydro=0.00063382882430512981 independent_hydro=0.00063382882430512981 diffusion_fe=0.039047712700515783 diffusion_sts=509.79131793285387\n[Diffusion] multi-block AMR uses composite RKL1 STS with stage ghost synchronization and reflux.\nRZ_RUNTIME_RKL mixed=1 direction=0 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=1 direction=0 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=0 inner=1 leaves=5 version=1 PASS\nRZ_RUNTIME_DT direction=1 inner=0 rkl=1 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.027901785714285712 diffusion_sts=734.28571428571433\nRZ_RUNTIME_DT direction=1 inner=0 rkl=2 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.027901785714285712 diffusion_sts=364.27455357142856\n[Diffusion] multi-block AMR uses composite RKL1 STS with stage ghost synchronization and reflux.\nRZ_RUNTIME_RKL mixed=1 direction=1 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=1 direction=1 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=1 inner=0 leaves=5 version=1 PASS\nRZ_RUNTIME_DT direction=1 inner=1 rkl=1 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.039048157242518818 diffusion_sts=1027.6225445199193\nRZ_RUNTIME_DT direction=1 inner=1 rkl=2 hydro=0.00057546900903755955 independent_hydro=0.00057546900903755944 diffusion_fe=0.039048157242518818 diffusion_sts=509.7971216954287\n[Diffusion] multi-block AMR uses composite RKL1 STS with stage ghost synchronization and reflux.\nRZ_RUNTIME_RKL mixed=1 direction=1 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16\nRZ_RUNTIME_RKL mixed=1 direction=1 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14\nRZ_RUNTIME_HALO direction=1 inner=1 leaves=5 version=1 PASS\n",
+  "stderr": "",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "4eec78d451ce3846f0e1679c9f3a7634dd7cbeac3d7fd4566f74bba07eeb9485",
+  "recompiledSources": {
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "09143f20658dd8104c2c1993d89a4a8c163073bc76d8e8827cf459325f699d43",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69"
+  },
+  "timestepHeaderSha256": "6c25bb19521b7dafa08b27326d84d826bb5f8e8b1900968034df8eb8d0480ab0",
+  "limitations": [
+    "RZ production regrid remains gated",
+    "CUDA not qualified",
+    "No scientific evolution acceptance",
+    "Nonzero diffusion evolution/reference and error acceptance still pending",
+    "Public RZ mode/checkpoint/IO semantic migration incomplete"
+  ],
+  "baseline": "4593e8efe17625efdd2c5e06697af2230cba1ae4",
+  "rklHeaderSha256": {
+    "src/numerics/diffusion/DiffDispatch.h": "349df128938e5237c861bee9de58f1e70f20841bdf22eb33bc164964d1088f09",
+    "src/numerics/diffusion/DiffusionAMRStages.h": "d3fec501c0f151cb7014cd2a1888f6ed55cd84c689971831d8f3384bb1d11c9f",
+    "src/numerics/diffusion/RKL1TimeIntegrator.h": "b7673e0c3bc44e7df9d709a3e464e2e93032592d1c331018f66e8c6904653ccd",
+    "src/numerics/diffusion/RKL2TimeIntegrator.h": "28d4e56da8fc316e3a1ac01352c895381537acbbfeab42a8f316564cb1274e76"
+  },
+  "rklCases": [
+    "RZ_RUNTIME_RKL mixed=0 direction=0 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=0 direction=0 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=0 direction=0 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=0 direction=0 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=0 direction=1 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=0 direction=1 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=0 direction=1 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=0 direction=1 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=1 direction=0 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=1 direction=0 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=1 direction=0 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=1 direction=0 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=1 direction=1 inner=0 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=1 direction=1 inner=0 rkl=2 stages=5 max_error=1.4210854715202004e-14",
+    "RZ_RUNTIME_RKL mixed=1 direction=1 inner=1 rkl=1 stages=2 max_error=1.1102230246251565e-16",
+    "RZ_RUNTIME_RKL mixed=1 direction=1 inner=1 rkl=2 stages=5 max_error=1.4210854715202004e-14"
+  ],
+  "maxStateError": 1.4210854715202004e-14,
+  "checks": {
+    "real_rkl_routes": "16/16 PASS",
+    "curvilinear_metrics": "PASS",
+    "shared_stage_scheduler": "PASS",
+    "amr_operation_plans": "PASS",
+    "amr_flux_surface_plan": "PASS"
+  },
+  "initialFailure": "First scoped compile exposed missing AMR RKL signature parameter; corrected. Original compile log retained.",
+  "rawLogs": "studio/.local/integration/rz-runtime-rkl-20261004-repair; original compile log in rz-runtime-rkl-20261004"
+}

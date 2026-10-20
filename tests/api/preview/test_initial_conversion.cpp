@@ -1,6 +1,6 @@
 #include "core/problem/InitialStateConversion.h"
-#include "core/config/RuntimeParams.h"
 #include "physics/eos/IdealGas.h"
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -16,7 +16,92 @@ struct DensityBoundedIdealGas : IdealGas {
                           : std::numeric_limits<double>::quiet_NaN();
     }
 };
+
+// Exact binary states independently fix the requested caloric state and K.
+// This is an initialization arithmetic check, not a physical high-velocity
+// model or a qualification of subnormal-density evolution on a full grid.
+static void test_extreme_ideal_initialization() {
+    SpeciesManager material;
+    material.add_species("binary", 1., 1., 2., 1.);
+    IdealGas eos(2., material);
+    NumericsConfig limits;
+    limits.sml_rho = std::numeric_limits<double>::denorm_min();
+    limits.max_eint = std::numeric_limits<double>::max();
+    const arch::state::Bounds bounds{limits.sml_rho, limits.min_eint, limits.max_eint};
+    struct Reference {
+        double rho, velocity, internal, momentum, pressure;
+        long double kinetic, energy;
+    };
+    const std::array<Reference, 2> references{{
+        {std::ldexp(1., -1074), std::ldexp(1., 20), std::ldexp(1., 42),
+         std::ldexp(1., -1054), std::ldexp(1., -1032),
+         std::ldexp(3.L, -1035), std::ldexp(11.L, -1035)},
+        {std::ldexp(1., -100), std::ldexp(1., 512), std::ldexp(1., 1020),
+         std::ldexp(1., 412), std::ldexp(1., 920),
+         std::ldexp(3.L, 923), std::ldexp(25.L, 920)}
+    }};
+    for (const auto& reference : references) {
+        PrimitiveData data{};
+        data.rho = reference.rho;
+        data.u = data.v = data.w = reference.velocity;
+        data.p = reference.pressure;
+        data.mass_fractions = {1.};
+        for (bool temperature_input : {false, true}) {
+            if (temperature_input) data.SetTemperature(reference.internal);
+            arch::state::Repair receipt;
+            const auto state = ProblemHelper::detail::InitialConservedState(data, eos, limits, &receipt);
+            require(receipt.status == arch::state::Status::valid,
+                    "representable extreme Init must not need an energy or density repair");
+            require(state.rho == reference.rho
+                    && state.mom_u == reference.momentum
+                    && state.mom_v == reference.momentum
+                    && state.mom_w == reference.momentum,
+                    "extreme Init changed independently specified conserved momentum");
+            require(state.eng == static_cast<double>(reference.energy),
+                    "extreme Init lost the independently specified total energy");
+            const auto thermal = arch::state::recover(state);
+            require(thermal.status == arch::state::Status::valid
+                    && thermal.kinetic == static_cast<double>(reference.kinetic)
+                    && thermal.internal == reference.internal,
+                    "extreme Init changed the requested resolvable caloric state");
+            require(arch::state::validate_eos(state, data.mass_fractions.data(), 1, bounds, eos)
+                        == arch::state::Status::valid
+                    && eos.get_temperature(state.rho, thermal.internal, data.mass_fractions.data())
+                        == reference.internal
+                    && eos.get_pressure(state, data.mass_fractions.data()) == reference.pressure,
+                    "actual IdealGas rejected or changed a representable extreme Init state");
+            const double sound = eos.get_sound_speed(state, reference.pressure,
+                                                     data.mass_fractions.data());
+            require(std::isfinite(sound) && sound > 0.
+                    && sound == std::sqrt(std::ldexp(reference.internal, 1)),
+                    "actual IdealGas sound speed differs from the independent gamma=2 state");
+        }
+    }
+
+    // K alone is finite, but rho*u cannot be stored in FluidVector. This
+    // primitive must fail through the existing finite-conservative gate.
+    PrimitiveData invalid{};
+    invalid.rho = std::ldexp(1.5, 1023);
+    invalid.u = 1.5;
+    invalid.p = std::ldexp(invalid.rho, -6);
+    invalid.mass_fractions = {1.};
+    const long double finite_kinetic = .5L * static_cast<long double>(invalid.rho) * 2.25L;
+    require(std::isfinite(static_cast<double>(finite_kinetic))
+            && !std::isfinite(invalid.rho * invalid.u)
+            && !std::isfinite(eos_utils::calc_kinetic_energy(invalid.rho, invalid.u, 0., 0.)),
+            "unrepresentable conservative momentum was silently replaced by a finite K");
+    for (bool temperature_input : {false, true}) {
+        if (temperature_input) invalid.SetTemperature(std::ldexp(1., -6));
+        bool rejected = false;
+        try { (void)ProblemHelper::detail::InitialConservedState(invalid, eos, limits); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected, "Init accepted an unrepresentable conserved momentum");
+    }
+    std::cout << "INITIAL_RANGE_PASS states=4 actual_ideal_eos=true no_repair=true\n";
+}
+
 int main() {
+    test_extreme_ideal_initialization();
     SpeciesManager empty;
     IdealGas air(1.4, empty);
     require(std::abs(air.get_eint_from_T(1, 300, nullptr) - 2.154e9) < 1e-5, "CGS air Cv times temperature");
@@ -53,9 +138,5 @@ int main() {
     try { (void)ProblemHelper::detail::InitialConservedState(data, eos); }
     catch (const std::runtime_error &) { rejected = true; }
     require(rejected, "invalid temperature conversion must fail");
-    const auto config = RuntimeParams::LoadText("nblockx1=2\nnblockx2=0\nnblockx3=0\nx_pos=.3\n");
-    require(config.grid.dim == 1 && config.grid.nblockx1 == 2, "memory configuration");
-    require(config.Get<double>("x_pos", .5) == .3, "custom memory parameter");
-    require(config.Get<double>("absent", .7) == .7, "custom fallback");
-    std::cout << "Initial conversion and in-memory parser passed\n";
+    std::cout << "Initial state conversion passed\n";
 }

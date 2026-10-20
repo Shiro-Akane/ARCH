@@ -15,10 +15,12 @@
 #pragma once
 
 #include <array>
+#include <bit>
 #include <cmath>
 #include <memory>
 #include <map>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include "amr/exchange/CoarseFineCellPlan.h"
@@ -29,6 +31,7 @@
 #include "amr/transfer/AmrTransferPlans.h"
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/transfer/LimitedLinearProlongation.h"
+#include "amr/transfer/RegridTransferMath.h"
 #include "data/GlobalDefs.h"
 
 namespace amr {
@@ -39,6 +42,7 @@ public:
 
     struct CachedPlans {
         std::vector<SameLevelExchangePlan> same_level;
+        std::vector<SameLevelExchangePlan> same_level_corners;
         CoarseFineTransferPlan coarse_fine;
         CoordinateSeamPlan coordinate_seam;
         std::vector<std::vector<std::size_t>> level_indices;
@@ -47,6 +51,8 @@ public:
     // One entry per exchange owner, not one entry per historical topology.
     // Logical plans contain no storage/view pointers. Slots, generations,
     // layouts and physical measures are deliberately rebound by each executor.
+    // Geometry keys this cache because seam stencils store physical donor
+    // weights; field/slot contents remain outside the key.
     // The returned reference is valid until the next cache miss on this owner.
     const CachedPlans& GetPlans(
         const std::shared_ptr<MemoryPool>& pool,
@@ -60,7 +66,7 @@ public:
             throw std::invalid_argument("exchange cache requires committed handles");
         auto& key = cache_probe_;
         key.clear();
-        key.reserve(2 + active.size() * 44);
+        key.reserve(3 + active.size() * 72);
         key.push_back(static_cast<std::uint64_t>(dim));
         key.push_back(active.size());
         for (std::size_t i = 0; i < active.size(); ++i) {
@@ -73,6 +79,21 @@ public:
                 static_cast<std::uint64_t>(block.level),
                 block.logical_x1, block.logical_x2, block.logical_x3,
                 static_cast<std::uint64_t>(block.fluid_state.GetNumSpecies())});
+            // Seam donor positions/weights depend on chart and native
+            // geometry, even if logical topology and handles are unchanged.
+            // Preserve binary64 identity instead of a lossy numeric hash.
+            const auto& grid = block.grid;
+            key.push_back(grid.geometry.size());
+            for (unsigned char byte : grid.geometry) key.push_back(byte);
+            for (double value : {grid.x1_min,grid.x1_max,grid.x2_min,grid.x2_max,
+                    grid.x3_min,grid.x3_max,grid.dx1,grid.dx2,grid.dx3})
+                key.push_back(std::bit_cast<std::uint64_t>(value));
+
+            key.insert(key.end(), {static_cast<std::uint64_t>(grid.dim),
+                static_cast<std::uint64_t>(grid.nblockx1),
+                static_cast<std::uint64_t>(grid.nblockx2),
+                static_cast<std::uint64_t>(grid.nblockx3),
+                static_cast<std::uint64_t>(grid.ng)});
             for (int face = 0; face < 2 * dim; ++face) {
                 const auto& neighbor = block.face_neighbors[face];
                 if (neighbor.count < 0 || neighbor.count > 4)
@@ -91,6 +112,9 @@ public:
         auto candidate = std::make_unique<CachedPlans>();
         candidate->same_level = BuildSameLevelPlans(pool, tree, dim, handles);
         candidate->coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
+        if(dim==2&&!candidate->coarse_fine.operations.empty())
+            for(const auto& faces:candidate->same_level)
+                candidate->same_level_corners.push_back(make_same_level_corner_completion_plan(faces));
         candidate->coordinate_seam = make_coordinate_seam_plan(
             pool, active, dim);
         std::map<BlockHandle, std::size_t> indices;
@@ -333,8 +357,10 @@ public:
             std::array<int, 6> slope_cells{};
             std::array<double, 3> fine_position{};
             std::array<double, 8> source_measures{};
+            std::array<double, 8> source_moment_measures{};
             std::uint8_t source_count = 0;
             double source_measure_sum = 0.0;
+            double source_moment_measure_sum = 0.0;
             RefinementRule rule = RefinementRule::CoarseGhostInjection;
         };
         std::map<LogicalBlockKey, std::size_t> active_index;
@@ -407,6 +433,9 @@ public:
             lowered.source_count = transfer.source_count;
             lowered.fine_position = transfer.fine_position;
             lowered.rule = transfer.rule;
+            const bool angular_momentum =
+                source_block.grid.geometry == "cylindrical" && dim == 2
+                && transfer.rule == RefinementRule::FineGhostAverage;
             if (lowered.source_count == 0
                 || lowered.source_count > lowered.source_cells.size())
                 throw std::invalid_argument(
@@ -414,15 +443,16 @@ public:
             for (std::size_t cell = 0; cell < lowered.source_count; ++cell) {
                 lowered.source_cells[cell] = cell_index(
                     source_block.grid, transfer.source_cells[cell]);
+                const LogicalAmrCell& logical =
+                    transfer.source_cells[cell];
+
                 // Cartesian fine cells have one common measure, so unit
                 // weights preserve the existing arithmetic.  Curvilinear
                 // restriction must use physical cell volumes.
                 double measure = 1.0;
                 if (source_block.grid.geometry != "cartesian") {
-                    const LogicalAmrCell& logical =
-                        transfer.source_cells[cell];
                     measure = GridMetrics::CellVolume(
-                        source_block.grid,
+                        GridMetrics::make_geometry_view(source_block.grid),
                         source_block.grid.Is() + logical[0],
                         source_block.grid.Js() + logical[1],
                         source_block.grid.Ks() + logical[2]);
@@ -432,6 +462,19 @@ public:
                         "coarse-fine Host source measure is invalid");
                 lowered.source_measures[cell] = measure;
                 lowered.source_measure_sum += measure;
+                if (angular_momentum) {
+                    const double moment =
+                        GridMetrics::AngularMomentumVolumeMoment(
+                            GridMetrics::make_geometry_view(source_block.grid),
+                            source_block.grid.Is() + logical[0],
+                            source_block.grid.Js() + logical[1],
+                            source_block.grid.Ks() + logical[2]);
+                    if (!std::isfinite(moment) || moment <= 0.0)
+                        throw std::invalid_argument(
+                            "coarse-fine Host source moment is invalid");
+                    lowered.source_moment_measures[cell] = moment;
+                    lowered.source_moment_measure_sum += moment;
+                }
             }
             if (lowered.rule == RefinementRule::CoarseGhostInjection) {
                 for (std::size_t cell = 0;
@@ -443,6 +486,12 @@ public:
                 || lowered.source_measure_sum <= 0.0)
                 throw std::invalid_argument(
                     "coarse-fine Host source measure sum is invalid");
+            if (angular_momentum
+                && (!std::isfinite(lowered.source_moment_measure_sum)
+                    || lowered.source_moment_measure_sum <= 0.0))
+                throw std::invalid_argument(
+                    "coarse-fine Host source moment sum is invalid");
+
             compiled.push_back(lowered);
         }
 
@@ -457,6 +506,7 @@ public:
         // CUDA two-kernel execution, this prevents the fine-to-coarse route
         // from overwriting a coarse stencil needed by its reciprocal
         // coarse-to-fine route.
+
         for (const CompiledTransfer& transfer : compiled) {
             const FluidState& source =
                 pool->GetBlock(transfer.source_id).*state_ptr;
@@ -464,19 +514,25 @@ public:
                 source.rho.data(), source.mass_fractions.data(),
                 source.rho.size(), transfer.source_cells[0],
                 transfer.slope_cells.data(), plan.dimension, species_count};
-            const auto transfer_field = [&](const std::vector<double>& field) {
+            const auto transfer_field = [&](const std::vector<double>& field,
+                                            bool moment_measure) {
                 if (transfer.rule == RefinementRule::CoarseGhostInjection)
                     return prolongation_math::reconstruct_field(
                         stencil, field.data(),
                         transfer.fine_position.data());
+                const auto& measures = moment_measure
+                    ? transfer.source_moment_measures
+                    : transfer.source_measures;
+                const double measure_sum = moment_measure
+                    ? transfer.source_moment_measure_sum
+                    : transfer.source_measure_sum;
                 double integral = 0.0;
                 for (std::size_t cell = 0;
                      cell < transfer.source_count; ++cell)
                     integral += restriction_math::weighted_conserved_value(
-                        field[transfer.source_cells[cell]],
-                        transfer.source_measures[cell]);
+                        field[transfer.source_cells[cell]], measures[cell]);
                 return restriction_math::restricted_average(
-                    integral, transfer.source_measure_sum);
+                    integral, measure_sum);
             };
             double density_integral = 0.0;
             for (std::size_t cell = 0;
@@ -486,13 +542,16 @@ public:
                         source.rho[transfer.source_cells[cell]],
                         transfer.source_measures[cell]);
             GatheredTransfer values{};
+            const bool angular_momentum =
+                transfer.rule == RefinementRule::FineGhostAverage
+                && transfer.source_moment_measure_sum > 0.0;
             values.fields = {
-                transfer_field(source.rho),
-                transfer_field(source.mom_u),
-                transfer_field(source.mom_v),
-                transfer_field(source.mom_w),
-                transfer_field(source.eng),
-                transfer_field(source.enuc_rate)};
+                transfer_field(source.rho, false),
+                transfer_field(source.mom_u, false),
+                transfer_field(source.mom_v, false),
+                transfer_field(source.mom_w, angular_momentum),
+                transfer_field(source.eng, false),
+                transfer_field(source.enuc_rate, false)};
             values.mass_fractions.resize(
                 static_cast<std::size_t>(species_count));
             if (transfer.rule == RefinementRule::CoarseGhostInjection) {
@@ -528,6 +587,8 @@ public:
             }
             gathered.push_back(std::move(values));
         }
+
+        
 
         for (std::size_t index = 0; index < compiled.size(); ++index) {
             const CompiledTransfer& transfer = compiled[index];
@@ -588,15 +649,15 @@ public:
             views.push_back(view);
         }
         const auto& plans = GetPlans(pool, tree, dim, handles);
-        host_compiled_.resize(plans.same_level.size());
+        host_compiled_.resize(plans.same_level.size()+plans.same_level_corners.size());
         std::vector<HostExchangeBlockView> level_views;
-        for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
-            const auto& plan = plans.same_level[group];
+        const auto execute_level=[&](const SameLevelExchangePlan& plan,
+                                    std::size_t group,std::size_t cache_index) {
             level_views.clear();
             level_views.reserve(plan.blocks.size());
             for (const auto index : plans.level_indices[group])
                 level_views.push_back(views[index]);
-            auto& compiled = host_compiled_[group];
+            auto& compiled = host_compiled_[cache_index];
             bool reusable = compiled.has_value()
                 && compiled->blocks.size() == level_views.size()
                 && compiled->species_count == n_species;
@@ -621,9 +682,14 @@ public:
             // is still checked on each exchange before any destination write.
             exchange_detail::execute_prevalidated_host_exchange_plan(
                 *compiled, level_views, host_workspace_);
-        }
+        };
+        for(std::size_t group=0;group<plans.same_level.size();++group)
+            execute_level(plans.same_level[group],group,group);
         ExecuteCoarseFinePlan(
             plans.coarse_fine, pool, tree, dim, state_ptr, handles);
+        for(std::size_t group=0;group<plans.same_level_corners.size();++group)
+            execute_level(plans.same_level_corners[group],group,plans.same_level.size()+group);
+
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 

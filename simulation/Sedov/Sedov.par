@@ -58,3 +58,11 @@ deposit_radius = 0.03
 ambient_density = 1.0
 ambient_pressure = 1.0e-5
 explosion_energy = 1.0
+
+# Explicit migration of previous effective controls and case inputs.
+compute_backend = cpu
+hll_wave_speed = roe
+sml_rho = 1e-12
+min_eint = 1e-10
+max_eint = 1e21
+center_z = 0.5

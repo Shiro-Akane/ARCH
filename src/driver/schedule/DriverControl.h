@@ -81,6 +81,9 @@ struct SimulationController
 
     bool reached_target_time() const
     {
+        // Relative slack in seconds for reaching the requested final time.
+        // min() only prevents a zero scale at t_current=t_max=0; it is not a
+        // physical timestep floor or a relaxation of field-error acceptance.
         const double target_tolerance = 1.0e-12 * std::max(
             {std::abs(t_current), std::abs(t_max),
              std::numeric_limits<double>::min()});

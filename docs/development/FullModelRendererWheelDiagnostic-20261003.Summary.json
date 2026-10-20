@@ -1,0 +1,111 @@
+{
+  "baseline": "8557b900881278308d43086cdcb6cbea500a8e3b",
+  "scope": "production renderer integration; not native WSLg UAT",
+  "case": "RT",
+  "sampling": [
+    128,
+    128
+  ],
+  "rendererZoomPanSelectionFit": "PASS",
+  "nativeWslgWheel": "NOT VERIFIED",
+  "initialAxes": [
+    "0",
+    "0",
+    "0.05",
+    "0.2",
+    "0.1",
+    "0.4",
+    "0.15",
+    "0.6",
+    "0.2",
+    "0.8",
+    "0.25",
+    "1"
+  ],
+  "zoomAxes": [
+    "0.025343",
+    "0.090854",
+    "0.065343",
+    "0.25085",
+    "0.10534",
+    "0.41085",
+    "0.14534",
+    "0.57085",
+    "0.18534",
+    "0.73085",
+    "0.22534",
+    "0.89085"
+  ],
+  "panAxes": [
+    "0.0088599",
+    "0.048665",
+    "0.04886",
+    "0.20866",
+    "0.08886",
+    "0.36866",
+    "0.12886",
+    "0.52866",
+    "0.16886",
+    "0.68866",
+    "0.20886",
+    "0.84866"
+  ],
+  "fitAxes": [
+    "0",
+    "0",
+    "0.05",
+    "0.2",
+    "0.1",
+    "0.4",
+    "0.15",
+    "0.6",
+    "0.2",
+    "0.8",
+    "0.25",
+    "1"
+  ],
+  "displayOnlyRequests": [
+    {
+      "path": "/api/configure/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/build/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/configure/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/runs",
+      "method": "GET"
+    },
+    {
+      "path": "/api/configure/status",
+      "method": "GET"
+    }
+  ],
+  "noMutationHttpRequests": true,
+  "configAndBinaryUnchanged": true,
+  "launcherExitCode": 0,
+  "recordedDesktopAndHostPidsAbsent": [
+    326221,
+    326265,
+    327649,
+    327693,
+    328625,
+    328669,
+    329667,
+    329711
+  ],
+  "failuresPreserved": [
+    "initial harness absolute require returned package path rather than Electron API",
+    "second harness returned a non-cloneable function from executeJavaScript"
+  ],
+  "scientificEvolutionExecuted": false
+}

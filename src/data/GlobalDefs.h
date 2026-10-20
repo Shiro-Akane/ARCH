@@ -8,8 +8,8 @@
  */
 
 /**
- * Configuration is divided into typed core sections plus custom parameter maps
- * for problem-specific values that do not belong to the solver-wide contract.
+ * Configuration is divided into typed core sections and private resolved model
+ * records. Input presence and source identity are retained by the loader.
  */
 
 #pragma once
@@ -24,13 +24,19 @@
 #include <vector>
 
 #include "core/ArchPortability.h"
+#include "core/config/ParameterKeys.h"
 #include "data/StateDiagnostics.h"
+#include "data/MaterialValue.h"
 #include "interface/PreviewMetadata.h"
 #include "physics/constant/PhysicalConstants.h"
+
+class RuntimeParams;
+namespace arch::config { struct ConfigurationInput; }
 
 // Grid and domain configuration.
 struct GridConfig
 {
+    bool operator==(const GridConfig&) const = default;
     // Root-block topology and active dimensionality.
     int nblockx1 = 1; ///< Number of root blocks in X
     int nblockx2 = 1; ///< Number of root blocks in Y
@@ -59,6 +65,7 @@ struct GridConfig
 // Hydrodynamic discretization and stability controls.
 struct NumericsConfig
 {
+    bool operator==(const NumericsConfig&) const = default;
     std::string solver_name = "SW";    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
 
     // Runtime dispatch maps these names to compile-time reconstruction policies.
@@ -84,6 +91,7 @@ struct NumericsConfig
 // Execution backend selection.
 struct ExecutionConfig
 {
+    bool operator==(const ExecutionConfig&) const = default;
     // "cpu" always selects the host implementation.  "cuda" is strict and
     // must fail when the binary/device/selected physics combination cannot
     // provide a CUDA launcher.  "auto" may choose either, but must log it.
@@ -94,6 +102,7 @@ struct ExecutionConfig
 // Stiff ODE integration controls.
 struct OdeConfig
 {
+    bool operator==(const OdeConfig&) const = default;
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
     std::string linear_solver = "Auto";    ///< DenseLU through 31 total ODE equations; larger CPU/CUDA systems use KLU/cuDSS.
 
@@ -196,6 +205,7 @@ struct BurnOdeReport
 
 struct BurnConfig
 {
+    bool operator==(const BurnConfig&) const = default;
 
     bool use_burn = false;                ///< Master switch for the burn module
     std::string network_name = "aprox19"; ///< Built-in network: aprox13, aprox19, aprox21, or iso7.
@@ -245,6 +255,7 @@ inline BurnConfigView make_burn_config_view(const BurnConfig& config)
 // Gravity configuration.
 struct GravityConfig
 {
+    bool operator==(const GravityConfig&) const = default;
     std::string type = "none"; // "none", "external", "self"
 
     // External Gravity Components (Logical Dimensions)
@@ -254,7 +265,6 @@ struct GravityConfig
     double g_x = 0.0;
     double g_y = 0.0;
     double g_z = 0.0;
-    double G_const = arch::constants::gravity::cgs::gravitational_constant;
     std::string boundary = "periodic";
     double relative_tolerance = 1e-10;
     double absolute_tolerance = 0.0; // Poisson RHS units (s^-2); relative control is active by default.
@@ -264,6 +274,7 @@ struct GravityConfig
 // Diffusion configuration.
 struct DiffusionConfig
 {
+    bool operator==(const DiffusionConfig&) const = default;
     bool use_diffusion = false;          ///< Master switch for the diffusion module
     std::string integrator = "RKL2";     ///< Time integrator: "RKL1", "RKL2"
     double diff_cfl = 0.8;                    ///< CFL condition for explicit diffusion integrator
@@ -283,6 +294,7 @@ struct DiffusionConfig
 
 struct PhysicsConfig
 {
+    bool operator==(const PhysicsConfig&) const = default;
     std::string eos_type = "ideal";  ///< Equation of state: ideal, tabular, or helmholtz.
     std::string eos_table_path = ""; ///< Selected EOS source table.
     std::string eos_helm_table_path = ""; ///< Optional electron-completion dependency; empty selects bundled data.
@@ -297,6 +309,7 @@ struct PhysicsConfig
 // Adaptive mesh refinement controls.
 struct AmrConfig
 {
+    bool operator==(const AmrConfig&) const = default;
     int lrefinemin = 0;            ///< Minimum refinement level
     int lrefinemax = 0;            ///< Maximum refinement level (0 = AMR disabled)
     int regrid_interval = 2;       ///< Number of steps between regridding
@@ -312,7 +325,10 @@ struct AmrConfig
     bool refine_on_div_v = false;     ///< DIVV: velocity divergence
     bool refine_on_entropy = false;   ///< ENTR: EOS-local Gamma1 entropy proxy
     bool refine_on_enuc = false;      ///< ENUC: nuclear specific-energy source rate
-    bool refine_on_jeans = false;     ///< JENS: reserved for a self-gravity Jeans criterion
+    bool refine_on_jeans = false;     ///< JENS: direct self-gravity resolution criterion
+    // Zero represents an absent conditional control, never a model default.
+    // Runtime/API exposure remains gated until the complete consumer chain is qualified.
+    double jeans_cells = 0.0;
     bool refine_on_species = false;  ///< SPECIES or named network-tracer gradient
     bool refine_all_species = false; ///< SPECIES selects every registered species
     std::vector<std::string> refine_species_names; ///< Case-insensitive species tracer names
@@ -323,6 +339,7 @@ struct AmrConfig
 // Plot-variable selection.
 struct OutputVariables
 {
+    bool operator==(const OutputVariables&) const = default;
     bool rho = true;     ///< DENS
     bool temp = false;   ///< TEMP
     bool u = true;       ///< VELX
@@ -340,6 +357,7 @@ struct OutputVariables
 
 struct IOConfig
 {
+    bool operator==(const IOConfig&) const = default;
     double tmax = 0.0;  ///< Simulation end time
     int max_steps = -1; ///< Maximum number of steps (-1 for no limit)
 
@@ -376,9 +394,64 @@ struct RunState
     std::string verified_eos_table_sha256; ///< Saved table identity rechecked after the EOS owner loads
 };
 
-// Complete runtime configuration.
+// Mutable preparation storage; default construction is not scientific readiness.
 struct SimConfig
 {
+private:
+    friend class RuntimeParams;
+    std::shared_ptr<const arch::config::ConfigurationInput> loaded_input_;
+    std::string loaded_case_id_;
+    std::shared_ptr<const SimConfig> loaded_values_;
+    struct ResolvedCaseValue {
+        std::optional<arch::preview::ParameterValue> value;
+        std::optional<std::string> raw;
+        std::string input_key;
+        bool explicit_input = false;
+        bool operator==(const ResolvedCaseValue&) const = default;
+    };
+    // The checked loader is the only writer of model values and lexical identity.
+    std::map<std::string, ResolvedCaseValue> resolved_case_values_;
+    std::map<std::string, arch::config::MaterialValue> material_inputs_;
+    std::string material_model_owner_, material_model_identity_;
+
+
+
+public:
+    // Immutable evidence of the load boundary, not certification of subsequent
+    // mutable fields, Setup results, resources or simulation readiness.
+    std::shared_ptr<const arch::config::ConfigurationInput> LoadedInput() const {
+        return loaded_input_;
+    }
+
+    // Preparation checks compare values, never object bytes/padding. Derived
+    // storage (dimension, selected fields, etc.) is guarded with input fields.
+    void RequireSamePreparation(const SimConfig& expected) const {
+        const char* changed = nullptr;
+        if (loaded_input_ != expected.loaded_input_) changed = "configuration";
+        else if (loaded_case_id_ != expected.loaded_case_id_) changed = "case";
+        else if (grid != expected.grid) changed = "grid";
+        else if (numerics != expected.numerics) changed = "numerics";
+        else if (execution != expected.execution) changed = "execution";
+        else if (physics != expected.physics) changed = "physics";
+        else if (amr != expected.amr) changed = "amr";
+        else if (io != expected.io) changed = "output";
+        else if (resolved_case_values_ != expected.resolved_case_values_) changed = "case";
+        if (changed)
+            throw ConfigValueError(changed, "UNDECLARED_CONFIGURATION_CHANGE",
+                "Preparation changed loaded values without a declared source.");
+    }
+    void RequireLoadedValues() const {
+        if (!loaded_input_ || !loaded_values_)
+            throw ConfigValueError("configuration", "INCOMPLETE_CONFIGURATION",
+                "Preparation requires case-aware declared input loading.");
+        RequireSamePreparation(*loaded_values_);
+    }
+
+    const std::string& LoadedCaseId() const {
+        RequireLoadedValues();
+        return loaded_case_id_;
+    }
+
     GridConfig grid;
     NumericsConfig numerics;
     ExecutionConfig execution;
@@ -386,52 +459,84 @@ struct SimConfig
     AmrConfig amr;
     IOConfig io;
 
-    /**
-     * @brief Stores problem-specific parameters not represented by a core field.
-     * Typical keys include:
-     * - "prob_rho_L" (Shock tube specific)
-     * - "stiff_p_inf" (Stiffened Gas EOS parameter)
-     */
-    std::map<std::string, double> custom_params;
-
-    std::map<std::string, std::string> custom_string_params;
-
     // Enabled only in the isolated initialization inspector; no global logger or UI state.
     std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
 
-    // Return a typed custom parameter or the caller-provided default.
+    arch::config::MaterialValue MaterialInput(const std::string& key) const {
+        RequireLoadedValues();
+        const auto found = material_inputs_.find(key);
+        if (found == material_inputs_.end())
+            throw ConfigValueError(key, "MISSING_MATERIAL_INPUT",
+                "Material registration requires a resolved numeric input.");
+        return found->second;
+    }
+    arch::config::MaterialValue MaterialConstant(double value, const std::string& field) const {
+        RequireLoadedValues();
+        if (material_model_owner_.empty() || material_model_identity_.empty() || field.empty())
+            throw ConfigValueError(field, "MISSING_MATERIAL_SOURCE",
+                "Model constants require registered source identity and a field owner.");
+        return {value, arch::config::MaterialOrigin::ModelDefinition,
+                material_model_owner_ + ":" + field, material_model_identity_, {}};
+    }
+
+    std::string CaseInputKey(const std::string& key) const {
+        const auto found = resolved_case_values_.find(key);
+        return found == resolved_case_values_.end() ? key : found->second.input_key;
+    }
+
+    // Read-only lexical identity of declared inputs, including composition
+    // aliases. This does not restore mutable custom maps or supply defaults.
+    std::map<std::string, std::string> DeclaredInputTokens() const {
+        std::map<std::string, std::string> result;
+        for (const auto& [key, record] : resolved_case_values_)
+            if (record.value && record.raw)
+                result.emplace(record.input_key, *record.raw);
+        return result;
+    }
+
+    // Read a resolved declared value. The legacy fallback argument is observed
+    // for API compatibility but never supplies a missing scientific input.
     template <typename T>
     T Get(const std::string &key, T default_val) const
     {
-        // Return the preserved string value when requested explicitly.
-        if constexpr (std::is_same_v<T, std::string>)
-        {
-            auto it = custom_string_params.find(key);
+        if (arch::config::IsStandardInputKey(key))
+            throw ConfigValueError(key, "STANDARD_PARAMETER_ACCESS",
+                "Standard inputs have one typed configuration owner; do not read them through Get.");
+        for (const auto retired : arch::config::retired_input_keys)
+            if (key == retired)
+                throw ConfigValueError(key, "RETIRED_PARAMETER", "Retired input cannot be read as a custom value.");
+        if (loaded_input_) {
+            const auto found = resolved_case_values_.find(key);
+            if (found == resolved_case_values_.end())
+                throw ConfigValueError(key, "UNDECLARED_PARAMETER_ACCESS",
+                    "Model read has no registered case, composition or auxiliary declaration.");
+            if (!found->second.value)
+                throw ConfigValueError(key, "MISSING_PARAMETER",
+                    "Model consumed an unresolved input; a Get fallback is not an approved value.");
+            const auto value = std::visit([&](const auto& resolved) -> T {
+                using V = std::decay_t<decltype(resolved)>;
+                if constexpr (std::is_same_v<T, std::string> && std::is_same_v<V, std::string>)
+                    return resolved;
+                else if constexpr (std::is_same_v<T, bool> && std::is_same_v<V, bool>)
+                    return resolved;
+                else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>
+                                   && std::is_arithmetic_v<V> && !std::is_same_v<V, bool>) {
+                    const double number = static_cast<double>(resolved);
+                    const auto& raw = found->second.raw;
+                    ConfigParser::ValidateNumeric<T>(key, number, raw ? &*raw : nullptr);
+                    return static_cast<T>(resolved);
+                } else
+                    throw ConfigValueError(key, "PARAMETER_TYPE_MISMATCH",
+                        "Model read type conflicts with the declared resolved value.");
+            }, *found->second.value);
             if (parameter_reads)
-                parameter_reads->observe(key, default_val,
-                    it != custom_string_params.end() ? it->second : default_val,
-                    it != custom_string_params.end());
-            if (it != custom_string_params.end())
-                return it->second;
-            return default_val;
+                parameter_reads->observe(found->second.input_key, default_val, value, found->second.explicit_input);
+            return value;
         }
-        // Numeric requests use the typed custom-parameter map.
-        else
-        {
-            auto it = custom_params.find(key);
-            if (it == custom_params.end() && custom_string_params.contains(key))
-                throw std::invalid_argument("Custom parameter '" + key + "' is not a complete numeric value.");
-            if (parameter_reads && it != custom_params.end())
-                parameter_reads->validate_numeric<T>(key, it->second);
-            if (parameter_reads)
-                parameter_reads->observe(key, default_val,
-                    it != custom_params.end() ? static_cast<T>(it->second) : default_val,
-                    it != custom_params.end());
-            if (it != custom_params.end())
-                return static_cast<T>(it->second);
-            return default_val;
-        }
+        throw ConfigValueError(key, "INCOMPLETE_CONFIGURATION",
+            "Model reads require case-aware declared input loading.");
     }
+
     double GetCustomParam(const std::string &key, double default_val) const
     {
         return Get<double>(key, default_val);

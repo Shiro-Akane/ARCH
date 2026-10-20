@@ -1,0 +1,40 @@
+{
+  "baseline": "41aa5354a497a7cab5aacac9b20849a0dd773238",
+  "scope": "Metadata-only bounded prototype; no payload, Viewer route, simulation or IO change",
+  "sample": {
+    "runId": "926efbfc-5fd5-4dfd-b9cd-51453c1da819",
+    "relativePath": "studio/.local/integration/terminal-t0-4e3ddd62-3462-4e24-a90d-44d1d8bdf7c6/output/reference_HLLC_plt_0000.h5",
+    "time": 0,
+    "dimension": 1,
+    "blocks": 12,
+    "cellShape": [
+      16
+    ],
+    "cells": 192,
+    "fileBytes": 16480,
+    "fileSha256": "7bc28bd017fd73548c489366fdc2ebb156cb3af64146381262f356e28bb45002",
+    "fields": [
+      "DENS"
+    ]
+  },
+  "completion": {
+    "state": "unknown",
+    "reason": "Current writer has no authoritative completion marker or atomic publish contract."
+  },
+  "renderEligible": false,
+  "checks": {
+    "scopedTests": "5/5 PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "fieldArrayRead": "forbidden getter test PASS",
+    "originalSodFixtureBytes": "unchanged"
+  },
+  "remaining": [
+    "Core completion/atomic publish contract review",
+    "units/native cell geometry/scientific provenance freeze",
+    "Host-owned reader process timeout/memory/cancellation",
+    "viewport/LOD/native-cell Inspector",
+    "desktop result UAT"
+  ],
+  "rawFilesUploaded": false
+}

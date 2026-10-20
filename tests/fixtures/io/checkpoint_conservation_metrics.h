@@ -10,7 +10,7 @@
 #pragma once
 
 #include "amr/storage/Block.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "io/hdf5/HDF5Writer.h"
 
 #include <cmath>
@@ -55,7 +55,7 @@ inline Grid checkpoint_root_grid(const GridConfig& config)
     root.geometry = config.geometry;
     require(GridMetrics::geometry_kind(root) != GridMetrics::Geometry::Unsupported,
             "conservation parameter geometry is unsupported");
-    root.InitializeTopology(); // shared domain/geometry validation
+    root.InitializeTopology();
     return root;
 }
 
@@ -80,6 +80,7 @@ inline Totals compute(const io::CheckpointData& checkpoint,
                 && checkpoint.eng.size() == cells
                 && checkpoint.rhoX.size() == species_count * cells,
             "conservation checkpoint field shape drifted");
+    io::require_checkpoint_geometry_compatible(checkpoint.dim,checkpoint.geometry,checkpoint.geometry_identity);
     Grid root;
     double root_dx1 = 0.0, root_dx2 = 0.0, root_dx3 = 0.0;
     if (physical_grid != nullptr) {
@@ -102,6 +103,7 @@ inline Totals compute(const io::CheckpointData& checkpoint,
         root_dx3 = root.nblockx3 > 0
             ? (root.x3_max - root.x3_min) / (static_cast<double>(root.nblockx3) * amr::BLOCK_NZ) : 0.0;
     }
+
     Totals result;
     result.species.resize(species_count, 0.0L);
     for (std::size_t block = 0; block < blocks; ++block) {
@@ -126,8 +128,7 @@ inline Totals compute(const io::CheckpointData& checkpoint,
         }
         for (std::size_t local = 0; local < checkpoint.cells_per_block; ++local) {
             // Without domain parameters, Cartesian totals use root-cell units.
-            // Parameter-bound runs use the shared physical cell measure,
-            // including the two-dimensional polar convention.
+            // Parameter-bound runs use the shared physical cell measure.
             long double measure = std::ldexp(1.0L, -checkpoint.dim * checkpoint.levels[block]);
             if (physical_grid != nullptr) {
                 const int i = static_cast<int>(local % amr::BLOCK_NX) + amr::MAX_NG;

@@ -1,0 +1,32 @@
+{
+  "scope": "internal CPU Cartesian accepted-state AMR tree transaction; not Driver trajectory/restart/CUDA/runtime availability",
+  "reviewCommit": "08ae94684d433ddbb7398a9de88c4fb9d09070b4",
+  "parentCheckpoint": "c3b8d6c219d3fc35b4cc78d270c68df456bfde1e",
+  "tests": [
+    {
+      "name": "scoped",
+      "exitCode": 0
+    },
+    {
+      "name": "numeric",
+      "exitCode": 0
+    },
+    {
+      "name": "architecture",
+      "exitCode": 0
+    }
+  ],
+  "rawEvidence": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-tree-20261004",
+  "cases": [
+    "real refine",
+    "actual restricted-parent veto",
+    "resolved parent merge",
+    "exact equality",
+    "one-ULP threshold",
+    "lrefinemax failure rollback",
+    "pool exhaustion rollback",
+    "disabled EOS zero calls",
+    "invalid target rejection"
+  ],
+  "productionARCHRebuilt": false
+}

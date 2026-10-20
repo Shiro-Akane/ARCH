@@ -1,0 +1,241 @@
+{
+  "status": "PROPOSED_NOT_FROZEN_NOT_EXECUTED",
+  "base_commit": "ccfcef5bc60f4361a808dc1e83c020094ab50930",
+  "rows": [
+    {
+      "id": "snia-2d-benchmark",
+      "status": "待 Core 确认",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "original_sha256": "fffe60075b5610759d6388af904e69fe2f180a34886a4b6ad5d487ca70284d8a",
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-2d-benchmark.par",
+      "sha256": "8195994965f596d3f1936ac39c0ad681a8bbaf2e1b8bf3cce0f269292ef455f9",
+      "physical_endpoint_s": "1e-7",
+      "restart_split_s": "5e-8",
+      "changes": {
+        "max_steps": "-1",
+        "tmax": "1e-7",
+        "chk_dt": "5e-8",
+        "out_dir": "studio/.local/integration/proposed-snia-2d-benchmark",
+        "base_name": "SNIaCoupled2Dbenchmark",
+        "compute_backend": "cpu"
+      },
+      "domain_cm": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "root_blocks": [
+        2,
+        2,
+        0
+      ],
+      "block_cells": 16,
+      "amr_levels": [
+        0,
+        1
+      ],
+      "pool_slots": 128,
+      "nominal_finest_shape": [
+        64,
+        64
+      ],
+      "memory_limit_proposal_mib": 12288,
+      "vram_limit_proposal_mib": 10240,
+      "disk_limit_proposal_mib": 10240,
+      "wallclock_failure_guard_proposal_s": 1200
+    },
+    {
+      "id": "snia-2d-long",
+      "status": "待 Core 确认",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_2d_cartesian_amr.par",
+      "original_sha256": "fffe60075b5610759d6388af904e69fe2f180a34886a4b6ad5d487ca70284d8a",
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-2d-long.par",
+      "sha256": "cc89cd79f9a285c89c0849f9bb46512c77094c0b91ba446c64b98c4ea23ae8cf",
+      "physical_endpoint_s": "1e-6",
+      "restart_split_s": "5e-7",
+      "changes": {
+        "max_steps": "-1",
+        "tmax": "1e-6",
+        "chk_dt": "5e-7",
+        "out_dir": "studio/.local/integration/proposed-snia-2d-long",
+        "base_name": "SNIaCoupled2Dlong",
+        "compute_backend": "cpu"
+      },
+      "domain_cm": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "root_blocks": [
+        2,
+        2,
+        0
+      ],
+      "block_cells": 16,
+      "amr_levels": [
+        0,
+        1
+      ],
+      "pool_slots": 128,
+      "nominal_finest_shape": [
+        64,
+        64
+      ],
+      "memory_limit_proposal_mib": 12288,
+      "vram_limit_proposal_mib": 10240,
+      "disk_limit_proposal_mib": 30720,
+      "wallclock_failure_guard_proposal_s": 7200
+    },
+    {
+      "id": "snia-3d-benchmark",
+      "status": "待 Core 确认",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_3d_cartesian_amr.par",
+      "original_sha256": "662d72fc12fdb604d71fac82d9cd63d21e437f688e27ff54ea4d14061c9d029a",
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-3d-benchmark.par",
+      "sha256": "c388d7337b3554ea963113ca6ed20da9af02696a2f71d30af1ce398ef1d33f8b",
+      "physical_endpoint_s": "1e-7",
+      "restart_split_s": "5e-8",
+      "changes": {
+        "max_steps": "-1",
+        "tmax": "1e-7",
+        "chk_dt": "5e-8",
+        "out_dir": "studio/.local/integration/proposed-snia-3d-benchmark",
+        "base_name": "SNIaCoupled3Dbenchmark",
+        "compute_backend": "cpu"
+      },
+      "domain_cm": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "root_blocks": [
+        2,
+        1,
+        1
+      ],
+      "block_cells": 16,
+      "amr_levels": [
+        0,
+        1
+      ],
+      "pool_slots": 128,
+      "nominal_finest_shape": [
+        64,
+        32,
+        32
+      ],
+      "memory_limit_proposal_mib": 12288,
+      "vram_limit_proposal_mib": 10240,
+      "disk_limit_proposal_mib": 10240,
+      "wallclock_failure_guard_proposal_s": 1200
+    },
+    {
+      "id": "snia-3d-long",
+      "status": "待 Core 确认",
+      "original_path": "simulation/SNIaCoupled/SNIaCoupled_3d_cartesian_amr.par",
+      "original_sha256": "662d72fc12fdb604d71fac82d9cd63d21e437f688e27ff54ea4d14061c9d029a",
+      "path": "validation/gravity/candidates/benchmark-20261006/snia-3d-long.par",
+      "sha256": "1d776c3664fe46b07e3fe7f049e5d3f967addfdd13a2730797e0f5383da32a49",
+      "physical_endpoint_s": "1e-6",
+      "restart_split_s": "5e-7",
+      "changes": {
+        "max_steps": "-1",
+        "tmax": "1e-6",
+        "chk_dt": "5e-7",
+        "out_dir": "studio/.local/integration/proposed-snia-3d-long",
+        "base_name": "SNIaCoupled3Dlong",
+        "compute_backend": "cpu"
+      },
+      "domain_cm": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "root_blocks": [
+        2,
+        1,
+        1
+      ],
+      "block_cells": 16,
+      "amr_levels": [
+        0,
+        1
+      ],
+      "pool_slots": 128,
+      "nominal_finest_shape": [
+        64,
+        32,
+        32
+      ],
+      "memory_limit_proposal_mib": 12288,
+      "vram_limit_proposal_mib": 10240,
+      "disk_limit_proposal_mib": 30720,
+      "wallclock_failure_guard_proposal_s": 7200
+    }
+  ],
+  "eos": {
+    "type": "helmholtz",
+    "path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+    "size": 60242514
+  },
+  "network": {
+    "name": "aprox13",
+    "source_sha256": {
+      "src/physics/network/aprox13/NetAprox13.cpp": "8f87ee39e2c80c9c22fb9241e2c5a61476a7f4a8a662ad39e43028daa9cc96d4",
+      "src/physics/network/aprox13/NetAprox13.h": "2dfbc8aececc68c71668248c463bf1f64bfd1e4570f872e37b0cfbdd0223d907",
+      "src/physics/network/aprox13/README.md": "94487b7286781f729b2986fbed2d87ff3d6ffa70206e1cab287bcea691e716a2",
+      "src/physics/network/aprox13/TimmesJacobian.inc": "6c57b312d361f46496c959d8148bfa8ac43179140627d436cc6fcec020bce3c9",
+      "src/physics/network/aprox13/TimmesRateLibrary.h": "ac4542e555d980731dd64bb4ed3b4c2682df24e215e1b4fdcc30e96314009708",
+      "src/physics/network/aprox13/TimmesRhs.inc": "cf0cd8e1387b3cbab4ff4f3c90d103b8cb2a1d7f8e0223000aa3c53717595bde"
+    },
+    "use_nse": false,
+    "use_burn": true,
+    "ode_solver": "bd",
+    "linear_solver": "DenseLU",
+    "ode_rtol": "1e-4",
+    "ode_atol": "1e-8"
+  },
+  "device": {
+    "cpu": "14700K",
+    "gpu": "RTX 4070 Ti",
+    "gpu_vram_mib": 12282
+  },
+  "timing_policy": "CPU-only baseline plus same CUDA Release ELF CPU/CUDA; one warm-up each then >=3 alternating serial pairs; thread/affinity confirmed before timed execution",
+  "independent_reference": "Existing verify_coupled endpoint/module/native checks and compare_backends parity are necessary but not a new independent full coupled long-trajectory scientific oracle.",
+  "requires_core_confirmation": [
+    "physical endpoints and restart splits",
+    "independent coupled trajectory/conservation/open-boundary budget",
+    "resource/disk/wallclock limits",
+    "CPU threads/affinity and CPU/GPU timing protocol",
+    "readiness of short scientific gate for each derived complete endpoint input"
+  ]
+}

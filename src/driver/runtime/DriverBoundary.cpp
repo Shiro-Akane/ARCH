@@ -3,19 +3,24 @@
  * @brief Apply boundary and ghost operations at the required stage state generation.
  *
  * Workflow:
- * 1. Receive a resolved configuration, stage request and current state identity.
- * 2. Apply boundary and ghost operations at the required stage state generation.
- * 3. Hand completed state and diagnostics to the next scheduled stage.
+ * 1. Select the actual Current/Next/Scratch slot and freeze its domain context.
+ * 2. Apply physical boundaries and domain exchange in the existing order.
+ * 3. Record only successfully completed Host or Device boundary bindings.
  */
 
 #include <algorithm>
+#include <cstddef>
+#include <optional>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace arch::driver {
 using scheduler::StageExecutionContext;
@@ -24,19 +29,6 @@ using state::StateResidencyLedger;
 using state::StateSlot;
 using topology::LogicalBlockIdentity;
 using topology::TopologyObservation;
-/** Publish the completed host ghost generation for current state. */
-void DriverRuntime::publish_current_ghost()
-{
-    StageExecutionContext context{
-        ExecutionSide::Host, *residency_ledger, scheduler_clock};
-    (void)arch::scheduler::complete_boundary(
-        context, stage_handles, StateSlot::Current,
-        current_interior_version(),
-        [](StateSlot, arch::state::StateVersion,
-           arch::state::CompletionToken token) { return token; });
-}
-
-/** Launch the device boundary plan for the requested state version. */
 state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requested, state::StateVersion version, state::CompletionToken token)
 {
     auto& accesses = boundary_accesses;
@@ -46,29 +38,62 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
         const auto access = backend_access(index, requested);
         accesses.push_back(access);
     }
+    return execute_device_boundary_domain(accesses, stage_handles, requested,
+        version, token);
+}
+
+/** Reuse the ordered recipe over the caller's exact backend storage domain. */
+state::CompletionToken DriverRuntime::execute_device_boundary_domain(
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::BlockHandle> handles, StateSlot requested,
+    state::StateVersion version, state::CompletionToken token)
+{
+    if (accesses.size() != handles.size())
+        throw std::logic_error("Device boundary access/handle extent mismatch");
+    for (std::size_t index = 0; index < accesses.size(); ++index)
+        if (accesses[index].block != handles[index] || accesses[index].slot != requested)
+            throw std::logic_error("Device boundary access/handle order or selected slot changed");
     const auto& plans = amr_ctrl.ghost_exchange.GetPlans(
-        amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
+        amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, handles);
+    /** Reuse the same actual same-level, coarse-fine and seam operations. */
+    const auto exchange = [&]() -> state::CompletionToken {
+        for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
+            const auto& plan = plans.same_level[group];
+            auto& level_accesses = boundary_level_accesses;
+            level_accesses.clear();
+            level_accesses.reserve(plan.blocks.size());
+            for (const auto index : plans.level_indices[group])
+                level_accesses.push_back(accesses[index]);
+            (void)compute_backend->execute_same_level_exchange(
+                    level_accesses, plan, requested, version, token);
+        }
+        const auto coarse_fine_completed = compute_backend->execute_coarse_fine_exchange(
+                accesses, plans.coarse_fine, requested, version, token);
+        if (coarse_fine_completed != token)
+            throw std::logic_error("Device coarse-fine exchange returned incomplete work");
+        for(std::size_t group=0;group<plans.same_level_corners.size();++group) {
+            auto& level_accesses=boundary_level_accesses;level_accesses.clear();
+            for(const auto index:plans.level_indices[group])level_accesses.push_back(accesses[index]);
+            if(compute_backend->execute_same_level_exchange(level_accesses,
+                plans.same_level_corners[group],requested,version,token)!=token)
+                throw std::logic_error("Device corner completion returned incomplete work");
+        }
+        if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
+        // The original physical donor map serves Host and CUDA; only storage
+        // and kernels differ, with no whole-state Host staging here.
+        return compute_backend->execute_coordinate_seam_exchange(
+                accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
+                requested, version, token);
+    };
     (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
-    for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
-        const auto& plan = plans.same_level[group];
-        auto& level_accesses = boundary_level_accesses;
-        level_accesses.clear();
-        level_accesses.reserve(plan.blocks.size());
-        for (const auto index : plans.level_indices[group])
-            level_accesses.push_back(accesses[index]);
-        (void)compute_backend->execute_same_level_exchange(
-            level_accesses, plan, requested, version, token);
+
+    // Preserve the original ExistingChart user-before-single-exchange path.
+    if (bc_handler.has_user()) {
+        const auto& active = amr_ctrl.tree->GetActiveBlocks();
+        for (std::size_t b = 0; b < accesses.size(); ++b)
+            bc_handler.apply_device(*compute_backend, accesses[b], amr_ctrl.pool->GetBlock(active[b]).grid);
     }
-    const auto coarse_fine_completed = compute_backend->execute_coarse_fine_exchange(
-        accesses, plans.coarse_fine, requested, version, token);
-    if (coarse_fine_completed != token)
-        throw std::logic_error("Device coarse-fine exchange returned incomplete work");
-    if (plans.coordinate_seam.transfers.empty()) return coarse_fine_completed;
-    // The same physical donor map serves Host and CUDA. Only the field
-    // storage and kernel launch differ; no whole-state Host staging occurs.
-    return compute_backend->execute_coordinate_seam_exchange(
-        accesses, amr_ctrl.tree->GetActiveBlocks(), plans.coordinate_seam,
-        requested, version, token);
+    return exchange();
 }
 
 /** Wait for and validate a device boundary publication. */
@@ -97,7 +122,12 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
     // identical Device ghosts would invalidate a synchronized Host copy
     // while leaving the interior synchronized, breaking the whole-state
     // materialization contract required by Host consumers.
-    if (!needs_device_ghosts) return;
+    auto& stamp = user_boundary_stamps_[static_cast<std::size_t>(slot)];
+
+    const bool same_context = !bc_handler.has_user()
+        || (stamp.epoch == stage_handles.front().epoch
+            && stamp.revision == bc_handler.stage_revision());
+    if (!needs_device_ghosts && same_context) return;
     const auto before = compute_backend->counters();
     StageExecutionContext context{
         ExecutionSide::Device, *residency_ledger, scheduler_clock};
@@ -109,25 +139,35 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
         });
     trace_backend_operation(
         arch::backend::BackendOperation::PhysicalBoundary, slot, before);
+    // Publish the context stamp only after every boundary/exchange and the
+    // residency transaction completed. Failed work cannot become a cache hit.
+    if (bc_handler.has_user())
+        stamp = {stage_handles.front().epoch, bc_handler.stage_revision()};
 }
 
 /** Fill missing host or device ghosts before a stage reads the state. */
 void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 {
+    const auto member = TimeIntegration::hydro_boundary_state_member(slot);
     if (compute_backend) { complete_device_boundary(slot); return; }
-    if (slot != StateSlot::Current)
-        throw std::logic_error("Host stage-slot boundaries belong to the integrator");
-#pragma omp parallel for schedule(dynamic, 1)
-    for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-        bc_handler.apply(block.fluid_state, block.grid);
+    // Freeze the actual domain/ledger/BC time before any fallible ghost writes.
+    // Existing pre-initialization callers retain their interior-only behavior;
+    // native candidates must have their real EOS and staged ledger available.
+    std::optional<StageExecutionContext> context;
+    state::StateVersion version{};
+    if (residency_ledger && !stage_handles.empty()) {
+        context.emplace(stage_context());
+        version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
     }
-    amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            config.grid.dim,
-                                            &amr::Block::fluid_state,
-                                            stage_handles);
-    if (residency_ledger && !stage_handles.empty())
-        publish_current_ghost();
+    for (int id:amr_ctrl.tree->GetActiveBlocks())
+        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
+    TimeIntegration::synchronize_domain_boundary(amr_ctrl, bc_handler,
+        member, stage_handles);
+    if (context) {
+        (void)arch::scheduler::complete_boundary(*context, stage_handles, slot, version,
+            [](StateSlot, arch::state::StateVersion, arch::state::CompletionToken token) { return token; });
+    }
+
 }
 
 /** Download accepted resident state only when host output needs it. */

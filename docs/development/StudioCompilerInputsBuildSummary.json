@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "64a04d2e6bd15ed5a3259af25ad8a2076417f7c4",
+  "buildId": "730f59c9-0bcf-4518-b35a-eb870cefae26",
+  "binarySha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+  "compilerObjectCount": 66,
+  "compilerInputCount": 735,
+  "compilerInputsStableDuringBuild": true,
+  "binaryState": "freshness-unknown",
+  "coverage": "compiler inputs captured; link/toolchain completeness not established",
+  "localEvidence": "studio/.local/integration/host-build-730f59c9-0bcf-4518-b35a-eb870cefae26.json"
+}

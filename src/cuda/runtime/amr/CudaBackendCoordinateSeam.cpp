@@ -38,6 +38,34 @@ state::CompletionToken CudaBackend::execute_coordinate_seam_exchange(
     return expected;
 }
 
+state::CompletionToken CudaBackend::execute_coordinate_seam_exchange(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const int> active_ids,
+    const amr::CoordinateSeamPlan& plan, state::StateSlot slot,
+    state::StateVersion source_version, state::CompletionToken expected)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    if (slot != state::StateSlot::Current)
+        throw std::invalid_argument("staged exchange requires Current");
+    if (!state::is_valid(source_version) || !complete_token(expected))
+        throw std::invalid_argument("invalid CUDA coordinate seam completion");
+    // Empty seam plans still authenticate every supplied candidate access.
+    if (plan.transfers.empty())
+        for (const auto access : accesses) {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged exchange requires Current");
+            static_cast<void>(resolve_staged_block(staged, access));
+        }
+    impl_->execute_coordinate_seam_exchange(accesses, active_ids, plan, slot,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged exchange requires Current");
+            return resolve_staged_block(staged, access);
+        });
+    return expected;
+}
+
 /** Execute the same plan against either active or private migration storage. */
 void CudaBackend::Impl::execute_coordinate_seam_exchange(
     std::span<const backend::BackendStateAccess> accesses,

@@ -150,7 +150,11 @@ ARCH_INLINE double scaled_basis(int endpoint, int stored_derivative,
                          requested_derivative);
 }
 
-ARCH_INLINE FreeEnergyState interpolate_biquintic(
+/** Contract the original biquintic Hermite tensor and its derivatives.
+ * CUDA keeps this compensated contraction behind one shared call boundary;
+ * ordinary C++ retains inline and the same evaluation order.
+ */
+ARCH_HEAVY_INLINE FreeEnergyState interpolate_biquintic(
     const std::array<const double*, FieldCount>& fields,
     const std::array<std::size_t, 4>& corners,
     double tx, double ty, double hx, double hy,
@@ -222,7 +226,11 @@ ARCH_INLINE FreeEnergyState blend(const FreeEnergyState& lower,
 // surface. Root isolation uses these, never a fitted temperature sample grid.
 using ThermalPolynomial = std::array<double, 6>;
 
-ARCH_INLINE ThermalPolynomial thermal_polynomial(
+/** Contract the same Hermite tensor into coefficients in log-temperature.
+ * This shared CUDA call boundary avoids force-expanding each composition
+ * corner; coefficients and compensated accumulation remain unchanged.
+ */
+ARCH_HEAVY_INLINE ThermalPolynomial thermal_polynomial(
     const std::array<const double*, FieldCount>& fields,
     const std::array<std::size_t, 4>& corners,
     double tx, double hx, double hy, int density_derivative = 0)

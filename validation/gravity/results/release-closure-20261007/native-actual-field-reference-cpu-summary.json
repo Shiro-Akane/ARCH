@@ -1,0 +1,227 @@
+{
+  "recordedAtUtc": "2026-10-07T06:20:53.599155+00:00",
+  "status": "ACTUAL_SUBSET_REFERENCE_DIAGNOSTIC_ONLY",
+  "referenceCertifiedAtAllSelectedPoints": true,
+  "scienceAccepted": false,
+  "nativePhysicalOrDeviceGranted": false,
+  "selectedBeforeOutcomes": "cell first/mid/last + per actual axis/side class first/mid/last",
+  "selectedObservers": 18,
+  "sourceLeaves": 512,
+  "sourceCoalescedExactly": 1,
+  "actualFaces": 1056,
+  "referenceSha256": "dacb6582a7da6f7e1bb915bdb34c3582c5c4de58ef0548fcfdd4949638ede939",
+  "materializedRecordSha256": "f81e81ea18101a9ceb06b4ba98da56d79feca6aec6b96e4ae71f953a6f88b073",
+  "producerResultSha256": "315a212433672e33e3b1015e85e908a5f221af0f841c3e594b4c9c532bc26dee",
+  "backend": {
+    "python_flint_version": "0.8.0",
+    "ctx_dps": 70
+  },
+  "budget": {
+    "calls": 32854,
+    "max_calls": 100000,
+    "wall_seconds": 1.771941062004771,
+    "timeout_seconds": 90.0
+  },
+  "originalWidthsExact": {
+    "Phi": "50429584986587/755578637259143234191360000000000",
+    "g_r": "50429584986587/755578637259143234191360000000000",
+    "g_z": "50429584986587/755578637259143234191360000000000"
+  },
+  "rows": [
+    {
+      "observerId": "cell-center:uid=1:epoch=1:level=0:cell=0,0,0",
+      "kind": "cell",
+      "actualIndex": 0,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "point_cell_potential": 2.9122768553098408e-12
+      }
+    },
+    {
+      "observerId": "cell-center:uid=2:epoch=1:level=0:cell=16,0,0",
+      "kind": "cell",
+      "actualIndex": 256,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "point_cell_potential": 5.592948661655757e-12
+      }
+    },
+    {
+      "observerId": "cell-center:uid=2:epoch=1:level=0:cell=31,15,0",
+      "kind": "cell",
+      "actualIndex": 511,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "point_cell_potential": 1.1133125287572157e-11
+      }
+    },
+    {
+      "observerId": "actual-face:0",
+      "kind": "face",
+      "actualIndex": 0,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 3.4823543080086484e-12,
+        "derived_original_value_row_potential": 1.8081863636022553e-11
+      }
+    },
+    {
+      "observerId": "actual-face:1",
+      "kind": "face",
+      "actualIndex": 1,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 9.882335415265091e-11,
+        "derived_original_value_row_potential": 1.5157148350470074e-20,
+        "actual_boundary_datum_potential": 1.5157148350470074e-20
+      }
+    },
+    {
+      "observerId": "actual-face:2",
+      "kind": "face",
+      "actualIndex": 2,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 8.060980744482712e-11,
+        "derived_original_value_row_potential": 2.8986296081322475e-10
+      }
+    },
+    {
+      "observerId": "actual-face:497",
+      "kind": "face",
+      "actualIndex": 497,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 9.882335415926835e-11,
+        "derived_original_value_row_potential": 1.5051269232063286e-20,
+        "actual_boundary_datum_potential": 1.5051269232063286e-20
+      }
+    },
+    {
+      "observerId": "actual-face:512",
+      "kind": "face",
+      "actualIndex": 512,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 4.07030104867738e-12,
+        "derived_original_value_row_potential": 1.8041369064533786e-11
+      }
+    },
+    {
+      "observerId": "actual-face:529",
+      "kind": "face",
+      "actualIndex": 529,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 7.51443238243634e-11,
+        "derived_original_value_row_potential": 2.5516359051524443e-20,
+        "actual_boundary_datum_potential": 2.5516359051524443e-20
+      }
+    },
+    {
+      "observerId": "actual-face:530",
+      "kind": "face",
+      "actualIndex": 530,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 7.455197289829648e-11,
+        "derived_original_value_row_potential": 2.7524790688254244e-10
+      }
+    },
+    {
+      "observerId": "actual-face:573",
+      "kind": "face",
+      "actualIndex": 573,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 1.9143364936038133e-10,
+        "derived_original_value_row_potential": 5.298124259976086e-21,
+        "actual_boundary_datum_potential": 5.298124259976086e-21
+      }
+    },
+    {
+      "observerId": "actual-face:574",
+      "kind": "face",
+      "actualIndex": 574,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 1.4280677883516078e-09,
+        "derived_original_value_row_potential": 2.3955492794593894e-21,
+        "actual_boundary_datum_potential": 2.3955492794593894e-21
+      }
+    },
+    {
+      "observerId": "actual-face:830",
+      "kind": "face",
+      "actualIndex": 830,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 1.0429375223663947e-10,
+        "derived_original_value_row_potential": 7.37567964701698e-21,
+        "actual_boundary_datum_potential": 7.37567964701698e-21
+      }
+    },
+    {
+      "observerId": "actual-face:1023",
+      "kind": "face",
+      "actualIndex": 1023,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 8.035259192884945e-12,
+        "derived_original_value_row_potential": 1.6025924201008011e-10
+      }
+    },
+    {
+      "observerId": "actual-face:1025",
+      "kind": "face",
+      "actualIndex": 1025,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 7.514432382441634e-11,
+        "derived_original_value_row_potential": 2.5569298610727837e-20,
+        "actual_boundary_datum_potential": 2.5569298610727837e-20
+      }
+    },
+    {
+      "observerId": "actual-face:1052",
+      "kind": "face",
+      "actualIndex": 1052,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 2.6483968012605013e-10,
+        "derived_original_value_row_potential": 2.522520284225834e-11
+      }
+    },
+    {
+      "observerId": "actual-face:1054",
+      "kind": "face",
+      "actualIndex": 1054,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 1.914336493671576e-10,
+        "derived_original_value_row_potential": 5.3775335987811764e-21,
+        "actual_boundary_datum_potential": 5.3775335987811764e-21
+      }
+    },
+    {
+      "observerId": "actual-face:1055",
+      "kind": "face",
+      "actualIndex": 1055,
+      "mathematicalIntervalMeetsOriginalWidth": true,
+      "absoluteErrorUpperApprox": {
+        "force_minus_original_gradient": 1.4280677883463403e-09,
+        "derived_original_value_row_potential": 2.4220190590610863e-21,
+        "actual_boundary_datum_potential": 2.4220190590610863e-21
+      }
+    }
+  ],
+  "referenceAndFullSourceKeptOnlyLocally": true,
+  "newH5": 0,
+  "limitations": [
+    "Deterministic observer subset only; no full-domain scientific acceptance or new production tolerance",
+    "Record shape is checked; genuine Runtime/ELF/file provenance remains the outer producer owner",
+    "Only source rectangles are coalesced by exact union; original selected sites/arrays remain unchanged",
+    "Side accelerations are shape-checked, not independently qualified by this subset reference",
+    "Unfinished/failed reference rows are UNVERIFIED, never PASS; interval containment is not a science gate"
+  ]
+}

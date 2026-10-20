@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <exception>
 #include <mutex>
+#include <stdexcept>
 #include <vector>
 
 #include "core/ArchPortability.h"
@@ -40,6 +41,7 @@ public:
 // 0/1: event count/affected volume; 2/3: signed/absolute mass; 4..6: momentum;
 // 7/8: signed/absolute energy; 9: one triggering local cell. Species follow as
 // signed/absolute pairs. The device borrows one row, never a host vector.
+inline constexpr const char* existing_repair_semantics = "existing-volume-v1";
 struct RepairView {
     double* values = nullptr;
     int species = 0;
@@ -70,6 +72,21 @@ struct RepairView {
         add(4, px); add(5, py); add(6, pz);
         add(7, energy); add(8, std::abs(energy));
     }
+    /** Convert density deltas to integrals using the cell volume V.
+     * The measure comes from the geometry owner. No physical repair is
+     * authorized here; reject invalid measures/products before changing any
+     * ledger slot. The third momentum slot is the ordinary w/phi component.
+     */
+    ARCH_INLINE bool conserved_density(double mass, double px, double py, double pz,
+        double energy, double volume) const {
+        if(!std::isfinite(volume) || volume<=0.0) return false;
+        const double dm=mass*volume, dx=px*volume, dy=py*volume;
+        const double dz=pz*volume, de=energy*volume;
+        if(!std::isfinite(dm)||!std::isfinite(dx)||!std::isfinite(dy)
+            ||!std::isfinite(dz)||!std::isfinite(de)) return false;
+        conserved(dm,dx,dy,dz,de);
+        return true;
+    }
     /** Accumulate signed and absolute change for one species. */
     ARCH_INLINE void species_mass(int index, double delta) const {
         add(fixed_size + 2 * index, delta);
@@ -80,12 +97,13 @@ struct RepairView {
 struct RepairBudget {
     std::vector<double> values;
     std::uint64_t block_uid = 0; // 0 identifies initialization before topology publication.
-    int stage = 0; // 0 initial state, 1..3 Hydro Runge-Kutta stage.
+    int stage = 0; // 0 initialization/non-Hydro correction, 1..3 Hydro RK stage.
     double time = 0.0;
     double position[3]{}; // Physical coordinates of one triggering cell.
 
     RepairBudget() : RepairBudget(0) {}
-    explicit RepairBudget(int species) : values(RepairView::fixed_size + 2 * species, 0.0) {}
+    explicit RepairBudget(int species)
+        : values(RepairView::fixed_size + 2 * species, 0.0) {}
     /** Infer species count from the compact statistic row. */
     int species() const { return static_cast<int>((values.size() - RepairView::fixed_size) / 2); }
     /** Clear the repair budget for a new species layout. */
@@ -102,7 +120,14 @@ struct RepairBudget {
         }
         values[0] += other.values[0];
         for (std::size_t i = 1; i < other.values.size(); ++i)
-            if (i != 9) values[i] += weight * other.values[i];
+            if (i != 9) {
+                // A negative recurrence gain may reverse a signed correction,
+                // but cannot make its volume or absolute error budget negative.
+                const bool absolute = i == 1 || i == 3 || i == 8
+                    || (i >= RepairView::fixed_size
+                        && (i - RepairView::fixed_size) % 2 == 1);
+                values[i] += (absolute ? std::abs(weight) : weight) * other.values[i];
+            }
     }
 };
 } // namespace arch::state

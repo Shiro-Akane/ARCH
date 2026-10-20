@@ -1,0 +1,36 @@
+# Complete input for runtime authority contract tests, not a physical benchmark.
+# Values explicitly retain the previous loader controls.
+geometry = cartesian
+nblockx1 = 1
+nblockx2 = 1
+nblockx3 = 1
+x1_min = 0
+x1_max = 1
+x2_min = 0
+x2_max = 1
+x3_min = 0
+x3_max = 1
+x1l_boundary_type = outflow
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+solver = SW
+reconstruct = pcm
+time_integrator = RK2
+EntropyFix = true
+cfl = 0.8
+compute_backend = cpu
+eos_type = ideal
+gamma = 1.4
+use_burn = false
+network_name = aprox19
+use_diffusion = false
+gravity_type = none
+lrefinemin = 0
+lrefinemax = 0
+sml_rho = 1e-12
+min_eint = 1e-10
+max_eint = 1e21
+tmax = 0

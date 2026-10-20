@@ -1,0 +1,7 @@
+nblockx2 = 0
+use_burn = false
+cfl = nope
+solver = HLLC
+solver = Roe
+not an assignment
+ = value

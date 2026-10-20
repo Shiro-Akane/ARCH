@@ -7,10 +7,17 @@
  * unchanged complete-EOS reference. No alternate runtime EOS is introduced.
  */
 #include "physics/eos/HelmEos.h"
+#include "physics/eos/sources/HelmTableReader.h"
 #include "fixtures/eos/HelmReference.h"
 #include <array>
+#include <bit>
+#include <cstdint>
+#include <cstring>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
@@ -39,6 +46,81 @@ bool invalid(const Component& value)
         && std::isnan(value.pressure_density) && std::isnan(value.pressure_temperature)
         && std::isnan(value.energy_density) && std::isnan(value.cv_temperature)
         && std::isnan(value.entropy);
+}
+
+void table_reader_boundaries()
+{
+    using helm_eos::loader::HelmTableReader;
+    const auto same_bits = [](double a, double b) {
+        return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b);
+    };
+    for (const std::string token : {"-0", "+0", "1.2345678901234567", "+1e3",
+            "5e-324", "-5e-324", "1e-500", "-1e-500", "+1e-500"}) {
+        std::istringstream reference(token), input(token);
+        double expected = 77.0, actual = 77.0;
+        require(static_cast<bool>(reference >> expected), "reader fixture rejected by original extractor");
+        HelmTableReader reader(input);
+        require(reader.read(actual) && same_bits(actual, expected),
+                "table reader changed finite extraction, including underflow or signed zero");
+        require(!reader.read(actual), "table reader did not finish at EOF");
+    }
+    for (const std::string token : {"", "+", "-", "+-1", "++1", "--1", "-+1",
+            "1e", "1e+", "1junk", "nan", "inf", "1e500", "1e500junk", "0x1p2"}) {
+        std::istringstream input(token);
+        HelmTableReader reader(input);
+        double value = 77.0;
+        require(!reader.read(value) && value == 77.0 && !reader.read(value),
+                "table reader published invalid data or lost sticky failure");
+    }
+    // Cross a byte window with a number, whitespace and a very long valid
+    // token. The final signed zero deliberately has no newline.
+    const std::string text = std::string(65535, ' ') + "+1.2345678901234567e-5 "
+        + std::string(131072, '0') + "1 " + std::string(131073, '\t') + "-0";
+    std::istringstream reference(text), input(text);
+    HelmTableReader reader(input);
+    for (int i = 0; i < 3; ++i) {
+        double expected, actual;
+        require(static_cast<bool>(reference >> expected) && reader.read(actual)
+                && same_bits(actual, expected), "table reader changed a chunk-boundary token");
+    }
+    double ignored;
+    require(!reader.read(ignored), "table reader did not finish a chunk-boundary stream");
+
+    // Expose readable bytes together with a real IO failure. A final clean
+    // EOF is accepted above; badbit must never publish the apparent token.
+    struct PartialFaultBuffer : std::streambuf {
+        std::istream* owner = nullptr;
+        std::streamsize xsgetn(char* target, std::streamsize) override {
+            std::memcpy(target, "1.0 ", 4);
+            owner->setstate(std::ios::badbit);
+            return 4;
+        }
+    } fault;
+    std::istream broken(&fault);
+    fault.owner = &broken;
+    HelmTableReader broken_reader(broken);
+    double unchanged = 77.0;
+    require(!broken_reader.read(unchanged) && unchanged == 77.0,
+            "table reader accepted bytes from a failed stream");
+}
+
+void table_reader_identity(const char* path)
+{
+    // Compare all 21 original fields, including the eight unused fields,
+    // with formatted input. This checks conversion independently of EOS.
+    std::ifstream reference(path), input(path);
+    require(reference.is_open() && input.is_open(), "cannot open reader reference table");
+    helm_eos::loader::HelmTableReader reader(input);
+    constexpr std::size_t count = 21 * View::imax * View::jmax;
+    for (std::size_t i = 0; i < count; ++i) {
+        double expected, actual;
+        require(static_cast<bool>(reference >> expected) && reader.read(actual),
+                "canonical reader comparison ended early");
+        require(std::bit_cast<std::uint64_t>(expected) == std::bit_cast<std::uint64_t>(actual),
+                "canonical table decimal conversion differs from original extractor");
+    }
+    double extra;
+    require(!(reference >> extra) && !reader.read(extra), "canonical table has extra numeric fields");
 }
 
 void boundaries(const View& view)
@@ -312,6 +394,58 @@ void actual_table(const char* path)
             }
         }
     }
+    // Compare the public scalar/acoustic queries with their inactive-scope
+    // results, including distinct one-ULP inputs and a different EOS owner.
+    // This checks returned thermodynamics, not cache implementation details.
+    const auto acoustic_fields = [](const View& view, double rho, double energy,
+                                    const double* x) {
+        std::array<double, 7> values{};
+        values[0] = view.get_pressure_from_rho_e(rho, energy, x);
+        view.get_pressure_and_sound_speed(rho, energy, x, values[1], values[2]);
+        values[3] = view.get_dp_drho_e(rho, energy, x);
+        values[4] = view.get_dp_de_rho(rho, energy, x);
+        view.get_dp_drho_e_and_dp_de_rho(rho, energy, x, values[5], values[6]);
+        return values;
+    };
+    struct AcousticPoint {
+        double rho, energy;
+        std::array<double, 2> fractions;
+        std::array<double, 7> expected;
+    };
+    std::vector<AcousticPoint> points;
+    for (int index = 0; index < 280; ++index) {
+        const double rho = 1e5 + 1000 * index, temperature = 1e7 + 12345 * index;
+        std::array<double, 2> x{.2 + index * .001, .8 - index * .001};
+        const double energy = eos.get_eint_from_T(rho, temperature, x.data());
+        for (int variant = 0; variant < 4; ++variant) {
+            const double density = variant == 1 ? std::nextafter(rho, INFINITY) : rho;
+            const double target = variant == 2 ? std::nextafter(energy, INFINITY) : energy;
+            auto composition = x;
+            if (variant == 3) composition[0] = std::nextafter(composition[0], INFINITY);
+            points.push_back({density, target, composition,
+                acoustic_fields(eos, density, target, composition.data())});
+        }
+    }
+    View different_owner = eos;
+    different_owner.coulomb_mult = .5;
+    const auto other_expected = acoustic_fields(different_owner,
+        points[0].rho, points[0].energy, points[0].fractions.data());
+    {
+        View::HostHydroScope scope(eos);
+        for (int repeat = 0; repeat < 2; ++repeat) for (const auto& point : points) {
+            // Alternate which valid query populates a state first.
+            if (repeat) (void)eos.get_dp_drho_e(point.rho, point.energy, point.fractions.data());
+            require(acoustic_fields(eos, point.rho, point.energy, point.fractions.data())
+                    == point.expected, "scoped EOS queries changed exact thermodynamics");
+            require(acoustic_fields(eos, point.rho, point.energy, point.fractions.data())
+                    == point.expected, "repeated scoped EOS queries changed exact thermodynamics");
+        }
+        require(acoustic_fields(different_owner, points[0].rho, points[0].energy,
+                points[0].fractions.data()) == other_expected,
+                "scoped EOS queries reused a different EOS owner");
+        require(std::isnan(eos.get_temperature(points[0].rho, -1., points[0].fractions.data())),
+                "scoped EOS queries served success for invalid energy");
+    }
     // Exercise exact inverse hits, slot collisions, key changes and nested
     // lexical scope restoration against the original uncached root solve.
     {
@@ -343,6 +477,8 @@ int main(int argc, char** argv)
 {
     try {
         require(argc == 2, "expected path to canonical helm_table.dat");
+        table_reader_boundaries();
+        table_reader_identity(argv[1]);
         polynomial_components();
         actual_table(argv[1]);
         std::cout << "Helmholtz electron/photon components: independent fields, strict domain and complete-EOS reference PASS\n";

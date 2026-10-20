@@ -1,0 +1,83 @@
+.real-workflow {
+  padding: 10px 16px 8px;
+}
+.real-workflow .workflow-primary-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.real-workflow .workflow-primary-actions button {
+  min-height: 32px;
+  padding: 6px 11px;
+  white-space: nowrap;
+}
+.real-workflow .workflow-primary-actions button:not(:disabled) {
+  color: #f0c697;
+  cursor: pointer;
+}
+.real-workflow .workflow-terminal-toggle {
+  margin-left: auto;
+  border-color: #8f795c;
+  background: #2b2c2d;
+  font-weight: 600;
+}
+.real-workflow .workflow-terminal-toggle[aria-expanded="true"] {
+  background: #3b3328;
+  border-color: #e4b779;
+}
+.real-workflow .workflow-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #adbfce;
+  overflow-wrap: anywhere;
+}
+.real-workflow .workflow-run-details,
+.real-workflow .workflow-availability {
+  font-size: 11px;
+}
+.real-workflow .workflow-run-details p,
+.real-workflow .workflow-availability p,
+.real-workflow > [role="alert"] {
+  overflow-wrap: anywhere;
+}
+.real-workflow .workflow-run-details p {
+  margin: 5px 0;
+}
+.real-workflow .workflow-run-details summary {
+  cursor: pointer;
+}
+.real-workflow .workflow-run-details [role="alert"] {
+  color: #ffb8ad;
+}
+.real-workflow .workflow-terminal {
+  z-index: 2;
+}
+.real-workflow .workflow-terminal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.real-workflow .workflow-terminal-heading h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.real-workflow .workflow-terminal-heading button {
+  min-height: 30px;
+  white-space: nowrap;
+}
+.real-workflow .run-confirmation {
+  z-index: 3;
+}
+@media (min-width: 1024px) {
+  .real-workflow .workflow-primary-actions {
+    flex-wrap: nowrap;
+  }
+}

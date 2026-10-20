@@ -3,18 +3,21 @@
  * @brief Adapt device layout metadata to the common geometry view.
  *
  * This value-only adapter owns no arrays and defines no metric formulas.
- * GridMetrics and its shared numerical consumers perform the physical arithmetic.
+ * Workflow: recover the numeric geometry kind and copy the ordinary layout;
+ * common coordinate and measure leaves perform all arithmetic.
  */
 
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace arch::cuda {
 
-// Backend-specific binding only: all metric and source arithmetic remains in
-// GridMetrics and the common numerical helpers.
+/** Restore the complete non-owning mathematical geometry from an owned POD.
+ * The launcher authenticates its input; this allocation-free Host/device
+ * adapter only copies values and never repairs or reinterprets a chart.
+ */
 ARCH_HOST_DEVICE inline GridMetrics::GeometryView make_grid_geometry_view(
     const DeviceGridView& grid)
 {

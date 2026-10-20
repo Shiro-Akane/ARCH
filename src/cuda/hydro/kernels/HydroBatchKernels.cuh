@@ -11,18 +11,27 @@
  * Workflow:
  * 1. Receive stage views, face geometry and device state arrays.
  * 2. Launch the shared hydro face, source or state work on CUDA.
- * 3. Publish stage output only after the backend stream orders writes.
+ * 3. Complete original per-direction AMR registration before scratch reuse.
  */
 #pragma once
 
-#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
-#include "cuda/hydro/policies/CheckedHydroEos.cuh"
-#include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include <algorithm>
+#include <cstdint>
+#include <limits>
+
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
+#include "cuda/hydro/policies/HydroIntegratorPolicies.cuh"
+#include "cuda/runtime/hydro/CudaBackendHydro.h"
 
 namespace arch::cuda {
 namespace detail {
 
+/** Reset actual stage increments and initialize the output diagnostic.
+ * ENUC is the last burn half's specific rate, not an RK conserved variable:
+ * active cells inherit the actual input bits, while unused output storage keeps
+ * the original zero initialization. Never borrow uninitialized Next/Scratch or
+ * input padding, and do not add transport, weighting or a second kernel.
+ */
 static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
 {
     const auto& b = blocks[blockIdx.y];
@@ -33,20 +42,20 @@ static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
     if (cell >= b.delta.total_size) return;
     b.delta.store(cell, {0.0, 0.0, 0.0, 0.0, 0.0});
     for (int s = 0; s < b.delta.n_species; ++s) b.delta.set_species(s, cell, 0.0);
-    b.output.enuc_rate[cell] = 0.0;
+    const int k = cell / b.grid.stride_z;
+    const int j = (cell - k * b.grid.stride_z) / b.grid.stride_y;
+    const int i = cell - k * b.grid.stride_z - j * b.grid.stride_y;
+    const bool active = i >= b.grid.is && i < b.grid.ie
+        && j >= b.grid.js && j < b.grid.je && k >= b.grid.ks && k < b.grid.ke;
+    b.output.enuc_rate[cell] = active ? b.input.enuc_rate[cell] : 0.0;
 }
 
-/** Evaluate only the union of means consumed by directional face limiters.
- * One normal ghost layer is required; unused corner/edge ghosts are not queried.
- * The launch follows latch clearing and precedes every face consumer.
- */
 template<class Eos>
-__global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
+__device__ inline void hydro_mean_thermo_work(const DeviceHydroBatchBlock& b,
     Eos eos, SpeciesWorkspaceView workspace)
 {
-    const auto& b = blocks[blockIdx.y];
+    const int lane=blockIdx.x*blockDim.x+threadIdx.x;
     if (!b.mean_pressure || !b.mean_sound_speed) return;
-    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     SpeciesLaneScratch<1> scratch(workspace, lane);
     double* composition = scratch.array(0);
     const auto checked = make_checked_hydro_eos(eos, b.eos_status);
@@ -68,10 +77,22 @@ __global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
         if (!needed || outside > 1) continue;
         for (int s = 0; s < b.input.n_species; ++s)
             composition[s] = b.input.species(s, cell);
-        FluxAdmissibility::required_mean_thermo(b.input.load(cell),
-            b.input.n_species > 0 ? composition : nullptr, checked,
-            b.mean_pressure[cell], b.mean_sound_speed[cell]);
+
+            FluxAdmissibility::required_mean_thermo(b.input.load(cell),
+                b.input.n_species > 0 ? composition : nullptr, checked,
+                b.mean_pressure[cell], b.mean_sound_speed[cell]);
+        
     }
+}
+
+/** One block per grid-y invokes the same required mean worker. Physical Bounds
+ * come from the existing actual launch arguments; the adapter owns no policy.
+ */
+template<class Eos>
+__global__ void hydro_batch_mean_thermo(const DeviceHydroBatchBlock* blocks,
+    Eos eos, SpeciesWorkspaceView workspace)
+{
+    hydro_mean_thermo_work(blocks[blockIdx.y],eos,workspace);
 }
 
 /** Reset each block's required-query latch before any CFL candidate runs. */
@@ -112,7 +133,8 @@ static __global__ void hydro_batch_divergence(const DeviceHydroBatchBlock* block
 {
     const auto& b = blocks[blockIdx.y];
     if (direction < b.grid.dim)
-        hydro_divergence_kernel_work(b.face_flux, b.delta, b.grid, dt, direction,b.self_gravity);
+        hydro_divergence_kernel_work(b.face_flux, b.delta, b.grid, dt, direction,
+            b.self_gravity, b.mean_pressure);
 }
 
 template<class Eos>
@@ -122,7 +144,8 @@ __global__ void hydro_batch_sources(const DeviceHydroBatchBlock* blocks, Eos eos
     const auto& b = blocks[blockIdx.y];
     if (b.grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled)
         hydro_source_kernel_work(b.input, b.delta, b.grid,
-            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity);
+            make_checked_hydro_eos(eos, b.eos_status), dt, workspace, gravity,
+            b.input.hydro_boundary, b.mean_pressure != nullptr);
     const int linear=blockIdx.x*blockDim.x+threadIdx.x;
     if(b.self_gravity.enabled() && linear<b.grid.active_cell_count()) {
         const int c=b.grid.active_cell(linear);FluidVector delta=b.delta.load(c);
@@ -143,14 +166,23 @@ static __global__ void hydro_batch_update(const DeviceHydroBatchBlock* blocks,
         minimum_internal_energy, maximum_internal_energy, b.eos_status, b.repairs);
 }
 
+/** Validate all POD launch storage before any clear/flux/register write.
+ * The actual backend additionally authenticates leases and original plan modes.
+ */
 template<class Reconstruction>
 bool valid_hydro_batch_block(const DeviceHydroBatchBlock& b, SpeciesWorkspaceView workspace)
 {
+    const auto geometry = make_grid_geometry_view(b.grid);
+    const bool radial_pressure_balance = geometry.geometry == GridMetrics::Geometry::Cylindrical
+        || (geometry.geometry == GridMetrics::Geometry::Spherical && geometry.dim == 2);
     if (!valid_hydro_grid(b.grid) || !b.eos_status
         || !valid_species_workspace(workspace, b.input.n_species, 4)
+        || ((b.mean_pressure == nullptr) != (b.mean_sound_speed == nullptr))
+        || (radial_pressure_balance && !b.mean_pressure)
         || b.grid.ng < Reconstruction::ghost_depth || !b.grid.cell_volume
         || make_grid_geometry_view(b.grid).geometry == GridMetrics::Geometry::Unsupported)
         return false;
+
     for (const auto view : {b.old_state, b.input, b.output, b.delta, b.face_flux})
         if (!valid_hydro_view(view) || view.total_size != b.grid.total_size
             || view.n_species != b.input.n_species) return false;
@@ -176,9 +208,10 @@ CudaBackendLaunchResult launch_hydro_batch(
     CudaBackendLaunchResult result{};
     if (host.empty()) return result;
     if (!device) return {cudaErrorInvalidValue, 0, true};
-    for (const auto& b : host)
+    for (const auto& b : host) {
         if (!detail::valid_hydro_batch_block<Reconstruction>(b, workspace))
             return {cudaErrorInvalidValue, 0, true};
+    }
     // Wide species use the existing bounded lane arena. One block per wave
     // avoids cross-block aliasing without multiplying its memory budget.
     // Local per-thread species scratch can execute many blocks concurrently.
@@ -217,7 +250,8 @@ CudaBackendLaunchResult launch_hydro_batch(
         if (means) {
             const dim3 mean_grid(detail::species_launch_blocks(storage, workspace),
                                  static_cast<unsigned>(count));
-            detail::hydro_batch_mean_thermo<<<mean_grid, threads, 0, stream>>>(bindings, eos, workspace);
+            detail::hydro_batch_mean_thermo<<<mean_grid, threads, 0, stream>>>(
+                bindings,eos,workspace);
             if (!record()) return result;
         }
         for (int direction = 0; direction < dimension; ++direction) {

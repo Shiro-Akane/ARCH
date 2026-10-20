@@ -1,0 +1,170 @@
+{
+  "schema": "arch-release-rel35-rz-execution-assessment-1",
+  "updated_utc": "2026-10-15T08:11:36.155381+00:00",
+  "status": "BOUNDED_TRIAL_CLOSED_EXECUTION_REWRITE_ASSESSED_REL35_OPEN",
+  "REL35_closed": false,
+  "REL4_started": false,
+  "retained": {
+    "source_files": 773,
+    "source_freeze_sha256": "818ccab3cad36f1901f05c45e0072114b32ada37747ea6395a47d2bc882cee0b",
+    "ARCH_sha256": "ccfcfe9768d78f63379318d8ce82aa228431eb37c16fc1b308abae1bbdab70f2",
+    "source_changed": false,
+    "restored_build_elapsed_seconds": 184.48,
+    "seven_CTest_and_public_short_and_own_one_step": "Reuse exact accepted second-package source/profile/executable evidence; no duplicate old-long run"
+  },
+  "measured_same_RZ_workload": {
+    "description": "GravityBox NativeRZ annulus128x128/64leaves/RK2/MUSCL-MC/HLLC/32steps/IdealGas/no gravity,burn,diffusion/OMP4 serialABBA",
+    "original_to_retained_seconds": [
+      16.035,
+      5.125
+    ],
+    "earlier_measured_reduction_percent": 68.03866541939507,
+    "trial_A_seconds": [
+      5.23,
+      5.02
+    ],
+    "trial_B_seconds": [
+      5.16,
+      5.31
+    ],
+    "trial_means_seconds": [
+      5.125,
+      5.235
+    ],
+    "trial_change_percent": 2.146341463414614,
+    "trial_adopted": false,
+    "trial_status": "ACCEPT_SCOPED_NUMERICS_REJECT_NO_MEASURED_BENEFIT",
+    "trial_physical_comparisons": "6initial/finalphase references:6fullCHK and6physicalPlot exact;provenance audited before exclusions",
+    "limits": "Two observations per version; no stable speedup/regression claim; chart-to-chart compares work organization across different PDE/measure/natural time,not identical physical states."
+  },
+  "remaining_diagnosis": {
+    "observed_RZ_to_true_Rphi_short_cost_ratio": 17.083333333333332,
+    "not_yet_explained_exclusively": true,
+    "source_confirmed": [
+      "Bound RZ coordinate getters repeatedly validate two-axis root/level/logical context and regenerate canonical coordinates/cell representability. Local descriptor identity comparison is separately repeated at make_geometry_view and face context.",
+      "Adjacent faces reconstruct same direction/method donor; validated actual point P/c not delivered to Riemann consumers.",
+      "Third primitive memo left coordinate argument evaluation and support frame before lookup; static58momentcalls per radialMUSCLface is not measured machine work/time."
+    ],
+    "physics_distinction": "RZ V/W-weighted native conservation/axis and finite-ring Newton gravity cannot be replaced by ordinary point-state/Rphi log gravity. Gravity-free timing nevertheless proves gravity kernel does not explain residual geometry/Hydro cost."
+  },
+  "rewrite_assessment": {
+    "preferred": "Replace internal preparation/consumption/acceptance dataflow while retaining accepted shared mathematical bodies; reuse fixed Driver/RK/IHydroSolver/patch/face interfaces.",
+    "difficulty": "Owner-bounded substantial work; interface reuse straightforward,most verification cost in failure order,fenv,axis,AMR/RKL,rollback,restart andDevice consumers. No guessed duration or speedup.",
+    "first_A1_scope": "HostHydro9productionheaders+1existingtest proposed; lazy stage-owned exact geometry values,raw public rejection preserved; candidate memo is already withdrawn,do not layer another cache.",
+    "subsequent_packages": [
+      "A2actualdonor/nodeThermo preparation andfaceconsumption",
+      "A3CFL/geometric source within actual immutable scope",
+      "A4real completedBC/newstate/publication acceptance boundaries",
+      "A5coupling/fresh/Device scope andobsolete facilities retirement"
+    ],
+    "full_numerical_reimplementation": "Feasible but materially greater mathematical/scientific verification scope; no present evidence requiring replacement of accepted formulas."
+  },
+  "trial_costs": {
+    "candidate_build_seconds": 343.64,
+    "test_only_repair_build_seconds": 17.25,
+    "candidate_build_peak_owned_rss_kib": 4555744,
+    "restore_build_seconds": 184.48,
+    "restore_build_peak_owned_rss_kib": 4471096,
+    "swap_growth_kib": 0,
+    "telemetry_limit": "Candidate3missing process samples,restore2missing;observations not leak-freedom proof;build sets/invalidation differ,not compile optimization measurement."
+  },
+  "failure_preservation": {
+    "first_curvilinear": "6PASS/1FAIL: newfixture did not isolate omitted stickybits; original permanent logs retained.",
+    "repair": "glibc fesetenv filters x87SF; explicitly seedIX for success-only premise andtest-onlyloadrequestedx87state;allstrongassertions retained. Complete repairedcurvilinear exit0/96configurations; other6unchangedtests reused.",
+    "withdrawal": "All10existingcandidate source/test files restored byte-exact;newCoreheader removed aftercomplete archive;candidate44be pluslibrary/testELF retained inthird-package/rejected-after/."
+  },
+  "evidence": [
+    {
+      "path": "output/release/rel35-20261015/comparative-cost-audit.json",
+      "sha256": "db510549d2b0cd0354c2d53a7cea1156d91f01138a1686d220c4de3c60ca0567"
+    },
+    {
+      "path": "output/release/rel35-20261015/rz-hydro-cost-audit.json",
+      "sha256": "02e9d240cbd221071383eb4d60b4fb2139cd5ad344268d99b930f922eebdb31d"
+    },
+    {
+      "path": "output/release/rel35-20261015/CanonicalGeometryResponsibilityAudit.json",
+      "sha256": "f3b01253404d6efe069f421b34fa113f0ff6d19311f1b5f682966932c63a1f64"
+    },
+    {
+      "path": "output/release/rel35-20261015/CanonicalGeometryA1Acceptance.json",
+      "sha256": "9a28afd46733da3e20e654e3254a090f1fa85b4b5db26aa3a4457dac59563280"
+    },
+    {
+      "path": "output/release/rel35-20261015/RzExecutionRewriteFeasibility.json",
+      "sha256": "c6e4a25898647b15b190fa5081a62ae1f908606d90d6ca11943f499c1bd965b4"
+    },
+    {
+      "path": "output/release/rel35-20261015/RzVersusRphiWorkAndAcceptance.json",
+      "sha256": "4d12c35125dd08f720817f4fe7c3bcd0dd01d00ab70731dc2a02cb435c6d0b98"
+    },
+    {
+      "path": "output/release/rel35-20261015/second-package/build-receipt.json",
+      "sha256": "64aa6120fa01a9a14f48489fc48ff65ed84f13e504d79885d516cc1c589eeef7"
+    },
+    {
+      "path": "output/release/rel35-20261015/second-package/ctest-receipt.json",
+      "sha256": "95aa36b5f30ab509747f5130cdbfb3c37d4609bdceaddde54861610bd333d5c4"
+    },
+    {
+      "path": "output/release/rel35-20261015/second-cost-abba/root-acceptance.json",
+      "sha256": "95ae9a3f68aae3e820ce8e4342f9a7a385d004efde4cce5060bdb374dfb2bfdd"
+    },
+    {
+      "path": "output/release/rel35-20261015/second-package/public-short/root-acceptance.json",
+      "sha256": "2654c428a5a866cf9da1874d619a232e9b21d51588bdf5f5bef0d9eef31c0557"
+    },
+    {
+      "path": "output/release/rel35-20261015/second-package/self-gravity-short/independent-acceptance.json",
+      "sha256": "585d24d06e7e58bd6fa839360491d198a99d58410848571dabedbcf7098956b0"
+    },
+    {
+      "path": "output/release/rel35-20261015/second-package/self-gravity-short/cost-attribution-correction.json",
+      "sha256": "eeed4a5e5057c7a110837a851f6f8fb6d51355bf9138c20cf3ff484c6dcae323"
+    },
+    {
+      "path": "output/release/rel35-20261015/exact-request-validation/root-acceptance.json",
+      "sha256": "422cb76b838593b98017f055dfe4a726858c2d9e7e0fe476670cf19de6849dba"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-package/build-receipt.json",
+      "sha256": "926cfac27c1a94929a135c0215605b7892b8c4861ed77da64a61825aa93262bd"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-package/ctest-receipt-attempt1.json",
+      "sha256": "5d7948ebe4dc02f47bdefbfb4bbf30fff69ae44a24d8dff15e363277335731e4"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-package/ctest-receipt-final.json",
+      "sha256": "0baec38beca874e0c878f3fac011a0db77513c14e587785f952469862d1e31f9"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-cost-abba-final/root-acceptance.json",
+      "sha256": "7fb22733db6c99d2b07a45b50bfe4a4d44dbb79a6369924c739894c96ff85f17"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-package/rejected-after.json",
+      "sha256": "4c254c37fc0fae1e4718e0a37c17fa8cd3595dd906700059b03024de98a53267"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-package/restore-receipt.json",
+      "sha256": "2a16514d739d306b585576d415e5de3e5a1d321029be8c1a94d88003ba53e5b4"
+    },
+    {
+      "path": "output/release/rel35-20261015/fenv-fixture-repair/independent-source-review.json",
+      "sha256": "e758f85edbefb9d2235630268bf3b6f581cea7d168c2a41db0891f527634d228"
+    },
+    {
+      "path": "output/release/rel35-20261015/third-cost-abba-final/independent-acceptance.json",
+      "sha256": "da175ea4fa0ae272b7f5e28f8bec1b8a332e77da87f6d4f73b56b5306d2180d8"
+    }
+  ],
+  "old_REL3_receipt": {
+    "path": "validation/backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json",
+    "sha256": "0b75ab750ec871f2412de7eb73b340cee15e4f79230f5dac0ca254777a5517db",
+    "unchanged": true
+  },
+  "provider_outcome": "Earlier realDeepSeek job timedout240s,noartifactadopted. Native workers performed distinct source/review tasks; no providers fabricated. No paid resubmission/Gemini polishing needed for frozen measured facts.",
+  "next": "Proceed withA1minimal direct-dataflow package fromretained773baseline;measurecertification/generation/consumption separately. No oldlongrerun,no numerical/O7change,noautomaticREL4.",
+  "independent_trial_verdict": "ACCEPT_NUMERIC_SCOPE_REJECT_NO_ROI"
+}

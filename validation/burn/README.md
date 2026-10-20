@@ -20,7 +20,7 @@ build also passes native burn restart.
 Whole-project acceptance is tracked in the [validation index](../README.md).
 
 The `BurnOneZone` implementation remains in `simulation/BurnOneZone/`; the
-immutable parameter files owned by this record are in [`inputs/`](inputs/).
+immutable parameter files owned by this record are in [`inputs/`](inputs).
 They run the production burn driver at
 $\rho=10^7\,\mathrm{g\,cm^{-3}}$, $T=3\times10^9\,\mathrm{K}$, initial
 `C12=0.5`, `O16=0.5`, and $t=10^{-10}\,\mathrm{s}$. The strict BE_NR input
@@ -28,13 +28,92 @@ $\rho=10^7\,\mathrm{g\,cm^{-3}}$, $T=3\times10^9\,\mathrm{K}$, initial
 ROS4 use `rtol=1e-6`, `atol=1e-10`. This is solver cross-verification, not an
 independent physical validation of aprox13 rates.
 
+## Current inputs and reference identity
+
+The BE_NR, BD and ROS4 input files explicitly declare `min_eint=1e-10`,
+`hll_wave_speed=roe` and `eos_coulomb_mult=1.0` for the current configuration
+contract. [bd.par](inputs/bd.par) is also the shared controller and inspection
+fixture. The density, temperature, initial composition, physical endpoint and
+ODE tolerances retain the reference problem specified above.
+
+Historical results retain their recorded source and input identities. Current
+configuration loading alone does not establish a new scientific trajectory or CUDA
+result. Replays use the recorded numerical/EOS controls and table identity;
+longer physical endpoints need their own independent reference and budgets.
+
+The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+closes the declared single-GPU scope. The original private Cellular 24-step run
+and all 25 checkpoints now pass the unchanged ENUC `5e-9` relative plus `5e-12`
+absolute gate; ENUC is byte-identical between current CPU and Device runs.
+Both backends also pass their own CHK12-to24 fresh process, with 21 checkpoint
+and 43 physical Plot datasets identical to continuous evolution.
+
+Actual capture of both accepted burn halves and identical-input replay isolated
+roundoff amplification in Saha arithmetic and a different Host AMR RKL time
+multiplication order. The existing NSE owner now shares conditioned arithmetic;
+the Host AMR owner consumes unscaled `L(U)` and applies the real interval once.
+Current built-in/generated NSE authorities, A19 policy cases, original RKL entry
+and rotating AMR consumers pass. The 6859-point current-function bridge retains
+the independent precision reference. Equations, ODE controls, fixed-point zero
+energy, source definition and original conservation tolerances are unchanged.
+ENUC remains the last accepted burn-half nuclear-energy increment divided by its
+half interval. The earlier step-1/terminal failures (`4.3878863852117646e-7` /
+`1.1197942950938268e-7`) keep their original identity in the record.
+The [release plan](../../ARCH_RELEASE_PLAN.md) lists build costs and remaining
+CPU, platform and distribution qualification boundaries.
+
+## CPU science evidence
+
+The [one-zone CPU receipt](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json) records fresh
+BE_NR, BD and ROS4 runs through the original one-zone endpoint and CPU
+cross-solver/closure budgets. It preserves the historical records below and
+does not qualify a new CUDA run.
+
+The [CPU coupling and NSE record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+adds six BurnGradient combinations of the three ODE methods with RKL1/RKL2
+species diffusion at the original `t=1e-10 s`. The original nuclear-mass energy,
+mass and charge budgets of `1e-12`, pointwise state checks and actual AMR changes
+pass. Sixteen application runs cover aprox13, aprox19, aprox21 and iso7, each
+with an NSE-disabled BE_NR control and enabled BE_NR, BD and ROS4. They retain
+the original `1e-12` energy/charge checks and composition contrast above `1e-3`.
+These are CPU scopes; independent time references and new CUDA runs remain separate.
+
+An earlier one-dimensional Cellular diagnostic explicitly restores eleven
+former effective controls, including `use_nse=true`, and completes one step to
+`t=1e-16 s` in 2.13 seconds of application wall time with zero repairs. This
+input differs from the two-dimensional `CellularFlash2D.par` FLASH comparison.
+The actual second burn half-step reports `NseSuccess`: one NSE attempt, no
+NSE failure and no BD substep. Replaying its captured inputs through the same
+shared BD/NSE implementation reproduces the packed state, report and energy
+handoff bit for bit. This is a shared-code replay, not an independent NSE
+reference. A separate independent Saha and Helmholtz-EOS audit at the actual
+density, input composition and accepted temperature agrees at 60/80 digits.
+Species Linf is `8.54e-15` and relative thermal-closure residual `2.28e-14`,
+within the original `1e-12` limits. This audits the accepted output; it does
+not measure the producer's internal Ye/old EOS energy or derive a unique
+preferred thermal root. Pure-ODE integration does not represent this route.
+The [earlier CPU receipt](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+extends this one-dimensional input to its original endpoint in 24 steps
+(4.01 seconds, 25 checkpoints, zero repairs); its first saved state matches
+the independently audited state exactly. It also qualifies six enabled-transport
+endpoints and four active-ENUC continuations under the original budgets, after
+repairing precision loss in the conservation observer without changing physics.
+The current Device record above owns the completed CPU/CUDA rate screening and
+public/2D acceptance; this earlier CPU receipt retains its original source identity. `ENUC`/`enuc_rate` has units
+`erg g^-1 s^-1`: it is the last burn half-step's accepted energy increment
+divided by that half-step's duration, not a whole-macro-step energy ledger.
+
 ## Helmholtz table identity
 
 The only source used for this record is the `helm_table.dat` member of the
 `helmholtz.tar.xz` package downloaded from the
 [Timmes EOS website](https://cococubed.com/code_pages/eos.shtml). The runtime
-path is `EOS_toolkit/tables/helmholtz/helm_table.dat`; Git LFS must
-materialize it before the run.
+path is `EOS_toolkit/tables/helmholtz/helm_table.dat`. Restore a matching,
+verified local copy or materialize an existing local LFS object using the
+[offline table guide](../../docs/guides/Build.md#offline-tables-and-lfs-bandwidth).
+Keep a verified copy outside build/output directories and the LFS object store.
+Report a missing object rather than automatically downloading it; reading a
+materialized table uses no LFS bandwidth.
 
 | Property | Required value |
 | --- | --- |
@@ -52,7 +131,7 @@ and a Python environment with NumPy and h5py. Verify the table identity, then
 run the archived recipe with a new output directory:
 
 ```bash
-git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat"
+git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
 sha256sum EOS_toolkit/tables/helmholtz/helm_table.dat
 python3 validation/burn/results/application-first-law-20260907/replay.py \
   --build-dir build-cuda \
@@ -118,6 +197,8 @@ with `--binary <build>/arch_burn_mainline_reference --build-dir <build>` using
 NumPy/SciPy/mpmath. It queries only the shared RHS/EOS, not ARCH's ODE algorithm
 or Jacobian, and never refreshes fixtures. Use the common memory guard for runs.
 
+For a new physical endpoint, `--derive-reference --input <initial-state.json>` accepts explicit `network`, `rho`, `interval` and `state`. The state contains every registered mass fraction, followed by temperature. This uses the bound Helmholtz table and shared RHS to derive a reference for review; it never replaces old endpoints or qualifies a production trajectory. The new reacting C/O reference meets its preallocated cross-method and endpoint first-law budgets. Both step ceilings were inactive in this adaptive integration and do not establish active step refinement. The [processed record](results/release-closure-20261009/time-reference-summary.json) identifies inputs, independence and reference errors; actual long evolution/restart remains a separate gate.
+
 Method-dependent numerical snapshots are retained as historical records with
 their original checkers and negative controls. Accuracy is assessed with
 independent references rather than treating these approximate endpoints as exact
@@ -140,3 +221,5 @@ These data files support reproduction and independent review; they are not setup
 - [Built-in NSE application results (JSON)](results/nse-application-native-20260907/release-890/evidence.json)
 
 </details>
+
+The active nonlinear endpoint and midpoint restart use `inputs/long_time_reference.par`: equal C/O fractions, rho=1e7, T0=3e9, physical endpoint1e-6 and midpoint checkpoint5e-7. Actual BD/ROS4 endpoints met the independent species/temperature/energy budgets; the BD restart retained20 numerical datasets bit for bit. See the [processed record](results/release-closure-20261009/production-summary.json). Local ODE tolerances do not bound global endpoint errors by themselves. This seconds-long run qualifies its physical endpoint and restart; wall-clock durability and long coupled trajectories have separate exits.

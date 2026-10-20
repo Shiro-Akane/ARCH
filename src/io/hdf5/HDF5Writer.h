@@ -9,6 +9,9 @@
 
 #pragma once
 #include <cstdint>
+#include "numerics/curvilinear/GridGeometryView.h"
+#include "io/chk/CheckpointGeometryIdentity.h"
+#include <array>
 #include "data/StateDiagnostics.h"
 #include <map>
 #include <string>
@@ -17,12 +20,13 @@
 namespace io {
 
 // On-disk layout discriminator, independent of the ARCH software release.
-inline constexpr int checkpoint_format_version = 6;
+inline constexpr int checkpoint_format_version = 7;
 
 /** Scientific/state-layout identity required for a verified restart. */
 struct CheckpointProvenance {
     bool available = false;
     std::string eos_type;
+    std::string boundary_identity; // Compiled callbacks, face types and scientific case inputs.
     std::string gravity_type = "none", gravity_boundary = "none";
     std::vector<double> gravity_controls; // external: gx,gy,gz; self: G,rtol,atol,max_cycles
     double ideal_gamma = 0.0;
@@ -51,6 +55,7 @@ struct CheckpointData {
     int dim = 1;
     int num_species = 0;
     std::string geometry;
+    CheckpointGeometryIdentity geometry_identity;
     std::size_t cells_per_block = 0;
     bool has_timestep_state = false;
     bool resume_after_regrid = false;
@@ -65,11 +70,61 @@ struct CheckpointData {
     std::vector<double> mass_fractions;
 };
 
+// Partial evidence supplied from the immutable load boundary and resolved EOS.
+// Missing run/config/build/binary identities remain explicitly unknown.
+struct PlotSourceIdentity {
+    // Formal producer records are immutable per run. Low-level legacy callers
+    // may leave formal=false and retain explicitly partial provenance.
+    bool formal = false;
+    std::string case_source_sha256;
+    std::string effective_config_version, effective_config_sha256, effective_config_record;
+    std::string build_identity_version, build_identity_scope, build_id;
+    std::string source_manifest_sha256, build_profile_sha256;
+    std::string source_manifest_record, build_profile_record;
+    std::string source_git_head, source_git_dirty;
+    std::string eos_identity_version, eos_identity_sha256, eos_identity_record;
+    std::string resolved_backend;
+    std::string run_id;
+    std::string case_id;
+    std::string raw_config_sha256;
+    std::string binary_sha256;
+    std::string eos_type, eos_table_sha256;
+    double ideal_gamma = 0.;
+    std::string unit_system;
+    std::vector<std::string> species_names;
+    // Exact resolved constituents; absent vectors remain unknown for legacy callers.
+    std::vector<double> species_A, species_Z, species_gamma, species_Cv;
+};
+
+// Candidate native metadata for retained leaf interiors.
+// Cell arrays use exactly the Data field flattening; inactive bounds are zero.
+struct PlotNativeGrid {
+    std::array<std::string,3> axes{"x","y","z"};
+    std::array<std::string,3> axis_units{"cm","cm","cm"};
+    std::string measure_convention="active-coordinate-product; inactive-measures-omitted";
+    std::array<std::vector<double>,3> lower, upper;
+    std::vector<double> cell_measure;
+    std::array<std::vector<uint32_t>,3> logical;
+    std::string measure_unit = "unknown", normalization = "unknown";
+};
+
+// Declarations come from the actual producer, not inferred by the HDF serializer.
+struct PlotFieldMetadata {
+    std::string unit = "unknown", basis = "unknown", meaning = "unknown";
+    std::string unit_reason = "producer declaration unavailable";
+    std::string averaging = "unknown";
+};
+
+// Linux/WSL candidate: checked close, then atomic replacement. Throws on failure.
+// Publication alone supplies no scientific provenance, units or native bounds.
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
                          const std::vector<double>& coord_x, const std::vector<double>& coord_y, const std::vector<double>& coord_z,
                          const std::vector<int>& block_levels, const std::vector<int>& block_mortons,
-                         const std::map<std::string, std::vector<double>>& data_map);
+                         const std::map<std::string, std::vector<double>>& data_map,
+                         const PlotNativeGrid* native_grid = nullptr,
+                         const PlotSourceIdentity* source_identity = nullptr,
+                         const std::map<std::string, PlotFieldMetadata>* field_metadata = nullptr);
 
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint);
 CheckpointData read_hdf5_chk_impl(const std::string& filepath);

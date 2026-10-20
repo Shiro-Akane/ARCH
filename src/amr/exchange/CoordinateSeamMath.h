@@ -6,7 +6,9 @@
  * 1. Receive a topology-owned donor stencil and borrowed structure-of-arrays views.
  * 2. Interpolate conserved fields and mass fractions at the mapped physical point.
  * 3. Rotate native momentum components and use the active donor center if the
- *    ghost-only interpolation leaves the admissible state domain.
+ *    ghost-only interpolation leaves its chart's provisional state domain.
+ * 4. Leave complete thermal/EOS acceptance to the Runtime owner after the
+ *    actual whole-domain density boundary/exchange has completed.
  *
  * Host and CUDA call this same arithmetic. The topology lookup and device
  * memory ownership remain with their respective AMR executors.
@@ -18,6 +20,7 @@
 #include <cstdint>
 
 #include "amr/transfer/RegridTransferMath.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace amr {
@@ -49,7 +52,14 @@ template<class Scalar> struct CoordinateSeamFields {
     }
 };
 
-/** Return false only when the already published active donor itself is invalid. */
+/** Reconstruct a provisional ghost using this immutable stencil's actual chart.
+ * Charts retain their point-state recovery and composition fallback.
+ * Candidate fractions use the existing destination ghost scratch; failure may
+ * leave that scratch changed. No accepted-ghost token or EOS certificate is
+ * published here. Runtime must reject failure and apply its full post-ghost EOS
+ * gate before publication. Host and CUDA execute exactly this same scalar
+ * arithmetic.
+ */
 ARCH_INLINE bool apply_coordinate_seam_transfer(
     const CoordinateSeamTransfer& transfer,
     CoordinateSeamFields<const double> source,
@@ -73,8 +83,8 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
         transfer.momentum_sign[2] * sample(source.mom_w),
         sample(source.eng)};
     const double enuc = sample(source.enuc_rate);
-    bool admissible = arch::state::recover(candidate).status
-        == arch::state::Status::valid && std::isfinite(enuc);
+    bool admissible = std::isfinite(enuc)
+        && arch::state::recover(candidate).status == arch::state::Status::valid;
     double species_sum = 0.;
     const double species_tolerance = regrid_math::composition_simplex_tolerance(
         source.species_count);
@@ -105,7 +115,8 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
     center.mom_u *= transfer.momentum_sign[0];
     center.mom_v *= transfer.momentum_sign[1];
     center.mom_w *= transfer.momentum_sign[2];
-    if (arch::state::recover(center).status != arch::state::Status::valid)
+    if (arch::state::recover(center).status != arch::state::Status::valid
+        || !std::isfinite(source.enuc_rate[transfer.source_center]))
         return false;
     destination.rho[cell] = center.rho;
     destination.mom_u[cell] = center.mom_u;

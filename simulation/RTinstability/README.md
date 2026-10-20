@@ -3,6 +3,9 @@
 [RT_instab.cpp](RT_instab.cpp) registers `RT`. It constructs a stratified
 two-fluid state with a velocity perturbation for Cartesian Rayleigh–Taylor
 mixing in two or three dimensions. Species fields identify the two fluids.
+Setup rejects curved computational geometries: the prescribed y stratification,
+y velocity and Cartesian transverse modes define this benchmark. The existing
+dimension handling and pressure/perturbation formulas remain unchanged.
 
 [RT_instab.par](RT_instab.par) is the reusable example input. Review its grid,
 external-gravity and output choices for the intended calculation; parameter

@@ -5,10 +5,15 @@ Hydro、自引力、aprox13 核反应及热扩散。算例源码只引用
 `<UserInterface.h>` 和 `<GlobalDefs.h>` 两个公开头。热点是厘米尺度的耦合执行
 检查，**不是**完整白矮星、火焰或 SN Ia 爆轰模型；不据此推断天体尺度的物理精度。
 
+[历史CPU续算记录](../../validation/backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+补验二维Cartesian混合AMR五步及两种检查点来源相位的新进程续算。匹配CHK与Plot
+边界后，全部原生物理数组逐位、拓扑、控制器及实际输出历史通过原比较；最初边界
+不匹配的失败保留。该短程结果不重新授予原`1e-8 s`能量、反复AMR或长程严格续算资格。
+
 从仓库根目录运行，例如：
 
 ```sh
-./build-ci/cpu/bin/ARCH SNIaCoupled simulation/SNIaCoupled/SNIaCoupled_2d_polar_amr.par
+./build-ci/cpu/bin/ARCH SNIaCoupled simulation/SNIaCoupled/SNIaCoupled_2d_cartesian.par
 ```
 
 配置文件按原生坐标和验证用途分组：
@@ -17,24 +22,33 @@ Hydro、自引力、aprox13 核反应及热扩散。算例源码只引用
 | --- | --- |
 | `SNIaCoupled_2d_cartesian.par` | 二维 Cartesian 全周期、无 AMR；保留原有 120 步 CPU/CUDA 基线 |
 | `SNIaCoupled_2d_cartesian_amr.par` | 二维 Cartesian 全周期、混合 AMR |
-| `SNIaCoupled_2d_polar_amr.par` | 二维完整方位角极坐标、正内半径、isolated 重力、混合 AMR |
 | `SNIaCoupled_3d_cartesian_amr.par` | 三维 Cartesian、isolated 重力、混合 AMR |
 | `SNIaCoupled_3d_cylindrical_amr.par` | 三维柱坐标，避开轴线，完整方位角，混合 AMR |
 | `SNIaCoupled_3d_spherical_amr.par` | 三维球坐标，避开原点与两极，完整方位角，混合 AMR |
 
 完整方位角且包含原点、轴线或两极的 CPU/CUDA 输入见
 [曲线坐标验证输入](../../validation/gravity/curved/inputs)；它们复用本算例，
-不另建一套物理实现。二维极坐标的 Poisson 势对应沿第三方向平移不变的物质，
-使用单位长度质量和对数核；它不是三维孤立白矮星。三维曲线坐标使用有限质量 Newton 势。
-曲线坐标自引力已按受测范围开放 **CPU/CUDA、完整方位角及坐标奇点接合**，
-奇点流体面须 reflecting；部分方位角扇区仍被拒绝。`rho0`、`temperature0`、`temperature_peak`、
+不另建一套物理实现。二维柱坐标现为原生`(r,z)`，球坐标二维保留`(r,phi)`极平面。
+三维曲线坐标使用有限质量 Newton 势；已受测的三维完整方位角与奇点接合
+仍遵循现有支持边界；奇点流体面须 reflecting。`rho0`、`temperature0`、`temperature_peak`、
 `density_amplitude`、`hotspot_width` 和 `center_x/y/z` 均为 CGS 场景参数；
-热点在物理 Cartesian 坐标中定义：
+Cartesian 和三维热点在物理 Cartesian 坐标中定义：
 
 $$
 q=\exp\left(-\frac{|\mathbf{x}-\mathbf{x}_c|^2}{2\sigma^2}\right),\quad
 \rho=\rho_0(1+Aq),\quad T=T_0+(T_{\rm peak}-T_0)q.
 $$
+
+二维柱坐标沿用上述公式，以Grid的`(r,0,z)`代表点取样：`center_x`为径向中心、
+`center_z`为轴向中心，`center_y`必须为0。三者都是必需的显式输入，缺键拒绝。
+完整环自引力留在公共引力模块，初始条件不管理求解或几何缓存。
+构造该域时将柱坐标输入的第三轴设为非活动，第二轴范围／边界按长度z声明；
+不能把旧phi范围或旧RZ checkpoint直接解释为新chart。
+
+[当前CPU签收](../../validation/backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)补齐非零轴向中心oracle、
+四步及第2→4步新进程fresh，保留原数值和O7；这是初始化器集成资格。
+原main反复AMR失败与thermal缺口仍保留，只继承原允许L2及已验短续算范围。
+当前CUDA ELF未含该Host初始化器修正，后续补建并进行必要GPU场对照。
 
 验收时检查接受步数、`state_repairs.txt` 的 `events=0`、
 `gravity_solves.tsv` 中每次求解的 `residual <= target`，以及最终 plot 的

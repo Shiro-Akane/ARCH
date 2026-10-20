@@ -4,19 +4,19 @@
 
 *后端*（backend）是指 ARCH 中负责在特定硬件上执行计算的引擎。CUDA 是我们的 GPU 后端：选择它会改变执行、内存管理和求解库接入方式，同时复用共用的数学与物理实现；后端一致性由具体受测配置的验证确认。*自适应网格细化*（AMR）会在模拟过程中动态调整单元尺寸，确保复杂的区域能获得更高的空间分辨率。本指南将详细说明这两种处理器之间的分工，并帮助你选择一个兼容的配置。
 
-CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算。CPU 和 CUDA 路径共用同一套数学与物理实现；而设备内存、计算核（kernels）、执行流以及线性求解库则是后端专有的。两个后端均支持下述功能范围。受测配置、技术结果和整体验收状态统一记录在[验证索引](../validation/README.zh-CN.md)中。
+CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算。CPU 和 CUDA 路径共用同一套数学与物理实现；而设备内存、计算核（kernels）、执行流以及线性求解库则是后端专有的。下表组件的几何与后端适用范围见[功能清单](Features.zh-CN.md)。受测配置、技术结果和整体验收状态统一记录在[验证索引](../validation/README.zh-CN.md)中。
 
 ## 共用功能范围
 
 | 模块 | 已有实现范围 |
 |---|---|
 | 流体 | Van Leer、Steger-Warming、Roe、HLL、HLLC；PCM/MUSCL/PPM；MinMod/MC/SuperBee/Van Leer 限制器；Euler/SSPRK2/SSPRK3 |
-| 网格与几何 | 一、二、三维块网格；笛卡尔、柱坐标与球坐标，采用两端共用的坐标约定 |
-| 边界 | 周期、流出、反射 |
+| 网格与几何 | 既有笛卡尔、径向、球坐标极平面及三维柱／球坐标块网格采用共用坐标约定；原生二维柱坐标复用公共几何／输运数学，已有壁面、索引、驻留、重网格与 fresh 的定点设备证据 |
+| 边界 | 周期、流出、反射及用户物理／势边界；Host 回调只交换所需边界片，共用 EOS 与面通量规则；成本见[用户边界](guides/UserBoundaries.zh-CN.md) |
 | 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
 | EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
 | 扩散 | 组分、热和黏性算子采用 RKL1/RKL2；材料模型决定实际通道。目前 Helmholtz 恒星模型只提供热传导。 |
-| 重力 | 外部阶段源项，以及复合 AMR 自引力：Cartesian 一至三维全周期或三维孤立边界，并支持受测一维径向和完整方位角二维／三维曲线坐标孤立域与坐标奇点接合；已验证燃烧与热扩散组合。见[引力验证](../validation/gravity/README.zh-CN.md)。 |
+| 重力 | 外部阶段源项，以及复合 AMR 自引力：Cartesian 一至三维全周期或三维孤立边界，并支持受测一维径向、二维球坐标极平面及完整方位角三维柱／球坐标孤立域与奇点接合；已验证燃烧与热扩散组合。见[引力验证](../validation/gravity/README.zh-CN.md)。 |
 | 内置燃烧 | iso7、aprox13、aprox19、aprox21；BE_NR、BD、ROS4 和网络受限 NSE |
 | 生成网络燃烧 | 已注册且数学实现可在设备端运行的网络；支持已识别的内嵌弱反应率表，各后端分别保存只读数据；按下述规则执行稠密或稀疏求解 |
 | 输出与恢复 | 共用 HDF5/checkpoint 设施，在 IO 边界同步状态，并提供 CPU/CUDA 重启路径 |
@@ -33,8 +33,13 @@ HLLC/MUSCL/RK2、BD、RKL2 热扩散、自引力 MG 与 AMR 已有代表性 CPU/
 平衡组分；网络可以是内置网络或明确认证的生成模型。具体配置见
 [API 与参数参考](Reference.zh-CN.md)。
 
-二维柱坐标与球坐标网格都采用极坐标平面 `(r, phi)`，其中 `phi` 是以弧度表示的
-方位角；三维球坐标使用 `(r, theta, phi)`。
+公开二维柱坐标采用轴对称 `(r,z)`，在 `phi=0` 处展开为 `x=r`、`y=0`、`z=z`，保留三个物理速度分量。二维球坐标采用赤道极平面 `(r,phi)`；三维柱／球坐标为 `(r,z,phi)`／`(r,theta,phi)`。原生壁面、RK/RKL、重网格、规定边界Poisson、孤立自引力与fresh见[验证记录](../validation/README.zh-CN.md)。[当前设备记录](../validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)补齐已重建的GravityBox／SNIa轴向场、显式中心输入与九种合法几何的公共真实壁面绑定；覆盖设备契约、原公共终点、真实重网格与fresh。当前NSE及Host AMR RKL修复已独立验收，原私有Cellular的25CHK均通过原`5e-9`＋`5e-12`源项门，ENUC逐位一致，并通过自身fresh；未变几何与资源owner按范围复用，本机单GPU设备阶段已闭合。历史二维柱坐标极平面记录保留原语义，不转签当前原生chart。
+
+## 构建与设备要求
+
+按[构建指南](guides/Build.zh-CN.md)选择CUDA工具链及受支持的Host编译器、显式设备代码映像和匹配数值库。本机已测配置为Release、GCC12、NVCC12.3、`sm86`及RTX3060Ti 8GiB。ARCH数值单元保持严格浮点标志，链接的第三方库配置分别记录；CPU GCC13与CUDA GCC12的LTO归档不能混用。
+
+本机WSL约7.7GiB，重构建采用j2与CUDA重型pool1。当前应用／测试增量构建及无动作检查通过，不代签干净构建或其他平台；实际Ninja规则使用ccache。显式CUDA或可选求解器请求须在执行前检查，不可用路径明确拒绝。本轮共享NSE头修改触发52动作、3040.45秒增量重建，其依赖／实例化成本留后续冻结评估。[主计划](../ARCH_RELEASE_PLAN.md)记录实际成本、原CPU限定及多GPU／平台资格边界。
 
 ## GPU-AMR 执行方式
 
@@ -51,9 +56,9 @@ CPU 掌握网格拓扑、Morton 排序以及所有的细化/粗化决策。
 ## 按性能选择后端
 
 下方服务器数据保留原始源码身份和输运配置，早于当前自引力工作，不能证明当前
-Helmholtz 的每个输运通道均有效。当前工作站证据和 FLASH 受控对照另见
-[当前验收记录](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)。
-共享 CPU 优化会改变比较基线。本轮 RTX 工作站的二维四模块 AMR 已有整程正收益；
+Helmholtz 的每个输运通道均有效。此前工作站测量和 FLASH 受控对照另见
+[优化验收记录](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)。
+共享 CPU 优化会改变比较基线。该记录中的 RTX 二维四模块 AMR 已有整程正收益；
 受测 Cellular、Jeans 和三维曲线耦合仍由 CPU 占优，不能外推为普遍 GPU 加速。
 选择后端应以相同输入和实际规模的完整任务用时为准。
 
@@ -105,7 +110,7 @@ CPU8 的 5.0–10.3 倍**，对应加速比约为 0.10–0.20。其数值对照�
 
 测速时，两端应使用相同的物理输入、AMR 判据和输出设置。CUDA 自引力在设备上实际求解，
 但小网格的额外开销可能使其慢于 CPU。本机 RTX 3060 Ti 的
-[曲线自引力记录](../validation/gravity/results/p13-20260924/README.md)分别报告了整段耦合收益与泊松阶段耗时；
+[曲线自引力记录](../validation/gravity/results/p13-20260924/README.md)保留原坐标与源码身份，分别报告整段耦合收益与泊松阶段耗时，不作为 Native RZ 证据；
 选择后端前可查阅[引力验收](../validation/gravity/README.zh-CN.md)。
 
 ### CUDA 优化具体改变了什么

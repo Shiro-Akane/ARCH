@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "01185a62a85c37ce0c202c37846baee7fe4d372b",
+  "tests": {
+    "total": 192,
+    "passed": 192,
+    "failed": 0,
+    "skipped": 0,
+    "includesHostTests": true
+  },
+  "lint": "PASS",
+  "typecheck": "PASS (npm run build)",
+  "productionBuild": "PASS",
+  "modules": 676,
+  "warning": "Existing bundle exceeds 500 kB; no unrelated code splitting performed",
+  "testLogSha256": "0c8fcc40b7ff1ea0610bf24fe550bb15d5ec6038845278dda7663aa3b35c8a96",
+  "localLog": "studio/.local/integration/configure-full-regression.log",
+  "notCovered": [
+    "Linux desktop manual UAT",
+    "complete link/toolchain provenance",
+    "Run/Restart",
+    "scientific evolution",
+    "CUDA"
+  ]
+}

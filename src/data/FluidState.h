@@ -9,12 +9,23 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
+#include <limits>
+#include <memory>
+#include <stdexcept>
 #include <vector>
 
 #include "amr/topology/AmrDefines.h"
 #include "core/ArchPortability.h"
 #include "data/StateDiagnostics.h"
+// The shared slots retain these attachments without defining boundary policy.
+// Consumers that inspect the face records include their boundary owner directly.
+namespace arch::boundary {
+struct DiffusionBoundaryStorage;
+struct BoundaryFluxCaptureStorage;
+}
 
 /**
  * @brief Represents the conserved variables at a single point.
@@ -63,6 +74,11 @@ ARCH_INLINE FluidVector operator*(double s, const FluidVector &v)
  */
 struct FluidState
 {
+    // Face-only callback data, regenerated for every stage and after regrid.
+    std::shared_ptr<const arch::boundary::DiffusionBoundaryStorage> diffusion_boundary;
+    // Optional physical-surface observer; one block record is shared by the
+    // three stage slots and never evolves conserved state.
+    std::shared_ptr<arch::boundary::BoundaryFluxCaptureStorage> boundary_flux_capture;
     arch::state::RepairBudget stage_repairs; // Ephemeral; consumed before slot publication.
     // Host arrays use the active-dimension block extent.
     std::vector<double> rho;
@@ -83,9 +99,22 @@ struct FluidState
 
     FluidState() = default;
 
+    // Shared species-major offsets use int, including k * cell_count + i.
+    // Reject negative extents and products outside that index range before
+    // allocation; widening the allocation alone would leave those offsets unsafe.
+    static std::size_t CheckedSpeciesSize(int species, int cells)
+    {
+        if (species < 0 || cells < 0)
+            throw std::invalid_argument("FluidState species/cell counts must be nonnegative");
+        if (cells > 0 && species > std::numeric_limits<int>::max() / cells)
+            throw std::length_error("FluidState species storage exceeds the int index range");
+        return static_cast<std::size_t>(species) * static_cast<std::size_t>(cells);
+    }
+
     // Allocate all fields for the requested block-local cell count.
     void Preallocate(int size)
     {
+        (void)CheckedSpeciesSize(n_species_, size);
         block_total_size_ = size;
         rho.assign(size, 0.0);
         mom_u.assign(size, 0.0);
@@ -110,11 +139,12 @@ struct FluidState
     // Explicit initialization for species
     void InitSpecies(int n_species)
     {
-        n_species_ = n_species;
-        if (n_species_ > 0 && block_total_size_ > 0)
+        const auto count = CheckedSpeciesSize(n_species, block_total_size_);
+        if (count > 0)
         {
-            mass_fractions.assign(n_species_ * block_total_size_, 0.0);
+            mass_fractions.assign(count, 0.0);
         }
+        n_species_ = n_species;
     }
 
     int GetNumSpecies() const

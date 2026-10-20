@@ -2,10 +2,14 @@
  * @file ChkIO.cpp
  * @brief Pack and restore checkpoint metadata, controller state and AMR leaves.
  *
- * Writing gathers synchronized host interiors, native composition and identity
- * metadata into the shared HDF5 payload. Reading checks compatibility and layout
- * before restoring the leaf grid, fields and timestep/output controller state;
- * backend transfers and evolution are outside this serialization layer.
+ * Workflow:
+ * 1. Write synchronized Host interiors with native composition and identities.
+ * 2. Read and check the exact geometry/schema, provenance and incoming layout.
+ * 3. Check the serialized finite/rho/composition contract strictly.
+ * 4. Restore original state means and timestep/output controller state.
+ * 5. The Runtime binds the same actual EOS and completes real BC/exchange before
+ *    its post-ghost thermal acceptance. This reader does not certify that EOS
+ *    gate, perform backend transfers, repair energy or advance a trajectory.
  */
 
 #include <filesystem>
@@ -46,8 +50,11 @@ void write_chk(amr::AMRControl &amr_ctrl,
                bool resume_after_regrid,
                const SimConfig &config, const SpeciesManager &specs,
                const io::CheckpointProvenance &provenance,
-               const arch::state::RepairBudget &repairs)
+               const arch::state::RepairBudget &repairs,
+               const io::CheckpointGeometryIdentity &geometry_identity)
 {
+    io::require_checkpoint_geometry_compatible(config.grid.dim, config.grid.geometry,
+                                               geometry_identity, geometry_identity);
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
 
     std::ostringstream filename;
@@ -71,6 +78,7 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.plt_file_index = plt_file_index;
     checkpoint.dim = dim;
     checkpoint.geometry = config.grid.geometry;
+    checkpoint.geometry_identity = geometry_identity;
     checkpoint.cells_per_block = cells_per_block;
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = resume_after_regrid;
@@ -133,9 +141,12 @@ void write_chk(amr::AMRControl &amr_ctrl,
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               RunState &run_state, const SimConfig &config,
               const SpeciesManager &specs,
-              const io::CheckpointProvenance &expected_provenance)
+              const io::CheckpointProvenance &expected_provenance,
+              const io::CheckpointGeometryIdentity &expected_geometry)
 {
     io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
+    io::require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
+                                               checkpoint.geometry_identity, expected_geometry);
     if (checkpoint.state_controls != arch::config::StateControlIdentity(config))
         throw std::runtime_error("Checkpoint state controls differ from the active configuration");
     const int expected_species = specs.count();
@@ -146,7 +157,9 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     }
     const bool verified_identity = io::require_checkpoint_provenance_compatible(
         checkpoint.provenance, expected_provenance);
-    // Validate the complete incoming state before replacing the live hierarchy.
+    // Serialized cells carry no ghost stencil, so check the original strict
+    // raw-state finite/rho/composition contract here. Runtime initialization
+    // owns actual post-ghost mean/point EOS acceptance before evolution.
     const auto& limits = config.numerics;
     const size_t incoming_cells = checkpoint.rho.size();
     if (checkpoint.repairs.species() != expected_species)
@@ -154,10 +167,9 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     for (size_t cell = 0; cell < incoming_cells; ++cell) {
         const FluidVector fluid{checkpoint.rho[cell], checkpoint.mom_u[cell],
             checkpoint.mom_v[cell], checkpoint.mom_w[cell], checkpoint.eng[cell]};
-        const auto status = arch::state::validate(fluid,
-            expected_species ? checkpoint.mass_fractions.data() + cell : nullptr,
-            expected_species, static_cast<int>(incoming_cells),
-            limits.sml_rho, limits.min_eint, limits.max_eint);
+        const double* fractions=expected_species ? checkpoint.mass_fractions.data()+cell : nullptr;
+        const auto status = arch::state::validate(fluid,fractions,expected_species,
+            static_cast<int>(incoming_cells),limits.sml_rho,limits.min_eint,limits.max_eint);
         if (status != arch::state::Status::valid || !std::isfinite(checkpoint.enuc_rate[cell]))
             throw std::runtime_error("Invalid checkpoint state at cell " + std::to_string(cell));
     }

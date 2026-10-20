@@ -1,0 +1,14 @@
+{
+  "baseline": "5e472868354dd6f58475ba8797ac59715729848b",
+  "actualReadOnlyConfigurationInputs": {
+    "count": 82,
+    "external": 58,
+    "generated": 4,
+    "dependenciesComplete": false
+  },
+  "fullTests": 259,
+  "pass": 259,
+  "initialFailure": "CMake unknown reason masked compiler-toolchain unknown reason; fixed production diagnostic priority, no assertion/budget relaxed.",
+  "archConfiguredOrBuilt": false,
+  "dependenciesComplete": false
+}

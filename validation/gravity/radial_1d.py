@@ -8,11 +8,14 @@ import math
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import h5py
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT/'tools'))
+from validate_backend_results import stored_arrays_equal
 G = 6.67430e-8
 RADIUS = 1e8
 RHO = 1e7
@@ -95,6 +98,9 @@ class RadialCampaign:
             x1l_boundary_type='reflecting', x1r_boundary_type='reflecting',
             x1_min=0, x1_max=RADIUS, nblockx2=0, nblockx3=0,
             rho0=RHO, temperature0=1e7, amplitude=0,
+            # Preserve the original radial Setup default instead of inheriting
+            # the explicit Cartesian periodic sample's domain midpoint.
+            center_x=0,
             out_dir=str(folder), plt_variables='DENS,ENER,VELX',
         ) | {key: str(value) for key, value in changes.items()}
         folder.mkdir(parents=True, exist_ok=True)
@@ -185,16 +191,28 @@ class RadialCampaign:
             a.visititems(lambda path, value: names.append(path)
                          if isinstance(value, h5py.Dataset) else None)
             require(a.attrs['time'] == b.attrs['time'] and
-                    all(np.array_equal(a[path][:], b[path][:]) for path in names),
+                    all(stored_arrays_equal(a[path][:], b[path][:]) for path in names),
                     name + ': checkpoint continuation changed state')
         record['restart_bitwise_equal'] = True
 
     def regrid_cycle(self, geometry):
         """Exercise actual refine, coarsen and unchanged topology publications."""
         name = geometry + '-refine-coarsen'
+        # Core-approved similarity migration is limited to this historical
+        # low-G, single-species IdealGas sample. Never alter production G.
+        require(self.base.get('eos_type') == 'ideal'
+                and self.base.get('network_name') == 'none'
+                and self.base.get('use_burn') == 'false'
+                and self.base.get('use_diffusion') == 'false',
+                name + ': low-G similarity requires nonreactive single-species IdealGas')
+        old_g = 1e-20
+        scale = old_g / G
+        density = RHO * scale
+        require(.8 * density > float(self.base['sml_rho']),
+                name + ': migrated density overlaps the unchanged density floor')
         plots, folder, record = self.run(
-            name, geometry, nblockx1=4, rho0=RHO, amplitude=.2, width=2e7,
-            gravity_G=1e-20, temperature0=1e9, lrefinemax=1,
+            name, geometry, nblockx1=4, rho0=density, amplitude=.2, width=2e7,
+            temperature0=1e9, lrefinemax=1,
             refine_threshold=.01, derefine_threshold=.005,
             regrid_interval=2, max_steps=40, tmax=.1, plt_dstep=20)
         with (folder / 'GravityBox_regrid.tsv').open() as stream:
@@ -211,7 +229,15 @@ class RadialCampaign:
                 name + ': closed-domain conservation across regrid cycle')
         record.update(mass_relative_drift=mass_error,
                       energy_relative_drift=energy_error,
-                      refined_and_coarsened=True)
+                      refined_and_coarsened=True,
+                      similarity_migration=dict(
+                          authority='11a321d5604f9ee62b9f9587c81f14de4f128bc4:2.1',
+                          old_G=old_g, shared_G=G, scale=scale,
+                          old_rho0=RHO, migrated_rho0=density,
+                          unchanged_temperature=1e9,
+                          fluid_mass_energy_scale=scale,
+                          independent_Gauss_budget=1e-7,
+                          relative_conservation_budget=1e-12))
 
     def hydrostatic(self, geometry, quick):
         """Measure parasitic radial velocity against an independent ideal-gas balance."""
@@ -254,7 +280,11 @@ class RadialCampaign:
         require(result.returncode != 0 and reason.lower() in
                 (result.stdout + result.stderr).lower(),
                 name + ': expected invalid configuration was accepted')
-        require(not list(folder.glob('*plt*.h5')), name + ': rejected run published data')
+        require('DUPLICATE_PARAMETER' not in result.stdout + result.stderr and
+                'MISSING_PARAMETER' not in result.stdout + result.stderr,
+                name + ': unrelated input construction error masked the target rejection')
+        require(not list(folder.glob('*.h5')) and not list(folder.glob('*.partial')),
+                name + ': rejected run published scientific data or temporary file')
         self.results.append(dict(name=name, rejected=True))
 
     def run_checks(self, quick=False):
@@ -270,8 +300,9 @@ class RadialCampaign:
             self.reject(geometry, 'nonnegative radius', x1_min=-1)
         # P12 permits the origin when the complete azimuth and fluid seam
         # topology are present; retain distinct invalid-topology checks.
-        self.reject('spherical', 'full azimuthal turn', nblockx2=1)
+        self.reject('spherical', 'full azimuthal turn', nblockx2=1,
+                    x2_min=0, x2_max=1, center_y=0)
         self.reject('spherical', 'Fluid faces must match', nblockx2=1,
                     x1_min=0.5, x1_max=RADIUS,
-                    x2_max=6.283185307179586,
+                    x2_min=0, x2_max=6.283185307179586, center_y=0,
                     x2l_boundary_type='outflow')

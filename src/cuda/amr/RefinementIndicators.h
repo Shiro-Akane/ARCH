@@ -5,6 +5,8 @@
  * The runtime supplies state, selected fields, scratch arrays and a stream.
  * The launch produces one block error; its owner fences the stream and checks
  * EOS status before using that scalar to make host-side topology decisions.
+ * Native charts borrow the shared density/inertia closure and its physical
+ * center baseline; Existing input keeps its original padded point-EOS batches.
  */
 
 #pragma once
@@ -18,6 +20,7 @@
 #include "amr/refinement/RefinementIndicatorMath.h"
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
+#include "numerics/state/StateAdmissibility.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/tabular/Tabular3DEOS.h"
@@ -45,19 +48,38 @@ struct DeviceIndicatorBatchBlock {
 static_assert(std::is_trivially_copyable_v<DeviceIndicatorBatchBlock>);
 
 // Limit optional cross-block scratch, not the already-required single-block
-// allocation. Layout/stencil ownership remains with the Host runtime.
 inline std::size_t indicator_wave_capacity(std::size_t cells, int species,
                                           bool thermodynamics, std::size_t blocks)
 {
     if (!cells || species < 0 || !blocks)
         throw std::invalid_argument("invalid indicator batch extent");
-    const std::size_t fields = 1 + (thermodynamics ? 3 + static_cast<std::size_t>(species) : 0);
+    const std::size_t fields = 1
+        + (thermodynamics ? 3 + static_cast<std::size_t>(species) : 0);
     if (cells > std::numeric_limits<std::size_t>::max() / fields / sizeof(double))
         throw std::overflow_error("indicator scratch extent overflow");
     constexpr std::size_t scratch_budget = 64 * 1024 * 1024;
     const auto capacity = std::max(std::size_t{1}, scratch_budget / (cells * fields * sizeof(double)));
     return std::min({blocks, std::size_t{1024}, capacity});
 }
+
+// Accepted-state JENS reduction is separate from curvature indicators.
+// Borrowed storage has active_cell_count doubles and total_size*n_species
+// composition entries. The caller owns Current/version validation and fencing.
+struct DeviceJeansWorkspace {
+    double* cell_resolution = nullptr;
+    double* block_minimum = nullptr;
+    double* composition = nullptr;
+    int* eos_status = nullptr;
+};
+#define ARCH_DECLARE_JEANS_RESOLUTION(EOS) \
+cudaError_t launch_cuda_jeans_resolution( \
+    DeviceStateView state, DeviceGridView grid, EOS eos, \
+    DeviceJeansWorkspace workspace, cudaStream_t stream)
+ARCH_DECLARE_JEANS_RESOLUTION(IdealGasView);
+ARCH_DECLARE_JEANS_RESOLUTION(HelmEosView);
+ARCH_DECLARE_JEANS_RESOLUTION(Tabular3DEOSView);
+ARCH_DECLARE_JEANS_RESOLUTION(Tabular4DEOSView);
+#undef ARCH_DECLARE_JEANS_RESOLUTION
 
 #define ARCH_DECLARE_REFINEMENT_INDICATORS(EOS) \
 cudaError_t launch_cuda_refinement_indicators( \

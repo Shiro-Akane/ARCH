@@ -1,0 +1,103 @@
+{
+  "status": "ACCEPTED_REALIZABLE_POSITIVE_DENSITY_FV_COUNTEREXAMPLE",
+  "logical_task_id": "public-arithmetic-density-fv-work-20261008",
+  "reviewed_at_utc": "2026-10-07T22:44:23.262042+00:00",
+  "root_exact_fraction": {
+    "x_face_group_work": [
+      "-268373/4000",
+      "1107/125",
+      "-268373/4000"
+    ],
+    "y_face_group_work": [
+      "-268373/4000",
+      "1107/125",
+      "-268373/4000"
+    ],
+    "total_work": "-250661/1000"
+  },
+  "public_fixture": {
+    "rho_exact": [
+      [
+        "1",
+        "1/1000",
+        "1/1000"
+      ],
+      [
+        "1/1000",
+        "1/1000",
+        "1/1000"
+      ],
+      [
+        "1/1000",
+        "1/1000",
+        "1/1000"
+      ]
+    ],
+    "u": [
+      [
+        0,
+        -15,
+        15
+      ],
+      [
+        0,
+        -34,
+        34
+      ],
+      [
+        0,
+        -34,
+        34
+      ]
+    ],
+    "v": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        15,
+        34,
+        34
+      ],
+      [
+        -15,
+        -34,
+        -34
+      ]
+    ],
+    "nu": 1,
+    "periodic_grid": [
+      3,
+      3
+    ]
+  },
+  "finding": "Positive arithmetic rho*nu faceviscosity does not ensure global dissipation for the proposed centeredtransverse fulltensor FV; use a paired operator, not an unqualified directface replacement.",
+  "old_production_vectorLaplacian_bug": "NOT_ESTABLISHED_BY_THIS_HYPOTHETICAL_METHOD_TEST",
+  "limits": [
+    "Does not alone prove positive eigenvalue",
+    "No actual curved/CF/thermal/RKL algorithm grant"
+  ],
+  "original_group_label_failure_retained": true,
+  "repair": "Corrected yface group label; previous numbers corresponded xcolumn group, not y-normal group. Exact aggregate unchanged.",
+  "cumulative_worker_seconds": 87.86,
+  "cumulative_cap_seconds": 150,
+  "reported_tokens": {
+    "input_tokens": 3099,
+    "cached_input_tokens": 1024,
+    "output_tokens": 23480,
+    "noncached_input_tokens": 2075,
+    "reasoning_tokens": 22994,
+    "visible_output_tokens": 486
+  },
+  "estimated_usd": {
+    "off_peak": 0.01440232,
+    "peak": 0.02880464
+  },
+  "actual_invoice": "UNKNOWN",
+  "root_active_token_cost": "UNKNOWN",
+  "formal_repairs_used": 1,
+  "formal_repairs_remaining": 0,
+  "source_raw_export": false
+}

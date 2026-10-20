@@ -1,0 +1,238 @@
+{
+  "read_only": true,
+  "new_baseline": "ee091b35c45e959910a6a4520aa240856c0d560d",
+  "recorder_implementation_revision": "24d86b7d93171f0395eeaeced34b59ef145994ee",
+  "recorder_hardcoded_solver_base": "25adec4224497981a0c124a3485f786194975be4",
+  "new_baseline_recorder_integrated": false,
+  "new_baseline_training_data_admitted": false,
+  "source_inventory": [
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/shadow_v1/event_graph.py",
+      "bytes": 24839,
+      "sha256": "2c1f28d4829a6259e3c8b0aff1453dea4c6a7d847bfd5eed8bcc5940de5f3d11"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/physics_family_v14/build_v13_multitask_cache.py",
+      "bytes": 13144,
+      "sha256": "0e37d4bed1e906300e74cfb0c747a4ec8df92c4c091ed57a80cea5fa31a78ace"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/shadow_v1/model_bundle.py",
+      "bytes": 14278,
+      "sha256": "748530020be9b91e17ad8e9fb76fbd19be8500edfce96ae78216e3396a185e61"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/physics_family_when_v1/build_when_cache.py",
+      "bytes": 13694,
+      "sha256": "815136cce4832e8a64dfcbab122a04b8d7235a18345957054ee3c9716d6799d9"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/physics_family_when_v4/build_competing_risk_cache.py",
+      "bytes": 9757,
+      "sha256": "64e0745b4a992cbf5712f26d73d3324f28b775a78f6f2f3b75f92c5cd50a0c61"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/physics_family_v2/offline_learning_v1/g1_temporal_graph/build_graph_cache.py",
+      "bytes": 13702,
+      "sha256": "32b31bf6941e99ee53de95e19d8f0bb4d3728d1d304f800f9acdb57b5eb53fce"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-AMR-Experiments/experiments/predictive_amr/physics_family_v2/offline_learning_v1/g1_temporal_graph/build_dimensionless_cache.py",
+      "bytes": 10724,
+      "sha256": "839246d5630562974afd842ebbbcb01bd37c81053db3189b2b5c4195e9b8e8f7"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-gnn-integrated-v1/src/driver/diagnostics/PatchFeatureRecorder.h",
+      "bytes": 25796,
+      "sha256": "1b324c5f3227a781992c2173e4fd1449bb88d3b21cc0e6b21e09ad355991bcb2"
+    }
+  ],
+  "actual_feature_columns": {
+    "RAW_NODE_FEATURES": [
+      "level",
+      "size_x1",
+      "size_x2",
+      "size_x3",
+      "refinement_indicator",
+      "refine_margin",
+      "derefine_margin",
+      "neighbor_degree",
+      "neighbor_min_level",
+      "neighbor_max_level",
+      "boundary_mask",
+      "rho_min",
+      "rho_max",
+      "rho_mean",
+      "rho_std",
+      "pressure_min",
+      "pressure_max",
+      "pressure_mean",
+      "pressure_std",
+      "energy_min",
+      "energy_max",
+      "energy_mean",
+      "velocity_mean",
+      "velocity_max",
+      "grad_rho_max",
+      "grad_rho_mean",
+      "grad_pressure_max",
+      "grad_pressure_mean",
+      "abs_div_v_max",
+      "abs_div_v_mean",
+      "mach_max",
+      "mach_mean",
+      "compression_sensor_max",
+      "compression_sensor_mean",
+      "physical_cells"
+    ],
+    "DIMENSIONLESS_NODE_FEATURES": [
+      "level",
+      "log2_relative_size_x1",
+      "log2_relative_size_x2",
+      "log2_relative_size_x3",
+      "refinement_indicator",
+      "refine_margin",
+      "derefine_margin",
+      "neighbor_degree",
+      "neighbor_min_level",
+      "neighbor_max_level",
+      "boundary_face_0",
+      "boundary_face_1",
+      "boundary_face_2",
+      "boundary_face_3",
+      "boundary_face_4",
+      "boundary_face_5",
+      "log2_physical_cells",
+      "signed_log1p_rho_min_over_mean",
+      "signed_log1p_rho_max_over_mean",
+      "log1p_rho_cv",
+      "signed_log1p_pressure_min_over_mean",
+      "signed_log1p_pressure_max_over_mean",
+      "log1p_pressure_cv",
+      "signed_log1p_energy_min_over_mean",
+      "signed_log1p_energy_max_over_mean",
+      "log1p_energy_cv",
+      "log1p_velocity_mean_over_sound_proxy",
+      "log1p_velocity_max_over_sound_proxy",
+      "log1p_mach_max",
+      "log1p_mach_mean",
+      "signed_log1p_compression_sensor_max",
+      "signed_log1p_compression_sensor_mean",
+      "log1p_rho_span_over_mean",
+      "log1p_pressure_span_over_mean",
+      "log1p_energy_span_over_mean"
+    ],
+    "CAUSAL_NODE_FEATURES": [
+      "has_causal_predecessor",
+      "predecessor_event_lag_fraction_mean",
+      "predecessor_exact_region_match_fraction",
+      "delta_refinement_indicator_from_predecessor_mean",
+      "delta_refine_margin_from_predecessor_mean",
+      "delta_level_from_predecessor_mean"
+    ],
+    "TEMPORAL_EDGE_FEATURES": [
+      "event_lag_fraction",
+      "source_minus_destination_level",
+      "exact_region_match"
+    ],
+    "IDENTITY_COLUMNS": [
+      "event_index",
+      "morton_code",
+      "level"
+    ],
+    "LINEAGE_COLUMNS": [
+      "logical_x1",
+      "logical_x2",
+      "logical_x3"
+    ],
+    "ACTION_COLUMNS": [
+      "criterion_action",
+      "balanced_action",
+      "balance_override"
+    ]
+  },
+  "actual_context_flags": [
+    "eos_is_ideal",
+    "eos_is_helmholtz",
+    "burn_enabled",
+    "thermal_diffusion_enabled",
+    "species_diffusion_enabled",
+    "viscous_diffusion_enabled",
+    "external_gravity_enabled"
+  ],
+  "actual_model_node_widths": [
+    35,
+    41
+  ],
+  "actual_targets": [
+    "balanced_refine_within_horizon",
+    "criterion_refine_within_horizon",
+    "time_to_criterion_events",
+    "time_to_balanced_refine_events",
+    "criterion_at_risk_1..4",
+    "criterion_event_1..4",
+    "balanced_at_risk_1..4",
+    "balanced_event_1..4",
+    "balance_only_first_time",
+    "balance_only_first_event"
+  ],
+  "actual_target_time_unit": "future regrid-event offset 1..4, not physical seconds",
+  "actual_count_uid_usage": "Neither repair counts nor repair_block_uid appears in feature/target column selections.",
+  "actual_join_scope": "event_index,morton_code,level within a trajectory/file; logical coordinate ancestor/descendant matches for history; not a cross-run physical-time key",
+  "actual_missing_features": [
+    "per-species block composition statistics/gradients",
+    "event-delta physical time in temporal edge features"
+  ],
+  "required_cross_run_contract": {
+    "domain_signature": [
+      "geometry",
+      "dimension",
+      "domain_bounds",
+      "root_block_counts",
+      "cells_per_block",
+      "boundary_conditions",
+      "axis_convention",
+      "units",
+      "species_names_and_order"
+    ],
+    "patch_physical_key": [
+      "domain_signature",
+      "level",
+      "logical_x1",
+      "logical_x2",
+      "logical_x3",
+      "physical_time"
+    ],
+    "cell_key_extension": [
+      "interior_i",
+      "interior_j",
+      "interior_k"
+    ],
+    "provenance": [
+      "trajectory_id",
+      "run_id",
+      "source_commit",
+      "parameter_hash",
+      "backend",
+      "binary_hash",
+      "checkpoint_parent_hash",
+      "event_index",
+      "macro_step",
+      "raw_physical_time"
+    ],
+    "lifecycle_sidecar": [
+      "run_id",
+      "topology_epoch",
+      "runtime_uid",
+      "pool_index",
+      "born_event",
+      "retired_event",
+      "parent_logical_key",
+      "child_logical_keys"
+    ],
+    "time_pairing": "Prefer explicitly requested identical physical output times. Step/event number alone is insufficient; retain both raw times and delta. Do not silently round/snap or interpolate labels.",
+    "label_policy": "AMR criterion/balanced/override targets remain backend-specific teacher decisions, not universally invariant truth. Do not use repair counts or UID as physical labels.",
+    "splits": "Keep paired backends/restarts/descendants of one trajectory family in one split; no cross-split sibling leakage.",
+    "admission": "Audit quarantine until recorder provenance/domain/time/lifecycle mapping and label checks pass, then request batch review; no automatic training release."
+  }
+}

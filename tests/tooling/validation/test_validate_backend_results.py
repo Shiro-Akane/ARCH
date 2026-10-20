@@ -22,7 +22,275 @@ def load_module():
     return module
 
 
+def load_qualification_module():
+    """Load the unchanged full-matrix consumer through the shared tooling path."""
+    spec = importlib.util.spec_from_file_location(
+        "qualify_cuda_amr_evidence",
+        ROOT / "tools" / "qualify_cuda_amr_evidence.py")
+    module = importlib.util.module_from_spec(spec)
+    with mock.patch.object(sys, "path", [str(MODULE_PATH.parent), *sys.path]):
+        spec.loader.exec_module(module)
+    return module
+
+
 class BackendValidationTests(unittest.TestCase):
+    GROUP_METRICS = {
+        64: {"l1": 4.0e-2, "l2": 8.0e-2},
+        128: {"l1": 2.0e-2, "l2": 4.0e-2},
+        256: {"l1": 1.0e-2, "l2": 2.0e-2},
+    }
+
+    def group_run_case(self, arch, checkpoint_validator, source_root, case,
+                       output_root, sanitizer):
+        # Process boundary stub: only the original group gate is exercised.
+        result = {"id": case["id"]}
+        if "scientific_time" in case and "resolution" in case:
+            metrics = self.GROUP_METRICS[int(case["resolution"])]
+            result["scientific"] = {"cpu_qualification": dict(metrics),
+                                    "cuda_qualification": dict(metrics)}
+        return result
+
+    def write_group_fixture(self, root):
+        """Two frozen groups of three resolutions plus one ungrouped case."""
+        cases = []
+        for group in ("alpha", "beta"):
+            for resolution in (64, 128, 256):
+                identifier = f"{group}_n{resolution}"
+                (root / f"{identifier}.par").write_text(
+                    "eos_type=ideal\n", encoding="utf-8")
+                cases.append({
+                    "id": identifier, "input": f"{identifier}.par",
+                    "resolution": resolution, "qualification_group": group,
+                    "scientific_time": 0.1, "accepted_steps": [1],
+                    "reduction_policy": {"rtol": 1.0e-9, "atol": 1.0e-12},
+                    "qualification": {"minimum_l1_order": 0.9,
+                                      "convergence_pairs": "final"},
+                })
+        (root / "solo.par").write_text("eos_type=ideal\n", encoding="utf-8")
+        cases.append({"id": "solo", "input": "solo.par", "accepted_steps": [1],
+                      "reduction_policy": {"rtol": 1.0e-9, "atol": 1.0e-12}})
+        manifest_path = root / "cases.json"
+        manifest_path.write_text(
+            json.dumps({"schema": 1, "cases": cases}), encoding="utf-8")
+        return manifest_path, cases
+
+    def backend_arguments(self, manifest_path, output_root, selection, source_root):
+        arguments = ["--manifest", str(manifest_path),
+                     "--arch", str(source_root / "unused-ARCH"),
+                     "--checkpoint-validator", str(source_root / "unused-validator"),
+                     "--build-dir", str(source_root / "unused-build"),
+                     "--output-root", str(output_root),
+                     "--source-root", str(source_root)]
+        for identifier in selection:
+            arguments += ["--case", identifier]
+        return arguments
+
+    def run_backend_main(self, module, manifest_path, output_root, selection,
+                         run_case=None, source_root=ROOT):
+        """Run main with only process/provenance boundaries stubbed."""
+        executed = run_case or self.group_run_case
+        with mock.patch.object(module, "run_case", side_effect=executed) as run_mock, \
+                mock.patch.object(
+                    module.provenance, "capture",
+                    return_value={"artifacts": {"arch_sha256": "0" * 64}}), \
+                mock.patch.object(module.provenance, "write_evidence") as write_mock:
+            status = module.main(
+                self.backend_arguments(manifest_path, output_root, selection, source_root))
+        return status, run_mock, write_mock
+
+    def test_terminal_lane_selects_actual_hdf5_time_not_output_index(self):
+        import h5py
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "canonical.par").write_text("geometry=cartesian\n")
+            case = {"id": "terminal", "input": "canonical.par", "problem": "Gaussian",
+                    "overrides": {"chk_dt": "0.05", "lrefinemax": "1"}}
+            lane = root / "output/terminal/scientific/cpu"
+            lane.mkdir(parents=True)
+            prefix = "terminal_cpu_scientific"
+            checkpoints = []
+            for index, time in ((1, 0.05), (97, 0.1), (999, 0.075)):
+                checkpoint = lane / f"{prefix}_chk_{index:04d}.h5"
+                with h5py.File(checkpoint, "w") as handle:
+                    handle.attrs["time"] = time
+                checkpoints.append(checkpoint)
+            completed = mock.Mock(returncode=0, stdout="Simulation Done. Total Steps: 4")
+            with mock.patch.object(module, "run_arch_with_logs", return_value=completed), \
+                    mock.patch.object(module, "validate_resolved_plan", return_value={}), \
+                    mock.patch.object(module, "read_regrid_metrics", return_value={}):
+                result = module.run_arch_terminal_lane(
+                    Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+                self.assertEqual(result["checkpoint"], checkpoints[1])
+                self.assertEqual(result["checkpoint_sha256"], module._sha256(checkpoints[1]))
+                parameters = module.read_parameter_map(result["parameter_file"])
+                self.assertEqual(parameters["chk_dt"], "0.05")
+                self.assertEqual(parameters["lrefinemax"], "1")
+                self.assertEqual(parameters["tmax"], "0.1")
+                checkpoints[1].unlink()
+                with self.assertRaisesRegex(RuntimeError, "checkpoint at time 0.1; found 0"):
+                    module.run_arch_terminal_lane(
+                        Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+
+    def test_terminal_lane_rejects_invalid_or_ambiguous_checkpoint_time(self):
+        import h5py
+        import numpy as np
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "canonical.par").write_text("geometry=cartesian\n")
+            case = {"id": "terminal", "input": "canonical.par", "problem": "Gaussian"}
+            lane = root / "output/terminal/scientific/cpu"
+            lane.mkdir(parents=True)
+            first = lane / "terminal_cpu_scientific_chk_0001.h5"
+            second = lane / "terminal_cpu_scientific_chk_0002.h5"
+            completed = mock.Mock(returncode=0, stdout="Simulation Done. Total Steps: 4")
+            with mock.patch.object(module, "run_arch_with_logs", return_value=completed), \
+                    mock.patch.object(module, "validate_resolved_plan", return_value={}), \
+                    mock.patch.object(module, "read_regrid_metrics", return_value={}):
+                for time in (None, float("nan"), float("inf"), -0.1, "0.1",
+                             np.array([0.1]), np.bool_(True)):
+                    with self.subTest(time=time):
+                        with h5py.File(first, "w") as handle:
+                            if time is not None:
+                                handle.attrs["time"] = time
+                        with self.assertRaisesRegex(RuntimeError, "invalid scientific checkpoint time"):
+                            module.run_arch_terminal_lane(
+                                Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+                for checkpoint in (first, second):
+                    with h5py.File(checkpoint, "w") as handle:
+                        handle.attrs["time"] = 0.1
+                with self.assertRaisesRegex(RuntimeError, "checkpoint at time 0.1; found 2"):
+                    module.run_arch_terminal_lane(
+                        Path("not-executed-ARCH"), root, case, "cpu", 0.1, root / "output")
+
+    def test_stored_numeric_identity_detects_signed_zero_dtype_shape_and_ulp(self):
+        import numpy as np
+        module = load_module()
+        for field in ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng', 'rhoX', 'X', 'enuc_rate'):
+            with self.subTest(field=field):
+                original = np.array([[1., -0.]], dtype=np.float64)
+                self.assertTrue(module.stored_arrays_equal(original, original.copy()))
+                for changed in (np.array([[1., 0.]]),
+                                np.array([[np.nextafter(1., 2.), -0.]]),
+                                original.astype(np.float32), original.reshape(2)):
+                    self.assertFalse(module.stored_arrays_equal(original, changed))
+        self.assertTrue(module.stored_arrays_equal(np.array([b'He4'], dtype=object),
+                                                  np.array([b'He4'], dtype=object)))
+        self.assertFalse(module.stored_arrays_equal(np.array([b'He4'], dtype=object),
+                                                   np.array([b'C12'], dtype=object)))
+
+    def test_user_boundary_checkpoint_rejects_each_missing_or_nonfinite_field(self):
+        import h5py
+        import numpy as np
+        script = ROOT/'validation/gravity/user_boundaries.py'
+        spec = importlib.util.spec_from_file_location('user_boundary_reader_controls', script)
+        reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reader)
+        parameters = dict(geometry='cartesian', x1_min=0, x1_max=1,
+                          x2_min=-.5, x2_max=.5, x3_min=0, x3_max=1,
+                          nblockx1=1, nblockx2=1, nblockx3=0)
+        fields = ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng', 'rhoX', 'X', 'enuc_rate')
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'native-checkpoint.h5'
+            with h5py.File(path, 'w') as h:
+                h.attrs.update(dim=2, time=0., step=0, boundary_identity='test',
+                               geometry_semantics_revision=1, geometry_chart='existing')
+                for key in ('level', 'logical_x1', 'logical_x2', 'logical_x3'):
+                    h.create_dataset('Blocks/'+key, data=np.array([0], dtype=np.int32))
+                h.create_dataset('state_repairs', data=np.zeros(1))
+                for field in fields:
+                    shape = (1, 1, 256) if field in ('rhoX', 'X') else (1, 256)
+                    h.create_dataset('Data/'+field, data=np.ones(shape, dtype=np.float64))
+            reader.checkpoint(path, parameters)
+            for field in fields:
+                with self.subTest(field=field), h5py.File(path, 'r+') as h:
+                    saved = h['Data/'+field][:]
+                    changed = saved.copy(); changed.flat[0] = np.nan
+                    h['Data/'+field][...] = changed
+                with self.assertRaisesRegex(RuntimeError, 'nonfinite '+field):
+                    reader.checkpoint(path, parameters)
+                with h5py.File(path, 'r+') as h:
+                    del h['Data/'+field]
+                with self.assertRaises(KeyError):
+                    reader.checkpoint(path, parameters)
+                with h5py.File(path, 'r+') as h:
+                    h.create_dataset('Data/'+field, data=saved)
+            # Independent constant-state meridian integrals, per unit azimuth:
+            # r in [1/4,5/4], z in [-1/2,1/2], rho=m_phi=1 give V=3/4,
+            # W=31/48. These literal integrals do not call production metrics.
+            native = parameters | dict(geometry='cylindrical', x1_min=.25, x1_max=1.25)
+            with h5py.File(path, 'r+') as h:
+                h.attrs['geometry_chart'] = 'cylindrical-rz-pwc'
+            totals = reader.checkpoint(path, native)['totals']
+            self.assertLessEqual(abs(totals[0]-np.longdouble(3)/4), np.longdouble('1e-18'))
+            self.assertLessEqual(abs(totals[3]-np.longdouble(31)/48), np.longdouble('1e-18'))
+            for revision, chart in ((2, 'axisymmetric-rz'), (1, 'axisymmetric-rz'),
+                                    (1, 'existing'), (0, ''), (2, 'cylindrical-rz-pwc')):
+                with self.subTest(revision=revision, chart=chart):
+                    with h5py.File(path, 'r+') as h:
+                        h.attrs['geometry_semantics_revision'] = revision
+                        h.attrs['geometry_chart'] = chart
+                    with self.assertRaisesRegex(RuntimeError, 'checkpoint chart'):
+                        reader.checkpoint(path, native)
+            # Only the retained charts admit an unstamped legacy identity.
+            with h5py.File(path, 'r+') as h:
+                del h.attrs['geometry_semantics_revision']
+                del h.attrs['geometry_chart']
+            reader.checkpoint(path, parameters)
+            with self.assertRaisesRegex(RuntimeError, 'checkpoint chart'):
+                reader.checkpoint(path, native)
+
+    def test_jeans_plot_requires_current_native_chart_and_three_velocities(self):
+        import h5py
+        import numpy as np
+        spec = importlib.util.spec_from_file_location('jeans_plot_identity_controls',
+            ROOT/'validation/gravity/check_jeans_plot.py')
+        reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reader)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'bounded-native-plot.h5'
+            with h5py.File(path, 'w') as h:
+                h.attrs.update(plot_publication_state='complete', dim=2, geometry='cylindrical',
+                    geometry_semantics_revision=1, geometry_chart='cylindrical-rz-pwc')
+                source = h.create_group('SourceIdentity')
+                source.attrs.update(eos_type='ideal', species_count=1)
+                source.create_dataset('species_gamma', data=[2.])
+                native = h.create_group('NativeGrid')
+                native.attrs.update(version='arch-native-curvilinear-1', native_geometry='cylindrical',
+                    center_basis='cartesian', x1_axis='r', x2_axis='z', x3_axis='inactive',
+                    x1_unit='cm', x2_unit='cm')
+                for axis, lower in ((1, .25), (2, -.5)):
+                    native.create_dataset(f'x{axis}_lower', data=[lower])
+                    native.create_dataset(f'x{axis}_upper', data=[lower+1.])
+                # First independent 80/120-digit JeansNumericCases.h reference:
+                # rho=cs^2=h=1; gamma=2 and E=1/2 give cs^2=1 with zero velocity.
+                for key, value in {'DENS': 1., 'ENER': .5, 'VELX': 0., 'VELY': 0., 'VELZ': 0.,
+                                   'JENS': float.fromhex('0x1.accc1f12f6cbdp+12')}.items():
+                    ds = h.create_dataset('Data/'+key, data=np.array([[value]], dtype=np.float64))
+                    if key == 'JENS':
+                        ds.attrs.update(unit='1', basis='scalar', centering='cell',
+                            meaning='jeans_length_over_max_active_physical_spacing')
+            reader.qualify(path)
+            for revision, chart in ((2, 'axisymmetric-rz'), (0, ''), (1, 'existing')):
+                with self.subTest(revision=revision, chart=chart):
+                    with h5py.File(path, 'r+') as h:
+                        h.attrs['geometry_semantics_revision'] = revision
+                        h.attrs['geometry_chart'] = chart
+                    with self.assertRaisesRegex(ValueError, 'current cylindrical chart identity'):
+                        reader.qualify(path)
+            with h5py.File(path, 'r+') as h:
+                h.attrs['geometry_semantics_revision'] = 1
+                h.attrs['geometry_chart'] = 'cylindrical-rz-pwc'
+                h['NativeGrid'].attrs['version'] = 'candidate-rz-1'
+            with self.assertRaisesRegex(ValueError, 'current cylindrical native grid metadata'):
+                reader.qualify(path)
+            with h5py.File(path, 'r+') as h:
+                h['NativeGrid'].attrs['version'] = 'arch-native-curvilinear-1'
+                del h['Data/VELZ']
+            with self.assertRaisesRegex(ValueError, 'native velocity evidence'):
+                reader.qualify(path)
+
     def test_hydro_temporal_reference_and_order_negative_controls(self):
         import math
         spec = importlib.util.spec_from_file_location('hydro_time_reference', ROOT / 'validation/hydro/time_reference.py')
@@ -58,6 +326,34 @@ class BackendValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'actual run parameters'):
             module.qualify_checkpoint(Path('validator'), Path('checkpoint'), {'qualification': policy})
 
+    def test_native_axial_reference_requires_bound_parameters_and_matching_axis(self):
+        module = load_module()
+        case = {"qualification_axis": 2,
+                "qualification": {"reference": "periodic_entropy_wave",
+                                  "mass_relative_drift_max": 1e-12}}
+        with self.assertRaisesRegex(RuntimeError, "actual run parameters"):
+            module.qualify_checkpoint(Path("validator"), Path("checkpoint"), case)
+        wrong_reference = {"reference_axis": 1}
+        process = mock.Mock(returncode=0, stdout=json.dumps(wrong_reference), stderr="")
+        with mock.patch.object(module.subprocess, "run", return_value=process) as run:
+            with self.assertRaisesRegex(RuntimeError, "axis does not match"):
+                module.qualify_checkpoint(Path("validator"), Path("checkpoint"), case,
+                                          parameter_file=Path("actual.par"))
+            self.assertEqual(run.call_args.args[0][-2:], ["--parameters", "actual.par"])
+        with self.assertRaisesRegex(RuntimeError, "must be 2"):
+            module.qualify_checkpoint(Path("validator"), Path("checkpoint"),
+                                      dict(case, qualification_axis=3))
+
+    def test_native_axial_momentum_conservation_uses_physical_axial_slot(self):
+        module = load_module()
+        policy = {"mass_relative_drift_max": 1e-12,
+                  "momentum_absolute_drift_max": 1e-12}
+        metrics = dict(reference_axis=2, min_rho=0.8, min_eng=2.9,
+                       mean=1., mass=1., mom_u=0., mom_v=1., mom_w=0., eng_total=3.)
+        module.validate_qualification_metrics(metrics, policy, "smooth")
+        with self.assertRaisesRegex(RuntimeError, "mom_v"):
+            module.validate_qualification_metrics(dict(metrics, mom_v=1.+1e-9), policy, "smooth")
+
     def test_whole_regrid_costs_are_checked_without_double_counting(self):
         module = load_module()
         row = dict(macro_step=0, physical_time=0.0, backend='cuda', old_blocks=1, new_blocks=2,
@@ -84,6 +380,107 @@ class BackendValidationTests(unittest.TestCase):
             path.write_text(path.read_text() + 'incomplete\n')
             with self.assertRaises(RuntimeError):
                 module.read_regrid_metrics(path, 'cuda', 2)
+
+    def test_fixed_grid_missing_regrid_is_not_applicable_not_measured(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            parameter.write_text('compute_backend = cpu\nlrefinemin = 0\nlrefinemax = 0\n')
+            self.assertFalse(path.exists())
+            result = module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+            self.assertIs(result['applicable'], False)
+            self.assertIsNone(result['file'])
+            self.assertEqual(result['records'], [])
+            self.assertIsNone(result['summary'])
+            self.assertIn('fixed', result['reason'].lower())
+            self.assertNotIn('wall_seconds', result)
+            with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                module.read_regrid_metrics(path, 'cpu', 3)
+            for text in ('lrefinemin = 0\nlrefinemax = 1\n',
+                         'lrefinemin = 1\nlrefinemax = 1\n',
+                         'lrefinemin = 0\n',
+                         'lrefinemax = 0\n',
+                         'lrefinemin = zero\nlrefinemax = 0\n',
+                         'lrefinemin = 0\nlrefinemax = -1\n',
+                         'lrefinemin = 0\nlrefinemax = 0.5\n'):
+                with self.subTest(text=text):
+                    parameter.write_text('# dynamic or malformed bounds\n' + text)
+                    with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                        module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+
+    def test_duplicate_and_floatified_levels_never_waive_regrid_measure(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            # A repeated bound previously resolved last-wins onto the fixed grid.
+            parameter.write_text('lrefinemin = 0\nlrefinemax = 1\nlrefinemax = 0\n')
+            with self.assertRaises(RuntimeError) as caught:
+                module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+            self.assertIn('DUPLICATE_PARAMETER', str(caught.exception))
+            with self.assertRaisesRegex(RuntimeError, 'DUPLICATE_PARAMETER'):
+                module.read_parameter_map(parameter)
+            parameter.write_text('lrefinemin = 0\nlrefinemin = 1\nlrefinemax = 0\n')
+            with self.assertRaisesRegex(RuntimeError, 'DUPLICATE_PARAMETER'):
+                module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+            # Float text underflowing to zero is not an integer level bound.
+            for text in ('lrefinemin = 0\nlrefinemax = 1e-10000\n',
+                         'lrefinemin = 1e-10000\nlrefinemax = 0\n'):
+                with self.subTest(text=text):
+                    parameter.write_text(text)
+                    with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                        module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+
+    def test_level_bounds_accept_only_integer_zero_text(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            for text in ('lrefinemin = 0\nlrefinemax = 00\n',
+                         'lrefinemin = +0\nlrefinemax = -0\n',
+                         'lrefinemin = 0\nlrefinemax = 0 # no dynamic regrid\n'):
+                with self.subTest(text=text):
+                    parameter.write_text(text)
+                    self.assertIs(
+                        module.read_regrid_metrics(
+                            path, 'cpu', 3, parameter_file=parameter)['applicable'],
+                        False)
+            for text in ('lrefinemin = 0.0\nlrefinemax = 0\n',
+                         'lrefinemin = 0\nlrefinemax = 0.5\n',
+                         'lrefinemin = 0\nlrefinemax = 1e0\n',
+                         'lrefinemin = 0\nlrefinemax = 0x0\n',
+                         'lrefinemin = zero\nlrefinemax = 0\n'):
+                with self.subTest(text=text):
+                    parameter.write_text(text)
+                    with self.assertRaisesRegex(RuntimeError, 'whole-regrid measurements'):
+                        module.read_regrid_metrics(path, 'cpu', 3, parameter_file=parameter)
+
+    def test_existing_regrid_report_is_validated_even_for_fixed_grid(self):
+        module = load_module()
+        header = ('backend', 'physical_time', 'wall_seconds', 'macro_step', 'old_blocks',
+                  'new_blocks', 'topology_changed', 'bytes_h2d', 'bytes_d2h',
+                  'kernel_count', 'stream_sync_count')
+        row = dict(backend='cpu', physical_time=0.1, wall_seconds=0.2, macro_step=0,
+                   old_blocks=1, new_blocks=2, topology_changed=1, bytes_h2d=0,
+                   bytes_d2h=0, kernel_count=0, stream_sync_count=0)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'regrid.tsv'
+            parameter = Path(directory) / 'actual.par'
+            parameter.write_text('lrefinemin = 0\nlrefinemax = 0\n')
+            path.write_text('\t'.join(header) + '\n'
+                            + '\t'.join(str(row[key]) for key in header) + '\n')
+            result = module.read_regrid_metrics(path, 'cpu', 2, parameter_file=parameter)
+            self.assertIs(result['applicable'], True)
+            self.assertEqual(result['records'], [row])
+            self.assertEqual(len(result['file']['sha256']), 64)
+            self.assertEqual(result['summary']['topology_changes'], 1)
+            path.write_text('\t'.join(header) + '\n' + '0.1\t0.2\n')
+            with self.assertRaises(RuntimeError):
+                module.read_regrid_metrics(path, 'cpu', 2, parameter_file=parameter)
+            path.write_text('\t'.join(header) + '\n')
+            with self.assertRaises(RuntimeError):
+                module.read_regrid_metrics(path, 'cpu', 2, parameter_file=parameter)
 
     def test_terminal_parity_without_oracle_still_checks_actual_metadata(self):
         module = load_module()
@@ -138,6 +535,46 @@ class BackendValidationTests(unittest.TestCase):
             with mock.patch.object(module.subprocess, "run", return_value=completed), \
                     self.assertRaisesRegex(RuntimeError, "did not provide physical"):
                 module.read_conservation_metrics(Path("validator"), Path("checkpoint.h5"), parameter)
+
+    def test_precise_totals_keep_decimal_tokens_and_metadata_types(self):
+        module = load_module()
+        text = ('{"totals_encoding":"native_long_double_roundtrip_decimal",'
+                '"step":71,"time":1e-10,"resume_after_regrid":false,'
+                '"chk_file_index":2,"plt_file_index":3,"blocks":8,'
+                '"mass":10000000000000001,"mom_u":0,"mom_v":0,"mom_w":0,'
+                '"energy":10000000000000000.25,"rhoX":[0.40000000000000000001,1e-30]}')
+        completed = mock.Mock(returncode=0, stderr="", stdout=text)
+        with mock.patch.object(module.subprocess, "run", return_value=completed):
+            precise = module.read_conservation_metrics(
+                Path("validator"), Path("checkpoint.h5"), preserve_total_precision=True)
+            ordinary = module.read_conservation_metrics(Path("validator"), Path("checkpoint.h5"))
+        self.assertEqual(precise["mass"], "10000000000000001")
+        self.assertEqual(precise["mom_u"], "0")
+        self.assertEqual(precise["energy"], "10000000000000000.25")
+        self.assertEqual(precise["rhoX"], ["0.40000000000000000001", "1e-30"])
+        self.assertEqual(ordinary["energy"], 10000000000000000.)
+        self.assertNotEqual(str(ordinary["energy"]), precise["energy"])
+        for field in ("step", "chk_file_index", "plt_file_index", "blocks"):
+            self.assertIs(type(precise[field]), int)
+        self.assertIs(type(precise["time"]), float)
+        self.assertIs(type(precise["resume_after_regrid"]), bool)
+        self.assertEqual(json.loads(json.dumps(precise)), precise)
+
+    def test_precise_totals_reject_old_or_malformed_metrics(self):
+        module = load_module()
+        original = dict(totals_encoding="native_long_double_roundtrip_decimal",
+                        mass=1, mom_u=0, mom_v=0, mom_w=0, energy=10, rhoX=[0.5, 0.5])
+        invalid = [dict(original, totals_encoding="binary64"),
+                   {key: value for key, value in original.items() if key != "totals_encoding"},
+                   {key: value for key, value in original.items() if key != "energy"},
+                   dict(original, energy="10"), dict(original, rhoX=[True, 0.5])]
+        for metrics in invalid:
+            with self.subTest(metrics=metrics):
+                completed = mock.Mock(returncode=0, stderr="", stdout=json.dumps(metrics))
+                with mock.patch.object(module.subprocess, "run", return_value=completed), \
+                        self.assertRaisesRegex(RuntimeError, "validator did not provide"):
+                    module.read_conservation_metrics(
+                        Path("validator"), Path("checkpoint.h5"), preserve_total_precision=True)
 
     def test_parameter_mutation_during_metrics_is_rejected(self):
         module = load_module()
@@ -569,6 +1006,131 @@ class BackendValidationTests(unittest.TestCase):
                 module.validate_cuda_diffusion_schedule(
                     schedule, 1,
                     {"order": 2, "stages": 3, "lanes_per_step": 2})
+
+
+    def test_partial_and_mixed_group_selection_rejects_before_any_boundary(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest_path, _ = self.write_group_fixture(root)
+            output_root = root / "evidence"
+            for selection, missing in (
+                (["alpha_n64", "alpha_n128"], "alpha_n256"),
+                (["alpha_n64", "alpha_n128", "alpha_n256",
+                  "beta_n64", "beta_n128"], "beta_n256"),
+                (["alpha_n64", "alpha_n128", "alpha_n256", "beta_n256"],
+                 "beta_n64, beta_n128"),
+                (["alpha_n64", "beta_n64"], "alpha_n128"),
+            ):
+                with self.subTest(selection=selection), \
+                        mock.patch.object(module, "require_empty_output_root") as empty_mock, \
+                        mock.patch.object(module, "runtime_case_inputs") as runtime_mock, \
+                        mock.patch.object(module, "run_case") as run_mock, \
+                        mock.patch.object(module.provenance, "capture") as capture_mock, \
+                        mock.patch.object(module.provenance, "write_evidence") as write_mock:
+                    with self.assertRaisesRegex(
+                            RuntimeError, "must be selected completely") as rejected:
+                        module.main(self.backend_arguments(
+                            manifest_path, output_root, selection, root))
+                    self.assertIn(missing, str(rejected.exception))
+                    for boundary in (empty_mock, runtime_mock, run_mock,
+                                     capture_mock, write_mock):
+                        boundary.assert_not_called()
+                    self.assertFalse(output_root.exists())
+            with mock.patch.object(module, "run_case") as run_mock:
+                with self.assertRaisesRegex(RuntimeError, "case is absent"):
+                    module.main(self.backend_arguments(
+                        manifest_path, output_root, ["alpha_n64", "ghost-case"], root))
+                run_mock.assert_not_called()
+            self.assertFalse(output_root.exists())
+
+    def test_complete_group_and_explicit_all_match_implicit_all_gate(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest_path, cases = self.write_group_fixture(root)
+            identifiers = [case["id"] for case in cases]
+            scoped = [case["id"] for case in cases
+                      if case.get("qualification_group") == "alpha"]
+            reports = {}
+            for label, selection in (("implicit", []), ("explicit", identifiers),
+                                     ("scoped", scoped)):
+                status, run_mock, write_mock = self.run_backend_main(
+                    module, manifest_path, root / ("evidence-" + label),
+                    selection, source_root=root)
+                self.assertEqual(status, 0)
+                self.assertEqual(run_mock.call_count, len(selection) or len(identifiers))
+                write_mock.assert_called_once()
+                reports[label] = write_mock.call_args[0][1]
+            self.assertEqual(reports["implicit"]["resolution_groups"],
+                             reports["explicit"]["resolution_groups"])
+            self.assertEqual(sorted(reports["implicit"]["resolution_groups"]),
+                             ["alpha", "beta"])
+            self.assertEqual(sorted(reports["scoped"]["resolution_groups"]), ["alpha"])
+            self.assertNotIn("beta", reports["scoped"]["resolution_groups"])
+            for group in ("alpha", "beta"):
+                summary = reports["implicit"]["resolution_groups"][group]
+                self.assertEqual(summary["resolutions"], [64, 128, 256])
+                for backend in ("cpu", "cuda"):
+                    self.assertEqual(summary["orders"][backend],
+                                     {"l1": [1.0, 1.0], "l2": [1.0, 1.0]})
+
+    def test_group_gate_failure_rejects_without_publishing_success_evidence(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest_path, cases = self.write_group_fixture(root)
+            selection = [case["id"] for case in cases
+                         if case.get("qualification_group") == "alpha"]
+            missing = object()
+            for label, backend, value, message in (
+                    ("cpu-convergence", "cpu", 9.9e-2, "L1 convergence gate failed"),
+                    ("cuda-convergence", "cuda", 9.9e-2, "L1 convergence gate failed"),
+                    ("cuda-nonfinite", "cuda", float("nan"), "L1 is invalid"),
+                    ("missing-l1", "cpu", missing, "l1")):
+                def broken(arch, checkpoint_validator, source_root, case,
+                           output_root, sanitizer, backend=backend, value=value):
+                    result = self.group_run_case(arch, checkpoint_validator,
+                                                 source_root, case, output_root, sanitizer)
+                    if case.get("resolution") == 256:
+                        metrics = result["scientific"][backend + "_qualification"]
+                        if value is missing:
+                            del metrics["l1"]
+                        else:
+                            metrics["l1"] = value
+                    return result
+                error = KeyError if value is missing else RuntimeError
+                with self.subTest(label=label), \
+                        mock.patch.object(module, "run_case", side_effect=broken) as run_mock, \
+                        mock.patch.object(
+                            module.provenance, "capture",
+                            return_value={"artifacts": {"arch_sha256": "0" * 64}}), \
+                        mock.patch.object(module.provenance, "write_evidence") as write_mock:
+                    with self.assertRaisesRegex(error, message):
+                        module.main(self.backend_arguments(
+                            manifest_path, root / ("evidence-" + label),
+                            selection, root))
+                    self.assertEqual(run_mock.call_count, len(selection))
+                    write_mock.assert_not_called()
+
+    def test_ungrouped_selection_has_no_group_summaries_and_full_matrix_rejects_subset(self):
+        module = load_module()
+        manifest_path = ROOT / "validation" / "backend" / "cases.json"
+        manifest = module.load_manifest(manifest_path)
+        ungrouped = [case["id"] for case in manifest["cases"]
+                     if case.get("qualification_group") is None]
+        self.assertEqual(len(ungrouped), 10)  # Original seven plus native RKL1 at three resolutions.
+        with tempfile.TemporaryDirectory() as directory:
+            status, run_mock, write_mock = self.run_backend_main(
+                module, manifest_path, Path(directory) / "evidence", ungrouped)
+            self.assertEqual(status, 0)
+            self.assertEqual(run_mock.call_count, len(ungrouped))
+            report = write_mock.call_args[0][1]
+            self.assertEqual(report["resolution_groups"], {})
+            self.assertEqual({case["id"] for case in report["cases"]}, set(ungrouped))
+        qualification = load_qualification_module()
+        with self.assertRaisesRegex(RuntimeError, "matrix is incomplete"):
+            qualification.check_matrix(report, manifest_path, ROOT)
 
 
 if __name__ == "__main__":

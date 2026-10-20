@@ -1,0 +1,31 @@
+{
+  "baseCommit": "a350df35b9ee90acc4e29a7b1a7395a6224d35b6",
+  "platform": "Linux/WSL Electron production",
+  "tests": 311,
+  "checks": {
+    "test": {
+      "exitCode": 0,
+      "wallSeconds": 6.311691344999417
+    },
+    "lint": {
+      "exitCode": 0,
+      "wallSeconds": 5.966849133001233
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "wallSeconds": 2.95907458000147
+    },
+    "build": {
+      "exitCode": 0,
+      "wallSeconds": 3.6097341909990064
+    }
+  },
+  "registryOverlapBefore": "409 Configuration inspection already active",
+  "freshnessOverlapBefore": "changedInputs exposed [] during incomplete scan",
+  "finalNativeUat": "PASS: registry/source association retained after multiple polls; needs-build remains; Preview/initialization/AMR disabled; no new Preview",
+  "productionAsset": "index-C8OO8Leo.js",
+  "oldHostIncident": "During interim UAT, old Host falsely became ready and auto-generated one Sod Initial Preview. Closed before final launch; not a simulation or accepted freshness evidence.",
+  "coreBuild": "not run",
+  "scientificCoreChanges": false,
+  "fullGoalComplete": false
+}

@@ -1,0 +1,57 @@
+{
+  "scope": "compute/optim integration checkpoint; not release",
+  "baseline": "a566310ed3327111356b4e4df10853f0f5faf8e1",
+  "mergedCheckpoint": "b7cb8b69845d44d6cb0ec4d6b19f4aabb4c65b14",
+  "configurationVersion": "3",
+  "standardParameterCount": 95,
+  "registeredModelCount": 16,
+  "localBackend": "cpu",
+  "cudaBuilt": false,
+  "coreCtest": {
+    "passed": 76,
+    "total": 76
+  },
+  "tooling": {
+    "passed": 482,
+    "total": 482,
+    "skipped": 0
+  },
+  "studioIncludingHost": {
+    "passed": 338,
+    "total": 338,
+    "skipped": 0
+  },
+  "lowDensityPhysicalRuns": {
+    "passed": 72,
+    "total": 72,
+    "referenceManifestModified": false
+  },
+  "lintTypecheckBuild": "PASS",
+  "actionlintAndArchitecture": "PASS",
+  "nativeDesktopPaths": 2,
+  "nativeWindowUserInteraction": "NOT_RUN",
+  "realTerminalRunRestart": {
+    "status": "PASS",
+    "endStep": 4,
+    "endTime": 1e-05,
+    "finalDatasetCount": 21,
+    "allFinalDatasetsBitwiseEqual": true
+  },
+  "publicRzGate": "retained",
+  "publicCudaJensGate": "retained",
+  "rzFindings": {
+    "finiteRing": "BLOCKED",
+    "symmetricViscosity": "NOT_RUN",
+    "axisNeighbor": "FAILED",
+    "continuousForce": "BLOCKED"
+  },
+  "diagnostics2d": "NOT_RUN",
+  "releaseReadiness": "INCOMPLETE; see release plan",
+  "newRunRawScientificDataCommitted": false,
+  "retainedRegressionPlotfile": {
+    "path": "studio/tests/fixtures/sod-1d.h5",
+    "bytes": 14336,
+    "source": "historical CPU Sod baseline; pinned reader fixture",
+    "includedInProductionPackage": false
+  }
+}

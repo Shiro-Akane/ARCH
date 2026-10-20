@@ -11,6 +11,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 
 namespace {
 using namespace arch;
@@ -202,6 +203,10 @@ void polynomial_and_fourier() {
 }
 
 void failure_contracts() {
+    // Shared mesh validation permits native (r,z); the standalone uniform
+    // stencil remains explicitly Cartesian, without a metric fallback.
+    auto native=mesh(2,8);native.geometry=elliptic::Geometry::Cylindrical;
+    rejects([&]{HostMultigrid wrong(native,BoundaryKind::Dirichlet);});
     const auto m = mesh(1,32);
     HostMultigrid solver(m,BoundaryKind::Periodic);
     std::vector<double> rhs(m.size(),1.);
@@ -246,7 +251,10 @@ void failure_contracts() {
     rhs[0] = std::numeric_limits<double>::infinity();
     rejects([&] { gravity::solve_uniform_gravity(solver,view,{},control); });
     rhs[0] = 0.;
-    rejects([&] { gravity::solve_uniform_gravity(solver,view,{},control,0.); });
+    static_assert(!std::is_invocable_v<decltype(&gravity::solve_uniform_gravity),
+        HostMultigrid&, grid::ConstScalarFieldView, const elliptic::BoundaryData&,
+        multigrid::SolveControl, double>,
+        "physical gravity adapter must not expose a configurable G");
     for (int i = 0; i < m.size(); ++i) rhs[i] = 1.+0.25*std::cos(2*pi*(i+0.5)/m.size());
     auto gravity_failure = gravity::solve_uniform_gravity(solver,view,{}, {1e-12,1e-20,1});
     require(gravity_failure.report.status == multigrid::SolveStatus::MaxCycles &&

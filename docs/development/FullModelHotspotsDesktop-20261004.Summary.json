@@ -1,0 +1,175 @@
+{
+  "scope": "Linux native CooperativeHotspots 2D shared EOS Init/initial AMR; no evolution",
+  "launchSourceBaseline": "1011bf113ad5a0eb1d6b54a38d0912bef72fc287",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "configSha256": "e4319416ca597a495ebb8fa3e91592a3dd4353348628554a706cbd172854fadb",
+  "eosTableSha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+  "windowId": 45025550,
+  "productionAssets": true,
+  "field": {
+    "shape": [
+      128,
+      128
+    ],
+    "order": "x1-fastest",
+    "x3": 0,
+    "xDomain": [
+      0,
+      64
+    ],
+    "yDomain": [
+      -24,
+      24
+    ],
+    "temperatureRangeDisplayed": [
+      200000000.0,
+      4000000000.0
+    ],
+    "fieldsViewed": [
+      "Density",
+      "Temperature"
+    ],
+    "hotSample": {
+      "index": 8127,
+      "i": 63,
+      "j": 63,
+      "x": 31.75,
+      "y": -0.1875,
+      "rhoDisplayed": 20318492,
+      "pressureDisplayed": 6.1774055e+24,
+      "temperatureDisplayed": 4000000000.0,
+      "velocityX": 0,
+      "velocityY": 0
+    },
+    "ambientSample": {
+      "index": 13081,
+      "i": 25,
+      "j": 102,
+      "x": 12.75,
+      "y": 14.4375,
+      "rhoDisplayed": 40000000.0,
+      "pressureDisplayed": 6.1774055e+24,
+      "temperatureDisplayed": 200000000.0,
+      "velocityX": 0,
+      "velocityY": 0
+    },
+    "scope": "UI-rounded samples/consistency, not independent EOS science oracle"
+  },
+  "state": {
+    "eos": "helmholtz / ready",
+    "loadedTablePath": "/home/arch/projects/ARCH-compute-optim/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "speciesCount": 13,
+    "amrConfig": [
+      0,
+      0
+    ],
+    "fieldSnapshotHierarchy": "not constructed; independent AMR result kept separate"
+  },
+  "amr": {
+    "complete": true,
+    "leafBlocks": 12,
+    "levels": {
+      "0": 12
+    },
+    "activeCells": 3072,
+    "configuredPoolCapacity": 256,
+    "selection": {
+      "logicalKey": "0:3:2:0",
+      "level": 0,
+      "logicalIndex": [
+        3,
+        2,
+        0
+      ],
+      "lower": [
+        48,
+        8
+      ],
+      "upper": [
+        64,
+        24
+      ],
+      "cellShape": [
+        16,
+        16
+      ],
+      "cellSpacing": [
+        1,
+        1
+      ]
+    },
+    "cellFieldArrays": "not provided by API",
+    "matchingIdentity": "UI label only, unseen response bytes not extracted"
+  },
+  "cleanup": {
+    "execSession": 80877,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1572239,
+        "parentPid": 1572238,
+        "startTicks": "6395816",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1572241,
+        "parentPid": 1572239,
+        "startTicks": "6395818",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1572242,
+        "parentPid": 1572239,
+        "startTicks": "6395818",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1572264,
+        "parentPid": 1572241,
+        "startTicks": "6395825",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1572267,
+        "parentPid": 1572239,
+        "startTicks": "6395825",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1572279,
+        "parentPid": 1572239,
+        "startTicks": "6395827",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1572646,
+        "parentPid": 1572242,
+        "startTicks": "6396299",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1573620,
+        "parentPid": 1572279,
+        "startTicks": "6398016",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allExactPidStartTicksGone": true
+  },
+  "inputUnchanged": true,
+  "noScientificOutput": true,
+  "noSourceChange": true,
+  "noBaselineRepeat": true,
+  "wheelPan": "still unverified; no wheel input this turn",
+  "remoteAvailable": false
+}

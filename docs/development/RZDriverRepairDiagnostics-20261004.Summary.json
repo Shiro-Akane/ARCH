@@ -1,0 +1,48 @@
+{
+  "status": "PASS",
+  "sourceBase": "3c81d32ae7c8b0ebdbdc5698e2d71bf537d12db8",
+  "scope": "Actual recompiled CPU DriverIO measurements/checkpoint fixture; time=0 step=0; no simulation advancement",
+  "firstFixtureFailure": "C++ test newline escaping; corrected before production change",
+  "baselineFailure": "repair report write failure swallowed",
+  "beforeExecutableSha256": "1f25b63ebf4b2757883d4faec6739b69b28eabc535fb18afc796b28cd01956a5",
+  "afterExecutableSha256": "78f6361f67157f8387e0f5bfcc915c244bc733ace063168bdd01d83ae014f87c",
+  "recompiledSources": {
+    "tests/host/io/test_driver_checkpoint_geometry.cpp": "7891a6947d3e90c0d97b212d1b8cbbdbbf3d6c05ffa23e1208cf550bb0e0e8ab",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69",
+    "src/driver/io/DriverIO.cpp": "fb75b87d49858b76f363c461e1eb722de191f5495deebf47fc9d8c05b85626ba",
+    "src/io/chk/ChkIO.cpp": "9667d1c416c7161136df2158a6a47a6835c6ac2ebd2b083cbbe1056270a5f8aa",
+    "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+    "src/io/hdf5/HDF5Writer.cpp": "1ef3fa88d6f38c5497797dc17348989a9dffe41f94e06c946cda2b95a925ef18"
+  },
+  "cartesianReportByteIdentical": true,
+  "cartesianReportSha256": "ad2aa419b4df587814b6daa1bd30ab3c087e9ab7b3919b110ed10a8aff7c419c",
+  "rzReportSha256": "07325e0ad39f4f9d227c7afe4e6b374f05a090833253e76f2932154209a23d80",
+  "rzDeclarations": {
+    "geometry_semantics_revision": "1",
+    "geometry_chart": "axisymmetric-rz",
+    "momentum_basis": "local-orthonormal-r-z-phi",
+    "measure_unit": "cm^3",
+    "measure_normalization": "full_rotation",
+    "mass_unit": "g",
+    "momentum_unit": "g*cm/s",
+    "energy_unit": "erg",
+    "momentum_r": "1.25",
+    "momentum_z": "-2.5",
+    "momentum_phi": "3.75"
+  },
+  "checks": [
+    "Real /dev/full flush failure propagates for Cartesian and RZ",
+    "Successful same-ledger recovery reproduces report bytes",
+    "Preexisting checkpoint SHA unchanged after measurement failure",
+    "Existing checkpoint profile/raw-state/controller/failure-index checks pass"
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/driver-repair-report-20261004-after",
+  "limitations": [
+    "Main ARCH executable has not been rebuilt for this source change",
+    "Not actual disk exhaustion, fsync or crash-safe report publication",
+    "Phi momentum is not angular momentum",
+    "Public RZ/capability/scientific/evolution/CUDA gates remain open"
+  ]
+}

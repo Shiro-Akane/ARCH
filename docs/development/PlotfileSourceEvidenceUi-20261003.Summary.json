@@ -1,0 +1,33 @@
+{
+  "kind": "component SSR; not native UAT",
+  "cases": [
+    {
+      "dimension": 1,
+      "selectedStoredIndex": 18,
+      "rawValue": 18.25,
+      "fileSha256": "30c297dde55f3bd54eba41284924d14a7cf7a3a52073e67487a29e34f26cc586",
+      "logicalKey": "0/1/0/0",
+      "render": "PASS",
+      "readOnly": true
+    },
+    {
+      "dimension": 2,
+      "selectedStoredIndex": 274,
+      "rawValue": 274.25,
+      "fileSha256": "9de46b91ca3d6ec5fbd1422f25ba9a44f451f520092142761b5896c5430fea5c",
+      "logicalKey": "0/1/0/0",
+      "render": "PASS",
+      "readOnly": true
+    }
+  ],
+  "legacy": "PASS",
+  "baseline": "82ab50fa580ae726724b0400b713276e28dd1db3",
+  "sourceEvidenceRendering": "partial recorded hashes/source; missing fields unknown",
+  "checks": {
+    "tests": "282/282 PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "nativeUat": "not performed"
+}

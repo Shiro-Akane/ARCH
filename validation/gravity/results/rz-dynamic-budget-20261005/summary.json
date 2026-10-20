@@ -1,0 +1,370 @@
+{
+  "status": "DYNAMIC_INITIAL_BUDGET_AND_NATIVE_ORIGINAL_REQUEST_PASS",
+  "baseline": "0ba26b5a3222c6a085272a50fede0cbf4d139242",
+  "scope": "Original owners initial work allocation plus actual static native uniform/mixed solves; not production Runtime qualification",
+  "rows": [
+    {
+      "radial_origin": 0,
+      "mixed": 0,
+      "face_target": 8.664639303685696e-19,
+      "proposal_source_norm_lower": 8.387172739141717e-07,
+      "proposal_tolerance": 8.387172739141716e-17,
+      "boundary_sensitivity_upper": 48.39885680858085,
+      "total_residual_upper": 5.675588091431122e-17,
+      "tolerance_safe": 1.1370095481120596e-15,
+      "work": 252,
+      "range_evaluations": 881834,
+      "nativeCells": 16
+    },
+    {
+      "radial_origin": 0.5,
+      "mixed": 0,
+      "face_target": 8.842462373261992e-19,
+      "proposal_source_norm_lower": 8.387172739141713e-07,
+      "proposal_tolerance": 8.387172739141712e-17,
+      "boundary_sensitivity_upper": 47.425549496840404,
+      "total_residual_upper": 6.302435274875508e-17,
+      "tolerance_safe": 1.65169083869655e-15,
+      "work": 336,
+      "range_evaluations": 1366272,
+      "nativeCells": 16
+    },
+    {
+      "radial_origin": 0,
+      "mixed": 1,
+      "face_target": 8.536592609296848e-19,
+      "proposal_source_norm_lower": 8.387172739141709e-07,
+      "proposal_tolerance": 8.387172739141709e-17,
+      "boundary_sensitivity_upper": 49.124827217405134,
+      "total_residual_upper": 7.884569025116181e-17,
+      "tolerance_safe": 1.1564498921364216e-15,
+      "work": 444,
+      "range_evaluations": 1058196,
+      "nativeCells": 28
+    },
+    {
+      "radial_origin": 0.5,
+      "mixed": 1,
+      "face_target": 8.715065119183471e-19,
+      "proposal_source_norm_lower": 8.387172739141704e-07,
+      "proposal_tolerance": 8.387172739141702e-17,
+      "boundary_sensitivity_upper": 48.11881853114316,
+      "total_residual_upper": 5.58254093605231e-16,
+      "tolerance_safe": 1.6778670153823713e-15,
+      "work": 592,
+      "range_evaluations": 1636810,
+      "nativeCells": 28
+    }
+  ],
+  "execution": [
+    {
+      "name": "uniform",
+      "exitCode": 0,
+      "seconds": 34.22360570298042
+    },
+    {
+      "name": "mixed",
+      "exitCode": 0,
+      "seconds": 40.57982880200143
+    }
+  ],
+  "independentNativeReference": [
+    {
+      "status": "PASS",
+      "cases": 2,
+      "cells": 32,
+      "rows": [
+        {
+          "radialOrigin": 0,
+          "mixedAmr": false,
+          "cells": 16,
+          "faces": 36,
+          "maximumExactRhsBoxDistance": 6.998562942064698e-17,
+          "maximumExactEvaluationError": 1.136658326349474e-20,
+          "maximumExactOriginalResidualBoxDistance": 6.999045261000719e-17,
+          "totalResidualUpper": 5.675588091431122e-17,
+          "toleranceSafe": 1.1370095481120596e-15,
+          "rhsErrorUpper": 4.723106988833045e-17,
+          "work": 252,
+          "rangeEvaluations": 881834
+        },
+        {
+          "radialOrigin": 0.5,
+          "mixedAmr": false,
+          "cells": 16,
+          "faces": 40,
+          "maximumExactRhsBoxDistance": 6.997599842477955e-17,
+          "maximumExactEvaluationError": 1.460904546748755e-20,
+          "maximumExactOriginalResidualBoxDistance": 6.998658633909478e-17,
+          "totalResidualUpper": 6.302435274875508e-17,
+          "toleranceSafe": 1.65169083869655e-15,
+          "rhsErrorUpper": 5.032688922983227e-17,
+          "work": 336,
+          "rangeEvaluations": 1366272
+        }
+      ],
+      "probeRecordSha256": "9aa8a6ddfc396bce43f79fc9defc08712101502d55c523d8ade7fb8e77c7494c",
+      "scope": "Actual solved nonzero-source native discrete original request rtol=1e-10 atol=0, given certified finite-ring boundary intervals",
+      "limitations": [
+        "Exact-coordinate subset; only the uniform/mixed meshes explicitly recorded in rows",
+        "Not independent continuous Phi/force or full RZ release",
+        "Boundary integral enclosure is checked by existing ring proofs; this script checks its native consumption",
+        "No timestep/simulation, CUDA or long-run claim; raw arrays remain local"
+      ]
+    },
+    {
+      "status": "PASS",
+      "cases": 2,
+      "cells": 56,
+      "rows": [
+        {
+          "radialOrigin": 0,
+          "mixedAmr": true,
+          "cells": 28,
+          "faces": 64,
+          "maximumExactRhsBoxDistance": 6.524693620136778e-17,
+          "maximumExactEvaluationError": 3.9160867606217985e-20,
+          "maximumExactOriginalResidualBoxDistance": 7.369036376659642e-17,
+          "totalResidualUpper": 7.884569025116181e-17,
+          "toleranceSafe": 1.1564498921364216e-15,
+          "rhsErrorUpper": 4.995794933681711e-17,
+          "work": 444,
+          "rangeEvaluations": 1058196
+        },
+        {
+          "radialOrigin": 0.5,
+          "mixedAmr": true,
+          "cells": 28,
+          "faces": 68,
+          "maximumExactRhsBoxDistance": 6.69530516675489e-17,
+          "maximumExactEvaluationError": 5.84087971673114e-20,
+          "maximumExactOriginalResidualBoxDistance": 7.574931698733641e-16,
+          "totalResidualUpper": 5.58254093605231e-16,
+          "toleranceSafe": 1.6778670153823713e-15,
+          "rhsErrorUpper": 5.584588992876384e-17,
+          "work": 592,
+          "rangeEvaluations": 1636810
+        }
+      ],
+      "probeRecordSha256": "d63053c95e4a47ca2de7575bc8dbd7a48819defe2681600bb5bd0d9ee386ae73",
+      "scope": "Actual solved nonzero-source native discrete original request rtol=1e-10 atol=0, given certified finite-ring boundary intervals",
+      "limitations": [
+        "Exact-coordinate subset; only the uniform/mixed meshes explicitly recorded in rows",
+        "Not independent continuous Phi/force or full RZ release",
+        "Boundary integral enclosure is checked by existing ring proofs; this script checks its native consumption",
+        "No timestep/simulation, CUDA or long-run claim; raw arrays remain local"
+      ]
+    }
+  ],
+  "independentBudgetReference": {
+    "status": "OFFLINE_EXACT_MAPPING_DIAGNOSTIC",
+    "records": [
+      {
+        "recordSha256": "9aa8a6ddfc396bce43f79fc9defc08712101502d55c523d8ade7fb8e77c7494c",
+        "rows": [
+          {
+            "radialOrigin": 0,
+            "mixed": false,
+            "cells": 16,
+            "boundaryRowsNormSquaredExact": {
+              "numerator": "21724414849406109634904536064",
+              "denominator": "9274230385674014259733423"
+            },
+            "boundarySensitivityCmMinus2": "48.39885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407",
+            "recordedToleranceSafePerSecondSquared": 1.1370095481120596e-15,
+            "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.174624384837877219827886858430728376902772104229472428890310795338187573408780808572979210588791496E-17",
+            "fixedTargetScaleDiagnostics": [
+              {
+                "densityScale": "1e-6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "5.685047740560298087415994855108904101945635598154560330641515975003130733966827392578125E-22",
+                "fixedTargetResidualContribution": "4.839885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407E-17",
+                "fixedContributionOverHalfTolerance": "85133.59784694244668605354633028245138272137841499755208074051142489225569191415887518995488319743171"
+              },
+              {
+                "densityScale": "1",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "5.685047740560298087415994855108904101945635598154560330641515975003130733966827392578125E-16",
+                "fixedTargetResidualContribution": "4.839885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407E-17",
+                "fixedContributionOverHalfTolerance": "0.08513359784694244668605354633028245138272137841499755208074051142489225569191415887518995488319743171"
+              },
+              {
+                "densityScale": "1e6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "5.685047740560298087415994855108904101945635598154560330641515975003130733966827392578125E-10",
+                "fixedTargetResidualContribution": "4.839885680855292144911035134624913687048554140933058399905079919292751002544074188962180861101591407E-17",
+                "fixedContributionOverHalfTolerance": "8.513359784694244668605354633028245138272137841499755208074051142489225569191415887518995488319743171E-8"
+              }
+            ],
+            "dynamicProposalExactChecks": true,
+            "recordedSolvePassed": true
+          },
+          {
+            "radialOrigin": 0.5,
+            "mixed": false,
+            "cells": 16,
+            "boundaryRowsNormSquaredExact": {
+              "numerator": "163895591807397123660654851072",
+              "denominator": "72868953030295826326476895"
+            },
+            "boundarySensitivityCmMinus2": "47.42554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424",
+            "recordedToleranceSafePerSecondSquared": 1.65169083869655e-15,
+            "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.741351292943420937519354559829885708392163464490931633408237330438418957828525885703328749756771349E-17",
+            "fixedTargetScaleDiagnostics": [
+              {
+                "densityScale": "1e-6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "8.258454193482750051262937265689606974449705535136490031078437823452986776828765869140625E-22",
+                "fixedTargetResidualContribution": "4.742554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424E-17",
+                "fixedContributionOverHalfTolerance": "57426.66652342684248564436973838935129485943700891770850557981884123317615846990732694946898777717135"
+              },
+              {
+                "densityScale": "1",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "8.258454193482750051262937265689606974449705535136490031078437823452986776828765869140625E-16",
+                "fixedTargetResidualContribution": "4.742554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424E-17",
+                "fixedContributionOverHalfTolerance": "0.05742666652342684248564436973838935129485943700891770850557981884123317615846990732694946898777717135"
+              },
+              {
+                "densityScale": "1e6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "8.258454193482750051262937265689606974449705535136490031078437823452986776828765869140625E-10",
+                "fixedTargetResidualContribution": "4.742554949681298662623641991508963796713659200059492769756471769485659282021185605800711605533838424E-17",
+                "fixedContributionOverHalfTolerance": "5.742666652342684248564436973838935129485943700891770850557981884123317615846990732694946898777717135E-8"
+              }
+            ],
+            "dynamicProposalExactChecks": true,
+            "recordedSolvePassed": true
+          }
+        ]
+      },
+      {
+        "recordSha256": "d63053c95e4a47ca2de7575bc8dbd7a48819defe2681600bb5bd0d9ee386ae73",
+        "rows": [
+          {
+            "radialOrigin": 0,
+            "mixed": true,
+            "cells": 28,
+            "boundaryRowsNormSquaredExact": {
+              "numerator": "3649320115177778877741877166714991967597795813592474837696369040477440",
+              "denominator": "1512202282382052954875347674218687711186522320492873493918905428223"
+            },
+            "boundarySensitivityCmMinus2": "49.12482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276",
+            "recordedToleranceSafePerSecondSquared": 1.1564498921364216e-15,
+            "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.177052376204383976431274860921285949561318268948123538499861000976213916836606049414189226973217284E-17",
+            "fixedTargetScaleDiagnostics": [
+              {
+                "densityScale": "1e-6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "5.782249460682108040089191445331000121778618726364751267965402803383767604827880859375E-22",
+                "fixedTargetResidualContribution": "4.912482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276E-17",
+                "fixedContributionOverHalfTolerance": "84957.98659569244934770636653124383080019511010278605767044831968850377733391562910004069371308899642"
+              },
+              {
+                "densityScale": "1",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "5.782249460682108040089191445331000121778618726364751267965402803383767604827880859375E-16",
+                "fixedTargetResidualContribution": "4.912482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276E-17",
+                "fixedContributionOverHalfTolerance": "0.08495798659569244934770636653124383080019511010278605767044831968850377733391562910004069371308899642"
+              },
+              {
+                "densityScale": "1e6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "5.782249460682108040089191445331000121778618726364751267965402803383767604827880859375E-10",
+                "fixedTargetResidualContribution": "4.912482721735804292935640647980915261850595678728380632744883954429218720604081414768213879013494276E-17",
+                "fixedContributionOverHalfTolerance": "8.495798659569244934770636653124383080019511010278605767044831968850377733391562910004069371308899642E-8"
+              }
+            ],
+            "dynamicProposalExactChecks": true,
+            "recordedSolvePassed": true
+          },
+          {
+            "radialOrigin": 0.5,
+            "mixed": true,
+            "cells": 28,
+            "boundaryRowsNormSquaredExact": {
+              "numerator": "27510877919005731871205515819563437943637036159676037227112015228144896",
+              "denominator": "11881589361573273216877731726003974873608389661015434595077114078895"
+            },
+            "boundarySensitivityCmMinus2": "48.11881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416",
+            "recordedToleranceSafePerSecondSquared": 1.6778670153823713e-15,
+            "halfToleranceFaceBudgetCmSquaredPerSecondSquaredDiagnostic": "1.743462398498047186303759029523510314989235096250997897226138398380198499895372831372229484261731677E-17",
+            "fixedTargetScaleDiagnostics": [
+              {
+                "densityScale": "1e-6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "8.389335076911856332053255428476898825204251751962158945019609745941124856472015380859375E-22",
+                "fixedTargetResidualContribution": "4.811881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416E-17",
+                "fixedContributionOverHalfTolerance": "57357.13032076155084893702765145782381219988795737910819974559994479206124217829608169138111932258989"
+              },
+              {
+                "densityScale": "1",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "8.389335076911856332053255428476898825204251751962158945019609745941124856472015380859375E-16",
+                "fixedTargetResidualContribution": "4.811881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416E-17",
+                "fixedContributionOverHalfTolerance": "0.05735713032076155084893702765145782381219988795737910819974559994479206124217829608169138111932258989"
+              },
+              {
+                "densityScale": "1e6",
+                "linearScalingDiagnosticOnly": true,
+                "scaledHalfTolerance": "8.389335076911856332053255428476898825204251751962158945019609745941124856472015380859375E-10",
+                "fixedTargetResidualContribution": "4.811881853109694720405351731467377097190197182514048487635388326992011727731649040753834117256438416E-17",
+                "fixedContributionOverHalfTolerance": "5.735713032076155084893702765145782381219988795737910819974559994479206124217829608169138111932258989E-8"
+              }
+            ],
+            "dynamicProposalExactChecks": true,
+            "recordedSolvePassed": true
+          }
+        ]
+      }
+    ],
+    "meaning": "K=norm_native(abs(B)*1); potential target delta contributes at most K*delta in exact native arithmetic",
+    "limitations": [
+      "Decimal sqrt/result is diagnostic, not an outward runtime certificate",
+      "Scaled density rows are linear mathematical diagnostics, not new physical runs",
+      "No new thresholds or production budget selected",
+      "Runtime must use original owner interval K and final complete original-request assessment",
+      "No Runtime source/solve/publication, continuous Phi/force or long-run qualification"
+    ]
+  },
+  "tests": {
+    "cpuLifecycle": "PASS 13.32s",
+    "cpuOriginalCompositePoisson": "PASS 3.25s",
+    "cudaEnabledHostLifecycle": "PASS 13.12s",
+    "actualCartesianRuntime": "PASS 4->8->4 7 gathers time0 steps0",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "unchangedOriginalRequest": {
+    "rtol": 1e-10,
+    "atol": 0,
+    "solverMaxCycles": 200,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumLeafEvaluations": 100000
+  },
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.cpp": "22346b2cb862721fb29db7072f6024b6d8353b30a11695e72fab7f0dceeeb298",
+    "src/numerics/elliptic/CompositePoisson.h": "b7c2ec9023141d15737d7dc8edaea5505a99a2aa94056c7132e16f8bc6ff626f",
+    "src/physics/gravity/GravityBoundary.cpp": "0ac75e4f4d6eac0e120e91bfaba0cc90feafa9609a6d4c2a67389dc492445436",
+    "src/physics/gravity/GravityBoundary.h": "0c901255565070004585c630e9cb27c263bcd13744b5cfa1ffc88ddd1ad59751",
+    "tests/host/gravity/test_composite_poisson.cpp": "61eeba1604b548da00a4f9a34d230c1a413ac967d3b4919739460e8eb5369885",
+    "tests/host/gravity/test_self_gravity.cpp": "eb8ff2b82d6df903d87fee7dffcfb9b5cd75a0ad782d0f0013d62aa08ad659e4",
+    "validation/gravity/rz_boundary_budget_audit.py": "15a687e88da6609ed06fda2be40332fbbedebbe85eccff8534083cc0b7bc0fa3"
+  },
+  "binarySha256": {
+    "build-cpu/arch_composite_poisson": "d4761ec0bd8ec5d72a27c2acc50aa1678b868fd57179461873c0372a2dea56b5",
+    "build-cpu/arch_self_gravity": "e24c5f78cd87f5494a0c114387ab9ec061a181292aa42176f0bc61a2234155ff",
+    "build-cuda/arch_self_gravity": "e24c5f78cd87f5494a0c114387ab9ec061a181292aa42176f0bc61a2234155ff",
+    "build-cpu/bin/ARCH": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda/bin/ARCH": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "runtimeExecutableSha256": "5710e124baf0df1e9d0b18cffdae466db39e54129da6a67045c0c1a685b71627",
+  "limitations": [
+    "Proposal is not a lower bound on final RHS and cannot qualify a field",
+    "Complete original-request assessment still mandatory",
+    "Four static exact-coordinate meshes only, not all-block RZ Runtime or continuous Phi/force",
+    "No Device ring math qualification; CUDA-enabled tests use Host",
+    "Public RZ and CUDA JENS gates retained",
+    "No simulation/new H5/checkpoint/benchmark/long-run/Windows work"
+  ]
+}

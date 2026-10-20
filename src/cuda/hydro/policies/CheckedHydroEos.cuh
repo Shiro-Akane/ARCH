@@ -16,12 +16,14 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 #include <cuda_runtime.h>
 
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/common/ExactWarpGroup.cuh"
 #include "data/FluidState.h"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace arch::cuda {
 
@@ -35,10 +37,26 @@ public:
     ARCH_INLINE CheckedHydroEosView(Eos eos, int* status)
         : eos_(bind_device_eos_status(eos, status)), status_(status) {}
 
+    /** Read the launch-owned sticky required-query failure without changing it.
+     * Finite error fallback values cannot authorize a completed physical cell.
+     */
+    ARCH_INLINE bool required_query_failed() const
+    { return status_ != nullptr && *status_ != 0; }
+
+    /** Reject a shared face assembly before the Runtime publishes this stage. */
+    ARCH_INLINE void report_failure() const {
+        if (!status_) return;
+#ifdef __CUDA_ARCH__
+        atomicExch(status_,1);
+#else
+        *status_=1;
+#endif
+    }
+
     ARCH_INLINE CheckedHydroEosView candidate_view() const
     {
         auto candidate = *this;
-        candidate.eos_ = bind_device_eos_status(eos_, nullptr);
+        candidate.eos_ = optional_eos();
         candidate.status_ = nullptr;
         return candidate;
     }
@@ -57,13 +75,25 @@ public:
     }
 
     ARCH_INLINE double get_pressure(const FluidVector& state, const double* composition) const
-    { return checked_pressure(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_pressure(state, composition);
     }, state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng)); }
 
+    /** Forward the selected EOS temperature for required physical-state checks.
+     * Match the actual rho/e/X inputs through the existing pure-query owner,
+     * then preserve its result and sticky nonfinite failure transport. The
+     * shared validate_eos owner still requires finite positive temperature;
+     * no temperature floor or alternate thermal inversion is introduced.
+     */
+    ARCH_INLINE double get_temperature(
+        double rho, double energy, const double* composition) const
+    { return checked_positive(evaluate_once(composition, [&] {
+        return eos_.get_temperature(rho, energy, composition);
+    }, rho, energy)); }
+
     ARCH_INLINE double get_sound_speed(
         const FluidVector& state, double pressure, const double* composition) const
-    { return checked(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_sound_speed(state, pressure, composition);
     }, state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng, pressure)); }
 
@@ -73,7 +103,7 @@ public:
     }
     ARCH_INLINE double get_sound_speed(
         const FluidVector& state, const double* composition) const
-    { return checked(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_sound_speed(state, composition);
     }, state.rho, state.mom_u, state.mom_v, state.mom_w, state.eng)); }
 
@@ -88,7 +118,7 @@ public:
         double& pressure, double& speed) const
     {
         if (reuse_mean_thermodynamics(rho, energy, composition, pressure, speed)) {
-            pressure = checked_pressure(pressure); speed = checked(speed);
+            pressure = checked_positive(pressure); speed = checked_positive(speed);
             return;
         }
         if constexpr (requires { typename Eos::HostHydroScope; }) {
@@ -100,8 +130,8 @@ public:
         } else {
             eos_.get_pressure_and_sound_speed(rho, energy, composition, pressure, speed);
         }
-        pressure = checked_pressure(pressure);
-        speed = checked(speed);
+        pressure = checked_positive(pressure);
+        speed = checked_positive(speed);
     }
 
     ARCH_INLINE double get_gamma(const double* composition) const
@@ -131,18 +161,18 @@ public:
         if constexpr (requires { typename Eos::HostHydroScope; }) {
             const auto group = input_group(composition, rho, energy);
             chi = kappa = 0.0;
-            if (group.leader()) bind_device_eos_status(eos_, nullptr)
+            if (group.leader()) optional_eos()
                 .get_dp_drho_e_and_dp_de_rho(rho, energy, composition, chi, kappa);
             chi = group.broadcast(chi); kappa = group.broadcast(kappa);
         } else {
-            bind_device_eos_status(eos_, nullptr)
+            optional_eos()
                 .get_dp_drho_e_and_dp_de_rho(rho, energy, composition, chi, kappa);
         }
     }
 
     ARCH_INLINE double get_pressure_from_rho_e(
         double rho, double energy, const double* composition) const
-    { return checked_pressure(evaluate_once(composition, [&] {
+    { return checked_positive(evaluate_once(composition, [&] {
         return eos_.get_pressure_from_rho_e(rho, energy, composition);
     }, rho, energy)); }
 
@@ -152,24 +182,24 @@ public:
     ARCH_INLINE double probe_pressure_from_rho_e(
         double rho, double energy, const double* composition) const
     { return evaluate_once(composition, [&] {
-        return bind_device_eos_status(eos_, nullptr).get_pressure_from_rho_e(rho, energy, composition);
+        return optional_eos().get_pressure_from_rho_e(rho, energy, composition);
     }, rho, energy); }
 
     ARCH_INLINE double probe_dp_drho_e(
         double rho, double energy, const double* composition) const
     { return evaluate_once(composition, [&] {
-        return bind_device_eos_status(eos_, nullptr).get_dp_drho_e(rho, energy, composition);
+        return optional_eos().get_dp_drho_e(rho, energy, composition);
     }, rho, energy); }
 
     ARCH_INLINE double probe_dp_de_rho(
         double rho, double energy, const double* composition) const
     { return evaluate_once(composition, [&] {
-        return bind_device_eos_status(eos_, nullptr).get_dp_de_rho(rho, energy, composition);
+        return optional_eos().get_dp_de_rho(rho, energy, composition);
     }, rho, energy); }
 
     ARCH_INLINE double get_pressure_from_rho_T(
         double rho, double temperature, const double* composition) const
-    { return checked_pressure(eos_.get_pressure_from_rho_T(rho, temperature, composition)); }
+    { return checked_positive(eos_.get_pressure_from_rho_T(rho, temperature, composition)); }
 
     ARCH_INLINE double get_dp_drho_e(
         double rho, double energy, const double* composition) const
@@ -191,10 +221,18 @@ public:
     ARCH_INLINE double probe_total_energy_primitive(
         double rho, double u, double v, double w, double pressure,
         const double* composition) const
-    { return bind_device_eos_status(eos_, nullptr).get_total_energy_primitive(
+    { return optional_eos().get_total_energy_primitive(
         rho, u, v, w, pressure, composition); }
 
 private:
+    /** Detach optional-query status through every checked adapter layer.
+     * Workflow: select the existing inner candidate recursively, then detach
+     * the raw EOS status. Each query still uses the original EOS mathematics;
+     * required calls retain their sticky launch-owned status unchanged.
+     */
+    ARCH_INLINE Eos optional_eos() const
+    { return bind_device_eos_status(arch::state::candidate_eos(eos_), nullptr); }
+
     // These borrowed fields never escape hydro_face_kernel_work. They are not
     // a temperature hint, persistent cache, or approximation of a face state.
     const DeviceStateView* means_ = nullptr;
@@ -262,11 +300,13 @@ private:
         }
     }
 
-    ARCH_INLINE double checked_pressure(double value) const
+    /** Required pressure, temperature and sound speed remain finite positive.
+     * Preserve the original result; any invalid value poisons the owning latch
+     * without a floor. Optional views have a null latch and retain local failure.
+     */
+    ARCH_INLINE double checked_positive(double value) const
     {
-        // A finite nonpositive hydro pressure is no more admissible than NaN.
-        // Do not change the EOS value; the launch owner rejects the stage.
-        if (!(value > 0.0) && status_ != nullptr) {
+        if ((!std::isfinite(value) || !(value > 0.0)) && status_ != nullptr) {
 #if defined(__CUDA_ARCH__)
             atomicExch(status_, 1);
 #else

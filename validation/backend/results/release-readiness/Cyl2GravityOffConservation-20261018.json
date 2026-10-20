@@ -1,0 +1,2313 @@
+{
+  "schema": "arch-cyl2-gravity-off-evidence-1",
+  "updated_utc": "2026-10-18T09:52:23.373307+00:00",
+  "decision": "ACCEPT_WITH_DECLARED_SCOPE",
+  "stage": "CYL-2",
+  "stage_complete": true,
+  "scope": "Native axisymmetric shared geometry/physical-PWC T-W Hydro, viscous/thermal/species diffusion and conservative AMR; actual gravity-off Host Runtime Euler/RK2/RK3 and RKL1/2; scoped retained CUDA leaves and explicit native Device refusal. Public/native Device/full release qualification is not granted.",
+  "phase_boundaries": {
+    "CYL3_started": false,
+    "CYL4_started": false,
+    "CYL5_started": false,
+    "REL4_started": false,
+    "full_CPU_ARCH_relinked": false,
+    "full_CUDA_ARCH_built": false,
+    "new_public_Cyl2_enabled": false,
+    "legacy_Rz_facilities_restored": false
+  },
+  "workspace": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "HEAD": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "candidate_is_uncommitted": true,
+  "source_identity": {
+    "freeze": {
+      "path": "output/release/cyl2-20261018/candidate-freeze22.json",
+      "sha256": "5d0f5df40773510937df125ed30e9be0807af0302dbc787f04a3e87f479d07dc"
+    },
+    "files": 1207,
+    "CYL1_snapshot_verified": "f581c3715eb9b992659b69971b35ac54a2a3f002",
+    "changed_from_CYL1": {
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/cmake/dependencies/Dependencies.cmake": {
+        "before": "02908f82c49eed3db48497af2f29487024e43a4b314af0ced76c57eb7da4083c",
+        "current": "31080c549fd92c0ec1a360157037d20ac133f1f55aff3840def31ffd4485b81e"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/exchange/ExchangePlan.h": {
+        "before": "a62d2d2754f53a9beaa806e6ac62d4e93e75bf61bddf61f71fdb22afca2bb026",
+        "current": "3f6cc7c672f5ed703b461e4b965b09afa2cb140b305070ae4df8405067b81374"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/exchange/GhostExchange.h": {
+        "before": "29cbb7b9dcd38299a59c4edcc5e7c72fe427909526d1071248203e822b246f46",
+        "current": "314029644aafe4605e6256e4e564c115ba60c26e8442b37db8e19638a2b8be2a"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/flux/AmrFluxExecutionPlan.h": {
+        "before": "ee6b65e0183cd7c76e818fd04294bf290ef05c677b4142d992afe927e312d71c",
+        "current": "0f1f8a0530f59cb5881e85ed6cb6036517dd49b44c58eea3ec30d636b16fef5d"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/flux/AmrFluxPlan.h": {
+        "before": "a1d6e45bbc5c1d604bd70f7a676b51912d9d37e9ba60183a58ec51a8bf22f098",
+        "current": "045d0992e74465d8f5913278a57b30a3879c453333aebe4ed446751af2c27b72"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/flux/FluxRegister.h": {
+        "before": "ba9eed5878dfbebe579fdd2deae0e3c48b7719478086bb00a92056c029a3ab04",
+        "current": "20c5c5bbe9f236d935cea8e12f59ce88d59320efa1d4045ff18aca81a7bc0501"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/storage/Block.h": {
+        "before": "0e93426473d73f6729038e2ed39cf4888a61cc69bcc2e9fc47ff351ff063c608",
+        "current": "870edc8a74445341616fdf2950dc54cb585897e4838f3f4d4da32b83acdfc8f8"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/topology/AmrTree.h": {
+        "before": "33fcd7b5ba46c512024a65abc6ae2fccb3f99137c87d8b9cfa5c6ed6b171df1e",
+        "current": "de815cf1de10ea712716ced733f686d17b497f24fa3b958712b7bcbc8569c803"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/amr/transfer/RegridTransferMath.h": {
+        "before": "57264f4eb4d954b569a377c9ae5ebbde5b9f845d1da0011d586a7e8ce93766fb",
+        "current": "507290ea0ba3504e5c16f6692e1333bb219b7f8a856d3dc0e3af97e587b2f65e"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/amr/AmrFluxSurfaceKernels.cuh": {
+        "before": "c4fc56c794fcd9147cc627fe64096f1ea316aaa8c0e4992e7245d47e642a65da",
+        "current": "5060db4ad8220b1fa4a067ec604bcf56b188d1c78330f1113122ae2684e53b66"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/amr/CoarseFineExchangeKernels.cuh": {
+        "before": "4c35feb98febe2f0ff27be88d3fb15092c15b1cfb2856a537d593531636170b9",
+        "current": "0da94b96b3c138745d59a3caa7e5e3794fe97f15df6a143d22359a111bc325a0"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/amr/RegridMigration.cu": {
+        "before": "d24754ece963de31dfdd331188192d47e2a6944a1ed5ed298548c55ff8e92fd0",
+        "current": "4db3f2d704e646ff71c9bd652b2c5fadec0c6c318bb5684b61954955ab16f7d5"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/diffusion/DiffusionKernels.cuh": {
+        "before": "b0d956bb61f077e37a1c324dbea6b1f196507d1291db6d6616bc1eb4dd1ae405",
+        "current": "006e32147c453bc3564512df5d640f874bc7a48c9fbc0886bd54c409fb408023"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/hydro/kernels/HydroSourceKernels.cuh": {
+        "before": "d6a19f7e0b39b973d9fbf16971fac641d23dfc67c89e4cdf28673aff346f67d9",
+        "current": "68e7abd28219f8641d934e71075143f6fb7224d2d44dd1f500cb94121d416850"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/hydro/kernels/HydroStateKernels.cuh": {
+        "before": "e76dff99d4323df14ad54deb445801bbda6e28ff7386eece132171a7d959ff09",
+        "current": "d0c5b2b398647550aeeae261928bf78db2d485f3e81937ca520645c0d5d80c99"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/runtime/amr/CudaBackendMigration.cpp": {
+        "before": "db8c657146f4dee8a1311f3a937cf27e54cbad17c0d67824190f73e6d35aa3fc",
+        "current": "67c560f12a6d79a8e53ac2d7450bcc12427b1f75b48d77d5f886e3c260cae8e8"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp": {
+        "before": "be7445a442da02246d421febfe06b8905b92d17ac887632a345a9c4ba06c3627",
+        "current": "4110e0c91a313f19888222477e0fa481d2a3d56c07d28f7ab2ba77566173b4b4"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/driver/DriverUtils.h": {
+        "before": "4458f117a9f555cdc07e4c9d0e4db3aa2b87aead4dd4cecef58b35161b8d583b",
+        "current": "4748662a241385cf57cd6520b8676f42ba5f915bd8e855b8b99da3f5e26f9cd8"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/driver/runtime/DriverBoundary.cpp": {
+        "before": "572bfd9fc75f0f8a892e925dccaf150b6b321b7c4234c1479f9055f7f4c3f548",
+        "current": "dd93f04e914bfacb1b532ae2b53c2c6d38a90d1b3ebe304cf1236e035ed82e37"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/curvilinear/CurvilinearViscousStress.h": {
+        "before": "71389f06ddc7ef84b19f1f03adcd23b47972a3e4b35a5b3f4aa81ac8d52faeac",
+        "current": "dcc61a956c37d25da23bd8d0e29fa3bb3a51af05b2d4825fceeaa5ae79ed9c11"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/curvilinear/GeometricSources.h": {
+        "before": "ace62a1e14edd56bdfdb42b89fbb748535b2585e57a354eb4d50f4898615eb0f",
+        "current": "71c9439239c15c46e372a39ea38d87b63bac339cdedf4b17c68a288a1e757345"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/curvilinear/GridMetrics.h": {
+        "before": "f094debf84bdab7d5f00d45f921e61fd79022152628a5d2dd55b2d866c034c1b",
+        "current": "9c9e82f5716dae922be92c394ba05edb256b2828560f091d927a0001485e5fdc"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/diffusion/DiffFlux.h": {
+        "before": "2774e68413d3179023a28a51a4af6cab7d7d7f2218e2f78900091406dc84f9dd",
+        "current": "5d0f28e34f9794b25cef42290294a407663b5bf013b05c93f71fcd2815265fe6"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/integrator/HydroCellUpdate.h": {
+        "before": "e8e3dd36f53df5fdd04301b527a6905a490ca3d90d3bcb8e2f01944fabca62c4",
+        "current": "e5641c02b0198de4182e9f88a706a69ed53e34ed0b6a025ffcc96967b1a3cafe"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/integrator/HydroGeometryBinding.h": {
+        "before": "092ed62bfbfdac8ce2937fba781ebdb876f01261043bf6e1d39c4ea878c4171f",
+        "current": "fb953cc6af36aa136aa5ed013ea316ce158bbf3626bdb0e794aa138f373bca88"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/integrator/HydroSolverImpl.h": {
+        "before": "9c61f4f218c00f4904de6320a6999e38dc1282aa46932043ca68fcce6121946f",
+        "current": "e80e091f0d43209cb90c0280990ac025567eeb72eb9f1267bab7f69683944e50"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/numerics/integrator/TimeIntegratorHelper.h": {
+        "before": "1d0eed92fe9259e5420596f977e01b83ce880ccc51cdae56f7795d717489a250",
+        "current": "4f4680ba5790646b26d59a4cda2a2dc4163a04e221042bb535227e01dd42da4f"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/physics/boundary/BoundaryFlux.h": {
+        "before": "b72afac44b6c699273834b3669d508d80f9869f38ba6b58abc7e74f797f78321",
+        "current": "4518c1f6841445b3bbfc1ffd764441f805547f861ea3d20ba56b6f56cb8dacee"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/cuda/grid/test_curvilinear_geometry_smoke.cu": {
+        "before": "910ba6aa6e3a023bbe6bca28b54d42368a0ad27f7c3cb97722b9c3486d9b7d82",
+        "current": "7b80c5210ae3972fdc9e997b4d2d18d9216f4d175f90fc235be26b3773003a3c"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/amr/test_amr_flux_surface_plan.cpp": {
+        "before": "076f0c09ade2389e6ea34b8948b78c7e99a925c59376f0ad55515b861dce2e80",
+        "current": "8b7a46793d50e999cc915924833d0691b4c07441b288d66315786df65bf305f7"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/amr/test_amr_operation_plans.cpp": {
+        "before": "80a690d43be5a7128e3dec71327d54948d229389cb2482545f8084de9034a889",
+        "current": "29460dad653a505c70b9b3370872705f2e535ad5ea099c81eb90f27981c68639"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/amr/test_same_level_exchange_plan.cpp": {
+        "before": "5f939330dbcbaf3bcab30739c2c2daef5837957fd60c27927b8c963f6190995b",
+        "current": "d7140912bcef235fb9c89d997e3d63b10bfc6dba9bd9134c2f4b88acaec5fe5f"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/driver/test_host_hydro_transaction.cpp": {
+        "before": "9799567910bc2ee419c828fa68ccb6341008d8cfc3b6a9dd1776b3a229718194",
+        "current": "ef01191512766aa65434a0615334c71a77ba5c6da78077251fac11543f5bdd75"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/gravity/test_gravity_stage_contract.cpp": {
+        "before": "dc615725a512c33d90d89ae3b9d71d76e23888682997fc720f4e398a6a53c3cb",
+        "current": "b9c4f80bb20c3337cd65662f3b53d0573ac8762675b2371595a79f1101a6f007"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/grid/test_curvilinear_metrics.cpp": {
+        "before": "27173bf56fb56ed8a9c391cfd05874fa1b0a9524ffc4e0bdfaad8054ef83c868",
+        "current": "32aa79ab8ddf7e5e72d78c0c63eb51c0b8546ebf28e03870095e686748c78aac"
+      },
+      "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/math/geometry/CurvedStokesCases.h": {
+        "before": "74a0c7d07fd5bc672e9819a2f8cf728929c4405844f1fca067fc2d880babbc6f",
+        "current": "1b0bb24f9cc25eb3059419ac218340f9109d5f5a76ca94300c48345ddb7ae227"
+      }
+    },
+    "phase_patch": {
+      "path": "output/release/cyl2-20261018/accepted-source-CYL2.patch",
+      "sha256": "1291e6a2169c37c3800dace44b0e87591c27a28bf57ac16a1d7043e0885bb287"
+    },
+    "source_snapshot": "output/release/cyl2-20261018/accepted-source/",
+    "docs_excluded_from_numerical_freeze": true,
+    "final_source_integrity": {
+      "path": "output/release/cyl2-20261018/final-source-history-integrity.json",
+      "sha256": "39d8e3f653d4d4aef2dd9aa9dbb10e7f6fb9d18de222e1519492cefea8c41dbf"
+    }
+  },
+  "executables": {
+    "arch_curvilinear_metrics": {
+      "path": "build-modernization-cpu/arch_curvilinear_metrics",
+      "sha256": "a42e0cdb3008b942c197a7a1f3c3e9ddf04bc51c152008c81387770da5e41c3a"
+    },
+    "arch_gravity_stage_contract": {
+      "path": "build-modernization-cpu/arch_gravity_stage_contract",
+      "sha256": "e1294bbb4fb8025cd5c883a2f8a153c1a5190d909bdf9b38acac9b289258a939"
+    },
+    "arch_amr_operation_plans": {
+      "path": "build-modernization-cpu/arch_amr_operation_plans",
+      "sha256": "e9c53f91498d20791e3c70d90693424c774d214c52704d56c884c63819b6cbd8"
+    },
+    "arch_amr_flux_surface_plan": {
+      "path": "build-modernization-cpu/arch_amr_flux_surface_plan",
+      "sha256": "6523168e1552d873017de851069a50987161c4ab2c005df1aef2a5604fdb093e"
+    },
+    "arch_same_level_exchange_plan": {
+      "path": "build-modernization-cpu/arch_same_level_exchange_plan",
+      "sha256": "0f7349e94c73e0bfbe30227baac540064bd7af5ddd53fc312eff532a8f2a8676"
+    },
+    "arch_input_resolution": {
+      "path": "build-modernization-cpu/arch_input_resolution",
+      "sha256": "2b2eed1f578c6dbd3eeb6cdfb22502ee4e48bdeb2a13f0b0eb51cabe041a6783"
+    },
+    "arch_runtime_probe_capabilities": {
+      "path": "build-modernization-cpu/arch_runtime_probe_capabilities",
+      "sha256": "477ddfa3f70d241ec67104fe2b9f4fda3acf96a6cb389b11b6a58cc68ba9603f"
+    },
+    "arch_checkpoint_compatibility": {
+      "path": "build-modernization-cpu/arch_checkpoint_compatibility",
+      "sha256": "5297d46895d6b555cdb936a01c8b4ae0fbff123c774c97d73900ef29660e4ec1"
+    },
+    "arch_cuda_curvilinear_geometry_smoke": {
+      "path": "build-modernization-cuda/arch_cuda_curvilinear_geometry_smoke",
+      "sha256": "10615a46d83e790395443d159d7864a5644545ba3bfad454cb6fcc1620813a8a"
+    }
+  },
+  "old_full_ARCH_control": {
+    "path": "build-modernization-cpu/bin/ARCH",
+    "sha256": "d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487",
+    "use": "Only unchanged retained rphi control; never signs current production source or native Cyl2."
+  },
+  "mathematical_contract": {
+    "state": "Physical PWC Mr,Mz,Mphi; E=rho*e+M^2/(2rho); no extra evolved J/ell/omega field",
+    "ordinary_measure": "V/A for rho,Mr,Mz,E,rhoX; W/T for native Mphi",
+    "angular_budget": 1e-12,
+    "mass_energy_species_and_axial_momentum": "rtol=2e-12,atol=2e-11; J checked as long-double normalized residual before stdout formatting",
+    "centrifugal": "Applied C_upper=T_upper/W-A_upper/V and C_lower=A_lower/V-T_lower/W over open advective faces; pressure retains p*<1/r>, no second phi or energy source. Stable eta=L/R factorization avoids thin-ring cancellation. Separate point oracle unchanged.",
+    "consistency": "Interior compatible source quadrature second order; one-cell closed-wall contribution first order in its integral. No universal entropy or exact rotating well-balance theorem claimed.",
+    "source_timestep": "Local thermal impulse bound, independent of gravity and spatial phi CFL; not a whole-step positivity theorem.",
+    "module_boundaries": "Geometry/source/weights remain in common curvilinear owners; gravity null required for native Host composition. Common BoundaryFlux view owns advective face identity; generic mixed-2D exchange owns corner completion."
+  },
+  "implementation": [
+    {
+      "owner": "HydroCellUpdate/GeometricSources/DriverUtils/TimeIntegratorHelper",
+      "result": "T/W angular divergence and compatible centrifugal work, authenticated boundary identities, independent source-impulse cap; retained eight point arithmetic branches unchanged."
+    },
+    {
+      "owner": "CurvilinearViscousStress/DiffFlux and thin CUDA consumers",
+      "result": "One Newtonian stress law with ell=W/V angular speed, T/A work lever, matching boundary traction/heat work and raw FE row bound; scalar diffusion retains ordinary V/A."
+    },
+    {
+      "owner": "RegridTransferMath/GhostExchange/AmrFluxPlan/FluxRegister and thin CUDA consumers",
+      "result": "W-weight Mphi transfer/ghost restriction and T-weight registration/W reflux; original common theta/admissibility and V measures for ordinary fields retained."
+    },
+    {
+      "owner": "ExchangePlan/GhostExchange/DriverBoundary/CudaBackendMigration",
+      "result": "Generic 2D corner-only completion AFTER coarse-fine face fill, reusing cached logical and Host-lowered plans and existing Host/Device copy executors, ordinary and staged consumers."
+    },
+    {
+      "owner": "Existing test target and cost fixture",
+      "result": "Actual Runtime refine/coarsen publication, retired-handle rejection and further Hydro/RKL evolution; no new CTest family. True OpenMP test binding enabled. Cost fixture matches actual Gaussian species/capacity and production boundary-preparation/clock scope."
+    }
+  ],
+  "completed_checks": {
+    "CPU_CTest": {
+      "decision": "PASS",
+      "names": [
+        "curvilinear_metrics",
+        "gravity_stage_contract",
+        "amr_operation_plans",
+        "amr_flux_surface_plan",
+        "same_level_exchange_plan",
+        "input_resolution",
+        "runtime_probe_and_capabilities",
+        "checkpoint_compatibility"
+      ],
+      "evidence": {
+        "path": "output/release/cyl2-20261018/final-production-context-cpu/receipt.json",
+        "sha256": "9e09184da6dea658479556e238fc523b64a4e2613ab74ab2ecffaffccdcad42a"
+      },
+      "scope": "Local current-workspace targets, not hosted CI or full algorithm/model matrix."
+    },
+    "native_Runtime": {
+      "decision": "PASS",
+      "native_cases": 27,
+      "base_axis_annulus_cases": 26,
+      "additional_native_MUSCL_stress_cases": 1,
+      "methods": [
+        "Euler",
+        "RK2",
+        "RK3",
+        "RKL1",
+        "RKL2"
+      ],
+      "maximum_normalized_J_error": 7.481238510891728e-17,
+      "maximum_relative_energy_error": 1.1857568316532303e-16,
+      "maximum_relative_species_error": 1.691797276425707e-16,
+      "maximum_absolute_axial_momentum_error": 1.9095299004664133e-18,
+      "all_actual_EOS_positive_and_cumulative_repairs_zero": true,
+      "actual_Runtime_regrid_cases": 4,
+      "regrid_checks": "real refine -> advance -> coarsen -> advance, new epoch/ledger and retired-handle refusal, re-bound exchange cache; original conservation criteria",
+      "rows": [
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "8",
+          "method": "Euler",
+          "mixed": "0",
+          "seconds": "0.0030083169999999999",
+          "hydro_seconds": "0.0025187130000000005",
+          "boundary_prepare_calls": "0",
+          "J_error": "1.8637755647857516e-18",
+          "mass_error": "2.5858221813779281e-17",
+          "energy_error": "3.5548857774303807e-18",
+          "species_error": "2.4348894703355056e-18",
+          "axial_momentum_absolute_error": "6.5380355616191307e-20",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "8",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0046569200000000002",
+          "hydro_seconds": "0.0041938729999999999",
+          "boundary_prepare_calls": "0",
+          "J_error": "7.4551022591430063e-18",
+          "mass_error": "3.1116602350333977e-17",
+          "energy_error": "1.387272498509417e-18",
+          "species_error": "2.8407043820580901e-18",
+          "axial_momentum_absolute_error": "7.4644778476785217e-21",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "8",
+          "method": "RK3",
+          "mixed": "0",
+          "seconds": "0.0072210099999999999",
+          "hydro_seconds": "0.0067803180000000005",
+          "boundary_prepare_calls": "0",
+          "J_error": "7.7092534725228821e-18",
+          "mass_error": "1.0625181290357943e-17",
+          "energy_error": "1.4739770296662555e-18",
+          "species_error": "2.5769246894384104e-17",
+          "axial_momentum_absolute_error": "1.4314856808597676e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "7",
+          "steps": "8",
+          "method": "RK2",
+          "mixed": "1",
+          "seconds": "0.022064457999999999",
+          "hydro_seconds": "0.017799796",
+          "boundary_prepare_calls": "0",
+          "J_error": "6.8620827612566309e-18",
+          "mass_error": "1.588356182691264e-17",
+          "energy_error": "2.2543178100778025e-18",
+          "species_error": "6.0195878572183336e-18",
+          "axial_momentum_absolute_error": "1.1487884347136448e-20",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "6",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0037271980000000001",
+          "hydro_seconds": "0.0030243660000000001",
+          "boundary_prepare_calls": "0",
+          "J_error": "4.8288730542176295e-18",
+          "mass_error": "4.6620693416876691e-18",
+          "energy_error": "5.2022718694103133e-19",
+          "species_error": "3.1788834751602435e-18",
+          "axial_momentum_absolute_error": "7.9938734397124594e-21",
+          "adaptive": "1",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.02",
+          "dt_min": "0.0019508864872183687",
+          "dt_max": "0.0036101525275148193",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "6",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0041751499999999999",
+          "hydro_seconds": "0.00344108",
+          "boundary_prepare_calls": "0",
+          "J_error": "8.0244009771139277e-18",
+          "mass_error": "4.3368086899420177e-18",
+          "energy_error": "1.3733084732039777e-18",
+          "species_error": "3.6523342055032584e-18",
+          "axial_momentum_absolute_error": "2.4352197233561135e-20",
+          "adaptive": "1",
+          "rotation": "2",
+          "physical_time": "0.02",
+          "dt_min": "0.0020852283965629194",
+          "dt_max": "0.0036095861979652598",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "15",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.010684635",
+          "hydro_seconds": "0.008772841",
+          "boundary_prepare_calls": "0",
+          "J_error": "7.8075252750297669e-19",
+          "mass_error": "4.4452289071905682e-18",
+          "energy_error": "1.0839546955797074e-17",
+          "species_error": "8.2515698716925465e-18",
+          "axial_momentum_absolute_error": "4.3913364359215133e-20",
+          "adaptive": "1",
+          "rotation": "20",
+          "physical_time": "0.02",
+          "dt_min": "0.00051989105995982679",
+          "dt_max": "0.0031348850994588236",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.017584655000000001",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "12",
+          "J_error": "0",
+          "mass_error": "0",
+          "energy_error": "6.9623738518941362e-17",
+          "species_error": "0",
+          "axial_momentum_absolute_error": "6.0409331006992632e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.017753245968720716",
+          "dt_min": "0.0044383114921801789",
+          "dt_max": "0.0044383114921801789",
+          "diffusion": "1",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "7",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "1",
+          "seconds": "0.049394281999999998",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "12",
+          "J_error": "4.1511364852046288e-18",
+          "mass_error": "2.0599841277224584e-18",
+          "energy_error": "2.1589428258052801e-17",
+          "species_error": "2.6107425987486256e-17",
+          "axial_momentum_absolute_error": "2.5281286497580695e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.0044387824433787327",
+          "dt_min": "0.0011096956108446832",
+          "dt_max": "0.0011096956108446832",
+          "diffusion": "1",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.041712519000000003",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "20",
+          "J_error": "0",
+          "mass_error": "0",
+          "energy_error": "1.3179088735839461e-17",
+          "species_error": "1.2120338696781184e-16",
+          "axial_momentum_absolute_error": "1.5758253890278207e-18",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.017753245968720716",
+          "dt_min": "0.0044383114921801789",
+          "dt_max": "0.0044383114921801789",
+          "diffusion": "2",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "7",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "1",
+          "seconds": "0.107429952",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "20",
+          "J_error": "3.0413428534458404e-17",
+          "mass_error": "2.0599841277224584e-18",
+          "energy_error": "5.5664309002690355e-17",
+          "species_error": "6.4456935145270474e-17",
+          "axial_momentum_absolute_error": "2.3703687633319561e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.0044387824433787327",
+          "dt_min": "0.0011096956108446832",
+          "dt_max": "0.0011096956108446832",
+          "diffusion": "2",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0069740590000000003",
+          "hydro_seconds": "0.0052850459999999998",
+          "boundary_prepare_calls": "0",
+          "J_error": "1.3554731380260012e-18",
+          "mass_error": "1.4799359654427136e-17",
+          "energy_error": "2.0028746697229708e-17",
+          "species_error": "3.9228774799849814e-18",
+          "axial_momentum_absolute_error": "7.4512429578776733e-20",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00020000000000000001",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "1",
+          "regrid_records": "2",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "0",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.109352351",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "20",
+          "J_error": "2.6092857907000522e-17",
+          "mass_error": "1.6425662913155392e-17",
+          "energy_error": "5.1675900569475786e-17",
+          "species_error": "5.2350123612213375e-17",
+          "axial_momentum_absolute_error": "6.060256039808502e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.0110958548429138",
+          "dt_min": "0.0011096159292767209",
+          "dt_max": "0.0044383114921801789",
+          "diffusion": "2",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "1",
+          "regrid_records": "2",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "8",
+          "method": "Euler",
+          "mixed": "0",
+          "seconds": "0.0025205280000000002",
+          "hydro_seconds": "0.00209407",
+          "boundary_prepare_calls": "0",
+          "J_error": "2.981653029703225e-18",
+          "mass_error": "2.7032774167305245e-17",
+          "energy_error": "4.0410408089447964e-19",
+          "species_error": "7.0341251365247937e-18",
+          "axial_momentum_absolute_error": "1.2620790914089075e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "8",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0046964700000000003",
+          "hydro_seconds": "0.0042763180000000003",
+          "boundary_prepare_calls": "0",
+          "J_error": "2.2588280528054735e-18",
+          "mass_error": "2.9128898367443888e-17",
+          "energy_error": "7.2738734561006341e-18",
+          "species_error": "9.9199200643298374e-19",
+          "axial_momentum_absolute_error": "7.8879943213056719e-20",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "8",
+          "method": "RK3",
+          "mixed": "0",
+          "seconds": "0.0065098669999999999",
+          "hydro_seconds": "0.0060865609999999999",
+          "boundary_prepare_calls": "0",
+          "J_error": "5.782599815182012e-18",
+          "mass_error": "1.1853943752508181e-17",
+          "energy_error": "3.1173743383288429e-18",
+          "species_error": "4.9779962504637004e-17",
+          "axial_momentum_absolute_error": "5.5406542662271921e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "7",
+          "steps": "8",
+          "method": "RK2",
+          "mixed": "1",
+          "seconds": "0.023189640000000001",
+          "hydro_seconds": "0.019182817999999997",
+          "boundary_prepare_calls": "0",
+          "J_error": "9.0353122112218938e-20",
+          "mass_error": "1.0769741580022677e-17",
+          "energy_error": "7.5047900737546218e-18",
+          "species_error": "1.8938029213720602e-17",
+          "axial_momentum_absolute_error": "2.6046263128069735e-20",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00040000000000000007",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "6",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0039864729999999999",
+          "hydro_seconds": "0.0031920260000000002",
+          "boundary_prepare_calls": "0",
+          "J_error": "2.981653029703225e-18",
+          "mass_error": "5.8546917314217239e-18",
+          "energy_error": "2.8864577206748549e-18",
+          "species_error": "9.018109149390762e-19",
+          "axial_momentum_absolute_error": "2.2785186281140679e-19",
+          "adaptive": "1",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.02",
+          "dt_min": "0.001951124824934123",
+          "dt_max": "0.0036100575526439478",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "6",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0043327779999999998",
+          "hydro_seconds": "0.0035936430000000001",
+          "boundary_prepare_calls": "0",
+          "J_error": "5.2043398336638113e-19",
+          "mass_error": "6.5774931797453933e-18",
+          "energy_error": "9.5409197297461155e-18",
+          "species_error": "5.4108654896344574e-19",
+          "axial_momentum_absolute_error": "3.05990652195616e-20",
+          "adaptive": "1",
+          "rotation": "2",
+          "physical_time": "0.02",
+          "dt_min": "0.0022275434866946449",
+          "dt_max": "0.0036095861979652585",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "86",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.071266051999999996",
+          "hydro_seconds": "0.059753537000000009",
+          "boundary_prepare_calls": "0",
+          "J_error": "2.3130399260728047e-18",
+          "mass_error": "8.6736173798840355e-19",
+          "energy_error": "2.8947328926660581e-17",
+          "species_error": "5.1403222151527342e-18",
+          "axial_momentum_absolute_error": "4.5432729708352534e-19",
+          "adaptive": "1",
+          "rotation": "20",
+          "physical_time": "0.02",
+          "dt_min": "3.3561526169845202e-06",
+          "dt_max": "0.0015552974147320208",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.017229944000000001",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "12",
+          "J_error": "0",
+          "mass_error": "0",
+          "energy_error": "3.244378478038537e-17",
+          "species_error": "5.1313041060033435e-17",
+          "axial_momentum_absolute_error": "1.7554757831845375e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.030630050701655274",
+          "dt_min": "0.0076575126754138186",
+          "dt_max": "0.0076575126754138186",
+          "diffusion": "1",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "7",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "1",
+          "seconds": "0.055614972999999998",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "12",
+          "J_error": "1.273979021782287e-17",
+          "mass_error": "1.2287624621502384e-18",
+          "energy_error": "3.7928054449667589e-17",
+          "species_error": "2.047110776911703e-17",
+          "axial_momentum_absolute_error": "8.3030404654602791e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.007684014150994567",
+          "dt_min": "0.0019210035377486417",
+          "dt_max": "0.0019210035377486417",
+          "diffusion": "1",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.063480444999999996",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "20",
+          "J_error": "0",
+          "mass_error": "0",
+          "energy_error": "5.7786883567910595e-17",
+          "species_error": "1.691797276425707e-16",
+          "axial_momentum_absolute_error": "3.2631944292971921e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.030630050701655274",
+          "dt_min": "0.0076575126754138186",
+          "dt_max": "0.0076575126754138186",
+          "diffusion": "2",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "7",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "1",
+          "seconds": "0.109959842",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "20",
+          "J_error": "2.0690864963698139e-17",
+          "mass_error": "1.2287624621502384e-18",
+          "energy_error": "1.1857568316532303e-16",
+          "species_error": "8.3688052906346274e-17",
+          "axial_momentum_absolute_error": "1.7149240808347378e-18",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.007684014150994567",
+          "dt_min": "0.0019210035377486417",
+          "dt_max": "0.0019210035377486417",
+          "diffusion": "2",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.0074130300000000001",
+          "hydro_seconds": "0.0058967400000000001",
+          "boundary_prepare_calls": "0",
+          "J_error": "9.0353122112218945e-19",
+          "mass_error": "1.7997756063259374e-17",
+          "energy_error": "8.6016440076110677e-18",
+          "species_error": "4.1393120995703598e-17",
+          "axial_momentum_absolute_error": "1.2779609591699256e-19",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.00020000000000000001",
+          "dt_min": "5.0000000000000002e-05",
+          "dt_max": "5.0000000000000002e-05",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "1",
+          "regrid_records": "2",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-runtime",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "4",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.114475278",
+          "hydro_seconds": "0",
+          "boundary_prepare_calls": "20",
+          "J_error": "7.4812385108917277e-17",
+          "mass_error": "2.3201926491189795e-17",
+          "energy_error": "1.3566351287171818e-17",
+          "species_error": "1.3040185830019042e-16",
+          "axial_momentum_absolute_error": "1.9095299004664133e-18",
+          "adaptive": "0",
+          "rotation": "0.080000000000000002",
+          "physical_time": "0.01915655488202974",
+          "dt_min": "0.0019207647656010515",
+          "dt_max": "0.0076575126754138186",
+          "diffusion": "2",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "1",
+          "regrid_records": "2",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-reference",
+          "geometry": "spherical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "47",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.027475129000000001",
+          "hydro_seconds": "0.022815918000000011",
+          "boundary_prepare_calls": "0",
+          "J_error": "0.0051616263357211044",
+          "mass_error": "2.3635607360183997e-17",
+          "energy_error": "5.1302371016775535e-18",
+          "species_error": "7.4850305939943326e-18",
+          "axial_momentum_absolute_error": "2.5569807095239191e-19",
+          "adaptive": "1",
+          "rotation": "20",
+          "physical_time": "0.02",
+          "dt_min": "9.8132982720301742e-05",
+          "dt_max": "0.00053403429442296069",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "pcm",
+          "repairs": "0",
+          "gravity": "off"
+        },
+        {
+          "stage": "final-production-context-reference",
+          "geometry": "cylindrical",
+          "inner": "1",
+          "roots": "2",
+          "patches": "4",
+          "steps": "91",
+          "method": "RK2",
+          "mixed": "0",
+          "seconds": "0.083122392000000003",
+          "hydro_seconds": "0.070778647999999972",
+          "boundary_prepare_calls": "0",
+          "J_error": "1.4340847541651391e-17",
+          "mass_error": "4.5536491244391186e-18",
+          "energy_error": "1.0259812784132865e-18",
+          "species_error": "1.515042337097648e-17",
+          "axial_momentum_absolute_error": "9.3957129674183265e-19",
+          "adaptive": "1",
+          "rotation": "20",
+          "physical_time": "0.02",
+          "dt_min": "5.7091159120042229e-05",
+          "dt_max": "0.0015552974147320208",
+          "diffusion": "0",
+          "cost": "0",
+          "species": "2",
+          "max_blocks": "20",
+          "runtime_regrid": "0",
+          "regrid_records": "0",
+          "reconstruct": "muscl_mc",
+          "repairs": "0",
+          "gravity": "off"
+        }
+      ]
+    },
+    "shared_math": {
+      "decision": "PASS",
+      "scope": [
+        "independent W/T/point source and true-relative thin-ring oracle",
+        "16 actual 1D axial-contact/acoustic and radial-extension fixtures with PCM/MUSCL",
+        "rigid-rotation viscous null, J/torque, kinetic/work/FE identities",
+        "axis/annulus manufactured radial viscous second-order convergence",
+        "thermal/species axial discrete eigenmodes",
+        "constant-pressure equilibrium and source-impulse invalid-state refusal"
+      ],
+      "point_source_oracle_preserved": true
+    },
+    "retained_eight": {
+      "decision": "PASS",
+      "rows": 96,
+      "binary64_outputs": 2400,
+      "layout_metadata_values": 768,
+      "scope": "Current actual stage source wrapper including both radial faces closed, compared byte-for-byte to retained baseline.",
+      "evidence": {
+        "path": "output/release/cyl2-20261018/closure-retained-eight-bits/receipt.json",
+        "sha256": "4c5cec9f9bc90b2ba9b0470e1c50849849976179322b307182f07b05c2e2f988"
+      }
+    },
+    "CUDA": {
+      "decision": "PASS_SCOPED_ONLY",
+      "compile_targets": [
+        "arch_cuda_backend_amr_migration",
+        "arch_cuda_backend_exchange",
+        "arch_cuda_backend_amr_flux",
+        "arch_cuda_backend_hydro_control",
+        "arch_cuda_backend_migration",
+        "arch_cuda_curvilinear_geometry_smoke"
+      ],
+      "compile": {
+        "path": "output/release/cyl2-20261018/closure-cuda-thin-build/receipt.json",
+        "sha256": "313fd999b2c77f2014ced570da56ffdb282a84bb230753afaee9a8bbd37546c6"
+      },
+      "execution": {
+        "path": "output/release/cyl2-20261018/closure-cuda-retained-leaves-and-native-gate/receipt.json",
+        "sha256": "417859c17dd018b3134c800425df514010dd5b065e4dcf564f7e7f8f179a6f6c"
+      },
+      "executed_scope": "Retained-chart shared metric/Newtonian/viscous/scalar leaves plus explicit native Device entry rejection. Native Cyl2 positive execution remains unqualified; no native source/kernel/AMR Device evolution acceptance."
+    },
+    "architecture_and_O7": {
+      "decision": "PASS_SCOPED",
+      "architecture": {
+        "path": "output/release/cyl2-20261018/accepted-architecture-audit/receipt.json",
+        "sha256": "819d9b86e6581923c1fd23264af41b5f6e532e4e36c50629e615eb7aaf3b68eb"
+      },
+      "O7": "Current input-resolution/backend/CHK leaves pass; parser/critical-default registry source unchanged. Historical full missing-key results retain original binary identity. Public Cyl2 and old CHK remain refused; no default/auto compatibility path introduced."
+    },
+    "history": {
+      "updated_utc": "2026-10-18T09:45:14.172000+00:00",
+      "source_freeze": "candidate-freeze22.json",
+      "files": 1207,
+      "source_mismatches": [],
+      "changed_source_test_build_files_from_CYL1": 36,
+      "verified_CYL1_snapshot": "f581c3715eb9b992659b69971b35ac54a2a3f002",
+      "baseline_file_mismatches": [],
+      "protected_records": 42,
+      "archived_records": 107,
+      "history_byte_mismatches": [],
+      "frozen_CYL0_CYL1": {
+        "validation/backend/results/release-readiness/Cyl0ContractAndBaselines-20261018.json": "071bcc046a4ee5f11dbf8be4613068ab03b6283f766820d784319202f78366a3",
+        "validation/backend/results/release-readiness/Cyl1SharedGeometry-20261018.json": "a41b3745bd6cc843f2fd426b0ad16f127aaf93be1d11ae109bd34d122c490aa0"
+      },
+      "retired_ARCH_old_SHA256": "d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487",
+      "status": "PASS"
+    }
+  },
+  "cost_acceptance": {
+    "status": "PASS_SCOPED_FIXED_WORK",
+    "source": "candidate-freeze22.json",
+    "clock": "actual advance_hydro sum (same production CpuStage::Hydro scope); whole Runtime loop retained separately",
+    "reference_profile": "Actual original H5 two species BgGas/PassiveGas A1/Z1/gamma1.4/Cv717.5, fractions1/0, spareblocks8, p1rho1",
+    "before_clock_limitation": "before ELF reports whole Runtime only, includes unintended stage boundary preparation. Compare whole scope only for before/after claim; original-anchor gate uses matching Hydro clock after correction.",
+    "records": [
+      {
+        "roots": 4,
+        "data": {
+          "before": {
+            "spherical": {
+              "whole_runtime_median": 0.14316132850000002,
+              "hydro_median": 0.14316132850000002,
+              "samples": 8,
+              "whole_samples": [
+                0.144376835,
+                0.139631644,
+                0.147363371,
+                0.141945822,
+                0.138732271,
+                0.145122644,
+                0.136469217,
+                0.148783611
+              ],
+              "hydro_samples": [
+                0.144376835,
+                0.139631644,
+                0.147363371,
+                0.141945822,
+                0.138732271,
+                0.145122644,
+                0.136469217,
+                0.148783611
+              ]
+            },
+            "cylindrical": {
+              "whole_runtime_median": 0.14253675700000001,
+              "hydro_median": 0.14253675700000001,
+              "samples": 8,
+              "whole_samples": [
+                0.139165828,
+                0.150024523,
+                0.141525479,
+                0.147673374,
+                0.148400399,
+                0.130559817,
+                0.143548035,
+                0.138438794
+              ],
+              "hydro_samples": [
+                0.139165828,
+                0.150024523,
+                0.141525479,
+                0.147673374,
+                0.148400399,
+                0.130559817,
+                0.143548035,
+                0.138438794
+              ]
+            }
+          },
+          "after": {
+            "spherical": {
+              "whole_runtime_median": 0.1294590185,
+              "hydro_median": 0.11596640499999997,
+              "samples": 8,
+              "whole_samples": [
+                0.130580116,
+                0.126044904,
+                0.128337921,
+                0.149875017,
+                0.122621113,
+                0.132811977,
+                0.123886669,
+                0.141255355
+              ],
+              "hydro_samples": [
+                0.11687627199999995,
+                0.11231898999999997,
+                0.115056538,
+                0.13488613900000002,
+                0.10881275799999998,
+                0.11941044399999999,
+                0.11065715400000002,
+                0.12650865999999997
+              ]
+            },
+            "cylindrical": {
+              "whole_runtime_median": 0.1292272305,
+              "hydro_median": 0.11544533500000001,
+              "samples": 8,
+              "whole_samples": [
+                0.124934316,
+                0.128774896,
+                0.130501872,
+                0.1288069,
+                0.129647561,
+                0.131027986,
+                0.126337029,
+                0.130835998
+              ],
+              "hydro_samples": [
+                0.11118441899999998,
+                0.11525611399999999,
+                0.11701661200000002,
+                0.11539500900000002,
+                0.11549566100000001,
+                0.11690188700000005,
+                0.11271722700000002,
+                0.11739461399999997
+              ]
+            }
+          }
+        },
+        "cyl2_to_rphi": 0.9955067159320843,
+        "cyl2_to_original_anchor": 0.8342916451966702,
+        "rphi_to_original_anchor": 0.8380572745966159,
+        "rphi_to_live_original_control": 1.046315357567862,
+        "cyl2_ns_per_cell_stage": 220.19450187683108,
+        "whole_scope_rphi_after_before": 0.9042876303009438,
+        "whole_scope_cyl2_after_before": 0.9066238998267654,
+        "twice_candidate_gate": true,
+        "twice_original_anchor_gate": true
+      },
+      {
+        "roots": 8,
+        "data": {
+          "before": {
+            "spherical": {
+              "whole_runtime_median": 0.572504111,
+              "hydro_median": 0.572504111,
+              "samples": 8,
+              "whole_samples": [
+                0.566710458,
+                0.572865011,
+                0.581045679,
+                0.591321269,
+                0.570697739,
+                0.572143211,
+                0.562185555,
+                0.577141575
+              ],
+              "hydro_samples": [
+                0.566710458,
+                0.572865011,
+                0.581045679,
+                0.591321269,
+                0.570697739,
+                0.572143211,
+                0.562185555,
+                0.577141575
+              ]
+            },
+            "cylindrical": {
+              "whole_runtime_median": 0.5692706275,
+              "hydro_median": 0.5692706275,
+              "samples": 8,
+              "whole_samples": [
+                0.557040473,
+                0.571057088,
+                0.591042404,
+                0.554218936,
+                0.57937888,
+                0.58036939,
+                0.556109624,
+                0.567484167
+              ],
+              "hydro_samples": [
+                0.557040473,
+                0.571057088,
+                0.591042404,
+                0.554218936,
+                0.57937888,
+                0.58036939,
+                0.556109624,
+                0.567484167
+              ]
+            }
+          },
+          "after": {
+            "spherical": {
+              "whole_runtime_median": 0.519897572,
+              "hydro_median": 0.4616096915,
+              "samples": 8,
+              "whole_samples": [
+                0.519699666,
+                0.528932783,
+                0.546379379,
+                0.509689667,
+                0.534642729,
+                0.520095478,
+                0.509779808,
+                0.502199756
+              ],
+              "hydro_samples": [
+                0.46138897499999987,
+                0.46976610300000005,
+                0.48625611199999996,
+                0.4542270739999999,
+                0.476021488,
+                0.461830408,
+                0.452648985,
+                0.4461208039999999
+              ]
+            },
+            "cylindrical": {
+              "whole_runtime_median": 0.52845527,
+              "hydro_median": 0.469366584,
+              "samples": 8,
+              "whole_samples": [
+                0.513480182,
+                0.548443688,
+                0.537437356,
+                0.526916911,
+                0.555976657,
+                0.506648075,
+                0.523688116,
+                0.529993629
+              ],
+              "hydro_samples": [
+                0.45727707400000006,
+                0.4889661400000001,
+                0.47744869099999987,
+                0.467846913,
+                0.49327071400000005,
+                0.45027497999999994,
+                0.46428535400000015,
+                0.47088625500000003
+              ]
+            }
+          }
+        },
+        "cyl2_to_rphi": 1.0168040070276558,
+        "cyl2_to_original_anchor": 0.9484929058046309,
+        "rphi_to_original_anchor": 0.932817828459672,
+        "rphi_to_live_original_control": 1.0541974420979652,
+        "cyl2_ns_per_cell_stage": 223.81142807006836,
+        "whole_scope_rphi_after_before": 0.9081115087398909,
+        "whole_scope_cyl2_after_before": 0.9283023652928589,
+        "twice_candidate_gate": true,
+        "twice_original_anchor_gate": true
+      }
+    ],
+    "ABBA": "boundary-cost-abba-results.json",
+    "actual_after_extra_boundary_preparation_calls": 0,
+    "not_production_solver_speedup": true
+  },
+  "resolved_blockers": [
+    {
+      "problem": "Cold Omega20 annulus lost thermal energy and dt collapsed before target .02 despite global E/J conservation",
+      "cause": "Point centrifugal quadrature was incompatible with the new T/W torque/mass kinetic-work commutator, most visible at a closed wall. Local dt cap alone did not fix the semidiscrete sink.",
+      "fix": "Derived applied work-adjoint quadrature, pressure and point leaf retained.",
+      "current": "PCM axis and annulus, plus annulus MUSCL, reach unchanged .02 with positive actual EOS, zero cumulative repairs and J1e-12.",
+      "old_raw": [
+        "runtime-rkl-first",
+        "runtime-rkl-source-bound",
+        "runtime-wall-diagnostic2",
+        "reference-stress-omp"
+      ],
+      "accepted_raw": [
+        "final-production-context-runtime",
+        "final-production-context-reference"
+      ]
+    },
+    {
+      "problem": "Mixed annulus RKL1 total-E residual -1.40133e-10 exceeded original gate",
+      "cause": "Same-level face sweep preceded coarse-fine fills, leaving transverse corner halos stale; adjacent same-level patches calculated different traction/work on one face. Double whole exchange did not repair it.",
+      "fix": "Only copy final corner strips from each same-level neighbor after all coarse-fine face interiors are filled; reuse existing generic plan/executors/cache.",
+      "current": "Actual mixed RKL1/2 and Runtime regrid continue under original conservation/EOS/repair criteria.",
+      "proof": [
+        "runtime-rkl-stage-diagnostic",
+        "runtime-rkl-flux-diagnostic",
+        "runtime-rkl-double-sync-diagnostic",
+        "runtime-rkl-corner-diagnostic",
+        "final-production-context-runtime"
+      ]
+    },
+    {
+      "problem": "Apparent reference cost inflation",
+      "cause": "Earlier fixture species/cv/composition/spare capacity differed from actual CYL0 H5; whole Runtime clock was compared to a Hydro-only anchor; fixture also enabled physical-boundary preparation unconditionally unlike Driver.h. Species count was verified as TWO from H5, correcting the initial single-species hypothesis.",
+      "fix": "Match actual BgGas/PassiveGas definitions and capacity; mirror production user-callback condition and input/clock ownership; report both clocks.",
+      "current": "Same-profile pre/post ELF ABBA shows whole-loop cost reduction of about7-10percent in the fixture; all after cost rows have zero extra boundary-preparation calls. This is measurement/fixture correction, not a production solver speedup.",
+      "proof": [
+        "aligned-cost-and-live-reference",
+        "boundary-cost-abba"
+      ],
+      "discarded_hypothesis": "Production EOSDispatcher uses IdealGas, same owner as fixture; no static-view change adopted."
+    },
+    {
+      "problem": "Architecture audit rejected a direct Device wall interpretation",
+      "fix": "Use existing shared BoundaryFlux view advective_faces_open identity from both Host and Device; no audit relaxation.",
+      "old_raw": "final-architecture-audit",
+      "accepted_raw": "accepted-architecture-audit"
+    }
+  ],
+  "cost_and_resource_policy": {
+    "CPU": "Release/GCC13.3.0 strictFP, real OpenMP4 for science; heavy compile j2",
+    "CUDA": "GCC12.4.0/NVCC12.3/sm86 strictFP, heavy pool1/j2; RTX3060Ti8GiB, driver610.88",
+    "measurements": "Compiler/science/analysis independently recorded. Guard tree RSS is sampled, may miss subsecond peaks; GNU max-RSS is per process, not a concurrent-tree bound. Missing process samples remain visible. No leak-freedom claim.",
+    "cold_or_full_project_build_gain": "UNMEASURED; 29/33-action increments and no-op targets are scoped checks, not a clean/full build speedup. Common-header fanout remains a later frozen-build measurement candidate.",
+    "new_outputs": "Small old-rphi control H5 batch only; all final Data bytes equal original, no old RZ long run.",
+    "raw_output_bytes_at_assembly": 103647651,
+    "host_capacity": "Guard actual /mnt/e observations about21.6GiB available; 1GiB warning threshold unchanged. No LFS download."
+  },
+  "stage_runs": [
+    {
+      "stage": "accepted-architecture-audit",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/accepted-architecture-audit/receipt.json",
+        "sha256": "819d9b86e6581923c1fd23264af41b5f6e532e4e36c50629e615eb7aaf3b68eb"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 2.0,
+        "user_seconds": 1.9,
+        "system_seconds": 0.17,
+        "max_process_rss_kib": 32004.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 2.188339491000079,
+      "observed_peak_owned_rss_kib": 34660,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "accepted-cuda-shared-leaves",
+      "execution_state": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/accepted-cuda-shared-leaves/receipt.json",
+        "sha256": "e86962dc067fc9bd36dd71042d15da7e7880a0bc09729f3014231539a8db201b"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.81,
+        "user_seconds": 0.33,
+        "system_seconds": 0.35,
+        "max_process_rss_kib": 119128.0,
+        "exit": 1.0
+      },
+      "guard_outer_seconds": 1.1814337329997215,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      }
+    },
+    {
+      "stage": "aligned-cost-and-live-reference",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/aligned-cost-and-live-reference/receipt.json",
+        "sha256": "2f5c5ae13fa899ec38eabbc75d80dfde9fc7f354a00e7ddfa1d2d11b75cc4807"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 15.32,
+        "user_seconds": 60.84,
+        "system_seconds": 0.5,
+        "max_process_rss_kib": 53808.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 16.386514989997522,
+      "observed_peak_owned_rss_kib": 84248,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "boundary-cost-abba",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/boundary-cost-abba/receipt.json",
+        "sha256": "3ba7c155e775b84191854cd33a049b470c0530ba2aa1a403eb11322fa9ef3594"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 23.72,
+        "user_seconds": 91.77,
+        "system_seconds": 0.56,
+        "max_process_rss_kib": 18476.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 22.436164144997747,
+      "observed_peak_owned_rss_kib": 40060,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "build-boundary-owner-final",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/build-boundary-owner-final/receipt.json",
+        "sha256": "4739f286dab7902f1d7c11b1c7f1a1bd3c85b0a17527f20b6f041db4e9ba9d94"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 90.7,
+        "user_seconds": 239.45,
+        "system_seconds": 13.91,
+        "max_process_rss_kib": 1380504.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 86.27828497000155,
+      "observed_peak_owned_rss_kib": 2722820,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "build-corner-integrated",
+      "execution_state": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/build-corner-integrated/receipt.json",
+        "sha256": "34afa7897a4b5453d04764ea371268f7ada22165c3b7fff22b8eaf8053045388"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 12.96,
+        "user_seconds": 14.12,
+        "system_seconds": 1.92,
+        "max_process_rss_kib": 478440.0,
+        "exit": 1.0
+      },
+      "guard_outer_seconds": 12.274928905000706,
+      "observed_peak_owned_rss_kib": 965624,
+      "observed_peak_swap_kib": 0,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      }
+    },
+    {
+      "stage": "build-corner-integrated-repair",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/build-corner-integrated-repair/receipt.json",
+        "sha256": "e85db25b1baff530bdb1215498dff9e8ab541301ec6a21928c148db307663014"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 97.6,
+        "user_seconds": 254.45,
+        "system_seconds": 15.1,
+        "max_process_rss_kib": 1380544.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 94.26442531499924,
+      "observed_peak_owned_rss_kib": 2691756,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "build-integrated-first",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/build-integrated-first/receipt.json",
+        "sha256": "8372bcf57eb3d21f5dbe0aa20d1c6f9930ad2c00c3e84a777d04c7af32f2cfaf"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 99.26,
+        "user_seconds": 258.84,
+        "system_seconds": 16.12,
+        "max_process_rss_kib": 1378020.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 95.22546662899913,
+      "observed_peak_owned_rss_kib": 2670900,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "build-matched-production-boundary-context",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/build-matched-production-boundary-context/receipt.json",
+        "sha256": "968e88687ddb73bd1cfd8f527a9aba295dc340828287eca0bd5f6e72a019fb3e"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 15.32,
+        "user_seconds": 58.23,
+        "system_seconds": 2.92,
+        "max_process_rss_kib": 689384.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 14.576966791999439,
+      "observed_peak_owned_rss_kib": 1098088,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "build-runtime-regrid-test",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/build-runtime-regrid-test/receipt.json",
+        "sha256": "130dd76a380f91f723c59667d9736371beb64b333ddf927b2098e91709888991"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 13.06,
+        "user_seconds": 52.13,
+        "system_seconds": 2.18,
+        "max_process_rss_kib": 689160.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 13.504210663002596,
+      "observed_peak_owned_rss_kib": 962212,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "closure-cuda-retained-leaves-and-native-gate",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/closure-cuda-retained-leaves-and-native-gate/receipt.json",
+        "sha256": "417859c17dd018b3134c800425df514010dd5b065e4dcf564f7e7f8f179a6f6c"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 2.64,
+        "user_seconds": 0.82,
+        "system_seconds": 0.19,
+        "max_process_rss_kib": 148728.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 2.1951868460018886,
+      "observed_peak_owned_rss_kib": 120192,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "closure-cuda-thin-build",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/closure-cuda-thin-build/receipt.json",
+        "sha256": "313fd999b2c77f2014ced570da56ffdb282a84bb230753afaee9a8bbd37546c6"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 43.67,
+        "user_seconds": 36.34,
+        "system_seconds": 2.88,
+        "max_process_rss_kib": 838140.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 42.60216258999935,
+      "observed_peak_owned_rss_kib": 875052,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "closure-retained-eight-bits",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/closure-retained-eight-bits/receipt.json",
+        "sha256": "4c5cec9f9bc90b2ba9b0470e1c50849849976179322b307182f07b05c2e2f988"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 1.45,
+        "user_seconds": 1.24,
+        "system_seconds": 0.19,
+        "max_process_rss_kib": 177336.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 2.1961477619988727,
+      "observed_peak_owned_rss_kib": 191752,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "cuda-amr-thin-compile",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/cuda-amr-thin-compile/receipt.json",
+        "sha256": "16f8da43ec4e7987f68032631d4e9a3e1b4d984cb1745465d915cb180729464d"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 48.46,
+        "user_seconds": 36.57,
+        "system_seconds": 5.22,
+        "max_process_rss_kib": 845796.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 46.55826312300087,
+      "observed_peak_owned_rss_kib": 890832,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "final-architecture-audit",
+      "execution_state": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/final-architecture-audit/receipt.json",
+        "sha256": "6b7c099e14705fd3281e86eabfd188b1aada8399c0e1c2209d4485f3f0af6e6a"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 2.12,
+        "user_seconds": 1.98,
+        "system_seconds": 0.22,
+        "max_process_rss_kib": 32000.0,
+        "exit": 1.0
+      },
+      "guard_outer_seconds": 3.20626350800012,
+      "observed_peak_owned_rss_kib": 35172,
+      "observed_peak_swap_kib": 0,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      }
+    },
+    {
+      "stage": "final-cpu-no-op-build",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/final-cpu-no-op-build/receipt.json",
+        "sha256": "c7e861154f193386c153488b2dcddbe777c2ceddcbf62b7610698290c4ae3372"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.03,
+        "user_seconds": 0.01,
+        "system_seconds": 0.02,
+        "max_process_rss_kib": 18560.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 1.181887740000093,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "final-cuda-no-op-build",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/final-cuda-no-op-build/receipt.json",
+        "sha256": "1f54d23e46b8d1fd84e27c54e89957278ddeaf24f2bc3143aef4756fa1d5bb45"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.03,
+        "user_seconds": 0.0,
+        "system_seconds": 0.02,
+        "max_process_rss_kib": 18560.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 1.1767509899982542,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "final-production-context-cpu",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/final-production-context-cpu/receipt.json",
+        "sha256": "9e09184da6dea658479556e238fc523b64a4e2613ab74ab2ecffaffccdcad42a"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 1.08,
+        "user_seconds": 5.03,
+        "system_seconds": 0.27,
+        "max_process_rss_kib": 92796.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 2.2003275620008935,
+      "observed_peak_owned_rss_kib": 124248,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "final-production-context-reference",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/final-production-context-reference/receipt.json",
+        "sha256": "2d5498282c4643fc71d740dd2f70186681c5eedd78b4e3f04d2921633429f877"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.11,
+        "user_seconds": 0.45,
+        "system_seconds": 0.0,
+        "max_process_rss_kib": 8192.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 1.1941823159977503,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "final-production-context-runtime",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "FINAL_SCOPED_ACCEPTANCE",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/final-production-context-runtime/receipt.json",
+        "sha256": "645cdf24abef4f7f3f6184e4c2e718a3525d157cf0b85d2195c8658f4abab62d"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.9,
+        "user_seconds": 3.73,
+        "system_seconds": 0.02,
+        "max_process_rss_kib": 9832.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 1.1974304190007388,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "runtime-rkl-corner-diagnostic",
+      "execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/runtime-rkl-corner-diagnostic/receipt.json",
+        "sha256": "b913f859229fcbb650a97d57d4d80c4228b5647d96a9416a9a64a253b5bd51c8"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.05,
+        "user_seconds": 0.2,
+        "system_seconds": 0.0,
+        "max_process_rss_kib": 8520.0,
+        "exit": 0.0
+      },
+      "guard_outer_seconds": 1.1810485630012408,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": null
+    },
+    {
+      "stage": "runtime-rkl-double-sync-diagnostic",
+      "execution_state": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/runtime-rkl-double-sync-diagnostic/receipt.json",
+        "sha256": "1fe35389c4a1ca2932bab3ad0bc0c34f62b87fa14f0d881db33ce3568e1a721b"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.07,
+        "user_seconds": 0.27,
+        "system_seconds": 0.02,
+        "max_process_rss_kib": 8388.0,
+        "exit": 1.0
+      },
+      "guard_outer_seconds": 1.1798349299970141,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      }
+    },
+    {
+      "stage": "runtime-rkl-flux-diagnostic",
+      "execution_state": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/runtime-rkl-flux-diagnostic/receipt.json",
+        "sha256": "63ccb730310c9ba9ff770304f61c3ab4c62d3cd744cacaf002e84d984b4c7cd4"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.05,
+        "user_seconds": 0.21,
+        "system_seconds": 0.0,
+        "max_process_rss_kib": 8516.0,
+        "exit": 1.0
+      },
+      "guard_outer_seconds": 1.1747395989987126,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      }
+    },
+    {
+      "stage": "runtime-rkl-stage-diagnostic",
+      "execution_state": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "manager_scope": "SUPPORTING_OR_SUPERSEDED_ONLY",
+      "receipt": {
+        "path": "output/release/cyl2-20261018/runtime-rkl-stage-diagnostic/receipt.json",
+        "sha256": "55091b1fd21cc68e2503de77f62ef8cdd6005ba22a8f2fb3fe9b0c89e8b98db2"
+      },
+      "GNU_time": {
+        "elapsed_seconds": 0.05,
+        "user_seconds": 0.2,
+        "system_seconds": 0.0,
+        "max_process_rss_kib": 8388.0,
+        "exit": 1.0
+      },
+      "guard_outer_seconds": 1.1804084799987322,
+      "observed_peak_owned_rss_kib": 1408,
+      "observed_peak_swap_kib": 0,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      }
+    }
+  ],
+  "all_attempts": {
+    "index": {
+      "path": "output/release/cyl2-20261018/all-attempt-index.json",
+      "sha256": "e0dab69249a49207d39ed0be518162b1806c746748b710e233019231b57c54d3"
+    },
+    "raw_receipt_count": 81,
+    "rule": "Key acceptance/failure/cost rows inline; every other bounded attempt remains in the local index and its immutable raw receipt."
+  },
+  "external_collaboration": {
+    "provider": "real DeepSeek CLI via global multimodel",
+    "jobs": [
+      {
+        "job_id": "db6265315ae8447eb43ca21ea5b5988a",
+        "task_id": "cyl2-rkl-energy-trace-repair",
+        "logical_task_id": "cyl2-rkl-energy-trace",
+        "status": "FAILED",
+        "review": "REJECT",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 300.00126336500034,
+        "failure_kind": "time_limit",
+        "summary": "time_limit"
+      },
+      {
+        "job_id": "a485800ceef945f99dff0fcaac941dd9",
+        "task_id": "cyl2-rkl-energy-trace",
+        "logical_task_id": "cyl2-rkl-energy-trace",
+        "status": "FAILED",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 600.0349968789997,
+        "failure_kind": "time_limit",
+        "summary": "time_limit"
+      },
+      {
+        "job_id": "431e6b36c326477e861071f719fbb235",
+        "task_id": "cyl2-euler-compatible-repair-1",
+        "logical_task_id": "cyl2-euler-compatible-implementation",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "partial",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 675.7190647839998,
+        "failure_kind": null,
+        "summary": "Implemented the smallest shared-owner native Cyl2 (r,z,RZPhi) correction. Derivation: per radial face, the discrete angular-KE change from the T/W torque flux p"
+      },
+      {
+        "job_id": "27a9a8f2811d4a8cabbae117378b1b79",
+        "task_id": "cyl2-euler-compatible-implementation-1",
+        "logical_task_id": "cyl2-euler-compatible-implementation",
+        "status": "BLOCKED",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 316.29865630600034,
+        "failure_kind": null,
+        "summary": "No mathematically defensible correction passes under the frozen point source, strict wall law, and no-energy-source constraints. Derivation: Cyl2 stores Mphi=rh"
+      },
+      {
+        "job_id": "44a2f99a736a43f7a54227be386173b2",
+        "task_id": "cyl2-euler-angular-energy-compatibility-1",
+        "logical_task_id": "cyl2-euler-angular-energy-compatibility",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 261.87859831199967,
+        "failure_kind": null,
+        "summary": "**Verdict: BLOCKED under the literal frozen point source.** The failure is not a wall-law or global E/J leak. It is a first-order non-adjointness between the T/"
+      },
+      {
+        "job_id": "cc32e7c298eb451cbab83f4ddcf5d9e3",
+        "task_id": "cyl2-rotation-source-bound-1",
+        "logical_task_id": "cyl2-rotation-source-bound",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 71.16354596699966,
+        "failure_kind": null,
+        "summary": "**Conclusion:** Under the stated frozen CYL-2 representation, the proposed limiter is mathematically justified as a **local centrifugal-source impulse bound**. "
+      },
+      {
+        "job_id": "fc20f87ea3a4470db24d15c07ca2ecc4",
+        "task_id": "cyl2-root-implementation-review-1",
+        "logical_task_id": "cyl2-root-implementation-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 211.65426873599972,
+        "failure_kind": null,
+        "summary": "## Bottom line\n\nStatic code/math review of the supplied excerpts: **no demonstrated implementation defect or blocker** for the frozen CYL‑2 contract (signs, mea"
+      },
+      {
+        "job_id": "871adb1ecd1349bbab99202a8a15e2ab",
+        "task_id": "cyl2-amr-implementation-repair-1",
+        "logical_task_id": "cyl2-amr-implementation",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "full",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 442.47102302499934,
+        "failure_kind": null,
+        "summary": "Completed the scoped CYL-2 repair. Host coarse/fine ghost restriction now uses V for rho/Mr/Mz/E/rhoX and W for Mphi; the CUDA gather recovers the same W from t"
+      },
+      {
+        "job_id": "9c844cbb47ca4f20838d697017bec4da",
+        "task_id": "cyl2-angular-viscosity-math-review-1",
+        "logical_task_id": "cyl2-angular-viscosity-math-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 157.7531446209996,
+        "failure_kind": null,
+        "summary": "**Verdict:** The proposed RZPhi axisymmetric angular algebra is mostly consistent, but there are two concrete integration conflicts that must be resolved before"
+      },
+      {
+        "job_id": "f5373607a13446a5a002aaf2c331f9cb",
+        "task_id": "cyl2-amr-implementation-1",
+        "logical_task_id": "cyl2-amr-implementation",
+        "status": "BLOCKED",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 753.2904079240006,
+        "failure_kind": null,
+        "summary": "Implemented CYL-2 (cylindrical dim2) moment-aware AMR math within the allowed paths. Shared regrid geometry now carries fixed-size W metadata: V weights rho/Mr/"
+      }
+    ],
+    "cumulative_gateway_budget": [
+      {
+        "goal_id": "arch-rz-reintroduction-20261018",
+        "manager_max_calls": 16,
+        "user_max_calls": null,
+        "calls_used_or_reserved": 16,
+        "calls_remaining": 0,
+        "elapsed_seconds_recorded": 4360.425813519999,
+        "output_tokens_reported": 597131,
+        "started_calls_with_unknown_output": 2,
+        "cost_money": null,
+        "attempt_allowances_reset": false
+      }
+    ],
+    "current_phase_calls": 10,
+    "previous_CYL0_CYL1_calls": 6,
+    "cost_money": null,
+    "Root_cost_and_tokens": null,
+    "limitations": "AMR repair accepted full; Euler correction accepted partial then Root stabilized/integrated/verified. Two RKL readonly attempts timed out without delivery (600s+300s); none adopted, no external RKL review claimed. Source/math decision and final acceptance belong to Root.",
+    "raw": {
+      "path": "output/release/cyl2-20261018/multimodel-final-status.json",
+      "sha256": "49a7d57f672da0be82812fe00d8d484ef39892ea7a4f2be2d4b9d0778b9f42e1"
+    },
+    "worktree_archives": [
+      {
+        "id": "01a14e65-eca1-7643-90d7-355885b8f2cf",
+        "attachmentType": "archived_worktree",
+        "identityKey": "/home/shiroakane/.codex/worktrees/cyl2-amr-moments/ARCH",
+        "payload": {
+          "worktree": {
+            "root": "/home/shiroakane/.codex/worktrees/cyl2-amr-moments/ARCH",
+            "workspaceRoot": "/home/shiroakane/.codex/worktrees/cyl2-amr-moments/ARCH",
+            "sourceCwd": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+            "sourceGitRoot": "/home/shiroakane/ARCH",
+            "worktreesRoot": "/home/shiroakane/.codex/worktrees"
+          },
+          "pullRequests": []
+        },
+        "createdAt": 1792316664
+      },
+      {
+        "id": "01a14e65-f72b-7002-88c4-2e6534e84d2f",
+        "attachmentType": "archived_worktree",
+        "identityKey": "/home/shiroakane/.codex/worktrees/cyl2-euler-work/ARCH",
+        "payload": {
+          "worktree": {
+            "root": "/home/shiroakane/.codex/worktrees/cyl2-euler-work/ARCH",
+            "workspaceRoot": "/home/shiroakane/.codex/worktrees/cyl2-euler-work/ARCH",
+            "sourceCwd": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+            "sourceGitRoot": "/home/shiroakane/ARCH",
+            "worktreesRoot": "/home/shiroakane/.codex/worktrees"
+          },
+          "pullRequests": []
+        },
+        "createdAt": 1792316667
+      }
+    ],
+    "workflow_feedback": [
+      "Read actual H5/species and real production call/clock ownership before benchmarking.",
+      "Use per-stage conservation and shared-face flux evidence to bound delegation; broad readonly RKL review timed out twice.",
+      "Do not repeat whole ghost exchanges to hide missing corner ownership; derive a small shared-plan completion.",
+      "No global Skill/MCP change made."
+    ]
+  },
+  "frozen_previous_records": {
+    "validation/backend/results/release-readiness/Cyl0ContractAndBaselines-20261018.json": "071bcc046a4ee5f11dbf8be4613068ab03b6283f766820d784319202f78366a3",
+    "validation/backend/results/release-readiness/Cyl1SharedGeometry-20261018.json": "a41b3745bd6cc843f2fd426b0ad16f127aaf93be1d11ae109bd34d122c490aa0"
+  },
+  "superseded_records": {
+    "old_cost_status": "Intermediate two-species mixed fixtures and whole-loop clocks remain observations; not final absolute-anchor acceptance.",
+    "native_CUDA_positive_attempt": "accepted-cuda-shared-leaves exits1 at explicit unqualified make_device_grid_view guard before native kernels; original failure preserved. Later native rejection control passes.",
+    "other_failures": "Original compile/path/guard failures and truncated/blocked outcomes remain in their unique receipts; raw execution completion is never numerical acceptance.",
+    "temporary_probe_reproducibility": "Some earlier temporary diagnostic source paths were edited during hypothesis tests; original log/freeze hashes retained. Those probes are supporting diagnosis only. Final source snapshot, phase patch, actual CMake ELF and execution receipts are the acceptance basis."
+  },
+  "future_gates_not_granted": [
+    "CYL3 optional gravity including no-gravity zero-solve/allocation controls, prescribed-field Poisson and isolated field/work/cost",
+    "CYL4 public config/Core/schema/CHK/Plot/diagnostics/Studio and fresh, explicit old-product refusal",
+    "CYL5 actual native Device grid/stage, authenticated wall-view binding rather than default-open inference, kernels/indexing/allocation/streams/AMR/regrid/failure parity",
+    "CYL6 remaining EOS/flux/reconstruction combinations and declared scientific endpoints/restart/backend support matrix",
+    "REL4 full release Device qualification and hosted CI/install/distribution remain separate"
+  ],
+  "documents": [
+    "ARCH_RELEASE_PLAN.md",
+    "AGENTS.md",
+    "docs/development/ImplementationOwnership.md",
+    "src/numerics/curvilinear/README.md"
+  ],
+  "next": "Stop after CYL2; no automatic CYL3 or REL4. Subsequent work starts only on user instruction, reusing unchanged shared-math evidence."
+}

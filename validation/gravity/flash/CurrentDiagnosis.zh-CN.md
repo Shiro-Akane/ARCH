@@ -52,7 +52,7 @@ ARCH 最终 CPU 长运行的 Driver 时间为 150.19 s，记录的输出时间�
 ## 3. Grid：均匀原生坐标、非均匀物理尺度
 
 当前 [Grid](../../../src/grid/Grid.h) 对各原生坐标使用等间距。
-[GridMetrics::PhysicalSpacing](../../../src/grid/GridMetrics.h) 将它们换成正交物理长度：
+[GridMetrics::PhysicalSpacing](../../../src/numerics/curvilinear/GridMetrics.h) 将它们换成正交物理长度：
 
 - 极坐标／柱坐标角向：`h_phi = r * Delta_phi`。
 - 三维球坐标：`h_theta = r * Delta_theta`，`h_phi = r * sin(theta) * Delta_phi`。
@@ -94,7 +94,7 @@ FLASH 明确区分二维 cylindrical `(r,z)`、spherical `(r,theta)` 和 polar `
 
 ## 4. 自引力和耦合：已有证据与未关闭问题
 
-[P8–P12 记录与计划](../../../docs/development/CurvilinearGravityPlan.zh-CN.md)及
+[P8–P12 记录与计划](../../../docs/histroy/science/CurvilinearGravityPlan.zh-CN.md)及
 [P13 设备验收](../results/p13-20260924/README.md)仍是具体支持范围的依据。
 
 | 内容 | 当前状态 | 问题的性质 |

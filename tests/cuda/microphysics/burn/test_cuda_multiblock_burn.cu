@@ -3,15 +3,28 @@
  * @brief Check multiblock CUDA burning for each supported ODE method.
  *
  * Run aprox13 with BE-NR, BD and ROS4 through the production backend and
- * compare the block results with the corresponding CPU calculation.
+ * compare sequential and batched device fields bitwise.
+ * also compares the real backend with the shared Host burn operation, keeping
+ * native density/momenta and inactive storage unchanged. This finite service
+ * check does not enable the full native CUDA Runtime.
  */
 #include "amr/storage/Block.h"
 #include "amr/exchange/BoundaryPlan.h"
 #include "amr/exchange/ExchangePlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/stages/DriverBurn.h"
+#include "driver/stages/DriverMacroStep.h"
+#include "numerics/burnsolver/BurnDispatch.h"
+#include "numerics/flux/FluxHLLC.h"
+#include "numerics/integrator/HydroSolverImpl.h"
+#include "numerics/integrator/TimeIntegratorRK2.h"
+#include "numerics/reconstruction/Reconstruction.h"
+#include "physics/boundary/UserBoundary.h"
 #include "driver/DriverUtils.h"
 #include "numerics/burnsolver/Networks.h"
+#include "numerics/burnsolver/ode/ode_bd.h"
+#include "numerics/burnsolver/ode/ode_be-nr.h"
+#include "numerics/burnsolver/ode/ode_ros4.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/species/Species.h"
 
@@ -19,7 +32,12 @@
 #include <array>
 #include <bit>
 #include <cmath>
+#include <atomic>
+#include <cstdlib>
+#include <optional>
 #include <iostream>
+#include <iomanip>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -31,18 +49,22 @@ void require(bool condition, const char* message)
     if (!condition) throw std::runtime_error(message);
 }
 
-arch::boundary::BoundaryPlan make_boundary_plan()
+arch::boundary::BoundaryPlan make_boundary_plan(int dimension = 1)
 {
     using namespace arch::boundary;
     BoundaryPlanInput input{};
-    input.dimension = 1;
-    input.active_extent = {amr::BLOCK_NX, 1, 1};
+    input.dimension = dimension;
+    input.active_extent = {amr::BLOCK_NX, dimension == 2 ? amr::BLOCK_NY : 1, 1};
     input.ghost_depth = amr::MAX_NG;
     input.faces.fill(BoundaryType::Inactive);
     input.faces[face_index(BoundaryAxis::X1, BoundarySide::Lower)] =
         BoundaryType::Outflow;
     input.faces[face_index(BoundaryAxis::X1, BoundarySide::Upper)] =
         BoundaryType::Outflow;
+    if (dimension == 2) {
+        input.faces[face_index(BoundaryAxis::X2, BoundarySide::Lower)] = BoundaryType::Outflow;
+        input.faces[face_index(BoundaryAxis::X2, BoundarySide::Upper)] = BoundaryType::Outflow;
+    }
     return arch::boundary::make_boundary_plan(input);
 }
 
@@ -68,7 +90,8 @@ BurnConfig make_burn_config()
 }
 
 arch::cuda::CudaLaunchConfig make_launch_config(
-    arch::dispatch::OdeSolverId ode)
+    arch::dispatch::OdeSolverId ode,
+    arch::dispatch::LinearSolverId linear = arch::dispatch::LinearSolverId::DenseLu)
 {
     SimConfig config{};
     config.physics.eos_type = "helmholtz";
@@ -82,7 +105,7 @@ arch::cuda::CudaLaunchConfig make_launch_config(
         arch::dispatch::EosId::Helmholtz,
         arch::dispatch::NetworkId::Aprox13,
         ode,
-        arch::dispatch::LinearSolverId::DenseLu,
+        linear,
         arch::dispatch::DiffusionIntegratorId::None};
     return arch::cuda::make_cuda_launch_config(plan, config);
 }
@@ -286,6 +309,16 @@ std::vector<FluidState> run_route(arch::dispatch::OdeSolverId ode, const char* n
     return downloaded;
 }
 
+
+/** Burn two real native patches through each existing dense ODE route.
+ * Independent constant-density full-ring moments seed the geometry:
+ * V~(b^2-a^2)/2, W~(b^3-a^3)/3, I~rho*(b^4-a^4)/4,
+ * q=Omega*I/W and E=rho*e+rho*(u_r^2+u_z^2)/2+Omega^2*I/(2V).
+ * One hot cell per patch reacts; cold cells and all ghosts keep their state.
+ * The same Host operator supplies the paired endpoint, with the established
+ * burn-global 1e-8 state/energy and 1e-12 mass budgets. This is backend/closure
+ * parity, not an independent nuclear-rate reference or Runtime capability.
+ */
 } // namespace
 
 int main(int argc, char** argv)

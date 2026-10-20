@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "decision": "accept",
+  "status": "ACCEPTED_GAMMA_LAW_POINT_MATH_ONLY",
+  "workflow": {
+    "adoption_scope": "evidence_only",
+    "review_kind": "initial",
+    "reused_evidence_count": 1
+  },
+  "independentRootChecks": {
+    "decimalPrecision": 70,
+    "states": 42,
+    "shockQuadraticAndRarefactionInvariant": true,
+    "counterexampleExact": "0.0007088007458608690473786365332704489597117818434261475548264977882005406",
+    "counterexampleLinear": "-0.00544267933366856682994921478848921656798756189930852170719920458537511"
+  },
+  "qualifications": [
+    "No general-EOS gamma approximation",
+    "No discrete invariant or Native Runtime qualification",
+    "Original wall candidate theta/baseline inconsistency is a separate unresolved integration finding"
+  ],
+  "providerSeconds": 57.34,
+  "actualCharge": "UNKNOWN",
+  "rootActiveCost": "UNKNOWN",
+  "providerUsage": {
+    "input_tokens": 1550,
+    "cached_input_tokens": 384,
+    "output_tokens": 13965,
+    "noncached_input_tokens": 1166,
+    "reasoning_tokens": 13541,
+    "visible_output_tokens": 424
+  },
+  "providerEstimatedUSD": {
+    "currency": "USD",
+    "off_peak": 0.00855505,
+    "peak": 0.0171101,
+    "status": "estimate from reported token usage; API billing is authoritative",
+    "pricing_snapshot": "2026-10-02.1"
+  }
+}

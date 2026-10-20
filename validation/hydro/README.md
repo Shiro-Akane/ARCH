@@ -18,7 +18,8 @@ Overall acceptance is tracked in the [validation index](../README.md).
 ## Smooth-wave spatial accuracy
 
 The `SmoothAdvection` implementation remains in `simulation/SmoothAdvection/`;
-the immutable parameter files owned by this record are in [`inputs/`](inputs/).
+the current canonical parameter templates owned by this record are in
+[`inputs/`](inputs).
 They advect a periodic entropy wave with
 $\rho=1+0.2\sin(2\pi x)$, $u=1$, and $p=1$ to $t=0.1$. The initial and
 translated references are exact finite-volume cell averages. HLLC and SSPRK3
@@ -186,6 +187,40 @@ python3 validation/hydro/sedov_reference.py --oracle-only
 python3 validation/hydro/sedov_reference.py --build-dir build-cuda \
   --output-dir validation/hydro/results/sedov-new
 ```
+
+## Canonical template provenance
+
+The twelve `inputs/*.par` files are the current canonical templates. Each now
+states its HLL/HLLC signal-speed estimator (`hll_wave_speed = roe`) and its
+specific internal-energy floor (`min_eint = 1e-10` erg/g) explicitly, because
+current production requires both for these solvers and restores no
+compatibility default; a missing or invalid control is rejected instead of
+silently defaulted. No other key or value changed.
+
+These same twelve files were byte-identical to the historical validation
+snapshot recorded at commit
+`c8f7c048ca7b384126547934946a3c4d595f6e99`, whose runtime chain loaded HLLC
+through the shared `RuntimeParams` policy with a historical `roe` wave speed
+and a `min_eint = 1e-10` erg/g floor. That commit freezes the original input
+SHA-256 and Git blob identity of each file. The tables above remain the
+historical snapshot results, not new measurements; the original tables,
+budgets and definitions are unchanged and can be checked against the original
+sections.
+
+Within the R2 representative set, the PPM smooth-wave and Sod six cases were
+scientifically replayed using traceable input overrides
+(`hll_wave_speed = roe`, `min_eint = 1e-10` erg/g), with the original scientific
+thresholds unchanged; PCM and MUSCL had not yet received current acceptance at
+that checkpoint. R4.3 subsequently qualified the updated canonical templates in
+all four groups: twelve cases and 49 CPU/CUDA comparisons at the unchanged
+manifest gates. The [R1–R4 foundation report](../../docs/development/modernization/R1R4Foundation-20261013.zh-CN.md)
+records those new results and the input/source identities separately from the
+historical tables above.
+
+The `hydro_periodic_1000` sustained case remains a thirteenth consumer of
+`ppm_n64.par`, with its own endpoint and minimum-step requirement and no separate
+template. R4 checked its configuration inheritance without a new sustained run;
+the four short groups do not confer new long-duration acceptance.
 
 ## Detailed verification records
 

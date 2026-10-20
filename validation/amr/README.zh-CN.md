@@ -6,6 +6,19 @@
 单元。改变网格时必须保留单元承载的物理量，因此记录既检查细化／粗化过程，也检查
 迁移后的场数据；曲线坐标下的守恒计算使用单元的实际物理体积。
 
+活动输入已显式声明旧加载器曾补入的控制值，当前哈希与历史收据分别保留。
+配置检查通过不等于重新签收历史科学结果；迁移与本轮CPU证据见
+[发布计划](../../ARCH_RELEASE_PLAN.md)。
+
+当前CPU检查新增六组原燃烧／组分扩散终点及真实运行期重网格，并验证RT与
+BurnGradient两种检查点来源相位的新进程续算。门槛及限制见[燃烧](../burn/README.zh-CN.md)
+与[重启](../restart/README.zh-CN.md)说明；不据此重新授予下方历史CUDA或更长轨迹资格。
+
+[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+补齐Store／交换／重网格事务、来自实际候选Tree的公共物理壁面元数据与四模块GPU fresh。
+既有一维重网格案例增加第7步采样：原1／5／10／20快照漏掉实际粗化，复用八次已完成运行，仅补缺失CPU／GPU两次。
+原场、守恒和显式父子拓扑门通过，不据此转签整份历史矩阵。
+
 各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
 [验证总览](../README.zh-CN.md)中。
 
@@ -196,3 +209,5 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 - [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
 
 </details>
+
+旧 [RZ 迁移](results/release-closure-20261009/native-device-migration-summary.json)及[反射](results/release-closure-20261009/native-device-reflector-summary.json)记录按原身份保留。原生二维柱坐标现复用公共转移、reflux和重网格owner，见[CPU守恒](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json)及[设备迁移／fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧专用消费者仍退役；当前输入／源码适用范围见[CPU签收](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)与[主计划](../../ARCH_RELEASE_PLAN.md)。

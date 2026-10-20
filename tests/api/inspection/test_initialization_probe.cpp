@@ -1,34 +1,107 @@
 #include "api/CaseInspection.h"
 #include "api/configuration/ParameterMetadata.h"
 #include "api/configuration/ValueDomain.h"
+#include "data/GlobalDefs.h"
 #include "core/config/RuntimeParams.h"
+#include <fstream>
+#include <type_traits>
 #include "core/files/InspectionSources.h"
 #include <iostream>
 #include <stdexcept>
 
 static void require(bool ok, const char* why) { if (!ok) throw std::runtime_error(why); }
+
+static std::string declared_input;
+static SimConfig load_probe(const std::string& extra = "") {
+    return RuntimeParams::LoadText(declared_input + extra, "probe",
+        arch::config::ConfigurationPurpose::InitialState);
+}
 struct ProbeProblem final : ProblemGenerator {
     bool product, fail;
     double a{}, b{};
     ProbeProblem(bool product, bool fail = false) : product(product), fail(fail) {}
-    void Setup(SimConfig& c, SpeciesManager&) override {
+    void Setup(SimConfig& c, SpeciesManager& species) override {
         a = c.Get<double>("a", 0); b = c.Get<double>("b", 0);
         if (fail) throw std::runtime_error("setup error");
+        species.add_species("probe", c.MaterialConstant(1, "probe.A"),
+            c.MaterialConstant(1, "probe.Z"), c.MaterialInput("gamma"),
+            c.MaterialConstant(1, "probe.Cv"));
     }
     void SampleInitialPrimitive(const PointCoords&, PrimitiveData& p) const override {
         p.rho = product ? a*b : a;
     }
     void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&, ProblemInitializationContext) override {}
 };
+struct InvalidSetupProblem final : ProblemGenerator {
+    bool entered = false;
+    bool change_population;
+    explicit InvalidSetupProblem(bool population = false) : change_population(population) {}
+    void Setup(SimConfig& config, SpeciesManager& species) override {
+        entered = true;
+        if (change_population) {
+            species.add_species("first", 1, 1, 1.4, 1);
+            species.add_species("second", 1, 1, 1.4, 1);
+        } else config.numerics.cfl = -0.5;
+    }
+    void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                        ProblemInitializationContext) override {}
+};
 struct Sink final : arch::preview::InitializationObserver {
     double rho = 0;
     void initial_primitive(const PointCoords&, const PrimitiveData& p) override { rho = p.rho; }
 };
-int main() {
+int main(int argc, char** argv) {
     using namespace arch;
+    require(argc == 2, "named complete input fixture required");
+    std::ifstream file(argv[1]);
+    require(file.good(), "fixture not readable");
+    declared_input.assign(std::istreambuf_iterator<char>(file), {});
+    declared_input += "\na=2\nb=1\n";
+    ProblemRegistry::Get().Register("probe", []() -> std::unique_ptr<ProblemGenerator> {
+        throw std::runtime_error("input loader must not construct probe");
+    }, {"probe", "test", true, [](const config::StandardInputResolution&) {
+        config::CaseConfiguration declaration;
+        declaration.complete = true;
+        declaration.consumers.needs_network = false;
+        declaration.consumers.needs_temperature_floor = false;
+        declaration.consumers.needs_composition_floor = false;
+        for (const auto* key : {"x_pos", "rho_left", "rho_right", "p_left",
+                                "p_right", "u_left", "u_right", "a", "b"})
+            declaration.parameters.push_back({key, "float", ""});
+        return declaration;
+    }});
+    {
+        struct RegisteredProbe final : ProblemGenerator {
+            bool entered = false;
+            void Setup(SimConfig&, SpeciesManager&) override { entered = true; }
+            void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                                ProblemInitializationContext) override {}
+        };
+        ProblemRegistry::Get().Register("registered-probe",
+            [] { return std::make_unique<RegisteredProbe>(); },
+            *ProblemRegistry::Get().Registration("probe"));
+        auto model = ProblemRegistry::Get().Create("registered-probe");
+        auto input = load_probe();
+        SpeciesManager species;
+        bool rejected = false;
+        try { model->SetupChecked(input, species); }
+        catch (const ConfigValueError& e) { rejected = e.code == "CASE_IDENTITY_MISMATCH"; }
+        require(rejected && !static_cast<RegisteredProbe&>(*model).entered,
+                "mismatched registered case entered Setup");
+        auto matching = RuntimeParams::LoadText(declared_input, "registered-probe",
+            config::ConfigurationPurpose::InitialState);
+        model->SetupChecked(matching, species);
+        require(static_cast<RegisteredProbe&>(*model).entered,
+                "matching registered case did not reach checked Setup");
+    }
+    static_assert(!std::is_default_constructible_v<config::PreparedConfiguration>);
+    static_assert(!std::is_constructible_v<config::PreparedConfiguration,
+        const SimConfig&, const SpeciesManager&, const ProblemGenerator&>);
+
     const auto observe = [](bool product) {
         auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
-        auto config = RuntimeParams::LoadText("nblockx2=0\nnblockx3=0\na=2\nb=1\n", reads);
+        auto config = load_probe();
+        RuntimeParams::CaptureReads(config, reads);
         config.parameter_reads.reset();
         SpeciesManager species; ProbeProblem model(product); Sink sink; PrimitiveData primitive;
         model.InspectSetup(config, species, reads);
@@ -44,16 +117,100 @@ int main() {
     // b=1. In the latter expression a's unit depends on b, absent from IO.
     require(observe(false) == observe(true), "boundary is observationally identical without expression provenance");
     auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true);
-    auto config = RuntimeParams::LoadText("a=2\nb=1\n", reads);
+    auto config = load_probe();
+    RuntimeParams::CaptureReads(config, reads);
+    config.parameter_reads = reads;
     auto original = config.parameter_reads;
     SpeciesManager species; ProbeProblem failing(false, true);
     bool caught = false;
     try { failing.InspectSetup(config, species, std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{}, true)); }
     catch (const std::runtime_error&) { caught = true; }
     require(caught && config.parameter_reads == original, "restore observer on Setup failure");
+    for (const bool observed : {false, true}) {
+        auto prepared = load_probe();
+        prepared.parameter_reads = original;
+        SpeciesManager prepared_species;
+        InvalidSetupProblem mutation;
+        bool rejected = false;
+        try {
+            if (observed) mutation.InspectSetup(prepared, prepared_species, reads);
+            else mutation.SetupChecked(prepared, prepared_species);
+        } catch (const ConfigValueError& error) { rejected = error.key == "cfl"; }
+        require(rejected && mutation.entered && prepared.parameter_reads == original,
+                "post-Setup invalid controls escaped or observer was not restored");
+        prepared.numerics.cfl = -1;
+        InvalidSetupProblem before;
+        try { before.SetupChecked(prepared, prepared_species); } catch (const ConfigValueError&) {}
+        require(!before.entered, "invalid pre-Setup controls reached the model");
+    }
+    {
+        auto prepared = load_probe("smallx=0.6\n");
+        SpeciesManager prepared_species;
+        InvalidSetupProblem population(true);
+        bool rejected = false;
+        try { population.SetupChecked(prepared, prepared_species); }
+        catch (const ConfigValueError& error) { rejected = error.key == "smallx"; }
+        require(rejected && population.entered && prepared_species.count() == 2,
+                "post-Setup controls ignored the actual species count");
+    }
+    {
+        SimConfig missing;
+        SpeciesManager specs;
+        InvalidSetupProblem model;
+        bool rejected = false;
+        try { model.SetupChecked(missing, specs); }
+        catch (const ConfigValueError& e) { rejected = e.code == "INCOMPLETE_CONFIGURATION"; }
+        require(rejected && !model.entered, "default storage entered Setup");
+    }
+    {
+        auto input = load_probe();
+        SpeciesManager specs;
+        ProbeProblem model(false), other(false);
+        const auto frozen = model.SetupChecked(input, specs);
+        static_assert(std::is_same_v<decltype(frozen.config()), const SimConfig&>);
+        static_assert(std::is_same_v<decltype(frozen.species()), const SpeciesManager&>);
+        input.numerics.cfl = 0.25;
+        specs.species_list.clear();
+        require(frozen.config().numerics.cfl == 0.4
+                && frozen.config().Get<double>("a", -1) == 2
+                && frozen.species().count() == 1,
+                "later preparation edit altered read-only snapshot");
+        require(frozen.belongs_to(model) && !frozen.belongs_to(other),
+                "prepared state lost model instance identity");
+        InvalidSetupProblem blocked;
+        bool rejected = false;
+        try { blocked.SetupChecked(input, specs); }
+        catch (const ConfigValueError& e) { rejected = e.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
+        require(rejected && !blocked.entered, "mutated loaded input entered Setup");
+    }
+    for (int kind = 0; kind < 6; ++kind) {
+        struct Mutator final : ProblemGenerator {
+            int kind;
+            explicit Mutator(int value) : kind(value) {}
+            void Setup(SimConfig& input, SpeciesManager&) override {
+                if (kind == 0) input.numerics.cfl = 0.25;
+                if (kind == 1) input.io.out_dir = "other";
+                if (kind == 2) input.numerics.dt_max = 10;
+                if (kind == 3) input.amr.refine_on_p = true;
+                if (kind == 4) input.physics.gravity.max_cycles = 201;
+                if (kind == 5) input = load_probe();
+            }
+            void InitializeData(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                                ProblemInitializationContext) override {}
+        } mutation(kind);
+        auto input = load_probe();
+        const auto observer = input.parameter_reads;
+        SpeciesManager specs;
+        bool rejected = false;
+        try { mutation.InspectSetup(input, specs, reads); }
+        catch (const ConfigValueError& e) { rejected = e.code == "UNDECLARED_CONFIGURATION_CHANGE"; }
+        require(rejected && input.parameter_reads == observer,
+                "valid undeclared Setup mutation escaped or broke observer restoration");
+    }
     for (double n : {1.25, 1e30, std::numeric_limits<double>::infinity()}) {
-        config.custom_params["mode"] = n; caught = false;
-        try { (void)config.Get<int>("mode", 0); } catch (const std::invalid_argument&) { caught = true; }
+        caught = false;
+        try { ConfigParser::ValidateNumeric<int>("mode", n); }
+        catch (const std::invalid_argument&) { caught = true; }
         require(caught, "refuse fractional/out-of-range/nonfinite integer before conversion");
     }
     reads->observe("x_pos", 0.5, 0.5, false);

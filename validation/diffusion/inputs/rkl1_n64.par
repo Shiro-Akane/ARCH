@@ -64,3 +64,7 @@ pressure0 = 1.0
 tracer_mean = 0.5
 tracer_amplitude = 0.25
 mode = 1
+
+# Explicit existing controls required by the current configuration contract.
+min_eint = 1e-10
+hll_wave_speed = roe

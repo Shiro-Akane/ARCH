@@ -1,0 +1,28 @@
+{
+  "scope": "Actual CPU Runtime initialization/halo refresh; no timestep or scientific output",
+  "exitCode": 0,
+  "stdout": "RZ_RUNTIME_HALO direction=0 inner=0 leaves=5 version=1 PASS\nRZ_RUNTIME_HALO direction=0 inner=1 leaves=5 version=1 PASS\nRZ_RUNTIME_HALO direction=1 inner=0 leaves=5 version=1 PASS\nRZ_RUNTIME_HALO direction=1 inner=1 leaves=5 version=1 PASS\n",
+  "stderr": "",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "087b7c8861e9822774f896b2930d04f0aef24cfda0bb2377f3311578e5c6db71",
+  "recompiledSources": {
+    "tests/host/driver/test_rz_runtime_boundary.cpp": "f6531d3518435d9272ee9511d3b9e39f81f24f3c148a6dc13101bc83963dd20b",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "85d6950fcd428d7d4a6afa865d9efd1abcadf7b70952a023187c6bfc2e5d3e69"
+  },
+  "limitations": [
+    "RZ production regrid remains gated",
+    "CUDA not qualified",
+    "No scientific evolution acceptance"
+  ],
+  "baseline": "ca78d468a1db3d832c888cdc696bdd19212a6f51",
+  "checks": {
+    "runtime_fixture": "PASS 4 mixed-AMR cases",
+    "shared_stage_scheduler": "PASS",
+    "boundary_plan": "PASS",
+    "curvilinear_metrics": "PASS"
+  },
+  "rawLogs": "studio/.local/integration/rz-runtime-halo-20261004",
+  "identityScope": "Four recompiled fixture/Runtime translation units + existing trusted CPU dependency archive; not a rebuilt production ARCH binary"
+}

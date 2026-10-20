@@ -1,0 +1,156 @@
+{
+  "scope": "Real fixed BuildRunner no-op build; static runtime before/after evidence saved and loaded by fresh Node; not active compiler runtime or actual-loaded-library closure",
+  "successfulBuild": {
+    "state": "succeeded",
+    "binaryState": "freshness-unknown",
+    "freshnessReason": "Tracked inputs match; full dependency coverage is unknown.",
+    "changedInputs": [],
+    "result": {
+      "projectId": "generator-real-build-audit",
+      "buildId": "c7d70a21-5d20-442f-89fd-b40968ea3f99",
+      "startedAt": "2026-10-03T21:05:46.597Z",
+      "finishedAt": "2026-10-03T21:05:49.834Z",
+      "state": "succeeded",
+      "exitCode": 0,
+      "signal": null
+    },
+    "buildId": "c7d70a21-5d20-442f-89fd-b40968ea3f99",
+    "sourceGitHead": "a0fe620083538c100e31ab1ff123d66a15519804",
+    "repositoryDirty": false,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+    "outputBinary": {
+      "relativePath": "build-studio-cpu/bin/ARCH",
+      "absolutePath": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu/bin/ARCH",
+      "fingerprint": {
+        "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+        "size": 7412240,
+        "modifiedTime": "2026-10-03T20:51:48.812Z"
+      }
+    },
+    "preBuildBinaryFingerprint": {
+      "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+      "size": 7412240,
+      "modifiedTime": "2026-10-03T20:51:48.812Z"
+    },
+    "configurationInputsStableDuringBuild": true,
+    "configurationInputCount": 82,
+    "generatorTools": [
+      {
+        "role": "cmake",
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472
+      },
+      {
+        "role": "ninja",
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040
+      }
+    ],
+    "compilerInputCount": 742,
+    "compilerInputsStableDuringBuild": true,
+    "compilerDriversStableDuringBuild": true,
+    "linkInputCount": 175,
+    "missingLinkInputCount": 0,
+    "inputsStableDuringBuild": true,
+    "toolRuntimeStableDuringBuild": true,
+    "runtimeRoots": [
+      "/usr/bin/as",
+      "/usr/bin/c++",
+      "/usr/bin/cc",
+      "/usr/bin/cmake",
+      "/usr/bin/ld",
+      "/usr/bin/ld.mold",
+      "/usr/bin/ninja",
+      "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1"
+    ],
+    "runtimeNodeCount": 65,
+    "runtimeEdgeCount": 209,
+    "runtimeUnresolved": [],
+    "runtimeEvidenceSha256": "bdf69d6698d8f1d42b8b82c2ee7d8a21f64dd9698861b93658ae8e533e731e07",
+    "dependenciesComplete": false
+  },
+  "freshNodeReload": {
+    "state": "ready",
+    "binaryState": "freshness-unknown",
+    "freshnessReason": "Tracked inputs match; full dependency coverage is unknown.",
+    "changedInputs": [],
+    "buildId": "c7d70a21-5d20-442f-89fd-b40968ea3f99",
+    "sourceGitHead": "a0fe620083538c100e31ab1ff123d66a15519804",
+    "repositoryDirty": false,
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+    "outputBinary": {
+      "relativePath": "build-studio-cpu/bin/ARCH",
+      "absolutePath": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu/bin/ARCH",
+      "fingerprint": {
+        "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+        "size": 7412240,
+        "modifiedTime": "2026-10-03T20:51:48.812Z"
+      }
+    },
+    "preBuildBinaryFingerprint": {
+      "sha256": "079f08ef5bc0e9cadfc6e31dce4bbd0d671886297c7f2e23e44f9bc5aeaf3835",
+      "size": 7412240,
+      "modifiedTime": "2026-10-03T20:51:48.812Z"
+    },
+    "configurationInputsStableDuringBuild": true,
+    "configurationInputCount": 82,
+    "generatorTools": [
+      {
+        "role": "cmake",
+        "path": "/usr/bin/cmake",
+        "resolvedPath": "/usr/bin/cmake",
+        "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+        "size": 11796472
+      },
+      {
+        "role": "ninja",
+        "path": "/usr/bin/ninja",
+        "resolvedPath": "/usr/bin/ninja",
+        "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+        "size": 248040
+      }
+    ],
+    "compilerInputCount": 742,
+    "compilerInputsStableDuringBuild": true,
+    "compilerDriversStableDuringBuild": true,
+    "linkInputCount": 175,
+    "missingLinkInputCount": 0,
+    "inputsStableDuringBuild": true,
+    "toolRuntimeStableDuringBuild": true,
+    "runtimeRoots": [
+      "/usr/bin/as",
+      "/usr/bin/c++",
+      "/usr/bin/cc",
+      "/usr/bin/cmake",
+      "/usr/bin/ld",
+      "/usr/bin/ld.mold",
+      "/usr/bin/ninja",
+      "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+      "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1"
+    ],
+    "runtimeNodeCount": 65,
+    "runtimeEdgeCount": 209,
+    "runtimeUnresolved": [],
+    "runtimeEvidenceSha256": "bdf69d6698d8f1d42b8b82c2ee7d8a21f64dd9698861b93658ae8e533e731e07",
+    "dependenciesComplete": false
+  },
+  "ninjaNoWork": true,
+  "binaryChanged": false,
+  "activeCompilationVerified": false,
+  "guard": "MEMORY_GUARD_RESULT min_available_kib=21885616 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=503172 elapsed_seconds=10.037 stop_reason=none",
+  "configureExecuted": false,
+  "simulationRun": false,
+  "dependenciesComplete": false,
+  "rawDirectory": "studio/.local/integration/build-runtime-real-build-20261004"
+}

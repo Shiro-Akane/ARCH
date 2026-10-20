@@ -36,11 +36,19 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
         "src/cuda/runtime/burn/routes/tabular4/cudabackendburntabular4diso7.cu",
     "arch_cuda_backend_hydro_ideal":
         "src/cuda/runtime/hydro/cudabackendhydroideal.cu",
+    "arch_cuda_backend_hydro_ideal_hll":
+        "src/cuda/runtime/hydro/cudabackendhydroideal.cu",
     "arch_cuda_backend_hydro_helm":
+        "src/cuda/runtime/hydro/cudabackendhydrohelm.cu",
+    "arch_cuda_backend_hydro_helm_hll":
         "src/cuda/runtime/hydro/cudabackendhydrohelm.cu",
     "arch_cuda_backend_hydro_tabular3":
         "src/cuda/runtime/hydro/cudabackendhydrotabular3.cu",
+    "arch_cuda_backend_hydro_tabular3_hll":
+        "src/cuda/runtime/hydro/cudabackendhydrotabular3.cu",
     "arch_cuda_backend_hydro_tabular4":
+        "src/cuda/runtime/hydro/cudabackendhydrotabular4.cu",
+    "arch_cuda_backend_hydro_tabular4_hll":
         "src/cuda/runtime/hydro/cudabackendhydrotabular4.cu",
     "arch_cuda_backend_diffusion":
         "src/cuda/runtime/diffusion/cudabackenddiffusion.cu",
@@ -54,6 +62,21 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
         "src/cuda/amr/regridmigration.cu",
     "arch_cuda_backend_grid_metrics":
         "src/cuda/common/gridmetricscache.cu",
+}
+
+# Reviewed compiler-only splits of the four canonical Hydro EOS sources. Each
+# pair compiles that same source with one exact target-private family marker.
+_CUDA_HYDRO_FLUX_FAMILY_PAIRS = {
+    _CUDA_DEVICE_OBJECT_SOURCES[owner]: {
+        owner: "arch_cuda_hydro_flux_family1",
+        owner + "_hll": "arch_cuda_hydro_flux_family2",
+    }
+    for owner in (
+        "arch_cuda_backend_hydro_ideal",
+        "arch_cuda_backend_hydro_helm",
+        "arch_cuda_backend_hydro_tabular3",
+        "arch_cuda_backend_hydro_tabular4",
+    )
 }
 
 _CUDA_HOST_OBJECT_SPECS = {
@@ -106,6 +129,14 @@ _CUDA_FOCUSED_OBJECT_CONSUMERS = {
 }
 
 _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
+    # Existing independent field/flux/Gauss cases now borrow the same compiled
+    # Device executor. Exact sources/object remain pinned, as for reduction tests.
+    "arch_composite_poisson": (
+        ("tests/host/gravity/test_composite_poisson.cpp",
+         "src/numerics/elliptic/cartesianpoisson.cpp", "src/numerics/elliptic/compositepoisson.cpp",
+         "src/numerics/multigrid/hostmultigrid.cpp", "src/numerics/multigrid/compositemultigrid.cpp",
+         "src/numerics/multigrid/compositeexecution.cpp", "src/physics/gravity/gravityboundary.cpp"),
+        ("arch_cuda_gravity_execution",)),
     "arch_cuda_reduction_contract": (
         ("tests/cuda/runtime/test_cuda_reduction_contract.cu",),
         ("arch_cuda_gravity_execution",)),
@@ -114,7 +145,7 @@ _CUDA_FOCUSED_LINK_OBJECT_CONSUMERS = {
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
          "arch_cuda_backend_eos_utils")),
     "arch_cuda_burn_controller_parity": (
-        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu",),
+        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu", "src/core/config/compositioninput.cpp"),
         ("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_species",
          "arch_cuda_backend_eos_utils")),
 }
@@ -185,7 +216,7 @@ _CUDA_COMPLETION_LAUNCHES = {
     "compute_hydro_dt_batch": r"\blaunch_cuda_backend_hydro_dt_batch\s*\(",
     "execute_hydro_stage_batch": r"\blaunch_cuda_backend_hydro_stage_batch\s*\(",
     "compute_hydro_dt": r"\blaunch_cuda_backend_hydro_dt\s*\(",
-    "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage\s*\(",
+    "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage_batch\s*\(",
     "compute_diffusion_dt": r"\blaunch_cuda_backend_diffusion_dt\s*\(",
     "execute_diffusion_stage":
         r"\blaunch_cuda_backend_diffusion_stage\s*\(",
@@ -409,6 +440,92 @@ def _launch_quiesces_before_kernel_count(
         r"impl_->runtime_counters\.kernel_count\s*\+=")
 
 
+# Only this reviewed same-file service extraction may follow an Impl body.
+# Compare complete wrapper signatures/bodies, not just the name of a helper.
+_CUDA_PHYSICAL_BOUNDARY_BATCH_DELEGATES = (
+    ("""CudaBackend::execute_physical_boundary_batch(
+        std::span<const backend::BackendStateAccess> accesses,
+        state::StateVersion version, state::CompletionToken expected)""", """
+        validate_hydro_batch_accesses(accesses, accesses.empty()
+            ? state::StateSlot::Current : accesses.front().slot);
+        return impl_->execute_physical_boundary_batch(accesses, version, expected,
+            [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+                return impl_->require_block(access);
+            });
+    """),
+    ("""CudaBackend::execute_physical_boundary_batch(
+        backend::BackendTopologyStoreTransaction& transaction,
+        std::span<const backend::BackendStateAccess> accesses,
+        state::StateVersion version, state::CompletionToken expected)""", """
+        auto& staged = require_staged_boundary_transaction(transaction);
+        return impl_->execute_physical_boundary_batch(accesses, version, expected,
+            [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+                if (access.slot != state::StateSlot::Current)
+                    throw std::invalid_argument("staged boundary requires Current");
+                return resolve_staged_block(staged, access);
+            });
+    """),
+)
+_CUDA_PHYSICAL_BOUNDARY_BATCH_IMPL_SIGNATURE = """
+CudaBackend::Impl::execute_physical_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected,
+    const BlockResolver& resolve)
+"""
+
+
+def _physical_boundary_batch_definitions(content: str, qualified_name: str):
+    """Collect definitions of this exact service, including both overloads."""
+    code = _without_cpp_comments(content)
+    # Mask literals while locating definitions; retain their original bytes in
+    # the complete-body comparison and use the existing balanced-body reader.
+    masked = _without_cpp_comments(content, strings=True)
+    definitions = []
+    for match in re.finditer(
+            r"\b" + re.escape(qualified_name) + r"\s*\([^{};]*\)\s*\{", masked):
+        signature = code[match.start():match.end() - 1]
+        body = _function_body(code[match.start():], qualified_name)
+        definitions.append((signature, body))
+    return definitions
+
+
+def _physical_boundary_batch_violation(public, implementation):
+    """Keep direct owners valid; permit only the exact reviewed delegation."""
+    bounded_error = ("CUDA bounded work must quiesce before completion: "
+                     "execute_physical_boundary_batch")
+    if not implementation and len(public) == 1 and not re.search(
+            r"\bimpl_\s*->\s*execute_physical_boundary_batch\s*\(",
+            _without_cpp_comments(public[0][1] or "", strings=True)):
+        return (None if _launch_quiesces_before_kernel_count(
+            public[0][1] or "", _CUDA_COMPLETION_LAUNCHES[
+                "execute_physical_boundary_batch"]) else bounded_error)
+
+    def compact(code):
+        return re.sub(r"\s+", "", _without_cpp_comments(code or ""))
+
+    actual = [(compact(signature), compact(body)) for signature, body in public]
+    expected = [(compact(signature), compact(body))
+                for signature, body in _CUDA_PHYSICAL_BOUNDARY_BATCH_DELEGATES]
+    if sorted(actual) != sorted(expected):
+        return ("CUDA physical boundary delegate must retain exact "
+                "committed/staged resolvers")
+    if (len(implementation) != 1 or compact(implementation[0][0])
+            != compact(_CUDA_PHYSICAL_BOUNDARY_BATCH_IMPL_SIGNATURE)):
+        return "CUDA physical boundary delegate requires its unique Impl owner"
+    body = _without_cpp_comments(implementation[0][1] or "", strings=True)
+    launches = list(re.finditer(
+        _CUDA_COMPLETION_LAUNCHES["execute_physical_boundary_batch"], body))
+    fences = list(re.finditer(r"\bchecked_quiesce\s*\(\s*\)\s*;", body))
+    counts = list(re.finditer(r"\bruntime_counters\s*\.\s*kernel_count\s*\+=", body))
+    # The sole Impl uses its own counter/fence. Reject an earlier counter write
+    # or a second launch/fence/count rather than finding a later valid suffix.
+    counter_uses = list(re.finditer(r"\bruntime_counters\s*\.\s*kernel_count\b", body))
+    if not (len(launches) == len(fences) == len(counts) == len(counter_uses) == 1
+            and launches[0].start() < fences[0].start() < counts[0].start()):
+        return bounded_error
+    return None
+
+
 def _is_pod_geometry_adapter(relative: str, content: str) -> bool:
     if relative != "src/cuda/hydro/GridGeometryAdapter.cuh":
         return False
@@ -418,7 +535,7 @@ def _is_pod_geometry_adapter(relative: str, content: str) -> bool:
     expected = """
 #pragma once
 #include "cuda/common/CudaCommon.cuh"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 namespace arch::cuda {
 ARCH_HOST_DEVICE inline GridMetrics::GeometryView make_grid_geometry_view(
     const DeviceGridView& grid) {
@@ -546,6 +663,31 @@ def audit_header_dependencies(root: pathlib.Path, sources):
         if catalogue in dependencies(relative):
             violations.append("generic burn mathematics must not include the network catalogue: " + relative)
 
+    # Shared operators borrow a source adapter only at instantiation. Necessary
+    # nonowning source views and the virtual policy declaration remain legal;
+    # field owners and Runtime source authority do not belong in this closure.
+    # An allowed declaration is still traversed, so forwarding to an owner
+    # cannot hide behind a reviewed filename. Unknown gravity headers fail closed.
+    gravity_declarations = {root / "src/physics/gravity" / name for name in
+                            ("GravitySourceTypes.h", "IGravityPolicy.h")}
+    for relative in ("numerics/integrator/TimeIntegratorHelper.h",
+                     "numerics/diffusion/DiffFlux.h"):
+        if any(path.is_relative_to(root / "src/physics/gravity")
+               and path not in gravity_declarations
+               for path in dependencies(relative)):
+            violations.append("shared flux operators must not import concrete gravity ownership: " + relative)
+
+    # FluidState retains shared_ptr attachments without defining their policies.
+    # Complete storage/face types belong in their actual dereferencing consumers;
+    # moving an include through an innocently named bridge must still be caught.
+    if any(path.is_relative_to(root / "src/physics/boundary")
+           for path in dependencies("data/FluidState.h")):
+        violations.append("shared fluid storage must not import boundary implementations: data/FluidState.h")
+    parsers = {root / "src" / name for name in
+               ("core/config/RuntimeParams.h", "io/ConfigParser.h")}
+    if dependencies("numerics/integrator/IHydroSolver.h") & parsers:
+        violations.append("Hydro interface must not import configuration parsing: numerics/integrator/IHydroSolver.h")
+
     # Interface/storage declarations must not pull the numerical graph back
     # into every dispatch TU. A real owner may include complete EOS types;
     # declaration-only ABIs and shared cell policies may not import the owner.
@@ -588,7 +730,7 @@ def audit_tree(root: pathlib.Path):
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
-        "src/core/config/RuntimeParams.h": "parser.GetBool",
+        "src/core/config/RuntimeParams.h": ("arch::config::AnalyzeConfigurationInput", "input.RequireDeclaredInputs();"),
         "src/driver/schedule/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
@@ -603,7 +745,8 @@ def audit_tree(root: pathlib.Path):
     }
     for relative, required in protected.items():
         path = root / relative
-        if not path.is_file() or required not in path.read_text(encoding="utf-8", errors="ignore"):
+        if not path.is_file() or any(token not in path.read_text(encoding="utf-8", errors="ignore")
+                                   for token in (required if isinstance(required, tuple) else (required,))):
             violations.append(f"protected mainline authority changed: {relative}")
 
     sources = [(path, path.read_text(encoding="utf-8", errors="ignore"))
@@ -614,6 +757,7 @@ def audit_tree(root: pathlib.Path):
     # A helper may be defined in the root and called by included functional
     # modules. Compile ownership is global even though registrations are local.
     cuda_source_owners = {}
+    cuda_object_owners = set()
 
     for path, content in sources:
         relative = path.relative_to(root).as_posix()
@@ -691,7 +835,16 @@ def audit_tree(root: pathlib.Path):
         if cuda_production and ("rkcontroller" in lowered or "rklcontroller" in lowered or
                                 (stage_loop and stage_work)):
             violations.append(f"complete CUDA RK/RKL controller is forbidden: {relative}")
-        boundary_mapping = any(token in semantic_code for token in
+        boundary_code = semantic_code
+        if lowered == "src/cuda/hydro/kernels/hydrofacekernel.cuh":
+            # This exact typed call delegates face identity to the shared owner;
+            # it contains no boundary-policy dispatch or reflection formula.
+            # Remove only the call, so any adjacent copied rule still fails.
+            boundary_code = re.sub(
+                r"\bstate\s*\.\s*hydro_boundary\s*\.\s*reflecting_side\s*\(\s*"
+                r"direction\s*,\s*face_coordinate\s*,\s*lower\s*,\s*upper\s*,\s*wall_side\s*\)\s*;",
+                "", boundary_code)
+        boundary_mapping = any(token in boundary_code for token in
                                ("outflow", "reflect", "periodic", "physical boundary", "boundary_type",
                                 "x1l_boundary", "x1r_boundary", "grid boundary"))
         # Stripping diagnostics must not hide actual string-based rule dispatch.
@@ -740,6 +893,24 @@ def audit_tree(root: pathlib.Path):
                 violations.append(
                     "bounded CUDA Hydro lowering must clear and visit XYZ")
         for function_name, owner in _CUDA_RUNTIME_FUNCTION_OWNERS.items():
+            if (function_name == "execute_physical_boundary_batch"
+                    and cuda_production
+                    and path.suffix.lower() in {".cpp", ".cu"}):
+                public = _physical_boundary_batch_definitions(
+                    content, "CudaBackend::execute_physical_boundary_batch")
+                implementation = _physical_boundary_batch_definitions(
+                    content, "CudaBackend::Impl::execute_physical_boundary_batch")
+                if not public and not implementation:
+                    continue
+                if lowered != owner:
+                    violations.append(
+                        f"CUDA runtime function has the wrong functional owner: "
+                        f"{function_name} in {relative}")
+                    continue
+                problem = _physical_boundary_batch_violation(public, implementation)
+                if problem:
+                    violations.append(problem)
+                continue
             body = (_function_body(content, f"CudaBackend::{function_name}")
                     if lowered.startswith("src/cuda/runtime/")
                     and path.suffix.lower() in {".cpp", ".cu"}
@@ -916,6 +1087,9 @@ def audit_tree(root: pathlib.Path):
                     source, owner = generated_objects[owner][1:]
                 elif source != _CUDA_DEVICE_OBJECT_SOURCES.get(owner):
                     valid_helper_calls = False
+                if (canonical_object_helper
+                        and source == _CUDA_DEVICE_OBJECT_SOURCES.get(owner)):
+                    cuda_object_owners.add(owner)
                 if owner in cuda_source_owners.get(source, set()):
                     violations.append("a CUDA source may appear only once per target")
                 cuda_source_owners.setdefault(source, set()).add(owner)
@@ -962,6 +1136,8 @@ def audit_tree(root: pathlib.Path):
                                 _CUDA_DEVICE_OBJECT_SOURCES[owner]]:
                             violations.append(
                                 "CUDA OBJECT library has the wrong source owner")
+                        else:
+                            cuda_object_owners.add(owner)
                     elif cuda_sources:
                         violations.append("CUDA OBJECT libraries are forbidden")
                 cpp_sources = [_canonical_source(arg) for arg in arguments[2:]
@@ -986,8 +1162,20 @@ def audit_tree(root: pathlib.Path):
                     cuda_source_owners.setdefault(source, set()).add(owner)
             if re.search(r"add_executable\s*\(\s*arch\b[^)]*\.cu", cmake_code, flags=re.DOTALL):
                 violations.append("ARCH must not compile CUDA sources directly")
-    if any(len(owners) > 1 for owners in cuda_source_owners.values()):
-        violations.append("a CUDA source may not have multiple target owners")
+    compile_definitions = {}
+    for _, arguments in _cmake_commands(cmake_all, "target_compile_definitions"):
+        if arguments:
+            compile_definitions.setdefault(arguments[0], []).append(arguments[1:])
+    for source, owners in cuda_source_owners.items():
+        reviewed_pair = _CUDA_HYDRO_FLUX_FAMILY_PAIRS.get(source, {})
+        if len(owners) > 1 and not (
+                owners == set(reviewed_pair) and owners <= cuda_object_owners):
+            violations.append("a CUDA source may not have multiple target owners")
+        for owner, definition in reviewed_pair.items():
+            if (owner in owners and compile_definitions.get(owner)
+                    != [["private", definition]]):
+                violations.append(
+                    "CUDA Hydro flux families need exact target-private definitions: " + owner)
     return violations
 
 

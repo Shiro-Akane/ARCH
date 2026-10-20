@@ -1,0 +1,233 @@
+{
+  "scope": "RZ-A CPU full-cell AMR transfer node; not full RZ science acceptance",
+  "coreAuthority": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "sourceHEADAtBuild": "e4e1fca9f53f4fae5a4f3c3dff4885c135e3dddd",
+  "repositoryDirtyAtBuild": true,
+  "binarySha256": "b5f6a744dc4a57add3df3ff8d6051a818f5112f7445e12ae22f231c4eb56dd80",
+  "deliveryFileFingerprints": {
+    "src/amr/storage/Block.h": "edc00699acb281e92d624775c32fc7025802e49de1f7318aa1b93d8a648d112b",
+    "src/amr/topology/AmrTree.h": "88d80bf997b3b7c2c49a926911233741f5e4cbdba2a5b960caffc93af66a18ff",
+    "src/amr/transfer/RegridTransferMath.h": "1ea42bc84f6186455cba7fe5f702e61b639f7f021de1cf0dbb4be5c6cd07ced8",
+    "src/grid/GridMetrics.h": "4780c2128d40e8cfff3bd7a0bf846cbe61697ad1be9a7716accd2015ce6df25c",
+    "tests/host/amr/test_amr_operation_plans.cpp": "5d7e2da3ce65b905b08236abcdf6b026ced35c4c26ad4d69b40a85815ffb745d",
+    "tests/host/core/test_jeans_diagnostics.cpp": "12068bc329adc6da9077997e57a84222489c797f2706c347a13c2c7d36c3498e",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "c5c372e51140170b1876a7cbd873a8f68e8b64131489d3591d27242222a1efbb"
+  },
+  "fixtureEvidence": [
+    "RZ_RIGID_ROTATION_TRANSFER_PASS",
+    "RZ_JOINT_PROLONGATION_THETA_PASS",
+    "RZ_CANDIDATE_PARENT_VETO_PASS",
+    "RZ_ANGULAR_RESTRICTION_COUNTEREXAMPLE_PASS",
+    "RZ_REGRID inner=0 conserved_error=2.9837899729338092e-17 angular_before=6.52565014546476 angular_refined=6.52565014546476 angular_restored=6.52565014546476 angular_relative_change=-1.1829502495566292e-17",
+    "RZ_REGRID inner=1 conserved_error=2.2651312806152058e-17 angular_before=102.00961373742267 angular_refined=102.00961373742265 angular_restored=102.00961373742267 angular_relative_change=-2.2651312806152061e-17"
+  ],
+  "recomputedJeansParent": {
+    "cases": 6,
+    "maxRelativeError": 2.4583812499529164e-16,
+    "propagatedEngineeringBound": 4.88498130835069e-15,
+    "oldVReferenceReused": false
+  },
+  "checks": {
+    "amr_operation_plans": "PASS",
+    "jeans_diagnostics": "PASS",
+    "curvilinear_metrics": "PASS",
+    "topology_transaction": "PASS",
+    "plotfile_publication": "PASS",
+    "checkpoint_compatibility": "PASS",
+    "self_gravity_lifecycle": "PASS",
+    "configuration_api_contract": "PASS",
+    "source_architecture": "PASS",
+    "diff_check": "PASS"
+  },
+  "jeansUniformFinalBinary": {
+    "contract": "uniform-lifecycle-1",
+    "status": "PASS",
+    "scope": "uniform Cartesian single-caloric-species CPU short evolution; not complete JENS/RZ/CUDA acceptance",
+    "binarySha256": "b5f6a744dc4a57add3df3ff8d6051a818f5112f7445e12ae22f231c4eb56dd80",
+    "cases": [
+      {
+        "name": "jeans-uniform-1d-active",
+        "dimension": 1,
+        "lane": "active",
+        "cells": 128,
+        "elapsed_seconds": 0.06380694199469872,
+        "restart_elapsed_seconds": 0.06389687200135086,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 29,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-1d-active"
+      },
+      {
+        "name": "jeans-uniform-1d-disabled",
+        "dimension": 1,
+        "lane": "disabled",
+        "cells": 64,
+        "elapsed_seconds": 0.0641529019922018,
+        "restart_elapsed_seconds": 0.06429850100539625,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-1d-disabled"
+      },
+      {
+        "name": "jeans-uniform-1d-output_only",
+        "dimension": 1,
+        "lane": "output_only",
+        "cells": 64,
+        "elapsed_seconds": 0.06411714598652907,
+        "restart_elapsed_seconds": 0.06399933400098234,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 58,
+        "stage_solves": 42,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-1d-output_only"
+      },
+      {
+        "name": "jeans-uniform-2d-active",
+        "dimension": 2,
+        "lane": "active",
+        "cells": 4096,
+        "elapsed_seconds": 0.2145161849912256,
+        "restart_elapsed_seconds": 0.11438605800503865,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 218,
+        "stage_solves": 162,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 55,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-2d-active"
+      },
+      {
+        "name": "jeans-uniform-2d-disabled",
+        "dimension": 2,
+        "lane": "disabled",
+        "cells": 1024,
+        "elapsed_seconds": 0.11423274800472427,
+        "restart_elapsed_seconds": 0.06401529599679634,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-2d-disabled"
+      },
+      {
+        "name": "jeans-uniform-2d-output_only",
+        "dimension": 2,
+        "lane": "output_only",
+        "cells": 1024,
+        "elapsed_seconds": 0.06435749899537768,
+        "restart_elapsed_seconds": 0.06384754300233908,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 114,
+        "stage_solves": 84,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-2d-output_only"
+      },
+      {
+        "name": "jeans-uniform-3d-active",
+        "dimension": 3,
+        "lane": "active",
+        "cells": 131072,
+        "elapsed_seconds": 6.232284098994569,
+        "restart_elapsed_seconds": 4.07488224899862,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 330,
+        "stage_solves": 246,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": 83,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-3d-active"
+      },
+      {
+        "name": "jeans-uniform-3d-disabled",
+        "dimension": 3,
+        "lane": "disabled",
+        "cells": 16384,
+        "elapsed_seconds": 0.6153886310057715,
+        "restart_elapsed_seconds": 0.36491604200273287,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": null,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-3d-disabled"
+      },
+      {
+        "name": "jeans-uniform-3d-output_only",
+        "dimension": 3,
+        "lane": "output_only",
+        "cells": 16384,
+        "elapsed_seconds": 0.6156052959995577,
+        "restart_elapsed_seconds": 0.41498637000040617,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "solves": 170,
+        "stage_solves": 126,
+        "restartExact": true,
+        "uniformFieldsExact": true,
+        "acceptedStateTransactionSteps": null,
+        "maxJensRelativeError": 4.50750606346323e-17,
+        "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004/jeans-regression-final/campaign/jeans-uniform-3d-output_only"
+      }
+    ],
+    "comparisons": [
+      {
+        "dimension": 1,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 2,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      },
+      {
+        "dimension": 3,
+        "offVsOutputNativeStateExact": true,
+        "offVsOutputSolveCountsExact": true
+      }
+    ]
+  },
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-angular-transfer-20261004",
+  "remaining": [
+    "RZ coarse/fine ghost consumers",
+    "hydro torque/source/reflux/axis/viscosity",
+    "Init/BC/IO/API/checkpoint semantics",
+    "full CPU science then CUDA",
+    "finite-ring shared math and reliable near-bound/error ledger"
+  ],
+  "capabilityState": "full RZ gated; CUDA RZ/JENS unqualified",
+  "resolvedFindings": [
+    "Test Resolution fixture initializer corrected to actual cells/status order; no scientific threshold change.",
+    "Independent RZ parent kinetic oracle was still using V azimuth integral. Recomputed with independently integrated W J, original error bound retained."
+  ]
+}

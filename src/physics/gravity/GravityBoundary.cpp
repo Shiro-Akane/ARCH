@@ -15,12 +15,13 @@
 #include <array>
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <stdexcept>
 #include <unordered_map>
 
 #include "physics/gravity/GravityBoundary.h"
 
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace Physical::Gravity {
 namespace {
@@ -31,7 +32,20 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     BoundaryMoments moments;
     const auto& base=op.base();
     moments.value[0]=op.volumes()[cell];
+
     if(base.geometry==Geometry::Cartesian)return moments;
+    if(base.geometry==Geometry::Cylindrical && base.dimension==2) {
+        // Grid volume is per radian; free-space Newton gravity sees the
+        // complete ring. About (0,0,z_mid), odd/cross moments vanish exactly.
+        const double r=op.center(cell)[0],dr=op.width(cell,0),dz=op.width(cell,1);
+        const double lo=r-.5*dr,hi=r+.5*dr;
+        const double mass=2.*arch::constants::math::pi*moments.value[0];
+        moments.value[0]=mass;
+        moments.value[second_moment_index(0,0)]=mass*(hi*hi+lo*lo)/4.;
+        moments.value[second_moment_index(1,1)]=moments.value[second_moment_index(0,0)];
+        moments.value[second_moment_index(2,2)]=mass*dz*dz/12.;
+        return moments;
+    }
     const auto center=op.center(cell);
     constexpr double nodes[]{-0.7745966692414834,0.,0.7745966692414834};
     constexpr double weights[]{5./9.,8./9.,5./9.};
@@ -62,6 +76,8 @@ BoundaryMoments unit_cell_moments(const arch::elliptic::CompositePoisson& op,int
     }
     return moments;
 }
+
+
 }
 /** Build a physical-space mass tree over every active leaf. */
 GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
@@ -71,7 +87,7 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
     using namespace arch::elliptic;
     if((dimension_!=2 && dimension_!=3) ||
        (dimension_==2 && op.base().geometry==Geometry::Cartesian))
-        throw std::invalid_argument("Isolated multipole gravity requires 2D polar or 3D space");
+        throw std::invalid_argument("Isolated gravity requires a curved 2D chart or 3D space");
     int root_level=0;
     // Round UP: a 48-cell axis needs a 64-cell tree root. Flooring this
     // depth would silently omit mass in the outermost root cells.
@@ -86,10 +102,18 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
             for(int a=0;a<3;++a) {
                 width[a]=std::ldexp(op.base().spacing[a],-key.level);
                 native[a]=op.base().origin[a]+(key.index[a]+0.5)*width[a];
+
             }
             if(op.base().geometry==Geometry::Cartesian) {
                 node.center=native;
                 for(int a=0;a<3;++a)node.radius_squared+=0.25*width[a]*width[a];
+            } else if(op.base().geometry==Geometry::Cylindrical && dimension_==2) {
+                // A meridional leaf represents a complete ring, centered on
+                // the physical axis. Its enclosing sphere also contains
+                // every parent ring; no phi=0 point source approximation.
+                node.center={0.,0.,native[1]};
+                const double outer=native[0]+.5*width[0];
+                node.radius_squared=outer*outer+.25*width[1]*width[1];
             } else {
                 const auto geometry=op.base().geometry==Geometry::Cylindrical
                     ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical;
@@ -136,17 +160,20 @@ GravityBoundary::GravityBoundary(const arch::elliptic::CompositePoisson& op)
 /** Recompute monopole, dipole and quadrupole moments from current density. */
 void GravityBoundary::update(std::span<const double> density) {
     arch::elliptic::validate_values(density,volumes_.size());
-    for(auto layer=layers_.rbegin();layer!=layers_.rend();++layer) for(int index:*layer) {
+    for(double rho:density)if(rho<0.)throw std::invalid_argument("Negative isolated source density");
+    std::vector<BoundaryMoments> next(nodes_.size());
+    for(auto layer=layers_.rbegin();layer!=layers_.rend();++layer)for(int index:*layer) {
         const int cell=nodes_[index].cell;
         if(cell>=0) {
-            if(density[cell]<0.) throw std::invalid_argument("Negative isolated source density");
-            moments_[index]={};
             for(int q=0;q<10;++q)
-                moments_[index].value[q]=density[cell]*nodes_[index].unit_moments.value[q];
-        } else moments_[index]=combine_boundary_moments(nodes_.data(),moments_.data(),index);
-        for(double value:moments_[index].value)
-            if(!std::isfinite(value)) throw std::overflow_error("Nonfinite isolated mass moment");
+                next[index].value[q]=density[cell]*nodes_[index].unit_moments.value[q];
+        } else next[index]=combine_boundary_moments(nodes_.data(),next.data(),index);
+        for(double value:next[index].value)
+            if(!std::isfinite(value))throw std::overflow_error("Nonfinite isolated mass moment");
     }
+    // Prevalidated no-throw commit; keep the allocation stable for existing
+    // geometry/device upload views and reference consumers.
+    std::copy(next.begin(),next.end(),moments_.begin());
 }
 /** Evaluate isolated boundary potential at each exterior composite face. */
 std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoisson& op,
@@ -160,7 +187,7 @@ std::vector<double> GravityBoundary::values(const arch::elliptic::CompositePoiss
             : (op.base().geometry==arch::elliptic::Geometry::Cylindrical
                 ? GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
         const auto point=GridMetrics::PhysicalPosition(geometry,dimension_,op.faces()[i].center);
-        result[i]=dimension_==2
+        result[i]=dimension_==2 && geometry==GridMetrics::Geometry::Spherical
             ?isolated_log_potential(nodes_.data(),moments_.data(),static_cast<int>(nodes_.size()),
                                     point.data(),G,reference_radius_,theta,order,geometry)
             :isolated_potential(nodes_.data(),moments_.data(),static_cast<int>(nodes_.size()),

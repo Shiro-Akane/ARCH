@@ -14,7 +14,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from verify_coupled import verify
+from verify_coupled import verify, physical_times_agree
 
 # The normalized Linf envelope is 2e-7 for bulk physical fields. Acceleration
 # is measured as one native-basis vector against its vector peak: an angular
@@ -48,12 +48,6 @@ def ordered_fields(path):
             "leaf_keys": [keys[index] for index in order],
             "fields": fields,
         }
-
-
-def physical_times_agree(left, right):
-    """Apply the existing coupled-run endpoint budget without changing it."""
-    scale = max(abs(left), abs(right), 1e-30)
-    return abs(left - right) <= max(1e-20, 2e-10 * scale)
 
 
 def compare_plot(cpu_path, cuda_path, label):
@@ -114,10 +108,10 @@ def compare_plot(cpu_path, cuda_path, label):
             "errors": errors}
 
 
-def compare_pair(label, cpu_dir, cuda_dir, steps, expect_mixed=True):
+def compare_pair(label, cpu_dir, cuda_dir, steps, expect_mixed=True, *, expected_time=None):
     """Require completed four-module runs, then compare both plot epochs."""
-    cpu = verify(label + "-cpu", cpu_dir, steps, expect_mixed)
-    cuda = verify(label + "-cuda", cuda_dir, steps, expect_mixed)
+    cpu = verify(label + "-cpu", cpu_dir, steps, expect_mixed, expected_time=expected_time)
+    cuda = verify(label + "-cuda", cuda_dir, steps, expect_mixed, expected_time=expected_time)
     plan_files = list(cuda_dir.glob("*_backend_plan.txt"))
     if len(plan_files) != 1 or "resolved=cuda\n" not in plan_files[0].read_text():
         raise ValueError(f"{label}: CUDA run did not resolve to the device")
@@ -128,6 +122,23 @@ def compare_pair(label, cpu_dir, cuda_dir, steps, expect_mixed=True):
         "initial": compare_plot(cpu_plots[0], cuda_plots[0], label + "-initial"),
         "final": compare_plot(cpu_plots[1], cuda_plots[1], label + "-final"),
     }
+
+
+def compare_cpu_baselines(label, cpu_only_dir, cpu_in_cuda_dir, steps,
+                          expect_mixed=True, *, expected_time=None):
+    """Reuse identical field budgets; both baseline runs must resolve CPU."""
+    results = {}
+    for name, folder in (("cpu_only", cpu_only_dir), ("cpu_in_cuda", cpu_in_cuda_dir)):
+        results[name] = verify(label + "-" + name, folder, steps, expect_mixed,
+                               expected_time=expected_time)
+        plans = list(folder.glob("*_backend_plan.txt"))
+        if len(plans) != 1 or "resolved=cpu\n" not in plans[0].read_text():
+            raise ValueError(f"{label}: {name} did not resolve CPU")
+    left = sorted(cpu_only_dir.glob("*_plt_*.h5"))
+    right = sorted(cpu_in_cuda_dir.glob("*_plt_*.h5"))
+    results["initial"] = compare_plot(left[0], right[0], label + "-cpu-baseline-initial")
+    results["final"] = compare_plot(left[1], right[1], label + "-cpu-baseline-final")
+    return results
 
 
 def main():

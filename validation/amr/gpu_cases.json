@@ -37,7 +37,7 @@
       "problem": "SmoothAdvection",
       "input": "validation/amr/inputs/smooth_amr80_l1.par",
       "overrides": {"time_integrator": "RK3", "lrefinemax": "1", "regrid_interval": "1", "derefine_threshold": "0.03"},
-      "accepted_steps": [1, 5, 10, 20],
+      "accepted_steps": [1, 5, 7, 10, 20],
       "topology_policy": {"require_refined": true, "require_mixed": true, "require_count_change": true, "require_refine_transition": true, "require_derefine_transition": true},
       "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
       "reduction_policy": {"rtol": 5e-9, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}

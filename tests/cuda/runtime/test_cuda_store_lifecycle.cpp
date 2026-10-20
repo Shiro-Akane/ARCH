@@ -5,22 +5,36 @@
  * The test selects a device through the backend interface and verifies
  * complete state upload, storage reuse and resource-lifetime constraints.
  */
-#include "amr/storage/Block.h"
-#include "amr/exchange/BoundaryPlan.h"
-#include "cuda/runtime/CudaBackend.h"
-#include "physics/eos/IdealGas.h"
-#include "physics/species/Species.h"
-
-#include <cuda_runtime_api.h>
-
+#include "physics/boundary/BoundaryFlux.h"
+#include <algorithm>
+#include <atomic>
 #include <array>
 #include <bit>
 #include <cstdint>
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
+
+#include <cuda_runtime_api.h>
+
+#include "amr/AMRControl.h"
+#include "amr/exchange/BoundaryPlan.h"
+#include "amr/exchange/ExchangePlan.h"
+#include "amr/exchange/HostBoundaryPlan.h"
+#include "amr/storage/Block.h"
+#include "cuda/runtime/CudaBackend.h"
+#include "driver/runtime/DriverRuntime.h"
+#include "driver/schedule/DriverControl.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/boundary/PhysicalBoundary.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "physics/boundary/UserBoundary.h"
+#include "physics/species/Species.h"
 
 namespace {
 
@@ -115,7 +129,9 @@ arch::backend::HostStateTransferView transfer_view(FluidState& state)
     return {
         state.rho.data(), state.mom_u.data(), state.mom_v.data(),
         state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
-        nullptr, state.rho.size(), 0, 0};
+        state.mass_fractions.empty()?nullptr:state.mass_fractions.data(),
+        state.rho.size(),static_cast<std::size_t>(state.GetNumSpecies()),
+        state.GetNumSpecies()>0?state.rho.size():0};
 }
 
 arch::cuda::CudaLaunchConfig make_launch_config()
@@ -187,6 +203,153 @@ void upload_complete_current(
         transfer_view(state));
     require_backend_device_selected(
         "staged ghost upload did not restore the backend device");
+}
+
+// Host planes deliberately have end sentinels; species planes also have a
+// stride larger than the device plane. Region checks use individual cell
+// membership, independent of the implementation's rectangles or cuboids.
+struct RegionBuffer {
+    static constexpr double sentinel = -9876.5;
+    std::array<std::vector<double>, 6> fields;
+    std::vector<double> composition;
+    std::size_t cells, species_stride;
+
+    explicit RegionBuffer(std::size_t count)
+        : composition(2 * (count + 7), sentinel),
+          cells(count), species_stride(count + 7)
+    {
+        for (auto& field : fields) field.assign(count + 7, sentinel);
+    }
+
+    void fill(double seed, const Grid& grid)
+    {
+        // PAD_NX includes allocation-only row tails. Their sentinels must stay
+        // untouched: only actual grid cells participate in either region.
+        for (int k = 0; k < grid.GetTotalZ(); ++k)
+            for (int j = 0; j < grid.GetTotalY(); ++j)
+                for (int i = 0; i < grid.GetTotalX(); ++i) {
+            const std::size_t cell = grid.GetIndex(i, j, k);
+            for (std::size_t field = 0; field < fields.size(); ++field)
+                fields[field][cell] = seed + 8.0 * field + 0.000125 * cell;
+            fields.back()[cell] = ((cell + static_cast<int>(seed)) & 1)
+                ? -0.0 : 0.0;
+            composition[cell] = 0.25 + 0.01 * seed + 0.000001 * cell;
+            composition[species_stride + cell] = 1.0 - composition[cell];
+        }
+    }
+
+    arch::backend::HostStateTransferView view()
+    {
+        return {fields[0].data(), fields[1].data(), fields[2].data(),
+                fields[3].data(), fields[4].data(), fields[5].data(),
+                composition.data(), cells, 2, species_stride};
+    }
+};
+
+// Check all transferred values, every untouched cell, signed zeros, and host
+// padding. An erroneous field base/origin or species stride cannot hide behind
+// a numeric tolerance or a matching implementation-side decomposition.
+void require_region_buffer(
+    const RegionBuffer& actual, const RegionBuffer& inside,
+    const RegionBuffer& outside, const std::vector<unsigned char>& selected)
+{
+    const auto bits_equal = [](double a, double b) {
+        return std::bit_cast<std::uint64_t>(a)
+            == std::bit_cast<std::uint64_t>(b);
+    };
+    for (std::size_t cell = 0; cell < actual.cells; ++cell) {
+        const auto& source = selected[cell] ? inside : outside;
+        for (std::size_t field = 0; field < actual.fields.size(); ++field)
+            require(bits_equal(actual.fields[field][cell], source.fields[field][cell]),
+                    "region transfer crossed ownership or changed field bits at cell "
+                        + std::to_string(cell) + ", field " + std::to_string(field));
+        for (std::size_t species = 0; species < 2; ++species)
+            require(bits_equal(actual.composition[species * actual.species_stride + cell],
+                               source.composition[species * source.species_stride + cell]),
+                    "region transfer changed species-plane ownership or bits");
+    }
+    for (std::size_t cell = actual.cells; cell < actual.species_stride; ++cell) {
+        for (const auto& field : actual.fields)
+            require(bits_equal(field[cell], RegionBuffer::sentinel),
+                    "region transfer wrote beyond a host field plane");
+        for (std::size_t species = 0; species < 2; ++species)
+            require(bits_equal(actual.composition[species * actual.species_stride + cell],
+                               RegionBuffer::sentinel),
+                    "region transfer wrote host species stride padding");
+    }
+}
+
+void run_region_transfers(int device_count)
+{
+    using arch::state::StateRegion;
+    for (int dimension = 1; dimension <= 3; ++dimension) {
+        amr::Block block{};
+        block.id = 0;
+        block.active = true;
+        block.grid = Grid(amr::MAX_NG, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+                          1, dimension >= 2 ? 1 : 0, dimension == 3 ? 1 : 0);
+        block.grid.dim = dimension;
+        block.grid.InitializeTopology();
+        const std::size_t cells = block.grid.GetTotalSize();
+        for (FluidState* state :
+             {&block.fluid_state, &block.state_next, &block.state_scratch}) {
+            state->Preallocate(cells);
+            state->InitSpecies(2);
+        }
+        SpeciesManager species;
+        species.add_species("H1", 1.0, 1.0, 1.4, 1.0);
+        species.add_species("He4", 4.0, 2.0, 1.4, 1.0);
+        IdealGas eos(1.4, species);
+        const auto boundary = make_boundary_plan(dimension);
+        const amr::BlockHandle handle{{3001}, {1}};
+        const arch::backend::StorageGeneration storage{3001};
+        auto backend = arch::cuda::make_cuda_backend(
+            block, handle, storage, kBackendDevice,
+            make_launch_config(), species, boundary, eos);
+        const auto access = current(handle, storage);
+        RegionBuffer baseline(cells), replacement(cells), untouched(cells);
+        baseline.fill(1.0, block.grid);
+        replacement.fill(2.0, block.grid);
+        for (StateRegion region : {StateRegion::Interior, StateRegion::Ghost}) {
+            backend->enqueue_upload_slot(access, StateRegion::Interior, baseline.view());
+            backend->enqueue_upload_slot(access, StateRegion::Ghost, baseline.view());
+            backend->quiesce();
+            std::vector<unsigned char> selected(cells, 0);
+            std::size_t selected_cells = 0;
+            for (int k = 0; k < block.grid.GetTotalZ(); ++k)
+                for (int j = 0; j < block.grid.GetTotalY(); ++j)
+                    for (int i = 0; i < block.grid.GetTotalX(); ++i) {
+                        const bool interior = i >= block.grid.Is() && i < block.grid.Ie()
+                            && j >= block.grid.Js() && j < block.grid.Je()
+                            && k >= block.grid.Ks() && k < block.grid.Ke();
+                        const bool owned = (region == StateRegion::Interior) == interior;
+                        selected[block.grid.GetIndex(i, j, k)] = owned;
+                        selected_cells += owned;
+                    }
+            const std::uint64_t expected_bytes = selected_cells * 8 * sizeof(double);
+            const auto before_upload = backend->counters();
+            select_device_probe(device_count);
+            backend->enqueue_upload_slot(access, region, replacement.view());
+            backend->quiesce();
+            require_backend_device_selected("region upload lost the backend device");
+            require(backend->counters().bytes_h2d - before_upload.bytes_h2d == expected_bytes,
+                    "region upload byte accounting includes another region or omits species");
+            RegionBuffer whole(cells);
+            backend->enqueue_materialize_host_current(access, StateRegion::Interior, whole.view());
+            backend->enqueue_materialize_host_current(access, StateRegion::Ghost, whole.view());
+            backend->quiesce();
+            require_region_buffer(whole, replacement, baseline, selected);
+            RegionBuffer partial(cells);
+            const auto before_download = backend->counters();
+            select_device_probe(device_count);
+            backend->enqueue_materialize_host_current(access, region, partial.view());
+            backend->quiesce();
+            require_backend_device_selected("region download lost the backend device");
+            require(backend->counters().bytes_d2h - before_download.bytes_d2h == expected_bytes,
+                    "region download byte accounting includes another region or omits species");
+            require_region_buffer(partial, replacement, untouched, selected);
+        }
+    }
 }
 
 void run_store_lifecycle(int device_count)
@@ -433,6 +596,214 @@ void run_store_lifecycle(int device_count)
         "lifetime-owning RAII abort did not restore the backend device");
 }
 
+/** Account for the one public counter query made by this assertion itself.
+ * Every work field and any additional production getter remain exact: counters()
+ * increments getter_count before returning its snapshot, even on a no-op path.
+ */
+bool unchanged_counters_after_query(const arch::backend::ComputeBackend& backend,
+    arch::backend::BackendCounters expected)
+{
+    ++expected.getter_count;
+    return backend.counters()==expected;
+}
+
+/** Exercise live resident controls, observer planes and all three slots.
+ * Three real cyclic rotations expose each physical owner and restore the map.
+ * Explicit test uploads restore replay inputs; they are not a production
+ * rollback or a replacement for the retired macro-savepoint facility.
+ */
+void run_resident_controls_and_rotations(int device_count)
+{
+    using namespace arch;using state::StateSlot;using state::StateRegion;
+    constexpr state::SlotRotation cycle{StateSlot::Next,StateSlot::Scratch,StateSlot::Current};
+    for(int count:{0,2}) {
+        std::array<amr::Block,2> blocks{make_block(0,1.),make_block(1,2.)};
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);auto launch=make_launch_config();
+        launch.diffusion={true,true,false,false,0.,.01,0.};
+        launch.plan.diffusion_integrator=dispatch::DiffusionIntegratorId::Rkl1;
+        const auto boundary=make_boundary_plan();
+        const std::array handles{amr::BlockHandle{{3101},{31}},amr::BlockHandle{{3102},{31}}};
+        const std::array storage{backend::StorageGeneration{3101},backend::StorageGeneration{3102}};
+        std::array<backend::BackendStateAccess,2> accesses{current(handles[0],storage[0]),current(handles[1],storage[1])};
+        for(int b=0;b<2;++b) {
+            int slot=0;for(auto* field:{&blocks[b].fluid_state,&blocks[b].state_next,&blocks[b].state_scratch}) {
+                field->InitSpecies(count);
+                for(int i=0;i<blocks[b].grid.GetTotalX();++i) {
+                    const int cell=blocks[b].grid.GetIndex(i);const double seed=100.*(1+slot)+b+.125*i;
+                    field->set(cell,{2.,.1,.2,.3,seed});field->enuc_rate[cell]=(i&1)?seed:-0.;
+                    for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;
+                }
+                ++slot;
+            }
+        }
+        const std::array bindings{cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&boundary},
+            cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&boundary}};
+        auto backend=cuda::make_cuda_backend(bindings,kBackendDevice,launch,species,eos);
+        const auto upload=[&](int b,StateSlot slot,FluidState& field) {
+            auto access=accesses[b];access.slot=slot;
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})backend->enqueue_upload_slot(access,region,transfer_view(field));
+        };
+        for(int b=0;b<2;++b) {
+            upload(b,StateSlot::Current,blocks[b].fluid_state);upload(b,StateSlot::Next,blocks[b].state_next);
+            upload(b,StateSlot::Scratch,blocks[b].state_scratch);
+        }
+        // Preallocate the genuine controls for each physical owner before pinning.
+        boundary::DiffusionBoundaryStorage controls;controls.faces[0].resize(4+count);
+        controls.faces[0][0]={boundary::ScalarBoundaryKind::OutwardFlux,.03125};
+        for(int b=0;b<2;++b)for(auto slot:{StateSlot::Current,StateSlot::Next,StateSlot::Scratch}) {
+            auto access=accesses[b];access.slot=slot;const std::array ghost{blocks[b].grid.GetIndex(0)};
+            const auto values=backend->read_boundary_cells(access,ghost,StateRegion::Ghost);
+            backend->write_boundary_cells(access,ghost,values,controls);
+        }
+        std::array<backend::BoundaryFluxPlanes,2> layout;
+        for(int b=0;b<2;++b){layout[b].block=handles[b];for(int face:{0,1})layout[b].stage[face].resize(6+count);}
+        backend->configure_boundary_flux_capture(layout,1.,0.,true);
+        const auto hydro=scheduler::make_hydro_plan(scheduler::HydroMethod::Euler).stages.front();
+        const auto all_slots=[&] {
+            std::array<std::array<FluidState,3>,2> result;
+            for(int slot=0;slot<3;++slot)for(int b=0;b<2;++b) {
+                result[b][slot]=blocks[b].fluid_state;
+                for(auto region:{StateRegion::Interior,StateRegion::Ghost})
+                    backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(result[b][slot]));
+                backend->quiesce();backend->rotate_slots(accesses[b],cycle);
+            }
+            return result;
+        };
+        const auto same_slots=[&](const auto& expected) {
+            const auto observed=all_slots();for(int b=0;b<2;++b)for(int slot=0;slot<3;++slot)
+                require(same_bits(observed[b][slot],expected[b][slot]),"resident consumer changed an original logical slot or Host padding");
+        };
+        const auto same_surfaces=[](const auto& actual,const auto& expected) {
+            require(actual.size()==expected.size(),"resident consumer changed observer owner count");
+            for(std::size_t b=0;b<actual.size();++b) {
+                require(actual[b].block==expected[b].block,"resident consumer changed observer identity");
+                for(int face=0;face<6;++face)for(int plane=0;plane<2;++plane) {
+                    const auto& a=plane?actual[b].initial[face]:actual[b].stage[face];
+                    const auto& e=plane?expected[b].initial[face]:expected[b].stage[face];
+                    require(a.size()==e.size(),"resident consumer changed observer active shape");
+                    for(std::size_t n=0;n<a.size();++n)require(std::bit_cast<std::uint64_t>(a[n])==std::bit_cast<std::uint64_t>(e[n]),
+                        "resident replay changed genuine observer plane bits");
+                }
+            }
+        };
+        // Check rotation against independently seeded Host slot values before
+        // any stage can overwrite Next. A no-op rotation cannot pass this.
+        const auto initial_slots=all_slots();
+        for(int b=0;b<2;++b) {
+            const std::array<const FluidState*,3> expected{&blocks[b].fluid_state,&blocks[b].state_next,&blocks[b].state_scratch};
+            for(int slot=0;slot<3;++slot)require(same_bits(initial_slots[b][slot],*expected[slot]),"resident rotation lost original physical slot identity");
+        }
+        (void)backend->execute_hydro_stage_batch(accesses,hydro,1.e-4,{1,state::CompletionState::Complete});backend->quiesce();
+        const auto baseline=all_slots();const auto surfaces=backend->download_boundary_flux_capture();
+        require(std::any_of(surfaces[0].stage[0].begin(),surfaces[0].stage[0].end(),[](double x){return x!=0.;}),
+            "resident observer reference remained zero");
+        const auto rejects_no_work=[&](auto&& operation) {
+            const auto before=backend->counters();require_rejected(operation,"invalid resident namespace accepted");
+            require(unchanged_counters_after_query(*backend,before),"resident preflight rejection enqueued partial work");
+        };
+        auto stale=accesses;stale[1].storage.value+=99;
+        rejects_no_work([&]{backend->rotate_slots(stale[1],cycle);});
+        const std::array outside{blocks[0].grid.GetTotalSize()};
+        rejects_no_work([&]{(void)backend->read_boundary_cells(accesses[0],outside,StateRegion::Ghost);});
+        same_slots(baseline);same_surfaces(backend->download_boundary_flux_capture(),surfaces);
+        const auto rkl=scheduler::make_rkl_plan(scheduler::RklMethod::RKL1,1);
+        const auto diffuse=[&]{(void)backend->execute_diffusion_stage_batch(accesses,rkl,rkl.stages.front(),1.e-4,1.,{2,state::CompletionState::Complete});};
+        diffuse();const auto reference=all_slots();const auto reference_surfaces=backend->download_boundary_flux_capture();
+        // Replay from exact uploaded inputs through the current public APIs.
+        for(int b=0;b<2;++b)for(int slot=0;slot<3;++slot) {
+            auto restored=baseline[b][slot];upload(b,static_cast<StateSlot>(slot),restored);
+        }
+        backend->quiesce();backend->configure_boundary_flux_capture(layout,1.,0.,true);
+        diffuse();same_slots(reference);same_surfaces(backend->download_boundary_flux_capture(),reference_surfaces);
+        // Growth is legal without a pinned savepoint. Verify the real binding
+        // and field update, rather than testing a removed capacity-prewarm API.
+        auto growing=controls;growing.faces[1].resize(4+count);
+        growing.faces[1][0]={boundary::ScalarBoundaryKind::OutwardFlux,.0625};
+        const std::array ghost{blocks[0].grid.GetIndex(0)};
+        auto values=backend->read_boundary_cells(accesses[0],ghost,StateRegion::Ghost);
+        values.conserved[0].eng+=37.;
+        select_device_probe(device_count);
+        backend->write_boundary_cells(accesses[0],ghost,values,growing);
+        require_backend_device_selected("resident control growth did not restore device selection");
+        const auto written=backend->read_boundary_cells(accesses[0],ghost,StateRegion::Ghost);
+        require(written.conserved[0].eng==values.conserved[0].eng,"resident boundary write lost a field update");
+        diffuse();const auto grown_surfaces=backend->download_boundary_flux_capture();
+        require(grown_surfaces[0].stage[1]!=reference_surfaces[0].stage[1],"new upper heat-flux control was not consumed");
+        std::cout<<"RESIDENT_CONTROLS_ROTATIONS_PASS species="<<count
+            <<" slots=3 controls_replay=1 growth=1 observers=1 stale_reject=1\n";
+    }
+}
+
+/** Reduce actual resident endpoints with independent true-volume references.
+ * Only real interiors contribute. Public Ghost uploads poison all actual halos;
+ * resident allocation padding stays unobservable through this transfer owner.
+ */
+void run_resident_diffusion_activity()
+{
+    using namespace arch;using state::StateSlot;using state::StateRegion;
+    for(int count:{0,2}) {
+        std::array<amr::Block,2> blocks{make_block(0,1.),make_block(1,2.)};
+
+        SpeciesManager species;if(count){species.add_species("H1",1.,1.,1.4,1.);species.add_species("He4",4.,2.,1.4,1.);}
+        IdealGas eos(1.4,species);const auto boundary=make_boundary_plan(1);
+        for(auto& block:blocks)for(auto* field:{&block.fluid_state,&block.state_next,&block.state_scratch}) {
+            field->Preallocate(block.grid.GetTotalSize());field->InitSpecies(count);
+            for(int cell=0;cell<block.grid.GetTotalSize();++cell){field->set(cell,{2.,0.,0.,0.,1.e100});field->enuc_rate[cell]=-0.;
+                for(int s=0;s<count;++s)field->X(s,cell)=s?.75:.25;}
+        }
+        long double expected_signed[2]{},expected_absolute[2]{};std::uint64_t cells=0;
+        for(auto& block:blocks){const auto& g=block.grid;for(int k=g.Ks();k<g.Ke();++k)for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
+            const int cell=g.GetIndex(i,j,k);const double difference=((i+j)&1)?.125:-.125;
+            block.fluid_state.eng[cell]=20.;block.state_next.eng[cell]=20.-difference;block.state_scratch.eng[cell]=19.75;
+            const long double volume=static_cast<long double>(g.dx1);
+            expected_signed[0]+=volume*difference;expected_absolute[0]+=volume*std::abs(difference);
+            expected_signed[1]+=volume*.25L;expected_absolute[1]+=volume*.25L;++cells;
+        }}
+        const std::array handles{amr::BlockHandle{{3201},{32}},amr::BlockHandle{{3202},{32}}};
+        const std::array storage{backend::StorageGeneration{3201},backend::StorageGeneration{3202}};
+        const std::array bindings{cuda::CudaBlockBinding{&blocks[0],handles[0],storage[0],&boundary},cuda::CudaBlockBinding{&blocks[1],handles[1],storage[1],&boundary}};
+        auto backend=cuda::make_cuda_backend(bindings,kBackendDevice,make_launch_config(),species,eos);
+        const std::array accesses{current(handles[0],storage[0]),current(handles[1],storage[1])};
+        const auto upload=[&](int b,StateSlot slot,FluidState& field){auto access=accesses[b];access.slot=slot;
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})backend->enqueue_upload_slot(access,region,transfer_view(field));};
+        for(int b=0;b<2;++b){upload(b,StateSlot::Current,blocks[b].fluid_state);upload(b,StateSlot::Next,blocks[b].state_next);upload(b,StateSlot::Scratch,blocks[b].state_scratch);}backend->quiesce();
+        const auto no_work=[&](auto&& operation){const auto before=backend->counters();require_rejected(operation,"invalid diffusion activity owner accepted");
+            require(unchanged_counters_after_query(*backend,before),"diffusion activity preflight partly enqueued work");};
+        const auto empty_before=backend->counters();const auto empty=backend->reduce_diffusion_energy_activity_batch({},StateSlot::Next);
+        require(empty.cells==0&&empty.signed_energy_change==0.&&empty.absolute_energy_change==0.&&unchanged_counters_after_query(*backend,empty_before),"empty activity batch performed work");
+        auto stale=accesses;stale[1].storage.value+=99;no_work([&]{backend->reduce_diffusion_energy_activity_batch(stale,StateSlot::Next);});
+        auto duplicate=accesses;duplicate[1]=duplicate[0];no_work([&]{backend->reduce_diffusion_energy_activity_batch(duplicate,StateSlot::Next);});
+        auto mixed=accesses;mixed[1].slot=StateSlot::Next;no_work([&]{backend->reduce_diffusion_energy_activity_batch(mixed,StateSlot::Next);});
+        for(auto slot:{StateSlot::Current,static_cast<StateSlot>(255)})no_work([&]{backend->reduce_diffusion_energy_activity_batch(accesses,slot);});
+        int reference=0;for(auto slot:{StateSlot::Next,StateSlot::Scratch}) {
+            const auto before=backend->counters();const auto result=backend->reduce_diffusion_energy_activity_batch(accesses,slot);const auto after=backend->counters();
+            const long double tolerance=64.L*std::numeric_limits<double>::epsilon()*std::max(1.L,expected_absolute[reference]);
+            require(result.cells==cells&&std::abs(result.signed_energy_change-expected_signed[reference])<=tolerance
+                &&std::abs(result.absolute_energy_change-expected_absolute[reference])<=tolerance,"resident endpoint activity lost independent true volume/cell ownership");
+            require(after.kernel_count==before.kernel_count+1&&after.bytes_h2d>before.bytes_h2d
+                &&after.bytes_d2h>before.bytes_d2h,"activity did not report actual compact metadata/result work");
+            std::cout<<"RESIDENT_DIFFUSION_ACTIVITY chart=Cartesian species="<<count
+                <<" retained_slot="<<static_cast<int>(slot)<<" h2d="<<after.bytes_h2d-before.bytes_h2d
+                <<" d2h="<<after.bytes_d2h-before.bytes_d2h<<" kernels="<<after.kernel_count-before.kernel_count<<'\n';++reference;
+        }
+        // Reading an endpoint receipt never mutates any real U/X/ENUC or host padding.
+        constexpr state::SlotRotation cycle{StateSlot::Next,StateSlot::Scratch,StateSlot::Current};
+        for(int slot=0;slot<3;++slot)for(int b=0;b<2;++b){auto observed=slot==0?blocks[b].fluid_state:slot==1?blocks[b].state_next:blocks[b].state_scratch;
+            for(auto region:{StateRegion::Interior,StateRegion::Ghost})backend->enqueue_materialize_host_current(accesses[b],region,transfer_view(observed));backend->quiesce();
+            const auto& original=slot==0?blocks[b].fluid_state:slot==1?blocks[b].state_next:blocks[b].state_scratch;
+            require(same_bits(observed,original),"resident activity modified an endpoint field or host padding");backend->rotate_slots(accesses[b],cycle);}
+        const auto& g=blocks[1].grid;const int bad=g.GetIndex(g.Is(),g.Js(),g.Ks());
+        blocks[1].fluid_state.eng[bad]=std::numeric_limits<double>::quiet_NaN();upload(1,StateSlot::Current,blocks[1].fluid_state);backend->quiesce();
+        require_rejected<std::runtime_error>([&]{backend->reduce_diffusion_energy_activity_batch(accesses,StateSlot::Next);},"nonfinite actual endpoint accepted");
+        blocks[1].fluid_state.eng[bad]=20.;upload(1,StateSlot::Current,blocks[1].fluid_state);backend->quiesce();
+        require(backend->reduce_diffusion_energy_activity_batch(accesses,StateSlot::Next).cells==cells,"activity scratch did not recover after nonfinite endpoint");
+        backend->copy_state_slot_batch(accesses,StateSlot::Scratch);const auto zero=backend->reduce_diffusion_energy_activity_batch(accesses,StateSlot::Scratch);
+        require(zero.cells==cells&&zero.signed_energy_change==0.&&zero.absolute_energy_change==0.,"identical actual resident energy endpoints had nonzero activity");
+    }
+}
+
+
 } // namespace
 
 int main()
@@ -446,7 +817,10 @@ int main()
     }
 
     try {
+        run_region_transfers(device_count);
         run_store_lifecycle(device_count);
+        run_resident_controls_and_rotations(device_count);
+        run_resident_diffusion_activity();
         std::cout << "CUDA store lifecycle passed\n";
         return 0;
     } catch (const std::exception& error) {

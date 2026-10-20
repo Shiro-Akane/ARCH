@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -19,6 +20,50 @@ import validation_provenance as provenance
 
 
 class ProvenanceTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("cmake"), "CMake is required for identity generation")
+    def test_generated_identity_is_not_its_own_source_input(self):
+        # Exercise the real generator without compiling or modifying project source.
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary)
+            build = source / "build"
+            (source / "src/core/files").mkdir(parents=True)
+            (source / "src/core/files/BuildIdentity.cpp").write_text("int identity_fixture;\n")
+            input_header = source / "src/example.h"
+            original = "#pragma once\n"
+            input_header.write_text(original)
+            registry = build / "generated"
+            registry.mkdir(parents=True)
+            for name in ("CustomNetworks.generated.h", "CustomNetworkRegistry.generated.h"):
+                (registry / name).write_text("#pragma once\n")
+            (source / "CMakeLists.txt").write_text("""
+cmake_minimum_required(VERSION 3.22)
+project(IdentityFixture LANGUAGES CXX)
+add_library(arch_build_contract STATIC src/core/files/BuildIdentity.cpp)
+foreach(name ARCH arch_driver_runtime arch_solver_dispatch arch_gravity_cpu arch_diffusion_math)
+    add_library(${name} INTERFACE)
+endforeach()
+set(ARCH_CUSTOM_REGISTRY_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+include("@MODULE@")
+""".replace("@MODULE@", (ROOT / "cmake/project/BuildIdentity.cmake").as_posix()))
+
+            def configure():
+                result = subprocess.run(["cmake", "-S", str(source), "-B", str(build)],
+                    capture_output=True, text=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                return (registry / "identity/BuildIdentity.generated.h").read_bytes()
+
+            first = configure()
+            self.assertEqual(first, configure())
+            self.assertEqual(first, configure())
+            self.assertNotIn(b"generated/identity/BuildIdentity.generated.h\t", first)
+            for name in ("CustomNetworks.generated.h", "CustomNetworkRegistry.generated.h"):
+                self.assertIn(("generated/" + name + "\t").encode(), first)
+            self.assertIn(b"src/example.h\t", first)
+            input_header.write_text(original + "// actual source change\n")
+            self.assertNotEqual(first, configure())
+            input_header.write_text(original)
+            self.assertEqual(first, configure())
+
     def test_focused_identity_tracks_configured_sources_and_artifact_replacement(self):
         def capture():
             return provenance.capture_focused(artifacts={"probe": self.arch},
@@ -408,6 +453,17 @@ class QualificationTests(unittest.TestCase):
             case["input"]: provenance.sha256(ROOT / case["input"])
             for case in manifest["cases"]}
         result["runtime_inputs"] = qualification.backend_validation.runtime_case_inputs(manifest["cases"], ROOT)
+        # The frozen protocol example predates the explicit step-7 sampling
+        # requirement. Duplicate only its step-5 *synthetic* shape in memory;
+        # this tests coverage, never supplies a new measured checkpoint. Keep
+        # the manifest, immutable example and real qualification gate intact.
+        cycle = next(item for item in result["cases"] if item["id"] == "hydro_amr_regrid_cycle_1d")
+        self.assertEqual([cp["cpu"]["steps"] for cp in cycle["checkpoints"]], [1, 5, 10, 20])
+        sample = copy.deepcopy(cycle["checkpoints"][1])
+        sample["parity"]["step"] = 7
+        for backend in ("cpu", "cuda"):
+            sample[backend]["steps"] = 7
+        cycle["checkpoints"].insert(2, sample)
         for case, record in zip(manifest["cases"], result["cases"]):
             for checkpoint in record["checkpoints"]:
                 self.output_history_fixture(checkpoint["parity"])
@@ -437,6 +493,13 @@ class QualificationTests(unittest.TestCase):
         qualification.check_matrix(report, path, ROOT)
         report["cases"].pop()
         with self.assertRaisesRegex(RuntimeError, "matrix is incomplete"):
+            qualification.check_matrix(report, path, ROOT)
+
+    def test_matrix_requires_the_added_regrid_sampling_checkpoint(self):
+        path, report = self.matrix()
+        cycle = next(item for item in report["cases"] if item["id"] == "hydro_amr_regrid_cycle_1d")
+        cycle["checkpoints"] = [cp for cp in cycle["checkpoints"] if cp["cpu"]["steps"] != 7]
+        with self.assertRaisesRegex(RuntimeError, "incomplete checkpoint coverage"):
             qualification.check_matrix(report, path, ROOT)
 
     def test_physical_matrix_requires_declared_measure_and_actual_parameter_identity(self):
@@ -539,6 +602,9 @@ class QualificationTests(unittest.TestCase):
     def restart(self):
         path = FIXTURES / "restart-smooth-evidence.json"
         report = json.loads(path.read_text())
+        # Only this in-memory protocol fixture follows the maintained input.
+        # Its real artifact provenance intentionally remains unqualified.
+        report["input_sha256"] = provenance.sha256(ROOT / "validation/amr/inputs/smooth_amr80_l1.par")
         report["runtime_inputs"] = provenance.runtime_inputs(
             parameter_file=ROOT / "validation/amr/inputs/smooth_amr80_l1.par",
             working_directory=ROOT, parameter_reader=qualification.backend_validation.read_parameter_map)
@@ -583,6 +649,15 @@ class QualificationTests(unittest.TestCase):
             comparison["tolerance"] = qualification.restart_validation.comparison_policy()
             self.output_history_fixture(comparison, int(comparison["route"].endswith("_terminal")))
         return report
+
+    def test_restart_rejects_input_and_runtime_dependency_identity_drift(self):
+        for defect in ("input_sha256", "runtime_inputs"):
+            report = self.restart()
+            report[defect] = "0" * 64 if defect == "input_sha256" else {}
+            expected = "canonical input mismatch" if defect == "input_sha256" else "runtime dependency identity mismatch"
+            with self.subTest(defect=defect), self.assertRaisesRegex(RuntimeError, expected):
+                qualification.check_restart(report, problem="SmoothAdvection",
+                    input_path=ROOT / "validation/amr/inputs/smooth_amr80_l1.par", source_root=ROOT)
 
     def test_restart_rejects_process_checkpoint_confusion_and_wrong_restore(self):
         for defect in ("step", "phase", "process", "restore"):

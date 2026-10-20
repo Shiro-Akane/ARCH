@@ -1,0 +1,108 @@
+{
+  "status": "ACTUAL_RUNTIME_IDENTITY_CONTRACT_PASS_NOT_RZ_SCIENTIFIC_ACCEPTANCE",
+  "baseline": "23a4825baadf11faac10072809c137dd62a65d22",
+  "phase": "Unified plan row 7; shared gravity production identity verification",
+  "initialBlocks": 4,
+  "refinedBlocks": 8,
+  "gathers": 5,
+  "finalCells": 128,
+  "controllerTime": 0,
+  "controllerSteps": 0,
+  "scope": "Real Cartesian DriverRuntime/GravityStage/SelfGravity; injected stage inputs, not actual Hydro advance",
+  "currentNonfirstUpdate": true,
+  "nonfirstUnreadableScratchRejectedBeforeGather": true,
+  "requestedSlots": [
+    "Current",
+    "Scratch",
+    "Next"
+  ],
+  "failedPrepareRetiresOldField": true,
+  "regridEpochs": [
+    1,
+    2
+  ],
+  "diagnosticRows": [
+    {
+      "time": "0",
+      "stage": "0",
+      "epoch": "1",
+      "generation": "1",
+      "cells": "64",
+      "iterations": "1",
+      "residual": "1.8826744423105356e-21",
+      "target": "5.9306267188300783e-18",
+      "rho_mean": "1",
+      "device": "0"
+    },
+    {
+      "time": "0.125",
+      "stage": "0",
+      "epoch": "1",
+      "generation": "2",
+      "cells": "64",
+      "iterations": "1",
+      "residual": "2.2303476996031627e-21",
+      "target": "6.1430963067450467e-18",
+      "rho_mean": "1.0026592188769303",
+      "device": "0"
+    },
+    {
+      "time": "0.25",
+      "stage": "2",
+      "epoch": "1",
+      "generation": "5",
+      "cells": "64",
+      "iterations": "1",
+      "residual": "9.5278603025041605e-22",
+      "target": "5.9306267188300768e-18",
+      "rho_mean": "1.2",
+      "device": "0"
+    },
+    {
+      "time": "0.125",
+      "stage": "3",
+      "epoch": "1",
+      "generation": "6",
+      "cells": "64",
+      "iterations": "0",
+      "residual": "2.0407505301186656e-21",
+      "target": "5.9306267188300768e-18",
+      "rho_mean": "1.3999999999999999",
+      "device": "0"
+    },
+    {
+      "time": "0.5",
+      "stage": "0",
+      "epoch": "2",
+      "generation": "7",
+      "cells": "128",
+      "iterations": "4",
+      "residual": "9.6252609350603976e-19",
+      "target": "6.1447201493267845e-18",
+      "rho_mean": "1.0026592188769305",
+      "device": "0"
+    }
+  ],
+  "executableSha256": "47018aa7ee4c2ea124192b7040e527e52890393f978f01789af2256cb9b620e7",
+  "productionExecutableSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "recompiledSources": {
+    "tests/host/gravity/test_gravity_runtime_contract.cpp": "f06ac261d07e1638d17fccd356f5a5d8c36f2b314b9d979bd4327f9e9f5d034b",
+    "src/driver/stages/GravityStage.cpp": "8820d7ba03478f00671b91ad8d43a2fe46b2450676a3ef4862f6950e2f029ea6",
+    "src/driver/runtime/DriverRuntime.cpp": "37e23c731840d694552526846f1e13e402b8cda7ec316035e482aa6e0c23a327",
+    "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+    "src/driver/runtime/DriverRegrid.cpp": "1af39912876480e6b264552ab495b544bc908310bd4d355f8d1b4ba667adcda8"
+  },
+  "runnerSha256": "33a0664e564ad05280b370cf7727fb9358fc06044a549d00ca4cbf07750a209f",
+  "existingScopedTests": {
+    "gravity_stage_contract": "PASS",
+    "self_gravity_lifecycle": "PASS"
+  },
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "limitations": [
+    "RZ gravity/regrid scientific capability remains gated; this is common identity-path evidence only",
+    "No CUDA, Hydro evolution, conservation accuracy, continuous ring force or long-run acceptance",
+    "Real all-block density inspected via delegated Host GatherDensity; no alternate solver",
+    "Raw build logs, executable and gravity TSV remain local"
+  ]
+}

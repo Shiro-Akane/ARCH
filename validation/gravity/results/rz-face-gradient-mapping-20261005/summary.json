@@ -1,0 +1,124 @@
+{
+  "status": "PASS",
+  "faces": 208,
+  "rows": [
+    {
+      "radialOrigin": 0,
+      "mixedAmr": false,
+      "cells": 16,
+      "faces": 36,
+      "boundaryFaces": 12,
+      "coarseFineFaces": 0,
+      "maximumStoredStencilArithmeticDelta": 2.5349136787511143e-23,
+      "nativeSourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      }
+    },
+    {
+      "radialOrigin": 0.5,
+      "mixedAmr": false,
+      "cells": 16,
+      "faces": 40,
+      "boundaryFaces": 16,
+      "coarseFineFaces": 0,
+      "maximumStoredStencilArithmeticDelta": 4.046869905464775e-23,
+      "nativeSourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      }
+    },
+    {
+      "radialOrigin": 0,
+      "mixedAmr": true,
+      "cells": 28,
+      "faces": 64,
+      "boundaryFaces": 12,
+      "coarseFineFaces": 16,
+      "maximumStoredStencilArithmeticDelta": 2.2455502761541577e-23,
+      "nativeSourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      }
+    },
+    {
+      "radialOrigin": 0.5,
+      "mixedAmr": true,
+      "cells": 28,
+      "faces": 68,
+      "boundaryFaces": 16,
+      "coarseFineFaces": 16,
+      "maximumStoredStencilArithmeticDelta": 2.57543749340834e-23,
+      "nativeSourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      }
+    }
+  ],
+  "bitMismatchFailures": [],
+  "wrongForceSignNegativeControls": 200,
+  "probeRecordSha256": "36a077b40be63748110cf5406960a626211d2293dbdbaf2335a53c58ce8c7175",
+  "limitations": [
+    "Binary64 anchored Neumaier reconstruction checks export mapping only",
+    "Exact Fraction stencil delta uses stored potential/coefficient/boundary values",
+    "No ideal coefficient error, continuous force, spatial acceptance, Runtime or CUDA grant"
+  ],
+  "sourceSha256": "37da33bbaa46c4f136af7110bf676e9fce1f9df006835f2714e55ca7b3c8e9be",
+  "baseCommit": "4ab4af8396999d99b6c64f168646bfeb14d3ebb9"
+}

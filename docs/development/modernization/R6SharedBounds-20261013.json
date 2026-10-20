@@ -1,0 +1,850 @@
+{
+  "schema": "ARCH R6 first minimal shared-core refactor v1",
+  "date": "2026-10-13",
+  "completed_utc": "2026-10-13T06:40:37.623161+00:00",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "status": "FIRST_MINIMAL_PACKAGE_COMPLETE_ACCEPTED",
+  "R6_scope": "CORE-R6-01 only; no obligation to refactor every shared module or retire every adapter. Further R6 work conditional on new concrete evidence.",
+  "R7_status": "NOT_STARTED_NO_AUTOMATIC_ADVANCE",
+  "problem": {
+    "duplicate": "RzReconstruction::bounds_valid reimplemented arch::state::valid_bounds exactly, despite already including its owner. Single internal call.",
+    "maintenance_benefit": "One authoritative physical-limit validity rule shared by native closure and limited high profile; removes future divergence risk without an abstraction/file split.",
+    "origin": {
+      "path": "src/numerics/reconstruction/RzCellPolynomial.h",
+      "original_sha256": "66e44994ec2e4903e735f756647d884b42d7472504884e33f50e76d3dfa5e7ea",
+      "duplicate_definition_original_lines": [
+        208,
+        220
+      ],
+      "only_call_original_line": 337,
+      "authority": "src/numerics/state/StateAdmissibility.h:51-57",
+      "authority_already_included_original_line": 81
+    }
+  },
+  "change": {
+    "production_files": {
+      "src/numerics/reconstruction/RzCellPolynomial.h": "2e11b1f25006311bed49fe3c5333bce3eba9e8ff224becbc2ca9676678c5bbba"
+    },
+    "retired_symbol": "RzReconstruction::bounds_valid",
+    "existing_authority": "arch::state::valid_bounds",
+    "existing_authority_sha256": "dba755c6a248eab5c63181a1927e8b8c5889536b49b7ce26e2ba2f7570ad5610",
+    "diff": {
+      "removed_lines": 15,
+      "added_lines": 3,
+      "net_lines": -12
+    },
+    "new_production_files": 0,
+    "new_dependencies": 0,
+    "new_abstractions": 0,
+    "compatibility_alias": false,
+    "comments": "At caller retain why bounds need independent up-front validation: caller bounds may differ from accepted baseline and state::validate alone does not reject NaN limits."
+  },
+  "preserved_contract": {
+    "predicate_clauses": "Finite density, density>=0, finite internal_min, internal_min>=0, finite internal_max, internal_max>=internal_min; same type/ordered &&/ARCH_INLINE. 0. and 0.0 same double literal.",
+    "call_position": "After read(index),baseline assignment,species<0 guard; before geometry,baseline/native stencil/polynomial/node/54-halving ladder.",
+    "mathematics": "All remaining header tokens unchanged except qualified call. Six certified nodes,54-halving ladder,EOS/field/defaults/repair/units untouched.",
+    "O7": "No production configuration/parser/default/restart acceptance changes; no fresh whole70-key replay.",
+    "FP": "Exact original strict flags per mode retained; Host GCC13.3 and CUDA NVCC12.3/g++12/sm86 are distinct actual original lanes, not silently substituted."
+  },
+  "independent_acceptance": {
+    "source": "ACCEPT; candidate-source-review.json",
+    "provider": "DeepSeek static equivalence evidence ACCEPT/evidence_only; no execution claim. Namespace/pre-existing device coverage packet corrections recorded in package-contract.",
+    "probe_design": "ACCEPT_SCOPE;14 static checks; actual uploaded inputs, valid baseline and preflight read-count control.",
+    "final": "ACCEPT;46 independent checks; raw source/ELF/library/dependencies/output rechecked."
+  },
+  "numerical_results": {
+    "schema": "R6 numerical acceptance v1",
+    "status": "PASS",
+    "Host_complete_leaf": {
+      "original_exit": 0,
+      "candidate_exit": 0,
+      "original_output_lines": 322,
+      "candidate_output_lines": 322,
+      "all_scientific_stdout_identical": true,
+      "diff_if_any": [],
+      "native_profile_cases": 7,
+      "source_eos_profile_cases": 4,
+      "malformed_bounds_fixture_cases": "6 original variants inside each of first3 native profile modes; unchanged tests.",
+      "original_stdout_sha256": "150d050217aa392df7561e05ec63040f8b093730304c1a7eecd20c2c41a51ecc",
+      "candidate_stdout_sha256": "150d050217aa392df7561e05ec63040f8b093730304c1a7eecd20c2c41a51ecc"
+    },
+    "GPU_probe": {
+      "status": "PASS",
+      "case_combinations": 4096,
+      "backends": [
+        "host",
+        "real_cuda"
+      ],
+      "rows_per_variant": 8192,
+      "fields_per_row": 38,
+      "same_backend_original_candidate_exact_CSV": true,
+      "original_sha256": "840606f38cd6ef61738ca3494f6bb41d559b2392f736e9cc16237880ce13eccb",
+      "candidate_sha256": "840606f38cd6ef61738ca3494f6bb41d559b2392f736e9cc16237880ce13eccb",
+      "valid_bounds": 414,
+      "rejected_bounds": 3682,
+      "admitted_profiles": 105,
+      "invalid_bounds_early_read_count": 1,
+      "scope": "Predicate plus flat scalar native baseline/profile and six certified points only; no gradient/species/long RZ/hierarchy qualification.",
+      "CSV_path": [
+        "output/modernization/r6-20261013/probe-baseline.csv",
+        "output/modernization/r6-20261013/probe-candidate.csv"
+      ]
+    },
+    "artifacts": {
+      "original": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/arch_curvilinear_metrics",
+        "sha256": "b2ad23ee275947ce0372975047b43e6b04fa89c55899a6d9eb7408aaa0f67133",
+        "bytes": 1851472,
+        "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH"
+      },
+      "candidate": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/arch_curvilinear_metrics",
+        "sha256": "b2ad23ee275947ce0372975047b43e6b04fa89c55899a6d9eb7408aaa0f67133",
+        "bytes": 1851472,
+        "source_root": "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH"
+      },
+      "probe_baseline": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/baseline/probe",
+        "sha256": "c15e537da129e934b0da50fe7b16ed30160132aac3c96af46381d7cc6e831b91",
+        "bytes": 1170536,
+        "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH"
+      },
+      "probe_candidate": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/candidate/probe",
+        "sha256": "1be5bf0035f05ef26e87b7c749538b735bc74ee41fe93462dfd8abc40fcc51a0",
+        "bytes": 1170536,
+        "source_root": "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH"
+      }
+    },
+    "scope": "Actual freshly compiled Host two-TU leaf and short CUDA header-math probes only; no new full ARCH or production CUDA executable, no old long RZ route signed."
+  },
+  "measurement_receipts": {
+    "host-original-build": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 22.21,
+        "user_seconds": 102.44,
+        "system_seconds": 5.08,
+        "max_process_rss_kib": 799356,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "5338736",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1075364",
+        "elapsed_seconds": "22.437",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/host-original-build.guard.log",
+      "log_sha256": "d0126d96de62ad02ff89ca030097f9013360bf415eab9a98c3e2461c977b6fac"
+    },
+    "host-candidate-build": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 22.55,
+        "user_seconds": 97.23,
+        "system_seconds": 4.08,
+        "max_process_rss_kib": 799260,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "5333664",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1092512",
+        "elapsed_seconds": "21.568",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/host-candidate-build.guard.log",
+      "log_sha256": "174911b82b3cca2793fbdbaa449e6bd830bc38ba00dc676333aac1f90907444f"
+    },
+    "host-original-run": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 20.93,
+        "user_seconds": 20.38,
+        "system_seconds": 0.15,
+        "max_process_rss_kib": 18216,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "6078164",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "13608",
+        "elapsed_seconds": "20.176",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/host-original-run.guard.log",
+      "log_sha256": "6ea75c127752600b6899371ab2f393998c088228fd99c46886e958f1fb12b86f"
+    },
+    "host-candidate-run": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 23.83,
+        "user_seconds": 23.38,
+        "system_seconds": 0.17,
+        "max_process_rss_kib": 18184,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "5951140",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "13576",
+        "elapsed_seconds": "22.908",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/host-candidate-run.guard.log",
+      "log_sha256": "d0654c9fc924eb70507709472ede67c27a6a2d8dcc7f5b45218eed89ce8939a4"
+    },
+    "probe-baseline-build": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 8.22,
+        "user_seconds": 6.22,
+        "system_seconds": 0.83,
+        "max_process_rss_kib": 483072,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "5683396",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "494848",
+        "elapsed_seconds": "7.470",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/probe-baseline-build.guard.log",
+      "log_sha256": "adc8984bf3d3af5c00ffee6153cde45c98600df2c78c7c37f113839d31cee41c"
+    },
+    "probe-candidate-build": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 7.39,
+        "user_seconds": 6.36,
+        "system_seconds": 0.88,
+        "max_process_rss_kib": 483072,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "5632068",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "494848",
+        "elapsed_seconds": "7.455",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/probe-candidate-build.guard.log",
+      "log_sha256": "7680e9eae9f87fc6caf7284441622ac84d5361c8ab5edf9bd19c3bc5bd53a8a4"
+    },
+    "probe-baseline-run": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 0.39,
+        "user_seconds": 0.03,
+        "system_seconds": 0.18,
+        "max_process_rss_kib": 104752,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "6103608",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "77568",
+        "elapsed_seconds": "0.525",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/probe-baseline-run.guard.log",
+      "log_sha256": "73ef0efa54dbd13ae6892dd26574a11ec49b453afcf38d12c21f9961667336b0"
+    },
+    "probe-candidate-run": {
+      "status": "PASS",
+      "timing": {
+        "elapsed_seconds": 0.24,
+        "user_seconds": 0.03,
+        "system_seconds": 0.07,
+        "max_process_rss_kib": 104744,
+        "exit_code": 0
+      },
+      "guard": {
+        "min_available_kib": "6154800",
+        "baseline_swap_kib": "0",
+        "peak_swap_kib": "0",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "1792",
+        "elapsed_seconds": "0.268",
+        "stop_reason": "none"
+      },
+      "log_path": "output/modernization/r6-20261013/probe-candidate-run.guard.log",
+      "log_sha256": "75754ada9eda765b9463c1113f4f34d44f870831562f0590b7d2ae030e8df539"
+    }
+  },
+  "cost_interpretation": "Only validation cost/bounded execution recorded, no speed/RAM improvement claim and no R7 profiling. Host original and candidate ELF bytes identical, all scientific output equal; run wall differences are not attributed to this refactor. Guard monotonic/GNU time raw scopes retained, not mixed or causally explained.",
+  "truthful_build_binding": {
+    "original_CMake_source": "/home/shiroakane/ARCH",
+    "original_Host_build": "/home/shiroakane/ARCH/build-release-cpu",
+    "actual_Host_variants": {
+      "original": {
+        "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+        "commands": [
+          [
+            "/usr/bin/c++",
+            "-DARCH_CUDA_BUILD_ENABLED=0",
+            "-DARCH_HAS_KLU=1",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/src",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/include",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/cases",
+            "-I/home/shiroakane/ARCH/build-release-cpu/generated",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-std=gnu++20",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "-MD",
+            "-MT",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-0.o",
+            "-MF",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-0.o.d",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-0.o",
+            "-c",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests/host/grid/test_curvilinear_metrics.cpp"
+          ],
+          [
+            "/usr/bin/c++",
+            "-DARCH_CUDA_BUILD_ENABLED=0",
+            "-DARCH_HAS_KLU=1",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/src",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/include",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/cases",
+            "-I/home/shiroakane/ARCH/build-release-cpu/generated",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-std=gnu++20",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "-MD",
+            "-MT",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-1.o",
+            "-MF",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-1.o.d",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-1.o",
+            "-c",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/src/physics/boundary/PhysicalBoundaryHandler.cpp"
+          ],
+          [
+            "/usr/bin/c++",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-0.o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/host-1.o",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/arch_curvilinear_metrics",
+            "/home/shiroakane/ARCH/build-release-cpu/libarch_gravity_cpu.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/KLU/libklu.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/AMD/libamd.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/COLAMD/libcolamd.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/BTF/libbtf.a",
+            "-lm",
+            "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0",
+            "/usr/lib/x86_64-linux-gnu/libpthread.a"
+          ]
+        ],
+        "build_argv": [
+          "ninja",
+          "-C",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original",
+          "-j1"
+        ],
+        "elf": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/original/arch_curvilinear_metrics",
+        "source_identity_count": 162
+      },
+      "candidate": {
+        "source_root": "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH",
+        "commands": [
+          [
+            "/usr/bin/c++",
+            "-DARCH_CUDA_BUILD_ENABLED=0",
+            "-DARCH_HAS_KLU=1",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/src",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/tests",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/include",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/cases",
+            "-I/home/shiroakane/ARCH/build-release-cpu/generated",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-std=gnu++20",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "-MD",
+            "-MT",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-0.o",
+            "-MF",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-0.o.d",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-0.o",
+            "-c",
+            "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/tests/host/grid/test_curvilinear_metrics.cpp"
+          ],
+          [
+            "/usr/bin/c++",
+            "-DARCH_CUDA_BUILD_ENABLED=0",
+            "-DARCH_HAS_KLU=1",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/src",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/tests",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/include",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/cases",
+            "-I/home/shiroakane/ARCH/build-release-cpu/generated",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-std=gnu++20",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "-MD",
+            "-MT",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-1.o",
+            "-MF",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-1.o.d",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-1.o",
+            "-c",
+            "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/src/physics/boundary/PhysicalBoundaryHandler.cpp"
+          ],
+          [
+            "/usr/bin/c++",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-0.o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/host-1.o",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/arch_curvilinear_metrics",
+            "/home/shiroakane/ARCH/build-release-cpu/libarch_gravity_cpu.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/KLU/libklu.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/AMD/libamd.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/COLAMD/libcolamd.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+            "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/BTF/libbtf.a",
+            "-lm",
+            "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0",
+            "/usr/lib/x86_64-linux-gnu/libpthread.a"
+          ]
+        ],
+        "build_argv": [
+          "ninja",
+          "-C",
+          "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate",
+          "-j1"
+        ],
+        "elf": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/leaf-builds/candidate/arch_curvilinear_metrics",
+        "source_identity_count": 162
+      }
+    },
+    "fixed_libraries": [
+      {
+        "path": "/home/shiroakane/ARCH/build-release-cpu/libarch_gravity_cpu.a",
+        "sha256": "0228d6ac17cb4cee1824ac3d9af1ae83ef297e3567d01914ca95bb822a2b0f77",
+        "bytes": 4752356,
+        "mtime_ns": 1791613767181841230
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/KLU/libklu.a",
+        "sha256": "19131b4ea03fffb649ba075524bd048a35ca9f5732c69acb3387e351dbd53efd",
+        "bytes": 933624,
+        "mtime_ns": 1791279741701727333
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/AMD/libamd.a",
+        "sha256": "2225748520648bd8b2ec552ae269d40b74af174d295923c0e14c3f485b2ec320",
+        "bytes": 193962,
+        "mtime_ns": 1791279739349596844
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/COLAMD/libcolamd.a",
+        "sha256": "690860d4dc1be5935c6664db0deed9e4db2b566a8e2a2c3af66f3c8c3d150d01",
+        "bytes": 110622,
+        "mtime_ns": 1791279739802831290
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+        "sha256": "a292c06bcb2935a39011fd138fc691f7ca5698879ab053d2a47d76b854584d90",
+        "bytes": 32714,
+        "mtime_ns": 1791279738462452214
+      },
+      {
+        "path": "/home/shiroakane/ARCH/build-release-cpu/_deps/suitesparse-build/BTF/libbtf.a",
+        "sha256": "86505d7d5443f95a155495a0ecdf0b917db14523d19de021cd0bfdaff2c4afa4",
+        "bytes": 53578,
+        "mtime_ns": 1791279739611378809
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0",
+        "sha256": "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1",
+        "bytes": 352304,
+        "mtime_ns": 1766093810000000000
+      },
+      {
+        "path": "/usr/lib/x86_64-linux-gnu/libpthread.a",
+        "sha256": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+        "bytes": 8,
+        "mtime_ns": 1788444912000000000
+      }
+    ],
+    "fixed_library_dependency_basis": "10 arch_gravity_cpu object Ninja deps VALID, no changed-header dependency; all project library dependencies origin/baseline/candidate byte-identical. Host162 identities each checked, only changed header differs. Source-hash record in full leaf recipe.",
+    "actual_CUDA_probe": {
+      "schema": "R6 temporary short CUDA probe recipe v1",
+      "status": "PREPARED_NOT_RUN",
+      "scope": "One math CUDA TU and standalone cudart-linked probe, no old backend library or full production build. Original strict NVCC flags reused.",
+      "variants": {
+        "baseline": {
+          "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+          "source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/R6BoundsProbe.cu",
+          "source_sha256": "d9e27f88520c6ba755544198078c3d976e81d0ea7892e6f031d771977da59a09",
+          "compile": [
+            "/usr/local/cuda-12.3/bin/nvcc",
+            "-forward-unknown-to-host-compiler",
+            "-ccbin=/usr/bin/g++-12",
+            "-DARCH_CUDA_BUILD_ENABLED=1",
+            "-DARCH_HAS_CUDSS_PROVIDER=1",
+            "-DARCH_HAS_KLU=1",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/src",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/tests",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/include",
+            "-I/home/shiroakane/.codex/worktrees/d7a6/ARCH/cases",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/generated",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+            "-O3",
+            "-DNDEBUG",
+            "-std=c++20",
+            "--generate-code=arch=compute_86,code=[compute_86,sm_86]",
+            "--expt-relaxed-constexpr",
+            "-Xcompiler=-march=native",
+            "--fmad=false",
+            "--ftz=false",
+            "--prec-div=true",
+            "--prec-sqrt=true",
+            "-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off",
+            "-x",
+            "cu",
+            "-c",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/R6BoundsProbe.cu",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/baseline/probe.o"
+          ],
+          "link": [
+            "/usr/local/cuda-12.3/bin/nvcc",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/baseline/probe.o",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/baseline/probe"
+          ],
+          "target_header_sha256": "66e44994ec2e4903e735f756647d884b42d7472504884e33f50e76d3dfa5e7ea",
+          "authority_sha256": "dba755c6a248eab5c63181a1927e8b8c5889536b49b7ce26e2ba2f7570ad5610",
+          "elf": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/baseline/probe"
+        },
+        "candidate": {
+          "source_root": "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH",
+          "source": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/R6BoundsProbe.cu",
+          "source_sha256": "d9e27f88520c6ba755544198078c3d976e81d0ea7892e6f031d771977da59a09",
+          "compile": [
+            "/usr/local/cuda-12.3/bin/nvcc",
+            "-forward-unknown-to-host-compiler",
+            "-ccbin=/usr/bin/g++-12",
+            "-DARCH_CUDA_BUILD_ENABLED=1",
+            "-DARCH_HAS_CUDSS_PROVIDER=1",
+            "-DARCH_HAS_KLU=1",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/src",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/tests",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/include",
+            "-I/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH/cases",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/generated",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/KLU/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/AMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/SuiteSparse_config",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/COLAMD/Include",
+            "-I/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-src/BTF/Include",
+            "-O3",
+            "-DNDEBUG",
+            "-std=c++20",
+            "--generate-code=arch=compute_86,code=[compute_86,sm_86]",
+            "--expt-relaxed-constexpr",
+            "-Xcompiler=-march=native",
+            "--fmad=false",
+            "--ftz=false",
+            "--prec-div=true",
+            "--prec-sqrt=true",
+            "-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off",
+            "-x",
+            "cu",
+            "-c",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/R6BoundsProbe.cu",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/candidate/probe.o"
+          ],
+          "link": [
+            "/usr/local/cuda-12.3/bin/nvcc",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/candidate/probe.o",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/candidate/probe"
+          ],
+          "target_header_sha256": "2e11b1f25006311bed49fe3c5333bce3eba9e8ff224becbc2ca9676678c5bbba",
+          "authority_sha256": "dba755c6a248eab5c63181a1927e8b8c5889536b49b7ce26e2ba2f7570ad5610",
+          "elf": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r6-20261013/probe/candidate/probe"
+        }
+      }
+    },
+    "CMake_cache_or_provenance_bypass": false,
+    "baseline_after_integration": "Original source hash/path records are historical observations before integration. Canonical header now changed; retained original header and Git HEAD restore exact original for reproduction. Never run old whole-ARCH ELF as new production-source acceptance.",
+    "production_application_build": "Not rebuilt; current accepted runtime results are fresh Host leaf and temporary actual CUDA math probe only."
+  },
+  "unselected_candidates": [
+    {
+      "area": "SolverDispatch axis label mapping",
+      "decision": "DEFER; display suffix and source-assertion semantics need more work than this exact one-predicate reuse."
+    },
+    {
+      "area": "Euler/RK2/RK3 dispatch startup chain",
+      "decision": "DEFER; at least4 owners and startup/restart order, larger coupled verification cost."
+    },
+    {
+      "area": "Grid wrappers/RKL adapter/EOS host-device boundary",
+      "decision": "RETAIN; legitimate representation/execution differences or already-shared authority."
+    }
+  ],
+  "unchanged_targeted_source_hashes": {
+    "src/numerics/state/StateAdmissibility.h": "dba755c6a248eab5c63181a1927e8b8c5889536b49b7ce26e2ba2f7570ad5610",
+    "src/numerics/state/RzNativeClosure.h": "7d597b95dabfc44f5d0df6336f5123d06c8d5e1829e031f758421b5c9da791c6",
+    "src/numerics/integrator/GeometricSources.h": "33af82ede690e8e345028dd8a382ba08a243ab39e8093de85ea5b0530bb20f63",
+    "tests/math/geometry/RzReconstructionCases.h": "2c0ed21214be24ada72e5d3cb52e2385a1c4f61955be3bbcef25f392e73df3a9",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "bdeabcdd2352b20f170fba748ad26a36d5846de9652e9377d6c5e4e3bdcd3c48",
+    "src/physics/boundary/PhysicalBoundaryHandler.cpp": "0f8251cba802a4d47a92fe51c3bea10c0a155694a721713af460b4eba7e45b5a",
+    "tests/cuda/numerics/test_diffusion_rkl_parity.cu": "ea93d0f8ab0017bb99f61f8c9edb46dfbe7f76d74de98055f105a4eb6b3a7956",
+    "tests/cuda/numerics/test_diffusion_rkl_tabular.cu": "53dfd814e8e5cd2a91f8180fc02a70cc93de90b3fa12a99b4ee6157e7dacf61e",
+    "tests/cuda/numerics/DiffusionRklTestSupport.cuh": "9bed3c6df58d3648e460aca1e123c1585845cd56a5e52e2f95c5930bc2130b2e",
+    "cmake/tests/CudaTests.cmake": "3d9afbe518fbc86add06b2ef29bc22ee497774d2c6d06e7a48cf4b6a047cfecb",
+    "tools/validate_backend_results.py": "74ebcf961fc497b0a3ec759eac0836a9de4ef6b1134a3e4e4e8c2eb6bcff6a12",
+    "tests/tooling/validation/test_validate_backend_results.py": "23d04850a56eee1807dcab550f601037a61e25795740c4a97e96e7fed4a34b09",
+    "tools/run_memory_guarded.py": "acc2b841c10f067db9e1f1e34fecdf5f333f68a0748b25ee07982f0f67108a9f",
+    "src/core/config/ConfigValidation.h": "dd44b7a9cc7bf20773552ea124fcf2b24ceab25f4bd39c0be1d1b91845941bfa",
+    "src/core/config/ConfigurationRecord.h": "edfc7efdf6dc39bcd4999598195ba7b2179339229c417d87c3f8e35f3ae36fd8"
+  },
+  "prior_machine_receipts_preserved": {
+    "docs/development/modernization/R31AuditTriage-20261013.json": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+    "docs/development/modernization/R1R4Foundation-20261013.json": "03f3c1715a71f53d8110b269e997d7520effb08ce4723e1eeb385536ceebf082",
+    "docs/development/modernization/R32RklCompilationAndInactiveIdentity-20261013.json": "f287b74659853ac2bf39e4a1dbb602c4b1cabab2f149d991c7af7ec52a5144f4",
+    "docs/development/modernization/R5BuildEfficiency-20261013.json": "ca5255222a7590951d727fdf1f3b8c0c573fb416b7672559ce561a2b6eb4bbbf",
+    "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+    "docs/development/modernization/BaselineIdentity-20261012.json": "e8ad61c49a7c970ccae1ece92a6214b511214abee8096fd288679e5ee2b0a48d",
+    "docs/development/modernization/R33CloseoutAndR4Handoff-20261013.json": "3e0cda51ac875ed2e428ce307216341464e374bd820a663194e1e7a40655580c",
+    "docs/development/modernization/R41R42Implementation-20261013.json": "9d5166baa9f3a2f010d92e92e718897fca4638a45c0ed80228d812f69b361c5e",
+    "docs/development/modernization/R22NumericalChecks-20261012.json": "1bab0d6b87a62ff346989ffaafb02f027effdf33a70d5b49fc66b9c5afbf35dd"
+  },
+  "delegation": {
+    "owner": "arch-r6-shared-bounds-20261013",
+    "job_id": "eb14520a0dc24f679e7f1553b2d14800",
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "effort": "high",
+    "transport": "api",
+    "calls": 1,
+    "repairs": 0,
+    "elapsed_seconds": 34.40962808999939,
+    "usage": {
+      "input_tokens": 1164,
+      "cached_input_tokens": 0,
+      "output_tokens": 5729,
+      "reasoning_tokens": 4792,
+      "visible_output_tokens": 937,
+      "cost_usd": null,
+      "cost_kind": "not_quoted"
+    },
+    "adoption_scope": "Static evidence only, not implementation/runtime; Codex manager writes exact isolated tiny edit and executes, native reviewers independently inspect.",
+    "Gemini": "Not invoked; no useful separate frozen-prose task.",
+    "manager_cost": "unknown",
+    "workflow": "Single fixed package, one short provider semantic proof, four serial bounded builds/four runtime runs, no new permanent test/framework/global policy. Passive metrics once."
+  },
+  "not_run_or_closed": [
+    "No full production CUDA/application build.",
+    "No old RZ/Cellular/periodic long verification or R3 attribution/R5 measurement replay.",
+    "No new numerical criterion,default/repair or silent fallback.",
+    "No LFS network or large H5/checkpoint batch.",
+    "No hosted CI run; earlier local CI/LFS patch remains separate.",
+    "No closure of original RZ/Cellular/hierarchy scientific exits.",
+    "No R7."
+  ],
+  "evidence_index": {
+    "start-identity.json": {
+      "path": "output/modernization/r6-20261013/start-identity.json",
+      "sha256": "ed024a966540b621dd4ee3f8d0075f1059287b6f6371070703b864a1875d8c60"
+    },
+    "package-contract.json": {
+      "path": "output/modernization/r6-20261013/package-contract.json",
+      "sha256": "95a1bb1a57be43034d6c4f5490dcdc018673f8108620687ae4776b064ff50bc0"
+    },
+    "core-candidates.json": {
+      "path": "output/modernization/r6-20261013/core-candidates.json",
+      "sha256": "3b6be7de3045a13d10d111c04326b27e8983472a5e7c45f13bf702ddf36e2438"
+    },
+    "control-candidates.json": {
+      "path": "output/modernization/r6-20261013/control-candidates.json",
+      "sha256": "07557911253c4b7c829381a47460072822dc73ce5b43392de3ccff1d1c436d65"
+    },
+    "candidate-source-review.json": {
+      "path": "output/modernization/r6-20261013/candidate-source-review.json",
+      "sha256": "ebec35d06141ca1108515b131404fdb28a3c0acb787f459f7ff40582f25342f6"
+    },
+    "probe-review.json": {
+      "path": "output/modernization/r6-20261013/probe-review.json",
+      "sha256": "3b7912a173dbdd20d9b76463256c40e0c92e60e786cee37d9d95c36bf93371b1"
+    },
+    "build-design.json": {
+      "path": "output/modernization/r6-20261013/build-design.json",
+      "sha256": "b92ad09099facdae0eab539d79c9247a083ba6ef5c740f47b3b1483dbfee7a02"
+    },
+    "prepare-leaf-builds.py": {
+      "path": "output/modernization/r6-20261013/prepare-leaf-builds.py",
+      "sha256": "874c0958d1720d99881c338997ef58acb564961a8c42e12b3726993c9ff5fe5d"
+    },
+    "leaf-builds/recipe.json": {
+      "path": "output/modernization/r6-20261013/leaf-builds/recipe.json",
+      "sha256": "7f4c29eea681153ff67b0d8d7c63d3c8d77e6e5b686d3c591a66daadc1643b25"
+    },
+    "host-recipe-equivalence.json": {
+      "path": "output/modernization/r6-20261013/host-recipe-equivalence.json",
+      "sha256": "d392fdfc62180be94c6f4850ddad41bbb028c5762e9bc8db5c1125ec31aea895"
+    },
+    "probe-recipe.json": {
+      "path": "output/modernization/r6-20261013/probe-recipe.json",
+      "sha256": "d71fe0c71e1dd685a45d5225f6e21c9a700a1cf9a967776d5f91cb16382e00f1"
+    },
+    "R6BoundsProbe.cu": {
+      "path": "output/modernization/r6-20261013/R6BoundsProbe.cu",
+      "sha256": "d9e27f88520c6ba755544198078c3d976e81d0ea7892e6f031d771977da59a09"
+    },
+    "RzCellPolynomial.original.h": {
+      "path": "output/modernization/r6-20261013/RzCellPolynomial.original.h",
+      "sha256": "66e44994ec2e4903e735f756647d884b42d7472504884e33f50e76d3dfa5e7ea"
+    },
+    "RzCellPolynomial.candidate.h": {
+      "path": "output/modernization/r6-20261013/RzCellPolynomial.candidate.h",
+      "sha256": "2e11b1f25006311bed49fe3c5333bce3eba9e8ff224becbc2ca9676678c5bbba"
+    },
+    "candidate.patch": {
+      "path": "output/modernization/r6-20261013/candidate.patch",
+      "sha256": "da020415868a8daf3cc9904a3a82afc4a9f9ff9602f71186f6cf0f3f71eed33e"
+    },
+    "probe-comparison.json": {
+      "path": "output/modernization/r6-20261013/probe-comparison.json",
+      "sha256": "81f49300cb1f9d1a8b6c9d648559bf0bfa7aa5ce7c3cd92f752586caae50e629"
+    },
+    "numerical-acceptance.json": {
+      "path": "output/modernization/r6-20261013/numerical-acceptance.json",
+      "sha256": "51cfa49b207a3e84b3b510856d546ee162b508051109fc40a6a0549e8f7b8acf"
+    },
+    "final-acceptance-review.json": {
+      "path": "output/modernization/r6-20261013/final-acceptance-review.json",
+      "sha256": "40e43c400ca4b0c06722aa085d00b9d4f7ca077c07bfaad816c18b380d0accde"
+    },
+    "integration.json": {
+      "path": "output/modernization/r6-20261013/integration.json",
+      "sha256": "3e173cbebb5ca0af84af6cdde2139110c14774818d0e91b76ca92e0ff58b1706"
+    },
+    "deepseek-delivery.json": {
+      "path": "output/modernization/r6-20261013/deepseek-delivery.json",
+      "sha256": "81799d9187b890228ae12f06fe89161e8025f759496ef7709ec062d112824878"
+    },
+    "deepseek-summary.json": {
+      "path": "output/modernization/r6-20261013/deepseek-summary.json",
+      "sha256": "7153c47de0def884240f63b9f18d034c19e0b299cf0dca2d004ca26071769aa4"
+    },
+    "deepseek-review.json": {
+      "path": "output/modernization/r6-20261013/deepseek-review.json",
+      "sha256": "d1ebf6161aa119f172086689c538a68ed80c284cee658509a88e1014ae62e844"
+    },
+    "workflow-observation.json": {
+      "path": "output/modernization/r6-20261013/workflow-observation.json",
+      "sha256": "334e7fcf11d4a10ee269de6197dea2e1fad2c455531bdd2b74086a23543f9acc"
+    }
+  },
+  "documentation": "Only update main plan,existing recovery/navigation/ownership and this single machine index; no new dated human report.",
+  "follow_up": "Stop this R6 first package after final QA; additional work requires an evidenced separate package, never widen to generic validators, axis presentation or all dispatch chains automatically.",
+  "final_documentation_identity_QA": {
+    "verdict": "ACCEPT",
+    "checks": 19,
+    "path": "output/modernization/r6-20261013/final-independent-qa.json",
+    "sha256": "469a687f11cfdf145129250acf44cb7720b1358bca0a3f5c008f36ce374d744c",
+    "summary": "23 evidence/9 historical JSON/15 targeted source hashes;47 prior dirty files beyond4 authorized docs retained;4 Markdown91 links/176 table rows; source/build/FP/O7 boundaries and exact integrated header pass.",
+    "checked_index_before_closure_sha256": "88f182bbe96123b3ae2ccbb66fdd0f0a5969f379b0c91a122f773000b39588c1",
+    "closure_delta": "Only final QA pointer and evaluation-worktree cleanup status appended after independent QA; no source,doc,numerical or measured fields changed."
+  },
+  "evaluation_worktree_cleanup": {
+    "root": "/home/shiroakane/.codex/worktrees/r6-shared-bounds/ARCH",
+    "archive_tool_result": "queued",
+    "physical_removal_confirmed": true,
+    "retained_candidate": "Exact original and candidate headers,patch,source identities and numerical artifacts in local R6 output;current production header integrated. Managed archive preserves recoverable Git snapshot."
+  }
+}

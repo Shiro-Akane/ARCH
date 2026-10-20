@@ -14,9 +14,16 @@
 
 #pragma once
 
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+
+#include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
 #include "cuda/hydro/policies/HydroFluxPolicies.cuh"
-#include "numerics/flux/InvariantDomainFlux.h"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
+#include "numerics/flux/InvariantDomainFlux.h"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 
 namespace arch::cuda
@@ -49,6 +56,10 @@ ARCH_INLINE void reconstruct_amr_face(
         species_left, species_right, species_cell);
 }
 
+/** Traverse the actual selected directional faces and publish limited fluxes.
+ * Preserve reconstruction, limiting, stores and capture order. Required EOS
+ * status remains owned by the caller.
+ */
 template <typename Reconstruction, typename Flux, typename EosView>
 __device__ inline void hydro_face_kernel_work(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
@@ -91,15 +102,48 @@ __device__ inline void hydro_face_kernel_work(
         reconstruct_amr_face<Reconstruction>(
             state, grid, direction, i, j, k, cell, stride, eos, left, right,
             species_left, species_right, species_cell);
+        int wall_side=-1;
+        const int face_coordinate=direction==0?i+1:direction==1?j+1:k+1;
+        const int lower=direction==0?grid.is:direction==1?grid.js:grid.ks;
+        const int upper=direction==0?grid.ie:direction==1?grid.je:grid.ke;
+        state.hydro_boundary.reflecting_side(direction,face_coordinate,lower,upper,wall_side);
+        FluidVector face_flux;
+        if (wall_side>=0) {
+            // Reuse the sole Host/device wall assembly and its selected EOS
+            // law. These four species planes are the existing lane scratch.
+            const int interior=wall_side==0?cell+stride:cell;
+            for (int sp=0;sp<state.n_species;++sp)
+                species_cell[sp]=state.species(sp,interior);
+            double pressure=0.,speed=0.;
+            if (mean_pressure && mean_sound_speed) {
+                pressure=mean_pressure[interior];speed=mean_sound_speed[interior];
+            } else FluxAdmissibility::required_mean_thermo(state.load(interior),
+                state.n_species?species_cell:nullptr,eos,pressure,speed);
+            const auto base_species=[&](int sp) {return state.species(sp,interior);};
+            const auto high_compute=[&](const FluidVector& l,const FluidVector& r,
+                const double* xl,const double* xr,const auto& trial,
+                FluidVector& high,double* high_species) {
+                Flux::compute(l,r,xl,xr,state.n_species,trial,direction,coefficient,
+                    high,high_species,&means,cell,cell+stride);
+            };
+            if(FluxAdmissibility::assemble_wall_point(state.load(cell),state.load(cell+stride),
+                left,right,direction,wall_side,state.n_species,pressure,speed,eos,
+                species_left,species_right,species_cell,face_species_flux,
+                base_species,high_compute,face_flux)!=FluxAdmissibility::PointWallStatus::valid) {
+                if constexpr(requires {eos.report_failure();})eos.report_failure();
+                face_flux=FluidVector(arch::state::invalid(),arch::state::invalid(),
+                    arch::state::invalid(),arch::state::invalid(),arch::state::invalid());
+                for(int sp=0;sp<state.n_species;++sp)face_species_flux[sp]=arch::state::invalid();
+            }
+        } else {
         FluxAdmissibility::limit_reconstruction(state.load(cell), left);
         FluxAdmissibility::limit_reconstruction(state.load(cell + stride), right);
-        FluidVector face_flux;
         if constexpr (requires {
             eos.bind_mean_thermodynamics(state, cell, cell + stride,
                                          mean_pressure, mean_sound_speed);
         }) eos.bind_mean_thermodynamics(state, cell, cell + stride,
                                         mean_pressure, mean_sound_speed);
-        const auto trial_eos = FluxAdmissibility::candidate_eos(eos);
+        const auto trial_eos = arch::state::candidate_eos(eos);
         // The method choice is valid even without cached thermodynamics (the
         // inexpensive ideal EOS needs no mean buffers). A view with null P/c
         // safely declines reuse and still carries the configured wave bounds.
@@ -123,10 +167,23 @@ __device__ inline void hydro_face_kernel_work(
                 species_left, species_right, state.n_species, eos, direction,
                 face_flux, face_species_flux);
         }
+        }
         const int face = cell + stride;
         flux.store(face, face_flux);
         for (int species = 0; species < state.n_species; ++species)
             flux.set_species(species, face, face_species_flux[species]);
+        // Observe the exact flux divergence and reflux consume, after
+        // admissibility limiting and physical-boundary ghost filling.
+        // Hydro reconstructs from the left cell, while divergence addresses
+        // the face by its right-cell index. Shift only the normal coordinate
+        // so both domain faces refer to the flux just stored at cell+stride.
+        // Hydro heat flux is zero; only owned physical face planes are touched.
+        if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1])
+            arch::boundary::CaptureBoundaryFlux(state.capture, direction,
+                i+(direction==0),j+(direction==1),k+(direction==2),
+                grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, face_flux,
+                state.n_species ? flux.mass_fractions + face : nullptr,
+                state.n_species, flux.total_size, 0.0);
     }
 }
 

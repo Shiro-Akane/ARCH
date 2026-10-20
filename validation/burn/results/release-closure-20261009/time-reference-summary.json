@@ -1,0 +1,140 @@
+{
+  "scope": "independent new isochoric C/O time reference only",
+  "release_qualified": false,
+  "production_long_run_passed": false,
+  "baseline_commit": "306096cb174ad1a933b3a0f3ef5bf208e4131a42",
+  "recorded_utc": "2026-10-09T08:17:56.458637+00:00",
+  "inputs": {
+    "network": "aprox13",
+    "rho": 10000000.0,
+    "temperature_initial": 3000000000.0,
+    "CO_initial": [
+      0.5,
+      0.5
+    ],
+    "interval_seconds": 1e-06,
+    "EOS": "bundled Helmholtz, Coulomb1",
+    "NSE": false,
+    "kinetic": "fixed density and composition-coupled energy firstlaw"
+  },
+  "source_sha256": {
+    "tests/host/burn/test_burn_mainline_reference.cpp": "06e6dfab4b8b77236793d027ca549417ec72b6498a3b5be54fba997b29ac241b",
+    "validation/burn/time_reference.py": "b918e9d42cab241ac46ba9fe85cd902598e823e14d2d9e389fe645f9ae4726bd"
+  },
+  "binary_sha256": "92a2f09b4f4d0c95cf4178f36dd66e9dc6016190edc98b55bf96c3c16c8e7f60",
+  "table": {
+    "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "reference_endpoint_hex": [
+    "0x1.621881e720589p-9",
+    "0x1.8d9fe724b2de3p-5",
+    "0x1.03f6780c54ff3p-1",
+    "0x1.c3ba27b8226f2p-4",
+    "0x1.246b4e993c4f4p-3",
+    "0x1.5d6d8cb9b3722p-3",
+    "0x1.013ef324008e7p-6",
+    "0x1.93616cb2c3735p-10",
+    "0x1.87cb8520ada26p-14",
+    "0x1.ceffe4e1c2599p-22",
+    "0x1.00c33b5aa7a3dp-29",
+    "0x1.557d666e90960p-38",
+    "0x1.ea6c991e42ac5p-49",
+    "0x1.d7a45c6326cafp+31"
+  ],
+  "independent_endpoint_energy_hex": "0x1.28596ba0a9a02p+59",
+  "independent_energy_change": 2.5807001585268736e+17,
+  "time_reference_disagreement": {
+    "budget": 1e-10,
+    "relative_temperature": 1.2109202529586582e-11,
+    "rigorous_error_bound": false,
+    "species_linf": 1.718317155230409e-11
+  },
+  "observations": [
+    {
+      "first_law_absolute_budget": 258676939.21604952,
+      "first_law_absolute_error": 7408896.0,
+      "integrated_energy": 2.5807001584527846e+17,
+      "mass_closure": 1.1102230246251565e-16,
+      "max_step_fraction": 1.0,
+      "method": "DOP853",
+      "minimum_abundance": 3.4030015708007944e-15,
+      "relative_temperature": null,
+      "relative_temperature_change": 0.3188067151919223,
+      "rhs_calls": 1118,
+      "species_change_linf": 0.45146183829129805,
+      "species_linf": null
+    },
+    {
+      "first_law_absolute_budget": 258676939.21604952,
+      "first_law_absolute_error": 7408896.0,
+      "integrated_energy": 2.5807001584527846e+17,
+      "mass_closure": 1.1102230246251565e-16,
+      "max_step_fraction": 0.125,
+      "method": "DOP853",
+      "minimum_abundance": 3.4030015708007944e-15,
+      "relative_temperature": null,
+      "relative_temperature_change": 0.3188067151919223,
+      "rhs_calls": 1118,
+      "species_change_linf": 0.45146183829129805,
+      "species_linf": null
+    },
+    {
+      "first_law_absolute_budget": 258676939.21604952,
+      "first_law_absolute_error": 19048416.0,
+      "integrated_energy": 2.5807001583363894e+17,
+      "mass_closure": 2.55351295663786e-15,
+      "max_step_fraction": 1.0,
+      "method": "Radau",
+      "minimum_abundance": 3.403001434669942e-15,
+      "relative_temperature": null,
+      "relative_temperature_change": 0.3188067151759526,
+      "rhs_calls": 19352,
+      "species_change_linf": 0.45146183827925673,
+      "species_linf": null
+    },
+    {
+      "first_law_absolute_budget": 258676939.21604952,
+      "first_law_absolute_error": 19048416.0,
+      "integrated_energy": 2.5807001583363894e+17,
+      "mass_closure": 2.55351295663786e-15,
+      "max_step_fraction": 0.125,
+      "method": "Radau",
+      "minimum_abundance": 3.403001434669942e-15,
+      "relative_temperature": null,
+      "relative_temperature_change": 0.3188067151759526,
+      "rhs_calls": 19352,
+      "species_change_linf": 0.45146183827925673,
+      "species_linf": null
+    }
+  ],
+  "method_scope": "Independent time integration, same production nuclear rates and EOS queries; separate60/80digit EOS oracle. Two stepceilings were inactive in eachmethod (identical endpoints/calls), not claimed as active refinements.",
+  "controls": "Original immutable reference and oldwindows unchanged. New empirical disagreement1e-10 consumes1% of existing productionglobal1e-8; not rigorous error certificate. Actual massclosure/nonnegativeabundances and firstlaw checked.",
+  "cost": {
+    "wrong_build_path_failed_guard_seconds": 1.021,
+    "actual_same_owner_build_guard_seconds": 12.128,
+    "original_owner_test_guard_seconds": 42.336,
+    "derivation_guard_seconds": 12.104
+  },
+  "delegation": {
+    "provider": "actual DeepSeek Flash high single API genericpublic budget advisory",
+    "worker_seconds": 25.04,
+    "input_tokens": 1417,
+    "cached_input_tokens": 256,
+    "output_tokens": 4162,
+    "thinking_tokens": 3736,
+    "visible_tokens": 426,
+    "estimated_USD_range": [
+      0.00267212,
+      0.00534424
+    ],
+    "actual_bill": null,
+    "manager_active_cost": null,
+    "accepted": "fixed-density firstlaw and empirical disagreement are corroboration, not mathematical bound",
+    "excluded": "mandatorythreelevels lacked requirement; blankettotalTconditioning claim wrong; independentbindingdata notneeded for numerical firstlaw",
+    "overlap": "CUDAcompile, no localresource conflict",
+    "blocking_wait_seconds": 0,
+    "extra_scientific_rework": 0
+  },
+  "next": "Actual public long burn trajectory, endpoint and restart/durability, then backend/performance; reference alone is notreleasequalification."
+}

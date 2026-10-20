@@ -1,0 +1,57 @@
+{
+  "status": "PASS_AFFECTED_CPU_ENGINEERING_AND_POINT_LAW_ONLY",
+  "sourceCommit": "9bd329f143ce02e6e23daf07eaa9caab1e61a48c",
+  "affectedCpuOwners": {
+    "names": [
+      "curvilinear_metrics",
+      "gravity_stage_contract",
+      "composite_poisson_analytic",
+      "self_gravity_lifecycle",
+      "composite_poisson_contract"
+    ],
+    "passed": 5,
+    "testSeconds": 69.06,
+    "guardSeconds": 69.371,
+    "junitSha256": "86b41174971960460ed4fc8597ac0807e01e4fd4f921ce9ea1c3bda1a69277a1"
+  },
+  "defaultTooling": {
+    "passed": 658,
+    "testSeconds": 38.234,
+    "guardSeconds": 39.203,
+    "failedPrior652RecordRetained": true
+  },
+  "sharedPointStress": {
+    "existingOwner": "curvilinear_metrics",
+    "testSeconds": 15.5752,
+    "guardSeconds": 16.084,
+    "pointCasesProspective": 57,
+    "originalViscousPdeBodiesUnchanged": true,
+    "fullTensorOperatorAccepted": false,
+    "CUDACompiled": false
+  },
+  "build": {
+    "strictFloatingPoint": true,
+    "newSharedLeafBuildGuardSeconds": 18.185,
+    "cumulativeSeconds": 1651.035,
+    "managerCapSeconds": 1800,
+    "failedBuildSecondsRetained": true
+  },
+  "homologyReference": {
+    "attempts": 2,
+    "eachMaxCallbacks": 1800000,
+    "eachComplete": false,
+    "sitesCertified": 410,
+    "sitesTotal": 808,
+    "memoSecondHits": 0,
+    "guardSeconds": [
+      103.496,
+      101.469
+    ],
+    "originalWidthsAnd70dps": true,
+    "fullRawRetainedLocal": true
+  },
+  "scienceQualified": false,
+  "CUDAQualified": false,
+  "fullReleaseQualified": false,
+  "recordedAtUtc": "2026-10-07T21:18:47.308754+00:00"
+}

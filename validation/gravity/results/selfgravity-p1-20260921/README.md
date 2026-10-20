@@ -47,7 +47,7 @@ request its CUDA-only build target in the CPU configuration produced no build
 or CUDA execution; the bounded build then selected only available CPU targets.
 
 GUI's previously reported 18/18 CPU checks were not repeated, per user request;
-see [GUI session handoff](../../../../src/api/PREVIEW_SESSION_HANDOFF.md).
+see [GUI session handoff](../../../../src/api/docs/archive/PREVIEW_SESSION_HANDOFF.md).
 CUDA compilation, runtime parity, sanitizer and performance gates are explicitly
 deferred by the user's current instruction. KLU was disabled for this P1 build;
 no new sparse provider was implemented or qualified.

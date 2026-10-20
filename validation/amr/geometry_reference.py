@@ -62,7 +62,8 @@ def viscous_transcript(text, backend):
         records[key] = error
     cases = {(geometry, dimension, uniform, slope)
              for geometry in ('cartesian', 'cylindrical', 'spherical')
-             for dimension in (1, 2, 3) for slope in (0., .1)
+             for dimension in (1, 2, 3) if (geometry, dimension) != ('cylindrical', 2)
+             for slope in (0., .1)
              for uniform in ((0,) if dimension == 1 else (0, 1))}
     spacings = (.05, .025, .0125)
     if set(records) != {(*case, spacing) for case in cases for spacing in spacings}:
@@ -106,7 +107,8 @@ def origin_transcript(text, backend):
     if (set(stability) != radial_cases
             or set(density) != {(geometry, contrast)
                 for geometry in ('cartesian', 'cylindrical', 'spherical') for contrast in (1., 10., 100.)}
-            or set(origins) != {(*case, dim) for case in radial_cases for dim in (1, 2, 3)}):
+            or set(origins) != {(*case, dim) for case in radial_cases for dim in (1, 2, 3)
+                if (case[0], dim) != ('cylindrical', 2)}):
         raise ValueError('incomplete origin/stability coverage')
     return dict(origin_samples=len(origins), contraction_matrices=len(stability),
                 density_contraction_matrices=len(density),
@@ -132,7 +134,8 @@ def scalar_transcript(text):
         records[key] = errors
     cases = {(tag, geometry, dim)
              for tag in ('DIFFUSION_SPATIAL_CONVERGENCE', 'THERMAL_SPATIAL_CONVERGENCE')
-             for geometry in ('cartesian', 'cylindrical', 'spherical') for dim in (1, 2, 3)}
+             for geometry in ('cartesian', 'cylindrical', 'spherical') for dim in (1, 2, 3)
+             if (geometry, dim) != ('cylindrical', 2)}
     spacings = (.05, .025, .0125)
     if set(records) != {(*case, h) for case in cases for h in spacings}:
         raise ValueError('incomplete thermal/species refinement coverage')

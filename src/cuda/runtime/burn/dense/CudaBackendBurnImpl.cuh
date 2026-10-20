@@ -81,9 +81,10 @@ __global__ void burn_cells_kernel(
     group.match(cell.fluid.eng); group.match(cell.burn_dt);
     for (int species = 0; species < Network::NUM_SPECIES; ++species)
         group.match(cell.state[species]);
-    if (group.leader())
+    if (group.leader()) {
         execute_burn_policy_cell<Network, Ode::template solver>(
             cell, workspaces[shared_workspace ? 0 : linear], checked_eos, config, network);
+    }
     // Preserve the original failure latch before each lane publishes its own
     // disposition. Never let a finite fallback erase the leader's EOS failure.
     const int eos_failed = group.broadcast(statuses[linear]);

@@ -1,0 +1,22 @@
+{
+  "schema": "arch-historical-producer-math-input-1",
+  "recordSha256": "f3bbb564e60313767708f9383ef39b739bd1318edcc22fd561dc373c14d2885c",
+  "recordBytes": 21387816,
+  "cells": 8192,
+  "faces": 16512,
+  "declaredInputsCount": 543,
+  "declaredInputStatsAndSha256Unchanged": true,
+  "elfSha256": "095bdaacaba2b4f74144afeef450bf24e7ad95a9b210fcaa6441f3512d9804ba",
+  "originalWholeSourceAfterFence": "FAILED",
+  "originalWrapperExitCode": 1,
+  "standaloneProducerExit": "UNKNOWN",
+  "producerReportedCompletion": true,
+  "actualSeconds": 762.204,
+  "mathematicalUse": "historical immutable compiled-producer input only",
+  "currentHeadReleaseEvidence": false,
+  "physicalQualified": false,
+  "scienceAccepted": false,
+  "constructorGravityType": "none; private explicit SelfGravity, not production dispatch",
+  "independentReadonlyAuditSha256": "fd4399178e3f13adb3f6129a80ac80d0661abd7c933e0c83b39b1fc950e770e8",
+  "observedUtc": "2026-10-07T10:26:29.711188+00:00"
+}

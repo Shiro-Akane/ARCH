@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "utc": "2026-10-09T23:33:55.169997+00:00",
+  "scope": "O9 optional resource-observation tooling; no production trajectory or leak-freedom qualification",
+  "head": "a82dc3c1d9dd67c564193d9854f5299b4b56922d",
+  "working_copy_changes": true,
+  "source_sha256": {
+    "tools/run_memory_guarded.py": "acc2b841c10f067db9e1f1e34fecdf5f333f68a0748b25ee07982f0f67108a9f",
+    "tests/tooling/resources/test_run_memory_guarded.py": "75decb3faecd7fc74710c28eee9f5f0b2dc39e0f9759dd8e8f2dcbe1741092db"
+  },
+  "command": [
+    "python3",
+    "tests/tooling/resources/test_run_memory_guarded.py",
+    "-v"
+  ],
+  "tests": {
+    "passed": 61,
+    "failed": 0,
+    "skipped": 0,
+    "elapsed_seconds": 6.172,
+    "retained_original_methods": 50,
+    "current_methods": 61,
+    "new_ctest_targets": 0,
+    "new_ci_jobs": 0
+  },
+  "verified": [
+    "Live child positive RSS and fd observations tied to PID/start_time",
+    "Failed child command retains samples and original exit status",
+    "PID reuse rejected and unreadable live counters explicitly missing",
+    "Requested output cannot overwrite existing samples",
+    "Guard-stop cleanup preserved; default sampling disabled"
+  ],
+  "limits": [
+    "Per-owned-process monitor samples, not atomic host totals",
+    "Short-lived processes can be missed between polls",
+    "Complete observation is not scientific success or absence of leaks",
+    "Remaining O9 long coupled trajectories and restart still pending"
+  ],
+  "raw_data_uploaded": false
+}

@@ -1,0 +1,36 @@
+{
+  "sourceHead": "aed4ecf07f6315926bc85abf6163c89a61f252c1",
+  "sourceFingerprints": {
+    "src/numerics/elliptic/CartesianPoisson.cpp": "e1e45a1f5d9b3be1f06b6888c94ad5b6e8693df9a69c9cd9778030cad19c086d",
+    "src/numerics/multigrid/CompositeMultigrid.cpp": "614c60356c68fca525213357ce93669f548eaa4946b4631cc9efe6b85a20853a",
+    "tests/host/gravity/test_composite_poisson.cpp": "a1f7a08eb10f088078a1dccaa91b3721e2c6c8a75fb19646ef34b55203c31565"
+  },
+  "checks": [
+    {
+      "mode": "coarse-diagnostic",
+      "exitCode": 0,
+      "elapsedSeconds": 0.02586846499616513,
+      "tail": "Composite coarse mesh cells=(4,4,4), spacing=(0.250000,0.062500,0.062500): Poisson prototype spacing ratio=4.000000 exceeds limit=223662"
+    },
+    {
+      "mode": "contract",
+      "exitCode": 0,
+      "elapsedSeconds": 0.03972716599673731,
+      "tail": "Composite contracts passed\nradial geometry=3 refined=0 n=16 phi=2.1257139240344191e-06 face=2.5283519498908568e-14 cycles=1\nradial geometry=3 refined=0 n=32 phi=1.4457984125882015e-07 face=1.0234966567580824e-13 cycles=1\nradial geometry=3 refined=0 n=64 phi=9.4309808808649871e-09 face=2.7023453923502774e-13 cycles=1\nradial geometry=3 refined=1 n=16 phi=1.1264958321490785e-06 face=1.4973285401306187e-12 cycles=6\nradial geometry=3 refined=1 n=32 phi=9.8527358815787432e-08 face=1.0454419018681942e-12 cycles=6\nradial geometry=3 refined=1 n=64 phi=7.0226987697118209e-09 face=9.1059183114085165e-13 cycles=6\nradial geometry=2 refined=0 n=16 phi=2.7632724734403041e-06 face=1.2869654384301048e-14 cycles=1\nradial geometry=2 refined=0 n=32 phi=1.8521396135717884e-07 face=3.3431605951144062e-14 cycles=1\nradial geometry=2 refined=0 n=64 phi=1.1947620682761682e-08 face=1.3042618507326007e-14 cycles=2\nradial geometry=2 refined=1 n=16 phi=1.328186976911766e-06 face=1.0430930844366119e-14 cycles=7\nradial geometry=2 refined=1 n=32 phi=1.1607546598672715e-07 face=1.7678231888012905e-14 cycles=7\nradial geometry=2 refined=1 n=64 phi=8.2281558154178419e-09 face=2.0341411308621167e-14 cycles=22\n"
+    }
+  ],
+  "mainBinaryRebuilt": false,
+  "initialFixtureBinarySha256": "de9c6eb962e70fa104d6d80cb51d000927aae754b2b0675a1a436a24dcf8d414",
+  "fixtureBinarySha256": "c9029cc45e3fcbbbd1fe52eb9a4d303d4f4b7b53e172740fc429b51e968a734a",
+  "finalDiagnostic": {
+    "exitCode": 0,
+    "elapsedSeconds": 0.024628688996017445,
+    "message": "Composite coarse mesh cells=(4,4,4), spacing=(0.250000,0.062500,0.062500): Poisson prototype spacing ratio=4.000000 exceeds limit=2",
+    "exactGuardMessage": true
+  },
+  "formatCorrection": "Initial diagnostic test emitted a multi-character newline literal; fixed and tightened ends_with guard text, diagnostic retested; production unchanged and contract not rerun.",
+  "status": "PASS_DIAGNOSTIC_ONLY",
+  "fullJeansCampaign": "FAIL",
+  "scienceGate": "NOT_CLEARED",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/poisson-coarse-diagnostic-20261004"
+}

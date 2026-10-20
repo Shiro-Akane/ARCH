@@ -1,0 +1,151 @@
+{
+  "scope": "Linux native GravityBox Cartesian 1D Init/initial AMR; no Poisson/evolution acceptance",
+  "launchSourceBaseline": "b625728717ec269cac875e0394203bd99226fd5c",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "configSha256": "524bd50ae34e1408cf79b05159424264c6b92b351e64fa52971b6b95dc642fc5",
+  "windowId": 62849886,
+  "productionAssets": true,
+  "field": {
+    "samples": 512,
+    "domainCm": [
+      0,
+      100000000
+    ],
+    "densityDisplayedRange": [
+      9990000,
+      10010000
+    ],
+    "availableFields": [
+      "Density",
+      "Pressure",
+      "Temperature",
+      "X velocity",
+      "Total energy density",
+      "Specific internal energy"
+    ],
+    "gravityFieldsAbsent": true,
+    "sample": {
+      "index": 99,
+      "xDisplayedCm": 19433594,
+      "xSampleCenterCm": 19433593.75,
+      "densityDisplayed": 10003427,
+      "pressureDisplayed": 8.3173117e+21,
+      "temperatureDisplayed": 10000000,
+      "velocityX": 0,
+      "energyDisplayed": 1.2475967e+22,
+      "specificEnergyDisplayed": 1247169400000000.0
+    },
+    "scope": "UI-rounded values, not independent physical oracle"
+  },
+  "state": {
+    "gravityType": "self; editable and enabled",
+    "eos": "ideal / ready",
+    "species": "gas",
+    "fieldSnapshotHierarchy": "not constructed; independent AMR result separate"
+  },
+  "amr": {
+    "complete": true,
+    "leafBlocks": 4,
+    "levels": {
+      "0": 4
+    },
+    "activeCells": 64,
+    "completedPasses": 0,
+    "configuredPoolCapacity": 64,
+    "workingCapacity": 64,
+    "selection": {
+      "logicalKey": "0:3:0:0",
+      "level": 0,
+      "logicalIndex": [
+        3,
+        0,
+        0
+      ],
+      "lowerCm": [
+        75000000
+      ],
+      "upperCm": [
+        100000000
+      ],
+      "cellShape": [
+        16
+      ],
+      "cellSpacingCm": [
+        1562500
+      ]
+    },
+    "cellFieldArrays": "not provided by API",
+    "matchingIdentity": "observed UI label only"
+  },
+  "cleanup": {
+    "execSession": 99083,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1580187,
+        "parentPid": 1580186,
+        "startTicks": "6423666",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1580189,
+        "parentPid": 1580187,
+        "startTicks": "6423668",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1580190,
+        "parentPid": 1580187,
+        "startTicks": "6423668",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1580212,
+        "parentPid": 1580189,
+        "startTicks": "6423674",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1580214,
+        "parentPid": 1580187,
+        "startTicks": "6423675",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1580227,
+        "parentPid": 1580187,
+        "startTicks": "6423676",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1580595,
+        "parentPid": 1580190,
+        "startTicks": "6424134",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1581567,
+        "parentPid": 1580227,
+        "startTicks": "6425863",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allExactPidStartTicksGone": true
+  },
+  "inputUnchanged": true,
+  "noScientificOutput": true,
+  "noSourceChange": true,
+  "noBaselineRepeat": true,
+  "wheelPan": "unverified; no wheel input this turn",
+  "remoteAvailable": false
+}

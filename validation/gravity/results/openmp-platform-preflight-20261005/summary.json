@@ -1,0 +1,190 @@
+{
+  "status": "STANDALONE_OPENMP_PLATFORM_OBSERVATIONS_PASS_NOT_BENCHMARK",
+  "baseline": "a159dae30407c4a46e1ec578b8c9e2db10d4ea42",
+  "tests": 6,
+  "cpuModels": [
+    "Intel(R) Core(TM) i7-14700K"
+  ],
+  "allowedLogicalCpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27
+  ],
+  "frequencyPolicy": {
+    "state": "unavailable",
+    "reason": "cpufreq policies not exposed"
+  },
+  "gpuNames": [
+    "NVIDIA GeForce RTX 4070 Ti"
+  ],
+  "rows": [
+    {
+      "requestedThreads": 1,
+      "observedTeam": 1,
+      "numPlaces": 28,
+      "procBind": 4,
+      "cpuIds": [
+        0
+      ],
+      "placeIds": [
+        0
+      ],
+      "allMasksSingleCpu": true,
+      "probeExecutableSha256": "914fc2ff79f7ba70d62a630f6a419c3467e0e962a751511a54399fe0d2a1ffda",
+      "platformMatch": true
+    },
+    {
+      "requestedThreads": 8,
+      "observedTeam": 8,
+      "numPlaces": 28,
+      "procBind": 4,
+      "cpuIds": [
+        0,
+        4,
+        8,
+        12,
+        16,
+        19,
+        22,
+        25
+      ],
+      "placeIds": [
+        0,
+        4,
+        8,
+        12,
+        16,
+        19,
+        22,
+        25
+      ],
+      "allMasksSingleCpu": true,
+      "probeExecutableSha256": "914fc2ff79f7ba70d62a630f6a419c3467e0e962a751511a54399fe0d2a1ffda",
+      "platformMatch": true
+    },
+    {
+      "requestedThreads": 28,
+      "observedTeam": 28,
+      "numPlaces": 28,
+      "procBind": 4,
+      "cpuIds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "placeIds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "allMasksSingleCpu": true,
+      "probeExecutableSha256": "914fc2ff79f7ba70d62a630f6a419c3467e0e962a751511a54399fe0d2a1ffda",
+      "platformMatch": true
+    }
+  ],
+  "sourceSha256": {
+    "tools/openmp_affinity_probe.cpp": "3f9cbc35493e8cee48eb15567aa22d70d5a4ea07e71fc4d7564d25bd5bd511be",
+    "validation/gravity/curved/platform_preflight.py": "f3d287a921e602d65eea8f802656297eea5cd623ffafd1589c7e2e5e23e95223",
+    "tests/tooling/validation/test_platform_preflight.py": "c001149fb4a0c1cc89f64f265b97d39cdafe52001c24d07f8173e67af77a2e68"
+  },
+  "compilerPath": "/usr/bin/c++",
+  "compileCommand": [
+    "/usr/bin/c++",
+    "-std=c++20",
+    "-O2",
+    "-fopenmp",
+    "-Wall",
+    "-Wextra",
+    "-pedantic",
+    "/home/arch/projects/ARCH-compute-optim/tools/openmp_affinity_probe.cpp",
+    "-o",
+    "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/openmp-platform-preflight-20261005/final/openmp-affinity-probe"
+  ],
+  "productionExecutableSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "limitations": [
+    "Standalone helper only, not ARCH production OpenMP kernel team sampling",
+    "No physical/P-E core inference, best-thread selection or formal benchmark qualification",
+    "Snapshot does not prove idle state, peaks or ARCH resource attribution",
+    "No CUDA build/workload, simulation or long-run scientific gate change"
+  ],
+  "compilerSha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+  "compilerVersion": "x86_64-linux-gnu-g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "observedOpenmpLibrarySha256": {
+    "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0": "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1"
+  }
+}

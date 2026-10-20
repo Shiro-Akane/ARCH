@@ -390,6 +390,146 @@ void test_validation_and_overflow_guards()
     fence_store.abort(std::move(exhausted_fence));
 }
 
+void test_index_preserves_original_entry_order()
+{
+    // Handles deliberately descend so a sorted projection would reorder the
+    // entries; the reused identity index must still resolve each access to the
+    // original active_entries_ position.
+    const std::vector<DeviceStoreEntry> initial{
+        entry(53, 15, 1101, 1201, 3), entry(51, 15, 1102, 1202, 1),
+        entry(52, 15, 1103, 1203, 2)};
+    DeviceBlockStoreLifecycle store(initial);
+    require(store.active_entries().size() == 3,
+            "nonsorted device namespace drifted");
+    require(&store.record(access(handle(53, 15), 1101))
+                == &store.active_entries()[0]
+                && &store.record(access(handle(51, 15), 1102))
+                    == &store.active_entries()[1]
+                && &store.record(access(handle(52, 15), 1103))
+                    == &store.active_entries()[2],
+            "device identity index reordered original entries");
+    require(store.contains(access(handle(52, 15), 1103))
+                && !store.contains(access(handle(52, 15), 9999))
+                && !store.contains(access(handle(52, 14), 1103)),
+            "stale storage or epoch reached the active identity index");
+    require_rejected(
+        [&] { (void)store.record(access(handle(52, 15), 9999)); },
+        "a stale storage generation resolved through the active index");
+    require_rejected(
+        [&] { (void)store.record(access(handle(99, 15), 1103)); },
+        "an unknown handle resolved through the active index");
+}
+
+void test_moved_candidate_queries_both_namespaces()
+{
+    const std::vector<DeviceStoreEntry> initial{
+        entry(61, 16, 1301, 1401, 1), entry(62, 16, 1302, 1402, 2)};
+    DeviceBlockStoreLifecycle store(initial);
+    const amr::AmrPlanScope scope{201, {16}, {17}};
+    auto candidate = store.prepare(
+        scope, std::vector<DeviceStoreProposal>{
+                   proposal(61, 17, 1303), proposal(63, 17, 1304)});
+
+    DeviceBlockStoreLifecycle::Candidate moved(std::move(candidate));
+    require(moved.entries().size() == 2,
+            "moved device candidate lost its staged namespace");
+    require(store.contains_migration(
+                moved, {scope, access(handle(61, 16), 1301),
+                        DeviceMigrationRole::ActiveOldSource})
+                && store.contains_migration(
+                    moved, {scope, access(handle(63, 17), 1304),
+                            DeviceMigrationRole::StagedNewDestination}),
+            "moved candidate could not resolve both identities");
+    require_rejected(
+        [&] {
+            (void)store.migration_record(
+                candidate,
+                {scope, access(handle(61, 16), 1301),
+                 DeviceMigrationRole::ActiveOldSource});
+        },
+        "a moved-from device candidate remained usable");
+    store.abort(std::move(moved));
+    require(!store.has_staged_transaction()
+                && store.contains(access(handle(61, 16), 1301)),
+            "aborting a moved candidate changed active state");
+}
+
+void test_throwing_finalizer_keeps_both_indices_consistent()
+{
+    const std::vector<DeviceStoreEntry> initial{
+        entry(71, 18, 1501, 1601, 1), entry(72, 18, 1502, 1602, 2)};
+    DeviceBlockStoreLifecycle store(initial);
+    const amr::AmrPlanScope scope{301, {18}, {19}};
+    auto candidate = store.prepare(
+        scope, std::vector<DeviceStoreProposal>{
+                   proposal(71, 19, 1503), proposal(73, 19, 1504)});
+
+    require_rejected<std::runtime_error>(
+        [&] {
+            store.publish_after_success(
+                std::move(candidate), DeviceRetirementFence{401},
+                [](auto) {
+                    throw std::runtime_error("injected index failure");
+                });
+        },
+        "a throwing finalizer published a device index");
+    require(store.active_epoch() == amr::TopologyEpoch{18}
+                && &store.record(access(handle(72, 18), 1502))
+                    == &store.active_entries()[1]
+                && !store.contains(access(handle(73, 19), 1504)),
+            "failed publication desynchronized the active index");
+    require(store.contains_migration(
+                candidate, {scope, access(handle(73, 19), 1504),
+                            DeviceMigrationRole::StagedNewDestination}),
+            "failed publication discarded the staged index");
+    store.abort(std::move(candidate));
+    require(!store.has_staged_transaction(),
+            "rollback after a throwing finalizer left staging");
+
+    const amr::AmrPlanScope reuse_scope{302, {18}, {19}};
+    auto reuse = store.prepare(
+        reuse_scope,
+        std::vector<DeviceStoreProposal>{proposal(71, 19, 1505)});
+    require(reuse.entries()[0].record.storage == StorageGeneration{1505}
+                && store.contains_migration(
+                    reuse, {reuse_scope, access(handle(71, 19), 1505),
+                            DeviceMigrationRole::StagedNewDestination}),
+            "reused device candidate had no staged identity index");
+    store.abort(std::move(reuse));
+}
+
+void test_successful_publish_and_retirement_identity()
+{
+    // Arenas are intentionally nonsorted so retirement must preserve the
+    // original active entry order rather than an index-implied order.
+    const std::vector<DeviceStoreEntry> initial{
+        entry(81, 21, 1701, 1801, 4), entry(82, 21, 1702, 1802, 2)};
+    DeviceBlockStoreLifecycle store(initial);
+    const amr::AmrPlanScope scope{501, {21}, {22}};
+    auto candidate = store.prepare(
+        scope, std::vector<DeviceStoreProposal>{
+                   proposal(82, 22, 1703), proposal(83, 22, 1704)});
+    const DeviceRetirementFence fence{601};
+    store.publish_after_success(std::move(candidate), fence, [](auto) {});
+
+    require(store.active_epoch() == amr::TopologyEpoch{22}
+                && &store.record(access(handle(82, 22), 1703))
+                    == &store.active_entries()[0]
+                && &store.record(access(handle(83, 22), 1704))
+                    == &store.active_entries()[1]
+                && !store.contains(access(handle(81, 21), 1701)),
+            "publication published the wrong device index");
+    std::vector<DeviceArenaSlot> retired;
+    store.complete_retirement(
+        fence, [&](std::span<const DeviceStoreEntry> entries) noexcept {
+            for (const auto& retired_entry : entries)
+                retired.push_back(retired_entry.arena);
+        });
+    require(retired.size() == 2 && retired[0] == DeviceArenaSlot{4}
+                && retired[1] == DeviceArenaSlot{2},
+            "retirement lost the original device arenas");
+}
+
 } // namespace
 
 int main()
@@ -399,6 +539,10 @@ int main()
         test_publish_visibility_and_delayed_retirement();
         test_failed_publication_and_candidate_raii();
         test_validation_and_overflow_guards();
+        test_index_preserves_original_entry_order();
+        test_moved_candidate_queries_both_namespaces();
+        test_throwing_finalizer_keeps_both_indices_consistent();
+        test_successful_publish_and_retirement_identity();
         std::cout << "device block store lifecycle contract passed\n";
         return 0;
     } catch (const std::exception& error) {

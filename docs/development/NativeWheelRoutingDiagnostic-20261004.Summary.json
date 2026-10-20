@@ -1,0 +1,84 @@
+{
+  "scope": "Linux native input routing diagnostic; not wheel/pan acceptance",
+  "sourceCommit": "060373ea664690b544889af0c33b1af7cd51afec",
+  "productionCodeReference": "b0de7b56",
+  "managedProjectCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "inputSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+  "startup": "Preparing then Current observed; automatic startup Preview not claimed absent",
+  "windowId": 393776,
+  "selectedSample": {
+    "index": 202,
+    "xDisplayed": 0.39550781,
+    "density": 1.0,
+    "pressure": 1.0,
+    "temperature": 2.5,
+    "velocityX": 0.0,
+    "energyDensity": 2.5,
+    "specificInternalEnergy": 2.5
+  },
+  "uiProvenance": {
+    "configRevision": "9c8ba5b67718",
+    "buildIdPrefix": "92d429da",
+    "binaryPrefix": "d53501ae2315"
+  },
+  "wheelInputs": [
+    {
+      "point": [
+        700,
+        700
+      ],
+      "deltaY": -120,
+      "window": "normal",
+      "visibleChange": false
+    },
+    {
+      "point": [
+        650,
+        720
+      ],
+      "deltaY": -600,
+      "window": "normal",
+      "visibleChange": false
+    },
+    {
+      "point": [
+        1185,
+        450
+      ],
+      "deltaY": 600,
+      "window": "ordinary content area",
+      "visibleChange": false
+    },
+    {
+      "point": [
+        1100,
+        750
+      ],
+      "deltaY": -120,
+      "window": "maximized",
+      "visibleChange": false
+    }
+  ],
+  "pointerClick": "native sample point and display disclosure/dropdown responded",
+  "wheelConclusion": "inconclusive: no visible response; no proof distinguishing WSL input forwarding from application event handling",
+  "dragPan": "not exercised because wheel zoom was not established",
+  "cleanup": {
+    "launcherExit": 0,
+    "ownedIdentitiesRecorded": 8,
+    "ownedIdentitiesRemaining": 0,
+    "inputUnchanged": true,
+    "scientificOutputAbsent": true,
+    "managedWorktreeClean": true
+  },
+  "notPerformed": [
+    "Core build",
+    "simulation",
+    "Save",
+    "config edit",
+    "AMR request",
+    "Plotfile read",
+    "source repair",
+    "baseline rerun"
+  ]
+}

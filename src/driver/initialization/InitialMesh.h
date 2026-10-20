@@ -5,12 +5,15 @@
  * Workflow:
  * 1. Receive the registered case, resolved configuration and empty root topology.
  * 2. Initialize root blocks and ask the case to fill primitive fields.
- * 3. Return the native mesh to Driver ownership before any time stage.
+ * 3. Return active interiors as provisional cell averages; the real EOS-bound
+ *    Runtime completes physical BC/exchange/EOS before publication.
  */
 
 #pragma once
 
+#include "driver/DriverUtils.h"
 #include "interface/ProblemGenerator.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 
 namespace arch::driver {
 // Shared fresh-start boundary. Does not allocate a pool, evolve time or write output.

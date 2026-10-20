@@ -10,22 +10,42 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
+#include "amr/flux/AmrFluxPlan.h"
+#include "numerics/curvilinear/GridGeometryView.h"
+#include "grid/ScalarFieldView.h"
+#include "numerics/elliptic/CompositePoisson.h"
+#include "physics/boundary/BoundaryTypes.h"
+#include "physics/boundary/UserBoundary.h"
+#include "physics/gravity/GravitySolveTypes.h"
 #include "physics/gravity/IGravityPolicy.h"
+#include "physics/gravity/self/GravityBoundaryDiagnostics.h"
 
+namespace arch::driver { class GravityStage; }
 namespace amr { struct EllipticMeshBinding; }
 namespace arch::state { struct CompletionToken; }
 namespace arch::multigrid { struct SolveReport; }
 namespace Physical::Gravity {
 struct GravitySolveRequest;
+struct GravitySolveIdentity;
 class GravityExecution;
 struct GravityPatchView;
+
 class SelfGravity final : public IGravityPolicy {
 public:
     explicit SelfGravity(GravityConfig config);
     ~SelfGravity();
-    void bind(amr::EllipticMeshBinding binding) const;
+    /** Bind using the actual stage or restart time. */
+    void bind(amr::EllipticMeshBinding binding, double time = 0.) const;
     arch::state::CompletionToken prepare(const GravitySolveRequest&) const;
     void invalidate() const noexcept;
     void clear_solver_initial_guess() const noexcept;
@@ -39,7 +59,16 @@ public:
     double density_mean() const;
     // Wall time bounded by completion fences; no asynchronous launch timing.
     struct Timings { double source_boundary=0., poisson=0., force=0.; };
+    /** Read the already fence-completed measurements of the published field. */
     const Timings& timings() const;
+    /** Enable an internal Host receipt before preparation; ordinary runs do not track consumers. */
+    void begin_host_stage_consumption(double step_dt) const;
+    /** Require the exact published input and every real patch force/work consumer. */
+    void require_host_stage_consumption(const GravitySolveIdentity&) const;
+    /** Retire a Host receipt without publishing diagnostics or retaining borrowed state. */
+    void end_host_stage_consumption() const noexcept;
+    /** Sample field energy and physical-face pairs for independent accounting. */
+    GravityBoundarySnapshot boundary_snapshot() const;
     void add_sources_on_patch(std::vector<FluidVector>&, const FluidState&,
         const Grid&, double, void* = nullptr) const override;
     void add_flux_work_on_patch(std::vector<FluidVector>&, const std::vector<FluidVector>&,
@@ -47,8 +76,21 @@ public:
 private:
     struct Workspace;
     Workspace& workspace() const;
+    /** Resolve the explicit per-side policy for the requested stage time. */
+    arch::elliptic::CompositeBoundary current_boundary(const Workspace&,double) const;
+    /** Rebuild the topology-bound operator after a side structure change. */
+    void rebuild_boundary(arch::elliptic::CompositeBoundary) const;
     GravityConfig config_;
     mutable std::unique_ptr<Workspace> work_;
     mutable std::shared_ptr<GravityExecution> execution_;
+    // Internal transaction observer only. It never changes force/work kernels,
+    // field publication or the Poisson tolerance.
+    mutable bool host_consumption_requested_ = false;
+    mutable double host_consumption_dt_ = 0.;
+    // Immutable callback selection captured at construction and kept live for
+    // every run; the referenced config/species outlive the simulation scope.
+    arch::boundary::GravityBoundaryFunction user_callback_;
+    const SimConfig* user_config_=nullptr;
+    const SpeciesManager* user_species_=nullptr;
 };
 }

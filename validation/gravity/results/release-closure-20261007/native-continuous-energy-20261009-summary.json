@@ -1,0 +1,206 @@
+{
+  "schema": "arch-native-continuous-energy-milestone-1",
+  "baseline": "88bffde48",
+  "status": "ACCEPTED_FINITE_OWNING_EULER_ENERGY",
+  "accepted_scope": "one authentic512-cell uniform before source -> actual Euler Hydro/postCurrent at T=tdyn/4096; independent volume functional and true boundary mass flux face-average work",
+  "public_native_isolated_qualified": false,
+  "native_device_qualified": false,
+  "long_time_qualified": false,
+  "production_math_or_eos_changed": false,
+  "original_CPU_optimizations_unchanged": true,
+  "raw_uploaded": false,
+  "new_ctest_targets": 0,
+  "new_workflows": 0,
+  "budget_frozen_before_integrals": {
+    "relative_balance": 0.01,
+    "relative_reference": 0.001,
+    "normalization": "abs(Q)+abs(B_Phi_cont)",
+    "scope": "finite Euler exchange only; not a universal tolerance; existing machine/Poisson/reference budgets unchanged"
+  },
+  "current_reference": {
+    "schema": "arch-native-continuous-energy-reference-1",
+    "cells": 512,
+    "same_endpoint": true,
+    "method": "Euler",
+    "dt": 0.9450117103316547,
+    "physical_time0": 0,
+    "physical_time1": 0.9450117103316547,
+    "exact_coalesced_pieces": 160,
+    "original_boundary_faces": 96,
+    "rho0": 1.0,
+    "delta_min_exact": "137444029703/562949953421312",
+    "delta_max_exact": "427072885909/562949953421312",
+    "levels": [
+      {
+        "degree": 12,
+        "I_DD": 1.1271322901723283e+23,
+        "linear_delta_W": -5371040645478.216,
+        "W0": -3761409522148585.5,
+        "B_Phi": 4436054841517.885,
+        "absolute_boundary_terms": 5461309262965.127
+      },
+      {
+        "degree": 24,
+        "I_DD": 1.1271323577564103e+23,
+        "linear_delta_W": -5371040678742.058,
+        "W0": -3761409747686805.0,
+        "B_Phi": 4436055011946.132,
+        "absolute_boundary_terms": 5461309434643.033
+      },
+      {
+        "degree": 48,
+        "I_DD": 1.1271323582282794e+23,
+        "linear_delta_W": -5371040678547.752,
+        "W0": -3761409749261503.0,
+        "B_Phi": 4436055012258.027,
+        "absolute_boundary_terms": 5461309434964.488
+      }
+    ],
+    "quadratic_delta_W_bounds": [
+      -2164786500.314334,
+      -224214053.10814312
+    ],
+    "delta_W": -5372235178824.463,
+    "B_Phi": 4436055012258.027,
+    "D_continuous": -624602425.7290039,
+    "normalization": 9808145396636.89,
+    "normalized_balance": 6.368201127434076e-05,
+    "normalized_reference_uncertainty": 9.892678066747303e-05,
+    "physical_budget": 0.01,
+    "reference_budget": 0.001,
+    "reference_uncertainty_pass": true,
+    "quadrature_monotone": true,
+    "finite_balance_pass": true,
+    "status": "PASS_FINITE_EULER_ENERGY",
+    "qualification": "one actual owning Euler endpoint only; no long-time/AMR/Device grant",
+    "uncertainty_kind": "three-order numerical convergence estimate plus rigorous positive-density quadratic bound; not an outward quadrature enclosure",
+    "original_point_B_Phi": 4436534820238.161,
+    "stored_B_Phi_reproduction_error": 0.0,
+    "raw_sha256": {
+      "before-materialized-native-source.json": "5fadb101d4163ac23c9249719c48565e30158bf414650291d59f938d5f6168d5",
+      "post-materialized-native-source.json": "5a16fae422a7519a13dc54f126ce1f96a0c32ddbe6d3c5d11307ec67109ec2c3",
+      "energy-diagnostic.json": "89732638ef5c786c92c228f602ee30a919f6bede80526541ff791847331df1a6",
+      "boundary-mass-flux.json": "fa59c47032869dd1d5e5c7ecbe305a9cce97a16a5fc99f29241428542e5839c5"
+    },
+    "wall_seconds": 14.687428172968794
+  },
+  "conservative_normalized_balance_plus_estimate": 0.0001626087919418138,
+  "formula_notes": [
+    "DeltaW=-G*rho0*S-G*T/2 with exact true delta rho and positive Newton kernel",
+    "dmin²*I_DD<=T<=dmax²*I_DD is rigorous; reported numeric endpoints use converged quadrature and are estimated, not outward enclosures",
+    "Full volume and full physical face integrals use actual native bounds; original face F_rho, dt, stage weight and signs, no extra area factor",
+    "No entire post field sweep, no160-squared quadratic pairs, no source modification"
+  ],
+  "current_owners": {
+    "CPU_build_guard_seconds": 27.526,
+    "actual_512_owning_guard_seconds": 98.648,
+    "original_gravity_stage_passed": 1,
+    "original_gravity_stage_ctest_seconds": 42.87,
+    "original_gravity_stage_guard_seconds": 43.443,
+    "original_reference_tests_passed": 86,
+    "original_reference_tests_seconds": 10.156,
+    "reference_tests_guard_seconds": 11.083,
+    "optional_flint_reference_run": false,
+    "current_reference_guard_seconds": 15.106,
+    "initial_reference_guard_seconds": 16.119,
+    "first_and_current_numeric_values_equal": true,
+    "repeated_whole_model": false,
+    "all_guard_stopped": false
+  },
+  "independent_tensor_reference_tests": {
+    "new_methods_in_existing_owner": 2,
+    "coverage": "Direct un-reduced five-dimensional Newton volume rule and four-dimensional radial/axial face rules at separated z, plus axial translation; no shared mixed-antiderivative or triangle path in direct rule",
+    "relative_budget": 2e-12,
+    "new_dependency": false
+  },
+  "source_sha256": {
+    "tests/host/gravity/NativeSelfEnergyWitness.h": "91211bfe9c403891e39685bfd434863f8ceb0cf3a8cf9a1e83221d7af24b0f4f",
+    "tests/tooling/validation/test_rz_matched_native_reference.py": "e098d8bce2eaad33eab87eff15b2361ab90685f7d0880d629fe95d6a0930aeed",
+    "validation/gravity/rz_scalar_energy_reference.py": "d844e17be52ca6210fe15ab14181485810db166e9e74a00ceab6fb599a382340"
+  },
+  "actual_owner_binary_sha256": "125ff67967b44b1d947ff23122566e9cc4249893fffe31ebe73f1cbd8f91be42",
+  "delegation": [
+    {
+      "logical_task": "newton-annular-energy-identity-20261009",
+      "attempt": 1,
+      "wall_seconds": 49.42,
+      "usage": {
+        "input_tokens": 1526,
+        "cached_input_tokens": 384,
+        "output_tokens": 10203,
+        "noncached_input_tokens": 1142,
+        "reasoning_tokens": 9730,
+        "visible_output_tokens": 473
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.00629425,
+        "peak": 0.0125885,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "actual_fee": null,
+      "blocking_wait_seconds": 0,
+      "parallel_overlap": "original CPU regression, test capture build or Root independent work; overlap duration unmeasured"
+    },
+    {
+      "logical_task": "newton-annular-energy-identity-20261009",
+      "attempt": 2,
+      "wall_seconds": 8.94,
+      "usage": {
+        "input_tokens": 1314,
+        "cached_input_tokens": 384,
+        "output_tokens": 2004,
+        "noncached_input_tokens": 930,
+        "reasoning_tokens": 1744,
+        "visible_output_tokens": 260
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.00134305,
+        "peak": 0.0026861,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "actual_fee": null,
+      "blocking_wait_seconds": 0,
+      "parallel_overlap": "original CPU regression, test capture build or Root independent work; overlap duration unmeasured"
+    },
+    {
+      "logical_task": "positive-newton-energy-increment-bound-20261009",
+      "attempt": 1,
+      "wall_seconds": 71.86,
+      "usage": {
+        "input_tokens": 1441,
+        "cached_input_tokens": 384,
+        "output_tokens": 14076,
+        "noncached_input_tokens": 1057,
+        "reasoning_tokens": 13783,
+        "visible_output_tokens": 293
+      },
+      "estimated_cost_usd": {
+        "currency": "USD",
+        "off_peak": 0.0086053,
+        "peak": 0.0172106,
+        "status": "estimate from reported token usage; API billing is authoritative",
+        "pricing_snapshot": "2026-10-02.1"
+      },
+      "actual_fee": null,
+      "blocking_wait_seconds": 0,
+      "parallel_overlap": "original CPU regression, test capture build or Root independent work; overlap duration unmeasured"
+    }
+  ],
+  "review": {
+    "generic_math_formal_repairs_used": 1,
+    "finding": "Initial explanation had self-overlap logarithm coefficient L instead of2L; main formula was correct; repaired and Root verified1296 Fraction overlap cases",
+    "positive_kernel_worker_reminders": "Half-angle factor and rR weight already included; no production defect or new repair",
+    "built_in_independent_review": "No substantive sign/factor/scaling/face-binding issue; quadrature endpoints retain estimated interpretation",
+    "manager_active_cost": null,
+    "recommendation": "Keep bounded independent math review; avoid repeated full pointwise integrals or source redesign"
+  },
+  "remaining": [
+    "Public NativeDevice consumers and lifecycle",
+    "Remaining nonlinear/FV/coarse-fine and native long-time coupling scope",
+    "Affected full CUDA library/producer/CI and matched endpoint performance exits"
+  ]
+}

@@ -18,7 +18,7 @@ supplies thermal conduction only. See the [combination rules](../../docs/Referen
 CPU and CUDA pass the same analytic-error, boundedness and conservation checks.
 
 The `DiffusionMode` implementation remains in `simulation/DiffusionMode/`; the
-immutable parameter files owned by this record are in [`inputs/`](inputs/).
+immutable parameter files owned by this record are in [`inputs/`](inputs).
 They evolve a bounded tracer mass fraction on a static,
 periodic, one-dimensional ideal-gas state:
 

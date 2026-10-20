@@ -1,0 +1,124 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Pure Carbon Detonation (1D ZND)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# ------------------------------------------------------------------------------
+geometry = cartesian
+
+nblockx1 = 32
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 20000
+
+x1_min    = 0.0
+x1_max    = 128.0
+x2_min    = 0.0
+x2_max    = 12.8
+x3_min    = 0.0
+x3_max    = 1.0
+
+# A reflecting left face can act as a rigid wall for ignition; the present
+# file leaves x1l unspecified and therefore uses the parser's default.
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# ------------------------------------------------------------------------------
+solver      = HLLC       # Contact-resolving shock-capturing flux.
+reconstruct = muscl      # Detonation structure is sensitive to numerical diffusion.
+time_integrator = RK2
+limiter     = mc
+cfl         = 0.8        # Reduce if stiff source coupling destabilizes the macro step.
+
+EntropyFix = true
+EntropyFixCoefficient = 0.1
+
+sml_rho = 1e-2       # Density floor to prevent vacuum crashing (similar to FLASH's smlrho)
+max_eint = 1e19      # Cap maximum specific internal energy to prevent sound speed / CFL crashes
+
+# ------------------------------------------------------------------------------
+# [AMR]
+# Use density only for the stiff detonation front; avoid over-refining smooth ash.
+# ------------------------------------------------------------------------------
+lrefinemin = 0
+lrefinemax = 5
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.80
+derefine_threshold = 0.20
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# ------------------------------------------------------------------------------
+tmax         = 5.0e-8    # Short physical interval for the initial detonation transient.
+max_steps    = 200
+restart      = false
+
+out_dir      = output
+base_name    = CDet_1D
+
+plt_dstep    = -1
+plt_dt       = 5.0e-9         # Output PLT based on physical time interval (-1.0 to disable)
+plt_variables= ALL
+chk_dstep    = -1
+chk_dt       = 5.0e-9         # Output CHK based on physical time interval (-1.0 to disable)
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# ------------------------------------------------------------------------------
+eos_type = helmholtz         # Ideal, tabular, helmholtz
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
+
+gravity_type = none
+
+# ------------------------------------------------------------------------------
+# [Nuclear Burn & ODE]
+# ------------------------------------------------------------------------------
+use_burn         = true
+# Runtime-selectable built-in networks: aprox13, aprox19, aprox21, and iso7.
+network_name     = aprox19
+# burn_verbose_level: 0 = fatal errors only, 1 = initialization summary,
+# 2 = detailed stiff-integrator diagnostics.
+burn_verbose_level = 2
+
+nuclearTempMin   = 1e9       # Minimum burn temperature (K); typical range 5e8-1e9.
+nuclearDensMin   = 1e-10     # Minimum burn density (g/cm^3).
+
+dt_init          = 1e-16     # Initial step for ignition transients; typical range 1e-16-1e-12 s.
+dt_min           = 1e-20     # Smallest ODE substep; typical range 1e-22-1e-20 s.
+tstep_change_factor = 1.2    # Maximum macro-step growth; 1.1-1.2 limits post-ignition jumps.
+enucDtFactor     = 0.05      # Maximum fractional nuclear-energy change; 1e30 effectively disables it.
+
+ode_solver       = BD      # BE_NR, ROS4, BD
+linear_solver    = DenseLU
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters: CellularDet]
+# ------------------------------------------------------------------------------
+shock_dir = 0            # Shock direction: 0=x, 1=y, 2=z.
+radiusPerturb = 12.8     # Length of the initial von Neumann spike; typical range 12.8-25.6.
+
+# Ambient unburned state ahead of the shock.
+rhoAmbient = 1.0e7       # Density (g/cm^3).
+tempAmbient   = 2.0e8    # Temperature (K), kept below premature ignition.
+
+# Frozen von Neumann spike immediately behind the shock and before substantial burning.
+rhoPerturb = 4.322e7     # Peak post-shock density (g/cm^3).
+tempPerturb   = 4.670e9  # Peak post-shock temperature (K).
+velxPerturb   = 1.011e9  # Shock or piston velocity (cm/s).
+
+# Transverse cellular perturbation for breaking symmetry in 2D/3D.
+noiseAmplitude = 0.0     # Sinusoidal density/pressure amplitude; 0 keeps planar 1D symmetry.
+
+# Initial composition in the default pynucastro aprox19 ordering:
+# N, H1, He3, He4, C12, N14, O16, Ne20, Mg24, Si28, S32, Ar36, Ca40, Ti44, Cr48, Fe52, Fe54, Ni56
+xhe4 = 0.4               # Mass fractions must sum to one.
+xc12 = 0.6
+xo16 = 0.0

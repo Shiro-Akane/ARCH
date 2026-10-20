@@ -1,0 +1,789 @@
+{
+  "schema_version": "arch-modernization-r31-evidence-v1",
+  "date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "status": "R3.1_COMPLETE",
+  "stage3_status": "IN_PROGRESS",
+  "R3.2_status": "NOT_STARTED",
+  "production_refactor": "NOT_STARTED",
+  "scope": "Evidence consolidation, representative read-only ownership audit, static rejection and mocked runner control-flow reproduction; user-added local LFS protection and offline-verified CI patch.",
+  "scientific_execution": {
+    "evolution_runs": 0,
+    "compiler_runs": 0,
+    "RZ_long_runs": 0,
+    "new_scientific_passes": 0,
+    "numerical_contract_changed": false
+  },
+  "identity": {
+    "r2_machine_sha256_unchanged": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+    "production_binary_sha256_unchanged": {
+      "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9",
+      "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH": "0828b3c8644333d446a044b555c15681e9277a10217d3fac6e129ccf14ba861c"
+    },
+    "protected_regions_unchanged": [
+      "src",
+      "include",
+      "simulation",
+      "studio",
+      "cmake",
+      "tests",
+      "tools",
+      ".agents"
+    ],
+    "production_tree_oids": {
+      "src": "e0757c64defadb6bbad2912c1452dbd21662d449",
+      "include": "40fd2cffc1323f1b08a918b4a2200574ed51e484",
+      "simulation": "31f82322521d9d207a8ac1de6249d70d80f9e34d",
+      "studio": "de9e37c3c23fb92c8560ae48bb71c1ba15d95d50",
+      "cmake": "6fa71aba8cca8a86e7904afa0bcea681bd03c73b",
+      "tests": "826a5ef701b9ab6ec347670272bc2ce3df41cfc5",
+      "tools": "08559146a4501eff0640d13ad50f2a715aa61a98"
+    }
+  },
+  "findings": {
+    "hydro_inputs": {
+      "unique_manifest_referenced_inputs": 12,
+      "manifest_consumers": 13,
+      "missing_keys": [
+        "hll_wave_speed",
+        "min_eint"
+      ],
+      "historical_rejections_reused": 6,
+      "new_inspection_hard_rejections": 6,
+      "new_inspection_setup_or_evolution": false,
+      "value_provenance_for_new_six": "NOT_YET_ESTABLISHED",
+      "inventory": {
+        "path": "output/modernization/r31-20261013/active-hydro-input-inventory.json",
+        "sha256": "3f432637c7aedfa3c5323051083f5c41761c92521c2b846f49e31bafc8f5e0a4",
+        "bytes": 4277
+      },
+      "inspection": {
+        "path": "output/modernization/r31-20261013/new-input-inspection.json",
+        "sha256": "dedcedc148b3a6ff29509a360d389a9cd5b5f629a7b9b203f2f6f734b43836ee",
+        "bytes": 3931
+      }
+    },
+    "selected_case_group_gate": {
+      "status": "CONFIRMED_GROUP_GATE_BYPASS_IN_MOCKED_MAIN",
+      "mock_only": true,
+      "original_group_error": "smooth_ppm cpu L1 convergence gate failed: 0.0 < 2.7",
+      "mock_main_exit": 0,
+      "mock_groups": {},
+      "real_R2_manual_group_acceptance_preserved": true,
+      "reproduction": {
+        "path": "output/modernization/r31-20261013/selected-case-control-flow-repro.json",
+        "sha256": "0b63146c8c0431244471194e2ca7a15c7b17158bf6668729d3e56ff871985b8d",
+        "bytes": 800
+      }
+    },
+    "shared_core": "KEEP current mathematical owners and representative backend/state roles; not exhaustive equivalence proof",
+    "build": "Single RKL TU measured392.040654s cold/390.858992s incremental in R2; cause unknown, no new compilation",
+    "O7": "Prior checked-scope active critical-key rejection preserved; inactive identity is maintenance candidate, not active physics fallback"
+  },
+  "candidate_crosswalk_R1": {
+    "C01": {
+      "original": "Shared Hydro core",
+      "decision": "KEEP representative shared owners; propose A01/A02 verification protection"
+    },
+    "C02": {
+      "original": "RZ source/boundary cost",
+      "decision": "DEFER; no long replay, no root-cause or closure claim"
+    },
+    "C03": {
+      "original": "Cellular rate discrepancy",
+      "decision": "DEFER; preserve original source/report identities and scientific failures"
+    },
+    "C04": {
+      "original": "Build throughput/dependencies",
+      "decision": "A03 targeted attribution before any build refactor"
+    },
+    "C05": {
+      "original": "Navigation/comments",
+      "decision": "A05 low optional existing-owner improvements"
+    },
+    "C06": {
+      "original": "Optional capabilities/generated networks",
+      "decision": "DEFER until actual affected route requires validation"
+    },
+    "C07": {
+      "original": "Lifecycle/coupled scientific exits",
+      "decision": "KEEP owners; preserve unresolved full scientific exits"
+    },
+    "C08": {
+      "original": "Justified backend layers/forwarding/oracles",
+      "decision": "KEEP absent concrete benefit to change; no compatibility obligation"
+    }
+  },
+  "candidates": [
+    {
+      "id": "R3-A01",
+      "priority": 1,
+      "next_stage": "4",
+      "decision": "PROPOSE_EXPLICIT_CANONICAL_INPUT_MAINTENANCE",
+      "owners": [
+        "validation/hydro/inputs/"
+      ],
+      "prerequisite": "Establish each original accepted scientific value and provenance; six new PCM/MUSCL inputs lack established per-input value provenance. Do not invent values or restore production defaults.",
+      "verification": "Inspect12 inputs; relevant method scientific cases under original budgets; integrate A02 before runner group acceptance."
+    },
+    {
+      "id": "R3-A02",
+      "priority": 1,
+      "next_stage": "4",
+      "decision": "PROPOSE_EXISTING_RUNNER_GATE_REPAIR",
+      "owners": [
+        "tools/validate_backend_results.py",
+        "tests/tooling/validation/test_validate_backend_results.py"
+      ],
+      "prerequisite": "Maintainer freezes complete versus partial selection/evidence semantics.",
+      "verification": "Main-level negative control rejects controlled false group pass; original complete-group positive and partial coverage controls, unchanged numerical thresholds."
+    },
+    {
+      "id": "R3-A03",
+      "priority": 2,
+      "next_stage": "R3.2",
+      "decision": "DEFER_TARGETED_BUILD_ATTRIBUTION",
+      "owners": [
+        "tests/cuda/numerics/test_diffusion_rkl_parity.cu",
+        "cmake/tests/CudaTests.cmake"
+      ],
+      "prerequisite": "Read original flags/dependencies first; root cause unknown. At most two useful bounded profile attempts after stage authorization.",
+      "verification": "Cost attribution with preserved FP options, numerical tolerances and bounded resources; retain if no demonstrated benefit."
+    },
+    {
+      "id": "R3-A04",
+      "priority": "optional",
+      "next_stage": "R3.2",
+      "decision": "DEFER_INACTIVE_IDENTITY_ASSESSMENT",
+      "owners": [
+        "src/core/config/",
+        "src/data/GlobalDefs.h",
+        "src/io/chk/"
+      ],
+      "prerequisite": "Show concrete maintenance value and minimal identity counterexample; protected contract changes remain reserved.",
+      "verification": "Active/inactive identity and restart contract distinction; keep current semantics absent material benefit."
+    },
+    {
+      "id": "R3-A05",
+      "priority": "low_optional",
+      "next_stage": "5",
+      "decision": "DEFER_LOCAL_NAVIGATION_AND_COMMENTS",
+      "owners": [
+        "src/api/",
+        "src/physics/gravity/"
+      ],
+      "prerequisite": "Concrete readability obstacle, current ownership and frozen behavior boundaries.",
+      "verification": "Links, symbols and responsibility descriptions only; no full scientific suite for prose edits."
+    }
+  ],
+  "lfs": {
+    "status": "PASS_LOCAL_PINNED_OFFLINE",
+    "network_fetches": 0,
+    "normal_file_cache": "/home/shiroakane/.local/share/arch-data",
+    "manifest": "/home/shiroakane/.local/share/arch-data/manifest.json",
+    "files": [
+      {
+        "tracked_path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+        "oid": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+        "bytes": 60242514,
+        "local_object": "/home/shiroakane/ARCH/.git/lfs/objects/c9/a5/c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+        "pinned_copy": "/home/shiroakane/.local/share/arch-data/EOS_toolkit/tables/helmholtz/helm_table.dat",
+        "pinned_sha256_verified": true,
+        "worktree_sha256_verified": true
+      },
+      {
+        "tracked_path": "EOS_toolkit/tables/baryon/eos2.tab",
+        "oid": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+        "bytes": 143166842,
+        "local_object": "/home/shiroakane/ARCH/.git/lfs/objects/d5/2d/d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+        "pinned_copy": "/home/shiroakane/.local/share/arch-data/EOS_toolkit/tables/baryon/eos2.tab",
+        "pinned_sha256_verified": true,
+        "worktree_sha256_verified": true
+      },
+      {
+        "tracked_path": "EOS_toolkit/tables/baryon/eos4.tab",
+        "oid": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+        "bytes": 143167115,
+        "local_object": "/home/shiroakane/ARCH/.git/lfs/objects/5e/e3/5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+        "pinned_copy": "/home/shiroakane/.local/share/arch-data/EOS_toolkit/tables/baryon/eos4.tab",
+        "pinned_sha256_verified": true,
+        "worktree_sha256_verified": true
+      },
+      {
+        "tracked_path": "studio/tests/fixtures/sod-1d.h5",
+        "oid": "dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+        "bytes": 14336,
+        "local_object": "/home/shiroakane/ARCH/.git/lfs/objects/da/da/dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+        "pinned_copy": "/home/shiroakane/.local/share/arch-data/studio/tests/fixtures/sod-1d.h5",
+        "pinned_sha256_verified": true,
+        "worktree_sha256_verified": true
+      }
+    ],
+    "project_local_config": {
+      "filter.lfs.smudge": "git-lfs smudge --skip -- %f",
+      "filter.lfs.process": "git-lfs filter-process --skip"
+    },
+    "global_config_changed": false,
+    "billing_cause": "UNCONFIRMED: reading local files incurs no LFS network traffic",
+    "local_receipt": {
+      "path": "output/modernization/r31-20261013/lfs-local-pin.json",
+      "sha256": "4e621f24e97592c8461547182e7106f35d403447a10473f0bb997dda93a014a1",
+      "bytes": 2678
+    },
+    "attribution_files": [
+      {
+        "source_path": "THIRD_PARTY_NOTICES.md",
+        "pinned_path": "/home/shiroakane/.local/share/arch-data/THIRD_PARTY_NOTICES.md",
+        "bytes": 9998,
+        "sha256": "5bbb454a0482c9a624fc480b942f45e1c0f14d8f84d992cf83893df7686e2461"
+      },
+      {
+        "source_path": "THIRD_PARTY_NOTICES.zh-CN.md",
+        "pinned_path": "/home/shiroakane/.local/share/arch-data/THIRD_PARTY_NOTICES.zh-CN.md",
+        "bytes": 9044,
+        "sha256": "55057e8210baff21a086d569f76113deb570f07e48a7f97d55112ae33871c6b1"
+      },
+      {
+        "source_path": "EOS_toolkit/tables/helmholtz/README.md",
+        "pinned_path": "/home/shiroakane/.local/share/arch-data/EOS_toolkit/tables/helmholtz/README.md",
+        "bytes": 746,
+        "sha256": "18f540dd70600214c28a2febcdc1999baded907fc9b7abd01b47df018e3a3f2d"
+      },
+      {
+        "source_path": "EOS_toolkit/tables/baryon/LICENSE-CC-BY-4.0.txt",
+        "pinned_path": "/home/shiroakane/.local/share/arch-data/EOS_toolkit/tables/baryon/LICENSE-CC-BY-4.0.txt",
+        "bytes": 18657,
+        "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+      },
+      {
+        "source_path": "LICENSE",
+        "pinned_path": "/home/shiroakane/.local/share/arch-data/LICENSE",
+        "bytes": 1577,
+        "sha256": "3ba654131eb496eb3879e53a20270639ca688a05bd404a564ed971714d6189e9"
+      }
+    ]
+  },
+  "ci_cache": {
+    "workflow": ".github/workflows/ci.yml",
+    "workflow_sha256": "7139a124c7bf6b907fd0e73d2db93a3312561e2dc9066cd8b2ca7bdb751ccce8",
+    "local_controls": "PASS",
+    "structural_check_count": 11,
+    "data_control_count": 4,
+    "network_fetches": 0,
+    "committed_or_pushed": false,
+    "hosted_actions_cache_and_auth": "NOT_RUN",
+    "actionlint": "NOT_RUN: no existing local binary found; no network installation requested",
+    "receipt": {
+      "path": "output/modernization/r31-20261013/ci-lfs/offline-controls.json",
+      "sha256": "74c73a36fca2ba2888a59a0faf016e6b430fcbdf9efb7fa009a65ae25bfce3c2",
+      "bytes": 11227
+    },
+    "caveat": "Exact pointer key; cache misses/eviction/fork scope may require scoped Helm download; corrupt hit fails without automatic retry."
+  },
+  "delegation": {
+    "owner": "arch-modernization-r31-20261013",
+    "manager_max_calls": 8,
+    "provider_inference_calls": 4,
+    "native_codex_child": "/root/lfs_ci_cache: unique CI writer, then independent read-only document QA",
+    "jobs": [
+      {
+        "job_id": "26014e399e324ed5bb64e3a2e709d433",
+        "logical_task_id": "r31-shared-core",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "execution_status": "FAILED",
+        "failure_kind": "invalid_delivery",
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "elapsed_seconds": 47.955629755,
+        "usage": {
+          "input_tokens": 262125,
+          "cached_input_tokens": 238848,
+          "output_tokens": 6734,
+          "reasoning_tokens": 3070,
+          "visible_output_tokens": 3664,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r31-20261013/workers/shared-core/task.json",
+            "sha256": "972da899317f4cfe384585a42775fe29b8ebe522683b3207f2ff3f11521ad4a2",
+            "bytes": 3009
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/shared-core/result.json",
+            "sha256": "d22b3fd27ad9b3b3459abe92a8dbd26237a0de19ea41427308750f1b77bccf65",
+            "bytes": 534
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/shared-core/review.json",
+            "sha256": "de3410dd43a1fc3a410ed4851704f248eb6e2d0f38b5db3e9663fc143d8c33c9",
+            "bytes": 1398
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/shared-core/delivery.txt",
+            "sha256": "d39d2677e2ea609a033a0a966d095136364161a76c8fa83f873c88dca3f4b2d4",
+            "bytes": 4836
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/shared-core/cli-events.ndjson",
+            "sha256": "1b9f68d4facc44724c23cc6e9322420cda3bc2205b0e4260b18df2849f016fcb",
+            "bytes": 117615
+          }
+        ],
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Outer delivery invalid due prose before/after complete single JSON fence; original delivery/result/events retained. Existing recover-delivery locally declined wrapper validation; no artifacts overwritten or new inference. Codex parsed complete fenced JSON and verified current HydroCellUpdate shared leaves called by Host TimeIntegratorHelper and CUDA kernels, policy aliases forward, two include forwarding headers have distinct current consumers. Adopt only these bounded source passages and representative Driver ownership observations; not exhaustive no-second-writer proof. Manager packet mistakenly called Driver/state C02 and forwarding headers C03; actual R1 C02 is RZ cost and C03 Cellular. Reject that label mapping and do not claim those two candidates audited or closed. No required full-delivery dependency is unlocked; retain FAILED transport metadata.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "complete_fenced_evidence_only",
+          "adopted_sections": [
+            "representative shared Hydro leaves",
+            "current forwarding header role",
+            "bounded Driver metadata ownership"
+          ],
+          "validation_kind": "manager_source_read",
+          "self_work_reason": "Complete preserved evidence sufficient for bounded retain decisions; no paid formatting repair justified.",
+          "next_recheck": "New verified architecture issue or R3.2 focused audit."
+        }
+      },
+      {
+        "job_id": "2ce426f047d14c3f947c68e8283d3d3d",
+        "logical_task_id": "r31-verification-entry",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "execution_status": "READY_FOR_REVIEW",
+        "failure_kind": null,
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "elapsed_seconds": 121.647810518,
+        "usage": {
+          "input_tokens": 1241696,
+          "cached_input_tokens": 1192832,
+          "output_tokens": 15477,
+          "reasoning_tokens": 8190,
+          "visible_output_tokens": 7287,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r31-20261013/workers/verification-entry/task.json",
+            "sha256": "a5de34943d6d6d7d37e7459a6323f2567d6ac0df5b38cc1fdb0f71e46afe1021",
+            "bytes": 2996
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/verification-entry/result.json",
+            "sha256": "7f99b72763b5c0c09ee2d25ea52bdbe4f98bcdfd7d836e77055f4bf2fcc10aa1",
+            "bytes": 6783
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/verification-entry/review.json",
+            "sha256": "66c3b5a086e2b76f72f748a6c6df7fe0a7b2468458802936f0479cf0a3ae74b2",
+            "bytes": 1333
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/verification-entry/delivery.txt",
+            "sha256": "d3b86de38f38fceaafedd3f88802767f731b4d2a5f44f5f9f2fb34f5c85242f4",
+            "bytes": 6243
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/verification-entry/cli-events.ndjson",
+            "sha256": "4630cd918b8aa3991082fedf6f9e55210b327f44d7cca055c742a8dec3a7056c",
+            "bytes": 203120
+          }
+        ],
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Codex verified main:1251-1252 skips convergence_groups for any --case, while existing validator still owns unchanged 3-resolution budgets. Manifest references all12 Hydro inputs (PCM/MUSCL/PPM/Sod), plus periodic case reuses ppm_n64. New six PCM/MUSCL missing controls will receive bounded static checks; six PPM/Sod failures retained fromR2. Reject broad assertion CellularFlash2D is wholly archival/unused: current README explicitly advertises normal ARCH comparison execution. Adopt classification as manually documented research comparison input outside automated manifest, preserve11 actual missing diagnostics fromR23, not onlytwo. Existing tests exercise group function, not main selection. No physics, source, or tolerance change accepted; stage4 remediation proposed only.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "bounded_source_evidence",
+          "adopted_sections": [
+            "selected-case gate omission",
+            "twelve active Hydro input consumers",
+            "main-level regression coverage gap"
+          ],
+          "validation_kind": "manager_source_read",
+          "self_work_reason": "Manager implementing user-added LFS mitigation and independent minimal reproductions; remaining review waits on actual provider result.",
+          "next_recheck": "LFS design result or completed R3.1 repro evidence."
+        }
+      },
+      {
+        "job_id": "d1a4ac829b2d4d68b76355d5304ddbb0",
+        "logical_task_id": "r31-lfs-cache",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "api",
+        "execution_status": "READY_FOR_REVIEW",
+        "failure_kind": null,
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "elapsed_seconds": 40.852537495,
+        "usage": {
+          "input_tokens": 1144,
+          "cached_input_tokens": 0,
+          "output_tokens": 6287,
+          "reasoning_tokens": 5480,
+          "visible_output_tokens": 807,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r31-20261013/workers/lfs-cache-design/task.json",
+            "sha256": "794a601b08beaddbf8bfc0a3bc8c9b17a512f6f754a7889c16fa57c4672b94ee",
+            "bytes": 3896
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/lfs-cache-design/result.json",
+            "sha256": "dbc7459d4887a5fde6a15ecf9f5ab98e022828143cfe1cf41c661354dd4e97aa",
+            "bytes": 1096
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/lfs-cache-design/review.json",
+            "sha256": "ffcc3dc4b852732d18e04cfb56f1a04a12983b1fc10c6410242a45d712088705",
+            "bytes": 1545
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/lfs-cache-design/delivery.txt",
+            "sha256": "d2cea0402dd23986c9eb5f65927905202efe8edd23cccc866b2878c1731a3017",
+            "bytes": 3282
+          }
+        ],
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Codex independently checked actual workflow and offline controls. Adopt exact cache identity, early distinct save, offline materialization/integrity verification and hosted eviction/miss limitations. Dismiss unsupported high-severity skip-smudge/wrong-science claim: HelmEos.h:1227-1239 throws on absent or malformed numeric table; HelmTableReader.h rejects the initial nonnumeric version token; TabularBaryonSource.cpp:41,118-150 rejects malformed/absent input. Original CPU CI hydrates only Helm, with no eos2/eos4 reference in cmake/tests or host/CUDA test entry wiring; baryon requirement was invented. Local four files already materialized and verified. Actual patch derives key from git-show canonical pointer, not hashFiles; cache-primary-key saved before CPU toolchain/science. Existing miss-only checkout auth pattern preserved; no hosted test or proven auth defect. No extra downloads or production fallback changes justified.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "bounded_partial_adoption",
+          "adopted_sections": [
+            "exact identity and early cache save",
+            "offline hydration and content verification",
+            "hosted cache scope and eviction caveats"
+          ],
+          "validation_kind": "manager_source_read_and_offline_controls",
+          "self_work_reason": "All independent source audits reviewed; manager integrates evidence and triage without paid format-only reruns.",
+          "next_recheck": "Frozen R3.1 candidate and follow-up table available for independent prioritization review."
+        }
+      },
+      {
+        "job_id": "22998ffa88494036b7263792adfeae45",
+        "logical_task_id": "r31-final-priority",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "api",
+        "execution_status": "READY_FOR_REVIEW",
+        "failure_kind": null,
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "elapsed_seconds": 54.520568352,
+        "usage": {
+          "input_tokens": 1388,
+          "cached_input_tokens": 0,
+          "output_tokens": 8809,
+          "reasoning_tokens": 8086,
+          "visible_output_tokens": 723,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r31-20261013/workers/final-priority/task.json",
+            "sha256": "0fc8f8966e0ee39bfa071b535a2a1f1da977e612068120645a075611cfa09b62",
+            "bytes": 4615
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/final-priority/result.json",
+            "sha256": "9bac25b8ba832dde36921f700e155d8ffdfec736a1260a1756893b77ac42ff69",
+            "bytes": 1112
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/final-priority/review.json",
+            "sha256": "2dc279f7afccc2eefb9abd24eed15339a8965e1e9c6e2e57692742b8c9a6e5df",
+            "bytes": 1486
+          },
+          {
+            "path": "output/modernization/r31-20261013/workers/final-priority/delivery.txt",
+            "sha256": "d55d0a881fbd72b51f585b8db2030b5dcb26e1a400407e0e66f7f1b584360946",
+            "bytes": 3191
+          }
+        ],
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Adopt per-input historical scientific value provenance prerequisite (six new PCM/MUSCL values not yet established), explicit manifest-referenced versus executable distinction, original group budget/full-versus-partial semantics and local-only CI caveats. Updated report accordingly. Dismiss claimed current scope contradiction: A03/A04 are explicitly future R3.2 work, report stops at R3.1; no profiles or identity changes performed. Dismiss conflation of real R2 manual group PASS with mocked current main false-pass: distinct data/execution identities already explicit; no acceptance assigned to mock. Missing active keys rejected is expected O7 behavior, not contradiction to active required-key rejection assurance. Native independent QA confirmed bounded coverage/no scientific closure. No numerical/physics defaults invented and no paid repair needed.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "bounded_partial_adoption",
+          "adopted_sections": [
+            "per-input historical value provenance prerequisite",
+            "manifest referenced versus currently executable clarity",
+            "original group acceptance and hosted CI limits"
+          ],
+          "validation_kind": "manager_evidence_and_document_check",
+          "self_work_reason": "Independent audits complete; deterministic document/evidence integration is sole remaining work.",
+          "next_recheck": "Next authorized R3.2 batch or actual CI hosted result, not more reviews of this frozen roadmap."
+        }
+      }
+    ],
+    "cost_limits": "Actual reported usage retained; manager/unknown monetary cost not inferred",
+    "feedback": [
+      "Preserved invalid-delivery metadata and deterministically parsed complete fenced JSON for bounded evidence adoption, no paid format-only rerun.",
+      "Manager task packet mislabelled original R1 C02/C03; corrected original immutable IDs, no RZ/Cellular closure.",
+      "Rejected unsupported wholly-unused Cellular, silent pointer consumption and extra CI baryon requirement claims.",
+      "Priority review distinction between future roadmap and current scope enforced; six new inputs require per-input provenance.",
+      "API execution.permissions schema corrected to none before inference; no cost or logical budget reset.",
+      "No Gemini prose-only job because frozen wording required no additional provider work; no global Skill/MCP change."
+    ],
+    "next_recheck": "Next authorized R3.2 packet or actual hosted CI result; no further review of frozen R3.1 needed."
+  },
+  "evidence": [
+    {
+      "path": "output/modernization/r31-20261013/active-hydro-input-inventory.json",
+      "sha256": "3f432637c7aedfa3c5323051083f5c41761c92521c2b846f49e31bafc8f5e0a4",
+      "bytes": 4277
+    },
+    {
+      "path": "output/modernization/r31-20261013/ci-lfs/ci-lfs.patch",
+      "sha256": "8f9f678d67975a87dc3daa04250ba641c71900b948993e8a3412c77df99cc426",
+      "bytes": 4223
+    },
+    {
+      "path": "output/modernization/r31-20261013/ci-lfs/identify-inline.py",
+      "sha256": "83bd533f2b8364d66e3570c636547d1baba802d3e7ffe657c01ea9acfd15656c",
+      "bytes": 519
+    },
+    {
+      "path": "output/modernization/r31-20261013/ci-lfs/manifest.json",
+      "sha256": "903a5c0efd196289914ee6aac29eb2ddb10c6ef60cedd44876cc5420408fd434",
+      "bytes": 1101
+    },
+    {
+      "path": "output/modernization/r31-20261013/ci-lfs/offline-controls-recipe.py",
+      "sha256": "ca0be3aac8e3ca710671fc3523c86b32bd8d5f8029f69f8fe8d1510c68ef43fe",
+      "bytes": 8606
+    },
+    {
+      "path": "output/modernization/r31-20261013/ci-lfs/offline-controls.json",
+      "sha256": "74c73a36fca2ba2888a59a0faf016e6b430fcbdf9efb7fa009a65ae25bfce3c2",
+      "bytes": 11227
+    },
+    {
+      "path": "output/modernization/r31-20261013/ci-lfs/verify-inline.py",
+      "sha256": "fc617237960dd2287183c74a5d583b14e4e36081b95301c61dc96946b7ab1a50",
+      "bytes": 1153
+    },
+    {
+      "path": "output/modernization/r31-20261013/finalize-recipe.py",
+      "sha256": "4b6602e176a0599737079158c8dd43e04312d9dc204e38270ba7871a393f6429",
+      "bytes": 12704
+    },
+    {
+      "path": "output/modernization/r31-20261013/lfs-local-pin.json",
+      "sha256": "4e621f24e97592c8461547182e7106f35d403447a10473f0bb997dda93a014a1",
+      "bytes": 2678
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection/muscl_n128.stdout.json",
+      "sha256": "bf4966a4bc03e7f89957c92035668c1a19544b476e08b19abe45ca65008aa993",
+      "bytes": 66829
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection/muscl_n256.stdout.json",
+      "sha256": "950dbea4fbac88ad24a02930153004b742829e412d138a16200e9a28cb355934",
+      "bytes": 66834
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection/muscl_n64.stdout.json",
+      "sha256": "81fc9518ce0860e198b5cb900f6a1a31ec40dcb57408f72487301bc97d9982a4",
+      "bytes": 66824
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection/pcm_n128.stdout.json",
+      "sha256": "4210096a16d619b44f17d3d06f44687ead4b4192dbaa18f6b47ed08a9d5eb8b6",
+      "bytes": 66822
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection/pcm_n256.stdout.json",
+      "sha256": "a186027c6026317f3fe687109f007b3bf7a74095f41d90b922e07eaa23d1cf88",
+      "bytes": 66827
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection/pcm_n64.stdout.json",
+      "sha256": "64a95677f1752fec58fb4b8adb0ceb2759915763550bab7988d496af5cd0a364",
+      "bytes": 66817
+    },
+    {
+      "path": "output/modernization/r31-20261013/new-input-inspection.json",
+      "sha256": "dedcedc148b3a6ff29509a360d389a9cd5b5f629a7b9b203f2f6f734b43836ee",
+      "bytes": 3931
+    },
+    {
+      "path": "output/modernization/r31-20261013/reproduce-recipe.py",
+      "sha256": "bea88011d6be94bce761745c2468351d91577b5ad3d890dd08f8436c218adb79",
+      "bytes": 6022
+    },
+    {
+      "path": "output/modernization/r31-20261013/selected-case-control-flow-repro.json",
+      "sha256": "0b63146c8c0431244471194e2ca7a15c7b17158bf6668729d3e56ff871985b8d",
+      "bytes": 800
+    },
+    {
+      "path": "output/modernization/r31-20261013/start-identity.json",
+      "sha256": "486bb16b6719d3b17eb4b82e29b7eeac8b03981bde09a0796ac0e9668c32957a",
+      "bytes": 1280
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/final-priority/delivery.txt",
+      "sha256": "d55d0a881fbd72b51f585b8db2030b5dcb26e1a400407e0e66f7f1b584360946",
+      "bytes": 3191
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/final-priority/result.json",
+      "sha256": "9bac25b8ba832dde36921f700e155d8ffdfec736a1260a1756893b77ac42ff69",
+      "bytes": 1112
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/final-priority/review.json",
+      "sha256": "2dc279f7afccc2eefb9abd24eed15339a8965e1e9c6e2e57692742b8c9a6e5df",
+      "bytes": 1486
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/final-priority/task.json",
+      "sha256": "0fc8f8966e0ee39bfa071b535a2a1f1da977e612068120645a075611cfa09b62",
+      "bytes": 4615
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/lfs-cache-design/delivery.txt",
+      "sha256": "d2cea0402dd23986c9eb5f65927905202efe8edd23cccc866b2878c1731a3017",
+      "bytes": 3282
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/lfs-cache-design/result.json",
+      "sha256": "dbc7459d4887a5fde6a15ecf9f5ab98e022828143cfe1cf41c661354dd4e97aa",
+      "bytes": 1096
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/lfs-cache-design/review.json",
+      "sha256": "ffcc3dc4b852732d18e04cfb56f1a04a12983b1fc10c6410242a45d712088705",
+      "bytes": 1545
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/lfs-cache-design/task.json",
+      "sha256": "794a601b08beaddbf8bfc0a3bc8c9b17a512f6f754a7889c16fa57c4672b94ee",
+      "bytes": 3896
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core/cli-events.ndjson",
+      "sha256": "1b9f68d4facc44724c23cc6e9322420cda3bc2205b0e4260b18df2849f016fcb",
+      "bytes": 117615
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core/delivery.txt",
+      "sha256": "d39d2677e2ea609a033a0a966d095136364161a76c8fa83f873c88dca3f4b2d4",
+      "bytes": 4836
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core/result.json",
+      "sha256": "d22b3fd27ad9b3b3459abe92a8dbd26237a0de19ea41427308750f1b77bccf65",
+      "bytes": 534
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core/review.json",
+      "sha256": "de3410dd43a1fc3a410ed4851704f248eb6e2d0f38b5db3e9663fc143d8c33c9",
+      "bytes": 1398
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core/task.json",
+      "sha256": "972da899317f4cfe384585a42775fe29b8ebe522683b3207f2ff3f11521ad4a2",
+      "bytes": 3009
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core-complete-fenced.json",
+      "sha256": "32168585edb0904189ce452b1be0ef6288705a369e2d4ea7b3a7b1491f5b9054",
+      "bytes": 4521
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core-original-cli-events.ndjson",
+      "sha256": "1b9f68d4facc44724c23cc6e9322420cda3bc2205b0e4260b18df2849f016fcb",
+      "bytes": 117615
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core-original-delivery.txt",
+      "sha256": "d39d2677e2ea609a033a0a966d095136364161a76c8fa83f873c88dca3f4b2d4",
+      "bytes": 4836
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core-original-result.json",
+      "sha256": "d22b3fd27ad9b3b3459abe92a8dbd26237a0de19ea41427308750f1b77bccf65",
+      "bytes": 534
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/shared-core-original-task.json",
+      "sha256": "972da899317f4cfe384585a42775fe29b8ebe522683b3207f2ff3f11521ad4a2",
+      "bytes": 3009
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/verification-entry/cli-events.ndjson",
+      "sha256": "4630cd918b8aa3991082fedf6f9e55210b327f44d7cca055c742a8dec3a7056c",
+      "bytes": 203120
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/verification-entry/delivery.txt",
+      "sha256": "d3b86de38f38fceaafedd3f88802767f731b4d2a5f44f5f9f2fb34f5c85242f4",
+      "bytes": 6243
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/verification-entry/result.json",
+      "sha256": "7f99b72763b5c0c09ee2d25ea52bdbe4f98bcdfd7d836e77055f4bf2fcc10aa1",
+      "bytes": 6783
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/verification-entry/review.json",
+      "sha256": "66c3b5a086e2b76f72f748a6c6df7fe0a7b2468458802936f0479cf0a3ae74b2",
+      "bytes": 1333
+    },
+    {
+      "path": "output/modernization/r31-20261013/workers/verification-entry/task.json",
+      "sha256": "a5de34943d6d6d7d37e7459a6323f2567d6ac0df5b38cc1fdb0f71e46afe1021",
+      "bytes": 2996
+    },
+    {
+      "path": "output/modernization/r31-20261013/lfs-local-provenance.json",
+      "sha256": "5ace18829f6d649c21f796dd545465499f6a9a9d7c4bf07e52d9e5de83f23d17",
+      "bytes": 1383
+    },
+    {
+      "path": "output/modernization/r31-20261013/docs-qa-recipe.py",
+      "sha256": "29d0cf4c50cc2da1cf6cc22f8d01db16087af7aa14cb4bb4b6fc4bbdfc692f3c",
+      "bytes": 2949
+    }
+  ],
+  "future_plan": {
+    "R3.2": "Targeted RKL cost attribution, optional bounded inactive-identity assessment; not executed",
+    "R3.3": "Freeze priority work packages, minimum verification and rollback after attribution",
+    "stage4": "Explicit canonical input maintenance and original selected-case runner group protection before risky refactoring"
+  },
+  "verification_limits": [
+    "No full CUDA/CPU project build",
+    "No full route mathematical equivalence proof",
+    "No runtime speedup or cross-version non-regression claim",
+    "No old RZ long replay or Cellular reference-discrepancy closure",
+    "No hosted CI/cache/auth run or actionlint result"
+  ],
+  "mechanical_qa": {
+    "receipt": "output/modernization/r31-20261013/final-qa.json",
+    "markdown_files": 12,
+    "local_links": 223,
+    "heading_anchors": 31,
+    "tables": 32,
+    "diff_check": "PASS",
+    "source_identity": "PASS",
+    "mock_scientific_output_absent": true
+  }
+}

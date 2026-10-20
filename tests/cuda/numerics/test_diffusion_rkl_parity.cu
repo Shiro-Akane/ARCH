@@ -1,10 +1,13 @@
-#include "fixtures/eos/FreeEnergyFixture.h"
 /**
  * @file test_diffusion_rkl_parity.cu
  * @brief Compare CPU/CUDA diffusion operators and RKL stage updates.
  *
  * Check directional timestep limits, EOS failures, state-buffer preparation
  * and every stage against the shared host calculation and reference cases.
+ *
+ * Build-cost split: the shared helpers, the single failure counter and main()
+ * stay here. The tabular-EOS latch body lives in test_diffusion_rkl_tabular.cu;
+ * both TUs share DiffusionRklTestSupport.cuh and one failure owner.
  */
 #include <cuda_runtime.h>
 
@@ -22,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#include "DiffusionRklTestSupport.cuh"
 #include "cuda/diffusion/DiffusionKernels.cuh"
 #include "cuda/diffusion/DiffusionBatchKernels.cuh"
 #include "numerics/diffusion/DiffFlux.h"
@@ -29,10 +33,8 @@
 #include "numerics/diffusion/DiffusionAMRStages.h"
 #include "physics/diffusionCoe/diffusion_math.hpp"
 #include "physics/eos/IdealGas.h"
-#include "physics/eos/tabular/Tabular3DEOS.h"
-#include "physics/eos/tabular/Tabular4DEOS.h"
 
-namespace {
+namespace diffusion_rkl_test {
 
 int failures = 0;
 
@@ -180,7 +182,7 @@ void expect_bits(const char* label, double actual, std::uint64_t expected)
 }
 
 void expect_close(const char* label, double actual, double expected,
-                  double relative_limit = 5.0e-12)
+                  double relative_limit)
 {
     if (std::isnan(expected)) {
         if (!std::isnan(actual)) fail(std::string(label) + " expected NaN");
@@ -367,7 +369,7 @@ void compare_frozen_rkl_state(
     }
 }
 
-Grid make_grid(int dimension, double cell_width = 0.01)
+Grid make_grid(int dimension, double cell_width)
 {
     Grid grid(2,
               0.0, amr::BLOCK_NX * cell_width,
@@ -472,6 +474,34 @@ double cartesian_face_dt_reference(const FluidState& state, const Grid& grid, co
     return maximum_rate > 0. ? static_cast<double>(1/maximum_rate) : std::numeric_limits<double>::max();
 }
 
+// Independent analytic face reference for the explicit linear 1D fixture.
+// The physical stress remains three-dimensional: tau_xx=(4/3)*mu*du/dx,
+// tau_yx=mu*dv/dx, tau_zx=mu*dw/dx, with mu=rho*nu. Momentum flux
+// is -tau(:,x) and total-energy flux is -velocity_face dot tau(:,x).
+// Linear primitives make the arithmetic face mean exactly their midpoint
+// value. This reference calls neither the production stress nor an EOS.
+std::array<long double, 2> cartesian_stokes_route_reference(
+    int right_cell, bool thermal)
+{
+    constexpr long double spacing = 0.01L, q_increment = 0.013L;
+    const long double q = q_increment * (right_cell - 0.5L);
+    const long double rho = 1.1L + 0.07L * q;
+    const long double mu = 0.19L * rho;
+    const long double u = 0.2L + 0.03L * q;
+    const long double v = -0.1L + 0.02L * q;
+    const long double w = 0.05L - 0.01L * q;
+    const long double tau_xx = (4.0L / 3.0L) * mu * 0.03L * q_increment / spacing;
+    const long double tau_yx = mu * 0.02L * q_increment / spacing;
+    const long double tau_zx = -mu * 0.01L * q_increment / spacing;
+    long double energy = -(u * tau_xx + v * tau_yx + w * tau_zx);
+    if (thermal) {
+        const long double x0 = 0.35L + 0.01L * q;
+        const long double cv = 3.5L * x0 + 7.25L * (1.0L - x0);
+        energy -= 0.37L * rho * cv * 0.4L * q_increment / spacing;
+    }
+    return {-tau_xx, energy};
+}
+
 void verify_frozen_host_authority()
 {
     const double composition[3] = {0.2, 0.3, 0.5};
@@ -510,29 +540,40 @@ void verify_frozen_host_authority()
     const int cell = grid.GetIndex(grid.Is() + 6, 0, 0);
     struct RouteAuthority {
         bool thermal, viscous, species;
-        std::uint64_t flux_u, flux_v, flux_w, flux_e, flux_x0, flux_x1;
-        std::uint64_t op_u, op_v, op_w, op_e, op_x0, op_x1;
+        std::uint64_t flux_v, flux_w, flux_e, flux_x0, flux_x1;
+        std::uint64_t op_v, op_w, op_e, op_x0, op_x1;
     };
+    // Unaffected thermal/species/transverse routes keep their original frozen
+    // references. Viscous longitudinal momentum and energy use the independent
+    // Stokes reference above, replacing the obsolete scalar-Laplacian values.
     const RouteAuthority routes[] = {
         {true, false, false,
-         0, 0, 0, 0xbff43400198d8819ULL, 0, 0,
-         0, 0, 0, 0x3fb7efc1166a8e00ULL, 0, 0},
+         0, 0, 0xbff43400198d8819ULL, 0, 0,
+         0, 0, 0x3fb7efc1166a8e00ULL, 0, 0},
         {false, true, false,
-         0xbf80c8737bec97afULL, 0xbf766099fa90cb42ULL,
-         0x3f666099fa90cb42ULL, 0xbf50318f4b8f7948ULL, 0, 0,
-         0x3f461885b2dc5d00ULL, 0x3f3d760799250d80ULL,
-         0xbf2d760799250d80ULL, 0x3f42fef32c7b3be0ULL, 0, 0},
+         0xbf766099fa90cb42ULL, 0x3f666099fa90cb42ULL, 0, 0, 0,
+         0x3f3d760799250d80ULL, 0xbf2d760799250d80ULL, 0, 0, 0},
         {false, false, true,
-         0, 0, 0, 0, 0xbf59e91e14a7abdaULL, 0x3f59e91e14a7b804ULL,
-         0, 0, 0, 0, 0x3f210e703064c200ULL, 0xbf210e70303eaf20ULL},
+         0, 0, 0, 0xbf59e91e14a7abdaULL, 0x3f59e91e14a7b804ULL,
+         0, 0, 0, 0x3f210e703064c200ULL, 0xbf210e70303eaf20ULL},
         {true, true, true,
-         0xbf80c8737bec97afULL, 0xbf766099fa90cb42ULL,
-         0x3f666099fa90cb42ULL, 0xbff4380c7d606bf8ULL,
+         0xbf766099fa90cb42ULL, 0x3f666099fa90cb42ULL, 0,
          0xbf59e91e14a7abdaULL, 0x3f59e91e14a7b804ULL,
-         0x3f461885b2dc5d00ULL, 0x3f3d760799250d80ULL,
-         0xbf2d760799250d80ULL, 0x3fb815befcc38640ULL,
+         0x3f3d760799250d80ULL, 0xbf2d760799250d80ULL, 0,
          0x3f210e703064c200ULL, 0xbf210e70303eaf20ULL}};
     for (const RouteAuthority& route : routes) {
+        const auto reference_flux = cartesian_stokes_route_reference(
+            grid.Is() + 5, route.thermal);
+        const auto reference_left = cartesian_stokes_route_reference(
+            grid.Is() + 6, route.thermal);
+        const auto reference_right = cartesian_stokes_route_reference(
+            grid.Is() + 7, route.thermal);
+        // L=-div(F), using the two actual cell faces and the independent
+        // fixture spacing. The existing 1e-9 comparison budget is unchanged.
+        const double reference_op_u = static_cast<double>(
+            -(reference_right[0] - reference_left[0]) / 0.01L);
+        const double reference_op_e = static_cast<double>(
+            -(reference_right[1] - reference_left[1]) / 0.01L);
         const SimConfig config = make_config(
             route.thermal, route.viscous, route.species);
         std::vector<FluidVector> flux(grid.GetTotalSize());
@@ -540,13 +581,14 @@ void verify_frozen_host_authority()
         DiffFlux::compute_fluxes(
             state, eos, grid, config, flux, species_flux, 0);
         expect_close("route.flux.u", flux[face].mom_u,
-                     std::bit_cast<double>(route.flux_u), 1.0e-9);
+                     route.viscous ? static_cast<double>(reference_flux[0]) : 0.0, 1.0e-9);
         expect_close("route.flux.v", flux[face].mom_v,
                      std::bit_cast<double>(route.flux_v), 1.0e-9);
         expect_close("route.flux.w", flux[face].mom_w,
                      std::bit_cast<double>(route.flux_w), 1.0e-9);
         expect_close("route.flux.e", flux[face].eng,
-                     std::bit_cast<double>(route.flux_e), 1.0e-9);
+                     route.viscous ? static_cast<double>(reference_flux[1])
+                                   : std::bit_cast<double>(route.flux_e), 1.0e-9);
         expect_close("route.flux.x0", species_flux[face],
                      std::bit_cast<double>(route.flux_x0), 1.0e-9);
         expect_close("route.flux.x1",
@@ -559,13 +601,14 @@ void verify_frozen_host_authority()
         std::fill(op.enuc_rate.begin(), op.enuc_rate.end(), -777.0);
         DiffFlux::compute_diffusion_operator(state, op, eos, grid, config);
         expect_close("route.op.u", op.mom_u[cell],
-                     std::bit_cast<double>(route.op_u), 1.0e-9);
+                     route.viscous ? reference_op_u : 0.0, 1.0e-9);
         expect_close("route.op.v", op.mom_v[cell],
                      std::bit_cast<double>(route.op_v), 1.0e-9);
         expect_close("route.op.w", op.mom_w[cell],
                      std::bit_cast<double>(route.op_w), 1.0e-9);
         expect_close("route.op.e", op.eng[cell],
-                     std::bit_cast<double>(route.op_e), 1.0e-9);
+                     route.viscous ? reference_op_e
+                                   : std::bit_cast<double>(route.op_e), 1.0e-9);
         expect_close("route.op.x0", op.X(0, cell),
                      std::bit_cast<double>(route.op_x0), 1.0e-9);
         expect_close("route.op.x1", op.X(1, cell),
@@ -601,135 +644,6 @@ void verify_frozen_host_authority()
     expect_bits("zero_transport.sentinel", DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.),
                 0x7fefffffffffffffULL);
 }
-
-template <class T>
-struct DeviceArray
-{
-    T* pointer = nullptr;
-    std::size_t count = 0;
-
-    DeviceArray() = default;
-    explicit DeviceArray(std::size_t size) : count(size)
-    {
-        if (count > 0) require_cuda(
-            cudaMalloc(reinterpret_cast<void**>(&pointer), count * sizeof(T)),
-            "cudaMalloc");
-    }
-    DeviceArray(const DeviceArray&) = delete;
-    DeviceArray& operator=(const DeviceArray&) = delete;
-    DeviceArray(DeviceArray&& other) noexcept
-        : pointer(std::exchange(other.pointer, nullptr)), count(other.count) {}
-    ~DeviceArray() { if (pointer) cudaFree(pointer); }
-
-    void upload(const T* source, std::size_t size)
-    {
-        require_cuda(cudaMemcpy(pointer, source, size * sizeof(T),
-                                cudaMemcpyHostToDevice), "upload");
-    }
-    void download(T* destination, std::size_t size) const
-    {
-        require_cuda(cudaMemcpy(destination, pointer, size * sizeof(T),
-                                cudaMemcpyDeviceToHost), "download");
-    }
-};
-
-struct DeviceStateOwner
-{
-    DeviceArray<double> rho, mom_u, mom_v, mom_w, eng, enuc, species;
-    arch::cuda::DeviceStateView view{};
-
-    DeviceStateOwner(int total, int n_species)
-        : rho(total), mom_u(total), mom_v(total), mom_w(total), eng(total),
-          enuc(total), species(static_cast<std::size_t>(total) * n_species)
-    {
-        view = {rho.pointer, mom_u.pointer, mom_v.pointer, mom_w.pointer,
-                eng.pointer, enuc.pointer, species.pointer, total, n_species};
-    }
-
-    void upload(const FluidState& state)
-    {
-        const std::size_t total = state.rho.size();
-        rho.upload(state.rho.data(), total);
-        mom_u.upload(state.mom_u.data(), total);
-        mom_v.upload(state.mom_v.data(), total);
-        mom_w.upload(state.mom_w.data(), total);
-        eng.upload(state.eng.data(), total);
-        enuc.upload(state.enuc_rate.data(), total);
-        if (!state.mass_fractions.empty())
-            species.upload(state.mass_fractions.data(), state.mass_fractions.size());
-    }
-
-    FluidState download() const
-    {
-        FluidState state;
-        state.Preallocate(view.total_size);
-        state.InitSpecies(view.n_species);
-        rho.download(state.rho.data(), state.rho.size());
-        mom_u.download(state.mom_u.data(), state.mom_u.size());
-        mom_v.download(state.mom_v.data(), state.mom_v.size());
-        mom_w.download(state.mom_w.data(), state.mom_w.size());
-        eng.download(state.eng.data(), state.eng.size());
-        enuc.download(state.enuc_rate.data(), state.enuc_rate.size());
-        if (!state.mass_fractions.empty())
-            species.download(state.mass_fractions.data(), state.mass_fractions.size());
-        return state;
-    }
-};
-
-struct DeviceFixture
-{
-    Grid grid = make_grid(1);
-    FluidState host_state = make_state(grid, 2);
-    DeviceStateOwner state{grid.GetTotalSize(), 2};
-    DeviceStateOwner output{grid.GetTotalSize(), 2};
-    DeviceStateOwner flux{grid.GetTotalSize(), 2};
-    DeviceArray<double> candidates{static_cast<std::size_t>(
-        (grid.Ie() - grid.Is()) * (grid.Je() - grid.Js()) *
-        (grid.Ke() - grid.Ks()))};
-    DeviceArray<double> result{1};
-    DeviceArray<int> status{1};
-    DeviceArray<double> volume{static_cast<std::size_t>(grid.GetTotalSize())};
-    DeviceArray<double> lower{static_cast<std::size_t>(grid.GetTotalSize())};
-    DeviceArray<double> upper{static_cast<std::size_t>(grid.GetTotalSize())};
-    DeviceArray<double> A{2}, Z{2}, gamma{2}, cv{2};
-    IdealGasView eos{};
-    arch::cuda::DeviceGridView device_grid{};
-    arch::cuda::DiffusionWorkspaceView workspace{};
-
-    DeviceFixture()
-    {
-        state.upload(host_state);
-        FluidState sentinel = make_state(grid, 2);
-        std::fill(sentinel.rho.begin(), sentinel.rho.end(), -101.0);
-        std::fill(sentinel.mom_u.begin(), sentinel.mom_u.end(), -102.0);
-        std::fill(sentinel.mom_v.begin(), sentinel.mom_v.end(), -103.0);
-        std::fill(sentinel.mom_w.begin(), sentinel.mom_w.end(), -104.0);
-        std::fill(sentinel.eng.begin(), sentinel.eng.end(), -105.0);
-        std::fill(sentinel.enuc_rate.begin(), sentinel.enuc_rate.end(), -777.0);
-        std::fill(sentinel.mass_fractions.begin(), sentinel.mass_fractions.end(), -106.0);
-        output.upload(sentinel);
-        flux.upload(sentinel);
-
-        std::vector<double> metric(grid.GetTotalSize(), grid.dx1);
-        std::vector<double> area(grid.GetTotalSize(), 1.0);
-        volume.upload(metric.data(), metric.size());
-        lower.upload(area.data(), area.size());
-        upper.upload(area.data(), area.size());
-        device_grid = arch::cuda::make_device_grid_view(grid);
-        device_grid.cell_volume = volume.pointer;
-        device_grid.face_area_lower[0] = lower.pointer;
-        device_grid.face_area_upper[0] = upper.pointer;
-
-        const double hA[2] = {1.0, 4.0};
-        const double hZ[2] = {1.0, 2.0};
-        const double hgamma[2] = {1.4, 1.5};
-        const double hcv[2] = {3.5, 7.25};
-        A.upload(hA, 2); Z.upload(hZ, 2); gamma.upload(hgamma, 2); cv.upload(hcv, 2);
-        eos.species = {A.pointer, Z.pointer, gamma.pointer, cv.pointer, 2};
-        eos.global_gamma = 1.37;
-        workspace = {flux.view, candidates.pointer, result.pointer, status.pointer};
-    }
-};
 
 __global__ void conductivity_probe(double* result)
 {
@@ -817,190 +731,6 @@ struct StellarOverrideProbeEos
         state.cv = 1.0;
     }
 };
-
-template<class Eos>
-void verify_tabular_diffusion_latch(Eos eos, int compositions)
-{
-    DeviceFixture fixture;
-    DeviceFixture second;
-    DeviceStateOwner first_stage(fixture.grid.GetTotalSize(), 2);
-    DeviceStateOwner second_stage(second.grid.GetTotalSize(), 2);
-    for (int cell = 0; cell < fixture.grid.GetTotalSize(); ++cell) {
-        fixture.host_state.rho[cell] = 1.0;
-        fixture.host_state.mom_u[cell] = fixture.host_state.mom_v[cell]
-            = fixture.host_state.mom_w[cell] = 0.0;
-        fixture.host_state.eng[cell] = 100.0;
-    }
-    fixture.state.upload(fixture.host_state);
-    second.state.upload(fixture.host_state);
-    first_stage.upload(fixture.host_state);
-    second_stage.upload(fixture.host_state);
-    std::array<arch::cuda::DeviceDiffusionBatchBlock, 2> bindings{};
-    for (int i = 0; i < 2; ++i) {
-        auto& f = i == 0 ? fixture : second;
-        auto& b = bindings[i];
-        b.input = b.state_n = b.previous = b.older = f.state.view;
-        b.output = i == 0 ? first_stage.view : second_stage.view;
-        b.delta = b.initial_delta = f.output.view;
-        b.grid = f.device_grid;
-        b.workspace = {f.flux.view, f.candidates.pointer, f.result.pointer, f.status.pointer, {}};
-    }
-    DeviceArray<arch::cuda::DeviceDiffusionBatchBlock> device_bindings(2);
-    device_bindings.upload(bindings.data(), bindings.size());
-    const auto batch_plan = arch::scheduler::make_rkl_plan(arch::scheduler::RklMethod::RKL1, 1);
-    const int extent = 4 * compositions;
-    std::vector<double> table(tabular_eos::FieldCount * extent);
-    DeviceArray<double> device_table(table.size());
-
-    const auto config = DiffFlux::make_diffusion_config_view(make_config(true, false, false));
-    double previous_dt = 0.0;
-    for (const bool invalid : {true, false, false}) {
-        // Exact Hermite polynomial F=100+2r+r*t-1.5t^2, r=ln(rho), t=ln(T).
-        // At T=1: e=100+r, Cv=3-r, with a unique root in the source domain.
-        for (int ir=0; ir<2; ++ir)
-            for (int it=0; it<2; ++it) {
-                const double r=ir*std::log(10.0), t=it*.2*std::log(10.0);
-                const double jets[]{100.+2*r+r*t-1.5*t*t, 2.+t, r-3*t,
-                                    0.,1.,-3.,0.,0.,0.};
-                for (int field=0; field<tabular_eos::FieldCount; ++field)
-                    std::fill_n(table.data()+field*extent+(ir*2+it)*compositions,
-                                compositions, jets[field]);
-                // Cv=(Fy-Fyy)/T: make only the lower-T endpoint invalid.
-                if (invalid && it==0)
-                    std::fill_n(table.data()+tabular_eos::Fyy*extent+ir*2*compositions,
-                                compositions, r);
-            }
-        Eos host = eos;
-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
-            host.free_energy_fields[field] = table.data() + field * extent;
-        bool host_threw = false;
-        try { static_cast<void>(host.get_temperature(1.0, 100.0, nullptr)); }
-        catch (const std::runtime_error&) { host_threw = true; }
-        if (host_threw != invalid) fail("Diffusion Tabular fixture missed the Host failure boundary");
-        device_table.upload(table.data(), table.size());
-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
-            eos.free_energy_fields[field] = device_table.pointer + field * extent;
-
-        const auto operation = arch::cuda::launch_diffusion_operator(
-            fixture.state.view, fixture.output.view, eos, fixture.eos.species,
-            fixture.device_grid, config, fixture.workspace, nullptr);
-        require_cuda(operation.error, "Tabular diffusion operator latch");
-        require_cuda(cudaDeviceSynchronize(), "Tabular diffusion operator sync");
-        int status = -1;
-        fixture.status.download(&status, 1);
-        if (status != (invalid ? 1 : 0))
-            fail("Diffusion operator concealed an intermediate EOS failure or failed to reset status");
-        const auto output = fixture.output.download();
-        for (int i = fixture.grid.Is(); i < fixture.grid.Ie(); ++i)
-            if (!std::isfinite(output.eng[fixture.grid.GetIndex(i, 0, 0)]))
-                fail("Diffusion fixture did not retain finite operator output");
-
-        const auto timestep = arch::cuda::launch_raw_diffusion_dt(
-            fixture.state.view, eos, fixture.eos.species, fixture.device_grid,
-            config, fixture.workspace, nullptr);
-        require_cuda(timestep.error, "Tabular diffusion dt latch");
-        require_cuda(cudaDeviceSynchronize(), "Tabular diffusion dt sync");
-        fixture.status.download(&status, 1);
-        double dt = 0.0;
-        fixture.result.download(&dt, 1);
-        if (status != (invalid ? 1 : 0) || !std::isfinite(dt))
-            fail("Diffusion dt reduction concealed an intermediate EOS failure or failed to reset status");
-        const auto batch_dt = arch::cuda::launch_diffusion_dt_batch(bindings, device_bindings.pointer,
-            eos, fixture.eos.species, config, nullptr);
-        require_cuda(batch_dt.error, "Batched Tabular diffusion dt latch");
-        require_cuda(cudaDeviceSynchronize(), "Batched Tabular diffusion dt sync");
-        for (auto* f : {&fixture, &second}) {
-            f->status.download(&status, 1);
-            if (status != (invalid ? 1 : 0)) fail("Batched diffusion dt concealed a block's EOS failure");
-        }
-        const auto batch_stage = arch::cuda::launch_diffusion_stage_batch(batch_plan, batch_plan.stages[0],
-            bindings, device_bindings.pointer, eos, fixture.eos.species, config, 1e-6, nullptr);
-        require_cuda(batch_stage.error, "Batched Tabular diffusion stage latch");
-        require_cuda(cudaDeviceSynchronize(), "Batched Tabular diffusion stage sync");
-        for (auto* f : {&fixture, &second}) {
-            f->status.download(&status, 1);
-            if (status != (invalid ? 1 : 0)) fail("Batched diffusion stage concealed a block's EOS failure");
-        }
-        // A late invalid binding must reject the WHOLE launch before clearing
-        // even the first block's status, rather than partially updating a wave.
-        auto invalid_bindings = bindings;
-        invalid_bindings[1].output = invalid_bindings[1].state_n;
-        require_cuda(cudaMemset(fixture.status.pointer, 0x7f, sizeof(int)), "poison batch status");
-        const auto rejected = arch::cuda::launch_diffusion_stage_batch(batch_plan, batch_plan.stages[0],
-            invalid_bindings, device_bindings.pointer, eos, fixture.eos.species, config, 1e-6, nullptr);
-        fixture.status.download(&status, 1);
-        if (rejected.error != cudaErrorInvalidValue || rejected.kernels_launched != 0 || status != 0x7f7f7f7f)
-            fail("Batched diffusion late-alias preflight wrote an earlier block");
-        if (!invalid) {
-            // An invalid EOS payload is rejected by its status, not a physical
-            // timestep reference. Check recovery against the uniform-capacity
-            // analytic limit, then bitwise repeatability of two valid runs.
-            expect_close("Tabular recovered uniform-capacity dt", dt,
-                         fixture.grid.dx1*fixture.grid.dx1/(2.*config.alpha_therm));
-            if (previous_dt > 0. && std::bit_cast<std::uint64_t>(dt)
-                != std::bit_cast<std::uint64_t>(previous_dt))
-                fail("Tabular valid timestep is not repeatable after recovery");
-            previous_dt = dt;
-        }
-    }
-    // Only rho=1's lower-T knot is invalid. At rho=10 the original Host
-    // evaluator must remain valid, so one failed block cannot poison its peer.
-    std::fill_n(table.data() + tabular_eos::Fyy * extent, compositions, 0.0);
-    Eos mixed_host = eos;
-    for (int field = 0; field < tabular_eos::FieldCount; ++field)
-        mixed_host.free_energy_fields[field] = table.data() + field * extent;
-    bool lower_failed = false;
-    try { static_cast<void>(mixed_host.get_temperature(1.0, 100.0, nullptr)); }
-    catch (const std::runtime_error&) { lower_failed = true; }
-    if (!lower_failed || !std::isfinite(mixed_host.get_temperature(10.0, 100.0+std::log(10.0), nullptr)))
-        fail("Mixed Tabular fixture did not isolate an invalid and valid density endpoint");
-    auto valid_peer = fixture.host_state;
-    for (int cell = 0; cell < fixture.grid.GetTotalSize(); ++cell) {
-        valid_peer.rho[cell] = 10.0;
-        valid_peer.eng[cell] = 10.0*(100.0+std::log(10.0));
-    }
-    second.state.upload(valid_peer);
-    device_table.upload(table.data(), table.size());
-    for (int ordering = 0; ordering < 2; ++ordering) {
-        if (ordering) std::swap(bindings[0], bindings[1]);
-        device_bindings.upload(bindings.data(), bindings.size());
-        const auto dt_result = arch::cuda::launch_diffusion_dt_batch(bindings, device_bindings.pointer,
-            eos, fixture.eos.species, config, nullptr);
-        require_cuda(dt_result.error, "Mixed block diffusion dt");
-        require_cuda(cudaDeviceSynchronize(), "Mixed block diffusion dt sync");
-        int failed_status = -1, valid_status = -1;
-        fixture.status.download(&failed_status, 1);
-        second.status.download(&valid_status, 1);
-        if (failed_status != 1 || valid_status != 0)
-            fail("Diffusion dt failure crossed block status ownership");
-        const auto stage_result = arch::cuda::launch_diffusion_stage_batch(batch_plan, batch_plan.stages[0],
-            bindings, device_bindings.pointer, eos, fixture.eos.species, config, 1e-6, nullptr);
-        require_cuda(stage_result.error, "Mixed block diffusion stage");
-        require_cuda(cudaDeviceSynchronize(), "Mixed block diffusion stage sync");
-        fixture.status.download(&failed_status, 1);
-        second.status.download(&valid_status, 1);
-        if (failed_status != 1 || valid_status != 0)
-            fail("Diffusion stage failure crossed block status ownership");
-    }
-}
-
-void verify_tabular_diffusion_failures()
-{
-    BasicTabular3DEOSView<arch::test::FixedTableComposition> eos3{};
-    eos3.n_rho = eos3.n_T = eos3.n_X = 2;
-    eos3.log_rho_max = eos3.dlog_rho = 1.0;
-    eos3.log_T_max = eos3.dlog_T = .2;
-    eos3.X_max = eos3.dX = 1.0;
-    eos3.target_species_id = -1;
-    verify_tabular_diffusion_latch(eos3, 2);
-    BasicTabular4DEOSView<arch::test::FixedTableComposition> eos4{};
-    eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
-    eos4.log_rho_max = eos4.dlog_rho = 1.0;
-    eos4.log_T_max = eos4.dlog_T = .2;
-    eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
-    eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
-    verify_tabular_diffusion_latch(eos4, 4);
-}
 
 void compare_operator_state(
     const FluidState& device, const FluidState& host, const Grid& grid,
@@ -1524,7 +1254,9 @@ void verify_rkl_stages()
     }
 }
 
-} // namespace
+} // namespace diffusion_rkl_test
+
+using namespace diffusion_rkl_test;
 
 int main()
 {

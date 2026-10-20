@@ -1,0 +1,149 @@
+{
+  "scope": "Linux native production SmoothAdvection 1D Init/AMR; wheel zoom/pan unverified",
+  "launchSourceBaseline": "01371b1e4f0dc5e9b9fad57a73cd154fb7a3339f",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "configSha256": "374077d75ca66534f3b10ca6bf7cd6ebed8ce758e619b081271336116fb71212",
+  "windowId": 32574480,
+  "productionAssets": true,
+  "field": {
+    "dimension": 1,
+    "sampleCount": 512,
+    "xDomain": [
+      0,
+      1
+    ],
+    "densityRangeDisplayed": [
+      0.800024,
+      1.19998
+    ],
+    "sample": {
+      "index": 2,
+      "x": 0.0048828125,
+      "rhoDisplayed": 1.0061343,
+      "pressureDisplayed": 1,
+      "temperatureDisplayed": 3.4606652e-07,
+      "velocityDisplayed": 1,
+      "totalEnergyDisplayed": 3.0030672,
+      "internalEnergyDisplayed": 2.4847576
+    },
+    "initialSampleNotAmrCellValue": true
+  },
+  "amr": {
+    "complete": true,
+    "limited": false,
+    "completedPasses": 0,
+    "leafBlocks": 8,
+    "levels": {
+      "0": 8
+    },
+    "configuredMaxBlocks": 32,
+    "workingCapacity": 32,
+    "selection": {
+      "logicalKey": "0:7:0:0",
+      "level": 0,
+      "logicalIndex": [
+        7,
+        0,
+        0
+      ],
+      "lower": [
+        0.875
+      ],
+      "upper": [
+        1
+      ],
+      "cellShape": [
+        16
+      ],
+      "cellSpacing": [
+        0.0078125
+      ]
+    },
+    "cellFieldArrays": "not provided by API",
+    "identity": "UI labels field/config/build/EOS/native-coordinates matching; unseen response bytes not extracted"
+  },
+  "wheel": {
+    "deltaY": -120,
+    "plotRangeChanged": false,
+    "backgroundChangedInScreenshot": true,
+    "status": "UNVERIFIED",
+    "limitation": "Input routing suspicion, not demonstrated application defect; no further wheel injection"
+  },
+  "pan": "UNVERIFIED without observed zoom state",
+  "cleanup": {
+    "execSession": 91594,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1564723,
+        "parentPid": 1564722,
+        "startTicks": "6370471",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1564725,
+        "parentPid": 1564723,
+        "startTicks": "6370472",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1564726,
+        "parentPid": 1564723,
+        "startTicks": "6370472",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1564748,
+        "parentPid": 1564725,
+        "startTicks": "6370479",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1564751,
+        "parentPid": 1564723,
+        "startTicks": "6370479",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1564763,
+        "parentPid": 1564723,
+        "startTicks": "6370481",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1565128,
+        "parentPid": 1564726,
+        "startTicks": "6370940",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1566102,
+        "parentPid": 1564763,
+        "startTicks": "6372636",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allExactPidStartTicksGone": true
+  },
+  "diskConfigUnchanged": true,
+  "noScientificOutput": true,
+  "testsRepeated": false,
+  "remoteAvailable": false,
+  "remaining": [
+    "full native model matrix",
+    "native zoom/pan",
+    "Core scientific pending decisions",
+    "unified CUDA",
+    "approved O9"
+  ]
+}

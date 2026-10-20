@@ -22,3 +22,10 @@ stay consistent. User build presets disable tests unless requested; building
 the `ARCH` target does not compile the standalone test executables.
 
 For running or adding tests, start with [tests/README.md](../../tests/README.md).
+
+
+Python runner contracts register once as `tooling_contracts`, invoking
+`tests/tooling/__main__.py`. Hosted Tooling uses that same complete entry;
+CPU discovery and execution exclude its `tooling` label. This replaces eight
+wrapper registrations while retaining their class/method assertions and the
+complete discovered suite. A result must be nonempty and contain no skips.

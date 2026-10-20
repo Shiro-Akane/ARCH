@@ -1,0 +1,190 @@
+{
+  "scope": "BurnGradient Linux production native initial field/raw Init/initial AMR; no burn evolution acceptance",
+  "launchCommit": "278ff187bfbd7c851558140b2f961dd9a4e081b9",
+  "productionCodeCommit": "584508ea1d9fc23009da69973de7b13abf2fc00e",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "completeDependencyFreshness": "unknown",
+  "configSha256": "8002e05c24c1326544de9c50c6dc2c732cf0aca4642b50ca52b349bc91395601",
+  "windowId": 31590792,
+  "field": {
+    "sampleCount": 512,
+    "domainCm": [
+      0,
+      1
+    ],
+    "densityUniform": 10000000,
+    "temperatureMinMaxUi": [
+      50000000.0,
+      2999560000.0
+    ],
+    "selectedSample": {
+      "index": 255,
+      "xCm": 0.4990234375,
+      "uiDensity": 10000000.0,
+      "uiPressure": 1.8694523e+24,
+      "uiTemperature": 2999560400.0,
+      "uiVelocityX": 0,
+      "uiEnergyDensity": 4.0916506e+24,
+      "uiSpecificInternalEnergy": 4.0916506e+17
+    },
+    "sameInitFormulaTemperature": 2999560448.494734,
+    "notIndependentEosOracle": true,
+    "menuFields": [
+      "DENS",
+      "PRES",
+      "TEMP",
+      "VELX",
+      "ENER",
+      "EINT"
+    ],
+    "continuousSpeciesOrEnucAvailable": false
+  },
+  "rawInit": {
+    "probeCount": 3,
+    "actuallyReviewedProbe": 0,
+    "coordinatesCm": [
+      0.25,
+      0,
+      0
+    ],
+    "temperature": 50169303.12178143,
+    "pressure": 0,
+    "pressureConversionUse": "unused",
+    "temperatureConversionUse": "consumed",
+    "density": 10000000.0,
+    "species": [
+      "he4",
+      "c12",
+      "o16",
+      "ne20",
+      "mg24",
+      "si28",
+      "s32",
+      "ar36",
+      "ca40",
+      "ti44",
+      "cr48",
+      "fe52",
+      "ni56"
+    ],
+    "rawFractions": [
+      1e-20,
+      0.5,
+      0.5,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20,
+      1e-20
+    ],
+    "uiNormalization": false,
+    "scope": "Sparse raw Init before EOS; not continuous composition or AMR cell field"
+  },
+  "amr": {
+    "status": "Complete",
+    "leaves": 1,
+    "levelCounts": {
+      "0": 1
+    },
+    "completedPasses": 0,
+    "configuredMaxBlocks": 8,
+    "workingCapacity": 8,
+    "activeCells": 16,
+    "poolBaseBytes": 36864,
+    "levelBaseBytes": 4608,
+    "levelWithSpeciesBytes": 14592,
+    "selectedBlock": {
+      "logicalKey": "0:0:0:0",
+      "level": 0,
+      "boundsCm": [
+        0,
+        1
+      ],
+      "cellShape": [
+        16
+      ],
+      "cellSpacingCm": [
+        0.0625
+      ]
+    },
+    "fieldAndMeshIdentityUi": "matching field/config/build/EOS/native coordinates",
+    "cellFieldArrays": "not provided",
+    "notOomPrediction": true
+  },
+  "startup": "Preview preparing/current observed without Generate input",
+  "cleanup": {
+    "exitCode": 0,
+    "ownedIdentities": [
+      {
+        "pid": 1668759,
+        "ppid": 1668758,
+        "startTicks": "6731745",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1668762,
+        "ppid": 1668759,
+        "startTicks": "6731747",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1668763,
+        "ppid": 1668759,
+        "startTicks": "6731747",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1668787,
+        "ppid": 1668759,
+        "startTicks": "6731754",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1668800,
+        "ppid": 1668759,
+        "startTicks": "6731755",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1668785,
+        "ppid": 1668762,
+        "startTicks": "6731754",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1669166,
+        "ppid": 1668763,
+        "startTicks": "6732220",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1670140,
+        "ppid": 1668800,
+        "startTicks": "6733905",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allGone": true,
+    "configUnchanged": true,
+    "configuredScientificOutputAbsent": true,
+    "managedWorktreeClean": true
+  },
+  "sourceChanged": false,
+  "baselineRerun": false,
+  "pushTag": false
+}

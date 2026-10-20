@@ -1,0 +1,43 @@
+{
+  "ownerContractCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "implementationCommit": "5cd1e9085477c9b06e8fda5c7e8a623028e94ae1",
+  "branch": "studio/compute-optim-integration",
+  "remoteAvailable": false,
+  "files": {
+    "src/io/plot/PlotIO.cpp": {
+      "lastChangeCommit": "b53fdc93ddec32cfd144d12bd860a2e994555f41",
+      "sha256": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5"
+    },
+    "src/driver/io/DriverIO.cpp": {
+      "lastChangeCommit": "b53fdc93ddec32cfd144d12bd860a2e994555f41",
+      "sha256": "5aaafe4f328b95306c169e195fa8ac3cc6821150b3e024da51fad55df4afbc3f"
+    },
+    "studio/host/plotfileMetadata.ts": {
+      "lastChangeCommit": "5656f7b87abd075e464fbd48e1b98a82756949ba",
+      "sha256": "e3e84e63a6ab58a675a23bfb1ce562d8d60f778528a1672564b9d2ae0d8c1627"
+    },
+    "studio/src/components/PlotfileNativeView.tsx": {
+      "lastChangeCommit": "e7181420d06f3eb95eff85061d347ed0f26eaec6",
+      "sha256": "ee95ec6b4d0953e2fcdf2379a1b74747013ba82aa61d1e296640da8c4f97c0b3"
+    },
+    "studio/src/components/PlotfileNativeInspector.tsx": {
+      "lastChangeCommit": "33a49399cb5f1f671a9de3d575fc4137c989b271",
+      "sha256": "445213763f98250dd4969d9ed0acefc7dda4535503b7b80d2146bf9529d5c048"
+    },
+    "validation/io/export_plotfile_handoff.py": {
+      "lastChangeCommit": "01371b1e4f0dc5e9b9fad57a73cd154fb7a3339f",
+      "sha256": "8c99c474dd3768911779932bb01a5b9b896db9514b7b312b5701b5dc01be2899"
+    }
+  },
+  "scope": "Sod 1D and Cartesian 2D active-leaf AMR",
+  "workingTreeClean": false,
+  "uncommittedPaths": [
+    "validation/gravity/curved/compare_backends.py",
+    "validation/gravity/curved/run_cuda_matrix.py",
+    "validation/gravity/curved/test_physical_endpoint.py"
+  ],
+  "mappingReference": "PlotfileAdapterDelivery-20261004.json",
+  "currentCpuBuildEvidence": "PlotfileCurrentCpuBuild-20261004.Summary.json",
+  "historicalProducerIdentityMustBePreserved": true,
+  "newBuildOrSimulation": false
+}

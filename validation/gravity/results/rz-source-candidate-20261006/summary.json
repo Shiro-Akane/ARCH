@@ -1,0 +1,24 @@
+{
+  "base_commit": "326626cb1f51dc82ad78c5d59238b07e84d1cbbc",
+  "patch_sha256": "956ad8cd85b6c7538268590c859d48a3eae48d2f34dc2ba301da4c37f324f96e",
+  "status": "PRIVATE_ARITHMETIC_CANDIDATE_NOT_STAGE_BINDING",
+  "public_gate": "UNCHANGED",
+  "source": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/source",
+  "contract_authority": "4639774fe3c94ae27b3e831d0f0b9d6340de34fd",
+  "fixture": "external_off_axis",
+  "test_sha256": "555bc1e1e79304e4fc4455f69434008d22a736533dd3ed0910eb973d6c1751ed",
+  "elf_sha256": "e8298c80af66a6ead56f4396096162ea2db97e1231f5aa94da688a0e648ba993",
+  "compile_command": [
+    "g++",
+    "-std=c++20",
+    "-O2",
+    "-I/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/source/src",
+    "-I/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/source/include",
+    "/home/arch/projects/ARCH-compute-optim/validation/core_contracts/rz/test_candidate_stage_integrals.cpp",
+    "-o",
+    "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/stage-integrals-test"
+  ],
+  "test_output": "RZ_STAGE_INTEGRAL_LEAF_PASS physical_case=Core_external_off_axis producer=NOT_IMPLEMENTED public_gate=UNCHANGED\n",
+  "scope": "Actual shared gravity owner arithmetic and typed-source declaration only; no reconstructed-integral producer, scheduler binding,24 evolutions or restart qualification.",
+  "rounding_test_note": "Eight epsilon comparison applies only to fixed scalar operation rounding in this fixture, not a production scientific tolerance."
+}

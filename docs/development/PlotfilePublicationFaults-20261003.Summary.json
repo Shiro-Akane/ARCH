@@ -1,0 +1,19 @@
+{
+  "phase": "before explicit flush/close/publish",
+  "ownedPid": 499677,
+  "startIdentity": "2930477",
+  "returnCode": -9,
+  "priorPublishedSha256": "49781bc1a22f7b40a14055c129982a94792630057c763c6f6be763ae5d65b49e",
+  "priorPublishedUnchanged": true,
+  "savedLogAbsent": true,
+  "partialRetainedLocally": true,
+  "readerRejectsPartial": true,
+  "ownedChildGone": true,
+  "baseline": "f309d8f07379dd33f5a4b7b66aa4ac454abe4c85",
+  "faultInjection": "test-executable linker wrapping only; H5Dwrite/H5Fflush/H5Fclose",
+  "injectedFailureChecks": "exception propagated; no Saved PLT; original digest unchanged; temporary cleaned",
+  "scopedTest": "plotfile_publication 1/1 PASS",
+  "studioTests": "283/283 PASS",
+  "lint": "PASS",
+  "typecheck": "PASS"
+}

@@ -1,0 +1,33 @@
+{
+  "status": "PASS_PRIVATE_PRODUCER_MUTATION_SENSITIVITY",
+  "results": [
+    {
+      "name": "correct",
+      "compiled": true,
+      "exit_code": 0,
+      "header_sha256": "0ee080d8a5140557da980c86c1b233ac57b2c40a5ca498fdf5121cd6fcb5cb3a",
+      "elf_sha256": "766e44cf9ee5af15a9d7e5d4f0c8beaabda7ce21bcc7d6e4ea66d2d347abce0b"
+    },
+    {
+      "name": "wrong_W_momentum_for_V_work",
+      "compiled": true,
+      "exit_code": -6,
+      "header_sha256": "d79cfde34b49004ee57f5e31f06f30c855f45364e206c5a339aca38dff36d2c6",
+      "elf_sha256": "6206acc3de0a2b1a62f61ec5bd1176c2c80ea06f9f0ad37c72ef5a97c25437b1"
+    },
+    {
+      "name": "wrong_V_density_for_W_torque",
+      "compiled": true,
+      "exit_code": -6,
+      "header_sha256": "a459c1f72d286f0023d456c6fc3672c66540610fdf76bd0d7919f7919749835f",
+      "elf_sha256": "3f6c566a2b9662237e8da878dcc7856ee5e954cfc29cb9b8529201384741feab"
+    },
+    {
+      "name": "missing_actual_ledger_read_check",
+      "compiled": true,
+      "exit_code": -6,
+      "header_sha256": "0250ed4036f0af43932d28e53ec21ef56ef30caefa6f89af4c71b614e6886b7b",
+      "elf_sha256": "4cdc1604c5bc5cf23eaa983fd4233313d0334d8dfc280ec781645ec9023f3996"
+    }
+  ]
+}

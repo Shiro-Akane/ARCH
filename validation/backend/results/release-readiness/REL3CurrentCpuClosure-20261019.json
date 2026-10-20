@@ -1,0 +1,1006 @@
+{
+  "schema": "arch-release-acceptance-1",
+  "phase": "REL-3 current CPU reclosure",
+  "decision": "ACCEPT_CURRENT_CPU_FOUNDATION_WITH_INHERITED_SCOPES",
+  "status": "CLOSED",
+  "client_date": "2026-10-19",
+  "timezone": "Asia/Tokyo",
+  "recorded_at_utc": "2026-10-18T20:27:32.254120+00:00",
+  "acceptance_owner": "Codex / root; independent source, oracle, numerical and provenance review",
+  "RZ_reintroduction_complete": true,
+  "REL3_complete": true,
+  "REL35_active_documentation_retired": true,
+  "REL4_started": false,
+  "full_release_qualified": false,
+  "worktree": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "head": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "contains_authorized_uncommitted_changes": true,
+  "scope": "Reclose the declared current CPU foundation using CYL0-6, affected public models and explicit inputs; retain inherited scientific scopes and failures. No automatic REL4 or complete release claim.",
+  "contracts": {
+    "chart": {
+      "name": "cylindrical-rz-pwc",
+      "revision": 1,
+      "axes": [
+        "r",
+        "z",
+        "inactive"
+      ]
+    },
+    "momentum": [
+      "rho*u_r",
+      "rho*u_z",
+      "rho*u_phi"
+    ],
+    "angular_momentum": "J=sum(mom_w*W); boundary/body torque balance original1e-12, zero denominator exact zero",
+    "O7": "Active missing/invalid input rejects; 25 registered auxiliary defaults and named auto remain traceable. Get second argument is audit metadata.",
+    "geometry_gravity_separate": true,
+    "no_Rz_private_production_infrastructure_restored": true,
+    "shared_mathematical_implementation_changed_this_phase": false,
+    "no_GlobalDefs_fields_or_device_kernel_changes_this_phase": true,
+    "CHK_has_no_build_source_profile_gate": true,
+    "Plot_provenance_retained": true,
+    "original_numerical_budgets_unchanged": true
+  },
+  "source": {
+    "entry_freeze": {
+      "path": "output/release/rel3-reclosure-20261019/entry-scientific-freeze.json",
+      "sha256": "c75ebbecaf09c112457e08aabff404b12503bdee442a9280010bc3b6bc84fea6",
+      "bytes": 191856
+    },
+    "entry_vs_old_REL3_applicability_not_final_model_source": {
+      "path": "output/release/rel3-reclosure-20261019/source-applicability.json",
+      "sha256": "10862c8d932125088745dce2a4d3af2cd88d954ae0a1d28f0cb45c9610429bcb",
+      "bytes": 56045
+    },
+    "final_scientific_freeze": {
+      "path": "output/release/rel3-reclosure-20261019/candidate-freeze15.json",
+      "sha256": "ecaad1c03a01c460d1a74ccae5ccd575acf58f8cd3172fbeab8ff3cd09249409",
+      "bytes": 251516
+    },
+    "delta_from_entry": [
+      {
+        "path": "simulation/GravityBox/GravityBox.cpp",
+        "entry_sha256": "2566ca650a41c4e576e9cde8054c0889f9bb20822baea32a748eb0608895fcf4",
+        "current_sha256": "7d0d143b261b04e78b46468c22e958afaaf8bd328e1c39d94d3ab249f393b589",
+        "owner": "model initialization"
+      },
+      {
+        "path": "simulation/SNIaCoupled/SNIaCoupled.cpp",
+        "entry_sha256": "26960832cc6ecaf79e7b7c7d6cc0cf2cedaf80659a0478d2e8fe3c402479b223",
+        "current_sha256": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78",
+        "owner": "model initialization"
+      },
+      {
+        "path": "tests/api/preview/test_full_model_preview.py",
+        "entry_sha256": "d808400a594290481fd8db2c1fd6c4208c047a2cb9d49597e9da9388cd2adf75",
+        "current_sha256": "630abfa42474beaafee6dd23a93c397d42362fcb77292c4e65c8398915ff4370",
+        "owner": "existing preview assertions"
+      }
+    ],
+    "production_delta": "Only GravityBox and SNIaCoupled: use ordinary 3D PointCoords profile for native meridian, require physical centres and reject transverse centre. Other charts keep original formulas/order.",
+    "test_delta": "Two aggregate model checks in the existing full-preview contract; no new target or long CI family.",
+    "final_comment_only_change": {
+      "path": "output/release/rel3-reclosure-20261019/final-comment-source-bridge.json",
+      "sha256": "80b440760d80041bb44e8577f156506482dd07f09d37078cf441faabe6fe56ba",
+      "bytes": 582
+    }
+  },
+  "binaries_and_profiles": {
+    "cpu": {
+      "executable_sha256": "afdf399e68fcdfb1c843f83b0df6a6f0689e2efef1d4acc94846e0a6603dc45a",
+      "source_manifest_sha256": "bb6fd29216fb62108a51fb9105bca7477ed0693fcc229a22fe5c5c43f02465b4",
+      "build_identity_header_sha256": "f4c178ee1612acc4081159d411a6511c422d19671041c7f80e5be8e155fdb44d",
+      "model_sources": {
+        "simulation/GravityBox/GravityBox.cpp": {
+          "embedded": "7d0d143b261b04e78b46468c22e958afaaf8bd328e1c39d94d3ab249f393b589",
+          "current": "7d0d143b261b04e78b46468c22e958afaaf8bd328e1c39d94d3ab249f393b589"
+        },
+        "simulation/SNIaCoupled/SNIaCoupled.cpp": {
+          "embedded": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78",
+          "current": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78"
+        }
+      },
+      "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "build_type": "Release",
+      "CUDA_enabled": "OFF",
+      "CXX_compiler": "/usr/bin/c++",
+      "CUDA_architectures": null
+    },
+    "cuda": {
+      "executable_sha256": "f2038db0ea056438c0dd5ccea4de184c5d937cf811ecf397a6be0f056067c253",
+      "source_manifest_sha256": "d9e95828d676c630264c18ac885e8746b7bfa83c4403688287d4022b553c4ca8",
+      "build_identity_header_sha256": "7212f2987c791ee3da677063a7c0493d5b942e7a8cb0114a1c4d662bdb3019f5",
+      "model_sources": {
+        "simulation/GravityBox/GravityBox.cpp": {
+          "embedded": "2566ca650a41c4e576e9cde8054c0889f9bb20822baea32a748eb0608895fcf4",
+          "current": "7d0d143b261b04e78b46468c22e958afaaf8bd328e1c39d94d3ab249f393b589"
+        },
+        "simulation/SNIaCoupled/SNIaCoupled.cpp": {
+          "embedded": "26960832cc6ecaf79e7b7c7d6cc0cf2cedaf80659a0478d2e8fe3c402479b223",
+          "current": "da2e7d0b914ccb55ec450a5f2476390d5b8f78cb6a16544675ad63c45dafdb78"
+        }
+      },
+      "source_root": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+      "build_type": "Release",
+      "CUDA_enabled": "ON",
+      "CXX_compiler": "/usr/bin/g++-12",
+      "CUDA_architectures": "86"
+    }
+  },
+  "CPU_comparator": {
+    "path": "build-modernization-cpu/arch_cuda_single_level_validation",
+    "sha256": "13e91fba6e383a900862ce2e576efe8e36382e0d5096071846384b1e7eed01a3",
+    "bytes": 437240
+  },
+  "executable_snapshots_preserve_modes": [
+    {
+      "path": "output/release/rel3-reclosure-20261019/final-snapshots/ARCH-cpu",
+      "sha256": "afdf399e68fcdfb1c843f83b0df6a6f0689e2efef1d4acc94846e0a6603dc45a",
+      "bytes": 8904720
+    },
+    {
+      "path": "output/release/rel3-reclosure-20261019/final-snapshots/Host-comparator",
+      "sha256": "13e91fba6e383a900862ce2e576efe8e36382e0d5096071846384b1e7eed01a3",
+      "bytes": 437240
+    }
+  ],
+  "coverage": {
+    "model_inventory": {
+      "actual_current_Core_registered_models": 16,
+      "record": {
+        "path": "output/release/rel3-reclosure-20261019/current-registered-cases.json",
+        "sha256": "3ba299a7c6f608fda5222ca36a10e6282ea3c1d429e3009c3877937558346e63",
+        "bytes": 18630
+      }
+    },
+    "CPU_CTests": {
+      "unique_passed": 8,
+      "rows": {
+        "gravity_stage_contract": {
+          "stage": "cpu-contracts5",
+          "seconds": 13.45
+        },
+        "composite_poisson_contract": {
+          "stage": "cpu-contracts5",
+          "seconds": 3.05
+        },
+        "poisson_multigrid_contract": {
+          "stage": "cpu-contracts5",
+          "seconds": 0.41
+        },
+        "configuration_entry_contract": {
+          "stage": "cpu-contracts5",
+          "seconds": 0.1
+        },
+        "conservative_flux_limiter": {
+          "stage": "cpu-contracts5",
+          "seconds": 0.03
+        },
+        "checkpoint_compatibility": {
+          "stage": "cpu-contracts5",
+          "seconds": 0.09
+        },
+        "runtime_probe_and_capabilities": {
+          "stage": "cpu-contracts5",
+          "seconds": 0.0
+        },
+        "preview_full_model_contract": {
+          "stage": "preview-contract6",
+          "seconds": 16.64
+        }
+      },
+      "note": "Seven completed passed bodies in a failed outer fixture window; corrected full preview passed separately. The failed outer batch is never relabelled PASS."
+    },
+    "initializers": {
+      "independent_reference": {
+        "path": "output/release/rel3-reclosure-20261019/initializer-independent-acceptance.json",
+        "sha256": "5ed49b8e963f306091da2e60df130e8b8914b291e7218cd1baa315cc41e0b934",
+        "bytes": 934
+      },
+      "counterexample": {
+        "path": "output/release/rel3-reclosure-20261019/initializer-counterexample2/receipt.json",
+        "sha256": "fc93a906c0e3d950fb81a5b39fd267a9671d5cc3d3b80e23e0a555be5a6bd953",
+        "bytes": 4526
+      },
+      "density_gate": "2e-13 relative",
+      "temperature_gate": "2e-12 relative",
+      "formula": "q=exp(-((r-.75)^2+(z-.18)^2)/(2*.1^2))",
+      "maximum_density_relative_error": 0.0,
+      "maximum_temperature_relative_error": 6.661338147750939e-16
+    },
+    "retained_model_endpoints": {
+      "current_models": 4,
+      "processes_including_entry_GBox_reference": 5,
+      "all_CHK_dtype_shape_bytes_exact": true,
+      "record": {
+        "path": "output/release/rel3-reclosure-20261019/retained-current-results.json",
+        "sha256": "8cccf556a99fdeecf39a971540b04df1193c28bcd1d07567cc60761dbc82d584",
+        "bytes": 32650
+      }
+    },
+    "retained_model_API": {
+      "old_new_pairs": 6,
+      "geometries": [
+        "Cartesian3",
+        "Spherical2 rphi",
+        "Cylindrical3"
+      ],
+      "Data_and_numeric_bytes_exact": true,
+      "typed_missing_centres_reject_exit3": true,
+      "record": {
+        "path": "output/release/rel3-reclosure-20261019/retained-initializer-api-results.json",
+        "sha256": "08b6cae5f5dd38c2a1478e7c98dadd5465caabe7a0e20afbee520ff031553dfb",
+        "bytes": 4175
+      }
+    },
+    "new_native_models": {
+      "models": [
+        "GravityBox",
+        "SNIaCoupled"
+      ],
+      "steps": 4,
+      "time_seconds": 4e-14,
+      "actual_new_process_fresh_from_step": 2,
+      "zero_state_repairs": true,
+      "zero_J_denominator_exact_zero": true,
+      "record": {
+        "path": "output/release/rel3-reclosure-20261019/native-model-results.json",
+        "sha256": "8caa69ce7a09f3e13cb1fe8d9ccf43fe864baf6d60969c48685c676567c38539",
+        "bytes": 26717
+      },
+      "scope": "Initializer short integration, not new long-term stellar or replacement CYL endpoint qualification"
+    },
+    "final_CPU_ELF_bridge": {
+      "record": {
+        "path": "output/release/rel3-reclosure-20261019/final-source-fresh-acceptance.json",
+        "sha256": "6ffdfad2c70da1216ae040b71a1fcdc4a062d61d1e4d65315c8404609e6cb498",
+        "bytes": 8602
+      },
+      "CHK_datasets_exact": 21,
+      "Plot_physical_datasets_exact": 39,
+      "only_prior_delta_is_header_comment": true,
+      "other_a09_tests_reused_through_body_byte_proof": true
+    },
+    "current_uniform_input_reuse": {
+      "path": "output/release/rel3-reclosure-20261019/current-uniform-reuse-acceptance.json",
+      "sha256": "6cec0308064ebaa36a044c3776688b1bbb8d8b68b4b7704e1287974dec481c50",
+      "bytes": 2424
+    },
+    "public_original_endpoints": [
+      {
+        "path": "output/release/rel3-reclosure-20261019/public-endpoints-final/cellular_flash2d/measurement.json",
+        "sha256": "6d030991f0f846193bd5175eef880f59edc62ef889564d722db2c7abce924e0f",
+        "bytes": 40572,
+        "steps": 138,
+        "GNU_time": {
+          "elapsed_seconds": 6.85,
+          "user_seconds": 21.45,
+          "system_seconds": 0.2,
+          "max_process_rss_kib": 62612,
+          "exit_code": 0
+        },
+        "guard_wall_seconds": 6.917589230994054,
+        "resource_observation": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6836868,
+            "baseline_swap_kib": 0,
+            "peak_swap_kib": 0,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 63000,
+            "elapsed_seconds": 6.874,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.039,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 28,
+            "complete": true
+          }
+        }
+      },
+      {
+        "path": "output/release/rel3-reclosure-20261019/public-endpoints-final/cellular_public/measurement.json",
+        "sha256": "8765634fbf660ffca065b08250395c54151bbb7cb70c287ed186424871741358",
+        "bytes": 53415,
+        "steps": 200,
+        "GNU_time": {
+          "elapsed_seconds": 2.34,
+          "user_seconds": 4.07,
+          "system_seconds": 0.19,
+          "max_process_rss_kib": 169652,
+          "exit_code": 0
+        },
+        "guard_wall_seconds": 2.600802360000671,
+        "resource_observation": {
+          "MEMORY_GUARD_RESULT": {
+            "min_available_kib": 6735220,
+            "baseline_swap_kib": 0,
+            "peak_swap_kib": 0,
+            "guard_stopped": false,
+            "peak_owned_rss_kib": 171828,
+            "elapsed_seconds": 2.557,
+            "stop_reason": "none"
+          },
+          "SYSTEM_PRESSURE_OBSERVATION": {
+            "scope": "linux_system",
+            "peak_memory_full_percent": 0.0,
+            "peak_io_full_percent": 0.0,
+            "peak_swap_in_mib_s": 0.0,
+            "peak_swap_out_mib_s": 0.0,
+            "memory_limit_percent": 20.0,
+            "io_limit_percent": 50.0,
+            "sustain_seconds": 10.0,
+            "samples": 11,
+            "complete": true
+          }
+        }
+      }
+    ],
+    "architecture_and_document_final_checks": {
+      "path": "output/release/rel3-reclosure-20261019/final-checks.json",
+      "sha256": "aa96e5a203d5121519f16e9c8907e71be755d21671edc11361ce828ab992540f",
+      "bytes": 6864
+    },
+    "full_historical_CPU_regression_repeated": false,
+    "old_RZ_long_runs_repeated": false,
+    "CUDA_compiled_or_run_this_phase": false
+  },
+  "reused_prior_receipts": [
+    {
+      "path": "validation/backend/results/release-readiness/Cyl0ContractAndBaselines-20261018.json",
+      "sha256": "071bcc046a4ee5f11dbf8be4613068ab03b6283f766820d784319202f78366a3",
+      "bytes": 77755
+    },
+    {
+      "path": "validation/backend/results/release-readiness/Cyl1SharedGeometry-20261018.json",
+      "sha256": "a41b3745bd6cc843f2fd426b0ad16f127aaf93be1d11ae109bd34d122c490aa0",
+      "bytes": 37893
+    },
+    {
+      "path": "validation/backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json",
+      "sha256": "962e2169dcc75d6188a6da3295e09829a0c0745a943de056a1990920beb5e5bc",
+      "bytes": 94360
+    },
+    {
+      "path": "validation/backend/results/release-readiness/Cyl3OptionalGravity-20261018.json",
+      "sha256": "71addcd8ba07642467ca8d848fce0af92637b10f66b85380e86083b8a61605a6",
+      "bytes": 22755
+    },
+    {
+      "path": "validation/backend/results/release-readiness/Cyl4PublicInterfacesAndFresh-20261018.json",
+      "sha256": "d371b3e2d41c551ba22fd4f53b25e21f11b52326a76df61b3ea418cf07212189",
+      "bytes": 94809
+    },
+    {
+      "path": "validation/backend/results/release-readiness/Cyl5NativeDevice-20261019.json",
+      "sha256": "def8b109efb55bb8b249d6b0f7da9fb11e002986b33bb1f30dc74d62def61e19",
+      "bytes": 28415
+    },
+    {
+      "path": "validation/backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json",
+      "sha256": "3b1e0cb59d0c04fc77e30c8c42195a65ae873d6773bf954e1a0479f967139d47",
+      "bytes": 137435
+    },
+    {
+      "path": "validation/backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json",
+      "sha256": "0b75ab750ec871f2412de7eb73b340cee15e4f79230f5dac0ca254777a5517db",
+      "bytes": 121817
+    },
+    {
+      "path": "validation/backend/results/release-readiness/RzRetirementAcceptance-20261018.json",
+      "sha256": "8f14050771776f0146cfee13e48209dce8e6ab77c6528519f10c313f64f0f65f",
+      "bytes": 116786
+    }
+  ],
+  "reuse_boundaries": [
+    "CYL0-6 retains original source/ELF/input scope. Unchanged shared math and device owners reuse original checks; this is not new CUDA execution.",
+    "Old native uniform GBox inputs missing center_z lose current exact-input qualification; current CPU checks and derived input proof supplement only bounded uniform math.",
+    "The old RZ implementation and long trajectories remain historical; no identity transfer to cylindrical-rz-pwc.",
+    "General old REL3 evidence is reused by accepted source/active-path identity, not by counting registered models or assuming all changed sources are equivalent."
+  ],
+  "preserved_history": {
+    "files": 156,
+    "all_byte_unchanged": true,
+    "freeze": {
+      "path": "output/release/rel3-reclosure-20261019/protected-history.json",
+      "sha256": "7b8c90439780e8897f7ab5aa7f0835f639a42f5e3314541097f96e001c1a78fa",
+      "bytes": 29822
+    },
+    "original_failures_and_NOT_MET_unmodified": true
+  },
+  "limitations": [
+    {
+      "status": "NOT_MET_INHERITED",
+      "owner": "CPU/scientific parity",
+      "scope": "Small high-pressure near-zero raw momentum fixture; rphi same-order control also fails. Scaled positive cases do not qualify original input."
+    },
+    {
+      "status": "FAIL_AND_GAP_INHERITED",
+      "owner": "SNIa CPU scientific statement",
+      "scope": "Original main repeated-AMR FAIL and thermal GAP stay; only originally allowed L2 supplement and accepted short fresh scopes inherited. Not moved into REL4."
+    },
+    {
+      "status": "PREPARED_NOT_RUN",
+      "owner": "REL4 GPU integration",
+      "scope": "Existing f203 CUDA ELF predates two Host initializer repairs; rebuild those CPPs plus BuildIdentity/link, then necessary nonuniform native field parity. 65 GPU derived inputs prepared only."
+    },
+    {
+      "status": "LATER_RELEASE_QUALIFICATION",
+      "owner": "REL4-7",
+      "scope": "Full release device/public integration, required original RT/Cellular parity, hostedCI/actionlint, packaging and GUI/platform remain separate."
+    }
+  ],
+  "failed_or_incomplete_original_attempts": [
+    {
+      "stage": "affected-model-shorts7",
+      "receipt": {
+        "path": "output/release/rel3-reclosure-20261019/affected-model-shorts7/receipt.json",
+        "sha256": "fadaa10c1f6f220620a6a98f62a9055c2f0d115f886a3d300184ae0fd5c03698",
+        "bytes": 4746
+      },
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "final_original_status_preserved": true
+    },
+    {
+      "stage": "cpu-contracts5",
+      "receipt": {
+        "path": "output/release/rel3-reclosure-20261019/cpu-contracts5/receipt.json",
+        "sha256": "8efd711e667466f064ec1f22de2459c63fbc068a8cfa6ac37408f6d95a5a4958",
+        "bytes": 4696
+      },
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "final_original_status_preserved": true
+    },
+    {
+      "stage": "final-api-ownership9",
+      "receipt": {
+        "path": "output/release/rel3-reclosure-20261019/final-api-ownership9/receipt.json",
+        "sha256": "072c9320df0aaf8d1145b8384cf3ace8e25d556bc865f60c4525f614a01f1320",
+        "bytes": 4525
+      },
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "final_original_status_preserved": true
+    },
+    {
+      "stage": "initializer-acceptance4",
+      "receipt": {
+        "path": "output/release/rel3-reclosure-20261019/initializer-acceptance4/receipt.json",
+        "sha256": "51f0ca28bc1af82d6f9378fe5ca8c3e96b601f17abcf2cd4afdc1d47fd662bbd",
+        "bytes": 4860
+      },
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "final_original_status_preserved": true
+    },
+    {
+      "stage": "uniform-admission11",
+      "receipt": {
+        "path": "output/release/rel3-reclosure-20261019/uniform-admission11/receipt.json",
+        "sha256": "a95f882166d60188b3fcb08725cec1e78b411e3a378ebb7ab075345544d23a33",
+        "bytes": 4663
+      },
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "final_original_status_preserved": true
+    }
+  ],
+  "failure_dispositions": {
+    "initializer-acceptance4": "Temporary Helm path and wrapped error-envelope fixture issues; no extra production change or threshold relaxation.",
+    "cpu-contracts5": "Seven test bodies passed; preview Setup errors use existing exit5, typed missing configuration exit3. Corrected preview passes in window6.",
+    "affected-model-shorts7": "Five retained processes completed. Private native reached same4e-14 in1step because dt_init is not a hard Hydro cap; new distinct dt_max input realizes4steps/midpoint at same endpoint.",
+    "final-api-ownership9": "Invalid private rphi angular interval rejected correctly by old/new; corrected full2pi periodic fixture passed window10.",
+    "uniform-admission11": "65API inputs passed and first physical rejection correct; observer expected wrong wording. One completed rejection reused with old timing, not rerun.",
+    "prepared_public_binding": "Earlier pre-correction public binding never executed; only final distinct frozen binding qualifies.",
+    "helper_raw_status_placeholders": "run_one initializes conservative status FAILED_OR_INCOMPLETE_NOT_PASS; root acceptance fields, exit, stdout/hash and comparator decide scientific result. Original raw status is never rewritten."
+  },
+  "cost": {
+    "stage_measurements": [
+      {
+        "stage": "affected-model-shorts7",
+        "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+        "exit": 1,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/affected-model-shorts7/receipt.json",
+          "sha256": "fadaa10c1f6f220620a6a98f62a9055c2f0d115f886a3d300184ae0fd5c03698",
+          "bytes": 4746
+        },
+        "GNU_time_raw": "Command exited with non-zero status 1\nelapsed_seconds=5.87\nuser_seconds=13.52\nsystem_seconds=0.38\nmax_process_rss_kib=124112\nexit=1\n",
+        "outer_seconds": 6.266482357998029,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=6 rows=36 valid_rows=36 missing=0 skipped=0 peak_process_rss_kib=60540 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.066 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=42546954 peak_bytes=42546954 samples=8 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=8 complete=True"
+        ]
+      },
+      {
+        "stage": "cpu-build1",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/cpu-build1/receipt.json",
+          "sha256": "4a1e318503fe57a5cde299cdd08bbbaa53bee465a32378399c670e3222633009",
+          "bytes": 4548
+        },
+        "GNU_time_raw": "elapsed_seconds=24.58\nuser_seconds=103.24\nsystem_seconds=4.70\nmax_process_rss_kib=730932\nexit=0\n",
+        "outer_seconds": 22.591298373001337,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=22 rows=415 valid_rows=415 missing=0 skipped=4 peak_process_rss_kib=709044 peak_process_fd_count=57 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=2.266 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=23 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=550513 peak_bytes=550513 samples=24 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=24 complete=True"
+        ]
+      },
+      {
+        "stage": "cpu-contracts5",
+        "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+        "exit": 8,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/cpu-contracts5/receipt.json",
+          "sha256": "8efd711e667466f064ec1f22de2459c63fbc068a8cfa6ac37408f6d95a5a4958",
+          "bytes": 4696
+        },
+        "GNU_time_raw": "Command exited with non-zero status 8\nelapsed_seconds=19.45\nuser_seconds=38.54\nsystem_seconds=1.35\nmax_process_rss_kib=94072\nexit=8\n",
+        "outer_seconds": 18.341671741000027,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=18 rows=103 valid_rows=103 missing=0 skipped=0 peak_process_rss_kib=93432 peak_process_fd_count=16 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.277 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=19 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=11179972 peak_bytes=11179972 samples=20 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=20 complete=True"
+        ]
+      },
+      {
+        "stage": "final-api-ownership9",
+        "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+        "exit": 1,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/final-api-ownership9/receipt.json",
+          "sha256": "072c9320df0aaf8d1145b8384cf3ace8e25d556bc865f60c4525f614a01f1320",
+          "bytes": 4525
+        },
+        "GNU_time_raw": "Command exited with non-zero status 1\nelapsed_seconds=0.16\nuser_seconds=0.40\nsystem_seconds=0.05\nmax_process_rss_kib=46948\nexit=1\n",
+        "outer_seconds": 1.2447200270034955,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=46566530 peak_bytes=46566530 samples=3 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=3 complete=True"
+        ]
+      },
+      {
+        "stage": "final-audit15",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/final-audit15/receipt.json",
+          "sha256": "275bd772e5439a35f5437d2ee10c391f4347e34abf20ca3d448b8c64152a33da",
+          "bytes": 4310
+        },
+        "GNU_time_raw": "elapsed_seconds=3.77\nuser_seconds=3.20\nsystem_seconds=0.76\nmax_process_rss_kib=308804\nexit=0\n",
+        "outer_seconds": 4.29673183200066,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=4 rows=12 valid_rows=12 missing=0 skipped=0 peak_process_rss_kib=155248 peak_process_fd_count=5 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.383 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=5 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=69438203 peak_bytes=69438203 samples=6 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22017912832 minimum_free_bytes=22017912832 samples=6 complete=True"
+        ]
+      },
+      {
+        "stage": "final-source-build13",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/final-source-build13/receipt.json",
+          "sha256": "0af53d2dcea09e0b363871dce4790b417219dccff069ed8da260c6215489f239",
+          "bytes": 4478
+        },
+        "GNU_time_raw": "elapsed_seconds=32.11\nuser_seconds=291.64\nsystem_seconds=10.48\nmax_process_rss_kib=394392\nexit=0\n",
+        "outer_seconds": 32.76060279300145,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=31 rows=860 valid_rows=859 missing=1 skipped=36 peak_process_rss_kib=378264 peak_process_fd_count=86 write_error=none complete=False",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=7.401 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=32 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=67974560 peak_bytes=67974560 samples=33 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=33 complete=True"
+        ]
+      },
+      {
+        "stage": "final-source-fresh14",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/final-source-fresh14/receipt.json",
+          "sha256": "de408c05968f8ee8969038fad4b1a615ed0d1b4edb5176aefc2e87e1bc178677",
+          "bytes": 4430
+        },
+        "GNU_time_raw": "elapsed_seconds=1.34\nuser_seconds=1.66\nsystem_seconds=0.12\nmax_process_rss_kib=59336\nexit=0\n",
+        "outer_seconds": 2.278131483006291,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=2 rows=7 valid_rows=7 missing=0 skipped=0 peak_process_rss_kib=49892 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.036 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=3 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=68853421 peak_bytes=68853421 samples=4 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=4 complete=True"
+        ]
+      },
+      {
+        "stage": "initializer-acceptance4",
+        "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+        "exit": 1,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/initializer-acceptance4/receipt.json",
+          "sha256": "51f0ca28bc1af82d6f9378fe5ca8c3e96b601f17abcf2cd4afdc1d47fd662bbd",
+          "bytes": 4860
+        },
+        "GNU_time_raw": "Command exited with non-zero status 1\nelapsed_seconds=0.85\nuser_seconds=0.83\nsystem_seconds=0.06\nmax_process_rss_kib=29876\nexit=1\n",
+        "outer_seconds": 1.2094680310037802,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.046 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=10918993 peak_bytes=10918993 samples=3 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=3 complete=True"
+        ]
+      },
+      {
+        "stage": "initializer-build3",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/initializer-build3/receipt.json",
+          "sha256": "4da04b8e24a5f266397c72798fb7d8d568b05a2ccfff55711f471059fdf3a6a2",
+          "bytes": 4454
+        },
+        "GNU_time_raw": "elapsed_seconds=31.33\nuser_seconds=292.64\nsystem_seconds=9.52\nmax_process_rss_kib=406800\nexit=0\n",
+        "outer_seconds": 30.272397052001907,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=29 rows=790 valid_rows=788 missing=2 skipped=30 peak_process_rss_kib=399248 peak_process_fd_count=86 write_error=none complete=False",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=2.755 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=30 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=10506007 peak_bytes=10506007 samples=31 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=31 complete=True"
+        ]
+      },
+      {
+        "stage": "initializer-counterexample2",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/initializer-counterexample2/receipt.json",
+          "sha256": "fc93a906c0e3d950fb81a5b39fd267a9671d5cc3d3b80e23e0a555be5a6bd953",
+          "bytes": 4526
+        },
+        "GNU_time_raw": "elapsed_seconds=0.83\nuser_seconds=0.79\nsystem_seconds=0.05\nmax_process_rss_kib=29824\nexit=0\n",
+        "outer_seconds": 1.170643168996321,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.382 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=10200852 peak_bytes=10200852 samples=3 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=3 complete=True"
+        ]
+      },
+      {
+        "stage": "native-model-fresh8",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/native-model-fresh8/receipt.json",
+          "sha256": "32df0cdf733e655884f10f61348b3ee124ba96968be26f11cfe87c1ab1061d9f",
+          "bytes": 4497
+        },
+        "GNU_time_raw": "elapsed_seconds=5.59\nuser_seconds=6.34\nsystem_seconds=0.38\nmax_process_rss_kib=60080\nexit=0\n",
+        "outer_seconds": 6.275969501002692,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=6 rows=28 valid_rows=28 missing=0 skipped=0 peak_process_rss_kib=59588 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=5.826 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=46045034 peak_bytes=46045034 samples=8 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=8 complete=True"
+        ]
+      },
+      {
+        "stage": "preview-contract6",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/preview-contract6/receipt.json",
+          "sha256": "30aa06dd80972dfeea88d4bea9b31bdc5db9a474848dc7c1e98eb8a9e8676a22",
+          "bytes": 4442
+        },
+        "GNU_time_raw": "elapsed_seconds=16.65\nuser_seconds=16.64\nsystem_seconds=1.14\nmax_process_rss_kib=49152\nexit=0\n",
+        "outer_seconds": 17.32695166600024,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=17 rows=81 valid_rows=81 missing=0 skipped=0 peak_process_rss_kib=23552 peak_process_fd_count=15 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.008 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=18 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=11933292 peak_bytes=11933292 samples=19 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=19 complete=True"
+        ]
+      },
+      {
+        "stage": "retained-api-final10",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/retained-api-final10/receipt.json",
+          "sha256": "cba743330af52e9ef1bee5c9a937bc59592033a46fbaea58c4f06b55be8a2c64",
+          "bytes": 4430
+        },
+        "GNU_time_raw": "elapsed_seconds=4.51\nuser_seconds=4.79\nsystem_seconds=0.27\nmax_process_rss_kib=47044\nexit=0\n",
+        "outer_seconds": 5.267160925002827,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=5 rows=17 valid_rows=17 missing=0 skipped=0 peak_process_rss_kib=46812 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.001 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=6 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=46827345 peak_bytes=46827345 samples=7 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=7 complete=True"
+        ]
+      },
+      {
+        "stage": "uniform-admission11",
+        "execution_status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+        "exit": 1,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/uniform-admission11/receipt.json",
+          "sha256": "a95f882166d60188b3fcb08725cec1e78b411e3a378ebb7ab075345544d23a33",
+          "bytes": 4663
+        },
+        "GNU_time_raw": "Command exited with non-zero status 1\nelapsed_seconds=1.07\nuser_seconds=1.29\nsystem_seconds=0.27\nmax_process_rss_kib=58212\nexit=1\n",
+        "outer_seconds": 2.445241203000478,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=2 rows=4 valid_rows=4 missing=0 skipped=0 peak_process_rss_kib=45668 peak_process_fd_count=4 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=37.636 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=3 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=53578404 peak_bytes=53578404 samples=4 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=4 complete=True"
+        ]
+      },
+      {
+        "stage": "uniform-endpoint-bridge12",
+        "execution_status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+        "exit": 0,
+        "receipt": {
+          "path": "output/release/rel3-reclosure-20261019/uniform-endpoint-bridge12/receipt.json",
+          "sha256": "d2bb3d4c05c29c950a3bbe179a8ef625d56b587b23326730db812547bd50646a",
+          "bytes": 4651
+        },
+        "GNU_time_raw": "elapsed_seconds=88.39\nuser_seconds=95.48\nsystem_seconds=1.53\nmax_process_rss_kib=299012\nexit=0\n",
+        "outer_seconds": 84.92068437900161,
+        "resource_observation_lines": [
+          "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=84 rows=499 valid_rows=499 missing=0 skipped=0 peak_process_rss_kib=202628 peak_process_fd_count=6 write_error=none complete=True",
+          "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.501 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=85 complete=True",
+          "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-reclosure-20261019 device=2096 inode=917389 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=58717575 peak_bytes=58717575 samples=86 complete=True",
+          "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=86 complete=True"
+        ]
+      }
+    ],
+    "units": "GNU elapsed/user/system seconds, max per-process RSS KiB; guard tree samples distinct",
+    "public_endpoint_measurements_in_coverage": true,
+    "build_configuration": "j2 heavy/light targeted; existing pools and strict FP retained",
+    "science_configuration": "OMP4, OMP_DYNAMIC=FALSE; existing deterministic owner OMP1 retained",
+    "measurement_policy": "Frozen windows; failed attempts and cached child reuse separately recorded. No cold-build or stable speedup claim; lane times never summed as actual wall clock.",
+    "no_observed_swap_growth_or_resource_guard_stop": true,
+    "missing_exit_samples_do_not_prove_exact_peak_or_no_leak": true,
+    "host_storage_root": "/mnt/e",
+    "minimum_observed_host_free_bytes_final": 22017912832,
+    "H5_and_checkpoint_approx_1GiB_host_stop_policy_retained": true,
+    "LFS_network_downloads": 0
+  },
+  "collaboration": {
+    "goal_owner": "arch-rz-reintroduction-20261018",
+    "phase_calls": 4,
+    "current_phase_jobs": [
+      {
+        "job_id": "76610d262fa3406e8a71b5849eb88342",
+        "task_id": "rel3-uniform-centre-evidence-review-1",
+        "logical_task_id": "rel3-uniform-centre-evidence-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 54.256862881004054,
+        "failure_kind": null,
+        "summary": "Verdict: bounded validation of unchanged uniform-state math, but not yet valid as current configuration/negative evidence. Actual checks: source and inventory r"
+      },
+      {
+        "job_id": "c2b98bf946cb4f5ead310b655378d3ad",
+        "task_id": "rel3-current-closure-prose-1",
+        "logical_task_id": "rel3-current-closure-prose",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "partial",
+        "provider": "antigravity",
+        "model": "gemini-3.8-flash-high",
+        "effort": "high",
+        "elapsed_seconds": 82.77664086099685,
+        "failure_kind": null,
+        "summary": "Text candidate produced; facts, semantics and adoption remain for independent manager review."
+      },
+      {
+        "job_id": "6404201b91854153ad85c6284709b74d",
+        "task_id": "rel3-public-profile-axial-review-1",
+        "logical_task_id": "rel3-public-profile-axial-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 57.61633333800273,
+        "failure_kind": null,
+        "summary": "Conclusion: the minimal reuse of the ordinary 3D `PointCoords` profile is correct for the axial Gaussian, and no Rz/metrics/gravity change is needed. As written"
+      },
+      {
+        "job_id": "e1ca4b51893447d3befdd9aca5874663",
+        "task_id": "rel3-current-cpu-reclosure-review-1",
+        "logical_task_id": "rel3-current-cpu-reclosure-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 24.665795396998874,
+        "failure_kind": null,
+        "summary": "Actual checks: none executed. I did not open files, recompute SHA256 values, inspect binaries, or run tests. This is a document-level applicability review of th"
+      }
+    ],
+    "cumulative_goal_budget": [
+      {
+        "goal_id": "arch-rz-reintroduction-20261018",
+        "manager_max_calls": 42,
+        "user_max_calls": null,
+        "calls_used_or_reserved": 42,
+        "calls_remaining": 0,
+        "elapsed_seconds_recorded": 7355.157081437002,
+        "output_tokens_reported": 1033238,
+        "started_calls_with_unknown_output": 5,
+        "cost_money": null,
+        "attempt_allowances_reset": false
+      }
+    ],
+    "worker_completion_not_acceptance": true,
+    "review_limits": [
+      "DPS initial closure review is document applicability guidance, no executed verification; universal raw-momentum1e-12 and one-step Cellular final claims not adopted.",
+      "DPS axial review math/ownership accepted; alleged SNIa defaults and case-canonicalization issue refuted using required CaseParameter and RuntimeParams code plus actual APIs.",
+      "DPS uniform review finite uniform algebra and provenance/negative-owner advice accepted; Get fallback assumption and blanket invalidation of unchanged CUDA owners not adopted.",
+      "Gemini frozen closure prose partially adopted; root removed redundant lead-ins only, facts/math/tolerances preserved."
+    ],
+    "status_artifact": {
+      "path": "output/release/rel3-reclosure-20261019/collaboration/final-status.json",
+      "sha256": "b54ea26a752bfae8f850011ee59b4c8001998e9c822b37f9ed6429f31c60218f",
+      "bytes": 5540
+    },
+    "total_manager_cost_or_money": null,
+    "no_additional_calls_for_text_finish": true
+  },
+  "documentation": {
+    "sole_current_plan": "ARCH_RELEASE_PLAN.md",
+    "existing_documents_updated": 12,
+    "changes": {
+      "AGENTS.md": {
+        "before_sha256": "7f271606a4f2485e0dc54b893763531b7419e03655638b5030652e6ba8767010",
+        "after_sha256": "7888c2ebe33adea183dcc596dbe5771635706962b69db5377570fbe894fc940d",
+        "before_lines": 58,
+        "after_lines": 53
+      },
+      "ARCH_RELEASE_PLAN.md": {
+        "before_sha256": "95e80da493d7f9c2a081979cce7550ad4327aec041e89d417c1fbfea51a2bd8b",
+        "after_sha256": "ec9149747e0166eea91f851a9ca03bff040d9e04f73c3d7e0c5805e4f8aa93c3",
+        "before_lines": 520,
+        "after_lines": 337
+      },
+      "docs/CudaBackendStatus.md": {
+        "before_sha256": "d558c384ecb6824851d399c483784f8929534facbc9e12910a3e2ed71ec7840e",
+        "after_sha256": "c7ae16376489bb0712547cb6a08874809a97f6d296f7ecdbf366cfa194e0a504",
+        "before_lines": 218,
+        "after_lines": 218
+      },
+      "docs/CudaBackendStatus.zh-CN.md": {
+        "before_sha256": "1ad233cd1bc230c4ec951e9666106901ea21650c5da02dd02d2335ed4a20a343",
+        "after_sha256": "14004f645f68c32a36d514cb8639ddec984449eea4e53ae5b30941593935122a",
+        "before_lines": 167,
+        "after_lines": 167
+      },
+      "simulation/GravityBox/README.md": {
+        "before_sha256": "cfac510d8a48d173471e5fce1b557c95647f316782e4b219440f514f46431b87",
+        "after_sha256": "a6eee917c504d6f04606b5840df5b5f3adc8d2a31d92caed08180d2cc01ba496",
+        "before_lines": 139,
+        "after_lines": 153
+      },
+      "simulation/SNIaCoupled/README.md": {
+        "before_sha256": "b13b47d1ff4b30b58df0112bfa706df100d20f73f0fb4b350024b1bb1818f35a",
+        "after_sha256": "80945b5be1b4337b594e4456cf84581750b6a073648771e142cab720eb9bfee0",
+        "before_lines": 54,
+        "after_lines": 65
+      },
+      "validation/README.md": {
+        "before_sha256": "50e46bb6521133b22977110d18e3e6cd071a8347d93d9bfcf3667a423d7bd5b6",
+        "after_sha256": "7b5661187126d2474134ef7e0f2c0e9c6a9088ae1c1f71e687b62c6842df0ff8",
+        "before_lines": 219,
+        "after_lines": 219
+      },
+      "validation/README.zh-CN.md": {
+        "before_sha256": "d13f2c809ce8329b7c70221c12016cc61aaaf3c5a7f0e6f041aa4da1b404ade8",
+        "after_sha256": "d97852738cb1595286f77db8759925e43752029dd56b49a3f345b2b38119e1eb",
+        "before_lines": 182,
+        "after_lines": 182
+      },
+      "validation/amr/README.md": {
+        "before_sha256": "a6a5007f442f9b9a6f6b5d080c91602ef9a4fe43d593e0bcab57e047ff0946b9",
+        "after_sha256": "1b21189cd622eef5972f6a02814e548d05e71a6680d475a098ed7cd9eb9b69c8",
+        "before_lines": 286,
+        "after_lines": 286
+      },
+      "validation/amr/README.zh-CN.md": {
+        "before_sha256": "b5692377a569ecfb0fac8f43f2e8a8ae078fb4698434b25432ef1fe406d8ba4d",
+        "after_sha256": "87d05bb48731c85e0ba615728822c88c196e97558de8460de547324464b35546",
+        "before_lines": 208,
+        "after_lines": 208
+      },
+      "validation/gravity/README.md": {
+        "before_sha256": "26bcf1b2bc071bb3f38e9ac98c67e31d036e83ab7d58c43a34f51479b1d252fd",
+        "after_sha256": "21ca58936db8863a22e6571d1bd70ff901cf6891025c88090227bb614531850a",
+        "before_lines": 227,
+        "after_lines": 236
+      },
+      "validation/gravity/README.zh-CN.md": {
+        "before_sha256": "416bd2e3743f3b46ec63f6c2c5bec6d9206c1a216161f048c3f80de0258cc6bb",
+        "after_sha256": "6ed2a41732e508c4425b406ce450f516abd1faebc8e8a27f317261aef701b27a",
+        "before_lines": 179,
+        "after_lines": 187
+      }
+    },
+    "REL35_active_stage_and_section_removed": true,
+    "completed_CYL_narratives_replaced_by_7_receipt_rows": true,
+    "retained_math_cost_and_ownership_contracts": true,
+    "source_Workflow_and_Gaussian_width_explanation_added": true,
+    "broken_local_links_in_updated_documents": 0,
+    "historical_original_document_bytes_local": "output/release/rel3-reclosure-20261019/entry-docs",
+    "no_new_human_daily_report": true
+  },
+  "REL4_handoff": [
+    {
+      "owner": "W0/W2",
+      "task": "Revalidate current worktree and explicit inputs, rebuild two Host model CPPs and BuildIdentity/application links in CUDA build, capture new identity and costs."
+    },
+    {
+      "owner": "W2/W1",
+      "task": "Real kernel/index/launch/reduction/error propagation, memory allocation/free/residency/stream/sync and Store lifecycle; reuse unchanged C5/C6 owners by scope."
+    },
+    {
+      "owner": "W2/W1",
+      "task": "Required new nonuniform axial field parity and public Hydro/multiphysics AMR, rollback/regrid, CHK-to-new-process fresh; original necessary RT fields/Cellular rate and real Core/Studio integration."
+    },
+    {
+      "owner": "W3/W0",
+      "task": "Update existing themes after independent numerical/device acceptance; retain CPU scientific limitations as CPU limitations."
+    }
+  ],
+  "raw_evidence_index": {
+    "path": "output/release/rel3-reclosure-20261019/evidence-files.json",
+    "sha256": "f5c20f4f153e9245392ac8a688de3570bb2279cca1a94c69f574fa784e646e2f",
+    "bytes": 184594
+  },
+  "raw_evidence_policy": "Original source/input/stdout/H5/CHK/cost/failed logs remain local and hashed. Raw H5 and credentials are not sent to workers or committed.",
+  "stop_boundary": {
+    "REL4_started": false,
+    "automatic_next_phase": false,
+    "commit_or_push_this_phase": false,
+    "new_RZ_implementation_added_this_phase": false
+  }
+}

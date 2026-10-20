@@ -1,0 +1,154 @@
+diff --git a/cmake/tests/HostTests.cmake b/cmake/tests/HostTests.cmake
+index 7e72de30..b5bcd7a4 100644
+--- a/cmake/tests/HostTests.cmake
++++ b/cmake/tests/HostTests.cmake
+@@ -22,6 +22,12 @@ target_link_libraries(arch_cuda_single_level_validation PRIVATE arch_build_contr
+ add_test(NAME checkpoint_temporal_comparison
+     COMMAND arch_cuda_single_level_validation --test-time-comparison)
+ 
++add_executable(arch_diffusion_schedule_output
++    tests/host/io/test_diffusion_schedule_output.cpp)
++arch_configure_host_test(arch_diffusion_schedule_output)
++target_link_libraries(arch_diffusion_schedule_output PRIVATE arch_build_contract)
++add_test(NAME diffusion_schedule_output COMMAND arch_diffusion_schedule_output)
++
+ add_executable(arch_preview_initial_conversion tests/api/preview/test_initial_conversion.cpp)
+ arch_configure_host_test(arch_preview_initial_conversion)
+ add_test(NAME preview_initial_conversion COMMAND arch_preview_initial_conversion)
+diff --git a/src/driver/Driver.h b/src/driver/Driver.h
+index 93b034be..cdc9b4c7 100644
+--- a/src/driver/Driver.h
++++ b/src/driver/Driver.h
+@@ -240,7 +240,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+         output.write_plot(gravity_stage.plot_fields());
+         output.write_checkpoint(dt_burn_global, false);
+     }
+-    output.write_measurements(workspace.cuda_diffusion_schedule, cpu_stages);
++    output.write_measurements(workspace.cuda_diffusion_schedule, cpu_stages, advanced_any_step);
+     std::cout << ">>> Simulation Done. Total Steps: " << ctrl.step_count
+               << " | Final Time: " << ctrl.t_current << std::endl;
+ }
+diff --git a/src/driver/io/DriverIO.cpp b/src/driver/io/DriverIO.cpp
+index 9e832b78..7a0c5ab2 100644
+--- a/src/driver/io/DriverIO.cpp
++++ b/src/driver/io/DriverIO.cpp
+@@ -87,7 +87,7 @@ void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
+ }
+ /** Persist run timing and CUDA diffusion scheduling diagnostics. */
+ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule,
+-                                  const CpuStageTimings& cpu_stages)
++                                  const CpuStageTimings& cpu_stages, bool advanced_any_step)
+ {
+     const auto& config = runtime.configuration();
+     const auto& hydro_budget=runtime.hydro_boundary_budget();
+@@ -239,9 +239,11 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
+                     << record.diffusion_dt << '\t'
+                     << record.dt_forward_euler << '\n';
+             }
+-            if (!schedule_output || cuda_diffusion_schedule.empty())
+-                throw std::runtime_error(
+-                    "failed writing CUDA diffusion schedule");
++            schedule_output.flush();
++            schedule_output.close();
++            require_cuda_diffusion_schedule_output(
++                static_cast<bool>(schedule_output), advanced_any_step,
++                cuda_diffusion_schedule.size());
+         }
+     }
+ 
+diff --git a/src/driver/io/DriverIO.h b/src/driver/io/DriverIO.h
+index 43e500d8..9a826b75 100644
+--- a/src/driver/io/DriverIO.h
++++ b/src/driver/io/DriverIO.h
+@@ -12,6 +12,7 @@
+ #include <chrono>
+ #include <cstdint>
+ #include <span>
++#include <stdexcept>
+ 
+ #include "io/IO.h"
+ 
+@@ -25,6 +26,17 @@ struct CudaDiffusionScheduleRecord {
+     double diffusion_dt = 0.0, dt_forward_euler = 0.0;
+ };
+ 
++// Empty output is legal only when this invocation advanced no timestep.
++// Keep I/O failure independent of that lifecycle exception.
++inline void require_cuda_diffusion_schedule_output(
++    bool output_ok, bool advanced_any_step, std::size_t schedule_count)
++{
++    if (!output_ok)
++        throw std::runtime_error("failed writing CUDA diffusion schedule");
++    if (advanced_any_step && schedule_count == 0)
++        throw std::runtime_error("executed CUDA diffusion has no schedule records");
++}
++
+ // Non-overlapping host stage intervals. Output has its existing independent
+ // timer and is not added to these values a second time.
+ enum class CpuStage : std::size_t {
+@@ -73,7 +85,7 @@ public:
+     void write_plot(std::span<const io::PlotScalarField> extra_fields = {});
+     void write_checkpoint(double dt_burn_global, bool resume_after_regrid);
+     void write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule,
+-                            const CpuStageTimings& cpu_stages);
++                            const CpuStageTimings& cpu_stages, bool advanced_any_step);
+ private:
+     using Clock = std::chrono::steady_clock;
+     Clock::time_point started_ = Clock::now();
+diff --git a/tests/host/io/test_diffusion_schedule_output.cpp b/tests/host/io/test_diffusion_schedule_output.cpp
+new file mode 100644
+index 00000000..de8e8be6
+--- /dev/null
++++ b/tests/host/io/test_diffusion_schedule_output.cpp
+@@ -0,0 +1,51 @@
++/** Test the zero-step exception without suppressing real diagnostic failures. */
++#include "driver/io/DriverIO.h"
++#include <fstream>
++#include <iostream>
++#include <sstream>
++#include <stdexcept>
++#include <string>
++
++namespace {
++int checks = 0;
++void expect(bool ok, const char* reason) {
++    ++checks;
++    if (!ok) throw std::runtime_error(reason);
++}
++template<class F> void rejects(F fn, const char* message) {
++    try { fn(); } catch (const std::runtime_error& e) {
++        expect(std::string(e.what()) == message, "unexpected diagnostic"); return;
++    }
++    throw std::runtime_error("missing required diagnostic");
++}
++}
++
++int main() {
++    using arch::driver::require_cuda_diffusion_schedule_output;
++    require_cuda_diffusion_schedule_output(true, false, 0); ++checks;
++    require_cuda_diffusion_schedule_output(true, true, 4); ++checks;
++    rejects([] { require_cuda_diffusion_schedule_output(true, true, 0); },
++            "executed CUDA diffusion has no schedule records");
++    for (bool advanced : {false, true})
++        for (std::size_t records : {0u, 4u})
++            rejects([=] { require_cuda_diffusion_schedule_output(false, advanced, records); },
++                    "failed writing CUDA diffusion schedule");
++    std::ostringstream failed;
++    failed.setstate(std::ios::badbit);
++    rejects([&] { require_cuda_diffusion_schedule_output(
++                static_cast<bool>(failed), false, 0); },
++            "failed writing CUDA diffusion schedule");
++#ifdef __linux__
++    // The writer flushes and closes before checking state; a buffered write can
++    // look successful before close even though the device rejects every byte.
++    std::ofstream full("/dev/full");
++    expect(static_cast<bool>(full), "cannot open /dev/full regression fixture");
++    full << "macro_step\tstages\n";
++    full.flush(); full.close();
++    expect(!full, "real write failure was not observed");
++    rejects([&] { require_cuda_diffusion_schedule_output(
++                static_cast<bool>(full), false, 0); },
++            "failed writing CUDA diffusion schedule");
++#endif
++    std::cout << "diffusion_schedule_output checks=" << checks << " PASS\n";
++}

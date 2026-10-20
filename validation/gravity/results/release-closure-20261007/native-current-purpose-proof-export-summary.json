@@ -1,0 +1,82 @@
+{
+  "status": "ACTUAL_CURRENT_SOURCE_FIELD_PROOF_EXPORT_ACCEPTED",
+  "scope": "Runtime Current source materialization, Stage-owned numerical field and same-publication discrete proof only",
+  "source_commit": "522ed4a9e",
+  "runner_purpose_coverage": {
+    "actualRuntimeCurrent": 1,
+    "directMathematicalSlots": [],
+    "directMathematicalSlotCount": 0,
+    "ownerCompleted": true,
+    "hydroStageAuthorityTested": false,
+    "physicalQualified": false,
+    "scienceAccepted": false
+  },
+  "field_purpose": "AcceptedCurrent",
+  "lease_generation": 1,
+  "source_generation": 1,
+  "field_generation": 1,
+  "native_discrete_certificate": {
+    "schema": "arch-private-native-discrete-field-certificate-1",
+    "scope": "ideal-root-dyadic-native-discrete-operator",
+    "physical_qualified": false,
+    "continuous_potential_error_certified": false,
+    "per_cell_residual_error_exported": false,
+    "norm_scope": "RootDyadicRzWeights",
+    "norm_kind": "volume-normalized-RMS",
+    "weighted_L2_exported": false,
+    "potential_semantics": "actual-stored-cell-center-point-Phi",
+    "residual_vector_binding": "original-certified-operator-residual;not-long-double-row-diagnostic",
+    "source_generation": 1,
+    "field_generation": 1,
+    "native_potential_rms": {
+      "status": "Bounded",
+      "units": "cm^2/s^2",
+      "lower": 2.669415970543707e-07,
+      "upper": 2.6694159705438984e-07
+    },
+    "native_measure": {
+      "status": "Bounded",
+      "units": "cm^3",
+      "total_volume_lower": 3.141592653589688,
+      "total_volume_upper": 3.1415926535898984
+    },
+    "conditional_residual": {
+      "status": "Accepted",
+      "units": "s^-2",
+      "error_composition": "CorrelatedPrescribedBoundary",
+      "complete_residual_error_upper": 1.6086037863548524e-14,
+      "tolerance_safe": 1.7289123717308613e-14,
+      "rhs_norm_lower": 0.00017289123721319635,
+      "rhs_norm_upper": 0.00017289123721320638,
+      "residual_norm_upper": 1.8310085764902566e-16,
+      "rhs_error_upper": 4.01101696530444e-14,
+      "total_residual_upper": 1.6269138721197554e-14
+    },
+    "marginal_error_scalars": {
+      "units": "s^-2",
+      "additive_floor": false,
+      "stored_norm_scope": "StoredNativeWeights",
+      "native_norm_scope": "RootDyadicRzWeights",
+      "authoritative_complete_floor": "conditional_residual.complete_residual_error_upper",
+      "source_stored_upper": 4.235164736271565e-22,
+      "rhs_assembly_stored_upper": 1.3911968219395083e-19,
+      "residual_arithmetic_stored_upper": 1.9715130214079204e-19,
+      "boundary_construction_native_upper": 3.836303468903255e-14,
+      "boundary_potential_native_upper": 2.9094769558100665e-15,
+      "operator_construction_native_upper": 5.257056336098828e-14,
+      "residual_evaluation_native_upper": 5.2570671302937654e-14,
+      "complete_native_upper": 1.6086037863548524e-14
+    }
+  },
+  "source_record_sha256": "559d7ca2c72f89451ccfaab71d1a609a0d7a4e9736e15532ba6fa0b3e20ac46b",
+  "guard_wall_seconds": 92.517,
+  "cell_count": 512,
+  "face_count": 1056,
+  "reference_calls": 0,
+  "physical_qualified": false,
+  "continuous_accuracy_qualified": false,
+  "energy_qualified": false,
+  "cuda_qualified": false,
+  "producer_fence_result": "maintained strict runner completed exit0 and verify_fixture_inputs",
+  "artifact_retention": "Raw source and full build identities retained locally; processed summary only"
+}

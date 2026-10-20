@@ -1,0 +1,134 @@
+{
+  "status": "UNAPPROVED_ANALYSIS_ONLY",
+  "sourceSHA256": {
+    "src/physics/constant/PhysicalConstants.h": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e",
+    "validation/gravity/radial_1d.py": "ced88c7819cba2c7ce7365c25b919f2f72f89e1e885dc59ad21f346f0c1feb4c",
+    "simulation/GravityBox/GravityBox.par": "524bd50ae34e1408cf79b05159424264c6b92b351e64fa52971b6b95dc642fc5",
+    "simulation/GravityBox/GravityBox.cpp": "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d",
+    "simulation/JeansWave/JeansWave.cpp": "1dc38ddda8cda82399760a8cb1393d601e93a4036f85d5f7186ef06fad23d6ab",
+    "validation/gravity/flash/compare_jeans_o6plus.py": "045d8168b1b0475f1609547ea785e3e7b7342da22c5b298782bc4f328945a036",
+    "validation/gravity/flash/arch_jeans_o6plus.par": "6cb860619e2bc5025cf1e80b5b850f3e83491ce49d45b92329456ace17e6102b",
+    "validation/gravity/flash/arch_jeans_o6plus_128.par": "0cc1cec6c4007edf3cb3680a8239c62275435b934609a6102d743ba3f6d069d7"
+  },
+  "similarityCondition": "Gnew/Gold * densityFactor * lengthFactor^2 = velocityFactor^2",
+  "radial": {
+    "oldG": 1e-20,
+    "newG": 6.6743e-08,
+    "GFactor": 6674300000000.001,
+    "historicalCenterEvidence": {
+      "baselineCommit": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+      "modelBlobSHA256": "5b7082c6f0778c4632dd7b3d2e55f06fdf8c789ed1fd240039003c582bf93477",
+      "parameterBlobSHA256": "5094035ade9e4759c3bf83bd7709c89ea325f0636fedc7699690c9cc6585ea8e",
+      "historicalRadialDefaultCenterX": 0,
+      "currentCommonParameterCenterX": 50000000.0,
+      "equivalentProfileNeedsExplicitHistoricalCenter": true,
+      "inputNotChanged": true
+    },
+    "tmaxIsCeilingNotObservedEndpoint": true,
+    "actualHistoricalAndNewEndpointNeedEvidence": true,
+    "old": {
+      "rho0": 10000000.0,
+      "domainRadius": 100000000.0,
+      "width": 20000000.0,
+      "temperature0": 1000000000.0,
+      "gamma": 1.6666666666666667,
+      "gas_cv": 124716939.27,
+      "tmax": 0.1,
+      "max_steps": 40,
+      "soundSpeedSquared": 1.385743769666667e+17,
+      "domainGravityStrength": 7.21634130269656e-15,
+      "acousticTime": 0.2686324869165411,
+      "gravityTimeConvention": "1/sqrt(G*rho), without geometry prefactor",
+      "gravityTime": 3162277.6601683795
+    },
+    "candidateDensityOnly_UNAPPROVED": {
+      "lengthFactor": 1,
+      "velocityFactor": 1,
+      "timeFactor": 1,
+      "densityAndPressureFactor": 1.4982844642883897e-13,
+      "rho0": 1.4982844642883896e-06,
+      "backgroundPressureOld": 8.314462618e+23,
+      "backgroundPressureNew": 124574301694.55972,
+      "temperature0": 1000000000.0,
+      "tmax": 0.1,
+      "domainGravityStrength": 7.21634130269656e-15,
+      "gravityTime": 3162277.6601683795,
+      "G_rho_roundoffRelative": 0.0,
+      "unchangedDensityFloor": 1e-12,
+      "floorOverBackgroundDensityOld": 1e-19,
+      "floorOverBackgroundDensityNew": 6.6743e-07,
+      "discreteEquivalenceProved": false
+    },
+    "lengthOnly_NOT_SELECTED": {
+      "lengthFactor": 3.870767965518457e-07,
+      "newRadius": 38.70767965518457,
+      "newWidth": 7.741535931036914,
+      "timeFactor": 3.870767965518457e-07,
+      "newTmax": 3.8707679655184576e-08,
+      "samePhysicalEndpoint": false
+    },
+    "temperatureOnly_NOT_SELECTED": {
+      "velocityFactor": 2583466.663225984,
+      "newTemperature": 6.674300000000001e+21,
+      "timeFactor": 3.870767965518457e-07,
+      "newTmax": 3.8707679655184576e-08,
+      "sameEOSPhysicalRegimeConfirmed": false
+    },
+    "thresholdsNotChanged": {
+      "gaussRelativeErrorLessThan": 1e-07,
+      "massAndEnergyRelativeDriftLessThan": 1e-12,
+      "topology": [
+        "refine",
+        "coarsen",
+        "no-change"
+      ],
+      "floorRepairEvents": 0
+    }
+  },
+  "jeans": [
+    {
+      "input": "validation/gravity/flash/arch_jeans_o6plus.par",
+      "oldG": 6.67408e-08,
+      "newG": 6.6743e-08,
+      "relativeGChange": 3.296334476066143e-05,
+      "rho0": 15000000.0,
+      "pressure0": 15000000.0,
+      "domainLength": 1.14411,
+      "mode": 2,
+      "tmax": 0.1,
+      "oldOmegaSquared": 188.48300574448461,
+      "newOmegaSquared": 188.48259105425433,
+      "oldOmega": 13.728911309513387,
+      "newOmega": 13.72889620669682,
+      "relativeOmegaChange": -1.1000738679989297e-06,
+      "phaseChangeAtTmaxRadians": -1.5102816567136303e-06,
+      "frequencySensitivityOnly": true,
+      "flashBuiltGConfirmed": false,
+      "referenceOrInputsChanged": false
+    },
+    {
+      "input": "validation/gravity/flash/arch_jeans_o6plus_128.par",
+      "oldG": 6.67408e-08,
+      "newG": 6.6743e-08,
+      "relativeGChange": 3.296334476066143e-05,
+      "rho0": 15000000.0,
+      "pressure0": 15000000.0,
+      "domainLength": 1.14411,
+      "mode": 2,
+      "tmax": 0.1,
+      "oldOmegaSquared": 188.48300574448461,
+      "newOmegaSquared": 188.48259105425433,
+      "oldOmega": 13.728911309513387,
+      "newOmega": 13.72889620669682,
+      "relativeOmegaChange": -1.1000738679989297e-06,
+      "phaseChangeAtTmaxRadians": -1.5102816567136303e-06,
+      "frequencySensitivityOnly": true,
+      "flashBuiltGConfirmed": false,
+      "referenceOrInputsChanged": false
+    }
+  ],
+  "noARCHorFLASHRun": true,
+  "noScientificInputModified": true,
+  "noThresholdModified": true,
+  "oldResultsRemainHistorical": true
+}

@@ -1,0 +1,369 @@
+{
+  "authority": "11a321d5604f9ee62b9f9587c81f14de4f128bc4:2.1",
+  "executableSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "sourceHead": "c2b76107617d780f5c06d87eb224aa53ef07a784",
+  "repositoryDirty": false,
+  "inputFingerprints": {
+    "validation/gravity/run_self_gravity.py": "f7da0393898855039814544997108ae287841b22b492162c9d12f7d65767401b",
+    "validation/gravity/radial_1d.py": "33a0550733dacf37c991f8e944a3e36940acb13f3f2c946bf20f1b6dd2332b72",
+    "simulation/JeansWave/JeansWave.par": "636c7a948009b7ab4a46eca26246f3bed475a6612bf8441ca5213bb2182caeaa",
+    "simulation/GravityBox/GravityBox.par": "524bd50ae34e1408cf79b05159424264c6b92b351e64fa52971b6b95dc642fc5",
+    "simulation/GravityBox/GravityBox.cpp": "27e5a8bf1d22a7303fd6e45adddd3780eb990e133cb74f1927526d237a7df12d",
+    "src/physics/eos/IdealGas.h": "b3949662185451fea91bd0a4bc5c8a3c2f80bfc3e4474999639ddf67e2205891",
+    "src/physics/constant/PhysicalConstants.h": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e",
+    "src/numerics/elliptic/CartesianPoisson.cpp": "bbb6348fba826861f0793b454dca84b396a3a19c99c4e39618baef40df2156a3",
+    "src/numerics/elliptic/CartesianPoisson.h": "251243d31f0b16d76247e3c1c59aad42c032417d9a456c5a007b59ddd85d2d50",
+    "src/numerics/elliptic/CompositePoisson.h": "71921583e57ebcc1112c3e80fa937aad285f801ddfb0a0a6d703adf233579909",
+    "src/numerics/elliptic/CompositePoisson.cpp": "e65e4f4f79b319df2128f82f7cc2e9c91beb4e26817643b9a3da4fbae5f78125",
+    "src/numerics/multigrid/CompositeMultigrid.cpp": "92f491f0a1f2079430eb93796db99026dfb945b7ed5fa96e44ec6872e74da601"
+  },
+  "cases": [
+    {
+      "name": "native-mixed-3d",
+      "status": "PASS",
+      "record": {
+        "name": "native-mixed-3d",
+        "config": {
+          "geometry": "cartesian",
+          "nblockx1": "4",
+          "nblockx2": "1",
+          "nblockx3": "1",
+          "max_blocks": "32",
+          "x1_min": "0",
+          "x1_max": "1",
+          "x1l_boundary_type": "periodic",
+          "x1r_boundary_type": "periodic",
+          "x2l_boundary_type": "periodic",
+          "x2r_boundary_type": "periodic",
+          "x3l_boundary_type": "periodic",
+          "x3r_boundary_type": "periodic",
+          "solver": "HLLC",
+          "reconstruct": "muscl",
+          "limiter": "mc",
+          "time_integrator": "RK3",
+          "cfl": "0.2",
+          "lrefinemin": "0",
+          "lrefinemax": "1",
+          "regrid_interval": "2",
+          "refine_var": "DENS",
+          "refine_threshold": "2e-05",
+          "derefine_threshold": "5e-06",
+          "tmax": "0.02",
+          "max_steps": "2",
+          "out_dir": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-core-cpu-gates-20261005/replay/jeans/native-mixed-3d",
+          "base_name": "JeansWave",
+          "plt_dt": "-1",
+          "plt_dstep": "-1",
+          "chk_dt": "-1",
+          "chk_dstep": "-1",
+          "plt_variables": "DENS,PRES,VELX,ENER",
+          "restart": "false",
+          "eos_type": "ideal",
+          "gamma": "1.6666666666666667",
+          "gravity_type": "self",
+          "use_burn": "false",
+          "use_diffusion": "false",
+          "rho0": "1e7",
+          "pressure0": "6e6",
+          "amplitude": "1e-4",
+          "compute_backend": "cpu",
+          "hll_wave_speed": "roe",
+          "sml_rho": "1e-12",
+          "min_eint": "1e-10",
+          "max_eint": "1e21",
+          "gravity_boundary": "periodic",
+          "gravity_rtol": "1e-10",
+          "gravity_atol": "0.0",
+          "phase": "0.7853981633974483",
+          "mode": "1",
+          "standing_wave": "false",
+          "x2_min": "0",
+          "x3_min": "0",
+          "x2_max": "0.25",
+          "x3_max": "0.25"
+        },
+        "solves": 10,
+        "last_time": 0.0005208006218809392,
+        "density_relative_rms": 0.0010426246815495668,
+        "mass_relative_drift": 1.1932570487260818e-16,
+        "energy_over_initial_potential": 4.619052309408943e-06,
+        "initial_net_force": 4.808420183209663e-18,
+        "final_net_force": 2.628512297028601e-10,
+        "endpointNote": "original max_steps=2; tmax is not a reached endpoint"
+      },
+      "nativeTrace": {
+        "regridRows": 2,
+        "refineTransactions": 1,
+        "coarsenTransactions": 0,
+        "noTopologyChangeRows": 1,
+        "stepsAndFinalTimeFromLog": ">>> Simulation Done. Total Steps: 2 | Final Time: 5.20801e-04",
+        "repairs": {
+          "revision": "P1.5-v1 units=CGS",
+          "events": "0",
+          "affected_volume": "0",
+          "mass_signed": "0",
+          "mass_absolute": "0",
+          "momentum_x": "0",
+          "momentum_y": "0",
+          "momentum_z": "0",
+          "energy_signed": "0",
+          "energy_absolute": "0",
+          "local_cell": "0",
+          "block_uid": "0",
+          "stage": "0",
+          "time": "0",
+          "position": "0,0,0"
+        }
+      },
+      "localPlotIndex": [
+        {
+          "name": "JeansWave_HLLC_plt_0000.h5",
+          "sha256": "b8227aa63aff0d00584d339f8f83f8015c561a5106846986db78260dcce7bb0e",
+          "time": 0.0,
+          "dimension": 3,
+          "densityValueCount": 73728,
+          "blocks": 18,
+          "levels": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "JeansWave_HLLC_plt_0001.h5",
+          "sha256": "4c6cd8a8ade6406bf2578489da607efd89f7521695aec07fa215723a923f41ad",
+          "time": 0.0005208006218809392,
+          "dimension": 3,
+          "densityValueCount": 73728,
+          "blocks": 18,
+          "levels": [
+            0,
+            1
+          ]
+        }
+      ],
+      "inputSha256": "7e11dddd23907f19bbbf4a735a3d58e44ae478f41b31fbbe34419ad8660c9b6b",
+      "runLogSha256": "aea80f97883caacdd51299dd6bd003cdc11d052e39e43d27391e05b9569d7378"
+    },
+    {
+      "name": "spherical",
+      "status": "PASS",
+      "record": {
+        "name": "spherical-refine-coarsen",
+        "geometry": "spherical",
+        "plots": 3,
+        "max_gauss_relative_error": 8.175608263028146e-09,
+        "solves": 162,
+        "mass_relative_drift": 2.948433597965705e-15,
+        "energy_relative_drift": 1.9532986339498848e-15,
+        "refined_and_coarsened": true,
+        "similarity_migration": {
+          "authority": "11a321d5604f9ee62b9f9587c81f14de4f128bc4:2.1",
+          "old_G": 1e-20,
+          "shared_G": 6.6743e-08,
+          "scale": 1.4982844642883897e-13,
+          "old_rho0": 10000000.0,
+          "migrated_rho0": 1.4982844642883896e-06,
+          "unchanged_temperature": 1000000000.0,
+          "fluid_mass_energy_scale": 1.4982844642883897e-13,
+          "independent_Gauss_budget": 1e-07,
+          "relative_conservation_budget": 1e-12
+        },
+        "initialSpecificEnergyRelativeError": 4.440892098500626e-16,
+        "initialDensityAboveUnchangedFloor": true
+      },
+      "nativeTrace": {
+        "regridRows": 21,
+        "refineTransactions": 2,
+        "coarsenTransactions": 1,
+        "noTopologyChangeRows": 18,
+        "stepsAndFinalTimeFromLog": ">>> Simulation Done. Total Steps: 40 | Final Time: 8.35504e-03",
+        "repairs": {
+          "revision": "P1.5-v1 units=CGS",
+          "events": "0",
+          "affected_volume": "0",
+          "mass_signed": "0",
+          "mass_absolute": "0",
+          "momentum_x": "0",
+          "momentum_y": "0",
+          "momentum_z": "0",
+          "energy_signed": "0",
+          "energy_absolute": "0",
+          "local_cell": "0",
+          "species_0_signed": "0",
+          "species_0_absolute": "0",
+          "block_uid": "0",
+          "stage": "0",
+          "time": "0",
+          "position": "0,0,0"
+        }
+      },
+      "localPlotIndex": [
+        {
+          "name": "GravityBox_HLLC_plt_0000.h5",
+          "sha256": "225c707eaffb0bf74566d6e739c406e7b56fdd0d4f5f485ed40d0984d37026bd",
+          "time": 0.0,
+          "dimension": 1,
+          "densityValueCount": 96,
+          "blocks": 6,
+          "levels": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "GravityBox_HLLC_plt_0001.h5",
+          "sha256": "63553139843e5aa36bd0b55537763d420cf69b7f5f284c05d55f1f698a7fc8f7",
+          "time": 0.004187452946768386,
+          "dimension": 1,
+          "densityValueCount": 96,
+          "blocks": 6,
+          "levels": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "GravityBox_HLLC_plt_0002.h5",
+          "sha256": "326365ab539c9d728ff1a61283aadb6aba34c4138f065e95f15b380ac60931f5",
+          "time": 0.008355035768485626,
+          "dimension": 1,
+          "densityValueCount": 96,
+          "blocks": 6,
+          "levels": [
+            0,
+            1
+          ]
+        }
+      ],
+      "inputSha256": "62fa61cb3fa6a7ecce0ed971fd7017bf852dcacfea502fe6826fb6e455c8c474",
+      "runLogSha256": "3336f8a302e7d61809d23a6a3abd9539b7de0124b27e7d50363f19c6313776f3"
+    },
+    {
+      "name": "cylindrical",
+      "status": "PASS",
+      "record": {
+        "name": "cylindrical-refine-coarsen",
+        "geometry": "cylindrical",
+        "plots": 3,
+        "max_gauss_relative_error": 3.972521665078625e-12,
+        "solves": 162,
+        "mass_relative_drift": 2.9896332805201542e-15,
+        "energy_relative_drift": 2.003388774318715e-15,
+        "refined_and_coarsened": true,
+        "similarity_migration": {
+          "authority": "11a321d5604f9ee62b9f9587c81f14de4f128bc4:2.1",
+          "old_G": 1e-20,
+          "shared_G": 6.6743e-08,
+          "scale": 1.4982844642883897e-13,
+          "old_rho0": 10000000.0,
+          "migrated_rho0": 1.4982844642883896e-06,
+          "unchanged_temperature": 1000000000.0,
+          "fluid_mass_energy_scale": 1.4982844642883897e-13,
+          "independent_Gauss_budget": 1e-07,
+          "relative_conservation_budget": 1e-12
+        },
+        "initialSpecificEnergyRelativeError": 2.220446049250313e-16,
+        "initialDensityAboveUnchangedFloor": true
+      },
+      "nativeTrace": {
+        "regridRows": 21,
+        "refineTransactions": 2,
+        "coarsenTransactions": 1,
+        "noTopologyChangeRows": 18,
+        "stepsAndFinalTimeFromLog": ">>> Simulation Done. Total Steps: 40 | Final Time: 8.35436e-03",
+        "repairs": {
+          "revision": "P1.5-v1 units=CGS",
+          "events": "0",
+          "affected_volume": "0",
+          "mass_signed": "0",
+          "mass_absolute": "0",
+          "momentum_x": "0",
+          "momentum_y": "0",
+          "momentum_z": "0",
+          "energy_signed": "0",
+          "energy_absolute": "0",
+          "local_cell": "0",
+          "species_0_signed": "0",
+          "species_0_absolute": "0",
+          "block_uid": "0",
+          "stage": "0",
+          "time": "0",
+          "position": "0,0,0"
+        }
+      },
+      "localPlotIndex": [
+        {
+          "name": "GravityBox_HLLC_plt_0000.h5",
+          "sha256": "ea52f293ec2da280c866416fc981720aa0d953399a00cb792946ccf56cc97a04",
+          "time": 0.0,
+          "dimension": 1,
+          "densityValueCount": 96,
+          "blocks": 6,
+          "levels": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "GravityBox_HLLC_plt_0001.h5",
+          "sha256": "dcf82636244b701507642da919388b7ab95ed63ed22c3cc9e070fe67298ba5ab",
+          "time": 0.004187375614558285,
+          "dimension": 1,
+          "densityValueCount": 96,
+          "blocks": 6,
+          "levels": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "GravityBox_HLLC_plt_0002.h5",
+          "sha256": "5db3751a473add8fd17fc01f55b070b851bf76da2b9b970880a9a4d419599b31",
+          "time": 0.008354359727176531,
+          "dimension": 1,
+          "densityValueCount": 96,
+          "blocks": 6,
+          "levels": [
+            0,
+            1
+          ]
+        }
+      ],
+      "inputSha256": "e53fe5f21c9150d301a0bc2abc9fc81a63730e093ef9410d995d6b53a3abf282",
+      "runLogSha256": "46c04ba9b039da5e7a82bcaa9c7fceaae257a4da7e61eee239fbebafc7a379d6"
+    }
+  ],
+  "scope": "Current CPU binary receipt for 3 previously Core-approved short cases only; not full O7, new RZ, CUDA or long-run acceptance",
+  "status": "PASS",
+  "buildVerification": {
+    "command": "cmake --build build-cpu --target ARCH --parallel 28",
+    "result": "PASS: no work to do; no recompiled ARCH objects",
+    "sourceRoot": "/home/arch/projects/ARCH-compute-optim",
+    "configuration": [
+      "ARCH_ENABLE_CUDA:BOOL=OFF",
+      "CMAKE_BUILD_TYPE:STRING=Release",
+      "CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++",
+      "CMAKE_HOME_DIRECTORY:INTERNAL=/home/arch/projects/ARCH-compute-optim"
+    ],
+    "cacheSha256Before": "b8f1cdff743e1af6d22f53ff80c39f3772aa82672bafe70e85e88ed4b16b6667",
+    "cacheSha256After": "b8f1cdff743e1af6d22f53ff80c39f3772aa82672bafe70e85e88ed4b16b6667",
+    "beforeBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "afterBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "trackedInputCount": 591,
+    "trackedInputsUnchangedDuringRun": true,
+    "trackedInputManifestSha256": "67ac1b8dc02c8d324b291ead9ec6618cbc4f02f8a4517450487e983f28489f97",
+    "dependenciesComplete": false,
+    "dependencyNote": "Ninja standard-build result and tracked source identity only; not a dependency-complete external library/runtime closure manifest"
+  },
+  "reuseFrozenJensReceipt": {
+    "path": "validation/gravity/results/rz-stencil-construction-20261005/summary.json",
+    "binarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "rerun": false,
+    "reason": "binary unchanged; existing frozen 9 short trajectories + 9 actual restarts remain matched"
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/current-core-cpu-gates-20261005",
+  "localLogs": {
+    "gates.log": "c4b9e881afa51ae0e2b826d32135f0754efa58d4fb340c579bd6bf05db2f2e43",
+    "build.log": "b302b37e95d588120d03f4d5eacf08bef3f1fbca03de69b89d6c808981f96bc6"
+  }
+}

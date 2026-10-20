@@ -61,7 +61,7 @@ ASCII 表，不属于当前正温度主表读取器的支持范围。
 | `tables/baryon/eos2.tab` | 143,166,842 | `d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58` |
 | `tables/baryon/eos4.tab` | 143,167,115 | `5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34` |
 
-两份解压后的表合计 286,333,957 字节。使用前须下载 LFS 实体内容；只有指针的检出
+两份解压后的表合计 286,333,957 字节。使用前须具备实际表内容；优先复用经过核验的本地副本／LFS对象，仅缺失时定点下载。只有指针的检出
 不能用于查询 EOS。也可以使用同一精确成员的外部路径。解压不会改变表中采样值
 或许可。署名为 H. Shen、
 F. Ji、J. N. Hu、K. Sumiyoshi，*Equation of state for simulations of core-collapse
@@ -73,4 +73,4 @@ supernovae and neutron-star mergers*（2020），
 加工后的 HShen HDF5 数据不随附。其 EOSDriver 格式经过兼容性调查，但须另行
 核对加工产品发布方的条款；原始归档的 CC BY 许可不会重新许可这些加工产品。
 
-需要特别说明的是，`helm_table.dat` 文件提取自项目下载的 Timmes `helmholtz.tar.xz` 压缩包，并严格通过 Git LFS 进行管理。由于 Git LFS 会将大表数据单独保存，而普通 Git 检出中仅保留一个指向该数据的小指针文件，因此在运行任何 Helmholtz 算例之前，必须先下载 LFS 的实际数据。关于该表格的详细来源、重新分发条款、必需大小要求以及校验和（checksum），请查阅 [`THIRD_PARTY_NOTICES.zh-CN.md`](../THIRD_PARTY_NOTICES.zh-CN.md) 以及 [`validation/burn/README.zh-CN.md`](../validation/burn/README.zh-CN.md)。
+需要特别说明的是，`helm_table.dat` 文件提取自项目下载的 Timmes `helmholtz.tar.xz` 压缩包，并严格通过 Git LFS 进行管理。由于 Git LFS 会将大表数据单独保存，而普通 Git 检出中仅保留一个指向该数据的小指针文件，因此运行 Helmholtz 算例必须使用实际表数据。已有对象优先用离线`git lfs checkout`或经过核验的本地副本复用，仅缺失时定点下载，见[离线表指南](../docs/guides/Build.zh-CN.md#离线表与-lfs-流量)。关于该表格的详细来源、重新分发条款、必需大小要求以及校验和（checksum），请查阅 [`THIRD_PARTY_NOTICES.zh-CN.md`](../THIRD_PARTY_NOTICES.zh-CN.md) 以及 [`validation/burn/README.zh-CN.md`](../validation/burn/README.zh-CN.md)。

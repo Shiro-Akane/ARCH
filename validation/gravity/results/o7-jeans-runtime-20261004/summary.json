@@ -1,0 +1,36 @@
+{
+  "scope": "Actual CPU JENS Runtime transactions and DriverIO checkpoint -> native HDF -> Host restore; no timestep evolution",
+  "exitCode": 0,
+  "runtimeTransactionPass": true,
+  "checkpointProfiles": [
+    "Cartesian",
+    "RZ"
+  ],
+  "negativeHdf5CreateFailure": true,
+  "rawEvidence": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-runtime-accepted-20261004",
+  "testExecutableSha256": "95476e07cd28d5eed5e0e93f631dc10538fbc61bda5bfd34350f1cba6a2bc90e",
+  "productionARCHSha256": "42a61aaf9a67430ab501ba20f1c57a45e22f143055d6f0d81004dedb6009f498",
+  "sourceFingerprints": {
+    "tests/host/io/test_driver_checkpoint_geometry.cpp": "4b7187ec6a04ff3d76281fb9d41e2238780ce47a9ceb60ade815ccc30b635969",
+    "src/driver/runtime/DriverRuntime.cpp": "4ca249abf5d6468426898cb683f0f7e677a01978d3e3b011184937ddbdf582ad",
+    "src/driver/runtime/DriverBoundary.cpp": "384532f54fbc56515f78106cae0a733e327300c6beea59b2c87d02166dbf03af",
+    "src/driver/runtime/DriverRegrid.cpp": "14e0488b67c49172de27ed4a20fe4905d5e60984efee234df8c06036e206bdce",
+    "src/driver/io/DriverIO.cpp": "5aaafe4f328b95306c169e195fa8ac3cc6821150b3e024da51fad55df4afbc3f",
+    "src/io/chk/ChkIO.cpp": "9667d1c416c7161136df2158a6a47a6835c6ac2ebd2b083cbbe1056270a5f8aa",
+    "src/io/chk/CheckpointCompatibility.cpp": "63a1cf3f0b90b2d5ffa1b697f36042894a39d341de46274816affdc3e0f87b3f",
+    "src/io/hdf5/HDF5Writer.cpp": "9300dca49861a2e50acf0c4d9904f202b05e5f9f4721934626c1fd1aa7b24c8c",
+    "src/io/plot/PlotIO.cpp": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5"
+  },
+  "driverHeaderSha256": "f8017cfc1d55c3ce4839d447a3337eef57cb214bcb4c5f128814df7a992812d4",
+  "finalRegression": {
+    "passed": 7,
+    "failed": 0
+  },
+  "limitations": [
+    "New accepted state is a published fixture, not actual hydro evolution",
+    "No evolved JENS trajectory or restart identity qualification",
+    "Runtime/API JENS still gated",
+    "Device JENS explicitly rejected before startup until backend-local qualification",
+    "RZ migration remains gated"
+  ]
+}

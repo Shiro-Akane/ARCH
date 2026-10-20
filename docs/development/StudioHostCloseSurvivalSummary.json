@@ -1,0 +1,155 @@
+{
+  "scope": "Production Host stdin-close survival and re-opened Host Stop; not native Electron close-button/human-visible terminal acceptance",
+  "sourceHead": "d3ccc711188e5d05342bd54426236162f97a0998",
+  "runId": "e475ea66-60cf-4b9d-88d0-98415cb9579c",
+  "configPath": "studio/.local/integration/host-close-survival-a5ee7466-6be2-45e3-9959-6a024d041886/Sod.par",
+  "configSha256": "94a77fc57ce8ce59ebebdf8820ee2df1375efddfd2b9f12218989c219a5f7a29",
+  "binary": {
+    "relativePath": "build-studio-cpu/bin/ARCH",
+    "kind": "executable",
+    "exists": true,
+    "size": 7177152,
+    "modifiedTime": "2026-10-03T04:11:50.885Z",
+    "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "changed": false
+  },
+  "firstHost": {
+    "pid": 17389,
+    "port": 45157,
+    "identity": {
+      "pid": 17389,
+      "startTicks": "417589",
+      "state": "R",
+      "ppid": 17388,
+      "pgrp": 17388
+    }
+  },
+  "firstHostExitCode": 0,
+  "firstHostAfter": {
+    "pid": 17389,
+    "exists": false
+  },
+  "liveBeforeClose": {
+    "worker": {
+      "pid": 17413,
+      "startTicks": "417743",
+      "state": "S",
+      "ppid": 17412,
+      "pgrp": 17413
+    },
+    "core": {
+      "pid": 17425,
+      "startTicks": "417750",
+      "state": "R",
+      "ppid": 17413,
+      "pgrp": 17425
+    },
+    "terminal": {
+      "pid": 17412,
+      "startTicks": "417741",
+      "state": "S",
+      "ppid": 17389,
+      "pgrp": 17412
+    }
+  },
+  "liveAfterClose": {
+    "worker": {
+      "pid": 17413,
+      "startTicks": "417743",
+      "state": "S",
+      "ppid": 17412,
+      "pgrp": 17413
+    },
+    "core": {
+      "pid": 17425,
+      "startTicks": "417750",
+      "state": "R",
+      "ppid": 17413,
+      "pgrp": 17425
+    },
+    "terminal": {
+      "pid": 17412,
+      "startTicks": "417741",
+      "state": "S",
+      "ppid": 17384,
+      "pgrp": 17412
+    }
+  },
+  "consoleBytesBefore": 1658,
+  "consoleBytesAfter": 13970,
+  "recoveryHost": {
+    "pid": 17453,
+    "port": 45483,
+    "identity": {
+      "pid": 17453,
+      "startTicks": "417788",
+      "state": "R",
+      "ppid": 17388,
+      "pgrp": 17388
+    }
+  },
+  "recoveryHistoryState": {
+    "runId": "e475ea66-60cf-4b9d-88d0-98415cb9579c",
+    "state": "running",
+    "workerPid": 17413,
+    "workerStartTicks": "417743",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T04:45:35.131Z",
+    "processId": 17425,
+    "processStartTicks": "417750",
+    "processIdentity": "captured"
+  },
+  "stopResponse": {
+    "protocolVersion": "1.3",
+    "projectId": "f96efaf0-7770-431a-91dd-f42668ef4ec9",
+    "runId": "e475ea66-60cf-4b9d-88d0-98415cb9579c",
+    "stopRequested": true
+  },
+  "final": {
+    "protocolVersion": "1.3",
+    "projectId": "f96efaf0-7770-431a-91dd-f42668ef4ec9",
+    "runId": "e475ea66-60cf-4b9d-88d0-98415cb9579c",
+    "state": "stopped",
+    "workerPid": 17413,
+    "workerStartTicks": "417743",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T04:45:35.131Z",
+    "processId": 17425,
+    "processStartTicks": "417750",
+    "processIdentity": "captured",
+    "exitCode": null,
+    "signal": "SIGTERM",
+    "finishedAt": "2026-10-03T04:45:38.190Z"
+  },
+  "workerAfterStop": {
+    "pid": 17413,
+    "exists": false
+  },
+  "coreAfterStop": {
+    "pid": 17425,
+    "exists": false
+  },
+  "terminalAfterStop": {
+    "pid": 17412,
+    "startTicks": "417741",
+    "state": "S",
+    "ppid": 17384,
+    "pgrp": 17412
+  },
+  "recoveryHostExitCode": 0,
+  "recoveryHostAfter": {
+    "pid": 17453,
+    "exists": false
+  },
+  "rawLocalRoot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/host-close-survival-a5ee7466-6be2-45e3-9959-6a024d041886",
+  "frozenInputEqualsSaved": true,
+  "originalSodSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+  "fixture": {
+    "cells": 4096,
+    "cfl": 0.4,
+    "tmax": 0.2,
+    "threads": 28,
+    "maxAmrLevel": 0,
+    "purpose": "lifecycle only; not scientific acceptance"
+  }
+}

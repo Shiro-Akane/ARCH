@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "status": "PASS_CURRENT_ENGINEERING_CHECKPOINT_ONLY",
+  "recorded_at_utc": "2026-10-07T22:25:36.726549+00:00",
+  "source_baseline": "9bd329f143ce02e6e23daf07eaa9caab1e61a48c plus reviewed working changes",
+  "studio": {
+    "tests": 367,
+    "passed": 367,
+    "skipped": 0,
+    "test_seconds": 6.096475,
+    "guard_seconds": 7.111,
+    "original_one_second_build_fixture_wait_unchanged": true,
+    "lint_typecheck_production_build": "PASS",
+    "build_guard_seconds": 14.086
+  },
+  "tooling": {
+    "tests": 665,
+    "passed": 665,
+    "skipped": 0,
+    "test_seconds": 39.084,
+    "guard_seconds": 40.219
+  },
+  "affected_cpu_original_owners": {
+    "tests": 5,
+    "passed": 5,
+    "test_seconds": 69.06,
+    "guard_seconds": 69.371
+  },
+  "stokes_point": {
+    "cases": 57,
+    "max_error": 0,
+    "complete_fv_operator": "UNVERIFIED"
+  },
+  "formal_native_point_reader": "PASS_SCOPED_ACTUAL_RETAINED_RZ_WRITER_READONLY_NOT_CURRENT_PHYSICS",
+  "ci_syntax_architecture_diff_checks": "PASS",
+  "failed_attempts_retained": true,
+  "raw_uploaded": false,
+  "local_receipt_sha256": {
+    "studio-singlepass-current-all-20261008.guard.log": "060239001cfd250819549b8239eac34716259b43e0f7f5fb0deb33a2c57eb4db",
+    "studio-current-lint-build-20261008.guard.log": "e4ff0ddfb62b125a8738fa70ebf384119351b08c204dd1857815ba0888f22945",
+    "tooling-current-native-query-contrast-20261008.guard.log": "13d2d97433800c6f32e862c547f82dc3099d517b933401bd07d0479a70137db6",
+    "formal-rz-point-reader-actual-20261008-attempt2.json": "e70373f8c66a2aee5aeeebfb5ac1c9440c6f2fd42236693d9d28c4e7bebc05f0"
+  },
+  "not_qualified": [
+    "Complete current scientific CPU suite",
+    "Native CUDA runtime/AMR/restart",
+    "Full Newtonian FV/CF/energy/stability",
+    "Continuous post-step force/energy reference",
+    "Current real desktop UAT",
+    "Formal matched endpoint timings and long runs",
+    "Entire O-series release"
+  ]
+}

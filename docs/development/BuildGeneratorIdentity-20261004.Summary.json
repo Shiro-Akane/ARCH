@@ -1,0 +1,73 @@
+{
+  "scope": "Read-only actual build-generator identity; no configure/build/tool execution",
+  "sourceHead": "1d4f84cdff79bfbaac67a8aadf4e12eea0a189c4",
+  "checks": [
+    {
+      "kind": "build-generator-identity-audit",
+      "version": 1,
+      "sourceRoot": "/home/arch/projects/ARCH-compute-optim",
+      "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+      "cacheSha256": "b8f1cdff743e1af6d22f53ff80c39f3772aa82672bafe70e85e88ed4b16b6667",
+      "generator": "Ninja",
+      "tools": {
+        "cmake": {
+          "path": "/usr/bin/cmake",
+          "resolvedPath": "/usr/bin/cmake",
+          "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+          "size": 11796472
+        },
+        "ninja": {
+          "path": "/usr/bin/ninja",
+          "resolvedPath": "/usr/bin/ninja",
+          "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+          "size": 248040
+        }
+      },
+      "observedExecution": false,
+      "dependenciesComplete": false,
+      "missingCoverage": [
+        "integration-with-build-manifest",
+        "before-after-build-stability",
+        "generator-runtime-dependencies",
+        "complete-dependency-closure"
+      ]
+    },
+    {
+      "kind": "build-generator-identity-audit",
+      "version": 1,
+      "sourceRoot": "/home/arch/projects/ARCH-compute-optim",
+      "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+      "cacheSha256": "50fc37be2df46ec110456b75b40229ddf725d3225dfa92d6ef6acee0aa601bbd",
+      "generator": "Ninja",
+      "tools": {
+        "cmake": {
+          "path": "/usr/bin/cmake",
+          "resolvedPath": "/usr/bin/cmake",
+          "sha256": "1c5227af4edd22d8d689def545e18ee458260c0fd579eba2187967f38817e638",
+          "size": 11796472
+        },
+        "ninja": {
+          "path": "/usr/bin/ninja",
+          "resolvedPath": "/usr/bin/ninja",
+          "sha256": "5965527e09fe2b3787772aa4f711d6a36b393e7f2fcaa744a7a96c5a4ddf59cb",
+          "size": 248040
+        }
+      },
+      "observedExecution": false,
+      "dependenciesComplete": false,
+      "missingCoverage": [
+        "integration-with-build-manifest",
+        "before-after-build-stability",
+        "generator-runtime-dependencies",
+        "complete-dependency-closure"
+      ]
+    }
+  ],
+  "tests": {
+    "pass": 4,
+    "fail": 0
+  },
+  "scriptSha256": "22a7b6aef51599f945cdd3f2c657a1a434b3cf4ebcd01dbce5e34eade0f21e46",
+  "dependenciesComplete": false,
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/build-generator-identity-20261004"
+}

@@ -10,6 +10,11 @@
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "driver/stages/DriverBurnPolicy.h"
+#include "core/CompensatedSum.h"
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 namespace arch::cuda {
 namespace {
@@ -91,6 +96,77 @@ std::vector<double> CudaBackend::compute_diffusion_dt_batch(
     return dt;
 }
 
+/** Optional read-only endpoint reduction; Runtime owns retained-seed validity.
+ * Resolve every actual Current/seed lease and full grid before any launch.
+ * Only compact per-patch summaries return to Host; diagnostics never add a
+ * stage, field copy, EOS query or publication to the normal diffusion route.
+ */
+backend::DiffusionActivityReceipt CudaBackend::reduce_diffusion_energy_activity_batch(
+    std::span<const backend::BackendStateAccess> currents, state::StateSlot retained_seed)
+{
+    if (retained_seed != state::StateSlot::Next && retained_seed != state::StateSlot::Scratch)
+        throw std::invalid_argument("Diffusion activity needs a distinct retained seed slot");
+    std::vector<DeviceDiffusionActivityBlock> bindings;
+    std::vector<const CudaBlockRuntime*> owners;
+    bindings.reserve(currents.size()); owners.reserve(currents.size());
+    for (const auto current : currents) {
+        if (current.slot != state::StateSlot::Current)
+            throw std::invalid_argument("Diffusion activity requires actual Current leases");
+        auto& block = impl_->require_block(current);
+        const auto endpoint = block.require_access(current);
+        auto seed_access = current; seed_access.slot = retained_seed;
+        const auto seed = block.require_access(seed_access);
+        if (!valid_hydro_view(endpoint) || !valid_hydro_view(seed)
+            || endpoint.total_size != block.grid.total_size || seed.total_size != endpoint.total_size
+            || seed.n_species != endpoint.n_species || endpoint.eng == seed.eng)
+            throw std::invalid_argument("Diffusion activity endpoint/seed resident shape mismatch");
+        DeviceDiffusionActivityBlock binding{endpoint.eng, seed.eng, block.grid};
+        if (!valid_diffusion_activity_binding(binding))
+            throw std::invalid_argument("Diffusion activity requires finite actual geometry/layout/volumes");
+        bindings.push_back(binding); owners.push_back(&block);
+    }
+    std::sort(owners.begin(), owners.end(), std::less<>{});
+    if (std::adjacent_find(owners.begin(), owners.end()) != owners.end())
+        throw std::invalid_argument("Duplicate Diffusion activity Current owner");
+    backend::DiffusionActivityReceipt receipt{};
+    if (currents.empty()) return receipt;
+    std::vector<DeviceDiffusionActivityResult> summaries(currents.size());
+    impl_->select_device();
+    impl_->checked_quiesce("quiesce before diffusion activity scratch reuse");
+    impl_->diffusion_activity_bindings.reserve(bindings.size());
+    impl_->diffusion_activity_results.reserve(summaries.size());
+    CudaQuiescenceGuard work_guard{*impl_};
+    enqueue_cuda_metadata_upload(impl_->diffusion_activity_bindings.get(), bindings.data(),
+        bindings.size() * sizeof(DeviceDiffusionActivityBlock), impl_->stream.get(),
+        impl_->runtime_counters, "upload diffusion activity bindings");
+    const auto launched = launch_cuda_backend_diffusion_activity_batch(bindings,
+        impl_->diffusion_activity_bindings.get(), impl_->diffusion_activity_results.get(), impl_->stream.get());
+    impl_->runtime_counters.kernel_count += launched.kernels_launched;
+    check_cuda(launched.error, "reduce resident diffusion endpoint activity");
+    check_cuda(cudaMemcpyAsync(summaries.data(), impl_->diffusion_activity_results.get(),
+        summaries.size() * sizeof(DeviceDiffusionActivityResult), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        "download compact diffusion activity receipts");
+    impl_->runtime_counters.bytes_d2h += summaries.size() * sizeof(DeviceDiffusionActivityResult);
+    quiesce(); work_guard.completed = true;
+    arch::math::CompensatedSum signed_change, absolute_change;
+    for (std::size_t n = 0; n < summaries.size(); ++n) {
+        const auto& summary = summaries[n];
+        if (summary.failed || !std::isfinite(summary.signed_energy_change)
+            || !std::isfinite(summary.absolute_energy_change) || summary.absolute_energy_change < 0.0
+            || summary.cells != static_cast<std::uint64_t>(bindings[n].grid.active_cell_count())
+            || summary.cells > std::numeric_limits<std::uint64_t>::max() - receipt.cells)
+            throw std::runtime_error("Diffusion activity endpoint/geometry/reduction is nonfinite or incomplete");
+        signed_change.add(summary.signed_energy_change);
+        absolute_change.add(summary.absolute_energy_change);
+        receipt.cells += summary.cells;
+    }
+    receipt.signed_energy_change = signed_change.value();
+    receipt.absolute_energy_change = absolute_change.value();
+    if (!std::isfinite(receipt.signed_energy_change) || !std::isfinite(receipt.absolute_energy_change))
+        throw std::runtime_error("Diffusion activity batch reduction overflow");
+    return receipt;
+}
+
 void CudaBackend::copy_state_slot(
     backend::BackendStateAccess source,
     backend::BackendStateAccess destination)
@@ -170,6 +246,13 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
     impl_->select_device();
     auto& scratch = impl_->diffusion_batch;
     scratch.ensure_capacity(currents.size());
+    const int species_count = impl_->species_view.count;
+    const int repair_stride = state::RepairView::fixed_size + 2 * species_count;
+    scratch.ensure_repairs(currents.size(), species_count);
+    stage_repairs.reset(species_count);
+    // A descriptor may omit reflux; never let an earlier stage's receipt
+    // become part of this stage's acceptance/accounting callback.
+    reflux_repairs.reset(species_count);
     std::vector<DeviceDiffusionBatchBlock> bindings;
     bindings.reserve(currents.size());
     impl_->diffusion_bindings.reserve(currents.size());
@@ -203,9 +286,13 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
         binding.bounds = {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
             impl_->launch.maximum_internal_energy};
         binding.routes = make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block);
+        binding.repairs = {scratch.repairs->get() + index * repair_stride, species_count};
         bindings.push_back(binding);
     }
     CudaQuiescenceGuard work_guard{*impl_};
+    check_cuda(cudaMemsetAsync(scratch.repairs->get(), 0,
+        scratch.host_repairs.size() * sizeof(double), impl_->stream.get()),
+        "reset diffusion stage repair receipts");
     enqueue_cuda_metadata_upload(impl_->diffusion_bindings.get(), bindings.data(),
         bindings.size() * sizeof(DeviceDiffusionBatchBlock), impl_->stream.get(),
         impl_->runtime_counters, "upload diffusion stage bindings");
@@ -220,6 +307,9 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
                    scratch.host_status.data(), scratch.status->get(), currents.size() * sizeof(int),
                    cudaMemcpyDeviceToHost, impl_->stream.get()),
                "download diffusion stage status");
+    check_cuda(cudaMemcpyAsync(scratch.host_repairs.data(), scratch.repairs->get(),
+        scratch.host_repairs.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        "download diffusion stage repair receipts");
     quiesce();
     work_guard.completed = true;
     impl_->runtime_counters.kernel_count +=
@@ -229,6 +319,14 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
         if (scratch.host_status[index] != 0)
             throw std::runtime_error("diffusion stage failed: block="
                 + std::to_string(currents[index].block.uid.value));
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        state::RepairBudget report(species_count);
+        std::copy_n(scratch.host_repairs.data() + index * repair_stride,
+            repair_stride, report.values.data());
+        report.block_uid = currents[index].block.uid.value;
+        stage_repairs.combine(report);
+    }
+    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
     return expected;
 }
 

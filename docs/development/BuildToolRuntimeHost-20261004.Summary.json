@@ -1,0 +1,39 @@
+{
+  "baseSourceCommit": "6df4478c76a098ca8b24ce85437bf842579278ed",
+  "sourceDirty": true,
+  "sourceFingerprints": {
+    "studio/host/toolRuntimeEvidence.ts": "227cf9ba491be0c3c5a9f5aa3a4544c1f021ea138f766a52a4973c9e0e491083",
+    "studio/host/buildManifest.ts": "641b2293fc161ddd917fba69a36acaa7caa94c15a403d34485cadc319dfe22e2",
+    "studio/host/buildRunner.ts": "07e7515f194ef23389db77b1ae9040465d8f71b944d5e1aa4726dbf1b82425d6",
+    "studio/src/host/contracts.ts": "c0d20e44ffd9f8c322ae2e54df24ed9824ad2f9e8c8ff6c772d0caab21450344",
+    "studio/tests/host-tool-runtime.test.ts": "c8b2169d3d9fbda21d662edaef159a91354c449465e42696efc51e3b093ce685",
+    "validation/io/audit_build_tool_runtime.py": "f66bd04a4d0f3345bc2b08ccc0edd51c28a9f2eb4aa5cc85abc4f4c405cb043e",
+    "tests/tooling/validation/test_build_tool_runtime.py": "0e2db61a377acab256b526bb8c9f0323e742168e5f11550d07013ae4741d9dc5"
+  },
+  "scope": "Host static runtime graph capture, Manifest validation and freshness; actual loaded closure remains unknown",
+  "actualRead": {
+    "roots": 12,
+    "nodes": 65,
+    "edges": 209,
+    "unresolved": 0,
+    "twoUnchangedReadonlySnapshotsStable": true,
+    "pythonNodeFileShaAndEdgeParity": true,
+    "acrossActualBuildStability": "NOT TESTED",
+    "productionManifestRewritten": false
+  },
+  "checks": {
+    "relatedInitial": "24/25 FAIL; spaced cache path omitted",
+    "relatedRecheck": "24/25 FAIL; RPATH negative fixture state not reset",
+    "relatedFinal": "26/26 PASS",
+    "fullStudioHost": "326/326 PASS; 0 skipped",
+    "python": "8/8 PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS; existing >500kB chunk warning",
+    "diffCheck": "PASS"
+  },
+  "dependenciesComplete": false,
+  "buildRun": false,
+  "simulationRun": false,
+  "rawDirectory": "studio/.local/integration/build-tool-runtime-host-20261004"
+}

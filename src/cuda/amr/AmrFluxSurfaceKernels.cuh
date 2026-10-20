@@ -7,16 +7,22 @@
  * the runtime serializes contributors and owns stream completion.
  * Workflow:
  * 1. Receive compiled AMR face plans and resident surface buffers.
- * 2. Launch shared flux-register math over CUDA indices.
+ * 2. Launch shared flux-register math over CUDA indices; an optional resident
+ *    Self-gravity selection replaces only the energy scalar with the shared
+ *    native_reflux_energy leaf and reports refusal through borrowed status.
  * 3. Return conservative corrections after backend stream ordering.
  */
 
 #pragma once
 
+#include <cstddef>
 #include "amr/flux/AmrFluxMath.h"
 #include "amr/flux/AmrFluxExecutionPlan.h"
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "numerics/state/StateAdmissibility.h"
+#include "physics/gravity/GravitySource.h"
+
 
 namespace arch::cuda::amr_flux_kernel_detail {
 
@@ -80,6 +86,11 @@ __global__ void capture_surface_kernel(
             species, cell, block.stage_flux.species(species, source_cell));
 }
 
+/**
+ * Register one target's accumulated fluxes from either the full direction
+ * scratch (StageScratch) or the compact initial-flux surface.
+ *
+ */
 __global__ void register_route_kernel(
     const DeviceAmrFluxBlockView* blocks, int source_block,
     const amr::AmrFluxRegistrationTarget* targets,
@@ -105,19 +116,24 @@ __global__ void register_route_kernel(
         const auto term = terms[target.first_term + offset];
         const double coefficient = amr::flux_math::registration_coefficient(
             target.rule, term.geometric_weight, stage_weight);
+        const double moment_coefficient =
+            amr::flux_math::registration_coefficient(
+                target.rule, term.moment_geometric_weight, stage_weight);
         const int cell = source_kind == AmrFluxSource::StageScratch
             ? term.source_cell : term.source_surface_cell;
         if (source_kind == AmrFluxSource::StageScratch) {
             rho += coefficient * stage_source.rho[cell];
             mom_u += coefficient * stage_source.mom_u[cell];
             mom_v += coefficient * stage_source.mom_v[cell];
-            mom_w += coefficient * stage_source.mom_w[cell];
-            eng += coefficient * stage_source.eng[cell];
+            mom_w += moment_coefficient * stage_source.mom_w[cell];
+
+                eng += coefficient * stage_source.eng[cell];
+            
         } else {
             rho += coefficient * surface_source.rho[cell];
             mom_u += coefficient * surface_source.mom_u[cell];
             mom_v += coefficient * surface_source.mom_v[cell];
-            mom_w += coefficient * surface_source.mom_w[cell];
+            mom_w += moment_coefficient * surface_source.mom_w[cell];
             eng += coefficient * surface_source.eng[cell];
         }
     }
@@ -146,6 +162,11 @@ __global__ void register_route_kernel(
     }
 }
 
+/** Apply original compiled conservative and torque corrections, then check U/X.
+ * Its shared provisional check never recovers raw ordinary kinetic energy or
+ * records a repair; real completed BC/EOS remains the thermal acceptance owner.
+ * Existing retains its original ordinary acceptance and repair arithmetic.
+ */
 __global__ void reflux_kernel(
     const DeviceAmrFluxBlockView* blocks,
     const amr::AmrRefluxTarget* targets,
@@ -167,6 +188,8 @@ __global__ void reflux_kernel(
         const int flux_cell = contribution.register_cell;
         const double correction =
             dt * contribution.sign * contribution.geometric_weight;
+        const double moment_correction =
+            dt * contribution.sign * contribution.moment_geometric_weight;
         const double rho_before = state.rho[state_cell];
         const double rho_after = amr::flux_math::reflux_conserved(
             rho_before, correction, flux.rho[flux_cell]);
@@ -176,7 +199,8 @@ __global__ void reflux_kernel(
         state.mom_v[state_cell] = amr::flux_math::reflux_conserved(
             state.mom_v[state_cell], correction, flux.mom_v[flux_cell]);
         state.mom_w[state_cell] = amr::flux_math::reflux_conserved(
-            state.mom_w[state_cell], correction, flux.mom_w[flux_cell]);
+            state.mom_w[state_cell], moment_correction,
+            flux.mom_w[flux_cell]);
         state.eng[state_cell] = amr::flux_math::reflux_conserved(
             state.eng[state_cell], correction, flux.eng[flux_cell]);
         for (int species = 0; species < target.species_count; ++species)
@@ -188,10 +212,16 @@ __global__ void reflux_kernel(
                     rho_after));
     }
     if (status) {
-        const auto outcome=arch::state::validate(state.load(state_cell),
-            state.n_species?state.mass_fractions+state_cell:nullptr,
-            state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling);
-        if (outcome!=arch::state::Status::valid) atomicExch(status,100+static_cast<int>(outcome));
+        const auto grid = blocks[target.block].grid;
+        const int k = state_cell / grid.stride_z;
+        const int j = (state_cell - k * grid.stride_z) / grid.stride_y;
+        const int i = state_cell - k * grid.stride_z - j * grid.stride_y;
+        const auto outcome = arch::state::accept_conservative_state(state.load(state_cell),
+                state.n_species?state.mass_fractions+state_cell:nullptr,
+                state.n_species,state.total_size,density_floor,energy_floor,energy_ceiling,
+                GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k),
+                blocks[target.block].repairs, state_cell);
+        if (!arch::state::accepted(outcome)) atomicExch(status,100+static_cast<int>(outcome));
     }
 }
 

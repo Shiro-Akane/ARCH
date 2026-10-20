@@ -42,3 +42,20 @@ use_diffusion=false
 rho0=1e7
 temperature0=1e7
 amplitude=1e-3
+
+# Explicit migration of the previous effective controls and Setup reads.
+compute_backend=cpu
+gravity_rtol=1e-10
+gravity_atol=0.0
+hll_wave_speed=roe
+max_eint=1e21
+min_eint=1e-10
+sml_rho=1e-12
+# Previous Setup selected none when burning was off.
+network_name=none
+gas_cv=1.2471693927e8
+temperature_amplitude=0.0
+velocity0=0.0
+width=8e6
+center_x=5e7
+hydrostatic_radial=false

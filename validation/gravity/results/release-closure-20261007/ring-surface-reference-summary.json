@@ -1,0 +1,193 @@
+{
+  "recordedAtUtc": "2026-10-07T04:32:41.969980+00:00",
+  "scope": "Independent one-angle rigorous mathematical reference feasibility only",
+  "status": "MathematicalIntervalsCertified",
+  "rows": 9,
+  "rootCandidateSha": "657bb43ef0a4499668f387db134c9d9ca1ef5b374327544e55829e7fb2c70452",
+  "originalAbsoluteWidth": "exact FP64 G_CGS * 1e-12",
+  "precisionDecimalDigits": 70,
+  "budget": {
+    "calls": 12596,
+    "max_calls": 100000,
+    "wall_seconds": 0.6111239710007794,
+    "timeout_seconds": 90.0
+  },
+  "coreBindingQualified": false,
+  "scienceAccepted": false,
+  "signSymmetryAxisChecked": true,
+  "formalRepairUsed": 1,
+  "formulasChanged": false,
+  "finalAcceptanceRelaxed": false,
+  "internalWorkRequest": "Uniform stricter absolute goal; final all-source outward interval width independently checked",
+  "limitations": [
+    "Actual Core source/cell/fragment adapter pending",
+    "Independent full Phi/force vs original science budgets and AMR work pending",
+    "No production field/CUDA/release acceptance"
+  ],
+  "mathematicalPropertyChecks": [
+    {
+      "name": "base-three-observers",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 3,
+      "budget": {
+        "calls": 4020,
+        "max_calls": 100000,
+        "wall_seconds": 0.2033617300039623,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "axis-independent-volume-antiderivative",
+      "status": "PASS",
+      "scope": "rigorous analytic balls overlap; no Core identity grant"
+    },
+    {
+      "name": "density-linearity",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 3,
+      "budget": {
+        "calls": 4290,
+        "max_calls": 100000,
+        "wall_seconds": 0.22250398600590415,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "exact-dyadic-translation",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 3,
+      "budget": {
+        "calls": 4020,
+        "max_calls": 100000,
+        "wall_seconds": 0.20786861701344606,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "same-density-two-leaf-partition",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 3,
+      "budget": {
+        "calls": 7489,
+        "max_calls": 100000,
+        "wall_seconds": 0.41758030399796553,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "discontinuous-two-leaf-contact",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 3,
+      "budget": {
+        "calls": 7567,
+        "max_calls": 100000,
+        "wall_seconds": 0.434547664001002,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "dense-zero-leaf-mathematical-only",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 3,
+      "budget": {
+        "calls": 3169,
+        "max_calls": 100000,
+        "wall_seconds": 0.1661827009957051,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "axis-L-zero-endpoint",
+      "status": "MathematicalIntervalsCertified",
+      "certified": true,
+      "rows": 1,
+      "budget": {
+        "calls": 1,
+        "max_calls": 100000,
+        "wall_seconds": 0.00022109899146016687,
+        "timeout_seconds": 90.0
+      },
+      "failure": null
+    },
+    {
+      "name": "exact-coverage-hole-rejected",
+      "status": "Unverified",
+      "certified": false,
+      "rows": 0,
+      "budget": {
+        "calls": 0,
+        "max_calls": 100000,
+        "wall_seconds": 8.660000457894057e-05,
+        "timeout_seconds": 90.0
+      },
+      "failure": "Actual dense source leaves do not cover root"
+    },
+    {
+      "name": "exact-overlap-rejected",
+      "status": "Unverified",
+      "certified": false,
+      "rows": 0,
+      "budget": {
+        "calls": 0,
+        "max_calls": 100000,
+        "wall_seconds": 6.999999459367245e-05,
+        "timeout_seconds": 90.0
+      },
+      "failure": "Positive-area source overlap"
+    },
+    {
+      "name": "foreign-epoch-rejected",
+      "status": "Unverified",
+      "certified": false,
+      "rows": 0,
+      "budget": {
+        "calls": 0,
+        "max_calls": 100000,
+        "wall_seconds": 2.4900000425986946e-05,
+        "timeout_seconds": 90.0
+      },
+      "failure": "Source epoch/slot mismatch"
+    },
+    {
+      "name": "non-CGS-G-rejected",
+      "status": "Unverified",
+      "certified": false,
+      "rows": 0,
+      "budget": {
+        "calls": 0,
+        "max_calls": 100000,
+        "wall_seconds": 2.449899329803884e-05,
+        "timeout_seconds": 90.0
+      },
+      "failure": "G is not the actual stored shared CGS constant"
+    },
+    {
+      "name": "whole-request-global-budget-rejection",
+      "status": "WorkLimit",
+      "certified": false,
+      "rows": 40,
+      "budget": {
+        "calls": 100000,
+        "max_calls": 100000,
+        "wall_seconds": 5.979330708010821,
+        "timeout_seconds": 90.0
+      },
+      "failure": "global max_calls=100000 reached"
+    }
+  ],
+  "adoptedReferencePath": "validation/gravity/rz_ring_surface_reference.py",
+  "adoptedSourceSha256": "e7fb826d59fb6bcd73d9ac5dcf9f97099634d136fadbc4b1ec405999a3af32bc",
+  "adoptionChanges": "Module documentation only; mathematical implementation unchanged"
+}

@@ -73,3 +73,8 @@ temperature0 = 3e9
 xhe4 = 0.0
 xc12 = 0.5
 xo16 = 0.5
+
+# Explicit numerical/EOS controls used by the current configuration contract.
+min_eint = 1e-10
+hll_wave_speed = roe
+eos_coulomb_mult = 1.0

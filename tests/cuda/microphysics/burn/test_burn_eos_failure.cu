@@ -219,7 +219,7 @@ void run(View table, const char* name)
     for (int first = 0; first < cells; ++first) {
         eos.fault = Fault::None;
         arch::cuda::sparse_burn_detail::prepare_cells<Network, Mapping::template solver><<<1, 1>>>(
-            batch, records.data, state, grid, first, 1, dt, eos, cfg);
+            batch, records.data, state, grid, first, 1, dt, eos, cfg, {});
         check(cudaGetLastError());
         executor.execute(1, eos, cfg);
         typename Ode::Continuation completed{};

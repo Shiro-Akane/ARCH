@@ -1,0 +1,385 @@
+{
+  "sourceBase": "e267fdfcfba205b23dfe9a075b351f29fcdd10a8",
+  "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+  "buildEvidence": "docs/development/PlotfileEosConstituents-20261003.Summary.json",
+  "attempts": {
+    "invalidCli": {
+      "baseline": "e267fdfcfba205b23dfe9a075b351f29fcdd10a8",
+      "binarySha256": "325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b",
+      "referenceSha256": "35646e15bfb001d53c6a9987abf596ef0e0bb683bb6bfd4070ef2fe90b899137",
+      "inputSha256": "c04c60e7727d8eb3e8550b93a4e000c8515bb86bd4543b47f1569bc776f1bf5f",
+      "edits": {
+        "nblockx1": "2",
+        "nblockx2": "2",
+        "nblockx3": "2",
+        "x3_max": "2.0"
+      },
+      "command": [
+        "--preview-amr",
+        "Sedov",
+        "--config-stdin",
+        "--request-id",
+        "mixed3d-20261004",
+        "--config-revision",
+        "mixed3d-unsaved-1",
+        "--mesh-max-blocks",
+        "512",
+        "--mesh-memory-mib",
+        "256"
+      ],
+      "exitCode": 2,
+      "seconds": 0.010570903999905568,
+      "cwdEntries": []
+    },
+    "sedovRootOnly": {
+      "exitCode": 0,
+      "seconds": 0.04130445900227642,
+      "command": [
+        "--preview-amr",
+        "Sedov",
+        "--config-stdin",
+        "--request-id",
+        "mixed3d-20261004",
+        "--mesh-max-blocks",
+        "512",
+        "--mesh-memory-mib",
+        "256"
+      ],
+      "cwdEntries": [],
+      "status": "ok",
+      "identity": {
+        "caseId": "Sedov",
+        "configRevision": "c04c60e7727d8eb3e8550b93a4e000c8515bb86bd4543b47f1569bc776f1bf5f",
+        "requestId": "mixed3d-20261004"
+      },
+      "execution": {
+        "previewBackend": "cpu",
+        "scientificOutput": "not_created",
+        "simulationReadiness": "not_checked",
+        "timeStepping": "not_executed"
+      },
+      "mesh": {
+        "dimension": 3,
+        "geometry": "cartesian",
+        "unit": "cm",
+        "coordinates": {
+          "basis": "native-grid",
+          "boundsAndSpacingUnits": "per active axis; never a single length unit for angular axes",
+          "metadata": {
+            "activation": "positive-block-count",
+            "axes": [
+              {
+                "active": true,
+                "blocks": 2,
+                "blocksKey": "nblockx1",
+                "displayName": "x",
+                "key": "x1",
+                "kind": "length",
+                "lowerBoundaryKey": "x1l_boundary_type",
+                "maxKey": "x1_max",
+                "minKey": "x1_min",
+                "nativeName": "x",
+                "unit": "cm",
+                "upperBoundaryKey": "x1r_boundary_type"
+              },
+              {
+                "active": true,
+                "blocks": 2,
+                "blocksKey": "nblockx2",
+                "displayName": "y",
+                "key": "x2",
+                "kind": "length",
+                "lowerBoundaryKey": "x2l_boundary_type",
+                "maxKey": "x2_max",
+                "minKey": "x2_min",
+                "nativeName": "y",
+                "unit": "cm",
+                "upperBoundaryKey": "x2r_boundary_type"
+              },
+              {
+                "active": true,
+                "blocks": 2,
+                "blocksKey": "nblockx3",
+                "displayName": "z",
+                "key": "x3",
+                "kind": "length",
+                "lowerBoundaryKey": "x3l_boundary_type",
+                "maxKey": "x3_max",
+                "minKey": "x3_min",
+                "nativeName": "z",
+                "unit": "cm",
+                "upperBoundaryKey": "x3r_boundary_type"
+              }
+            ],
+            "dimension": 3,
+            "disabledBlockCount": 0,
+            "geometry": "cartesian",
+            "thirdAxisRequiresSecond": true,
+            "unitSystem": "cgs"
+          },
+          "version": "1"
+        },
+        "leafCount": 8,
+        "levelCounts": [
+          {
+            "leafBlocks": 8,
+            "level": 0
+          },
+          {
+            "leafBlocks": 0,
+            "level": 1
+          },
+          {
+            "leafBlocks": 0,
+            "level": 2
+          },
+          {
+            "leafBlocks": 0,
+            "level": 3
+          }
+        ],
+        "complete": true,
+        "completedPasses": 1,
+        "limitedReason": null,
+        "workingCapacity": 21,
+        "snapshot": "last-completed-balanced-hierarchy"
+      }
+    },
+    "rtFourRootLimited": {
+      "referenceSha256": "aa72d96c240e3cd349fdae1f75bbd79a23a7b144fc926713fb00a0586f890602",
+      "inputSha256": "275f4f2b3808a0c26b563f598f5ef8204eba7ba34b74bfdaf64fe054614b21e5",
+      "edits": {
+        "nblockx1": "1",
+        "nblockx2": "4",
+        "nblockx3": "1"
+      },
+      "exitCode": 0,
+      "seconds": 0.027128166002512444,
+      "command": [
+        "--preview-amr",
+        "RT",
+        "--config-stdin",
+        "--request-id",
+        "mixed3d-rt-20261004",
+        "--mesh-max-blocks",
+        "512",
+        "--mesh-memory-mib",
+        "256"
+      ],
+      "cwdEntries": [],
+      "status": "limited",
+      "identity": {
+        "caseId": "RT",
+        "configRevision": "275f4f2b3808a0c26b563f598f5ef8204eba7ba34b74bfdaf64fe054614b21e5",
+        "requestId": "mixed3d-rt-20261004"
+      },
+      "execution": {
+        "previewBackend": "cpu",
+        "scientificOutput": "not_created",
+        "simulationReadiness": "not_checked",
+        "timeStepping": "not_executed"
+      },
+      "mesh": {
+        "dimension": 3,
+        "geometry": "cartesian",
+        "unit": "cm",
+        "leafCount": 4,
+        "levelCounts": [
+          {
+            "leafBlocks": 4,
+            "level": 0
+          },
+          {
+            "leafBlocks": 0,
+            "level": 1
+          },
+          {
+            "leafBlocks": 0,
+            "level": 2
+          }
+        ],
+        "complete": false,
+        "completedPasses": 0,
+        "limitedReason": "regrid-exceeds-working-capacity",
+        "workingCapacity": 18,
+        "snapshot": "last-completed-balanced-hierarchy"
+      }
+    },
+    "rtThreeRootMixedLimited": {
+      "inputSha256": "8c48f0ae24065ee958f61fcc87b4d37e6c70c7b7c0ad7536fba1dd48a255f3ca",
+      "changeVsPreviousGrid": {
+        "nblockx2": {
+          "before": 4,
+          "after": 3
+        }
+      },
+      "exitCode": 0,
+      "seconds": 0.047446454998862464,
+      "command": [
+        "--preview-amr",
+        "RT",
+        "--config-stdin",
+        "--request-id",
+        "mixed3d-rt-three-root-20261004",
+        "--mesh-max-blocks",
+        "512",
+        "--mesh-memory-mib",
+        "256"
+      ],
+      "cwdEntries": [],
+      "status": "limited",
+      "identity": {
+        "caseId": "RT",
+        "configRevision": "8c48f0ae24065ee958f61fcc87b4d37e6c70c7b7c0ad7536fba1dd48a255f3ca",
+        "requestId": "mixed3d-rt-three-root-20261004"
+      },
+      "execution": {
+        "previewBackend": "cpu",
+        "scientificOutput": "not_created",
+        "simulationReadiness": "not_checked",
+        "timeStepping": "not_executed"
+      },
+      "mesh": {
+        "dimension": 3,
+        "geometry": "cartesian",
+        "unit": "cm",
+        "leafCount": 10,
+        "levelCounts": [
+          {
+            "leafBlocks": 2,
+            "level": 0
+          },
+          {
+            "leafBlocks": 8,
+            "level": 1
+          },
+          {
+            "leafBlocks": 0,
+            "level": 2
+          }
+        ],
+        "complete": false,
+        "completedPasses": 1,
+        "limitedReason": "regrid-exceeds-working-capacity",
+        "workingCapacity": 18,
+        "snapshot": "last-completed-balanced-hierarchy"
+      }
+    },
+    "canonicalFixture": {
+      "inputRelativePath": "src/api/examples/local-workflow/rt-3d-limited-amr.par",
+      "inputSha256": "339289de3d8d979c985d5a25c0a2c1fb5c3c3b1e7bde82ad3e52a296e35966b1",
+      "exitCode": 0,
+      "seconds": 0.049008429996320046,
+      "command": [
+        "--preview-amr",
+        "RT",
+        "--config-stdin",
+        "--request-id",
+        "mixed3d-rt-canonical-20261004",
+        "--mesh-max-blocks",
+        "512",
+        "--mesh-memory-mib",
+        "256"
+      ],
+      "cwdEntries": [],
+      "identity": {
+        "caseId": "RT",
+        "configRevision": "339289de3d8d979c985d5a25c0a2c1fb5c3c3b1e7bde82ad3e52a296e35966b1",
+        "requestId": "mixed3d-rt-canonical-20261004"
+      },
+      "status": "limited",
+      "execution": {
+        "previewBackend": "cpu",
+        "scientificOutput": "not_created",
+        "simulationReadiness": "not_checked",
+        "timeStepping": "not_executed"
+      },
+      "meshDataIdenticalToPriorThreeRootInput": true
+    }
+  },
+  "topology": {
+    "version": "cartesian-initial-amr-topology-1",
+    "inputSha256": "339289de3d8d979c985d5a25c0a2c1fb5c3c3b1e7bde82ad3e52a296e35966b1",
+    "dimension": 3,
+    "leafCount": 10,
+    "levelCounts": {
+      "0": 2,
+      "1": 8
+    },
+    "overlapPairs": 0,
+    "facePairs": 20,
+    "unbalancedFacePairs": 0,
+    "exactLeafVolume": "1/16",
+    "exactInputDomainVolume": "1/16",
+    "scope": "Stored Cartesian box partition and 2:1 topology only; not cell fields or scientific evolution"
+  },
+  "display": {
+    "version": "initial-amr-display-response-1",
+    "caseId": "RT",
+    "dimension": 3,
+    "status": "limited",
+    "complete": false,
+    "leafCount": 10,
+    "levelCounts": [
+      {
+        "leafBlocks": 2,
+        "level": 0
+      },
+      {
+        "leafBlocks": 8,
+        "level": 1
+      },
+      {
+        "leafBlocks": 0,
+        "level": 2
+      }
+    ],
+    "centerHits": 81,
+    "planeMemberships": 81,
+    "axes": 3,
+    "rawMeshUnchanged": true,
+    "scope": "Runtime validator and all native slice/center hit mappings; no canvas or desktop UAT, no AMR cell field array"
+  },
+  "negativeTopologyChecks": [
+    {
+      "case": "omitted-leaf",
+      "exitCode": 1,
+      "rejected": true
+    },
+    {
+      "case": "overlap-leaf",
+      "exitCode": 1,
+      "rejected": true
+    },
+    {
+      "case": "unbalanced-face",
+      "exitCode": 1,
+      "rejected": true
+    },
+    {
+      "case": "wrong-input-identity",
+      "exitCode": 1,
+      "rejected": true
+    }
+  ],
+  "checks": {
+    "topologyScriptSyntax": "PASS",
+    "displayScriptSyntax": "PASS",
+    "realCanonicalCoreRequest": "PASS",
+    "inputRevision": "PASS",
+    "runtimeWorkflowValidator": "PASS",
+    "allThreeNativePlanes": "PASS",
+    "noScientificOutput": "PASS",
+    "unchangedBinary": "PASS",
+    "diffCheck": "PASS"
+  },
+  "correction": "An initial manual domain assumption used x3_max=1. Actual external RT input supplies 0.25; final verifier parses external input and exact covered volume is 1/16.",
+  "scope": "CLI actual 3D mixed initial hierarchy + unchanged runtime validator/slice mapping, not native canvas UAT, cell field data, full refinement completion or scientific evolution",
+  "limits": [
+    "RT snapshot remains limited/complete=false, no automatic budget increase.",
+    "Only root grid layout changed vs existing RT physical input; dimensional activation is not 2D/3D physical equivalence.",
+    "No new physics/reference/error budget approved, no JENS/RZ capability promotion.",
+    "Exact Cartesian box verifier has numeric input-domain scope; not curved measure or uncertain endpoint acceptance.",
+    "Existing production Studio tests unchanged, not rerun merely for reports/scripts; previous 316 PASS not counted as new evidence."
+  ]
+}

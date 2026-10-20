@@ -1,0 +1,86 @@
+{
+  "status": "ACTUAL_ACTIVE_FOUR_MODULE_SHORT_WITNESS_ACCEPTED",
+  "science_qualified": false,
+  "dynamic_amr_qualified": false,
+  "restart_qualified": false,
+  "total_energy_qualified": false,
+  "source_before_after_exact": true,
+  "binaries": {
+    "stage": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu/arch_gravity_stage_contract",
+      "sha256": "118faf33d0c67bcce1b4e721f0a7f68f08c739b54c2c675b14340eb87ffc7f1e"
+    },
+    "self": {
+      "path": "/home/shiroakane/ARCH/build-release-cpu/arch_self_gravity",
+      "sha256": "2deda7f359d5b57c6f3faddd34b63813e736e409dcd8a7278e7acc627f131648"
+    }
+  },
+  "eos": {
+    "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "steps": [
+    {
+      "name": "compile",
+      "exit_code": 0,
+      "wall_seconds": 66.30471261200728
+    },
+    {
+      "name": "original-low-density-plus-stationary-regression",
+      "exit_code": 0,
+      "wall_seconds": 0.015924332983558998
+    },
+    {
+      "name": "original-gravity-stage-owner",
+      "exit_code": 0,
+      "wall_seconds": 26.68297712900676
+    },
+    {
+      "name": "actual-active-four-module",
+      "exit_code": 0,
+      "wall_seconds": 136.17566505199648
+    }
+  ],
+  "total_wall_seconds": 232.4778010470036,
+  "halves": [
+    {
+      "half": "1",
+      "burn_calls": "1",
+      "changed_composition_cells": "256",
+      "fresh_enuc_cells": "256",
+      "max_abs_enuc": "1.8373522723447171e+22",
+      "Q_actual_half": "4.9043874186676379e+17",
+      "delta_E_burn": "4.9043877526802767e+17",
+      "rhoX_change_L1": "5.2565180678448485",
+      "thermal_probe_max": "3.5144377444015149e+28",
+      "diffusion_changed_E_cells": "256",
+      "rkl2_begin": "2",
+      "rkl2_accept": "2"
+    },
+    {
+      "half": "2",
+      "burn_calls": "1",
+      "changed_composition_cells": "256",
+      "fresh_enuc_cells": "256",
+      "max_abs_enuc": "1.8359222037528137e+22",
+      "Q_actual_half": "4.9010632414569251e+17",
+      "delta_E_burn": "4.9010632310550641e+17",
+      "rhoX_change_L1": "5.2529582502950014",
+      "thermal_probe_max": "3.5133828268020055e+28",
+      "diffusion_changed_E_cells": "256",
+      "rkl2_begin": "2",
+      "rkl2_accept": "2"
+    }
+  ],
+  "logical450task_previous_failures_wall_seconds": 89.909,
+  "continued_guard_wall_seconds": 233.503,
+  "logical450task_cumulative_wall_seconds": 323.412,
+  "original_assertions_thresholds_kept": true,
+  "single_macro_dt": 1e-12,
+  "low_density_stationary_owner_passed": true,
+  "current_cuda_execution": false,
+  "no_dynamic_cf_routes": true,
+  "no_independent_total_gravitational_energy_acceptance": true,
+  "failure_evidence_preserved": true,
+  "output_log_sha256": "1d499a689cd371dfcf84191a505c7aa86f1f0188650701c13df1afbd5f246a48"
+}

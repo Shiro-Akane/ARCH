@@ -12,13 +12,19 @@
 
 #include <vector>
 
-#include "amr/AMRControl.h"
-#include "core/config/RuntimeParams.h"
-#include "data/FluidState.h"
-#include "grid/Grid.h"
-#include "physics/gravity/IGravityPolicy.h"
+// Borrowed declarations keep storage, field owners and parsing in their actual consumers.
+struct FluidState;
+struct FluidVector;
+struct Grid;
+struct NumericsConfig;
+namespace amr { struct AMRControl; }
+namespace Physical::Gravity { class IGravityPolicy; }
+namespace arch::boundary { class HostHydroBoundaryAuthority; }
 
 namespace Numerics {
+
+/** Internal Host storage promise; unavailable bindings fail before a guarded step. */
+enum class HostHydroStorageContract { Unavailable, FixedExtentSlotPermutation };
 
 /**
  * @brief Pure virtual interface for hydrodynamics solvers.
@@ -29,6 +35,11 @@ class IHydroSolver {
 public:
     virtual ~IHydroSolver() = default;
 
+    /** Qualified updates keep all conserved/species allocations and only rotate whole slots. */
+    virtual HostHydroStorageContract host_storage_contract() const noexcept {
+        return HostHydroStorageContract::Unavailable;
+    }
+
     /**
      * @brief Evaluates flux divergences and geometric/gravity sources on a single patch.
      * @param state The current fluid state.
@@ -37,6 +48,7 @@ public:
      * @param dU The accumulator for conservative variable changes.
      * @param d_spec The accumulator for conserved species-density changes (rho*X).
      * @param gravity The gravity policy interface.
+     * @param boundary Scoped Host wall authority; scheduler callers bind real BC/slot/ghost provenance.
      * @param execution_stream Reserved opaque execution context; the Host binding ignores it.
      */
     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
@@ -44,7 +56,8 @@ public:
                                 std::vector<FluidVector>& dU, std::vector<double>& d_spec,
                                 const Physical::Gravity::IGravityPolicy* gravity,
                                 const NumericsConfig& num_cfg, double flux_weight = 1.0,
-                                void* execution_stream = nullptr) const = 0;
+                                void* execution_stream = nullptr,
+                                const arch::boundary::HostHydroBoundaryAuthority* boundary = nullptr) const = 0;
 
     /**
      * @brief Performs the Runge-Kutta stage update combining old, current, and flux divergence states.

@@ -97,7 +97,7 @@ ARCH can fetch pinned SuiteSparse v7.13.0 and statically link KLU with its minim
 
 ## pynucastro-generated networks and nuclear data
 
-ARCH supplies generation recipes and portable adapters in [`tools/network/`](tools/network/).
+ARCH supplies generation recipes and portable adapters in [`tools/network/`](tools/network).
 The maintained [`audit31` and `weak_urca` workloads](validation/network/README.md)
 use pynucastro 2.12.0. Users generate their network packages locally; the ARCH
 adapters do not make the emitted templates or nuclear data ARCH-authored material.

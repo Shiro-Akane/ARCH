@@ -9,15 +9,22 @@
  * 1. Receive a stage descriptor and current state ledger.
  * 2. Order hydro, gravity, burn, diffusion and output transitions.
  * 3. Require completed publications before consuming a state.
+ * 4. When explicitly bound, validate completed boundary candidates before
+ *    publishing ghost readiness; owner receipts retain their original order.
+ * 5. Selected plans configure the actual input/output boundary snapshot from
+ *    their stage abscissae; configuring a snapshot never publishes ghost data.
  */
 
 #pragma once
 #include <functional>
 
 #include "driver/runtime/StateResidency.h"
+#include "physics/boundary/BoundaryFlux.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <span>
 #include <stdexcept>
@@ -43,6 +50,15 @@ struct StageDescriptor {
     // Time of the input state relative to the beginning of the Hydro step.
     double input_time_fraction = 0.0;
 };
+
+/** Compare the complete prepared stage, keeping source quadrature separate from repair weights. */
+inline bool same_stage_descriptor(const StageDescriptor& a,const StageDescriptor& b) noexcept {
+    return a.stage==b.stage&&a.old_slot==b.old_slot&&a.input_slot==b.input_slot
+        &&a.output_slot==b.output_slot&&a.old_weight==b.old_weight
+        &&a.update_weight==b.update_weight&&a.flux_register_weight==b.flux_register_weight
+        &&a.input_requires_ghost==b.input_requires_ghost
+        &&a.refresh_ghost_after==b.refresh_ghost_after&&a.input_time_fraction==b.input_time_fraction;
+}
 
 struct HydroPlan {
     HydroMethod method = HydroMethod::Euler;
@@ -100,6 +116,68 @@ inline HydroPlan make_hydro_plan(HydroMethod method)
                 true};
     }
     throw std::invalid_argument("unknown Hydro method");
+}
+
+/** Borrow the immutable selected table for physical-time validation.
+ * The table is constructed once from the same factory used by execution;
+ * there is no second coefficient table and no allocation per timed stage.
+ */
+inline const HydroPlan& supported_hydro_time_plan(HydroMethod method)
+{
+    switch (method) {
+    case HydroMethod::Euler: {
+        static const HydroPlan plan = make_hydro_plan(HydroMethod::Euler);
+        return plan;
+    }
+    case HydroMethod::RK2: {
+        static const HydroPlan plan = make_hydro_plan(HydroMethod::RK2);
+        return plan;
+    }
+    case HydroMethod::RK3: {
+        static const HydroPlan plan = make_hydro_plan(HydroMethod::RK3);
+        return plan;
+    }
+    }
+    throw std::invalid_argument("unknown timed Hydro method");
+}
+
+/** Derive one supported Shu–Osher output clock without using field versions.
+ * U_out=a*U_old+b*(U_in+dt*L), with the original Current at c_old=0,
+ * gives c_out=a*c_old+b*(c_in+1)=b*(c_in+1). Exact table membership rejects
+ * a changed old-state clock, coefficient or slot instead of guessing its time.
+ */
+inline double hydro_output_time_fraction(HydroMethod method,
+                                         const StageDescriptor& descriptor)
+{
+    const auto& supported = supported_hydro_time_plan(method);
+    if (descriptor.stage <= 0
+        || static_cast<std::size_t>(descriptor.stage) > supported.stages.size()
+        || !same_stage_descriptor(descriptor,
+            supported.stages[static_cast<std::size_t>(descriptor.stage - 1)]))
+        throw std::invalid_argument("unsupported timed Hydro descriptor");
+    return descriptor.update_weight * (descriptor.input_time_fraction + 1.0);
+}
+
+/** Return one RKL clock abscissa, sharing the same input/output time authority.
+ * The clock equation t'=1 in the recurrence gives RKL1
+ * c_j=j*(j+1)/(s*(s+1)); RKL2 c_1=4/(3*(s*s+s-2)) and
+ * c_j=(j*j+j-2)/(s*s+s-2) for j>=2. Both have c_0=0 and c_s=1.
+ * This computes time only; the diffusion owner retains all update coefficients.
+ */
+inline double rkl_stage_time_fraction(RklMethod method, int stage, int stages)
+{
+    if ((method != RklMethod::RKL1 && method != RklMethod::RKL2)
+        || stages <= 0 || stage < 0 || stage > stages
+        || (method == RklMethod::RKL2 && stages < 2))
+        throw std::invalid_argument("unsupported timed RKL stage");
+    if (stage == 0) return 0.0;
+    const bool second = method == RklMethod::RKL2;
+    const double count = static_cast<double>(stages);
+    const double index = static_cast<double>(stage);
+    const double denominator = count * (count + 1.0) - (second ? 2.0 : 0.0);
+    return !second ? index * (index + 1.0) / denominator
+        : stage == 1 ? 4.0 / (3.0 * denominator)
+                     : (index * (index + 1.0) - 2.0) / denominator;
 }
 
 inline RklPlan make_rkl_plan(RklMethod method, int stages)
@@ -197,6 +275,15 @@ public:
     virtual ~HydroStagePreparation() = default;
     virtual state::CompletionToken prepare(const HydroStagePreparationRequest&) = 0;
     virtual void invalidate() const {}
+    /** Existing services are not implicitly accepted as atomic source journals. */
+    virtual bool supports_macro_step_journal(state::ExecutionSide) const noexcept { return false; }
+    /** Candidate hook: fallible private journal allocation; never writes accepted fluid/owners. */
+    virtual void begin_macro_step() {}
+    /** Candidate hook: validate complete prepared frame/consumption, then append a tentative receipt. */
+    virtual void accept(const StageDescriptor&) {}
+    /** Candidate hooks: preallocated, noexcept publication or discard of only this owner's journal. */
+    virtual void commit_macro_step() noexcept {}
+    virtual void discard_macro_step() noexcept {}
 };
 
 struct StageExecutionContext {
@@ -207,10 +294,57 @@ struct StageExecutionContext {
     std::function<void(const StageDescriptor&)> hydro_acceptance;
     double step_start_time = 0.0;
     double step_dt = 0.0;
+    std::function<void(state::StateSlot, double, arch::boundary::BoundaryPurpose)> physical_boundary_preparation;
+    double boundary_start_time = 0.0, boundary_step_dt = 0.0;
+    // Optional physical-surface observation of the already-computed face flux.
+    // Empty by default; only callback runs configure them. Accounting never
+    // changes the stage descriptors or the coefficient recurrence.
+    std::function<void(const StageDescriptor&)> hydro_flux_capture_begin;
+    std::function<void(const StageDescriptor&)> hydro_flux_capture_accept;
+    std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_begin;
+    std::function<void(const RklStageDescriptor&, const RklPlan&)> rkl_flux_capture_accept;
+    std::function<void(const RklStageDescriptor&)> rkl_acceptance;
+    // Configure only the actual physical time/purpose snapshot. The selected
+    // plan calls this before the real boundary callback; it never fills arrays
+    // or publishes readiness, unlike physical_boundary_preparation.
+    std::function<void(double, arch::boundary::BoundaryPurpose)> configure_boundary_context;
 };
 
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
                              state::ExecutionSide>);
+
+/** Borrowed only during one actual RKL executor/boundary call. This metadata
+ * grants no retry by itself; Runtime authenticates the live macro/field owners. */
+struct RklCompletedBoundaryFrame {
+    const StageExecutionContext* context;
+    const RklStageDescriptor* descriptor;
+    std::span<const amr::BlockHandle> handles;
+    state::StateSlot slot{};state::StateVersion version{};
+    state::CompletionToken completion{};
+    bool completed=false;
+};
+namespace detail {
+inline thread_local RklCompletedBoundaryFrame* active_rkl_completed_boundary=nullptr;
+/** Synchronous stack lease, preserving nested ordinary scope and actual span.
+ * No allocation, EOS call, numerical work or ledger publication occurs here. */
+class ScopedRklCompletedBoundary final {
+    RklCompletedBoundaryFrame frame_;
+    RklCompletedBoundaryFrame* previous_;
+public:
+    ScopedRklCompletedBoundary(const StageExecutionContext& context,
+        const RklStageDescriptor& descriptor,std::span<const amr::BlockHandle> handles)
+        :frame_{&context,&descriptor,handles},previous_(active_rkl_completed_boundary) {
+        active_rkl_completed_boundary=&frame_;
+    }
+    ScopedRklCompletedBoundary(const ScopedRklCompletedBoundary&)=delete;
+    ScopedRklCompletedBoundary(ScopedRklCompletedBoundary&&)=delete;
+    ~ScopedRklCompletedBoundary() noexcept {active_rkl_completed_boundary=previous_;}
+};
+}
+/** Inspect only the current synchronous actual RKL boundary completion. */
+inline const RklCompletedBoundaryFrame* current_rkl_completed_boundary() noexcept {
+    return detail::active_rkl_completed_boundary;
+}
 
 struct StageBinding {
     StageExecutionContext& context;
@@ -218,6 +352,31 @@ struct StageBinding {
 };
 
 namespace detail {
+
+/** Fail closed on an unrepresentable physical interval before stage writes. */
+inline void require_boundary_interval(double start, double interval)
+{
+    if (!std::isfinite(start) || !std::isfinite(interval) || !(interval > 0.0)
+        || !std::isfinite(start + interval))
+        throw std::invalid_argument("boundary interval must be finite and positive");
+}
+
+/** Require the one supported Hydro plan before configuring real snapshots. */
+inline void require_timed_hydro_plan(const HydroPlan& plan)
+{
+    const auto& supported = supported_hydro_time_plan(plan.method);
+    if (plan.stages.size() != supported.stages.size()
+        || plan.final_rotation.current_from != supported.final_rotation.current_from
+        || plan.final_rotation.next_from != supported.final_rotation.next_from
+        || plan.final_rotation.scratch_from != supported.final_rotation.scratch_from
+        || plan.final_reflux_after_rotation != supported.final_reflux_after_rotation)
+        throw std::invalid_argument("unsupported timed Hydro plan");
+    for (std::size_t i = 0; i < plan.stages.size(); ++i) {
+        if (!same_stage_descriptor(plan.stages[i], supported.stages[i]))
+            throw std::invalid_argument("unsupported timed Hydro descriptor order");
+        (void)hydro_output_time_fraction(plan.method, plan.stages[i]);
+    }
+}
 inline thread_local StageBinding* active_stage_binding = nullptr;
 } // namespace detail
 
@@ -361,6 +520,27 @@ void publish_ghost_batch(StageExecutionContext& context,
     }
 }
 
+/** Execute actual boundary work, check its token, gate the candidate, then publish ghosts. */
+template <typename HandleRange, typename Boundary>
+state::CompletionToken execute_completed_boundary(
+    StageExecutionContext& context, const HandleRange& handles,
+    state::StateSlot slot, state::StateVersion version, Boundary&& boundary)
+{
+    const state::CompletionToken token = context.clock.next_completion();
+    const state::CompletionToken completed =
+        std::forward<Boundary>(boundary)(slot, version, token);
+    if (!state::is_complete(completed) || completed.value != token.value)
+        throw std::logic_error(
+            "boundary completion does not match scheduler token");
+    auto* const rkl=active_rkl_completed_boundary;
+    if(rkl&&rkl->context==&context&&rkl->descriptor->output_slot==slot) {
+        rkl->slot=slot;rkl->version=version;rkl->completion=completed;rkl->completed=true;
+    }
+    if(rkl&&rkl->context==&context)rkl->completed=false;
+    publish_ghost_batch(context, handles, slot, version, completed);
+    return completed;
+}
+
 } // namespace detail
 
 struct NoStagePreparation {
@@ -398,19 +578,9 @@ StageExecutionResult execute_stage(StageExecutionContext& context,
                                    witness);
     StageExecutionResult result{witness.version, witness.completion, {}};
     if (descriptor.refresh_ghost_after) {
-        const state::CompletionToken ghost_token =
-            context.clock.next_completion();
-        const state::CompletionToken boundary_completion =
-            std::forward<Boundary>(boundary)(descriptor.output_slot,
-                                             witness.version, ghost_token);
-        if (!state::is_complete(boundary_completion)
-            || boundary_completion.value != ghost_token.value) {
-            throw std::logic_error(
-                "boundary completion does not match scheduler token");
-        }
-        detail::publish_ghost_batch(context, handles, descriptor.output_slot,
-                                    witness.version, boundary_completion);
-        result.ghost_completion = boundary_completion;
+        result.ghost_completion = detail::execute_completed_boundary(
+            context, handles, descriptor.output_slot, witness.version,
+            std::forward<Boundary>(boundary));
     }
     return result;
 }
@@ -443,6 +613,8 @@ StageExecutionResult execute_rkl_stage(
             older,
             {context.side, older_state.interior.version, true, false});
     }
+    detail::ScopedRklCompletedBoundary rkl_frame(context,descriptor,
+        std::span<const amr::BlockHandle>{std::data(handles),std::size(handles)});
     const StageDescriptor access{
         descriptor.stage, descriptor.state_n_slot,
         descriptor.previous_slot, descriptor.output_slot,
@@ -453,8 +625,11 @@ StageExecutionResult execute_rkl_stage(
             return std::forward<Executor>(executor)(descriptor, token);
         },
         [&](const StageDescriptor&, state::CompletionToken token) {
-            if (!descriptor.reflux_before_publish) return token;
-            return std::forward<Reflux>(reflux)(descriptor, token);
+            const auto completed = descriptor.reflux_before_publish
+                ? std::forward<Reflux>(reflux)(descriptor, token) : token;
+            if (state::is_complete(completed) && completed.value == token.value
+                && context.rkl_acceptance) context.rkl_acceptance(descriptor);
+            return completed;
         },
         std::forward<Boundary>(boundary));
 }
@@ -501,17 +676,37 @@ HydroExecutionResult execute_hydro_plan(
 {
     if (plan.stages.empty())
         throw std::invalid_argument("Hydro plan requires at least one stage");
+    if (context.configure_boundary_context) {
+        detail::require_boundary_interval(context.step_start_time, context.step_dt);
+        detail::require_timed_hydro_plan(plan);
+    }
 
     HydroExecutionResult result;
     result.stages.reserve(plan.stages.size());
     for (const StageDescriptor& descriptor : plan.stages) {
+        if (context.configure_boundary_context)
+            context.configure_boundary_context(
+                context.step_start_time + descriptor.input_time_fraction * context.step_dt,
+                arch::boundary::BoundaryPurpose::Hydro);
+        if (context.physical_boundary_preparation)
+            context.physical_boundary_preparation(descriptor.input_slot,
+                context.step_start_time + descriptor.input_time_fraction * context.step_dt,
+                arch::boundary::BoundaryPurpose::Hydro);
+        if (context.hydro_flux_capture_begin) context.hydro_flux_capture_begin(descriptor);
         result.stages.push_back(execute_stage(
             context, handles, descriptor, executor,
             [&](const StageDescriptor& stage, state::CompletionToken token) {
                 if (context.hydro_acceptance) context.hydro_acceptance(stage);
                 return token;
             },
-            boundary, [&](const StageDescriptor& input) {
+            [&](state::StateSlot slot, state::StateVersion version,
+                state::CompletionToken token) {
+                if (context.configure_boundary_context)
+                    context.configure_boundary_context(context.step_start_time
+                        + hydro_output_time_fraction(plan.method, descriptor) * context.step_dt,
+                        arch::boundary::BoundaryPurpose::Hydro);
+                return boundary(slot, version, token);
+            }, [&](const StageDescriptor& input) {
                 if (!context.hydro_preparation) return;
                 const auto completed = context.hydro_preparation->prepare({
                     plan.method, input, std::span<const amr::BlockHandle>(handles),
@@ -521,6 +716,7 @@ HydroExecutionResult execute_hydro_plan(
                 if (!state::is_complete(completed))
                     throw std::logic_error("Hydro preparation did not complete");
             }));
+        if (context.hydro_flux_capture_accept) context.hydro_flux_capture_accept(descriptor);
     }
     rotate_slots(context, handles, plan.final_rotation,
                  std::forward<PhysicalRotation>(physical_rotation));
@@ -550,12 +746,46 @@ RklExecutionResult execute_rkl_plan(
 {
     if (plan.stages.empty())
         throw std::invalid_argument("RKL plan requires at least one stage");
+    if (context.configure_boundary_context) {
+        detail::require_boundary_interval(context.boundary_start_time, context.boundary_step_dt);
+        if (plan.stages.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())
+            || plan.second_order != (plan.method == RklMethod::RKL2))
+            throw std::invalid_argument("unsupported timed RKL plan");
+        const int count = static_cast<int>(plan.stages.size());
+        for (int i = 0; i < count; ++i) {
+            if (plan.stages[static_cast<std::size_t>(i)].stage != i + 1)
+                throw std::invalid_argument("unsupported timed RKL descriptor order");
+            (void)rkl_stage_time_fraction(plan.method, i + 1, count);
+        }
+    }
 
     RklExecutionResult result;
     result.stages.reserve(plan.stages.size());
     for (const RklStageDescriptor& descriptor : plan.stages) {
+        if (context.configure_boundary_context || context.physical_boundary_preparation) {
+            const int j = descriptor.stage - 1, stages = static_cast<int>(plan.stages.size());
+            const double time = context.boundary_start_time
+                + rkl_stage_time_fraction(plan.method, j, stages) * context.boundary_step_dt;
+            if (context.configure_boundary_context)
+                context.configure_boundary_context(time, arch::boundary::BoundaryPurpose::Diffusion);
+            if (context.physical_boundary_preparation)
+                context.physical_boundary_preparation(
+                    descriptor.stage == 1 ? descriptor.state_n_slot : descriptor.previous_slot,
+                    time, arch::boundary::BoundaryPurpose::Diffusion);
+        }
+        if (context.rkl_flux_capture_begin) context.rkl_flux_capture_begin(descriptor, plan);
         result.stages.push_back(execute_rkl_stage(
-            context, handles, descriptor, executor, reflux, boundary));
+            context, handles, descriptor, executor, reflux,
+            [&](state::StateSlot slot, state::StateVersion version,
+                state::CompletionToken token) {
+                if (context.configure_boundary_context)
+                    context.configure_boundary_context(context.boundary_start_time
+                        + rkl_stage_time_fraction(plan.method, descriptor.stage,
+                            static_cast<int>(plan.stages.size())) * context.boundary_step_dt,
+                        arch::boundary::BoundaryPurpose::Diffusion);
+                return boundary(slot, version, token);
+            }));
+        if (context.rkl_flux_capture_accept) context.rkl_flux_capture_accept(descriptor, plan);
     }
     rotate_slots(context, handles, plan.final_rotation,
                  std::forward<PhysicalRotation>(physical_rotation));
@@ -813,14 +1043,8 @@ state::CompletionToken complete_boundary(
     state::StateSlot slot, state::StateVersion version,
     Boundary&& boundary)
 {
-    const state::CompletionToken token = context.clock.next_completion();
-    const state::CompletionToken completed =
-        std::forward<Boundary>(boundary)(slot, version, token);
-    if (!state::is_complete(completed) || completed.value != token.value)
-        throw std::logic_error(
-            "boundary completion does not match scheduler token");
-    detail::publish_ghost_batch(context, handles, slot, version, completed);
-    return completed;
+    return detail::execute_completed_boundary(
+        context, handles, slot, version, std::forward<Boundary>(boundary));
 }
 
 } // namespace arch::scheduler

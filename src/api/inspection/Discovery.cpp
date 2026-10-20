@@ -9,6 +9,7 @@
  */
 
 #include "api/CaseInspection.h"
+#include "api/Preview.h"
 
 namespace arch::api {
 using detail::Json;
@@ -16,14 +17,19 @@ using detail::Json;
 std::string RegisteredCases() {
     auto cases = Json::array();
     for (const auto& name : ProblemRegistry::Get().Names()) {
-        const bool supported = name == "Sod" || name == "CellularDet";
+        const auto domain = PreviewDomain(name);
+        const bool supported = domain.dimensions != 0;
+        auto dimensions = Json::array();
+        for (int dim = 1; dim <= 3; ++dim)
+            if (domain.dimensions & (1u << dim)) dimensions.push(dim);
         cases.push(Json::object({{"caseId", name}, {"initialFieldPreview", supported},
 #ifdef __linux__
             {"initialAmrPreview", supported},
 #else
             {"initialAmrPreview", false},
 #endif
-            {"previewDimensions", name == "Sod" ? Json::array({1}) : name == "CellularDet" ? Json::array({2}) : Json::array()},
+            {"previewDimensions", dimensions},
+            {"previewScope", "documented initializer domain; configuration-dependent Setup validation required"},
             {"automaticCustomUnitInference", false},
             {"inspection", CaseInspectionCapability(name, *ProblemRegistry::Get().Registration(name))}}));
     }

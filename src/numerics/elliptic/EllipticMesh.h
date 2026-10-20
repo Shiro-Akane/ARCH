@@ -12,6 +12,7 @@
 #include <array>
 
 #include "core/ArchPortability.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 
 namespace arch::elliptic {
 enum class Geometry { Cartesian, Cylindrical, Spherical };

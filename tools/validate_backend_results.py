@@ -21,7 +21,24 @@ import validation_sanitizer
 
 
 PARAMETER_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
+INTEGER_LEVEL_RE = re.compile(r"^[+-]?[0-9]+$")
 STEP_RE = re.compile(r"Simulation Done\. Total Steps:\s*([0-9]+)")
+
+
+def stored_arrays_equal(left, right) -> bool:
+    """Compare stored numeric bits, including signed zero, shape and dtype.
+
+    HDF5 variable-length strings are object arrays: compare their values rather
+    than Python object addresses. Numeric validity remains the reader's rule;
+    this identity check never makes a NaN scientific state admissible.
+    """
+    import numpy as np
+    a, b = np.asarray(left), np.asarray(right)
+    if a.shape != b.shape or a.dtype != b.dtype:
+        return False
+    if a.dtype.hasobject:
+        return bool(np.array_equal(a, b))
+    return a.tobytes(order="C") == b.tobytes(order="C")
 
 
 def load_manifest(path: Path) -> dict[str, Any]:
@@ -65,13 +82,64 @@ def select_cases(manifest: dict[str, Any], requested: list[str]) -> list[dict[st
     return cases
 
 
+def resolution_group_members(
+    manifest: dict[str, Any]
+) -> dict[str, list[dict[str, Any]]]:
+    """Frozen qualification groups; membership never depends on a selection."""
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for case in manifest["cases"]:
+        group = case.get("qualification_group")
+        if group is not None:
+            grouped.setdefault(str(group), []).append(case)
+    return grouped
+
+
+def selected_resolution_group_cases(
+    manifest: dict[str, Any], requested: list[str]
+) -> list[dict[str, Any]]:
+    """Return the frozen group members a request may gate, refusing partial groups.
+
+    Resolution groups are all-or-nothing: a request that touches a group must
+    select every member, so the unchanged convergence gate always sees the
+    complete frozen group. Completeness is derived from the original manifest,
+    and any missing member rejects before execution or provenance work.
+    """
+    grouped = resolution_group_members(manifest)
+    if not requested:
+        return [case for members in grouped.values() for case in members]
+    selected = set(requested)
+    complete: list[dict[str, Any]] = []
+    for group, members in grouped.items():
+        if not any(case["id"] in selected for case in members):
+            continue
+        missing = [case["id"] for case in members if case["id"] not in selected]
+        if missing:
+            raise RuntimeError(
+                f"resolution group {group} must be selected completely; "
+                f"missing case IDs: {', '.join(missing)}")
+        complete.extend(members)
+    return complete
+
+
 def read_parameter_map(path: Path) -> dict[str, str]:
+    """Read unambiguous raw assignments; Core still owns semantic validation."""
     result: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.split("#", 1)[0]
-        match = PARAMETER_RE.match(stripped)
-        if match:
-            result[match.group(1)] = match.group(2)
+    locations: dict[str, int] = {}
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        stripped = line.split("#", 1)[0].strip()
+        if not stripped:
+            continue
+        if "=" not in stripped:
+            raise RuntimeError(f"{path}:{number}: MALFORMED_LINE: expected equals sign")
+        key, value = (part.strip() for part in stripped.split("=", 1))
+        if not key:
+            raise RuntimeError(f"{path}:{number}: EMPTY_KEY")
+        if key in locations:
+            raise RuntimeError(
+                f"{path}:{number}: DUPLICATE_PARAMETER [{key}]; "
+                f"first assignment at line {locations[key]}; no occurrence selected")
+        locations[key] = number
+        result[key] = value
     return result
 
 
@@ -151,6 +219,8 @@ def render_terminal_parameter_file(
 def _render_parameter_overrides(
     source: Path, destination: Path, overrides: dict[str, str]
 ) -> None:
+    # Never repair ambiguous canonical input by applying execution overrides.
+    read_parameter_map(source)
     seen: set[str] = set()
     output: list[str] = []
     for line in source.read_text(encoding="utf-8").splitlines():
@@ -315,8 +385,14 @@ def compare_hdf5_checkpoints(
 
 
 def read_conservation_metrics(
-    checkpoint_validator: Path, checkpoint: Path, parameter_file: Path | None = None
+    checkpoint_validator: Path, checkpoint: Path, parameter_file: Path | None = None,
+    *, preserve_total_precision: bool = False,
 ) -> dict[str, Any]:
+    """Read totals; opt-in decimal strings avoid an intermediate binary64 round.
+
+    Metadata retains ordinary JSON types. The explicit encoding contract rejects
+    old validators whose totals were already narrowed before JSON serialization.
+    """
     command = [str(checkpoint_validator), "--metrics", str(checkpoint)]
     parameter_sha256 = None
     if parameter_file is not None:
@@ -333,6 +409,20 @@ def read_conservation_metrics(
     if not lines:
         raise RuntimeError("checkpoint metrics produced no JSON summary")
     result = json.loads(lines[-1])
+    if preserve_total_precision:
+        if result.get("totals_encoding") != "native_long_double_roundtrip_decimal":
+            raise RuntimeError("checkpoint validator did not provide round-trip native long-double totals")
+        decimal_tokens = json.loads(lines[-1], parse_float=str, parse_int=str)
+        for field in ("mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"):
+            values = result.get(field)
+            tokens = decimal_tokens.get(field)
+            if field != "rhoX":
+                values, tokens = [values], [tokens]
+            if (not isinstance(values, list) or not isinstance(tokens, list)
+                    or any(type(value) not in (int, float) for value in values)
+                    or any(not isinstance(token, str) for token in tokens)):
+                raise RuntimeError(f"checkpoint validator did not provide numeric totals: {field}")
+            result[field] = decimal_tokens[field]
     if parameter_file is not None:
         if _sha256(parameter_file) != parameter_sha256:
             raise RuntimeError("conservation parameter file changed while computing metrics")
@@ -510,8 +600,8 @@ def validate_qualification_metrics(
             raise RuntimeError(f"hydro mass drift gate failed: {drift}")
         expected = {
             "mass": 1.0,
-            "mom_u": 1.0,
-            "mom_v": 0.0,
+            "mom_u": 0.0 if metrics.get("reference_axis") == 2 else 1.0,
+            "mom_v": 1.0 if metrics.get("reference_axis") == 2 else 0.0,
             "mom_w": 0.0,
             "eng_total": 3.0,
         }
@@ -622,9 +712,12 @@ def qualify_checkpoint(
         return {"status": "not-requested"}
     mode = qualification_mode(qualification)
     command = [str(checkpoint_validator), "--qualify", str(checkpoint), mode]
-    if mode == 'gravity':
+    reference_axis = case.get("qualification_axis")
+    if reference_axis is not None and reference_axis != 2:
+        raise RuntimeError('native axial qualification_axis must be 2')
+    if mode == 'gravity' or reference_axis is not None:
         if parameter_file is None:
-            raise RuntimeError('gravity reference requires actual run parameters')
+            raise RuntimeError('parameter-bound reference requires actual run parameters')
         command += ['--parameters', str(parameter_file)]
     completed = subprocess.run(
         command,
@@ -637,6 +730,8 @@ def qualify_checkpoint(
     if not lines:
         raise RuntimeError("scientific qualifier produced no JSON summary")
     metrics = json.loads(lines[-1])
+    if reference_axis is not None and metrics.get("reference_axis") != reference_axis:
+        raise RuntimeError('scientific reference axis does not match the manifest')
     validate_qualification_metrics(
         metrics, qualification, mode, scientific=scientific)
     return metrics
@@ -723,9 +818,36 @@ def summarize_regrids(records: list[dict[str, Any]], backend: str, expected_step
             'overlaps_backend_trace': True}
 
 
-def read_regrid_metrics(path: Path, backend: str, expected_steps: int) -> dict[str, Any]:
+def fixed_grid_without_regrid(parameter_file: Path) -> bool:
+    """True only for an actual, unambiguous single-level run with no AMR.
+
+    Driver deliberately skips no-op fixed-grid regrids, so an absent whole-
+    regrid report is not-applicable rather than a missing measurement.  Both
+    refinement bounds must be present in the actual run parameters exactly once,
+    written as valid integer text and equal to zero; a missing, duplicate,
+    nonzero or non-integer bound keeps the measurement mandatory.
+    """
+    parameters = read_parameter_map(parameter_file)
+    for key in ('lrefinemin', 'lrefinemax'):
+        if key not in parameters:
+            return False
+        text = parameters[key]
+        if not INTEGER_LEVEL_RE.match(text):
+            return False
+        if int(text) != 0:
+            return False
+    return True
+
+
+def read_regrid_metrics(path: Path, backend: str, expected_steps: int,
+                        parameter_file: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
-        raise RuntimeError('ARCH lane did not produce whole-regrid measurements')
+        if parameter_file is None or not fixed_grid_without_regrid(parameter_file):
+            raise RuntimeError('ARCH lane did not produce whole-regrid measurements')
+        return {'applicable': False,
+                'reason': 'fixed-level0 grid: no initial refinement and no dynamic '
+                          'topology transaction, so whole-regrid measurement is not applicable',
+                'file': None, 'records': [], 'summary': None}
     lines = path.read_text().splitlines()
     if len(lines) < 2:
         raise RuntimeError('regrid measurement file is empty')
@@ -743,7 +865,7 @@ def read_regrid_metrics(path: Path, backend: str, expected_steps: int) -> dict[s
                 for key, value in zip(header, values)})
         except ValueError as error:
             raise RuntimeError('malformed regrid measurement value') from error
-    return {'file': provenance.file_identity(path), 'records': records,
+    return {'applicable': True, 'file': provenance.file_identity(path), 'records': records,
             'summary': summarize_regrids(records, backend, expected_steps)}
 
 
@@ -953,7 +1075,9 @@ def run_arch_lane(
         "resolved_plan": resolved_plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
-        "regrid": read_regrid_metrics(prefix.with_name(prefix.name + "_regrid.tsv"), backend, steps),
+        "regrid": read_regrid_metrics(
+            prefix.with_name(prefix.name + "_regrid.tsv"), backend, steps,
+            parameter_file=parameter),
         "diffusion_schedule": schedule if schedule_summary else None,
         "diffusion_schedule_summary": schedule_summary,
         "sanitizer": sanitizer.evidence(lane_root) if sanitizer and backend == "cuda" else None,
@@ -988,13 +1112,36 @@ def run_arch_terminal_lane(
     accepted_steps = int(match.group(1))
     prefix = lane_root / base_name
     plan = prefix.with_name(prefix.name + "_backend_plan.txt")
-    checkpoint = prefix.with_name(prefix.name + "_chk_0001.h5")
     resolved_plan = validate_resolved_plan(plan, backend, case.get("plan_policy"))
     trace = prefix.with_name(prefix.name + "_backend_trace.tsv")
     trace_summary = (
         validate_cuda_trace(trace, accepted_steps) if backend == "cuda" else None)
-    if not checkpoint.is_file():
-        raise RuntimeError(f"missing scientific HDF5 checkpoint: {checkpoint}")
+    # CHK indices count outputs, not physical endpoints: an intermediate
+    # chk_dt can make 0001 the midpoint. Inspect only the writer's scalar time
+    # attribute here; run_case retains the full parameter-bound metadata and
+    # step/identity validation through the existing checkpoint comparator.
+    import h5py
+    terminal_checkpoints = []
+    for candidate in sorted(lane_root.glob(base_name + "_chk_*.h5")):
+        try:
+            with h5py.File(candidate, "r") as handle:
+                stored_time = handle.attrs["time"]
+                if getattr(stored_time, "shape", ()) != () \
+                        or isinstance(stored_time, (str, bytes, bool)) \
+                        or getattr(getattr(stored_time, "dtype", None), "kind", "f") not in "fiu":
+                    raise ValueError("time must be a numeric scalar")
+                actual_time = float(stored_time)
+        except (OSError, KeyError, TypeError, ValueError) as error:
+            raise RuntimeError(f"invalid scientific checkpoint time: {candidate}") from error
+        if not math.isfinite(actual_time) or actual_time < 0.0:
+            raise RuntimeError(f"invalid scientific checkpoint time: {candidate}")
+        if actual_time == terminal_time:
+            terminal_checkpoints.append(candidate)
+    if len(terminal_checkpoints) != 1:
+        raise RuntimeError(
+            f"expected one scientific HDF5 checkpoint at time {terminal_time!r}; "
+            f"found {len(terminal_checkpoints)}")
+    checkpoint = terminal_checkpoints[0]
     if _sha256(parameter) != parameter_sha256:
         raise RuntimeError("scientific parameter file changed during execution")
     return {
@@ -1009,7 +1156,9 @@ def run_arch_terminal_lane(
         "resolved_plan": resolved_plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
-        "regrid": read_regrid_metrics(prefix.with_name(prefix.name + "_regrid.tsv"), backend, accepted_steps),
+        "regrid": read_regrid_metrics(
+            prefix.with_name(prefix.name + "_regrid.tsv"), backend, accepted_steps,
+            parameter_file=parameter),
         "sanitizer": sanitizer.evidence(lane_root) if sanitizer and backend == "cuda" else None,
     }
 
@@ -1113,7 +1262,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, required=True,
                         help="canonical case manifest with inputs and acceptance budgets")
     parser.add_argument("--case", action="append", default=[],
-                        help="run only this case ID; repeat to select several cases")
+                        help="run only this case ID; repeat to select several cases. "
+                             "A qualification group is all-or-nothing: selecting any "
+                             "resolution of a group requires selecting every member")
     parser.add_argument("--arch", type=Path, help="ARCH executable from the selected build")
     parser.add_argument("--checkpoint-validator", type=Path,
                         help="arch_cuda_single_level_validation from the same build")
@@ -1136,8 +1287,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.output_root is None or args.build_dir is None:
         parser.error(
             "release validation requires --arch, --checkpoint-validator, --build-dir and --output-root")
-    selected = set(args.case)
     cases = select_cases(manifest, args.case)
+    group_cases = selected_resolution_group_cases(manifest, args.case)
     require_empty_output_root(args.output_root)
     identity_arguments = {
         "arch": args.arch.resolve(),
@@ -1163,8 +1314,8 @@ def main(argv: list[str] | None = None) -> int:
             args.arch.resolve(), args.checkpoint_validator.resolve(),
             args.source_root.resolve(), case,
             args.output_root.resolve(), sanitizer))
-    evidence["resolution_groups"] = (
-        {} if selected else validate_resolution_groups(cases, evidence["cases"]))
+    evidence["resolution_groups"] = validate_resolution_groups(
+        group_cases, evidence["cases"])
     args.output_root.mkdir(parents=True, exist_ok=True)
     evidence_path = args.output_root / "backend-validation-evidence.json"
     if evidence["manifest_sha256"] != _sha256(args.manifest) or any(

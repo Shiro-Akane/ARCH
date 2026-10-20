@@ -1,0 +1,110 @@
+{
+  "sourceBase": "5a423d057996eccb39916996e6e9ca42735be9a2",
+  "status": "PASS",
+  "scope": "Typed CPU ring executor and actual Device pre-launch decline; not complete RZ Runtime/physics or Device ring evaluation",
+  "sourceFingerprints": {
+    "src/physics/gravity/GravityExecution.h": "ec173184d5bb70d807030d82281d52dd1fac713b0e4bc40b1c838f5bb454d488",
+    "src/physics/gravity/GravityExecution.cpp": "f88a0d491319fcf9fe8eea673037f2967a6d8d1a1b4b091d6a156c0b0a1171d7",
+    "src/cuda/runtime/gravity/CudaGravityExecution.cu": "fb396310e5a521e41435fbbd8e488916a8b57150cd1c61816b17d53da9610e67",
+    "src/physics/gravity/self/SelfGravity.cpp": "e158b4c636a14b550a1b5e097ae18dfd1ebe624a5622d5a7c73510d22819d2c2",
+    "tests/host/gravity/test_self_gravity.cpp": "3ae64b62f8d243f5355539b0c96765e8782205c10dad757eea07c25083c3d01c",
+    "tests/cuda/runtime/test_cuda_reduction_contract.cu": "7b951f6270328d556ce3e44a56b5f0ccb0d9d5625e44b8f5fdc3ad69b63218df"
+  },
+  "cpuHostTest": {
+    "pass": 1,
+    "seconds": 13.19,
+    "nativeRingCells": 16,
+    "density": 1,
+    "rootCells": [
+      4,
+      4,
+      1
+    ],
+    "spacing": [
+      0.25,
+      0.25,
+      1
+    ],
+    "origin": [
+      0,
+      -0.5,
+      0
+    ],
+    "faceTarget": 1e-18,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumLeafEvaluations": 100000,
+    "checks": [
+      "bounded source/generation",
+      "actual current-ring validation",
+      "stale request resets output",
+      "WorkLimit retains source/generation",
+      "missing owner clears output",
+      "RZ rejects legacy log before work"
+    ]
+  },
+  "cudaEnabledTests": {
+    "pass": 2,
+    "hostLifecycleSeconds": 13.0,
+    "actualDeviceContractSeconds": 0.23,
+    "ringNumericsQualified": false,
+    "declineCountersDelta": {
+      "kernels": 0,
+      "bytes_h2d": 0,
+      "bytes_d2h": 0,
+      "synchronizations": 0
+    },
+    "legacyReductionEdgeCases": 36
+  },
+  "builds": {
+    "cpu": {
+      "seconds": 5.022,
+      "peakOwnedRssKiB": 982044,
+      "swapGrowthKiB": 0
+    },
+    "cudaExecutorAndContract": {
+      "seconds": 16.055,
+      "peakOwnedRssKiB": 955420,
+      "swapGrowthKiB": 0
+    }
+  },
+  "actualCartesianRuntime": {
+    "scope": "Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity all-block/slot/regrid publication; no simulation time advancement",
+    "exitCode": 0,
+    "stdout": "ACTUAL_JEANS_RUNTIME_LEASE_PASS initial_blocks=4 coarse_blocks=4 nonfirst_version_reject=1 device_only_reject=1 time=0 steps=0\nACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks=4 refined_blocks=8 coarsened_blocks=4 gathers=7 cells=64 time=0 steps=0\n",
+    "stderr": "",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "executableSha256": "d6315e30ed24e7b9969501a63b26c55d5520a597d8f2078f30ab971427d19f2d",
+    "recompiledSources": {
+      "tests/host/gravity/test_gravity_runtime_contract.cpp": "17de355d821cac5bb1b75b69375fc539238b61f5aba568d68af211c438025e49",
+      "src/driver/stages/GravityStage.cpp": "8820d7ba03478f00671b91ad8d43a2fe46b2450676a3ef4862f6950e2f029ea6",
+      "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "1ed54a960334d2fbb64f718087d234a4cd7f07a70fcc4ab49ecc756b449ec11b",
+      "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340"
+    },
+    "timestepHeaderSha256": "00f9e70c9ee177a76f01054e53b11f89ec02cd8f84dfaef974360b6aa38481ea",
+    "rklHeaderSha256": {
+      "src/numerics/diffusion/DiffDispatch.h": "349df128938e5237c861bee9de58f1e70f20841bdf22eb33bc164964d1088f09",
+      "src/numerics/diffusion/DiffusionAMRStages.h": "3f051214b754f42f4892081db0d07b19792a3cce1e757391fb6c4371403caf16",
+      "src/numerics/diffusion/RKL1TimeIntegrator.h": "b7673e0c3bc44e7df9d709a3e464e2e93032592d1c331018f66e8c6904653ccd",
+      "src/numerics/diffusion/RKL2TimeIntegrator.h": "28d4e56da8fc316e3a1ac01352c895381537acbbfeab42a8f316564cb1274e76"
+    },
+    "limitations": [
+      "Supported Cartesian identity path only; RZ production gravity/regrid remains gated",
+      "No actual Hydro integration or scientific evolution acceptance",
+      "No CUDA qualification; only local gravity diagnostic output"
+    ]
+  },
+  "productionBinarySha256": {
+    "build-cpu": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "testElfSha256": {
+    "build-cpu": "20604352a37234875ea61cefa5ff10746b82727adaf0ca53a3871990a98a49bb",
+    "build-cuda": "20604352a37234875ea61cefa5ff10746b82727adaf0ca53a3871990a98a49bb"
+  },
+  "cudaReductionElfSha256": "b308b1ce3a4635df09b1a27e899603e2a1a690e4815a06a8e278e3f83bd102d9",
+  "originalScientificThresholdsUnchanged": true,
+  "productionRzGateRetained": true,
+  "publicCudaJeansGateRetained": true
+}

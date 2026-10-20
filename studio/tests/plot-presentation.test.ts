@@ -1,0 +1,76 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {projection,zoomView,panView,axisDefault,fieldDefault,displayRange,fieldRange,lineFieldRange,logDataError,previewCoordinateDomain,formatPlotTicks} from '../src/data/plotPresentation.ts';
+import {realInitGrid,gridPoint,sampleEdges} from '../src/data/RealInitPreviewProvider.ts';
+const near=(a:number,b:number)=>assert.ok(Math.abs(a-b)<Math.max(1,Math.abs(b))*1e-10,`${a} != ${b}`);
+test('all four 1D scale combinations preserve data/marker/hit inverse under zoom and pan',()=>{
+ for(const xScale of ['linear','log'] as const)for(const yScale of ['linear','log'] as const){const xv=panView(zoomView([0,1],.6,.4),.1),yv=panView(zoomView([0,1],.4,.5),-.1);const xp=projection([.001,1],xScale,xv),yp=projection([.1,2],yScale,yv);for(const x of [.01,.125,.5,.9])near(xp.inverse(xp.forward(x)),x);for(const raw of [.125,1])near(yp.inverse(yp.forward(raw)),raw);near(projection([0,1],'linear').forward(.5),.5);}
+});
+test('non-square Core grids in both directions retain j*Nx+i through independent spatial scales',()=>{
+ for(const name of ['cellular-x1','cellular-x2']){const core=JSON.parse(readFileSync(new URL(`../../src/api/examples/core-b/${name}.json`,import.meta.url),'utf8'));const grid=realInitGrid({core} as never,'DENS'),original=Array.from(grid.values);assert.notEqual(grid.width,grid.height);
+ for(const xs of ['linear','log'] as const)for(const ys of ['linear','log'] as const){const xp=projection([grid.x[0]/2,30],xs,zoomView([0,1],.5,.6)),yp=projection([grid.y[0]/2,15],ys,panView(zoomView([0,1],.5,.7),.1));for(let j=0;j<grid.height;j++)for(let i=0;i<grid.width;i++){const hit=gridPoint(grid,xp.inverse(xp.forward(grid.x[i])),yp.inverse(yp.forward(grid.y[j])));assert.equal(hit?.index,j*grid.width+i);}}
+ assert.deepEqual(Array.from(grid.values),original);const edges=sampleEdges(grid.x);assert.equal(gridPoint(grid,edges[0]-1,grid.y[0]),null);}
+});
+test('Log rejects nonpositive raw data independently of manual range/clipping',()=>{assert.match(logDataError([1,0,-1],'log','Field')!,/sample 1/);assert.match(logDataError([-2,3],'log','X')!,/-2/);assert.equal(logDataError([0,-1],'linear','Field'),null);assert.throws(()=>displayRange({...axisDefault(),scale:'log'},[0,1]),/positive/);});
+test('physical manual ranges and independent clipping reject invalid drafts without changing input',()=>{
+ const raw=[.125,1];const before=[...raw];assert.deepEqual(fieldRange({...fieldDefault(),lower:true,low:'.2'},[.125,1]),[.2,1]);assert.deepEqual(fieldRange({...fieldDefault(),upper:true,high:'.8'},[.125,1]),[.125,.8]);assert.deepEqual(fieldRange({...fieldDefault(),lower:true,low:'.2',upper:true,high:'.8'},[.125,1]),[.2,.8]);for(const min of ['','NaN','1e999','2','3abc'])assert.throws(()=>displayRange({...axisDefault(),manual:true,min,max:'1'},[0,1]));assert.throws(()=>fieldRange({...fieldDefault(),lower:true,low:'2'},[0,1]));assert.deepEqual(raw,before);
+});
+test('zoom bounds remain finite and Fit is exact full-domain projection',()=>{let v:[number,number]=[0,1];for(let i=0;i<200;i++)v=zoomView(v,.99,.8);assert.ok(v[1]>v[0]);v=panView(v,1e6);assert.ok(v[0]>=0&&v[1]<=1);const full=projection([0,25.6],'linear');assert.equal(full.inverse(0),0);assert.equal(full.inverse(1),25.6);});
+
+test('authoritative Core region restores exact full domain; unrepresentable display ranges reject',()=>{assert.deepEqual(previewCoordinateDomain({grid:{axes:[{name:'x1',min:0,max:25.6}]}},'x1'),[0,25.6]);assert.equal(previewCoordinateDomain({grid:{axes:[{name:'x1',min:0,max:Infinity}]}},'x1'),undefined);assert.throws(()=>projection([-1e308,1e308],'linear'),/represented/);});
+
+test('Sod plateaus lie inside the automatic 1D viewport on Linear and Log without changing raw values',()=>{
+ const raw=[1,1,.125,.125],before=[...raw];
+ for(const scale of ['linear','log'] as const){
+  const settings={...fieldDefault(),scale},range=lineFieldRange(settings,[.125,1]);
+  const yp=projection(range,scale);
+  for(const value of raw){assert.ok(yp.forward(value)>0&&yp.forward(value)<1);near(yp.inverse(yp.forward(value)),value);}
+  assert.deepEqual(fieldRange(settings,[.125,1]),[.125,1]);
+ }
+ assert.deepEqual(raw,before);
+});
+test('1D headroom preserves explicit manual/clipping limits and rejects nonpositive Log',()=>{
+ for(const scale of ['linear','log'] as const){
+  for(const settings of [
+   {...fieldDefault(),scale,manual:true,min:'.2',max:'.8'},
+   {...fieldDefault(),scale,lower:true,low:'.2'},
+   {...fieldDefault(),scale,upper:true,high:'.8'},
+  ])assert.deepEqual(lineFieldRange(settings,[.125,1]),fieldRange(settings,[.125,1]));
+ }
+ assert.throws(()=>lineFieldRange({...fieldDefault(),scale:'log'},[0,1]),/positive/);
+ assert.equal(logDataError([0,-1],'log','Field')?.includes('Return to Linear'),true);
+});
+
+test('full-domain pan remains fixed; zoomed pan clamps to bounds without changing raw hit coordinates',()=>{
+ const rawX=new Float64Array([.0625,.1875]),rawValues=new Float64Array([1,2]);
+ const beforeX=Array.from(rawX),beforeValues=Array.from(rawValues);
+ for(const shift of [-1e6,-.1,.1,1e6])assert.deepEqual(panView([0,1],shift),[0,1]);
+ const zoomed=zoomView([0,1],.5,.5);
+ assert.deepEqual(panView(zoomed,1e6),[0,.5]);
+ assert.deepEqual(panView(zoomed,-1e6),[.5,1]);
+ for(const view of [zoomed,panView(zoomed,.1),panView(zoomed,-.1)]){
+  const xp=projection([0,.25],'linear',view);
+  for(const coordinate of rawX)near(xp.inverse(xp.forward(coordinate)),coordinate);
+ }
+ assert.deepEqual(Array.from(rawX),beforeX);assert.deepEqual(Array.from(rawValues),beforeValues);
+});
+
+test('Jeans small perturbation ticks remain distinct around a large background',()=>{
+ const ticks=Array.from({length:6},(_,i)=>9998900+i*440),before=[...ticks];
+ const labels=formatPlotTicks(ticks);
+ assert.equal(new Set(labels).size,ticks.length);
+ for(let i=0;i<ticks.length;i++)assert.ok(Math.abs(Number(labels[i])-ticks[i])<220);
+ assert.deepEqual(ticks,before);
+});
+test('tick labels preserve signed zero and distinguish adjacent FP64 values',()=>{
+ const ticks=[-0,0,1,1+Number.EPSILON,1+2*Number.EPSILON];
+ assert.equal(new Set(formatPlotTicks(ticks)).size,ticks.length);
+ assert.deepEqual(formatPlotTicks([0,.2,.4,.6,.8,1]),['0','0.2','0.4','0.6','0.8','1']);
+});
+test('small signed and logarithmic ranges retain distinct display labels',()=>{
+ for(const ticks of [[-1e7-1100,-1e7-660,-1e7-220], [1e-9,1.00001e-9,1.00002e-9], [1e-8,1e-4,1]]){
+  const labels=formatPlotTicks(ticks);assert.equal(new Set(labels).size,ticks.length);
+  assert.ok(labels.every((label,i)=>Math.sign(Number(label))===Math.sign(ticks[i])));
+ }
+});

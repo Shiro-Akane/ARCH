@@ -1,111 +1,55 @@
-# Verify your ARCH checkout
+# Test ARCH after checkout
 
-[中文](README.zh-CN.md) · [Build guide](../docs/guides/Build.md) · [Scientific validation](../validation/README.md)
+[中文](README.zh-CN.md) · [Build](../docs/guides/Build.md) · [Scientific validation](../validation/README.md)
 
-The checkout includes test code, small independent references, manufactured
-problems, validation manifests and network-generation recipes. Build test
-executables locally. Generated packages, external libraries, large simulation
-outputs and profiler data are not bundled as prebuilt dependencies. Run
-`git lfs pull` before tests or cases that use the tracked EOS table.
+Engineering tests check mathematical leaves, interfaces, lifecycle and failure handling. Validation adds independent references and actual application endpoints. Tests do not require FLASH or another simulation program. Reuse accepted evidence only within its source/input/binary scope; rerun the owners affected by a change.
 
-All commands below run from the repository root in Linux or WSL2. Tool tests,
-numerical regressions and application smoke have different purposes;
-[Validation](../validation/README.md) records scientific comparisons and budgets.
+## Choose the smallest meaningful check
 
-Compiling the full test suite costs more time and host RAM than building only
-the application. `BUILD_TESTING=ON` registers the applicable tests; the default
-`all` build compiles their extra executables. CUDA tests add substantial NVCC
-compilation when `ARCH_ENABLE_CUDA=ON`. This is primarily host-memory pressure,
-not GPU-memory use; GPU memory matters when the device tests actually run.
-Larger generated networks and additional GPU target architectures add more
-compilation work.
+| Change | Entry | What it establishes |
+| --- | --- | --- |
+| Validation/build/report tooling or docs | `python3 -B tests/tooling`; architecture/documentation audits below | Complete runner/identity/resource and documentation contracts, not physical accuracy |
+| CPU mathematics, configuration, API, AMR or IO | Existing [Host](host/README.md) / API target and CTest | Its independent mathematical or interface assertions |
+| CUDA indexing, launches, allocation or residency | Existing [Device](cuda/README.md) target and applicable full-program short check | Actual device execution for that scope; Host results do not substitute |
+| Studio/Host | [Studio checks](../studio/tests/README.md) | Typed responses, request association, owned lifecycle and rendering/build contracts |
+| Scientific endpoint, convergence or coupled evolution | Owning [Validation](../validation/README.md) manifest/reference | Original error, conservation, topology and fresh-continuation requirements |
 
-Both Release presets keep `BUILD_TESTING=OFF` for a first application build.
-New users can start with `cpu-release` and the tool checks below, then enable
-tests or choose `cuda-release` as needed. With testing enabled,
-`cmake --build <build-dir> --target ARCH` still builds the application and its
-dependencies, not standalone tests. Changing a `.par` file to run on CPU does
-not remove the compile cost of a CUDA-enabled build.
+Extend an existing assertion owner before creating another executable or probe. Keep independent references independent of production mathematics. Failure diagnosis uses a small reproducer; a larger matrix cannot explain an unresolved small failure. Long-run, sanitizer and fair CPU/GPU cost campaigns stay outside every-PR testing.
 
-## GitHub continuous integration
+## Tooling and current documentation
 
-[ARCH CI](../.github/workflows/ci.yml) runs the shared-authority audit, the full
-Python tooling suite and a CPU Release build with all configured Host tests,
-including KLU, on GitHub-hosted Linux machines. The jobs reuse the commands and
-test owners described here; no separate CI mathematical implementation exists.
-The CPU job fetches the required Helmholtz LFS table and rejects incomplete or
-skipped CTest reports. The tooling job also rejects skipped controls.
-
-The `CI required` result combines those two jobs. It does not represent CUDA
-execution or a rerun of the full scientific Validation campaign. Diagnostic
-artifacts are kept for 14 days, separately from reviewed Validation records.
-See the [workflow guide](../.github/workflows/README.md) for manual runs,
-resource limits, security settings and branch-rule setup.
-
-## Check tools without a GPU
-
-Use Python 3.10 or newer and Git/CMake from the build setup. Install NumPy and
-h5py for the microphysics/checkpoint protocol checks. The suite uses controlled
-fixtures and does not need pynucastro, SciPy or a CUDA device.
+Use Python 3.10+ with NumPy/h5py, Git and CMake. Linux resource tests need `/proc`, pidfd and child-process support. This workstation uses the existing `work` environment for scientific Python; the resource suite uses the system Python that provides pidfd. A missing facility or skipped control is not complete verification.
 
 ```bash
 python3 tools/audit_architecture.py .
-python3 -m unittest discover -s tests/tooling -p 'test_*.py'
+python3 tools/check_documentation.py .
+python3 -B tests/tooling
 ```
 
-Full resource-guard coverage needs Linux `/proc`, child-process ownership support
-and Python's `os.pidfd_open`. An unsupported Python build or kernel may skip those
-controls. Read the summary: a skip does not verify that feature.
+The complete Tooling entry rejects an empty, failed or skipped suite. It includes the sparse trajectory transcript controls; dependency-heavy independent oracle tests remain documented in their Validation owner. Current Markdown destinations/headings are checked without rewriting dated/frozen evidence.
 
-The architecture audit prunes configured CMake build trees and auxiliary Git
-worktrees before scanning. It still reads new/untracked source and user modules
-under source directories; it does not rely on a clean Git index or ignore a
-broad `build*` prefix. Running from a normal development checkout therefore does
-not require exporting a temporary source snapshot.
+## Compile and run CPU regressions
 
-## Build and run CPU regressions
-
-Prepare the dependencies in the [build guide](../docs/guides/Build.md). Default
-KLU support includes CPU sparse solving; configuration may fetch HighFive and
-SuiteSparse if they are not installed.
+First follow [Build](../docs/guides/Build.md), including [offline table identity](../docs/guides/Build.md#offline-tables-and-lfs-bandwidth). Default presets build the application with testing disabled; building `--target ARCH` does not build standalone tests. CTest never compiles missing programs.
 
 ```bash
 cmake -S . -B build-test-cpu -G Ninja \
   -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DARCH_ENABLE_CUDA=OFF \
   -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-test-cpu/bin"
-cmake --build build-test-cpu --parallel 1
-ctest --test-dir build-test-cpu -N
-ctest --test-dir build-test-cpu --parallel 1 --output-on-failure
+cmake --build build-test-cpu --parallel 2
+ctest --test-dir build-test-cpu --show-only=json-v1
+ctest --test-dir build-test-cpu --parallel 1 --no-tests=error --output-on-failure
 ```
 
-CTest does not compile missing executables. The default build above includes
-configured tests. For a quick checkpoint-only check, build
-`arch_checkpoint_compatibility` and select `-R '^checkpoint_compatibility$'`.
-It checks complete ARCH state restoration and rejected input through the same
-reader used by both backends. Current-format round trips, explicit old-control
-identity rejection and corrupt-payload rejection are tested together; rejected
-reads preserve the live AMR state, and validation failures before a write
-preserve the previous checkpoint file.
+Use the existing memory guard for a heavy build and choose concurrency by measured process-tree RAM. Shared dispatch/LTO work can consume several GiB even with one outer job. For a focused change, build its target and select its exact CTest with `-R '^name$'` before broadening.
 
-`arch_cuda_single_level_validation` is also available in CPU-only builds. The
-historical target name is retained for runner compatibility, but the utility
-uses ordinary C++ and the Host HDF5 reader and does not link the CUDA backend.
-Its comparison rules and `checkpoint_temporal_comparison` test are unchanged.
+The unfiltered command includes the single `tooling_contracts` entry. If Tooling has already run, use `-LE '^tooling$'` in both discovery and execution to avoid running it twice. Other configured tests remain selected; do not use a name filter as a claim of full CPU coverage.
 
-For a scoped Driver CUDA check, `tools/check_ci_results.py --profile driver-cuda`
-requires scheduler, gravity preparation, checkpoint and CUDA AMR/batch/reduction
-coverage anchors. Supply inventory and JUnit files from the same CTest selection;
-every selected test must pass without skips. This does not certify the full CUDA
-inventory, application-level numerics, restart or sanitizer checks. Hosted CPU CI
-continues to check its complete configured inventory.
-Build this target to compare CPU artifacts without a CUDA build.
+The Host-only `arch_cuda_single_level_validation` comparator is available without CUDA. Its historical name does not imply a device dependency. `checkpoint_compatibility` and `checkpoint_temporal_comparison` check their original restoration/rejection and comparison contracts.
 
-## Add CUDA and its sparse provider
+## CUDA and optional providers
 
-Prepare the NVIDIA driver/toolkit and cuDSS using the
-[CUDA build guide](../docs/guides/Build.md#cudss-and-sparse-burning).
-Set `CUDSS_ROOT` for a custom installation; a system-wide install is not required.
-Keep KLU if this build should also test CPU sparse burning.
+Use a separate build tree and the [CUDA build instructions](../docs/guides/Build.md). Enable cuDSS only when its actual library is available; KLU remains the CPU sparse provider. `native` targets the visible GPU, not every supported platform.
 
 ```bash
 cmake -S . -B build-test-cuda -G Ninja \
@@ -115,68 +59,22 @@ cmake -S . -B build-test-cuda -G Ninja \
   -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-test-cuda/bin"
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-test-cuda --parallel 1
-ctest --test-dir build-test-cuda -N
-ctest --test-dir build-test-cuda --parallel 1 --output-on-failure
+  cmake --build build-test-cuda --parallel 2
+ctest --test-dir build-test-cuda --parallel 1 --no-tests=error --output-on-failure
 ```
 
-`native` targets the visible GPU; use an explicit architecture selection when
-building for another device. Build parallelism is configurable and does not
-change numerical methods. Begin with serial device tests and inspect their
-memory requirements before increasing concurrency.
+Retain CUDA `RUN_SERIAL`, provider conditions, device-unavailable codes and compile-pool limits. A skipped device test is not accepted GPU qualification. Generated-package tests appear only for packages actually discovered/configured; an empty package selection means all discoverable packages, not disabled generation. Setup and independent weak/NSE references belong to [network validation](../validation/network/README.md).
 
-Check CMake's provider messages and the CTest inventory. cuDSS-specific and
-generated-network tests appear when their providers/packages are enabled.
-A build without those entries does not test those capabilities. For the full
-representative profile, generate audit31 and the weak network from the
-[network setup and recipes](../validation/network/README.md#reproduce-the-records),
-then reconfigure with those package IDs selected. pynucastro is needed for
-generation, not for running ARCH. Large audit150/audit200 workloads are separate
-scaling exercises, not required for getting started.
+## Full-program checks and cost
 
-## Check the application and restart
+Use an ARCH executable and comparator from the same build. [Smoke](smoke/README.md), [restart](../validation/restart/README.md) and [gravity](../validation/gravity/README.md) own bounded application, fresh-process and optional-field checks. Their manifests define the real endpoint, input, fields and budgets. A step diagnostic cannot replace a required physical-time comparison.
 
-Use ARCH and its comparator from the same build:
+Freeze source/configuration before measuring; record build/run wall time, compiler/profile, threads, RAM/swap and exit reason. Reuse matching accepted science rather than rerunning it after pure comments. Abnormally slow runs may stop under the existing guard with reached step/time and retained evidence; truncation is never PASS. Before HDF batches check actual host storage, not WSL's virtual free space; this workstation warns near 1 GiB remaining.
 
-```bash
-python3 tools/smoke_cuda_amr_runtime.py \
-  --arch build-test-cuda/bin/ARCH \
-  --checkpoint-validator build-test-cuda/arch_cuda_single_level_validation
-```
+## GitHub continuous integration
 
-The [smoke guide](smoke/README.md) describes CPU/CUDA dynamic AMR, curved diffusion
-and short checkpoint continuation. For field-by-field recovery and continued
-evolution, use the [restart checks](../validation/restart/README.md#reproduce-the-dynamic-amr-checks).
-They cover all four backend directions, native composition, ENUC, controller
-state and output phase. Runners retain logs and require an absent or empty output
-directory; they do not silently overwrite another run.
+[CI](../.github/workflows/README.md) runs Tooling once, applicable complete CPU/KLU and Studio lanes, and one required aggregate. Recognized documentation changes can omit expensive native/Node work with explicit `NOT_APPLICABLE`. Unknown scope selects full execution. Inventory/JUnit and TAP checks reject empty, missing, failed or skipped controls. Local success is not hosted execution or scientific release qualification.
 
-Shared application runners read HDF5 through the C++ comparator. Independent
-scientific references may additionally need NumPy, SciPy, mpmath or h5py;
-each [Validation module](../validation/README.md) lists its requirements.
-Compute Sanitizer is needed only for instrumented checks.
+## Find and extend tests
 
-## Find or extend a test
-
-- [host/](host/README.md): CPU contracts, AMR/geometry, checkpoint, EOS and burn.
-- [cuda/](cuda/README.md): device execution, parity, memory and transaction lifecycles.
-- [tooling/](tooling/README.md): audits, build metadata, runners, provenance and guards.
-- [math/](math/README.md): numerical witnesses shared by host and device.
-- [fixtures/](fixtures/README.md): independent data and controlled systems.
-- [smoke/](smoke/README.md): short complete-application checks.
-
-[CMakeLists.txt](../CMakeLists.txt) selects the test groups; target declarations
-and conditions live in [HostTests.cmake](../cmake/tests/HostTests.cmake) and
-[CudaTests.cmake](../cmake/tests/CudaTests.cmake).
-Keep one copy of shared test data and place production algorithms
-in `src/`. Derive reference results independently of the routines being tested.
-
-
-### Self-gravity checks
-
-The CPU anchors are `composite_poisson_contract`, `composite_poisson_analytic`,
-`self_gravity_lifecycle` and `self_gravity_physics`. The last test runs the real
-executable and requires numpy/h5py in CMake's selected `Python3_EXECUTABLE`
-environment (CI installs both). Configure that interpreter with the matching
-packages rather than skipping the test. Device, coupling and performance evidence
-is in [gravity validation](../validation/gravity/README.md).
+[Host](host/README.md), [Device](cuda/README.md), [Tooling](tooling/README.md), [math](math/README.md), [fixtures](fixtures/README.md) and [smoke](smoke/README.md) describe the existing owners. Registration is in [HostTests.cmake](../cmake/tests/HostTests.cmake) and [CudaTests.cmake](../cmake/tests/CudaTests.cmake). Keep the accepted RKL core/Tabular split and grouped burn routes; retain every independent subcase and original threshold when sharing fixtures or registration.

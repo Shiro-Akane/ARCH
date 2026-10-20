@@ -1,6 +1,8 @@
 # Collect application sources and establish the shared compilation contract.
 # Target ownership stays in the project directory, including when tests are off.
 
+include(GNUInstallDirs)
+
 set(APP_SRC_DIRS
     "src/api"
     "src/core"
@@ -56,23 +58,40 @@ foreach(case_source IN LISTS ARCH_APPLICATION_SOURCES)
         set_property(SOURCE "${case_source}" APPEND PROPERTY COMPILE_DEFINITIONS
             ARCH_CASE_SOURCE_SHA256="${case_source_sha256}")
     endif()
+    # Same-directory boundary helpers carry their own digest, kept separate
+    # from the case digest so neither literal identity is combined.
+    get_filename_component(case_source_name "${case_source}" NAME)
+    if(case_source_name STREQUAL "physical_boundary.cpp" OR
+       case_source_name STREQUAL "gravity_boundary.cpp")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${case_source}")
+        file(SHA256 "${case_source}" boundary_source_sha256)
+        set_property(SOURCE "${case_source}" APPEND PROPERTY COMPILE_DEFINITIONS
+            ARCH_BOUNDARY_SOURCE_SHA256="${boundary_source_sha256}")
+    endif()
 endforeach()
 
 include("${CMAKE_CURRENT_LIST_DIR}/../CustomNetworks.cmake")
 
-# Dispatch sources (isolated in its own object target to manage template instantiation)
+list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
+    "/src/physics/boundary/PhysicalBoundaryHandler\\.cpp$")
+
+# Runtime owns the concrete topology, boundary, and accounting implementations.
+# Keep lifecycle consumers independent of the policy-template dispatch archive.
+set(ARCH_DRIVER_RUNTIME_SOURCES
+    src/driver/runtime/DriverRuntime.cpp
+    src/driver/runtime/DriverBoundary.cpp
+    src/driver/runtime/DriverBoundaryDiagnostics.cpp
+    src/physics/boundary/PhysicalBoundaryHandler.cpp
+    src/driver/runtime/DriverRegrid.cpp)
+
+# Dispatch sources stay in their own static target for template instantiation.
 set(DISPATCH_SRC_DIRS
     "src/driver/dispatch/bindings"
     "src/driver/dispatch/capability"
 )
-# Dispatch consumers need the extracted driver owners as well as policy binding.
-# Keep those non-template implementations in the same library, rather than
-# making its references resolve only when linked into the ARCH executable.
+# Policy binding and its I/O/gravity adapters consume the shared Runtime owner.
 set(ARCH_DISPATCH_SOURCES
     src/driver/SolverDispatch.cpp
-    src/driver/runtime/DriverRuntime.cpp
-    src/driver/runtime/DriverBoundary.cpp
-    src/driver/runtime/DriverRegrid.cpp
     src/driver/io/DriverIO.cpp
     src/driver/stages/GravityStage.cpp
     src/amr/elliptic/EllipticMeshAdapter.cpp)
@@ -130,24 +149,47 @@ set(ARCH_GRAVITY_CPU_SOURCES
     src/numerics/multigrid/CompositeExecution.cpp
     src/physics/gravity/GravityBoundary.cpp
     src/physics/gravity/GravityExecution.cpp
-    src/physics/gravity/self/GravityWorkspace.cpp src/physics/gravity/self/SelfGravity.cpp)
+    src/physics/gravity/self/GravityWorkspace.cpp src/physics/gravity/self/SelfGravity.cpp
+    src/physics/gravity/self/GravityUserBoundary.cpp)
 foreach(source IN LISTS ARCH_GRAVITY_CPU_SOURCES)
     list(REMOVE_ITEM ARCH_APPLICATION_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
 endforeach()
 add_library(arch_gravity_cpu STATIC ${ARCH_GRAVITY_CPU_SOURCES})
 target_link_libraries(arch_gravity_cpu PUBLIC arch_build_contract)
+add_library(arch_driver_runtime STATIC ${ARCH_DRIVER_RUNTIME_SOURCES})
+target_link_libraries(arch_driver_runtime
+    PUBLIC arch_build_contract
+    PRIVATE arch_diffusion_math)
 add_library(arch_solver_dispatch STATIC ${ARCH_DISPATCH_SOURCES})
 target_link_libraries(arch_solver_dispatch
     PUBLIC arch_build_contract
-    PRIVATE arch_diffusion_math arch_gravity_cpu)
+    PRIVATE arch_driver_runtime arch_diffusion_math arch_gravity_cpu)
 
 add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
+
+# Opt-in provenance for local tooling. This changes link diagnostics only, not
+# numerical flags; unsupported linkers fail explicitly instead of claiming coverage.
+option(ARCH_EMIT_LINK_DEPENDENCIES "Emit ARCH linker-read dependency file" OFF)
+# GNU LTO's plugin normally removes generated linker inputs before tooling can
+# fingerprint them. Retention is opt-in; it is not complete dependency evidence.
+option(ARCH_RETAIN_LTO_LINK_INPUTS "Retain GNU LTO linker inputs for local provenance" OFF)
+if(ARCH_RETAIN_LTO_LINK_INPUTS)
+    if(NOT ARCH_EMIT_LINK_DEPENDENCIES OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        message(FATAL_ERROR "LTO input retention requires GNU C++ and ARCH_EMIT_LINK_DEPENDENCIES=ON")
+    endif()
+    target_link_options(ARCH PRIVATE "LINKER:-plugin-opt=-debug")
+endif()
+if(ARCH_EMIT_LINK_DEPENDENCIES)
+    target_link_options(ARCH PRIVATE "LINKER:--dependency-file=ARCH.link.d")
+endif()
+
 target_link_libraries(ARCH PRIVATE arch_solver_dispatch)
 if(CMAKE_DL_LIBS)
+    target_link_libraries(arch_driver_runtime PRIVATE ${CMAKE_DL_LIBS})
     target_link_libraries(arch_solver_dispatch PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
-foreach(target ARCH arch_solver_dispatch)
+foreach(target ARCH arch_driver_runtime arch_solver_dispatch)
     target_compile_features(${target} PRIVATE cxx_std_20)
     target_include_directories(${target} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -156,14 +198,52 @@ foreach(target ARCH arch_solver_dispatch)
     )
 endforeach()
 
-# PCH covers heavy STL/OpenMP headers shared by every dispatch TU
-target_precompile_headers(arch_solver_dispatch PRIVATE
+# Each owner gets a private PCH with the existing STL/OpenMP header contract.
+# Separate PCH ownership avoids reversing Runtime's dependency on dispatch.
+set(ARCH_DRIVER_COMMON_PCH_HEADERS
     <vector> <string> <memory> <map> <iostream> <cmath> <omp.h>
     <sstream> <stdexcept> <algorithm> <iomanip> <array>
 )
+foreach(target arch_driver_runtime arch_solver_dispatch)
+    target_precompile_headers(${target} PRIVATE ${ARCH_DRIVER_COMMON_PCH_HEADERS})
+endforeach()
 
-# Dispatch uses the same Release optimization and configuration-specific IPO
+# Runtime and dispatch use the same Release optimization and configuration-specific IPO
 # as the application. There is no lower-optimization policy matrix override;
 # build concurrency, rather than runtime optimization, bounds build memory.
 
 set_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")
+
+install(TARGETS ARCH
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    COMPONENT Runtime)
+
+set(ARCH_INSTALL_DATADIR "${CMAKE_INSTALL_DATADIR}/arch")
+install(FILES
+    simulation/Sod/Sod_beginner.par
+    simulation/Sod/Sod.par
+    DESTINATION "${ARCH_INSTALL_DATADIR}/simulation/Sod"
+    COMPONENT Runtime)
+install(FILES
+    EOS_toolkit/tables/helmholtz/helm_table.dat
+    DESTINATION "${ARCH_INSTALL_DATADIR}/EOS_toolkit/tables/helmholtz"
+    COMPONENT Runtime)
+install(FILES
+    EOS_toolkit/tables/baryon/eos2.tab
+    EOS_toolkit/tables/baryon/eos4.tab
+    EOS_toolkit/tables/baryon/LICENSE-CC-BY-4.0.txt
+    DESTINATION "${ARCH_INSTALL_DATADIR}/EOS_toolkit/tables/baryon"
+    COMPONENT Runtime)
+install(FILES
+    LICENSE
+    THIRD_PARTY_NOTICES.md
+    THIRD_PARTY_NOTICES.zh-CN.md
+    DESTINATION "${ARCH_INSTALL_DATADIR}"
+    COMPONENT Runtime)
+install(FILES
+    LICENSES/README.md
+    LICENSES/AMReX-Astro-Microphysics.txt
+    LICENSES/LGPL-2.1.txt
+    LICENSES/SuiteSparse-KLU.txt
+    DESTINATION "${ARCH_INSTALL_DATADIR}/LICENSES"
+    COMPONENT Runtime)

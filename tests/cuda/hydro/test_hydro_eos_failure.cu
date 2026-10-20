@@ -3,8 +3,11 @@
 #include "cuda/hydro/policies/CheckedHydroEos.cuh"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
 #include "cuda/hydro/policies/HydroFluxPolicies.cuh"
+#include "amr/storage/Block.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "cuda/hydro/kernels/HydroFaceKernel.cuh"
 #include "cuda/hydro/kernels/HydroStateKernels.cuh"
-#include "numerics/integrator/GeometricSources.h"
+#include "numerics/curvilinear/GeometricSources.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/tabular/Tabular3DEOS.h"
 #include "physics/eos/tabular/Tabular4DEOS.h"
@@ -38,9 +41,12 @@ template<class T> struct Buffer {
     Buffer& operator=(const Buffer&) = delete;
 };
 
-enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure };
+enum class Fault { None, GhostPressure, NegativeFinitePressure, FaceEnergy, FaceDerivative, GeometryPressure, RoeCross, TrialPressure, InfinitePressure, ZeroTemperature, NegativeTemperature, NonfiniteTemperature, LatchedFiniteTemperature };
 struct ProbeEos : IdealGasView {
     Fault fault = Fault::None;
+    int* device_error_status=nullptr;
+    int* temperature_calls=nullptr;
+    int fail_temperature_call=0;
     ARCH_INLINE double get_pressure(const FluidVector& value, const double* x) const
     {
         if ((fault == Fault::GhostPressure && value.rho == 2.0)
@@ -48,7 +54,27 @@ struct ProbeEos : IdealGasView {
             || fault == Fault::GeometryPressure)
             return std::numeric_limits<double>::quiet_NaN();
         if (fault == Fault::NegativeFinitePressure) return -1.0;
+        if (fault == Fault::InfinitePressure) return std::numeric_limits<double>::infinity();
         return IdealGasView::get_pressure(value, x);
+    }
+    // Required thermal checks consume the selected EOS result without a floor.
+    ARCH_INLINE double get_temperature(double rho, double energy, const double* x) const
+    {
+        if(temperature_calls) {
+            const int call=++*temperature_calls;
+            if(fault==Fault::LatchedFiniteTemperature&&call==fail_temperature_call
+                &&device_error_status) {
+#if defined(__CUDA_ARCH__)
+                atomicExch(device_error_status,1);
+#else
+                *device_error_status=1;
+#endif
+            }
+        }
+        if (fault == Fault::ZeroTemperature) return 0.;
+        if (fault == Fault::NegativeTemperature) return -1.;
+        if (fault == Fault::NonfiniteTemperature) return std::numeric_limits<double>::quiet_NaN();
+        return IdealGasView::get_temperature(rho, energy, x);
     }
     ARCH_INLINE double get_pressure_from_rho_e(double rho, double energy, const double* x) const
     {
@@ -240,7 +266,7 @@ __global__ void trial_face_kernel(int* status, TrialFaceResult* result)
     ProbeEos eos;
     eos.fault = Fault::TrialPressure;
     const auto checked = arch::cuda::make_checked_hydro_eos(eos, status);
-    const auto trial = FluxAdmissibility::candidate_eos(checked);
+    const auto trial = arch::state::candidate_eos(checked);
     const FluidVector mean_left{1.0, 0.0, 0.0, 0.0, 2.5};
     const FluidVector mean_right{2.0, 0.0, 0.0, 0.0, 5.0};
     const FluidVector face{1.5, 0.0, 0.0, 0.0, 3.75};
@@ -423,6 +449,10 @@ void test_tabular_leaves()
     view4.Z_min = 7.0; view4.Z_max = 8.0; view4.dZ = 1.0;
     test_table(view4, 16);
 }
+/** Actual native face failure fixture uses genuine Block metadata and buffers.
+ * Required source/B EOS failure is sticky and cannot publish a real flux;
+ * optional PPM inversion and high-ray failures must leave the latch clear.
+ */
 } // namespace
 
 int main()

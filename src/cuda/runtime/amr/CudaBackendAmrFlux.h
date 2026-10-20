@@ -10,6 +10,7 @@
 #pragma once
 
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
+#include "physics/gravity/GravitySourceTypes.h"
 
 #include <cuda_runtime.h>
 
@@ -52,6 +53,7 @@ cudaError_t launch_cuda_amr_flux_surface_capture(
  * Register one canonical source-block/direction route before stage_flux is
  * overwritten by the next direction.  targets and terms are device arrays
  * uploaded from AmrCompiledFluxRegistrationRoute.
+ *
  */
 cudaError_t launch_cuda_amr_flux_register_route(
     const DeviceAmrFluxBlockView* device_blocks, int block_count,

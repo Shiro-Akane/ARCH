@@ -44,6 +44,16 @@ storage, launches and synchronization rather than restating an independent
 version of the formula. Similar-looking helpers with different admissibility or
 conservation requirements need those differences stated explicitly.
 
+Classify a non-obvious literal before explaining it: physical datum or upstream
+fit, mathematical coefficient, accepted residual/admission threshold, work budget,
+protocol/index convention, or display geometry. State the implemented units and
+source beside the group or expression. A controller-history floor or initial
+seed clamp is not a new physical abundance floor; an interactive byte/time cap
+is not a scientific tolerance. Do not unify unrelated constants merely because
+their digits match. Retained numerical controls may have no evidence of optimal
+calibration: explain their actual role and keep that uncertainty explicit rather
+than inventing a derivation. Preserve upstream coefficient and license provenance.
+
 ## Keep prose durable
 
 Prefer complete, direct sentences over noun lists and unexplained abbreviations.
@@ -85,6 +95,45 @@ reader branches, renaming public keys or changing scientific behavior. Such
 changes need their own implementation review and tests.
 
 ## Preserve evidence and translations
+
+### Comments in behavior-frozen source
+
+Behavior-frozen source keeps its formulas, operation order, acceptance gates,
+interfaces and ownership contracts. Within an authorized comment task, improve
+the explanation without changing those contracts. A useful file or module
+comment identifies the responsibility and real flow: inputs, owned work,
+published outputs, and the conditions under which consumers may read them.
+Declaration headers describe the contract they expose; they do not claim to
+execute the implementation's request handling or numerical work.
+
+At sensitive boundaries, explain the implemented units, sign and coordinate
+conventions, conserved measures, borrowed views, slot/ghost identity, resource
+lifetime, synchronization and failure propagation where relevant. Link the
+maintained mathematical owner rather than copying a formula into an adapter.
+Explain non-obvious choices beside their implementation. Skip obvious operations
+and repeated generic Workflow steps; no fixed comment length or paragraph count
+is a quality requirement. Apply the same responsibility and lifetime guidance
+to new or split Studio modules, using the appropriate TypeScript comment form.
+
+Comment-only changes still change source bytes and may invalidate source
+digests, build identities or evidence tied to an exact revision. Review the diff
+and affected identity rules; record any refreshed identity separately. Reuse
+existing risk-adaptive verification rather than running an expensive scientific
+campaign merely for prose. Do not relabel an old measurement as a result for
+the edited source.
+
+If a file is explicitly byte-frozen, an imported source requires its original
+annotations, or it is immutable historical evidence, retain the file and add
+the explanation in its maintained owner documentation or a new dated record.
+Changing behavior, protected interfaces or numerical criteria requires its
+own authorized work package. This guidance does not authorize a bulk comment
+rewrite or a redesign of frozen source.
+
+User-authorized historical documentation cleanup may correct obsolete planning
+prose, consolidate useful references or move completed records into the existing
+archive. Keep dated conclusions distinguishable from current status and repair
+both incoming and outgoing links. Do not remove a record merely because it is
+old; delete only material shown to have no remaining reference value.
 
 Frozen results, failed attempts and signed review records retain their original
 text, inputs and identities. Explain later work in a new record or a maintained

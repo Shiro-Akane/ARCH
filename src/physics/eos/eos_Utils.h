@@ -1,6 +1,12 @@
 /**
  * @file eos_Utils.h
  * @brief Common thermodynamic and kinematic utilities for EOS solvers.
+ *
+ * Workflow:
+ * 1. Apply the selected EOS's composition derivatives and thermodynamic queries.
+ * 2. Build kinetic energy from the representable conserved momenta and share
+ *    the strict conservative thermal recovery used by Host and Device callers.
+ * 3. Construct checked thermodynamic paths without an extra EOS or energy floor.
  */
 #pragma once
 
@@ -90,10 +96,22 @@ namespace eos_utils
         double sound_speed = 0.0;
     };
 
-    // Shared kinetic/internal-energy conversions.
+    /** Kinetic energy density K = (rho*u^2 + rho*v^2 + rho*w^2)/2.
+     * Construct the same m_i=rho*u_i stored in a conservative state before
+     * halving each m_i*u_i product. Halving rho first can erase a positive
+     * subnormal density; squaring velocity first can overflow although K is
+     * representable. This order matches strict conservative state recovery.
+     * An unrepresentable momentum or total propagates a nonfinite result for
+     * the caller's existing state rejection; it is never floored or repaired.
+     */
     ARCH_INLINE double calc_kinetic_energy(double rho, double u, double v, double w)
     {
-        return (0.5 * rho * u) * u + (0.5 * rho * v) * v + (0.5 * rho * w) * w;
+        const double momentum_u = rho * u;
+        const double momentum_v = rho * v;
+        const double momentum_w = rho * w;
+        return (0.5 * momentum_u) * u
+             + (0.5 * momentum_v) * v
+             + (0.5 * momentum_w) * w;
     }
 
     // Extract specific internal energy from a conservative state.
@@ -154,6 +172,8 @@ namespace eos_utils
 
         const double log_rho_reference = std::log(reference_rho);
         const double log_temperature_reference = std::log(reference_temperature);
+        // Local search domain in ln(rho), corresponding to a density ratio
+        // exp(+-0.25). It limits this isentropic helper, not the EOS table domain.
         constexpr double max_log_density_distance = 0.25;
 
         const auto log_temperature_on_isentrope = [&](double log_rho_target) {
@@ -162,6 +182,9 @@ namespace eos_utils
                 throw std::runtime_error(
                     "Isentropic pressure solve left its supported local neighborhood.");
             }
+            // Existing RK4 quadrature resolution: |Delta ln(rho)| per panel
+            // is at most 1e-4, with at least eight panels near the reference.
+            // These fixed accuracy/work controls are not physical constants.
             const int steps = std::max(
                 8, static_cast<int>(std::ceil(std::abs(interval) / 1.0e-4)));
             const double step = interval / static_cast<double>(steps);
@@ -194,10 +217,14 @@ namespace eos_utils
 
         double log_rho = log_rho_reference + std::log(pressure_factor) / gamma1_reference;
         eos_state_t state{};
+        // Twelve Newton attempts bound this local solve; failure remains an
+        // error. The 2e-13 log-pressure residual below is its separate criterion.
         for (int iteration = 0; iteration < 12; ++iteration) {
             const double temperature = std::exp(log_temperature_on_isentrope(log_rho));
             state = evaluate(std::exp(log_rho), temperature);
             const double residual = std::log(state.P / target_pressure);
+            // ln(P/P_target) is dimensionless and approximates relative
+            // pressure error near the root; do not use this as a field budget.
             if (std::abs(residual) <= 2.0e-13) {
                 return {
                     state.rho,

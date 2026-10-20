@@ -1,0 +1,37 @@
+{
+  "status": "PASS_PRIVATE_PATCH_PRODUCER_ONLY",
+  "candidate_base": "326626cb",
+  "core_contract": "4639774fe3c94ae27b3e831d0f0b9d6340de34fd",
+  "patch_sha256": "595781d45fb26c9270845861b4fe489796811f1779bf69cb8295586742832a0f",
+  "test_sha256": "b322941cca0d3b9b055405ad672b74d5d0d0f04dc1ae661299867126932c566b",
+  "elf_sha256": "766e44cf9ee5af15a9d7e5d4f0c8beaabda7ce21bcc7d6e4ea66d2d347abce0b",
+  "stdout": "RZ_REAL_PATCH_PRODUCER_PASS cells=256 positive_slots=3 variable_density=PASS rejection_cases=13 states=Current+Next+Scratch ledger=unchanged scheduler=NOT_BOUND RK=NOT_RUN\n",
+  "rejected_mutations": [
+    {
+      "name": "wrong_W_momentum_for_V_work",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "d79cfde34b49004ee57f5e31f06f30c855f45364e206c5a339aca38dff36d2c6"
+    },
+    {
+      "name": "wrong_V_density_for_W_torque",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "a459c1f72d286f0023d456c6fc3672c66540610fdf76bd0d7919f7919749835f"
+    },
+    {
+      "name": "missing_actual_ledger_read_check",
+      "exit_code": -6,
+      "compiled": true,
+      "header_sha256": "da29d640758ff5224e3d5baf97f8eecfe8583013832420f06c6b07f314ecf75c"
+    }
+  ],
+  "not_covered": [
+    "real RK scheduler frame binding",
+    "configuration owner storage generation and fingerprint producer",
+    "global multi-block rejection rollback/publication",
+    "actual boundary/AMR ghost generation",
+    "frozen RK evolution and restart",
+    "finite-ring stage source binding"
+  ]
+}

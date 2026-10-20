@@ -2,13 +2,17 @@
  * @file RegridMigration.cu
  * @brief Device execution of conservative parent/child regrid transfers.
  *
- * Each thread gathers one geometric family and calls amr::regrid_math from
- * RegridTransferMath.h. Only staged interiors are written; active source blocks
- * remain unchanged. The caller owns scratch/status storage and must check a
- * completion fence and the transaction status before publishing destinations.
+ * Workflow:
+ * 1. Authenticate borrowed layouts and parent/child storage.
+ * 2. Gather one immutable source family and actual destination cell bounds.
+ * 3. Invoke the same reconstruction/restriction as Host.
+ * 4. Write only provisional interiors; latch the first mathematical failure.
+ * 5. Let the transaction owner complete real ghosts/EOS before publication.
  */
 
+#include "amr/transfer/RegridTransferMath.h"
 #include "cuda/amr/RegridMigration.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 
 #include <cmath>
 #include <cstdint>
@@ -17,6 +21,7 @@
 namespace arch::cuda {
 namespace {
 
+/** Borrow the immutable species-major source without copying a field. */
 ARCH_DEVICE inline amr::regrid_math::ConstStateView samples(DeviceStateView state)
 {
     return {{state.rho, state.mom_u, state.mom_v, state.mom_w,
@@ -24,9 +29,10 @@ ARCH_DEVICE inline amr::regrid_math::ConstStateView samples(DeviceStateView stat
             static_cast<std::size_t>(state.total_size)};
 }
 
+/** Integrate one parent family using the Host mathematical owner. */
 __global__ void prolong_regrid_families(
     DeviceRegridBlock source, DeviceRegridBlock destination, int child_index,
-    double density_floor, double min_eint, double* workspace, int* status,
+    state::Bounds bounds, double* workspace, int* status,
     int family_count)
 {
     const int family = blockIdx.x * blockDim.x + threadIdx.x;
@@ -52,6 +58,12 @@ __global__ void prolong_regrid_families(
     geometry.neighbours[4] = dst.dim == 3 ? src.index(ci, cj, ck - 1) : geometry.center;
     geometry.neighbours[5] = dst.dim == 3 ? src.index(ci, cj, ck + 1) : geometry.center;
     geometry.coarse_volume = src.cell_volume[geometry.center];
+    const bool angular_momentum = dst.dim == 2
+        && dst.geometry == static_cast<int>(DeviceGeometry::Cylindrical);
+    geometry.angular_momentum = angular_momentum;
+    if (angular_momentum)
+        geometry.coarse_moment = GridMetrics::AngularMomentumVolumeMoment(
+            make_grid_geometry_view(src), ci, cj, ck);
     int targets[8]{};
     for (int child = 0; child < (1 << dst.dim); ++child) {
         const int fi = dst.is + 2 * i + (child & 1);
@@ -59,15 +71,21 @@ __global__ void prolong_regrid_families(
         const int fk = dst.ks + 2 * k + (dst.dim == 3 ? (child >> 2) & 1 : 0);
         targets[child] = dst.index(fi, fj, fk);
         geometry.fine_volumes[child] = dst.cell_volume[targets[child]];
+        if (angular_momentum)
+            geometry.fine_moments[child] = GridMetrics::AngularMomentumVolumeMoment(
+                make_grid_geometry_view(dst), fi, fj, fk);
     }
     const int species = destination.state.n_species;
     double* scratch = species > 0
         ? workspace + static_cast<std::size_t>(family)
             * amr::regrid_math::prolongation_workspace_per_species * species : nullptr;
     amr::regrid_math::ProlongationResult result{};
-    const auto outcome = amr::regrid_math::prolong_family(
-        samples(source.state), geometry, species, density_floor, min_eint,
-        scratch, result);
+    amr::regrid_math::Status outcome;
+
+        outcome = amr::regrid_math::prolong_family(
+            samples(source.state), geometry, species, bounds.density,
+            bounds.internal_min, scratch, result);
+    
     if (outcome != amr::regrid_math::Status::Ok) {
         atomicCAS(status, 0, static_cast<int>(outcome));
         return;
@@ -81,9 +99,10 @@ __global__ void prolong_regrid_families(
     }
 }
 
+/** Restrict true child V/W means; completed target EOS remains a later owner. */
 __global__ void restrict_regrid_families(
     DeviceRegridChildren children, DeviceRegridBlock destination,
-    double density_floor, double min_eint, double* workspace,
+    state::Bounds bounds, double* workspace,
     int* status, int cell_count)
 {
     const int cell = blockIdx.x * blockDim.x + threadIdx.x;
@@ -106,19 +125,28 @@ __global__ void restrict_regrid_families(
     amr::regrid_math::RestrictionGeometry geometry{};
     geometry.count = 1 << dst.dim;
     geometry.coarse_volume = dst.cell_volume[target];
+    const bool angular_momentum = dst.dim == 2
+        && dst.geometry == static_cast<int>(DeviceGeometry::Cylindrical);
+    geometry.angular_momentum = angular_momentum;
+    if (angular_momentum)
+        geometry.coarse_moment = GridMetrics::AngularMomentumVolumeMoment(
+            make_grid_geometry_view(dst), dst.is + i, dst.js + j, dst.ks + k);
     for (int child = 0; child < geometry.count; ++child) {
         const int fi = source.grid.is + ibase + (child & 1);
         const int fj = source.grid.js + jbase + (dst.dim >= 2 ? (child >> 1) & 1 : 0);
         const int fk = source.grid.ks + kbase + (dst.dim == 3 ? (child >> 2) & 1 : 0);
         geometry.source_cells[child] = source.grid.index(fi, fj, fk);
         geometry.volumes[child] = source.grid.cell_volume[geometry.source_cells[child]];
+        if (angular_momentum)
+            geometry.moments[child] = GridMetrics::AngularMomentumVolumeMoment(
+                make_grid_geometry_view(source.grid), fi, fj, fk);
     }
     const int species = destination.state.n_species;
     double* scratch = species > 0
         ? workspace + static_cast<std::size_t>(cell) * species : nullptr;
     amr::regrid_math::RestrictionResult result{};
     const auto outcome = amr::regrid_math::restrict_family(
-        samples(source.state), geometry, species, density_floor, min_eint,
+        samples(source.state), geometry, species, bounds.density, bounds.internal_min,
         scratch, result);
     if (outcome != amr::regrid_math::Status::Ok) {
         atomicCAS(status, 0, static_cast<int>(outcome));
@@ -130,11 +158,13 @@ __global__ void restrict_regrid_families(
         destination.state.set_species(sp, target, result.fractions[sp]);
 }
 
+/** Verify addressable logical storage and the already lowered geometry chart. */
 bool valid_block(const DeviceRegridBlock& block)
 {
     const auto& state = block.state;
     const auto& grid = block.grid;
-    if (grid.dim < 1 || grid.dim > 3 || grid.total_size <= 0
+    if (!valid_device_grid_geometry(grid)
+        || grid.dim < 1 || grid.dim > 3 || grid.total_size <= 0
         || state.total_size != grid.total_size || state.n_species < 0
         || state.n_species > std::numeric_limits<int>::max() / grid.total_size
         || !state.rho || !state.mom_u || !state.mom_v || !state.mom_w
@@ -161,16 +191,19 @@ bool valid_block(const DeviceRegridBlock& block)
         && static_cast<std::int64_t>(nx) * ny * nz <= std::numeric_limits<int>::max();
 }
 
+/** Compare chart and field extents without granting transaction freshness. */
 bool same_layout(const DeviceRegridBlock& source, const DeviceRegridBlock& destination)
 {
     return valid_block(source) && valid_block(destination)
         && source.state.n_species == destination.state.n_species
+        && source.grid.geometry == destination.grid.geometry
         && source.grid.dim == destination.grid.dim
         && source.grid.ie - source.grid.is == destination.grid.ie - destination.grid.is
         && source.grid.je - source.grid.js == destination.grid.je - destination.grid.js
         && source.grid.ke - source.grid.ks == destination.grid.ke - destination.grid.ks;
 }
 
+/** Validate caller-owned reusable scratch with overflow-safe extent products. */
 bool valid_workspace(int cells, int species, int per_species,
                      double* workspace, std::size_t supplied)
 {
@@ -181,20 +214,20 @@ bool valid_workspace(int cells, int species, int per_species,
         && supplied >= count * width);
 }
 
-bool valid_floors(double density_floor, double min_eint)
+/** Borrow the full existing numerical limits; never create local defaults. */
+bool valid_limits(const state::Bounds& bounds)
 {
-    return std::isfinite(density_floor) && density_floor > 0.0
-        && std::isfinite(min_eint) && min_eint >= 0.0;
+    return state::valid_bounds(bounds) && bounds.density > 0.0;
 }
 
 } // namespace
 
 cudaError_t launch_cuda_regrid_prolongation(
     DeviceRegridBlock source, DeviceRegridBlock destination, int child_index,
-    double density_floor, double min_eint, double* workspace,
+    state::Bounds bounds, double* workspace,
     std::size_t workspace_scalars, int* status, cudaStream_t stream)
 {
-    if (!same_layout(source, destination) || !valid_floors(density_floor, min_eint)
+    if (!same_layout(source, destination) || !valid_limits(bounds)
         || !status || child_index < 0 || child_index >= (1 << destination.grid.dim))
         return cudaErrorInvalidValue;
     const auto& grid = source.grid;
@@ -209,26 +242,39 @@ cudaError_t launch_cuda_regrid_prolongation(
         return cudaErrorInvalidValue;
     constexpr int threads = 128;
     prolong_regrid_families<<<(static_cast<unsigned>(families) + threads - 1) / threads, threads, 0, stream>>>(
-        source, destination, child_index, density_floor, min_eint, workspace, status, families);
+        source, destination, child_index, bounds, workspace, status, families);
     return cudaGetLastError();
 }
 
-cudaError_t launch_cuda_regrid_restriction(
+cudaError_t validate_cuda_regrid_restriction(
     const DeviceRegridChildren& children, DeviceRegridBlock destination,
-    double density_floor, double min_eint, double* workspace,
-    std::size_t workspace_scalars, int* status, cudaStream_t stream)
+    state::Bounds bounds, double* workspace,
+    std::size_t workspace_scalars, int* status)
 {
-    if (!valid_block(destination) || !valid_floors(density_floor, min_eint) || !status)
+    if (!valid_block(destination) || !valid_limits(bounds) || !status)
         return cudaErrorInvalidValue;
     for (int child = 0; child < (1 << destination.grid.dim); ++child)
-        if (!same_layout(children.blocks[child], destination)) return cudaErrorInvalidValue;
+        if (!same_layout(children.blocks[child], destination))
+            return cudaErrorInvalidValue;
     const int cells = destination.grid.active_cell_count();
     if (!valid_workspace(cells, destination.state.n_species,
             amr::regrid_math::restriction_workspace_per_species, workspace, workspace_scalars))
         return cudaErrorInvalidValue;
+    return cudaSuccess;
+}
+
+cudaError_t launch_cuda_regrid_restriction(
+    const DeviceRegridChildren& children, DeviceRegridBlock destination,
+    state::Bounds bounds, double* workspace,
+    std::size_t workspace_scalars, int* status, cudaStream_t stream)
+{
+    const auto preflight=validate_cuda_regrid_restriction(children,destination,
+        bounds,workspace,workspace_scalars,status);
+    if(preflight!=cudaSuccess) return preflight;
+    const int cells=destination.grid.active_cell_count();
     constexpr int threads = 128;
     restrict_regrid_families<<<(static_cast<unsigned>(cells) + threads - 1) / threads, threads, 0, stream>>>(
-        children, destination, density_floor, min_eint, workspace, status, cells);
+        children, destination, bounds, workspace, status, cells);
     return cudaGetLastError();
 }
 

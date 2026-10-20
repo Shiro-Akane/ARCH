@@ -1,0 +1,419 @@
+{
+  "date": "2026-10-05",
+  "status": "SCOPED_CPU_PASS_STRICT_CONTACT_NOT_COMPLETE",
+  "sourceBaseline": "d69c75c7cd1e3d44af240b3ae2f70cd1dbd406d5",
+  "dirtyAtBuild": true,
+  "sourceFingerprints": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "0480ef54d6fd03981e83f806313e9a40013592ed11b6267671bf7481ed23994a",
+    "tests/host/gravity/test_composite_poisson.cpp": "e50a7842153b110cea413db1b32f1a86c884e6d09567ed15cc788e6e4fc7bbbe",
+    "validation/gravity/rz_ring_contact_log_reference.py": "cce85d2e1549e7449a42f21c7b4eea47338883eaabf7aa75ea22c46a80b8e191"
+  },
+  "cpuArchBinarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "cpuArchUnchanged": true,
+  "beforeScopedTestSha256": "b6e0457a7f023f8d6d88ff8c261879299d44441d64562b545d546f5fea8d3a2b",
+  "afterScopedTestSha256": "f7a638dbc7a53453e3b53f464d072d9146b75f545842e833d71a957a56f0732c",
+  "checks": [
+    {
+      "mode": "ring-contact-log",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-separated-gauss",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-native-face",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-far-leaf",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-axis-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "boundary-ledger",
+      "exitCode": 0
+    },
+    {
+      "mode": "ctest",
+      "exitCode": 0
+    },
+    {
+      "mode": "architecture",
+      "exitCode": 0
+    },
+    {
+      "mode": "reference",
+      "exitCode": 0
+    }
+  ],
+  "ctestPassed": 4,
+  "independentReference": {
+    "status": "PASS",
+    "primitiveCases": 20,
+    "contactCases": 3,
+    "rows": [
+      {
+        "primitive": "atan",
+        "inputHex": "0x0.0p+0",
+        "enclosure": {
+          "lower": 0,
+          "upper": 0
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.56e1fc2f8f359p-997",
+        "enclosure": {
+          "lower": 9.999999999999886e-301,
+          "upper": 1.0000000000000113e-300
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.79ca10c924223p-67",
+        "enclosure": {
+          "lower": 9.999999999999896e-21,
+          "upper": 1.0000000000000102e-20
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.0000000000000p-2",
+        "enclosure": {
+          "lower": 0.24497866312686212,
+          "upper": 0.24497866312686606
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.0000000000000p-1",
+        "enclosure": {
+          "lower": 0.4636476090008022,
+          "upper": 0.4636476090008101
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.0000000000000p+0",
+        "enclosure": {
+          "lower": 0.7853981633974482,
+          "upper": 0.7853981633974484
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.0000000000000p+1",
+        "enclosure": {
+          "lower": 1.1071487177940857,
+          "upper": 1.1071487177940948
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.5af1d78b58c40p+66",
+        "enclosure": {
+          "lower": 1.5707963267948961,
+          "upper": 1.570796326794897
+        }
+      },
+      {
+        "primitive": "atan",
+        "inputHex": "0x1.7e43c8800759cp+996",
+        "enclosure": {
+          "lower": 1.5707963267948961,
+          "upper": 1.570796326794897
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.56e1fc2f8f359p-997",
+        "enclosure": {
+          "lower": -690.7755278982195,
+          "upper": -690.7755278982077
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.79ca10c924223p-67",
+        "enclosure": {
+          "lower": -46.0517018598813,
+          "upper": -46.05170185988051
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.0000000000000p-2",
+        "enclosure": {
+          "lower": -1.3862943611199026,
+          "upper": -1.3862943611198781
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.0000000000000p+0",
+        "enclosure": {
+          "lower": 0,
+          "upper": 0
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.0000000000000p+1",
+        "enclosure": {
+          "lower": 0.6931471805599392,
+          "upper": 0.6931471805599511
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.5af1d78b58c40p+66",
+        "enclosure": {
+          "lower": 46.05170185988051,
+          "upper": 46.0517018598813
+        }
+      },
+      {
+        "primitive": "log",
+        "inputHex": "0x1.7e43c8800759cp+996",
+        "enclosure": {
+          "lower": 690.7755278982077,
+          "upper": 690.7755278982195
+        }
+      },
+      {
+        "primitive": "quadrant log",
+        "inputHex": [
+          "0x1.0000000000000p-2",
+          "0x1.8000000000000p-1"
+        ],
+        "enclosure": {
+          "lower": -0.19578781643028867,
+          "upper": -0.1957878164302846
+        },
+        "reference100": "-0.1957878164302866404534453902167495062449396900714981774811962387503139853817090716374088599128762446",
+        "reference140": "-0.19578781643028664045344539021674950624493969007149817748119623875031398538170907163740885991287624456171821943269720051232217501134289937746"
+      },
+      {
+        "primitive": "quadrant log",
+        "inputHex": [
+          "0x1.0000000000000p+0",
+          "0x1.0000000000000p+0"
+        ],
+        "enclosure": {
+          "lower": -0.36802824632259185,
+          "upper": -0.3680282463225653
+        },
+        "reference100": "-0.368028246322579035675723093451035994912957582976095917695923847176349087443600392540059630166261389",
+        "reference140": "-0.36802824632257903567572309345103599491295758297609591769592384717634908744360039254005963016626138923346223786139408047138377872973328916355"
+      },
+      {
+        "primitive": "quadrant log",
+        "inputHex": [
+          "0x1.0c6f7a0b5ed8dp-20",
+          "0x1.0c6f7a0b5ed8dp-20"
+        ],
+        "enclosure": {
+          "lower": -1.4183538804286982e-11,
+          "upper": -1.4183538804286712e-11
+        },
+        "reference100": "-1.418353880428685190137173622608777963521785915026897924773674425317038952831952225670566671240043294E-11",
+        "reference140": "-1.4183538804286851901371736226087779635217859150268979247736744253170389528319522256705666712400432939202226502741718998730208507761241850696E-11"
+      },
+      {
+        "primitive": "quadrant log",
+        "inputHex": [
+          "0x1.0000000000000p-2",
+          "0x1.4f8b588e368f1p-17"
+        ],
+        "enclosure": {
+          "lower": -5.9656573636501045e-06,
+          "upper": -5.965657363650001e-06
+        },
+        "reference100": "-0.000005965657363650053956817765304798572771852710596019449901207135298251493136423101673109145571034954509",
+        "reference140": "-0.0000059656573636500539568177653047985727718527105960194499012071352982514931364231016731091455710349545094486486499396587684394323576550282441511"
+      }
+    ],
+    "contact": [
+      {
+        "sourceObserverExactHex": [
+          "0x1.ff7ced916872bp-1",
+          "0x1.0000000000000p+0",
+          "-0x1.0624dd2f1a9fcp-10",
+          "0x1.0624dd2f1a9fcp-10",
+          "0x1.0000000000000p+0",
+          "0x0.0p+0"
+        ],
+        "enclosure": {
+          "lower": 9.345369048829761e-06,
+          "upper": 9.359909829195316e-06
+        },
+        "duffy24Precision80": "0.0000093526837067091683449165008822122821524671997716625523119741842680104868661078865",
+        "duffy32Precision100": "0.000009352682760691816509026245057019086166521186905517444168456176006587871757237916470785376207964319548"
+      },
+      {
+        "sourceObserverExactHex": [
+          "0x1.ff7ced916872bp-1",
+          "0x1.0000000000000p+0",
+          "-0x1.0624dd2f1a9fcp-10",
+          "0x1.0624dd2f1a9fcp-10",
+          "0x1.0000000000000p+0",
+          "0x1.0624dd2f1a9fcp-10"
+        ],
+        "enclosure": {
+          "lower": 8.932596941705505e-06,
+          "upper": 8.94652802876425e-06
+        },
+        "duffy24Precision80": "0.0000089395854829092976662368422165238333838895555876660738817353352085065714969019432",
+        "duffy32Precision100": "0.000008939584536891945831912014307343708985592653313803891669010575477910645310113157641469472827210422175"
+      },
+      {
+        "sourceObserverExactHex": [
+          "0x1.ff7ced916872bp-1",
+          "0x1.0000000000000p+0",
+          "-0x1.0624dd2f1a9fcp-10",
+          "0x1.0624dd2f1a9fcp-10",
+          "0x1.ffbe76c8b4396p-1",
+          "0x0.0p+0"
+        ],
+        "enclosure": {
+          "lower": 9.627211134270889e-06,
+          "upper": 9.642174997052018e-06
+        },
+        "duffy24Precision80": "0.0000096346912135690184004400255008749727527173968155170346586719289616849065977481674",
+        "duffy32Precision100": "0.000009634690267552609537941329035887167157624266029230126324689365988538663256017723602594995932645369261"
+      }
+    ],
+    "scope": "arithmetic containment and Duffy/Decimal AGM diagnostic, not certified quadrature error or strict full-source contact acceptance"
+  },
+  "matchedContactBudget": {
+    "maximumBoxes": 16384,
+    "relativeTarget": 1e-10,
+    "absoluteTarget": 0,
+    "before": [
+      {
+        "r": 1.0,
+        "z": 0.0,
+        "elapsedSeconds": 1.408510234003188,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.357766998429049e-07,
+          "upper": -1.3577668083852108e-07,
+          "value": -1.35776690340713e-07,
+          "absolute_error": 9.50219191750067e-15,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 326860,
+          "agm_iterations": 1836298
+        }
+      },
+      {
+        "r": 1.0,
+        "z": 0.375,
+        "elapsedSeconds": 1.3460729290090967,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.1921046363557295e-07,
+          "upper": -1.1921046029169093e-07,
+          "value": -1.1921046196363195e-07,
+          "absolute_error": 1.6719410233494041e-15,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 327230,
+          "agm_iterations": 1812546
+        }
+      },
+      {
+        "r": 0.75,
+        "z": 0.0,
+        "elapsedSeconds": 1.52471254800912,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.6471533548429167e-07,
+          "upper": -1.647152481662632e-07,
+          "value": -1.6471529182527744e-07,
+          "absolute_error": 4.3659014235319184e-14,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 326160,
+          "agm_iterations": 1830235
+        }
+      }
+    ],
+    "after": [
+      {
+        "r": 1.0,
+        "z": 0.0,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.3577669945168903e-07,
+          "upper": -1.3577668121189211e-07,
+          "value": -1.3577669033179056e-07,
+          "absolute_error": 9.119898472773577e-15,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 327140,
+          "agm_iterations": 1832938
+        },
+        "upperErrorReductionFraction": 0.04023213254859681
+      },
+      {
+        "r": 1.0,
+        "z": 0.375,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.1921046356956044e-07,
+          "upper": -1.1921046035564602e-07,
+          "value": -1.1921046196260323e-07,
+          "absolute_error": 1.6069572115014258e-15,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 327390,
+          "agm_iterations": 1808132
+        },
+        "upperErrorReductionFraction": 0.03886728714736365
+      },
+      {
+        "r": 0.75,
+        "z": 0.0,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.6471533228941902e-07,
+          "upper": -1.647152512248736e-07,
+          "value": -1.6471529175714631e-07,
+          "absolute_error": 4.053227271100882e-14,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 326720,
+          "agm_iterations": 1823845
+        },
+        "upperErrorReductionFraction": 0.0716173184180805
+      }
+    ],
+    "allThreeStatus": "WorkLimit, not converged"
+  },
+  "sourceReference": "https://dlmf.nist.gov/19.12",
+  "proofScope": "Convergent complementary-root K series gives log(4/q)<=K(q)<=log(4/q)/(1-q^2); integrate log distance exactly over contact quadrants with enclosed primitives",
+  "referenceQuality": "High-precision primitive arithmetic containment and Duffy/Decimal AGM diagnostic; order differences not certified quadrature error",
+  "remaining": [
+    "Strict full-source contact/inside target",
+    "Higher-order certified separated quadrature near singular region",
+    "General parent far/translation arithmetic",
+    "Full original RHS/residual ledger",
+    "Real AMR source-publication and RZ consumer science/CUDA"
+  ],
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-contact-budget-20261005"
+}

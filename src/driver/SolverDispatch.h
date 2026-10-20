@@ -12,10 +12,7 @@
 #include <string>
 
 class ProblemGenerator;
-struct SimConfig;
-struct SpeciesManager;
+namespace arch::config { class PreparedConfiguration; }
 
-void DispatchSolver(const std::string &solver_name,
-                    ProblemGenerator &problem,
-                    const SimConfig &config,
-                    const SpeciesManager &specs);
+void DispatchSolver(ProblemGenerator &problem,
+                    const arch::config::PreparedConfiguration &prepared);

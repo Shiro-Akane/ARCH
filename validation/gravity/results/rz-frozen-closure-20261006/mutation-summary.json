@@ -1,0 +1,31 @@
+{
+  "status": "PASS_PRIVATE_OWNER_EXECUTOR_MUTATION_SENSITIVITY",
+  "original_elf_sha256": "660634245f2a0e2ade20558e4bfbc8680da2b3bcabecb2d4149bb10e68bde0c5",
+  "restored_elf_sha256": "660634245f2a0e2ade20558e4bfbc8680da2b3bcabecb2d4149bb10e68bde0c5",
+  "rejected_mutations": [
+    {
+      "name": "missing_numerical_rollback",
+      "compiled": true,
+      "exit_code": -6,
+      "mutant_source_sha256": "7c82f27a88b6c6ec6c46487d2dbff921b1791b6827f04c36272e209e7866f933",
+      "elf_sha256": "b4b057052d80f704aa257f6e91c27769f1f542209f6e63e8367f9a4ecb6c6e0e",
+      "error": "terminate called after throwing an instance of 'std::runtime_error'\n  what():  actual numerical rejection corrupted state/ledger/clock/flux/source budget"
+    },
+    {
+      "name": "PCM_wrong_source_limiter",
+      "compiled": true,
+      "exit_code": -6,
+      "mutant_source_sha256": "fe71a5d9d62e35ead640df24967efdfa675b412f62474bd955ad9d8b0a33c599",
+      "elf_sha256": "b62039fd95f8cf499ea9cefb84d7d1263aa25389c5b3ecec79d03bdb5ca212de",
+      "error": "terminate called after throwing an instance of 'std::runtime_error'\n  what():  actual PCM source limiter"
+    },
+    {
+      "name": "duplicate_cache_consumption",
+      "compiled": true,
+      "exit_code": -6,
+      "mutant_source_sha256": "6166acd8f24521ce17bf3faffd6bdb1ff4a69c70caef3f73a8f370c3b9549ca0",
+      "elf_sha256": "f291b7a6b45e687d77935b77d40d46787cff0306d035eb8260dd80c9eeb5d8e4",
+      "error": "terminate called after throwing an instance of 'std::runtime_error'\n  what():  invalid production/cache identity accepted"
+    }
+  ]
+}

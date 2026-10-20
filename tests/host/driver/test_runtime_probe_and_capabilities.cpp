@@ -285,10 +285,10 @@ void test_all_requirement_codes()
     expect(query_support(plan, r, probe).cuda_supported,
            "CUDA cylindrical self gravity uses the shared curved operator");
     r.dimension=2; r.root_blocks_x3=0;
-    expect(query_support(plan, r, probe).cpu_supported,
-           "CPU 2D polar self gravity");
-    expect(query_support(plan, r, probe).cuda_supported,
-           "CUDA 2D polar self gravity");
+    expect(query_support(plan,r,probe).cpu_supported,
+           "CPU native Cyl2 self gravity uses the shared curved operator");
+    expect(query_support(plan,r,probe).cuda_supported,
+           "CUDA native Cyl2 uses shared curved operators and qualified Device bindings");
     r.dimension=1; r.root_blocks_x2=0;
     expect(query_support(plan, r, probe).cpu_supported,
            "CPU 1D radial self gravity");

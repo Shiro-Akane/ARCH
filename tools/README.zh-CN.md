@@ -12,10 +12,11 @@
 
 ```bash
 python3 tools/audit_architecture.py .
-python3 -m unittest discover -s tests/tooling -p 'test_*.py'
+python3 tools/check_documentation.py .
+python3 -B tests/tooling
 ```
 
-架构审查检查共用实现与头文件边界，Python 测试使用受控输入验证工具行为。两者都
+架构审查检查共用实现与头文件边界，Python 测试使用受控输入验证工具行为。这些入口都
 不运行模拟，也不表示物理结果已经验收。完整资源保护测试需要 Linux `/proc`、pidfd、
 子进程管理支持，以及 Python 的 `os.pidfd_open` 接口。
 
@@ -29,12 +30,16 @@ python3 tools/validate_cuda_amr_restart.py --unit-test
 
 这些模式只检查验证协议，不产生 CPU/CUDA 轨迹，不能替代实际场比较。
 
+[check_documentation.py](check_documentation.py)核对当前 Markdown 路径及标题锚点，
+历史冻结证据保持其原始依据。完整 Tooling 入口拒绝空套件、失败及跳过。
+
 ## 核对 CI 测试报告
 
 [check_ci_results.py](check_ci_results.py) 核对 CPU CI 配置的 CTest 清单，以及可选的
 JUnit 结果报告，拒绝关键测试缺失、重复或遗漏结果、失败和跳过。它读取 CTest 的
 通过／失败判定，不重新定义数值误差标准。接入方式见[工作流指南](../.github/workflows/README.md)；
-这项报告检查不生成科学 Validation 证据。
+这项报告检查不生成科学 Validation 证据。同一所有者用 `--scope`、`--base`、
+`--head` 判断原生／Studio 任务的保守适用范围；`NOT_APPLICABLE` 不代表测试通过。
 
 ## 完整程序与结果比较
 
@@ -51,6 +56,10 @@ CUDA 测试需要可用显卡；稀疏 CUDA 燃烧还需要 cuDSS，并编入所
   检查点契约，验证严格恢复与后续演化。
 - [qualify_cuda_amr_evidence.py](qualify_cuda_amr_evidence.py)：按清单、源码／构建身份
   和最终产物检查已生成的验证记录。
+
+固定零层级网格会跳过空的 regrid 事务。Backend 运行器依据实际参数，将相应计时
+明确标为“不适用”，不会伪造耗时或零计数；动态 AMR 仍必须提供合法的事务观测。
+两种情况均保留场值、守恒和独立科学参考检查。
 
 将输出放在本地 build 或临时目录中，目标目录必须不存在或为空。运行器保留日志，
 不自动删除前一次数据。工具中“发布证据”指写入本地 JSON，不会上传；维护者审阅

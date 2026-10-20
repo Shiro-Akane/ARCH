@@ -1,0 +1,237 @@
+{
+  "sourceHead": "3ef60687459c3289dafc8528d68af65f418c5b4b",
+  "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "results": [
+    {
+      "case": "reject-gravity-rtol",
+      "expected": "gravity_rtol",
+      "changes": {
+        "gravity_rtol": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "reject-gravity-atol",
+      "expected": "gravity_atol",
+      "changes": {
+        "gravity_atol": -1
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "reject-gravity-cycles",
+      "expected": "gravity_max_cycles",
+      "changes": {
+        "gravity_max_cycles": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "reject-1d-cartesian-isolated",
+      "expected": "Cartesian isolated gravity requires a 3D",
+      "changes": {
+        "gravity_boundary": "isolated"
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "reject-periodic-fluid-face",
+      "expected": "Fluid faces must match the gravity topology",
+      "changes": {
+        "x1l_boundary_type": "outflow"
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "reject-3d-isolated-fluid-faces",
+      "expected": "Fluid faces must match the gravity topology",
+      "changes": {
+        "gravity_boundary": "isolated",
+        "nblockx2": 1,
+        "nblockx3": 1,
+        "x2_min": 0,
+        "x2_max": 1,
+        "x3_min": 0,
+        "x3_max": 1
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "spherical",
+      "expected": "requires isolated",
+      "changes": {
+        "gravity_boundary": "periodic"
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "spherical",
+      "expected": "radial inner boundary",
+      "changes": {
+        "x1l_boundary_type": "outflow"
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "spherical",
+      "expected": "nonnegative radius",
+      "changes": {
+        "x1_min": -1
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "cylindrical",
+      "expected": "requires isolated",
+      "changes": {
+        "gravity_boundary": "periodic"
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "cylindrical",
+      "expected": "radial inner boundary",
+      "changes": {
+        "x1l_boundary_type": "outflow"
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "cylindrical",
+      "expected": "nonnegative radius",
+      "changes": {
+        "x1_min": -1
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "spherical",
+      "expected": "full azimuthal turn",
+      "changes": {
+        "nblockx2": 1,
+        "x2_min": 0,
+        "x2_max": 1,
+        "center_y": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case": "spherical",
+      "expected": "Fluid faces must match",
+      "changes": {
+        "nblockx2": 1,
+        "x1_min": 0.5,
+        "x1_max": 100000000.0,
+        "x2_min": 0,
+        "x2_max": 6.283185307179586,
+        "center_y": 0,
+        "x2l_boundary_type": "outflow"
+      },
+      "status": "PASS"
+    }
+  ],
+  "passCount": 14,
+  "failCount": 0,
+  "initialAudit": {
+    "passCount": 11,
+    "failCount": 3,
+    "falsePositiveFindings": [
+      "rtol/atol tests rejected duplicate whitespace keys rather than invalid range",
+      "spherical fluid-face test included missing axis/case inputs"
+    ],
+    "originalSummarySha256": "f75c1b749bc506481534b85b74d9455a413689c8a93719975b36e89c6ce22474"
+  },
+  "rejectionEvidence": [
+    {
+      "name": "reject-1d-cartesian-isolated",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_boundary': INVALID_RANGE [gravity_boundary]: Cartesian isolated gravity requires a 3D Newtonian domain.; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+      "inputSha256": "cb8b035342a845659a03f4c0252b5f8d3f9148aa37df550d8446c09e0f81cf82",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "reject-3d-isolated-fluid-faces",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_boundary': INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+      "inputSha256": "5536afc74c82e61ef07780fb2face1ad87d8a82bc61c1b421c7b0b1764ccfac7",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "reject-gravity-atol",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_atol': INVALID_RANGE [gravity_atol]: Requires a finite nonnegative value.",
+      "inputSha256": "ad13e62d92e1771800cc2849ae1d57cd9ba1ff731cac4d5c7eafafd3e401f960",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "reject-gravity-cycles",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_max_cycles': INVALID_RANGE [gravity_max_cycles]: Count must be positive.",
+      "inputSha256": "d3e99bd6bff6e505dc1cc7a96043210b19d804cea9550dfba9c0b819c9b8f51b",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "reject-gravity-rtol",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_rtol': INVALID_RANGE [gravity_rtol]: Requires a finite value in (0,1).",
+      "inputSha256": "0c9d0027259f6c91348055584e53720b6db878ed9f36753bc309fa3a5490f549",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "reject-periodic-fluid-face",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_boundary': INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+      "inputSha256": "78436ca73daeb079c741fd64ede26776ee2910245900f81225d58b698e78799a",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "cylindrical-reject-nonnegative-radius",
+      "diagnostic": "[Fatal Error] Config parameter 'x1_min': INVALID_RANGE [x1_min]: Curvilinear self-gravity requires nonnegative radius.",
+      "inputSha256": "d54b1ee054814c32cb1d1e7ac088610085ab2eaeab639ae995aff7e6934e394c",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "cylindrical-reject-radial-inner-boundary",
+      "diagnostic": "[Fatal Error] Config parameter 'x1l_boundary_type': INVALID_RANGE [x1l_boundary_type]: The radial inner boundary requires reflecting fluid flow.",
+      "inputSha256": "e17f2810cb9d8b8fb7266e551a2542666cdafb74939884a7edb41cb75c92b202",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "cylindrical-reject-requires-isolated",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_boundary': INVALID_RANGE [gravity_boundary]: Curvilinear self-gravity requires isolated gravity boundary.; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+      "inputSha256": "17df23491381d4d9afce6c8049e3ace1011a1a492b6319944edb9a4540632b37",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "spherical-reject-Fluid-faces-must-match",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_boundary': INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+      "inputSha256": "168f9b9e7c881f012277b9f9f77d6a6be4d4c3acd24e27d74cf6f4417887e046",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "spherical-reject-full-azimuthal-turn",
+      "diagnostic": "[Fatal Error] Config parameter 'x2_max': INVALID_RANGE [x2_max]: Curvilinear gravity requires a full azimuthal turn.",
+      "inputSha256": "bed7d4972e3f8c28cf99f420fbd93b0d55936093fbf9b07c338e5b9a10a3852d",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "spherical-reject-nonnegative-radius",
+      "diagnostic": "[Fatal Error] Config parameter 'x1_min': INVALID_RANGE [x1_min]: Curvilinear self-gravity requires nonnegative radius.",
+      "inputSha256": "020d2b4c9e21f1acc198c29444d12da52454cbac3b55dfb0aea2b433b0bbebbe",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "spherical-reject-radial-inner-boundary",
+      "diagnostic": "[Fatal Error] Config parameter 'x1l_boundary_type': INVALID_RANGE [x1l_boundary_type]: The radial inner boundary requires reflecting fluid flow.",
+      "inputSha256": "6d5d0093312e4632203d70e9b2a53e9423ed05a29d7e2c90b1f48ad3dd1033d4",
+      "scientificOutputCount": 0
+    },
+    {
+      "name": "spherical-reject-requires-isolated",
+      "diagnostic": "[Fatal Error] Config parameter 'gravity_boundary': INVALID_RANGE [gravity_boundary]: Curvilinear self-gravity requires isolated gravity boundary.; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).; INVALID_RANGE [gravity_boundary]: Fluid faces must match the gravity topology (periodic azimuth, physical radial/polar faces).",
+      "inputSha256": "5d09214e84521d5aed962b135161b89f5cc96662dc9945a2f90d9f21d55e5e18",
+      "scientificOutputCount": 0
+    }
+  ],
+  "generatorSha256": {
+    "validation/gravity/run_self_gravity.py": "9922f5d292589f309a95661583723a7fecb3ddec44353b9ad01e38a1f2dba8ae",
+    "validation/gravity/radial_1d.py": "bed57fc0972c686ab734267405aa1418eed91106393505e0e5733fa7ecbe36aa"
+  },
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/gravity-negative-contracts-20261004",
+  "fullSelfGravityGate": "NOT_COMPLETE",
+  "scope": "14 original negative contracts, no simulation timesteps; explicit former axis/default values; original raw failure retained"
+}

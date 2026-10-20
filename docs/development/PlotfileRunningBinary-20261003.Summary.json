@@ -1,0 +1,14 @@
+{
+  "kind": "non-scientific executable inode replacement test",
+  "runningExecutableSha256": "cb45be42994796d568ebc9e27577a6d4dfd97c1e13b3c0d28fbad01b137b3e50",
+  "replacementLaunchPathSha256": "2b319c01065bd0ba8bc041519e0400049297b38a33a41445fd01f5d17463e1bf",
+  "runningInodeRetained": true,
+  "freshProcHashMatches": true,
+  "processCacheMatches": true,
+  "exitCode": 0,
+  "ownedChildGone": true,
+  "baseline": "5a8bd9202276ce6d4c2b827ef304a86fa11a6d84",
+  "scopedTests": "3/3 PASS",
+  "buildSourceIdentity": "unknown",
+  "scientificSimulation": false
+}

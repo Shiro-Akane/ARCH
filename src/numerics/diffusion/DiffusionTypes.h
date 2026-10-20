@@ -10,11 +10,35 @@
 #pragma once
 
 #include "data/GlobalDefs.h"
+#include "core/ArchPortability.h"
+#include <cmath>
 #include <type_traits>
 #include <limits>
 
 namespace DiffFlux
 {
+    /** One endpoint redistribution item, separate from heat-flux accounting. */
+    struct DiffusionEnergyActivityTerm {
+        double signed_energy_change = 0.0, absolute_energy_change = 0.0;
+        bool valid = false;
+    };
+
+    /** Shared Host/device scalar term; original GridMetrics supplies true V.
+     * No normalization, clipping, EOS, recurrence or coefficient is involved.
+     */
+    ARCH_HOST_DEVICE inline DiffusionEnergyActivityTerm diffusion_energy_activity_term(
+        double volume, double current_energy, double seed_energy)
+    {
+        if (!std::isfinite(volume) || !(volume > 0.0)
+            || !std::isfinite(current_energy) || !std::isfinite(seed_energy)) return {};
+        const double difference = current_energy - seed_energy;
+        const double signed_change = volume * difference;
+        const double absolute_change = volume * std::abs(difference);
+        if (!std::isfinite(difference) || !std::isfinite(signed_change)
+            || !std::isfinite(absolute_change)) return {};
+        return {signed_change, absolute_change, true};
+    }
+
     struct DiffusionConfigView
     {
         bool use_diffusion = false;

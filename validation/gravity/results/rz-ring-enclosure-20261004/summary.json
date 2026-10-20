@@ -1,0 +1,295 @@
+{
+  "status": "PASS",
+  "source_cases": 5,
+  "log_cases": 6,
+  "G_exact_binary64_hex": "0x1.1ea8b45edf98cp-24",
+  "scope": "finite non-axis point-potential source enclosure; not production residual/force gate",
+  "proof": "positive rectangular kernel ranges; analytic logarithmic contact majorant; outward FP64 arithmetic",
+  "axis_certified_arithmetic": "pending; original analytic branch retained",
+  "logs": [
+    {
+      "input_hex": "0x1.0000000000000p+0",
+      "upper": 0,
+      "reference_excess": 0.0
+    },
+    {
+      "input_hex": "0x1.0000000000001p+0",
+      "upper": 2.22044604925034e-16,
+      "reference_excess": 2.7363612649853847e-30
+    },
+    {
+      "input_hex": "0x1.0000000000000p+1",
+      "upper": 0.6931471805599511,
+      "reference_excess": 5.749969259912351e-15
+    },
+    {
+      "input_hex": "0x1.0000000000000p+2",
+      "upper": 1.3862943611199021,
+      "reference_excess": 1.1499938519824702e-14
+    },
+    {
+      "input_hex": "0x1.249ad2594c37dp+332",
+      "upper": 230.25850929940646,
+      "reference_excess": 1.886866340712976e-12
+    },
+    {
+      "input_hex": "0x1.fffffffffffffp+1023",
+      "upper": 709.7827128933899,
+      "reference_excess": 5.88807954445271e-12
+    }
+  ],
+  "rows": [
+    {
+      "source": {
+        "name": "exterior_radial",
+        "r_observer": 2.0,
+        "z_observer": 0.0,
+        "r_lower": 0.5,
+        "r_upper": 1.0,
+        "z_lower": -0.375,
+        "z_upper": 0.375,
+        "density": 1.0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision": 60,
+          "potential": "-6.10412324880742672921721072321872556419772619647342521454557E-8"
+        },
+        {
+          "order": 32,
+          "precision": 80,
+          "potential": "-6.1041232488074267292172107455091384145210955353164407999316790955867964302287585E-8"
+        }
+      ],
+      "intervals": [
+        {
+          "status": 4,
+          "lower": -7.011678254971539e-08,
+          "upper": -5.271893705564303e-08,
+          "value": -6.141785980267921e-08,
+          "absolute_error": 8.698922747036182e-09,
+          "boxes": 16,
+          "range_evaluations": 31
+        },
+        {
+          "status": 4,
+          "lower": -6.536454676876754e-08,
+          "upper": -5.690591724131046e-08,
+          "value": -6.113523200503899e-08,
+          "absolute_error": 4.229314763728547e-09,
+          "boxes": 128,
+          "range_evaluations": 255
+        }
+      ],
+      "reference_quadrature_certified": false
+    },
+    {
+      "source": {
+        "name": "exterior_axial",
+        "r_observer": 0.75,
+        "z_observer": 2.0,
+        "r_lower": 0.5,
+        "r_upper": 1.0,
+        "z_lower": -0.375,
+        "z_upper": 0.375,
+        "density": 1.0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision": 60,
+          "potential": "-5.26932970549026969498720049791725422055559079430038190780776E-8"
+        },
+        {
+          "order": 32,
+          "precision": 80,
+          "potential": "-5.2693297054902696949872004979172541657916424573701250433140444948167153470310168E-8"
+        }
+      ],
+      "intervals": [
+        {
+          "status": 4,
+          "lower": -6.246740717434443e-08,
+          "upper": -4.4164196754478366e-08,
+          "value": -5.33158019644114e-08,
+          "absolute_error": 9.151605209933033e-09,
+          "boxes": 16,
+          "range_evaluations": 31
+        },
+        {
+          "status": 4,
+          "lower": -5.647308799988143e-08,
+          "upper": -4.9085474344525336e-08,
+          "value": -5.2779281172203386e-08,
+          "absolute_error": 3.6938068276780505e-09,
+          "boxes": 128,
+          "range_evaluations": 255
+        }
+      ],
+      "reference_quadrature_certified": false
+    },
+    {
+      "source": {
+        "name": "outer_face",
+        "r_observer": 1.0,
+        "z_observer": 0.0,
+        "r_lower": 0.5,
+        "r_upper": 1.0,
+        "z_lower": -0.375,
+        "z_upper": 0.375,
+        "density": 1.0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision": 60,
+          "potential": "-1.35777031284893718827175600973815750459807555373307968662510E-7"
+        },
+        {
+          "order": 32,
+          "precision": 80,
+          "potential": "-1.3577671289111362089338501887445203937671855897450526575364526656389228056519386E-7"
+        }
+      ],
+      "intervals": [
+        {
+          "status": 4,
+          "lower": -2.0100627579133948e-07,
+          "upper": -9.406843054961934e-08,
+          "value": -1.475373531704794e-07,
+          "absolute_error": 5.346892262086009e-08,
+          "boxes": 16,
+          "range_evaluations": 31
+        },
+        {
+          "status": 4,
+          "lower": -1.5116643915999623e-07,
+          "upper": -1.2226586148450858e-07,
+          "value": -1.367161503222524e-07,
+          "absolute_error": 1.4450288837743842e-08,
+          "boxes": 128,
+          "range_evaluations": 255
+        }
+      ],
+      "reference_quadrature_certified": false
+    },
+    {
+      "source": {
+        "name": "outer_corner",
+        "r_observer": 1.0,
+        "z_observer": 0.375,
+        "r_lower": 0.5,
+        "r_upper": 1.0,
+        "z_lower": -0.375,
+        "z_upper": 0.375,
+        "density": 1.0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision": 60,
+          "potential": "-1.19210802919466263596347896736821678170686225207878913916542E-7"
+        },
+        {
+          "order": 32,
+          "precision": 80,
+          "potential": "-1.1921048452597894144930802656421837444483895683110102686531503781138477494800442E-7"
+        }
+      ],
+      "intervals": [
+        {
+          "status": 4,
+          "lower": -1.6003525961966686e-07,
+          "upper": -8.96437920831956e-08,
+          "value": -1.2483952585143124e-07,
+          "absolute_error": 3.519573376823565e-08,
+          "boxes": 16,
+          "range_evaluations": 31
+        },
+        {
+          "status": 4,
+          "lower": -1.316149129025363e-07,
+          "upper": -1.0808736015520661e-07,
+          "value": -1.1985113652887146e-07,
+          "absolute_error": 1.1763776373664848e-08,
+          "boxes": 128,
+          "range_evaluations": 255
+        }
+      ],
+      "reference_quadrature_certified": false
+    },
+    {
+      "source": {
+        "name": "interior",
+        "r_observer": 0.75,
+        "z_observer": 0.0,
+        "r_lower": 0.5,
+        "r_upper": 1.0,
+        "z_lower": -0.375,
+        "z_upper": 0.375,
+        "density": 1.0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision": 60,
+          "potential": "-1.64715632388102059240313330107999691354397934942907274674910E-7"
+        },
+        {
+          "order": 32,
+          "precision": 80,
+          "potential": "-1.6471531430056205946302214773904106842853424807154304808100726500072811870052082E-7"
+        }
+      ],
+      "intervals": [
+        {
+          "status": 4,
+          "lower": -2.859863711363661e-07,
+          "upper": -9.697936355137127e-08,
+          "value": -1.9148286734386868e-07,
+          "absolute_error": 9.450350379249744e-08,
+          "boxes": 16,
+          "range_evaluations": 31
+        },
+        {
+          "status": 4,
+          "lower": -1.8855264331190523e-07,
+          "upper": -1.4503874703202059e-07,
+          "value": -1.6679569517196292e-07,
+          "absolute_error": 2.1756948139942337e-08,
+          "boxes": 128,
+          "range_evaluations": 255
+        }
+      ],
+      "reference_quadrature_certified": false
+    }
+  ],
+  "base_commit": "cad3c614262a72eda16a8396d86cf9fb7df4f75f",
+  "authority_commit": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "source_sha256": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "e3a172a95eb52fd3baf99423c9c224cb73f9d2ac790ad7981f7db062304a95a8",
+    "tests/host/gravity/test_composite_poisson.cpp": "361e77072f984fe522730eb421b6904b4f204405c3116dce3cbb8ee215091e04",
+    "validation/gravity/rz_ring_enclosure_reference.py": "e06e5336952a1b949798e53bbd3cd32b05661eb0cc633eaba95cbfd52d1a4c99"
+  },
+  "arch_sha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "production_binary_changed": false,
+  "production_rz_gate": "RETAINED",
+  "arithmetic_preconditions": "IEEE binary64, gradual underflow, basic/sqrt rounding and no-fast-math/no-contraction build contract; CPU validated, CUDA pending",
+  "checks": {
+    "source_enclosure": "PASS",
+    "independent_reference": "5 source + 6 log PASS",
+    "failure_cases": "axis pending, zero work, negative density, overflow, unsplittable, zero-target WorkLimit PASS",
+    "ring_legacy_and_dual_guard": "PASS",
+    "K_interval": "PASS",
+    "original_rhs_acceptance": "PASS",
+    "core_regression": "3/3 PASS",
+    "architecture": "PASS",
+    "diff_check": "PASS",
+    "memory_guard": "PASS, zero swap growth"
+  },
+  "production_precision_achieved": false,
+  "method": "positive range quadrature + integrable logarithmic contact majorant, independent of estimate-only Duffy Gauss path",
+  "cpu_resource_controller": "max 65536 boxes; tested 16/128, 2N-1 range evaluations; sum/rank scans are O(N^2), unsuitable for large production budgets without further work",
+  "raw_local_only": "studio/.local/integration/rz-ring-enclosure-20261004"
+}

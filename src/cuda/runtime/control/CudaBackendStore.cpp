@@ -6,11 +6,17 @@
  * are prepared. Publication follows a completion witness and atomically changes
  * the store namespace; abandoned candidates synchronize before releasing memory.
  * The shared DeviceBlockStoreLifecycle owns identity rules, not transfer physics.
+ *
+ * Macro-entry resident field snapshots are owned by CudaBackendMacroStep.cpp;
+ * this file owns only staged topology/store namespace publication.
  */
 
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 #include <algorithm>
+#include <array>
+#include <functional>
+#include <utility>
 
 namespace arch::cuda {
 namespace {
@@ -152,7 +158,7 @@ CudaBackend::StoreTransaction CudaBackend::begin_store_transaction(
             resource_slot->second = std::make_unique<CudaBlockRuntime>(
                 *binding.block, entry.record.handle, entry.record.storage,
                 impl_->species_count, impl_->device_ordinal,
-                *binding.physical_boundary,
+                *binding.physical_boundary, binding.hydro_boundary,
                 impl_->launch, impl_->stream.get(), impl_->runtime_counters);
             static_cast<void>(upload_slot);
         }
@@ -354,10 +360,24 @@ CudaBackend::begin_topology_store_transaction(
     for (const auto& binding : bindings) {
         cuda_bindings.push_back({
             binding.block, binding.handle, binding.storage,
-            binding.physical_boundary});
+            binding.physical_boundary, binding.hydro_boundary});
     }
     return std::make_unique<CudaTopologyStoreTransaction>(
         begin_store_transaction(scope, cuda_bindings));
+}
+
+CudaBackend::StoreTransaction::Impl& CudaBackend::require_staged_boundary_transaction(
+    backend::BackendTopologyStoreTransaction& transaction) const
+{
+    auto& concrete = require_cuda_topology_transaction(transaction).transaction;
+    if (!concrete.impl_ || concrete.impl_->consumed || !concrete.impl_->owner
+        || concrete.impl_->owner.get() != impl_.get() || concrete.impl_->upload_failed)
+        throw std::invalid_argument("invalid CUDA staged boundary transaction");
+    auto& staged = *concrete.impl_;
+    for (const auto& [arena, initialized] : staged.uploaded_current)
+        if (initialized != StoreTransaction::Impl::kInteriorUploaded)
+            throw std::logic_error("staged boundaries require complete migrated interiors");
+    return staged;
 }
 
 void CudaBackend::enqueue_upload_staged_current(

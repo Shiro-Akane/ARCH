@@ -1,0 +1,36 @@
+{
+  "sourceGitHead": "5ba4a9579517ef5aa664fc910ad74b5009caff45",
+  "repositoryDirtyAtBuild": false,
+  "buildId": "92b66ad1-92bf-42f5-8500-9d1784bb49c7",
+  "configureState": "succeeded",
+  "startedAt": "2026-10-03T09:57:41.766Z",
+  "finishedAt": "2026-10-03T09:57:49.883Z",
+  "beforeBinary": {
+    "sha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a",
+    "size": 7199816,
+    "modifiedTime": "2026-10-03T08:30:03.190Z"
+  },
+  "afterBinary": {
+    "sha256": "ee3de6cf2b8cd54bc54e70a5c15ffdaa60a9fb39281ae243800f21d1286c2d5a",
+    "size": 7199816,
+    "modifiedTime": "2026-10-03T09:57:49.321Z"
+  },
+  "binaryBytesUnchanged": true,
+  "compilerInputCount": 735,
+  "compilerInputsStableDuringBuild": true,
+  "compilerDriversStableDuringBuild": true,
+  "linkInputCount": 172,
+  "missingLinkInputCount": 0,
+  "retainedLtoInputCount": 97,
+  "retainedLtoBytes": 12120736,
+  "newHostReload": {
+    "state": "freshness-unknown",
+    "reason": "Tracked inputs match; full dependency coverage is unknown.",
+    "changed": [],
+    "buildId": "92b66ad1-92bf-42f5-8500-9d1784bb49c7",
+    "missing": 0
+  },
+  "dependenciesComplete": false,
+  "simulationRun": false,
+  "coreNumericChanges": false
+}

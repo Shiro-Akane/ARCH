@@ -1,0 +1,173 @@
+{
+  "date": "2026-10-03",
+  "baseline": "9a5c8958bbc4cda738c0abebf182bc698222f0d3",
+  "status": "PASS",
+  "scope": "production desktop Host HTTP scenario; not native Electron project-picker clicks",
+  "runId": "740d4d6c-6cba-41ce-b7df-d6a8a7585eaf",
+  "previewRequestId": "511f17da-6dd6-4ed4-810d-e0fe9deeb30c",
+  "scientificScope": "existing CPU Sod 4096 cells tmax=0.2; no extended endpoint",
+  "finalTime": 0.2,
+  "finalStep": 8994,
+  "previewHold": "owned idle warm-worker SIGSTOP; bounded 90s identity guard",
+  "before": {
+    "projects": [
+      {
+        "head": "9a5c8958bbc4cda738c0abebf182bc698222f0d3",
+        "dirty": ""
+      },
+      {
+        "head": "c96e9da0a6d114fd0323102b73dba4a3cd8da9ba",
+        "dirty": ""
+      }
+    ],
+    "binaries": [
+      {
+        "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+        "size": 7177152,
+        "mtimeNs": 1791000710885251414
+      },
+      {
+        "sha256": "fb4f9de20f6ca152bf016d56182b15a6760a83224fbec6ab8643a4f0c2b5d9a4",
+        "size": 72387504,
+        "mtimeNs": 1790605648347295117
+      }
+    ],
+    "originalInputSha": "9edb45ef29ce5bbf371f9145f5bc1dbb051ee31563472aaee865e159e59b3d16",
+    "testInputSha": "b2d55ae2a6daa4c96d942f9658bca483e96037f1640022567cdb2d0d538d7b85",
+    "sourceOnlyChange": "out_dir"
+  },
+  "after": {
+    "projects": [
+      {
+        "head": "9a5c8958bbc4cda738c0abebf182bc698222f0d3",
+        "dirty": ""
+      },
+      {
+        "head": "c96e9da0a6d114fd0323102b73dba4a3cd8da9ba",
+        "dirty": ""
+      }
+    ],
+    "binaries": [
+      {
+        "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+        "size": 7177152,
+        "mtimeNs": 1791000710885251414
+      },
+      {
+        "sha256": "fb4f9de20f6ca152bf016d56182b15a6760a83224fbec6ab8643a4f0c2b5d9a4",
+        "size": 72387504,
+        "mtimeNs": 1790605648347295117
+      }
+    ]
+  },
+  "observations": [
+    {
+      "name": "run-live-before-preview",
+      "time": 1791011581.2628603,
+      "core": {
+        "pid": 125008,
+        "state": "R",
+        "ppid": 124990,
+        "pgrp": 125008,
+        "startTicks": "1238607"
+      },
+      "worker": {
+        "pid": 124990,
+        "state": "S",
+        "ppid": 124985,
+        "pgrp": 124990,
+        "startTicks": "1238599"
+      },
+      "logBytes": 1688
+    },
+    {
+      "name": "run-live-after-preview-cancel",
+      "time": 1791011583.8988285,
+      "core": {
+        "pid": 125008,
+        "state": "R",
+        "ppid": 124990,
+        "pgrp": 125008,
+        "startTicks": "1238607"
+      },
+      "worker": {
+        "pid": 124990,
+        "state": "S",
+        "ppid": 124985,
+        "pgrp": 124990,
+        "startTicks": "1238599"
+      },
+      "logBytes": 27122
+    },
+    {
+      "name": "run-live-after-host-close",
+      "time": 1791011584.7656617,
+      "core": {
+        "pid": 125008,
+        "state": "R",
+        "ppid": 124990,
+        "pgrp": 125008,
+        "startTicks": "1238607"
+      },
+      "worker": {
+        "pid": 124990,
+        "state": "S",
+        "ppid": 124985,
+        "pgrp": 124990,
+        "startTicks": "1238599"
+      },
+      "logBytes": 42134
+    },
+    {
+      "name": "run-live-after-other-project-open",
+      "time": 1791011587.3365088,
+      "core": {
+        "pid": 125008,
+        "state": "R",
+        "ppid": 124990,
+        "pgrp": 125008,
+        "startTicks": "1238607"
+      },
+      "worker": {
+        "pid": 124990,
+        "state": "S",
+        "ppid": 124985,
+        "pgrp": 124990,
+        "startTicks": "1238599"
+      },
+      "logBytes": 73562
+    }
+  ],
+  "finalState": {
+    "runId": "740d4d6c-6cba-41ce-b7df-d6a8a7585eaf",
+    "state": "succeeded",
+    "workerPid": 124990,
+    "workerStartTicks": "1238599",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T07:13:01.196Z",
+    "processId": 125008,
+    "processStartTicks": "1238607",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T07:13:31.867Z"
+  },
+  "hostClosures": [
+    {
+      "name": "host-closed",
+      "time": 1791011584.7651782,
+      "pid": 124688,
+      "exitCode": 0
+    },
+    {
+      "name": "host-closed",
+      "time": 1791011587.3520737,
+      "pid": 125157,
+      "exitCode": 0
+    }
+  ],
+  "localEvidence": "studio/.local/integration/run-preview-project-isolation-550d3aff-ded7-4a35-b213-5173a673c20f",
+  "rawDataPolicy": "H5/checkpoint/input/log/arrays remain local ignored; no scientific comparison claimed",
+  "noConfigureBuild": true,
+  "currentNativeWindowTouched": false
+}

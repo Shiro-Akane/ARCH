@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "status": "PASS_ACTUAL_CURRENT_LINUX_GUI_ACTIVE_CLOSE_SCOPED",
+  "recorded_at_utc": "2026-10-08T03:06:04.613974+00:00",
+  "sourceCommit": "1b722c20f",
+  "binarySHA256": "d5e4a5d61b7d807d314b1a9066caa1a5b0c614756ed17c5af24941d0ef94c1a8",
+  "configSHA256": "936df43017a957b69dee6e4ae37423590b1a4f3566ca69ad465f85eb9b832398",
+  "method": "Real Configure/Build/Run + observed native WM_DELETE_WINDOW; same PID/startticks job retained",
+  "case": {
+    "model": "Sod",
+    "dimension": 1,
+    "cells": 4096,
+    "rootBlocks": 256,
+    "AMR": false,
+    "CFL": 0.4,
+    "scheme": "RK2/HLLC/MUSCL_MC",
+    "physicalEndpoint": 0.2,
+    "finalStep": 8993
+  },
+  "runWallSeconds": 58.604,
+  "formalPerformanceMeasurement": false,
+  "runId": "797e54c2-01ea-43a7-ad1f-1e65ea759360",
+  "processIdentity": {
+    "PID": 530682,
+    "startTicks": "17306378",
+    "runningBeforeClose": true,
+    "sameRunExitCode": 0,
+    "normalGuiAndHostExit": true
+  },
+  "desktopLogEvidence": [
+    "2026-10-08T02:55:53.253Z ready {\"bridgePid\":523849,\"hostPid\":523849,\"port\":41213,\"project\":\"/home/shiroakane/ARCH\",\"caseId\":\"Sod\",\"distro\":\"default\",\"linuxUser\":\"shiroakane\"}",
+    "2026-10-08T03:01:34.040Z shutdown requested WSL bridge PID 523849",
+    "2026-10-08T03:01:37.126Z owned Host exited; bridge PID 523849"
+  ],
+  "rawCleanup": {
+    "files": 4,
+    "bytes": 1677008,
+    "rawUploaded": false,
+    "receiptSHA256": "022916eefb9dd7a54ba56244fa990d1f9e3d78d7646a869b1dba4bd31698892d"
+  },
+  "pathObservation": "Host and Core both preserved quote characters in out_dir as literal path; initial guessed unquoted monitor superseded by actual job canonical path. No claim continuous raw guard. Parameter quote semantics separately reviewed.",
+  "notQualified": [
+    "new shared point-assembler source currently under CPU build",
+    "full supported GUI interaction matrix",
+    "Native/CUDA science",
+    "formal benchmark or long run",
+    "whole O-series release"
+  ]
+}

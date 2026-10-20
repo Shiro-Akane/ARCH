@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-01",
+  "workspace": "/home/shiroakane/ARCH/.worktrees/studio-ui-main-check",
+  "coreCommit": "25adec4224497981a0c124a3485f786194975be4",
+  "computePlanCommit": "85f77bed3c941279de1fc7bc57f29eefb1e422b2",
+  "studioSourceCheckpoint": "840ab538f676f9b898a4680acaabc80201b13647",
+  "studioLocalProfileAdaptation": true,
+  "phase3bRequestedCommit": "c96e9da0a6d114fd0323102b73dba4a3cd8da9ba",
+  "phase3bSourceAvailable": false,
+  "cpuOnly": true,
+  "sourceEdited": false,
+  "gpuCompilation": false,
+  "coreScopedTests": {
+    "passed": 11,
+    "failed": 0,
+    "wallSeconds": 244.13
+  },
+  "studioAndHostTests": {
+    "passed": 170,
+    "failed": 1,
+    "total": 171,
+    "node": "22.23.2 /home/shiroakane/miniconda3/bin/node",
+    "failure": "Old Studio test reads src/api/examples/core-a/fallback.json; main replaced this with invalid-number.json and reject-invalid semantics."
+  },
+  "realHost": {
+    "schemaVersion": "2",
+    "parameterCount": 95,
+    "sodInspection": "ok",
+    "exactInputIdentityMatched": true,
+    "buildFreshness": "unknown: tracked inputs match, full dependency coverage unknown",
+    "cuda": "not_initialized",
+    "setup": "not_executed",
+    "simulationReadiness": "not_checked"
+  },
+  "registry": {
+    "registered": 14,
+    "fieldAndAmrPreview": [
+      "Sod",
+      "CellularDet"
+    ]
+  },
+  "currentBehavior": {
+    "emptyInspection": "ok with defaults",
+    "unknownPolicies": "ok with POLICY_FALLBACK warnings",
+    "fractionalStandardInteger": "error INVALID_INTEGER",
+    "duplicateParameter": "ok last value wins",
+    "lineWithoutEquals": "ignored",
+    "unknownStandardLookingKey": "preserved as uninspected custom parameter"
+  },
+  "migrationProbe": {
+    "currentSchemaAndInspectionAccepted": true,
+    "syntheticMissingNullAccepted": false,
+    "hypotheticalNewVersionAccepted": false,
+    "note": "Synthetic probes only demonstrate current client assumptions; not a finalized new contract or a Phase 3B result."
+  },
+  "validationBoundary": "Current main Core and locally available Phase 2H Studio source. Not an independent certification of Phase 3B, simulation readiness, all-model Preview, Linux desktop launch, CUDA, long scientific trajectories or formal performance."
+}

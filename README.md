@@ -1,6 +1,8 @@
 # ARCH: Adaptive Reactive CUDA Hydrodynamics
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md) · [Documentation overview](docs/README.md)
+[简体中文](README.zh-CN.md) · [中文索引](docs/README.zh-CN.md)
+
+[Index](docs/README.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -11,6 +13,8 @@ Chinese translation: [README.zh-CN.md](README.zh-CN.md) · [Documentation overvi
 
 ARCH models compressible fluid motion, heat transfer and nuclear reactions. It advances fluid state with a finite-volume method and uses adaptive mesh refinement (AMR) to add spatial resolution where needed. CPU and CUDA share the physics and mathematical implementation.
 
+The supported environment is **Linux or WSL2**. Build and run the scientific executable independently; **ARCH Studio is always optional** and is not required for CPU or CUDA calculations.
+
 **ARCH uses CGS for inputs, outputs and physical constants**: length in `cm`, time in `s`, density in `g/cm³`, pressure and energy density in `erg/cm³`, specific internal energy in `erg/g`, and temperature in `K`. Angles use `rad`. Inputs are not converted automatically; see the [case guide](docs/guides/SimulationCase.md#units) for more units.
 
 Begin with [Build](#build) and [First run](#first-run). After the first case, follow the [ARCH Simulation Case Guide](docs/guides/SimulationCase.md) in order. Use the [feature list](docs/Features.md) or [reference](docs/Reference.md) when you need module scope or a specific setting.
@@ -19,17 +23,23 @@ Begin with [Build](#build) and [First run](#first-run). After the first case, fo
 
 ARCH provides one- to three-dimensional fluid dynamics, dynamic AMR, equations of state, diffusion, nuclear reactions and external/self gravity on CPU and CUDA. The [separate feature list](docs/Features.md) shows the applicable modules, geometries and boundaries. The [validation index](validation/README.md) identifies tested combinations; [release notes](docs/releases/README.md) describe changes in each source version.
 
+Physical and potential user boundaries use separate sibling sources and the
+existing two public headers. See [user boundaries](docs/guides/UserBoundaries.md)
+for inflow, transport flux and potential conditions.
+
 Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automatic selection occurs at startup; see the [CUDA guide](docs/CudaBackendStatus.md) for details.
 
 ## Build
 
-Build in a Linux or WSL2 terminal. Prepare the dependencies for your backend:
+Build in a Linux or WSL2 terminal. Prepare the Core dependencies for your backend:
 
 - **Core tools:** a C++20 compiler, CMake 3.22+, Ninja and Git.
 - **Libraries used by both builds:** HDF5 C++/HL and OpenMP.
 - **CUDA builds also need:** CMake 3.25.2+, CUDA Toolkit 12.0+ and a compatible GPU driver.
 
 The [build guide](docs/guides/Build.md) covers installation, compilation memory limits and EOS tables in source archives.
+
+For desktop configuration, previews and read-only Plotfile viewing, optionally install [ARCH Studio](docs/guides/Studio.md). `ARCH_BUILD_STUDIO` defaults to `OFF`; set it to `ON` to build the desktop. Only this option needs Linux Node 24+, npm, Electron and a graphical session; see [desktop requirements](docs/guides/StudioEnvironment.md). Both calculation builds below work independently of Studio.
 
 ### Get the source
 
@@ -79,9 +89,13 @@ export OMP_NUM_THREADS=4
 Here `Sod` selects the problem definition, and the `.par` file supplies its
 parameters. `OMP_NUM_THREADS` controls the number of CPU worker threads; it is
 not a numerical accuracy setting. For Option B, the
-executable is `./build-cuda/bin/ARCH`. To request GPU execution, add
-`compute_backend = cuda` to a copy of the example parameter file and run that
-copy.
+executable is `./build-cuda/bin/ARCH`. To request GPU execution, copy the example and replace its existing `compute_backend = cpu` assignment with `compute_backend = cuda`, then run that copy. Do not append a duplicate assignment.
+
+The example explicitly supplies required configuration controls. Inspect an edited input before running it:
+
+    ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
+
+This checks declared configuration only; it does not execute Setup, load EOS tables, check paths or establish simulation readiness. Missing or invalid values must be corrected, not silently filled from runtime defaults.
 
 A successful run prints the selected methods and a table of time steps, then
 writes files under `output/first_sod/`:
@@ -100,6 +114,16 @@ the data format used for these binary files. This example uses 64 cells;
 `simulation/Sedov/` contains a blast-wave example.
 
 **New to ARCH? Continue with the [ARCH Simulation Case Guide](docs/guides/SimulationCase.md).** It starts from the Sod case you just ran, then explains the mesh and settings, output checks, controlled experiments and writing your own case.
+
+## ARCH Studio
+
+ARCH Studio is an optional desktop workbench for preparing local calculations and inspecting their output. It combines grouped parameter editing, Configure/Build, previews of real Core initial fields and initial AMR, confirmed Run/Restart, and read-only Plotfile views with stored cell values, recorded units and provenance.
+
+![ARCH Studio Plotfile workspace showing a recorded gravitational potential field and native AMR leaf outlines](docs/guides/images/studio-plotfile.png)
+
+*Plotfile workspace: a recorded potential field with native AMR leaf outlines.*
+
+See the [Studio user guide](docs/guides/Studio.md#workspaces) for installation, workspace navigation and the complete workflow.
 
 ## Extended models
 
@@ -174,4 +198,4 @@ MPI would distribute calculations across processes and machines. Later explorati
 
 ## License
 
-ARCH-owned code uses the [MIT License](LICENSE). Third-party scientific code and data retain their original provenance and terms; see the [third-party notices](THIRD_PARTY_NOTICES.md) and [license directory](LICENSES/).
+ARCH-owned code uses the [MIT License](LICENSE). Third-party scientific code and data retain their original provenance and terms; see the [third-party notices](THIRD_PARTY_NOTICES.md) and [license directory](LICENSES).

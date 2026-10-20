@@ -17,10 +17,11 @@
 | 配置命令 | 构建目录 | 可执行文件 |
 | --- | --- | --- |
 | `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
+| `cmake --preset studio-cpu-release` | `build-studio-cpu` | `build-studio-cpu/bin/ARCH` + `arch-studio` |
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-三个预设都使用 Ninja 与 OpenMP。Release 预设设置 `BUILD_TESTING=OFF`；
+上述预设都使用 Ninja 与 OpenMP。Release 预设设置 `BUILD_TESTING=OFF`；
 `cuda-debug` 则启用测试，供开发使用。两个 CUDA 预设均通过
 `CMAKE_CUDA_ARCHITECTURES=native` 面向配置时可见的显卡，并设置
 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1`。预设只负责配置，实际编译仍使用下方明确的
@@ -73,7 +74,7 @@ NVIDIA CUDA 工具链、该工具链支持的宿主编译器及兼容的 NVIDIA 
 声明位于 [cmake/dependencies/Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake)；CUDA 专用
 求解库（包括 cuDSS）的发现仍由 [cmake/cuda/CudaBackend.cmake](../../cmake/cuda/CudaBackend.cmake)
 通过 [FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake)等查找逻辑处理。
-通过 Git LFS 管理的 EOS 资源需要先执行 `git lfs pull`，再使用相应表格。
+通过 Git LFS 管理的 EOS 资源若已有本地对象，优先用离线 `git lfs checkout` 实体化；读取已下载表格不消耗 LFS 流量。
 
 构建监控和测试工具需要 **Python 3.10 或更高版本**，ARCH 可执行文件本身不依赖
 Python 运行。生成反应网络使用独立的 Python 环境，配置方法见
@@ -83,16 +84,37 @@ Python 运行。生成反应网络使用独立的 Python 环境，配置方法�
 不要在 WSL 内安装 Linux 显示驱动。具体步骤见
 [NVIDIA 的 WSL 安装指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
 
+## 离线表与 LFS 流量
+
+必要表应在构建／输出目录和 Git LFS 对象库之外保留经过核验的普通文件副本，
+避免清理输出或 LFS prune 后丢失唯一的本机数据。恢复到新检出前，按该版本的
+`git show HEAD:EOS_toolkit/tables/helmholtz/helm_table.dat` 指针核对字节数和 SHA-256，
+并保留表的来源与许可。
+
+需要关闭本仓库自动下载时使用：
+
+```bash
+git config --local filter.lfs.smudge 'git-lfs smudge --skip -- %f'
+git config --local filter.lfs.process 'git-lfs filter-process --skip'
+git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+```
+
+本地配置覆盖本仓库关联的 worktree；`checkout`只展开已有对象，不下载缺失对象。
+对象缺失应明确报告，不能用 EOS 默认或自动网络重试掩盖。确需下载时限定路径：
+`git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""`。
+避免不带范围的全量 pull。CPU CI 按指针身份缓存所需表，缓存首次缺失或被驱逐时
+仍可能需要一次定点下载；本地读取已下载表不会消耗 LFS 流量。
+
 ## 源码包与 EOS 表
 
 不含 `.git` 的 ZIP／tar 源码目录可以正常构建，但不能直接用 `git lfs pull`
 补齐数据。首行是 `version https://git-lfs.github.com/spec/v1` 的文件是指针，
 不是 EOS 表。CPU 构建或 Sod 运行成功也不代表表数据已经可用。
 
-建议使用所选发行版本的 Git 检出并拉取 LFS 数据。若保留已经解压的源码包，
-从**同一标签或完整提交**的独立检出取得所需表，再复制到包内对应位置。
-从解压后的 ARCH 根目录运行以下示例；把 `YOUR_RELEASE_TAG_OR_COMMIT`
-替换为该源码包的版本身份：
+建议使用所选发行版本的 Git 检出并先复用已有本地 LFS 数据。若保留已经解压的源码包，
+先复制经过核验、与**同一标签或完整提交**匹配的本地表到包内对应位置。
+仅当本机没有该版本数据时，从解压后的 ARCH 根目录运行以下定点下载示例；
+把 `YOUR_RELEASE_TAG_OR_COMMIT` 替换为该源码包的版本身份：
 
 ```bash
 git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
@@ -106,6 +128,21 @@ cp ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables
 发布冒烟检查应从干净解压目录构建，运行 Sod，再用实际表运行已有 Helmholtz
 测试；只有后者会检查表格依赖。preset 的程序路径分别是 `build-cpu/bin/ARCH`
 和 `build-cuda/bin/ARCH`；自定义构建输出路径也须显式传给比较脚本。
+
+## 安装运行包
+
+构建应用并按上文物化、核对三张表后，可安装 `Runtime` 组件。它包含程序、
+Sod 输入、EOS 表及其许可；系统 HDF5／OpenMP、CUDA 和可选 cuDSS 仍需由运行环境提供。
+
+```bash
+cmake --install build-cpu --prefix "$PWD/arch-install" --component Runtime
+cd arch-install/share/arch
+../../bin/ARCH Sod simulation/Sod/Sod_beginner.par
+```
+
+CUDA 应用将构建目录换为 `build-cuda`。安装前缀可以移动，但输入中的相对表路径、
+输出与重启路径仍以启动时的工作目录为准；也可显式使用绝对路径。程序不会从安装
+前缀自动寻找缺失配置或表。Studio 是独立的可选桌面包，见下方构建说明。
 
 ## cuDSS 与稀疏燃烧
 
@@ -213,3 +250,13 @@ CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `
 构建的是默认目标集合；启用测试后这个集合会更大。更多定向检查见
 [Tests](../../tests/README.md)，科学算例及验收使用
 [Validation](../../validation/README.zh-CN.md) 中各模块的流程。
+
+算例边界随应用编译：把 `physical_boundary.cpp`、`gravity_boundary.cpp` 放在注册算例源码
+同目录，新增文件后重新配置并构建，无需边界路径参数。见[用户边界](UserBoundaries.zh-CN.md)。
+
+## Linux Studio 桌面
+
+`studio-cpu-release` 同时构建 Core 与可选的 Electron 桌面；普通 Core 预设保持 Studio 关闭。
+GUI 预设使用 Host 管理的本地 CPU 构建目录和 GNU 构建身份设置。
+Node 24+、WSLg、图形库及独立终端的要求见 [Studio 使用指南](Studio.zh-CN.md)
+与[环境准备](StudioEnvironment.zh-CN.md)。

@@ -37,12 +37,21 @@ def vector(stream, size):
     return result
 
 
-def review(binary, name, free_energy, eta, *, derive_reference=False):
+def review(binary, name, free_energy, eta, *, derive_reference=False, input_state=None):
     # This is a synchronous numerical query channel, not a new job supervisor.
     # The common outer memory guard owns this process and its child.
-    child = subprocess.Popen([str(binary), '--rhs', name], cwd=ROOT,
+    command = [str(binary), '--rhs', name]
+    if input_state is not None:
+        command = [str(binary), '--rhs-input', name,
+                   format(input_state['rho'], '.17g'),
+                   format(input_state['interval'], '.17g')]
+    child = subprocess.Popen(command, cwd=ROOT,
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
     try:
+        if input_state is not None:
+            child.stdin.write(' '.join(format(float(x), '.17g')
+                                      for x in input_state['state']) + '\n')
+            child.stdin.flush()
         for line in child.stdout:
             if line.startswith('BURN_RHS_READY '):
                 _, size, rho, interval = line.split()
@@ -54,6 +63,10 @@ def review(binary, name, free_energy, eta, *, derive_reference=False):
         expected = vector(child.stdout, size)
         aion = vector(child.stdout, size - 1)
         zion = vector(child.stdout, size - 1)
+        if input_state is not None and (rho != input_state['rho']
+                or interval != input_state['interval']
+                or not np.array_equal(initial, input_state['state'])):
+            raise ValueError('custom reference input changed in the RHS service')
 
         def query(state):
             child.stdin.write(' '.join(format(float(x), '.17g') for x in state) + '\n')
@@ -86,16 +99,34 @@ def review(binary, name, free_energy, eta, *, derive_reference=False):
                 if not derive_reference and (species_error > 1.e-12 or temperature_error > 1.e-12):
                     raise ArithmeticError('immutable time reference failed independent review')
                 endpoints.append(endpoint)
-                records.append({'method': method, 'max_step_fraction': 1.0 / steps,
+                record = {'method': method, 'max_step_fraction': 1.0 / steps,
                     'rhs_calls': solution.nfev, 'species_linf': species_error,
                     'relative_temperature': temperature_error,
                     'endpoint_hex': [float(x).hex() for x in endpoint],
-                    'integrated_energy': float(solution.y[-1, -1] * energy_initial)})
+                    'integrated_energy': float(solution.y[-1, -1] * energy_initial),
+                    'mass_closure': float(abs(np.sum(endpoint[:-1]) - 1.0)),
+                    'minimum_abundance': float(np.min(endpoint[:-1]))}
+                if input_state is not None:
+                    # The custom header is an initial-state placeholder, so a
+                    # distance from it is reaction activity, not an error.
+                    record.update(species_linf=None, relative_temperature=None,
+                                  species_change_linf=species_error,
+                                  relative_temperature_change=temperature_error)
+                records.append(record)
 
         authority = endpoints[0] if derive_reference else expected
+        # New long-time derivations allocate 1% of the existing production
+        # 1e-8 global budget to this empirical reference disagreement. The
+        # immutable short reference retains its original 1e-12 window.
+        reference_budget = 1.e-10 if input_state is not None else 1.e-12
         for endpoint in endpoints:
-            if np.max(abs(endpoint[:-1] - authority[:-1])) > 1.e-12 or abs(endpoint[-1]/authority[-1] - 1.0) > 1.e-12:
+            if np.max(abs(endpoint[:-1] - authority[:-1])) > reference_budget or abs(endpoint[-1]/authority[-1] - 1.0) > reference_budget:
                 raise ArithmeticError('independent DOP853/Radau time refinements disagree')
+        disagreement = {'species_linf': float(max(
+            np.max(abs(endpoint[:-1] - authority[:-1])) for endpoint in endpoints)),
+            'relative_temperature': float(max(
+                abs(endpoint[-1] / authority[-1] - 1.0) for endpoint in endpoints)),
+            'budget': reference_budget, 'rigorous_error_bound': False}
 
         # The already-independent EOS oracle accepts composition through its
         # thermodynamic moments. Reuse it at both precisions; no new EOS body.
@@ -131,7 +162,9 @@ def review(binary, name, free_energy, eta, *, derive_reference=False):
                 'reference_endpoint_hex': [float(value).hex() for value in authority],
                 'independent_endpoint_energy_hex': energies[1][0].hex(),
                 'independent_energy_change': energies[1][1],
-                'relative_endpoint_eos_error': energy_error}
+                'relative_endpoint_eos_error': energy_error,
+                'time_reference_disagreement': disagreement,
+                'input_state_hex': [float(value).hex() for value in initial]}
     finally:
         child.stdin.close()
         # A normal EOF finishes the server; a protocol/ODE failure still has a
@@ -158,7 +191,20 @@ def main():
     parser.add_argument('--build-dir', type=Path, required=True)
     parser.add_argument('--derive-reference', action='store_true',
         help='print independently corroborated endpoints for review; never rewrite fixtures or declare a validation pass')
+    parser.add_argument('--input', type=Path,
+        help='explicit network/rho/interval/state JSON for a new reference derivation; requires --derive-reference')
     args = parser.parse_args()
+    if args.input is not None and not args.derive_reference:
+        parser.error('--input is only available with --derive-reference')
+    input_state = json.loads(args.input.read_text()) if args.input is not None else None
+    if input_state is not None:
+        if (input_state['network'] not in ('aprox13', 'aprox19', 'aprox21', 'iso7')
+                or not np.isfinite(input_state['rho']) or input_state['rho'] <= 0.0
+                or not np.isfinite(input_state['interval']) or input_state['interval'] <= 0.0):
+            parser.error('custom reference needs a built-in network and positive rho/interval')
+        size = {'aprox13': 14, 'aprox19': 20, 'aprox21': 22, 'iso7': 8}[input_state['network']]
+        if len(input_state['state']) != size:
+            parser.error('custom initial state must contain all abundances followed by T')
     binary, build = args.binary.resolve(), args.build_dir.resolve()
     def identity():
         return provenance.capture_focused(artifacts={'burn_reference': binary},
@@ -170,12 +216,17 @@ def main():
         raise ValueError('incomplete Helmholtz reference table')
     free_energy = values[:9 * points].reshape(JMAX, IMAX, 9)
     eta = values[13 * points:17 * points].reshape(JMAX, IMAX, 4)
-    records = [review(binary, name, free_energy, eta, derive_reference=args.derive_reference)
-               for name in ('aprox13', 'aprox19', 'aprox21', 'iso7')]
+    networks = (input_state['network'],) if input_state is not None else (
+        'aprox13', 'aprox19', 'aprox21', 'iso7')
+    records = [review(binary, name, free_energy, eta,
+                      derive_reference=args.derive_reference, input_state=input_state)
+               for name in networks]
     provenance.require_unchanged(before, identity())
-    print(json.dumps({'scope': 'builtin independent time integration and endpoint EOS',
+    print(json.dumps({'scope': 'custom isochoric time-reference derivation' if input_state is not None
+                             else 'builtin independent time integration and endpoint EOS',
         'release_qualified': False, 'focused_gate_pass': not args.derive_reference,
         'reference_derivation': args.derive_reference,
+        'custom_input': provenance.file_identity(args.input) if args.input is not None else None,
         'independent_nuclear_rates': False, 'identity': before,
         'identity_verified_after_run': True, 'table': provenance.file_identity(TABLE),
         'records': records}, indent=2, sort_keys=True))

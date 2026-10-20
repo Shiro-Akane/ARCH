@@ -1,0 +1,453 @@
+{
+  "scope": "CPU SmoothAdvection real Host/xterm Run and Restart continuation; not visual UAT, CUDA, burn or adaptive-AMR coverage",
+  "sourceCommit": "f840c4999a8ea55ccd2c64c6e1a2ab1ef0822194",
+  "localRawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9",
+  "runs": [
+    {
+      "kind": "source",
+      "runId": "14ad3646-6a57-4487-bb91-e3ec7697313e",
+      "state": {
+        "runId": "14ad3646-6a57-4487-bb91-e3ec7697313e",
+        "state": "succeeded",
+        "workerPid": 393,
+        "startedAt": "2026-10-02T05:14:15.682Z",
+        "processId": 404,
+        "processStartTicks": "31791",
+        "processIdentity": "captured",
+        "exitCode": 0,
+        "signal": null,
+        "finishedAt": "2026-10-02T05:14:15.801Z"
+      },
+      "terminalPid": 392,
+      "config": {
+        "relativePath": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/source.par",
+        "fingerprint": {
+          "sha256": "45c62f50e67e6de95874145a10bcc9ab96929117f972fdb607db3bda5c872aec",
+          "size": 1167,
+          "modifiedTime": "2026-10-02T05:13:48.824Z"
+        }
+      },
+      "binary": {
+        "relativePath": "build-studio-cpu/bin/ARCH",
+        "fingerprint": {
+          "sha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+          "size": 7174432,
+          "modifiedTime": "2026-10-02T04:02:04.184Z"
+        },
+        "sourceClaim": "compiled-version-only"
+      },
+      "checkpointPath": null,
+      "terminalLogEmpty": true,
+      "ownedProcessesRemaining": []
+    },
+    {
+      "kind": "resumed",
+      "runId": "b463c8c7-c69b-4c5d-97de-b55db9a4e2a7",
+      "state": {
+        "runId": "b463c8c7-c69b-4c5d-97de-b55db9a4e2a7",
+        "state": "succeeded",
+        "workerPid": 440,
+        "startedAt": "2026-10-02T05:15:13.338Z",
+        "processId": 451,
+        "processStartTicks": "37324",
+        "processIdentity": "captured",
+        "exitCode": 0,
+        "signal": null,
+        "finishedAt": "2026-10-02T05:15:13.455Z"
+      },
+      "terminalPid": 439,
+      "config": {
+        "relativePath": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/resumed.par",
+        "fingerprint": {
+          "sha256": "f5e4c0be743c5b61cf1de2f1a9993948e5d336a827229aee93246843e2a21183",
+          "size": 1346,
+          "modifiedTime": "2026-10-02T05:15:08.745Z"
+        }
+      },
+      "binary": {
+        "relativePath": "build-studio-cpu/bin/ARCH",
+        "fingerprint": {
+          "sha256": "ae6192573b41761aaad325d6eaf6346ad7d6a90a87c8ad8fbdd850792a86e403",
+          "size": 7174432,
+          "modifiedTime": "2026-10-02T04:02:04.184Z"
+        },
+        "sourceClaim": "compiled-version-only"
+      },
+      "checkpointPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/source-output/RestartSmoothAdvection_chk_0001.h5",
+      "terminalLogEmpty": true,
+      "ownedProcessesRemaining": []
+    }
+  ],
+  "comparison": {
+    "metadata": {
+      "source-output/RestartSmoothAdvection_chk_0000.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 0,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 1e-16,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 1,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 0,
+        "step": 0,
+        "time": 0
+      },
+      "source-output/RestartSmoothAdvection_chk_0001.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 1,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.001009170367741371,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 1,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 1,
+        "step": 25,
+        "time": 0.025227987917244142
+      },
+      "source-output/RestartSmoothAdvection_chk_0002.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 2,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0010092169880981437,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 1,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 1,
+        "step": 50,
+        "time": 0.050457890208906925
+      },
+      "source-output/RestartSmoothAdvection_chk_0003.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 3,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0010092868933430357,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 1,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 1,
+        "step": 75,
+        "time": 0.07568931052064394
+      },
+      "source-output/RestartSmoothAdvection_chk_0004.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 4,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0010093155916479216,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 2,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 0,
+        "step": 100,
+        "time": 0.1
+      },
+      "resumed-output/RestartSmoothAdvection_chk_0002.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 2,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0010092169880981437,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 1,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 1,
+        "step": 50,
+        "time": 0.050457890208906925
+      },
+      "resumed-output/RestartSmoothAdvection_chk_0003.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 3,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0010092868933430357,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 1,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 1,
+        "step": 75,
+        "time": 0.07568931052064394
+      },
+      "resumed-output/RestartSmoothAdvection_chk_0004.h5": {
+        "active_network": "none",
+        "burn_enabled": 0,
+        "cells_per_block": 16,
+        "checkpoint_version": 6,
+        "chk_index": 4,
+        "dim": 1,
+        "dt_burn": 1e+99,
+        "dt_old": 0.0010093155916479216,
+        "eos_table_path": "",
+        "eos_table_sha256": "",
+        "eos_type": "ideal",
+        "geometry": "cartesian",
+        "gravity_boundary": "none",
+        "gravity_type": "none",
+        "ideal_gamma": 1.4,
+        "nse_enabled": 0,
+        "num_species": 0,
+        "plt_index": 2,
+        "repair_block_uid": 0,
+        "repair_stage": 0,
+        "repair_time": 0,
+        "resume_after_regrid": 0,
+        "step": 100,
+        "time": 0.1
+      }
+    },
+    "source": "source-output/RestartSmoothAdvection_chk_0004.h5",
+    "resumed": "resumed-output/RestartSmoothAdvection_chk_0004.h5",
+    "comparisons": [
+      {
+        "path": "Blocks/level",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Blocks/logical_x1",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Blocks/logical_x2",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Blocks/logical_x3",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/eng",
+        "shape": [
+          4,
+          16
+        ],
+        "count": 64,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/enuc_rate",
+        "shape": [
+          4,
+          16
+        ],
+        "count": 64,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/mom_u",
+        "shape": [
+          4,
+          16
+        ],
+        "count": 64,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/mom_v",
+        "shape": [
+          4,
+          16
+        ],
+        "count": 64,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/mom_w",
+        "shape": [
+          4,
+          16
+        ],
+        "count": 64,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "Data/rho",
+        "shape": [
+          4,
+          16
+        ],
+        "count": 64,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "gravity_controls",
+        "shape": [
+          0
+        ],
+        "count": 0,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "repair_position",
+        "shape": [
+          3
+        ],
+        "count": 3,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "state_controls",
+        "shape": [
+          18
+        ],
+        "count": 18,
+        "differences": 0,
+        "maxAbs": 0
+      },
+      {
+        "path": "state_repairs",
+        "shape": [
+          10
+        ],
+        "count": 10,
+        "differences": 0,
+        "maxAbs": 0
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "file": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/source-result.json",
+      "sha256": "bb66c585f55e27437f0dd2605651396325edce3d7a6dfe8c8267c7650cd9e4f2"
+    },
+    {
+      "file": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/resumed-result.json",
+      "sha256": "eac5a18403e2f61868d594691d99acf24b33cf4bd02917b71d38be91e2e318e4"
+    },
+    {
+      "file": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/comparison.json",
+      "sha256": "43faa7076101c2f2b5ae32c93a0accd5dc86eaed7e696689375eebe4d62becae"
+    },
+    {
+      "file": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/source-output/RestartSmoothAdvection_chk_0004.h5",
+      "sha256": "de42acdbd16e860599659ae21ca5ed9aaccc5fb7ded85ccac87da7a729ae21c4"
+    },
+    {
+      "file": "studio/.local/integration/restart-terminal-b722bdac-0ea5-4797-b21b-0030ff03cfc9/resumed-output/RestartSmoothAdvection_chk_0004.h5",
+      "sha256": "c7ab2a6ddc9e226c5e844f9f418bea914476bbae198672fa12beb224f7141032"
+    }
+  ],
+  "result": "PASS: step25 checkpoint resumed to step100/time0.1; final root attributes and all listed native arrays exactly equal",
+  "performanceClaim": false
+}

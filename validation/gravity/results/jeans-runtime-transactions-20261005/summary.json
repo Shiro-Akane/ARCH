@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "1.0",
+  "node": "Actual Runtime device Jeans regrid decisions",
+  "status": "SCOPED_PASS_NOT_FULL_FROZEN_LIFECYCLE",
+  "sourceHeadBeforeCommit": "6cf5ba8d9c96b1f11ab41691bb94851cd2b0ea52",
+  "sourceDirtyDuringBuild": true,
+  "explicitInputFingerprints": {
+    "src/amr/topology/AmrTree.h": "822171341e392a1ccdb1468a70120b2dbebdd7feb5c64787835ed90ecc1e54fb",
+    "src/driver/runtime/DriverRuntime.h": "541d5bb3980e93b297e18ea86451ff9dd03efcc8e067c3274bf9cf301b0f085b",
+    "src/driver/runtime/DriverRegrid.cpp": "1ed54a960334d2fbb64f718087d234a4cd7f07a70fcc4ab49ecc756b449ec11b",
+    "tests/cuda/amr/test_cuda_regrid_transaction.cpp": "c0d2eafcd6addf7f90dd0819a647cca9fdace2a090c6c30dfcb6326c645513c4"
+  },
+  "publicGatesRetained": [
+    "src/core/config/RefinementSelection.h",
+    "src/core/config/RuntimeParams.h",
+    "src/api/configuration/PresentationMetadata.cpp",
+    "src/driver/Driver.h"
+  ],
+  "cuda": {
+    "ctest": "cuda_regrid_transaction",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "dimensions": [
+      1,
+      2,
+      3
+    ],
+    "rootBlocks": 4,
+    "refinedBlocks": [
+      8,
+      16,
+      32
+    ],
+    "requestedTarget": 160,
+    "explicitAllowedCoarsenTarget": 64,
+    "parentDeficitVeto": true,
+    "exactEqualityCoarsen": true,
+    "nextafterDeficitRefine": true,
+    "finestLevelRejectBeforePublication": true,
+    "retiredStorageRejected": true,
+    "staleHostRhoCompositionAndHostEosFallbackRejected": true,
+    "capacityFailure": {
+      "roots": 4,
+      "finalLeaves": 8,
+      "peakSlotsNeeded": 12,
+      "capacity": 8,
+      "exactError": "AMR MemoryPool exhausted! Increase MaxBlocks.",
+      "oldHandlesAndDeviceMinimaPreserved": true,
+      "stagedNamespaceEmpty": true
+    },
+    "time": 0,
+    "steps": 0,
+    "scope": "Cartesian IdealGas uniform t=0 internal typed Runtime; not registered GravityBox evolution/Poisson/checkpoint acceptance",
+    "existingSpeciesTransactions": [
+      4,
+      41
+    ]
+  },
+  "cpu": {
+    "ctests": [
+      "jeans_diagnostics",
+      "amr_operation_plans",
+      "shared_stage_scheduler"
+    ],
+    "passed": 3,
+    "failed": 0,
+    "actualRuntimeFixtureExit": 0,
+    "actualRuntimeFixtureScope": "Actual Cartesian CPU Runtime -> GravityStage -> SelfGravity all-block/slot/regrid publication; no simulation time advancement",
+    "gathers": 7,
+    "treeSequence": [
+      4,
+      8,
+      4
+    ],
+    "time": 0,
+    "steps": 0
+  },
+  "build": {
+    "cudaInitialSeconds": 877.918,
+    "cudaFinalIncrementalSeconds": 8.039,
+    "cpuSelectedTargetsSeconds": 6.035,
+    "minAvailableKiB": 20955668,
+    "peakSwapKiB": 0,
+    "guardStopped": false,
+    "cudaInitialPeakOwnedRssKiB": 1983456,
+    "architecture": "sm_89",
+    "heavyCompilePool": 1,
+    "topParallel": 28,
+    "cudaInitialSystemIoFullPeakPercent": 20.66
+  },
+  "executables": {
+    "build-cuda/arch_cuda_regrid_transaction": {
+      "sha256": "dbaf3ad7ce723f8b459706e4034723e5a9299dbfacc7a75c4432eafbd4b2e771",
+      "size": 288240352
+    },
+    "build-cpu/bin/ARCH": {
+      "sha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+      "size": 7539704
+    },
+    "studio/.local/integration/jeans-runtime-transactions-cpu-20261005/gravity-runtime-contract": {
+      "sha256": "9220c16ecdcd2086500a68643e600edb018abf4f390e9c2b31a6e3fa817779bf",
+      "size": 1573000
+    }
+  },
+  "logs": {
+    "studio/.local/integration/jeans-runtime-transactions-20261005.build.log": {
+      "sha256": "596c1ad3d001d51d2ce64c7813abcfb1490408f27a20689b673e45c73d4d2b33",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-transactions-20261005.build.log"
+    },
+    "studio/.local/integration/jeans-runtime-transactions-20261005.build-final.log": {
+      "sha256": "c09e36673b8b0f541c2c3ec17333ff9eadcf3bda3e82031ef94d820cddf46a51",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-transactions-20261005.build-final.log"
+    },
+    "studio/.local/integration/jeans-runtime-transactions-20261005.ctest-first.log": {
+      "sha256": "21c517648746a17fa0bb5dc88b8c6cbc0a87ae25891bb7fc7b8706914eb07db8",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-transactions-20261005.ctest-first.log"
+    },
+    "studio/.local/integration/jeans-runtime-transactions-20261005.ctest-final.log": {
+      "sha256": "d1edc1c408796b73561826f802e33e4e811a31f55855da5d87f2e92b11e80f32",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-transactions-20261005.ctest-final.log"
+    },
+    "studio/.local/integration/jeans-runtime-cpu-20261005.build.log": {
+      "sha256": "48d909d767c6d822be25864efdf6388fea55125df3da309727def540a6747052",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-cpu-20261005.build.log"
+    },
+    "studio/.local/integration/jeans-runtime-cpu-20261005.ctest.log": {
+      "sha256": "af3b47d96f20bd9be968e3bb1bd879d8aa7d8d069f872351dcba3e0ceac41b43",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-cpu-20261005.ctest.log"
+    },
+    "studio/.local/integration/jeans-runtime-transactions-cpu-20261005/result.json": {
+      "sha256": "4e2aac2b801c95061dcf21cfd781c041343a48884eff144a3426ec7f6fbed4bf",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/jeans-runtime-transactions-cpu-20261005/result.json"
+    }
+  },
+  "limitations": [
+    "No full public CUDA JENS capability acceptance",
+    "No frozen 9 evolution + 9 restart CUDA receipt",
+    "No gravity solve or timestep advancement in this new CUDA fixture",
+    "No other-EOS numeric qualification or production RZ release",
+    "CPU ARCH unchanged; old matched frozen receipt reused, not current-source Build Manifest",
+    "No long run or benchmark; raw logs/ELF/fields remain local"
+  ],
+  "recordedUtc": "2026-10-05T00:50:54.491090+00:00"
+}

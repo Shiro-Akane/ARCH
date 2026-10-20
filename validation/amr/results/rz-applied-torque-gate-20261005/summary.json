@@ -1,0 +1,38 @@
+{
+  "status": "NOT_CLEARED",
+  "findingId": "RZ-EXT-TORQUE-GATE-01",
+  "sourceHead": "3d5b98c874cc98ee412bc2efce7398d18e1acadb",
+  "changes": "test-only; production gate unchanged",
+  "actualExitCode": 2,
+  "elapsedSeconds": 0.008804020006209612,
+  "firstCase": {
+    "method": "Euler",
+    "direction": 0,
+    "innerRadius": 1,
+    "open": false,
+    "externalPhiAcceleration": -0.025
+  },
+  "plannedCases": 24,
+  "attemptedCases": 1,
+  "completedScienceCases": 0,
+  "observedStageCalls": 0,
+  "currentStateWords": 26880,
+  "currentStateBitsUnchanged": true,
+  "error": "RZ gravity requires authoritative finite-ring contract",
+  "existingRegression": {
+    "curvilinear_metrics": "PASS",
+    "amr_flux_surface_plan": "PASS",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "nodeScope": "Actual preflight rejection; does not qualify applied torque/RK science, source formula, RZ production, CUDA or long runs",
+  "inputSha256": {
+    "tests/host/grid/test_curvilinear_metrics.cpp": "6871278d097f8b5b59466d921c6e2a684b08cf3d0516373e2d9e8b76d2b14587",
+    "src/numerics/integrator/HydroGeometryBinding.h": "a04669fed5e350a1d6e977d8695880656054166b97fa3f5fd4637f406f805b96",
+    "src/physics/gravity/ExternalGravity.h": "63d99e2e9674af5122cd7059772f1239adcd6e1ff28dff8e8041618d113e3b38",
+    "src/physics/gravity/GravitySource.h": "cd494d036beb3a2f16a7eaff2a99ffa80a0938bac268d404096e258ee3c277e9",
+    "build-cpu/arch_curvilinear_metrics": "8d5054013a785338f4319b19178f9ac2788187d90828c842342bc5f49def8fe0",
+    "build-cpu/bin/ARCH": "32f7b13972ac9381076b06e04c581900065a246796e911bdd161479d86f31b8e",
+    "build-cuda/bin/ARCH": "1cbbd6952f4970f89ef5071b9e3f18d9ec619ec92824f0ad9928455f6e27eb53"
+  }
+}

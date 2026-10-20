@@ -9,13 +9,19 @@
 
 #pragma once
 
+#include "physics/boundary/BoundaryFlux.h"
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 #include "driver/runtime/ComputeBackend.h"
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <span>
+#include <vector>
 
 struct IdealGas;
 class HelmEos;
@@ -33,6 +39,8 @@ struct CudaBlockBinding {
     amr::BlockHandle handle{};
     backend::StorageGeneration storage{};
     const boundary::BoundaryPlan* physical_boundary = nullptr;
+    // Presence is distinct from an explicitly prepared open-face view.
+    std::optional<boundary::HydroBoundaryView> hydro_boundary{};
 };
 
 /**
@@ -93,6 +101,34 @@ public:
     amr::BlockHandle block_handle() const noexcept override;
     backend::StorageGeneration storage_generation() const noexcept override;
     bool contains(backend::BackendStateAccess access) const noexcept override;
+    bool contains(backend::BackendTopologyStoreTransaction&,
+        backend::BackendStateAccess) const noexcept override;
+    state::CompletionToken execute_physical_boundary_batch(
+        backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>,
+        state::StateVersion, state::CompletionToken) override;
+    state::CompletionToken execute_same_level_exchange(
+        backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>,
+        const amr::SameLevelExchangePlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken) override;
+    state::CompletionToken execute_coarse_fine_exchange(
+        backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>,
+        const amr::CoarseFineTransferPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken) override;
+    state::CompletionToken execute_coordinate_seam_exchange(
+        backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>, std::span<const int>,
+        const amr::CoordinateSeamPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken) override;
+    backend::BoundaryCells read_boundary_cells(
+        backend::BackendTopologyStoreTransaction&, backend::BackendStateAccess,
+        std::span<const int>, state::StateRegion = state::StateRegion::Interior) override;
+    void write_boundary_cells(
+        backend::BackendTopologyStoreTransaction&, backend::BackendStateAccess,
+        std::span<const int>, const backend::BoundaryCells&,
+        const boundary::DiffusionBoundaryStorage&) override;
     std::shared_ptr<Physical::Gravity::GravityExecution> gravity_execution() override;
     const double* gravity_density(backend::BackendStateAccess) override;
     void publish_gravity(backend::BackendStateAccess,Physical::Gravity::GravityPatchView) override;
@@ -115,6 +151,13 @@ public:
     state::CompletionToken execute_physical_boundary_batch(
         std::span<const backend::BackendStateAccess> accesses,
         state::StateVersion version, state::CompletionToken expected) override;
+    backend::BoundaryCells read_boundary_cells(backend::BackendStateAccess,
+        std::span<const int>, state::StateRegion = state::StateRegion::Interior) override;
+    void write_boundary_cells(backend::BackendStateAccess, std::span<const int>,
+        const backend::BoundaryCells&, const boundary::DiffusionBoundaryStorage&) override;
+    void configure_boundary_flux_capture(std::span<const backend::BoundaryFluxPlanes>,
+        double weight, double initial_weight, bool save_initial) override;
+    std::vector<backend::BoundaryFluxPlanes> download_boundary_flux_capture() override;
     state::CompletionToken execute_same_level_exchange(
         std::span<const backend::BackendStateAccess> accesses,
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
@@ -134,6 +177,8 @@ public:
                       state::SlotRotation rotation) override;
     double compute_diffusion_dt(
         backend::BackendStateAccess current) override;
+    backend::DiffusionActivityReceipt reduce_diffusion_energy_activity_batch(
+        std::span<const backend::BackendStateAccess>, state::StateSlot retained_seed) override;
     void copy_state_slot(backend::BackendStateAccess source,
                          backend::BackendStateAccess destination) override;
     state::CompletionToken execute_diffusion_stage(
@@ -206,6 +251,11 @@ public:
         std::span<const backend::BackendStateAccess>, const AmrConfig&, double,
         std::span<const int>) override;
 
+    std::vector<double> evaluate_jeans_resolution(
+        std::span<const backend::BackendStateAccess>) override;
+    std::optional<double> evaluate_jeans_parent(
+        std::span<const backend::BackendStateAccess>, const amr::Block&) override;
+
     StoreTransaction begin_store_transaction(
         amr::AmrPlanScope scope,
         std::span<const CudaBlockBinding> bindings);
@@ -239,6 +289,8 @@ public:
     }
 
 private:
+    StoreTransaction::Impl& require_staged_boundary_transaction(
+        backend::BackendTopologyStoreTransaction&) const;
     bool gravity_ready_=false;
     std::uint64_t gravity_generation_=0;
     std::shared_ptr<Impl> impl_;

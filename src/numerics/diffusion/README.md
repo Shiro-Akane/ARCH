@@ -5,6 +5,10 @@ grid and AMR hierarchy.
 
 - [DiffFlux.h](DiffFlux.h) owns the shared face/cell operators, geometric terms,
   face thermodynamics and stability estimates.
+- [NewtonianViscousStress.h](NewtonianViscousStress.h) owns the sole three-dimensional
+  Stokes constitutive law and physical frame connections.
+  [CurvilinearViscousStress.h](../curvilinear/CurvilinearViscousStress.h) pairs polar/3D
+  cylindrical metric gradients, face traction, geometry and work with their row bounds.
 - [DiffFunction.h](DiffFunction.h) and [DiffFunction.cpp](DiffFunction.cpp) own
   RKL stage selection and recurrence coefficients.
 - [DiffusionAMRStages.h](DiffusionAMRStages.h) owns common stage updates;
@@ -13,7 +17,12 @@ grid and AMR hierarchy.
 - [DiffusionTypes.h](DiffusionTypes.h) provides the shared records;
   [DiffDispatch.h](DiffDispatch.h) binds the resolved diffusion-policy ID to execution.
 
-CUDA readers and kernels manage state access, kernel launches, and storage handling; however, they consume these exact same operators and stage descriptors. Transport material models are maintained in [physics/diffusionCoe](../../physics/diffusionCoe/README.md), and physical metric measures are provided by `GridMetrics`.
+CUDA readers and kernels manage state access, launches and storage while
+consuming these same operators and stage descriptors. Transport material models
+remain in [physics/diffusionCoe](../../physics/diffusionCoe/README.md), and
+[GridMetrics](../curvilinear/GridMetrics.h) supplies physical measures.
+Runtime owns completed-state EOS acceptance; this operator defines neither a
+second EOS gate authority nor an alternative constitutive law.
 
 See the [Reference](../../../docs/Reference.md),
 [diffusion validation](../../../validation/diffusion/README.md) and

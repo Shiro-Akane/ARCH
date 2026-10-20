@@ -1,0 +1,22 @@
+{
+  "authority": "86bec324018349c6d81df84a3cced3ed9f9a2792 \u00a78",
+  "baseCommit": "bff3b02807c64a84115471a5e2f6dcade40cdb18",
+  "scope": "shared scalar torque normalization only; not runtime migration",
+  "cases": 12,
+  "maxRelativeAngularBudgetError": 3.12307e-17,
+  "acceptanceThreshold": 1e-12,
+  "test": "AMR_FLUX_SURFACE_PLAN_PASS",
+  "architecture": "PASS",
+  "productionArchRebuilt": false,
+  "existingArchSha256": "651d3be57664ff2416e2fe1d997e34dc34146c9d77134ce58db48b1ebb990215",
+  "testExecutableSha256": "c08bc24bf2b92f8e9e9155ef9a1ba05c7091a556bfa44ffc235cb8ded7730978",
+  "sourceSha256": {
+    "src/amr/flux/AmrFluxMath.h": "1ee3607fc6583e17128d243b398962c3bfbde0f1005a309c5b902c8c4e0dded5",
+    "tests/host/amr/test_amr_flux_surface_plan.cpp": "5c2811c9deeabb95237d87f51e56d2ae85e3e7928280b7d9c236c455a96e03ac"
+  },
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-amr-torque-normalization-20261004",
+  "initialAttempt": "compiler rejected newline quoting in new test; corrected, rerun PASS",
+  "runtimeConsumersMigrated": false,
+  "cudaQualified": false,
+  "viscousFinding": "RZ-VISC-01 remains open"
+}

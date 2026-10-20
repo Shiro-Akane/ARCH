@@ -1,0 +1,1194 @@
+diff --git a/cmake/dependencies/Dependencies.cmake b/cmake/dependencies/Dependencies.cmake
+--- a/cmake/dependencies/Dependencies.cmake
++++ b/cmake/dependencies/Dependencies.cmake
+@@ -59,6 +59,9 @@
+ foreach(target ARCH arch_solver_dispatch)
+     target_include_directories(${target} PRIVATE ${highfive_SOURCE_DIR}/include)
+ endforeach()
++if(TARGET arch_curvilinear_metrics)
++    target_include_directories(arch_curvilinear_metrics PRIVATE "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
++endif()
+ # The Host comparison utility reads the production checkpoint schema directly.
+ # Keep it on the same HDF5Writer implementation as CPU restart rather than
+ # introducing a CUDA-specific reader or duplicating schema logic in the test.
+diff --git a/cmake/tests/HostTests.cmake b/cmake/tests/HostTests.cmake
+--- a/cmake/tests/HostTests.cmake
++++ b/cmake/tests/HostTests.cmake
+@@ -143,6 +143,8 @@
+     target_link_libraries(arch_${contract} PRIVATE arch_build_contract)
+     add_test(NAME ${contract} COMMAND arch_${contract})
+ endforeach()
++target_link_libraries(arch_curvilinear_metrics PRIVATE arch_solver_dispatch)
++target_sources(arch_curvilinear_metrics PRIVATE src/io/chk/ChkIO.cpp src/io/chk/CheckpointCompatibility.cpp src/io/hdf5/HDF5Writer.cpp src/core/files/FileFingerprint.cpp)
+ add_executable(arch_compensated_sum tests/host/numerics/test_compensated_sum.cpp)
+ target_include_directories(arch_compensated_sum PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+ target_compile_features(arch_compensated_sum PRIVATE cxx_std_20)
+diff --git a/src/amr/flux/FluxRegister.h b/src/amr/flux/FluxRegister.h
+--- a/src/amr/flux/FluxRegister.h
++++ b/src/amr/flux/FluxRegister.h
+@@ -13,6 +13,7 @@
+  */
+
+ #pragma once
++#include <bit>
+
+ #include <algorithm>
+ #include <array>
+@@ -100,6 +101,43 @@
+     }
+
+ public:
++    class HostRollback {
++        friend class FluxRegister;
++        const FluxRegister* owner;
++        int dim,capacity,stride,species;
++        std::array<int,6> cells,offsets;
++        std::vector<FluidVector> fluxes;
++        std::vector<double> species_fluxes;
++        std::vector<int> active;
++        std::optional<std::uint64_t> topology;
++        explicit HostRollback(const FluxRegister& f):owner(&f),dim(f.dim_),capacity(f.capacity_),
++            stride(f.block_stride_),species(f.num_species_),cells(f.face_cells_),offsets(f.face_offsets_),
++            fluxes(f.fluxes_),species_fluxes(f.species_fluxes_),active(f.active_),topology(f.topology_identity_){}
++    };
++    HostRollback checkpoint_host_hydro() const {
++        std::lock_guard lock(identity_mutex_);return HostRollback(*this);
++    }
++    bool matches_host_hydro(const HostRollback& saved) const {
++        if(saved.owner!=this||dim_!=saved.dim||capacity_!=saved.capacity||block_stride_!=saved.stride
++            ||num_species_!=saved.species||face_cells_!=saved.cells||face_offsets_!=saved.offsets
++            ||topology_identity_!=saved.topology||active_!=saved.active
++            ||fluxes_.size()!=saved.fluxes.size()||species_fluxes_.size()!=saved.species_fluxes.size())return false;
++        const auto same=[](double a,double b){return std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);};
++        for(std::size_t i=0;i<fluxes_.size();++i) {
++            const auto a=fluxes_[i],b=saved.fluxes[i];
++            if(!same(a.rho,b.rho)||!same(a.mom_u,b.mom_u)||!same(a.mom_v,b.mom_v)
++                ||!same(a.mom_w,b.mom_w)||!same(a.eng,b.eng))return false;
++        }
++        for(std::size_t i=0;i<species_fluxes_.size();++i)
++            if(!same(species_fluxes_[i],saved.species_fluxes[i]))return false;
++        return true;
++    }
++    void rollback_host_hydro(HostRollback&& saved) noexcept {
++        if(saved.owner!=this)std::terminate();
++        dim_=saved.dim;capacity_=saved.capacity;block_stride_=saved.stride;num_species_=saved.species;
++        face_cells_=saved.cells;face_offsets_=saved.offsets;topology_identity_=saved.topology;
++        fluxes_.swap(saved.fluxes);species_fluxes_.swap(saved.species_fluxes);active_.swap(saved.active);
++    }
+     FluxRegister() = default;
+
+     void Resize(int max_blocks, int dim) {
+diff --git a/src/driver/runtime/DriverRegrid.cpp b/src/driver/runtime/DriverRegrid.cpp
+--- a/src/driver/runtime/DriverRegrid.cpp
++++ b/src/driver/runtime/DriverRegrid.cpp
+@@ -401,6 +401,7 @@
+
+     stage_handles = std::move(staged_handles);
+     residency_ledger = std::move(staged_ledger);
++    renew_host_storage();
+     amr_ctrl.BindActiveHandles(stage_handles);
+     prepared.ReleaseRetiredNoexcept();
+     return true;
+diff --git a/src/driver/runtime/DriverRuntime.cpp b/src/driver/runtime/DriverRuntime.cpp
+--- a/src/driver/runtime/DriverRuntime.cpp
++++ b/src/driver/runtime/DriverRuntime.cpp
+@@ -38,6 +38,7 @@
+            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx2)),
+            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
+           config.amr.lrefinemax}) {
++    configuration_lease=storage_generation_issuer.issue();
+     ctrl.repairs.bind_semantics(geometry_semantics_==GridMetrics::GeometrySemantics::AxisymmetricRz
+         ? state::RepairSemantics::RzVolumeAngular : state::RepairSemantics::ExistingVolume);
+ }
+@@ -218,6 +219,7 @@
+     if (initial_topology.handles_in_observation_order != stage_handles)
+         throw std::logic_error("initial topology commit result mismatch");
+     amr_ctrl.BindActiveHandles(stage_handles);
++    renew_host_storage();
+
+ }
+
+@@ -285,3 +287,7 @@
+         amr_ctrl.RequireRefluxTopologyPlan(specs.count()));
+ }
+ } // namespace arch::driver
++
++namespace arch::driver { std::uint64_t DriverRuntime::macro_step() const { if(ctrl.step_count<0)throw std::logic_error("invalid macro step");return static_cast<std::uint64_t>(ctrl.step_count); } }
++
++namespace arch::driver { double DriverRuntime::current_time() const { if(!std::isfinite(ctrl.t_current))throw std::logic_error("invalid controller time");return ctrl.t_current; } }
+diff --git a/src/driver/runtime/DriverRuntime.h b/src/driver/runtime/DriverRuntime.h
+--- a/src/driver/runtime/DriverRuntime.h
++++ b/src/driver/runtime/DriverRuntime.h
+@@ -77,6 +77,15 @@
+     const SpeciesManager& species() const { return specs; }
+     GridMetrics::GeometrySemantics geometry_semantics() const noexcept { return geometry_semantics_; }
+     state::RepairBudget& repair_budget();
++    backend::StorageGeneration host_storage_generation(std::size_t index) const {
++        if(compute_backend || index>=host_storage.size() || host_storage.size()!=stage_handles.size())
++            throw std::logic_error("Host storage lease unavailable");
++        return host_storage[index];
++    }
++    std::uint64_t source_configuration_lease() const { return configuration_lease.value; }
++    std::uint64_t macro_step() const;
++    double current_time() const;
++
+     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
+ private:
+     std::vector<topology::TopologyObservation> observe_blocks(std::span<const int>) const;
+@@ -105,6 +114,15 @@
+     std::unique_ptr<backend::ComputeBackend> compute_backend;
+     backend::StorageGenerationIssuer storage_generation_issuer;
+     std::vector<backend::StorageGeneration> backend_storage;
++    std::vector<backend::StorageGeneration> host_storage;
++    backend::StorageGeneration configuration_lease{};
++    void renew_host_storage() {
++        std::vector<backend::StorageGeneration> replacement;
++        replacement.reserve(stage_handles.size());
++        for(std::size_t i=0;i<stage_handles.size();++i)
++            replacement.push_back(storage_generation_issuer.issue());
++        host_storage.swap(replacement);
++    }
+     std::vector<backend::BackendStateAccess> boundary_accesses, boundary_level_accesses;
+     std::vector<RegridMeasurement> regrid_measurements;
+ };
+diff --git a/src/driver/runtime/StateResidency.h b/src/driver/runtime/StateResidency.h
+--- a/src/driver/runtime/StateResidency.h
++++ b/src/driver/runtime/StateResidency.h
+@@ -407,6 +407,28 @@
+         bool active = false;
+     };
+
++public:
++    class HostRollback {
++        friend class StateResidencyLedger;
++        const StateResidencyLedger* owner;
++        amr::TopologyEpoch epoch;
++        std::unordered_map<std::uint64_t,BlockRecord> records;
++        HostRollback(const StateResidencyLedger& ledger):owner(&ledger),epoch(ledger.active_epoch_),records(ledger.blocks_){}
++    };
++    HostRollback checkpoint_host_hydro() const {
++        for(const auto& [uid,record]:blocks_)for(const auto& slot:record.slots) {
++            validate_quiescent(slot.coherence);
++            for(auto part:{slot.coherence.interior,slot.coherence.ghost})
++                if(part.residency!=StateResidency::Invalid && part.residency!=StateResidency::HostValid)
++                    throw std::logic_error("Host hydro rollback cannot capture Device-owned state");
++        }
++        return HostRollback(*this);
++    }
++    void rollback_host_hydro(HostRollback&& checkpoint) noexcept {
++        if(checkpoint.owner!=this||checkpoint.epoch!=active_epoch_)std::terminate();
++        blocks_.swap(checkpoint.records);
++    }
++private:
+     static constexpr std::array<StateSlot, 3> all_slots() noexcept
+     {
+         return {StateSlot::Current, StateSlot::Next, StateSlot::Scratch};
+diff --git a/src/driver/stages/RzExternalStage.h b/src/driver/stages/RzExternalStage.h
+new file mode 100644
+--- /dev/null
++++ b/src/driver/stages/RzExternalStage.h
+@@ -0,0 +1,84 @@
++#pragma once
++#include "driver/runtime/DriverRuntime.h"
++#include "driver/schedule/DriverControl.h"
++#include "numerics/integrator/IHydroSolver.h"
++namespace arch::driver {
++// Private CPU qualification adapter, not selected from SimConfig/API.
++class RzExternalStage final:public scheduler::HydroStagePreparation {
++    DriverRuntime& runtime_;
++    const Physical::Gravity::ExternalGravity& source_;
++    const Numerics::IHydroSolver& hydro_;
++    const GravityConfig configuration_;
++    scheduler::StageDescriptor descriptor_{};
++    double dt_=0.;
++    Physical::Gravity::ExternalGravity::RzStageIdentity frame(std::size_t index) const {
++        using state::StateSlot;
++        const auto& cfg=runtime_.configuration().physics.gravity;
++        if(cfg!=configuration_||cfg.type!="external"
++           ||cfg.g_x!=source_.g_x||cfg.g_y!=source_.g_y||cfg.g_z!=source_.g_z)
++            throw std::invalid_argument("External source configuration owner changed");
++        const auto h=runtime_.handles().at(index);
++        auto context=runtime_.stage_context();
++        const auto version=context.ledger.inspect({h,descriptor_.input_slot}).interior.version;
++        context.ledger.require_readable({h,descriptor_.input_slot},{state::ExecutionSide::Host,version,true,true});
++        const auto& block=runtime_.control().pool->GetBlock(runtime_.control().tree->GetActiveBlocks().at(index));
++        const auto& input=descriptor_.input_slot==StateSlot::Current?block.fluid_state:
++            descriptor_.input_slot==StateSlot::Next?block.state_next:block.state_scratch;
++        return {Physical::Gravity::GravitySourceOrigin::ExternalNativeOrthonormal,
++            runtime_.geometry_semantics(),h,descriptor_.input_slot,version,
++            runtime_.host_storage_generation(index).value,runtime_.source_configuration_lease(),
++            runtime_.macro_step(),descriptor_.stage,{cfg.g_x,cfg.g_y,cfg.g_z},&input,
++            runtime_.current_time()+descriptor_.input_time_fraction*dt_,dt_};
++    }
++public:
++    RzExternalStage(DriverRuntime& runtime,const Physical::Gravity::ExternalGravity& source,
++        const Numerics::IHydroSolver& hydro):runtime_(runtime),source_(source),hydro_(hydro),
++        configuration_(runtime.configuration().physics.gravity) {
++        if(runtime.backend()||runtime.geometry_semantics()!=GridMetrics::GeometrySemantics::AxisymmetricRz
++           ||hydro.geometry_semantics()!=runtime.geometry_semantics()
++           ||source.source_contract().chart!=runtime.geometry_semantics())
++            throw std::invalid_argument("Private RZ external qualification requires consistent CPU owners");
++        source_.bind_stage_service(true);
++    }
++    ~RzExternalStage() {source_.bind_stage_service(false);}
++    state::CompletionToken prepare(const scheduler::HydroStagePreparationRequest& request) override {
++        source_.invalidate_prepared();
++        auto context=runtime_.stage_context();
++        if(request.side!=state::ExecutionSide::Host||&request.ledger!=&context.ledger
++           ||request.handles.size()!=runtime_.handles().size()
++           ||!std::equal(request.handles.begin(),request.handles.end(),runtime_.handles().begin())
++           ||request.descriptor.stage<=0||!std::isfinite(request.input_time))
++            throw std::invalid_argument("External source request is not actual Runtime stage");
++        const auto plan=scheduler::make_hydro_plan(request.method);
++        const auto found=std::find_if(plan.stages.begin(),plan.stages.end(),
++            [&](const auto& d){return d.stage==request.descriptor.stage;});
++        const auto& d=request.descriptor;
++        if(found==plan.stages.end()||d.old_slot!=found->old_slot||d.input_slot!=found->input_slot
++            ||d.output_slot!=found->output_slot||d.old_weight!=found->old_weight
++            ||d.update_weight!=found->update_weight||d.flux_register_weight!=found->flux_register_weight
++            ||d.input_requires_ghost!=found->input_requires_ghost||d.refresh_ghost_after!=found->refresh_ghost_after
++            ||d.input_time_fraction!=found->input_time_fraction
++            ||!std::isfinite(request.step_dt)||request.step_dt<=0.
++            ||request.input_time!=runtime_.current_time()+d.input_time_fraction*request.step_dt)
++            throw std::invalid_argument("External source canonical RK/time identity mismatch");
++        descriptor_=request.descriptor;dt_=request.step_dt;
++        std::vector<Physical::Gravity::ExternalGravity::PreparedPatch> candidate;
++        for(std::size_t i=0;i<request.handles.size();++i) {
++            const auto identity=frame(i);
++            const auto& block=runtime_.control().pool->GetBlock(runtime_.control().tree->GetActiveBlocks().at(i));
++            candidate.push_back({identity,&block.grid,dt_,
++                hydro_.prepare_rz_external(source_,*identity.state,block.grid,dt_,identity,request.ledger)});
++        }
++        source_.publish_prepared(std::move(candidate),[this](std::size_t i){return frame(i);});
++        return {request.ledger.inspect({request.handles.front(),descriptor_.input_slot}).interior.completion.value,
++                state::CompletionState::Complete};
++    }
++    void accept(const scheduler::StageDescriptor& descriptor) const {
++        if(descriptor.stage!=descriptor_.stage||descriptor.input_slot!=descriptor_.input_slot
++            ||descriptor.flux_register_weight!=descriptor_.flux_register_weight)
++            throw std::logic_error("Source budget acceptance stage mismatch");
++        source_.accept_prepared_stage(descriptor.flux_register_weight);
++    }
++    void invalidate() const override {source_.invalidate_prepared();}
++};
++}
+diff --git a/src/numerics/flux/FluxHLL.h b/src/numerics/flux/FluxHLL.h
+--- a/src/numerics/flux/FluxHLL.h
++++ b/src/numerics/flux/FluxHLL.h
+@@ -27,6 +27,7 @@
+ {
+     static std::string name() { return "HLL (Einfeldt) + " + ReconstructPolicy::name(); }
+     static constexpr int NG = ReconstructPolicy::NG;
++    using Reconstruction = ReconstructPolicy;
+
+     template <typename EosType>
+     static ARCH_INLINE void compute_face_flux(
+diff --git a/src/numerics/flux/FluxHLLC.h b/src/numerics/flux/FluxHLLC.h
+--- a/src/numerics/flux/FluxHLLC.h
++++ b/src/numerics/flux/FluxHLLC.h
+@@ -31,6 +31,7 @@
+ {
+     static std::string name() { return "HLLC + " + ReconstructPolicy::name(); }
+     static constexpr int NG = ReconstructPolicy::NG;
++    using Reconstruction = ReconstructPolicy;
+
+     // Construct the flux in an HLLC star region from its contact speed and
+     // pressure. This is algebraically F_K + S_K*(U*_K - U_K), but avoids
+diff --git a/src/numerics/flux/FluxRoe.h b/src/numerics/flux/FluxRoe.h
+--- a/src/numerics/flux/FluxRoe.h
++++ b/src/numerics/flux/FluxRoe.h
+@@ -30,6 +30,7 @@
+ {
+     static std::string name() { return "Roe-Glaister + " + ReconstructPolicy::name(); }
+     static constexpr int NG = ReconstructPolicy::NG;
++    using Reconstruction = ReconstructPolicy;
+
+     template <typename EosType>
+     static ARCH_INLINE void compute_face_flux(
+diff --git a/src/numerics/integrator/HydroGeometryBinding.h b/src/numerics/integrator/HydroGeometryBinding.h
+--- a/src/numerics/integrator/HydroGeometryBinding.h
++++ b/src/numerics/integrator/HydroGeometryBinding.h
+@@ -4,8 +4,55 @@
+  */
+ #pragma once
+ #include "numerics/integrator/IHydroSolver.h"
++#include "physics/gravity/ExternalGravity.h"
++#include "driver/schedule/StageScheduler.h"
++#include <optional>
++#include <exception>
+
+ namespace TimeIntegration {
++// Private CPU external-source qualification is macro-step transactional.
++// Rejected numerical execution must not leave writable slots or flux budgets.
++class HydroCandidateTransaction {
++    amr::AMRControl& control_;
++    arch::scheduler::StageExecutionContext* context_=nullptr;
++    const Physical::Gravity::ExternalGravity* source_=nullptr;
++    std::optional<arch::state::StateResidencyLedger::HostRollback> ledger_;
++    std::optional<amr::FluxRegister::HostRollback> flux_;
++    arch::scheduler::MonotonicSchedulerClock clock_;
++    struct Saved {int id;FluidState current,next,scratch;};
++    std::vector<Saved> states_;
++    int exceptions_=std::uncaught_exceptions();
++    std::size_t budget_size_=0;
++public:
++    HydroCandidateTransaction(amr::AMRControl& control,const Physical::Gravity::IGravityPolicy* gravity):control_(control) {
++        const auto* source=dynamic_cast<const Physical::Gravity::ExternalGravity*>(gravity);
++        if(!source||!source->stage_service_bound()
++            ||source->source_contract().chart!=GridMetrics::GeometrySemantics::AxisymmetricRz)return;
++        auto& context=arch::scheduler::current_stage_binding().context;
++        if(context.side!=arch::state::ExecutionSide::Host)throw std::logic_error("Private RZ rollback is Host-only");
++        context_=&context;source_=source;clock_=context.clock;budget_size_=source->accepted_budgets().size();
++        ledger_.emplace(context.ledger.checkpoint_host_hydro());
++        flux_.emplace(control.flux_register.checkpoint_host_hydro());
++        for(int id:control.tree->GetActiveBlocks()) {
++            const auto& block=control.pool->GetBlock(id);
++            states_.push_back({id,block.fluid_state,block.state_next,block.state_scratch});
++        }
++    }
++    ~HydroCandidateTransaction() noexcept {
++        if(!context_||std::uncaught_exceptions()==exceptions_)return;
++        for(auto& saved:states_) {
++            auto& block=control_.pool->GetBlock(saved.id);
++            std::swap(block.fluid_state,saved.current);std::swap(block.state_next,saved.next);
++            std::swap(block.state_scratch,saved.scratch);
++        }
++        control_.flux_register.rollback_host_hydro(std::move(*flux_));
++        context_->ledger.rollback_host_hydro(std::move(*ledger_));
++        context_->clock=clock_;
++        source_->invalidate_prepared();source_->rollback_budgets(budget_size_);
++    }
++    HydroCandidateTransaction(const HydroCandidateTransaction&)=delete;
++    HydroCandidateTransaction& operator=(const HydroCandidateTransaction&)=delete;
++};
+ struct HydroGeometryBinding {
+     GridMetrics::GeometrySemantics semantics;
+     amr::CoordinateSeamGeometry exchange_chart;
+@@ -28,8 +75,12 @@
+     } else {
+         if (rz) throw std::invalid_argument("RZ boundary chart identity is missing");
+     }
+-    if (rz && gravity)
+-        throw std::invalid_argument("RZ gravity requires authoritative finite-ring contract");
++    if (rz && gravity) {
++        const auto contract=gravity->source_contract();
++        if(contract.origin!=Physical::Gravity::GravitySourceOrigin::ExternalNativeOrthonormal
++            ||!gravity->stage_service_bound()||contract.chart!=semantics)
++            throw std::invalid_argument("RZ gravity requires authoritative finite-ring contract");
++    }
+     // Validate all patches before Clear(), any stage output, or publication.
+     for (int id:control.tree->GetActiveBlocks()) {
+         const auto& grid=control.pool->GetBlock(id).grid;
+diff --git a/src/numerics/integrator/HydroSolverImpl.h b/src/numerics/integrator/HydroSolverImpl.h
+--- a/src/numerics/integrator/HydroSolverImpl.h
++++ b/src/numerics/integrator/HydroSolverImpl.h
+@@ -10,6 +10,7 @@
+ #pragma once
+
+ #include "numerics/integrator/IHydroSolver.h"
++#include "physics/gravity/ExternalGravity.h"
+ #include "numerics/integrator/TimeIntegratorHelper.h"
+
+ namespace Numerics {
+@@ -35,6 +36,18 @@
+         return semantics_;
+     }
+
++    std::vector<FluidVector> prepare_rz_external(
++        const Physical::Gravity::ExternalGravity& source,
++        const FluidState& state,const Grid& grid,double dt,
++        const Physical::Gravity::ExternalGravity::RzStageIdentity& frame,
++        const arch::state::StateResidencyLedger& ledger) const override {
++        if constexpr(requires { typename FluxSchemePolicy::Reconstruction::SourceLimiter; }) {
++            if(semantics_!=GridMetrics::GeometrySemantics::AxisymmetricRz)
++                throw std::invalid_argument("RZ source/Hydro chart mismatch");
++            return source.template produce_rz_stage_patch<
++                typename FluxSchemePolicy::Reconstruction::SourceLimiter>(state,grid,dt,frame,frame,ledger);
++        } else throw std::invalid_argument("Selected reconstruction has no qualified RZ source integral");
++    }
+     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
+                                 const FluidState& state, const Grid& grid, double dt,
+                                 std::vector<FluidVector>& dU, std::vector<double>& d_spec,
+diff --git a/src/numerics/integrator/IHydroSolver.h b/src/numerics/integrator/IHydroSolver.h
+--- a/src/numerics/integrator/IHydroSolver.h
++++ b/src/numerics/integrator/IHydroSolver.h
+@@ -28,6 +28,13 @@
+ class IHydroSolver {
+ public:
+     virtual ~IHydroSolver() = default;
++    virtual std::vector<FluidVector> prepare_rz_external(
++        const Physical::Gravity::ExternalGravity&,
++        const FluidState&,const Grid&,double,
++        const Physical::Gravity::RzStageIdentity&,
++        const arch::state::StateResidencyLedger&) const {
++        throw std::invalid_argument("Hydro source reconstruction is not qualified");
++    }
+
+     // Internal chart identity. Existing bindings retain their historical chart;
+     // Host RZ bindings must report the same profile used by patch mathematics.
+diff --git a/src/numerics/integrator/TimeIntegratorEuler.h b/src/numerics/integrator/TimeIntegratorEuler.h
+--- a/src/numerics/integrator/TimeIntegratorEuler.h
++++ b/src/numerics/integrator/TimeIntegratorEuler.h
+@@ -36,6 +36,7 @@
+     {
+         const auto geometry=TimeIntegration::bind_hydro_geometry(
+             amr_ctrl,boundary_condition,hydro,gravity);
++        TimeIntegration::HydroCandidateTransaction transaction(amr_ctrl,gravity);
+         amr_ctrl.flux_register.Clear();
+         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+         if (!active_blocks.empty()) {
+diff --git a/src/numerics/integrator/TimeIntegratorHelper.h b/src/numerics/integrator/TimeIntegratorHelper.h
+--- a/src/numerics/integrator/TimeIntegratorHelper.h
++++ b/src/numerics/integrator/TimeIntegratorHelper.h
+@@ -370,9 +370,12 @@
+         // Validate the chart and reject consumers not yet migrated before any
+         // output/cache mutation. Runtime Grid still uses its existing chart.
+         (void)GridMetrics::make_geometry_view(grid, semantics);
+-        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz
+-            && gravity != nullptr)
+-            throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
++        if (semantics == GridMetrics::GeometrySemantics::AxisymmetricRz && gravity) {
++            const auto contract=gravity->source_contract();
++            if(contract.origin!=Physical::Gravity::GravitySourceOrigin::ExternalNativeOrthonormal
++               ||contract.chart!=semantics||!gravity->stage_service_bound())
++                throw std::invalid_argument("RZ Hydro gravity consumer not migrated");
++        }
+         int n_spec = state.GetNumSpecies();
+         std::fill(dU.begin(), dU.end(), FluidVector());
+         std::fill(d_spec.begin(), d_spec.end(), 0.0);
+diff --git a/src/numerics/integrator/TimeIntegratorRK2.h b/src/numerics/integrator/TimeIntegratorRK2.h
+--- a/src/numerics/integrator/TimeIntegratorRK2.h
++++ b/src/numerics/integrator/TimeIntegratorRK2.h
+@@ -36,6 +36,7 @@
+     {
+         const auto geometry=TimeIntegration::bind_hydro_geometry(
+             amr_ctrl,boundary_condition,hydro,gravity);
++        TimeIntegration::HydroCandidateTransaction transaction(amr_ctrl,gravity);
+         amr_ctrl.flux_register.Clear();
+         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+         if (!active_blocks.empty()) {
+diff --git a/src/numerics/integrator/TimeIntegratorRK3.h b/src/numerics/integrator/TimeIntegratorRK3.h
+--- a/src/numerics/integrator/TimeIntegratorRK3.h
++++ b/src/numerics/integrator/TimeIntegratorRK3.h
+@@ -40,6 +40,7 @@
+     {
+         const auto geometry=TimeIntegration::bind_hydro_geometry(
+             amr_ctrl,boundary_condition,hydro,gravity);
++        TimeIntegration::HydroCandidateTransaction transaction(amr_ctrl,gravity);
+         amr_ctrl.flux_register.Clear();
+         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+         if (!active_blocks.empty()) {
+diff --git a/src/numerics/reconstruction/Reconstruction.h b/src/numerics/reconstruction/Reconstruction.h
+--- a/src/numerics/reconstruction/Reconstruction.h
++++ b/src/numerics/reconstruction/Reconstruction.h
+@@ -93,6 +93,7 @@
+  */
+ struct PCMReconstruction
+ {
++    using SourceLimiter = NoLimiter;
+
+     // Human-readable policy name for logs.
+     static std::string name() { return "PCM (1st Order)"; }
+@@ -162,6 +163,7 @@
+ template <typename Limiter>
+ struct MusclReconstruction
+ {
++    using SourceLimiter = Limiter;
+     static std::string name() { return "MUSCL-" + Limiter::name(); }
+
+     static constexpr int NG = 2;
+diff --git a/src/physics/gravity/ExternalGravity.h b/src/physics/gravity/ExternalGravity.h
+--- a/src/physics/gravity/ExternalGravity.h
++++ b/src/physics/gravity/ExternalGravity.h
+@@ -12,6 +12,13 @@
+
+ #include "data/FluidState.h"
+ #include "grid/Grid.h"
++#include "grid/GridMetrics.h"
++#include "driver/runtime/StateResidency.h"
++#include "numerics/reconstruction/Reconstruction.h"
++#include <array>
++#include <atomic>
++#include <functional>
++#include <memory>
+
+ namespace Physical {
+ namespace Gravity {
+@@ -20,11 +27,177 @@
+ {
+     double g_x, g_y, g_z;
+
+-    ExternalGravity(double gx, double gy, double gz) : g_x(gx), g_y(gy), g_z(gz) {}
++    ExternalGravity(double gx, double gy, double gz,
++        GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing)
++        :g_x(gx),g_y(gy),g_z(gz),chart_(chart) {
++        if(chart!=GridMetrics::GeometrySemantics::Existing
++           &&chart!=GridMetrics::GeometrySemantics::AxisymmetricRz)
++            throw std::invalid_argument("unknown external gravity chart");
++    }
++
++    ExternalGravity(const ExternalGravity&)=delete;
++    ExternalGravity& operator=(const ExternalGravity&)=delete;
++    ExternalGravity(ExternalGravity&&)=delete;
++    ExternalGravity& operator=(ExternalGravity&&)=delete;
++
++    GravitySourceContract source_contract() const noexcept override {
++        return {GravitySourceOrigin::ExternalNativeOrthonormal,
++                chart_};
++    }
++
++    using RzStageIdentity = Physical::Gravity::RzStageIdentity;
++
++    struct StageBudget {
++        std::uint64_t macro_step;
++        int stage;
++        std::uint64_t config_lease;
++        amr::TopologyEpoch topology;
++        double dt,weight;
++        long double radial=0,axial=0,angular=0,energy=0;
++        std::size_t patches=0;
++    };
++    const std::vector<StageBudget>& accepted_budgets() const {return budgets_;}
++    void rollback_budgets(std::size_t size) const noexcept {
++        if(size>budgets_.size())std::terminate();
++        budgets_.resize(size);
++    }
++    void accept_prepared_stage(double weight) const {
++        if(prepared_.empty()||accepted_prepared_||!std::isfinite(weight))
++            throw std::logic_error("Unprepared/duplicate source budget acceptance");
++        const auto& first=prepared_.front();
++        StageBudget candidate{first.frame.macro_step,first.frame.stage,first.frame.config_revision,
++            first.frame.block.epoch,first.dt,weight};
++        for(const auto& entry:prepared_) {
++            if(!entry.consumed->load()||resolve_(&entry-prepared_.data())!=entry.frame)
++                throw std::logic_error("Source stage budget has unconsumed/stale patch");
++            const auto& g=*entry.grid;
++            const auto view=GridMetrics::make_geometry_view(g,GridMetrics::GeometrySemantics::AxisymmetricRz);
++            for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
++                const auto& d=entry.increments[g.GetIndex(i,j,0)];
++                const long double V=GridMetrics::CellVolume(view,i,j,0);
++                const long double W=GridMetrics::Rz::AngularMomentumMeasure(g.GetFacePosL(i),g.GetFacePosR(i),g.dx2);
++                candidate.radial+=weight*V*d.mom_u;candidate.axial+=weight*V*d.mom_v;
++                candidate.angular+=weight*W*d.mom_w;candidate.energy+=weight*V*d.eng;
++            }
++            ++candidate.patches;
++        }
++        budgets_.push_back(candidate);accepted_prepared_=true;
++    }
++    struct PreparedPatch {
++        RzStageIdentity frame;
++        const Grid* grid;
++        double dt;
++        std::vector<FluidVector> increments;
++        std::shared_ptr<std::atomic_bool> consumed=std::make_shared<std::atomic_bool>(false);
++    };
++    void bind_stage_service(bool bound) const {
++        if(bound&&service_bound_)throw std::logic_error("RZ source already has an active stage owner");
++        invalidate_prepared();service_bound_=bound;
++    }
++    bool stage_service_bound() const noexcept override { return service_bound_; }
++    void invalidate_prepared() const { prepared_.clear();resolve_={};accepted_prepared_=false; }
++    void publish_prepared(std::vector<PreparedPatch> candidate,
++        std::function<RzStageIdentity(std::size_t)> resolve) const {
++        if(!service_bound_||candidate.empty()||!resolve)throw std::logic_error("RZ prepared batch has no owner");
++        prepared_.swap(candidate);resolve_=std::move(resolve);
++    }
++    // Own a patch candidate only. Caller must bind expected identity to the
++    // actual scheduler frame; this method neither publishes nor rotates slots.
++    template<typename Limiter>
++    std::vector<FluidVector> produce_rz_stage_patch(const FluidState& state,
++        const Grid& grid,double dt,const RzStageIdentity& identity,
++        const RzStageIdentity& expected,
++        const arch::state::StateResidencyLedger& ledger) const
++    {
++        const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
++        if(chart_!=rz || identity!=expected
++           ||identity.origin!=GravitySourceOrigin::ExternalNativeOrthonormal
++           ||identity.chart!=rz ||identity.state!=&state
++           ||!identity.storage_generation ||!identity.config_revision ||identity.stage<=0
++           ||identity.acceleration!=std::array<double,3>{g_x,g_y,g_z}
++           ||!std::isfinite(dt) ||dt<0
++           ||!std::isfinite(g_x)||!std::isfinite(g_y)||!std::isfinite(g_z))
++            throw std::invalid_argument("RZ external source/chart/stage identity mismatch");
++        ledger.require_readable({identity.block,identity.slot},
++            {arch::state::ExecutionSide::Host,identity.version,true,true});
++        const auto geometry=GridMetrics::make_geometry_view(grid,rz);
++        if(grid.ng<1 ||state.rho.size()!=std::size_t(grid.GetTotalSize())
++           ||state.mom_u.size()!=state.rho.size()||state.mom_v.size()!=state.rho.size()
++           ||state.mom_w.size()!=state.rho.size()||state.eng.size()!=state.rho.size())
++            throw std::invalid_argument("RZ external patch layout mismatch");
++        if(grid.GetFacePosL(grid.Is())==0 && (g_x!=0||g_z!=0))
++            throw std::invalid_argument("constant radial/phi source is nonregular at axis");
++        const auto centroid=[&](int i,bool angular) {
++            double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
++            const bool mirrored=right<=0;
++            if(mirrored) {const double swap=left;left=-right;right=-swap;}
++            if(left<0||!(right>left))throw std::invalid_argument("invalid source stencil radius");
++            const double result=angular?GridMetrics::Rz::AngularReconstructionRadius(left,right)
++                :GridMetrics::Rz::VolumeCentroidRadius(left,right);
++            return mirrored?-result:result;
++        };
++        const auto gradient=[&](const std::vector<double>& q,int cell,int i,bool angular) {
++            const double xm=centroid(i-1,angular),x=centroid(i,angular),xp=centroid(i+1,angular);
++            if(!std::isfinite(q[cell-1])||!std::isfinite(q[cell])||!std::isfinite(q[cell+1])
++               ||!(xm<x&&x<xp))throw std::invalid_argument("invalid RZ source reconstruction");
++            const double back=(q[cell]-q[cell-1])/(x-xm);
++            const double forward=(q[cell+1]-q[cell])/(xp-x);
++            if(!std::isfinite(back)||!std::isfinite(forward)||!std::isfinite(back+forward))
++                throw std::invalid_argument("nonfinite RZ source gradient");
++            const double result=2*compute_limited_slope<Limiter>(0.,back,back+forward);
++            if(!std::isfinite(result))throw std::invalid_argument("nonfinite limited RZ source gradient");
++            return result;
++        };
++        std::vector<FluidVector> candidate(grid.GetTotalSize());
++        for(int j=grid.Js();j<grid.Je();++j)for(int i=grid.Is();i<grid.Ie();++i) {
++            const int cell=grid.GetIndex(i,j,0);
++            const auto mean=state.get(cell);
++            if(!(mean.rho>0)||!std::isfinite(mean.rho)||!std::isfinite(mean.mom_u)
++               ||!std::isfinite(mean.mom_v)||!std::isfinite(mean.mom_w)||!std::isfinite(mean.eng))
++                throw std::invalid_argument("invalid RZ source stage state");
++            const double left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
++            const double rv=centroid(i,false),rw=centroid(i,true);
++            const double drho=gradient(state.rho,cell,i,false);
++            const double dmphi=gradient(state.mom_w,cell,i,true);
++            if(!(mean.rho+drho*(left-rv)>0)||!(mean.rho+drho*(right-rv)>0))
++                throw std::invalid_argument("nonpositive reconstructed RZ density");
++            const double rho_w=mean.rho+drho*(rw-rv);
++            const double mphi_v=mean.mom_w+dmphi*(rv-rw);
++            const double V=GridMetrics::CellVolume(geometry,i,j,0);
++            const double W=GridMetrics::Rz::AngularMomentumMeasure(left,right,grid.dx2);
++            const ExternalRzStageIntegrals rates{V,W,V*mean.rho*g_x,V*mean.rho*g_y,
++                W*rho_w*g_z,V*(mean.mom_u*g_x+mean.mom_v*g_y+mphi_v*g_z)};
++            if(!(V>0)||!(W>0)||!std::isfinite(V)||!std::isfinite(W)
++               ||!std::isfinite(rates.radial_momentum_rate)
++               ||!std::isfinite(rates.axial_momentum_rate)
++               ||!std::isfinite(rates.angular_momentum_rate)||!std::isfinite(rates.energy_rate))
++                throw std::invalid_argument("nonfinite RZ source integral");
++            add_external_rz_stage_integrals(rates,dt,candidate[cell]);
++            if(!std::isfinite(candidate[cell].mom_u)||!std::isfinite(candidate[cell].mom_v)
++               ||!std::isfinite(candidate[cell].mom_w)||!std::isfinite(candidate[cell].eng))
++                throw std::invalid_argument("nonfinite RZ source increment");
++        }
++        return candidate;
++    }
+
+     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
+                                       const Grid& grid, double dt, void* execution_stream = nullptr) const override
+     {
++        if(chart_==GridMetrics::GeometrySemantics::AxisymmetricRz) {
++            if(!service_bound_||!resolve_)throw std::invalid_argument("RZ external source requires a framed integral producer");
++            for(std::size_t index=0;index<prepared_.size();++index) {
++                const auto& entry=prepared_[index];
++                if(entry.frame.state!=&state)continue;
++                if(entry.grid!=&grid||entry.dt!=dt||entry.increments.size()!=dU.size()
++                    ||resolve_(index)!=entry.frame
++                    ||entry.frame.acceleration!=std::array<double,3>{g_x,g_y,g_z})
++                    throw std::invalid_argument("RZ prepared source lease mismatch");
++                if(entry.consumed->exchange(true))throw std::logic_error("RZ prepared source already consumed");
++                for(std::size_t cell=0;cell<dU.size();++cell)dU[cell]=dU[cell]+entry.increments[cell];
++                return;
++            }
++            throw std::invalid_argument("RZ prepared source does not match input slot");
++        }
+         const int ks = grid.Ks(), ke = grid.Ke();
+         const int js = grid.Js(), je = grid.Je();
+         const int nk = ke - ks, nj = je - js;
+@@ -42,6 +215,12 @@
+             }
+         }
+     }
++private:
++    GridMetrics::GeometrySemantics chart_;
++    mutable bool service_bound_=false,accepted_prepared_=false;
++    mutable std::vector<StageBudget> budgets_;
++    mutable std::vector<PreparedPatch> prepared_;
++    mutable std::function<RzStageIdentity(std::size_t)> resolve_;
+ };
+
+ }
+diff --git a/src/physics/gravity/GravitySource.h b/src/physics/gravity/GravitySource.h
+--- a/src/physics/gravity/GravitySource.h
++++ b/src/physics/gravity/GravitySource.h
+@@ -51,4 +51,26 @@
+     delta.mom_w += dt * rho * gravity.g_z;
+     delta.eng += dt * (state.mom_u * gravity.g_x + state.mom_v * gravity.g_y + state.mom_w * gravity.g_z);
+ }
++/** Stage integrals supplied by an authoritative physical-field producer.
++ * Momentum r/z and energy use V; angular impulse uses W. These are source
++ * rates, not stored representative cell values. Integrals include full 2*pi.
++ * The stage owner validates source/chart/epoch and positive native measures
++ * before this arithmetic leaf. No callback/source traversal is introduced here.
++ */
++struct ExternalRzStageIntegrals {
++    double volume=0.0;
++    double angular_measure=0.0;
++    double radial_momentum_rate=0.0;
++    double axial_momentum_rate=0.0;
++    double angular_momentum_rate=0.0;
++    double energy_rate=0.0;
++};
++ARCH_INLINE void add_external_rz_stage_integrals(
++    const ExternalRzStageIntegrals& source, double dt, FluidVector& delta)
++{
++    delta.mom_u += dt * source.radial_momentum_rate / source.volume;
++    delta.mom_v += dt * source.axial_momentum_rate / source.volume;
++    delta.mom_w += dt * source.angular_momentum_rate / source.angular_measure;
++    delta.eng += dt * source.energy_rate / source.volume;
++}
+ } // namespace Physical::Gravity
+diff --git a/src/physics/gravity/IGravityPolicy.h b/src/physics/gravity/IGravityPolicy.h
+--- a/src/physics/gravity/IGravityPolicy.h
++++ b/src/physics/gravity/IGravityPolicy.h
+@@ -14,6 +14,8 @@
+ #pragma once
+
+ #include <vector>
++#include <array>
++#include "driver/runtime/StateResidency.h"
+
+ #include "data/FluidState.h"
+ #include "grid/Grid.h"
+@@ -21,14 +23,41 @@
+ namespace Physical {
+ namespace Gravity {
+
++enum class GravitySourceOrigin { Unknown, ExternalNativeOrthonormal, FiniteRingCurrentState };
++
++struct RzStageIdentity {
++        GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
++        GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing;
++        amr::BlockHandle block{};
++        arch::state::StateSlot slot=arch::state::StateSlot::Current;
++        arch::state::StateVersion version{};
++        std::uint64_t storage_generation=0,config_revision=0,macro_step=0;
++        int stage=0;
++        std::array<double,3> acceleration{};
++        const FluidState* state=nullptr;
++        double input_time=0.,step_dt=0.;
++        friend bool operator==(const RzStageIdentity&,const RzStageIdentity&)=default;
++    };
++
++
++class ExternalGravity;
++
+ /**
+  * @brief Pure virtual interface for gravity models.
+  * Acts as a compilation firewall (type erasure boundary) between the generic
+  * Host hydrodynamics loops and specific gravity implementations.
+  */
++struct GravitySourceContract {
++    GravitySourceOrigin origin=GravitySourceOrigin::Unknown;
++    GridMetrics::GeometrySemantics chart=GridMetrics::GeometrySemantics::Existing;
++    // Identity of a future stage-owned integral producer is required separately.
++    // A declared origin/chart alone must never release the RZ stage gate.
++};
+ class IGravityPolicy {
+ public:
+     virtual ~IGravityPolicy() = default;
++    virtual bool stage_service_bound() const noexcept { return false; }
++    virtual GravitySourceContract source_contract() const noexcept { return {}; }
+     // Optional work from the actual Riemann mass flux. Existing external gravity
+     // retains its cell source; self gravity supplies this compatible face work.
+     virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
+diff --git a/tests/host/grid/test_curvilinear_metrics.cpp b/tests/host/grid/test_curvilinear_metrics.cpp
+--- a/tests/host/grid/test_curvilinear_metrics.cpp
++++ b/tests/host/grid/test_curvilinear_metrics.cpp
+@@ -18,6 +18,11 @@
+ #include "numerics/diffusion/DiffFlux.h"
+ #include "physics/eos/IdealGas.h"
+ #include "physics/gravity/ExternalGravity.h"
++#include "driver/stages/RzExternalStage.h"
++#include "driver/io/DriverIO.h"
++#include "io/chk/CheckpointCompatibility.h"
++#include "core/files/FileFingerprint.h"
++#include <filesystem>
+ #include "physics/diagnostics/VelocityDiagnostics.h"
+ #include <iostream>
+ #include <bit>
+@@ -446,6 +451,12 @@
+     GridMetrics::GeometrySemantics geometry_semantics() const noexcept override {
+         return owner_.geometry_semantics();
+     }
++    std::vector<FluidVector> prepare_rz_external(
++        const Physical::Gravity::ExternalGravity& source,const FluidState& state,
++        const Grid& grid,double dt,const Physical::Gravity::ExternalGravity::RzStageIdentity& frame,
++        const arch::state::StateResidencyLedger& ledger) const override {
++        return owner_.prepare_rz_external(source,state,grid,dt,frame,ledger);
++    }
+     void evaluate_patch(amr::AMRControl* control,int block_id,
+         const FluidState& state,const Grid& grid,double dt,
+         std::vector<FluidVector>& dU,std::vector<double>& ds,
+@@ -547,6 +558,70 @@
+     mutable long double unweighted_torque_=0.;
+ };
+
++class RejectNumericalPatch final:public Numerics::IHydroSolver {
++    const Numerics::IHydroSolver& owner_;
++    mutable int calls_=0;
++    int fail_call_;
++public:
++    explicit RejectNumericalPatch(const Numerics::IHydroSolver& owner,int fail_call):owner_(owner),fail_call_(fail_call){}
++    auto geometry_semantics() const noexcept -> GridMetrics::GeometrySemantics override {return owner_.geometry_semantics();}
++    void evaluate_patch(amr::AMRControl* control,int id,const FluidState& state,const Grid& grid,double dt,
++        std::vector<FluidVector>& delta,std::vector<double>& species,const Physical::Gravity::IGravityPolicy* source,
++        const NumericsConfig& cfg,double weight=1.,void* stream=nullptr) const override {
++        owner_.evaluate_patch(control,id,state,grid,dt,delta,species,source,cfg,weight,stream);
++        if(++calls_==fail_call_)throw std::runtime_error("injected late actual numerical executor rejection");
++    }
++    void update_patch(const FluidState& old,const FluidState& current,FluidState& next,
++        const std::vector<FluidVector>& delta,const std::vector<double>& species,const Grid& grid,
++        double a,double b,const NumericsConfig& cfg,void* stream=nullptr) const override {
++        owner_.update_patch(old,current,next,delta,species,grid,a,b,cfg,stream);
++    }
++};
++static bool rz_rejection_probe=false,rz_owner_probe=false;
++static std::vector<std::uint64_t> all_rz_bits(const amr::AMRControl& control) {
++    std::vector<std::uint64_t> out;
++    for(int id:control.tree->GetActiveBlocks()) {
++        const auto& b=control.pool->GetBlock(id);
++        for(const auto* state:{&b.fluid_state,&b.state_next,&b.state_scratch}) {
++            for(const auto* values:{&state->rho,&state->mom_u,&state->mom_v,&state->mom_w,&state->eng,
++                    &state->enuc_rate,&state->mass_fractions})
++                for(double value:*values)out.push_back(std::bit_cast<std::uint64_t>(value));
++            for(double value:state->stage_repairs.values)out.push_back(std::bit_cast<std::uint64_t>(value));
++        }
++    }
++    return out;
++}
++static std::vector<std::uint64_t> rz_ledger_words(
++    const arch::state::StateResidencyLedger& ledger,std::span<const amr::BlockHandle> handles) {
++    std::vector<std::uint64_t> out;
++    for(auto h:handles)for(auto slot:{arch::state::StateSlot::Current,arch::state::StateSlot::Next,arch::state::StateSlot::Scratch}) {
++        const auto v=ledger.inspect({h,slot});
++        for(auto c:{v.interior,v.ghost}) {
++            out.push_back(static_cast<unsigned>(c.residency));out.push_back(c.version.value);
++            out.push_back(c.completion.value);out.push_back(static_cast<unsigned>(c.completion.state));
++            out.push_back(static_cast<unsigned>(c.pending_transfer));
++        }
++        out.push_back(v.ghost_source_version.value);
++    }
++    return out;
++}
++static std::filesystem::path rz_checkpoint_root;
++static std::vector<std::uint64_t> accepted_rz_bits(const amr::AMRControl& control) {
++    std::vector<std::uint64_t> out;
++    for(int id:control.tree->GetActiveBlocks()) {
++        const auto& b=control.pool->GetBlock(id);const auto& g=b.grid;
++        for(int j=g.Js();j<g.Je();++j)for(int i=g.Is();i<g.Ie();++i) {
++            const int c=g.GetIndex(i,j,0);
++            for(const auto* v:{&b.fluid_state.rho,&b.fluid_state.mom_u,&b.fluid_state.mom_v,
++                &b.fluid_state.mom_w,&b.fluid_state.eng,&b.fluid_state.enuc_rate})
++                out.push_back(std::bit_cast<std::uint64_t>((*v)[c]));
++            for(int k=0;k<b.fluid_state.GetNumSpecies();++k)
++                out.push_back(std::bit_cast<std::uint64_t>(b.fluid_state.X(k,c)));
++        }
++    }
++    return out;
++}
++
+ template<typename Solver>
+ void test_rz_rotating_boundary_budget(int direction,double inner,bool open=false,double external_phi=0.) {
+     const auto rz=GridMetrics::GeometrySemantics::AxisymmetricRz;
+@@ -556,7 +631,7 @@
+     IdealGas eos(1.4,species);
+     Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> policy(eos,rz);
+     if(external_phi!=0. && inner<=0.)throw std::invalid_argument("body torque audit is off-axis");
+-    Physical::Gravity::ExternalGravity external(0.,0.,external_phi);
++    Physical::Gravity::ExternalGravity external(0.,0.,external_phi,rz);
+     const auto* gravity=external_phi==0.?nullptr:&external;
+     RzBoundaryBudgetObserver observer(policy,eos,gravity);
+     const Numerics::IHydroSolver& hydro=observer;
+@@ -587,10 +662,13 @@
+         config.grid.x1l_boundary_type=inner==0.?"reflecting":"outflow";
+         config.grid.x2l_boundary_type=config.grid.x2r_boundary_type="outflow";
+     }
++    config.numerics=numerics;
++    config.io.tmax=1.e-3; // Frozen 10 steps times dt=1e-4, not a new endpoint.
++    config.physics.gravity.type="external";config.physics.gravity.g_z=external_phi;
+     amr::AMRControl control(32,2);
+     control.tree->LoadLeafGrid(config,0,{1,1,1,1,0},
+         {0,1,0,1,static_cast<std::uint32_t>(direction==0?1:0)},
+-        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0});
++        {0,0,1,1,static_cast<std::uint32_t>(direction==0?0:1)},{0,0,0,0,0},rz);
+     const auto& active=control.tree->GetActiveBlocks();
+     std::vector<amr::BlockHandle> handles;
+     for(std::size_t n=0;n<active.size();++n) {
+@@ -630,15 +708,102 @@
+
+     using namespace arch::state;
+     using namespace arch::scheduler;
+-    StateResidencyLedger ledger({97});
+-    for(auto handle:handles) {
+-        ledger.register_block(handle,{1},{1,CompletionState::Complete});
+-        ledger.publish_ghost({handle,StateSlot::Current},ExecutionSide::Host,
+-            {1},{2,CompletionState::Complete});
+-    }
+-    MonotonicSchedulerClock clock(2,1);
+-    StageExecutionContext context{ExecutionSide::Host,ledger,clock};
+-    ScopedStageBinding scope(context,handles);
++    RunState start{};
++    SimulationController counters(config,start);
++    counters.repairs.reset(species.count());
++    arch::driver::DriverRuntime runtime(control,boundary,config,species,counters);
++    runtime.initialize_topology();
++    handles=runtime.handles();
++    auto context=runtime.stage_context();
++    auto& ledger=context.ledger;auto& clock=context.clock;
++    std::unique_ptr<arch::driver::RzExternalStage> source_stage;
++    if(gravity)source_stage=std::make_unique<arch::driver::RzExternalStage>(runtime,external,hydro);
++    context.hydro_preparation=source_stage.get();
++    if(source_stage)context.hydro_acceptance=[&](const auto& descriptor){source_stage->accept(descriptor);};
++    context.step_dt=1.e-4;
++
++    if(rz_owner_probe) {
++        const auto plan=make_hydro_plan(HydroMethod::Euler);
++        const auto& descriptor=plan.stages.front();
++        const auto prepare=[&] {
++            return source_stage->prepare({plan.method,descriptor,runtime.handles(),ExecutionSide::Host,
++                context.ledger,counters.t_current,1.e-4});
++        };
++        const auto& b=control.pool->GetBlock(active.front());
++        std::vector<FluidVector> delta(b.grid.GetTotalSize());
++        int rejects=0;
++        const auto consume_reject=[&] {
++            const auto before=delta;
++            bool rejected=false;
++            try{external.add_sources_on_patch(delta,b.fluid_state,b.grid,1.e-4);}
++            catch(const std::exception&){rejected=true;}
++            if(!rejected)throw std::runtime_error("invalid production/cache identity accepted");
++            for(std::size_t i=0;i<delta.size();++i)
++                for(const auto pair:std::array<std::pair<double,double>,5>{{{delta[i].rho,before[i].rho},
++                    {delta[i].mom_u,before[i].mom_u},{delta[i].mom_v,before[i].mom_v},
++                    {delta[i].mom_w,before[i].mom_w},{delta[i].eng,before[i].eng}}})
++                    if(std::bit_cast<std::uint64_t>(pair.first)!=std::bit_cast<std::uint64_t>(pair.second))
++                        throw std::runtime_error("bad lease partially wrote source increment");
++            ++rejects;
++        };
++        auto prepare_bad=[&](auto descriptor,double time) {
++            bool rejected=false;
++            try {source_stage->prepare({plan.method,descriptor,runtime.handles(),ExecutionSide::Host,
++                context.ledger,time,1.e-4});}catch(const std::invalid_argument&){rejected=true;}
++            if(!rejected)throw std::runtime_error("noncanonical RK/time request accepted");
++            ++rejects;
++        };
++        auto bad_descriptor=descriptor;bad_descriptor.flux_register_weight=.5;
++        prepare_bad(bad_descriptor,0.);prepare_bad(descriptor,1.e-4);
++        bool duplicate_owner=false;
++        try {arch::driver::RzExternalStage other(runtime,external,policy);}
++        catch(const std::logic_error&){duplicate_owner=true;}
++        if(!duplicate_owner)throw std::runtime_error("multiple source stage owners accepted");
++        ++rejects;
++        prepare();
++        external.add_sources_on_patch(delta,b.fluid_state,b.grid,1.e-4);
++        const int cell=b.grid.GetIndex(b.grid.Is(),b.grid.Js(),0);
++        close(delta[cell].eng,1.e-4*b.fluid_state.mom_w[cell]*external.g_z,"actual PCM source limiter");
++        consume_reject(); // exactly once
++        prepare();counters.step_count=1;consume_reject();counters.step_count=0;
++        prepare();counters.t_current=1.e-4;consume_reject();counters.t_current=0.;
++        prepare();config.physics.gravity.g_z=.05;consume_reject();config.physics.gravity.g_z=external_phi;
++        prepare();external.g_z=.05;consume_reject();external.g_z=external_phi;
++        prepare();
++        auto saved_ledger=ledger.checkpoint_host_hydro();
++        const auto saved_clock=clock;
++        publish_completed_interior(context,runtime.handles(),StateSlot::Current);
++        consume_reject(); // real publication invalidates old version + ghost
++        ledger.rollback_host_hydro(std::move(saved_ledger));clock=saved_clock;
++        // A late block invalidity cannot publish the already prepared prefix.
++        auto& last=control.pool->GetBlock(active.back());
++        const int last_cell=last.grid.GetIndex(last.grid.Ie()-1,last.grid.Je()-1,0);
++        const auto saved=last.fluid_state.eng[last_cell];
++        last.fluid_state.eng[last_cell]=std::numeric_limits<double>::quiet_NaN();
++        const auto before=all_rz_bits(control),publication=rz_ledger_words(ledger,handles);
++        const auto token=clock.last_token(),version=clock.last_version();
++        bool failed=false;
++        try {ScopedStageBinding binding(context,handles);Solver::solve(control,1.e-4,boundary,gravity,&policy,numerics);}
++        catch(const std::invalid_argument&){failed=true;}
++        if(!failed||all_rz_bits(control)!=before||rz_ledger_words(ledger,handles)!=publication
++            ||clock.last_token()!=token||clock.last_version()!=version)
++            throw std::runtime_error("real late source preparation rejection not protected");
++        last.fluid_state.eng[last_cell]=saved;
++        ++rejects;
++        prepare();
++        const auto generation=runtime.host_storage_generation(0);
++        config.amr.refine_on_rho=true;
++        config.amr.refine_threshold=.2;config.amr.derefine_threshold=.1;
++        if(!runtime.regrid_native_rz_candidate(0,0.))throw std::runtime_error("owner fixture did not commit actual regrid");
++        if(runtime.host_storage_generation(0)==generation)throw std::runtime_error("Host lifetime not renewed");
++        consume_reject();
++        std::cout<<"RZ_PRODUCTION_OWNER_PASS cache_once=1 PCM_actual_limiter=1 config_mismatch=1"
++            <<" macro_step_mismatch=1 source_mismatch=1 actual_version_ghost_rejection=1"
++            <<" late_domain_rejection=1 renewed_storage_rejection=1 rejects="<<rejects
++            <<" canonical_RK_time=1 single_owner=1 config_lease="<<runtime.source_configuration_lease()<<" storage_generation="
++            <<runtime.host_storage_generation(0).value<<"\n";
++        return;
++    }
+     // Independent full-ring integral budget, not production metric helpers.
+     const auto totals=[&]() {
+         std::array<long double,6> sum{};
+@@ -662,7 +827,20 @@
+     long double maxJ=0.,maxM=0.,maxE=0.,maxSpecies=0.;
+     double maxTorqueRegister=0.;
+     constexpr int steps=10;
++    std::unique_ptr<amr::AMRControl> restored;
++    RunState restart;
++    std::filesystem::path checkpoint;
++    std::string checkpoint_sha;
++    config.io.base_name="frozen-rz";
++    if(!rz_checkpoint_root.empty()) {
++        config.io.out_dir=(rz_checkpoint_root/(std::to_string(direction)+"-"+std::to_string(open)
++            +"-"+std::to_string(external_phi)+"-"+Solver::name())).string();
++        if(std::filesystem::exists(config.io.out_dir))throw std::runtime_error("checkpoint case output already exists");
++    }
++    const auto provenance=io::inspect_checkpoint_provenance(config,species,
++        arch::dispatch::EosId::Ideal,false,"none",false);
+     for(int step=0;step<steps;++step) {
++        counters.step_count=step;counters.t_current=step*1.e-4;context.step_start_time=counters.t_current;
+         complete_boundary(context,handles,StateSlot::Current,
+             StateVersion{clock.last_version()},
+             [&](StateSlot,StateVersion,CompletionToken token) {
+@@ -676,6 +854,28 @@
+                     {numerics.sml_rho,numerics.min_eint,numerics.max_eint});
+                 return token;
+             });
++        if(rz_rejection_probe&&gravity&&step==1) {
++            const auto arrays=all_rz_bits(control),publication=rz_ledger_words(ledger,handles);
++            const auto flux_before=control.flux_register.checkpoint_host_hydro();
++            const auto token=clock.last_token(),version=clock.last_version(),budget=external.accepted_budgets().size();
++            constexpr int stage_count=std::is_same_v<Solver,SolverEuler>?1:(std::is_same_v<Solver,SolverRK2>?2:3);
++            RejectNumericalPatch rejecting(policy,(stage_count-1)*active.size()+2);
++            bool failed=false;
++            try {
++                ScopedStageBinding reject_scope(context,handles);
++                Solver::solve(control,1.e-4,boundary,gravity,&rejecting,numerics);
++            } catch(const std::runtime_error& e) {
++                if(std::string(e.what())!="injected late actual numerical executor rejection")throw;
++                failed=true;
++            }
++            if(!failed||all_rz_bits(control)!=arrays||rz_ledger_words(ledger,handles)!=publication
++                ||clock.last_token()!=token||clock.last_version()!=version
++                ||!control.flux_register.matches_host_hydro(flux_before)
++                ||external.accepted_budgets().size()!=budget)
++                throw std::runtime_error("actual numerical rejection corrupted state/ledger/clock/flux/source budget");
++            std::cout<<"RZ_NUMERICAL_REJECTION_PASS method="<<Solver::name()
++                <<" arrays=Current+Next+Scratch ledger=unchanged clock=unchanged flux=unchanged source_budget=unchanged retry=next\n";
++        }
+         const auto snapshot=[&]() {
+             std::vector<std::uint64_t> words;
+             for(int id:active) {
+@@ -691,6 +891,7 @@
+         };
+         const auto preflight_state=gravity?snapshot():std::vector<std::uint64_t>{};
+         try {
++            ScopedStageBinding stage_scope(context,handles);
+             Solver::solve(control,1.e-4,boundary,gravity,&hydro,numerics);
+         } catch(const std::invalid_argument& error) {
+             if(gravity && std::string(error.what())=="RZ gravity requires authoritative finite-ring contract") {
+@@ -700,6 +901,24 @@
+                     <<preflight_state.size()<<" state_bits_unchanged=1 reason="<<error.what()<<'\n';
+             }
+             throw;
++        }
++        counters.dt_old=1.e-4;counters.advance(1.e-4);
++        if(!rz_checkpoint_root.empty()&&step==4) {
++            auto pressure=+[](const FluidVector& u,const double* x,const void* p){
++                return static_cast<const IdealGas*>(p)->get_pressure(u,x);};
++            auto temperature=+[](const FluidVector& u,const double* x,const void* p){
++                return static_cast<const IdealGas*>(p)->get_temperature(u.rho,eos_utils::extract_specific_internal_energy(u),x);};
++            auto gamma=+[](const FluidVector&,const double* x,const void* p){
++                return static_cast<const IdealGas*>(p)->get_gamma(x);};
++            arch::driver::DriverIO output(runtime,counters,provenance,pressure,temperature,gamma,&eos);
++            output.write_checkpoint(1e99,false);
++            checkpoint=std::filesystem::path(config.io.out_dir)/"frozen-rz_chk_0000.h5";
++            checkpoint_sha=arch::core::file_sha256(checkpoint.string());
++            restored=std::make_unique<amr::AMRControl>(32,2);
++            read_chk(checkpoint.string(),*restored,restart,config,species,provenance,io::current_rz_checkpoint_geometry());
++            if(accepted_rz_bits(*restored)!=accepted_rz_bits(control)||restart.step!=5
++                ||restart.time!=5.e-4||restart.time!=counters.t_current||restart.dt_old!=1.e-4)
++                throw std::runtime_error("frozen checkpoint split identity/state mismatch");
+         }
+         const auto now=totals();
+         const auto out=observer.outward();
+@@ -728,6 +947,39 @@
+             }
+         }
+     }
++    if(restored) {
++        SimConfig resumed_config=config;resumed_config.io.restart=true;
++        SimulationController resumed_counters(resumed_config,restart);
++        BCHandler resumed_boundary(resumed_config,rz);
++        arch::driver::DriverRuntime resumed(*restored,resumed_boundary,resumed_config,species,resumed_counters);
++        resumed.initialize_topology();
++        Physical::Gravity::ExternalGravity resumed_source(0.,0.,external_phi,rz);
++        arch::driver::RzExternalStage resumed_stage(resumed,resumed_source,policy);
++        auto resumed_context=resumed.stage_context();
++        resumed_context.hydro_preparation=&resumed_stage;resumed_context.step_dt=1.e-4;
++        resumed_context.hydro_acceptance=[&](const auto& descriptor){resumed_stage.accept(descriptor);};
++        for(int step=5;step<steps;++step) {
++            resumed.ensure_fluid_ghosts();
++            resumed_context.step_start_time=resumed_counters.t_current;
++            {
++                ScopedStageBinding resumed_scope(resumed_context,resumed.handles());
++                Solver::solve(*restored,1.e-4,resumed_boundary,&resumed_source,&policy,numerics);
++            }
++            resumed_counters.dt_old=1.e-4;resumed_counters.advance(1.e-4);
++        }
++        if(accepted_rz_bits(*restored)!=accepted_rz_bits(control)
++           ||resumed_counters.step_count!=10||resumed_counters.t_current!=1.e-3||resumed_counters.t_current!=counters.t_current
++           ||arch::core::file_sha256(checkpoint.string())!=checkpoint_sha)
++            throw std::runtime_error("frozen actual checkpoint continuation differs");
++        for(int id:restored->tree->GetActiveBlocks())
++            for(double repair:restored->pool->GetBlock(id).fluid_state.stage_repairs.values)
++                if(repair!=0.)throw std::runtime_error("restart used repair");
++        std::cout<<std::setprecision(17)<<"RZ_FROZEN_CHECKPOINT_PASS method="<<Solver::name()
++            <<" direction="<<direction<<" open="<<open<<" phi="<<external_phi
++            <<" split_time="<<restart.time<<" split_step="<<restart.step
++            <<" final_time="<<resumed_counters.t_current<<" final_step=10 bit_words="
++            <<accepted_rz_bits(control).size()<<" checkpoint_sha="<<checkpoint_sha<<'\n';
++    }
+     if(maxTorqueRegister==0.)throw std::runtime_error("rotating fixture never exercised torque reflux");
+     const auto& topology=control.RequireFluxTopologyPlan(2,rz,-1,true);
+     if(!topology.angular_transport)throw std::runtime_error("rotating hydro lost torque identity");
+@@ -737,6 +989,17 @@
+     const int stages=std::is_same_v<Solver,SolverEuler>?1:(std::is_same_v<Solver,SolverRK2>?2:3);
+     if(observer.stage_calls()!=steps*stages*static_cast<int>(active.size()))
+         throw std::runtime_error("boundary budget missed a real RK patch-stage");
++    if(gravity) {
++        long double actual_J=0.,actual_E=0.;
++        for(const auto& entry:external.accepted_budgets()) {
++            if(entry.patches!=active.size())throw std::runtime_error("source ledger incomplete patch set");
++            actual_J+=entry.angular;actual_E+=entry.energy;
++        }
++        if(external.accepted_budgets().size()!=steps*stages
++            ||std::abs(actual_J-final_applied[2])>1.e-12L*std::abs(final_applied[2])
++            ||std::abs(actual_E-final_applied[1])>1.e-12L*std::abs(final_applied[1]))
++            throw std::runtime_error("actual accepted source ledger differs from independent stage observer");
++    }
+     const auto final_state=totals();
+     const long double naive_error=std::abs(final_state[2]-before[2]+observer.unweighted_torque()-final_applied[2])
+         /(before[3]+std::abs(observer.unweighted_torque()));
+@@ -1011,7 +1274,24 @@
+ }
+ int main(int argc,char** argv)
+ {
+-    if(argc==2 && std::string(argv[1])=="rz-applied-torque-audit") {
++    if(argc==2&&std::string(argv[1])=="rz-source-owner-audit") {
++        rz_owner_probe=true;
++        test_rz_rotating_boundary_budget<SolverEuler>(0,1.,false,-.025);
++        return 0;
++    }
++    if(argc==2&&std::string(argv[1])=="rz-source-rejection-audit") {
++        rz_rejection_probe=true;
++        test_rz_rotating_boundary_budget<SolverEuler>(0,1.,false,-.025);
++        test_rz_rotating_boundary_budget<SolverRK2>(0,1.,false,-.025);
++        test_rz_rotating_boundary_budget<SolverRK3>(0,1.,false,-.025);
++        return 0;
++    }
++    if((argc==2 && std::string(argv[1])=="rz-applied-torque-audit")
++        ||(argc==3 && std::string(argv[1])=="rz-applied-torque-restart-audit")) {
++        if(argc==3) {
++            rz_checkpoint_root=argv[2];
++            if(std::filesystem::exists(rz_checkpoint_root))throw std::runtime_error("fresh owned checkpoint root required");
++        }
+         try {
+             for(int direction:{0,1})for(bool open:{false,true})for(double phi:{-.025,.025}) {
+                 test_rz_rotating_boundary_budget<SolverEuler>(direction,1.,open,phi);

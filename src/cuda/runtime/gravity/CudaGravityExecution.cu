@@ -12,6 +12,7 @@
 
 #include "cuda/common/DeviceAllocation.h"
 
+
 namespace arch::cuda {
 namespace {
 using namespace arch::multigrid;
@@ -70,6 +71,8 @@ class CudaExecution final:public CompositeExecution {
     ReusableDeviceAllocation<double> partials_;
     DeviceAllocation<double> result_,scale_,sum_;
     ExecutionCounters counters_;
+    /** A caller may select another device between borrowed stream operations. */
+    void select_device() const {check_cuda(cudaSetDevice(lease_->device),"select gravity lease device");}
 public:
     /** Bind one device and stream and allocate reusable scalar reductions. */
     CudaExecution(cudaStream_t stream,int device,std::shared_ptr<void> lifetime)
@@ -91,6 +94,7 @@ public:
     }
     /** Queue an explicit host/device or device/device transfer on the leased stream. */
     void copy(void* to,const void* from,std::size_t bytes,Transfer transfer) override {
+        select_device();
         const auto kind=transfer==Transfer::Upload?cudaMemcpyHostToDevice:transfer==Transfer::Download?cudaMemcpyDeviceToHost:cudaMemcpyDeviceToDevice;
         check_cuda(cudaMemcpyAsync(to,from,bytes,kind,lease_->stream),"copy gravity storage");
         if(transfer==Transfer::Upload){counters_.bytes_h2d+=bytes;fence();} // borrowed host input lifetime
@@ -98,7 +102,9 @@ public:
     }
     /** Visit a shared work descriptor and launch its scalar kernel. */
     template<class Variant> void launch(const Variant& work) {
-        std::visit([&](auto task){if(!task.size)return;
+        select_device();
+        std::visit([&](auto task){
+            if(!task.size)return;
             execute_work<<<(task.size+127)/128,128,0,lease_->stream>>>(task);
             check_cuda(cudaGetLastError(),"launch shared gravity arithmetic");++counters_.kernels;
         },work);
@@ -107,6 +113,7 @@ public:
     void run(const CompositeWork& work) override {launch(work);}
     /** Queue both reduction passes with reusable partial storage. */
     void reduce_device(const Reduction& task,double* out) {
+        select_device();
         const int n=(task.size+Reduction::chunk-1)/Reduction::chunk;
         if (n > 0 && n <= reduction_threads) {
             reduce_one_block<<<1,reduction_threads,0,lease_->stream>>>(task,n,out);
@@ -114,6 +121,9 @@ public:
             ++counters_.kernels;
             return;
         }
+        // Growth can release storage still borrowed by an earlier enqueue.
+        // Reuse within capacity stays asynchronous; first allocation frees nothing.
+        if(n>static_cast<int>(partials_.size()) && partials_.size()!=0)fence();
         partials_.reserve(n);
         reduce_chunks<<<(n+127)/128,128,0,lease_->stream>>>(task,partials_.get(),n);
         reduce_finish<<<1,1,0,lease_->stream>>>(task,partials_.get(),n,out);
@@ -126,6 +136,7 @@ public:
     }
     /** Remove a periodic mean entirely on device after two reductions. */
     void project(Vector& x,const Vector& weights) override {
+        select_device();
         // Same normalization/sum/subtraction as Host, ordered on the existing
         // stream. Projection has no Host control dependency or scalar download.
         const int n = (x.size + Reduction::chunk - 1) / Reduction::chunk;
@@ -140,7 +151,7 @@ public:
         run(ProjectWork{x.size,x.data,scale_.get(),sum_.get()});
     }
     /** Wait for all work on the leased gravity stream. */
-    void fence() override {check_cuda(cudaStreamSynchronize(lease_->stream),"complete gravity execution");++counters_.synchronizations;}
+    void fence() override {select_device();check_cuda(cudaStreamSynchronize(lease_->stream),"complete gravity execution");++counters_.synchronizations;}
     /** Return transfer, kernel and synchronization evidence. */
     ExecutionCounters counters() const override{return counters_;}
 };

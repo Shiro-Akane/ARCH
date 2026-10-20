@@ -5,12 +5,16 @@
  * Exercise reconstructed faces, directional fluxes, divergence and primitive
  * recovery against host results and independent physical identities.
  */
+#include <algorithm>
+#include "numerics/flux/InvariantDomainFlux.h"
+#include <array>
 #include <bit>
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string_view>
 #include <vector>
 
@@ -29,6 +33,7 @@
 #include "numerics/flux/FluxRoe.h"
 #include "numerics/flux/FluxSW.h"
 #include "numerics/flux/FluxVL.h"
+#include "numerics/flux/StationarySlipWallFlux.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/reconstruction/Reconstruction.h"
 #include "fixtures/hydro/MeanThermoCases.h"
@@ -36,9 +41,13 @@
 #include "math/RoeThermodynamicCases.h"
 
 #if defined(__CUDACC__)
+#include "amr/storage/Block.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
 #include "cuda/hydro/policies/HydroFluxPolicies.cuh"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
+#include "cuda/hydro/kernels/HydroFaceKernel.cuh"
 #include "cuda/hydro/kernels/HydroStageKernels.cuh"
+#include "cuda/hydro/kernels/HydroBatchKernels.cuh"
 #endif
 
 namespace
@@ -46,6 +55,11 @@ namespace
 struct TestIdealGas
 {
     ARCH_INLINE double get_gamma(const double*) const { return 1.4; }
+
+    // This fixed-composition test EOS borrows the production single-gas
+    // temperature relation and CGS Cv; native mean admissibility requires it.
+    ARCH_INLINE double get_temperature(double rho,double energy,const double*) const
+    { return IdealGasView{}.get_temperature(rho,energy,nullptr); }
 
     ARCH_INLINE double get_pressure(const FluidVector& state, const double*) const
     {
@@ -600,7 +614,11 @@ FaceResult characterize_face(double coefficient)
 
 bool exact_bits(double actual, std::uint64_t expected)
 {
-    return std::bit_cast<std::uint64_t>(actual) == expected;
+    const auto bits=std::bit_cast<std::uint64_t>(actual);
+    if(bits!=expected)
+        std::cerr << "Host characterization bit mismatch actual=0x" << std::hex
+                  << bits << " expected=0x" << expected << std::dec << '\n';
+    return bits == expected;
 }
 
 bool vector_bits(
@@ -690,10 +708,14 @@ bool validate_characterized_host_paths()
     const auto ppm = PPMReconstruction::apply(
         {1, 0, 0, 0, 2}, {1, 0, 0, 0, 2}, {1, 0, 0, 0, 2},
         {10, 0, 0, 0, 20}, {10, 0, 0, 0, 20}, {10, 0, 0, 0, 20});
+    // On this unsupported sharp step, one neighboring second difference is
+    // zero on each side. The current curvature support k is exactly zero:
+    // theta=0 selects the CW bounds, which return the own-cell means 1/10
+    // (energy 2/20). These exact analytical values retire the old method snapshot.
     if (!vector_bits(ppm.first,
-                     0x4004000000000000ULL, 0, 0, 0, 0x4014000000000000ULL)
+                     0x3ff0000000000000ULL, 0, 0, 0, 0x4000000000000000ULL)
         || !vector_bits(ppm.second,
-                        0x4020fffffffffffeULL, 0, 0, 0, 0x4030fffffffffffeULL))
+                        0x4024000000000000ULL, 0, 0, 0, 0x4034000000000000ULL))
         return false;
 
     const FaceResult hll = characterize_face<FluxHLL>(0.0);
@@ -1000,10 +1022,10 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         && exact_bits(actual.limiter_negzero, 0x0000000000000000ULL)
         && exact_bits(actual.slope, 0x3fe0000000000000ULL)
         && actual.slope_below == 0.5*((1.0+0.5e-12)-1.0)
-        && std::abs(actual.ppm_left - 5.0 / 3.0)
-               <= 2e-15 * std::max(1.0, std::abs(5.0 / 3.0))
-        && std::abs(actual.ppm_right - 25.0 / 3.0)
-               <= 2e-15 * std::max(1.0, std::abs(25.0 / 3.0))
+        // The same unsupported scalar step has exact CW endpoints 0/10;
+        // no rounding window or positive floor is needed for these values.
+        && actual.ppm_left == 0.0
+        && actual.ppm_right == 10.0
         && actual.cfl_nan_minimum == 3.0
         && actual.cfl_infinite_minimum == 3.0
         && species_match;
@@ -1600,6 +1622,51 @@ int run_device_primitives()
         || destination.species(0, active - 1) != 0.2)
         return 112;
 
+    // Workflow: reuse the actual stage buffers/launcher for SSPRK3's final
+    // (1/3,2/3) pair with zero conserved and species RHS. Each seed component
+    // is a power-of-two multiple of the independently specified nextafter(1)
+    // bit pattern; ample thermal energy prevents a repair from masking drift.
+    constexpr double stationary_q = 0x1.0000000000001p+0;
+    const FluidVector stationary_seed{
+        stationary_q, stationary_q / 16.0, stationary_q / 8.0,
+        stationary_q / 32.0, 8.0 * stationary_q};
+    old_state.store(active, stationary_seed);
+    current_state.store(active, stationary_seed);
+    stage_delta.store(active, {});
+    for (int species_index = 0; species_index < 2; ++species_index) {
+        const double fraction = species_index == 0 ? .25 : .75;
+        old_state.set_species(species_index, active, fraction);
+        current_state.set_species(species_index, active, fraction);
+        stage_delta.set_species(species_index, active, 0.0);
+    }
+    if (!old_state.upload() || !current_state.upload() || !stage_delta.upload())
+        return 203;
+    if (launch_hydro_single_stage_update(
+            old_state.view, current_state.view, destination.view,
+            stage_delta.view, grid, 1.0 / 3.0, 2.0 / 3.0,
+            1e-12, 1e-10, 1e20, nullptr) != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess || !destination.download()
+        || !vector_bits(destination.load(active),
+                        0x3ff0000000000001ULL, 0x3fb0000000000001ULL,
+                        0x3fc0000000000001ULL, 0x3fa0000000000001ULL,
+                        0x4020000000000001ULL)
+        || !exact_bits(destination.species(0, active), 0x3fd0000000000000ULL)
+        || !exact_bits(destination.species(1, active), 0x3fe8000000000000ULL))
+        return 204;
+    for (int cell = 0; cell < total; ++cell) {
+        if (!exact_bits(destination.enuc_rate[cell], 0x4031000000000000ULL))
+            return 205;
+        if (cell != active
+            && (!vector_bits(destination.load(cell),
+                             0x4022000000000000ULL, 0x4020000000000000ULL,
+                             0x401c000000000000ULL, 0x4018000000000000ULL,
+                             0x4014000000000000ULL)
+                || !exact_bits(destination.species(0, cell), 0x3fc999999999999aULL)
+                || !exact_bits(destination.species(1, cell), 0x3fe999999999999aULL)))
+            return 205;
+    }
+    std::cout << "CUDA_RK3_STATIONARY_PASS cells=1 species=2\n";
+
     state.store(active, {2.0, 2.0, 2.5, 2.0, 10.0});
     if (!state.upload())
         return 113;
@@ -1750,6 +1817,124 @@ int run_concurrent_repairs()
     cudaFree(ledger); cudaFree(failure);
     return result;
 }
+
+/** Actual shared point-wall assembly on Host and in a CUDA kernel.
+ * The at-rest reference is F=(0,P*n,0), with zero species advection. The
+ * optional negative high trial is deliberate NaN input, not a failed EOS.
+ * This leaf grants no Runtime wall, native geometry or rollback capability.
+ */
+struct SharedWallLeafResult { int cases=0, failures=0; };
+
+/** Read true immutable base composition after the selected high callback. */
+struct SharedWallBaseSpecies {
+    int* high_calls;
+    int* base_reads;
+    int* order_errors;
+    ARCH_INLINE double operator()(int species) const {
+        if(*high_calls!=1) ++*order_errors;
+        ++*base_reads;
+        return species==0?.75:.25;
+    }
+};
+
+/** Preserve the actual HLLC/PCM high policy or supply an optional NaN trial. */
+struct SharedWallHighPolicy {
+    int direction, species, trial;
+    int* high_calls;
+    int* order_errors;
+    template<class Eos>
+    ARCH_INLINE void operator()(const FluidVector& left,const FluidVector& right,
+        const double* xl,const double* xr,const Eos& eos,
+        FluidVector& high,double* species_flux) const {
+        ++*high_calls;
+        if(species && (xl[0]!=.25||xr[0]!=.25)) ++*order_errors;
+        if(trial) {
+            high={arch::state::invalid(),0.,0.,0.,arch::state::invalid()};
+            for(int s=0;s<species;++s)species_flux[s]=arch::state::invalid();
+        } else {
+            FluxHLLC<PCMReconstruction>::compute_face_flux(left,right,xl,xr,
+                species,eos,direction,1.,high,species_flux);
+        }
+    }
+};
+
+/** Exercise all point directions/sides and required-output rejection. */
+ARCH_INLINE SharedWallLeafResult evaluate_shared_wall_assembly() {
+    using Status=FluxAdmissibility::PointWallStatus;
+    constexpr double pressure=.00625;
+    const double sound=std::sqrt(1.4*pressure);
+    const FluidVector point{1.,0.,0.,0.,pressure/.4};
+    const FluidVector sentinel{123.,456.,789.,123.,456.};
+    const IdealGasView eos{};
+    SharedWallLeafResult result{};
+    for(int dir=0;dir<3;++dir)for(int side=0;side<2;++side)
+        for(int species_case=0;species_case<2;++species_case)for(int trial=0;trial<2;++trial) {
+            const int species=species_case?2:0;
+            double left[2]{.25,.75},right[2]{.25,.75},low[2]{123.,456.},high_species[2]{123.,456.};
+            int high_calls=0,base_reads=0,order_errors=0;
+            const SharedWallBaseSpecies read_base{&high_calls,&base_reads,&order_errors};
+            const SharedWallHighPolicy selected{dir,species,trial,&high_calls,&order_errors};
+            auto output=sentinel;
+            const auto status=FluxAdmissibility::assemble_wall_point(point,point,point,point,
+                dir,side,species,pressure,sound,eos,species?left:nullptr,
+                species?right:nullptr,species?low:nullptr,species?high_species:nullptr,
+                read_base,selected,output);
+            const double normal=dir==0?output.mom_u:dir==1?output.mom_v:output.mom_w;
+            const bool valid=status==Status::valid&&high_calls==1&&base_reads==species
+                &&order_errors==0&&output.rho==0.&&output.eng==0.
+                &&std::isfinite(normal)
+                &&std::abs(normal-pressure)<=arch::state::composition_roundoff_limit*pressure
+                &&(dir==0||output.mom_u==0.)&&(dir==1||output.mom_v==0.)
+                &&(dir==2||output.mom_w==0.)
+                &&(!species||(high_species[0]==0.&&high_species[1]==0.
+                    &&left[0]==.75&&right[0]==.75));
+            ++result.cases;if(!valid)++result.failures;
+        }
+    for(int negative=0;negative<2;++negative) {
+        double left[2]{.25,.75},right[2]{.25,.75},low[2]{123.,456.},high_species[2]{123.,456.};
+        int high_calls=0,base_reads=0,order_errors=0;
+        const SharedWallBaseSpecies read_base{&high_calls,&base_reads,&order_errors};
+        const SharedWallHighPolicy selected{0,2,0,&high_calls,&order_errors};
+        auto output=sentinel;
+        const auto status=FluxAdmissibility::assemble_wall_point(point,point,point,point,
+            negative?0:3,0,2,negative?arch::state::invalid():pressure,sound,eos,
+            left,right,low,high_species,read_base,selected,output);
+        const bool valid=status!=Status::valid&&output.rho==sentinel.rho
+            &&output.mom_u==sentinel.mom_u&&output.mom_v==sentinel.mom_v
+            &&output.mom_w==sentinel.mom_w&&output.eng==sentinel.eng
+            &&(negative||high_calls==0);
+        ++result.cases;if(!valid)++result.failures;
+    }
+    return result;
+}
+
+/** Launch the same mathematical leaf using genuine device-local scratch. */
+__global__ void shared_wall_assembly_kernel(SharedWallLeafResult* output) {
+    if(blockIdx.x==0&&threadIdx.x==0)*output=evaluate_shared_wall_assembly();
+}
+
+/** Check Host and copied device evidence against the same physical identities. */
+int run_shared_point_wall_assembler() {
+    const auto host=evaluate_shared_wall_assembly();
+    SharedWallLeafResult* device=nullptr;
+    const auto allocation=cudaMalloc(&device,sizeof(SharedWallLeafResult));
+    if(allocation!=cudaSuccess)return 201;
+    shared_wall_assembly_kernel<<<1,1>>>(device);
+    const auto launch=cudaGetLastError();
+    const auto sync=cudaDeviceSynchronize();
+    SharedWallLeafResult copied{};
+    const auto transfer=cudaMemcpy(&copied,device,sizeof(copied),cudaMemcpyDeviceToHost);
+    const auto release=cudaFree(device);
+    if(launch!=cudaSuccess||sync!=cudaSuccess||transfer!=cudaSuccess||release!=cudaSuccess
+        ||host.cases!=26||copied.cases!=host.cases||host.failures||copied.failures) {
+        std::cerr<<"shared point-wall leaf: host="<<host.failures<<'/'<<host.cases
+            <<" device="<<copied.failures<<'/'<<copied.cases<<'\n';return 202;
+    }
+    std::cout<<"SHARED_POINT_WALL_ASSEMBLER_LEAF_PASS host_cases=26 device_cases=26 "
+        "optional_trial_negative=1 runtime_authority=0 native_authority=0\n";
+    return 0;
+}
+
 #endif
 } // namespace
 
@@ -1766,8 +1951,10 @@ int main()
               << " stationary_transport=" << identities.stationary_transport << '\n';
     if (!identities.passed())
         return 2;
-    if (!validate_characterized_host_paths())
+    if (!validate_characterized_host_paths()) {
+        std::cerr << "Independent Host characterization failed before any device launch\n";
         return 1;
+    }
     print_double("limiter.minmod.negzero", MinMod::calc(-0.0));
     print_double("limiter.minmod.half", MinMod::calc(0.5));
     print_double("limiter.superbee.half", SuperBee::calc(0.5));
@@ -1886,6 +2073,8 @@ int main()
     const int route_result = run_route_matrix();
     if (route_result != 0)
         return route_result;
+    const int wall_assembly_result=run_shared_point_wall_assembler();
+    if(wall_assembly_result!=0)return wall_assembly_result;
 #endif
     return 0;
 }

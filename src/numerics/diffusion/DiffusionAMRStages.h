@@ -12,30 +12,38 @@
  * Workflow:
  * 1. Evaluate the shared physical diffusion operator on synchronized AMR leaves.
  * 2. Register coarse-fine fluxes, reflux, and refresh halos at every RKL stage.
- * 3. Return a conservative composite hierarchy state to the driver.
+ * 3. Evaluate the same RKL polynomial in centered conserved increments,
+ *    retaining exact stationary identities and original operator dt grouping.
+ * 4. Return a conservative composite hierarchy state to the driver.
  */
 
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <vector>
 
-#include "numerics/diffusion/DiffFlux.h"
-#include "numerics/integrator/TimeIntegratorHelper.h"
-#include "numerics/diffusion/DiffFunction.h"
 #include "amr/flux/AMRFluxRegistering.h"
 #include "driver/schedule/StageScheduler.h"
+#include "numerics/diffusion/DiffFlux.h"
+#include "numerics/diffusion/DiffFunction.h"
+#include "numerics/integrator/TimeIntegratorHelper.h"
 
 namespace Numerics::Diffusion {
 
 namespace detail {
 
-// These expression leaves intentionally remain macro-expanded at Host
-// call sites. GCC's -ffast-math changes FMA grouping when the recurrences
-// cross a function boundary, even after inlining. Keeping one expansion source
-// preserves the Host expression grouping while the Host/device cell
-// wrappers below consume the identical authority.
+template<typename BCPolicy>
+inline void validate_geometry(const Grid& grid,const BCPolicy& boundary)
+{
+    (void)GridMetrics::make_geometry_view(grid);
+    if constexpr(requires { boundary.logical_plan(grid); })
+        (void)boundary.logical_plan(grid);
+}
+
+// First-stage expression leaves retain their original arithmetic. Recursive
+// Host and device consumers use the shared centered scalar authority below.
 #define ARCH_DIFFUSION_FIRST_RKL_COMPONENT(                                \
     state_n, coefficient, increment)                                       \
     ((state_n) + (coefficient) * (increment))
@@ -44,57 +52,99 @@ namespace detail {
     rho_n, species_n, coefficient, species_increment)                      \
     ((rho_n) * (species_n) + (coefficient) * (species_increment))
 
-#define ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(                            \
-    coefficients, state_previous, state_older, increment_previous, dt)     \
-    ((coefficients).mu * (state_previous)                                  \
-     + (coefficients).nu * (state_older)                                   \
-     + (coefficients).tilde_mu * (dt) * (increment_previous))
+/** Check finite arithmetic controls before preserving a stationary value.
+ * Workflow: first stage checks its actual coefficient only; recursion checks
+ * mu/nu/tilde_mu and RKL2 gamma. Unscaled recursion also uses dt; scaled
+ * recursion and RKL1 initial operator controls are mathematically unused.
+ * This exact finite guard prevents malformed controls from gaining a finite
+ * output through the stationary shortcut; no magnitude bound is introduced.
+ */
+ARCH_INLINE bool finite_rkl_arithmetic_controls(
+    const DiffFunction::RKLCoeffs& coefficients, double dt,
+    double first_coefficient, bool recursive, bool second_order,
+    bool increments_are_scaled)
+{
+    if (!recursive) return std::isfinite(first_coefficient);
+    return std::isfinite(coefficients.mu) && std::isfinite(coefficients.nu)
+        && std::isfinite(coefficients.tilde_mu)
+        && (!second_order || std::isfinite(coefficients.gamma))
+        && (increments_are_scaled || std::isfinite(dt));
+}
 
-#define ARCH_DIFFUSION_UNSCALED_RKL1_SPECIES_EXPRESSION(                   \
-    coefficients, rho_previous, species_previous, rho_older,              \
-    species_older, species_increment_previous, dt)                         \
-    ((coefficients).mu * (rho_previous) * (species_previous)               \
-     + (coefficients).nu * (rho_older) * (species_older)                   \
-     + (coefficients).tilde_mu * (dt) * (species_increment_previous))
+/** Exact stationary-polynomial identity shared by every Host/device adapter.
+ * Workflow: inspect only finite seed, genuinely used history and zero RHS.
+ * For recursive RKL, mu+nu+(1-mu-nu)=1 (RKL1: mu+nu=1), so
+ * equal stage values with zero operators reproduce the seed exactly.
+ * No numerical magnitude test is used. The shared used-controls guard must
+ * succeed. First-stage history and first-order initial RHS are mathematically
+ * unused inputs and are deliberately ignored.
+ */
+ARCH_INLINE bool exact_stationary_rkl_value(
+    double seed, double previous, double older,
+    double increment_previous, double increment_initial,
+    bool recursive, bool second_order, bool controls_valid)
+{
+    if (!controls_valid || !std::isfinite(seed) || increment_previous != 0.0)
+        return false;
+    if (!recursive) return true;
+    return previous == seed && older == seed
+        && (!second_order || increment_initial == 0.0);
+}
 
-#define ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(                            \
-    coefficients, state_previous, state_older, initial_weight, state_n,    \
-    increment_previous, increment_initial, dt)                             \
-    ((coefficients).mu * (state_previous)                                  \
-     + (coefficients).nu * (state_older)                                   \
-     + (initial_weight) * (state_n)                                        \
-     + (dt) * ((coefficients).tilde_mu * (increment_previous)              \
-               + (coefficients).gamma * (increment_initial)))
+/** Preserve each independently stationary conserved component after the
+ * original affine expression; all active values retain its exact grouping.
+ * Histories are passed by value so destination may alias an older buffer.
+ */
+ARCH_INLINE FluidVector preserve_stationary_rkl_hydro(
+    FluidVector candidate, FluidVector seed, FluidVector previous,
+    FluidVector older, FluidVector increment_previous,
+    FluidVector increment_initial, bool recursive, bool second_order,
+    bool controls_valid)
+{
+    if (exact_stationary_rkl_value(seed.rho, previous.rho, older.rho,
+            increment_previous.rho, increment_initial.rho, recursive, second_order,
+            controls_valid))
+        candidate.rho = seed.rho;
+    if (exact_stationary_rkl_value(seed.mom_u, previous.mom_u, older.mom_u,
+            increment_previous.mom_u, increment_initial.mom_u, recursive, second_order,
+            controls_valid))
+        candidate.mom_u = seed.mom_u;
+    if (exact_stationary_rkl_value(seed.mom_v, previous.mom_v, older.mom_v,
+            increment_previous.mom_v, increment_initial.mom_v, recursive, second_order,
+            controls_valid))
+        candidate.mom_v = seed.mom_v;
+    if (exact_stationary_rkl_value(seed.mom_w, previous.mom_w, older.mom_w,
+            increment_previous.mom_w, increment_initial.mom_w, recursive, second_order,
+            controls_valid))
+        candidate.mom_w = seed.mom_w;
+    if (exact_stationary_rkl_value(seed.eng, previous.eng, older.eng,
+            increment_previous.eng, increment_initial.eng, recursive, second_order,
+            controls_valid))
+        candidate.eng = seed.eng;
+    return candidate;
+}
 
-#define ARCH_DIFFUSION_UNSCALED_RKL2_SPECIES_EXPRESSION(                   \
-    coefficients, rho_previous, species_previous, rho_older,              \
-    species_older, initial_weight, rho_n, species_n,                       \
-    species_increment_previous, species_increment_initial, dt)             \
-    ((coefficients).mu * (rho_previous) * (species_previous)               \
-     + (coefficients).nu * (rho_older) * (species_older)                   \
-     + (initial_weight) * (rho_n) * (species_n)                            \
-     + (dt) * ((coefficients).tilde_mu * (species_increment_previous)      \
-               + (coefficients).gamma * (species_increment_initial)))
-
-#define ARCH_DIFFUSION_SCALED_RKL_HYDRO_EXPRESSION(                        \
-    coefficients, state_previous, state_older, state_n,                    \
-    increment_previous, increment_initial, initial_weight,                 \
-    initial_operator_weight)                                               \
-    ((coefficients).mu * (state_previous)                                  \
-     + (coefficients).nu * (state_older)                                   \
-     + (initial_weight) * (state_n)                                        \
-     + (coefficients).tilde_mu * (increment_previous)                      \
-     + (initial_operator_weight) * (increment_initial))
-
-#define ARCH_DIFFUSION_SCALED_RKL_SPECIES_EXPRESSION(                      \
-    coefficients, rho_previous, species_previous, rho_older, species_older,\
-    initial_weight, rho_n, species_n, increment_previous,                  \
-    initial_operator_weight, increment_initial)                            \
-    ((coefficients).mu * (rho_previous) * (species_previous)               \
-     + (coefficients).nu * (rho_older) * (species_older)                   \
-     + (initial_weight) * (rho_n) * (species_n)                            \
-     + (coefficients).tilde_mu * (increment_previous)                      \
-     + (initial_operator_weight) * (increment_initial))
+/** Check the exact conserved-species identity before fraction publication.
+ * Positive finite seed density, unchanged output density and all used rho/X
+ * histories are required. Callers retain the original rhoX/rho division for
+ * active composition at its original expression site; no arithmetic moves
+ * across this predicate boundary. No normalization or simplex validation.
+ */
+ARCH_INLINE bool exact_stationary_rkl_fraction(
+    double output_rho,
+    double seed_rho, double seed_fraction,
+    double previous_rho, double previous_fraction,
+    double older_rho, double older_fraction,
+    double increment_previous, double increment_initial,
+    bool recursive, bool second_order, bool controls_valid)
+{
+    return controls_valid && std::isfinite(seed_rho) && seed_rho > 0.0
+        && output_rho == seed_rho
+        && (!recursive || (previous_rho == seed_rho && older_rho == seed_rho))
+        && exact_stationary_rkl_value(seed_fraction, previous_fraction,
+            older_fraction, increment_previous, increment_initial,
+            recursive, second_order, controls_valid);
+}
 
 inline void initialize_amr_rkl_stage_buffers(
     const FluidState& source, FluidState& state_scratch,
@@ -110,6 +160,10 @@ ARCH_INLINE void apply_first_rkl_stage_cell(
     int species_count, int species_stride, double coefficient,
     FluidVector& destination, double* destination_species)
 {
+    const FluidVector seed = state_n;
+    const FluidVector source_increment = increment;
+    const bool controls_valid = finite_rkl_arithmetic_controls(
+        DiffFunction::RKLCoeffs{}, 0.0, coefficient, false, false, true);
     destination = {
         ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
             state_n.rho, coefficient, increment.rho),
@@ -121,15 +175,29 @@ ARCH_INLINE void apply_first_rkl_stage_cell(
             state_n.mom_w, coefficient, increment.mom_w),
         ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
             state_n.eng, coefficient, increment.eng)};
+    destination = preserve_stationary_rkl_hydro(destination, seed, seed, seed,
+        source_increment, FluidVector{}, false, false, controls_valid);
     for (int species = 0; species < species_count; ++species) {
         const int offset = species * species_stride;
+        const double seed_fraction = species_n[offset];
+        const double species_rhs = species_increment[offset];
         const double rhoX = ARCH_DIFFUSION_FIRST_RKL_SPECIES_EXPRESSION(
-            state_n.rho, species_n[offset], coefficient,
-            species_increment[offset]);
-        destination_species[offset] = rhoX / destination.rho;
+            seed.rho, seed_fraction, coefficient, species_rhs);
+        destination_species[offset] = exact_stationary_rkl_fraction(destination.rho,
+            seed.rho, seed_fraction, seed.rho, seed_fraction,
+            seed.rho, seed_fraction, species_rhs, 0.0, false, false, controls_valid)
+            ? seed_fraction : rhoX / destination.rho;
     }
 }
 
+/** Evaluate the original recursive polynomial around its conserved base.
+ * Workflow: reject every nonfinite used control/history/RHS first; preserve
+ * the exact stationary identity; then use RKL2 U0+mu*(Up-U0)+nu*(Uo-U0),
+ * or RKL1 Up+nu*(Uo-Up). RKL1 does not inspect U0, L0 or gamma.
+ * Scaled and unscaled operator terms retain their original multiplication
+ * and addition grouping. Only finite-input intermediate range failure uses
+ * the equivalent original affine form; no clipping or normalization occurs.
+ */
 template <bool IncrementsAreScaled>
 ARCH_INLINE double evaluate_recursive_rkl_component(
     double state_n, double state_previous, double state_older,
@@ -137,24 +205,53 @@ ARCH_INLINE double evaluate_recursive_rkl_component(
     const DiffFunction::RKLCoeffs& coefficients, bool second_order,
     double dt)
 {
-    const double initial_weight = second_order
-        ? 1.0 - coefficients.mu - coefficients.nu : 0.0;
-    const double initial_operator_weight = second_order
-        ? coefficients.gamma : 0.0;
+    const bool controls_valid = finite_rkl_arithmetic_controls(
+        coefficients, dt, 0.0, true, second_order, IncrementsAreScaled);
+    if (!controls_valid || !std::isfinite(state_previous)
+        || !std::isfinite(state_older) || !std::isfinite(increment_previous)
+        || (second_order && (!std::isfinite(state_n)
+                             || !std::isfinite(increment_initial))))
+        return arch::state::invalid();
+    const double seed = second_order ? state_n : state_previous;
+    if (exact_stationary_rkl_value(seed, state_previous, state_older,
+            increment_previous, increment_initial, true, second_order, controls_valid))
+        return seed;
+    const double difference_previous = second_order ? state_previous - seed : 0.0;
+    const double difference_older = state_older - seed;
+    double centered = second_order
+        ? seed + coefficients.mu * difference_previous
+               + coefficients.nu * difference_older
+        : seed + coefficients.nu * difference_older;
     if constexpr (IncrementsAreScaled) {
-        return ARCH_DIFFUSION_SCALED_RKL_HYDRO_EXPRESSION(
-            coefficients, state_previous, state_older, state_n,
-            increment_previous, increment_initial, initial_weight,
-            initial_operator_weight);
+        centered = centered + coefficients.tilde_mu * increment_previous;
+        if (second_order) centered = centered + coefficients.gamma * increment_initial;
     } else if (second_order) {
-        return ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
-            coefficients, state_previous, state_older, initial_weight,
-            state_n, increment_previous, increment_initial, dt);
+        centered = centered + dt * (coefficients.tilde_mu * increment_previous
+                                    + coefficients.gamma * increment_initial);
+    } else {
+        centered = centered + coefficients.tilde_mu * dt * increment_previous;
     }
-    return ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
-        coefficients, state_previous, state_older, increment_previous, dt);
+    if (std::isfinite(difference_previous) && std::isfinite(difference_older)
+        && std::isfinite(centered)) return centered;
+
+    // Finite differences may overflow although the original affine sum is
+    // representable. Keep that range fallback's original operator grouping.
+    double affine = coefficients.mu * state_previous + coefficients.nu * state_older;
+    if (second_order)
+        affine = affine + (1.0 - coefficients.mu - coefficients.nu) * state_n;
+    if constexpr (IncrementsAreScaled) {
+        affine = affine + coefficients.tilde_mu * increment_previous;
+        if (second_order) affine = affine + coefficients.gamma * increment_initial;
+    } else if (second_order) {
+        affine = affine + dt * (coefficients.tilde_mu * increment_previous
+                                + coefficients.gamma * increment_initial);
+    } else {
+        affine = affine + coefficients.tilde_mu * dt * increment_previous;
+    }
+    return std::isfinite(affine) ? affine : arch::state::invalid();
 }
 
+/** Apply the same conserved scalar recurrence to all five fluid components. */
 template <bool IncrementsAreScaled>
 ARCH_INLINE FluidVector evaluate_recursive_rkl_hydro_cell(
     FluidVector state_n, FluidVector state_previous,
@@ -186,6 +283,10 @@ ARCH_INLINE FluidVector evaluate_recursive_rkl_hydro_cell(
             coefficients, second_order, dt)};
 }
 
+/** Form each used rho*X before the identical conserved scalar recurrence.
+ * Fractions are neither normalized nor clipped. RKL1 does not inspect its
+ * initial rho/X or operator; publication divides by the actual updated rho.
+ */
 template <bool IncrementsAreScaled>
 ARCH_INLINE double evaluate_recursive_rkl_species_cell(
     double rho_n, double species_n, double rho_previous,
@@ -194,24 +295,16 @@ ARCH_INLINE double evaluate_recursive_rkl_species_cell(
     const DiffFunction::RKLCoeffs& coefficients, bool second_order,
     double dt)
 {
-    const double initial_weight = second_order
-        ? 1.0 - coefficients.mu - coefficients.nu : 0.0;
-    const double initial_operator_weight = second_order
-        ? coefficients.gamma : 0.0;
-    if constexpr (IncrementsAreScaled) {
-        return ARCH_DIFFUSION_SCALED_RKL_SPECIES_EXPRESSION(
-            coefficients, rho_previous, species_previous,
-            rho_older, species_older, initial_weight, rho_n, species_n,
-            increment_previous, initial_operator_weight, increment_initial);
-    } else if (second_order) {
-        return ARCH_DIFFUSION_UNSCALED_RKL2_SPECIES_EXPRESSION(
-            coefficients, rho_previous, species_previous, rho_older,
-            species_older, initial_weight, rho_n, species_n,
-            increment_previous, increment_initial, dt);
-    }
-    return ARCH_DIFFUSION_UNSCALED_RKL1_SPECIES_EXPRESSION(
-        coefficients, rho_previous, species_previous, rho_older,
-        species_older, increment_previous, dt);
+    if (!std::isfinite(rho_previous) || !std::isfinite(species_previous)
+        || !std::isfinite(rho_older) || !std::isfinite(species_older)
+        || (second_order && (!std::isfinite(rho_n) || !std::isfinite(species_n))))
+        return arch::state::invalid();
+    const double previous = rho_previous * species_previous;
+    const double older = rho_older * species_older;
+    const double seed = second_order ? rho_n * species_n : 0.0;
+    return evaluate_recursive_rkl_component<IncrementsAreScaled>(
+        seed, previous, older, increment_previous, increment_initial,
+        coefficients, second_order, dt);
 }
 
 template <bool IncrementsAreScaled>
@@ -228,20 +321,29 @@ ARCH_INLINE void apply_recursive_rkl_stage_cell_impl(
     double dt,
     FluidVector& destination, double* destination_species)
 {
+    const bool controls_valid = finite_rkl_arithmetic_controls(
+        coefficients, dt, 0.0, true, second_order, IncrementsAreScaled);
     destination = evaluate_recursive_rkl_hydro_cell<IncrementsAreScaled>(
         state_n, state_previous, state_older, increment_previous,
         increment_initial, coefficients, second_order, dt);
     for (int species = 0; species < species_count; ++species) {
         const int offset = species * species_stride;
+        const double previous_fraction = species_previous[offset];
+        const double seed_fraction = second_order ? species_n[offset] : previous_fraction;
+        const double older_fraction = species_older[offset];
+        const double species_rhs = species_increment_previous[offset];
+        const double initial_rhs = second_order && species_increment_initial != nullptr
+            ? species_increment_initial[offset] : 0.0;
         const double rhoX =
             evaluate_recursive_rkl_species_cell<IncrementsAreScaled>(
-                state_n.rho, species_n[offset], state_previous.rho,
-                species_previous[offset], state_older.rho,
-                species_older[offset], species_increment_previous[offset],
-                species_increment_initial == nullptr
-                    ? 0.0 : species_increment_initial[offset],
-                coefficients, second_order, dt);
-        destination_species[offset] = rhoX / destination.rho;
+                state_n.rho, seed_fraction, state_previous.rho,
+                previous_fraction, state_older.rho, older_fraction,
+                species_rhs, initial_rhs, coefficients, second_order, dt);
+        destination_species[offset] = exact_stationary_rkl_fraction(destination.rho,
+            second_order ? state_n.rho : state_previous.rho, seed_fraction,
+            state_previous.rho, previous_fraction, state_older.rho, older_fraction,
+            species_rhs, initial_rhs, true, second_order, controls_valid)
+            ? seed_fraction : rhoX / destination.rho;
     }
 }
 
@@ -278,13 +380,18 @@ ARCH_INLINE void apply_recursive_rkl_stage_cell(
 }
 
 template <typename EosType>
-inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id,
+inline void evaluate_amr_diffusion_operator(amr::AMRControl& amr_ctrl, int block_id,
                                          const FluidState& state, const EosType& eos,
                                          const Grid& grid, const SimConfig& config,
-                                         double dt, double flux_weight,
+                                         double flux_weight,
                                          std::vector<FluidVector>& dU,
-                                         std::vector<double>& d_species)
+                                         std::vector<double>& d_species,
+                                         bool capture_budget = true)
 {
+    // Publish L(U), as the single-block and CUDA adapters already do.
+    // RKL applies the physical interval in its shared stage formula. The
+    // independent flux_weight and ApplyReflux(real_dt) retain time budgets.
+    constexpr double operator_interval = 1.0;
     const int n_species = state.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
     dU.assign(total_size, FluidVector{});
@@ -295,14 +402,14 @@ inline void evaluate_diffusion_increment(amr::AMRControl& amr_ctrl, int block_id
     for (int dir = 0; dir < grid.dim; ++dir) {
         std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector{});
         std::fill(species_flux_buffer.begin(), species_flux_buffer.end(), 0.0);
-        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir);
+        DiffFlux::compute_fluxes(state, eos, grid, config, flux_buffer, species_flux_buffer, dir, capture_budget);
         TimeIntegration::accumulate_divergence(dU, d_species, flux_buffer, species_flux_buffer,
-                                               grid, dt, dir, n_species);
+                                               grid, operator_interval, dir, n_species);
         amr::RegisterCoarseFineFluxes(amr_ctrl, block_id, grid, dir, flux_buffer,
                                       species_flux_buffer, n_species, flux_weight);
     }
 
-    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, dt);
+    DiffFlux::add_geometric_sources(dU, state, eos, grid, config, operator_interval);
 }
 
 inline void apply_first_rkl_stage(const FluidState& state_n, FluidState& destination,
@@ -315,7 +422,9 @@ inline void apply_first_rkl_stage(const FluidState& state_n, FluidState& destina
     const int ks = grid.Ks(), ke = grid.Ke();
     const int js = grid.Js(), je = grid.Je();
 
-#pragma omp parallel for schedule(static)
+    // One logical row has one independent task: its i cells stay in this
+    // thread. Avoid a team whose other workers have no row to publish.
+#pragma omp parallel for schedule(static) if ((ke - ks) * (je - js) > 1)
     for (int kj = 0; kj < (ke - ks) * (je - js); ++kj) {
         const int k = ks + kj / (je - js);
         const int j = js + kj % (je - js);
@@ -344,40 +453,35 @@ inline void apply_recursive_rkl_stage(const FluidState& state_n,
                                       const std::vector<FluidVector>& d_initial,
                                       const std::vector<double>& d_species_initial,
                                       const Grid& grid, const DiffFunction::RKLCoeffs& coeffs,
-                                      bool second_order)
+                                      bool second_order, double dt)
 {
     const int n_species = state_n.GetNumSpecies();
     const int total_size = grid.GetTotalSize();
     const int ks = grid.Ks(), ke = grid.Ke();
     const int js = grid.Js(), je = grid.Je();
-    const double initial_weight = second_order ? 1.0 - coeffs.mu - coeffs.nu : 0.0;
-    const double initial_operator_weight = second_order ? coeffs.gamma : 0.0;
-#pragma omp parallel for schedule(static)
+    // Match the first-stage row ownership without changing cell arithmetic.
+#pragma omp parallel for schedule(static) if ((ke - ks) * (je - js) > 1)
     for (int kj = 0; kj < (ke - ks) * (je - js); ++kj) {
         const int k = ks + kj / (je - js);
         const int j = js + kj % (je - js);
         for (int i = grid.Is(); i < grid.Ie(); ++i) {
             const int idx = grid.GetIndex(i, j, k);
-            const FluidVector updated =
-                ARCH_DIFFUSION_SCALED_RKL_HYDRO_EXPRESSION(
-                    coeffs, state_previous.get(idx), state_older.get(idx),
-                    state_n.get(idx), d_previous[idx], d_initial[idx],
-                    initial_weight, initial_operator_weight);
-            // destination may alias state_older.  Read every old rhoX before
-            // changing its conserved fields, otherwise the recurrence would
-            // mix Y_j with Y_{j-2} for composition-dependent EOS states.
-            for (int species = 0; species < n_species; ++species) {
-                const double rhoX =
-                    ARCH_DIFFUSION_SCALED_RKL_SPECIES_EXPRESSION(
-                        coeffs, state_previous.rho[idx],
-                        state_previous.X(species, idx), state_older.rho[idx],
-                        state_older.X(species, idx), initial_weight,
-                        state_n.rho[idx], state_n.X(species, idx),
-                        d_species_previous[species * total_size + idx],
-                        initial_operator_weight,
-                        d_species_initial[species * total_size + idx]);
-                destination.X(species, idx) = rhoX / updated.rho;
-            }
+            FluidVector updated;
+            // This is the same unscaled RHS/time grouping as single-block
+            // and CUDA RKL. Capture all fluid values by value; every old rhoX
+            // is read before destination.set can replace an aliased older rho.
+            apply_recursive_rkl_stage_cell_impl<false>(
+                second_order ? state_n.get(idx) : FluidVector{},
+                second_order && n_species > 0 ? state_n.mass_fractions.data() + idx : nullptr,
+                state_previous.get(idx),
+                n_species > 0 ? state_previous.mass_fractions.data() + idx : nullptr,
+                state_older.get(idx),
+                n_species > 0 ? state_older.mass_fractions.data() + idx : nullptr,
+                d_previous[idx], n_species > 0 ? d_species_previous.data() + idx : nullptr,
+                second_order ? d_initial[idx] : FluidVector{},
+                second_order && n_species > 0 ? d_species_initial.data() + idx : nullptr,
+                n_species, total_size, coeffs, second_order, dt, updated,
+                n_species > 0 ? destination.mass_fractions.data() + idx : nullptr);
             destination.set(idx, updated);
         }
     }
@@ -391,14 +495,8 @@ inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (binding.handles.size() != active_blocks.size())
         throw std::logic_error("RKL exchange handle count mismatch");
-#pragma omp parallel for schedule(dynamic, 1)
-    for (size_t index = 0; index < active_blocks.size(); ++index) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
-        boundary_condition.apply(block.*state_ptr, block.grid);
-    }
-    amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            amr_ctrl.tree->GetRootGridDim(),
-                                            state_ptr, binding.handles);
+    TimeIntegration::synchronize_domain_boundary(amr_ctrl, boundary_condition,
+        state_ptr, binding.handles);
 }
 
 inline FluidState& state_for(amr::Block& block,
@@ -459,6 +557,7 @@ inline void advance_single_rkl(
     const SimConfig& config, double dt, double dt_diff_fe,
     BCPolicy& boundary_condition, arch::scheduler::RklMethod method)
 {
+    validate_geometry(grid,boundary_condition);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = order_for(method);
@@ -470,13 +569,17 @@ inline void advance_single_rkl(
     const StageBinding& binding = current_stage_binding();
     if (binding.handles.size() != 1)
         throw std::logic_error("single RKL requires one scheduler handle");
+    /** Synchronize the selected actual slot using the original local fill. */
+    const auto synchronize_single=[&](StateSlot slot) {
+        boundary_condition.apply(state_for(block,slot),grid);
+    };
     const auto current = binding.context.ledger.inspect(
         {binding.handles.front(), StateSlot::Current});
     if (!arch::state::side_can_read(current.ghost.residency,
                                     binding.context.side)
         || current.ghost.version != current.interior.version
         || current.ghost_source_version != current.interior.version) {
-        boundary_condition.apply(block.fluid_state, grid);
+        synchronize_single(StateSlot::Current);
         (void)complete_boundary(
             binding.context, binding.handles, StateSlot::Current,
             current.interior.version,
@@ -508,15 +611,21 @@ inline void advance_single_rkl(
                 FluidState& previous = state_for(block, descriptor.previous_slot);
                 FluidState& older = state_for(block, descriptor.older_slot);
                 FluidState& output = state_for(block, descriptor.output_slot);
+                output.stage_repairs.reset(output.GetNumSpecies());
                 const DiffFunction::RKLCoeffs coefficients =
                     DiffFunction::get_rkl_coeffs(
                         order, descriptor.stage, stages);
+                const bool controls_valid = finite_rkl_arithmetic_controls(
+                    coefficients, dt,
+                    descriptor.stage == 1 ? coefficients.tilde_mu * dt : 0.0,
+                    descriptor.stage != 1, selected_plan.second_order, false);
 
                 if (descriptor.stage == 1) {
                     DiffFlux::compute_diffusion_operator(
                         state_n, increment_initial, eos, grid, config);
 #pragma omp parallel for schedule(static)
                     for (int index = 0; index < grid.GetTotalSize(); ++index) {
+                        const FluidVector seed = state_n.get(index);
                         output.rho[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
                             state_n.rho[index], coefficients.tilde_mu * dt,
                             increment_initial.rho[index]);
@@ -532,6 +641,10 @@ inline void advance_single_rkl(
                         output.eng[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
                             state_n.eng[index], coefficients.tilde_mu * dt,
                             increment_initial.eng[index]);
+                        output.set(index, preserve_stationary_rkl_hydro(
+                            output.get(index), seed, seed, seed,
+                            increment_initial.get(index), FluidVector{}, false, false,
+                            controls_valid));
                         for (int species = 0;
                              species < state_n.GetNumSpecies(); ++species) {
                             const double rho_x =
@@ -540,8 +653,13 @@ inline void advance_single_rkl(
                                     state_n.X(species, index),
                                     coefficients.tilde_mu * dt,
                                     increment_initial.X(species, index));
-                            output.X(species, index) =
-                                rho_x / output.rho[index];
+                            output.X(species, index) = exact_stationary_rkl_fraction(
+                                output.rho[index], seed.rho,
+                                state_n.X(species, index), seed.rho,
+                                state_n.X(species, index), seed.rho,
+                                state_n.X(species, index),
+                                increment_initial.X(species, index), 0.0, false, false,
+                                controls_valid) ? state_n.X(species, index) : rho_x / output.rho[index];
                         }
                     }
                     return token;
@@ -549,106 +667,41 @@ inline void advance_single_rkl(
 
                 DiffFlux::compute_diffusion_operator(
                     previous, increment_previous, eos, grid, config);
-                const double initial_weight = selected_plan.second_order
-                    ? 1.0 - coefficients.mu - coefficients.nu : 0.0;
 #pragma omp parallel for schedule(static)
                 for (int index = 0; index < grid.GetTotalSize(); ++index) {
-                    const double rho_older = older.rho[index];
-                    if (selected_plan.second_order) {
-                        output.rho[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
-                                coefficients, previous.rho[index],
-                                older.rho[index], initial_weight,
-                                state_n.rho[index],
-                                increment_previous.rho[index],
-                                increment_initial.rho[index], dt);
-                        output.mom_u[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
-                                coefficients, previous.mom_u[index],
-                                older.mom_u[index], initial_weight,
-                                state_n.mom_u[index],
-                                increment_previous.mom_u[index],
-                                increment_initial.mom_u[index], dt);
-                        output.mom_v[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
-                                coefficients, previous.mom_v[index],
-                                older.mom_v[index], initial_weight,
-                                state_n.mom_v[index],
-                                increment_previous.mom_v[index],
-                                increment_initial.mom_v[index], dt);
-                        output.mom_w[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
-                                coefficients, previous.mom_w[index],
-                                older.mom_w[index], initial_weight,
-                                state_n.mom_w[index],
-                                increment_previous.mom_w[index],
-                                increment_initial.mom_w[index], dt);
-                        output.eng[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
-                                coefficients, previous.eng[index],
-                                older.eng[index], initial_weight,
-                                state_n.eng[index],
-                                increment_previous.eng[index],
-                                increment_initial.eng[index], dt);
-                    } else {
-                        output.rho[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
-                                coefficients, previous.rho[index],
-                                older.rho[index],
-                                increment_previous.rho[index], dt);
-                        output.mom_u[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
-                                coefficients, previous.mom_u[index],
-                                older.mom_u[index],
-                                increment_previous.mom_u[index], dt);
-                        output.mom_v[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
-                                coefficients, previous.mom_v[index],
-                                older.mom_v[index],
-                                increment_previous.mom_v[index], dt);
-                        output.mom_w[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
-                                coefficients, previous.mom_w[index],
-                                older.mom_w[index],
-                                increment_previous.mom_w[index], dt);
-                        output.eng[index] =
-                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
-                                coefficients, previous.eng[index],
-                                older.eng[index],
-                                increment_previous.eng[index], dt);
-                    }
-                    for (int species = 0;
-                         species < state_n.GetNumSpecies(); ++species) {
-                        const double rho_x = selected_plan.second_order
-                            ? ARCH_DIFFUSION_UNSCALED_RKL2_SPECIES_EXPRESSION(
-                                  coefficients, previous.rho[index],
-                                  previous.X(species, index),
-                                  rho_older, older.X(species, index),
-                                  initial_weight, state_n.rho[index],
-                                  state_n.X(species, index),
-                                  increment_previous.X(species, index),
-                                  increment_initial.X(species, index), dt)
-                            : ARCH_DIFFUSION_UNSCALED_RKL1_SPECIES_EXPRESSION(
-                                  coefficients, previous.rho[index],
-                                  previous.X(species, index),
-                                  rho_older, older.X(species, index),
-                                  increment_previous.X(species, index), dt);
-                        output.X(species, index) = rho_x / output.rho[index];
-                    }
+                    const int species_count = state_n.GetNumSpecies();
+                    FluidVector updated;
+                    apply_recursive_rkl_stage_cell_impl<false>(
+                        selected_plan.second_order ? state_n.get(index) : FluidVector{},
+                        selected_plan.second_order && species_count > 0
+                            ? state_n.mass_fractions.data() + index : nullptr,
+                        previous.get(index), species_count > 0
+                            ? previous.mass_fractions.data() + index : nullptr,
+                        older.get(index), species_count > 0
+                            ? older.mass_fractions.data() + index : nullptr,
+                        increment_previous.get(index), species_count > 0
+                            ? increment_previous.mass_fractions.data() + index : nullptr,
+                        selected_plan.second_order ? increment_initial.get(index) : FluidVector{},
+                        selected_plan.second_order && species_count > 0
+                            ? increment_initial.mass_fractions.data() + index : nullptr,
+                        species_count, grid.GetTotalSize(), coefficients,
+                        selected_plan.second_order, dt, updated, species_count > 0
+                            ? output.mass_fractions.data() + index : nullptr);
+                    output.set(index, updated);
                 }
                 return token;
             };
     const auto reflux =
             [&](const RklPlan&, const RklStageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
-                TimeIntegration::validate_stage_state(state_for(block, descriptor.output_slot),
+                TimeIntegration::accept_stage_state(state_for(block, descriptor.output_slot),
                     grid, config.numerics);
                 return token;
             };
     const auto boundary =
             [&](StateSlot output, arch::state::StateVersion,
                 arch::state::CompletionToken token) {
-                boundary_condition.apply(state_for(block, output), grid);
+                synchronize_single(output);
                 return token;
             };
     const auto rotate = [&](arch::state::SlotRotation rotation) {
@@ -678,6 +731,9 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                             const SimConfig& config,
                             arch::scheduler::RklMethod method)
 {
+    for(int id:amr_ctrl.tree->GetActiveBlocks())
+        detail::validate_geometry(amr_ctrl.pool->GetBlock(id).grid,
+            boundary_condition);
     using namespace arch::scheduler;
     using arch::state::StateSlot;
     const DiffFunction::RKLOrder order = detail::order_for(method);
@@ -743,28 +799,30 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         detail::state_for(block, descriptor.older_slot);
                     FluidState& output =
                         detail::state_for(block, descriptor.output_slot);
+                    output.stage_repairs.reset(output.GetNumSpecies());
                     std::vector<FluidVector> d_previous;
                     std::vector<double> d_species_previous;
-                    detail::evaluate_diffusion_increment(
+                    detail::evaluate_amr_diffusion_operator(
                         amr_ctrl, block_id, previous, eos, block.grid,
-                        config, dt, coefficients.tilde_mu, d_previous,
-                        d_species_previous);
+                        config, coefficients.tilde_mu, d_previous,
+                        d_species_previous, /*capture_budget=*/true);
 
                     if (descriptor.stage == 1) {
                         detail::apply_first_rkl_stage(
                             state_n, output, d_previous,
                             d_species_previous, block.grid,
-                            coefficients.tilde_mu);
+                            coefficients.tilde_mu * dt);
+                        TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                         continue;
                     }
 
                     std::vector<FluidVector> d_initial;
                     std::vector<double> d_species_initial;
                     if (selected_plan.second_order) {
-                        detail::evaluate_diffusion_increment(
+                        detail::evaluate_amr_diffusion_operator(
                             amr_ctrl, block_id, state_n, eos, block.grid,
-                            config, dt, coefficients.gamma, d_initial,
-                            d_species_initial);
+                            config, coefficients.gamma, d_initial,
+                            d_species_initial, /*capture_budget=*/false);
                     } else {
                         d_initial.assign(block.grid.GetTotalSize(),
                                          FluidVector{});
@@ -777,7 +835,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                         state_n, previous, older, output, d_previous,
                         d_species_previous, d_initial, d_species_initial,
                         block.grid, coefficients,
-                        selected_plan.second_order);
+                        selected_plan.second_order, dt);
+                    TimeIntegration::accept_stage_state(output, block.grid, config.numerics);
                 }
                 return token;
             };
@@ -786,8 +845,8 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
                 arch::state::CompletionToken token) {
                 amr_ctrl.ApplyReflux(
                     dt, detail::member_for(descriptor.output_slot));
-                TimeIntegration::validate_reflux_state(amr_ctrl,config.numerics,
-                    detail::member_for(descriptor.output_slot));
+                TimeIntegration::accept_reflux_state(amr_ctrl,config.numerics,
+                    detail::member_for(descriptor.output_slot), false);
                 return token;
             };
     const auto boundary =

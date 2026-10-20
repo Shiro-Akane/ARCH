@@ -6,6 +6,10 @@
  * selected common EOS and network composition. Init chooses the configured
  * hotspot footprint and supplies stationary primitive states; the production
  * driver owns subsequent hydro and burn evolution.
+ * Workflow:
+ * 1. Validate the Cartesian experiment and bind the selected composition.
+ * 2. Use the common EOS to bracket and solve the isobaric hotspot density.
+ * 3. Check the final pressure mismatch, then initialize the chosen footprint.
  */
 
 #include <algorithm>
@@ -56,8 +60,13 @@ class CooperativeHotspots
 
         double log_low = std::log(rho_low);
         double log_high = std::log(rho_high);
-        for (int iteration = 0; iteration < 80; ++iteration) {
+        // Retain the established safety cap. At binary64 endpoint stagnation,
+        // later comparisons can only keep or collapse this same midpoint.
+        constexpr int density_bisection_limit = 80;
+        for (int iteration = 0; iteration < density_bisection_limit; ++iteration) {
             const double log_mid = 0.5 * (log_low + log_high);
+            if (log_mid == log_low || log_mid == log_high)
+                break;
             const double rho_mid = std::exp(log_mid);
             const double p_mid = ProblemHelper::GetPressureFromRhoT(
                 config, species, rho_mid, temperature_hot_, composition_.data());
@@ -102,6 +111,29 @@ class CooperativeHotspots
     }
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"ambient_density", "float", "g/cm^3"},
+            {"ambient_temperature", "float", "K"},
+            {"hotspot_temperature", "float", "K"},
+            {"hotspot_center_x", "float", "cm"},
+            {"hotspot_center_y", "float", "cm"},
+            {"hotspot_radius", "float", "cm"},
+            {"hotspot_separation", "float", "cm"},
+            {"hotspot_mode", "string", "1", "simulation", {true, {}},
+             {"single", "double", "equal_energy", "elongated"}, true}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &species)
     {
         if (config.grid.dim != 2 || config.grid.geometry != "cartesian")
@@ -145,6 +177,8 @@ public:
 
         const double pressure_mismatch =
             std::abs(pressure_hot_ - pressure_ambient_) / pressure_ambient_;
+        // Relative isobaric-initialization acceptance against the ambient EOS
+        // pressure. This 1e-10 model consistency gate is not a burn/ODE tolerance.
         if (!std::isfinite(pressure_mismatch) || pressure_mismatch > 1.0e-10)
             throw std::runtime_error("Isobaric hotspot solve did not converge.");
 

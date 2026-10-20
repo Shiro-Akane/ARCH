@@ -1,6 +1,11 @@
 /**
  * @file nse_solver.h
  * @brief Network-constrained nuclear statistical equilibrium solver.
+ *
+ * Workflow: validate nuclear data and the physical state; build conditioned
+ * Saha logarithms; retain a residual-certified fixed point or solve the mass/
+ * charge constraints; return the original nuclear-energy contraction only
+ * after conservation succeeds. Host and CUDA share the same arithmetic.
  * @note The Saha formulation, mass/charge residuals, and two-potential Newton
  * method are adapted from Frank Timmes's public_nse package at
  * https://cococubed.com/code_pages/nse.shtml. ARCH adds the generic NetType
@@ -68,6 +73,94 @@ ARCH_HOST_DEVICE inline double clamp_by_value(double value, double lower,
  * The public interface uses mass fractions X despite the historical Y names.
  * Internally the Saha equation and energy closure use molar abundance X/A.
  */
+
+namespace arch::nse_detail {
+
+// These elementary functions are private to the Saha solve. A platform-libm
+// ulp in a large cancelling log or capped chemical-potential step can become
+// a much larger relative error in a small nuclear-energy increment. Keep
+// their arithmetic shared, without changing the equilibrium equations or
+// the original residual/conservation/energy acceptance criteria.
+inline constexpr double log_two = 0x1.62e42fefa39efp-1;
+inline constexpr double log_two_tail = 0x1.abc9e3b39803fp-56;
+inline constexpr double inverse_log_two = 0x1.71547652b82fep+0;
+inline constexpr double sqrt_half = 0x1.6a09e667f3bcdp-1;
+
+/** x=m*2^e, m in [sqrt(1/2),sqrt(2)]. With t=(m-1)/(m+1),
+ * log(m)=2*t*sum_{k=0}^{13} t^(2k)/(2k+1). The omitted atanh tail is
+ * below 4.474e-24. Compensated reconstruction retains the low part of
+ * log(2); the constants above are its nearest double and remaining tail.
+ * Invalid/nonfinite inputs keep their standard mathematical classification.
+ */
+ARCH_HOST_DEVICE inline double logarithm(double value)
+{
+    if (!(value > 0.0) || !std::isfinite(value)) return std::log(value);
+    int exponent = 0;
+    double m = std::frexp(value, &exponent);
+    if (m < sqrt_half) {
+        m *= 2.0;
+        --exponent;
+    }
+    const double t = (m - 1.0) / (m + 1.0);
+    const double t_squared = t * t;
+    constexpr int terms = 14; // Odd powers through t^27.
+    double polynomial = 1.0 / (2 * terms - 1);
+    for (int k = terms - 2; k >= 0; --k)
+        polynomial = std::fma(polynomial, t_squared, 1.0 / (2 * k + 1));
+    arch::math::CompensatedSum result;
+    result.add((2.0 * t) * polynomial);
+    result.add_product(static_cast<double>(exponent), log_two);
+    result.add_product(static_cast<double>(exponent), log_two_tail);
+    return result.value();
+}
+
+/** x=n*log(2)+r, |r|<=log(2)/2 up to rounding. The coefficients below
+ * are the rounded 1/k! values for k=0..18; the degree-18 Taylor remainder
+ * is below 2.1e-26. Explicit FMAs keep the polynomial order identical.
+ * This is selected Saha arithmetic, not a universal correctly-rounded libm.
+ */
+ARCH_HOST_DEVICE inline double exponential(double value)
+{
+    if (!std::isfinite(value)) return std::exp(value);
+    // exp(-746)<denorm_min/2 and exp(710)>DBL_MAX. These outer bounds
+    // protect integer reduction; ldexp rounds actual subnormal/overflow edges.
+    if (value <= -746.0) return 0.0;
+    if (value >= 710.0) return std::numeric_limits<double>::infinity();
+    const int n = static_cast<int>(std::floor(
+        std::fma(value, inverse_log_two, 0.5)));
+    double r = std::fma(-static_cast<double>(n), log_two, value);
+    r = std::fma(-static_cast<double>(n), log_two_tail, r);
+    constexpr double coefficients[19]{
+        0x1p+0, 0x1p+0, 0x1p-1,
+        0x1.5555555555555p-3, 0x1.5555555555555p-5,
+        0x1.1111111111111p-7, 0x1.6c16c16c16c17p-10,
+        0x1.a01a01a01a01ap-13, 0x1.a01a01a01a01ap-16,
+        0x1.71de3a556c734p-19, 0x1.27e4fb7789f5cp-22,
+        0x1.ae64567f544e4p-26, 0x1.1eed8eff8d898p-29,
+        0x1.6124613a86d09p-33, 0x1.93974a8c07c9dp-37,
+        0x1.ae7f3e733b81fp-41, 0x1.ae7f3e733b81fp-45,
+        0x1.952c77030ad4ap-49, 0x1.6827863b97d97p-53
+    };
+    double polynomial = coefficients[18];
+    for (int k = 17; k >= 0; --k)
+        polynomial = std::fma(polynomial, r, coefficients[k]);
+    return std::ldexp(polynomial, n);
+}
+
+/** Euclidean step length for finite chemical-potential corrections.
+ * Scaling by the largest component avoids squaring large corrections.
+ * sqrt is shared IEEE arithmetic; a platform hypot must not choose a
+ * different capped Newton direction before the original line search.
+ */
+ARCH_HOST_DEVICE inline double norm2(double a, double b)
+{
+    const double hi = std::max(std::abs(a), std::abs(b));
+    if (hi == 0.0) return 0.0;
+    const double ratio = std::min(std::abs(a), std::abs(b)) / hi;
+    return hi * std::sqrt(1.0 + ratio * ratio);
+}
+} // namespace arch::nse_detail
+
 template <typename NetType>
 struct NSESolver
 {
@@ -153,20 +246,29 @@ struct NSESolver
                 const double partition = NetType::nse_log_partition(i, T);
                 if (!std::isfinite(mass) || mass <= 0.0
                     || !std::isfinite(partition)) return false;
-                log_base[i] = 2.5 * std::log(mass) + std::log(weight) - std::log(rho)
-                    + 1.5 * std::log(NetType::NSE_K_BOLTZMANN * T
+                log_base[i] = 2.5 * arch::nse_detail::logarithm(mass) + arch::nse_detail::logarithm(weight) - arch::nse_detail::logarithm(rho)
+                    + 1.5 * arch::nse_detail::logarithm(NetType::NSE_K_BOLTZMANN * T
                         / (two_pi * NetType::NSE_HBAR * NetType::NSE_HBAR))
                     + binding / (NetType::NSE_K_BOLTZMANN_MEV * T) + partition;
             } else {
                 // Hartmann et al. (1985), ApJ 297, 837, Eq. 2, in the same
                 // convention as public_nse.f90. BINDING_E is total MeV per
                 // nucleus, not binding energy per nucleon.
+                // Combine positive translational factors before log to
+                // avoid cancelling two large prefactor logarithms.
                 const double nuclear_mass = A * atomic_mass_unit;
-                const double log_prefactor =
-                    std::log(A * weight / (avogadro * rho))
-                    + 1.5 * std::log(two_pi * nuclear_mass * kT
-                                     / (planck * planck));
-                log_base[i] = log_prefactor + binding / kT_mev;
+                const double quantum = two_pi * nuclear_mass * kT / (planck * planck);
+                const double log_prefactor = arch::nse_detail::logarithm(
+                    (A * weight / (avogadro * rho) * quantum) * std::sqrt(quantum));
+                // Remove A*b_ref/kT from log_base and absorb b_ref/kT
+                // into BOTH chemical potentials. N+Z=A makes this the same
+                // Saha equation with a smaller intermediate binding scale.
+                // Nuclear-energy weights/conversion remain unchanged.
+                const int anchor = best_anchor(Ye);
+                if (anchor < 0) return false;
+                const double gauge = NetType::binding_energy(anchor) / NetType::aion(anchor);
+                const double shifted_binding = std::fma(-A, gauge, binding);
+                log_base[i] = log_prefactor + shifted_binding / kT_mev;
             }
             if (!std::isfinite(log_base[i])) return false;
 
@@ -290,8 +392,12 @@ private:
         const std::array<double, NUM_SPEC>& log_base, int i,
         double eta_n, double eta_p)
     {
-        return log_base[i] + (NetType::aion(i) - NetType::zion(i)) * eta_n
-             + NetType::zion(i) * eta_p;
+        // Preserve product low bits when opposite chemical potentials cancel.
+        arch::math::CompensatedSum sum;
+        sum.add(log_base[i]);
+        sum.add_product(NetType::aion(i) - NetType::zion(i), eta_n);
+        sum.add_product(NetType::zion(i), eta_p);
+        return sum.value();
     }
 
     ARCH_HOST_DEVICE static bool input_is_equilibrium(
@@ -311,7 +417,7 @@ private:
         }
         if (anchor < 0) return false;
         const double anchor_q = NetType::zion(anchor) / NetType::aion(anchor);
-        const double anchor_potential = (std::log(x[anchor]) - log_base[anchor])
+        const double anchor_potential = (arch::nse_detail::logarithm(x[anchor]) - log_base[anchor])
                                       / NetType::aion(anchor);
         double eta_n = anchor_potential, eta_p = anchor_potential;
         if (q_span > charge_degeneracy_tol) {
@@ -328,7 +434,7 @@ private:
             }
             if (partner < 0) return false;
             const double partner_q = NetType::zion(partner) / NetType::aion(partner);
-            const double partner_potential = (std::log(x[partner]) - log_base[partner])
+            const double partner_potential = (arch::nse_detail::logarithm(x[partner]) - log_base[partner])
                                            / NetType::aion(partner);
             const double charge_potential = (partner_potential - anchor_potential)
                                           / (partner_q - anchor_q);
@@ -338,7 +444,7 @@ private:
         if (!std::isfinite(eta_n) || !std::isfinite(eta_p)) return false;
         for (int i = 0; i < NUM_SPEC; ++i) {
             if (NetType::spin_weight(i) <= 0.0) continue;
-            const double residual = std::log(x[i])
+            const double residual = arch::nse_detail::logarithm(x[i])
                                   - log_mass_fraction(log_base, i, eta_n, eta_p);
             if (!std::isfinite(residual) || std::abs(residual) > residual_tol)
                 return false;
@@ -353,7 +459,6 @@ private:
         std::array<double, NUM_SPEC> log_x{};
         double max_log_x = -std::numeric_limits<double>::infinity();
 
-#pragma omp simd reduction(max:max_log_x)
         for (int i = 0; i < NUM_SPEC; ++i) {
             if (NetType::spin_weight(i) > 0.0) {
                 log_x[i] = log_mass_fraction(log_base, i, eta_n, eta_p);
@@ -364,46 +469,54 @@ private:
         }
         if (!std::isfinite(max_log_x)) return false;
 
-        double sum_w = 0.0;
-        double sum_n = 0.0;
-        double sum_z = 0.0;
-        double sum_q = 0.0;
-        double sum_qn = 0.0;
-        double sum_qz = 0.0;
-#pragma omp simd reduction(+:sum_w,sum_n,sum_z,sum_q,sum_qn,sum_qz)
+        // Center charge BEFORE summing; subtracting <q>-Ye afterwards
+        // loses the small residual. Centered covariances give the same
+        // Jacobian. Both backends use this compensated species order.
+        arch::math::CompensatedSum acc_w;
+        arch::math::CompensatedSum acc_n;
+        arch::math::CompensatedSum acc_z;
+        arch::math::CompensatedSum acc_q_offset;
+        arch::math::CompensatedSum acc_qn_offset;
+        arch::math::CompensatedSum acc_qz_offset;
         for (int i = 0; i < NUM_SPEC; ++i) {
             const double w = NetType::spin_weight(i) > 0.0
-                           ? std::exp(log_x[i] - max_log_x) : 0.0;
+                           ? arch::nse_detail::exponential(log_x[i] - max_log_x) : 0.0;
             const double A = NetType::aion(i);
             const double Z = NetType::zion(i);
             const double N = A - Z;
             const double q = Z / A;
             out.x[i] = w;
-            sum_w += w;
-            sum_n += w * N;
-            sum_z += w * Z;
-            sum_q += w * q;
-            sum_qn += w * q * N;
-            sum_qz += w * q * Z;
+            acc_w.add(w);
+            acc_n.add(w * N);
+            acc_z.add(w * Z);
+            acc_q_offset.add(w * (q - Ye));
+            acc_qn_offset.add(w * (q - Ye) * N);
+            acc_qz_offset.add(w * (q - Ye) * Z);
         }
+        const double sum_w = acc_w.value();
+        const double sum_n = acc_n.value();
+        const double sum_z = acc_z.value();
+        const double sum_q_offset = acc_q_offset.value();
+        const double sum_qn_offset = acc_qn_offset.value();
+        const double sum_qz_offset = acc_qz_offset.value();
         if (!std::isfinite(sum_w) || sum_w <= 0.0) return false;
 
         const double inv_sum = 1.0 / sum_w;
         const double mean_n = sum_n * inv_sum;
         const double mean_z = sum_z * inv_sum;
-        const double mean_q = sum_q * inv_sum;
+        const double mean_q_offset = sum_q_offset * inv_sum;
 
 #pragma omp simd
         for (int i = 0; i < NUM_SPEC; ++i) out.x[i] *= inv_sum;
 
         // Solving log(sum X)=0 instead of sum X-1=0 is algebraically
         // equivalent at the root and avoids both overflow and underflow.
-        out.f_mass = max_log_x + std::log(sum_w);
-        out.f_charge = mean_q - Ye;
+        out.f_mass = max_log_x + arch::nse_detail::logarithm(sum_w);
+        out.f_charge = mean_q_offset;
         out.j00 = mean_n;
         out.j01 = mean_z;
-        out.j10 = sum_qn * inv_sum - mean_q * mean_n;
-        out.j11 = sum_qz * inv_sum - mean_q * mean_z;
+        out.j10 = sum_qn_offset * inv_sum - mean_q_offset * mean_n;
+        out.j11 = sum_qz_offset * inv_sum - mean_q_offset * mean_z;
 
         return std::isfinite(out.f_mass) && std::isfinite(out.f_charge)
             && std::isfinite(out.j00) && std::isfinite(out.j01)
@@ -413,6 +526,9 @@ private:
     ARCH_HOST_DEVICE static double objective(const Evaluation& e,
                                               double q_span)
     {
+        // q_span is a dimensionless charge-per-baryon range. Its 1e-3 floor
+        // scales the line-search objective when species have similar charge;
+        // final equilibrium/conservation checks retain their separate gates.
         const double scaled_charge = e.f_charge / std::max(q_span, 1.0e-3);
         return 0.5 * (e.f_mass * e.f_mass
                     + scaled_charge * scaled_charge);
@@ -455,7 +571,7 @@ private:
                                   + current.f_mass * current.j10) / det;
                 if (!std::isfinite(delta_n) || !std::isfinite(delta_p)) break;
 
-                const double step_norm = std::hypot(delta_n, delta_p);
+                const double step_norm = arch::nse_detail::norm2(delta_n, delta_p);
                 if (step_norm > max_newton_step) {
                     const double scale = max_newton_step / step_norm;
                     delta_n *= scale;
@@ -603,7 +719,6 @@ private:
         for (int iter = 0; iter < max_iterations; ++iter) {
             double max_log_x = -std::numeric_limits<double>::infinity();
             std::array<double, NUM_SPEC> log_x{};
-#pragma omp simd reduction(max:max_log_x)
             for (int i = 0; i < NUM_SPEC; ++i) {
                 if (NetType::spin_weight(i) > 0.0) {
                     log_x[i] = log_base[i] + NetType::aion(i) * eta;
@@ -614,19 +729,19 @@ private:
             }
             if (!std::isfinite(max_log_x)) return false;
 
-            double sum_w = 0.0;
-            double sum_aw = 0.0;
-#pragma omp simd reduction(+:sum_w,sum_aw)
+            arch::math::CompensatedSum acc_w, acc_aw;
             for (int i = 0; i < NUM_SPEC; ++i) {
                 const double w = NetType::spin_weight(i) > 0.0
-                               ? std::exp(log_x[i] - max_log_x) : 0.0;
+                               ? arch::nse_detail::exponential(log_x[i] - max_log_x) : 0.0;
                 solution[i] = w;
-                sum_w += w;
-                sum_aw += w * NetType::aion(i);
+                acc_w.add(w);
+                acc_aw.add(w * NetType::aion(i));
             }
+            const double sum_w = acc_w.value();
+            const double sum_aw = acc_aw.value();
             if (!std::isfinite(sum_w) || sum_w <= 0.0) return false;
 
-            const double f = max_log_x + std::log(sum_w);
+            const double f = max_log_x + arch::nse_detail::logarithm(sum_w);
             const double mean_a = sum_aw / sum_w;
             if (std::abs(f) < residual_tol) {
                 const double inv_sum = 1.0 / sum_w;
@@ -702,6 +817,9 @@ private:
         if (attempt == 1 && lo >= 0 && hi >= 0) {
             double x_lo = (q_hi - Ye) / (q_hi - q_lo);
             double x_hi = 1.0 - x_lo;
+            // Keep both initial mixing weights away from logarithmic endpoints.
+            // The 1e-8 band belongs to this chemical-potential seed only; it is
+            // not a floor imposed on the final equilibrium abundances.
             x_lo = arch::nse_detail::clamp_by_value(
                 x_lo, 1.0e-8, 1.0 - 1.0e-8);
             x_hi = 1.0 - x_lo;
@@ -712,8 +830,8 @@ private:
             const double z_hi = NetType::zion(hi);
             const double det = n_lo * z_hi - z_lo * n_hi;
             if (std::abs(det) > std::numeric_limits<double>::epsilon()) {
-                const double rhs_lo = std::log(x_lo) - log_base[lo];
-                const double rhs_hi = std::log(x_hi) - log_base[hi];
+                const double rhs_lo = arch::nse_detail::logarithm(x_lo) - log_base[lo];
+                const double rhs_hi = arch::nse_detail::logarithm(x_hi) - log_base[hi];
                 eta_n = (rhs_lo * z_hi - z_lo * rhs_hi) / det;
                 eta_p = (n_lo * rhs_hi - rhs_lo * n_hi) / det;
                 return std::isfinite(eta_n) && std::isfinite(eta_p);

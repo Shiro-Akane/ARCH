@@ -10,5 +10,9 @@ and acceptance budgets; [time_reference.py](../time_reference.py) provides the
 independent time-integration checks. A filename containing `reference` does not
 make that ODE trajectory an independent scientific oracle.
 
+All three current inputs explicitly declare the numerical energy bound, HLL
+wave-speed policy and Coulomb multiplier. The shared controller/inspection
+fixture reads the same [bd.par](bd.par).
+
 Preserve the input identity with each result. Campaign-specific overrides belong
 in the recorded execution recipe rather than unrecorded edits to these files.

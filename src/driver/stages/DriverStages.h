@@ -7,6 +7,8 @@
  * 3. Hand completed state and diagnostics to the next scheduled stage.
  */
 #pragma once
+#include <cmath>
+#include <optional>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -23,6 +25,7 @@
 #include "numerics/diffusion/DiffDispatch.h"
 #include "numerics/diffusion/DiffFunction.h"
 #include "numerics/integrator/IHydroSolver.h"
+#include "physics/gravity/IGravityPolicy.h"
 #if ARCH_CUDA_BUILD_ENABLED
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/CudaBackend.h"
@@ -189,7 +192,42 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
 
     return {dt_hydro, dt_diff_fe, dt_diff_sts_limit};
 }
-/** Advance one diffusion half-step through the selected CPU/CUDA route. */
+/** Reduce completed block receipts and attach the first physical location. */
+inline state::RepairBudget collect_stage_repairs(
+    DriverRuntime& runtime, StateSlot slot, const state::RepairBudget* device_report = nullptr)
+{
+    auto& control = runtime.control();
+    const auto& active = control.tree->GetActiveBlocks();
+    const auto& handles = runtime.handles();
+    state::RepairBudget report(runtime.species().count());
+    if (device_report) report = *device_report;
+    else for (std::size_t index = 0; index < active.size(); ++index) {
+        const auto& block = control.pool->GetBlock(active[index]);
+        const auto& output = slot == StateSlot::Current ? block.fluid_state
+            : slot == StateSlot::Next ? block.state_next : block.state_scratch;
+        auto block_report = output.stage_repairs;
+        block_report.block_uid = handles[index].uid.value;
+        report.combine(block_report);
+    }
+    if (report.values[0] > 0.0)
+        for (std::size_t index = 0; index < handles.size(); ++index) {
+            if (handles[index].uid.value != report.block_uid) continue;
+            const auto& grid = control.pool->GetBlock(active[index]).grid;
+            const int cell = static_cast<int>(report.values[9]);
+            const int k = cell / grid.stride_z;
+            const int j = (cell - k * grid.stride_z) / grid.stride_y;
+            const auto point = grid.GetPhysicalCoords(
+                cell - k * grid.stride_z - j * grid.stride_y, j, k);
+            report.position[0] = point.x;
+            report.position[1] = point.y;
+            report.position[2] = point.z;
+            break;
+        }
+    return report;
+}
+
+/** Advance one diffusion half-step through the selected CPU/CUDA route.
+ */
 template<class EosPolicy>
 void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const EosPolicy& eos,
@@ -204,6 +242,46 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     auto* compute_backend = runtime.backend();
     const bool has_diff = config.physics.diffusion.use_diffusion;
     if (!has_diff || diffusion_dt <= 0.0) return;
+
+    const bool rkl1 = resolved_plan->diffusion_integrator
+        == arch::dispatch::DiffusionIntegratorId::Rkl1;
+    const bool rkl2 = resolved_plan->diffusion_integrator
+        == arch::dispatch::DiffusionIntegratorId::Rkl2;
+    if (!rkl1 && !rkl2)
+        throw std::logic_error("enabled diffusion received an invalid resolved route");
+    const auto order = rkl1 ? DiffFunction::RKLOrder::First : DiffFunction::RKLOrder::Second;
+    const int stages = DiffFunction::compute_stages(order, diffusion_dt, dt_diff_fe,
+        config.physics.diffusion.diff_cfl, config.physics.diffusion.max_stages);
+    const auto repair_weights = DiffFunction::repair_weights(order, stages);
+    state::RepairBudget pending(runtime.species().count());
+    stage_context.rkl_acceptance = [&](const scheduler::RklStageDescriptor& descriptor) {
+        state::RepairBudget device_report(runtime.species().count());
+        if (compute_backend) {
+            device_report = compute_backend->stage_repairs;
+            device_report.combine(compute_backend->reflux_repairs);
+        }
+        auto report = collect_stage_repairs(runtime, descriptor.output_slot,
+            compute_backend ? &device_report : nullptr);
+        report.stage = 0; // The checkpoint's non-Hydro receipt category.
+        report.time = stage_context.step_start_time;
+        pending.combine(report, repair_weights.at(static_cast<std::size_t>(descriptor.stage - 1)));
+    };
+    struct ClearRklAcceptance {
+        scheduler::StageExecutionContext& context;
+        ~ClearRklAcceptance() { context.rkl_acceptance = {}; }
+    } clear_rkl_acceptance{stage_context};
+
+    /** Record the same completed stage through its actual receipt owner.
+     * Workflow: validate an active macro lease and accumulate both backend
+     * halves tentatively; standalone stages retain the original accepted
+     * budget. Observe activity only after real final boundary/acceptance work.
+     */
+    const auto record_completed_diffusion = [&] {
+        auto& accepted=runtime.repair_budget();
+        accepted.combine(pending);
+        if(runtime.diffusion_activity_enabled())runtime.observe_completed_diffusion_activity(
+            scheduler::make_rkl_plan(rkl1?scheduler::RklMethod::RKL1:scheduler::RklMethod::RKL2,stages));
+    };
 
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
@@ -222,20 +300,6 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
         copy_one(StateSlot::Scratch);
         copy_one(StateSlot::Next);
 
-        const bool rkl1 = resolved_plan->diffusion_integrator
-            == arch::dispatch::DiffusionIntegratorId::Rkl1;
-        const bool rkl2 = resolved_plan->diffusion_integrator
-            == arch::dispatch::DiffusionIntegratorId::Rkl2;
-        if (!rkl1 && !rkl2)
-            throw std::logic_error(
-                "CUDA diffusion received an invalid resolved route");
-        const DiffFunction::RKLOrder order = rkl1
-            ? DiffFunction::RKLOrder::First
-            : DiffFunction::RKLOrder::Second;
-        const int stages = DiffFunction::compute_stages(
-            order, diffusion_dt, dt_diff_fe,
-            config.physics.diffusion.diff_cfl,
-            config.physics.diffusion.max_stages);
         int negative_gamma_stages = 0;
         for (int stage = 1; stage <= stages; ++stage) {
             const auto coefficients = DiffFunction::get_rkl_coeffs(
@@ -292,18 +356,11 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
         runtime.trace_backend_operation(
             arch::backend::BackendOperation::DiffusionStage,
             StateSlot::Current, before);
+        record_completed_diffusion();
         return;
     }
 
     if (active_blocks.size() > 1) {
-        const bool rkl1 = resolved_plan->diffusion_integrator
-            == arch::dispatch::DiffusionIntegratorId::Rkl1;
-        const bool rkl2 = resolved_plan->diffusion_integrator
-            == arch::dispatch::DiffusionIntegratorId::Rkl2;
-        if (!rkl1 && !rkl2) {
-            throw std::logic_error(
-                "enabled diffusion received an invalid resolved route");
-        }
         if (!workspace.reported_composite_diffusion) {
             std::cout << "[Diffusion] multi-block AMR uses composite "
                       << (rkl1 ? "RKL1" : "RKL2")
@@ -321,13 +378,14 @@ void advance_diffusion(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     } else {
         const auto execute_single = [&](auto& integrator) {
             amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
-            integrator.integrate(block, eos, block.grid, config,
-                                 diffusion_dt, dt_diff_fe, bc_handler);
+            integrator.integrate(block,eos,block.grid,config,
+                diffusion_dt,dt_diff_fe,bc_handler);
         };
         Numerics::Diffusion::dispatch_diffusion(
             config, resolved_plan->diffusion_integrator,
             execute_single);
     }
+    record_completed_diffusion();
 }
 enum class BurnHalf { First, Second };
 /** Advance one burn half-step and reduce accepted burn timestep advice. */
@@ -425,12 +483,19 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
 }
 using IntegratorSolve = void (*)(amr::AMRControl&, double, BCHandler&,
     const Physical::Gravity::IGravityPolicy*, const Numerics::IHydroSolver*, const NumericsConfig&);
-/** Advance Hydro with per-stage gravity preparation and state repair accounting. */
+/** Advance Hydro with per-stage gravity preparation and state repair accounting.
+ */
 inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspace,
     StageExecutionContext& stage_context, const dispatch::ResolvedExecutionPlan* resolved_plan,
     double dt, IntegratorSolve integrator_solve,
     const Physical::Gravity::IGravityPolicy* gravity, const Numerics::IHydroSolver* hydro)
 {
+    if(!resolved_plan||!hydro||(!runtime.backend()&&!integrator_solve))
+        throw std::logic_error("Hydro requires its selected plan and executable solver");
+    if(!std::isfinite(dt)||dt<=0.||dt!=stage_context.step_dt)
+        throw std::logic_error("Hydro step size must be finite, positive and equal frozen context.step_dt");
+    if(stage_context.hydro_acceptance)
+        throw std::logic_error("Hydro acceptance already has another owner");
     auto& amr_ctrl = runtime.control();
     auto& bc_handler = runtime.boundaries();
     const auto& config = runtime.configuration();
@@ -440,37 +505,28 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     const auto& num_cfg = config.numerics;
     state::RepairBudget pending(runtime.species().count());
     stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
-        if (stage_context.hydro_preparation) stage_context.hydro_preparation->invalidate();
-        state::RepairBudget stage(runtime.species().count());
-        if (compute_backend) stage = compute_backend->stage_repairs;
-        else for (std::size_t index=0;index<active_blocks.size();++index) {
-            auto& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
-            const auto& output = descriptor.output_slot == StateSlot::Current ? block.fluid_state
-                : descriptor.output_slot == StateSlot::Next ? block.state_next : block.state_scratch;
-            auto report=output.stage_repairs;
-            report.block_uid=stage_handles[index].uid.value;
-            stage.combine(report);
+        // Only the explicitly begun transaction composes atomic source receipts.
+        // Production retains invalidate-before-collection, including collection failures.
+        if(stage_context.hydro_preparation) {
+            stage_context.hydro_preparation->invalidate();
         }
+        auto stage = collect_stage_repairs(runtime, descriptor.output_slot,
+            compute_backend ? &compute_backend->stage_repairs : nullptr);
         if (stage.values[0] > 0.0) {
             stage.stage=descriptor.stage; stage.time=stage_context.step_start_time;
-            for (std::size_t index=0;index<stage_handles.size();++index) {
-                if (stage_handles[index].uid.value != stage.block_uid) continue;
-                const auto& grid=amr_ctrl.pool->GetBlock(active_blocks[index]).grid;
-                const int cell=static_cast<int>(stage.values[9]);
-                const int k=cell/grid.stride_z, j=(cell-k*grid.stride_z)/grid.stride_y;
-                const auto point=grid.GetPhysicalCoords(cell-k*grid.stride_z-j*grid.stride_y,j,k);
-                stage.position[0]=point.x; stage.position[1]=point.y; stage.position[2]=point.z;
-                break;
-            }
         }
         double weight = 1.0;
         if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk2 && descriptor.stage == 1) weight = 0.5;
         if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk3)
             weight = descriptor.stage == 1 ? 1.0/6.0 : descriptor.stage == 2 ? 2.0/3.0 : 1.0;
         pending.combine(stage, weight);
+
     };
-    struct ClearAcceptance { scheduler::StageExecutionContext& context;
-        ~ClearAcceptance() { context.hydro_acceptance = {}; } } clear{stage_context};
+    struct RestoreAcceptance {
+        scheduler::StageExecutionContext& context;
+        std::function<void(const scheduler::StageDescriptor&)> previous;
+        ~RestoreAcceptance() noexcept { context.hydro_acceptance.swap(previous); }
+    } restore{stage_context,{}};
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
         auto& currents = workspace.hydro_currents;
@@ -534,8 +590,13 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
             amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
     }
 
-    runtime.repair_budget().combine(pending);
-
+    auto& accepted=runtime.repair_budget();
+    accepted.combine(pending);
+    auto reflux = collect_stage_repairs(runtime, StateSlot::Current,
+        compute_backend ? &compute_backend->reflux_repairs : nullptr);
+    reflux.stage = 0;
+    reflux.time = stage_context.step_start_time;
+    accepted.combine(reflux);
 }
 /** Instantiate and bind the selected backend after configuration validation. */
 template<class EosPolicy>
@@ -549,7 +610,7 @@ void start_compute_backend(DriverRuntime& runtime, const EosPolicy& eos,
         std::vector<cuda::CudaBlockBinding> bindings;
         bindings.reserve(topology.size());
         for (const auto& block : topology)
-            bindings.push_back({block.block, block.handle, block.storage, block.physical_boundary});
+            bindings.push_back({block.block, block.handle, block.storage, block.physical_boundary, block.hydro_boundary});
         runtime.install_backend(cuda::make_cuda_backend(bindings, resolution.device.ordinal,
             cuda::make_cuda_launch_config(plan, runtime.configuration()), runtime.species(), eos));
         order.record(dispatch::StartupEvent::Constructed);

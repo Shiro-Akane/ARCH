@@ -1,0 +1,87 @@
+{
+  "baseHead": "00ee60b54e3bc5aa85f615869ebda457623017bb",
+  "dirtyInputs": {
+    "src/amr/exchange/BoundaryPlan.h": "a9841375f2aac7633333403c3b336ee07d7c0b90466b3925987a95a307d72c75",
+    "src/driver/DriverUtils.h": "fbf2fd69c1a1f250c3eb0b3dabbf9816ec01ca96a3bad843cc67a675e363ef68",
+    "tests/host/amr/test_boundary_plan.cpp": "9b7bb0155e1a1786159e8af3d5ace0b9f5e3998359d791c97d8d335b9137be1c",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "378a6025fbc6eb62ce137afd8f3a8cbfc11d6c490d0a52aa1ac9824e613eb53b"
+  },
+  "testBinarySha256": {
+    "arch_boundary_plan": "62be4fa931cfc901cb3365d3e383ee919cdb2873ca265fca15c771463cb34f05",
+    "arch_curvilinear_metrics": "fbdd7659fbf7b3c45e4bf6340f458ec626378ec5de97375f9f1f528a56280f0b"
+  },
+  "checks": {
+    "boundary_plan": "PASS",
+    "amr_operation_plans": "PASS",
+    "curvilinear_metrics_after_BC_link": "PASS",
+    "diffCheck": "PASS"
+  },
+  "axisContract": {
+    "type": "internal BoundaryType::RzAxis=4",
+    "dimension": 2,
+    "face": "lower x1, native r=0 only",
+    "donor": "mirror radial depth; same axial j; no half-turn shift",
+    "parity": {
+      "rho": 1,
+      "mom_r": -1,
+      "mom_z": 1,
+      "mom_phi": -1,
+      "eng": 1,
+      "enuc_rate": 1,
+      "species": 1
+    },
+    "nonzeroInnerBoundary": "normal configured physical BC"
+  },
+  "physicalBoundaryWitness": {
+    "checkedGhostCells": 272,
+    "fields": "rho,three momenta,energy,ENUC,two species",
+    "comparison": "FP64 exact bit equality, includes reflected signed zeros",
+    "corner": "lower-r/lower-z composed parity (-r,-z,-phi)",
+    "legacy": "old 1/2/3D plan fingerprints and BCHandler full-state/ENUC snapshots unchanged"
+  },
+  "rejections": [
+    "RZ axis at wrong face/dimension",
+    "radial periodic at r=0",
+    "wrong native chart before state writes",
+    "non-axis prepared profile with r=0 patch before writes"
+  ],
+  "mixedStage": "actual BCHandler before input exchange, and after stage before output exchange; four 5-leaf radial/axial cases",
+  "mixedStageResultsRoundedByStream": [
+    {
+      "direction": 0.0,
+      "inner": 0.0,
+      "max_delta": 2.77556e-17,
+      "max_register": 0.0,
+      "max_state_error": 2.77556e-17
+    },
+    {
+      "direction": 0.0,
+      "inner": 1.0,
+      "max_delta": 4.95494e-17,
+      "max_register": 3.14523e-15,
+      "max_state_error": 3.55618e-17
+    },
+    {
+      "direction": 1.0,
+      "inner": 0.0,
+      "max_delta": 5.34464e-16,
+      "max_register": 2.13163e-14,
+      "max_state_error": 1.38778e-17
+    },
+    {
+      "direction": 1.0,
+      "inner": 1.0,
+      "max_delta": 5.29374e-16,
+      "max_register": 2.84217e-14,
+      "max_state_error": 1.38778e-17
+    }
+  ],
+  "limits": [
+    "explicit internal profile; public runtime Grid and driver scheduler remain old chart",
+    "constant-state stage only; not nonuniform boundary evolution or long-time acceptance",
+    "new Grid-aware logical_plan selector is required for explicit profile; old no-arg selector remains legacy-compatible",
+    "no CUDA or full ARCH build/simulation",
+    "RZ angular regrid finding and other scientific gates remain open"
+  ],
+  "localEvidence": "studio/.local/integration/rz-physical-boundary-20261004"
+}

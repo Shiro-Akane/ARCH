@@ -13,6 +13,7 @@ stable; implementation files are grouped by responsibility:
 | [amr](amr/README.md) | Indicator, migration, ghost exchange and flux-correction orchestration |
 | [gravity](gravity/README.md) | Resident gravity fields, shared-work launches, reductions and publication |
 | [diffusion](diffusion/README.md) | Diffusion launch interface and device execution |
+| [boundary](boundary/CudaBackendBoundary.cu) | Surface gather/scatter and observation planes for Host case callbacks; shared formulas remain in physics |
 
 These groups separate execution responsibilities; their numerical operations
 are shared with CPU. Declaration-only launch headers should not include complete

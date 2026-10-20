@@ -17,6 +17,15 @@ import h5py
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = json.loads(Path(__file__).with_name('manifest.json').read_text())
 FIELDS = ('rho', 'mom_u', 'mom_v', 'mom_w', 'eng')
+# Frozen per-model fixture controls. Only the matching case model receives its
+# own controls, so no case key leaks into another model. Values are the former
+# effective defaults from models/GlobalDefs; caller overrides stay authoritative.
+MODEL_FIXTURES = {
+    'SmoothAdvection': dict(mode=1),
+    'Sod': dict(x_pos=.5, u_left=0., u_right=0.),
+    'ExternalGravity': dict(gravity_g_y=0, gravity_g_z=0),
+    'DiffusionMode': dict(tracer_mean=.5, tracer_amplitude=.25, mode=1, diff_cfl=.8),
+}
 
 
 def checkpoint(path, params):
@@ -38,7 +47,8 @@ def checkpoint(path, params):
 def run(arch, backend, directory, case, overrides, scale=1., restart=None):
     directory.mkdir(parents=True, exist_ok=True)
     params = dict(geometry='cartesian', nblockx1=8, nblockx2=0, nblockx3=0,
-                  max_blocks=256, x1_min=0., x1_max=1., solver='HLLC', reconstruct='muscl',
+                  max_blocks=256, x1_min=0., x1_max=1., solver='HLLC', hll_wave_speed='roe',
+                  EntropyFix='true', EntropyFixCoefficient=.1, reconstruct='muscl',
                   limiter='mc', time_integrator='RK3', cfl=.4, lrefinemin=0, lrefinemax=0,
                   regrid_interval=2, refine_var='DENS', refine_threshold=.8, derefine_threshold=.2,
                   tmax=.1, max_steps=-1, plt_dt=-1, plt_dstep=-1, chk_dt=-1, chk_dstep=-1,
@@ -46,6 +56,7 @@ def run(arch, backend, directory, case, overrides, scale=1., restart=None):
                   gravity_type='none', use_burn='false', use_diffusion='false',
                   sml_rho=scale*1e-12, min_eint=1e-10, max_eint=1e21, compute_backend=backend,
                   x1l_boundary_type='periodic', x1r_boundary_type='periodic')
+    params.update(MODEL_FIXTURES.get(case, {}))
     params.update(overrides)
     if restart:
         params.update(restart='true', restart_file=str(restart))

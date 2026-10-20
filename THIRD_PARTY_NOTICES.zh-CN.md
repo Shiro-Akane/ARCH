@@ -43,7 +43,7 @@ ARCH 可获取固定的 SuiteSparse v7.13.0，并静态链接 KLU 及其最小�
 
 ## pynucastro 生成网络与核数据
 
-ARCH 在 [`tools/network/`](tools/network/) 中提供生成配方和可移植适配器。维护中的 [`audit31` 与 `weak_urca` 验证网络](validation/network/README.zh-CN.md)使用 pynucastro 2.12.0，由用户在本地生成网络包；ARCH 的适配工作不会将输出中的上游模板或核数据变成 ARCH 自有内容。
+ARCH 在 [`tools/network/`](tools/network) 中提供生成配方和可移植适配器。维护中的 [`audit31` 与 `weak_urca` 验证网络](validation/network/README.zh-CN.md)使用 pynucastro 2.12.0，由用户在本地生成网络包；ARCH 的适配工作不会将输出中的上游模板或核数据变成 ARCH 自有内容。
 
 pynucastro 2.12.0 使用其 [BSD-3-Clause 许可证](https://raw.githubusercontent.com/pynucastro/pynucastro/2.12.0/LICENSE)。SimpleCxx 输出包含上游模板，其中 `amrex_bridge.H` 的源码注释注明了 AMReX 和 Microphysics 的改编来源。重新分发生成包时，应保留这些来源及适用条款，包括 pynucastro 许可证和相关 [AMReX](https://raw.githubusercontent.com/AMReX-Codes/amrex/development/LICENSE)、Microphysics 说明。上文已有的 Microphysics 说明针对 ARCH 的传导适配，并不统一覆盖所有生成文件。源码分发须保留适用的版权声明、条件和免责声明；二进制分发须在随附材料中重现这些内容。pynucastro 的[引用指南](https://pynucastro.github.io/pynucastro/citing.html)请求引用其 2.0 论文和 Zenodo 软件记录。
 

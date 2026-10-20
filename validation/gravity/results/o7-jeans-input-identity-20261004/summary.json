@@ -1,0 +1,68 @@
+{
+  "parentCheckpoint": "13c673c7b2ce91fa2003559f79db463c688b6229",
+  "schemaParameterCount": 95,
+  "jeansParameter": {
+    "allowedDefault": null,
+    "applicability": {
+      "dependencies": [
+        "refine_var"
+      ],
+      "description": "Core-owned consumer condition; inspection evaluates supplied input.",
+      "id": "requires:jeans_cells"
+    },
+    "caseId": null,
+    "constraints": {
+      "complete": false,
+      "min": 4,
+      "minInclusive": true,
+      "syntax": "finite decimal or scientific notation; full token"
+    },
+    "group": "Grid",
+    "key": "jeans_cells",
+    "options": null,
+    "path": null,
+    "presentation": {
+      "description": "Minimum cells per Jeans length; required only when refine_var requests JENS. No implicit default.",
+      "displayName": "Jeans resolution target",
+      "subgroup": "AMR"
+    },
+    "requirement": {
+      "condition": {
+        "dependencies": [
+          "refine_var"
+        ],
+        "description": "Core-owned presence requirement; inspection evaluates supplied input.",
+        "id": "requires:jeans_cells"
+      },
+      "kind": "conditional"
+    },
+    "templateRecommendations": [],
+    "type": "float",
+    "units": {
+      "status": "dimensionless",
+      "unit": "1"
+    },
+    "usage": "simulation"
+  },
+  "checks": [
+    {
+      "name": "final-regression",
+      "exitCode": 0
+    },
+    {
+      "name": "architecture",
+      "exitCode": 0
+    }
+  ],
+  "binarySha256": "49ca838d7617c15fc0fc27caa0c3552e995da50b7e6738b97945b3fa58ea7044",
+  "checkpointStateControlRevision": 3,
+  "checkpointStateControlCount": 20,
+  "checkpointFileFormatVersion": 6,
+  "rawEvidence": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-contract-build-20261004",
+  "limitations": [
+    "Public JENS activation remains gated pending complete CPU scientific qualification",
+    "Old state-control revisions explicitly rejected; no migration of raw checkpoint",
+    "No uniform-lifecycle-1 evolution/restart acceptance yet",
+    "No CUDA or RZ angular momentum acceptance"
+  ]
+}

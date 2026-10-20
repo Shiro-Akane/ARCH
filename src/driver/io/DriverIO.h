@@ -66,9 +66,11 @@ class DriverIO {
 public:
     DriverIO(DriverRuntime& runtime, SimulationController& controller,
              const io::CheckpointProvenance& provenance,
+             const io::PlotSourceIdentity& plot_identity,
              PressureFunc pressure, TemperatureFunc temperature, Gamma1Func gamma1,
              const void* eos)
         : runtime(runtime), ctrl(controller), checkpoint_provenance(provenance),
+          plot_source_identity(plot_identity),
           p_func(pressure), t_func(temperature), gamma1_func(gamma1), eos(eos) {}
     void write_plot(std::span<const io::PlotScalarField> extra_fields = {});
     void write_checkpoint(double dt_burn_global, bool resume_after_regrid);
@@ -77,11 +79,14 @@ public:
 private:
     using Clock = std::chrono::steady_clock;
     Clock::time_point started_ = Clock::now();
+    std::string plot_run_id_; // One output session; new on restart invocation.
     double output_seconds_ = 0.;
     std::size_t output_calls_ = 0;
     DriverRuntime& runtime;
     SimulationController& ctrl;
     const io::CheckpointProvenance& checkpoint_provenance;
+    // Driver owns this frozen record for the complete output service lifetime.
+    const io::PlotSourceIdentity& plot_source_identity;
     PressureFunc p_func;
     TemperatureFunc t_func;
     Gamma1Func gamma1_func;

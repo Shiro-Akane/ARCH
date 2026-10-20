@@ -418,6 +418,9 @@ private:
                                                        burn_cfg.odeconfig.dt_fac_max);
                 dt_new = std::max(dt * burn_cfg.odeconfig.dt_fac_min, std::min(dt * burn_cfg.odeconfig.dt_fac_max, dt_new));
                 dt = dt_new * burn_cfg.odeconfig.dt_safe_factor;
+                // Floor only the stored, dimensionless controller history at
+                // 1e-4 so a nearly zero error does not dominate the next ratio.
+                // This does not change the current step's acceptance threshold.
                 err_prev = std::max(current_err, 1e-4);
             }
             else

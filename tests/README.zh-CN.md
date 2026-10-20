@@ -1,85 +1,55 @@
 # 验证拉取后的 ARCH
 
-[English](README.md) · [构建指南](../docs/guides/Build.zh-CN.md) · [科学验证](../validation/README.zh-CN.md)
+[English](README.md) · [构建](../docs/guides/Build.zh-CN.md) · [科学验证](../validation/README.zh-CN.md)
 
-源码包含测试代码、小型独立参考数据、制造解、验证清单和网络生成配方。测试程序需要
-本地编译；生成网络、外部库、大型模拟输出和分析器数据不作为预编译依赖随源码提供。
-使用受 Git LFS 管理的 EOS 表之前，请运行 `git lfs pull`。
+工程测试检查数学叶、接口、生命周期和失败处理；科学验证补充独立参考与实际程序终点。不需要安装 FLASH 或其他模拟软件。旧证据只在其源码、输入、执行物及适用范围内复用，修改后运行受影响的原测试所有者。
 
-以下命令均从仓库根目录在 Linux 或 WSL2 中执行。工具测试、数值回归和完整程序短测
-各有用途；科学误差与验收预算统一见 [Validation](../validation/README.zh-CN.md)。
+## 选择最小有效检查
 
-完整测试套件的编译耗时与主机内存需求都高于只构建应用。
-`BUILD_TESTING=ON` 注册适用的测试目标，默认 `all` 构建会编译这些额外的可执行程序。
-启用 `ARCH_ENABLE_CUDA=ON` 后，CUDA 测试还会增加大量 NVCC 编译工作。
-这里的压力主要是主机内存，不是显存；显存需求在实际运行设备测试时才需要另行衡量。
-较大的生成网络和更多目标 GPU 架构会继续增加编译工作量。
+| 改动 | 入口 | 能证明什么 |
+| --- | --- | --- |
+| 验证／构建／报告工具或文档 | `python3 -B tests/tooling`，以及下方架构／链接审查 | 运行器、身份、资源和当前文档契约，不是物理精度 |
+| CPU 数学、配置、API、AMR 或 IO | 既有 [Host](host/README.md)／API 目标及 CTest | 对应独立数学或接口断言 |
+| CUDA 索引、launch、分配或驻留 | 既有 [Device](cuda/README.md) 目标及适用整程序短测 | 对应范围的真实设备执行，不能由 Host 结果代签 |
+| Studio／Host | [Studio 检查](../studio/tests/README.md) | 类型响应、请求身份、进程生命周期、渲染及构建契约 |
+| 科学终点、收敛或耦合演化 | 对应 [Validation](../validation/README.zh-CN.md) 清单／参考 | 原误差、守恒、拓扑和新进程续算要求 |
 
-两个 Release 预设在首次应用构建中保持 `BUILD_TESTING=OFF`。新用户可以先用
-`cpu-release` 跑通应用和下方工具检查，再按需启用测试或选择 `cuda-release`。
-即使已启用测试，`cmake --build <build-dir> --target ARCH` 仍只构建应用及其依赖，
-不会编译独立测试。在 `.par` 中改为 CPU 运行，也不会消除 CUDA 构建的编译成本。
-
-## GitHub 持续集成
-
-[ARCH CI](../.github/workflows/ci.yml) 在 GitHub 提供的 Linux 机器上执行共用实现审查、
-全部 Python 工具测试，以及包含 KLU 和所有已配置 Host 测试的 CPU Release 构建。
-这些任务复用下文的测试入口，不维护另一套 CI 数学实现。CPU 任务会下载所需的
-Helmholtz LFS 表，拒绝缺项或跳过的 CTest 报告；工具任务同样不接受跳过的检查。
-`physics/selfgravity` 的 push/目标 PR 也触发同一完整流程。下载限定为当前测试真正使用的
-Helmholtz 表，不下载无关历史 HDF5 与大表；测试选择、数值容差和失败判据保持不变。
-
-`CI required` 汇总这两个任务的结果，不代表实际执行了 CUDA 或重新完成了整套科学
-验证。诊断附件保留 14 天，与维护者审阅过的 Validation 记录分开存放。
-手动运行、资源限制、安全设置及分支规则的接入方法见[工作流指南](../.github/workflows/README.md)。
+优先扩展既有断言所有者，不为每个参数新建程序或探针。独立参考不能调用生产算法制造共同错误。失败先用最小复现定位，不以更大矩阵掩盖尚未解释的失败。长程、sanitizer 和公平 CPU/GPU 成本对照不进入每次 PR。
 
 ## 不需要 GPU 的工具检查
 
-使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。微物理／检查点协议
-检查需要安装 NumPy 和 h5py。测试使用受控输入，不需要 pynucastro、SciPy 或 CUDA 设备。
+使用 Python 3.10+、NumPy/h5py、Git 和 CMake。Linux 资源检查需要 `/proc`、pidfd 和子进程支持。本工作站科学 Python 使用已有 `work` 环境；资源套件使用提供 pidfd 的系统 Python。设施缺失或跳过不表示完整验证。
 
 ```bash
 python3 tools/audit_architecture.py .
-python3 -m unittest discover -s tests/tooling -p 'test_*.py'
+python3 tools/check_documentation.py .
+python3 -B tests/tooling
 ```
 
-完整资源保护测试需要 Linux `/proc`、子进程管理支持和 Python 的 `os.pidfd_open`
-接口。缺少这些功能的 Python 构建或内核可能导致对应测试跳过。请阅读汇总：
-跳过不表示功能已经验证。
-
-架构审计会在遍历前排除已配置的 CMake 构建树与辅助 Git worktree，仍检查未跟踪源码
-和生产目录中的用户模块。不笼统忽略 `build*`，日常工作目录不再需要先导出干净快照。
+完整 Tooling 入口拒绝空套件、失败和跳过，包含稀疏轨迹 transcript 控制。依赖科学 Python 的独立 oracle 检查仍归各 Validation 所有者。文档检查核对当前页面的路径／标题锚点，历史冻结材料不改写。
 
 ## 编译并运行 CPU 回归
 
-先按[构建指南](../docs/guides/Build.zh-CN.md)准备依赖。默认启用 KLU 以测试 CPU
-稀疏求解；本机尚未安装时，配置阶段可能下载 HighFive 和 SuiteSparse。
+先按[构建指南](../docs/guides/Build.zh-CN.md)准备依赖，必要表使用[离线身份核对](../docs/guides/Build.zh-CN.md#离线表与-lfs-流量)。默认预设关闭测试；`--target ARCH` 只构建应用及依赖。CTest 不编译缺失程序。
 
 ```bash
 cmake -S . -B build-test-cpu -G Ninja \
   -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DARCH_ENABLE_CUDA=OFF \
   -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-test-cpu/bin"
-cmake --build build-test-cpu --parallel 1
-ctest --test-dir build-test-cpu -N
-ctest --test-dir build-test-cpu --parallel 1 --output-on-failure
+cmake --build build-test-cpu --parallel 2
+ctest --test-dir build-test-cpu --show-only=json-v1
+ctest --test-dir build-test-cpu --parallel 1 --no-tests=error --output-on-failure
 ```
 
-CTest 不会编译缺失的程序；上述默认构建包含已配置的测试目标。需要先检查重启时，
-可只构建 `arch_checkpoint_compatibility`，再用 `-R '^checkpoint_compatibility$'`
-选择它。该测试通过两种后端共用的读取器检查完整状态恢复，并拒绝不完整或不匹配输入。
+重型构建沿既有资源护栏，按实际进程树 RAM 选择并发；外层只有一个 job，dispatch／LTO 也可能占数 GiB。局部改动先构建原目标，用 `-R '^name$'` 选中其 CTest，再按风险扩大。
 
-当前格式的正常往返、旧控制身份拒绝和损坏数据拒绝均由现有检查点测试覆盖；
-拒绝读取后活跃 AMR 状态不变，写入前验证失败也不会截断已有检查点。
+未筛选命令包含唯一 `tooling_contracts`。若已执行完整 Tooling，则发现和运行同时使用 `-LE '^tooling$'` 避免重复，其余配置测试仍全部保留；局部名称过滤不代表完整 CPU 覆盖。
 
-历史命名的 `arch_cuda_single_level_validation` 现在也可在 CPU-only 构建中单独编译。
-它只使用普通 C++ 与 Host HDF5 读取器，不再链接 CUDA 后端；比较源码、CLI 和容差不变。
-`checkpoint_temporal_comparison` 同样进入 CPU CTest，避免仅为比较检查点而编译整套 CUDA。
+Host 比较器 `arch_cuda_single_level_validation` 无需 CUDA；历史名称不构成设备依赖。`checkpoint_compatibility` 与 `checkpoint_temporal_comparison` 保留原完整恢复／拒绝和时间比较契约。
 
 ## 加入 CUDA 和原生稀疏求解器
 
-按 [CUDA 构建指南](../docs/guides/Build.zh-CN.md)准备 NVIDIA 驱动、工具链和 cuDSS。
-库位于自定义目录时设置 `CUDSS_ROOT`，不要求安装到系统目录。同一构建若还要验证
-CPU 稀疏燃烧，应保留 KLU，它不能由 cuDSS 替代。
+使用独立构建树及 [CUDA 构建说明](../docs/guides/Build.zh-CN.md)。只有真实 cuDSS 库可用时才启用它，KLU 仍负责 CPU 稀疏路径。`native` 只对应配置时可见 GPU，不代表全平台资格。
 
 ```bash
 cmake -S . -B build-test-cuda -G Ninja \
@@ -89,62 +59,22 @@ cmake -S . -B build-test-cuda -G Ninja \
   -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-test-cuda/bin"
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-test-cuda --parallel 1
-ctest --test-dir build-test-cuda -N
-ctest --test-dir build-test-cuda --parallel 1 --output-on-failure
+  cmake --build build-test-cuda --parallel 2
+ctest --test-dir build-test-cuda --parallel 1 --no-tests=error --output-on-failure
 ```
 
-`native` 面向配置时可见的 GPU；为其他设备编译时使用指南中的架构选项。编译并行度
-可以调整，不改变数值方法。设备测试先串行执行，测清显存需求后再增加并发。
-
-只验证 Driver 改动时，可显式使用 `tools/check_ci_results.py --profile driver-cuda`
-核对所选 CTest 的 inventory 和 JUnit。发现与执行必须使用相同的选择范围；该 profile
-要求调度、引力准备、检查点比较及 CUDA AMR/批处理/归约等必要锚点，所有所选测试
-均须通过，不接受跳过。它只标识 Driver 范围，不能替代完整 CUDA 测试、实际模拟的
-数值/重启对照或 sanitizer；GitHub CPU CI 仍验证完整 inventory。
-
-请检查配置输出和 CTest 清单。cuDSS 专项与生成网络测试仅在相应库和网络包启用时
-出现；不包含这些条目的构建没有测试对应能力。复现代表性完整配置时，先按
-[网络配方与环境说明](../validation/network/README.zh-CN.md)生成 audit31 和弱反应网络，
-再选中相应包 ID 重新配置。pynucastro 只在生成时需要，ARCH 运行不依赖它。
-audit150/audit200 属于单独的规模测试，不是起步要求。
+保留 CUDA 的 `RUN_SERIAL`、提供者条件、不可用设备退出码及编译池限制；跳过不能签收 GPU。生成包测试只在实际发现／配置包时出现；空选择表示全部可发现包，不是禁用。生成与独立弱反应／NSE 参考见[网络验证](../validation/network/README.zh-CN.md)。
 
 ## 完整程序与重启检查
 
-ARCH 和检查点比较器必须来自同一构建：
+ARCH 与比较器须来自同一构建。[短测](smoke/README.md)、[重启](../validation/restart/README.zh-CN.md)和[引力](../validation/gravity/README.zh-CN.md)分别负责有界应用、新进程及可选场检查。清单定义真实终点、输入、字段和门槛；按步诊断不能替代要求的同物理时间比较。
 
-```bash
-python3 tools/smoke_cuda_amr_runtime.py \
-  --arch build-test-cuda/bin/ARCH \
-  --checkpoint-validator build-test-cuda/arch_cuda_single_level_validation
-```
+测量前冻结源码／配置，记录编译和运行墙钟、编译器／profile、线程、RAM／swap 与退出原因。纯注释复用适用科学证据。异常缓慢可由既有护栏停止并保留到达步数／时刻及证据，截断不能记 PASS。HDF 批次前检查实际宿主盘；本工作站约余 1 GiB 时预警，不能用 WSL 虚拟余量代替。
 
-[短测指南](smoke/README.md)说明动态 AMR、曲线扩散与检查点续算路径。逐字段恢复和
-继续演化使用[重启验证](../validation/restart/README.zh-CN.md)，覆盖 CPU/CUDA 四种
-方向，并检查原始组分、ENUC、时间步控制器及输出阶段。运行器保留日志，输出目录必须
-不存在或为空，不会静默覆盖另一轮数据。
+## GitHub 持续集成
 
-共用运行器通过 C++ 比较器读取 HDF5。独立科学参考脚本可能额外需要 NumPy、SciPy、
-mpmath 或 h5py，各 [Validation 模块](../validation/README.zh-CN.md)均列明要求。
-只有插桩检查需要 Compute Sanitizer。
-
-## 自引力检查
-
-CPU 锚点为 `composite_poisson_contract`、`composite_poisson_analytic`、
-`self_gravity_lifecycle` 和 `self_gravity_physics`。最后一项运行正式程序，需要
-CMake 所选 `Python3_EXECUTABLE` 环境中的 numpy/h5py；应配置对应解释器及依赖，
-而不是跳过。设备、耦合与性能证据见[引力验证](../validation/gravity/README.zh-CN.md)。
+[CI](../.github/workflows/README.md)执行一次 Tooling、适用的完整 CPU/KLU 与 Studio 任务，并由一个必需状态汇总。明确的文档差异可省略昂贵原生／Node 工作并记录 `NOT_APPLICABLE`；未知范围完整执行。inventory/JUnit 与 TAP 均拒绝空项、缺项、失败或跳过。本地通过不等于托管执行或科学发布资格。
 
 ## 查找与扩展测试
 
-- [host/](host/README.md)：CPU 契约、AMR/几何、检查点、EOS 与燃烧。
-- [cuda/](cuda/README.md)：设备执行、两侧一致性、内存与事务生命周期。
-- [tooling/](tooling/README.md)：源码审查、构建元数据、运行器、身份与资源保护。
-- [math/](math/README.md)：主机与设备共用的数值测试。
-- [fixtures/](fixtures/README.md)：独立参考数据和受控系统。
-- [smoke/](smoke/README.md)：短时完整程序检查。
-
-测试组由 [CMakeLists.txt](../CMakeLists.txt) 选择，目标声明及条件位于
-[HostTests.cmake](../cmake/tests/HostTests.cmake) 和
-[CudaTests.cmake](../cmake/tests/CudaTests.cmake)。多个测试使用相同参考
-数据时，共用一份即可。生产算法放在 `src/` 中，参考结果则应独立于被测函数计算。
+[Host](host/README.md)、[Device](cuda/README.md)、[Tooling](tooling/README.md)、[数学](math/README.md)、[夹具](fixtures/README.md)与[短测](smoke/README.md)说明原所有者。注册在 [HostTests.cmake](../cmake/tests/HostTests.cmake) 和 [CudaTests.cmake](../cmake/tests/CudaTests.cmake)。保持已验 RKL core／Tabular 分工和燃烧分组；共享装配或注册不能丢掉独立子例或放宽阈值。

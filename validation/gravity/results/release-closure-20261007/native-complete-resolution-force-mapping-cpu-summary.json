@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "status": "COMPLETE_PURE_REFERENCE_MAPPING_DIAGNOSTIC_ONLY",
+  "global_source_and_imported_reference_fence": true,
+  "layout2_source_scope": "Historical immutable actual compiled producer; original broad producer rejection and unknown process exit retained",
+  "rows": [
+    {
+      "layout": 1,
+      "cells": 2048,
+      "targets": 6208,
+      "side_values": 12288,
+      "cell_values": 6144,
+      "mapping_wall_seconds": 5.412493564988836,
+      "side_cell_maximum_error_upper_exact": {
+        "side_acceleration_rows": "230360459439858473804654333546557221176428435835821062684450805921983/463168356949264781694283940034751631413079938662562256157830336031652518559744",
+        "cell_acceleration_rows": "109710193121811894435529106487239635661235909249754456899100038491135/463168356949264781694283940034751631413079938662562256157830336031652518559744"
+      },
+      "science_accepted": false,
+      "reference_sha256": "02d969b69de03c75c231bb91225c24c8bb7b6fa9b76a46cd23a80cbb16257fd1",
+      "kernel_evaluations": 0
+    },
+    {
+      "layout": 2,
+      "cells": 8192,
+      "targets": 24704,
+      "side_values": 49152,
+      "cell_values": 24576,
+      "mapping_wall_seconds": 20.746394339003018,
+      "side_cell_maximum_error_upper_exact": {
+        "side_acceleration_rows": "114059787925020777391592838054532029164403835481826045686721787846795/463168356949264781694283940034751631413079938662562256157830336031652518559744",
+        "cell_acceleration_rows": "109245163129290517972029196562362953655495021577666954098630681404031/926336713898529563388567880069503262826159877325124512315660672063305037119488"
+      },
+      "science_accepted": false,
+      "reference_sha256": "01d74ad30a3feceb9dafddf9d8be57f72998059786af34588ee734e57f08c82a",
+      "kernel_evaluations": 0
+    }
+  ],
+  "no_current_science_grant": true
+}

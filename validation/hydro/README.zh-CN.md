@@ -13,7 +13,7 @@ CPU 和 CUDA 已通过光滑波空间与时间精度、Sod、持续周期平流�
 
 ## 光滑波空间精度
 
-`SmoothAdvection` 实现仍位于 `simulation/SmoothAdvection/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们对周期 entropy wave $\rho=1+0.2\sin(2\pi x)$、$u=1$、$p=1$ 平流至 $t=0.1$。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
+`SmoothAdvection` 实现仍位于 `simulation/SmoothAdvection/`；本记录归属的当前规范参数模板位于 [`inputs/`](inputs)，它们对周期 entropy wave $\rho=1+0.2\sin(2\pi x)$、$u=1$、$p=1$ 平流至 $t=0.1$。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
 
 ### 复现
 
@@ -104,6 +104,16 @@ python3 validation/hydro/sedov_reference.py --oracle-only
 python3 validation/hydro/sedov_reference.py --build-dir build-cuda \
   --output-dir validation/hydro/results/sedov-new
 ```
+
+## 规范模板来源
+
+`inputs/*.par` 十二个文件是当前规范模板。现在每个文件都显式声明其 HLL/HLLC 信号速度估计（`hll_wave_speed = roe`）与比内能下限（`min_eint = 1e-10` erg/g）；当前生产代码对这两个求解器要求显式给定，且不恢复任何兼容默认值，缺失或非法取值会被直接拒绝，而不会静默取默认。其余键与数值均未改动。
+
+这十二个文件此前与历史验证快照逐字节相同，该快照记录于提交 `c8f7c048ca7b384126547934946a3c4d595f6e99`；其运行时链路通过共享的 `RuntimeParams` 策略加载 HLLC，历史波速为 `roe`、内能下限为 `min_eint = 1e-10` erg/g。该提交冻结了每个文件原始输入的 SHA-256 与 Git blob 身份。上文各表仍为历史快照结果，不是新的测量；原始各表、预算与定义保持不变，可与原始小节逐项核对。
+
+在 R2 代表集中，PPM 光滑波与 Sod 共六个案例使用可追溯输入覆盖值（`hll_wave_speed = roe`、`min_eint = 1e-10` erg/g）进行了科学重放，原科学阈值保持；当时 PCM／MUSCL 尚无当前数值验收。随后 R4.3 已对更新后的规范模板完成四个完整组、十二个案例、49 对 CPU/CUDA 比较，原 manifest 门槛不变。[R1–R4 基础阶段报告](../../docs/development/modernization/R1R4Foundation-20261013.zh-CN.md)单独记录这批新结果及输入／源码身份，不替换上文历史表格。
+
+`hydro_periodic_1000` 仍是复用 `ppm_n64.par` 的第十三个消费者，采用自身终点及最低步数要求，没有独立模板。R4 只核其配置继承，没有新增持续运行；四个短组不赋予新的长程验收。
 
 ## 详细复核记录
 

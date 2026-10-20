@@ -1,0 +1,242 @@
+{
+  "scope": "CellularDet native 2D physical axes/colorbar/hit-testing regression after dynamic plot margins; not simulation or scientific acceptance",
+  "sourceCommit": "fefef8859b4f249053d3755f40232d85efebd5c7",
+  "productionCodeCommit": "b0de7b567cd4224eca42557bde14819f342ed031",
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "completeDependencyFreshness": "unknown",
+  "runs": [
+    {
+      "localDataId": "native-cellular-plot-margin-20261004",
+      "windowId": 47778518,
+      "launch": {
+        "pid": 1710460,
+        "sourceCommit": "fefef8859b4f249053d3755f40232d85efebd5c7",
+        "configSha256": "e82fc95db2bda34045ed940065a48b110e6529748d82bb6f811870b8df905ed7"
+      },
+      "owned": [
+        {
+          "pid": 1710460,
+          "ppid": 1710459,
+          "startTicks": "6873295",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1710463,
+          "ppid": 1710460,
+          "startTicks": "6873296",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1710464,
+          "ppid": 1710460,
+          "startTicks": "6873297",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1710486,
+          "ppid": 1710463,
+          "startTicks": "6873303",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1710488,
+          "ppid": 1710460,
+          "startTicks": "6873303",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1710501,
+          "ppid": 1710460,
+          "startTicks": "6873305",
+          "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+          "comm": "MainThread"
+        },
+        {
+          "pid": 1710866,
+          "ppid": 1710464,
+          "startTicks": "6873769",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        }
+      ],
+      "cleanup": {
+        "exitCode": 0,
+        "allRecordedIdentitiesGone": true,
+        "configUnchanged": true
+      }
+    },
+    {
+      "localDataId": "native-cellular-plot-margin-valid-20261004",
+      "windowId": 47909590,
+      "launch": {
+        "pid": 1714654,
+        "sourceCommit": "fefef8859b4f249053d3755f40232d85efebd5c7",
+        "configSha256": "6ca2b63719942d1a900cab8458a4417b0dc88c3a41750e37df5fff55647391e3"
+      },
+      "owned": [
+        {
+          "pid": 1714654,
+          "ppid": 1714653,
+          "startTicks": "6882631",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1714657,
+          "ppid": 1714654,
+          "startTicks": "6882632",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1714658,
+          "ppid": 1714654,
+          "startTicks": "6882632",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1714680,
+          "ppid": 1714657,
+          "startTicks": "6882639",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1714682,
+          "ppid": 1714654,
+          "startTicks": "6882640",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1714695,
+          "ppid": 1714654,
+          "startTicks": "6882642",
+          "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+          "comm": "MainThread"
+        },
+        {
+          "pid": 1715061,
+          "ppid": 1714658,
+          "startTicks": "6883119",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1716035,
+          "ppid": 1714695,
+          "startTicks": "6884832",
+          "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+          "comm": "ARCH"
+        }
+      ],
+      "cleanup": {
+        "exitCode": 0,
+        "allRecordedIdentitiesGone": true,
+        "configUnchanged": true
+      }
+    }
+  ],
+  "rejectedOldInput": {
+    "missingKey": "tmax",
+    "issueCount": 1,
+    "previewNotGenerated": true,
+    "gateNotBypassed": true
+  },
+  "acceptedInput": {
+    "existingApprovedT0": true,
+    "sha256": "6ca2b63719942d1a900cab8458a4417b0dc88c3a41750e37df5fff55647391e3",
+    "byteForByteCopy": true,
+    "useBurn": false,
+    "tmax": 0
+  },
+  "grid": {
+    "shape": [
+      128,
+      128
+    ],
+    "order": "x1-fastest",
+    "domainCm": [
+      [
+        0,
+        25.6
+      ],
+      [
+        0,
+        12.8
+      ]
+    ],
+    "fixedX3Cm": 0,
+    "shockDir": 0
+  },
+  "density": {
+    "rangeUi": [
+      10000000.0,
+      44083400.0
+    ],
+    "colorbarTopMiddleBottom": [
+      "4.408e+7",
+      "2.704e+7",
+      "1.000e+7"
+    ]
+  },
+  "pressure": {
+    "rangeUi": [
+      8.67347e+23,
+      1.46636e+25
+    ],
+    "colorbarTopMiddleBottom": [
+      "1.466e+25",
+      "7.765e+24",
+      "8.673e+23"
+    ]
+  },
+  "sample": {
+    "i": 14,
+    "j": 63,
+    "rawIndex": 8078,
+    "coordinatesCm": [
+      2.9,
+      6.35,
+      0
+    ],
+    "uiFields": {
+      "DENS": 43177586,
+      "PRES": 1.4216047e+25,
+      "TEMP": 4667785000.0,
+      "VELX": 1011000000.0,
+      "ENER": 5.4149083e+25,
+      "EINT": 7.4304119e+17,
+      "VELY": 0
+    },
+    "sameAfterPressureFieldReselection": true,
+    "selectionResetOnFieldSwitch": true
+  },
+  "display": {
+    "axesColorbarReadable": true,
+    "noFinalClippingObserved": true,
+    "configRevisionUnchanged": "6ca2b6371994",
+    "state": "Current",
+    "nativeWheelPanNotVerified": true,
+    "nonSquareSamplingNotExercisedThisRun": true,
+    "noManualPreviewClick": "startup preparing/current observed"
+  },
+  "existingScientificOutput": {
+    "fileCount": 8,
+    "allHashesUnchanged": true,
+    "plotfileSha256": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b",
+    "filesAddedOrRemoved": false
+  },
+  "managedWorktreeClean": true,
+  "codeChanged": false,
+  "baselineRerun": false,
+  "pushTag": false
+}

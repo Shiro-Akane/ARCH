@@ -1,0 +1,815 @@
+{
+  "stage": "R1/stage1",
+  "source_baseline": "c5ce17a67bd8d82899ab7420fec627c3cf97cb9d",
+  "meaning": "Configure/FileAPI and CTest registration only; no application/test compilation, execution or scientific acceptance.",
+  "configuration_conditions": {
+    "common": [
+      "Release",
+      "GCC/G++12",
+      "Ninja",
+      "BUILD_TESTING=ON",
+      "OpenMP=ON",
+      "KLU=ON",
+      "offline existing HighFive/SuiteSparse source cache"
+    ],
+    "cuda": [
+      "CUDA12.3",
+      "native resolved locally to86-real",
+      "no application/test target compilation"
+    ],
+    "studio": [
+      "Linux Node24.21.0",
+      "ARCH_BUILD_STUDIO=ON",
+      "no npm/build/Electron installation"
+    ]
+  },
+  "profiles": {
+    "cpu": {
+      "configure_exit_code": 0,
+      "configure_wall_seconds": 9.479,
+      "wall_time_meaning": "configure only; not a build or runtime baseline",
+      "all_target_count": 96,
+      "registered_test_count": 76,
+      "tests_with_resolved_command": 20,
+      "label_counts": {
+        "tooling": 8
+      },
+      "test_base_profile": null,
+      "additional_registered_tests": [
+        "checkpoint_temporal_comparison",
+        "preview_initial_conversion",
+        "preview_api_contract",
+        "preview_full_model_contract",
+        "configuration_api_contract",
+        "configuration_entry_contract",
+        "configuration_v3_contract",
+        "preview_parameter_reads",
+        "preview_parameter_metadata",
+        "preview_sampling_limits",
+        "preview_mesh_geometry",
+        "portable_network_generator",
+        "cuda_amr_smoke_runner_contract",
+        "curvilinear_manifest_contract",
+        "memory_guard_contract",
+        "backend_validation_contract",
+        "sparse_validation_contract",
+        "validation_provenance_contract",
+        "runtime_validation_inputs_contract",
+        "rz_qualification_runner_contract",
+        "config_input_records",
+        "input_resolution",
+        "case_configuration",
+        "configuration_input",
+        "physical_constants",
+        "jeans_diagnostics",
+        "refinement_indicator_math",
+        "curvilinear_metrics",
+        "compensated_sum",
+        "sparse_ode_continuation",
+        "sparse_residual",
+        "checkpoint_conservation_metrics",
+        "burn_mainline_reference",
+        "generated_nse",
+        "tabular_strict_math",
+        "baryon_source_format",
+        "helm_components",
+        "mainline_authority",
+        "block_handle",
+        "state_residency",
+        "shared_stage_scheduler",
+        "gravity_stage_contract",
+        "boundary_plan",
+        "same_level_exchange_plan",
+        "amr_operation_plans",
+        "amr_flux_surface_plan",
+        "topology_transaction",
+        "resolved_execution_plan",
+        "runtime_probe_and_capabilities",
+        "reduction_contract",
+        "compute_backend",
+        "device_block_store_lifecycle",
+        "initialization_probe",
+        "case_inspection_contract",
+        "preview_session_contract",
+        "preview_verified_resources",
+        "preview_exact_sample_cache",
+        "low_density_math",
+        "ppm_limiter_math",
+        "conservative_flux_limiter",
+        "conservative_acceptance",
+        "rkl_repair_weights",
+        "poisson_multigrid_contract",
+        "poisson_multigrid_analytic",
+        "composite_poisson_analytic",
+        "self_gravity_lifecycle",
+        "composite_poisson_contract",
+        "self_gravity_physics",
+        "ui_expansion_contract",
+        "preview_cellular_2d",
+        "plotfile_publication",
+        "checkpoint_compatibility",
+        "tabular_eos_ideal_gas",
+        "native_tabular_eos",
+        "tabular_component_completion",
+        "sparse_klu_161_equations"
+      ],
+      "removed_registered_tests": [],
+      "production_arch_targets": [
+        "ARCH",
+        "arch_diffusion_math",
+        "arch_driver_runtime",
+        "arch_gravity_cpu",
+        "arch_solver_dispatch"
+      ],
+      "compiled_owned_units": 76,
+      "generated_compiled_sources": [
+        "/tmp/arch-stage1-20261012-cpu/CMakeFiles/arch_driver_runtime.dir/cmake_pch.hxx.cxx",
+        "/tmp/arch-stage1-20261012-cpu/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx"
+      ]
+    },
+    "cuda": {
+      "configure_exit_code": 0,
+      "configure_wall_seconds": 20.541,
+      "wall_time_meaning": "configure only; not a build or runtime baseline",
+      "all_target_count": 187,
+      "registered_test_count": 140,
+      "tests_with_resolved_command": 20,
+      "label_counts": {
+        "tooling": 8,
+        "batch-boundary": 7,
+        "cuda": 7,
+        "microphysics": 7
+      },
+      "test_base_profile": "cpu",
+      "additional_registered_tests": [
+        "cuda_conservative_acceptance",
+        "cuda_ppm_limiter_math",
+        "cuda_flux_limiter",
+        "cuda_regrid_transaction",
+        "cuda_grid_metrics_cache",
+        "cuda_burn_eos_failure",
+        "cuda_regrid_migration",
+        "cuda_curvilinear_geometry_smoke",
+        "cuda_hydro_eos_failure",
+        "cuda_hydro_dispatch",
+        "cuda_refinement_indicators",
+        "cuda_compensated_sum",
+        "cuda_amr_composition",
+        "generated_nse_device",
+        "native_tabular_device",
+        "tabular_completion_device",
+        "burn_controller_parity",
+        "cuda_network_derivative",
+        "cuda_burn_thermal_math",
+        "cuda_compile_probe",
+        "hydro_leaf_parity",
+        "eos_host_device_parity",
+        "tabular_free_energy_owner",
+        "network_nse_device",
+        "burn_policy_parity_helpers",
+        "diffusion_rkl_parity",
+        "boundary_plan_parity",
+        "cuda_policy_resolution",
+        "cuda_reduction_contract",
+        "cuda_single_level_smoke",
+        "cuda_multiblock_hydro",
+        "cuda_multiblock_diffusion",
+        "cuda_multiblock_burn",
+        "cuda_multiblock_burn_b3",
+        "cuda_multiblock_diffusion_b3",
+        "cuda_multiblock_burn_b1024",
+        "cuda_multiblock_diffusion_b1024",
+        "cuda_multiblock_burn_b1025",
+        "cuda_multiblock_diffusion_b1025",
+        "cuda_multiblock_diffusion_global_species",
+        "cuda_store_lifecycle",
+        "cuda_amr_exchange",
+        "cuda_hydro_route_matrix",
+        "cuda_hydro_integrator_matrix",
+        "cuda_backend_eos_owner_matrix",
+        "cuda_backend_diffusion_rkl1",
+        "cuda_backend_diffusion_rkl2",
+        "cuda_backend_burn_aprox13_be_nr",
+        "cuda_backend_burn_aprox13_bd",
+        "cuda_backend_burn_aprox13_ros4",
+        "cuda_backend_burn_aprox19_be_nr",
+        "cuda_backend_burn_aprox19_bd",
+        "cuda_backend_burn_aprox19_ros4",
+        "cuda_backend_burn_aprox21_be_nr",
+        "cuda_backend_burn_aprox21_bd",
+        "cuda_backend_burn_aprox21_ros4",
+        "cuda_backend_burn_iso7_be_nr",
+        "cuda_backend_burn_iso7_bd",
+        "cuda_backend_burn_iso7_ros4",
+        "burn_policy_parity_matrix_aprox13",
+        "burn_policy_parity_matrix_aprox19",
+        "burn_policy_parity_matrix_aprox21",
+        "burn_policy_parity_matrix_iso7",
+        "burn_policy_parity_status_matrix"
+      ],
+      "removed_registered_tests": [],
+      "production_arch_targets": [
+        "ARCH",
+        "arch_cuda_backend",
+        "arch_cuda_backend_amr_flux",
+        "arch_cuda_backend_amr_indicators",
+        "arch_cuda_backend_amr_migration",
+        "arch_cuda_backend_burn_helm",
+        "arch_cuda_backend_burn_helm_aprox13",
+        "arch_cuda_backend_burn_helm_aprox19",
+        "arch_cuda_backend_burn_helm_aprox21",
+        "arch_cuda_backend_burn_helm_iso7",
+        "arch_cuda_backend_burn_ideal",
+        "arch_cuda_backend_burn_ideal_aprox13",
+        "arch_cuda_backend_burn_ideal_aprox19",
+        "arch_cuda_backend_burn_ideal_aprox21",
+        "arch_cuda_backend_burn_ideal_iso7",
+        "arch_cuda_backend_burn_tabular3d",
+        "arch_cuda_backend_burn_tabular3d_aprox13",
+        "arch_cuda_backend_burn_tabular3d_aprox19",
+        "arch_cuda_backend_burn_tabular3d_aprox21",
+        "arch_cuda_backend_burn_tabular3d_iso7",
+        "arch_cuda_backend_burn_tabular4d",
+        "arch_cuda_backend_burn_tabular4d_aprox13",
+        "arch_cuda_backend_burn_tabular4d_aprox19",
+        "arch_cuda_backend_burn_tabular4d_aprox21",
+        "arch_cuda_backend_burn_tabular4d_iso7",
+        "arch_cuda_backend_complete",
+        "arch_cuda_backend_coordinate_seam",
+        "arch_cuda_backend_core",
+        "arch_cuda_backend_diffusion",
+        "arch_cuda_backend_eos_helm",
+        "arch_cuda_backend_eos_species",
+        "arch_cuda_backend_eos_tabular3",
+        "arch_cuda_backend_eos_tabular4",
+        "arch_cuda_backend_eos_utils",
+        "arch_cuda_backend_exchange",
+        "arch_cuda_backend_factory",
+        "arch_cuda_backend_grid_metrics",
+        "arch_cuda_backend_hydro_control",
+        "arch_cuda_backend_hydro_helm",
+        "arch_cuda_backend_hydro_helm_hll",
+        "arch_cuda_backend_hydro_ideal",
+        "arch_cuda_backend_hydro_ideal_hll",
+        "arch_cuda_backend_hydro_tabular3",
+        "arch_cuda_backend_hydro_tabular3_hll",
+        "arch_cuda_backend_hydro_tabular4",
+        "arch_cuda_backend_hydro_tabular4_hll",
+        "arch_cuda_backend_indicators",
+        "arch_cuda_backend_microphysics_control",
+        "arch_cuda_backend_migration",
+        "arch_cuda_backend_resources",
+        "arch_cuda_backend_sparse_factory",
+        "arch_cuda_backend_store",
+        "arch_cuda_gravity_control",
+        "arch_cuda_gravity_execution",
+        "arch_diffusion_math",
+        "arch_driver_runtime",
+        "arch_driver_runtime_complete",
+        "arch_gravity_cpu",
+        "arch_solver_dispatch",
+        "arch_solver_dispatch_complete"
+      ],
+      "compiled_owned_units": 117,
+      "generated_compiled_sources": [
+        "/tmp/arch-stage1-20261012-cuda/CMakeFiles/arch_driver_runtime.dir/cmake_pch.hxx.cxx",
+        "/tmp/arch-stage1-20261012-cuda/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/helm_aprox13.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/helm_aprox19.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/helm_aprox21.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/helm_iso7.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/ideal_aprox13.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/ideal_aprox19.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/ideal_aprox21.cu",
+        "/tmp/arch-stage1-20261012-cuda/generated/cuda_dense_burn/ideal_iso7.cu"
+      ]
+    },
+    "cuda-cudss": {
+      "configure_exit_code": 0,
+      "configure_wall_seconds": 18.666,
+      "wall_time_meaning": "configure only; not a build or runtime baseline",
+      "all_target_count": 207,
+      "registered_test_count": 143,
+      "tests_with_resolved_command": 20,
+      "label_counts": {
+        "tooling": 8,
+        "batch-boundary": 7,
+        "cuda": 7,
+        "microphysics": 7
+      },
+      "test_base_profile": "cuda",
+      "additional_registered_tests": [
+        "cuda_sparse_burn_factory",
+        "cuda_sparse_be_nr_batch",
+        "cuda_cudss_sparse_solver"
+      ],
+      "removed_registered_tests": [],
+      "production_arch_targets": [
+        "ARCH",
+        "arch_cuda_backend",
+        "arch_cuda_backend_amr_flux",
+        "arch_cuda_backend_amr_indicators",
+        "arch_cuda_backend_amr_migration",
+        "arch_cuda_backend_burn_helm",
+        "arch_cuda_backend_burn_helm_aprox13",
+        "arch_cuda_backend_burn_helm_aprox19",
+        "arch_cuda_backend_burn_helm_aprox21",
+        "arch_cuda_backend_burn_helm_iso7",
+        "arch_cuda_backend_burn_ideal",
+        "arch_cuda_backend_burn_ideal_aprox13",
+        "arch_cuda_backend_burn_ideal_aprox19",
+        "arch_cuda_backend_burn_ideal_aprox21",
+        "arch_cuda_backend_burn_ideal_iso7",
+        "arch_cuda_backend_burn_tabular3d",
+        "arch_cuda_backend_burn_tabular3d_aprox13",
+        "arch_cuda_backend_burn_tabular3d_aprox19",
+        "arch_cuda_backend_burn_tabular3d_aprox21",
+        "arch_cuda_backend_burn_tabular3d_iso7",
+        "arch_cuda_backend_burn_tabular4d",
+        "arch_cuda_backend_burn_tabular4d_aprox13",
+        "arch_cuda_backend_burn_tabular4d_aprox19",
+        "arch_cuda_backend_burn_tabular4d_aprox21",
+        "arch_cuda_backend_burn_tabular4d_iso7",
+        "arch_cuda_backend_complete",
+        "arch_cuda_backend_coordinate_seam",
+        "arch_cuda_backend_core",
+        "arch_cuda_backend_diffusion",
+        "arch_cuda_backend_eos_helm",
+        "arch_cuda_backend_eos_species",
+        "arch_cuda_backend_eos_tabular3",
+        "arch_cuda_backend_eos_tabular4",
+        "arch_cuda_backend_eos_utils",
+        "arch_cuda_backend_exchange",
+        "arch_cuda_backend_factory",
+        "arch_cuda_backend_grid_metrics",
+        "arch_cuda_backend_hydro_control",
+        "arch_cuda_backend_hydro_helm",
+        "arch_cuda_backend_hydro_helm_hll",
+        "arch_cuda_backend_hydro_ideal",
+        "arch_cuda_backend_hydro_ideal_hll",
+        "arch_cuda_backend_hydro_tabular3",
+        "arch_cuda_backend_hydro_tabular3_hll",
+        "arch_cuda_backend_hydro_tabular4",
+        "arch_cuda_backend_hydro_tabular4_hll",
+        "arch_cuda_backend_indicators",
+        "arch_cuda_backend_microphysics_control",
+        "arch_cuda_backend_migration",
+        "arch_cuda_backend_resources",
+        "arch_cuda_backend_sparse_aprox13_helmeosview",
+        "arch_cuda_backend_sparse_aprox13_idealgasview",
+        "arch_cuda_backend_sparse_aprox13_tabular3deosview",
+        "arch_cuda_backend_sparse_aprox13_tabular4deosview",
+        "arch_cuda_backend_sparse_aprox19_helmeosview",
+        "arch_cuda_backend_sparse_aprox19_idealgasview",
+        "arch_cuda_backend_sparse_aprox19_tabular3deosview",
+        "arch_cuda_backend_sparse_aprox19_tabular4deosview",
+        "arch_cuda_backend_sparse_aprox21_helmeosview",
+        "arch_cuda_backend_sparse_aprox21_idealgasview",
+        "arch_cuda_backend_sparse_aprox21_tabular3deosview",
+        "arch_cuda_backend_sparse_aprox21_tabular4deosview",
+        "arch_cuda_backend_sparse_factory",
+        "arch_cuda_backend_sparse_iso7_helmeosview",
+        "arch_cuda_backend_sparse_iso7_idealgasview",
+        "arch_cuda_backend_sparse_iso7_tabular3deosview",
+        "arch_cuda_backend_sparse_iso7_tabular4deosview",
+        "arch_cuda_backend_store",
+        "arch_cuda_gravity_control",
+        "arch_cuda_gravity_execution",
+        "arch_cuda_sparse_provider",
+        "arch_diffusion_math",
+        "arch_driver_runtime",
+        "arch_driver_runtime_complete",
+        "arch_gravity_cpu",
+        "arch_solver_dispatch",
+        "arch_solver_dispatch_complete"
+      ],
+      "compiled_owned_units": 119,
+      "generated_compiled_sources": [
+        "/tmp/arch-stage1-20261012-cuda-cudss/CMakeFiles/arch_driver_runtime.dir/cmake_pch.hxx.cxx",
+        "/tmp/arch-stage1-20261012-cuda-cudss/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/helm_aprox13.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/helm_aprox19.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/helm_aprox21.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/helm_iso7.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/ideal_aprox13.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/ideal_aprox19.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/ideal_aprox21.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_dense_burn/ideal_iso7.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox13_helmeosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox13_idealgasview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox13_tabular3deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox13_tabular4deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox19_helmeosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox19_idealgasview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox19_tabular3deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox19_tabular4deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox21_helmeosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox21_idealgasview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox21_tabular3deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/aprox21_tabular4deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/iso7_helmeosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/iso7_idealgasview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/iso7_tabular3deosview.cu",
+        "/tmp/arch-stage1-20261012-cuda-cudss/generated/cuda_sparse_burn/iso7_tabular4deosview.cu"
+      ]
+    },
+    "studio": {
+      "configure_exit_code": 0,
+      "configure_wall_seconds": 7.631,
+      "wall_time_meaning": "configure only; not a build or runtime baseline",
+      "all_target_count": 100,
+      "registered_test_count": 76,
+      "tests_with_resolved_command": 20,
+      "label_counts": {
+        "tooling": 8
+      },
+      "test_base_profile": "cpu",
+      "additional_registered_tests": [],
+      "removed_registered_tests": [],
+      "production_arch_targets": [
+        "ARCH",
+        "arch-studio",
+        "arch-studio-assets",
+        "arch-studio-package",
+        "arch-studio-runtime",
+        "arch_diffusion_math",
+        "arch_driver_runtime",
+        "arch_gravity_cpu",
+        "arch_solver_dispatch"
+      ],
+      "compiled_owned_units": 76,
+      "generated_compiled_sources": [
+        "/tmp/arch-stage1-20261012-studio/CMakeFiles/arch_driver_runtime.dir/cmake_pch.hxx.cxx",
+        "/tmp/arch-stage1-20261012-studio/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx"
+      ]
+    }
+  },
+  "source_ownership": {
+    "tracked_translation_units": 119,
+    "configured_owned_units": 119,
+    "unowned_units": [],
+    "owners": {
+      "simulation/BurnGradient/BurnGradient.cpp": [
+        "ARCH"
+      ],
+      "simulation/BurnOneZone/BurnOneZone.cpp": [
+        "ARCH"
+      ],
+      "simulation/Cellular/Cellular.cpp": [
+        "ARCH"
+      ],
+      "simulation/CooperativeHotspots/CooperativeHotspots.cpp": [
+        "ARCH"
+      ],
+      "simulation/DiffusionMode/DiffusionMode.cpp": [
+        "ARCH"
+      ],
+      "simulation/ExternalGravity/ExternalGravity.cpp": [
+        "ARCH"
+      ],
+      "simulation/GaussianPulse/Gaussian.cpp": [
+        "ARCH"
+      ],
+      "simulation/GravityBox/GravityBox.cpp": [
+        "ARCH"
+      ],
+      "simulation/JeansWave/JeansWave.cpp": [
+        "ARCH"
+      ],
+      "simulation/RTinstability/RT_instab.cpp": [
+        "ARCH"
+      ],
+      "simulation/SNIaCoupled/SNIaCoupled.cpp": [
+        "ARCH"
+      ],
+      "simulation/Sedov/Sedov.cpp": [
+        "ARCH"
+      ],
+      "simulation/SmoothAdvection/SmoothAdvection.cpp": [
+        "ARCH"
+      ],
+      "simulation/Sod/Sod.cpp": [
+        "ARCH"
+      ],
+      "simulation/UserBoundary/case.cpp": [
+        "ARCH"
+      ],
+      "simulation/UserBoundary/gravity_boundary.cpp": [
+        "ARCH"
+      ],
+      "simulation/UserBoundary/physical_boundary.cpp": [
+        "ARCH"
+      ],
+      "simulation/UserGravity/case.cpp": [
+        "ARCH"
+      ],
+      "simulation/UserGravity/gravity_boundary.cpp": [
+        "ARCH"
+      ],
+      "simulation/UserGravity/physical_boundary.cpp": [
+        "ARCH"
+      ],
+      "src/amr/elliptic/EllipticMeshAdapter.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/api/configuration/Configuration.cpp": [
+        "ARCH"
+      ],
+      "src/api/configuration/ParameterMetadata.cpp": [
+        "ARCH"
+      ],
+      "src/api/configuration/PresentationMetadata.cpp": [
+        "ARCH"
+      ],
+      "src/api/inspection/CaseInspection.cpp": [
+        "ARCH"
+      ],
+      "src/api/inspection/CaseUnitEvidence.cpp": [
+        "ARCH"
+      ],
+      "src/api/inspection/Discovery.cpp": [
+        "ARCH"
+      ],
+      "src/api/preview/Preview.cpp": [
+        "ARCH"
+      ],
+      "src/api/preview/PreviewCommand.cpp": [
+        "ARCH"
+      ],
+      "src/api/preview/ResourceEstimates.cpp": [
+        "ARCH"
+      ],
+      "src/api/preview/StateSnapshot.cpp": [
+        "ARCH"
+      ],
+      "src/api/resources/WorkerLimits.cpp": [
+        "ARCH"
+      ],
+      "src/api/session/PreviewSession.cpp": [
+        "ARCH"
+      ],
+      "src/core/config/CompositionInput.cpp": [
+        "ARCH"
+      ],
+      "src/core/config/ConfigurationIdentity.cpp": [
+        "ARCH"
+      ],
+      "src/core/files/BuildIdentity.cpp": [
+        "ARCH"
+      ],
+      "src/core/files/FileFingerprint.cpp": [
+        "ARCH"
+      ],
+      "src/core/problem/ProblemHelper.cpp": [
+        "ARCH"
+      ],
+      "src/cuda/amr/RefinementIndicators.cu": [
+        "arch_cuda_backend_amr_indicators"
+      ],
+      "src/cuda/amr/RegridMigration.cu": [
+        "arch_cuda_backend_amr_migration"
+      ],
+      "src/cuda/common/GridMetricsCache.cu": [
+        "arch_cuda_backend_grid_metrics"
+      ],
+      "src/cuda/microphysics/eos/device_eos_owner_utils.cpp": [
+        "arch_cuda_backend_eos_utils"
+      ],
+      "src/cuda/microphysics/eos/owners/helm_eos_device_owner.cpp": [
+        "arch_cuda_backend_eos_helm"
+      ],
+      "src/cuda/microphysics/eos/owners/tabular3_eos_device_owner.cpp": [
+        "arch_cuda_backend_eos_tabular3"
+      ],
+      "src/cuda/microphysics/eos/owners/tabular4_eos_device_owner.cpp": [
+        "arch_cuda_backend_eos_tabular4"
+      ],
+      "src/cuda/microphysics/linalg/CuDssSparseSolver.cpp": [
+        "arch_cuda_sparse_provider"
+      ],
+      "src/cuda/microphysics/linalg/SparseEquilibration.cu": [
+        "arch_cuda_sparse_provider"
+      ],
+      "src/cuda/microphysics/network/device_species_owner.cpp": [
+        "arch_cuda_backend_eos_species"
+      ],
+      "src/cuda/runtime/CudaBackendFactory.cpp": [
+        "arch_cuda_backend_factory"
+      ],
+      "src/cuda/runtime/amr/CudaBackendAmrFlux.cu": [
+        "arch_cuda_backend_amr_flux"
+      ],
+      "src/cuda/runtime/amr/CudaBackendCoordinateSeam.cpp": [
+        "arch_cuda_backend_coordinate_seam"
+      ],
+      "src/cuda/runtime/amr/CudaBackendExchange.cu": [
+        "arch_cuda_backend_exchange"
+      ],
+      "src/cuda/runtime/amr/CudaBackendIndicators.cpp": [
+        "arch_cuda_backend_indicators"
+      ],
+      "src/cuda/runtime/amr/CudaBackendMigration.cpp": [
+        "arch_cuda_backend_migration"
+      ],
+      "src/cuda/runtime/boundary/CudaBackendBoundary.cu": [
+        "arch_cuda_backend_exchange"
+      ],
+      "src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu": [
+        "arch_cuda_backend_burn_helm"
+      ],
+      "src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu": [
+        "arch_cuda_backend_burn_ideal"
+      ],
+      "src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3D.cu": [
+        "arch_cuda_backend_burn_tabular3d"
+      ],
+      "src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DAprox13.cu": [
+        "arch_cuda_backend_burn_tabular3d_aprox13"
+      ],
+      "src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DAprox19.cu": [
+        "arch_cuda_backend_burn_tabular3d_aprox19"
+      ],
+      "src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DAprox21.cu": [
+        "arch_cuda_backend_burn_tabular3d_aprox21"
+      ],
+      "src/cuda/runtime/burn/routes/tabular3/CudaBackendBurnTabular3DIso7.cu": [
+        "arch_cuda_backend_burn_tabular3d_iso7"
+      ],
+      "src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4D.cu": [
+        "arch_cuda_backend_burn_tabular4d"
+      ],
+      "src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox13.cu": [
+        "arch_cuda_backend_burn_tabular4d_aprox13"
+      ],
+      "src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox19.cu": [
+        "arch_cuda_backend_burn_tabular4d_aprox19"
+      ],
+      "src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox21.cu": [
+        "arch_cuda_backend_burn_tabular4d_aprox21"
+      ],
+      "src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DIso7.cu": [
+        "arch_cuda_backend_burn_tabular4d_iso7"
+      ],
+      "src/cuda/runtime/burn/sparse/CudaBackendBurnSparseFactory.cpp": [
+        "arch_cuda_backend_sparse_factory"
+      ],
+      "src/cuda/runtime/control/CudaBackendCore.cpp": [
+        "arch_cuda_backend_core"
+      ],
+      "src/cuda/runtime/control/CudaBackendMacroStep.cpp": [
+        "arch_cuda_backend_store"
+      ],
+      "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp": [
+        "arch_cuda_backend_microphysics_control"
+      ],
+      "src/cuda/runtime/control/CudaBackendResources.cpp": [
+        "arch_cuda_backend_resources"
+      ],
+      "src/cuda/runtime/control/CudaBackendStore.cpp": [
+        "arch_cuda_backend_store"
+      ],
+      "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu": [
+        "arch_cuda_backend_diffusion"
+      ],
+      "src/cuda/runtime/gravity/CudaBackendGravity.cpp": [
+        "arch_cuda_gravity_control"
+      ],
+      "src/cuda/runtime/gravity/CudaGravityExecution.cu": [
+        "arch_cuda_gravity_execution"
+      ],
+      "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp": [
+        "arch_cuda_backend_hydro_control"
+      ],
+      "src/cuda/runtime/hydro/CudaBackendHydroHelm.cu": [
+        "arch_cuda_backend_hydro_helm",
+        "arch_cuda_backend_hydro_helm_hll"
+      ],
+      "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu": [
+        "arch_cuda_backend_hydro_ideal",
+        "arch_cuda_backend_hydro_ideal_hll"
+      ],
+      "src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu": [
+        "arch_cuda_backend_hydro_tabular3",
+        "arch_cuda_backend_hydro_tabular3_hll"
+      ],
+      "src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu": [
+        "arch_cuda_backend_hydro_tabular4",
+        "arch_cuda_backend_hydro_tabular4_hll"
+      ],
+      "src/driver/SolverDispatch.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/driver/dispatch/bindings/Dispatch_Euler.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/driver/dispatch/bindings/Dispatch_RK2.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/driver/dispatch/bindings/Dispatch_RK3.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/driver/dispatch/capability/RuntimeProbe.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/driver/io/DriverIO.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/driver/runtime/DriverBoundary.cpp": [
+        "arch_driver_runtime"
+      ],
+      "src/driver/runtime/DriverBoundaryDiagnostics.cpp": [
+        "arch_driver_runtime"
+      ],
+      "src/driver/runtime/DriverRegrid.cpp": [
+        "arch_driver_runtime"
+      ],
+      "src/driver/runtime/DriverRuntime.cpp": [
+        "arch_driver_runtime"
+      ],
+      "src/driver/stages/GravityStage.cpp": [
+        "arch_solver_dispatch"
+      ],
+      "src/io/chk/CheckpointCompatibility.cpp": [
+        "ARCH"
+      ],
+      "src/io/chk/ChkIO.cpp": [
+        "ARCH"
+      ],
+      "src/io/hdf5/HDF5Writer.cpp": [
+        "ARCH"
+      ],
+      "src/io/plot/PlotIO.cpp": [
+        "ARCH"
+      ],
+      "src/main.cpp": [
+        "ARCH"
+      ],
+      "src/numerics/diffusion/DiffFunction.cpp": [
+        "arch_diffusion_math"
+      ],
+      "src/numerics/elliptic/CartesianPoisson.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/numerics/elliptic/CompositePoisson.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/numerics/multigrid/CompositeExecution.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/numerics/multigrid/CompositeMultigrid.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/numerics/multigrid/HostMultigrid.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/physics/boundary/PhysicalBoundaryHandler.cpp": [
+        "arch_driver_runtime"
+      ],
+      "src/physics/eos/eosdispatch.cpp": [
+        "ARCH"
+      ],
+      "src/physics/eos/sources/Tabular3DEOS.cpp": [
+        "ARCH"
+      ],
+      "src/physics/eos/sources/Tabular4DEOS.cpp": [
+        "ARCH"
+      ],
+      "src/physics/eos/sources/TabularBaryonSource.cpp": [
+        "ARCH"
+      ],
+      "src/physics/eos/sources/TabularCompletion.cpp": [
+        "ARCH"
+      ],
+      "src/physics/gravity/GravityBoundary.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/physics/gravity/GravityExecution.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/physics/gravity/UniformGravity.cpp": [
+        "ARCH"
+      ],
+      "src/physics/gravity/self/GravityUserBoundary.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/physics/gravity/self/GravityWorkspace.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/physics/gravity/self/SelfGravity.cpp": [
+        "arch_gravity_cpu"
+      ],
+      "src/physics/network/aprox13/NetAprox13.cpp": [
+        "ARCH"
+      ],
+      "src/physics/network/aprox19/NetAprox19.cpp": [
+        "ARCH"
+      ],
+      "src/physics/network/aprox21/NetAprox21.cpp": [
+        "ARCH"
+      ],
+      "src/physics/network/iso7/NetIso7.cpp": [
+        "ARCH"
+      ]
+    }
+  }
+}

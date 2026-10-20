@@ -14,4 +14,11 @@ and coarse/fine flux correction must agree with that topology.
 | Exchange plans | [ExchangePlan.h](exchange/ExchangePlan.h), [AmrTransferPlans.h](transfer/AmrTransferPlans.h), [CoarseFineCellPlan.h](exchange/CoarseFineCellPlan.h), [BoundaryPlan.h](exchange/BoundaryPlan.h), [CoordinateSeamPlan.h](exchange/CoordinateSeamPlan.h), [CoordinateSeamMath.h](exchange/CoordinateSeamMath.h) |
 | Flux correction | [AmrFluxMath.h](flux/AmrFluxMath.h), [FluxRegister.h](flux/FluxRegister.h), [AmrFluxPlan.h](flux/AmrFluxPlan.h), [AmrFluxExecutionPlan.h](flux/AmrFluxExecutionPlan.h), [AMRFluxRegistering.h](flux/AMRFluxRegistering.h) |
 
+Flux registration owns topology, orientation, area and stage weights. An
+optional caller-owned Energy receipt may interpret the same immutable face
+flux and is committed only after registration succeeds. The register has no
+gravity model, potential formula or concrete gravity-frame dependency. Missing
+routes and zero stage weights consume no receipt; a present empty route keeps
+the original apply/commit behavior.
+
 Topology definition and Morton ordering remain strictly on the CPU. Meanwhile, CUDA [AMR kernels](../cuda/amr/README.md) rely on shared numerical helpers, and the [runtime AMR](../cuda/runtime/amr/README.md) handles the binding of plans, buffers, and completion logic. It is important to remember that ghost-cell admissibility and complete-family regrid conservation operate under distinct contracts; helpers with similar names are not automatically interchangeable. For complete details, consult the [AMR validation](../../validation/amr/README.md).

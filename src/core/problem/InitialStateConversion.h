@@ -10,13 +10,17 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
 #include "data/FluidState.h"
 #include "data/GlobalDefs.h"
 #include "data/UserTypes.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/state/StateAdmissibility.h"
+#include "physics/eos/eos_Utils.h"
 
 namespace ProblemHelper::detail {
 
@@ -46,8 +50,8 @@ FluidVector InitialConservedState(const PrimitiveData &data, const Eos &eos,
         if (!std::isfinite(specific_internal_energy)) {
             throw std::runtime_error("EOS returned non-finite internal energy for temperature-based initialization.");
         }
-        const double kinetic_energy = 0.5 * data.rho *
-            (data.u * data.u + data.v * data.v + data.w * data.w);
+        const double kinetic_energy = eos_utils::calc_kinetic_energy(
+            data.rho,data.u,data.v,data.w);
         state.eng = data.rho * specific_internal_energy + kinetic_energy;
     } else {
         state.eng = eos.get_total_energy_primitive(

@@ -1,0 +1,39 @@
+{
+  "status": "PASS_ORIGINAL_ACCOUNTING_AND_GREEN_ONLY",
+  "mode": "private-native-self-homology",
+  "actual_fields": 2,
+  "cells": 512,
+  "steps": 1,
+  "actual_hydro_owning_before_and_current_owning_after": true,
+  "source_field_schema": "arch-materialized-native-source-2",
+  "source_binary_fence_unchanged": true,
+  "source_commit": "9bd329f143ce02e6e23daf07eaa9caab1e61a48c",
+  "working_tree_sha256": "6ed20d0d220822232b6754f476ed8594a63724ed8d6284793e9621cf6203d574",
+  "executable_sha256": "b966faaf1d2fe9dfa90ff0f6fbfc666fc906687d777ee921ba72e6428bb0133e",
+  "wall_seconds": 91.92509394898661,
+  "guard_seconds": 94.435,
+  "logical_campaign_seconds_including_retained_original_failure": 191.918,
+  "logical_campaign_cap_seconds": 420,
+  "physical_continuous_total_energy": "UNVERIFIED",
+  "public_device_qualification": false,
+  "raw_source_reference_consumers_pending": true,
+  "records": {
+    "before-materialized-native-source.json": {
+      "bytes": 1340136,
+      "sha256": "5e992332c510c2f54955497141bacff444ccf16fbc51517c5e5629644f0bfbd1"
+    },
+    "green-pair-diagnostic.json": {
+      "bytes": 7696,
+      "sha256": "fecb91ca3c276501a4303a2a3e16306b29b1a743b3c397f41efcf401d2a3e8e7"
+    },
+    "post-materialized-native-source.json": {
+      "bytes": 1348792,
+      "sha256": "053c018170617c6d9da2ded3ccdf67f6eaebb0fed77ded8409b88638508ed5c8"
+    },
+    "energy-diagnostic.json": {
+      "bytes": 3170,
+      "sha256": "cc9f0fe00ad2d723fd9e726af8fd26abe52a25ba3848ef29833105adbaefc39c"
+    }
+  },
+  "note": "Original rejected owner attempt retained; new before/post export authentic sealed actual source/field, not synthetic or relabeled current"
+}

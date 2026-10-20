@@ -12,8 +12,14 @@
 
 ## 已标识源码的 CPU/CUDA 结果
 
+下列验证保留其原始源码与输入身份。使用极坐标图的圆柱二维记录属于历史结果；
+原生二维柱坐标使用 `cylindrical-rz-pwc` chart，CPU／CUDA定点证据见[设备签收](backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧RZ与极平面别名只保留原身份，不转签新chart。[综合准入收据](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)补齐轴向科学终点、声明的方法／EOS、必要耦合与fresh，保留失败输入和表域边界；[当前CPU签收](backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)补齐两个轴向初始化器、显式中心输入及受影响原CPU终点／fresh。
+
+[当前设备记录](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)已按声明的单GPU范围签收。原17项资源／批次契约、九种合法几何壁面、公共终点、重网格、输入／拒绝及Studio真实产物按原owner／执行物身份保留。当前NSE及Host AMR RKL修复通过9项数学CTest、原私有Cellular24步／25CHK的原ENUC门（`5e-9`＋`5e-12`，现逐位一致）、两后端自身fresh及三对旋转AMR的原`1e-12`标准。[燃烧指南](burn/README.zh-CN.md)说明未变的源项含义；[主计划](../ARCH_RELEASE_PLAN.md)统一给出成本、原CPU限定及后续平台／分发资格。旧缺`center_z`均匀输入保持历史范围。
+
 | 区域 | 已记录的 CPU/CUDA 检查 | 记录 |
 | --- | --- | --- |
+| 原生二维柱坐标综合准入 | 15个原终点轴向案例、306个合法方法／EOS组合对、源项准入、必要耦合与当前多物理fresh；表域范围和原门槛不变 | [综合收据](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |
 | 光滑流体 | PCM/MUSCL/PPM 在 64/128/256 单元上的空间收敛；独立 Euler/RK2/RK3 时间精度；1,016 步周期平流 | [hydro](hydro/README.zh-CN.md) |
 | Riemann 与强激波 | Sod 和平面 Sedov 解析剖面、三档分辨率收敛与激波位置 | [hydro](hydro/README.zh-CN.md#sod-激波管) |
 | 组分扩散 | 三档分辨率的 RKL1/RKL2 应用；RKL2 二阶空间收敛 | [diffusion](diffusion/README.zh-CN.md) |
@@ -33,22 +39,33 @@
 | 声明规模的内存容量 | 重网格迁移、16,384 行 cuDSS 矩阵、生成网络燃烧及 AMR 应用；观测到的动态分配全部释放 | [详细容量记录](#详细复核记录) |
 | 专项后端设备检查 | memcheck 与 racecheck 各通过 23 条完整路径，包含弱反应热力学与真实生成网络 cuDSS 燃烧；内存及竞争报告均无报错 | [详细设备检查](#详细复核记录) |
 
-均匀网格应用矩阵
+已记录的历史均匀网格应用矩阵
 包含 22 个案例、180 次 CPU/CUDA 执行及 90 次比较。
 生成网络矩阵
 另包含六个案例、48 次执行及 24 次比较，并在 audit31 的 32 方程系统中实际调用
 CPU KLU 与 GPU cuDSS。各模块摘要链接独立科学检查，并保留原定预算。
 
-完整 Release 回归
-通过 98 项测试，纯 CPU 回归
-通过 31 项。完整 Debug 回归
-也已通过全部 98 项，没有跳过项。专项 memcheck 与 racecheck 各通过全部 23 条路径。
+下方链接的历史 Release 与 Debug 回归各通过 98 项测试且没有跳过项，
+其纯 CPU 回归通过 31 项。这些总数描述记录中具有明确身份的程序。
+对应的专项 memcheck 与 racecheck 各通过全部 23 条路径。
 其中稀疏测试均覆盖三种 ODE、两种存储规模与四段推进，保留原有数值预算。
 普通科学运行和 memcheck 使用完整 `1e-10 s` 区间；racecheck 单独使用 `1e-12 s`
 观察区间，短插桩运行不替代完整科学轨迹。主机／设备容量与保留优化的核心构建测量
 可在下方详细记录中查看。
 
+## 当前验证选择
+
+当前CPU CTest清单包含75个入口：68个数值／API检查与七个工具包装；CUDA缓存142个入口，其中52个名称含cuda。
+注册入口本身不是执行结果。托管 CI 只执行一次数值／API 清单，工具检查由独立任务
+执行；[CI 说明](../.github/workflows/README.md)给出一致的发现与完成判定规则。
+
+当前验证范围见[发布计划](../ARCH_RELEASE_PLAN.md)。RZ 的原 PASS／FAIL／GAP 与成本记录保留，不作为当前支持或待运行项目。其余坐标和共享模块沿用原数值标准。
+
 ## 误差约定
+
+ARCH 的必需验证使用解析／制造解、独立参考、守恒、收敛和后端对照。
+FLASH 等外部模拟软件只用于可选的开发比较，其安装、构建或运行结果不作为
+ARCH 用户测试、CI 或发布验收的前置条件。
 
 Verification 将实现与解析解、制造解或独立收敛参考比较。与实验或已发表物理数据的 validation 会单独标记。
 
@@ -66,11 +83,13 @@ $$
 
 ### 目录与保留文件
 
-每个模块只拥有一个子目录，其中包含整理后的 README、机器可读指标、`inputs/` 下的不可变基线参数和可选的 `figures/`。原始日志、机型信息和历史记录归入模块的 `results/`，与用户摘要分开。验证 `.par` 应与指标及验收结论同步修改。教学示例保留在 `simulation/`，运行数据保留在 `EOS_toolkit/`，不建立平行验证树。
+每个模块只拥有一个子目录，其中包含整理后的 README、机器可读指标、`inputs/` 下的不可变基线参数和可选的 `figures/`。受审指标、经整理的机型信息和历史判定归入模块的 `results/`，与用户摘要分开。验证 `.par` 应与指标及验收结论同步修改。教学示例保留在 `simulation/`，运行数据保留在 `EOS_toolkit/`，不建立平行验证树。
 
-新生成的 HDF5 检查点和绘图输出保留在本地结果目录，不自动加入 Git。JSON/CSV
-指标、参数、日志和文件哈希仍由 Git 保存；需要提供完整二进制数据时，另行发布
-数据归档。已有受版本控制的参考数据和 EOS 输入不受影响。
+Git 保存 JSON/CSV 指标、不可变参数、参考采样、复现脚本及简明的失败说明。
+检查点、绘图文件、完整程序输出和逐步后端／求解器轨迹保留在本地结果目录或
+具有身份记录的本地归档；保留范围见[原始记录归档索引](archive/README.zh-CN.md)。
+CI 使用自有回归夹具，EOS 运行输入仍由原目录管理。研究需要公开原始输出时，
+可以另行发布配套数据归档。
 
 ### 结果身份与证据
 
@@ -141,7 +160,7 @@ ARCH 的[表数据契约](../src/physics/eos/TabularEOS.zh-CN.md)包含规范化
 下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
 
 - [源码交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/README.zh-CN.md)：详细证据清单和源码资产检查。
-- [集成审阅](../docs/development/HpcCudaIntegration.md)：代码调整、测试选择及精确身份。
+- [集成审阅](../docs/histroy/integration/HpcCudaIntegration.md)：代码调整、测试选择及精确身份。
 - [维护与构建记录](backend/results/maintenance-freeze-20260908/README.zh-CN.md)：特定源码的分发、重启检查和较早的 RTX 3060 Ti 计时。优化前的计时不用于推算当前代码性能。
 
 - [集成回归记录 (JSON)](backend/results/hpc-cuda-optimization/integration.json)
@@ -160,6 +179,6 @@ ARCH 的[表数据契约](../src/physics/eos/TabularEOS.zh-CN.md)包含规范化
 - [构建测量](backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
 - [容量测量](backend/results/device-memory-first-law-20260907/README.zh-CN.md)
 - [设备检查记录](backend/results/final-first-law-20260907/README.zh-CN.md)
-- [交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/)
+- [交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50)
 
 </details>

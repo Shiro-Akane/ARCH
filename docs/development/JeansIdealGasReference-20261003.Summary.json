@@ -1,0 +1,12 @@
+{
+  "baseCommit": "30820aebd7fc48446dcda65100c111e74e531fc4",
+  "upstreamPlanCommit": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "caseCount": 24,
+  "maximumRelativeError": 1.9657272738823614e-16,
+  "reference": "independent caloric IdealGas analytic expression in long double",
+  "cpuCTest": "1/1 PASS",
+  "generalEosAcceptance": false,
+  "amrAcceptance": false,
+  "jensProductionSupported": false,
+  "simulationRun": false
+}

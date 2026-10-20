@@ -1,6 +1,6 @@
 # O6／O6+ 第三轮验收记录
 
-2026-09-27，工作区 `compute/optim`。本轮接续[第二轮记录](O6SecondPassOptimizationReport.zh-CN.md)，以相同输入、实际检查点物理终点和完整进程墙钟复测。输入、输出路径、执行物身份及逐次时间见 [CPU/FLASH 清单](results/o6-acceptance-20260927/final/o6view_measurements.json)；阶段账本在[实施计划](../../../docs/development/ComputeOptimizationPlan.zh-CN.md)。
+2026-09-27，工作区 `compute/optim`。本轮接续[第二轮记录](O6SecondPassOptimizationReport.zh-CN.md)，以相同输入、实际检查点物理终点和完整进程墙钟复测。输入、输出路径、执行物身份及逐次时间见 [CPU/FLASH 清单](results/o6-acceptance-20260927/final/o6view_measurements.json)；阶段账本在[实施计划](../../../docs/histroy/integration/ComputeOptimizationPlan.zh-CN.md)。
 
 **当前状态：最终源码 CPU 61/61、CUDA 132/132、生产兼容 42/42 与六次设备内存／同步检查通过。CPU 七点三轮计时中六点达到两倍成本线，细网格 3.48 倍未通过；二维四模块 AMR 对最快 CPU 加速 1.67 倍，其他受测 GPU 点仍负收益。O6／O6+ 保持开放，本文不是 release 签收。**
 

@@ -3,8 +3,12 @@
 This tree owns the numerical methods used by the fluid and microphysics
 solvers. Start with the module matching the operation:
 
-- [Reconstruction](reconstruction/README.md) builds face states and limits slopes.
-- [Fluxes](flux/README.md) evaluate the selected Riemann or flux-splitting policy.
+- [Curvilinear coordinates](curvilinear/README.md) own chart layouts, measures,
+  state representation, geometric sources and coordinate stress mathematics.
+- [Reconstruction](reconstruction/README.md) builds selected face states and
+  limits slopes, including native weighted/parity donors in the same owner.
+- [Fluxes](flux/README.md) evaluate the selected Riemann or flux-splitting policy
+  and share conservative point/wall acceptance and native V/W face integration.
 - [Hydro integration](integrator/README.md) combines fluxes, sources and stages.
 - [Diffusion](diffusion/README.md) owns spatial operators and RKL integration.
 - [Burn solvers](burnsolver/README.md) advance a selected reaction network.

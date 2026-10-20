@@ -1,0 +1,57 @@
+{
+  "scope": "Native Start evidence; intended active Electron-close test NOT EXERCISED because run finished before close",
+  "sourceHead": "10ad80b1a28394dc4f49591c8f94a3c1f0910b60",
+  "runId": "afb95966-335d-47d4-8620-39d4ca6f8035",
+  "configPath": "studio/.local/integration/native-close-run-89a8e2af-72ec-4c3e-8864-ba4da8c541a1/Sod.par",
+  "configFingerprint": {
+    "sha256": "3a772a8866d5e4cd77d81d2f8bb7cabb51521f3f70223d2522aec9fc8101865c",
+    "size": 1252,
+    "modifiedTime": "2026-10-03T04:55:58.756Z"
+  },
+  "binaryFingerprint": {
+    "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "size": 7177152,
+    "modifiedTime": "2026-10-03T04:11:50.885Z"
+  },
+  "state": {
+    "runId": "afb95966-335d-47d4-8620-39d4ca6f8035",
+    "state": "succeeded",
+    "workerPid": 19122,
+    "workerStartTicks": "486417",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T04:57:55.833Z",
+    "processId": 19134,
+    "processStartTicks": "486425",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T04:58:12.341Z"
+  },
+  "workerAfter": {
+    "pid": 19122,
+    "exists": false
+  },
+  "coreAfter": {
+    "pid": 19134,
+    "exists": false
+  },
+  "heldTerminal": {
+    "pid": 19121,
+    "exists": true,
+    "startTicks": "486414",
+    "ppid": 14292,
+    "pgrp": 19121,
+    "state": "S"
+  },
+  "frozenInputEqualsSaved": true,
+  "finalStep": 8994,
+  "finalTime": 0.2,
+  "nativeActiveClose": "NOT EXERCISED",
+  "humanVisibleDesktop": "NOT VERIFIED",
+  "originalSodSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+  "originalUatSodSha256": "381ceb60eb6cdbf7c99b43577ff0d94731144d655514c7a8194d09ce8d88644e",
+  "rawLocalRoot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-close-run-89a8e2af-72ec-4c3e-8864-ba4da8c541a1",
+  "rawRunDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/runs/afb95966-335d-47d4-8620-39d4ca6f8035",
+  "repeatedRun": false,
+  "freshness": "full dependency freshness unknown"
+}

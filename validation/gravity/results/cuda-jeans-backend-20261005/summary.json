@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0",
+  "node": "cuda-jeans-backend-consumer",
+  "status": "SCOPED_PASS_NOT_FULL_LIFECYCLE",
+  "sourceHeadBeforeCommit": "23f34a9a222ebbb49c214a5064ef157722c20d2c",
+  "inputFingerprints": {
+    "src/cuda/runtime/CudaBackend.h": "ae98bbd6bac6b3fbdd09b28a5c18483478c868fd18d845972c4cdeafe26fa151",
+    "src/cuda/runtime/amr/CudaBackendIndicators.cpp": "a737c545d39fbf3d174b53d19aac3d050f438783b9ebfe8499cca5815e5704c4",
+    "src/driver/runtime/ComputeBackend.h": "acee52504bf204e3b77a4740be15e40c472fbaf34c09cd869dbce140abd1f336",
+    "tests/cuda/hydro/test_cuda_multiblock_hydro.cu": "2c896c37eac0b3a58c1c22a2ad7238410632fd028bae9b9a69bca6032fef7cec",
+    "tests/host/driver/test_compute_backend.cpp": "cc6a1adc2aaa2f3eb0e64ab9ff96d7d0a0d9ee10bbc2629e0414adac286eda30"
+  },
+  "cpuArchSha256Unchanged": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "gpu": "NVIDIA GeForce RTX 4070 Ti, GPU-597803c6-7939-63f9-f93f-671f90b13766, 617.14",
+  "build": {
+    "ARCH_ENABLE_CUDA": "ON",
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CUDA_ARCHITECTURES": "89",
+    "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.8/bin/nvcc",
+    "CMAKE_HOME_DIRECTORY": "/home/arch/projects/ARCH-compute-optim"
+  },
+  "testExecutables": {
+    "build-cuda/arch_cuda_multiblock_hydro": {
+      "sha256": "adbd596aa9638e1f377fc308f0fe4dee4b705d270cac32450ee7fbe24130b3dd",
+      "size": 287771840
+    },
+    "build-cuda/arch_cuda_refinement_indicators": {
+      "sha256": "546fe941d0e6ff2fb25a09a549414a8cc171c4cc944b807cff3e0583bdcfb174",
+      "size": 2634512
+    }
+  },
+  "checks": {
+    "hostComputeBackend": {
+      "passed": 1,
+      "failed": 0
+    },
+    "cudaCTest": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    "finalIncrementalBuild": "ninja: no work to do.",
+    "currentMarkers": 6,
+    "failureRecoveryMarkers": 3,
+    "integrators": [
+      "Euler",
+      "RK2",
+      "RK3"
+    ],
+    "faults": [
+      "duplicate-handle",
+      "storage-generation",
+      "Next-slot",
+      "AMR-epoch",
+      "rho-zero",
+      "rho-NaN",
+      "negative-energy"
+    ],
+    "batchCounters": {
+      "blocks": 2,
+      "kernels": 4,
+      "bytesD2H": 16,
+      "bytesH2D": 0,
+      "streamSyncs": 1
+    },
+    "independentNumeric": {
+      "valid": 197,
+      "unrepresentable": 104,
+      "invalid": 12,
+      "maxRelativeError": 1.5432483614913696e-16
+    },
+    "independentCaloric": {
+      "cases": 24,
+      "maxRelativeError": 1.9657272738823614e-16
+    },
+    "acceptedPatchDimensionLevelCombinations": 6
+  },
+  "coldBuildObservation": {
+    "exitCode": 0,
+    "elapsedSeconds": 2890.973,
+    "peakOwnedRssKiB": 1986608,
+    "minAvailableKiB": 21155516,
+    "baselineSwapKiB": 0,
+    "peakSwapKiB": 0,
+    "guardStopped": false,
+    "observationSource": "completed exec session 19565 stdout; sampled Linux scope"
+  },
+  "logs": {
+    "build.log": {
+      "sha256": "e6989ebff40d8a26e7c00796e06ff1485f2782cf9f027eabb9f10b70eaaa03ed",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/cuda-jeans-backend-20261005/build.log"
+    },
+    "build-final.log": {
+      "sha256": "38074f2b643c55b576f24601cf13865ae97f4428930a6ae95cd4c395b4e25db2",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/cuda-jeans-backend-20261005/build-final.log"
+    },
+    "build-final-guard.log": {
+      "sha256": "0272b00aae2570735d8b275103520f44e27cbd225e705377edd617cb597b192e",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/cuda-jeans-backend-20261005/build-final-guard.log"
+    },
+    "host-ctest.log": {
+      "sha256": "699bd745214c948e75e6c1400c17b57e8732e93b65891ff91ab73e8d5b8a9045",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/cuda-jeans-backend-20261005/host-ctest.log"
+    },
+    "cuda-ctest.log": {
+      "sha256": "20255206a1b897f39cf0703c8a0b49de3666848006fe4b02309607bd75943e31",
+      "localPath": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/cuda-jeans-backend-20261005/cuda-ctest.log"
+    }
+  },
+  "limits": [
+    "Current access is not full StateVersion/publication qualification",
+    "Driver CUDA JENS gates unchanged",
+    "candidate-parent device EOS/veto not connected",
+    "no production ARCH CUDA application built",
+    "no full CUDA uniform lifecycle/restart/output receipt",
+    "no complete RZ scientific acceptance",
+    "no long run or benchmark",
+    "raw logs/binaries remain local"
+  ],
+  "recordedUtc": "2026-10-04T23:53:27.155164+00:00"
+}

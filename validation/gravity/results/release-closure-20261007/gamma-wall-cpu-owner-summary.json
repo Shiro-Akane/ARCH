@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "PASS_CURRENT_CPU_AND_CUDA_POINT_WALL_OWNERS",
+  "cpu": {
+    "owner": "conservative_flux_limiter",
+    "testSeconds": 0.01,
+    "guardSeconds": 1.014,
+    "buildGuardSeconds": 12.076
+  },
+  "emptyCTestMatch": {
+    "status": "NOT_EXECUTED_NOT_PASS",
+    "guardSeconds": 1.016,
+    "correctedNameUsed": true,
+    "noTestsIsErrorNow": true
+  },
+  "wallBranches": [
+    "gamma-law rarefaction",
+    "compression shock",
+    "true vacuum",
+    "required-base rejection",
+    "optional-high theta0 fallback"
+  ],
+  "nativeFaceFactor": "Same selected physical low for both side states, species and face integration",
+  "waveSpeedAndCFLUnchanged": true,
+  "oldWindowsUnchanged": true,
+  "rootReferenceChecks": {
+    "gammaPressureDecimal70States": 42,
+    "selectedBaseDecimal90States": 54,
+    "exactEnergyIdentities": 45
+  },
+  "limitations": [
+    "General EOS exact wall unresolved",
+    "Ordinary wall integration pending",
+    "No whole mixed-measure/source Native stage qualification",
+    "Not release/long-run/performance acceptance"
+  ],
+  "builtinCandidate": {
+    "firstSeconds": 230,
+    "repairSeconds": 165,
+    "cumulativeCapSeconds": 460,
+    "formalRepairsUsed": 1,
+    "firstWrongCandidateRetained": true
+  },
+  "cuda": {
+    "owner": "hydro_leaf_parity",
+    "testSeconds": 0.43,
+    "requiredEOSOwner": "cuda_hydro_eos_failure",
+    "requiredEOSSeconds": 0.43,
+    "testPairSeconds": 0.87,
+    "guardSeconds": 1.016,
+    "buildGuardSeconds": 179.976,
+    "fullNativeRuntimeQualified": false
+  }
+}

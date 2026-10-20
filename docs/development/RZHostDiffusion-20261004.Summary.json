@@ -1,0 +1,60 @@
+{
+  "baseHead": "85d4609d95d41c286b48cd09559dc31078c2dea2",
+  "dirtyInputs": {
+    "src/grid/GridMetrics.h": "484cb25e1d6d3deb9130477470c0d9cebfb68445d599c72c475df47de6a60068",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "e46b1540fb9d6a7b5b1379b09d69f34ff89b5246785665b935fee9b1f3f10b0f",
+    "src/numerics/diffusion/DiffFlux.h": "7355f4d701e4f8aa80117d89e89eca677cc587215455337d5c6b893ef0537b64",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "98e670899048be374c7d8a4176c64af70c57e12f43e35bdf819efc4557500bbf"
+  },
+  "checks": {
+    "hostFullOperator": "PASS",
+    "constantNuIndependentDt": "PASS",
+    "variableMuSpatialConvergence": "PASS",
+    "curvilinear_metrics": "PASS",
+    "amr_operation_plans": "PASS",
+    "diffCheck": "PASS"
+  },
+  "binarySha256": "cd15b800e3fa5a6ce4543a1320ef3290052180242876971afb247d7f8f74b7e8",
+  "constantWitness": {
+    "velocity": [
+      "r",
+      "3z",
+      "2r"
+    ],
+    "rho": 2,
+    "activeCells": 512,
+    "work": "19*mu",
+    "momentum": 0
+  },
+  "variableWitness": {
+    "rho": "2+0.1r",
+    "dynamicViscosity": "nu*rho",
+    "velocity": [
+      "r",
+      "3z",
+      "2r"
+    ],
+    "cellAverageWork": "nu*(38+24*0.1*<r>)",
+    "spacings": [
+      0.05,
+      0.025,
+      0.0125
+    ],
+    "absoluteWorkErrors": [
+      1.125e-05,
+      2.8125e-06,
+      7.03125e-07
+    ],
+    "orders": [
+      2,
+      2
+    ]
+  },
+  "limits": [
+    "explicit internal Host adapter only; runtime Grid chart remains legacy",
+    "no real boundary/AMR regrid evolution",
+    "no thermal/species RZ independent acceptance",
+    "no CUDA",
+    "not whole RZ scientific exit"
+  ]
+}

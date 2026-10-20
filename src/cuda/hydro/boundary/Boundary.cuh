@@ -14,12 +14,15 @@
 
 #pragma once
 
-#include "cuda/hydro/boundary/BoundaryPlan.h"
+#include <cmath>
+#include <cstddef>
+#include <limits>
 
 #include <cuda_runtime.h>
 
-#include <cstddef>
-#include <limits>
+#include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "cuda/hydro/boundary/BoundaryPlan.h"
+#include "cuda/hydro/policies/CheckedHydroEos.cuh"
 
 namespace arch::cuda
 {
@@ -56,12 +59,14 @@ __device__ inline void boundary_phase_kernel_work(
 }
 
 
-__global__ void boundary_phase_kernel(
+// Header-private launch implementation; each including TU owns its own stub.
+static __global__ void boundary_phase_kernel(
     DeviceStateView state, const DeviceBoundaryTransfer* transfers,
     int count)
 {
     boundary_phase_kernel_work(state, transfers, count);
 }
+
 } // namespace detail
 
 inline cudaError_t launch_boundary_plan(

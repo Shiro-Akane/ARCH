@@ -14,10 +14,19 @@ import unittest
 ARCH, ROOT = map(lambda p: Path(p).resolve(), sys.argv[1:3])
 del sys.argv[1:3]
 ENV = dict(os.environ, OMP_NUM_THREADS='1', CUDA_VISIBLE_DEVICES='')
-BASE = 'nblockx1=1\nnblockx2=0\nnblockx3=0\nnetwork_name=none\nx1_min=0\nx1_max=1\n'
+def replace_inputs(text, **values):
+    """Edit unique assignments; production config rejects repeated keys."""
+    lines = [line for line in text.splitlines()
+             if line.split('#', 1)[0].split('=', 1)[0].strip() not in values]
+    return '\n'.join(lines) + '\n' + '\n'.join(f'{key}={value}' for key, value in values.items()) + '\n'
+
+
+BASE = replace_inputs((ROOT/'simulation/Sod/Sod.par').read_text(), nblockx1=1)
 TABLE = ROOT/'EOS_toolkit/tables/helmholtz/helm_table.dat'
-CELL = (ROOT/'simulation/Cellular/CellularPreview2D.par').read_text()+f'\neos_table_path={TABLE}\nuse_burn=false\n'
-HOT = (ROOT/'simulation/CooperativeHotspots/CooperativeHotspots.par').read_text()+f'\neos_table_path={TABLE}\n'
+CELL = replace_inputs((ROOT/'simulation/Cellular/CellularPreview2D.par').read_text(),
+                      eos_table_path=TABLE, use_burn='false')
+HOT = replace_inputs((ROOT/'simulation/CooperativeHotspots/CooperativeHotspots.par').read_text(),
+                     eos_table_path=TABLE)
 
 
 class Session:
@@ -78,6 +87,25 @@ class PreviewSession(unittest.TestCase):
         self.session = Session(self.cwd)
         self.addCleanup(self.session.close)
 
+    def test_multidimensional_request_recovery_and_equivalence(self):
+        text = replace_inputs((ROOT/'simulation/Sedov/Sedov.par').read_text(),
+                              nblockx1=1, nblockx2=1, nblockx3=1, max_blocks=8)
+        for nx, ny, nz in [(5, 3, 2), (3, 2, 4)]:
+            result, progress = self.session.call("Sedov", text,
+                                                samplesX1=nx, samplesX2=ny, samplesX3=nz)
+            self.check(result, text, progress)
+            single = self.single("Sedov", text, "--preview",
+                                 "--samples-x1", str(nx), "--samples-x2", str(ny),
+                                 "--samples-x3", str(nz))
+            self.assertEqual(result["response"]["data"], single["data"])
+            self.assertEqual(single["data"]["sampling"]["shape"], [nz, ny, nx])
+        error, _ = self.session.call("Sedov", text, samplesX1=3, samplesX2=3)
+        self.assertEqual(error["exitCode"], 2)
+        result, progress = self.session.call("Sod", BASE, samples=8)
+        self.check(result, BASE, progress)
+        self.assertEqual(result["response"]["data"]["dimension"], 1)
+        self.assertEqual(list(self.cwd.iterdir()), [])
+
     def single(self, case, text, command, *args):
         proc = subprocess.run([str(ARCH), command, case, '--config-stdin', '--request-id', 'edit-初期🌌', *args],
             input=text, text=True, capture_output=True, cwd=self.cwd, env=ENV, timeout=360)
@@ -100,7 +128,7 @@ class PreviewSession(unittest.TestCase):
         before = list(self.cwd.iterdir())
         values = []
         for x in [.25, .75, .25]:
-            text = BASE+f'x_pos={x}\n'
+            text = replace_inputs(BASE, x_pos=x)
             got, progress = self.session.call(config=text, samples=8)
             self.check(got, text, progress)
             expected = self.single('Sod', text, '--preview', '--samples', '8')
@@ -118,8 +146,8 @@ class PreviewSession(unittest.TestCase):
         first, progress = self.session.call(case='CellularDet', config=CELL, samplesX1=5, samplesX2=3)
         self.check(first, CELL, progress)
         self.assertEqual(first['resources']['tableLoads'], 1)
-        for extra in ('radiusPerturb=12\n', 'tempPerturb=2.e9\n'):
-            text = CELL+extra
+        for extra in ({'radiusPerturb': 12}, {'tempPerturb': '2.e9'}):
+            text = replace_inputs(CELL, **extra)
             warm, progress = self.session.call(case='CellularDet', config=text, samplesX1=5, samplesX2=3)
             self.check(warm, text, progress)
             self.assertEqual(warm['resources']['tableLoads'], 0)
@@ -133,7 +161,7 @@ class PreviewSession(unittest.TestCase):
         first, progress = self.session.call(case='CooperativeHotspots', config=HOT, command='--inspect-case')
         self.check(first, HOT, progress)
         self.assertEqual(first['resources']['tableLoads'], 1)
-        text = HOT+'hotspot_center_x=48\nhotspot_temperature=2.8e9\n'
+        text = replace_inputs(HOT, hotspot_center_x=48, hotspot_temperature='2.8e9')
         warm, progress = self.session.call(case='CooperativeHotspots', config=text, command='--inspect-case')
         self.check(warm, text, progress)
         self.assertEqual(warm['resources']['tableLoads'], 0)
@@ -143,12 +171,12 @@ class PreviewSession(unittest.TestCase):
         self.assertNotEqual(first['response']['data'], warm['response']['data'])
 
     def test_mesh_field_and_error_recovery(self):
-        text=BASE+'nblockx1=4\nx_pos=.43\nlrefinemax=3\nmax_blocks=128\nrefine_threshold=.1\nderefine_threshold=.01\n'
+        text=replace_inputs(BASE, nblockx1=4, x_pos=.43, lrefinemax=3, max_blocks=128, refine_threshold=.1, derefine_threshold=.01)
         mesh, progress=self.session.call(config=text, command='--preview-amr', meshMaxBlocks=128)
         self.check(mesh,text,progress)
         expected=self.single('Sod',text,'--preview-amr','--mesh-max-blocks','128')
         self.assertEqual(mesh['response']['data'],expected['data'])
-        failed,_=self.session.call(config=BASE+'x_pos=5\n',samples=8)
+        failed,_=self.session.call(config=replace_inputs(BASE, x_pos=5),samples=8)
         self.assertNotEqual(failed['exitCode'],0)
         self.assertTrue(failed['resources']['clearedAfterError'])
         self.assertIsNone(failed['response']['data'])
@@ -158,7 +186,7 @@ class PreviewSession(unittest.TestCase):
     def test_table_change_reset_and_recovery(self):
         copied=self.cwd/'table.dat'
         shutil.copyfile(TABLE,copied)
-        text=CELL+f'eos_table_path={copied}\n'
+        text=replace_inputs(CELL, eos_table_path=copied)
         first,_=self.session.call(case='CellularDet',config=text,samplesX1=2,samplesX2=2)
         self.assertEqual(first['resources']['tableLoads'],1)
         # Same length and mtime, but different valid content: never rely on stat.
@@ -177,6 +205,28 @@ class PreviewSession(unittest.TestCase):
         self.assertEqual(failed['resources']['retainedTables'],0)
         ok,progress=self.session.call(samples=8)
         self.check(ok,BASE,progress)
+
+    def test_configuration_errors_clear_resources_without_default_replay(self):
+        first, progress = self.session.call(samples=8)
+        self.check(first, BASE, progress)
+        missing = '\n'.join(line for line in BASE.splitlines()
+                            if line.split('#', 1)[0].split('=', 1)[0].strip() != 'x_pos') + '\n'
+        for text in [missing, BASE + 'x_pos=.75\n', replace_inputs(BASE, x_pos='nan')]:
+            with self.subTest(text=text[-80:]):
+                failed, _ = self.session.call(config=text, samples=8)
+                self.assertEqual(failed['exitCode'], 3)
+                response = failed['response']
+                self.assertEqual(response['stage'], 'configuration')
+                self.assertEqual(response['identity']['configRevision'],
+                                 hashlib.sha256(text.encode()).hexdigest())
+                self.assertIsNone(response['data'])
+                self.assertNotIn('parameterMetadata', response)
+                self.assertNotIn('graphicalBindings', response)
+                self.assertTrue(failed['resources']['clearedAfterError'])
+                recovered, progress = self.session.call(samples=8)
+                self.check(recovered, BASE, progress)
+                self.assertEqual(recovered['response']['data'], first['response']['data'])
+        self.assertEqual(list(self.cwd.iterdir()), [], 'session must not create scientific output')
 
     def test_strict_frames_and_recovery(self):
         valid=dict(command='--preview',caseId='Sod',configText=BASE,requestId='valid',samples=8)
@@ -220,6 +270,7 @@ class PreviewSession(unittest.TestCase):
         while True:
             event=self.session.next()
             self.assertIsNotNone(event)
+            self.assertNotEqual(event.get('kind'), 'preview-session-result', event)
             if event.get('stage')=='setup':
                 break
         self.session.close()

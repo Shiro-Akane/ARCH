@@ -1,0 +1,118 @@
+{
+  "baselineCommit": "4486312a7c2ed6f2693ca0898edf11d6ef9d9c43",
+  "ownerLatestCommit": "10caebe77079e26c0e1e7bc76a1c7c75b5fb4531",
+  "ownerLatestChange": "RT maintenance documentation only",
+  "expectedGpu": "NVIDIA GeForce RTX 5070 Ti",
+  "preflightExitCodes": [
+    2,
+    2
+  ],
+  "platformMatch": false,
+  "observedCpu": {
+    "model_names": [
+      "Intel(R) Core(TM) i7-14700K"
+    ],
+    "allowed_logical_cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ],
+    "frequency_policy": {
+      "state": "unavailable",
+      "reason": "cpufreq policies not exposed"
+    }
+  },
+  "observedGpu": {
+    "tool_sha256": "b08bd23ca62ad9797b60d14e79fb1ccc21fca858acef57fef473fd74b19f4af7",
+    "query": "uuid,name,memory.total,memory.used,power.draw,temperature.gpu,utilization.gpu",
+    "exit_code": 0,
+    "state": "observed",
+    "devices": [
+      {
+        "uuid": "GPU-597803c6-7939-63f9-f93f-671f90b13766",
+        "name": "NVIDIA GeForce RTX 4070 Ti",
+        "scope": "whole_device",
+        "memory_total_mib": {
+          "state": "observed",
+          "value": 12282.0
+        },
+        "memory_used_mib": {
+          "state": "observed",
+          "value": 2103.0
+        },
+        "power_draw_w": {
+          "state": "observed",
+          "value": 6.82
+        },
+        "temperature_c": {
+          "state": "observed",
+          "value": 39.0
+        },
+        "utilization_percent": {
+          "state": "observed",
+          "value": 5.0
+        }
+      }
+    ]
+  },
+  "secondObservedMetrics": [
+    {
+      "uuid": "GPU-597803c6-7939-63f9-f93f-671f90b13766",
+      "name": "NVIDIA GeForce RTX 4070 Ti",
+      "scope": "whole_device",
+      "memory_total_mib": {
+        "state": "observed",
+        "value": 12282.0
+      },
+      "memory_used_mib": {
+        "state": "observed",
+        "value": 2103.0
+      },
+      "power_draw_w": {
+        "state": "observed",
+        "value": 6.84
+      },
+      "temperature_c": {
+        "state": "observed",
+        "value": 39.0
+      },
+      "utilization_percent": {
+        "state": "observed",
+        "value": 6.0
+      }
+    }
+  ],
+  "sampleCount": 2,
+  "toolTestsPassed": 3,
+  "initialTestFailure": "Multi-device fixture used literal backslash-n instead of newline; log retained, corrected fixture",
+  "rawEvidenceLocal": "platform-preflight-20261004",
+  "newBuild": false,
+  "newScientificExecution": false,
+  "benchmarkAccepted": false,
+  "scriptSha256": "7bd3717f7193aa8690cc70e1b9fb2c137bba520ebe28e717d9bce1cf79d18725"
+}

@@ -13,8 +13,10 @@
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "driver/schedule/StageScheduler.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
+#include "numerics/state/StateAdmissibility.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include "physics/eos/eos.h"
-#include "physics/gravity/GravitySource.h"
+#include "physics/gravity/GravitySourceTypes.h"
 
 #include <cuda_runtime.h>
 #include <array>
@@ -61,17 +63,6 @@ struct CudaBackendLaunchResult {
     cudaError_t launch_cuda_backend_hydro_dt( \
         DeviceStateView state, DeviceGridView grid, EOS eos, double cfl, \
         CudaHydroWorkspaceView workspace, cudaStream_t stream); \
-    CudaBackendLaunchResult launch_cuda_backend_hydro_stage( \
-        const dispatch::ResolvedExecutionPlan& plan, DeviceStateView old_state, \
-        DeviceStateView input, DeviceStateView output, DeviceStateView delta, \
-        DeviceStateView face_flux, DeviceGridView grid, EOS eos, \
-        double entropy_fix_coefficient, double density_floor, \
-        double minimum_internal_energy, \
-        double maximum_internal_energy, \
-        const CudaAmrFluxDirectionRouteView* amr_routes, \
-        const scheduler::StageDescriptor& descriptor, double dt, \
-        int* eos_status, cudaStream_t stream, SpeciesWorkspaceView species_workspace = {}, \
-        Physical::Gravity::ExternalGravityView gravity = {}); \
     CudaBackendLaunchResult launch_cuda_backend_hydro_stage_batch( \
         const dispatch::ResolvedExecutionPlan& plan, \
         std::span<const DeviceHydroBatchBlock> host_blocks, \

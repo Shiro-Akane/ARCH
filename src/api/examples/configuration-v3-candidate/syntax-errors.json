@@ -1,0 +1,291 @@
+{
+  "schemaVersion": "1.0",
+  "version": "3",
+  "kind": "configuration-inspection",
+  "status": "error",
+  "identity": {
+    "caseId": "Sod",
+    "requestId": "candidate-syntax-001",
+    "configRevision": "ff3233e0e8f233969bf8cdb730e18f594a98eae31bf38d91de9c73ed6b378eac"
+  },
+  "execution": {
+    "setup": "not_executed",
+    "eos": "not_loaded",
+    "cuda": "not_initialized",
+    "filesystem": "not_accessed",
+    "simulationReadiness": "not_checked",
+    "caseRegistration": "not_checked",
+    "caseDeclarations": "not_checked",
+    "validationStage": "typed-input"
+  },
+  "coverage": {
+    "standardParametersComplete": false,
+    "caseParametersComplete": false,
+    "conditionsComplete": false,
+    "diagnosticsComplete": false,
+    "auxiliaryParametersComplete": false
+  },
+  "completeness": {
+    "state": "invalid",
+    "scope": "declared-configuration-before-setup"
+  },
+  "parameters": [
+    {
+      "key": "nblockx2",
+      "caseId": null,
+      "type": "int",
+      "group": "Grid",
+      "usage": "simulation",
+      "inputState": "present",
+      "rawValue": " 0",
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 1,
+          "column": 11,
+          "endColumn": 13,
+          "rawValue": " 0"
+        }
+      ],
+      "parsedValue": 0,
+      "resolvedValue": null,
+      "valueSource": null,
+      "sourceEvidence": null,
+      "valueStage": "configuration-resolution-before-setup",
+      "requirement": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "required": true,
+        "missingDependencies": []
+      },
+      "applicability": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "missingDependencies": []
+      },
+      "units": {
+        "unit": "1",
+        "status": "dimensionless"
+      }
+    },
+    {
+      "key": "use_burn",
+      "caseId": null,
+      "type": "bool",
+      "group": "Network",
+      "usage": "simulation",
+      "inputState": "present",
+      "rawValue": " false",
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 2,
+          "column": 11,
+          "endColumn": 17,
+          "rawValue": " false"
+        }
+      ],
+      "parsedValue": false,
+      "resolvedValue": null,
+      "valueSource": null,
+      "sourceEvidence": null,
+      "valueStage": "configuration-resolution-before-setup",
+      "requirement": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "required": true,
+        "missingDependencies": []
+      },
+      "applicability": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "missingDependencies": []
+      },
+      "units": {
+        "unit": null,
+        "status": "not-applicable"
+      }
+    },
+    {
+      "key": "cfl",
+      "caseId": null,
+      "type": "float",
+      "group": "Runtime",
+      "usage": "simulation",
+      "inputState": "invalid",
+      "rawValue": " nope",
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 3,
+          "column": 6,
+          "endColumn": 11,
+          "rawValue": " nope"
+        }
+      ],
+      "parsedValue": null,
+      "resolvedValue": null,
+      "valueSource": null,
+      "sourceEvidence": null,
+      "valueStage": "configuration-resolution-before-setup",
+      "requirement": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "required": true,
+        "missingDependencies": []
+      },
+      "applicability": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "missingDependencies": []
+      },
+      "units": {
+        "unit": "1",
+        "status": "dimensionless"
+      }
+    },
+    {
+      "key": "solver",
+      "caseId": null,
+      "type": "string",
+      "group": "Runtime",
+      "usage": "simulation",
+      "inputState": "duplicate",
+      "rawValue": null,
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 4,
+          "column": 9,
+          "endColumn": 14,
+          "rawValue": " HLLC"
+        },
+        {
+          "source": "stdin",
+          "line": 5,
+          "column": 9,
+          "endColumn": 13,
+          "rawValue": " Roe"
+        }
+      ],
+      "parsedValue": null,
+      "resolvedValue": null,
+      "valueSource": null,
+      "sourceEvidence": null,
+      "valueStage": "configuration-resolution-before-setup",
+      "requirement": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "required": true,
+        "missingDependencies": []
+      },
+      "applicability": {
+        "conditionId": "always",
+        "state": "satisfied",
+        "missingDependencies": []
+      },
+      "units": {
+        "unit": null,
+        "status": "not-applicable"
+      }
+    }
+  ],
+  "coordinates": null,
+  "diagnostics": [
+    {
+      "code": "INVALID_NUMBER",
+      "severity": "error",
+      "parameterKey": "cfl",
+      "module": "Runtime",
+      "conditionId": null,
+      "message": "Expected a finite complete numeric token.",
+      "expected": {
+        "type": "float",
+        "units": null
+      },
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 3,
+          "column": 6,
+          "endColumn": 11,
+          "rawValue": " nope"
+        }
+      ],
+      "relatedKeys": []
+    },
+    {
+      "code": "DUPLICATE_PARAMETER",
+      "severity": "error",
+      "parameterKey": "solver",
+      "module": "Runtime",
+      "conditionId": null,
+      "message": "Duplicate parameter; neither occurrence is selected.",
+      "expected": {
+        "type": "string",
+        "units": null
+      },
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 4,
+          "column": 9,
+          "endColumn": 14,
+          "rawValue": " HLLC"
+        },
+        {
+          "source": "stdin",
+          "line": 5,
+          "column": 9,
+          "endColumn": 13,
+          "rawValue": " Roe"
+        }
+      ],
+      "relatedKeys": []
+    },
+    {
+      "code": "MALFORMED_LINE",
+      "severity": "error",
+      "parameterKey": null,
+      "module": null,
+      "conditionId": null,
+      "message": "Non-comment line requires an equals sign.",
+      "expected": {
+        "type": null,
+        "units": null
+      },
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 6,
+          "column": 1,
+          "endColumn": 18,
+          "rawValue": null
+        }
+      ],
+      "relatedKeys": []
+    },
+    {
+      "code": "EMPTY_KEY",
+      "severity": "error",
+      "parameterKey": null,
+      "module": null,
+      "conditionId": null,
+      "message": "Parameter key is empty.",
+      "expected": {
+        "type": null,
+        "units": null
+      },
+      "locations": [
+        {
+          "source": "stdin",
+          "line": 7,
+          "column": 1,
+          "endColumn": 9,
+          "rawValue": null
+        }
+      ],
+      "relatedKeys": []
+    }
+  ]
+}

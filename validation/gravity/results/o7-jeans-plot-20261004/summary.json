@@ -1,0 +1,75 @@
+{
+  "parentCheckpoint": "2c066a742f41916d0c3d7e8df78622ed247e238f",
+  "scope": "internal native writer consumer, public JENS selection still gated",
+  "fixtureExitCode": 0,
+  "negativeCases": [
+    "nonfinite EOS Gamma1 refuses publication",
+    "gravity none rejects JENS",
+    "last successful file retained"
+  ],
+  "nativeOutput": [
+    {
+      "file": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-plot-corrected-20261004/evidence/cartesian/fixture_SW_plt_0012.h5",
+      "cells": 16,
+      "shape": [
+        1,
+        16
+      ],
+      "dtype": "float64",
+      "maxRelativeError": 2.1115519111258224e-17,
+      "bound": 3.552713678800501e-15,
+      "unchangedFields": [
+        "DENS",
+        "ENER",
+        "VELX",
+        "fixture-gas"
+      ],
+      "publication": "complete",
+      "sourceIdentityScope": "partial",
+      "scope": "bounded static single-caloric-species native writer; not evolved JENS acceptance",
+      "sha256": "054a345359ed8d43e39ac06ce6484605602c82ff0e2ad445f1fecfcb60c040d2"
+    },
+    {
+      "file": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-plot-corrected-20261004/evidence/rz/fixture_SW_plt_0012.h5",
+      "cells": 256,
+      "shape": [
+        1,
+        16,
+        16
+      ],
+      "dtype": "float64",
+      "maxRelativeError": 3.1714519106408167e-16,
+      "bound": 3.552713678800501e-15,
+      "unchangedFields": [
+        "DENS",
+        "ENER",
+        "VELX",
+        "VELY",
+        "VELZ",
+        "fixture-gas"
+      ],
+      "publication": "complete",
+      "sourceIdentityScope": "partial",
+      "scope": "bounded static single-caloric-species native writer; not evolved JENS acceptance",
+      "sha256": "d437e1f3f09134bced12754fbc890d9d53bf4eb413892b5388e55e54d85f402f"
+    }
+  ],
+  "rawEvidence": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-plot-corrected-20261004",
+  "limitations": [
+    "partial source identity in fixture, not certified project output",
+    "no evolved JENS or restart qualification",
+    "RZ public dispatch/regrid remains gated",
+    "CUDA not qualified"
+  ],
+  "productionARCHSha256": "50d58433b7065f71153a6c9843f22e21444359bed8fd61ed5807a7c792b22cc8",
+  "regression": {
+    "tests": [
+      "configuration_api_contract",
+      "jeans_diagnostics",
+      "plotfile_publication"
+    ],
+    "pass": 3,
+    "fail": 0
+  },
+  "architectureAuditExitCode": 0
+}

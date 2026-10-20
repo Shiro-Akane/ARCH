@@ -1,0 +1,16 @@
+{
+  "classification": "assistant_introduced_diagnostic_overlay_control_flow_bug",
+  "baseline_ee091b_affected": false,
+  "zero_step_candidate_dcd3a70a_affected": false,
+  "bad_overlay_variants": [
+    "observer-v1 CUDA",
+    "observer-buffered-v2 CUDA",
+    "isolated-v3 built but never run"
+  ],
+  "cause": "Insertion of printf into an unbraced if(stage==1) made clear_amr_flux_register unconditional in the CUDA Hydro stage executor.",
+  "effect": "RK2/RK3 contributions were cleared before the next stage rather than accumulated; original numerical leaf mathematics was unchanged but orchestration was not.",
+  "fix_scope": "Restore original stage==1 guard with braces in diagnostic overlay only. No frozen solver or numerical candidate change.",
+  "before": "            if (descriptor.stage == 1)\n                printf(\"AUDIT_EXEC stage=%d\\n\",descriptor.stage);fflush(stdout);\n            (void)compute_backend->clear_amr_flux_register(token);",
+  "after": "            printf(\"AUDIT_EXEC stage=%d\\n\",descriptor.stage);fflush(stdout);\n            if (descriptor.stage == 1) {\n                (void)compute_backend->clear_amr_flux_register(token);\n            }",
+  "training_data_admitted": false
+}

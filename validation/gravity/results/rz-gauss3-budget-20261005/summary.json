@@ -1,0 +1,472 @@
+{
+  "date": "2026-10-05",
+  "status": "MATCHED_SOURCE_TARGET_PASS_PRODUCTION_RZ_GATED",
+  "sourceBaseline": "b2e082b1db20c2b9b17dedefaa453c79ae16a146",
+  "dirtyAtBuild": true,
+  "sourceFingerprints": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "dbbc9298eaa3e34c48a53deb3b812b2dc57fe56092a4a48d7f97b82ab8f3b2a6",
+    "tests/host/gravity/test_composite_poisson.cpp": "070b5c196f7b43d972b97d85810331c1bfa7c642088e92cad40102ff00c1a960",
+    "validation/gravity/rz_ring_contact_log_reference.py": "2f0fe83d1ce944673088848635ef34c51e3ad19dc3a6e3b424221324441ec317"
+  },
+  "cpuArchBinarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "productionBinaryUnchanged": true,
+  "scopedTestBinarySha256": "b48a2407e469899215e2bc99d48d16441f5a872c9c2f621de3957422c8e30c0c",
+  "internalRelativeTarget": 1e-10,
+  "absoluteTarget": 0,
+  "productionFullScientificAcceptance": false,
+  "separated": {
+    "beforeGauss2": [
+      {
+        "r": 2.0,
+        "z": 0.0,
+        "lower": -1.1311305668751044,
+        "upper": -1.1311305666489453,
+        "error": 1.1307954572714608e-10,
+        "boxes": 5761.0,
+        "range_evaluations": 11521.0,
+        "kernel_enclosures": 115210.0,
+        "agm_iterations": 485941.0
+      },
+      {
+        "r": 0.75,
+        "z": 2.0,
+        "lower": -1.1005902388232087,
+        "upper": -1.1005902386031456,
+        "error": 1.1003153943534018e-10,
+        "boxes": 2985.0,
+        "range_evaluations": 5969.0,
+        "kernel_enclosures": 59690.0,
+        "agm_iterations": 238727.0
+      },
+      {
+        "r": 0.01,
+        "z": 2.0,
+        "lower": -1.1669888613941326,
+        "upper": -1.166988861160915,
+        "error": 1.1660894472242947e-10,
+        "boxes": 2377.0,
+        "range_evaluations": 4753.0,
+        "kernel_enclosures": 47530.0,
+        "agm_iterations": 128364.0
+      },
+      {
+        "r": 2.0,
+        "z": -0.7,
+        "lower": -1.01330737088948,
+        "upper": -1.0133073706869038,
+        "error": 1.0128808902720722e-10,
+        "boxes": 4007.0,
+        "range_evaluations": 8013.0,
+        "kernel_enclosures": 80130.0,
+        "agm_iterations": 321977.0
+      }
+    ],
+    "afterGauss2Gauss3Intersection": [
+      {
+        "r": 2.0,
+        "z": 0.0,
+        "lower": -1.1311305668762228,
+        "upper": -1.131130566658062,
+        "error": 1.0908052239244627e-10,
+        "boxes": 104.0,
+        "range_evaluations": 207.0,
+        "kernel_enclosures": 5796.0,
+        "agm_iterations": 24261.0
+      },
+      {
+        "r": 0.75,
+        "z": 2.0,
+        "lower": -1.1005902388345288,
+        "upper": -1.100590238616525,
+        "error": 1.0900191860230281e-10,
+        "boxes": 58.0,
+        "range_evaluations": 115.0,
+        "kernel_enclosures": 3220.0,
+        "agm_iterations": 12852.0
+      },
+      {
+        "r": 0.01,
+        "z": 2.0,
+        "lower": -1.166988861433776,
+        "upper": -1.166988861204891,
+        "error": 1.1444245551217592e-10,
+        "boxes": 44.0,
+        "range_evaluations": 87.0,
+        "kernel_enclosures": 2436.0,
+        "agm_iterations": 7080.0
+      },
+      {
+        "r": 2.0,
+        "z": -0.7,
+        "lower": -1.0133073708801603,
+        "upper": -1.013307370681189,
+        "error": 9.948575296903074e-11,
+        "boxes": 76.0,
+        "range_evaluations": 151.0,
+        "kernel_enclosures": 4228.0,
+        "agm_iterations": 16985.0
+      }
+    ]
+  },
+  "contact": {
+    "sameMaximumBoxes": 16384,
+    "beforeGauss3": [
+      {
+        "r": 1.0,
+        "z": 0.0,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.3577669945168903e-07,
+          "upper": -1.3577668121189211e-07,
+          "value": -1.3577669033179056e-07,
+          "absolute_error": 9.119898472773577e-15,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 327140,
+          "agm_iterations": 1832938
+        },
+        "upperErrorReductionFraction": 0.04023213254859681
+      },
+      {
+        "r": 1.0,
+        "z": 0.375,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.1921046356956044e-07,
+          "upper": -1.1921046035564602e-07,
+          "value": -1.1921046196260323e-07,
+          "absolute_error": 1.6069572115014258e-15,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 327390,
+          "agm_iterations": 1808132
+        },
+        "upperErrorReductionFraction": 0.03886728714736365
+      },
+      {
+        "r": 0.75,
+        "z": 0.0,
+        "exitCode": 0,
+        "output": {
+          "status": 4,
+          "lower": -1.6471533228941902e-07,
+          "upper": -1.647152512248736e-07,
+          "value": -1.6471529175714631e-07,
+          "absolute_error": 4.053227271100882e-14,
+          "boxes": 16384,
+          "range_evaluations": 32767,
+          "kernel_enclosures": 326720,
+          "agm_iterations": 1823845
+        },
+        "upperErrorReductionFraction": 0.0716173184180805
+      }
+    ],
+    "afterGauss3": [
+      {
+        "r": 1.0,
+        "z": 0.0,
+        "lower": -1.3577669033924882e-07,
+        "upper": -1.3577669031210337e-07,
+        "error": 1.3572723597904902e-17,
+        "boxes": 8007.0,
+        "range_evaluations": 16013.0,
+        "kernel_enclosures": 446600.0,
+        "agm_iterations": 2577824.0
+      },
+      {
+        "r": 1.0,
+        "z": 0.375,
+        "lower": -1.1921046197245645e-07,
+        "upper": -1.1921046194863182e-07,
+        "error": 1.191232726304966e-17,
+        "boxes": 3733.0,
+        "range_evaluations": 7465.0,
+        "kernel_enclosures": 208152.0,
+        "agm_iterations": 1182746.0
+      },
+      {
+        "r": 0.75,
+        "z": 0.0,
+        "lower": -1.6471529175688556e-07,
+        "upper": -1.6471529172394275e-07,
+        "error": 1.6471402692307127e-17,
+        "boxes": 15664.0,
+        "range_evaluations": 31327.0,
+        "kernel_enclosures": 873600.0,
+        "agm_iterations": 5048985.0
+      }
+    ],
+    "statusChange": "3 WorkLimit -> 3 Bounded at same original target"
+  },
+  "contactReference": {
+    "status": "PASS",
+    "contactCases": 3,
+    "rows": [
+      {
+        "sourceObserverExactHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.8000000000000p-2",
+          "0x1.8000000000000p-2",
+          "0x1.0000000000000p+0",
+          "0x0.0p+0"
+        ],
+        "enclosure": {
+          "status": 0,
+          "lower": -1.3577669033924882e-07,
+          "upper": -1.3577669031210337e-07,
+          "value": -1.357766903256761e-07,
+          "absolute_error": 1.3572723597904902e-17,
+          "boxes": 8007,
+          "range_evaluations": 16013,
+          "kernel_enclosures": 446600,
+          "agm_iterations": 2577824
+        },
+        "duffy64Precision80": "-1.3577669032576413934560630125292454981838750828977917584837486946632369781624432E-7",
+        "duffy96Precision100": "-1.357766903256854868146801778666266932203449529650417974752807865635525443862969809848438470400431223E-7"
+      },
+      {
+        "sourceObserverExactHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.8000000000000p-2",
+          "0x1.8000000000000p-2",
+          "0x1.0000000000000p+0",
+          "0x1.8000000000000p-2"
+        ],
+        "enclosure": {
+          "status": 0,
+          "lower": -1.1921046197245645e-07,
+          "upper": -1.1921046194863182e-07,
+          "value": -1.1921046196054415e-07,
+          "absolute_error": 1.191232726304966e-17,
+          "boxes": 3733,
+          "range_evaluations": 7465,
+          "kernel_enclosures": 208152,
+          "agm_iterations": 1182746
+        },
+        "duffy64Precision80": "-1.1921046196063072932681005546231420656987926707557312381000608999890059804391441E-7",
+        "duffy96Precision100": "-1.192104619605520818580473836177774395908284905705811143821959864339869829179874654214287370583397033E-7"
+      },
+      {
+        "sourceObserverExactHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.8000000000000p-2",
+          "0x1.8000000000000p-2",
+          "0x1.8000000000000p-1",
+          "0x0.0p+0"
+        ],
+        "enclosure": {
+          "status": 0,
+          "lower": -1.6471529175688556e-07,
+          "upper": -1.6471529172394275e-07,
+          "value": -1.6471529174041416e-07,
+          "absolute_error": 1.6471402692307127e-17,
+          "boxes": 15664,
+          "range_evaluations": 31327,
+          "kernel_enclosures": 873600,
+          "agm_iterations": 5048985
+        },
+        "duffy64Precision80": "-1.6471529174041465088676151659923624355805173727195274167638509873144646688137601E-7",
+        "duffy96Precision100": "-1.647152917404146578875313049964932731136531033532232240851308392971714731422818986801008027809237822E-7"
+      }
+    ],
+    "singularSubtraction": "exact integral -(t/2)*log(t)=1/8 per triangle",
+    "scope": "independent singularity-subtracted Duffy/Decimal AGM containment; differences not certified reference error or full RZ scientific acceptance"
+  },
+  "separatedReference": {
+    "status": "PASS",
+    "cases": 4,
+    "reference": "independent full-azimuth 3D Newton product quadrature",
+    "orders": [
+      12,
+      16
+    ],
+    "decimalPrecisions": [
+      80,
+      100
+    ],
+    "sampleDomain": "separated",
+    "angularSamples": [
+      128,
+      256
+    ],
+    "scope": "diagnostic containment, not certified quadrature error or full RZ scientific acceptance",
+    "rows": [
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.0000000000000p+1",
+          "0x0.0p+0"
+        ],
+        "newtonOrder12Precision80": "-7.5495047417708233465779181324587139714691551732550635358426811064024650696945558E-8",
+        "newtonOrder16Precision100": "-7.549504741770823347628317740066271080772128762415162300637097240442054714148856585430077445672609274E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -7.549504742501975e-08,
+          "upper": -7.549504741045902e-08,
+          "value": -7.549504741773938e-08,
+          "absolute_error": 7.28036729565892e-18,
+          "boxes": 104,
+          "range_evaluations": 207,
+          "kernel_enclosures": 5796,
+          "agm_iterations": 24261
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.8000000000000p-1",
+          "0x1.0000000000000p+1"
+        ],
+        "newtonOrder12Precision80": "-7.3456694303420069637328190225381889667863387259626292293342695396500020026144939E-8",
+        "newtonOrder16Precision100": "-7.345669430342006963732789380969450745641013506079066044394876302521350645539401354581172034160193121E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -7.345669431053295e-08,
+          "upper": -7.345669429598272e-08,
+          "value": -7.345669430325783e-08,
+          "absolute_error": 7.275126279297785e-18,
+          "boxes": 58,
+          "range_evaluations": 115,
+          "kernel_enclosures": 3220,
+          "agm_iterations": 12852
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.47ae147ae147bp-7",
+          "0x1.0000000000000p+1"
+        ],
+        "newtonOrder12Precision80": "-7.7888337570144939805284053417549883437851060119245051898764619600929776135424872E-8",
+        "newtonOrder16Precision100": "-7.788833757014493980528454829474269559321731728537762473872335111334705201247562575517181499174742825E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -7.788833757867452e-08,
+          "upper": -7.788833756339804e-08,
+          "value": -7.788833757103628e-08,
+          "absolute_error": 7.638238715873862e-18,
+          "boxes": 44,
+          "range_evaluations": 87,
+          "kernel_enclosures": 2436,
+          "agm_iterations": 7080
+        }
+      },
+      {
+        "exactInputHex": [
+          "0x1.0000000000000p-1",
+          "0x1.0000000000000p+0",
+          "-0x1.d70a3d70a3d71p-3",
+          "0x1.6b851eb851eb8p-1",
+          "0x1.0000000000000p+0",
+          "0x1.0000000000000p+1",
+          "-0x1.6666666666666p-1"
+        ],
+        "newtonOrder12Precision80": "-6.7631173848142899394621962220907694131681820736511029332379335945015513486756448E-8",
+        "newtonOrder16Precision100": "-6.763117384814289939455888084575313387997458248709982737372276659604799985177746078076464100799578673E-8",
+        "enclosure": {
+          "status": 0,
+          "lower": -6.763117385465453e-08,
+          "upper": -6.763117384137459e-08,
+          "value": -6.763117384801456e-08,
+          "absolute_error": 6.639970682865266e-18,
+          "boxes": 76,
+          "range_evaluations": 151,
+          "kernel_enclosures": 4228,
+          "agm_iterations": 16985
+        }
+      }
+    ]
+  },
+  "referenceDefaultRegression": {
+    "primitiveCases": 20,
+    "contactCases": 3,
+    "status": "PASS",
+    "axisSubtractionDomain": "rejected as inappropriate"
+  },
+  "checks": [
+    {
+      "mode": "ring-contact-gauss3",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-separated-gauss",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-contact-log",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-native-face",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-far-leaf",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-axis-enclosure",
+      "exitCode": 0
+    },
+    {
+      "mode": "boundary-ledger",
+      "exitCode": 0
+    },
+    {
+      "mode": "ctest",
+      "exitCode": 0
+    },
+    {
+      "mode": "architecture",
+      "exitCode": 0
+    },
+    {
+      "mode": "separated-reference",
+      "exitCode": 0
+    },
+    {
+      "mode": "contact-reference",
+      "exitCode": 0
+    }
+  ],
+  "ctestPassed": 4,
+  "proof": "Gauss3 exact nodes +/-sqrt(3/5),0 and rational weights 5/9,8/9; sixth derivative reliable remainder area*pi/5600*((dr/d)^6*(1+rh/d)+(dz/d)^6*rh/d)",
+  "referenceScope": "Independently singularity-subtracted Duffy/Decimal AGM containment, no production kernel import; order/precision differences are not certified reference error",
+  "matchingJensReceipt": {
+    "status": "PASS",
+    "evolutions": 9,
+    "restarts": 9,
+    "binarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+    "rerunThisNode": false,
+    "reason": "Actual production ELF unchanged after affected-target rebuild"
+  },
+  "limitations": [
+    "Matched mathematical source points, not arbitrary-source/global full RZ science",
+    "General parent moment/translation certificate pending",
+    "Full coefficient/assembly/residual original-user request ledger pending",
+    "Actual AMR source-publication/consumer acceptance pending",
+    "No CUDA/performance/long-run acceptance"
+  ],
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-gauss3-budget-20261005"
+}

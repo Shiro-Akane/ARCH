@@ -15,12 +15,13 @@ repository root:
 
 ```bash
 python3 tools/audit_architecture.py .
-python3 -m unittest discover -s tests/tooling -p 'test_*.py'
+python3 tools/check_documentation.py .
+python3 -B tests/tooling
 ```
 
 [audit_architecture.py](audit_architecture.py) checks shared implementation and
 include boundaries; the Python suite tests tool behavior with controlled inputs.
-Neither command runs a simulation or establishes physical accuracy. Full
+These entries do not run a simulation or establish physical accuracy. Full
 resource-guard coverage requires Linux `/proc`, pidfd and child-subreaper
 support, including Python's `os.pidfd_open` interface.
 
@@ -35,6 +36,10 @@ python3 tools/validate_cuda_amr_restart.py --unit-test
 These modes check the checking protocol only. They do not produce a CPU/CUDA
 trajectory or replace field comparisons.
 
+[check_documentation.py](check_documentation.py) checks current Markdown destinations
+and heading anchors; historical/frozen evidence remains on its recorded basis.
+The complete Tooling entry rejects empty, failed or skipped discovery.
+
 ## Check CI test reports
 
 [check_ci_results.py](check_ci_results.py) verifies the CPU CI profile's CTest
@@ -42,7 +47,9 @@ inventory and, when provided, its JUnit report. It rejects missing coverage
 anchors, duplicate or omitted results, failures and skips. It reads CTest's
 pass/fail decisions rather than recalculating numerical tolerances. The
 [workflow guide](../.github/workflows/README.md) describes its use; this report
-check does not generate scientific Validation evidence.
+check does not generate scientific Validation evidence. The same owner reports
+conservative `native`/`studio` applicability using `--scope`, `--base` and `--head`;
+`NOT_APPLICABLE` never represents an executed test pass.
 
 ## Run the application and compare results
 
@@ -51,7 +58,7 @@ Use a testing-enabled build containing ARCH and
 CUDA burning additionally needs cuDSS and compiled support for the selected
 network/EOS combination. A generated package is needed only when the case uses
 a custom network; built-in networks can also use the sparse provider.
-See [test setup](../tests/README.md#add-cuda-and-its-sparse-provider).
+See [test setup](../tests/README.md#cuda-and-optional-providers).
 
 - [smoke_cuda_amr_runtime.py](smoke_cuda_amr_runtime.py): short complete-program
   runs; start with the [smoke guide](../tests/smoke/README.md).
@@ -63,6 +70,12 @@ See [test setup](../tests/README.md#add-cuda-and-its-sparse-provider).
   physical time; same-backend restart still requires strict reproducibility.
 - [qualify_cuda_amr_evidence.py](qualify_cuda_amr_evidence.py): review recorded
   matrices against their manifests, source/build identities and final artifacts.
+
+For a fixed level-zero grid, ARCH skips empty regrid transactions. The backend
+runner identifies this from the actual run parameters and marks the regrid
+measurement as not applicable; it does not invent a timing or a zero counter.
+Dynamic AMR still requires valid transaction measurements. Field, conservation
+and scientific-reference checks apply in both cases.
 
 ARCH and the comparator must come from the same build. Choose an absent or empty
 output directory under a local build area or temporary directory; runners retain

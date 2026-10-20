@@ -1,0 +1,71 @@
+{
+  "observedAt": "2026-10-03T05:59:36.378396+00:00",
+  "sourceHead": "2b4fc090628eac09a3d591e4e2039ad30066637c",
+  "runId": "47e96a35-86aa-4ec1-9c81-3fa6c022dddf",
+  "state": {
+    "runId": "47e96a35-86aa-4ec1-9c81-3fa6c022dddf",
+    "state": "succeeded",
+    "workerPid": 30264,
+    "workerStartTicks": "820722",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T05:58:06.885Z",
+    "processId": 30276,
+    "processStartTicks": "820730",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T05:58:25.243Z"
+  },
+  "nativeStop": "NOT VERIFIED: clicked after observing running; final record proves natural success, not SIGTERM",
+  "workerAfter": null,
+  "coreAfter": null,
+  "ownedAfter": [
+    {
+      "pid": 14246,
+      "startTicks": "279169",
+      "ppid": 14241,
+      "pgrp": 14246
+    },
+    {
+      "pid": 14292,
+      "startTicks": "279179",
+      "ppid": 14246,
+      "pgrp": 14246
+    },
+    {
+      "pid": 14445,
+      "startTicks": "279622",
+      "ppid": 14292,
+      "pgrp": 14445
+    }
+  ],
+  "ownedBefore": {
+    "owned": [
+      {
+        "pid": 14246,
+        "ppid": 14241,
+        "pgrp": 14246,
+        "startTicks": "279169"
+      },
+      {
+        "pid": 14292,
+        "ppid": 14246,
+        "pgrp": 14246,
+        "startTicks": "279179"
+      },
+      {
+        "pid": 14445,
+        "ppid": 14292,
+        "pgrp": 14445,
+        "startTicks": "279622"
+      }
+    ],
+    "source": "2b4fc090628eac09a3d591e4e2039ad30066637c",
+    "inputSha": "3379a7203b7dabc0a842b9582c313d9904b804d0e4f4f66a8a6aaa25419ac3f3"
+  },
+  "inputSha256": "3379a7203b7dabc0a842b9582c313d9904b804d0e4f4f66a8a6aaa25419ac3f3",
+  "frozenInputMatchesSaved": true,
+  "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+  "localRawData": "studio/.local/integration/native-stop-focused-35ee6c5c-4c77-4a1a-b5bd-3ef84821e38f",
+  "rawUploaded": false
+}

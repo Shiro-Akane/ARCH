@@ -20,6 +20,18 @@
       }
     },
     {
+      "name": "studio-cpu-release",
+      "displayName": "CPU application and Linux Studio desktop (Release)",
+      "inherits": "cpu-release",
+      "binaryDir": "${sourceDir}/build-studio-cpu",
+      "cacheVariables": {
+        "ARCH_BUILD_STUDIO": "ON",
+        "ARCH_EMIT_LINK_DEPENDENCIES": "ON",
+        "ARCH_RETAIN_LTO_LINK_INPUTS": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build-studio-cpu/bin"
+      }
+    },
+    {
       "name": "cuda-release",
       "displayName": "CUDA application (Release, visible GPU)",
       "generator": "Ninja",

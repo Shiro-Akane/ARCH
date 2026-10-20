@@ -1,0 +1,29 @@
+{
+  "baseline": "ae71df6df8481fab723b76271e972cf1951148b7",
+  "operation": "local pinned hyperslab audit",
+  "maximumSamples": 512,
+  "maximumInputBytes": 67108864,
+  "productionEndpoint": false,
+  "isolatedSliceWorkerIntegrated": false,
+  "renderEligible": false,
+  "completion": "unknown",
+  "scientificIdentity": "unavailable",
+  "tests": {
+    "slice": 5,
+    "fullStudioHost": 265,
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "realFixture": {
+    "sha256": "dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+    "dimension": 1,
+    "time": 0.15,
+    "field": "DENS",
+    "sampleCount": 8,
+    "allFinite": true
+  },
+  "knownBuildWarning": "existing bundle exceeds 500 kB",
+  "scientificEvolutionExecuted": false
+}

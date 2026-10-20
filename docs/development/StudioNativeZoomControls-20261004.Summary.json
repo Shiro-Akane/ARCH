@@ -1,0 +1,118 @@
+{
+  "baselineCommit": "2d340a3edb087e2e436236368d18c297f46471bd",
+  "sourceStateAtUat": "PhysicalPlot dirty zoom controls only",
+  "physicalPlotSha256": "e521a60d22c85e6251c02411e3c5c8e1fe3c2cfd17d8d0788844c7e106130d24",
+  "asset": "index-B9q5BL2w.js",
+  "configSha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "checks": [
+    {
+      "name": "test",
+      "exitCode": 0,
+      "seconds": 6.5936443930113455
+    },
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "seconds": 6.285020865994738
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "seconds": 3.6758968829963123
+    }
+  ],
+  "nodeTests": {
+    "pass": 334,
+    "fail": 0,
+    "skip": 0
+  },
+  "native": {
+    "windowId": 2623886,
+    "production": true,
+    "dimension": 1,
+    "case": "Sod",
+    "zoomIn": {
+      "xRangeBefore": [
+        0,
+        1
+      ],
+      "xRangeAfter": [
+        0.1,
+        0.9
+      ],
+      "fieldYBefore": [
+        0.08125,
+        1.04375
+      ],
+      "fieldYAfter": [
+        0.1775,
+        0.9475
+      ]
+    },
+    "zoomOut": {
+      "xRange": [
+        0,
+        1
+      ],
+      "fieldYRange": [
+        0.08125,
+        1.04375
+      ],
+      "selectedIndexRetained": 234,
+      "xPos": 0.5,
+      "displayedInspectorValues": [
+        1,
+        1,
+        2.5,
+        0,
+        2.5,
+        2.5
+      ]
+    },
+    "hitBeforeDrag": {
+      "index": 188,
+      "x": 0.3681640625,
+      "click": [
+        1000,
+        800
+      ]
+    },
+    "dragAttempt": {
+      "from": [
+        1000,
+        800
+      ],
+      "to": [
+        1200,
+        800
+      ],
+      "xRangeUnchanged": [
+        0.1,
+        0.9
+      ],
+      "selectedIndexAfter": 234,
+      "xAfter": 0.4580078125,
+      "status": "PAN NOT VERIFIED; observed endpoint selection, not translation"
+    },
+    "configRevisionPrefix": "9c8ba5b67718",
+    "buildIdPrefix": "92d429da",
+    "startupAutomaticPreviewObserved": true,
+    "updatePreviewClicked": false,
+    "saveOrRunClicked": false,
+    "amrGenerated": false,
+    "closeExitCode": 0,
+    "ownedProcessCount": 8,
+    "allExactOwnedProcessesGone": true,
+    "inputAndBinaryUnchanged": true,
+    "managedWorktreeClean": true,
+    "configuredOutputAbsent": true
+  },
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-host-clean-build-20261004/studio/.local/integration/native-sod-pan-controls-20261004",
+  "limitations": [
+    "Native 2D zoom controls not tested in this turn; existing scale/grid tests cover shared numerical math only.",
+    "Native wheel remains unverified; drag did not produce pan, cause not distinguished between WSL/Computer Use input and application.",
+    "No full scientific, CPU/CUDA gate or O9 completion.",
+    "Inspector values recorded here are rendered decimal text, not a full FP64 bit comparison."
+  ]
+}

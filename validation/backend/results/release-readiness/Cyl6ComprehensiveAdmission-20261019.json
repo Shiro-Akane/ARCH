@@ -1,0 +1,1901 @@
+{
+  "phase": "CYL-6",
+  "decision": "ACCEPT",
+  "status": "CLOSED_IN_DECLARED_SCOPE",
+  "client_date": "2026-10-19",
+  "recorded_at_utc": "2026-10-18T19:32:37.349533+00:00",
+  "worktree": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "head": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "contains_authorized_uncommitted_changes": true,
+  "acceptance_owner": "Codex Root independent numerical and integration acceptance; worker success is not science acceptance",
+  "scope": "Native cylindrical-rz-pwc declared methods/EOS/necessary coupling admission. Small high-pressure near-zero momentum fixture remains NOT_MET, not certified by scaled inputs. Not arbitrary parameter products or full release Device qualification.",
+  "contracts": {
+    "chart": "cylindrical-rz-pwc revision1",
+    "spatial_axes": [
+      "r",
+      "z",
+      "inactive"
+    ],
+    "physical_momenta": [
+      "rho*ur",
+      "rho*uz",
+      "rho*uphi"
+    ],
+    "angular_momentum": "sum(mom_phi*W)",
+    "J_normalized_budget": "1e-12 unchanged; residual DeltaJ+outward_torque_impulse-body_torque_impulse; denominator initial integralabs(mom_phi)*W +abs(outward impulse)+abs(body impulse); zero denominator requires zero residual",
+    "geometry_gravity_decoupled": true,
+    "O7_active_missing_or_invalid_rejected": true,
+    "old_Rz_facilities_restored": false,
+    "scientific_tolerances_reduced": false,
+    "REL4_started": false
+  },
+  "source": {
+    "entry_files": 1208,
+    "entry_manifest": {
+      "path": "output/release/cyl6-20261019/entry-freeze.json",
+      "sha256": "bbab154ffad575d8b8d86d8202b2a0d4d942c0b476f6a285b94a1f843ad51f54"
+    },
+    "current_source_manifest_digest": "4eaf04eb4b1368934ada0d3c263cb70e0a8ffb8d55824d18b22b880180fea26e",
+    "changed_from_CYL5": [
+      {
+        "path": "simulation/DiffusionMode/DiffusionMode.cpp",
+        "entry_sha256": "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842",
+        "accepted_sha256": "07e253d8d7ede7f42fb65531b6298c0c1dd27ad0f9b701ce2f57a48694383e26"
+      },
+      {
+        "path": "simulation/SmoothAdvection/SmoothAdvection.cpp",
+        "entry_sha256": "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a",
+        "accepted_sha256": "21aaf2c1f2b1dad3ab37ea9aac27b95125b7cb96c0e7c807d29de72ae98edf83"
+      },
+      {
+        "path": "src/core/config/InputResolution.h",
+        "entry_sha256": "189dc825997ef33b94a8a61306f92b2debf59cdc96d91ed0ff5743f81f3a9997",
+        "accepted_sha256": "d5d6a00ef48266df2249ee65808c2a27988ad197a893305fb94333b4944b3dda"
+      },
+      {
+        "path": "src/driver/io/DriverIO.cpp",
+        "entry_sha256": "a4eabae445e6602b1830ae771814b1f84a7e4180e59c9442032a4c29998493d7",
+        "accepted_sha256": "8aef9e155361f8b2a8b8b33fe21f62cea9af3078305f183d44b02f04853471ab"
+      },
+      {
+        "path": "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
+        "entry_sha256": "9a4b66c9f436da62d76b9fcdc2de6c07573f6bd34664e71dc0d4343419a5acf9",
+        "accepted_sha256": "7bd838e6cf7a38ee20392cedd30a9c3a09be7c114ff72b3fc03ceee8780abdee"
+      },
+      {
+        "path": "src/physics/eos/eosdispatch.cpp",
+        "entry_sha256": "7758ee7e4680999816ae86c79ffa9e3792856231960508a93e408221b6ea03c6",
+        "accepted_sha256": "95d3eab14ab97d3fe1976907b34c6d14cb1c9ebe5bc3a56d19d36af352e6fd1c"
+      },
+      {
+        "path": "tests/host/amr/test_user_physical_boundary.cpp",
+        "entry_sha256": "d858ab4599475dac842062c449b596a9ef6513221e346760db664b27497b5817",
+        "accepted_sha256": "dd7b1edf4e88ef5e66ef3f84f755aa033c1fc8ee1ce62d05a3f72e24d8c0af05"
+      },
+      {
+        "path": "tests/host/core/test_input_resolution.cpp",
+        "entry_sha256": "cc47f13fe9d8ba7a7ae027a655d69616442fb5d39eb711b44499459d3018d35d",
+        "accepted_sha256": "a89dedd8846f042bb230957e4cd0a32ab6cb0c1eb0d380ab157df6a73f233817"
+      },
+      {
+        "path": "tests/host/eos/TabularCompletionRegression.cpp",
+        "entry_sha256": "b0cfb7b20c1d02bac7f1f2d557834a89046839cd76289154f5e9318a3c9ef661",
+        "accepted_sha256": "ddf3705f364ba6b1a3c74cb90e9017bb8932422308b5d10f303b985296dc4be3"
+      },
+      {
+        "path": "tests/host/io/test_cuda_single_level_validation.cpp",
+        "entry_sha256": "7a43a2492e3c4a2b81e835b7a0789618337a797f7072b67b899b0aab754deac9",
+        "accepted_sha256": "00533feae0853d52f33ab4c6cf283566f671be7136d7953517afc5c6eeaea5cf"
+      },
+      {
+        "path": "tests/tooling/validation/test_validate_backend_results.py",
+        "entry_sha256": "6b2d47ea2e14c0cfdc1a11b17998d9bc2d7217c073bf3e7cbfef05c500b4d5bd",
+        "accepted_sha256": "74861f8d87881f95355f617a2eb7180c4d8227867d556086fb7b7a1844597d14"
+      },
+      {
+        "path": "tools/validate_backend_results.py",
+        "entry_sha256": "1fa11aa4a9eef37abaecbd51a2e9e0504a648eecfbdd86e2dc0edbe9709d83cb",
+        "accepted_sha256": "9ad93843c9bcbb5a08a148026012cff3b5e8fdc2d5815b079701d33bb935c21f"
+      },
+      {
+        "path": "validation/backend/cases.json",
+        "entry_sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877",
+        "accepted_sha256": "5970336ab7a488d94e3e3c4849811934638b82a2ba584505a499175b796f4d03"
+      }
+    ],
+    "production_changed_existing_files": [
+      {
+        "path": "simulation/DiffusionMode/DiffusionMode.cpp",
+        "entry_sha256": "99adddc7019cb1d2cf4de86b2a08c93f4bebacdef4faff71e8a6353b375bc842",
+        "accepted_sha256": "07e253d8d7ede7f42fb65531b6298c0c1dd27ad0f9b701ce2f57a48694383e26"
+      },
+      {
+        "path": "simulation/SmoothAdvection/SmoothAdvection.cpp",
+        "entry_sha256": "1c6e80c5b542c33253d41f2afd8e28ca8544443573d5db73235cda65160e144a",
+        "accepted_sha256": "21aaf2c1f2b1dad3ab37ea9aac27b95125b7cb96c0e7c807d29de72ae98edf83"
+      },
+      {
+        "path": "src/core/config/InputResolution.h",
+        "entry_sha256": "189dc825997ef33b94a8a61306f92b2debf59cdc96d91ed0ff5743f81f3a9997",
+        "accepted_sha256": "d5d6a00ef48266df2249ee65808c2a27988ad197a893305fb94333b4944b3dda"
+      },
+      {
+        "path": "src/driver/io/DriverIO.cpp",
+        "entry_sha256": "a4eabae445e6602b1830ae771814b1f84a7e4180e59c9442032a4c29998493d7",
+        "accepted_sha256": "8aef9e155361f8b2a8b8b33fe21f62cea9af3078305f183d44b02f04853471ab"
+      },
+      {
+        "path": "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
+        "entry_sha256": "9a4b66c9f436da62d76b9fcdc2de6c07573f6bd34664e71dc0d4343419a5acf9",
+        "accepted_sha256": "7bd838e6cf7a38ee20392cedd30a9c3a09be7c114ff72b3fc03ceee8780abdee"
+      },
+      {
+        "path": "src/physics/eos/eosdispatch.cpp",
+        "entry_sha256": "7758ee7e4680999816ae86c79ffa9e3792856231960508a93e408221b6ea03c6",
+        "accepted_sha256": "95d3eab14ab97d3fe1976907b34c6d14cb1c9ebe5bc3a56d19d36af352e6fd1c"
+      }
+    ],
+    "new_production_files": [],
+    "source_reuse_bridge": {
+      "path": "output/release/cyl6-20261019/source-reuse-bridge.json",
+      "sha256": "05b96e95283ac8f93638949d767e5904d09f8df4a31aef54e45cc7da66e2de61"
+    },
+    "new_canonical_inputs": [
+      {
+        "path": "validation/hydro/inputs/cylindrical.par",
+        "sha256": "6ebdb49933884c4d5655c63bc24cef3f8931890d7fb5b61ea84680c731c5fecb"
+      },
+      {
+        "path": "validation/diffusion/inputs/cylindrical.par",
+        "sha256": "29938657a24954897906819896d2a373d4989e0fb06cb20024311dd6c9ccb8a4"
+      }
+    ],
+    "final_scientific_freeze": {
+      "path": "output/release/cyl6-20261019/final-freeze-verification.json",
+      "sha256": "b7fb69febcbfe0b7333ba79b25391e793713007e4ee907cd7183282534d9460f"
+    },
+    "production_file_counts": {
+      "existing_CPP": 5,
+      "existing_configuration_header": 1,
+      "new_production_files": 0
+    },
+    "shared_evolution_math_or_CUDA_kernels_changed": false,
+    "configuration_admission_semantics_fixed": true,
+    "GlobalDefs_fields_added": false
+  },
+  "binaries": {
+    "build-modernization-cpu/bin/ARCH": "a67d13c7df70e74047084250509d810f46b8cb7000d683a1dfccfeb4a7243340",
+    "build-modernization-cuda/bin/ARCH": "f2038db0ea056438c0dd5ccea4de184c5d937cf811ecf397a6be0f056067c253",
+    "build-modernization-cpu/arch_cuda_single_level_validation": "13e91fba6e383a900862ce2e576efe8e36382e0d5096071846384b1e7eed01a3",
+    "build-modernization-cuda/arch_cuda_single_level_validation": "6baf38f677afa00ae35a66deb89906bd60ca97babd9c89c038976e1c9d5e9b5b"
+  },
+  "build_profiles": {
+    "CPU": "Release/GCC13/CUDA OFF/strictFP; current worktree CMake source",
+    "CUDA": "Release/GCC12/NVCC12.3/sm86/strictFP; current worktree CMake source",
+    "scientific_OMP": 4,
+    "heavy_build_j": 2,
+    "CUDA_heavy_pool": 1
+  },
+  "coverage": {
+    "analytic-pcm-runs": {
+      "path": "output/release/cyl6-20261019/analytic-pcm-runs/backend-validation-evidence.json",
+      "sha256": "4bafa2c323cb2eb8254499414943d269b125bf353dfd259aa1aaf7716bf53aa5",
+      "native_cases": 3,
+      "resolution_groups": {
+        "cyl_smooth_pcm": {
+          "resolutions": [
+            64,
+            128,
+            256
+          ],
+          "orders": {
+            "cpu": {
+              "l1": [
+                0.9881608076818591,
+                0.9943505305536745
+              ],
+              "l2": [
+                0.988210151310744,
+                0.9942696102423565
+              ]
+            },
+            "cuda": {
+              "l1": [
+                0.9881608076818591,
+                0.9943505305536745
+              ],
+              "l2": [
+                0.988210151310744,
+                0.9942696102423565
+              ]
+            }
+          }
+        }
+      },
+      "old_execution_identity_retained": true
+    },
+    "analytic-remaining-runs": {
+      "path": "output/release/cyl6-20261019/analytic-remaining-runs/backend-validation-evidence.json",
+      "sha256": "b12b132c8e67d22340e61fc445c9a588395fd1269b43c31dcec99eed9cd40a33",
+      "native_cases": 12,
+      "resolution_groups": {
+        "cyl_smooth_muscl": {
+          "resolutions": [
+            64,
+            128,
+            256
+          ],
+          "orders": {
+            "cpu": {
+              "l1": [
+                2.02135033839508,
+                2.04039605692474
+              ],
+              "l2": [
+                1.807911912541204,
+                1.7716512792280656
+              ]
+            },
+            "cuda": {
+              "l1": [
+                2.02135033839508,
+                2.04039605692474
+              ],
+              "l2": [
+                1.807911912541204,
+                1.7716512792280656
+              ]
+            }
+          }
+        },
+        "cyl_smooth_ppm": {
+          "resolutions": [
+            64,
+            128,
+            256
+          ],
+          "orders": {
+            "cpu": {
+              "l1": [
+                3.9979288501050285,
+                3.999438129584279
+              ],
+              "l2": [
+                3.9983095809217657,
+                3.999496299500943
+              ]
+            },
+            "cuda": {
+              "l1": [
+                3.9979288501050285,
+                3.999438129584279
+              ],
+              "l2": [
+                3.9983095809217657,
+                3.999496299500943
+              ]
+            }
+          }
+        },
+        "cyl_diffusion_rkl2": {
+          "resolutions": [
+            64,
+            128,
+            256
+          ],
+          "orders": {
+            "cpu": {
+              "l1": [
+                1.9996570586253897,
+                1.9999095024724844
+              ],
+              "l2": [
+                1.9992224803940593,
+                1.9998008661019528
+              ]
+            },
+            "cuda": {
+              "l1": [
+                1.9996570587368843,
+                1.9999095025528906
+              ],
+              "l2": [
+                1.9992224805165129,
+                1.999800866214255
+              ]
+            }
+          }
+        }
+      },
+      "old_execution_identity_retained": true
+    },
+    "ideal_helm_methods": {
+      "accepted_pairs": 162,
+      "entries": [
+        {
+          "path": "output/release/cyl6-20261019/matrix-results.json",
+          "sha256": "9800f5ef284d09737673fcfacbecb78820a27185f028c73042bfde702d4e676f"
+        },
+        {
+          "path": "output/release/cyl6-20261019/matrix-completion/matrix-results.json",
+          "sha256": "b61c4ee330bb2593e20afe55790f99636d18b78394fc03cccd29a27d16147b2b"
+        }
+      ],
+      "scope": "Ideal5fluxes x6recon/limiter policies x3RK; Helm4generalEOSfluxes x6x3; failedlaterrows preserved",
+      "source_reuse": {
+        "path": "output/release/cyl6-20261019/source-reuse-bridge.json",
+        "sha256": "05b96e95283ac8f93638949d767e5904d09f8df4a31aef54e45cc7da66e2de61"
+      }
+    },
+    "tabular_methods": {
+      "path": "output/release/cyl6-20261019/polynomial-matrix5/matrix-results.json",
+      "sha256": "48f6a7660219bc92ca83c105bde67f93a32b5342c5c89fa5bfba6d6db76e3a6a",
+      "accepted_pairs_or_cases": 147,
+      "positive_pairs": 144,
+      "negative_pairs": 3,
+      "independent_polynomial_pressure_energy_budget": "2e-12 unchanged",
+      "original_IDs_unique_and_complete": true,
+      "remaining_completion": {
+        "path": "output/release/cyl6-20261019/remaining-methods28/receipt.json",
+        "sha256": "d51adfc04632d99b7a0ef22ec82112c98767ebda757451749def144516f720d6"
+      }
+    },
+    "burn": {
+      "path": "output/release/cyl6-20261019/coupled-burn-results.json",
+      "sha256": "292c98675e7a2a70d6e2d1607718608044e79ec0b0ef620bc92fe09ef414446b",
+      "accepted_pairs_or_cases": 12
+    },
+    "nse": {
+      "path": "output/release/cyl6-20261019/coupled-nse-results.json",
+      "sha256": "57d626ae68a411c078da2e6ec0ad344b5df5d8d863f3225e308fc3f8fe6cdf9e",
+      "accepted_pairs_or_cases": 16
+    },
+    "sparse": {
+      "path": "output/release/cyl6-20261019/coupled-sparse-results.json",
+      "sha256": "492bd9eb9bb10a7a7918b337aa34a7e5619981ece0ca9c2409d482c7415e7228",
+      "accepted_pairs_or_cases": 1
+    },
+    "gravity": {
+      "path": "output/release/cyl6-20261019/coupled-gravity-results.json",
+      "sha256": "f0b61dbb48842d44fa34b92e6163d10b6fd9f039c731039a48a33080b83e2fe0",
+      "accepted_pairs_or_cases": 3
+    },
+    "strong_tabular_burn": {
+      "path": "output/release/cyl6-20261019/uniform-source-isolation/coupled-table-burn-results.json",
+      "sha256": "51fdb9ab6349fca99e7b135e295b41f6519e7bd09a53d533b65069fa2d75c832",
+      "accepted_pairs_or_cases": 8
+    },
+    "EOS_source_families": {
+      "path": "output/release/cyl6-20261019/uniform-source-isolation/source-family-results.json",
+      "sha256": "d8303d6d607851faeb88169ddcdc6cc4d034f6706f80263665aa40635bf786e9",
+      "accepted_pairs_or_cases": 21,
+      "positive_pairs": 12,
+      "negative_pairs": 9,
+      "scope": "Equilibrium manufactured EOSDriver and offline eos2/eos4; four generalEOS fluxes. Historical automatic thermal negatives reached early O7 rejection; current EOS-owner rejection is separately proved by final negative cases, without relabelling old executions."
+    },
+    "current_callbacks": {
+      "path": "output/release/cyl6-20261019/current-interfaces/coupled-user-results.json",
+      "sha256": "d03cc6e5cffb5399e888ede35fb265d81e9d197fcdf7f1312095cf915c04d2bc",
+      "accepted_pairs_or_cases": 2
+    },
+    "current_combined": {
+      "path": "output/release/cyl6-20261019/current-interfaces/coupled-combined-results.json",
+      "sha256": "72336e16b517ab4f6ec9ac46058474efda45ffb72f4a9dd6ffce6a871cd24c9c",
+      "accepted_pairs_or_cases": 1,
+      "transport_scope": "All three flags enabled; existing Helm model supplies automatic thermal transport, viscosity and species constants remain zero. Actual three nonzero constants are qualified separately with Ideal and Tabular."
+    },
+    "AMR_three_diffusions": {
+      "path": "output/release/cyl6-20261019/boundary-budget/results.json",
+      "sha256": "b7747ea7f4dc32f09bdaa43b57b11641c82541a5d8f93272684001a8d53c4c9b",
+      "positive_pairs": 2,
+      "criterion": "original boundary-aware J1e-12; original V mass/energy/species/axial budgets",
+      "physics_changed": false
+    },
+    "retained_models": {
+      "path": "output/release/cyl6-20261019/retained-models/both-results.json",
+      "sha256": "839bbea993fad4e2f1d7852558525e46c8656c8795fc756e05bb08f2514a0ba3",
+      "accepted_pairs_or_cases": 6
+    },
+    "observer_GPU": {
+      "path": "output/release/cyl6-20261019/observer-gpu-off/results.json",
+      "sha256": "c48626fd529fdc37d601337b65de855fefcf85dcbf4e430b161315418d9fa5cb"
+    },
+    "current_fresh": {
+      "path": "output/release/cyl6-20261019/current-combined-fresh/results.json",
+      "sha256": "1b0e0ce08dbbef3ec7979640190a0459cf14fa38a9b0771abaa1693f55861b3b"
+    },
+    "axis_O7_and_1D_golden": {
+      "path": "output/release/cyl6-20261019/axis-and-golden-results.json",
+      "sha256": "85f2c3ada3fbd55a3f7e9a5af10f0e6624bad41c3496703741a2521894f9ed3a"
+    },
+    "weak_eta_rejection": {
+      "path": "output/release/cyl6-20261019/eta-gate-results.json",
+      "sha256": "79933f0b49eae5434ff5a0c44607490a08d6cf62825dfeb3358ab246a286c35b"
+    },
+    "invalid_observer_token": {
+      "path": "output/release/cyl6-20261019/observer-invalid-token/results.json",
+      "sha256": "90fb97a946f62f5543112980056514ab05c6483cc0168f1353dc259785b2680c"
+    },
+    "analytical_summary": {
+      "cases": 15,
+      "actual_CPU_GPU_processes": 126,
+      "original_terminal_time": 0.1
+    },
+    "Tabular_explicit_constant_transport": {
+      "path": "output/release/cyl6-20261019/tabular-transport-admission/all-results.json",
+      "sha256": "a1e36029fe6fc3276cbaf41b1f4b4d659c19218d8aa948b23a4f32781bdd03e3",
+      "accepted_pairs_or_cases": 7,
+      "nu_visc": 0.01,
+      "alpha_therm": 0.01,
+      "D_spec": 0.01,
+      "AMR_phi_indicator_reaches_level1": true,
+      "original_J_budget": "1e-12",
+      "max_J_residual": "4.9082318155299284088e-17",
+      "species_analytic_terminal_time": 0.001,
+      "species_time_scope": "New short Table4D coupling endpoint; not replacement for original t=.1 scientific endpoints",
+      "RKL1_species_Linf": 1.224556305245983e-06,
+      "RKL2_species_L1": 8.030009255553805e-07,
+      "original_species_budgets": "RKL1Linf<=1e-5; RKL2L1<=1e-5; mean error<=1e-12"
+    },
+    "Tabular_transport_O7_negatives": {
+      "path": "output/release/cyl6-20261019/tabular-transport-admission/negatives/results.json",
+      "sha256": "bd6eb8da5884b5ef42eb80b23ddbea22781e425f49c9ee3de9474d4ae22d38df",
+      "accepted_pairs_or_cases": 17,
+      "actual_reject_processes": 34,
+      "scope": "Both ranks missing/negative constants preserve O7 code/key; alpha_therm=0 is valid explicit input then physically rejected for five EOS-view/data routes before H5; no fallback defaults"
+    },
+    "final_application_fresh": {
+      "path": "output/release/cyl6-20261019/post-transport-fresh/results.json",
+      "sha256": "c88d4d66ca9a1a0660b74d90b252d19eb75aaa4ebaa99b47ff2f8ec2b0979a86",
+      "CHK_physical_control_datasets_per_lane": 21,
+      "Plot_physical_grid_datasets_per_lane": 36,
+      "metadata_scope": "Four run-context config fields and current source-manifest identity separately tracked; no CHK build/source/profile gate added"
+    },
+    "strict_byte_audit": {
+      "path": "output/release/cyl6-20261019/strict-byte-audit.json",
+      "sha256": "a53b02e08431844be049d4cf81712a7b583264e147406616ccae86dbfbf9d436"
+    }
+  },
+  "cost": {
+    "current_general_EOS_point": {
+      "path": "output/release/cyl6-20261019/matched-general-eos-cost-common-indicator/results.json",
+      "sha256": "01b2844d4c74a05c9c6edd85e3a17bf150cc1f5b6f955b629f169388c73ba71c",
+      "summary": {
+        "cpu": {
+          "native_rphi_ratio": 0.9975757622263831,
+          "CV": {
+            "native": 0.009742658592431093,
+            "rphi": 0.004794011234489951
+          },
+          "warning_ratio": 2.0,
+          "decision": "PASS_BOUNDED_COST",
+          "scope": "two-sampleABBA fixedwork onegeneralEOSpoint, not stableproduction speedup or all EOS families"
+        },
+        "cuda": {
+          "native_rphi_ratio": 1.126854386603033,
+          "CV": {
+            "native": 0.0012427934071006543,
+            "rphi": 0.0010494394425828407
+          },
+          "warning_ratio": 2.0,
+          "decision": "PASS_BOUNDED_COST",
+          "scope": "two-sampleABBA fixedwork onegeneralEOSpoint, not stableproduction speedup or all EOS families"
+        }
+      }
+    },
+    "two_scale_gate_reused": {
+      "path": "validation/backend/results/release-readiness/Cyl5NativeDevice-20261019.json",
+      "sha256": "def8b109efb55bb8b249d6b0f7da9fb11e002986b33bb1f30dc74d62def61e19"
+    },
+    "raw_baryon_attribution": {
+      "path": "output/release/cyl6-20261019/raw-baryon-rphi-cost/results.json",
+      "sha256": "0abdcad5514f45b97fa6cb7b96832e969215d381de8edac797681230e0033479"
+    },
+    "timing_caution": "Actual GNU and resource-guard intervals separated; reused executions are not new samples. Two-sample cost point is not stable speedup."
+  },
+  "checks": {
+    "decision": "PASS",
+    "backend_tooling": {
+      "count": 46,
+      "source": "tests/tooling/validation/test_validate_backend_results.py"
+    },
+    "architecture": {
+      "count": 129,
+      "audit": "PASS",
+      "final_actual_audit": {
+        "path": "output/release/cyl6-20261019/transport-completion32/receipt.json",
+        "sha256": "e2a38740a60249279d7759e2ea00d6693cc9cbd525694830be8b117b7c6063b9"
+      }
+    },
+    "existing_CPP_contracts": {
+      "count": 2,
+      "names": [
+        "boundary_plan",
+        "amr_flux_surface_plan"
+      ],
+      "timings_seconds": [
+        0.02,
+        0.05
+      ],
+      "stale_retirement_assertion_replaced_in": "tests/host/amr/test_user_physical_boundary.cpp",
+      "unchanged_8_charts": true,
+      "native_positive_normal_and_distance": true,
+      "inactive_phi_negative": true,
+      "evidence": {
+        "path": "output/release/cyl6-20261019/final-affected-tests33/receipt.json",
+        "sha256": "eb598c6d13399ba5c3e0602489a421b49983f7de53b7faeff6a4e41e6bf66ca6"
+      }
+    },
+    "EOS_owner_tests": {
+      "count": 6,
+      "evidence": "eos-owner-checks8/receipt.json",
+      "scope": "Historical f8 Host/realDevice ETA-admission and tabular owner math tests; unchanged numerical owner bodies reused under the source bridge, not rerun or relabelled as final ELF tests."
+    },
+    "proofs": {
+      "final-tooling22/guard.log": "7f63c2b8855311f63d536529e17ea6ca49cf68f7b7a2453b24ee72141a3b006f",
+      "final-interfaces-cost25/guard.log": "7a18dc9af4d462787294d264315c655dbce3e15e5c4c3a31d2f856edb6c9e903",
+      "eos-owner-checks8/guard.log": "8789d914ea59deacb8a8c6783feb1cbcc55bb0d093eb624b27eed0e1c346a43b",
+      "final-affected-tests33/guard.log": "3029d7dbfc02e64080367c474ae6eb44c119b8891d46773b7a231e57a26ad919",
+      "build-transport29/guard.log": "b860e938c4621637122a27d889e84114ccdf4b70a65ddb76709e8bfece7fe5c6",
+      "transport-completion32/guard.log": "d82388653f0ee304457b7c0cd8011064ad6661c2cca3da7bde488e1d19d2ea33"
+    },
+    "acceptance_boundary": "Specific completed test bodies accepted independently. Earlier failed outer windows and child execution-only initial statuses remain intact. Final source/header test rebuild and actual API tests are bound to final binaries; EOS numerical owner leaf tests retain their old execution scope.",
+    "current_configuration_contracts": {
+      "count": 2,
+      "names": [
+        "input_resolution",
+        "configuration_api_contract"
+      ],
+      "timings_seconds": [
+        0.01,
+        15.12
+      ],
+      "proof": {
+        "path": "output/release/cyl6-20261019/build-transport29/receipt.json",
+        "sha256": "fef3e2b4eff574981285cd3fbc216baa50182a2a59374c61c1c92bbb95393734"
+      },
+      "Tabular_explicit_required_constants_and_original_Helm_rules": true
+    },
+    "accepted_current_executables": {
+      "cpu": "a67d13c7df70e74047084250509d810f46b8cb7000d683a1dfccfeb4a7243340",
+      "cuda": "f2038db0ea056438c0dd5ccea4de184c5d937cf811ecf397a6be0f056067c253"
+    },
+    "previous_acceptance": {
+      "path": "output/release/cyl6-20261019/final-check-acceptance.before-transport.json",
+      "sha256": "20ff1f046c99fee1fd371df027264fc018f4215296aeba43f86dd7547a17fe86"
+    }
+  },
+  "reused_prior_receipts": {
+    "validation/backend/results/release-readiness/Cyl3OptionalGravity-20261018.json": "71addcd8ba07642467ca8d848fce0af92637b10f66b85380e86083b8a61605a6",
+    "validation/backend/results/release-readiness/Cyl0ContractAndBaselines-20261018.json": "071bcc046a4ee5f11dbf8be4613068ab03b6283f766820d784319202f78366a3",
+    "validation/backend/results/release-readiness/Cyl4PublicInterfacesAndFresh-20261018.json": "d371b3e2d41c551ba22fd4f53b25e21f11b52326a76df61b3ea418cf07212189",
+    "validation/backend/results/release-readiness/Cyl1SharedGeometry-20261018.json": "a41b3745bd6cc843f2fd426b0ad16f127aaf93be1d11ae109bd34d122c490aa0",
+    "validation/backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json": "962e2169dcc75d6188a6da3295e09829a0c0745a943de056a1990920beb5e5bc",
+    "validation/backend/results/release-readiness/Cyl5NativeDevice-20261019.json": "def8b109efb55bb8b249d6b0f7da9fb11e002986b33bb1f30dc74d62def61e19"
+  },
+  "history": {
+    "locked_files": 155,
+    "unchanged": true,
+    "manifest": {
+      "path": "output/release/cyl6-20261019/history-and-prior-freeze.json",
+      "sha256": "aff89d94415f7d7cda8931ab22daae2e5830cece53a5c217100c3a65566510a5"
+    },
+    "original_FAIL_NOT_MET_GAP_preserved": true
+  },
+  "failed_or_incomplete_attempts_original": [
+    {
+      "path": "output/release/cyl6-20261019/coupled-remaining15/receipt.json",
+      "sha256": "998f0fc606fd9b2715959a30ac66aaaa71c36dd2d407fd6a69ec20e02d5b540f",
+      "stage": "coupled-remaining15",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=25.97\nuser_seconds=24.21\nsystem_seconds=1.33\nmax_process_rss_kib=346184\nexit=1\n",
+      "outer_seconds": 25.910828344000038,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=23 rows=155 valid_rows=155 missing=0 skipped=0 peak_process_rss_kib=164228 peak_process_fd_count=22 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=24 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=838136283 peak_bytes=838136283 samples=25 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22756634624 minimum_free_bytes=22756634624 samples=25 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/cpu-endpoints11/receipt.json",
+      "sha256": "f1810b4d63be214c64b41703703e84e7ee6bf6662c2171e09f53686eff8eb84d",
+      "stage": "cpu-endpoints11",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=48.64\nuser_seconds=52.57\nsystem_seconds=1.80\nmax_process_rss_kib=54044\nexit=1\n",
+      "outer_seconds": 46.7862614340047,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=43 rows=247 valid_rows=247 missing=0 skipped=0 peak_process_rss_kib=53268 peak_process_fd_count=6 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.025 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=44 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=745848257 peak_bytes=745848257 samples=45 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=45 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/current-interfaces19/receipt.json",
+      "sha256": "818905ec85430abfc82681a97bdc97e1b2f6fdb33a4a9220fb466be1db132859",
+      "stage": "current-interfaces19",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=83.20\nuser_seconds=169.24\nsystem_seconds=2.42\nmax_process_rss_kib=346388\nexit=1\n",
+      "outer_seconds": 83.86384564699983,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=78 rows=531 valid_rows=531 missing=0 skipped=0 peak_process_rss_kib=340700 peak_process_fd_count=23 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.128 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=79 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=865375588 peak_bytes=865375588 samples=80 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=80 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-fresh-cost26/receipt.json",
+      "sha256": "3b04bcffb56f48656b9575e33e89ca709019ee33e1107908a8caf8321224f61a",
+      "stage": "final-fresh-cost26",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=121.83\nuser_seconds=123.38\nsystem_seconds=3.94\nmax_process_rss_kib=343996\nexit=1\n",
+      "outer_seconds": 119.35233088300447,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=112 rows=760 valid_rows=760 missing=0 skipped=0 peak_process_rss_kib=343996 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.026 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=113 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=923067102 peak_bytes=923067102 samples=114 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=114 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-full-matrix27/receipt.json",
+      "sha256": "522a22ee0aedd9f69f2dfa55850770667fdda06421eb5bb22be55eb13340a325",
+      "stage": "final-full-matrix27",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 124\nelapsed_seconds=2531.35\nuser_seconds=2508.30\nsystem_seconds=45.83\nmax_process_rss_kib=349312\nexit=124\n",
+      "outer_seconds": 2402.1377302140027,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=2278 rows=13275 valid_rows=13274 missing=1 skipped=1 peak_process_rss_kib=349268 peak_process_fd_count=21 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=1.023 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2279 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1019469246 peak_bytes=1019469246 samples=2280 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22555308032 samples=2280 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-interfaces-cost24/receipt.json",
+      "sha256": "36ed8e0a07aff592339dd17e18aeff67b933cd8d0ebe69bd47004bf05a240e05",
+      "stage": "final-interfaces-cost24",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 8\nelapsed_seconds=19.59\nuser_seconds=50.39\nsystem_seconds=3.06\nmax_process_rss_kib=690924\nexit=8\n",
+      "outer_seconds": 20.86060899899894,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=18 rows=229 valid_rows=228 missing=1 skipped=0 peak_process_rss_kib=666988 peak_process_fd_count=55 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.183 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=19 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=909499794 peak_bytes=909499794 samples=20 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=20 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-interfaces-cost25/receipt.json",
+      "sha256": "70d0b7f781de863c3473baffb6fe6932225197720329493dbbaca64f33120c4d",
+      "stage": "final-interfaces-cost25",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=25.00\nuser_seconds=74.09\nsystem_seconds=1.06\nmax_process_rss_kib=435248\nexit=1\n",
+      "outer_seconds": 26.075784148997627,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=23 rows=179 valid_rows=179 missing=0 skipped=0 peak_process_rss_kib=366004 peak_process_fd_count=32 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.010 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=24 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=912334622 peak_bytes=912334622 samples=25 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=25 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-matrix4/receipt.json",
+      "sha256": "b13458d547d7ef24914c756cb2789a18011742e04c2a6c48e9cb78496977645e",
+      "stage": "public-matrix4",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=75.51\nuser_seconds=60.46\nsystem_seconds=12.12\nmax_process_rss_kib=347928\nexit=1\n",
+      "outer_seconds": 74.2462013819968,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=71 rows=337 valid_rows=336 missing=1 skipped=1 peak_process_rss_kib=347928 peak_process_fd_count=16 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.022 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=72 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=543819366 peak_bytes=543819366 samples=73 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23159296000 minimum_free_bytes=23092187136 samples=73 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-matrix5/receipt.json",
+      "sha256": "a68395aa54533be587604ae220c59934c5b35632d6e6cc2afc2d917a5c49491a",
+      "stage": "public-matrix5",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=461.00\nuser_seconds=404.64\nsystem_seconds=47.22\nmax_process_rss_kib=349456\nexit=1\n",
+      "outer_seconds": 439.0298831820037,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=425 rows=2288 valid_rows=2286 missing=2 skipped=6 peak_process_rss_kib=349456 peak_process_fd_count=22 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.096 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=426 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=676999539 peak_bytes=676999539 samples=427 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23092187136 minimum_free_bytes=22924414976 samples=427 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-polynomial-matrix10/receipt.json",
+      "sha256": "ed2f279cfe76ac17c3ded56f7aa5fe021bd8cef0cbbdc508e581e08607338173",
+      "stage": "public-polynomial-matrix10",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 124\nelapsed_seconds=952.91\nuser_seconds=937.17\nsystem_seconds=22.43\nmax_process_rss_kib=347548\nexit=124\n",
+      "outer_seconds": 902.5501668390061,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=865 rows=5060 valid_rows=5058 missing=2 skipped=0 peak_process_rss_kib=347548 peak_process_fd_count=22 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.284 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=866 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=799821794 peak_bytes=799821794 samples=867 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22790189056 samples=867 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-polynomial-matrix8/receipt.json",
+      "sha256": "ba6dd6290e4467cdabcb8e77a544ebfbdee10bf73c9b852738c86f052129d6d1",
+      "stage": "public-polynomial-matrix8",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.13\nuser_seconds=0.39\nsystem_seconds=0.02\nmax_process_rss_kib=53508\nexit=1\n",
+      "outer_seconds": 2.7472926970003755,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=693126457 peak_bytes=693126457 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-polynomial-matrix9/receipt.json",
+      "sha256": "b30aaeaff3955de0b1400550735d5cb6dfca20b3a0f531b25bd454ba02095d2f",
+      "stage": "public-polynomial-matrix9",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=2.65\nuser_seconds=3.32\nsystem_seconds=0.03\nmax_process_rss_kib=53552\nexit=1\n",
+      "outer_seconds": 4.876357363995339,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=3 rows=13 valid_rows=13 missing=0 skipped=0 peak_process_rss_kib=44864 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=4 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=695137096 peak_bytes=695137096 samples=5 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=5 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/remaining-interfaces18/receipt.json",
+      "sha256": "15ee1ad599ec7063d1ffe12f64532201a1ee21aa768e5c9cb83612d0af0e11ba",
+      "stage": "remaining-interfaces18",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.14\nuser_seconds=0.40\nsystem_seconds=0.02\nmax_process_rss_kib=54780\nexit=1\n",
+      "outer_seconds": 2.9464876569982152,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.017 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=849636607 peak_bytes=849636607 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/remaining-sources21/receipt.json",
+      "sha256": "1e8ab012e827fea9806a8a6bc81e82c9d47557c2b81d1ba5e04d0cc394bb92c5",
+      "stage": "remaining-sources21",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=609.82\nuser_seconds=608.07\nsystem_seconds=14.76\nmax_process_rss_kib=346640\nexit=1\n",
+      "outer_seconds": 589.1528020820042,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=560 rows=3854 valid_rows=3852 missing=2 skipped=0 peak_process_rss_kib=346508 peak_process_fd_count=22 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=3.320 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=561 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=908814331 peak_bytes=908814331 samples=562 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=562 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/retained-cpu14/receipt.json",
+      "sha256": "aca8b55a98dcb88206eaa9b0d492dbd799b227553f9d5a1975f90d6cbbcbba0e",
+      "stage": "retained-cpu14",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.52\nuser_seconds=0.93\nsystem_seconds=0.09\nmax_process_rss_kib=55620\nexit=1\n",
+      "outer_seconds": 3.0870340170004056,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.010 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=790301409 peak_bytes=790301409 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22790197248 minimum_free_bytes=22790197248 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/scaled-source-checks20/receipt.json",
+      "sha256": "3b28076638130449c657a553fc9cc8783e664a9fb54f55801709374afa5aa017",
+      "stage": "scaled-source-checks20",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=318.16\nuser_seconds=323.20\nsystem_seconds=5.34\nmax_process_rss_kib=346552\nexit=1\n",
+      "outer_seconds": 309.1068245379938,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=293 rows=2006 valid_rows=2006 missing=0 skipped=3 peak_process_rss_kib=346512 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.036 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=294 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=882513496 peak_bytes=882513496 samples=295 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=295 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/tabular-edge-step1-7/receipt.json",
+      "sha256": "e60fd82299a10b0d109506874ec44a6d8e66a257e1e0a73c00a9e81be616ae58",
+      "stage": "tabular-edge-step1-7",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=6.02\nuser_seconds=6.80\nsystem_seconds=0.01\nmax_process_rss_kib=33492\nexit=1\n",
+      "outer_seconds": 7.944027315003041,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=6 rows=16 valid_rows=16 missing=0 skipped=0 peak_process_rss_kib=32212 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.002 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=691228924 peak_bytes=691228924 samples=8 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22924414976 minimum_free_bytes=22890860544 samples=8 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/tooling-axial2/receipt.json",
+      "sha256": "28ef42864289e1d57e4da19f7e1ca8994a76264396e034b2ebd9c615cad30a21",
+      "stage": "tooling-axial2",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.84\nuser_seconds=0.75\nsystem_seconds=0.05\nmax_process_rss_kib=57788\nexit=1\n",
+      "outer_seconds": 1.1918618330018944,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=4.328 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=313170343 peak_bytes=313170343 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192854528 minimum_free_bytes=23192854528 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/transport-completion31/receipt.json",
+      "sha256": "cc2a21eb457ced540893b2108a8ca7b9034b3e29cf20cc390923db70bbe08873",
+      "stage": "transport-completion31",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=40.63\nuser_seconds=43.18\nsystem_seconds=1.38\nmax_process_rss_kib=347288\nexit=1\n",
+      "outer_seconds": 42.05170562100102,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=38 rows=248 valid_rows=248 missing=0 skipped=0 peak_process_rss_kib=347288 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.001 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=39 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1343511807 peak_bytes=1343511807 samples=40 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=40 complete=True"
+      ]
+    }
+  ],
+  "limitations": [
+    {
+      "kind": "baseline CPU ELF copy correction",
+      "status": "RECORDED_LIMITATION",
+      "evidence": {
+        "path": "output/release/cyl6-20261019/baseline-copy-correction.json",
+        "sha256": "96d28009a884430602ec909649de45af10d99d779840e540fb308f641653a4b0"
+      },
+      "qualification": "Old CPU ELF was not retained before rebuild. 1D golden is old/new CUDA-build ELF forced CPU at same GCC12, not GCC13CPU A/B."
+    },
+    {
+      "kind": "unexecuted summary-recipe edit recovery",
+      "status": "FROZEN_BYTES_RESTORED",
+      "evidence": {
+        "path": "output/release/cyl6-20261019/assembler-edit-recovery.json",
+        "sha256": "d15a0feb6c2a395ba4ba5ad95a12aa88c398a1c16eb8ceb1e800149f1dbf767d"
+      },
+      "qualification": "Unexecuted aggregate script restored exactly before science window ended; production/source math and inputs unchanged."
+    },
+    {
+      "kind": "near-zero raw momentum parity",
+      "status": "NOT_MET_RETAINED",
+      "source": {
+        "path": "output/release/cyl6-20261019/current-interfaces19/receipt.json",
+        "sha256": "818905ec85430abfc82681a97bdc97e1b2f6fdb33a4a9220fb466be1db132859"
+      },
+      "scaling": {
+        "path": "output/release/cyl6-20261019/uniform-source-isolation/scaling-rationale.json",
+        "sha256": "83aa0ebbcc6bb873de8a8a4ac3afa1c5083d8bcbc44122141eceb8174709d7c5"
+      },
+      "retained_chart_control": {
+        "path": "output/release/cyl6-20261019/zero-pressure-retained-reference/results.json",
+        "sha256": "02eb84904923cadb3d4085a5ec517d85b261f8da250a6e2cd6290d12718a8e29"
+      },
+      "original_gate_and_geometry_audit": {
+        "path": "output/release/cyl6-20261019/nearzero-original-gate-audit.json",
+        "sha256": "0c8ca3807a1e1b9a822d6b2274f00973bb7021ae2f210bde20a728972fc365c3"
+      },
+      "qualification": "large-box uniform-source isolation does not certify the failed smaller input; ordinary-scale rotating/multiphysics cases accepted separately; numerical gates unchanged; original nuclear rtol2e-8/atol1e-12 retained; common cancellation explanation supported, not proven full roundoff bound"
+    },
+    {
+      "kind": "table endpoint positive-fixture domain failure",
+      "status": "FAILED_RETAINED",
+      "evidence": {
+        "path": "output/release/cyl6-20261019/tabular-edge-step1-7/receipt.json",
+        "sha256": "e60fd82299a10b0d109506874ec44a6d8e66a257e1e0a73c00a9e81be616ae58"
+      },
+      "qualification": "No table-domain extrapolation or Ye clipping introduced; exact offending endpoint was not observed. Accepted fixtures use interior declared composition."
+    },
+    {
+      "kind": "full method batch outer timeout",
+      "status": "TRUNCATED_NOT_PASS_RETAINED",
+      "evidence": {
+        "path": "output/release/cyl6-20261019/public-polynomial-matrix10/receipt.json",
+        "sha256": "ed2f279cfe76ac17c3ded56f7aa5fe021bd8cef0cbbdc508e581e08607338173"
+      },
+      "qualification": "Reuse only completed independently accepted child executions; partial child archived and rerun; final matrix required complete."
+    },
+    {
+      "kind": "Gemini language delivery",
+      "status": "FAILED_REJECTED_NONE_ADOPTED",
+      "evidence": {
+        "path": "output/release/cyl6-20261019/collaboration/f2f90edc863a41d088f4d8a923bad964/workflow-feedback.json",
+        "sha256": "d4e122c49e5f002b0b96f5b9ee7a27ee0301b9cf837bc19df8719c90576c1cd0"
+      },
+      "qualification": "Zero-inference nested-lock reproducer; no global Skill/MCP edits and no ineffective repeated inference."
+    },
+    {
+      "kind": "external release extent",
+      "status": "OUT_OF_SCOPE",
+      "qualification": "Real Shen datasets, arbitrary new tabular data, multiGPU and global full Device release matrix are not implied; REL4 not started."
+    },
+    {
+      "kind": "second outer full-method timeout",
+      "status": "TRUNCATED_NOT_PASS_RETAINED",
+      "evidence": [
+        {
+          "path": "output/release/cyl6-20261019/final-full-matrix27/receipt.json",
+          "sha256": "522a22ee0aedd9f69f2dfa55850770667fdda06421eb5bb22be55eb13340a325"
+        },
+        {
+          "path": "output/release/cyl6-20261019/interrupted/window27/completed-results.json",
+          "sha256": "339af74c116170b0112ee8785c57a53fd938fcf2ae21cebdc526e5a4def09a20"
+        },
+        {
+          "path": "output/release/cyl6-20261019/interrupted/window27/retirement.json",
+          "sha256": "fbe1a0730dc41653f034dbf9bbacc0c7b73b7a0ef159b9b8a00a17a372595bd7"
+        }
+      ],
+      "qualification": "2400s outer limit preserved.137 complete rows reused, partial child archived, only10 missing original IDs completed. Final147 IDs unique and complete; no timeout numericalPASS."
+    },
+    {
+      "kind": "initial ineffective AMR fixture",
+      "status": "NOT_AMR_QUALIFIED_RETAINED",
+      "evidence": {
+        "path": "output/release/cyl6-20261019/tabular-transport-admission/amr-trigger-correction.json",
+        "sha256": "09326badf3b744ee7dbdfdec0dbe0e4c631e19c522c4f5bb7e6d2bd5c093cafa"
+      },
+      "qualification": "Gaussian density constant, amp controls species; private input DENS changed to actual native phi velocity VELZ; level1 reached under unchanged numerical gates."
+    },
+    {
+      "kind": "resource observations",
+      "status": "BOUNDED_OBSERVATION",
+      "qualification": "No swap growth or resource-guard stop in completed windows. Missing process rows remain incomplete; observed peaks only, no phase-wide leak-freedom proof. C5 sanitizer scope retained."
+    }
+  ],
+  "attempts": [
+    {
+      "path": "output/release/cyl6-20261019/analytic-pcm3/receipt.json",
+      "sha256": "05431a95793349b09525009fe21c8a06cf2846ce5e2c79e3877bdec845a93f76",
+      "stage": "analytic-pcm3",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=29.99\nuser_seconds=28.55\nsystem_seconds=2.57\nmax_process_rss_kib=167816\nexit=0\n",
+      "outer_seconds": 28.49448589399981,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=28 rows=108 valid_rows=108 missing=0 skipped=0 peak_process_rss_kib=167176 peak_process_fd_count=20 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=62.586 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=29 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=339632003 peak_bytes=339632003 samples=30 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192850432 minimum_free_bytes=23192850432 samples=30 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/analytic-remaining3/receipt.json",
+      "sha256": "bd5b127374abe5a9790a4c16c371e296ddaea850eddb2e81f171e874f6f57d36",
+      "stage": "analytic-remaining3",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=146.76\nuser_seconds=156.29\nsystem_seconds=11.53\nmax_process_rss_kib=187540\nexit=0\n",
+      "outer_seconds": 140.15779911100253,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=138 rows=543 valid_rows=543 missing=0 skipped=1 peak_process_rss_kib=181652 peak_process_fd_count=20 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=1.592 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=139 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=504240424 peak_bytes=504240424 samples=140 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192850432 minimum_free_bytes=23159296000 samples=140 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/axis-and-golden4/receipt.json",
+      "sha256": "d4ab339fccf565b2a882ef89b5cdee35ebb3abb9367bc66fc81112429490a192",
+      "stage": "axis-and-golden4",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=7.23\nuser_seconds=6.82\nsystem_seconds=1.24\nmax_process_rss_kib=337712\nexit=0\n",
+      "outer_seconds": 10.14034920999984,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=8 rows=34 valid_rows=34 missing=0 skipped=0 peak_process_rss_kib=337712 peak_process_fd_count=6 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.023 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=507108298 peak_bytes=507108298 samples=10 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23159296000 minimum_free_bytes=23159296000 samples=10 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/boundary-budget17/receipt.json",
+      "sha256": "cfd4b22bc60586a7d3e9003ca998830b590e9bde512f1f5bfdca6f00c1daedfa",
+      "stage": "boundary-budget17",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=5.63\nuser_seconds=8.43\nsystem_seconds=0.91\nmax_process_rss_kib=346792\nexit=0\n",
+      "outer_seconds": 8.11166093400243,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=6 rows=28 valid_rows=28 missing=0 skipped=0 peak_process_rss_kib=339040 peak_process_fd_count=16 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.199 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=849006744 peak_bytes=849006744 samples=8 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=8 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/build-axis-models1/receipt.json",
+      "sha256": "560168609a9399e8eb7da85f167ae103034b47f977c181b918720000a8002f0a",
+      "stage": "build-axis-models1",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=77.05\nuser_seconds=331.58\nsystem_seconds=13.02\nmax_process_rss_kib=446040\nexit=0\n",
+      "outer_seconds": 72.40459838800598,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=69 rows=1779 valid_rows=1778 missing=1 skipped=169 peak_process_rss_kib=433680 peak_process_fd_count=86 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=9.127 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=70 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=312484470 peak_bytes=312484470 samples=71 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192854528 minimum_free_bytes=23192854528 samples=71 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/build-boundary-observer16/receipt.json",
+      "sha256": "0e2ad45fe1253c6d22fd4149fc089daee7069fd6c751997281b1122b45aecab1",
+      "stage": "build-boundary-observer16",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=70.73\nuser_seconds=293.83\nsystem_seconds=11.37\nmax_process_rss_kib=482124\nexit=0\n",
+      "outer_seconds": 69.49207682800625,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=61 rows=1550 valid_rows=1548 missing=2 skipped=145 peak_process_rss_kib=441164 peak_process_fd_count=86 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=36.949 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=62 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=838882312 peak_bytes=838882312 samples=63 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22756634624 minimum_free_bytes=22588862464 samples=63 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/build-eta-owners8/receipt.json",
+      "sha256": "bacc8d08a19546f12c58623025556cbf4dbcc5ce04bf6cd6e5a219839524d2b6",
+      "stage": "build-eta-owners8",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=118.47\nuser_seconds=384.92\nsystem_seconds=16.92\nmax_process_rss_kib=506776\nexit=0\n",
+      "outer_seconds": 114.89256426099746,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=105 rows=2195 valid_rows=2192 missing=3 skipped=328 peak_process_rss_kib=466840 peak_process_fd_count=210 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=3.041 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=106 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=692813502 peak_bytes=692813502 samples=107 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22890860544 minimum_free_bytes=22857306112 samples=107 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/build-identity3/receipt.json",
+      "sha256": "552c73a6a35cf9ba53590890487ec07c47932ebda604cae8e1576861e3f281ee",
+      "stage": "build-identity3",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=48.75\nuser_seconds=298.45\nsystem_seconds=10.63\nmax_process_rss_kib=297992\nexit=0\n",
+      "outer_seconds": 46.03755688000092,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=43 rows=1525 valid_rows=1524 missing=1 skipped=24 peak_process_rss_kib=302816 peak_process_fd_count=86 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.043 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=44 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=313887412 peak_bytes=313887412 samples=45 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192850432 minimum_free_bytes=23192850432 samples=45 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/build-qualifiers2/receipt.json",
+      "sha256": "3f60973c0dbb820cc472597bdd7ace3cd228c82705fe3b9de1eb9d5b9b00ed5a",
+      "stage": "build-qualifiers2",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=23.67\nuser_seconds=19.05\nsystem_seconds=2.78\nmax_process_rss_kib=372736\nexit=0\n",
+      "outer_seconds": 22.471775579993846,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=22 rows=194 valid_rows=194 missing=0 skipped=43 peak_process_rss_kib=365184 peak_process_fd_count=50 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.191 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=23 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=312955015 peak_bytes=312955015 samples=24 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192854528 minimum_free_bytes=23192854528 samples=24 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/build-transport29/receipt.json",
+      "sha256": "fef3e2b4eff574981285cd3fbc216baa50182a2a59374c61c1c92bbb95393734",
+      "stage": "build-transport29",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=452.66\nuser_seconds=792.49\nsystem_seconds=43.16\nmax_process_rss_kib=1378404\nexit=0\n",
+      "outer_seconds": 430.06190311099635,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=400 rows=4915 valid_rows=4914 missing=1 skipped=1241 peak_process_rss_kib=1355316 peak_process_fd_count=243 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.188 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=401 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1338318958 peak_bytes=1338318958 samples=402 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22219763712 minimum_free_bytes=22018437120 samples=402 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/coupled-critical15/receipt.json",
+      "sha256": "fdb298bc6e3926f3d25efa2e63c0d071d40340214a68ddbc241c82cf604eb0d7",
+      "stage": "coupled-critical15",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=153.25\nuser_seconds=138.23\nsystem_seconds=12.96\nmax_process_rss_kib=368564\nexit=0\n",
+      "outer_seconds": 148.30365580400394,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=140 rows=913 valid_rows=912 missing=1 skipped=0 peak_process_rss_kib=347828 peak_process_fd_count=21 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=3.639 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=141 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=834817404 peak_bytes=834817404 samples=142 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22790189056 minimum_free_bytes=22756634624 samples=142 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/coupled-remaining15/receipt.json",
+      "sha256": "998f0fc606fd9b2715959a30ac66aaaa71c36dd2d407fd6a69ec20e02d5b540f",
+      "stage": "coupled-remaining15",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=25.97\nuser_seconds=24.21\nsystem_seconds=1.33\nmax_process_rss_kib=346184\nexit=1\n",
+      "outer_seconds": 25.910828344000038,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=23 rows=155 valid_rows=155 missing=0 skipped=0 peak_process_rss_kib=164228 peak_process_fd_count=22 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=24 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=838136283 peak_bytes=838136283 samples=25 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22756634624 minimum_free_bytes=22756634624 samples=25 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/cpu-endpoints11/receipt.json",
+      "sha256": "f1810b4d63be214c64b41703703e84e7ee6bf6662c2171e09f53686eff8eb84d",
+      "stage": "cpu-endpoints11",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=48.64\nuser_seconds=52.57\nsystem_seconds=1.80\nmax_process_rss_kib=54044\nexit=1\n",
+      "outer_seconds": 46.7862614340047,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=43 rows=247 valid_rows=247 missing=0 skipped=0 peak_process_rss_kib=53268 peak_process_fd_count=6 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.025 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=44 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=745848257 peak_bytes=745848257 samples=45 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=45 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/cpu-source-acceptance12/receipt.json",
+      "sha256": "645cb50bcb7fae9779f8853d6ff6e0d87f94af8624853368e4629b66927c09fd",
+      "stage": "cpu-source-acceptance12",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=0.46\nuser_seconds=0.71\nsystem_seconds=0.05\nmax_process_rss_kib=48948\nexit=0\n",
+      "outer_seconds": 2.911631707000197,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=770384198 peak_bytes=770384198 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/cpu-variants13/receipt.json",
+      "sha256": "341c47eb62a17c6a537f3e96485675289c8097ded73365608cfdc674245d279d",
+      "stage": "cpu-variants13",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=184.04\nuser_seconds=285.82\nsystem_seconds=0.68\nmax_process_rss_kib=53732\nexit=0\n",
+      "outer_seconds": 174.78825771300035,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=165 rows=985 valid_rows=985 missing=0 skipped=0 peak_process_rss_kib=53000 peak_process_fd_count=6 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.014 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=166 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=799198557 peak_bytes=799198557 samples=167 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22790189056 samples=167 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/current-interfaces19/receipt.json",
+      "sha256": "818905ec85430abfc82681a97bdc97e1b2f6fdb33a4a9220fb466be1db132859",
+      "stage": "current-interfaces19",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=83.20\nuser_seconds=169.24\nsystem_seconds=2.42\nmax_process_rss_kib=346388\nexit=1\n",
+      "outer_seconds": 83.86384564699983,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=78 rows=531 valid_rows=531 missing=0 skipped=0 peak_process_rss_kib=340700 peak_process_fd_count=23 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.128 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=79 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=865375588 peak_bytes=865375588 samples=80 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=80 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/eos-owner-checks8/receipt.json",
+      "sha256": "1a082d39ae6e405d63e8f262bc596ce191373e5cd2dc1a30a24bcc3e03dbd7dd",
+      "stage": "eos-owner-checks8",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=4.39\nuser_seconds=5.70\nsystem_seconds=0.50\nmax_process_rss_kib=143480\nexit=0\n",
+      "outer_seconds": 6.993019228000776,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=5 rows=22 valid_rows=22 missing=0 skipped=0 peak_process_rss_kib=139512 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.113 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=6 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=693030013 peak_bytes=693030013 samples=7 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22857306112 minimum_free_bytes=22823751680 samples=7 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/eta-gate9/receipt.json",
+      "sha256": "c887042c5da2bbff79a8b49787e681a719ac71c47b5813842bee6d30d2355e7e",
+      "stage": "eta-gate9",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=2.92\nuser_seconds=2.63\nsystem_seconds=0.72\nmax_process_rss_kib=343860\nexit=0\n",
+      "outer_seconds": 4.994092286004161,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=3 rows=7 valid_rows=7 missing=0 skipped=0 peak_process_rss_kib=343856 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=4 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=694611445 peak_bytes=694611445 samples=5 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=5 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-affected-tests33/receipt.json",
+      "sha256": "eb598c6d13399ba5c3e0602489a421b49983f7de53b7faeff6a4e41e6bf66ca6",
+      "stage": "final-affected-tests33",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=11.04\nuser_seconds=41.97\nsystem_seconds=2.30\nmax_process_rss_kib=691652\nexit=0\n",
+      "outer_seconds": 13.784280239997315,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=11 rows=168 valid_rows=168 missing=0 skipped=0 peak_process_rss_kib=668356 peak_process_fd_count=55 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.050 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=12 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1353551935 peak_bytes=1353551935 samples=13 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=13 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-fresh-cost26/receipt.json",
+      "sha256": "3b04bcffb56f48656b9575e33e89ca709019ee33e1107908a8caf8321224f61a",
+      "stage": "final-fresh-cost26",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=121.83\nuser_seconds=123.38\nsystem_seconds=3.94\nmax_process_rss_kib=343996\nexit=1\n",
+      "outer_seconds": 119.35233088300447,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=112 rows=760 valid_rows=760 missing=0 skipped=0 peak_process_rss_kib=343996 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.026 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=113 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=923067102 peak_bytes=923067102 samples=114 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=114 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-full-matrix27/receipt.json",
+      "sha256": "522a22ee0aedd9f69f2dfa55850770667fdda06421eb5bb22be55eb13340a325",
+      "stage": "final-full-matrix27",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 124\nelapsed_seconds=2531.35\nuser_seconds=2508.30\nsystem_seconds=45.83\nmax_process_rss_kib=349312\nexit=124\n",
+      "outer_seconds": 2402.1377302140027,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=2278 rows=13275 valid_rows=13274 missing=1 skipped=1 peak_process_rss_kib=349268 peak_process_fd_count=21 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=1.023 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2279 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1019469246 peak_bytes=1019469246 samples=2280 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22555308032 samples=2280 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-interfaces-cost24/receipt.json",
+      "sha256": "36ed8e0a07aff592339dd17e18aeff67b933cd8d0ebe69bd47004bf05a240e05",
+      "stage": "final-interfaces-cost24",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 8\nelapsed_seconds=19.59\nuser_seconds=50.39\nsystem_seconds=3.06\nmax_process_rss_kib=690924\nexit=8\n",
+      "outer_seconds": 20.86060899899894,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=18 rows=229 valid_rows=228 missing=1 skipped=0 peak_process_rss_kib=666988 peak_process_fd_count=55 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.183 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=19 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=909499794 peak_bytes=909499794 samples=20 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=20 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-interfaces-cost25/receipt.json",
+      "sha256": "70d0b7f781de863c3473baffb6fe6932225197720329493dbbaca64f33120c4d",
+      "stage": "final-interfaces-cost25",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=25.00\nuser_seconds=74.09\nsystem_seconds=1.06\nmax_process_rss_kib=435248\nexit=1\n",
+      "outer_seconds": 26.075784148997627,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=23 rows=179 valid_rows=179 missing=0 skipped=0 peak_process_rss_kib=366004 peak_process_fd_count=32 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.010 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=24 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=912334622 peak_bytes=912334622 samples=25 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=25 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/final-tooling22/receipt.json",
+      "sha256": "713cefa598934c9e49c9b42f2f841ab657f9986ea102091773fe02f93c4bf9ad",
+      "stage": "final-tooling22",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=9.38\nuser_seconds=6.37\nsystem_seconds=1.78\nmax_process_rss_kib=58216\nexit=0\n",
+      "outer_seconds": 10.294961191000766,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=8 rows=27 valid_rows=27 missing=0 skipped=0 peak_process_rss_kib=33024 peak_process_fd_count=7 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=5.049 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=890530584 peak_bytes=890530584 samples=10 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=10 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-matrix4/receipt.json",
+      "sha256": "b13458d547d7ef24914c756cb2789a18011742e04c2a6c48e9cb78496977645e",
+      "stage": "public-matrix4",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=75.51\nuser_seconds=60.46\nsystem_seconds=12.12\nmax_process_rss_kib=347928\nexit=1\n",
+      "outer_seconds": 74.2462013819968,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=71 rows=337 valid_rows=336 missing=1 skipped=1 peak_process_rss_kib=347928 peak_process_fd_count=16 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.022 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=72 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=543819366 peak_bytes=543819366 samples=73 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23159296000 minimum_free_bytes=23092187136 samples=73 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-matrix5/receipt.json",
+      "sha256": "a68395aa54533be587604ae220c59934c5b35632d6e6cc2afc2d917a5c49491a",
+      "stage": "public-matrix5",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=461.00\nuser_seconds=404.64\nsystem_seconds=47.22\nmax_process_rss_kib=349456\nexit=1\n",
+      "outer_seconds": 439.0298831820037,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=425 rows=2288 valid_rows=2286 missing=2 skipped=6 peak_process_rss_kib=349456 peak_process_fd_count=22 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.096 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=426 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=676999539 peak_bytes=676999539 samples=427 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23092187136 minimum_free_bytes=22924414976 samples=427 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-polynomial-matrix10/receipt.json",
+      "sha256": "ed2f279cfe76ac17c3ded56f7aa5fe021bd8cef0cbbdc508e581e08607338173",
+      "stage": "public-polynomial-matrix10",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 124\nelapsed_seconds=952.91\nuser_seconds=937.17\nsystem_seconds=22.43\nmax_process_rss_kib=347548\nexit=124\n",
+      "outer_seconds": 902.5501668390061,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=865 rows=5060 valid_rows=5058 missing=2 skipped=0 peak_process_rss_kib=347548 peak_process_fd_count=22 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.284 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=866 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=799821794 peak_bytes=799821794 samples=867 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22790189056 samples=867 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-polynomial-matrix8/receipt.json",
+      "sha256": "ba6dd6290e4467cdabcb8e77a544ebfbdee10bf73c9b852738c86f052129d6d1",
+      "stage": "public-polynomial-matrix8",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.13\nuser_seconds=0.39\nsystem_seconds=0.02\nmax_process_rss_kib=53508\nexit=1\n",
+      "outer_seconds": 2.7472926970003755,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=693126457 peak_bytes=693126457 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/public-polynomial-matrix9/receipt.json",
+      "sha256": "b30aaeaff3955de0b1400550735d5cb6dfca20b3a0f531b25bd454ba02095d2f",
+      "stage": "public-polynomial-matrix9",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=2.65\nuser_seconds=3.32\nsystem_seconds=0.03\nmax_process_rss_kib=53552\nexit=1\n",
+      "outer_seconds": 4.876357363995339,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=3 rows=13 valid_rows=13 missing=0 skipped=0 peak_process_rss_kib=44864 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=4 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=695137096 peak_bytes=695137096 samples=5 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22823751680 minimum_free_bytes=22823751680 samples=5 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/remaining-interfaces18/receipt.json",
+      "sha256": "15ee1ad599ec7063d1ffe12f64532201a1ee21aa768e5c9cb83612d0af0e11ba",
+      "stage": "remaining-interfaces18",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.14\nuser_seconds=0.40\nsystem_seconds=0.02\nmax_process_rss_kib=54780\nexit=1\n",
+      "outer_seconds": 2.9464876569982152,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.017 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=849636607 peak_bytes=849636607 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/remaining-methods28/receipt.json",
+      "sha256": "d51adfc04632d99b7a0ef22ec82112c98767ebda757451749def144516f720d6",
+      "stage": "remaining-methods28",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=332.28\nuser_seconds=331.41\nsystem_seconds=3.51\nmax_process_rss_kib=347056\nexit=0\n",
+      "outer_seconds": 315.63296941099543,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=297 rows=1765 valid_rows=1765 missing=0 skipped=0 peak_process_rss_kib=346980 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.023 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=298 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1029377782 peak_bytes=1029377782 samples=299 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22555308032 minimum_free_bytes=22555308032 samples=299 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/remaining-sources21/receipt.json",
+      "sha256": "1e8ab012e827fea9806a8a6bc81e82c9d47557c2b81d1ba5e04d0cc394bb92c5",
+      "stage": "remaining-sources21",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=609.82\nuser_seconds=608.07\nsystem_seconds=14.76\nmax_process_rss_kib=346640\nexit=1\n",
+      "outer_seconds": 589.1528020820042,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=560 rows=3854 valid_rows=3852 missing=2 skipped=0 peak_process_rss_kib=346508 peak_process_fd_count=22 write_error=none complete=False",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=3.320 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=561 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=908814331 peak_bytes=908814331 samples=562 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=562 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/retained-cpu14/receipt.json",
+      "sha256": "aca8b55a98dcb88206eaa9b0d492dbd799b227553f9d5a1975f90d6cbbcbba0e",
+      "stage": "retained-cpu14",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.52\nuser_seconds=0.93\nsystem_seconds=0.09\nmax_process_rss_kib=55620\nexit=1\n",
+      "outer_seconds": 3.0870340170004056,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.010 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=790301409 peak_bytes=790301409 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22790197248 minimum_free_bytes=22790197248 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/retained-cpu15/receipt.json",
+      "sha256": "0f189daaa2e03b50dcb2719ccd829bcfec5e32403e296b78bdeaaa1f2f81991c",
+      "stage": "retained-cpu15",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=0.54\nuser_seconds=0.97\nsystem_seconds=0.15\nmax_process_rss_kib=56256\nexit=0\n",
+      "outer_seconds": 2.995232119996217,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=810474272 peak_bytes=810474272 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22790189056 minimum_free_bytes=22790189056 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/scaled-source-checks20/receipt.json",
+      "sha256": "3b28076638130449c657a553fc9cc8783e664a9fb54f55801709374afa5aa017",
+      "stage": "scaled-source-checks20",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=318.16\nuser_seconds=323.20\nsystem_seconds=5.34\nmax_process_rss_kib=346552\nexit=1\n",
+      "outer_seconds": 309.1068245379938,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=293 rows=2006 valid_rows=2006 missing=0 skipped=3 peak_process_rss_kib=346512 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.036 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=294 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=882513496 peak_bytes=882513496 samples=295 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22588862464 minimum_free_bytes=22588862464 samples=295 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/tabular-edge-step1-7/receipt.json",
+      "sha256": "e60fd82299a10b0d109506874ec44a6d8e66a257e1e0a73c00a9e81be616ae58",
+      "stage": "tabular-edge-step1-7",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=6.02\nuser_seconds=6.80\nsystem_seconds=0.01\nmax_process_rss_kib=33492\nexit=1\n",
+      "outer_seconds": 7.944027315003041,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=6 rows=16 valid_rows=16 missing=0 skipped=0 peak_process_rss_kib=32212 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.002 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=691228924 peak_bytes=691228924 samples=8 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22924414976 minimum_free_bytes=22890860544 samples=8 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/tooling-axial2/receipt.json",
+      "sha256": "28ef42864289e1d57e4da19f7e1ca8994a76264396e034b2ebd9c615cad30a21",
+      "stage": "tooling-axial2",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=0.84\nuser_seconds=0.75\nsystem_seconds=0.05\nmax_process_rss_kib=57788\nexit=1\n",
+      "outer_seconds": 1.1918618330018944,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=4.328 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=313170343 peak_bytes=313170343 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192854528 minimum_free_bytes=23192854528 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/tooling-axial3/receipt.json",
+      "sha256": "6ab97096296554f14b229cd75a62306ad0294aed2101b53b7078ed82553a492b",
+      "stage": "tooling-axial3",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=0.89\nuser_seconds=0.86\nsystem_seconds=0.07\nmax_process_rss_kib=58272\nexit=0\n",
+      "outer_seconds": 1.1837635319971014,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.259 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=313576854 peak_bytes=313576854 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23192854528 minimum_free_bytes=23192854528 samples=3 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/transport-completion31/receipt.json",
+      "sha256": "cc2a21eb457ced540893b2108a8ca7b9034b3e29cf20cc390923db70bbe08873",
+      "stage": "transport-completion31",
+      "status": "FAILED_OR_INCOMPLETE_NOT_PASS",
+      "GNU_time": "Command exited with non-zero status 1\nelapsed_seconds=40.63\nuser_seconds=43.18\nsystem_seconds=1.38\nmax_process_rss_kib=347288\nexit=1\n",
+      "outer_seconds": 42.05170562100102,
+      "failure": {
+        "type": "AssertionError",
+        "message": ""
+      },
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=38 rows=248 valid_rows=248 missing=0 skipped=0 peak_process_rss_kib=347288 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.001 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=39 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1343511807 peak_bytes=1343511807 samples=40 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=40 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/transport-completion32/receipt.json",
+      "sha256": "e2a38740a60249279d7759e2ea00d6693cc9cbd525694830be8b117b7c6063b9",
+      "stage": "transport-completion32",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=92.03\nuser_seconds=140.67\nsystem_seconds=5.42\nmax_process_rss_kib=347852\nexit=0\n",
+      "outer_seconds": 90.8560520539977,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=84 rows=529 valid_rows=529 missing=0 skipped=0 peak_process_rss_kib=347852 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.020 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=85 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1353487887 peak_bytes=1353487887 samples=86 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=86 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/transport-pilot30/receipt.json",
+      "sha256": "ffd52ad27abd607da6631e3847df8fb4011b15735f7cc6d6625090155a586aa6",
+      "stage": "transport-pilot30",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=9.47\nuser_seconds=8.29\nsystem_seconds=0.46\nmax_process_rss_kib=338844\nexit=0\n",
+      "outer_seconds": 10.261532544995134,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=8 rows=40 valid_rows=40 missing=0 skipped=0 peak_process_rss_kib=338844 peak_process_fd_count=21 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.003 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1339529300 peak_bytes=1339529300 samples=10 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22018437120 minimum_free_bytes=22018437120 samples=10 complete=True"
+      ]
+    },
+    {
+      "path": "output/release/cyl6-20261019/weak-eta-before6/receipt.json",
+      "sha256": "8141831f13ed12664c73dae3ba8de28541babb2d9f5d50a8acae8c7589f406d6",
+      "stage": "weak-eta-before6",
+      "status": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "GNU_time": "elapsed_seconds=14.08\nuser_seconds=13.95\nsystem_seconds=0.01\nmax_process_rss_kib=34776\nexit=0\n",
+      "outer_seconds": 14.209120881001581,
+      "failure": null,
+      "resource_observation_lines": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=12 rows=34 valid_rows=34 missing=0 skipped=0 peak_process_rss_kib=34136 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.016 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=13 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl6-20261019 device=2096 inode=874220 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=653675709 peak_bytes=653675709 samples=14 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=22957969408 minimum_free_bytes=22957969408 samples=14 complete=True"
+      ]
+    }
+  ],
+  "collaboration": {
+    "actual_status": {
+      "jobs": [
+        {
+          "job_id": "e0dda82acc364dffb67ba20552a8f71c",
+          "task_id": "cyl6-tabular-transport-admission-1",
+          "logical_task_id": "cyl6-tabular-transport-admission",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 24.067563611002697,
+          "failure_kind": null,
+          "summary": "## Verdict\n\nThe proposed owner fix is correct and minimal; I found no physics or config-contract error in it. Do not adopt a larger alternative (setting InputCo"
+        },
+        {
+          "job_id": "ffa715c350bb482ea3635d7f24f88c62",
+          "task_id": "cyl6-nearzero-admission-audit-1",
+          "logical_task_id": "cyl6-nearzero-admission-audit",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 21.38930692699796,
+          "failure_kind": null,
+          "summary": "**Classification:** The supplied evidence supports a **shared near-zero cancellation limitation**, not a demonstrated correctness defect that must block all nat"
+        },
+        {
+          "job_id": "f2f90edc863a41d088f4d8a923bad964",
+          "task_id": "cyl6-admission-prose-1",
+          "logical_task_id": "cyl6-admission-prose",
+          "status": "FAILED",
+          "review": "REJECT",
+          "adoption_scope": "none",
+          "provider": "antigravity",
+          "model": "gemini-3.8-flash-high",
+          "effort": "high",
+          "elapsed_seconds": 78.74742816900107,
+          "failure_kind": "invalid_delivery",
+          "summary": "Numbers changed, introduced, omitted or duplicated"
+        },
+        {
+          "job_id": "3eb1f00b030f4d1da21a3f34a0736737",
+          "task_id": "cyl6-boundary-angular-budget-1",
+          "logical_task_id": "cyl6-boundary-angular-budget",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 91.88546870300343,
+          "failure_kind": null,
+          "summary": "**Verdict.** Source-only review: the minimal two-CPP plan is directionally sound and preserves the original 1e-12 criterion, but it is not yet safe to accept. I"
+        },
+        {
+          "job_id": "705c5f3da4e9467aa5435f50525b0f7f",
+          "task_id": "cyl6-tabular-weak-eta-1",
+          "logical_task_id": "cyl6-tabular-weak-eta",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 19.682626613997854,
+          "failure_kind": null,
+          "summary": "**Verdict.** The silent fallback is real in the supplied source. A direct admission rejection for `use_burn && selected-network-aprox19/21` in the existing Tabu"
+        },
+        {
+          "job_id": "913d7846b5fd44d986c9dee473872159",
+          "task_id": "cyl6-axial-qualifier-review-1",
+          "logical_task_id": "cyl6-axial-qualifier-review",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 125.51246138399438,
+          "failure_kind": null,
+          "summary": "Source-only review; no files or tests executed. No arithmetic/dimensional defect found in the finite-volume reference. Concrete issues are binding/coordinate co"
+        },
+        {
+          "job_id": "549c4e17e8a24cd48d38932b82eb4ee0",
+          "task_id": "cyl6-method-eos-coverage-1",
+          "logical_task_id": "cyl6-method-eos-coverage",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 45.179787748005765,
+          "failure_kind": null,
+          "summary": "**Verdict**\n\nThe proposed 720-process full Cartesian is not a legal positive matrix. From the supplied evidence, 108 entries—SW with Helmholtz, Tabular3D, or Ta"
+        },
+        {
+          "job_id": "374db43df41b453a9c0e1b592a604afb",
+          "task_id": "cyl6-analytic-axis-1",
+          "logical_task_id": "cyl6-analytic-axis",
+          "status": "READY_FOR_REVIEW",
+          "review": "ACCEPT",
+          "adoption_scope": "evidence_only",
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "elapsed_seconds": 82.80202668700076,
+          "failure_kind": null,
+          "summary": "**Verdict: conditional PASS on the mathematics, not yet acceptance-ready as written.** The axial entropy/tracer construction is valid for native cylindrical `(r"
+        }
+      ],
+      "budgets": [
+        {
+          "goal_id": "arch-rz-reintroduction-20261018",
+          "manager_max_calls": 38,
+          "user_max_calls": null,
+          "calls_used_or_reserved": 38,
+          "calls_remaining": 0,
+          "elapsed_seconds_recorded": 7135.841448959999,
+          "output_tokens_reported": 991302,
+          "started_calls_with_unknown_output": 5,
+          "cost_money": null,
+          "attempt_allowances_reset": false
+        }
+      ],
+      "next_event": 1443
+    },
+    "C6_DPS_calls": 7,
+    "C6_Gemini_calls": 1,
+    "DPS_adoption": "seven source reviews ACCEPT/evidence_only for checked sections; refuted assumptions preserved; Root independently accepts science",
+    "Gemini_adoption": "REJECT/none; no scientific dependency",
+    "money_and_Root_active_cost": "unknown"
+  },
+  "documentation": {
+    "unique_plan": "ARCH_RELEASE_PLAN.md",
+    "unique_receipt": "validation/backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json",
+    "raw_output": "output/release/cyl6-20261019",
+    "no_new_human_stage_report": true
+  },
+  "next": "Stop after CYL6; REL4 requires a new user instruction. Reuse applicable mathematical and device-owner evidence; do not rerun historical RZ long trajectories. No automatic commit or push.",
+  "configuration_fix": {
+    "owner": "src/core/config/InputResolution.h",
+    "counterexample": {
+      "path": "output/release/cyl6-20261019/tabular-transport-admission/counterexample-api.json",
+      "sha256": "0dd4b81485561ee07313b7fb0bf60b8e92a6494aba62c924f41eb9ec9aeaffd6"
+    },
+    "behavior": "Ideal OR Tabular requires explicit constant coefficients for active channels; Helm model-owned transport and unresolved unknown-EOS context retained; no default values",
+    "preflight_correction": {
+      "path": "output/release/cyl6-20261019/transport-freeze-preflight-correction.json",
+      "sha256": "735c19ecc8eea08db6e16d88f631465393a62ef0bc6ac730916b4b73186d116d"
+    }
+  },
+  "build_cost": {
+    "final_header_window": {
+      "path": "output/release/cyl6-20261019/build-transport29/receipt.json",
+      "sha256": "fef3e2b4eff574981285cd3fbc216baa50182a2a59374c61c1c92bbb95393734"
+    },
+    "actions_CPU_and_CUDA": 102,
+    "CXX_compilation_actions": 91,
+    "CUDA_kernel_compilation_actions": 0,
+    "CUDA_byte_identical_objects": 64,
+    "GNU_seconds": 452.66,
+    "guard_seconds": 428.262,
+    "GNU_max_process_RSS_KiB": 1378404,
+    "guard_observed_owned_peak_RSS_KiB": 2662032,
+    "kernel_reuse": {
+      "path": "output/release/cyl6-20261019/post-transport-kernel-reuse.json",
+      "sha256": "6773cc9abc0cdb32d96c102e2479336a5feefe43790bc031305773b93407557d"
+    },
+    "candidate": "Public configuration-header fanout; no clean-build speedup or frozen A/B optimization claim. Raw GNU/guard/outer clocks retained separately."
+  }
+}

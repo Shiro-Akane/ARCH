@@ -6,6 +6,7 @@
  * invalid metadata must be rejected before conservation is evaluated.
  */
 #include "fixtures/io/checkpoint_conservation_metrics.h"
+#include "fixtures/io/checkpoint_analysis_inputs.h"
 
 #include <cmath>
 #include <iostream>
@@ -34,6 +35,7 @@ io::CheckpointData checkpoint(const GridConfig& config,
     io::CheckpointData result;
     result.dim = config.dim;
     result.geometry = config.geometry;
+    result.geometry_identity=io::checkpoint_geometry_identity(config.dim,config.geometry);
     result.num_species = 2;
     result.cells_per_block = amr::BLOCK_NX
         * (config.dim >= 2 ? amr::BLOCK_NY : 1)
@@ -73,7 +75,52 @@ GridConfig config(int dim, const std::string& geometry)
     return result;
 }
 
-void check_nine_geometries_and_cell_order()
+void check_explicit_metric_inputs()
+{
+    const std::string text = "geometry=cartesian\nnblockx1=1\nnblockx2=0\nnblockx3=0\n"
+                             "x1_min=0\nx1_max=exp(1)\n";
+    const auto read = [](const std::string& source) {
+        std::istringstream stream(source);
+        return checkpoint_analysis::Inputs(stream);
+    };
+    const auto inputs = read(text);
+    const auto grid = inputs.grid();
+    auto upper = text;
+    upper.replace(upper.find("cartesian"), 9, "CaRtEsIaN");
+    expect(read(upper).grid().geometry == "cartesian", "metric enum canonicalization changed");
+    expect(grid.dim == 1 && grid.x1_min == 0 && grid.x1_max == std::exp(1.0),
+           "metric input altered explicit geometry or zero/expression values");
+    expect(checkpoint_metrics::compute(checkpoint(grid), &grid).mass > 0,
+           "explicit metric grid does not produce a physical measure");
+    // Missing scientific-run controls are irrelevant to a grid metric; missing
+    // metric controls, malformed tokens and duplicates must never be filled.
+    for (const std::string key : {"geometry", "nblockx1", "nblockx2", "nblockx3", "x1_min", "x1_max"}) {
+        auto missing = text;
+        const auto begin = missing.find(key + "="), end = missing.find('\n', begin);
+        missing.erase(begin, end - begin + 1);
+        bool failed = false;
+        try { (void)read(missing).grid(); }
+        catch (const ConfigValueError&) { failed = true; }
+        expect(failed, "metric input silently filled a missing grid control");
+    }
+    for (const auto suffix : {"x1_max=2\n", "bad line\n", "cfl=nan\n"}) {
+        bool failed = false;
+        try { (void)read(text + suffix).grid(); }
+        catch (const ConfigInputError&) { failed = true; }
+        expect(failed, "invalid explicit metric input was ignored");
+    }
+    const auto force = read(text + "gravity_type=external\ngravity_g_x=0\n"
+                           "gravity_g_y=0\ngravity_g_z=-2\neos_type=ideal\ngamma=1.4\n"
+                           "rho0=1\npressure0=2\nvelocity_x0=0\n");
+    expect(force.standard<double>("gravity_g_x") == 0 && force.case_number("velocity_x0") == 0,
+           "explicit zero acceleration or velocity was lost");
+    bool missing_case = false;
+    try { (void)inputs.case_number("rho0"); }
+    catch (const ConfigValueError&) { missing_case = true; }
+    expect(missing_case, "analytic reference silently filled missing initial density");
+}
+
+void check_retained_geometries_and_cell_order()
 {
     for (const std::string name : {"cartesian", "cylindrical", "spherical"}) {
         for (int dim = 1; dim <= 3; ++dim) {
@@ -90,7 +137,14 @@ void check_nine_geometries_and_cell_order()
                             grid, i + amr::MAX_NG, dim >= 2 ? j + amr::MAX_NG : 0,
                             dim == 3 ? k + amr::MAX_NG : 0)) * data.rho[cell];
                     }
-            const auto observed = checkpoint_metrics::compute(data, &parameters);
+            std::ostringstream source;
+            source << "geometry=" << name << "\n"
+                   << "nblockx1=1\nnblockx2=" << parameters.nblockx2
+                   << "\nnblockx3=" << parameters.nblockx3
+                   << "\nx1_min=1\nx1_max=2\nx2_min=0.25\nx2_max=0.75\nx3_min=0.1\nx3_max=0.6\n";
+            std::istringstream stream(source.str());
+            const auto parsed = checkpoint_analysis::Inputs(stream).grid();
+            const auto observed = checkpoint_metrics::compute(data, &parsed);
             expect(observed.mass == expected, "physical cell volume/index order differs from GridMetrics");
         }
     }
@@ -121,8 +175,13 @@ void check_mixed_annulus_and_shell()
     }
 }
 
+
 void check_invalid_metadata()
 {
+    auto native=config(2,"cylindrical");
+    auto legacy=checkpoint(native);legacy.geometry_identity={2,"axisymmetric-rz"};
+    rejected([&] {checkpoint_metrics::compute(legacy,&native);});
+    legacy.geometry_identity={};rejected([&] {checkpoint_metrics::compute(legacy,&native);});
     auto parameters = config(1, "cylindrical");
     auto data = checkpoint(parameters);
     auto invalid = parameters;
@@ -145,7 +204,8 @@ void check_invalid_metadata()
 
 int main()
 {
-    check_nine_geometries_and_cell_order();
+    check_explicit_metric_inputs();
+    check_retained_geometries_and_cell_order();
     check_mixed_annulus_and_shell();
     check_invalid_metadata();
     std::cout << "checkpoint conservation metrics: shared geometry and legacy/negative controls PASS\n";

@@ -1,0 +1,23 @@
+{
+  "baseHead": "906bc0a3b1960daf4bfc8bce484688eae8ae3a82",
+  "dirtyInputs": {
+    "src/physics/gravity/GravityBoundary.cpp": "1b725cbdaa0fb55154b1c51797e6177f62808eac45b453142322beb18907fc68",
+    "tests/host/gravity/test_composite_poisson.cpp": "192e25c64659611cc998e14de74ed252de1370aca0beca9476bb23b9399e1fa9"
+  },
+  "checks": {
+    "rz_constructor": "explicit refusal PASS",
+    "legacy_cached_values_with_rz": "explicit refusal PASS",
+    "legacy_polar_values": "finite PASS",
+    "rz_manufactured": "PASS",
+    "boundary_regression": "PASS",
+    "curved_regression": "PASS"
+  },
+  "binarySha256": "916a0fcc08f51be2bc30d4220caab100c449687a00d1e26b514c122390c7141f",
+  "error": "RZ isolated boundary unavailable: finite-ring contract pending",
+  "limits": [
+    "RZ production finite-ring kernel not implemented or accepted",
+    "internal analytic boundary operator remains available",
+    "no new science threshold",
+    "no CUDA/simulation/full ARCH build"
+  ]
+}

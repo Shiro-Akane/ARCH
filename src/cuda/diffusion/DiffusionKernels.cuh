@@ -2,14 +2,25 @@
  * @file DiffusionKernels.cuh
  * @brief Device flux, stability and RKL-stage traversal for shared diffusion.
  *
- * DiffFlux and DiffusionAMRStages own transport, geometry and stage arithmetic.
- * Launch results describe queued kernels and their write extent; the runtime
- * owns the stream, workspaces, EOS status checks and logical-slot publication.
+ * Workflow:
+ * 1. Borrow the runtime's existing state, species scratch, grid metrics and
+ *    physical boundary controls; the kernels neither allocate nor publish them.
+ * 2. Read each face's states and call DiffFlux for its physical distance,
+ *    material coefficients, traction and matched work.
+ * 3. Apply the shared prescribed-flux boundary owner, then capture the actual
+ *    oriented flux used by divergence/reflux: q = F_E - sum_i F_mom_i*v_i.
+ * 4. Borrow the same shared geometry/source and stability-row owners for the
+ *    operator and timestep; DiffusionAMRStages owns the RKL-stage arithmetic.
+ * 5. Return queued-kernel status and write extent. The runtime owns streams,
+ *    workspaces, EOS failure checks, halo exchange and logical-slot publication.
+ *
+ * CPU and CUDA share all transport and integration mathematics.
  * A successful interior update does not make the surrounding ghosts valid.
  */
 
 #pragma once
 
+#include "physics/boundary/BoundaryDiagnostics.h"
 #include <cuda_runtime.h>
 
 #include <cstddef>
@@ -172,6 +183,13 @@ ARCH_INLINE int diffusion_face_cell(
     return grid.index(i, j, k);
 }
 
+struct DiffusionStateReader {
+    DeviceStateView state;
+    ARCH_INLINE FluidVector operator()(int cell) const { return state.load(cell); }
+    ARCH_INLINE double fraction(int species, int cell) const
+    { return state.mass_fractions[species * state.total_size + cell]; }
+};
+
 template <typename EosView>
 __global__ void diffusion_face_kernel(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
@@ -204,12 +222,15 @@ __global__ void diffusion_face_kernel(
         const int nj = grid.je - grid.js + (direction == 1 ? 1 : 0);
         const int i = grid.is + linear % ni;
         const int j = grid.js + (linear / ni) % nj;
-        const double spacing = DiffFlux::diffusion_face_spacing(
-            geometry.geometry, grid.dim, direction, grid.dx1, grid.dx2, grid.dx3,
-            geometry.GetCellCenterX(i), geometry.GetCellCenterY(j));
+        // Borrow the same physical face distance as Host.
+        const double spacing = DiffFlux::diffusion_face_spacing(geometry,direction,i,j);
+        const FluidVector left = state.load(left_cell);
+        const FluidVector right = state.load(right_cell);
+        const DiffusionStateReader read{state};
+        DiffFlux::DiffusionFaceProperties properties{};
         const DiffFlux::DiffusionFaceStatus face_status =
             DiffFlux::evaluate_diffusion_face(
-                state.load(left_cell), state.load(right_cell),
+                left, right,
                 state.n_species > 0
                     ? state.mass_fractions + left_cell : nullptr,
                 state.n_species > 0
@@ -221,21 +242,59 @@ __global__ void diffusion_face_kernel(
                     ? flux.mass_fractions + right_cell : nullptr,
                 flux.total_size, config.use_viscous_diffusion
                     ? DiffFlux::viscous_basis_rotation(geometry, direction, i, j)
-                    : DiffFlux::ViscousBasisRotation{});
+                    : DiffFlux::ViscousBasisRotation{}, &properties);
         if (!face_status.valid) {
             atomicExch(status, 1);
             continue;
         }
-        if (face_status.active) flux.store(right_cell, face_flux);
+        if (face_status.active) {
+            if(!DiffFlux::replace_cartesian_viscous_flux(
+                DiffusionStateReader{state},
+                right_cell,geometry,direction,spacing,eos,species,config,
+                left_species,right_species,properties,charge,inverse_mass,face_flux)) {
+                atomicExch(status,1);continue;
+            }
+            const int k = grid.ks + linear / (ni * nj);
+            const auto* controls = state.diffusion_boundary.at(direction, i, j, k,
+                grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, state.n_species);
+            const bool radial=geometry.geometry!=GridMetrics::Geometry::Cartesian&&geometry.dim==1;
+            const bool matched_work=radial||(geometry.geometry==GridMetrics::Geometry::Cylindrical&&geometry.dim==2);
+            double work_velocity[3]{};
+            if(matched_work) {
+                work_velocity[0]=.5*(left.mom_u/left.rho+right.mom_u/right.rho);
+                work_velocity[1]=.5*(left.mom_v/left.rho+right.mom_v/right.rho);
+                work_velocity[2]=.5*(left.mom_w/left.rho+right.mom_w/right.rho);
+            }
+            if(!DiffFlux::replace_curvilinear_viscous_flux(read,right_cell,geometry,direction,i,j,
+                config,properties,face_flux,
+                matched_work?work_velocity:nullptr)) {
+                atomicExch(status,1);continue;
+            }
+            const int coordinate[3]{i,j,k}, lower[3]{grid.is,grid.js,grid.ks};
+            if(controls)
+                boundary::ApplyDiffusionBoundaryFlux(controls, coordinate[direction] == lower[direction] ? -1. : 1.,
+                    left, right, face_flux,
+                    state.n_species ? flux.mass_fractions + right_cell : nullptr, state.n_species, flux.total_size,
+                    matched_work?work_velocity:nullptr);
+            flux.store(right_cell, face_flux);
+            // Observe the actual post-override flux: heat follows the shared
+            // DiffFlux convention F_E - sum_i F_mom_i * matched face velocity.
+            // Reuse the physical velocity that supplied boundary work above.
+            if (state.capture.stage[2 * direction] || state.capture.stage[2 * direction + 1]) {
+                const double velocity[3]{
+                    matched_work?work_velocity[0]:0.5 * (left.mom_u / left.rho + right.mom_u / right.rho),
+                    matched_work?work_velocity[1]:0.5 * (left.mom_v / left.rho + right.mom_v / right.rho),
+                    matched_work?work_velocity[2]:0.5 * (left.mom_w / left.rho + right.mom_w / right.rho)};
+                const double heat = face_flux.eng - face_flux.mom_u * velocity[0]
+                    - face_flux.mom_v * velocity[1] - face_flux.mom_w * velocity[2];
+                boundary::CaptureBoundaryFlux(state.capture, direction, i, j, k,
+                    grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, face_flux,
+                    state.n_species ? flux.mass_fractions + right_cell : nullptr,
+                    state.n_species, flux.total_size, heat);
+            }
+        }
     }
 }
-
-struct DiffusionStateReader {
-    DeviceStateView state;
-    ARCH_INLINE FluidVector operator()(int cell) const { return state.load(cell); }
-    ARCH_INLINE double fraction(int species, int cell) const
-    { return state.mass_fractions[species * state.total_size + cell]; }
-};
 
 template <typename EosView>
 __global__ void diffusion_dt_candidates_kernel(
@@ -351,6 +410,26 @@ static __global__ void diffusion_dt_reduce_kernel(
     *result = DiffFlux::finalize_raw_diffusion_dt(reduced.value);
 }
 
+/** Check one RKL output in its actual conserved representation.
+ */
+ARCH_INLINE state::Status check_rkl_stage_output(
+    const FluidVector& updated, DeviceStateView destination,
+    const DeviceGridView& grid, const DeviceDiffusionBatchBlock& binding, int cell)
+{
+    double* fractions = destination.n_species
+        ? destination.mass_fractions + cell : nullptr;
+    const int k = cell / grid.stride_z;
+    const int j = (cell - k * grid.stride_z) / grid.stride_y;
+    const int i = cell - k * grid.stride_z - j * grid.stride_y;
+    return state::accept_conservative_state(updated, fractions,
+        destination.n_species, destination.total_size,
+        binding.bounds.density, binding.bounds.internal_min,
+        binding.bounds.internal_max,
+        GridMetrics::CellVolume(make_grid_geometry_view(grid), i, j, k),
+        binding.repairs, cell);
+}
+
+/** Apply the unchanged first RKL polynomial, then precheck its actual output. */
 static __global__ void first_rkl_stage_kernel(
     DeviceStateView state_n, DeviceStateView increment,
     DeviceStateView destination, DeviceGridView grid, double coefficient,
@@ -374,11 +453,9 @@ static __global__ void first_rkl_stage_kernel(
             ? destination.mass_fractions + cell : nullptr);
     if (blocks) {
         const auto& b = blocks[blockIdx.y];
-        const auto status = state::validate(updated,
-            destination.n_species ? destination.mass_fractions + cell : nullptr,
-            destination.n_species, destination.total_size,
-            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
-        if (status != state::Status::valid) {
+        const auto status = check_rkl_stage_output(
+            updated, destination, grid, b, cell);
+        if (!state::accepted(status)) {
             atomicExch(b.workspace.status, 100 + static_cast<int>(status));
             return;
         }
@@ -403,6 +480,7 @@ static __global__ void initialize_rkl_stage_buffers_kernel(
     }
 }
 
+/** Apply the unchanged recursive RKL polynomial and representation precheck. */
 static __global__ void recursive_rkl_stage_kernel(
     DeviceStateView state_n, DeviceStateView state_previous,
     DeviceStateView state_older, DeviceStateView increment_previous,
@@ -442,11 +520,9 @@ static __global__ void recursive_rkl_stage_kernel(
             ? destination.mass_fractions + cell : nullptr);
     if (blocks) {
         const auto& b = blocks[blockIdx.y];
-        const auto status = state::validate(updated,
-            destination.n_species ? destination.mass_fractions + cell : nullptr,
-            destination.n_species, destination.total_size,
-            b.bounds.density, b.bounds.internal_min, b.bounds.internal_max);
-        if (status != state::Status::valid) {
+        const auto status = check_rkl_stage_output(
+            updated, destination, grid, b, cell);
+        if (!state::accepted(status)) {
             atomicExch(b.workspace.status, 100 + static_cast<int>(status));
             return;
         }

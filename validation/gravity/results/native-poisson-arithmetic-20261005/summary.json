@@ -1,0 +1,313 @@
+{
+  "date": "2026-10-05",
+  "status": "CANONICAL_ARITHMETIC_PASS_PHYSICAL_CONSTRUCTION_PENDING",
+  "sourceBaseline": "d3323b5eed12c338015cebda0f9df7d490af9d36",
+  "dirtyAtBuild": true,
+  "sourceFingerprints": {
+    "src/numerics/elliptic/CompositePoisson.h": "5a9f094a90790b2feec933f3b5df34a4e947b6c7bedbe9144e5dd0b94a4069db",
+    "src/numerics/elliptic/CompositePoisson.cpp": "11568892fbc86b57a7f433a65f2f5d5d8dc1e2c4907c6bcea4d95df81c450a5a",
+    "tests/host/gravity/test_composite_poisson.cpp": "af459f66199fb34ed2c19fe30315c6ad62aedaedec44ec67902571e24d4df7ff",
+    "validation/gravity/native_poisson_arithmetic_reference.py": "7769af9b51b42189f96dc045d39491b3545076f07c1b2baaa4c9e6d56a48c361"
+  },
+  "cpuArchBinarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+  "productionArchUnchanged": true,
+  "scopedTestBinarySha256": "5650daa5c7aca8eb560cebbe4489917271071677700c52d0c27310353c670d46",
+  "scope": "StoredNativeCoefficients: exact stored source, area, stencil coefficients, volumes and normalized weights",
+  "reference": {
+    "status": "PASS",
+    "cases": 18,
+    "rows": [
+      {
+        "rz": false,
+        "mixed": false,
+        "origin": 0,
+        "lane": 0,
+        "cells": 16,
+        "rhsActualErrorMax": 0.0,
+        "residualActualErrorMax": 0.0,
+        "rhsNormUpper": 0,
+        "residualNormUpper": 0,
+        "maxBoundUtilization": 0.0,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": false,
+        "mixed": false,
+        "origin": 0,
+        "lane": 1,
+        "cells": 16,
+        "rhsActualErrorMax": 1.0320099440445771e-14,
+        "residualActualErrorMax": 4.041997889137034e-14,
+        "rhsNormUpper": 1.0544290207588639e-13,
+        "residualNormUpper": 8.100642463698698e-14,
+        "maxBoundUtilization": 0.2370252628561182,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": false,
+        "mixed": false,
+        "origin": 0,
+        "lane": 2,
+        "cells": 16,
+        "rhsActualErrorMax": 0.009286839847182867,
+        "residualActualErrorMax": 0.008880038984115508,
+        "rhsNormUpper": 0.04332240822816186,
+        "residualNormUpper": 0.06250000000000015,
+        "maxBoundUtilization": 0.11887155004394066,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": false,
+        "mixed": true,
+        "origin": 0,
+        "lane": 0,
+        "cells": 28,
+        "rhsActualErrorMax": 0.0,
+        "residualActualErrorMax": 0.0,
+        "rhsNormUpper": 0,
+        "residualNormUpper": 0,
+        "maxBoundUtilization": 0.0,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": false,
+        "mixed": true,
+        "origin": 0,
+        "lane": 1,
+        "cells": 28,
+        "rhsActualErrorMax": 4.6757308210459355e-14,
+        "residualActualErrorMax": 6.592955128420486e-14,
+        "rhsNormUpper": 1.8688295496606943e-13,
+        "residualNormUpper": 1.5464593770178638e-13,
+        "maxBoundUtilization": 0.20564081624362512,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": false,
+        "mixed": true,
+        "origin": 0,
+        "lane": 2,
+        "cells": 28,
+        "rhsActualErrorMax": 0.00843603014831027,
+        "residualActualErrorMax": 0.012829498898558132,
+        "rhsNormUpper": 0.044879395676078425,
+        "residualNormUpper": 0.06611840187426095,
+        "maxBoundUtilization": 0.1368479882512864,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": false,
+        "origin": 0,
+        "lane": 0,
+        "cells": 16,
+        "rhsActualErrorMax": 0.0,
+        "residualActualErrorMax": 0.0,
+        "rhsNormUpper": 0,
+        "residualNormUpper": 0,
+        "maxBoundUtilization": 0.0,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": false,
+        "origin": 0,
+        "lane": 1,
+        "cells": 16,
+        "rhsActualErrorMax": 3.374966190703634e-14,
+        "residualActualErrorMax": 2.079645350504474e-14,
+        "rhsNormUpper": 9.876193581745853e-14,
+        "residualNormUpper": 8.079924139336524e-14,
+        "maxBoundUtilization": 0.21229792709786965,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": false,
+        "origin": 0,
+        "lane": 2,
+        "cells": 16,
+        "rhsActualErrorMax": 0.00887798041552289,
+        "residualActualErrorMax": 0.005059554391250711,
+        "rhsNormUpper": 0.035907766232129414,
+        "residualNormUpper": 0.05721856279410266,
+        "maxBoundUtilization": 0.21363194296097554,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": false,
+        "origin": 0.5,
+        "lane": 0,
+        "cells": 16,
+        "rhsActualErrorMax": 0.0,
+        "residualActualErrorMax": 0.0,
+        "rhsNormUpper": 0,
+        "residualNormUpper": 0,
+        "maxBoundUtilization": 0.0,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": false,
+        "origin": 0.5,
+        "lane": 1,
+        "cells": 16,
+        "rhsActualErrorMax": 3.378414323822447e-14,
+        "residualActualErrorMax": 2.6005803699511836e-14,
+        "rhsNormUpper": 1.0936141999835125e-13,
+        "residualNormUpper": 8.293373425158278e-14,
+        "maxBoundUtilization": 0.228749468458187,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": false,
+        "origin": 0.5,
+        "lane": 2,
+        "cells": 16,
+        "rhsActualErrorMax": 0.0074156229790553994,
+        "residualActualErrorMax": 0.009500887901360713,
+        "rhsNormUpper": 0.03865140122492837,
+        "residualNormUpper": 0.05881407956344325,
+        "maxBoundUtilization": 0.23729993532977273,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": true,
+        "origin": 0,
+        "lane": 0,
+        "cells": 28,
+        "rhsActualErrorMax": 0.0,
+        "residualActualErrorMax": 0.0,
+        "rhsNormUpper": 0,
+        "residualNormUpper": 0,
+        "maxBoundUtilization": 0.0,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": true,
+        "origin": 0,
+        "lane": 1,
+        "cells": 28,
+        "rhsActualErrorMax": 1.066977770274817e-13,
+        "residualActualErrorMax": 4.171041168977709e-14,
+        "rhsNormUpper": 2.2262039718737394e-13,
+        "residualNormUpper": 1.5206547852570198e-13,
+        "maxBoundUtilization": 0.1945625226712208,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": true,
+        "origin": 0,
+        "lane": 2,
+        "cells": 28,
+        "rhsActualErrorMax": 0.007449326939262722,
+        "residualActualErrorMax": 0.01535732785368206,
+        "rhsNormUpper": 0.037186392118476165,
+        "residualNormUpper": 0.05953027599268835,
+        "maxBoundUtilization": 0.2418002594367731,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": true,
+        "origin": 0.5,
+        "lane": 0,
+        "cells": 28,
+        "rhsActualErrorMax": 0.0,
+        "residualActualErrorMax": 0.0,
+        "rhsNormUpper": 0,
+        "residualNormUpper": 0,
+        "maxBoundUtilization": 0.0,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": true,
+        "origin": 0.5,
+        "lane": 1,
+        "cells": 28,
+        "rhsActualErrorMax": 4.6757308210459355e-14,
+        "residualActualErrorMax": 3.64379836734524e-14,
+        "rhsNormUpper": 2.1087668599403516e-13,
+        "residualNormUpper": 1.5302810346408735e-13,
+        "maxBoundUtilization": 0.3155102891709164,
+        "exactRationalContainment": true
+      },
+      {
+        "rz": true,
+        "mixed": true,
+        "origin": 0.5,
+        "lane": 2,
+        "cells": 28,
+        "rhsActualErrorMax": 0.008467218771659846,
+        "residualActualErrorMax": 0.015887892191943954,
+        "rhsNormUpper": 0.0392846466513881,
+        "residualNormUpper": 0.059174772253593584,
+        "maxBoundUtilization": 0.16947085004740176,
+        "exactRationalContainment": true
+      }
+    ],
+    "reference": "exact Fraction arithmetic over FP64 native operator arrays",
+    "scope": "stored source/coefficient/volume/weight evaluation only; excludes geometry/source construction and full physical residual acceptance"
+  },
+  "checks": [
+    {
+      "mode": "fraction-reference",
+      "exitCode": 0
+    },
+    {
+      "mode": "ctest",
+      "exitCode": 0
+    },
+    {
+      "mode": "architecture",
+      "exitCode": 0
+    },
+    {
+      "mode": "boundary-acceptance",
+      "exitCode": 0
+    },
+    {
+      "mode": "boundary-ledger",
+      "exitCode": 0
+    },
+    {
+      "mode": "ring-native-face",
+      "exitCode": 0
+    },
+    {
+      "mode": "diff",
+      "exitCode": 0
+    }
+  ],
+  "ctestPassed": 4,
+  "negativeCases": [
+    "missing source -> InvalidInput",
+    "NaN residual -> InvalidInput",
+    "incorrect finite computed residual -> nonzero mismatch bound",
+    "boundary/residual expression overflow -> Overflow",
+    "exact zero source/potential/boundary -> exact zero ledger, no floor"
+  ],
+  "maxCellBoundUtilization": 0.3155102891709164,
+  "limitations": [
+    "Does not certify ideal source/G/rho construction",
+    "Does not certify ideal native geometry/stencil coefficient construction or fit",
+    "Does not automatically grant CertifiedAbsolute full physical assessment quality",
+    "General parent far/AMR source publication/full RZ consumer science and CUDA remain pending"
+  ],
+  "matchingJensReceipt": {
+    "status": "PASS",
+    "evolutions": 9,
+    "restarts": 9,
+    "binarySha256": "d83186386a3dbcb403f473426da7dd42d1fc42840b09f7ddc43a7977fb36d95e",
+    "rerunThisNode": false,
+    "reason": "Actual production ELF unchanged after affected-target build, no new JENS evidence"
+  },
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-poisson-arithmetic-20261005",
+  "rawNativeArrays": "fraction-final.raw.json remains local only"
+}

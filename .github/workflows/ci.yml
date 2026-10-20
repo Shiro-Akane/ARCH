@@ -1,11 +1,11 @@
 name: ARCH CI
 
 on:
-  push:
-    branches: [main, CUDA_complete_v1, physics/selfgravity]
-  pull_request:
-    branches: [main, CUDA_complete_v1, physics/selfgravity]
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [compute/optim, main]
 
 # Public PRs run only on disposable GitHub-hosted machines, without secrets or
 # write permissions. Do not change this to pull_request_target to run PR code.
@@ -56,19 +56,12 @@ jobs:
         run: |
           python3 tools/audit_architecture.py . \
             2>&1 | tee build-ci/tooling/architecture.log
+          python3 tools/check_documentation.py . \
+            2>&1 | tee build-ci/tooling/documentation.log
 
       - name: Run the existing Python suite without skips
         run: |
-          python3 - <<'PY' 2>&1 | tee build-ci/tooling/unittest.log
-          import sys
-          import unittest
-
-          suite = unittest.defaultTestLoader.discover("tests/tooling", pattern="test_*.py")
-          result = unittest.TextTestRunner(verbosity=2).run(suite)
-          if not result.testsRun or result.skipped:
-              print("CI requires a nonempty tooling suite with no skipped controls.")
-          sys.exit(0 if result.wasSuccessful() and result.testsRun and not result.skipped else 1)
-          PY
+          python3 -B tests/tooling 2>&1 | tee build-ci/tooling/unittest.log
 
       - name: Retain tooling diagnostics
         if: always()
@@ -92,21 +85,45 @@ jobs:
       CCACHE_MAXSIZE: 1G
       CCACHE_COMPILERCHECK: content
     steps:
-      - name: Check out source and the required EOS table
+      - name: Check out source without downloading LFS objects
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         env:
-          # Limit LFS hydration while checkout still owns its temporary auth.
-          # Do not fetch historical HDF5 results or unused large EOS tables.
-          GIT_CONFIG_COUNT: '2'
-          GIT_CONFIG_KEY_0: lfs.fetchinclude
-          GIT_CONFIG_VALUE_0: EOS_toolkit/tables/helmholtz/helm_table.dat
-          GIT_CONFIG_KEY_1: lfs.fetchexclude
-          GIT_CONFIG_VALUE_1: ''
+          GIT_LFS_SKIP_SMUDGE: '1'
         with:
           persist-credentials: false
-          lfs: true
+          lfs: false
+          fetch-depth: 2
+
+      - name: Decide whether native checks apply
+        id: native-scope
+        env:
+          ARCH_CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          mkdir -p build-ci/reports
+          python3 tools/check_ci_results.py --scope native \
+            --base "$ARCH_CI_BASE_SHA" --head HEAD > build-ci/reports/scope.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          scope = json.loads(Path("build-ci/reports/scope.json").read_text())
+          assert type(scope["required"]) is bool
+          print(json.dumps(scope, indent=2))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("required=" + str(scope["required"]).lower() + "\n")
+          if not scope["required"]:
+              print("CPU: NOT_APPLICABLE to this nonnative diff; no test pass is claimed.")
+          PY
+
+      - name: Prepare the verified Helmholtz table
+        if: steps.native-scope.outputs.required == 'true'
+        uses: ./.github/actions/lfs-asset
+        with:
+          asset: helmholtz
 
       - name: Prepare the CPU toolchain
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
@@ -119,6 +136,7 @@ jobs:
           free -h
 
       - name: Identify native compiler targets for the cache
+        if: steps.native-scope.outputs.required == 'true'
         id: compiler
         run: |
           # Release uses -march=native. Never share its cached objects across
@@ -127,6 +145,7 @@ jobs:
           echo "target=$identity" >> "$GITHUB_OUTPUT"
 
       - name: Restore compiler cache
+        if: steps.native-scope.outputs.required == 'true'
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -136,31 +155,41 @@ jobs:
             arch-cpu-ubuntu24-gcc12-${{ steps.compiler.outputs.target }}-${{ hashFiles('CMakeLists.txt', 'cmake/**') }}-
 
       - name: Configure the existing CPU Release preset with tests and KLU
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           cmake --preset cpu-release -B build-ci/cpu \
             -DBUILD_TESTING=ON -DARCH_ENABLE_KLU=ON -DARCH_FETCH_SUITESPARSE=ON \
             -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-ci/cpu/bin" \
             2>&1 | tee build-ci/reports/configure.log
-          ctest --test-dir build-ci/cpu --show-only=json-v1 > build-ci/reports/inventory.json
+          ctest --test-dir build-ci/cpu -LE '^tooling$' --show-only=json-v1 > build-ci/reports/inventory.json
           python3 tools/check_ci_results.py --inventory build-ci/reports/inventory.json
 
       - name: Build the application and existing CPU validation suite
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           python3 tools/run_memory_guarded.py \
             --min-available-mib 1536 --max-swap-growth-mib 512 --pressure-guard \
             --log build-ci/reports/build.log -- \
             cmake --build build-ci/cpu --parallel 2
 
-      - name: Run every configured CPU test
+      - name: Run every configured CPU numerical and API test
+        if: steps.native-scope.outputs.required == 'true'
         run: |
-          ctest --test-dir build-ci/cpu --parallel 1 --timeout 600 \
+          set -euo pipefail
+          test_status=0
+          ctest --test-dir build-ci/cpu -LE '^tooling$' --parallel 1 --timeout 600 \
             --no-tests=error --output-on-failure \
             --output-junit "$PWD/build-ci/reports/ctest.xml" \
-            2>&1 | tee build-ci/reports/ctest.log
+            2>&1 | tee build-ci/reports/ctest.log || test_status=$?
           python3 tools/check_ci_results.py \
             --inventory build-ci/reports/inventory.json --junit build-ci/reports/ctest.xml
+          if test "$test_status" -ne 0; then
+            echo "::error::CTest command exited with status $test_status despite a complete report."
+            exit "$test_status"
+          fi
 
       - name: Validate low-density physical trajectories and repair accounting
+        if: steps.native-scope.outputs.required == 'true'
         run: |
           /usr/bin/python3 validation/low_density/run.py \
             --arch "$PWD/build-ci/cpu/bin/ARCH" --backend cpu \
@@ -173,9 +202,9 @@ jobs:
         run: |
           if command -v ccache >/dev/null; then ccache --show-stats; fi
 
-      # A PR may restore trusted caches, but cannot publish a new shared cache.
-      - name: Save cache after a successful main or V1 push
-        if: success() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CUDA_complete_v1') && steps.cache.outputs.cache-hit != 'true'
+      # Save only the current PR cache namespace after all CPU gates pass.
+      - name: Save the successful PR compiler cache
+        if: steps.native-scope.outputs.required == 'true' && success() && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: build-ci/ccache
@@ -200,9 +229,111 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+  studio:
+    name: Studio and Host
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # This suite checks Node/React/Host, not native Electron window behavior.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - name: Check out the tested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env:
+          GIT_LFS_SKIP_SMUDGE: '1'
+        with:
+          persist-credentials: false
+          # Include both merge parents; unavailable refs conservatively run Studio.
+          fetch-depth: 2
+
+      - name: Decide affected-module scope
+        id: scope
+        env:
+          ARCH_CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          mkdir -p build-ci/studio
+          python3 tools/check_ci_results.py \
+            --scope studio --base "$ARCH_CI_BASE_SHA" --head HEAD \
+            > build-ci/studio/scope.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          scope = json.loads(Path("build-ci/studio/scope.json").read_text())
+          assert type(scope["required"]) is bool
+          print(json.dumps(scope, indent=2))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("required=" + str(scope["required"]).lower() + "\n")
+          if not scope["required"]:
+              print("Studio: NOT_APPLICABLE to this diff; no test pass is claimed.")
+          PY
+
+      - name: Prepare the verified Studio reader fixture
+        if: steps.scope.outputs.required == 'true'
+        uses: ./.github/actions/lfs-asset
+        with:
+          asset: studio-sod
+
+      - name: Prepare the declared Node runtime
+        if: steps.scope.outputs.required == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+
+      - name: Prepare the Host fixture toolchain
+        if: steps.scope.outputs.required == 'true'
+        run: |
+          # Host tests perform small real builds and bind explicit /usr/bin
+          # tools. A runner's preinstalled CMake elsewhere is not that contract.
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential cmake ninja-build mold
+          /usr/bin/cmake --version
+          /usr/bin/ninja --version
+          /usr/bin/c++ --version
+          /usr/bin/ld.mold --version
+
+      - name: Record identity and install locked dependencies
+        if: steps.scope.outputs.required == 'true'
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          mkdir -p ../build-ci/studio
+          git rev-parse HEAD > ../build-ci/studio/commit.txt
+          node --version > ../build-ci/studio/node.txt
+          npm --version > ../build-ci/studio/npm.txt
+          /usr/bin/time -p npm ci 2>&1 | tee ../build-ci/studio/install.log
+
+      - name: Run the full Studio suite including Host exactly once
+        if: steps.scope.outputs.required == 'true'
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          test_status=0
+          /usr/bin/time -p npm --silent test \
+            2> ../build-ci/studio/test-time.log | tee ../build-ci/studio/tests.tap || test_status=$?
+          python3 ../tools/check_ci_results.py --node-tap ../build-ci/studio/tests.tap
+          if test "$test_status" -ne 0; then
+            echo "::error::Studio command exited with status $test_status despite a complete report."
+            exit "$test_status"
+          fi
+
+      - name: Lint and build production assets with type checking
+        if: steps.scope.outputs.required == 'true'
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          /usr/bin/time -p npm run lint 2>&1 | tee ../build-ci/studio/lint.log
+          # npm run build already runs tsc --noEmit before Vite.
+          /usr/bin/time -p npm run build 2>&1 | tee ../build-ci/studio/build.log
+
+      # No new artifact upload: raw diagnostics remain in the disposable runner.
+
   required:
     name: CI required
-    needs: [tooling, cpu]
+    needs: [tooling, cpu, studio]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -210,9 +341,12 @@ jobs:
     env:
       TOOLING_RESULT: ${{ needs.tooling.result }}
       CPU_RESULT: ${{ needs.cpu.result }}
+      STUDIO_RESULT: ${{ needs.studio.result }}
     steps:
-      - name: Require both jobs to succeed
+      - name: Require all jobs to succeed
         run: |
           printf 'Tooling: %s\nCPU Release: %s\n' "$TOOLING_RESULT" "$CPU_RESULT"
           test "$TOOLING_RESULT" = success
           test "$CPU_RESULT" = success
+          printf 'Studio and Host: %s\n' "$STUDIO_RESULT"
+          test "$STUDIO_RESULT" = success

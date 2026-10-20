@@ -14,7 +14,7 @@
 #include "amr/elliptic/EllipticMeshAdapter.h"
 
 #include "amr/AMRControl.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 /** Bind every valid AMR leaf to one x-fast composite Poisson cell and native storage offset. */
@@ -36,6 +36,13 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
         if (extent<2 || extent>std::numeric_limits<int>::max())
             throw std::invalid_argument("Elliptic root extent exceeds indexing capacity");
         base.cells[axis]=static_cast<int>(extent);
+    }
+    const std::string lower_faces[]{config.x1l_boundary_type,config.x2l_boundary_type,config.x3l_boundary_type};
+    const std::string upper_faces[]{config.x1r_boundary_type,config.x2r_boundary_type,config.x3r_boundary_type};
+    for (int axis=0; axis<base.dimension; ++axis) {
+        if ((lower_faces[axis]=="periodic") != (upper_faces[axis]=="periodic"))
+            throw std::invalid_argument("Elliptic AMR topology requires paired periodic physical faces");
+        result.periodic[axis]=lower_faces[axis]=="periodic";
     }
     base.origin={config.x1_min,config.x2_min,config.x3_min};
     const double ends[]{config.x1_max,config.x2_max,config.x3_max};
@@ -66,9 +73,10 @@ EllipticMeshBinding bind_elliptic_mesh(const AMRControl& control, const GridConf
                     ?GridMetrics::Geometry::Cartesian
                     :(base.geometry==arch::elliptic::Geometry::Cylindrical
                         ?GridMetrics::Geometry::Cylindrical:GridMetrics::Geometry::Spherical);
-                const double composite=GridMetrics::CellVolume(
-                    GridMetrics::make_geometry_view(geometry,base.dimension,lower,widths),0,0,0);
-                const double native=GridMetrics::CellVolume(grid,i,j,k);
+                auto fragment=GridMetrics::make_geometry_view(geometry,base.dimension,lower,widths);
+                double composite=GridMetrics::CellVolume(fragment,0,0,0);
+                const double native=GridMetrics::CellVolume(
+                    GridMetrics::make_geometry_view(grid),i,j,k);
                 if(std::abs(native-composite)>64*std::numeric_limits<double>::epsilon()*composite)
                     throw std::logic_error("Elliptic cell volume differs from native metrics");
                 result.cells.push_back(cell);

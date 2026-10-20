@@ -10,9 +10,12 @@
  *    diffusion. The case adds no private numerical implementation.
  *
  * This is a centimetre-scale coupled execution example, not a stellar
- * white-dwarf model. Two-dimensional periodic and polar gravity have
- * translation-invariant source units; three-dimensional isolated runs have
- * finite-mass Newtonian gravity.
+ * white-dwarf model. Cartesian 2D periodic gravity has translation-invariant
+ * source units. Three-dimensional isolated runs have finite Newtonian mass.
+ * Grid's (r,0,z) representative point retains a cylindrical meridian's axial
+ * profile; its full-ring gravity stays in the shared gravity solver.
+ * Shared configuration and Grid checks reject unsupported coordinate pairs.
+ * Scientific/backend qualification is owned by Core, not this initializer.
  */
 
 #include <cmath>
@@ -33,10 +36,32 @@ class SNIaCoupledProblem
     double center_x_ = 0.5;
     double center_y_ = 0.5;
     double center_z_ = 0.5;
-    int dimension_ = 2;
+    int profile_dimension_ = 2;
     std::vector<double> fractions_;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rho0", "float", "g/cm^3"},
+            {"temperature0", "float", "K"},
+            {"temperature_peak", "float", "K"},
+            {"density_amplitude", "float", "1"},
+            {"hotspot_width", "float", "cm"},
+            {"center_x", "float", "cm"},
+            {"center_y", "float", "cm"},
+            {"center_z", "float", "cm"}};
+        return result;
+    }
+
     /** Validate the four-module contract and load the network composition. */
     void Setup(SimConfig& config, SpeciesManager& species)
     {
@@ -55,7 +80,10 @@ public:
             throw std::invalid_argument(
                 "SNIaCoupled requires supported 2D/3D self gravity, Helmholtz EOS, "
                 "aprox13/19 burning and thermal diffusion");
-        dimension_=config.grid.dim;
+        const bool meridian=config.grid.geometry=="cylindrical" && config.grid.dim==2;
+        // Grid embeds the meridian as (r,0,z). Keeping the ordinary 3D profile
+        // includes physical z without introducing a separate coordinate solver.
+        profile_dimension_=meridian?3:config.grid.dim;
         // Global config validation owns the detailed fluid/gravity face contract.
         // This case only owns the physical initial state.
 
@@ -67,6 +95,8 @@ public:
         center_x_ = config.Get<double>("center_x", center_x_);
         center_y_ = config.Get<double>("center_y", center_y_);
         center_z_ = config.Get<double>("center_z", center_z_);
+        if(meridian && center_y_!=0.)
+            throw std::invalid_argument("SNIaCoupled cylindrical meridian requires center_y=0; center_x is radial and center_z is axial");
         if (!std::isfinite(density_) || !std::isfinite(background_temperature_)
             || !std::isfinite(peak_temperature_) || !std::isfinite(density_amplitude_)
             || !std::isfinite(width_) || !std::isfinite(center_x_) || !std::isfinite(center_y_)
@@ -75,17 +105,17 @@ public:
             || peak_temperature_ < background_temperature_
             || density_amplitude_ < 0.0 || width_ <= 0.0)
             throw std::invalid_argument("SNIaCoupled requires finite positive hotspot inputs");
-
         ProblemHelper::SetupNetworkAndFractions(config, species, fractions_);
     }
 
     /** Supply smooth primitive fields; the shared EOS converts T and X to e. */
     void Init(const PointCoords& point, PrimitiveData& state) const
     {
-        const double dx = (point.x - center_x_) / width_;
-        const double dy = (point.y - center_y_) / width_;
-        const double dz = dimension_==3 ? (point.z-center_z_)/width_ : 0.;
-        // q = exp[-|x-x_c|^2/(2 sigma^2)] in physical Cartesian space.
+        const double dx = (point.x-center_x_)/width_;
+        const double dy = (point.y-center_y_)/width_;
+        const double dz = profile_dimension_==3 ? (point.z-center_z_)/width_ : 0.;
+        // Ordinary physical-point hotspot: q=exp[-|x-x_c|^2/(2 sigma^2)].
+        // The representative (r,0,z) point gives the same meridional Gaussian.
         const double hotspot = std::exp(-0.5 * (dx * dx + dy * dy + dz * dz));
         // rho = rho_0 (1 + A q), T = T_0 + (T_peak-T_0) q.
         state.rho = density_ * (1.0 + density_amplitude_ * hotspot);

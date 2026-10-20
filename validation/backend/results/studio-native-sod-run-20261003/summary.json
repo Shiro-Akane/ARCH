@@ -1,0 +1,132 @@
+{
+  "scope": "Linux/WSL native Sod Run engineering UAT; not independent scientific accuracy or full 3C acceptance",
+  "sourceHEAD": "7d9b95f92d3a99cf830d090b3834e3de99b5cccf",
+  "runId": "795e6be7-105e-4b3d-a48a-eae68a6f4303",
+  "caseId": "Sod",
+  "mode": "run",
+  "config": {
+    "path": "studio/.local/UatSod.par",
+    "sha256": "381ceb60eb6cdbf7c99b43577ff0d94731144d655514c7a8194d09ce8d88644e",
+    "size": 1259,
+    "frozenInputMatchesSavedConfig": true
+  },
+  "originalInput": {
+    "path": "simulation/Sod/Sod.par",
+    "sha256": "9c8ba5b67718bf3bde6a14c447a5bfe442015813461b9a7ea8417a3e9ec79843",
+    "unchanged": true
+  },
+  "inputChanges": {
+    "chk_dt": {
+      "original": "-1.0",
+      "run": "0.05"
+    },
+    "out_dir": {
+      "original": "output/sod_standard",
+      "run": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844/source-output"
+    }
+  },
+  "binary": {
+    "path": "build-studio-cpu/bin/ARCH",
+    "sha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+    "size": 7177152,
+    "modifiedTime": "2026-10-03T03:14:48.890Z",
+    "confirmedBinary": "compiled-version",
+    "fullDependencyFreshness": "unknown"
+  },
+  "runState": {
+    "runId": "795e6be7-105e-4b3d-a48a-eae68a6f4303",
+    "state": "succeeded",
+    "workerPid": 6210,
+    "workerStartTicks": "128132",
+    "bootId": "d8090c89-57e6-4d69-bb3c-af22da56a86c",
+    "startedAt": "2026-10-03T03:53:41.361Z",
+    "processId": 6222,
+    "processStartTicks": "128140",
+    "processIdentity": "captured",
+    "exitCode": 0,
+    "signal": null,
+    "finishedAt": "2026-10-03T03:53:41.594Z"
+  },
+  "endpoint": {
+    "step": 280,
+    "time": 0.2,
+    "checkpointVersion": 6
+  },
+  "processObservation": {
+    "workerExited": true,
+    "coreExited": true,
+    "completedIndependentTerminalHeld": true
+  },
+  "nativeEvidence": {
+    "openConfigAssociation": "captured",
+    "runConfirmationAndIndependentTerminal": "captured",
+    "userVisibleWindowAcceptance": "pending current user confirmation"
+  },
+  "restart": "prepared-not-run; pending confirmation dialog cancelled without starting Core",
+  "rawLocalIndex": {
+    "workflow": "studio/.local/integration/native-sod-workflow-99a45564-e576-4682-bcb2-d6cabd077844",
+    "runDirectory": "studio/.local/runs/795e6be7-105e-4b3d-a48a-eae68a6f4303",
+    "files": [
+      {
+        "name": "Sod_HLLC_plt_0000.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_HLLC_plt_0001.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_HLLC_plt_0002.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_HLLC_plt_0003.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_HLLC_plt_0004.h5",
+        "size": 17472
+      },
+      {
+        "name": "Sod_backend_plan.txt",
+        "size": 267
+      },
+      {
+        "name": "Sod_chk_0000.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_chk_0001.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_chk_0002.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_chk_0003.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_chk_0004.h5",
+        "size": 25496
+      },
+      {
+        "name": "Sod_log.dat",
+        "size": 18490
+      },
+      {
+        "name": "cpu_stage_timings.tsv",
+        "size": 202
+      },
+      {
+        "name": "run_timings.tsv",
+        "size": 87
+      },
+      {
+        "name": "state_repairs.txt",
+        "size": 252
+      }
+    ]
+  }
+}

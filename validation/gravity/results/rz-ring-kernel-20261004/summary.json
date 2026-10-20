@@ -1,0 +1,531 @@
+{
+  "scope": "CPU shared axis/off-axis ring kernel and bounded Duffy contact estimate; not production/certified RZ boundary",
+  "coreAuthority": "86bec324018349c6d81df84a3cced3ed9f9a2792 section 7",
+  "sourceHEADAtBuild": "1e584b762b315526b28d73895d476f305020a452",
+  "repositoryDirtyAtBuild": true,
+  "binarySha256": "651d3be57664ff2416e2fe1d997e34dc34146c9d77134ce58db48b1ebb990215",
+  "testBinarySha256": "462b6324967cf9792a69d2627bb878a3932d14a899e8cff40f1a0ac26baa3546",
+  "deliveryFileFingerprints": {
+    "src/physics/gravity/FiniteRingBoundaryMath.h": "cfd33943d2232f0f694e9113e982571b8ca0aad2b199ac546b0da24fcd497e2f",
+    "src/physics/gravity/GravityBoundary.h": "621093fe04395a0ba94f6a7093db7b4aee533b9f018fd259a3c47f3b5bccb6c8",
+    "tests/host/gravity/test_composite_poisson.cpp": "856f69e4745834bb1ab6c5f9460f346bb087e5ef2a66275f25ccbac7789ced8d",
+    "validation/gravity/rz_ring_axis_reference.py": "e5709e62c09919b31194bec698eef8a4e02f0404f689297b50e1c6e33e9db9a9",
+    "validation/gravity/rz_ring_offaxis_reference.py": "121340969aa7f5e252a86b438009dcf11d895b91bbf08e2baf2c3a3178e6a76f"
+  },
+  "algorithm": {
+    "elliptic": "K(m), m=k^2; AGM starts with sqrt(1-m)=hypot(radialOffset,axialOffset)/s",
+    "axis": "exact R_observer=0 analytic primitive, a=0 continuous branch; stable sections/log1p intervals",
+    "contact": "split rectangles at observer, two Duffy triangles each, internal Gauss samples",
+    "gaussOrders": [
+      4,
+      8,
+      16,
+      32,
+      64,
+      128
+    ],
+    "maximumKernelEvaluations": 200000,
+    "maximumAGMIterationsPerSample": 32,
+    "errorQuality": "estimate_only; never certified",
+    "defaultRelativeEstimateTarget": 1e-09,
+    "looseContactDiagnosticTarget": 1e-07,
+    "limitsAreUserConfig": false
+  },
+  "independentAGM": {
+    "scope": "complementary-root K parameter math only; independent Decimal parameter m reference",
+    "rows": [
+      {
+        "complementaryRoot": 1.0,
+        "K": 1.5707963267948966,
+        "iterations": 1,
+        "independentDecimalPrecision": 100,
+        "reference": 1.5707963267948966,
+        "absoluteDelta": 0.0
+      },
+      {
+        "complementaryRoot": 0.5,
+        "K": 2.1565156474996434,
+        "iterations": 4,
+        "independentDecimalPrecision": 100,
+        "reference": 2.1565156474996434,
+        "absoluteDelta": 0.0
+      },
+      {
+        "complementaryRoot": 1e-12,
+        "K": 29.017315477048435,
+        "iterations": 8,
+        "independentDecimalPrecision": 100,
+        "reference": 29.017315477048438,
+        "absoluteDelta": 3.552713678800501e-15
+      },
+      {
+        "complementaryRoot": 1e-100,
+        "K": 231.6448036605245,
+        "iterations": 11,
+        "independentDecimalPrecision": 300,
+        "reference": 231.64480366052445,
+        "absoluteDelta": 5.684341886080802e-14
+      },
+      {
+        "complementaryRoot": 1e-300,
+        "K": 692.1618222593336,
+        "iterations": 13,
+        "independentDecimalPrecision": 700,
+        "reference": 692.1618222593336,
+        "absoluteDelta": 0.0
+      }
+    ]
+  },
+  "independentAxis": {
+    "scope": "matched analytic axis point-potential reference only; not certified global boundary",
+    "precisionDigits": [
+      80,
+      120
+    ],
+    "rows": [
+      {
+        "name": "solid_midplane",
+        "source": {
+          "name": "solid_midplane",
+          "r_lower": 0,
+          "r_upper": 2,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": 0
+        },
+        "reference": -3.976671367227376e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -3.976671367227376e-06,
+          "estimated_error": 5.651189904977196e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 0.0,
+        "relativeDelta": 0.0
+      },
+      {
+        "name": "solid_source_edge",
+        "source": {
+          "name": "solid_source_edge",
+          "r_lower": 0,
+          "r_upper": 2,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": 1
+        },
+        "reference": -3.2598939661704885e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -3.2598939661704885e-06,
+          "estimated_error": 4.632587954021245e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 0.0,
+        "relativeDelta": 0.0
+      },
+      {
+        "name": "hollow_midplane",
+        "source": {
+          "name": "hollow_midplane",
+          "r_lower": 1,
+          "r_upper": 2,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": 0
+        },
+        "reference": -2.3467243841421324e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -2.346724384142133e-06,
+          "estimated_error": 6.48639419972184e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 4.235164736271502e-22,
+        "relativeDelta": 1.80471331226215e-16
+      },
+      {
+        "name": "solid_below",
+        "source": {
+          "name": "solid_below",
+          "r_lower": 0,
+          "r_upper": 2,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": -3
+        },
+        "reference": -1.5604778079151454e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -1.5604778079151452e-06,
+          "estimated_error": 5.179751705989861e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 2.117582368135751e-22,
+        "relativeDelta": 1.3570089605855512e-16
+      },
+      {
+        "name": "solid_above",
+        "source": {
+          "name": "solid_above",
+          "r_lower": 0,
+          "r_upper": 2,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": 3
+        },
+        "reference": -1.5604778079151454e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -1.5604778079151452e-06,
+          "estimated_error": 5.179751705989861e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 2.117582368135751e-22,
+        "relativeDelta": 1.3570089605855512e-16
+      },
+      {
+        "name": "shifted_hollow",
+        "source": {
+          "name": "shifted_hollow",
+          "r_lower": 1,
+          "r_upper": 2,
+          "z_lower": 4,
+          "z_upper": 6,
+          "density": 3,
+          "z_observer": 8
+        },
+        "reference": -1.1381646093174392e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -1.1381646093174392e-06,
+          "estimated_error": 4.899525460607832e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 0.0,
+        "relativeDelta": 0.0
+      },
+      {
+        "name": "near_hollow_edge",
+        "source": {
+          "name": "near_hollow_edge",
+          "r_lower": "0.125",
+          "r_upper": 1,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": 1
+        },
+        "reference": -1.1661100489577753e-06,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -1.1661100489577753e-06,
+          "estimated_error": 1.7539842640526417e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 0.0,
+        "relativeDelta": 0.0
+      },
+      {
+        "name": "far_solid",
+        "source": {
+          "name": "far_solid",
+          "r_lower": 0,
+          "r_upper": 2,
+          "z_lower": -1,
+          "z_upper": 1,
+          "density": 3,
+          "z_observer": 100
+        },
+        "reference": -5.0319681666508664e-08,
+        "precisionBinary64Equal": true,
+        "production": {
+          "status": 1,
+          "value": -5.0319681666508505e-08,
+          "estimated_error": 3.6468106142612716e-20,
+          "error_is_certified": false,
+          "order": 0,
+          "kernel_evaluations": 0,
+          "agm_iterations": 0
+        },
+        "absoluteDelta": 1.5881867761018131e-22,
+        "relativeDelta": 3.1561940050166586e-15
+      }
+    ],
+    "existingExteriorContactStillRejected": 3
+  },
+  "independentContact": {
+    "scope": "Independent bounded contact point-potential review only; no certified near bound or production RZ acceptance",
+    "G_cgs": "6.67430E-8",
+    "potential_unit": "cm^2/s^2",
+    "normalization": "full rotating volume",
+    "method": "Independent Decimal AGM + split rectangle triangular Duffy; separate precision/order/t partition",
+    "source_identity": "matched piecewise-constant annulus",
+    "rows": [
+      {
+        "source": {
+          "name": "outer_face",
+          "r_lower": ".5",
+          "r_upper": 1,
+          "z_lower": "-.375",
+          "z_upper": ".375",
+          "density": 1,
+          "r_observer": 1,
+          "z_observer": 0
+        },
+        "reference_sequence": [
+          {
+            "order": 32,
+            "t_panels": 1,
+            "precision": 80,
+            "potential": -1.357767128911136e-07,
+            "decimal_potential": "-1.3577671289111361249210535949773973601529300878483908837278521918219750642173907E-7",
+            "kernel_evaluations": 4096,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 1,
+            "precision": 80,
+            "potential": -1.357766917788228e-07,
+            "decimal_potential": "-1.3577669177882278032189377851566754857500053848095025266244224809150782704129317E-7",
+            "kernel_evaluations": 16384,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 2,
+            "precision": 80,
+            "potential": -1.3577669068895323e-07,
+            "decimal_potential": "-1.3577669068895323865863745100489435060706745258302008213058462728865793067510921E-7",
+            "kernel_evaluations": 32768,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 2,
+            "precision": 100,
+            "potential": -1.3577669068895323e-07,
+            "decimal_potential": "-1.357766906889532386586374510048943506070674525830200821305846272886579306751090717936729868539517775E-7",
+            "kernel_evaluations": 32768,
+            "certified": false
+          }
+        ],
+        "precision_binary64_equal": true,
+        "order_32_to_64_delta": 2.1112290810478397e-14,
+        "t_partition_1_to_2_delta": 1.0898695640564646e-15,
+        "certified": false,
+        "production_math_probe": {
+          "status": 0,
+          "value": -1.3577669041789805e-07,
+          "estimated_error": 1.3609246599799322e-15,
+          "error_is_certified": false,
+          "order": 128,
+          "kernel_evaluations": 87360,
+          "agm_iterations": 466038
+        },
+        "production_absolute_delta": 2.710551753328064e-16
+      },
+      {
+        "source": {
+          "name": "outer_corner",
+          "r_lower": ".5",
+          "r_upper": 1,
+          "z_lower": "-.375",
+          "z_upper": ".375",
+          "density": 1,
+          "r_observer": 1,
+          "z_observer": ".375"
+        },
+        "reference_sequence": [
+          {
+            "order": 32,
+            "t_panels": 1,
+            "precision": 80,
+            "potential": -1.1921048452597893e-07,
+            "decimal_potential": "-1.1921048452597893407307540532142502705941685095062947427576332401215849696182301E-7",
+            "kernel_evaluations": 2048,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 1,
+            "precision": 80,
+            "potential": -1.1921046341368936e-07,
+            "decimal_potential": "-1.1921046341368937132814457085889761471992537871308768529764557745156013758085726E-7",
+            "kernel_evaluations": 8192,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 2,
+            "precision": 80,
+            "potential": -1.1921046232381982e-07,
+            "decimal_potential": "-1.1921046232381983460734708222362460966231888768709224817687201467529041493032285E-7",
+            "kernel_evaluations": 16384,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 2,
+            "precision": 100,
+            "potential": -1.1921046232381982e-07,
+            "decimal_potential": "-1.192104623238198346073470822236246096623188876870922481768720146752904149303229388295057246314192667E-7",
+            "kernel_evaluations": 16384,
+            "certified": false
+          }
+        ],
+        "precision_binary64_equal": true,
+        "order_32_to_64_delta": 2.1112289566398756e-14,
+        "t_partition_1_to_2_delta": 1.089869537586685e-15,
+        "certified": false,
+        "production_math_probe": {
+          "status": 0,
+          "value": -1.1921046205276462e-07,
+          "estimated_error": 1.3609246864497118e-15,
+          "error_is_certified": false,
+          "order": 128,
+          "kernel_evaluations": 43680,
+          "agm_iterations": 226880
+        },
+        "production_absolute_delta": 2.71055201802586e-16
+      },
+      {
+        "source": {
+          "name": "interior",
+          "r_lower": ".5",
+          "r_upper": 1,
+          "z_lower": "-.375",
+          "z_upper": ".375",
+          "density": 1,
+          "r_observer": ".75",
+          "z_observer": 0
+        },
+        "reference_sequence": [
+          {
+            "order": 32,
+            "t_panels": 1,
+            "precision": 80,
+            "potential": -1.6471531430056205e-07,
+            "decimal_potential": "-1.6471531430056204927114616138407163901868383491360848352959430574883179615437608E-7",
+            "kernel_evaluations": 8192,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 1,
+            "precision": 80,
+            "potential": -1.647152931934733e-07,
+            "decimal_potential": "-1.6471529319347329007245266656184019033350040287255640489015408831328010612672997E-7",
+            "kernel_evaluations": 32768,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 2,
+            "precision": 80,
+            "potential": -1.647152921036793e-07,
+            "decimal_potential": "-1.6471529210367930987451370894527324651455045192971572737466406111068522523824678E-7",
+            "kernel_evaluations": 65536,
+            "certified": false
+          },
+          {
+            "order": 64,
+            "t_panels": 2,
+            "precision": 100,
+            "potential": -1.647152921036793e-07,
+            "decimal_potential": "-1.647152921036793098745137089452732465145504519297157273746640611106852252382466362948836512816010829E-7",
+            "kernel_evaluations": 65536,
+            "certified": false
+          }
+        ],
+        "precision_binary64_equal": true,
+        "order_32_to_64_delta": 2.1107088757632835e-14,
+        "t_partition_1_to_2_delta": 1.0897939928357017e-15,
+        "certified": false,
+        "production_math_probe": {
+          "status": 0,
+          "value": -1.6471529183263352e-07,
+          "estimated_error": 1.3608396919874107e-15,
+          "error_is_certified": false,
+          "order": 128,
+          "kernel_evaluations": 174720,
+          "agm_iterations": 934888
+        },
+        "production_absolute_delta": 2.710457785610478e-16
+      }
+    ],
+    "limits": [
+      "Potential only; no contact force reference",
+      "Quadrature difference is estimate only",
+      "Existing exterior reference still rejects contact",
+      "No production kernel imported",
+      "No AMR/operator/CUDA/evolution or global residual certification"
+    ]
+  },
+  "defaultContact": {
+    "status": "WorkLimit",
+    "order": 128,
+    "kernelEvaluations": 174720,
+    "estimatedErrorAtG1": 2.038924984404389e-08,
+    "certified": false
+  },
+  "checks": {
+    "kernel_axis_offaxis_nearaxis": "PASS",
+    "complementary_root_extreme_domain": "PASS",
+    "Duffy_face_corner_interior": "PASS",
+    "default_contact_explicit_WorkLimit": "PASS",
+    "one_evaluation_WorkLimit": "PASS",
+    "axis_zero_request_PrecisionLimit": "PASS",
+    "negative_source_rejected": "PASS",
+    "existing_exterior_contact_rejected": "PASS",
+    "production_boundary_gate": "PASS",
+    "composite_poisson_analytic": "PASS",
+    "composite_poisson_contract": "PASS",
+    "self_gravity_lifecycle": "PASS",
+    "axis_reference_cli": "PASS",
+    "source_architecture": "PASS",
+    "diff_check": "PASS"
+  },
+  "remaining": [
+    "Reliable near/contact quadrature bound proof",
+    "full FP64/moment/distance/support/accumulation rounding ledger",
+    "tree descent bound budget and original Poisson RHS residual request",
+    "source/AMR epoch identity of complete evaluation",
+    "contact force and full source/operator/evolution references",
+    "RZ-B reflux and viscosity clarification; C/D; CUDA after CPU science"
+  ],
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-ring-kernel-20261004"
+}

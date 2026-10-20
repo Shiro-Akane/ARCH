@@ -1,0 +1,361 @@
+{
+  "status": "PASS_SCOPED",
+  "baseCommit": "49f607252db4bf76c174c6a612122d96b811fc6c",
+  "rootCoordinateProof": {
+    "status": "PASS",
+    "cases": 12,
+    "cells": 264,
+    "exteriorFaces": 176,
+    "certifiedCases": 8,
+    "declinedRoundedCases": 4,
+    "rows": [
+      {
+        "radialOrigin": 0,
+        "mixed": false,
+        "zeroDensity": false,
+        "cells": 16,
+        "exteriorFaces": 12,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0,
+        "mixed": false,
+        "zeroDensity": true,
+        "cells": 16,
+        "exteriorFaces": 12,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0.5,
+        "mixed": false,
+        "zeroDensity": false,
+        "cells": 16,
+        "exteriorFaces": 16,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0.5,
+        "mixed": false,
+        "zeroDensity": true,
+        "cells": 16,
+        "exteriorFaces": 16,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0.3,
+        "mixed": false,
+        "zeroDensity": false,
+        "cells": 16,
+        "exteriorFaces": 16,
+        "rootScopeCertified": false,
+        "maximumExactCoordinateDifference": 5.551115123125783e-17
+      },
+      {
+        "radialOrigin": 0.3,
+        "mixed": false,
+        "zeroDensity": true,
+        "cells": 16,
+        "exteriorFaces": 16,
+        "rootScopeCertified": false,
+        "maximumExactCoordinateDifference": 5.551115123125783e-17
+      },
+      {
+        "radialOrigin": 0,
+        "mixed": true,
+        "zeroDensity": false,
+        "cells": 28,
+        "exteriorFaces": 12,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0,
+        "mixed": true,
+        "zeroDensity": true,
+        "cells": 28,
+        "exteriorFaces": 12,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0.5,
+        "mixed": true,
+        "zeroDensity": false,
+        "cells": 28,
+        "exteriorFaces": 16,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0.5,
+        "mixed": true,
+        "zeroDensity": true,
+        "cells": 28,
+        "exteriorFaces": 16,
+        "rootScopeCertified": true,
+        "maximumExactCoordinateDifference": 0.0
+      },
+      {
+        "radialOrigin": 0.3,
+        "mixed": true,
+        "zeroDensity": false,
+        "cells": 28,
+        "exteriorFaces": 16,
+        "rootScopeCertified": false,
+        "maximumExactCoordinateDifference": 5.551115123125783e-17
+      },
+      {
+        "radialOrigin": 0.3,
+        "mixed": true,
+        "zeroDensity": true,
+        "cells": 28,
+        "exteriorFaces": 16,
+        "rootScopeCertified": false,
+        "maximumExactCoordinateDifference": 5.551115123125783e-17
+      }
+    ],
+    "probeRecordSha256": "c987d74345ad374ef69c792526e180c49abea9b2d203b9236765997aefbd1178",
+    "scope": "Actual current ring producer exact root source edges and exterior observer identity",
+    "limitations": [
+      "Exact-coordinate subset only; rounded/unsupported geometry remains Unknown",
+      "Not physical Poisson/force or complete RZ acceptance; no changed source coordinates",
+      "No simulation, CUDA or long-run evidence; raw arrays remain local"
+    ]
+  },
+  "storedRhsRegression": {
+    "status": "PASS",
+    "cases": 12,
+    "cells": 264,
+    "rows": [
+      {
+        "mixed": false,
+        "radialOrigin": 0,
+        "zero": false,
+        "cells": 16,
+        "maximumExactIntervalDistance": 0.00013304285032440886,
+        "sourceNormUpper": 4.235164736271509e-22,
+        "boundaryNormUpper": 6.086820043304833e-05,
+        "assemblyNormUpper": 3.990786090280446e-20,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 6.08682004330484e-05,
+        "totalResidualUpper": 0.0001253071938246849,
+        "toleranceSafe": 3.5707929585879323e-16
+      },
+      {
+        "mixed": false,
+        "radialOrigin": 0,
+        "zero": true,
+        "cells": 16,
+        "maximumExactIntervalDistance": 0.0,
+        "sourceNormUpper": 0,
+        "boundaryNormUpper": 0,
+        "assemblyNormUpper": 0,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 0,
+        "totalResidualUpper": 0,
+        "toleranceSafe": 0
+      },
+      {
+        "mixed": false,
+        "radialOrigin": 0.5,
+        "zero": false,
+        "cells": 16,
+        "maximumExactIntervalDistance": 9.664577439750547e-05,
+        "sourceNormUpper": 4.235164736271509e-22,
+        "boundaryNormUpper": 5.3179694313840376e-05,
+        "assemblyNormUpper": 4.328267911950456e-20,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 5.317969431384045e-05,
+        "totalResidualUpper": 0.000111841559584132,
+        "toleranceSafe": 5.482170956450939e-16
+      },
+      {
+        "mixed": false,
+        "radialOrigin": 0.5,
+        "zero": true,
+        "cells": 16,
+        "maximumExactIntervalDistance": 0.0,
+        "sourceNormUpper": 0,
+        "boundaryNormUpper": 0,
+        "assemblyNormUpper": 0,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 0,
+        "totalResidualUpper": 0,
+        "toleranceSafe": 0
+      },
+      {
+        "mixed": false,
+        "radialOrigin": 0.3,
+        "zero": false,
+        "cells": 16,
+        "maximumExactIntervalDistance": 5.7081841966516775e-05,
+        "sourceNormUpper": 4.235164736271509e-22,
+        "boundaryNormUpper": 3.713489787341491e-05,
+        "assemblyNormUpper": 2.994348701483263e-20,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 3.7134897873414955e-05,
+        "totalResidualUpper": 7.897251478444945e-05,
+        "toleranceSafe": 4.702719037619426e-16
+      },
+      {
+        "mixed": false,
+        "radialOrigin": 0.3,
+        "zero": true,
+        "cells": 16,
+        "maximumExactIntervalDistance": 0.0,
+        "sourceNormUpper": 0,
+        "boundaryNormUpper": 0,
+        "assemblyNormUpper": 0,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 0,
+        "totalResidualUpper": 0,
+        "toleranceSafe": 0
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0,
+        "zero": false,
+        "cells": 28,
+        "maximumExactIntervalDistance": 0.00013505358986538817,
+        "sourceNormUpper": 4.23516473627151e-22,
+        "boundaryNormUpper": 6.203484418314581e-05,
+        "assemblyNormUpper": 4.7061332731308733e-20,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 6.203484418314592e-05,
+        "totalResidualUpper": 0.00012705828842339673,
+        "toleranceSafe": 2.9886000571046503e-16
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0,
+        "zero": true,
+        "cells": 28,
+        "maximumExactIntervalDistance": 0.0,
+        "sourceNormUpper": 0,
+        "boundaryNormUpper": 0,
+        "assemblyNormUpper": 0,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 0,
+        "totalResidualUpper": 0,
+        "toleranceSafe": 0
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0.5,
+        "zero": false,
+        "cells": 28,
+        "maximumExactIntervalDistance": 4.937944897508198e-05,
+        "sourceNormUpper": 4.23516473627151e-22,
+        "boundaryNormUpper": 2.7492379568991605e-05,
+        "assemblyNormUpper": 2.2082840976310942e-20,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 2.7492379568991652e-05,
+        "totalResidualUpper": 6.186257958376602e-05,
+        "toleranceSafe": 6.877820445782565e-16
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0.5,
+        "zero": true,
+        "cells": 28,
+        "maximumExactIntervalDistance": 0.0,
+        "sourceNormUpper": 0,
+        "boundaryNormUpper": 0,
+        "assemblyNormUpper": 0,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 0,
+        "totalResidualUpper": 0,
+        "toleranceSafe": 0
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0.3,
+        "zero": false,
+        "cells": 28,
+        "maximumExactIntervalDistance": 7.358116361886897e-05,
+        "sourceNormUpper": 4.235164736271511e-22,
+        "boundaryNormUpper": 3.0043906644473656e-05,
+        "assemblyNormUpper": 2.5356667308285728e-20,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 3.0043906644473714e-05,
+        "totalResidualUpper": 6.59110110900185e-05,
+        "toleranceSafe": 5.823197801070926e-16
+      },
+      {
+        "mixed": true,
+        "radialOrigin": 0.3,
+        "zero": true,
+        "cells": 28,
+        "maximumExactIntervalDistance": 0.0,
+        "sourceNormUpper": 0,
+        "boundaryNormUpper": 0,
+        "assemblyNormUpper": 0,
+        "residualEvaluationNormUpper": 0,
+        "combinedRhsNormUpper": 0,
+        "totalResidualUpper": 0,
+        "toleranceSafe": 0
+      }
+    ],
+    "scope": "Identity-bound physical source and ring interval composition through exact stored B/native weights; physical geometry/coefficient/weight construction unverified",
+    "probeSha256": "66ee8be8e6bc1a361d6b9381965a62c8b68d401a746d51a0515be9dd0e35def4",
+    "limitations": [
+      "Conditional zero accepted, positive un-solved arrays rejected at unchanged rtol=1e-10 atol=0",
+      "No physical acceptance, field publication, new simulation or CUDA claim"
+    ]
+  },
+  "sourceSha256": {
+    "src/physics/gravity/GravityBoundary.cpp": "d4ed8f1e08420274c99a92b8a48d072c6d908c6c5e4e83c4b2ba123cdcf4929e",
+    "src/physics/gravity/GravityBoundary.h": "82b5c03c303aa396d905a9f9e6dedae3cce4a90c8a2db0e5b650f95362f814bb",
+    "tests/host/gravity/test_composite_poisson.cpp": "c2b82128b06555179e11852bc66bd862f87defc175dee0aa78804ef27dc6b786",
+    "validation/gravity/rz_root_producer_reference.py": "545127027f8698e2cf46a6b2e958cf8d494bda5ffed50aaea2313181dfb6d37b"
+  },
+  "productionBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "finalProbeSha256": "66ee8be8e6bc1a361d6b9381965a62c8b68d401a746d51a0515be9dd0e35def4",
+  "frozenJens": {
+    "action": "REUSED_MATCHING_ELF",
+    "receipt": "validation/gravity/results/rz-stencil-construction-20261005/summary.json",
+    "receiptSha256": "fe1473f61205f1aae7831be7e6d95f3637c51654432567d7d16a826c792bf2a0",
+    "coverage": "9 frozen evolutions + 9 actual restart comparisons"
+  },
+  "coreTests": {
+    "status": "PASS",
+    "count": 6,
+    "seconds": 12.28,
+    "names": [
+      "physical_constants",
+      "gravity_stage_contract",
+      "composite_poisson_analytic",
+      "composite_poisson_contract",
+      "self_gravity_lifecycle",
+      "self_gravity_physics"
+    ]
+  },
+  "architectureAudit": "PASS",
+  "diffCheck": "PASS",
+  "negativeContracts": [
+    "stale source generation",
+    "different operator",
+    "missing errors",
+    "Estimate quality",
+    "rounded root coordinates"
+  ],
+  "build": {
+    "parallel": 28,
+    "cpuReleaseExistingTree": true,
+    "probeGuardPeakRssKiB": 464484,
+    "productionGuardPeakRssKiB": 1798828,
+    "swapGrowthKiB": 0,
+    "guardStopped": false
+  },
+  "remaining": [
+    "General rounded source/observer construction bound",
+    "Full native physical residual composition and actual solved Phi/force references",
+    "RZ axis/viscosity findings and full A-B-C-D science",
+    "Unified CUDA and approved long-run benchmarks after CPU scientific gates"
+  ],
+  "rawLocalRoot": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-root-producer-20261005"
+}

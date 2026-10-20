@@ -1,0 +1,188 @@
+{
+  "scope": "Core decision and independent bounded review; not algorithm/science acceptance",
+  "source_baselines": [
+    "08ae94684d433ddbb7398a9de88c4fb9d09070b4",
+    "523bec6a21422432f8104d1433ad50ef9a19259e"
+  ],
+  "project_changes": "Existing plan/handoff documentation, oneplanned JENSinputcontract andthiscompactreview; no production physics/CI/testthreshold edits.",
+  "leader_checks": {
+    "independent_decimal80_NJ_root": "146.36282851082452316153049820683844923086930491939776643389656018278898342201406",
+    "staged_peak_slots_1d_2d_3d": [
+      12,
+      20,
+      36
+    ],
+    "success_pool_capacity": 64,
+    "angular_parent_positive_child_internal": "1/16",
+    "angular_parent_m": "-111/8",
+    "angular_parent_energy": "1539/16",
+    "angular_parent_internal": "-9/128",
+    "rigid_rotation_half_toone_true_kinetic_perrho": "5/16",
+    "rigid_rotation_half_toone_representative_kinetic_perrho": "2025/6272",
+    "finite_ring_error_contract": "T_safe=max(atol,rtol*max(0,norm_V(b_hat)-E_b)); norm_V(A*Phi-b_hat)+E_b<=T_safe",
+    "actual_source_architecture_audit": {
+      "source_commit": "a9ada04fb",
+      "exit_code": 0,
+      "independent_local_run": true
+    }
+  },
+  "producer_only_evidence": "Collaborator CPUarchitecture/tooling/config/JENS parent/tree/runtime/plot results are sourcedfromtheircommittedreports, not rerunhere.",
+  "delegation": {
+    "logical_tasks": 4,
+    "provider_attempts": 6,
+    "read_only_tool_free": true,
+    "parallel_initial_slots": 3,
+    "first_batch_max_attempt_wall_seconds": 180.1,
+    "leader_wall_activity": "Reference/source review, documentation and serialGit integration overlappedworker requests. No localcompile/simulationGPUresourceuse.",
+    "blocking_wait": "No dedicated blocking waits for workers; actual return-to-notice delays and review wall clocks savedlocally, notactive time.",
+    "coordination_limit": "Observed return-to-notice delays~80-230s: currentmanager30scheckpoint target wasnotmetconsistently.",
+    "repairs": [
+      "Angularwalltimeout: one narrower sameProhigh retry;no partial artifact",
+      "Sourceoutputcap:16384 thinking tokens,0body, one32768-token repair;no visiblefirstreasoningavailable"
+    ],
+    "new_useful_findings": [
+      "Exact positive-child angularparent inadmissibility class, independently corrected topositiveinternalreference."
+    ],
+    "repeated_or_false": [
+      "Ring formula/support/units checks mostlyindependentconfirmation offrozenproposal.",
+      "Angularworker omitted rleverarm fromaxialtorque andkineticexamplefactor2; independently rejected/corrected.",
+      "Sourceworkerconditionalmissinggeometry/flags/EOS-context issues notdemonstrated; actualsourceinspection resolves."
+    ],
+    "extra_rework": "Two provider deliveryrepairs; independent arithmetic/units fixes and planned max_blocks32->64 correction beforefirstpush; no productioncode rework.",
+    "usage": [
+      {
+        "name": "jens-uniform",
+        "logical_task_id": "O7-NODE-JENS-UNIFORM",
+        "duration_seconds": 35.79,
+        "reported_token_usage": {
+          "input_tokens": 1838,
+          "cached_input_tokens": 256,
+          "output_tokens": 7479,
+          "noncached_input_tokens": 1582,
+          "reasoning_tokens": 6627,
+          "visible_output_tokens": 852
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.00472547,
+          "peak": 0.00945094,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "status": "completed",
+        "delivery_failure": null
+      },
+      {
+        "name": "angular-chart",
+        "logical_task_id": "O7-NODE-ANGULAR-CHART",
+        "duration_seconds": 180.1,
+        "reported_token_usage": null,
+        "estimated_cost_usd": null,
+        "status": null,
+        "delivery_failure": "wall_timeout"
+      },
+      {
+        "name": "angular-chart-repair",
+        "logical_task_id": "O7-NODE-ANGULAR-CHART",
+        "duration_seconds": 133.3,
+        "reported_token_usage": {
+          "input_tokens": 1843,
+          "cached_input_tokens": 384,
+          "output_tokens": 11679,
+          "noncached_input_tokens": 1459,
+          "reasoning_tokens": 11068,
+          "visible_output_tokens": 611
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.02409581,
+          "peak": 0.04819162,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "status": "completed",
+        "delivery_failure": null
+      },
+      {
+        "name": "ring-boundary",
+        "logical_task_id": "O7-NODE-RING-BOUNDARY",
+        "duration_seconds": 67.87,
+        "reported_token_usage": {
+          "input_tokens": 1952,
+          "cached_input_tokens": 256,
+          "output_tokens": 5531,
+          "noncached_input_tokens": 1696,
+          "reasoning_tokens": 5128,
+          "visible_output_tokens": 403
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.01207637,
+          "peak": 0.02415274,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "status": "completed",
+        "delivery_failure": null
+      },
+      {
+        "name": "jeans-source",
+        "logical_task_id": "O7-CPU-JEANS-SOURCE-REVIEW",
+        "duration_seconds": 71.42,
+        "reported_token_usage": {
+          "input_tokens": 5520,
+          "cached_input_tokens": 256,
+          "output_tokens": 16384,
+          "noncached_input_tokens": 5264,
+          "reasoning_tokens": 16384,
+          "visible_output_tokens": 0
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.01062077,
+          "peak": 0.02124154,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "status": "incomplete",
+        "delivery_failure": "output_token_limit"
+      },
+      {
+        "name": "jeans-source-repair",
+        "logical_task_id": "O7-CPU-JEANS-SOURCE-REVIEW",
+        "duration_seconds": 83.61,
+        "reported_token_usage": {
+          "input_tokens": 5717,
+          "cached_input_tokens": 768,
+          "output_tokens": 18848,
+          "noncached_input_tokens": 4949,
+          "reasoning_tokens": 18131,
+          "visible_output_tokens": 717
+        },
+        "estimated_cost_usd": {
+          "currency": "USD",
+          "off_peak": 0.01205345,
+          "peak": 0.02410691,
+          "status": "estimate from reported token usage; API billing is authoritative",
+          "pricing_snapshot": "2026-10-02.1"
+        },
+        "status": "completed",
+        "delivery_failure": null
+      }
+    ],
+    "known_cost_usd_estimate": {
+      "off_peak": 0.06357187,
+      "peak": 0.12714375,
+      "incomplete_total_reason": "Angular firsttimeout usage/cost not returned; managercost unmeasured; actualbilling authoritative."
+    },
+    "recommendation": "Keepboundedmathcounterexamples; preinclude criticalsourcecallsiteinvariants; use32768 managercap for high source reasoning when contextislarge; improve <=30s statuscheckpoints. Do notclaim general speedupfromthisrun.",
+    "telemetry_note": "Targeted import of all6 current verifiedprovider attempts succeeded. Globalrefresh reports unrelated historicalunverifiedrecords; no legacyrecords modified or paidprobe added."
+  },
+  "remaining_science_gates": [
+    "JENS actualuniform three-lane CPUevolution/restart, EOSdomain samples, CUDA",
+    "RZ singleauthority migration andindependentlocalforce/convergence/torque/energychecks",
+    "Finite-ring reliable nearbound, productionerrorledger andmatchedsourcepotential/force checks",
+    "Frozen scientificinputs before newRZ longtrajectory/benchmark"
+  ],
+  "raw_data_policy": "No H5/plt/checkpoint/fullfield/fullAPIbody uploaded. Localjobpaths ignored bygit."
+}

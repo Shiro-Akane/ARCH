@@ -1,4 +1,5 @@
 # Uniform Sod shock tube: PPM, 128 cells, eight root blocks.
+# VALIDATION INPUT: current canonical template owned by validation/hydro/README.md; see its provenance note for the historical snapshot identity.
 geometry = cartesian
 nblockx1 = 8
 nblockx2 = 0
@@ -17,12 +18,16 @@ x2r_boundary_type = outflow
 x3l_boundary_type = outflow
 x3r_boundary_type = outflow
 solver = HLLC
+# HLL/HLLC signal-speed estimator: roe (Roe-Glaister acoustic); explicit, no default is restored.
+hll_wave_speed = roe
 reconstruct = ppm
 limiter = mc
 time_integrator = RK3
 cfl = 0.4
 sml_rho = 1e-12
 max_eint = 1e6
+# Specific internal-energy floor in erg/g; explicit, no default is restored.
+min_eint = 1e-10
 compute_backend = cpu
 lrefinemin = 0
 lrefinemax = 0

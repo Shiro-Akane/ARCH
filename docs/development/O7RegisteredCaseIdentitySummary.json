@@ -1,0 +1,55 @@
+{
+  "scope": "O7.0 registered model versus loaded-case identity before Setup; CPU engineering regression",
+  "baseCommit": "de05fd74d7e4b86b8660a3bcbd21a1fe20c6ad2e",
+  "sourceState": "tested implementation before commit; exact patch identities below",
+  "implementationSHA256": {
+    "src/data/GlobalDefs.h": "2a8fc0ca6815cc2acb54309449e8e82e860ed9cb21489c111cf7e111a841bc9f",
+    "src/core/config/RuntimeParams.h": "7cb7f889727f04051067ea23809b86fb4b633c1d832d629481bfe08051841e5d",
+    "src/interface/ProblemGenerator.h": "f86413ca646340e3a45bff8eba270bdb0384df36650f7834c2bd82dc6a6901e5",
+    "src/core/problem/ProblemRegistry.h": "8c90d9ed576b36b1365ebf8a19cb1d0177380acbc7e54fb91382e5c0dbf3511f"
+  },
+  "binarySHA256": "a0c60ebd3175bb838d9206c40be474102c6f213875cdc78e1aae0ac7c80d7032",
+  "binarySize": 7177152,
+  "status": "PASS",
+  "cpuTarget": "ARCH",
+  "buildDirectory": "build-cpu",
+  "parallelJobs": 28,
+  "guard": {
+    "minAvailableKiB": 15094724,
+    "peakOwnedRSSKiB": 9017400,
+    "baselineSwapKiB": 0,
+    "peakSwapKiB": 0,
+    "stopped": false,
+    "elapsedSeconds": 24.455
+  },
+  "coreChecksPassed": [
+    "initialization_probe",
+    "input_resolution",
+    "case_configuration",
+    "configuration_input",
+    "preview_api_contract",
+    "configuration_entry_contract",
+    "configuration_v3_contract",
+    "case_inspection_contract",
+    "preview_session_contract"
+  ],
+  "caseMismatchRejectedBeforeSetup": true,
+  "matchingCaseAccepted": true,
+  "limitations": [
+    "Registry-created instances only; unregistered directly constructed subclasses retain no inferred identity",
+    "No scientific formulas or error-budget changes",
+    "No simulation timesteps or CUDA",
+    "Studio managed build-studio-cpu binary was not replaced; no matching Studio Build Manifest claimed",
+    "Native desktop/file-dialog UAT remains incomplete",
+    "Historical nonphysical G input migration still needs maintainer confirmation"
+  ],
+  "localLogs": [
+    "case-identity-probe-build-20261003.log",
+    "case-identity-probe-build-retry-20261003.log",
+    "case-identity-loader-build-20261003.log",
+    "case-identity-loader-test-20261003.log",
+    "case-identity-arch-build-20261003.log",
+    "case-identity-api-test-20261003.log"
+  ],
+  "initialBuildFailure": "Incomplete ConfigurationInput type at header boundary; corrected using loader-owned private case identity, not a cyclic include"
+}

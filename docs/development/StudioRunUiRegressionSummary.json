@@ -1,0 +1,32 @@
+{
+  "scope": "Run/Restart confirmation UI engineering regression; not manual UAT or evolution acceptance",
+  "baseCommit": "aa60e57c816e350364b0e0d4e42a56bd298bcfe8",
+  "test": {
+    "passed": 216,
+    "failed": 0,
+    "hostIncluded": true
+  },
+  "lint": "PASS",
+  "typecheck": "PASS (npm run build)",
+  "productionBuild": "PASS; existing large chunk warning",
+  "logs": [
+    {
+      "path": "studio/.local/integration/run-ui-build-20261002T050514Z.log",
+      "sha256": "3c9351df9560a0a5e649788c7e2bdd5c47e8b3c0fe0b27a3274656eca4362e22"
+    },
+    {
+      "path": "studio/.local/integration/run-ui-lint-20261002T050514Z.log",
+      "sha256": "ae78cd63e66af32a8acabfefb82b945f881a4c41a7584b883935379325798c47"
+    },
+    {
+      "path": "studio/.local/integration/run-ui-test-20261002T050513Z.log",
+      "sha256": "5d678fc9a8b0c7fd17b1cb5d514115a08fa9b534ed94eed065a01dd5fa4e6cb8"
+    }
+  ],
+  "remaining": [
+    "Linux interactive production UAT",
+    "run recovery after reopening",
+    "real Restart continuation acceptance",
+    "full build freshness coverage"
+  ]
+}

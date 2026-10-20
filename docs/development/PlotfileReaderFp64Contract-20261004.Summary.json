@@ -1,0 +1,62 @@
+{
+  "baselineCommit": "6b291494d5de8168e50ed57718a0a3cee7c3bd4c",
+  "finding": "candidate native metadata accepted FP32 field; pre-fix negative test failed Missing expected rejection",
+  "scope": "enforce candidate FP64 fields/centers; legacy structure audit unchanged; no Core build/simulation",
+  "checks": {
+    "targeted": "24/24 PASS",
+    "fullStudioHostTail": [
+      "\u2714 cell-line LOD resolves only visible native cells and never changes leaf counts (0.517719ms)",
+      "\u2714 authoritative Cartesian reference has balanced 2:1 transitions (0.740483ms)",
+      "\u2139 tests 329",
+      "\u2139 suites 0",
+      "\u2139 pass 329",
+      "\u2139 fail 0",
+      "\u2139 cancelled 0",
+      "\u2139 skipped 0",
+      "\u2139 todo 0",
+      "\u2139 duration_ms 5257.564697"
+    ],
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS; existing chunk warning; frontend asset unchanged",
+    "diffCheck": "PASS"
+  },
+  "realExistingReadback": [
+    {
+      "case": "Sod",
+      "fileSha256": "355d345f270d7e5570420af602ee98ae6ab75b0c7d0473cf61925ead41eb471a",
+      "producerBinarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+      "dimension": 1,
+      "fieldCount": 9,
+      "cellShape": [
+        16
+      ],
+      "blocks": 12,
+      "sliceRawDens": 0.125,
+      "sliceIndex": 191,
+      "overviewScannedCells": 192,
+      "overviewNumericSha256": "31744e26da31fcd68bb5c029a2990658b1f3c565c3eb222fb3af275d071f8fe7",
+      "renderEligible": false,
+      "fileUnchanged": true
+    },
+    {
+      "case": "CellularDet",
+      "fileSha256": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b",
+      "producerBinarySha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+      "dimension": 2,
+      "fieldCount": 28,
+      "cellShape": [
+        16,
+        16
+      ],
+      "blocks": 20,
+      "sliceRawDens": 10000000.000000006,
+      "sliceIndex": 5119,
+      "overviewScannedCells": 5120,
+      "overviewNumericSha256": "5ffe0d98585ae1787697c82fd97ffa59ca447fe0cd9f33a260bf96d02785a05f",
+      "renderEligible": false,
+      "fileUnchanged": true
+    }
+  ],
+  "rawDataRetainedLocally": true
+}

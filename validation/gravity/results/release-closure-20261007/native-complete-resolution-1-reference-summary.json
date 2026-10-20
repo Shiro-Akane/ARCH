@@ -1,0 +1,144 @@
+{
+  "profile": "actual-materialized-matched-resolution-1",
+  "status": "FULL_DOMAIN_MATHEMATICAL_REFERENCE_DIAGNOSTIC_ONLY",
+  "science_accepted": false,
+  "physical_qualified": false,
+  "core_binding_qualified": false,
+  "reference_complete": true,
+  "coverage_complete": true,
+  "target_count": 6208,
+  "verified_target_count": 6208,
+  "unique_site_count": 3136,
+  "exact_z_reflection": true,
+  "source_identity": {
+    "topology": 1,
+    "operator_revision": 1,
+    "boundary_revision": 1,
+    "accuracy_revision": 1,
+    "generation": 1,
+    "time": 0.0,
+    "G": 6.6743e-08,
+    "inputs": [
+      {
+        "uid": 1,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 3,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 2,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 4,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 5,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 7,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 6,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 8,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      }
+    ]
+  },
+  "field_identity": {
+    "source_generation": 1,
+    "field_generation": 1
+  },
+  "actual_record_canonical_sha256": "894279fadd304abcd782ca79d2219fb3bbba398601f746b1146a7f38978db8df",
+  "original_source_input_sha256": "87261aea1c80eb2b8f5419eb044b27be8c3ddd5b5a2c512440f2114ce32637ef",
+  "reference_status": "MathematicalIntervalsCertified",
+  "failure": null,
+  "target_widths_exact": {
+    "Phi": "50429584986587/755578637259143234191360000000000",
+    "g_r": "50429584986587/755578637259143234191360000000000",
+    "g_z": "50429584986587/755578637259143234191360000000000"
+  },
+  "budget": {
+    "calls": 4397967,
+    "max_calls": 6000000,
+    "wall_seconds": 193.76625333199627,
+    "timeout_seconds": 600.0,
+    "resource_profile": "matched-resolution-1"
+  },
+  "comparison_counts": {
+    "point_cell_potential": 2048,
+    "force_minus_original_gradient": 4160,
+    "derived_original_value_row_vs_point_potential": 4160,
+    "actual_boundary_datum_potential": 160
+  },
+  "maximum_absolute_error_upper_exact": {
+    "point_cell_potential": "2100875525635154639822294679586070815097649719673224642674716420151/231584178474632390847141970017375815706539969331281128078915168015826259279872",
+    "force_minus_original_gradient": "230360459439858473804654333546557221176428435835821062684450805921983/463168356949264781694283940034751631413079938662562256157830336031652518559744",
+    "derived_original_value_row_vs_point_potential": "15282956178499280542192637970330682283434802057668526711136441843931/231584178474632390847141970017375815706539969331281128078915168015826259279872",
+    "actual_boundary_datum_potential": "4235576604132497111363303896276028633116342000553915051583/231584178474632390847141970017375815706539969331281128078915168015826259279872"
+  },
+  "scope": "Complete-domain mathematical interval diagnostic; no frozen production accuracy/science grant",
+  "matched_resolution": {
+    "level": 1,
+    "expected_cells": 2048,
+    "root_blocks": [
+      4,
+      2
+    ],
+    "root_cells": [
+      64,
+      32,
+      1
+    ],
+    "scope": "Fixed supplied schema; outer Runtime authentication required",
+    "batch_limits": {
+      "wall_seconds": 2400.0,
+      "enforcement": "External serial campaign owner; no allowance transfer"
+    }
+  },
+  "materializedRecordSha256": "99a96c4f70327fe145fdea5b8dd7ae09a477ee58005acb8e79c51d97b0efb26b",
+  "completeLocalResultSha256": "02d969b69de03c75c231bb91225c24c8bb7b6fa9b76a46cd23a80cbb16257fd1",
+  "evidence": {
+    "profile": "matched-resolution-1",
+    "guardSeconds": 194.306,
+    "exitCode": 0,
+    "globalAndExplicitAfterFenceUnchanged": true,
+    "referenceComplete": true,
+    "allTargets": 6208,
+    "allOriginalWidthsChecked": true,
+    "scienceAccepted": false,
+    "fullLocalSha256": "02d969b69de03c75c231bb91225c24c8bb7b6fa9b76a46cd23a80cbb16257fd1"
+  }
+}

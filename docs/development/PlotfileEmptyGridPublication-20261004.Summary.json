@@ -1,0 +1,84 @@
+{
+  "baselineHead": "ab0a345868998422e179b398ced90baed78c6169",
+  "validationUsedDirtyPatch": true,
+  "validatedSourceSha256": {
+    "src/driver/io/DriverIO.cpp": "5aaafe4f328b95306c169e195fa8ac3cc6821150b3e024da51fad55df4afbc3f",
+    "src/io/plot/PlotIO.cpp": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5",
+    "tests/host/io/test_driver_plot_publication.cpp": "40e07ce7f1c4c6b4c60ce3cbd46b1f6424ff1760aad50cb8b614fdd0a4ebb879",
+    "validation/io/run_driver_plot_publication.py": "95b38ca0f47cc64e4a976a5168605ba3ddbbcef8f5a8c810a3116326d04a0c07"
+  },
+  "scope": "CPU direct writer + real DriverIO fixture; no timestep",
+  "results": [
+    {
+      "localEvidenceId": "plotfile-empty-grid-baseline-20261004",
+      "exitCode": 1,
+      "stderr": "empty active grid publication did not fail explicitly\n",
+      "testExecutableSha256": "5f99c006ad1413380f28a80941aa422d79d2ddf7327d320ddd6913ed1fa489b9",
+      "dispatchLibrarySha256": "6b79b5e01113064adacb90468f8e8b540fa059aba3ce1d23049f3f1117fb4631",
+      "plotSourceSha256": null,
+      "driverObjectSha256": null,
+      "plotObjectSha256": null
+    },
+    {
+      "localEvidenceId": "plotfile-empty-grid-fixed-20261004",
+      "exitCode": 1,
+      "stderr": "empty active grid publication did not fail explicitly\n",
+      "testExecutableSha256": "2306465d1abaeabecbba72afd01a852372256b3aef95396b4cdd5d9a0dcaed26",
+      "dispatchLibrarySha256": "6b79b5e01113064adacb90468f8e8b540fa059aba3ce1d23049f3f1117fb4631",
+      "plotSourceSha256": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5",
+      "driverObjectSha256": null,
+      "plotObjectSha256": "8383019df3917a93d9440d407d8193207ea04879b96dbfe4936f8204348a6b9a"
+    },
+    {
+      "localEvidenceId": "plotfile-empty-grid-driver-fixed-20261004",
+      "exitCode": 0,
+      "stderr": "empty-grid error: Cannot publish Plotfile without active leaf blocks.\n",
+      "testExecutableSha256": "261d4034020e18dd1713b59a00b83690ee19527a5f833b315d4281f5acf746d0",
+      "dispatchLibrarySha256": "6b79b5e01113064adacb90468f8e8b540fa059aba3ce1d23049f3f1117fb4631",
+      "plotSourceSha256": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5",
+      "driverObjectSha256": "af104a375e83db65ba232cb95466ca05a29e3aed356ac919e5d76bc64b60970a",
+      "plotObjectSha256": "7d0ae080004e561afefc929983ea096b60191b12ae5a6661b6f5fd73a6ce8c60"
+    },
+    {
+      "localEvidenceId": "plotfile-empty-grid-direct-baseline-20261004",
+      "exitCode": 1,
+      "stderr": "direct writer accepted empty active grid\n",
+      "testExecutableSha256": "d6d788cb9e222a4d757d89e84d7097ccb2b52c1c58fa9b89d707173c689c9744",
+      "dispatchLibrarySha256": "6b79b5e01113064adacb90468f8e8b540fa059aba3ce1d23049f3f1117fb4631",
+      "plotSourceSha256": null,
+      "driverObjectSha256": null,
+      "plotObjectSha256": null
+    },
+    {
+      "localEvidenceId": "plotfile-empty-grid-direct-fixed-20261004",
+      "exitCode": 0,
+      "stderr": "empty-grid error: Cannot publish Plotfile without active leaf blocks.\n",
+      "testExecutableSha256": "dd01552c1a947f9ac7eea9f33a730ad4951c8a3537ae9ed0b9fc328daa9069bf",
+      "dispatchLibrarySha256": "6b79b5e01113064adacb90468f8e8b540fa059aba3ce1d23049f3f1117fb4631",
+      "plotSourceSha256": "1980798324c4d2678c8a342fc2ed75c730f2b9960d46b2449fc4e4630a23a2f5",
+      "driverObjectSha256": "6d52dc93965c698c7229432762dcf60bfa99273e3e1c4e42c4870d14b33dba39",
+      "plotObjectSha256": "5fbf0583fe5c3b2db7d038c60bf9f211bed2f868363371c03e2c905278daddfe"
+    }
+  ],
+  "preservedOriginalFailures": true,
+  "checks": {
+    "directEmptyGridRejected": true,
+    "driverEmptyGridRejectedBeforeMaterialization": true,
+    "noEmptyOutputDirectory": true,
+    "failureDoesNotConsumePlotIndex": true,
+    "sameIndexRetries": true,
+    "existingOutputDigestUnchanged": true,
+    "writeFlushCloseRenameCreateFailurePropagation": true,
+    "noPartialLeak": true,
+    "time": 0,
+    "step": 0,
+    "pythonAstParse": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "limitations": [
+    "Cached remainder object set is not complete current-source build freshness",
+    "Initial Driver-only failures did not prove output index advancement; direct writer return is the reproduced defect",
+    "Real ENOSPC/fsync/power-loss not tested",
+    "No scientific accuracy, evolution, CUDA or complete workflow certification"
+  ]
+}

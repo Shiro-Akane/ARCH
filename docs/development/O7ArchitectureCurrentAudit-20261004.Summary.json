@@ -1,0 +1,43 @@
+{
+  "sourceCommit": "73ae158c203005f3ca82be0a65d0d835ad1e9848",
+  "gitArchiveTrackedTree": true,
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-architecture-current-20261004",
+  "cleanResults": [
+    {
+      "name": "audit-clean",
+      "exitCode": 1,
+      "seconds": 1.1830130659946008
+    },
+    {
+      "name": "architecture-unit-clean",
+      "exitCode": 1,
+      "seconds": 2.2991031059937086
+    }
+  ],
+  "initialResults": [
+    {
+      "name": "audit",
+      "exitCode": 1,
+      "seconds": 5.818919975994504
+    },
+    {
+      "name": "architecture-unit",
+      "exitCode": 1,
+      "seconds": 5.135179520002566
+    }
+  ],
+  "scope": "Architecture/tooling only; no CPU/CUDA build or simulation; no rule modification",
+  "confirmedViolations": [
+    "protected mainline authority changed: src/core/config/RuntimeParams.h",
+    "OBJECT files may enter only their canonical owner: arch_cuda_burn_controller_parity"
+  ],
+  "unitResults": {
+    "tests": 106,
+    "pass": 105,
+    "fail": 1,
+    "failedTest": "test_repository_tree_passes_audit"
+  },
+  "initialLocalTreeViolations": 79,
+  "initialAdditionalFindings": "Recursive audit includes ignored studio/.local/integration/studio-ci-candidate-20261004 copied CMake/CUDA source tree; tracked clean source excludes these non-delivery files.",
+  "ruleMigrationApplied": false
+}

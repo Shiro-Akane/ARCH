@@ -1,0 +1,706 @@
+{
+  "scope": "Independent finite-volume axis reference only; no production RZ or scientific acceptance",
+  "G_cgs": "6.67430E-8",
+  "potential_unit": "cm^2/s^2",
+  "acceleration_unit": "cm/s^2",
+  "mass_unit": "g",
+  "normalization": "full rotating volume, 2*pi",
+  "precision_digits": [
+    80,
+    120
+  ],
+  "rows": [
+    {
+      "source": {
+        "name": "solid_midplane",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": 0
+      },
+      "reference": {
+        "potential": -3.976671367227376e-06,
+        "axial_acceleration": -0.0,
+        "mass": 75.39822368615503,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -3.962101511850834e-06,
+            "axial_acceleration": 5.418033012222331e-23,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 1.4569855376541993e-08,
+            "axial_acceleration": 5.418033012222331e-23,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -3.972859541840586e-06,
+            "axial_acceleration": -5.534355285862601e-23,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 3.811825386789848e-09,
+            "axial_acceleration": 5.534355285862601e-23,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -3.975690913350593e-06,
+            "axial_acceleration": 1.4921966665415824e-23,
+            "mass": 75.39822368615502,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 9.804538767830753e-10,
+            "axial_acceleration": 1.4921966665415824e-23,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -3.976422596063904e-06,
+            "axial_acceleration": -4.6043385290466904e-24,
+            "mass": 75.39822368615505,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.487711634718606e-10,
+            "axial_acceleration": 4.6043385290466904e-24,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 6.255763690257096e-05,
+            "axial_acceleration": null,
+            "mass": 1.884773144570973e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_source_edge",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": 1
+      },
+      "reference": {
+        "potential": -3.2598939661704885e-06,
+        "axial_acceleration": -1.4739276121869997e-06,
+        "mass": 75.39822368615503,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -3.2603607607365986e-06,
+            "axial_acceleration": -1.5009313441413487e-06,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 4.667945661100968e-10,
+            "axial_acceleration": 2.7003731954349055e-08,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -3.2599274127228645e-06,
+            "axial_acceleration": -1.4812609320984401e-06,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 3.3446552376007095e-11,
+            "axial_acceleration": 7.333319911440455e-09,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -3.2598961996100753e-06,
+            "axial_acceleration": -1.4758298390007027e-06,
+            "mass": 75.39822368615502,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.2334395867537203e-12,
+            "axial_acceleration": 1.9022268137030068e-09,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -3.259894110335723e-06,
+            "axial_acceleration": -1.4744113729076498e-06,
+            "mass": 75.39822368615505,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 1.4416523462751178e-13,
+            "axial_acceleration": 4.837607206501217e-10,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 4.4223903023713295e-08,
+            "axial_acceleration": 0.00032821199402888055,
+            "mass": 1.884773144570973e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "hollow_midplane",
+        "r_lower": 1,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": 0
+      },
+      "reference": {
+        "potential": -2.3467243841421324e-06,
+        "axial_acceleration": -0.0,
+        "mass": 56.548667764616276,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -2.346724332357767e-06,
+            "axial_acceleration": -2.419503291717606e-23,
+            "mass": 56.548667764616276,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 5.178436550553299e-14,
+            "axial_acceleration": 2.419503291717606e-23,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -2.346724384142119e-06,
+            "axial_acceleration": 1.0830896145616206e-23,
+            "mass": 56.54866776461627,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 1.3552527156068805e-20,
+            "axial_acceleration": 1.0830896145616206e-23,
+            "mass": 7.105427357601002e-15,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -2.346724384142132e-06,
+            "axial_acceleration": -2.849895704186603e-24,
+            "mass": 56.54866776461627,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 4.235164736271502e-22,
+            "axial_acceleration": 2.849895704186603e-24,
+            "mass": 7.105427357601002e-15,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -2.3467243841421332e-06,
+            "axial_acceleration": -3.653852251689924e-24,
+            "mass": 56.54866776461628,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 8.470329472543003e-22,
+            "axial_acceleration": 3.653852251689924e-24,
+            "mass": 7.105427357601002e-15,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 3.6094266245243e-16,
+            "axial_acceleration": null,
+            "mass": 1.256515429713982e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_below",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": -3
+      },
+      "reference": {
+        "potential": -1.5604778079151454e-06,
+        "axial_acceleration": 4.4824133791435447e-07,
+        "mass": 75.39822368615503,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -1.5604778079141641e-06,
+            "axial_acceleration": 4.482413379020697e-07,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 9.81287669394107e-19,
+            "axial_acceleration": 1.2284783531825135e-17,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -1.5604778079151454e-06,
+            "axial_acceleration": 4.482413379143545e-07,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 5.293955920339377e-23,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -1.5604778079151452e-06,
+            "axial_acceleration": 4.4824133791435436e-07,
+            "mass": 75.39822368615502,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-22,
+            "axial_acceleration": 1.0587911840678754e-22,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -1.5604778079151456e-06,
+            "axial_acceleration": 4.482413379143546e-07,
+            "mass": 75.39822368615505,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-22,
+            "axial_acceleration": 1.5881867761018131e-22,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 1.3570089605855512e-16,
+            "axial_acceleration": 3.5431510701167597e-16,
+            "mass": 1.884773144570973e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_above",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": 3
+      },
+      "reference": {
+        "potential": -1.5604778079151454e-06,
+        "axial_acceleration": -4.4824133791435447e-07,
+        "mass": 75.39822368615503,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -1.5604778079141641e-06,
+            "axial_acceleration": -4.482413379020697e-07,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 9.81287669394107e-19,
+            "axial_acceleration": 1.2284783531825135e-17,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -1.5604778079151454e-06,
+            "axial_acceleration": -4.482413379143545e-07,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 5.293955920339377e-23,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -1.5604778079151452e-06,
+            "axial_acceleration": -4.4824133791435436e-07,
+            "mass": 75.39822368615502,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-22,
+            "axial_acceleration": 1.0587911840678754e-22,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -1.5604778079151456e-06,
+            "axial_acceleration": -4.482413379143546e-07,
+            "mass": 75.39822368615505,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-22,
+            "axial_acceleration": 1.5881867761018131e-22,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 1.3570089605855512e-16,
+            "axial_acceleration": 3.5431510701167597e-16,
+            "mass": 1.884773144570973e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "shifted_hollow",
+        "r_lower": 1,
+        "r_upper": 2,
+        "z_lower": 4,
+        "z_upper": 6,
+        "density": 3,
+        "z_observer": 8
+      },
+      "reference": {
+        "potential": -1.1381646093174392e-06,
+        "axial_acceleration": -3.061261241760849e-07,
+        "mass": 56.548667764616276,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -1.1381646093174193e-06,
+            "axial_acceleration": -3.061261241759907e-07,
+            "mass": 56.548667764616276,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 1.9905274260476058e-20,
+            "axial_acceleration": 9.417947582283752e-20,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -1.138164609317439e-06,
+            "axial_acceleration": -3.061261241760849e-07,
+            "mass": 56.54866776461627,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-22,
+            "axial_acceleration": 0.0,
+            "mass": 7.105427357601002e-15,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -1.138164609317439e-06,
+            "axial_acceleration": -3.061261241760849e-07,
+            "mass": 56.54866776461627,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-22,
+            "axial_acceleration": 0.0,
+            "mass": 7.105427357601002e-15,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -1.1381646093174392e-06,
+            "axial_acceleration": -3.0612612417608494e-07,
+            "mass": 56.54866776461628,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 5.293955920339377e-23,
+            "mass": 7.105427357601002e-15,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 1.7293381721627502e-16,
+            "mass": 1.256515429713982e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "near_hollow_edge",
+        "r_lower": "0.125",
+        "r_upper": 1,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": 1
+      },
+      "reference": {
+        "potential": -1.1661100489577753e-06,
+        "axial_acceleration": -8.087345553904472e-07,
+        "mass": 18.555031610264717,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -1.166083888567211e-06,
+            "axial_acceleration": -8.078023330840906e-07,
+            "mass": 18.555031610264717,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 2.6160390564166668e-11,
+            "axial_acceleration": 9.322223063566326e-10,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -1.16611004215678e-06,
+            "axial_acceleration": -8.087328038367344e-07,
+            "mass": 18.555031610264713,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 6.800995246028334e-15,
+            "axial_acceleration": 1.7515537128481528e-12,
+            "mass": 3.552713678800501e-15,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -1.1661100489578987e-06,
+            "axial_acceleration": -8.087345553973939e-07,
+            "mass": 18.555031610264713,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 1.2345505206231427e-19,
+            "axial_acceleration": 6.94672895866933e-18,
+            "mass": 3.552713678800501e-15,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -1.1661100489577753e-06,
+            "axial_acceleration": -8.087345553904481e-07,
+            "mass": 18.555031610264717,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 8.470329472543003e-22,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 1.0473559483869996e-15,
+            "mass": 0.0,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "far_solid",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "z_observer": 100
+      },
+      "reference": {
+        "potential": -5.0319681666508664e-08,
+        "axial_acceleration": -5.031297233154831e-10,
+        "mass": 75.39822368615503,
+        "radial_acceleration": 0.0
+      },
+      "quadrature": [
+        {
+          "order": 8,
+          "values": {
+            "potential": -5.031968166650867e-08,
+            "axial_acceleration": -5.031297233154832e-10,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 6.617444900424222e-24,
+            "axial_acceleration": 1.0339757656912846e-25,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 16,
+          "values": {
+            "potential": -5.0319681666508664e-08,
+            "axial_acceleration": -5.031297233154831e-10,
+            "mass": 75.39822368615503,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 0.0,
+            "axial_acceleration": 0.0,
+            "mass": 0.0,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 32,
+          "values": {
+            "potential": -5.031968166650866e-08,
+            "axial_acceleration": -5.03129723315483e-10,
+            "mass": 75.39822368615502,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 6.617444900424222e-24,
+            "axial_acceleration": 1.0339757656912846e-25,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          }
+        },
+        {
+          "order": 64,
+          "values": {
+            "potential": -5.031968166650867e-08,
+            "axial_acceleration": -5.031297233154832e-10,
+            "mass": 75.39822368615505,
+            "radial_acceleration": 0.0
+          },
+          "absolute_errors": {
+            "potential": 6.617444900424222e-24,
+            "axial_acceleration": 1.0339757656912846e-25,
+            "mass": 1.4210854715202004e-14,
+            "radial_acceleration": 0.0
+          },
+          "relative_errors": {
+            "potential": 1.3150808354236078e-16,
+            "axial_acceleration": 2.0550878188584758e-16,
+            "mass": 1.884773144570973e-16,
+            "radial_acceleration": null
+          }
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "axis observers only",
+    "axis source interior/contact use analytic continuous primitive, no epsilon",
+    "uniform finite cell density",
+    "no selected production quadrature/order/opening or error budget",
+    "no AMR/operator/CUDA/evolution coverage"
+  ],
+  "baseline": "e34c54f7405a6d9e2d8c481e32d4c57e782625c1",
+  "upstream_compute_optim": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+  "upstream_o8_boundaries": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "tests": "5/5 PASS; arithmetic/domain checks of independent tool",
+  "state": "independent-reference-candidate; physics-review-pending"
+}

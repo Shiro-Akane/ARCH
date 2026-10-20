@@ -1,0 +1,57 @@
+{
+  "scope": "Actual shared PopulateState/EOS coordinate/repair population; no timestep evolution",
+  "exitCode": 0,
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "5048579ab7ad2df4ba2698db6a0c6c6a3b5237b66d22934295e3a970de0505f4",
+  "recompiledSources": {
+    "tests/host/grid/test_rz_initial_population.cpp": "efad9ff76602fb12b866c5c47e2dc4e77866a7f029bc3238f50473dd36370358",
+    "src/core/problem/ProblemHelper.cpp": "da6ae9cae1f4d8cc73c7f67dab335e15c92d356792a5651519c7d9b6062755e3",
+    "src/physics/eos/eosdispatch.cpp": "7758ee7e4680999816ae86c79ffa9e3792856231960508a93e408221b6ea03c6"
+  },
+  "initializationHeaders": {
+    "src/interface/ProblemGenerator.h": "11e92f91ec2e56cb25bdbf27cf13c3f243b9437dc6d14c71e1bb43b3741d7f5f",
+    "src/grid/Grid.h": "1e3697f7e0f18743b79fc9581785c51e6bec1144fddbedd2680222c9001d998b",
+    "src/core/problem/InitialStateConversion.h": "46b03265b9a7e50b5e959e7eee49937a3e384f24bbd10bb03f9c8d9976e39ba8"
+  },
+  "limitations": [
+    "Public RZ dispatch still gated",
+    "No registered model science acceptance",
+    "CUDA not qualified"
+  ],
+  "baseline": "72b8679176aacc68ea533013a6d316657dbfcc29",
+  "changedHeaderHashes": {
+    "src/amr/storage/Block.h": "5e4b7cb78f470987bec52039127d5da40fd2f187a653dff66634ef74010cbb20",
+    "src/amr/topology/AmrTree.h": "5c73707cab3761e8d9d9dc60156970fb0eae34a81f74a8cd012ab98d632d9e44",
+    "src/io/chk/ChkIO.cpp": "9667d1c416c7161136df2158a6a47a6835c6ac2ebd2b083cbbe1056270a5f8aa"
+  },
+  "checks": {
+    "curvilinear_metrics": "PASS",
+    "amr_operation_plans": "PASS",
+    "checkpoint_compatibility": "PASS; final mixed leaf fixture 0.14 s"
+  },
+  "mixedCheckpoint": {
+    "leaves": 5,
+    "levels": [
+      1,
+      1,
+      1,
+      1,
+      0
+    ],
+    "zDomain": [
+      -10.0,
+      10.0
+    ],
+    "coverage": "stored native bounds/fields/controller restore, no timestep/refinement execution"
+  },
+  "population": {
+    "rzZDomain": [
+      -4.0,
+      4.0
+    ],
+    "legacyPolarMeasure": 2.0,
+    "rzFullRingMeasure": 100.53096491487338,
+    "maxEnergyArithmeticError": 7.10543e-15
+  },
+  "negative": "Unknown explicit root profile rejects before live IDs, pool count or density changes"
+}

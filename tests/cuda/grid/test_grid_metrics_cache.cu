@@ -5,10 +5,9 @@
  * Verify metric parity and rejection of invalid geometry before kernels
  * consume the cache.
  */
-#include "cuda/common/GridMetricsCache.h"
-#include "grid/GridMetrics.h"
-
 #include <algorithm>
+#include <array>
+#include <bit>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
@@ -16,6 +15,11 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "amr/storage/Block.h"
+#include "cuda/common/GridMetricsCache.h"
+#include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace {
 
@@ -244,9 +248,10 @@ int main()
         check(probe);
         check(cudaSetDevice(0));
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
-            for (int dim = 1; dim <= 3; ++dim)
+            for (int dim = 1; dim <= 3; ++dim) {
                 for (int variant = 0; variant < 3; ++variant)
                     run_parity(dim, geometry, variant);
+            }
         run_invalid_inputs();
         std::cout << "Grid metric cache: 27 shared-math parity layouts and invalid-input guards passed\n";
         return 0;

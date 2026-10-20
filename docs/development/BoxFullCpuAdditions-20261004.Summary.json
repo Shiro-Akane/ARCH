@@ -1,0 +1,532 @@
+{
+  "sourceHead": "380ce5a92e16fc5d952a0852d0bdbc2fda8f68bb",
+  "binarySha256": "7d0360de4ac9a3429d2a8ffec3908ca4424f2c7716096f2c44ad189662a9d8c4",
+  "scope": "Original non-quick Box additions; unchanged quick baselines reused, no complete self-gravity PASS",
+  "reusedCloud1SummarySha256": "0c1fbcdfb20a0681ee223298c6c4d740f63816651a34f410d7e9f290de48834d",
+  "results": [
+    {
+      "name": "cloud-2",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 0.6152427580018411,
+      "cells": 32768,
+      "peak_rss_kib": 514616,
+      "driver_seconds": 0.406520949,
+      "output_seconds": 0.031814498000000004,
+      "output_calls": 2.0,
+      "solves": 1,
+      "max_iterations": 13,
+      "setup_seconds": 0.142093505,
+      "solve_seconds": 0.226811277,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.0630122,
+      "poisson_seconds": 0.161167256,
+      "force_seconds": 0.002627258,
+      "potential_relative_rms": 0.0016358013816432774,
+      "force_relative_rms": 0.009331855011896283
+    },
+    {
+      "name": "cloud-4",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 5.084633302001748,
+      "cells": 262144,
+      "peak_rss_kib": 3987824,
+      "driver_seconds": 3.524514049,
+      "output_seconds": 0.134308967,
+      "output_calls": 2.0,
+      "solves": 1,
+      "max_iterations": 14,
+      "setup_seconds": 1.365262309,
+      "solve_seconds": 1.938326048,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.637574128,
+      "poisson_seconds": 1.261888597,
+      "force_seconds": 0.038855466,
+      "potential_relative_rms": 0.000405332677932761,
+      "force_relative_rms": 0.002333718065505553,
+      "potential_relative_rms_orders": [
+        2.0411863862844304,
+        2.012819192148254
+      ],
+      "force_relative_rms_orders": [
+        2.0108896998099937,
+        1.9995336116751659
+      ]
+    },
+    {
+      "name": "cloud-domain",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 0.5149740330016357,
+      "cells": 32768,
+      "peak_rss_kib": 514388,
+      "driver_seconds": 0.384327535,
+      "output_seconds": 0.032844623,
+      "output_calls": 2.0,
+      "solves": 1,
+      "max_iterations": 13,
+      "setup_seconds": 0.113696033,
+      "solve_seconds": 0.23218148,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.063471777,
+      "poisson_seconds": 0.165999875,
+      "force_seconds": 0.002705637,
+      "potential_relative_rms": 0.011139080818839468,
+      "force_relative_rms": 0.005472406434476055,
+      "common_core_error": 0.00915359022134523
+    },
+    {
+      "name": "cloud-expanded",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 4.637887138000224,
+      "cells": 262144,
+      "peak_rss_kib": 3990092,
+      "driver_seconds": 3.558286323,
+      "output_seconds": 0.098518862,
+      "output_calls": 2.0,
+      "solves": 1,
+      "max_iterations": 14,
+      "setup_seconds": 1.378737652,
+      "solve_seconds": 1.909589317,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.500690306,
+      "poisson_seconds": 1.386288149,
+      "force_seconds": 0.022605507,
+      "potential_relative_rms": 0.00034070941310069587,
+      "force_relative_rms": 0.0018834467991397815,
+      "common_core_error": 0.0006549460360983967
+    },
+    {
+      "name": "cloud-mixed",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 3.2265003680004156,
+      "cells": 233472,
+      "peak_rss_kib": 1452548,
+      "driver_seconds": 3.021189631,
+      "output_seconds": 0.09341993999999999,
+      "output_calls": 2.0,
+      "solves": 1,
+      "max_iterations": 14,
+      "setup_seconds": 1.066502138,
+      "solve_seconds": 1.728488456,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.487834743,
+      "poisson_seconds": 1.220472349,
+      "force_seconds": 0.020176627,
+      "potential_relative_rms": 0.0014274450661218596,
+      "force_relative_rms": 0.004444413255054508
+    },
+    {
+      "name": "coupled-time-4",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 1.7680085460015107,
+      "cells": 32,
+      "peak_rss_kib": 35680,
+      "driver_seconds": 0.060251602,
+      "output_seconds": 0.032940209,
+      "output_calls": 4.0,
+      "solves": 18,
+      "max_iterations": 1,
+      "setup_seconds": 0.000177387,
+      "solve_seconds": 0.000416151,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 5.8672e-05,
+      "poisson_seconds": 0.000316709,
+      "force_seconds": 3.3349e-05,
+      "stage_solves": 12,
+      "stage_poisson_seconds": 0.000176326,
+      "mass_relative_drift": 3.0265503644932856e-16,
+      "energy_minus_nuclear_over_initial_gas": 3.2966102058914003e-10,
+      "nuclear_heat_over_initial_gas": 0.004118925309465082,
+      "mean_composition_change": 0.001506153827786741
+    },
+    {
+      "name": "coupled-time-8",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 1.6679763479987741,
+      "cells": 32,
+      "peak_rss_kib": 35704,
+      "driver_seconds": 0.093751063,
+      "output_seconds": 0.038959069,
+      "output_calls": 4.0,
+      "solves": 34,
+      "max_iterations": 1,
+      "setup_seconds": 0.00015968999999999998,
+      "solve_seconds": 0.000731834,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.000108696,
+      "poisson_seconds": 0.00054494,
+      "force_seconds": 6.4949e-05,
+      "stage_solves": 24,
+      "stage_poisson_seconds": 0.000354644,
+      "mass_relative_drift": 3.49221519757581e-16,
+      "energy_minus_nuclear_over_initial_gas": 3.2966274715084987e-10,
+      "nuclear_heat_over_initial_gas": 0.0041189253094629395,
+      "mean_composition_change": 0.0015061538277867624
+    },
+    {
+      "name": "coupled-time-16",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 1.7175089250013116,
+      "cells": 32,
+      "peak_rss_kib": 35764,
+      "driver_seconds": 0.134645863,
+      "output_seconds": 0.030457732,
+      "output_calls": 4.0,
+      "solves": 66,
+      "max_iterations": 1,
+      "setup_seconds": 0.000140572,
+      "solve_seconds": 0.001282419,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.000182473,
+      "poisson_seconds": 0.000965691,
+      "force_seconds": 0.000114555,
+      "stage_solves": 48,
+      "stage_poisson_seconds": 0.000647686,
+      "mass_relative_drift": 6.286746297157197e-16,
+      "energy_minus_nuclear_over_initial_gas": 3.296716589465046e-10,
+      "nuclear_heat_over_initial_gas": 0.004118925309453775,
+      "mean_composition_change": 0.0015061538277867693
+    },
+    {
+      "name": "coupled-time-64",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 1.9172160520029138,
+      "cells": 32,
+      "peak_rss_kib": 35520,
+      "driver_seconds": 0.450406718,
+      "output_seconds": 0.030716025,
+      "output_calls": 4.0,
+      "solves": 258,
+      "max_iterations": 1,
+      "setup_seconds": 0.00022625,
+      "solve_seconds": 0.0054415390000000004,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.000921231,
+      "poisson_seconds": 0.00389977,
+      "force_seconds": 0.000483201,
+      "stage_solves": 192,
+      "stage_poisson_seconds": 0.002713994,
+      "mass_relative_drift": 1.699649535696901e-15,
+      "energy_minus_nuclear_over_initial_gas": 3.297027002099282e-10,
+      "nuclear_heat_over_initial_gas": 0.004118925309419128,
+      "mean_composition_change": 0.0015061538277867765
+    },
+    {
+      "name": "coupled-time-128",
+      "backend": "cpu",
+      "threads": 1,
+      "elapsed_seconds": 2.4184662570041837,
+      "cells": 32,
+      "peak_rss_kib": 35480,
+      "driver_seconds": 0.89664459,
+      "output_seconds": 0.030501786,
+      "output_calls": 4.0,
+      "solves": 514,
+      "max_iterations": 1,
+      "setup_seconds": 0.000323003,
+      "solve_seconds": 0.010156119,
+      "kernels": 0.0,
+      "bytes_h2d": 0.0,
+      "bytes_d2h": 0.0,
+      "synchronizations": 0.0,
+      "source_boundary_seconds": 0.001338028,
+      "poisson_seconds": 0.007678121,
+      "force_seconds": 0.00098704,
+      "stage_solves": 384,
+      "stage_poisson_seconds": 0.005317638,
+      "mass_relative_drift": 5.3550913703404035e-15,
+      "energy_minus_nuclear_over_initial_gas": 3.2981452929604013e-10,
+      "nuclear_heat_over_initial_gas": 0.004118925309302998,
+      "mean_composition_change": 0.0015061538277867557,
+      "coupled_errors": [
+        1.4731429226410876e-07,
+        3.6394583582700724e-08,
+        8.665344147678557e-09
+      ],
+      "coupled_orders": [
+        2.017101743102144,
+        2.070394804713532
+      ],
+      "reference_change": 4.3325726814860037e-10
+    }
+  ],
+  "status": "PASS",
+  "elapsedSeconds": 23.89928087500448,
+  "inputFingerprints": [
+    {
+      "name": "cloud-2",
+      "sha256": "c313ddcb3e4438ec8a45d840fe5aa07bd18536bcf68df63a7ab41c9ef9beb870"
+    },
+    {
+      "name": "cloud-4",
+      "sha256": "ece161880e4ecad46808d9cf6fb44d2e8512a7ddab7980efc4737ea6ae17bdd8"
+    },
+    {
+      "name": "cloud-domain",
+      "sha256": "657bc81cddb33b6496e377f4c1ea9b1c804182ea9ae38c375a1c7a8d5884e7e3"
+    },
+    {
+      "name": "cloud-expanded",
+      "sha256": "4e6dfb245142aaabfb447febfa77ca1b14399be412947bb59fd233b88d08df7f"
+    },
+    {
+      "name": "cloud-mixed",
+      "sha256": "ba94c22f7ba2904543da47bf1afa739435cf1476427e8784c9015c500cb84fb2"
+    },
+    {
+      "name": "coupled-time-128",
+      "sha256": "d9f3812fbfb9a82c7704541f4d7f11a37e0305e0377af0faa7acd5df3d5c01cc"
+    },
+    {
+      "name": "coupled-time-16",
+      "sha256": "ecb4d7126c06acadcf91178494b0e1d1b5541186efc4b8bf3a22ac0d3d9dba74"
+    },
+    {
+      "name": "coupled-time-4",
+      "sha256": "11c21b1e3b8ba3e1cf1ba21691805a865a3468dc5be2a44f1c2ffc363d895a44"
+    },
+    {
+      "name": "coupled-time-64",
+      "sha256": "b43760552b0e995920edf4969b98a254cfd6635c92141990ca8675223f0ca046"
+    },
+    {
+      "name": "coupled-time-8",
+      "sha256": "48db99005f3631c3efea0906878e26f6496dce23e73ee615eccedd21447a5711"
+    }
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/box-full-cpu-20261004",
+  "fullSelfGravityGate": "NOT_COMPLETE",
+  "generatorSha256": "649bc73a7058ddf46b6afd0fc24a73d3f894ab1b86fcbc9d56f0fb3a91c07e70",
+  "memoryGuardSummary": [
+    "MEMORY_GUARD_RESULT min_available_kib=18653980 baseline_swap_kib=0 peak_swap_kib=0 guard_stopped=False peak_owned_rss_kib=3744504 elapsed_seconds=24.079 stop_reason=none",
+    "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.184 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=25 complete=True"
+  ],
+  "localScientificDataIndex": [
+    {
+      "relativeFile": "runs/cloud-2/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 3956888,
+      "sha256": "45fd875df6e897bc3870c15a1765bef0ee00938823ab5d34d14bfeacfe315dd7",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-2/GravityBox_chk_0000.h5",
+      "sizeBytes": 2115712,
+      "sha256": "19a23c7e78a1b2ea2cfed5fb0afc925458d1ddec9f89608c61b9a6c32cdd797f",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-4/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 31482008,
+      "sha256": "6c8c4992f4d543a322aada78356ab234edbf70a8e7f47bdfcb40282c26a3f215",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-4/GravityBox_chk_0000.h5",
+      "sizeBytes": 16795776,
+      "sha256": "fa81328481a3f253e35b23fecf2fcf25b2901ac445121d28e4721500aee82cde",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-domain/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 3956888,
+      "sha256": "fade182ba6b728ed7fc4fcb34d13f02ab1da463c6e2cd1e14067d84dd7295cf6",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-domain/GravityBox_chk_0000.h5",
+      "sizeBytes": 2115712,
+      "sha256": "bc5b37e82e3ec1f5aeacda059e2da19bd1cc523c39f8a00637e3c0ab7154fd6f",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-expanded/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 31482008,
+      "sha256": "fc763cd3c2a184a2f04c6fd5630f76c5d16d31b5b73246c435103ae94459ae63",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-expanded/GravityBox_chk_0000.h5",
+      "sizeBytes": 16795776,
+      "sha256": "555eb10cd690b93e1519e84d0fe0ad963c8dba2bb37f0f932f040191a7bca672",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-mixed/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 28041368,
+      "sha256": "1380a34962e782b14a3cbeaf8538f1fdf0ebb66c25e27d21680ba02295e299d0",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/cloud-mixed/GravityBox_chk_0000.h5",
+      "sizeBytes": 14960768,
+      "sha256": "589376f356a6cec39fb8285ea056b816769314164893e58cd5226dab63701d0c",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-128/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 47392,
+      "sha256": "2cda1a806fd2c802da08f56d94de6e8e83d610a0fee04f8ed4ca11cb80a7a34b",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-128/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 47392,
+      "sha256": "4c75688e0e08ee2a04ace2992c4dd572aeae07dce3934126a84c13d96f1fd827",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-128/GravityBox_chk_0000.h5",
+      "sizeBytes": 27120,
+      "sha256": "88992692381686f15ec39967a2c06fd0d4440046dcc95192ca0860c68aaa0e65",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-128/GravityBox_chk_0001.h5",
+      "sizeBytes": 27120,
+      "sha256": "46427b9434a55151b5bdfb4ee56dc6d6a02dc6c6ad7f9570a2ca6283e85c1a0c",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-16/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 47392,
+      "sha256": "419203a5b70b56402d03be45daae0913995f2fec1f6ee5b200f37a24b59bfd04",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-16/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 47392,
+      "sha256": "5e3c189273e42166f3c991aa719de6bc5b6a1941fc42a2bde1d9457840bab970",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-16/GravityBox_chk_0000.h5",
+      "sizeBytes": 27120,
+      "sha256": "680fde0bd0dc7e3de7e609396b2e80087f6c9dd3f2371f2f8cbe123c5199ed12",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-16/GravityBox_chk_0001.h5",
+      "sizeBytes": 27120,
+      "sha256": "53d5cbee3779381f6bac10f413eb4ceea3d712c0e3fc7baa82d1d4281c608862",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-4/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 47392,
+      "sha256": "aa9a24a470ba1b74950e58bac375e7bb5e5107ad2ea283b1ca3ced2b5ce83da9",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-4/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 47392,
+      "sha256": "23c04bb5e1b37dd1b0c0f3cf9caba02a8ae75e8894a1696bec1160187b1ed9ac",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-4/GravityBox_chk_0000.h5",
+      "sizeBytes": 27120,
+      "sha256": "3b5d5bcbf19fc470d74ad5ee55dcf077f27a84520f2c771d242631c4bd0bd3e7",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-4/GravityBox_chk_0001.h5",
+      "sizeBytes": 27120,
+      "sha256": "dcda02844351900ad7c674e619d476c1ff760bbcfc441e27afcd89bd401052a1",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-64/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 47392,
+      "sha256": "37380003171d7781becfafb8709b5bc5fc99c67012d759dc3e5ede96f4e2e6ca",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-64/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 47392,
+      "sha256": "44d2cf5da9c212df2714cb46ccd0dd3c512390f21f3b27ddb2ba1133e145c323",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-64/GravityBox_chk_0000.h5",
+      "sizeBytes": 27120,
+      "sha256": "16787a647f47793ab39881586a75372622e9bcee62b48a4de0e77c6de3a7c9ff",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-64/GravityBox_chk_0001.h5",
+      "sizeBytes": 27120,
+      "sha256": "ba11272a36e67c5840d8f5891b220e457a9bfc89925e1021a31c6f87ea023094",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-8/GravityBox_HLLC_plt_0000.h5",
+      "sizeBytes": 47392,
+      "sha256": "d1e6ed8fe6508a1a09f66d31f3bbffd47b24640555b4738bd62f82d156812167",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-8/GravityBox_HLLC_plt_0001.h5",
+      "sizeBytes": 47392,
+      "sha256": "1d64d928d5c41fcd0ac77b268753f059edc28d097c1d00e517466b48cc2c1877",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-8/GravityBox_chk_0000.h5",
+      "sizeBytes": 27120,
+      "sha256": "8faf042b06d1d0c51c4484bb2a0d7b809cc33f03a79638e056d87c035b80a34d",
+      "retention": "Local persistent ignored directory; not uploaded"
+    },
+    {
+      "relativeFile": "runs/coupled-time-8/GravityBox_chk_0001.h5",
+      "sizeBytes": 27120,
+      "sha256": "14bd1f944d45ce81695a81ee7ea44bc2ed8632b974d9c2400e66ad0dd99caa32",
+      "retention": "Local persistent ignored directory; not uploaded"
+    }
+  ],
+  "limitations": [
+    "Original non-quick Box additions only; not full self_gravity campaign PASS.",
+    "Unchanged cloud-1 and quick thermal/burn evidence reused, not rerun.",
+    "Native mixed 3D Jeans coarse-mesh failure and historical radial G conversion remain unresolved.",
+    "Main ELF does not yet contain diagnostic-only 380ce5a9 changes; no production rebuild this turn.",
+    "No CUDA, Windows, O9 or performance acceptance."
+  ],
+  "upstreamRefs": {
+    "compute/optim": "8fc0dd25eefd2243e8c36f85440bac46994e2e73",
+    "codex/o8-boundaries": "23ff77c4f08419de2b3c5eadee214da2af25784e"
+  }
+}

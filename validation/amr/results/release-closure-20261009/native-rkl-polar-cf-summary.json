@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-10-09T18:42:20.785346+00:00",
+  "baseline_head": "d64ccfa90a786290638b69c15132188e9fdd79c7",
+  "scope": "Native CUDA RKL provisional first/recursive output checks and shared actual transaction receipt routing; actual Spherical2D (r,phi) five-leaf mixed-CF Host RKL2 trajectory. No full Native numerical/macro/source/retry/regrid or long qualification.",
+  "sources_sha256": {
+    "cmake/tests/HostTests.cmake": "fdcea824c14611bff17d0ecc7c60c1a4e0f536f4ab0828825ee82b58f6110d1c",
+    "src/cuda/diffusion/DiffusionKernels.cuh": "9602a9b67bc5e41703340cbebee01dcff42e774e0616a74f2eac338c1554e5bf",
+    "src/driver/stages/DriverStages.h": "0e57a5b07bb785a95357aaec30ebbb9f72b6eb37c5ca64558c4795e82ce2c2a4",
+    "tests/cuda/numerics/test_diffusion_rkl_parity.cu": "90eeb8795a0bfad75d9169fd8807429fdf85757df6e5bdf0dd389a308bac719e",
+    "tests/host/amr/test_amr_flux_surface_plan.cpp": "87f4815ca72e3b3070deb3545f97ef9c951ea870b959c698dd66717a9f932fb9"
+  },
+  "executables_sha256": {
+    "build-release-cpu/arch_amr_flux_surface_plan": "f9d4b0f85eac436059f4ab9870fcd26dc2a2a653bb3167a40ab87e812ab747eb",
+    "build-rt-cuda/arch_cuda_diffusion_rkl_parity": "70b4565b724ebf2a03398bab90147301caeaf097da8ce904bf8996cdac3a7ef7"
+  },
+  "changes": {
+    "rkl": "Native raw V/W stage output uses existing shared provisional finite/rho/simplex leaf; Existing keeps exact ordinary acceptance. First and recursive consumers reuse one helper; no coefficients, flux or thermodynamic law changed.",
+    "receipt": "Both adapters use one completed-stage actual Runtime transaction repair sink; existing standalone accepted budget unchanged. Actual completed boundary/EOS remains mandatory.",
+    "polar_cf": "One actual spherical 2D polar (r,phi) five-leaf RKL2 trajectory, original Runtime, shared Stokes, capture/register/reflux/BC/EOS. No new target or CI family."
+  },
+  "cpu": {
+    "build_attempts": [
+      {
+        "status": "FAIL_COMMAND_NO_BUILD",
+        "guard_seconds": 5.051,
+        "reason": "Root used CTest name as build target; arch_low_density_math does not exist. No numerical/source failure."
+      },
+      {
+        "status": "PASS",
+        "guard_seconds": 49.713
+      }
+    ],
+    "cumulative_build_guard_seconds": 54.764,
+    "affected_owners": {
+      "passed": 3,
+      "failed": 0,
+      "names": [
+        "gravity_stage_contract",
+        "amr_flux_surface_plan",
+        "low_density_math"
+      ],
+      "ctest_seconds": 35.86,
+      "guard_seconds": 36.333
+    },
+    "architecture": {
+      "audit": "PASS",
+      "unittest_passed": 111,
+      "seconds": 5.316,
+      "rule_changes": false
+    },
+    "polar_cf": {
+      "leaves": 5,
+      "interiors": 1280,
+      "macros": 2,
+      "stages": 7,
+      "dt_printed": 0.0345335,
+      "kinetic_ratio_printed": 0.988777,
+      "mass_relative_errors": [
+        0.0,
+        0.0
+      ],
+      "energy_with_actual_boundary_work_relative_errors_printed": [
+        6.29001e-15,
+        1.76462e-14
+      ],
+      "original_mass_energy_budget": 2e-12,
+      "actual_outward_boundary_work": [
+        0.0,
+        0.0
+      ],
+      "changed_energy_cells_per_macro": [
+        1280,
+        1280
+      ],
+      "nonzero_cf_stages_per_macro": [
+        7,
+        7
+      ],
+      "cf_momentum_linf_printed": 2.14345e-06,
+      "cf_energy_linf_printed": 1.0805e-07,
+      "completed_eos": true,
+      "zero_repairs": true,
+      "thermal_activity": false,
+      "continuous_pde_reference": false,
+      "printed_precision_is_not_added_precision": true
+    }
+  },
+  "cuda": {
+    "build_guard_seconds": 462.759,
+    "original_owner": {
+      "name": "diffusion_rkl_parity",
+      "status": "PASS",
+      "ctest_seconds": 0.96,
+      "guard_seconds": 1.018
+    },
+    "memcheck": {
+      "status": "PASS",
+      "guard_seconds": 5.047,
+      "errors": 0,
+      "leaked_bytes": 0,
+      "leaked_allocations": 0
+    },
+    "native_output_cases": {
+      "routes": [
+        "RKL first",
+        "recursive RKL1",
+        "recursive RKL2"
+      ],
+      "scenarios_per_route": 7,
+      "scenarios": [
+        "valid",
+        "nonfinite energy",
+        "zero density",
+        "below configured floor",
+        "negative fraction",
+        "wrong simplex sum",
+        "nonfinite fraction"
+      ],
+      "real_bound_grid": true,
+      "actual_density_inertia_closure_positive_thermal": true,
+      "ordinary_raw_kinetic_recovery_rejects": true,
+      "stationary_zero_operator": true,
+      "raw_fields_enuc_ghost_padding_bits_preserved": true,
+      "invalid_fractions_unprojected": true,
+      "zero_native_repairs": true,
+      "completed_runtime_or_thermal_qualification": false
+    }
+  },
+  "resources": {
+    "one_heavy_job_at_a_time": true,
+    "guard_stops": 0,
+    "swap_growth_kib": 0,
+    "minimum_available_kib_build": 3860416,
+    "peak_owned_rss_kib_build": 3284084,
+    "host_e_minimum_free_bytes": 23759388672,
+    "raw_simulation_output_generated": false,
+    "new_ctest_targets": 0,
+    "new_ci_workflows": 0
+  },
+  "budgets": {
+    "mass_energy_relative": 2e-12,
+    "scientific_threshold_relaxed": false,
+    "strict_cuda_fp64_flags_preserved": true
+  },
+  "remaining": [
+    "Actual Native Hydro batch and full Runtime macro",
+    "Actual native external/self source and paired work",
+    "Resident retry and staged regrid",
+    "Remaining O9, current Studio/Plot, complete affected regression and matched full-run timing"
+  ]
+}

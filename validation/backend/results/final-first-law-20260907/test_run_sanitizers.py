@@ -1,4 +1,9 @@
-"""CPU-only command/profile controls; no executable, GPU or build is launched."""
+"""CPU-only command/profile and synthetic parser controls; no build/GPU run.
+
+Historical command construction remains the reference for profile migration.
+The sparse transcript witness is a shared deterministic parser fixture, not
+historical scientific evidence or a performance measurement.
+"""
 import ast
 from contextlib import redirect_stderr, redirect_stdout
 from copy import deepcopy
@@ -7,11 +12,15 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 import run_sanitizers as recipe
+
+sys.path.insert(0, str(recipe.ROOT / 'validation/network/tests/fixtures'))
+from audit31_transcript_fixture import load_audit31_fixture
 
 HERE = Path(__file__).resolve().parent
 BUILD = Path('/nonexistent/sanitizer-fixture-build')
@@ -38,14 +47,13 @@ class SanitizerProfileTests(unittest.TestCase):
         namespace = dict(build=BUILD, configured=cls.configured, CASES=cls.old_cases)
         exec(compile(block, str(archived), 'exec'), namespace)
         cls.original_commands = namespace['commands']
-        path = recipe.ROOT / 'validation/network/results/sparse-native-20260907/release-900/evidence.json'
-        cls.record = json.loads(path.read_text())
-        cls.metadata = next(item['manifest'] for item in cls.record['identity']['build']['registered_networks']
-                            if item['manifest']['network_id'] == 'audit31')
-        transcript = Path(cls.record['transcript']['path'])
-        if recipe.provenance.sha256(transcript) != cls.record['transcript']['sha256']:
-            raise AssertionError('existing sparse transcript identity changed')
-        cls.transcript = transcript.read_text()
+        # Source record: validation/network/results/sparse-native-20260907/
+        # release-900/evidence.json. Its actual raw log remains local; this
+        # hash-identified fixture is solely a deterministic parser witness.
+        fixture = load_audit31_fixture()
+        cls.metadata = fixture['metadata']
+        cls.transcript = fixture['transcript']
+        cls.fixture_identity = fixture['fixture_identity']
 
     def test_default_commands_are_byte_for_byte_original_for_both_tools(self):
         self.assertEqual(recipe.CASES, self.old_cases)
@@ -97,7 +105,9 @@ class SanitizerProfileTests(unittest.TestCase):
                 run.assert_not_called()
                 empty.assert_not_called()
 
-    def test_shared_parser_rechecks_full_existing_transcript(self):
+    def test_shared_parser_rechecks_representative_contract_fixture(self):
+        self.assertEqual(self.fixture_identity['name'], 'audit31_transcript_contract.json')
+        self.assertIn('not scientific', self.fixture_identity['scope'])
         profile = recipe.sparse_profile('memcheck')
         summary = recipe.sparse_validation.parse_transcript(
             self.transcript, self.metadata, profile['controls'], profile['steps'])

@@ -4,6 +4,7 @@
  */
 
 #include "io/chk/CheckpointCompatibility.h"
+#include "physics/boundary/UserBoundary.h"
 
 #include "core/files/FileFingerprint.h"
 #include "data/GlobalDefs.h"
@@ -99,9 +100,12 @@ CheckpointProvenance make_checkpoint_provenance(
     result.gravity_type=gravity.type;
     if (gravity.type=="self") {
         result.gravity_boundary=gravity.boundary;
-        result.gravity_controls={gravity.G_const,gravity.relative_tolerance,gravity.absolute_tolerance,
+        result.gravity_controls={arch::constants::gravity::cgs::gravitational_constant,gravity.relative_tolerance,gravity.absolute_tolerance,
                                  static_cast<double>(gravity.max_cycles)};
     } else if (gravity.type=="external") result.gravity_controls={gravity.g_x,gravity.g_y,gravity.g_z};
+    const auto* boundaries = arch::boundary::CurrentUserBoundaries();
+    result.boundary_identity = arch::boundary::BoundaryRestartIdentity(config,
+        boundaries ? boundaries->callbacks : arch::boundary::ResolvedUserBoundaries{});
     result.burn_enabled = burn_enabled;
     result.active_network = lower_ascii(std::string(active_network));
     result.nse_enabled = nse_enabled;
@@ -178,6 +182,7 @@ bool require_checkpoint_provenance_compatible(
         throw std::logic_error("Expected checkpoint provenance is unavailable");
     require_equal(saved.gravity_type==expected.gravity_type && saved.gravity_boundary==expected.gravity_boundary
                   && saved.gravity_controls==expected.gravity_controls, "gravity policy/boundary/controls");
+    require_equal(saved.boundary_identity == expected.boundary_identity, "physical/gravity boundary identity");
     require_execution_identity(saved);
     require_execution_identity(expected);
     const std::string saved_eos = lower_ascii(saved.eos_type);

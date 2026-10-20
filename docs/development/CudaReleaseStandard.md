@@ -7,13 +7,18 @@ performance are summarized in [Validation](../../validation/README.md).
 
 ## Current execution contract
 
-The implementation invariants below apply to current work. Validation and
-publication decisions must use the current source, changed paths and authorized
-work branch. The [compute optimization plan](ComputeOptimizationPlan.zh-CN.md),
-[current O6 acceptance record](../../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)
-and [release follow-up](../../validation/gravity/flash/results/release-readiness-20260927/README.md)
-track the present CPU/CUDA optimization gates; historical pass counts and GPU
-speedups do not sign off a newer executable.
+The implementation invariants below apply to current work. The
+[release plan](../../ARCH_RELEASE_PLAN.md) alone owns execution order, current
+qualification, costs and remaining limitations. Historical evidence retains its
+original source, inputs and platform; it cannot qualify a newer executable by
+matching a test count or an earlier speedup.
+
+ARCH build, test, CI and release acceptance use self-contained scientific checks.
+FLASH and other simulation programs are optional developer comparisons, with no
+required installation, build, run or reference-output dependency. Consolidate
+new coverage into existing test owners and review measured CI runtime before
+stage delivery, as defined in the release plan. External comparisons and long
+performance campaigns stay outside the required workflow.
 
 Trust source-identified collaborator measurements. Repeat a check when an edit
 affects it or a concrete inconsistency makes it unreliable, not merely because
@@ -24,7 +29,7 @@ must distinguish correctness, performance and any unmet release gate.
 The historical HPC integration used
 `3dab4e25f9877b6eb2112bbf59a8264618e8862a` and the
 `codex/hpc-cuda-integration` worktree. Its recorder-removal scope and original
-branch handoff are retained in the [integration record](HpcCudaIntegration.md).
+branch handoff are retained in the [integration record](../histroy/integration/HpcCudaIntegration.md).
 That completed handoff does not select a branch or authorize a release for
 subsequent work.
 
@@ -55,30 +60,14 @@ Consult [implementation ownership](ImplementationOwnership.md) before introducin
 a helper, wrapper or new file. Split code by responsibility and include only the
 types needed at that boundary; avoid parallel CPU/CUDA formula implementations.
 
-## Historical integration verification
+## Historical integration evidence
 
-| Responsibility | Recorded result |
-| --- | --- |
-| Shared physics and optimization campaign | 1,188 microphysics runs and 1,155 comparisons passed; Hydro/AMR and large-network records retain their separate scope |
-| Local build and focused regression | Core and selected targets rebuilt; 350 tooling tests and seven CPU/CUDA tests passed without skips |
-| Recorder removal for v1.1.0 | 24 CPU/CUDA runs and 12 exact dataset comparisons passed; six complete-run regrid event comparisons and six baseline-checkpoint continuations passed |
-| Active ENUC with coupled AMR/restart | BD/RKL2 and all transport passed 12 routes and 9 comparisons, with an active limiter witnessed on every route |
-| Device instrumentation | Four current-tree AMR composition/regrid-transaction memory/race checks passed with complete clean reports |
-| Documentation and publication | Bilingual v1.1.0 notes prepared; 155 maintained Markdown pages have no missing local targets; inspect staged file types and remote heads before pushing |
-
-Exact identities, test inputs and resource observations belong to the
-[integration record](HpcCudaIntegration.md). The
+The [integration record](../histroy/integration/HpcCudaIntegration.md) and
 [performance summary](../../validation/backend/results/hpc-cuda-optimization/README.md)
-retains the original campaign measurements. Production 150/200-isotope
-correctness is accepted for the tested configurations; further acceleration,
-experimental sparse-provider promotion and distributed execution remain separate
-work. None is implied by the approximately 5× aprox13 coupled-AMR result.
-
-The historical cleanup gates above ran on the rebuilt recorder-removal tree. Earlier
-broader integration and device-instrumentation results retain their own source
-identity in the linked baseline record; they are not new runs of this binary.
-The current compact record is updated in place, with a fixed Git reference to
-its predecessor. Creation of a tag or hosted release remains outside this handoff.
+retain the original recorder removal, coupled source-energy, generated-network
+and device-instrumentation scope. Their original failures, measured speedups and
+source identities remain there. Current scientific and device qualification is
+summarized only in the release plan; publication still needs its final exits.
 
 ## Performance and memory policy
 
@@ -116,7 +105,7 @@ Third-party permissions remain documented in the canonical
 <details>
 <summary>Historical acceptance decisions — contributor reference</summary>
 
-The [archived checklist](archive/CudaReleaseStandard.md) preserves earlier
+The [archived checklist](../histroy/CudaReleaseStandard.md) preserves earlier
 decisions, attempted checks and source-specific outcomes. It is not an additional
 active plan. The [archive index](archive/README.md) groups related investigations.
 

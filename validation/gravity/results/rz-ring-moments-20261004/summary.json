@@ -1,0 +1,91 @@
+{
+  "scope": "finite-ring analytic moments, actual shared tree cache and separated quadrupole truncation envelope; production RZ boundary remains gated",
+  "coreAuthority": "86bec324018349c6d81df84a3cced3ed9f9a2792 section 7",
+  "sourceHEADAtBuild": "86cd83e84c576c6c909cbcc8cb956dc730d5068c",
+  "repositoryDirtyAtBuild": true,
+  "binarySha256": "651d3be57664ff2416e2fe1d997e34dc34146c9d77134ce58db48b1ebb990215",
+  "testBinarySha256": "502447fa36c342fc91faf515daabb4c725bf70bee5b739a8d7e23ed5347b9af6",
+  "deliveryFileFingerprints": {
+    "src/physics/gravity/GravityBoundary.cpp": "85f5415be592ec924cbf74ef3d63e79dc170845c5f9a0cb1c82c1455e10acc7d",
+    "src/physics/gravity/GravityBoundary.h": "b625bddc4b3feccc4e03a7a8dbb712aee362629ae5685fe1a3e64da08cc1e83f",
+    "tests/host/gravity/test_composite_poisson.cpp": "cd1a399183d45d7036c1dd10a5f89cc3f7afa5a2d7824f1924cff2d56f4c31e9"
+  },
+  "moments": {
+    "layout": "existing ten raw Cartesian moments",
+    "leafExpansionCenter": "(0,0,z_mid)",
+    "mass": "rho*pi*(r_upper^2-r_lower^2)*dz",
+    "IxxIyy": "M*(r_upper^2+r_lower^2)/4",
+    "Izz": "M*dz^2/12",
+    "supportSquared": "r_upper^2+(dz/2)^2",
+    "leafDipoleAndCrossMoments": "exact zero",
+    "parentTranslation": "existing combine_boundary_moments; odd/dipole not assumed zero"
+  },
+  "farReferences": [
+    {
+      "q": 0.01,
+      "quadrupoleAbsoluteError": 2.3743476175924544e-12,
+      "leafEvenTruncationBound": 1.654795716467535e-10,
+      "generalTruncationBound": 1.6713436736322097e-08,
+      "independent24Vs32Difference": 1.6940658945086007e-21
+    },
+    {
+      "q": 0.2,
+      "quadrupoleAbsoluteError": 7.561094572855438e-06,
+      "leafEvenTruncationBound": 0.0005515434122986293,
+      "generalTruncationBound": 0.0033092604737917745,
+      "independent24Vs32Difference": 2.439454888092385e-19
+    },
+    {
+      "q": 0.7,
+      "quadrupoleAbsoluteError": 0.0036357491730458643,
+      "leafEvenTruncationBound": 0.5452817723825331,
+      "generalTruncationBound": 1.3242557329290081,
+      "independent24Vs32Difference": 1.4094628242311558e-18
+    },
+    {
+      "q": 0.95,
+      "quadrupoleAbsoluteError": 0.013925496267208796,
+      "leafEvenTruncationBound": 13.131500881242548,
+      "generalTruncationBound": 26.95413338781363,
+      "independent24Vs32Difference": 4.336808689942018e-19
+    }
+  ],
+  "signedManufactured": {
+    "netMass": 0.0,
+    "absoluteMass": 1.1780972450961724,
+    "quadrupoleAbsoluteError": 0.0003405604691930319,
+    "generalBound": 0.02751216000749423,
+    "productionNegativeDensityAllowed": false
+  },
+  "checks": {
+    "analytic_leaf_moments": "PASS",
+    "uniform_and_mixed_parent_translation": "PASS",
+    "density_update": "PASS",
+    "signed_absolute_mass": "PASS",
+    "contact_rejects_far_bound": "PASS",
+    "overflow_not_accepted": "PASS",
+    "RZ_and_legacy_cache_value_gates": "PASS",
+    "RZ_manufactured_operator": "PASS",
+    "composite_poisson_analytic": "PASS",
+    "composite_poisson_contract": "PASS",
+    "self_gravity_lifecycle": "PASS",
+    "source_architecture": "PASS",
+    "diff_check": "PASS"
+  },
+  "notCertified": [
+    "near/contact potential quadrature bound",
+    "full arithmetic/distance/support rounding ledger",
+    "global boundary residual/error budget",
+    "production RZ isolated boundary",
+    "CUDA or full RZ science"
+  ],
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-ring-moments-20261004",
+  "remaining": [
+    "elliptic complementary-parameter ring kernel",
+    "axis limit and contact split Duffy quadrature",
+    "structured work-limit/error status",
+    "global descent/near-bound error ledger and Poisson request budget",
+    "source/AMR epoch invalidation in complete production path",
+    "B reflux and viscosity clarification; C/D consumers"
+  ]
+}

@@ -1,0 +1,301 @@
+{
+  "scope": "JeansWave initial field/AMR native matrix and display-only tick collision fix; not Jeans evolution scientific acceptance",
+  "fixCommits": [
+    "66f4f6f110ccb78134cc293cb80772f2ceac9e63",
+    "b0de7b567cd4224eca42557bde14819f342ed031"
+  ],
+  "runs": [
+    {
+      "localDataId": "native-jeans-wave-20261004",
+      "windowId": 20382030,
+      "launch": {
+        "pid": 1692605,
+        "sourceCommit": "b2a9f7c6ac2cc0eeca4eb62c14435a37753dc3f0",
+        "configSha256": "636c7a948009b7ab4a46eca26246f3bed475a6612bf8441ca5213bb2182caeaa"
+      },
+      "owned": [
+        {
+          "pid": 1692605,
+          "ppid": 1692583,
+          "startTicks": "6815829",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1692608,
+          "ppid": 1692605,
+          "startTicks": "6815830",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1692609,
+          "ppid": 1692605,
+          "startTicks": "6815830",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1692631,
+          "ppid": 1692608,
+          "startTicks": "6815837",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1692633,
+          "ppid": 1692605,
+          "startTicks": "6815837",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1692646,
+          "ppid": 1692605,
+          "startTicks": "6815839",
+          "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+          "comm": "MainThread"
+        },
+        {
+          "pid": 1693012,
+          "ppid": 1692609,
+          "startTicks": "6816299",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1693982,
+          "ppid": 1692646,
+          "startTicks": "6817980",
+          "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+          "comm": "ARCH"
+        }
+      ],
+      "cleanup": {
+        "exitCode": 0,
+        "allRecordedIdentitiesGone": true,
+        "configUnchanged": true
+      }
+    },
+    {
+      "localDataId": "native-jeans-ticks-fixed-20261004",
+      "windowId": 48042634,
+      "launch": {
+        "pid": 1700403,
+        "sourceCommit": "66f4f6f110ccb78134cc293cb80772f2ceac9e63",
+        "configSha256": "636c7a948009b7ab4a46eca26246f3bed475a6612bf8441ca5213bb2182caeaa"
+      },
+      "owned": [
+        {
+          "pid": 1700403,
+          "ppid": 1700314,
+          "startTicks": "6838393",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1700405,
+          "ppid": 1700403,
+          "startTicks": "6838395",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1700406,
+          "ppid": 1700403,
+          "startTicks": "6838395",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1700428,
+          "ppid": 1700405,
+          "startTicks": "6838401",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1700430,
+          "ppid": 1700403,
+          "startTicks": "6838401",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1700442,
+          "ppid": 1700403,
+          "startTicks": "6838403",
+          "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+          "comm": "MainThread"
+        },
+        {
+          "pid": 1700808,
+          "ppid": 1700406,
+          "startTicks": "6838881",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1701783,
+          "ppid": 1700442,
+          "startTicks": "6840587",
+          "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+          "comm": "ARCH"
+        }
+      ],
+      "cleanup": {
+        "exitCode": 0,
+        "allRecordedIdentitiesGone": true,
+        "configUnchanged": true
+      }
+    },
+    {
+      "localDataId": "native-jeans-ticks-margin-20261004",
+      "windowId": 5312346,
+      "launch": {
+        "pid": 1706997,
+        "sourceCommit": "b0de7b567cd4224eca42557bde14819f342ed031",
+        "configSha256": "636c7a948009b7ab4a46eca26246f3bed475a6612bf8441ca5213bb2182caeaa"
+      },
+      "owned": [
+        {
+          "pid": 1706997,
+          "ppid": 1706996,
+          "startTicks": "6856546",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1707000,
+          "ppid": 1706997,
+          "startTicks": "6856548",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1707001,
+          "ppid": 1706997,
+          "startTicks": "6856548",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1707023,
+          "ppid": 1707000,
+          "startTicks": "6856555",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1707025,
+          "ppid": 1706997,
+          "startTicks": "6856555",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1707038,
+          "ppid": 1706997,
+          "startTicks": "6856557",
+          "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+          "comm": "MainThread"
+        },
+        {
+          "pid": 1707404,
+          "ppid": 1707001,
+          "startTicks": "6857038",
+          "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+          "comm": "electron"
+        },
+        {
+          "pid": 1708379,
+          "ppid": 1707038,
+          "startTicks": "6858739",
+          "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+          "comm": "ARCH"
+        }
+      ],
+      "cleanup": {
+        "exitCode": 0,
+        "allRecordedIdentitiesGone": true,
+        "configUnchanged": true
+      }
+    }
+  ],
+  "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+  "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+  "buildId": "92d429da-42d9-4336-b956-79c43440b5c3",
+  "completeDependencyFreshness": "unknown",
+  "sample": {
+    "count": 512,
+    "domainCm": [
+      0,
+      1
+    ],
+    "index": 255,
+    "xCm": 0.4990234375,
+    "densityUi": 9999000.4,
+    "pressureUi": 5999000.4,
+    "temperatureUi": 1.2533984e-07,
+    "velocityXUi": -8.8706733e-05,
+    "energyDensityUi": 8998500.7,
+    "specificInternalEnergyUi": 0.89994002,
+    "sameInitFormulaDensity": 9999000.42036401,
+    "notIndependentScientificReference": true,
+    "rawInspectorUnchangedInFinalUat": true
+  },
+  "amr": {
+    "run": "native-jeans-wave-20261004",
+    "status": "Complete",
+    "leafCount": 4,
+    "levelCounts": {
+      "0": 4
+    },
+    "passes": 0,
+    "configuredMaxBlocks": 32,
+    "workingCapacity": 32,
+    "activeCells": 64,
+    "baseBytes": 18432,
+    "withSpeciesBytes": 18432,
+    "poolBaseBytes": 147456,
+    "speciesCount": 0,
+    "matchingIdentityUi": true,
+    "blockInspectorNotExercised": true,
+    "cellFieldArrays": "not provided"
+  },
+  "finding": {
+    "before": "different ticks collapsed to repeated 1.000e+7 / 9.999e+6",
+    "intermediate": "labels distinct but old 80px margin clipped prefix",
+    "finalVisibleTopToBottom": [
+      "1.00011e+7",
+      "1.00007e+7",
+      "1.00002e+7",
+      "9.99978e+6",
+      "9.99934e+6",
+      "9.99890e+6"
+    ],
+    "finalNoLabelClippingObserved": true,
+    "noConfigSaveOrPreviewFromDisplayFormatting": true
+  },
+  "checks": {
+    "focused": {
+      "pass": 12,
+      "fail": 0
+    },
+    "fullAfterMarginEdit": {
+      "pass": 334,
+      "fail": 0,
+      "skip": 0
+    },
+    "lintFirstMarginAttempt": "failed: missing left effect dependency; preserved locally",
+    "finalLint": "pass",
+    "finalTypecheck": "pass",
+    "finalProductionBuild": "pass, existing chunk warning",
+    "diffCheck": "pass",
+    "finalHookDependencyOnlyChange": "full tests not repeated after adding left effect dependency; final lint/typecheck/build and native UAT passed"
+  },
+  "scientificOutputAbsent": true,
+  "managedWorktreeClean": true,
+  "pushTag": false,
+  "coreModified": false
+}

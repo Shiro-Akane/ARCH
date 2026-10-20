@@ -1,0 +1,545 @@
+{
+  "purpose": "Production optimization and source-only audit; genuine DeepSeek API/CLI workers, manager independent acceptance",
+  "jobs": [
+    {
+      "task_id": "ARCH-CPU-BD-RETRY-001",
+      "scope": "Zero rejected macro trials in measured case",
+      "integration_decision": "not integrated",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 43.24,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 275857,
+            "cached_input_tokens": 258560,
+            "output_tokens": 6200,
+            "noncached_input_tokens": 17297
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.00709023,
+            "peak": 0.01418046,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REJECTED"
+        }
+      ],
+      "formal_repairs_used": 0
+    },
+    {
+      "task_id": "ARCH-CPU-BURN-AUDIT-001",
+      "scope": "Candidate ROI gated on actual rejection counts",
+      "integration_decision": "discussion accepted",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 187.79,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 1047144,
+            "cached_input_tokens": 1011200,
+            "output_tokens": 32856,
+            "noncached_input_tokens": 35944
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.0281388,
+            "peak": 0.0562776,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 0
+    },
+    {
+      "task_id": "ARCH-CPU-EOS-ACOUSTIC-001",
+      "scope": "Same-entry exact thermodynamic memo",
+      "integration_decision": "retained",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 243.22,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": "Expecting value: line 1 column 1 (char 0)",
+          "usage": {
+            "input_tokens": 2327570,
+            "cached_input_tokens": 2287104,
+            "output_tokens": 49151,
+            "noncached_input_tokens": 40466
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.04242181,
+            "peak": 0.08484362,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REPAIR_REQUIRED"
+        },
+        {
+          "attempt_index": 1,
+          "seconds": 52.95,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 305136,
+            "cached_input_tokens": 289152,
+            "output_tokens": 8404,
+            "noncached_input_tokens": 15984
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.00830746,
+            "peak": 0.01661491,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 1
+    },
+    {
+      "task_id": "ARCH-CPU-EOS-CACHE-001",
+      "scope": "Composition-prefix lazy preparation",
+      "integration_decision": "retained",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 150.5,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 976713,
+            "cached_input_tokens": 948352,
+            "output_tokens": 29553,
+            "noncached_input_tokens": 28361
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.02483101,
+            "peak": 0.04966201,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 0
+    },
+    {
+      "task_id": "ARCH-CPU-HELM-READER-001",
+      "scope": "Canonical decimal table stream",
+      "integration_decision": "retained",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 97.55,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 158341,
+            "cached_input_tokens": 150016,
+            "output_tokens": 19960,
+            "noncached_input_tokens": 8325
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.0136748,
+            "peak": 0.0273496,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REPAIR_REQUIRED"
+        },
+        {
+          "attempt_index": 1,
+          "seconds": 102.59,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 304948,
+            "cached_input_tokens": 289408,
+            "output_tokens": 20805,
+            "noncached_input_tokens": 15540
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.01568222,
+            "peak": 0.03136445,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 1
+    },
+    {
+      "task_id": "ARCH-CPU-HYDRO-AUDIT-001",
+      "scope": "Direction dependency and conditional loop correction; geometry only advanced",
+      "integration_decision": "corrected discussion accepted",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 125.86,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 588007,
+            "cached_input_tokens": 551680,
+            "output_tokens": 20138,
+            "noncached_input_tokens": 36327
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.01918689,
+            "peak": 0.03837378,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REPAIR_REQUIRED"
+        },
+        {
+          "attempt_index": 1,
+          "seconds": 91.22,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 454311,
+            "cached_input_tokens": 436352,
+            "output_tokens": 17937,
+            "noncached_input_tokens": 17959
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.01476511,
+            "peak": 0.02953021,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 1
+    },
+    {
+      "task_id": "ARCH-CPU-HYDRO-METRICS-001",
+      "scope": "Immutable shared geometry descriptor",
+      "integration_decision": "retained",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 57.57,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 386507,
+            "cached_input_tokens": 370304,
+            "output_tokens": 9275,
+            "noncached_input_tokens": 16203
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.00910636,
+            "peak": 0.01821272,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 0
+    },
+    {
+      "task_id": "ARCH-CPU-HYDRO-WORKSPACE-001",
+      "scope": "No clear whole-task benefit after independent measurement",
+      "integration_decision": "withdrawn",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 128.29,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 521920,
+            "cached_input_tokens": 499968,
+            "output_tokens": 26577,
+            "noncached_input_tokens": 21952
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.0207389,
+            "peak": 0.04147781,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REPAIR_REQUIRED"
+        },
+        {
+          "attempt_index": 1,
+          "seconds": 129.9,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 865903,
+            "cached_input_tokens": 841984,
+            "output_tokens": 26947,
+            "noncached_input_tokens": 23919
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.022282,
+            "peak": 0.044564,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REJECTED"
+        }
+      ],
+      "formal_repairs_used": 1
+    },
+    {
+      "task_id": "ARCH-CPU-MG-HOST-001",
+      "scope": "Host-only MG dispatch",
+      "integration_decision": "retained",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 131.77,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 557470,
+            "cached_input_tokens": 541312,
+            "output_tokens": 25404,
+            "noncached_input_tokens": 16158
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.01929004,
+            "peak": 0.03858007,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 0
+    },
+    {
+      "task_id": "ARCH-CPU-REPORT-001",
+      "scope": "Numerical facts and sample table correct; compiler/smoke scope clarified",
+      "integration_decision": "draft accepted with manager edits",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 74.71,
+          "transport": "cli",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 220588,
+            "cached_input_tokens": 206720,
+            "output_tokens": 14942,
+            "noncached_input_tokens": 13868
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.01166556,
+            "peak": 0.02333112,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 0
+    },
+    {
+      "task_id": "ARCH-CPU-COST-CLAIMS-001",
+      "scope": "Frozen final ratio/scope coherence only",
+      "integration_decision": "Narrow summary accepted; no new physics/reference discovery and no recorded independent calculation",
+      "attempts": [
+        {
+          "attempt_index": 0,
+          "seconds": 14.44,
+          "transport": "api",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 1,
+          "result_error": "Unterminated string starting at: line 1 column 77 (char 76)",
+          "usage": {
+            "input_tokens": 1582,
+            "cached_input_tokens": 512,
+            "output_tokens": 3069,
+            "noncached_input_tokens": 1070
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.00200344,
+            "peak": 0.00400687,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "REPAIR_REQUIRED"
+        },
+        {
+          "attempt_index": 1,
+          "seconds": 7.74,
+          "transport": "api",
+          "model": "deepseek-flash",
+          "effort": "high",
+          "exit_code": 0,
+          "result_error": null,
+          "usage": {
+            "input_tokens": 1693,
+            "cached_input_tokens": 640,
+            "output_tokens": 1669,
+            "noncached_input_tokens": 1053
+          },
+          "estimated_cost_usd": {
+            "currency": "USD",
+            "off_peak": 0.00116127,
+            "peak": 0.00232254,
+            "status": "estimate from reported token usage; API billing is authoritative",
+            "pricing_snapshot": "2026-10-02.1"
+          },
+          "delivery_review": "PASS"
+        }
+      ],
+      "formal_repairs_used": 1
+    }
+  ],
+  "totals": {
+    "input_tokens": 8993690,
+    "cached_input_tokens": 8683264,
+    "noncached_input_tokens": 310426,
+    "output_tokens": 312887,
+    "worker_seconds_sum": 1639.3400000000001,
+    "estimated_usd_off_peak": 0.2603459000000001,
+    "estimated_usd_peak": 0.5206917700000001
+  },
+  "logical_tasks": 11,
+  "runs": 16,
+  "formal_repairs": 5,
+  "new_value": [
+    "Exact same-state EOS prefix and acoustic reuse",
+    "Bitwise canonical table conversion with malformed/IO counterexamples",
+    "MG work-class dispatch preserving reduction order",
+    "Shared immutable geometry descriptor",
+    "Evidence-gated withdrawal of low-return scratch and zero-rejection BD proposals"
+  ],
+  "corrections": [
+    "Manager initially reselected an already negative patch-flux route; ledger recheck withdrew it",
+    "Initial scratch lease exception handling needed one repair; final proposal withdrawn on cost evidence",
+    "Reader duplicate-sign, underflow and badbit counterexamples needed one repair",
+    "Hydro audit overgeneralized direction safety and bisection counts; one correction",
+    "Acoustic result included prose aroundJSON; locally normalized without API retry, one code correctness repair",
+    "Report routing documentation family unsupported; local preflight fix made no API call; manager clarified ambiguous supplied compiler scope",
+    "SingleAPIcostclaimsaudit hit3072outputcap(2889reasoning+180finaltokens); one formalrepair6144cap/remaininglogical90s finished. No provider/effort/key change or quota reset."
+  ],
+  "parallel_overlap": {
+    "method": "Source-only workers/Markdown drafting alongside manager build, review or validation; all heavy jobs serialized by manager",
+    "report_draft_observed_during_cuda_build_seconds": 74.71,
+    "total_manager_overlap_seconds": null,
+    "resource_contention_observed": false,
+    "no_full_source_checkout": "Minimal staged file sets only",
+    "cost_claim_api_overlap_with_manager_document_integration_seconds": 22.18
+  },
+  "blocking_wait_seconds": null,
+  "manager_review_seconds": null,
+  "manager_token_usage": null,
+  "manager_cost_usd": null,
+  "actual_API_bill_usd": null,
+  "extra_rework": {
+    "formal_worker_repair_seconds": 384.40000000000003,
+    "extra_manager_rework_seconds": null,
+    "note": "Scoped correctness fixes and candidate measurement are recorded; no new scientific tolerance and no reset of logical repair budget"
+  },
+  "fee_scope": "Estimates from reported cached/noncached token usage and local pricing snapshot2026-10-02.1; sum of initial and repair calls, API bill authoritative. Input token counts include repeated CLI context, not unique prompt length.",
+  "recommendation": "Retain bounded source-only workers and frozen-data drafts; provide unambiguous branch/owner/lifetime and compiler scopes, check rejected-route ledger before dispatch. Reduce large repeated CLI context where feasible. Single campaign gives no universal manager-worker speedup proof. Short high-effort API reasoning needs an output allowance that includes reasoning tokens; the audit mainly confirmed known reporting boundaries and cannot substitute independent scientific calculation.",
+  "validation_pilot_scope": "Earlier conditional pilot and its limits remain in the user-boundaries acceptance record; this dataset records production work and does not relabel every delivered candidate as an independent algorithm pass.",
+  "data_policy": "No raw HDF5/checkpoints, complete task prompts, API keys, event logs or binary artifacts published.",
+  "text_editor": {
+    "provider": "Gemini via official Antigravity CLI account login",
+    "logical_task_id": "ARCH-REPORT-GEMINI-001",
+    "model": "gemini-3.8-flash-medium",
+    "logical_tasks": 1,
+    "runs": 1,
+    "formal_repairs": 0,
+    "scope": "Frozen report prose candidate only; manager independently reviewed and applied. Source, mathematics, methods, data, scientific tolerances and decisions unchanged.",
+    "baseline_sha256": "a7663c86e067f540f6dae040492c422a1e64cd01285a5e17eb15b4de2dc98f3e",
+    "candidate_sha256": "393a88a0053b2dc496dd5b8e4b28058929aec53ddbdb2b60ce559d89da49bb73",
+    "worker_seconds": 23.313,
+    "reported_cli_token_usage": {
+      "input_tokens": 5904,
+      "output_tokens": 6609,
+      "thinking_tokens": 5304,
+      "cache_read_tokens": 0,
+      "total_tokens": 12513
+    },
+    "token_accounting": "CLI total is input plus output; thinking is reported separately and is not added again.",
+    "review_decision": "accept",
+    "new_value": "Clearer report prose; no new scientific or numerical finding.",
+    "observed_tool_calls": 0,
+    "forbidden_tool_calls": 0,
+    "project_writes": false,
+    "paid_credit_fallback": false,
+    "tool_boundary": "Editor configuration and deny rules are not a hard tool-isolation guarantee; actual event record reviewed and no tool calls observed.",
+    "parallel_overlap_seconds": null,
+    "blocking_wait_seconds": null,
+    "manager_review_seconds": null,
+    "actual_subscription_cost": null,
+    "manager_token_usage": null,
+    "manager_cost": null,
+    "recommendation": "Retain one bounded edit plus independent fact review for long frozen reports; no claim of general speedup from this trial."
+  }
+}

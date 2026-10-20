@@ -6,9 +6,10 @@
  * and native mass fractions, including explicitly rejected incompatibilities.
  */
 #include "amr/AMRControl.h"
-#include "core/config/RuntimeParams.h"
+#include "core/config/ConfigValidation.h"
 #include "core/files/FileFingerprint.h"
 #include "io/IO.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "physics/species/Species.h"
@@ -19,6 +20,7 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -96,38 +98,6 @@ void test_sha256_padding_boundaries(const std::filesystem::path& directory)
     }
 }
 
-void test_nse_parameter_contract(const std::filesystem::path& directory)
-{
-    const auto path = directory / "nse-controls.par";
-    for (const std::string request : {"true", "false", "auto", "AuTo", "TRUE"}) {
-        write_bytes(path, "use_nse = " + request
-            + "\nnseTempThreshold = 5.25e9\nnseDensThreshold = 2.75e6\n");
-        const auto config = RuntimeParams::Load(path.string());
-        const auto& burn = config.physics.burn;
-        expect(burn.nse_auto == (request == "auto" || request == "AuTo"),
-               "NSE auto parsing must be case-insensitive");
-        expect(burn.use_nse == (request != "false"),
-               "NSE explicit boolean compatibility changed");
-        expect(burn.nseTempThreshold == 5.25e9 && burn.nseDensThreshold == 2.75e6,
-               "NSE mode must not alter activation thresholds");
-    }
-    write_bytes(path, "");
-    const auto defaults = RuntimeParams::Load(path.string());
-    expect(defaults.physics.burn.use_nse && !defaults.physics.burn.nse_auto
-               && defaults.physics.burn.nseTempThreshold == 4.5e9
-               && defaults.physics.burn.nseDensThreshold == 1.0e6,
-           "existing NSE defaults changed");
-    for (const std::string contents : {
-            "use_nse = sometimes\n", "use_nse = 1\n",
-            "use_nse = auto\nnseTempThreshold = nan\n",
-            "use_nse = true\nnseTempThreshold = 0\n",
-            "use_nse = auto\nnseDensThreshold = -1\n",
-            "use_nse = true\nnseDensThreshold = inf\n"}) {
-        write_bytes(path, contents);
-        expect_rejected([&] { (void)RuntimeParams::Load(path.string()); },
-                        "invalid NSE controls were accepted");
-    }
-}
 
 SpeciesManager make_species()
 {
@@ -171,6 +141,30 @@ io::CheckpointData make_checkpoint(
     checkpoint.rhoX = {0.5, 1.0, 1.5, 3.0};
     checkpoint.mass_fractions = {0.25, 0.25, 0.75, 0.75};
     return checkpoint;
+}
+
+void test_shared_gravity_identity()
+{
+    SimConfig config;
+    config.physics.gravity.type = "self";
+    const auto species = make_species();
+    const auto current = io::inspect_checkpoint_provenance(
+        config, species, EosId::Ideal, false, "none", false);
+    constexpr double G = arch::constants::gravity::cgs::gravitational_constant;
+    expect(current.gravity_controls.size() == 4 && current.gravity_controls.front() == G,
+           "checkpoint identity does not record the shared CGS constant");
+    expect(io::require_checkpoint_provenance_compatible(current, current),
+           "matching shared gravity identity was rejected");
+    for (double historical : {1e-20, 6.67408e-8, 0.,
+                              std::numeric_limits<double>::quiet_NaN()}) {
+        auto saved = current;
+        saved.gravity_controls.front() = historical;
+        expect_rejected([&] {
+            io::require_checkpoint_provenance_compatible(saved, current);
+        }, "different saved G was accepted", "gravity policy/boundary/controls");
+        expect(current.gravity_controls.front() == G,
+               "saved identity overwrote current physical constant");
+    }
 }
 
 void test_identity_and_digest(const std::filesystem::path& directory)
@@ -483,6 +477,72 @@ void test_native_composition(const std::filesystem::path& directory)
                     "reader accepted an unsupported conserved-only composition payload");
 }
 
+// Actual serializer and restore boundary, including a populated live target.
+// This verifies native PWC three-momentum bytes, not a trajectory tolerance.
+void test_cylindrical_restart(const std::filesystem::path& directory)
+{
+    SimConfig config;config.grid.dim=2;config.grid.geometry="cylindrical";
+    config.grid.nblockx1=config.grid.nblockx2=1;config.grid.nblockx3=0;
+    config.grid.x1_min=1.;config.grid.x1_max=2.;config.grid.x2_min=-1.;config.grid.x2_max=1.;
+    config.grid.amr_max_blocks=4;config.amr.lrefinemin=config.amr.lrefinemax=0;
+    config.io.out_dir=directory.string();config.io.base_name="native-cylinder";
+    const auto species=make_species();
+    const auto provenance=io::inspect_checkpoint_provenance(config,species,EosId::Ideal,false,"none",false);
+    const auto chart=io::checkpoint_geometry_identity(2,"cylindrical");
+    amr::AMRControl source(4,2);source.tree->InitRootGrid(config,species.count());
+    for(int id:source.tree->GetActiveBlocks()) {
+        auto& b=source.pool->GetBlock(id);
+        for(int q=0;q<b.grid.GetTotalSize();++q) {
+            b.fluid_state.set(q,{2.,.125,-.25,.75,10.});
+            b.fluid_state.X(0,q)=.25;b.fluid_state.X(1,q)=.75;
+        }
+    }
+    write_chk(source,0,0,3,.03,.01,.01,false,config,species,provenance,arch::state::RepairBudget(2),chart);
+    const auto path=directory/"native-cylinder_chk_0000.h5";
+    const auto saved=io::read_hdf5_chk_impl(path.string());
+    expect(saved.geometry_identity.revision==1 && saved.geometry_identity.chart=="cylindrical-rz-pwc",
+           "new native checkpoint chart missing");
+    amr::AMRControl target(4,2);target.tree->InitRootGrid(config,species.count());RunState state;
+    read_chk(path.string(),target,state,config,species,provenance,chart);
+    for(int id:target.tree->GetActiveBlocks()) {
+        const auto& b=target.pool->GetBlock(id);
+        for(int j=b.grid.Js();j<b.grid.Je();++j)for(int i=b.grid.Is();i<b.grid.Ie();++i) {
+            const int q=b.grid.GetIndex(i,j,0);const auto u=b.fluid_state.get(q);
+            expect(u.rho==2.&&u.mom_u==.125&&u.mom_v==-.25&&u.mom_w==.75&&u.eng==10.
+                &&b.fluid_state.X(0,q)==.25&&b.fluid_state.X(1,q)==.75,"native Cyl2 restart state changed");
+        }
+    }
+    const auto snapshot=[&] {
+        const auto ids=target.tree->GetActiveBlocks();const auto& f=target.pool->GetBlock(ids.front()).fluid_state;
+        return std::make_tuple(ids,f.rho,f.mom_u,f.mom_v,f.mom_w,f.eng,f.mass_fractions,
+                               state.time,state.step,state.dt_old,state.dt_burn,state.chk_idx,state.plt_idx);
+    };
+    const auto before=snapshot();
+    for(int corruption=0;corruption<6;++corruption) {
+        io::write_hdf5_chk_impl(path.string(),saved);
+        {
+            HighFive::File file(path.string(),HighFive::File::ReadWrite);
+            if(corruption==0) {file.getAttribute("geometry_semantics_revision").write(2);
+                file.getAttribute("geometry_chart").write(std::string("axisymmetric-rz"));}
+            if(corruption==1) file.getAttribute("geometry_chart").write(std::string("existing"));
+            if(corruption==2) {file.deleteAttribute("geometry_semantics_revision");file.deleteAttribute("geometry_chart");}
+            if(corruption==3) file.deleteAttribute("geometry_chart");
+            if(corruption==4) file.getAttribute("geometry_chart").write(std::string());
+            if(corruption==5) file.getAttribute("geometry_semantics_revision").write(3);
+        }
+        expect_rejected([&]{read_chk(path.string(),target,state,config,species,provenance,chart);},
+                        "old/empty/wrong Cyl2 identity accepted");
+        expect(snapshot()==before,"invalid Cyl2 identity mutated populated live hierarchy");
+    }
+    for(const auto invalid: {io::CheckpointGeometryIdentity{},io::CheckpointGeometryIdentity{2,"axisymmetric-rz"},
+                            io::CheckpointGeometryIdentity{1,"existing"}}) {
+        auto bad=saved;bad.geometry_identity=invalid;
+        const auto digest=arch::core::file_sha256(path.string());
+        expect_rejected([&]{io::write_hdf5_chk_impl(path.string(),bad);},"invalid Cyl2 writer identity accepted");
+        expect(arch::core::file_sha256(path.string())==digest,"invalid Cyl2 writer truncated saved file");
+    }
+}
+
 void test_host_restart(const std::filesystem::path& directory)
 {
     SimConfig config;
@@ -533,16 +593,37 @@ void test_host_restart(const std::filesystem::path& directory)
     io::write_hdf5_chk_impl(path.string(), checkpoint);
 
     // A control change must fail before replacing the live AMR state.
-    for(int control=0;control<3;++control) {
+    for(int control=0;control<4;++control) {
         auto changed=config;
         if(control==0) changed.numerics.dt_max=1.;
         if(control==1) changed.physics.eos_coulomb_mult=.5;
         if(control==2) changed.numerics.hll_roe_wave_speed=false;
+        if(control==3) {changed.amr.refine_on_jeans=true;changed.amr.jeans_cells=160.;}
         amr::AMRControl untouched(config.grid.amr_max_blocks,config.grid.dim);
         RunState unchanged;
         expect_rejected([&] { read_chk(path.string(),untouched,unchanged,changed,species,identity); },
                         "restart accepted a changed Coulomb/face/timestep control");
     }
+
+    // Unused target/output selection must not alter active trajectory identity.
+    auto output_only=config;output_only.io.vars.jens=true;output_only.amr.jeans_cells=160.;
+    expect(arch::config::StateControlIdentity(output_only)==checkpoint.state_controls,
+           "output-only or unused target changed restart identity");
+    auto active_config=config;active_config.amr.refine_on_jeans=true;
+    active_config.amr.jeans_cells=160.;
+    auto active_payload=checkpoint;
+    active_payload.state_controls=arch::config::StateControlIdentity(active_config);
+    const auto active_path=directory/"jeans-restart.h5";
+    io::write_hdf5_chk_impl(active_path.string(),active_payload);
+    amr::AMRControl active_tree(config.grid.amr_max_blocks,config.grid.dim);
+    RunState active_state;
+    read_chk(active_path.string(),active_tree,active_state,active_config,species,identity);
+    expect(active_tree.tree->GetActiveBlocks().size()==checkpoint.levels.size(),
+           "active JENS identity roundtrip failed");
+    active_config.amr.jeans_cells=161.;
+    expect_rejected([&] {read_chk(active_path.string(),active_tree,active_state,
+                                 active_config,species,identity);},
+                    "restart accepted a changed Jeans resolution target");
 
     amr::AMRControl restored(config.grid.amr_max_blocks, config.grid.dim);
     RunState state;
@@ -611,11 +692,45 @@ void test_host_restart(const std::filesystem::path& directory)
                                       config, species, expected); }, reason, diagnostic);
         expect(snapshot() == before, "rejected restart modified live state: " + reason);
     };
+    // Actual HDF/read_chk path: missing/partial/future/RZ chart must reject
+    // before replacing this populated live hierarchy or controller.
+    for (int corruption = 0; corruption < 4; ++corruption) {
+        io::write_hdf5_chk_impl(path.string(), checkpoint);
+        {
+            HighFive::File file(path.string(), HighFive::File::ReadWrite);
+            if (corruption == 0) file.deleteAttribute("geometry_chart");
+            if (corruption == 1) file.getAttribute("geometry_semantics_revision").write(2);
+            if (corruption == 2) file.getAttribute("geometry_chart").write(std::string("axisymmetric-rz"));
+            if (corruption >= 3) {
+                file.deleteAttribute("geometry_chart");
+                file.deleteAttribute("geometry_semantics_revision");
+            }
+        }
+        if (corruption == 3) {
+            // Legacy Cartesian v6 remains readable by the existing chart.
+            const auto legacy = io::read_hdf5_chk_impl(path.string());
+            io::require_checkpoint_geometry_compatible(legacy.dim, legacy.geometry, legacy.geometry_identity);
+        } else {
+            reject_unchanged(identity, "invalid geometry identity");
+        }
+        expect(snapshot() == before, "geometry rejection modified live state");
+    }
+    auto invalid_geometry = checkpoint;
+    invalid_geometry.geometry_identity = {2, "existing"};
+    io::write_hdf5_chk_impl(path.string(), checkpoint);
+    const auto geometry_digest = arch::core::file_sha256(path.string());
+    expect_rejected([&] { io::write_hdf5_chk_impl(path.string(), invalid_geometry); },
+                    "future geometry revision accepted");
+    expect(arch::core::file_sha256(path.string()) == geometry_digest,
+           "invalid geometry writer truncated previous checkpoint");
+
     // Format v6 predates controls revision 2. Exercise an actual v6/15-value
     // payload instead of merely changing the currently active configuration.
     auto legacy_controls = checkpoint.state_controls;
     legacy_controls.resize(15);
     legacy_controls[0] = 1.0;
+    auto prior_controls=checkpoint.state_controls;
+    prior_controls.resize(18);prior_controls[0]=2.0;
     auto future_controls = checkpoint.state_controls;
     future_controls[0] = arch::config::StateControlRevision + 1.0;
     auto short_controls = checkpoint.state_controls;
@@ -624,6 +739,7 @@ void test_host_restart(const std::filesystem::path& directory)
     nonfinite_controls[1] = std::numeric_limits<double>::quiet_NaN();
     for (const auto& [controls, diagnostic] : std::vector<std::pair<std::vector<double>, std::string>>{
              {legacy_controls, "Unsupported checkpoint state-control revision"},
+             {prior_controls, "Unsupported checkpoint state-control revision"},
              {future_controls, "Unsupported checkpoint state-control revision"},
              {short_controls, "Invalid checkpoint state-control length"},
              {nonfinite_controls, "missing or nonfinite values"},
@@ -703,6 +819,7 @@ void test_host_restart(const std::filesystem::path& directory)
     reject_unchanged(identity, "incompatible spatial dimension");
 }
 
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -724,11 +841,21 @@ int main(int argc, char** argv)
         const std::filesystem::path directory = argv[1];
         std::filesystem::create_directories(directory);
         test_sha256_padding_boundaries(directory);
-        test_nse_parameter_contract(directory);
+        test_shared_gravity_identity();
         test_identity_and_digest(directory);
         test_hdf5_round_trip(directory);
         test_native_composition(directory);
         test_host_restart(directory);
+        test_cylindrical_restart(directory);
+        arch::state::RepairBudget volume(0);
+        expect(volume.view().conserved_density(.5,1.,-2.,3.,4.,2.),"volume ledger failed");
+        expect(volume.values[2]==1. && volume.values[4]==2. &&volume.values[5]==-4.
+            &&volume.values[6]==6. &&volume.values[7]==8.,
+            "ordinary repair ledger changed volume-integrated conserved units");
+        expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{});},
+            "legacy cylindrical two-dimensional checkpoint accepted");
+        expect_rejected([&]{io::require_checkpoint_geometry_compatible(2,"cylindrical",{2,"axisymmetric-rz"});},
+            "retired cylindrical two-dimensional checkpoint accepted");
         std::cout << "checkpoint compatibility tests passed\n";
         return 0;
     } catch (const std::exception& error) {

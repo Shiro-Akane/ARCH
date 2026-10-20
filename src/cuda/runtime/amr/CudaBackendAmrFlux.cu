@@ -83,10 +83,12 @@ cudaError_t launch_cuda_amr_flux_register_route(
         || !std::isfinite(stage_weight))
         return cudaErrorInvalidValue;
     if (stage_weight == 0.0) return cudaSuccess;
-    amr_flux_kernel_detail::register_route_kernel
-        <<<launch_blocks(target_count), kThreads, 0, stream>>>(
-            device_blocks, source_block, device_targets, device_terms,
-            target_count, source, stage_weight);
+
+        amr_flux_kernel_detail::register_route_kernel
+            <<<launch_blocks(target_count), kThreads, 0, stream>>>(
+                device_blocks, source_block, device_targets, device_terms,
+                target_count, source, stage_weight);
+    
     return cudaGetLastError();
 }
 

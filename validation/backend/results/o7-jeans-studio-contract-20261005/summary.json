@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "schemaVersion": "3",
+  "binarySha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "parameterCount": 95,
+  "cases": [
+    "valid",
+    "empty",
+    "duplicate-and-syntax",
+    "bounded-overflow",
+    "JENS-unselected-available",
+    "JENS-missing-null",
+    "JENS-first-edit-insertion",
+    "JENS-one-Undo-Redo",
+    "JENS-active-input",
+    "JENS-invalid-retained",
+    "JENS-inactive-invalid",
+    "JENS-auto-CUDA-rejected",
+    "JENS-output-only-no-target"
+  ],
+  "scientificResources": "not-created",
+  "scope": "real binary through ConfigurationAdapter; static selected-binary identity, no successful Build claim",
+  "date": "2026-10-05",
+  "base_commit": "7f2f8e34da1e959bdee78ee80d445607096be76e",
+  "repository_dirty_during_verification": true,
+  "core_authority": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "ref_fetch": {
+    "origin/codex/o8-boundaries": "11a321d5604f9ee62b9f9587c81f14de4f128bc4",
+    "origin/studio/compute-optim-integration": "7f2f8e34da1e959bdee78ee80d445607096be76e",
+    "new_core_decision": false
+  },
+  "node": "JENS Core/Host/Studio static contract consumption",
+  "stage": "joint plan item 6 O7.1 consumer supplement; item 7 RZ still in progress",
+  "checks": [
+    {
+      "command": "npm test",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    }
+  ],
+  "studio_host_regression": {
+    "pass": 334,
+    "fail": 0,
+    "skipped": 0,
+    "host_subsuite_not_added_again": true
+  },
+  "final_identity_recheck_and_lint": "PASS",
+  "identity_scope": "selected-binary:<SHA>, not current/source-certified successful Build",
+  "three_layer_semantics": {
+    "schema_default": "none",
+    "inspection_parsed": "160 only after explicit edit; missing is null",
+    "preview_effective": "not requested, not inferred"
+  },
+  "no_side_effects": [
+    "No Setup/Preview/AMR/simulation/Core build",
+    "No input disk write by inspection",
+    "No CUDA resource creation requested",
+    "No new checkout or build cache",
+    "No managed Studio binary/Manifest replacement"
+  ],
+  "not_proven": [
+    "native desktop UAT with current JENS schema",
+    "complete O7.1 scientific qualification",
+    "CUDA/performance/long-run acceptance",
+    "current Build freshness"
+  ],
+  "known_warning": "existing production bundle >500kB; no threshold relaxation",
+  "raw_local_only": "studio/.local/integration/o7-jeans-studio-contract-20261004",
+  "source_identity_format": "path-sha256-records-v1",
+  "source_files": [
+    {
+      "path": "studio/tests/configuration-core-v3.integration.ts",
+      "sha256": "a9948ee62c4dce92ea72e5c76c6bbbce25ae6a26d02c02fb5c127f22c0eb961f"
+    },
+    {
+      "path": "src/api/CONFIGURATION_API.md",
+      "sha256": "38e86e189935e9227d2a5d5961ecbe7d5aac4e6db7569b54dab268d21dcbebe1"
+    }
+  ]
+}

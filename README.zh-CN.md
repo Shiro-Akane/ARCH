@@ -1,6 +1,8 @@
 # ARCH：自适应反应流 CUDA 流体力学框架
 
-英文原文：[README.md](README.md) · [文档总览](docs/README.zh-CN.md)
+[English](README.md) · [English index](docs/README.md)
+
+[索引](docs/README.zh-CN.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -11,6 +13,8 @@
 
 ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积法推进流体状态，并用自适应网格细化（AMR）增加局部空间分辨率。CPU 与 CUDA 共用物理和数学实现。
 
+运行环境为 **Linux 或 WSL2**。科学计算程序可独立构建与运行；**ARCH Studio 始终是选配组件**，CPU／CUDA 计算无需安装或编译图形界面。
+
 **ARCH 的输入、输出和物理常数统一使用 CGS**：长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力和能量密度为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`。角度使用 `rad`。输入不会自动换算单位；更多量纲见[算例指南](docs/guides/SimulationCase.zh-CN.md#单位)。
 
 从下方的[构建](#构建)与[首次运行](#首次运行)开始。完成第一个算例后，按[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续学习；需要查找模块范围或具体参数时，再使用[功能清单](docs/Features.zh-CN.md)和[参考手册](docs/Reference.zh-CN.md)。
@@ -19,17 +23,22 @@ ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积
 
 ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应及外部／自引力计算，并可在 CPU 或 CUDA 后端运行。[独立功能清单](docs/Features.zh-CN.md)列出各模块、几何与边界的适用范围。[验证索引](validation/README.zh-CN.md)说明经过检查的模型组合；[版本说明](docs/releases/README.md)记录各源码版本的变化。
 
+物理域和自引力支持独立的用户边界回调，使用同目录源码及现有两个公共头文件；
+入流、热通量与势边界的写法见[用户边界指南](docs/guides/UserBoundaries.zh-CN.md)。
+
 在参数文件中用 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。自动选择只发生在启动阶段；细节见[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)。
 
 ## 构建
 
-在 Linux 或 WSL2 终端中构建。按所选后端准备依赖：
+在 Linux 或 WSL2 终端中构建。按所选后端准备 Core 依赖：
 
 - **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
 - **两种后端共用的库：** HDF5 C++/HL 和 OpenMP。
 - **CUDA 构建另需：** CMake 3.25.2+、CUDA Toolkit 12.0+ 和兼容的 GPU 驱动。
 
 依赖安装、编译内存限制及源码包中的 EOS 表处理见[构建指南](docs/guides/Build.zh-CN.md)。
+
+需要桌面操作时，可额外选装 [ARCH Studio](docs/guides/Studio.zh-CN.md)，提供配置编辑、预览和只读 Plotfile 查看。`ARCH_BUILD_STUDIO` 默认关闭，显式设为 `ON` 才构建桌面；只有这时才需 Linux Node 24+、npm、Electron 与图形环境，详见[桌面环境](docs/guides/StudioEnvironment.zh-CN.md)。上面的 Core 依赖及下方两种计算构建均可独立使用。
 
 ### 获取源码
 
@@ -78,7 +87,13 @@ export OMP_NUM_THREADS=4
 其中，`Sod` 选择算例定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU
 工作线程数，不影响数值精度设置。如果使用方案 B，可执行文件
 路径应换成 `./build-cuda/bin/ARCH`。需要 GPU 执行时，先复制示例参数文件，
-在副本中加入 `compute_backend = cuda`，再运行该副本。
+将副本中已有的 `compute_backend = cpu` 替换为 `compute_backend = cuda`，再运行该副本。不要追加第二次赋值：重复键会明确报错。
+
+示例已显式提供必需配置。修改后可先进行只读检查：
+
+    ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
+
+该检查仅覆盖已声明配置，不执行 Setup、不加载 EOS、不检查路径存在性，也不代表已经具备模拟运行条件。缺失或非法值需要补齐或修正，不会从运行默认值静默回填。
 
 成功运行后，程序会打印所选方法和时间步表，并在 `output/first_sod/` 下写入：
 
@@ -95,6 +110,16 @@ SodBeginner_chk_0000.h5
 `simulation/Sedov/` 则提供爆炸波示例。
 
 **初学者下一步：** 请从[ARCH 模拟算例指南](docs/guides/SimulationCase.zh-CN.md)继续。它以刚运行的 Sod 算例为起点，按顺序解释网格与参数、如何检查输出和进行受控实验，最后带你编写自己的算例。
+
+## ARCH Studio
+
+ARCH Studio 是用于准备本机计算和检查输出的选配桌面工作台。它整合分组参数编辑、配置与编译、Core 真实初始场和初始 AMR 预览、显式确认的运行与重启，以及只读 Plotfile 查看，可检查存储单元值、已记录的单位与来源信息。
+
+![ARCH Studio 的 Plotfile 工作区，显示已记录的引力势场与原生 AMR 叶块轮廓](docs/guides/images/studio-plotfile.png)
+
+*Plotfile 工作区：已记录的势场与原生 AMR 叶块轮廓。*
+
+安装、界面导航与完整操作流程见 [Studio 使用指南](docs/guides/Studio.zh-CN.md#界面导航)。
 
 ## 扩展模型
 
@@ -169,4 +194,4 @@ MPI 用于将计算分配到多个进程和机器。后续探索还可能包括�
 
 ## 许可证
 
-ARCH 自有代码采用 [MIT License](LICENSE)。第三方科学代码和数据保留其来源与条款，见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)及[许可证目录](LICENSES/)。
+ARCH 自有代码采用 [MIT License](LICENSE)。第三方科学代码和数据保留其来源与条款，见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)及[许可证目录](LICENSES)。

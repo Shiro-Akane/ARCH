@@ -5,12 +5,20 @@
  * This Host adapter allocates patch flux buffers and forwards the configured
  * EOS/flux combination to TimeIntegratorHelper.h. The helper owns divergence
  * and stage-update mathematics; this binding does not define another scheme.
+ * Workflow: authenticate physical walls; bind the gravity owner's patch source
+ * before allocating existing scratch; run the selected shared flux/EOS
+ * traversal with that scoped adapter. Gravity owns its receipt and completion.
  */
 
 #pragma once
 
+#include <stdexcept>
+#include <vector>
+
+#include "numerics/integrator/HydroBoundaryAuthority.h"
 #include "numerics/integrator/IHydroSolver.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
+#include "physics/gravity/HydroSourceBinding.h"
 
 namespace Numerics {
 
@@ -21,25 +29,42 @@ namespace Numerics {
 template <typename EosType, typename FluxSchemePolicy>
 class HydroSolverImpl : public IHydroSolver {
 public:
-    HydroSolverImpl(const EosType& eos) : eos_(eos) {}
+    explicit HydroSolverImpl(const EosType& eos) : eos_(eos) {}
+
+    /** Shared Host stage updates write fixed extents; accepted integrators rotate live slots. */
+    HostHydroStorageContract host_storage_contract() const noexcept override {
+        return HostHydroStorageContract::FixedExtentSlotPermutation;
+    }
 
     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
                                 const FluidState& state, const Grid& grid, double dt,
                                 std::vector<FluidVector>& dU, std::vector<double>& d_spec,
                                 const Physical::Gravity::IGravityPolicy* gravity,
                                 const NumericsConfig& num_cfg, double flux_weight = 1.0,
-                                void* execution_stream = nullptr) const override
+                                void* execution_stream = nullptr,
+                                const arch::boundary::HostHydroBoundaryAuthority* boundary = nullptr) const override
     {
-        int total_size = grid.GetTotalSize();
-        int n_spec = state.GetNumSpecies();
+        // Authenticate the exact borrowed BC/slot/ghost frame before outputs,
+        // cache allocation, or EOS work. The empty mathematical path is used
+        // by direct numerical leaves; production BCHandler integrators bind the same real input frame.
+        const auto walls=boundary
+            ? boundary->require_view(amr_ctrl,block_id,state,grid)
+            : arch::boundary::HydroBoundaryView{};
+        const int total_size = grid.GetTotalSize();
+        const int n_spec = state.GetNumSpecies();
+        const auto species_size = FluidState::CheckedSpeciesSize(n_spec, total_size);
+        if (state.block_total_size_ != total_size || state.mass_fractions.size() < species_size)
+            throw std::invalid_argument("Hydro state species storage does not match the Grid extent");
+        Physical::Gravity::HydroPatchSource source(gravity);
 
         std::vector<FluidVector> flux_buffer(total_size);
-        std::vector<double> spec_flux_buffer(n_spec * total_size);
+        std::vector<double> spec_flux_buffer(species_size);
 
         const auto evaluate = [&] {
             TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy, EosType>(
                 amr_ctrl, block_id, state, eos_, grid, dt, dU, d_spec,
-                flux_buffer, spec_flux_buffer, gravity, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed);
+                flux_buffer, spec_flux_buffer, source, num_cfg.entropy_fix_coeff, flux_weight, num_cfg.hll_roe_wave_speed,
+                walls);
         };
         if constexpr (requires { typename EosType::HostHydroScope; }) {
             // The EOS owns the complete key. Storage is local to this worker

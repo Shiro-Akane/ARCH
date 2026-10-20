@@ -7,8 +7,8 @@
  * GravitySource.h, the mathematical owner also used by device code.
  * Workflow:
  * 1. Read the resolved gravity kind and CGS parameters.
- * 2. Construct the disabled, external or self-gravity policy.
- * 3. Return a type-erased policy; field solves begin only at stage preparation.
+ * 2. Leave disabled gravity absent, or construct the external/self policy.
+ * 3. Return the optional policy; field solves begin only at stage preparation.
  */
 
 #pragma once
@@ -27,12 +27,6 @@ namespace Physical
 {
     namespace Gravity
     {
-        // The disabled policy is owned by its only construction site.
-        struct GravityNone final : IGravityPolicy {
-            void add_sources_on_patch(std::vector<FluidVector>&, const FluidState&,
-                const Grid&, double, void* = nullptr) const override {}
-        };
-
         /**
          * @brief Factory for gravity policy
          * @return std::unique_ptr<IGravityPolicy>
@@ -43,7 +37,7 @@ namespace Physical
             using arch::dispatch::GravityId;
             switch (gravity) {
             case GravityId::None:
-                return std::make_unique<GravityNone>();
+                return nullptr;
             case GravityId::External:
                 return std::make_unique<ExternalGravity>(
                     config.physics.gravity.g_x,

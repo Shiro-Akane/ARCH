@@ -79,11 +79,11 @@ inline detail::Json ParameterPresentation(const config::ParameterDefinition& def
         {"gravity_rtol", {"Gravity relative tolerance", "Relative volume RMS residual target."}},
         {"gravity_atol", {"Gravity absolute tolerance", "Absolute Poisson RHS residual in s^-2; zero uses relative accuracy."}},
         {"gravity_max_cycles", {"Gravity iteration limit", "Maximum outer composite MG/Krylov iterations; failure stops evolution."}},
-        {"gravity_G", {"Gravitational constant", "Gravitational constant for the self-gravity Poisson equation in CGS."}},
         {"lrefinemin", {"Minimum refinement level", "Prevents coarsening below this level; it does not force uniform initial refinement."}},
         {"lrefinemax", {"Maximum refinement level", "Highest allowed refinement level; each active direction is halved per level."}},
         {"regrid_interval", {"Regrid interval", "Number of simulation steps between regrids. Must be positive; it is not an initial preview iteration count."}},
         {"refine_var", {"Refinement fields", "Fields used by the refinement indicators, separated by commas or plus signs; species names are resolved after Setup."}},
+        {"jeans_cells", {"Jeans resolution target", "Minimum cells per Jeans length; required only when refine_var requests JENS. No implicit default."}},
         {"refine_threshold", {"Refinement threshold", "Refines blocks when their indicator exceeds this threshold."}},
         {"derefine_threshold", {"Coarsening threshold", "Coarsens eligible block families when their indicators fall below this threshold."}},
         {"tmax", {"End time", "Requested simulation end time."}},
@@ -112,14 +112,14 @@ inline detail::Json ParameterPresentation(const config::ParameterDefinition& def
         {"x3_max", {"Axis 3 maximum", "Physical domain bound for this logical axis. Angular coordinates use radians; lengths use cm."}},
         {"x3l_boundary_type", {"Axis 3 lower boundary", "Boundary behavior at the lower end of this active axis."}},
         {"x3r_boundary_type", {"Axis 3 upper boundary", "Boundary behavior at the upper end of this active axis."}},
-        {"gravity_g_x", {"External x acceleration", "Constant acceleration component used by external gravity."}},
-        {"gravity_g_y", {"External y acceleration", "Constant acceleration component used by external gravity."}},
-        {"gravity_g_z", {"External z acceleration", "Constant acceleration component used by external gravity."}},
+        {"gravity_g_x", {"External acceleration: first component", "Constant acceleration in the first native orthonormal momentum slot: Cartesian x or cylindrical radial r."}},
+        {"gravity_g_y", {"External acceleration: second component", "Constant acceleration in the second native orthonormal momentum slot: Cartesian y or cylindrical axial z."}},
+        {"gravity_g_z", {"External acceleration: third component", "Constant acceleration in the third native orthonormal momentum slot: Cartesian z or cylindrical azimuthal phi, including cylindrical 2D."}},
     };
     const std::string key(definition.key);
     const auto& entry = text.at(key);
     const bool amr = key == "max_blocks" || key.starts_with("lrefine") || key == "regrid_interval"
-        || key == "refine_var" || key == "refine_threshold" || key == "derefine_threshold";
+        || key == "refine_var" || key == "jeans_cells" || key == "refine_threshold" || key == "derefine_threshold";
     auto result = detail::Json::object({{"displayName", entry.first}, {"description", entry.second},
         {"subgroup", amr ? "AMR" : std::string(definition.group)}});
     if (key == "max_steps" || key == "plt_dt" || key == "plt_dstep" || key == "chk_dt" || key == "chk_dstep")

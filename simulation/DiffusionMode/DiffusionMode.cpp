@@ -2,7 +2,8 @@
  * @file DiffusionMode.cpp
  * @brief Initialize a cell-averaged cosine mode for species diffusion.
  *
- * Setup computes the root-cell averaging factor and registers two species
+ * Setup selects an explicit linear axis for multidimensional modes and computes
+ * the uniform-root-cell averaging factor and registers two species
  * with identical thermodynamic properties. Init supplies complementary mass
  * fractions at uniform density and pressure; the configured diffusion policy
  * and boundary conditions determine their subsequent evolution.
@@ -26,18 +27,67 @@ class DiffusionModeProblem
     double amplitude_ = 0.25;
     double cell_average_factor_ = 1.0;
     int mode_ = 1;
+    int mode_axis_ = 0; // Setup selects a declared linear axis; zero is unprepared.
+    bool cylindrical_axis_ = false;
     int background_id_ = -1;
     int tracer_id_ = -1;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3", "verification"},
+            {"pressure0", "float", "erg/cm^3", "verification"},
+            {"tracer_mean", "float", "1", "verification"},
+            {"tracer_amplitude", "float", "1", "verification"},
+            {"mode", "int", "1", "verification"}};
+        // The old Cartesian 1-D model defines axis1. Multidimensional
+        // verification requires an explicit case-owned axis, never a default.
+        const auto* second = arch::config::input_detail::get<int>(inputs, "nblockx2");
+        arch::config::CaseParameter axis{"mode_axis", "int", "1", "verification"};
+        axis.requirement = second
+            ? arch::config::ConditionResult{*second > 0, {}}
+            : arch::config::ConditionResult{std::nullopt, {"nblockx2"}};
+        result.parameters.push_back(std::move(axis));
+        return result;
+    }
+
     void Setup(SimConfig& config, SpeciesManager& species)
     {
-        if (config.grid.dim != 1 || config.grid.geometry != "cartesian") {
-            throw std::invalid_argument("DiffusionMode requires one-dimensional Cartesian geometry.");
+        cylindrical_axis_ = config.grid.geometry == "cylindrical";
+        const bool legacy_line = config.grid.dim == 1 && config.grid.geometry == "cartesian";
+        if (legacy_line) {
+            mode_axis_ = 1; // Existing model definition, with the original arithmetic below.
+            if (config.DeclaredInputTokens().contains("mode_axis") &&
+                config.Get<int>("mode_axis", 0) != 1)
+                throw std::invalid_argument("DiffusionMode: inactive mode_axis in Cartesian 1-D");
+        } else {
+            // Get's second argument is audit metadata; loaded O7 inputs never
+            // use it as a fallback. An unresolved/undeclared axis throws.
+            mode_axis_ = config.Get<int>("mode_axis", 0);
+            if (mode_axis_ < 1 || mode_axis_ > config.grid.dim ||
+                (config.grid.geometry != "cartesian" &&
+                 !(cylindrical_axis_ && config.grid.dim >= 2 && mode_axis_ == 2)))
+                throw std::invalid_argument("DiffusionMode requires an active Cartesian axis or cylindrical axial axis2");
+            // The root-cell sinc is exact for uniform root cells. It is not
+            // a child-cell average: dynamic/refined tests use other fixtures.
+            if (config.amr.lrefinemin != 0 || config.amr.lrefinemax != 0)
+                throw std::invalid_argument("DiffusionMode multidimensional analytic mode requires a uniform root grid");
+            const std::string lower[]{config.grid.x1l_boundary_type, config.grid.x2l_boundary_type, config.grid.x3l_boundary_type};
+            const std::string upper[]{config.grid.x1r_boundary_type, config.grid.x2r_boundary_type, config.grid.x3r_boundary_type};
+            if (lower[mode_axis_-1] != "periodic" || upper[mode_axis_-1] != "periodic")
+                throw std::invalid_argument("DiffusionMode analytic mode requires periodic selected-axis faces");
         }
-
-        x_min_ = config.grid.x1_min;
-        length_ = config.grid.x1_max - config.grid.x1_min;
+        const double lower[]{config.grid.x1_min, config.grid.x2_min, config.grid.x3_min};
+        const double upper[]{config.grid.x1_max, config.grid.x2_max, config.grid.x3_max};
+        x_min_ = lower[mode_axis_-1];
+        length_ = upper[mode_axis_-1] - x_min_;
         density_ = config.Get<double>("rho0", 1.0);
         pressure_ = config.Get<double>("pressure0", 1.0);
         mean_ = config.Get<double>("tracer_mean", 0.5);
@@ -49,14 +99,12 @@ public:
             throw std::invalid_argument("DiffusionMode parameters require a bounded mass fraction in [0,1].");
         }
 
-        const double cell_width = ProblemHelper::GetRootCellWidth(config, 1);
+        const double cell_width = ProblemHelper::GetRootCellWidth(config, mode_axis_);
         const double half_cell_phase = arch::constants::math::pi * mode_ * cell_width / length_;
         cell_average_factor_ = std::sin(half_cell_phase) / half_cell_phase;
 
-        background_id_ = species.add_species("background", 1.0, 1.0,
-                                             config.physics.gamma, 717.5);
-        tracer_id_ = species.add_species("tracer", 1.0, 1.0,
-                                         config.physics.gamma, 717.5);
+        background_id_ = species.add_species("background", config.MaterialConstant(1.0, "background.A"), config.MaterialConstant(1.0, "background.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "background.Cv"));
+        tracer_id_ = species.add_species("tracer", config.MaterialConstant(1.0, "tracer.A"), config.MaterialConstant(1.0, "tracer.Z"), config.MaterialInput("gamma"), config.MaterialConstant(717.5, "tracer.Cv"));
 
         std::cout << "[Problem] Diffusion cosine mode: X=" << mean_ << "+"
                   << amplitude_ << " cos(2*pi*" << mode_ << "*x/L)" << std::endl;
@@ -64,7 +112,11 @@ public:
 
     void Init(const PointCoords& point, PrimitiveData& state) const
     {
-        const double phase = 2.0 * arch::constants::math::pi * mode_ * (point.x - x_min_) / length_;
+        // Cylindrical logical axis2 is native z, carried by physical z;
+        // Cartesian axes retain x/y/z. No radius/angle projection is applied.
+        const double coordinate = mode_axis_ == 1 ? point.x :
+            (mode_axis_ == 2 ? (cylindrical_axis_ ? point.z : point.y) : point.z);
+        const double phase = 2.0 * arch::constants::math::pi * mode_ * (coordinate - x_min_) / length_;
         const double tracer = mean_ + amplitude_ * cell_average_factor_ * std::cos(phase);
 
         state.rho = density_;

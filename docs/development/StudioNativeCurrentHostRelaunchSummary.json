@@ -1,0 +1,62 @@
+{
+  "observedAt": "2026-10-03T06:05:43.950032+00:00",
+  "sourceHead": "40dd783b50c5c382d1c2dae80ac22b0fc6df31da",
+  "oldOwnedGone": true,
+  "newElectron": {
+    "pid": 35303,
+    "startTicks": "857946",
+    "ppid": 35298,
+    "pgrp": 35303
+  },
+  "newHost": {
+    "pid": 35350,
+    "startTicks": "857958",
+    "ppid": 35303,
+    "pgrp": 35303
+  },
+  "hostChildren": [
+    {
+      "pid": 35775,
+      "startTicks": "858688",
+      "ppid": 35350,
+      "pgrp": 35775
+    }
+  ],
+  "origin": "http://127.0.0.1:42819",
+  "session": {
+    "projectId": "72ce7ca5-216a-4495-95e0-37485790d210",
+    "projectRoot": "/home/arch/projects/ARCH-compute-optim",
+    "displayName": "ARCH-compute-optim"
+  },
+  "parameterFile": {
+    "relativePath": "studio/.local/integration/native-stop-focused-35ee6c5c-4c77-4a1a-b5bd-3ef84821e38f/Sod.par",
+    "kind": "parameter",
+    "exists": true,
+    "size": 1255,
+    "modifiedTime": "2026-10-03T05:54:29.228Z",
+    "sha256": "3379a7203b7dabc0a842b9582c313d9904b804d0e4f4f66a8a6aaa25419ac3f3",
+    "changed": false
+  },
+  "preview": {
+    "state": "succeeded",
+    "identity": {
+      "requestId": "2fd9a2cf-38f5-4557-b9ea-fbbf198bf781",
+      "projectId": "72ce7ca5-216a-4495-95e0-37485790d210",
+      "profileId": "sod-initial-cpu",
+      "caseId": "Sod",
+      "configRevision": "3379a7203b7dabc0a842b9582c313d9904b804d0e4f4f66a8a6aaa25419ac3f3",
+      "buildId": "a7c719a8-5851-4331-a020-f131a38843b8",
+      "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+    },
+    "sessionStage": "complete",
+    "generation": 1
+  },
+  "build": {
+    "state": "ready",
+    "binaryState": "freshness-unknown",
+    "freshnessReason": "Compiler toolchain identity is incomplete or unavailable."
+  },
+  "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7",
+  "ui": "Native window15730862: Saved / Disk in-sync / Preview Current / Sod marker0.5 visible",
+  "scope": "idle warm-session native close and current-source relaunch; not active request or AMR shutdown"
+}

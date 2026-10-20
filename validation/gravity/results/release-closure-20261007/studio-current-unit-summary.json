@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "status": "PASS_STUDIO_UNIT_AND_HOST_CONTRACT_ONLY",
+  "tests": 362,
+  "passed": 362,
+  "failed": 0,
+  "skipped": 0,
+  "node": "24.21.0",
+  "testSeconds": 23.381107952,
+  "guardSeconds": 24.161,
+  "command": [
+    "node24",
+    "--test",
+    "--test-concurrency=2",
+    "studio/tests/*.test.ts"
+  ],
+  "fullLocalEvidenceSha256": "39ff6ce486afbcc6c9b9117648025d5b182bfc7427dabe5a1972d4c9ba30727f",
+  "actualDesktopRendering": false,
+  "RunRestartScientificAcceptance": false,
+  "globalSourceBuildFence": "NOT_ASSERTED_FOR_STUDIO_UNIT_EXECUTION"
+}

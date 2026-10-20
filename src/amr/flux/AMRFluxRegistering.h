@@ -9,21 +9,29 @@
 
 #pragma once
 
-#include "amr/AMRControl.h"
-
 #include <cstddef>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
+
+#include "amr/AMRControl.h"
 
 namespace amr {
 
-/** Gather and execute one already-indexed route without scanning the tree. */
+/** Gather and execute one already-indexed route without scanning the tree.
+ * Workflow: validate original native route/storage; gather all scalar values;
+ * optionally obtain Energy from the caller's same-stage receipt; apply the
+ * original plan once; publish that receipt only after registration succeeds.
+ * Flux input arrays remain immutable. This function adds no dt/RK/area factor.
+ */
+template<typename EnergyReceipt=std::nullptr_t>
 inline void RegisterCoarseFineFluxes(
     AMRControl& amr_ctrl, const AmrFluxTopologyPlan& topology,
     int block_id, const Grid& grid, int direction,
     const std::vector<FluidVector>& flux_buffer,
     const std::vector<double>& species_flux_buffer,
-    int species_count, double stage_weight)
+    int species_count, double stage_weight,
+    EnergyReceipt energy_receipt = nullptr)
 {
     const int total_size = grid.GetTotalSize();
     if (direction < 0 || direction >= grid.dim || species_count < 0
@@ -37,6 +45,10 @@ inline void RegisterCoarseFineFluxes(
         || !amr_plan_detail::is_finite_binary64(stage_weight))
         throw std::invalid_argument("invalid coarse-fine flux inputs");
 
+    if (!topology.native_grids.empty() && !matches_amr_flux_geometry(
+            topology,*amr_ctrl.pool,amr_ctrl.tree->GetActiveBlocks(),
+            block_id))
+        throw std::invalid_argument("AMR face-flux native geometry drifted");
     const Block& block = amr_ctrl.pool->GetBlock(block_id);
     if (!flux_plan_detail::same_grid_contract(block.grid, grid)
         || block.fluid_state.GetNumSpecies() != species_count)
@@ -46,7 +58,8 @@ inline void RegisterCoarseFineFluxes(
 
     std::vector<double> values;
     values.reserve(route->plan.operations.size());
-    for (const auto& operation : route->plan.operations) {
+    for (std::size_t operation_index=0;operation_index<route->plan.operations.size();++operation_index) {
+        const auto& operation=route->plan.operations[operation_index];
         const int flux_index = grid.GetIndex(
             grid.Is() + operation.source_box.first[0],
             grid.Js() + operation.source_box.first[1],
@@ -68,7 +81,14 @@ inline void RegisterCoarseFineFluxes(
             values.push_back(flux_buffer[flux_index].mom_w);
             break;
         case AmrField::Energy:
-            values.push_back(flux_buffer[flux_index].eng);
+            // The optional caller owns Energy interpretation. AMR passes the
+            // ORIGINAL operation and same-stage immutable fluxes before any
+            // register mutation; sign/area/RK/dt remain in the original plan.
+            if constexpr(!std::is_same_v<EnergyReceipt,std::nullptr_t>)
+                values.push_back(energy_receipt ? energy_receipt->registered_energy(
+                    topology,*route,operation_index,flux_index,flux_buffer[flux_index].eng,
+                    flux_buffer[flux_index].rho,stage_weight) : flux_buffer[flux_index].eng);
+            else values.push_back(flux_buffer[flux_index].eng);
             break;
         case AmrField::Species:
             values.push_back(species_flux_buffer[
@@ -80,7 +100,12 @@ inline void RegisterCoarseFineFluxes(
         }
     }
     amr_ctrl.flux_register.ApplyRegistrationPlan(
-        route->plan, values, topology.pool_lowering, stage_weight);
+        route->plan, values, topology.pool_lowering, stage_weight,topology.fingerprint);
+    // Publish a route receipt only AFTER original registration truly succeeds.
+    // Missing routes and stage_weight==0 above consume no receipt. A present
+    // route with no operations still follows the original apply/commit path.
+    if constexpr(!std::is_same_v<EnergyReceipt,std::nullptr_t>)
+        if(energy_receipt)energy_receipt->commit_registration(*route);
 }
 
 /**
@@ -88,17 +113,19 @@ inline void RegisterCoarseFineFluxes(
  * epoch cache, so the first call after publication builds O(blocks*surface)
  * plans and every later stage/direction call is an indexed lookup.
  */
+template<typename EnergyReceipt=std::nullptr_t>
 inline void RegisterCoarseFineFluxes(
     AMRControl& amr_ctrl, int block_id, const Grid& grid, int direction,
     const std::vector<FluidVector>& flux_buffer,
     const std::vector<double>& species_flux_buffer,
-    int species_count, double stage_weight)
+    int species_count, double stage_weight,
+    EnergyReceipt energy_receipt = nullptr)
 {
     const auto& topology =
-        amr_ctrl.RequireFluxTopologyPlan(species_count);
+        amr_ctrl.RequireFluxTopologyPlan(species_count,block_id);
     RegisterCoarseFineFluxes(
         amr_ctrl, topology, block_id, grid, direction, flux_buffer,
-        species_flux_buffer, species_count, stage_weight);
+        species_flux_buffer, species_count, stage_weight,energy_receipt);
 }
 
 } // namespace amr

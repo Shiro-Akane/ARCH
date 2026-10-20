@@ -7,7 +7,8 @@
  */
 #include "cuda/runtime/CudaBackend.h"
 #include "io/hdf5/HDF5Writer.h"
-#include "core/config/RuntimeParams.h"
+#include "fixtures/io/checkpoint_analysis_inputs.h"
+#include <optional>
 #include "fixtures/io/checkpoint_conservation_metrics.h"
 
 #include <algorithm>
@@ -728,10 +729,9 @@ void print_conservation_metrics(const std::filesystem::path& checkpoint_path,
     const io::CheckpointData checkpoint =
         io::read_hdf5_chk_impl(checkpoint_path.string());
     const std::size_t blocks = checkpoint.levels.size();
-    const SimConfig config = parameter_path == nullptr
-        ? SimConfig{} : RuntimeParams::Load(parameter_path);
-    const auto totals = checkpoint_metrics::compute(
-        checkpoint, parameter_path == nullptr ? nullptr : &config.grid);
+    const std::optional<GridConfig> grid = parameter_path == nullptr
+        ? std::nullopt : std::optional(checkpoint_analysis::Inputs::File(parameter_path).grid());
+    const auto totals = checkpoint_metrics::compute(checkpoint, grid ? &*grid : nullptr);
     std::cout << std::setprecision(17)
               << "{\"step\":" << checkpoint.step_count
               << ",\"time\":" << checkpoint.time
@@ -739,15 +739,19 @@ void print_conservation_metrics(const std::filesystem::path& checkpoint_path,
               << ",\"chk_file_index\":" << checkpoint.chk_file_index
               << ",\"plt_file_index\":" << checkpoint.plt_file_index
               << ",\"blocks\":" << blocks
-              << ",\"mass\":" << static_cast<double>(totals.mass)
-              << ",\"mom_u\":" << static_cast<double>(totals.mom_u)
-              << ",\"mom_v\":" << static_cast<double>(totals.mom_v)
-              << ",\"mom_w\":" << static_cast<double>(totals.mom_w)
-              << ",\"energy\":" << static_cast<double>(totals.energy)
+              // First-law residuals subtract large nuclear-mass integrals;
+              // rounding these long-double totals to double can dominate them.
+              << ",\"totals_encoding\":\"native_long_double_roundtrip_decimal\""
+              << std::setprecision(std::numeric_limits<long double>::max_digits10)
+              << ",\"mass\":" << totals.mass
+              << ",\"mom_u\":" << totals.mom_u
+              << ",\"mom_v\":" << totals.mom_v
+              << ",\"mom_w\":" << totals.mom_w
+              << ",\"energy\":" << totals.energy
               << ",\"rhoX\":[";
     for (std::size_t component = 0; component < totals.species.size(); ++component) {
         if (component != 0) std::cout << ',';
-        std::cout << static_cast<double>(totals.species[component]);
+        std::cout << totals.species[component];
     }
     std::cout << ']';
     if (parameter_path != nullptr)
@@ -1073,20 +1077,109 @@ void qualify_sod_checkpoint(const io::CheckpointData& checkpoint)
               << ",\"species_sum_error\":0}\n";
 }
 
+/** Read the two explicitly supported uniform hydrodynamic initial states.
+ * Native CHK does not store the model name for periodic, callback-free cases.
+ * Select an unambiguous parameter contract from the actual run input instead:
+ * ExternalGravity owns pressure0/velocity_x0; Gaussian owns p0 and all four
+ * pulse amplitudes. The latter is uniform only when every amplitude is zero.
+ * Missing or mixed controls are errors, never aliases or model defaults.
+ */
+std::array<double, 2> gravity_initial_conditions(
+    const ConfigParser& parser, const checkpoint_analysis::Inputs& inputs)
+{
+    constexpr std::array gaussian_keys{
+        "p0", "pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"};
+    const bool gaussian = std::any_of(gaussian_keys.begin(), gaussian_keys.end(),
+        [&](const char* key) { return parser.HasKey(key); });
+    const bool external = parser.HasKey("pressure0") || parser.HasKey("velocity_x0");
+    require(gaussian != external,
+            "gravity reference requires exactly one explicit Gaussian or ExternalGravity input contract");
+    if (external)
+        return {inputs.case_number("pressure0"), inputs.case_number("velocity_x0")};
+    const double pressure = inputs.case_number("p0");
+    for (const char* key : {"pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"})
+        require(inputs.case_number(key) == 0.0,
+                "uniform Gaussian gravity reference requires explicit zero hydrodynamic pulse amplitudes");
+    // Gaussian Init multiplies these amplitudes by the same envelope. Exact
+    // zeros therefore define stationary flow; no velocity input is invented.
+    return {pressure, 0.0};
+}
+
+void test_gravity_reference_inputs()
+{
+    const auto read = [](const std::string& text) {
+        std::istringstream raw(text);
+        ConfigParser parser;
+        parser.Read(raw, "gravity-reference-self-test");
+        std::istringstream resolved(parser.InputText());
+        const checkpoint_analysis::Inputs inputs(resolved, "gravity-reference-self-test");
+        return gravity_initial_conditions(parser, inputs);
+    };
+    const auto rejected = [&](const std::string& text) {
+        bool failed = false;
+        try { (void)read(text); }
+        catch (const std::exception&) { failed = true; }
+        require(failed, "invalid gravity reference input was accepted");
+    };
+    const std::string gaussian = "p0=2\npressure_amplitude=0\nu_amplitude=0\n"
+                                 "v_amplitude=0\nw_amplitude=0\n";
+    const std::string external = "pressure0=3\nvelocity_x0=0.125\n";
+    require(read(gaussian) == std::array{2.0, 0.0},
+            "Gaussian reference did not use its actual uniform p0 and zero amplitudes");
+    require(read(external) == std::array{3.0, 0.125},
+            "ExternalGravity reference changed its explicit pressure or initial velocity");
+    // Every branch input is required even when its physical value is zero.
+    for (const std::string key : {"p0", "pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"}) {
+        auto missing = gaussian;
+        const auto first = missing.find(key + "="), last = missing.find('\n', first);
+        missing.erase(first, last - first + 1);
+        rejected(missing);
+    }
+    for (const std::string key : {"pressure0", "velocity_x0"}) {
+        auto missing = external;
+        const auto first = missing.find(key + "="), last = missing.find('\n', first);
+        missing.erase(first, last - first + 1);
+        rejected(missing);
+    }
+    for (const std::string key : {"pressure_amplitude", "u_amplitude", "v_amplitude", "w_amplitude"}) {
+        auto nonuniform = gaussian;
+        const auto value = nonuniform.find(key + "=") + key.size() + 1;
+        nonuniform.replace(value, 1, "0.01");
+        rejected(nonuniform);
+    }
+    for (const auto& text : {std::string{}, gaussian + external,
+                            gaussian + "pressure0=2\n", gaussian + "velocity_x0=0\n",
+                            external + "p0=3\n", gaussian + "p0=2\n"})
+        rejected(text);
+    auto malformed = gaussian;
+    malformed.replace(malformed.find("u_amplitude=0"), 13, "u_amplitude=nan");
+    rejected(malformed);
+    std::cout << "checkpoint gravity reference input controls passed\n";
+}
+
 void qualify_gravity_checkpoint(const io::CheckpointData& checkpoint, const char* parameter_path)
 {
     require(parameter_path != nullptr, "gravity reference requires actual run parameters");
-    const auto config = RuntimeParams::Load(parameter_path);
-    require(config.physics.gravity.type == "external" && config.physics.eos_type == "ideal"
-                && config.grid.geometry == "cartesian",
+    // Parse once from disk, then resolve the same immutable bytes through the
+    // shared strict metric parser; presence checks never supply missing values.
+    std::ifstream source(parameter_path, std::ios::binary);
+    require(static_cast<bool>(source), "cannot open gravity reference parameters");
+    ConfigParser parser;
+    parser.Read(source, parameter_path);
+    std::istringstream resolved(parser.InputText());
+    const checkpoint_analysis::Inputs inputs(resolved, parameter_path);
+    require(inputs.standard_token("gravity_type") == "external"
+                && inputs.standard_token("eos_type") == "ideal"
+                && inputs.standard_token("geometry") == "cartesian",
             "gravity reference requires Cartesian constant external acceleration and ideal gas");
-    const double rho0 = config.Get<double>("rho0", 1.0);
-    const double pressure0 = config.Get<double>("pressure0", 1.0);
-    const double gamma = config.physics.gamma;
+    const double rho0 = inputs.case_number("rho0");
+    const auto initial = gravity_initial_conditions(parser, inputs);
+    const double pressure0 = initial[0];
+    const double gamma = inputs.standard<double>("gamma");
     const std::array velocity{
-        config.Get<double>("velocity_x0", 0.0) + config.physics.gravity.g_x * checkpoint.time,
-        config.physics.gravity.g_y * checkpoint.time,
-        config.physics.gravity.g_z * checkpoint.time};
+        initial[1] + inputs.standard<double>("gravity_g_x") * checkpoint.time,
+        inputs.standard<double>("gravity_g_y") * checkpoint.time,
+        inputs.standard<double>("gravity_g_z") * checkpoint.time};
     const double energy = pressure0 / (gamma - 1.0)
         + 0.5 * rho0 * (velocity[0]*velocity[0] + velocity[1]*velocity[1] + velocity[2]*velocity[2]);
     require(rho0 > 0.0 && pressure0 > 0.0 && gamma > 1.0 && std::isfinite(energy),
@@ -1116,11 +1209,146 @@ void qualify_gravity_checkpoint(const io::CheckpointData& checkpoint, const char
               << ",\"pressure_linf\":" << errors[4] << ",\"energy_linf\":" << errors[5] << "}\n";
 }
 
+// Workflow: bind the actual run input, verify the uniform native r-z topology,
+// and integrate an independent axial finite-volume reference with physical V.
+// The reference is the existing unit-period, first-mode benchmark. It is not
+// an AMR profile oracle: root-cell sinc averages cannot certify child averages.
+void qualify_native_axial_checkpoint(const io::CheckpointData& checkpoint,
+                                     const std::string& mode, const char* parameter_path)
+{
+    require(parameter_path != nullptr, "native axial reference requires actual run parameters");
+    const auto inputs = checkpoint_analysis::Inputs::File(parameter_path);
+    const auto grid = inputs.grid();
+    require(grid.geometry == "cylindrical" && grid.dim == 2
+                && grid.nblockx1 > 0 && grid.nblockx2 > 0
+                && inputs.case_number("mode_axis") == 2.0
+                && inputs.case_number("mode") == 1.0
+                && grid.x1_min >= 0.0 && grid.x1_max > grid.x1_min
+                && grid.x2_min == 0.0 && grid.x2_max == 1.0
+                && inputs.standard<int>("lrefinemin") == 0
+                && inputs.standard<int>("lrefinemax") == 0
+                && inputs.standard_token("x2l_boundary_type") == "periodic"
+                && inputs.standard_token("x2r_boundary_type") == "periodic",
+            "native axial reference inputs do not match the frozen benchmark");
+    require(inputs.case_number("pressure0") == 1.0,
+            "native axial reference pressure changed");
+    if (mode == "smooth") {
+        require(inputs.case_number("rho_mean") == 1.0
+                    && inputs.case_number("rho_amplitude") == 0.2
+                    && inputs.case_number("velocity0") == 1.0,
+                "native advection reference parameters changed");
+    } else {
+        require(mode == "diffusion" && inputs.case_number("rho0") == 1.0
+                    && inputs.case_number("tracer_mean") == 0.5
+                    && inputs.case_number("tracer_amplitude") == 0.25
+                    && inputs.standard<double>("D_spec") == 0.01,
+                "native diffusion reference parameters changed");
+    }
+    const std::size_t local_cells = amr::BLOCK_NX * amr::BLOCK_NY;
+    const std::size_t blocks = checkpoint.levels.size();
+    const std::size_t cells = blocks * local_cells;
+    require(checkpoint.dim == 2 && checkpoint.geometry == "cylindrical"
+                && checkpoint.cells_per_block == local_cells
+                && blocks == static_cast<std::size_t>(grid.nblockx1 * grid.nblockx2)
+                && checkpoint.logical_x1.size() == blocks
+                && checkpoint.logical_x2.size() == blocks
+                && checkpoint.rho.size() == cells && checkpoint.eng.size() == cells
+                && checkpoint.mom_u.size() == cells && checkpoint.mom_v.size() == cells
+                && checkpoint.mom_w.size() == cells,
+            "native axial checkpoint topology or field shape drifted");
+    require(mode != "diffusion" || (checkpoint.num_species == 2
+                && checkpoint.rhoX.size() == 2 * cells),
+            "native diffusion species layout drifted");
+    const int axial_cells = grid.nblockx2 * amr::BLOCK_NY;
+    const long double dr = (grid.x1_max - grid.x1_min)
+        / static_cast<long double>(grid.nblockx1 * amr::BLOCK_NX);
+    const long double dz = 1.0L / axial_cells;
+    constexpr long double pi = 3.141592653589793238462643383279502884L;
+    const long double half_phase = pi / axial_cells;
+    const long double average = std::sin(half_phase) / half_phase;
+    std::vector<bool> seen(blocks, false);
+    long double volume = 0.0L, l1 = 0.0L, l2 = 0.0L, linf = 0.0L, mean = 0.0L;
+    std::array<long double, 5> totals{};
+    double min_rho = std::numeric_limits<double>::infinity();
+    double min_eng = min_rho, min_fraction = min_rho, max_fraction = -min_rho;
+    double species_sum_error = 0.0;
+    for (std::size_t block = 0; block < blocks; ++block) {
+        const int bi = checkpoint.logical_x1[block], bj = checkpoint.logical_x2[block];
+        require(checkpoint.levels[block] == 0 && bi >= 0 && bi < grid.nblockx1
+                    && bj >= 0 && bj < grid.nblockx2,
+                "native axial reference requires uniform root blocks");
+        const auto root_index = static_cast<std::size_t>(bj * grid.nblockx1 + bi);
+        require(!seen[root_index], "native axial checkpoint has duplicate root blocks");
+        seen[root_index] = true;
+        for (std::size_t local = 0; local < local_cells; ++local) {
+            const auto offset = block * local_cells + local;
+            const int i = bi * amr::BLOCK_NX + static_cast<int>(local % amr::BLOCK_NX);
+            const int j = bj * amr::BLOCK_NY + static_cast<int>(local / amr::BLOCK_NX);
+            const long double rlo = grid.x1_min + i * dr, rhi = rlo + dr;
+            // Per unit azimuth: integral(r dr dz), independent of Grid helpers.
+            const long double weight = 0.5L * (rhi * rhi - rlo * rlo) * dz;
+            const long double z = (j + 0.5L) * dz;
+            const double rho = checkpoint.rho[offset], eng = checkpoint.eng[offset];
+            require(std::isfinite(rho) && std::isfinite(eng) && rho > 0.0 && eng > 0.0,
+                    "native axial positivity failed");
+            min_rho = std::min(min_rho, rho); min_eng = std::min(min_eng, eng);
+            const std::array<double, 5> values{rho, checkpoint.mom_u[offset],
+                checkpoint.mom_v[offset], checkpoint.mom_w[offset], eng};
+            for (std::size_t field = 0; field < values.size(); ++field) {
+                require(std::isfinite(values[field]), "native axial field is not finite");
+                totals[field] += weight * values[field];
+            }
+            long double observed = rho;
+            long double expected = 1.0L + 0.2L * average
+                * std::sin(2.0L * pi * (z - checkpoint.time));
+            if (mode == "diffusion") {
+                observed = checkpoint.rhoX[cells + offset] / rho;
+                min_fraction = std::min(min_fraction, static_cast<double>(observed));
+                max_fraction = std::max(max_fraction, static_cast<double>(observed));
+                expected = 0.5L + 0.25L * average
+                    * std::exp(-0.01L * 4.0L * pi * pi * checkpoint.time)
+                    * std::cos(2.0L * pi * z);
+            }
+            require(std::isfinite(observed), "native axial observed profile is not finite");
+            const long double error = std::abs(observed - expected);
+            l1 += weight * error; l2 += weight * error * error;
+            linf = std::max(linf, error); mean += weight * observed; volume += weight;
+            if (checkpoint.num_species > 0) {
+                double sum = 0.0;
+                require(checkpoint.rhoX.size() == checkpoint.num_species * cells,
+                        "native axial species shape drifted");
+                for (int species = 0; species < checkpoint.num_species; ++species)
+                    sum += checkpoint.rhoX[static_cast<std::size_t>(species) * cells + offset] / rho;
+                require(std::isfinite(sum), "native axial species sum is not finite");
+                species_sum_error = std::max(species_sum_error, std::abs(sum - 1.0));
+            }
+        }
+    }
+    require(volume > 0.0L && std::isfinite(volume), "native axial volume is invalid");
+    std::cout << "{\"status\":\"pass\",\"mode\":\"" << mode
+              << "\",\"reference_axis\":2,\"measure\":\"physical_cell_volume_normalized\""
+              << ",\"step\":" << checkpoint.step_count << ",\"time\":" << checkpoint.time
+              << ",\"l1\":" << l1 / volume << ",\"l2\":" << std::sqrt(l2 / volume)
+              << ",\"linf\":" << linf << ",\"mean\":" << mean / volume
+              << ",\"mass\":" << totals[0] / volume << ",\"mom_u\":" << totals[1] / volume
+              << ",\"mom_v\":" << totals[2] / volume << ",\"mom_w\":" << totals[3] / volume
+              << ",\"eng_total\":" << totals[4] / volume
+              << ",\"min_rho\":" << min_rho << ",\"min_eng\":" << min_eng
+              << ",\"min_fraction\":" << (mode == "diffusion" ? min_fraction : 0.0)
+              << ",\"max_fraction\":" << (mode == "diffusion" ? max_fraction : 0.0)
+              << ",\"species_sum_error\":" << species_sum_error << "}\n";
+}
+
 void qualify_real_checkpoint(const std::filesystem::path& checkpoint_path,
                              const std::string& mode, const char* parameter_path = nullptr)
 {
     const io::CheckpointData checkpoint =
         io::read_hdf5_chk_impl(checkpoint_path.string());
+    if (checkpoint.dim == 2 && checkpoint.geometry == "cylindrical"
+            && (mode == "smooth" || mode == "diffusion")) {
+        qualify_native_axial_checkpoint(checkpoint, mode, parameter_path);
+        return;
+    }
     require(checkpoint.dim == 1 && checkpoint.geometry == "cartesian"
                 && checkpoint.cells_per_block > 0
                 && checkpoint.levels.size() == checkpoint.logical_x1.size()
@@ -1269,6 +1497,7 @@ int run_validation(int argc, char** argv)
     }
     if (argc == 2 && std::string(argv[1]) == "--test-time-comparison") {
         test_evolution_timing();
+        test_gravity_reference_inputs();
         return 0;
     }
     if (argc == 8 && std::string(argv[1]) == "--compare-step-diagnostic") {

@@ -1,18 +1,32 @@
 /**
  * @file Reconstruction.h
- * @brief Spatial reconstruction from cell averages to interface states.
+ * @brief Shared selected-method reconstruction of physical coordinate traces.
+ *
+ * Workflow:
+ * 1. Select the configured PCM, MUSCL limiter or PPM and actual AMR support.
+ * 2. Reconstruct ordinary conservative/primitive traces with their
+ *    authoritative limiter math and physical EOS inputs.
+ * 3. Publish a bounded finite trace only after its trial-state path returns
+ *    physical nodes. Face averaging, flux policy and Runtime publication
+ *    remain consumers.
  */
-
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <utility>
 
-#include "numerics/reconstruction/Limiters.h"
-
+#include "core/ArchPortability.h"
 #include "data/FluidState.h"
+#include "numerics/curvilinear/GridMetrics.h"
+#include "numerics/reconstruction/Limiters.h"
 #include "numerics/state/StateAdmissibility.h"
 
 namespace ReconstructionMath {
@@ -245,7 +259,8 @@ struct MusclReconstruction
 
 /**
  * @struct PPMReconstruction
- * @brief Third-order piecewise-parabolic reconstruction with smooth-extremum preservation.
+ * @brief Third-order piecewise-parabolic reconstruction with continuous
+ * curvature-supported face bounds and a CW endpoint blend.
  */
 struct PPMReconstruction
 {
@@ -254,48 +269,48 @@ struct PPMReconstruction
     static constexpr int NG = 3;
 
 private:
+    // Curvature support follows the second-difference limiting principle of
+    // Sekora/Colella (2009, arXiv:0903.4200). The continuous projection/blend
+    // below is stated explicitly rather than using their conditional switches.
+    // This shared dimensionless coefficient bounds local curvature relative to
+    // neighboring second differences; it is a numerical method coefficient.
+    static constexpr double kCurvatureLimitCoefficient = 1.25;
+
     static ARCH_INLINE double interpolate_face_4th(double u_im1, double u_i, double u_ip1, double u_ip2)
     {
         return (7.0 / 12.0) * (u_i + u_ip1) - (1.0 / 12.0) * (u_im1 + u_ip2);
     }
 
-    static ARCH_INLINE bool is_smooth_extremum(
-        double u_im2, double u_im1, double u_i, double u_ip1, double u_ip2)
+    // Continuous extended-interval face projection between the cell averages
+    // u_i and u_ip1. The fourth-order face f is clamped into
+    // [min(u_i,u_ip1) - kp/6, max(u_i,u_ip1) + kn/6], where kp and kn are the
+    // positive and negative curvature supports bounded by the two adjacent
+    // second differences. Clamp and bounds are continuous in the data and scale
+    // equivariant; a zero supported curvature reduces the projection to the
+    // ordinary adjacent-average bound, so no inside/outside switch or midpoint
+    // replacement is needed. Cell averages are not point samples: the retained
+    // curvature keeps the true extremum face of an exact quadratic instead of
+    // flattening it to the average of the two cell means.
+    static ARCH_INLINE double project_face(
+        double f, double u_im1, double u_i, double u_ip1, double u_ip2)
     {
-        const double slope_left = u_i - u_im1;
-        const double slope_right = u_ip1 - u_i;
-        if ((slope_left > 0.0 && slope_right > 0.0) || (slope_left < 0.0 && slope_right < 0.0))
-            return false;
-
-        const double d2_left = u_im2 - 2.0 * u_im1 + u_i;
-        const double d2_center = u_im1 - 2.0 * u_i + u_ip1;
-        const double d2_right = u_i - 2.0 * u_ip1 + u_ip2;
-        const double curvature_scale = std::max({
-            std::abs(d2_left), std::abs(d2_center), std::abs(d2_right)});
-        const double value_scale = std::max({
-            std::abs(u_im2), std::abs(u_im1), std::abs(u_i),
-            std::abs(u_ip1), std::abs(u_ip2)});
-
-        if (curvature_scale <= 1e-12 * value_scale)
-            return false;
-        if (d2_center == 0.0 || d2_left == 0.0 || d2_right == 0.0
-            || (d2_left > 0.0) != (d2_center > 0.0) || (d2_center > 0.0) != (d2_right > 0.0))
-            return false;
-
-        const double min_curvature = std::min({
-            std::abs(d2_left), std::abs(d2_center), std::abs(d2_right)});
-        return min_curvature >= 0.25 * curvature_scale;
+        const double d_left = (u_ip1 - u_i) - (u_i - u_im1);
+        const double d_right = (u_ip2 - u_ip1) - (u_ip1 - u_i);
+        const double k_positive = std::max(0.0, std::min(
+            kCurvatureLimitCoefficient * d_left, kCurvatureLimitCoefficient * d_right));
+        const double k_negative = std::max(0.0, std::min(
+            -kCurvatureLimitCoefficient * d_left, -kCurvatureLimitCoefficient * d_right));
+        const double lower = std::min(u_i, u_ip1) - k_positive / 6.0;
+        const double upper = std::max(u_i, u_ip1) + k_negative / 6.0;
+        return std::max(lower, std::min(f, upper));
     }
 
-    static ARCH_INLINE void apply_cw_limiter(
-        double &u_left, double &u_right, double u_average,
-        bool preserve_smooth_extremum)
+    // Colella/Woodward two-to-one endpoint bound used by the profile blend.
+    static ARCH_INLINE void apply_cw_bound(
+        double &u_left, double &u_right, double u_average)
     {
         const double delta_left = u_left - u_average;
         const double delta_right = u_right - u_average;
-
-        if (preserve_smooth_extremum)
-            return;
 
         if ((delta_left > 0.0 && delta_right > 0.0)
             || (delta_left < 0.0 && delta_right < 0.0))
@@ -311,25 +326,144 @@ private:
             u_right = u_average - 2.0 * delta_left;
     }
 
+    // Continuous curvature-supported CW blend for one cell. The original
+    // Colella/Woodward two-to-one endpoint bound is computed unconditionally from
+    // the input faces fL/fR and the cell mean u_i, then blended back toward the
+    // original faces by theta = min(1, k/|P|). Here P = 6*(aL+aR) is the
+    // dimensionless parabolic second derivative, supported by the
+    // three adjacent second differences. theta=1 keeps the original profile
+    // (quadratics satisfy |P| <= C*min(|dL|,|dC|,|dR|)) and theta=0 keeps the CW
+    // bound for unsupported sharp profiles; both limits join continuously because
+    // the CW correction is itself bounded by |P|/6 per endpoint, so the weighted
+    // blend tends to the original face as P tends to zero even when theta has a
+    // directional limit. A zero P is an exact linear profile and returns the
+    // original faces instead of dividing 0/0.
+    static ARCH_INLINE void apply_cell_limiter(
+        double &fL, double &fR,
+        double u_im2, double u_im1, double u_i, double u_ip1, double u_ip2)
+    {
+        double cw_left = fL;
+        double cw_right = fR;
+        apply_cw_bound(cw_left, cw_right, u_i);
+
+        const double a_left = fL - u_i;
+        const double a_right = fR - u_i;
+        const double P = 6.0 * (a_left + a_right);
+        if (P == 0.0)
+            return; // linear profile: the original faces already lie on it
+
+        const double d_left = (u_i - u_im1) - (u_im1 - u_im2);
+        const double d_center = (u_ip1 - u_i) - (u_i - u_im1);
+        const double d_right = (u_ip2 - u_ip1) - (u_ip1 - u_i);
+        const double S = P > 0.0 ? 1.0 : -1.0;
+        const double k = std::max(0.0, std::min({
+            kCurvatureLimitCoefficient * S * d_left,
+            kCurvatureLimitCoefficient * S * d_center,
+            kCurvatureLimitCoefficient * S * d_right}));
+        const double theta = std::min(1.0, k / std::abs(P));
+        if (theta == 1.0)
+            return; // full original profile, exact by construction
+        if (theta == 0.0) {
+            fL = cw_left;
+            fR = cw_right;
+            return;
+        }
+        fL = cw_left + theta * (fL - cw_left);
+        fR = cw_right + theta * (fR - cw_right);
+    }
+
+    /** Apply the existing CW/curvature rule to already projected own-cell faces.
+     * The five means are ordered [i-2,i-1,i,i+1,i+2]. Keeping projection outside
+     * lets the ordinary six-point pair preserve its original three-face order.
+     */
+    static ARCH_INLINE void limit_own_scalar_cell(
+        const double (&v)[5], double& lower, double& upper)
+    {
+        apply_cell_limiter(lower, upper, v[0], v[1], v[2], v[3], v[4]);
+    }
+
+    /** Original primitive pressure/density ray for one owning-cell face.
+     * theta=min(1,rho_mean/[2*(rho_mean-rho_face)],
+     * p_mean/[2*(p_mean-p_face)]) only for a nonpositive trial rho/p.
+     * All primitive components follow that same original per-face ray.
+     */
+    static ARCH_INLINE void limit_own_primitive_face(
+        double mean_rho, double mean_velocity_x, double mean_velocity_y,
+        double mean_velocity_z, double mean_pressure,
+        double& rho, double& velocity_x, double& velocity_y,
+        double& velocity_z, double& pressure)
+    {
+        double theta=1.0;
+        if (!(rho > 0.0)) theta=std::min(theta,0.5*mean_rho/(mean_rho-rho));
+        if (!(pressure > 0.0)) theta=std::min(theta,0.5*mean_pressure/(mean_pressure-pressure));
+        if (theta < 1.0) {
+            rho=mean_rho+theta*(rho-mean_rho);
+            pressure=mean_pressure+theta*(pressure-mean_pressure);
+            velocity_x=mean_velocity_x+theta*(velocity_x-mean_velocity_x);
+            velocity_y=mean_velocity_y+theta*(velocity_y-mean_velocity_y);
+            velocity_z=mean_velocity_z+theta*(velocity_z-mean_velocity_z);
+        }
+    }
+
+    /** Assemble the same physical conserved trial and original EOS probe.
+     * m=rho*u and E=EOS(rho,u,p,X); unresolved energy remains nonfinite for the
+     * caller to reject or restore with the matching owning composition.
+     */
+    template <typename EosType>
+    static ARCH_INLINE void assemble_own_eos_point(
+        double rho, double velocity_x, double velocity_y, double velocity_z,
+        double pressure, const double* composition, const EosType& eos,
+        FluidVector& point)
+    {
+        point.rho = rho;
+        point.mom_u = rho * velocity_x;
+        point.mom_v = rho * velocity_y;
+        point.mom_w = rho * velocity_z;
+        point.eng = ReconstructionMath::probe_face_energy(
+            eos, rho, velocity_x, velocity_y, velocity_z, pressure, composition);
+    }
+
 public:
+    /** Reconstruct both endpoints of one owning scalar cell from five means.
+     * Workflow: original fourth-order left/right face interpolation and
+     * projection, then the unchanged owning CW/curvature limiter.
+     * f_- = project((7*(v1+v2)-(v0+v3))/12),
+     * f_+ = project((7*(v2+v3)-(v1+v4))/12).
+     * Interpolation itself retains the original evaluated coefficient formula.
+     */
+    static ARCH_INLINE void reconstruct_scalar_cell_ppm(
+        const double (&v)[5], double& lower, double& upper)
+    {
+        lower = project_face(
+            interpolate_face_4th(v[0], v[1], v[2], v[3]), v[0], v[1], v[2], v[3]);
+        upper = project_face(
+            interpolate_face_4th(v[1], v[2], v[3], v[4]), v[1], v[2], v[3], v[4]);
+        limit_own_scalar_cell(v, lower, upper);
+    }
+
+    /** Return the original left/right states at one face from six means.
+     * All three projected faces retain their original evaluation order; the
+     * two exact five-value windows delegate only their owning-cell limiting.
+     */
     static ARCH_INLINE void reconstruct_scalar_ppm(
         const double (&v)[6], double& left, double& right)
     {
-        double u_face_imhalf = interpolate_face_4th(v[0], v[1], v[2], v[3]);
-        double u_face_iphalf = interpolate_face_4th(v[1], v[2], v[3], v[4]);
-        double u_face_ip3half = interpolate_face_4th(v[2], v[3], v[4], v[5]);
+        const double u_face_imhalf = project_face(
+            interpolate_face_4th(v[0], v[1], v[2], v[3]), v[0], v[1], v[2], v[3]);
+        const double u_face_iphalf = project_face(
+            interpolate_face_4th(v[1], v[2], v[3], v[4]), v[1], v[2], v[3], v[4]);
+        const double u_face_ip3half = project_face(
+            interpolate_face_4th(v[2], v[3], v[4], v[5]), v[2], v[3], v[4], v[5]);
 
         double u_L_cell_i = u_face_imhalf;
         double u_R_cell_i = u_face_iphalf;
-        apply_cw_limiter(
-            u_L_cell_i, u_R_cell_i, v[2],
-            is_smooth_extremum(v[0], v[1], v[2], v[3], v[4]));
+        const double own_i[5]{v[0], v[1], v[2], v[3], v[4]};
+        limit_own_scalar_cell(own_i, u_L_cell_i, u_R_cell_i);
 
         double u_L_cell_ip1 = u_face_iphalf;
         double u_R_cell_ip1 = u_face_ip3half;
-        apply_cw_limiter(
-            u_L_cell_ip1, u_R_cell_ip1, v[3],
-            is_smooth_extremum(v[1], v[2], v[3], v[4], v[5]));
+        const double own_ip1[5]{v[1], v[2], v[3], v[4], v[5]};
+        limit_own_scalar_cell(own_ip1, u_L_cell_ip1, u_R_cell_ip1);
 
         left = u_R_cell_i;
         right = u_L_cell_ip1;
@@ -382,37 +516,75 @@ public:
         // asking an EOS to invert the face. No dimensional pressure floor.
         for (int side=0; side<2; ++side) {
             const int center=side+2;
-            double theta=1.0;
-            if (!(face_rho[side] > 0.0)) theta=std::min(theta,0.5*rho[center]/(rho[center]-face_rho[side]));
-            if (!(face_pressure[side] > 0.0)) theta=std::min(theta,0.5*pressure[center]/(pressure[center]-face_pressure[side]));
-            if (theta < 1.0) {
-                face_rho[side]=rho[center]+theta*(face_rho[side]-rho[center]);
-                face_pressure[side]=pressure[center]+theta*(face_pressure[side]-pressure[center]);
-                face_velocity_x[side]=velocity_x[center]+theta*(face_velocity_x[side]-velocity_x[center]);
-                face_velocity_y[side]=velocity_y[center]+theta*(face_velocity_y[side]-velocity_y[center]);
-                face_velocity_z[side]=velocity_z[center]+theta*(face_velocity_z[side]-velocity_z[center]);
-            }
+            limit_own_primitive_face(
+                rho[center], velocity_x[center], velocity_y[center],
+                velocity_z[center], pressure[center],
+                face_rho[side], face_velocity_x[side], face_velocity_y[side],
+                face_velocity_z[side], face_pressure[side]);
         }
         const double rho_left = face_rho[0];
         const double rho_right = face_rho[1];
         const double pressure_left = face_pressure[0];
         const double pressure_right = face_pressure[1];
 
-        left.rho = rho_left;
-        left.mom_u = rho_left * face_velocity_x[0];
-        left.mom_v = rho_left * face_velocity_y[0];
-        left.mom_w = rho_left * face_velocity_z[0];
-        left.eng = ReconstructionMath::probe_face_energy(
-            eos, rho_left, face_velocity_x[0], face_velocity_y[0],
-            face_velocity_z[0], pressure_left, X_left);
+        assemble_own_eos_point(
+            rho_left, face_velocity_x[0], face_velocity_y[0],
+            face_velocity_z[0], pressure_left, X_left, eos, left);
+        assemble_own_eos_point(
+            rho_right, face_velocity_x[1], face_velocity_y[1],
+            face_velocity_z[1], pressure_right, X_right, eos, right);
+    }
 
-        right.rho = rho_right;
-        right.mom_u = rho_right * face_velocity_x[1];
-        right.mom_v = rho_right * face_velocity_y[1];
-        right.mom_w = rho_right * face_velocity_z[1];
-        right.eng = ReconstructionMath::probe_face_energy(
-            eos, rho_right, face_velocity_x[1], face_velocity_y[1],
-            face_velocity_z[1], pressure_right, X_right);
+    /** Expose original own-cell primitive endpoints AFTER its rho/p ray.
+     * The caller can derive matching rhoX/rho before any actual EOS inverse;
+     * no trial material is substituted and no new limiting formula is added.
+     */
+    static ARCH_INLINE void reconstruct_cell_primitives(
+        const double (&rho)[5], const double (&velocity_x)[5],
+        const double (&velocity_y)[5], const double (&velocity_z)[5],
+        const double (&pressure)[5], double (&face_rho)[2],
+        double (&face_velocity_x)[2], double (&face_velocity_y)[2],
+        double (&face_velocity_z)[2], double (&face_pressure)[2])
+    {
+        reconstruct_scalar_cell_ppm(rho, face_rho[0], face_rho[1]);
+        reconstruct_scalar_cell_ppm(velocity_x, face_velocity_x[0], face_velocity_x[1]);
+        reconstruct_scalar_cell_ppm(velocity_y, face_velocity_y[0], face_velocity_y[1]);
+        reconstruct_scalar_cell_ppm(velocity_z, face_velocity_z[0], face_velocity_z[1]);
+        reconstruct_scalar_cell_ppm(pressure, face_pressure[0], face_pressure[1]);
+        for (int side=0; side<2; ++side) {
+            limit_own_primitive_face(
+                rho[2], velocity_x[2], velocity_y[2], velocity_z[2], pressure[2],
+                face_rho[side], face_velocity_x[side], face_velocity_y[side],
+                face_velocity_z[side], face_pressure[side]);
+        }
+    }
+
+    /** Reconstruct physical primitive/EOS trials at both faces of one cell.
+     * Workflow: reuse the original scalar owning-cell PPM for rho/u/p, apply
+     * the original per-face rho/p ray against index two, then probe the actual
+     * EOS with each supplied matching face composition. Required stencil EOS
+     * gathering remains the caller's strict responsibility. This entry performs
+     * no species normalization, baseline restore or native common-theta rule.
+     */
+    template <typename EosType>
+    static ARCH_INLINE void reconstruct_cell_eos(
+        const double (&rho)[5], const double (&velocity_x)[5],
+        const double (&velocity_y)[5], const double (&velocity_z)[5],
+        const double (&pressure)[5], const double* X_lower,
+        const double* X_upper, const EosType& eos,
+        FluidVector& lower, FluidVector& upper)
+    {
+        double face_rho[2], face_velocity_x[2], face_velocity_y[2];
+        double face_velocity_z[2], face_pressure[2];
+        reconstruct_cell_primitives(rho, velocity_x, velocity_y, velocity_z,
+            pressure, face_rho, face_velocity_x, face_velocity_y,
+            face_velocity_z, face_pressure);
+        assemble_own_eos_point(
+            face_rho[0], face_velocity_x[0], face_velocity_y[0],
+            face_velocity_z[0], face_pressure[0], X_lower, eos, lower);
+        assemble_own_eos_point(
+            face_rho[1], face_velocity_x[1], face_velocity_y[1],
+            face_velocity_z[1], face_pressure[1], X_upper, eos, upper);
     }
 
 private:

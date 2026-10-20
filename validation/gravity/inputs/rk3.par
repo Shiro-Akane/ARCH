@@ -19,11 +19,15 @@ x3l_boundary_type = outflow
 x3r_boundary_type = outflow
 
 solver = HLLC
+# Original Roe-Glaister HLL-family wave-speed estimate, now explicit.
+hll_wave_speed = roe
 reconstruct = muscl
 limiter = mc
 time_integrator = RK3
 cfl = 0.4
 sml_rho = 1e-12
+# Original specific internal-energy floor [erg/g], now explicit.
+min_eint = 1e-10
 max_eint = 1e6
 compute_backend = cpu
 

@@ -1,0 +1,24 @@
+{
+  "scope": "runner engineering; synthetic fields and real Python/tool children only; no ARCH/CUDA/science/benchmark run",
+  "sourceHeadBeforeChange": "851cced20bf35ef58beb43628fcf0598cb0009cf",
+  "tests": {
+    "passed": 31,
+    "initialFailure": "old taskset stub returned captured stderr rather than writing the new stdout file descriptor; original log retained",
+    "finalExit": 0
+  },
+  "architectureAuditExit": 0,
+  "diffCheckExit": 0,
+  "binarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "failureLogReadMaxBytes": 65536,
+  "failureDiagnosticMaxLines": 35,
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/physical-endpoint-stream-log-20261005",
+  "fingerprints": {
+    "validation/gravity/curved/run_cuda_matrix.py": "01deae4669e30403f78b5ddf9f443715c5a30af1811cd5a96d107925532f5e93",
+    "validation/gravity/curved/test_physical_endpoint.py": "20386fe3fcbb9a395f9b56cf463d1506e4a6ded22fe87872f5a1152c350a3b55"
+  },
+  "rawLogFingerprints": {
+    "tests.log": "a5452c8c3d2315efcebcd2b0850ece4bdfaebb3a88fa954c959c063069eb41b6",
+    "tests-final.log": "cc663ba517a5432b343539cad7e15401350adbb1fb9830ae4e3a70ab5257c993",
+    "audit.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

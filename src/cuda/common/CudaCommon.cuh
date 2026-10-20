@@ -6,18 +6,24 @@
  * preserve the common field layout; geometry formulas remain in GridMetrics.
  * Species scratch uses local or caller-owned storage without changing the
  * numerical policy. Passing a view transfers neither ownership nor completion.
+ * Workflow: lower the ordinary Host layout and recheck its dimensions and
+ * geometry before launch; native Cyl2 retains one inactive spatial plane.
  */
 
 #pragma once
 
+#include "physics/boundary/BoundaryDiagnostics.h"
+#include "physics/boundary/BoundaryFlux.h"
 #include <cuda_runtime.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 
 #include "data/FluidState.h"
+#include "numerics/curvilinear/GridGeometryView.h"
 
 namespace arch::cuda
 {
@@ -114,6 +120,14 @@ struct DeviceStateView
     double* mass_fractions;
     int total_size;
     int n_species;
+
+    arch::boundary::DiffusionBoundaryView diffusion_boundary{};
+    // Topology-owned physical walls, shared by all slots. The Runtime stage
+    // lease authenticates ghost completion before these scalar flags are read.
+    arch::boundary::HydroBoundaryView hydro_boundary{};
+    // Block-owned physical-surface observer planes. Ordinary runs leave this
+    // view empty, so kernels neither allocate, transfer nor synchronize.
+    arch::boundary::BoundaryFluxCaptureView capture{};
 
     ARCH_INLINE FluidVector load(int cell) const
     {
@@ -226,6 +240,13 @@ inline bool valid_hydro_view(const DeviceStateView& view)
             <= std::numeric_limits<int>::max() / view.n_species;
 }
 
+/** Refuse unsupported geometry before any numerical launch. */
+inline bool valid_device_grid_geometry(const DeviceGridView& grid)
+{
+    return grid.geometry >= static_cast<int>(DeviceGeometry::Cartesian)
+        && grid.geometry <= static_cast<int>(DeviceGeometry::Spherical);
+}
+
 inline bool valid_hydro_grid(const DeviceGridView& grid)
 {
     if (grid.dim < 1 || grid.dim > 3 || grid.ng < 0
@@ -251,7 +272,8 @@ inline bool valid_hydro_grid(const DeviceGridView& grid)
     if (grid.total_y - 1 > remaining / grid.stride_y)
         return false;
     remaining -= (grid.total_y - 1) * grid.stride_y;
-    return grid.total_x - 1 <= remaining;
+    return grid.total_x - 1 <= remaining
+        && valid_device_grid_geometry(grid);
 }
 
 static_assert(std::is_standard_layout_v<DeviceStateView>);
@@ -263,11 +285,13 @@ static_assert(std::is_trivially_copyable_v<CudaHydroWorkspaceView>);
 static_assert(std::is_standard_layout_v<SpeciesWorkspaceView>);
 static_assert(std::is_trivially_copyable_v<SpeciesWorkspaceView>);
 
-// Host-only POD binding. The caller owns the concrete grid; raw device views
-// and launch declarations must not include the host topology implementation.
+/** Lower the ordinary Host layout without borrowing its geometry storage. */
 template <class HostGrid>
 inline DeviceGridView make_device_grid_view(const HostGrid& grid)
 {
+    if (grid.geometry != "cartesian" && grid.geometry != "cylindrical"
+        && grid.geometry != "spherical")
+        throw std::invalid_argument("CUDA grid lowering received unknown geometry");
     int geometry = static_cast<int>(DeviceGeometry::Cartesian);
     if (grid.geometry == "cylindrical")
         geometry = static_cast<int>(DeviceGeometry::Cylindrical);

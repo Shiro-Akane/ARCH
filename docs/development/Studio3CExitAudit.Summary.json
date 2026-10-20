@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-03",
+  "auditBase": "e240bbd92e651c31005a9d9b2bba08fc52e62ba2",
+  "status": "ENGINEERING_WORKFLOW_VERIFIED_WITH_RECORDED_LIMITS",
+  "requirements": [
+    {
+      "requirement": "Linux独立production窗口",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeCurrentHostRelaunch.zh-CN.md",
+      "boundary": "Linux entry执行Linux Electron；用户已提供可见窗口截图，正常流程无需npm/端口/browser。"
+    },
+    {
+      "requirement": "原生文件选择/SaveAs/Reopen/Dirty保护/外部冲突",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeFileLifecycleUat.zh-CN.md",
+      "boundary": "空格/中文路径字节操作通过；中文缺字形仍是展示问题。"
+    },
+    {
+      "requirement": "明确overwrite/取消保留/落盘重读",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeOverwriteUat.zh-CN.md",
+      "boundary": "独立测试副本唯一cfl修改，原始输入及binary不变。"
+    },
+    {
+      "requirement": "原生Configure",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeConfigureUat.zh-CN.md",
+      "boundary": "真实CPU Configure成功；host-configure.test.ts另有真实CMake失败恢复/owned-group取消。"
+    },
+    {
+      "requirement": "原生Build及真实编译失败恢复",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeToolchainBuild.zh-CN.md",
+      "boundary": "原生ARCH Build无工作增量；host-build-real.test.ts真实微型C++成功/失败/恢复，不是ARCH干净编译。"
+    },
+    {
+      "requirement": "输入/工具链/binary/构建新鲜度",
+      "status": "VERIFIED_WITH_LIMITS",
+      "evidence": "StudioBuildToolchainStability.zh-CN.md",
+      "boundary": "735编译依赖/66objects及driver前后证据；link不完整继续unknown，不谎称current。"
+    },
+    {
+      "requirement": "原生Run及独立终端",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeActiveRunCloseUat.zh-CN.md",
+      "boundary": "小型CPU Sod，显式compiled-version确认，不替代独立科学验收。"
+    },
+    {
+      "requirement": "真实Restart继续演化",
+      "status": "VERIFIED",
+      "evidence": "validation/backend/results/studio-native-sod-restart-20261003/summary.json",
+      "boundary": "t0.05/step67→t0.2/step280；既有21datasets/maxAbs0。当前job/state/input/binary只读复核一致。"
+    },
+    {
+      "requirement": "关闭Studio/Host后Run存活/恢复",
+      "status": "VERIFIED",
+      "evidence": "StudioHostCloseSurvivalUat.zh-CN.md",
+      "boundary": "真实Host关闭后观察活跃进程/日志增长；另有native close后9.370秒Run成功。"
+    },
+    {
+      "requirement": "owned Stop/无关进程隔离",
+      "status": "VERIFIED",
+      "evidence": "StudioNativeStopUat.zh-CN.md",
+      "boundary": "原生Stop得到stopped/SIGTERM；host-run-worker.test.ts覆盖wrong ID/unrelated process。"
+    },
+    {
+      "requirement": "pending Preview/AMR close cleanup",
+      "status": "VERIFIED_WITH_LIMITS",
+      "evidence": "StudioNativeStalledAmrClose.zh-CN.md",
+      "boundary": "与StudioNativeStalledPreviewClose分别以owned-worker stall/guard验证，不声称自然数学调用瞬间覆盖。"
+    },
+    {
+      "requirement": "活跃Run与Preview cancel/不同项目重开",
+      "status": "VERIFIED_WITH_LIMITS",
+      "evidence": "StudioRunPreviewProjectIsolation.zh-CN.md",
+      "boundary": "同一活跃Run的Preview取消/不同项目Host重开有直接PID/start/log证据；owned idle Preview worker stall，不冒充native project-picker点击。"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm test",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "studioHostTests": {
+    "passed": 235,
+    "failed": 0,
+    "skipped": 0
+  },
+  "restartReadOnlyRecheck": {
+    "at": "2026-10-03T07:04:18.018075+00:00",
+    "runId": "30db4e5c-7c43-4cac-8b30-9af8fad393db",
+    "persistedJobMatchesSummary": true,
+    "persistedStateMatchesSummary": true,
+    "savedInputMatchesFrozen": true,
+    "savedShaMatches": true,
+    "binaryShaMatches": true,
+    "checkpointExists": true,
+    "retainedFinalOutputsExist": true
+  },
+  "localEvidence": "studio/.local/integration/3c-exit-audit-20261003",
+  "nextAction": "Audit full-model Init/AMR and independent plt contracts; preserve separate pending scientific/architecture approvals.",
+  "notClaimed": [
+    "Full objective complete",
+    "Full Core/architecture/CUDA suite passed",
+    "Historical nonphysical G migration approved",
+    "Complete build freshness",
+    "Full-model/JENS/RZ/plt implemented"
+  ],
+  "updatedBase": "9a5c8958bbc4cda738c0abebf182bc698222f0d3",
+  "isolationRunId": "740d4d6c-6cba-41ce-b7df-d6a8a7585eaf"
+}

@@ -1,0 +1,1202 @@
+{
+  "scope": "Independent finite uniform annulus exterior point reference; physics-review-pending",
+  "G_cgs": "6.67430E-8",
+  "normalization": "full rotating volume, 2*pi",
+  "potential_unit": "cm^2/s^2",
+  "acceleration_unit": "cm/s^2",
+  "mass_unit": "g",
+  "method": "analytic azimuth K/E AGM; Decimal finite-source r/z Gauss-Legendre",
+  "formula_source": "https://dlmf.nist.gov/19.8#E5 and #E6",
+  "rows": [
+    {
+      "source": {
+        "name": "solid_offaxis_midplane",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "r_observer": 3,
+        "z_observer": 0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001738940036114939683053153474768807932302709062898995347797298957032978233865787337052044102131790750",
+            "radial_acceleration": "-6.183957029803238213618547072891500161814656945379559274284763393828382587987733840263275679455319239E-7",
+            "axial_acceleration": "0",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.7389400361149398e-06,
+            "radial_acceleration": -6.183957029803238e-07,
+            "axial_acceleration": 0.0,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 32,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001738940036114940605385920062880632818330487793337788506595900876847758972310867260575412026440030838",
+            "radial_acceleration": "-6.183957029803445551092995526997688622165904641503620521119782388176143688068070389826528227742417289E-7",
+            "axial_acceleration": "0",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.7389400361149406e-06,
+            "radial_acceleration": -6.183957029803446e-07,
+            "axial_acceleration": 0.0,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 64,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001738940036114940605385920063011649012082395935082106667241280730606975552213996468880560014666916950",
+            "radial_acceleration": "-6.183957029803445551092995586108841067232401639448936317374845178203362503830655618966648826789200751E-7",
+            "axial_acceleration": "0",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.7389400361149406e-06,
+            "radial_acceleration": -6.183957029803446e-07,
+            "axial_acceleration": 0.0,
+            "mass": 75.39822368615503
+          }
+        }
+      ],
+      "multipoles": {
+        "available": true,
+        "expansion": "3D Newton monopole + traceless quadrupole",
+        "centroid_z": 0.0,
+        "mass": 75.39822368615503,
+        "second_moments": {
+          "Ixx": 75.39822368615503,
+          "Iyy": 75.39822368615503,
+          "Izz": 25.132741228718345
+        },
+        "quadrupole": {
+          "Qxx": 50.26548245743669,
+          "Qyy": 50.26548245743669,
+          "Qzz": -100.53096491487338
+        },
+        "enclosing_radius": 2.23606797749979,
+        "observer_distance": 3.0,
+        "monopole": {
+          "potential": -1.6774345478283485e-06,
+          "radial_acceleration": -5.591448492761161e-07,
+          "axial_acceleration": -0.0
+        },
+        "through_quadrupole": {
+          "potential": -1.7395617533034725e-06,
+          "radial_acceleration": -6.212720547512402e-07,
+          "axial_acceleration": -0.0
+        },
+        "absolute_errors": {
+          "monopole": {
+            "potential": 6.150548828659208e-08,
+            "radial_acceleration": 5.925085370422841e-08,
+            "axial_acceleration": 0.0
+          },
+          "through_quadrupole": {
+            "potential": 6.217171885319015e-10,
+            "radial_acceleration": 2.8763517708956783e-09,
+            "axial_acceleration": 0.0
+          }
+        }
+      },
+      "partition_reference": {
+        "source_parts": [
+          2,
+          2
+        ],
+        "order_per_part": 64,
+        "precision_digits": [
+          60,
+          100
+        ],
+        "precision_binary64_equal": true,
+        "decimal_values": {
+          "potential": "-0.000001738940036114940605385920063011649012082395935082106677697880669099996663551220117746394222579103423",
+          "radial_acceleration": "-6.183957029803445551092995586108841067232401639448945767814965196068487727200400184747293426953814772E-7",
+          "axial_acceleration": "0",
+          "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080963"
+        },
+        "values": {
+          "potential": -1.7389400361149406e-06,
+          "radial_acceleration": -6.183957029803446e-07,
+          "axial_acceleration": 0.0,
+          "mass": 75.39822368615503
+        }
+      },
+      "whole_64_to_partition_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "source_order_32_to_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "direct_newton": [
+        {
+          "order_rz": 8,
+          "order_phi": 16,
+          "values": {
+            "potential": -1.7389398386294671e-06,
+            "radial_acceleration": -6.183959642560324e-07,
+            "axial_acceleration": -7.187090826415177e-24,
+            "mass": 75.39822368615503
+          },
+          "absolute_errors": {
+            "potential": 1.9748547351904945e-13,
+            "radial_acceleration": 2.6127568783061315e-13,
+            "axial_acceleration": 7.187090826415177e-24,
+            "mass": 0.0
+          }
+        },
+        {
+          "order_rz": 16,
+          "order_phi": 32,
+          "values": {
+            "potential": -1.7389400361152894e-06,
+            "radial_acceleration": -6.183957029891309e-07,
+            "axial_acceleration": 2.9395635511308125e-24,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 3.4876581603195816e-19,
+            "radial_acceleration": 8.786378640987264e-18,
+            "axial_acceleration": 2.9395635511308125e-24,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 32,
+          "order_phi": 64,
+          "values": {
+            "potential": -1.7389400361149385e-06,
+            "radial_acceleration": -6.183957029803428e-07,
+            "axial_acceleration": -1.9601282171050454e-24,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 2.117582368135751e-21,
+            "radial_acceleration": 1.7999450129153882e-21,
+            "axial_acceleration": 1.9601282171050454e-24,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 64,
+          "order_phi": 128,
+          "values": {
+            "potential": -1.7389400361149493e-06,
+            "radial_acceleration": -6.183957029803525e-07,
+            "axial_acceleration": -3.086553690510645e-25,
+            "mass": 75.39822368615505
+          },
+          "absolute_errors": {
+            "potential": 8.682087709356578e-21,
+            "radial_acceleration": 7.940933880509066e-21,
+            "axial_acceleration": 3.086553690510645e-25,
+            "mass": 1.4210854715202004e-14
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_offaxis_above",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "r_observer": 3,
+        "z_observer": 2
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001398169305429289049246968291237048950865920811476523449809120424276373172766985726293021538013451732",
+            "radial_acceleration": "-3.078219799984339795063449002785292159824594642561467802569784815754380033636617466878551667743536473E-7",
+            "axial_acceleration": "-2.397614429632127383052393623700148163012505169531955800408269346656885794578196449004800683128884287E-7",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.398169305429289e-06,
+            "radial_acceleration": -3.07821979998434e-07,
+            "axial_acceleration": -2.3976144296321274e-07,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 32,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001398169305429289049246965318035907941673461826740984579803791034810416925012392582292408477805775947",
+            "radial_acceleration": "-3.078219799984339795062876916646377078096503670866433352177833374767640910723689870453962397851187925E-7",
+            "axial_acceleration": "-2.397614429632127383051507064037975639433787738380836076840889943744229762470441582624490885479225034E-7",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.398169305429289e-06,
+            "radial_acceleration": -3.07821979998434e-07,
+            "axial_acceleration": -2.3976144296321274e-07,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 64,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001398169305429289049246965318035907941673461820676870568568005692047728125140326219995190760985128390",
+            "radial_acceleration": "-3.078219799984339795062876916646377078096502738381218088304285438883867505356677874975026409002035374E-7",
+            "axial_acceleration": "-2.397614429632127383051507064037975639433787731125855983921086035530009780433854371446136864096606972E-7",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.398169305429289e-06,
+            "radial_acceleration": -3.07821979998434e-07,
+            "axial_acceleration": -2.3976144296321274e-07,
+            "mass": 75.39822368615503
+          }
+        }
+      ],
+      "multipoles": {
+        "available": true,
+        "expansion": "3D Newton monopole + traceless quadrupole",
+        "centroid_z": 0.0,
+        "mass": 75.39822368615503,
+        "second_moments": {
+          "Ixx": 75.39822368615503,
+          "Iyy": 75.39822368615503,
+          "Izz": 25.132741228718345
+        },
+        "quadrupole": {
+          "Qxx": 50.26548245743669,
+          "Qyy": 50.26548245743669,
+          "Qzz": -100.53096491487338
+        },
+        "enclosing_radius": 2.23606797749979,
+        "observer_distance": 3.605551275463989,
+        "monopole": {
+          "potential": -1.3957099092530453e-06,
+          "radial_acceleration": -3.2208690213531815e-07,
+          "axial_acceleration": -2.1472460142354543e-07
+        },
+        "through_quadrupole": {
+          "potential": -1.3984627887584754e-06,
+          "radial_acceleration": -3.0874602453208014e-07,
+          "axial_acceleration": -2.3886523708654755e-07
+        },
+        "absolute_errors": {
+          "monopole": {
+            "potential": 2.4593961762436967e-09,
+            "radial_acceleration": 1.4264922136884161e-08,
+            "axial_acceleration": 2.5036841539667316e-08
+          },
+          "through_quadrupole": {
+            "potential": 2.934833291864309e-10,
+            "radial_acceleration": 9.240445336461519e-10,
+            "axial_acceleration": 8.962058766651899e-10
+          }
+        }
+      },
+      "partition_reference": {
+        "source_parts": [
+          2,
+          2
+        ],
+        "order_per_part": 64,
+        "precision_digits": [
+          60,
+          100
+        ],
+        "precision_binary64_equal": true,
+        "decimal_values": {
+          "potential": "-0.000001398169305429289049246965318035907941673461820676870568568005692047728125140326219995130479535733868",
+          "radial_acceleration": "-3.078219799984339795062876916646377078096502738381218088304285438883867505356677874947967593915161169E-7",
+          "axial_acceleration": "-2.397614429632127383051507064037975639433787731125855983921086035530009780433854371425183575361459471E-7",
+          "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080963"
+        },
+        "values": {
+          "potential": -1.398169305429289e-06,
+          "radial_acceleration": -3.07821979998434e-07,
+          "axial_acceleration": -2.3976144296321274e-07,
+          "mass": 75.39822368615503
+        }
+      },
+      "whole_64_to_partition_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "source_order_32_to_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "direct_newton": [
+        {
+          "order_rz": 8,
+          "order_phi": 16,
+          "values": {
+            "potential": -1.3981693044793934e-06,
+            "radial_acceleration": -3.07821960096628e-07,
+            "axial_acceleration": -2.397614122646461e-07,
+            "mass": 75.39822368615503
+          },
+          "absolute_errors": {
+            "potential": 9.498955695776785e-16,
+            "radial_acceleration": 1.9901805978194407e-14,
+            "axial_acceleration": 3.0698566656331595e-14,
+            "mass": 0.0
+          }
+        },
+        {
+          "order_rz": 16,
+          "order_phi": 32,
+          "values": {
+            "potential": -1.3981693054292904e-06,
+            "radial_acceleration": -3.078219799984341e-07,
+            "axial_acceleration": -2.397614429632135e-07,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 1.4823076576950256e-21,
+            "radial_acceleration": 1.0587911840678754e-22,
+            "axial_acceleration": 7.411538288475128e-22,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 32,
+          "order_phi": 64,
+          "values": {
+            "potential": -1.398169305429288e-06,
+            "radial_acceleration": -3.078219799984336e-07,
+            "axial_acceleration": -2.397614429632122e-07,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 8.470329472543003e-22,
+            "radial_acceleration": 3.705769144237564e-22,
+            "axial_acceleration": 5.293955920339377e-22,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 64,
+          "order_phi": 128,
+          "values": {
+            "potential": -1.3981693054292932e-06,
+            "radial_acceleration": -3.078219799984355e-07,
+            "axial_acceleration": -2.397614429632151e-07,
+            "mass": 75.39822368615505
+          },
+          "absolute_errors": {
+            "potential": 4.235164736271502e-21,
+            "radial_acceleration": 1.5352472168984194e-21,
+            "axial_acceleration": 2.3822801641527197e-21,
+            "mass": 1.4210854715202004e-14
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_offaxis_below",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "r_observer": 3,
+        "z_observer": -2
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001398169305429289049246968291237048950865920811476523449809120424276373172766985726293021538013451731",
+            "radial_acceleration": "-3.078219799984339795063449002785292159824594642561467802569784815754380033636617466878551667743536474E-7",
+            "axial_acceleration": "2.397614429632127383052393623700148163012505169531955800408269346656885794578196449004800683128884286E-7",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.398169305429289e-06,
+            "radial_acceleration": -3.07821979998434e-07,
+            "axial_acceleration": 2.3976144296321274e-07,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 32,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001398169305429289049246965318035907941673461826740984579803791034810416925012392582292408477805775949",
+            "radial_acceleration": "-3.078219799984339795062876916646377078096503670866433352177833374767640910723689870453962397851187924E-7",
+            "axial_acceleration": "2.397614429632127383051507064037975639433787738380836076840889943744229762470441582624490885479225034E-7",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.398169305429289e-06,
+            "radial_acceleration": -3.07821979998434e-07,
+            "axial_acceleration": 2.3976144296321274e-07,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 64,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000001398169305429289049246965318035907941673461820676870568568005692047728125140326219995190760985128394",
+            "radial_acceleration": "-3.078219799984339795062876916646377078096502738381218088304285438883867505356677874975026409002035374E-7",
+            "axial_acceleration": "2.397614429632127383051507064037975639433787731125855983921086035530009780433854371446136864096606970E-7",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.398169305429289e-06,
+            "radial_acceleration": -3.07821979998434e-07,
+            "axial_acceleration": 2.3976144296321274e-07,
+            "mass": 75.39822368615503
+          }
+        }
+      ],
+      "multipoles": {
+        "available": true,
+        "expansion": "3D Newton monopole + traceless quadrupole",
+        "centroid_z": 0.0,
+        "mass": 75.39822368615503,
+        "second_moments": {
+          "Ixx": 75.39822368615503,
+          "Iyy": 75.39822368615503,
+          "Izz": 25.132741228718345
+        },
+        "quadrupole": {
+          "Qxx": 50.26548245743669,
+          "Qyy": 50.26548245743669,
+          "Qzz": -100.53096491487338
+        },
+        "enclosing_radius": 2.23606797749979,
+        "observer_distance": 3.605551275463989,
+        "monopole": {
+          "potential": -1.3957099092530453e-06,
+          "radial_acceleration": -3.2208690213531815e-07,
+          "axial_acceleration": 2.1472460142354543e-07
+        },
+        "through_quadrupole": {
+          "potential": -1.3984627887584754e-06,
+          "radial_acceleration": -3.0874602453208014e-07,
+          "axial_acceleration": 2.3886523708654755e-07
+        },
+        "absolute_errors": {
+          "monopole": {
+            "potential": 2.4593961762436967e-09,
+            "radial_acceleration": 1.4264922136884161e-08,
+            "axial_acceleration": 2.5036841539667316e-08
+          },
+          "through_quadrupole": {
+            "potential": 2.934833291864309e-10,
+            "radial_acceleration": 9.240445336461519e-10,
+            "axial_acceleration": 8.962058766651899e-10
+          }
+        }
+      },
+      "partition_reference": {
+        "source_parts": [
+          2,
+          2
+        ],
+        "order_per_part": 64,
+        "precision_digits": [
+          60,
+          100
+        ],
+        "precision_binary64_equal": true,
+        "decimal_values": {
+          "potential": "-0.000001398169305429289049246965318035907941673461820676870568568005692047728125140326219995130479535733868",
+          "radial_acceleration": "-3.078219799984339795062876916646377078096502738381218088304285438883867505356677874947967593915161164E-7",
+          "axial_acceleration": "2.397614429632127383051507064037975639433787731125855983921086035530009780433854371425183575361459470E-7",
+          "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080963"
+        },
+        "values": {
+          "potential": -1.398169305429289e-06,
+          "radial_acceleration": -3.07821979998434e-07,
+          "axial_acceleration": 2.3976144296321274e-07,
+          "mass": 75.39822368615503
+        }
+      },
+      "whole_64_to_partition_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "source_order_32_to_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "direct_newton": [
+        {
+          "order_rz": 8,
+          "order_phi": 16,
+          "values": {
+            "potential": -1.3981693044793934e-06,
+            "radial_acceleration": -3.07821960096628e-07,
+            "axial_acceleration": 2.397614122646461e-07,
+            "mass": 75.39822368615503
+          },
+          "absolute_errors": {
+            "potential": 9.498955695776785e-16,
+            "radial_acceleration": 1.9901805978194407e-14,
+            "axial_acceleration": 3.0698566656331595e-14,
+            "mass": 0.0
+          }
+        },
+        {
+          "order_rz": 16,
+          "order_phi": 32,
+          "values": {
+            "potential": -1.3981693054292904e-06,
+            "radial_acceleration": -3.078219799984341e-07,
+            "axial_acceleration": 2.397614429632135e-07,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 1.4823076576950256e-21,
+            "radial_acceleration": 1.0587911840678754e-22,
+            "axial_acceleration": 7.411538288475128e-22,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 32,
+          "order_phi": 64,
+          "values": {
+            "potential": -1.398169305429288e-06,
+            "radial_acceleration": -3.078219799984336e-07,
+            "axial_acceleration": 2.397614429632122e-07,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 8.470329472543003e-22,
+            "radial_acceleration": 3.705769144237564e-22,
+            "axial_acceleration": 5.293955920339377e-22,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 64,
+          "order_phi": 128,
+          "values": {
+            "potential": -1.3981693054292932e-06,
+            "radial_acceleration": -3.078219799984355e-07,
+            "axial_acceleration": 2.397614429632151e-07,
+            "mass": 75.39822368615505
+          },
+          "absolute_errors": {
+            "potential": 4.235164736271502e-21,
+            "radial_acceleration": 1.5352472168984194e-21,
+            "axial_acceleration": 2.3822801641527197e-21,
+            "mass": 1.4210854715202004e-14
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "hollow_cavity",
+        "r_lower": 1,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "r_observer": "0.25",
+        "z_observer": 0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000002356990255066953527959107402996730664951972092194307167324701642839123458403244028947919113162431509",
+            "radial_acceleration": "8.251034738536804168778912011998012223351076776952721592305535333446483305540575925487390522381935886E-8",
+            "axial_acceleration": "0",
+            "mass": "56.54866776461627829232758089903105191554904918875190477754900266154069531315176197530462685615810722"
+          },
+          "values": {
+            "potential": -2.3569902550669537e-06,
+            "radial_acceleration": 8.251034738536805e-08,
+            "axial_acceleration": 0.0,
+            "mass": 56.548667764616276
+          }
+        },
+        {
+          "order": 32,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000002356990255067868753078630699567754268791937136864825939510101958912225211855625985997664206575088338",
+            "radial_acceleration": "8.251034740667524518488897081265296810906343965737487285550642047483203428118558952971016221440565529E-8",
+            "axial_acceleration": "0",
+            "mass": "56.54866776461627829232758089903105191554904918875190477754900266154069531315176197530462685615810722"
+          },
+          "values": {
+            "potential": -2.356990255067869e-06,
+            "radial_acceleration": 8.251034740667524e-08,
+            "axial_acceleration": 0.0,
+            "mass": 56.548667764616276
+          }
+        },
+        {
+          "order": 64,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000002356990255067868753078683277945871797042918395459713668820586196216990538896436053427061789008515079",
+            "radial_acceleration": "8.251034740667524518746362914142499728103500612433181952318483797253392572584771516556404795059229021E-8",
+            "axial_acceleration": "0",
+            "mass": "56.54866776461627829232758089903105191554904918875190477754900266154069531315176197530462685615810722"
+          },
+          "values": {
+            "potential": -2.356990255067869e-06,
+            "radial_acceleration": 8.251034740667524e-08,
+            "axial_acceleration": 0.0,
+            "mass": 56.548667764616276
+          }
+        }
+      ],
+      "multipoles": {
+        "available": false,
+        "reason": "Observer not outside enclosing source sphere"
+      },
+      "partition_reference": {
+        "source_parts": [
+          2,
+          2
+        ],
+        "order_per_part": 64,
+        "precision_digits": [
+          60,
+          100
+        ],
+        "precision_binary64_equal": true,
+        "decimal_values": {
+          "potential": "-0.000002356990255067868753078683277945871797042919104112562026097950811889956647013910266844213083929216449",
+          "radial_acceleration": "8.251034740667524518746362914142499728110601688949972881616244766605226926085381571830849380014812002E-8",
+          "axial_acceleration": "0",
+          "mass": "56.54866776461627829232758089903105191554904918875190477754900266154069531315176197530462685615810722"
+        },
+        "values": {
+          "potential": -2.356990255067869e-06,
+          "radial_acceleration": 8.251034740667524e-08,
+          "axial_acceleration": 0.0,
+          "mass": 56.548667764616276
+        }
+      },
+      "whole_64_to_partition_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "source_order_32_to_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "direct_newton": [
+        {
+          "order_rz": 8,
+          "order_phi": 16,
+          "values": {
+            "potential": -2.356990005869362e-06,
+            "radial_acceleration": 8.250779662231831e-08,
+            "axial_acceleration": -2.4634472617594855e-23,
+            "mass": 56.548667764616276
+          },
+          "absolute_errors": {
+            "potential": 2.4919850678020413e-13,
+            "radial_acceleration": 2.5507843569285317e-12,
+            "axial_acceleration": 2.4634472617594855e-23,
+            "mass": 0.0
+          }
+        },
+        {
+          "order_rz": 16,
+          "order_phi": 32,
+          "values": {
+            "potential": -2.3569902550669537e-06,
+            "radial_acceleration": 8.251034738536975e-08,
+            "axial_acceleration": 9.277206193790835e-24,
+            "mass": 56.54866776461627
+          },
+          "absolute_errors": {
+            "potential": 9.152190995082715e-19,
+            "radial_acceleration": 2.130548589673642e-17,
+            "axial_acceleration": 9.277206193790835e-24,
+            "mass": 7.105427357601002e-15
+          }
+        },
+        {
+          "order_rz": 32,
+          "order_phi": 64,
+          "values": {
+            "potential": -2.3569902550678676e-06,
+            "radial_acceleration": 8.251034740667245e-08,
+            "axial_acceleration": -6.1545160776915646e-24,
+            "mass": 56.54866776461627
+          },
+          "absolute_errors": {
+            "potential": 1.2705494208814505e-21,
+            "radial_acceleration": 2.7925617479790214e-21,
+            "axial_acceleration": 6.1545160776915646e-24,
+            "mass": 7.105427357601002e-15
+          }
+        },
+        {
+          "order_rz": 64,
+          "order_phi": 128,
+          "values": {
+            "potential": -2.3569902550678723e-06,
+            "radial_acceleration": 8.251034740668728e-08,
+            "axial_acceleration": -3.457290325473711e-24,
+            "mass": 56.54866776461628
+          },
+          "absolute_errors": {
+            "potential": 3.3881317890172014e-21,
+            "radial_acceleration": 1.2043749718772083e-20,
+            "axial_acceleration": 3.457290325473711e-24,
+            "mass": 7.105427357601002e-15
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_near_exterior",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "r_observer": "2.125",
+        "z_observer": 0
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000002523484385715534470518741935797746680696518519374061125175853362617298648071861013643830761231169858",
+            "radial_acceleration": "-0.000001286433863505712519339327848946322271598621980051334305476347503326362233986347182077210504060020176",
+            "axial_acceleration": "0",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -2.5234843857155345e-06,
+            "radial_acceleration": -1.2864338635057125e-06,
+            "axial_acceleration": 0.0,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 32,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000002523521416966520762987941511137187269867310868296176225215659663715445729625946650008638835741720240",
+            "radial_acceleration": "-0.000001287632805303482521835578587525836415628839734315130175954095555339945851767244778054494537015061354",
+            "axial_acceleration": "0",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -2.5235214169665207e-06,
+            "radial_acceleration": -1.2876328053034824e-06,
+            "axial_acceleration": 0.0,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 64,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-0.000002523521594629921717177796524616854940406351688811790248822440962848259961990710777981488435460870180",
+            "radial_acceleration": "-0.000001287644253839156657106090575260144257071535211099002199895789305036520642963073809205163047386819798",
+            "axial_acceleration": "0",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -2.5235215946299217e-06,
+            "radial_acceleration": -1.2876442538391567e-06,
+            "axial_acceleration": 0.0,
+            "mass": 75.39822368615503
+          }
+        }
+      ],
+      "multipoles": {
+        "available": false,
+        "reason": "Observer not outside enclosing source sphere"
+      },
+      "partition_reference": {
+        "source_parts": [
+          2,
+          2
+        ],
+        "order_per_part": 64,
+        "precision_digits": [
+          60,
+          100
+        ],
+        "precision_binary64_equal": true,
+        "decimal_values": {
+          "potential": "-0.000002523521594645357214047759446327090287078103648736008862084438521115454777857372563301270312256114795",
+          "radial_acceleration": "-0.000001287644255814500776565879851016871211400693576431677283168845141641311564959022657961463605674918110",
+          "axial_acceleration": "0",
+          "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080963"
+        },
+        "values": {
+          "potential": -2.523521594645357e-06,
+          "radial_acceleration": -1.2876442558145008e-06,
+          "axial_acceleration": 0.0,
+          "mass": 75.39822368615503
+        }
+      },
+      "whole_64_to_partition_64_absolute_delta": {
+        "potential": 1.5435481397815115e-17,
+        "radial_acceleration": 1.9753441487098356e-15,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "source_order_32_to_64_absolute_delta": {
+        "potential": 1.7766340097564158e-13,
+        "radial_acceleration": 1.144853567424669e-11,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "direct_newton": [
+        {
+          "order_rz": 8,
+          "order_phi": 16,
+          "values": {
+            "potential": -2.5224376005478395e-06,
+            "radial_acceleration": -1.2709771931137442e-06,
+            "axial_acceleration": -2.5951378080109087e-23,
+            "mass": 75.39822368615503
+          },
+          "absolute_errors": {
+            "potential": 1.0839940975176754e-09,
+            "radial_acceleration": 1.6667062700756643e-08,
+            "axial_acceleration": 2.5951378080109087e-23,
+            "mass": 0.0
+          }
+        },
+        {
+          "order_rz": 16,
+          "order_phi": 32,
+          "values": {
+            "potential": -2.5234846458326636e-06,
+            "radial_acceleration": -1.286442094070802e-06,
+            "axial_acceleration": 3.1592483759160187e-23,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 3.694881269358197e-11,
+            "radial_acceleration": 1.2021617436987276e-09,
+            "axial_acceleration": 3.1592483759160187e-23,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 32,
+          "order_phi": 64,
+          "values": {
+            "potential": -2.523521416960014e-06,
+            "radial_acceleration": -1.287632805271896e-06,
+            "axial_acceleration": -1.22715250487392e-24,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 1.776853433641402e-13,
+            "radial_acceleration": 1.1450542604889277e-11,
+            "axial_acceleration": 1.22715250487392e-24,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 64,
+          "order_phi": 128,
+          "values": {
+            "potential": -2.5235215946299476e-06,
+            "radial_acceleration": -1.287644253839206e-06,
+            "axial_acceleration": -9.605338911855085e-24,
+            "mass": 75.39822368615505
+          },
+          "absolute_errors": {
+            "potential": 1.540964689292386e-17,
+            "radial_acceleration": 1.975294809040658e-15,
+            "axial_acceleration": 9.605338911855085e-24,
+            "mass": 1.4210854715202004e-14
+          }
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "solid_far_offaxis",
+        "r_lower": 0,
+        "r_upper": 2,
+        "z_lower": -1,
+        "z_upper": 1,
+        "density": 3,
+        "r_observer": 30,
+        "z_observer": 40
+      },
+      "reference_sequence": [
+        {
+          "order": 16,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-1.006337261956042318074043936157585449455038970586118986151128731252011876191292083567391058559066282E-7",
+            "radial_acceleration": "-1.206690097757289368783196762156112328896371156937760136543035621871736431089390008107879576301443122E-9",
+            "axial_acceleration": "-1.610208209805712884917760496134638683429252003891786044188208507298096124408358896222588844359623718E-9",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.0063372619560423e-07,
+            "radial_acceleration": -1.2066900977572893e-09,
+            "axial_acceleration": -1.610208209805713e-09,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 32,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-1.006337261956042318074043936157585449455038970586118986151128731303785484704794723418768761195922364E-7",
+            "radial_acceleration": "-1.206690097757289368783196762156112328896371156937760136543035631641955971713842688596689873032526978E-9",
+            "axial_acceleration": "-1.610208209805712884917760496134638683429252003891786044188208504268598943621632355497492677274817757E-9",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.0063372619560423e-07,
+            "radial_acceleration": -1.2066900977572893e-09,
+            "axial_acceleration": -1.610208209805713e-09,
+            "mass": 75.39822368615503
+          }
+        },
+        {
+          "order": 64,
+          "precision_binary64_equal": true,
+          "decimal_values": {
+            "potential": "-1.006337261956042318074043936157585449455038970586118986151128731303785484704794723418768761195922368E-7",
+            "radial_acceleration": "-1.206690097757289368783196762156112328896371156937760136543035631641955971713842688596689873032526972E-9",
+            "axial_acceleration": "-1.610208209805712884917760496134638683429252003891786044188208504268598943621632355497492677274817756E-9",
+            "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080964"
+          },
+          "values": {
+            "potential": -1.0063372619560423e-07,
+            "radial_acceleration": -1.2066900977572893e-09,
+            "axial_acceleration": -1.610208209805713e-09,
+            "mass": 75.39822368615503
+          }
+        }
+      ],
+      "multipoles": {
+        "available": true,
+        "expansion": "3D Newton monopole + traceless quadrupole",
+        "centroid_z": 0.0,
+        "mass": 75.39822368615503,
+        "second_moments": {
+          "Ixx": 75.39822368615503,
+          "Iyy": 75.39822368615503,
+          "Izz": 25.132741228718345
+        },
+        "quadrupole": {
+          "Qxx": 50.26548245743669,
+          "Qyy": 50.26548245743669,
+          "Qzz": -100.53096491487338
+        },
+        "enclosing_radius": 2.23606797749979,
+        "observer_distance": 50.0,
+        "monopole": {
+          "potential": -1.0064607286970091e-07,
+          "radial_acceleration": -1.207752874436411e-09,
+          "axial_acceleration": -1.6103371659152147e-09
+        },
+        "through_quadrupole": {
+          "potential": -1.006337269514289e-07,
+          "radial_acceleration": -1.206690051906907e-09,
+          "axial_acceleration": -1.6102083389419415e-09
+        },
+        "absolute_errors": {
+          "monopole": {
+            "potential": 1.2346674096677038e-11,
+            "radial_acceleration": 1.0627766791216877e-12,
+            "axial_acceleration": 1.289561095017773e-13
+          },
+          "through_quadrupole": {
+            "potential": 7.558246644870839e-16,
+            "radial_acceleration": 4.5850382298617296e-17,
+            "axial_acceleration": 1.2913622859818259e-16
+          }
+        }
+      },
+      "partition_reference": {
+        "source_parts": [
+          2,
+          2
+        ],
+        "order_per_part": 64,
+        "precision_digits": [
+          60,
+          100
+        ],
+        "precision_binary64_equal": true,
+        "decimal_values": {
+          "potential": "-1.006337261956042318074043936157585449455038970586118986151128731303785484704794723418768761195922364E-7",
+          "radial_acceleration": "-1.206690097757289368783196762156112328896371156937760136543035631641955971713842688596689873032526982E-9",
+          "axial_acceleration": "-1.610208209805712884917760496134638683429252003891786044188208504268598943621632355497492677274817752E-9",
+          "mass": "75.39822368615503772310344119870806922073206558500253970339867021538759375086901596707283580821080963"
+        },
+        "values": {
+          "potential": -1.0063372619560423e-07,
+          "radial_acceleration": -1.2066900977572893e-09,
+          "axial_acceleration": -1.610208209805713e-09,
+          "mass": 75.39822368615503
+        }
+      },
+      "whole_64_to_partition_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "source_order_32_to_64_absolute_delta": {
+        "potential": 0.0,
+        "radial_acceleration": 0.0,
+        "axial_acceleration": 0.0,
+        "mass": 0.0
+      },
+      "direct_newton": [
+        {
+          "order_rz": 8,
+          "order_phi": 16,
+          "values": {
+            "potential": -1.0063372619560423e-07,
+            "radial_acceleration": -1.2066900977572893e-09,
+            "axial_acceleration": -1.6102082098057127e-09,
+            "mass": 75.39822368615503
+          },
+          "absolute_errors": {
+            "potential": 0.0,
+            "radial_acceleration": 0.0,
+            "axial_acceleration": 2.0679515313825692e-25,
+            "mass": 0.0
+          }
+        },
+        {
+          "order_rz": 16,
+          "order_phi": 32,
+          "values": {
+            "potential": -1.0063372619560422e-07,
+            "radial_acceleration": -1.2066900977572891e-09,
+            "axial_acceleration": -1.6102082098057127e-09,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 1.3234889800848443e-23,
+            "radial_acceleration": 2.0679515313825692e-25,
+            "axial_acceleration": 2.0679515313825692e-25,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 32,
+          "order_phi": 64,
+          "values": {
+            "potential": -1.0063372619560422e-07,
+            "radial_acceleration": -1.2066900977572893e-09,
+            "axial_acceleration": -1.6102082098057127e-09,
+            "mass": 75.39822368615502
+          },
+          "absolute_errors": {
+            "potential": 1.3234889800848443e-23,
+            "radial_acceleration": 0.0,
+            "axial_acceleration": 2.0679515313825692e-25,
+            "mass": 1.4210854715202004e-14
+          }
+        },
+        {
+          "order_rz": 64,
+          "order_phi": 128,
+          "values": {
+            "potential": -1.0063372619560426e-07,
+            "radial_acceleration": -1.2066900977572897e-09,
+            "axial_acceleration": -1.6102082098057137e-09,
+            "mass": 75.39822368615505
+          },
+          "absolute_errors": {
+            "potential": 2.6469779601696886e-23,
+            "radial_acceleration": 4.1359030627651384e-25,
+            "axial_acceleration": 8.271806125530277e-25,
+            "mass": 1.4210854715202004e-14
+          }
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "No production kernel or capability changes",
+    "Source quadrature convergence and arithmetic precision reported separately",
+    "Interior/contact observers rejected; no epsilon or softening",
+    "Point values, not cell/face averages",
+    "No production near/far switch, order or scientific error budget selected",
+    "No AMR/operator/CUDA/evolution coverage"
+  ],
+  "sourceBaseline": "55765729a727a36189f59a8fe8f85ad591c3c1ad",
+  "sourceInputSha256": {
+    "validation/gravity/rz_ring_axis_reference.py": "aa8b51657c34f566fe1321efede6d1d2b339505a91d9ed0381da47c1f4df87c8",
+    "validation/gravity/rz_ring_offaxis_reference.py": "86f89dde4949db11299d9e2cc93d310beb94ce92c91a73e7da938c2dfd5c0011",
+    "tests/tooling/validation/test_rz_ring_offaxis_reference.py": "9397c4f869acd858006c9cd41763481da8eda739d911cc88da164ada82dadb04"
+  },
+  "checks": [
+    {
+      "check": "tests",
+      "exitCode": 0,
+      "wallSeconds": 0.40735798999958206
+    },
+    {
+      "check": "reference",
+      "exitCode": 0,
+      "wallSeconds": 17.976481751000392
+    },
+    {
+      "check": "diff-check",
+      "exitCode": 0,
+      "wallSeconds": 0.006561727001098916
+    }
+  ],
+  "engineeringTests": {
+    "pass": 8,
+    "fail": 0
+  },
+  "productionCoreModified": false,
+  "ARCHExecuted": false,
+  "rawDataUploaded": false
+}

@@ -1,0 +1,111 @@
+{
+  "profile": "actual-materialized-full-reference-reuse-1",
+  "status": "COMPLETE_REFERENCE_REUSE_DIAGNOSTIC_ONLY",
+  "science_accepted": false,
+  "physical_qualified": false,
+  "core_binding_qualified": false,
+  "reference_complete": true,
+  "coverage_complete": true,
+  "target_count": 1568,
+  "verified_target_count": 1568,
+  "unique_site_count": 800,
+  "exact_z_reflection": true,
+  "source_identity": {
+    "topology": 1,
+    "operator_revision": 1,
+    "boundary_revision": 1,
+    "accuracy_revision": 1,
+    "generation": 1,
+    "time": 0.0,
+    "G": 6.6743e-08,
+    "inputs": [
+      {
+        "uid": 1,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      },
+      {
+        "uid": 2,
+        "epoch": 1,
+        "slot": 0,
+        "version": 1,
+        "storage_generation": 1
+      }
+    ]
+  },
+  "field_identity": {
+    "source_generation": 1,
+    "field_generation": 1
+  },
+  "actual_record_canonical_sha256": "241926a99a0157983359baa2e36d290c98a797ff01cce319e89b564dceecc089",
+  "original_source_input_sha256": "98b81e2a79e8eb07ab7f1c5d90ebdf5fdc1e6ff97514be7c186f1b7e7635754b",
+  "reference_status": "MathematicalIntervalsCertified",
+  "failure": null,
+  "target_widths_exact": {
+    "Phi": "50429584986587/755578637259143234191360000000000",
+    "g_r": "50429584986587/755578637259143234191360000000000",
+    "g_z": "50429584986587/755578637259143234191360000000000"
+  },
+  "budget": {
+    "calls": 0,
+    "max_calls": 1800000,
+    "wall_seconds": 1.3222900929977186,
+    "timeout_seconds": 240.0,
+    "resource_profile": "pure-exact-reference-mapping-1",
+    "kernel_evaluations": 0
+  },
+  "comparison_counts": {
+    "point_cell_potential": 512,
+    "force_minus_original_gradient": 1056,
+    "derived_original_value_row_vs_point_potential": 1056,
+    "actual_boundary_datum_potential": 80
+  },
+  "maximum_absolute_error_upper_exact": {
+    "point_cell_potential": "8122279741975895421970805997220391521977798129450698945965487965093/231584178474632390847141970017375815706539969331281128078915168015826259279872",
+    "force_minus_original_gradient": "471104285458226602115353370719062225373659255984239636555055593235331/463168356949264781694283940034751631413079938662562256157830336031652518559744",
+    "derived_original_value_row_vs_point_potential": "60894055330896401366722451717325781650139648352125365255868469996187/231584178474632390847141970017375815706539969331281128078915168015826259279872",
+    "actual_boundary_datum_potential": "5874335660922969251814398842598205688897775305288844586299/231584178474632390847141970017375815706539969331281128078915168015826259279872"
+  },
+  "scope": "Complete-domain mathematical interval diagnostic; no frozen production accuracy/science grant",
+  "reference_materialized_record_sha256": "dca450ba2fce633f8fc1a2bc6394934c3111505731b3fd80947488a387b8ec7b",
+  "materializedRecordSha256": "0d5c1ceb45e4a3aec5bcf265560ed94c17e4c0043ead57c42fb97f86fa62a15b",
+  "reused_reference_raw_sha256": "fd80cf64edb620aaabc6d6374d6e13285734969358a1f963fb338423f9519054",
+  "reference_history": {
+    "calls": 1101139,
+    "max_calls": 1800000,
+    "wall_seconds": 54.04157787900476,
+    "timeout_seconds": 240.0,
+    "resource_profile": "full-domain-diagnostic-1"
+  },
+  "mapping_budget": {
+    "calls": 0,
+    "max_calls": 1800000,
+    "wall_seconds": 1.3222900929977186,
+    "timeout_seconds": 240.0,
+    "resource_profile": "full-domain-diagnostic-1"
+  },
+  "side_acceleration_count": 3072,
+  "cell_acceleration_count": 1536,
+  "externally_accepted_reference_sha256": "fd80cf64edb620aaabc6d6374d6e13285734969358a1f963fb338423f9519054",
+  "completeLocalResultSha256": "e8867f4633964c64662839de889d39d7158e98dc3d00a6195d3492557a9ad304",
+  "weighted_acceleration_maximum_absolute_error_upper_exact": {
+    "side_acceleration_rows": "471104285458226602115353370719062225373659255984239636555055593235331/463168356949264781694283940034751631413079938662562256157830336031652518559744",
+    "cell_acceleration_rows": "892070110383535446937966116878424948259088984457676178687341764507563/1852673427797059126777135760139006525652319754650249024631321344126610074238976"
+  },
+  "actual_record_file_sha256": "0d5c1ceb45e4a3aec5bcf265560ed94c17e4c0043ead57c42fb97f86fa62a15b",
+  "root_review": "Complete same-source geometry join and current-field comparisons accepted as diagnostic only; no resolution/energy/production-science grant",
+  "tool_tests": {
+    "count": 42,
+    "passed": true,
+    "new_owner": false
+  },
+  "failed_attempts_preserved": [
+    "Original site-schema width missing",
+    "Authentic omitted zero-measure r=0 side"
+  ],
+  "reference_mathematics_recomputed": false,
+  "source_field_runtime_scope": "Real current initialized Runtime/Current materialization and field snapshot, separate from Hydro evolution",
+  "colleague_4070Ti_current_matched_dataset": "MISSING"
+}

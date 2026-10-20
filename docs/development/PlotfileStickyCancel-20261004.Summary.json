@@ -1,0 +1,135 @@
+{
+  "scope": "Sticky read controls + native pre-Host pending HTTP cancellation; not complete Viewer/race acceptance",
+  "sourceParent": "c26335d071629a4d6e5ea3c3e84bb2f2531d68ff",
+  "changedCode": [
+    "studio/src/components/ProjectPlotfileAudit.tsx",
+    "studio/src/components/ProjectPlotfileAudit.css"
+  ],
+  "requestAndScientificLogicChanged": false,
+  "checks": [
+    {
+      "check": "test",
+      "exitCode": 0
+    },
+    {
+      "check": "lint",
+      "exitCode": 0
+    },
+    {
+      "check": "typecheck",
+      "exitCode": 0
+    },
+    {
+      "check": "build",
+      "exitCode": 0
+    },
+    {
+      "check": "diff",
+      "exitCode": 0
+    }
+  ],
+  "tests": {
+    "pass": 331,
+    "fail": 0,
+    "skip": 0,
+    "hostWorkerDisconnectEvidence": [
+      "{\"scope\":\"live HTTP disconnect with explicit worker-stall injection\",\"operation\":\"metadata\",\"pid\":1636905,\"start\":\"6628611\",\"reapedMs\":10.907390000000078,\"recoveryStatus\":200}",
+      "{\"scope\":\"live HTTP disconnect with explicit worker-stall injection\",\"operation\":\"slice\",\"pid\":1637428,\"start\":\"6628658\",\"reapedMs\":3.1042589999999564,\"recoveryStatus\":200}",
+      "✔ disconnecting a real pending HTTP audit reaps its stalled owned worker and permits another read (5023.37629ms)"
+    ]
+  },
+  "native": {
+    "windowId": 41420456,
+    "managedSourceCommit": "64b0ce2f8d97553f59024978618f1e4848a974e1",
+    "binarySha256": "d53501ae231578fa6f270539ccada1af9bc049bc7d499b047a101332bbd4aa75",
+    "h5Sha256": "8cc5e9e1da007bdc2854a091517a487b08f40976ec9a5580c44f76a1f7d5550b",
+    "stickyControlsVisibleInQueryViewport": true,
+    "pendingHostPause": {
+      "scope": "Pending HTTP before Host processing; not active-reader reap evidence",
+      "host": {
+        "pid": 1638876,
+        "parentPid": 1638836,
+        "startTicks": "6633032",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      "signal": "SIGSTOP",
+      "resumed": true
+    },
+    "clickCancelBusyFalse": true,
+    "previousLodRetained": true,
+    "cancelledStateAfterHostResume": true,
+    "newLodReadRecovered": true,
+    "invalidFirstInjection": "Owned Node child appeared before query click; resumed exact PID/startTicks. Not acceptance evidence.",
+    "race": "not verified",
+    "activeReaderNativeCancellation": "not verified",
+    "startupInit": "Observed preparing/current before workspace switch; no Generate input"
+  },
+  "cleanup": {
+    "execSession": 33054,
+    "exitCode": 0,
+    "ownedProcesses": [
+      {
+        "pid": 1638836,
+        "parentPid": 1638835,
+        "startTicks": "6633021",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1638838,
+        "parentPid": 1638836,
+        "startTicks": "6633023",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1638839,
+        "parentPid": 1638836,
+        "startTicks": "6633023",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1638861,
+        "parentPid": 1638838,
+        "startTicks": "6633030",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1638864,
+        "parentPid": 1638836,
+        "startTicks": "6633030",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1638876,
+        "parentPid": 1638836,
+        "startTicks": "6633032",
+        "exe": "/home/arch/.local/opt/node-v24.21.0-linux-x64/bin/node",
+        "comm": "MainThread"
+      },
+      {
+        "pid": 1639242,
+        "parentPid": 1638839,
+        "startTicks": "6633507",
+        "exe": "/home/arch/projects/ARCH-compute-optim/studio/node_modules/electron/dist/electron",
+        "comm": "electron"
+      },
+      {
+        "pid": 1640216,
+        "parentPid": 1638876,
+        "startTicks": "6635213",
+        "exe": "/home/arch/projects/ARCH-host-clean-build-20261004/build-studio-cpu/bin/ARCH",
+        "comm": "ARCH"
+      }
+    ],
+    "allExactPidStartTicksGone": true
+  },
+  "rawFileAndConfigUnchanged": true,
+  "managedWorktreeClean": true,
+  "coreBuildSimulation": false,
+  "pushTag": false
+}

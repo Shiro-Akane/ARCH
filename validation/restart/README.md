@@ -16,6 +16,14 @@ on either backend when the destination build supports its physics and required
 data. The tests compare resumed runs with uninterrupted runs, including dynamic
 refinement and burning. Overall acceptance is tracked in the [validation index](../README.md).
 
+The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+adds four original 256-step RT GPU continuations, a five-step four-module AMR
+continuation and the rebuilt native axial model. Own-backend fresh retains
+strict controller/field checks and all-checkpoint/physical-Plot dataset equality.
+Independent CPU/GPU endpoints with different natural CFL clocks use actual
+common-time supplements, not time relabelling or a relaxed fresh contract.
+The separate private Cellular ENUC parity failure remains open.
+
 ## What a checkpoint preserves
 
 An ARCH checkpoint stores AMR leaf topology, conserved fields, native mass fractions and the
@@ -42,6 +50,19 @@ memcheck/racecheck suites each complete twelve executions and nine strict
 comparisons, including six actual CUDA processes with complete clean reports
 per sanitizer. Each record keeps its tested source and binary identity; the
 details are grouped at the end of this page.
+
+## Current CPU continuations
+
+The [current CPU record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+checks RT, BurnGradient, CooperativeHotspots and Cartesian four-module SNIa
+from both post-regrid and terminal checkpoints in fresh processes. Accepted
+fixtures pass the original time, controller, topology, scientific-identity and
+actual output-history gates; all native physical arrays match bit for bit.
+SNIa matches both checkpoint and plot boundaries. Earlier unmatched-boundary
+numerical/bitwise and output-history results remain recorded without changing
+the solver-history policy or comparison budgets. These short checks do not
+renew historical long trajectories, the original SNIa `1e-8 s` qualification,
+or CUDA execution evidence.
 
 <a id="completed-checks-on-the-release-candidate"></a>
 

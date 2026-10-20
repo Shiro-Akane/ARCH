@@ -1,0 +1,587 @@
+{
+  "baselineCommit": "514afb1842bfd00e00948589b20de180e9b28668",
+  "sourceSha256": "6b991456305522b0a8d9783e7540500cc1c265907406c390bbb1836a43c501ee",
+  "datasetComparisons": [
+    {
+      "blocks": 4,
+      "storage": "chunked",
+      "datasets": 16,
+      "allDatasetBitsAndAttributesEqual": true
+    },
+    {
+      "blocks": 4,
+      "storage": "gzip",
+      "datasets": 16,
+      "allDatasetBitsAndAttributesEqual": true
+    },
+    {
+      "blocks": 256,
+      "storage": "chunked",
+      "datasets": 16,
+      "allDatasetBitsAndAttributesEqual": true
+    },
+    {
+      "blocks": 256,
+      "storage": "gzip",
+      "datasets": 16,
+      "allDatasetBitsAndAttributesEqual": true
+    }
+  ],
+  "rows": [
+    {
+      "storage": "contiguous",
+      "case": "synthetic-4-blocks",
+      "cells": 8192,
+      "fileBytes": 739328,
+      "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+      "queries": [
+        {
+          "query": "metadata",
+          "wallMs": [
+            175.046069,
+            158.92879299999998,
+            148.096695
+          ],
+          "medianMs": 158.92879299999998,
+          "responseBytes": 1424,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 114608,
+          "maxObservedRchar": 5092972
+        },
+        {
+          "query": "overview-0",
+          "wallMs": [
+            167.457154,
+            179.05064400000003,
+            170.423314
+          ],
+          "medianMs": 170.423314,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "maxObservedHwmKiB": 123168,
+          "maxObservedRchar": 10106548
+        },
+        {
+          "query": "overview-1",
+          "wallMs": [
+            183.41777600000006,
+            171.932414,
+            170.02672700000005
+          ],
+          "medianMs": 171.932414,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "maxObservedHwmKiB": 123472,
+          "maxObservedRchar": 10106597
+        },
+        {
+          "query": "point",
+          "wallMs": [
+            169.64667199999997,
+            160.122523,
+            162.63279699999998
+          ],
+          "medianMs": 162.63279699999998,
+          "responseBytes": 2313,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 121428,
+          "maxObservedRchar": 10236637
+        }
+      ],
+      "cancelBusyRecovery": true,
+      "rawFileUnchanged": true
+    },
+    {
+      "storage": "contiguous",
+      "case": "synthetic-256-blocks",
+      "cells": 524288,
+      "fileBytes": 46159872,
+      "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+      "queries": [
+        {
+          "query": "metadata",
+          "wallMs": [
+            203.87604899999997,
+            207.52714100000014,
+            194.83284300000014
+          ],
+          "medianMs": 203.87604899999997,
+          "responseBytes": 1432,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 115800,
+          "maxObservedRchar": 50519060
+        },
+        {
+          "query": "overview-0",
+          "wallMs": [
+            617.092457,
+            601.855129,
+            606.171687
+          ],
+          "medianMs": 606.171687,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "maxObservedHwmKiB": 132664,
+          "maxObservedRchar": 650079252
+        },
+        {
+          "query": "overview-1",
+          "wallMs": [
+            588.3591469999999,
+            600.6302449999998,
+            620.6215750000001
+          ],
+          "medianMs": 600.6302449999998,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "maxObservedHwmKiB": 132744,
+          "maxObservedRchar": 650079309
+        },
+        {
+          "query": "point",
+          "wallMs": [
+            526.6152780000002,
+            537.926132,
+            532.5528450000002
+          ],
+          "medianMs": 532.5528450000002,
+          "responseBytes": 2325,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 128980,
+          "maxObservedRchar": 584182812
+        }
+      ],
+      "cancelBusyRecovery": true,
+      "rawFileUnchanged": true
+    },
+    {
+      "storage": "chunked",
+      "case": "synthetic-4-blocks",
+      "cells": 8192,
+      "fileBytes": 773168,
+      "fileSha256": "e9cb1183a82be033c5f2d062f14acdcc2f30886a01c27cd78f1da936235fb535",
+      "queries": [
+        {
+          "query": "metadata",
+          "wallMs": [
+            146.613744,
+            148.85535600000003,
+            148.136791
+          ],
+          "medianMs": 148.136791,
+          "responseBytes": 1424,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 115424,
+          "maxObservedRchar": 5126812
+        },
+        {
+          "query": "overview-0",
+          "wallMs": [
+            172.734358,
+            178.36799200000002,
+            169.14040299999996
+          ],
+          "medianMs": 172.734358,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "maxObservedHwmKiB": 124612,
+          "maxObservedRchar": 9603236
+        },
+        {
+          "query": "overview-1",
+          "wallMs": [
+            171.138647,
+            171.61878299999995,
+            188.92261200000002
+          ],
+          "medianMs": 171.61878299999995,
+          "responseBytes": 16739,
+          "scannedCells": 8192,
+          "maxObservedHwmKiB": 123968,
+          "maxObservedRchar": 9603236
+        },
+        {
+          "query": "point",
+          "wallMs": [
+            164.78978800000004,
+            171.23494100000005,
+            175.98565499999995
+          ],
+          "medianMs": 171.23494100000005,
+          "responseBytes": 2313,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 121504,
+          "maxObservedRchar": 9697732
+        }
+      ],
+      "cancelBusyRecovery": true,
+      "rawFileUnchanged": true
+    },
+    {
+      "storage": "chunked",
+      "case": "synthetic-256-blocks",
+      "cells": 524288,
+      "fileBytes": 46272272,
+      "fileSha256": "7dfb2360449d40760a0e9c8337bc89b8e87e138f1db54ae1203fa4a2ad30f261",
+      "queries": [
+        {
+          "query": "metadata",
+          "wallMs": [
+            206.80638399999998,
+            202.63291300000014,
+            203.01459599999987
+          ],
+          "medianMs": 203.01459599999987,
+          "responseBytes": 1432,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 116960,
+          "maxObservedRchar": 50631525
+        },
+        {
+          "query": "overview-0",
+          "wallMs": [
+            619.6331739999998,
+            617.262579,
+            606.4203340000001
+          ],
+          "medianMs": 617.262579,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "maxObservedHwmKiB": 126964,
+          "maxObservedRchar": 335908980
+        },
+        {
+          "query": "overview-1",
+          "wallMs": [
+            621.3141099999998,
+            605.5900559999998,
+            704.3949319999997
+          ],
+          "medianMs": 621.3141099999998,
+          "responseBytes": 42029,
+          "scannedCells": 524288,
+          "maxObservedHwmKiB": 132148,
+          "maxObservedRchar": 335908980
+        },
+        {
+          "query": "point",
+          "wallMs": [
+            528.9527699999999,
+            555.2132150000002,
+            537.1317869999998
+          ],
+          "medianMs": 537.1317869999998,
+          "responseBytes": 2325,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 130120,
+          "maxObservedRchar": 319488444
+        }
+      ],
+      "cancelBusyRecovery": true,
+      "rawFileUnchanged": true
+    },
+    {
+      "storage": "gzip",
+      "case": "synthetic-4-blocks",
+      "cells": 8192,
+      "fileBytes": 68452,
+      "fileSha256": "314cd9192794886f032860055420132a5aa734c0d4534151954df5d808efa843",
+      "queries": [
+        {
+          "query": "metadata",
+          "wallMs": [
+            146.295777,
+            149.6073,
+            150.86922499999997
+          ],
+          "medianMs": 149.6073,
+          "responseBytes": 1423,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 113532,
+          "maxObservedRchar": 4422080
+        },
+        {
+          "query": "overview-0",
+          "wallMs": [
+            172.10203600000003,
+            181.173713,
+            176.24611000000002
+          ],
+          "medianMs": 176.24611000000002,
+          "responseBytes": 16738,
+          "scannedCells": 8192,
+          "maxObservedHwmKiB": 125048,
+          "maxObservedRchar": 4534965
+        },
+        {
+          "query": "overview-1",
+          "wallMs": [
+            172.99453899999997,
+            178.25929599999995,
+            172.2466
+          ],
+          "medianMs": 172.99453899999997,
+          "responseBytes": 16738,
+          "scannedCells": 8192,
+          "maxObservedHwmKiB": 126272,
+          "maxObservedRchar": 4534916
+        },
+        {
+          "query": "point",
+          "wallMs": [
+            166.91911299999992,
+            175.10327800000005,
+            173.7457780000001
+          ],
+          "medianMs": 173.7457780000001,
+          "responseBytes": 2312,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 125544,
+          "maxObservedRchar": 4504685
+        }
+      ],
+      "cancelBusyRecovery": true,
+      "rawFileUnchanged": true
+    },
+    {
+      "storage": "gzip",
+      "case": "synthetic-256-blocks",
+      "cells": 524288,
+      "fileBytes": 1099683,
+      "fileSha256": "d75370fed83b3f95a5039c5d877e515d6f79b702b4be847143d8a635d1a5a374",
+      "queries": [
+        {
+          "query": "metadata",
+          "wallMs": [
+            157.62386800000002,
+            148.8098990000001,
+            146.671378
+          ],
+          "medianMs": 148.8098990000001,
+          "responseBytes": 1431,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 114196,
+          "maxObservedRchar": 5453472
+        },
+        {
+          "query": "overview-0",
+          "wallMs": [
+            764.7585849999999,
+            767.162106,
+            763.350673
+          ],
+          "medianMs": 764.7585849999999,
+          "responseBytes": 42028,
+          "scannedCells": 524288,
+          "maxObservedHwmKiB": 131480,
+          "maxObservedRchar": 11103498
+        },
+        {
+          "query": "overview-1",
+          "wallMs": [
+            759.7969780000003,
+            771.7119660000001,
+            748.823468
+          ],
+          "medianMs": 759.7969780000003,
+          "responseBytes": 42028,
+          "scannedCells": 524288,
+          "maxObservedHwmKiB": 132928,
+          "maxObservedRchar": 11103441
+        },
+        {
+          "query": "point",
+          "wallMs": [
+            654.4317190000002,
+            647.6074649999996,
+            659.6579529999999
+          ],
+          "medianMs": 654.4317190000002,
+          "responseBytes": 2324,
+          "scannedCells": null,
+          "maxObservedHwmKiB": 132284,
+          "maxObservedRchar": 8472967
+        }
+      ],
+      "cancelBusyRecovery": true,
+      "rawFileUnchanged": true
+    }
+  ],
+  "scope": "Synthetic storage workload; not production AMR or scientific reference; warm OS cache, fresh worker per query",
+  "queryResponseComparison": {
+    "excluded": "Only top-level file identity, because storage encoding changes bytes/hash/path; all other numeric response members compared",
+    "allFourResponsesEqual": true,
+    "queries": [
+      "metadata",
+      "overview",
+      "point",
+      "slice"
+    ],
+    "rows": [
+      [
+        {
+          "case": "synthetic-4-blocks",
+          "fileSha256": "e257c2513452c9ec5d971a1c4d8201b4991928b7bef89407438246fd7a47667a",
+          "responses": {
+            "metadata": {
+              "sha256": "0c8907b0c8109bdab241c6aec8211a1d16ccf55efc2b3853540e7c9000eed4b5",
+              "bytes": 1227
+            },
+            "overview": {
+              "sha256": "7582f54d4a8b7f37b7ba4f68d8beb6945b3c18ebdb1f252ff04dcdd6628b5863",
+              "bytes": 16542
+            },
+            "point": {
+              "sha256": "8ad9a3419d584b1ceea21e10cce5e8dbc67d54a4dceabed0ebc9cefb44649dad",
+              "bytes": 2116
+            },
+            "slice": {
+              "sha256": "88b5616cb0777a25c35447999a5c6a532fff7f88493dff08d6e0b14bf47fca43",
+              "bytes": 2110
+            }
+          },
+          "rawFileUnchanged": true
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "fileSha256": "b116a9ae46df078e8084bbe0155c536a8907b464caf66317ad00fd49169b7f67",
+          "responses": {
+            "metadata": {
+              "sha256": "38fb5ecd9f7411da9964872c9c64d888ef9c9248c2a1977736230b341130c520",
+              "bytes": 1233
+            },
+            "overview": {
+              "sha256": "fe916cbc3aab38f40ab5fb7dc66adb426c7ea1a50652539b992456e261244af5",
+              "bytes": 41830
+            },
+            "point": {
+              "sha256": "58814a383fee530a3f51fa0515668f7cfd6a2bc5daa454c0d6940d19d2a27df7",
+              "bytes": 2126
+            },
+            "slice": {
+              "sha256": "a39f8c2263e1a557885fc570431b55f8373a87284fe9c475ec07734e58655620",
+              "bytes": 2116
+            }
+          },
+          "rawFileUnchanged": true
+        }
+      ],
+      [
+        {
+          "case": "synthetic-4-blocks",
+          "fileSha256": "e9cb1183a82be033c5f2d062f14acdcc2f30886a01c27cd78f1da936235fb535",
+          "responses": {
+            "metadata": {
+              "sha256": "0c8907b0c8109bdab241c6aec8211a1d16ccf55efc2b3853540e7c9000eed4b5",
+              "bytes": 1227
+            },
+            "overview": {
+              "sha256": "7582f54d4a8b7f37b7ba4f68d8beb6945b3c18ebdb1f252ff04dcdd6628b5863",
+              "bytes": 16542
+            },
+            "point": {
+              "sha256": "8ad9a3419d584b1ceea21e10cce5e8dbc67d54a4dceabed0ebc9cefb44649dad",
+              "bytes": 2116
+            },
+            "slice": {
+              "sha256": "88b5616cb0777a25c35447999a5c6a532fff7f88493dff08d6e0b14bf47fca43",
+              "bytes": 2110
+            }
+          },
+          "rawFileUnchanged": true
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "fileSha256": "7dfb2360449d40760a0e9c8337bc89b8e87e138f1db54ae1203fa4a2ad30f261",
+          "responses": {
+            "metadata": {
+              "sha256": "38fb5ecd9f7411da9964872c9c64d888ef9c9248c2a1977736230b341130c520",
+              "bytes": 1233
+            },
+            "overview": {
+              "sha256": "fe916cbc3aab38f40ab5fb7dc66adb426c7ea1a50652539b992456e261244af5",
+              "bytes": 41830
+            },
+            "point": {
+              "sha256": "58814a383fee530a3f51fa0515668f7cfd6a2bc5daa454c0d6940d19d2a27df7",
+              "bytes": 2126
+            },
+            "slice": {
+              "sha256": "a39f8c2263e1a557885fc570431b55f8373a87284fe9c475ec07734e58655620",
+              "bytes": 2116
+            }
+          },
+          "rawFileUnchanged": true
+        }
+      ],
+      [
+        {
+          "case": "synthetic-4-blocks",
+          "fileSha256": "314cd9192794886f032860055420132a5aa734c0d4534151954df5d808efa843",
+          "responses": {
+            "metadata": {
+              "sha256": "0c8907b0c8109bdab241c6aec8211a1d16ccf55efc2b3853540e7c9000eed4b5",
+              "bytes": 1227
+            },
+            "overview": {
+              "sha256": "7582f54d4a8b7f37b7ba4f68d8beb6945b3c18ebdb1f252ff04dcdd6628b5863",
+              "bytes": 16542
+            },
+            "point": {
+              "sha256": "8ad9a3419d584b1ceea21e10cce5e8dbc67d54a4dceabed0ebc9cefb44649dad",
+              "bytes": 2116
+            },
+            "slice": {
+              "sha256": "88b5616cb0777a25c35447999a5c6a532fff7f88493dff08d6e0b14bf47fca43",
+              "bytes": 2110
+            }
+          },
+          "rawFileUnchanged": true
+        },
+        {
+          "case": "synthetic-256-blocks",
+          "fileSha256": "d75370fed83b3f95a5039c5d877e515d6f79b702b4be847143d8a635d1a5a374",
+          "responses": {
+            "metadata": {
+              "sha256": "38fb5ecd9f7411da9964872c9c64d888ef9c9248c2a1977736230b341130c520",
+              "bytes": 1233
+            },
+            "overview": {
+              "sha256": "fe916cbc3aab38f40ab5fb7dc66adb426c7ea1a50652539b992456e261244af5",
+              "bytes": 41830
+            },
+            "point": {
+              "sha256": "58814a383fee530a3f51fa0515668f7cfd6a2bc5daa454c0d6940d19d2a27df7",
+              "bytes": 2126
+            },
+            "slice": {
+              "sha256": "a39f8c2263e1a557885fc570431b55f8373a87284fe9c475ec07734e58655620",
+              "bytes": 2116
+            }
+          },
+          "rawFileUnchanged": true
+        }
+      ]
+    ]
+  },
+  "existingRootRefused": true,
+  "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/plotfile-storage-layout-20261004",
+  "comparisonHarnessSha256": "8243add9ce5c97bda430ada63987438fb0499ccfd1a25ac11445afb8fc3671c5",
+  "checks": {
+    "threeLayoutGeneration": "PASS",
+    "sixFiles16DatasetsEachBitsAndAttributes": "PASS",
+    "fourQueriesAllNumericMembersExceptFileIdentity": "PASS",
+    "nineIsolationRuns": "PASS",
+    "cancelBusyRecoveryAndFileUnchanged": "PASS",
+    "existingRootRefusal": "PASS"
+  },
+  "limitations": [
+    "Measurements grouped by layout, not randomised or alternating paired speed ranking.",
+    "Synthetic linear-index arrays compress very well; not representative of physical density entropy or mixed-level production AMR.",
+    "Warm OS cache, fresh worker; no drop-caches/cold-disk or concurrent simulation measurement.",
+    "Only file identity excluded in response comparison; layout changes expected file bytes/hash/path.",
+    "Observed 5ms worker HWM and rchar include Node/import/WASM and may miss peak; not hard memory cap or dataset-only I/O.",
+    "Full file hash and full leaf scan remain; no new index/cache/writer storage policy.",
+    "Not science acceptance, complete provenance, ENOSPC or durable publication evidence."
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "sourceBeforeChange": "a95f49465f7d6d17f571f9dacf496dd403ba7705",
+  "scope": "Read-only current GNU C/CXX default compiler component identity; NOT build-time verification or complete dependency claim",
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-studio-cpu",
+  "evidence": {
+    "kind": "cmake-compiler-driver-identities",
+    "dependenciesComplete": false,
+    "compilers": [
+      {
+        "language": "C",
+        "path": "/usr/bin/cc",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-gcc-13",
+        "id": "GNU",
+        "version": "13.3.0",
+        "sha256": "1b99826121ae6682a634e5efe09bd3e3df58ce58e0b28f849114ab5b89139c26",
+        "size": 1023032,
+        "components": [
+          {
+            "role": "cc1",
+            "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1",
+            "sha256": "5d1679131184e2de4435b426eb264bf13472fe026db8e5c6bc97445814e8e2f4",
+            "size": 30487984
+          },
+          {
+            "role": "collect2",
+            "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+            "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+            "size": 336056
+          },
+          {
+            "role": "as",
+            "path": "/usr/bin/as",
+            "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+            "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+            "size": 745768
+          },
+          {
+            "role": "ld",
+            "path": "/usr/bin/ld",
+            "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+            "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+            "size": 1359128
+          },
+          {
+            "role": "lto1",
+            "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+            "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+            "size": 29352624
+          },
+          {
+            "role": "liblto_plugin.so",
+            "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+            "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+            "size": 68296
+          }
+        ],
+        "specsSha256": "3a269a0e5ee21101352e1f276f347d289e4152854796704a46416964b170e0dc"
+      },
+      {
+        "language": "CXX",
+        "path": "/usr/bin/c++",
+        "resolvedPath": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "id": "GNU",
+        "version": "13.3.0",
+        "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+        "size": 1027128,
+        "components": [
+          {
+            "role": "cc1plus",
+            "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus",
+            "sha256": "840b332fb62ec6f694ac77d91fe69ef7f80b0d69512ed89374af0ee7a506255d",
+            "size": 32675168
+          },
+          {
+            "role": "collect2",
+            "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/collect2",
+            "sha256": "4d1f341ae5b763b513258ee2812422a45e063c30a2f1924a0cf63d3699f3a158",
+            "size": 336056
+          },
+          {
+            "role": "as",
+            "path": "/usr/bin/as",
+            "resolvedPath": "/usr/bin/x86_64-linux-gnu-as",
+            "sha256": "7a2ef948033b05ad0c5dcb0d5be059bc68562b5d45713d91aee21df2b4bf4e92",
+            "size": 745768
+          },
+          {
+            "role": "ld",
+            "path": "/usr/bin/ld",
+            "resolvedPath": "/usr/bin/x86_64-linux-gnu-ld.bfd",
+            "sha256": "e46a122cc3a29feba3b1d0fc2a274b6e46538be016ebe381370c0801bb98b0b8",
+            "size": 1359128
+          },
+          {
+            "role": "lto1",
+            "path": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/lto1",
+            "sha256": "7c9bdc474948b9127b5942f0f260ecc7067fb3afbb54fcbe2ddf598b9889edc8",
+            "size": 29352624
+          },
+          {
+            "role": "liblto_plugin.so",
+            "path": "/usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+            "resolvedPath": "/usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so",
+            "sha256": "14469ff8498fca3871c29dbf678c2330123207fffb8308151314a08395309ddf",
+            "size": 68296
+          }
+        ],
+        "specsSha256": "3a269a0e5ee21101352e1f276f347d289e4152854796704a46416964b170e0dc"
+      }
+    ]
+  },
+  "checks": {
+    "scoped": "16/16",
+    "studioHost": "233/233",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "remaining": [
+    "per-invocation tool/flags overrides",
+    "implicit library coverage",
+    "deleted LTO temporary provenance",
+    "toolchain stability across actual Build"
+  ],
+  "archRebuilt": false
+}

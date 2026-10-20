@@ -1,0 +1,40 @@
+{
+  "baseline": "2d67946b59ddecd95363c8c2d771a0bb8ef5d80f",
+  "buildId": "b122233f-61aa-4fd5-932a-a27ded45e302",
+  "compilerInputCount": 735,
+  "fingerprintedLinkInputs": 75,
+  "missingLinkInputs": 97,
+  "binaryState": "freshness-unknown",
+  "probe": {
+    "scope": "Independent non-scientific compiler/linker diagnostic. ARCH was not built or run. Probe executable was not run.",
+    "command": [
+      "/usr/bin/g++",
+      "-O3",
+      "-flto=auto",
+      "-save-temps=obj",
+      "-fuse-ld=mold",
+      "-Wl,--dependency-file=probe.link.d",
+      "main.cpp",
+      "helper.cpp",
+      "-o",
+      "probe"
+    ],
+    "exitCode": 0,
+    "retainedLtoObjectCount": 1,
+    "retainedBytes": 3154,
+    "depfileSha256": "92b3e05ee48ae96a6412b9780116b1f25d7171c8179f21cdacc798dd7e9f9b2b",
+    "retainedFiles": [
+      "probe.ltrans0.o"
+    ],
+    "fingerprintedInputs": 18,
+    "unavailable": [
+      {
+        "path": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/full-model-production-20261003/lto-provenance-probe/probe.ltrans0.ltrans.o",
+        "reason": "missing"
+      }
+    ],
+    "complete": false
+  },
+  "profileChanged": false,
+  "archRebuilt": false
+}

@@ -17,10 +17,11 @@ The presets in [CMakePresets.json](../../CMakePresets.json) keep output separate
 | Configure command | Build directory | Executable |
 | --- | --- | --- |
 | `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
+| `cmake --preset studio-cpu-release` | `build-studio-cpu` | `build-studio-cpu/bin/ARCH` + `arch-studio` |
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-All three use Ninja and OpenMP. The Release presets set `BUILD_TESTING=OFF`;
+All four use Ninja and OpenMP. The Release presets set `BUILD_TESTING=OFF`;
 `cuda-debug` enables tests for development. Both CUDA
 presets target the visible GPU with `CMAKE_CUDA_ARCHITECTURES=native` and set
 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1`. They configure builds only: use the explicit
@@ -88,11 +89,37 @@ KLU declarations are in [cmake/dependencies/Dependencies.cmake](../../cmake/depe
 CUDA-specific provider discovery, including cuDSS, remains in
 [cmake/cuda/CudaBackend.cmake](../../cmake/cuda/CudaBackend.cmake), using
 [FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake). Git LFS supplies the EOS assets
-tracked through LFS; run `git lfs pull` before using those tables.
+tracked through LFS. Prefer offline `git lfs checkout` when the required objects
+are already local; reading a materialized table uses no LFS bandwidth.
 
 Python **3.10 or newer** is needed for the build guard and test tooling, not for
 running the ARCH executable. Generated reaction networks have a separate Python
 setup described in the [network guide](../../validation/network/README.md).
+
+## Offline tables and LFS bandwidth
+
+Keep ordinary verified copies of required tables outside build/output directories
+and the Git LFS object store so cleaning outputs or pruning LFS cannot remove the
+only local copy. Match each copy's SHA-256 and byte count to the selected
+revision's pointer (`git show HEAD:EOS_toolkit/tables/helmholtz/helm_table.dat`)
+before restoring it into another checkout; preserve the table's attribution.
+
+For a repository that should not download LFS data automatically:
+
+```bash
+git config --local filter.lfs.smudge 'git-lfs smudge --skip -- %f'
+git config --local filter.lfs.process 'git-lfs filter-process --skip'
+git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+```
+
+These repository-local settings also apply to its linked worktrees. `checkout`
+materializes existing objects and never downloads missing ones; an absent object
+must be reported, not replaced by an EOS default or an automatic network retry.
+If a download is necessary, limit it explicitly to the needed tracked paths:
+`git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""`.
+Avoid unrestricted pulls of tables and historical HDF5 results. The CPU CI caches
+the required table by pointer identity; a cache miss or eviction can still
+require a single scoped download. Local reads do not explain an LFS traffic bill.
 
 ## Source archives and EOS tables
 
@@ -101,11 +128,11 @@ populate that directory. A file beginning with
 `version https://git-lfs.github.com/spec/v1` is a pointer, not an EOS table.
 Do not infer table availability from a successful CPU build or Sod run.
 
-Prefer a Git checkout of the selected release with Git LFS. To keep an existing
-archive, fetch only the required table from a separate checkout of **the same
-tag or full commit** and copy it to the corresponding archive path. Run the
-following from the extracted ARCH root, replacing `YOUR_RELEASE_TAG_OR_COMMIT`
-with the identity of that archive:
+Prefer a Git checkout of the selected release and reuse matching verified local
+data first. For an existing archive, copy a verified table of **the same tag or
+full commit** to the corresponding path. Only if that version is unavailable
+locally, use the scoped download below from the extracted ARCH root, replacing
+`YOUR_RELEASE_TAG_OR_COMMIT` with the identity of that archive:
 
 ```bash
 git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
@@ -122,6 +149,25 @@ Sod, and run the existing Helmholtz test with the actual table; only the latter
 exercises the table dependency. Presets put the applications in
 `build-cpu/bin/ARCH` and `build-cuda/bin/ARCH`; explicit custom build paths must
 also be supplied to the comparison scripts.
+
+## Install a runtime package
+
+After building the application and materializing and verifying the three tables
+above, install the `Runtime` component. It contains the application, Sod inputs,
+EOS tables and licenses. The runtime environment must still provide system
+HDF5/OpenMP, CUDA and optional cuDSS dependencies.
+
+```bash
+cmake --install build-cpu --prefix "$PWD/arch-install" --component Runtime
+cd arch-install/share/arch
+../../bin/ARCH Sod simulation/Sod/Sod_beginner.par
+```
+
+Use `build-cuda` for the CUDA application. The installation prefix can move;
+relative table, output and restart paths in an input still resolve against the
+launch working directory. Explicit absolute paths also work. ARCH does not
+search the installation prefix for missing configuration or tables. Studio is
+a separate optional desktop package; see its build instructions below.
 
 ## cuDSS and sparse burning
 
@@ -245,3 +291,11 @@ CTest runs tests; it does not compile missing test executables. A build without
 `--target ARCH` builds the default target set, which is larger when tests are
 enabled. Choose further checks from [Tests](../../tests/README.md), and use the
 module recipes in [Validation](../../validation/README.md) for scientific runs.
+
+Case boundary callbacks compile with the application. Keep `physical_boundary.cpp`
+and `gravity_boundary.cpp` beside the registered case source, then reconfigure
+and rebuild; no boundary path setting is needed. See [user boundaries](UserBoundaries.md).
+
+## Linux Studio desktop
+
+`studio-cpu-release` builds Core and the optional Electron desktop together; normal Core presets keep Studio disabled. The GUI preset uses the Host-owned local CPU build directory and GNU provenance settings. See the [Studio workflow](Studio.md) and [environment setup](StudioEnvironment.zh-CN.md) for Node 24+, WSLg, graphical libraries and independent terminal requirements.

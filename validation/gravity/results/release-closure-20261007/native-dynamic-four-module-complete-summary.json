@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "status": "PASS_ACTUAL_WARM_DYNAMIC_FOUR_MODULE_OWNER_ONLY",
+  "sourceCommit": "bb25c50e5a0c8a32c92440417b72e0ada70c20d5",
+  "sourceElfEosFenceUnchanged": true,
+  "childWallSeconds": 835.8346287049935,
+  "guardSeconds": 838.683,
+  "actualFields": 5,
+  "macros": 2,
+  "regrid": {
+    "oldEpoch": 1,
+    "newEpoch": 2,
+    "oldLeaves": 2,
+    "newLeaves": 5,
+    "cells": 1280,
+    "actualCfRoutes": 3,
+    "energyOperations": 48
+  },
+  "acceptedPhysicalTime": 2e-12,
+  "actualBurnCalls": 4,
+  "actualDiffusionHalfSteps": 4,
+  "memoObservations": [
+    "NATIVE_ACTIVE_RING_MEMO purpose=HydroStage stage=1 epoch=1 source_generation=1 field_generation=1 time=0 cells=512 boundary_faces=96 memo_hits=0 memo_misses=42240 memo_admissions=42240 entries=42240 capacity=65536 current_call_kernel_enclosures=203629160 current_call_range_evaluations=7278574 current_call_agm_iterations=1231980772 accepted_field_observation=1 physical_qualified=0",
+    "NATIVE_ACTIVE_RING_MEMO purpose=HydroStage stage=2 epoch=1 source_generation=2 field_generation=2 time=9.9999999999999998e-13 cells=512 boundary_faces=96 memo_hits=39901 memo_misses=9251 memo_admissions=9251 entries=51456 capacity=65536 current_call_kernel_enclosures=94168060 current_call_range_evaluations=3366131 current_call_agm_iterations=588463197 accepted_field_observation=1 physical_qualified=0",
+    "NATIVE_ACTIVE_RING_MEMO purpose=AcceptedCurrent stage=0 epoch=2 source_generation=1 field_generation=1 time=9.9999999999999998e-13 cells=1280 boundary_faces=144 memo_hits=0 memo_misses=184320 memo_admissions=65536 entries=65536 capacity=65536 current_call_kernel_enclosures=361970168 current_call_range_evaluations=12936550 current_call_agm_iterations=2205291232 accepted_field_observation=1 physical_qualified=0",
+    "NATIVE_ACTIVE_RING_MEMO purpose=HydroStage stage=1 epoch=2 source_generation=2 field_generation=2 time=9.9999999999999998e-13 cells=1280 boundary_faces=144 memo_hits=65536 memo_misses=118784 memo_admissions=0 entries=65536 capacity=65536 current_call_kernel_enclosures=192873660 current_call_range_evaluations=6894036 current_call_agm_iterations=1161697931 accepted_field_observation=1 physical_qualified=0",
+    "NATIVE_ACTIVE_RING_MEMO purpose=HydroStage stage=2 epoch=2 source_generation=3 field_generation=3 time=2e-12 cells=1280 boundary_faces=144 memo_hits=65471 memo_misses=118849 memo_admissions=65 entries=65536 capacity=65536 current_call_kernel_enclosures=320013988 current_call_range_evaluations=11437863 current_call_agm_iterations=1972770278 accepted_field_observation=1 physical_qualified=0"
+  ],
+  "completeMarker": "PRIVATE_NATIVE_ACTIVE_FOUR_MODULE_AMR candidate_only=1 genuine_regrid=1 actual_fields=5 macros=2 leaves=5 cells=1280 real_CF_routes=3 accepted_time=2e-12 accepted_steps=2 activity_accounting_checked=1 restart_qualified=0 total_energy_qualified=0 physical_qualified=0",
+  "originalAssertionsPreserved": true,
+  "continuousEnergyQualified": false,
+  "restartQualified": false,
+  "CUDAQualified": false,
+  "physicalQualified": false,
+  "guardStopped": false,
+  "swapKiB": 0,
+  "EFreeMinimumBytes": 23846371328,
+  "cumulativeDynamicGuardSeconds": 2037.031,
+  "capSeconds": 2400,
+  "remainingSeconds": 362.969,
+  "localRawSha256": {
+    "stdout": "c6841e1e75a2f53bdaa75eba761746cf85c474c4bd14833684268a31f25c36a3",
+    "summary": "0f719cd5a61cb92b3595778774fea5dd5a7baf230249ebe441ce6edfa2619b42"
+  }
+}

@@ -2,6 +2,9 @@
 
 **结论：**在受测的完整 `2π` 方位角、`gravity_boundary=isolated`、奇点流体面 reflecting 范围内，CPU 与 CUDA 共用自引力 Poisson/MG、源项和坐标接合算术。一维球/柱、二维极坐标及三维柱/球坐标的真实设备运行通过解析场或同输入耦合对照，包含原点、轴线、极点、混合 AMR、近真空与跨后端续算。部分方位角、域外质量、圆心小单元的时间步代价以及真实 SN Ia 的长期物理精度不由此开放或证明。
 
+
+本记录中的二维柱坐标 CPU/CUDA 结果对应原极坐标物理身份；[受测输入](https://github.com/Shiro-Akane/ARCH/tree/0ad8f470b9dc9835318044b56dade33cf63f0c31/validation/gravity/curved/inputs)属于原始提交。现行轴对称 `(r,z)` 输入及验证范围见[活动算例](../../curved/inputs/README.md)。
+
 ## 实现边界与验证方法
 
 坐标接合的插值、组分单纯形检查、原生动量符号和 ghost-only 有效 donor 回退位于共享的 [CoordinateSeamMath.h](../../../../src/amr/exchange/CoordinateSeamMath.h)。Host 与 CUDA 都消费同一拓扑 donor 计划；设备适配器在 [CudaBackendCoordinateSeam.cpp](../../../../src/cuda/runtime/amr/CudaBackendCoordinateSeam.cpp) 绑定活动或暂存块身份，只上传 stencil/块视图、回读一个错误状态字，流体大数组保持在显存。Driver 对常规阶段和 regrid 暂存态均按物理边界、同层、粗细、坐标接合的次序完成后才发布 ghost。泊松迭代没有全域 Host 往返，也未新增 CUDA 专用重力数学、用户控制参数或新的源项函数。

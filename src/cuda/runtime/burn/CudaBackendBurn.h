@@ -39,6 +39,10 @@ struct DeviceBurnBatchBlock {
     state::Bounds bounds{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceBurnBatchBlock>);
+// Maximum patch descriptors per submitted wave, not cells or CUDA threads.
+// This fixed scheduling budget bounds batch marshalling; each cell still owns
+// its independent ODE workspace. Changing it requires launch/resource and batch
+// coverage checks, not a change to burn tolerances or the accepted physical step.
 inline constexpr std::size_t BURN_BATCH_WAVE_LIMIT = 1024;
 // Host-only launch request. The typed factory may populate the persistent
 // backend-owned slot once; kernels receive only numeric controls and a bound

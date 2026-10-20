@@ -167,21 +167,48 @@ arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox21
     src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DAprox21.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_iso7
     src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DIso7.cu)
-# Hydro owns one shared template implementation and one canonical source
-# owner per EOS.  Heavy tabular interpolation call boundaries keep NVCC
-# Debug frontend memory bounded without duplicating physics or routes.
+# Each canonical Hydro EOS source is compiled in two target-private flux
+# families using the same registry and numerical templates. The base owner
+# defines the public entries; its Hll/Hllc companion defines a host helper.
+# This compiler organization requires workload measurements under the guard.
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal
     src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)
+target_compile_definitions(arch_cuda_backend_hydro_ideal PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal_hll
+    src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)
+target_compile_definitions(arch_cuda_backend_hydro_ideal_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm
     src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)
+target_compile_definitions(arch_cuda_backend_hydro_helm PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm_hll
+    src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)
+target_compile_definitions(arch_cuda_backend_hydro_helm_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3
     src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular3 PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3_hll
+    src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular3_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4
     src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular4 PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY1)
+arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4_hll
+    src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)
+target_compile_definitions(arch_cuda_backend_hydro_tabular4_hll PRIVATE
+    ARCH_CUDA_HYDRO_FLUX_FAMILY2)
 arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
     src/cuda/runtime/diffusion/CudaBackendDiffusion.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_exchange
     src/cuda/runtime/amr/CudaBackendExchange.cu)
+target_sources(arch_cuda_backend_exchange PRIVATE
+    src/cuda/runtime/boundary/CudaBackendBoundary.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_amr_flux
     src/cuda/runtime/amr/CudaBackendAmrFlux.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_amr_indicators
@@ -205,9 +232,13 @@ arch_order_cuda_targets(
     arch_cuda_backend_burn_tabular4d_aprox21
     arch_cuda_backend_burn_tabular4d_iso7
     arch_cuda_backend_hydro_ideal
+    arch_cuda_backend_hydro_ideal_hll
     arch_cuda_backend_hydro_helm
+    arch_cuda_backend_hydro_helm_hll
     arch_cuda_backend_hydro_tabular3
+    arch_cuda_backend_hydro_tabular3_hll
     arch_cuda_backend_hydro_tabular4
+    arch_cuda_backend_hydro_tabular4_hll
     arch_cuda_backend_diffusion
     arch_cuda_backend_exchange
     arch_cuda_backend_amr_flux)
@@ -324,9 +355,13 @@ add_library(arch_cuda_backend STATIC
     $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox21>
     $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_iso7>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_helm>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_helm_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4>
+    $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4_hll>
     $<TARGET_OBJECTS:arch_cuda_backend_diffusion>
     $<TARGET_OBJECTS:arch_cuda_backend_exchange>
     $<TARGET_OBJECTS:arch_cuda_backend_amr_flux>)
@@ -366,22 +401,26 @@ include(cmake/cuda/CudaBurnDenseRoutes.cmake)
 arch_register_cuda_dense_burn_routes()
 include(cmake/cuda/CudaBurnSparseRoutes.cmake)
 arch_register_cuda_sparse_burn_routes()
-# A full CUDA build has three explicit phases: backend archive, dispatch
-# archive, and then the application.  The file-backed barriers are stronger
+# A full CUDA build has three explicit phases: backend archive, driver
+# archives, and then the application.  The file-backed barriers are stronger
 # than target-level object ordering under Ninja and prevent unplanned
 # overlap between these phases. They do not replace memory measurements.
 arch_add_completion_barrier(
     arch_cuda_backend_complete arch_cuda_backend)
-add_dependencies(arch_solver_dispatch arch_cuda_backend_complete)
-if(ARCH_CUDA_HEAVY_JOB_POOL)
-    set_property(TARGET arch_solver_dispatch PROPERTY JOB_POOL_COMPILE
-        ${ARCH_CUDA_HEAVY_JOB_POOL})
-    set_property(TARGET arch_solver_dispatch PROPERTY JOB_POOL_LINK
-        ${ARCH_CUDA_HEAVY_JOB_POOL})
-endif()
+foreach(target arch_driver_runtime arch_solver_dispatch)
+    add_dependencies(${target} arch_cuda_backend_complete)
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        set_property(TARGET ${target} PROPERTY JOB_POOL_COMPILE
+            ${ARCH_CUDA_HEAVY_JOB_POOL})
+        set_property(TARGET ${target} PROPERTY JOB_POOL_LINK
+            ${ARCH_CUDA_HEAVY_JOB_POOL})
+    endif()
+endforeach()
+arch_add_completion_barrier(
+    arch_driver_runtime_complete arch_driver_runtime)
 arch_add_completion_barrier(
     arch_solver_dispatch_complete arch_solver_dispatch)
-add_dependencies(ARCH arch_solver_dispatch_complete)
+add_dependencies(ARCH arch_driver_runtime_complete arch_solver_dispatch_complete)
 if(BUILD_TESTING)
     set_property(TARGET arch_runtime_probe_capabilities APPEND PROPERTY
         BUILD_RPATH "${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}")

@@ -2,7 +2,7 @@
  * @file HydroStateKernels.cuh
  * @brief Device CFL reduction, buffer clearing and flux-divergence traversal.
  *
- * CFL candidates use DriverUtils and divergence uses TimeIntegratorHelper with
+ * CFL candidates use DriverUtils and divergence uses HydroCellUpdate with
  * shared metric caches. Reductions retain failure status. Borrowed buffers stay
  * owned by the runtime, which checks completion before reading results or
  * publishing the next stage.
@@ -13,14 +13,13 @@
  */
 
 #pragma once
-#include "physics/gravity/GravitySource.h"
-
 #include <cstddef>
 
 #include "cuda/common/CudaCommon.cuh"
-#include "driver/DriverUtils.h"
-#include "numerics/integrator/TimeIntegratorHelper.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
+#include "driver/DriverUtils.h"
+#include "numerics/integrator/HydroCellUpdate.h"
+#include "physics/gravity/GravitySource.h"
 
 namespace arch::cuda
 {
@@ -47,9 +46,10 @@ __device__ inline void hydro_cfl_candidates_work(
         const int k = cell / grid.stride_z;
         const int j = (cell - k * grid.stride_z) / grid.stride_y;
         const int i = cell - k * grid.stride_z - j * grid.stride_y;
+        const auto geometry=make_grid_geometry_view(grid);
         candidates[linear] = evaluate_cfl_cell_dt(
             value, state.n_species > 0 ? composition : nullptr, eos,
-            make_grid_geometry_view(grid), i, j);
+            geometry, i, j);
     }
 }
 
@@ -106,7 +106,8 @@ static __global__ void hydro_cfl_reduce_kernel(
 
 static __device__ inline void hydro_divergence_kernel_work(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction, Physical::Gravity::GravityPatchView gravity = {})
+    double dt, int direction, Physical::Gravity::GravityPatchView gravity = {},
+    const double* mean_pressure = nullptr)
 {
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     if (linear >= grid.active_cell_count())
@@ -122,18 +123,23 @@ static __device__ inline void hydro_divergence_kernel_work(
         grid.face_area_lower[direction][cell],
         grid.face_area_upper[direction][cell], grid.cell_volume[cell], dt,
         cell_delta,
-        delta.n_species > 0 ? delta.mass_fractions + cell : nullptr);
+        delta.n_species > 0 ? delta.mass_fractions + cell : nullptr,
+        make_grid_geometry_view(grid), direction,
+        cell % grid.stride_y, (cell % grid.stride_z) / grid.stride_y, cell / grid.stride_z,
+        mean_pressure ? mean_pressure[cell] : 0.0);
+    // w_low/high belong to this cell, even where the physical face is shared.
+    // Host and Device apply the identical dt/2 mass-flux work leaf.
     if(gravity.enabled()) cell_delta.eng+=Physical::Gravity::gravity_flux_work(
-        gravity.work_faces[direction][cell],gravity.work_faces[direction][cell+stride],flux.rho[cell],flux.rho[cell+stride],dt);
+        gravity.work_low[direction][cell],gravity.work_high[direction][cell],flux.rho[cell],flux.rho[cell+stride],dt);
     delta.store(cell, cell_delta);
 }
 
 
 static __global__ void hydro_divergence_kernel(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction)
+    double dt, int direction, const double* mean_pressure = nullptr)
 {
-    hydro_divergence_kernel_work(flux, delta, grid, dt, direction);
+    hydro_divergence_kernel_work(flux, delta, grid, dt, direction, {}, mean_pressure);
 }
 } // namespace detail
 
@@ -158,7 +164,8 @@ inline cudaError_t clear_hydro_buffer(
 
 inline cudaError_t launch_hydro_divergence(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
-    double dt, int direction, cudaStream_t stream)
+    double dt, int direction, cudaStream_t stream,
+    const double* mean_pressure = nullptr)
 {
     const int directional_end = direction == 0 ? grid.ie
         : (direction == 1 ? grid.je : grid.ke);
@@ -181,7 +188,7 @@ inline cudaError_t launch_hydro_divergence(
         return cudaSuccess;
     detail::hydro_divergence_kernel
         <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
-            flux, delta, grid, dt, direction);
+            flux, delta, grid, dt, direction, mean_pressure);
     return cudaGetLastError();
 }
 

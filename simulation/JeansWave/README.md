@@ -19,7 +19,7 @@ The example rejects unstable parameters. Plot output includes potential and
 cell acceleration; inspect `gravity_solves.tsv` and `state_repairs.txt` alongside
 fluid fields. This example exercises a periodic Jeans mode. For production
 isolated boundaries and coupled CPU/CUDA inputs, see [GravityBox](../GravityBox/README.md)
-and the [current acceptance](../../docs/development/P5P7GravityAcceptance.zh-CN.md).
+and the [current acceptance](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md).
 
 Run the independent acceptance campaign with
 `python3 validation/gravity/run_self_gravity.py --arch ./build-cpu/bin/ARCH --output /tmp/jeans-validation`

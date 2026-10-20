@@ -1,0 +1,84 @@
+{
+  "schema": "arch.raw-archive-index.v1",
+  "date": "2026-10-06",
+  "source_commit": "8a13508c0db5aed423fd36876c8e2b8adfd42f1c",
+  "status": "ARCHIVED_LOCALLY",
+  "files": 9549,
+  "bytes": 147038657,
+  "selectors": [
+    "validation/**/results/**/*_backend_trace.tsv",
+    "validation/**/results/**/gravity_solves.tsv",
+    "validation/**/results/**/*_log.dat",
+    "validation/**/results/**/*.stdout",
+    "validation/**/results/**/*.stderr"
+  ],
+  "archive_relative_root": "studio/.local/validation-archive/20261006",
+  "local_manifest": "manifest.json",
+  "payload_distributed": false,
+  "git_history_rewritten": false,
+  "content_hashes_recomputed": false,
+  "verification": "Frozen unmodified tracked paths; atomic same-filesystem rename preserves device/inode/size/mtime; postflight path and byte totals match.",
+  "owners": {
+    "validation/amr": {
+      "files": 4444,
+      "bytes": 87604066
+    },
+    "validation/backend": {
+      "files": 2361,
+      "bytes": 27894734
+    },
+    "validation/burn": {
+      "files": 452,
+      "bytes": 811546
+    },
+    "validation/eos": {
+      "files": 1107,
+      "bytes": 2877505
+    },
+    "validation/gravity": {
+      "files": 237,
+      "bytes": 8323867
+    },
+    "validation/hydro": {
+      "files": 375,
+      "bytes": 18360656
+    },
+    "validation/network": {
+      "files": 573,
+      "bytes": 1166283
+    }
+  },
+  "categories": {
+    "application_transcript": {
+      "files": 5716,
+      "bytes": 19352939
+    },
+    "backend_trace": {
+      "files": 1222,
+      "bytes": 111678571
+    },
+    "gravity_solves": {
+      "files": 27,
+      "bytes": 5725094
+    },
+    "runtime_log": {
+      "files": 2584,
+      "bytes": 10282053
+    }
+  },
+  "retained": [
+    "EOS runtime inputs and licenses",
+    "tests/fixtures independent references",
+    "JSON/CSV measurements and artifact identities",
+    "parameter inputs",
+    "scientific sample TSV",
+    "reference/reproduction/failure scripts",
+    "sanitizer logs and historical decisions"
+  ],
+  "selected_failure": {
+    "path": "validation/backend/results/final-first-law-20260907/memcheck-902/audit31_sparse_cells/arch.stdout",
+    "result": "22 routes completed, audit31 timed out; historical attempt remains incomplete",
+    "bytes": 1499
+  },
+  "recovery": "Tracked original payloads remain addressable by source_commit:path in Git history; local manifest contains the original Git blob OID for each path. Runtime LFS tables are outside this archive."
+}

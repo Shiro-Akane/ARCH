@@ -1,0 +1,89 @@
+{
+  "status": "PASS",
+  "scope": "JENS uniform-lifecycle-1 CPU evidence + native Linux parameter consumption; not full JENS/RZ/CUDA qualification",
+  "sourceBaseline": "7bd2e80b06e36799c9bbaedaeded5fc33710bf5f",
+  "sourceDirtyAtUat": true,
+  "coreScienceAuthority": "86bec324018349c6d81df84a3cced3ed9f9a2792",
+  "originCoreBoundaryHead": "11a321d5604f9ee62b9f9587c81f14de4f128bc4",
+  "cpuBinarySha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "binaryUnchanged": true,
+  "buildProfile": {
+    "profileId": "arch-compute-optim-existing-cpu",
+    "fingerprint": "07ecf3db155a21e7d6445fa88e91243db5effde004edb5fd3aedcb1093dca4b6",
+    "sourceRoot": "/home/arch/projects/ARCH-compute-optim",
+    "buildDirectory": "build-cpu",
+    "output": "build-cpu/bin/ARCH",
+    "target": "ARCH",
+    "parallelism": 28,
+    "trackedInputs": 96,
+    "completeDependencyClaim": false,
+    "otherSourceRejected": true
+  },
+  "cmakeBinding": {
+    "sourceRoot": "/home/arch/projects/ARCH-compute-optim",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "buildType": "Release",
+    "cuda": false,
+    "generator": "Ninja"
+  },
+  "nativeUat": {
+    "windowId": 13306798,
+    "caseId": "GravityBox",
+    "configSha256": "468e50799ab0b4fdb93be6dafef50aff1cfd8f3fbdd05d050c1a7210d8c70e5a",
+    "diskUnchanged": true,
+    "initialText": "160.0",
+    "inspectionParsedValue": 160,
+    "schemaDefault": null,
+    "previewEffectiveValue": null,
+    "invalidTextRetained": "3",
+    "displayedMinimum": 4,
+    "oneUndoRestoresOriginalText": true,
+    "coreInspectionRecovered": true,
+    "previewNotGenerated": true,
+    "successfulBuildNotInvented": true,
+    "ownedProcessCount": 8,
+    "ownedProcessRemaining": 0
+  },
+  "checks": [
+    {
+      "check": "test",
+      "exitCode": 0
+    },
+    {
+      "check": "lint",
+      "exitCode": 0
+    },
+    {
+      "check": "typecheck",
+      "exitCode": 0
+    },
+    {
+      "check": "build",
+      "exitCode": 0
+    }
+  ],
+  "studioHostTests": {
+    "passed": 334,
+    "failed": 0,
+    "skipped": 0
+  },
+  "existingFrozenScience": {
+    "receipt": "validation/amr/results/rz-amr-torque-runtime-20261004/summary.json",
+    "commit": "00db019149962011f29f12917740ed2b3584eeaa",
+    "evolutions": 9,
+    "actualCheckpointRestarts": 9,
+    "endpoint": 0.02,
+    "maxMassRelativeDrift": 0,
+    "maxEnergyRelativeDrift": 0,
+    "sameBinary": true,
+    "repeatedThisNode": false
+  },
+  "noCoreBuildOrConfigure": true,
+  "noNewScienceEvolution": true,
+  "cudaQualified": false,
+  "fullRzScienceQualified": false,
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/o7-jeans-native-20261005",
+  "sourceSha256": {
+    "studio/host/buildProfile.ts": "2114ccb05271dfe1a51ec46a688b4bf874198755e72f4726c3e15bde97e9a463"
+  }
+}

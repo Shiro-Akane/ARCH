@@ -1,0 +1,24 @@
+{
+  "baseHead": "6404696f52be1b62ddd59372ae7f3f6ee2b90628",
+  "dirtyInputs": {
+    "src/amr/exchange/CoordinateSeamPlan.h": "1cfdda1fa84a6661ac4a3eb1004f6d4ff975148aaf568454bddd64d67e4ce7b8",
+    "tests/host/amr/test_amr_operation_plans.cpp": "25c330dbe65fe6e9943e194fb6521153bd9dd749cca49ec4aa9801d498cd0257"
+  },
+  "binarySha256": "72dbac31902ac5675876d361b1d251aaf75c50bcd2afff4f39cdb437e9d4f6f0",
+  "finalSourceAfterBuild": "Only comment updates in CoordinateSeamPlan.h; executable code unchanged.",
+  "test": "amr_operation_plans 1/1 PASS",
+  "scope": [
+    "real uniform and mixed L0/L1 axis ghost transfer",
+    "r/phi odd; scalar/z even",
+    "unchanged z donor; no half-turn",
+    "nonzero inner radius no axis transfer",
+    "existing polar/spherical uniform/mixed seam regression"
+  ],
+  "initialFailure": "New mixed fixture omitted lrefinemax=1; corrected. Initial ctest.log retained.",
+  "unverified": [
+    "production RZ dispatch/epoch integration",
+    "CUDA execution",
+    "RZ conservative migration/reflux",
+    "evolution and scientific budgets"
+  ]
+}

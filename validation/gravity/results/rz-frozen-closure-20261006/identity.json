@@ -1,0 +1,167 @@
+{
+  "status": "PRIVATE_CPU_PRODUCTION_OWNER_QUALIFICATION_PUBLIC_GATES_UNCHANGED",
+  "delivery_parent": "1f743efd7cf7d0793a766f3c2cd4fdca1bc9cadd",
+  "snapshot_base": "326626cb1f51dc82ad78c5d59238b07e84d1cbbc",
+  "core_contract": "4639774fe3c94ae27b3e831d0f0b9d6340de34fd",
+  "closure_ref": "b466ce0216928fee56878afe43aae9e8a1614f25",
+  "patch": "validation/gravity/candidates/rz-external-production-binding-20261006.patch",
+  "patch_sha256": "dc1ec77c6ee5034f93ea45b309b1dbc311ac7be86d56b9baf36fb158d58ad97d",
+  "changed_files": [
+    {
+      "path": "cmake/dependencies/Dependencies.cmake",
+      "base_sha256": "4de97f37d9a40402a76c8db369a36df14292db4fc4d042272bd0e169ed5379f4",
+      "candidate_sha256": "3e5bbfd8ac0f8861e4326094b27575ee3a2bf91073c2c59a1cb8cb79a72aac75"
+    },
+    {
+      "path": "cmake/tests/HostTests.cmake",
+      "base_sha256": "ef87e32ba04ef141a9865c3303a33558025d863672b217f769a9daf2670f9f47",
+      "candidate_sha256": "3088dbcf2c8dfba4ee3f51b2a1ffadc0bfc4a4030319a68977de31af0cfc5582"
+    },
+    {
+      "path": "src/amr/flux/FluxRegister.h",
+      "base_sha256": "1b971021f534b93b43afd3bde8f1bd30e5f4e5110cf32953117b171d984afea8",
+      "candidate_sha256": "1c32db853209857a9b2df4b5a24dee26af3f9e31df614d11ff6038387e973441"
+    },
+    {
+      "path": "src/driver/runtime/DriverRegrid.cpp",
+      "base_sha256": "c61ca4a9235d71d475cf1eacd9663a28d915a66f51ce06ea880fc7051b3facb5",
+      "candidate_sha256": "3aaff26f39d22e6fd1929a494697ca98b35102daf21e91abdce646ac81f89c45"
+    },
+    {
+      "path": "src/driver/runtime/DriverRuntime.cpp",
+      "base_sha256": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "candidate_sha256": "757443874bf2a651e6b9068fd26bcc71aebb281eb0495417bdc9673b05c6ee3b"
+    },
+    {
+      "path": "src/driver/runtime/DriverRuntime.h",
+      "base_sha256": "3ecb3b649afc7e3c16fa3472d7d9dd5bdd7d1ece5b4f4b7fc68dc8a3dec0edcf",
+      "candidate_sha256": "34d82ef24027bbf911e5378bcdf8ecf1a1b9b8e2fe9553efc7cddaa05ac54edc"
+    },
+    {
+      "path": "src/driver/runtime/StateResidency.h",
+      "base_sha256": "7d6e0c8d75a48db04946be616605a6b129815cd245e7e2c91244beb48cfc260e",
+      "candidate_sha256": "3d76497796d39c0af90cd1a12467af5544fa0e9ca6decd723ea9aeddb93b28f2"
+    },
+    {
+      "path": "src/driver/stages/RzExternalStage.h",
+      "base_sha256": null,
+      "candidate_sha256": "69cd81d779f5aa09865afb109c0153a03ccfedbeb175ebfd085706c81b945fc2"
+    },
+    {
+      "path": "src/numerics/flux/FluxHLL.h",
+      "base_sha256": "ff4ee12a30ef0e2b00c40893c3116ce5404fb9ec376700a7cc6a080d03c9e001",
+      "candidate_sha256": "bae0d5299daee2c29820d8b3aa888f781c2b64cff7af5a1c8ccac0b232533e97"
+    },
+    {
+      "path": "src/numerics/flux/FluxHLLC.h",
+      "base_sha256": "dc47f3df2d675703f9b14d5cbc742d8134c506c51cc69fa8212812a8ddbce487",
+      "candidate_sha256": "7c9a9e9ee315be42ec749aa8c9dda03b21956a65aa140adc0de0d8cec2f5ac81"
+    },
+    {
+      "path": "src/numerics/flux/FluxRoe.h",
+      "base_sha256": "31009c435450d2f5ef1cd2e8b49532d3f5f1f546b8b6e7f4323231d615e6fc2f",
+      "candidate_sha256": "d5c0b2a79fe0a62e99f0ef2f86f6fd8242ba15c33f20649d113f3cd55f908e27"
+    },
+    {
+      "path": "src/numerics/integrator/HydroGeometryBinding.h",
+      "base_sha256": "a04669fed5e350a1d6e977d8695880656054166b97fa3f5fd4637f406f805b96",
+      "candidate_sha256": "71e64685ecf14e504af82010cc4bff19fd494dcc5efd27a4c32fadacb7f724d8"
+    },
+    {
+      "path": "src/numerics/integrator/HydroSolverImpl.h",
+      "base_sha256": "0846fe10870be935f63d0bb3a988fcdb5e5c1629d7a6efd68856dc88cc215259",
+      "candidate_sha256": "f181f0d9b453b61c41af8bfbe871586fda076569954ceca17ec94aff0e05c061"
+    },
+    {
+      "path": "src/numerics/integrator/IHydroSolver.h",
+      "base_sha256": "6bddb0b3f67bef5ea13aa2c09b15516e5deacb3554ba63a17297052380a6c04f",
+      "candidate_sha256": "723bb8dd2f17b654482c793f1034d7ffb6375516ba63fecb541e20805f71cadc"
+    },
+    {
+      "path": "src/numerics/integrator/TimeIntegratorEuler.h",
+      "base_sha256": "39b9eaebaf208d3728aa1ceb76b298a6d52d065371dc720a95291c6a46eca187",
+      "candidate_sha256": "b1f562ce954b02b409496c0a87ac770d644a919c01eae06645e3c262dcaa5c6a"
+    },
+    {
+      "path": "src/numerics/integrator/TimeIntegratorHelper.h",
+      "base_sha256": "3cfbba65128a757c23fb78d068bdecb89715e44368bb5693bd294fd5af365199",
+      "candidate_sha256": "ace02ca81b6b3590f45b257f5896e40027599cdf60db2d55d13edab0ca39bfe4"
+    },
+    {
+      "path": "src/numerics/integrator/TimeIntegratorRK2.h",
+      "base_sha256": "5e11b11c511fb2f61a12757e64ad63e792e46c951bf89840b54e7ed82d5c7a24",
+      "candidate_sha256": "658e77e6c6fbfe07a089f59ff06b0a816fa967be1d4de9cf86ddb6a630b01300"
+    },
+    {
+      "path": "src/numerics/integrator/TimeIntegratorRK3.h",
+      "base_sha256": "9f8700251c5a40b770cdf0ac1120b84dfbec7978fda373fb1db84c2ad564e574",
+      "candidate_sha256": "5f165c7e63ddec166c50c8ce8284c302b3b8b0a7f82a1c669513cc0da41616eb"
+    },
+    {
+      "path": "src/numerics/reconstruction/Reconstruction.h",
+      "base_sha256": "607f7bd4b7160c0e116e3bb4959f108727107a79d7d06f75162ea3df51202222",
+      "candidate_sha256": "5a6a50212e0dd9e9dcc3dbc84af2a0a2b7ca179df109bd1aa6cfc0f3c423e103"
+    },
+    {
+      "path": "src/physics/gravity/ExternalGravity.h",
+      "base_sha256": "63d99e2e9674af5122cd7059772f1239adcd6e1ff28dff8e8041618d113e3b38",
+      "candidate_sha256": "15adaa7631d096f017a4da8d404ba616b9b867c2c009582906e34de5a9b04fd5"
+    },
+    {
+      "path": "src/physics/gravity/GravitySource.h",
+      "base_sha256": "cd494d036beb3a2f16a7eaff2a99ffa80a0938bac268d404096e258ee3c277e9",
+      "candidate_sha256": "9fa69541dbbf834c716a61d0102be5f56f6b3bf5e50084d4c360c82691447517"
+    },
+    {
+      "path": "src/physics/gravity/IGravityPolicy.h",
+      "base_sha256": "671ebb33a8a6bc57170dba6d65a34b503a3cee5b929dfea9b4d154e02e0b786a",
+      "candidate_sha256": "739dbdede495fd05817ba7175221f2653c38d880e124f0a8221cf4e0fc7ac222"
+    },
+    {
+      "path": "tests/host/grid/test_curvilinear_metrics.cpp",
+      "base_sha256": "6871278d097f8b5b59466d921c6e2a684b08cf3d0516373e2d9e8b76d2b14587",
+      "candidate_sha256": "51314b512a988395f0814e0c5b6c3705cf674de174968eab4883a7f386b39e5a"
+    }
+  ],
+  "candidate_source_root": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/source",
+  "build_directory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/build-cpu",
+  "target": "arch_curvilinear_metrics",
+  "executable": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/build-cpu/arch_curvilinear_metrics",
+  "executable_sha256": "660634245f2a0e2ade20558e4bfbc8680da2b3bcabecb2d4149bb10e68bde0c5",
+  "executable_kind": "internal production-owner fixture, NOT the public ARCH executable",
+  "compiler": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "cache_sha256": "32ee0512f0ca49c65df61089d22d1953602ca39ca32a45f34852ff139bc2b280",
+  "flags": [
+    "-O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -fno-math-errno -ffp-contract=off",
+    "-O3 -march=native -DNDEBUG -flto=auto -fno-fat-lto-objects",
+    "-O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -fno-math-errno -ffp-contract=off -fopenmp"
+  ],
+  "configure_options": [
+    "CMAKE_BUILD_TYPE=Release",
+    "ARCH_ENABLE_CUDA=OFF",
+    "ARCH_ENABLE_KLU=ON",
+    "ARCH_FETCH_SUITESPARSE=OFF",
+    "BUILD_TESTING=ON"
+  ],
+  "build_guard": {
+    "minimum_available_MiB": 4096,
+    "maximum_swap_growth_MiB": 256,
+    "build_parallelism": 28,
+    "timeout_seconds": 1800
+  },
+  "public_executables": {
+    "build-cpu/bin/ARCH": "32f7b13972ac9381076b06e04c581900065a246796e911bdd161479d86f31b8e",
+    "build-cuda/bin/ARCH": "1cbbd6952f4970f89ef5071b9e3f18d9ec619ec92824f0ad9928455f6e27eb53"
+  },
+  "architecture_audit": {
+    "canonical_root": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/source",
+    "command": "python3 tools/audit_architecture.py /home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-source-candidate-20261006/source",
+    "exit_code": 0,
+    "rules_modified": false
+  },
+  "raw_artifacts": "studio/.local/integration only; no raw HDF5, checkpoint, ELF or full logs committed",
+  "unchanged_owner_inputs": {
+    "src/driver/schedule/StageScheduler.h": "af35c88d907d1a3d847b514ca0f17c7d4b816ac611182eeb33ee71c81c0a3bb8",
+    "CMakeLists.txt": "52a5bf91cccb8265b5f060375b148f29cb20ad3f0893c021b2a349aee8d1a139"
+  }
+}

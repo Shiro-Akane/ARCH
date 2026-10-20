@@ -50,6 +50,18 @@ function(arch_configure_cuda_host_object target source debug_level)
 endfunction()
 """
 
+    def hydro_family_definitions(self, eos):
+        owner = "arch_cuda_backend_hydro_" + eos
+        return (f"target_compile_definitions({owner} PRIVATE ARCH_CUDA_HYDRO_FLUX_FAMILY1)\n"
+                f"target_compile_definitions({owner}_hll PRIVATE ARCH_CUDA_HYDRO_FLUX_FAMILY2)\n")
+
+    def hydro_family_objects(self, eos="ideal", eos_source="Ideal"):
+        owner = "arch_cuda_backend_hydro_" + eos
+        source = f"src/cuda/runtime/hydro/CudaBackendHydro{eos_source}.cu"
+        return (f"arch_configure_cuda_backend_object({owner} {source})\n"
+                f"arch_configure_cuda_backend_object({owner}_hll {source})\n"
+                + self.hydro_family_definitions(eos))
+
     def generated_route_files(self, kind="dense"):
         if kind == "custom":
             template = "cmake/templates/CudaCustomDenseRoute.cu.in"
@@ -124,6 +136,69 @@ target_sources(arch_cuda_backend PRIVATE $<TARGET_OBJECTS:${{route_target}}>)
             "src/numerics/burnsolver/BurnDispatch.h": '#include "Networks.h"\n',
             "src/numerics/burnsolver/Networks.h": '// fixture catalogue\n',
             "src/numerics/burnsolver/ode/ode_bd.h": '#include "external/Networks.h"\n',
+        })
+
+    def test_shared_flux_operators_cannot_import_gravity_through_bridge(self):
+        for operator in ("numerics/integrator/TimeIntegratorHelper.h",
+                         "numerics/diffusion/DiffFlux.h"):
+            for owner in ("HydroSourceBinding.h", "SelfGravity.h",
+                          "GravitySolveTypes.h", "NewSourceOwner.h"):
+                with self.subTest(operator=operator, owner=owner):
+                    self.assert_rejected_with({
+                        "src/" + operator: '#include "Bridge.h"\n',
+                        "src/Bridge.h": f'#include "physics/gravity/{owner}"\n',
+                        "src/physics/gravity/" + owner: '// fixture owner\n',
+                    }, "shared flux operators must not import concrete gravity ownership")
+
+    def test_shared_state_cannot_import_boundary_definition_indirectly(self):
+        for owner in ("BoundaryDiagnostics.h", "BoundaryFlux.h", "NewWallOwner.h"):
+            with self.subTest(owner=owner):
+                self.assert_rejected_with({
+                    "src/data/FluidState.h": '#include "Bridge.h"\n',
+                    "src/Bridge.h": f'#include "physics/boundary/{owner}"\n',
+                    "src/physics/boundary/" + owner: '// fixture owner\n',
+                }, "shared fluid storage must not import boundary implementations")
+
+    def test_hydro_interface_cannot_import_parser_through_value_bridge(self):
+        for parser in ("core/config/RuntimeParams.h", "io/ConfigParser.h"):
+            with self.subTest(parser=parser):
+                self.assert_rejected_with({
+                    "src/numerics/integrator/IHydroSolver.h": '#include "Values.h"\n',
+                    "src/numerics/integrator/Values.h": f'#include "{parser}"\n',
+                    "src/" + parser: '// fixture parser\n',
+                }, "Hydro interface must not import configuration parsing")
+
+    def test_actual_source_owner_and_forward_declared_attachments_are_allowed(self):
+        for operator in ("numerics/integrator/TimeIntegratorHelper.h",
+                         "numerics/diffusion/DiffFlux.h"):
+            for declaration in ("GravitySourceTypes.h", "IGravityPolicy.h"):
+                with self.subTest(operator=operator, declaration=declaration):
+                    files = {
+                        "src/" + operator: '#include "Bridge.h"\n',
+                        "src/Bridge.h": f'#include "physics/gravity/{declaration}"\n',
+                        "src/physics/gravity/" + declaration: '// borrowed interface/view\n',
+                    }
+                    self.assert_accepted(files)
+                    # A permitted interface cannot launder a concrete owner.
+                    self.assert_rejected_with({
+                        **files,
+                        "src/physics/gravity/" + declaration:
+                            '#include "SelfGravity.h"\n',
+                        "src/physics/gravity/SelfGravity.h": '// field owner\n',
+                    }, "shared flux operators must not import concrete gravity ownership")
+        self.assert_accepted({
+            "src/numerics/integrator/HydroSolverImpl.h":
+                '#include "TimeIntegratorHelper.h"\n'
+                '#include "physics/gravity/HydroSourceBinding.h"\n',
+            "src/numerics/integrator/TimeIntegratorHelper.h":
+                'template<class Source> void evaluate(Source& source);\n',
+            "src/physics/gravity/HydroSourceBinding.h": '// actual source owner\n',
+            "src/data/FluidState.h":
+                '#include <memory>\n'
+                'namespace arch::boundary { struct BoundaryFluxCaptureStorage; }\n'
+                'struct FluidState { std::shared_ptr<arch::boundary::BoundaryFluxCaptureStorage> capture; };\n',
+            "src/numerics/integrator/IHydroSolver.h": 'struct NumericsConfig;\n',
+            "src/physics/boundary/BoundaryDiagnostics.h": '// actual face owner\n',
         })
 
     def test_declaration_abi_cannot_import_eos_indirectly(self):
@@ -208,7 +283,7 @@ target_link_options(arch_build_contract INTERFACE
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
-        "src/core/config/RuntimeParams.h": "parser.GetBool",
+        "src/core/config/RuntimeParams.h": "arch::config::AnalyzeConfigurationInput; input.RequireDeclaredInputs();",
         "src/driver/schedule/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
@@ -287,7 +362,7 @@ target_link_options(arch_build_contract INTERFACE
         source = (ROOT / relative).read_text(encoding="utf-8")
         dependencies = {
             "src/cuda/common/CudaCommon.cuh": "// fixture device records\n",
-            "src/grid/GridMetrics.h": "// fixture shared metric interface\n",
+            "src/numerics/curvilinear/GridMetrics.h": "// fixture shared metric interface\n",
         }
         self.assert_accepted({**dependencies, relative: source})
         for mutation in (
@@ -297,6 +372,28 @@ target_link_options(arch_build_contract INTERFACE
                 source.replace("grid.x1_min, grid.x2_min", "grid.x2_min, grid.x1_min")):
             with self.subTest(mutation=mutation[-100:]):
                 self.assert_rejected_with({**dependencies, relative: mutation}, "formula-copy filename")
+
+    def test_gravity_pod_split_does_not_authorize_grid_import_into_launch_abi(self):
+        # The real source views remain annotation-only; an accidental Grid edge
+        # must still reject every declaration ABI that borrows these PODs.
+        relative = "src/physics/gravity/GravitySourceTypes.h"
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        interfaces = {
+            "src/cuda/runtime/hydro/CudaBackendHydro.h": '#include "physics/gravity/GravitySourceTypes.h"\n',
+            "src/cuda/runtime/diffusion/CudaBackendDiffusion.h": '#include "cuda/runtime/hydro/CudaBackendHydro.h"\n',
+            "src/cuda/common/CudaLaunchConfig.h": '#include "physics/gravity/GravitySourceTypes.h"\n',
+        }
+        dependencies = {
+            "src/core/ArchPortability.h": "#define ARCH_INLINE inline\n",
+            "src/grid/Grid.h": "struct Grid;\n",
+        }
+        self.assert_accepted({**dependencies, **interfaces, relative: source})
+        forbidden = {**dependencies, **interfaces,
+                     relative: source + '#include "grid/Grid.h"\n'}
+        for owner in interfaces:
+            self.assert_rejected_with(forbidden,
+                "launch/types declarations must not import grid or numerical operators: "
+                + owner.removeprefix("src/"))
 
     def test_diagnostics_and_comments_do_not_define_backend_rules(self):
         self.assert_accepted({
@@ -321,6 +418,31 @@ const char* explanation = R"note(physical boundary "outflow"
                  "boundary-rule duplication")):
             with self.subTest(source=source):
                 self.assert_rejected_with({"src/cuda/transport.cu": source}, expected)
+
+    def test_shared_wall_lookup_is_delegation_not_a_copied_boundary_rule(self):
+        path="src/cuda/hydro/kernels/HydroFaceKernel.cuh"
+        call="state.hydro_boundary.reflecting_side(direction, face_coordinate, lower, upper, wall_side);"
+        self.assert_accepted({path:"void face() {"+call+"}"})
+        for body in (call+'if (mode == "reflect") update();',
+                     call.replace("state.hydro_boundary", "local"),
+                     call.replace("face_coordinate", "guessed_face")):
+            with self.subTest(body=body):
+                self.assert_rejected_with({path:"void face() {"+body+"}"}, "boundary-rule duplication")
+        self.assert_rejected_with({"src/cuda/transport.cu":"void face() {"+call+"}"}, "boundary-rule duplication")
+
+    def test_device_poisson_reuses_only_the_original_executor_object(self):
+        sources=("tests/host/gravity/test_composite_poisson.cpp "
+                 "src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp "
+                 "src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/CompositeMultigrid.cpp "
+                 "src/numerics/multigrid/CompositeExecution.cpp src/physics/gravity/GravityBoundary.cpp")
+        declaration="add_executable(arch_composite_poisson "+sources+")"
+        link="target_link_libraries(arch_composite_poisson PRIVATE arch_cuda_gravity_execution CUDA::cudart)"
+        self.assert_accepted({"CMakeLists.txt":declaration,"cmake/Tests.cmake":link})
+        for bad_declaration,bad_link in ((declaration.replace("test_composite_poisson.cpp","other.cpp"),link),
+                (declaration.replace(sources,sources+" extra.cpp"),link),
+                (declaration,link.replace("arch_cuda_gravity_execution","arch_cuda_backend_core"))):
+            with self.subTest(link=bad_link):
+                self.assert_rejected_with({"CMakeLists.txt":bad_declaration,"cmake/Tests.cmake":bad_link},"canonical owner")
 
     def test_rejects_device_formula_copy(self):
         self.assert_rejected("src/cuda/diffusion_device.cuh", "double vie = iec * zbar;")
@@ -446,6 +568,93 @@ arch_configure_cuda_backend_object(arch_cuda_backend_amr_migration
             "cmake/Duplicate.cmake": registration,
         }, "only once per target")
 
+    def test_accepts_exact_hydro_flux_family_object_pairs(self):
+        for eos, eos_source in (("ideal", "Ideal"), ("helm", "Helm"),
+                                ("tabular3", "Tabular3"), ("tabular4", "Tabular4")):
+            with self.subTest(eos=eos):
+                self.assert_accepted({"CMakeLists.txt": self.object_helpers
+                                      + self.hydro_family_objects(eos, eos_source)})
+
+    def test_accepts_hydro_pair_definitions_in_a_separate_cmake_module(self):
+        definitions = self.hydro_family_definitions("ideal")
+        objects = self.hydro_family_objects().replace(definitions, "")
+        self.assert_accepted({"CMakeLists.txt": self.object_helpers + objects,
+                              "cmake/FamilyDefinitions.cmake": definitions})
+
+    def test_accepts_direct_canonical_hydro_flux_family_object_pair(self):
+        objects = self.hydro_family_objects().replace(
+            "arch_configure_cuda_backend_object(", "add_library(")
+        objects = objects.replace(" src/cuda/runtime/hydro/", " OBJECT src/cuda/runtime/hydro/")
+        self.assert_accepted({"CMakeLists.txt": objects})
+
+    def test_hydro_family_exception_rejects_a_third_source_owner(self):
+        self.assert_rejected_with({
+            "CMakeLists.txt": self.object_helpers + self.hydro_family_objects(),
+            "cmake/ExtraOwner.cmake":
+                "add_executable(copy src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)",
+        }, "multiple target owners")
+
+    def test_hydro_family_pair_does_not_authorize_an_unrelated_source(self):
+        objects = self.hydro_family_objects().replace(
+            "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu",
+            "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu")
+        self.assert_rejected_with({"CMakeLists.txt": self.object_helpers + objects},
+                                  "canonical owners")
+        self.assert_rejected_with({"CMakeLists.txt": self.object_helpers + objects},
+                                  "multiple target owners")
+
+    def test_hydro_family_pair_does_not_authorize_nonobject_compilation(self):
+        objects = self.hydro_family_objects().replace(
+            "arch_configure_cuda_backend_object(", "add_library(")
+        objects = objects.replace(" src/cuda/runtime/hydro/", " STATIC src/cuda/runtime/hydro/")
+        self.assert_rejected_with({"CMakeLists.txt": objects}, "multiple target owners")
+
+    def test_hydro_family_pair_rejects_duplicate_compilation_per_target(self):
+        for duplicate in (
+                "arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal "
+                "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)",
+                "target_sources(arch_cuda_backend_hydro_ideal_hll PRIVATE "
+                "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)"):
+            with self.subTest(duplicate=duplicate):
+                self.assert_rejected_with({
+                    "CMakeLists.txt": self.object_helpers + self.hydro_family_objects(),
+                    "cmake/Duplicate.cmake": duplicate,
+                }, "only once per target")
+
+    def test_hydro_family_targets_require_exact_private_family_definitions(self):
+        objects = self.hydro_family_objects()
+        expected = "target-private definitions"
+        for family in ("1", "2"):
+            marker = "ARCH_CUDA_HYDRO_FLUX_FAMILY" + family
+            for mutation in (
+                    objects.replace("PRIVATE " + marker, "PUBLIC " + marker),
+                    objects.replace("PRIVATE " + marker, "INTERFACE " + marker),
+                    objects.replace(marker, "ARCH_CUDA_HYDRO_FLUX_FAMILY" + ("2" if family == "1" else "1")),
+                    objects.replace(marker, marker + "=1"),
+                    objects.replace(marker, marker + " ARCH_CUDA_HYDRO_FLUX_FAMILY" + ("2" if family == "1" else "1")),
+                    objects.replace(marker, "OTHER_DEFINITION"),
+                    objects.replace(marker, "")):
+                with self.subTest(family=family, mutation=mutation):
+                    self.assert_rejected_with({"CMakeLists.txt": self.object_helpers + mutation},
+                                              expected)
+
+    def test_hydro_family_definition_cannot_be_missing_or_repeated_across_modules(self):
+        objects = self.hydro_family_objects()
+        definitions = self.hydro_family_definitions("ideal")
+        self.assert_rejected_with({"CMakeLists.txt": self.object_helpers
+                                  + objects.replace(definitions, "")},
+                                  "target-private definitions")
+        self.assert_rejected_with({"CMakeLists.txt": self.object_helpers + objects,
+                                  "cmake/DuplicateDefinitions.cmake": definitions},
+                                  "target-private definitions")
+
+    def test_unpaired_hydro_owner_still_requires_its_private_family_definition(self):
+        self.assert_rejected_with({"CMakeLists.txt": self.object_helpers
+                                  + "arch_configure_cuda_backend_object("
+                                  "arch_cuda_backend_hydro_ideal "
+                                  "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)"},
+                                  "target-private definitions")
+
     def test_accepts_exact_focused_production_object_reuse(self):
         self.assert_accepted({"CMakeLists.txt": self.object_helpers + """
 arch_configure_cuda_backend_object(arch_cuda_backend_amr_migration
@@ -526,7 +735,7 @@ arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
 
     def test_accepts_exact_burn_resource_object_links(self):
         for name, extra in (("policy", " src/core/files/FileFingerprint.cpp"),
-                            ("controller", "")):
+                            ("controller", " src/core/config/CompositionInput.cpp")):
             target = f"arch_cuda_burn_{name}_parity"
             source = f"tests/cuda/microphysics/burn/test_burn_{name}_parity.cu"
             definition = f"add_executable({target} {source}{extra})"
@@ -544,6 +753,40 @@ arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
                 with self.subTest(linkage=invalid_linkage, definition=invalid_definition):
                     self.assert_rejected_with({"CMakeLists.txt": invalid_definition,
                                                "cmake/Tests.cmake": invalid_linkage}, "canonical owner")
+
+    def test_runtime_params_requires_both_migrated_configuration_gates(self):
+        valid = self.protected["src/core/config/RuntimeParams.h"]
+        for mutation in (
+                valid.replace("arch::config::AnalyzeConfigurationInput", ""),
+                valid.replace("input.RequireDeclaredInputs();", ""),
+                "parser.GetBool"):
+            with self.subTest(mutation=mutation):
+                self.assert_rejected_with(
+                    {"src/core/config/RuntimeParams.h": mutation},
+                    "protected mainline authority changed: src/core/config/RuntimeParams.h")
+
+    def test_burn_controller_keeps_exact_helper_and_object_ownership(self):
+        definition = """add_executable(arch_cuda_burn_controller_parity
+            tests/cuda/microphysics/burn/test_burn_controller_parity.cu
+            src/core/config/CompositionInput.cpp)"""
+        linkage = """target_link_libraries(arch_cuda_burn_controller_parity PRIVATE
+            arch_cuda_backend_eos_helm arch_cuda_backend_eos_species
+            arch_cuda_backend_eos_utils arch_build_contract CUDA::cudart)"""
+        mutations = (
+            ("missing-helper", definition.replace("src/core/config/CompositionInput.cpp", ""), linkage),
+            ("replaced-helper", definition.replace("CompositionInput.cpp", "OtherInput.cpp"), linkage),
+            ("extra-backend", definition, linkage.replace("PRIVATE", "PRIVATE arch_cuda_backend_core")),
+            ("missing-object", definition, linkage.replace("arch_cuda_backend_eos_helm", "")),
+            ("replaced-object", definition, linkage.replace("arch_cuda_backend_eos_helm", "arch_cuda_backend_eos_tabular3")),
+            ("reordered-objects", definition, linkage.replace(
+                "arch_cuda_backend_eos_helm arch_cuda_backend_eos_species",
+                "arch_cuda_backend_eos_species arch_cuda_backend_eos_helm")),
+        )
+        for name, bad_definition, bad_linkage in mutations:
+            with self.subTest(mutation=name):
+                self.assert_rejected_with(
+                    {"CMakeLists.txt": bad_definition, "cmake/Tests.cmake": bad_linkage},
+                    "canonical owner")
 
     def test_accepts_module_host_helper_with_root_definition(self):
         self.assert_accepted({
@@ -765,14 +1008,22 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "arch_configure_cuda_backend_object("
                 "arch_cuda_backend_hydro_ideal "
                 "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)\n"
+                "arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal_hll "
+                "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)\n"
                 "arch_configure_cuda_backend_object("
                 "arch_cuda_backend_hydro_helm "
+                "src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)\n"
+                "arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm_hll "
                 "src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)\n"
                 "arch_configure_cuda_backend_object("
                 "arch_cuda_backend_hydro_tabular3 "
                 "src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)\n"
+                "arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3_hll "
+                "src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)\n"
                 "arch_configure_cuda_backend_object("
                 "arch_cuda_backend_hydro_tabular4 "
+                "src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)\n"
+                "arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4_hll "
                 "src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)\n"
                 "arch_configure_cuda_backend_object("
                 "arch_cuda_backend_diffusion "
@@ -791,14 +1042,20 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "src/cuda/runtime/burn/routes/tabular4/CudaBackendBurnTabular4DIso7.cu)\n"
                 "add_library(arch_cuda_backend STATIC runtime.cu "
                 "$<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal> "
+                "$<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal_hll> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_hydro_helm> "
+                "$<TARGET_OBJECTS:arch_cuda_backend_hydro_helm_hll> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3> "
+                "$<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3_hll> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4> "
+                "$<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4_hll> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_diffusion> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_exchange> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_amr_flux> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d_aprox13> "
                 "$<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_iso7>)\n"
+                + "".join(self.hydro_family_definitions(eos) for eos in
+                          ("ideal", "helm", "tabular3", "tabular4"))
         })
 
     def test_accepts_canonical_functional_host_objects(self):
@@ -824,14 +1081,16 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
         })
 
     def test_rejects_swapped_canonical_backend_object_source(self):
-        self.assert_rejected(
-            "CMakeLists.txt",
-            "function(arch_configure_cuda_backend_object target source)\n"
-            "  add_library(${target} OBJECT ${source})\n"
-            "endfunction()\n"
-            "arch_configure_cuda_backend_object("
-            "arch_cuda_backend_hydro_ideal "
-            "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu)\n")
+        for target in ("arch_cuda_backend_hydro_ideal", "arch_cuda_backend_hydro_ideal_hll"):
+            with self.subTest(target=target):
+                self.assert_rejected(
+                    "CMakeLists.txt",
+                    "function(arch_configure_cuda_backend_object target source)\n"
+                    "  add_library(${target} OBJECT ${source})\n"
+                    "endfunction()\n"
+                    "arch_configure_cuda_backend_object("
+                    + target + " "
+                    "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu)\n")
 
     def test_rejects_swapped_canonical_host_object_source(self):
         self.assert_rejected_with({
@@ -921,7 +1180,7 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "  impl_->runtime_counters.kernel_count += 2; return 1.0;\n"
                 "}\n"
                 "void CudaBackend::execute_hydro_stage() {\n"
-                "  launch_cuda_backend_hydro_stage(); quiesce();\n"
+                "  launch_cuda_backend_hydro_stage_batch(); quiesce();\n"
                 "  impl_->runtime_counters.kernel_count += 1;\n"
                 "}\n"
                 "void CudaBackend::execute_physical_boundary() {\n"
@@ -972,7 +1231,7 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "launch_cuda_backend_hydro_dt();"),
             "execute_hydro_stage": (
                 "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
-                "launch_cuda_backend_hydro_stage();"),
+                "launch_cuda_backend_hydro_stage_batch();"),
             "compute_diffusion_dt": (
                 "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
                 "launch_cuda_backend_diffusion_dt();"),
@@ -997,6 +1256,106 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                         "}\n"
                 }, f"CUDA bounded work must quiesce before completion: "
                    f"{function_name}")
+
+    physical_boundary_wrappers = """
+state::CompletionToken CudaBackend::execute_physical_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected)
+{
+    validate_hydro_batch_accesses(accesses, accesses.empty()
+        ? state::StateSlot::Current : accesses.front().slot);
+    return impl_->execute_physical_boundary_batch(accesses, version, expected,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+state::CompletionToken CudaBackend::execute_physical_boundary_batch(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    return impl_->execute_physical_boundary_batch(accesses, version, expected,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged boundary requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+"""
+    physical_boundary_impl_prefix = """
+state::CompletionToken CudaBackend::Impl::execute_physical_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected,
+    const BlockResolver& resolve)
+{
+"""
+    physical_boundary_impl_work = """
+    launch_cuda_backend_boundary_batch();
+    checked_quiesce("synchronize CUDA backend");
+    runtime_counters.kernel_count += kernels;
+    return expected;
+"""
+
+    def test_accepts_exact_physical_boundary_batch_impl_delegation(self):
+        owner = "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp"
+        self.assert_accepted({owner: self.physical_boundary_wrappers
+            + self.physical_boundary_impl_prefix + self.physical_boundary_impl_work + "}"})
+        # Keep the original direct single-owner recipe valid as well.
+        self.assert_accepted({owner:
+            "auto CudaBackend::execute_physical_boundary_batch() {"
+            "launch_cuda_backend_boundary_batch(); quiesce();"
+            "impl_->runtime_counters.kernel_count += kernels; }"})
+
+    def test_physical_boundary_delegate_requires_unique_same_file_impl(self):
+        owner = "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp"
+        impl = self.physical_boundary_impl_prefix + self.physical_boundary_impl_work + "}"
+        for bodies in ("", impl + impl, impl.replace("BlockResolver&", "OtherResolver&")):
+            with self.subTest(bodies=bodies):
+                self.assert_rejected_with({owner: self.physical_boundary_wrappers + bodies},
+                    "CUDA physical boundary delegate requires its unique Impl owner")
+        self.assert_rejected_with({owner: self.physical_boundary_wrappers,
+            "src/cuda/runtime/control/CudaBackendCore.cpp": impl},
+            "CUDA runtime function has the wrong functional owner")
+        for wrong_owner in ("src/cuda/runtime/control/CudaBackendCore.cpp",
+                            "src/cuda/transport.cu"):
+            with self.subTest(wrong_owner=wrong_owner):
+                self.assert_rejected_with({wrong_owner: self.physical_boundary_wrappers + impl},
+                    "CUDA runtime function has the wrong functional owner")
+
+    def test_physical_boundary_impl_requires_launch_fence_then_count(self):
+        owner = "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp"
+        launch = "launch_cuda_backend_boundary_batch();"
+        fence = 'checked_quiesce("synchronize CUDA backend");'
+        count = "runtime_counters.kernel_count += kernels;"
+        for work in (launch + count, fence + launch + count,
+                     launch + count + fence, launch + count + fence + count,
+                     "launch_cuda_backend_hydro_stage_batch();" + fence + count,
+                     launch + fence + count + launch):
+            with self.subTest(work=work):
+                self.assert_rejected_with({owner: self.physical_boundary_wrappers
+                    + self.physical_boundary_impl_prefix + work + "}"},
+                    "CUDA bounded work must quiesce before completion: execute_physical_boundary_batch")
+
+    def test_physical_boundary_delegate_rejects_wrong_resolvers_and_extra_work(self):
+        owner = "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp"
+        impl = self.physical_boundary_impl_prefix + self.physical_boundary_impl_work + "}"
+        wrappers = self.physical_boundary_wrappers
+        for changed in (
+                wrappers.replace("require_staged_boundary_transaction(transaction)",
+                                 "require_other_transaction(transaction)"),
+                wrappers.replace("return resolve_staged_block(staged, access);",
+                                 "return impl_->require_block(access);"),
+                wrappers.replace("access.slot != state::StateSlot::Current",
+                                 "access.slot != state::StateSlot::Next"),
+                wrappers.replace("accesses, version, expected,", "accesses, version, other,"),
+                wrappers.replace("    validate_hydro_batch_accesses(",
+                                 "    auto extra = 1 + 2; validate_hydro_batch_accesses("),
+                wrappers.replace("    auto& staged =", "    launch_extra_work(); auto& staged ="),
+                wrappers + wrappers):
+            with self.subTest(changed=changed):
+                self.assert_rejected_with({owner: changed + impl},
+                    "CUDA physical boundary delegate must retain exact committed/staged resolvers")
 
     def test_accepts_exact_scalar_batch_delegates(self):
         self.assert_accepted({
@@ -1088,7 +1447,7 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
         self.assert_rejected_with({
             "src/cuda/runtime/CudaBackend.cu":
                 "void CudaBackend::execute_hydro_stage() {\n"
-                "  launch_cuda_backend_hydro_stage(); quiesce();\n"
+                "  launch_cuda_backend_hydro_stage_batch(); quiesce();\n"
                 "  impl_->runtime_counters.kernel_count += 1;\n"
                 "}\n"
         }, "CUDA runtime function has the wrong functional owner")

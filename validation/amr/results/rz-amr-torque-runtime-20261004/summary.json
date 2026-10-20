@@ -1,0 +1,149 @@
+{
+  "authority": "86bec324018349c6d81df84a3cced3ed9f9a2792 \u00a78",
+  "baseCommit": "f2c19db2ffea07b4eefb17e8a7b858d6a455d2df",
+  "sourceDirtyAtBuild": true,
+  "archSha256": "1917385417c8f366dc9834a9946744f55556405b6a4b5f48578efd14db803020",
+  "sourceSha256": {
+    "src/amr/AMRControl.h": "c7528bb28827de3a50245efad38d29a2770a00b46eafaa58d00281c3fa16d9fe",
+    "src/amr/flux/AMRFluxRegistering.h": "1cd599b75d0bb0249f049518d36aea82b6871951150418729b3098b27533bb01",
+    "src/amr/flux/AmrFluxExecutionPlan.h": "4ac226adcd54f2505236ac8d2b7a9ac04f88c804bcd232436874f771f1ad7ce1",
+    "src/amr/flux/AmrFluxPlan.h": "9d28b9a712ad18d1dc71e95dd0499faee2e3f6948e745dbdd4c4011953e21c76",
+    "src/amr/flux/FluxRegister.h": "1b971021f534b93b43afd3bde8f1bd30e5f4e5110cf32953117b171d984afea8",
+    "src/cuda/amr/AmrFluxSurfaceKernels.cuh": "a4c27ca0e4d4cdb91f9e82ba48e0ba495bb32e4ae1cf23520d2d4aac9d25de59",
+    "src/cuda/runtime/control/CudaBackendResources.cpp": "7c25f88806fa3bc330e64ae595d46c36114626e4ecc45c80c44a61b1e065fd10",
+    "src/numerics/integrator/TimeIntegratorEuler.h": "39b9eaebaf208d3728aa1ceb76b298a6d52d065371dc720a95291c6a46eca187",
+    "src/numerics/integrator/TimeIntegratorHelper.h": "211544754a7133f677aa2fcb1b535920f8a694a716cac0c5e4b93539925a4fcc",
+    "src/numerics/integrator/TimeIntegratorRK2.h": "5e11b11c511fb2f61a12757e64ad63e792e46c951bf89840b54e7ed82d5c7a24",
+    "src/numerics/integrator/TimeIntegratorRK3.h": "9f8700251c5a40b770cdf0ac1120b84dfbec7978fda373fb1db84c2ad564e574",
+    "tests/host/amr/test_amr_flux_surface_plan.cpp": "b4c3eb771616b7c378d6c63ba6f03cab0f227c8c98e67b20fce55cd2541de8f9",
+    "tests/host/grid/test_curvilinear_metrics.cpp": "13b32d78a16ce8cc38353343058c0e08d342a2d05a6f50f9e38f4533d365da90"
+  },
+  "cpuRegression": {
+    "passed": 7,
+    "failed": 0,
+    "tests": [
+      "amr_flux_surface_plan",
+      "curvilinear_metrics",
+      "self_gravity_lifecycle",
+      "preview_api_contract",
+      "preview_session_contract",
+      "preview_full_model_contract",
+      "preview_mesh_geometry"
+    ]
+  },
+  "torqueRegistrationReflux": {
+    "runtimeCases": 8,
+    "directions": [
+      "radial",
+      "axial"
+    ],
+    "innerRadius": [
+      0,
+      1
+    ],
+    "stageWeight": [
+      1,
+      -0.375
+    ],
+    "maxRelativeAngularBudgetError": 2.62249e-18,
+    "threshold": 1e-12,
+    "cacheModeMismatchRejected": true,
+    "nativeGeometryMismatchRejected": true,
+    "compiledMetadataIndependentlyChecked": true
+  },
+  "frozenJeans": {
+    "contract": "uniform-lifecycle-1",
+    "evolutions": 9,
+    "actualCheckpointRestarts": 9,
+    "endpoint": 0.02,
+    "maxMassRelativeDrift": 0.0,
+    "maxEnergyRelativeDrift": 0.0,
+    "disabledOutputSolveCountsMatch": true,
+    "lanes": [
+      {
+        "dimension": 1,
+        "lane": "disabled",
+        "solves": 58,
+        "stage_solves": 42,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 1,
+        "lane": "output_only",
+        "solves": 58,
+        "stage_solves": 42,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 1,
+        "lane": "active",
+        "solves": 114,
+        "stage_solves": 84,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 2,
+        "lane": "disabled",
+        "solves": 114,
+        "stage_solves": 84,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 2,
+        "lane": "output_only",
+        "solves": 114,
+        "stage_solves": 84,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 2,
+        "lane": "active",
+        "solves": 218,
+        "stage_solves": 162,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 3,
+        "lane": "disabled",
+        "solves": 170,
+        "stage_solves": 126,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 3,
+        "lane": "output_only",
+        "solves": 170,
+        "stage_solves": 126,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      },
+      {
+        "dimension": 3,
+        "lane": "active",
+        "solves": 330,
+        "stage_solves": 246,
+        "mass_relative_drift": 0.0,
+        "energy_minus_nuclear_over_initial_gas": 0.0,
+        "restart_pass": true
+      }
+    ]
+  },
+  "cudaQualified": false,
+  "fullRzScienceQualified": false,
+  "rawDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-amr-torque-runtime-20261004"
+}

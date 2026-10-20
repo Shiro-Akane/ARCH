@@ -17,6 +17,8 @@ public:
     CompositeMultigrid(elliptic::CartesianMesh base,std::vector<elliptic::CompositeCell> cells,
         elliptic::BoundaryKind kind=elliptic::BoundaryKind::Periodic,
         std::shared_ptr<CompositeExecution> execution={});
+    CompositeMultigrid(elliptic::CartesianMesh base,std::vector<elliptic::CompositeCell> cells,
+        elliptic::CompositeBoundary boundary,std::shared_ptr<CompositeExecution> execution={});
     const elliptic::CompositePoisson& op() const { return levels_.front().op; }
     SolveResult solve(std::span<const double> rhs,SolveControl control);
     SolveReport solve(const Vector& rhs,SolveControl control);
@@ -25,6 +27,10 @@ public:
     void clear_initial_guess() noexcept { has_accepted_potential_ = false; }
     CompositeExecution& execution() const { return *execution_; }
     std::size_t level_count() const { return levels_.size(); }
+    // Read-only construction evidence; only this owner can derive coarse operators.
+    const elliptic::CompositePoisson& level_operator(std::size_t level) const {
+        return levels_.at(level).op;
+    }
     double mean(const Vector& x,int level=0);
     double norm(const Vector& x,int level=0);
     void project(Vector& x,int level=0);
@@ -34,8 +40,9 @@ private:
     struct Level {
         elliptic::CompositePoisson op;
         std::vector<int> parent;
-        Vector u,rhs,residual,scratch,face_values,weights,diagonal,boundary;
+        Vector u,rhs,residual,scratch,face_values,weights,diagonal,boundary,anchor_weights;
         Array<int> anchors;
+        Array<unsigned char> flux_boundaries;
         SparseArray faces,rows,restriction,prolongation;
         explicit Level(elliptic::CompositePoisson value):op(std::move(value)){}
     };
@@ -47,6 +54,8 @@ private:
     // The topology-owned solver may use only its last accepted solution as a
     // starting vector. Failed solves never publish a warm start.
     bool has_accepted_potential_ = false;
+    void build_levels(elliptic::CartesianMesh base,std::vector<elliptic::CompositeCell> cells,
+        const elliptic::CompositeBoundary* boundary,elliptic::BoundaryKind kind);
     void setup();
     void smooth(int level);
     void cycle(int level);

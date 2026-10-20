@@ -9,6 +9,10 @@
  * 1. Receive device-resident block state and boundary plans.
  * 2. Launch CUDA ghost and boundary transport for the active stage.
  * 3. Leave core hydro mathematics in the shared host/device policies.
+ * 4. Borrow only a completed sparse candidate prefix while preparing the
+ *    next immutable Native layer; no prefix accessor writes resident fields.
+ * 5. Lower final Native signed-axis/corner copies from the same logical plan;
+ *    their two ordered phases never relaunch ordinary outer physical seeds.
  */
 
 #pragma once
@@ -65,6 +69,28 @@ inline int flatten_boundary_checked(
     return static_cast<int>(index);
 }
 
+/** Lower one shared logical operation without defining a boundary policy.
+ * Ordinary plans and final-axis subsets use this same checked logical-cell
+ * flattening and component_mapping; padding and invented signs never enter.
+ */
+inline DeviceBoundaryTransfer compile_boundary_transfer(
+    const boundary::BoundaryOperation& operation, const DeviceGridView& grid)
+{
+    DeviceBoundaryTransfer transfer{};
+    transfer.logical_ordinal = operation.ordinal;
+    transfer.source_index = flatten_boundary_checked(grid, operation.source);
+    transfer.destination_index = flatten_boundary_checked(grid, operation.destination);
+    for (std::uint8_t field = 0; field < 5; ++field) {
+        transfer.conserved_signs[field] = boundary::component_mapping(
+            operation, static_cast<boundary::BoundaryFieldClass>(field)).sign;
+    }
+    transfer.conserved_signs[5] = boundary::component_mapping(
+        operation, boundary::BoundaryFieldClass::AllSpecies).sign;
+    transfer.species_sign = boundary::component_mapping(
+        operation, boundary::BoundaryFieldClass::AllSpecies).sign;
+    return transfer;
+}
+
 ARCH_INLINE double boundary_signed_copy(
     double value, std::int8_t sign) noexcept
 {
@@ -99,24 +125,8 @@ inline DeviceCompiledBoundaryPlan compile_boundary_plan(
     for (std::size_t phase = 0; phase < compiled.phases.size(); ++phase)
         compiled.phases[phase] = plan.phases()[phase];
     compiled.transfers.reserve(plan.operations().size());
-    for (const auto& operation : plan.operations()) {
-        DeviceBoundaryTransfer transfer{};
-        transfer.logical_ordinal = operation.ordinal;
-        transfer.source_index = detail::flatten_boundary_checked(
-            grid, operation.source);
-        transfer.destination_index = detail::flatten_boundary_checked(
-            grid, operation.destination);
-        for (std::uint8_t field = 0; field < 5; ++field) {
-            transfer.conserved_signs[field] = boundary::component_mapping(
-                operation,
-                static_cast<boundary::BoundaryFieldClass>(field)).sign;
-        }
-        transfer.conserved_signs[5] = boundary::component_mapping(
-            operation, boundary::BoundaryFieldClass::AllSpecies).sign;
-        transfer.species_sign = boundary::component_mapping(
-            operation, boundary::BoundaryFieldClass::AllSpecies).sign;
-        compiled.transfers.push_back(transfer);
-    }
+    for (const auto& operation : plan.operations())
+        compiled.transfers.push_back(detail::compile_boundary_transfer(operation, grid));
     return compiled;
 }
 inline cudaError_t validate_boundary_launch(

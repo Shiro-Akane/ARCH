@@ -14,12 +14,16 @@
 
 #pragma once
 
+#include "core/config/ConfigurationIdentity.h"
+#include "core/config/RuntimeConfiguration.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "driver/stages/DriverMacroStep.h"
 #include "driver/stages/DriverStages.h"
 #include "driver/stages/GravityStage.h"
 #include "driver/io/DriverIO.h"
 #include "amr/refinement/RefinementThermodynamics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/state/StateAdmissibility.h"
 #include <iostream>
 #include <limits>
@@ -40,8 +44,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const Numerics::IHydroSolver* hydro,
                     void (*integrator_solve)(amr::AMRControl&, double, BCHandler&, const Physical::Gravity::IGravityPolicy*, const Numerics::IHydroSolver*, const NumericsConfig&),
                     const std::string& integrator_name,
-                    const SimConfig &config,
-                    const SpeciesManager &specs,
+                    const arch::config::RuntimeConfiguration &runtime_config,
                     const RunState &start_state,
                     const io::CheckpointProvenance &checkpoint_provenance,
                     const arch::dispatch::ResolvedExecutionPlan* resolved_plan = nullptr,
@@ -49,6 +52,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const arch::dispatch::BackendResolution* backend_resolution = nullptr,
                     arch::dispatch::StartupOrder* startup_order = nullptr)
 {
+    const auto& config = runtime_config.config();
+    const auto& specs = runtime_config.species();
     if (resolved_plan == nullptr || execution_requirements == nullptr
         || backend_resolution == nullptr || startup_order == nullptr) {
         throw std::invalid_argument(
@@ -63,9 +68,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     using arch::scheduler::ScopedStageBinding;
     SimulationController ctrl(config, start_state);
     BCHandler bc_handler{config};
+    bc_handler.bind(eos, specs);
+    bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+    // Runtime binds the receipt measure before initial budgets are combined.
+    // Construction publishes no topology; the real bound EOS/BC initialization
+    // below remains the sole authority for completed Native ghosts.
+    DriverRuntime runtime(amr_ctrl, bc_handler, config, specs, ctrl);
     if (!config.io.restart)
         for (int id : amr_ctrl.tree->GetActiveBlocks()) ctrl.repairs.combine(amr_ctrl.pool->GetBlock(id).fluid_state.stage_repairs);
-    DriverRuntime runtime(amr_ctrl, bc_handler, config, specs, ctrl);
     amr::BindRefinementThermodynamics(*amr_ctrl.tree, eos);
     const auto p_func = [](const FluidVector& U, const double* Xi, const void* context) -> double {
         return static_cast<const EosPolicy*>(context)->get_pressure(U, Xi);
@@ -84,7 +94,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         return U.rho * sound_speed * sound_speed / pressure;
     };
-    DriverIO output(runtime, ctrl, checkpoint_provenance, p_func, t_func, gamma1_func, &eos);
+    // Freeze final typed controls, accepted EOS and actual executable/backend
+    // provenance once. Each published output reuses this immutable run record.
+    const auto plot_source_identity = arch::config::make_plot_source_identity(
+        config, checkpoint_provenance, *resolved_plan,
+        backend_resolution->resolved_backend);
+    DriverIO output(runtime, ctrl, checkpoint_provenance, plot_source_identity,
+                    p_func, t_func, gamma1_func, &eos);
     CpuStageTimings cpu_stages;
     const bool time_cpu_stages = backend_resolution->resolved_backend
         == arch::dispatch::ComputeBackend::Cpu;
@@ -120,7 +136,15 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
+    // JENS startup workflow: the CPU consumes accepted Host Current before
+    // backend construction; CUDA first uploads and publishes resident Current,
+    // then the same Runtime owner acquires its accepted Device lease. Neither
+    // route borrows stale Host storage after a device publication.
+    if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cpu)
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
     start_compute_backend(runtime, eos, *resolved_plan, *backend_resolution, *startup_order);
+    if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cuda)
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
     GravityStage gravity_stage(runtime, gravity);
     {
         CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
@@ -166,50 +190,54 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             CpuStageTimer timed(cpu_stages, CpuStage::Timestep, time_cpu_stages);
             return calculate_timestep_candidates(runtime, workspace, eos, resolved_plan);
         }();
-        const double dt_computed = ctrl.calculate_next_dt(
-            std::min({candidates.hydro, candidates.diffusion_sts, gravity_stage.timestep()}), dt_burn_global);
-        dt_burn_global = 1e99;
-        const double dt = ctrl.sync_dt(dt_computed);
-        auto stage_context = runtime.stage_context();
-        stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
-        stage_context.step_start_time = ctrl.t_current;
-        stage_context.step_dt = dt;
-        ScopedStageBinding stage_binding(stage_context, runtime.handles());
-
-        // Symmetric split: Burn(dt/2), Diffusion(dt/2), Hydro(dt), Diffusion(dt/2), Burn(dt/2).
-        if (has_burn) {
-            CpuStageTimer timed(cpu_stages, CpuStage::BurnFirst, time_cpu_stages);
-            (void)arch::scheduler::execute_burn_first_lane(stage_context, runtime.handles(),
-                [&](arch::state::CompletionToken token) {
-                    return execute_burn_half(runtime, workspace, eos, burn, BurnHalf::First,
-                                             0.5 * dt, dt_burn_global, token);
+        // Freeze scalar caps from this accepted entry before any rejected
+        // macro invalidates gravity. Regrid/output above are not replayed.
+        const double accepted_dt_cap=std::min({candidates.hydro,candidates.diffusion_sts,gravity_stage.timestep()});
+        const double dt=execute_driver_macro_attempts(runtime,ctrl,dt_burn_global,accepted_dt_cap,
+            [&](double dt,std::uint64_t attempt_index) {
+            bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+            auto stage_context = runtime.stage_context();
+            stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
+            stage_context.step_start_time = ctrl.t_current;
+            stage_context.step_dt = dt;
+            // Plan owners set input/output physical clocks through this one hook.
+            // Configuration changes the callback snapshot only: actual BC, exchange
+            // and scientific acceptance retain their existing scheduler owners.
+            stage_context.configure_boundary_context = [&](double time,
+                arch::boundary::BoundaryPurpose purpose) {
+                bc_handler.configure_stage(time, purpose);
+            };
+            if (bc_handler.has_user())
+                stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
+                    arch::boundary::BoundaryPurpose purpose) {
+                    stage_context.configure_boundary_context(time, purpose);
+                    runtime.ensure_fluid_ghosts(slot);
+                };
+            runtime.bind_boundary_accounting(stage_context);
+            ScopedStageBinding stage_binding(stage_context, runtime.handles());
+            execute_driver_macro_step(runtime,stage_context,hydro,has_burn,
+                [&](BurnHalf half,double half_dt,arch::state::CompletionToken token) {
+                    return execute_burn_half(runtime,workspace,eos,burn,half,half_dt,dt_burn_global,token);
+                },
+                [&](double half_dt) {
+                    advance_diffusion(runtime,workspace,stage_context,eos,resolved_plan,
+                        ctrl.step_count,half_dt,candidates.diffusion_forward_euler);
+                },
+                [&](double hydro_dt) {
+                    advance_hydro(runtime,workspace,stage_context,resolved_plan,hydro_dt,
+                        integrator_solve,gravity,hydro);
+                },
+                [&](CpuStage stage,auto&& execute) {
+                    CpuStageTimer timed(cpu_stages,stage,time_cpu_stages);execute();
                 });
-        }
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Diffusion, time_cpu_stages);
-            advance_diffusion(runtime, workspace, stage_context, eos, resolved_plan,
-                              ctrl.step_count, 0.5 * dt, candidates.diffusion_forward_euler);
-        }
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Hydro, time_cpu_stages);
-            advance_hydro(runtime, workspace, stage_context, resolved_plan, dt,
-                          integrator_solve, gravity, hydro);
-        }
-        {
-            CpuStageTimer timed(cpu_stages, CpuStage::Diffusion, time_cpu_stages);
-            advance_diffusion(runtime, workspace, stage_context, eos, resolved_plan,
-                              ctrl.step_count, 0.5 * dt, candidates.diffusion_forward_euler);
-        }
-        if (has_burn) {
-            CpuStageTimer timed(cpu_stages, CpuStage::BurnSecond, time_cpu_stages);
-            (void)arch::scheduler::execute_burn_second_lane(stage_context, runtime.handles(),
-                [&](arch::state::CompletionToken token) {
-                    return execute_burn_half(runtime, workspace, eos, burn, BurnHalf::Second,
-                                             0.5 * dt, dt_burn_global, token);
-                });
-        }
+            });
         gravity_stage.invalidate();
         ctrl.advance(dt);
+        // Numerical state/time are already accepted. Durable diagnostics are
+        // reported afterwards; an I/O error stops the run without fake rollback.
+        gravity_stage.flush_committed_diagnostics();
+        bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+        runtime.ensure_jeans_resolution(ctrl.step_count, ctrl.t_current);
         advanced_any_step = true;
         ctrl.print_step(dt, candidates.hydro, has_burn ? dt / 2.0 : 0.0,
                         candidates.diffusion_forward_euler, has_burn, has_diff);
@@ -217,7 +245,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (advanced_any_step && (ctrl.reached_target_time() || ctrl.reached_step_limit())) {
         {
             CpuStageTimer timed(cpu_stages, CpuStage::Gravity, time_cpu_stages);
-            gravity_stage.prepare_current(ctrl.t_current, false);
+            // A terminal checkpoint is also restartable with a later target
+            // time. Its boundary solve uses the same cold unsaved numerical
+            // history policy as a scheduled durable checkpoint.
+            gravity_stage.prepare_current(ctrl.t_current, true);
         }
         std::cout << ">>> Terminal time/step limit reached. Forcing final output..." << std::endl;
         output.write_plot(gravity_stage.plot_fields());

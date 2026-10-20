@@ -1,0 +1,38 @@
+{
+  "sourceHead": "869ae3d3d30e8a9b16e377112af73e737b6c736a",
+  "sourceDirtyAtValidation": false,
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "buildType": "Release",
+  "cudaEnabled": false,
+  "sourceInputCount": 592,
+  "sourceInputsSha256": "09d2e41cdf415e46a7535765d46c03e748fa24a02097af0e944e650fe02813aa",
+  "executableSha256": "f82bb7ff16c4acf54ae84970b9b403dce3d0370a468d241169519b3bfd1f6a44",
+  "executableSize": 7400456,
+  "executableMtimeNs": 1791054008613455683,
+  "buildResult": "PASS; 53 Ninja steps; current Driver/Runtime/Init/IO/models rebuilt",
+  "buildParallelism": 8,
+  "compiler": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "limitations": [
+    "Internal RZ is not published by runtime/API",
+    "Not CPU physics acceptance or CUDA qualification"
+  ],
+  "apiTests": {
+    "names": [
+      "preview_api_contract",
+      "preview_full_model_contract",
+      "configuration_api_contract",
+      "configuration_entry_contract",
+      "configuration_v3_contract",
+      "preview_parameter_metadata",
+      "preview_cellular_2d",
+      "case_inspection_contract",
+      "preview_session_contract"
+    ],
+    "exitCode": 0,
+    "wallSeconds": 59.52569350200065
+  },
+  "sourceHeadAfter": "869ae3d3d30e8a9b16e377112af73e737b6c736a",
+  "sourceDirtyAfter": false,
+  "sourceInputScope": "592 tracked files under src/simulation/include/cmake plus CMakeLists/Presets; conservative source context digest, not exact compiler transitive dependency discovery",
+  "managedStudioBinary": "This validates build-cpu/bin/ARCH; does not silently replace another Project Session binary/build-studio-cpu or Studio Build Manifest"
+}

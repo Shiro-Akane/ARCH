@@ -1,0 +1,2595 @@
+{
+  "schema_version": "arch-modernization-r32-evidence-v1",
+  "date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "branch": "compute/optim",
+  "head": "34a6ccd5f409ec14ec11c4b798e5795e7592f26f",
+  "status": "R3.2_COMPLETE",
+  "stage3_status": "IN_PROGRESS",
+  "R3.3_status": "NOT_STARTED",
+  "stage4_status": "NOT_STARTED",
+  "scope": "Two bounded original/scratch single-TU CUDA compilation diagnostics; original complete RKL leaf acceptance; inactive configuration identity assessment using actual controlled loader and artificial checkpoint reader, no production implementation.",
+  "scientific_contract": {
+    "changed": false,
+    "O7_changed": false,
+    "FP_flags_changed": false,
+    "application_evolution_runs": 0,
+    "RZ_long_runs": 0,
+    "full_engineering_builds": 0,
+    "original_RKL_leaf_tests": 1,
+    "ablation_scientific_PASS": false,
+    "all_route_fallback_absence_claim": false
+  },
+  "identity": {
+    "frozen_prior_files": {
+      "docs/development/modernization/R23PerformanceAndConfiguration-20261012.json": "b288bb4fca034de73ae31f87e9a0de724b03e396c9bd27cc4631253004f8d27e",
+      "docs/development/modernization/R31AuditTriage-20261013.json": "8647c95f4da6474d383bc36b42d24d8a48c8ce18dc7908f9ab14ee98d23bd330",
+      ".github/workflows/ci.yml": "7139a124c7bf6b907fd0e73d2db93a3312561e2dc9066cd8b2ca7bdb751ccce8"
+    },
+    "production_binaries_sha256_unchanged": {
+      "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH": "a1c76c6ff4c1833b79ff692b460805013b2695d8e9d492e36abcabb039fd57e9",
+      "/home/shiroakane/ARCH/build-rt-cuda/bin/ARCH": "0828b3c8644333d446a044b555c15681e9277a10217d3fac6e129ccf14ba861c"
+    },
+    "protected_source_regions_unchanged": [
+      "src",
+      "include",
+      "simulation",
+      "studio",
+      "cmake",
+      "tests",
+      "tools",
+      ".agents",
+      ".gitattributes"
+    ],
+    "source_tree_oids": {
+      "src": "e0757c64defadb6bbad2912c1452dbd21662d449",
+      "include": "40fd2cffc1323f1b08a918b4a2200574ed51e484",
+      "simulation": "31f82322521d9d207a8ac1de6249d70d80f9e34d",
+      "studio": "de9e37c3c23fb92c8560ae48bb71c1ba15d95d50",
+      "cmake": "6fa71aba8cca8a86e7904afa0bcea681bd03c73b",
+      "tests": "826a5ef701b9ab6ec347670272bc2ce3df41cfc5",
+      "tools": "08559146a4501eff0640d13ad50f2a715aa61a98"
+    },
+    "RKL_source_sha256": "90eeb8795a0bfad75d9169fd8807429fdf85757df6e5bdf0dd389a308bac719e",
+    "prior_work_preserved": true
+  },
+  "rkl": {
+    "attempt_count": 2,
+    "attempt_cap": 2,
+    "observation_limits_seconds": [
+      600,
+      300
+    ],
+    "compiler": "NVCC12.3 g++12 sm86 -O3 original strictFP",
+    "original_recipe": {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/recipe.json",
+      "sha256": "54a8beb790e8cb29b62c5c82c8b087d78f8d73340e30b0d8ec1d645016467605",
+      "bytes": 28687
+    },
+    "ablation_recipe": {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/recipe.json",
+      "sha256": "9e6ac9853eb7d2841fe125ebaa510bb37f12774d6e32875fb03cc41db1f21e8b",
+      "bytes": 2863
+    },
+    "phase_analysis": {
+      "status": "PASS_MEASURED_PHASE_ATTRIBUTION",
+      "actual_nvcc_phase_seconds": {
+        "g++-12 (preprocessing 1)": 0.442967,
+        "g++-12 (preprocessing 4)": 0.31941699999999995,
+        "cudafe++": 8.270006799999999,
+        "cicc": 256.8173906,
+        "ptxas": 144.59025,
+        "fatbinary": 0.343584,
+        "g++-12 (compiling)": 29.172300800000002,
+        "nvcc (driver)": 0.0114062
+      },
+      "phase_total_seconds": 439.9673224,
+      "cicc_plus_ptxas_phase_seconds": 401.40764060000004,
+      "cicc_plus_ptxas_fraction_of_reported_phase_total": 0.9123578506020429,
+      "phase_total_is_wall_time": false,
+      "outer_wall_seconds": 428.1072695920002,
+      "dryrun_prefix_rows_excluded": 8,
+      "dryrun_exclusion_reason": "NVCC --dryrun with --time emitted noncompilation administrative timings before actual append; original CSV preserved, filter excludes first complete8-row driver sequence.",
+      "object_sha256": "aa3ea25d1f133783099e4d5caf8f2ba35410f724aca23c3a0b85099a947fefb5",
+      "original_R2_object_sha256": "dd0598b154cf160ce5cc1fd19082240d968607de45645927547ca638734eb508",
+      "object_byte_identical_to_R2": false,
+      "numerical_flags_changed": false,
+      "profile_flags": [
+        "--time",
+        "--keep",
+        "--keep-dir",
+        "-v"
+      ],
+      "compiler_attempt": 1,
+      "full_build": false,
+      "numerical_PASS": false
+    },
+    "independent_ablation_comparison": {
+      "schema": "ARCH R3.2 independent read-only diagnostic comparison v1",
+      "status": "ACCEPT_DIAGNOSTIC_ONLY",
+      "checks": {
+        "only_two_specified_template_calls_replaced": true,
+        "original_source_hash_matches_recipe": true,
+        "scratch_source_hash_matches_recipe": true,
+        "all_flags_equal_except_six_source_output_observation_path_values": true,
+        "numeric_and_architecture_flags_equal": true,
+        "tabular3_and_tabular4_kernel_specializations_absent_in_ablation": true,
+        "ideal_gas_and_stellar_override_kernel_families_retained": true,
+        "ablation_scientifically_accepted": false,
+        "production_optimization_adopted": false
+      },
+      "changed_source_lines": [
+        1036,
+        1043
+      ],
+      "removed_calls": [
+        "    verify_tabular_diffusion_latch(eos3, 2);",
+        "    verify_tabular_diffusion_latch(eos4, 4);"
+      ],
+      "numeric_architecture_flags": [
+        "--generate-code=arch=compute_86,code=[compute_86,sm_86]",
+        "-Xcompiler=-march=native",
+        "--fmad=false",
+        "--ftz=false",
+        "--prec-div=true",
+        "--prec-sqrt=true",
+        "-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off"
+      ],
+      "profiles": [
+        {
+          "profile": 1,
+          "outer_elapsed_seconds": 428.1072695920002,
+          "exit_code": 0,
+          "excluded_initial_dryrun_rows": 8,
+          "actual_nvcc_phase_sum_seconds": 439.9673224,
+          "phase_seconds": {
+            "g++-12 (preprocessing 1)": 0.442967,
+            "g++-12 (preprocessing 4)": 0.31941699999999995,
+            "cudafe++": 8.270006799999999,
+            "cicc": 256.8173906,
+            "ptxas": 144.59025,
+            "fatbinary": 0.343584,
+            "g++-12 (compiling)": 29.172300800000002,
+            "nvcc (driver)": 0.0114062
+          },
+          "ptx_entries": 24,
+          "ptx_kernel_family_counts": {
+            "non_EOS_kernels_and_probes": 13,
+            "Tabular3D_FixedTableComposition": 3,
+            "Tabular4D_FixedTableComposition": 3,
+            "IdealGasView": 3,
+            "StellarOverrideProbeEos": 2
+          },
+          "ptx_sha256": "7240722d8b19f448f8316cabc50d0fb1d30d90c1cc214e94dfe74a65fcb5c275"
+        },
+        {
+          "profile": 2,
+          "outer_elapsed_seconds": 208.784283599,
+          "exit_code": 0,
+          "excluded_initial_dryrun_rows": 0,
+          "actual_nvcc_phase_sum_seconds": 213.4206333,
+          "phase_seconds": {
+            "g++-12 (preprocessing 1)": 0.345552,
+            "g++-12 (preprocessing 4)": 0.37479700000000005,
+            "cudafe++": 9.015208000000001,
+            "cicc": 126.7703047,
+            "ptxas": 52.388363299999995,
+            "fatbinary": 0.142254,
+            "g++-12 (compiling)": 24.3722949,
+            "nvcc (driver)": 0.0118594
+          },
+          "ptx_entries": 18,
+          "ptx_kernel_family_counts": {
+            "non_EOS_kernels_and_probes": 13,
+            "IdealGasView": 3,
+            "StellarOverrideProbeEos": 2
+          },
+          "ptx_sha256": "07327cf9117d57ace346f783b7906a6737c9d30fb2239daa34a0701475ae7373"
+        }
+      ],
+      "observed_seconds_original_minus_ablation": {
+        "outer_elapsed_seconds": 219.3229859930002,
+        "nvcc_phase_sum_seconds": 226.5466891,
+        "cicc_seconds": 130.0470859,
+        "ptxas_seconds": 92.2018867
+      },
+      "bounded_conclusion": "Removing two template-triggering calls eliminated six Tabular3D/4D diffusion kernel specializations and reduced observed device-generation/assembly phase durations in this diagnostic sample. This supports contribution of the instantiated EOS test matrix to this TU cost; it does not isolate interpolation cost or prove any accepted optimization.",
+      "limits": [
+        "Ablation deliberately removes Tabular failure/recovery test coverage, cannot be used as a scientific PASS or production optimization, and must not replace the original test.",
+        "One original and one ablated compile on this machine cannot establish general full-build benefit, variance, or runtime improvement.",
+        "NVCC phase sums and external guarded wall time remain distinct measurement units; no percentage is a decomposition of wall time.",
+        "Compiler flags are preserved; changing source location can change generated anonymous-namespace symbol spelling, so family preservation is checked semantically."
+      ],
+      "document_review": {
+        "source_and_plan_links_checked": 14,
+        "source_and_plan_links_all_exist": true,
+        "identity_boundaries_checked": [
+          "raw text SHA is independently computed from LoadedInput raw_text",
+          "effective SHA includes canonical typed record and resolved runtime record",
+          "read_chk compares StateControlIdentity and checkpoint provenance separately before topology reconstruction"
+        ],
+        "identity_boundary_sources": [
+          "src/core/config/ConfigurationIdentity.cpp:316",
+          "src/core/config/ConfigurationIdentity.cpp:339",
+          "src/core/config/ConfigValidation.h:125",
+          "src/io/chk/ChkIO.cpp:162"
+        ],
+        "identity_boundary_specific_misstatement_found": false,
+        "scope": "Existence and focused source semantics only; not independent replay of identity probe or proof of all modes."
+      }
+    },
+    "original_full_leaf_acceptance": {
+      "status": "PASS_ORIGINAL_LEAF",
+      "records": [
+        {
+          "name": "link",
+          "command": [
+            "timeout",
+            "--signal=TERM",
+            "--kill-after=10s",
+            "60",
+            "/usr/bin/python3",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/run_memory_guarded.py",
+            "--min-available-mib",
+            "1536",
+            "--max-swap-growth-mib",
+            "256",
+            "--poll-seconds",
+            "0.5",
+            "--pressure-guard",
+            "--log",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r32-20261013/rkl-profile-1/link.guard.log",
+            "--",
+            "/usr/bin/g++-12",
+            "-O3",
+            "-march=native",
+            "-DNDEBUG",
+            "-flto=auto",
+            "-fno-fat-lto-objects",
+            "-fuse-ld=mold",
+            "-fno-fast-math",
+            "-fno-math-errno",
+            "-ffp-contract=off",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r32-20261013/rkl-profile-1/test_diffusion_rkl_parity.cu.o",
+            "-o",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r32-20261013/rkl-profile-1/arch_cuda_diffusion_rkl_parity",
+            "-L/usr/local/cuda-12.3/targets/x86_64-linux/lib/stubs",
+            "-L/usr/local/cuda-12.3/targets/x86_64-linux/lib",
+            "-Wl,-rpath,/usr/local/cuda-12.3/targets/x86_64-linux/lib",
+            "libarch_cuda_backend.a",
+            "libarch_diffusion_math.a",
+            "libarch_cuda_sparse_provider.a",
+            "_deps/suitesparse-build/KLU/libklu.a",
+            "_deps/suitesparse-build/AMD/libamd.a",
+            "_deps/suitesparse-build/COLAMD/libcolamd.a",
+            "_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+            "_deps/suitesparse-build/BTF/libbtf.a",
+            "-lm",
+            "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcudart.so",
+            "-ldl",
+            "-lcudadevrt",
+            "-lcudart_static",
+            "-lrt",
+            "-lpthread",
+            "-ldl"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.5859273339997344
+        },
+        {
+          "name": "original_leaf_acceptance",
+          "command": [
+            "timeout",
+            "--signal=TERM",
+            "--kill-after=10s",
+            "60",
+            "/usr/bin/python3",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/tools/run_memory_guarded.py",
+            "--min-available-mib",
+            "1536",
+            "--max-swap-growth-mib",
+            "256",
+            "--poll-seconds",
+            "0.5",
+            "--pressure-guard",
+            "--log",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r32-20261013/rkl-profile-1/original_leaf_acceptance.guard.log",
+            "--",
+            "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r32-20261013/rkl-profile-1/arch_cuda_diffusion_rkl_parity"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.5771488010000212
+        }
+      ],
+      "unchanged_libraries": [
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/libarch_cuda_backend.a",
+          "bytes": 360704470,
+          "sha256": "a11f589d119c24bf67896bae662feaae249d4c802d9046de7d05e11200f8d20f"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/libarch_diffusion_math.a",
+          "bytes": 37178,
+          "sha256": "f9a80679400ea4be8928062673be3fd1a1f621763bf0723fc20d6e8e6896c66b"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/libarch_cuda_sparse_provider.a",
+          "bytes": 299362,
+          "sha256": "471ef2914113dc0abbe09511b4e76d2d2e8370ad704f9556b35f38bd290839ae"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/KLU/libklu.a",
+          "bytes": 930648,
+          "sha256": "178944600fb9231da84d20317093a2ca27c15afe419764d154d1b2ea0d6c2fba"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/AMD/libamd.a",
+          "bytes": 193146,
+          "sha256": "c1b39adb51ced614eaf6dbaad0049da1616f753c85a7a400c1059c1c33c2bd03"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/COLAMD/libcolamd.a",
+          "bytes": 110214,
+          "sha256": "0e3140e0cbdf12b945649519b44b74008bc67131ac7a7d7492072d34b4e7abec"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+          "bytes": 32698,
+          "sha256": "4569ff99afeb04996cd1f85cae35838bfd362a888ecf00446392307510e700d6"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build-rt-cuda/_deps/suitesparse-build/BTF/libbtf.a",
+          "bytes": 53370,
+          "sha256": "40b2eac61f9cf3dd760172c6e436af8f57197f4ee93a456852bba34f990f32d4"
+        },
+        {
+          "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcudart.so",
+          "bytes": 703808,
+          "sha256": "c64a25f35ec55af9f0aeb0079fc6a285e3620d8c4acb0632c3e23b9a8926610f"
+        }
+      ],
+      "source_test_unmodified": true,
+      "original_tolerances_unmodified": true,
+      "scope": "Only original RKL leaf test after observational compilation; no full regression or application evolution",
+      "elf": {
+        "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/modernization/r32-20261013/rkl-profile-1/arch_cuda_diffusion_rkl_parity",
+        "bytes": 8546360,
+        "sha256": "f38da9a30339ce4ade8d6510303dd7663925dfdf2d9ac6a1df215b106bc3ac1b"
+      }
+    },
+    "phase_percent_denominator": "Sum of actual NVCC phase metrics, not external wall",
+    "diagnostic_result": "Device codegen and assembly dominate observed phase accounting. Controlled removal of two Tabular failure/recovery calls eliminates6 kernel specializations and materially reduces this TU diagnostic cost.",
+    "not_adopted": [
+      "No ablation test replacement",
+      "No numerical test/tolerance removal",
+      "No compiler FP/arch downgrade",
+      "No production optimization or full-build speedup claim",
+      "No shared-math duplication or header-size-driven split"
+    ],
+    "next_candidate": {
+      "id": "R3-A03",
+      "decision": "DEFER_IMPLEMENTATION_TO_ROADMAP",
+      "possible_location": [
+        "tests/cuda/numerics/",
+        "cmake/tests/CudaTests.cmake"
+      ],
+      "prerequisites": [
+        "Maintain every original scientific check and budget",
+        "Measure actual relevant-edit incremental cost plus aggregate full-test cold cost and RAM",
+        "Retain original TU if no maintenance/development benefit"
+      ]
+    }
+  },
+  "inactive_identity": {
+    "actual_loader_checkpoint_controls": {
+      "status": "PASS_EXPECTED_IDENTITY_AND_REJECTION_CONTROLS",
+      "rows": [
+        {
+          "case": "inactive_absent",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": true,
+          "effective_record_available": true,
+          "effective_record_equal": true,
+          "effective_record_error": "",
+          "restart_controls_equal": true,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": true,
+          "restart_error": "",
+          "blocks_before": 0,
+          "blocks_after": 1,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 0.0001
+        },
+        {
+          "case": "inactive_dt_init_input",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": false,
+          "effective_record_available": true,
+          "effective_record_equal": false,
+          "effective_record_error": "",
+          "restart_controls_equal": false,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": false,
+          "restart_error": "Checkpoint state controls differ from the active configuration",
+          "blocks_before": 0,
+          "blocks_after": 0,
+          "stored_dt_init": 2e-16,
+          "stored_ode_rtol": 0.0001
+        },
+        {
+          "case": "inactive_ode_rtol_input",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": false,
+          "effective_record_available": true,
+          "effective_record_equal": false,
+          "effective_record_error": "",
+          "restart_controls_equal": false,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": false,
+          "restart_error": "Checkpoint state controls differ from the active configuration",
+          "blocks_before": 0,
+          "blocks_after": 0,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 1e-05
+        },
+        {
+          "case": "inactive_ode_atol_input",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": false,
+          "effective_record_available": true,
+          "effective_record_equal": false,
+          "effective_record_error": "",
+          "restart_controls_equal": false,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": false,
+          "restart_error": "Checkpoint state controls differ from the active configuration",
+          "blocks_before": 0,
+          "blocks_after": 0,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 0.0001
+        },
+        {
+          "case": "inactive_ode_solver_input",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": false,
+          "effective_record_available": true,
+          "effective_record_equal": false,
+          "effective_record_error": "",
+          "restart_controls_equal": true,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": true,
+          "restart_error": "",
+          "blocks_before": 0,
+          "blocks_after": 1,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 0.0001
+        },
+        {
+          "case": "output_only",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": false,
+          "effective_record_available": true,
+          "effective_record_equal": false,
+          "effective_record_error": "",
+          "restart_controls_equal": true,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": true,
+          "restart_error": "",
+          "blocks_before": 0,
+          "blocks_after": 1,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 0.0001
+        },
+        {
+          "case": "raw_dt_init_storage",
+          "accepted_input": true,
+          "raw_storage_mutation": true,
+          "loaded_boundary_unchanged": false,
+          "loaded_boundary_error": "Config parameter 'numerics': Preparation changed loaded values without a declared source.",
+          "raw_text_equal": true,
+          "effective_record_available": false,
+          "effective_record_equal": false,
+          "effective_record_error": "Config parameter 'numerics': Preparation changed loaded values without a declared source.",
+          "restart_controls_equal": false,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": false,
+          "restart_error": "Checkpoint state controls differ from the active configuration",
+          "blocks_before": 0,
+          "blocks_after": 0,
+          "stored_dt_init": 2e-16,
+          "stored_ode_rtol": 0.0001
+        },
+        {
+          "case": "raw_ode_rtol_storage",
+          "accepted_input": true,
+          "raw_storage_mutation": true,
+          "loaded_boundary_unchanged": false,
+          "loaded_boundary_error": "Config parameter 'physics': Preparation changed loaded values without a declared source.",
+          "raw_text_equal": true,
+          "effective_record_available": false,
+          "effective_record_equal": false,
+          "effective_record_error": "Config parameter 'physics': Preparation changed loaded values without a declared source.",
+          "restart_controls_equal": false,
+          "plan_ok": true,
+          "plan_ode_none": true,
+          "provenance_equal": true,
+          "provenance_error": "",
+          "actual_restart_accepted": false,
+          "restart_error": "Checkpoint state controls differ from the active configuration",
+          "blocks_before": 0,
+          "blocks_after": 0,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 1e-05
+        },
+        {
+          "case": "active_burn_control",
+          "accepted_input": true,
+          "raw_storage_mutation": false,
+          "loaded_boundary_unchanged": true,
+          "loaded_boundary_error": "",
+          "raw_text_equal": false,
+          "effective_record_available": true,
+          "effective_record_equal": false,
+          "effective_record_error": "",
+          "restart_controls_equal": false,
+          "plan_ok": true,
+          "plan_ode_none": false,
+          "provenance_equal": false,
+          "provenance_error": "Checkpoint provenance mismatch: burn enabled state",
+          "actual_restart_accepted": false,
+          "restart_error": "Checkpoint state controls differ from the active configuration",
+          "blocks_before": 0,
+          "blocks_after": 0,
+          "stored_dt_init": 1e-16,
+          "stored_ode_rtol": 1e-06
+        },
+        {
+          "case": "invalid_inactive_dt_init_token",
+          "accepted_input": false,
+          "error": "Config parameter 'dt_init': INVALID_NUMBER [dt_init]: Config parameter 'dt_init': Expected a complete finite decimal or scientific-notation number."
+        },
+        {
+          "case": "invalid_inactive_dt_init_range",
+          "accepted_input": false,
+          "error": "Config parameter 'dt_init': INVALID_RANGE [dt_init]: Requires a finite positive value."
+        },
+        {
+          "case": "invalid_inactive_ode_rtol_range",
+          "accepted_input": false,
+          "error": "Config parameter 'ode_rtol': INVALID_RANGE [ode_rtol]: Requires a finite value in (0,1)."
+        },
+        {
+          "case": "invalid_inactive_ode_solver",
+          "accepted_input": false,
+          "error": "Config parameter 'ode_solver': INVALID_OPTION [ode_solver]: Config parameter 'ode_solver': Unknown registered option."
+        },
+        {
+          "case": "missing_active_cfl",
+          "accepted_input": false,
+          "error": "Config parameter 'cfl': MISSING_PARAMETER [cfl]: Required input has no declared value."
+        }
+      ],
+      "fixture": {
+        "bytes": 18760,
+        "artificial": true,
+        "evolution_steps": 0
+      },
+      "no_evolution": true,
+      "no_original_simulation_output": true,
+      "numerical_acceptance_claim": false
+    },
+    "production_ELF_static_inspection": {
+      "status": "PASS_EIGHT_STATIC_INSPECTION_CONTROLS",
+      "scope": "CPU original production ELF inspection; no Setup, simulation, or table loading",
+      "source_input": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/validation/burn/inputs/bd.par",
+      "source_sha256": "c0ddc0d1056a6ad2d1b1b8103e37fab76e5c2093c5e4844f6b358d9d584e945c",
+      "records": [
+        {
+          "case": "inactive_absent",
+          "exit_code": 0,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "e765b4c314b832cafa6e7364f1c51621aac1507c13b0b96b8465fc1ab973862a",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "e765b4c314b832cafa6e7364f1c51621aac1507c13b0b96b8465fc1ab973862a",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "inactive_dt_init_input",
+          "exit_code": 0,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "7945835b03c04cc82d3ee826370cab2c444210a9a84c5f1c920c1628974633ec",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "7945835b03c04cc82d3ee826370cab2c444210a9a84c5f1c920c1628974633ec",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "present",
+              "parsedValue": 2e-16,
+              "resolvedValue": 2e-16,
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "inactive_ode_rtol_input",
+          "exit_code": 0,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "b39beebe12b740a8104eb3dd8650411db939e03a6519a046d4bfa2c88d1ec652",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "b39beebe12b740a8104eb3dd8650411db939e03a6519a046d4bfa2c88d1ec652",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "present",
+              "parsedValue": 1e-05,
+              "resolvedValue": 1e-05,
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "inactive_ode_atol_input",
+          "exit_code": 0,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "6c2d861f2eada0fa68a11c8604fe89b4be5bdae175530da9e9ffe42db254230b",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "6c2d861f2eada0fa68a11c8604fe89b4be5bdae175530da9e9ffe42db254230b",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "present",
+              "parsedValue": 1e-09,
+              "resolvedValue": 1e-09,
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "inactive_ode_solver_input",
+          "exit_code": 0,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "8341da81a34fc28de9e0cd6d17fb89747f78a63d3be2260d9b810f1394af2429",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "8341da81a34fc28de9e0cd6d17fb89747f78a63d3be2260d9b810f1394af2429",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "ROS4",
+              "resolvedValue": "ROS4",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "output_only",
+          "exit_code": 0,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "dbe1b26b2a3f756696ced531ad881b5b236c4efc97aa8b7881be9487a0742617",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "dbe1b26b2a3f756696ced531ad881b5b236c4efc97aa8b7881be9487a0742617",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "invalid_inactive_dt_init",
+          "exit_code": 3,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "909754b93da6f72cb5cad5b160a97b053cc879da8e89255c12d4c0fa5bc3841e",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "909754b93da6f72cb5cad5b160a97b053cc879da8e89255c12d4c0fa5bc3841e",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "invalid",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [
+            {
+              "code": "INVALID_NUMBER",
+              "conditionId": "requires:dt_init",
+              "expected": {
+                "type": "float",
+                "units": {
+                  "status": "known",
+                  "unit": "s"
+                }
+              },
+              "locations": [
+                {
+                  "column": 10,
+                  "endColumn": 23,
+                  "line": 78,
+                  "rawValue": " not-a-number",
+                  "source": "stdin"
+                }
+              ],
+              "message": "Config parameter 'dt_init': Expected a complete finite decimal or scientific-notation number.",
+              "module": "Runtime",
+              "parameterKey": "dt_init",
+              "relatedKeys": [],
+              "severity": "error"
+            }
+          ],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        },
+        {
+          "case": "missing_active_cfl",
+          "exit_code": 3,
+          "command": [
+            "/home/shiroakane/ARCH/build-release-cpu/bin/ARCH",
+            "--inspect-config",
+            "BurnOneZone",
+            "--config-stdin"
+          ],
+          "input_sha256": "f978310e1269a70281ac9cf229f765c64a09753c56068ad3740a9834958f3f20",
+          "identity": {
+            "caseId": "BurnOneZone",
+            "configRevision": "f978310e1269a70281ac9cf229f765c64a09753c56068ad3740a9834958f3f20",
+            "requestId": ""
+          },
+          "selected_parameters": {
+            "dt_init": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:dt_init",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_rtol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_rtol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_atol": {
+              "inputState": "missing",
+              "parsedValue": null,
+              "resolvedValue": null,
+              "valueSource": null,
+              "applicability": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_atol",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            },
+            "ode_solver": {
+              "inputState": "present",
+              "parsedValue": "BD",
+              "resolvedValue": "BD",
+              "valueSource": "input",
+              "applicability": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "state": "not-applicable"
+              },
+              "requirement": {
+                "conditionId": "requires:ode_solver",
+                "missingDependencies": [],
+                "required": false,
+                "state": "not-applicable"
+              }
+            }
+          },
+          "diagnostics": [
+            {
+              "code": "MISSING_PARAMETER",
+              "conditionId": "always",
+              "expected": {
+                "type": "float",
+                "units": {
+                  "status": "dimensionless",
+                  "unit": "1"
+                }
+              },
+              "locations": [],
+              "message": "Required input has no declared value.",
+              "module": "Runtime",
+              "parameterKey": "cfl",
+              "relatedKeys": [],
+              "severity": "error"
+            }
+          ],
+          "execution": {
+            "caseDeclarations": "checked",
+            "caseRegistration": "checked",
+            "cuda": "not_initialized",
+            "eos": "not_loaded",
+            "filesystem": "not_accessed",
+            "setup": "not_executed",
+            "simulationReadiness": "not_checked",
+            "validationStage": "conditional-resolution"
+          }
+        }
+      ],
+      "evolution_steps": 0
+    },
+    "source_roles": {
+      "lexical": "Independent raw text SHA; not physical equivalence",
+      "effective": "Complete typed configuration plus actual resolved execution record; audit identity includes output and inactive storage",
+      "restart": "Separate CheckpointProvenance and20-number StateControlIdentity revision3 exact comparison before topology mutation"
+    },
+    "executed_vs_source_evidence": {
+      "canonical_configuration_record_comparison": "EXECUTED",
+      "StateControlIdentity_comparison": "EXECUTED",
+      "actual_read_chk_positive_negative": "EXECUTED_ON_ARTIFICIAL_FIXTURE",
+      "raw_text_SHA_API": "EXECUTED_STATIC_INSPECTION",
+      "full_make_plot_source_identity_hash_comparison": "SOURCE_PATH_VERIFIED_NOT_EXECUTED_IN_PROBE",
+      "real_evolution_equivalence": "NOT_RUN"
+    },
+    "conditional_no_input_default_keys": [
+      "dt_init",
+      "ode_solver",
+      "ode_rtol",
+      "ode_atol"
+    ],
+    "confirmed_inactive_restart_controls": [
+      "dt_init",
+      "ode_rtol",
+      "ode_atol"
+    ],
+    "inactive_solver_string_in_numeric_restart_vector": false,
+    "raw_mutations": "Unreachable negative controls: RequireLoadedValues rejects; canonical record unavailable, not evidence of accepted input bypass",
+    "O7_negative_controls": "Four invalid inactive inputs plus active cfl omission reject; eight additional static production ELF inspections retain source/applicability distinction",
+    "fixture": {
+      "kind": "artificial ideal-EOS one-block checkpoint",
+      "bytes": 18760,
+      "Setup_calls": 0,
+      "evolution_steps": 0,
+      "raw_data_stays_local": true
+    },
+    "decision": {
+      "id": "R3-A04",
+      "classification": "CONFIRMED_CONSERVATIVE_INACTIVE_RESTART_RESTRICTION",
+      "current_action": "KEEP full audit record, current strict restart vector/revision and O7",
+      "future_candidate": "Narrow activity-aware restart projection only if concrete need; freeze fields/version/positive-negative controls and reserved protected-contract decision first; old formats can reject without compatibility layer",
+      "not_proven": "No real scientific trajectory or universal absence of numerical fallbacks"
+    }
+  },
+  "resources": {
+    "status": "PASS_GUARD_OBSERVATIONS",
+    "count": 10,
+    "peak_owned_rss_kib": 1516344,
+    "min_available_kib": 4670836,
+    "max_swap_growth_kib": 0,
+    "rows": [
+      {
+        "path": "output/modernization/r32-20261013/identity/attempt1/compile.stdout",
+        "fields": {
+          "min_available_kib": "5995172",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "478048",
+          "elapsed_seconds": "7.091",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/identity/attempt1/link.stdout",
+        "fields": {
+          "min_available_kib": "6285284",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "315204",
+          "elapsed_seconds": "2.042",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/identity/attempt1/run.stdout",
+        "fields": {
+          "min_available_kib": "6463116",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "9728",
+          "elapsed_seconds": "0.521",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/identity/compile.stdout",
+        "fields": {
+          "min_available_kib": "5729568",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "484236",
+          "elapsed_seconds": "7.083",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/identity/link.stdout",
+        "fields": {
+          "min_available_kib": "6180712",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "272936",
+          "elapsed_seconds": "2.037",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/identity/run.stdout",
+        "fields": {
+          "min_available_kib": "6208748",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "10496",
+          "elapsed_seconds": "0.516",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/rkl-profile-1/compile.stdout",
+        "fields": {
+          "min_available_kib": "5014672",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "1516344",
+          "elapsed_seconds": "428.052",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/rkl-profile-1/link.stdout",
+        "fields": {
+          "min_available_kib": "6406540",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "2688",
+          "elapsed_seconds": "0.523",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/rkl-profile-1/original_leaf_acceptance.stdout",
+        "fields": {
+          "min_available_kib": "6335664",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "142004",
+          "elapsed_seconds": "1.525",
+          "stop_reason": "none"
+        }
+      },
+      {
+        "path": "output/modernization/r32-20261013/rkl-profile-2/compile.stdout",
+        "fields": {
+          "min_available_kib": "4670836",
+          "baseline_swap_kib": "0",
+          "peak_swap_kib": "0",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "1165612",
+          "elapsed_seconds": "208.720",
+          "stop_reason": "none"
+        }
+      }
+    ]
+  },
+  "lfs": {
+    "network_fetches": 0,
+    "tables_loaded_by_identity_probe": false,
+    "pinning_reused_from_R31": true,
+    "project_local_skip_smudge_unchanged": true,
+    "CI_patch_sha256_unchanged": "7139a124c7bf6b907fd0e73d2db93a3312561e2dc9066cd8b2ca7bdb751ccce8",
+    "new_large_H5_batch": false
+  },
+  "delegation": {
+    "owner": "arch-modernization-r32-20261013",
+    "manager_max_calls": 6,
+    "provider_inference_calls": 4,
+    "jobs": [
+      {
+        "job_id": "5c23bc893793442eb9a58a2ae9811b96",
+        "logical_task_id": "r32-rkl-source",
+        "attempt_kind": "initial",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "execution_status": "READY_FOR_REVIEW",
+        "failure_kind": null,
+        "elapsed_seconds": 112.182802897,
+        "reported_usage": {
+          "input_tokens": 516612,
+          "cached_input_tokens": 478848,
+          "output_tokens": 17980,
+          "reasoning_tokens": 10686,
+          "visible_output_tokens": 7294,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Parent independently verified frozen source SHA and 136 actual Ninja project dependencies against current worktree, original NVCC FP flags, existing ELF sections .text0x41cd2 and .nv_fatbin0x748a30, and actual IdealGas/tabular/probe launches. Adopt source and artifact observations, necessary AMR batch consumer, and H1/H2 as hypotheses only. Cold/incremental equality and zero block reads alone do not exclude link cost or establish CPU/device/IO attribution; new single-TU phase profile is running. Warning instantiation frames do not prove wasted runtime or compile dominance. No split or math/coverage reduction accepted. Later suggestions stay contingent on measured phase result.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "bounded_source_and_artifact_evidence",
+          "validation_kind": "manager_source_artifact_and_dependency_check",
+          "adopted_sections": [
+            "RKL target/source identity",
+            "object code composition",
+            "actual EOS and batch consumers",
+            "bounded hypotheses only"
+          ],
+          "self_work_reason": "Manager profiles original TU serially and reviews independent identity audit while native worker prepares minimal probe.",
+          "next_recheck": "Completed NVCC phase profile or identity probe ready."
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/task.json",
+            "sha256": "cc6e161b35e8a7567c0d013d5b1275ff334785f798619ccc52f952c7a12dac90",
+            "bytes": 3155
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/result.json",
+            "sha256": "029643bbb92b760533c16f1c09a13cf18f3235891e477bea48058c30d6bff7ba",
+            "bytes": 5952
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/review.json",
+            "sha256": "2ca206dfd1ab281d47d1acc9a0c068b0276de94b35c1a680f53e8382ce2e273c",
+            "bytes": 1276
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/delivery.txt",
+            "sha256": "07de7b83ed695ac9f05064c82f42ff1df930d250595f86c5dd7d33bda30d314e",
+            "bytes": 5433
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/cli-events.ndjson",
+            "sha256": "475e8266e60661be1cedc5bd07cdceb2fb3c37165b8f0bd890c4469fc1765f61",
+            "bytes": 136610
+          }
+        ]
+      },
+      {
+        "job_id": "84e0ad5fb35144e7bfb0f62a75be5d2b",
+        "logical_task_id": "r32-inactive-identity",
+        "attempt_kind": "initial",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "execution_status": "READY_FOR_REVIEW",
+        "failure_kind": null,
+        "elapsed_seconds": 138.065349289,
+        "reported_usage": {
+          "input_tokens": 1492284,
+          "cached_input_tokens": 1427328,
+          "output_tokens": 18510,
+          "reasoning_tokens": 10961,
+          "visible_output_tokens": 7549,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "review_decision": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "adoption_details": {
+          "decision": "REPAIR_REQUIRED",
+          "evidence": "Concrete source contradiction in critical restart conclusion: src/core/config/ConfigValidation.h:124-133 StateControlIdentity unconditionally includes b.odeconfig.rtol AND atol, as well as burn thresholds; claim that ODE numerics are not in StateControlIdentity and coupling is dt_init-specific is false. StandardParameterEntries.inc:54-55 ode_rtol/atol are Conditional/Burn/no default, not Optional documented-default as checks also claim. Both anchors checked by manager. One consolidated bounded repair requested to recheck only identity membership/applicability, valid counterexample values and update conclusions. Keep no-execution/physics/O7 bounds.",
+          "adoption_scope": "none",
+          "reason_code": "incorrect_source_claim",
+          "validation_kind": "manager_source_read",
+          "self_work_reason": "Manager continues phase profiling and reviews native tiny probe while original worker repairs these concrete errors.",
+          "next_recheck": "Single corrected identity audit or profile result."
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/task.json",
+            "sha256": "1f0b6b38cdaec59be04c60105a35b29b9a3bfcabdd4a932237292f0c49b0f842",
+            "bytes": 3057
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/result.json",
+            "sha256": "b7ed6da881885301e744a4feb6781ade23286a4268d302ebd2db98a9cf9424fb",
+            "bytes": 7505
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/review.json",
+            "sha256": "5d38503bd335ed126cc0547feaad7a95bced1b01f8e9152dfca857b2dbe74d4d",
+            "bytes": 1038
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/delivery.txt",
+            "sha256": "c691400c87755694bd391586632e41e0d435f84f1193a28dea8f799185f08d2d",
+            "bytes": 6966
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/cli-events.ndjson",
+            "sha256": "838fe89bbd2d23b2c55765be441a6efd1f0e90559ff3788bf534b5bab4651f5d",
+            "bytes": 301164
+          }
+        ]
+      },
+      {
+        "job_id": "53046f243d4449138c09e11361eaf642",
+        "logical_task_id": "r32-inactive-identity",
+        "attempt_kind": "repair",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "cli",
+        "execution_status": "FAILED",
+        "failure_kind": "invalid_delivery",
+        "elapsed_seconds": 65.215537514,
+        "reported_usage": {
+          "input_tokens": 289397,
+          "cached_input_tokens": 263808,
+          "output_tokens": 10145,
+          "reasoning_tokens": 6505,
+          "visible_output_tokens": 3640,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Preserve execution FAILED/invalid_delivery; complete six-field JSON after prose prefix parsed deterministically with JSONDecoder and no trailing data into local workers/inactive-identity-repair-complete.json. No paid format retry. Manager source confirms corrected StateControlIdentity has dt_init+ODE rtol/atol but not solver string; rtol/atol Conditional/Burn/no default, other six work knobs Optional. Adopt these corrected source facts and lexical/typed/restart distinction only. Reject proposed raw mutations leave identity unchanged: RequireLoadedValues makes canonical record unavailable, while raw vector comparison can still differ; native probe marks unreachable raw rows explicitly. Original dt_init1e-30 example lacks relation context; actual probe uses2e-16>=explicitdt_min1e-24. No execution claimed by provider; no full implementation/dependency release; parent will execute controlled probe and inspect precise results.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "complete_json_partial_evidence_adoption",
+          "adopted_sections": [
+            "corrected restart vector membership",
+            "missing vs explicit inactive resolution",
+            "typed audit identity vs trajectory restart"
+          ],
+          "validation_kind": "manager_source_read_and_deterministic_json_parse",
+          "self_work_reason": "Manager owns serial NVCC/profile completion, actual identity-probe execution and final report integration.",
+          "next_recheck": "Actual phase/identity evidence frozen for final independent counterexample review."
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/task.json",
+            "sha256": "44d2686528848a0bad2067dd3024ca2f6f4aac21d18fd35b45923b808f426a94",
+            "bytes": 3332
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/result.json",
+            "sha256": "62c226bef388d3d28b0fe3ff93bc395c9f7911a35358583097738c71f2b42b20",
+            "bytes": 535
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/review.json",
+            "sha256": "ab6f2801f46a62e745aec6b040585f966e3ca66fd31d8789b02b790a2f172a11",
+            "bytes": 1554
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/delivery.txt",
+            "sha256": "79d65a2daac180477909d43cd74e2ea272554670eeebd0db47e625f66df28cf6",
+            "bytes": 4194
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/cli-events.ndjson",
+            "sha256": "55d7487fec2f35a8ca598a0fa8e985f0ba1481a5affb8abc915a5a3fd684f3a7",
+            "bytes": 90492
+          }
+        ]
+      },
+      {
+        "job_id": "dd60d3e1072c48e7aecb176638f58ebf",
+        "logical_task_id": "r32-evidence-review",
+        "attempt_kind": "initial",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "transport": "api",
+        "execution_status": "READY_FOR_REVIEW",
+        "failure_kind": null,
+        "elapsed_seconds": 121.486136641,
+        "reported_usage": {
+          "input_tokens": 1718,
+          "cached_input_tokens": 0,
+          "output_tokens": 20286,
+          "reasoning_tokens": 19885,
+          "visible_output_tokens": 401,
+          "cost_usd": null,
+          "cost_kind": "not_quoted"
+        },
+        "review_decision": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "adoption_details": {
+          "decision": "ACCEPT",
+          "evidence": "Independent inline review found no blocker. Parent also has native source/flag/PTX verification: exactly two calls removed, six Tabular kernels disappear24->18, other families retained. Adopt bounded phase denominator and tested-family contribution only, no allocation of all11 kernels or wall decomposition. Real loader/read_chk artificial18,760B fixture proves controlled conservative rejection, not scientific trajectory or universal absence of numerical fallback. Report keeps full audit identity distinct and current revision/O7 untouched; narrows fallback wording to checked inputs. No extra profiles, full simulation, compatibility layer or broad reassessment justified.",
+          "adoption_scope": "evidence_only",
+          "reason_code": "bounded_conclusions_accepted",
+          "adopted_sections": [
+            "phase total versus wall limit",
+            "two-call ablation contribution",
+            "controlled restart restriction and scientific limits"
+          ],
+          "validation_kind": "manager_measured_evidence_and_native_independent_check",
+          "self_work_reason": "All investigative evidence accepted; manager performs deterministic indexing, links/hashes and progress handoff only.",
+          "next_recheck": "Next user-authorized R3.3 packet; no automatic continuation or paid text-only review."
+        },
+        "artifacts": [
+          {
+            "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/task.json",
+            "sha256": "0b9f7bd7a8ce18ec834f6af248281c4dc49af5a3325e5f08d995b3cf3c2b77eb",
+            "bytes": 5901
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/result.json",
+            "sha256": "8aa3398928ac0ecaa36f310781f049bb997d10f22bff55ba4d31b725a8d9b702",
+            "bytes": 1109
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/review.json",
+            "sha256": "1d559a3ddaf7a7d648684d6f711afa28f0b65dbba75dd236fff4f5f44d1739dd",
+            "bytes": 1300
+          },
+          {
+            "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/delivery.txt",
+            "sha256": "8e14ec8c6365b8666ffb2472b86d9e6b148e5018969c166457cf9c3a0d758ac9",
+            "bytes": 1835
+          }
+        ]
+      }
+    ],
+    "native_codex_workers": [
+      "/root/identity_probe: diagnostic proposal and one output-only repair",
+      "/root/rkl_artifact_attribution: phase/PTX statistics and two-call independent verification"
+    ],
+    "Gemini": "Not dispatched: no further frozen-prose edit needed",
+    "passive_metrics_read_once": true,
+    "unknown_costs": "Manager and unreported monetary cost remain unknown",
+    "feedback": [
+      "Single scientific-source error repair corrected ODE rtol/atol membership; initial source audit not adopted.",
+      "Complete repair JSON parsed deterministically after prose prefix; FAILED metadata retained and only independently checked evidence adopted, no paid format retry.",
+      "First identity observation JSON interleaved real warning; initial source/objects/logs retained, one output-only correction, no input or production changes.",
+      "NVCC dryrun emitted8 administrative CSV rows; kept original and explicitly filtered actual measurement.",
+      "Ablation changed only2 source calls and observation paths; not scientific acceptance or adopted optimization.",
+      "No global Skill/MCP policy changes, no added provider calls for metrics or wording."
+    ],
+    "self_work_reason": "Independent conclusions accepted; deterministic indexing and mechanical QA only.",
+    "next_recheck": "Next user-authorized R3.3 packet, never automatic continuation."
+  },
+  "future_work": {
+    "R3.3": "Freeze ordered implementation packages after this evidence; not started",
+    "A01_A02": "Canonical Hydro input provenance and selected-case convergence protection remain first verification candidates",
+    "A03": "Optional test compilation responsibility package only with actual measured benefit and full coverage",
+    "A04": "Optional narrow protected restart identity assessment; full audit identity preserved",
+    "RZ_Cellular": "Original scientific unresolved exits preserved, no replay/closure"
+  },
+  "evidence": [
+    {
+      "path": "output/modernization/r32-20261013/ablation-recipe.py",
+      "sha256": "d8ba33e20ab65e2c5e8a710823eb27379d680fc69c2f1a1347d1523dd35699bf",
+      "bytes": 3397
+    },
+    {
+      "path": "output/modernization/r32-20261013/finalize-recipe.py",
+      "sha256": "2321b94f03bff13ef1bf8da4195c586ef18270b979c7ecfa23d87246c2ffbabc",
+      "bytes": 11627
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/compile.guard.log",
+      "sha256": "9c040f603c2800cf02dba91ddf4b223b397b34263426546fce9450fa4fd700d6",
+      "bytes": 418
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/compile.stdout",
+      "sha256": "9c040f603c2800cf02dba91ddf4b223b397b34263426546fce9450fa4fd700d6",
+      "bytes": 418
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/execution-identity.json",
+      "sha256": "0857f9d72ac2a8a4b813fbae7ef5294fdfb8877b671a17d09e284842488d139e",
+      "bytes": 2547
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/execution.json",
+      "sha256": "0d2582134c09ac1a999ca8dbbf85a6505c63a7b33d2291c9820ad362cbfdb893",
+      "bytes": 6419
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/inactive_identity_probe",
+      "sha256": "57b8fdfdc37ea77bacc0d05cba2a3878c1d1599d10dacae8753367d35dbaccd0",
+      "bytes": 2003632
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/inactive_identity_probe.cpp",
+      "sha256": "8ae5b46e419c2c66655ab88fa3c84aa7fa01eabe2b6a280e780e21e199a07261",
+      "bytes": 9418
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/inactive_identity_probe.o",
+      "sha256": "a6b559407a8c17a863c3f542d910932258b5377ee9fd1a2a234231660b5d624e",
+      "bytes": 3837576
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/link.guard.log",
+      "sha256": "96c32db38d9916492a8ffb9fb11f49e93ac2828e87ab00349ba8dcec037a5076",
+      "bytes": 416
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/link.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/link.stdout",
+      "sha256": "96c32db38d9916492a8ffb9fb11f49e93ac2828e87ab00349ba8dcec037a5076",
+      "bytes": 416
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/probe_recipe.json",
+      "sha256": "6d00ecab34c3ad2bd13ab50dfd392932d04e68afb428e8795001755bf01bdc8a",
+      "bytes": 5484
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/run.guard.log",
+      "sha256": "a25cff802ff2bf4f6b7fbfff5d425cbe85e52d786a42a0dca92fddbe78987958",
+      "bytes": 8111
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/run.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/attempt1/run.stdout",
+      "sha256": "9308a9c92f6253a8c99789ffb49fca46bb16f42b1753a2732099839e9c69d324",
+      "bytes": 414
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/compile.guard.log",
+      "sha256": "4f668db6a38e59636c6148415d6f9fab4ac7321ec6d31fc72ba61ad91ad5a4c0",
+      "bytes": 417
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/compile.stdout",
+      "sha256": "4f668db6a38e59636c6148415d6f9fab4ac7321ec6d31fc72ba61ad91ad5a4c0",
+      "bytes": 417
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/execution-identity.json",
+      "sha256": "a1ad62c4d348c4cff5eae64cdfe8d28a66a007942b5f3e0120c5f86827709ccf",
+      "bytes": 2547
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/execution.json",
+      "sha256": "2693597c4d8081883d6f08d7257819ebee3f5d69be2093be5fc377d58294e6ee",
+      "bytes": 6252
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/fixture/artificial-inactive-control.h5",
+      "sha256": "021b9f2a9bceb28e09e8b7b9598d748b199dbf2dd78e942b27ad6f5318456ecb",
+      "bytes": 18760
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/identity-results.json",
+      "sha256": "df4c47f0af516557a6c26d01a3805afbe8515f82169d33be713e0bfb87c92a61",
+      "bytes": 8181
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inactive_identity_probe",
+      "sha256": "49852b23a5b3ff5826745679e1fb788b79219c04b11c96271ee7618c66ef97b9",
+      "bytes": 2007728
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inactive_identity_probe.attempt1.cpp",
+      "sha256": "8ae5b46e419c2c66655ab88fa3c84aa7fa01eabe2b6a280e780e21e199a07261",
+      "bytes": 9418
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inactive_identity_probe.cpp",
+      "sha256": "d10be923c0efae66db8c2f889ee38b406b18da8f8b82af38fc4054635d3d96cd",
+      "bytes": 9631
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inactive_identity_probe.o",
+      "sha256": "64860b8381bfdca7b483b458f779e3989acd61ef9755dd235dcbc3d585bee6ce",
+      "bytes": 3837968
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_absent.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_absent.stdout.json",
+      "sha256": "af6ee4a80b27546f275e6fa529eadf696c179b25d299bca493b2daae348d4e2f",
+      "bytes": 73610
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_dt_init_input.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_dt_init_input.stdout.json",
+      "sha256": "0930574629e6b194da3457258cec4e5022ca819177f5261a7fb41b51baf2d523",
+      "bytes": 73694
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_ode_atol_input.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_ode_atol_input.stdout.json",
+      "sha256": "4648655e9fbc37281fccd9249a6dcf7cb3dcbf49e0f918985a404e3384823e85",
+      "bytes": 73726
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_ode_rtol_input.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_ode_rtol_input.stdout.json",
+      "sha256": "44407b95c66f07e2a56c9dc3169138191806472f6cc23d73117f5cbf71aa62d2",
+      "bytes": 73726
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_ode_solver_input.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/inactive_ode_solver_input.stdout.json",
+      "sha256": "53b1bd52581d7aa4a950ef669c60eb10fe36d975cf6aea0383b13ba7cb76c881",
+      "bytes": 73618
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/invalid_inactive_dt_init.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/invalid_inactive_dt_init.stdout.json",
+      "sha256": "ea98443697e17f026741ff272daa5ec0900289c9aa1c505771641694faf2ad2f",
+      "bytes": 74112
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/missing_active_cfl.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/missing_active_cfl.stdout.json",
+      "sha256": "267b40bddf95f17b4fe2c5d594a31105e215c4e9d423ede723762605d346260f",
+      "bytes": 73774
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/output_only.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection/output_only.stdout.json",
+      "sha256": "a4f1d90fecc1bd46d108c3f0e02bcb3a09dcb08077d3432b75e414c9f1f881c5",
+      "bytes": 73630
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/inspection-results.json",
+      "sha256": "5bebea5c9138f4ae9d4f970959f4575be1374f8b4881675e47e14fde80a1c952",
+      "bytes": 25754
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/link.guard.log",
+      "sha256": "2a47dfef2acb6da24221ebeaca447384fc6b7e7dd1ed0d4b90ccbdf1e66830c5",
+      "bytes": 416
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/link.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/link.stdout",
+      "sha256": "2a47dfef2acb6da24221ebeaca447384fc6b7e7dd1ed0d4b90ccbdf1e66830c5",
+      "bytes": 416
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/probe_recipe.json",
+      "sha256": "6d00ecab34c3ad2bd13ab50dfd392932d04e68afb428e8795001755bf01bdc8a",
+      "bytes": 5484
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/run.guard.log",
+      "sha256": "ac9067b01cb215448a6d05196db68399b0427fc1ff33528b899d334affcb3b36",
+      "bytes": 8112
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/run.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/run.stdout",
+      "sha256": "e263585f901633ddd722b51ea614d1490c42296675c1d984ac2860f1b24331fd",
+      "bytes": 415
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity/source_findings.json",
+      "sha256": "6aa5d4eee0febd951afadcd860040a252d0a480a2c59094dbefe439e8dad9f45",
+      "bytes": 4055
+    },
+    {
+      "path": "output/modernization/r32-20261013/identity-execution-recipe.py",
+      "sha256": "9684cf2f8b016549cb0ab2a01dada636775d522f069e9ec265f2d3a965526587",
+      "bytes": 4177
+    },
+    {
+      "path": "output/modernization/r32-20261013/inspection-recipe.py",
+      "sha256": "9e40ea794c91bcd55bfe8d20fe883d9c9f84b4322dfa83711364f452ab346e92",
+      "bytes": 3283
+    },
+    {
+      "path": "output/modernization/r32-20261013/profile-recipe.py",
+      "sha256": "37386263f1ad349fdbdc7cc725e9eb81e5650236b6e74536196bb5edc8554888",
+      "bytes": 4210
+    },
+    {
+      "path": "output/modernization/r32-20261013/resources.json",
+      "sha256": "c073f58fe54736f1ad6a2fe78fc88cf9307072b86eeaa975ca7e2934057f3e5e",
+      "bytes": 3794
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-ablation-comparison-recipe.py",
+      "sha256": "6d1c43591f5ee4d7b148739ab27fdf7f58bd0dc9c42735024432b1e9f8ad9124",
+      "bytes": 6373
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-ablation-comparison.json",
+      "sha256": "c1a20d935eef9a049745d96124701e9eb417543a80ba3585e1a95c10887e58e8",
+      "bytes": 4918
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-acceptance-recipe.py",
+      "sha256": "6ea88d27d3e0891839b446dd01b8a894078c88430407e878e353611187652b84",
+      "bytes": 2233
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-artifact-analysis-recipe.py",
+      "sha256": "d4e758bafa800c73a3ce8c6b720c59e6c148c035ea5f333e95db1f597109dd3b",
+      "bytes": 8726
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-artifact-analysis.json",
+      "sha256": "244e90c090c79777c54e1a3de871e7141ab13c59c5fb227d5fb021dc29386812",
+      "bytes": 45546
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-cubin-section-headers.txt",
+      "sha256": "34d4d12d458553fa7a0a6ec233b21c743c0647a59ae0b96ee01d1dd77289b586",
+      "bytes": 27225
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/acceptance.json",
+      "sha256": "64651b84a19a6d17426d7c6d966da6a22c2008ee2c0471bdefee25d2443c6311",
+      "bytes": 5172
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/arch_cuda_diffusion_rkl_parity",
+      "sha256": "f38da9a30339ce4ade8d6510303dd7663925dfdf2d9ac6a1df215b106bc3ac1b",
+      "bytes": 8546360
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/compile-result.json",
+      "sha256": "d8dc1fb735419c75f17fdc419a1161844a876f726fb3b4febb01c477dcfbf10a",
+      "bytes": 461
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/compile.guard.log",
+      "sha256": "71f044c72a608ac9e8b245922167ff5cec9c3cfdf3820edc71d642dc4faf7301",
+      "bytes": 135660
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/compile.stdout",
+      "sha256": "8cf4c8f5ac83f42794d27a80050fc54a0744893b4f775cbf2fa6f3cd4adbbe9c",
+      "bytes": 421
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/dryrun.stderr",
+      "sha256": "c579a215a7564a43c39f32cfc9fece48692a67023949a64da4f56d7d3109d0e0",
+      "bytes": 9177
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/dryrun.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.cpp1.ii",
+      "sha256": "bdc6164fbee3fcac5e4972e87de916fdcca1a0c2bd1fa2bf42363ce9bf76b2ca",
+      "bytes": 5485410
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.cpp4.ii",
+      "sha256": "382fff9520a8bfa1adf37e7ed656cd16c88e724cde05c6a294e287ae26b1f1d8",
+      "bytes": 5373787
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.cudafe1.c",
+      "sha256": "13496c0e607f733be4ad87fb008bc9e7c4b69e3c60b5108859637b2a86e0d56d",
+      "bytes": 62689
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.cudafe1.cpp",
+      "sha256": "0e8622c8dfeab522f8d0b686a04968cc263a411a31373408cffb8d5e14702e70",
+      "bytes": 5389450
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.cudafe1.gpu",
+      "sha256": "cd4b3fb3899e6793c1089f574d275fe64b3e799ca2aa12b7645a378321bb727b",
+      "bytes": 4576249
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.cudafe1.stub.c",
+      "sha256": "1e55dc37d0607dd0a8f59eefe06f4ad5bcb640f26b124b18f30c92e53832e29b",
+      "bytes": 68634
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.fatbin",
+      "sha256": "18bc9cd4a87a108916905f194af8322bcba683f35d967017b66158ea4b7601a9",
+      "bytes": 7637552
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.fatbin.c",
+      "sha256": "0104da74beeed9039608e8c05cb8b77f77e6f3e4bb340c2160e9eb16dd17069d",
+      "bytes": 20526528
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.ptx",
+      "sha256": "7240722d8b19f448f8316cabc50d0fb1d30d90c1cc214e94dfe74a65fcb5c275",
+      "bytes": 20185804
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/kept/test_diffusion_rkl_parity.sm_86.cubin",
+      "sha256": "f7fbde32c96bb9cc1a9a4b42d66de8fc050497aa38467b4861b6713d1455c6f1",
+      "bytes": 11970736
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/link.guard.log",
+      "sha256": "d3aa11de14cc475b0d14651bde74186b16931410bb770eb52614ae2da4507e79",
+      "bytes": 414
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/link.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/link.stdout",
+      "sha256": "d3aa11de14cc475b0d14651bde74186b16931410bb770eb52614ae2da4507e79",
+      "bytes": 414
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/nvcc-phases.actual.csv",
+      "sha256": "514526009aa93d3908262537256c0c81c7f94c9c751c818734c253c0ced0b5d4",
+      "bytes": 2867
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/nvcc-phases.csv",
+      "sha256": "bd2bc563828f81449a42575c5ebe9aaf2dc5f60d6ecb48e092e6fb6b8740d7e1",
+      "bytes": 5593
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/original-ninja-dependencies.txt",
+      "sha256": "aa2b975d74f16a22a9ef2d5ba887d101556818e8ea41a284bcbf256f3a7aad44",
+      "bytes": 28392
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/original_leaf_acceptance.guard.log",
+      "sha256": "f9a7dc5e71d4600be33b442daed357d116df1aea22189538b4602d747889046c",
+      "bytes": 5888
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/original_leaf_acceptance.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/original_leaf_acceptance.stdout",
+      "sha256": "70e1087e6282c081eb234db1634c495b69a156c47963e789aed445687aa518c3",
+      "bytes": 416
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/phase-analysis.json",
+      "sha256": "97a27f9cd443ab826b72589c6449cf099a55664dff7b0125fba62fd09159024c",
+      "bytes": 1275
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/recipe.json",
+      "sha256": "54a8beb790e8cb29b62c5c82c8b087d78f8d73340e30b0d8ec1d645016467605",
+      "bytes": 28687
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-1/test_diffusion_rkl_parity.cu.o",
+      "sha256": "aa3ea25d1f133783099e4d5caf8f2ba35410f724aca23c3a0b85099a947fefb5",
+      "bytes": 8698552
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/compile-result.json",
+      "sha256": "1ce81f62676e62e1b61ef2480d391b44bc4f0fcc814d8412fcc9e300175b8b1b",
+      "bytes": 2657
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/compile.guard.log",
+      "sha256": "0511aa3e52cee0278e6258216cafeaa5d1c40bca70b5146d07709d0c3740f5c7",
+      "bytes": 138550
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/compile.stdout",
+      "sha256": "9d631fdfdfaf1cc2de2a1d1aeb460704e8a11e067a254b83471b8e0ef85b241b",
+      "bytes": 421
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.cpp1.ii",
+      "sha256": "99973067b99075c0d900bed6a120fc32c9decafc7b0f38cd4c28b313dcb81421",
+      "bytes": 5486122
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.cpp4.ii",
+      "sha256": "78eaad20a1231615d98525bb52344f6563fdbf0b46715e1449ef063fd8d96c51",
+      "bytes": 5374499
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.cudafe1.c",
+      "sha256": "9f3ad2df34cd04e176fe19557c4546b9151b0fe1cc35049ece052a444a3ffd2f",
+      "bytes": 63701
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.cudafe1.cpp",
+      "sha256": "50e631fa0b0c6060e928ef24142f5fe49582378a335d5a3fb54d86c3d4365bc0",
+      "bytes": 5389702
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.cudafe1.gpu",
+      "sha256": "842c820a7c23c058e6372b72f81748680fb94931f79fb32a05d08ec8f941b9e9",
+      "bytes": 3625790
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.cudafe1.stub.c",
+      "sha256": "27faa12a0fda7c49a41d1516224fb10ef2372a35fdb016fdedc047fd38da510c",
+      "bytes": 43568
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.fatbin",
+      "sha256": "c9fa046832d823b411a1cc60ad8dabbd46e643d18740a0f0112858e257bb181d",
+      "bytes": 6933032
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.fatbin.c",
+      "sha256": "4fef9f86e96e305a2376a0c2d6109fd5291b2e05d72864a5d7f01a7b9e2d668e",
+      "bytes": 18633132
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.ptx",
+      "sha256": "07327cf9117d57ace346f783b7906a6737c9d30fb2239daa34a0701475ae7373",
+      "bytes": 9036187
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/kept/test_diffusion_rkl_parity.sm_86.cubin",
+      "sha256": "46b571c69454d35b542f747b460de2469444f5bc8feb06b78b8f00da77d403e6",
+      "bytes": 4819632
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/nvcc-phases.csv",
+      "sha256": "0e24538c91179e7c7bf5a3808baf9b4d257466d8a02af7ab852843da39ab6ca3",
+      "bytes": 3307
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/recipe.json",
+      "sha256": "9e6ac9853eb7d2841fe125ebaa510bb37f12774d6e32875fb03cc41db1f21e8b",
+      "bytes": 2863
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/scratch-source.patch",
+      "sha256": "e7ee748bef63d50457f1468c0d728c86261d6bffe8d0ccfca0b0724818f2f8d9",
+      "bytes": 837
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/test_diffusion_rkl_parity.cu",
+      "sha256": "76a3362272bb707367b94ffbf06460937332add40185e1614fff3f3d90809b86",
+      "bytes": 93585
+    },
+    {
+      "path": "output/modernization/r32-20261013/rkl-profile-2/test_diffusion_rkl_parity.cu.o",
+      "sha256": "e84b852905c2ffdd5b014987c75ccf43eb01facd3355e0a217580f3a1ec484e4",
+      "bytes": 7794992
+    },
+    {
+      "path": "output/modernization/r32-20261013/start-identity.json",
+      "sha256": "0c7b5fb85cfa2ca4b389f09025a4b450e1bf57b2316862ace809e60ba9ee544b",
+      "bytes": 2015
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/cli-events.ndjson",
+      "sha256": "55d7487fec2f35a8ca598a0fa8e985f0ba1481a5affb8abc915a5a3fd684f3a7",
+      "bytes": 90492
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/delivery.txt",
+      "sha256": "79d65a2daac180477909d43cd74e2ea272554670eeebd0db47e625f66df28cf6",
+      "bytes": 4194
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/result.json",
+      "sha256": "62c226bef388d3d28b0fe3ff93bc395c9f7911a35358583097738c71f2b42b20",
+      "bytes": 535
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/review.json",
+      "sha256": "ab6f2801f46a62e745aec6b040585f966e3ca66fd31d8789b02b790a2f172a11",
+      "bytes": 1554
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/53046f243d4449138c09e11361eaf642/task.json",
+      "sha256": "44d2686528848a0bad2067dd3024ca2f6f4aac21d18fd35b45923b808f426a94",
+      "bytes": 3332
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/cli-events.ndjson",
+      "sha256": "475e8266e60661be1cedc5bd07cdceb2fb3c37165b8f0bd890c4469fc1765f61",
+      "bytes": 136610
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/delivery.txt",
+      "sha256": "07de7b83ed695ac9f05064c82f42ff1df930d250595f86c5dd7d33bda30d314e",
+      "bytes": 5433
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/result.json",
+      "sha256": "029643bbb92b760533c16f1c09a13cf18f3235891e477bea48058c30d6bff7ba",
+      "bytes": 5952
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/review.json",
+      "sha256": "2ca206dfd1ab281d47d1acc9a0c068b0276de94b35c1a680f53e8382ce2e273c",
+      "bytes": 1276
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/5c23bc893793442eb9a58a2ae9811b96/task.json",
+      "sha256": "cc6e161b35e8a7567c0d013d5b1275ff334785f798619ccc52f952c7a12dac90",
+      "bytes": 3155
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/cli-events.ndjson",
+      "sha256": "838fe89bbd2d23b2c55765be441a6efd1f0e90559ff3788bf534b5bab4651f5d",
+      "bytes": 301164
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/delivery.txt",
+      "sha256": "c691400c87755694bd391586632e41e0d435f84f1193a28dea8f799185f08d2d",
+      "bytes": 6966
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/result.json",
+      "sha256": "b7ed6da881885301e744a4feb6781ade23286a4268d302ebd2db98a9cf9424fb",
+      "bytes": 7505
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/review.json",
+      "sha256": "5d38503bd335ed126cc0547feaad7a95bced1b01f8e9152dfca857b2dbe74d4d",
+      "bytes": 1038
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/84e0ad5fb35144e7bfb0f62a75be5d2b/task.json",
+      "sha256": "1f0b6b38cdaec59be04c60105a35b29b9a3bfcabdd4a932237292f0c49b0f842",
+      "bytes": 3057
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/delivery.txt",
+      "sha256": "8e14ec8c6365b8666ffb2472b86d9e6b148e5018969c166457cf9c3a0d758ac9",
+      "bytes": 1835
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/result.json",
+      "sha256": "8aa3398928ac0ecaa36f310781f049bb997d10f22bff55ba4d31b725a8d9b702",
+      "bytes": 1109
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/review.json",
+      "sha256": "1d559a3ddaf7a7d648684d6f711afa28f0b65dbba75dd236fff4f5f44d1739dd",
+      "bytes": 1300
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/dd60d3e1072c48e7aecb176638f58ebf/task.json",
+      "sha256": "0b9f7bd7a8ce18ec834f6af248281c4dc49af5a3325e5f08d995b3cf3c2b77eb",
+      "bytes": 5901
+    },
+    {
+      "path": "output/modernization/r32-20261013/workers/inactive-identity-repair-complete.json",
+      "sha256": "cb8e2a31c090aaa297381b7587f1679c44783ee157841c1154163d8ace109d11",
+      "bytes": 4154
+    },
+    {
+      "path": "output/modernization/r32-20261013/docs-qa-recipe.py",
+      "sha256": "d2ad39fdd9c566160104db1e76965fca05437c8eb03e11c8d814ecb24562409c",
+      "bytes": 2961
+    }
+  ],
+  "completed_utc": "2026-10-13T03:23:52.500132+00:00",
+  "mechanical_qa": {
+    "status": "PASS",
+    "receipt": "output/modernization/r32-20261013/final-qa.json",
+    "markdown_files": 15,
+    "local_links": 262,
+    "heading_anchors": 32,
+    "tables": 46,
+    "diff_check": "PASS",
+    "R3.3_not_started": true,
+    "production_source_and_binary_identity": "UNCHANGED"
+  },
+  "historical_proposals_retained": {
+    "identity/probe_recipe.json": "Preparation-time READY_NOT_COMPILED recipe; actual execution and acceptance in identity/execution.json and identity/identity-results.json",
+    "identity/source_findings.json": "Source proposal before centrally scheduled execution; not a standalone current acceptance",
+    "identity/attempt1/execution.json": "Commands exited0 but observation JSON invalid; not accepted diagnostic or scientific evidence"
+  }
+}

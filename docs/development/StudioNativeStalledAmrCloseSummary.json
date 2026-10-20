@@ -1,0 +1,86 @@
+{
+  "sourceCommit": "2deb281005da746df86f7048b8c301f7e9784a69",
+  "scope": "native Linux close of pending AMR request under explicit shared-worker stall; no new numeric AMR acceptance",
+  "status": "PASS (fault injection scope)",
+  "request": {
+    "protocolVersion": "1.3",
+    "projectId": "369286e1-cba3-4ef7-b13b-1c30c00fd3c3",
+    "requestId": "9ba1e717-a55f-481c-a37d-37e97af5cd10",
+    "operation": "preview-amr",
+    "state": "running",
+    "identity": null,
+    "progress": null,
+    "at": "2026-10-03T06:44:22.053224+00:00",
+    "workerState": "T",
+    "guardRestored": false
+  },
+  "baselinePreviewIdentity": {
+    "requestId": "d38ff4d3-63e3-47e7-96ef-1d6bc9383bd1",
+    "projectId": "369286e1-cba3-4ef7-b13b-1c30c00fd3c3",
+    "profileId": "sod-initial-cpu",
+    "caseId": "Sod",
+    "configRevision": "9edb45ef29ce5bbf371f9145f5bc1dbb051ee31563472aaee865e159e59b3d16",
+    "buildId": "f6449e3d-ccc0-4d51-ac96-eaf767de62a8",
+    "binarySha256": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+  },
+  "faultInjection": {
+    "signal": "SIGSTOP",
+    "worker": {
+      "pid": 77360,
+      "state": "T",
+      "startTicks": "1038828",
+      "ppid": 76933,
+      "pgrp": 77360
+    },
+    "host": {
+      "pid": 76933,
+      "state": "S",
+      "startTicks": "1038120",
+      "ppid": 76887,
+      "pgrp": 76887,
+      "origin": "http://127.0.0.1:43419"
+    },
+    "automaticRestoreGuardSeconds": 90,
+    "guardRestored": false
+  },
+  "lastRunningObservation": {
+    "startedAt": "2026-10-03T06:44:35.031716+00:00",
+    "state": "running",
+    "requestId": "9ba1e717-a55f-481c-a37d-37e97af5cd10",
+    "operation": "preview-amr",
+    "identity": null,
+    "progress": null,
+    "session": {
+      "stage": null,
+      "generation": null
+    },
+    "completedAt": "2026-10-03T06:44:35.033269+00:00"
+  },
+  "shutdownLog": [
+    "2026-10-03T06:44:35.035Z shutdown requested WSL bridge PID 76933",
+    "2026-10-03T06:44:38.701Z owned Host exited; bridge PID 76933",
+    "2026-10-03T06:44:38.704Z desktop clean shutdown"
+  ],
+  "ownedAbsent": {
+    "76933": true,
+    "76887": true,
+    "77360": true
+  },
+  "unchangedFiles": {
+    "studio/.local/integration/native-active-close-direct-0fffcf94-cea7-42b8-b360-c87397bc7d4d/Sod.par": "9edb45ef29ce5bbf371f9145f5bc1dbb051ee31563472aaee865e159e59b3d16",
+    "build-studio-cpu/bin/ARCH": "e506619f473a85e639df37f332ad1aa2d7105c63519674f9a9947ffc03813bc7"
+  },
+  "observedWorkerExitCode": "not collected",
+  "operations": {
+    "newBuild": false,
+    "simulation": false,
+    "Save": false,
+    "CoreModification": false
+  },
+  "limits": [
+    "no natural active AMR computation timing claim",
+    "does not prove completed hierarchy/field arrays or any new scientific accuracy",
+    "no workflow result identity was returned; baseline identity is context only",
+    "whole3C remains incomplete"
+  ]
+}

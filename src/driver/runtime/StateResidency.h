@@ -9,6 +9,8 @@
  * 1. Receive a resolved plan and active AMR topology.
  * 2. Manage backend residency and stable state generations.
  * 3. Expose stage data only through checked runtime leases.
+ * 4. Snapshot exact metadata for one quiescent execution side while real
+ *    field owners independently protect their Host or Device allocations.
  */
 
 #pragma once
@@ -20,6 +22,8 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <utility>
 #include <map>
 #include <unordered_map>
 #include <stdexcept>
@@ -157,6 +161,7 @@ public:
                         CompletionToken completed_initialization,
                         ExecutionSide initial_side = ExecutionSide::Host)
     {
+        if(snapshot_owner_)throw std::logic_error("Metadata snapshot excludes topology registration");
         validate_side(initial_side);
         validate_handle_epoch(block);
         if (!is_valid(current_version))
@@ -180,6 +185,7 @@ public:
 
     void retire_block(amr::BlockHandle block)
     {
+        if(snapshot_owner_)throw std::logic_error("Metadata snapshot excludes topology retirement");
         BlockRecord& record = require_record(block);
         quiesce(block);
         record.active = false; // Keep the UID as a same-epoch tombstone.
@@ -219,6 +225,8 @@ public:
                           StateVersion new_version,
                           CompletionToken completed_operation)
     {
+        if(snapshot_owner_&&side!=snapshot_owner_->side_)
+            throw std::logic_error("Metadata snapshot excludes publication from the other side");
         validate_side(side);
         if (!is_valid(new_version))
             throw std::logic_error("published version must be nonzero");
@@ -246,6 +254,8 @@ public:
                        StateVersion source_version,
                        CompletionToken completed_operation)
     {
+        if(snapshot_owner_&&side!=snapshot_owner_->side_)
+            throw std::logic_error("Metadata snapshot excludes publication from the other side");
         validate_side(side);
         if (!is_valid(source_version))
             throw std::logic_error("ghost source version must be nonzero");
@@ -271,6 +281,7 @@ public:
                         PendingTransferPhase direction,
                         CompletionToken pending_operation)
     {
+        if(snapshot_owner_)throw std::logic_error("Metadata snapshot excludes asynchronous transfer");
         validate_region(region);
         if (direction != PendingTransferPhase::PendingH2D
             && direction != PendingTransferPhase::PendingD2H) {
@@ -406,6 +417,124 @@ private:
         std::array<Entry, 3> slots{};
         bool active = false;
     };
+public:
+    /**
+     * Metadata-only savepoint bound to this ledger and one execution side.
+     * Records include retired UIDs, all slots and private token high-watermarks;
+     * field allocations and backend completion are protected by their real owners.
+     * Workflow:
+     * 1. Prepare a quiescent snapshot for the actual mutation side.
+     * 2. Prepare all field/Runtime backups before freezing this ledger snapshot.
+     * 3. Publish only on the frozen side, then release or restore the same backup.
+     * 4. Use strict owner matching for leases/witnesses; compare records alone only
+     *    for an explicit independent Runtime reference, never to authorize restore.
+     */
+    class MetadataSnapshot {
+        friend class StateResidencyLedger;
+        const StateResidencyLedger* const owner_;
+        const ExecutionSide side_;
+        amr::TopologyEpoch epoch_{};
+        std::unordered_map<std::uint64_t, BlockRecord> records_;
+        /** Copy complete ledger history without claiming protection of field storage. */
+        explicit MetadataSnapshot(const StateResidencyLedger& owner, ExecutionSide side)
+            : owner_(&owner),side_(side),epoch_(owner.active_epoch_),records_(owner.blocks_) {}
+    public:
+        MetadataSnapshot(const MetadataSnapshot&)=delete;
+        MetadataSnapshot& operator=(const MetadataSnapshot&)=delete;
+        MetadataSnapshot(MetadataSnapshot&&)=delete;
+        MetadataSnapshot& operator=(MetadataSnapshot&&)=delete;
+    };
+    /**
+     * Prepare a backup only when all active metadata is settled on the requested side.
+     * Host remains strictly HostValid/Invalid. Device admits DeviceValid/Synchronized/
+     * Invalid, but Synchronized restoration additionally requires protected Device
+     * fields and an unchanged or independently protected Host mirror at Runtime.
+     * This method does not synchronize streams or grant any field-storage lease.
+     */
+    MetadataSnapshot snapshot_metadata(ExecutionSide side) const {
+        validate_side(side);
+        if(snapshot_owner_)throw std::logic_error("Metadata residency backup already leased");
+        for(const auto& [uid,record]:blocks_) {
+            if(!record.active)continue;
+            for(const auto& slot:record.slots) {
+                validate_quiescent(slot.coherence);
+                for(const auto& region:{slot.coherence.interior,slot.coherence.ghost}) {
+                    const bool allowed=region.residency==StateResidency::Invalid
+                        ||(side==ExecutionSide::Host
+                            ?region.residency==StateResidency::HostValid
+                            :region.residency==StateResidency::DeviceValid
+                                ||region.residency==StateResidency::Synchronized);
+                    if(!allowed)
+                        throw std::logic_error(side==ExecutionSide::Host
+                            ?"Host metadata backup excludes Device/Synchronized residency"
+                            :"Device metadata backup excludes Host residency");
+                }
+            }
+        }
+        return MetadataSnapshot(*this,side);
+    }
+    /**
+     * Freeze only this owner's exact, still-current backup after field allocation succeeds.
+     * The lease excludes topology/asynchronous transfer mutation; interior and ghost
+     * publications retain the original actual-side residency downgrade on same-side writes.
+     */
+    void freeze_metadata_snapshot(const MetadataSnapshot& snapshot) {
+        if(snapshot_owner_||!metadata_snapshot_matches(snapshot))
+            throw std::logic_error("Metadata residency backup is foreign, stale or overlapping");
+        snapshot_owner_=&snapshot;
+    }
+    /**
+     * Restore all prepared records and the epoch by the original noexcept ownership swap.
+     * Runtime must first drain work and restore the actual fields/mirrors protected by
+     * its transaction; only the exact leased snapshot may restore this metadata.
+     */
+    void restore_metadata_snapshot_noexcept(MetadataSnapshot& snapshot) noexcept {
+        if(snapshot_owner_!=&snapshot)std::terminate();
+        blocks_.swap(snapshot.records_);active_epoch_=snapshot.epoch_;
+    }
+    /** Release only the exact leased backup while its lifetime still covers this ledger. */
+    void release_metadata_snapshot(const MetadataSnapshot& snapshot) noexcept {
+        if(snapshot_owner_!=&snapshot)std::terminate();
+        snapshot_owner_=nullptr;
+    }
+    /**
+     * Match exact owner, valid frozen side, epoch and complete record/token history.
+     * Do not reapply side admission to live records: permitted same-side publications
+     * legitimately change metadata and must simply make this equality check false.
+     */
+    bool metadata_snapshot_matches(const MetadataSnapshot& snapshot) const noexcept {
+        return snapshot.owner_==this
+            &&(snapshot.side_==ExecutionSide::Host||snapshot.side_==ExecutionSide::Device)
+            &&metadata_records_match(snapshot);
+    }
+    /**
+     * Compare exact epoch/records/token history for independent reference checks.
+     * Content equality intentionally does not require the same ledger owner or side.
+     * It grants no snapshot lease or restore identity; freeze/restore consumers must
+     * use metadata_snapshot_matches and the exact leased snapshot respectively.
+     */
+    bool metadata_records_match(const MetadataSnapshot& snapshot) const noexcept {
+        const auto same_region=[](const RegionCoherence& a,const RegionCoherence& b) {
+            return a.residency==b.residency&&a.version==b.version
+                &&a.completion==b.completion&&a.pending_transfer==b.pending_transfer;
+        };
+        if(active_epoch_!=snapshot.epoch_||blocks_.size()!=snapshot.records_.size())return false;
+        for(const auto& [uid,record]:blocks_) {
+            const auto found=snapshot.records_.find(uid);
+            if(found==snapshot.records_.end()||record.active!=found->second.active)return false;
+            for(std::size_t s=0;s<3;++s) {
+                const auto& a=record.slots[s];const auto& b=found->second.slots[s];
+                if(a.interior_last_token_id!=b.interior_last_token_id
+                    ||a.ghost_last_token_id!=b.ghost_last_token_id
+                    ||a.coherence.ghost_source_version!=b.coherence.ghost_source_version
+                    ||!same_region(a.coherence.interior,b.coherence.interior)
+                    ||!same_region(a.coherence.ghost,b.coherence.ghost))return false;
+            }
+        }
+        return true;
+    }
+
+private:
 
     static constexpr std::array<StateSlot, 3> all_slots() noexcept
     {
@@ -594,6 +723,7 @@ private:
 
     amr::TopologyEpoch active_epoch_{};
     std::unordered_map<std::uint64_t, BlockRecord> blocks_;
+    const MetadataSnapshot* snapshot_owner_=nullptr;
 };
 
 } // namespace arch::state

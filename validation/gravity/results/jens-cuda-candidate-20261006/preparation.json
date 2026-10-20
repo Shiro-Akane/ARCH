@@ -1,0 +1,64 @@
+{
+  "status": "PREPARED_NOT_BUILT_NOT_VALIDATED",
+  "base_commit": "ccfcef5bc60f4361a808dc1e83c020094ab50930",
+  "patch_path": "validation/gravity/candidates/jens-cuda-20261006.patch",
+  "patch_sha256": "c026244a12f55900062aa32f213466d6d07dddf388eb18695424b0f2726bb123",
+  "public_identity_before": {
+    "src/core/config/RefinementSelection.h": "d4e44cc0066bb1d8e0c075aa9ef7ee02e683a2d5f57e60331dd0cfed3893d243",
+    "src/core/config/ConfigurationInput.h": "d4ffc65e7224b138383599dcface87c613b162b2dfd97e13ea7e54b1cef0428c",
+    "src/core/config/RuntimeParams.h": "6a6c2a1f797e1de596c39e70677de1abdf75a6ca58d37d80108f52ce4d797b6a",
+    "src/api/Configuration.h": "5cbd448136f7ab004265113d08ca82c0dc5d162dd8195c5f17c0e24f3d6bbed6",
+    "src/api/configuration/PresentationMetadata.cpp": "02ea2039bd50f668b802b9ac9c7bee77d6f49532289021d36258a79b82b3855a",
+    "src/api/configuration/Configuration.cpp": "4a32aec75fc5b32a126ba65aa90a6da77e264467b3d664d6802689df703c47f8",
+    "src/driver/Driver.h": "f8017cfc1d55c3ce4839d447a3337eef57cb214bcb4c5f128814df7a992812d4",
+    "validation/gravity/gravity_box.py": "71cfe0b4bed14fa554fe0c32a2c28089838779ce40d227e736411815b909713a",
+    "tests/api/configuration/test_configuration.py": "502d1326dacdaf73a7d1349d8c8a2ceb8996b7cc895a4014e130d17a99d2be13",
+    "tests/host/core/test_configuration_input.cpp": "b051dfd250581cbdec315339cda249da1e7dcaf6a117c49ab3f7ba29499f53d6",
+    "build-cpu/CMakeCache.txt": "b8f1cdff743e1af6d22f53ff80c39f3772aa82672bafe70e85e88ed4b16b6667",
+    "build-cuda/CMakeCache.txt": "9c784bcd5dd9d32e64e22ddf6970890857869ff2d1dee5692afb859575427da9",
+    "build-cpu/bin/ARCH": "32f7b13972ac9381076b06e04c581900065a246796e911bdd161479d86f31b8e",
+    "build-cuda/bin/ARCH": "1cbbd6952f4970f89ef5071b9e3f18d9ec619ec92824f0ad9928455f6e27eb53"
+  },
+  "public_identity_after": {
+    "src/core/config/RefinementSelection.h": "d4e44cc0066bb1d8e0c075aa9ef7ee02e683a2d5f57e60331dd0cfed3893d243",
+    "src/core/config/ConfigurationInput.h": "d4ffc65e7224b138383599dcface87c613b162b2dfd97e13ea7e54b1cef0428c",
+    "src/core/config/RuntimeParams.h": "6a6c2a1f797e1de596c39e70677de1abdf75a6ca58d37d80108f52ce4d797b6a",
+    "src/api/Configuration.h": "5cbd448136f7ab004265113d08ca82c0dc5d162dd8195c5f17c0e24f3d6bbed6",
+    "src/api/configuration/PresentationMetadata.cpp": "02ea2039bd50f668b802b9ac9c7bee77d6f49532289021d36258a79b82b3855a",
+    "src/api/configuration/Configuration.cpp": "4a32aec75fc5b32a126ba65aa90a6da77e264467b3d664d6802689df703c47f8",
+    "src/driver/Driver.h": "f8017cfc1d55c3ce4839d447a3337eef57cb214bcb4c5f128814df7a992812d4",
+    "validation/gravity/gravity_box.py": "71cfe0b4bed14fa554fe0c32a2c28089838779ce40d227e736411815b909713a",
+    "tests/api/configuration/test_configuration.py": "502d1326dacdaf73a7d1349d8c8a2ceb8996b7cc895a4014e130d17a99d2be13",
+    "tests/host/core/test_configuration_input.cpp": "b051dfd250581cbdec315339cda249da1e7dcaf6a117c49ab3f7ba29499f53d6",
+    "build-cpu/CMakeCache.txt": "b8f1cdff743e1af6d22f53ff80c39f3772aa82672bafe70e85e88ed4b16b6667",
+    "build-cuda/CMakeCache.txt": "9c784bcd5dd9d32e64e22ddf6970890857869ff2d1dee5692afb859575427da9",
+    "build-cpu/bin/ARCH": "32f7b13972ac9381076b06e04c581900065a246796e911bdd161479d86f31b8e",
+    "build-cuda/bin/ARCH": "1cbbd6952f4970f89ef5071b9e3f18d9ec619ec92824f0ad9928455f6e27eb53"
+  },
+  "scope": "private Cartesian explicit CUDA JENS verification; public gates unchanged",
+  "contract": "uniform-lifecycle-1",
+  "limits": {
+    "compile_parallel_jobs": 28,
+    "cuda_heavy_jobs": 1,
+    "compile_timeout_seconds": 3600,
+    "minimum_available_memory_mib": 4096,
+    "maximum_swap_growth_mib": 256,
+    "campaign_threads": 1,
+    "per_run_timeout_seconds": 1200,
+    "campaign_total_timeout_seconds": 14400,
+    "device": "GPU0 RTX 4070 Ti",
+    "raw_output_budget_mib": 10240,
+    "vram_limit_mib": 10240
+  },
+  "limit_note": "Declared plan; preparation does not enforce run limits. Run wrapper must enforce before launch.",
+  "candidate_source_file_count": 1931,
+  "candidate_source_inventory_sha256": "4067f618f247e95499d98f87f6398555115cece50959c01e38a4b9133700aabe",
+  "preparation_notes": [
+    "First scope parser rejected unified diff lacking diff--git header; fixed to parse +++b paths. No source/build/run occurred on failed attempt.",
+    "Private snapshot applied successfully; no public source/cache/binary identity changed."
+  ],
+  "architecture_checks": {
+    "private_candidate_canonical_root_exit_code": 0,
+    "public_root_unfiltered_scan": "FAIL: scanner traverses ignored nested private snapshot and counts duplicate CMake owners. Public source unchanged; not an architecture defect assertion. No checker modifications or exclusions applied."
+  }
+}

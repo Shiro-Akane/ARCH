@@ -31,8 +31,34 @@ class CellularDetonation
     std::vector<double> default_X;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution& inputs)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        result.consumers.needs_network = true;
+        result.consumers.needs_temperature_floor = false;
+        result.composition = arch::config::DescribeNetworkComposition(inputs);
+        if (result.composition->complete)
+            result.consumers.needs_composition_floor = !result.composition->keys.empty();
+        result.parameters = {
+            {"rhoAmbient", "float", "g/cm^3"},
+            {"tempAmbient", "float", "K"},
+            {"rhoPerturb", "float", "g/cm^3"},
+            {"tempPerturb", "float", "K"},
+            {"velxPerturb", "float", "cm/s"},
+            {"radiusPerturb", "float", "cm"},
+            {"noiseAmplitude", "float", "1"},
+            {"shock_dir", "int", "1"}};
+        return result;
+    }
+
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
+        // This planar benchmark uses Cartesian positions and velocity directions.
+        // A curved chart is a different physical model, not a coordinate relabel.
+        if (config.grid.geometry!="cartesian")
+            throw std::invalid_argument("CellularDet requires Cartesian geometry");
         // [1. Read Thermodynamics & Kinematics (Temperature-based)]
         rho_amb = config.Get<double>("rhoAmbient", 1.0e7);
         T_amb = config.Get<double>("tempAmbient", 2.0e8);

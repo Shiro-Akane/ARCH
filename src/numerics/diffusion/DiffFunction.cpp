@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 #include "numerics/diffusion/DiffFunction.h"
 
@@ -158,5 +159,36 @@ namespace DiffFunction
         return order == RKLOrder::First
             ? get_rkl1_coeffs(stage, stages)
             : get_rkl2_coeffs(stage, stages);
+    }
+
+    // 3. Global repair weights
+    //
+    // Global mass of a conservative composite operator (closed boundaries) obeys
+    //     M_j = mu_j M_(j-1) + nu_j M_(j-2) + (1 - mu_j - nu_j) M_0 + delta_j,
+    // with zero initial mass and zero global operator sum. Differentiating the final
+    // stage with respect to a unit impulse delta_k yields the adjoint recurrence
+    // w_s = 1, w_(s-1) = mu_s, w_j = mu_(j+1) w_(j+1) + nu_(j+2) w_(j+2);
+    // w_j is the gain applied to a repair injected at stage j. Indices are 1-based
+    // here and map to the returned vector as w_j -> result[j - 1].
+    std::vector<double> repair_weights(RKLOrder order, int stages)
+    {
+        if (stages <= 0) {
+            throw std::invalid_argument("DiffFunction::repair_weights: stages must be positive");
+        }
+
+        const std::size_t s = static_cast<std::size_t>(stages);
+        std::vector<double> gains(s, 0.0);
+        gains[s - 1] = 1.0; // w_s
+        if (stages == 1) return gains; // documented special case: {1}
+
+        gains[s - 2] = get_rkl_coeffs(order, stages, stages).mu; // w_(s-1) = mu_s
+        for (int j = stages - 2; j >= 1; --j) {
+            const double mu_next = get_rkl_coeffs(order, j + 1, stages).mu;
+            const double nu_next2 = get_rkl_coeffs(order, j + 2, stages).nu;
+            gains[static_cast<std::size_t>(j - 1)] =
+                mu_next * gains[static_cast<std::size_t>(j)] +
+                nu_next2 * gains[static_cast<std::size_t>(j + 1)];
+        }
+        return gains;
     }
 }

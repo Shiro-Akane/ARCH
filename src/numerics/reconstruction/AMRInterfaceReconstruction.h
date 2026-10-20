@@ -17,6 +17,7 @@
 
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 #include "numerics/reconstruction/Reconstruction.h"
+#include "numerics/curvilinear/GridMetrics.h"
 #include "grid/Grid.h"
 
 /**

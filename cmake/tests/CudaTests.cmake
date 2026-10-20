@@ -84,10 +84,27 @@ foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
 endforeach()
 
 # Backend resource ownership, AMR transactions and geometric leaves.
+add_executable(arch_cuda_conservative_acceptance
+    tests/cuda/numerics/test_conservative_acceptance.cu)
+target_link_libraries(arch_cuda_conservative_acceptance PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_conservative_acceptance)
+add_test(NAME cuda_conservative_acceptance COMMAND arch_cuda_conservative_acceptance)
+
+add_executable(arch_cuda_ppm_limiter tests/cuda/numerics/test_ppm_limiter.cu)
+target_link_libraries(arch_cuda_ppm_limiter PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_ppm_limiter)
+add_test(NAME cuda_ppm_limiter_math COMMAND arch_cuda_ppm_limiter)
+
+add_executable(arch_cuda_flux_limiter tests/cuda/numerics/test_flux_limiter.cu)
+target_link_libraries(arch_cuda_flux_limiter PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_flux_limiter)
+add_test(NAME cuda_flux_limiter COMMAND arch_cuda_flux_limiter)
+
 add_executable(arch_cuda_regrid_transaction tests/cuda/amr/test_cuda_regrid_transaction.cpp)
 target_include_directories(arch_cuda_regrid_transaction PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+# BCHandler now has one compiled owner shared with the production driver.
 target_link_libraries(arch_cuda_regrid_transaction PRIVATE
-    arch_cuda_backend CUDA::cudart)
+    arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_test(NAME cuda_regrid_transaction COMMAND arch_cuda_regrid_transaction)
 set_tests_properties(cuda_regrid_transaction PROPERTIES SKIP_RETURN_CODE 77)
 # Exercise the same setup kernel owned by the production backend without
@@ -168,11 +185,20 @@ if(ARCH_CUDA_HEAVY_JOB_POOL)
     set_property(TARGET arch_cuda_hydro_dispatch PROPERTY JOB_POOL_LINK ${ARCH_CUDA_HEAVY_JOB_POOL})
 endif()
 add_test(NAME cuda_hydro_dispatch COMMAND arch_cuda_hydro_dispatch)
+# A test-only kernel archive extends the existing AMR witness. Production
+# indicator OBJECT ownership and the CTest entrypoint remain unchanged.
+add_library(arch_cuda_jeans_witness STATIC tests/cuda/amr/test_jeans_resolution.cu)
+target_link_libraries(arch_cuda_jeans_witness PRIVATE arch_build_contract CUDA::cudart)
+arch_configure_cuda_leaf_test(arch_cuda_jeans_witness)
+if(ARCH_CUDA_HEAVY_JOB_POOL)
+    set_property(TARGET arch_cuda_jeans_witness PROPERTY
+        JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+endif()
 add_executable(arch_cuda_refinement_indicators
     tests/cuda/amr/test_refinement_indicators.cpp
     $<TARGET_OBJECTS:arch_cuda_backend_amr_indicators>)
 target_link_libraries(arch_cuda_refinement_indicators PRIVATE
-    arch_build_contract CUDA::cudart)
+    arch_cuda_jeans_witness arch_build_contract CUDA::cudart)
 add_test(NAME cuda_refinement_indicators COMMAND arch_cuda_refinement_indicators)
 set_tests_properties(cuda_refinement_indicators PROPERTIES SKIP_RETURN_CODE 77)
 
@@ -258,7 +284,7 @@ target_link_libraries(arch_cuda_hydro_leaf_parity PRIVATE
 add_executable(arch_cuda_reduction_contract
     tests/cuda/runtime/test_cuda_reduction_contract.cu)
 arch_configure_cuda_math_test(arch_cuda_reduction_contract)
-target_link_libraries(arch_cuda_reduction_contract PRIVATE arch_cuda_gravity_execution)
+target_link_libraries(arch_cuda_reduction_contract PRIVATE arch_cuda_gravity_execution arch_gravity_cpu)
 add_executable(arch_cuda_burn_policy_parity
     tests/cuda/microphysics/burn/test_burn_policy_parity.cu
     src/core/files/FileFingerprint.cpp)
@@ -276,8 +302,11 @@ target_link_libraries(arch_cuda_burn_policy_parity PRIVATE
     arch_cuda_backend_eos_utils
     arch_build_contract CUDA::cudart)
 add_executable(arch_cuda_burn_controller_parity
-    tests/cuda/microphysics/burn/test_burn_controller_parity.cu)
+    tests/cuda/microphysics/burn/test_burn_controller_parity.cu
+    src/core/config/CompositionInput.cpp)
 arch_configure_cuda_math_test(arch_cuda_burn_controller_parity)
+target_include_directories(arch_cuda_burn_controller_parity PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/simulation")
 target_compile_definitions(arch_cuda_burn_controller_parity PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_burn_controller_parity PRIVATE
@@ -322,7 +351,9 @@ target_include_directories(arch_cuda_multiblock_hydro PRIVATE
 set_target_properties(arch_cuda_multiblock_hydro PROPERTIES
     CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
 target_link_libraries(arch_cuda_multiblock_hydro PRIVATE
-    arch_cuda_backend arch_solver_dispatch CUDA::cudart)
+    arch_cuda_backend arch_solver_dispatch arch_driver_runtime CUDA::cudart)
+target_compile_definitions(arch_cuda_multiblock_hydro PRIVATE
+    ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(arch_cuda_multiblock_diffusion
     tests/cuda/numerics/test_cuda_multiblock_diffusion.cu)
 set_source_files_properties(tests/cuda/numerics/test_cuda_multiblock_diffusion.cu
@@ -342,7 +373,7 @@ target_include_directories(arch_cuda_multiblock_burn PRIVATE
 target_compile_definitions(arch_cuda_multiblock_burn PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_multiblock_burn PRIVATE
-    arch_cuda_backend arch_solver_dispatch)
+    arch_cuda_backend arch_solver_dispatch arch_driver_runtime)
 add_executable(arch_cuda_store_lifecycle
     tests/cuda/runtime/test_cuda_store_lifecycle.cpp)
 target_compile_features(arch_cuda_store_lifecycle PRIVATE cxx_std_20)
@@ -358,7 +389,8 @@ target_include_directories(arch_cuda_amr_exchange PRIVATE
 target_link_libraries(arch_cuda_amr_exchange PRIVATE
     arch_cuda_backend arch_solver_dispatch CUDA::cudart)
 add_executable(arch_cuda_diffusion_rkl_parity
-    tests/cuda/numerics/test_diffusion_rkl_parity.cu)
+    tests/cuda/numerics/test_diffusion_rkl_parity.cu
+    tests/cuda/numerics/test_diffusion_rkl_tabular.cu)
 arch_configure_cuda_math_test(arch_cuda_diffusion_rkl_parity "-Xcompiler=-march=native")
 target_link_libraries(arch_cuda_diffusion_rkl_parity PRIVATE
     arch_cuda_backend)
@@ -483,18 +515,17 @@ foreach(route IN ITEMS
     add_test(NAME "cuda_backend_burn_${backend_route_test}"
         COMMAND arch_cuda_hydro_block "${route}")
 endforeach()
-foreach(solver IN ITEMS be_nr bd ros4)
-    add_test(NAME "burn_policy_parity_status_${solver}"
-        COMMAND arch_cuda_burn_policy_parity "status.${solver}")
-endforeach()
-foreach(route IN ITEMS
-        aprox13.be_nr aprox13.bd aprox13.ros4
-        aprox19.be_nr aprox19.bd aprox19.ros4
-        aprox21.be_nr aprox21.bd aprox21.ros4
-        iso7.be_nr iso7.bd iso7.ros4)
-    string(REPLACE "." "_" route_test "${route}")
-    add_test(NAME "burn_policy_parity_${route_test}"
-        COMMAND arch_cuda_burn_policy_parity "${route}")
-    set_tests_properties("burn_policy_parity_${route_test}" PROPERTIES
+# Grouped burn policy witnesses: one entry per network matrix and one for the
+# controller status matrix.  Each matrix runs every original route through the
+# same single-route dispatch, each in its own fresh CUDA context; a failing
+# subcase names its original route while the remaining routes still run.  The
+# helpers entry and the single-route CLI
+# (`arch_cuda_burn_policy_parity <route>`) stay available unchanged.
+foreach(network IN ITEMS aprox13 aprox19 aprox21 iso7)
+    add_test(NAME "burn_policy_parity_matrix_${network}"
+        COMMAND arch_cuda_burn_policy_parity "matrix.${network}")
+    set_tests_properties("burn_policy_parity_matrix_${network}" PROPERTIES
         DEPENDS burn_mainline_reference)
 endforeach()
+add_test(NAME burn_policy_parity_status_matrix
+    COMMAND arch_cuda_burn_policy_parity "matrix.status")

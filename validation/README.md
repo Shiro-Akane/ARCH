@@ -12,8 +12,18 @@ The [gravity summary](gravity/README.md) covers external and self gravity, inclu
 
 ## Source-identified CPU/CUDA results
 
+The campaigns below retain their original source and input identities.
+Native cylindrical 2D now uses the `cylindrical-rz-pwc` chart with scoped CPU/CUDA
+checks in the [native-device receipt](backend/results/release-readiness/Cyl5NativeDevice-20261019.json).
+Former RZ and polar-alias records retain their original identities and do not
+qualify this chart. The [comprehensive admission receipt](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) adds native axial scientific endpoints, declared method/EOS products, necessary reacting/diffusive/gravity coupling and fresh. It retains failed fixtures and data-domain limits. The [current CPU closure](backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json) adds two corrected axial initializers, explicit centre-input migration and affected original CPU endpoints/fresh.
+
+The [current device record](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) closes the declared single-GPU scope. It retains the original 17 resource/batch contracts, nine legal chart walls, public endpoints, regridding, input/rejection checks and actual Studio artifacts under their recorded owner/ELF identities. The current shared NSE and Host AMR RKL repair passes nine mathematical CTests, the original private Cellular 24-step/all-25-checkpoint ENUC gate (`5e-9` plus `5e-12`, now byte-identical), own CPU/Device fresh and three rotating AMR pairs at the original `1e-12` standard. The [burn guide](burn/README.md) explains the unchanged source meaning; the [release plan](../ARCH_RELEASE_PLAN.md) records costs, retained CPU limits and later platform/distribution qualification. Earlier uniform inputs missing `center_z` retain historical scope.
+
 | Area | Recorded CPU/CUDA checks | Record |
 | --- | --- | --- |
+| Native cylindrical 2D | Real walls, three momenta, RK/RKL, AMR transactions, prescribed Poisson, seven CPU/GPU pairs, fresh, memcheck and synccheck; bounded scope, original angular-momentum budget | [Native-device receipt](backend/results/release-readiness/Cyl5NativeDevice-20261019.json) |
+| Native cylindrical scientific admission | 15 original-time axial cases, 306 legal method/EOS pairs, strong/weak source admission, required coupled endpoints and current multiphysics fresh; scoped table domains and original budgets | [Comprehensive receipt](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |
 | Smooth hydro | PCM/MUSCL/PPM spatial convergence at 64/128/256 cells; independent Euler/RK2/RK3 time accuracy; 1,016-step periodic advection | [hydro](hydro/README.md) |
 | Riemann and strong shocks | Sod and planar Sedov analytic profiles, three-resolution convergence and shock positions | [hydro](hydro/README.md#sod-shock-tube) |
 | Species diffusion | RKL1/RKL2 applications at three resolutions; second-order RKL2 spatial convergence | [diffusion](diffusion/README.md) |
@@ -33,25 +43,41 @@ The [gravity summary](gravity/README.md) covers external and self gravity, inclu
 | Bounded memory capacity | Regrid migration, a 16,384-row cuDSS matrix, generated burning and AMR applications; all observed dynamic allocations released | [Detailed capacity records](#detailed-verification-records) |
 | Focused backend instrumentation | Memcheck and racecheck each pass 23 complete routes, including weak thermodynamics and real generated cuDSS burning; clean memory and race reports | [Detailed device checks](#detailed-verification-records) |
 
-The uniform application matrix
+The recorded historical uniform application matrix
 contains 22 cases, 180 CPU/CUDA executions and 90 comparisons. The
 generated-network matrix
 adds six cases, 48 executions and 24 comparisons, including actual CPU KLU and
 GPU cuDSS selection for the 32-equation audit31 network. Module summaries link
 the independent scientific checks and preserve their original budgets.
 
-The complete Release regression
-passes 98 tests, and the CPU-only regression
-passes 31. The complete Debug regression
-also passes all 98 tests without skips. Focused memcheck and racecheck each pass
-all 23 routes. Their sparse tests cover three ODEs, both storage sizes and four
+The linked historical Release and Debug regressions each passed 98 tests
+without skips; their CPU-only regression passed 31. Those totals describe the
+identified binaries in the records below. The associated focused memcheck and
+racecheck each passed all 23 routes. Their sparse tests cover three ODEs, both storage sizes and four
 subdivisions with the original numerical budgets. Ordinary scientific runs and
 memcheck retain the full `1e-10 s` interval; racecheck uses a separate `1e-12 s`
 observation interval. The shorter instrumentation run does not replace the
 full scientific trajectory. Host/device capacity and optimized core-build
 measurements are available in the detailed records below.
 
+## Current verification selection
+
+The current CPU CTest list contains 75 entries: 68 numerical/API checks
+and seven tooling wrappers; the CUDA cache contains 142 entries, including 52
+CUDA-named entries. Registration alone is not an execution result.
+Hosted CI selects the numerical/API entries once and runs their tooling owners
+in its separate job; [the CI guide](../.github/workflows/README.md) explains the
+matching discovery and completion checks.
+
+The [release plan](../ARCH_RELEASE_PLAN.md) owns current verification scope. Historical RZ PASS/FAIL/GAP and cost records remain evidence for their recorded implementations. Other coordinates and shared modules retain their existing numerical criteria.
+
 ## Error conventions
+
+Required ARCH verification uses analytical/manufactured solutions, independent
+references, conservation, convergence and backend comparisons. Comparisons with
+FLASH or other simulation programs are optional developer work; installing,
+building or obtaining results from those programs is not a prerequisite for
+ARCH tests, CI or release acceptance.
 
 Verification compares the implementation with analytic, manufactured, or
 independently converged references. Validation against experimental or
@@ -80,12 +106,18 @@ immutable baseline parameter files under `inputs/`, and optional `figures/`. Eac
 validation `.par` file names its owning record and must change together with the
 relevant metrics and acceptance decision. Reusable teaching and example inputs
 remain under `simulation/`; runtime data remain under `EOS_toolkit/`. Do not create
-a parallel validation tree. Raw logs, hardware metadata and historical records
-belong under each module's `results/`, separate from the user-facing summary.
-Generated HDF5 checkpoints and plot outputs remain in the local result directory
-and are excluded from new Git additions. Keep the JSON/CSV results, parameters,
-logs and artifact hashes in Git; distribute a full binary-data archive separately
-when needed. Existing tracked reference data and EOS inputs are unaffected.
+a parallel validation tree. Reviewed measurements, sanitized hardware metadata
+and historical decisions belong under each module's `results/`, separate from
+the user-facing summary. Keep JSON/CSV metrics, immutable parameters, reference
+samples, reproduction scripts and compact failure explanations in Git.
+
+Generated checkpoints, plots, complete application transcripts and per-step
+backend/solver traces remain in local result directories or an identified local
+archive. Their retained identities and archive scope are described in the
+[raw-record archive index](archive/README.md). Raw files are not required by CI;
+regression fixtures and runtime EOS inputs retain their existing owners. A
+separately published data archive can accompany a study when its raw outputs
+are needed for independent analysis.
 
 ### Result identity and evidence
 
@@ -166,7 +198,7 @@ Use [CASE_TEMPLATE.md](CASE_TEMPLATE.md) for new records.
 These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
 
 - [Source delivery review](backend/results/final-acceptance-20260907/release-73a9cf50/README.md): detailed evidence inventory and source-asset checks.
-- [Integration review](../docs/development/HpcCudaIntegration.md): code changes, test selection and exact identities.
+- [Integration review](../docs/histroy/integration/HpcCudaIntegration.md): code changes, test selection and exact identities.
 - [Maintenance and build records](backend/results/maintenance-freeze-20260908/README.md): source-specific dispatch and restart checks, including earlier RTX 3060 Ti timings. Those pre-optimization measurements are not current-code performance estimates.
 
 - [integration regression record (JSON)](backend/results/hpc-cuda-optimization/integration.json)
@@ -185,6 +217,6 @@ These data files support reproduction and independent review; they are not setup
 - [build measurements](backend/results/cold-core-first-law-20260907/release-909/README.md)
 - [capacity measurements](backend/results/device-memory-first-law-20260907/README.md)
 - [instrumentation records](backend/results/final-first-law-20260907/README.md)
-- [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50/)
+- [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50)
 
 </details>

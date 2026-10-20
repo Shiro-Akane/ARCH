@@ -1,18 +1,23 @@
 // Focused production-kernel smoke, not full scientific qualification.
+#include "physics/boundary/BoundaryFlux.h"
 #include "cuda/diffusion/DiffusionKernels.cuh"
 #include "cuda/hydro/kernels/HydroSourceKernels.cuh"
 #include "cuda/hydro/kernels/HydroFaceKernel.cuh"
 #include "physics/eos/IdealGas.h"
 #include "math/geometry/CurvilinearMetricCases.h"
 #include "math/geometry/ViscousGeometryCases.h"
+#include "math/geometry/RadialStokesCases.h"
+#include "math/geometry/CurvedStokesCases.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace {
@@ -94,6 +99,10 @@ struct ConstantGeometryEos {
     ARCH_INLINE void evaluate_state(eos_state_t&) const {}
 };
 
+struct HighPressureGeometryEos {
+    ARCH_INLINE double get_pressure(const FluidVector&, const double*) const { return 3e24; }
+};
+
 __global__ void independent_metrics_kernel(
     const CurvilinearMetricCases::MeasureCase* cases, int count, double* error)
 {
@@ -124,14 +133,94 @@ void independent_metrics()
               << " device=" << device_error << '\n';
 }
 
+/** Runtime-uploaded analytic covariant point gradients, not a diffusion step. */
+__global__ void independent_newtonian_kernel(
+    const ViscousGeometryCases::NewtonianPointCase* cases,int count,double* result)
+{
+    double maximum=0.;bool valid=true;
+    for(int index=0;index<count;++index) {
+        maximum=std::max(maximum,ViscousGeometryCases::newtonian_point_error(cases[index]));
+        valid=valid&&ViscousGeometryCases::newtonian_point_guards(cases[index]);
+    }
+    result[0]=maximum;result[1]=valid?1.:0.;
+}
+
+/** Execute actual runtime-uploaded frame inputs in the same point math.
+ * This is a constitutive connection witness, independent of diffusion updates.
+ */
+__global__ void independent_covariant_kernel(
+    const ViscousGeometryCases::CovariantPointCase* cases,int count,double* result)
+{
+    double maximum=0.;
+    for(int index=0;index<count;++index)
+        maximum=std::max(maximum,ViscousGeometryCases::covariant_point_error(cases[index]));
+    result[0]=maximum;result[1]=ViscousGeometryCases::covariant_point_guards()?1.:0.;
+}
+
+
+/** Actual uploaded face and periodic witnesses execute shared scalar math. */
+__global__ void independent_paired_traction_kernel(
+    const ViscousGeometryCases::PairedTractionCase* cases,int count,
+    const ViscousGeometryCases::PairedPeriodicCase* periodic,double* result)
+{
+    double maximum=0.;
+    for(int index=0;index<count;++index)
+        maximum=std::max(maximum,ViscousGeometryCases::paired_traction_error(cases[index]));
+    result[0]=maximum;result[1]=ViscousGeometryCases::paired_traction_guards()?1.:0.;
+    result[2]=ViscousGeometryCases::paired_periodic_work(*periodic,result+3)?1.:0.;
+}
+
+/** Execute the sole shared constitutive leaf on actual device case buffers. */
+void independent_newtonian()
+{
+    const auto inputs=ViscousGeometryCases::newtonian_point_cases();
+    DeviceBuffer<ViscousGeometryCases::NewtonianPointCase> cases(inputs.size());
+    cases.upload(inputs);DeviceBuffer<double> result(2);
+    independent_newtonian_kernel<<<1,1>>>(cases.get(),static_cast<int>(inputs.size()),result.get());
+    check(cudaGetLastError());const auto device=result.download();
+    require(std::isfinite(device[0])&&device[0]<=64.*std::numeric_limits<double>::epsilon()
+        &&device[1]==1.,"independent CUDA Newtonian constitutive point law");
+    ViscousGeometryCases::newtonian_constitutive();
+    const auto frames=ViscousGeometryCases::covariant_point_cases();
+    DeviceBuffer<ViscousGeometryCases::CovariantPointCase> frame_cases(frames.size());
+    frame_cases.upload(frames);
+    independent_covariant_kernel<<<1,1>>>(frame_cases.get(),static_cast<int>(frames.size()),result.get());
+    check(cudaGetLastError());const auto frame_result=result.download();
+    require(std::isfinite(frame_result[0])&&frame_result[0]<=64.*std::numeric_limits<double>::epsilon()
+        &&frame_result[1]==1.,"independent CUDA covariant gradient failure/publication law");
+    ViscousGeometryCases::newtonian_covariant_gradient();
+    const auto paired=ViscousGeometryCases::paired_traction_cases();
+    DeviceBuffer<ViscousGeometryCases::PairedTractionCase> paired_cases(paired.size());
+    paired_cases.upload(paired);
+    DeviceBuffer<ViscousGeometryCases::PairedPeriodicCase> periodic(1);
+    periodic.upload({ViscousGeometryCases::paired_periodic_case()});
+    DeviceBuffer<double> paired_result(7);
+    independent_paired_traction_kernel<<<1,1>>>(paired_cases.get(),static_cast<int>(paired.size()),periodic.get(),paired_result.get());
+    check(cudaGetLastError());const auto paired_values=paired_result.download();
+    require(std::isfinite(paired_values[0])&&paired_values[0]<=64.*std::numeric_limits<double>::epsilon()
+        &&paired_values[1]==1.&&paired_values[2]==1.,"independent CUDA paired traction/work law");
+    ViscousGeometryCases::newtonian_paired_faces();
+    std::cout<<"NEWTONIAN_DEVICE_PAIRED_FACE cases="<<paired.size()<<" max_error="<<paired_values[0]
+        <<" corrected_D="<<paired_values[3]<<" naive_D="<<paired_values[4]<<'\n';
+
+    std::cout<<"NEWTONIAN_DEVICE_COVARIANT_POINT cases="<<frames.size()
+        <<" max_error="<<frame_result[0]<<'\n';
+    std::cout<<"NEWTONIAN_DEVICE_CONSTITUTIVE_POINT cases="<<inputs.size()
+        <<" max_error="<<device[0]<<'\n';
+}
+
 void analytic_geometry_examples()
 {
     // Hand-derived examples: rho=2, velocity=(2,3,4), p=5,
     // r=2, theta=pi/4, dt=.1, nu=.03. Native velocity components are
-    // constant in neighbouring cells. Viscous source is mu*sum C_d(C_d(v));
-    // spherical 2D is polar, spherical 3D includes radial/theta cot coupling.
-    // Spherical 1D/3D sources use <1/r> = 6/13 on the shell [1,3].
-    // The volume-weighted source is 12/13 of its midpoint value (1/r_mid = 1/2).
+    // constant in neighbouring cells. Hydro and its original shell volume
+    // remain unchanged. Full Stokes sources use the same complete stress as
+    // actual face traction, rather than the retired vector Laplacian.
+    // Radial viscous inputs additionally bind the real r=1,2,3 stencil with
+    // h=1 and faces 3/2,5/2. Their independent rational residual is computed
+    // from tau=mu*(G+G^T-(2/3)*tr(G)*I), with q=u/r at those two faces.
+    // Multidimensional references are the point connection C_j*tau[:,j],
+    // with real centred zero partials. Every original assertion/window stays.
     struct Example {
         GridMetrics::Geometry geometry;
         int dimension;
@@ -141,12 +230,11 @@ void analytic_geometry_examples()
     };
     constexpr double pi = 3.14159265358979323846;
     const Example examples[]{
-        {GridMetrics::Geometry::Cylindrical, 1, {.25, 0, 0}, {-.003, 0, 0}, 4.0},
-        {GridMetrics::Geometry::Cylindrical, 2, {1.15, -.6, 0}, {-.003, -.0045, 0}, 2*pi},
-        {GridMetrics::Geometry::Cylindrical, 3, {1.85, 0, -.8}, {-.003, 0, -.006}, pi/2},
-        {GridMetrics::Geometry::Spherical, 1, {6.0/13, 0, 0}, {-.006*12/13, 0, 0}, 26.0/3},
-        {GridMetrics::Geometry::Spherical, 2, {1.15, -.6, 0}, {-.003, -.0045, 0}, 2*pi},
-        {GridMetrics::Geometry::Spherical, 3, {36.0/13, 15.0/13, -24.0/13}, {-.0105*12/13, -.012*12/13, -.012*12/13}, 13.0/6},
+        {GridMetrics::Geometry::Cylindrical, 1, {.25, 0, 0}, {-13.0/3000, 0, -13.0/2000}, 4.0},
+        {GridMetrics::Geometry::Cylindrical, 3, {1.85, 0, -.8}, {-.004, 0, -.006}, pi/2},
+        {GridMetrics::Geometry::Spherical, 1, {6.0/13, 0, 0}, {-103.0/24500, -927.0/196000, -309.0/49000}, 26.0/3},
+        {GridMetrics::Geometry::Spherical, 2, {1.15, -.6, 0}, {-.004, -.0045, 0}, 2*pi},
+        {GridMetrics::Geometry::Spherical, 3, {36.0/13, 15.0/13, -24.0/13}, {-.007, -.0125, -.012}, 13.0/6},
     };
     DiffFlux::DiffusionConfigView config{};
     config.use_diffusion = config.use_viscous_diffusion = true;
@@ -163,9 +251,18 @@ void analytic_geometry_examples()
         FluidVector hydro{}, viscous{};
         TimeIntegration::add_geometric_source_cell(
             state, nullptr, ConstantGeometryEos{}, grid, 0, 0, .1, hydro);
+        // Valid storage and real neighbours are essential to the matched
+        // finite-volume geometric residual. The synthetic hydro point above
+        // intentionally has no such storage, so keep its metric test separate.
+        auto viscous_grid=grid;
+        viscous_grid.ng=1;viscous_grid.dx1=1.;viscous_grid.x1_min=.5;
+        viscous_grid.stride_y=5;
+        viscous_grid.stride_z=example.dimension>=2?25:5;
+        viscous_grid.total_size=example.dimension==3?125:viscous_grid.stride_z;
+        const int j=example.dimension>=2?1:0,k=example.dimension==3?1:0;
         const auto result = DiffFlux::evaluate_geometric_diffusion_cell(
             state, nullptr, ConstantGeometryEos{}, SpeciesPODView{}, config,
-            grid, 0, 0, 0, .1, nullptr, nullptr, viscous,
+            viscous_grid, 2, j, k, .1, nullptr, nullptr, viscous,
             [&state](int) { return state; });
         require(result.valid && result.active, "frozen geometry coefficient unexpectedly inactive");
         const double hydro_values[]{hydro.mom_u, hydro.mom_v, hydro.mom_w};
@@ -211,6 +308,105 @@ void cache_metrics(arch::cuda::DeviceGridView& grid, DeviceBuffer<double>& metri
     }
 }
 
+/** Production CUDA pressure balance on cylindrical and spherical-rphi charts.
+ * Fixture matches the original high-pressure report: rho=1e7, p=3e24,
+ * dt=1e-10, r=1e8..2e8. Uniform pressure must produce exact zero radial
+ * impulse; nonuniform faces are compared with the long-double unreduced
+ * divergence plus p*(A_R-A_L)/V source. Non-radial fields/species stay raw.
+ */
+void pressure_balanced_curvilinear_divergence()
+{
+    constexpr double high_pressure=3e24, density=1e7, dt=1e-10;
+    constexpr double radial_left=1e8, radial_right=2e8;
+    struct Case { const char* geometry; int dim; };
+    for (const Case& chart : {Case{"cylindrical",1},Case{"cylindrical",2},
+             Case{"cylindrical",3},Case{"spherical",2}}) {
+        Grid grid(amr::MAX_NG,radial_left,radial_right,0.,1.,0.,1.,1,1,1);
+        grid.dim=chart.dim;grid.geometry=chart.geometry;grid.InitializeTopology();
+        const int cells=grid.GetTotalSize();
+        auto device_grid=arch::cuda::make_device_grid_view(grid);
+        DeviceBuffer<double> metrics(7*cells);
+        cache_metrics(device_grid,metrics);
+        DeviceState flux(cells,1),delta(cells,1),baseline(cells,1);
+        DeviceBuffer<double> mean_pressure(cells);
+        std::vector<double> packed((6+1)*cells,0.),pressures(cells,high_pressure);
+        for(int cell=0;cell<cells;++cell)packed[cells+cell]=high_pressure;
+        flux.storage.upload(packed);mean_pressure.upload(pressures);
+        // The leaf accumulates into delta; never rely on allocator contents.
+        check(arch::cuda::clear_hydro_buffer(delta.view,nullptr));
+
+        check(arch::cuda::launch_hydro_divergence(
+            flux.view,delta.view,device_grid,dt,0,nullptr,mean_pressure.get()));
+        auto actual=delta.storage.download();
+        for(int linear=0;linear<device_grid.active_cell_count();++linear) {
+            const int cell=device_grid.active_cell(linear);
+            require(actual[cells+cell]==0.,"uniform CUDA pressure produced radial impulse");
+            require(actual[cell]==0.&&actual[2*cells+cell]==0.&&actual[3*cells+cell]==0.
+                &&actual[4*cells+cell]==0.&&actual[6*cells+cell]==0.,
+                "uniform CUDA pressure changed another conserved field");
+        }
+
+        FluidState state;initialize(state,cells,1);
+        for(int cell=0;cell<cells;++cell) {
+            state.set(cell,{density,0.,0.,0.,density*10.});
+            state.X(0,cell)=1.;
+        }
+        DeviceState input(cells,1),source_offset(cells,1);
+        input.storage.upload(pack(state));
+        check(arch::cuda::clear_hydro_buffer(source_offset.view,nullptr));
+        check(arch::cuda::launch_hydro_sources(input.view,source_offset.view,device_grid,
+            HighPressureGeometryEos{},dt,nullptr,{}, {}, {},true));
+        const auto source=source_offset.storage.download();
+        for(int linear=0;linear<device_grid.active_cell_count();++linear) {
+            const int cell=device_grid.active_cell(linear);
+            require(source[cell]==0.&&source[cells+cell]==0.&&source[4*cells+cell]==0.
+                &&source[2*cells+cell]==0.&&source[3*cells+cell]==0.
+                &&source[6*cells+cell]==0.,"uniform CUDA pressure source impulse");
+        }
+
+        for(int cell=0;cell<cells;++cell) {
+            const double face_pressure=high_pressure*(1.+1.e-3*(cell%7-3));
+            packed[cell]=1.2;packed[cells+cell]=face_pressure;
+            packed[2*cells+cell]=.4;packed[3*cells+cell]=.2;
+            packed[4*cells+cell]=3.;packed[6*cells+cell]=.7;
+        }
+        flux.storage.upload(packed);
+        check(arch::cuda::clear_hydro_buffer(baseline.view,nullptr));
+        check(arch::cuda::clear_hydro_buffer(delta.view,nullptr));
+        check(arch::cuda::launch_hydro_divergence(
+            flux.view,baseline.view,device_grid,dt,0,nullptr));
+        check(arch::cuda::launch_hydro_divergence(
+            flux.view,delta.view,device_grid,dt,0,nullptr,mean_pressure.get()));
+        check(arch::cuda::launch_hydro_sources(input.view,delta.view,device_grid,
+            HighPressureGeometryEos{},dt,nullptr,{}, {}, {},true));
+        actual=delta.storage.download();
+        const auto raw=baseline.storage.download();
+        for(int linear=0;linear<device_grid.active_cell_count();++linear) {
+            const int cell=device_grid.active_cell(linear);
+            require(actual[cell]==raw[cell]&&actual[2*cells+cell]==raw[2*cells+cell]
+                &&actual[3*cells+cell]==raw[3*cells+cell]
+                &&actual[4*cells+cell]==raw[4*cells+cell]
+                &&actual[6*cells+cell]==raw[6*cells+cell],
+                "CUDA pressure reduction changed T/W or passive fields");
+            const int k=cell/device_grid.stride_z;
+            const int j=(cell-k*device_grid.stride_z)/device_grid.stride_y;
+            const int i=cell-k*device_grid.stride_z-j*device_grid.stride_y;
+            const long double area_l=GridMetrics::FaceArea(grid,0,i,j,k,false);
+            const long double area_r=GridMetrics::FaceArea(grid,0,i,j,k,true);
+            const long double volume=GridMetrics::CellVolume(grid,i,j,k);
+            const long double expected=dt/volume*(area_l*packed[cells+cell]
+                -area_r*packed[cells+cell+1]
+                +static_cast<long double>(high_pressure)*(area_r-area_l));
+            const double value=actual[cells+cell];
+            require(std::isfinite(value)
+                &&std::abs(static_cast<long double>(value)-expected)
+                    <=2.e-13L*std::max(1.L,std::abs(expected)),
+                "CUDA reduced pressure gradient differs from unreduced oracle");
+        }
+    }
+    std::cout<<"PRESSURE_BALANCED_CURVILINEAR_PASS\n";
+}
+
 std::vector<double> device_diffusion_operator(
     const DeviceState& input, DeviceState& output, DeviceState& faces,
     arch::cuda::DeviceGridView grid, IdealGasView eos, SpeciesPODView species,
@@ -240,7 +436,7 @@ std::vector<double> device_diffusion_operator(
     return actual;
 }
 
-void run_case(const char* geometry_name, int dimension, int species_count = 2)
+void run_case(const char* geometry_name, int dimension, int species_count = 2,bool walls=false)
 {
     Grid grid(amr::MAX_NG, 1.0, 2.0, 0.25, 1.25, 0.0, 1.0);
     grid.dim = dimension;
@@ -320,10 +516,13 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
             }
     DeviceState input(cells, species_count), output(cells, species_count), face_flux(cells, species_count);
     input.storage.upload(pack(state));
+    // Mathematical flags are explicit in this leaf; Runtime authority is
+    // checked separately by the resident whole-domain tests.
+    if(walls)input.view.hydro_boundary.reflecting[0]=input.view.hydro_boundary.reflecting[1]=true;
     std::vector<FluidVector> host_delta(cells);
-    TimeIntegration::add_geometric_sources(host_delta, state, host_eos, grid, 0.01);
+    TimeIntegration::add_geometric_sources(host_delta, state, host_eos, grid, 0.01,input.view.hydro_boundary);
     check(arch::cuda::launch_hydro_sources(input.view, output.view, device_grid,
-                                                   device_eos, 0.01, nullptr, species_workspace));
+                                                   device_eos, 0.01, nullptr, species_workspace, {},input.view.hydro_boundary));
     auto actual = output.storage.download();
     double radial_source = 0.0;
     for (int linear = 0; linear < device_grid.active_cell_count(); ++linear) {
@@ -341,7 +540,7 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
     const Physical::Gravity::ExternalGravityView gravity{.2, -.3, .4, true};
     check(arch::cuda::clear_hydro_buffer(output.view, nullptr));
     check(arch::cuda::launch_hydro_sources(input.view, output.view, device_grid,
-        device_eos, .01, nullptr, species_workspace, gravity));
+        device_eos, .01, nullptr, species_workspace, gravity,input.view.hydro_boundary));
     actual = output.storage.download();
     for (int linear = 0; linear < device_grid.active_cell_count(); ++linear) {
         const int cell = device_grid.active_cell(linear);
@@ -362,8 +561,10 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
     for (int direction = 0; direction < dimension; ++direction) {
         std::vector<FluidVector> host_flux(cells);
         std::vector<double> host_species_flux(static_cast<std::size_t>(cells) * species_count);
+        FluxAdmissibility::MeanThermoCache means;means.reset(cells);
+        means.hydro_boundary=input.view.hydro_boundary;
         FluxHLL<PCMReconstruction>::compute_fluxes(
-            state, host_eos, grid, host_flux, host_species_flux, direction, 0.0);
+            state, host_eos, grid, host_flux, host_species_flux, direction, 0.0,&means);
         check(arch::cuda::launch_hydro_faces<arch::cuda::CudaPcmReconstruction, arch::cuda::CudaHllFlux>(
             input.view, face_flux.view, device_grid, device_eos, direction, 0.0, nullptr, species_workspace));
         actual = face_flux.storage.download();
@@ -371,6 +572,11 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
         for (int linear = 0; linear < faces; ++linear) {
             const int cell = arch::cuda::detail::diffusion_face_cell(device_grid, direction, linear);
             const auto& flux = host_flux[cell];
+            if(walls && direction==0 && (cell%grid.stride_y==grid.Is()||cell%grid.stride_y==grid.Ie())) {
+                require(actual[cell]==0. && actual[3*cells+cell]==0. && actual[4*cells+cell]==0.,
+                    "Device reflecting wall leaked mass, torque or energy");
+                for(int sp=0;sp<species_count;++sp)require(actual[(6+sp)*cells+cell]==0.,"Device wall leaked species");
+            }
             const double fields[]{flux.rho, flux.mom_u, flux.mom_v, flux.mom_w, flux.eng};
             for (int field = 0; field < 5; ++field)
                 close(actual[field * cells + cell], fields[field], "hydro face parity");
@@ -380,6 +586,15 @@ void run_case(const char* geometry_name, int dimension, int species_count = 2)
         }
     }
 
+    if(walls) {
+        auto open=input.view;open.hydro_boundary={};
+        check(arch::cuda::launch_hydro_faces<arch::cuda::CudaPcmReconstruction,arch::cuda::CudaHllFlux>(
+            open,face_flux.view,device_grid,device_eos,0,0.,nullptr,species_workspace));
+        const auto unbound=face_flux.storage.download();
+        const int face=grid.GetIndex(grid.Is(),grid.Js(),0);
+        require(std::abs(unbound[face])>0.,"default-open negative control failed to detect advective wall leakage");
+        std::cout<<"DEVICE_CLOSED_WALL_FLUX_PASS species="<<species_count<<" default_open_negative=1\n";
+    }
     SimConfig config{};
     auto& diffusion = config.physics.diffusion;
     diffusion.use_diffusion = diffusion.use_thermal_diffusion = true;
@@ -514,9 +729,10 @@ void scalar_diffusion_convergence(const char* name, int dimension, bool thermal)
             if (dimension >= 2) laplacian -= .01*std::cos(theta);
             if (dimension == 3) laplacian -= .02*std::cos(phi);
         } else if (grid.geometry == "cylindrical" || dimension == 2) {
-            // Cylindrical 3D is (r,z,phi); spherical 2D is polar (r,phi).
+            // Cylindrical 2D/3D share axial z; spherical 2D is polar (r,phi).
             laplacian = .016*radius*radius;
-            if (dimension == 2) laplacian -= .01*std::cos(theta)/(radius*radius);
+            if (dimension == 2) laplacian -= grid.geometry=="cylindrical"
+                ? .01*std::cos(theta) : .01*std::cos(theta)/(radius*radius);
             if (dimension == 3)
                 laplacian -= .01*std::cos(theta) + .02*std::cos(phi)/(radius*radius);
         } else {
@@ -586,6 +802,16 @@ void viscous_diffusion_convergence()
     ViscousGeometryCases::convergence("cuda", evaluate);
     ViscousGeometryCases::radial_origin("cuda", evaluate);
     ViscousGeometryCases::density_stability("cuda", evaluate);
+    RadialStokesCases::density_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::density_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
+    CurvedStokesCases::cylindrical_axis_energy("cuda",ViscousGeometryCases::viscosity,evaluate);
+    Grid native(amr::MAX_NG,0.,1.,0.,1.,0.,0.,1,1,0);
+    native.dim=2;native.geometry="cylindrical";native.InitializeTopology();
+    const auto lowered=arch::cuda::make_device_grid_view(native);
+    require(arch::cuda::valid_hydro_grid(lowered) && lowered.total_z==1
+        && lowered.active_cell_count()==amr::BLOCK_NX*amr::BLOCK_NY,
+        "native axisymmetric Device indexing lost its inactive plane");
+    std::cout<<"AXISYMMETRIC_DEVICE_LAYOUT_PASS\n";
 }
 
 } // namespace
@@ -603,17 +829,23 @@ int main()
     try {
         check(probe);
         independent_metrics();
+        independent_newtonian();
         analytic_geometry_examples();
+        pressure_balanced_curvilinear_divergence();
         viscous_diffusion_convergence();
         for (const char* geometry : {"cylindrical", "spherical"})
-            for (int dimension = 1; dimension <= 3; ++dimension)
+            for (int dimension = 1; dimension <= 3; ++dimension) {
                 run_case(geometry, dimension);
+            }
+        run_case("cylindrical",2,2,true);
+        run_case("cylindrical",2,41,true);
         run_case("cartesian", 2, 41);
         run_case("spherical", 3, 41);
         for (const char* geometry : {"cartesian", "cylindrical", "spherical"})
-            for (int dimension = 1; dimension <= 3; ++dimension)
+            for (int dimension = 1; dimension <= 3; ++dimension) {
                 for (bool thermal : {false, true})
                     scalar_diffusion_convergence(geometry, dimension, thermal);
+            }
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';

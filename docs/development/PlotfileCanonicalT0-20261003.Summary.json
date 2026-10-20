@@ -1,0 +1,919 @@
+{
+  "sourceHead": "a2b0658bfe6d0bc36eb87983c5b8131327e817b3",
+  "sourceWasClean": true,
+  "binarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+  "buildExitCode": 0,
+  "buildSeconds": 9.690640687942505,
+  "ownerCheckerCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+  "native": [
+    {
+      "case": "Sod",
+      "dimension": 1,
+      "time": 0,
+      "step": 0,
+      "leafBlocks": 12,
+      "storedShape": [
+        12,
+        16
+      ],
+      "densitySamplesCompared": 192,
+      "densityBitExactMismatchCount": 0,
+      "logicalKeysMatchPreviewAndCheckpoint": true,
+      "maxNativeBoundsAbsDifference": 0.0,
+      "maxCartesianCenterAbsDifference": 0.0,
+      "maxCellMeasureAbsDifference": 0.0,
+      "numericalMetadataReview": "reported without adding scientific tolerance",
+      "caseRawConfigBinaryEosSpeciesMatch": true,
+      "rawConfigSha256": "e970eb5a9b9bd3f4fbcc9e745ae435a9d336d769d3fc6a773b5a934d6a04bc16",
+      "binarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "plotfileSha256": "f0fc3b0c4872f3a161ea5d71cf85962ba47ec1bc3ebdec6c0375f6a3c0c28e1d",
+      "plotfileBytes": 36944,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/Sod-e1bascjq",
+      "scope": "t=0 DENS/native metadata only; no evolution or all-field acceptance"
+    },
+    {
+      "case": "CellularDet",
+      "dimension": 2,
+      "time": 0,
+      "step": 0,
+      "leafBlocks": 20,
+      "storedShape": [
+        20,
+        16,
+        16
+      ],
+      "densitySamplesCompared": 5120,
+      "densityBitExactMismatchCount": 0,
+      "logicalKeysMatchPreviewAndCheckpoint": true,
+      "maxNativeBoundsAbsDifference": 1.7763568394002505e-15,
+      "maxCartesianCenterAbsDifference": 0.0,
+      "maxCellMeasureAbsDifference": 0.0,
+      "numericalMetadataReview": "reported without adding scientific tolerance",
+      "caseRawConfigBinaryEosSpeciesMatch": true,
+      "rawConfigSha256": "6c3ec5afc04e7cba5cb505c59a61040c7b4c641f6b1f89a91aee820ba5ddb5cb",
+      "binarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "plotfileSha256": "03ff6c131b773539f60d729ea7eff9799a21aa62e7c1c33df76654dad5d0f462",
+      "plotfileBytes": 473216,
+      "localEvidenceDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/amr-production-oracle/CellularDet-4dhknsoe",
+      "scope": "t=0 DENS/native metadata only; no evolution or all-field acceptance"
+    }
+  ],
+  "fields": [
+    {
+      "case": "Sod",
+      "time": 0,
+      "step": 0,
+      "plotfileSha256": "7cbbf3d54bb96b3d1c04449cd18116062e6d8f645096ddc3c7dda481d91b9d38",
+      "plotfileBytes": 55376,
+      "checkpointSha256": "d6d3277f9c688924bf9f673cb1d8623dfaff3651b4afd1248335cd59789da71a",
+      "inputSha256": "69ff073e097cdc4e3e8e4e38ee31e09c1189223608ce3896e5095bd11c0e47a1",
+      "binarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "changedInputKeys": [
+        "out_dir",
+        "plt_variables"
+      ],
+      "fields": {
+        "DENS": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "mass_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "g/cm^3"
+          },
+          "samples": 192,
+          "min": 0.125,
+          "max": 1.0
+        },
+        "DIVV": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "velocity_divergence",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 192,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "ENER": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "total_energy_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 192,
+          "min": 0.25000000000000006,
+          "max": 2.5000000000000004
+        },
+        "ENTR": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure_density_proxy",
+            "metadata_version": "candidate-field-1",
+            "unit": "unknown",
+            "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+          },
+          "samples": 192,
+          "min": 1.0,
+          "max": 1.837917367995254
+        },
+        "PRES": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 192,
+          "min": 0.1,
+          "max": 1.0
+        },
+        "SodGas": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 192,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "TEMP": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "temperature",
+            "metadata_version": "candidate-field-1",
+            "unit": "K"
+          },
+          "samples": 192,
+          "min": 2.0000000000000004,
+          "max": 2.5000000000000004
+        },
+        "VELX": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "samples": 192,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "VORT": {
+          "shape": [
+            12,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "vorticity_magnitude",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 192,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "checkpointUnchangedBitMismatches": {
+        "rho": 0,
+        "mom_u": 0,
+        "mom_v": 0,
+        "mom_w": 0,
+        "eng": 0,
+        "enuc_rate": 0,
+        "X": 0,
+        "rhoX": 0
+      },
+      "fieldCheckpointBitMismatches": {
+        "DENS": 0,
+        "ENER": 0,
+        "VELX": 0,
+        "SodGas": 0
+      },
+      "hostReaderRawPointBitMismatches": {
+        "DENS": 0,
+        "DIVV": 0,
+        "ENER": 0,
+        "ENTR": 0,
+        "PRES": 0,
+        "SodGas": 0,
+        "TEMP": 0,
+        "VELX": 0,
+        "VORT": 0
+      },
+      "logicalKeysMatch": true,
+      "unverifiedScientificFields": [
+        "PRES",
+        "TEMP",
+        "ENTR",
+        "VORT",
+        "DIVV"
+      ],
+      "scope": "t=0 stored fields and metadata; not EOS/diagnostic independent science acceptance"
+    },
+    {
+      "case": "CellularDet",
+      "time": 0,
+      "step": 0,
+      "plotfileSha256": "986e316496087f786ca49e14779a7d46894e0cad59a3a8ffa80f2dbee619c937",
+      "plotfileBytes": 1599616,
+      "checkpointSha256": "777cfbb7b9d27086bd1e00c751dda74a035649626c98bfdf75138a926795e9f8",
+      "inputSha256": "9f40e8723b368d2bf22c1311d3565c5e266d3734a12f7073148b5a15059daa9d",
+      "binarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "changedInputKeys": [
+        "out_dir",
+        "plt_variables"
+      ],
+      "fields": {
+        "DENS": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "mass_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "g/cm^3"
+          },
+          "samples": 5120,
+          "min": 9999999.999999994,
+          "max": 44018601.46790276
+        },
+        "DIVV": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "velocity_divergence",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 5120,
+          "min": -2527500000.0,
+          "max": 0.0
+        },
+        "ENER": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "total_energy_density",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 5120,
+          "min": 1.6286614998780037e+24,
+          "max": 5.556266755531392e+25
+        },
+        "ENTR": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure_density_proxy",
+            "metadata_version": "candidate-field-1",
+            "unit": "unknown",
+            "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+          },
+          "samples": 5120,
+          "min": 56551319426707.36,
+          "max": 350266338307725.94
+        },
+        "PRES": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "pressure",
+            "metadata_version": "candidate-field-1",
+            "unit": "erg/cm^3"
+          },
+          "samples": 5120,
+          "min": 8.673469414740809e+23,
+          "max": 1.4631603001410902e+25
+        },
+        "TEMP": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "temperature",
+            "metadata_version": "candidate-field-1",
+            "unit": "K"
+          },
+          "samples": 5120,
+          "min": 199999999.99999663,
+          "max": 4710871133.116774
+        },
+        "VELX": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "samples": 5120,
+          "min": 0.0,
+          "max": 1011000000.0000001
+        },
+        "VELY": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "cartesian",
+            "centering": "cell",
+            "meaning": "velocity_component",
+            "metadata_version": "candidate-field-1",
+            "unit": "cm/s"
+          },
+          "samples": 5120,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "VORT": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "vorticity_magnitude",
+            "metadata_version": "candidate-field-1",
+            "unit": "1/s"
+          },
+          "samples": 5120,
+          "min": 0.0,
+          "max": 8.940696716308594e-07
+        },
+        "ar36": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "c12": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 0.5999999999999998,
+          "max": 0.6000000000000002
+        },
+        "ca40": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "cr48": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "fe52": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "fe54": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "h1": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "he3": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "he4": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 0.39999999999999986,
+          "max": 0.4000000000000002
+        },
+        "mg24": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "n14": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "ne20": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "neut": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "ni56": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "o16": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "prot": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "s32": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "si28": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        },
+        "ti44": {
+          "shape": [
+            20,
+            16,
+            16
+          ],
+          "dtype": "float64",
+          "declaration": {
+            "basis": "scalar",
+            "centering": "cell",
+            "meaning": "species_mass_fraction",
+            "metadata_version": "candidate-field-1",
+            "unit": "1"
+          },
+          "samples": 5120,
+          "min": 9.999999999999996e-21,
+          "max": 1.0000000000000002e-20
+        }
+      },
+      "checkpointUnchangedBitMismatches": {
+        "rho": 0,
+        "mom_u": 0,
+        "mom_v": 0,
+        "mom_w": 0,
+        "eng": 0,
+        "enuc_rate": 0,
+        "X": 0,
+        "rhoX": 0
+      },
+      "fieldCheckpointBitMismatches": {
+        "DENS": 0,
+        "ENER": 0,
+        "VELX": 0,
+        "VELY": 0,
+        "h1": 0,
+        "he3": 0,
+        "he4": 0,
+        "c12": 0,
+        "n14": 0,
+        "o16": 0,
+        "ne20": 0,
+        "mg24": 0,
+        "si28": 0,
+        "s32": 0,
+        "ar36": 0,
+        "ca40": 0,
+        "ti44": 0,
+        "cr48": 0,
+        "fe52": 0,
+        "fe54": 0,
+        "ni56": 0,
+        "neut": 0,
+        "prot": 0
+      },
+      "hostReaderRawPointBitMismatches": {
+        "DENS": 0,
+        "DIVV": 0,
+        "ENER": 0,
+        "ENTR": 0,
+        "PRES": 0,
+        "TEMP": 0,
+        "VELX": 0,
+        "VELY": 0,
+        "VORT": 0,
+        "ar36": 0,
+        "c12": 0,
+        "ca40": 0,
+        "cr48": 0,
+        "fe52": 0,
+        "fe54": 0,
+        "h1": 0,
+        "he3": 0,
+        "he4": 0,
+        "mg24": 0,
+        "n14": 0,
+        "ne20": 0,
+        "neut": 0,
+        "ni56": 0,
+        "o16": 0,
+        "prot": 0,
+        "s32": 0,
+        "si28": 0,
+        "ti44": 0
+      },
+      "logicalKeysMatch": true,
+      "unverifiedScientificFields": [
+        "PRES",
+        "TEMP",
+        "ENTR",
+        "VORT",
+        "DIVV"
+      ],
+      "scope": "t=0 stored fields and metadata; not EOS/diagnostic independent science acceptance"
+    }
+  ],
+  "headerAndCrossBuild": [
+    {
+      "case": "Sod",
+      "ownerCheckerCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+      "headerValidation": "PASS",
+      "trustedIdentityChecks": [
+        "case",
+        "config",
+        "binary"
+      ],
+      "fullIdentity": "not accepted: build/EOS composite unknown",
+      "fieldCount": 9,
+      "canonicalEntrMeaning": "pressure_density_proxy",
+      "previousBinarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec",
+      "currentBinarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "crossBuildCheckpointBitMismatches": {
+        "rho": 0,
+        "mom_u": 0,
+        "mom_v": 0,
+        "mom_w": 0,
+        "eng": 0,
+        "enuc_rate": 0,
+        "X": 0,
+        "rhoX": 0
+      },
+      "scope": "all exported header semantics and t=0 cross-build state only; not bounds adapter/full AMR/scientific accuracy acceptance"
+    },
+    {
+      "case": "CellularDet",
+      "ownerCheckerCommit": "23ff77c4f08419de2b3c5eadee214da2af25784e",
+      "headerValidation": "PASS",
+      "trustedIdentityChecks": [
+        "case",
+        "config",
+        "binary"
+      ],
+      "fullIdentity": "not accepted: build/EOS composite unknown",
+      "fieldCount": 28,
+      "canonicalEntrMeaning": "pressure_density_proxy",
+      "previousBinarySha256": "c294f0d1be009bdeca36174a00a28c6ff6ca48b11b499416f6556a2ecb6b4bec",
+      "currentBinarySha256": "b360c662cd51faf6d147ff6c7c7dfa932a0c1d98cd1967d345a920b9ad13991a",
+      "crossBuildCheckpointBitMismatches": {
+        "rho": 0,
+        "mom_u": 0,
+        "mom_v": 0,
+        "mom_w": 0,
+        "eng": 0,
+        "enuc_rate": 0,
+        "X": 0,
+        "rhoX": 0
+      },
+      "scope": "all exported header semantics and t=0 cross-build state only; not bounds adapter/full AMR/scientific accuracy acceptance"
+    }
+  ],
+  "scope": "CPU t=0 only; no full scientific, evolution, publication durability or complete provenance acceptance"
+}

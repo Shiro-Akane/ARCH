@@ -1,0 +1,97 @@
+{
+  "status": "LIMITED_CHECKPOINT_PASS_NOT_FULL_RELEASE",
+  "baseline_commit": "1d4306bf8b58c525262d5326558a0a26f9fbb607",
+  "validated_candidate_sha256": {
+    "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp": "27627ec1ea219d832b13122be37f848bc4cbd1ce757925b7209fab473cbf76ae",
+    "src/numerics/elliptic/CompositePoisson.cpp": "42794477f74513e64fb06ea1856fd13fa4688b1af77687cb7e1467ef37259ac9",
+    "tests/cuda/hydro/test_cuda_hydro_block.cu": "bcd95707d7c8f3dcd88d24e647c9b88d15d634fc72226a592728ff0a80ab76bb",
+    "tests/cuda/hydro/test_hydro_leaf_parity.cu": "0979ec469bfbd20d3fe40b888e567db016f8c3b43840d4f87140926a911a62b9",
+    "tests/cuda/numerics/test_cuda_multiblock_diffusion.cu": "e887f788476cefcdb91492476f7cc1eed146a0d28f1435cf8f61e2f7f7300c8e",
+    "tests/host/gravity/test_composite_poisson.cpp": "94bdfa6ef6bfb9f252f4b61c601ab1a6769795f904e674ed82a5ab44cb4a6a6b"
+  },
+  "cpu_zero_area_boundary": {
+    "original_owners": [
+      "composite_poisson_analytic",
+      "composite_poisson_contract"
+    ],
+    "passed": 2,
+    "total": 2,
+    "seconds": 10.45,
+    "build_guard_seconds": 12.103,
+    "scope": "Actual retained positive-area faces determine constant nullspace; uniform/mixed NativeRZ axis-only Dirichlet/Robin cannot bypass source compatibility. Genuine outer Dirichlet keeps gauge fixing."
+  },
+  "cuda_existing_owners": {
+    "passed": 26,
+    "total": 26,
+    "tests": [
+      "cuda_hydro_eos_failure",
+      "hydro_leaf_parity",
+      "eos_host_device_parity",
+      "cuda_single_level_smoke",
+      "cuda_multiblock_diffusion",
+      "cuda_multiblock_diffusion_b3",
+      "cuda_multiblock_diffusion_b1024",
+      "cuda_multiblock_diffusion_b1025",
+      "cuda_multiblock_diffusion_global_species",
+      "cuda_hydro_route_matrix",
+      "cuda_hydro_integrator_matrix",
+      "cuda_backend_eos_owner_matrix",
+      "cuda_backend_diffusion_rkl1",
+      "cuda_backend_diffusion_rkl2",
+      "cuda_backend_burn_aprox13_be_nr",
+      "cuda_backend_burn_aprox13_bd",
+      "cuda_backend_burn_aprox13_ros4",
+      "cuda_backend_burn_aprox19_be_nr",
+      "cuda_backend_burn_aprox19_bd",
+      "cuda_backend_burn_aprox19_ros4",
+      "cuda_backend_burn_aprox21_be_nr",
+      "cuda_backend_burn_aprox21_bd",
+      "cuda_backend_burn_aprox21_ros4",
+      "cuda_backend_burn_iso7_be_nr",
+      "cuda_backend_burn_iso7_bd",
+      "cuda_backend_burn_iso7_ros4"
+    ],
+    "junit_sha256": "b681c728e6a98b193150a8f979af633b08e9debbb65525d9c5add9caf2a46a64",
+    "guard_seconds": 24.15,
+    "physics_windows_changed": false
+  },
+  "clock_defense": {
+    "production": "Shared canonical StageDescriptor compares input_time_fraction before metadata upload or kernel launch.",
+    "negative": "Actual completed ghost/source access and issued token, one ULP input time mutation.",
+    "measurement_correction": "Existing counters() and trace_snapshot() each instrument their own getter read. Snapshot placement and exact one final getter increment are accounted; all kernel,H2D,D2H,sync counts unchanged.",
+    "full_device_arrays_or_runtime_wall_grant": false
+  },
+  "wall_leaf": {
+    "host_cases": 26,
+    "genuine_kernel_cases": 26,
+    "original_owner_bytes_unchanged_except_include_append_main_call": true,
+    "cases": "dir3 x side2 x species0/2 x selected HLLC or explicit optional NaN trial, plus invaliddir and nonfinitecachedP no fluid publication",
+    "reference": "At rest F_rho=F_E=F_species=0; normal traction=P in original composition roundoff bound.",
+    "optional_trial_is_not_genuine_EOS_failure": true,
+    "runtime_or_native_qualification": false
+  },
+  "rkl_scope": "Shared Newtonian longitudinal/transverse Cartesian viscosity modes on actual CUDA plus original multiblockAMR species checks; fullcurvedFV stillopen.",
+  "resources": {
+    "cumulative_cuda_build_seconds": 4540.145,
+    "manager_cap_seconds": 6000,
+    "historical_guard_stops_recorded": true,
+    "latest_max_swap_growth_mib": 8,
+    "latest_build_swap_growth_kib": 768,
+    "minimum_available_kib": 2459480,
+    "host_E_minimum_free_bytes": 23832346624,
+    "host_preserve_bytes": 8589934592,
+    "next_write_reserve_bytes": 536870912,
+    "formal_performance_timing": false
+  },
+  "retired_eos_face_approximation": true,
+  "remaining_release_obligations": [
+    "Full current CPU inventory (remaining NativeRZ explicit user gravity failclosed)",
+    "General explicit source/field boundary certificate",
+    "Full curved NewtonianFV/CF/work/stability",
+    "Continuousgravity energy and force",
+    "Full NativeDevice lifecycle",
+    "GUI supported interaction matrix/currentproducer",
+    "Formal matched timing and longruns"
+  ],
+  "raw_data_uploaded": false
+}

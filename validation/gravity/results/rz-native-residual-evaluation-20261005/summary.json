@@ -1,0 +1,700 @@
+{
+  "status": "PASS",
+  "cases": 38,
+  "cells": 3288,
+  "faces": 7464,
+  "rows": [
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 36,
+      "maximumExactOperatorConstructionError": 5.6390811286335865e-14,
+      "maximumExactResidualArithmeticError": 1.2385400188852303e-14,
+      "maximumExactNativeEvaluationError": 4.98109618602762e-14,
+      "operatorConstructionNativeNormUpper": 5.5565283834512224e-11,
+      "residualEvaluationNativeNormUpper": 5.562759436896398e-11,
+      "fullManufacturedResidualBoxNativeNormUpper": 9.410985754351042e-05
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 36,
+      "maximumExactOperatorConstructionError": 1.2806323132576557e-13,
+      "maximumExactResidualArithmeticError": 4.542248766564043e-14,
+      "maximumExactNativeEvaluationError": 1.73485718991406e-13,
+      "operatorConstructionNativeNormUpper": 8.964314797379745e-11,
+      "residualEvaluationNativeNormUpper": 8.977912884853706e-11,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.00043055058349213924
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 36,
+      "maximumExactOperatorConstructionError": 9.013728832179142e-14,
+      "maximumExactResidualArithmeticError": 3.9795531614274723e-14,
+      "maximumExactNativeEvaluationError": 9.451562971267978e-14,
+      "operatorConstructionNativeNormUpper": 7.839134094927991e-11,
+      "residualEvaluationNativeNormUpper": 7.84789964874859e-11,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0002456938204091343
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 36,
+      "maximumExactOperatorConstructionError": 6.789386492988902e-14,
+      "maximumExactResidualArithmeticError": 1.438170439666929e-14,
+      "maximumExactNativeEvaluationError": 6.112935904215714e-14,
+      "operatorConstructionNativeNormUpper": 1.4039207887765666e-10,
+      "residualEvaluationNativeNormUpper": 1.4051831315613362e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.00025551548744211596
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 8.966372862539416e-14,
+      "maximumExactResidualArithmeticError": 2.1238449046753398e-14,
+      "maximumExactNativeEvaluationError": 9.639341763178797e-14,
+      "operatorConstructionNativeNormUpper": 9.030351359248782e-11,
+      "residualEvaluationNativeNormUpper": 9.042300476611315e-11,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.00010839785407069936
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 2.3744843719889997e-13,
+      "maximumExactResidualArithmeticError": 5.969276854045007e-14,
+      "maximumExactNativeEvaluationError": 1.8832106742921413e-13,
+      "operatorConstructionNativeNormUpper": 1.8787626206008542e-10,
+      "residualEvaluationNativeNormUpper": 1.881394874068188e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0004952956872571961
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 1.4612565264706696e-13,
+      "maximumExactResidualArithmeticError": 4.2954112761382956e-14,
+      "maximumExactNativeEvaluationError": 1.4851833464547456e-13,
+      "operatorConstructionNativeNormUpper": 1.4632918421748716e-10,
+      "residualEvaluationNativeNormUpper": 1.4649083099230484e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.00029092312859159826
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 1.7606471540554738e-13,
+      "maximumExactResidualArithmeticError": 6.020259634452865e-14,
+      "maximumExactNativeEvaluationError": 1.9634403267383045e-13,
+      "operatorConstructionNativeNormUpper": 2.4140875906864215e-10,
+      "residualEvaluationNativeNormUpper": 2.416390035891915e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.00028919559283610606
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 8.107860390341559e-14,
+      "maximumExactResidualArithmeticError": 2.1969627248198475e-14,
+      "maximumExactNativeEvaluationError": 6.857689942917269e-14,
+      "operatorConstructionNativeNormUpper": 7.447445057106185e-11,
+      "residualEvaluationNativeNormUpper": 7.457181097093075e-11,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.00010998788291232186
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 1.2032162522386476e-13,
+      "maximumExactResidualArithmeticError": 1.0512279848864282e-13,
+      "maximumExactNativeEvaluationError": 1.7624834418589385e-13,
+      "operatorConstructionNativeNormUpper": 1.3779689781817106e-10,
+      "residualEvaluationNativeNormUpper": 1.3801089962254353e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0005057246353780676
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 1.0535583299777071e-13,
+      "maximumExactResidualArithmeticError": 2.694920271763621e-14,
+      "maximumExactNativeEvaluationError": 1.323050357154069e-13,
+      "operatorConstructionNativeNormUpper": 1.1251775853953268e-10,
+      "residualEvaluationNativeNormUpper": 1.1264291832946167e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.000298303825497358
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 16,
+      "faces": 40,
+      "maximumExactOperatorConstructionError": 1.243394678721536e-13,
+      "maximumExactResidualArithmeticError": 2.165725283021516e-14,
+      "maximumExactNativeEvaluationError": 1.23260811886511e-13,
+      "operatorConstructionNativeNormUpper": 1.9522639950212852e-10,
+      "residualEvaluationNativeNormUpper": 1.9540174885580354e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0002898919736294901
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 64,
+      "maximumExactOperatorConstructionError": 1.7275834728188503e-13,
+      "maximumExactResidualArithmeticError": 9.469742570149564e-15,
+      "maximumExactNativeEvaluationError": 1.6652312783497108e-13,
+      "operatorConstructionNativeNormUpper": 1.0672266323577928e-10,
+      "residualEvaluationNativeNormUpper": 1.0679512674295777e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 9.341223766348452e-05
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 64,
+      "maximumExactOperatorConstructionError": 1.8536339320656667e-13,
+      "maximumExactResidualArithmeticError": 3.308367702554586e-14,
+      "maximumExactNativeEvaluationError": 1.9061704091667533e-13,
+      "operatorConstructionNativeNormUpper": 1.588279880337827e-10,
+      "residualEvaluationNativeNormUpper": 1.5897093309870083e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.000456027796419539
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 88,
+      "maximumExactOperatorConstructionError": 2.1004096688292813e-13,
+      "maximumExactResidualArithmeticError": 9.981101763759677e-14,
+      "maximumExactNativeEvaluationError": 2.7285135518156403e-13,
+      "operatorConstructionNativeNormUpper": 1.182227028439193e-10,
+      "residualEvaluationNativeNormUpper": 1.1836896272072227e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0004802517827099806
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 88,
+      "maximumExactOperatorConstructionError": 2.659306025237251e-13,
+      "maximumExactResidualArithmeticError": 5.277625941595491e-14,
+      "maximumExactNativeEvaluationError": 2.5564115004708933e-13,
+      "operatorConstructionNativeNormUpper": 2.37397725629006e-10,
+      "residualEvaluationNativeNormUpper": 2.37594769736542e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0004686419292361814
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 68,
+      "maximumExactOperatorConstructionError": 3.3455653016737205e-13,
+      "maximumExactResidualArithmeticError": 1.616014550606903e-14,
+      "maximumExactNativeEvaluationError": 3.47315897643367e-13,
+      "operatorConstructionNativeNormUpper": 1.7184036080596446e-10,
+      "residualEvaluationNativeNormUpper": 1.7195837406933242e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 8.71560337271742e-05
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 68,
+      "maximumExactOperatorConstructionError": 6.106165982110802e-13,
+      "maximumExactResidualArithmeticError": 3.863364193015681e-14,
+      "maximumExactNativeEvaluationError": 6.269939781317953e-13,
+      "operatorConstructionNativeNormUpper": 3.231196925041329e-10,
+      "residualEvaluationNativeNormUpper": 3.2339192666179453e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0003915749185091534
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 94,
+      "maximumExactOperatorConstructionError": 5.817443152491399e-13,
+      "maximumExactResidualArithmeticError": 1.6632740277183109e-13,
+      "maximumExactNativeEvaluationError": 5.858637493905267e-13,
+      "operatorConstructionNativeNormUpper": 2.2915603794935844e-10,
+      "residualEvaluationNativeNormUpper": 2.294481451005353e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0005655879870122681
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 94,
+      "maximumExactOperatorConstructionError": 5.817071075560337e-13,
+      "maximumExactResidualArithmeticError": 2.276981161705759e-13,
+      "maximumExactNativeEvaluationError": 8.094052237266095e-13,
+      "operatorConstructionNativeNormUpper": 4.1099685942985284e-10,
+      "residualEvaluationNativeNormUpper": 4.1142901896183965e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.000530558267456924
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.25
+      ],
+      "cells": 28,
+      "faces": 68,
+      "maximumExactOperatorConstructionError": 2.5476923445922863e-13,
+      "maximumExactResidualArithmeticError": 2.016998824717048e-14,
+      "maximumExactNativeEvaluationError": 2.453947688304119e-13,
+      "operatorConstructionNativeNormUpper": 1.4234792191022785e-10,
+      "residualEvaluationNativeNormUpper": 1.424567424765017e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 8.635304481453174e-05
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.1,
+        0.15
+      ],
+      "cells": 28,
+      "faces": 68,
+      "maximumExactOperatorConstructionError": 2.4622048630209547e-13,
+      "maximumExactResidualArithmeticError": 3.5444533687607727e-14,
+      "maximumExactNativeEvaluationError": 2.816650199897032e-13,
+      "operatorConstructionNativeNormUpper": 2.393538599186597e-10,
+      "residualEvaluationNativeNormUpper": 2.3955208686123816e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0003884157076420287
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.125,
+        0.25
+      ],
+      "cells": 40,
+      "faces": 94,
+      "maximumExactOperatorConstructionError": 4.956822354668864e-13,
+      "maximumExactResidualArithmeticError": 8.73243287273251e-14,
+      "maximumExactNativeEvaluationError": 4.576838648514439e-13,
+      "operatorConstructionNativeNormUpper": 1.7427407169673872e-10,
+      "residualEvaluationNativeNormUpper": 1.7448801453460503e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0005746878298992587
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": -1,
+      "radialOrigin": 0.3,
+      "spacing": [
+        0.25,
+        0.125
+      ],
+      "cells": 40,
+      "faces": 94,
+      "maximumExactOperatorConstructionError": 4.714949554396698e-13,
+      "maximumExactResidualArithmeticError": 1.3779282866896743e-13,
+      "maximumExactNativeEvaluationError": 5.813599022452592e-13,
+      "operatorConstructionNativeNormUpper": 3.322705863304927e-10,
+      "residualEvaluationNativeNormUpper": 3.3261923732129585e-10,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.0005250529960658153
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 576,
+      "maximumExactOperatorConstructionError": 1.1818598207863922e-11,
+      "maximumExactResidualArithmeticError": 3.3019337129823618e-12,
+      "maximumExactNativeEvaluationError": 1.2291150626191654e-11,
+      "operatorConstructionNativeNormUpper": 2.440934231004566e-09,
+      "residualEvaluationNativeNormUpper": 2.4471985635565373e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.01476225299065695
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 288,
+      "maximumExactOperatorConstructionError": 8.16167676840329e-12,
+      "maximumExactResidualArithmeticError": 1.7944555482244924e-12,
+      "maximumExactNativeEvaluationError": 6.654523305164309e-12,
+      "operatorConstructionNativeNormUpper": 2.6302118483583607e-09,
+      "residualEvaluationNativeNormUpper": 2.634695442519382e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.014193361618846018
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 144,
+      "maximumExactOperatorConstructionError": 5.048473819458978e-12,
+      "maximumExactResidualArithmeticError": 1.541689193928493e-12,
+      "maximumExactNativeEvaluationError": 5.507479873265707e-12,
+      "operatorConstructionNativeNormUpper": 6.780162725698432e-09,
+      "residualEvaluationNativeNormUpper": 6.7839741222735715e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.014097596316059698
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 580,
+      "maximumExactOperatorConstructionError": 2.4813653129762202e-11,
+      "maximumExactResidualArithmeticError": 7.35746417377166e-12,
+      "maximumExactNativeEvaluationError": 2.6177265624178892e-11,
+      "operatorConstructionNativeNormUpper": 4.6008875902505315e-09,
+      "residualEvaluationNativeNormUpper": 4.61254287100026e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.01832745403225034
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 292,
+      "maximumExactOperatorConstructionError": 1.785407462720111e-11,
+      "maximumExactResidualArithmeticError": 4.247961641764972e-12,
+      "maximumExactNativeEvaluationError": 1.4701873699881113e-11,
+      "operatorConstructionNativeNormUpper": 4.894067263485325e-09,
+      "residualEvaluationNativeNormUpper": 4.9030357595059405e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.01753749253937193
+    },
+    {
+      "mixed": false,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 148,
+      "maximumExactOperatorConstructionError": 1.1179318940944232e-11,
+      "maximumExactResidualArithmeticError": 4.6952047517022035e-12,
+      "maximumExactNativeEvaluationError": 8.828226882093888e-12,
+      "operatorConstructionNativeNormUpper": 1.2530194233041036e-08,
+      "residualEvaluationNativeNormUpper": 1.2537549016773196e-08,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.017272857727454006
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 448,
+      "faces": 994,
+      "maximumExactOperatorConstructionError": 2.9732760761762446e-11,
+      "maximumExactResidualArithmeticError": 3.3019337129823618e-12,
+      "maximumExactNativeEvaluationError": 3.036887389131707e-11,
+      "operatorConstructionNativeNormUpper": 3.0610669775313525e-09,
+      "residualEvaluationNativeNormUpper": 3.0676860464887306e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.014363786691957401
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 576,
+      "maximumExactOperatorConstructionError": 1.1818598207863922e-11,
+      "maximumExactResidualArithmeticError": 3.3019337129823618e-12,
+      "maximumExactNativeEvaluationError": 1.2291150626191654e-11,
+      "operatorConstructionNativeNormUpper": 2.440934231004566e-09,
+      "residualEvaluationNativeNormUpper": 2.4471985635565373e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.01476225299065695
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 288,
+      "maximumExactOperatorConstructionError": 8.16167676840329e-12,
+      "maximumExactResidualArithmeticError": 1.7944555482244924e-12,
+      "maximumExactNativeEvaluationError": 6.654523305164309e-12,
+      "operatorConstructionNativeNormUpper": 2.6302118483583607e-09,
+      "residualEvaluationNativeNormUpper": 2.634695442519382e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.014193361618846018
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 3,
+      "radialOrigin": 0,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 144,
+      "maximumExactOperatorConstructionError": 5.048473819458978e-12,
+      "maximumExactResidualArithmeticError": 1.541689193928493e-12,
+      "maximumExactNativeEvaluationError": 5.507479873265707e-12,
+      "operatorConstructionNativeNormUpper": 6.780162725698432e-09,
+      "residualEvaluationNativeNormUpper": 6.7839741222735715e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.014097596316059698
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 0,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 448,
+      "faces": 998,
+      "maximumExactOperatorConstructionError": 7.318785492396424e-11,
+      "maximumExactResidualArithmeticError": 4.642199245161654e-12,
+      "maximumExactNativeEvaluationError": 7.267502958102759e-11,
+      "operatorConstructionNativeNormUpper": 6.518855742904136e-09,
+      "residualEvaluationNativeNormUpper": 6.5306816934881416e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.015734727612047594
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 1,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.015625,
+        0.015625
+      ],
+      "cells": 256,
+      "faces": 580,
+      "maximumExactOperatorConstructionError": 2.4813653129762202e-11,
+      "maximumExactResidualArithmeticError": 7.35746417377166e-12,
+      "maximumExactNativeEvaluationError": 2.6177265624178892e-11,
+      "operatorConstructionNativeNormUpper": 4.6008875902505315e-09,
+      "residualEvaluationNativeNormUpper": 4.61254287100026e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.01832745403225034
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 2,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.03125,
+        0.015625
+      ],
+      "cells": 128,
+      "faces": 292,
+      "maximumExactOperatorConstructionError": 1.785407462720111e-11,
+      "maximumExactResidualArithmeticError": 4.247961641764972e-12,
+      "maximumExactNativeEvaluationError": 1.4701873699881113e-11,
+      "operatorConstructionNativeNormUpper": 4.894067263485325e-09,
+      "residualEvaluationNativeNormUpper": 4.9030357595059405e-09,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.01753749253937193
+    },
+    {
+      "mixed": true,
+      "hierarchyLevel": 3,
+      "radialOrigin": 0.5,
+      "spacing": [
+        0.0625,
+        0.015625
+      ],
+      "cells": 64,
+      "faces": 148,
+      "maximumExactOperatorConstructionError": 1.1179318940944232e-11,
+      "maximumExactResidualArithmeticError": 4.6952047517022035e-12,
+      "maximumExactNativeEvaluationError": 8.828226882093888e-12,
+      "operatorConstructionNativeNormUpper": 1.2530194233041036e-08,
+      "residualEvaluationNativeNormUpper": 1.2537549016773196e-08,
+      "fullManufacturedResidualBoxNativeNormUpper": 0.017272857727454006
+    }
+  ],
+  "probeSha256": "4a537e6f1cfa65085a49e2acf0b40eca468e30de86f750e085237859223da313",
+  "scope": "Canonical homogeneous native A construction, actual scalar apply/subtraction arithmetic, and complete manufactured ideal-boundary residual interval box",
+  "limitations": [
+    "Not a solved physical Poisson system or continuous Phi/force certificate",
+    "Real ideal source/observer producer and source/AMR identity binding remain pending",
+    "Natural recovery and all RZ consumer science remain pending",
+    "No threshold change, simulation/CUDA/long-run claim; raw arrays retained locally"
+  ],
+  "baselineCommit": "cb694c43a51da42aa9a54de6582090fd8d8e9535",
+  "sourceSha256": {
+    "src/numerics/elliptic/CompositePoisson.h": "7a9c35ba8d430ea8968d2f09660cf8c788ec84d59f684c019296d99b7dbed2d3",
+    "src/numerics/elliptic/CompositePoisson.cpp": "aec7da7b480310c72a0c650009797766eea45112cf1e73b1ee6f4a8ab02486e5",
+    "tests/host/gravity/test_composite_poisson.cpp": "0a1fc2ca4ba10e020a67f39efb77036b6f759c70e95271e090d7190bffc64b9e",
+    "validation/gravity/rz_native_residual_reference.py": "bbb27733d9960038e5043d89a805a0850eb8a7605e4ec8d42182eff11939a3ca",
+    "validation/gravity/rz_stencil_construction_reference.py": "289e2bdbdcbd4198bf8448da5daace23ad71e6bbbed549995e38abd5206a2241",
+    "src/numerics/linalg/DenseWrap.h": "b26f83191a53d5affeea6b9421f52a932911157a235ad3adf0d9bf2124312634"
+  },
+  "cpuArchSha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+  "checks": {
+    "affectedCoreCtest": "6/6 PASS; 12.31 seconds",
+    "architectureAudit": "PASS",
+    "diffCheck": "PASS",
+    "boundaryRegression": "38 operators / 3288 cells / 7464 faces / 1632 boundaries PASS",
+    "build": "Existing CPU Release tree incremental; parallel28; guard not stopped; swap growth0; 11.169 seconds; peak RSS2739228 KiB",
+    "frozenJeans": "Same binary matches frozen 9 short + 9 actual restart PASS receipt; reused"
+  },
+  "frozenJeansReceipt": {
+    "path": "validation/gravity/results/rz-stencil-construction-20261005/summary.json",
+    "sha256": "fe1473f61205f1aae7831be7e6d95f3637c51654432567d7d16a826c792bf2a0",
+    "binarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510",
+    "status": "PASS",
+    "shortEvolutions": 9,
+    "actualRestarts": 9
+  },
+  "negativeChecks": [
+    "Missing/NaN phi InvalidInput",
+    "Missing residual InvalidInput",
+    "Finite fake-zero residual is revealed by positive evaluation error",
+    "Exact zero phi/rhs/residual keeps zero native error"
+  ],
+  "decomposition": "computed_r - (Aideal*phi - bideal) = stored evaluation arithmetic + A construction + (bideal - computed_b). No RHS assembly counted twice.",
+  "remainingDependencies": [
+    "Real ideal-source/observer potential producer tied to current source/generation identity",
+    "Physical source/RHS acceptance at original tolerance; independent Phi/force and all RZ consumers",
+    "Natural recovery and existing axis/viscosity findings; corresponding CPU science before unified CUDA/long runs"
+  ]
+}

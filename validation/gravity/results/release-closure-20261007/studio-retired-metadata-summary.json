@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "status": "PASS_STUDIO_UNIT_TYPECHECK_AND_LINT_ONLY",
+  "capturedUtc": "2026-10-09T22:30:29.233463+00:00",
+  "baselineHead": "a82dc3c1d9dd67c564193d9854f5299b4b56922d",
+  "scope": "Selected Studio source + existing original automated test inventory; no global backend/desktop qualification",
+  "sources": {
+    "studio/src/components/ParameterPanel/ConfigPanel.tsx": {
+      "exists": true,
+      "sha256": "ffd8d89871163d959296587d3212a746a45223b2e81cb6527e965d76a7fae685"
+    },
+    "studio/src/state/parState.ts": {
+      "exists": true,
+      "sha256": "e0dea84a42669b852e0aae6d592d2f29e7fb735502516b3654221e425f053f73"
+    },
+    "studio/src/data/parameterCatalog.ts": {
+      "exists": true,
+      "sha256": "b50b29a799737d0af0602597f0f7d53a8ae5cc13097555977346b2d265b49abb"
+    },
+    "studio/src/data/parameterLayout.ts": {
+      "exists": true,
+      "sha256": "77a316db659ca175616048fea713f771f7599f9fe4b7c98ea02868ad20b8c01c"
+    },
+    "studio/src/data/retiredParameters.ts": {
+      "exists": false,
+      "sha256": null
+    },
+    "studio/tests/retired-migration.test.ts": {
+      "exists": true,
+      "sha256": "8d26305ed7013e9e9026a69891cae61ef2e0e8118cb9822473bd678abf4f947e"
+    }
+  },
+  "retirementAuthority": "matching connected Core ConfigurationSchema.retiredKeys; no static six-key fallback",
+  "originalOwner": {
+    "path": "studio/tests/retired-migration.test.ts",
+    "tests": 8,
+    "pass": 8,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 147.127382
+  },
+  "fullOriginalStudioSuite": {
+    "tests": 369,
+    "pass": 369,
+    "fail": 0,
+    "skipped": 0,
+    "durationMs": 49203.426852,
+    "command": "NODE_OPTIONS=--max-old-space-size=128 node --test --test-concurrency=1 tests/*.test.ts",
+    "localLogSha256": "e82ee903fb2859d90d632a2a764c6afd7bd253d5f686e0ea3b4bac8db15379af"
+  },
+  "typecheck": {
+    "command": "NODE_OPTIONS=--max-old-space-size=256 npm run typecheck",
+    "exitCode": 0,
+    "localLogSha256": "3f0a589016c0bda11d0b2f81b829f97814db889fa8879c447b2ef428b9bf9ca1",
+    "wallSeconds": null
+  },
+  "actualDesktopRendering": false,
+  "RunRestartScientificAcceptance": false,
+  "rawSimulationDataCreated": false,
+  "limitations": [
+    "Real ConfigPanel Custom/disconnect/Run rendering retained in final desktop gate",
+    "No new Core/API version or math changes",
+    "Light tooling checks overlapped one guarded NVCC compiler; no official timings inferred"
+  ],
+  "lint": {
+    "command": "NODE_OPTIONS=--max-old-space-size=512 npm run lint",
+    "exitCode": 0,
+    "localLogSha256": "ae78cd63e66af32a8acabfefb82b945f881a4c41a7584b883935379325798c47",
+    "wallSeconds": null,
+    "priorAttempt": {
+      "exitCode": 134,
+      "heapMiB": 256,
+      "cause": "V8 JavaScript heap out of memory; no lint findings reported",
+      "localLogSha256": "ff1c9fcaf319ce04a5a0430d13f9beaab3cf57f36b9468826a055297b40f6600"
+    },
+    "testsOrRulesChanged": false
+  }
+}

@@ -18,11 +18,31 @@
 #include <GlobalDefs.h>
 
 class JeansWaveProblem {
+    // Construction/audit scales use g/cm^3 and erg/cm^3; amplitude is a
+    // dimensionless density perturbation. Required explicit Setup input
+    // replaces these seeds; Get's audit argument is not a missing-key default.
     double rho_ = 1e7, pressure_ = 6e6, amplitude_ = 1e-4;
     double velocity_ = 0.0, phase_ = 0.0, gamma_ = 5.0 / 3.0;
     double x_min_ = 0.0, wave_number_ = 0.0, average_ = 1.0;
 
 public:
+    static arch::config::CaseConfiguration DescribeConfiguration(
+        const arch::config::StandardInputResolution&)
+    {
+        arch::config::CaseConfiguration result;
+        result.complete = true;
+        // This model does not initialize a network or consume network floors.
+        result.consumers.needs_network = false;
+        result.consumers.needs_temperature_floor = false;
+        result.consumers.needs_composition_floor = false;
+        result.parameters = {
+            {"rho0", "float", "g/cm^3", "verification"}, {"pressure0", "float", "erg/cm^3", "verification"},
+            {"amplitude", "float", "1", "verification"}, {"phase", "float", "rad", "verification"},
+            {"mode", "int", "1", "verification"},
+            {"standing_wave", "string", "1", "verification", {true, {}}, {"true", "false"}}};
+        return result;
+    }
+
     /** Resolve one stable periodic wave without altering the production gravity solver. */
     void Setup(SimConfig& config, SpeciesManager&) {
         if (config.grid.geometry != "cartesian"
@@ -58,7 +78,7 @@ public:
         const double frequency_squared =
             config.physics.gamma * pressure_ / rho_ * wave_number_ * wave_number_
             - 4.0 * arch::constants::math::pi
-                * config.physics.gravity.G_const * rho_;
+                * arch::constants::gravity::cgs::gravitational_constant * rho_;
         if (!(frequency_squared > 0.0))
             throw std::invalid_argument(
                 "JeansWave selects the stable oscillatory branch");

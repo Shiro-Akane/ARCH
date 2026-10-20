@@ -1,0 +1,115 @@
+{
+  "status": "ACTUAL_NATIVE_CELL_POINT_PHI_DIAGNOSTIC_NOT_SCIENTIFIC_ACCEPTANCE",
+  "baseline": "2cdcb7507f69e9d110a0054d54fdd1ff0b5ffa91",
+  "probeSha256": "ca3135a23f6b9130f7373c8dd29b161e309398238d7e6421f6386de949a7cb8f",
+  "orders": [
+    16,
+    32
+  ],
+  "precision": 80,
+  "tPanels": 1,
+  "units": "cm^2/s^2",
+  "rows": [
+    {
+      "radialOrigin": 0,
+      "sourceId": "20c402eebc310f8e65cdeb56600ed69129d30141a6b4e1bf159947e9a2921484",
+      "sourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      },
+      "cellObservers": 28,
+      "order16MaximumPointPotentialDelta": "4.0861100077318829258503549183988287320208965853654516389695603109440539946033E-10",
+      "order32MaximumPointPotentialDelta": "4.0859774688235534890767651991189533592020623449617553296721188372229711716577E-10",
+      "order32NativeVolumeRmsPointPotentialDelta": "2.3915302507993858182426324105491266651297489989695769054883590741712040488779796E-10",
+      "maximumOrder16To32Estimate": "5.301464817668200954519882679750520448332871823338411771589865317595404741E-14",
+      "byLevel": {
+        "0": {
+          "cells": 12,
+          "maximumPointPotentialDelta": "3.4412291202417545262353910552944079683266485731236754446159190680096263050681E-10"
+        },
+        "1": {
+          "cells": 16,
+          "maximumPointPotentialDelta": "4.0859774688235534890767651991189533592020623449617553296721188372229711716577E-10"
+        }
+      },
+      "contactLeafObserverPairs": 28,
+      "exteriorLeafObserverPairs": 756
+    },
+    {
+      "radialOrigin": 0.5,
+      "sourceId": "92a2b0a04b8f8f0640aba0e99e6f31708e0966bd79666ba902a05d68e1d69ea6",
+      "sourceIdentity": {
+        "topology": 9,
+        "time": 0,
+        "G": 6.6743e-08,
+        "operator_revision": 1,
+        "boundary_revision": 1,
+        "accuracy_revision": 1,
+        "generation": 1,
+        "inputs": [
+          {
+            "uid": 1,
+            "epoch": 9,
+            "slot": 0,
+            "version": 1,
+            "storage_generation": 1
+          }
+        ]
+      },
+      "cellObservers": 28,
+      "order16MaximumPointPotentialDelta": "5.4287642749620159702587185741945453913488373284238438373483792410020716375332E-10",
+      "order32MaximumPointPotentialDelta": "5.4292944213528799553016014360041463902509684135296766330327732625840493173431E-10",
+      "order32NativeVolumeRmsPointPotentialDelta": "2.7803776652154635785813254567836727323693594152889947782478497007156069657470139E-10",
+      "maximumOrder16To32Estimate": "5.301465381031525276592648867909835570188980956055270081757866901761201003E-14",
+      "byLevel": {
+        "0": {
+          "cells": 12,
+          "maximumPointPotentialDelta": "5.4292944213528799553016014360041463902509684135296766330327732625840493173431E-10"
+        },
+        "1": {
+          "cells": 16,
+          "maximumPointPotentialDelta": "3.4186737923348352497653789806897106611078756646082851994136011610354083820438E-10"
+        }
+      },
+      "contactLeafObserverPairs": 28,
+      "exteriorLeafObserverPairs": 756
+    }
+  ],
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/rz-native-cell-potential-20261005",
+  "tests": {
+    "adapterTestsPassed": 6,
+    "architectureAuditExit": 0,
+    "diffCheckExit": 0
+  },
+  "limitations": [
+    "Static numerical probe source; no Runtime RZ production capability",
+    "Reference order difference is an estimate, not certified quadrature bound",
+    "No approved continuous Phi threshold; no spatial convergence or force gate",
+    "Existing boundary/discrete original-request receipts remain separate; no rerun"
+  ],
+  "fileFingerprints": {
+    "validation/gravity/rz_matched_native_reference.py": "60388b0835407b62c94be6e7186ebbcde993f1d40024d672bc8f598113400fa7",
+    "tests/tooling/validation/test_rz_matched_native_reference.py": "fd35af32d9ba19aad98042c7a6370c55b4ac910406cc6656f98cffceeb19e1d4"
+  },
+  "rawFingerprints": {
+    "run.py": "154339214ec5e7f656b01f286c0bbe544badb295cd08bb1936c33c0237dee6c9",
+    "order16.json": "7bf24edfcf9196e38fe3c3521478569b743b386e40e4a2c00e8eaf6b3026589c",
+    "guard.log": "75839f1ba386b391b302980f1d31fcaaf89d25d66dc26e8d9536ce0d92fe3273",
+    "order32.json": "41c837267478b843747dd7950f9fecbbcddcb2a32988bf02282ed29b77d639dc"
+  },
+  "productionBinarySha256": "7d3bd3d396dfcbcd8126aa82d37b293c963ceb8a23428b184cb5a15ceab0b510"
+}

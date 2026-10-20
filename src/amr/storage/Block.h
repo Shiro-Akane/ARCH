@@ -15,6 +15,8 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
+#include <bit>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -27,7 +29,7 @@
 
 #include "data/FluidState.h"
 #include "grid/Grid.h"
-#include "grid/GridMetrics.h"
+#include "numerics/curvilinear/GridMetrics.h"
 
 namespace amr {
 
@@ -116,16 +118,31 @@ struct Block {
     void AverageToCoarse(const Block* children[], int dim,
                          double density_floor,
                          double min_specific_internal_energy);
+    // Candidate-parent preflight returns the shared mathematical status.
+    // It never mutates source children or allocates/publishes a pool block.
+    regrid_math::Status TryAverageToCoarse(const Block* children[], int dim,
+                         double density_floor, double min_specific_internal_energy);
 
 
-    /**
-     * @brief Initialize block geometry based on root domain and its location.
-     * @param root_grid  Global domain root-level Grid (carries x_min, nblockx, dim, geometry)
-     * @param root_dx1/2/3  Root-level cell spacing (computed by AmrTree)
+
+private:
+    /** Scalar ordinary logical geometry; owns no Grid/metric array or authority. */
+    struct OrdinaryLogicalGeometry {
+        double dx1,dx2,dx3;
+        double x1_min,x1_max,x2_min,x2_max,x3_min,x3_max;
+    };
+
+    /** Sole ordinary root-to-block metadata generator.
+     * Workflow: reject an unrepresentable level before the original shift;
+     * evaluate the original factor, spacing and endpoint statements in their
+     * exact order; return only scalar metadata. InitGeometry and identity
+     * verification reuse this owner; no second rounded coordinate formula.
      */
-    void InitGeometry(const Grid& root_grid,
-                      double root_dx1, double root_dx2, double root_dx3)
+    OrdinaryLogicalGeometry ordinary_logical_geometry(const Grid& root_grid,
+        double root_dx1,double root_dx2,double root_dx3) const
     {
+        if(level<0||level>kMaxRefinementLevel)
+            throw std::invalid_argument("Logical Block level is not representable");
         // Calculate cell sizes at this level
         double factor = 1.0 / (1 << level);
         double dx1 = root_dx1 * factor;
@@ -142,16 +159,96 @@ struct Block {
         double x3_min = root_grid.x3_min + logical_x3 * BLOCK_NZ * dx3;
         double x3_max = x3_min + BLOCK_NZ * dx3;
 
+        return {dx1,dx2,dx3,x1_min,x1_max,x2_min,x2_max,x3_min,x3_max};
+    }
+
+public:
+    /**
+     * @brief Initialize block geometry based on root domain and its location.
+     * @param root_grid  Global domain root-level Grid (carries x_min, nblockx, dim, geometry)
+     * @param root_dx1/2/3  Root-level cell spacing (computed by AmrTree)
+     */
+    void InitGeometry(const Grid& root_grid,
+                      double root_dx1, double root_dx2, double root_dx3)
+    {
+
+        const auto metadata=ordinary_logical_geometry(root_grid,root_dx1,root_dx2,root_dx3);
         // Initialize local grid topology wrapper
         grid = Grid(MAX_NG,
-                    x1_min, x1_max,
-                    x2_min, x2_max,
-                    x3_min, x3_max,
+                    metadata.x1_min, metadata.x1_max,
+                    metadata.x2_min, metadata.x2_max,
+                    metadata.x3_min, metadata.x3_max,
                     root_grid.nblockx1, root_grid.nblockx2, root_grid.nblockx3);
         grid.geometry = root_grid.geometry;
         grid.dim = root_grid.dim;
         grid.InitializeTopology();
     }
+    /** Require exact root/logical/local geometry identity, without BC authority.
+     * Workflow: validate chart and checked integer topology -> generate the
+     * original endpoint metadata -> check represented local spacings and fixed
+     * storage layout.
+     * Root spacing follows AmrTree's actual root construction; active counts
+     * and all logical coordinates are checked BEFORE Morton masking/shifts.
+     * This proves numerical geometry only; the caller must separately own the
+     * real Tree/block/handle/slot/epoch and completed ghost publication.
+     */
+    void RequireLogicalGeometryIdentity(const Grid& root) const
+    {
+        if(root.dim<1||root.dim>3||grid.dim!=root.dim||grid.geometry!=root.geometry
+            ||GridMetrics::geometry_from_name(root.geometry)==GridMetrics::Geometry::Unsupported
+            ||level<0||level>kMaxRefinementLevel)
+            throw std::invalid_argument("Logical Block chart/level identity is invalid");
+        const int count[3]{root.nblockx1,root.nblockx2,root.nblockx3};
+        const std::uint32_t logical[3]{logical_x1,logical_x2,logical_x3};
+        const double lower[3]{root.x1_min,root.x2_min,root.x3_min};
+        const double upper[3]{root.x1_max,root.x2_max,root.x3_max};
+        for(int axis=0;axis<3;++axis) {
+            if(count[axis]<0||(axis<root.dim&&count[axis]==0)
+                ||(axis>=root.dim&&(count[axis]>1||logical[axis]!=0)))
+                throw std::invalid_argument("Logical Block root count/inactive coordinate is invalid");
+            const auto blocks=static_cast<std::uint64_t>(std::max(count[axis],1));
+            const auto extent=blocks<<level;
+            if(extent==0||extent-1>kMortonCoordinateMask||logical[axis]>=extent
+                ||!std::isfinite(lower[axis])||!std::isfinite(upper[axis])
+                ||(axis<root.dim&&(!(upper[axis]>lower[axis])
+                    ||!std::isfinite(upper[axis]-lower[axis]))))
+                throw std::invalid_argument("Logical Block root extent/coordinate is invalid");
+        }
+        if(morton_code!=encodeMorton(level,logical_x1,logical_x2,logical_x3))
+            throw std::invalid_argument("Logical Block Morton identity changed");
+        if(grid.nblockx1!=count[0]||grid.nblockx2!=count[1]||grid.nblockx3!=count[2])
+            throw std::invalid_argument("Logical Block local root counts changed");
+        const auto same=[](double a,double b) {
+            return std::isfinite(a)&&std::isfinite(b)
+                &&std::bit_cast<std::uint64_t>(a)==std::bit_cast<std::uint64_t>(b);
+        };
+        // Original AmrTree root-spacing arithmetic, not local nominal dx.
+        const double root_dx1=(root.x1_max-root.x1_min)/(root.nblockx1*BLOCK_NX);
+        const double root_dx2=root.nblockx2>0
+            ?(root.x2_max-root.x2_min)/(root.nblockx2*BLOCK_NY):0.;
+        const double root_dx3=root.nblockx3>0
+            ?(root.x3_max-root.x3_min)/(root.nblockx3*BLOCK_NZ):0.;
+        const auto metadata=ordinary_logical_geometry(root,root_dx1,root_dx2,root_dx3);
+
+            if(!same(grid.x1_min,metadata.x1_min)||!same(grid.x1_max,metadata.x1_max)
+                ||!same(grid.x2_min,metadata.x2_min)||!same(grid.x2_max,metadata.x2_max))
+                throw std::invalid_argument("Logical ordinary Block endpoints changed");
+        
+        // Keep the inactive x3 constructor arithmetic unchanged.
+        if(!same(grid.x3_min,metadata.x3_min)||!same(grid.x3_max,metadata.x3_max)
+            ||!same(grid.dx1,(grid.x1_max-grid.x1_min)/BLOCK_NX)
+            ||!same(grid.dx2,root.dim>=2?(grid.x2_max-grid.x2_min)/BLOCK_NY:0.)
+            ||!same(grid.dx3,root.dim==3?(grid.x3_max-grid.x3_min)/BLOCK_NZ:0.))
+            throw std::invalid_argument("Logical Block represented spacing changed");
+        const int nx=BLOCK_NX+2*MAX_NG;
+        const int ny=root.dim>=2?BLOCK_NY+2*MAX_NG:1;
+        const int nz=root.dim==3?BLOCK_NZ+2*MAX_NG:1;
+        if(grid.ng!=MAX_NG||grid.GetTotalX()!=nx||grid.GetTotalY()!=ny||grid.GetTotalZ()!=nz
+            ||grid.stride_y!=PAD_NX||grid.stride_z!=PAD_NX*ny
+            ||grid.GetTotalSize()!=PAD_NX*ny*nz)
+            throw std::invalid_argument("Logical Block storage/ghost identity changed");
+    }
+
 };
 
 
@@ -173,6 +270,10 @@ inline void Block::InterpolateFromCoarse(
     const Block& coarse, int child_idx, int dim, double density_floor,
     double min_specific_internal_energy)
 {
+    const auto fine_view=GridMetrics::make_geometry_view(grid);
+    const auto coarse_view=GridMetrics::make_geometry_view(coarse.grid);
+    const bool angular_momentum =
+        fine_view.geometry==GridMetrics::Geometry::Cylindrical && dim==2;
     const int nx = BLOCK_NX / 2;
     const int ny = dim >= 2 ? BLOCK_NY / 2 : 1;
     const int nz = dim == 3 ? BLOCK_NZ / 2 : 1;
@@ -188,6 +289,7 @@ inline void Block::InterpolateFromCoarse(
     std::vector<double> workspace(static_cast<std::size_t>(species)
         * regrid_math::prolongation_workspace_per_species);
     const auto source = regrid_state_view(coarse.fluid_state);
+
     for (int k = 0; k < nz; ++k) {
         for (int j = 0; j < ny; ++j) {
             for (int i = 0; i < nx; ++i) {
@@ -203,14 +305,23 @@ inline void Block::InterpolateFromCoarse(
                 geometry.neighbours[3] = dim >= 2 ? coarse.grid.GetIndex(ci, cj + 1, ck) : geometry.center;
                 geometry.neighbours[4] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck - 1) : geometry.center;
                 geometry.neighbours[5] = dim == 3 ? coarse.grid.GetIndex(ci, cj, ck + 1) : geometry.center;
-                geometry.coarse_volume = GridMetrics::CellVolume(coarse.grid, ci, cj, ck);
+                geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
+                geometry.angular_momentum = angular_momentum;
+                if (angular_momentum)
+                    geometry.coarse_moment =
+                        GridMetrics::AngularMomentumVolumeMoment(coarse_view, ci, cj, ck);
+
                 int destination[8]{};
                 for (int child = 0; child < (1 << dim); ++child) {
                     const int fi = grid.Is() + 2 * i + (child & 1);
                     const int fj = grid.Js() + 2 * j + (dim >= 2 ? (child >> 1) & 1 : 0);
                     const int fk = grid.Ks() + 2 * k + (dim == 3 ? (child >> 2) & 1 : 0);
                     destination[child] = grid.GetIndex(fi, fj, fk);
-                    geometry.fine_volumes[child] = GridMetrics::CellVolume(grid, fi, fj, fk);
+                    geometry.fine_volumes[child] = GridMetrics::CellVolume(fine_view, fi, fj, fk);
+                    if (angular_momentum)
+                        geometry.fine_moments[child] =
+                            GridMetrics::AngularMomentumVolumeMoment(fine_view, fi, fj, fk);
+
                 }
                 regrid_math::ProlongationResult result{};
                 const auto status = regrid_math::prolong_family(
@@ -234,6 +345,20 @@ inline void Block::AverageToCoarse(
     const Block* children[], int dim, double density_floor,
     double min_specific_internal_energy)
 {
+    const auto status=TryAverageToCoarse(children,dim,density_floor,
+                                       min_specific_internal_energy);
+    if(status!=regrid_math::Status::Ok)
+        throw std::runtime_error(regrid_math::status_message(status));
+}
+
+inline regrid_math::Status Block::TryAverageToCoarse(
+    const Block* children[], int dim, double density_floor,
+    double min_specific_internal_energy)
+{
+    const auto coarse_view=GridMetrics::make_geometry_view(grid);
+    const bool angular_momentum =
+        coarse_view.geometry==GridMetrics::Geometry::Cylindrical && dim==2;
+    std::array<GridMetrics::GeometryView,8> fine_views{};
     const int nx = BLOCK_NX;
     const int ny = dim >= 2 ? BLOCK_NY : 1;
     const int nz = dim == 3 ? BLOCK_NZ : 1;
@@ -244,6 +369,9 @@ inline void Block::AverageToCoarse(
         if (children[child] == nullptr
             || children[child]->fluid_state.GetNumSpecies() != species)
             throw std::invalid_argument("invalid Host AMR restriction binding");
+    for (int child=0;child<(1<<dim);++child) {
+        fine_views[child]=GridMetrics::make_geometry_view(children[child]->grid);
+    }
     std::vector<double> workspace(static_cast<std::size_t>(species));
     for (int k = 0; k < nz; ++k) {
         for (int j = 0; j < ny; ++j) {
@@ -260,20 +388,27 @@ inline void Block::AverageToCoarse(
                 const int ck = grid.Ks() + k;
                 regrid_math::RestrictionGeometry geometry{};
                 geometry.count = 1 << dim;
-                geometry.coarse_volume = GridMetrics::CellVolume(grid, ci, cj, ck);
+                geometry.coarse_volume = GridMetrics::CellVolume(coarse_view, ci, cj, ck);
+                geometry.angular_momentum = angular_momentum;
+                if (angular_momentum)
+                    geometry.coarse_moment =
+                        GridMetrics::AngularMomentumVolumeMoment(coarse_view, ci, cj, ck);
                 for (int cell = 0; cell < geometry.count; ++cell) {
                     const int fi = child.grid.Is() + ibase + (cell & 1);
                     const int fj = child.grid.Js() + jbase + (dim >= 2 ? (cell >> 1) & 1 : 0);
                     const int fk = child.grid.Ks() + kbase + (dim == 3 ? (cell >> 2) & 1 : 0);
                     geometry.source_cells[cell] = child.grid.GetIndex(fi, fj, fk);
-                    geometry.volumes[cell] = GridMetrics::CellVolume(child.grid, fi, fj, fk);
+                    geometry.volumes[cell] = GridMetrics::CellVolume(fine_views[child_index], fi, fj, fk);
+                    if (angular_momentum)
+                        geometry.moments[cell] =
+                            GridMetrics::AngularMomentumVolumeMoment(
+                                fine_views[child_index], fi, fj, fk);
                 }
                 regrid_math::RestrictionResult result{};
                 const auto status = regrid_math::restrict_family(
                     regrid_state_view(child.fluid_state), geometry, species,
                     density_floor, min_specific_internal_energy, workspace.data(), result);
-                if (status != regrid_math::Status::Ok)
-                    throw std::runtime_error(regrid_math::status_message(status));
+                if (status != regrid_math::Status::Ok) return status;
                 const int destination = grid.GetIndex(ci, cj, ck);
                 fluid_state.set(destination, result.fluid);
                 fluid_state.enuc_rate[destination] = result.enuc;
@@ -282,6 +417,7 @@ inline void Block::AverageToCoarse(
             }
         }
     }
+    return regrid_math::Status::Ok;
 }
 
 } // namespace amr

@@ -1,8 +1,13 @@
 """Independent finite-cloud and coupled-physics checks for the standard GravityBox.
 
 This module extends the existing gravity campaign; it is not another CI job.
+The explicit CLI runs only the frozen JENS subgroup against an existing binary;
+it never copies a source tree, configures a build or changes scientific budgets.
 """
+import argparse
 import csv
+import hashlib
+import json
 import math
 import os
 from pathlib import Path
@@ -84,6 +89,15 @@ class BoxCampaign:
                                     stdout=log, stderr=subprocess.STDOUT, timeout=1200)
         elapsed = time.perf_counter() - started
         require(result.returncode == 0, name+': run failed; '+str(folder/'run.log'))
+        return self.inspect_completed_run(name, config, elapsed, energy_budget)
+
+    def inspect_completed_run(self, name, config, elapsed=None, energy_budget=1e-6):
+        """Read an already completed run with the same scientific checks.
+
+        A missing wrapper clock remains None; driver timings come from ARCH.
+        This reader does not infer an exit status or rerun the simulation.
+        """
+        folder = self.output/name
         plots = [load(p, config) for p in sorted(folder.glob('*plt*.h5'))]
         require(bool(plots), name+': missing plot')
         repairs = dict(line.split('=', 1) for line in (folder/'state_repairs.txt').read_text().splitlines() if '=' in line)
@@ -125,10 +139,94 @@ class BoxCampaign:
         self.results.append(record)
         return plots, folder, record
 
+    def jeans_uniform_lifecycle(self, dimensions=(1,2,3)):
+        """Core-frozen bounded subgroup; reuse real GravityBox and native readers."""
+        from check_jeans_plot import qualify
+        contract=json.loads((ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json').read_text())
+        require(contract['contract_version']=='uniform-lifecycle-1','unknown Jeans contract')
+        require(self.backend in ('cpu','cuda'),'unknown explicit Jeans backend')
+        common={k:('true' if v else 'false') if isinstance(v,bool) else v
+                for k,v in contract['common'].items()}
+        records=[]
+        for domain in contract['dimensions']:
+            dim=domain['dim']
+            if dim not in dimensions:continue
+            changes=dict(common)
+            for axis in range(1,4):
+                changes[f'nblockx{axis}']=domain['root_blocks'][axis-1]
+                changes[f'x{axis}l_boundary_type']='periodic'
+                changes[f'x{axis}r_boundary_type']='periodic'
+                if axis<=dim:
+                    changes[f'x{axis}_min']=domain['lower_cm'][axis-1]
+                    changes[f'x{axis}_max']=domain['upper_cm'][axis-1]
+                    changes[f'center_{("x","y","z")[axis-1]}']=domain['center_cm'][axis-1]
+            for lane,settings in contract['lanes'].items():
+                options=changes|dict(refine_var=settings['refine_var'],
+                    plt_variables='DENS,PRES,TEMP,VELX,VELY,VELZ,ENER,SPECIES')
+                if settings['jens_plot']:options['plt_variables']+=',JENS'
+                if 'jeans_cells' in settings:options['jeans_cells']=settings['jeans_cells']
+                name=f'jeans-uniform-{dim}d-{lane}'
+                plots,folder,record=self.run(name,energy_budget=1e-12,**options)
+                require(plots[-1]['time']==.02,name+': physical endpoint not reached')
+                require(all(np.all(p['level']==settings['expected_level']) for p in plots),
+                        name+': wrong AMR level or parent coarsen')
+                require(len(plots[0]['level'])==(domain['expected_initial_active_leaf_blocks']
+                        if lane=='active' else 4),name+': wrong initial leaf count')
+                for plot in plots:
+                    for key in ['GPOT',*['GACX','GACY','GACZ'][:dim]]:
+                        require(key in plot and np.all(plot[key]==0),name+': missing/nonzero uniform-source '+key)
+                    for key in ['VELX','VELY','VELZ']:
+                        if key in plot:require(np.all(plot[key]==0),name+': uniform state moved')
+                    require(np.all(plot['DENS']==1e7),name+': uniform density changed')
+                    require(np.all(plot['TEMP']==1),name+': uniform temperature changed')
+                    require(np.all(plot['ENER']==1e7),name+': uniform energy density changed')
+                    require(np.all(plot['PRES']==(1.6666666666666667-1)*1e7),
+                            name+': uniform EOS pressure changed')
+                    require(np.all(plot['gas']==1),name+': uniform composition changed')
+                checks=[]
+                if settings['jens_plot']:
+                    for path in sorted(folder.glob('*plt*.h5')):
+                        checks.append(qualify(path))
+                        with h5py.File(path) as h:
+                            if lane=='active':
+                                require(np.all(h['Data/JENS'][:]>=settings['jeans_cells']),
+                                        name+': unresolved accepted output')
+                checkpoints=[]
+                for path in folder.glob('*chk*.h5'):
+                    with h5py.File(path) as h:
+                        if float(h.attrs['time'])==.01:checkpoints.append(path)
+                require(len(checkpoints)==1,name+': no unique actual checkpoint at .01 s')
+                _,resumed,restart_record=self.run(name+'-restart',energy_budget=1e-12,
+                    **(options|dict(restart='true',restart_file=str(checkpoints[0]))))
+                direct=max(folder.glob('*chk*.h5'))
+                recovered=max(resumed.glob('*chk*.h5'))
+                with h5py.File(direct) as h, h5py.File(recovered) as g:
+                    require(float(h.attrs['time'])==.02 and float(g.attrs['time'])==.02,
+                            name+': restart endpoint not reached')
+                    for key in h.attrs:
+                        require(key in g.attrs and np.array_equal(h.attrs[key],g.attrs[key]),
+                                name+': strict restart attribute mismatch '+key)
+                    # Compare the actual native state/controller payload, not
+                    # file hashes or requested output names.
+                    for key in h:
+                        if isinstance(h[key],h5py.Dataset):
+                            require(key in g and np.array_equal(h[key][:],g[key][:]),
+                                    name+': strict restart mismatch '+key)
+                record.update(contract='uniform-lifecycle-1',dimension=dim,lane=lane,
+                    jens_checks=checks,restart_pass=True,
+                    restart_elapsed_seconds=restart_record['elapsed_seconds'])
+                records.append(record)
+        return records
+
     @staticmethod
     def cloud_config(roots=1, extent=1., **changes):
         return dict(gravity_boundary='isolated', nblockx1=roots, nblockx2=roots, nblockx3=roots,
+                    # Preserve the pre-v3 cloud's actual Setup defaults and
+                    # the independent oracle's center, rather than inheriting
+                    # explicit values from the periodic 1D base configuration.
+                    x1_min=0., x2_min=0., x3_min=0.,
                     x1_max=extent, x2_max=extent, x3_max=extent,
+                    center_x=extent/2, center_y=extent/2, center_z=extent/2,
                     x1l_boundary_type='reflecting', x1r_boundary_type='reflecting',
                     x2l_boundary_type='reflecting', x2r_boundary_type='reflecting',
                     x3l_boundary_type='reflecting', x3r_boundary_type='reflecting',
@@ -157,7 +255,8 @@ class BoxCampaign:
         amplitude,thermal=1e-5,2e-5
         data,folder,record=self.run(f'thermal-linear-{roots}', nblockx1=roots, rho0=1e7, temperature0=3e7,
             amplitude=amplitude, temperature_amplitude=thermal, use_diffusion='true',use_thermal_diff='true',
-            alpha_therm=1e15,tmax=.05,cfl=.2,diff_integrator='RKL2')
+            alpha_therm=1e15,tmax=.05,cfl=.2,diff_integrator='RKL2',diff_cfl=.8,
+            use_viscous_diff='false',use_species_diff='false')
         d=data[-1];k=2*math.pi/1e8;speed=math.sqrt((2/3)*CV*3e7);omega_g=4*math.pi*G*1e7
         matrix=np.array([[0,-k*speed,0],[k*speed-omega_g/(k*speed),0,k*speed],
                          [0,-(2/3)*k*speed,-1e15*k*k]])
@@ -178,13 +277,17 @@ class BoxCampaign:
         return dict(nblockx1=2, rho0=1e7, temperature0=1e9, amplitude=.01,temperature_amplitude=.01,
                     eos_type='helmholtz',eos_table_path=str(ROOT/'EOS_toolkit/tables/helmholtz/helm_table.dat'),
                     use_burn='true',network_name='aprox13',xhe4=1.,xc12=0.,xo16=0.,
+                    # Preserve the original pre-v3 RuntimeParams effective defaults.
+                    nuclearTempMin=1e9,nuclearDensMin=1e-10,smallt=1e5,smallx=1e-20,
+                    enucDtFactor=1e30,eos_coulomb_mult=1.,
                     ode_solver='bd',linear_solver='DenseLU',ode_rtol=1e-9,ode_atol=1e-12,
                     tmax=1e-4,dt_init=2.5e-5,tstep_change_factor=1.,use_nse='false') | changes
 
     def coupled(self, name, diffusion=False, **changes):
         config=self.burning_config()
         if diffusion:
-            config.update(use_diffusion='true',use_thermal_diff='true',use_species_diff='true',diff_integrator='RKL2')
+            config.update(use_diffusion='true',use_thermal_diff='true',use_species_diff='true',
+                          use_viscous_diff='false',diff_integrator='RKL2',diff_cfl=.8)
         data,folder,record=self.run(name, **(config|changes))
         require(abs(record['nuclear_heat_over_initial_gas'])>1e-8,name+': no nuclear heat')
         def mean_fraction(d,key):
@@ -250,3 +353,72 @@ class BoxCampaign:
         record['transport_relative_effect']=difference
         require(difference>1e-8,'combined case has no resolved transport effect')
         if not quick:self.temporal_coupling()
+
+
+def file_sha256(path):
+    """Hash an actual input or executable without requiring a Git checkout."""
+    digest=hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for block in iter(lambda:stream.read(1024*1024),b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def compact_jeans_record(record, output):
+    """Keep verified scalars and exact input identities; raw arrays stay local."""
+    compact={key:value for key,value in record.items() if key not in ('config','jens_checks')}
+    folder=output/record['name']
+    compact['input_sha256']=file_sha256(folder/'input.par')
+    compact['restart_input_sha256']=file_sha256(output/(record['name']+'-restart')/'input.par')
+    compact['raw_directory']=record['name']
+    compact['jens_checks']=[{key:check[key] for key in
+        ('cells','dtype','gridEvidence','maxRelativeError','bound','publication','sourceIdentityScope')}
+        for check in record['jens_checks']]
+    return compact
+
+
+def main():
+    """Run the frozen 1D/2D/3D subgroup on one existing ELF, preserving failures."""
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--jeans-uniform-lifecycle',action='store_true',required=True,
+                        help='Run the existing frozen 9 evolutions and 9 same-lane checkpoint restarts.')
+    parser.add_argument('--arch',type=Path,required=True,help='Existing built ARCH executable; no build or source snapshot.')
+    parser.add_argument('--output',type=Path,required=True,help='New local directory for raw evidence and compact summary.')
+    parser.add_argument('--backend',choices=('cpu','cuda'),required=True,help='Explicit requested backend; no auto qualification.')
+    args=parser.parse_args()
+    executable=args.arch.resolve()
+    require(executable.is_file() and os.access(executable,os.X_OK),'ARCH executable is missing or not executable')
+    output=args.output.resolve()
+    # Do not overwrite a previous run, including its failure evidence.
+    output.mkdir(parents=True,exist_ok=False)
+    contract=ROOT/'validation/gravity/results/o7-resume-20261004/jens-short-contract.json'
+    summary=dict(contract='uniform-lifecycle-1',backend=args.backend,threads=1,
+        executable=str(executable),binary_sha256=file_sha256(executable),
+        runner_sha256=file_sha256(Path(__file__)),contract_sha256=file_sha256(contract),
+        base_input_sha256=file_sha256(ROOT/'simulation/GravityBox/GravityBox.par'),
+        scope='frozen Cartesian single-caloric-IdealGas JENS lifecycle; no arbitrary-EOS, nonzero-gravity or performance acceptance',
+        raw_evidence='local only; publish compact processed records, not HDF5 or full logs')
+    campaign=BoxCampaign(executable,output,backend=args.backend,threads=1)
+    try:
+        records=campaign.jeans_uniform_lifecycle()
+        require(len(records)==9 and all(record['restart_pass'] for record in records),
+                'frozen 9 evolution and 9 actual checkpoint restart coverage incomplete')
+        require(file_sha256(executable)==summary['binary_sha256'],'ARCH executable changed during qualification')
+        require(file_sha256(Path(__file__))==summary['runner_sha256'],'runner changed during qualification')
+        require(file_sha256(contract)==summary['contract_sha256'],'frozen contract changed during qualification')
+        require(file_sha256(ROOT/'simulation/GravityBox/GravityBox.par')==summary['base_input_sha256'],
+                'base input changed during qualification')
+        summary.update(status='PASS',evolution_cases=9,restart_cases=9,
+            records=[compact_jeans_record(record,output) for record in records])
+    except Exception as error:
+        # A successful subprocess or partially collected run is not qualification.
+        summary.update(status='FAIL',error=str(error),completed_run_records=len(campaign.results))
+        (output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+        raise
+    (output/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+    print(json.dumps({key:summary[key] for key in
+        ('status','contract','backend','binary_sha256','evolution_cases','restart_cases','scope')},indent=2))
+
+
+if __name__=='__main__':
+    main()

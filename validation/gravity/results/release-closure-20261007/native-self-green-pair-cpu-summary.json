@@ -1,0 +1,149 @@
+{
+  "schema": "arch-private-native-self-green-pair-1",
+  "physical_qualified": false,
+  "continuous_green_science": "UNVERIFIED",
+  "algebra_checked": true,
+  "actual_fields_batch": 2,
+  "resource_scope": "distinct-two-field-diagnostic-240s",
+  "method": "Euler",
+  "dt": 0.001,
+  "G": 6.6743e-08,
+  "cells": 256,
+  "faces": 544,
+  "time0": 0.375,
+  "time1": 0.376,
+  "source_generation0": 1,
+  "source_generation1": 1,
+  "field_generation0": 1,
+  "field_generation1": 1,
+  "generation_scope": "each-separately-created-stage;actual-handle-slot-version-time-is-authoritative",
+  "operator_revision": 1,
+  "boundary_revision": 1,
+  "accuracy_revision": 1,
+  "relative_tolerance": 1e-10,
+  "absolute_tolerance": 0,
+  "max_cycles": 200,
+  "root_bounds": [
+    10000,
+    30000,
+    -10000,
+    10000
+  ],
+  "axis_before_events": 2,
+  "axis_after_events": 2,
+  "gradient_orientation": "increasing-coordinate;left-outward-plus,right-outward-minus",
+  "residual_definition": "complete-inhomogeneous-div(g)-4*pi*G*rho",
+  "identity": "S-BG=internal_jump+boundary_jump-residual_cross",
+  "scope": "original-stored-point-Phi-and-face-rows;not-continuous-Green-certificate",
+  "S": {
+    "value": -105843.44718647003,
+    "absolute_operation_scale": 7525369983649517.0
+  },
+  "B_G_stored_point_rows": {
+    "value": 483267.8392291713,
+    "absolute_operation_scale": 6670293509637241.0
+  },
+  "internal_jump": {
+    "value": 0.003368114515461533,
+    "absolute_operation_scale": 718091455375502.8
+  },
+  "boundary_jump": {
+    "value": 5220.6317333275665,
+    "absolute_operation_scale": 136985019190413.86
+  },
+  "residual_cross": {
+    "value": 594331.9214817794,
+    "absolute_operation_scale": 11469376.913128415
+  },
+  "S_minus_B_G": -589111.2864156413,
+  "reconstructed_gap": -589111.2863803373,
+  "internal_faces": 480,
+  "physical_boundary_faces": 64,
+  "construction_counts": {
+    "TwoPoint": 480,
+    "PolynomialFit": 64,
+    "EllipticRecovery": 0
+  },
+  "internal_by_axis": [
+    {
+      "value": 0.0012822142784775638,
+      "absolute_operation_scale": 443012711464674.06
+    },
+    {
+      "value": 0.0020859002369839692,
+      "absolute_operation_scale": 275078743910828.75
+    }
+  ],
+  "boundary_by_side": [
+    {
+      "value": -1010.7891861348443,
+      "absolute_operation_scale": 2144970561483.7207
+    },
+    {
+      "value": 6041.858651032963,
+      "absolute_operation_scale": 68071558413193.086
+    },
+    {
+      "value": 94.78340365181579,
+      "absolute_operation_scale": 33384245107868.555
+    },
+    {
+      "value": 94.7788647776311,
+      "absolute_operation_scale": 33384245107868.492
+    }
+  ],
+  "native_volume_sum": 50265482457436.69,
+  "discrete_residual_rms0": 3.630063776501522e-16,
+  "discrete_residual_rms1": 2.8610616999096065e-15,
+  "discrete_residual_linf0": 1.1928765799612648e-15,
+  "discrete_residual_linf1": 8.698016431920438e-15,
+  "residual_norm_quality": "long-double-stored-row-diagnostic;not-outward-physical-certificate",
+  "volume_definition": "full-ring-long-double-antiderivative-of-actual-canonical-cell-bounds",
+  "budget_formula": "64*epsilon*absolute_state_scale+1e-12*absolute_operation_scale",
+  "algebra_budget": {
+    "error": -3.530400567797187e-05,
+    "absolute_state_scale": 7525369983649517.0,
+    "absolute_operation_scale": 7525369995672534.0,
+    "roundoff_allowance": 106.94193951578536,
+    "operation_allowance": 7525.369995672534,
+    "allowance": 7632.31193518832
+  },
+  "mass_budget": {
+    "error": -0.0007493309325272701,
+    "absolute_state_scale": 100530964889740.64,
+    "absolute_operation_scale": 25132.741228718347,
+    "roundoff_allowance": 1.4286309364271779,
+    "operation_allowance": 2.5132741228718345e-08,
+    "allowance": 1.428630961559919
+  },
+  "work_budget": {
+    "error": -3.1866477512298985e-10,
+    "absolute_state_scale": 17752040.95819578,
+    "absolute_operation_scale": 3733780.6719155805,
+    "roundoff_allowance": 2.522716749552356e-07,
+    "operation_allowance": 3.7337806719155804e-06,
+    "allowance": 3.986052346870816e-06
+  },
+  "input_handles": [
+    {
+      "uid": 1,
+      "epoch": 1,
+      "slot0": 0,
+      "slot1": 0,
+      "version0": 1,
+      "version1": 3,
+      "density_lease0": 1,
+      "density_lease1": 1
+    }
+  ],
+  "evidence": {
+    "actualSeconds": 160.141,
+    "sourceBeforeUtc": "2026-10-07T10:15:42.304815+00:00",
+    "allGlobalSourceAndExplicitProducerAfterFenceUnchanged": true,
+    "sourceCommit": "3b40dd0cf78bedc8196d865abb8a3e32da469694",
+    "sourceAggregate": "5e7652c702f94a564fe2546d352ebf22ab108b425319a38af01a86c9b95ae408",
+    "actualElfSha256": "48d110a5dba12d4c83e7720cf88782c4a4b0913e6dd1395a12103963694018f4",
+    "rawDiagnosticSha256": "4e391fdde2482ac651564bb4d69458470768f906eb9c32fc41e16b976d17ddb3",
+    "scope": "actual isolated private owner; algebra-only, no release or continuous energy grant"
+  }
+}

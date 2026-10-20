@@ -1,7 +1,7 @@
 # O6 阶段核验：共享热力学、启步和整程成本
 
 2026-09-26，`compute/optim`，基线提交 `90385b6fb25f`；对应
-[实施计划](../../../docs/development/ComputeOptimizationPlan.zh-CN.md)。
+[实施计划](../../../docs/histroy/integration/ComputeOptimizationPlan.zh-CN.md)。
 **两个预登记 Cellular 点的 CPU 整程成本子目标已达到，CUDA 在本机对实测最快 CPU 配置有正向收益；O6 尚未完成科学与功能出口。**
 跨代码共同误差预算、若干 O6 参数和重力执行专项仍需独立签收。
 下列数字仅属于这个源码与本机输入，不外推到其他问题或 H100。

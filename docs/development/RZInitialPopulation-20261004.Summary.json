@@ -1,0 +1,35 @@
+{
+  "scope": "Actual shared PopulateState/EOS coordinate/repair population; no timestep evolution",
+  "exitCode": 0,
+  "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+  "executableSha256": "62e50a1fba1f14055c7352f759c5e14faf46c4b0204d71f1bd533ba642bb6cc0",
+  "recompiledSources": {
+    "tests/host/grid/test_rz_initial_population.cpp": "adf7aaee3e35a12e50ab3d18c17485bae5061e6593f396e8f232cdfbee7816b2",
+    "src/core/problem/ProblemHelper.cpp": "da6ae9cae1f4d8cc73c7f67dab335e15c92d356792a5651519c7d9b6062755e3",
+    "src/physics/eos/eosdispatch.cpp": "7758ee7e4680999816ae86c79ffa9e3792856231960508a93e408221b6ea03c6"
+  },
+  "limitations": [
+    "Public RZ dispatch still gated",
+    "No registered model science acceptance",
+    "CUDA not qualified"
+  ],
+  "baseline": "acdf35574f96c1b5d9e840cdd028543b839d9095",
+  "initializationHeaders": {
+    "src/interface/ProblemGenerator.h": "11e92f91ec2e56cb25bdbf27cf13c3f243b9437dc6d14c71e1bb43b3741d7f5f",
+    "src/grid/Grid.h": "1e3697f7e0f18743b79fc9581785c51e6bec1144fddbedd2680222c9001d998b",
+    "src/core/problem/InitialStateConversion.h": "46b03265b9a7e50b5e959e7eee49937a3e384f24bbd10bb03f9c8d9976e39ba8"
+  },
+  "fixtureCases": 4,
+  "maxEnergyArithmeticError": 7.10543e-15,
+  "rawMeasure": {
+    "legacyPolar": 2.0,
+    "RzFullRing": 12.566370614359172
+  },
+  "budgetScope": "existing 2e-12 arithmetic/engineering gates; not Core physical acceptance budgets",
+  "regressions": {
+    "preview_initial_conversion": "PASS",
+    "preview_mesh_geometry": "PASS",
+    "initialization_probe": "PASS"
+  },
+  "negativeCheck": "Unknown context profile rejected before callbacks, block fields or repair ledger mutation"
+}

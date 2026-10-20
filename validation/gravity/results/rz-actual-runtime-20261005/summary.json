@@ -1,0 +1,116 @@
+{
+  "status": "ACTUAL_CPU_RZ_RUNTIME_STAGE_CANDIDATE_PASS",
+  "baseline": "703fc2bdfeda4d129b2beb9eba1cfa93e45c1ab2",
+  "runtime": {
+    "scope": "Actual CPU RZ DriverRuntime lease -> GravityStage -> SelfGravity candidate; no timestep",
+    "exitCode": 0,
+    "stdout": "ACTUAL_RZ_RUNTIME_SLOT_PASS slot=0 lease=1 source_generation=1 cells=512 time=0 steps=0\nACTUAL_RZ_RUNTIME_SLOT_PASS slot=2 lease=4 source_generation=2 cells=512 time=0 steps=0\nACTUAL_RZ_RUNTIME_SLOT_PASS slot=1 lease=5 source_generation=3 cells=512 time=0 steps=0\nACTUAL_RZ_RUNTIME_CONTRACT_PASS blocks=2 gathers=3 slots=3 actual_ledger=1 nonfirst_unpublished=1 invalidation=1 physical_consumers_rejected=1 regrid_gate_held=1 time=0 steps=0\n",
+    "stderr": "",
+    "buildDirectory": "/home/arch/projects/ARCH-compute-optim/build-cpu",
+    "executableSha256": "80ada663f1b4994885a193d0eb82591f6083473af1b4d79f12754b780ca9f64b",
+    "recompiledSources": {
+      "tests/host/gravity/test_gravity_runtime_rz_contract.cpp": "2265b4b2776fb3879a6f59e7f72bacf36cb541e8118550a2add5da1491ccd52a",
+      "src/driver/stages/GravityStage.cpp": "fc2336d88b6041fae7e9c4106f6796e268ec54d189a622bc42f517103f60d038",
+      "src/driver/runtime/DriverRuntime.cpp": "aaf1e54fe03e4991cd128ed00c6dff53555d9c1fca75cf113b43e142877b97c3",
+      "src/driver/runtime/DriverBoundary.cpp": "54f9eefb29f7b9aad191d4f06f4c9b3a80d2ab43fc377da46d31ca935a487f0d",
+      "src/driver/runtime/DriverRegrid.cpp": "1ed54a960334d2fbb64f718087d234a4cd7f07a70fcc4ab49ecc756b449ec11b",
+      "src/amr/elliptic/EllipticMeshAdapter.cpp": "9e3be652d00e571861a1a893b98b2bc75fa7983e696c82d20a7079b24753b340"
+    },
+    "timestepHeaderSha256": "00f9e70c9ee177a76f01054e53b11f89ec02cd8f84dfaef974360b6aa38481ea",
+    "rklHeaderSha256": {
+      "src/numerics/diffusion/DiffDispatch.h": "349df128938e5237c861bee9de58f1e70f20841bdf22eb33bc164964d1088f09",
+      "src/numerics/diffusion/DiffusionAMRStages.h": "3f051214b754f42f4892081db0d07b19792a3cce1e757391fb6c4371403caf16",
+      "src/numerics/diffusion/RKL1TimeIntegrator.h": "b7673e0c3bc44e7df9d709a3e464e2e93032592d1c331018f66e8c6904653ccd",
+      "src/numerics/diffusion/RKL2TimeIntegrator.h": "28d4e56da8fc316e3a1ac01352c895381537acbbfeab42a8f316564cb1274e76"
+    },
+    "limitations": [
+      "Native candidate only; ordinary physical readers and RZ regrid/Device gates held",
+      "No continuous Phi/force or evolution/conservation acceptance"
+    ]
+  },
+  "stageDiagnosticRows": [
+    {
+      "time": "0",
+      "stage": "0",
+      "epoch": "1",
+      "lease": "1",
+      "cells": "512",
+      "source_generation": "1",
+      "residual_upper": "4.443476783658658e-15",
+      "tolerance_safe": "1.4684682266979847e-14",
+      "physical_qualified": "0"
+    },
+    {
+      "time": "0",
+      "stage": "2",
+      "epoch": "1",
+      "lease": "4",
+      "cells": "512",
+      "source_generation": "2",
+      "residual_upper": "4.443476783658658e-15",
+      "tolerance_safe": "1.4684682266979847e-14",
+      "physical_qualified": "0"
+    },
+    {
+      "time": "0",
+      "stage": "3",
+      "epoch": "1",
+      "lease": "5",
+      "cells": "512",
+      "source_generation": "3",
+      "residual_upper": "4.443476783658658e-15",
+      "tolerance_safe": "1.4684682266979847e-14",
+      "physical_qualified": "0"
+    }
+  ],
+  "stageHeaderSha256": "af5eae3d184a4ff795848a76e17524ac12b915f7f4c530f8fb4972798f4f9a4f",
+  "runnerSha256": "ce418bf799057ca7ad7fa0595f8eb0bf49ab3a5c7a4521e141dfc1d49802233a",
+  "stageDiagnosticSha256": "280aae5ae61f5cb709316c5463e1612776f6fba83dc5e62e1193c92b73ef5cb8",
+  "cartesianRegression": {
+    "exitCode": 0,
+    "stdout": "ACTUAL_JEANS_RUNTIME_LEASE_PASS initial_blocks=4 coarse_blocks=4 nonfirst_version_reject=1 device_only_reject=1 time=0 steps=0\nACTUAL_GRAVITY_RUNTIME_CONTRACT_PASS initial_blocks=4 refined_blocks=8 coarsened_blocks=4 gathers=7 cells=64 time=0 steps=0\n",
+    "executableSha256": "5b9661b704d5ec2d797d07ff49ac4d8ca5f9233bc5a69239e12380024abce64c"
+  },
+  "fixture": {
+    "blocks": 2,
+    "cells": 512,
+    "radialDomain": [
+      0,
+      1
+    ],
+    "axialDomain": [
+      -0.5,
+      0.5
+    ],
+    "density": 1,
+    "originalRtol": 1e-10,
+    "originalAtol": 0,
+    "maximumBoxesPerLeaf": 65536,
+    "maximumWork": 100000,
+    "time": 0,
+    "steps": 0
+  },
+  "checks": {
+    "actualRuntimeVersionsAndLeases": "PASS all blocks and three slots",
+    "unpublishedScratch": "rejected before gather",
+    "unpublishedNonfirstScratch": "rejected before gather",
+    "inactiveBuffers": "NaN, selected buffer gathers exact native values",
+    "ordinaryPlotCflHydroReaders": "rejected candidate",
+    "defaultProductionRzBind": "rejected before gather",
+    "explicitInvalidation": "retired candidate",
+    "rzRegridGate": "held",
+    "architecture": "PASS",
+    "diffCheck": "PASS"
+  },
+  "productionElfSha256": {
+    "build-cpu/bin/ARCH": "5d454c03404b8b6a9fae082d82270886904637e04df7d9b59a29682bc56c2be0",
+    "build-cuda/bin/ARCH": "0203e0b5f097b465898fe68ad62dc734e2cecd680b3e50782682e70fffebe3fc"
+  },
+  "limitations": [
+    "Actual root topology only, not RZ regrid/mixed topology/retired transaction handles",
+    "No Hydro timestep, continuous Phi/force reference, energy/angular conservation or scientific signoff",
+    "No Device numerical run or long run/benchmark",
+    "Same density in selected slots, no evolving-source field accuracy claim",
+    "Production ARCH ELF unchanged; no current-source freshness claim"
+  ]
+}

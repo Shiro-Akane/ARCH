@@ -1,0 +1,170 @@
+{
+  "recordedAtUtc": "2026-10-07T08:43:52.069963+00:00",
+  "status": "SCOPED_PRIVATE_SELF_ENGINEERING_CLAUSES_CLOSED",
+  "singleInvocationWholeMatrixPassed": false,
+  "mathematicalPhysicsOrDeviceGranted": false,
+  "relativeTolerance": 1e-10,
+  "absoluteTolerance": 0,
+  "maxTotalCycles": 200,
+  "hydroSolveEvidence": {
+    "when": "2026-10-07T08:16:22.095661+00:00",
+    "status": "FROZEN_PENDING_ACTUAL_RUN",
+    "mode": "private-native-self",
+    "working_directory": "/home/shiroakane/ARCH/studio/.local/release-closure-20261006/native-self-refined-run-root",
+    "max_wall_seconds": 1200,
+    "OMP_NUM_THREADS": 4,
+    "max_cycles": 200,
+    "rtol": 1e-10,
+    "atol": 0,
+    "change": "Same-source internal solve work guided by complete certificate margin; all additional cycles counted in same200; physical math/tolerances/gates held",
+    "hashes": {
+      "src/numerics/elliptic/CompositePoisson.cpp": "175f36f2c9108c50405a037417ca8f8aa84791a409663cf98f117a81fb22b7c4",
+      "src/numerics/elliptic/CompositePoisson.h": "b38a0f31878df94b62bb413b20cf0a7a93321cc0c2ac0aa04b9a6705316728ef",
+      "src/physics/gravity/GravityBoundary.cpp": "8ad99215fe54c3918815998dc7e80554e3edfadaa9a3089dc8706dfea3788ca5",
+      "src/physics/gravity/GravityBoundary.h": "f4e2d497fdce50a5987eff3235c25d8e9ab7960a34d7351f3a9b0b795e13e8d0",
+      "src/physics/gravity/self/SelfGravity.cpp": "6ba7cd2642d5035e4bd17e0615f4137bdd38d535291b2c05e2b51e9c6304d913",
+      "src/physics/gravity/NativeSelfStage.h": "f1bf7d3079db42f047587ffd04b9655cdff7ee1156017bdb4a07b688aca65134",
+      "src/driver/stages/GravityStage.cpp": "5b30ae3e9d2efa08976ee829c19ba5c720f7c6d9d2549c488a3e3d9645d014fd",
+      "tests/host/gravity/test_gravity_stage_contract.cpp": "2582b66e714aa5d73e841c9a6f2541673e8c597c8134f4cb84ff2d8705992bcc",
+      "build-release-cpu/arch_gravity_stage_contract": "7c53460e52b568c9bb20db8835bcd35d8fd3ace46e1f5c38064cef0d5e516654"
+    },
+    "rawH5Planned": 0,
+    "publicQualification": false,
+    "default_owner_pass_seconds": 32.199
+  },
+  "acceptedGroups": [
+    {
+      "label": "euler-single",
+      "acceptedStages": [
+        {
+          "time": 0.375,
+          "stage": 1,
+          "epoch": 1,
+          "lease": 1,
+          "cells": 256,
+          "sourceGeneration": 1,
+          "residualUpper": 1.0956275096356466e-14,
+          "toleranceSafe": 1.3002140746945254e-14,
+          "physicalQualified": false
+        }
+      ],
+      "journalSha256": "1d403d2913f64029f6b50cb58cb4b99a09fa4199be074cd13b079f06783712bd"
+    },
+    {
+      "label": "rk2-single",
+      "acceptedStages": [
+        {
+          "time": 0.375,
+          "stage": 1,
+          "epoch": 1,
+          "lease": 1,
+          "cells": 256,
+          "sourceGeneration": 1,
+          "residualUpper": 1.0956275096356466e-14,
+          "toleranceSafe": 1.3002140746945254e-14,
+          "physicalQualified": false
+        },
+        {
+          "time": 0.376,
+          "stage": 2,
+          "epoch": 1,
+          "lease": 2,
+          "cells": 256,
+          "sourceGeneration": 2,
+          "residualUpper": 1.1033717653811982e-14,
+          "toleranceSafe": 1.3002140740352686e-14,
+          "physicalQualified": false
+        }
+      ],
+      "journalSha256": "8280310b21f3cada935053909f034d5a17993e70e00279e8c061f03f2ace4ec3"
+    },
+    {
+      "label": "rk3-single",
+      "acceptedStages": [
+        {
+          "time": 0.375,
+          "stage": 1,
+          "epoch": 1,
+          "lease": 1,
+          "cells": 256,
+          "sourceGeneration": 1,
+          "residualUpper": 1.0956275096356466e-14,
+          "toleranceSafe": 1.3002140746945254e-14,
+          "physicalQualified": false
+        },
+        {
+          "time": 0.376,
+          "stage": 2,
+          "epoch": 1,
+          "lease": 2,
+          "cells": 256,
+          "sourceGeneration": 2,
+          "residualUpper": 1.1033717653811982e-14,
+          "toleranceSafe": 1.3002140740352686e-14,
+          "physicalQualified": false
+        },
+        {
+          "time": 0.3755,
+          "stage": 3,
+          "epoch": 1,
+          "lease": 3,
+          "cells": 256,
+          "sourceGeneration": 3,
+          "residualUpper": 1.0514599770299224e-14,
+          "toleranceSafe": 1.3002140743672727e-14,
+          "physicalQualified": false
+        }
+      ],
+      "journalSha256": "ba784cf8b109efc31d6d3f0727fc4fd489a7a335eb7efd12303687493efabecc"
+    },
+    {
+      "label": "euler-mixed",
+      "acceptedStages": [
+        {
+          "time": 0.375,
+          "stage": 1,
+          "epoch": 1,
+          "lease": 1,
+          "cells": 1280,
+          "sourceGeneration": 1,
+          "residualUpper": 2.904692973242463e-14,
+          "toleranceSafe": 4.9800288011530286e-14,
+          "physicalQualified": false
+        }
+      ],
+      "journalSha256": "926dcbde0688a3cb8d0bf6f8630437a5217af43397499cf0960de7000d8c5183"
+    }
+  ],
+  "originalFullInvocation": {
+    "exitCode": 1,
+    "guardWallSeconds": 780.251,
+    "failure": "Zero committed row header buffered while writer alive; actual wrong-dt full rollback already passed",
+    "actualSolvedFieldsBeforeFailure": 8
+  },
+  "finalIndependentCacheRefusal": {
+    "exitCode": 0,
+    "guardWallSeconds": 70.578,
+    "actualCurrentFieldPrepared": true,
+    "originalCacheDropped": true,
+    "actualOwnerAndSevenFieldsRolledBack": true,
+    "actualPublishedHeaderReadableWhileWriterLives": true,
+    "publicGatesHeld": true
+  },
+  "integrationRepair": "Native constructor publishes schema with flush/error check like original ordinary journal; real cache check extracted unchanged to explicit maintenance selector, no numeric assertions loosened",
+  "limits": [
+    "Actual small dt and flow; no independent full self-energy proof, reacting split, continuous-field accuracy, regrid/restart or CUDA science",
+    "Nine total authentic fields across two explicit runs and I/O-only repair; no assertion that one complete matrix invocation passed",
+    "Default CI remains existing owner; no new CTest"
+  ],
+  "postRepairHashes": {
+    "src/driver/stages/GravityStage.cpp": "77060d84f78a4883f29890e141996babb2956e225e29af5ecec9856ca4c21a5f",
+    "tests/host/gravity/test_gravity_stage_contract.cpp": "8909edd89069bbfb81ce5c4d0ff070eecec728efc8d6a1b7c42c92a332a6de9b",
+    "build-release-cpu/arch_gravity_stage_contract": "24220ed23b091860ceb9eb6a1b0f0286a28b7f0ee3f9e0a69ef932d4351b0365"
+  },
+  "postRepairDefaultOwner": {
+    "exitCode": 0,
+    "guardWallSeconds": 33.422,
+    "actualClassifierFaults": 3,
+    "rollbackChecks": true
+  }
+}

@@ -270,7 +270,7 @@ void run_dimension(int dimension, const std::string& geometry)
     for (std::size_t index = 0; index < active.size(); ++index) {
         bindings.push_back({
             &control.pool->GetBlock(active[index]), handles[index],
-            storage[index], &boundary});
+            storage[index], &boundary, arch::boundary::HydroBoundaryView{}});
     }
     auto backend = arch::cuda::make_cuda_backend(
         bindings, 0, make_launch_config(), species, eos);
@@ -568,7 +568,7 @@ int main()
         for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
             for (int dimension = 1; dimension <= 3; ++dimension)
                 run_dimension(dimension, geometry);
-        run_coordinate_seam(2, "cylindrical");
+        // The matrix above checks retired cylindrical two-dimensional topology rejection.
         run_coordinate_seam(3, "cylindrical");
         run_coordinate_seam(3, "spherical");
         return 0;

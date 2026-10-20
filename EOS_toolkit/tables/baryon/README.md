@@ -20,7 +20,10 @@ linked author record; ARCH has not converted, resampled or retuned them. The
 archive SHA-256 values are respectively
 `c4df343f8f5446851ed5c74d735400429b5491250ec5bda85cb061e6ba141f3c` and
 `1c47911219a72862a27d4eb3eec765cd38857564f91249d886cb1b8295a8d720`.
-Use `git lfs pull` to obtain the actual tables instead of LFS pointers.
+Use offline `git lfs checkout EOS_toolkit/tables/baryon/eos2.tab EOS_toolkit/tables/baryon/eos4.tab`
+when the objects are local. Only missing objects require a scoped download;
+avoid unrestricted `git lfs pull`. Verified ordinary local copies and bandwidth
+controls are described in the [build guide](../../../docs/guides/Build.md#offline-tables-and-lfs-bandwidth).
 Zero-temperature and zero-proton-fraction auxiliary products are not included:
 they do not meet this finite-temperature/logarithmic-coordinate interface.
 The separately processed `HShenEOS.h5` product is not distributed here.

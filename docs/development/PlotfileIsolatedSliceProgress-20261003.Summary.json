@@ -1,0 +1,25 @@
+{
+  "baseline": "54747a7ec3b5621f2ca681b356eb997cdb96e0cc",
+  "stage": "isolated and project-scoped plotfile slice reader",
+  "limits": {
+    "samples": 512,
+    "workerStdoutBytes": 65536,
+    "timeoutMsMax": 15000,
+    "nodeHeapMiB": 256,
+    "hardRssCap": false
+  },
+  "concurrency": "one metadata or slice operation; release only after child close",
+  "fileAssociation": "expected SHA-256 + post-read path/device/inode/size/mtime/ctime",
+  "completion": "unknown",
+  "renderEligible": false,
+  "productionEndpoint": false,
+  "tests": {
+    "completeStudioHost": 269,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "diffCheck": "PASS"
+  },
+  "rawDataUploaded": false,
+  "scientificEvolutionExecuted": false
+}

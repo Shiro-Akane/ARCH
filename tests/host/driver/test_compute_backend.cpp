@@ -5,20 +5,30 @@
  * Mock-backed cases check generation ownership, device-store identities,
  * transfer completion and topology rejection without requiring a CUDA device.
  */
+#include "physics/boundary/BoundaryFlux.h"
 #include "driver/runtime/ComputeBackend.h"
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 #include "amr/exchange/ExchangePlan.h"
+#include "amr/storage/Block.h"
 #include "amr/flux/AmrFluxPlan.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "physics/eos/IdealGas.h"
 
 #include <array>
+#include <atomic>
+#include <bit>
 #include <cstdint>
 #include <limits>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 static_assert(std::is_same_v<
               decltype(std::declval<const arch::backend::ComputeBackend&>()
@@ -204,7 +214,7 @@ void test_cuda_launch_config()
             "CUDA numeric launch controls drifted");
 }
 
-class FakeBackend final : public arch::backend::ComputeBackend {
+class FakeBackend : public arch::backend::ComputeBackend {
 public:
     arch::state::ExecutionSide side() const noexcept override
     {
@@ -358,6 +368,169 @@ public:
     arch::backend::BackendCounters counters_value{};
     std::vector<arch::backend::BackendTraceRecord> trace;
 };
+
+// Reuse the existing backend double; only boundary gather/scatter is implemented.
+class BoundarySurfaceBackend final : public FakeBackend {
+public:
+    explicit BoundarySurfaceBackend(FluidState& value) : state(value) {}
+    arch::backend::BoundaryCells read_boundary_cells(
+        arch::backend::BackendStateAccess, std::span<const int> cells,
+        arch::state::StateRegion) override
+    {
+#ifdef _OPENMP
+        require(!omp_in_parallel(), "boundary gather entered the worker team");
+#endif
+        arch::backend::BoundaryCells result;
+        result.species_count = state.GetNumSpecies();
+        for (const int cell : cells) {
+            result.conserved.push_back(state.get(cell));
+            result.enuc.push_back(state.enuc_rate[cell]);
+            for (int s = 0; s < state.GetNumSpecies(); ++s)
+                result.composition.push_back(state.X(s, cell));
+        }
+        return result;
+    }
+    void write_boundary_cells(arch::backend::BackendStateAccess,
+        std::span<const int> cells, const arch::backend::BoundaryCells& packed,
+        const arch::boundary::DiffusionBoundaryStorage& controls) override
+    {
+#ifdef _OPENMP
+        require(!omp_in_parallel(), "boundary scatter entered the worker team");
+#endif
+        ++writes;
+        for (std::size_t i = 0; i < cells.size(); ++i) {
+            state.set(cells[i], packed.conserved[i]);
+            state.enuc_rate[cells[i]] = packed.enuc[i];
+            for (int s = 0; s < state.GetNumSpecies(); ++s)
+                state.X(s, cells[i]) = packed.composition[i * state.GetNumSpecies() + s];
+        }
+        state.diffusion_boundary =
+            std::make_shared<arch::boundary::DiffusionBoundaryStorage>(controls);
+    }
+    FluidState& state;
+    int writes = 0;
+};
+
+// Exercise the actual parallel Host surface evaluator, including repeated
+// corner destinations, independent donor/inherited snapshots and transactional
+// failure. The frozen serial Host path is the reference for exact field parity.
+void test_parallel_boundary_surface()
+{
+    using namespace arch::boundary;
+    SpeciesManager species;
+    species.add_species("a", 1., 1., 5. / 3., 1.e8);
+    species.add_species("b", 4., 2., 1.4, 2.e8);
+    const IdealGas eos(1.4, species);
+    SimConfig config;
+    config.grid.dim = 3;
+    config.grid.x1_min = config.grid.x2_min = config.grid.x3_min = 0.;
+    config.grid.x1_max = config.grid.x2_max = config.grid.x3_max = 16.;
+    config.grid.x1l_boundary_type = config.grid.x1r_boundary_type = "user";
+    config.grid.x2l_boundary_type = config.grid.x2r_boundary_type = "user";
+    config.grid.x3l_boundary_type = config.grid.x3r_boundary_type = "user";
+    config.physics.diffusion.use_diffusion = true;
+    config.physics.diffusion.use_thermal_diffusion = true;
+    config.physics.diffusion.use_viscous_diffusion = true;
+    config.physics.diffusion.use_species_diffusion = true;
+    Grid grid(4, 0., 16., 0., 16., 0., 16.);
+    grid.dim = 3; grid.geometry = "cartesian"; grid.InitializeTopology();
+    std::atomic<std::size_t> calls{0};
+    std::atomic<std::uint64_t> thread_mask{0};
+    bool inject_failure = false; // Written only outside the joined sample loop.
+    ResolvedUserBoundaries callbacks;
+    callbacks.physical = [&](const PhysicalBoundaryContext& context) {
+        ++calls;
+#ifdef _OPENMP
+        thread_mask.fetch_or(std::uint64_t{1} << omp_get_thread_num());
+#else
+        thread_mask.fetch_or(1);
+#endif
+        if (inject_failure && context.axis == BoundaryAxis::X2
+            && context.side == BoundarySide::Lower && context.ghost_depth == 2)
+            throw std::runtime_error("injected surface callback failure");
+        require(context.time == .375, "parallel surface changed stage time");
+        const int face = 2 * static_cast<int>(context.axis) + static_cast<int>(context.side);
+        PhysicalBoundaryData data;
+        if (context.purpose == BoundaryPurpose::Hydro) {
+            auto primitive = context.interior;
+            primitive.u += .125 * face;
+            primitive.SetTemperature(1000. + context.point.x);
+            data.hydro = primitive;
+        } else {
+            data.temperature = {ScalarBoundaryKind::OutwardFlux, 11. + face};
+            data.velocity[static_cast<int>(context.axis)] =
+                {ScalarBoundaryKind::Value, .25 * face};
+            data.species = {{ScalarBoundaryKind::OutwardFlux, -.125},
+                            {ScalarBoundaryKind::OutwardFlux, .125}};
+        }
+        return data;
+    };
+    ScopedUserBoundarySelection selected(callbacks, config, species);
+    BCHandler handler(config); handler.bind(eos, species);
+    FluidState initial;
+    initial.Preallocate(grid.GetTotalSize()); initial.InitSpecies(2);
+    for (int cell = 0; cell < grid.GetTotalSize(); ++cell) {
+        PrimitiveData primitive;
+        primitive.rho = .5 + cell * 1.e-5;
+        primitive.u = 2.; primitive.v = -.5; primitive.w = .25;
+        primitive.SetTemperature(1000.);
+        primitive.mass_fractions = {.7, .3};
+        initial.set(cell, ProblemHelper::detail::InitialConservedState(primitive, eos, config.numerics));
+        initial.X(0, cell) = .7; initial.X(1, cell) = .3;
+        initial.enuc_rate[cell] = cell * .125;
+    }
+    const auto logical = arch::boundary::host::compile(handler.logical_plan(),
+        arch::boundary::host::make_layout(grid));
+#ifdef _OPENMP
+    const int old_threads = omp_get_max_threads();
+    const int old_dynamic = omp_get_dynamic();
+    omp_set_dynamic(0); omp_set_num_threads(4);
+#endif
+    for (const auto purpose : {BoundaryPurpose::Hydro, BoundaryPurpose::Diffusion}) {
+        handler.configure_stage(.375, purpose);
+        auto expected = initial, actual = initial;
+        arch::boundary::host::execute(logical, actual); // CUDA built-in phase precedes gather.
+        handler.apply(expected, grid);
+        BoundarySurfaceBackend backend(actual);
+        calls = 0; thread_mask = 0;
+        handler.apply_device(backend, {backend.block, backend.storage, arch::state::StateSlot::Current}, grid);
+        require(calls > 512 && backend.writes == 1, "surface did not exercise the parallel-size batch");
+#ifdef _OPENMP
+        require(std::popcount(thread_mask.load()) == 4, "surface samples did not use all four Host workers");
+#endif
+        require(actual.rho == expected.rho && actual.mom_u == expected.mom_u
+            && actual.mom_v == expected.mom_v && actual.mom_w == expected.mom_w
+            && actual.eng == expected.eng && actual.enuc_rate == expected.enuc_rate
+            && actual.mass_fractions == expected.mass_fractions,
+            "parallel surface changed immutable snapshots or corner precedence");
+        for (int face = 0; face < 6; ++face) {
+            const auto& a = actual.diffusion_boundary->faces[face];
+            const auto& e = expected.diffusion_boundary->faces[face];
+            require(a.size() == e.size(), "parallel face control extent changed");
+            for (std::size_t i = 0; i < a.size(); ++i)
+                require(a[i].kind == e[i].kind && a[i].value == e[i].value,
+                    "parallel surface mixed face control rows");
+        }
+        auto failed = initial;
+        arch::boundary::host::execute(logical, failed);
+        const auto before = failed;
+        BoundarySurfaceBackend rejected(failed);
+        inject_failure = true;
+        require_failure([&] { handler.apply_device(rejected,
+            {rejected.block, rejected.storage, arch::state::StateSlot::Current}, grid); },
+            "parallel callback failure escaped without rejection");
+        inject_failure = false;
+        require(rejected.writes == 0 && failed.rho == before.rho
+            && failed.mom_u == before.mom_u && failed.mom_v == before.mom_v
+            && failed.mom_w == before.mom_w && failed.eng == before.eng
+            && failed.mass_fractions == before.mass_fractions
+            && failed.enuc_rate == before.enuc_rate && !failed.diffusion_boundary,
+            "failed parallel surface published partial ghosts or controls");
+    }
+#ifdef _OPENMP
+    omp_set_num_threads(old_threads); omp_set_dynamic(old_dynamic);
+#endif
+}
 
 void test_microphysics_batch_contract()
 {
@@ -712,6 +885,34 @@ void test_multiblock_exchange_contract()
         "multi-block exchange accepted stale storage");
 }
 
+void test_jeans_consumer_is_fail_closed_by_default()
+{
+    FakeBackend backend;
+    const std::array<arch::backend::BackendStateAccess,1> accesses{{
+        {{{41},{7}},{101},arch::state::StateSlot::Current}}};
+    for(const auto batch : {std::span<const arch::backend::BackendStateAccess>{},
+                           std::span<const arch::backend::BackendStateAccess>{accesses}}) {
+        bool rejected=false;
+        try {(void)backend.evaluate_jeans_resolution(batch);}
+        catch(const std::logic_error& error) {
+            rejected=std::string(error.what())=="backend JENS accepted-state consumer is unavailable";
+        }
+        require(rejected,"unsupported backend silently accepted or fell back for JENS");
+    }
+}
+
+void test_jeans_parent_is_fail_closed_by_default()
+{
+    FakeBackend backend;
+    const amr::Block candidate{};
+    bool rejected=false;
+    try {(void)backend.evaluate_jeans_parent({},candidate);}
+    catch(const std::logic_error& error) {
+        rejected=std::string(error.what())=="backend JENS candidate-parent consumer is unavailable";
+    }
+    require(rejected,"unsupported JENS parent used a Host fallback or silently accepted");
+}
+
 void test_dynamic_topology_store_is_fail_closed_by_default()
 {
     class DummyTopologyTransaction final
@@ -761,6 +962,57 @@ void test_dynamic_topology_store_is_fail_closed_by_default()
 
 } // namespace
 
+/** Boundary-only updates preserve synchronized interiors through H2D/D2H.
+ *  A failed fence must leave only the changed region pending, with the valid
+ *  interior and its original completion token untouched. */
+void test_mixed_region_transfer()
+{
+    using namespace arch::state;
+    for(const auto direction:{PendingTransferPhase::PendingH2D,PendingTransferPhase::PendingD2H}) {
+        FakeBackend backend;
+        StateResidencyLedger ledger({3});
+        const StateKey key{backend.block,StateSlot::Current};
+        ledger.register_block(backend.block,{1},{1,CompletionState::Complete});
+        ledger.publish_ghost(key,ExecutionSide::Host,{1},{2,CompletionState::Complete});
+        arch::scheduler::MonotonicSchedulerClock clock(2,1);
+        std::array<double,8> rho{},mom_u{},mom_v{},mom_w{},eng{},enuc{};
+        arch::backend::HostStateTransferView view{rho.data(),mom_u.data(),mom_v.data(),mom_w.data(),
+            eng.data(),enuc.data(),nullptr,rho.size(),0,0};
+        const arch::backend::BackendStateAccess access{backend.block,backend.storage,StateSlot::Current};
+        const auto initial=arch::backend::transfer_state_regions(backend,ledger,clock,access,view,
+            PendingTransferPhase::PendingH2D);
+        const auto side=direction==PendingTransferPhase::PendingH2D?ExecutionSide::Host:ExecutionSide::Device;
+        ledger.publish_ghost(key,side,{1},{4,CompletionState::Complete});
+        clock=arch::scheduler::MonotonicSchedulerClock(4,1);
+        backend.calls.clear();backend.enqueue_count=0;
+        const auto completed=arch::backend::transfer_state_regions(backend,ledger,clock,access,view,direction,
+            0,arch::backend::BackendOperation::Materialize);
+        const auto result=ledger.inspect(key);
+        const bool upload=direction==PendingTransferPhase::PendingH2D;
+        require(completed.value==5 && backend.calls==std::vector<int>({upload?11:21,30})
+            && result.interior.residency==StateResidency::Synchronized
+            && result.ghost.residency==StateResidency::Synchronized
+            && result.interior.completion==initial && result.ghost.completion==completed,
+            "boundary-only transfer rewrote the synchronized interior");
+        require(backend.trace.back().bytes_h2d==(upload?64:0)
+            && backend.trace.back().bytes_d2h==(upload?0:64),
+            "boundary-only transfer copied a redundant interior region");
+        require_failure([&]{arch::backend::transfer_state_regions(backend,ledger,clock,access,view,direction);},
+            "a wholly synchronized state was accepted as a transfer source");
+        ledger.publish_ghost(key,side,{1},{6,CompletionState::Complete});
+        clock=arch::scheduler::MonotonicSchedulerClock(6,1);
+        backend.fail_quiesce=true;
+        require_failure([&]{arch::backend::transfer_state_regions(backend,ledger,clock,access,view,direction);},
+            "mixed-region transfer accepted a failed fence");
+        const auto pending=ledger.inspect(key);
+        require(pending.interior.residency==StateResidency::Synchronized
+            && pending.interior.completion==initial
+            && pending.interior.pending_transfer==PendingTransferPhase::None
+            && pending.ghost.pending_transfer==direction,
+            "failed boundary transfer corrupted the synchronized interior");
+    }
+}
+
 int main()
 {
     static_assert(!std::is_copy_constructible_v<arch::backend::ComputeBackend>);
@@ -775,8 +1027,12 @@ int main()
     test_cuda_launch_config();
     test_hydro_batch_contract();
     test_microphysics_batch_contract();
+    test_parallel_boundary_surface();
     test_transfer_transaction();
+    test_mixed_region_transfer();
     test_multiblock_exchange_contract();
+    test_jeans_consumer_is_fail_closed_by_default();
+    test_jeans_parent_is_fail_closed_by_default();
     test_dynamic_topology_store_is_fail_closed_by_default();
     return 0;
 }

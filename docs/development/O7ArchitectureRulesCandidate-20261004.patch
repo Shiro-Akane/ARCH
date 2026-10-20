@@ -1,0 +1,12 @@
+--- a/tools/audit_architecture.py
++++ b/tools/audit_architecture.py
+@@ -117 +117 @@
+-        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu",),
++        ("tests/cuda/microphysics/burn/test_burn_controller_parity.cu", "src/core/config/compositioninput.cpp"),
+@@ -591 +591 @@
+-        "src/core/config/RuntimeParams.h": "parser.GetBool",
++        "src/core/config/RuntimeParams.h": ("arch::config::AnalyzeConfigurationInput", "input.RequireDeclaredInputs();"),
+@@ -606 +606,2 @@
+-        if not path.is_file() or required not in path.read_text(encoding="utf-8", errors="ignore"):
++        if not path.is_file() or any(token not in path.read_text(encoding="utf-8", errors="ignore")
++                                   for token in (required if isinstance(required, tuple) else (required,))):

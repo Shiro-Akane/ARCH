@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "FAILED_OUTER_TIMEOUT_COMPLETE_DYNAMIC_NOT_ACCEPTED",
+  "exitCode": 124,
+  "guardSeconds": 655.931,
+  "actualChildWallSeconds": "UNKNOWN_NO_COMPLETED_CHILD_SUMMARY",
+  "sourceBinaryEosFenceUnchanged": true,
+  "acceptedDiscreteFieldRows": 3,
+  "fieldRows": [
+    "time\tstage\tepoch\tlease\tcells\tsource_generation\tresidual_upper\ttolerance_safe\tphysical_qualified",
+    "0\t1\t1\t1\t512\t1\t1.8111633590441042e-07\t2.2888956170460894e-07\t0",
+    "9.9999999999999998e-13\t2\t1\t2\t512\t2\t2.0901641906869007e-07\t2.2888956149758731e-07\t0",
+    "9.9999999999999998e-13\t0\t2\t3\t1280\t1\t2.5622146254435727e-07\t3.9275618105001655e-07\t0"
+  ],
+  "partialStdoutFlushed": false,
+  "newSpeciesFailureObserved": false,
+  "M1DiffusionReceipt": "NOT_PERSISTED_DO_NOT_INFER_PASS",
+  "guardStopped": false,
+  "peakSwapKiB": 0,
+  "minAvailableKiB": 6693136,
+  "EFreeMinimumBytes": 23846371328,
+  "cumulativeDynamicGuardSeconds": 1198.348,
+  "oldCapSeconds": 1200,
+  "scienceAndRestartAcceptance": false
+}

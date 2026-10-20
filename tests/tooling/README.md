@@ -1,17 +1,24 @@
 # Tooling contract tests
 
-All Python test entry points live here. Run them together from the repository
-root without a GPU:
+Maintained build, runner, identity, resource and documentation contracts live
+here. Run the complete entry from the repository root without a GPU:
 
 ```bash
-python3 -m unittest discover -s tests/tooling -p 'test_*.py'
+python3 -B tests/tooling
 ```
+
+The entry rejects empty, failed or skipped suites and is shared by CI and the
+single `tooling_contracts` CTest. Discovery still selects every `test_*.py`;
+individual Python modules remain available for focused diagnosis. The sparse
+transcript parser controls moved here with their original assertions.
 
 Install NumPy and h5py for the checkpoint and microphysics protocol tests. The
 Tooling CI job installs these dependencies; no CUDA compiler or GPU is required.
 
 - [test_audit_architecture.py](architecture/test_audit_architecture.py) checks shared-authority
   and dependency rules in the source audit.
+- [Current documentation](architecture/test_documentation.py) checks local destinations,
+  headings and history boundaries without changing frozen evidence.
 - CUDA-image and compile-memory tests check build metadata, not GPU execution
   or measured compilation performance.
 - Backend, restart, provenance and input tests exercise validation protocols.

@@ -219,7 +219,8 @@ constexpr bool selected_minimum_compute_capability(
 constexpr BoundaryFeatureMask known_boundary_features =
     boundary_bit(BoundaryFeature::Periodic)
     | boundary_bit(BoundaryFeature::Outflow)
-    | boundary_bit(BoundaryFeature::Reflecting);
+    | boundary_bit(BoundaryFeature::Reflecting)
+    | boundary_bit(BoundaryFeature::User);
 
 constexpr StateLayoutRequirement known_state_layout =
     StateLayoutRequirement::HydroConserved

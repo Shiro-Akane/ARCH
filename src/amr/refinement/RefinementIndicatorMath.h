@@ -41,14 +41,19 @@ struct Selection { Field field; int species = -1; };
 
 // Selection and threshold policy are independent of the storage/executor.
 inline std::vector<Selection> make_selection(
-    const AmrConfig& config, int dimension, std::span<const int> species)
+    const AmrConfig& config, int dimension, std::span<const int> species,
+    GridMetrics::Geometry geometry)
 {
-    if (config.refine_on_jeans)
-        throw std::runtime_error("AMR JENS refinement criterion is not implemented in this build.");
+    if (config.refine_on_jeans &&
+        (!std::isfinite(config.jeans_cells) || config.jeans_cells < 4.0))
+        throw std::invalid_argument("JENS requires explicit finite jeans_cells >= 4.");
     if (config.refine_on_vely && dimension < 2)
         throw std::invalid_argument("VELY AMR indicator requires at least two spatial dimensions.");
-    if (config.refine_on_velz && dimension < 3)
-        throw std::invalid_argument("VELZ AMR indicator requires three spatial dimensions.");
+    // Spatial derivatives and physical vector slots are separate: native
+    // Cyl2 retains the phi velocity even though only r,z are resolved.
+    if (config.refine_on_velz && dimension < 3
+        && !(dimension == 2 && geometry == GridMetrics::Geometry::Cylindrical))
+        throw std::invalid_argument("VELZ AMR indicator requires a third physical velocity component.");
     std::vector<Selection> result;
     const auto add = [&](bool enabled, Field field) {
         if (enabled) result.push_back({field});
@@ -143,6 +148,7 @@ struct VelocityView {
     const double* density = nullptr;
     double density_floor = 0.0;
 
+    /** Keep the original momentum quotient and nonpositive-density gate. */
     ARCH_INLINE double operator[](int cell) const {
         return density[cell] > 0.0 ? momentum[cell] / density[cell] : std::numeric_limits<double>::quiet_NaN();
     }
@@ -163,6 +169,11 @@ struct StateView {
     // Runtime metadata, not a compile-time species ceiling.
     int species_count = 0;
 
+    /** Select one common physical-velocity reader for VEL, curl and div(v). */
+    ARCH_INLINE VelocityView velocity(int component) const {
+        return {momentum[component],density,density_floor};
+    }
+
     ARCH_INLINE bool valid_entropy(int cell) const {
         return std::isfinite(pressure[cell]) && pressure[cell] > 0.0
             && std::isfinite(gamma1[cell]) && gamma1[cell] > 0.0;
@@ -180,9 +191,9 @@ struct StateView {
         case Field::Energy: return energy[cell];
         case Field::NuclearEnergyRate: return nuclear_energy[cell];
         case Field::Species: return species[selection.species * cells + cell];
-        case Field::VelocityX: return VelocityView{momentum[0], density, density_floor}[cell];
-        case Field::VelocityY: return VelocityView{momentum[1], density, density_floor}[cell];
-        case Field::VelocityZ: return VelocityView{momentum[2], density, density_floor}[cell];
+        case Field::VelocityX: return velocity(0)[cell];
+        case Field::VelocityY: return velocity(1)[cell];
+        case Field::VelocityZ: return velocity(2)[cell];
         case Field::Entropy: {
             // P/rho^Gamma1 is an entropy proxy for refinement, not the general
             // EOS thermodynamic entropy. Invalid ghost closure uses the nearest
@@ -201,9 +212,7 @@ struct StateView {
         case Field::Vorticity:
         case Field::Divergence: {
             const auto result = VelocityDiagnostics::evaluate(grid,
-                VelocityView{momentum[0], density, density_floor},
-                VelocityView{momentum[1], density, density_floor},
-                VelocityView{momentum[2], density, density_floor}, i, j, k);
+                velocity(0),velocity(1),velocity(2),i,j,k);
             return selection.field == Field::Vorticity ? result.vorticity : result.divergence;
         }
         }

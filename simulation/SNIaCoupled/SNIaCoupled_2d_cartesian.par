@@ -55,3 +55,23 @@ density_amplitude=0.01
 hotspot_width=0.15
 center_x=0.5
 center_y=0.5
+
+# Explicit migration of previous registered controls and Setup values.
+compute_backend=cpu
+diff_cfl=0.8
+enucDtFactor=1e30
+eos_coulomb_mult=1.0
+gravity_atol=0.0
+gravity_rtol=1e-10
+hll_wave_speed=roe
+max_eint=1e21
+min_eint=1e-10
+nuclearDensMin=1e-10
+ode_atol=1e-8
+ode_rtol=1e-4
+smallt=1e5
+smallx=1e-20
+sml_rho=1e-12
+use_species_diff=false
+use_viscous_diff=false
+center_z=0.5

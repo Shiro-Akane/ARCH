@@ -1,0 +1,23 @@
+{
+  "baseline": "01cbe4376b317e217333b1f75ba119a25eb43627",
+  "scope": "isolated CPU numeric leaf, not production JENS or scientific EOS/AMR acceptance",
+  "cases": 301,
+  "expected": {
+    "valid": 197,
+    "zero": 31,
+    "infinite": 73
+  },
+  "valid_subnormal_results": 2,
+  "reference_precision_digits": [
+    80,
+    120
+  ],
+  "criterion": "existing 16*binary64 epsilon relative error; long double error evaluation; no floor",
+  "maximum_relative_error": 1.5432483614913696e-16,
+  "generated_fixture_reproducible": true,
+  "tests": "jeans_diagnostics 1/1 PASS, includes prior physical spacing and 24 IdealGas cases",
+  "core_production_build": false,
+  "simulation": false,
+  "cuda": false,
+  "binary_sha256": "73eb193ef2afe2c3889c483c46f3856f0535e56c11999c57afac5be6fbd4297c"
+}

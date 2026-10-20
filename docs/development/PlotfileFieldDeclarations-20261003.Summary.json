@@ -1,0 +1,96 @@
+{
+  "scope": "synthetic C++ writer fixture; not production t=0 or science acceptance",
+  "records": [
+    {
+      "dimension": 1,
+      "shape": [
+        2,
+        16
+      ],
+      "dtype": "float64",
+      "raw_values_bit_exact": true,
+      "time_unit": "s",
+      "coordinate_unit": "cm",
+      "field_metadata": {
+        "DENS": {
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "mass_density",
+          "metadata_version": "candidate-field-1",
+          "unit": "g/cm^3"
+        },
+        "ENTR": {
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "pressure_density_gamma1_proxy",
+          "metadata_version": "candidate-field-1",
+          "unit": "unknown",
+          "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+        },
+        "species": {
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "species_mass_fraction",
+          "metadata_version": "candidate-field-1",
+          "unit": "1"
+        },
+        "unregistered": {
+          "basis": "unknown",
+          "centering": "cell",
+          "meaning": "unknown",
+          "metadata_version": "candidate-field-1",
+          "unit": "unknown",
+          "unit_reason": "producer declaration unavailable"
+        }
+      },
+      "measure_unit": "cm",
+      "measure_normalization": "per_unit_transverse_area"
+    },
+    {
+      "dimension": 2,
+      "shape": [
+        2,
+        16,
+        16
+      ],
+      "dtype": "float64",
+      "raw_values_bit_exact": true,
+      "time_unit": "s",
+      "coordinate_unit": "cm",
+      "field_metadata": {
+        "DENS": {
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "mass_density",
+          "metadata_version": "candidate-field-1",
+          "unit": "g/cm^3"
+        },
+        "ENTR": {
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "pressure_density_gamma1_proxy",
+          "metadata_version": "candidate-field-1",
+          "unit": "unknown",
+          "unit_reason": "P/rho^Gamma1; exponent from local EOS; not thermodynamic entropy"
+        },
+        "species": {
+          "basis": "scalar",
+          "centering": "cell",
+          "meaning": "species_mass_fraction",
+          "metadata_version": "candidate-field-1",
+          "unit": "1"
+        },
+        "unregistered": {
+          "basis": "unknown",
+          "centering": "cell",
+          "meaning": "unknown",
+          "metadata_version": "candidate-field-1",
+          "unit": "unknown",
+          "unit_reason": "producer declaration unavailable"
+        }
+      },
+      "measure_unit": "cm^2",
+      "measure_normalization": "per_unit_transverse_length"
+    }
+  ]
+}

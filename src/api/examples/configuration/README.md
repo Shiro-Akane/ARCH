@@ -1,6 +1,6 @@
 # 标准配置与单位响应示例
 
-这些 JSON 来自本次 CPU ARCH 程序的实际响应。请从仓库根目录运行，保持 EOS 相对路径基准一致。以下示例将可执行文件位置记作 `bin/ARCH`。
+这些 JSON 是配置 v2 迁移前 CPU ARCH 程序的实际响应快照，暂未随当前严格语法/方法拒绝更新。当前 v3 候选见 ../configuration-v3-candidate/；生产迁移后再以真实输出统一刷新。请从仓库根目录运行，保持 EOS 相对路径基准一致。以下示例将可执行文件位置记作 `bin/ARCH`。
 
 | 文件 | 请求 | 退出码 |
 |---|---|---|
@@ -22,4 +22,4 @@ bin/ARCH --preview CellularDet --config-stdin \
 
 使用 `--request-id` 可以替换示例请求标识；configRevision 是输入原始字节的 SHA-256。配置检查不需要 EOS 表；Cellular 实际预览需要先准备 `EOS_toolkit/tables/helmholtz/helm_table.dat` 的 Git LFS 实体文件。
 
-Sod 与 Cellular 当前响应均使用 CGS。invalid-integer.par 最后加入 `nblockx2=1.5`，用于演示带参数键的错误。本目录是最新扩展的响应示例，旧 core-a/core-b 目录保留当时的接口快照。
+Sod 与 Cellular 当前响应均使用 CGS。invalid-integer.par 最后加入 `nblockx2=1.5`，用于演示带参数键的错误。本目录和 core-a/core-b 目录当前均保留当时的接口快照，不能作为配置 v3 已实施的证据。

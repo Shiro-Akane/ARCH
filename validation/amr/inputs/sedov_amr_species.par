@@ -19,10 +19,16 @@ x3l_boundary_type = outflow
 x3r_boundary_type = outflow
 
 solver = HLLC
+# Original Roe-Glaister HLL-family wave-speed estimate, now explicit.
+hll_wave_speed = roe
 reconstruct = ppm
 limiter = mc
 time_integrator = RK3
 cfl = 0.4
+# Original admissible-state controls: density [g/cm^3], specific energy [erg/g].
+sml_rho = 1e-12
+min_eint = 1e-10
+max_eint = 1e21
 compute_backend = cpu
 
 lrefinemin = 0
@@ -51,6 +57,8 @@ use_diffusion = false
 
 center_x = 0.5
 center_y = 0.5
+# Original x3-domain midpoint [cm]; unused by this 2D radial distance.
+center_z = 0.5
 deposit_radius = 0.03
 ambient_density = 1.0
 ambient_pressure = 1.0e-5

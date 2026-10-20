@@ -1,0 +1,1531 @@
+{
+  "schema": "arch-cyl0-contract-baselines-1",
+  "updated_utc": "2026-10-18T05:16:01.820589+00:00",
+  "decision": "CYL-0_COMPLETE",
+  "scope": "Freeze mathematical/interface contract, audit common consumers and measure retained CPU rphi/Cyl3 baselines; no production/test-source change, no new RZ qualification.",
+  "workspace": "/home/shiroakane/.codex/worktrees/d7a6/ARCH",
+  "branch": "compute/optim",
+  "HEAD": "45b92535e8efe78728bb67b0415c148854a63f9c",
+  "phase_boundaries": {
+    "production_source_changed": false,
+    "repository_test_source_changed": false,
+    "RZ_support_currently_available": false,
+    "CYL1_started": false,
+    "REL4_started": false,
+    "full_application_rebuild": false,
+    "CUDA_build_or_execution": false,
+    "old_RZ_long_run_repeated": false,
+    "new_stage_automatically_authorized": false
+  },
+  "source_identity": {
+    "original_retirement_freeze": {
+      "path": "output/release/rz-retirement-implementation-20261016/source-freeze15.json",
+      "sha256": "1d926259e33d68a818be7043ecf1a510760d432af43499885096a25e2fbf9595"
+    },
+    "members": 1207,
+    "mismatches": [],
+    "latest_measurement_freeze": {
+      "path": "output/release/cyl0-20261018/tu-freeze.json",
+      "sha256": "5a1fd439f9203382246c9ccf8e6235249c1658c467f76f1ae386496822d574b2"
+    },
+    "latest_members": 1252,
+    "initial_dirty_tracked": [
+      "AGENTS.md",
+      "ARCH_RELEASE_PLAN.md"
+    ],
+    "retained_ELF_git_annotation": "Built before retirement commit; embeds source_git_head 34a6ccd5f409ec14ec11c4b798e5795e7592f26f and dirty=true. Source freeze matches current candidate; not a clean post-commit rebuild."
+  },
+  "executables": [
+    {
+      "path": "build-modernization-cpu/bin/ARCH",
+      "sha256": "d3d8e07037627e83adcaa967716701e9a6d033efc913c521884e38a75f9da487"
+    },
+    {
+      "path": "build-modernization-cpu/arch_cuda_single_level_validation",
+      "sha256": "bed49e522814100530599457ed8484f5c0d5c1d18fce9fd12d04cb2a3595845a"
+    }
+  ],
+  "frozen_contract": {
+    "status": "FROZEN_FOR_IMPLEMENTATION_NOT_IMPLEMENTED",
+    "public_selection": {
+      "geometry": "cylindrical",
+      "dimension": 2,
+      "block_shape": "nblockx1>0, nblockx2>0, nblockx3=0",
+      "domain": "finite 0<=rL<rR, finite zL<zR; r=0 only at a face; active dr,dz strictly positive",
+      "selection_policy": "Existing O7 declaration/relations/unsupported-combination checks; no default, polar alias or migration."
+    },
+    "layout": {
+      "native_spatial_axes": [
+        "r",
+        "z",
+        "inactive"
+      ],
+      "spatial_units": [
+        "cm",
+        "cm",
+        "inactive"
+      ],
+      "basis": "CoordinateLayout::Basis::CylindricalRZPhi",
+      "radial": 0,
+      "axial": 1,
+      "azimuth": 2,
+      "resolved_derivatives": [
+        true,
+        true,
+        false
+      ],
+      "stored_momentum": [
+        "rho*u_r",
+        "rho*u_z",
+        "rho*u_phi"
+      ],
+      "handedness": "Preserve retained Cyl3 positive-phi and physical basis; storage r,z,phi does not license a sign flip in cross products.",
+      "inactive_grid_storage": "Existing single storage cell/no inactive ghost plane; dx3=0, never pretend dx3=1.",
+      "physical_position": "Native (r,z) embeds at phi=0 as (r,0,z); PointCoords representations agree. This sample position does not define self-gravity mass geometry."
+    },
+    "measures": {
+      "normalization": "per_unit_azimuth",
+      "Q": "(rR-rL)*(rR+rL)/2 = integral r dr",
+      "V": "Q*dz",
+      "Ar": "r_face*dz",
+      "Az": "Q",
+      "inverse_r_volume_average": "(rR-rL)/Q",
+      "physical_spacing": [
+        "configured dr",
+        "configured dz"
+      ],
+      "W": "dz*(rR-rL)*(rR*rR+rR*rL+rL*rL)/3 = integral r dV",
+      "Tr": "r_face*r_face*dz",
+      "Tz": "W/dz",
+      "dimensions": {
+        "V": "cm3",
+        "A": "cm2",
+        "W": "cm4",
+        "T": "cm3"
+      },
+      "integration_endpoints": "Independent polynomial oracles use exact actual binary64 endpoints; CFL spacing remains configured dx, not cancellation-prone endpoint subtraction.",
+      "full_physical_integrals": "Multiply per-unit-azimuth mass, energy, gravity moments and angular momentum by 2*pi consistently."
+    },
+    "state_and_projection": {
+      "representation": "Existing three orthonormal momentum-density PWC coefficients, energy and species only; no extra authoritative J/ell state.",
+      "energy": "E=rho*e+(Mr^2+Mz^2+Mphi^2)/(2*rho)",
+      "angular_momentum": "J=sum Mphi*W (and 2*pi for full physical integral); not sum r_mid*Mphi*V.",
+      "initialization": "Retain generic Init point sampling as declared PWC projection. Exact coefficient fixtures remain prescribed values; analytic projection/truncation error is separate from discrete conservation and PDE convergence."
+    },
+    "Euler": {
+      "continuous_sources": {
+        "radial": "(rho*u_phi^2+p)*<1/r>",
+        "axial": "0",
+        "azimuthal": "-rho*u_r*u_phi*<1/r>",
+        "mass": "0",
+        "total_energy": "0"
+      },
+      "discrete_angular_update": "DeltaJ=-dt*sum_outward(T_face*F_phi)+body_torque_impulse; DeltaMphi=DeltaJ/W.",
+      "no_double_count": "The torque divergence absorbs the continuous phi-curvature term by product-rule cancellation. Do not add the point phi source again.",
+      "execution": "One existing Riemann/reconstruction/traversal path, common geometry-moment weights; no RZ flux/state/control hierarchy or extra full-domain pass.",
+      "retained_Cyl1": "Original pressure-only radial source semantics preserved; azimuth index alone does not activate swirl."
+    },
+    "axis_and_boundary": {
+      "axis": "r=0 face, Ar=Tr=0 exactly; no radial epsilon.",
+      "parity": {
+        "scalar": 1,
+        "rho*u_r": -1,
+        "rho*u_z": 1,
+        "rho*u_phi": -1
+      },
+      "owner": "Existing CoordinateBoundary/seam/physical-boundary machinery, including AMR donors; no phi+pi shift of z or substitute ordinary wall.",
+      "axial_boundaries": "Ordinary existing periodic/reflecting/outflow/user semantics only after corresponding qualification."
+    },
+    "AMR_and_diffusion": {
+      "transfer": "V weights for mass/E/rhoX; W weights for J; same state slots and common transaction.",
+      "reflux": "T-compatible integrated angular flux/traction in existing face/register owner, consistent with W update.",
+      "admissibility": "Retain numerical criteria; veto inadmissible coarsen/transfer instead of silently clipping energy/J to pass.",
+      "viscosity": "Shared symmetric stress, connection/shear terms retained even with partial_phi=0; torque and energy work consistent.",
+      "lifecycle": "Reuse ordinary rollback/regrid/cache; no RZ authoritative state or persistent buffer subsystem."
+    },
+    "time": {
+      "CFL": "Common owner on active dr,dz only, no manufactured phi CFL.",
+      "rotation": "Source/rotation stability and correct physical-endpoint step counts need independent CYL-2 evidence; fixed-step cost is not physical-endpoint qualification."
+    },
+    "gravity": {
+      "separation": "Geometry has no field/solve/selection/work/receipt/cache ownership. Optional gravity owner owns all actual gravity operations and conservation coupling.",
+      "off": "No gravity solve or gravity-specific field allocation; existing generic no-op stage timing is allowed.",
+      "external_components": "Existing g_x/g_y/g_z are stored source-slot components. On native RZ these mean (g_r,g_axial,g_phi), not Cartesian projection or new aliases/defaults.",
+      "body_torque": "rho*g_phi*W integrated over dt; work is M dot g. Axisymmetric self gravity has g_phi=0; an explicitly prescribed azimuthal body force is physical torque.",
+      "Poisson": "-laplacian(Phi)=-4*pi*G*rho; laplacian=1/r*d_r(r*d_r Phi)+d_zz Phi.",
+      "manufactured": "Phi=a*(r^2+z^2), laplacian=6*a, g=(-2*a*r,-2*a*z,0), prescribed boundary first.",
+      "isolated": "Actual axisymmetric 3D Newtonian mass/ring boundary in gravity owner; phi=0 point mass or 2D planar/log Green is invalid. No revival of old ring memo/controller."
+    },
+    "interfaces": {
+      "checkpoint": {
+        "owner": "Existing CheckpointGeometryIdentity fields/schema; no new state_semantics mechanism or build/source/profile gate.",
+        "new_expected_tuple": {
+          "revision": 1,
+          "chart": "cylindrical-rz-pwc"
+        },
+        "legacy_observed_tuple": {
+          "revision": 2,
+          "chart": "axisymmetric-rz"
+        },
+        "negative_cases": [
+          "old RZ tuple",
+          "empty/legacy identity",
+          "existing identity for Cyl2",
+          "wrong or future revision/chart",
+          "new Cyl2 tag on any other geometry/dimension"
+        ],
+        "timing": "Pass explicit expected tuple; reader validates before live-state mutation, writer before file replacement; retain existing rules for other charts including allowed empty legacy identity.",
+        "currently": "All Cyl2 still rejected; new tuple is frozen but not implemented."
+      },
+      "Plot": {
+        "native_axes": [
+          "r",
+          "z",
+          "inactive"
+        ],
+        "units": [
+          "cm",
+          "cm",
+          "inactive"
+        ],
+        "measure_unit": "cm3",
+        "normalization": "per_unit_azimuth",
+        "vector_components": [
+          "u_r",
+          "u_z",
+          "u_phi"
+        ],
+        "field_keys": "Keep current VELX/Y/Z slots; physical third component active despite inactive third spatial axis.",
+        "retained_rphi": "cm2/per_unit_transverse_length unchanged",
+        "retained_Cyl3": "cm3/full_volume unchanged"
+      },
+      "Core_and_Studio": "Current eight retained combinations only. Add public RZ combinations solely from actual qualified Core authority; unknown/untested combinations reject."
+    },
+    "numerical_criteria": {
+      "geometry_leaf": {
+        "relative_limit": 2e-12,
+        "source": "tests/host/grid/test_curvilinear_metrics.cpp",
+        "tiny_measure_rule": "True relative error; no max(1,expected) loophole."
+      },
+      "retained_baseline_conservation": {
+        "measure": "physical_cell_volume",
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "strict_RZ_angular": {
+        "relative_limit": 1e-12,
+        "no_body_torque": "abs(DeltaJ+outward_torque_impulse)/(initial integral abs(Mphi)*W+abs(outward_torque_impulse))",
+        "body_torque": "Subtract physical body-torque impulse in numerator; include its absolute impulse in normalization. Exact all-zero denominator requires zero residual.",
+        "source": "docs/development/archive/histroy/rz/RZHydroTorqueNode-20261004.zh-CN.md"
+      },
+      "historical_weak_self_scope_only": {
+        "mass_relative": 1e-12,
+        "physical_exchange_budget": 0.02,
+        "reference_budget": 0.002,
+        "gravity_rtol": 1e-10,
+        "physical_endpoint_relative": 2e-10,
+        "source": "validation/backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json",
+        "rule": "Original case/endpoints/FAIL scopes retained; not a universal energy tolerance and not a signature for new RZ."
+      },
+      "repairs": "New qualification fixtures require zero state repairs; keep other accepted chart policies.",
+      "unchanged": "No loosened scientific standard, O7 default, solver accuracy, physical endpoint or original reference discrepancy."
+    }
+  },
+  "consumer_audit": {
+    "status": "STATIC_INDEX_AND_OWNER_SEAMS_VERIFIED",
+    "scanned_active_first_party_files": 986,
+    "direct_lexical_reference_files": 120,
+    "coordinate_branch_files": 105,
+    "coordinate_branch_sites": 406,
+    "union_files": 168,
+    "files": [
+      "simulation/BurnGradient/BurnGradient.cpp",
+      "simulation/BurnOneZone/BurnOneZone.cpp",
+      "simulation/Cellular/Cellular.cpp",
+      "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "simulation/DiffusionMode/DiffusionMode.cpp",
+      "simulation/ExternalGravity/ExternalGravity.cpp",
+      "simulation/GaussianPulse/Gaussian.cpp",
+      "simulation/GravityBox/GravityBox.cpp",
+      "simulation/JeansWave/JeansWave.cpp",
+      "simulation/RTinstability/RT_instab.cpp",
+      "simulation/SNIaCoupled/SNIaCoupled.cpp",
+      "simulation/Sedov/Sedov.cpp",
+      "simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "simulation/Sod/Sod.cpp",
+      "simulation/UserBoundary/case.cpp",
+      "simulation/UserBoundary/gravity_boundary.cpp",
+      "simulation/UserGravity/case.cpp",
+      "simulation/UserGravity/gravity_boundary.cpp",
+      "src/amr/elliptic/EllipticMeshAdapter.cpp",
+      "src/amr/exchange/CoordinateSeamPlan.h",
+      "src/amr/exchange/GhostExchange.h",
+      "src/amr/flux/AmrFluxPlan.h",
+      "src/amr/flux/FluxRegister.h",
+      "src/amr/refinement/RefinementThermodynamics.h",
+      "src/amr/storage/Block.h",
+      "src/amr/topology/AmrTree.h",
+      "src/api/Preview.h",
+      "src/api/configuration/Configuration.cpp",
+      "src/api/inspection/CaseInspection.cpp",
+      "src/api/preview/Preview.cpp",
+      "src/core/config/ConfigValidation.h",
+      "src/core/config/ControlRelations.h",
+      "src/core/config/InputResolution.h",
+      "src/core/problem/ProblemHelper.cpp",
+      "src/core/problem/ProblemHelper.h",
+      "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+      "src/cuda/common/CudaCommon.cuh",
+      "src/cuda/common/GridMetricsCache.cu",
+      "src/cuda/diffusion/DiffusionKernels.cuh",
+      "src/cuda/hydro/GridGeometryAdapter.cuh",
+      "src/cuda/hydro/kernels/HydroSourceKernels.cuh",
+      "src/cuda/hydro/kernels/HydroStageKernels.cuh",
+      "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu",
+      "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+      "src/data/UserTypes.h",
+      "src/driver/DriverUtils.h",
+      "src/driver/SolverDispatch.cpp",
+      "src/driver/dispatch/PolicyDescriptor.h",
+      "src/driver/dispatch/capability/BackendCapabilities.h",
+      "src/driver/dispatch/capability/ResolvedExecutionPlan.h",
+      "src/driver/io/DriverIO.cpp",
+      "src/driver/runtime/DriverBoundaryDiagnostics.cpp",
+      "src/driver/runtime/DriverRegrid.cpp",
+      "src/driver/runtime/DriverRuntime.cpp",
+      "src/driver/stages/DriverStages.h",
+      "src/grid/CoordinateBoundary.h",
+      "src/grid/Grid.h",
+      "src/interface/GenericProblem.h",
+      "src/interface/PreviewMetadata.h",
+      "src/interface/ProblemGenerator.h",
+      "src/io/IO.h",
+      "src/io/chk/CheckpointGeometryIdentity.h",
+      "src/io/chk/ChkIO.cpp",
+      "src/io/hdf5/HDF5Writer.cpp",
+      "src/io/hdf5/HDF5Writer.h",
+      "src/io/plot/PlotGridMetadata.h",
+      "src/io/plot/PlotIO.cpp",
+      "src/numerics/curvilinear/CurvilinearViscousStress.h",
+      "src/numerics/curvilinear/GeometricSources.h",
+      "src/numerics/curvilinear/GridGeometryView.h",
+      "src/numerics/curvilinear/GridMetrics.h",
+      "src/numerics/diffusion/DiffFlux.h",
+      "src/numerics/diffusion/DiffusionAMRStages.h",
+      "src/numerics/diffusion/NewtonianViscousStress.h",
+      "src/numerics/elliptic/CartesianPoisson.cpp",
+      "src/numerics/elliptic/CompositePoisson.cpp",
+      "src/numerics/elliptic/EllipticMesh.h",
+      "src/numerics/integrator/HydroBoundaryAuthority.h",
+      "src/numerics/integrator/HydroGeometryBinding.h",
+      "src/numerics/integrator/TimeIntegratorHelper.h",
+      "src/physics/boundary/BoundaryTypes.h",
+      "src/physics/boundary/PhysicalBoundary.h",
+      "src/physics/boundary/PhysicalBoundaryHandler.cpp",
+      "src/physics/diagnostics/JeansDiagnostics.h",
+      "src/physics/diagnostics/VelocityDiagnostics.h",
+      "src/physics/gravity/GravityBoundary.cpp",
+      "src/physics/gravity/GravityBoundary.h",
+      "src/physics/gravity/self/GravityUserBoundary.cpp",
+      "src/physics/gravity/self/GravityWorkspace.cpp",
+      "src/physics/gravity/self/SelfGravity.cpp",
+      "studio/host/plotfileMetadata.ts",
+      "studio/src/components/ParameterPanel/controlContract.ts",
+      "studio/src/host/configurationValidation.ts",
+      "studio/src/host/plotfileAudit.ts",
+      "studio/src/host/previewValidation.ts",
+      "studio/src/host/workflowContracts.ts",
+      "studio/src/host/workflowValidation.ts",
+      "studio/tests/amr-native-volume.test.ts",
+      "studio/tests/configuration-core-v3.integration.ts",
+      "studio/tests/host-preview-discovery.test.ts",
+      "studio/tests/native-plot-view.test.ts",
+      "studio/tests/parameter-catalog.test.ts",
+      "studio/tests/plotfile-audit-validation.test.ts",
+      "studio/tests/plotfile-isolation.test.ts",
+      "studio/tests/plotfile-overview.test.ts",
+      "studio/tests/plotfile-slice.test.ts",
+      "studio/tests/plotfile-source-evidence.test.ts",
+      "tests/api/configuration/test_configuration.py",
+      "tests/api/configuration/test_configuration_v3.py",
+      "tests/api/inspection/test_initialization_probe.cpp",
+      "tests/api/preview/cellular_reference.cpp",
+      "tests/api/preview/test_cellular_preview.py",
+      "tests/api/preview/test_full_model_preview.py",
+      "tests/api/preview/test_sampling_limits.cpp",
+      "tests/cuda/amr/test_cuda_amr_exchange.cpp",
+      "tests/cuda/amr/test_cuda_regrid_migration.cu",
+      "tests/cuda/amr/test_cuda_regrid_transaction.cpp",
+      "tests/cuda/amr/test_refinement_indicators.cpp",
+      "tests/cuda/grid/test_boundary_plan_parity.cu",
+      "tests/cuda/grid/test_curvilinear_geometry_smoke.cu",
+      "tests/cuda/grid/test_grid_metrics_cache.cu",
+      "tests/cuda/hydro/test_cuda_hydro_block.cu",
+      "tests/cuda/hydro/test_hydro_eos_failure.cu",
+      "tests/cuda/numerics/test_cuda_multiblock_diffusion.cu",
+      "tests/cuda/runtime/test_mainline_authority.cpp",
+      "tests/fixtures/io/checkpoint_conservation_metrics.h",
+      "tests/host/amr/test_amr_flux_surface_plan.cpp",
+      "tests/host/amr/test_amr_operation_plans.cpp",
+      "tests/host/amr/test_refinement_indicator_math.cpp",
+      "tests/host/amr/test_user_physical_boundary.cpp",
+      "tests/host/core/test_configuration_input.cpp",
+      "tests/host/core/test_input_resolution.cpp",
+      "tests/host/core/test_jeans_diagnostics.cpp",
+      "tests/host/driver/test_reduction_contract.cpp",
+      "tests/host/driver/test_runtime_probe_and_capabilities.cpp",
+      "tests/host/driver/test_shared_stage_scheduler.cpp",
+      "tests/host/gravity/test_composite_poisson.cpp",
+      "tests/host/gravity/test_gravity_runtime_contract.cpp",
+      "tests/host/gravity/test_self_gravity.cpp",
+      "tests/host/grid/test_curvilinear_metrics.cpp",
+      "tests/host/io/test_checkpoint_compatibility.cpp",
+      "tests/host/io/test_checkpoint_conservation_metrics.cpp",
+      "tests/host/io/test_driver_checkpoint_geometry.cpp",
+      "tests/host/io/test_plotfile_publication.cpp",
+      "tests/math/diffusion/ThermalFiveDecayCases.h",
+      "tests/math/geometry/CurvedStokesCases.h",
+      "tests/math/geometry/CurvilinearMetricCases.h",
+      "tests/math/geometry/RadialStokesCases.h",
+      "tests/math/geometry/ViscousGeometryCases.h",
+      "tests/tooling/microphysics/test_microphysics_coupling.py",
+      "tests/tooling/validation/test_curvilinear_manifest.py",
+      "tests/tooling/validation/test_plotfile_contract.py",
+      "tests/tooling/validation/test_smoke_cuda_amr_runtime.py",
+      "tests/tooling/validation/test_validate_backend_results.py",
+      "tools/audit_architecture.py",
+      "tools/validate_backend_results.py",
+      "validation/amr/gaussian_reference.py",
+      "validation/amr/geometry_reference.py",
+      "validation/backend/plotfile_contract.py",
+      "validation/gravity/check_jeans_plot.py",
+      "validation/gravity/curved/check_cross_backend_restart.py",
+      "validation/gravity/curved/run_cuda_matrix.py",
+      "validation/gravity/curved/verify_coupled.py",
+      "validation/gravity/flash/run_comparison.py",
+      "validation/gravity/radial_1d.py",
+      "validation/gravity/run_o7_resume.py",
+      "validation/gravity/user_boundaries.py",
+      "validation/io/make_plotfile_query_fixture.py"
+    ],
+    "group_counts": {
+      "simulation/BurnGradient": 1,
+      "simulation/BurnOneZone": 1,
+      "simulation/Cellular": 1,
+      "simulation/CooperativeHotspots": 1,
+      "simulation/DiffusionMode": 1,
+      "simulation/ExternalGravity": 1,
+      "simulation/GaussianPulse": 1,
+      "simulation/GravityBox": 1,
+      "simulation/JeansWave": 1,
+      "simulation/RTinstability": 1,
+      "simulation/SNIaCoupled": 1,
+      "simulation/Sedov": 1,
+      "simulation/SmoothAdvection": 1,
+      "simulation/Sod": 1,
+      "simulation/UserBoundary": 1,
+      "simulation/UserGravity": 1,
+      "src/amr": 8,
+      "src/api": 2,
+      "src/core": 2,
+      "src/cuda": 8,
+      "src/data": 1,
+      "src/driver": 7,
+      "src/grid": 2,
+      "src/interface": 3,
+      "src/io": 7,
+      "src/numerics": 10,
+      "src/physics": 10,
+      "studio/host": 1,
+      "studio/src": 1,
+      "studio/tests": 6,
+      "tests/api": 3,
+      "tests/cuda": 9,
+      "tests/fixtures": 1,
+      "tests/host": 13,
+      "tests/math": 5,
+      "tests/tooling": 1,
+      "tools/audit_architecture.py": 1,
+      "validation/amr": 1,
+      "validation/gravity": 1,
+      "validation/io": 1
+    },
+    "potential_include_dependents": {
+      "src/grid/Grid.h": 262,
+      "src/grid/CoordinateBoundary.h": 127,
+      "src/numerics/curvilinear/GridGeometryView.h": 328,
+      "src/numerics/curvilinear/GridMetrics.h": 254,
+      "src/numerics/curvilinear/GeometricSources.h": 53,
+      "src/numerics/curvilinear/CurvilinearViscousStress.h": 33
+    },
+    "method": "Tracked first-party active source; lexical references preserve line numbers. Static include closure is potential dependency, not proof of executed math or instantiated templates. Tests/string assertions are separate from production behavior.",
+    "excluded": "third-party/build/generated output/historical results/docs/raw H5",
+    "known_project_include_unresolved": [],
+    "unresolved_external_or_system_includes": {
+      "sys/resource.h": 2,
+      "sys/random.h": 1,
+      "highfive/H5DataSet.hpp": 1,
+      "highfive/H5DataSpace.hpp": 1,
+      "highfive/H5File.hpp": 10,
+      "sys/wait.h": 1,
+      "sys/vfs.h": 1,
+      "sys/statvfs.h": 1,
+      "linux/magic.h": 1
+    },
+    "coverage_limit": "Lexical symbols include declarations/comments/test strings; transitive include count is potential impact, not executed math or every template instantiation. All listed seams are mapped to owners, not dynamically qualified.",
+    "responsibility_map": [
+      {
+        "responsibility": "Grid/layout/native coordinates",
+        "files": [
+          "src/grid/Grid.h",
+          "src/numerics/curvilinear/GridGeometryView.h",
+          "src/numerics/curvilinear/GridMetrics.h"
+        ],
+        "current_fact": "All CYL2 layouts/raw measures are refused. Inactive dx3=0; current Cyl3 axial area uses Q*dx3.",
+        "frozen_requirement": "Use existing CylindricalRZPhi, two resolved derivatives; provide V/A/W/T and phi=0 point embedding without inventing dx3 or a new Grid.",
+        "implementation_stage": "CYL-1",
+        "existing_verification_owner": [
+          "tests/host/grid/test_curvilinear_metrics.cpp",
+          "tests/math/geometry/CurvilinearMetricCases.h"
+        ]
+      },
+      {
+        "responsibility": "Hydro/reconstruction/geometry binding",
+        "files": [
+          "src/numerics/curvilinear/GeometricSources.h",
+          "src/numerics/integrator/HydroGeometryBinding.h",
+          "src/numerics/integrator/HydroCellUpdate.h"
+        ],
+        "current_fact": "Cyl3 swirl source is dimension-gated. Ordinary area/volume plus source fails the new strict PWC angular target in an actual leaf witness.",
+        "frozen_requirement": "Keep one traversal/reconstruction/Riemann path. Use layout-aware swirl and compatible torque weights; no second phi source after conservative torque divergence. Keep Cyl1 pressure-only semantics.",
+        "implementation_stage": "CYL-1/CYL-2",
+        "existing_verification_owner": [
+          "tests/host/grid/test_curvilinear_metrics.cpp",
+          "tests/cuda/hydro/test_cuda_hydro_block.cu"
+        ]
+      },
+      {
+        "responsibility": "Thermal/species/viscous diffusion",
+        "files": [
+          "src/numerics/diffusion/DiffFlux.h",
+          "src/numerics/diffusion/NewtonianViscousStress.h",
+          "src/numerics/curvilinear/CurvilinearViscousStress.h",
+          "src/numerics/diffusion/DiffusionAMRStages.h"
+        ],
+        "current_fact": "Shared scalar/vector operators and curvilinear stress already exist; absent phi partials do not eliminate connection terms.",
+        "frozen_requirement": "Reuse scalar operators and symmetric stress; conserve angular traction with T/W and preserve viscous work. No RZVis or new diffusion controller.",
+        "implementation_stage": "CYL-2",
+        "existing_verification_owner": [
+          "tests/math/geometry/ViscousGeometryCases.h",
+          "tests/math/geometry/CurvedStokesCases.h"
+        ]
+      },
+      {
+        "responsibility": "Axis/physical boundaries/seams",
+        "files": [
+          "src/grid/CoordinateBoundary.h",
+          "src/amr/exchange/CoordinateSeamPlan.h",
+          "src/amr/exchange/GhostExchange.h",
+          "src/physics/boundary/PhysicalBoundaryHandler.cpp"
+        ],
+        "current_fact": "Some seam logic infers azimuth from dimension-1; this would misidentify z.",
+        "frozen_requirement": "Use common radial mirror/donor owner with (-,+,-) momentum signs at axis; no phi+pi shift of z and no ordinary wall substitution.",
+        "implementation_stage": "CYL-1/CYL-2",
+        "existing_verification_owner": [
+          "tests/host/amr/test_user_physical_boundary.cpp",
+          "tests/cuda/grid/test_boundary_plan_parity.cu"
+        ]
+      },
+      {
+        "responsibility": "AMR transfer/reflux/admissibility",
+        "files": [
+          "src/amr/transfer/ConservativeRestriction.h",
+          "src/amr/transfer/LimitedLinearProlongation.h",
+          "src/amr/transfer/RegridTransferMath.h",
+          "src/amr/flux/FluxRegister.h",
+          "src/amr/flux/AmrFluxPlan.h",
+          "src/numerics/state/StateAdmissibility.h"
+        ],
+        "current_fact": "Existing transfer/reflux, validation and rollback own the transaction; this phase did not execute new RZ AMR.",
+        "frozen_requirement": "V-weight mass/E/rhoX; W-weight J and T-weight angular reflux in existing slots. Veto inadmissible transfer instead of clipping away a conservation defect.",
+        "implementation_stage": "CYL-2",
+        "existing_verification_owner": [
+          "tests/host/amr/test_amr_flux_surface_plan.cpp",
+          "tests/host/amr/test_amr_operation_plans.cpp",
+          "tests/cuda/amr/test_cuda_regrid_transaction.cpp"
+        ]
+      },
+      {
+        "responsibility": "State/resource lifecycle",
+        "files": [
+          "src/data/FluidState.h",
+          "src/amr/storage/Block.h",
+          "src/driver/runtime/DriverRegrid.cpp"
+        ],
+        "current_fact": "Three momentum slots, generic state attachments and common resource lifecycle remain after retirement.",
+        "frozen_requirement": "No RZ authoritative J/ell arrays, GlobalDefs fields, special rollback state or persistent buffer/control hierarchy.",
+        "implementation_stage": "CYL-2/CYL-5",
+        "existing_verification_owner": [
+          "tests/cuda/amr/test_cuda_regrid_migration.cu"
+        ]
+      },
+      {
+        "responsibility": "Time stepping/EOS/burn/model initialization",
+        "files": [
+          "src/numerics/integrator/TimeIntegratorHelper.h",
+          "src/driver/stages/DriverStages.h",
+          "src/interface/ProblemGenerator.h",
+          "src/data/UserTypes.h"
+        ],
+        "current_fact": "All 16 registered model Init callbacks appear in the PointCoords inventory. Existing Init samples points, not exact analytic cell averages.",
+        "frozen_requirement": "Keep common EOS/flux/CFL/integrator and PWC projection semantics; dr/dz only, no phi CFL. Qualification of EOS/burn combinations remains explicit, not automatic.",
+        "implementation_stage": "CYL-2/CYL-6",
+        "existing_verification_owner": [
+          "tests/api/inspection/test_initialization_probe.cpp",
+          "tests/api/preview/test_full_model_preview.py"
+        ]
+      },
+      {
+        "responsibility": "Optional gravity ownership and scheduling",
+        "files": [
+          "src/driver/stages/GravityStage.cpp",
+          "src/physics/gravity/ExternalGravity.h",
+          "src/physics/gravity/GravityBoundary.cpp",
+          "src/physics/gravity/self/SelfGravity.cpp"
+        ],
+        "current_fact": "Cyl2 gravity is rejected. External g_x/g_y/g_z feed stored momentum slots directly. Baseline no-op gravity timer is called N+2 times but actual field solves are zero.",
+        "frozen_requirement": "Field/solve/boundary/source/work/receipt belong to gravity; geometry runs independently with gravity none. Source-slot components for new chart are gr/g_axial/gphi. Isolated gravity must integrate axisymmetric 3D Newtonian mass.",
+        "implementation_stage": "CYL-3",
+        "existing_verification_owner": [
+          "tests/host/gravity/test_self_gravity.cpp",
+          "tests/host/gravity/test_gravity_runtime_contract.cpp"
+        ]
+      },
+      {
+        "responsibility": "Shared elliptic/MG geometry",
+        "files": [
+          "src/numerics/elliptic/CartesianPoisson.cpp",
+          "src/numerics/elliptic/CompositePoisson.cpp",
+          "src/amr/elliptic/EllipticMeshAdapter.cpp"
+        ],
+        "current_fact": "Generic FV/MG machinery exists; dimension-1 angular assumptions and CYL2 refusal are actual seams.",
+        "frozen_requirement": "Add only needed common V/A geometry; -laplacian sign retained. Check manufactured axisymmetric potential before isolated-boundary qualification.",
+        "implementation_stage": "CYL-3",
+        "existing_verification_owner": [
+          "tests/host/gravity/test_composite_poisson.cpp"
+        ]
+      },
+      {
+        "responsibility": "Diagnostics and physical totals",
+        "files": [
+          "src/physics/diagnostics/VelocityDiagnostics.h",
+          "src/physics/diagnostics/JeansDiagnostics.h",
+          "tests/fixtures/io/checkpoint_conservation_metrics.h"
+        ],
+        "current_fact": "Current dim<=2 polar diagnostics cannot simply serve native r,z. Observer already preserves long-double totals.",
+        "frozen_requirement": "Native basis/order/handedness, physical 2*pi normalization, PWC W angular totals and rotational energy are explicit; do not infer active vector components from spatial axes.",
+        "implementation_stage": "CYL-4",
+        "existing_verification_owner": [
+          "tests/host/io/test_checkpoint_conservation_metrics.cpp",
+          "tests/host/core/test_jeans_diagnostics.cpp"
+        ]
+      },
+      {
+        "responsibility": "Checkpoint reader/writer/fresh",
+        "files": [
+          "src/io/chk/CheckpointGeometryIdentity.h",
+          "src/io/chk/ChkIO.cpp",
+          "src/io/hdf5/HDF5Writer.cpp"
+        ],
+        "current_fact": "All Cyl2 checkpoints are rejected; retained charts use revision 1 existing and their allowed legacy empty identity. Actual retired RZ uses revision 2 axisymmetric-rz.",
+        "frozen_requirement": "Only new Cyl2 accepts (1,cylindrical-rz-pwc), using existing identity fields and explicit expected tuple. Reject old/empty/wrong/future before mutation/replacement; retained rules unchanged. No build/source/profile CHK gate.",
+        "implementation_stage": "CYL-4",
+        "existing_verification_owner": [
+          "tests/host/io/test_checkpoint_compatibility.cpp",
+          "tests/host/io/test_driver_checkpoint_geometry.cpp"
+        ]
+      },
+      {
+        "responsibility": "Plot axes/units/basis",
+        "files": [
+          "src/io/plot/PlotGridMetadata.h",
+          "src/io/plot/PlotIO.cpp",
+          "validation/backend/plotfile_contract.py"
+        ],
+        "current_fact": "Two-dimensional metadata currently means rphi cm2/per_unit_transverse_length; native RZ cannot inherit it.",
+        "frozen_requirement": "r,z,inactive in cm,cm,inactive; measure cm3/per_unit_azimuth. Third physical component remains uphi. Keep existing VELX/Y/Z keys and source/build/profile rules.",
+        "implementation_stage": "CYL-4",
+        "existing_verification_owner": [
+          "tests/host/io/test_plotfile_publication.cpp",
+          "tests/tooling/validation/test_plotfile_contract.py"
+        ]
+      },
+      {
+        "responsibility": "Configuration/Core API/preview",
+        "files": [
+          "src/core/config/InputResolution.h",
+          "src/core/config/ConfigValidation.h",
+          "src/core/config/ControlRelations.h",
+          "src/api/configuration/Configuration.cpp",
+          "src/api/preview/Preview.cpp"
+        ],
+        "current_fact": "Actual Core schema equals active fixture, with eight retained combinations. O7 missing/invalid controls and Cyl2 reject before H5.",
+        "frozen_requirement": "Keep canonical geometry=cylindrical and block-derived dimension, no polar alias/default. Only advertise combinations after qualification, regenerate schema from actual Core and validate before Init.",
+        "implementation_stage": "CYL-4",
+        "existing_verification_owner": [
+          "tests/host/core/test_input_resolution.cpp",
+          "tests/api/configuration/test_configuration.py"
+        ]
+      },
+      {
+        "responsibility": "Studio consumers",
+        "files": [
+          "studio/src/host/configurationValidation.ts",
+          "studio/src/host/previewValidation.ts",
+          "studio/src/host/plotfileAudit.ts",
+          "studio/host/plotfileMetadata.ts"
+        ],
+        "current_fact": "Static index found schema/preview/Plot display assumptions; this phase did not run Studio or change its fixtures.",
+        "frozen_requirement": "Consume actual Core authority, display independent coordinate/basis components and units; no hand-written support claim or compatibility alias.",
+        "implementation_stage": "CYL-4",
+        "existing_verification_owner": [
+          "studio/tests/parameter-catalog.test.ts",
+          "studio/tests/native-plot-view.test.ts"
+        ]
+      },
+      {
+        "responsibility": "Device geometry/execution/cache",
+        "files": [
+          "src/cuda/hydro/GridGeometryAdapter.cuh",
+          "src/cuda/common/GridMetricsCache.cu",
+          "src/cuda/hydro/kernels/HydroSourceKernels.cuh",
+          "src/cuda/diffusion/DiffusionKernels.cuh",
+          "src/cuda/amr/AmrFluxSurfaceKernels.cuh"
+        ],
+        "current_fact": "Consumers indexed statically; no CUDA build/run in CYL-0.",
+        "frozen_requirement": "Thin adapter to shared math and ordinary lifecycle. Real kernels/indexing/cache/regrid/streams need separate device evidence after shared math is frozen.",
+        "implementation_stage": "CYL-5",
+        "existing_verification_owner": [
+          "tests/cuda/grid/test_curvilinear_geometry_smoke.cu",
+          "tests/cuda/grid/test_grid_metrics_cache.cu"
+        ]
+      },
+      {
+        "responsibility": "Build/test/architecture contracts",
+        "files": [
+          "CMakeLists.txt",
+          "tools/audit_architecture.py",
+          "tools/run_memory_guarded.py",
+          "tools/validate_backend_results.py"
+        ],
+        "current_fact": "Existing geometry CTest and architecture audit passed; one existing TU and one output-only leaf probe compiled without changing production objects.",
+        "frozen_requirement": "Extend existing parameterized targets/runners, retain unique assertions and bounded resources; no new RZ build hierarchy or duplicated full regression.",
+        "implementation_stage": "CYL-1 through CYL-6",
+        "existing_verification_owner": [
+          "tests/host/grid/test_curvilinear_metrics.cpp",
+          "tests/tooling/validation/test_curvilinear_manifest.py"
+        ]
+      }
+    ]
+  },
+  "numerical_baselines": {
+    "decision": "PASS_WITH_DECLARED_SCOPE",
+    "retained_runs": 22,
+    "warmups": 4,
+    "timed_runs": 16,
+    "swirl_runs": 2,
+    "timed_steps": 64,
+    "swirl_steps": 8,
+    "RK_stages": 2,
+    "OMP_threads": 4,
+    "baseline_policy": {
+      "measure": "physical_cell_volume",
+      "rtol": 2e-12,
+      "atol": 2e-11,
+      "fields": [
+        "mass",
+        "energy",
+        "rhoX"
+      ]
+    },
+    "all_runs_original_mass_energy_species_policy_pass": true,
+    "all_runs_zero_repairs": true,
+    "same_group_timed_final_Data_bit_equal": true,
+    "max_steady_field_error": 4.588343593958655e-16,
+    "max_Cyl3_phi_invariance_error": 4.440892098500626e-16,
+    "leaf_cases": 10,
+    "leaf_oracle": "Decimal120 from exact binary64 endpoints",
+    "max_leaf_relative_error": 2.5252996439318245e-16,
+    "angular_leaf_witness": {
+      "scope": "retained Cyl3 scalar leaves, closed synthetic angular flux; not full HLLC or whole evolution",
+      "initial_abs_J": "6.93333333333333371849977",
+      "delta_J": "-0.000511999999999999886463206",
+      "outward_torque_impulse": 0,
+      "relative_torque_residual": "7.3846153846153825673495e-05",
+      "frozen_RZ_torque_budget": "1e-12",
+      "CYL2_refusals": 3
+    },
+    "swirl_angular_diagnostics": [
+      {
+        "id": "rphi-small-swirl",
+        "PWC_definition": "sum Mphi*int(r dV) in native basis; not Cartesian component mean",
+        "initial_J_decimal": "7.717509653157634898e-01",
+        "final_J_decimal": "7.7174954733129791796e-01",
+        "initial_integral_abs_Mphi_W_decimal": "7.717509653157634898e-01",
+        "outward_torque_impulse_decimal": "0",
+        "relative_drift_decimal": "0.0000018373601450458422796800657849359926621601758377705565562641446261175243781460180",
+        "new_RZ_torque_budget": 1e-12,
+        "new_RZ_gate": "NOT_MET",
+        "not_a_retained_chart_regression_claim": true
+      },
+      {
+        "id": "cyl3-small-swirl",
+        "PWC_definition": "sum Mphi*int(r dV) in native basis; not Cartesian component mean",
+        "initial_J_decimal": "7.1224144875569301975e-01",
+        "final_J_decimal": "7.1222917801944189334e-01",
+        "initial_integral_abs_Mphi_W_decimal": "7.1224144875569301975e-01",
+        "outward_torque_impulse_decimal": "0",
+        "relative_drift_decimal": "0.000017228337767429501529456380070102104713401660665918997116139297133987003080414440",
+        "new_RZ_torque_budget": 1e-12,
+        "new_RZ_gate": "NOT_MET",
+        "not_a_retained_chart_regression_claim": true
+      }
+    ],
+    "angular_interpretation": "NOT_MET is against the inherited strict new-RZ target, not a retroactive retained-chart release FAIL. Common infrastructure is reusable; current ordinary A/V+source arithmetic cannot be copied as a proof of exact W-angular conservation.",
+    "oracle_scope": "Independent polynomial metric/physical-total checks and steady/phi-invariance fixtures; swirl only conservation/diagnostic, not an exact unsteady analytic solution or full convergence qualification.",
+    "no_gravity": {
+      "actual_field_solves": 0,
+      "gravity_stage_timer_calls_per_64_steps": 66,
+      "explanation": "N+2 generic no-op stage entries for accepted steps plus initial/final materialization; not 66 solves or evidence of repeated expensive gravity."
+    }
+  },
+  "cost_baselines": {
+    "status": "MEASURED_FROZEN_BASELINE",
+    "groups": [
+      {
+        "chart": "rphi",
+        "scale": "small",
+        "samples": 4,
+        "active_cells": 4096,
+        "patches": 16,
+        "steps": 64,
+        "RK_stages": 2,
+        "OMP_threads": 4,
+        "hydro_seconds": [
+          0.13969858400000001,
+          0.13584056699999997,
+          0.13715139,
+          0.13959915800000003
+        ],
+        "hydro_median_seconds": 0.13837527400000002,
+        "hydro_cv": 0.013744876256772069,
+        "seconds_per_cell_stage_median": 2.639298896789551e-07,
+        "future_RZ_2x_alarm_seconds_per_cell_stage": 5.278597793579102e-07,
+        "same_chart_final_state_bits_equal": true,
+        "max_process_rss_kib": 26308,
+        "median_process_seconds": 0.2,
+        "median_cpu_equivalent": 3.325,
+        "gravity_stage_timer_calls": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "actual_gravity_solve_records": 0,
+        "note": "Same-dimensional reference for future RZ."
+      },
+      {
+        "chart": "rphi",
+        "scale": "medium",
+        "samples": 4,
+        "active_cells": 16384,
+        "patches": 64,
+        "steps": 64,
+        "RK_stages": 2,
+        "OMP_threads": 4,
+        "hydro_seconds": [
+          0.5160276580000001,
+          0.497800173,
+          0.4909657209999999,
+          0.49191009500000016
+        ],
+        "hydro_median_seconds": 0.4948551340000001,
+        "hydro_cv": 0.023307086521656053,
+        "seconds_per_cell_stage_median": 2.3596531581878666e-07,
+        "future_RZ_2x_alarm_seconds_per_cell_stage": 4.719306316375733e-07,
+        "same_chart_final_state_bits_equal": true,
+        "max_process_rss_kib": 35000,
+        "median_process_seconds": 0.6,
+        "median_cpu_equivalent": 3.720967741935484,
+        "gravity_stage_timer_calls": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "actual_gravity_solve_records": 0,
+        "note": "Same-dimensional reference for future RZ."
+      },
+      {
+        "chart": "cyl3",
+        "scale": "small",
+        "samples": 4,
+        "active_cells": 4096,
+        "patches": 1,
+        "steps": 64,
+        "RK_stages": 2,
+        "OMP_threads": 4,
+        "hydro_seconds": [
+          0.570007808,
+          0.574804194,
+          0.5709843689999999,
+          0.5632967779999999
+        ],
+        "hydro_median_seconds": 0.5704960884999999,
+        "hydro_cv": 0.008403469540926235,
+        "seconds_per_cell_stage_median": 1.0881349344253538e-06,
+        "future_RZ_2x_alarm_seconds_per_cell_stage": null,
+        "same_chart_final_state_bits_equal": true,
+        "max_process_rss_kib": 56676,
+        "median_process_seconds": 0.64,
+        "median_cpu_equivalent": 2.2109375,
+        "gravity_stage_timer_calls": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "actual_gravity_solve_records": 0,
+        "note": "Cyl3 includes a third sweep and different patches/ghost ratio; no RZ/rphi performance ratio inferred."
+      },
+      {
+        "chart": "cyl3",
+        "scale": "medium",
+        "samples": 4,
+        "active_cells": 16384,
+        "patches": 4,
+        "steps": 64,
+        "RK_stages": 2,
+        "OMP_threads": 4,
+        "hydro_seconds": [
+          0.889591194,
+          0.899049567,
+          0.889679323,
+          0.9042932399999999
+        ],
+        "hydro_median_seconds": 0.894364445,
+        "hydro_cv": 0.008118567201079362,
+        "seconds_per_cell_stage_median": 4.264662003517151e-07,
+        "future_RZ_2x_alarm_seconds_per_cell_stage": null,
+        "same_chart_final_state_bits_equal": true,
+        "max_process_rss_kib": 70040,
+        "median_process_seconds": 1.0150000000000001,
+        "median_cpu_equivalent": 3.7831974373907977,
+        "gravity_stage_timer_calls": [
+          66,
+          66,
+          66,
+          66
+        ],
+        "actual_gravity_solve_records": 0,
+        "note": "Cyl3 includes a third sweep and different patches/ghost ratio; no RZ/rphi performance ratio inferred."
+      }
+    ],
+    "alarm_multiplier": 2,
+    "alarm_scope": "Two-dimensional fixed-work Hydro stage only; same source profile/thread/patch/state/output controls; physical-endtime cost and isolated gravity separate.",
+    "environment": {
+      "path": "output/release/cyl0-20261018/environment.json",
+      "sha256": "30444f0326b7e89333e7ba29fbf3d0f7c8c3d836af42e86991115712dd3d8c74"
+    },
+    "measurement_design": "Four repeats/chart/scale after warmup, ABBA order; same production ELF/profile. Stage hydro clock excludes process/startup/IO; each cell-stage divides by two actual RK2 RHS stages, not a new detailed per-kernel profiler.",
+    "CPU": "Intel Core i7-10700, WSL2, 16 logical CPUs; visible RAM 8081592 KiB; science OMP4, OMP_DYNAMIC=FALSE.",
+    "profile": "Release GCC13.3.0 CPU, -O3/-march=native/LTO, -fno-fast-math/-fno-math-errno/-ffp-contract=off; actual CMake source current workspace.",
+    "state": "Gaussian public model with explicit uniform steady state, ideal gamma=1.4, two species, gravity none, no burn/diffusion/regrid. Separate nonzero-swirl 8-step lanes not used for stable speed ratio.",
+    "output": "Initial/final native CHK and Plot only, fixed steps. Process time/RSS/CPU equivalent separately recorded; output paths have separate hashes.",
+    "noise_max_cv": 0.023307086521656053,
+    "future_RZ_control": "Use same cell/patch shape as rphi: 4096 cells/16 patches and 16384/64, r in [1,2] reflecting, z in [0,1] periodic, nblockz=0, fixed 64 RK2 steps and all explicit physics controls. No phi CFL.",
+    "gate": "Frozen engineering alarm 2x matched two-dimensional hydro ns/cell-stage at both scales, with same-candidate rphi control and these absolute anchors. No claimed RZ result. Regressing the reference cannot be used to hide the ratio; unexplained reference change invalidates cost acceptance.",
+    "limits": "Steady fixed-work microbaseline only; nonuniform/physical-endpoint, AMR, diffusion, gravity and GPU costs require their matching later work packages. Cyl3 third sweep, ghost ratio and patch topology preclude a direct same-dimensional whole-wall ratio.",
+    "compilation": {
+      "existing_geometry_TU_seconds": 6.51,
+      "existing_geometry_TU_max_single_process_RSS_kib": 473996,
+      "test_only_leaf_probe_seconds": 1.81,
+      "test_only_leaf_probe_max_single_process_RSS_kib": 183032,
+      "scope": "Fresh output objects on warm filesystem; existing TU uses exact current compile-database profile, changes output/depfile only. No production object overwrite, application link, whole-project cold/incremental/no-op or CUDA build measurement."
+    }
+  },
+  "interface_and_architecture_checks": {
+    "actual_checks": {
+      "scope": "Current rejection/O7 baseline, not future CYL2 implementation",
+      "negatives": [
+        {
+          "id": "cyl2",
+          "exit_code": 1,
+          "status": "EXPECTED_REJECTION",
+          "input_sha256": "464140aba5d012fa89636ad052e8233b965306a4fa937098fab436008b6db264",
+          "log": "output/release/cyl0-20261018/negative-inputs/cyl2/program.log",
+          "diagnostic_tail": [
+            "[Fatal Error] Config parameter 'geometry': INVALID_RANGE [geometry]: Two-dimensional cylindrical support is retired; use one or three dimensions."
+          ],
+          "H5_created": false
+        },
+        {
+          "id": "missing-amp",
+          "exit_code": 1,
+          "status": "EXPECTED_REJECTION",
+          "input_sha256": "a2c1e9f6fe654c699b2e1ea56636327bc0c8b42c320bf530ee71020545abdc4c",
+          "log": "output/release/cyl0-20261018/negative-inputs/missing-amp/program.log",
+          "diagnostic_tail": [
+            "[Fatal Error] Config parameter 'amp': MISSING_PARAMETER [amp]: Required case input has no declared value."
+          ],
+          "H5_created": false
+        },
+        {
+          "id": "missing-geometry",
+          "exit_code": 1,
+          "status": "EXPECTED_REJECTION",
+          "input_sha256": "6a1d921320c96f65ae20b98cb61ea0e1391415efc46f6ff6c332656450abe710",
+          "log": "output/release/cyl0-20261018/negative-inputs/missing-geometry/program.log",
+          "diagnostic_tail": [
+            "[Fatal Error] Config parameter 'geometry': MISSING_PARAMETER [geometry]: Required input has no declared value."
+          ],
+          "H5_created": false
+        },
+        {
+          "id": "missing-wave",
+          "exit_code": 1,
+          "status": "EXPECTED_REJECTION",
+          "input_sha256": "eedf9ae40e46338c62f9369b7076b454f6e8b52b5f6dfe88e0434f71083cefc6",
+          "log": "output/release/cyl0-20261018/negative-inputs/missing-wave/program.log",
+          "diagnostic_tail": [
+            "[Fatal Error] Config parameter 'hll_wave_speed': MISSING_PARAMETER [hll_wave_speed]: Required input has no declared value."
+          ],
+          "H5_created": false
+        },
+        {
+          "id": "old-polar",
+          "exit_code": 1,
+          "status": "EXPECTED_REJECTION",
+          "input_sha256": "106b355e3a4b482a94877f4ca675b921e6755324db9063a26a18cba587a924b1",
+          "log": "output/release/cyl0-20261018/negative-inputs/old-polar/program.log",
+          "diagnostic_tail": [
+            "[Fatal Error] Config parameter 'geometry': INVALID_OPTION [geometry]: Config parameter 'geometry': Unknown registered option."
+          ],
+          "H5_created": false
+        },
+        {
+          "id": "wrong-wave",
+          "exit_code": 1,
+          "status": "EXPECTED_REJECTION",
+          "input_sha256": "a9f5f30b35760b473d3cd00d0fe12bdc15e417cd485afe991bdb10358bbe1a16",
+          "log": "output/release/cyl0-20261018/negative-inputs/wrong-wave/program.log",
+          "diagnostic_tail": [
+            "[Fatal Error] Config parameter 'hll_wave_speed': INVALID_OPTION [hll_wave_speed]: Config parameter 'hll_wave_speed': Unknown registered option."
+          ],
+          "H5_created": false
+        },
+        {
+          "id": "actual-retired-RZ-checkpoint",
+          "status": "EXPECTED_REJECTION",
+          "exit_code": 1,
+          "path": "/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/rel3-final-20261014/rz/original-long-current/main/run/RzClosedUniform_chk_0000.h5",
+          "sha256_unchanged": "b264b01b34c5696ca6c5bc575c92774a99080ae48da389f909a65a6249df9362",
+          "actual_old_identity": {
+            "geometry_chart": "axisymmetric-rz",
+            "geometry_semantics_revision": 2
+          },
+          "diagnostic": "checkpoint validation failed: Cylindrical2D checkpoints are no longer supported\n"
+        }
+      ],
+      "Core_schema_equals_active_fixture": true,
+      "Core_schema_sha256": "f3b4adc5b5eb2cace2f25e58c3f88343ab176462949c8815bdc9199077a131fe",
+      "new_checkpoint_chart_frozen": "cylindrical-rz-pwc",
+      "new_identity_revision_frozen": 1,
+      "new_identity_not_implemented": true
+    },
+    "raw_Cyl2_leaf_rejections": 3,
+    "retained_geometry_CTest": {
+      "name": "curvilinear_metrics",
+      "passed": 1,
+      "tests": 1
+    },
+    "architecture_audit_exit": 0,
+    "O7_scope": "Targeted declaration negative controls only, not a repeated complete O7 suite. Original registration and 1207 source inputs unchanged.",
+    "future_identity_not_implemented": true
+  },
+  "stage_cost_and_acceptance": [
+    {
+      "stage": "architecture-audit",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/architecture-audit/receipt.json",
+        "sha256": "4e10cc9929e27113c1697bb5da22a7433c5c18b202ac0d22583f614fe53ef5b0"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 3.6,
+      "user_seconds": 2.19,
+      "system_seconds": 0.54,
+      "max_single_process_rss_kib": 31416,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=4 rows=10 valid_rows=10 missing=0 skipped=0 peak_process_rss_kib=31032 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=29.571 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=5 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=98898645 peak_bytes=98898645 samples=6 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23238815744 minimum_free_bytes=23238815744 samples=6 complete=True"
+      ]
+    },
+    {
+      "stage": "baseline-numerical-analysis",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/baseline-numerical-analysis/receipt.json",
+        "sha256": "49673f29d6dcad55420b5f4b39d3e264de7b4ea56e4790eb0485c8397f63cb02"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 1.17,
+      "user_seconds": 0.86,
+      "system_seconds": 0.34,
+      "max_single_process_rss_kib": 54016,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=2 rows=4 valid_rows=4 missing=0 skipped=0 peak_process_rss_kib=53632 peak_process_fd_count=6 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=34.061 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=3 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=98281706 peak_bytes=98281706 samples=4 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23239024640 minimum_free_bytes=23239024640 samples=4 complete=True"
+      ]
+    },
+    {
+      "stage": "compile-retained-geometry-tu",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/compile-retained-geometry-tu/receipt.json",
+        "sha256": "ee042d4aa0c906493115020f8f3091110d4e6472ae71fc651f02288873f7bf38"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 6.51,
+      "user_seconds": 4.71,
+      "system_seconds": 0.65,
+      "max_single_process_rss_kib": 473996,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=6 rows=21 valid_rows=21 missing=0 skipped=0 peak_process_rss_kib=466828 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=37.239 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=100396867 peak_bytes=100396867 samples=8 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23238496256 minimum_free_bytes=23238496256 samples=8 complete=True"
+      ]
+    },
+    {
+      "stage": "compile-shared-leaf",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/compile-shared-leaf/receipt.json",
+        "sha256": "c14c07b7bfcffc721cc31ae46831f9c3e4a41314e61eb15af40132c9eef94509"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 1.81,
+      "user_seconds": 1.35,
+      "system_seconds": 0.25,
+      "max_single_process_rss_kib": 183032,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=2 rows=5 valid_rows=5 missing=0 skipped=0 peak_process_rss_kib=142404 peak_process_fd_count=5 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=10.132 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=3 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=919945 peak_bytes=919945 samples=4 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23239806976 minimum_free_bytes=23239774208 samples=4 complete=True"
+      ]
+    },
+    {
+      "stage": "input-and-chart-contracts",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/input-and-chart-contracts/receipt.json",
+        "sha256": "f8eadfa9a7c6b23838474a0695a4a5e5cdc0cb27aa93dc23de48ccc3472868f3"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 0.16,
+      "user_seconds": 0.07,
+      "system_seconds": 0.05,
+      "max_single_process_rss_kib": 18568,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=22.830 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=98774943 peak_bytes=98774943 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23238815744 minimum_free_bytes=23238815744 samples=3 complete=True"
+      ]
+    },
+    {
+      "stage": "retained-app-baselines",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/retained-app-baselines/receipt.json",
+        "sha256": "e733396d264e038a63939485aea4826a4441e465437f3fd780e46118cc9a44f9"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 13.05,
+      "user_seconds": 41.25,
+      "system_seconds": 0.83,
+      "max_single_process_rss_kib": 70040,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=13 rows=70 valid_rows=70 missing=0 skipped=0 peak_process_rss_kib=67940 peak_process_fd_count=6 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.546 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=14 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=97613309 peak_bytes=97613309 samples=15 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23239561216 minimum_free_bytes=23239561216 samples=15 complete=True"
+      ]
+    },
+    {
+      "stage": "retained-geometry-ctest",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/retained-geometry-ctest/receipt.json",
+        "sha256": "2c5ebe1c10285410c11ff4ee83f73063573388a88ae7f3a5839d686704b819ad"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 0.72,
+      "user_seconds": 0.66,
+      "system_seconds": 0.08,
+      "max_single_process_rss_kib": 19072,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=5.610 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=97865729 peak_bytes=97865729 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23239380992 minimum_free_bytes=23239380992 samples=3 complete=True"
+      ]
+    },
+    {
+      "stage": "run-shared-leaf",
+      "raw_receipt": {
+        "path": "output/release/cyl0-20261018/run-shared-leaf/receipt.json",
+        "sha256": "2a2d989c57f52d5a5c9750972d1e1818546d052b8ce85114b4d726fd91516204"
+      },
+      "raw_execution_state": "COMPLETE_PENDING_INDEPENDENT_ACCEPTANCE",
+      "manager_acceptance": "ACCEPT_WITH_DECLARED_SCOPE",
+      "elapsed_seconds": 0.01,
+      "user_seconds": 0.0,
+      "system_seconds": 0.0,
+      "max_single_process_rss_kib": 3968,
+      "exit": 0,
+      "resources": [
+        "PROCESS_SAMPLES_OBSERVATION scope=owned_descendants phase=monitor_loop per_process=true rss_unit=KiB leak_freedom_proven=False interval_seconds=1.0 samples=1 rows=1 valid_rows=1 missing=0 skipped=0 peak_process_rss_kib=1408 peak_process_fd_count=4 write_error=none complete=True",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=4.169 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True",
+        "OUTPUT_STORAGE_OBSERVATION scope=directory root=/home/shiroakane/.codex/worktrees/d7a6/ARCH/output/release/cyl0-20261018 device=2096 inode=837127 budget_bytes=2147483648 reserve_bytes=536870912 current_bytes=1371188 peak_bytes=1371188 samples=3 complete=True",
+        "HOST_STORAGE_OBSERVATION scope=linux_mount root=/mnt/e minimum_threshold_bytes=1073741824 reserve_bytes=536870912 initial_free_bytes=23239700480 minimum_free_bytes=23239700480 samples=3 complete=True"
+      ]
+    }
+  ],
+  "history_integrity": {
+    "protected_records": 42,
+    "archived_documents": 107,
+    "current_frozen_hashes_match": true,
+    "mapping_reference": {
+      "path": "validation/backend/results/release-readiness/REL35DocumentationRelocation-20261016.json",
+      "sha256": "c8b221e2b8375539625046a53e7ca0bd8c728ba3365ee889ced613f1838a96e6"
+    },
+    "no_historical_failure_relabeling": true,
+    "old_checkpoint_identity_inspected_read_only": true,
+    "old_checkpoint_original_hash_unchanged": true
+  },
+  "external_collaboration": {
+    "owner": "arch-rz-reintroduction-20261018",
+    "providers_used": [
+      "DeepSeek"
+    ],
+    "current_phase_paid_calls": 3,
+    "prior_plan_paid_calls": 1,
+    "gateway_cumulative_budget": {
+      "goal_id": "arch-rz-reintroduction-20261018",
+      "manager_max_calls": 4,
+      "user_max_calls": null,
+      "calls_used_or_reserved": 4,
+      "calls_remaining": 0,
+      "elapsed_seconds_recorded": 285.849826611,
+      "output_tokens_reported": 57308,
+      "started_calls_with_unknown_output": 0,
+      "cost_money": null,
+      "attempt_allowances_reset": false
+    },
+    "current_phase_worker_elapsed_seconds": 238.86678162299995,
+    "current_phase_reported_tokens": 48218,
+    "cost_money": null,
+    "manager_cost": null,
+    "jobs": [
+      {
+        "job_id": "a7a18ae12b51454cbe51041bffc9247b",
+        "task_id": "cyl0-angular-contract-review-repair-1",
+        "logical_task_id": "cyl0-angular-contract-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 80.32868139900029,
+        "failure_kind": null,
+        "summary": "Actual checks: no build/test/file execution; only static consistency review of the supplied snippets. CYL2 remains rejected; no production edits. O7 numerical b"
+      },
+      {
+        "job_id": "c5762459a9504082a0b56aac67f1492c",
+        "task_id": "cyl0-interface-boundary-review-1",
+        "logical_task_id": "cyl0-interface-boundary-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 105.12562118899996,
+        "failure_kind": null,
+        "summary": "**Verdict (source inspection only; no execution, no edits).** The supplied code does **not** implement the proposed CYL-0 interface freeze. CYL2 remains rejecte"
+      },
+      {
+        "job_id": "7097e41c8ccd47f4b5d108b449a68db7",
+        "task_id": "cyl0-angular-contract-review-1",
+        "logical_task_id": "cyl0-angular-contract-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "REPAIR_REQUIRED",
+        "adoption_scope": "none",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 53.412479034999706,
+        "failure_kind": null,
+        "summary": "**Conclusion**\nThe frozen contract is not simultaneously satisfiable by the retained Cyl3 arithmetic: ordinary area/volume divergence plus the existing `<1/r> ="
+      },
+      {
+        "job_id": "aca023ece3a84f0996ddbbf394355fd2",
+        "task_id": "axisymmetric-reintroduction-math-review-1",
+        "logical_task_id": "axisymmetric-reintroduction-math-review",
+        "status": "READY_FOR_REVIEW",
+        "review": "ACCEPT",
+        "adoption_scope": "evidence_only",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "effort": "high",
+        "elapsed_seconds": 46.983044988000074,
+        "failure_kind": null,
+        "summary": "**Actual checks:** none executed; source review only. No file/test execution. Binding/raw-metric/IO/checkpoint code was not supplied, so those changes cannot be"
+      }
+    ],
+    "manager_adoption": {
+      "7097e41c8ccd47f4b5d108b449a68db7": {
+        "decision": "REPAIR_REQUIRED",
+        "adoption": "none",
+        "reason": "Initial proposed torque divergence plus an additional phi-curvature source double-counted the product-rule term. One bounded repair requested; original output retained."
+      },
+      "c5762459a9504082a0b56aac67f1492c": {
+        "decision": "ACCEPT",
+        "adoption": "evidence_only_partial",
+        "accepted": "Concrete IO identity, inactive-vector/component distinction, last-axis azimuth and unit/diagnostic seams, independently inspected by manager.",
+        "excluded": "Do not leave common axis/seam infrastructure wholly unsupported; new unimplemented contracts are future work, not present regressions. Do not reuse old axisymmetric-rz tag."
+      },
+      "a7a18ae12b51454cbe51041bffc9247b": {
+        "decision": "ACCEPT",
+        "adoption": "evidence_only_partial",
+        "accepted": "Correct product rule and source-free compatible torque divergence, supported by manager exact arithmetic and executed leaf counterexample.",
+        "excluded": "Wrong illustrative claim that equal-width cells cancel ordinary A/V in W; mandatory analytic cell-average Init; retroactively applying new RZ angular budget to retained Cyl3."
+      }
+    },
+    "scope": "Actual source-text reviews only; manager owns all runtime and independent numerical acceptance.",
+    "no_further_delegation_reason": "Math and interface reviews returned; remaining work is manager synthesis/identity checks, no independent paid task needed. Recheck at next authorized implementation stage.",
+    "transport_notes": "Four final read-only status queries initially omitted required owner and were rejected locally by schema validation; corrected owner-level status read succeeded. No provider call/retry or scientific run resulted."
+  },
+  "evidence_index": [
+    {
+      "path": "output/release/cyl0-20261018/consumer-index.json",
+      "sha256": "75289223366e32f53f423d421d2d34d0670fc0752cbf01bdbc37129cdca85ebf"
+    },
+    {
+      "path": "output/release/cyl0-20261018/source_inventory.py",
+      "sha256": "cbdf41022eb729fb6004a50b9cb06ed05a5993febcc27d1961cf1e33bb1760d8"
+    },
+    {
+      "path": "output/release/cyl0-20261018/source-and-input-freeze.json",
+      "sha256": "e64fa9abb8517fa7316dc6f5ba4a9d5e62fcd4d31a7def47a17224c561a57b6a"
+    },
+    {
+      "path": "output/release/cyl0-20261018/leaf-freeze.json",
+      "sha256": "b0eb0edadbc118b3aff3003b34853d74647aa96542b678aa4dda8da9f8ade10a"
+    },
+    {
+      "path": "output/release/cyl0-20261018/science-freeze.json",
+      "sha256": "04e472e384fa9e1dec9c543723b6fb9e856c0638d6556d33d944e5b1291c9f89"
+    },
+    {
+      "path": "output/release/cyl0-20261018/analysis-freeze.json",
+      "sha256": "1260bd0bf3bf2585a6647b8121228d9986311a722e981424bc00f83e625cb27f"
+    },
+    {
+      "path": "output/release/cyl0-20261018/contract-probe-freeze.json",
+      "sha256": "aa11e3dc227c8c915179a0ce9aff521e62652da272e2a2a1ba5d4869bb0dfc62"
+    },
+    {
+      "path": "output/release/cyl0-20261018/tu-freeze.json",
+      "sha256": "5a1fd439f9203382246c9ccf8e6235249c1658c467f76f1ae386496822d574b2"
+    },
+    {
+      "path": "output/release/cyl0-20261018/environment.json",
+      "sha256": "30444f0326b7e89333e7ba29fbf3d0f7c8c3d836af42e86991115712dd3d8c74"
+    },
+    {
+      "path": "output/release/cyl0-20261018/baseline-plan.json",
+      "sha256": "5f37703038276c8a9490d14723f7ad11a757817ca4924889b07109d96b7d7c58"
+    },
+    {
+      "path": "output/release/cyl0-20261018/baseline-executions.json",
+      "sha256": "513d1239864db06d9f679a095d448b6951de761186856751de7fc17c6fd46a06"
+    },
+    {
+      "path": "output/release/cyl0-20261018/baseline-numerical-review.json",
+      "sha256": "8cf98659e2cc9e1a39920fa506c6b2fa241ce0014795c6f2275d63319227ed0c"
+    },
+    {
+      "path": "output/release/cyl0-20261018/cost-baseline.json",
+      "sha256": "4fe24dfef7e0c0f7f773d9edd584627dab6b244890b86d9a6e08bce244cf7315"
+    },
+    {
+      "path": "output/release/cyl0-20261018/leaf-metrics.csv",
+      "sha256": "2c6d993344f1aae3d5996206623c7e6fd58b313d9c27d6c94c50eb41f234c4db"
+    },
+    {
+      "path": "output/release/cyl0-20261018/leaf-numerical-review.json",
+      "sha256": "228fe089a45a899711de27399bf2b2f2e911180bd6654be81f91955933daa5d6"
+    },
+    {
+      "path": "output/release/cyl0-20261018/angular-witness.json",
+      "sha256": "b67c5afef023f942e133bd55532293f80cdca4db31a809d05c3a1c3e00587ca4"
+    },
+    {
+      "path": "output/release/cyl0-20261018/shared_leaf_probe.cpp",
+      "sha256": "67289956989a85938b49993f90f4adea96046dc59d181c2f11ff3b25c92d7ef8"
+    },
+    {
+      "path": "output/release/cyl0-20261018/shared_leaf_probe",
+      "sha256": "0df1722554dd5c7e4178304b5184a4afd938cbfdaf3b695757c1b254e90b96d5"
+    },
+    {
+      "path": "output/release/cyl0-20261018/shared_leaf_probe.d",
+      "sha256": "15187e4b3383685d66cd1a5c804c93146460e5c0c8538c222ca3d935d99fc5a7"
+    },
+    {
+      "path": "output/release/cyl0-20261018/retained-tu-command.json",
+      "sha256": "45c74770b185684a07cb26ae60f3a97d461bad41e9f47c8bc0317b550ffac0d1"
+    },
+    {
+      "path": "output/release/cyl0-20261018/retained_curvilinear_metrics.o",
+      "sha256": "4de9b7558239fb016e10fd90cdea5e077c7673bcaae9b600ffaeacba34472142"
+    },
+    {
+      "path": "output/release/cyl0-20261018/retained_curvilinear_metrics.d",
+      "sha256": "f6adaefeb16510721b498a1d8d158c241d6fd44927cf198a8dd5a5d298301cbb"
+    },
+    {
+      "path": "output/release/cyl0-20261018/tu-supplemental-inputs.json",
+      "sha256": "c945c82289f0346a9764cfa263faf5daf8d082ae05672ba2682f1b49bbf45881"
+    },
+    {
+      "path": "output/release/cyl0-20261018/prepare_inputs.py",
+      "sha256": "da6dee4f975036efbb1829c065ac178f39e78f99c62e976af277660018a80c70"
+    },
+    {
+      "path": "output/release/cyl0-20261018/run_baselines.py",
+      "sha256": "faa872747d84bba1e7c923d9e0ed07cf96a7d62c35ee1612225a8982817b4ab2"
+    },
+    {
+      "path": "output/release/cyl0-20261018/analyze_baselines.py",
+      "sha256": "420e9533bf64ac8675a65287041af5bb462eacb299266343f2438383f4c2e46e"
+    },
+    {
+      "path": "output/release/cyl0-20261018/contract_probes.py",
+      "sha256": "959cb7b4cede87b102ed462741c6fb70af3e12bd31fe49253fcde9ceab65683d"
+    },
+    {
+      "path": "output/release/cyl0-20261018/contract-probe-results.json",
+      "sha256": "f05c982a00b3bbad1884a9127ba5557011926f586184a04a21dccdde010be545"
+    },
+    {
+      "path": "output/release/cyl0-20261018/actual-core-schema.json",
+      "sha256": "f3b4adc5b5eb2cace2f25e58c3f88343ab176462949c8815bdc9199077a131fe"
+    },
+    {
+      "path": "output/release/cyl0-20261018/stages.py",
+      "sha256": "e9d7ed770e0fb628d89eca38ebdbc397801ff613a8171625c09159045cd839b6"
+    },
+    {
+      "path": "output/release/cyl0-20261018/dps-tasks.json",
+      "sha256": "cec2c15594853c45ad3b5ffb3254a574ca97c50d2142eeb6331dda76e0a5b82c"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/angular_initial.json",
+      "sha256": "ee3c80a9cd71f7711e351d87552d3793cc95f18fdae65ba862b9830aab12d3a6"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/interface_pages.json",
+      "sha256": "70f3ce0fd537faa2a8ea5e2024d9d62bd247bf1d269b68c52f8c75350b81ad7b"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/angular_repaired.json",
+      "sha256": "5a75e6d6c6341e27c56e9aac89d6c98111414e67356ff9100f2bbe65abd3b216"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/gateway_status.json",
+      "sha256": "eec028f521b2bb552ab699e6fcf730d1fef5ff0ff152d09162d853ca8d508cc6"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/raw_gateway_envelopes.json",
+      "sha256": "1be665b98c1b99755d63d1b9ad113b5e5a5c642ceb31f2274b753fc4d2f742ad"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/angular-initial.txt",
+      "sha256": "79ebbbc747e874b7f1b3aad2fb03b8a50bb2233a933be6862300e81c7ae48b16"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/interface.txt",
+      "sha256": "3eb0695ac9f1a9fcf7650c1a214a8ea8f285ca1df9eb1ef0a827ea7aca10923d"
+    },
+    {
+      "path": "output/release/cyl0-20261018/multimodel/angular-repaired.txt",
+      "sha256": "4f5b4295246477672ee923572e23a4c2a3b37e30c93ae19d693d9f01e68e7912"
+    },
+    {
+      "path": "output/release/cyl0-20261018/final-artifacts.json",
+      "sha256": "5429a9102361a3593ce8ee6fe00cbf93741434b0e67be1b4e5614261330ba8b8"
+    }
+  ],
+  "documents": [
+    "ARCH_RELEASE_PLAN.md",
+    "AGENTS.md"
+  ],
+  "future_gates_not_met_or_untested": [
+    "New RZ implementation and all new RZ tests remain UNTESTED; every current CYL2 path still rejects.",
+    "Compatible W/T angular leaf/update must meet original 1e-12; current copied Cyl3 arithmetic is demonstrated NOT_MET.",
+    "Axis/AMR/viscosity, optional isolated gravity, native fresh/Plot/Studio, GPU and full physical endpoints require later own evidence.",
+    "Actual detailed EOS/reconstruction/flux/source/allocator counts for a future RZ path are unmeasured; the present stage counter is not their profiler.",
+    "Whole-project build improvement, repeatable cold costs, hosted CI and complete REL-4 remain outside scope."
+  ],
+  "next": {
+    "stage": "CYL-1",
+    "status": "WAIT_FOR_USER_STAGE_INSTRUCTION",
+    "W0": "Bind this contract and unique file writers; independently accept common geometry without publishing new unqualified combinations.",
+    "W1": "Extend existing geometry/layout/metrics with V/A/W/T and independent leaf oracle, preserving other charts and Cyl1.",
+    "W2": "Extend common axis parity/donor seam logic without assuming last axis is azimuth; no gravity or state ownership added.",
+    "W3": "Parameterize existing geometry tests/negative identity fixtures and refresh evidence, no new RZ infrastructure.",
+    "stop": "Do not automatically start CYL-1, CYL-2 or REL-4."
+  },
+  "final_identity_check": {
+    "all_six_measurement_freezes_match": true,
+    "source_mismatches": 0,
+    "ELF_hashes_unchanged": true,
+    "production_and_repository_test_source_edits": 0,
+    "git_diff_check_exit": 0,
+    "updated_document_links_checked": true,
+    "raw_artifact_files": 393,
+    "raw_artifact_bytes": 100548050
+  }
+}

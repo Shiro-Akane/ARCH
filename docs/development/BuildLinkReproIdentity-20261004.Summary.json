@@ -1,0 +1,56 @@
+{
+  "status": "CAPTURE_REJECTED",
+  "linkerVersion": "mold 2.30.0 (compatible with GNU ld)",
+  "compiler": "/usr/bin/g++",
+  "flags": [
+    "-O3",
+    "-flto=auto",
+    "-fuse-ld=mold",
+    "-Wl,--dependency-file=probe.link.d",
+    "-Wl,--repro"
+  ],
+  "rows": [
+    {
+      "label": "project-local",
+      "exitCode": 1,
+      "archiveSha256": "70f8d7895b105ff43cb6f4d7e01f313ed09305a63b57610a79c4262002497293",
+      "archiveBytes": 10269184,
+      "memberCount": 21,
+      "duplicateNames": [
+        {
+          "name": "probe.repro/probe.repro.tar",
+          "count": 19,
+          "distinctHashes": 19
+        }
+      ],
+      "status": "INVALID",
+      "executableBytes": 6856,
+      "depfileSha256": "4687136a573ee840ef87e13f2e9ee2333d746262570d7de450b2d6cea7709f89"
+    },
+    {
+      "label": "short-tmp-path",
+      "exitCode": 1,
+      "archiveSha256": "32de4d4a12471876c5a674020ee4cbb0cee1c6a3e025627721fc76178886cbe6",
+      "archiveBytes": 10269184,
+      "memberCount": 21,
+      "duplicateNames": [
+        {
+          "name": "probe.repro/probe.repro.tar",
+          "count": 19,
+          "distinctHashes": 19
+        }
+      ],
+      "status": "INVALID",
+      "executableBytes": 7664,
+      "depfileSha256": "3d8c04aea43cfc36c0f732e57805acf0e442d7289ccf4b65f8aa457869493d9a"
+    }
+  ],
+  "scope": "Independent two-file non-scientific link only; no ARCH build/run, no probe execution",
+  "notClaimed": [
+    "No trustworthy mapping of archive content to missing LTO path",
+    "No dependenciesComplete/current freshness",
+    "No toolchain upgrade or production flag change"
+  ],
+  "initialAuditFailure": "--help said .repro section; actual build produced separate archive, objcopy exit0 with diagnostic and no dump; real directory/ELF inspection corrected audit without relink",
+  "rawLocalDirectory": "/home/arch/projects/ARCH-compute-optim/studio/.local/integration/lto-link-repro-probe-20261004"
+}
