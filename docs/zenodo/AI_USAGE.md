@@ -1,6 +1,6 @@
 # AI 使用说明 / AI-use disclosure
 
-适用版本：ARCH 1.3.0。披露依据：维护者于 2026-10-20 明确确认的使用范围。
+适用版本：ARCH 1.3.0 与 1.3.1 维护版。披露依据：维护者于 2026-10-20 明确确认的使用范围。
 
 AI 辅助用于 bug 追踪与修复、完整 CTest 测试集的容差设置核对、部分文档编辑、代码补全，以及工程与安全检查。软件整体架构由人类贡献者设计并搭建；科学定义、数值验收标准、审查与发布决定由人类维护者负责。
 
@@ -11,3 +11,5 @@ AI 辅助用于 bug 追踪与修复、完整 CTest 测试集的容差设置核�
 AI-assisted tools were used for bug tracking and fixes, review of tolerance settings across the complete CTest suite, editing selected documentation, code completion, and engineering and security checks. The overall software architecture was designed and built by human contributors. Human maintainers retain responsibility for scientific definitions, numerical acceptance criteria, code review, and release decisions.
 
 Tolerance review describes the assisted activity; test outcomes and scientific qualifications are those recorded in the release evidence. Engineering and security checks are bounded by their recorded scope.
+
+1.3.1 维护版新增活动限于依赖审阅、发布清理、归档准备及 Windows 计划审阅；没有新增科学实现或重复全套科学验收。

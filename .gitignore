@@ -48,3 +48,9 @@ id_ed25519
 *.pfx
 # Public certificates and scientific key data can be intentionally tracked;
 # review their contents instead of force-adding an entire credentials directory.
+
+# Machine-local assistant instructions and completed execution plans.
+/AGENTS.md
+/.agents/
+/ARCH_MODERNIZATION_PLAN.md
+/ARCH_RELEASE_PLAN.md

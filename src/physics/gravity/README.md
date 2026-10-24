@@ -24,7 +24,7 @@ external or self gravity through these same owners. Its isolated source uses
 three-dimensional full-ring physics; `g_phi=0` and field energy/output measures
 are per unit azimuth. The retired RZ-specific solver/cache infrastructure is
 absent. Native cylindrical 2D also uses the existing CUDA gravity owner; scoped
-field, work and continuation evidence is indexed in the [release plan](../../../ARCH_RELEASE_PLAN.md).
+field, work and continuation evidence is indexed in the [release qualification index](../../../docs/releases/README.md).
 The resolved execution plan still rejects unsupported routes.
 
 [UniformGravity.h](UniformGravity.h) is the standalone uniform CPU adapter from a

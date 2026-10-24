@@ -8,7 +8,7 @@
 
 活动输入已显式声明旧加载器曾补入的控制值，当前哈希与历史收据分别保留。
 配置检查通过不等于重新签收历史科学结果；迁移与本轮CPU证据见
-[发布计划](../../ARCH_RELEASE_PLAN.md)。
+[发布资格索引](../../docs/releases/README.md)。
 
 当前CPU检查新增六组原燃烧／组分扩散终点及真实运行期重网格，并验证RT与
 BurnGradient两种检查点来源相位的新进程续算。门槛及限制见[燃烧](../burn/README.zh-CN.md)
@@ -210,4 +210,4 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 
 </details>
 
-旧 [RZ 迁移](results/release-closure-20261009/native-device-migration-summary.json)及[反射](results/release-closure-20261009/native-device-reflector-summary.json)记录按原身份保留。原生二维柱坐标现复用公共转移、reflux和重网格owner，见[CPU守恒](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json)及[设备迁移／fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧专用消费者仍退役；当前输入／源码适用范围见[CPU签收](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)与[主计划](../../ARCH_RELEASE_PLAN.md)。
+旧 [RZ 迁移](results/release-closure-20261009/native-device-migration-summary.json)及[反射](results/release-closure-20261009/native-device-reflector-summary.json)记录按原身份保留。原生二维柱坐标现复用公共转移、reflux和重网格owner，见[CPU守恒](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json)及[设备迁移／fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧专用消费者仍退役；当前输入／源码适用范围见[CPU签收](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)与[发布资格索引](../../docs/releases/README.md)。

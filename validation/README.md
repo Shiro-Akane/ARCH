@@ -18,7 +18,7 @@ checks in the [native-device receipt](backend/results/release-readiness/Cyl5Nati
 Former RZ and polar-alias records retain their original identities and do not
 qualify this chart. The [comprehensive admission receipt](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) adds native axial scientific endpoints, declared method/EOS products, necessary reacting/diffusive/gravity coupling and fresh. It retains failed fixtures and data-domain limits. The [current CPU closure](backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json) adds two corrected axial initializers, explicit centre-input migration and affected original CPU endpoints/fresh.
 
-The [current device record](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) closes the declared single-GPU scope. It retains the original 17 resource/batch contracts, nine legal chart walls, public endpoints, regridding, input/rejection checks and actual Studio artifacts under their recorded owner/ELF identities. The current shared NSE and Host AMR RKL repair passes nine mathematical CTests, the original private Cellular 24-step/all-25-checkpoint ENUC gate (`5e-9` plus `5e-12`, now byte-identical), own CPU/Device fresh and three rotating AMR pairs at the original `1e-12` standard. The [burn guide](burn/README.md) explains the unchanged source meaning; the [release plan](../ARCH_RELEASE_PLAN.md) records costs, retained CPU limits and later platform/distribution qualification. Earlier uniform inputs missing `center_z` retain historical scope.
+The [current device record](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) closes the declared single-GPU scope. It retains the original 17 resource/batch contracts, nine legal chart walls, public endpoints, regridding, input/rejection checks and actual Studio artifacts under their recorded owner/ELF identities. The current shared NSE and Host AMR RKL repair passes nine mathematical CTests, the original private Cellular 24-step/all-25-checkpoint ENUC gate (`5e-9` plus `5e-12`, now byte-identical), own CPU/Device fresh and three rotating AMR pairs at the original `1e-12` standard. The [burn guide](burn/README.md) explains the unchanged source meaning; the [release qualification index](../docs/releases/README.md) records costs, retained CPU limits and later platform/distribution qualification. Earlier uniform inputs missing `center_z` retain historical scope.
 
 | Area | Recorded CPU/CUDA checks | Record |
 | --- | --- | --- |
@@ -69,7 +69,7 @@ Hosted CI selects the numerical/API entries once and runs their tooling owners
 in its separate job; [the CI guide](../.github/workflows/README.md) explains the
 matching discovery and completion checks.
 
-The [release plan](../ARCH_RELEASE_PLAN.md) owns current verification scope. Historical RZ PASS/FAIL/GAP and cost records remain evidence for their recorded implementations. Other coordinates and shared modules retain their existing numerical criteria.
+The [release qualification index](../docs/releases/README.md) owns current verification scope. Historical RZ PASS/FAIL/GAP and cost records remain evidence for their recorded implementations. Other coordinates and shared modules retain their existing numerical criteria.
 
 ## Error conventions
 

@@ -39,7 +39,7 @@ HLLC/MUSCL/RK2、BD、RKL2 热扩散、自引力 MG 与 AMR 已有代表性 CPU/
 
 按[构建指南](guides/Build.zh-CN.md)选择CUDA工具链及受支持的Host编译器、显式设备代码映像和匹配数值库。本机已测配置为Release、GCC12、NVCC12.3、`sm86`及RTX3060Ti 8GiB。ARCH数值单元保持严格浮点标志，链接的第三方库配置分别记录；CPU GCC13与CUDA GCC12的LTO归档不能混用。
 
-本机WSL约7.7GiB，重构建采用j2与CUDA重型pool1。当前应用／测试增量构建及无动作检查通过，不代签干净构建或其他平台；实际Ninja规则使用ccache。显式CUDA或可选求解器请求须在执行前检查，不可用路径明确拒绝。本轮共享NSE头修改触发52动作、3040.45秒增量重建，其依赖／实例化成本留后续冻结评估。[主计划](../ARCH_RELEASE_PLAN.md)记录实际成本、原CPU限定及多GPU／平台资格边界。
+本机WSL约7.7GiB，重构建采用j2与CUDA重型pool1。当前应用／测试增量构建及无动作检查通过，不代签干净构建或其他平台；实际Ninja规则使用ccache。显式CUDA或可选求解器请求须在执行前检查，不可用路径明确拒绝。本轮共享NSE头修改触发52动作、3040.45秒增量重建，其依赖／实例化成本留后续冻结评估。[发布资格索引](releases/README.md)记录实际成本、原CPU限定及多GPU／平台资格边界。
 
 ## GPU-AMR 执行方式
 

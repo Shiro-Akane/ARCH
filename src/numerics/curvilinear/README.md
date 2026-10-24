@@ -18,7 +18,7 @@ Optional Host gravity is composed through the existing
 [gravity binding](../../physics/gravity/HydroSourceBinding.h); its field,
 three-dimensional isolated ring physics and workspace stay with that owner.
 Public CPU configuration, new-chart checkpoint/Plot and Studio paths are qualified
-by the [release plan](../../../ARCH_RELEASE_PLAN.md), together with scoped native
+by the [release qualification index](../../../docs/releases/README.md), together with scoped native
 Device and method/EOS admission. Each receipt retains its tested combinations
 and original limits; coordinate admission is not an unrestricted release.
 The old cylindrical polar alias remains retired; spherical 2D is the `(r,phi)` route.

@@ -60,7 +60,7 @@ tooling discovery, without new CI lanes or a production writer change.
 
 ## Optimization and coupled checks
 
-The [release plan](../../ARCH_RELEASE_PLAN.md) owns current qualification work.
+The [release qualification index](../../docs/releases/README.md) owns current qualification work.
 Its [CPU follow-up record](results/release-readiness/REL3CpuScienceFollowup-20261014.json)
 links the original receipt and adds six burn–diffusion combinations, sixteen
 built-in NSE applications, four short fresh-process continuation protocols,

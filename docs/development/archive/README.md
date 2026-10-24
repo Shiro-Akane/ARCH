@@ -3,8 +3,8 @@
 The [historical-records index](../../histroy/README.md) owns the consolidated
 human archive. Only notes referenced at fixed paths by original receipts remain
 here; they retain their original bytes and scope. These are evidence exceptions,
-not a second current documentation tree. The [release plan](../../../ARCH_RELEASE_PLAN.md)
-owns current actions and the [validation summaries](../../../validation/README.md)
+not a second current documentation tree. The [release qualification index](../../releases/README.md)
+indexes the frozen release scope and the [validation summaries](../../../validation/README.md)
 own current scientific interpretation.
 
 ## Modernization evidence

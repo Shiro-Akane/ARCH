@@ -18,7 +18,7 @@ headers in [curvilinear](../../src/numerics/curvilinear/README.md).
 assembly. Runtime and the common scheduler bind stage storage, domain boundary
 work and publication; the numerical-state and EOS owners validate physical states.
 Current verification, source identities and costs are maintained in the
-[release plan](../../ARCH_RELEASE_PLAN.md).
+[release qualification index](../releases/README.md).
 
 | Responsibility | Single mathematical/control authority | Allowed adapters / consumers |
 |---|---|---|

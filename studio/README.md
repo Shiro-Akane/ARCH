@@ -50,7 +50,7 @@ flowchart LR
 
 ## Current qualification
 
-The [release plan](../ARCH_RELEASE_PLAN.md) is the single progress and qualification index. Native cylindrical CPU/Device integration and the scoped CUDA source-energy correction have accepted evidence there. Original CPU qualification limits, final distribution checks and human WSLg foreground acceptance remain explicit; automated Node/HTTP tests do not establish those outcomes. Historical test counts describe their original source identity, not the current suite.
+The [release qualification index](../docs/releases/README.md) records frozen qualification and its evidence. Native cylindrical CPU/Device integration and the scoped CUDA source-energy correction have accepted evidence there. Original CPU qualification limits, final distribution checks and human WSLg foreground acceptance remain explicit; automated Node/HTTP tests do not establish those outcomes. Historical test counts describe their original source identity, not the current suite.
 
 For a source change, find its process owner in the table, follow the typed request to its validator and producer, then extend the corresponding [existing test](tests/README.md). Preview uses Core Setup/Init and shared EOS conversion; Run/Restart invoke the production program. Plotfile readers preserve stored values. Keep these responsibilities separate when adding a file, cache or numerical explanation.
 
