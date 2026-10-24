@@ -2,7 +2,7 @@
 
 These records preserve earlier decisions, measurements, limitations and failed
 attempts. Their pending items describe the time of writing. Current work belongs
-to the [release plan](../../ARCH_RELEASE_PLAN.md); current instructions start in
+to the [release qualification index](../releases/README.md); current instructions start in
 the [guides](../guides/README.md), [developer guide](../development/README.md) and
 [scientific validation summaries](../../validation/README.md).
 
@@ -19,7 +19,7 @@ are not portable download instructions or current setup requirements.
 | Configuration | [Input and provenance investigations](configuration/); the maintained [configuration contract](../development/ConfigurationContractPlan.zh-CN.md) owns current rules |
 | Scientific methods | [Model and numerical investigations](science/), [geometry review](CurvilinearMetricReview.md), [transport coefficients](DiffusionCoefficientAlignment.md) |
 | Integration | [Compute requirements](integration/ComputeOptimizationPlan.zh-CN.md), [Core/Studio integration](integration/ComputeStudioReleasePlan-20261006.zh-CN.md), [execution history](compute-studio/ExecutionHistory.zh-CN.md) |
-| Modernization | [Original repository map](modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md), [working-entry preflight](modernization/Preflight-20261012.zh-CN.md), [closed modernization plan](../../ARCH_MODERNIZATION_PLAN.md) |
+| Modernization | [Original repository map](modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md), [working-entry preflight](modernization/Preflight-20261012.zh-CN.md), [closed modernization plan](https://github.com/Shiro-Akane/ARCH/blob/fe8f1f708cec34e42fa436f8cd21cec9285407e1/ARCH_MODERNIZATION_PLAN.md) |
 | Low density | [Implementation](low-density/ImplementationReport.zh-CN.md), [robustness design](low-density/RobustnessPlan.zh-CN.md), [parameter retirement](low-density/ParameterRetirementAudit.zh-CN.md) |
 | Optimization | [Implementation and acceptance ledger](optimization/ImplementationAndAcceptancePlan.zh-CN.md) |
 | Release preparation | [Plan through CPU/CUDA qualification](release/QualificationThroughCuda-20261019.md); the maintained plan contains current actions and standards |

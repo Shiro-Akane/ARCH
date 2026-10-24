@@ -12,7 +12,7 @@ volumes when computing conservation in curved coordinates.
 Active inputs explicitly declare the controls formerly supplied by the old
 loader. Their current hashes differ from historical receipts; configuration
 acceptance alone does not renew those scientific results. Current migration and
-CPU evidence are indexed in the [release plan](../../ARCH_RELEASE_PLAN.md).
+CPU evidence are indexed in the [release qualification index](../../docs/releases/README.md).
 
 Current CPU checks add six original burn–species-diffusion endpoints with
 runtime regridding, plus both checkpoint source phases in RT and BurnGradient
@@ -291,4 +291,4 @@ These data files support reproduction and independent review; they are not setup
 
 </details>
 
-Historical [RZ transfer](results/release-closure-20261009/native-device-migration-summary.json) and [reflector](results/release-closure-20261009/native-device-reflector-summary.json) records retain their original source and binary identities. Native cylindrical 2D now reuses the shared transfer, reflux and regrid owners; see [CPU conservation](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json) and [device migration/fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json). Old dedicated consumers remain retired. Current input/source applicability follows the [CPU closure](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json) and [release plan](../../ARCH_RELEASE_PLAN.md).
+Historical [RZ transfer](results/release-closure-20261009/native-device-migration-summary.json) and [reflector](results/release-closure-20261009/native-device-reflector-summary.json) records retain their original source and binary identities. Native cylindrical 2D now reuses the shared transfer, reflux and regrid owners; see [CPU conservation](../backend/results/release-readiness/Cyl2GravityOffConservation-20261018.json) and [device migration/fresh](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json). Old dedicated consumers remain retired. Current input/source applicability follows the [CPU closure](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json) and [release qualification index](../../docs/releases/README.md).

@@ -27,14 +27,14 @@
 [旧CPU科学](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)与
 [旧实现退役](../backend/results/release-readiness/RzRetirementAcceptance-20261018.json)只保留历史身份，
 失败和中断不改签；旧runner／checkpoint不是当前执行入口。剩余发布工作见
-[主计划](../../ARCH_RELEASE_PLAN.md)。
+[发布资格索引](../../docs/releases/README.md)。
 
 ## 常外部重力
 
 活动均匀输入已显式声明旧加载器控制值。耦合Gaussian使用真实的`p0`和四个
 显式为零的流体扰动幅值，删除失效的`pressure0`／`velocity_x0`覆盖；检查点参考
 明确拒绝混合或缺项契约。历史收据身份保持，当前CPU迁移核验见
-[发布计划](../../ARCH_RELEASE_PLAN.md)。
+[发布资格索引](../../docs/releases/README.md)。
 
 下方外部源项测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期
 改变动量与能量，而不改变总质量。耦合案例进一步检查网格细化和组分扩散时

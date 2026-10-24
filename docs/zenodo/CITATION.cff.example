@@ -2,13 +2,12 @@ cff-version: 1.2.0
 message: "If you use ARCH, please cite the archived software version you used."
 type: software
 title: "ARCH: Adaptive Reactive CUDA Hydrodynamics"
-version: 1.3.0
-date-released: 2026-10-20
+version: 1.3.1
+date-released: 2026-10-24
 license: MIT
 repository-code: "https://github.com/Shiro-Akane/ARCH"
-doi: 10.5281/zenodo.23503925
-url: "https://zenodo.org/records/23503925"
-commit: 3063d883c1d7abf0b6bce5bb31df05af0a49cbac
+doi: 10.5281/zenodo.23503924
+url: "https://github.com/Shiro-Akane/ARCH/releases/tag/v1.3.1"
 authors:
   - family-names: Ye
     given-names: Haonan
@@ -30,12 +29,12 @@ keywords:
   - scientific computing
   - ARCH Studio
 abstract: |-
-  ARCH (Adaptive Reactive CUDA Hydrodynamics) is a C++20 and CUDA simulation code designed for finite-volume modeling of compressible hydrodynamics, heat transfer, and nuclear reactions with adaptive mesh refinement. Its CPU and CUDA backends share identical physical and numerical formulations. Version 1.3.0 introduces the optional ARCH Studio graphical desktop environment, providing researchers with an integrated workflow to edit simulation parameters, configure and build targets, inspect initial fields and AMR mesh layouts, execute or restart runs, and examine read-only plotfiles.
+  ARCH (Adaptive Reactive CUDA Hydrodynamics) is a C++20 and CUDA simulation code for finite-volume compressible hydrodynamics, heat transfer and nuclear reactions with adaptive mesh refinement. CPU and CUDA backends retain shared physical and numerical formulations. The optional ARCH Studio provides parameter editing, configuration and builds, initial-field and AMR previews, run and restart control, and read-only plotfile inspection.
 
-  This deposit provides the complete source tree based on the tagged v1.3.0 release, accompanied by post-release citation information and deposit documentation outlined in ARCHIVE_PROVENANCE.json. The scientific source code and test configurations remain identical to the tagged release. No raw simulation outputs, prebuilt scientific binaries, or fetched Git LFS payloads are added. Git LFS pointers remain as pointers; users should obtain required external data and system dependencies as described in the build guide.
+  Version 1.3.1 is a maintenance source release. It updates the Studio development dependency Vite from 8.3.0 to 8.3.4 with its locked transitive dependencies, removes machine-local assistant instructions and completed execution plans from distribution, and refreshes release and citation documentation. Scientific implementation, mathematical libraries, Studio data-reading and data-writing implementation, scientific inputs, test definitions, tolerances and historical acceptance evidence are unchanged by this maintenance release.
 
-  Supported execution is Linux and WSL2. Software qualification and validation remain scoped rather than universal; details regarding supported configurations, numerical tolerances, and specific validation limits are provided in the release notes. Researchers should not assume that all physical models, equation-of-state or reaction network combinations, execution devices, or scientific mechanisms have been validated. In addition, GNN functionality is outside the scope of this release.
+  Supported execution remains Linux and WSL2 under the qualification recorded for version 1.3.0. Windows native execution, MPI, additional GPU vendors and additional platforms are planning topics and are not qualified by this release. Existing limitations, including retained historical failures and gaps, remain applicable. No new scientific validation or general performance claim follows from the dependency update.
 
-  All ARCH-authored material is licensed under MIT. Third-party components, scientific sources, and data retain their own terms and notices as detailed in LICENSE, THIRD_PARTY_NOTICES.md, and the LICENSES/ directory.
+  The archive contains tagged source, third-party notices and existing validation evidence. No raw simulation outputs, prebuilt scientific binaries or fetched Git LFS payloads are added. Git LFS pointers remain pointers; obtain required external data and system dependencies using the build guide. All ARCH-authored material is MIT licensed; third-party material retains its own terms.
 
-  AI-assisted tools were used for bug tracking and fixes, review of tolerance settings across the complete CTest suite, editing selected documentation, code completion, and engineering and security checks. The overall software architecture was designed and built by human contributors. Human maintainers retain responsibility for scientific definitions, numerical acceptance criteria, code review, and release decisions.
+  AI-assisted tools were used for bug tracking and fixes, review of tolerance settings across the complete CTest suite, selected documentation, code completion, and engineering and security checks. Human contributors designed the overall software architecture and retain responsibility for scientific definitions, numerical acceptance, code review and release decisions.

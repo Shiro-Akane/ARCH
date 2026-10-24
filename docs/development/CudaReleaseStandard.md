@@ -8,8 +8,8 @@ performance are summarized in [Validation](../../validation/README.md).
 ## Current execution contract
 
 The implementation invariants below apply to current work. The
-[release plan](../../ARCH_RELEASE_PLAN.md) alone owns execution order, current
-qualification, costs and remaining limitations. Historical evidence retains its
+[release qualification index](../releases/README.md) indexes frozen
+qualification, recorded costs and retained limitations. Historical evidence retains its
 original source, inputs and platform; it cannot qualify a newer executable by
 matching a test count or an earlier speedup.
 

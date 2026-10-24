@@ -48,7 +48,7 @@ Tooling/CPU diagnostic artifacts retain identity, logs, inventory and JUnit for 
 
 ## Qualification and maintainer setup
 
-This workflow does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, packaging or native desktop acceptance. The [release plan](../../ARCH_RELEASE_PLAN.md) records their actual qualification. Local actionlint/tests do not establish a hosted passing result for an unpublished working tree.
+This workflow does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, packaging or native desktop acceptance. The [release qualification index](../../docs/releases/README.md) records their actual qualification. Local actionlint/tests do not establish a hosted passing result for an unpublished working tree.
 
 Use a normal PR targeting `main` for integration; engineering-branch pushes can execute the same checks before that PR exists. Actions are pinned to full commits; actionlint's release archive has a fixed checksum. After a real successful run, maintainers may require **CI required** in the main ruleset. Human approval and merge/publication remain separate decisions. Do not run public PR code on a persistent personal GPU runner; this workflow uses neither `pull_request_target` nor repository secrets.
 

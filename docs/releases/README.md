@@ -1,24 +1,17 @@
-# Release notes
+# Frozen release qualifications
 
-- [v1.3.0](V1.3.0.md) · [中文](V1.3.0.zh-CN.md): ARCH Studio, shared
-  architecture modernization, explicit critical-configuration validation and
-  a consolidated documentation/verification workflow.
-- [v1.2.1 update notes](V1.2.1.md) · [中文](V1.2.1.zh-CN.md): shared
-  execution work, configurable physical/numerical controls, checkpoint checks
-  and clearer reader documentation.
+The current maintenance baseline is [ARCH v1.3.1](V1.3.1.md) ([中文](V1.3.1.zh-CN.md)). It follows the accepted [v1.3.0 release](V1.3.0.md) and its [scoped scientific acceptance](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json).
 
-- [v1.2.0](V1.2.0.md) · [中文](V1.2.0.zh-CN.md): composite AMR self-gravity,
-  Driver and source layout refactoring, low-density and EOS migration.
-- [v1.1.0](V1.1.0.md) · [中文](V1.1.0.zh-CN.md): CUDA batching, device-resident
-  AMR data handling, measured scaling and a curated source/validation layout.
-- [v1.0.0](V1.0.0.md): CPU/CUDA source release, component-aware EOS loading
-  and generated-network NSE.
+## Applicable qualification
 
-These notes describe the corresponding source snapshots and verification.
-A note prepared on a development branch is not itself a published release;
-the repository's tags and hosted releases identify published packages. Later
-development results do not silently change an earlier snapshot's claims.
+This patch updates Studio build dependencies and release documentation. Scientific implementation, mathematical libraries, Studio data-reading and data-writing implementation, inputs, test definitions, numerical tolerances and recorded historical evidence retain their original identities. The [original acceptance record](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json) remains authoritative for the physical models, backends and workloads actually qualified.
 
-For the working source, start with the [project guide](../../README.md) and
-[Validation index](../../validation/README.md). Current integration work is
-tracked separately in [development records](../development/README.md).
+Supported execution remains Linux/WSL2 and the recorded CPU and single NVIDIA GPU configuration. Windows native execution, MPI, additional GPU vendors and other platforms require separate qualification. The retained SNIa repeated-AMR failure and thermal gap, and the distinction between hotspot functional checks and an ignition-mechanism claim, remain applicable. See the [v1.3.0 verification and use section](V1.3.0.md#verification-and-use) for qualifications and measured limits.
+
+Hosted Tooling, CPU and Studio CI cover their declared scopes; they do not establish native Windows desktop behavior, additional GPU hardware, all scientific trajectories or a new performance result. Historical CPU/CUDA timings and costs remain attached to their originating implementation and acceptance records.
+
+## Distribution and local work instructions
+
+Machine-local `AGENTS.md`, project assistant skills and the completed root modernization/release plans are excluded from current distributions. Historical commits retain their original provenance. Users may supply their own local instructions. This public index records frozen qualification, rather than a machine-specific execution queue.
+
+Use the [build guide](../guides/Build.md), [Studio guide](../guides/Studio.md) and [Zenodo record documentation](../zenodo/README.md) for current user-facing instructions.

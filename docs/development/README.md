@@ -1,6 +1,6 @@
 # Contributing to ARCH
 
-The [release plan](../../ARCH_RELEASE_PLAN.md) is the sole current work index. Scoped CPU and CUDA qualification and the axisymmetric cylindrical implementation have accepted evidence; final distribution, hosted CI and human platform acceptance remain separate. Near-zero-momentum and SNIa qualification limits remain in that plan. A completed implementation or unit test does not establish an unrestricted scientific release.
+The [release qualification index](../releases/README.md) records the frozen distribution and qualification scope. Scoped CPU and CUDA qualification and the axisymmetric cylindrical implementation have accepted evidence; final distribution, hosted CI and human platform acceptance remain separate. Near-zero-momentum and SNIa qualification limits remain in the linked qualification records. A completed implementation or unit test does not establish an unrestricted scientific release.
 
 Start from the [implementation ownership map](ImplementationOwnership.md) when changing code. Grid and curvilinear numerics own coordinates, measures and geometric terms; optional gravity owns its field, solver and energy work. Shared numerical bodies serve Host and Device. CUDA owners manage launches, storage and synchronization. Studio separates Electron, the Linux Host service, browser contracts and rendering.
 
@@ -30,7 +30,7 @@ Comments explain workflow, units, mathematical conventions, non-obvious constant
 
 Current usage belongs in the [guides](../guides/README.md), configuration/API contracts in their maintained owners, and source reasoning beside the implementation. Current results belong in each [Validation summary](../../validation/README.md); detailed receipts stay under its `results/` directory. Raw HDF5, checkpoints and full logs remain local.
 
-[Historical development records](../histroy/README.md) explain past decisions and qualification limits. Their pending items are dated observations, not a second current execution plan. Fixed-path receipts and original failures retain their bytes and provenance during documentation cleanup. The [modernization closeout](../../ARCH_MODERNIZATION_PLAN.md) preserves the completed architecture scope.
+[Historical development records](../histroy/README.md) explain past decisions and qualification limits. Their pending items are dated observations, not a second current execution plan. Fixed-path receipts and original failures retain their bytes and provenance during documentation cleanup. The [modernization closeout](https://github.com/Shiro-Akane/ARCH/blob/fe8f1f708cec34e42fa436f8cd21cec9285407e1/ARCH_MODERNIZATION_PLAN.md) preserves the completed architecture scope.
 
 ## Reporting and review
 

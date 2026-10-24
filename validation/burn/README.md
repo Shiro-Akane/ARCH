@@ -59,7 +59,7 @@ energy, source definition and original conservation tolerances are unchanged.
 ENUC remains the last accepted burn-half nuclear-energy increment divided by its
 half interval. The earlier step-1/terminal failures (`4.3878863852117646e-7` /
 `1.1197942950938268e-7`) keep their original identity in the record.
-The [release plan](../../ARCH_RELEASE_PLAN.md) lists build costs and remaining
+The [release qualification index](../../docs/releases/README.md) lists build costs and remaining
 CPU, platform and distribution qualification boundaries.
 
 ## CPU science evidence

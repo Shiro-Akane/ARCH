@@ -15,7 +15,7 @@
 下列验证保留其原始源码与输入身份。使用极坐标图的圆柱二维记录属于历史结果；
 原生二维柱坐标使用 `cylindrical-rz-pwc` chart，CPU／CUDA定点证据见[设备签收](backend/results/release-readiness/Cyl5NativeDevice-20261019.json)。旧RZ与极平面别名只保留原身份，不转签新chart。[综合准入收据](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)补齐轴向科学终点、声明的方法／EOS、必要耦合与fresh，保留失败输入和表域边界；[当前CPU签收](backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)补齐两个轴向初始化器、显式中心输入及受影响原CPU终点／fresh。
 
-[当前设备记录](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)已按声明的单GPU范围签收。原17项资源／批次契约、九种合法几何壁面、公共终点、重网格、输入／拒绝及Studio真实产物按原owner／执行物身份保留。当前NSE及Host AMR RKL修复通过9项数学CTest、原私有Cellular24步／25CHK的原ENUC门（`5e-9`＋`5e-12`，现逐位一致）、两后端自身fresh及三对旋转AMR的原`1e-12`标准。[燃烧指南](burn/README.zh-CN.md)说明未变的源项含义；[主计划](../ARCH_RELEASE_PLAN.md)统一给出成本、原CPU限定及后续平台／分发资格。旧缺`center_z`均匀输入保持历史范围。
+[当前设备记录](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)已按声明的单GPU范围签收。原17项资源／批次契约、九种合法几何壁面、公共终点、重网格、输入／拒绝及Studio真实产物按原owner／执行物身份保留。当前NSE及Host AMR RKL修复通过9项数学CTest、原私有Cellular24步／25CHK的原ENUC门（`5e-9`＋`5e-12`，现逐位一致）、两后端自身fresh及三对旋转AMR的原`1e-12`标准。[燃烧指南](burn/README.zh-CN.md)说明未变的源项含义；[发布资格索引](../docs/releases/README.md)统一给出成本、原CPU限定及后续平台／分发资格。旧缺`center_z`均匀输入保持历史范围。
 
 | 区域 | 已记录的 CPU/CUDA 检查 | 记录 |
 | --- | --- | --- |
@@ -59,7 +59,7 @@ CPU KLU 与 GPU cuDSS。各模块摘要链接独立科学检查，并保留原�
 注册入口本身不是执行结果。托管 CI 只执行一次数值／API 清单，工具检查由独立任务
 执行；[CI 说明](../.github/workflows/README.md)给出一致的发现与完成判定规则。
 
-当前验证范围见[发布计划](../ARCH_RELEASE_PLAN.md)。RZ 的原 PASS／FAIL／GAP 与成本记录保留，不作为当前支持或待运行项目。其余坐标和共享模块沿用原数值标准。
+当前验证范围见[发布资格索引](../docs/releases/README.md)。RZ 的原 PASS／FAIL／GAP 与成本记录保留，不作为当前支持或待运行项目。其余坐标和共享模块沿用原数值标准。
 
 ## 误差约定
 

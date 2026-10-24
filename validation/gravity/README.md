@@ -35,7 +35,7 @@ Cellular source-rate gate still limits full device release acceptance.
 and [implementation retirement](../backend/results/release-readiness/RzRetirementAcceptance-20261018.json)
 are historical evidence only. Failed or interrupted runs stay unchanged; old
 RZ runners and checkpoints are not current execution instructions. The
-[release plan](../../ARCH_RELEASE_PLAN.md) owns remaining release work.
+[release qualification index](../../docs/releases/README.md) owns remaining release work.
 
 ## Constant external gravity
 
@@ -44,7 +44,7 @@ Gaussian inputs use their actual `p0` and four explicitly zero hydrodynamic
 amplitudes; obsolete `pressure0`/`velocity_x0` overrides were removed. The
 checkpoint reference rejects mixed or incomplete model parameter contracts.
 Historical receipts keep their original identities; current CPU migration checks
-are indexed in the [release plan](../../ARCH_RELEASE_PLAN.md).
+are indexed in the [release qualification index](../../docs/releases/README.md).
 
 The external-source tests below apply a prescribed acceleration; they do not solve
 for the gravity produced by the fluid itself. The force should change momentum
