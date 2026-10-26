@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
-    "test": "node --test --test-concurrency=1 --test-reporter=tap tests/*.test.ts",
+    "test": "node tests/run-platform.mjs",
     "local-host": "node host/cli.ts",
     "test:host": "node --test tests/host-*.test.ts",
     "desktop:package": "npm run build && node desktop/package.mjs"
@@ -29,7 +29,7 @@
     "@types/react": "18.3.31",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "6.1.1",
-    "electron": "44.4.3",
+    "electron": "44.9.1",
     "eslint": "10.10.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.6",

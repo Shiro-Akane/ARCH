@@ -1,40 +1,82 @@
-# ARCH Studio local workflow
+# ARCH Studio: configure, preview, run and inspect output
 
-[中文](Studio.zh-CN.md) · [Homepage](../../README.md) · [Current status](../../studio/README.md#current-qualification)
+[中文](Studio.zh-CN.md) · [Homepage](../../README.md) · [Environment](StudioEnvironment.md)
 
-Studio is an optional desktop component; Core CPU/CUDA builds and runs work independently. It provides a parameter workspace, controlled build, real initial fields/AMR and read-only Plotfile queries. Scientific Core execution stays on Linux/WSL. Linux Node 24+ and a graphical session are required; Run/Restart also use `xterm` and Linux `flock`.
+Studio is optional; Core runs independently. **Linux/WSL2 is recommended. Native Windows 11 x64 provides the complete CPU Studio workflow, but its newer support may still have instability or bugs.** The systems share configuration, scientific Preview and Plotfile services. Native Windows CUDA/MPI are outside this qualification; use Linux for the established CUDA route.
 
-## Workspaces
+## Build and launch: Linux, then Windows
 
-Use the **Workspace** selector at the top right to switch views:
+Prepare Core using the [build guide](Build.md), then native Node24+, Electron and the terminal prerequisites in the [environment guide](StudioEnvironment.md). Start from the ARCH root.
 
-- **Config:** edit grouped parameters; request real Core initial fields and initial AMR; Configure/Build after source edits, then confirm Run/Restart with saved input.
-- **Plotfile:** open published output, choose a field, view native AMR leaf outlines and inspect stored cells, recorded units and source information. Reads leave the file unchanged.
-
-![Studio Plotfile view with recorded gravitational potential and native AMR leaf outlines](images/studio-plotfile.png)
-
-*Example: the read-only Plotfile workspace, with a recorded potential field and native AMR leaf outlines.*
-
-## Build and launch
+Linux/WSL2:
 
 ```bash
 cmake --preset studio-cpu-release -DARCH_STUDIO_NODE=/absolute/path/to/node
 cmake --build build-studio-cpu --parallel 2
-build-studio-cpu/bin/arch-studio --project "$PWD" --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod.par
+build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
+  --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod_beginner.par
 ```
 
-Core-only builds leave Studio disabled. The opt-in target prepares locked npm dependencies, Linux Electron and production assets; first preparation needs network/disk space. The generated launcher belongs to this source checkout. Existing Studio environments may run `studio/desktop/arch-studio` directly, with Node on PATH or `ARCH_STUDIO_NODE` set. Connections are internal; users do not start Vite or enter a port.
+Native Windows: complete the [GCC/UCRT64 Core setup](WindowsNativeCpu.md), then enable Studio and configure the trusted tools/DLL context in the [desktop build guide](WindowsStudioDesktop.md). In PowerShell:
 
-Choose a registered compiled case and its `.par`, edit grouped parameters, then request initial Preview/AMR. Unsaved working-copy Preview is allowed; Save/Save As and Run/Restart are explicit. With `--source`, the model is fixed to that source's unique compiled registration; close the project and reopen the intended source to change models. Unmatched source identity remains pending. If model discovery fails, use **Retry model discovery** for the current build; the working copy is retained. `--source` identifies C++ source and does not compile it. Source changes require Configure/Build. The managed CPU build profile uses `build-studio-cpu`; build dependency gaps stay unknown rather than being certified fresh.
+```powershell
+& .\build-studio-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-studio-cpu `
+  --binary build-studio-cpu/bin/ARCH.exe --case Sod --config simulation/Sod/Sod_beginner.par
+```
 
-Initial views call real Setup/Init and shared EOS conversion. Available dimensions/geometry/fields are negotiated per case; registration alone grants no Preview capability. AMR is a separate bounded request, overlaid only on matching field/config/build identities. Native cylindrical 2D CPU requests use r/z length axes and all three physical velocity fields; phi velocity remains selectable for AMR. Old RZ chart artifacts are rejected. This Preview scope is separate from dynamic AMR during evolution. Resource estimates describe capacity, not MPI OOM predictions. Coordinate and field/color scale controls are independent. Log views must distinguish zero/nonpositive values without changing raw data.
+Use the actual configured build directory; `--build-dir` explicitly adopts an existing tree. A checkout launcher depends on that checkout. Keep portable package directories intact: start `arch-studio` on Linux or `arch-studio-bin.exe` on Windows. Host Node and h5wasm are bundled; Core, system dependencies and the Run terminal remain external. Connections are managed internally: no Vite server or port entry is needed.
 
-Core units are CGS, including ideal gas. Standard descriptions come from Core; custom units are reviewed source/declaration evidence, not automatic inference of arbitrary C++ expressions. See the [feature list](../Features.md) for supported model/backend combinations.
+## Workspaces
 
-Confirmed Run/Restart use associated saved input and the selected compiled binary. Their owned independent terminal and records survive Host exit. Stop targets the recorded job. Output reservations coordinate managed runs but do not approve overwriting earlier scientific data. Cluster/background scheduling is outside this local workflow.
+Check **MODEL / PARAMETERS** at the top, then use **Workspace** at the top right to select **Config** or **Plotfile**. Config places parameters on the left and **Real initial condition** in the center; selecting a parameter opens its **Parameter Inspector** on the right. Expand **Project / Local Host** above the workspace to inspect project, source, executable and build state. Run/Restart actions are in the lower workflow area.
 
-Plotfile views read full published files. Cartesian 1D/2D and native cylindrical r-z active leaves support display LOD using recorded native bounds. Formal published files additionally support exact stored-cell queries in their recorded native coordinates for Cartesian/spherical 1D–3D and cylindrical 1D–3D charts; bounds, units and provenance come from the file. Other curved/3D rendering and physical qualification are separate; new cylindrical 2D publications require the exact chart identity and cm^3 per-unit-azimuth measures. Initial samples are a separate source. XDMF, reusable spatial indexing/cache, more formats and complete native/scientific acceptance follow the [release closure plan](../histroy/integration/ComputeStudioReleasePlan-20261006.zh-CN.md).
+![Read-only Plotfile view with a recorded potential field and native AMR leaf outlines](images/studio-plotfile.png)
 
-See [Core API](../../src/api/README.md), [configuration v3](../../src/api/docs/CONFIGURATION_API.md), [engineering tests](../../studio/tests/README.md) and [scientific validation](../../validation/README.md). [Historical reports](../histroy/README.md#studio) retain earlier scopes; they are not current launch instructions.
+*This shows recorded output, separate from the initial-state Preview.*
 
-See [environment setup](StudioEnvironment.md) for Linux prerequisites, installation and troubleshooting.
+## Config: select a model and parameter file
+
+1. **Select the project and compiled model first.** The startup page accepts Project, Existing build directory, Binary, Registered model and Source, or use the launch commands above. After connection, choose a registered case such as Sod using **Real initial condition → Model**. **Retry model discovery** retries a failed discovery against the current binary.
+2. **Source and parameters are separate.** `--source simulation/Sod/Sod.cpp` or the startup Source field binds a registered compiled source; it does not import and compile arbitrary C++. A selected source fixes the model. Pending source identity, incomplete discovery or a busy workflow can disable the selector. Reopen the project with another source to change that binding. Add/register and compile a new case using the [case guide](SimulationCase.md); selecting a source cannot update an old executable.
+3. **Open the `.par` next.** Use **Config file → Open Parameter File (.par)…** on the left, or **Load Project Parameter File** for the associated project input. Start with `simulation/Sod/Sod_beginner.par`. Check the top model/file labels and **Source & parameter association**; filenames do not establish compatibility.
+
+## Config: inspect, edit and save
+
+Work from left to right. Expand parameter groups such as Grid, EOS, Network, Gravity, Diffusion and Runtime. Search by name, raw key or description. Additional controls appear in **Advanced** or **Inactive settings**; hidden fields can still contain errors.
+
+Each **Help** entry gives the raw key, type, unit, permitted values, applicability and whether a default is allowed. Select a parameter to compare Working Copy, Saved value, parsed values and diagnostics in **Parameter Inspector**. Missing metadata remains Unavailable. Full definitions are in the [reference](../Reference.md). Core uses CGS: for example cm, g/cm³, erg/cm³, K and rad.
+
+Edit an input, select or toggle to change the **Working Copy**. Correct **View issues**, inline errors and path checks, then use **Generate Real Preview / Update Preview** in the center. Preview may use unsaved input, provided model/build identity, configuration and sampling gates pass. It calls real Setup/Init; **Initial AMR** is a separate bounded request, not time evolution. Field/coordinate/color scales and ranges affect display only; log cannot turn zero or negative stored values positive.
+
+- **Save** writes the associated file. **Save Working Copy As…** saves a new in-project `.par`; use a copy for a first experiment. External disk changes retain the Working Copy for reload or Save As.
+- **Download Copy…** exports a download; it does not establish a saved project association for Run.
+- After C++ edits, explicitly **Configure / Build** in **Project / Local Host** and inspect output/identity checks. Refreshing is not compilation. Incomplete dependency evidence stays unknown.
+- In the lower workflow area, prepare **Run / Restart**, inspect the saved input, binary, output directory and checkpoint, then confirm. Confirmed jobs run in an independent terminal and can survive desktop exit. Stop targets the recorded job.
+
+## Plotfile: load and inspect results
+
+Choose **Workspace → Plotfile**; the page heading is **Real Plotfile**. Prefer the upper **Project Plotfile Viewer · read-only**:
+
+1. Enter a **Project-relative file**, for example `output/first_sod/SodBeginner_HLLC_plt_0000.h5`, and click **Read metadata**. Choose an actual `_plt_` field output, not a `_chk_` restart file; use the name/index on disk.
+2. Check Time, Geometry / dimension, Stored shape, completion and provenance before selecting a **Stored field** such as DENS or PRES.
+3. Choose **Block index, Start, Count → Read raw samples** for stored values. The table and supported curve/native view appear below; use the row's **Inspect** button for that cell's coordinates and units.
+4. Use **Read global display LOD · scans leaves** for an overview. It requires native grid evidence and currently covers Cartesian1D/2D and cylindrical r-z2D. Bounded cell queries in other geometries/dimensions do not imply 3D rendering. Use Fit, zoom or drag to navigate. LOD is display downsampling; obtain exact stored values from raw samples/Inspector.
+
+The lower **Local file · legacy 1D inspection → Open Plotfile…** is a separate older browser reader without formal completion/provenance verification. Keep it distinct from project-scoped reads. The complete `.h5` remains authoritative, and all views are read-only. Initial Preview, evolved output and scientific numerical qualification are separate results.
+
+## Paths on Linux and Windows
+
+Distinguish **OS paths** from **Studio project-relative paths**.
+
+| Location | Linux / WSL2 | Native Windows |
+| --- | --- | --- |
+| Project/tools | `/home/user/ARCH`, `/usr/bin/cmake` | `C:/work/ARCH`, `C:\tools\cmake.exe` |
+| Core | `build-studio-cpu/bin/ARCH` | `build-studio-cpu/bin/ARCH.exe` |
+| Studio config/Plotfile/Save As relative inputs | Both systems use forward-slash paths such as `simulation/Sod/Sod_beginner.par` or `output/first_sod/xxx.h5` | Do not enter a drive prefix, `/mnt/c` or `..` here; native dialogs convert in-project selections |
+| `.par` output/restart/table values | Relative to the calculation working directory, or actual Linux absolute paths | Same relative rule; adapt absolute paths to Windows, preferably `C:/work/ARCH/...` |
+
+Studio starts Core in the project root; a CLI run uses the terminal's current directory. Thus `out_dir = output/first_sod` is usually portable and **does not mean beside the `.par`**. After copying a Linux `.par` to Windows, inspect `out_dir`, `restart_file` and EOS/network table paths individually. Changing separators alone does not translate namespaces; provide actual values without relying on shell variable expansion.
+
+WSL `/mnt/c/work/ARCH` and Windows `C:/work/ARCH` may name the same disk location, but `/home/...` and `/mnt/c/...` are not native Windows Core paths. Windows paths likewise cannot be passed directly to Linux Core. Quote shell arguments containing spaces. Keep `.par` UTF-8 and preserve its syntax rather than copying Bash escapes or PowerShell quotes/backticks into values. Never share CMake caches, Node executables or ABI dependencies between systems. UNC/network filesystems and arbitrary long paths were not qualified by local NTFS checks.
+
+Further reading: [build](Build.md), [environment](StudioEnvironment.md), [feature scope](../Features.md), [scientific validation](../../validation/README.md), and [Host tests](../../studio/tests/README.md). Platform adaptation does not relax equations, scientific formats or established error budgets.

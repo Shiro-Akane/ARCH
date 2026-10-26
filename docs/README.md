@@ -2,6 +2,8 @@
 
 [中文](README.zh-CN.md) · [Project homepage](../README.md)
 
+Linux/WSL2 is recommended; native Windows11 x64 provides the complete adapted CPU CLI/Studio workflow with newer support that may still have instability or bugs. The shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides put Linux and Windows instructions together, including model/parameter navigation and `.par`/Plotfile paths.
+
 Begin with [build and first run](../README.md#build), then use the [case guide](guides/SimulationCase.md) to inspect output or write a problem. Inputs, outputs and physical constants use CGS.
 
 ## Choose features and settings
@@ -11,7 +13,7 @@ Begin with [build and first run](../README.md#build), then use the [case guide](
 - [CUDA guide](CudaBackendStatus.md): backend choice and AMR execution.
 - [Build guide](guides/Build.md): dependencies, presets, EOS tables and compile resources.
 - [Simulation catalogue](../simulation/README.md): runnable problems and example inputs.
-- [ARCH Studio](guides/Studio.md): Linux CLI desktop, parameter workspace, initial Preview/AMR and read-only Plotfile workflow.
+- [ARCH Studio](guides/Studio.md): Linux/Windows desktop, parameter workspace, initial Preview/AMR and read-only Plotfile workflow.
 
 ## Interpret results
 

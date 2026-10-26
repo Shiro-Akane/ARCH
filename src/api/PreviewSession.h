@@ -11,8 +11,17 @@
 #pragma once
 
 #include "api/protocol/Json.h"
+#include "api/ApplicationContract.h"
 
 namespace arch::api {
 detail::Json PreviewSessionCapability();
+#ifdef _WIN32
+// One metadata owner serves session, AMR and case inspection capabilities.
+inline detail::Json WindowsPreviewResourcePolicy() {
+    return detail::Json::object({{"kind", contract::windows_preview_resource_policy},
+        {"memoryKind", "committed"}, {"processCommitMiB", contract::windows_worker_commit_mib},
+        {"cpuClock", "user"}, {"cpuScope", "resource-job"}, {"budgetRenewal", "per-request"}});
+}
+#endif
 int RunPreviewSession();
 }

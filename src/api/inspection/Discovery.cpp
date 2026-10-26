@@ -23,7 +23,7 @@ std::string RegisteredCases() {
         for (int dim = 1; dim <= 3; ++dim)
             if (domain.dimensions & (1u << dim)) dimensions.push(dim);
         cases.push(Json::object({{"caseId", name}, {"initialFieldPreview", supported},
-#ifdef __linux__
+#if defined(__linux__) || defined(_WIN32)
             {"initialAmrPreview", supported},
 #else
             {"initialAmrPreview", false},

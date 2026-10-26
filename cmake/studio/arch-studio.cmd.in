@@ -1,0 +1,4 @@
+@echo off
+setlocal DisableDelayedExpansion
+set "ARCH_STUDIO_NODE=@ARCH_STUDIO_NODE_QUOTED@"
+"@ARCH_STUDIO_ENTRY_QUOTED@" %*

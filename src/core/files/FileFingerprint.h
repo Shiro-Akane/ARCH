@@ -22,11 +22,15 @@ namespace arch::core {
  */
 std::string file_sha256(const std::string& path);
 
-/** Linux: hash the running main executable via /proc/self/exe once per process.
- * Independent of argv[0] and replacement of its launch path. No build/source claim.
- * Other platforms return an empty (unknown) digest; Linux read failures throw.
+/** Hash the running main executable once per process on Linux and Windows.
+ * Linux uses /proc/self/exe; Windows opens the mapped main image with a read lock
+ * and checks its mapped name around the read. Neither uses argv[0]. No build/source
+ * claim. Unsupported platforms return unknown; supported-platform failures throw.
  */
 const std::string& running_executable_sha256();
+
+/** Describe the OS source used for the running main executable fingerprint. */
+const char* running_executable_source() noexcept;
 
 /** Hash a canonical interpretation record with the same SHA-256 authority. */
 std::string string_sha256(std::string_view bytes);

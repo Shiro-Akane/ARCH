@@ -5,13 +5,13 @@
  * request generation. Cancellation and stale responses cannot replace current data.
  */
 import { spawn, execFile } from 'node:child_process';
+import {captureOwned,terminateOwned} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import { PreviewSession, sessionCapability } from './previewSession.ts';
 import type { SessionResult, SessionRequest, SessionCapability, SessionProgress } from './previewSession.ts';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { checkedPath } from './files.ts';
-import { inputs, inspect, same } from './buildManifest.ts';
-import { profileFingerprint } from './buildProfile.ts';
 import { BuildError, BuildRunner } from './buildRunner.ts';
 import { PROTOCOL_VERSION } from '../src/host/contracts.ts';
 import { MAX_PREVIEW_BYTES } from '../src/host/previewContracts.ts';
@@ -20,6 +20,7 @@ import { profilesFromModels } from './previewProfile.ts';
 import type { PreviewStatus, PreviewProfile, RealPreviewRequest, PreviewIdentity } from '../src/host/previewContracts.ts';
 import { validateCorePreview, validateModelCapabilities } from '../src/host/previewValidation.ts';
 export interface PreviewHooks {
+    windowsTools?: WindowsHostTools;
     spawn?: typeof spawn;
     timeoutMs?: number;
     graceMs?: number;
@@ -57,12 +58,14 @@ export class PreviewRunner {
         this.profiles = structuredClone(profiles);
         this.build = build;
         this.profile = structuredClone(profile);
-        this.hooks = hooks;
+        this.hooks = {...hooks,...(hooks.windowsTools?{windowsTools:structuredClone(hooks.windowsTools)}:{})};
         this.build.beforeStart = () => this.endSession('Build starting; retire Preview session.');
         this.current = { protocolVersion: PROTOCOL_VERSION, projectId: build.projectId, profile: this.profile, profiles: this.profiles, ready: false, reason: 'Build required before real preview.', state: 'none' };
     }
     isActive() { return this.current.state === 'generating' || !!this.auxiliaryRequestId; }
     snapshot() { return structuredClone(this.current); }
+    /** Internal trusted startup context; never populated by an HTTP request. */
+    windowsTools(){return this.hooks.windowsTools?structuredClone(this.hooks.windowsTools):undefined;}
     /** Cache cheap discovery per successful build/binary identity, not per edit. */
     private async capabilities(buildId: string, binarySha256: string): Promise<unknown> {
         if (this.closed)
@@ -76,7 +79,15 @@ export class PreviewRunner {
             const controller = new AbortController();
             let finish!: () => void;
             this.capabilityQueries.set(controller, new Promise<void>(resolve => { finish = resolve; }));
-            this.capabilityPromise = new Promise<unknown>((resolve, reject) => {
+            this.capabilityPromise = process.platform==='win32' ?
+                captureOwned(binary,['--preview-capabilities'],'',this.build.root,this.hooks.windowsTools,
+                    {timeoutMs:3000,stdoutBytes:65536,stderrBytes:65536,signal:controller.signal}).then(result=>{
+                    if(result.code!==0)throw new Error('Preview capability query failed.');
+                    const value:unknown=JSON.parse(result.stdout);capabilityExtensions(value);
+                    if(sessionCapability(value)?.workerPlatform!=='windows')throw new Error('Native Windows Preview resource contract unavailable.');
+                    return value;
+                }).finally(()=>{this.capabilityQueries.delete(controller);finish();}) :
+                new Promise<unknown>((resolve, reject) => {
                 const query = execFile(binary, ['--preview-capabilities'], { cwd: this.build.root, timeout: 3000, killSignal: 'SIGKILL', signal: controller.signal, maxBuffer: 65536, encoding: 'utf8', env: { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', OMP_NUM_THREADS: '1', CUDA_VISIBLE_DEVICES: '' } }, (error, stdout) => {
                     if (error) {
                         reject(new Error('Preview capability process could not start or query failed.'));
@@ -101,27 +112,13 @@ export class PreviewRunner {
         return this.capabilityPromise;
     }
     async readiness() {
-        const b = await this.build.validate();
-        const refreshed = await this.build.refreshFreshness();
-        const m = refreshed.lastSuccessfulBuild;
         this.current.ready = false;
-        this.current.build = m;
+        this.current.build = this.build.snapshot().lastSuccessfulBuild;
         try {
             if (this.closed)
                 throw new Error('Preview Host is closed.');
-            if (!b.configured || this.build.isActive())
-                throw new Error('Build unavailable or active.');
-            if (refreshed.binaryState === 'needs-build')
-                throw new Error('Tracked source or compiler inputs changed. Build required before real preview.');
-            if (this.build.profile.id !== this.profile.buildProfileId)
-                throw new Error('Preview profile does not match the configured Build.');
-            if (!m || !m.inputsStableDuringBuild || m.buildProfileFingerprint !== profileFingerprint(this.build.profile))
-                throw new Error('Build required before real preview: no matching successful manifest.');
-            const now = await inputs(this.build.profile);
-            if (now.length !== m.trackedInputFingerprints.length || now.some((v, i) => v.relativePath !== m.trackedInputFingerprints[i].relativePath || !same(v.fingerprint, m.trackedInputFingerprints[i].fingerprint)))
-                throw new Error('Tracked source changed. Build required before real preview.');
-            if (!same(await inspect(this.build.root, this.build.profile.outputBinaryRelative, true), m.outputBinary.fingerprint))
-                throw new Error('Binary differs from successful Build. Build required before real preview.');
+            const m = await this.build.requireBuildEvidence(this.profile.buildProfileId);
+            this.current.build = m;
             const capabilities = await this.capabilities(m.buildId, m.outputBinary.fingerprint.sha256);
             const root = capabilities as {
                 modelCapabilities?: unknown;
@@ -139,6 +136,10 @@ export class PreviewRunner {
             }
             if (this.closed)
                 throw new Error('Preview Host is closed.');
+            const latestBuild = this.build.snapshot();
+            if (this.build.isActive() || latestBuild.lastSuccessfulBuild?.buildId !== m.buildId ||
+                (this.build.profile.observedInputScope && latestBuild.observedInputs?.state !== 'current'))
+                throw new Error('Build changed during Preview capability negotiation.');
             this.current.ready = true;
             this.current.reason = 'Preview uses the last successful tracked build. Full dependency freshness is not independently verified.';
         }
@@ -237,7 +238,7 @@ export class PreviewRunner {
                 if (this.auxiliaryRequestId !== request.requestId)
                     throw new Error('Workflow cancelled.');
                 this.sessionGeneration++;
-                this.session = new PreviewSession({ binary, cwd: this.build.root, capability, spawn: this.hooks.spawn, timeoutMs: this.hooks.timeoutMs, graceMs: this.hooks.graceMs });
+                this.session = new PreviewSession({ binary, cwd: this.build.root, capability, windowsTools:this.hooks.windowsTools, spawn: this.hooks.spawn, timeoutMs: this.hooks.timeoutMs, graceMs: this.hooks.graceMs });
                 this.sessionKey = key;
             }
             const session = this.session, generation = this.sessionGeneration;
@@ -264,12 +265,7 @@ export class PreviewRunner {
         const child = this.child;
         if (!child?.pid || this.killTimer)
             return;
-        const kill = (signal: NodeJS.Signals) => { try {
-            process.kill(-child.pid!, signal);
-        }
-        catch {
-            child.kill(signal);
-        } };
+        const kill = (signal: NodeJS.Signals) => terminateOwned(child,signal);
         kill('SIGTERM');
         this.killTimer = setTimeout(() => kill('SIGKILL'), this.hooks.graceMs ?? 1000);
     }
@@ -343,7 +339,7 @@ export class PreviewRunner {
                     if (this.cancelled)
                         throw new Error('Preview cancelled.');
                     this.sessionGeneration++;
-                    this.session = new PreviewSession({ binary, cwd: this.build.root, capability, spawn: this.hooks.spawn, timeoutMs: this.hooks.timeoutMs, graceMs: this.hooks.graceMs });
+                    this.session = new PreviewSession({ binary, cwd: this.build.root, capability, windowsTools:this.hooks.windowsTools, spawn: this.hooks.spawn, timeoutMs: this.hooks.timeoutMs, graceMs: this.hooks.graceMs });
                     this.sessionKey = key;
                 }
                 const session = this.session, generation = this.sessionGeneration;
@@ -362,6 +358,7 @@ export class PreviewRunner {
                 output = { bytes: Buffer.from(JSON.stringify(sessionResult.response)), code: sessionResult.exitCode };
             }
             else {
+                if(process.platform==='win32')throw new Error('Native Windows Preview requires a bounded session; legacy fallback is unavailable.');
                 await this.endSession('Binary uses single-shot Preview.');
                 this.current.session = undefined;
                 output = await new Promise<{

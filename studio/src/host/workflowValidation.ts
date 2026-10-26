@@ -11,13 +11,21 @@ const finite=(v:unknown):v is number=>typeof v==='number'&&Number.isFinite(v);
 const integer=(v:unknown,min=0,max=Number.MAX_SAFE_INTEGER):v is number=>finite(v)&&Number.isInteger(v)&&v>=min&&v<=max;
 const texts=(v:unknown):v is string[]=>Array.isArray(v)&&v.every(x=>typeof x==='string');
 const numbers=(v:unknown,n:number):v is number[]=>Array.isArray(v)&&v.length===n&&v.every(finite);
+/** One strict policy check is shared by session and workflow capability readers. */
+export function windowsPreviewResourcePolicy(value:unknown):boolean {
+    if(!value||typeof value!=='object'||Array.isArray(value))return false;
+    const policy=value as Record<string,unknown>;
+    return Object.keys(policy).length===6&&policy.kind==='windows-job-commit-user-v1'&&
+        policy.memoryKind==='committed'&&policy.processCommitMiB===1024&&policy.cpuClock==='user'&&
+        policy.cpuScope==='resource-job'&&policy.budgetRenewal==='per-request';
+}
 export function validateRegistry(value:unknown):RegisteredCase[]{
  if(!record(value)||value.schemaVersion!=='1.0'||value.version!=='1'||value.kind!=='registered-cases'||value.status!=='ok'||value.setup!=='not_executed'||value.cuda!=='not_initialized'||!Array.isArray(value.cases)||value.cases.length>1024)invalid('Invalid binary case registry.');
  const ids=new Set<string>();
  for(const c of value.cases){
   if(!record(c)||typeof c.caseId!=='string'||!c.caseId||c.caseId.length>128||ids.has(c.caseId)||typeof c.initialFieldPreview!=='boolean'||typeof c.initialAmrPreview!=='boolean'||!Array.isArray(c.previewDimensions)||c.previewDimensions.some(d=>![1,2,3].includes(Number(d))))invalid('Invalid registered case.');
   const i=c.inspection;
-  if(!record(i)||i.registered!==true||i.command!=='--inspect-case'||i.workerPlatform!=='linux'||typeof i.setupReads!=='boolean'||typeof i.primitiveSinkProbe!=='boolean'||i.automaticExpressionInference!==false||!integer(i.hostWallTimeoutSeconds,1,360)||typeof i.coverage!=='string'||typeof i.reviewedUnitEvidence!=='string'||(i.sourceFile!==null&&typeof i.sourceFile!=='string')||(i.compiledSourceSha256!==null&&(typeof i.compiledSourceSha256!=='string'||!/^[a-f0-9]{64}$/.test(i.compiledSourceSha256))))invalid('Invalid case inspection capability.');
+  if(!record(i)||i.registered!==true||i.command!=='--inspect-case'||(i.workerPlatform!=='linux'&&(i.workerPlatform!=='windows'||!windowsPreviewResourcePolicy(i.resourcePolicy)||i.processCpuSeconds!==300||i.processAddressSpaceMiB!==undefined))||typeof i.setupReads!=='boolean'||typeof i.primitiveSinkProbe!=='boolean'||i.automaticExpressionInference!==false||!integer(i.hostWallTimeoutSeconds,1,360)||typeof i.coverage!=='string'||typeof i.reviewedUnitEvidence!=='string'||(i.sourceFile!==null&&typeof i.sourceFile!=='string')||(i.compiledSourceSha256!==null&&(typeof i.compiledSourceSha256!=='string'||!/^[a-f0-9]{64}$/.test(i.compiledSourceSha256))))invalid('Invalid case inspection capability.');
   ids.add(c.caseId);
  }
  return value.cases as unknown as RegisteredCase[];

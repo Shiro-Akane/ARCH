@@ -4,6 +4,8 @@
 
 Use this page to choose the capabilities needed for a simulation. The reference defines configuration and combination rules; validation records identify the tested scientific scope. Inputs, outputs and physical constants use CGS units.
 
+Linux is recommended. Native Windows provides the complete adapted CPU CLI/Studio workflow but may still have instability or bugs; this table does not qualify native Windows CUDA/MPI. See the shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides.
+
 | Area | Available capability | Check when choosing a case |
 | --- | --- | --- |
 | Fluid dynamics | Compressible finite-volume flow in one to three dimensions; SW, VL, Roe, HLL and HLLC fluxes; PCM, MUSCL/PLM and PPM reconstruction; Euler, SSPRK2 and SSPRK3 steps | Flux/EOS compatibility, coarse/fine face reconstruction and coupled temporal order |
@@ -16,7 +18,7 @@ Use this page to choose the capabilities needed for a simulation. The reference 
 | Gravity | External acceleration and self-consistent potential, acceleration and energy work | See the self-gravity domain table below |
 | Execution | CPU/OpenMP and CUDA backends share physics and mathematics; the host owns AMR topology while the device executes numerical work | Build and network capabilities select the backend; speed depends on workload size |
 | Output and restart | HDF5 fields, checkpoints, solver and repair diagnostics; cross-backend restart for compatible configurations | EOS, network, geometry, gravity and control identity must agree on restart |
-| Studio (optional) | Standalone Linux/WSLg window; configuration, build, run/restart, initial-field/AMR Preview and read-only Plotfile queries | Preview follows each model’s advertised capabilities; native cylindrical 2D initial Preview supports three velocity fields and phi-velocity AMR selection. Plotfile overviews cover Cartesian 1D/2D and native cylindrical r-z and stored-cell queries cover recorded native 1D–3D charts. See the [Studio guide](guides/Studio.md) |
+| Studio (optional) | Standalone Linux/WSLg or native Windows11 x64 CPU window; configuration, build, run/restart, initial-field/AMR Preview and read-only Plotfile queries | Preview follows each model’s advertised capabilities; native cylindrical 2D initial Preview supports three velocity fields and phi-velocity AMR selection. Plotfile overviews cover Cartesian 1D/2D and native cylindrical r-z and stored-cell queries cover recorded native 1D–3D charts. See the [Studio guide](guides/Studio.md) |
 | Custom cases | Define `Setup`, `Init` and parameters through `<UserInterface.h>` and `<GlobalDefs.h>` | The [case guide](guides/SimulationCase.md) gives the workflow |
 
 General radiation transport is outside the current feature set. Thermal diffusion and radiation thermodynamics in an EOS follow their respective models.

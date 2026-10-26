@@ -1,3 +1,5 @@
+import {captureOwned} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 /**
  * Adapt the selected Core binary's schema and inspection protocol to Host.
  * The binary and configuration identity are checked around bounded subprocess
@@ -18,6 +20,8 @@ export interface SelectedConfigurationBinary {
     root: string;
     projectId: string;
     binaryRelativePath: string;
+    /** Trusted Host bootstrap only; never a configuration/schema/HTTP field. */
+    windowsTools?: WindowsHostTools;
 }
 /** Only the Host chooses executable, arguments, cwd and environment. */
 export class ConfigurationAdapter {
@@ -84,6 +88,17 @@ export class ConfigurationAdapter {
         try {
             const build = this.target;
             const binary = await checkedPath(build.root, build.binaryRelativePath);
+            if(process.platform==='win32') {
+                let response;
+                try{response=await captureOwned(binary,args,text??'',build.root,this.selected?.windowsTools);}
+                catch{throw new BuildError('Configuration command failed or exceeded its limits.',502);}
+                if(![0,3,7].includes(response.code??-1))throw new BuildError('Configuration command failed or exceeded its limits.',502);
+                try{
+                    const value:unknown=JSON.parse(response.stdout);
+                    if(!value||typeof value!=='object'||Array.isArray(value))throw new Error();
+                    return value as Record<string,unknown>;
+                }catch{throw new BuildError('Invalid Core configuration response.',502);}
+            }
             return await new Promise((resolve, reject) => {
                 const child = execFile(binary, args, { cwd: build.root, shell: false, encoding: 'utf8', timeout: 10000, maxBuffer: 8 * 1024 * 1024, env: { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', OMP_NUM_THREADS: '1', CUDA_VISIBLE_DEVICES: '' } }, (error, stdout) => {
                     // Core uses exit 3 for invalid/incomplete input and 7 for bounded evidence errors.

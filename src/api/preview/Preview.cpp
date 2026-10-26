@@ -428,16 +428,32 @@ std::string PreviewCapabilities() {
     extensions["configuration"] = ConfigurationExtensions();
     extensions["discovery"] = Json::object({{"version", "1"}, {"command", "--list-cases"}});
     extensions["amr"] = Json::object({{"version", "1"}, {"resourcesCommand", "--amr-resources"},
-        {"meshCommand", "--preview-amr"}, {"workerPlatform", "linux"},
+        {"meshCommand", "--preview-amr"},
+#ifdef _WIN32
+        {"workerPlatform", "windows"}, {"resourcePolicy", WindowsPreviewResourcePolicy()},
+#else
+        {"workerPlatform", "linux"},
+#endif
         {"cases", amr_cases}, {"geometries", Json::array({"cartesian", "cylindrical", "spherical"})},
         {"domainNegotiation", "modelCapabilities; SetupChecked restrictions still apply"},
-        {"defaultMaxBlocks", contract::mesh_default_blocks}, {"defaultMemoryMiB", contract::mesh_default_memory_mib}, {"processAddressSpaceMiB", contract::worker_address_space_mib},
+        {"defaultMaxBlocks", contract::mesh_default_blocks}, {"defaultMemoryMiB", contract::mesh_default_memory_mib},
+#ifndef _WIN32
+        {"processAddressSpaceMiB", contract::worker_address_space_mib},
+#endif
         {"processCpuSeconds", contract::worker_cpu_seconds}, {"hostWallTimeoutRequired", true}});
     extensions["caseInspection"] = Json::object({{"version", contract::initialization_version},
         {"command", "--inspect-case"}, {"caseDiscovery", "--list-cases"},
-        {"automaticExpressionInference", false}, {"workerPlatform", "linux"},
+        {"automaticExpressionInference", false},
+#ifdef _WIN32
+        {"workerPlatform", "windows"}, {"resourcePolicy", WindowsPreviewResourcePolicy()},
+#else
+        {"workerPlatform", "linux"},
+#endif
         {"hostWallTimeoutSeconds", contract::case_wall_seconds}, {"processCpuSeconds", contract::case_cpu_seconds},
-        {"processAddressSpaceMiB", contract::worker_address_space_mib}, {"primitiveProbeSamplesPerAxis", 3}});
+#ifndef _WIN32
+        {"processAddressSpaceMiB", contract::worker_address_space_mib},
+#endif
+        {"primitiveProbeSamplesPerAxis", 3}});
     return Json::object({{"schemaVersion", preview_schema_version}, {"kind", "preview-capabilities"},
         {"status", "ok"}, {"cases", Json::array({"Sod"})}, {"dimensions", Json::array({1})},
         {"geometries", Json::array({"cartesian"})}, {"previewBackend", "cpu"},

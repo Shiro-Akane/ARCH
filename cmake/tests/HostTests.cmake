@@ -7,11 +7,27 @@ function(arch_configure_host_test target)
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${CMAKE_CURRENT_SOURCE_DIR}/tests" ${ARGN})
+    if(WIN32)
+        target_sources(${target} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/project/windows/ARCH.rc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/project/windows/ARCH.manifest")
+    endif()
 endfunction()
 
 # Python tooling contracts.
 find_package(Threads REQUIRED)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+add_executable(arch_platform_files tests/host/core/test_platform_files.cpp
+    src/core/files/FileFingerprint.cpp)
+arch_configure_host_test(arch_platform_files)
+add_test(NAME platform_files COMMAND arch_platform_files)
+add_test(NAME running_image_identity
+    COMMAND ${Python3_EXECUTABLE} -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/host/core/test_running_image_identity.py"
+        $<TARGET_FILE:arch_platform_files>
+        "${CMAKE_CURRENT_BINARY_DIR}/running-image-identity-data")
+set_tests_properties(running_image_identity PROPERTIES TIMEOUT 90)
 # This utility reads Host HDF5 checkpoints/traces; its historical target name
 # stays stable for validation runners. Its source and acceptance logic are
 # unchanged, and it does not construct or link the production CUDA backend.
@@ -313,6 +329,15 @@ function(arch_register_io_regression_tests)
         src/core/files/FileFingerprint.cpp)
     arch_configure_host_test(arch_plotfile_publication
         "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+       AND CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL "16.2.0")
+        # Locally reproduced UCRT64/GCC 16.2 LTO failure: this TU's valid UUID
+        # regex throws before any Grid operation. Keep its original assertions
+        # and O3/strict FP; only this harness is native, while the writer and
+        # fingerprint implementations retain the production IPO profile.
+        set_property(SOURCE tests/host/io/test_plotfile_publication.cpp
+            APPEND PROPERTY COMPILE_OPTIONS -fno-lto)
+    endif()
     target_link_libraries(arch_plotfile_publication PRIVATE
         ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -495,3 +520,24 @@ add_test(NAME self_gravity_physics
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/validation/gravity/run_self_gravity.py
         --arch $<TARGET_FILE:ARCH> --output ${CMAKE_CURRENT_BINARY_DIR}/self-gravity-jeans --quick)
 set_tests_properties(self_gravity_physics PROPERTIES TIMEOUT 300 ENVIRONMENT "OMP_NUM_THREADS=1")
+
+# Standalone native file primitive tests. Fault seams are excluded from the
+# installed publisher, and neither target links numerical or scientific I/O code.
+if(WIN32)
+    add_executable(arch_windows_build_publish_test src/core/files/WindowsBuildPublish.cpp)
+    target_link_libraries(arch_windows_build_publish_test PRIVATE ntdll advapi32)
+    target_compile_definitions(arch_windows_build_publish_test PRIVATE
+        _WIN32_WINNT=0x0A00 ARCH_BUILD_PUBLISH_TEST)
+    target_link_options(arch_windows_build_publish_test PRIVATE
+        $<$<CXX_COMPILER_ID:GNU>:-municode>)
+    add_test(NAME windows_build_manifest_publication
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/host/core/test_windows_build_publish.py
+            $<TARGET_FILE:arch_windows_build_publish_test>)
+    set_tests_properties(windows_build_manifest_publication PROPERTIES TIMEOUT 120)
+    add_test(NAME windows_config_and_read_operations
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/host/core/test_windows_file_operations.py
+            $<TARGET_FILE:arch_windows_build_publish_test>)
+    set_tests_properties(windows_config_and_read_operations PROPERTIES TIMEOUT 120)
+endif()

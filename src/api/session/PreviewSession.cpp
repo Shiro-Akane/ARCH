@@ -100,18 +100,25 @@ void emit(std::ostream& output, const Json& value) {
 
 detail::Json PreviewSessionCapability() {
     return Json::object({{"version", "1"}, {"command", "--preview-session"},
-#ifdef __linux__
+#if defined(__linux__) || defined(_WIN32)
         {"supported", true},
 #else
         {"supported", false},
 #endif
-        {"workerPlatform", "linux"}, {"transport", "ndjson"}, {"maxInFlight", 1},
+#ifdef _WIN32
+        {"workerPlatform", "windows"}, {"resourcePolicy", WindowsPreviewResourcePolicy()},
+#else
+        {"workerPlatform", "linux"},
+#endif
+        {"transport", "ndjson"}, {"maxInFlight", 1},
         {"commands", Json::array({"--inspect-config", "--amr-resources", "--inspect-case", "--preview", "--preview-amr", "reset-resources"})},
         {"maxRequests", contract::session_max_requests},
         {"maxRequestBytes", std::int64_t(contract::session_max_request_bytes)},
         {"maxResponseBytes", std::int64_t(contract::session_max_response_bytes)},
         {"maxConfigBytes", std::int64_t(max_config_bytes)},
+#ifndef _WIN32
         {"processAddressSpaceMiB", contract::worker_address_space_mib},
+#endif
         {"heavyRequestCpuSeconds", contract::case_cpu_seconds}, {"heavyRequestWallSeconds", contract::case_wall_seconds},
         {"meshRequestCpuSeconds", contract::worker_cpu_seconds}, {"meshRequestWallSeconds", 45},
         {"maxRetainedTables", 1}, {"resourceReuse", "content-and-ordered-species-validated"},

@@ -3,8 +3,18 @@
 [English](Build.md) · [快速开始](../../README.zh-CN.md#构建)
 
 第一次构建可以直接使用 README 中的 CPU 或 CUDA 命令。本指南解释这些命令的
-作用，以及如何根据机器调整编译。所有 shell 示例都应在 Linux 或 WSL2 终端中，
-从仓库根目录执行。
+作用，以及如何根据机器调整编译。Bash 示例在 Linux／WSL2 终端中执行，原生 Windows 示例使用 PowerShell；两者均从仓库根目录开始。
+
+**推荐 Linux。** 原生 Windows 11 x64 提供完整的已适配 CPU CLI 与 Studio 工作流，但适配较新，可能存在不稳定性与 bug。两侧共用 CMake、科学实现、参数格式与 Studio 服务；本轮不赋予 Windows CUDA／MPI 资格。
+
+| 任务 | Linux／WSL2 | 原生 Windows 11 x64 |
+| --- | --- | --- |
+| CPU 工具与依赖 | C++20、Ninja、HDF5／OpenMP；使用下方预设 | GCC/UCRT64 与同 ABI HDF5／HighFive／KLU；见[依赖准备](WindowsNativeW0.zh-CN.md)和[编译](WindowsNativeCpu.zh-CN.md) |
+| 可执行文件 | `build-cpu/bin/ARCH` | `build-windows-cpu/bin/ARCH.exe` |
+| 可选 Studio | 原生 Node24+、Electron、图形库／WSLg | 原生 x64 Node24+、Electron、平台辅助程序与 DLL PATH；见[桌面构建](WindowsStudioDesktop.zh-CN.md) |
+| 运行终端 | `xterm` 与 `flock` | 已配置的 Windows Terminal 与原生进程辅助程序 |
+
+两侧分别使用构建与依赖目录。[Studio 路径说明](Studio.zh-CN.md#linux-与-windows-的路径)区分共用的项目相对路径和依赖宿主系统的 `.par` 路径。
 
 ## 先配置，再编译
 
@@ -41,6 +51,19 @@ CUDA 预设启用 `ARCH_ENABLE_CUDA=ON`，相比纯 CPU 构建会显著增加编
 产物分离通过 `ARCH_RUNTIME_OUTPUT_DIRECTORY` 实现，它指向各构建目录下 `bin/`
 的绝对路径。不设置该选项时，项目默认把可执行文件写入源码树的 `bin/`。
 需要覆盖预设中的编译器、CUDA 架构等选项时，在配置命令后追加 `-D名称=值` 即可。
+
+## Windows 原生 CPU CLI
+
+Windows 11 的 GCC/UCRT64 构建、安装、路径与定点验收见
+[Windows 原生 CPU CLI](WindowsNativeCpu.zh-CN.md)。工具与同 ABI 的
+HDF5／HighFive／KLU 准备仍由 [W0 指南](WindowsNativeW0.zh-CN.md)说明。
+
+CPU CLI 复用相同 CMake／求解器／HDF5 实现，使用独立的 Windows 构建目录。
+仅 CPU CLI 验证不代表原生 Studio、Windows CUDA 或 MPI 已获支持。数学库和 Studio
+读写库继续冻结；既有 Linux／WSL2 路线保留。
+
+原生 Studio Host 服务与已批准的平台例外见 [Windows Studio 平台服务](WindowsStudioPlatform.zh-CN.md)，
+包含资源验收程序的编译命令及有限范围 Build／Preview 准入。[原生桌面指南](WindowsStudioDesktop.zh-CN.md)给出已完成的 W3 窗口、打包、Run／Restart 和真实 Plotfile 链路；普通使用按 [Studio 指南](Studio.zh-CN.md)操作。本节不赋予 Windows CUDA 或 MPI 资格。
 
 ## 构建输出
 
@@ -260,3 +283,5 @@ CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `
 GUI 预设使用 Host 管理的本地 CPU 构建目录和 GNU 构建身份设置。
 Node 24+、WSLg、图形库及独立终端的要求见 [Studio 使用指南](Studio.zh-CN.md)
 与[环境准备](StudioEnvironment.zh-CN.md)。
+
+[W3 原生桌面构建与打包](WindowsStudioDesktop.zh-CN.md)：W3 原生 CPU Studio 已在文档限定环境闭合，A11 与人工操作／文件校验证据分别记录。

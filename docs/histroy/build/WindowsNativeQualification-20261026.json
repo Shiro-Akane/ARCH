@@ -1,0 +1,117 @@
+{
+  "schema": "arch-windows-native-qualification-1",
+  "date": "2026-10-26",
+  "frozenBaseline": "04cb2f3f7881c20b7ee446d1b7adc020cb8feaf5",
+  "branch": "build/win11",
+  "recommendedSystem": "Linux or Linux under WSL2",
+  "nativeScope": "Windows11 x64 GCC/UCRT64 CPU CLI and complete Studio workflow",
+  "maturity": "Newer native Windows support; instability and bugs remain possible",
+  "implementedStages": [
+    "W0 toolchain/same-ABI",
+    "W1 CPU CLI/install/UTF-8/run/restart",
+    "W2 native Host/process/file/resource boundaries",
+    "W3 window/shared portable package/actual Core output GUI"
+  ],
+  "runtime": {
+    "electron": "44.9.1",
+    "hostStandaloneNode": "24.21.0",
+    "electronEmbeddedNode": "24.22.0",
+    "windowsProductionFilesCompared": 222,
+    "finalWindowsAndLinuxPackagesRebuilt": true,
+    "currentLegalNoticesMatch": true,
+    "licenseInventoryRecords": 330
+  },
+  "finalLinuxSoftwareChecks": {
+    "lockedInstall": true,
+    "lint": true,
+    "typedProductionBuild": true,
+    "fullStudioHost": {
+      "tests": 451,
+      "pass": 451,
+      "fail": 0,
+      "skip": 0,
+      "strictCiGatePassed": true,
+      "windowsCasesNotApplicable": 40,
+      "nativeOnlyFilesNotApplicable": 5,
+      "originalAssertionBodiesUnchanged": true,
+      "originalCiResultCheckerUnchanged": true,
+      "newTestEntryControls": 3
+    },
+    "fixture": {
+      "bytes": 14336,
+      "sha256": "dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+      "temporaryVerifiedLocalMaterialization": true,
+      "originalPointerRestored": true
+    }
+  },
+  "producedPlotfile": {
+    "bytes": 93440,
+    "blocks": 4,
+    "cells": 64,
+    "step": 8,
+    "time": 0.015108299363338467,
+    "sha256": "ac8e6b1b7d781c347117b1b3d95eba0e56b500dc6efdd5a4f821ac6e80555fc1",
+    "coreSha256": "5e9265a5f54ebad11a17a3d88af4d6837cd19167fa3354fdaa06e4630ecf445e",
+    "checkpointRestartComparison": {
+      "maxAbs": 0,
+      "maxRel": 0,
+      "scope": "This representative sample only; no new global tolerance"
+    },
+    "originalPackagedWorkerQueries": [
+      "metadata",
+      "SHA-bound slice",
+      "SHA-bound overview",
+      "SHA-bound point"
+    ],
+    "independentStoredFP64Check": {
+      "sliceSamples": 8,
+      "pointSamples": 1,
+      "coordinateBitsExact": true,
+      "readBeforeAfterShaUnchanged": true
+    },
+    "humanReportedGuiDisplayAndNormalClose": true,
+    "automatedOSClickClaim": false
+  },
+  "finalizationFreeze": {
+    "implementationFilesUnchanged": 708,
+    "mathematicalImplementationChanges": false,
+    "additionalStudioIoImplementationChanges": false,
+    "testRegistrationChanges": "23 Windows and 2 Linux registration guards only; original assertions/options/names identical"
+  },
+  "dependencyPullRequests": {
+    "19": {
+      "mergeSha": "10336a217fe39369f39e80b51e98781dfa170aa6",
+      "ciRun": 40069802272
+    },
+    "20": {
+      "mergeSha": "c9040f44e6e3ab388fe0a1a5756c5980244ec29e",
+      "acceptedHead": "f154bb4761f6e4aa585add63cd16f1fe598f67e8",
+      "ciRun": 40265117378
+    }
+  },
+  "limits": [
+    "Native Windows CUDA/MPI not qualified",
+    "No all-model or arbitrary filesystem qualification",
+    "Windows process commit is not Linux RLIMIT_AS",
+    "Full build dependency closure may remain unknown",
+    "Human window evidence remains separate from HTTP/process checks"
+  ],
+  "distribution": {
+    "coreAndNativeDependenciesBundled": false,
+    "packageKind": "local portable directory",
+    "developmentPackageVersion": "0.0.0",
+    "rawLocalRunDataAndLogsIncluded": false,
+    "machineLocalAgentsSkillsAndObsoletePlansIncluded": false,
+    "WindowsPullRequestMerge": "user",
+    "release": "deferred",
+    "Zenodo": "deferred"
+  },
+  "finalNativeWindowsRegistrationRegression": {
+    "tests": 47,
+    "pass": 47,
+    "fail": 0,
+    "skip": 0,
+    "nativeNode": "24.21.0",
+    "scope": "Affected mixed-platform groups plus selector controls; all original assertions/options unchanged"
+  }
+}

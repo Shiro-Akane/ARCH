@@ -5,6 +5,8 @@
  * a reason to infer the toolchain from a profile label.
  */
 import path from 'node:path';
+import {windowsEnvironment} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {readFile,stat,realpath,readdir,access} from 'node:fs/promises';
@@ -20,6 +22,14 @@ export interface CMakeConfigurationEvidence {
 }
 function object(x:unknown):x is Record<string,unknown>{return !!x&&typeof x==='object'&&!Array.isArray(x);}
 function absolute(x:unknown):x is string{return typeof x==='string'&&path.isAbsolute(x)&&!x.includes('\0');}
+// CMake writes '/' and may lowercase the drive in its Windows cache. Normalize
+// that host spelling only; directory/file case and all Linux spelling stay exact.
+export function sameCMakePath(value:unknown,expected:string){
+ if(!absolute(value)||!absolute(expected))return false;
+ if(process.platform!=='win32')return value===expected;
+ const normalize=(text:string)=>path.normalize(text).replace(/^[a-z]:/i,drive=>drive.toUpperCase());
+ return normalize(value)===normalize(expected);
+}
 async function boundedFile(file:string,limit:number){
  const before=await stat(file);
  if(!before.isFile()||before.size>limit)throw new Error('CMake evidence file unavailable or over budget: '+file);
@@ -37,7 +47,7 @@ export async function readCMakeConfigurationEvidence(sourceRoot:string,buildDire
  const bytes=await boundedFile(reply,8*1024*1024);
  const data:unknown=JSON.parse(bytes.toString('utf8'));
  if(!object(data)||data.kind!=='cmakeFiles'||!object(data.version)||data.version.major!==1||
-    !object(data.paths)||data.paths.source!==source||data.paths.build!==build||
+    !object(data.paths)||!sameCMakePath(data.paths.source,source)||!sameCMakePath(data.paths.build,build)||
     !Array.isArray(data.inputs)||data.inputs.length===0||data.inputs.length>20000)
   throw new Error('Incompatible CMake input reply or source/build binding.');
  const inputs:CMakeInputEvidence[]=[];const seen=new Set<string>();let total=0;
@@ -62,29 +72,32 @@ export async function readCMakeConfigurationEvidence(sourceRoot:string,buildDire
 
 export const HOST_BUILD_PATH='/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin';
 type CompilerProbe=(compiler:string,argument:string)=>Promise<string>;
-const compilerProbe:CompilerProbe=async(compiler,argument)=>{
+const compilerProbe:CompilerProbe=async(compiler,argument)=>compilerProbeWithTools(compiler,argument);
+async function compilerProbeWithTools(compiler:string,argument:string,tools?:WindowsHostTools){
+ if(process.platform==='win32'&&!tools)throw new Error('Trusted native compiler environment required.');
  const result=await promisify(execFile)(compiler,[argument],{
-  env:{PATH:HOST_BUILD_PATH,LC_ALL:'C'},timeout:5000,maxBuffer:1024*1024,
+  env:tools?{...windowsEnvironment(tools),LC_ALL:'C'}:{PATH:HOST_BUILD_PATH,LC_ALL:'C'},timeout:5000,maxBuffer:1024*1024,windowsHide:true,
  });
  return result.stdout;
 };
-async function gnuComponents(compiler:string,language:string,probe:CompilerProbe,selectedProgram?:string){
+async function gnuComponents(compiler:string,language:string,probe:CompilerProbe,selectedProgram?:string,tools?:WindowsHostTools){
+ const plugin=process.platform==='win32'?'liblto_plugin.dll':'liblto_plugin.so';
  const components:{role:string;path:string;resolvedPath:string;sha256:string;size:number}[]=[];
  const query=async(argument:string)=>{
   const value=(await probe(compiler,argument)).trim();
   if(!value||value.includes('\0')||value.includes('\n'))throw new Error('Invalid GNU component reply.');
   return value;
  };
- for(const role of [language==='CXX'?'cc1plus':'cc1','collect2','as','ld','lto1','liblto_plugin.so',...(selectedProgram?['selected-'+selectedProgram]:[])]){
+ for(const role of [language==='CXX'?'cc1plus':'cc1','collect2','as','ld','lto1',plugin,...(selectedProgram?['selected-'+selectedProgram]:[])]){
   const program=role.startsWith('selected-')?role.slice('selected-'.length):role;
-  const value=await query((role==='liblto_plugin.so'?'-print-file-name=':'-print-prog-name=')+program);
+  const value=await query((role===plugin?'-print-file-name=':'-print-prog-name=')+program);
   // Bare tool names are resolved only through the same fixed Host PATH used for the probe.
   let filename=value;
   if(!path.isAbsolute(value)){
-   if(path.basename(value)!==value||role==='liblto_plugin.so')throw new Error('GNU component cannot be resolved: '+program);
+   if(path.basename(value)!==value||role===plugin)throw new Error('GNU component cannot be resolved: '+program);
    filename='';
-   for(const dir of HOST_BUILD_PATH.split(':')){
-    const candidate=path.join(dir,value);
+   for(const dir of (tools?.path??HOST_BUILD_PATH).split(path.delimiter)){
+    const candidate=path.join(dir,process.platform==='win32'&&!value.toLowerCase().endsWith('.exe')?value+'.exe':value);
     try{await stat(candidate);filename=candidate;break;}catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;}
    }
    if(!filename)throw new Error('GNU component unavailable: '+program);
@@ -103,7 +116,8 @@ async function gnuComponents(compiler:string,language:string,probe:CompilerProbe
  return {components,specsSha256:createHash('sha256').update(specs).digest('hex')};
 }
 /** Host-owned GNU subprocess identities; implicit libraries and per-invocation overrides remain separate evidence. */
-export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile:string,probe:CompilerProbe=compilerProbe,selectedProgram?:string){
+export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile:string,probe:CompilerProbe=compilerProbe,selectedProgram?:string,tools?:WindowsHostTools){
+ if(tools&&probe===compilerProbe)probe=(compiler,argument)=>compilerProbeWithTools(compiler,argument,tools);
  const build=await realpath(buildDirectory),reply=await realpath(replyFile);
  if(path.dirname(reply)!==path.join(build,'.cmake/api/v1/reply'))throw new Error('Toolchain reply outside selected build.');
  const bytes=await boundedFile(reply,8*1024*1024),data:unknown=JSON.parse(bytes.toString('utf8'));
@@ -111,12 +125,23 @@ export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile
   throw new Error('Incompatible CMake toolchain reply.');
  const compilers=[];
  for(const entry of data.toolchains){
-  if(!object(entry)||typeof entry.language!=='string'||!object(entry.compiler)||!absolute(entry.compiler.path)||
-     typeof entry.compiler.id!=='string'||typeof entry.compiler.version!=='string')throw new Error('Malformed compiler identity.');
+  if(!object(entry)||typeof entry.language!=='string'||!object(entry.compiler)||!absolute(entry.compiler.path))throw new Error('Malformed compiler identity.');
+  let id=entry.compiler.id,version=entry.compiler.version;
+  // CMake's native RC descriptor omits id/version. Probe only the explicitly
+  // bound GNU resource compiler; never guess missing C/CXX identities or run a
+  // cache-selected executable. Keep the actual RC driver hash like other tools.
+  if(process.platform==='win32'&&entry.language==='RC'&&id===undefined&&version===undefined){
+   if(!tools?.rc||!sameCMakePath(entry.compiler.path,tools.rc))throw new Error('RC driver differs from trusted Host resource compiler.');
+   const output=await probe(tools.rc,'--version');
+   const match=/^GNU windres \(GNU Binutils\) ([0-9]+(?:\.[0-9]+)+)\r?$/m.exec(output);
+   if(!match)throw new Error('GNU resource compiler version unavailable.');
+   id='GNU windres';version=match[1];
+  }
+  if(typeof id!=='string'||!id||typeof version!=='string'||!version)throw new Error('Malformed compiler identity.');
   const resolvedPath=await realpath(entry.compiler.path),content=await boundedFile(resolvedPath,128*1024*1024);
-  compilers.push({language:entry.language,path:entry.compiler.path,resolvedPath,id:entry.compiler.id,version:entry.compiler.version,
+  compilers.push({language:entry.language,path:entry.compiler.path,resolvedPath,id,version,
    sha256:createHash('sha256').update(content).digest('hex'),size:content.length,
-   ...(entry.compiler.id==='GNU'&&['C','CXX'].includes(entry.language)?await gnuComponents(entry.compiler.path,entry.language,probe,entry.language==='CXX'?selectedProgram:undefined):{})});
+   ...(entry.compiler.id==='GNU'&&['C','CXX'].includes(entry.language)?await gnuComponents(entry.compiler.path,entry.language,probe,entry.language==='CXX'?selectedProgram:undefined,tools):{})});
  }
  return {kind:'cmake-compiler-driver-identities' as const,replySha256:createHash('sha256').update(bytes).digest('hex'),compilers,
   dependenciesComplete:false as const,missingCoverage:['compiler-subprograms','linker','implicit-libraries']};
@@ -134,7 +159,7 @@ async function buildReply(buildDirectory:string,kind:string){
  return {build,replyFile:path.join(reply,entry.jsonFile)};
 }
 
-export async function readBuildToolchainEvidence(buildDirectory:string){
+export async function readBuildToolchainEvidence(buildDirectory:string,tools?:WindowsHostTools){
  const {build,replyFile}=await buildReply(buildDirectory,'toolchains');
  // Read only the bounded descriptor to decide whether GNU CXX needs the
  // actual ARCH linker selection. Do not probe or hash the full toolchain yet.
@@ -146,14 +171,14 @@ export async function readBuildToolchainEvidence(buildDirectory:string){
   object(entry.compiler)&&entry.compiler.id==='GNU');
  // Non-GNU fixtures retain their old contract: a codemodel is not required.
  const selectedProgram=hasGnuCxx?(await readBuildLinkerSelection(build)).programName:undefined;
- const evidence=await readCMakeToolchainEvidence(build,replyFile,compilerProbe,selectedProgram);
+ const evidence=await readCMakeToolchainEvidence(build,replyFile,(compiler,argument)=>compilerProbeWithTools(compiler,argument,tools),selectedProgram,tools);
  // A descriptor replacement cannot change the GNU/selection decision midway.
  if(evidence.replySha256!==createHash('sha256').update(bytes).digest('hex'))
   throw new Error('Toolchain reply changed while selecting linker.');
  return evidence;
 }
 /** Fingerprint fixed Host tools; cache program paths are never executed. */
-export async function readBuildGeneratorEvidence(sourceRoot:string,buildDirectory:string,hostCmake='/usr/bin/cmake'):Promise<GeneratorToolEvidence[]>{
+export async function readBuildGeneratorEvidence(sourceRoot:string,buildDirectory:string,hostCmake='/usr/bin/cmake',hostNinja?:string):Promise<GeneratorToolEvidence[]>{
  const source=await realpath(sourceRoot),build=await realpath(buildDirectory);
  const cache=path.join(build,'CMakeCache.txt'),bytes=await boundedFile(cache,2*1024*1024);
  const values=new Map<string,string>();
@@ -163,10 +188,13 @@ export async function readBuildGeneratorEvidence(sourceRoot:string,buildDirector
   if(values.has(key))throw new Error('Duplicate CMake cache key: '+key);
   values.set(key,line.slice(at+1));
  }
- if(values.get('CMAKE_HOME_DIRECTORY')!==source||values.get('CMAKE_CACHEFILE_DIR')!==build)
+ if(!sameCMakePath(values.get('CMAKE_HOME_DIRECTORY'),source)||!sameCMakePath(values.get('CMAKE_CACHEFILE_DIR'),build))
   throw new Error('Generator source/build binding differs.');
  if(values.get('CMAKE_GENERATOR')!=='Ninja')throw new Error('Unsupported Host generator.');
- if(values.get('CMAKE_COMMAND')!==hostCmake)throw new Error('Cache CMake differs from fixed Host CMake.');
+ if(!sameCMakePath(values.get('CMAKE_COMMAND'),hostCmake))throw new Error('Cache CMake differs from fixed Host CMake.');
+ // Original read-only callers may only fingerprint the cache tool. The Build
+ // path always supplies its explicit Ninja binding before any execution.
+ if(hostNinja!==undefined&&!sameCMakePath(values.get('CMAKE_MAKE_PROGRAM'),hostNinja))throw new Error('Cache Ninja differs from fixed Host Ninja.');
  const tools:GeneratorToolEvidence[]=[];
  for(const role of ['cmake','ninja'] as const){
   const filename=role==='cmake'?hostCmake:values.get('CMAKE_MAKE_PROGRAM');
@@ -179,10 +207,11 @@ export async function readBuildGeneratorEvidence(sourceRoot:string,buildDirector
  if(!(await boundedFile(cache,2*1024*1024)).equals(bytes))throw new Error('Generator cache changed while reading.');
  return tools;
 }
-export async function readBuildConfigurationInputs(sourceRoot:string,buildDirectory:string){
+export async function readBuildConfigurationInputs(sourceRoot:string,buildDirectory:string,tools?:WindowsHostTools){
+ if(process.platform==='win32'&&!tools?.ninja)throw new Error('Trusted native generator tools required.');
  const {build,replyFile}=await buildReply(buildDirectory,'cmakeFiles');
  const evidence=await readCMakeConfigurationEvidence(sourceRoot,build,replyFile);
- evidence.generatorTools=await readBuildGeneratorEvidence(sourceRoot,build);
+ evidence.generatorTools=await readBuildGeneratorEvidence(sourceRoot,build,tools?.cmake,tools?.ninja);
  return evidence;
 }
 export function sameConfigurationInputs(a:CMakeConfigurationEvidence|undefined,b:CMakeConfigurationEvidence|undefined){
@@ -201,7 +230,7 @@ export async function readBuildLinkerSelection(buildDirectory:string){
  const {build,replyFile}=await buildReply(buildDirectory,'codemodel');
  const bytes=await boundedFile(replyFile,8*1024*1024),data:unknown=JSON.parse(bytes.toString('utf8'));
  if(!object(data)||data.kind!=='codemodel'||!object(data.version)||data.version.major!==2||
-    !object(data.paths)||data.paths.build!==build||!Array.isArray(data.configurations)||data.configurations.length!==1)
+    !object(data.paths)||!sameCMakePath(data.paths.build,build)||!Array.isArray(data.configurations)||data.configurations.length!==1)
   throw new Error('Unsupported ARCH codemodel binding or configuration count.');
  const configuration=data.configurations[0];
  if(!object(configuration)||!Array.isArray(configuration.targets))throw new Error('Malformed codemodel targets.');

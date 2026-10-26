@@ -478,7 +478,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
             identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
             identity.createAttribute("binary_sha256",id.binary_sha256.empty()?std::string("unknown"):id.binary_sha256);
-            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):std::string("Linux /proc/self/exe"));
+            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):
+                std::string(arch::core::running_executable_source()));
             identity.createAttribute("binary_scope",std::string("main-executable-only"));
             identity.createAttribute("raw_config_sha256",id.raw_config_sha256.empty()?std::string("unknown"):id.raw_config_sha256);
             identity.createAttribute("raw_config_source",id.raw_config_sha256.empty()?std::string("unknown"):

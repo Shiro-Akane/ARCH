@@ -5,6 +5,8 @@
  * identity is rechecked before publication; failures close descriptors and remove
  * only the owned temporary file. HTTP callers cannot supply fault-injection hooks.
  */
+import {publishWindowsConfig,WindowsFileError} from './windowsFilePublish.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import { constants } from 'node:fs';
 import { open, realpath, rename, unlink, link, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -15,6 +17,9 @@ import type { FileFingerprint } from '../src/host/contracts.ts';
 // Fault injection is module-only for tests; never accepted by HTTP requests.
 export interface AtomicHooks {
     beforeWrite?: () => Promise<void>;
+    beforeCommit?: () => Promise<void>;
+    afterCommit?: () => Promise<void>;
+    windowsTools?: WindowsHostTools;
     publish?: (temporary: string, target: string) => Promise<void>;
 }
 export async function atomicSave(root: string, relative: string, projectId: string, text: string, expected: FileFingerprint, hooks: AtomicHooks = {}) {
@@ -26,7 +31,7 @@ export async function atomicSave(root: string, relative: string, projectId: stri
 export async function publishConfig(root: string, relative: string, projectId: string, text: string, expected: FileFingerprint | undefined, createOnly: boolean, hooks: AtomicHooks = {}) {
     configPath(relative);
     validateText(text);
-    if (process.platform !== 'linux')
+    if (process.platform !== 'linux' && process.platform !== 'win32')
         throw new ConfigError('write-failed', 'Local writes are currently supported in the documented WSL/Linux host only.');
     const parentRelative = path.dirname(relative);
     let directory;
@@ -37,6 +42,33 @@ export async function publishConfig(root: string, relative: string, projectId: s
     }
     catch (e) {
         throw configError(e, relative);
+    }
+    if (process.platform === 'win32') {
+        const identity = await stat(directory, {bigint:true});
+        try {
+            if (!createOnly) await prepareSave(root, relative, projectId, expected!, text);
+            await publishWindowsConfig(directory,path.basename(relative),text,createOnly,hooks.windowsTools,
+                async()=>{await hooks.beforeWrite?.();},async()=>{
+                    await hooks.beforeCommit?.();
+                    const current = parentRelative === '.' ? await realpath(root) : await checkedPath(root,parentRelative);
+                    const latest = await stat(current,{bigint:true});
+                    if (current!==directory || latest.dev!==identity.dev || latest.ino!==identity.ino)
+                        throw new ConfigError('outside-project-root','Destination directory changed before save.',relative);
+                    if (!createOnly) await prepareSave(root,relative,projectId,expected!,text);
+                    if(hooks.publish)throw new ConfigError('rename-failed','A path-based publication override is unavailable on Windows; original preserved.',relative);
+                });
+        } catch(error) {
+            if(error instanceof ConfigError)throw error;
+            if(error instanceof WindowsFileError && error.committed===false && [80,183].includes(error.win32??0))
+                throw new ConfigError('destination-exists','Destination already exists. Choose another name.',relative);
+            throw new ConfigError('write-failed',error instanceof WindowsFileError && error.committed===false ?
+                'Native atomic publication failed before commit; original preserved. '+error.message:
+                'Native save outcome is uncertain or was already committed. Reload explicitly to inspect disk. '+String(error),relative);
+        }
+        await hooks.afterCommit?.();
+        const result=await readConfig(root,relative,projectId);
+        if(result.text!==text)throw new ConfigError('changed-externally','File changed immediately after save. Reload explicitly to inspect disk.',relative,result.fingerprint);
+        return result;
     }
     const dir = await open(directory, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW).catch(e => { throw configError(e, relative); });
     const temporaryName = `.arch-config-${randomUUID()}.tmp`;

@@ -8,7 +8,7 @@ set(arch_identity_inputs ${ARCH_APPLICATION_SOURCES} ${ARCH_DRIVER_RUNTIME_SOURC
 # Bind extracted mathematical leaves and actual CUDA object owners as well as
 # APP collection variables; extraction must not silently drop a source identity.
 set(arch_identity_targets ARCH arch_build_contract arch_driver_runtime
-    arch_solver_dispatch arch_gravity_cpu arch_diffusion_math)
+    arch_solver_dispatch arch_gravity_cpu arch_diffusion_math arch_run_identity)
 get_property(arch_identity_directory_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN LISTS arch_identity_directory_targets)
     if(target MATCHES "^arch_cuda_")
@@ -49,8 +49,15 @@ foreach(root "${ARCH_CUSTOM_NETWORK_ROOT}" "${ARCH_CUSTOM_REGISTRY_DIR}")
         list(APPEND arch_identity_inputs ${arch_identity_custom})
     endif()
 endforeach()
-list(TRANSFORM arch_identity_inputs PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/"
-    REGEX "^[^/].*")
+# Native absolute paths include drive letters and UNC roots as well as POSIX /.
+# Resolve only relative inputs against the source directory.
+set(arch_identity_absolute_inputs "")
+foreach(input IN LISTS arch_identity_inputs)
+    cmake_path(ABSOLUTE_PATH input BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE absolute_input)
+    list(APPEND arch_identity_absolute_inputs "${absolute_input}")
+endforeach()
+set(arch_identity_inputs ${arch_identity_absolute_inputs})
 list(REMOVE_DUPLICATES arch_identity_inputs)
 # The generated identity is an output of these inputs, never one of its own
 # sources. Keep actual generated network/registry headers in the fingerprint.
@@ -77,10 +84,13 @@ set(arch_identity_profile "arch-configured-compiler-profile-1\n")
 foreach(name CMAKE_VERSION CMAKE_GENERATOR CMAKE_BUILD_TYPE CMAKE_SYSTEM_NAME
     CMAKE_SYSTEM_PROCESSOR CMAKE_CXX_COMPILER_LAUNCHER CMAKE_CUDA_COMPILER_LAUNCHER CMAKE_C_COMPILER CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION
     CMAKE_CXX_COMPILER CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION
+    CMAKE_RC_COMPILER CMAKE_RC_COMPILER_ID CMAKE_RC_COMPILER_VERSION
     CMAKE_CUDA_COMPILER CMAKE_CUDA_COMPILER_ID CMAKE_CUDA_COMPILER_VERSION
     CMAKE_CUDA_ARCHITECTURES CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE
     CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
     CMAKE_CUDA_FLAGS CMAKE_CUDA_FLAGS_RELEASE CMAKE_EXE_LINKER_FLAGS
+    CMAKE_RC_FLAGS CMAKE_RC_FLAGS_RELEASE CMAKE_RC_FLAGS_DEBUG
+    CMAKE_RC_FLAGS_RELWITHDEBINFO CMAKE_RC_FLAGS_MINSIZEREL
     CMAKE_EXE_LINKER_FLAGS_RELEASE CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG
     CMAKE_CUDA_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_DEBUG
     CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CUDA_FLAGS_RELWITHDEBINFO
@@ -89,7 +99,7 @@ foreach(name CMAKE_VERSION CMAKE_GENERATOR CMAKE_BUILD_TYPE CMAKE_SYSTEM_NAME
     string(LENGTH "${${name}}" value_length)
     string(APPEND arch_identity_profile "${name}=${value_length}:${${name}}\n")
 endforeach()
-foreach(name CMAKE_C_COMPILER CMAKE_CXX_COMPILER CMAKE_CUDA_COMPILER)
+foreach(name CMAKE_C_COMPILER CMAKE_CXX_COMPILER CMAKE_CUDA_COMPILER CMAKE_RC_COMPILER)
     if(EXISTS "${${name}}")
         file(SHA256 "${${name}}" driver_sha256)
         string(APPEND arch_identity_profile "${name}.driver_sha256=${driver_sha256}\n")

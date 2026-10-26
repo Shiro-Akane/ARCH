@@ -18,7 +18,7 @@
 | globals | 16.5.0 | MIT | devDependencies |
 | typescript | 5.9.3 | Apache-2.0 | devDependencies |
 | typescript-eslint | 8.70.0 | MIT | devDependencies |
-| vite | 8.3.0 | MIT | devDependencies |
+| vite | 8.3.4 | MIT | devDependencies |
 
 H5Web is used only through its public visualization API. Its peer/transitive WebGL dependencies are locked in package-lock.json. At the frozen Phase 0 checkpoint, no @h5web/app, h5wasm or HDF5 reader was installed; Phase 1A adds h5wasm as recorded below. Node.js 24.21.0 is isolated in the WSL user directory.
 
@@ -29,8 +29,8 @@ H5Web is used only through its public visualization API. Its peer/transitive Web
 
 ## Phase 2G-C desktop additions
 
-- Electron 44.4.3 (MIT): Linux x64 independent packaged window; ships its upstream LICENSE and LICENSES.chromium.html. The Linux package includes the Node executable used by the packager and the h5wasm/HDF5 worker dependency. The scientific Core and Linux graphical/terminal libraries remain external prerequisites.
-- @electron/packager 20.3.0 (BSD-2-Clause): development-only Linux portable packaging.
+- Electron 44.9.1 (MIT): native Linux/Windows x64 independent packaged window; ships its upstream LICENSE and LICENSES.chromium.html. Both packages include the native standalone Node executable used by the packager, its LICENSE.node and the h5wasm/HDF5 worker dependency. The scientific Core and OS graphical/terminal prerequisites remain external. The exact Electron version is read from package.json and checked against both lock entries and the installed package before staging.
+- @electron/packager 20.3.0 (BSD-2-Clause): development-only native Linux/Windows portable directory packaging.
 - Full locked package inventory is regenerated in DEPENDENCY-LICENSES.json from package-lock.json. No installer/signing/auto-update service.
 
 Current locked versions come from `package-lock.json`; the full inventory is in `DEPENDENCY-LICENSES.json`. ARCH-owned code uses the root MIT LICENSE. Preserve the separate h5wasm/HDF5 and Electron/Chromium notices. No tests, raw scientific data or historical reports are required by the desktop package.

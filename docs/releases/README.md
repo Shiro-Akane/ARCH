@@ -6,9 +6,13 @@ The current maintenance baseline is [ARCH v1.3.1](V1.3.1.md) ([中文](V1.3.1.zh
 
 This patch updates Studio build dependencies and release documentation. Scientific implementation, mathematical libraries, Studio data-reading and data-writing implementation, inputs, test definitions, numerical tolerances and recorded historical evidence retain their original identities. The [original acceptance record](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json) remains authoritative for the physical models, backends and workloads actually qualified.
 
-Supported execution remains Linux/WSL2 and the recorded CPU and single NVIDIA GPU configuration. Windows native execution, MPI, additional GPU vendors and other platforms require separate qualification. The retained SNIa repeated-AMR failure and thermal gap, and the distinction between hotspot functional checks and an ignition-mechanism claim, remain applicable. See the [v1.3.0 verification and use section](V1.3.0.md#verification-and-use) for qualifications and measured limits.
+For the frozen v1.3.1 distribution, qualified execution remains Linux/WSL2 and the recorded CPU and single NVIDIA GPU configuration. Later native Windows work has separate evidence below; MPI, additional GPU vendors and other platforms require separate qualification. The retained SNIa repeated-AMR failure and thermal gap, and the distinction between hotspot functional checks and an ignition-mechanism claim, remain applicable. See the [v1.3.0 verification and use section](V1.3.0.md#verification-and-use) for qualifications and measured limits.
 
 Hosted Tooling, CPU and Studio CI cover their declared scopes; they do not establish native Windows desktop behavior, additional GPU hardware, all scientific trajectories or a new performance result. Historical CPU/CUDA timings and costs remain attached to their originating implementation and acceptance records.
+
+## Native Windows work after the frozen baseline
+
+The [2026-10-26 W0–W3 archive](../histroy/build/WindowsNativeQualification-20261026.zh-CN.md) and its [processed summary](../histroy/build/WindowsNativeQualification-20261026.json) record native Windows11 x64 GCC/UCRT64 CPU CLI and complete Studio workflow qualification on `build/win11`. Linux is recommended; Windows support is newer and may still have instability or bugs. The shared [build](../guides/Build.md) and [Studio](../guides/Studio.md) guides put both routes together. This work does not change the immutable v1.3.1 tag/archive, qualify native Windows CUDA/MPI or create a new release/Zenodo version.
 
 ## Distribution and local work instructions
 

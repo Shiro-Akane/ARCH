@@ -1,10 +1,18 @@
 /** Packaged desktop entrypoint. Only Electron main supplies this launch envelope. */
 import {createHostServer,listenLocal} from './server.ts';
 import {openDesktopProject} from './desktopProject.ts';
+import {windowsEnvironment} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 async function main(){
-const launch=JSON.parse(Buffer.from(process.argv[2]??'', 'base64url').toString('utf8')) as {project?:string;cwd:string;source?:string;config?:string;binary?:string;caseId?:string;buildDir?:string;origin:string;token:string};
+const launch=JSON.parse(Buffer.from(process.argv[2]??'', 'base64url').toString('utf8')) as {project?:string;cwd:string;source?:string;config?:string;binary?:string;caseId?:string;buildDir?:string;origin:string;token:string;windowsTools?:WindowsHostTools};
 if(!/^[a-f0-9]{64}$/.test(launch.token))throw new Error('Invalid desktop ownership token.');
-const {root,reader,caseId,config,selectedSource}=await openDesktopProject(launch);
+const windowsTools=launch.windowsTools;
+if(process.platform==='win32'&&!windowsTools)throw new Error('Trusted Windows desktop tools are required.');
+if(windowsTools){
+ if(typeof windowsTools!=='object'||Array.isArray(windowsTools)||Object.keys(windowsTools).some(key=>!['cmake','supervisor','path','ninja','objdump','publisher','rc','terminal'].includes(key)))throw new Error('Invalid private Windows desktop tool context.');
+ windowsEnvironment(windowsTools);
+}
+const {root,reader,caseId,config,selectedSource}=await openDesktopProject(launch,{windowsTools});
 const server=createHostServer(reader,launch.origin,{token:launch.token});
 await listenLocal(server,0);
 const port=(server.address() as {port:number}).port;

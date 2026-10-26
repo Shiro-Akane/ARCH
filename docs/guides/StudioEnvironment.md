@@ -1,8 +1,21 @@
-# Linux / WSL Studio requirements
+# Studio requirements: Linux / WSL and Windows
 
 [Workflow](Studio.md) · [Detailed setup and troubleshooting](StudioEnvironment.zh-CN.md)
 
-The current desktop supports Linux x64 and WSL with WSLg. Core, Host and Electron run on Linux. A scientific-only build does not need Node, npm or Electron; the desktop does not require compiling CUDA. Run the GUI as a normal Linux user.
+**Linux is recommended**, including WSL2 with WSLg. Native Windows11 x64 also supports the complete CPU Studio workflow, with newer support that may have instability or bugs. Both routes use the same Host/scientific services. A Core-only build does not need Node, npm or Electron, and the desktop does not require CUDA compilation. Native Windows CUDA/MPI remain separate qualifications.
+
+| Requirement | Linux / WSL2 | Native Windows11 x64 |
+| --- | --- | --- |
+| Core and build tools | Native C++20, CMake, Ninja, HDF5/OpenMP | GCC/UCRT64 plus matching-ABI dependencies and native helpers; [setup](WindowsNativeW0.md) / [build](WindowsNativeCpu.md) |
+| Source desktop runtime | Native Linux Node24+, npm, Electron | Native Windows x64 Node24+, npm, Electron |
+| Window | Graphical Linux session / WSLg and libraries below | Native Windows desktop |
+| Confirmed Run/Restart | `xterm`, `flock` | Configured Windows Terminal and native supervisor/publisher |
+
+Keep each OS's Node, Core, CMake cache and dependencies together. Portable packages include their own native Host Node and h5wasm; Core and OS/tool prerequisites remain external. The [shared user guide](Studio.md#paths-on-linux-and-windows) explains paths and `.par` portability.
+
+## Linux / WSL2
+
+Run the GUI as a normal Linux user.
 
 Required components are C++20, CMake 3.22+, Ninja and HDF5 development libraries for the CPU Core; Linux Node 24+ and npm for source builds; the locked Electron runtime; Linux GTK3/NSS/GBM/ALSA/X11 libraries; a working graphical session; and `/usr/bin/xterm` plus `flock` for independent Run/Restart terminals. Python 3.10+ is for validation; scientific tests additionally need h5py and NumPy. The portable package includes Host Node and h5wasm but still needs Core and system libraries.
 
@@ -30,7 +43,17 @@ build-studio-cpu/bin/arch-studio --project "$PWD" \
 
 The preset matches the Host-owned local CPU build directory. Other existing caches are not adopted silently. The generated entry depends on the checkout. `arch-studio-package` creates the separate portable Linux package; its Host uses bundled Node unless explicitly overridden. An invalid explicit override fails.
 
-For this workstation's scientific tests, activate conda `work` and configure `Python3_EXECUTABLE` from that environment. Other users may choose any Python environment with the required packages. Check `DISPLAY`, `xterm`, `flock`, and `ldd studio/node_modules/electron/dist/electron` when launch fails. Resolve missing libraries before starting the desktop.
+Check `DISPLAY`, `xterm`, `flock`, and `ldd studio/node_modules/electron/dist/electron` when launch fails. Resolve missing libraries before starting the desktop.
+
+## Native Windows11 x64
+
+Follow the [native desktop guide](WindowsStudioDesktop.md) after the [CPU setup](WindowsNativeCpu.md). It uses the same `arch-studio-assets`, `arch-studio-runtime` and `arch-studio-package` targets. CMake invokes native Node's npm-cli.js, without requiring npm.ps1. The checkout entry is `arch-studio.cmd`; the portable entry is `arch-studio-bin.exe`.
+
+Configure `ARCH_STUDIO_WINDOWS_TOOLS` before launch using that guide's trusted tool/DLL paths. Editing and Preview do not need a terminal; the qualified Run/Restart route sets `terminal` to `wt.exe`. Native Windows helpers and HDF5 DLLs must match UCRT64; do not add Anaconda/MSVC HDF5 or MSYS `usr/bin` to the Core DLL path. A Linux `.par` can be reused after adapting host-specific paths; `/home` and `/mnt/c` are not Windows drive paths.
+
+## Developer verification
+
+For this workstation's scientific tests, activate conda `work` and configure `Python3_EXECUTABLE` from that environment. Other users may choose any Python environment with the required packages. The following Linux process-interface requirements do not describe the native Windows supervisor.
 
 The complete Tooling suite and process resource guard also require Linux Python's `os.pidfd_open` and `signal.pidfd_send_signal`. This workstation's conda `work` Python 3.12.14 does not expose them; `/usr/bin/python3` does. Use `work` for scientific CTest and system Python for the guard and complete Tooling. A version number alone does not establish these capabilities.
 

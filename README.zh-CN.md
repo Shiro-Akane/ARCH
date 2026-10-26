@@ -13,7 +13,7 @@
 
 ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积法推进流体状态，并用自适应网格细化（AMR）增加局部空间分辨率。CPU 与 CUDA 共用物理和数学实现。
 
-运行环境为 **Linux 或 WSL2**。科学计算程序可独立构建与运行；**ARCH Studio 始终是选配组件**，CPU／CUDA 计算无需安装或编译图形界面。
+**推荐使用 Linux 系统**，也可采用 WSL2 中的 Linux。原生 Windows 11 x64 同样提供完整的 CPU CLI 与 Studio 工作流，包括配置、编译、初始场／AMR 预览、运行／重启和只读 Plotfile 查看；Windows 适配较新，仍可能存在不稳定性与 bug。原生 Windows CUDA／MPI 及其他平台另行验收，已有 CUDA 路线请使用 Linux。**ARCH Studio 始终是选配组件**，科学计算无需安装图形界面。
 
 **ARCH 的输入、输出和物理常数统一使用 CGS**：长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力和能量密度为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`。角度使用 `rad`。输入不会自动换算单位；更多量纲见[算例指南](docs/guides/SimulationCase.zh-CN.md#单位)。
 
@@ -30,7 +30,7 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 ## 构建
 
-在 Linux 或 WSL2 终端中构建。按所选后端准备 Core 依赖：
+下文先列 Linux／WSL2 命令。原生 Windows 使用同一 CMake 工程，按 [Windows CPU 指南](docs/guides/WindowsNativeCpu.zh-CN.md)准备 GCC/UCRT64 及同 ABI 依赖；不能复用 Linux 构建目录或 DLL。按所选后端准备 Core 依赖：
 
 - **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
 - **两种后端共用的库：** HDF5 C++/HL 和 OpenMP。
@@ -38,7 +38,7 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 依赖安装、编译内存限制及源码包中的 EOS 表处理见[构建指南](docs/guides/Build.zh-CN.md)。
 
-需要桌面操作时，可额外选装 [ARCH Studio](docs/guides/Studio.zh-CN.md)，提供配置编辑、预览和只读 Plotfile 查看。`ARCH_BUILD_STUDIO` 默认关闭，显式设为 `ON` 才构建桌面；只有这时才需 Linux Node 24+、npm、Electron 与图形环境，详见[桌面环境](docs/guides/StudioEnvironment.zh-CN.md)。上面的 Core 依赖及下方两种计算构建均可独立使用。
+需要桌面操作时，可额外选装 [ARCH Studio](docs/guides/Studio.zh-CN.md)，提供配置编辑、预览和只读 Plotfile 查看。`ARCH_BUILD_STUDIO` 默认关闭，显式设为 `ON` 才构建桌面；只有这时才需相应系统的原生 Node 24+、npm、Electron 与图形环境，详见并列说明的 [Linux／Windows 桌面环境](docs/guides/StudioEnvironment.zh-CN.md)。上面的 Core 依赖及下方两种计算构建均可独立使用。
 
 ### 获取源码
 
@@ -84,6 +84,15 @@ export OMP_NUM_THREADS=4
 ./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
+原生 Windows 完成 [GCC/UCRT64 构建](docs/guides/WindowsNativeCpu.zh-CN.md)后，在同一仓库根目录的 PowerShell 中执行：
+
+```powershell
+$env:OMP_NUM_THREADS = '4'
+& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```
+
+两侧共用 `.par` 格式。文件中的相对路径以计算的工作目录为基准，不是以 `.par` 所在目录为基准；Linux／WSL 的绝对路径移到 Windows 前须调整，见[路径说明](docs/guides/Studio.zh-CN.md#linux-与-windows-的路径)。
+
 其中，`Sod` 选择算例定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU
 工作线程数，不影响数值精度设置。如果使用方案 B，可执行文件
 路径应换成 `./build-cuda/bin/ARCH`。需要 GPU 执行时，先复制示例参数文件，
@@ -93,7 +102,7 @@ export OMP_NUM_THREADS=4
 
     ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
 
-该检查仅覆盖已声明配置，不执行 Setup、不加载 EOS、不检查路径存在性，也不代表已经具备模拟运行条件。缺失或非法值需要补齐或修正，不会从运行默认值静默回填。
+上面的输入重定向是 Linux shell 语法，PowerShell 不支持这种 `<` 写法；两侧均可在 Studio 的 Config 工作区检查已声明输入。该检查不执行 Setup、不加载 EOS、不检查路径存在性，也不代表已经具备模拟运行条件。缺失或非法值需要补齐或修正，不会从运行默认值静默回填。
 
 成功运行后，程序会打印所选方法和时间步表，并在 `output/first_sod/` 下写入：
 

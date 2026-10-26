@@ -37,8 +37,14 @@ export interface ConfigWriteResponse extends ConfigReadResponse { project:Projec
 // Phase 2C: browser requests identify only a Host-owned profile.
 export type BuildState = 'not-configured'|'ready'|'queued'|'building'|'succeeded'|'failed'|'cancelled'|'unknown';
 export type BinaryBuildState = 'missing'|'available'|'built-from-current-tracked-inputs'|'needs-build'|'freshness-unknown';
+export type ObservedBuildInputScope = 'observed-build-inputs-v1';
+/** Recorded identities only; the complete dependency graph may remain unknown. */
+export interface ObservedBuildInputs {
+ scope:ObservedBuildInputScope; state:'current'|'changed'|'unknown'; reason:string;
+}
 export interface BuildProfile {
  buildBackend?:'cpu'|'cuda';
+ observedInputScope?:ObservedBuildInputScope;
  id:string; displayName:string; managedSourceRoot:string; buildDirRelative:string; target:string; outputBinaryRelative:string;
  compilerDependencyMode?:'ninja'; retainGnuLtoInputs?:boolean; linkDependencyFile?:string; registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
 }
@@ -67,6 +73,7 @@ export interface BuildManifest {
 export interface BuildSnapshot {
  protocolVersion:string; projectId:string; profile?:BuildProfile; configured:boolean; reason?:string; state:BuildState;
  mappingState:'configured'|'unknown'; binaryState:BinaryBuildState; freshnessReason:string; changedInputs:string[];
+ observedInputs?:ObservedBuildInputs;
  lastSuccessfulBuild?:BuildManifest; latestResult?:BuildResult; activeBuildId?:string;
 }
 export interface BuildEvents { protocolVersion:string; projectId:string; buildId:string; events:BuildEvent[]; truncated:boolean; lastSequence:number }

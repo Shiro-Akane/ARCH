@@ -6,18 +6,21 @@
  * terminal closure and a stale process-group number do not prove ownership.
  */
 import { reserveRunOutputs } from './runOutput.ts';
-import type { RunOutputDirectory } from './runOutput.ts';
+import type { RunOutputDirectory, RunOutputReservation } from './runOutput.ts';
 import { checkpointFilesystemIdentity } from './runCheckpoint.ts';
 import type { RunCheckpoint } from './runCheckpoint.ts';
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
-import { open, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+import { open, readFile, readdir, rename, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { checkedPath, fingerprint, projectRoot } from './files.ts';
 import { sameFingerprint, validateFingerprint, readConfig } from './config.ts';
 import type { FileFingerprint } from '../src/host/contracts.ts';
+import { terminateOwned } from './hostProcess.ts';
+import { requireWindowsProcessIdentity, spawnWindowsOwned, windowsProcessIdentity, windowsWorkerBootstrap, parseWindowsRunBootstrap } from './windowsRun.ts';
+import type { WindowsRunTools } from './windowsRun.ts';
 export interface RunJob {
     version: '1';
     runId: string;
@@ -96,8 +99,42 @@ async function finishOwnedStop(members: {
 }
 async function store(directory: string, state: RunState) {
     const temp = path.join(directory, '.state-' + randomUUID() + '.tmp');
-    await writeFile(temp, JSON.stringify(state, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
-    await rename(temp, path.join(directory, 'state.json'));
+    let file: Awaited<ReturnType<typeof open>> | undefined, stored = false;
+    try {
+        file = await open(temp, 'wx', 0o600);
+        await file.writeFile(JSON.stringify(state, null, 2) + '\n');
+        await file.sync();
+        await file.close();
+        file = undefined;
+        const target = path.join(directory, 'state.json');
+        for (let attempt = 0; ; attempt++) {
+            try { await rename(temp, target); break; }
+            catch (e) {
+                const code = (e as NodeJS.ErrnoException).code;
+                if (process.platform !== 'win32' || attempt >= 5 || !['EACCES', 'EBUSY', 'EPERM'].includes(code ?? ''))
+                    throw e;
+                await new Promise(resolve => setTimeout(resolve, 20));
+            }
+        }
+        stored = true;
+    }
+    finally {
+        await file?.close().catch(() => undefined);
+        if (!stored) await unlink(temp).catch(() => undefined);
+    }
+}
+/** Atomic owner-state replacement; exported for bounded failure-path tests. */
+export async function writeRunState(directory: string, state: RunState) {
+    await store(directory, state);
+}
+function waitClosed(child: ChildProcess, timeout: number) {
+    if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
+    return new Promise<void>(resolve => {
+        let settled = false;
+        const finish = () => { if (!settled) { settled = true; clearTimeout(timer); resolve(); } };
+        const timer = setTimeout(finish, timeout);
+        child.once('close', finish);
+    });
 }
 function validateJob(job: RunJob) {
     if (job.version !== '1' || !/^[-a-f0-9]{36}$/.test(job.runId) || !['run', 'restart'].includes(job.mode) ||
@@ -117,19 +154,34 @@ function validateJob(job: RunJob) {
     validateFingerprint(job.configFingerprint);
 }
 /** Runs in the independent terminal, never in the Studio/Preview process group. */
-export async function executeRun(job: RunJob, directory: string): Promise<RunState> {
+export async function executeRun(job: RunJob, directory: string, windowsTools?: WindowsRunTools): Promise<RunState> {
     validateJob(job);
-    if (process.platform !== 'linux' || await projectRoot(job.projectRoot) !== job.projectRoot)
+    const linux = process.platform === 'linux', windows = process.platform === 'win32';
+    if (!linux && !windows)
+        throw new Error('Run requires a supported native project platform.');
+    if (linux && await projectRoot(job.projectRoot) !== job.projectRoot)
         throw new Error('Run requires the selected Linux project.');
+    if (windows && !windowsTools)
+        throw new Error('Native Windows Run supervisor is not configured.');
     const expected = 'studio/.local/runs/' + job.runId;
     if (await checkedPath(job.projectRoot, expected) !== directory || job.inputRelativePath !== expected + '/input.par')
         throw new Error('Run directory does not match the owned run identity.');
-    const state: RunState = { runId: job.runId, state: 'starting', workerPid: process.pid, workerStartTicks: await processTicks(process.pid), bootId: (await readFile('/proc/sys/kernel/random/boot_id', 'utf8')).trim(), startedAt: new Date().toISOString() };
+    const state: RunState = { runId: job.runId, state: 'starting', workerPid: process.pid, startedAt: new Date().toISOString() };
+    if (linux) {
+        state.workerStartTicks = await processTicks(process.pid);
+        state.bootId = (await readFile('/proc/sys/kernel/random/boot_id', 'utf8')).trim();
+    }
+    else {
+        const identity = windowsProcessIdentity(windowsTools!, process.pid);
+        if (!identity.alive)
+            throw new Error('Windows Run worker identity unavailable.');
+        state.windowsWorker = { version: 'windows-v1', pid: identity.pid, creationTime: identity.creationTime };
+    }
     const claim = await open(path.join(directory, 'worker.lock'), 'wx', 0o600);
     await claim.close();
     await store(directory, state);
     let owned: ChildProcess | undefined;
-    let outputReservations: Awaited<ReturnType<typeof reserveRunOutputs>> = [];
+    let outputReservations: RunOutputReservation[] = [];
     let output: Awaited<ReturnType<typeof open>> | undefined, tail: Awaited<ReturnType<typeof open>> | undefined;
     try {
         if ((await readFile(directory + '/stop-request', 'utf8').catch(() => '')).trim() === job.runId) {
@@ -161,24 +213,48 @@ export async function executeRun(job: RunJob, directory: string): Promise<RunSta
         output = await open(path.join(directory, 'console.log'), 'wx', 0o600);
         tail = await open(path.join(directory, 'console.log'), 'r');
         // Direct file descriptors avoid a broken GUI/terminal stdout pipe killing Core.
-        const child = spawn(executable, [job.caseId, inputPath], { cwd: job.projectRoot, detached: true, shell: false,
+        let child: ChildProcess;
+        if (windows) {
+            const lockKeys = outputReservations.map(file => {
+                if (!file.lockKey) throw new Error('Windows output lock keys are unavailable.');
+                return file.lockKey;
+            });
+            child = spawnWindowsOwned(executable, [job.caseId, inputPath], {
+                cwd: job.projectRoot, stdio: ['pipe', output.fd, output.fd]
+            }, state.windowsWorker!, windowsTools!, lockKeys);
+        }
+        else child = spawn(executable, [job.caseId, inputPath], { cwd: job.projectRoot, detached: true, shell: false,
             env: { PATH: '/usr/bin:/bin', HOME: process.env.HOME ?? '', LANG: 'C.UTF-8' },
-            stdio: ['ignore', output.fd, output.fd, ...outputReservations.map(file => file.fd)] });
+            stdio: ['ignore', output.fd, output.fd, ...outputReservations.map(file => {
+                if (file.fd === undefined) throw new Error('Linux output reservation descriptor is unavailable.');
+                return file.fd;
+            })] });
         owned = child;
+        child.stdin?.on('error',()=>undefined);
         let ended = false, spawnError: Error | undefined, code: number | null = null, signal: NodeJS.Signals | null = null;
         child.once('error', e => { spawnError = e; ended = true; });
         child.once('close', (c, s) => { code = c; signal = s; ended = true; });
         state.processId = child.pid;
-        state.processStartTicks = child.pid ? await processTicks(child.pid) : undefined;
-        if (state.processStartTicks)
-            state.processIdentity = 'captured';
+        if (linux) {
+            state.processStartTicks = child.pid ? await processTicks(child.pid) : undefined;
+            if (state.processStartTicks)
+                state.processIdentity = 'captured';
+        }
+        else if (child.pid) {
+            try {
+                const helper = windowsProcessIdentity(windowsTools!, child.pid);
+                state.windowsHelper = { version: 'windows-v1', pid: helper.pid, creationTime: helper.creationTime };
+                state.processIdentity = helper.alive ? 'captured' : 'exited-before-observation';
+            }
+            catch { state.processIdentity = 'exited-before-observation'; }
+        }
         state.state = 'running';
         await store(directory, state);
         let stopMembers: {
             pid: number;
             ticks: string;
         }[] = [];
-        let stopped = false, killAt = 0, position = 0, consoleAvailable = true, consoleReady = true;
+        let stopped = false, stopIncomplete=false, killAt = 0, position = 0, consoleAvailable = true, consoleReady = true;
         const consoleError = () => { consoleAvailable = false; };
         process.stdout.on('error', consoleError);
         const forward = async () => {
@@ -197,19 +273,33 @@ export async function executeRun(job: RunJob, directory: string): Promise<RunSta
                 const stop = await readFile(path.join(directory, 'stop-request'), 'utf8').catch(() => '');
                 if (stop.trim() === job.runId && !stopped) {
                     stopped = true;
-                    killAt = Date.now() + 2000;
-                    if (child.pid && state.processStartTicks && await processTicks(child.pid) === state.processStartTicks) {
-                        stopMembers = await groupMembers(child.pid);
-                        try {
-                            process.kill(-child.pid, 'SIGTERM');
-                        }
-                        catch (e) {
-                            if ((e as NodeJS.ErrnoException).code !== 'ESRCH')
-                                throw e;
+                    if (linux) {
+                        killAt = Date.now() + 2000;
+                        if (child.pid && state.processStartTicks && await processTicks(child.pid) === state.processStartTicks) {
+                            stopMembers = await groupMembers(child.pid);
+                            try {
+                                process.kill(-child.pid, 'SIGTERM');
+                            }
+                            catch (e) {
+                                if ((e as NodeJS.ErrnoException).code !== 'ESRCH')
+                                    throw e;
+                            }
                         }
                     }
+                    else {
+                        // The helper is the held owner of exactly this Job. Its inherited
+                        // lock handles remain in Core until the Job has drained.
+                        if (!child.pid || !state.windowsHelper)
+                            throw new Error('Windows Run helper identity unavailable; outcome unknown.');
+                        requireWindowsProcessIdentity(windowsTools!, state.windowsHelper);
+                        child.stdin?.end('!');
+                        killAt=Date.now()+12000;
+                    }
                 }
-                if (stopped && Date.now() >= killAt && child.pid && state.processStartTicks && await processTicks(child.pid) === state.processStartTicks)
+                if(stopped&&windows&&Date.now()>=killAt&&child.exitCode===null&&child.signalCode===null){
+                    stopIncomplete=true;terminateOwned(child,'SIGKILL');
+                }
+                if (stopped && linux && Date.now() >= killAt && child.pid && state.processStartTicks && await processTicks(child.pid) === state.processStartTicks)
                     try {
                         process.kill(-child.pid, 'SIGKILL');
                     }
@@ -219,7 +309,7 @@ export async function executeRun(job: RunJob, directory: string): Promise<RunSta
                     }
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
-            if (stopped)
+            if (stopped && linux)
                 await finishOwnedStop(stopMembers, killAt);
             await forward();
         }
@@ -228,21 +318,30 @@ export async function executeRun(job: RunJob, directory: string): Promise<RunSta
         }
         if (spawnError)
             throw spawnError;
-        state.state = stopped ? 'stopped' : code === 0 ? 'succeeded' : 'failed';
+        state.state = stopped ? (windows&&(stopIncomplete||signal!==null||code===null||code===125)?'failed':'stopped') : code === 0 ? 'succeeded' : 'failed';
+        if(stopped&&state.state==='failed')state.error='Stop cleanup was not confirmed; inspect the retained log and process identities.';
         state.exitCode = code;
         state.signal = signal;
-        if (!state.processStartTicks)
+        if (linux && !state.processStartTicks)
             state.processIdentity = 'exited-before-observation';
     }
     catch (e) {
         // A supervisor failure must not silently abandon its live Core process.
-        if (owned?.pid && state.processStartTicks && await processTicks(owned.pid) === state.processStartTicks) {
+        if (linux && owned?.pid && state.processStartTicks && await processTicks(owned.pid) === state.processStartTicks) {
             const members = await groupMembers(owned.pid);
             try {
                 process.kill(-owned.pid, 'SIGTERM');
             }
             catch { /* process may already have exited */ }
             await finishOwnedStop(members, Date.now() + 2000);
+        }
+        else if (windows && owned?.pid && state.windowsHelper) {
+            try {
+                requireWindowsProcessIdentity(windowsTools!, state.windowsHelper);
+                terminateOwned(owned, 'SIGKILL');
+                await waitClosed(owned, 10000);
+            }
+            catch { /* identity changed; never signal a reused PID */ }
         }
         state.state = 'failed';
         state.error = e instanceof Error ? e.message : 'Run failed';
@@ -257,10 +356,17 @@ export async function executeRun(job: RunJob, directory: string): Promise<RunSta
     return state;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    const directory = path.resolve(process.argv[2] ?? '');
+    const bootstrap=process.platform==='win32'&&process.argv[2]==='--run-bootstrap'?parseWindowsRunBootstrap(process.argv.slice(2)):undefined;
+    const directory = path.resolve(bootstrap?.directory??process.argv[2]??'');
     try {
+        // The executable path is Host-created argv, deliberately not mutable job.json.
+        const windowsTools = process.platform === 'win32' ? bootstrap?.windowsTools??windowsWorkerBootstrap(process.argv.slice(3)) : undefined;
+        if (process.platform === 'win32' && !windowsTools)
+            throw new Error('Trusted native Windows worker bootstrap is required.');
+        if (process.platform !== 'win32' && process.argv.length > 3)
+            throw new Error('Unexpected Run worker arguments.');
         const job = JSON.parse(await readFile(path.join(directory, 'job.json'), 'utf8')) as RunJob;
-        const state = await executeRun(job, directory);
+        const state = await executeRun(job, directory, windowsTools);
         console.log('\nARCH run ' + state.runId + ': ' + state.state + '\nLog: ' + path.join(directory, 'console.log'));
         process.exitCode = state.state === 'succeeded' ? 0 : 1;
     }

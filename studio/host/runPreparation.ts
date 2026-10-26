@@ -7,6 +7,8 @@
 import {canonicalOutputDirectory} from './runOutput.ts';
 import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
 import {execFile} from 'node:child_process';
+import {captureOwned} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import {randomUUID} from 'node:crypto';
 import {checkedPath,fingerprint} from './files.ts';
 import {sameFingerprint} from './config.ts';
@@ -25,8 +27,9 @@ export class RunPreparationRunner {
  private prepared?:{plan:RunPreparation;schema:ConfigurationSchema;checkpointIdentity?:string};
  readonly root:string;readonly projectId:string;readonly binaryRelativePath:string;
  private config:()=>Promise<ConfigReadResponse>;
- constructor(root:string,projectId:string,binaryRelativePath:string,config:()=>Promise<ConfigReadResponse>){
-  this.root=root;this.projectId=projectId;this.binaryRelativePath=binaryRelativePath;this.config=config;
+ private windowsTools?:WindowsHostTools;
+ constructor(root:string,projectId:string,binaryRelativePath:string,config:()=>Promise<ConfigReadResponse>,windowsTools?:WindowsHostTools){
+  this.root=root;this.projectId=projectId;this.binaryRelativePath=binaryRelativePath;this.config=config;this.windowsTools=windowsTools;
  }
  isActive(){return this.active;}
  private async binary():Promise<FileFingerprint>{
@@ -36,6 +39,8 @@ export class RunPreparationRunner {
  }
  private async query(args:string[],text=''):Promise<unknown>{
   const executable=await checkedPath(this.root,this.binaryRelativePath);
+  if(process.platform==='win32')return this.queryWindows(executable,args,text);
+  if(process.platform!=='linux')throw new BuildError('Unsupported Core run preflight platform.',502);
   return new Promise((resolve,reject)=>{
    const child=execFile(executable,args,{cwd:this.root,shell:false,encoding:'utf8',timeout:10000,maxBuffer:8*1024*1024,
     env:{PATH:'/usr/bin:/bin',LANG:'C.UTF-8',OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},(error,stdout)=>{
@@ -45,6 +50,14 @@ export class RunPreparationRunner {
    child.stdin?.on('error',()=>undefined);child.stdin?.end(text);
   });
  }
+ private async queryWindows(executable:string,args:string[],text:string):Promise<unknown>{
+  try{
+   const result=await captureOwned(executable,args,text,this.root,this.windowsTools);
+   if(![0,3,7].includes(result.code??-1))throw new Error('Core command failed.');
+   return JSON.parse(result.stdout);
+  }catch{throw new BuildError('Core run preflight failed or exceeded its bounds.',502);}
+ }
+
  async prepare(request:PrepareRunRequest):Promise<RunPreparation>{
   const keys=['projectId','caseId','configRevision','mode'];
   if(!request||Object.keys(request).length!==keys.length||Object.keys(request).some(k=>!keys.includes(k))||

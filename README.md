@@ -13,7 +13,7 @@
 
 ARCH models compressible fluid motion, heat transfer and nuclear reactions. It advances fluid state with a finite-volume method and uses adaptive mesh refinement (AMR) to add spatial resolution where needed. CPU and CUDA share the physics and mathematical implementation.
 
-The supported environment is **Linux or WSL2**. Build and run the scientific executable independently; **ARCH Studio is always optional** and is not required for CPU or CUDA calculations.
+**Linux is the recommended system**, including Linux under WSL2. Native Windows 11 x64 also provides the complete CPU CLI and Studio workflow: configuration, Build, initial Preview/AMR, Run/Restart and read-only Plotfile viewing. Windows support is newer and may still have instability or bugs. Native Windows CUDA/MPI and other platforms have separate qualification requirements; use Linux for the established CUDA route. **ARCH Studio is always optional** for scientific calculations.
 
 **ARCH uses CGS for inputs, outputs and physical constants**: length in `cm`, time in `s`, density in `g/cm³`, pressure and energy density in `erg/cm³`, specific internal energy in `erg/g`, and temperature in `K`. Angles use `rad`. Inputs are not converted automatically; see the [case guide](docs/guides/SimulationCase.md#units) for more units.
 
@@ -31,7 +31,7 @@ Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automati
 
 ## Build
 
-Build in a Linux or WSL2 terminal. Prepare the Core dependencies for your backend:
+The Linux/WSL2 commands come first below. For native Windows, use the same CMake project with GCC/UCRT64 and matching dependencies from the [Windows CPU instructions](docs/guides/WindowsNativeCpu.md); Linux build directories and DLLs cannot be reused there. Prepare the Core dependencies for your backend:
 
 - **Core tools:** a C++20 compiler, CMake 3.22+, Ninja and Git.
 - **Libraries used by both builds:** HDF5 C++/HL and OpenMP.
@@ -39,7 +39,7 @@ Build in a Linux or WSL2 terminal. Prepare the Core dependencies for your backen
 
 The [build guide](docs/guides/Build.md) covers installation, compilation memory limits and EOS tables in source archives.
 
-For desktop configuration, previews and read-only Plotfile viewing, optionally install [ARCH Studio](docs/guides/Studio.md). `ARCH_BUILD_STUDIO` defaults to `OFF`; set it to `ON` to build the desktop. Only this option needs Linux Node 24+, npm, Electron and a graphical session; see [desktop requirements](docs/guides/StudioEnvironment.md). Both calculation builds below work independently of Studio.
+For desktop configuration, previews and read-only Plotfile viewing, optionally install [ARCH Studio](docs/guides/Studio.md). `ARCH_BUILD_STUDIO` defaults to `OFF`; set it to `ON` to build the desktop. Only this option needs native Node 24+, npm, Electron and a graphical session; see the paired [Linux/Windows requirements](docs/guides/StudioEnvironment.md). Both calculation builds below work independently of Studio.
 
 ### Get the source
 
@@ -86,6 +86,15 @@ export OMP_NUM_THREADS=4
 ./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
+On native Windows, after the [GCC/UCRT64 setup](docs/guides/WindowsNativeCpu.md), run from the same project root in PowerShell:
+
+```powershell
+$env:OMP_NUM_THREADS = '4'
+& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```
+
+The `.par` format is shared. Relative paths inside it resolve from the calculation's working directory, not the `.par` file's directory. Adapt absolute Linux/WSL paths before using that file on Windows; see the [path guide](docs/guides/Studio.md#paths-on-linux-and-windows).
+
 Here `Sod` selects the problem definition, and the `.par` file supplies its
 parameters. `OMP_NUM_THREADS` controls the number of CPU worker threads; it is
 not a numerical accuracy setting. For Option B, the
@@ -95,7 +104,7 @@ The example explicitly supplies required configuration controls. Inspect an edit
 
     ./build-cpu/bin/ARCH --inspect-config Sod --config-stdin < simulation/Sod/Sod_beginner.par
 
-This checks declared configuration only; it does not execute Setup, load EOS tables, check paths or establish simulation readiness. Missing or invalid values must be corrected, not silently filled from runtime defaults.
+The redirection above is Linux shell syntax; PowerShell does not support `<` in this form. Studio's Config workspace offers the same declared-input inspection on either platform. Inspection does not execute Setup, load EOS tables, check paths or establish simulation readiness. Missing or invalid values must be corrected, not silently filled from runtime defaults.
 
 A successful run prints the selected methods and a table of time steps, then
 writes files under `output/first_sod/`:
