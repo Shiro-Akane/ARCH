@@ -113,5 +113,12 @@
     "skip": 0,
     "nativeNode": "24.21.0",
     "scope": "Affected mixed-platform groups plus selector controls; all original assertions/options unchanged"
+  },
+  "finalToolingChecks": {
+    "tests": 619,
+    "pass": 619,
+    "skip": 0,
+    "strictNonemptyGatePassed": true,
+    "fix": "Isolated BuildIdentity configure fixture declares newly required arch_run_identity INTERFACE stand-in; production module/assertions unchanged"
   }
 }

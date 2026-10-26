@@ -39,7 +39,7 @@ class ProvenanceTests(unittest.TestCase):
 cmake_minimum_required(VERSION 3.22)
 project(IdentityFixture LANGUAGES CXX)
 add_library(arch_build_contract STATIC src/core/files/BuildIdentity.cpp)
-foreach(name ARCH arch_driver_runtime arch_solver_dispatch arch_gravity_cpu arch_diffusion_math)
+foreach(name ARCH arch_driver_runtime arch_solver_dispatch arch_gravity_cpu arch_diffusion_math arch_run_identity)
     add_library(${name} INTERFACE)
 endforeach()
 set(ARCH_CUSTOM_REGISTRY_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")

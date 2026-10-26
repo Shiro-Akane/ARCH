@@ -51,7 +51,13 @@ README、Build、Studio、环境与功能索引均按 Linux 在前、Windows 在
 
 PR [#19](https://github.com/Shiro-Akane/ARCH/pull/19) 的 undici7.30.1 和 [#20](https://github.com/Shiro-Akane/ARCH/pull/20) 的 Electron44.9.1 已在精确 head CI 通过后提前合并。#19 改变 main 后，#20 由机器人更新基线并重新通过 CPU Release、Studio／Host、Tooling 与 CI required；没有绕过必需检查。两者只更新依赖；#20 合并本身不修复旧 main 的硬编码打包版本，该修复在本轮 Windows 分支中，合入前不从该中间 main 制作发布包。
 
-最终依赖的330项许可证清单按 lockfile 同步，包括先前 Vite8.3.4 更新后的传递依赖版本。Linux 与 Windows 本地便携包已用共用打包设施重新生成，实际引擎均为44.9.1，最新 notices／README 一致；Core SHA 未变，沿用同一实现和此前人工窗口验收，不重复要求用户操作。Windows 首次最终目录 rename 返回 EPERM，确认无包进程／目标残留后一次有界重试通过；首轮失败保留，未关闭系统保护或改写源码。最后一次本地检查使用 Linux Node24.21.0：锁定安装、lint、带类型检查的生产构建通过。早期全套报告为448 pass／40 Windows专属 skip，不能满足现有正式 CI 的零 skip 规则。最终在 npm 测试入口显式选择适用文件：5个纯原生文件列为 NOT_APPLICABLE，混合文件中的23个 Windows case 与2个 Linux case 按 OS 注册；所有原断言、名字、超时和缺失工具检查不变，共享／未知新增文件默认选入。相同注册调整在原生 Windows 的受影响组中取得47 pass／0 fail／0 skip。新增3个入口控制测试后，Linux 完整适用套件为 **451 pass、0 fail、0 skip**，原 `check_ci_results.py` 零 skip 门禁逐字节未改并实际通过；不把不适用项计为通过，也不使用名字过滤产生空文件 pass。首次运行还曾因固定 Sod 样本为 LFS 指针而失败；仅按既有 OID／14336字节复用本地缓存后重跑，最后恢复原指针。
+最终依赖的330项许可证清单按 lockfile 同步，包括先前 Vite8.3.4 更新后的传递依赖版本。Linux 与 Windows 本地便携包已用共用打包设施重新生成，实际引擎均为44.9.1，最新 notices／README 一致；Core SHA 未变，沿用同一实现和此前人工窗口验收，不重复要求用户操作。Windows 首次最终目录 rename 返回 EPERM，确认无包进程／目标残留后一次有界重试通过；首轮失败保留，未关闭系统保护或改写源码。
+
+最后一次本地检查使用 Linux Node24.21.0：锁定安装、lint、带类型检查的生产构建通过。早期全套报告为448 pass／40 Windows专属 skip，不能满足现有正式 CI 的零 skip 规则。最终在 npm 测试入口显式选择适用文件：5个纯原生文件列为 NOT_APPLICABLE，混合文件中的23个 Windows case 与2个 Linux case 按 OS 注册；所有原断言、名字、超时和缺失工具检查不变，共享／未知新增文件默认选入。相同注册调整在原生 Windows 的受影响组中取得47 pass／0 fail／0 skip。新增3个入口控制测试后，Linux 完整适用套件为 **451 pass、0 fail、0 skip**，原 `check_ci_results.py` 零 skip 门禁逐字节未改并实际通过；
+
+首次托管 Tooling 的最小 CMake 身份测试 fixture 漏列新 `arch_run_identity`，仅补齐原占位 target 清单后，本地原回归和完整619项 Python Tooling 均通过且零 skip，生产身份规则及全部原断言未改；不把不适用项计为通过，也不使用名字过滤产生空文件 pass。
+
+首次全套运行还曾因固定 Sod 样本为 LFS 指针而失败；仅按既有 OID／14336字节复用本地缓存后重跑，最后恢复原指针。
 
 ## 归档边界
 
