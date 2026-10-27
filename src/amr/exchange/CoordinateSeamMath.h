@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -83,7 +84,7 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
         transfer.momentum_sign[2] * sample(source.mom_w),
         sample(source.eng)};
     const double enuc = sample(source.enuc_rate);
-    bool admissible = std::isfinite(enuc)
+    bool admissible = arch::math::isfinite(enuc)
         && arch::state::recover(candidate).status == arch::state::Status::valid;
     double species_sum = 0.;
     const double species_tolerance = regrid_math::composition_simplex_tolerance(
@@ -96,7 +97,7 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
                    - source.species(species, transfer.source_center));
         destination.fractions[species * destination.total_size + cell] = value;
         species_sum += value;
-        admissible &= std::isfinite(value) && value >= 0. && value <= 1.;
+        admissible &= arch::math::isfinite(value) && value >= 0. && value <= 1.;
     }
     if (source.species_count > 0)
         admissible &= std::abs(species_sum - 1.) <= species_tolerance;
@@ -116,7 +117,7 @@ ARCH_INLINE bool apply_coordinate_seam_transfer(
     center.mom_v *= transfer.momentum_sign[1];
     center.mom_w *= transfer.momentum_sign[2];
     if (arch::state::recover(center).status != arch::state::Status::valid
-        || !std::isfinite(source.enuc_rate[transfer.source_center]))
+        || !arch::math::isfinite(source.enuc_rate[transfer.source_center]))
         return false;
     destination.rho[cell] = center.rho;
     destination.mom_u[cell] = center.mom_u;

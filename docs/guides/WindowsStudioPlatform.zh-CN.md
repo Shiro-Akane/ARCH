@@ -1,5 +1,7 @@
 # Windows Studio 平台服务：W2
 
+当前完整 Windows CPU／CUDA／Studio 状态与逐项对应见[2026-10-27 最终验收](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)。本页的 W0／W1／W2／W3 结果保留各自当时范围；CUDA 使用独立 [MSVC 构建及工具上下文](WindowsNativeCuda.zh-CN.md)。
+
 [English](WindowsStudioPlatform.md) · [原生 CPU CLI](WindowsNativeCpu.zh-CN.md)
 
 W2 在既有 Host 状态机下补充 Windows 进程原语。当前已实测进程监督、Configure

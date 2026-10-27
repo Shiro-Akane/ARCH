@@ -1,6 +1,7 @@
 /** Shared host/device witnesses for generated-data NSE and its burn handoff. */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "numerics/burnsolver/coupling/odeFunction.h"
 #include "fixtures/network/GeneratedNseReference.h"
 
@@ -90,7 +91,7 @@ ARCH_HOST_DEVICE inline BurnConfigView configuration()
 ARCH_HOST_DEVICE inline bool close(double actual, double expected,
                                     double absolute = 1.0e-12)
 {
-    return std::isfinite(actual) && std::abs(actual - expected) <= absolute;
+    return arch::math::isfinite(actual) && std::abs(actual - expected) <= absolute;
 }
 
 ARCH_HEAVY_INLINE bool rank_two()
@@ -194,7 +195,7 @@ ARCH_HOST_DEVICE inline bool mass_gauge()
     const double increment[3]{-0.125, -0.125, 0.25};
     const double original = OdeMath::composition_increment_energy<LightNetwork>(increment);
     const double shifted = OdeMath::composition_increment_energy<ShiftedMassGauge>(increment);
-    return std::isfinite(original) && original > 0.0
+    return arch::math::isfinite(original) && original > 0.0
         && std::abs(shifted - original) <= 1.0e-12 * std::abs(original);
 }
 

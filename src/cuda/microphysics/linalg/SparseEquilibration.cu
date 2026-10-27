@@ -11,6 +11,7 @@
  * 3. Return a checked solution through the shared ODE contract.
  */
 
+#include "core/MathClassification.h"
 #include "cuda/microphysics/linalg/SparseEquilibration.h"
 #include "numerics/linalg/LinearEquilibration.h"
 #include "numerics/linalg/SparseResidual.h"
@@ -40,7 +41,7 @@ __global__ void accumulate_correction(int extent, const double* correction,
     const auto stride = static_cast<std::size_t>(gridDim.x) * blockDim.x;
     for (auto row = lane; row < static_cast<std::size_t>(extent); row += stride) {
         const double next = solution[row] + correction[row];
-        if (!std::isfinite(next)) atomicExch(invalid, 1);
+        if (!arch::math::isfinite(next)) atomicExch(invalid, 1);
         else solution[row] = next;
     }
 }

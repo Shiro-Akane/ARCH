@@ -7,6 +7,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "core/ArchPortability.h"
 #include <cmath>
 #include <limits>
@@ -19,7 +20,7 @@ ARCH_HOST_DEVICE inline double equilibration_divisor(
     double maximum = 0.0;
     for (int slot = begin; slot < end; ++slot) {
         const double value = values[slots == nullptr ? slot : slots[slot]];
-        if (!std::isfinite(value))
+        if (!arch::math::isfinite(value))
             return std::numeric_limits<double>::quiet_NaN();
         const double magnitude = std::abs(value);
         if (magnitude > maximum) maximum = magnitude;
@@ -38,9 +39,9 @@ ARCH_HOST_DEVICE inline double equilibration_divisor(
 ARCH_HOST_DEVICE inline bool equilibrated_value(
     double value, double divisor, double& scaled)
 {
-    if (std::isfinite(value) && std::isfinite(divisor) && divisor > 0.0) {
+    if (arch::math::isfinite(value) && arch::math::isfinite(divisor) && divisor > 0.0) {
         scaled = value / divisor;
-        if (std::isfinite(scaled) && (value == 0.0 || scaled != 0.0)) return true;
+        if (arch::math::isfinite(scaled) && (value == 0.0 || scaled != 0.0)) return true;
     }
     // A caller must propagate this failure before accepting a linear response.
     // The initialized output keeps invalid arithmetic out of a vendor kernel.

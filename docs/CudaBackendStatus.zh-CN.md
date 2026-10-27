@@ -6,6 +6,8 @@
 
 CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算。CPU 和 CUDA 路径共用同一套数学与物理实现；而设备内存、计算核（kernels）、执行流以及线性求解库则是后端专有的。下表组件的几何与后端适用范围见[功能清单](Features.zh-CN.md)。受测配置、技术结果和整体验收状态统一记录在[验证索引](../validation/README.zh-CN.md)中。
 
+Linux／WSL2 仍是推荐运行系统；Windows11 x64 原生 CUDA 与 CPU 共用本页的科学范围及 Studio 工作流，但适配较新，可能存在不稳定性与 bug。Windows 使用独立 MSVC／NVCC ABI 依赖树，见[构建与启动](guides/WindowsNativeCuda.zh-CN.md)及[两侧逐项对应与验收](histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)。此兼容工作不扩展既有几何、EOS、网络或耦合组合的科学资格。
+
 ## 共用功能范围
 
 | 模块 | 已有实现范围 |

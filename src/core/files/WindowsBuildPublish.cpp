@@ -20,7 +20,29 @@
 #include <string>
 #include <vector>
 
+#ifdef _MSC_VER
+// The user-mode SDK omits this declaration; MinGW supplies it in winternl.h.
+// Signature: learn.microsoft.com/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntsetinformationfile
+extern "C" __declspec(dllimport) NTSTATUS NTAPI NtSetInformationFile(
+    HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
+#endif
+
 namespace {
+// Exact FileRenameInformation (class 10) layout, shared by both compilers.
+// Declare the documented NT record locally rather than mixing WDK kernel
+// headers into this user-mode helper or reopening pinned names via Win32.
+struct NativeRenameInformation {
+    BOOLEAN ReplaceIfExists;
+    HANDLE RootDirectory;
+    ULONG FileNameLength;
+    WCHAR FileName[1];
+};
+static_assert(offsetof(NativeRenameInformation, RootDirectory)==sizeof(HANDLE));
+static_assert(offsetof(NativeRenameInformation, FileName)==2*sizeof(HANDLE)+sizeof(ULONG));
+#ifndef _MSC_VER
+static_assert(sizeof(NativeRenameInformation)==sizeof(FILE_RENAME_INFORMATION));
+static_assert(offsetof(NativeRenameInformation, FileName)==offsetof(FILE_RENAME_INFORMATION, FileName));
+#endif
 struct Handle {
     HANDLE value = INVALID_HANDLE_VALUE;
     explicit Handle(HANDLE h = INVALID_HANDLE_VALUE) : value(h) {}
@@ -249,16 +271,16 @@ int wmain(int argc, wchar_t** argv) {
         // Use the Native API's same-directory rename by source handle. The
         // Win32 wrapper reopens names/parents and conflicts with the pin. A
         // basename and null root keep the rename in this file's pinned parent.
-        const auto bytes=offsetof(FILE_RENAME_INFORMATION,FileName)+(target.size()+1)*sizeof(wchar_t);
+        const auto bytes=offsetof(NativeRenameInformation,FileName)+(target.size()+1)*sizeof(wchar_t);
         std::vector<unsigned char> storage(bytes);
-        auto* rename=reinterpret_cast<FILE_RENAME_INFORMATION*>(storage.data());
+        auto* rename=reinterpret_cast<NativeRenameInformation*>(storage.data());
         rename->ReplaceIfExists=create?FALSE:TRUE;
         rename->RootDirectory=nullptr;
         rename->FileNameLength=static_cast<DWORD>(target.size()*sizeof(wchar_t));
         std::copy(target.begin(),target.end(),rename->FileName);
         IO_STATUS_BLOCK status{};
         const NTSTATUS result=NtSetInformationFile(identity.value,&status,rename,
-            static_cast<ULONG>(bytes),FileRenameInformation);
+            static_cast<ULONG>(bytes),static_cast<FILE_INFORMATION_CLASS>(10));
         if (result<0) {
             SetLastError(RtlNtStatusToDosError(result));
             throw std::runtime_error("replace-manifest");

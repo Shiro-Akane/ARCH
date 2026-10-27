@@ -29,6 +29,7 @@
 
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/schedule/DriverControl.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "driver/stages/DriverStages.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "physics/boundary/UserBoundary.h"

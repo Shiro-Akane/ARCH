@@ -29,11 +29,13 @@ class ConfigurationV3(unittest.TestCase):
         self.cwd = Path(self.tmp.name)
 
     def call(self, args, text=None, expected=0):
-        p = subprocess.run([str(ARCH), *args], input=text, text=True, capture_output=True,
+        # Preserve the exact bytes covered by configRevision on every host.
+        payload = text.encode('utf-8') if text is not None else None
+        p = subprocess.run([str(ARCH), *args], input=payload, capture_output=True,
                            cwd=self.cwd, env=ENV, timeout=30)
         self.assertEqual(p.returncode, expected, (p.stdout[:4000], p.stderr))
         self.assertEqual(list(self.cwd.iterdir()), [], "static API wrote files")
-        self.assertLessEqual(len(p.stdout.encode()), 8 * 1024 * 1024)
+        self.assertLessEqual(len(p.stdout), 8 * 1024 * 1024)
         data = json.loads(p.stdout)
         self.assertEqual(data["version"], "3")
         return data
@@ -50,7 +52,7 @@ class ConfigurationV3(unittest.TestCase):
 
     def resources(self, text, expected=0):
         result = subprocess.run([str(ARCH), "--amr-resources", "count-context", "--config-stdin"],
-                                input=text, text=True, capture_output=True,
+                                input=text.encode('utf-8'), capture_output=True,
                                 cwd=self.cwd, env=ENV, timeout=30)
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         self.assertEqual(list(self.cwd.iterdir()), [])
@@ -318,7 +320,7 @@ class ConfigurationV3(unittest.TestCase):
         responses = []
         for payload in [text, text + "\nxhe4=.9\nxc12=.1\n"]:
             p = subprocess.run([str(ARCH), "--inspect-case", "Gaussian", "--config-stdin"],
-                               input=payload, text=True, capture_output=True, cwd=self.cwd,
+                               input=payload.encode('utf-8'), capture_output=True, cwd=self.cwd,
                                env=ENV, timeout=30)
             self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
             data = json.loads(p.stdout)

@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "amr/AMRControl.h"
 #include "driver/schedule/DriverControl.h"
 #include "driver/stages/DriverStages.h"

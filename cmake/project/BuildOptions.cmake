@@ -28,7 +28,9 @@ message(STATUS "[OPT] Build Type: ${CMAKE_BUILD_TYPE}")
 
 # Optimization must preserve the shared physics library's ordered reductions,
 # finite-value checks, and CPU/device operation boundaries in every build type.
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+endif()
 
 # Enable LTO only for optimized configurations.  Applying IPO globally also
 # adds -flto to Debug objects and makes the already template-heavy CUDA build
@@ -73,6 +75,15 @@ set(ARCH_CUSTOM_NETWORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/cu
 # This seam is deliberately opt-in: a normal CPU configure must neither enable
 # CUDA nor discover a toolkit or nvcc.
 option(ARCH_ENABLE_CUDA "Build the CUDA execution backend and focused validation targets" OFF)
+if(MSVC AND ARCH_ENABLE_CUDA)
+    # The common backend explicitly links CUDA::cudart. Match that shared
+    # runtime on every native target instead of also adding cudart_static via
+    # CMake's CUDA-language default (duplicate symbols with the MSVC linker).
+    set(CMAKE_CUDA_RUNTIME_LIBRARY Shared CACHE STRING "CUDA runtime for the native Windows backend")
+    if(NOT CMAKE_CUDA_RUNTIME_LIBRARY STREQUAL "Shared")
+        message(FATAL_ERROR "Native Windows ARCH CUDA requires CMAKE_CUDA_RUNTIME_LIBRARY=Shared to match CUDA::cudart")
+    endif()
+endif()
 set(ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL "1" CACHE STRING
     "CUDA Debug assembler optimization (0-3); bounds optimizer cost without changing shared physics")
 set_property(CACHE ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL PROPERTY STRINGS 0 1 2 3)

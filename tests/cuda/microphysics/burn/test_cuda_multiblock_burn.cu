@@ -13,6 +13,7 @@
 #include "amr/exchange/ExchangePlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/stages/DriverBurn.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "driver/stages/DriverMacroStep.h"
 #include "numerics/burnsolver/BurnDispatch.h"
 #include "numerics/flux/FluxHLLC.h"

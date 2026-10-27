@@ -2,10 +2,11 @@
 import path from 'node:path';
 import {execFileSync, spawn} from 'node:child_process';
 import type {ChildProcess, SpawnOptions} from 'node:child_process';
+import {compilerEnvironment,windowsSearchPath} from './windows-tools.mjs';
 
 /** Trusted Host setup only. Never populated from HTTP or a project data file. */
 export interface WindowsProcessTools {supervisor:string;path:string}
-export interface WindowsHostTools extends WindowsProcessTools {cmake:string;ninja?:string;objdump?:string;publisher?:string;rc?:string;terminal?:string}
+export interface WindowsHostTools extends WindowsProcessTools {cmake:string;ninja?:string;objdump?:string;publisher?:string;rc?:string;terminal?:string;compilerEnvironment?:Partial<Record<'INCLUDE'|'LIB'|'LIBPATH',string>>}
 export interface ProcessIdentity {pid:number;creationTime:string;alive:boolean}
 export function windowsExecutable(value:unknown):string{
  if(typeof value!=='string'||!/^[A-Za-z]:[\\/]/.test(value)||!path.win32.isAbsolute(value)||value.includes('\0')||!value.toLowerCase().endsWith('.exe'))throw new Error('Absolute local Windows .exe required.');
@@ -17,7 +18,7 @@ export function windowsEnvironment(tools:WindowsProcessTools):NodeJS.ProcessEnv 
  executable(tools.supervisor);
  const host=tools as Partial<WindowsHostTools>;
  for(const value of [host.cmake,host.ninja,host.objdump,host.publisher,host.rc,host.terminal])if(value!==undefined)executable(value);
- const env:NodeJS.ProcessEnv={PATH:tools.path,PATHEXT:'.COM;.EXE;.BAT;.CMD'};
+ const env:NodeJS.ProcessEnv={PATH:windowsSearchPath(tools.path),PATHEXT:'.COM;.EXE;.BAT;.CMD',...compilerEnvironment(host.compilerEnvironment)};
  for(const key of ['SystemRoot','WINDIR','ComSpec','TEMP','TMP','USERPROFILE'])if(process.env[key])env[key]=process.env[key];
  return env;
 }

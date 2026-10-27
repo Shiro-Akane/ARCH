@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm> // for std::max
 #include <bit>
 #include <cstddef>
@@ -42,21 +43,21 @@ struct IdealGasView
 
         for (int k = 0; k < species.count; ++k)
         {
-            if (!std::isfinite(Xi[k]) || Xi[k] < 0.0) return arch::state::invalid();
+            if (!arch::math::isfinite(Xi[k]) || Xi[k] < 0.0) return arch::state::invalid();
             if (Xi[k] > 0.0)
             {
                 // SpeciesManager supplies immutable per-species gamma values.
                 double gamma_i = species.get_gamma_ref(k);
                 double Cv_i = species.get_Cv_ref(k);
                 if (!(Cv_i > 0.0) || !(gamma_i > 1.0)
-                    || !std::isfinite(Cv_i) || !std::isfinite(gamma_i)) return arch::state::invalid();
+                    || !arch::math::isfinite(Cv_i) || !arch::math::isfinite(gamma_i)) return arch::state::invalid();
 
                 sum_Xi_Cv += Xi[k] * Cv_i;
                 sum_Xi_Cv_gm1 += Xi[k] * Cv_i * (gamma_i - 1.0);
             }
         }
 
-        if (!(sum_Xi_Cv > 0.0) || !std::isfinite(sum_Xi_Cv))
+        if (!(sum_Xi_Cv > 0.0) || !arch::math::isfinite(sum_Xi_Cv))
             return arch::state::invalid();
         return (sum_Xi_Cv_gm1 / sum_Xi_Cv) + 1.0;
     }
@@ -76,16 +77,16 @@ struct IdealGasView
         double cv_mix = 0.0;
         for (int k = 0; k < species.count; ++k)
         {
-            if (!std::isfinite(Xi[k]) || Xi[k] < 0.0 || !(species.get_Cv_ref(k) > 0.0))
+            if (!arch::math::isfinite(Xi[k]) || Xi[k] < 0.0 || !(species.get_Cv_ref(k) > 0.0))
                 return arch::state::invalid();
             cv_mix += Xi[k] * species.get_Cv_ref(k);
         }
-        return cv_mix > 0.0 && std::isfinite(cv_mix) ? cv_mix : arch::state::invalid();
+        return cv_mix > 0.0 && arch::math::isfinite(cv_mix) ? cv_mix : arch::state::invalid();
     }
 
     ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     {
-        if (!(rho > 0.0) || !std::isfinite(rho) || !(T > 0.0) || !std::isfinite(T))
+        if (!(rho > 0.0) || !arch::math::isfinite(rho) || !(T > 0.0) || !arch::math::isfinite(T))
             return arch::state::invalid();
         double cv_mix = get_mixture_Cv(Xi);
         return (get_gamma(Xi) - 1.0) * rho * cv_mix * T;
@@ -93,7 +94,7 @@ struct IdealGasView
 
     ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
-        if (!(rho > 0.0) || !std::isfinite(rho) || !(e > 0.0) || !std::isfinite(e))
+        if (!(rho > 0.0) || !arch::math::isfinite(rho) || !(e > 0.0) || !arch::math::isfinite(e))
             return arch::state::invalid();
         return (get_gamma(Xi) - 1.0) * rho * e;
     }
@@ -101,18 +102,18 @@ struct IdealGasView
     // Temperature interface required by all reaction-network solvers.
     ARCH_INLINE double get_temperature(double rho, double e, const double *Xi) const
     {
-        if (!(rho > 0.0) || !std::isfinite(rho) || !(e > 0.0) || !std::isfinite(e))
+        if (!(rho > 0.0) || !arch::math::isfinite(rho) || !(e > 0.0) || !arch::math::isfinite(e))
             return arch::state::invalid();
         // Ideal-gas relation e=Cv*T, hence T=e/Cv.
         double cv_mix = get_mixture_Cv(Xi);
-        if (!(cv_mix > 0.0) || !std::isfinite(cv_mix))
+        if (!(cv_mix > 0.0) || !arch::math::isfinite(cv_mix))
             return arch::state::invalid();
         return e / cv_mix;
     }
 
     ARCH_INLINE double get_eint_from_T(double rho, double T, const double *Xi) const
     {
-        if (!(rho > 0.0) || !std::isfinite(rho) || !(T > 0.0) || !std::isfinite(T))
+        if (!(rho > 0.0) || !arch::math::isfinite(rho) || !(T > 0.0) || !arch::math::isfinite(T))
             return arch::state::invalid();
         // Analytic ideal-gas relation e=Cv*T.
         double cv_mix = get_mixture_Cv(Xi);
@@ -121,7 +122,7 @@ struct IdealGasView
 
     ARCH_INLINE double get_cv(double rho, double T, const double *Xi) const
     {
-        if (!(rho > 0.0) || !std::isfinite(rho) || !(T > 0.0) || !std::isfinite(T))
+        if (!(rho > 0.0) || !arch::math::isfinite(rho) || !(T > 0.0) || !arch::math::isfinite(T))
             return arch::state::invalid();
         // Cv is composition-dependent but temperature-independent for an ideal gas.
         return get_mixture_Cv(Xi);

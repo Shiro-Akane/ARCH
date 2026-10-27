@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <cmath>
 #include <limits>
 #include "core/ArchPortability.h"
@@ -39,14 +40,14 @@ ARCH_HOST_DEVICE inline double cylindrical_rotation_source_dt(
     if(recovered.w==0.)return std::numeric_limits<double>::max();
     const double inverse_radius=GridMetrics::InverseRadiusVolumeAverage(grid,i);
     const double acceleration=recovered.w*recovered.w*inverse_radius;
-    if(!std::isfinite(inverse_radius)||!(inverse_radius>0.)||
-       !std::isfinite(acceleration))return arch::state::invalid();
+    if(!arch::math::isfinite(inverse_radius)||!(inverse_radius>0.)||
+       !arch::math::isfinite(acceleration))return arch::state::invalid();
     if(acceleration==0.)return std::numeric_limits<double>::max();
     const double radial_speed=std::abs(recovered.u);
     const double impulse=2.*recovered.internal/
         (std::hypot(radial_speed,std::sqrt(2.*recovered.internal))+radial_speed);
     const double dt=.5*impulse/acceleration;
-    return std::isfinite(dt)&&dt>0.?dt:arch::state::invalid();
+    return arch::math::isfinite(dt)&&dt>0.?dt:arch::state::invalid();
 }
 
 /**
@@ -156,8 +157,8 @@ ARCH_HOST_DEVICE inline double axisymmetric_centrifugal_work_coefficient(
     const double volume=GridMetrics::CellVolume(grid,i,0,0);
     const double moment=GridMetrics::AngularMomentumVolumeMoment(grid,i,0,0);
     const double lower=grid.GetFacePosL(i),upper=grid.GetFacePosR(i);
-    if (!std::isfinite(volume)||!(volume>0.)||!std::isfinite(moment)||!(moment>0.)
-        ||!std::isfinite(lower)||lower<0.||!std::isfinite(upper)||!(upper>lower))
+    if (!arch::math::isfinite(volume)||!(volume>0.)||!arch::math::isfinite(moment)||!(moment>0.)
+        ||!arch::math::isfinite(lower)||lower<0.||!arch::math::isfinite(upper)||!(upper>lower))
         return std::numeric_limits<double>::quiet_NaN();
     // Factor the exact annular moments with eta=lower/upper. Directly
     // subtracting T/W and A/V cancels two O(1/dr) terms in a thin ring;

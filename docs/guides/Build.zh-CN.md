@@ -5,11 +5,12 @@
 第一次构建可以直接使用 README 中的 CPU 或 CUDA 命令。本指南解释这些命令的
 作用，以及如何根据机器调整编译。Bash 示例在 Linux／WSL2 终端中执行，原生 Windows 示例使用 PowerShell；两者均从仓库根目录开始。
 
-**推荐 Linux。** 原生 Windows 11 x64 提供完整的已适配 CPU CLI 与 Studio 工作流，但适配较新，可能存在不稳定性与 bug。两侧共用 CMake、科学实现、参数格式与 Studio 服务；本轮不赋予 Windows CUDA／MPI 资格。
+**推荐 Linux。** 原生 Windows11 x64 在既有科学范围内提供完整的 CPU／CUDA CLI 与 Studio 工作流，但可能仍有不稳定性与 bug。两侧共用 CMake、科学实现、参数格式与 Studio 服务；[最终功能对照](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)记录实测配置与限制。
 
 | 任务 | Linux／WSL2 | 原生 Windows 11 x64 |
 | --- | --- | --- |
 | CPU 工具与依赖 | C++20、Ninja、HDF5／OpenMP；使用下方预设 | GCC/UCRT64 与同 ABI HDF5／HighFive／KLU；见[依赖准备](WindowsNativeW0.zh-CN.md)和[编译](WindowsNativeCpu.zh-CN.md) |
+| CUDA 工具与依赖 | NVCC 与兼容 GCC／Clang、匹配数值库 | 独立 MSVC／NVCC、Windows SDK、同 ABI HDF5／KLU 与可选 cuDSS；见[原生 CUDA](WindowsNativeCuda.zh-CN.md) |
 | 可执行文件 | `build-cpu/bin/ARCH` | `build-windows-cpu/bin/ARCH.exe` |
 | 可选 Studio | 原生 Node24+、Electron、图形库／WSLg | 原生 x64 Node24+、Electron、平台辅助程序与 DLL PATH；见[桌面构建](WindowsStudioDesktop.zh-CN.md) |
 | 运行终端 | `xterm` 与 `flock` | 已配置的 Windows Terminal 与原生进程辅助程序 |
@@ -52,18 +53,11 @@ CUDA 预设启用 `ARCH_ENABLE_CUDA=ON`，相比纯 CPU 构建会显著增加编
 的绝对路径。不设置该选项时，项目默认把可执行文件写入源码树的 `bin/`。
 需要覆盖预设中的编译器、CUDA 架构等选项时，在配置命令后追加 `-D名称=值` 即可。
 
-## Windows 原生 CPU CLI
+## 原生 Windows：CPU 与 CUDA
 
-Windows 11 的 GCC/UCRT64 构建、安装、路径与定点验收见
-[Windows 原生 CPU CLI](WindowsNativeCpu.zh-CN.md)。工具与同 ABI 的
-HDF5／HighFive／KLU 准备仍由 [W0 指南](WindowsNativeW0.zh-CN.md)说明。
+CPU 使用 [GCC/UCRT64 指南](WindowsNativeCpu.zh-CN.md)及 [W0 同 ABI 依赖](WindowsNativeW0.zh-CN.md)。CUDA 使用独立的 [MSVC／NVCC 指南](WindowsNativeCuda.zh-CN.md)，配套 Windows SDK、HDF5／KLU 和可选 cuDSS；两个编译器 ABI 的对象、DLL 与缓存不可混用。两条路线都构建同一 ARCH 目标，共用求解器和 HDF5 实现。
 
-CPU CLI 复用相同 CMake／求解器／HDF5 实现，使用独立的 Windows 构建目录。
-仅 CPU CLI 验证不代表原生 Studio、Windows CUDA 或 MPI 已获支持。数学库和 Studio
-读写库继续冻结；既有 Linux／WSL2 路线保留。
-
-原生 Studio Host 服务与已批准的平台例外见 [Windows Studio 平台服务](WindowsStudioPlatform.zh-CN.md)，
-包含资源验收程序的编译命令及有限范围 Build／Preview 准入。[原生桌面指南](WindowsStudioDesktop.zh-CN.md)给出已完成的 W3 窗口、打包、Run／Restart 和真实 Plotfile 链路；普通使用按 [Studio 指南](Studio.zh-CN.md)操作。本节不赋予 Windows CUDA 或 MPI 资格。
+Studio 的 Host／进程与资源策略见 [W2](WindowsStudioPlatform.zh-CN.md)，窗口、可信工具上下文与便携包见[桌面指南](WindowsStudioDesktop.zh-CN.md)。CUDA 指南补充继承 Microsoft Developer 环境的启动方法；日常模型、参数、后端选择与看图见共用 [Studio 指南](Studio.zh-CN.md)。[最终功能对照与验收](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)分别记录当前 CPU、CUDA 和 Studio 的证据。数学公式、拒绝检查、科学格式与既有误差预算保持。MPI、Zenodo 和 release 仍另行处理。
 
 ## 构建输出
 

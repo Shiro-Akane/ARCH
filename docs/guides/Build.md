@@ -6,11 +6,12 @@ Use the README's CPU or CUDA commands for a first build. This guide explains
 the choices behind them and how to adjust compilation for your machine. Run
 the Bash commands from the repository root in a Linux or WSL2 terminal; native Windows examples use PowerShell.
 
-**Linux is recommended.** Native Windows 11 x64 provides the complete adapted CPU CLI and Studio workflow, with newer support that may still have instability or bugs. Both systems share CMake, the scientific implementation, parameter format and Studio services. Windows CUDA/MPI have not been qualified by this work.
+**Linux is recommended.** Native Windows11 x64 provides the complete CPU/CUDA CLI and Studio workflow within the existing scientific scope, but may still have instability or bugs. Both systems share CMake, the scientific implementation, parameter format and Studio services. The [final correspondence](../histroy/build/WindowsNativeCudaQualification-20261027.md) records tested profiles and limits.
 
 | Task | Linux / WSL2 | Native Windows 11 x64 |
 | --- | --- | --- |
 | CPU tools and libraries | C++20, Ninja, HDF5/OpenMP; presets below | GCC/UCRT64 with same-ABI HDF5/HighFive/KLU; [setup](WindowsNativeW0.md) and [build](WindowsNativeCpu.md) |
+| CUDA tools and libraries | NVCC with compatible GCC/Clang and matching numerical libraries | Separate MSVC/NVCC, Windows SDK, matching-ABI HDF5/KLU and optional cuDSS; [native CUDA](WindowsNativeCuda.md) |
 | Executable | `build-cpu/bin/ARCH` | `build-windows-cpu/bin/ARCH.exe` |
 | Optional Studio | Native Node24+, Electron, graphical libraries/WSLg | Native x64 Node24+, Electron, native helpers and DLL PATH; [desktop setup](WindowsStudioDesktop.md) |
 | Run terminal | `xterm` and `flock` | Configured Windows Terminal and native supervision helpers |
@@ -58,21 +59,11 @@ build directory's absolute `bin/` path. Without that option, the project writes
 executables to `bin/` in the source tree. Append `-DNAME=value` to a configuration
 command to override a preset option, such as a compiler or CUDA architecture.
 
-## Native Windows CPU CLI
+## Native Windows: CPU and CUDA
 
-See [Native Windows CPU CLI](WindowsNativeCpu.md) for Windows 11 GCC/UCRT64
-build/install commands, paths and focused acceptance. Tool and matching-ABI
-HDF5/HighFive/KLU preparation stays in [W0](WindowsNativeW0.md).
+CPU uses [GCC/UCRT64](WindowsNativeCpu.md) with [W0 matching-ABI dependencies](WindowsNativeW0.md). CUDA uses the separate [MSVC/NVCC recipe](WindowsNativeCuda.md), Windows SDK, matching HDF5/KLU and optional cuDSS. Do not mix their objects, DLLs or caches. Both routes build the same ARCH target and share solvers and HDF5 implementation.
 
-The CPU CLI shares CMake, solvers and HDF5 implementation, using a separate
-Windows build directory. Its CLI qualification alone does not establish native Studio,
-Windows CUDA or MPI support. Mathematical and Studio I/O libraries remain
-frozen; the existing Linux/WSL2 route remains available.
-
-Native Studio Host services and their approved platform exceptions are documented
-in [Windows Studio platform services](WindowsStudioPlatform.md), including the
-resource harness build command and scoped Build/Preview admission. Electron
-windows, packaging, Run/Restart and real Plotfile display are covered by the completed [W3 desktop instructions](WindowsStudioDesktop.md). Follow the shared [Studio workflow](Studio.md) for daily use. Windows CUDA and MPI are not qualified here.
+See [W2](WindowsStudioPlatform.md) for Host process/resource services and the [desktop guide](WindowsStudioDesktop.md) for windows, trusted tools and portable packages. The CUDA guide adds the Microsoft Developer environment; the shared [Studio guide](Studio.md) covers models, parameters, backend selection and plots. The [final correspondence record](../histroy/build/WindowsNativeCudaQualification-20261027.md) separates current CPU, CUDA and Studio evidence. Formulas, rejection checks, scientific formats and existing error budgets remain intact. MPI, Zenodo and release actions remain separate.
 
 ## Build output
 

@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "core/CompensatedSum.h"
 #include <cmath>
 #include <limits>
@@ -22,8 +23,8 @@ ARCH_HOST_DEVICE inline bool sparse_residual_accurate(
     int extent, double product, double rhs, double scale)
 {
     const double allowance = 64.0 * (extent + 1.0) * std::numeric_limits<double>::epsilon();
-    return extent > 0 && std::isfinite(product) && std::isfinite(rhs)
-        && std::isfinite(scale) && scale >= 0.0
+    return extent > 0 && arch::math::isfinite(product) && arch::math::isfinite(rhs)
+        && arch::math::isfinite(scale) && scale >= 0.0
         && std::abs(product - rhs) <= allowance * scale;
 }
 
@@ -44,23 +45,23 @@ ARCH_HOST_DEVICE inline SparseResidualRow sparse_residual_row(
 {
     SparseResidualRow result;
     if (extent <= 0 || begin < 0 || end < begin || !columns || !values || !solution
-        || !std::isfinite(rhs)) return result;
+        || !arch::math::isfinite(rhs)) return result;
     double product = 0.0, scale = std::abs(rhs);
     math::CompensatedSum residual;
     residual.add(rhs);
     for (int slot = begin; slot < end; ++slot) {
         if (columns[slot] < 0 || columns[slot] >= extent) return result;
         const double a = values[slot], x = solution[columns[slot]];
-        if (!std::isfinite(a) || !std::isfinite(x)) return result;
+        if (!arch::math::isfinite(a) || !arch::math::isfinite(x)) return result;
         const double term = a * x;
-        if (!std::isfinite(term)) return result;
+        if (!arch::math::isfinite(term)) return result;
         product += term;
         scale += std::abs(term);
         residual.add_product(-a, x);
     }
     result.correction_rhs = residual.value();
-    if (!std::isfinite(product) || !std::isfinite(scale)
-        || !std::isfinite(result.correction_rhs)) return result;
+    if (!arch::math::isfinite(product) || !arch::math::isfinite(scale)
+        || !arch::math::isfinite(result.correction_rhs)) return result;
     result.state = sparse_residual_accurate(extent, product, rhs, scale)
         ? SparseResidualState::Accurate : SparseResidualState::Correctable;
     return result;

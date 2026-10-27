@@ -1,0 +1,546 @@
+{
+  "schema": "arch-windows-native-cuda-qualification-1",
+  "date": "2026-10-27",
+  "engineeringStatus": "closed-with-documented-platform-limits",
+  "branch": "build/win11",
+  "frozenBaseline": "04cb2f3f7881c20b7ee446d1b7adc020cb8feaf5",
+  "implementationParent": "1f80e0cf2fb2fb82821d14c4418d50eca3a15ce0",
+  "recommendedSystem": "Linux or Linux under WSL2",
+  "maturity": "Native Windows has the corresponding CPU/CUDA/Studio functionality within the existing scientific scope; instability and bugs remain possible.",
+  "toolchains": {
+    "linuxCPU": "Release GCC strict FP",
+    "linuxCUDA": "NVCC12.3/GCC12/SM86/cuDSS0.8",
+    "windowsCPU": "GCC16.2 UCRT64 with same-ABI HDF5/KLU",
+    "windowsCUDA": "NVCC12.9.86/MSVC19.44.35229/SDK10.0.26100/HDF51.14.6/cuDSS0.8/SM86"
+  },
+  "coreCTest": {
+    "suites": [
+      {
+        "file": "native-final-current-source-ctest.xml",
+        "tests": 141,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "time": "570"
+      },
+      {
+        "file": "native-final-preview-oracle-ctest.xml",
+        "tests": 1,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "time": "14"
+      },
+      {
+        "file": "arch-linux-final-source-ctest.xml",
+        "tests": 72,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "time": "99"
+      },
+      {
+        "file": "arch-linux-final-oracle-port.xml",
+        "tests": 2,
+        "fail": 0,
+        "error": 0,
+        "skip": 0,
+        "time": "34"
+      }
+    ],
+    "windows_unique_scientific_ctests": 142,
+    "shared_linux_cpu_contracts": 71,
+    "linux_only_tooling_contracts": [
+      "tooling_contracts"
+    ],
+    "no_other_linux_scientific_contract_missing": true
+  },
+  "affectedLinuxCUDARegression": {
+    "tests": 12,
+    "fail": 0,
+    "skip": 0,
+    "scope": "Affected leaves and their original real EOS fixture; not the entire Linux CUDA inventory"
+  },
+  "studioTests": {
+    "linux": {
+      "tests": 453,
+      "fail": 0,
+      "skip": 0
+    },
+    "windows": {
+      "tests": 95,
+      "files": 16,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "nativeWindowsLinkEvidenceTests": 7,
+  "canonicalBackendMatrix": {
+    "cases": 37,
+    "resolutionGroups": 9,
+    "originalThresholdsPreserved": true,
+    "sourceAndBinaryIdentityVerifiedAfterRun": true,
+    "manifestSha256": "5970336ab7a488d94e3e3c4849811934638b82a2ba584505a499175b796f4d03"
+  },
+  "nativeAMRRestart": {
+    "routes": 8,
+    "comparisons": 9,
+    "originalThresholdsPreserved": true,
+    "sourceAndBinaryIdentityVerifiedAfterRun": true
+  },
+  "realHostCUDA": {
+    "managedBuild": true,
+    "fullDependencyFreshness": "unknown",
+    "initializationPreview": true,
+    "inspectionResourcesAMR": true,
+    "terminalRunRestart": true,
+    "actualBackend": "cuda",
+    "formalPlotfile": [
+      "metadata",
+      "SHA-bound raw slice",
+      "SHA-bound native point",
+      "global display LOD"
+    ],
+    "independentH5pySamples": 8,
+    "independentH5pyPoint": true,
+    "readFileShaUnchanged": true,
+    "sameBackendRestart": {
+      "rtol": 0,
+      "atol": 0
+    },
+    "newHumanDialogOrCurveClaim": false
+  },
+  "geometryMemcheck": {
+    "tool": "Compute Sanitizer12.9.79",
+    "originalFullGeometryTest": true,
+    "errors": 0,
+    "originalAssertionsPreserved": true
+  },
+  "packages": {
+    "linux": {
+      "electron": {
+        "electron": "44.9.1",
+        "node": "24.22.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "node": {
+        "node": "24.21.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "filesCompared": 225,
+      "sourceCopiesExact": true,
+      "licensesPreserved": true,
+      "commonWindowsToolsModuleLoaded": true,
+      "coreBundled": false,
+      "release": false
+    },
+    "windows": {
+      "electron": {
+        "electron": "44.9.1",
+        "node": "24.22.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "node": {
+        "node": "24.21.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "filesCompared": 225,
+      "sourceCopiesExact": true,
+      "licensesPreserved": true,
+      "commonWindowsToolsModuleLoaded": true,
+      "coreBundled": false,
+      "release": false
+    }
+  },
+  "actualCurrentWindowsWindow": {
+    "nativeElectronMainHostAndRendererReady": true,
+    "bundledStandaloneNode": true,
+    "osInteractionAutomated": false,
+    "normalUserCloseNewlyClaimed": false,
+    "historicalHumanEvidence": "WindowsNativeQualification-20261026.json"
+  },
+  "frozenBoundary": {
+    "pass": true,
+    "protected_files": 249,
+    "changed_protected_files": 43,
+    "approved_protected_candidates": 43,
+    "violations": [],
+    "approvals": [
+      "A12",
+      "A13",
+      "A14",
+      "A15",
+      "A16",
+      "A17",
+      "A18"
+    ],
+    "pool_implementations_changed": false
+  },
+  "mathematicalCompatibilityApprovals": [
+    "A12/A13/A15 IEEE classification names only",
+    "A14 matching struct forward-declaration tags",
+    "A16 symmetric Windows Host/Device empty-member annotation",
+    "A17 exactly742 frozen Linux binary64 Helm nodes",
+    "A18 thirteen failed-array value assignments"
+  ],
+  "poolAllocationCapacityOwnershipChanged": false,
+  "testPortability": [
+    "Raw UTF8 bytes preserve config SHA rather than Python text newline translation",
+    "Initialize Grid topology before reading test-fixture cell extent",
+    "Original production t=0 topology oracle registered on Windows too",
+    "Strengthened two real EOS tests were force-recompiled and binary assertions verified"
+  ],
+  "featureCorrespondence": [
+    {
+      "id": "build",
+      "linux_feature": "Shared CMake/Ninja configure/build/install; GCC CPU and qualified NVCC host",
+      "windows_correspondence": "Same CMake/Ninja project; GCC/UCRT64 CPU or separate MSVC/NVCC CUDA ABI tree",
+      "shared_owner": "cmake/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "构建与安装",
+      "common_capability_zh": "共用 CMake／Ninja 的配置、构建、安装；Linux 使用 GCC／NVCC，Windows CPU 用 GCC/UCRT64、CUDA 用独立 MSVC/NVCC 依赖树。",
+      "acceptance": "Native GCC and MSVC/NVCC production builds; same shared CMake graph",
+      "acceptance_zh": "GCC 与 MSVC/NVCC 真实生产构建通过"
+    },
+    {
+      "id": "paths",
+      "linux_feature": "Project-relative .par paths resolve from calculation cwd; UTF8 and spaces",
+      "windows_correspondence": "Same relative-path rule; native slash/backslash paths, UTF8/spaces; adapt absolute OS namespaces",
+      "shared_owner": "src/core/files/;studio/host/hostProcess.ts",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "路径与输入",
+      "common_capability_zh": "输入格式与相对路径规则共用；工作目录为路径基准。Windows 支持本机斜杠、UTF-8 与空格，跨系统绝对路径需调整。",
+      "acceptance": "Native CPU/CUDA switch runs in UTF-8/space paths; original Windows file/process tests",
+      "acceptance_zh": "中文空格及双分隔符路径；原生文件与进程契约"
+    },
+    {
+      "id": "cpu_omp",
+      "linux_feature": "CPU runtime; OpenMP1/4; same scientific implementations",
+      "windows_correspondence": "CPU runtime; OpenMP1/4; same scientific implementations",
+      "shared_owner": "src/driver/;src/numerics/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "CPU／OpenMP",
+      "common_capability_zh": "共用 CPU 数值实现及 OpenMP；检查1／4线程功能，不承诺 SIMD 性能相同。",
+      "acceptance": "Actual CPU and CUDA-enabled executables: OpenMP 1/4, CPU/auto routes",
+      "acceptance_zh": "两种程序的 OpenMP 1／4线程、CPU／auto 实际运行"
+    },
+    {
+      "id": "backend",
+      "linux_feature": "cpu/cuda/auto selection; cuda_device; fail-closed explicit invalid backend",
+      "windows_correspondence": "cpu/cuda/auto selection; cuda_device; fail-closed explicit invalid backend",
+      "shared_owner": "src/cuda/runtime/;src/core/backend/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "后端选择",
+      "common_capability_zh": "同一 CUDA 构建选择 cpu／cuda／auto；CPU-only 的 auto 保持 CPU，显式不支持的 CUDA／设备请求必须拒绝。",
+      "acceptance": "Actual cpu/cuda/auto and invalid device/build rejection; canonical 37 cases",
+      "acceptance_zh": "CPU／CUDA／auto、无效设备及不支持构建拒绝；37算例"
+    },
+    {
+      "id": "hydro",
+      "linux_feature": "SW,VL,Roe,HLL,HLLC; PCM/MUSCL/PPM; minmod/superbee/vanleer/MC; Euler/RK2/RK3",
+      "windows_correspondence": "SW,VL,Roe,HLL,HLLC; PCM/MUSCL/PPM; minmod/superbee/vanleer/MC; Euler/RK2/RK3",
+      "shared_owner": "src/numerics/;src/cuda/hydro/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "流体求解",
+      "common_capability_zh": "原 SW／VL／Roe／HLL／HLLC、PCM／MUSCL／PPM、四类 limiter 与 Euler／RK2／RK3；保留原模型、EOS、粗细面与耦合阶次限制。",
+      "acceptance": "Original hydro leaf, route/integrator and conservative acceptance matrices; canonical cases",
+      "acceptance_zh": "原流体叶函数、路由／积分器、保守性矩阵与规范算例"
+    },
+    {
+      "id": "geometry",
+      "linux_feature": "Cartesian/cylindrical/spherical1D-3D; native r-z2D; same scoped singular joins",
+      "windows_correspondence": "Cartesian/cylindrical/spherical1D-3D; native r-z2D; same scoped singular joins",
+      "shared_owner": "src/numerics/curvilinear/;src/cuda/grid/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "几何",
+      "common_capability_zh": "原 Cartesian／cylindrical／spherical 1D–3D 与原生2D r-z；坐标顺序、奇点拼接及后端资格沿用原记录。",
+      "acceptance": "Complete original Host/device geometry tests; actual Compute Sanitizer zero errors",
+      "acceptance_zh": "原 Host／GPU 完整几何检查；memcheck 0错误"
+    },
+    {
+      "id": "boundaries",
+      "linux_feature": "Fluid periodic/outflow/reflection/prescribed inflow/user; potential prescribed value/outward normal gradient/linear Robin/user with scoped compatibility",
+      "windows_correspondence": "Fluid periodic/outflow/reflection/prescribed inflow/user; potential prescribed value/outward normal gradient/linear Robin/user with scoped compatibility",
+      "shared_owner": "src/physics/boundary/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "流体／势边界",
+      "common_capability_zh": "周期、流出、反射、给定流入、用户流体边界；势值、外法向梯度、Robin 与用户势边界保留原兼容条件。",
+      "acceptance": "Original shared boundary plan/parity and coupled geometry checks",
+      "acceptance_zh": "原边界计划／Host-Device 对照及耦合几何检查"
+    },
+    {
+      "id": "amr",
+      "linux_feature": "indicators/prolongation/restriction/halo/reflux/migration/topology transactions",
+      "windows_correspondence": "indicators/prolongation/restriction/halo/reflux/migration/topology transactions",
+      "shared_owner": "src/amr/;src/cuda/amr/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "AMR",
+      "common_capability_zh": "同一指标、细化／粗化、守恒迁移、ghost、reflux 与拓扑事务；Host 决策、Device 数值工作分工保持。",
+      "acceptance": "Original exchange/reflux/migration/transaction checks; actual eight restart routes",
+      "acceptance_zh": "交换／reflux／迁移／事务与8条真实重启链"
+    },
+    {
+      "id": "eos",
+      "linux_feature": "IdealGas, Helm, Tabular3D/4D; supported native EOSDriver and baryon table normalization",
+      "windows_correspondence": "IdealGas, Helm, Tabular3D/4D; supported native EOSDriver and baryon table normalization",
+      "shared_owner": "src/physics/eos/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "状态方程",
+      "common_capability_zh": "IdealGas、Helm、3D／4D free-energy，以及支持的 EOSDriver／baryon 原表；保留声明域、分量、反演和拒绝检查。",
+      "acceptance": "Original Helm, normalized/native tabular and Host/device parity checks; 70 added failure slots",
+      "acceptance_zh": "原 Helm、规范／原生表与 Host-Device 对照；70个失败槽"
+    },
+    {
+      "id": "diffusion",
+      "linux_feature": "thermal/viscous/species; RKL1/RKL2; closure-dependent active channels",
+      "windows_correspondence": "thermal/viscous/species; RKL1/RKL2; closure-dependent active channels",
+      "shared_owner": "src/numerics/diffusion/;src/cuda/diffusion/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "扩散",
+      "common_capability_zh": "原热、黏性、组分通道和 RKL1／RKL2；各通道取决于材料模型，Helm 恒星分支的导热范围保持。",
+      "acceptance": "Original RKL1/RKL2 parity and backend tests; canonical diffusion convergence groups",
+      "acceptance_zh": "原 RKL1／RKL2 与后端测试；规范扩散收敛组"
+    },
+    {
+      "id": "burn",
+      "linux_feature": "iso7/aprox13/aprox19/aprox21; BE_NR/BD/ROS4; scoped NSE",
+      "windows_correspondence": "iso7/aprox13/aprox19/aprox21; BE_NR/BD/ROS4; scoped NSE",
+      "shared_owner": "src/numerics/burnsolver/;src/physics/network/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "烧核与 NSE",
+      "common_capability_zh": "iso7、aprox13／19／21，BE_NR／BD／ROS4 及已验收网络的 NSE；保留网络／EOS 组合限制。",
+      "acceptance": "Original network/ODE/policy matrices and canonical burn cases",
+      "acceptance_zh": "原网络／ODE／策略矩阵与规范烧核算例"
+    },
+    {
+      "id": "generated",
+      "linux_feature": "registered generated networks and weak tables; same package contract",
+      "windows_correspondence": "registered generated networks and weak tables; same package contract",
+      "shared_owner": "tools/network/;src/physics/network/generated/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "生成网络",
+      "common_capability_zh": "注册生成网络与 weak tables 的同一包契约；GPU 使用者仍需提供可设备调用的数学和有效包。",
+      "acceptance": "Original generated network/NSE Host and actual device tests",
+      "acceptance_zh": "原生成网络／NSE 的 Host 与真实 Device 测试"
+    },
+    {
+      "id": "linear",
+      "linux_feature": "DenseLU<=31totalODE; CPU KLU; optional CUDA cuDSS0.8",
+      "windows_correspondence": "DenseLU<=31totalODE; CPU KLU; optional CUDA cuDSS0.8",
+      "shared_owner": "src/numerics/linalg/;src/cuda/microphysics/linalg/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "烧核线性求解",
+      "common_capability_zh": "总 ODE 方程数≤31的 DenseLU、CPU KLU、可选 CUDA cuDSS0.8；显式跨后端错误组合继续拒绝。",
+      "acceptance": "Original DenseLU/KLU/cuDSS and 32/151/201-equation sparse batch/retry tests",
+      "acceptance_zh": "原 DenseLU／KLU／cuDSS 与32／151／201方程及重试测试"
+    },
+    {
+      "id": "gravity",
+      "linux_feature": "External stage forces and shared composite self-gravity; exact geometry, boundary and coupled-physics qualifications remain required",
+      "windows_correspondence": "External stage forces and shared composite self-gravity; exact geometry, boundary and coupled-physics qualifications remain required",
+      "shared_owner": "src/physics/gravity/;src/amr/elliptic/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "外部／自引力",
+      "common_capability_zh": "外力阶段与复合自引力沿用原周期／孤立／曲线几何、流体面、势边界和耦合物理的适用范围。",
+      "acceptance": "Original gravity stage/lifecycle/physics tests; canonical external-gravity cases",
+      "acceptance_zh": "原引力 stage／生命周期／物理测试与规范外引力算例"
+    },
+    {
+      "id": "poisson",
+      "linux_feature": "Composite multigrid for self-gravity Poisson; distinct equations and limits from burning linear solves",
+      "windows_correspondence": "Same composite multigrid and Poisson contracts; platform integration requires original solver/domain tests",
+      "shared_owner": "src/numerics/multigrid/;src/amr/elliptic/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Poisson／复合多重网格",
+      "common_capability_zh": "共用自引力 Poisson 的 composite multigrid；烧核线性系统与 Poisson 方程继续分别验收。",
+      "acceptance": "Original analytic/composite Poisson multigrid contracts and gravity tests",
+      "acceptance_zh": "原解析／composite Poisson 契约与引力检查"
+    },
+    {
+      "id": "jeans",
+      "linux_feature": "Jeans field/JENS: qualified CPU evolution/restart of uniform periodic constant-cv IdealGas; scoped CUDA accepted-state/parent transactions only",
+      "windows_correspondence": "Same scoped field/indicator contracts; no newly claimed full CUDA scientific evolution/restart, general EOS or nonuniform gravity coupling",
+      "shared_owner": "src/physics/diagnostics/JeansDiagnostics.h;src/amr/refinement/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Jeans／JENS",
+      "common_capability_zh": "Jeans／JENS 的 CPU 演化／重启限原均匀周期、常比热 IdealGas 背景；CUDA 仍仅有原 Cartesian／原生 r-z 事务资格。",
+      "acceptance": "Original Jeans diagnostics and accepted-state/parent transaction scope; no new full-GPU evolution claim",
+      "acceptance_zh": "原 Jeans 诊断与受限事务；不新增完整GPU科学演化资格"
+    },
+    {
+      "id": "output",
+      "linux_feature": "HDF5 plotfiles/checkpoints/diagnostics; source/binary identity",
+      "windows_correspondence": "HDF5 plotfiles/checkpoints/diagnostics; source/binary identity",
+      "shared_owner": "src/io/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "HDF5 输出",
+      "common_capability_zh": "共用 HDF5 Plotfile／checkpoint／诊断格式和来源标记；平台只替换必要的文件／进程原语。",
+      "acceptance": "Original publication/compatibility tests; actual CPU/CUDA checkpoints and formal Plotfiles",
+      "acceptance_zh": "原发布／兼容契约与真实CPU／GPU checkpoint／Plotfile"
+    },
+    {
+      "id": "restart",
+      "linux_feature": "same format and compatible identity; CPU/CUDA restart routes",
+      "windows_correspondence": "same format and compatible identity; CPU/CUDA restart routes",
+      "shared_owner": "src/io/chk/;validation/backend/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "重启",
+      "common_capability_zh": "同格式的相容状态与 CPU↔CUDA 重启；EOS、网络、几何、引力及控制身份检查保持。",
+      "acceptance": "Eight intermediate/terminal CPU-CUDA routes, nine comparisons; actual Host CUDA restart",
+      "acceptance_zh": "8条中途／终止路由、9比较；真实Host GPU续算"
+    },
+    {
+      "id": "models",
+      "linux_feature": "registered Setup/Init API;16case discovery and observed parameter/units",
+      "windows_correspondence": "registered Setup/Init API;16case discovery and observed parameter/units",
+      "shared_owner": "simulation/;include/UserInterface.h;src/api/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "模型与参数发现",
+      "common_capability_zh": "同一 Setup／Init 用户接口、16个注册模型、声明参数与已观察单位证据；选择源文件不等于热编译任意 C++。",
+      "acceptance": "16 exact registered models/source SHA/unit-evidence matches; complete initial-preview API suites",
+      "acceptance_zh": "16个注册模型的源码SHA／单位证据匹配；完整初态API"
+    },
+    {
+      "id": "studio_config",
+      "linux_feature": "project/model binding; parameter editing/Help/Inspector/Open/SaveWorkingCopy",
+      "windows_correspondence": "project/model binding; parameter editing/Help/Inspector/Open/SaveWorkingCopy",
+      "shared_owner": "studio/src/;studio/host/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Studio Config",
+      "common_capability_zh": "模型／参数绑定、Inspector、Working Copy、Open／Save／Save Working Copy As 共用；下载导出另计。",
+      "acceptance": "Linux 453 and native Windows 95 tests; dated W3 human Open/Save acceptance",
+      "acceptance_zh": "Linux453／Windows95测试；保留W3人工Open／Save证据"
+    },
+    {
+      "id": "studio_build",
+      "linux_feature": "Configure/Build and pinned evidence; full CUDA dependency freshness remains unknown",
+      "windows_correspondence": "Same operations and evidence checks; GNU observed scope retained, full MSVC/CUDA freshness unknown",
+      "shared_owner": "studio/host/;studio/desktop/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Studio Build",
+      "common_capability_zh": "相同 Configure／Build／指纹／绑定检查；GNU 可用观察范围保持，完整 CUDA 依赖新鲜度在两侧均不冒称已知。",
+      "acceptance": "Native actual managed MSVC/CUDA Build; full freshness remains unknown",
+      "acceptance_zh": "真实MSVC/CUDA managed Build；完整新鲜度仍unknown"
+    },
+    {
+      "id": "studio_preview",
+      "linux_feature": "Initial field/AMR Preview with existing CPU/wall and Linux RLIMIT ownership",
+      "windows_correspondence": "Same initial-state functions/limits; explicit Windows Job commit/user-CPU policy; no evolution claim",
+      "shared_owner": "src/api/;studio/host/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "初始化 Preview／AMR",
+      "common_capability_zh": "初始场／AMR 的同一有界 Preview；CPU／wall 预算保留，Linux RLIMIT 与 Windows Job commit/user 计量明确区分。",
+      "acceptance": "Actual Host field/inspection/resource/AMR requests; real t=0 topology oracle on both OSes",
+      "acceptance_zh": "真实Host场／检查／资源／AMR；两侧t=0拓扑oracle"
+    },
+    {
+      "id": "studio_run",
+      "linux_feature": "Shared Run/Restart with output reservation, process identity, cancellation, xterm/flock",
+      "windows_correspondence": "Same controllers and checks, native helper/Job and configured Windows Terminal handoff",
+      "shared_owner": "studio/host/;src/core/process/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Studio Run／Restart",
+      "common_capability_zh": "共用 Run／Restart 控制器、输出锁、进程身份与取消；Linux xterm/flock 对应已配置的 Windows Terminal／原生 helper。",
+      "acceptance": "Actual common Host and configured Windows Terminal CUDA Run/Restart; original supervision",
+      "acceptance_zh": "真实Host＋Windows Terminal GPU Run／Restart"
+    },
+    {
+      "id": "studio_plot",
+      "linux_feature": "read-only metadata/raw slices/point/global display LOD; existing limits",
+      "windows_correspondence": "read-only metadata/raw slices/point/global display LOD; existing limits",
+      "shared_owner": "studio/host/plotfileMetadata.ts;studio/src/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Plotfile",
+      "common_capability_zh": "只读 metadata、SHA绑定 raw slice／point／global display LOD；保留原几何、FP64、文件身份与读取限额。",
+      "acceptance": "Actual GPU Plotfile metadata, raw slice, native point and global LOD; native h5py agreement",
+      "acceptance_zh": "真实GPU metadata／slice／point／LOD；原生h5py一致"
+    },
+    {
+      "id": "desktop",
+      "linux_feature": "Electron44.9.1, standalone Node, one portable package flow and complete licenses",
+      "windows_correspondence": "Same pinned Electron/Host/assets/copy flow with native node.exe and window",
+      "shared_owner": "studio/desktop/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "Electron 桌面／便携包",
+      "common_capability_zh": "同一 Electron44.9.1、独立 Host Node、生产资产和许可证复制流程；分别生成本机包和入口。",
+      "acceptance": "Both rebuilt 44.9.1 packages, 225 exact production-file comparisons each; real current Windows window",
+      "acceptance_zh": "两侧44.9.1包各225文件比对；最新Windows真实窗口"
+    },
+    {
+      "id": "developer_tools",
+      "linux_feature": "platform-aware build/provenance; Linux profiling/PSI remain host-specific tools",
+      "windows_correspondence": "platform-aware build/provenance; Linux profiling/PSI remain host-specific tools",
+      "shared_owner": "tools/;tests/tooling/",
+      "status": "corresponding-within-existing-scientific-scope",
+      "area_zh": "开发工具",
+      "common_capability_zh": "构建／来源证据共用原则并使用本机解析；Linux 内核 profiling／PSI 等工具与计数保持系统专用，不伪造等效指标。",
+      "acceptance": "Linux complete tooling and architecture audit; seven native Windows link-evidence tests",
+      "acceptance_zh": "Linux完整tooling／架构审计；Windows链接证据7项"
+    }
+  ],
+  "limits": [
+    "Existing model/EOS/geometry/method combination scope remains required; no universal Cartesian-product qualification",
+    "Jeans/JENS full CUDA evolution/restart remains outside its existing accepted-state/parent transaction scope",
+    "Windows commit/user-CPU limits are not Linux RLIMIT_AS/CPU/PSI counter equivalence",
+    "Full MSVC/CUDA loader/dependency freshness remains unknown",
+    "Qualified Windows Terminal handoff; independent-console fallback Win32 5 was retained, not qualified",
+    "MSVC14.38 failed the unchanged NaN characterization; actual14.44 accepted without unsupported-compiler override; NVIDIA12.9 published table explicitly names193x",
+    "MSVC formatted parsing rejects three below-binary64 EOS literals; failed reads publish no value; canonical tables and representable fixtures retain original bit checks",
+    "Toolchains, arbitrary filesystems/UNC, other hardware and signing/installers are not universally qualified",
+    "MPI, HIP/AMD, Apple Metal and general radiation transport are not newly implemented",
+    "Observed first-load metadata/identity timeouts were retained; final matching profile passed original short query limits; universal cold-start stability is not claimed"
+  ],
+  "distribution": {
+    "rawLocalRunDataOrLogsIncluded": false,
+    "coreOrNativeToolchainBundled": false,
+    "machineAgentsSkillsObsoletePlansIncluded": false,
+    "portablePackageVersion": "0.0.0",
+    "windowsPRMerge": "user",
+    "release": "deferred",
+    "Zenodo": "deferred"
+  },
+  "retainedLocalEvidence": "output/windows-cuda-20261026/ and the native Windows validation mirror; original failed runs retained",
+  "sourceSnapshot": {
+    "schema": "repo-relative-path-NUL-file-SHA256-newline-v1",
+    "files": 1074,
+    "sha256": "78b946f1a2a120afd59c4b77b0fb0de5f2ab028a6dc074e1ed4dd64cc71dd2c0",
+    "excludes": "Documentation and large scientific data; data identities remain their frozen Git LFS objects"
+  },
+  "retainedFailures": [
+    "MSVC14.38 failed original NaN characterization; qualified14.44 preserves the original gate",
+    "Initial native CTest failures: Python text pipe newline translation and uninitialized test Grid; corrected only test boundaries",
+    "Two strengthened EOS tests initially skipped by preserved timestamps; forced compilation and actual binary assertions verified",
+    "Initial Host metadata query timeout retained; final matching helper/tool profile passes original limits",
+    "Harness stale pre-Build Preview snapshot corrected by calling the existing readiness owner; no production gate changed"
+  ],
+  "frozenScientificData": [
+    {
+      "path": "EOS_toolkit/tables/baryon/eos2.tab",
+      "frozenObjectSha256": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+      "bytes": 143166842,
+      "originalPointerRestored": true
+    },
+    {
+      "path": "EOS_toolkit/tables/baryon/eos4.tab",
+      "frozenObjectSha256": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+      "bytes": 143167115,
+      "originalPointerRestored": true
+    },
+    {
+      "path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "frozenObjectSha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+      "bytes": 60242514,
+      "originalPointerRestored": true
+    },
+    {
+      "path": "studio/tests/fixtures/sod-1d.h5",
+      "frozenObjectSha256": "dadaba822af2ff977cf81a04927901485cd90b0d2502a97ef99f8e0cac50b5ed",
+      "bytes": 14336,
+      "originalPointerRestored": true
+    }
+  ]
+}

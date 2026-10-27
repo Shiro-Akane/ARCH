@@ -253,41 +253,55 @@ def sparse_link_identity(build_dir: Path, options: dict[str, str], selected: str
         output = build_dir / output
     if options.get("CMAKE_CONFIGURATION_TYPES"):
         output /= selected
-    output /= "ARCH"
+    output /= "ARCH.exe" if os.name == "nt" else "ARCH"
     generator = options.get("CMAKE_GENERATOR", "")
     if generator.startswith("Ninja"):
         command = [options.get("CMAKE_MAKE_PROGRAM", "ninja"), "-C", str(build_dir)]
         if options.get("CMAKE_CONFIGURATION_TYPES"):
             command += ["-f", f"build-{selected}.ninja"]
         target = str(output.resolve().relative_to(build_dir.resolve()))
-        result = subprocess.run(command + ["-t", "commands", "-s", target],
-                                check=True, capture_output=True, text=True)
-        link_command = result.stdout.strip()
+        if os.name == "nt":
+            from windows_link_evidence import ninja_link_recipe
+            link_command = ninja_link_recipe(command, build_dir, output)
+        else:
+            result = subprocess.run(command + ["-t", "commands", "-s", target],
+                                    check=True, capture_output=True, text=True)
+            link_command = result.stdout.strip()
     elif generator == "Unix Makefiles":
         link_command = (build_dir / "CMakeFiles/ARCH.dir/link.txt").read_text(encoding="utf-8").strip()
     else:
         raise RuntimeError("sparse link qualification currently requires Ninja or Unix Makefiles")
     runtime = {}
-    if "cudss" in required and "libarch_cuda_sparse_provider.a" in link_command:
+    if os.name != "nt" and "cudss" in required and "libarch_cuda_sparse_provider.a" in link_command:
         runtime = {"cudss": cudss_library, "cublas": options.get("CUDA_cublas_LIBRARY", "")}
         if not runtime["cublas"]:
             raise RuntimeError("configured lazy cuDSS provider is missing its cuBLAS artifact")
-    return sparse_link_command_identity(build_dir, link_command, required, runtime)
+    result = sparse_link_command_identity(build_dir, link_command, required, runtime)
+    if os.name == "nt" and "cudss" in required:
+        from windows_link_evidence import configured_provider_dlls
+        result.update(configured_provider_dlls(options, file_identity))
+    return result
 
 
 def sparse_link_command_identity(build_dir: Path, command: str, required: set[str],
                                  runtime: dict[str, str] | None = None) -> dict[str, Any]:
     libraries, observed = {}, set()
     pattern = re.compile(r'lib(klu|amd|btf|colamd|suitesparseconfig|cudss|cublas|cublasLt)\.(?:a|so(?:\.\d+)*)$')
-    for argument in shlex.split(command):
-        match = pattern.fullmatch(Path(argument).name)
-        if match:
+    if os.name == "nt":
+        from windows_link_evidence import command_arguments, provider_name
+        arguments = command_arguments(command)
+    else:
+        arguments = shlex.split(command)
+    for argument in arguments:
+        match = pattern.fullmatch(Path(argument).name) if os.name != "nt" else None
+        provider = provider_name(Path(argument).name) if os.name == "nt" else (match.group(1) if match else None)
+        if provider:
             path = Path(argument)
             if not path.is_absolute():
                 path = build_dir / path
             identity = file_identity(path)
             libraries[identity["path"]] = identity
-            observed.add(match.group(1))
+            observed.add(provider)
     runtime_libraries = []
     if runtime:
         # Lazy loading changes the link closure, not artifact accountability.
@@ -376,8 +390,9 @@ def _configured_artifact_paths(build_dir: Path, build: dict[str, Any]) -> dict[s
         output = output / build["configuration"]
         comparator_output = comparator_output / build["configuration"]
     result = {
-        "arch": (output / "ARCH").resolve(),
-        "checkpoint_validator": (comparator_output / "arch_cuda_single_level_validation").resolve(),
+        "arch": (output / ("ARCH.exe" if os.name == "nt" else "ARCH")).resolve(),
+        "checkpoint_validator": (comparator_output / ("arch_cuda_single_level_validation.exe"
+                                if os.name == "nt" else "arch_cuda_single_level_validation")).resolve(),
     }
     if any(not path.is_relative_to(build_dir) for path in result.values()):
         raise RuntimeError("configured validation artifacts must remain inside --build-dir")

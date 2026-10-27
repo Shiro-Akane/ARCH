@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -38,8 +39,8 @@ namespace OdeMath
     ARCH_INLINE bool energy_closure_acceptable(double before, double after,
                                                double integrated, double rtol)
     {
-        if (!(before > 0.0) || !(after > 0.0) || !std::isfinite(before)
-            || !std::isfinite(after) || !std::isfinite(integrated)) return false;
+        if (!(before > 0.0) || !(after > 0.0) || !arch::math::isfinite(before)
+            || !arch::math::isfinite(after) || !arch::math::isfinite(integrated)) return false;
         const double thermal = after - before;
         const double scale = std::max({std::abs(integrated), std::abs(thermal), rtol * before});
         const double roundoff = 64.0 * std::numeric_limits<double>::epsilon()
@@ -430,7 +431,7 @@ namespace OdeMath
         const double ye = ye_sum.value();
         const double old_temperature = state[NUM_SPEC];
         const double old_eint = eos.get_eint_from_T(rho, old_temperature, old_x);
-        if (!std::isfinite(ye) || !std::isfinite(old_eint)) return false;
+        if (!arch::math::isfinite(ye) || !arch::math::isfinite(old_eint)) return false;
 
         auto evaluate = [&](double temperature, Candidate& candidate) {
             candidate.temperature = temperature;
@@ -442,7 +443,7 @@ namespace OdeMath
             candidate.residual = new_eint - old_eint - candidate.enuc;
             candidate.scale = max4(std::abs(new_eint), std::abs(old_eint),
                                    std::abs(candidate.enuc), 1.0);
-            return std::isfinite(new_eint) && std::isfinite(candidate.residual) && std::isfinite(candidate.scale);
+            return arch::math::isfinite(new_eint) && arch::math::isfinite(candidate.residual) && arch::math::isfinite(candidate.scale);
         };
 
         auto closed = [](const Candidate& candidate) {
@@ -489,9 +490,9 @@ namespace OdeMath
             })) break;
             if (have_previous && current.temperature != previous.temperature) {
                 const double secant = (current.residual - previous.residual) / (current.temperature - previous.temperature);
-                if (std::isfinite(secant) && secant > 0.0) derivative = secant;
+                if (arch::math::isfinite(secant) && secant > 0.0) derivative = secant;
             }
-            if (!std::isfinite(derivative) || derivative <= 0.0) break;
+            if (!arch::math::isfinite(derivative) || derivative <= 0.0) break;
 
             double delta_temperature = -current.residual / derivative;
             // Limit one Newton correction to half the current temperature so
@@ -521,7 +522,7 @@ namespace OdeMath
 
         Candidate lower;
         Candidate upper;
-        if (!evaluate(minimum_temperature, lower) || !evaluate(maximum_temperature, upper) || std::signbit(lower.residual) == std::signbit(upper.residual)) {
+        if (!evaluate(minimum_temperature, lower) || !evaluate(maximum_temperature, upper) || arch::math::signbit(lower.residual) == arch::math::signbit(upper.residual)) {
             return false;
         }
         if (lower.residual > 0.0) std::swap(lower, upper);

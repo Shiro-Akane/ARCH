@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -30,8 +31,8 @@ namespace StationarySlipWallFlux {
 namespace detail {
 /** Check every physical component without modifying or repairing the point. */
 ARCH_INLINE bool finite_point(const FluidVector& point) {
-    return std::isfinite(point.rho)&&std::isfinite(point.mom_u)&&std::isfinite(point.mom_v)
-        &&std::isfinite(point.mom_w)&&std::isfinite(point.eng);
+    return arch::math::isfinite(point.rho)&&arch::math::isfinite(point.mom_u)&&arch::math::isfinite(point.mom_v)
+        &&arch::math::isfinite(point.mom_w)&&arch::math::isfinite(point.eng);
 }
 /** Check half-open borrowed species spans by integer address, without
  * undefined relational pointer comparisons or overflowing endpoint arithmetic.
@@ -70,7 +71,7 @@ ARCH_INLINE bool species_scratch_disjoint(int species,double* scratch,
  * Only a finite strictly positive final product is published; output is atomic.
  */
 ARCH_INLINE bool positive_exp_product(double pressure,double logarithm,double& output) {
-    if(!std::isfinite(pressure)||!(pressure>0.)||!std::isfinite(logarithm))return false;
+    if(!arch::math::isfinite(pressure)||!(pressure>0.)||!arch::math::isfinite(logarithm))return false;
     int pressure_exponent=0;
     const double mantissa=std::frexp(pressure,&pressure_exponent);
     // Correctly rounded binary64 ln(2); exact dyadic exponent witnesses use
@@ -83,7 +84,7 @@ ARCH_INLINE bool positive_exp_product(double pressure,double logarithm,double& o
         -double(std::numeric_limits<double>::digits)-1.-double(pressure_exponent);
     const double maximum_shift=double(std::numeric_limits<double>::max_exponent)
         +1.-double(pressure_exponent);
-    if(!std::isfinite(shift)||shift<minimum_shift||shift>maximum_shift
+    if(!arch::math::isfinite(shift)||shift<minimum_shift||shift>maximum_shift
         ||shift<double(std::numeric_limits<int>::min())
         ||shift>double(std::numeric_limits<int>::max()))return false;
     const double combined_exponent=double(pressure_exponent)+shift;
@@ -91,10 +92,10 @@ ARCH_INLINE bool positive_exp_product(double pressure,double logarithm,double& o
         ||combined_exponent>double(std::numeric_limits<int>::max()))return false;
     const double remainder=logarithm-shift*ln2;
     const double residual_product=mantissa*std::exp(remainder);
-    if(!std::isfinite(remainder)||!std::isfinite(residual_product)
+    if(!arch::math::isfinite(remainder)||!arch::math::isfinite(residual_product)
         ||!(residual_product>0.))return false;
     const double candidate=std::scalbn(residual_product,static_cast<int>(combined_exponent));
-    if(!std::isfinite(candidate)||!(candidate>0.))return false;
+    if(!arch::math::isfinite(candidate)||!(candidate>0.))return false;
     output=candidate;
     return true;
 }
@@ -119,7 +120,7 @@ ARCH_INLINE StationaryCandidateStatus stationary_candidate(int direction,
     if(direction<0||direction>2||species<0||(species&&!species_flux))
         return StationaryCandidateStatus::invalid;
     if(!finite_flux(candidate))return StationaryCandidateStatus::nonfinite_trial;
-    for(int s=0;s<species;++s)if(!std::isfinite(species_flux[s]))
+    for(int s=0;s<species;++s)if(!arch::math::isfinite(species_flux[s]))
         return StationaryCandidateStatus::nonfinite_trial;
     const double pressure=direction==0?candidate.mom_u:
         direction==1?candidate.mom_v:candidate.mom_w;
@@ -165,23 +166,23 @@ ARCH_INLINE FluidVector reflected_point(const FluidVector& interior,int directio
 ARCH_INLINE bool gamma_wall_pressure(double gamma_minus_one,double pressure,
     double sound_speed,double away_speed,double& output)
 {
-    if(!std::isfinite(gamma_minus_one)||!(gamma_minus_one>0.)
-        ||!std::isfinite(pressure)||!(pressure>0.)
-        ||!std::isfinite(sound_speed)||!(sound_speed>0.)
-        ||!std::isfinite(away_speed)) return false;
+    if(!arch::math::isfinite(gamma_minus_one)||!(gamma_minus_one>0.)
+        ||!arch::math::isfinite(pressure)||!(pressure>0.)
+        ||!arch::math::isfinite(sound_speed)||!(sound_speed>0.)
+        ||!arch::math::isfinite(away_speed)) return false;
     if(away_speed==0.) {output=pressure;return true;}
     const double gamma=gamma_minus_one+1.;
     const double mach=away_speed/sound_speed;
-    if(!std::isfinite(gamma)||!std::isfinite(mach)) return false;
+    if(!arch::math::isfinite(gamma)||!arch::math::isfinite(mach)) return false;
     double candidate=0.;
     if(away_speed>0.) {
         const double decrement=.5*gamma_minus_one*mach;
-        if(!std::isfinite(decrement)) return false;
+        if(!arch::math::isfinite(decrement)) return false;
         const double base=1.-decrement;
         if(base<=0.) {output=0.;return true;}
         const double exponent=(2.*gamma)/gamma_minus_one;
         const double logarithm=std::log1p(-decrement);
-        if(!std::isfinite(exponent)||!std::isfinite(logarithm)) return false;
+        if(!arch::math::isfinite(exponent)||!arch::math::isfinite(logarithm)) return false;
         candidate=pressure*std::exp(exponent*logarithm);
         // Preserve the original ordinary-range expression and rounded value.
         // Only a nonvacuum direct-product zero attempts binary range recovery.
@@ -191,12 +192,12 @@ ARCH_INLINE bool gamma_wall_pressure(double gamma_minus_one,double pressure,
         const double K=.5*gamma*(gamma+1.)*mach*mach;
         const double B=gamma_minus_one/(gamma+1.);
         const double root_argument=K*(1.+B);
-        if(!std::isfinite(K)||!std::isfinite(B)||!std::isfinite(root_argument)) return false;
+        if(!arch::math::isfinite(K)||!arch::math::isfinite(B)||!arch::math::isfinite(root_argument)) return false;
         candidate=pressure*(1.+.5*K+std::hypot(.5*K,std::sqrt(root_argument)));
     }
     // Only actual vacuum may publish zero; never floor an unrepresented
     // strictly positive rarefaction/compression pressure back into existence.
-    if(!std::isfinite(candidate)||!(candidate>0.)) return false;
+    if(!arch::math::isfinite(candidate)||!(candidate>0.)) return false;
     output=candidate;
     return true;
 }
@@ -226,8 +227,8 @@ ARCH_INLINE bool point_wall_flux(const FluidVector& point,const double* composit
         if(!gamma_wall_pressure(eos.roe_gamma_minus_one(composition),pressure,speed,
             side==0?un:-un,wall_pressure)) return false;
     } else {
-        if(!std::isfinite(pressure)||!(pressure>0.)
-            ||!std::isfinite(speed)||!(speed>0.))return false;
+        if(!arch::math::isfinite(pressure)||!(pressure>0.)
+            ||!arch::math::isfinite(speed)||!(speed>0.))return false;
         wall_pressure=pressure;
     }
     FluidVector candidate{};

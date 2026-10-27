@@ -14,6 +14,12 @@
 #include <stdexcept>
 #include <string_view>
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#include <cstdio>
+#endif
+
 #include "api/CaseInspection.h"
 #include "api/Configuration.h"
 #include "api/Preview.h"
@@ -87,6 +93,12 @@ int RunPreviewCommand(int argc, char **argv) {
             throw std::invalid_argument("Identifiers must be UTF-8 without NUL bytes");
         if (request.case_id.size() > 128 || request.request_id.size() > 128)
             throw std::invalid_argument("Expected identifiers <= 128 bytes");
+#ifdef _WIN32
+        // The configuration revision binds the exact input bytes, including
+        // CRLF. The Windows CRT's text mode would translate them before hashing.
+        if (_setmode(_fileno(stdin), _O_BINARY) == -1)
+            throw std::runtime_error("Failed to read configuration stdin as bytes");
+#endif
         char buffer[8192];
         while (std::cin) {
             std::cin.read(buffer, sizeof(buffer));

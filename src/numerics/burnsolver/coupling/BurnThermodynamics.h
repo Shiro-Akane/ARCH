@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "core/ArchPortability.h"
 #include "core/CompensatedSum.h"
 #include <algorithm>
@@ -69,7 +70,7 @@ ARCH_INLINE decltype(auto) burn_thermodynamics_at(
 
 ARCH_INLINE double require_positive_cv(double cv)
 {
-    return std::isfinite(cv) && cv > 0.0 ? cv : std::numeric_limits<double>::quiet_NaN();
+    return arch::math::isfinite(cv) && cv > 0.0 ? cv : std::numeric_limits<double>::quiet_NaN();
 }
 
 // Derivative at the origin of the quadratic through actual floating-point
@@ -105,7 +106,7 @@ template <int Equations, class EOS>
 ARCH_HEAVY_INLINE void burn_cv_gradient(
     const double* state, double rho, const EOS& eos, double cv, double* gradient)
 {
-    if (!(cv > 0.0) || !std::isfinite(cv)) {
+    if (!(cv > 0.0) || !arch::math::isfinite(cv)) {
         for (int i = 0; i < Equations; ++i) gradient[i] = std::numeric_limits<double>::quiet_NaN();
     } else if constexpr (requires {
         eos.template get_cv_gradient<Equations>(rho, state[Equations - 1], state, gradient);

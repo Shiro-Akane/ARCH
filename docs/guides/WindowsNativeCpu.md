@@ -1,5 +1,7 @@
 # Native Windows 11 CPU CLI
 
+For current complete Windows CPU/CUDA/Studio status and one-to-one correspondence, see the [2026-10-27 final record](../histroy/build/WindowsNativeCudaQualification-20261027.md). The W0/W1/W2/W3 observations below retain their dated scope. CUDA uses the separate [MSVC build and trusted tool context](WindowsNativeCuda.md).
+
 [中文](WindowsNativeCpu.zh-CN.md) · [Build guide](Build.md) · [W0 toolchain preflight](WindowsNativeW0.md)
 
 Studio process services and remaining frozen boundaries are documented in

@@ -13,6 +13,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -290,13 +291,13 @@ ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
     ThermodynamicState& state = result.state;
     state.pressure = rho * f.ax;
     state.energy = specific_energy(f, energy_shift);
-    if (!(state.pressure > 0.0) || !std::isfinite(state.pressure) ||
-        !(state.energy > 0.0) || !std::isfinite(state.energy)) {
+    if (!(state.pressure > 0.0) || !arch::math::isfinite(state.pressure) ||
+        !(state.energy > 0.0) || !arch::math::isfinite(state.energy)) {
         return free_energy_failure(
             FreeEnergyStatus::invalid_pressure_or_energy);
     }
     state.cv = (f.ay - f.ayy) / temperature;
-    if (!(state.cv > 0.0) || !std::isfinite(state.cv)) {
+    if (!(state.cv > 0.0) || !arch::math::isfinite(state.cv)) {
         return free_energy_failure(FreeEnergyStatus::invalid_heat_capacity);
     }
 
@@ -306,9 +307,9 @@ ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
     state.dp_drho_e =
         dp_drho_T - state.dp_dT * de_drho_T / state.cv;
     state.dp_de_rho = state.dp_dT / state.cv;
-    if (!std::isfinite(state.dp_dT) || !std::isfinite(dp_drho_T) ||
-        !std::isfinite(de_drho_T) || !std::isfinite(state.dp_drho_e) ||
-        !std::isfinite(state.dp_de_rho)) {
+    if (!arch::math::isfinite(state.dp_dT) || !arch::math::isfinite(dp_drho_T) ||
+        !arch::math::isfinite(de_drho_T) || !arch::math::isfinite(state.dp_drho_e) ||
+        !arch::math::isfinite(state.dp_de_rho)) {
         return free_energy_failure(FreeEnergyStatus::invalid_derivatives);
     }
 
@@ -316,7 +317,7 @@ ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
         state.dp_drho_e +
         (state.dp_de_rho / rho) * (state.pressure / rho);
     if (!(sound_speed_squared > 0.0) ||
-        !std::isfinite(sound_speed_squared)) {
+        !arch::math::isfinite(sound_speed_squared)) {
         return free_energy_failure(FreeEnergyStatus::invalid_sound_speed);
     }
     state.sound_speed = std::sqrt(sound_speed_squared);

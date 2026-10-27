@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#include "core/ArrayFill.h"
+#include "core/MathClassification.h"
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -95,7 +97,7 @@ struct BasicTabular4DEOSView
         using Status = tabular_eos::FreeEnergyStatus;
         if (n_rho < 2 || n_T < 2 || n_A < 2 || n_Z < 2 ||
             !(dlog_rho > 0.0) || !(dlog_T > 0.0) || !(dA > 0.0) || !(dZ > 0.0) ||
-            !std::isfinite(rho) || !std::isfinite(T) || !std::isfinite(A) || !std::isfinite(Z) ||
+            !arch::math::isfinite(rho) || !arch::math::isfinite(T) || !arch::math::isfinite(A) || !arch::math::isfinite(Z) ||
             !(rho > 0.0) || !(T > 0.0) ||
             rho < std::pow(10.0, log_rho_min) || rho > std::pow(10.0, log_rho_max) ||
             T < std::pow(10.0, log_T_min) || T > std::pow(10.0, log_T_max) ||
@@ -291,9 +293,9 @@ struct BasicTabular4DEOSView
         eos_utils::LinearCompositionDerivatives d{};
         {
             const auto state = free_energy_state(rho, T, get_Abar(Xi), get_Zbar(Xi));
-            if (!std::isfinite(state.energy)) {
-                d.energy.fill(state.energy); d.energy_temperature.fill(state.energy);
-                d.cv.fill(state.energy); d.energy_hessian.fill(state.energy);
+            if (!arch::math::isfinite(state.energy)) {
+                arch::fill_array(d.energy, state.energy); arch::fill_array(d.energy_temperature, state.energy);
+                arch::fill_array(d.cv, state.energy); arch::fill_array(d.energy_hessian, state.energy);
                 d.cv_temperature = state.energy;
                 return d;
             }
@@ -304,7 +306,7 @@ struct BasicTabular4DEOSView
         const auto f = interpolate_free_energy(rho, T, A, Z, &d);
         const auto state = tabular_eos::checked_thermodynamics(
             tabular_eos::evaluate_thermodynamics(f, rho, T, energy_reference_shift), device_error_status, trial_error_status);
-        if (!std::isfinite(state.energy)) d.energy.fill(state.energy);
+        if (!arch::math::isfinite(state.energy)) arch::fill_array(d.energy, state.energy);
         const auto table = d;
         const double a_y = y > 0.0 ? -A * A : 0.0;
         const double z_y = y > 0.0 ? -A * Z : 0.0;
@@ -399,7 +401,7 @@ ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, do
     {
         {
             const auto state = free_energy_state(rho, T, get_Abar(Xi), get_Zbar(Xi));
-            if (!std::isfinite(state.energy)) return state.energy;
+            if (!arch::math::isfinite(state.energy)) return state.energy;
         }
         return 0.0;
     }

@@ -68,7 +68,7 @@ class Inspection(unittest.TestCase):
     def call(self, case, text, code=0, *opts):
         before = sorted(self.cwd.rglob('*'))
         p = subprocess.run([str(ARCH), '--inspect-case', case, '--config-stdin', '--request-id', 'inspection', *opts],
-                           input=text, text=True, capture_output=True, timeout=360, cwd=self.cwd,
+                           input=text.encode('utf-8'), capture_output=True, timeout=360, cwd=self.cwd,
                            env=dict(os.environ, OMP_NUM_THREADS='1', CUDA_VISIBLE_DEVICES=''))
         self.assertEqual(p.returncode, code, (p.stdout[-6000:], p.stderr))
         self.assertEqual(before, sorted(self.cwd.rglob('*')), 'inspection must not create scientific output')

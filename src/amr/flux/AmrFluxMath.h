@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <cmath>
 
 #include "amr/transfer/AmrTransferPlans.h"
@@ -76,10 +77,10 @@ ARCH_HOST_DEVICE inline double reflux_mass_fraction(
     double rho_before, double mass_fraction_before, double correction,
     double registered_species_flux, double rho_after) noexcept
 {
-    if (std::isfinite(rho_before) && rho_before > 0.0
-        && std::isfinite(rho_after) && rho_after > 0.0
-        && rho_after == rho_before && std::isfinite(mass_fraction_before)
-        && std::isfinite(correction) && std::isfinite(registered_species_flux)
+    if (arch::math::isfinite(rho_before) && rho_before > 0.0
+        && arch::math::isfinite(rho_after) && rho_after > 0.0
+        && rho_after == rho_before && arch::math::isfinite(mass_fraction_before)
+        && arch::math::isfinite(correction) && arch::math::isfinite(registered_species_flux)
         && (correction == 0.0 || registered_species_flux == 0.0))
         return mass_fraction_before;
     return reflux_species_density(

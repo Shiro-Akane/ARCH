@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -304,7 +305,7 @@ ARCH_INLINE FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi
     double c = eos.get_sound_speed(U, p, Xi);
 
     const double gamma_eff = c * c / (p / rho);
-    if (!(c > 0.0) || !(gamma_eff > 1.0) || !std::isfinite(gamma_eff))
+    if (!(c > 0.0) || !(gamma_eff > 1.0) || !arch::math::isfinite(gamma_eff))
         return set_flux_vector(arch::state::invalid(), arch::state::invalid(),
             arch::state::invalid(), arch::state::invalid(), arch::state::invalid(), dir);
 
@@ -365,7 +366,7 @@ ARCH_INLINE FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi
     // kinetic energy.
     double f_eng = f_rho * (E_ideal_term + (h_real - h_ideal) + 0.5 * (ut1 * ut1 + ut2 * ut2));
 
-    if (std::isnan(f_eng))
+    if (arch::math::isnan(f_eng))
     {
         return (sign > 0) ? get_flux(U, p, dir) : FluidVector();
     }
@@ -474,10 +475,10 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
         candidate.roe_gamma_minus_one(Xi_avg);
     }) {
         const double gm1 = eos.roe_gamma_minus_one(Xi_avg);
-        if (!(gm1 > 0.0) || !std::isfinite(gm1)
+        if (!(gm1 > 0.0) || !arch::math::isfinite(gm1)
             || !(rho_L > 0.0) || !(rho_R > 0.0)
             || !(e_L > 0.0) || !(e_R > 0.0)
-            || !std::isfinite(P_L) || !std::isfinite(P_R)) {
+            || !arch::math::isfinite(P_L) || !arch::math::isfinite(P_R)) {
             res.c_hat = arch::state::invalid();
             return res;
         }
@@ -512,8 +513,8 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
         : same_composition && equal_energy ? p_ll
         : identical_thermo_inputs ? p_rl
         : probe_roe_pressure(eos, rho_L, e_R, Xi_avg);
-    if (!std::isfinite(p_ll) || !std::isfinite(p_rr)
-        || !std::isfinite(p_rl) || !std::isfinite(p_lr)) {
+    if (!arch::math::isfinite(p_ll) || !arch::math::isfinite(p_rr)
+        || !arch::math::isfinite(p_rl) || !arch::math::isfinite(p_lr)) {
         res.c_hat = arch::state::invalid();
         return res;
     }
@@ -761,9 +762,9 @@ ARCH_INLINE void calc_hll_wave_speeds(
     double un_hat = (dir == 0) ? rs.u_hat : ((dir == 1) ? rs.v_hat : rs.w_hat);
 
     S_L = std::min(un_L - c_L, un_R - c_R);
-    if (std::isfinite(rs.c_hat)) S_L = std::min(S_L, un_hat - rs.c_hat);
+    if (arch::math::isfinite(rs.c_hat)) S_L = std::min(S_L, un_hat - rs.c_hat);
     S_R = std::max(un_L + c_L, un_R + c_R);
-    if (std::isfinite(rs.c_hat)) S_R = std::max(S_R, un_hat + rs.c_hat);
+    if (arch::math::isfinite(rs.c_hat)) S_R = std::max(S_R, un_hat + rs.c_hat);
 }
 
 /**

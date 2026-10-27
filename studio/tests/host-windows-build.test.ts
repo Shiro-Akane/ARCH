@@ -11,6 +11,8 @@ import {fingerprintLinkDependencies} from '../host/linkDependencies.ts';
 import {readBuildToolchainEvidence} from '../host/cmakeEvidence.ts';
 import {readBuildGeneratorEvidence} from '../host/cmakeEvidence.ts';
 import {validRuntimeEvidence} from '../host/toolRuntimeEvidence.ts';
+import {windowsEnvironment,captureOwned} from '../host/hostProcess.ts';
+import {loadWindowsTools} from '../host/windows-tools.mjs';
 import type {BuildProfile} from '../src/host/contracts.ts';
 
 test('native Configure/Build persists real evidence, reopens, invalidates changes and preserves the old manifest on failure', {skip:process.platform!=='win32',timeout:360000},async()=>{
@@ -57,5 +59,54 @@ test('native Configure/Build persists real evidence, reopens, invalidates change
   const corrupted=structuredClone(saved);corrupted.toolRuntime!.nodes[0].sha256='bad';await saveManifest(p,corrupted,tools);assert.equal(await loadManifest(p),undefined);
   await saveManifest(p,saved,tools);assert.equal((await loadManifest(p))?.buildId,saved.buildId);
   const linker=await readFile(path.join(build,'ARCH.link.d'),'utf8');assert.match(linker,/[A-Za-z]:[\\/]/);
+ }finally{await configure.shutdown();await rm(root,{recursive:true,force:true});}
+});
+
+// This compiler family is selected explicitly, alongside the existing GNU CPU
+// fixture. Linux and a Windows CPU-only installation do not register this test.
+if(process.platform==='win32'&&process.env.ARCH_TEST_MSVC) test('private MSVC environment builds a real CUDA/RC target and retains unknown full freshness',{timeout:360000},async()=>{
+ const tools=await loadWindowsTools(process.env.ARCH_TEST_CUDA_TOOLS!);
+ const root=await mkdtemp(path.join(os.tmpdir(),'ARCH MSVC CUDA '));
+ const p:BuildProfile={id:'native-msvc-cuda-fixture',displayName:'Native MSVC CUDA fixture',managedSourceRoot:root,
+  buildDirRelative:'build',outputBinaryRelative:'build/bin/ARCH.exe',target:'ARCH',parallelism:1,
+  trackedInputs:['CMakeLists.txt','main.cpp','probe.cu','fixture.rc','build/CMakeCache.txt'],compilerDependencyMode:'ninja',dependenciesComplete:false,buildBackend:'cuda'};
+ const configure=new ConfigureRunner({id:p.id,sourceRoot:root,buildDirRelative:'build',generator:'Ninja',windowsTools:tools,
+  definitions:{CMAKE_BUILD_TYPE:'Release',CMAKE_CXX_COMPILER:process.env.ARCH_TEST_MSVC!,CMAKE_MAKE_PROGRAM:tools.ninja,
+   CMAKE_RC_COMPILER:tools.rc,CMAKE_CUDA_COMPILER:process.env.ARCH_TEST_NVCC!,CMAKE_CUDA_HOST_COMPILER:process.env.ARCH_TEST_MSVC!,
+   CUDAToolkit_ROOT:process.env.ARCH_TEST_CUDA_ROOT!,CMAKE_CUDA_ARCHITECTURES:'86-real'}});
+ async function finish(runner:BuildRunner){const end=Date.now()+120000;while(runner.isActive()&&Date.now()<end)await new Promise(r=>setTimeout(r,25));assert.equal(runner.isActive(),false);return runner.snapshot();}
+ try{
+  const poisoned={...tools,compilerEnvironment:{LIB:'relative'}};
+  assert.throws(()=>windowsEnvironment(poisoned),/absolute local/);
+  for(const path of ['C:/tools;;.','C:/tools;relative','C:relative'])
+   assert.throws(()=>windowsEnvironment({...tools,path}),/absolute local/);
+  const env=windowsEnvironment(tools);assert.equal(env.INCLUDE,tools.compilerEnvironment.INCLUDE);assert.equal(env.CL,undefined);
+  await mkdir(path.join(root,'studio'));
+  await writeFile(path.join(root,'main.cpp'),'#include <windows.h>\n#include <omp.h>\nint main(){return GetCurrentProcessId()>0 && omp_get_max_threads()>0 ? 0:1;}\n');
+  await writeFile(path.join(root,'probe.cu'),'#include <cuda_runtime.h>\n__global__ void fixture(int *p){*p=1;}\n');
+  await writeFile(path.join(root,'fixture.rc'),'#include <windows.h>\n1 RCDATA { 1, 2, 3, 4 }\n');
+  await writeFile(path.join(root,'CMakeLists.txt'),'cmake_minimum_required(VERSION 3.20)\nproject(NativeCudaEvidence CXX CUDA RC)\nset(OpenMP_CXX_FLAGS "/openmp:llvm /openmp:experimental")\nfind_package(OpenMP REQUIRED COMPONENTS CXX)\nadd_executable(ARCH main.cpp probe.cu fixture.rc)\ntarget_link_libraries(ARCH PRIVATE OpenMP::OpenMP_CXX)\ntarget_compile_options(ARCH PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/fp:strict>" "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/fp:strict>")\nset_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")\n');
+  const result=await configure.run('p',p.id);assert.equal(result.state,'succeeded',result.error);
+  const reader=await openProject({project:root,buildProfile:p.id,trustedBuildProfile:p,configureProfile:configure.profile});
+  const runner=reader.build!,projectId=reader.snapshot().session.projectId;
+  for(let i=0;i<2;i++){
+   await runner.start(projectId,p.id);const state=await finish(runner);
+   assert.equal(state.state,'succeeded',JSON.stringify(runner.events(state.latestResult!.buildId)));
+   const m=await loadManifest(p);assert.ok(m);assert.equal(m.compilerDriverError,undefined);
+   if(m.compilerInputError)console.error('Native fixture dependency diagnostics:',(await captureOwned(tools.ninja,['-C',path.join(root,'build'),'-t','deps'],'',root,tools)).stdout);
+   assert.equal(m.configurationInputError,undefined);assert.equal(m.compilerInputError,undefined);
+   assert.equal(m.compilerDriversStableDuringBuild,true);assert.equal(state.binaryState,'freshness-unknown');assert.equal(state.observedInputs,undefined);
+   assert.ok(m.compilerDrivers!.some(d=>d.id==='MSVC'));assert.ok(m.compilerDrivers!.some(d=>d.id==='NVIDIA'));
+   assert.ok(m.compilerDrivers!.some(d=>d.language==='RC'&&d.id==='Microsoft RC'));
+  }
+  await runner.requireBuildEvidence(p.id);
+  const executable=path.join(root,p.outputBinaryRelative);
+  assert.equal((await captureOwned(executable,[],'',root,tools)).code,0);
+  await writeFile(path.join(root,'main.cpp'),'#error deliberate compiler failure\n');
+  assert.equal((await runner.refreshFreshness()).binaryState,'needs-build');
+  await assert.rejects(runner.requireBuildEvidence(p.id),/changed|Build required/);
+  const previous=(await loadManifest(p))!.buildId;
+  await runner.start(projectId,p.id);assert.equal((await finish(runner)).state,'failed');
+  assert.equal((await loadManifest(p))!.buildId,previous);
  }finally{await configure.shutdown();await rm(root,{recursive:true,force:true});}
 });

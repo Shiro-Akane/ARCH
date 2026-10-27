@@ -1,5 +1,7 @@
 # Windows Studio platform services: W2
 
+For current complete Windows CPU/CUDA/Studio status and one-to-one correspondence, see the [2026-10-27 final record](../histroy/build/WindowsNativeCudaQualification-20261027.md). The W0/W1/W2/W3 observations below retain their dated scope. CUDA uses the separate [MSVC build and trusted tool context](WindowsNativeCuda.md).
+
 [简体中文](WindowsStudioPlatform.zh-CN.md) · [Native CPU CLI](WindowsNativeCpu.md)
 
 W2 adds native process operations beneath the existing Host state machines.

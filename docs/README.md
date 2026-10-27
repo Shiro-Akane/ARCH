@@ -2,7 +2,7 @@
 
 [中文](README.zh-CN.md) · [Project homepage](../README.md)
 
-Linux/WSL2 is recommended; native Windows11 x64 provides the complete adapted CPU CLI/Studio workflow with newer support that may still have instability or bugs. The shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides put Linux and Windows instructions together, including model/parameter navigation and `.par`/Plotfile paths.
+Linux/WSL2 is recommended. Native Windows11 x64 provides the complete CPU/CUDA CLI and Studio functionality within the existing scientific scope, with newer support that may still have instability or bugs. The shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides explain both systems, model/parameter navigation and `.par`/Plotfile paths. The [final correspondence record](histroy/build/WindowsNativeCudaQualification-20261027.md) maps the accepted functionality and platform limits.
 
 Begin with [build and first run](../README.md#build), then use the [case guide](guides/SimulationCase.md) to inspect output or write a problem. Inputs, outputs and physical constants use CGS.
 

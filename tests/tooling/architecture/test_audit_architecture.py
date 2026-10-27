@@ -280,6 +280,40 @@ target_link_options(arch_build_contract INTERFACE
             self.assert_rejected_with({"CMakeLists.txt": contract.replace(original,"-Xcompiler="+flags)},
                                       "one strict Host/CUDA build contract")
 
+    def test_native_msvc_contract_preserves_both_host_fp_paths(self):
+        contract = """
+add_library(arch_build_contract INTERFACE)
+if(MSVC)
+target_compile_options(arch_build_contract INTERFACE
+    $<$<COMPILE_LANGUAGE:CXX>:/fp:strict;/utf-8>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=/fp:strict,/utf-8>)
+else()
+target_compile_options(arch_build_contract INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=-fno-fast-math,-ffp-contract=off>)
+endif()
+target_compile_options(arch_build_contract INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true>)
+target_link_options(arch_build_contract INTERFACE
+    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
+    $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-ffp-contract=off>>)
+"""
+        self.assert_accepted({"CMakeLists.txt": contract})
+        self.assert_accepted({"CMakeLists.txt": """
+if(MSVC)
+set(arch_windows_resource_sources ARCH.manifest)
+else()
+set(arch_windows_resource_sources ARCH.rc ARCH.manifest)
+endif()
+""" + contract})
+        for strict in ("CXX>:/fp:strict", "-Xcompiler=/fp:strict"):
+            self.assert_rejected_with(
+                {"CMakeLists.txt": contract.replace(strict, strict.replace("strict", "precise"))},
+                "native MSVC needs strict Host/CUDA floating-point options")
+        self.assert_rejected_with(
+            {"CMakeLists.txt": contract + "\nadd_compile_options(/fp:fast)\n"},
+            "forbids fast-math/reassociation")
+
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',

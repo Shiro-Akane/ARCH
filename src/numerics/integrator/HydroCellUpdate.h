@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -87,17 +88,17 @@ namespace TimeIntegration
     ARCH_INLINE double normalized_stage_component(
         double old, double current, double delta, double weight_flux)
     {
-        if (!std::isfinite(old) || !std::isfinite(current) || !std::isfinite(delta))
+        if (!arch::math::isfinite(old) || !arch::math::isfinite(current) || !arch::math::isfinite(delta))
             return arch::state::invalid();
         const double trial = current + delta;
-        if (!std::isfinite(trial)) return arch::state::invalid();
+        if (!arch::math::isfinite(trial)) return arch::state::invalid();
         if (weight_flux == 1.0) return trial;
         if (weight_flux == 0.0) return old;
         const double difference = current - old;
         const double increment = difference + delta;
-        if (std::isfinite(difference) && std::isfinite(increment)) {
+        if (arch::math::isfinite(difference) && arch::math::isfinite(increment)) {
             const double result = old + weight_flux * increment;
-            if (std::isfinite(result)) return result;
+            if (arch::math::isfinite(result)) return result;
         }
         return (1.0 - weight_flux) * old + weight_flux * trial;
     }
@@ -118,7 +119,7 @@ namespace TimeIntegration
         // The supported scheduler supplies convex coefficients with w_n+w_f=1.
         // Reject malformed internal requests rather than silently normalizing
         // arbitrary weights or interpreting them as a different RK method.
-        if (!std::isfinite(weight_n) || !std::isfinite(weight_flux)
+        if (!arch::math::isfinite(weight_n) || !arch::math::isfinite(weight_flux)
             || weight_n < 0.0 || weight_n > 1.0
             || weight_flux < 0.0 || weight_flux > 1.0
             || weight_n + weight_flux != 1.0) {
@@ -147,7 +148,7 @@ namespace TimeIntegration
                 U_old.rho * Xi_old[off], U_curr.rho * Xi_curr[off],
                 d_spec[off], weight_flux);
             double fraction = density / raw_density;
-            if (!std::isfinite(fraction) || fraction < -arch::state::composition_roundoff_limit) {
+            if (!arch::math::isfinite(fraction) || fraction < -arch::state::composition_roundoff_limit) {
                 U_new.eng = arch::state::invalid();
                 return arch::state::Status::invalid_composition;
             }
@@ -156,7 +157,7 @@ namespace TimeIntegration
             Xi_new[off] = fraction;
             sum += fraction;
         }
-        if (n_spec && (!std::isfinite(sum) || std::abs(sum - 1.0)
+        if (n_spec && (!arch::math::isfinite(sum) || std::abs(sum - 1.0)
                 > 512.0 * n_spec * std::numeric_limits<double>::epsilon())) {
             U_new.eng = arch::state::invalid();
             return arch::state::Status::invalid_composition;

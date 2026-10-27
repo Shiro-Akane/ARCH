@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 namespace {
-struct Probe { double value[10]{}; };
+struct Probe { double value[20]{}; };
 
 template <class View>
 ARCH_INLINE Probe evaluate(View view, double rho, double temperature, double ye)
@@ -46,6 +46,15 @@ __global__ void invalid_query(Tabular3DEOSView view, int* status, Probe* out)
     view.get_cv_gradient<3>(1e4,1e5,X,capacity);
     view.get_energy_composition_hessian_action<3>(0.0,1e8,X,flow,action);
     out->value[1]=gradient[1]; out->value[2]=capacity[1]; out->value[3]=action[1];
+    // Check every failed derivative slot, independently of species projection.
+    const auto derivatives=view.composition_derivatives(0.0,1e8,X);
+    for(int i=0;i<2;++i) {
+        out->value[10+i]=derivatives.energy[i];
+        out->value[12+i]=derivatives.energy_temperature[i];
+        out->value[14+i]=derivatives.cv[i];
+    }
+    for(int i=0;i<3;++i)out->value[16+i]=derivatives.energy_hessian[i];
+    out->value[19]=derivatives.cv_temperature;
 }
 } // namespace
 
@@ -91,6 +100,9 @@ int main(int argc,char** argv)
     if(failed!=1 || !std::isnan(actual.value[0]) || !std::isnan(actual.value[1])
         || !std::isnan(actual.value[2]) || !std::isnan(actual.value[3]))
         throw std::runtime_error("native EOS failure did not remain latched");
+    for(int i=10;i<20;++i)
+        if(!std::isnan(actual.value[i]))
+            throw std::runtime_error("native EOS failure left a finite composition derivative slot");
     check_cuda(cudaDeviceSynchronize(),"native owner completion");
     std::cout<<"native EOSDriver CUDA parity, host-release/move lifetime and failure latch PASS\n";
 }

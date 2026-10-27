@@ -13,7 +13,7 @@
 
 ARCH 用于模拟可压缩流体运动、传热与核反应。它以有限体积法推进流体状态，并用自适应网格细化（AMR）增加局部空间分辨率。CPU 与 CUDA 共用物理和数学实现。
 
-**推荐使用 Linux 系统**，也可采用 WSL2 中的 Linux。原生 Windows 11 x64 同样提供完整的 CPU CLI 与 Studio 工作流，包括配置、编译、初始场／AMR 预览、运行／重启和只读 Plotfile 查看；Windows 适配较新，仍可能存在不稳定性与 bug。原生 Windows CUDA／MPI 及其他平台另行验收，已有 CUDA 路线请使用 Linux。**ARCH Studio 始终是选配组件**，科学计算无需安装图形界面。
+**推荐使用 Linux 系统**，也可采用 WSL2 中的 Linux。原生 Windows 11 x64 在相同的既有科学范围内，同样提供完整的 CPU／CUDA CLI 与 Studio 工作流，包括配置、编译、初始场／AMR 预览、运行／重启和只读 Plotfile 查看；Windows 适配较新，仍可能存在不稳定性与 bug。[Linux／Windows 功能对照与验收](docs/histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)逐项记录实测范围和平台限制。**ARCH Studio 始终是选配组件**，科学计算无需安装图形界面。
 
 **ARCH 的输入、输出和物理常数统一使用 CGS**：长度为 `cm`，时间为 `s`，密度为 `g/cm³`，压力和能量密度为 `erg/cm³`，比内能为 `erg/g`，温度为 `K`。角度使用 `rad`。输入不会自动换算单位；更多量纲见[算例指南](docs/guides/SimulationCase.zh-CN.md#单位)。
 
@@ -30,7 +30,7 @@ ARCH 提供一至三维流体、动态 AMR、状态方程、扩散、核反应�
 
 ## 构建
 
-下文先列 Linux／WSL2 命令。原生 Windows 使用同一 CMake 工程，按 [Windows CPU 指南](docs/guides/WindowsNativeCpu.zh-CN.md)准备 GCC/UCRT64 及同 ABI 依赖；不能复用 Linux 构建目录或 DLL。按所选后端准备 Core 依赖：
+下文先列 Linux／WSL2 命令。原生 Windows 使用同一 CMake 工程，按 [Windows CPU 指南](docs/guides/WindowsNativeCpu.zh-CN.md)准备 GCC/UCRT64 及同 ABI 依赖；不能复用 Linux 构建目录或库。原生 CUDA 按 [Windows CUDA 指南](docs/guides/WindowsNativeCuda.zh-CN.md)另建 MSVC／NVCC 依赖树。按所选后端准备 Core 依赖：
 
 - **基础工具：** 支持 C++20 的编译器、CMake 3.22+、Ninja 和 Git。
 - **两种后端共用的库：** HDF5 C++/HL 和 OpenMP。

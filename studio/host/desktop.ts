@@ -9,7 +9,7 @@ if(!/^[a-f0-9]{64}$/.test(launch.token))throw new Error('Invalid desktop ownersh
 const windowsTools=launch.windowsTools;
 if(process.platform==='win32'&&!windowsTools)throw new Error('Trusted Windows desktop tools are required.');
 if(windowsTools){
- if(typeof windowsTools!=='object'||Array.isArray(windowsTools)||Object.keys(windowsTools).some(key=>!['cmake','supervisor','path','ninja','objdump','publisher','rc','terminal'].includes(key)))throw new Error('Invalid private Windows desktop tool context.');
+ if(typeof windowsTools!=='object'||Array.isArray(windowsTools)||Object.keys(windowsTools).some(key=>!['cmake','supervisor','path','ninja','objdump','publisher','rc','terminal','compilerEnvironment'].includes(key)))throw new Error('Invalid private Windows desktop tool context.');
  windowsEnvironment(windowsTools);
 }
 const {root,reader,caseId,config,selectedSource}=await openDesktopProject(launch,{windowsTools});

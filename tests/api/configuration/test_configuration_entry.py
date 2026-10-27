@@ -41,8 +41,8 @@ class ConfigurationEntry(unittest.TestCase):
         options = ["--samples", "4"] if mode == "--preview" else []
         before = list(self.cwd.rglob("*"))
         result = subprocess.run([str(ARCH), mode, "Sod", "--config-stdin", *options],
-                                input=text, cwd=self.cwd, env=ENV,
-                                capture_output=True, text=True, timeout=30)
+                                input=text.encode('utf-8'), cwd=self.cwd, env=ENV,
+                                capture_output=True, timeout=30)
         self.assertEqual(result.returncode, expected, (result.stdout, result.stderr))
         self.assertEqual(before, list(self.cwd.rglob("*")), "initial API wrote files")
         data = json.loads(result.stdout)

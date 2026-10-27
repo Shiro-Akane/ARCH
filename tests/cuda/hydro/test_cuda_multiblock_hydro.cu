@@ -35,6 +35,7 @@
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "driver/schedule/DriverControl.h"
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "driver/stages/DriverMacroStep.h"
 #include "driver/stages/GravityStage.h"
 #include "numerics/flux/FluxHLL.h"

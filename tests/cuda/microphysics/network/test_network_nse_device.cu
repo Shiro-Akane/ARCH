@@ -5,6 +5,7 @@
  * Exercise registered network data and numerical leaves with host reference
  * checks before comparing their CUDA execution.
  */
+#include "core/MathClassification.h"
 #include "numerics/linalg/DenseWrap.h"
 #include "physics/network/aprox13/NetAprox13.h"
 #include "physics/network/aprox19/NetAprox19.h"
@@ -101,8 +102,8 @@ void compare_field(double actual, double expected, double abs_tol,
                    double rel_tol,
                    const char* field, int index)
 {
-    if (std::isnan(expected)) {
-        require(std::isnan(actual), std::string(field) + " NaN class at "
+    if (arch::math::isnan(expected)) {
+        require(arch::math::isnan(actual), std::string(field) + " NaN class at "
                                     + std::to_string(index));
         return;
     }
@@ -111,10 +112,10 @@ void compare_field(double actual, double expected, double abs_tol,
                                     + std::to_string(index));
         return;
     }
-    require(std::isfinite(actual), std::string(field) + " finite class at "
+    require(arch::math::isfinite(actual), std::string(field) + " finite class at "
                                    + std::to_string(index));
     if (expected == 0.0) {
-        require(actual == expected && std::signbit(actual) == std::signbit(expected),
+        require(actual == expected && arch::math::signbit(actual) == arch::math::signbit(expected),
                 std::string(field) + " signed zero at " + std::to_string(index));
         return;
     }
@@ -310,7 +311,7 @@ ARCH_INLINE NseFixedPointChecks nse_fixed_point_checks(const double* equilibrium
     for (int repeat = 0; repeat < 16; ++repeat) {
         double energy = 1.0;
         if (!NSESolver<Network>::solve(temperature, density, ye, state, output, energy)
-            || energy != 0.0 || std::signbit(energy)) {
+            || energy != 0.0 || arch::math::signbit(energy)) {
             result.repeated = false;
             break;
         }
@@ -342,7 +343,7 @@ ARCH_INLINE NseFixedPointChecks nse_fixed_point_checks(const double* equilibrium
         double energy = 0.0;
         result.composition = change > 0.0
             && NSESolver<Network>::solve(temperature, density, ye, state, output, energy)
-            && std::isfinite(energy) && energy != 0.0;
+            && arch::math::isfinite(energy) && energy != 0.0;
         for (int i = 0; i < N; ++i)
             result.composition = result.composition && output[i] == equilibrium[i];
     }
@@ -352,7 +353,7 @@ ARCH_INLINE NseFixedPointChecks nse_fixed_point_checks(const double* equilibrium
         double energy = 0.0;
         bool changed = false;
         bool valid = NSESolver<Network>::solve(changed_temperature, changed_density,
-            ye, equilibrium, output, energy) && std::isfinite(energy) && energy != 0.0;
+            ye, equilibrium, output, energy) && arch::math::isfinite(energy) && energy != 0.0;
         for (int i = 0; i < N; ++i) changed = changed || output[i] != equilibrium[i];
         if (parameter == 0) result.temperature = valid && changed;
         else result.density = valid && changed;
@@ -674,7 +675,7 @@ void check_network_authority(
                 // allow a 1e-12 portable envelope.  The current
                 // host/device values are compared directly below.
                 const bool exact_zero = expected == 0.0;
-                const double scale = std::isfinite(expected)
+                const double scale = arch::math::isfinite(expected)
                     ? std::abs(expected) * 1.0e-12 : 0.0;
                 const double portable_abs = exact_zero ? 0.0 : std::max(
                     64.0 * frozen_abs, scale);
@@ -2905,7 +2906,7 @@ void validate_network_host(const char* name, const NetworkProbe<N, R>& value)
         require(!value.nse_invalid_status[i]
                     && value.nse_invalid_preserved[i]
                     && value.nse_invalid_enuc[i] == 0.0
-                    && !std::signbit(value.nse_invalid_enuc[i]),
+                    && !arch::math::signbit(value.nse_invalid_enuc[i]),
                 std::string(name) + ".host X_old below -1e-12 contract "
                 + std::to_string(i));
     }

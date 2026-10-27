@@ -7,7 +7,7 @@ compilation, dependencies, CUDA targets, and memory-aware build parallelism.
 model selection, parameter Help/Inspector, Preview, builds, Run/Restart, Plotfile loading and host-specific paths. Its
 [environment guide](StudioEnvironment.md) lists desktop prerequisites.
 
-Linux is recommended. Native Windows11 x64 has the complete adapted CPU CLI/Studio workflow but may still have instability or bugs; this does not qualify native Windows CUDA/MPI. Detailed Windows [dependency](WindowsNativeW0.md), [CPU](WindowsNativeCpu.md) and [desktop](WindowsStudioDesktop.md) recipes supplement the shared guides.
+Linux is recommended. Native Windows11 x64 has the corresponding CPU/CUDA CLI and Studio functionality within the existing scientific scope, but may still have instability or bugs. Windows [dependencies](WindowsNativeW0.md), [CPU](WindowsNativeCpu.md), [CUDA](WindowsNativeCuda.md) and [desktop](WindowsStudioDesktop.md) recipes supplement the shared guides. See the [final functional correspondence](../histroy/build/WindowsNativeCudaQualification-20261027.md) for actual acceptance and limits.
 
 [SimulationCase.md](SimulationCase.md) ([Chinese](SimulationCase.zh-CN.md)) walks
 through building, running and extending a small Sod problem. Start there for a

@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <vector>
 #ifdef _OPENMP
@@ -120,7 +121,7 @@ private:
                 identical = identical && Xi_L[s] == Xi_R[s];
         }
         if (identical && rho_L > 0.0 && e_L > 0.0
-            && std::isfinite(e_L)) {
+            && arch::math::isfinite(e_L)) {
             double pressure = 0.0, sound_speed = 0.0;
             // Both execution backends borrow the same stage-mean contract.
             // State equality is the original identity path, independent of
@@ -131,7 +132,7 @@ private:
                 calc_endpoint_thermo(U_L, e_L, Xi_L, eos,
                                      pressure, sound_speed);
             if (pressure > 0.0 && sound_speed > 0.0
-                && std::isfinite(pressure) && std::isfinite(sound_speed)) {
+                && arch::math::isfinite(pressure) && arch::math::isfinite(sound_speed)) {
                 flux_out = get_flux(U_L, pressure, dir);
                 for (int s = 0; s < n_spec; ++s)
                     species_flux_out[s] = flux_out.rho * Xi_L[s];

@@ -64,6 +64,50 @@ include("@MODULE@")
             input_header.write_text(original)
             self.assertEqual(first, configure())
 
+    @unittest.skipUnless(shutil.which("cmake") and shutil.which("c++"), "CMake and C++ are required")
+    def test_msvc_identity_arrays_preserve_large_utf8_records_byte_for_byte(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary)
+            build = source / "build"
+            (source / "src/core/files").mkdir(parents=True)
+            (source / "src/core/files/BuildIdentity.cpp").write_text("int fixture;\n")
+            (source / "payload.txt").write_text((' quoted";back\\slash;中文 ' * 5000), encoding="utf-8")
+            (source / "CMakeLists.txt").write_text("""
+cmake_minimum_required(VERSION 3.22)
+project(LargeIdentity LANGUAGES CXX)
+add_library(arch_build_contract STATIC src/core/files/BuildIdentity.cpp)
+foreach(name ARCH arch_driver_runtime arch_solver_dispatch arch_gravity_cpu arch_diffusion_math arch_run_identity)
+    add_library(${name} INTERFACE)
+endforeach()
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/payload.txt" payload)
+set_property(TARGET arch_build_contract PROPERTY COMPILE_OPTIONS "${payload}")
+if(IDENTITY_BYTE_ARRAY)
+    set(MSVC TRUE)
+endif()
+include("@MODULE@")
+""".replace("@MODULE@", (ROOT / "cmake/project/BuildIdentity.cmake").as_posix()))
+            reader = source / "reader.cpp"
+            reader.write_text('#include "BuildIdentity.generated.h"\n#include <iostream>\n'
+                'int main(){using namespace arch_generated_identity;'
+                'std::cout<<source_manifest<<profile_record<<source_git_head<<source_git_dirty;}\n')
+            def observe(arrays):
+                configured = subprocess.run(["cmake", "-S", str(source), "-B", str(build),
+                    "-DIDENTITY_BYTE_ARRAY=" + ("ON" if arrays else "OFF")],
+                    capture_output=True, timeout=30)
+                self.assertEqual(configured.returncode, 0, configured.stderr.decode(errors="replace"))
+                header = build / "generated/identity/BuildIdentity.generated.h"
+                binary = source / "identity-reader"
+                compiled = subprocess.run(["c++", "-std=c++17", "-I", str(header.parent), str(reader),
+                    "-o", str(binary)], capture_output=True, timeout=30)
+                self.assertEqual(compiled.returncode, 0, compiled.stderr.decode(errors="replace"))
+                return header.read_bytes(), subprocess.check_output([str(binary)], timeout=5)
+            raw_header, raw = observe(False)
+            array_header, actual = observe(True)
+            self.assertGreater(len(actual), 65535)
+            self.assertIn(b"R\"ARCHID", raw_header)
+            self.assertIn(b"inline constexpr char profile_record[]", array_header)
+            self.assertEqual(actual, raw)
+
     def test_focused_identity_tracks_configured_sources_and_artifact_replacement(self):
         def capture():
             return provenance.capture_focused(artifacts={"probe": self.arch},

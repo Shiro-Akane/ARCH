@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include "numerics/multigrid/CompositeExecution.h"
 #include "physics/gravity/GravityBoundary.h"
 #include "physics/gravity/GravitySource.h"
@@ -18,7 +19,7 @@ struct GatherDensity {
     /** Gather one active native density into the composite source order. */
     ARCH_INLINE void operator()(int i) const {
         const auto& c=cells[i];const double rho=patches[c.block][c.offset];
-        out[i]=rho>0.&&std::isfinite(rho)?rho:std::numeric_limits<double>::quiet_NaN();
+        out[i]=rho>0.&&arch::math::isfinite(rho)?rho:std::numeric_limits<double>::quiet_NaN();
     }
 };
 struct UpdateMoments {
@@ -52,7 +53,7 @@ struct CellAcceleration {
         for(int a=0;a<3;++a) {
             const double value=a<dimension?0.5*(sides[6*i+2*a]+sides[6*i+2*a+1]):0.;
             g[a*size+i]=value;
-            if(a<dimension){const double q=std::abs(value)/cells[i].width[a];if(!std::isfinite(q))maximum=std::numeric_limits<double>::infinity();
+            if(a<dimension){const double q=std::abs(value)/cells[i].width[a];if(!arch::math::isfinite(q))maximum=std::numeric_limits<double>::infinity();
                 else if(q>maximum)maximum=q;}
         }
         // max_a |g_a|/dx_a is an inverse acceleration timescale squared.

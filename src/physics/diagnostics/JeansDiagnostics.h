@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <cmath>
 #include "core/ArchPortability.h"
 #include "numerics/curvilinear/GridMetrics.h"
@@ -34,9 +35,9 @@ struct Resolution {
 ARCH_INLINE Resolution evaluate(double density, double sound_speed_squared,
                                 double max_active_spacing)
 {
-    if (!std::isfinite(density) || density <= 0.0 ||
-        !std::isfinite(sound_speed_squared) || sound_speed_squared <= 0.0 ||
-        !std::isfinite(max_active_spacing) || max_active_spacing <= 0.0)
+    if (!arch::math::isfinite(density) || density <= 0.0 ||
+        !arch::math::isfinite(sound_speed_squared) || sound_speed_squared <= 0.0 ||
+        !arch::math::isfinite(max_active_spacing) || max_active_spacing <= 0.0)
         return {};
 
     int density_exponent = 0, sound_exponent = 0, spacing_exponent = 0;
@@ -54,7 +55,7 @@ ARCH_INLINE Resolution evaluate(double density, double sound_speed_squared,
         arch::constants::math::pi / arch::constants::gravity::cgs::gravitational_constant)
         * std::sqrt(ratio) / spacing_fraction;
     const double cells = std::ldexp(coefficient, exponent / 2 - spacing_exponent);
-    if (!std::isfinite(cells) || cells <= 0.0)
+    if (!arch::math::isfinite(cells) || cells <= 0.0)
         return {cells, Status::unrepresentable};
     return {cells, Status::valid};
 }
@@ -75,7 +76,7 @@ ARCH_INLINE Resolution evaluate_cell(double density, double sound_speed_squared,
     double maximum = 0.0;
     for (int direction = 0; direction < grid.dim; ++direction) {
         const double spacing = GridMetrics::PhysicalSpacing(grid, direction, i, j);
-        if (!std::isfinite(spacing) || spacing <= 0.0)
+        if (!arch::math::isfinite(spacing) || spacing <= 0.0)
             return {};
         if (spacing > maximum) maximum = spacing;
     }

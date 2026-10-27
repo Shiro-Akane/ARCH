@@ -145,7 +145,7 @@ arch::backend::HostStateTransferView transfer_view(FluidState& state)
     return {
         state.rho.data(), state.mom_u.data(), state.mom_v.data(),
         state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
-        state.mass_fractions.data(), state.rho.size(), test_species_count, state.rho.size()};
+        state.mass_fractions.data(), state.rho.size(), static_cast<std::size_t>(test_species_count), state.rho.size()};
 }
 
 arch::cuda::CudaLaunchConfig make_launch_config(

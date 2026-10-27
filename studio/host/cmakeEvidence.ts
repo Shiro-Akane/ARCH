@@ -78,8 +78,15 @@ async function compilerProbeWithTools(compiler:string,argument:string,tools?:Win
  const result=await promisify(execFile)(compiler,[argument],{
   env:tools?{...windowsEnvironment(tools),LC_ALL:'C'}:{PATH:HOST_BUILD_PATH,LC_ALL:'C'},timeout:5000,maxBuffer:1024*1024,windowsHide:true,
  });
- return result.stdout;
+ return argument==='/?'?result.stdout+result.stderr:result.stdout;
 };
+/** Only fixed, bound RC probes reach this parser; no cache-selected command. */
+export function resourceCompilerVersion(output:string,msvc:boolean){
+ const match=(msvc?/^Microsoft \(R\) Windows \(R\) Resource Compiler Version ([0-9]+(?:\.[0-9]+)+)\r*$/m:
+  /^GNU windres \(GNU Binutils\) ([0-9]+(?:\.[0-9]+)+)\r?$/m).exec(output);
+ if(!match)throw new Error((msvc?'Microsoft':'GNU')+' resource compiler version unavailable.');
+ return {id:msvc?'Microsoft RC':'GNU windres',version:match[1]};
+}
 async function gnuComponents(compiler:string,language:string,probe:CompilerProbe,selectedProgram?:string,tools?:WindowsHostTools){
  const plugin=process.platform==='win32'?'liblto_plugin.dll':'liblto_plugin.so';
  const components:{role:string;path:string;resolvedPath:string;sha256:string;size:number}[]=[];
@@ -128,14 +135,13 @@ export async function readCMakeToolchainEvidence(buildDirectory:string,replyFile
   if(!object(entry)||typeof entry.language!=='string'||!object(entry.compiler)||!absolute(entry.compiler.path))throw new Error('Malformed compiler identity.');
   let id=entry.compiler.id,version=entry.compiler.version;
   // CMake's native RC descriptor omits id/version. Probe only the explicitly
-  // bound GNU resource compiler; never guess missing C/CXX identities or run a
+ // bound resource compiler; never guess missing C/CXX identities or run a
   // cache-selected executable. Keep the actual RC driver hash like other tools.
   if(process.platform==='win32'&&entry.language==='RC'&&id===undefined&&version===undefined){
    if(!tools?.rc||!sameCMakePath(entry.compiler.path,tools.rc))throw new Error('RC driver differs from trusted Host resource compiler.');
-   const output=await probe(tools.rc,'--version');
-   const match=/^GNU windres \(GNU Binutils\) ([0-9]+(?:\.[0-9]+)+)\r?$/m.exec(output);
-   if(!match)throw new Error('GNU resource compiler version unavailable.');
-   id='GNU windres';version=match[1];
+   const msvc=data.toolchains.some(item=>object(item)&&object(item.compiler)&&item.compiler.id==='MSVC');
+   const output=await probe(tools.rc,msvc?'/?':'--version');
+   ({id,version}=resourceCompilerVersion(output,msvc));
   }
   if(typeof id!=='string'||!id||typeof version!=='string'||!version)throw new Error('Malformed compiler identity.');
   const resolvedPath=await realpath(entry.compiler.path),content=await boundedFile(resolvedPath,128*1024*1024);

@@ -7,6 +7,8 @@
  * 3. Return an accepted state or explicit rejection status.
  */
 #pragma once
+#include "core/ArchPortability.h"
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -60,7 +62,7 @@ struct Solver_BD
     };
     struct Continuation
     {
-        [[no_unique_address]] NetType network{};
+        ARCH_NO_UNIQUE_ADDRESS NetType network{};
         OdeMath::AcceptedState<NEQ> accepted;
         arch::math::CompensatedSum accepted_energy;
         // GPU execution places this O(NEQ) tableau in a bounded global pool,
@@ -177,7 +179,7 @@ struct Solver_BD
                 }
 
                 if (t_current + H > dt_target) H = dt_target - t_current;
-                if (!(H > 0.0) || !std::isfinite(H) || t_current + H == t_current) {
+                if (!(H > 0.0) || !arch::math::isfinite(H) || t_current + H == t_current) {
                     report.status = BurnOdeStatus::Stalled;
                     c.phase = Phase::Complete;
                     return OdeLinearRequest::Complete;
@@ -231,7 +233,7 @@ struct Solver_BD
                     bool simpr_failed = false;
 #pragma omp simd
                     for (int i = 0; i < NEQ; ++i) {
-                        if (!std::isfinite(c.b[i])) simpr_failed = true;
+                        if (!arch::math::isfinite(c.b[i])) simpr_failed = true;
                         c.increment[i] += c.delta[i] + 2.0 * c.b[i];
                         c.delta[i] += 2.0 * c.b[i];
                     }
@@ -389,14 +391,14 @@ private:
                     // Permit negative extrapolation noise only within ten
                     // absolute-tolerance units before projection.
                     for (int i = 0; i < NUM_SPEC; ++i) {
-                        if(X_trial[i] < -10.0*atol || !std::isfinite(X_trial[i])) physically_sound = false;
+                        if(X_trial[i] < -10.0*atol || !arch::math::isfinite(X_trial[i])) physically_sound = false;
                         mass_sum += std::max(X_trial[i], burn_cfg.smallx);
                     }
-                    if (!std::isfinite(mass_sum) || !(mass_sum > 0.0)) physically_sound = false;
+                    if (!arch::math::isfinite(mass_sum) || !(mass_sum > 0.0)) physically_sound = false;
                     // smallt is the configured lower boundary of the EOS burn state.
-                    if(!std::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt) physically_sound = false;
+                    if(!arch::math::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt) physically_sound = false;
                     for (int i = NUM_SPEC + 1; i < NEQ; ++i)
-                        if (!std::isfinite(X_trial[i])) physically_sound = false;
+                        if (!arch::math::isfinite(X_trial[i])) physically_sound = false;
 
                     // Run the more expensive EOS energy-closure check only for
                     // finite states whose normalized mathematical error passes.
@@ -450,7 +452,7 @@ private:
             c.H *= 0.25;
             c.nse_attempted = false;
             ++c.report.rejected_substeps;
-            if (!(c.H > 0.0) || !std::isfinite(c.H) || c.t_current + c.H == c.t_current) {
+            if (!(c.H > 0.0) || !arch::math::isfinite(c.H) || c.t_current + c.H == c.t_current) {
 #if !defined(__CUDA_ARCH__)
                 std::cerr << "[BD] Fatal Error: Stiff ODE stalled. time increment is not representable" << std::endl;
 #endif

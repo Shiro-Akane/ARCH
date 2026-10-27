@@ -1,5 +1,7 @@
 # Native Windows Studio desktop build (W3)
 
+For current complete Windows CPU/CUDA/Studio status and one-to-one correspondence, see the [2026-10-27 final record](../histroy/build/WindowsNativeCudaQualification-20261027.md). The W0/W1/W2/W3 observations below retain their dated scope. CUDA uses the separate [MSVC build and trusted tool context](WindowsNativeCuda.md).
+
 [中文](WindowsStudioDesktop.zh-CN.md) · [Shared user guide](Studio.md) · [W0–W3 archive](../histroy/build/WindowsNativeQualification-20261026.zh-CN.md)
 
 W3 is complete for the tested Windows 11 x64 GCC/UCRT64 CPU environment. Native windows, Build/Preview, portable packaging and configuration saving passed. The 2026-10-26 supplement also passed real Core Run/Restart, formal Plotfile readback through the final package, and an independent FP64 transport comparison. The user confirmed that raw values and the curve for that same output displayed normally, then reported a normal window close. OS interactions are human-operated because the WSL Computer Use route is unavailable. GPU/MPI, installers and signing are outside this qualification. Mathematics and other Studio I/O stay frozen; Zenodo and releases remain deferred.

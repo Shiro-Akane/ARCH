@@ -2,7 +2,7 @@
 
 [中文](Studio.zh-CN.md) · [Homepage](../../README.md) · [Environment](StudioEnvironment.md)
 
-Studio is optional; Core runs independently. **Linux/WSL2 is recommended. Native Windows 11 x64 provides the complete CPU Studio workflow, but its newer support may still have instability or bugs.** The systems share configuration, scientific Preview and Plotfile services. Native Windows CUDA/MPI are outside this qualification; use Linux for the established CUDA route.
+Studio is optional; Core runs independently. **Linux/WSL2 is recommended. Native Windows11 x64 provides the complete CPU/CUDA Studio workflow, but its newer support may still have instability or bugs.** The systems share configuration, scientific Preview and Plotfile services within the existing [scientific and platform scope](../histroy/build/WindowsNativeCudaQualification-20261027.md).
 
 ## Build and launch: Linux, then Windows
 
@@ -25,6 +25,10 @@ Native Windows: complete the [GCC/UCRT64 Core setup](WindowsNativeCpu.md), then 
 ```
 
 Use the actual configured build directory; `--build-dir` explicitly adopts an existing tree. A checkout launcher depends on that checkout. Keep portable package directories intact: start `arch-studio` on Linux or `arch-studio-bin.exe` on Windows. Host Node and h5wasm are bundled; Core, system dependencies and the Run terminal remain external. Connections are managed internally: no Vite server or port entry is needed.
+
+## Choosing CPU or CUDA
+
+Use the GCC/UCRT64 entry above for native Windows CPU, or the separate MSVC build and matching DLL/tool context in the [native CUDA guide](WindowsNativeCuda.md). Linux CUDA uses the same explicit `--build-dir`/`--binary` selection. In Config's Runtime parameters choose `compute_backend` as `cpu`, `cuda` or `auto`, and `cuda_device` when needed; save and start a new Run. This selects execution at process startup and cannot add GPU code to a CPU-only binary. Initial Preview still uses CPU Setup/Init; verify evolution through the Run log and `*_backend_plan.txt`. Full MSVC/CUDA dependency freshness may remain unknown after a successful Build.
 
 ## Workspaces
 
@@ -80,3 +84,5 @@ Studio starts Core in the project root; a CLI run uses the terminal's current di
 WSL `/mnt/c/work/ARCH` and Windows `C:/work/ARCH` may name the same disk location, but `/home/...` and `/mnt/c/...` are not native Windows Core paths. Windows paths likewise cannot be passed directly to Linux Core. Quote shell arguments containing spaces. Keep `.par` UTF-8 and preserve its syntax rather than copying Bash escapes or PowerShell quotes/backticks into values. Never share CMake caches, Node executables or ABI dependencies between systems. UNC/network filesystems and arbitrary long paths were not qualified by local NTFS checks.
 
 Further reading: [build](Build.md), [environment](StudioEnvironment.md), [feature scope](../Features.md), [scientific validation](../../validation/README.md), and [Host tests](../../studio/tests/README.md). Platform adaptation does not relax equations, scientific formats or established error budgets.
+
+Both LF and CRLF parameter files are accepted; raw UTF-8 bytes determine configuration revisions, so converting line endings changes the fingerprint.

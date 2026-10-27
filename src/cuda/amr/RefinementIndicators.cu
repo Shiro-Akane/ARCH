@@ -9,6 +9,7 @@
  * buffers, synchronization and refine/derefine decisions.
  */
 
+#include "core/MathClassification.h"
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
@@ -39,8 +40,8 @@ __global__ void jeans_resolution_kernel(DeviceStateView state, DeviceGridView gr
     const auto observe = [&](const auto& value) {
         const double pressure = eos.get_pressure(value, fractions);
         const double sound = eos.get_sound_speed(value, pressure, fractions);
-        const auto resolution = std::isfinite(pressure) && pressure > 0.0
-            && std::isfinite(sound) && sound > 0.0
+        const auto resolution = arch::math::isfinite(pressure) && pressure > 0.0
+            && arch::math::isfinite(sound) && sound > 0.0
             ? JeansDiagnostics::evaluate_cell(value.rho,
                 sound * sound, make_grid_geometry_view(grid), i, j)
             : JeansDiagnostics::Resolution{};
@@ -61,7 +62,7 @@ __global__ void jeans_minimum_kernel(DeviceJeansWorkspace workspace, int count)
     }
     for (int cell = 0; cell < count; ++cell) {
         const double value = workspace.cell_resolution[cell];
-        if (!std::isfinite(value) || value <= 0.0) {
+        if (!arch::math::isfinite(value) || value <= 0.0) {
             *workspace.block_minimum = std::numeric_limits<double>::quiet_NaN();
             return;
         }
@@ -178,7 +179,7 @@ __global__ void maximum_kernel(const double* errors, int count, double* result,
     }
     double maximum = 0.0;
     for (int cell = 0; cell < count; ++cell) {
-        if (!std::isfinite(errors[cell])) {
+        if (!arch::math::isfinite(errors[cell])) {
             *result = std::numeric_limits<double>::quiet_NaN();
             return;
         }

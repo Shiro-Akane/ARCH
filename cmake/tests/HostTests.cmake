@@ -8,9 +8,7 @@ function(arch_configure_host_test target)
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${CMAKE_CURRENT_SOURCE_DIR}/tests" ${ARGN})
     if(WIN32)
-        target_sources(${target} PRIVATE
-            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/project/windows/ARCH.rc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/project/windows/ARCH.manifest")
+        target_sources(${target} PRIVATE ${arch_windows_resource_sources})
     endif()
 endfunction()
 
@@ -134,6 +132,16 @@ foreach(contract IN ITEMS core/physical_constants core/jeans_diagnostics amr/ref
     add_test(NAME ${contract} COMMAND arch_${contract})
 endforeach()
 add_executable(arch_compensated_sum tests/host/numerics/test_compensated_sum.cpp)
+add_executable(arch_math_classification tests/host/numerics/test_math_classification.cpp)
+arch_configure_host_test(arch_math_classification)
+target_include_directories(arch_math_classification PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_math_classification PRIVATE arch_build_contract)
+add_test(NAME math_classification COMMAND arch_math_classification)
+add_executable(arch_fixed_array_fill tests/host/core/test_fixed_array_fill.cpp)
+arch_configure_host_test(arch_fixed_array_fill)
+target_include_directories(arch_fixed_array_fill PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_fixed_array_fill PRIVATE arch_build_contract)
+add_test(NAME fixed_array_fill COMMAND arch_fixed_array_fill)
 target_sources(arch_curvilinear_metrics PRIVATE src/physics/boundary/PhysicalBoundaryHandler.cpp)
 # The real hydro policy instantiates SelfGravity stage/source calls. Reuse its
 # existing production owner rather than test-local definitions or stubs.
@@ -298,16 +306,14 @@ add_test(NAME device_block_store_lifecycle
 
 # These targets require HDF5/HighFive and the resolved KLU provider.
 function(arch_register_io_regression_tests)
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        add_executable(arch_preview_mesh_checkpoint tests/api/preview/read_mesh_checkpoint.cpp)
-        arch_configure_host_test(arch_preview_mesh_checkpoint
-            "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
-        target_link_libraries(arch_preview_mesh_checkpoint PRIVATE ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES})
-        add_test(NAME ui_expansion_contract
-            COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_ui_expansion.py
-                $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_mesh_checkpoint>)
-        set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
-    endif()
+    add_executable(arch_preview_mesh_checkpoint tests/api/preview/read_mesh_checkpoint.cpp)
+    arch_configure_host_test(arch_preview_mesh_checkpoint
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_preview_mesh_checkpoint PRIVATE ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+    add_test(NAME ui_expansion_contract
+        COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_ui_expansion.py
+            $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_mesh_checkpoint>)
+    set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
     add_executable(arch_preview_cellular_reference
         tests/api/preview/cellular_reference.cpp src/core/config/CompositionInput.cpp
         src/core/problem/ProblemHelper.cpp src/core/files/FileFingerprint.cpp

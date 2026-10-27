@@ -2,7 +2,7 @@
 
 [English](Studio.md) · [首页](../../README.zh-CN.md) · [环境准备](StudioEnvironment.zh-CN.md)
 
-Studio 是可选桌面组件，Core 可独立运行。**推荐 Linux／WSL2；原生 Windows 11 x64 同样提供完整的 CPU Studio 工作流，但适配较新，可能存在不稳定性与 bug。** 两侧共用参数编辑、科学预览与 Plotfile 服务。Windows CUDA／MPI 不在本轮资格内；已有 CUDA 路线使用 Linux。
+Studio 是可选桌面组件，Core 可独立运行。**推荐 Linux／WSL2；原生 Windows11 x64 同样提供完整的 CPU／CUDA Studio 工作流，但适配较新，可能存在不稳定性与 bug。** 两侧共用参数编辑、科学预览与 Plotfile 服务；仍按[功能对照](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)中的既有科学范围使用。
 
 ## 构建与启动：先 Linux，再 Windows
 
@@ -25,6 +25,10 @@ build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
 ```
 
 命令中的构建目录必须对应实际配置；已有树通过 `--build-dir` 显式选择，不会静默改写其他缓存。生成的源码启动器依赖当前 checkout。便携包保留整个目录：Linux 启动 `arch-studio`，Windows 启动 `arch-studio-bin.exe`。包内带 Host Node 与 h5wasm，Core、系统依赖和运行终端仍需另备。连接由程序管理，无需启动 Vite 或填写端口。
+
+## CPU／CUDA 的选择
+
+Windows CPU 按上方 GCC/UCRT64 入口；Windows GPU 按[原生 CUDA 指南](WindowsNativeCuda.zh-CN.md)选择独立 MSVC 构建与匹配的 DLL／工具上下文。Linux 的 CUDA 树用相同 `--build-dir`／`--binary` 规则。进入 Config 的 Runtime 参数，将 `compute_backend` 选为 `cpu`、`cuda` 或 `auto`，需要时设置 `cuda_device`；保存后重新 Run。它在新进程启动时切换，不会把 CPU-only 二进制变成 GPU 构建。初始 Preview 仍使用 CPU Setup／Init；实际推进后端以 Run 日志与 `*_backend_plan.txt` 为准。MSVC/CUDA 完整依赖新鲜度可能显示 unknown，成功 Build 不会将缺失证据伪装为 fresh。
 
 ## 界面导航
 
@@ -84,3 +88,5 @@ WSL 中的 `/mnt/c/work/ARCH` 与原生 Windows 的 `C:/work/ARCH` 可指向同�
 ## 更多说明
 
 [构建](Build.zh-CN.md) · [平台与环境](StudioEnvironment.zh-CN.md) · [科学功能范围](../Features.zh-CN.md) · [验证入口](../../validation/README.zh-CN.md) · [Host 工程测试](../../studio/tests/README.md)。数学与物理定义、原科学格式及既有误差预算不因平台变化而放宽。
+
+LF 与 CRLF 都可用于参数文件；配置 revision 按原始 UTF-8 字节计算，转换换行会改变指纹。

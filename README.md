@@ -13,7 +13,7 @@
 
 ARCH models compressible fluid motion, heat transfer and nuclear reactions. It advances fluid state with a finite-volume method and uses adaptive mesh refinement (AMR) to add spatial resolution where needed. CPU and CUDA share the physics and mathematical implementation.
 
-**Linux is the recommended system**, including Linux under WSL2. Native Windows 11 x64 also provides the complete CPU CLI and Studio workflow: configuration, Build, initial Preview/AMR, Run/Restart and read-only Plotfile viewing. Windows support is newer and may still have instability or bugs. Native Windows CUDA/MPI and other platforms have separate qualification requirements; use Linux for the established CUDA route. **ARCH Studio is always optional** for scientific calculations.
+**Linux is the recommended system**, including Linux under WSL2. Native Windows 11 x64 also provides the complete CPU/CUDA CLI and Studio workflow within the same documented scientific scope: configuration, Build, initial Preview/AMR, Run/Restart and read-only Plotfile viewing. Windows support is newer and may still have instability or bugs. The [Linux/Windows correspondence and acceptance record](docs/histroy/build/WindowsNativeCudaQualification-20261027.md) lists the tested scope and platform limits. **ARCH Studio is always optional** for scientific calculations.
 
 **ARCH uses CGS for inputs, outputs and physical constants**: length in `cm`, time in `s`, density in `g/cm³`, pressure and energy density in `erg/cm³`, specific internal energy in `erg/g`, and temperature in `K`. Angles use `rad`. Inputs are not converted automatically; see the [case guide](docs/guides/SimulationCase.md#units) for more units.
 
@@ -31,7 +31,7 @@ Choose `compute_backend = cpu`, `cuda` or `auto` in the parameter file. Automati
 
 ## Build
 
-The Linux/WSL2 commands come first below. For native Windows, use the same CMake project with GCC/UCRT64 and matching dependencies from the [Windows CPU instructions](docs/guides/WindowsNativeCpu.md); Linux build directories and DLLs cannot be reused there. Prepare the Core dependencies for your backend:
+The Linux/WSL2 commands come first below. For native Windows, use the same CMake project with GCC/UCRT64 and matching dependencies from the [Windows CPU instructions](docs/guides/WindowsNativeCpu.md); Linux build directories and libraries cannot be reused there. Native CUDA uses a separate MSVC/NVCC dependency tree from the [Windows CUDA instructions](docs/guides/WindowsNativeCuda.md). Prepare the Core dependencies for your backend:
 
 - **Core tools:** a C++20 compiler, CMake 3.22+, Ninja and Git.
 - **Libraries used by both builds:** HDF5 C++/HL and OpenMP.

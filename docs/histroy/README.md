@@ -15,7 +15,7 @@ are not portable download instructions or current setup requirements.
 
 | Subject | Records and starting points |
 | --- | --- |
-| Build and CI | [Build investigations](build/); [Windows native W0–W3 qualification](build/WindowsNativeQualification-20261026.zh-CN.md); cold, incremental and hosted observations remain distinct |
+| Build and CI | [Build investigations](build/); [Windows native W0–W3 qualification](build/WindowsNativeQualification-20261026.zh-CN.md); [final CPU/CUDA/Studio correspondence](build/WindowsNativeCudaQualification-20261027.md); cold, incremental and hosted observations remain distinct |
 | Configuration | [Input and provenance investigations](configuration/); the maintained [configuration contract](../development/ConfigurationContractPlan.zh-CN.md) owns current rules |
 | Scientific methods | [Model and numerical investigations](science/), [geometry review](CurvilinearMetricReview.md), [transport coefficients](DiffusionCoefficientAlignment.md) |
 | Integration | [Compute requirements](integration/ComputeOptimizationPlan.zh-CN.md), [Core/Studio integration](integration/ComputeStudioReleasePlan-20261006.zh-CN.md), [execution history](compute-studio/ExecutionHistory.zh-CN.md) |

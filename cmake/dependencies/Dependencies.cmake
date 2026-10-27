@@ -3,6 +3,14 @@
 
 # 1. OpenMP
 if(ARCH_ENABLE_OPENMP)
+    if(MSVC)
+        # DenseWrap uses the existing OpenMP SIMD directives. MSVC's plain
+        # /openmp mode only implements OpenMP 2.0. FluxRegister also uses atomic
+        # update/write, requiring LLVM mode. Keep the common strict-FP contract.
+        # MSVC 19.38 still needs experimental explicitly alongside LLVM mode
+        # for SIMD. Install its matching libomp runtime for native execution.
+        set(OpenMP_CXX_FLAGS "/openmp:llvm /openmp:experimental")
+    endif()
     find_package(OpenMP REQUIRED COMPONENTS CXX)
     foreach(target ARCH arch_driver_runtime arch_solver_dispatch arch_gravity_cpu)
         target_link_libraries(${target} PRIVATE OpenMP::OpenMP_CXX)
@@ -70,7 +78,8 @@ endforeach()
 # introducing a CUDA-specific reader or duplicating schema logic in the test.
 if(TARGET arch_cuda_single_level_validation)
     target_sources(arch_cuda_single_level_validation PRIVATE
-        src/io/hdf5/HDF5Writer.cpp)
+        src/io/hdf5/HDF5Writer.cpp
+        src/core/files/FileFingerprint.cpp)
     target_include_directories(arch_cuda_single_level_validation PRIVATE
         "${highfive_SOURCE_DIR}/include"
         ${HDF5_INCLUDE_DIRS})

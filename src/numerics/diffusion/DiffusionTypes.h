@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "data/GlobalDefs.h"
 #include "core/ArchPortability.h"
 #include <cmath>
@@ -29,13 +30,13 @@ namespace DiffFlux
     ARCH_HOST_DEVICE inline DiffusionEnergyActivityTerm diffusion_energy_activity_term(
         double volume, double current_energy, double seed_energy)
     {
-        if (!std::isfinite(volume) || !(volume > 0.0)
-            || !std::isfinite(current_energy) || !std::isfinite(seed_energy)) return {};
+        if (!arch::math::isfinite(volume) || !(volume > 0.0)
+            || !arch::math::isfinite(current_energy) || !arch::math::isfinite(seed_energy)) return {};
         const double difference = current_energy - seed_energy;
         const double signed_change = volume * difference;
         const double absolute_change = volume * std::abs(difference);
-        if (!std::isfinite(difference) || !std::isfinite(signed_change)
-            || !std::isfinite(absolute_change)) return {};
+        if (!arch::math::isfinite(difference) || !arch::math::isfinite(signed_change)
+            || !arch::math::isfinite(absolute_change)) return {};
         return {signed_change, absolute_change, true};
     }
 

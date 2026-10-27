@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/MathClassification.h"
 #include <limits>
 
 #include "numerics/flux/FluxHLL.h"
@@ -17,10 +18,10 @@ struct Result {
     double rotation = 0.;
     double stationary_transport = 0.;
     ARCH_INLINE bool passed() const {
-        return std::isfinite(reflection) && reflection <= 3e-14
-            && std::isfinite(ideal_sound_speed) && ideal_sound_speed <= 3e-14
-            && std::isfinite(ideal_pressure_jump) && ideal_pressure_jump <= 3e-14
-            && std::isfinite(rotation) && rotation <= 3e-14
+        return arch::math::isfinite(reflection) && reflection <= 3e-14
+            && arch::math::isfinite(ideal_sound_speed) && ideal_sound_speed <= 3e-14
+            && arch::math::isfinite(ideal_pressure_jump) && ideal_pressure_jump <= 3e-14
+            && arch::math::isfinite(rotation) && rotation <= 3e-14
             && stationary_transport == 0.;
     }
 };
@@ -33,7 +34,7 @@ ARCH_INLINE FluidVector reflect(FluidVector state, int direction) {
 }
 
 ARCH_INLINE double scaled_error(double value, double expected) {
-    return std::isfinite(value) && std::isfinite(expected)
+    return arch::math::isfinite(value) && arch::math::isfinite(expected)
         ? std::abs(value - expected) / std::max(1., std::abs(expected))
         : std::numeric_limits<double>::infinity();
 }
@@ -104,7 +105,7 @@ ARCH_INLINE Result evaluate() {
         const auto local = rotate(flux, (3-direction)%3);
         const double transport = std::max({std::abs(local.rho), std::abs(local.mom_v),
                                            std::abs(local.mom_w), std::abs(local.eng)});
-        result.stationary_transport = std::isfinite(transport)
+        result.stationary_transport = arch::math::isfinite(transport)
             ? std::max(result.stationary_transport, transport)
             : std::numeric_limits<double>::infinity();
     }

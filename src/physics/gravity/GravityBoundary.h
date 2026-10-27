@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <array>
 #include <bit>
 #include <cfenv>
@@ -90,7 +91,7 @@ ARCH_INLINE BoundaryMoments combine_boundary_moments(const BoundaryTreeNode* nod
  * This dimensionless leaf has no AGM, allocation, memo or solver state.
  */
 ARCH_INLINE double complete_elliptic_first_kind(double delta) {
-    if(!(delta>0.) || delta>1. || !std::isfinite(delta))
+    if(!(delta>0.) || delta>1. || !arch::math::isfinite(delta))
         return std::numeric_limits<double>::quiet_NaN();
     const bool regular=delta>=.5;
     const double variable=regular?1.-delta:delta;
@@ -117,11 +118,11 @@ ARCH_INLINE double complete_elliptic_first_kind(double delta) {
  * physical boundary quadrature nodes lie strictly inside their source cell.
  */
 ARCH_INLINE double ring_average_inverse_distance(double r,double s,double dz) {
-    if(!(r>=0.) || !(s>=0.) || !std::isfinite(r) || !std::isfinite(s) || !std::isfinite(dz))
+    if(!(r>=0.) || !(s>=0.) || !arch::math::isfinite(r) || !arch::math::isfinite(s) || !arch::math::isfinite(dz))
         return std::numeric_limits<double>::quiet_NaN();
     const double distance=std::hypot(r+s,dz);
     const double separation=std::hypot(r-s,dz);
-    if(!(distance>0.) || !std::isfinite(distance) || !(separation>0.))
+    if(!(distance>0.) || !arch::math::isfinite(distance) || !(separation>0.))
         return std::numeric_limits<double>::quiet_NaN();
     const double complement=separation/distance,delta=complement*complement;
     // If delta underflows, every higher complementary-series term is below

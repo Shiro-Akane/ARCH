@@ -12,6 +12,7 @@
  */
 #pragma once
 
+#include "core/ArchPortability.h"
 #include "cuda/microphysics/linalg/CuDssSparseSolver.h"
 #include "cuda/common/DeviceEosStatus.h"
 #include "numerics/burnsolver/ode/ode_be-nr.h"
@@ -54,7 +55,7 @@ struct SparseOdeBatchView
     // an internal failure hook. The caller clears once before preparing a chunk,
     // never between continuation launches, and retains it through energy commit.
     int* eos_statuses = nullptr;
-    [[no_unique_address]] Network network{}; // Explicit immutable backend view.
+    ARCH_NO_UNIQUE_ADDRESS Network network{}; // Explicit immutable backend view.
 };
 
 namespace sparse_burn_detail {

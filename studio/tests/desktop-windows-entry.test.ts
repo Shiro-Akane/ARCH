@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {selectWindowsNode} from '../desktop/node-runtime.mjs';
 import {hostEnvironment,configurationRelativePath} from '../desktop/arguments.mjs';
-import {parseWindowsTools,loadWindowsTools,windowsHostEnvironment} from '../desktop/windows-tools.mjs';
+import {parseWindowsTools,loadWindowsTools,windowsHostEnvironment,compilerEnvironment} from '../host/windows-tools.mjs';
 
 const node=(extra={})=>JSON.stringify({node:'24.21.0',platform:'win32',arch:'x64',...extra});
 test('native Open/Save dialog paths retain containment and the existing Host slash protocol',()=>{
@@ -38,6 +38,22 @@ test('trusted tool configuration rejects unknown fields, relative executables an
  assert.throws(()=>parseWindowsTools('not json'),/ARCH_STUDIO_WINDOWS_TOOLS/);
  const env=windowsHostEnvironment(tools(),{SystemRoot:'C:/Windows',ComSpec:'C:/Windows/System32/cmd.exe',PATH:'untrusted',ARCH_STUDIO_WINDOWS_TOOLS:'not inherited',NODE_OPTIONS:'--require bad'});
  assert.deepEqual(env,{PATH:tools().path,PATHEXT:'.COM;.EXE;.BAT;.CMD',SystemRoot:'C:/Windows',ComSpec:'C:/Windows/System32/cmd.exe'});
+});
+test('compiler search directories are explicit private setup and never inherited',()=>{
+ const compiler={INCLUDE:'C:/Visual Studio/include;C:/SDK/Include',LIB:'C:/Visual Studio/lib',LIBPATH:'C:/SDK/References'};
+ const value={...tools(),compilerEnvironment:compiler};
+ assert.deepEqual(parseWindowsTools(JSON.stringify(value)),value);
+ const inherited={INCLUDE:'D:/untrusted',LIB:'D:/untrusted',LIBPATH:'D:/untrusted',CL:'/fp:fast',_CL_:'/fp:fast',LINK:'bad'};
+ const env=windowsHostEnvironment(value,inherited);
+ for(const key of ['INCLUDE','LIB','LIBPATH'] as const)assert.equal(env[key],compiler[key]);
+ for(const key of ['CL','_CL_','LINK'])assert.equal(env[key],undefined);
+ const cpu=windowsHostEnvironment(tools(),inherited);
+ for(const key of ['INCLUDE','LIB','LIBPATH'])assert.equal(cpu[key],undefined);
+ for(const invalid of [null,[],1,{CL:'/fp:fast'},{INCLUDE:''},{LIB:'relative'},{LIB:'C:relative'},
+  {LIB:'C:/good;.'},{LIB:'C:/good;'},{LIB:'\\\\server\\share'},{LIB:'C:/bad\0'}, {LIB:'C:/'+ 'a'.repeat(32768)}]){
+  assert.throws(()=>compilerEnvironment(invalid));
+  assert.throws(()=>parseWindowsTools(JSON.stringify({...tools(),compilerEnvironment:invalid})));
+ }
 });
 if(process.platform==='win32') test('native trusted tools accept an optional Windows Terminal execution alias',{skip:process.platform!=='win32'||!process.env.ARCH_TEST_TERMINAL||!process.env.ARCH_TEST_PUBLISHER},async()=>{
  const env=process.env;

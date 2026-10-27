@@ -2,11 +2,12 @@
 
 [操作指南](Studio.zh-CN.md) · [构建模块](../../cmake/README.md) · [桌面入口](../../studio/desktop/README.md)
 
-**推荐使用 Linux**，也可采用带 WSLg 的 WSL2。原生 Windows11 x64 同样支持完整的 CPU Studio 工作流，但适配较新，可能存在不稳定性与 bug。两侧共用 Host 与科学服务；普通 Core 编译不依赖 Node、npm 或 Electron，桌面构建不要求 CUDA。原生 Windows CUDA／MPI 仍另行验收。
+**推荐使用 Linux**，也可采用带 WSLg 的 WSL2。原生 Windows11 x64 同样支持完整的 CPU／CUDA Studio 工作流，但适配较新，可能存在不稳定性与 bug。两侧共用 Host 与科学服务；普通 Core 编译不依赖 Node、npm 或 Electron，桌面构建不要求 CUDA。CUDA 构建与可信工具上下文见[原生 CUDA 指南](WindowsNativeCuda.zh-CN.md)。
 
 | 要求 | Linux／WSL2 | 原生 Windows11 x64 |
 | --- | --- | --- |
 | Core 与构建工具 | 原生 C++20、CMake、Ninja、HDF5／OpenMP | GCC/UCRT64、同 ABI 依赖和平台辅助程序；[准备](WindowsNativeW0.zh-CN.md)／[编译](WindowsNativeCpu.zh-CN.md) |
+| CUDA Core 选项 | NVCC 与兼容宿主依赖 | 独立 MSVC/NVCC 依赖及可信编译环境；[CUDA 准备](WindowsNativeCuda.zh-CN.md) |
 | 源码桌面运行时 | Linux Node24+、npm、Electron | Windows 原生 x64 Node24+、npm、Electron |
 | 窗口 | Linux 图形会话／WSLg 与下方系统库 | 原生 Windows 桌面 |
 | 确认 Run／Restart | `xterm`、`flock` | 已配置的 Windows Terminal 与 supervisor／publisher |
@@ -83,7 +84,7 @@ studio/.local/desktop-release/arch-studio-bin-linux-x64/arch-studio \
 
 先完成 [CPU 环境](WindowsNativeCpu.zh-CN.md)，再按[桌面构建指南](WindowsStudioDesktop.zh-CN.md)使用共用的 `arch-studio-assets`、`arch-studio-runtime`、`arch-studio-package` 目标。CMake 通过原生 Node 的 npm-cli.js 调用 npm，不依赖 npm.ps1。源码入口为 `arch-studio.cmd`，便携入口为 `arch-studio-bin.exe`。
 
-启动前按该指南设置 `ARCH_STUDIO_WINDOWS_TOOLS` 的可信工具与 DLL 路径。编辑和 Preview 不依赖终端；本次合格的 Run／Restart 路线需要把 `terminal` 设为可用的 `wt.exe`。平台辅助程序与 HDF5 DLL 必须对应 UCRT64，不要向 Core DLL PATH 混入 Anaconda／MSVC HDF5 或 MSYS 的 `usr/bin`。Linux `.par` 可在调整宿主路径后沿用，`/home`、`/mnt/c` 不是 Windows 盘符路径。
+启动前按所选构建设置 `ARCH_STUDIO_WINDOWS_TOOLS` 的可信工具和 DLL 路径。编辑与 Preview 不依赖终端；合格 Run／Restart 使用明确的 `terminal = wt.exe`。辅助程序选用对应构建的产物：CPU 路线配 GCC/UCRT64 HDF5，CUDA 路线配 MSVC HDF5／CUDA／cuDSS，并按 [CUDA 指南](WindowsNativeCuda.zh-CN.md)传入编译环境。不要混入无关 Anaconda、MSYS 或另一 ABI 的 DLL。Linux `.par` 可调整宿主路径后沿用，`/home`、`/mnt/c` 不是 Windows 盘符路径。
 
 ## 开发验证环境
 

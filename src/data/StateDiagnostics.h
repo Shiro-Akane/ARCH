@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -79,11 +80,11 @@ struct RepairView {
      */
     ARCH_INLINE bool conserved_density(double mass, double px, double py, double pz,
         double energy, double volume) const {
-        if(!std::isfinite(volume) || volume<=0.0) return false;
+        if(!arch::math::isfinite(volume) || volume<=0.0) return false;
         const double dm=mass*volume, dx=px*volume, dy=py*volume;
         const double dz=pz*volume, de=energy*volume;
-        if(!std::isfinite(dm)||!std::isfinite(dx)||!std::isfinite(dy)
-            ||!std::isfinite(dz)||!std::isfinite(de)) return false;
+        if(!arch::math::isfinite(dm)||!arch::math::isfinite(dx)||!arch::math::isfinite(dy)
+            ||!arch::math::isfinite(dz)||!arch::math::isfinite(de)) return false;
         conserved(dm,dx,dy,dz,de);
         return true;
     }

@@ -1,5 +1,6 @@
 // Independent analytic self-heating witnesses; shared only by test consumers.
 #pragma once
+#include "core/MathClassification.h"
 #include "numerics/burnsolver/ode/ode_ros4.h"
 #include "numerics/burnsolver/ode/ode_be-nr.h"
 #include "numerics/burnsolver/ode/ode_bd.h"
@@ -74,7 +75,7 @@ ARCH_INLINE bool jacobian_contract()
         if (gradient[0] != 3.0 || gradient[1] != 7.0 || gradient[2] != 0.0) return false;
         // A nonphysical heat capacity must propagate failure, never invent a flat branch.
         OdeMath::burn_cv_gradient<3>(state, 1.0, eos, OdeMath::require_positive_cv(0.0), gradient);
-        if (std::isfinite(gradient[0]) || std::isfinite(gradient[1]) || std::isfinite(gradient[2])) return false;
+        if (arch::math::isfinite(gradient[0]) || arch::math::isfinite(gradient[1]) || arch::math::isfinite(gradient[2])) return false;
         eos.species = {};
         OdeMath::burn_cv_gradient<3>(state, 1.0, eos, eos.get_cv(1.0, 2.0, state), gradient);
         if (gradient[0] != 0.0 || gradient[1] != 0.0 || gradient[2] != 0.0) return false;
@@ -94,7 +95,7 @@ ARCH_INLINE bool jacobian_contract()
                  -fraction * (composition ? 0.75 : 0.25) / factor}};
             for (int i = 0; i < 3; ++i)
                 for (int j = 0; j < 3; ++j)
-                    if (!std::isfinite(matrix(i + 1, j + 1))
+                    if (!arch::math::isfinite(matrix(i + 1, j + 1))
                         || std::abs(matrix(i + 1, j + 1) - expected[i][j]) > 2.e-10) return false;
             if (state[0] != fraction || state[1] != 1.0 - fraction || state[2] != 2.0) return false;
         }
@@ -175,7 +176,7 @@ ARCH_INLINE bool tiny_interval_path(BurnConfigView cfg)
     const auto report = Solver<BoundRateReaction, DenseMatrixData<3>, DenseLUSolver>::integrate_report(
         values, 1e-100, 1e-31, Eos{false}, cfg, next, network);
     return report.success() && std::abs(values[0] - 0.5 * std::exp(-0.1)) < 2e-5
-        && values[2] == 1.0 && std::isfinite(next) && next > 0.0;
+        && values[2] == 1.0 && arch::math::isfinite(next) && next > 0.0;
 }
 
 ARCH_INLINE BoundNetworkResult bound_network_suite(const BurnConfigView& cfg)
@@ -230,7 +231,7 @@ ARCH_INLINE Ros4FailureControl ros4_failure_control(BurnConfigView config)
             if (request == OdeLinearRequest::Factorize) {
                 for (int i = 1; i <= 3; ++i)
                     for (int j = 1; j <= 3; ++j)
-                        saw_nonfinite_matrix = saw_nonfinite_matrix || !std::isfinite(matrix(i, j));
+                        saw_nonfinite_matrix = saw_nonfinite_matrix || !arch::math::isfinite(matrix(i, j));
                 if (lane >= 2) success = DenseLUSolver::factorize<3, 3>(matrix, pivots);
             } else if (request == OdeLinearRequest::SolveWithFactors) {
                 if (lane != 2) {
@@ -525,7 +526,7 @@ ARCH_INLINE ExternalEnergyPath external_energy_path(bool reacting, const BurnCon
         result.temperature_error[level] = std::abs(state[2] - exact_t);
         result.quadrature_error[level] = std::abs(state[3] - exact_quadrature);
         for (int i = 0; i < 4; ++i) result.accepted_state[level][i] = state[i];
-        result.success = result.success && std::isfinite(state[3]) && state[3] < 0.0
+        result.success = result.success && arch::math::isfinite(state[3]) && state[3] < 0.0
             && std::abs(state[0] + state[1] - 1.0) < 1.e-14
             && std::abs(accepted_energy.value() - (state[2] - 1.0)) < 1.e-13
             && std::abs((state[2] - 1.0) - (a0 - state[0] + state[3])) < 1.e-13;

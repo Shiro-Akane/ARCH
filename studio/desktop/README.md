@@ -1,8 +1,10 @@
 # Desktop entry: Linux / WSL and native Windows
 
+Full documentation is in the [source repository](https://github.com/Shiro-Akane/ARCH/tree/main/docs); a portable package does not include that documentation tree.
+
 The desktop opens an independent Electron window with production assets and a managed local Host. Linux uses `arch-studio`; Windows uses `arch-studio.cmd` from a checkout and `arch-studio-bin.exe` from a package. A checkout needs native standalone Node 24+; a portable package includes the native Host Node runtime. Linux graphical libraries and WSLg (under WSL) are prerequisites. Linux Run/Restart use `xterm` and `flock`; native Windows uses the W2 Job/terminal services. These do not provide server/background scheduling.
 
-W3 native Windows CPU Studio qualification is complete for the tested Windows11 x64 GCC/UCRT64 environment: A11, real project/window software integration and portable packaging passed. The user performed Save Working Copy As and its copy passed independent byte/read validation. OS interactions were human-operated because the WSL Computer Use route was unavailable. GPU/MPI, installers and signing remain outside this qualification.
+W3 native Windows CPU Studio qualification is complete for the tested Windows11 x64 GCC/UCRT64 environment: A11, real project/window software integration and portable packaging passed. The user performed Save Working Copy As and its copy passed independent byte/read validation. OS interactions were human-operated because the WSL Computer Use route was unavailable. The [native CUDA guide](../../docs/guides/WindowsNativeCuda.md) records the additional MSVC/CUDA setup and current qualification. MPI, installers and signing remain outside this work.
 
 From a source checkout after building Studio:
 
@@ -14,6 +16,10 @@ studio/desktop/arch-studio --source "$PWD/simulation/Sod/Sod.cpp" --config simul
 With CMake `ARCH_BUILD_STUDIO=ON`, the equivalent launcher is `build-studio-cpu/bin/arch-studio`. Relative binary/config paths resolve against the selected project. `--source` selects a regular `.cpp` under `simulation/`; an uncompiled or edited source remains pending until explicit Configure/Build produces its exact registered source and digest. The source view is read-only; edit C++ with your editor. Missing executables open the workbench with Core actions disabled. Stale identities and unsupported cases remain visible errors. Configure/Build are explicit actions with a small output panel.
 
 Use `--build-dir build-release-cpu` (or select Existing build directory in the launcher) to adopt an existing in-project Ninja ARCH tree explicitly. Its canonical source/build/output identities and CPU/CUDA setting are checked; Configure preserves the cache mode and adds no new definitions. Selecting this tree does not assert build freshness or enable Preview before a matching successful Studio Build.
+
+In Config, choose a compiled Model and open its `.par`, then select a parameter to read its units and explanation in Parameter Inspector. Edit the Working Copy, address the reported issues, and use initial Preview before preparing Run. Save Working Copy As writes an in-project file; Download Copy exports a download. In Plotfile, use the upper project viewer, enter a project-relative `.h5` path, read metadata, then request raw samples or global display LOD. Initial Preview and evolved output have separate meanings.
+
+Paths inside `.par` resolve from the calculation working directory, which Studio sets to the project root. They do not resolve beside the parameter file. Prefer shared forward-slash relative paths; replace Linux `/home/...` or `/mnt/c/...` absolute paths before native Windows use, and adapt Windows drive paths before Linux use.
 
 Node is selected from `ARCH_STUDIO_NODE`, otherwise the packaged Host runtime and PATH (plus existing user/system candidates on Linux). An explicit runtime must be absolute and supported; it is never replaced silently. Native Windows requires standalone x64 Node 24+ `.exe`, verified by platform, architecture and version. Electron or a WSL shim cannot serve as the bundled Host Node.
 
@@ -29,9 +35,11 @@ The package script derives Electron from `package.json` and checks both lock ent
 
 ## Native Windows prerequisites and entry
 
-Use GCC/UCRT64 and same-ABI dependencies from the [native CPU guide](../../docs/guides/WindowsNativeCpu.md). The Core and W2 helpers stay outside the Electron package. Build `arch-studio-assets` and `arch-studio-runtime` with `ARCH_BUILD_STUDIO=ON` and `ARCH_STUDIO_NODE` set to native `node.exe`. CMake invokes npm through its native `npm-cli.js`, without depending on shell execution policy for `npm.ps1`.
+Use GCC/UCRT64 and same-ABI dependencies from the [native CPU guide](../../docs/guides/WindowsNativeCpu.md), or a separate MSVC/NVCC tree and matching dependencies from the [native CUDA guide](../../docs/guides/WindowsNativeCuda.md). A CUDA-enabled executable can select `cpu`, `cuda` or `auto` through `compute_backend` while keeping its MSVC dependency context. Full MSVC/CUDA dependency freshness remains unknown. The Core and W2 helpers stay outside the Electron package. Build `arch-studio-assets` and `arch-studio-runtime` with `ARCH_BUILD_STUDIO=ON` and `ARCH_STUDIO_NODE` set to native `node.exe`. CMake invokes npm through its native `npm-cli.js`, without depending on shell execution policy for `npm.ps1`.
 
 Main reads `ARCH_STUDIO_WINDOWS_TOOLS` as a JSON object with required `cmake`, `supervisor`, `ninja`, `objdump`, `publisher`, `rc` absolute local `.exe` paths and a `path` string of absolute native tool/DLL directories separated by semicolons. `terminal` is an optional absolute Windows Terminal `.exe`; Run/Restart needs it. These are trusted startup settings; they are not renderer fields, HTTP parameters or project data. Missing or invalid settings fail visibly. Never put credentials in this configuration.
+
+MSVC builds also accept `compilerEnvironment` containing only explicit `INCLUDE`, `LIB` and `LIBPATH` directory lists from the selected Developer environment. SDK `rc.exe` and Ninja must match the existing CMake bindings. Main and Host use the same private-context validator.
 
 ```powershell
 # From the ARCH root, after setting the trusted tool context:

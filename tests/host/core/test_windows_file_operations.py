@@ -60,12 +60,20 @@ class WindowsFileTests(unittest.TestCase):
         self.assertFalse(list(self.root.glob('.arch-config-*.tmp')))
         return result, receipt
 
-    def test_original_inherited_dacl_preserved_exactly(self):
+    def test_original_inherited_dacl_entries_and_protection_preserved(self):
         before = dacl(self.target)
         result, receipt = self.publish()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(receipt['committed'])
-        self.assertEqual(dacl(self.target), before)
+        after = dacl(self.target)
+        # The native fixture may start with inherited entries but no AI flag.
+        # Windows may add that bookkeeping on save, as
+        # in the protected-DACL case below. All permission entries and the
+        # inheritance protection remain exact; AI is not an access grant.
+        before_flags, before_entries = before.split('(', 1)
+        after_flags, after_entries = after.split('(', 1)
+        self.assertEqual(after_entries, before_entries)
+        self.assertEqual(after_flags.replace('AI', ''), before_flags.replace('AI', ''))
 
     def test_create_private_protected_dacl_and_no_clobber(self):
         result, receipt = self.publish(create=True, target='new.par')

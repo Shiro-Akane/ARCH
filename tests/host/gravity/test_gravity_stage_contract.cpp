@@ -23,6 +23,7 @@
 #include <vector>
 
 
+#include "physics/boundary/PhysicalBoundaryHandler.h"
 #include "amr/AMRControl.h"
 #include "amr/elliptic/EllipticMeshAdapter.h"
 #include "driver/DriverUtils.h"

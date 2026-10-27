@@ -108,7 +108,7 @@ export async function packageDesktop({base=process.cwd()}={}){
 
  await rm(staging,{recursive:true,force:true});
  await mkdir(staging,{recursive:true});
- for(const file of ['main.cjs','close-assets.mjs','preload.cjs','arguments.mjs','node-runtime.mjs','windows-tools.mjs','launcher.html','launcher.js','launcher.css'])
+ for(const file of ['main.cjs','close-assets.mjs','preload.cjs','arguments.mjs','node-runtime.mjs','launcher.html','launcher.js','launcher.css'])
   await cp(path.join(base,'desktop',file),path.join(staging,file));
  for(const dir of ['dist','host','src'])
   await cp(path.join(base,dir),path.join(staging,dir),{recursive:true,filter:source=>!source.endsWith('.md')});

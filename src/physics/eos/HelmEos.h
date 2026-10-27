@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -39,6 +40,7 @@
 #include "physics/eos/eos.h"
 #include "physics/eos/eos_Utils.h"
 #include "physics/eos/sources/HelmTableReader.h"
+#include "physics/eos/sources/HelmGridNodes.h"
 #include "physics/species/Species.h"
 
 
@@ -97,12 +99,12 @@ struct BasicHelmEosView {
     }
 
     ARCH_INLINE static bool finite_component(const ComponentThermodynamics& value) {
-        return std::isfinite(value.pressure) && std::isfinite(value.energy)
-            && std::isfinite(value.free_energy) && std::isfinite(value.cv)
-            && std::isfinite(value.pressure_density)
-            && std::isfinite(value.pressure_temperature)
-            && std::isfinite(value.energy_density) && std::isfinite(value.cv_temperature)
-            && std::isfinite(value.entropy);
+        return arch::math::isfinite(value.pressure) && arch::math::isfinite(value.energy)
+            && arch::math::isfinite(value.free_energy) && arch::math::isfinite(value.cv)
+            && arch::math::isfinite(value.pressure_density)
+            && arch::math::isfinite(value.pressure_temperature)
+            && arch::math::isfinite(value.energy_density) && arch::math::isfinite(value.cv_temperature)
+            && arch::math::isfinite(value.entropy);
     }
 
     struct AxisCell { int index; double spacing, coordinate; };
@@ -276,12 +278,12 @@ struct BasicHelmEosView {
     // substituting another component. The caller owns the error context.
     ARCH_HEAVY_INLINE bool electron_positron_component(
         double rho, double T, double ye, ComponentThermodynamics& out) const {
-        if (!std::isfinite(rho) || !std::isfinite(T) || !std::isfinite(ye)
+        if (!arch::math::isfinite(rho) || !arch::math::isfinite(T) || !arch::math::isfinite(ye)
             || !(rho > 0.0) || !(T > 0.0) || !(ye > 0.0) || ye > 1.0
             || !density_nodes || !temperature_nodes)
             return reject_component(out);
         const double electron_density = rho * ye;
-        if (!std::isfinite(electron_density)
+        if (!arch::math::isfinite(electron_density)
             || electron_density < density_nodes[0]
             || electron_density > density_nodes[imax - 1]
             || T < temperature_nodes[0] || T > temperature_nodes[jmax - 1])
@@ -303,7 +305,7 @@ struct BasicHelmEosView {
     // Photons require no electron table or composition metadata.
     ARCH_INLINE static bool photon_component(
         double rho, double T, ComponentThermodynamics& out) {
-        if (!std::isfinite(rho) || !std::isfinite(T) || !(rho > 0.0) || !(T > 0.0))
+        if (!arch::math::isfinite(rho) || !arch::math::isfinite(T) || !(rho > 0.0) || !(T > 0.0))
             return reject_component(out);
         const auto result = radiation_thermodynamics(rho, T);
         if (!finite_component(result)) return reject_component(out);
@@ -700,7 +702,7 @@ struct BasicHelmEosView {
         const double result =
             invert_temperature_uncached(rho, target, Xi, pressure, &composition);
         // A failed query never overwrites success with a reusable sentinel.
-        if (!(std::isfinite(result) && result > 0.0)) return nullptr;
+        if (!(arch::math::isfinite(result) && result > 0.0)) return nullptr;
         // A new key reuses the storage: clear the temperature and EVERY field
         // derived from it so a stale pressure/acoustic value can never leak.
         slot = {};
@@ -723,7 +725,7 @@ struct BasicHelmEosView {
         double rho, double e, const double* Xi) const {
 #if !defined(__CUDA_ARCH__)
         if (host_inverse_workspace && host_inverse_workspace->owner == this
-            && rho > 0.0 && e > 0.0 && std::isfinite(e)
+            && rho > 0.0 && e > 0.0 && arch::math::isfinite(e)
             && Xi && specs.count > 0 && temperature_nodes) {
             CompositionState composition{};
             prepare_composition(Xi, composition);
@@ -739,10 +741,10 @@ struct BasicHelmEosView {
     ARCH_INLINE void store_acoustic(HostInverseWorkspace::Entry& slot,
                                     double pressure, double cv,
                                     const ThermodynamicDerivatives& d) const {
-        if (std::isfinite(pressure) && pressure > 0.0
-            && std::isfinite(cv) && cv > 0.0
-            && std::isfinite(d.pressure_density)
-            && std::isfinite(d.pressure_temperature)) {
+        if (arch::math::isfinite(pressure) && pressure > 0.0
+            && arch::math::isfinite(cv) && cv > 0.0
+            && arch::math::isfinite(d.pressure_density)
+            && arch::math::isfinite(d.pressure_temperature)) {
             slot.pressure = pressure;
             slot.cv = cv;
             slot.pressure_density = d.pressure_density;
@@ -756,7 +758,7 @@ struct BasicHelmEosView {
                                                 const double* Xi, bool pressure) const {
 #if !defined(__CUDA_ARCH__)
         if (host_inverse_workspace && host_inverse_workspace->owner == this
-            && rho > 0.0 && target > 0.0 && std::isfinite(target)
+            && rho > 0.0 && target > 0.0 && arch::math::isfinite(target)
             && Xi && specs.count > 0 && temperature_nodes) {
             // Only the ordered sums are needed to key the lookup; the density
             // axis and ion factors stay unbuilt until the query actually
@@ -776,7 +778,7 @@ struct BasicHelmEosView {
     // This is the ARCH adapter, not a modification of the Timmes formulas.
     ARCH_HEAVY_INLINE double invert_temperature_uncached(double rho, double target,
         const double* Xi, bool pressure, const CompositionState* prepared = nullptr) const {
-        if (!(rho > 0.0) || !(target > 0.0) || !std::isfinite(target)
+        if (!(rho > 0.0) || !(target > 0.0) || !arch::math::isfinite(target)
             || !temperature_nodes || specs.count == 0 || Xi == nullptr)
             return arch::state::invalid();
         double lower = temperature_nodes[0];
@@ -803,7 +805,7 @@ struct BasicHelmEosView {
         double derivative;
         const double lo_value = value(lower, derivative);
         const double hi_value = value(upper, derivative);
-        if (!std::isfinite(lo_value) || !std::isfinite(hi_value)
+        if (!arch::math::isfinite(lo_value) || !arch::math::isfinite(hi_value)
             || target < lo_value || target > hi_value) return arch::state::invalid();
         if (target == lo_value) return lower;
         if (target == hi_value) return upper;
@@ -811,8 +813,8 @@ struct BasicHelmEosView {
         for (int iteration = 0; iteration < 96; ++iteration) {
             const double current = value(T, derivative);
             const double residual = current - target;
-            if (!std::isfinite(current) || !(derivative > 0.0)
-                || !std::isfinite(derivative)) return arch::state::invalid();
+            if (!arch::math::isfinite(current) || !(derivative > 0.0)
+                || !arch::math::isfinite(derivative)) return arch::state::invalid();
             const double correction = residual / derivative;
             // Iterate directly in temperature: exp(log(T)) loses low bits even
             // when T already solves the equation. Require both a small residual
@@ -874,7 +876,7 @@ struct BasicHelmEosView {
         auto* slot = energy_state_entry(rho, e, Xi);
         const double T =
             slot != nullptr ? slot->temperature : get_temperature(rho, e, Xi);
-        if (!std::isfinite(T)) {
+        if (!arch::math::isfinite(T)) {
             pressure = speed = arch::state::invalid();
             return;
         }
@@ -889,7 +891,7 @@ struct BasicHelmEosView {
             calc_thermo_with_cv(rho, T, Xi, pressure, energy, &cv, &d, nullptr, JetRequest::Acoustic);
             if (slot != nullptr) store_acoustic(*slot, pressure, cv, d);
         }
-        if (!(cv > 0.0) || !std::isfinite(pressure)) {
+        if (!(cv > 0.0) || !arch::math::isfinite(pressure)) {
             speed = arch::state::invalid();
             return;
         }
@@ -1057,7 +1059,7 @@ struct BasicHelmEosView {
 
     ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double* Xi) const {
         const double T = invert_temperature(rho, p, Xi, true);
-        if (!std::isfinite(T)) return T;
+        if (!arch::math::isfinite(T)) return T;
         return rho * get_eint_from_T(rho, T, Xi) + eos_utils::calc_kinetic_energy(rho, u, v, w);
     }
 
@@ -1069,7 +1071,7 @@ struct BasicHelmEosView {
             if (slot->pressure_ready) return slot->pressure;
             double P, E;
             calc_thermo(rho, slot->temperature, Xi, P, E);
-            if (std::isfinite(P) && P > 0.0) {
+            if (arch::math::isfinite(P) && P > 0.0) {
                 slot->pressure = P;
                 slot->pressure_ready = true;
             }
@@ -1281,18 +1283,16 @@ public:
             ef_table[k] = host_ef_table[k].data();
             ef_extents[k] = host_ef_table[k].size();
         }
-        // Materialize the documented grid once. Device owners copy these
-        // values with the table; libm/libdevice pow rounding must not move
-        // physical interpolation endpoints or be paid on every EOS query.
-        // Construct the decimal exponent before the final binary64 rounding.
-        // Rounding i*0.05 first shifts some nodes by several ULPs; second
-        // derivatives amplify that coordinate error in pair-dominated states.
-        for (int i = 0; i < imax; ++i)
-            host_density_nodes[i] = static_cast<double>(std::pow(10.0L,
-                static_cast<long double>(dlo) + static_cast<long double>(i) / dstpi));
-        for (int j = 0; j < jmax; ++j)
-            host_temperature_nodes[j] = static_cast<double>(std::pow(10.0L,
-                static_cast<long double>(tlo) + static_cast<long double>(j) / tstpi));
+        // Reuse the frozen Linux binary64 grid on every host. MSVC's
+        // long double has fewer significand bits and moves interpolation nodes.
+        // The generated data preserves the original Linux operation rounding.
+        static_assert(helm_eos::grid::density_nodes.size() == imax
+            && helm_eos::grid::temperature_nodes.size() == jmax);
+        static_assert(helm_eos::grid::density_log_min == dlo && helm_eos::grid::density_log_max == dhi
+            && helm_eos::grid::temperature_log_min == tlo && helm_eos::grid::temperature_log_max == thi
+            && helm_eos::grid::steps_per_decade == dstpi && helm_eos::grid::steps_per_decade == tstpi);
+        host_density_nodes = helm_eos::grid::density_nodes;
+        host_temperature_nodes = helm_eos::grid::temperature_nodes;
         density_nodes = host_density_nodes.data();
         temperature_nodes = host_temperature_nodes.data();
         node_extents = {host_density_nodes.size(), host_temperature_nodes.size()};

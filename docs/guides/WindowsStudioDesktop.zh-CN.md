@@ -1,5 +1,7 @@
 # Windows 原生 Studio 桌面构建（W3）
 
+当前完整 Windows CPU／CUDA／Studio 状态与逐项对应见[2026-10-27 最终验收](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)。本页的 W0／W1／W2／W3 结果保留各自当时范围；CUDA 使用独立 [MSVC 构建及工具上下文](WindowsNativeCuda.zh-CN.md)。
+
 [English](WindowsStudioDesktop.md) · [两侧共用操作指南](Studio.zh-CN.md) · [W0–W3 验收归档](../histroy/build/WindowsNativeQualification-20261026.zh-CN.md)
 
 状态：W3 在已测 Windows 11 x64／GCC UCRT64 CPU 环境闭合。原生窗口、Build／Preview、便携包和配置保存已验收；2026-10-26 补验通过最终包的真实 Core Run／Restart、正式 Plotfile 读取与独立 FP64 传输比对，用户确认同一产物的数值表与曲线显示正常并正常关闭窗口。窗口工具的 WSL 路由问题仍存在，人工操作证据与自动验收分别记录。数学、其他 Studio 读写、Zenodo 与 release 仍冻结／暂缓。

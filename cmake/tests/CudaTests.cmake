@@ -1,6 +1,19 @@
 # Focused CUDA tests. Included only after the production CUDA targets exist.
 # Target-specific language, numerical options and ownership are intentional.
 
+# The burn witness deliberately disables host inlining/vectorization. Express
+# that same witness contract in the selected host compiler's own vocabulary.
+if(MSVC)
+    # /Od also disables the host auto-vectorizer; use documented MSVC switches
+    # instead of relying on GNU or undocumented vectorization controls.
+    set(arch_cuda_burn_host_options "-Xcompiler=/Od,/Ob0")
+    set(arch_cuda_host_language_option "/TP")
+else()
+    set(arch_cuda_burn_host_options
+        "-Xcompiler=-march=native,-fno-inline,-fno-tree-vectorize,-fno-tree-slp-vectorize")
+    set(arch_cuda_host_language_option "-x c++")
+endif()
+
 # These helpers change compile properties only: sources, owners, libraries and
 # test registration remain visible at their individual declarations.
 function(arch_configure_cuda_math_test target)
@@ -84,6 +97,16 @@ foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
 endforeach()
 
 # Backend resource ownership, AMR transactions and geometric leaves.
+add_executable(arch_cuda_math_classification tests/cuda/numerics/test_math_classification.cu)
+arch_configure_cuda_math_test(arch_cuda_math_classification)
+target_link_libraries(arch_cuda_math_classification PRIVATE arch_build_contract CUDA::cudart)
+add_test(NAME cuda_math_classification COMMAND arch_cuda_math_classification)
+set_tests_properties(cuda_math_classification PROPERTIES SKIP_RETURN_CODE 77)
+add_executable(arch_cuda_fixed_array_fill tests/cuda/runtime/test_fixed_array_fill.cu)
+arch_configure_cuda_math_test(arch_cuda_fixed_array_fill)
+target_link_libraries(arch_cuda_fixed_array_fill PRIVATE arch_build_contract CUDA::cudart)
+add_test(NAME cuda_fixed_array_fill COMMAND arch_cuda_fixed_array_fill)
+set_tests_properties(cuda_fixed_array_fill PROPERTIES SKIP_RETURN_CODE 77)
 add_executable(arch_cuda_conservative_acceptance
     tests/cuda/numerics/test_conservative_acceptance.cu)
 target_link_libraries(arch_cuda_conservative_acceptance PRIVATE arch_build_contract CUDA::cudart)
@@ -289,7 +312,7 @@ add_executable(arch_cuda_burn_policy_parity
     tests/cuda/microphysics/burn/test_burn_policy_parity.cu
     src/core/files/FileFingerprint.cpp)
 arch_configure_cuda_math_test(arch_cuda_burn_policy_parity
-    "-Xcompiler=-march=native,-fno-inline,-fno-tree-vectorize,-fno-tree-slp-vectorize")
+    "${arch_cuda_burn_host_options}")
 target_compile_definitions(arch_cuda_burn_policy_parity PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 # This mathematical policy witness instantiates the shared headers and
@@ -335,8 +358,8 @@ add_executable(arch_cuda_hydro_block
 set_source_files_properties(tests/cuda/hydro/test_cuda_hydro_block.cu
     PROPERTIES
         LANGUAGE CXX
-        COMPILE_FLAGS "-x c++")
-arch_configure_cuda_math_test(arch_cuda_hydro_block "-Xcompiler=-march=native")
+        COMPILE_FLAGS "${arch_cuda_host_language_option}")
+arch_configure_cuda_math_test(arch_cuda_hydro_block "${arch_cuda_host_native_option}")
 target_compile_definitions(arch_cuda_hydro_block PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(arch_cuda_hydro_block PRIVATE
@@ -344,7 +367,7 @@ target_link_libraries(arch_cuda_hydro_block PRIVATE
 add_executable(arch_cuda_multiblock_hydro
     tests/cuda/hydro/test_cuda_multiblock_hydro.cu)
 set_source_files_properties(tests/cuda/hydro/test_cuda_multiblock_hydro.cu
-    PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+    PROPERTIES LANGUAGE CXX COMPILE_FLAGS "${arch_cuda_host_language_option}")
 target_compile_features(arch_cuda_multiblock_hydro PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_multiblock_hydro PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -357,7 +380,7 @@ target_compile_definitions(arch_cuda_multiblock_hydro PRIVATE
 add_executable(arch_cuda_multiblock_diffusion
     tests/cuda/numerics/test_cuda_multiblock_diffusion.cu)
 set_source_files_properties(tests/cuda/numerics/test_cuda_multiblock_diffusion.cu
-    PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+    PROPERTIES LANGUAGE CXX COMPILE_FLAGS "${arch_cuda_host_language_option}")
 target_compile_features(arch_cuda_multiblock_diffusion PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_multiblock_diffusion PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -366,7 +389,7 @@ target_link_libraries(arch_cuda_multiblock_diffusion PRIVATE
 add_executable(arch_cuda_multiblock_burn
     tests/cuda/microphysics/burn/test_cuda_multiblock_burn.cu)
 set_source_files_properties(tests/cuda/microphysics/burn/test_cuda_multiblock_burn.cu
-    PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+    PROPERTIES LANGUAGE CXX COMPILE_FLAGS "${arch_cuda_host_language_option}")
 target_compile_features(arch_cuda_multiblock_burn PRIVATE cxx_std_20)
 target_include_directories(arch_cuda_multiblock_burn PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -391,7 +414,7 @@ target_link_libraries(arch_cuda_amr_exchange PRIVATE
 add_executable(arch_cuda_diffusion_rkl_parity
     tests/cuda/numerics/test_diffusion_rkl_parity.cu
     tests/cuda/numerics/test_diffusion_rkl_tabular.cu)
-arch_configure_cuda_math_test(arch_cuda_diffusion_rkl_parity "-Xcompiler=-march=native")
+arch_configure_cuda_math_test(arch_cuda_diffusion_rkl_parity "${arch_cuda_host_native_option}")
 target_link_libraries(arch_cuda_diffusion_rkl_parity PRIVATE
     arch_cuda_backend)
 add_executable(arch_cuda_boundary_plan_parity

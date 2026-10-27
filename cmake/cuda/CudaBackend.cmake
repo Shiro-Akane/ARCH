@@ -1,7 +1,18 @@
 # CUDA dependency discovery, canonical object owners and bounded build phases.
 # Included only when ARCH_ENABLE_CUDA is enabled; focused tests live separately.
 
+if(MINGW)
+    message(FATAL_ERROR
+        "Native Windows CUDA requires an NVIDIA-supported MSVC host and "
+        "MSVC-ABI dependencies. Configure a separate build with MSVC; "
+        "the GCC/UCRT64 CPU build cannot be reused for CUDA.")
+endif()
 enable_language(CUDA)
+if(MSVC)
+    set(arch_cuda_host_native_option "")
+else()
+    set(arch_cuda_host_native_option "-Xcompiler=-march=native")
+endif()
 find_package(CUDAToolkit REQUIRED)
 include(cmake/cuda/CudaCodeImages.cmake)
 arch_resolve_cuda_code_images(CMAKE_CUDA_ARCHITECTURES)
@@ -19,6 +30,15 @@ if(ARCH_ENABLE_CUDSS)
     find_package(CuDSS QUIET)
     if(CuDSS_FOUND)
         message(STATUS "[DEP] cuDSS found: ${CuDSS_LIBRARY}")
+        if(WIN32)
+            find_file(CUDA_cublas_RUNTIME_LIBRARY
+                NAMES "cublas64_${CUDAToolkit_VERSION_MAJOR}.dll"
+                HINTS "${CUDAToolkit_BIN_DIR}" NO_DEFAULT_PATH)
+            find_file(CUDA_cublasLt_RUNTIME_LIBRARY
+                NAMES "cublasLt64_${CUDAToolkit_VERSION_MAJOR}.dll"
+                HINTS "${CUDAToolkit_BIN_DIR}" NO_DEFAULT_PATH)
+            mark_as_advanced(CUDA_cublas_RUNTIME_LIBRARY CUDA_cublasLt_RUNTIME_LIBRARY)
+        endif()
         # Backend numerical refinement, not an ODE tolerance or network-size
         # switch. Keep it private to the Host provider so tuning it does not
         # reinstantiate the CUDA network/EOS matrix.
@@ -39,14 +59,14 @@ if(ARCH_ENABLE_CUDSS)
             ARCH_CUDSS_BLAS_LIBRARY="$<TARGET_FILE:CUDA::cublas>")
         target_compile_options(arch_cuda_sparse_provider PRIVATE
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
-        # Vendor libraries are loaded by the provider only when a sparse solve
-        # is requested; bounded CPU inspection never maps cuDSS/cuBLAS.
+        # Linux loads sparse vendors on demand to retain RLIMIT_AS semantics.
+        # Native Windows uses import libraries and Job commit accounting.
         target_include_directories(arch_cuda_sparse_provider SYSTEM PUBLIC "${CuDSS_INCLUDE_DIR}")
         target_link_libraries(arch_cuda_sparse_provider PUBLIC
             arch_build_contract CUDA::cudart ${CMAKE_DL_LIBS})
         if(WIN32)
             # Windows discovery returns import libraries, not DLL paths. Keep
-            # its existing direct provider link; bounded workers are Linux-only.
+            # its existing direct provider link and explicit DLL dependencies.
             target_link_libraries(arch_cuda_sparse_provider PUBLIC
                 "${CuDSS_LIBRARY}" CUDA::cublas)
         endif()
@@ -129,7 +149,7 @@ function(arch_configure_cuda_backend_object target source)
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_compile_options(${target} PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native>)
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;${arch_cuda_host_native_option}>)
     set_target_properties(${target} PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON
@@ -373,7 +393,7 @@ target_link_libraries(arch_cuda_backend
     PUBLIC arch_build_contract
     PRIVATE arch_diffusion_math CUDA::cudart)
 target_compile_options(arch_cuda_backend PRIVATE
-    $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native>)
+    $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;${arch_cuda_host_native_option}>)
 set_target_properties(arch_cuda_backend PROPERTIES
     CUDA_STANDARD 20
     CUDA_STANDARD_REQUIRED ON

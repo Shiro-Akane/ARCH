@@ -2,11 +2,12 @@
 
 [Workflow](Studio.md) · [Detailed setup and troubleshooting](StudioEnvironment.zh-CN.md)
 
-**Linux is recommended**, including WSL2 with WSLg. Native Windows11 x64 also supports the complete CPU Studio workflow, with newer support that may have instability or bugs. Both routes use the same Host/scientific services. A Core-only build does not need Node, npm or Electron, and the desktop does not require CUDA compilation. Native Windows CUDA/MPI remain separate qualifications.
+**Linux is recommended**, including WSL2 with WSLg. Native Windows11 x64 supports the complete CPU/CUDA Studio workflow, with newer support that may still have instability or bugs. Both routes use the same Host/scientific services. Core alone needs no Node, npm or Electron; desktop support does not require CUDA compilation. See [native CUDA](WindowsNativeCuda.md) for its separate compiler dependencies and trusted tool context.
 
 | Requirement | Linux / WSL2 | Native Windows11 x64 |
 | --- | --- | --- |
 | Core and build tools | Native C++20, CMake, Ninja, HDF5/OpenMP | GCC/UCRT64 plus matching-ABI dependencies and native helpers; [setup](WindowsNativeW0.md) / [build](WindowsNativeCpu.md) |
+| CUDA Core option | NVCC with compatible host libraries | Separate MSVC/NVCC dependencies and private compiler context; [CUDA setup](WindowsNativeCuda.md) |
 | Source desktop runtime | Native Linux Node24+, npm, Electron | Native Windows x64 Node24+, npm, Electron |
 | Window | Graphical Linux session / WSLg and libraries below | Native Windows desktop |
 | Confirmed Run/Restart | `xterm`, `flock` | Configured Windows Terminal and native supervisor/publisher |
@@ -49,7 +50,7 @@ Check `DISPLAY`, `xterm`, `flock`, and `ldd studio/node_modules/electron/dist/el
 
 Follow the [native desktop guide](WindowsStudioDesktop.md) after the [CPU setup](WindowsNativeCpu.md). It uses the same `arch-studio-assets`, `arch-studio-runtime` and `arch-studio-package` targets. CMake invokes native Node's npm-cli.js, without requiring npm.ps1. The checkout entry is `arch-studio.cmd`; the portable entry is `arch-studio-bin.exe`.
 
-Configure `ARCH_STUDIO_WINDOWS_TOOLS` before launch using that guide's trusted tool/DLL paths. Editing and Preview do not need a terminal; the qualified Run/Restart route sets `terminal` to `wt.exe`. Native Windows helpers and HDF5 DLLs must match UCRT64; do not add Anaconda/MSVC HDF5 or MSYS `usr/bin` to the Core DLL path. A Linux `.par` can be reused after adapting host-specific paths; `/home` and `/mnt/c` are not Windows drive paths.
+Set `ARCH_STUDIO_WINDOWS_TOOLS` to the trusted tool/DLL context for the chosen build. Editing and Preview need no terminal; qualified Run/Restart sets `terminal` to `wt.exe`. Use that build’s native helpers: GCC/UCRT64 HDF5 for the CPU route, or matching MSVC HDF5/CUDA/cuDSS with the compiler environment in the [CUDA guide](WindowsNativeCuda.md). Keep unrelated Anaconda/MSYS/other-ABI DLLs off the Core PATH. Adapt Linux absolute `.par` paths; `/home` and `/mnt/c` are not Windows drive paths.
 
 ## Developer verification
 

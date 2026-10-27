@@ -5,7 +5,15 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,readdir} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,readBuildLinkerSelection,readBuildGeneratorEvidence} from '../host/cmakeEvidence.ts';
+import {readCMakeConfigurationEvidence,readCMakeToolchainEvidence,readBuildConfigurationInputs,sameConfigurationInputs,readBuildLinkerSelection,readBuildGeneratorEvidence,resourceCompilerVersion} from '../host/cmakeEvidence.ts';
+test('resource compiler banners keep MSVC and GNU families distinct',()=>{
+ const microsoft='Microsoft (R) Windows (R) Resource Compiler Version 10.0.10011.16384\r\r\nCopyright';
+ const gnu='GNU windres (GNU Binutils) 2.46\nCopyright';
+ assert.deepEqual(resourceCompilerVersion(microsoft,true),{id:'Microsoft RC',version:'10.0.10011.16384'});
+ assert.deepEqual(resourceCompilerVersion(gnu,false),{id:'GNU windres',version:'2.46'});
+ for(const [text,msvc] of [[gnu,true],[microsoft,false],['prefix '+microsoft,true],['not a version',true]] as const)
+  assert.throws(()=>resourceCompilerVersion(text,msvc),/version unavailable/);
+});
 test('CMake configuration evidence binds source/build and hashes external inputs without claiming compiler coverage',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch cmake evidence-'));
  try{

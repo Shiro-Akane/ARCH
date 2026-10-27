@@ -86,7 +86,7 @@ foreach(name CMAKE_VERSION CMAKE_GENERATOR CMAKE_BUILD_TYPE CMAKE_SYSTEM_NAME
     CMAKE_CXX_COMPILER CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION
     CMAKE_RC_COMPILER CMAKE_RC_COMPILER_ID CMAKE_RC_COMPILER_VERSION
     CMAKE_CUDA_COMPILER CMAKE_CUDA_COMPILER_ID CMAKE_CUDA_COMPILER_VERSION
-    CMAKE_CUDA_ARCHITECTURES CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE
+    CMAKE_CUDA_ARCHITECTURES CMAKE_CUDA_RUNTIME_LIBRARY CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE
     CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
     CMAKE_CUDA_FLAGS CMAKE_CUDA_FLAGS_RELEASE CMAKE_EXE_LINKER_FLAGS
     CMAKE_RC_FLAGS CMAKE_RC_FLAGS_RELEASE CMAKE_RC_FLAGS_DEBUG
@@ -168,7 +168,29 @@ foreach(pair source_manifest profile_record source_git_head source_git_dirty)
     if(NOT collision EQUAL -1)
         message(FATAL_ERROR "Generated build identity delimiter collision")
     endif()
-    string(APPEND header "inline constexpr const char* ${pair} = R\"${delimiter}(${value})${delimiter}\";\n")
+    if(MSVC)
+        # MSVC limits individual/concatenated string literals. Full CUDA profile
+        # records exceed those limits: preserve every UTF-8 byte in a constexpr
+        # char array instead. There is no truncation, runtime assembly or new
+        # identity format, and no literal can be terminated by input content.
+        string(HEX "${value}" encoded)
+        string(APPEND header "inline constexpr char ${pair}[] = {\n")
+        while(NOT encoded STREQUAL "")
+            string(LENGTH "${encoded}" remaining)
+            if(remaining GREATER 1024)
+                set(count 1024)
+            else()
+                set(count ${remaining})
+            endif()
+            string(SUBSTRING "${encoded}" 0 ${count} chunk)
+            string(SUBSTRING "${encoded}" ${count} -1 encoded)
+            string(REGEX REPLACE "([0-9a-f][0-9a-f])" "'\\\\x\\1'," chunk "${chunk}")
+            string(APPEND header "${chunk}\n")
+        endwhile()
+        string(APPEND header "'\\0'};\n")
+    else()
+        string(APPEND header "inline constexpr const char* ${pair} = R\"${delimiter}(${value})${delimiter}\";\n")
+    endif()
 endforeach()
 string(APPEND header "}\n")
 set(generated_header "${arch_identity_generated}/BuildIdentity.generated.h")

@@ -5,6 +5,7 @@
  * Exercise reconstructed faces, directional fluxes, divergence and primitive
  * recovery against host results and independent physical identities.
  */
+#include "core/MathClassification.h"
 #include <algorithm>
 #include "numerics/flux/InvariantDomainFlux.h"
 #include <array>
@@ -137,7 +138,7 @@ struct DeviceLeafResult
 // The budget is the same 1e-11 used by the CPU low-density manifest.
 ARCH_INLINE void range_error(DeviceLeafResult& result, double actual, double expected)
 {
-    if (!std::isfinite(actual)) result.low_density_valid = false;
+    if (!arch::math::isfinite(actual)) result.low_density_valid = false;
     result.low_density_error = std::max(result.low_density_error,
         std::abs(actual-expected)/std::max(1.0,std::abs(expected)));
 }
@@ -701,7 +702,7 @@ bool validate_characterized_host_paths()
                      0x4018000000000000ULL, 0x4039000000000000ULL,
                      0x4038000000000000ULL, 0x403e000000000000ULL,
                      0x4074100000000000ULL)
-        || !std::isnan(get_flux({-0.0, 1.0, 2.0, 3.0, 4.0}, 7.0, 0).rho)
+        || !arch::math::isnan(get_flux({-0.0, 1.0, 2.0, 3.0, 4.0}, 7.0, 0).rho)
         || !exact_bits(entropy_fix(-0.0, 1.0), 0x3fe0000000000000ULL))
         return false;
 
@@ -1809,7 +1810,7 @@ int run_concurrent_repairs()
             if(i==9) { if(actual[i]<0. || actual[i]>=1025. || std::floor(actual[i])!=actual[i]) result=122; }
             else {
                 const double scaled=i<2 ? actual[i] : actual[i]/scale;
-                if(!std::isfinite(scaled) || std::abs(scaled-expected[i])>
+                if(!arch::math::isfinite(scaled) || std::abs(scaled-expected[i])>
                     1e-11*std::max(1.,std::abs(expected[i]))) result=122;
             }
         }
@@ -1882,7 +1883,7 @@ ARCH_INLINE SharedWallLeafResult evaluate_shared_wall_assembly() {
             const double normal=dir==0?output.mom_u:dir==1?output.mom_v:output.mom_w;
             const bool valid=status==Status::valid&&high_calls==1&&base_reads==species
                 &&order_errors==0&&output.rho==0.&&output.eng==0.
-                &&std::isfinite(normal)
+                &&arch::math::isfinite(normal)
                 &&std::abs(normal-pressure)<=arch::state::composition_roundoff_limit*pressure
                 &&(dir==0||output.mom_u==0.)&&(dir==1||output.mom_v==0.)
                 &&(dir==2||output.mom_w==0.)

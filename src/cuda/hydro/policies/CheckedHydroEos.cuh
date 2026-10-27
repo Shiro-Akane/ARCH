@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <cmath>
 #include <limits>
 #include <cuda_runtime.h>
@@ -256,8 +257,8 @@ private:
                 for (int species = 0; species < means_->n_species; ++species)
                     same = same && composition[species] == means_->species(species, cell)
                         && (composition[species] != 0.0
-                            || std::signbit(composition[species])
-                               == std::signbit(means_->species(species, cell)));
+                            || arch::math::signbit(composition[species])
+                               == arch::math::signbit(means_->species(species, cell)));
                 if (same) {
                     pressure = mean_pressure_[cell]; speed = mean_sound_speed_[cell];
                     return true;
@@ -306,7 +307,7 @@ private:
      */
     ARCH_INLINE double checked_positive(double value) const
     {
-        if ((!std::isfinite(value) || !(value > 0.0)) && status_ != nullptr) {
+        if ((!arch::math::isfinite(value) || !(value > 0.0)) && status_ != nullptr) {
 #if defined(__CUDA_ARCH__)
             atomicExch(status_, 1);
 #else
@@ -318,7 +319,7 @@ private:
 
     ARCH_INLINE double checked(double value) const
     {
-        if (!std::isfinite(value) && status_ != nullptr) {
+        if (!arch::math::isfinite(value) && status_ != nullptr) {
 #if defined(__CUDA_ARCH__)
             atomicExch(status_, 1);
 #else

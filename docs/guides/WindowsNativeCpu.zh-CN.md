@@ -1,5 +1,7 @@
 # Windows 11 原生 CPU CLI
 
+当前完整 Windows CPU／CUDA／Studio 状态与逐项对应见[2026-10-27 最终验收](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)。本页的 W0／W1／W2／W3 结果保留各自当时范围；CUDA 使用独立 [MSVC 构建及工具上下文](WindowsNativeCuda.zh-CN.md)。
+
 [English](WindowsNativeCpu.md) · [构建指南](Build.zh-CN.md) · [工具链预检 W0](WindowsNativeW0.zh-CN.md)
 
 Studio 平台设施及仍受冻结限制的功能见 [W2 平台服务](WindowsStudioPlatform.zh-CN.md)。
