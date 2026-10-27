@@ -207,6 +207,8 @@ MPI would distribute calculations across processes and machines. Later explorati
 
 ## Citation
 
+The [v1.4.0 release candidate](docs/releases/V1.4.0.md) prepares native Windows support; it is not yet tagged or published. Citation metadata describes that candidate and uses the known series DOI; cite the archived version actually used.
+
 For ARCH 1.3.0, please cite:
 
 Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamics* (Version 1.3.0) [Computer software]. Zenodo. [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925).

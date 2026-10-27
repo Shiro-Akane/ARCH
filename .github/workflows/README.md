@@ -52,29 +52,6 @@ This workflow does not execute CUDA, cuDSS, generated-network trajectories, sani
 
 Use a normal PR targeting `main` for integration; engineering-branch pushes can execute the same checks before that PR exists. Actions are pinned to full commits; actionlint's release archive has a fixed checksum. After a real successful run, maintainers may require **CI required** in the main ruleset. Human approval and merge/publication remain separate decisions. Do not run public PR code on a persistent personal GPU runner; this workflow uses neither `pull_request_target` nor repository secrets.
 
-## v1.3.0 source publication
+## Release preparation
 
-[release-v1.3.0.yml](release-v1.3.0.yml) is a one-shot, explicitly authorized
-release from `compute/optim`, triggered only when that workflow file changes.
-It waits for the exact head's PR and push CI, all three default-setup CodeQL
-analyses and the original PR comparison gate; missing, skipped, cancelled or
-failed results cannot unlock it. The original candidate and note digests must
-match. Existing releases/tags are never replaced.
-
-The isolated publication job uses GitHub's temporary repository token to update
-PR #12 and call the normal merge API with the accepted head SHA. It has no
-admin/bypass operation and does not alter branch rules. Ordinary public PR CI
-remains read-only. After merging, the entire tracked file tree must exactly
-match the scanned head. The workflow explicitly dispatches the existing full
-CI on the actual main commit, since token-generated pushes do not trigger
-other workflows. Missing dispatch-base information conservatively selects
-complete CPU and Studio work.
-
-Only successful main CI allows the annotated `v1.3.0` tag and formal source
-release. Security qualification explicitly reuses the accepted identical file
-tree; it does not invent a new main scan. Notes use tag-pinned English/Chinese
-guide links and the existing GUI screenshot, with actual CI/security identities
-appended. No prebuilt scientific binaries or raw simulation outputs are assets.
-A failure stops the current stage; no tag is moved and no rule is weakened.
-See [GitHub token behavior](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)
-and [release command](https://cli.github.com/manual/gh_release_create).
+Current version status and publication exits are owned by the [release index](../../docs/releases/README.md). PR #21 prepares v1.4.0; the user retains merge authority. This directory has no automatic merge/tag/publication workflow. The former v1.3.0 one-shot publisher and its explanation are preserved in [dated history](../../docs/histroy/release/ReleaseV1.3.0Workflow-20261027.md), outside the active workflow directory. A PR merge alone does not publish v1.4.0 or create a Zenodo record.

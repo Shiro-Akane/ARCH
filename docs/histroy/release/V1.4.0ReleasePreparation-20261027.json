@@ -1,0 +1,120 @@
+{
+  "schema": "arch-release-preparation-1",
+  "date": "2026-10-27",
+  "version": "1.4.0",
+  "status": "unpublished-candidate",
+  "pr": "https://github.com/Shiro-Akane/ARCH/pull/21",
+  "branch": "build/win11",
+  "mergeAuthority": "user",
+  "implementationHead": "dd42d4fa479a262920c7c772794a898c42665e70",
+  "implementationSourceSnapshot": {
+    "files": 1074,
+    "sha256": "78b946f1a2a120afd59c4b77b0fb0de5f2ab028a6dc074e1ed4dd64cc71dd2c0"
+  },
+  "frozenV131Commit": "04cb2f3f7881c20b7ee446d1b7adc020cb8feaf5",
+  "implementationQualification": "docs/histroy/build/WindowsNativeCudaQualification-20261027.json",
+  "implementationChecks": {
+    "head": "dd42d4fa479a262920c7c772794a898c42665e70",
+    "run": "https://github.com/Shiro-Akane/ARCH/actions/runs/40430379002",
+    "ciJobs": {
+      "CPU Release": "success",
+      "Studio and Host": "success",
+      "Tooling": "success",
+      "CI required": "success"
+    },
+    "codeqlComparison": {
+      "conclusion": "success",
+      "newAlerts": 0,
+      "annotations": 0
+    },
+    "codeqlLanguageAnalyses": "four succeeded; do not generalize comparison-gate annotation count"
+  },
+  "candidateChanges": {
+    "sourceAndScientificIo": "unchanged relative to implementationHead",
+    "zod": {
+      "advisory": "GHSA-mrhx-c7xc-m3w5",
+      "before": "4.6.2",
+      "after": "4.6.7",
+      "changedPackages": [
+        "node_modules/zod"
+      ],
+      "developmentOnly": true,
+      "license": "MIT",
+      "inventoryRecords": 330
+    },
+    "npmAuditAfter": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "linuxStudio": {
+      "tests": 453,
+      "fail": 0,
+      "skip": 0,
+      "todo": 0,
+      "lint": "passed",
+      "typedProductionBuild": "passed",
+      "notice": "Windows-only applicability notice retained outside TAP; original complete TAP accepted by unchanged parser"
+    },
+    "windowsStudio": {
+      "tests": 95,
+      "fail": 0,
+      "skip": 0,
+      "todo": 0,
+      "installation": "passed",
+      "lint": "passed",
+      "typedProductionBuild": "passed",
+      "runnerExitCode": 0,
+      "runnerElapsedSeconds": 270.96900000000096,
+      "testReportSha256": "3c60a15c6495c4e66f5a5e3450005e86eec1c1071b96784c4b5dd58cf99b442e",
+      "nodeVersion": "24.21.0",
+      "actualInstalledZod": "4.6.7",
+      "lockAndLicenseInventoryMatchCandidate": true,
+      "scope": "16 existing native platform/desktop test files; same scoped suite as implementation qualification"
+    },
+    "electron": "44.9.1 unchanged; no newly packaged 1.4.0 binary claimed",
+    "cff": {
+      "cffSchema": "https://raw.githubusercontent.com/citation-file-format/citation-file-format/1.2.0/schema.json",
+      "schemaSha256": "0b8d22140da702d766df318dcff3a91af2f39521298dcf36d76315fd99cc169b",
+      "cffSchemaValid": true,
+      "metadataCopiesByteIdentical": true,
+      "version": "1.4.0",
+      "status": "unpublished-candidate",
+      "seriesDoi": "10.5281/zenodo.23503924",
+      "candidateUrl": "https://github.com/Shiro-Akane/ARCH/pull/21",
+      "noInventedDateOrVersionDoi": true
+    }
+  },
+  "archive": {
+    "sourceImplementation": "dd42d4fa479a262920c7c772794a898c42665e70",
+    "moves": [
+      {
+        "from": ".github/workflows/release-v1.3.0.yml",
+        "to": "docs/histroy/release/ReleaseV1.3.0.workflow.yml",
+        "sha256": "1c933c16ea6140f51828b14a19521667a922c03e0c697e40a7087583700de403",
+        "bytesUnchanged": true,
+        "activeWorkflow": false
+      },
+      {
+        "from": "docs/zenodo/README.md",
+        "to": "docs/histroy/release/ZenodoCitationStatusBeforeV1.4.0-20261027.zh-CN.md",
+        "originalSha256": "39730308e4bc1efee1be977d80ad80780a77015c6408a5e19cbf3a4ad3f0f752",
+        "proseRetained": true,
+        "relativeLinksRebased": true
+      }
+    ]
+  },
+  "candidateHeadAcceptance": "Exact-head applicable CI/security checks on live PR are authoritative; implementation results do not certify a later head.",
+  "publicationPending": [
+    "User merge",
+    "Independent main changes reviewed",
+    "Actual main revision CI/security accepted",
+    "Real citation release URL/date and resulting metadata commit accepted",
+    "Immutable v1.4.0 source tag/archive and public release"
+  ],
+  "zenodo": "deferred; no deposit or publication performed",
+  "retainedLimits": "Original Windows qualification and v1.3 scientific limits remain applicable. Linux recommended; Windows functionality has recorded scope, instability and bugs remain possible."
+}

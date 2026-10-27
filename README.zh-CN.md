@@ -203,6 +203,8 @@ MPI 用于将计算分配到多个进程和机器。后续探索还可能包括�
 
 ## 引用
 
+[v1.4.0 发布候选](docs/releases/V1.4.0.zh-CN.md)准备 Windows 原生支持，尚未打标或发表；引用元数据为候选及已有全版本 DOI，具体研究仍引用实际使用的存档版本。
+
 使用 ARCH 1.3.0 时，请引用：
 
 Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamics* (Version 1.3.0) [Computer software]. Zenodo. [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925)。

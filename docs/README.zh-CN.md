@@ -8,6 +8,8 @@
 
 [ARCH Studio 本地桌面指南](guides/Studio.zh-CN.md)介绍 Linux／Windows 呼出、模型选择与配置编辑、初始场/AMR 和只读 Plotfile 工作流。
 
+版本状态从[发布索引](releases/README.md)开始：v1.4.0 为 Windows 支持候选，已发表／冻结版本保留原范围；日期明确的过程与证据留在[历史索引](histroy/README.md)。
+
 ## 选择功能和配置
 
 - [功能清单](Features.zh-CN.md)：各模块、坐标、边界及自引力的可用范围。
