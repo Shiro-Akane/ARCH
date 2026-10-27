@@ -22,7 +22,7 @@ are not portable download instructions or current setup requirements.
 | Modernization | [Original repository map](modernization/ModernizationR1-RepositoryMap-20261012.zh-CN.md), [working-entry preflight](modernization/Preflight-20261012.zh-CN.md), [closed modernization plan](https://github.com/Shiro-Akane/ARCH/blob/fe8f1f708cec34e42fa436f8cd21cec9285407e1/ARCH_MODERNIZATION_PLAN.md) |
 | Low density | [Implementation](low-density/ImplementationReport.zh-CN.md), [robustness design](low-density/RobustnessPlan.zh-CN.md), [parameter retirement](low-density/ParameterRetirementAudit.zh-CN.md) |
 | Optimization | [Implementation and acceptance ledger](optimization/ImplementationAndAcceptancePlan.zh-CN.md) |
-| Release preparation | [v1.4.0 candidate and publication exits](release/V1.4.0ReleasePreparation-20261027.md); [retired v1.3.0 publisher](release/ReleaseV1.3.0Workflow-20261027.md); [earlier qualification plan](release/QualificationThroughCuda-20261019.md). Current version status stays in [release notes](../releases/README.md). |
+| Releases | [v1.4.0 publication and provenance](release/V1.4.0Publication-20261027.md); [earlier v1.4.0 candidate and publication exits](release/V1.4.0ReleasePreparation-20261027.md); [retired v1.3.0 publisher](release/ReleaseV1.3.0Workflow-20261027.md); [earlier qualification plan](release/QualificationThroughCuda-20261019.md). Current version status stays in [release notes](../releases/README.md). |
 
 ## Studio
 

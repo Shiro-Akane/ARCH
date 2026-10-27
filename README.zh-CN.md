@@ -203,7 +203,7 @@ MPI 用于将计算分配到多个进程和机器。后续探索还可能包括�
 
 ## 引用
 
-[v1.4.0 发布候选](docs/releases/V1.4.0.zh-CN.md)准备 Windows 原生支持，尚未打标或发表；引用元数据为候选及已有全版本 DOI，具体研究仍引用实际使用的存档版本。
+[ARCH v1.4.0](docs/releases/V1.4.0.zh-CN.md)（2026-10-27）新增 Windows 原生 CPU／CUDA 与 Studio 支持。此版本引用[实际 GitHub release](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.0)；已有 DOI 标识版本系列，v1.4.0 的 Zenodo 新记录仍暂缓。
 
 使用 ARCH 1.3.0 时，请引用：
 

@@ -54,4 +54,4 @@ Use a normal PR targeting `main` for integration; engineering-branch pushes can 
 
 ## Release preparation
 
-Current version status and publication exits are owned by the [release index](../../docs/releases/README.md). PR #21 prepares v1.4.0; the user retains merge authority. This directory has no automatic merge/tag/publication workflow. The former v1.3.0 one-shot publisher and its explanation are preserved in [dated history](../../docs/histroy/release/ReleaseV1.3.0Workflow-20261027.md), outside the active workflow directory. A PR merge alone does not publish v1.4.0 or create a Zenodo record.
+Current version status and publication exits are owned by the [release index](../../docs/releases/README.md). PR #21 integrated native Windows support for v1.4.0; the release index and actual GitHub release own publication status. This directory has no automatic merge/tag/publication workflow. The former v1.3.0 one-shot publisher and its explanation are preserved in [dated history](../../docs/histroy/release/ReleaseV1.3.0Workflow-20261027.md), outside the active workflow directory. A PR merge alone does not publish v1.4.0 or create a Zenodo record.
