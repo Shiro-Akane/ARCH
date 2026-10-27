@@ -36,11 +36,11 @@ class Expansion(unittest.TestCase):
             args += [case, '--config-stdin', '--request-id', 'test-amr']
         args += list(options)
         before = sorted(self.cwd.rglob('*'))
-        p = subprocess.run(args, input=text, capture_output=True, text=True,
+        p = subprocess.run(args, input=text.encode('utf-8'), capture_output=True,
                            cwd=self.cwd, env=ENV, timeout=45)
         self.assertEqual(p.returncode, code, (p.stdout[-4000:], p.stderr[-2000:]))
         self.assertEqual(before, sorted(self.cwd.rglob('*')), 'API created files')
-        self.assertLessEqual(len(p.stdout.encode()), 8*1024*1024)
+        self.assertLessEqual(len(p.stdout), 8*1024*1024)
         obj = json.loads(p.stdout)
         if obj.get('identity'):
             self.assertEqual(obj['identity']['configRevision'], hashlib.sha256(text.encode()).hexdigest())
@@ -191,9 +191,9 @@ class Expansion(unittest.TestCase):
                 outdir=evidence/'output'
                 par=evidence/(case+'.par')
                 par.write_text(edit(text,solver='HLLC',hll_wave_speed='roe',tmax=0,max_steps=-1,compute_backend='cpu',out_dir=outdir,base_name='reference',plt_variables='DENS',plt_dt=-1,plt_dstep=-1,chk_dt=-1,chk_dstep=-1))
-                run=subprocess.run([str(ARCH),case,str(par)],cwd=self.cwd,env=ENV,capture_output=True,text=True,timeout=90)
-                (evidence/'stdout.log').write_text(run.stdout)
-                (evidence/'stderr.log').write_text(run.stderr)
+                run=subprocess.run([str(ARCH),case,str(par)],cwd=self.cwd,env=ENV,capture_output=True,timeout=90)
+                (evidence/'stdout.log').write_bytes(run.stdout)
+                (evidence/'stderr.log').write_bytes(run.stderr)
                 (evidence/'preview.json').write_text(json.dumps(preview))
                 self.assertEqual(run.returncode,0,(run.stdout[-3000:],run.stderr[-2000:]))
                 checkpoints=sorted(outdir.rglob('*chk*.h5'))

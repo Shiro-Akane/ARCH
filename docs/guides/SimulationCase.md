@@ -7,6 +7,8 @@ This guide is the continuous learning path for a first ARCH case. Complete it in
 order; the exact parameter catalogue and framework extension interfaces are kept
 in the searchable [Research and API Reference](../Reference.md).
 
+Command examples below use Linux/WSL2 Bash, the recommended route. Native Windows11 x64 uses the same CPU case and `.par` format; follow the paired [build instructions](Build.md) and [path notes](Studio.md#paths-on-linux-and-windows) for PowerShell, `ARCH.exe`, DLL dependencies and host-specific input paths. Linux absolute paths inside a copied `.par` must be adapted before native Windows execution.
+
 You don't need a CFD background to get started. ARCH represents the fluid as a mesh of discrete cells, updating their average density, momentum, and energy over successive time steps. A 'case' defines the initial fluid state, the domain boundaries, and the underlying physical models, while its accompanying parameter file dictates exactly how the calculation is executed.
 
 Our first example is a shock tube: two different gas states initially meet at a sharp interface, and waves develop as they interact. Running this example demonstrates the complete workflow without requiring a nuclear reaction network or an external EOS table. Later sections will connect your input choices to the underlying equations and show you how to write your own custom initializer.

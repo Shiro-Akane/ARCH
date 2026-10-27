@@ -1,17 +1,30 @@
-# Frozen release qualifications
+# Release notes and qualification
 
-The current maintenance baseline is [ARCH v1.3.1](V1.3.1.md) ([中文](V1.3.1.zh-CN.md)). It follows the accepted [v1.3.0 release](V1.3.0.md) and its [scoped scientific acceptance](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json).
+## v1.4.0 candidate — native Windows
 
-## Applicable qualification
+[v1.4.0 notes](V1.4.0.md) ([中文](V1.4.0.zh-CN.md)) describe the candidate on [PR #21](https://github.com/Shiro-Akane/ARCH/pull/21). It provides corresponding native Windows11 x64 CPU/CUDA CLI and Studio functionality within the existing scientific scope. **Linux/WSL2 remains recommended; Windows support is newer and may still have instability or bugs.** No v1.4.0 tag or public release is claimed. The user retains merge authority; Zenodo remains deferred.
 
-This patch updates Studio build dependencies and release documentation. Scientific implementation, mathematical libraries, Studio data-reading and data-writing implementation, inputs, test definitions, numerical tolerances and recorded historical evidence retain their original identities. The [original acceptance record](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json) remains authoritative for the physical models, backends and workloads actually qualified.
+Start with [Build](../guides/Build.md), then [Studio](../guides/Studio.md) for current operation. The [26-area native qualification](../histroy/build/WindowsNativeCudaQualification-20261027.md) records implementation evidence; the [release-preparation record](../histroy/release/V1.4.0ReleasePreparation-20261027.md) separates that evidence from candidate-head CI and post-merge publication exits.
 
-Supported execution remains Linux/WSL2 and the recorded CPU and single NVIDIA GPU configuration. Windows native execution, MPI, additional GPU vendors and other platforms require separate qualification. The retained SNIa repeated-AMR failure and thermal gap, and the distinction between hotspot functional checks and an ignition-mechanism claim, remain applicable. See the [v1.3.0 verification and use section](V1.3.0.md#verification-and-use) for qualifications and measured limits.
+## Published and frozen versions
 
-Hosted Tooling, CPU and Studio CI cover their declared scopes; they do not establish native Windows desktop behavior, additional GPU hardware, all scientific trajectories or a new performance result. Historical CPU/CUDA timings and costs remain attached to their originating implementation and acceptance records.
+| Version | Record and original scope |
+| --- | --- |
+| [v1.3.1](V1.3.1.md) ([中文](V1.3.1.zh-CN.md)) | Maintenance source release; original Linux/WSL2 scope and immutable tag/archive remain unchanged. |
+| [v1.3.0](V1.3.0.md) ([中文](V1.3.0.zh-CN.md)) | Studio GUI, modernization and strict configuration; original [scientific acceptance](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json). |
+| [v1.2.1](V1.2.1.md) ([中文](V1.2.1.zh-CN.md)) | Earlier maintenance record. |
+| [v1.2.0](V1.2.0.md) ([中文](V1.2.0.zh-CN.md)) | Earlier feature record. |
+| [v1.1.0](V1.1.0.md) ([中文](V1.1.0.zh-CN.md)) | Earlier feature record. |
+| [v1.0.0](V1.0.0.md) | Original release record. |
 
-## Distribution and local work instructions
+Later Windows acceptance does not retroactively qualify frozen v1.3.1. The [2026-10-26 CPU/Studio record](../histroy/build/WindowsNativeQualification-20261026.zh-CN.md) precedes the [2026-10-27 CPU/CUDA/Studio record](../histroy/build/WindowsNativeCudaQualification-20261027.md); original source, binary and human-interaction identities remain attached to each.
 
-Machine-local `AGENTS.md`, project assistant skills and the completed root modernization/release plans are excluded from current distributions. Historical commits retain their original provenance. Users may supply their own local instructions. This public index records frozen qualification, rather than a machine-specific execution queue.
+## Scientific and publication boundaries
 
-Use the [build guide](../guides/Build.md), [Studio guide](../guides/Studio.md) and [Zenodo record documentation](../zenodo/README.md) for current user-facing instructions.
+Existing model, EOS, network, geometry and coupled-method conditions remain applicable. Retained SNIa repeated-AMR failure/thermal gap and the distinction between hotspot functional checks and ignition-mechanism claims remain in [v1.3.0](V1.3.0.md#verification-and-use). Platform support does not add MPI, HIP/AMD, Apple Metal, general radiation transport, arbitrary hardware qualification or new performance claims.
+
+Hosted CI/security results cover their declared scopes; native GPU, packaging, desktop and human evidence remain separate. Publication needs the final PR head's checks, user merge, review of independent main changes, and successful checks on the actual main revision before an immutable v1.4.0 source tag/release.
+
+## Distribution and citation
+
+Machine-local AGENTS/assistant skills, obsolete root plans, build products and raw simulation outputs stay excluded. Scientific LFS pointers and third-party notices remain. The [citation guide](../zenodo/README.md) distinguishes unpublished candidate metadata, released versions and the known series DOI; no new version DOI or publication date is invented.

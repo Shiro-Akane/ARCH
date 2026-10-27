@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -64,11 +65,11 @@ ARCH_INLINE bool finite_rkl_arithmetic_controls(
     double first_coefficient, bool recursive, bool second_order,
     bool increments_are_scaled)
 {
-    if (!recursive) return std::isfinite(first_coefficient);
-    return std::isfinite(coefficients.mu) && std::isfinite(coefficients.nu)
-        && std::isfinite(coefficients.tilde_mu)
-        && (!second_order || std::isfinite(coefficients.gamma))
-        && (increments_are_scaled || std::isfinite(dt));
+    if (!recursive) return arch::math::isfinite(first_coefficient);
+    return arch::math::isfinite(coefficients.mu) && arch::math::isfinite(coefficients.nu)
+        && arch::math::isfinite(coefficients.tilde_mu)
+        && (!second_order || arch::math::isfinite(coefficients.gamma))
+        && (increments_are_scaled || arch::math::isfinite(dt));
 }
 
 /** Exact stationary-polynomial identity shared by every Host/device adapter.
@@ -84,7 +85,7 @@ ARCH_INLINE bool exact_stationary_rkl_value(
     double increment_previous, double increment_initial,
     bool recursive, bool second_order, bool controls_valid)
 {
-    if (!controls_valid || !std::isfinite(seed) || increment_previous != 0.0)
+    if (!controls_valid || !arch::math::isfinite(seed) || increment_previous != 0.0)
         return false;
     if (!recursive) return true;
     return previous == seed && older == seed
@@ -138,7 +139,7 @@ ARCH_INLINE bool exact_stationary_rkl_fraction(
     double increment_previous, double increment_initial,
     bool recursive, bool second_order, bool controls_valid)
 {
-    return controls_valid && std::isfinite(seed_rho) && seed_rho > 0.0
+    return controls_valid && arch::math::isfinite(seed_rho) && seed_rho > 0.0
         && output_rho == seed_rho
         && (!recursive || (previous_rho == seed_rho && older_rho == seed_rho))
         && exact_stationary_rkl_value(seed_fraction, previous_fraction,
@@ -207,10 +208,10 @@ ARCH_INLINE double evaluate_recursive_rkl_component(
 {
     const bool controls_valid = finite_rkl_arithmetic_controls(
         coefficients, dt, 0.0, true, second_order, IncrementsAreScaled);
-    if (!controls_valid || !std::isfinite(state_previous)
-        || !std::isfinite(state_older) || !std::isfinite(increment_previous)
-        || (second_order && (!std::isfinite(state_n)
-                             || !std::isfinite(increment_initial))))
+    if (!controls_valid || !arch::math::isfinite(state_previous)
+        || !arch::math::isfinite(state_older) || !arch::math::isfinite(increment_previous)
+        || (second_order && (!arch::math::isfinite(state_n)
+                             || !arch::math::isfinite(increment_initial))))
         return arch::state::invalid();
     const double seed = second_order ? state_n : state_previous;
     if (exact_stationary_rkl_value(seed, state_previous, state_older,
@@ -231,8 +232,8 @@ ARCH_INLINE double evaluate_recursive_rkl_component(
     } else {
         centered = centered + coefficients.tilde_mu * dt * increment_previous;
     }
-    if (std::isfinite(difference_previous) && std::isfinite(difference_older)
-        && std::isfinite(centered)) return centered;
+    if (arch::math::isfinite(difference_previous) && arch::math::isfinite(difference_older)
+        && arch::math::isfinite(centered)) return centered;
 
     // Finite differences may overflow although the original affine sum is
     // representable. Keep that range fallback's original operator grouping.
@@ -248,7 +249,7 @@ ARCH_INLINE double evaluate_recursive_rkl_component(
     } else {
         affine = affine + coefficients.tilde_mu * dt * increment_previous;
     }
-    return std::isfinite(affine) ? affine : arch::state::invalid();
+    return arch::math::isfinite(affine) ? affine : arch::state::invalid();
 }
 
 /** Apply the same conserved scalar recurrence to all five fluid components. */
@@ -295,9 +296,9 @@ ARCH_INLINE double evaluate_recursive_rkl_species_cell(
     const DiffFunction::RKLCoeffs& coefficients, bool second_order,
     double dt)
 {
-    if (!std::isfinite(rho_previous) || !std::isfinite(species_previous)
-        || !std::isfinite(rho_older) || !std::isfinite(species_older)
-        || (second_order && (!std::isfinite(rho_n) || !std::isfinite(species_n))))
+    if (!arch::math::isfinite(rho_previous) || !arch::math::isfinite(species_previous)
+        || !arch::math::isfinite(rho_older) || !arch::math::isfinite(species_older)
+        || (second_order && (!arch::math::isfinite(rho_n) || !arch::math::isfinite(species_n))))
         return arch::state::invalid();
     const double previous = rho_previous * species_previous;
     const double older = rho_older * species_older;

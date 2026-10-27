@@ -7,11 +7,25 @@ function(arch_configure_host_test target)
     target_include_directories(${target} PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${CMAKE_CURRENT_SOURCE_DIR}/tests" ${ARGN})
+    if(WIN32)
+        target_sources(${target} PRIVATE ${arch_windows_resource_sources})
+    endif()
 endfunction()
 
 # Python tooling contracts.
 find_package(Threads REQUIRED)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+add_executable(arch_platform_files tests/host/core/test_platform_files.cpp
+    src/core/files/FileFingerprint.cpp)
+arch_configure_host_test(arch_platform_files)
+add_test(NAME platform_files COMMAND arch_platform_files)
+add_test(NAME running_image_identity
+    COMMAND ${Python3_EXECUTABLE} -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/host/core/test_running_image_identity.py"
+        $<TARGET_FILE:arch_platform_files>
+        "${CMAKE_CURRENT_BINARY_DIR}/running-image-identity-data")
+set_tests_properties(running_image_identity PROPERTIES TIMEOUT 90)
 # This utility reads Host HDF5 checkpoints/traces; its historical target name
 # stays stable for validation runners. Its source and acceptance logic are
 # unchanged, and it does not construct or link the production CUDA backend.
@@ -118,6 +132,16 @@ foreach(contract IN ITEMS core/physical_constants core/jeans_diagnostics amr/ref
     add_test(NAME ${contract} COMMAND arch_${contract})
 endforeach()
 add_executable(arch_compensated_sum tests/host/numerics/test_compensated_sum.cpp)
+add_executable(arch_math_classification tests/host/numerics/test_math_classification.cpp)
+arch_configure_host_test(arch_math_classification)
+target_include_directories(arch_math_classification PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_math_classification PRIVATE arch_build_contract)
+add_test(NAME math_classification COMMAND arch_math_classification)
+add_executable(arch_fixed_array_fill tests/host/core/test_fixed_array_fill.cpp)
+arch_configure_host_test(arch_fixed_array_fill)
+target_include_directories(arch_fixed_array_fill PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_fixed_array_fill PRIVATE arch_build_contract)
+add_test(NAME fixed_array_fill COMMAND arch_fixed_array_fill)
 target_sources(arch_curvilinear_metrics PRIVATE src/physics/boundary/PhysicalBoundaryHandler.cpp)
 # The real hydro policy instantiates SelfGravity stage/source calls. Reuse its
 # existing production owner rather than test-local definitions or stubs.
@@ -282,16 +306,14 @@ add_test(NAME device_block_store_lifecycle
 
 # These targets require HDF5/HighFive and the resolved KLU provider.
 function(arch_register_io_regression_tests)
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        add_executable(arch_preview_mesh_checkpoint tests/api/preview/read_mesh_checkpoint.cpp)
-        arch_configure_host_test(arch_preview_mesh_checkpoint
-            "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
-        target_link_libraries(arch_preview_mesh_checkpoint PRIVATE ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES})
-        add_test(NAME ui_expansion_contract
-            COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_ui_expansion.py
-                $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_mesh_checkpoint>)
-        set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
-    endif()
+    add_executable(arch_preview_mesh_checkpoint tests/api/preview/read_mesh_checkpoint.cpp)
+    arch_configure_host_test(arch_preview_mesh_checkpoint
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_preview_mesh_checkpoint PRIVATE ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+    add_test(NAME ui_expansion_contract
+        COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/preview/test_ui_expansion.py
+            $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_mesh_checkpoint>)
+    set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
     add_executable(arch_preview_cellular_reference
         tests/api/preview/cellular_reference.cpp src/core/config/CompositionInput.cpp
         src/core/problem/ProblemHelper.cpp src/core/files/FileFingerprint.cpp
@@ -313,6 +335,15 @@ function(arch_register_io_regression_tests)
         src/core/files/FileFingerprint.cpp)
     arch_configure_host_test(arch_plotfile_publication
         "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+       AND CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL "16.2.0")
+        # Locally reproduced UCRT64/GCC 16.2 LTO failure: this TU's valid UUID
+        # regex throws before any Grid operation. Keep its original assertions
+        # and O3/strict FP; only this harness is native, while the writer and
+        # fingerprint implementations retain the production IPO profile.
+        set_property(SOURCE tests/host/io/test_plotfile_publication.cpp
+            APPEND PROPERTY COMPILE_OPTIONS -fno-lto)
+    endif()
     target_link_libraries(arch_plotfile_publication PRIVATE
         ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -495,3 +526,24 @@ add_test(NAME self_gravity_physics
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/validation/gravity/run_self_gravity.py
         --arch $<TARGET_FILE:ARCH> --output ${CMAKE_CURRENT_BINARY_DIR}/self-gravity-jeans --quick)
 set_tests_properties(self_gravity_physics PROPERTIES TIMEOUT 300 ENVIRONMENT "OMP_NUM_THREADS=1")
+
+# Standalone native file primitive tests. Fault seams are excluded from the
+# installed publisher, and neither target links numerical or scientific I/O code.
+if(WIN32)
+    add_executable(arch_windows_build_publish_test src/core/files/WindowsBuildPublish.cpp)
+    target_link_libraries(arch_windows_build_publish_test PRIVATE ntdll advapi32)
+    target_compile_definitions(arch_windows_build_publish_test PRIVATE
+        _WIN32_WINNT=0x0A00 ARCH_BUILD_PUBLISH_TEST)
+    target_link_options(arch_windows_build_publish_test PRIVATE
+        $<$<CXX_COMPILER_ID:GNU>:-municode>)
+    add_test(NAME windows_build_manifest_publication
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/host/core/test_windows_build_publish.py
+            $<TARGET_FILE:arch_windows_build_publish_test>)
+    set_tests_properties(windows_build_manifest_publication PROPERTIES TIMEOUT 120)
+    add_test(NAME windows_config_and_read_operations
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/host/core/test_windows_file_operations.py
+            $<TARGET_FILE:arch_windows_build_publish_test>)
+    set_tests_properties(windows_config_and_read_operations PROPERTIES TIMEOUT 120)
+endif()

@@ -7,13 +7,14 @@
 import path from 'node:path';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import type { ChildProcess } from 'node:child_process';
-import { spawn } from 'node:child_process';
+import {spawnOwned, terminateOwned} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import { StringDecoder } from 'node:string_decoder';
 import { randomUUID, createHash } from 'node:crypto';
 import { checkedPath, selectedPath } from './files.ts';
 import { BuildLog } from './buildLog.ts';
 import { CMAKE } from './buildProfile.ts';
-import { readCMakeConfigurationEvidence } from './cmakeEvidence.ts';
+import { readCMakeConfigurationEvidence, sameCMakePath } from './cmakeEvidence.ts';
 import type { CMakeConfigurationEvidence } from './cmakeEvidence.ts';
 /** Created by Host configuration only. Never deserialize this type from HTTP. */
 export interface ConfigureProfile {
@@ -22,11 +23,14 @@ export interface ConfigureProfile {
     buildDirRelative: string;
     generator: 'Ninja' | 'Unix Makefiles';
     definitions: Readonly<Record<string, string>>;
+    /** Explicit trusted Host setup. Browser requests cannot select tools/env. */
+    windowsTools?: WindowsHostTools;
 }
 export interface ConfigureResult {
     id: string;
     profileId: string;
     state: 'succeeded' | 'failed' | 'cancelled';
+    /** Tool status, or native supervisor failure status; stderr retains attribution. */
     exitCode: number | null;
     error?: string;
     evidence?: CMakeConfigurationEvidence;
@@ -68,7 +72,7 @@ export class ConfigureRunner {
         const pid = this.child?.pid;
         if (pid) {
             try {
-                process.kill(-pid, 'SIGTERM');
+                terminateOwned(this.child!, 'SIGTERM');
             }
             catch (e) {
                 if ((e as NodeJS.ErrnoException).code !== 'ESRCH')
@@ -78,7 +82,7 @@ export class ConfigureRunner {
                 this.killTimer = setTimeout(() => {
                     if (this.child?.pid === pid) {
                         try {
-                            process.kill(-pid, 'SIGKILL');
+                            terminateOwned(this.child!, 'SIGKILL');
                         }
                         catch (e) {
                             if ((e as NodeJS.ErrnoException).code !== 'ESRCH')
@@ -107,7 +111,8 @@ export class ConfigureRunner {
         try {
             await this.beforeStart?.();
             const p = this.profile;
-            if (process.platform !== 'linux' || !['Ninja', 'Unix Makefiles'].includes(p.generator))
+            if ((!['linux','win32'].includes(process.platform)) || !['Ninja', 'Unix Makefiles'].includes(p.generator) ||
+                (process.platform === 'win32' && (!p.windowsTools || p.generator !== 'Ninja')))
                 throw new Error('Unsupported Configure platform or generator.');
             await checkedPath(p.sourceRoot, 'CMakeLists.txt');
             const definitions = Object.entries(p.definitions).sort(([a], [b]) => a.localeCompare(b));
@@ -127,7 +132,15 @@ export class ConfigureRunner {
             }
             if (cache !== undefined) {
                 const lines = cache.split(/\r?\n/);
-                if (!lines.includes('CMAKE_HOME_DIRECTORY:INTERNAL=' + p.sourceRoot) || !lines.includes('CMAKE_CACHEFILE_DIR:INTERNAL=' + build) ||
+                // Match the same native host spelling used by CMake's cache;
+                // do not rebind another tree or fold directory/file case.
+                const bound = (key: string, expected: string) => {
+                    const prefix = key + ':INTERNAL=';
+                    if (process.platform !== 'win32') return lines.includes(prefix + expected);
+                    const values = lines.filter(line => line.startsWith(prefix)).map(line => line.slice(prefix.length));
+                    return values.length === 1 && sameCMakePath(values[0], expected);
+                };
+                if (!bound('CMAKE_HOME_DIRECTORY', p.sourceRoot) || !bound('CMAKE_CACHEFILE_DIR', build) ||
                     !lines.includes('CMAKE_GENERATOR:INTERNAL=' + p.generator))
                     throw new Error('Existing CMake tree binding or generator differs; refusing to migrate it.');
             }
@@ -168,19 +181,19 @@ export class ConfigureRunner {
                 throw new Error('Configure cancelled.');
             const args = ['-S', p.sourceRoot, '-B', build, '-G', p.generator, ...definitions.map(([k, v]) => '-D' + k + '=' + v)];
             await new Promise<void>((resolve, reject) => {
-                const child = spawn(CMAKE, args, { cwd: p.sourceRoot, shell: false, detached: true, env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: process.env.HOME, LANG: 'C.UTF-8' }, stdio: ['ignore', 'pipe', 'pipe'] });
+                const child = spawnOwned(p.windowsTools?.cmake ?? CMAKE, args, { cwd: p.sourceRoot, shell: false, env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: process.env.HOME, LANG: 'C.UTF-8' }, stdio: ['ignore', 'pipe', 'pipe'] }, p.windowsTools);
                 this.child = child;
                 for (const [stream, kind] of [[child.stdout, 'stdout'], [child.stderr, 'stderr']] as const) {
                     const decoder = new StringDecoder('utf8');
-                    stream.on('data', (b: Buffer) => this.log?.append(kind, decoder.write(b)));
-                    stream.on('end', () => { const tail = decoder.end(); if (tail)
+                    stream!.on('data', (b: Buffer) => this.log?.append(kind, decoder.write(b)));
+                    stream!.on('end', () => { const tail = decoder.end(); if (tail)
                         this.log?.append(kind, tail); });
                 }
                 child.once('error', reject);
                 child.once('close', (code) => { result.exitCode = code; if (code === 0)
                     resolve();
                 else
-                    reject(new Error('CMake Configure failed.')); });
+                    reject(new Error(process.platform === 'win32' ? 'CMake Configure command or process supervisor failed; inspect the retained log.' : 'CMake Configure failed.')); });
             });
             if (this.cancelled)
                 throw new Error('Configure cancelled.');

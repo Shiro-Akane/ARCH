@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -50,9 +51,9 @@ ARCH_INLINE decltype(auto) candidate_eos(const Eos& eos)
 /** Validate configured physical limits without interpreting any state. */
 ARCH_INLINE bool valid_bounds(const Bounds& bounds)
 {
-    return std::isfinite(bounds.density) && bounds.density >= 0.0
-        && std::isfinite(bounds.internal_min) && bounds.internal_min >= 0.0
-        && std::isfinite(bounds.internal_max)
+    return arch::math::isfinite(bounds.density) && bounds.density >= 0.0
+        && arch::math::isfinite(bounds.internal_min) && bounds.internal_min >= 0.0
+        && arch::math::isfinite(bounds.internal_max)
         && bounds.internal_max >= bounds.internal_min;
 }
 
@@ -68,7 +69,7 @@ ARCH_INLINE Status validate_composition(const double* fractions,int species,int 
     double sum = 0.0;
     for (int s = 0; s < species; ++s) {
         const double x = fractions[static_cast<std::size_t>(s) * stride];
-        if (!std::isfinite(x) || x < 0.0) return Status::invalid_composition;
+        if (!arch::math::isfinite(x) || x < 0.0) return Status::invalid_composition;
         sum += x;
     }
     if (species && std::abs(sum - 1.0)
@@ -87,9 +88,9 @@ ARCH_INLINE double invalid() { return std::numeric_limits<double>::quiet_NaN(); 
 ARCH_INLINE Kinematics recover(const FluidVector& state)
 {
     Kinematics result;
-    if (!std::isfinite(state.rho) || !std::isfinite(state.eng)
-        || !std::isfinite(state.mom_u) || !std::isfinite(state.mom_v)
-        || !std::isfinite(state.mom_w)) result.status = Status::nonfinite;
+    if (!arch::math::isfinite(state.rho) || !arch::math::isfinite(state.eng)
+        || !arch::math::isfinite(state.mom_u) || !arch::math::isfinite(state.mom_v)
+        || !arch::math::isfinite(state.mom_w)) result.status = Status::nonfinite;
     else if (!(state.rho > 0.0)) result.status = Status::nonpositive_density;
     if (result.status != Status::valid) {
         result.u = result.v = result.w = result.internal = invalid();
@@ -106,9 +107,9 @@ ARCH_INLINE Kinematics recover(const FluidVector& state)
                    + (0.5 * state.mom_w) * result.w;
     const double thermal = state.eng - result.kinetic;
     result.internal = thermal / state.rho;
-    if (!std::isfinite(result.u) || !std::isfinite(result.v)
-        || !std::isfinite(result.w) || !std::isfinite(result.kinetic)
-        || !std::isfinite(result.internal)) result.status = Status::nonfinite;
+    if (!arch::math::isfinite(result.u) || !arch::math::isfinite(result.v)
+        || !arch::math::isfinite(result.w) || !arch::math::isfinite(result.kinetic)
+        || !arch::math::isfinite(result.internal)) result.status = Status::nonfinite;
     // A cancellation-dominated residual cannot be turned into a measured
     // temperature by applying an energy floor. The bound is in energy density.
     else if (!(thermal > 0.0) || thermal <= 8.0 * std::numeric_limits<double>::epsilon()
@@ -161,7 +162,7 @@ ARCH_INLINE Repair apply_bounds(FluidVector& state, double density_floor,
     state.eng = state.rho * std::max(k.internal, energy_floor)
               + (0.5 * state.mom_u) * k.u + (0.5 * state.mom_v) * k.v
               + (0.5 * state.mom_w) * k.w;
-    if (!std::isfinite(state.eng)) { state = before; report.status = Status::nonfinite; return report; }
+    if (!arch::math::isfinite(state.eng)) { state = before; report.status = Status::nonfinite; return report; }
     report.delta = state - before;
     report.status = Status::repaired;
     return report;
@@ -208,9 +209,9 @@ ARCH_INLINE Status validate_eos(const FluidVector& fluid,
         contiguous_fractions);
     const double pressure = eos.get_pressure(fluid,contiguous_fractions);
     const double sound = eos.get_sound_speed(fluid,pressure,contiguous_fractions);
-    if (!std::isfinite(temperature) || !(temperature > 0.0)
-        || !std::isfinite(pressure) || !(pressure > 0.0)
-        || !std::isfinite(sound) || !(sound > 0.0))
+    if (!arch::math::isfinite(temperature) || !(temperature > 0.0)
+        || !arch::math::isfinite(pressure) || !(pressure > 0.0)
+        || !arch::math::isfinite(sound) || !(sound > 0.0))
         return Status::invalid_thermodynamics;
     if(output)*output={thermal,temperature,pressure,sound,true};
     return Status::valid;
@@ -238,7 +239,7 @@ ARCH_INLINE Status repair_composition_roundoff(
     double nonnegative_sum = 0.0;
     for (int s = 0; s < count; ++s) {
         const double x = fractions[s * stride];
-        if (!std::isfinite(x) || x < -composition_roundoff_limit)
+        if (!arch::math::isfinite(x) || x < -composition_roundoff_limit)
             return Status::invalid_composition;
         needs_repair = needs_repair || x < 0.0;
         nonnegative_sum += std::max(x, 0.0);
@@ -247,7 +248,7 @@ ARCH_INLINE Status repair_composition_roundoff(
     const auto kinematics = recover(fluid);
     if (kinematics.status != Status::valid) return kinematics.status;
     if (!receipt.values || receipt.species != count
-        || !(volume > 0.0) || !std::isfinite(volume)
+        || !(volume > 0.0) || !arch::math::isfinite(volume)
         || std::abs(nonnegative_sum - 1.0)
             > 512.0 * count * std::numeric_limits<double>::epsilon())
         return Status::invalid_composition;
@@ -258,7 +259,7 @@ ARCH_INLINE Status repair_composition_roundoff(
         // when the correction is representable. An underflowed receipt cannot
         // account for a state change, so reject it rather than silently clip.
         const double mass = (fluid.rho * -x) * volume;
-        if (!(mass > 0.0) || !std::isfinite(mass))
+        if (!(mass > 0.0) || !arch::math::isfinite(mass))
             return Status::invalid_composition;
     }
     receipt.event(volume, cell);
@@ -300,11 +301,11 @@ ARCH_INLINE bool normalize_composition(double* fractions, int count, int stride 
     int largest = 0;
     for (int i = 0; i < count; ++i) {
         const double x = fractions[i * stride];
-        if (!std::isfinite(x) || x < -composition_roundoff_limit) return false;
+        if (!arch::math::isfinite(x) || x < -composition_roundoff_limit) return false;
         sum += std::max(x, 0.0);
         if (x > fractions[largest * stride]) largest = i;
     }
-    if (!(sum > 0.0) || !std::isfinite(sum)) return false;
+    if (!(sum > 0.0) || !arch::math::isfinite(sum)) return false;
     double deficit = 0.0, surplus = 0.0;
     for (int i = 0; i < count; ++i) {
         fractions[i * stride] = std::max(fractions[i * stride], 0.0) / sum;

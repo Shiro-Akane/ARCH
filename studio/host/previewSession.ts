@@ -6,6 +6,10 @@
  */
 import { spawn } from 'node:child_process';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
+import {spawnOwned,terminateOwned} from './hostProcess.ts';
+import {windowsPreviewResourcePolicy} from '../src/host/workflowValidation.ts';
+export {windowsPreviewResourcePolicy} from '../src/host/workflowValidation.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import { createHash, randomUUID } from 'node:crypto';
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -19,6 +23,8 @@ function boundedInteger(value: unknown, min: number, max: number): number {
     return value;
 }
 export interface SessionCapability {
+    workerPlatform?: 'windows';
+    resourcePolicy?: 'windows-job-commit-user-v1';
     version: '1';
     maxRequests: number;
     maxRequestBytes: number;
@@ -37,10 +43,16 @@ export function sessionCapability(capabilities: unknown): SessionCapability | un
     const value = object(extensions.session);
     if (value.supported === false)
         return;
-    if (value.supported !== true || value.version !== '1' || value.workerPlatform !== 'linux' ||
+    if (value.supported !== true || value.version !== '1' || (value.workerPlatform!=='linux'&&value.workerPlatform!=='windows') ||
         value.transport !== 'ndjson' || value.maxInFlight !== 1)
         throw new Error('Unsupported Preview session contract.');
+    if(value.workerPlatform==='windows'){
+        if(!windowsPreviewResourcePolicy(value.resourcePolicy)||value.heavyRequestCpuSeconds!==300||value.meshRequestCpuSeconds!==30||
+            value.processAddressSpaceMiB!==undefined)
+            throw new Error('Unsupported native Windows Preview resource contract.');
+    }
     return {
+        ...(value.workerPlatform==='windows'?{workerPlatform:'windows' as const,resourcePolicy:'windows-job-commit-user-v1' as const}:{}),
         version: '1', maxRequests: boundedInteger(value.maxRequests, 1, 256),
         maxRequestBytes: boundedInteger(value.maxRequestBytes, 1, 8 * 1024 * 1024),
         maxResponseBytes: boundedInteger(value.maxResponseBytes, 1, 9 * 1024 * 1024),
@@ -79,6 +91,7 @@ export interface SessionResult {
     transportParseMilliseconds: number;
 }
 export interface SessionOptions {
+    windowsTools?: WindowsHostTools;
     binary: string;
     cwd: string;
     capability: SessionCapability;
@@ -123,14 +136,20 @@ export class PreviewSession {
     private diagnostics = Buffer.alloc(0);
     private parseMilliseconds = 0;
     constructor(options: SessionOptions) {
-        this.options = options;
+        if(process.platform==='win32'&&(options.capability.workerPlatform!=='windows'||options.capability.resourcePolicy!=='windows-job-commit-user-v1'))
+            throw new Error('Native Windows Preview requires the approved resource contract.');
+        if(process.platform!=='win32'&&options.capability.workerPlatform==='windows')
+            throw new Error('Preview worker platform does not match this Host.');
+        this.options = {...options,...(options.windowsTools?{windowsTools:structuredClone(options.windowsTools)}:{})};
         this.ready = new Promise((resolve, reject) => { this.readyResolve = resolve; this.readyReject = reject; });
         void this.ready.catch(() => { });
         this.closed = new Promise(resolve => { this.closedResolve = resolve; });
-        this.child = (options.spawn ?? spawn)(options.binary, ['--preview-session'], {
+        const spawnOptions={
             cwd: options.cwd, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'],
             env: { PATH: '/usr/bin:/bin', HOME: process.env.HOME ?? '/home/arch', LANG: 'C.UTF-8', OMP_NUM_THREADS: '1', CUDA_VISIBLE_DEVICES: '' },
-        });
+        } as const;
+        this.child = (options.spawn?options.spawn(options.binary,['--preview-session'],{...spawnOptions,stdio:['pipe','pipe','pipe']}):
+            spawnOwned(options.binary,['--preview-session'],{...spawnOptions,stdio:['pipe','pipe','pipe']},options.windowsTools)) as ChildProcessWithoutNullStreams;
         this.readyTimer = setTimeout(() => this.fail(new Error('Preview session ready timeout.')), options.readyTimeoutMs ?? 3000);
         this.child.stdout.on('data', (chunk: Buffer) => this.consume(chunk));
         this.child.stderr.on('data', (chunk: Buffer) => {
@@ -200,12 +219,7 @@ export class PreviewSession {
         const kill = (signal: NodeJS.Signals) => {
             if (!this.child.pid)
                 return;
-            try {
-                process.kill(-this.child.pid, signal);
-            }
-            catch {
-                this.child.kill(signal);
-            }
+            terminateOwned(this.child,signal);
         };
         kill('SIGTERM');
         this.killTimer = setTimeout(() => kill('SIGKILL'), this.options.graceMs ?? 1000);

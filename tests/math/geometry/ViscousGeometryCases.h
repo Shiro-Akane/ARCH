@@ -2,6 +2,7 @@
 // Test data only: no call to production gradient, connection or flux operators.
 #pragma once
 
+#include "core/MathClassification.h"
 #include "data/FluidState.h"
 #include "numerics/curvilinear/GridGeometryView.h"
 #include "grid/Grid.h"
@@ -125,7 +126,7 @@ inline double error(const FluidVector& actual, const FluidVector& expected)
     const double e[]{expected.rho,expected.mom_u,expected.mom_v,expected.mom_w,expected.eng};
     double maximum = 0.;
     for (int field=0; field<5; ++field) {
-        if (!std::isfinite(a[field])) return std::numeric_limits<double>::infinity();
+        if (!arch::math::isfinite(a[field])) return std::numeric_limits<double>::infinity();
         maximum = std::max(maximum,std::abs(a[field]-e[field])/std::max(1.,std::abs(e[field])));
     }
     return maximum;
@@ -171,7 +172,7 @@ void convergence(const char* backend, Evaluate evaluate)
             std::cout << "VISCOUS_SPATIAL_CONVERGENCE backend=" << backend << " geometry=" << name
                       << " dim=" << dimension << " uniform=" << uniform << " density_slope=" << density_slope
                       << " h=" << spacing << " error=" << current << std::endl;
-            if (!std::isfinite(current) || (previous > 1.e-10 && previous < 3.5*current))
+            if (!arch::math::isfinite(current) || (previous > 1.e-10 && previous < 3.5*current))
                 throw std::runtime_error("viscous momentum/work flux lost second-order consistency");
             previous = current;
         }
@@ -196,7 +197,7 @@ Contraction momentum_contraction(FluidState state, const Grid& grid, Evaluate ev
 {
     Contraction result{};
     result.raw_dt = evaluate(state, grid).raw_dt;
-    if (!(result.raw_dt > 0.) || !std::isfinite(result.raw_dt))
+    if (!(result.raw_dt > 0.) || !arch::math::isfinite(result.raw_dt))
         throw std::runtime_error("invalid diffusion stability limit");
     std::vector<double> row_sums(amr::BLOCK_NX, 0.);
     for (int column=0; column<amr::BLOCK_NX; ++column) {
@@ -280,7 +281,7 @@ void cartesian_density_energy(const char* backend,FluidState state,const Grid& g
     const double raw_dt=evaluate(state,grid).raw_dt;
     const long double old_scalar_dt=h*h/(nu*(contrast+1.L));
     const long double stokes_dt=3.L*old_scalar_dt/4.L;
-    if(!std::isfinite(raw_dt)||!(raw_dt>0.)
+    if(!arch::math::isfinite(raw_dt)||!(raw_dt>0.)
        ||std::abs(static_cast<long double>(raw_dt)-stokes_dt)>2.e-12L*stokes_dt)
         throw std::runtime_error("Cartesian actual Stokes recommended timestep differs from independent row");
     long double maximum_energy_change=0.,maximum_identity_error=0.;
@@ -474,7 +475,9 @@ ARCH_INLINE bool newtonian_point_guards(const NewtonianPointCase& input)
 {
     using namespace NewtonianViscousStress;
     const double nan=std::numeric_limits<double>::quiet_NaN();
-    Tensor sentinel{};sentinel.fill(42.);Tensor output=sentinel;
+    Tensor sentinel{};
+    for(int component=0;component<9;++component)sentinel[component]=42.;
+    Tensor output=sentinel;
     if(stress(input.gradient,-1.,output)||output!=sentinel)return false;
     if(stress(input.gradient,nan,output)||output!=sentinel)return false;
     if(stress(input.gradient,std::numeric_limits<double>::infinity(),output)||output!=sentinel)return false;
@@ -511,7 +514,7 @@ inline void newtonian_constitutive()
         maximum=std::max(maximum,newtonian_point_error(input));
         if(!newtonian_point_guards(input))throw std::runtime_error("Newtonian point-law failure publication contract");
     }
-    if(!std::isfinite(maximum)||maximum>64.*std::numeric_limits<double>::epsilon())
+    if(!arch::math::isfinite(maximum)||maximum>64.*std::numeric_limits<double>::epsilon())
         throw std::runtime_error("Newtonian analytical point-law 64-epsilon window");
     std::cout<<"NEWTONIAN_CONSTITUTIVE_POINT cases="<<cases.size()<<" max_error="<<maximum<<'\n';
 }
@@ -602,7 +605,9 @@ ARCH_INLINE bool covariant_point_guards()
     const double nan=std::numeric_limits<double>::quiet_NaN();
     const double inf=std::numeric_limits<double>::infinity();
     const double huge=std::numeric_limits<double>::max();
-    VelocityGradient sentinel{};sentinel.fill(42.);VelocityGradient output=sentinel;
+    VelocityGradient sentinel{};
+    for(int component=0;component<9;++component)sentinel[component]=42.;
+    VelocityGradient output=sentinel;
     const VelocityGradient zero{};const Vector velocity{};
     if(physical_covariant_gradient(static_cast<Frame>(255),velocity,zero,2.,.7,output)||output!=sentinel)return false;
     for(int component=0;component<9;++component) {
@@ -640,7 +645,7 @@ inline void newtonian_covariant_gradient()
     double maximum=0.;const auto cases=covariant_point_cases();
     for(const auto& input:cases)maximum=std::max(maximum,covariant_point_error(input));
     if(!covariant_point_guards())throw std::runtime_error("Covariant point-gradient atomic failure contract");
-    if(!std::isfinite(maximum)||maximum>64.*std::numeric_limits<double>::epsilon())
+    if(!arch::math::isfinite(maximum)||maximum>64.*std::numeric_limits<double>::epsilon())
         throw std::runtime_error("Covariant analytical point-gradient 64-epsilon window");
     std::cout<<"NEWTONIAN_COVARIANT_POINT cases="<<cases.size()<<" max_error="<<maximum<<'\n';
 }
@@ -745,7 +750,8 @@ ARCH_INLINE bool paired_traction_guards()
             if(cartesian_paired_traction(0,1.,side?Vector{}:velocity,side?velocity:Vector{},zero,zero,0.,0.,output)||output!=sentinel)return false;
         }
     }
-    auto enormous=zero;enormous.fill(huge);
+    auto enormous=zero;
+    for(int component=0;component<9;++component)enormous[component]=huge;
     if(cartesian_paired_traction(0,1.,Vector{-huge,0.,0.},Vector{huge,0.,0.},zero,zero,1.,1.,output)||output!=sentinel)return false;
     if(cartesian_paired_traction(0,1.,Vector{},Vector{},enormous,enormous,1.,1.,output)||output!=sentinel)return false;
     // Finite enormous operands remain legal when both actual coefficients vanish.
@@ -820,10 +826,10 @@ ARCH_INLINE bool paired_periodic_work(const PairedPeriodicCase& input,double* ou
         for(int n=0;n<3;++n) {const double term=input.velocity[cell][n]*divergence[cell][n];kinetic+=term;kinetic_scale+=std::abs(term);}
     }
     const double window=64.*std::numeric_limits<double>::epsilon();
-    if(!std::isfinite(work)||work<0.||!std::isfinite(work_scale)
-       ||!std::isfinite(kinetic)||!std::isfinite(kinetic_scale)
-       ||!std::isfinite(total_energy)||!std::isfinite(energy_scale)
-       ||!std::isfinite(naive_work)||!(naive_work<0.)
+    if(!arch::math::isfinite(work)||work<0.||!arch::math::isfinite(work_scale)
+       ||!arch::math::isfinite(kinetic)||!arch::math::isfinite(kinetic_scale)
+       ||!arch::math::isfinite(total_energy)||!arch::math::isfinite(energy_scale)
+       ||!arch::math::isfinite(naive_work)||!(naive_work<0.)
        ||std::abs(work-static_cast<double>(17027.L/500.L))>window*work_scale
        ||std::abs(naive_work-static_cast<double>(-250661.L/1000.L))>window*work_scale
        ||std::abs(kinetic+work)>window*(work_scale+kinetic_scale)
@@ -836,7 +842,7 @@ inline void newtonian_paired_faces()
     const auto cases=paired_traction_cases();double error=0.;
     for(const auto& input:cases)error=std::max(error,paired_traction_error(input));
     double work[4]{};
-    if(!std::isfinite(error)||error>64.*std::numeric_limits<double>::epsilon()
+    if(!arch::math::isfinite(error)||error>64.*std::numeric_limits<double>::epsilon()
        ||!paired_traction_guards()||!paired_periodic_work(paired_periodic_case(),work))
         throw std::runtime_error("Product-weighted paired Cartesian face/work contract");
     std::cout<<"NEWTONIAN_PAIRED_CARTESIAN_FACE cases="<<cases.size()<<" max_error="<<error

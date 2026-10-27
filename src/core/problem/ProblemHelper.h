@@ -21,7 +21,7 @@ struct SpeciesManager;
 struct ProblemInitializationContext;
 
 namespace amr {
-class AMRControl;
+struct AMRControl;
 }
 
 namespace ProblemHelper {

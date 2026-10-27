@@ -5,10 +5,11 @@
  * separate Core contracts; a displayed initial mesh is not an evolved solution.
  */
 import { execFile } from 'node:child_process';
+import {captureOwned} from './hostProcess.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { BuildError } from './buildRunner.ts';
 import { checkedPath } from './files.ts';
-import { sessionCapability } from './previewSession.ts';
+import { sessionCapability,windowsPreviewResourcePolicy } from './previewSession.ts';
 import type { SessionCapability, SessionRequest } from './previewSession.ts';
 import type { PreviewRunner } from './previewRunner.ts';
 import { record } from '../src/host/previewValidation.ts';
@@ -36,6 +37,12 @@ export class WorkflowRunner {
     }
     private async query(command: '--list-cases' | '--preview-capabilities') {
         const b = this.preview.build, binary = await checkedPath(b.root, b.profile.outputBinaryRelative);
+        if(process.platform==='win32'){
+            const response=await captureOwned(binary,[command],'',b.root,this.preview.windowsTools());
+            if(response.code!==0)throw new BuildError('Binary discovery failed or exceeded its limits.',502);
+            try{return JSON.parse(response.stdout) as unknown;}
+            catch{throw new BuildError('Malformed binary discovery response.',502);}
+        }
         return new Promise<unknown>((resolve, reject) => execFile(binary, [command], { cwd: b.root, shell: false, encoding: 'utf8', timeout: 10000, maxBuffer: 8 * 1024 * 1024, env: { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', OMP_NUM_THREADS: '1', CUDA_VISIBLE_DEVICES: '' } }, (error, stdout) => {
             if (error) {
                 reject(new BuildError('Binary discovery failed or exceeded its limits.', 502));
@@ -64,7 +71,9 @@ export class WorkflowRunner {
         const ext = caps.extensions.amr;
         let amr: DiscoveryResponse['amr'] = null;
         if (ext !== undefined) {
-            if (!record(ext) || ext.version !== '1' || ext.workerPlatform !== 'linux' || ext.meshCommand !== '--preview-amr' || ext.resourcesCommand !== '--amr-resources' || !Array.isArray(ext.cases) || !ext.cases.every(x => typeof x === 'string') || !Array.isArray(ext.geometries) || !ext.geometries.every(x => typeof x === 'string') || !Number.isInteger(ext.defaultMaxBlocks) || Number(ext.defaultMaxBlocks) < 1 || Number(ext.defaultMaxBlocks) > 1024 || !Number.isInteger(ext.defaultMemoryMiB) || Number(ext.defaultMemoryMiB) < 16 || Number(ext.defaultMemoryMiB) > 256)
+            if (!record(ext) || ext.version !== '1' || ext.workerPlatform !== (session.workerPlatform??'linux') ||
+                (session.workerPlatform==='windows'&&(!windowsPreviewResourcePolicy(ext.resourcePolicy)||ext.processAddressSpaceMiB!==undefined))||
+                ext.meshCommand !== '--preview-amr' || ext.resourcesCommand !== '--amr-resources' || !Array.isArray(ext.cases) || !ext.cases.every(x => typeof x === 'string') || !Array.isArray(ext.geometries) || !ext.geometries.every(x => typeof x === 'string') || !Number.isInteger(ext.defaultMaxBlocks) || Number(ext.defaultMaxBlocks) < 1 || Number(ext.defaultMaxBlocks) > 1024 || !Number.isInteger(ext.defaultMemoryMiB) || Number(ext.defaultMemoryMiB) < 16 || Number(ext.defaultMemoryMiB) > 256)
                 throw new BuildError('Unsupported AMR capability.');
             amr = { cases: ext.cases as string[], geometries: ext.geometries as string[], defaultMaxBlocks: Number(ext.defaultMaxBlocks), defaultMemoryMiB: Number(ext.defaultMemoryMiB) };
         }

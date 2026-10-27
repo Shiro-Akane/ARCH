@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include "driver/schedule/ReductionSpec.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 
@@ -78,7 +79,7 @@ ARCH_INLINE double compute_cfl_candidate(
     const FluidVector& U, double c, int dim,
     double dx1, double dx2, double dx3)
 {
-    if (!(c >= 0.0) || !std::isfinite(c)) return std::numeric_limits<double>::quiet_NaN();
+    if (!(c >= 0.0) || !arch::math::isfinite(c)) return std::numeric_limits<double>::quiet_NaN();
     // Sufficient convex-update bound: two face wave speeds per dimension.
     double rho = U.rho;
     double inv_dt_sum = (std::abs(U.mom_u / rho) + c) / dx1;
@@ -89,7 +90,7 @@ ARCH_INLINE double compute_cfl_candidate(
     if (dim == 3)
         inv_dt_sum += (std::abs(U.mom_w / rho) + c) / dx3;
 
-    if (!std::isfinite(inv_dt_sum) || inv_dt_sum < 0.0)
+    if (!arch::math::isfinite(inv_dt_sum) || inv_dt_sum < 0.0)
         return std::numeric_limits<double>::quiet_NaN();
     return inv_dt_sum == 0.0 ? std::numeric_limits<double>::max() : 0.5 / inv_dt_sum;
 }
@@ -101,7 +102,7 @@ ARCH_INLINE double cfl_inactive_cell_dt()
 
 ARCH_INLINE bool is_cfl_cell_active(const FluidVector& U)
 {
-    return std::isfinite(U.rho) && U.rho > 0.0;
+    return arch::math::isfinite(U.rho) && U.rho > 0.0;
 }
 
 ARCH_INLINE double compute_cfl_cell_dt(
@@ -144,7 +145,7 @@ ARCH_INLINE double evaluate_cfl_cell_dt(
         grid.dim == 3 ? GridMetrics::PhysicalSpacing(grid, 2, i, j) : grid.dx3);
     if(grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2) {
         const double source=TimeIntegration::cylindrical_rotation_source_dt(U,grid,i);
-        if(!std::isfinite(source))return arch::state::invalid();
+        if(!arch::math::isfinite(source))return arch::state::invalid();
         return std::min(spatial,source);
     }
     return spatial;

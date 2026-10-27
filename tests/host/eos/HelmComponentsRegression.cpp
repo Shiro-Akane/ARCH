@@ -58,8 +58,24 @@ void table_reader_boundaries()
             "5e-324", "-5e-324", "1e-500", "-1e-500", "+1e-500"}) {
         std::istringstream reference(token), input(token);
         double expected = 77.0, actual = 77.0;
-        require(static_cast<bool>(reference >> expected), "reader fixture rejected by original extractor");
         HelmTableReader reader(input);
+        const bool extracted = static_cast<bool>(reference >> expected);
+#ifdef _MSC_VER
+        // MSVC's original extractor reports these below-binary64 literals as
+        // failbit, even though it stores signed zero. The buffered reader must
+        // preserve that failure and its own no-publication/sticky contract.
+        if (!extracted) {
+            require((token == "1e-500" || token == "-1e-500" || token == "+1e-500")
+                    && reference.fail() && !reference.bad()
+                    && same_bits(expected, token.front() == '-' ? -0.0 : 0.0),
+                    "unexpected MSVC reference extraction failure");
+            require(!reader.read(actual) && same_bits(actual, 77.0)
+                    && !reader.read(actual) && same_bits(actual, 77.0),
+                    "table reader published failed MSVC underflow or lost sticky failure");
+            continue;
+        }
+#endif
+        require(extracted, "reader fixture rejected by original extractor");
         require(reader.read(actual) && same_bits(actual, expected),
                 "table reader changed finite extraction, including underflow or signed zero");
         require(!reader.read(actual), "table reader did not finish at EOF");

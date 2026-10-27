@@ -14,6 +14,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "amr/transfer/ConservativeRestriction.h"
 #include "core/ArchPortability.h"
 #include "data/FluidState.h"
@@ -85,9 +86,9 @@ ARCH_HOST_DEVICE inline double minmod(double a, double b)
 ARCH_HOST_DEVICE inline bool is_admissible_conserved_state(
     const FluidVector& state, double density_floor, double min_eint)
 {
-    if (!std::isfinite(state.rho) || !std::isfinite(state.mom_u)
-        || !std::isfinite(state.mom_v) || !std::isfinite(state.mom_w)
-        || !std::isfinite(state.eng) || state.rho < density_floor)
+    if (!arch::math::isfinite(state.rho) || !arch::math::isfinite(state.mom_u)
+        || !arch::math::isfinite(state.mom_v) || !arch::math::isfinite(state.mom_w)
+        || !arch::math::isfinite(state.eng) || state.rho < density_floor)
         return false;
     const auto recovered=arch::state::recover(state);
     return recovered.status == arch::state::Status::valid && recovered.internal >= min_eint;
@@ -193,10 +194,10 @@ ARCH_HOST_DEVICE inline Status prolong_family(
 {
     if (geometry.dimension < 1 || geometry.dimension > 3 || species < 0
         || (species > 0 && workspace == nullptr)
-        || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
+        || !arch::math::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
     if (geometry.angular_momentum
-        && (!std::isfinite(geometry.coarse_moment) || geometry.coarse_moment <= 0.0))
+        && (!arch::math::isfinite(geometry.coarse_moment) || geometry.coarse_moment <= 0.0))
         return Status::InvalidGeometry;
     const int cells = 1 << geometry.dimension;
     result.rhoX = workspace;
@@ -205,10 +206,10 @@ ARCH_HOST_DEVICE inline Status prolong_family(
     double* parent_X = species > 0 ? workspace
         + static_cast<std::size_t>(species) * (2 * maximum_children) : nullptr;
     for (int cell = 0; cell < cells; ++cell) {
-        if (!std::isfinite(geometry.fine_volumes[cell]) || geometry.fine_volumes[cell] <= 0.0)
+        if (!arch::math::isfinite(geometry.fine_volumes[cell]) || geometry.fine_volumes[cell] <= 0.0)
             return Status::InvalidGeometry;
         if (geometry.angular_momentum
-            && (!std::isfinite(geometry.fine_moments[cell]) || geometry.fine_moments[cell] <= 0.0))
+            && (!arch::math::isfinite(geometry.fine_moments[cell]) || geometry.fine_moments[cell] <= 0.0))
             return Status::InvalidGeometry;
         for (int field = 0; field < 5; ++field)
             component(result.fluid[cell], field) = reconstruct(source, geometry, field, cell);
@@ -236,7 +237,7 @@ ARCH_HOST_DEVICE inline Status prolong_family(
     const double enuc_shift = source.fields[5][geometry.center] - enuc_integral / geometry.coarse_volume;
     for (int cell = 0; cell < cells; ++cell) {
         result.enuc[cell] += enuc_shift;
-        if (!std::isfinite(result.enuc[cell])) return Status::ProlongationEnuc;
+        if (!arch::math::isfinite(result.enuc[cell])) return Status::ProlongationEnuc;
     }
     const FluidVector parent = source.fluid(geometry.center);
     if (!is_admissible_conserved_state(parent, density_floor, min_eint)) return Status::ParentFluid;
@@ -271,13 +272,13 @@ ARCH_HOST_DEVICE inline Status prolong_family(
     const double tolerance = composition_simplex_tolerance(species);
     for (int sp = 0; sp < species; ++sp) {
         const double value = source.fraction(sp, geometry.center);
-        if (!std::isfinite(value) || value < -tolerance) return Status::ParentFractions;
+        if (!arch::math::isfinite(value) || value < -tolerance) return Status::ParentFractions;
         parent_X[sp] = maximum(0.0, value);
         parent_sum += parent_X[sp];
         if (closure_species < 0 || parent_X[sp] > parent_X[closure_species]) closure_species = sp;
     }
     if (species > 0) {
-        if (!std::isfinite(parent_sum) || std::abs(parent_sum - 1.0) > tolerance)
+        if (!arch::math::isfinite(parent_sum) || std::abs(parent_sum - 1.0) > tolerance)
             return Status::ParentNormalization;
         parent_X[closure_species] += 1.0 - parent_sum;
         if (parent_X[closure_species] < 0.0) return Status::ParentClosure;
@@ -315,12 +316,12 @@ ARCH_HOST_DEVICE inline Status prolong_family(
                 const double baseline = parent_X[sp] * result.fluid[cell].rho;
                 const std::size_t index = static_cast<std::size_t>(sp) * maximum_children + cell;
                 result.rhoX[index] = baseline + theta * deviation[index];
-                if (!std::isfinite(result.rhoX[index]) || result.rhoX[index] < 0.0)
+                if (!arch::math::isfinite(result.rhoX[index]) || result.rhoX[index] < 0.0)
                     return Status::CompositionProjection;
                 sum += result.rhoX[index];
             }
             result.rhoX[static_cast<std::size_t>(closure_species) * maximum_children + cell] += result.fluid[cell].rho - sum;
-            if (!std::isfinite(result.rhoX[static_cast<std::size_t>(closure_species) * maximum_children + cell])
+            if (!arch::math::isfinite(result.rhoX[static_cast<std::size_t>(closure_species) * maximum_children + cell])
                 || result.rhoX[static_cast<std::size_t>(closure_species) * maximum_children + cell] < 0.0)
                 return Status::CompositionClosure;
         }
@@ -351,10 +352,10 @@ ARCH_HOST_DEVICE inline Status restrict_family(
 {
     if ((geometry.count != 2 && geometry.count != 4 && geometry.count != 8)
         || species < 0 || (species > 0 && workspace == nullptr)
-        || !std::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
+        || !arch::math::isfinite(geometry.coarse_volume) || geometry.coarse_volume <= 0.0)
         return Status::InvalidGeometry;
     if (geometry.angular_momentum
-        && (!std::isfinite(geometry.coarse_moment) || geometry.coarse_moment <= 0.0))
+        && (!arch::math::isfinite(geometry.coarse_moment) || geometry.coarse_moment <= 0.0))
         return Status::InvalidGeometry;
     FluidVector integral{};
     double enuc_integral = 0.0;
@@ -362,11 +363,11 @@ ARCH_HOST_DEVICE inline Status restrict_family(
     for (int cell = 0; cell < geometry.count; ++cell) {
         const int index = geometry.source_cells[cell];
         const double volume = geometry.volumes[cell];
-        if (!std::isfinite(volume) || volume <= 0.0) return Status::InvalidGeometry;
+        if (!arch::math::isfinite(volume) || volume <= 0.0) return Status::InvalidGeometry;
         const double moment = geometry.angular_momentum
             ? geometry.moments[cell] : volume;
         if (geometry.angular_momentum
-            && (!std::isfinite(moment) || moment <= 0.0))
+            && (!arch::math::isfinite(moment) || moment <= 0.0))
             return Status::InvalidGeometry;
         FluidVector sample=source.fluid(index);
 
@@ -391,17 +392,17 @@ ARCH_HOST_DEVICE inline Status restrict_family(
     if (!is_admissible_conserved_state(result.fluid, density_floor, min_eint))
         return Status::CoarseFluid;
     result.enuc = enuc_integral / geometry.coarse_volume;
-    if (!std::isfinite(result.enuc)) return Status::RestrictionEnuc;
+    if (!arch::math::isfinite(result.enuc)) return Status::RestrictionEnuc;
 
     double total = 0.0;
     for (int sp = 0; sp < species; ++sp) {
-        if (!std::isfinite(workspace[sp]) || workspace[sp] < 0.0) return Status::SpeciesIntegral;
+        if (!arch::math::isfinite(workspace[sp]) || workspace[sp] < 0.0) return Status::SpeciesIntegral;
         total += workspace[sp];
         workspace[sp] = restriction_math::restricted_mass_fraction(workspace[sp], integral.rho);
     }
     if (species > 0) {
         const double scale = maximum(std::abs(integral.rho), std::numeric_limits<double>::min());
-        if (!std::isfinite(total) || std::abs(total - integral.rho)
+        if (!arch::math::isfinite(total) || std::abs(total - integral.rho)
             > composition_simplex_tolerance(species) * scale) return Status::SpeciesClosure;
     }
     result.fractions = workspace;

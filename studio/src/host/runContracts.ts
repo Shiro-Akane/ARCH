@@ -16,9 +16,12 @@ export interface RunPreparation {
  checkpointPath:string|null;
  pendingChecks:string[];
 }
+/** Windows process identity from one opened handle; a PID alone is never ownership. */
+export interface WindowsRunProcessIdentity {version:'windows-v1';pid:number;creationTime:string}
 export interface RunState {
  runId:string;state:'starting'|'running'|'succeeded'|'failed'|'stopped';
  workerPid:number;workerStartTicks?:string;bootId?:string;processId?:number;processStartTicks?:string;processIdentity?:'captured'|'exited-before-observation';
+ windowsWorker?:WindowsRunProcessIdentity;windowsHelper?:WindowsRunProcessIdentity;
  startedAt:string;finishedAt?:string;exitCode?:number|null;signal?:string|null;error?:string;
 }
 export interface RunAcceptance {projectId:string;runId:string;terminalPid:number;state:RunState}

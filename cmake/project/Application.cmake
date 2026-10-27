@@ -117,6 +117,20 @@ target_include_directories(arch_build_contract INTERFACE
     ${ARCH_CUSTOM_REGISTRY_DIR})
 target_compile_definitions(arch_build_contract INTERFACE
     ARCH_CUDA_BUILD_ENABLED=$<BOOL:${ARCH_ENABLE_CUDA}>)
+if(WIN32)
+    enable_language(RC)
+    target_compile_definitions(arch_build_contract INTERFACE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_link_libraries(arch_build_contract INTERFACE psapi)
+    # MSVC's linker embeds .manifest inputs itself. GNU windres instead embeds
+    # the same bytes through ARCH.rc; listing both for MSVC duplicates ID 1.
+    if(MSVC)
+        set(arch_windows_resource_sources "${CMAKE_CURRENT_LIST_DIR}/windows/ARCH.manifest")
+    else()
+        set(arch_windows_resource_sources
+            "${CMAKE_CURRENT_LIST_DIR}/windows/ARCH.rc"
+            "${CMAKE_CURRENT_LIST_DIR}/windows/ARCH.manifest")
+    endif()
+endif()
 # One floating-point contract for all users of the shared mathematical headers.
 # In particular, reassociation can optimize compensated sums back into naive
 # sums.  CUDA host compilation must obey the same contract as ordinary C++;
@@ -124,15 +138,39 @@ target_compile_definitions(arch_build_contract INTERFACE
 # ARCH validates domains/results explicitly and never consumes libm errno.
 # Disable only that side effect; retain finite checks, subnormals, compensation
 # and explicit operation order (no fast-math or implicit FMA contraction).
+if(MSVC)
+    # NVCC uses cl.exe on native Windows. Keep both host languages strict;
+    # the device contract below is identical on every supported host.
+    target_compile_options(arch_build_contract INTERFACE
+        $<$<COMPILE_LANGUAGE:CXX>:/fp:strict;/utf-8>
+        $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=/fp:strict,/utf-8>)
+else()
+    target_compile_options(arch_build_contract INTERFACE
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-fno-math-errno;-ffp-contract=off>
+        $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off>)
+endif()
 target_compile_options(arch_build_contract INTERFACE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-fno-math-errno;-ffp-contract=off>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-Xptxas=-O${ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL}>
-    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-fno-fast-math,-fno-math-errno,-ffp-contract=off>)
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true>)
 # Global/toolchain fast-math flags can also cause GCC to link crtfastmath.o,
 # enabling process-wide FTZ/DAZ even when individual files compiled strictly.
-target_link_options(arch_build_contract INTERFACE
-    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-fno-math-errno;-ffp-contract=off>
-    $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-fno-math-errno;-ffp-contract=off>>)
+if(NOT MSVC)
+    target_link_options(arch_build_contract INTERFACE
+        $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-fno-math-errno;-ffp-contract=off>
+        $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-fno-math-errno;-ffp-contract=off>>)
+endif()
+# Run identity has one compiled owner, keeping OS headers out of public headers
+# and consumers such as HighFive. It contains no numerical implementation.
+list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
+    "/src/core/files/RunIdentity\\.cpp$")
+add_library(arch_run_identity STATIC src/core/files/RunIdentity.cpp)
+target_include_directories(arch_run_identity PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_compile_features(arch_run_identity PRIVATE cxx_std_20)
+if(WIN32)
+    target_link_libraries(arch_run_identity PRIVATE bcrypt)
+endif()
+target_link_libraries(arch_build_contract INTERFACE arch_run_identity)
+
 # Every ARCH target declared below consumes headers whose policy layout depends
 # on this generated registry and the build-feature macros populated later.
 # Keep one directory-wide contract instead of maintaining a fragile target list.
@@ -165,7 +203,35 @@ target_link_libraries(arch_solver_dispatch
     PUBLIC arch_build_contract
     PRIVATE arch_driver_runtime arch_diffusion_math arch_gravity_cpu)
 
+# The Windows Host process entry point is never part of the numerical CLI.
+list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
+    "/src/api/resources/WindowsProcess\\.cpp$")
+list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
+    "/src/core/files/WindowsBuildPublish\\.cpp$")
 add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
+if(WIN32)
+    # One application entry encoding; numerical and file-format owners are shared.
+    target_sources(ARCH PRIVATE ${arch_windows_resource_sources})
+    # Node has no Job-object API. This small process primitive serves the same
+    # Host runners; it does not link the solver or implement another workflow.
+    add_executable(arch_windows_process src/api/resources/WindowsProcess.cpp
+        ${arch_windows_resource_sources})
+    target_link_libraries(arch_windows_process PRIVATE advapi32 shell32 ole32 uuid)
+    target_compile_definitions(arch_windows_process PRIVATE _WIN32_WINNT=0x0A00)
+    target_link_options(arch_windows_process PRIVATE
+        $<$<CXX_COMPILER_ID:GNU>:-municode>)
+    # Opaque manifest publication stays in Core file primitives, outside the solver.
+    add_executable(arch_windows_build_publish src/core/files/WindowsBuildPublish.cpp
+        ${arch_windows_resource_sources})
+    target_link_libraries(arch_windows_build_publish PRIVATE ntdll advapi32)
+    target_compile_definitions(arch_windows_build_publish PRIVATE _WIN32_WINNT=0x0A00)
+    target_link_options(arch_windows_build_publish PRIVATE
+        $<$<CXX_COMPILER_ID:GNU>:-municode>)
+    install(TARGETS arch_windows_build_publish RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT Runtime)
+    install(TARGETS arch_windows_process RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT Runtime)
+endif()
 
 # Opt-in provenance for local tooling. This changes link diagnostics only, not
 # numerical flags; unsupported linkers fail explicitly instead of claiming coverage.
@@ -178,6 +244,15 @@ if(ARCH_RETAIN_LTO_LINK_INPUTS)
         message(FATAL_ERROR "LTO input retention requires GNU C++ and ARCH_EMIT_LINK_DEPENDENCIES=ON")
     endif()
     target_link_options(ARCH PRIVATE "LINKER:-plugin-opt=-debug")
+endif()
+# CMake's stock windres rule declares a Ninja GCC depfile but never emits it.
+# Produce actual RC preprocessing dependencies; zero-entry records stay rejected
+# by Studio's unchanged Ninja parser. This affects diagnostics, not resource data.
+if(WIN32 AND ARCH_EMIT_LINK_DEPENDENCIES AND CMAKE_RC_COMPILER MATCHES "windres(\\.exe)?$")
+    set(CMAKE_DEPFILE_FLAGS_RC
+        "--preprocessor-arg=-MD --preprocessor-arg=-MF --preprocessor-arg=<DEP_FILE> --preprocessor-arg=-MT --preprocessor-arg=<OBJECT>")
+    set_property(SOURCE "${CMAKE_CURRENT_LIST_DIR}/windows/ARCH.rc" APPEND PROPERTY
+        OBJECT_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/windows/ARCH.manifest")
 endif()
 if(ARCH_EMIT_LINK_DEPENDENCIES)
     target_link_options(ARCH PRIVATE "LINKER:--dependency-file=ARCH.link.d")

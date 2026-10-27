@@ -13,6 +13,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include "physics/eos/tabular/TabularFreeEnergy.h"
 
@@ -34,7 +35,7 @@ ARCH_INLINE int stationary_points(const ThermalPolynomial& p, double* roots)
     int degree = 4;
     while (degree > 0 && derivatives[0][degree] == 0.0) --degree;
     for (int k = 0; k <= degree; ++k)
-        if (!std::isfinite(derivatives[0][k])) return -1;
+        if (!arch::math::isfinite(derivatives[0][k])) return -1;
     if (degree == 0) return 0;
     for (int row = 1; row < degree; ++row)
         for (int k = 1; k <= degree - row + 1; ++k)
@@ -46,10 +47,10 @@ ARCH_INLINE int stationary_points(const ThermalPolynomial& p, double* roots)
         const auto& poly = derivatives[row];
         double scale = 0.0;
         for (int k = 0; k <= order; ++k) {
-            if (!std::isfinite(poly[k])) return -1;
+            if (!arch::math::isfinite(poly[k])) return -1;
             scale += std::abs(poly[k]);
         }
-        if (!std::isfinite(scale)) return -1;
+        if (!arch::math::isfinite(scale)) return -1;
         const double tolerance = 64.0 * std::numeric_limits<double>::epsilon() * scale;
         double cuts[7]{};
         cuts[0] = 0.0;
@@ -66,14 +67,14 @@ ARCH_INLINE int stationary_points(const ThermalPolynomial& p, double* roots)
             double lo = cuts[k], hi = cuts[k + 1];
             double flo = polynomial_value(poly, order, lo);
             double fhi = polynomial_value(poly, order, hi);
-            if (!std::isfinite(flo) || !std::isfinite(fhi)) return -1;
+            if (!arch::math::isfinite(flo) || !arch::math::isfinite(fhi)) return -1;
             if (std::abs(flo) <= tolerance) append(lo);
             if ((flo < 0.0 && fhi > 0.0) || (flo > 0.0 && fhi < 0.0)) {
                 for (int iteration = 0; iteration < 64; ++iteration) {
                     const double mid = lo + 0.5 * (hi - lo);
                     if (mid == lo || mid == hi) break;
                     const double fm = polynomial_value(poly, order, mid);
-                    if (!std::isfinite(fm)) return -1;
+                    if (!arch::math::isfinite(fm)) return -1;
                     if (fm == 0.0) { lo = hi = mid; break; }
                     if ((flo < 0.0) == (fm < 0.0)) { lo = mid; flo = fm; }
                     else hi = mid;
@@ -101,7 +102,7 @@ ARCH_HEAVY_INLINE TemperatureInverse invert_free_energy_temperature(
     double log_temperature_max = std::numeric_limits<double>::quiet_NaN())
 {
     TemperatureInverse result{};
-    if (!(target > 0.0) || !std::isfinite(target)) return result;
+    if (!(target > 0.0) || !arch::math::isfinite(target)) return result;
     int roots_found = 0;
     double last_temperature = -1.0;
     for (int j = 0; j < n_temperature - 1; ++j) {
@@ -115,7 +116,7 @@ ARCH_HEAVY_INLINE TemperatureInverse invert_free_energy_temperature(
         auto temperature_at = [&](double coordinate) {
             // Exact knot spelling also deduplicates a root shared by two cells.
             const double log_temperature = coordinate == 1.0
-                ? ((j == n_temperature - 2 && std::isfinite(log_temperature_max))
+                ? ((j == n_temperature - 2 && arch::math::isfinite(log_temperature_max))
                     ? log_temperature_max : log_temperature_min + (j + 1) * dlog_temperature)
                 : log_temperature_min + (j + coordinate) * dlog_temperature;
             return std::pow(10.0, log_temperature);
@@ -124,7 +125,7 @@ ARCH_HEAVY_INLINE TemperatureInverse invert_free_energy_temperature(
             double lo = temperature_at(cuts[segment]);
             double hi = temperature_at(cuts[segment + 1]);
             double vlo = value(lo), vhi = value(hi);
-            if (!std::isfinite(vlo) || !std::isfinite(vhi)) return result;
+            if (!arch::math::isfinite(vlo) || !arch::math::isfinite(vhi)) return result;
             // Strict physical bracket: nextafter outside an endpoint cannot be
             // pulled back into the table by a polynomial/log rounding tolerance.
             if (target < std::min(vlo, vhi) || target > std::max(vlo, vhi)) continue;
@@ -140,7 +141,7 @@ ARCH_HEAVY_INLINE TemperatureInverse invert_free_energy_temperature(
                     const double mid = lo + 0.5 * (hi - lo);
                     if (mid == lo || mid == hi) break;
                     const double vmid = value(mid);
-                    if (!std::isfinite(vmid)) return result;
+                    if (!arch::math::isfinite(vmid)) return result;
                     if (vmid == target) { lo = hi = mid; break; }
                     if ((vmid < target) == increasing) lo = mid;
                     else hi = mid;
@@ -150,7 +151,7 @@ ARCH_HEAVY_INLINE TemperatureInverse invert_free_energy_temperature(
             const auto physical = state(temperature);
             if (physical.status != FreeEnergyStatus::success) continue;
             const double recovered = value(temperature);
-            if (!std::isfinite(recovered) || std::abs(recovered - target) >
+            if (!arch::math::isfinite(recovered) || std::abs(recovered - target) >
                 // Original relative recovered-interpolant residual; it is not
                 // the independent scientific error budget of an EOS table.
                 2.0e-12 * std::max(std::abs(target), std::abs(recovered))) continue;

@@ -1,3 +1,4 @@
+#include "core/MathClassification.h"
 #include "fixtures/eos/FreeEnergyFixture.h"
 /**
  * @file test_eos_host_device_parity.cu
@@ -90,7 +91,10 @@ void close(double actual, double authority, double tolerance, const std::string 
                   << " actual=" << actual << " reference=" << authority
                   << " absolute_error=" << abs_error
                   << " relative_error=" << rel_error
-                  << " tolerance=" << tolerance << '\n';
+                  << " tolerance=" << tolerance
+                  << " actual_bits=0x" << std::hex << std::bit_cast<std::uint64_t>(actual)
+                  << " reference_bits=0x" << std::bit_cast<std::uint64_t>(authority)
+                  << std::dec << '\n';
         throw std::runtime_error(std::string(field) + " value/reference mismatch");
     }
 }
@@ -1178,7 +1182,7 @@ __global__ void helm_group_kernel(View plain, int* status, int* passed, bool inv
     // This combined entry rejects null X before derivative evaluation.
     const bool bad = invalid && lane % 7 == 0;
     checked.get_pressure_and_sound_speed(rho, energy, bad ? nullptr : x, p, c);
-    if (bad) ok = std::isnan(p) && std::isnan(c) && ok;
+    if (bad) ok = arch::math::isnan(p) && arch::math::isnan(c) && ok;
     else {
         plain.get_pressure_and_sound_speed(rho, energy, x, expected_p, expected_c);
         ok = identical(p, expected_p) && identical(c, expected_c) && ok;
@@ -1408,10 +1412,14 @@ void test_helm(cudaStream_t stream)
         cuda_check(cudaMemcpyAsync(&device, device_differentials.get(), sizeof(device),
             cudaMemcpyDeviceToHost, stream), "copy Helm differentials");
         cuda_check(cudaStreamSynchronize(stream), "complete Helm differentials");
+        int backend_index = 0;
         for (const auto& d : {helm_differentials(host_view, point.rho, point.temperature), device}) {
+            const std::string diagnostic_context =
+                std::string(backend_index++ == 0 ? ".host.point" : ".device.point")
+                + std::to_string(&point - HelmReference::points);
             for (int i = 0; i < 10; ++i)
                 close(d.values[i], point.derivatives[i], 2e-9,
-                      "helm.independent_differential." + std::to_string(i));
+                      "helm.independent_differential." + std::to_string(i) + diagnostic_context);
             const auto& expected = point.derivatives;
             // A={1,4}, Z={1,2}; the fixed tangent (-0.4,+0.4)
             // has y'=-0.3, z'=-0.2, derived independently of the EOS adapters.

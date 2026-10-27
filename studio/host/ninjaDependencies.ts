@@ -3,6 +3,8 @@
  * Keep the build directory as the path basis and compare the complete snapshot.
  * Absent dependency evidence cannot be replaced by a guessed source-file list.
  */
+import {windowsEnvironment} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 import {open} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -30,15 +32,16 @@ export function parseNinjaDependencies(text:string,buildDirectory:string):NinjaD
  finish();if(!result.length)throw new Error('No compiler dependencies recorded.');
  return result;
 }
-export async function readNinjaDependencies(buildDirectory:string):Promise<NinjaDependency[]>{
+export async function readNinjaDependencies(buildDirectory:string,tools?:WindowsHostTools):Promise<NinjaDependency[]>{
  if(!path.isAbsolute(buildDirectory)||buildDirectory.includes('\0'))throw new Error('Host build directory required.');
- const {stdout}=await promisify(execFile)('/usr/bin/ninja',['-C',buildDirectory,'-t','deps'],
-  {shell:false,encoding:'utf8',timeout:15000,maxBuffer:32*1024*1024,env:{PATH:'/usr/bin:/bin',LANG:'C.UTF-8'}});
+ if(process.platform==='win32'&&!tools?.ninja)throw new Error('Trusted native Ninja required.');
+ const {stdout}=await promisify(execFile)(tools?.ninja??'/usr/bin/ninja',['-C',buildDirectory,'-t','deps'],
+  {shell:false,encoding:'utf8',timeout:15000,maxBuffer:32*1024*1024,windowsHide:true,env:tools?windowsEnvironment(tools):{PATH:'/usr/bin:/bin',LANG:'C.UTF-8'}});
  return parseNinjaDependencies(stdout,buildDirectory);
 }
 
-export async function fingerprintNinjaDependencies(buildDirectory:string){
- const objects=await readNinjaDependencies(buildDirectory);
+export async function fingerprintNinjaDependencies(buildDirectory:string,tools?:WindowsHostTools){
+ const objects=await readNinjaDependencies(buildDirectory,tools);
  const paths=[...new Set(objects.flatMap(o=>o.inputs))].sort();
  if(paths.length>20000)throw new Error('Compiler input count exceeds budget.');
  const files:{path:string;sha256:string;size:number}[]=[];let total=0;

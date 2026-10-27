@@ -36,7 +36,7 @@ class FullInitialPreview(unittest.TestCase):
         before = list(self.cwd.rglob("*"))
         run = subprocess.run([str(ARCH), command, case, "--config-stdin",
                               "--request-id", "unsaved-full", *options],
-                             input=text, text=True, capture_output=True, cwd=self.cwd,
+                             input=text.encode('utf-8'), capture_output=True, cwd=self.cwd,
                              env=ENV, timeout=360)
         self.assertEqual(run.returncode, code, (case, run.stdout[-6000:], run.stderr))
         obj = json.loads(run.stdout)

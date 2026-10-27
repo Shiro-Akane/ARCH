@@ -29,7 +29,7 @@ constexpr int sample_count=6, field_count=23;
 constexpr double parity_budget=2e-10;
 struct Sample { double rho,T,X[3]; };
 struct Probe { double values[field_count]{}; };
-struct FailureProbe { double values[7]{}; };
+struct FailureProbe { double values[17]{}; };
 static_assert(std::is_trivially_copyable_v<Sample> && std::is_trivially_copyable_v<Probe>);
 
 void require(bool condition,const char* message)
@@ -114,6 +114,14 @@ __global__ void failure_kernel(View valid,View masked,Sample sample,double energ
         out->values[2]=gradient[0]; out->values[3]=capacity[0]; out->values[4]=action[0];
         out->values[5]=mode==2 ? invalid.get_temperature(rho,energy,sample.X)
             : invalid.get_eta(rho,T,sample.X);
+        const auto derivatives=invalid.composition_derivatives(rho,T,sample.X);
+        for(int i=0;i<2;++i) {
+            out->values[7+i]=derivatives.energy[i];
+            out->values[9+i]=derivatives.energy_temperature[i];
+            out->values[11+i]=derivatives.cv[i];
+        }
+        for(int i=0;i<3;++i)out->values[13+i]=derivatives.energy_hessian[i];
+        out->values[16]=derivatives.cv_temperature;
     }
     // A later valid call must remain usable but cannot clear a previous error.
     out->values[6]=valid.get_eint_from_T(sample.rho,sample.T,sample.X);
@@ -204,6 +212,8 @@ void test_rank(const char* source,const char* helm_path,const char* rank)
         check_cuda(cudaMemcpy(&failed,status.get(),sizeof(int),cudaMemcpyDeviceToHost),"download completion failure status");
         require(failed==1,"strict completion failure was not sticky");
         for(int i=0;i<6;++i) require(std::isnan(result.values[i]),"strict completion failure returned a non-NaN field");
+        if(mode!=3) for(int i=7;i<17;++i)
+            require(std::isnan(result.values[i]),"strict completion failure left a finite derivative slot");
         require(std::isfinite(result.values[6]),"a valid query after a failure became unusable");
     }
     check_cuda(cudaDeviceSynchronize(),"strict completion owner completion witness");

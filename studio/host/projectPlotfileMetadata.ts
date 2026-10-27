@@ -1,3 +1,4 @@
+import type {WindowsHostTools} from './hostProcess.ts';
 /**
  * Bind Plotfile queries to the selected project and file fingerprint.
  * Validate scope before isolated reading and recheck identity afterwards so a
@@ -13,7 +14,7 @@ import {inspectPlotfileMetadataIsolated,readPlotfileFieldSliceIsolated,readPlotf
 import {copyPlotfileSliceRequest} from './plotfileSliceRequest.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 
-async function readScoped(root:string,projectId:string,request:unknown,mode:'metadata'|'slice'|'overview'|'point',signal?:AbortSignal){
+async function readScoped(root:string,projectId:string,request:unknown,mode:'metadata'|'slice'|'overview'|'point',signal?:AbortSignal,windowsTools?:WindowsHostTools){
  if(!request||typeof request!=='object'||Array.isArray(request))throw Error('Expected plotfile audit request.');
  const isSlice=mode==='slice',isOverview=mode==='overview',isPoint=mode==='point';
  const data=request as Record<string,unknown>,keys=isPoint?['projectId','relativePath','pointQuery','expectedFileSha256']:isOverview?['projectId','relativePath','overview','expectedFileSha256']:isSlice?['projectId','relativePath','slice','expectedFileSha256']:['projectId','relativePath'];
@@ -29,7 +30,7 @@ async function readScoped(root:string,projectId:string,request:unknown,mode:'met
  if((isSlice||isOverview||isPoint)&&(typeof expected!=='string'||!/^([a-f0-9]{64})$/.test(expected)))throw Error('Expected file SHA-256 is required.');
  if(await projectRoot(root)!==root)throw Error('Project root identity changed.');
  const target=await checkedPath(root,relativePath);
- const result=point?await readPlotfilePointIsolated(target,point,{signal}):overview?await readPlotfileOverviewIsolated(target,overview,{signal}):slice?await readPlotfileFieldSliceIsolated(target,slice,{signal}):await inspectPlotfileMetadataIsolated(target,{signal});
+ const result=point?await readPlotfilePointIsolated(target,point,{signal,windowsTools}):overview?await readPlotfileOverviewIsolated(target,overview,{signal,windowsTools}):slice?await readPlotfileFieldSliceIsolated(target,slice,{signal,windowsTools}):await inspectPlotfileMetadataIsolated(target,{signal,windowsTools});
  if((isSlice||isOverview||isPoint)&&result.file.sha256!==expected)throw Error('Selected plotfile no longer matches requested file SHA-256.');
  // Pinning in the worker does not prove that the selected name still refers to it.
  const latest=await stat(await checkedPath(root,relativePath),{bigint:true});
@@ -38,18 +39,18 @@ async function readScoped(root:string,projectId:string,request:unknown,mode:'met
   throw Error('Selected plotfile changed during read audit.');
  return {protocolVersion:PROTOCOL_VERSION,projectId,relativePath,result};
 }
-export async function readProjectPlotfileMetadata(root:string,projectId:string,request:unknown,signal?:AbortSignal){
- const {result,...identity}=await readScoped(root,projectId,request,'metadata',signal);
+export async function readProjectPlotfileMetadata(root:string,projectId:string,request:unknown,signal?:AbortSignal,windowsTools?:WindowsHostTools){
+ const {result,...identity}=await readScoped(root,projectId,request,'metadata',signal,windowsTools);
  return {...identity,metadata:result};
 }
-export function readProjectPlotfileFieldSlice(root:string,projectId:string,request:unknown,signal?:AbortSignal){
- return readScoped(root,projectId,request,'slice',signal);
+export function readProjectPlotfileFieldSlice(root:string,projectId:string,request:unknown,signal?:AbortSignal,windowsTools?:WindowsHostTools){
+ return readScoped(root,projectId,request,'slice',signal,windowsTools);
 }
 
-export function readProjectPlotfileOverview(root:string,projectId:string,request:unknown,signal?:AbortSignal){
- return readScoped(root,projectId,request,'overview',signal);
+export function readProjectPlotfileOverview(root:string,projectId:string,request:unknown,signal?:AbortSignal,windowsTools?:WindowsHostTools){
+ return readScoped(root,projectId,request,'overview',signal,windowsTools);
 }
 
-export function readProjectPlotfilePoint(root:string,projectId:string,request:unknown,signal?:AbortSignal){
- return readScoped(root,projectId,request,'point',signal);
+export function readProjectPlotfilePoint(root:string,projectId:string,request:unknown,signal?:AbortSignal,windowsTools?:WindowsHostTools){
+ return readScoped(root,projectId,request,'point',signal,windowsTools);
 }

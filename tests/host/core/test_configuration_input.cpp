@@ -1,5 +1,12 @@
 #include "core/files/FileFingerprint.h"
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#include <share.h>
+#include <sys/stat.h>
+#else
 #include <unistd.h>
+#endif
 /**
  * @file test_configuration_input.cpp
  * @brief Exercise declared production loading before any model or output exists.
@@ -216,8 +223,16 @@ int main(int argc, char** argv) {
                 "raw SHA disagrees with independent Python hashlib");
         std::string pattern=(std::filesystem::temp_directory_path()/"arch-raw-config-XXXXXX").string();
         std::vector<char> temporary(pattern.begin(),pattern.end());temporary.push_back(0);
+#ifdef _WIN32
+        int fd=-1;
+        require(::_mktemp_s(temporary.data(),temporary.size())==0 &&
+                ::_sopen_s(&fd,temporary.data(),_O_CREAT|_O_EXCL|_O_RDWR|_O_BINARY,
+                    _SH_DENYRW,_S_IREAD|_S_IWRITE)==0,"raw fixture create failed");
+        require(::_close(fd)==0,"raw fixture close failed");
+#else
         const int fd=::mkstemp(temporary.data());require(fd>=0,"raw fixture create failed");
         require(::close(fd)==0,"raw fixture close failed");
+#endif
         const std::filesystem::path raw_path(temporary.data());
         { std::ofstream output(raw_path,std::ios::binary);output<<exact;require(output.good(),"raw fixture write failed"); }
         auto file_config=RuntimeParams::Load(raw_path.string(),"declared-test");

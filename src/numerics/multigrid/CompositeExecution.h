@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -108,7 +109,7 @@ struct Reduction {
         const double normal=normalization?(*normalization==0.?1.:*normalization):scale_x;
         const int end=(block+1)*chunk<size?(block+1)*chunk:size;
         for(int i=block*chunk;i<end;++i) {
-            if(!std::isfinite(x[i]) || (y && !std::isfinite(y[i]))) return std::numeric_limits<double>::infinity();
+            if(!arch::math::isfinite(x[i]) || (y && !arch::math::isfinite(y[i]))) return std::numeric_limits<double>::infinity();
             if(kind==ReductionKind::Maximum) { const double v=std::abs(x[i]); if(v>maximum) maximum=v; }
             else sum.add((weights?weights[i]:1.)*(x[i]/normal)*(y?y[i]/scale_y:1.));
         }
@@ -117,7 +118,7 @@ struct Reduction {
     ARCH_INLINE double finish(const double* partials,int count) const {
         math::CompensatedSum sum; double maximum=0.;
         for(int i=0;i<count;++i) {
-            if(!std::isfinite(partials[i])) return std::numeric_limits<double>::infinity();
+            if(!arch::math::isfinite(partials[i])) return std::numeric_limits<double>::infinity();
             if(kind==ReductionKind::Maximum) { if(partials[i]>maximum) maximum=partials[i]; }
             else sum.add(partials[i]);
         }

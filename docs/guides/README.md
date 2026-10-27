@@ -3,9 +3,11 @@
 [Build.md](Build.md) ([Chinese](Build.zh-CN.md)) explains configuration versus
 compilation, dependencies, CUDA targets, and memory-aware build parallelism.
 
-[Studio.md](Studio.md) ([Chinese](Studio.zh-CN.md)) covers the Linux/WSL desktop,
-parameter editing, Preview, builds, Run/Restart and Plotfile views. Its
+[Studio.md](Studio.md) ([Chinese](Studio.zh-CN.md)) covers Linux/WSL and native Windows in one workflow,
+model selection, parameter Help/Inspector, Preview, builds, Run/Restart, Plotfile loading and host-specific paths. Its
 [environment guide](StudioEnvironment.md) lists desktop prerequisites.
+
+Linux is recommended. Native Windows11 x64 has the corresponding CPU/CUDA CLI and Studio functionality within the existing scientific scope, but may still have instability or bugs. Windows [dependencies](WindowsNativeW0.md), [CPU](WindowsNativeCpu.md), [CUDA](WindowsNativeCuda.md) and [desktop](WindowsStudioDesktop.md) recipes supplement the shared guides. See the [final functional correspondence](../histroy/build/WindowsNativeCudaQualification-20261027.md) for actual acceptance and limits.
 
 [SimulationCase.md](SimulationCase.md) ([Chinese](SimulationCase.zh-CN.md)) walks
 through building, running and extending a small Sod problem. Start there for a

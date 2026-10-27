@@ -38,6 +38,9 @@ inline const CommandDefinition* find(std::string_view flag) {
 inline constexpr int mesh_default_blocks = 512, mesh_max_blocks = 1024;
 inline constexpr int mesh_default_memory_mib = 128, mesh_min_memory_mib = 16, mesh_max_memory_mib = 256;
 inline constexpr int worker_address_space_mib = 1024, worker_cpu_seconds = 30, mesh_seconds = 10;
+// Windows commits and user-mode CPU are an explicitly distinct Preview policy.
+inline constexpr int windows_worker_commit_mib = 1024;
+inline constexpr auto windows_preview_resource_policy = "windows-job-commit-user-v1";
 inline constexpr int case_cpu_seconds = 300, case_wall_seconds = 360;
 inline constexpr int session_max_requests = 256;
 inline constexpr int session_file_cache_mib = 128;

@@ -24,4 +24,7 @@ test('Windows/WSL mapping keeps distro identity and literal spaces',()=>{
  assert.deepEqual(windowsAssociation('/home/arch/a b','Linux'),{distro:'Linux',linux:'/home/arch/a b'});
  assert.equal(windowsAssociation('E:\\release with spaces\\app').windows,'E:\\release with spaces\\app');
  assert.throws(()=>windowsAssociation('bad\0path'));
+ assert.throws(()=>windowsAssociation('C:relative'),/Drive-relative/);
+ assert.throws(()=>windowsAssociation('\\\\?\\C:\\project'),/Device paths/);
+ assert.throws(()=>windowsAssociation('\\\\.\\C:\\project'),/Device paths/);
 });

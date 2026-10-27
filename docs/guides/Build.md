@@ -4,7 +4,19 @@
 
 Use the README's CPU or CUDA commands for a first build. This guide explains
 the choices behind them and how to adjust compilation for your machine. Run
-the shell commands from the repository root in a Linux or WSL2 terminal.
+the Bash commands from the repository root in a Linux or WSL2 terminal; native Windows examples use PowerShell.
+
+**Linux is recommended.** Native Windows11 x64 provides the complete CPU/CUDA CLI and Studio workflow within the existing scientific scope, but may still have instability or bugs. Both systems share CMake, the scientific implementation, parameter format and Studio services. The [final correspondence](../histroy/build/WindowsNativeCudaQualification-20261027.md) records tested profiles and limits.
+
+| Task | Linux / WSL2 | Native Windows 11 x64 |
+| --- | --- | --- |
+| CPU tools and libraries | C++20, Ninja, HDF5/OpenMP; presets below | GCC/UCRT64 with same-ABI HDF5/HighFive/KLU; [setup](WindowsNativeW0.md) and [build](WindowsNativeCpu.md) |
+| CUDA tools and libraries | NVCC with compatible GCC/Clang and matching numerical libraries | Separate MSVC/NVCC, Windows SDK, matching-ABI HDF5/KLU and optional cuDSS; [native CUDA](WindowsNativeCuda.md) |
+| Executable | `build-cpu/bin/ARCH` | `build-windows-cpu/bin/ARCH.exe` |
+| Optional Studio | Native Node24+, Electron, graphical libraries/WSLg | Native x64 Node24+, Electron, native helpers and DLL PATH; [desktop setup](WindowsStudioDesktop.md) |
+| Run terminal | `xterm` and `flock` | Configured Windows Terminal and native supervision helpers |
+
+Keep separate build/dependency directories for the two systems. The [Studio guide](Studio.md#paths-on-linux-and-windows) explains shared project-relative paths and host-specific `.par` paths.
 
 ## Configure first, then compile
 
@@ -46,6 +58,12 @@ Output separation comes from `ARCH_RUNTIME_OUTPUT_DIRECTORY`, set to each
 build directory's absolute `bin/` path. Without that option, the project writes
 executables to `bin/` in the source tree. Append `-DNAME=value` to a configuration
 command to override a preset option, such as a compiler or CUDA architecture.
+
+## Native Windows: CPU and CUDA
+
+CPU uses [GCC/UCRT64](WindowsNativeCpu.md) with [W0 matching-ABI dependencies](WindowsNativeW0.md). CUDA uses the separate [MSVC/NVCC recipe](WindowsNativeCuda.md), Windows SDK, matching HDF5/KLU and optional cuDSS. Do not mix their objects, DLLs or caches. Both routes build the same ARCH target and share solvers and HDF5 implementation.
+
+See [W2](WindowsStudioPlatform.md) for Host process/resource services and the [desktop guide](WindowsStudioDesktop.md) for windows, trusted tools and portable packages. The CUDA guide adds the Microsoft Developer environment; the shared [Studio guide](Studio.md) covers models, parameters, backend selection and plots. The [final correspondence record](../histroy/build/WindowsNativeCudaQualification-20261027.md) separates current CPU, CUDA and Studio evidence. Formulas, rejection checks, scientific formats and existing error budgets remain intact. MPI, Zenodo and release actions remain separate.
 
 ## Build output
 
@@ -299,3 +317,5 @@ and rebuild; no boundary path setting is needed. See [user boundaries](UserBound
 ## Linux Studio desktop
 
 `studio-cpu-release` builds Core and the optional Electron desktop together; normal Core presets keep Studio disabled. The GUI preset uses the Host-owned local CPU build directory and GNU provenance settings. See the [Studio workflow](Studio.md) and [environment setup](StudioEnvironment.zh-CN.md) for Node 24+, WSLg, graphical libraries and independent terminal requirements.
+
+[W3 native desktop build and packaging](WindowsStudioDesktop.md)：W3 native CPU Studio is qualified in the documented tested environment; A11 and the separate human/file evidence are recorded.

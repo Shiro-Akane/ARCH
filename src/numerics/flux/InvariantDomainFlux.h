@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -244,7 +245,7 @@ ARCH_INLINE PointFaceBlend evaluate(const FluidVector& left,const FluidVector& r
     const auto fr = get_flux(right, p_right, direction);
     arithmetic.a=a;arithmetic.fl=fl;arithmetic.fr=fr;
     result.wave_speed=a;
-    if (!(a > 0.0) || !std::isfinite(a)) return result;
+    if (!(a > 0.0) || !arch::math::isfinite(a)) return result;
     // Local Lax-Friedrichs: F_low=(F_L+F_R)/2-a*(U_R-U_L)/2.
     const auto low = 0.5 * fl + 0.5 * fr - (0.5 * a) * (right - left);
     // Invariant-domain bar state: U_bar=(U_L+U_R)/2-(F_R-F_L)/(2a).
@@ -269,7 +270,7 @@ ARCH_INLINE PointFaceBlend evaluate(const FluidVector& left,const FluidVector& r
         const double shifted_bar = bar_species + tau * bar.rho;
         const double shifted_deviation = std::abs(
             (low_species - species_high[s]) / a + tau * correction.rho);
-        if (!std::isfinite(shifted_deviation) || !std::isfinite(shifted_bar))
+        if (!arch::math::isfinite(shifted_deviation) || !arch::math::isfinite(shifted_bar))
             theta = 0.0;
         else if (shifted_deviation > shifted_bar)
             theta = std::min(theta, std::max(0.0, shifted_bar) / shifted_deviation);
@@ -319,7 +320,7 @@ ARCH_INLINE PointFaceBlend point_face_blend_with_baseline_and_thermo(
     const double a=std::max(std::abs(get_un(left,direction))+c_left,
                             std::abs(get_un(right,direction))+c_right);
     result.wave_speed=a;result.low=low;
-    if(!(a>0.)||!std::isfinite(a))return result;
+    if(!(a>0.)||!arch::math::isfinite(a))return result;
     const auto fl=get_flux(left,p_left,direction);
     const auto fr=get_flux(right,p_right,direction);
     const auto bar_left=left+(fl-low)/a;
@@ -329,7 +330,7 @@ ARCH_INLINE PointFaceBlend point_face_blend_with_baseline_and_thermo(
     double theta=std::min(point_face_detail::segment_from_valid_mean(bar_left,correction),
                           point_face_detail::segment_from_valid_mean(bar_right,-1.*correction));
     for(int s=0;s<species;++s) {
-        if(!std::isfinite(species_low[s]))return result;
+        if(!arch::math::isfinite(species_low[s]))return result;
         const double bar_species_left=left.rho*x_left[s]
             +(fl.rho*x_left[s]-species_low[s])/a;
         const double bar_species_right=right.rho*x_right[s]
@@ -337,11 +338,11 @@ ARCH_INLINE PointFaceBlend point_face_blend_with_baseline_and_thermo(
         const double tau=arch::state::composition_roundoff_limit;
         const double shifted_left=bar_species_left+tau*bar_left.rho;
         const double shifted_right=bar_species_right+tau*bar_right.rho;
-        if(!std::isfinite(shifted_left)||!std::isfinite(shifted_right)
+        if(!arch::math::isfinite(shifted_left)||!arch::math::isfinite(shifted_right)
             ||shifted_left<0.||shifted_right<0.)return result;
         const double deviation=(species_low[s]-species_high[s])/a
                               +tau*correction.rho;
-        if(!std::isfinite(deviation))theta=0.;
+        if(!arch::math::isfinite(deviation))theta=0.;
         else if(deviation<0.)theta=std::min(theta,shifted_left/(-deviation));
         else if(deviation>0.)theta=std::min(theta,shifted_right/deviation);
     }
@@ -422,13 +423,13 @@ ARCH_INLINE FluxAdmissibility::PointFaceBlend selected_wall_point_blend(
         ||(species&&(!x_left||!x_right||!species_high||!species_low))
         ||!StationarySlipWallFlux::detail::finite_point(base_left)||!StationarySlipWallFlux::detail::finite_point(base_right)
         ||!(base_left.rho>0.)||!(base_right.rho>0.)
-        ||!std::isfinite(p_left)||!(p_left>0.)||!std::isfinite(c_left)||!(c_left>0.)
-        ||!std::isfinite(p_right)||!(p_right>0.)||!std::isfinite(c_right)||!(c_right>0.))
+        ||!arch::math::isfinite(p_left)||!(p_left>0.)||!arch::math::isfinite(c_left)||!(c_left>0.)
+        ||!arch::math::isfinite(p_right)||!(p_right>0.)||!arch::math::isfinite(c_right)||!(c_right>0.))
         return invalid;
     if(!StationarySlipWallFlux::detail::species_scratch_disjoint(species,species_low,x_left,x_right,species_high))
         return invalid;
     for(int s=0;s<species;++s)
-        if(!std::isfinite(x_left[s])||!std::isfinite(x_right[s]))return invalid;
+        if(!arch::math::isfinite(x_left[s])||!arch::math::isfinite(x_right[s]))return invalid;
     // This workspace remains provisional even if the two baseline bars reject.
     for(int s=0;s<species;++s)species_low[s]=0.;
     FluidVector canonical_low{};
@@ -532,11 +533,11 @@ ARCH_INLINE PointWallStatus assemble_wall_point(FluidVector base_left,FluidVecto
             pressure,speed,pressure,speed,dir,high,face_species_flux);
     }
     if(!factor.valid||!StationarySlipWallFlux::finite_flux(factor.low)
-        ||!std::isfinite(factor.theta)||factor.theta<0.||factor.theta>1.)
+        ||!arch::math::isfinite(factor.theta)||factor.theta<0.||factor.theta>1.)
         return PointWallStatus::inadmissible_baseline;
     const double hp=dir==0?high.mom_u:dir==1?high.mom_v:high.mom_w;
     const double lp=dir==0?factor.low.mom_u:dir==1?factor.low.mom_v:factor.low.mom_w;
-    if(hp<0.||(!std::isfinite(hp)&&factor.theta!=0.)||!std::isfinite(lp)||lp<0.)
+    if(hp<0.||(!arch::math::isfinite(hp)&&factor.theta!=0.)||!arch::math::isfinite(lp)||lp<0.)
         return PointWallStatus::invalid_pressure_traction;
     const auto blended=factor.theta==0.?factor.low:factor.theta==1.?high:
         factor.low+factor.theta*(high-factor.low);
@@ -553,7 +554,7 @@ ARCH_INLINE PointWallStatus assemble_wall_point(FluidVector base_left,FluidVecto
         const double value=factor.theta==0.?low_species:
             factor.theta==1.?face_species_flux[s]:
             low_species+factor.theta*(face_species_flux[s]-low_species);
-        if(!std::isfinite(value))
+        if(!arch::math::isfinite(value))
             return PointWallStatus::nonfinite_species;
         face_species_flux[s]=value;
     }

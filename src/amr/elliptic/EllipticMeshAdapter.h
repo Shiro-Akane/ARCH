@@ -18,7 +18,7 @@
 
 class Grid;
 struct GridConfig;
-namespace amr { class AMRControl;
+namespace amr { struct AMRControl;
 /** Describe a native padded scalar field without copying its active cells. */
 inline arch::grid::ScalarFieldLayout native_scalar_layout(const Grid& grid) {
     using Size=std::size_t;

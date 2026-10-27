@@ -970,16 +970,18 @@ def audit_tree(root: pathlib.Path):
                 root, lowered, cmake_code, violations)
             if re.search(
                     r"(?<![\w-])(?:-ffast-math|-ofast|--use_fast_math|"
-                    r"-fassociative-math|-funsafe-math-optimizations)(?![\w-])",
+                    r"-fassociative-math|-funsafe-math-optimizations|/fp:fast)(?![\w-])",
                     cmake_code):
                 violations.append(
                     "shared mathematics forbids fast-math/reassociation")
             if re.search(
                     r"add_library\s*\(\s*arch_build_contract\s+interface\s*\)",
                     cmake_code):
-                strict_contract = re.search(
+                # Compiler branches attach options to the same interface owner.
+                # Inspect every attachment, including the shared device options.
+                strict_contract = "\n".join(re.findall(
                     r"target_compile_options\s*\(\s*arch_build_contract\s+"
-                    r"interface\b([^)]*)\)", cmake_code, flags=re.DOTALL)
+                    r"interface\b([^)]*)\)", cmake_code, flags=re.DOTALL))
                 required_flags = (
                     "compile_lang_and_id:cxx", "-fno-fast-math",
                     "-ffp-contract=off", "compile_lang_and_id:cuda",
@@ -988,14 +990,26 @@ def audit_tree(root: pathlib.Path):
                 # removal of either required NVCC-host numerical protection.
                 cuda_host_flags = {
                     flag for argument in re.findall(r"-xcompiler=([^\s>]+)",
-                        strict_contract.group(1) if strict_contract else "")
+                        strict_contract)
                     for flag in argument.split(",")}
-                if (strict_contract is None or any(
-                        flag not in strict_contract.group(1)
+                if (not strict_contract or any(
+                        flag not in strict_contract
                         for flag in required_flags) or not
                         {"-fno-fast-math", "-ffp-contract=off"} <= cuda_host_flags):
                     violations.append(
                         "shared mathematics needs one strict Host/CUDA build contract")
+                msvc_branches = re.findall(
+                    r"\bif\s*\(\s*msvc\s*\)(.*?)\belse\s*\(\s*\)",
+                    cmake_code, flags=re.DOTALL)
+                if msvc_branches:
+                    msvc_contracts = re.findall(
+                        r"target_compile_options\s*\(\s*arch_build_contract\s+"
+                        r"interface\b([^)]*)\)", "\n".join(msvc_branches), flags=re.DOTALL)
+                    msvc_options = "\n".join(msvc_contracts)
+                    if (not re.search(r"compile_language:cxx>:/fp:strict(?:[;>])", msvc_options)
+                            or not re.search(r"compile_lang_and_id:cuda,nvidia>:-xcompiler=/fp:strict(?:[,>])", msvc_options)):
+                        violations.append(
+                            "native MSVC needs strict Host/CUDA floating-point options")
                 link_contract = re.search(
                     r"target_link_options\s*\(\s*arch_build_contract\s+"
                     r"interface\b([^)]*)\)", cmake_code, flags=re.DOTALL)

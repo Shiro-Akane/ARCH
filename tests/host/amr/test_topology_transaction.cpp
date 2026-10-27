@@ -608,11 +608,11 @@ void test_identity_and_residency_rollback()
         1, {1U, 1U, 1U}, 1});
     MonotonicSchedulerClock clock;
     auto adoption = registry.stage_adoption(observe_tree(*tree, *pool, 1));
-    std::unique_ptr<StateResidencyLedger> ledger;
+    std::unique_ptr<arch::state::StateResidencyLedger> ledger;
     std::vector<amr::BlockHandle> old_handles;
     const auto initial = registry.commit_after_success(
         std::move(adoption), [&](const auto& proposed) {
-            ledger = std::make_unique<StateResidencyLedger>(proposed.epoch);
+            ledger = std::make_unique<arch::state::StateResidencyLedger>(proposed.epoch);
             const auto witness = clock.next_publication();
             for (const auto handle : proposed.handles_in_observation_order)
                 ledger->register_block(
@@ -656,11 +656,11 @@ void test_identity_and_residency_rollback()
                 transaction.commit_after_success(
                     [&](const amr::AmrPlanScope&) {
                         struct Payload {
-                            std::unique_ptr<StateResidencyLedger> ledger;
+                            std::unique_ptr<arch::state::StateResidencyLedger> ledger;
                         };
                         Payload payload;
                         payload.ledger =
-                            std::make_unique<StateResidencyLedger>(
+                            std::make_unique<arch::state::StateResidencyLedger>(
                                 committed_topology.epoch);
                         const auto witness = clock.next_publication();
                         for (const auto handle

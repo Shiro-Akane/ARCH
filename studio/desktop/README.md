@@ -1,6 +1,10 @@
-# Linux / WSL desktop entry
+# Desktop entry: Linux / WSL and native Windows
 
-`arch-studio` opens an independent Electron window with production assets and a managed local Host. A source checkout needs Node 24+; the portable package includes its Host Node runtime. Linux graphical libraries and WSLg (under WSL) are prerequisites. Run/Restart use an independent `xterm` and Linux `flock`; they do not provide server/background scheduling.
+Full documentation is in the [source repository](https://github.com/Shiro-Akane/ARCH/tree/main/docs); a portable package does not include that documentation tree.
+
+The desktop opens an independent Electron window with production assets and a managed local Host. Linux uses `arch-studio`; Windows uses `arch-studio.cmd` from a checkout and `arch-studio-bin.exe` from a package. A checkout needs native standalone Node 24+; a portable package includes the native Host Node runtime. Linux graphical libraries and WSLg (under WSL) are prerequisites. Linux Run/Restart use `xterm` and `flock`; native Windows uses the W2 Job/terminal services. These do not provide server/background scheduling.
+
+W3 native Windows CPU Studio qualification is complete for the tested Windows11 x64 GCC/UCRT64 environment: A11, real project/window software integration and portable packaging passed. The user performed Save Working Copy As and its copy passed independent byte/read validation. OS interactions were human-operated because the WSL Computer Use route was unavailable. The [native CUDA guide](../../docs/guides/WindowsNativeCuda.md) records the additional MSVC/CUDA setup and current qualification. MPI, installers and signing remain outside this work.
 
 From a source checkout after building Studio:
 
@@ -13,16 +17,35 @@ With CMake `ARCH_BUILD_STUDIO=ON`, the equivalent launcher is `build-studio-cpu/
 
 Use `--build-dir build-release-cpu` (or select Existing build directory in the launcher) to adopt an existing in-project Ninja ARCH tree explicitly. Its canonical source/build/output identities and CPU/CUDA setting are checked; Configure preserves the cache mode and adds no new definitions. Selecting this tree does not assert build freshness or enable Preview before a matching successful Studio Build.
 
-Node is selected from `ARCH_STUDIO_NODE`, otherwise the packaged Host runtime, PATH and the existing user/system candidates. `ARCH_STUDIO_NODE` must be an absolute supported Linux executable. An invalid explicit runtime is never replaced silently.
+In Config, choose a compiled Model and open its `.par`, then select a parameter to read its units and explanation in Parameter Inspector. Edit the Working Copy, address the reported issues, and use initial Preview before preparing Run. Save Working Copy As writes an in-project file; Download Copy exports a download. In Plotfile, use the upper project viewer, enter a project-relative `.h5` path, read metadata, then request raw samples or global display LOD. Initial Preview and evolved output have separate meanings.
+
+Paths inside `.par` resolve from the calculation working directory, which Studio sets to the project root. They do not resolve beside the parameter file. Prefer shared forward-slash relative paths; replace Linux `/home/...` or `/mnt/c/...` absolute paths before native Windows use, and adapt Windows drive paths before Linux use.
+
+Node is selected from `ARCH_STUDIO_NODE`, otherwise the packaged Host runtime and PATH (plus existing user/system candidates on Linux). An explicit runtime must be absolute and supported; it is never replaced silently. Native Windows requires standalone x64 Node 24+ `.exe`, verified by platform, architecture and version. Electron or a WSL shim cannot serve as the bundled Host Node.
 
 Closing the desktop cancels owned Preview/Configure requests and stops its Host. Active Build is allowed to finish. Confirmed Run/Restart jobs have their own terminal, records and process identity and survive Host exit. Stop targets the owned job. Output-directory advisory reservations coordinate Studio-managed runs; they are not approval to overwrite existing data. See the [workflow guide](../../docs/guides/Studio.zh-CN.md).
 
 ## Packaging
 
-From `studio/`, run `npm run desktop:package`, or use `cmake --build build-studio-cpu --target arch-studio-package`. Keep the complete `.local/desktop-release/arch-studio-bin-linux-x64/` directory together and start its `arch-studio`. The Host Node executable and h5wasm are bundled. The scientific Core, Linux graphical libraries and Run/Restart terminal remain external prerequisites. The packager recreates its owned staging tree and copies only production assets and required Host sources, not tests or historical docs.
+From `studio/`, run `npm run desktop:package`, or use `cmake --build build-studio-cpu --target arch-studio-package`. Package on the target OS with native x64 Node. Keep the complete `.local/desktop-release/arch-studio-bin-linux-x64/` or `arch-studio-bin-win32-x64/` directory together; start `arch-studio` on Linux or `arch-studio-bin.exe` on Windows. Host Node and h5wasm are bundled. The scientific Core, native toolchain/dependencies, OS graphical libraries and Run/Restart terminal remain external prerequisites. The packager recreates its owned staging tree and copies only production assets and required Host sources, not tests or historical docs.
 
-The default package version remains development `0.0.0`. Set `ARCH_STUDIO_VERSION` only after the release version has been frozen. Preserve `LICENSE.arch`, Electron's `LICENSE`/`LICENSES.chromium.html`, and the dependency notices; ARCH's MIT license does not replace third-party licenses. Packaging is not signing, an installer or a release tag.
+The default package version remains development `0.0.0`. Set `ARCH_STUDIO_VERSION` only after the release version has been frozen. Preserve `LICENSE.arch`, Electron's `LICENSE`/`LICENSES.chromium.html`, `resources/app/runtime/LICENSE.node`, and the dependency notices; ARCH's MIT license does not replace third-party licenses. Packaging is not signing, an installer or a release tag.
 
-Native Windows packaging is outside this Linux delivery. Earlier platform/checkpoint instructions remain in the [historical archive](../../docs/histroy/studio/desktop-checkpoint-history.md).
+The package script derives Electron from `package.json` and checks both lock entries and the installed package before staging. CMake explicitly prepares that exact runtime with the official installer, even if an older executable already exists. Updating a dependency pin therefore does not leave a separate hard-coded packaging version.
 
-Environment setup and troubleshooting: [Linux/WSL requirements](../../docs/guides/StudioEnvironment.zh-CN.md).
+## Native Windows prerequisites and entry
+
+Use GCC/UCRT64 and same-ABI dependencies from the [native CPU guide](../../docs/guides/WindowsNativeCpu.md), or a separate MSVC/NVCC tree and matching dependencies from the [native CUDA guide](../../docs/guides/WindowsNativeCuda.md). A CUDA-enabled executable can select `cpu`, `cuda` or `auto` through `compute_backend` while keeping its MSVC dependency context. Full MSVC/CUDA dependency freshness remains unknown. The Core and W2 helpers stay outside the Electron package. Build `arch-studio-assets` and `arch-studio-runtime` with `ARCH_BUILD_STUDIO=ON` and `ARCH_STUDIO_NODE` set to native `node.exe`. CMake invokes npm through its native `npm-cli.js`, without depending on shell execution policy for `npm.ps1`.
+
+Main reads `ARCH_STUDIO_WINDOWS_TOOLS` as a JSON object with required `cmake`, `supervisor`, `ninja`, `objdump`, `publisher`, `rc` absolute local `.exe` paths and a `path` string of absolute native tool/DLL directories separated by semicolons. `terminal` is an optional absolute Windows Terminal `.exe`; Run/Restart needs it. These are trusted startup settings; they are not renderer fields, HTTP parameters or project data. Missing or invalid settings fail visibly. Never put credentials in this configuration.
+
+MSVC builds also accept `compilerEnvironment` containing only explicit `INCLUDE`, `LIB` and `LIBPATH` directory lists from the selected Developer environment. SDK `rc.exe` and Ninja must match the existing CMake bindings. Main and Host use the same private-context validator.
+
+```powershell
+# From the ARCH root, after setting the trusted tool context:
+& .\build-studio-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-studio-cpu --binary build-studio-cpu/bin/ARCH.exe --case Sod --config simulation/Sod/Sod.par
+```
+
+Windows drive paths default to the native Host. Explicit `--distro` or an absolute Linux/WSL UNC project selects the existing WSL route and its Linux Node/Core requirements. Native Open/Save As selections remain `.par` paths inside the managed project and still use the existing Host readers/writers. Closing follows the same drain policy on both platforms. Earlier platform/checkpoint instructions remain in the [historical archive](../../docs/histroy/studio/desktop-checkpoint-history.md).
+
+Environment setup and troubleshooting: [Linux/WSL and Windows requirements](../../docs/guides/StudioEnvironment.zh-CN.md).

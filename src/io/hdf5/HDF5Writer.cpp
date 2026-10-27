@@ -19,7 +19,19 @@
 #include <cmath>
 #include <filesystem>
 #include <system_error>
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+// MinGW's Windows headers expose this NT constant, which collides with a
+// HighFive enum. This translation unit uses Win32 CREATE_NEW, not FILE_CREATE.
+#ifdef FILE_CREATE
+#undef FILE_CREATE
+#endif
+#else
 #include <unistd.h>
+#endif
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -42,6 +54,44 @@ using namespace HighFive;
 namespace io {
 
 namespace {
+
+/** Reserve a same-directory temporary; publication/schema checks stay shared. */
+std::filesystem::path create_plot_temporary(const std::string& filepath)
+{
+#if defined(_WIN32)
+    for (int attempt = 0; attempt < 32; ++attempt) {
+        const auto candidate = std::filesystem::u8path(
+            filepath + ".partial-" + arch::core::new_run_identity());
+        const HANDLE file = CreateFileW(candidate.c_str(), GENERIC_READ | GENERIC_WRITE,
+            0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+        if (file == INVALID_HANDLE_VALUE) {
+            const DWORD error = GetLastError();
+            if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) continue;
+            throw std::system_error(error, std::system_category(), "Create plot temporary");
+        }
+        if (!CloseHandle(file)) {
+            const DWORD error = GetLastError();
+            std::error_code ignored; std::filesystem::remove(candidate, ignored);
+            throw std::system_error(error, std::system_category(), "Close temporary descriptor");
+        }
+        return candidate;
+    }
+    throw std::runtime_error("Create plot temporary: unique-name attempts exhausted");
+#else
+    std::string pattern = filepath + ".partial-XXXXXX";
+    std::vector<char> temporary(pattern.begin(), pattern.end());
+    temporary.push_back(0);
+    int fd = ::mkstemp(temporary.data());
+    if (fd < 0) throw std::system_error(errno, std::generic_category(), "Create plot temporary");
+    const std::filesystem::path temporary_path(temporary.data());
+    if (::close(fd) != 0) {
+        int error = errno;
+        std::error_code ignored; std::filesystem::remove(temporary_path, ignored);
+        throw std::system_error(error, std::generic_category(), "Close temporary descriptor");
+    }
+    return temporary_path;
+#endif
+}
 
 /** Explain identity/payload failures without changing reader/writer exception types. */
 std::string state_control_error(const std::vector<double>& controls)
@@ -429,17 +479,7 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
     }
     // Same-directory atomic replacement retains legacy overwrite semantics.
     // Atomic visibility does not promise power-loss durability (no fsync).
-    std::string pattern = filepath + ".partial-XXXXXX";
-    std::vector<char> temporary(pattern.begin(), pattern.end());
-    temporary.push_back(0);
-    int fd = ::mkstemp(temporary.data());
-    if (fd < 0) throw std::system_error(errno, std::generic_category(), "Create plot temporary");
-    const std::filesystem::path temporary_path(temporary.data());
-    if (::close(fd) != 0) {
-        int error = errno;
-        std::error_code ignored; std::filesystem::remove(temporary_path, ignored);
-        throw std::system_error(error, std::generic_category(), "Close temporary descriptor");
-    }
+    const auto temporary_path = create_plot_temporary(filepath);
     try {
         CheckedPlotFile file(temporary_path.string(), File::ReadWrite | File::Truncate);
         file.createAttribute("time", current_time);
@@ -478,7 +518,8 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
             identity.createAttribute("case_id",id.case_id.empty()?std::string("unknown"):id.case_id);
             identity.createAttribute("case_source",id.case_id.empty()?std::string("unknown"):std::string("ConfigurationInput.case_id"));
             identity.createAttribute("binary_sha256",id.binary_sha256.empty()?std::string("unknown"):id.binary_sha256);
-            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):std::string("Linux /proc/self/exe"));
+            identity.createAttribute("binary_source",id.binary_sha256.empty()?std::string("unknown"):
+                std::string(arch::core::running_executable_source()));
             identity.createAttribute("binary_scope",std::string("main-executable-only"));
             identity.createAttribute("raw_config_sha256",id.raw_config_sha256.empty()?std::string("unknown"):id.raw_config_sha256);
             identity.createAttribute("raw_config_source",id.raw_config_sha256.empty()?std::string("unknown"):

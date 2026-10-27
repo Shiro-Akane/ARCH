@@ -7,6 +7,8 @@
  * 3. Return an accepted state or explicit rejection status.
  */
 #pragma once
+#include "core/ArchPortability.h"
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -52,7 +54,7 @@ struct Solver_ROS4
     };
     struct Continuation
     {
-        [[no_unique_address]] NetType network{};
+        ARCH_NO_UNIQUE_ADDRESS NetType network{};
         OdeMath::AcceptedState<NEQ> accepted;
         arch::math::CompensatedSum accepted_energy;
         double X_old[MAX_N], X_k[MAX_N], X_trial[MAX_N];
@@ -155,7 +157,7 @@ struct Solver_ROS4
                 }
 
                 if (t_current + dt > dt_target) dt = dt_target - t_current;
-                if (!(dt > 0.0) || !std::isfinite(dt) || t_current + dt == t_current) {
+                if (!(dt > 0.0) || !arch::math::isfinite(dt) || t_current + dt == t_current) {
                     report.status = BurnOdeStatus::Stalled;
                     c.phase = Phase::Complete;
                     return OdeLinearRequest::Complete;
@@ -190,7 +192,7 @@ struct Solver_ROS4
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) {
                     stage_values[i] = c.b[i];
-                    if (!std::isfinite(stage_values[i])) c.solve_failed = true;
+                    if (!arch::math::isfinite(stage_values[i])) c.solve_failed = true;
                 }
                 if (c.solve_failed || c.stage == 3) {
                     finish_trial(c, X_ODE, eos, burn_cfg);
@@ -352,7 +354,7 @@ private:
                     X_trial[i] = stage_state_sum(c, i, m1, m2, m3, m4).value();
                     X_err[i]   = e1 * u1[i] + e2 * u2[i] + e3 * u3[i] + e4 * u4[i];
 
-                    if (!std::isfinite(X_trial[i])) {
+                    if (!arch::math::isfinite(X_trial[i])) {
                         admissible = false;
                     }
                     else if (X_trial[i] < -10.0 * atol || X_trial[i] > 1.0 + 10.0 * atol) {
@@ -366,13 +368,13 @@ private:
                 for (int i = NUM_SPEC; i < NEQ; ++i) {
                     X_trial[i] = stage_state_sum(c, i, m1, m2, m3, m4).value();
                     X_err[i] = e1 * u1[i] + e2 * u2[i] + e3 * u3[i] + e4 * u4[i];
-                    if (!std::isfinite(X_trial[i])) admissible = false;
+                    if (!arch::math::isfinite(X_trial[i])) admissible = false;
                 }
 
                 // The 1e11 K upper guard bounds the Timmes EOS/network domain
                 // used by the burn solvers; smallt supplies the lower guard.
-                if (!std::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt || X_trial[NUM_SPEC] > 1.0e11
-                    || !std::isfinite(mass_sum) || mass_sum <= 0.0) {
+                if (!arch::math::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt || X_trial[NUM_SPEC] > 1.0e11
+                    || !arch::math::isfinite(mass_sum) || mass_sum <= 0.0) {
                     admissible = false;
                 }
 
@@ -430,7 +432,7 @@ private:
                 nse_attempted = false;
                 report.rejected_substeps += 1;
                 // Stalling depends on the current time, not an absolute second scale.
-                if (!(dt > 0.0) || !std::isfinite(dt) || t_current + dt == t_current)
+                if (!(dt > 0.0) || !arch::math::isfinite(dt) || t_current + dt == t_current)
                 {
 #if !defined(__CUDA_ARCH__)
                     std::cerr << "[ROS4] Fatal Error: Stiff ODE stalled. time increment is not representable" << std::endl;

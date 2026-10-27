@@ -8,6 +8,7 @@
  * this file does not introduce a second RKL recurrence.
  */
 
+#include "core/MathClassification.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 
 #include "cuda/diffusion/DiffusionSolver.cuh"
@@ -67,13 +68,13 @@ __global__ void diffusion_activity_kernel(const DeviceDiffusionActivityBlock* bi
     DeviceDiffusionActivityResult result{};
     for (int lane = 0; lane < threads; ++lane) {
         result.failed |= failed_part[lane];
-        if (!std::isfinite(signed_part[lane]) || !std::isfinite(absolute_part[lane])) result.failed = 1;
+        if (!arch::math::isfinite(signed_part[lane]) || !arch::math::isfinite(absolute_part[lane])) result.failed = 1;
         signed_total.add(signed_part[lane]); absolute_total.add(absolute_part[lane]);
         result.cells += cells_part[lane];
     }
     result.signed_energy_change = signed_total.value();
     result.absolute_energy_change = absolute_total.value();
-    if (!std::isfinite(result.signed_energy_change) || !std::isfinite(result.absolute_energy_change))
+    if (!arch::math::isfinite(result.signed_energy_change) || !arch::math::isfinite(result.absolute_energy_change))
         result.failed = 1;
     results[blockIdx.x] = result;
 }

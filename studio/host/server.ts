@@ -1,3 +1,4 @@
+import type {WindowsHostTools} from './hostProcess.ts';
 /**
  * Route loopback HTTP requests to the selected project's existing service owners.
  * Validate origin/desktop token, method and bounded typed body before dispatch;
@@ -27,6 +28,8 @@ import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import type { ProjectSnapshot } from '../src/host/contracts.ts';
 export interface ProjectReader {
+    /** Trusted module-only context; never serialized into the snapshot or accepted from HTTP. */
+    nativeTools?(): WindowsHostTools | undefined;
     runs?: RunController;
     runPreparation?: RunPreparationRunner;
     configure?: ConfigureRunner;
@@ -243,8 +246,8 @@ export function createHostServer(reader: ProjectReader, origin: string, desktop?
                     res.once('close', cancel);
                     try {
                         const result = await (req.url === '/api/plotfile/audit-metadata'
-                            ? readProjectPlotfileMetadata(root, projectId, data, controller.signal)
-                            : req.url === '/api/plotfile/audit-point' ? readProjectPlotfilePoint(root, projectId, data, controller.signal) : req.url === '/api/plotfile/audit-overview' ? readProjectPlotfileOverview(root, projectId, data, controller.signal) : readProjectPlotfileFieldSlice(root, projectId, data, controller.signal));
+                            ? readProjectPlotfileMetadata(root, projectId, data, controller.signal, reader.nativeTools?.())
+                            : req.url === '/api/plotfile/audit-point' ? readProjectPlotfilePoint(root, projectId, data, controller.signal, reader.nativeTools?.()) : req.url === '/api/plotfile/audit-overview' ? readProjectPlotfileOverview(root, projectId, data, controller.signal, reader.nativeTools?.()) : readProjectPlotfileFieldSlice(root, projectId, data, controller.signal, reader.nativeTools?.()));
                         const current = reader.snapshot();
                         if (current.session.projectId !== projectId || current.host.projectRoot !== root)
                             throw new ConfigError('changed-externally', 'Project session changed during Plotfile audit.');

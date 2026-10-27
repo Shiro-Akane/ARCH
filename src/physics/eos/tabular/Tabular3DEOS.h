@@ -13,6 +13,8 @@
  */
 #pragma once
 
+#include "core/ArrayFill.h"
+#include "core/MathClassification.h"
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -80,8 +82,8 @@ struct BasicTabular3DEOSView
         const bool outside = (log_rho < log_rho_min || log_rho > log_rho_max ||
                 log_T < log_T_min || log_T > log_T_max ||
                 X < X_min || X > X_max);
-        if (native_direct && (outside || !std::isfinite(log_rho)
-                || !std::isfinite(log_T) || !std::isfinite(X))) {
+        if (native_direct && (outside || !arch::math::isfinite(log_rho)
+                || !arch::math::isfinite(log_T) || !arch::math::isfinite(X))) {
             native_failure(tabular_eos::FreeEnergyStatus::invalid_native_domain);
             return true;
         }
@@ -123,11 +125,11 @@ struct BasicTabular3DEOSView
         state.gamma1 = rho * cs2 / state.pressure;
         if (!(state.pressure > 0.0) || !(state.energy > 0.0)
             || !(state.cv > 0.0) || !(cs2 > 0.0)
-            || !std::isfinite(state.pressure) || !std::isfinite(state.energy)
-            || !std::isfinite(state.cv) || !std::isfinite(cs2)
-            || !std::isfinite(state.dp_dT) || !std::isfinite(state.dp_de_rho)
-            || !std::isfinite(state.dp_drho_e) || !std::isfinite(state.gamma1)
-            || !std::isfinite(state.sound_speed)) {
+            || !arch::math::isfinite(state.pressure) || !arch::math::isfinite(state.energy)
+            || !arch::math::isfinite(state.cv) || !arch::math::isfinite(cs2)
+            || !arch::math::isfinite(state.dp_dT) || !arch::math::isfinite(state.dp_de_rho)
+            || !arch::math::isfinite(state.dp_drho_e) || !arch::math::isfinite(state.gamma1)
+            || !arch::math::isfinite(state.sound_speed)) {
             native_failure(tabular_eos::FreeEnergyStatus::invalid_native_cell);
             return tabular_eos::invalid_thermodynamic_state();
         }
@@ -143,7 +145,7 @@ struct BasicTabular3DEOSView
         double rho, double energy, const double* Xi, bool from_pressure = false) const
     {
         const double x = get_target_X(Xi);
-        if (!(rho > 0.0) || !(energy > 0.0) || !std::isfinite(energy)
+        if (!(rho > 0.0) || !(energy > 0.0) || !arch::math::isfinite(energy)
             || is_out_of_bounds(std::log10(rho), log_T_min, x))
             return native_failure(tabular_eos::FreeEnergyStatus::invalid_native_domain);
         const auto ar = tabular_eos::locate_axis(std::log10(rho), n_rho,
@@ -153,7 +155,7 @@ struct BasicTabular3DEOSView
         const double* field = from_pressure ? table_P : table_E;
         const double target = transform.logarithmic
             ? std::log10(energy - transform.offset) : energy - transform.offset;
-        if (!std::isfinite(target))
+        if (!arch::math::isfinite(target))
             return native_failure(tabular_eos::FreeEnergyStatus::invalid_temperature_inversion);
         double root = std::numeric_limits<double>::quiet_NaN();
         for (int j = 0; j + 1 < n_T; ++j) {
@@ -190,17 +192,17 @@ struct BasicTabular3DEOSView
             const double fraction = (cell_target - q[0]) / (q[1] - q[0]);
             const double lt = axis_nodes[1][j]
                 + fraction * (axis_nodes[1][j + 1] - axis_nodes[1][j]);
-            if (std::isfinite(root)
+            if (arch::math::isfinite(root)
                 && std::abs(lt - root) > 32.0 * std::numeric_limits<double>::epsilon()
                     * std::max(1.0, std::abs(root)))
                 return native_failure(tabular_eos::FreeEnergyStatus::ambiguous_temperature_inversion);
             root = lt;
         }
-        if (!std::isfinite(root))
+        if (!arch::math::isfinite(root))
             return native_failure(tabular_eos::FreeEnergyStatus::invalid_temperature_inversion);
         const double temperature = std::pow(10.0, root);
         const double recovered = interpolate_3d(field, rho, temperature, x);
-        if (!std::isfinite(recovered)
+        if (!arch::math::isfinite(recovered)
             // Require the same relative recovered-energy consistency as the
             // shared table inversion; this is not a global EOS field budget.
             || std::abs(recovered - energy) > 2.0e-12 * std::max(std::abs(energy), std::abs(recovered)))
@@ -299,7 +301,7 @@ struct BasicTabular3DEOSView
         using Status = tabular_eos::FreeEnergyStatus;
         if (native_direct || n_rho < 2 || n_T < 2 || n_X < 2 ||
             !(dlog_rho > 0.0) || !(dlog_T > 0.0) || !(dX > 0.0) ||
-            !std::isfinite(rho) || !std::isfinite(T) || !std::isfinite(composition) ||
+            !arch::math::isfinite(rho) || !arch::math::isfinite(T) || !arch::math::isfinite(composition) ||
             !(rho > 0.0) || !(T > 0.0) ||
             rho < std::pow(10.0, log_rho_min) || rho > std::pow(10.0, log_rho_max) ||
             T < std::pow(10.0, log_T_min) || T > std::pow(10.0, log_T_max) ||
@@ -474,18 +476,18 @@ struct BasicTabular3DEOSView
         eos_utils::LinearCompositionDerivatives d{};
         if (!native_direct) {
             const auto state = free_energy_state(rho, T, get_target_X(Xi));
-            if (!std::isfinite(state.energy)) {
-                d.energy.fill(state.energy); d.energy_temperature.fill(state.energy);
-                d.cv.fill(state.energy); d.energy_hessian.fill(state.energy);
+            if (!arch::math::isfinite(state.energy)) {
+                arch::fill_array(d.energy, state.energy); arch::fill_array(d.energy_temperature, state.energy);
+                arch::fill_array(d.cv, state.energy); arch::fill_array(d.energy_hessian, state.energy);
                 d.cv_temperature=state.energy;
                 return d;
             }
             interpolate_free_energy(rho, T, get_target_X(Xi), &d);
         } else {
             const auto state = native_state(rho, T, Xi);
-            if (!std::isfinite(state.energy)) {
-                d.energy.fill(state.energy); d.energy_temperature.fill(state.energy);
-                d.cv.fill(state.energy); d.energy_hessian.fill(state.energy);
+            if (!arch::math::isfinite(state.energy)) {
+                arch::fill_array(d.energy, state.energy); arch::fill_array(d.energy_temperature, state.energy);
+                arch::fill_array(d.cv, state.energy); arch::fill_array(d.energy_hessian, state.energy);
                 d.cv_temperature=state.energy;
                 return d;
             }
@@ -588,7 +590,7 @@ struct BasicTabular3DEOSView
     {
         if (!native_direct) {
             const auto state = free_energy_state(rho, T, get_target_X(Xi));
-            if (!std::isfinite(state.energy)) return state.energy;
+            if (!arch::math::isfinite(state.energy)) return state.energy;
         }
         return 0.0;
     }

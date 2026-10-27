@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 
@@ -74,7 +75,7 @@ struct DenseLUSolver
         if (!factorize<ACTIVE_N, MAX_N>(A, pivots)) return false;
         solve_with_factors<ACTIVE_N, MAX_N>(A, pivots, b);
         for (int i = 0; i < ACTIVE_N; ++i)
-            if (!std::isfinite(b[i])) return false;
+            if (!arch::math::isfinite(b[i])) return false;
         return true;
     }
 
@@ -93,7 +94,7 @@ struct DenseLUSolver
         for (int i = 0; i < ACTIVE_N; ++i) {
             double scale = 0.0;
             for (int j = 0; j < ACTIVE_N; ++j) {
-                if (!std::isfinite(A.data[i][j])) return false;
+                if (!arch::math::isfinite(A.data[i][j])) return false;
                 scale = std::max(scale, std::abs(A.data[i][j]));
             }
             if (scale == 0.0) return false;
@@ -108,7 +109,7 @@ struct DenseLUSolver
             int pivot_row = i;
             for (int j = i; j < ACTIVE_N; ++j) {
                 const double value = std::abs(A.data[p[j]][i]);
-                if (!std::isfinite(value)) return false;
+                if (!arch::math::isfinite(value)) return false;
                 const double scaled = value / row_scale[p[j]];
                 if (scaled > max_scaled) {
                     max_value = value;
@@ -116,7 +117,7 @@ struct DenseLUSolver
                     pivot_row = j;
                 }
             }
-            if (!std::isfinite(max_value) || max_value == 0.0) return false;
+            if (!arch::math::isfinite(max_value) || max_value == 0.0) return false;
             std::swap(p[i], p[pivot_row]);
 
             const double pivot = A.data[p[i]][i];

@@ -1,3 +1,4 @@
+import {windowsConfigAvailable} from './windowsFilePublish.ts';
 /**
  * Compose a canonical project reader from existing Host service owners.
  * Bind selected files, build/configuration/Preview and run controllers to one
@@ -43,20 +44,21 @@ export async function openProject(options:ProjectOptions) {
  for(const value of [options.case,options.config,options.binary])if(value!==undefined)selectedPath(value);
  const read=async(value:string|undefined,kind:ProjectFileRef['kind'])=>value===undefined?undefined:await fingerprint(root,value,kind);
  const [caseSource,parameterFile,executable]=await Promise.all([read(options.case,'case-source'),read(options.config,'parameter'),read(options.binary,'executable')]);
+ const nativeWrites=process.platform==='win32'&&await windowsConfigAvailable(options.configureProfile?.windowsTools);
  const state=(file:ProjectFileRef|undefined)=>!file||file.error?'unknown' as const:!file.exists?'missing' as const:'available' as const;
- let result:ProjectSnapshot={host:{protocolVersion:PROTOCOL_VERSION,hostKind:'local',platform:process.platform,projectRoot:root,capabilities:{readProject:true,writeConfig:process.platform==='linux',build:false,preview:false,watchFiles:false}},session:{projectId:randomUUID(),displayName:path.basename(root),projectRoot:root,caseSource,parameterFile,executable,sourceState:state(caseSource),configFileState:state(parameterFile),binaryState:state(executable),mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
- const runPreparation=options.binary?new RunPreparationRunner(root,result.session.projectId,options.binary,()=>serial(()=>readConfig(root,options.config,result.session.projectId))):undefined;
- const runs=runPreparation?new RunController(runPreparation):undefined;
+ let result:ProjectSnapshot={host:{protocolVersion:PROTOCOL_VERSION,hostKind:'local',platform:process.platform,projectRoot:root,capabilities:{readProject:true,writeConfig:process.platform==='linux'||nativeWrites,build:false,preview:false,watchFiles:false}},session:{projectId:randomUUID(),displayName:path.basename(root),projectRoot:root,caseSource,parameterFile,executable,sourceState:state(caseSource),configFileState:state(parameterFile),binaryState:state(executable),mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
+ const runPreparation=options.binary?new RunPreparationRunner(root,result.session.projectId,options.binary,()=>serial(()=>readConfig(root,options.config,result.session.projectId)),options.configureProfile?.windowsTools):undefined;
+ const runs=runPreparation?new RunController(runPreparation,{windowsTools:options.configureProfile?.windowsTools}):undefined;
  let build:BuildRunner|undefined;
- if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!);result.host.capabilities.build=(await build.initialize()).configured;}
+ if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!,{windowsTools:options.configureProfile?.windowsTools});result.host.capabilities.build=(await build.initialize()).configured;}
  const configure=options.configureProfile?new ConfigureRunner(options.configureProfile):undefined;
  const previewProfiles=local||options.trustedBuildProfile?PREVIEW_PROFILES.map(profile=>({...profile,buildProfileId:selectedProfile!.id})):PREVIEW_PROFILES;
- const preview=build&&(local||options.trustedBuildProfile||build.profile.id===SOD_PREVIEW_PROFILE.buildProfileId)?new PreviewRunner(build,previewProfiles[0],{},previewProfiles):undefined;
+ const preview=build&&(local||options.trustedBuildProfile||build.profile.id===SOD_PREVIEW_PROFILE.buildProfileId)?new PreviewRunner(build,previewProfiles[0],{windowsTools:options.configureProfile?.windowsTools},previewProfiles):undefined;
  const workflow=preview?new WorkflowRunner(preview):undefined;
  if(preview)preview.externalBusy=()=>(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);
  if(preview&&build){build.executionBlocked=()=>preview.isActive()||(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);result.host.capabilities.preview=(await preview.readiness()).ready;}
  if(build&&!preview)build.executionBlocked=()=>(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);
- if(options.trustedBuildProfile&&build){if(configure&&build.profile.id.startsWith('studio-existing-'))configure.beforeStart=()=>validateExistingBuildProfile(root,build!.profile);const retire=build.beforeStart;build.beforeStart=async()=>{if(build!.profile.id.startsWith('studio-existing-'))await validateExistingBuildProfile(root,build!.profile);await retire?.();};}
+ if(options.trustedBuildProfile&&build){if(configure&&build.profile.id.startsWith('studio-existing-'))configure.beforeStart=()=>validateExistingBuildProfile(root,build!.profile,options.configureProfile?.windowsTools);const retire=build.beforeStart;build.beforeStart=async()=>{if(build!.profile.id.startsWith('studio-existing-'))await validateExistingBuildProfile(root,build!.profile,options.configureProfile?.windowsTools);await retire?.();};}
  const baseline=structuredClone(result.session);
  const changed=(a:ProjectFileRef|undefined,b:ProjectFileRef|undefined)=>Boolean(a&&b&&(a.exists!==b.exists||a.sha256!==b.sha256||a.size!==b.size||a.modifiedTime!==b.modifiedTime));
  async function refresh(){
@@ -78,7 +80,7 @@ export async function openProject(options:ProjectOptions) {
  function serial<T>(operation:()=>Promise<T>):Promise<T>{const next=queue.then(operation);queue=next.catch(()=>undefined);return next;}
  async function saved(read:ConfigReadResponse):Promise<ConfigWriteResponse>{options.config=read.relativePath;const current=await fingerprint(root,read.relativePath,'parameter');result.session.parameterFile=current;baseline.parameterFile=structuredClone(current);result.session.configFileState=current.error?'unknown':current.exists?'available':'missing';result.session.refreshedAt=new Date().toISOString();return {...read,project:structuredClone(result)};}
  function projectId(id:string){if(id!==result.session.projectId)throw new ConfigError('protocol-error','Project session changed. Reconnect before saving.');}
- const configuration=options.binary?new ConfigurationAdapter({root,projectId:result.session.projectId,binaryRelativePath:options.binary}):undefined;
+ const configuration=options.binary?new ConfigurationAdapter({root,projectId:result.session.projectId,binaryRelativePath:options.binary,windowsTools:options.configureProfile?.windowsTools}):undefined;
  if(options.selectedSource){
   if(!configuration)throw new BuildError('Selected source has no configured executable owner. Close this project and reopen it with its compiled binary.',409);
   const assertCase=async(caseId:string)=>{
@@ -92,8 +94,8 @@ export async function openProject(options:ProjectOptions) {
   configuration.assertCase=assertCase;if(runPreparation)runPreparation.assertCase=assertCase;
   if(workflow)workflow.assertCase=assertCase;if(preview)preview.assertCase=assertCase;
  }
- return {runs,runPreparation,configure,build,preview,workflow,configuration,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
+ return {runs,runPreparation,configure,build,preview,workflow,configuration,nativeTools:()=>options.configureProfile?.windowsTools?structuredClone(options.configureProfile.windowsTools):undefined,readSource:()=>readSource(root,options.case,result.session.projectId),snapshot:()=>{result.host.capabilities.preview=preview?.snapshot().ready??false;return structuredClone(result);},refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
   openConfig:(request:OpenConfigRequest)=>serial(async()=>{projectId(request.projectId);return saved(await readConfig(root,request.relativePath,result.session.projectId));}),
-  saveConfig:(request:SaveConfigRequest)=>serial(async()=>{projectId(request.projectId);if(request.relativePath!==options.config)throw new ConfigError('invalid-path','Save may only update the current associated configuration.');return saved(await atomicSave(root,request.relativePath,result.session.projectId,request.text,request.expectedFingerprint));}),
-  saveConfigAs:(request:SaveConfigAsRequest)=>serial(async()=>{projectId(request.projectId);return saved(await publishConfig(root,request.destinationRelativePath,result.session.projectId,request.text,undefined,true));})};
+  saveConfig:(request:SaveConfigRequest)=>serial(async()=>{projectId(request.projectId);if(request.relativePath!==options.config)throw new ConfigError('invalid-path','Save may only update the current associated configuration.');return saved(await atomicSave(root,request.relativePath,result.session.projectId,request.text,request.expectedFingerprint,{windowsTools:options.configureProfile?.windowsTools}));}),
+  saveConfigAs:(request:SaveConfigAsRequest)=>serial(async()=>{projectId(request.projectId);return saved(await publishConfig(root,request.destinationRelativePath,result.session.projectId,request.text,undefined,true,{windowsTools:options.configureProfile?.windowsTools}));})};
 }

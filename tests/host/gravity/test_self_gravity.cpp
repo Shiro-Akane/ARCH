@@ -152,58 +152,60 @@ void host_stage_diagnostic_journal() {
     const auto directory=std::filesystem::path("self-gravity-host-journal-fixture-"
         +std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     require(std::filesystem::create_directory(directory),"Host journal output directory already exists");
-    f.config.io.out_dir=directory.string();
-    RunState start;start.repairs.reset(1);
-    SimulationController controller(f.config,start);BCHandler boundary(f.config);
-    driver::DriverRuntime runtime(f.control,boundary,f.config,species,controller);
-    runtime.initialize_topology();auto context=runtime.stage_context();
-    SelfGravity gravity(f.config.physics.gravity);
-    driver::GravityStage stage(runtime,&gravity);
-    require(stage.supports_macro_step_journal(arch::state::ExecutionSide::Host),"real Host journal capability absent");
-    stage.flush_committed_diagnostics();
-    const auto read_rows=[&] {
-        std::ifstream input(directory/"gravity_solves.tsv");
-        return std::string(std::istreambuf_iterator<char>(input),{});
-    };
-    const auto original=read_rows();
-    const auto& descriptor=scheduler::supported_hydro_time_plan(scheduler::HydroMethod::Euler).stages.front();
-    const auto prepare=[&] {
-        stage.prepare({scheduler::HydroMethod::Euler,descriptor,runtime.handles(),
-            state::ExecutionSide::Host,context.ledger,2.,.125});
-    };
-    const auto consume=[&] {
-        for(int id:f.control.tree->GetActiveBlocks()) {
-            auto& block=f.control.pool->GetBlock(id);
-            std::vector<FluidVector> delta(block.grid.GetTotalSize()),flux(block.grid.GetTotalSize());
-            for(auto& face:flux)face.rho=.37;
-            gravity.add_sources_on_patch(delta,block.fluid_state,block.grid,.125);
-            gravity.add_flux_work_on_patch(delta,flux,block.fluid_state,block.grid,.125,0);
-        }
-    };
-    stage.begin_macro_step();prepare();
-    rejects([&]{stage.accept(descriptor);},"unconsumed real GravityStage was accepted");
-    rejects([&]{stage.flush_committed_diagnostics();},"tentative source diagnostics flushed");
-    stage.discard_macro_step();
-    require(read_rows()==original,"discarded source prefix changed accepted diagnostics");
-    rejects([&]{gravity.potential();},"discard retained readable candidate gravity");
-    stage.begin_macro_step();prepare();consume();
-    auto wrong=descriptor;wrong.flux_register_weight=.5;
-    rejects([&]{stage.accept(wrong);},"different source descriptor accepted");
-    stage.accept(descriptor);
-    require(read_rows()==original,"accepted stage row leaked before macro-step commit");
-    stage.commit_macro_step();
-    require(read_rows()==original,"numerical commit performed fallible file publication");
-    stage.flush_committed_diagnostics();
-    const auto accepted=read_rows();
-    require(accepted.size()>original.size()
-        &&std::count(accepted.begin(),accepted.end(),'\n')
-            ==std::count(original.begin(),original.end(),'\n')+1,
-        "committed actual source receipt was not published exactly once");
-    stage.flush_committed_diagnostics();
-    require(read_rows()==accepted,"source diagnostics flush repeated a committed row");
-    stage.begin_macro_step();prepare();consume();stage.accept(descriptor);
-    stage.discard_macro_step();stage.flush_committed_diagnostics();
-    require(read_rows()==accepted,"late failed source attempt erased accepted history or leaked a prefix");
+    { // Release the journal file before deleting its Windows directory.
+        f.config.io.out_dir=directory.string();
+        RunState start;start.repairs.reset(1);
+        SimulationController controller(f.config,start);BCHandler boundary(f.config);
+        driver::DriverRuntime runtime(f.control,boundary,f.config,species,controller);
+        runtime.initialize_topology();auto context=runtime.stage_context();
+        SelfGravity gravity(f.config.physics.gravity);
+        driver::GravityStage stage(runtime,&gravity);
+        require(stage.supports_macro_step_journal(arch::state::ExecutionSide::Host),"real Host journal capability absent");
+        stage.flush_committed_diagnostics();
+        const auto read_rows=[&] {
+            std::ifstream input(directory/"gravity_solves.tsv");
+            return std::string(std::istreambuf_iterator<char>(input),{});
+        };
+        const auto original=read_rows();
+        const auto& descriptor=scheduler::supported_hydro_time_plan(scheduler::HydroMethod::Euler).stages.front();
+        const auto prepare=[&] {
+            stage.prepare({scheduler::HydroMethod::Euler,descriptor,runtime.handles(),
+                state::ExecutionSide::Host,context.ledger,2.,.125});
+        };
+        const auto consume=[&] {
+            for(int id:f.control.tree->GetActiveBlocks()) {
+                auto& block=f.control.pool->GetBlock(id);
+                std::vector<FluidVector> delta(block.grid.GetTotalSize()),flux(block.grid.GetTotalSize());
+                for(auto& face:flux)face.rho=.37;
+                gravity.add_sources_on_patch(delta,block.fluid_state,block.grid,.125);
+                gravity.add_flux_work_on_patch(delta,flux,block.fluid_state,block.grid,.125,0);
+            }
+        };
+        stage.begin_macro_step();prepare();
+        rejects([&]{stage.accept(descriptor);},"unconsumed real GravityStage was accepted");
+        rejects([&]{stage.flush_committed_diagnostics();},"tentative source diagnostics flushed");
+        stage.discard_macro_step();
+        require(read_rows()==original,"discarded source prefix changed accepted diagnostics");
+        rejects([&]{gravity.potential();},"discard retained readable candidate gravity");
+        stage.begin_macro_step();prepare();consume();
+        auto wrong=descriptor;wrong.flux_register_weight=.5;
+        rejects([&]{stage.accept(wrong);},"different source descriptor accepted");
+        stage.accept(descriptor);
+        require(read_rows()==original,"accepted stage row leaked before macro-step commit");
+        stage.commit_macro_step();
+        require(read_rows()==original,"numerical commit performed fallible file publication");
+        stage.flush_committed_diagnostics();
+        const auto accepted=read_rows();
+        require(accepted.size()>original.size()
+            &&std::count(accepted.begin(),accepted.end(),'\n')
+                ==std::count(original.begin(),original.end(),'\n')+1,
+            "committed actual source receipt was not published exactly once");
+        stage.flush_committed_diagnostics();
+        require(read_rows()==accepted,"source diagnostics flush repeated a committed row");
+        stage.begin_macro_step();prepare();consume();stage.accept(descriptor);
+        stage.discard_macro_step();stage.flush_committed_diagnostics();
+        require(read_rows()==accepted,"late failed source attempt erased accepted history or leaked a prefix");
+    }
     std::filesystem::remove_all(directory);
     std::cout<<"GRAVITY_HOST_DIAGNOSTIC_JOURNAL_PASS actual_runtime=1 actual_source=1 no_prefix=1 flush_once=1\n";
 }

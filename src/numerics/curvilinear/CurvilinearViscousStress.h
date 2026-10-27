@@ -22,6 +22,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -67,10 +68,10 @@ ARCH_INLINE bool velocity(const StateReader& read,int cell,
 {
     if(cell<0||cell>=grid.total_size)return false;
     const auto state=read(cell);
-    if(!std::isfinite(state.rho)||!(state.rho>0.))return false;
+    if(!arch::math::isfinite(state.rho)||!(state.rho>0.))return false;
     const Vector candidate{state.mom_u/state.rho,state.mom_v/state.rho,
         state.mom_w/state.rho};
-    for(double value:candidate)if(!std::isfinite(value))return false;
+    for(double value:candidate)if(!arch::math::isfinite(value))return false;
     output=candidate;return true;
 }
 
@@ -81,14 +82,14 @@ ARCH_INLINE bool spacings(const GridMetrics::GeometryView& grid,
     if(grid.dim<1||grid.dim>3||
        grid.geometry==GridMetrics::Geometry::Cartesian||
        grid.geometry==GridMetrics::Geometry::Unsupported||
-       !std::isfinite(radius)||!(radius>0.))return false;
+       !arch::math::isfinite(radius)||!(radius>0.))return false;
     std::array<double,3> candidate{};
     for(int axis=0;axis<grid.dim;++axis) {
         candidate[axis]=GridMetrics::PhysicalSpacing(grid.geometry,grid.dim,axis,
             grid.dx1,grid.dx2,grid.dx3,radius,theta);
         // Reflected spherical virtual cells can have a signed phi metric.
         // Real physical cells retain positive lengths; a pole remains invalid.
-        if(!std::isfinite(candidate[axis])||candidate[axis]==0.||
+        if(!arch::math::isfinite(candidate[axis])||candidate[axis]==0.||
            (candidate[axis]<0.&&!(grid.geometry==GridMetrics::Geometry::Spherical&&
                grid.dim==3&&axis==2)))return false;
     }
@@ -115,7 +116,7 @@ ARCH_INLINE bool covariant_gradient(const GridMetrics::GeometryView& grid,
     bool reflected=false;
     if(basis==Frame::SphericalRThetaPhi&&grid.dim==3) {
         constexpr double pi=std::numbers::pi_v<double>;
-        if(!std::isfinite(theta))return false;
+        if(!arch::math::isfinite(theta))return false;
         theta=std::fmod(theta,2.*pi);if(theta<0.)theta+=2.*pi;
         if(theta>pi) {theta=2.*pi-theta;reflected=true;}
         if(reflected) {
@@ -155,7 +156,7 @@ ARCH_INLINE bool partials(const StateReader& read,int cell,
            !velocity(read,cell+strides[axis],grid,high))return false;
         for(int component=0;component<3;++component) {
             const double value=.5*((high[component]-low[component])/h[axis]);
-            if(!std::isfinite(value))return false;
+            if(!arch::math::isfinite(value))return false;
             candidate[3*component+axis]=value;
         }
     }
@@ -183,7 +184,7 @@ ARCH_INLINE bool angular_face_kinematics(const GridMetrics::GeometryView& grid,
     double& shear,double& work)
 {
     if(grid.geometry!=GridMetrics::Geometry::Cylindrical||grid.dim!=2||
-       direction<0||direction>1||!std::isfinite(left_phi)||!std::isfinite(right_phi))return false;
+       direction<0||direction>1||!arch::math::isfinite(left_phi)||!arch::math::isfinite(right_phi))return false;
     const double area=GridMetrics::FaceArea(grid,direction,i,j,k,false);
     if(direction==0&&grid.GetFacePosL(i)==0.) {shear=0.;work=0.;return true;}
     const int il=i-(direction==0),jl=j-(direction==1);
@@ -196,7 +197,7 @@ ARCH_INLINE bool angular_face_kinematics(const GridMetrics::GeometryView& grid,
     const double omega_l=left_phi/(wl/vl),omega_r=right_phi/(wr/vr),lever=torque/area;
     const double candidate_shear=lever*((omega_r-omega_l)/h);
     const double candidate_work=lever*(.5*(omega_l+omega_r));
-    if(!std::isfinite(candidate_shear)||!std::isfinite(candidate_work))return false;
+    if(!arch::math::isfinite(candidate_shear)||!arch::math::isfinite(candidate_work))return false;
     shear=candidate_shear;work=candidate_work;return true;
 }
 
@@ -216,13 +217,13 @@ ARCH_INLINE bool face_traction(const StateReader& read,int right_cell,
     const GridMetrics::GeometryView& grid,int direction,int i,int j,
     double mu_left,double mu_right,Vector& traction,Vector& work_velocity)
 {
-    if(direction<0||direction>=grid.dim||!std::isfinite(mu_left)||mu_left<0.||
-       !std::isfinite(mu_right)||mu_right<0.)return false;
+    if(direction<0||direction>=grid.dim||!arch::math::isfinite(mu_left)||mu_left<0.||
+       !arch::math::isfinite(mu_right)||mu_right<0.)return false;
     const int stride=direction==0?1:direction==1?grid.stride_y:grid.stride_z;
     Vector left{},right{};
     if(!velocity(read,right_cell-stride,grid,left)||!velocity(read,right_cell,grid,right))return false;
     const Vector mean{.5*(left[0]+right[0]),.5*(left[1]+right[1]),.5*(left[2]+right[2])};
-    for(double value:mean)if(!std::isfinite(value))return false;
+    for(double value:mean)if(!arch::math::isfinite(value))return false;
     double radius=0.,theta=0.;face_point(grid,direction,i,j,radius,theta);
     if(direction==0&&radius==0.) {traction={};work_velocity=mean;return true;}
     const int k=right_cell/grid.stride_z;
@@ -230,7 +231,7 @@ ARCH_INLINE bool face_traction(const StateReader& read,int right_cell,
     const double area=GridMetrics::FaceArea(grid,direction,i,j,k,false);
     if(area==0.||(grid.geometry==GridMetrics::Geometry::Spherical&&grid.dim==3&&direction==1&&
         (theta==0.||theta==std::numbers::pi_v<double>))) {traction={};work_velocity=mean;return true;}
-    if(!std::isfinite(area)||!(area>0.))return false;
+    if(!arch::math::isfinite(area)||!(area>0.))return false;
     std::array<double,3> hl{},hr{};
     const double rl=grid.GetCellCenterX(il),rr=grid.GetCellCenterX(i);
     const double tl_point=grid.SourceTheta(jl),tr_point=grid.SourceTheta(j);
@@ -255,11 +256,11 @@ ARCH_INLINE bool face_traction(const StateReader& read,int right_cell,
     Vector candidate{};
     const double vl=std::abs(GridMetrics::CellVolume(grid,il,jl,kl));
     const double vr=std::abs(GridMetrics::CellVolume(grid,i,j,k));
-    if(!std::isfinite(vl)||!(vl>0.)||!std::isfinite(vr)||!(vr>0.))return false;
+    if(!arch::math::isfinite(vl)||!(vl>0.)||!arch::math::isfinite(vr)||!(vr>0.))return false;
     for(int component=0;component<3;++component) {
         candidate[component]=(vl/(2.*hl[direction])*tl[3*component+direction]
             +vr/(2.*hr[direction])*tr[3*component+direction])/area;
-        if(!std::isfinite(candidate[component]))return false;
+        if(!arch::math::isfinite(candidate[component]))return false;
     }
     Vector work=mean;
     if(grid.geometry==GridMetrics::Geometry::Cylindrical&&grid.dim==2) {
@@ -287,12 +288,12 @@ ARCH_INLINE RadialFace radial_face(const StateReader& read,int right_cell,
     const GridMetrics::GeometryView& grid,int i,double nu)
 {
     RadialFace result{};
-    if(grid.dim!=1||!std::isfinite(nu)||nu<0.)return result;
+    if(grid.dim!=1||!arch::math::isfinite(nu)||nu<0.)return result;
     Vector left{},right{};
     if(!velocity(read,right_cell-1,grid,left)||!velocity(read,right_cell,grid,right))return result;
     const double radius=grid.GetFacePosL(i),low=grid.GetCellCenterX(i-1),high=grid.GetCellCenterX(i);
-    if(!std::isfinite(radius)||radius<0.||!std::isfinite(low)||low==0.||
-       !std::isfinite(high)||!(high>0.)||!std::isfinite(grid.dx1)||!(grid.dx1>0.))return result;
+    if(!arch::math::isfinite(radius)||radius<0.||!arch::math::isfinite(low)||low==0.||
+       !arch::math::isfinite(high)||!(high>0.)||!arch::math::isfinite(grid.dx1)||!(grid.dx1>0.))return result;
     if(radius==0.) {
         result.work_velocity={0.,grid.geometry==GridMetrics::Geometry::Cylindrical?
             .5*(left[1]+right[1]):0.,0.};result.valid=true;return result;
@@ -308,7 +309,7 @@ ARCH_INLINE RadialFace radial_face(const StateReader& read,int right_cell,
             partial[3*component]=(right[component]-left[component])/grid.dx1;
         } else {
             const double q_left=left[component]/low,q_right=right[component]/high;
-            if(!std::isfinite(q_left)||!std::isfinite(q_right)||
+            if(!arch::math::isfinite(q_left)||!arch::math::isfinite(q_right)||
                (left[component]!=0.&&q_left==0.)||(right[component]!=0.&&q_right==0.))return result;
             const double mean=.5*q_left+.5*q_right;
             result.work_velocity[component]=radius*mean;
@@ -341,7 +342,7 @@ ARCH_INLINE bool radial_connection_source(const StateReader& read,int cell,
     if(!lower.valid||!upper.valid)return false;
     const double radius=grid.GetCellCenterX(i),left=grid.GetFacePosL(i),right=grid.GetFacePosR(i);
     const double volume=GridMetrics::CellVolume(grid,i,0,0);
-    if(!std::isfinite(radius)||!(radius>0.)||!std::isfinite(volume)||!(volume>0.))return false;
+    if(!arch::math::isfinite(radius)||!(radius>0.)||!arch::math::isfinite(volume)||!(volume>0.))return false;
     const bool cylinder=grid.geometry==GridMetrics::Geometry::Cylindrical;
     const double area_l=cylinder?left:left*left,area_r=cylinder?right:right*right;
     Vector candidate{};
@@ -352,7 +353,7 @@ ARCH_INLINE bool radial_connection_source(const StateReader& read,int cell,
     if(cylinder)
         candidate[0]-=grid.dx1*(right*(upper.stress[0]+upper.stress[8])
             +left*(lower.stress[0]+lower.stress[8]))/(2.*radius*volume);
-    for(double value:candidate)if(!std::isfinite(value))return false;
+    for(double value:candidate)if(!arch::math::isfinite(value))return false;
     output=candidate;return true;
 }
 
@@ -367,14 +368,14 @@ ARCH_INLINE bool radial_connection_source(const StateReader& read,int cell,
 ARCH_INLINE bool radial_row_sums(const GridMetrics::GeometryView& grid,
     int i,bool high,double rho,double mu,Vector& output)
 {
-    if(grid.dim!=1||!std::isfinite(rho)||!(rho>0.)||!std::isfinite(mu)||mu<0.)return false;
+    if(grid.dim!=1||!arch::math::isfinite(rho)||!(rho>0.)||!arch::math::isfinite(mu)||mu<0.)return false;
     const double edge=high?grid.GetFacePosR(i):grid.GetFacePosL(i);
     if(edge==0.)return true;
     const double radius=grid.GetCellCenterX(i),adjacent=grid.GetCellCenterX(i+(high?1:-1));
     const double h=grid.dx1,volume=GridMetrics::CellVolume(grid,i,0,0);
-    if(!std::isfinite(edge)||!(edge>0.)||!std::isfinite(radius)||!(radius>0.)||
-       !std::isfinite(adjacent)||adjacent==0.||!std::isfinite(volume)||!(volume>0.)||
-       !std::isfinite(h)||!(h>0.))return false;
+    if(!arch::math::isfinite(edge)||!(edge>0.)||!arch::math::isfinite(radius)||!(radius>0.)||
+       !arch::math::isfinite(adjacent)||adjacent==0.||!arch::math::isfinite(volume)||!(volume>0.)||
+       !arch::math::isfinite(h)||!(h>0.))return false;
     const bool cylinder=grid.geometry==GridMetrics::Geometry::Cylindrical;
     const double area=cylinder?edge:edge*edge,lever=edge/radius;
     const double base=(mu/rho)*(area/volume)/h;
@@ -390,7 +391,7 @@ ARCH_INLINE bool radial_row_sums(const GridMetrics::GeometryView& grid,
         candidate[0]+=(4./3.)*graph*(1.+neighbour);
         candidate[1]+=graph*(1.+neighbour);candidate[2]+=graph*(1.+neighbour);
     }
-    for(double value:candidate)if(!std::isfinite(value)||value<0.)return false;
+    for(double value:candidate)if(!arch::math::isfinite(value)||value<0.)return false;
     output=candidate;return true;
 }
 
@@ -417,11 +418,11 @@ ARCH_INLINE bool cell_stress(const StateReader& read,int cell,
 ARCH_INLINE bool connection_source(const Tensor& tau,
     const GridMetrics::GeometryView& grid,int i,int j,Vector& output)
 {
-    for(double value:tau)if(!std::isfinite(value))return false;
+    for(double value:tau)if(!arch::math::isfinite(value))return false;
     // This is the exact adjoint of the point connection in cell G_i. Replacing
     // it independently by a different quadrature would break the D identity.
     const double inverse=1./grid.GetCellCenterX(i);
-    if(!std::isfinite(inverse)||!(inverse>0.))return false;
+    if(!arch::math::isfinite(inverse)||!(inverse>0.))return false;
     Vector candidate{};
     const auto basis=frame(grid);
     if(basis==Frame::CylindricalRZPhi)candidate={-inverse*tau[8],0.,grid.dim==2?0.:inverse*tau[2]};
@@ -431,7 +432,7 @@ ARCH_INLINE bool connection_source(const Tensor& tau,
         candidate={-inverse*(tau[4]+tau[8]),inverse*(tau[1]-cot*tau[8]),
             inverse*(tau[2]+cot*tau[5])};
     }
-    for(double value:candidate)if(!std::isfinite(value))return false;
+    for(double value:candidate)if(!arch::math::isfinite(value))return false;
     output=candidate;return true;
 }
 
@@ -445,7 +446,7 @@ ARCH_INLINE bool stress_row_sums(const GridMetrics::GeometryView& grid,
 {
     std::array<double,3> h{};if(!cell_spacings(grid,i,j,h))return false;
     const double radius=grid.GetCellCenterX(i),theta=grid.SourceTheta(j);
-    if(!std::isfinite(radius)||!(radius>0.))return false;
+    if(!arch::math::isfinite(radius)||!(radius>0.))return false;
     Gradient g{};
     for(int axis=0;axis<grid.dim;++axis) {
         const double row=(axis==normal?2.:1.)/std::abs(h[axis]);
@@ -462,7 +463,7 @@ ARCH_INLINE bool stress_row_sums(const GridMetrics::GeometryView& grid,
     for(int a=0;a<3;++a)for(int b=0;b<3;++b)
         candidate[3*a+b]=a==b?(4.*g[3*a+a]+2.*g[3*((a+1)%3)+(a+1)%3]
             +2.*g[3*((a+2)%3)+(a+2)%3])/3.:g[3*a+b]+g[3*b+a];
-    for(double value:candidate)if(!std::isfinite(value)||value<0.)return false;
+    for(double value:candidate)if(!arch::math::isfinite(value)||value<0.)return false;
     output=candidate;return true;
 }
 
@@ -475,8 +476,8 @@ ARCH_INLINE bool face_row_sums(const GridMetrics::GeometryView& grid,
     int i,int j,int k,int direction,bool high,double rho,double mu_left,double mu_right,
     Vector& output)
 {
-    if(!std::isfinite(rho)||!(rho>0.)||!std::isfinite(mu_left)||mu_left<0.||
-       !std::isfinite(mu_right)||mu_right<0.)return false;
+    if(!arch::math::isfinite(rho)||!(rho>0.)||!arch::math::isfinite(mu_left)||mu_left<0.||
+       !arch::math::isfinite(mu_right)||mu_right<0.)return false;
     const int ir=i+(high&&direction==0?1:0),jr=j+(high&&direction==1?1:0),kr=k+(high&&direction==2?1:0);
     const int il=ir-(direction==0?1:0),jl=jr-(direction==1?1:0),kl=kr-(direction==2?1:0);
     double radius=0.,theta=0.;face_point(grid,direction,ir,jr,radius,theta);
@@ -485,7 +486,7 @@ ARCH_INLINE bool face_row_sums(const GridMetrics::GeometryView& grid,
         (theta==0.||theta==std::numbers::pi_v<double>)))return true;
     const double vl=std::abs(GridMetrics::CellVolume(grid,il,jl,kl)),vr=std::abs(GridMetrics::CellVolume(grid,ir,jr,kr));
     const double volume=GridMetrics::CellVolume(grid,i,j,k);
-    if(!std::isfinite(vl)||!(vl>0.)||!std::isfinite(vr)||!(vr>0.)||!std::isfinite(volume)||!(volume>0.))return false;
+    if(!arch::math::isfinite(vl)||!(vl>0.)||!arch::math::isfinite(vr)||!(vr>0.)||!arch::math::isfinite(volume)||!(volume>0.))return false;
     Tensor nl{},nr{};std::array<double,3> hl{},hr{};
     if(!cell_spacings(grid,il,jl,hl)||!cell_spacings(grid,ir,jr,hr))return false;
     if(!stress_row_sums(grid,il,jl,direction,nl)||
@@ -508,7 +509,7 @@ ARCH_INLINE bool face_row_sums(const GridMetrics::GeometryView& grid,
         const double conductance=.5*(mu_left+mu_right)*(torque/area)*torque/h;
         candidate[2]+=conductance/(rho*capacity)*(vl/wl+vr/wr);
     }
-    for(double value:candidate)if(!std::isfinite(value)||value<0.)return false;
+    for(double value:candidate)if(!arch::math::isfinite(value)||value<0.)return false;
     output=candidate;return true;
 }
 

@@ -9,8 +9,10 @@ import {createHash} from 'node:crypto';
 import {readFile,stat} from 'node:fs/promises';
 import {checkedPath,selectedPath} from './files.ts';
 import {profileFingerprint} from './buildProfile.ts';
+import {sameCMakePath} from './cmakeEvidence.ts';
 import type {BuildProfile} from '../src/host/contracts.ts';
 import type {ConfigureProfile} from './configureRunner.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 
 /** Read a bounded canonical project file; selected-path symlinks stay forbidden. */
 async function boundedText(root:string,relative:string,limit:number){
@@ -41,41 +43,45 @@ function booleanCache(values:Map<string,string>,key:string,required=false){
  * The launcher chooses the directory; browser requests receive an immutable
  * Host profile ID. Configure adds no -D overrides to this existing tree.
  */
-export async function existingBuildProfile(root:string,buildDirRelative:string,binaryRelative?:string){
+export async function existingBuildProfile(root:string,buildDirRelative:string,binaryRelative?:string,windowsTools?:WindowsHostTools){
+ const nativeWindows=process.platform==='win32';
+ const samePath=(value:unknown,expected:string)=>nativeWindows?sameCMakePath(value,expected):value===expected;
  selectedPath(buildDirRelative);
  const build=await checkedPath(root,buildDirRelative);if(!(await stat(build)).isDirectory())throw new Error('Existing build path is not a directory.');
  const cacheRelative=buildDirRelative+'/CMakeCache.txt';
  const values=cacheValues(await boundedText(root,cacheRelative,2*1024*1024));
- if(values.get('CMAKE_HOME_DIRECTORY')!==root||values.get('CMAKE_CACHEFILE_DIR')!==build)
+ if(!samePath(values.get('CMAKE_HOME_DIRECTORY'),root)||!samePath(values.get('CMAKE_CACHEFILE_DIR'),build))
   throw new Error('Existing CMake source/build binding differs; refusing to rebind it.');
  if(values.get('CMAKE_GENERATOR')!=='Ninja')throw new Error('Existing build selection requires its configured Ninja generator.');
  const cuda=booleanCache(values,'ARCH_ENABLE_CUDA',true);
  const output=values.get('ARCH_RUNTIME_OUTPUT_DIRECTORY');
  if(!output||!path.isAbsolute(output))throw new Error('Existing ARCH output directory identity is unavailable.');
- const outputParent=path.relative(root,output);selectedPath(outputParent);
- if(await checkedPath(root,outputParent)!==output)throw new Error('Existing output directory differs from its canonical identity.');
- const expected=outputParent+'/ARCH';
+ const outputParent=path.relative(root,output).split(path.sep).join('/');selectedPath(outputParent);
+ if(!samePath(await checkedPath(root,outputParent),output))throw new Error('Existing output directory differs from its canonical identity.');
+ const expected=outputParent+'/ARCH'+(nativeWindows?'.exe':'');
  if(binaryRelative!==undefined&&binaryRelative!==expected)throw new Error('Selected binary differs from the configured ARCH output.');
  const targetDirs=await boundedText(root,buildDirRelative+'/CMakeFiles/TargetDirectories.txt',1024*1024);
- if(!targetDirs.split(/\r?\n/).includes(build+'/CMakeFiles/ARCH.dir'))throw new Error('Existing build has no configured ARCH target.');
+ if(!targetDirs.split(/\r?\n/).some(line=>samePath(line,build+'/CMakeFiles/ARCH.dir')))throw new Error('Existing build has no configured ARCH target.');
  const ninja=await boundedText(root,buildDirRelative+'/build.ninja',16*1024*1024);
  if(!/^build ARCH: phony(?: |$)/m.test(ninja))throw new Error('Existing Ninja ARCH target is unavailable.');
  const emitLink=booleanCache(values,'ARCH_EMIT_LINK_DEPENDENCIES');
  const retainLink=booleanCache(values,'ARCH_RETAIN_LTO_LINK_INPUTS');
  if(retainLink&&!emitLink)throw new Error('Existing LTO retention has no linker dependency authority.');
+ const observedInputScope=nativeWindows&&windowsTools!==undefined&&!cuda&&emitLink&&retainLink?'observed-build-inputs-v1' as const:undefined;
  const id='studio-existing-'+createHash('sha256').update(buildDirRelative+'\0'+(cuda?'cuda':'cpu')).digest('hex').slice(0,16);
  const profile:BuildProfile={id,displayName:'Existing '+(cuda?'CUDA':'CPU')+' ARCH build',managedSourceRoot:root,
   buildDirRelative,target:'ARCH',outputBinaryRelative:expected,parallelism:2,
   compilerDependencyMode:'ninja',dependenciesComplete:false,buildBackend:cuda?'cuda':'cpu',
+  ...(observedInputScope?{observedInputScope}:{}),
   ...(emitLink?{linkDependencyFile:'ARCH.link.d'}:{}),...(retainLink?{retainGnuLtoInputs:true}:{}),
   trackedInputs:['CMakeLists.txt','CMakePresets.json',cacheRelative]};
- const configure:ConfigureProfile={id,sourceRoot:root,buildDirRelative,generator:'Ninja',definitions:{}};
+ const configure:ConfigureProfile={id,sourceRoot:root,buildDirRelative,generator:'Ninja',definitions:{},...(windowsTools?{windowsTools}:{})};
  return {build:profile,configure};
 }
 
 /** Recheck binding before an explicit Build; a changed backend/output is rejected. */
-export async function validateExistingBuildProfile(root:string,profile:BuildProfile){
- const current=await existingBuildProfile(root,profile.buildDirRelative,profile.outputBinaryRelative);
+export async function validateExistingBuildProfile(root:string,profile:BuildProfile,windowsTools?:WindowsHostTools){
+ const current=await existingBuildProfile(root,profile.buildDirRelative,profile.outputBinaryRelative,windowsTools);
  const expected={...profile};delete expected.sourceRelativePath;
  expected.trackedInputs=expected.trackedInputs.filter(p=>p!==profile.sourceRelativePath);
  if(profileFingerprint(current.build)!==profileFingerprint(expected))throw new Error('Existing build profile binding changed; reopen the selected project explicitly.');

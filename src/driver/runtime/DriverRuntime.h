@@ -36,13 +36,13 @@
 #include <type_traits>
 
 
-class BCHandler;
+struct BCHandler;
 struct SimulationController;
 struct SimConfig;
 struct FluidState;
 struct Grid;
 struct SpeciesManager;
-namespace amr { class AMRControl; }
+namespace amr { struct AMRControl; }
 namespace arch::driver {
 struct RegridMeasurement {
     int step;

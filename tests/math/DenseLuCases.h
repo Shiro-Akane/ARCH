@@ -7,6 +7,7 @@
  * to be rejected. The analytic reference is test data, not a second solver.
  */
 #pragma once
+#include "core/MathClassification.h"
 #include "numerics/linalg/DenseWrap.h"
 #include <cmath>
 #include <limits>
@@ -41,7 +42,7 @@ ARCH_INLINE bool mixed_units()
                         sign * std::ldexp(rhs[1], -exponent)};
             DenseLUSolver::solve_with_factors<2, 2>(matrix, pivots, b);
             for (int i = 0; i < 2; ++i) {
-                if (!std::isfinite(b[i]) || std::abs(b[i] - sign * expected[i])
+                if (!arch::math::isfinite(b[i]) || std::abs(b[i] - sign * expected[i])
                     > budget * std::abs(expected[i])) return false;
                 double product = 0.0, scale = std::abs(rhs[i]);
                 for (int j = 0; j < 2; ++j) {

@@ -14,6 +14,8 @@ import { checkedPath } from './files.ts';
 import { BuildError } from './buildRunner.ts';
 import type { RunPreparationRunner, ConfirmRunRequest } from './runPreparation.ts';
 import type { RunJob, RunState } from './runWorker.ts';
+import { createPrivateRunDirectory, windowsRunBootstrap, spawnWindowsConsoleRun } from './windowsRun.ts';
+import type { WindowsRunTools } from './windowsRun.ts';
 interface TerminalHandle {
     pid: number;
     exited: () => boolean;
@@ -21,6 +23,8 @@ interface TerminalHandle {
 export interface RunControllerHooks {
     /** Module-only test seam; never accepted by HTTP or a browser request. */
     terminal?: (directory: string, runId: string) => Promise<TerminalHandle>;
+    /** Host composition only; never populated from HTTP or job.json. */
+    windowsTools?: WindowsRunTools;
 }
 export class RunController {
     private preparing: RunPreparationRunner;
@@ -41,6 +45,8 @@ export class RunController {
         }
     }
     private async terminal(directory: string, runId: string): Promise<TerminalHandle> {
+        if (process.platform === 'win32')
+            return this.windowsTerminal(directory);
         const stderr = await open(directory + '/terminal.log', 'wx', 0o600);
         try {
             const environment: Record<string, string> = { PATH: '/usr/bin:/bin', HOME: process.env.HOME ?? '', LANG: 'C.UTF-8' };
@@ -59,16 +65,39 @@ export class RunController {
             await stderr.close();
         }
     }
+    private async windowsTerminal(directory: string): Promise<TerminalHandle> {
+        const tools = this.hooks.windowsTools;
+        if (!tools)
+            throw new BuildError('Native Windows Run supervisor is not configured.', 409);
+        const stderr = await open(directory + '/terminal.log', 'wx', 0o600);
+        try {
+            const child = spawnWindowsConsoleRun(process.execPath, [fileURLToPath(new URL('./runWorker.ts', import.meta.url)),
+                ...windowsRunBootstrap(directory,tools)], tools, {
+                cwd: this.preparing.root, stdio: ['ignore', stderr.fd, stderr.fd]
+            });
+            await new Promise<void>((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject); });
+            child.unref();
+            return { pid: child.pid!, exited: () => tools.terminal ? child.exitCode !== null && child.exitCode !== 0 : child.exitCode !== null || child.signalCode !== null };
+        }
+        finally {
+            await stderr.close();
+        }
+    }
     async start(request: ConfirmRunRequest) {
         if (this.launching)
             throw new BuildError('Run handoff already active.', 409);
         this.launching = true;
         try {
             if (!this.hooks.terminal) {
-                if (process.platform !== 'linux' || !process.env.DISPLAY)
+                if (process.platform === 'win32' && !this.hooks.windowsTools)
+                    throw new BuildError('Native Windows Run supervisor is not configured.', 409);
+                if (process.platform === 'linux' && !process.env.DISPLAY)
                     throw new BuildError('Linux display unavailable; independent Run terminal required.', 409);
+                if (process.platform !== 'linux' && process.platform !== 'win32')
+                    throw new BuildError('Independent Run terminal is unavailable on this platform.', 409);
                 try {
-                    await access('/usr/bin/xterm', constants.X_OK);
+                    if (process.platform === 'linux')
+                        await access('/usr/bin/xterm', constants.X_OK);
                 }
                 catch {
                     throw new BuildError('Install xterm in the Linux project environment before Run/Restart.', 409);
@@ -80,7 +109,8 @@ export class RunController {
                     throw e; });
                 await checkedPath(root, relative);
             }
-            await mkdir(root + '/studio/.local/runs/' + runId, { mode: 0o700 });
+            if(process.platform==='win32')await createPrivateRunDirectory(root,runId,this.hooks.windowsTools!);
+            else await mkdir(root + '/studio/.local/runs/' + runId, { mode: 0o700 });
             const directory = await this.directory(runId), plan = confirmed.plan;
             const job: RunJob = { version: '1', runId, projectRoot: root, caseId: plan.caseId, mode: plan.mode,
                 binaryRelativePath: plan.binary.relativePath, binaryFingerprint: plan.binary.fingerprint,
@@ -128,7 +158,7 @@ export class RunController {
             const job = JSON.parse(await readFile(directory + '/job.json', 'utf8')) as RunJob;
             if (job.runId !== runId || job.projectRoot !== this.preparing.root)
                 throw new BuildError('Run owner mismatch.', 409);
-            await verifyRunSupervisor(state);
+            await verifyRunSupervisor(state, this.hooks.windowsTools);
             return state;
         }
         finally {

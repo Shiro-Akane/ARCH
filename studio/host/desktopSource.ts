@@ -5,13 +5,14 @@
  */
 import path from 'node:path';
 import {fingerprint} from './files.ts';
+import {sameCMakePath} from './cmakeEvidence.ts';
 import type {RegisteredCase} from '../src/host/workflowContracts.ts';
 /** Match authoritative registry paths; never infer a case from a basename. */
 export function registeredSourceCase(cases:readonly {caseId:string;inspection:{sourceFile:string|null}}[],root:string,source:string,requested?:string){
  const absolute=path.resolve(root,source);
  const rel=path.relative(root,absolute);
- if(rel.startsWith('../')||path.isAbsolute(rel))throw new Error('Source is outside the managed project.');
- const matches=cases.filter(c=>c.inspection.sourceFile!==null&&path.resolve(root,c.inspection.sourceFile)===absolute);
+ if(rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw new Error('Source is outside the managed project.');
+ const matches=cases.filter(c=>c.inspection.sourceFile!==null&&sameCMakePath(path.resolve(root,c.inspection.sourceFile),absolute));
  if(matches.length!==1)throw new Error('Source has no unique authoritative compiled case association. Choose a registered source.');
  if(requested&&requested!==matches[0].caseId)throw new Error('Case and source association disagree.');
  return matches[0].caseId;

@@ -3,8 +3,19 @@
 [English](Build.md) · [快速开始](../../README.zh-CN.md#构建)
 
 第一次构建可以直接使用 README 中的 CPU 或 CUDA 命令。本指南解释这些命令的
-作用，以及如何根据机器调整编译。所有 shell 示例都应在 Linux 或 WSL2 终端中，
-从仓库根目录执行。
+作用，以及如何根据机器调整编译。Bash 示例在 Linux／WSL2 终端中执行，原生 Windows 示例使用 PowerShell；两者均从仓库根目录开始。
+
+**推荐 Linux。** 原生 Windows11 x64 在既有科学范围内提供完整的 CPU／CUDA CLI 与 Studio 工作流，但可能仍有不稳定性与 bug。两侧共用 CMake、科学实现、参数格式与 Studio 服务；[最终功能对照](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)记录实测配置与限制。
+
+| 任务 | Linux／WSL2 | 原生 Windows 11 x64 |
+| --- | --- | --- |
+| CPU 工具与依赖 | C++20、Ninja、HDF5／OpenMP；使用下方预设 | GCC/UCRT64 与同 ABI HDF5／HighFive／KLU；见[依赖准备](WindowsNativeW0.zh-CN.md)和[编译](WindowsNativeCpu.zh-CN.md) |
+| CUDA 工具与依赖 | NVCC 与兼容 GCC／Clang、匹配数值库 | 独立 MSVC／NVCC、Windows SDK、同 ABI HDF5／KLU 与可选 cuDSS；见[原生 CUDA](WindowsNativeCuda.zh-CN.md) |
+| 可执行文件 | `build-cpu/bin/ARCH` | `build-windows-cpu/bin/ARCH.exe` |
+| 可选 Studio | 原生 Node24+、Electron、图形库／WSLg | 原生 x64 Node24+、Electron、平台辅助程序与 DLL PATH；见[桌面构建](WindowsStudioDesktop.zh-CN.md) |
+| 运行终端 | `xterm` 与 `flock` | 已配置的 Windows Terminal 与原生进程辅助程序 |
+
+两侧分别使用构建与依赖目录。[Studio 路径说明](Studio.zh-CN.md#linux-与-windows-的路径)区分共用的项目相对路径和依赖宿主系统的 `.par` 路径。
 
 ## 先配置，再编译
 
@@ -41,6 +52,12 @@ CUDA 预设启用 `ARCH_ENABLE_CUDA=ON`，相比纯 CPU 构建会显著增加编
 产物分离通过 `ARCH_RUNTIME_OUTPUT_DIRECTORY` 实现，它指向各构建目录下 `bin/`
 的绝对路径。不设置该选项时，项目默认把可执行文件写入源码树的 `bin/`。
 需要覆盖预设中的编译器、CUDA 架构等选项时，在配置命令后追加 `-D名称=值` 即可。
+
+## 原生 Windows：CPU 与 CUDA
+
+CPU 使用 [GCC/UCRT64 指南](WindowsNativeCpu.zh-CN.md)及 [W0 同 ABI 依赖](WindowsNativeW0.zh-CN.md)。CUDA 使用独立的 [MSVC／NVCC 指南](WindowsNativeCuda.zh-CN.md)，配套 Windows SDK、HDF5／KLU 和可选 cuDSS；两个编译器 ABI 的对象、DLL 与缓存不可混用。两条路线都构建同一 ARCH 目标，共用求解器和 HDF5 实现。
+
+Studio 的 Host／进程与资源策略见 [W2](WindowsStudioPlatform.zh-CN.md)，窗口、可信工具上下文与便携包见[桌面指南](WindowsStudioDesktop.zh-CN.md)。CUDA 指南补充继承 Microsoft Developer 环境的启动方法；日常模型、参数、后端选择与看图见共用 [Studio 指南](Studio.zh-CN.md)。[最终功能对照与验收](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)分别记录当前 CPU、CUDA 和 Studio 的证据。数学公式、拒绝检查、科学格式与既有误差预算保持。MPI、Zenodo 和 release 仍另行处理。
 
 ## 构建输出
 
@@ -260,3 +277,5 @@ CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `
 GUI 预设使用 Host 管理的本地 CPU 构建目录和 GNU 构建身份设置。
 Node 24+、WSLg、图形库及独立终端的要求见 [Studio 使用指南](Studio.zh-CN.md)
 与[环境准备](StudioEnvironment.zh-CN.md)。
+
+[W3 原生桌面构建与打包](WindowsStudioDesktop.zh-CN.md)：W3 原生 CPU Studio 已在文档限定环境闭合，A11 与人工操作／文件校验证据分别记录。

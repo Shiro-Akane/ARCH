@@ -19,6 +19,11 @@
 #include <limits>
 #include <sstream>
 #include <stdexcept>
+#if defined(_WIN32)
+#include <windows.h>
+#include <psapi.h>
+#include <system_error>
+#endif
 
 namespace arch::core {
 namespace {
@@ -153,6 +158,51 @@ private:
     std::uint64_t bit_count_ = 0;
 };
 
+#if defined(_WIN32)
+std::wstring mapped_main_image_name()
+{
+    std::array<wchar_t, 32768> path{};
+    const DWORD count = ::GetMappedFileNameW(::GetCurrentProcess(),
+        ::GetModuleHandleW(nullptr), path.data(), static_cast<DWORD>(path.size()));
+    if (count == 0)
+        throw std::system_error(static_cast<int>(::GetLastError()),
+            std::system_category(), "Cannot locate running executable mapping");
+    if (count >= path.size())
+        throw std::runtime_error("Running executable mapping path is too long");
+    return std::wstring(path.data(), count);
+}
+
+std::string mapped_main_image_sha256()
+{
+    // The mapped name follows the backing file when the launch path is renamed.
+    // Deny write/delete sharing while hashing and reject a rename during open.
+    const auto mapped_name = mapped_main_image_name();
+    const auto path = std::wstring(L"\\\\?\\GLOBALROOT") + mapped_name;
+    const HANDLE raw = ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+        nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+    if (raw == INVALID_HANDLE_VALUE)
+        throw std::system_error(static_cast<int>(::GetLastError()),
+            std::system_category(), "Cannot open running executable mapping");
+    const std::unique_ptr<void, decltype(&::CloseHandle)> image(raw, &::CloseHandle);
+    if (mapped_main_image_name() != mapped_name)
+        throw std::runtime_error("Running executable mapping changed while opening");
+    Sha256 hash;
+    std::array<std::uint8_t, 64 * 1024> buffer{};
+    for (;;) {
+        DWORD count = 0;
+        if (!::ReadFile(image.get(), buffer.data(), static_cast<DWORD>(buffer.size()),
+                        &count, nullptr))
+            throw std::system_error(static_cast<int>(::GetLastError()),
+                std::system_category(), "Cannot read running executable mapping");
+        if (count == 0) break;
+        hash.update(buffer.data(), count);
+    }
+    if (mapped_main_image_name() != mapped_name)
+        throw std::runtime_error("Running executable mapping changed while hashing");
+    return hash.finish();
+}
+#endif
+
 } // namespace
 
 VerifiedFileCacheScope::VerifiedFileCacheScope(VerifiedFileCache& cache) : previous_(verified_files) { verified_files=&cache; }
@@ -242,10 +292,23 @@ const std::string& running_executable_sha256()
     // The kernel holds the running executable inode even if its path is replaced.
     // Hash only the main executable; shared libraries/toolchain are separate IDs.
     static const std::string digest = file_sha256("/proc/self/exe");
+#elif defined(_WIN32)
+    static const std::string digest = mapped_main_image_sha256();
 #else
     static const std::string digest;
 #endif
     return digest;
+}
+
+const char* running_executable_source() noexcept
+{
+#if defined(__linux__)
+    return "Linux /proc/self/exe";
+#elif defined(_WIN32)
+    return "Windows mapped main executable";
+#else
+    return "unknown";
+#endif
 }
 
 } // namespace arch::core

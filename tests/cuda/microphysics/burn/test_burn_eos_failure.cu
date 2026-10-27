@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <tuple>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -148,7 +149,7 @@ void run(View table, const char* name)
     const auto cfg = make_burn_config_view(config);
     RecoveringTableEos<View> eos{};
     static_cast<View&>(eos) = table;
-    std::array<double, original.size()> dense_valid{};
+    std::array<double, std::tuple_size_v<decltype(original)>> dense_valid{};
     bool have_dense_reference = false;
     auto reset = [&] {
         check(cudaMemcpy(flow.data, original.data(), sizeof(original), cudaMemcpyHostToDevice));
@@ -157,7 +158,7 @@ void run(View table, const char* name)
         check(cudaMemset(eos_status.data, 0x7f, sizeof(int)));
     };
     auto verify = [&](bool fail, bool dense) {
-        std::array<double, original.size()> actual{};
+        std::array<double, std::tuple_size_v<decltype(original)>> actual{};
         std::array<int, cells> actual_status{};
         check(cudaMemcpy(actual.data(), flow.data, sizeof(actual), cudaMemcpyDeviceToHost));
         check(cudaMemcpy(actual_status.data(), statuses.data, sizeof(actual_status), cudaMemcpyDeviceToHost));

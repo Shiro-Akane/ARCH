@@ -89,6 +89,8 @@ void test_species_storage_bounds(const IdealGas& eos)
         throw std::runtime_error("rejected deferred extent allocated fields");
 
     Grid grid(amr::MAX_NG, 0., 1., 0., 0., 0., 0.);
+    grid.dim = 1;
+    grid.InitializeTopology();
     FluidState state; state.Preallocate(grid.GetTotalSize()); state.InitSpecies(1);
     Numerics::HydroSolverImpl<IdealGas, FluxHLLC<PCMReconstruction>> hydro(eos);
     std::vector<FluidVector> delta(1, {1., 2., 3., 4., 5.});
@@ -774,7 +776,7 @@ static void test_axisymmetric_velocity_diagnostics()
     }
 }
 
-int main(int argc,char** argv)
+int main(int argc,char** argv) try
 {
     using namespace GridMetrics;
     test_axisymmetric_geometry();
@@ -865,4 +867,9 @@ int main(int argc,char** argv)
     CurvedStokesCases::cylindrical_axis_energy("cpu",ViscousGeometryCases::viscosity,evaluate);
     CurvedStokesCases::axisymmetric_angular("cpu",ViscousGeometryCases::viscosity,evaluate);
     CurvedStokesCases::axisymmetric_convergence("cpu",ViscousGeometryCases::viscosity,evaluate);
+}
+catch (const std::exception& error)
+{
+    std::cerr << "CURVILINEAR_METRICS_FAIL: " << error.what() << '\n';
+    return 1;
 }

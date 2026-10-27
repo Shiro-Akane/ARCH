@@ -8,6 +8,7 @@
  * CPU and CUDA tests consume these same cases.
  */
 #pragma once
+#include "core/MathClassification.h"
 #include "numerics/burnsolver/coupling/NetworkDerivative.h"
 
 namespace arch::test {
@@ -40,7 +41,7 @@ ARCH_INLINE bool network_derivative_contract()
                                 (4.0*x*x*x + 2.0*x + (oscillatory ? std::cos(x) : 0.0)) / scale};
         const double actual[]{derivative[0], derivative[1], energy};
         for (int i = 0; i < 3; ++i)
-            if (!std::isfinite(actual[i]) || std::abs(actual[i] - expected[i])
+            if (!arch::math::isfinite(actual[i]) || std::abs(actual[i] - expected[i])
                 > 2.e-11 * std::max(1.0 / scale, std::abs(expected[i]))) return false;
         if (state[0] != .25 || state[1] != .75 || state[2] != temperature) return false;
     }
@@ -60,14 +61,14 @@ ARCH_INLINE bool network_derivative_contract()
         state[2] = invalid;
         burnmath::temperature_derivative<3>(state, 1.0, derivative, energy,
                                             DerivativeRhs{1.0, false});
-        if (!std::isnan(derivative[0]) || !std::isnan(derivative[1]) || !std::isnan(energy)) return false;
+        if (!arch::math::isnan(derivative[0]) || !arch::math::isnan(derivative[1]) || !arch::math::isnan(energy)) return false;
     }
     state[2] = 1.e5;
     const double invalid_steps[]{-1.0, 1.e-300, std::numeric_limits<double>::infinity()};
     for (double invalid : invalid_steps) {
         burnmath::temperature_derivative<3>(state, 1.0, derivative, energy,
                                             DerivativeRhs{1.e5, false}, invalid);
-        if (!std::isnan(derivative[0]) || !std::isnan(energy)) return false;
+        if (!arch::math::isnan(derivative[0]) || !arch::math::isnan(energy)) return false;
     }
     return true;
 }

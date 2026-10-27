@@ -7,6 +7,8 @@
  * 3. Return an accepted state or explicit rejection status.
  */
 #pragma once
+#include "core/ArchPortability.h"
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -34,7 +36,7 @@ struct Solver_BE_NR
      */
     struct Continuation
     {
-        [[no_unique_address]] NetType network{};
+        ARCH_NO_UNIQUE_ADDRESS NetType network{};
         OdeMath::AcceptedState<NEQ> accepted;
         arch::math::CompensatedSum accepted_energy;
         double X_old[MAX_N], X_k[MAX_N], X_trial[MAX_N];
@@ -133,7 +135,7 @@ struct Solver_BE_NR
                     continue;
                 }
                 if (c.t_current + c.dt > c.dt_target) c.dt = c.dt_target - c.t_current;
-                if (!(c.dt > 0.0) || !std::isfinite(c.dt) || c.t_current + c.dt == c.t_current) {
+                if (!(c.dt > 0.0) || !arch::math::isfinite(c.dt) || c.t_current + c.dt == c.t_current) {
                     c.report.status = BurnOdeStatus::Stalled;
                     c.phase = Phase::Complete;
                     return OdeLinearRequest::Complete;
@@ -246,7 +248,7 @@ private:
     {
         const double rtol = cfg.odeconfig.rtol, atol = cfg.odeconfig.atol;
         for (int i = 0; i < NEQ; ++i)
-            if (!std::isfinite(c.b[i])) return false;
+            if (!arch::math::isfinite(c.b[i])) return false;
         OdeMath::calc_weights<NEQ>(c.X_k, rtol, atol, c.W);
         // Solve the same backward-Euler equation for the increment. Forming
         // X_old-X_k would erase a sub-ULP thermal update before Newton sees it.
@@ -258,18 +260,18 @@ private:
         double mass_sum = 0.0;
         const double negative_tolerance = 10.0 * atol;
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (!std::isfinite(c.X_trial[i]) || c.X_trial[i] < -negative_tolerance
+            if (!arch::math::isfinite(c.X_trial[i]) || c.X_trial[i] < -negative_tolerance
                 || c.X_trial[i] > 1.0 + negative_tolerance) admissible = false;
             mass_sum += c.X_trial[i];
         }
         // Temperature and any passive energy integral are evolved unknowns,
         // but only composition is projected into the unit simplex.
         for (int i = NUM_SPEC; i < NEQ; ++i) {
-            if (!std::isfinite(c.X_trial[i])) admissible = false;
+            if (!arch::math::isfinite(c.X_trial[i])) admissible = false;
         }
         // 100*rtol allows roundoff-scale Newton iterates before normalization.
-        if (!std::isfinite(c.X_trial[NUM_SPEC]) || c.X_trial[NUM_SPEC] < cfg.smallt
-            || c.X_trial[NUM_SPEC] > 1.0e11 || !std::isfinite(mass_sum)
+        if (!arch::math::isfinite(c.X_trial[NUM_SPEC]) || c.X_trial[NUM_SPEC] < cfg.smallt
+            || c.X_trial[NUM_SPEC] > 1.0e11 || !arch::math::isfinite(mass_sum)
             || mass_sum <= 0.0 || std::abs(mass_sum - 1.0) > 100.0 * rtol)
             admissible = false;
         if (!admissible) return false;
@@ -289,7 +291,7 @@ private:
             for (int i = 0; i < NEQ; ++i)
                 c.b[i] = 0.5 * c.dt * (c.RHS[i] - c.RHS_old[i]);
             c.current_err = OdeMath::wrms_norm<NEQ>(c.b, c.W);
-            if (!std::isfinite(c.current_err) || c.current_err >= 1.0) return false;
+            if (!arch::math::isfinite(c.current_err) || c.current_err >= 1.0) return false;
             const double integrated_enuc = OdeMath::integrated_burn_increment_energy<NetType>(c.increment);
             const double old_eint = eos.get_eint_from_T(c.rho, c.X_old[NUM_SPEC], c.X_old);
             const double new_eint = OdeMath::trial_internal_energy(eos, c.rho, c.X_trial[NUM_SPEC], c.X_trial);
@@ -321,7 +323,7 @@ private:
         } else {
             c.dt *= 0.25;
             ++c.report.rejected_substeps;
-            if (!(c.dt > 0.0) || !std::isfinite(c.dt) || c.t_current + c.dt == c.t_current) {
+            if (!(c.dt > 0.0) || !arch::math::isfinite(c.dt) || c.t_current + c.dt == c.t_current) {
 #if !defined(__CUDA_ARCH__)
                 std::cerr << "[BE-NR] Fatal Error: Stiff ODE stalled. time increment is not representable" << std::endl;
 #endif

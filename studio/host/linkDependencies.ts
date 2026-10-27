@@ -9,13 +9,16 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import type {LinkInputSnapshot} from '../src/host/contracts.ts';
 
+const canonicalWindowsDrive=(value:string)=>/^[A-Za-z]:/.test(value)?value[0].toUpperCase()+value.slice(1):value;
+
 /** Restricted Make depfile grammar: no variable expansion, recipes or wildcards. */
-export function parseLinkDependencies(text:string,buildDirectory:string,executable:string):string[]{
- if(!path.isAbsolute(buildDirectory)||!path.isAbsolute(executable)||text.includes('\0')||Buffer.byteLength(text)>8*1024*1024)
+export function parseLinkDependencies(text:string,buildDirectory:string,executable:string,platform:NodeJS.Platform=process.platform):string[]{
+ const windows=platform==='win32',paths=windows?path.win32:path.posix;
+ if(!paths.isAbsolute(buildDirectory)||!paths.isAbsolute(executable)||text.includes('\0')||Buffer.byteLength(text)>8*1024*1024)
   throw new Error('Invalid linker dependency input.');
  const rules:{targets:string[];inputs:string[]}[]=[];
- let targets:string[]=[],inputs:string[]=[],token='',separator=false;
- const flush=()=>{if(token){(separator?inputs:targets).push(token);token='';}};
+ let targets:string[]=[],inputs:string[]=[],token='',separator=false,driveColon=false;
+ const flush=()=>{if(token){(separator?inputs:targets).push(token);token='';driveColon=false;}};
  const finish=()=>{flush();if(targets.length||inputs.length||separator){if(!separator||!targets.length)throw new Error('Malformed linker dependency rule.');rules.push({targets,inputs});}targets=[];inputs=[];separator=false;};
  for(let i=0;i<text.length;i++){
   const c=text[i];
@@ -23,28 +26,42 @@ export function parseLinkDependencies(text:string,buildDirectory:string,executab
    const next=text[++i];if(next===undefined)throw new Error('Truncated linker dependency escape.');
    if(next==='\n')continue;
    if(next==='\r'&&text[i+1]==='\n'){i++;continue;}
-   if(!' \t\\#:$'.includes(next))throw new Error('Unsupported linker dependency escape.');
-   token+=next;
+   if(' \t\\#:$'.includes(next)){
+    if(windows&&next===':')throw new Error('Ambiguous linker dependency rule.');
+    token+=next;continue;
+   }
+   if(windows&&next.charCodeAt(0)>0x20&&next!=='\x7f'&&!'*?[];|'.includes(next)){
+    token+='\\'+next;continue;
+   }
+   throw new Error('Unsupported linker dependency escape.');
   }else if(c==='$'){
    if(text[++i]!=='$')throw new Error('Variable expansion is not supported in linker dependencies.');
    token+='$';
   }else if(c==='#'){
    while(i+1<text.length&&text[i+1]!=='\n')i++;
   }else if(c===':'){
+   if(windows&&!driveColon&&token.length===1&&/[A-Za-z]/.test(token)){
+    const next=text[i+1];
+    if(next!==undefined&&next!==' '&&next!=='\t'&&next!=='\r'&&next!=='\n'&&next!=='#'){
+     if(next!=='/'&&next!=='\\')throw new Error('Drive-relative linker dependency path is not supported.');
+     token+=':';driveColon=true;continue;
+    }
+   }
    flush();if(separator)throw new Error('Ambiguous linker dependency rule.');separator=true;
   }else if(c==='\n'){finish();}
   else if(c===' '||c==='\t'||c==='\r'){flush();}
   else{if('*?[];|'.includes(c))throw new Error('Unsupported linker dependency syntax.');token+=c;}
  }
  finish();
- if(!rules.length||rules[0].targets.length!==1||path.resolve(buildDirectory,rules[0].targets[0])!==executable||!rules[0].inputs.length)
+ const resolve=(p:string)=>windows?canonicalWindowsDrive(paths.resolve(buildDirectory,p)):paths.resolve(buildDirectory,p);
+ if(!rules.length||rules[0].targets.length!==1||resolve(rules[0].targets[0])!==(windows?canonicalWindowsDrive(paths.resolve(executable)):paths.resolve(executable))||!rules[0].inputs.length)
   throw new Error('Linker dependency output does not match the expected executable.');
- const paths=[...new Set(rules[0].inputs.map(p=>path.resolve(buildDirectory,p)))].sort();
- if(paths.length>20000)throw new Error('Linker input count exceeds budget.');
- const known=new Set(paths);
- for(const rule of rules.slice(1))if(rule.inputs.length||rule.targets.length!==1||!known.has(path.resolve(buildDirectory,rule.targets[0])))
+ const inputPaths=[...new Set(rules[0].inputs.map(resolve))].sort();
+ if(inputPaths.length>20000)throw new Error('Linker input count exceeds budget.');
+ const known=new Set(inputPaths);
+ for(const rule of rules.slice(1))if(rule.inputs.length||rule.targets.length!==1||!known.has(resolve(rule.targets[0])))
   throw new Error('Unexpected additional linker dependency rule.');
- return paths;
+ return inputPaths;
 }
 async function readStable(filePath:string,limit:number){
  const file=await open(filePath,constants.O_RDONLY|constants.O_NONBLOCK);

@@ -23,6 +23,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -55,7 +56,7 @@ namespace detail {
 template<std::size_t N>
 ARCH_INLINE bool finite(const std::array<double,N>& values)
 {
-    for(std::size_t n=0;n<N;++n)if(!std::isfinite(values[n]))return false;
+    for(std::size_t n=0;n<N;++n)if(!arch::math::isfinite(values[n]))return false;
     return true;
 }
 /** Divide one required connection term without erasing a nonzero value.
@@ -65,9 +66,9 @@ ARCH_INLINE bool finite(const std::array<double,N>& values)
  */
 ARCH_INLINE bool connection_ratio(double numerator,double denominator,double& output)
 {
-    if(!std::isfinite(numerator)||!std::isfinite(denominator)||!(denominator>0.))return false;
+    if(!arch::math::isfinite(numerator)||!arch::math::isfinite(denominator)||!(denominator>0.))return false;
     const double candidate=numerator/denominator;
-    if(!std::isfinite(candidate)||(numerator!=0.&&candidate==0.))return false;
+    if(!arch::math::isfinite(candidate)||(numerator!=0.&&candidate==0.))return false;
     output=candidate;return true;
 }
 
@@ -77,9 +78,9 @@ ARCH_INLINE bool connection_ratio(double numerator,double denominator,double& ou
  */
 ARCH_INLINE bool connection_product(double left,double right,double& output)
 {
-    if(!std::isfinite(left)||!std::isfinite(right))return false;
+    if(!arch::math::isfinite(left)||!arch::math::isfinite(right))return false;
     const double candidate=left*right;
-    if(!std::isfinite(candidate)||(left!=0.&&right!=0.&&candidate==0.))return false;
+    if(!arch::math::isfinite(candidate)||(left!=0.&&right!=0.&&candidate==0.))return false;
     output=candidate;return true;
 }
 } // namespace detail
@@ -92,9 +93,9 @@ ARCH_INLINE bool connection_product(double left,double right,double& output)
  */
 ARCH_INLINE bool dynamic_viscosity(double rho,double nu,double& output)
 {
-    if(!std::isfinite(rho)||!(rho>0.)||!std::isfinite(nu)||nu<0.)return false;
+    if(!arch::math::isfinite(rho)||!(rho>0.)||!arch::math::isfinite(nu)||nu<0.)return false;
     const double candidate=rho*nu;
-    if(!std::isfinite(candidate)||(nu>0.&&candidate==0.))return false;
+    if(!arch::math::isfinite(candidate)||(nu>0.&&candidate==0.))return false;
     output=candidate;return true;
 }
 
@@ -108,12 +109,12 @@ ARCH_INLINE bool dynamic_viscosity(double rho,double nu,double& output)
  */
 ARCH_INLINE bool nonnegative_coefficient_mean(double left,double right,double& output)
 {
-    if(!std::isfinite(left)||left<0.||!std::isfinite(right)||right<0.)return false;
+    if(!arch::math::isfinite(left)||left<0.||!arch::math::isfinite(right)||right<0.)return false;
     constexpr double half_normal_limit=2.*std::numeric_limits<double>::min();
     const bool subnormal_half=(left>0.&&left<half_normal_limit)
         ||(right>0.&&right<half_normal_limit);
     const double candidate=subnormal_half?.5*(left+right):.5*left+.5*right;
-    if(!std::isfinite(candidate)||((left>0.||right>0.)&&candidate==0.))return false;
+    if(!arch::math::isfinite(candidate)||((left>0.||right>0.)&&candidate==0.))return false;
     output=candidate;return true;
 }
 
@@ -142,7 +143,7 @@ ARCH_INLINE bool physical_covariant_gradient(Frame frame,Vector velocity,
     VelocityGradient& output)
 {
     if(!detail::finite(velocity)||!detail::finite(physical_partials)||
-       !std::isfinite(radius)||!std::isfinite(theta))return false;
+       !arch::math::isfinite(radius)||!arch::math::isfinite(theta))return false;
     if(frame!=Frame::Cartesian&&frame!=Frame::CylindricalRZPhi&&
        frame!=Frame::CylindricalRPhiZ&&frame!=Frame::SphericalRThetaPhi)return false;
     VelocityGradient candidate=physical_partials;
@@ -155,7 +156,7 @@ ARCH_INLINE bool physical_covariant_gradient(Frame frame,Vector velocity,
     if(frame==Frame::SphericalRThetaPhi) {
         if(!(theta>0.)||!(theta<std::numbers::pi_v<double>))return false;
         const double sine=std::sin(theta),cosine=std::cos(theta);
-        if(!std::isfinite(sine)||!(sine>0.)||!std::isfinite(cosine))return false;
+        if(!arch::math::isfinite(sine)||!(sine>0.)||!arch::math::isfinite(cosine))return false;
         double polar=0.,phi_numerator=0.,polar_numerator=0.,phi_cot=0.,polar_cot=0.;
         if(!detail::connection_ratio(velocity[1],radius,polar)||
            !detail::connection_product(cosine,azimuthal,phi_numerator)||
@@ -183,7 +184,7 @@ ARCH_INLINE bool physical_covariant_gradient(Frame frame,Vector velocity,
  */
 ARCH_INLINE bool stress(const VelocityGradient& gradient,double mu,Tensor& output)
 {
-    if(!std::isfinite(mu)||mu<0.||!detail::finite(gradient))return false;
+    if(!arch::math::isfinite(mu)||mu<0.||!detail::finite(gradient))return false;
     Tensor candidate{};
     if(mu!=0.) {
         for(int i=0;i<3;++i) {
@@ -219,7 +220,7 @@ ARCH_INLINE bool power(const Vector& velocity,const Vector& face_traction,double
     if(!detail::finite(velocity)||!detail::finite(face_traction))return false;
     const double candidate=velocity[0]*face_traction[0]
         +velocity[1]*face_traction[1]+velocity[2]*face_traction[2];
-    if(!std::isfinite(candidate))return false;
+    if(!arch::math::isfinite(candidate))return false;
     output=candidate;return true;
 }
 
@@ -233,7 +234,7 @@ ARCH_INLINE bool dissipation(const Tensor& tensor,const VelocityGradient& gradie
     if(!detail::finite(tensor)||!detail::finite(gradient))return false;
     double candidate=0.;
     for(int n=0;n<9;++n)candidate+=tensor[n]*gradient[n];
-    if(!std::isfinite(candidate)||candidate<0.)return false;
+    if(!arch::math::isfinite(candidate)||candidate<0.)return false;
     output=candidate;return true;
 }
 
@@ -265,8 +266,8 @@ ARCH_INLINE bool cartesian_paired_traction(int direction,double spacing,
     Vector left_velocity,Vector right_velocity,VelocityGradient left_gradient,
     VelocityGradient right_gradient,double mu_left,double mu_right,Vector& output)
 {
-    if(direction<0||direction>=3||!std::isfinite(spacing)||!(spacing>0.)||
-       !std::isfinite(mu_left)||mu_left<0.||!std::isfinite(mu_right)||mu_right<0.||
+    if(direction<0||direction>=3||!arch::math::isfinite(spacing)||!(spacing>0.)||
+       !arch::math::isfinite(mu_left)||mu_left<0.||!arch::math::isfinite(mu_right)||mu_right<0.||
        !detail::finite(left_velocity)||!detail::finite(right_velocity)||
        !detail::finite(left_gradient)||!detail::finite(right_gradient))return false;
     Vector candidate{};
@@ -276,7 +277,7 @@ ARCH_INLINE bool cartesian_paired_traction(int direction,double spacing,
     Vector difference{};
     for(int i=0;i<3;++i) {
         difference[i]=(right_velocity[i]-left_velocity[i])/spacing;
-        if(!std::isfinite(difference[i]))return false;
+        if(!arch::math::isfinite(difference[i]))return false;
     }
     double transverse_left=0.,transverse_right=0.;
     for(int k=0;k<3;++k)if(k!=direction) {

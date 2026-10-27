@@ -15,6 +15,7 @@
  * 3. Return one consistent RHS/Jacobian to the selected ODE method.
  */
 #pragma once
+#include "core/MathClassification.h"
 #include "core/ArchPortability.h"
 #include "core/CompensatedSum.h"
 #include <algorithm>
@@ -42,9 +43,9 @@ ARCH_HEAVY_INLINE void temperature_derivative(
     // A zero step selects the precision-based default. Explicit positive steps
     // support independent refinement tests; negative/nonfinite steps are errors.
     const double h = step == 0.0 ? temperature_difference_step(temperature) : step;
-    if (!std::isfinite(temperature) || temperature < minimum_temperature
-        || !std::isfinite(h) || h <= 0.0
-        || !std::isfinite(temperature + 4.0 * h)
+    if (!arch::math::isfinite(temperature) || temperature < minimum_temperature
+        || !arch::math::isfinite(h) || h <= 0.0
+        || !arch::math::isfinite(temperature + 4.0 * h)
         || !(temperature + h > temperature)) {
         for (int i = 0; i < species; ++i)
             derivative[i] = std::numeric_limits<double>::quiet_NaN();

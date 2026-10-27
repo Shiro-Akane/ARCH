@@ -1,6 +1,7 @@
 // Independent finite-volume witnesses, consumed by Host and actual CUDA tests.
 #pragma once
 
+#include "core/MathClassification.h"
 #include "numerics/curvilinear/GridMetrics.h"
 
 #include <algorithm>
@@ -80,7 +81,7 @@ ARCH_HOST_DEVICE inline double cylindrical_conditioning_error(const MeasureCase&
             chart==2?sample.annulus:sample.shell*angular,
             (right-left)/sample.annulus};
         for (unsigned n=0;n<sizeof(actual)/sizeof(actual[0]);++n) {
-            if (!std::isfinite(actual[n]) || (expected[n]==0. && actual[n]!=0.))
+            if (!arch::math::isfinite(actual[n]) || (expected[n]==0. && actual[n]!=0.))
                 return std::numeric_limits<double>::infinity();
             if(expected[n]!=0.)maximum=std::max(maximum,std::abs((actual[n]-expected[n])/expected[n]));
         }
@@ -117,7 +118,7 @@ ARCH_HOST_DEVICE inline double conditioning_error(const MeasureCase& sample)
         right * right * sample.angle * grid.dx3,
         sample.annulus / sample.shell};
     for (unsigned index = 0; index < sizeof(actual) / sizeof(actual[0]); ++index) {
-        if (!std::isfinite(actual[index]) || actual[index] <= 0.0)
+        if (!arch::math::isfinite(actual[index]) || actual[index] <= 0.0)
             return std::numeric_limits<double>::infinity();
         // Relative even for tiny cells: an absolute max(1, expected)
         // budget would silently accept a zero volume at either pole.

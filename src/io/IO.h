@@ -21,12 +21,12 @@
 
 // Forward declarations to keep this header extremely lightweight
 struct SimConfig;
-class SpeciesManager;
+struct SpeciesManager;
 class RunState;
 struct FluidVector;
 
 namespace amr {
-    class AMRControl;
+    struct AMRControl;
 }
 
 namespace io {

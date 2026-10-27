@@ -7,7 +7,7 @@ export interface PlotfileSourceEvidence {
  version:'candidate-identity-1'|'arch-plot-identity-1';scope:'partial'|'resolved-runtime';
  caseId:string|null;caseSource:'ConfigurationInput.case_id'|null;
  rawConfigSha256:string|null;rawConfigSource:'ConfigurationInput.raw_text; exact parser bytes'|null;
- binarySha256:string|null;binarySource:'Linux /proc/self/exe'|null;binaryScope:'main-executable-only';
+ binarySha256:string|null;binarySource:'Linux /proc/self/exe'|'Windows mapped main executable'|null;binaryScope:'main-executable-only';
  eosType:string|null;eosSource:'resolved-runtime-checkpoint-provenance'|null;
  eosTableState:'unknown'|'recorded'|'not-applicable';eosTableSha256:string|null;idealGamma:number|null;
  speciesState:'unknown'|'recorded';speciesNames:string[];speciesProperties?:PlotfileSpeciesProperties;
@@ -55,7 +55,7 @@ export function sourceEvidenceValid(v:unknown):v is PlotfileSourceEvidence {
  if(v.eosUnitSystem!==null&&v.eosUnitSystem!=='cgs')return false;
  if(v.caseId===null?v.caseSource!==null:!text(v.caseId)||v.caseSource!=='ConfigurationInput.case_id')return false;
  if(v.rawConfigSha256===null?v.rawConfigSource!==null:!digest(v.rawConfigSha256)||v.rawConfigSource!=='ConfigurationInput.raw_text; exact parser bytes')return false;
- if(v.binarySha256===null?v.binarySource!==null:!digest(v.binarySha256)||v.binarySource!=='Linux /proc/self/exe')return false;
+ if(v.binarySha256===null?v.binarySource!==null:!digest(v.binarySha256)||(v.binarySource!=='Linux /proc/self/exe'&&v.binarySource!=='Windows mapped main executable'))return false;
  if(v.eosType===null?v.eosSource!==null:!text(v.eosType)||v.eosSource!=='resolved-runtime-checkpoint-provenance')return false;
  if(!['unknown','recorded','not-applicable'].includes(String(v.eosTableState))||
   (v.eosTableState==='recorded'?!digest(v.eosTableSha256)||v.eosType===null:v.eosTableSha256!==null))return false;

@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include "core/ArchPortability.h"
 #include "numerics/linalg/SparseResidual.h"
 #include <cmath>
@@ -109,13 +110,13 @@ struct CsrMatrixView
     {
         if (!valid() || rhs == nullptr || solution == nullptr) return false;
         for (int row = 0; row < N; ++row) {
-            if (!std::isfinite(rhs[row])) return false;
+            if (!arch::math::isfinite(rhs[row])) return false;
             double product = 0.0;
             double scale = std::abs(rhs[row]);
             for (int index = row_offsets[row]; index < row_offsets[row + 1]; ++index) {
                 const double x = solution[column_indices[index]];
                 const double a = values[index];
-                if (!std::isfinite(x) || !std::isfinite(a)) return false;
+                if (!arch::math::isfinite(x) || !arch::math::isfinite(a)) return false;
                 const double term = a * x;
                 product += term;
                 scale += std::abs(term);

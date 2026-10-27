@@ -14,6 +14,7 @@
  */
 #pragma once
 
+#include "core/MathClassification.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -94,7 +95,7 @@ inline constexpr double sqrt_half = 0x1.6a09e667f3bcdp-1;
  */
 ARCH_HOST_DEVICE inline double logarithm(double value)
 {
-    if (!(value > 0.0) || !std::isfinite(value)) return std::log(value);
+    if (!(value > 0.0) || !arch::math::isfinite(value)) return std::log(value);
     int exponent = 0;
     double m = std::frexp(value, &exponent);
     if (m < sqrt_half) {
@@ -121,7 +122,7 @@ ARCH_HOST_DEVICE inline double logarithm(double value)
  */
 ARCH_HOST_DEVICE inline double exponential(double value)
 {
-    if (!std::isfinite(value)) return std::exp(value);
+    if (!arch::math::isfinite(value)) return std::exp(value);
     // exp(-746)<denorm_min/2 and exp(710)>DBL_MAX. These outer bounds
     // protect integer reduction; ldexp rounds actual subnormal/overflow edges.
     if (value <= -746.0) return 0.0;
@@ -196,8 +197,8 @@ struct NSESolver
                                        double& enuc)
     {
         enuc = 0.0;
-        if (X_old == nullptr || X_out == nullptr || !std::isfinite(T)
-            || !std::isfinite(rho) || !std::isfinite(Ye)
+        if (X_old == nullptr || X_out == nullptr || !arch::math::isfinite(T)
+            || !arch::math::isfinite(rho) || !arch::math::isfinite(Ye)
             || T <= 0.0 || rho <= 0.0 || Ye < 0.0 || Ye > 1.0) {
             return false;
         }
@@ -214,7 +215,7 @@ struct NSESolver
 
         const double kT = k_boltzmann * T;
         const double kT_mev = kT / mev_to_erg;
-        if (!std::isfinite(kT_mev) || kT_mev <= 0.0) return false;
+        if (!arch::math::isfinite(kT_mev) || kT_mev <= 0.0) return false;
 
         for (int i = 0; i < NUM_SPEC; ++i) {
             if (!arch::nse_detail::is_finite_bits(X_old[i])
@@ -226,8 +227,8 @@ struct NSESolver
             const double Z = NetType::zion(i);
             const double binding = NetType::binding_energy(i);
             const double weight = NetType::spin_weight(i);
-            if (!std::isfinite(A) || !std::isfinite(Z)
-                || !std::isfinite(binding) || !std::isfinite(weight)
+            if (!arch::math::isfinite(A) || !arch::math::isfinite(Z)
+                || !arch::math::isfinite(binding) || !arch::math::isfinite(weight)
                 || A <= 0.0 || Z < 0.0 || Z > A) {
                 return false;
             }
@@ -244,8 +245,8 @@ struct NSESolver
                 const double mass = NetType::nse_mass_number(i)
                                   * NetType::NSE_ATOMIC_MASS_UNIT;
                 const double partition = NetType::nse_log_partition(i, T);
-                if (!std::isfinite(mass) || mass <= 0.0
-                    || !std::isfinite(partition)) return false;
+                if (!arch::math::isfinite(mass) || mass <= 0.0
+                    || !arch::math::isfinite(partition)) return false;
                 log_base[i] = 2.5 * arch::nse_detail::logarithm(mass) + arch::nse_detail::logarithm(weight) - arch::nse_detail::logarithm(rho)
                     + 1.5 * arch::nse_detail::logarithm(NetType::NSE_K_BOLTZMANN * T
                         / (two_pi * NetType::NSE_HBAR * NetType::NSE_HBAR))
@@ -270,7 +271,7 @@ struct NSESolver
                 const double shifted_binding = std::fma(-A, gauge, binding);
                 log_base[i] = log_prefactor + shifted_binding / kT_mev;
             }
-            if (!std::isfinite(log_base[i])) return false;
+            if (!arch::math::isfinite(log_base[i])) return false;
 
             const double q = Z / A;
             q_min = std::min(q_min, q);
@@ -334,7 +335,7 @@ struct NSESolver
 
             energy = binding_energy_conversion() * delta_binding.value();
         }
-        if (!std::isfinite(energy)) return false;
+        if (!arch::math::isfinite(energy)) return false;
 
 #pragma omp simd
         for (int i = 0; i < NUM_SPEC; ++i) X_out[i] = solution[i];
@@ -441,12 +442,12 @@ private:
             eta_n = anchor_potential - anchor_q * charge_potential;
             eta_p = eta_n + charge_potential;
         }
-        if (!std::isfinite(eta_n) || !std::isfinite(eta_p)) return false;
+        if (!arch::math::isfinite(eta_n) || !arch::math::isfinite(eta_p)) return false;
         for (int i = 0; i < NUM_SPEC; ++i) {
             if (NetType::spin_weight(i) <= 0.0) continue;
             const double residual = arch::nse_detail::logarithm(x[i])
                                   - log_mass_fraction(log_base, i, eta_n, eta_p);
-            if (!std::isfinite(residual) || std::abs(residual) > residual_tol)
+            if (!arch::math::isfinite(residual) || std::abs(residual) > residual_tol)
                 return false;
         }
         return true;
@@ -467,7 +468,7 @@ private:
                 log_x[i] = -std::numeric_limits<double>::infinity();
             }
         }
-        if (!std::isfinite(max_log_x)) return false;
+        if (!arch::math::isfinite(max_log_x)) return false;
 
         // Center charge BEFORE summing; subtracting <q>-Ye afterwards
         // loses the small residual. Centered covariances give the same
@@ -499,7 +500,7 @@ private:
         const double sum_q_offset = acc_q_offset.value();
         const double sum_qn_offset = acc_qn_offset.value();
         const double sum_qz_offset = acc_qz_offset.value();
-        if (!std::isfinite(sum_w) || sum_w <= 0.0) return false;
+        if (!arch::math::isfinite(sum_w) || sum_w <= 0.0) return false;
 
         const double inv_sum = 1.0 / sum_w;
         const double mean_n = sum_n * inv_sum;
@@ -518,9 +519,9 @@ private:
         out.j10 = sum_qn_offset * inv_sum - mean_q_offset * mean_n;
         out.j11 = sum_qz_offset * inv_sum - mean_q_offset * mean_z;
 
-        return std::isfinite(out.f_mass) && std::isfinite(out.f_charge)
-            && std::isfinite(out.j00) && std::isfinite(out.j01)
-            && std::isfinite(out.j10) && std::isfinite(out.j11);
+        return arch::math::isfinite(out.f_mass) && arch::math::isfinite(out.f_charge)
+            && arch::math::isfinite(out.j00) && arch::math::isfinite(out.j01)
+            && arch::math::isfinite(out.j10) && arch::math::isfinite(out.j11);
     }
 
     ARCH_HOST_DEVICE static double objective(const Evaluation& e,
@@ -556,7 +557,7 @@ private:
                                  - current.j01 * current.j10;
                 const double det_scale = std::abs(current.j00 * current.j11)
                                        + std::abs(current.j01 * current.j10);
-                if (!std::isfinite(det)
+                if (!arch::math::isfinite(det)
                     || std::abs(det) <= 128.0
                        * std::numeric_limits<double>::epsilon()
                        * std::max(det_scale,
@@ -569,7 +570,7 @@ private:
                                   + current.j01 * current.f_charge) / det;
                 double delta_p = (-current.j00 * current.f_charge
                                   + current.f_mass * current.j10) / det;
-                if (!std::isfinite(delta_n) || !std::isfinite(delta_p)) break;
+                if (!arch::math::isfinite(delta_n) || !arch::math::isfinite(delta_p)) break;
 
                 const double step_norm = arch::nse_detail::norm2(delta_n, delta_p);
                 if (step_norm > max_newton_step) {
@@ -627,7 +628,7 @@ private:
             }
             if (std::abs(result.f_mass) < residual_tol) return true;
             const double mean_a = result.j00 + result.j01;
-            if (!std::isfinite(mean_a) || mean_a <= 0.0) return false;
+            if (!arch::math::isfinite(mean_a) || mean_a <= 0.0) return false;
             eta_n += arch::nse_detail::clamp_by_value(
                 -result.f_mass / mean_a, -max_newton_step, max_newton_step);
         }
@@ -727,7 +728,7 @@ private:
                     log_x[i] = -std::numeric_limits<double>::infinity();
                 }
             }
-            if (!std::isfinite(max_log_x)) return false;
+            if (!arch::math::isfinite(max_log_x)) return false;
 
             arch::math::CompensatedSum acc_w, acc_aw;
             for (int i = 0; i < NUM_SPEC; ++i) {
@@ -739,7 +740,7 @@ private:
             }
             const double sum_w = acc_w.value();
             const double sum_aw = acc_aw.value();
-            if (!std::isfinite(sum_w) || sum_w <= 0.0) return false;
+            if (!arch::math::isfinite(sum_w) || sum_w <= 0.0) return false;
 
             const double f = max_log_x + arch::nse_detail::logarithm(sum_w);
             const double mean_a = sum_aw / sum_w;
@@ -749,7 +750,7 @@ private:
                 for (int i = 0; i < NUM_SPEC; ++i) solution[i] *= inv_sum;
                 return true;
             }
-            if (!std::isfinite(mean_a) || mean_a <= 0.0) return false;
+            if (!arch::math::isfinite(mean_a) || mean_a <= 0.0) return false;
             const double delta = arch::nse_detail::clamp_by_value(
                 -f / mean_a, -max_newton_step, max_newton_step);
             eta += delta;
@@ -794,7 +795,7 @@ private:
             // Ye, set X_anchor=1, and start with mu_n=mu_p.
             eta_n = eta;
             eta_p = eta;
-            return std::isfinite(eta);
+            return arch::math::isfinite(eta);
         }
 
         int lo = -1;
@@ -834,7 +835,7 @@ private:
                 const double rhs_hi = arch::nse_detail::logarithm(x_hi) - log_base[hi];
                 eta_n = (rhs_lo * z_hi - z_lo * rhs_hi) / det;
                 eta_p = (n_lo * rhs_hi - rhs_lo * n_hi) / det;
-                return std::isfinite(eta_n) && std::isfinite(eta_p);
+                return arch::math::isfinite(eta_n) && arch::math::isfinite(eta_p);
             }
         }
 
@@ -846,7 +847,7 @@ private:
                 20.0 * (Ye - anchor_q), -4.0, 4.0);
         eta_n = eta - charge_shift;
         eta_p = eta + charge_shift;
-        return std::isfinite(eta_n) && std::isfinite(eta_p);
+        return arch::math::isfinite(eta_n) && arch::math::isfinite(eta_p);
     }
 
     ARCH_HOST_DEVICE static bool check_conservation(
@@ -855,7 +856,7 @@ private:
         arch::math::CompensatedSum mass;
         arch::math::CompensatedSum charge;
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (!std::isfinite(x[i]) || x[i] < 0.0) return false;
+            if (!arch::math::isfinite(x[i]) || x[i] < 0.0) return false;
             mass.add(x[i]);
             charge.add(x[i] * (NetType::zion(i) / NetType::aion(i)));
         }

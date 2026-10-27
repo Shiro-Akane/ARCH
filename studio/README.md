@@ -1,6 +1,6 @@
-# ARCH Studio — Linux / WSL desktop
+# ARCH Studio — Linux / WSL and Windows desktop
 
-ARCH Studio edits research configurations, builds selected cases and displays initial states and read-only Plotfiles. The scientific Core stays on Linux. Start with the [user guide](../docs/guides/Studio.zh-CN.md) ([English](../docs/guides/Studio.md)); implementation boundaries are in the [Core API](../src/api/README.md) and [Host Plotfile contract](docs/contracts/PLOTFILE_AUDIT_API.md).
+ARCH Studio edits research configurations, builds selected cases and displays initial states and read-only Plotfiles. Linux/WSL2 is recommended; native Windows11 x64 provides the complete CPU CLI/Studio workflow with newer support that may still have instability or bugs. Native Windows CUDA/MPI are outside this qualification. Start with the shared [user guide](../docs/guides/Studio.zh-CN.md) ([English](../docs/guides/Studio.md)), including model selection, parameter Help/Inspector, Plotfile loading and host-specific paths. Implementation boundaries are in the [Core API](../src/api/README.md) and [Host Plotfile contract](docs/contracts/PLOTFILE_AUDIT_API.md).
 
 ## Build and launch
 
@@ -16,6 +16,8 @@ This generates a source-checkout launcher. It requires this checkout; it is not 
 
 The development equivalent is `npm ci && npm run build` in this directory, then `desktop/arch-studio` with the same arguments. Put Node 24+ on PATH or set `ARCH_STUDIO_NODE` to its absolute executable. An explicit invalid Node path is an error. The desktop selects its internal loopback connections; users do not copy an IP/port or start Vite.
 
+Native Windows uses the same CMake targets with native x64 Node and GCC/UCRT64 Core dependencies. Follow the [Windows desktop setup](../docs/guides/WindowsStudioDesktop.md) for trusted tools/DLL context, then launch `build-studio-cpu/bin/arch-studio.cmd` with `--binary build-studio-cpu/bin/ARCH.exe`. Config/Plotfile actions are shared. Windows Terminal supports the qualified independent Run/Restart route; editing and Preview do not need it. Keep separate OS build trees.
+
 ## Workflow and capability
 
 The selected binary supplies the configuration schema, registered cases and Preview capabilities. Parameter edits may be previewed without Save; Run/Restart require an associated saved input and explicit confirmation. Changing C++ requires Configure/Build before its code can affect Preview or Run. Incomplete build-dependency evidence stays unknown rather than being accepted as fresh.
@@ -30,8 +32,8 @@ The Plotfile workspace reads completed published files. Display overviews cover 
 | --- | --- |
 | `src/components`, `src/data`, `src/state` | Renderer, display transformations and edit/request identity; no scientific solver |
 | `src/host` | Browser-side typed contracts, validation and Host clients; no Node process access |
-| `host/` | Linux service: project files, Core requests, build evidence, owned runs and isolated HDF reads |
-| `desktop/` | Electron window, bootstrap and Linux packaging; run supervision stays with Host |
+| `host/` | Shared local service: project files, Core requests, build evidence, owned runs and isolated HDF reads |
+| `desktop/` | Electron window, bootstrap and native Linux/Windows packaging; run supervision stays with Host |
 | [tests/](tests/README.md) | Engineering tests, fixtures and standalone test tools |
 | [docs/contracts/](docs/contracts/PLOTFILE_AUDIT_API.md) | Maintained Host interface documentation |
 | [docs/archive/](../docs/histroy/README.md#studio) | Historical Phase/QA/UAT records |
@@ -40,7 +42,7 @@ The Plotfile workspace reads completed published files. Display overviews cover 
 ```mermaid
 flowchart LR
   Desktop[Electron main and preload] --> UI[React workbench]
-  Desktop --> Host[Linux Host]
+  Desktop --> Host[Local Host]
   UI <-->|Typed loopback requests| Host
   Host -->|Schema and Setup/Init| Core[ARCH Core]
   Host -->|Confirmed Run/Restart| Supervisor[Independent terminal supervisor]
@@ -54,6 +56,6 @@ The [release qualification index](../docs/releases/README.md) records frozen qua
 
 For a source change, find its process owner in the table, follow the typed request to its validator and producer, then extend the corresponding [existing test](tests/README.md). Preview uses Core Setup/Init and shared EOS conversion; Run/Restart invoke the production program. Plotfile readers preserve stored values. Keep these responsibilities separate when adding a file, cache or numerical explanation.
 
-Current integration is on `compute/optim`. The [feature list](../docs/Features.md) records supported model/backend combinations; past GUI delivery branches are historical evidence.
+The Windows W0–W3 record is archived with the [build investigations](../docs/histroy/build/WindowsNativeQualification-20261026.zh-CN.md); source/runtime evidence and human window checks are distinct. The [feature list](../docs/Features.md) records supported model/backend combinations; past GUI delivery branches are historical evidence.
 
-Environment prerequisites and installation: [Linux/WSL setup](../docs/guides/StudioEnvironment.md).
+Environment prerequisites and installation: [Linux/WSL and Windows setup](../docs/guides/StudioEnvironment.md).

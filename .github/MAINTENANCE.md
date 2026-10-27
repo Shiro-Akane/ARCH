@@ -25,7 +25,7 @@ ownership and review expectations.
 
 [ARCH CI](workflows/ci.yml) runs the existing tooling suite and a CPU Release
 build with KLU on GitHub-hosted Ubuntu machines. It is triggered by pull requests
-targeting `main` and pushes to `compute/optim`; its applicability decisions keep required checks present
+targeting `main` and pushes to `compute/optim` or merged `main`; its applicability decisions keep required checks present
 while omitting explicitly unrelated work.
 The [workflow guide](workflows/README.md) describes coverage, resource limits,
 artifacts and the maintainer setup. CUDA execution remains a separate GPU
@@ -35,3 +35,9 @@ After the workflow has produced its first successful run, maintainers can add
 the `CI required` check from GitHub Actions to the `main` ruleset's required
 status checks. This is separate from the pull-request and reviewer settings.
 Workflow changes still follow the repository's normal pull-request process.
+
+## Dependency maintenance
+
+Review security updates against the locked `studio/package-lock.json`, then run a current audit and affected tests; no automatic merge is configured here. The v1.4.0 preparation updates the development-only transitive Zod security patch and its license inventory. Do not batch unrelated major upgrades merely to prepare a release.
+
+For Electron changes, check manifest/lock/installed/runtime agreement and regenerate actual native packages. Hosted CI omits Electron downloads and native windows; its green status cannot prove a newly packaged runtime. The existing shared version validator remains authoritative. Publication and exact native evidence follow the [release index](../docs/releases/README.md).

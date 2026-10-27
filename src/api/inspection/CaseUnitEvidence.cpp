@@ -13,6 +13,7 @@
 #include <map>
 
 #include "api/CaseInspection.h"
+#include "api/PreviewSession.h"
 
 namespace arch::api {
 namespace {
@@ -148,7 +149,12 @@ detail::Json CaseInspectionCapability(const std::string& name, const ProblemRegi
     if (reviewed) for (const auto& [key, unit] : it->second.units) keys.push(key);
     return Json::object({{"command", "--inspect-case"}, {"registered", true},
         {"setupReads", true}, {"primitiveSinkProbe", registration.point_initialization},
-        {"automaticExpressionInference", false}, {"workerPlatform", "linux"},
+        {"automaticExpressionInference", false},
+#ifdef _WIN32
+        {"workerPlatform", "windows"}, {"resourcePolicy", WindowsPreviewResourcePolicy()},
+#else
+        {"workerPlatform", "linux"},
+#endif
         {"processCpuSeconds", contract::case_cpu_seconds}, {"hostWallTimeoutSeconds", contract::case_wall_seconds},
         {"sourceFile", registration.source_file},
         {"compiledSourceSha256", stamped ? Json(registration.source_sha256) : Json()},

@@ -18,8 +18,10 @@ import type {PlotfileOverviewRequest,PlotfileOverview,NativePlotBlock,NativePlot
  * stable file identity do not prove writer completion or scientific provenance.
  */
 import {constants} from 'node:fs';
-import {open,realpath} from 'node:fs/promises';
-import {resolve} from 'node:path';
+import {open,realpath,stat} from 'node:fs/promises';
+import {holdWindowsRead} from './windowsFilePublish.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
+import {resolve,dirname,basename} from 'node:path';
 import {createHash} from 'node:crypto';
 import h5 from 'h5wasm/node';
 import {sourceEvidenceValid} from '../src/host/plotfileSourceIdentity.ts';
@@ -499,20 +501,34 @@ function readPoint(file:InstanceType<typeof h5.File>,shape:number[],request:Plot
  return {payload,pointEvidence};
 }
 
-async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewRequest?:PlotfileOverviewRequest,pointRequest?:PlotfilePointRequest) {
+/** Only trusted Host setup supplies native tools; afterPin is a module-only race test seam. */
+export interface PlotfileReadContext {windowsTools?:WindowsHostTools;afterPin?:()=>Promise<void>}
+async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewRequest?:PlotfileOverviewRequest,pointRequest?:PlotfilePointRequest,context:PlotfileReadContext={}) {
  if(/\.partial-[A-Za-z0-9]{6}$/.test(path))throw Error('Writer temporary is not a published Plotfile.');
  const source=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+ let lease:Awaited<ReturnType<typeof holdWindowsRead>>|undefined;
  try {
   // Reject parent-directory symlink swaps before HDF5 reads any bytes.
-  if(await realpath('/proc/self/fd/'+source.fd)!==resolve(path))
+  if(process.platform==='linux'&&await realpath('/proc/self/fd/'+source.fd)!==resolve(path))
    throw new Error('Plotfile path identity changed during open.');
   const before=await source.stat({bigint:true});
   if(!before.isFile()||before.size<1n||before.size>BigInt(MAX_FILE_BYTES))
    throw new Error('Choose a regular non-empty plotfile of at most 64 MiB for metadata audit.');
+  let selected='/proc/self/fd/'+source.fd;
+  if(process.platform==='win32') {
+   const canonical=await realpath(path);
+   if(canonical!==resolve(path))throw new Error('Plotfile path identity changed during open.');
+   lease=await holdWindowsRead(dirname(canonical),basename(canonical),context.windowsTools);
+   const pinned=await stat(canonical,{bigint:true});
+   if(pinned.dev!==before.dev||pinned.ino!==before.ino||pinned.size!==before.size||pinned.mtimeNs!==before.mtimeNs||pinned.ctimeNs!==before.ctimeNs)
+    throw new Error('Plotfile path identity changed before pin.');
+   selected=canonical;
+  }else if(process.platform!=='linux')throw new Error('Protected Plotfile opens are unavailable on this Host.');
+  await context.afterPin?.();
   await h5.ready;
-  // Pin the descriptor on Linux: replacement of the selected path cannot switch
-  // the HDF5 object between stat/hash/header reads.
-  const file=new h5.File('/proc/self/fd/'+source.fd,'r');
+  // Linux opens the descriptor; Windows holds the file and ancestors against
+  // writes/delete/rebinding while this same HDF reader opens the pinned name.
+  const file=new h5.File(selected,'r');
   let structure;
   let overview:PlotfileOverview|undefined;
   let pointEvidence:PlotfilePointEvidence|undefined;
@@ -596,25 +612,25 @@ async function auditPlotfile(path:string,request?:PlotfileSliceRequest,overviewR
   if(before.size!==after.size||before.mtimeNs!==after.mtimeNs||before.ctimeNs!==after.ctimeNs||position!==Number(before.size))
    throw new Error('Plotfile changed during metadata audit; retry only after authoritative completion.');
   return {schemaVersion:pointRequest?'audit-point-1':overviewRequest?'audit-overview-1':request?'audit-slice-1':'audit-1',payload,overview,pointEvidence,file:{bytes:Number(before.size),sha256:hash.digest('hex'),device:before.dev.toString(),inode:before.ino.toString(),mtimeNs:before.mtimeNs.toString(),ctimeNs:before.ctimeNs.toString()},...structure};
- } finally {await source.close();}
+ } finally {try{await lease?.close();}finally{await source.close();}}
 }
 
 
 /** Read only headers and a streaming file digest; never load field payloads. */
-export function inspectPlotfileMetadata(path:string){return auditPlotfile(path);}
+export function inspectPlotfileMetadata(path:string,context:PlotfileReadContext={}){return auditPlotfile(path,undefined,undefined,undefined,context);}
 
 /** Local audit primitive only. Production use requires isolated worker ownership. */
-export function readPlotfileFieldSlice(path:string,request:PlotfileSliceRequest){
- try{return auditPlotfile(path,copyPlotfileSliceRequest(request));}
+export function readPlotfileFieldSlice(path:string,request:PlotfileSliceRequest,context:PlotfileReadContext={}){
+ try{return auditPlotfile(path,copyPlotfileSliceRequest(request),undefined,undefined,context);}
  catch(error){return Promise.reject(error);}
 }
 
-export function readPlotfileOverview(path:string,request:PlotfileOverviewRequest){
- try{return auditPlotfile(path,undefined,copyOverviewRequest(request));}
+export function readPlotfileOverview(path:string,request:PlotfileOverviewRequest,context:PlotfileReadContext={}){
+ try{return auditPlotfile(path,undefined,copyOverviewRequest(request),undefined,context);}
  catch(error){return Promise.reject(error);}
 }
 
-export function readPlotfilePoint(path:string,request:PlotfilePointRequest){
- try{return auditPlotfile(path,undefined,undefined,copyPointRequest(request));}
+export function readPlotfilePoint(path:string,request:PlotfilePointRequest,context:PlotfileReadContext={}){
+ try{return auditPlotfile(path,undefined,undefined,copyPointRequest(request),context);}
  catch(error){return Promise.reject(error);}
 }

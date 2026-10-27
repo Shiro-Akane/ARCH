@@ -21,26 +21,26 @@ struct ObservedRoute {
     void operator()()
     {
         ++calls;
-        if constexpr (std::is_same_v<Flux, cuda::CudaVlFlux>) flux = dispatch::FluxId::Vl;
-        else if constexpr (std::is_same_v<Flux, cuda::CudaSwFlux>) flux = dispatch::FluxId::Sw;
-        else if constexpr (std::is_same_v<Flux, cuda::CudaRoeFlux>) flux = dispatch::FluxId::Roe;
-        else if constexpr (std::is_same_v<Flux, cuda::CudaHllFlux>) flux = dispatch::FluxId::Hll;
-        else if constexpr (std::is_same_v<Flux, cuda::CudaHllcFlux>) flux = dispatch::FluxId::Hllc;
+        if constexpr (std::is_same_v<Flux, arch::cuda::CudaVlFlux>) flux = dispatch::FluxId::Vl;
+        else if constexpr (std::is_same_v<Flux, arch::cuda::CudaSwFlux>) flux = dispatch::FluxId::Sw;
+        else if constexpr (std::is_same_v<Flux, arch::cuda::CudaRoeFlux>) flux = dispatch::FluxId::Roe;
+        else if constexpr (std::is_same_v<Flux, arch::cuda::CudaHllFlux>) flux = dispatch::FluxId::Hll;
+        else if constexpr (std::is_same_v<Flux, arch::cuda::CudaHllcFlux>) flux = dispatch::FluxId::Hllc;
         else static_assert(!sizeof(Flux), "unreviewed Hydro flux binding");
 
-        if constexpr (std::is_same_v<Reconstruction, cuda::CudaPcmReconstruction>)
+        if constexpr (std::is_same_v<Reconstruction, arch::cuda::CudaPcmReconstruction>)
             reconstruction = dispatch::ReconstructionId::Pcm;
-        else if constexpr (std::is_same_v<Reconstruction, cuda::CudaPpmReconstruction>)
+        else if constexpr (std::is_same_v<Reconstruction, arch::cuda::CudaPpmReconstruction>)
             reconstruction = dispatch::ReconstructionId::Ppm;
         else {
             reconstruction = dispatch::ReconstructionId::Muscl;
-            if constexpr (std::is_same_v<Reconstruction, cuda::CudaMusclReconstruction<MinMod>>)
+            if constexpr (std::is_same_v<Reconstruction, arch::cuda::CudaMusclReconstruction<MinMod>>)
                 limiter = dispatch::LimiterId::MinMod;
-            else if constexpr (std::is_same_v<Reconstruction, cuda::CudaMusclReconstruction<McLimiter>>)
+            else if constexpr (std::is_same_v<Reconstruction, arch::cuda::CudaMusclReconstruction<McLimiter>>)
                 limiter = dispatch::LimiterId::Mc;
-            else if constexpr (std::is_same_v<Reconstruction, cuda::CudaMusclReconstruction<SuperBee>>)
+            else if constexpr (std::is_same_v<Reconstruction, arch::cuda::CudaMusclReconstruction<SuperBee>>)
                 limiter = dispatch::LimiterId::SuperBee;
-            else if constexpr (std::is_same_v<Reconstruction, cuda::CudaMusclReconstruction<VanLeer>>)
+            else if constexpr (std::is_same_v<Reconstruction, arch::cuda::CudaMusclReconstruction<VanLeer>>)
                 limiter = dispatch::LimiterId::VanLeer;
             else static_assert(!sizeof(Reconstruction), "unreviewed Hydro reconstruction binding");
         }
@@ -54,8 +54,8 @@ struct ObservedFamilyRoute : ObservedRoute {
     template <class Reconstruction, class Flux>
     void operator()()
     {
-        constexpr bool hll_family = std::is_same_v<Flux, cuda::CudaHllFlux>
-            || std::is_same_v<Flux, cuda::CudaHllcFlux>;
+        constexpr bool hll_family = std::is_same_v<Flux, arch::cuda::CudaHllFlux>
+            || std::is_same_v<Flux, arch::cuda::CudaHllcFlux>;
         static_assert(Family == 1 ? !hll_family : hll_family,
             "Excluded flux family instantiated a callback");
         ObservedRoute::template operator()<Reconstruction, Flux>();
@@ -96,8 +96,8 @@ struct FailingStatusEos {
 void verify_nested_optional_eos_status()
 {
     int inner_status = 0, outer_status = 0;
-    const auto inner = cuda::make_checked_hydro_eos(FailingStatusEos{}, &inner_status);
-    const auto outer = cuda::make_checked_hydro_eos(inner, &outer_status);
+    const auto inner = arch::cuda::make_checked_hydro_eos(FailingStatusEos{}, &inner_status);
+    const auto outer = arch::cuda::make_checked_hydro_eos(inner, &outer_status);
     const FluidVector state{1., 0., 0., 0., 1.};
     const auto required_pressure = [&] { return std::isnan(outer.get_pressure(state, nullptr)); };
     const auto check_optional = [&](auto optional_query, auto required_query, const char* message) {
@@ -136,12 +136,12 @@ void verify_nested_optional_eos_status()
 void require_rejected(const dispatch::ResolvedExecutionPlan& plan)
 {
     ObservedRoute observed;
-    require(!cuda::visit_cuda_hydro_route(plan, observed) && observed.calls == 0,
+    require(!arch::cuda::visit_cuda_hydro_route(plan, observed) && observed.calls == 0,
         "Unregistered Hydro route invoked a callback");
     ObservedFamilyRoute<1> first;
     ObservedFamilyRoute<2> second;
-    require(!cuda::visit_cuda_hydro_route<1>(plan, first) && first.calls == 0
-        && !cuda::visit_cuda_hydro_route<2>(plan, second) && second.calls == 0,
+    require(!arch::cuda::visit_cuda_hydro_route<1>(plan, first) && first.calls == 0
+        && !arch::cuda::visit_cuda_hydro_route<2>(plan, second) && second.calls == 0,
         "Unregistered Hydro route entered a compiler family");
 }
 } // namespace
@@ -158,7 +158,7 @@ int main()
                     plan.reconstruction = reconstruction.id;
                     plan.limiter = limiter.id;
                     ObservedRoute observed;
-                    require(cuda::visit_cuda_hydro_route(plan, observed), "Registered Hydro route was rejected");
+                    require(arch::cuda::visit_cuda_hydro_route(plan, observed), "Registered Hydro route was rejected");
                     require(observed.calls == 1 && observed.flux == plan.flux
                         && observed.reconstruction == plan.reconstruction
                         && (plan.reconstruction != dispatch::ReconstructionId::Muscl
@@ -166,8 +166,8 @@ int main()
                         "Hydro registry selected the wrong policy or invoked it more than once");
                     ObservedFamilyRoute<1> first;
                     ObservedFamilyRoute<2> second;
-                    const bool in_first = cuda::visit_cuda_hydro_route<1>(plan, first);
-                    const bool in_second = cuda::visit_cuda_hydro_route<2>(plan, second);
+                    const bool in_first = arch::cuda::visit_cuda_hydro_route<1>(plan, first);
+                    const bool in_second = arch::cuda::visit_cuda_hydro_route<2>(plan, second);
                     const auto& selected = in_first
                         ? static_cast<const ObservedRoute&>(first)
                         : static_cast<const ObservedRoute&>(second);
@@ -189,11 +189,11 @@ int main()
         for (const auto reconstruction : {dispatch::ReconstructionId::Pcm, dispatch::ReconstructionId::Ppm}) {
             plan.reconstruction = reconstruction;
             ObservedRoute observed;
-            require(cuda::visit_cuda_hydro_route(plan, observed) && observed.calls == 1
+            require(arch::cuda::visit_cuda_hydro_route(plan, observed) && observed.calls == 1
                 && observed.reconstruction == reconstruction,
                 "A limiter-independent reconstruction consulted the MUSCL limiter registry");
             ObservedFamilyRoute<2> grouped;
-            require(cuda::visit_cuda_hydro_route<2>(plan, grouped) && grouped.calls == 1
+            require(arch::cuda::visit_cuda_hydro_route<2>(plan, grouped) && grouped.calls == 1
                 && grouped.reconstruction == reconstruction,
                 "Compiler family consulted an unused MUSCL limiter");
         }

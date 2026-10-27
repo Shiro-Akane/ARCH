@@ -13,6 +13,8 @@ The components below follow the geometry and backend scope in the
 [validation index](../validation/README.md) records the tested configurations,
 technical results and combined acceptance status.
 
+Linux/WSL2 remains recommended. Native Windows11 x64 CUDA and CPU share the scientific scope below and the Studio workflow, with newer support that may still have instability or bugs. Windows needs a separate MSVC/NVCC ABI dependency tree; see [build and launch](guides/WindowsNativeCuda.md) and the [one-to-one correspondence and acceptance](histroy/build/WindowsNativeCudaQualification-20261027.md). Platform compatibility does not expand existing geometry, EOS, network or coupled-method qualifications.
+
 ## Shared functional scope
 
 | Facility | Implementation scope |

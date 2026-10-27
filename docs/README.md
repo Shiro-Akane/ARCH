@@ -2,7 +2,11 @@
 
 [中文](README.zh-CN.md) · [Project homepage](../README.md)
 
+Linux/WSL2 is recommended. Native Windows11 x64 provides the complete CPU/CUDA CLI and Studio functionality within the existing scientific scope, with newer support that may still have instability or bugs. The shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides explain both systems, model/parameter navigation and `.par`/Plotfile paths. The [final correspondence record](histroy/build/WindowsNativeCudaQualification-20261027.md) maps the accepted functionality and platform limits.
+
 Begin with [build and first run](../README.md#build), then use the [case guide](guides/SimulationCase.md) to inspect output or write a problem. Inputs, outputs and physical constants use CGS.
+
+Current version status starts in the [release index](releases/README.md): v1.4.0 is a Windows-support candidate, while published/frozen versions retain their original scope. Dated investigations remain in [history](histroy/README.md).
 
 ## Choose features and settings
 
@@ -11,7 +15,7 @@ Begin with [build and first run](../README.md#build), then use the [case guide](
 - [CUDA guide](CudaBackendStatus.md): backend choice and AMR execution.
 - [Build guide](guides/Build.md): dependencies, presets, EOS tables and compile resources.
 - [Simulation catalogue](../simulation/README.md): runnable problems and example inputs.
-- [ARCH Studio](guides/Studio.md): Linux CLI desktop, parameter workspace, initial Preview/AMR and read-only Plotfile workflow.
+- [ARCH Studio](guides/Studio.md): Linux/Windows desktop, parameter workspace, initial Preview/AMR and read-only Plotfile workflow.
 
 ## Interpret results
 

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "core/MathClassification.h"
 #include "physics/boundary/BoundaryDiagnostics.h"
 #include "physics/boundary/BoundaryFlux.h"
 #include <algorithm>
@@ -61,8 +62,8 @@ namespace DiffFlux
 
     ARCH_INLINE bool diffusion_face_is_active(double rho_left, double rho_right)
     {
-        return std::isfinite(rho_left) && rho_left > 0.0
-            && std::isfinite(rho_right) && rho_right > 0.0;
+        return arch::math::isfinite(rho_left) && rho_left > 0.0
+            && arch::math::isfinite(rho_right) && rho_right > 0.0;
     }
 
     ARCH_INLINE double diffusion_face_spacing(
@@ -85,12 +86,12 @@ namespace DiffFlux
         int species_count, const double* charge, const double* inverse_mass)
     {
         DiffusionCoefficients coefficients{};
-        if (!(state.rho > 0.0) || !std::isfinite(state.rho)
-            || !(state.T > 0.0) || !std::isfinite(state.T)
-            || (config.use_thermal_diffusion && (!(state.cv > 0.0) || !std::isfinite(state.cv)))
-            || !std::isfinite(config.nu_visc) || config.nu_visc < 0.0
-            || !std::isfinite(config.alpha_therm) || config.alpha_therm < 0.0
-            || !std::isfinite(config.D_spec) || config.D_spec < 0.0) {
+        if (!(state.rho > 0.0) || !arch::math::isfinite(state.rho)
+            || !(state.T > 0.0) || !arch::math::isfinite(state.T)
+            || (config.use_thermal_diffusion && (!(state.cv > 0.0) || !arch::math::isfinite(state.cv)))
+            || !arch::math::isfinite(config.nu_visc) || config.nu_visc < 0.0
+            || !arch::math::isfinite(config.alpha_therm) || config.alpha_therm < 0.0
+            || !arch::math::isfinite(config.D_spec) || config.D_spec < 0.0) {
             coefficients.valid = false;
             return coefficients;
         }
@@ -112,10 +113,10 @@ namespace DiffFlux
                     state.T, state.rho, state.pele, state.xne, state.eta,
                     state.Xi, species_count, charge, inverse_mass);
             const double cv_value = state.cv;
-            if (!(cv_value > 0.0) || !std::isfinite(cv_value)) { coefficients.valid = false; return coefficients; }
+            if (!(cv_value > 0.0) || !arch::math::isfinite(cv_value)) { coefficients.valid = false; return coefficients; }
             coefficients.alpha_therm =
                 (conductivity / state.rho) / cv_value;
-            coefficients.valid = std::isfinite(coefficients.alpha_therm)
+            coefficients.valid = arch::math::isfinite(coefficients.alpha_therm)
                 && coefficients.alpha_therm >= 0.0;
         } else {
             coefficients.nu_visc = config.nu_visc;
@@ -282,11 +283,11 @@ namespace DiffFlux
                 species_face, charge, inverse_mass);
         if (face.coefficients.valid && config.use_thermal_diffusion) {
             face.heat_capacity = eos.get_cv(face.density, face_temperature, species_face);
-            face.coefficients.valid = face.heat_capacity > 0.0 && std::isfinite(face.heat_capacity);
+            face.coefficients.valid = face.heat_capacity > 0.0 && arch::math::isfinite(face.heat_capacity);
         }
         face.coefficients.valid = face.coefficients.valid
-            && face.temperature_left > 0.0 && std::isfinite(face.temperature_left)
-            && face.temperature_right > 0.0 && std::isfinite(face.temperature_right);
+            && face.temperature_left > 0.0 && arch::math::isfinite(face.temperature_left)
+            && face.temperature_right > 0.0 && arch::math::isfinite(face.temperature_right);
         if(face.coefficients.valid&&config.use_viscous_diffusion) {
             // The original face law must not erase a configured positive nu
             // when rho*nu is unrepresentable, in any computational geometry.
@@ -311,7 +312,7 @@ namespace DiffFlux
         DiffusionFaceProperties* properties = nullptr)
     {
         if (!diffusion_face_is_active(left.rho, right.rho)
-            || !(spacing > 0.0) || !std::isfinite(spacing)) return {false, false};
+            || !(spacing > 0.0) || !arch::math::isfinite(spacing)) return {false, false};
         for (int index = 0; index < species_count; ++index) {
             species_left[index] = species_left_source[index * species_source_stride];
             species_right[index] = species_right_source[index * species_source_stride];
@@ -354,15 +355,15 @@ namespace DiffFlux
         NewtonianViscousStress::VelocityGradient candidate{};
         for(int axis=0;axis<grid.dim;++axis)if(axis!=direction) {
             if(coordinate[axis]<=0||coordinate[axis]>=extents[axis]-1||
-               !std::isfinite(spacing[axis])||!(spacing[axis]>0.))return false;
+               !arch::math::isfinite(spacing[axis])||!(spacing[axis]>0.))return false;
             const auto left=read(cell-strides[axis]),right=read(cell+strides[axis]);
             if(!diffusion_face_is_active(left.rho,right.rho))return false;
             const double a[3]{left.mom_u/left.rho,left.mom_v/left.rho,left.mom_w/left.rho};
             const double b[3]{right.mom_u/right.rho,right.mom_v/right.rho,right.mom_w/right.rho};
             for(int component=0;component<3;++component) {
-                if(!std::isfinite(a[component])||!std::isfinite(b[component]))return false;
+                if(!arch::math::isfinite(a[component])||!arch::math::isfinite(b[component]))return false;
                 const double value=.5*((b[component]-a[component])/spacing[axis]);
-                if(!std::isfinite(value))return false;
+                if(!arch::math::isfinite(value))return false;
                 candidate[3*component+axis]=value;
             }
         }
@@ -426,7 +427,7 @@ namespace DiffFlux
         FluidVector candidate=flux;
         candidate.mom_u=momentum[0];candidate.mom_v=momentum[1];candidate.mom_w=momentum[2];
         candidate.eng=thermal_flux+work;
-        if(!std::isfinite(candidate.eng))return false;
+        if(!arch::math::isfinite(candidate.eng))return false;
         flux=candidate;return true;
     }
 
@@ -470,7 +471,7 @@ namespace DiffFlux
             FluidVector candidate=flux;
             candidate.mom_u=momentum[0];candidate.mom_v=momentum[1];candidate.mom_w=momentum[2];
             candidate.eng=heat+power;
-            if(!std::isfinite(candidate.eng))return false;
+            if(!arch::math::isfinite(candidate.eng))return false;
             flux=candidate;
             if(physical_work_velocity)for(int component=0;component<3;++component)
                 physical_work_velocity[component]=velocity[component];
@@ -492,14 +493,14 @@ namespace DiffFlux
         double rho,const GridMetrics::GeometryView& grid,int direction,double* rows)
     {
         if(!rows||grid.geometry!=DiffusionGeometry::Cartesian||grid.dim<1||grid.dim>3||
-           direction<0||direction>=grid.dim||!std::isfinite(rho)||!(rho>0.)||
-           !std::isfinite(mu_left)||mu_left<0.||!std::isfinite(mu_right)||mu_right<0.)return false;
+           direction<0||direction>=grid.dim||!arch::math::isfinite(rho)||!(rho>0.)||
+           !arch::math::isfinite(mu_left)||mu_left<0.||!arch::math::isfinite(mu_right)||mu_right<0.)return false;
         const double h[3]{grid.dx1,grid.dx2,grid.dx3};
-        for(int k=0;k<grid.dim;++k)if(!std::isfinite(h[k])||!(h[k]>0.))return false;
+        for(int k=0;k<grid.dim;++k)if(!arch::math::isfinite(h[k])||!(h[k]>0.))return false;
         double mu_face=0.;
         if(!NewtonianViscousStress::nonnegative_coefficient_mean(mu_left,mu_right,mu_face))return false;
         const double capacity=mu_face/rho;
-        if(!std::isfinite(capacity)||(mu_face>0.&&capacity==0.))return false;
+        if(!arch::math::isfinite(capacity)||(mu_face>0.&&capacity==0.))return false;
         double candidate[3]{rows[0],rows[1],rows[2]};
         for(int i=0;i<3;++i) {
             candidate[i]+=capacity*(i==direction?4./3.:1.)/h[direction]/h[direction];
@@ -508,7 +509,7 @@ namespace DiffFlux
                     candidate[i]+=capacity/(3.*h[direction])/h[k];
             } else if(i<grid.dim)
                 candidate[i]+=capacity/(2.*h[direction])/h[i];
-            if(!std::isfinite(candidate[i])||candidate[i]<0.)return false;
+            if(!arch::math::isfinite(candidate[i])||candidate[i]<0.)return false;
         }
         for(int i=0;i<3;++i)rows[i]=candidate[i];
         return true;
@@ -580,7 +581,7 @@ namespace DiffFlux
     {
         if (grid.geometry == DiffusionGeometry::Unsupported)
             return {diffusion_dt_sentinel(), false};
-        if (!(value.rho > 0.0) || !std::isfinite(value.rho)) return {diffusion_dt_sentinel(), false};
+        if (!(value.rho > 0.0) || !arch::math::isfinite(value.rho)) return {diffusion_dt_sentinel(), false};
         const int cell = grid.GetIndex(i, j, k);
         for (int index = 0; index < species_count; ++index)
             composition[index] = species_source[index * species_source_stride];
@@ -595,7 +596,7 @@ namespace DiffFlux
 
         const double cell_cv = config.use_thermal_diffusion
             ? eos.get_cv(value.rho, temperature, composition) : 1.;
-        if (!(cell_cv > 0.0) || !std::isfinite(cell_cv)) return {diffusion_dt_sentinel(), false};
+        if (!(cell_cv > 0.0) || !arch::math::isfinite(cell_cv)) return {diffusion_dt_sentinel(), false};
         const double volume = GridMetrics::CellVolume(grid, i, j, k);
         double maximum = 0., inverse_dt = 0.;
         double cartesian_rows[3]{},curved_rows[3]{};
@@ -695,12 +696,12 @@ namespace DiffFlux
             }
         }
         if(curved_viscous)for(double row:curved_rows) {
-            if(!std::isfinite(row)||row<0.)return {diffusion_dt_sentinel(),false};
+            if(!arch::math::isfinite(row)||row<0.)return {diffusion_dt_sentinel(),false};
             inverse_dt=std::max(inverse_dt,row);
         }
         if(grid.geometry==DiffusionGeometry::Cartesian&&config.use_viscous_diffusion)
             for(int component=0;component<3;++component)inverse_dt=std::max(inverse_dt,cartesian_rows[component]);
-        if (!std::isfinite(inverse_dt) || !(inverse_dt > 0.))
+        if (!arch::math::isfinite(inverse_dt) || !(inverse_dt > 0.))
             return {diffusion_dt_sentinel(), false};
         return {1. / inverse_dt, true};
     }
@@ -923,7 +924,7 @@ inline void capture_diffusion_surface_flux(
         if (!config.use_viscous_diffusion
             || grid.geometry == DiffusionGeometry::Cartesian) return status;
         const double rho = U.rho;
-        if (!(rho > 0.0) || !std::isfinite(rho)) { status.valid = false; return status; }
+        if (!(rho > 0.0) || !arch::math::isfinite(rho)) { status.valid = false; return status; }
         const double r = grid.GetCellCenterX(i);
         if (r == 0.0) return status;
         status.active = true;

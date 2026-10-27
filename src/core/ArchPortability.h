@@ -27,3 +27,11 @@
 #define ARCH_INLINE inline
 #define ARCH_HEAVY_INLINE inline
 #endif
+
+// MSVC ignores the standard empty-member attribute while NVCC's device pass
+// applies it. Cross-address-space values must retain the same member layout.
+#if defined(_WIN32) && (defined(_MSC_VER) || defined(__CUDACC__))
+#define ARCH_NO_UNIQUE_ADDRESS
+#else
+#define ARCH_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#endif

@@ -1,3 +1,5 @@
+import {spawnOwned,terminateOwned} from './hostProcess.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 /**
  * Own a bounded subprocess for read-only HDF inspection.
  * Workflow: copy and validate a typed query, launch the fixed reader worker,
@@ -11,9 +13,9 @@ import type {PlotfileOverviewRequest} from '../src/host/plotfileOverview.ts';
 import {validatePlotfileAudit,validatePlotfileOverview,validatePlotfilePoint} from '../src/host/plotfileAudit.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
 import {record} from '../src/host/previewValidation.ts';
-/** Linux reader isolation; publication/provenance use the shared client contract. */
-import {spawn} from 'node:child_process';
+/** Reader isolation; publication/provenance use the shared client contract. */
 import {fileURLToPath} from 'node:url';
+import type {ChildProcess} from 'node:child_process';
 import {copyPlotfileSliceRequest} from './plotfileSliceRequest.ts';
 import type {PlotfileSliceRequest} from './plotfileSliceRequest.ts';
 import type {inspectPlotfileMetadata} from './plotfileMetadata.ts';
@@ -58,7 +60,7 @@ export function validateIsolatedPlotfileResult(result:unknown,slice?:PlotfileSli
 }
 
 /** Options are Host-owned. The browser must not supply execution settings. */
-function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={},slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Promise<Metadata>{
+function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number;windowsTools?:WindowsHostTools}={},slice?:PlotfileSliceRequest,overview?:PlotfileOverviewRequest,point?:PlotfilePointRequest):Promise<Metadata>{
  // Fifteen seconds is the maximum wall budget for this interactive read, in
  // milliseconds. Timeout is an explicit failure, never a partial success.
  const timeoutMs=options.timeoutMs??15_000;
@@ -70,16 +72,23 @@ function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number
  return new Promise((resolve,reject)=>{
   let failure:Error|undefined;let bytes=0;const chunks:Buffer[]=[];
   // The heap cap is not a hard RSS/WASM cap. Process termination bounds lifetime.
-  const child=spawn(process.execPath,['--max-old-space-size=256',fileURLToPath(new URL('./plotfileMetadataWorker.ts',import.meta.url)),path,...(point?[JSON.stringify({pointQuery:point})]:overview?[JSON.stringify({overview})]:slice?[JSON.stringify(slice)]:[])],
-   {stdio:['ignore','pipe','ignore'],shell:false});
-  const terminate=(error:Error)=>{failure??=error;child.kill('SIGKILL');};
+  let child:ChildProcess;
+  try {
+   child=spawnOwned(process.execPath,['--max-old-space-size=256',fileURLToPath(new URL('./plotfileMetadataWorker.ts',import.meta.url)),...(process.platform==='win32'?['--native-tools',JSON.stringify(options.windowsTools)]:[]),path,...(point?[JSON.stringify({pointQuery:point})]:overview?[JSON.stringify({overview})]:slice?[JSON.stringify(slice)]:[])],
+    {stdio:['ignore','pipe','ignore'],shell:false},options.windowsTools);
+  } catch(error) {
+   active=false;
+   reject(new PlotfileReadError('WORKER_FAILED',error instanceof Error?error.message:'Metadata worker startup failed.'));
+   return;
+  }
+  const terminate=(error:Error)=>{failure??=error;terminateOwned(child,'SIGKILL');};
   const cancel=()=>terminate(new PlotfileReadError('CANCELLED','Metadata read cancelled.'));
   const timer=setTimeout(()=>terminate(new PlotfileReadError('TIMEOUT','Metadata read exceeded its wall-clock budget.')),timeoutMs);
   options.signal?.addEventListener('abort',cancel,{once:true});
   // Covers cancellation between the initial check and listener registration.
   if(options.signal?.aborted)cancel();
   child.on('error',error=>{failure??=new PlotfileReadError('WORKER_FAILED',error.message);});
-  child.stdout.on('data',(chunk:Buffer)=>{
+  child.stdout!.on('data',(chunk:Buffer)=>{
    bytes+=chunk.length;
    if(bytes>OUTPUT_LIMIT){terminate(new PlotfileReadError('OUTPUT_LIMIT','Metadata worker response exceeded 64 KiB.'));return;}
    if(!failure)chunks.push(chunk);
@@ -101,21 +110,21 @@ function readIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number
 }
 
 
-export function inspectPlotfileMetadataIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+export function inspectPlotfileMetadataIsolated(path:string,options:{signal?:AbortSignal;timeoutMs?:number;windowsTools?:WindowsHostTools}={}){
  return readIsolated(path,options);
 }
 /** Same fixed worker/capacity/timeout as metadata; no browser execution settings. */
-export function readPlotfileFieldSliceIsolated(path:string,request:PlotfileSliceRequest,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+export function readPlotfileFieldSliceIsolated(path:string,request:PlotfileSliceRequest,options:{signal?:AbortSignal;timeoutMs?:number;windowsTools?:WindowsHostTools}={}){
  try{return readIsolated(path,options,copyPlotfileSliceRequest(request));}
  catch(error){return Promise.reject(error);}
 }
 
-export function readPlotfileOverviewIsolated(path:string,request:PlotfileOverviewRequest,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+export function readPlotfileOverviewIsolated(path:string,request:PlotfileOverviewRequest,options:{signal?:AbortSignal;timeoutMs?:number;windowsTools?:WindowsHostTools}={}){
  try{return readIsolated(path,options,undefined,copyOverviewRequest(request));}
  catch(error){return Promise.reject(error);}
 }
 
-export function readPlotfilePointIsolated(path:string,request:PlotfilePointRequest,options:{signal?:AbortSignal;timeoutMs?:number}={}){
+export function readPlotfilePointIsolated(path:string,request:PlotfilePointRequest,options:{signal?:AbortSignal;timeoutMs?:number;windowsTools?:WindowsHostTools}={}){
  try{return readIsolated(path,options,undefined,undefined,copyPointRequest(request));}
  catch(error){return Promise.reject(error);}
 }

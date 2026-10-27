@@ -8,6 +8,7 @@
  * 3. Return flags to the staged AMR regrid transaction.
  */
 
+#include "core/MathClassification.h"
 #include "numerics/state/StateAdmissibility.h"
 /**
  * @file RefinementIndicatorMath.h
@@ -91,8 +92,8 @@ ARCH_INLINE int refinement_flag(double error, int level, int minimum_level,
 ARCH_INLINE double loehner_error(double qm, double q0, double qp,
                                  double curvature_uncertainty = 0.0)
 {
-    if (!std::isfinite(qm) || !std::isfinite(q0) || !std::isfinite(qp)
-        || !std::isfinite(curvature_uncertainty) || curvature_uncertainty < 0.0)
+    if (!arch::math::isfinite(qm) || !arch::math::isfinite(q0) || !arch::math::isfinite(qp)
+        || !arch::math::isfinite(curvature_uncertainty) || curvature_uncertainty < 0.0)
         return std::numeric_limits<double>::quiet_NaN();
     // The existing estimator coefficient is a mathematical policy, not a
     // backend tuning parameter. Both executors use this one definition.
@@ -137,7 +138,7 @@ ARCH_INLINE Thermodynamics thermodynamics(
     }
     if (gamma1 && state.rho > 0.0 && value.pressure > 0.0) {
         const double sound = eos.get_sound_speed(state, value.pressure, composition);
-        if (std::isfinite(sound) && sound > 0.0)
+        if (arch::math::isfinite(sound) && sound > 0.0)
             value.gamma1 = state.rho * sound * sound / value.pressure;
     }
     return value;
@@ -175,8 +176,8 @@ struct StateView {
     }
 
     ARCH_INLINE bool valid_entropy(int cell) const {
-        return std::isfinite(pressure[cell]) && pressure[cell] > 0.0
-            && std::isfinite(gamma1[cell]) && gamma1[cell] > 0.0;
+        return arch::math::isfinite(pressure[cell]) && pressure[cell] > 0.0
+            && arch::math::isfinite(gamma1[cell]) && gamma1[cell] > 0.0;
     }
 
     template<class Geometry>
@@ -238,7 +239,7 @@ ARCH_INLINE double cell_error(const StateView& state, const Geometry& grid,
                 uncertainty = 4.0 * composition_roundoff(state.species_count);
             }
             const double error = loehner_error(low, center, high, uncertainty);
-            if (!std::isfinite(error)) return error;
+            if (!arch::math::isfinite(error)) return error;
             maximum = std::max(maximum, error);
         }
     }

@@ -12,6 +12,8 @@ import {localCpuProfile} from './localBuildProfile.ts';
 import {checkedPath,fingerprint} from './files.ts';
 import {existingBuildProfile} from './existingBuildProfile.ts';
 import {openProject} from './project.ts';
+import {sameCMakePath} from './cmakeEvidence.ts';
+import type {WindowsHostTools} from './hostProcess.ts';
 
 /** Semantic launcher inputs; no shell, argument vector or browser build settings. */
 export interface DesktopProjectLaunch {project?:string;cwd:string;source?:string;config?:string;binary?:string;caseId?:string;buildDir?:string}
@@ -30,14 +32,19 @@ async function discoverRoot(start:string){
  * An absent executable keeps every Core operation behind its existing validation.
  * Existing executable registration remains authoritative and is never fabricated.
  */
-export async function openDesktopProject(launch:DesktopProjectLaunch){
+export async function openDesktopProject(launch:DesktopProjectLaunch,context:{windowsTools?:WindowsHostTools}={}){
+ if(process.platform==='win32'&&!context.windowsTools)throw new Error('Trusted Windows desktop tools are required.');
  const root=await discoverRoot(launch.project??launch.source??launch.cwd);
- function relative(input:string){const rel=path.relative(root,path.resolve(launch.cwd,input));if(rel.startsWith('../')||path.isAbsolute(rel))throw new Error('Selected file is outside the managed project.');return rel;}
+ function relative(input:string){
+  const rel=path.relative(root,path.resolve(launch.cwd,input));
+  if(rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))throw new Error('Selected file is outside the managed project.');
+  return rel.split(path.sep).join('/');
+ }
  const binary=launch.binary?relative(launch.binary):undefined;
- const registered=BUILD_PROFILES.find(p=>p.managedSourceRoot===root&&(!binary||p.outputBinaryRelative===binary));
- const local=localCpuProfile(root).build;
- const existing=launch.buildDir?await existingBuildProfile(root,relative(launch.buildDir),binary):undefined;
- const profile=existing?.build??registered??(!binary||binary===local.outputBinaryRelative?local:undefined);
+ const registered=process.platform==='win32'?undefined:BUILD_PROFILES.find(p=>p.managedSourceRoot===root&&(!binary||p.outputBinaryRelative===binary));
+ const local=localCpuProfile(root,context.windowsTools);
+ const existing=launch.buildDir?await existingBuildProfile(root,relative(launch.buildDir),binary,context.windowsTools):undefined;
+ const profile=existing?.build??registered??(!binary||binary===local.build.outputBinaryRelative?local.build:undefined);
  if(!profile)throw new Error('No approved Host-owned Build Profile matches this project/binary. Register a trusted profile; build trees are never rebound automatically.');
  const config=launch.config?relative(launch.config):'simulation/Sod/Sod.par';
  const selectedSource=launch.source?relative(launch.source):undefined;
@@ -48,7 +55,7 @@ export async function openDesktopProject(launch:DesktopProjectLaunch){
  const chosen=selectedSource?{...profile,sourceRelativePath:selectedSource,caseId:undefined,
   trackedInputs:[...new Set([...profile.trackedInputs,selectedSource])]}:profile;
  const reader=await openProject({project:root,config,buildProfile:chosen.id,
-  ...((existing||selectedSource)?{trustedBuildProfile:chosen,configureProfile:existing?.configure??(chosen.id===local.id?localCpuProfile(root).configure:undefined)}:{}),
+  ...((existing||selectedSource||process.platform==='win32')?{trustedBuildProfile:chosen,configureProfile:existing?.configure??(chosen.id===local.build.id?local.configure:undefined)}:{}),
   ...(selectedSource?{selectedSource,requestedCaseId:launch.caseId}:{})});
  let caseId=launch.caseId??'Sod',registrationPending=false;
  const executable=reader.snapshot().session.executable;
@@ -56,7 +63,7 @@ export async function openDesktopProject(launch:DesktopProjectLaunch){
  if(executable?.exists){
   const registry=await desktopRegistry(reader);
   if(selectedSource){
-   const matches=registry.cases.filter(c=>c.inspection.sourceFile!==null&&path.resolve(root,c.inspection.sourceFile)===path.resolve(root,selectedSource));
+   const matches=registry.cases.filter(c=>c.inspection.sourceFile!==null&&sameCMakePath(path.resolve(root,c.inspection.sourceFile),path.resolve(root,selectedSource)));
    if(matches.length>1)throw new Error('Selected source has ambiguous compiled registration.');
    if(matches.length===1){
     caseId=registeredSourceCase(registry.cases,root,selectedSource,launch.caseId);
