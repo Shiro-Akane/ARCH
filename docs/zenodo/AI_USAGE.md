@@ -1,10 +1,10 @@
 # AI 使用说明 / AI-use disclosure
 
-## v1.4.0 候选补充
+## v1.4.0 补充
 
-Windows 原生适配期间，AI 辅助用于平台兼容实现、冻结边界候选整理、失败诊断、既有阈值下的回归核对、依赖审阅及文档归档；DeepSeek 用于有界独立复核。数学边界例外由维护者逐项批准，公式、容差、拒绝检查与内存池契约保持。实际执行范围与保留限制见 [Windows 验收记录](../histroy/build/WindowsNativeCudaQualification-20261027.md)和[发布准备记录](../histroy/release/V1.4.0ReleasePreparation-20261027.zh-CN.md)。候选未公开发布，Zenodo 仍暂缓。
+Windows 原生适配期间，AI 辅助用于平台兼容实现、冻结边界候选整理、失败诊断、既有阈值下的回归核对、依赖审阅及文档归档；DeepSeek 用于有界独立复核。数学边界例外由维护者逐项批准，公式、容差、拒绝检查与内存池契约保持。实际执行范围与保留限制见 [Windows 验收记录](../histroy/build/WindowsNativeCudaQualification-20261027.md)和[发布准备记录](../histroy/release/V1.4.0ReleasePreparation-20261027.zh-CN.md)。GitHub 软件发布日期为2026-10-27；Zenodo 仍暂缓。
 
-For the v1.4.0 candidate, AI assistance covered native Windows compatibility work, proposed frozen-boundary exceptions, failure diagnosis, regression review under existing thresholds, dependency review and documentation. DeepSeek supplied bounded independent reviews. The maintainer approved mathematical exceptions individually; formulas, tolerances, rejection checks and memory-pool contracts remain unchanged. Recorded acceptance scope and limitations continue to govern the claims.
+For v1.4.0, AI assistance covered native Windows compatibility work, proposed frozen-boundary exceptions, failure diagnosis, regression review under existing thresholds, dependency review and documentation. DeepSeek supplied bounded independent reviews. The maintainer approved mathematical exceptions individually; formulas, tolerances, rejection checks and memory-pool contracts remain unchanged. Recorded acceptance scope and limitations continue to govern the claims.
 
 ## 既有版本披露
 

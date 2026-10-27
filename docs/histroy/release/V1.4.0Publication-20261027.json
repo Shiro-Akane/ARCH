@@ -1,0 +1,39 @@
+{
+  "schema": "arch-publication-record-1",
+  "softwareVersion": "1.4.0",
+  "softwareReleaseDate": "2026-10-27",
+  "dateTimezone": "Asia/Shanghai",
+  "releaseUrl": "https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.0",
+  "sourceIntegration": {
+    "pr": 21,
+    "acceptedPrHead": "87711fb37e7e83b3c63a79fde99a8b8646a98554",
+    "acceptedPrCi": "https://github.com/Shiro-Akane/ARCH/actions/runs/40469585289",
+    "mergedMain": "157bd92bdb0520305867cb577e8b82ec53f2fbce",
+    "mergedTreeEqualsAcceptedPr": true,
+    "mainCi": "https://github.com/Shiro-Akane/ARCH/actions/runs/40471127901"
+  },
+  "requiredBeforeTag": [
+    "Actual integration main CI/security accepted",
+    "Metadata-only protected-branch PR accepted and normally merged",
+    "Actual metadata main applicable CI/security accepted",
+    "No independent implementation changes",
+    "Tag absent or exactly matching previously accepted immutable identity"
+  ],
+  "finalPublicationEvidence": "GitHub release and its external ARCHIVE_PROVENANCE.json asset hold actual final main/tag/checks/digests/publication identity; no self-referential source hash.",
+  "archive": {
+    "file": "ARCH-1.4.0-source.zip",
+    "source": "new git archive of exact accepted main/tag",
+    "lfsPayloads": "not fetched; pointers preserved",
+    "machineInstructionsSkillsObsoleteRootPlans": "excluded",
+    "prebuiltScientificOrDesktopBinaries": "not included"
+  },
+  "citation": {
+    "version": "1.4.0",
+    "softwareDate": "2026-10-27",
+    "seriesDoi": "10.5281/zenodo.23503924",
+    "versionDoi": null,
+    "authors": "unchanged",
+    "zenodoPublication": "deferred; no API operation"
+  },
+  "frozen": "Source, math, pools, scientific IO, lockfile, tests, inputs, thresholds and previous qualification bytes unchanged relative to merged PR21."
+}

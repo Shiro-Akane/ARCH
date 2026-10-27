@@ -1,12 +1,13 @@
 cff-version: 1.2.0
-message: "Cite the archived version used. This file describes the unpublished v1.4.0 candidate; its DOI is the all-versions series DOI."
+message: "Cite the software version used. ARCH v1.4.0 is available at the GitHub release URL; the DOI identifies the existing version series, not a v1.4.0 Zenodo record."
 type: software
 title: "ARCH: Adaptive Reactive CUDA Hydrodynamics"
 version: 1.4.0
+date-released: 2026-10-27
 license: MIT
 repository-code: "https://github.com/Shiro-Akane/ARCH"
 doi: 10.5281/zenodo.23503924
-url: "https://github.com/Shiro-Akane/ARCH/pull/21"
+url: "https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.0"
 authors:
   - family-names: Ye
     given-names: Haonan
@@ -30,10 +31,10 @@ keywords:
 abstract: |-
   ARCH (Adaptive Reactive CUDA Hydrodynamics) is a C++20 and CUDA simulation code for finite-volume compressible hydrodynamics, heat transfer and nuclear reactions with adaptive mesh refinement. CPU and CUDA backends retain shared physical and numerical formulations. The optional ARCH Studio provides parameter editing, configuration and builds, initial-field and AMR previews, run and restart control, and read-only plotfile inspection.
 
-  Version 1.4.0 is an unpublished release candidate on PR #21. Its main update is corresponding native Windows 11 x64 CPU/CUDA CLI and Studio functionality alongside Linux and WSL2. It uses the shared CMake project, solver implementation, scientific formats and Host services, with GCC/UCRT64 CPU and separate MSVC/NVCC CUDA dependency profiles. The final dependency audit also updates development-only transitive Zod from 4.6.2 to 4.6.7 under its existing allowed range.
+  Version 1.4.0 is the GitHub source release dated 2026-10-27, incorporating PR #21. Its main update is corresponding native Windows 11 x64 CPU/CUDA CLI and Studio functionality alongside Linux and WSL2. It uses the shared CMake project, solver implementation, scientific formats and Host services, with GCC/UCRT64 CPU and separate MSVC/NVCC CUDA dependency profiles. The final dependency audit also updates development-only transitive Zod from 4.6.2 to 4.6.7 under its existing allowed range.
 
   Linux and WSL2 remain recommended. Native Windows has the corresponding functionality within the established scientific scope, with newer support that may have instability or bugs. The recorded Windows toolchain, GPU, resource-policy, dependency-freshness and terminal limits remain applicable. Approved portability exceptions preserve formulas, numerical tolerances, rejection checks and pool allocation, capacity and ownership. Existing scientific limitations and historical failures remain documented; MPI, additional GPU vendors, Apple Metal and general radiation transport are not added.
 
-  The intended archive is tagged source with third-party notices and processed validation evidence. No raw simulation outputs, prebuilt scientific binaries or fetched Git LFS payloads are added. Machine-local assistant instructions, skills and obsolete root plans remain excluded. Publication date and version-specific DOI are intentionally absent until publication; the DOI in this candidate file identifies the existing version series. Zenodo remains deferred.
+  The release archive is tagged source with third-party notices and processed validation evidence. No raw simulation outputs, prebuilt scientific binaries or fetched Git LFS payloads are added. Machine-local assistant instructions, skills and obsolete root plans remain excluded. The software release date is 2026-10-27. No v1.4.0 Zenodo record or version-specific DOI has been created; the citation DOI identifies the existing version series. Zenodo remains deferred.
 
   AI-assisted tools were used for bug tracking and fixes, review of tolerance settings across the complete CTest suite, selected documentation, code completion, and engineering and security checks. Human contributors designed the overall software architecture and retain responsibility for scientific definitions, numerical acceptance, code review and release decisions.

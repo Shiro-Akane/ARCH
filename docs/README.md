@@ -6,7 +6,7 @@ Linux/WSL2 is recommended. Native Windows11 x64 provides the complete CPU/CUDA C
 
 Begin with [build and first run](../README.md#build), then use the [case guide](guides/SimulationCase.md) to inspect output or write a problem. Inputs, outputs and physical constants use CGS.
 
-Current version status starts in the [release index](releases/README.md): v1.4.0 is a Windows-support candidate, while published/frozen versions retain their original scope. Dated investigations remain in [history](histroy/README.md).
+Current version status starts in the [release index](releases/README.md): v1.4.0 adds native Windows support (2026-10-27), while published/frozen versions retain their original scope. Dated investigations remain in [history](histroy/README.md).
 
 ## Choose features and settings
 

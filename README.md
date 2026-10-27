@@ -207,7 +207,7 @@ MPI would distribute calculations across processes and machines. Later explorati
 
 ## Citation
 
-The [v1.4.0 release candidate](docs/releases/V1.4.0.md) prepares native Windows support; it is not yet tagged or published. Citation metadata describes that candidate and uses the known series DOI; cite the archived version actually used.
+[ARCH v1.4.0](docs/releases/V1.4.0.md), dated 2026-10-27, adds native Windows CPU/CUDA and Studio support. Cite the [GitHub release](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.0) for this version; the known DOI identifies the existing series, and a v1.4.0 Zenodo record remains deferred.
 
 For ARCH 1.3.0, please cite:
 
