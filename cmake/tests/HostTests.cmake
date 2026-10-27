@@ -547,3 +547,16 @@ if(WIN32)
             $<TARGET_FILE:arch_windows_build_publish_test>)
     set_tests_properties(windows_config_and_read_operations PROPERTIES TIMEOUT 120)
 endif()
+
+# Exercise the existing Host owners under real 1/2/4-rank communication.
+if(ARCH_ENABLE_MPI)
+    add_executable(arch_mpi_fixed_grid tests/host/amr/test_mpi_fixed_grid.cpp)
+    arch_configure_host_test(arch_mpi_fixed_grid)
+    foreach(ranks IN ITEMS 1 2 4)
+        add_test(NAME mpi_fixed_grid_${ranks}
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_mpi_fixed_grid> ${MPIEXEC_POSTFLAGS})
+        set_tests_properties(mpi_fixed_grid_${ranks} PROPERTIES
+            TIMEOUT 45 PROCESSORS ${ranks} ENVIRONMENT "OMP_NUM_THREADS=1")
+    endforeach()
+endif()

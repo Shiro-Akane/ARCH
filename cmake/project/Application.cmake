@@ -116,7 +116,12 @@ target_include_directories(arch_build_contract INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/cases
     ${ARCH_CUSTOM_REGISTRY_DIR})
 target_compile_definitions(arch_build_contract INTERFACE
-    ARCH_CUDA_BUILD_ENABLED=$<BOOL:${ARCH_ENABLE_CUDA}>)
+    ARCH_CUDA_BUILD_ENABLED=$<BOOL:${ARCH_ENABLE_CUDA}>
+    ARCH_MPI_ENABLED=$<BOOL:${ARCH_ENABLE_MPI}>)
+if(ARCH_ENABLE_MPI)
+    find_package(MPI REQUIRED COMPONENTS CXX)
+    target_link_libraries(arch_build_contract INTERFACE MPI::MPI_CXX)
+endif()
 if(WIN32)
     enable_language(RC)
     target_compile_definitions(arch_build_contract INTERFACE WIN32_LEAN_AND_MEAN NOMINMAX)

@@ -11,6 +11,7 @@
  * 5. Hand completed state and diagnostics to the next scheduled stage.
  */
 
+#include "io/OutputPath.h"
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -102,6 +103,9 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
  */
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {
+    // Distributed restart is not yet qualified. Never emit a partial mesh
+    // using the serial checkpoint schema, even at the implicit terminal write.
+    if(runtime.control().tree->PartitionSize()>1)return;
     const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
@@ -135,7 +139,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         io::PlotNativeGrid measure;
         // Reuse the existing measure/normalization owner for one actual cell.
         io::append_plot_native_cell(measure,grid,grid.Is(),grid.Js(),grid.Ks());
-        std::ofstream activity(config.io.out_dir+"/diffusion_activity.tsv");
+        std::ofstream activity(io::output_directory(config.io.out_dir)+"/diffusion_activity.tsv");
         if(!activity)throw std::runtime_error("Cannot write diffusion activity diagnostics");
         activity << "# scope=since-process-start; quantity=endpoint-energy-redistribution; units=CGS\n"
                  << "# signed=sum_half,sum_leaf,sum_interior V*(E_after-E_seed); "
@@ -164,7 +168,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
     const auto& hydro_budget=runtime.hydro_boundary_budget();
     const auto& diffusion_budget=runtime.diffusion_boundary_budget();
     if (!hydro_budget.empty()) {
-        std::ofstream fluxes(config.io.out_dir+"/boundary_fluxes.tsv");
+        std::ofstream fluxes(io::output_directory(config.io.out_dir)+"/boundary_fluxes.tsv");
         if (!fluxes) throw std::runtime_error("Cannot write boundary flux diagnostics");
         fluxes << "# scope=since-process-start; positive=outgoing; momentum=native; "
                   "energy=fluid-total; gravity-work=separate; units=CGS";
@@ -192,7 +196,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
     const auto& regrid_measurements = runtime.regrid_records();
     const bool has_diff = config.physics.diffusion.use_diffusion;
     {
-        std::ofstream timing(config.io.out_dir + "/run_timings.tsv");
+        std::ofstream timing(io::output_directory(config.io.out_dir) + "/run_timings.tsv");
         timing << "driver_seconds\toutput_seconds\toutput_calls\n" << std::setprecision(17)
                << std::chrono::duration<double>(Clock::now()-started_).count() << '\t'
                << output_seconds_ << '\t' << output_calls_ << '\n';
@@ -206,7 +210,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         static constexpr std::array<const char*, CpuStageTimings::size> names{
             "regrid", "gravity", "timestep", "burn_first", "diffusion",
             "hydro", "burn_second"};
-        std::ofstream timing(config.io.out_dir + "/cpu_stage_timings.tsv");
+        std::ofstream timing(io::output_directory(config.io.out_dir) + "/cpu_stage_timings.tsv");
         timing << "stage\twall_seconds\tcalls\n" << std::setprecision(17);
         for (std::size_t i = 0; i < names.size(); ++i)
             timing << names[i] << '\t' << cpu_stages.seconds[i]
@@ -215,7 +219,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
         close_diagnostic(timing, "CPU stage timings");
     }
     {
-        std::ofstream report(config.io.out_dir + "/state_repairs.txt");
+        std::ofstream report(io::output_directory(config.io.out_dir) + "/state_repairs.txt");
         if (!report) throw std::runtime_error("cannot write state repair diagnostics");
         report << std::setprecision(17) << "revision=P1.5-v1 units=CGS\n";
         const char* names[]{"events","affected_volume","mass_signed","mass_absolute",
@@ -236,7 +240,7 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
                   << " delta_energy=" << ctrl.repairs.values[7] << std::endl;
     }
     if (!regrid_measurements.empty()) {
-        const std::filesystem::path directory = config.Get<std::string>("log_dir", config.io.out_dir);
+        const std::filesystem::path directory = io::output_directory(config.Get<std::string>("log_dir", config.io.out_dir));
         std::filesystem::create_directories(directory);
         std::ofstream output(directory / (config.io.base_name + "_regrid.tsv"));
         if (!output) throw std::runtime_error("cannot write regrid measurements");
@@ -255,8 +259,8 @@ void DriverIO::write_measurements(std::span<const CudaDiffusionScheduleRecord> c
     }
 
     if (compute_backend) {
-        const std::filesystem::path directory = config.Get<std::string>(
-            "log_dir", config.io.out_dir);
+        const std::filesystem::path directory = io::output_directory(config.Get<std::string>(
+            "log_dir", config.io.out_dir));
         std::filesystem::create_directories(directory);
         const std::filesystem::path trace_path = directory
             / (config.io.base_name + "_backend_trace.tsv");

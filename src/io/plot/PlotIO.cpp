@@ -13,6 +13,7 @@
  * Device visibility and completed ghost/stage identity belong to the caller.
  */
 
+#include "io/OutputPath.h"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -69,11 +70,11 @@ void write_plt(amr::AMRControl &amr_ctrl,
         (void)GridMetrics::make_geometry_view(amr_ctrl.pool->GetBlock(id).grid);
     if (!frozen_source_identity || !frozen_source_identity->formal)
         throw std::invalid_argument("Production Plotfile requires frozen complete runtime provenance");
-    if (!fs::exists(config.io.out_dir))
-        fs::create_directories(config.io.out_dir);
+    if (!fs::exists(io::output_directory(config.io.out_dir)))
+        fs::create_directories(io::output_directory(config.io.out_dir));
 
     std::ostringstream oss;
-    oss << config.io.out_dir << "/"
+    oss << io::output_directory(config.io.out_dir) << "/"
         << config.io.base_name << "_"
         << config.numerics.solver_name << "_plt_"
         << std::setw(4) << std::setfill('0') << file_index << ".h5";

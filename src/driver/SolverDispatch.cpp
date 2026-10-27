@@ -31,6 +31,7 @@
 #include "interface/ProblemGenerator.h"
 #include "physics/boundary/UserBoundary.h"
 #include "io/IO.h"
+#include "io/OutputPath.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "physics/eos/eosdispatch.h"
 #include "driver/dispatch/capability/BackendCapabilities.h"
@@ -89,8 +90,8 @@ void write_backend_sidecar(
     const arch::dispatch::BackendResolution& resolution)
 {
     using namespace arch::dispatch;
-    const std::filesystem::path directory = config.Get<std::string>(
-        "log_dir", config.io.out_dir);
+    const std::filesystem::path directory = io::output_directory(config.Get<std::string>(
+        "log_dir", config.io.out_dir));
     std::filesystem::create_directories(directory);
     const std::filesystem::path path =
         directory / (config.io.base_name + "_backend_plan.txt");
@@ -291,7 +292,33 @@ void DispatchSolver(ProblemGenerator &problem,
 
     // --- AMR Initialization ---
     int max_blocks = config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000;
+    int rank = 0, rank_count = 1;
+#if ARCH_MPI_ENABLED
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
+    }
+#endif
+    if (rank_count > 1) {
+        if (max_blocks < config.grid.nblockx1)
+            throw std::invalid_argument("MPI global max_blocks is smaller than the root mesh");
+        // Keep the original pool and free list. Only its per-rank capacity
+        // changes; no shadow blocks or second field allocator is introduced.
+        const int roots =
+            static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1) * (rank + 1) / rank_count -
+                             static_cast<std::int64_t>(config.grid.nblockx1) * rank / rank_count);
+        // Reserve owned roots first, then share spare slots. Clamping an
+        // independently divided capacity could exceed the global max_blocks.
+        const int spare_blocks = max_blocks - config.grid.nblockx1;
+        const int local_spare =
+            static_cast<int>(static_cast<std::int64_t>(spare_blocks) * (rank + 1) / rank_count -
+                             static_cast<std::int64_t>(spare_blocks) * rank / rank_count);
+        max_blocks = roots + local_spare;
+    }
     amr::AMRControl amr_ctrl(max_blocks, config.grid.dim);
+    amr_ctrl.tree->SetRootPartition(rank, rank_count);
 
     amr_ctrl.tree->ConfigureRefinementSpecies(config.amr, specs);
     RunState run_state;
@@ -331,6 +358,23 @@ void DispatchSolver(ProblemGenerator &problem,
         }
     }
 
+    if (rank_count > 1) {
+        std::ofstream partition(io::output_directory(config.io.out_dir) + "/partition.txt");
+        if (!partition)
+            throw std::runtime_error("cannot write MPI partition metadata");
+        partition << "schema=1\nrank=" << rank << "\nsize=" << rank_count
+                  << "\nroot_begin=" << amr_ctrl.tree->RootBegin()
+                  << "\nroot_end=" << amr_ctrl.tree->RootEnd()
+                  << "\nglobal_root_blocks=" << config.grid.nblockx1
+                  << "\nlocal_pool_capacity=" << max_blocks
+                  << "\noutput_scope=rank-local\nrestart_supported=false\n";
+        partition.close();
+        if (!partition)
+            throw std::runtime_error("cannot finish MPI partition metadata");
+        std::cout << "[MPI] rank=" << rank << '/' << rank_count << " owned roots=["
+                  << amr_ctrl.tree->RootBegin() << ',' << amr_ctrl.tree->RootEnd()
+                  << ") pool=" << max_blocks << "; rank-local plots, no checkpoints" << std::endl;
+    }
     std::cout << "[Dispatch] Resolving Gravity Policy..." << std::endl;
     std::string grav_type = config.physics.gravity.type;
     std::cout << "           -> Type: " << grav_type;

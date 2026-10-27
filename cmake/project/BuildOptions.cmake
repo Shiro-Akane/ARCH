@@ -66,6 +66,7 @@ if(ipo_supported)
     endif()
 endif()
 
+option(ARCH_ENABLE_MPI "Enable distributed fixed-grid CPU hydro" OFF)
 option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
 option(ARCH_VERBOSE_BUILD "Show dependency configuration and verbose Makefile commands" OFF)
 option(ARCH_ENABLE_KLU "Enable SuiteSparse KLU for large reaction networks" ON)

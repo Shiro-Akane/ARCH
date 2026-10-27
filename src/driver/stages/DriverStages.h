@@ -139,7 +139,7 @@ TimestepCandidates calculate_timestep_candidates(DriverRuntime& runtime,
         }
     }
     double dt_hydro = DriverReduction::reduce_block_minimum(
-        1e99, workspace.hydro_dt_candidates);
+        1e99, workspace.hydro_dt_candidates, amr_ctrl.tree->PartitionSize());
 
     // The diffusion operator reports a forward-Euler stability step.  STS
     // removes that O(dx^2) restriction from the macro step, except when

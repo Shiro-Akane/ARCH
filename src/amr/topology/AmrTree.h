@@ -106,10 +106,26 @@ private:
         const FluidVector&, const double*, const GridMetrics::GeometryView&, int, int)>;
     JeansEvaluator jeans_evaluator;
     int deferred_initial_refinement_passes = 0;
+    // Root coordinates remain global; pool indices and handles remain local.
+    int partition_rank_ = 0, partition_size_ = 1;
+    int root_begin_ = 0, root_end_ = 0;
+    bool periodic_x_ = false;
 
 public:
     AmrTree(std::shared_ptr<MemoryPool> memory_pool) : pool(memory_pool) {}
 
+    void SetRootPartition(int rank, int size)
+    {
+        if (!active_blocks.empty() || size < 1 || rank < 0 || rank >= size)
+            throw std::invalid_argument("invalid root partition or nonempty tree");
+        partition_rank_ = rank;
+        partition_size_ = size;
+    }
+    int PartitionRank() const noexcept { return partition_rank_; }
+    int PartitionSize() const noexcept { return partition_size_; }
+    int RootBegin() const noexcept { return root_begin_; }
+    int RootEnd() const noexcept { return root_end_; }
+    bool PeriodicX() const noexcept { return periodic_x_; }
     int GetRootGridDim() const { return root_grid.dim; }
     /** Immutable native domain identity for IO; no geometry reconstruction. */
     const Grid& GetRootGrid() const { return root_grid; }
@@ -244,6 +260,18 @@ public:
      * @brief Initialize the Level 0 root blocks.
      */
     void InitRootGrid(const SimConfig& config, int n_species) {
+        if (partition_size_ > 1 && (config.grid.dim != 1
+            || config.grid.geometry != "cartesian" || config.amr.lrefinemax != 0
+            || config.grid.nblockx1 < partition_size_
+            || ((config.grid.x1l_boundary_type == "periodic")
+                != (config.grid.x1r_boundary_type == "periodic"))))
+            throw std::invalid_argument("MPI root partition requires a fixed Cartesian 1-D grid, paired periodic faces and at least one block per rank");
+        root_begin_ = static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1)
+            * partition_rank_ / partition_size_);
+        root_end_ = static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1)
+            * (partition_rank_ + 1) / partition_size_);
+        periodic_x_ = config.grid.x1l_boundary_type == "periodic"
+            && config.grid.x1r_boundary_type == "periodic";
         if (config.amr.lrefinemin < 0 ||
             config.amr.lrefinemax < config.amr.lrefinemin ||
             config.amr.lrefinemax > kMaxRefinementLevel) {
@@ -284,11 +312,10 @@ public:
 
         int loop_k = std::max(1, root_grid.nblockx3);
         int loop_j = std::max(1, root_grid.nblockx2);
-        int loop_i = std::max(1, root_grid.nblockx1);
 
         for (int k = 0; k < loop_k; ++k) {
             for (int j = 0; j < loop_j; ++j) {
-                for (int i = 0; i < loop_i; ++i) {
+                for (int i = root_begin_; i < root_end_; ++i) {
                     PoolBlockAllocationGuard allocation(
                         *pool, pool->AllocateBlock());
                     const int id = allocation.id();

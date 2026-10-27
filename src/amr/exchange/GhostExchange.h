@@ -14,6 +14,10 @@
 
 #pragma once
 
+#if ARCH_MPI_ENABLED
+#include <mpi.h>
+#endif
+
 #include <array>
 #include <bit>
 #include <cmath>
@@ -649,6 +653,14 @@ public:
             views.push_back(view);
         }
         const auto& plans = GetPlans(pool, tree, dim, handles);
+        // Validate native topology/storage before any remote destination write.
+        // No remote block is allocated and no alternate exchange owner exists.
+        if (tree->PartitionSize() > 1) {
+            for (const auto& plan : plans.same_level)
+                for (const auto& view : views)
+                    exchange_detail::validate_host_view(plan, view);
+            ExchangeRemoteRootFaces(*tree, views, n_species);
+        }
         host_compiled_.resize(plans.same_level.size()+plans.same_level_corners.size());
         std::vector<HostExchangeBlockView> level_views;
         const auto execute_level=[&](const SameLevelExchangePlan& plan,
@@ -701,6 +713,82 @@ private:
     mutable std::vector<std::optional<HostCompiledSameLevelExchangePlan>> host_compiled_;
     std::size_t host_cache_builds_ = 0;
     HostExchangeWorkspace host_workspace_;
+
+    void ExchangeRemoteRootFaces(const AmrTree &tree, std::span<const HostExchangeBlockView> views,
+                                 int species)
+    {
+#if ARCH_MPI_ENABLED
+        if (tree.GetRootGridDim() != 1 || views.empty() ||
+            views.front().logical.logical_x1 != static_cast<unsigned>(tree.RootBegin()) ||
+            views.back().logical.logical_x1 != static_cast<unsigned>(tree.RootEnd() - 1))
+            throw std::logic_error("MPI exchange root ownership mismatch");
+        int initialized = 0, rank = 0, size = 1;
+        MPI_Initialized(&initialized);
+        if (!initialized)
+            throw std::logic_error("MPI exchange before initialization");
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        if (rank != tree.PartitionRank() || size != tree.PartitionSize())
+            throw std::logic_error("MPI communicator differs from root partition");
+        const int lower = rank > 0 ? rank - 1 : (tree.PeriodicX() ? size - 1 : MPI_PROC_NULL);
+        const int upper = rank + 1 < size ? rank + 1 : (tree.PeriodicX() ? 0 : MPI_PROC_NULL);
+        const std::array<std::int32_t, 3> extent{BLOCK_NX, 1, 1};
+        const auto count64 = static_cast<std::uint64_t>(6 + species) * MAX_NG;
+        if (count64 > static_cast<std::uint64_t>(std::numeric_limits<int>::max()))
+            throw std::overflow_error("MPI halo count exceeds the MPI int range");
+        const int count = static_cast<int>(count64);
+        // Reuse the existing executor's scratch, retaining no FluidState views.
+        host_workspace_.values.resize(4 * count64);
+        double *send_lower = host_workspace_.values.data();
+        double *send_upper = send_lower + count;
+        double *receive_lower = send_upper + count;
+        double *receive_upper = receive_lower + count;
+        const auto copy = [&](const HostExchangeBlockView &view, bool upper_side, bool gather,
+                              double *buffer) {
+            // The source side is opposite the destination side in the native
+            // plan recipe; use that same indexing and the same six+species fields.
+            const auto box = exchange_detail::make_box(1, extent, MAX_NG, 0, gather,
+                                                       gather ? !upper_side : upper_side);
+            exchange_detail::for_each_box_cell(box, [&](const auto &logical, std::uint64_t cell) {
+                const auto index = exchange_detail::flatten_host_exchange(view.layout, logical);
+                for (int field = 0; field < 6 + species; ++field) {
+                    double &value = exchange_detail::host_exchange_field(view, field)[index];
+                    double &packed = buffer[cell * (6 + species) + field];
+                    if (gather)
+                        packed = value;
+                    else
+                        value = packed;
+                }
+            });
+        };
+        copy(views.front(), false, true, send_lower);
+        copy(views.back(), true, true, send_upper);
+        MPI_Status status_lower{}, status_upper{};
+        MPI_Sendrecv(send_upper, count, MPI_DOUBLE, upper, 310, receive_lower, count, MPI_DOUBLE, lower,
+                     310, MPI_COMM_WORLD, &status_lower);
+        MPI_Sendrecv(send_lower, count, MPI_DOUBLE, lower, 311, receive_upper, count, MPI_DOUBLE, upper,
+                     311, MPI_COMM_WORLD, &status_upper);
+        const auto require_count = [&](int peer, MPI_Status &status) {
+            int received = 0;
+            if (peer != MPI_PROC_NULL) {
+                MPI_Get_count(&status, MPI_DOUBLE, &received);
+                if (received != count)
+                    throw std::runtime_error("MPI halo field count mismatch");
+            }
+        };
+        require_count(lower, status_lower);
+        require_count(upper, status_upper);
+        if (lower != MPI_PROC_NULL)
+            copy(views.front(), false, false, receive_lower);
+        if (upper != MPI_PROC_NULL)
+            copy(views.back(), true, false, receive_upper);
+#else
+        (void)tree;
+        (void)views;
+        (void)species;
+        throw std::logic_error("distributed exchange requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
 
     static LogicalBlockKey logical_key(const Block& block, int dim)
     {

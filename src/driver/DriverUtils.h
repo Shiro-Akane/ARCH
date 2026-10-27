@@ -9,6 +9,10 @@
 
 #pragma once
 
+#if ARCH_MPI_ENABLED
+#include <mpi.h>
+#endif
+
 #include "core/MathClassification.h"
 #include "driver/schedule/ReductionSpec.h"
 #include "driver/dispatch/PolicyDescriptor.h"
@@ -20,6 +24,7 @@
 #include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/curvilinear/GeometricSources.h"
 
+#include <array>
 #include <bit>
 #include <cmath>
 #include <cstdint>
@@ -63,14 +68,69 @@ inline amr::CellLogicalKey make_accumulator_reduction_key(
             static_cast<int>(component)};
 }
 
-inline double reduce_block_minimum(
-    double identity,
-    std::span<const arch::reduction::ReductionCandidate> candidates)
+inline double reduce_block_minimum(double identity,
+                                   std::span<const arch::reduction::ReductionCandidate> candidates,
+                                   int rank_count = 1)
 {
     const auto result = arch::reduction::execute_host_reduction(
         arch::reduction::minimum_spec(identity), candidates);
-    if (result.status != arch::reduction::ReductionStatus::Ok)
+    // Empty/NaN-only local input is an empty partial, not a global error.
+    // The existing finalizer still rejects a globally empty reduction.
+    if (result.status != arch::reduction::ReductionStatus::Ok &&
+        !(rank_count > 1 && result.status == arch::reduction::ReductionStatus::Empty))
         throw std::runtime_error("Invalid block minimum reduction");
+#if ARCH_MPI_ENABLED
+    if (rank_count > 1) {
+        int initialized = 0, size = 1;
+        MPI_Initialized(&initialized);
+        if (!initialized)
+            throw std::logic_error("MPI reduction before initialization");
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        if (size != rank_count)
+            throw std::logic_error("MPI reduction communicator size mismatch");
+        // Typed wire fields avoid transmitting C++ padding or process-local IDs.
+        const auto &key = result.key;
+        const std::array<std::int64_t, 9> wire{
+            key.root.root_i,
+            key.root.root_j,
+            key.root.root_k,
+            key.level,
+            key.logical_i,
+            key.logical_j,
+            key.logical_k,
+            key.component,
+            static_cast<std::int64_t>(result.status == arch::reduction::ReductionStatus::Empty
+                                          ? arch::reduction::ReductionStatus::Ok
+                                          : result.status)};
+        const std::array<std::uint64_t, 2> counts{key.morton, result.accepted_count};
+        std::vector<double> values(rank_count);
+        std::vector<std::int64_t> keys(static_cast<std::size_t>(rank_count) * wire.size());
+        std::vector<std::uint64_t> totals(static_cast<std::size_t>(rank_count) * counts.size());
+        MPI_Allgather(&result.value, 1, MPI_DOUBLE, values.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Allgather(wire.data(), 9, MPI_INT64_T, keys.data(), 9, MPI_INT64_T, MPI_COMM_WORLD);
+        MPI_Allgather(counts.data(), 2, MPI_UINT64_T, totals.data(), 2, MPI_UINT64_T,
+                      MPI_COMM_WORLD);
+        const auto spec = arch::reduction::minimum_spec(identity);
+        auto merged = arch::reduction::begin_reduction(spec);
+        for (int r = 0; r < rank_count; ++r) {
+            const auto *k = keys.data() + 9 * r;
+            const amr::CellLogicalKey global{{k[0], k[1], k[2]},     static_cast<int>(k[3]),
+                                             totals[2 * r],          static_cast<int>(k[4]),
+                                             static_cast<int>(k[5]), static_cast<int>(k[6]),
+                                             static_cast<int>(k[7])};
+            arch::reduction::combine_state(spec, merged,
+                                           {values[r], global, totals[2 * r + 1],
+                                            static_cast<arch::reduction::ReductionStatus>(k[8])});
+        }
+        const auto global = arch::reduction::finalize_reduction(spec, merged);
+        if (global.status != arch::reduction::ReductionStatus::Ok)
+            throw std::runtime_error("Invalid distributed block minimum reduction");
+        return global.value;
+    }
+#else
+    if (rank_count != 1)
+        throw std::logic_error("distributed reduction requires ARCH_ENABLE_MPI=ON");
+#endif
     return result.value;
 }
 } // namespace DriverReduction
