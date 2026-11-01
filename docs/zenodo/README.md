@@ -6,7 +6,7 @@
 
 For v1.4.1, use:
 
-Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamics* (Version 1.4.1) [Computer software]. GitHub. [Release of 2026-11-01](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.1).
+Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamics* (Version 1.4.1) [Computer software]. GitHub. [Release of 2026-11-02](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.1).
 
 [CITATION.cff](../../CITATION.cff) provides the authors, ORCIDs, version, date and release URL in machine-readable form.
 
@@ -16,7 +16,7 @@ Ye, H., Jiang, E., & Ding, Y. (2026). *ARCH: Adaptive Reactive CUDA Hydrodynamic
 | [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925) | Published v1.3.0 software record |
 | [GitHub v1.4.1](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.1) | v1.4.1 source release; a corresponding Zenodo version has not been published |
 
-引用时请注明实际使用的版本。v1.4.1 的软件发布日期为 2026-11-01，引用入口为 GitHub release；系列 DOI 用于 ARCH 整体，v1.3.0 DOI 只标识该版本。
+引用时请注明实际使用的版本。v1.4.1 的软件发布日期为 2026-11-02，引用入口为 GitHub release；系列 DOI 用于 ARCH 整体，v1.3.0 DOI 只标识该版本。
 
 ## Metadata and packages
 

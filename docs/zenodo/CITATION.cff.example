@@ -3,7 +3,7 @@ message: "Cite the software version used. ARCH v1.4.1 is available at the GitHub
 type: software
 title: "ARCH: Adaptive Reactive CUDA Hydrodynamics"
 version: 1.4.1
-date-released: 2026-11-01
+date-released: 2026-11-02
 license: MIT
 repository-code: "https://github.com/Shiro-Akane/ARCH"
 doi: 10.5281/zenodo.23503924
@@ -35,6 +35,6 @@ abstract: |-
 
   cuDSS remains optional for ordinary CUDA and DenseLU calculations. Core and Studio share execution preflight checks that resolve the requested backend and solver before mesh construction. Required sparse dependencies are checked before Run, Windows launch environments check linked runtime DLLs, and strict GPU sparse qualification requires actual tests. Mathematical implementations, memory pools, scientific file readers and writers, and numerical thresholds are unchanged.
 
-  Linux remains recommended. Native Windows provides the corresponding CPU/CUDA and Studio workflows within the documented platform and scientific scope, with newer support that may still have instability or bugs. The software release date is 2026-11-01. GitHub provides the versioned source release; no v1.4.1 Zenodo record or version-specific DOI has been published. The citation DOI identifies the existing version series.
+  Linux remains recommended. Native Windows provides the corresponding CPU/CUDA and Studio workflows within the documented platform and scientific scope, with newer support that may still have instability or bugs. The software release date is 2026-11-02. GitHub provides the versioned source release; no v1.4.1 Zenodo record or version-specific DOI has been published. The citation DOI identifies the existing version series.
 
   AI-assisted tools contributed to implementation, documentation and code review. Human contributors designed the overall software architecture and retain responsibility for scientific definitions, numerical acceptance, code review and release decisions.

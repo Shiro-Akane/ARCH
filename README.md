@@ -235,7 +235,7 @@ See the [source guide](src/README.md) and [contributor guide](docs/development/R
 
 ## Citation
 
-For v1.4.1, cite Haonan Ye, Enjie Jiang and Yu Ding, *ARCH: Adaptive Reactive CUDA Hydrodynamics*, version 1.4.1, 2026-11-01, [GitHub release](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.1).
+For v1.4.1, cite Haonan Ye, Enjie Jiang and Yu Ding, *ARCH: Adaptive Reactive CUDA Hydrodynamics*, version 1.4.1, 2026-11-02, [GitHub release](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.1).
 
 [CITATION.cff](CITATION.cff) provides machine-readable metadata. The series DOI is [10.5281/zenodo.23503924](https://doi.org/10.5281/zenodo.23503924); the version DOI for v1.3.0 is [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925). A v1.4.1 Zenodo version has not been published. Cite the version used for your results; details are in the [citation guide](docs/zenodo/README.md).
 

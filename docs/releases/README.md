@@ -4,7 +4,7 @@
 
 | Version | Main changes |
 | --- | --- |
-| [v1.4.1](V1.4.1.md) · [中文](V1.4.1.zh-CN.md) | Simpler Linux/Windows builds, illustrated Studio guidance and shared cuDSS Run checks; published 2026-11-01 |
+| [v1.4.1](V1.4.1.md) · [中文](V1.4.1.zh-CN.md) | Simpler Linux/Windows builds, illustrated Studio guidance and shared cuDSS Run checks; published 2026-11-02 |
 | [v1.4.0](V1.4.0.md) · [中文](V1.4.0.zh-CN.md) | Native Windows 11 CPU/CUDA and Studio support; published 2026-10-27 |
 | [v1.3.1](V1.3.1.md) · [中文](V1.3.1.zh-CN.md) | Vite dependency update and source-package maintenance |
 | [v1.3.0](V1.3.0.md) · [中文](V1.3.0.zh-CN.md) | Studio desktop, shared implementation and strict configuration validation |
