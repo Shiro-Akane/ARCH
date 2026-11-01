@@ -1,26 +1,16 @@
 /** OS process ownership shared by existing runners; no workflow or file writer. */
-import path from 'node:path';
 import {execFileSync, spawn} from 'node:child_process';
 import type {ChildProcess, SpawnOptions} from 'node:child_process';
-import {compilerEnvironment,windowsSearchPath} from './windows-tools.mjs';
+import {windowsExecutable,windowsHostEnvironment} from './windows-tools.mjs';
+import type {WindowsProcessTools} from './windows-tools.mjs';
+export {windowsExecutable} from './windows-tools.mjs';
+export type {WindowsProcessTools,WindowsHostTools} from './windows-tools.mjs';
 
-/** Trusted Host setup only. Never populated from HTTP or a project data file. */
-export interface WindowsProcessTools {supervisor:string;path:string}
-export interface WindowsHostTools extends WindowsProcessTools {cmake:string;ninja?:string;objdump?:string;publisher?:string;rc?:string;terminal?:string;compilerEnvironment?:Partial<Record<'INCLUDE'|'LIB'|'LIBPATH',string>>}
 export interface ProcessIdentity {pid:number;creationTime:string;alive:boolean}
-export function windowsExecutable(value:unknown):string{
- if(typeof value!=='string'||!/^[A-Za-z]:[\\/]/.test(value)||!path.win32.isAbsolute(value)||value.includes('\0')||!value.toLowerCase().endsWith('.exe'))throw new Error('Absolute local Windows .exe required.');
- return value;
-}
 const executable=windowsExecutable;
 export function windowsEnvironment(tools:WindowsProcessTools):NodeJS.ProcessEnv {
- if(process.platform!=='win32'||!tools.path||tools.path.includes('\0')||tools.path.length>32767)throw new Error('Native Windows Host tools required.');
- executable(tools.supervisor);
- const host=tools as Partial<WindowsHostTools>;
- for(const value of [host.cmake,host.ninja,host.objdump,host.publisher,host.rc,host.terminal])if(value!==undefined)executable(value);
- const env:NodeJS.ProcessEnv={PATH:windowsSearchPath(tools.path),PATHEXT:'.COM;.EXE;.BAT;.CMD',...compilerEnvironment(host.compilerEnvironment)};
- for(const key of ['SystemRoot','WINDIR','ComSpec','TEMP','TMP','USERPROFILE'])if(process.env[key])env[key]=process.env[key];
- return env;
+ if(process.platform!=='win32')throw new Error('Native Windows Host tools required.');
+ return windowsHostEnvironment(tools);
 }
 /** Creation time and liveness come from one opened process handle, never PID alone. */
 export function windowsProcessIdentity(tools:WindowsProcessTools,pid:number):ProcessIdentity {
@@ -76,16 +66,21 @@ export function terminateOwned(child:ChildProcess,signal:NodeJS.Signals='SIGTERM
 }
 
 /** Capture one owned native request; failure settles only after the Job owner exits. */
-export interface CaptureLimits {timeoutMs?:number;stdoutBytes?:number;stderrBytes?:number;signal?:AbortSignal}
+export interface CaptureLimits {timeoutMs?:number;stdoutBytes?:number;stderrBytes?:number;signal?:AbortSignal;purpose?:'execution-preflight'}
 export async function captureOwned(program:string,args:string[],text:string,cwd:string,tools?:WindowsProcessTools,limits:CaptureLimits={}){
- const timeout=limits.timeoutMs??10000,stdoutLimit=limits.stdoutBytes??8*1024*1024,stderrLimit=limits.stderrBytes??8*1024*1024;
- if(!Number.isSafeInteger(timeout)||timeout<1||timeout>10000||
+ const execution=limits.purpose==='execution-preflight';
+ if(execution&&args[0]!=='--check-run')throw new Error('Execution preflight bounds require --check-run.');
+ const ceiling=execution?360000:10000;
+ const timeout=limits.timeoutMs??ceiling,stdoutLimit=limits.stdoutBytes??8*1024*1024,stderrLimit=limits.stderrBytes??8*1024*1024;
+ if(!Number.isSafeInteger(timeout)||timeout<1||timeout>ceiling||
   !Number.isSafeInteger(stdoutLimit)||stdoutLimit<1||stdoutLimit>8*1024*1024||
   !Number.isSafeInteger(stderrLimit)||stderrLimit<1||stderrLimit>8*1024*1024)
   throw new Error('Capture bounds may only tighten the existing command limits.');
  if(limits.signal?.aborted)throw new Error('Core command cancelled.');
  const started=performance.now();
- const child=spawnOwned(program,args,{cwd,shell:false,stdio:['pipe','pipe','pipe'],env:{OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},tools);
+ const env:NodeJS.ProcessEnv={OMP_NUM_THREADS:'1',...(execution?{}:{CUDA_VISIBLE_DEVICES:''})};
+ if(process.platform==='linux')Object.assign(env,{PATH:'/usr/bin:/bin',HOME:process.env.HOME??'',LANG:'C.UTF-8'});
+ const child=spawnOwned(program,args,{cwd,shell:false,stdio:['pipe','pipe','pipe'],env},tools);
  return new Promise<{stdout:string;code:number|null}>((resolve,reject)=>{
   const output:Buffer[]=[];let bytes=0,errors=0,failure:Error|undefined;
   const stop=(error:Error)=>{failure??=error;terminateOwned(child,'SIGKILL');};

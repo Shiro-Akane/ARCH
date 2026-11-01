@@ -161,7 +161,8 @@ int RunPreviewSession() {
                     done["status"]="ok"; emit(output, done); continue;
                 }
                 const auto* definition=contract::find(flag);
-                if (!definition || !definition->takes_configuration)
+                if (!definition || !definition->takes_configuration
+                    || definition->command == Command::CheckRun)
                     throw std::invalid_argument("Unsupported session command");
                 auto request=request_from(input,definition->command);
                 identity["caseId"]=request.case_id;

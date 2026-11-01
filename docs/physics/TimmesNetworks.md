@@ -117,7 +117,7 @@ diagnostics and recoverable device-trial errors have the limits described in
 [the combination rules](../Reference.md#combining-methods-and-physics).
 
 ARCH updates rates, screening and thermodynamics at the ODE trial temperature.
-The archived FLASH Cellular burner used in the [comparison](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+The archived FLASH Cellular burner used in the [comparison](../../validation/gravity/flash/README.md)
 freezes temperature and prepares rates/screening once per burn call, then
 recovers temperature after the energy update. These have different thermal
 feedback and cost; a shared network name or ODE name does not make their
@@ -320,7 +320,7 @@ HelmEos::evaluate
   -> ConductivityMath::compute_stellar_conductivity
 ```
 
-The [diffusion-coefficient alignment record](../histroy/DiffusionCoefficientAlignment.md)
+The [diffusion-coefficient alignment record](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/DiffusionCoefficientAlignment.md)
 reports hexadecimal floating-point comparison for more than 10,000 randomized
 `aprox19` states. Maximum absolute and relative errors are both `0.0` over the
 tested range. Section 5 separately covers network RHS, Jacobian, and LHS paths.

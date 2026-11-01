@@ -3,12 +3,12 @@
  * Dimension-specific limits come from that model response. A display profile
  * does not grant unsupported geometry, sampling or scientific runtime capability.
  */
-import {PREVIEW_BUILD_PROFILE} from './buildProfile.ts';
+import {LOCAL_CPU_PROFILE_ID} from './localBuildProfile.ts';
 import {samplingForDimension} from '../src/host/previewContracts.ts';
 import type {ModelCapability,PreviewProfile} from '../src/host/previewContracts.ts';
-export const SOD_PREVIEW_PROFILE:PreviewProfile={id:'sod-initial-cpu',displayName:'Sod real initial state',buildProfileId:PREVIEW_BUILD_PROFILE.id,caseId:'Sod',dimension:1,defaultSampleCount:512,maxSampleCount:4096,runnerKind:'existing-arch-cli',configured:true};
+export const SOD_PREVIEW_PROFILE:PreviewProfile={id:'sod-initial-cpu',displayName:'Sod real initial state',buildProfileId:LOCAL_CPU_PROFILE_ID,caseId:'Sod',dimension:1,defaultSampleCount:512,maxSampleCount:4096,runnerKind:'existing-arch-cli',configured:true};
 
-export const CELLULAR_PREVIEW_PROFILE:PreviewProfile={id:'cellular-initial-cpu',displayName:'CellularDet real 2D initial state',buildProfileId:PREVIEW_BUILD_PROFILE.id,caseId:'CellularDet',dimension:2,defaultSampleCount:16384,maxSampleCount:65536,defaultShape:[128,128],maxPerAxis:256,runnerKind:'existing-arch-cli',configured:true};
+export const CELLULAR_PREVIEW_PROFILE:PreviewProfile={id:'cellular-initial-cpu',displayName:'CellularDet real 2D initial state',buildProfileId:LOCAL_CPU_PROFILE_ID,caseId:'CellularDet',dimension:2,defaultSampleCount:16384,maxSampleCount:65536,defaultShape:[128,128],maxPerAxis:256,runnerKind:'existing-arch-cli',configured:true};
 export const PREVIEW_PROFILES=[SOD_PREVIEW_PROFILE,CELLULAR_PREVIEW_PROFILE];
 
 /** Profiles come only from the selected binary; IDs never encode a command. */

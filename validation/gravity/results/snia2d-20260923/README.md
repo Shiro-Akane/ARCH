@@ -63,7 +63,7 @@ CUDA 先运行 5 步预热。下面是随后两组成对 120 步计时。端到�
 CTest 在最终构建上 [6/6 通过](ctest-final.log)，没有修改测试内容或数值预算。
 第一次 [CTest 记录](ctest-initial.log)为 5/6：`self_gravity_physics` 的系统 Python
 缺少 `h5py`，尚未执行物理检查；将本地 CMake 的 `Python3_EXECUTABLE` 指向
-已有工具环境后原样重跑通过。GUI 前端专项测试本轮不重复执行。
+已有工具环境后原样重跑通过。本记录不包含 GUI 前端专项测试。
 
 从仓库根目录可将输入复制到独立目录，分别附加 `compute_backend=cpu` 或
 `compute_backend=cuda`，指定不同 `out_dir`，然后运行：

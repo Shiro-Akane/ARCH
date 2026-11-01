@@ -4,7 +4,7 @@
 
 本页用于选择算例所需的能力。表中列的是现行实现；具体参数、可组合条件和科学验收范围分别见参考手册与验证记录。输入、输出和物理常数统一使用 CGS。
 
-推荐 Linux。原生 Windows11 x64 对应下表中的既有 CPU／CUDA 与 Studio 功能，但适配较新，可能仍有不稳定性与 bug；原科学模型、几何和方法组合条件继续适用。见[两侧功能对照与验收](histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)、共用[构建指南](guides/Build.zh-CN.md)和[Studio 指南](guides/Studio.zh-CN.md)。MPI、HIP／Metal 与一般辐射输运均未由本轮新增。
+推荐 Linux；原生 Windows 11 x64 提供下表中的 CPU／CUDA 与 Studio 功能，但可能仍有平台相关的不稳定性和缺陷。工具链与限制见[平台支持](releases/PlatformSupport.zh-CN.md)，安装见[构建指南](guides/Build.zh-CN.md)。
 
 | 功能 | 现行能力 | 使用时核对 |
 | --- | --- | --- |

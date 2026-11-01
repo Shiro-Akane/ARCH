@@ -1,14 +1,10 @@
 # Studio 配置接口 v3
 
-当前集成分支的 Core 已实现配置扩展版本 3，外层仍为 schemaVersion="1.0"。
-Host/Studio 已消费 v3 的 nullable 表单、来源与诊断；静态 inspection 的坐标、扩散和 AMR
-选择摘要已从共同解析结果接线。生产 Driver/dispatch 使用私有构造的只读
-RuntimeConfiguration，见下文的运行边界。配置接口、初始化和正式运行分别验收；当前科学与平台验证范围见[功能清单](../../../docs/Features.zh-CN.md)。
-v2 的 defaultValue/defaultSource、缺项回填和 custom 未检查列表不再是本接口。
+Core 发布配置扩展版本 3，外层 `schemaVersion="1.0"`。Host/Studio 使用 nullable 表单值、来源和诊断；坐标、扩散和 AMR 选择摘要来自共同解析记录。生产 Driver/dispatch 使用只读 `RuntimeConfiguration`。
 
 完整字段定义见 [v3 协议](ConfigurationProtocol.md)；
 必填／默认规则唯一来源仍是
-[配置完整性计划](../../../docs/development/ConfigurationContractPlan.zh-CN.md)。
+[配置完整性契约](../../../docs/development/ConfigurationContractPlan.zh-CN.md)。
 
 ## 入口与边界
 
@@ -21,7 +17,7 @@ v2 的 defaultValue/defaultSource、缺项回填和 custom 未检查列表不再
 调用 build-cpu/bin/ARCH --config-schema 查询目录。
 调用 build-cpu/bin/ARCH --inspect-config Sod --config-stdin --request-id editor-001
 并通过 stdin 提供原始参数文件。可用输入见
-[迁移后的 Sod](../examples/configuration-v3-candidate/sod-valid.par)。
+[Sod 配置示例](../examples/configuration-v3-candidate/sod-valid.par)。
 
 stdin 限制 1 MiB、stdout JSON 含换行限制 8 MiB。退出码 0 表示本层声明检查
 完成，2 为请求错误，3 为无效／不完整／条件未定，7 为响应超限。
@@ -36,9 +32,7 @@ inspection 仅调用共同输入解析及登记的静态 case 声明：
 
 ## Schema
 
-parameters 是当前活动标准目录；本 binary 为 95 项，gravity_G 进入 retiredKeys。模型声明从同一 binary 的 registry 取得，本次集成包含原有 14 个模型与 UserBoundary/UserGravity 示例；Host 不应写死数量。
-25 个允许登记默认通过 allowedDefault 发布，其他项为 null。
-这些数量仅是本次 binary 证据，客户端不得固定数量。
+parameters 是活动标准目录，caseDeclarations 来自程序注册表。客户端使用实际返回的数量。`gravity_G` 属于 retiredKeys；允许的默认值由 allowedDefault 发布，其他项为 null。
 
 每项保留 key/type/group/presentation/options/path/units/constraints，
 增加 usage、requirement、applicability、allowedDefault、templateRecommendations。
@@ -48,7 +42,7 @@ parameters 是当前活动标准目录；本 binary 为 95 项，gravity_G 进�
 constraints.complete=false，不代表全部模型物理规则已在 schema 枚举。
 
 caseDeclarations 包含当前注册模型的来源路径、源码 SHA 和静态参数声明。
-集成 binary 还包含用户边界示例；模型数量以 registry 实际响应为准；网络组分目录依赖选定 network，在 inspection 展开。
+网络组分目录依赖选定 network，在 inspection 中展开。
 动态依赖未知时不宣称所选模型全部可验证。auxiliaryParameters 当前含 log_dir，
 缺失时沿现有 main 所有者从 out_dir 派生，不是新的物理默认。
 
@@ -105,18 +99,7 @@ null，Host 将其作为缺少可用摘要处理。具体覆盖见本文末尾�
 草稿保存与运行资格独立；保存、inspection 都不能自动插入缺项或删除退役键。
 未知／错误输入保持可定位，显式删除可 Undo。
 
-配置 v3 的检查入口包括 configuration_v3_contract；共同解析与实际入口还由
-configuration_input、input_resolution、case_configuration、config_input_records、
-configuration_entry_contract 覆盖。它们的通过范围必须关联实际 source/binary/输入，
-不能称为全部 Core/Host/Studio 或科学回归通过。
-实际 v3 配置响应存于 examples/configuration-v3；原 examples/configuration 是历史
-v2 证据，不作为当前客户端协议期望，也不因当前检查通过而改写历史文件。
-
-2026-10-04 旧输入快照的静态复验见
-[全模型输入审计](../../../docs/histroy/studio/FullModelCurrentInputAudit-20261004.zh-CN.md)：
-16 profiles 覆盖该 binary 的 14 个注册 case，15 份声明完整；旧 CellularDet 输入缺
-tmax，仍为失败。已批准的 t=0 替代输入与旧 burn-on 输入分开记录。
-该静态结果不执行 Setup/Init，也不证明 simulation readiness。
+配置检查由 `configuration_v3_contract`、`configuration_input`、`input_resolution`、`case_configuration`、`config_input_records` 和 `configuration_entry_contract` 覆盖。测试检查真实入口的缺项、无效值、来源和失败行为。响应样本见[配置 v3 示例](../examples/configuration-v3/README.md)。
 
 ## 受控运行边界
 
@@ -125,11 +108,6 @@ tmax，仍为失败。已批准的 t=0 替代输入与旧 burn-on 输入分开�
 仅 DispatchSolver 可构造；对象以 const 持有有效配置及已准备的 species。
 Driver 与 dispatch bindings 接收该类型，不能用原始 SimConfig 或另一份
 SpeciesManager 替代。输入、checked preparation 与策略解析后的运行值仍为不同层。
-
-既有 CPU t=0 拓扑对照记录于
-[运行边界摘要](../../../docs/development/O7RuntimeConfigurationT0Summary.json)。
-该证据仅覆盖所记身份的初始拓扑，不表示 CUDA、演化、所有下层直接入口或整个
-材料来源呈现已经完成；后续验收继续按联合计划分别记录。
 
 ### Registered model values during configuration preparation
 
@@ -237,24 +215,25 @@ filtering as RuntimeParams. It requires resolved topology, use_burn and refine_v
 otherwise the summary is null. It does not construct a hierarchy or resolve case
 species. With known dependencies, an alias or selection containing no usable
 indicator returns INVALID_REFINEMENT_SELECTION and preserves the input token.
-JENS availability is independent of selection: it is available only with self
-gravity and an explicit CPU backend. Unsupported requests fail; no substitute
-indicator is selected.
+JENS availability is independent of selection. It requires self gravity and an
+explicit CPU backend, or an explicit CUDA backend with Cartesian geometry.
+`auto` and native-coordinate CUDA requests are rejected.
 
-### O7 CPU Jeans target and checkpoint identity
+### Jeans target and checkpoint identity
 
 The Core-owned catalog includes jeans_cells as a conditional dimensionless
 float with no runtime default and an inclusive minimum of four. It is required
 only when refine_var requests JENS; output-only selection does not require it.
 A supplied out-of-range value remains invalid even when unused.
 
-The frozen CPU uniform-lifecycle-1 short package is qualified. Public JENS
-refinement and plot output require self gravity and explicit compute_backend=cpu;
-auto and CUDA are not qualified and explicit requests fail without fallback.
-Availability does not depend on whether JENS is already selected. An absent
-refinement target stays null until the user explicitly provides jeans_cells.
-This qualification does not advertise a JENS field in Initial Preview, nonlinear
-JeansWave evolution, other EOS or complete RZ/AMR support.
+Public JENS refinement and plot output follow the backend conditions above.
+CPU scientific validation covers uniform periodic constant-specific-heat
+IdealGas backgrounds; CUDA accepted-state/parent transactions have separate
+tests. Full GPU evolution and restart, general EOS and nonuniform gravity
+coupling require their corresponding scientific validation. The
+[feature list](../../../docs/Features.md) describes the supported scope.
+An absent refinement target stays null until `jeans_cells` is provided.
+Initial Preview does not publish a JENS field.
 
 Checkpoint state-controls revision 3 records active JENS refinement and its
 consumed target. Output-only and unused target values do not change that

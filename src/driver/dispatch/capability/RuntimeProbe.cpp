@@ -14,12 +14,24 @@
 #include "driver/dispatch/capability/RuntimeProbe.h"
 
 #include <charconv>
+#include <filesystem>
 
 #ifndef ARCH_CUDA_CODE_IMAGES
 #define ARCH_CUDA_CODE_IMAGES ""
 #endif
 #ifndef ARCH_CUDA_PTX_VERSION
 #define ARCH_CUDA_PTX_VERSION 0
+#endif
+
+// Exact runtime libraries selected by the configured optional provider.
+#ifndef ARCH_CUDSS_RUNTIME_LIBRARY
+#define ARCH_CUDSS_RUNTIME_LIBRARY ""
+#endif
+#ifndef ARCH_CUBLAS_RUNTIME_LIBRARY
+#define ARCH_CUBLAS_RUNTIME_LIBRARY ""
+#endif
+#ifndef ARCH_CUBLASLT_RUNTIME_LIBRARY
+#define ARCH_CUBLASLT_RUNTIME_LIBRARY ""
 #endif
 
 #if defined(_WIN32)
@@ -104,9 +116,70 @@ Function load_symbol(LibraryHandle handle, const char* name) noexcept
 }
 #endif
 
+LibraryHandle open_bound_library(const char* path) noexcept
+{
+    LibraryHandle library = nullptr;
+    try {
+        std::error_code error;
+#if defined(_WIN32)
+        // Windows imports the provider at startup. Validate the module actually
+        // loaded for that import, including a legitimate relocated deployment.
+        const std::string_view configured(path);
+        const auto separator = configured.find_last_of("/\\");
+        const std::string basename(configured.substr(separator == std::string_view::npos
+            ? 0 : separator + 1));
+        if (basename.empty() || !GetModuleHandleExA(0, basename.c_str(), &library))
+            return nullptr;
+        std::array<wchar_t, 32768> actual{};
+        const DWORD length = GetModuleFileNameW(library, actual.data(),
+                                               static_cast<DWORD>(actual.size()));
+        if (length == 0 || length >= actual.size()
+            || !std::filesystem::is_regular_file(
+                std::filesystem::path(std::wstring_view(actual.data(), length)), error) || error) {
+            close_library(library);
+            return nullptr;
+        }
+        return library;
+#else
+        // dlopen may return an already-loaded image after its file was deleted.
+        // Linux's provider loads this exact configured path on demand.
+        if (!std::filesystem::is_regular_file(path, error) || error) return nullptr;
+        return open_library(path);
+#endif
+    } catch (...) {
+        close_library(library);
+        return nullptr;
+    }
+}
+
 class NativeRuntimeLoader final : public RuntimeLoader
 {
 public:
+    bool cudss_available() noexcept override
+    {
+        // Retain BLAS while loading cuDSS, as the production provider does for
+        // toolkit installs whose directory is not on the dynamic loader path.
+        const auto blas_lt = open_bound_library(ARCH_CUBLASLT_RUNTIME_LIBRARY);
+        const auto blas = blas_lt ? open_bound_library(ARCH_CUBLAS_RUNTIME_LIBRARY) : nullptr;
+        const auto sparse = blas ? open_bound_library(ARCH_CUDSS_RUNTIME_LIBRARY) : nullptr;
+        bool ready = blas_lt && blas && sparse;
+        if (ready) {
+            ready = load_symbol<void (*)()>(blas_lt, "cublasLtCreate")
+                && load_symbol<void (*)()>(blas, "cublasCreate_v2");
+            constexpr const char* sparse_symbols[] = {
+                "cudssConfigCreate", "cudssConfigDestroy", "cudssConfigSet", "cudssCreate",
+                "cudssDataCreate", "cudssDataDestroy", "cudssDataGet", "cudssDestroy",
+                "cudssExecute", "cudssGetProperty", "cudssMatrixCreateCsr", "cudssMatrixCreateDn",
+                "cudssMatrixDestroy", "cudssSetStream"};
+            for (const char* name : sparse_symbols)
+                ready = ready && load_symbol<void (*)()>(sparse, name) != nullptr;
+        }
+        close_library(sparse);
+        close_library(blas);
+        close_library(blas_lt);
+        return ready;
+    }
+
     RuntimeProbeResult query(int device_ordinal) noexcept override
     {
 #if defined(_WIN32)
@@ -231,18 +304,19 @@ RuntimeProbeResult probe_runtime(
         return {RuntimeProbeState::NotRequested, ProbeFailureCode::None, {}};
     if (!request.cuda_build_enabled)
         return {RuntimeProbeState::BuildDisabled, ProbeFailureCode::None, {}};
-    return loader.query(request.device_ordinal);
+    auto result = loader.query(request.device_ordinal);
+    result.cudss = ProviderProbeState::NotRequested;
+    if (request.require_cudss && result.state == RuntimeProbeState::Available)
+        result.cudss = loader.cudss_available()
+            ? ProviderProbeState::Available : ProviderProbeState::Unavailable;
+    return result;
 }
 
 RuntimeProbeResult probe_runtime_native(
     RuntimeProbeRequest request) noexcept
 {
-    if (request.requested == ComputeBackend::Cpu)
-        return {RuntimeProbeState::NotRequested, ProbeFailureCode::None, {}};
-    if (!request.cuda_build_enabled)
-        return {RuntimeProbeState::BuildDisabled, ProbeFailureCode::None, {}};
     NativeRuntimeLoader loader;
-    return loader.query(request.device_ordinal);
+    return probe_runtime(request, loader);
 }
 
 } // namespace arch::dispatch

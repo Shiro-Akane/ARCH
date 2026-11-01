@@ -1,12 +1,6 @@
 # Core／Studio 配置契约审计：2026-10-01
 
-本目录保存对话“检查 ARCH Studio GUI 状态”的既有 CPU 审计摘要，
-用于固定下一轮接口交付的基线。原文件为
-`/tmp/arch-studio-contract-audit-20261001/audit-summary.json`；
-[summary.json](summary.json) 原样保留该摘要，不补写尚未取得的测试输出。
-
-归档时只复核源文件、当前分支和有关报告，没有重跑测试或编译 GPU。
-原审计的 workspace、Node 路径是当时环境身份，不是其他机器的安装要求。
+[summary.json](summary.json) 保存 CPU 配置接口审计，记录受测源码、程序、运行环境和下表结果。配置与模型覆盖以所列版本为准；现行接口见[配置 API](../../../../src/api/docs/CONFIGURATION_API.md)。
 
 | 证据 | 已记录结果 | 限制 |
 | --- | --- | --- |
@@ -20,6 +14,3 @@
 原摘要 `realHost.schemaVersion="2"` 表示配置扩展版本；
 [现行协议](../../../../src/api/docs/CONFIGURATION_API.md) 的外层 `schemaVersion` 为 `"1.0"`，
 二者不能混用。错误样例替换为非法数值明确失败，不恢复旧静默回填行为。
-
-本目录不是完整原始测试归档，也不替代合作者下一轮提交的日志、源码及人工验收。
-执行与报告要求见 [Core／Studio 联合交付计划](../../../../docs/development/StudioConfigurationHandoff.zh-CN.md)。

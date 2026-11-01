@@ -32,7 +32,7 @@ AMR cells, hardware and thread/process counts. Include the effective physics
 and material coefficients, not just enabled switches. A checkpoint counter may
 name the next step; verify its meaning against the evolution log. Cross-code
 comparisons also need a common accuracy target; see the
-[comparison assessment](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
+[comparison assessment](../../validation/gravity/flash/README.md).
 
 ## Research data and private reports
 

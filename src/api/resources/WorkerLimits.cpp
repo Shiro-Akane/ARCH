@@ -10,6 +10,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <chrono>
+#include <condition_variable>
+#include <cstdlib>
+#include <mutex>
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
@@ -94,8 +98,9 @@ void configure_new_resource_job(HANDLE job, std::uint64_t memory_bytes,
         job_user_budget > static_cast<std::uint64_t>(std::numeric_limits<LONGLONG>::max()))
         throw std::overflow_error("Windows job user CPU budget overflow");
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
-    limits.BasicLimitInformation.LimitFlags =
-        JOB_OBJECT_LIMIT_PROCESS_MEMORY | JOB_OBJECT_LIMIT_JOB_TIME;
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_JOB_TIME;
+    if (memory_bytes != 0)
+        limits.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_PROCESS_MEMORY;
     limits.ProcessMemoryLimit = static_cast<SIZE_T>(memory_bytes);
     limits.BasicLimitInformation.PerJobUserTimeLimit.QuadPart =
         static_cast<LONGLONG>(job_user_budget);
@@ -226,6 +231,52 @@ struct InspectionResourceJob {
 };
 }
 #endif
+
+ExecutionPreflightLimits::ExecutionPreflightLimits(int cpu_seconds, int wall_seconds) {
+    if (cpu_seconds <= 0 || wall_seconds <= 0)
+        throw std::invalid_argument("Execution preflight budgets must be positive");
+#ifdef __linux__
+    rlimit cpu{};
+    if (getrlimit(RLIMIT_CPU, &cpu))
+        throw std::runtime_error("Cannot inspect execution preflight CPU limit");
+    cpu.rlim_cur = std::min(cpu.rlim_cur, static_cast<rlim_t>(cpu_seconds));
+    cpu.rlim_max = std::min(cpu.rlim_max, static_cast<rlim_t>(cpu_seconds));
+    if (setrlimit(RLIMIT_CPU, &cpu))
+        throw std::runtime_error("Cannot install execution preflight CPU limit");
+#elif defined(_WIN32)
+    const auto ceiling = cpu_seconds_to_ticks(cpu_seconds);
+    const auto spent = current_process_user_time();
+    if (spent >= ceiling)
+        throw std::runtime_error("Execution preflight CPU budget is already exhausted");
+    resource_job_ = create_resource_job(0, ceiling - spent);
+#else
+    throw std::runtime_error("Execution preflight limits require Linux or Windows");
+#endif
+    try {
+        deadline_ = std::jthread([wall_seconds](std::stop_token stop) {
+            std::mutex mutex;
+            std::unique_lock lock(mutex);
+            std::condition_variable_any wake;
+            wake.wait_for(lock, stop, std::chrono::seconds(wall_seconds), [] { return false; });
+            // Like an OS CPU limit, exhaustion must terminate even blocked Setup.
+            if (!stop.stop_requested()) std::_Exit(3);
+        });
+    } catch (...) {
+#ifdef _WIN32
+        CloseHandle(as_handle(resource_job_));
+        resource_job_ = nullptr;
+#endif
+        throw;
+    }
+}
+
+ExecutionPreflightLimits::~ExecutionPreflightLimits() {
+    deadline_.request_stop();
+    if (deadline_.joinable()) deadline_.join();
+#ifdef _WIN32
+    if (resource_job_ != nullptr) CloseHandle(as_handle(resource_job_));
+#endif
+}
 
 /** Remember process limits for repeated local preview requests. */
 SessionProcessLimits::SessionProcessLimits() {

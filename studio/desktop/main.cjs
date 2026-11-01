@@ -59,8 +59,8 @@ async function launch(options){
  let runtime,windowsTools,environment;
  if(nativeWindows){
   const {selectWindowsNode}=await import('./node-runtime.mjs');
-  const {loadWindowsTools,windowsHostEnvironment}=await import(app.isPackaged?'./host/windows-tools.mjs':'../host/windows-tools.mjs');
-  windowsTools=await loadWindowsTools(process.env.ARCH_STUDIO_WINDOWS_TOOLS);
+  const {loadWindowsToolsFromEnvironment,windowsHostEnvironment}=await import(app.isPackaged?'./host/windows-tools.mjs':'../host/windows-tools.mjs');
+  windowsTools=await loadWindowsToolsFromEnvironment();
   runtime=await selectWindowsNode({explicit:process.env.ARCH_STUDIO_NODE,bundled:app.isPackaged?path.join(contentRoot,'runtime','node.exe'):undefined,searchPath:process.env.PATH,probe:candidate=>exec(candidate,['--print','JSON.stringify({node:process.versions.node,electron:process.versions.electron,platform:process.platform,arch:process.arch})'])});
   environment=windowsHostEnvironment(windowsTools);
  }else{
@@ -157,7 +157,9 @@ app.whenReady().then(async()=>{
  ipcMain.on('desktop:dirty',(event,value)=>{senderAllowed(event);dirty=value===true;});
  const {parseLaunchArgs}=await import('./arguments.mjs');
  try{const entryIndex=process.argv.findIndex((value,index)=>index>0&&path.resolve(value)===__filename);
-  const args=app.isPackaged?process.argv.slice(1):process.argv.slice(entryIndex>=1?entryIndex+1:2);await launch(parseLaunchArgs(args,process.cwd()));}
+  const args=app.isPackaged?process.argv.slice(1):process.argv.slice(entryIndex>=1?entryIndex+1:2);
+  if(args.length===0)await createWindow({},'/launcher.html');
+  else await launch(parseLaunchArgs(args,process.cwd()));}
  catch(e){await log('launch failed: '+e.message);await createWindow({error:e.message},'/launcher.html');}
 }).catch(async e=>{await log(e.message);app.quit();});
 app.on('window-all-closed',()=>{if(!closing)void shutdown();});

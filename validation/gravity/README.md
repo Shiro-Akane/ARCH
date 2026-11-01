@@ -13,38 +13,26 @@ preserves the original budgets. Production AMR and device evidence are linked be
 
 ## Native cylindrical meridian
 
-Cylindrical 2D uses the `cylindrical-rz-pwc` chart with `(r,z)` axes and three
-physical momentum components. The shared Grid supplies geometry; optional
-gravity owns the field, full-ring mass, potential boundary and work. Scoped
-[CPU gravity](../backend/results/release-readiness/Cyl3OptionalGravity-20261018.json),
-[device owners](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)
-and [comprehensive admission](../backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)
-retain their numerical budgets and source identities. Gravity disabled means
-no gravity solves or dedicated numerical allocations.
+Cylindrical 2D uses the axisymmetric `cylindrical-rz-pwc` chart with `(r,z)`
+axes and three physical momentum components. The grid supplies geometry;
+gravity supplies the field, full-ring mass, potential boundary and work.
+When gravity is disabled, it performs no solves or dedicated numerical allocations.
 
-The [current CPU closure](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)
-adds corrected axial GravityBox/SNIaCoupled profiles, explicit centre inputs and
-short fresh checks. The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
-includes these Host changes in the rebuilt CUDA application and qualifies the
-affected fields and fresh. Unchanged gravity kernels, disabled-module allocation
-and energy checks retain their identified earlier scope. Spherical 2D `(r,phi)`,
-radial 1D and full 3D routes retain their own contracts; the unrelated private
-Cellular source-rate gate still limits full device release acceptance.
-
-[Old CPU science](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)
-and [implementation retirement](../backend/results/release-readiness/RzRetirementAcceptance-20261018.json)
-are historical evidence only. Failed or interrupted runs stay unchanged; old
-RZ runners and checkpoints are not current execution instructions. The
-[release qualification index](../../docs/releases/README.md) owns remaining release work.
+The [CPU gravity results](../backend/results/release-readiness/Cyl3OptionalGravity-20261018.json),
+[device checks](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)
+and [scientific cases](../backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)
+retain their numerical budgets and source identities. GravityBox/SNIaCoupled
+axial profiles, explicit centre inputs and continuation in a new process are
+covered by the [CPU](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)
+and [CUDA integration results](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json).
+Spherical 2D `(r,phi)`, radial 1D and full 3D geometries have their own domains
+and boundary conditions as described below.
 
 ## Constant external gravity
 
-The active uniform inputs explicitly declare former loader controls. Coupled
-Gaussian inputs use their actual `p0` and four explicitly zero hydrodynamic
-amplitudes; obsolete `pressure0`/`velocity_x0` overrides were removed. The
-checkpoint reference rejects mixed or incomplete model parameter contracts.
-Historical receipts keep their original identities; current CPU migration checks
-are indexed in the [release qualification index](../../docs/releases/README.md).
+The coupled Gaussian inputs set `p0` and four zero hydrodynamic perturbation
+amplitudes explicitly. The checkpoint reference checks the complete model
+parameter contract.
 
 The external-source tests below apply a prescribed acceleration; they do not solve
 for the gravity produced by the fluid itself. The force should change momentum
@@ -159,8 +147,6 @@ source-energy error; independent temporal convergence is described in the
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
 
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
-
 - [Release application record (JSON)](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
 - [endpoint audit (JSON)](results/coupled-final-20260907/endpoints-894/evidence.json)
 - [application record (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
@@ -185,9 +171,9 @@ also cover Dirichlet, Neumann, linear Robin and user potential
 conditions in their stated geometries. Isolated mass sources require the full
 azimuth; external mass is outside those isolated-source records. Jeans
 refinement diagnostics have their own current checks. Start with
-[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
+[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
 records numerical, coupling, restart and device checks. The [radial field and AMR record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The
-[earlier periodic solver record](../../docs/histroy/science/P3P4CompositeGravity.zh-CN.md) retains its CPU
+[earlier periodic solver record](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P3P4CompositeGravity.zh-CN.md) retains its CPU
 periodic scope.
 
 `run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,
@@ -199,7 +185,7 @@ manufactured solutions; `contract` checks failure and hierarchy invariants.
 checks actual device gravity in its supported routes; `--benchmark-only --benchmark-time 0.1` measures
 representative local workloads through the same physical endpoint. Runs alternate after
 warmup; `--benchmark-repeats` defaults to five. Report complete elapsed time, ranges and
-final-field parity. `--baseline-cpu-arch` adds a separate frozen/current pure-CPU regression
+final-field parity. `--baseline-cpu-arch` adds a separate baseline/candidate CPU comparison
 pair; backend speedups still use one CUDA-enabled executable. Keep compilation,
 sanitizer runs and other GPU workloads separate from formal timing.
 `--benchmark-case large-user-boundary --benchmark-time 0.0003` measures the
@@ -223,17 +209,17 @@ checks Hydro/self-gravity/burn/thermal-diffusion execution with AMR. Its origina
 [curved-coordinate CPU record](results/p11-p12-20260923/README.md) and
 [curved-coordinate CUDA record](results/p13-20260924/README.md) do not constitute
 analytic SN Ia validation. The curved-coordinate CPU record also reports a controlled comparison
-against the user-provided FLASH 4.8 archive's Cellular case in 2D and 3D matched controls.
-The archive contains local initialization extensions. The current
-[comparison assessment](flash/O5OptimizationReport.zh-CN.md) records its
+against the FLASH 4.8 reference Cellular case in 2D and 3D matched controls.
+The archive contains local initialization extensions. The
+[comparison method](flash/README.md) records its
 fixed-temperature burn, optional face-EOS work, workload differences and
-remaining qualification gaps. The representative four-module route is
+cost results. The representative four-module route is
 HLLC/MUSCL/MC + RK2 + RKL2 thermal + BD/DenseLU + MG + AMR with
 Helmholtz/aprox13 and NSE disabled; this is not an all-policy coupling matrix.
 
 The [execution-cost follow-up](flash/results/cpu-followup-20261003/README.md)
 records exact-state EOS reuse, canonical table loading and Host multigrid
-scheduling after the user-boundary baseline. Matched-endpoint CPU/FLASH costs,
+scheduling. Matched-endpoint CPU/FLASH costs,
 unchanged-budget field comparisons and five-step 2D/3D coupled checks have
 separate scopes. Its unresolved cost targets remain visible; FLASH comparisons
 are optional developer work, independent of ARCH build, tests and CI.

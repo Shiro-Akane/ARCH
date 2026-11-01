@@ -1170,6 +1170,17 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "if (resolution.resolved_backend == ComputeBackend::Cpu) {}"
         })
 
+    def test_run_query_only_displays_central_resolution_reason(self):
+        path = "src/api/inspection/ExecutionPreflight.cpp"
+        display = "export_value(ready.backend.fallback_reason);"
+        self.assert_accepted({path: display})
+        self.assert_rejected_with({
+            path: display + " if (cuda_failed) cpu_fallback();"
+        }, "hidden CUDA fallback")
+        self.assert_rejected_with({
+            path: "struct Result { const char* fallback_reason; };"
+        }, "hidden CUDA fallback")
+
     def test_schema_parameter_default_is_not_backend_fallback(self):
         self.assert_accepted({
             "src/api/configuration/Configuration.cpp":

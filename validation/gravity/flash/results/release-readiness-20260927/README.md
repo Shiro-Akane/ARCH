@@ -1,12 +1,11 @@
-# O6／O6+ 发布收尾与三维 CPU 补测
+# 三维 CPU 执行成本与检查点回归
 
-本记录接续 [冻结实现的完整验收](../../O6ControlsAcceptanceReport.zh-CN.md)。
-保留面向 main 的 PR 触发 CI 策略；本轮只推送 `compute/optim`，合并和发布由维护者控制。
-没有引入数值近似、修改物理误差门槛、改变 AMR/CFL 或减少任何 Strang 燃烧半步。
+相关成本与精度基线见[完整验证记录](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)。
+测量采用完整面 EOS、相同 AMR/CFL 配置和两个 Strang 燃烧半步。
 
-## 检查点：以当前有效格式完成补测
+## 受测检查点格式
 
-现行格式为 v6、控制身份修订 2。原有 `checkpoint_compatibility` 增补了：
+受测格式为 v6、控制身份修订 2。原有 `checkpoint_compatibility` 增补了：
 
 - 当前控制身份、原生组分和控制器状态的正常往返与主机状态恢复。
 - v6／修订 1／15 项的旧身份、未知修订、错误长度、非有限值和空身份的明确拒绝。
@@ -21,7 +20,7 @@
 
 实际下载了 GitHub 的 `51f982ab` 源码归档。它已包含 60,242,514 字节的 Helmholtz
 实体表，摘要与该版本的 LFS 对象一致；未发现这份归档缺表。无 `.git` 的干净解压目录
-覆盖本轮修复后，以 CPU preset 从头构建，依赖源码复用现有 HighFive/SuiteSparse，
+覆盖本记录的修复后，以 CPU preset 从头构建，依赖源码复用现有 HighFive/SuiteSparse，
 ARCH 对象文件没有从开发构建目录复制。已有 Helmholtz、检查点测试和默认路径 Sod
 入口均通过。Sod 是安装冒烟，不作为性能样本。
 
@@ -30,7 +29,7 @@ ARCH 对象文件没有从开发构建目录复制。已有 Helmholtz、检查�
 完整本地 CPU 参考生成和 CUDA 对照命令已补入
 [复现说明](../o6-controls-20260927/README.md)。README 和构建指南同时区分 Git 检出
 与 ZIP／tar：只有指针的其他归档应从同版本检出取得实际表，不能在无 `.git` 目录
-直接执行 `git lfs pull`。本轮没有改动远端归档设置或重新分发外部求解器。
+直接执行 `git lfs pull`。
 
 ## 三维归因与执行修复
 
@@ -40,10 +39,10 @@ ARCH 对象文件没有从开发构建目录复制。已有 Helmholtz、检查�
 | 源码／批次 | CPU8 中位数 s | CPU16 中位数 s |
 | --- | ---: | ---: |
 | 上一轮已存档的 ca1fdcd3 验收 | 40.625 | 30.878 |
-| 本轮同机重建 ca1fdcd3 | 41.717 | 32.572 |
-| 本轮与之交替的 51f982ab | 44.529 | 34.167 |
+| 同机重建 ca1fdcd3 | 41.717 | 32.572 |
+| 交替运行的 51f982ab | 44.529 | 34.167 |
 
-本轮对照复现约 6.7%／4.9% 的版本相关差距，不能把之前跨批次约 10%／20% 全部
+同机对照复现约 6.7%／4.9% 的版本相关差距，不能把之前跨批次约 10%／20% 全部
 归因于某一项代码变化。各样本的物理终点、场、AMR 拓扑、模块活跃性和零修复检查
 均按原预算通过；没有通过关闭模块或换用较宽的容差减少工作量。
 
@@ -109,9 +108,9 @@ CUDA 终点和全部场采用原有 `compare_pair` 预算逐次核对，没有�
 | SNIaCoupled 3D | 40.446 | 31.531 | 42.942 / 44.345 / 43.141 | 43.141 | 0.73× |
 
 二维保持正收益；三维在本机仍然较慢，相对 CPU16 耗时约为 1.37 倍。只与 CPU8
-比较得到的 0.94× 也不是正收益。CPU 改进不会自动缩短设备任务成本；本轮没有
+比较得到的 0.94× 也不是正收益。CPU 改进不会自动缩短设备任务成本；该测量没有
 修改设备数学或声称获得三维 GPU 加速。Windows 端先前重负载已经由用户确认结束，
-本轮启动前设备利用率为 0%；保留全部六个样本，未筛去最慢项。
+测量启动前设备利用率为 0%；保留全部六个样本，未筛去最慢项。
 
 额外一次 Cellular 细网格默认 CPU8 为 29.197 s，原检查点场预算通过。它仅用于
 修复后的回归检查，不是新的三轮性能结论，也不与另一批次 FLASH 时间重算达标率。
@@ -128,16 +127,16 @@ CUDA 终点和全部场采用原有 `compare_pair` 预算逐次核对，没有�
 | 干净归档 | 2/2 + Sod 通过 | Helmholtz、检查点，以及默认路径 Sod 场对照 |
 | 当前物理场补测 | 全部通过 | 12 个三维配对、6 个二维 CPU、6 个 CUDA 样本及单次细网格回归 |
 
-本轮没有设备内存／设备数学改动，未重复上一轮的设备 sanitizer；原记录仍在
-[冻结验收](../../O6ControlsAcceptanceReport.zh-CN.md)中。以上短程见证不能替代长时
+该测量没有设备内存／设备数学改动，未重复上一轮的设备 sanitizer；原记录仍在
+[冻结验收](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)中。以上短程见证不能替代长时
 演化或 FLASH 共同科学误差曲线。原统一两倍成本目标与 RTX 的负收益场景保留；
-没有新增 FLASH 或 H100 测量，也不以尚未安排的 H100 试验阻塞本轮工程交付。
+本记录没有新增 FLASH 或 H100 测量。
 
 ## 证据与复现
 
 - [checks/verification.json](checks/verification.json)：当前源码／程序身份、全部检查状态和设备前后快照。
   同目录保留 CPU/CUDA CTest、两套 Python 日志和 42 条生产记录。
-- [timings/summary.json](timings/summary.json)：本轮全部正式样本的中位数、分项和比值；
+- [timings/summary.json](timings/summary.json)：本记录的全部正式样本的中位数、分项和比值；
   `cpu8.json`、`cpu16.json`、`cuda.json` 保留每次记录与场检查，`regression.json`
   保留二维 CPU 和单次细网格检查。三维配对的完整场证据在 `final-pairs.json`。
 - [diagnostics/baseline-pairs.json](diagnostics/baseline-pairs.json)：重建旧源码的对照；
@@ -145,7 +144,7 @@ CUDA 终点和全部场采用原有 `compare_pair` 预算逐次核对，没有�
   两个已撤销探针的原始补丁文本作为证据，不应应用到正式源码。最初错误使用 CPU/CUDA 比较器检查两个
   CPU 结果的拒绝日志也保留，随后以 CPU 对照检查原有效样本，没有放宽 CUDA 身份检查。
 - [package/archive-inspection.json](package/archive-inspection.json)：实际下载归档的身份和表大小／摘要；
-  同目录保存干净配置／构建日志、两项 CTest 与 Sod 结果。构建使用归档加本轮源码
+  同目录保存干净配置／构建日志、两项 CTest 与 Sod 结果。构建使用归档加本记录的源码
   修复，四个受影响的源码／脚本文件与最终工作区逐字节一致。
 
 原始 HDF5 和执行物保留在本机 `output/release-readiness-20260927/`，不提交到仓库。

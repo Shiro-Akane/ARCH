@@ -89,7 +89,7 @@ J(T,j) = (partial_j enuc - sum_i e_i * J(i,j)
 的弱过程诊断与设备可恢复试探错误仍有[组合规则](../Reference.zh-CN.md#方法与物理模块的组合)
 中说明的限制。
 
-ARCH 在 ODE 试算温度处更新反应率、屏蔽和热力学量。[对照](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md)
+ARCH 在 ODE 试算温度处更新反应率、屏蔽和热力学量。[对照](../../validation/gravity/flash/README.zh-CN.md)
 所用归档 FLASH Cellular 在一次燃烧调用内固定温度，预先计算率／屏蔽，再在能量更新后
 恢复温度。两者热反馈与计算成本不同，相同网络或 ODE 名称不等于等精度轨迹；更强
 耦合的收益仍需在目标问题上通过时间收敛和能量检查确认。
@@ -223,7 +223,7 @@ HelmEos::evaluate
   -> ConductivityMath::compute_stellar_conductivity
 ```
 
-[扩散系数对齐报告](../histroy/DiffusionCoefficientAlignment.zh-CN.md)记录了 `aprox19`、10,000 个以上随机状态的十六进制浮点比较；测试范围内的最大绝对误差和最大相对误差均为 `0.0`。第 5 节的反应网络 ODE 验证覆盖独立的 RHS、Jacobian 和 LHS 路径。
+[扩散系数对齐报告](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/DiffusionCoefficientAlignment.zh-CN.md)记录了 `aprox19`、10,000 个以上随机状态的十六进制浮点比较；测试范围内的最大绝对误差和最大相对误差均为 `0.0`。第 5 节的反应网络 ODE 验证覆盖独立的 RHS、Jacobian 和 LHS 路径。
 
 ## 9. 历史 CPU 求解器对照
 

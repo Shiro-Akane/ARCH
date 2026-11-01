@@ -1,6 +1,6 @@
-# Core A 完整响应示例
+# Sod 位置绑定响应样本
 
-本目录 JSON 均由实际 CPU ARCH 可执行程序生成。每个响应旁边的同名 `.par` 是完整输入字节，响应 `configRevision` 为该文件的 SHA-256。采样数量为 4，requestId 为 `core-a-<名称>`。
+本目录保留配置 v2 的 CPU 响应，用于展示位置绑定与错误结构；当前配置 v3 要求显式提供 `x_pos`，并拒绝重复键。每个响应旁边的同名 `.par` 是完整输入字节，响应 `configRevision` 为该文件的 SHA-256。采样数量为 4，requestId 为 `core-a-<名称>`。
 
 | 输入 / 响应 | 含义 | 退出码 |
 |---|---|---|
@@ -9,9 +9,9 @@
 | [invalid-number.par](invalid-number.par) / [invalid-number.json](invalid-number.json) | 最后一次 x_pos=bad，Setup 拒绝且不采用旧值或默认值 | 5 |
 | [outside.par](outside.par) / [outside.json](outside.json) | 域为 (-3,5)，x_pos=5 被 Setup 拒绝；保留实际值和约束 | 5 |
 | [nonfinite.par](nonfinite.par) / [nonfinite.json](nonfinite.json) | x_pos=nan 在 Setup 读取时被拒绝，不发布位置绑定 | 5 |
-| [capabilities.json](capabilities.json) | 当前 CPU 程序实际发布的能力和扩展版本 | 0 |
+| [capabilities.json](capabilities.json) | 生成样本的 CPU 程序发布的能力和扩展版本 | 0 |
 
-从仓库根目录复现一个成功响应：
+样本记录的调用命令如下；使用当前程序时，应按[配置 v3](../../docs/CONFIGURATION_API.md)补齐必填输入：
 
 ```sh
 build-studio-cpu/bin/ARCH --preview Sod --config-stdin \

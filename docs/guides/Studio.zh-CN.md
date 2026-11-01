@@ -1,92 +1,139 @@
-# ARCH Studio：配置、预览、运行与查看输出
+# ARCH Studio
 
-[English](Studio.md) · [首页](../../README.zh-CN.md) · [环境准备](StudioEnvironment.zh-CN.md)
+[English](Studio.md) · [构建与安装](Build.zh-CN.md) · [参数参考](../Reference.zh-CN.md)
 
-Studio 是可选桌面组件，Core 可独立运行。**推荐 Linux／WSL2；原生 Windows11 x64 同样提供完整的 CPU／CUDA Studio 工作流，但适配较新，可能存在不稳定性与 bug。** 两侧共用参数编辑、科学预览与 Plotfile 服务；仍按[功能对照](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)中的既有科学范围使用。
+Studio 是用于准备计算、预览初始状态、运行算例和查看 HDF5 输出的桌面工作台。Linux 与 Windows 使用相同的界面。推荐使用 Linux 进行科学计算；原生 Windows 11 提供对应的 CPU／CUDA 工作流，但适配较新，可能仍有平台相关 bug。具体要求见[平台支持](../releases/PlatformSupport.zh-CN.md)。
 
-## 构建与启动：先 Linux，再 Windows
+## 打开项目
 
-先按[构建指南](Build.zh-CN.md)准备 Core，再按[环境指南](StudioEnvironment.zh-CN.md)准备相应系统的 Node24+、Electron 和运行终端。所有示例从 ARCH 项目根目录开始。
+按[构建指南](Build.zh-CN.md)安装可选桌面组件。以下示例使用已启用 Studio 的 `linux-core`／`windows-core` 构建目录；若选择其他 profile，替换成实际目录。从项目根目录运行不带参数的命令，即可打开空白启动页：
 
 Linux／WSL2：
 
 ```bash
-cmake --preset studio-cpu-release -DARCH_STUDIO_NODE=/absolute/path/to/node
-cmake --build build-studio-cpu --parallel 2
-build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod_beginner.par
+build/linux-core/bin/arch-studio
 ```
 
-原生 Windows：先完成 [GCC/UCRT64 CPU 构建](WindowsNativeCpu.zh-CN.md)，再按[原生桌面指南](WindowsStudioDesktop.zh-CN.md)开启 Studio 并设置可信工具／DLL 上下文。在 PowerShell 启动：
+Windows PowerShell；生成的启动器自动载入本机工具配置：
 
 ```powershell
-& .\build-studio-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-studio-cpu `
-  --binary build-studio-cpu/bin/ARCH.exe --case Sod --config simulation/Sod/Sod_beginner.par
+& .\build\windows-core\bin\arch-studio.cmd
 ```
 
-命令中的构建目录必须对应实际配置；已有树通过 `--build-dir` 显式选择，不会静默改写其他缓存。生成的源码启动器依赖当前 checkout。便携包保留整个目录：Linux 启动 `arch-studio`，Windows 启动 `arch-studio-bin.exe`。包内带 Host Node 与 h5wasm，Core、系统依赖和运行终端仍需另备。连接由程序管理，无需启动 Vite 或填写端口。
+![Studio 空白启动页：选择项目、构建目录、程序、模型和参数文件](images/studio-start.png)
 
-## CPU／CUDA 的选择
+此时尚未打开项目，也未载入模型或 `.par`。点击 **Choose project…** 选择 ARCH 项目目录，再填写构建目录、Core 程序、模型和参数文件，点击 **Open project** 进入工作台。
 
-Windows CPU 按上方 GCC/UCRT64 入口；Windows GPU 按[原生 CUDA 指南](WindowsNativeCuda.zh-CN.md)选择独立 MSVC 构建与匹配的 DLL／工具上下文。Linux 的 CUDA 树用相同 `--build-dir`／`--binary` 规则。进入 Config 的 Runtime 参数，将 `compute_backend` 选为 `cpu`、`cuda` 或 `auto`，需要时设置 `cuda_device`；保存后重新 Run。它在新进程启动时切换，不会把 CPU-only 二进制变成 GPU 构建。初始 Preview 仍使用 CPU Setup／Init；实际推进后端以 Run 日志与 `*_backend_plan.txt` 为准。MSVC/CUDA 完整依赖新鲜度可能显示 unknown，成功 Build 不会将缺失证据伪装为 fresh。
+### 指定模型与参数启动
 
+也可以一次性传入项目、构建、模型和参数文件。以下命令使用已配置的 CPU 构建打开 Sedov：
+
+Linux／WSL2：
+
+```bash
+build/linux-core/bin/arch-studio --project "$PWD" --build-dir build/linux-core \
+  --binary build/linux-core/bin/ARCH --case Sedov \
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+```
+
+Windows PowerShell：
+
+```powershell
+& .\build\windows-core\bin\arch-studio.cmd --project "$PWD" --build-dir build/windows-core `
+  --binary build/windows-core/bin/ARCH.exe --case Sedov `
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+```
+
+`--config` 把指定的 `.par` 载入 **Config** 工作区，供查看和编辑。上面命令中的选项含义如下：
+
+| 选项 | 作用 |
+| --- | --- |
+| `--project` | ARCH 项目根目录 |
+| `--build-dir` / `--binary` | 已有 CMake 构建目录及其中的 Core 可执行文件 |
+| `--case` | 程序中已注册的模型，此处为 `Sedov` |
+| `--source` | 绑定的模型源码，须与程序中的编译登记匹配 |
+| `--config` | 启动时打开的参数文件，此处为 `simulation/Sedov/Sedov.par` |
+
+文件与构建目录的相对路径以 `--project` 为基准，未指定时使用当前目录；参数文件须位于项目内。底部 **Configure** 执行 CMake 配置，**Build** 编译程序。
+
+启动后，Config 显示 Sedov 模型及其参数。输入与构建就绪时会生成初始预览，也可点击 **Preview** 手动更新；选择 **Field → Pressure** 即可看到下图中的中心压力沉积区域。保存参数并确认 **Run** 后开始时间推进，再加载生成的 Plotfile，可查看后文展示的扩展密度场。
+
+填写实际使用的构建目录与可执行文件；使用 CUDA 时选择对应的 CUDA 构建。便携桌面包在 Linux 下运行 `arch-studio`，在 Windows 下运行 `arch-studio-bin.exe`，启动页可填写相同的项目、构建、程序、模型和参数选项。保留整个包目录，科学计算 Core 及其运行库另行安装。Windows 便携包需选择可信的本机[工具配置](Build.zh-CN.md#windows-tool-configuration)。
+
+<a id="workspaces"></a>
 ## 界面导航
 
-先看顶部 **MODEL / PARAMETERS**，确认当前模型与参数文件；再用右上角 **Workspace** 选择 **Config** 或 **Plotfile**。Config 中左侧是参数，中间是 **Real initial condition** 预览，选中参数后在右侧 **Parameter Inspector** 查看解释。上方可展开 **Project / Local Host**，核对项目、源码、二进制与构建状态；下方工作流区域用于运行和重启。
+![Config 工作区：Sedov 模型、参数文件、初始压力场与参数 Inspector](images/studio-config.png)
 
-![Studio 的 Plotfile 界面，显示已记录的势场与原生 AMR 叶块轮廓](images/studio-plotfile.png)
+按从左到右的顺序查看界面：
 
-*示例为已输出文件的只读查看，不是初始场 Preview。*
+1. 顶部 **MODEL / PARAMETERS** 显示模型与参数文件。展开 **Source & parameter association** 可查看路径。
+2. 左侧 **Parameters** 是参数工作副本，**Config file** 用于打开或重新加载 `.par`。
+3. 中间 **Real initial condition** 显示初始状态，右侧 **Inspector** 解释当前参数或采样点。
+4. **Project / Local Host** 显示选定程序与构建；底部提供 Configure、Build、Preview、Run 和 Restart。
+5. 右上角 **Workspace** 在 **Config** 与 **Plotfile** 之间切换。
 
-## Config：引入模型与参数文件
+图中使用项目自带的二维 Sedov 算例。中心亮点是初始压力沉积区域；时间推进后的爆炸波见后面的输出图。
 
-1. **先选项目和编译好的模型。** 启动页可填写 Project、Existing build directory、Binary、Registered model、Source；也可用上面的启动命令。连接后，在中间 **Real initial condition → Model** 选择当前二进制发现的注册模型，例如 Sod。模型发现失败可点击 **Retry model discovery**。
-2. **源码与参数是两件事。** `--source simulation/Sod/Sod.cpp` 或启动页 Source 绑定已注册源码，不是导入任意 C++ 后自动编译。选定源码时 Model 固定为其唯一注册模型；源码身份待确认、发现未完成或工作流忙碌时，下拉框不可用。换另一源码请重新打开项目。新增模型先按[算例指南](SimulationCase.zh-CN.md)注册并编译；选文件本身不能更新旧二进制。
-3. **再打开 `.par`。** 左侧 **Config file → Open Parameter File (.par)…** 选择参数；已关联项目可点 **Load Project Parameter File**。先试 `simulation/Sod/Sod_beginner.par`。顶部模型与文件名应对应；文件名相似不证明物理配置兼容。展开 **Source & parameter association** 可核对来源。
+## 选择模型与参数文件
 
-## Config：查看、调整与保存参数
+在 **Real initial condition → Model** 选择已注册模型，再用 **Open Parameter File (.par)…** 或 **Load Project Parameter File** 加载参数。首次使用可选择 Sod 和 `simulation/Sod/Sod_beginner.par`。
 
-从左向右看：左侧按 Grid、EOS、Network、Gravity、Diffusion、Runtime 等组展开；用搜索框查名称、原始键或说明。常用项先显示，额外设置在 **Advanced** 或 **Inactive settings** 中；隐藏字段并不消除错误。
+模型列表来自选定的 Core 可执行文件。显式指定 Source，例如 `simulation/Sedov/Sedov.cpp`，会把项目绑定到该模型；更换源码时关闭并重新打开项目。添加自己的模型时，先按[算例指南](SimulationCase.zh-CN.md)注册输入并编译，再到 Studio 中选择。
 
-每项 **Help** 提供原始键、类型、单位、允许值、适用条件与默认值是否允许。点击参数后，右侧 **Parameter Inspector** 可对照 Working Copy、Saved value、解析值与诊断；没有元数据时保持 Unavailable，不凭猜测补齐。完整定义查[参考手册](../Reference.zh-CN.md)。输入输出统一采用 CGS；例如长度 cm、密度 g/cm³、压力 erg/cm³、温度 K、角度 rad。
+## 查看与调整参数
 
-直接修改输入框、下拉框或开关即可调整 **Working Copy**。先修正 View issues／行内错误与路径检查，再在中间请求 **Generate Real Preview / Update Preview**。它可读取未保存的工作副本，但仍要求模型、编译身份、参数和采样条件有效。预览显示真实 Setup／Init；**Initial AMR** 是单独的有界请求，不代表已经运行时间推进。字段、坐标轴和颜色的 linear/log／范围只影响显示；log 不能使零或负值变成正值。
+![选中 Sedov 的能量沉积半径，左侧显示 Help，右侧显示参数 Inspector](images/studio-parameters.png)
 
-保存与计算分别确认：
+通过参数分组或搜索框找到设置。**Help** 显示 `.par` 原始键、类型、单位和允许值；点击输入框后，右侧 **Parameter Inspector** 可对照 Working Copy、Saved value 和解析值。图中的 `deposit_radius = 0.03` 表示 0.03 cm。完整定义见[参数参考](../Reference.zh-CN.md)。
 
-- **Save** 写回已关联文件；**Save Working Copy As…** 在项目内另存 `.par`，建议先保存副本。磁盘有外部变动时保留工作副本，按提示重载或另存。
-- **Download Copy…** 是导出下载，不等于在项目内保存并建立可运行的文件关联。
-- 修改 C++ 后，在 **Project / Local Host** 内显式 **Configure / Build**，查看输出与身份检查；刷新状态不等于编译。依赖证据不完整仍显示 unknown。
-- 最后到工作流区域选择 **Run / Restart**，检查已保存参数、二进制、输出目录和 checkpoint，再确认。独立终端中的已启动作业可在 Studio 关闭后继续；Stop 只针对记录的本次作业。
+直接编辑文本框、选择选项或调整开关。继续操作前检查行内提示和 **View issues**。高级项和非活动项单独分组。ARCH 使用 CGS 单位，例如 cm、g/cm³、erg/cm³ 和 K。
 
-## Plotfile：调入结果与看图
+- **Save** 更新已关联文件。
+- **Save Working Copy As…** 在项目内保存新的 `.par`，并将它关联到工作台；适合保留原始输入的对照实验。
+- **Download Copy…** 导出一个副本。用于实际运行的输入请通过项目保存动作关联。
+- 文件被外部程序修改时，可重新加载磁盘版本，或将工作副本另存为新文件。
 
-右上角 Workspace 选 **Plotfile**，页面标题为 **Real Plotfile**。优先看上方 **Project Plotfile Viewer · read-only**：
+使用 GPU 时，在 Runtime 中选择 `compute_backend = cuda` 并保存，执行物需包含 CUDA。`cpu` 指定 CPU，`auto` 由 Run 准备选择受支持的路径。确认前核对请求后端、实际选择及原因，运行日志和 `*_backend_plan.txt` 记录实际路径。
 
-1. 在 **Project-relative file** 输入项目内结果路径，例如 `output/first_sod/SodBeginner_HLLC_plt_0000.h5`，点击 **Read metadata**。选择 `_plt_` 场输出，不是 `_chk_` 重启文件；名称和编号以实际磁盘结果为准。
-2. 先核对 Time、Geometry / dimension、Stored shape、完成状态与来源，再在 **Stored field** 选 DENS、PRES 等实际存在的场。
-3. 需要原始数据时，选择 **Block index、Start、Count → Read raw samples**。下方出现数值表与支持的曲线／原生视图；点行内 **Inspect** 查看该存储单元、坐标和单位。
-4. 需要全域总览时，点击 **Read global display LOD · scans leaves**。当前图形总览覆盖具有原生网格证据的笛卡尔1D／2D及柱坐标 r-z 2D；其他几何／维数可用的有界单元查询不代表已有三维渲染。用 Fit、缩放或拖动查看；总览是显示降采样，精确数值回查 raw samples／Inspector。
+## 预览与运行
 
-下方 **Local file · legacy 1D inspection → Open Plotfile…** 是独立的旧式本地1D入口，不提供正式完成／来源核验，不能和上方项目读取混为一谈。完整 `.h5` 始终是权威数据；所有查看均只读。初始化 Preview、正式时间推进输出和数值科学验收也分别判断。
+**Generate Real Preview / Update Preview** 使用当前工作副本计算模型初始状态，也可预览尚未保存的参数修改。选择 **Field**，再用 Fit、缩放或拖动查看。Plot presentation 调整坐标、配色和显示范围。**Initial AMR** 使用独立的块数与内存预算生成初始细化层级。Preview 采用 CPU 初始化；Run 开始时间推进。
 
+修改 C++ 后使用 **Configure / Build**，让程序包含源码变化。构建面板显示进度与输入新鲜度。出现 `freshness-unknown` 时，打开诊断查看哪些依赖尚未核实。
+
+![Run 准备界面，显示已保存参数、可执行文件和输出位置](images/studio-run.png)
+
+保存输入后选择 **Run**，核对模型、程序、输出目录和拟执行命令，再确认启动。**Restart from checkpoint** 使用已保存的重启参数与选定 checkpoint。确认后的计算在独立终端运行，关闭 Studio 后也可继续；使用对应运行记录的 **Stop** 停止它。
+
+## 读取 Plotfile
+
+选择 **Workspace → Plotfile**，使用 **Project Plotfile Viewer · read-only**。
+
+![已推进的 Sedov 密度输出，显示项目文件路径与元数据](images/studio-plotfile.png)
+
+1. 在 **Project-relative file** 输入项目相对路径，例如 `output/sedov_standard/Sedov_HLLC_plt_0001.h5`，点击 **Read metadata**。选择实际运行产生的 `_plt_` 文件；`_chk_` 是重启检查点。
+2. 核对物理时间、几何、维数与完成状态，再选择 **Stored field**，例如 `DENS` 或 `PRES`。
+3. 要查看精确存储值，设置 **Block index、Start、Count**，点击 **Read raw samples**。采样行旁的 **Inspect** 显示单元坐标与单位。
+4. 要看全域图像，点击 **Read global display LOD · scans leaves**。用 Fit 与缩放定位结构，叶块轮廓显示 AMR 网格。总览采用显示降采样，单元 Inspector 读取对应的原始存储值。
+
+![Sedov 时间推进后的密度场与 AMR 叶块轮廓](images/studio-overview.png)
+
+图中的二维总览采用 32 × 24 显示采样；叶块轮廓显示 280 块中的 128 块。
+
+图像总览支持笛卡尔 1D／2D 和柱坐标 r-z 2D，其他受支持几何与维数可通过有界单元查询查看数据。下方 **Local file · legacy 1D inspection** 用于打开独立文件；需要完成状态与来源信息时使用项目查看器。
+
+<a id="paths-on-linux-and-windows"></a>
 ## Linux 与 Windows 的路径
 
-**先区分“当前 OS 的路径”与“Studio 的项目相对路径”。**
+| 路径使用位置 | 填写方式 |
+| --- | --- |
+| 项目、编译器或程序位置 | 当前系统的原生路径：Linux 如 `/home/user/ARCH`，Windows 如 `C:/work/ARCH` |
+| Studio 的 config、Plotfile 或 Save As 字段 | 使用 `/` 的项目相对路径，如 `simulation/Sod/Sod_beginner.par` |
+| `.par` 中的输出、重启或表文件设置 | 相对计算工作目录的路径，或当前系统的绝对路径 |
 
-| 位置 | Linux／WSL2 | 原生 Windows |
-| --- | --- | --- |
-| 项目根／外部工具绝对路径 | `/home/user/ARCH`、`/usr/bin/cmake` | `C:/work/ARCH`、`C:\tools\cmake.exe` |
-| Core | `build-studio-cpu/bin/ARCH` | `build-studio-cpu/bin/ARCH.exe` |
-| Studio 的 config／Plotfile／Save As 相对路径 | 两侧均用 `simulation/Sod/Sod_beginner.par`、`output/first_sod/xxx.h5` 这样的正斜杠路径 | 不在这些输入框填写盘符、`/mnt/c` 或 `..`；原生文件对话框会转换项目内选项 |
-| `.par` 内的输出／重启／表路径 | 相对路径从计算工作目录解析，或写真实 Linux 绝对路径 | 相对规则相同；绝对路径需改成真实 Windows 路径，建议 `C:/work/ARCH/...` |
+Studio 从项目根目录运行 Core；CLI 使用终端当前目录。因此 `out_dir = output/first_sod` 相对该工作目录，**不是相对 `.par` 文件所在目录**。
 
-Studio 启动 Core 时以项目根目录为工作目录；自行运行 CLI 时以终端当前目录为准。`out_dir = output/first_sod` 因此通常可跨两侧共用，**并不表示输出到 `.par` 旁边**。从 Linux 复制 `.par` 到 Windows 后，逐项检查 `out_dir`、`restart_file`、EOS／网络表等路径，不要只改文件名或全局替换斜杠；写实际值，不依赖 shell 环境变量展开。
+将 Linux `.par` 移到 Windows 时，检查 `out_dir`、`restart_file` 和 EOS／网络表路径。`/mnt/c/work/ARCH` 属于 WSL，原生 Windows 使用 `C:/work/ARCH`。只替换分隔符不能完成路径转换；项目相对路径最便于共享输入。
 
-WSL 中的 `/mnt/c/work/ARCH` 与原生 Windows 的 `C:/work/ARCH` 可指向同一磁盘位置，但 `/home/...`、`/mnt/c/...` 不能直接传给原生 Core。Windows 路径也不能直接交给 Linux Core。PowerShell 的命令参数遇到空格要整体引用；`.par` 使用 UTF-8，保留原有语法，不照抄 PowerShell 的引号／反引号或 Bash 的转义。不要共用两侧的 CMake 缓存、Node 可执行文件或 ABI 依赖；UNC、网络文件系统和任意长路径未由本次本机 NTFS 验收覆盖。
-
-## 更多说明
-
-[构建](Build.zh-CN.md) · [平台与环境](StudioEnvironment.zh-CN.md) · [科学功能范围](../Features.zh-CN.md) · [验证入口](../../validation/README.zh-CN.md) · [Host 工程测试](../../studio/tests/README.md)。数学与物理定义、原科学格式及既有误差预算不因平台变化而放宽。
-
-LF 与 CRLF 都可用于参数文件；配置 revision 按原始 UTF-8 字节计算，转换换行会改变指纹。
+参数文件使用 UTF-8，支持 LF 与 CRLF。路径值遵循 `.par` 语法，不照抄 shell 引号，也不依赖 shell 变量展开。命令行中的含空格参数需要引用。不同系统或编译器 ABI 使用各自的构建目录、CMake 缓存与依赖库。

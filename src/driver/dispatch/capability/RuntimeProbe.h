@@ -40,6 +40,8 @@ enum class ProbeFailureCode : std::uint8_t
     CapabilityQueryFailed,
 };
 
+enum class ProviderProbeState : std::uint8_t { NotRequested, Unavailable, Available };
+
 struct DeviceCapability
 {
     int ordinal{};
@@ -58,6 +60,7 @@ struct RuntimeProbeRequest
     ComputeBackend requested{};
     bool cuda_build_enabled{};
     int device_ordinal{};
+    bool require_cudss{};
 };
 
 struct RuntimeProbeResult
@@ -65,6 +68,7 @@ struct RuntimeProbeResult
     RuntimeProbeState state{};
     ProbeFailureCode failure{};
     DeviceCapability device{};
+    ProviderProbeState cudss{ProviderProbeState::NotRequested};
 };
 
 class RuntimeLoader
@@ -72,6 +76,7 @@ class RuntimeLoader
 public:
     virtual ~RuntimeLoader() = default;
     virtual RuntimeProbeResult query(int device_ordinal) noexcept = 0;
+    virtual bool cudss_available() noexcept { return false; }
 };
 
 RuntimeProbeResult probe_runtime(

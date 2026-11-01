@@ -21,7 +21,7 @@ python3 -B tests/tooling
 
 [audit_architecture.py](audit_architecture.py) checks shared implementation and
 include boundaries; the Python suite tests tool behavior with controlled inputs.
-These entries do not run a simulation or establish physical accuracy. Full
+Full
 resource-guard coverage requires Linux `/proc`, pidfd and child-subreaper
 support, including Python's `os.pidfd_open` interface.
 
@@ -33,11 +33,10 @@ python3 tools/validate_backend_results.py \
 python3 tools/validate_cuda_amr_restart.py --unit-test
 ```
 
-These modes check the checking protocol only. They do not produce a CPU/CUDA
-trajectory or replace field comparisons.
+These modes exercise manifest parsing and comparison rules with controlled inputs.
 
 [check_documentation.py](check_documentation.py) checks current Markdown destinations
-and heading anchors; historical/frozen evidence remains on its recorded basis.
+and heading anchors.
 The complete Tooling entry rejects empty, failed or skipped discovery.
 
 ## Check CI test reports
@@ -46,8 +45,7 @@ The complete Tooling entry rejects empty, failed or skipped discovery.
 inventory and, when provided, its JUnit report. It rejects missing coverage
 anchors, duplicate or omitted results, failures and skips. It reads CTest's
 pass/fail decisions rather than recalculating numerical tolerances. The
-[workflow guide](../.github/workflows/README.md) describes its use; this report
-check does not generate scientific Validation evidence. The same owner reports
+[workflow guide](../.github/workflows/README.md) describes its use. The same owner reports
 conservative `native`/`studio` applicability using `--scope`, `--base` and `--head`;
 `NOT_APPLICABLE` never represents an executed test pass.
 
@@ -73,15 +71,14 @@ See [test setup](../tests/README.md#cuda-and-optional-providers).
 
 For a fixed level-zero grid, ARCH skips empty regrid transactions. The backend
 runner identifies this from the actual run parameters and marks the regrid
-measurement as not applicable; it does not invent a timing or a zero counter.
+measurement as not applicable.
 Dynamic AMR still requires valid transaction measurements. Field, conservation
 and scientific-reference checks apply in both cases.
 
 ARCH and the comparator must come from the same build. Choose an absent or empty
 output directory under a local build area or temporary directory; runners retain
-logs and do not erase an earlier run. Writing or “publishing” evidence here means
-writing local JSON, not uploading it. The effective Validation record is updated
-by the maintainer only after reviewing the actual result.
+logs. Review the resulting local JSON and scientific output before adding a
+result to Validation.
 
 ## Build and memory measurements
 
@@ -92,13 +89,15 @@ is collected only when requested; it is not a device-memory reservation.
 
 [summarize_cuda_compile_memory.py](summarize_cuda_compile_memory.py) reads recorded
 compiler measurements. [validation_device_memory.py](validation_device_memory.py)
-reads process-local allocation events from profiler data. These readers do not
-compile code, execute a solver or infer performance from configured limits.
+reads process-local allocation events from profiler data.
 
 ## Shared helpers and optional dependencies
 
 [validation_provenance.py](validation_provenance.py) owns source/build/input
-identities and replacement checks. The backend runner's `run_arch_with_logs`
+identities and replacement checks. [windows_link_evidence.py](windows_link_evidence.py)
+parses native Ninja/PE inputs for that same provenance flow. Configured link
+inputs are recorded separately from complete runtime-loader coverage.
+The backend runner's `run_arch_with_logs`
 owns process logs. [validation_sanitizer.py](validation_sanitizer.py) owns
 Compute Sanitizer invocation and report checks. Extend these owners for reusable
 behavior instead of creating another process supervisor or evidence schema.

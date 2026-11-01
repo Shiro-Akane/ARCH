@@ -10,17 +10,7 @@ ARCH --list-cases
 
 返回 `kind=registered-cases`，`cases` 来自本 binary 的注册表，不构造模型、不调用 Setup。每项提供注册名、场预览和 AMR 预览支持状态、支持维数。客户端必须消费所选 binary 的
 initialFieldPreview、initialAmrPreview 与 previewDimensions，不保留 Sod/Cellular 白名单。
-当前 Linux 集成分支已接入已登记模型的初始化路径及 1/2/3D 原生坐标网格；
-模型/维数、几何、EOS 和 Setup 输入的适用条件仍逐请求检查。
-注册成功不等于任意配置均可预览，也不等于演化、self-gravity field 或 JENS 已完成。
-
-已核对 CPU binary 325ef7806af16e85c6dbfc545937da5e5bab32115e57ed5167a788296be4f91b
-发布 14 个模型：BurnGradient、BurnOneZone、CellularDet、CooperativeHotspots、
-DiffusionMode、ExternalGravity、Gaussian、GravityBox、JeansWave、RT、SNIaCoupled、
-Sedov、SmoothAdvection、Sod。这是该 binary 的证据，不是永久模型数量常量。
-支持维数以运行时列表为准；参见
-[全模型生产 Host 验证](../../../docs/histroy/studio/FullModelProductionHostProgress.zh-CN.md)
-和[三维有界混合快照](../../../docs/histroy/studio/FullModel3DMixedAmr-20261004.zh-CN.md)。
+已登记模型的初始化路径支持其声明范围内的一至三维原生坐标网格。模型、维数、几何、EOS 和 Setup 输入的适用条件逐请求检查，支持列表由所选程序返回。
 
 此查询给本地启动器使用。`arch-studio` 命令、桌面窗口、项目发现、源码/构建身份以及文件管理由 Studio/Host 实现。Core 不依据 `.cpp` 文件名猜测注册名，也不能通过该列表证明源码与 binary 一致。
 
@@ -30,8 +20,7 @@ Sedov、SmoothAdvection、Sod。这是该 binary 的证据，不是永久模型�
 ARCH --amr-resources Sod --config-stdin < simulation/Sod/Sod.par
 ```
 
-当前集成分支的资源估算直接消费共同输入解析记录，不再经带默认物理配置的
-RuntimeParams。必须显式提供nblockx1/nblockx2/nblockx3与lrefinemin/lrefinemax；
+资源估算直接使用共同输入解析记录。必须显式提供nblockx1/nblockx2/nblockx3与lrefinemin/lrefinemax；
 max_blocks仍使用已登记的资源默认。缺项逐键报错，明确的零轴计数不等于缺失。
 仅需规模估算输入，不要求补写EOS、case初态或演化终点；显式的语法/类型/范围
 错误仍拒绝。execution.configurationScope=resource-count-inputs，
@@ -56,7 +45,7 @@ ARCH --preview-amr CellularDet --config-stdin \
   < simulation/Cellular/CellularPreview2D.par
 ```
 
-本轮有界工作进程支持 Linux/WSL CPU。非 Linux 返回明确错误，不退回无保护的大规模分配。CUDA 不初始化。上述单次命令每次只接受一份请求。持续编辑也可通过 [预览会话](PREVIEW_SESSION_API.md) 调用，复用表资源；每次网格仍重新构造。
+有界工作进程支持 Linux/WSL 和原生 Windows，均在 CPU 上初始化。单次命令处理一份请求；持续编辑可通过[预览会话](PREVIEW_SESSION_API.md)复用表资源，每次重新构造网格。平台能力和资源策略随 `--preview-capabilities` 发布。
 
 `--mesh-max-blocks` 默认 512、范围 1–1024；`--mesh-memory-mib` 默认 128、范围 16–256。这是预览工作预算，不写回 `.par`。不接受 `--samples` 或二维采样参数。输入 1 MiB、响应 8 MiB、UTF-8 和身份规则沿用既有接口。
 
@@ -93,14 +82,19 @@ Cartesian 轴为长度，通常 cm；角度轴使用 Core 发布的 rad。曲线
 
 池容量在构造前按配置容量、块数预算和存储工作预算取最小值。存储预算按三份含组分状态的四倍加每块 64 KiB 预留估算；这是保守工作规模规则，不是 RSS 上界。每次细化先完成指标和平衡判断，再在分配新子块之前检查迁移时旧块与新块共存的容量。停止发生在完整细化之间。
 
-CLI 在 Setup/EOS 前收紧进程地址空间为至多 1 GiB、CPU 时间为至多 30 秒，并用单个 OpenMP 线程。地址空间限制不是可用物理内存检测或部署建议；继承到更严的系统限制时不会提高它。网格循环另有 10 秒检查点预算。
+Setup/EOS 前设置单个 OpenMP 线程和 30 秒 CPU 预算；网格循环另有 10 秒检查点预算。进程内存与 CPU 的平台定义如下：
+
+| 平台 | 内存限制 | CPU 限制 |
+| --- | --- | --- |
+| Linux / WSL | `RLIMIT_AS`，最多 1024 MiB 地址空间 | `RLIMIT_CPU`，用户与系统 CPU 时间 |
+| Windows | Job 对当前进程的 1024 MiB committed memory 限制 | 资源 Job 的用户 CPU 时间，到限终止 |
+
+Windows 声明 `workerPlatform=windows` 与 `resourcePolicy.kind=windows-job-commit-user-v1`，包含 `memoryKind=committed`、`processCommitMiB=1024`、`cpuClock=user`、`cpuScope=resource-job` 和 `budgetRenewal=per-request`；它不声明 Linux 的 `processAddressSpaceMiB`。Host 按所声明策略接纳能力。更严格的继承限制仍然有效。
 
 Host 必须继续实现墙钟超时（建议 45 秒）、取消和子进程回收。遇到系统终止、超时、损坏/缺失 JSON 时，保留上一次有效图并显示本次失败；进程被杀时不保证有最终 JSON。不要为重试自动增加预算或改写科学参数。
 
 ## 验证
 
-2026-09-21 CPU Debug 构建与 15 组 scoped CTest 最终通过；详细结果见 [LOCAL_WORKFLOW_HANDOFF.md](../../../docs/histroy/studio/core-api/LOCAL_WORKFLOW_HANDOFF.md)。
-
-新增 `ui_expansion_contract`：模型枚举、90 参数展示、扩散依赖、CGS、资源公式与溢出、根网格/细化预算、1D/2D 平衡和域覆盖、CUDA 请求仍走 CPU、非法请求。
+`ui_expansion_contract` 覆盖模型枚举、参数目录、扩散依赖、CGS、资源公式与溢出、根网格/细化预算、1D/2D 平衡和域覆盖、CUDA 请求使用 CPU 初始化，以及非法请求。平台资源测试核对实际生效的内存与 CPU 限额。
 
 另用小配置令正式 CPU Driver 在 t=0 初始化并输出临时 checkpoint，比对 Sod 与 CellularDet 的逐块逻辑身份和层级。该测试不进入时间推进；测试夹具的临时文件与 API 本身不生成文件的约定分开验证。

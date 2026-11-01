@@ -20,18 +20,18 @@ shared driver. Choose a directory by responsibility:
 
 To trace a calculation end-to-end, start with the initialization in `main.cpp`, proceed to the stage scheduling in `driver/`, and examine the specific numerical or physical routines for the features you are interested in.
 
-Spherical 2D polar `(r,phi)` and full 3D cylindrical flow share the existing
+Cartesian, spherical and cylindrical grids use the shared
 [reconstruction](numerics/reconstruction/Reconstruction.h),
 [face admissibility/assembly](numerics/flux/InvariantDomainFlux.h) and integration
-owners. Cylindrical grids support radial 1D and full 3D only; 2D cylindrical
-configuration and direct construction reject explicitly. Runtime retains Host
-completed-patch EOS gates and acceptance ownership.
+owners. Cylindrical 2D resolves the axisymmetric `(R,z)` plane; cylindrical 3D
+also resolves the azimuthal direction. Geometry-specific measures and source
+terms live under `numerics/curvilinear/`.
 
 Before adding any new implementations, always consult the [ownership map](../docs/development/ImplementationOwnership.md) to understand module boundaries. As a core design principle, both CPU and CUDA call the exact same mathematical bodies: backend-specific execution paths handle execution flow and resource management, including memory allocation, kernel launches, and synchronization; however, if you are modifying a physical equation or numerical method, focus directly on the shared routines. Note that build and run instructions are maintained in the central [project guide](../README.md), rather than within the source directories.
 
 User cases start with the two [public headers](../include/README.md). Internal
 headers use paths relative to `src/`; tests use their own fixture root. See the
-[directory and include convention](../docs/development/layout/README.zh-CN.md).
+[directory and include convention](../docs/development/ImplementationOwnership.md#source-layout-and-public-case-headers).
 
 Source comments follow the pattern in `main.cpp` and the flux policies. New or
 split code units start with a short **Workflow** that identifies inputs, the

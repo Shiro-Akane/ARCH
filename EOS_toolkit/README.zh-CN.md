@@ -73,4 +73,4 @@ supernovae and neutron-star mergers*（2020），
 加工后的 HShen HDF5 数据不随附。其 EOSDriver 格式经过兼容性调查，但须另行
 核对加工产品发布方的条款；原始归档的 CC BY 许可不会重新许可这些加工产品。
 
-需要特别说明的是，`helm_table.dat` 文件提取自项目下载的 Timmes `helmholtz.tar.xz` 压缩包，并严格通过 Git LFS 进行管理。由于 Git LFS 会将大表数据单独保存，而普通 Git 检出中仅保留一个指向该数据的小指针文件，因此运行 Helmholtz 算例必须使用实际表数据。已有对象优先用离线`git lfs checkout`或经过核验的本地副本复用，仅缺失时定点下载，见[离线表指南](../docs/guides/Build.zh-CN.md#离线表与-lfs-流量)。关于该表格的详细来源、重新分发条款、必需大小要求以及校验和（checksum），请查阅 [`THIRD_PARTY_NOTICES.zh-CN.md`](../THIRD_PARTY_NOTICES.zh-CN.md) 以及 [`validation/burn/README.zh-CN.md`](../validation/burn/README.zh-CN.md)。
+需要特别说明的是，`helm_table.dat` 文件提取自项目下载的 Timmes `helmholtz.tar.xz` 压缩包，并严格通过 Git LFS 进行管理。由于 Git LFS 会将大表数据单独保存，而普通 Git 检出中仅保留一个指向该数据的小指针文件，因此运行 Helmholtz 算例必须使用实际表数据。已有对象优先用离线`git lfs checkout`或经过核验的本地副本复用，仅缺失时定点下载，见[离线表指南](../docs/guides/Build.zh-CN.md#离线表格与-lfs-下载)。关于该表格的详细来源、重新分发条款、必需大小要求以及校验和（checksum），请查阅 [`THIRD_PARTY_NOTICES.zh-CN.md`](../THIRD_PARTY_NOTICES.zh-CN.md) 以及 [`validation/burn/README.zh-CN.md`](../validation/burn/README.zh-CN.md)。

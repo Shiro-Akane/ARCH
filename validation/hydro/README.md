@@ -188,46 +188,27 @@ python3 validation/hydro/sedov_reference.py --build-dir build-cuda \
   --output-dir validation/hydro/results/sedov-new
 ```
 
-## Canonical template provenance
+## Input and result identities
 
-The twelve `inputs/*.par` files are the current canonical templates. Each now
-states its HLL/HLLC signal-speed estimator (`hll_wave_speed = roe`) and its
-specific internal-energy floor (`min_eint = 1e-10` erg/g) explicitly, because
-current production requires both for these solvers and restores no
-compatibility default; a missing or invalid control is rejected instead of
-silently defaulted. No other key or value changed.
+The twelve `inputs/*.par` templates explicitly set `hll_wave_speed = roe` and
+`min_eint = 1e-10` erg/g. Both controls are required for the selected HLLC
+configuration. The values match those used by the source recorded at
+`c8f7c048ca7b384126547934946a3c4d595f6e99`, which identifies the original
+input SHA-256 and Git blobs for the tables above.
 
-These same twelve files were byte-identical to the historical validation
-snapshot recorded at commit
-`c8f7c048ca7b384126547934946a3c4d595f6e99`, whose runtime chain loaded HLLC
-through the shared `RuntimeParams` policy with a historical `roe` wave speed
-and a `min_eint = 1e-10` erg/g floor. That commit freezes the original input
-SHA-256 and Git blob identity of each file. The tables above remain the
-historical snapshot results, not new measurements; the original tables,
-budgets and definitions are unchanged and can be checked against the original
-sections.
+The [updated-template results](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/development/modernization/R1R4Foundation-20261013.zh-CN.md)
+cover all four groups: twelve cases and 49 CPU/CUDA comparisons under the
+manifest's scientific budgets. They identify their own inputs and source,
+separately from the tabulated measurements above.
 
-Within the R2 representative set, the PPM smooth-wave and Sod six cases were
-scientifically replayed using traceable input overrides
-(`hll_wave_speed = roe`, `min_eint = 1e-10` erg/g), with the original scientific
-thresholds unchanged; PCM and MUSCL had not yet received current acceptance at
-that checkpoint. R4.3 subsequently qualified the updated canonical templates in
-all four groups: twelve cases and 49 CPU/CUDA comparisons at the unchanged
-manifest gates. The [R1–R4 foundation report](../../docs/development/modernization/R1R4Foundation-20261013.zh-CN.md)
-records those new results and the input/source identities separately from the
-historical tables above.
-
-The `hydro_periodic_1000` sustained case remains a thirteenth consumer of
-`ppm_n64.par`, with its own endpoint and minimum-step requirement and no separate
-template. R4 checked its configuration inheritance without a new sustained run;
-the four short groups do not confer new long-duration acceptance.
+The sustained `hydro_periodic_1000` case uses `ppm_n64.par` with its own endpoint
+and minimum-step requirement. Its long-duration results are separate from the
+four shorter convergence groups.
 
 ## Detailed verification records
 
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
-
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
 
 - [application evidence (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 - [metrics.csv (CSV)](metrics.csv)

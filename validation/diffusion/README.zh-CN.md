@@ -60,8 +60,6 @@ $9.992\times10^{-16}$，满足原有的相对误差 $5\times10^{-10}$
 <details>
 <summary>展开源码身份、机器可读数据与执行日志</summary>
 
-下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
-
 - [主程序验证记录 (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 - [metrics.csv (CSV)](metrics.csv)
 

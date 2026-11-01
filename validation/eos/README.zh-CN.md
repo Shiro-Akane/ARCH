@@ -18,15 +18,13 @@ EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、He
 规范化表格要求 schema 2、自由能势及明确的物理分量声明。受支持的原生 EOSDriver
 与重子格式遵循各自的数据契约。当前规范化夹具和拒绝测试位于
 `tests/host/eos` 与 `tests/cuda/microphysics/eos`，通过下方 CTest 目标运行。
-输入规则见[表格数据参考](../../src/physics/eos/TabularEOS.zh-CN.md)；
-[迁移记录](../../docs/histroy/low-density/ImplementationReport.zh-CN.md)
-保存实施与验收历史。
+输入格式、物理声明和有效域见[表格数据参考](../../src/physics/eos/TabularEOS.zh-CN.md)。
 
 下方应用结果与重放脚本属于 `2226456c1f87415a317dd6a2a96053a7e154b949`
 **及其证据中记录的未提交源码身份**，单独检出该提交不能复现。
 其中的 direct 表格输入与通过数描述的是当时的实现。
 
-## 历史耦合应用结果
+## 耦合应用基准
 
 Release 应用记录
 通过了十二个案例、96 次 CPU/CUDA 执行。
@@ -91,7 +89,7 @@ cmake --build build --target tabular_eos_regression
 ctest --test-dir build -R '^tabular_eos_ideal_gas$' --output-on-failure
 ```
 
-## 表格式与后续工作
+## 表格式
 
 当前读取器接受规范化 3D/4D HDF5，以及遵循
 [数据契约](../../src/physics/eos/TabularEOS.zh-CN.md) 的原生 EOSDriver 总 EOS
@@ -150,8 +148,6 @@ EOS2/EOS4 原始表各有 650650 个节点。源坐标检查分别标记 6382、
 
 <details>
 <summary>展开源码身份、机器可读数据与执行日志</summary>
-
-下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
 
 - [Release 应用记录 (JSON)](results/application-native-20260907/release-891/evidence.json)
 - [独立端点记录 (JSON)](results/application-native-20260907/endpoints-892/evidence.json)

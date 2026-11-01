@@ -1,29 +1,29 @@
 # ARCH Verification and Validation
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is the authoritative source text.
+Chinese translation: [README.zh-CN.md](README.zh-CN.md).
 
-This directory collects quantitative validation for fluid dynamics, diffusion, gravity, burning, AMR, EOS, restart and generated networks on CPU and CUDA. Choose a module summary below to see its test problem, independent reference, error budget and detailed record. The [feature list](../docs/Features.md) describes available capabilities; the [reference](../docs/Reference.md) gives configuration and combination rules.
+This directory describes numerical tests for hydrodynamics, diffusion, gravity,
+burning, AMR, EOS, restart and generated networks. Each module guide explains
+its reference solution, error budget, results and reproduction inputs. Start
+with the [feature list](../docs/Features.md) for capabilities, the
+[reference](../docs/Reference.md) for parameter combinations, and
+[platform support](../docs/releases/PlatformSupport.md) for tested Linux and
+Windows configurations.
 
-A convergence check asks whether error decreases with a finer mesh or timestep. Conservation checks account for sources and boundary transport. CPU/CUDA comparisons test consistency between backends; independent references test the numerical answer. Each result retains the source, executable, input and data identities actually used. Earlier results remain evidence for those identities and do not automatically qualify a changed implementation.
+## Test coverage
 
-The [gravity summary](gravity/README.md) covers external and self gravity, including tested Cartesian and curved-coordinate AMR and selected coupled problems. The [low-density suite](low_density/README.md) checks near-vacuum state acceptance and repair accounting; the [EOS suite](eos/README.md) separates current table checks from historical application data. The [backend guide](../docs/CudaBackendStatus.md) explains how to assess performance for a representative workload.
+Convergence checks measure how errors change with mesh or timestep refinement.
+Conservation checks account for physical sources and boundary transport.
+Independent analytic or manufactured references test numerical accuracy;
+CPU/CUDA comparisons test agreement between execution backends. The linked
+records identify the source, binary, input and data used for each measurement.
 
 <a id="completed-results-on-the-release-candidate"></a>
 
-## Source-identified CPU/CUDA results
-
-The campaigns below retain their original source and input identities.
-Native cylindrical 2D now uses the `cylindrical-rz-pwc` chart with scoped CPU/CUDA
-checks in the [native-device receipt](backend/results/release-readiness/Cyl5NativeDevice-20261019.json).
-Former RZ and polar-alias records retain their original identities and do not
-qualify this chart. The [comprehensive admission receipt](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) adds native axial scientific endpoints, declared method/EOS products, necessary reacting/diffusive/gravity coupling and fresh. It retains failed fixtures and data-domain limits. The [current CPU closure](backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json) adds two corrected axial initializers, explicit centre-input migration and affected original CPU endpoints/fresh.
-
-The [current device record](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) closes the declared single-GPU scope. It retains the original 17 resource/batch contracts, nine legal chart walls, public endpoints, regridding, input/rejection checks and actual Studio artifacts under their recorded owner/ELF identities. The current shared NSE and Host AMR RKL repair passes nine mathematical CTests, the original private Cellular 24-step/all-25-checkpoint ENUC gate (`5e-9` plus `5e-12`, now byte-identical), own CPU/Device fresh and three rotating AMR pairs at the original `1e-12` standard. The [burn guide](burn/README.md) explains the unchanged source meaning; the [release qualification index](../docs/releases/README.md) records costs, retained CPU limits and later platform/distribution qualification. Earlier uniform inputs missing `center_z` retain historical scope.
-
-| Area | Recorded CPU/CUDA checks | Record |
+| Area | Recorded checks | Record |
 | --- | --- | --- |
-| Native cylindrical 2D | Real walls, three momenta, RK/RKL, AMR transactions, prescribed Poisson, seven CPU/GPU pairs, fresh, memcheck and synccheck; bounded scope, original angular-momentum budget | [Native-device receipt](backend/results/release-readiness/Cyl5NativeDevice-20261019.json) |
-| Native cylindrical scientific admission | 15 original-time axial cases, 306 legal method/EOS pairs, strong/weak source admission, required coupled endpoints and current multiphysics fresh; scoped table domains and original budgets | [Comprehensive receipt](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |
+| Native cylindrical 2D | Real walls, three momenta, RK/RKL, AMR transactions, prescribed Poisson, seven CPU/GPU pairs, restart from a new process, memcheck and synccheck; bounded scope, original angular-momentum budget | [Device results](backend/results/release-readiness/Cyl5NativeDevice-20261019.json) |
+| Native cylindrical scientific cases | 15 original-time axial cases, 306 legal method/EOS pairs, strong/weak source admission, required coupled endpoints and multiphysics restart from a new process; documented table domains and error budgets | [Scientific results](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |
 | Smooth hydro | PCM/MUSCL/PPM spatial convergence at 64/128/256 cells; independent Euler/RK2/RK3 time accuracy; 1,016-step periodic advection | [hydro](hydro/README.md) |
 | Riemann and strong shocks | Sod and planar Sedov analytic profiles, three-resolution convergence and shock positions | [hydro](hydro/README.md#sod-shock-tube) |
 | Species diffusion | RKL1/RKL2 applications at three resolutions; second-order RKL2 spatial convergence | [diffusion](diffusion/README.md) |
@@ -39,49 +39,46 @@ The [current device record](backend/results/release-readiness/REL4CudaDeviceAndI
 | Built-in NSE | Sixteen application cases and 32 physical endpoints, with independent equilibrium and source-energy checks | [burn](burn/README.md) |
 | Geometry | Twelve high-precision metric references; thermal/species/viscous spatial convergence and radial-origin stability | [AMR](amr/README.md#independent-geometry-and-diffusion-checks) |
 | Sustained execution | 500 hydro and 100 diffusion AMR steps; twelve cycles per restart chain; 72 exact native burn-state replays and seven fixed-time burn comparisons | [AMR](amr/README.md#sustained-regridding-and-continuation), [restart](restart/README.md#sustained-native-restoration) |
-| Core compilation | Optimized cold ARCH build, no-op, compact-route incremental build and identical-work serial/parallel comparison; two heavy jobs and four total jobs | [Detailed build records](#detailed-verification-records) |
-| Bounded memory capacity | Regrid migration, a 16,384-row cuDSS matrix, generated burning and AMR applications; all observed dynamic allocations released | [Detailed capacity records](#detailed-verification-records) |
-| Focused backend instrumentation | Memcheck and racecheck each pass 23 complete routes, including weak thermodynamics and real generated cuDSS burning; clean memory and race reports | [Detailed device checks](#detailed-verification-records) |
 
-The recorded historical uniform application matrix
-contains 22 cases, 180 CPU/CUDA executions and 90 comparisons. The
-generated-network matrix
-adds six cases, 48 executions and 24 comparisons, including actual CPU KLU and
-GPU cuDSS selection for the 32-equation audit31 network. Module summaries link
-the independent scientific checks and preserve their original budgets.
+Native cylindrical 2D uses the axisymmetric `cylindrical-rz-pwc` chart, with
+three physical momentum components. The linked native-chart records include
+axial cases and coordinate-wall checks. Older cylindrical polar-plane records
+use a different chart and remain attached to their measured source.
 
-The linked historical Release and Debug regressions each passed 98 tests
-without skips; their CPU-only regression passed 31. Those totals describe the
-identified binaries in the records below. The associated focused memcheck and
-racecheck each passed all 23 routes. Their sparse tests cover three ODEs, both storage sizes and four
-subdivisions with the original numerical budgets. Ordinary scientific runs and
-memcheck retain the full `1e-10 s` interval; racecheck uses a separate `1e-12 s`
-observation interval. The shorter instrumentation run does not replace the
-full scientific trajectory. Host/device capacity and optimized core-build
-measurements are available in the detailed records below.
+The [CPU/CUDA integration results](backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+include 17 resource/batch contracts, nine legal coordinate-wall combinations,
+public application endpoints, regridding and input rejection. In the recorded
+24-step Cellular run, the ENUC comparison passes the `5e-9` relative plus
+`5e-12` absolute budget at all 25 checkpoints, with byte-identical values.
+Three rotating-AMR pairs pass their `1e-12` budget; both backends also pass
+continuation from a new process. The [burn guide](burn/README.md) explains
+which energy diagnostic ENUC represents.
 
-## Current verification selection
+## Run the tests
 
-The current CPU CTest list contains 75 entries: 68 numerical/API checks
-and seven tooling wrappers; the CUDA cache contains 142 entries, including 52
-CUDA-named entries. Registration alone is not an execution result.
-Hosted CI selects the numerical/API entries once and runs their tooling owners
-in its separate job; [the CI guide](../.github/workflows/README.md) explains the
-matching discovery and completion checks.
+Follow [Build](../docs/guides/Build.md#build-tests-only-when-you-need-them) to
+configure a test build. Inspect the tests registered for that build and run
+the complete selected suite:
 
-The [release qualification index](../docs/releases/README.md) owns current verification scope. Historical RZ PASS/FAIL/GAP and cost records remain evidence for their recorded implementations. Other coordinates and shared modules retain their existing numerical criteria.
+```sh
+ctest --test-dir build -N
+ctest --test-dir build --output-on-failure
+```
+
+Module guides provide application-level commands and inputs. Python validators
+use NumPy and h5py; tests with independent ODE or equilibrium references list
+their additional dependencies. CPU/CUDA comparisons require both binaries and
+the same physical input. Use a new output directory for each measurement.
+The [backend validation guide](backend/README.md) describes group selection,
+coupled runs and timing instrumentation. Hosted checks are described in the
+[CI guide](../.github/workflows/README.md).
 
 ## Error conventions
 
-Required ARCH verification uses analytical/manufactured solutions, independent
-references, conservation, convergence and backend comparisons. Comparisons with
-FLASH or other simulation programs are optional developer work; installing,
-building or obtaining results from those programs is not a prerequisite for
-ARCH tests, CI or release acceptance.
-
-Verification compares the implementation with analytic, manufactured, or
-independently converged references. Validation against experimental or
-published physical data will be labeled separately.
+Verification compares the implementation with analytic, manufactured or
+independently converged solutions. Validation against experimental or published
+physical data is identified separately. FLASH comparisons are optional
+performance studies; ARCH tests do not require a FLASH installation.
 
 For cell-volume-weighted field error,
 
@@ -92,131 +89,53 @@ L_2(q)=\sqrt{\frac{\sum_i V_i(q_i-q_i^{ref})^2}{\sum_i V_i}}.
 $$
 
 The observed rate between resolutions $N$ and $2N$ is
-$p=\log_2(E_N/E_{2N})$. Each record states any different norm or
-normalization. Machine-readable results are retained as CSV or JSON; a committed data
-processing script is optional when the formula, sampled outputs, commands, and
-metrics are sufficient to reproduce the decision.
+$p=\log_2(E_N/E_{2N})$. Each record specifies any alternative norm or
+normalization. AMR comparisons place numerical and reference fields on a common
+mesh and use physical cell volumes. Trajectory comparisons use the same
+prescribed physical time; exact checkpoint restoration separately compares
+native state, topology and controller metadata.
 
-## Record requirements
+## Add or reproduce a result
 
-### Directory layout and retained artifacts
+Use [CASE_TEMPLATE.md](CASE_TEMPLATE.md) to record:
 
-Each module owns one subdirectory containing a curated README, machine-readable metrics,
-immutable baseline parameter files under `inputs/`, and optional `figures/`. Each
-validation `.par` file names its owning record and must change together with the
-relevant metrics and acceptance decision. Reusable teaching and example inputs
-remain under `simulation/`; runtime data remain under `EOS_toolkit/`. Do not create
-a parallel validation tree. Reviewed measurements, sanitized hardware metadata
-and historical decisions belong under each module's `results/`, separate from
-the user-facing summary. Keep JSON/CSV metrics, immutable parameters, reference
-samples, reproduction scripts and compact failure explanations in Git.
+1. the equations, modules, dimension, geometry and property under test;
+2. the source commit, binary, compiler flags, backend, thread count and hardware;
+3. input files and checksums for external EOS or reference data;
+4. configure, build and run commands, reference provenance and sampling rules;
+5. field errors, residuals or invariants, acceptance tolerances and pass/fail results;
+6. CSV/JSON metrics, useful figures, and any safeguard activation or limitation.
 
-Generated checkpoints, plots, complete application transcripts and per-step
-backend/solver traces remain in local result directories or an identified local
-archive. Their retained identities and archive scope are described in the
-[raw-record archive index](archive/README.md). Raw files are not required by CI;
-regression fixtures and runtime EOS inputs retain their existing owners. A
-separately published data archive can accompany a study when its raw outputs
-are needed for independent analysis.
+Each module keeps its summary, `inputs/`, metrics and optional `figures/`
+together. Example simulations belong in `simulation/`; runtime tables belong
+in `EOS_toolkit/`. Update a result's input, metrics and summary together when
+its definition changes. Source-identified measurements remain reproducible
+through their recorded commit and data checksums.
 
-### Result identity and evidence
+Git stores compact metrics, reference samples, parameter files and reproduction
+scripts. Large checkpoints, plotfiles and complete execution traces are
+indexed separately; see [data availability](archive/README.md).
 
-Each case has one effective result set. Rerun in a temporary working directory,
-then update the existing result, summary and dependent index together after
-checking their identities. Do not accumulate numbered copies or relabel an earlier
-run as a new execution. Keep required reference data and failure controls under
-their stated test ownership; superseded working outputs do not belong in the
-published validation directory.
+## Interpreting the results
 
-Each completed record states:
-
-1. the property and modules tested, equations, dimension, and geometry;
-2. immutable `.par` inputs and checksums for external EOS/reference assets;
-3. configure, build, and run commands;
-4. commit, compiler/flags, OpenMP count, backend, and relevant hardware;
-5. reference provenance and sampling rules;
-6. L1/L2 errors or the module-specific residuals and invariants;
-7. an acceptance tolerance and explicit pass/fail result;
-8. retained CSV/JSON metrics and, where useful, a static figure;
-9. any safeguard activation or known implementation limitation.
-
-AMR comparisons must place reference and numerical fields on a documented
-common mesh and use physical cell volumes. CPU/CUDA comparisons use the same
-case source, parameters, reference and metric definitions. Physical acceptance
-compares solutions at the same prescribed time; exact checkpoint restoration
-has its own state and metadata checks.
+A component test establishes the combinations it exercises. The [EOS guide](eos/README.md)
+distinguishes normalized-table applications from focused native-table loading,
+component-completion and inversion checks. The [network guide](network/README.md)
+separates representative generated/weak networks from large-network trajectories
+and resource measurements. For GPU performance, use the
+[CUDA guide](../docs/CudaBackendStatus.md) and compare complete runs of a
+representative input on your hardware.
 
 <a id="final-candidate-verification"></a>
 
-## Recheck the acceptance records
-
-The completed campaigns cover the following areas on one frozen source and
-scientific-data set, with identified Debug/Release binaries, dependencies and
-comparators. Their delivery audit
-records the combined evidence and reviewed source assets. Each retained result
-identifies the source actually tested; the current maintenance checks are
-recorded separately from those scientific runs. A passing test report does not
-itself publish the source or confirm third-party redistribution permission.
-
-| Area | Reference or check | Required measurements |
-| --- | --- | --- |
-| Hydro/Riemann | analytic 1D Sod solution | density, velocity, pressure, energy L1/L2; feature positions; conservation |
-| Strong shock | planar Sedov similarity solution | profile L1/L2, shock position, energy, symmetry |
-| Hydro time integration | smooth semi-discrete reference | error versus time step for Euler, SSPRK2, SSPRK3 |
-| Geometry and diffusion | analytic and manufactured solutions | physical-volume metrics, source balance and thermal/species/viscous convergence with RKL1/RKL2 |
-| Dynamic AMR | refinement, coarsening and interface crossing | common-mesh L1/L2, topology, conservation and curved-coordinate face consistency |
-| EOS | Ideal, Helmholtz and normalized Tabular3D/Tabular4D references | domains, derivatives, inversions, errors and coupled hydro/burn behavior |
-| Burning and NSE | independent trajectories and equilibrium states | built-in/generated/weak composition and energy, tolerance refinement, equilibrium residuals and transitions |
-| HDF5/restart | uninterrupted and resumed dynamic-AMR runs | native fields, topology, controller/output metadata and compatibility/error checks |
-| CPU/CUDA policies | identical physics and accepted backend selections | field/state L1/L2, invariants, DenseLU/KLU/cuDSS selection and explicit rejection |
-| Reliability and capacity | full execution paths and sustained workloads | memory/race checks, repeated regrid/restart, host RAM, swap and device allocation peaks |
-| Build reproducibility | optimized cold and incremental core builds | identified sources and assets, compile time, safe concurrency and memory pressure |
-
-## Follow-up workloads and table formats
-
-ARCH's [tabular data contract](../src/physics/eos/TabularEOS.md) includes
-normalized 3D/4D HDF5, native EOSDriver total tables and the shared
-finite-temperature baryon ASCII format used by EOS2/EOS4. Declared missing
-electron/positron and photon components are assembled during loading. These
-extensions have their own [bounded EOS checks](eos/README.md), not the source
-identity or full coupled-application qualification of the frozen results above.
-Other source families still need explicit units, energy references, component
-scope and valid domains; there is no safe universal numerical-data inference.
-
-Complete large-network trajectories and scaling measurements are scheduled for
-machines sized for those workloads. They remain separate from the release
-profile's representative generated and weak networks; retained results and
-reproduction inputs are in [network validation](network/README.md).
-
-Use [CASE_TEMPLATE.md](CASE_TEMPLATE.md) for new records.
-
 ## Detailed verification records
 
-<details>
-<summary>Expand source identities, machine-readable data and execution logs</summary>
+The following records retain their measured sources and error budgets:
 
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
-
-- [Source delivery review](backend/results/final-acceptance-20260907/release-73a9cf50/README.md): detailed evidence inventory and source-asset checks.
-- [Integration review](../docs/histroy/integration/HpcCudaIntegration.md): code changes, test selection and exact identities.
-- [Maintenance and build records](backend/results/maintenance-freeze-20260908/README.md): source-specific dispatch and restart checks, including earlier RTX 3060 Ti timings. Those pre-optimization measurements are not current-code performance estimates.
-
-- [integration regression record (JSON)](backend/results/hpc-cuda-optimization/integration.json)
-- [3-D lifecycle (JSON)](amr/results/dynamic-3d-final-20260907/release-919/evidence.json)
-- [curved 2-D lifecycles (JSON)](amr/results/dynamic-curved-final-20260907/release-923/evidence.json)
-- [memcheck (JSON)](amr/results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
-- [racecheck (JSON)](amr/results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
-- [memcheck (JSON)](amr/results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
-- [racecheck (JSON)](amr/results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
-- [uniform application matrix (JSON)](backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
-- [generated-network matrix (JSON)](network/results/runtime-native-20260907/release-875/backend-validation-evidence.json)
-- [complete Release regression (JSON)](backend/results/final-first-law-20260907/release-regression-895/evidence.json)
-- [CPU-only regression (JSON)](backend/results/final-first-law-20260907/cpu-regression-897/evidence.json)
-- [complete Debug regression (JSON)](backend/results/final-first-law-20260907/debug-regression-910/evidence.json)
-
-- [build measurements](backend/results/cold-core-first-law-20260907/release-909/README.md)
-- [capacity measurements](backend/results/device-memory-first-law-20260907/README.md)
-- [instrumentation records](backend/results/final-first-law-20260907/README.md)
-- [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50)
-
-</details>
+- [Uniform application matrix](backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json): 22 cases, 180 executions and 90 comparisons.
+- [Generated-network matrix](network/results/runtime-native-20260907/release-875/backend-validation-evidence.json): six cases, 48 executions and 24 comparisons, including CPU KLU and GPU cuDSS for the 32-equation audit31 network.
+- [Device instrumentation](backend/results/final-first-law-20260907/README.md): memcheck and racecheck each cover 23 routes, including three ODEs, both sparse storage sizes and four subdivisions. Scientific runs and memcheck use `1e-10 s`; racecheck uses a separate `1e-12 s` observation interval.
+- [Three-dimensional AMR lifecycle](amr/results/dynamic-3d-final-20260907/release-919/evidence.json) and [curved AMR lifecycle](amr/results/dynamic-curved-final-20260907/release-923/evidence.json).
+- [Build measurements](backend/results/cold-core-first-law-20260907/release-909/README.md): cold, incremental and no-op builds, including a two-heavy-job/four-total-job comparison.
+- [Memory capacity](backend/results/device-memory-first-law-20260907/README.md): regrid migration, a 16,384-row cuDSS matrix, generated burning and AMR, with observed dynamic allocations released.
+- [GPU performance measurements](backend/results/hpc-cuda-optimization/README.md) and [ARCH/FLASH comparison](gravity/flash/README.md).

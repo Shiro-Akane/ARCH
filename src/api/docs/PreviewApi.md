@@ -6,16 +6,7 @@
 
 ## CPU 构建
 
-使用现有 ARCH CPU 构建流程即可。例如在项目根目录：
-
-```sh
-cmake -S . -B build-studio-cpu \
-  -DARCH_ENABLE_CUDA=OFF \
-  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-studio-cpu/bin"
-cmake --build build-studio-cpu --target ARCH -j 1
-```
-
-依赖与普通 ARCH CPU 构建相同：C++20、HDF5、HighFive，以及所选构建选项需要的依赖。仅验证预览时，可在配置命令中增加 `-DARCH_ENABLE_KLU=OFF`，避免为大反应网络准备 KLU。已有 CPU 构建目录可以直接更新和重新编译。
+按[共用构建指南](../../../docs/guides/Build.zh-CN.md#cpu-build)准备 Linux/WSL 或原生 Windows CPU 程序。CUDA 构建也提供相同的 CPU 预览入口。下方 shell 示例使用 `build-studio-cpu/bin/ARCH`；Windows 程序名为 `ARCH.exe`，Host 直接通过 stdin 传入配置字节。
 
 该命令入口在创建科学输出目录、启动持久日志和解析计算后端之前分流。GUI 预览固定使用 CPU；它不修改配置中对正式计算后端的选择。
 
@@ -29,7 +20,7 @@ build-studio-cpu/bin/ARCH --preview-capabilities
 
 返回一个 JSON 对象，包括 `schemaVersion`、支持的模型和维度、EOS 输入名称、字段列表、数量限制，以及 `amrHierarchy`、`parameterTracing`、`markers` 等能力开关。
 
-**新 Host 使用 `modelCapabilities` 按 case 协商。** 每项包含 `caseId/dimensions/geometries/previewBackend/fields/maxFields/maxResponseBytes/sampling`。CellularDet 另有 `supportedShockDirections=[0,1]`。`sampling.defaultShape` 使用与响应一致的 `[Ny,Nx]` 顺序（一维为 `[N]`），其余限制为 `minPerAxis/maxPerAxis/maxTotalSamples`。为保持旧客户端兼容，顶层 `cases/dimensions/fields/defaultSamples/minSamples/maxSamples` 仍是原有 Sod 视图，不表示所有模型；不要混用两个层级的采样限制。
+**Host 使用 `modelCapabilities` 按 case 协商。** 每项包含 `caseId/dimensions/geometries/previewBackend/fields/maxFields/maxResponseBytes/sampling`。CellularDet 另有 `supportedShockDirections=[0,1]`。`sampling.defaultShape` 使用与响应一致的 `[Ny,Nx]` 顺序（一维为 `[N]`），其余限制为 `minPerAxis/maxPerAxis/maxTotalSamples`。为保持旧客户端兼容，顶层 `cases/dimensions/fields/defaultSamples/minSamples/maxSamples` 仍是原有 Sod 视图，不表示所有模型；不要混用两个层级的采样限制。
 
 `eosTypes` 是 `.par` 接受的名称：`ideal`、`helmholtz`、`tabular`。表格 EOS 由实际数据确定为 `tabular3d` 或 `tabular4d`。能力列表说明可调用的现有 CPU 路径；具体数据是否加载成功、输入是否在 EOS 的适用范围内，以本次请求结果为准。
 
@@ -55,7 +46,7 @@ Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，
 
 ### 按配置维度生成通用初态
 
-新增可选 extensions.initialSampling.version="1"；外层 schema 保持1.0。
+`extensions.initialSampling.version="1"` 声明通用初态采样；外层 schema 为 1.0。
 采样维度来自解析后的配置，不能从模型文件名或默认维度猜测。
 已注册不等于自动支持；未知自定义模型仍可检查，不会自动获得完整场能力。
 每个模型的维度/几何域见 modelCapabilities，具体组合仍由真实 SetupChecked 检查。
@@ -87,7 +78,7 @@ BurnOneZone标为uniform-state，不能把重复采样解释为反应轨迹。
 纯流体零物种继续使用共享IdealGas原有闭合，不注入虚构species或客户端物理默认。
 
 真实AMR使用相同模型域并复用已有初始化/细化路径。
-新曲线几何AMR的data.unit=null，通过版本化coordinates.metadata逐轴给单位；
+曲线几何 AMR 的 data.unit=null，通过版本化coordinates.metadata逐轴给单位；
 不能将angular bounds/cellSpacing称为cm。AMR层级没有cell field arrays，
 完整场Init样本也不是细化单元平均值。成功初态不认证引力场、演化、GPU或科学收敛。
 
@@ -148,15 +139,15 @@ graphicalBindings?: { version: "1", items }
 | key / type | `x_pos` / `float`；数值为 double 精度，不表示 float32 |
 | explicitValue | 成功读取的显式值；键缺失时为 null，存在但格式错误的数值会使 Setup 失败 |
 | effectiveValue | Setup 实际读取值；无法归并时为 null |
-| defaultValue | 该次 Get 调用传入的默认值；本例为 0.5，不是域中点 |
-| rawValue | 存在时返回原解析器保留的有效 token；重复 key 采用最后一项 |
+| defaultValue | 该次 Get 调用记录的 fallback 实参；Sod 为 0.5，配置 v3 仍要求显式提供 x_pos |
+| rawValue | 存在时返回原解析器保留的有效 token；重复键由配置检查拒绝 |
 | valueSource | `explicit`、`default` 或 `unknown` |
 | sourceReason | 显式值为 null；键缺失而采用默认值时为 `missing-key`；其他见下文 |
 | unit / unitEvidence / description | Sod x_pos 为 cm，附显式轴绑定依据；不自动解释 custom 含义，description 仍为 null |
 | constraints | 本次域的 min/max；两个 Inclusive 字段均为 false |
 | diagnostics | 参数级 severity/code/message 列表 |
 
-缺失 `x_pos` 时，Sod Setup 使用调用者提供的默认值 0.5。显式 `x_pos=bad`、`x_pos=0.35suffix`、`x_pos=nan` 和超出 double 表示范围的数值均作为错误拒绝，不会退回 0.5；Setup 阶段返回错误、空参数读取记录和空位置绑定。重复键取最后一次赋值，若最后的值无效也会报错。
+`x_pos` 是 Sod 声明的必填项；缺失、重复、非有限或格式错误的输入在配置准备时被拒绝，不能采用 Get 的 fallback 实参。只有通过配置检查并进入 Setup 的读取才产生对应 metadata 和图形绑定。
 
 重复读取若类型、默认值、值或来源不一致，报告 `AMBIGUOUS_PARAMETER_READ`，type/explicitValue/effectiveValue/defaultValue 为 null，来源为 `unknown/ambiguous-reads`。若程序改写参数值而无法归因于原输入，报告 `PARAMETER_SOURCE_UNKNOWN` 和 `unknown/untracked-value`。两者均不提供可编辑绑定。参数级诊断使用 warning；无效的显式数值通过顶层错误响应报告。
 
@@ -169,7 +160,7 @@ graphicalBindings?: { version: "1", items }
 
 Setup 越界失败时，保留已经读取的值及约束，`data=null`，绑定 items 为空。EOS 或采样失败也只保留已确认的 metadata，不提供本次成功绑定。Setup 之前的失败没有这些扩展，不能把缺失理解为“使用了默认值”。
 
-Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；不自动保存或重新预览。用户点击 Update Preview 后提交完整文本。未填写 x_pos 时，Studio 负责安全插入赋值。旧曲线、旧 effectiveValue、位置绑定和状态快照必须保持同一请求身份；候选位置不得改写旧响应。
+Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；不自动保存或重新预览。用户点击 Update Preview 后提交完整文本。缺失 x_pos 时由用户在配置表单中填写。旧曲线、旧 effectiveValue、位置绑定和状态快照必须保持同一请求身份；候选位置不得改写旧响应。
 
 ### 场数据
 
@@ -273,7 +264,7 @@ CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，�
 |---|---|
 | Preview.h | 请求、结果和数量限制 |
 | Preview.cpp / StateSnapshot.cpp | 初始场、共用状态快照、数据检查和结果组织 |
-| ApplicationContract.h / WorkerLimits.cpp | 统一命令、版本、预算及 Linux worker 限制 |
+| ApplicationContract.h / WorkerLimits.cpp | 统一命令、版本、预算及 Linux/Windows worker 限制 |
 | CaseInspection.cpp / CaseUnitEvidence.cpp | ProblemGenerator 检查流程、与编译源码匹配的模型单位依据 |
 | Discovery.cpp | 注册模型、编译源码身份及能力查询 |
 | ResourceEstimates.cpp / InitialMesh.h | 逐级资源提示、真实有界 AMR 初始网格 |
@@ -301,7 +292,7 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 
 `preview_sampling_limits` 检查分配前数量限制、真实网格的非活动坐标、JSON 字节边界及超限状态保留。`preview_cellular_2d` 检查真实 CLI 的二维排列、两个方向、噪声影响、直接 Init/EOS 对照、实际 Helmholtz 输入、采样/响应限制、错误、取消及无文件输出。直接对照程序仅供测试，不是 Host 需要管理的另一个生产程序。
 
-历史初始采样与二维预览的实现记录见 [初始采样记录](../../../docs/histroy/studio/core-api/CORE_A_HANDOFF.md) 和 [二维预览记录](../../../docs/histroy/studio/core-api/CORE_B_HANDOFF.md)。CPU 预览的验证范围不包括 CUDA、完整模拟或 Studio UAT。
+平台工具配置与桌面检查见[构建指南](../../../docs/guides/Build.zh-CN.md#studio-desktop)和[Studio 测试](../../../studio/tests/README.md)。
 
 ## 配置与物理下限契约
 
@@ -309,6 +300,5 @@ GUI 以 `--config-schema` 的实际响应取得标准参数目录。已退役的
 `RETIRED_PARAMETER`，不能重新写入编辑器。`dt_init/dt_min/tstep_change_factor` 已登记，
 参数按物理模块归属。
 
-状态下限、EOS 与检查点格式见[参考手册](../../../docs/Reference.zh-CN.md)；
-[迁移记录](../../../docs/histroy/low-density/ImplementationReport.zh-CN.md)保留实施历史。
-[配置示例](../examples/configuration/README.md)与 Sod 初态检查 的无效数值响应已同步当前解析规则；其余 初始采样与二维预览 场景保留对应阶段的响应快照。
+状态下限、EOS 与检查点格式见[参考手册](../../../docs/Reference.zh-CN.md)。
+配置字段、必填条件与来源语义见[配置接口](CONFIGURATION_API.md)。

@@ -10,6 +10,7 @@
 #include "driver/dispatch/capability/RuntimeProbe.h"
 
 #include <cstring>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -18,9 +19,43 @@
 #define ARCH_D1_TEST_CUDA_BUILD 0
 #endif
 
+#if defined(_WIN32) && ARCH_D1_TEST_CUDA_BUILD && ARCH_HAS_CUDSS_PROVIDER
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace {
 
 using namespace arch::dispatch;
+
+#if defined(_WIN32) && ARCH_D1_TEST_CUDA_BUILD && ARCH_HAS_CUDSS_PROVIDER
+// The small probe test does not link the application's provider imports.
+// Supply that startup prerequisite explicitly; production only inspects it.
+class NativeSparseImports {
+    std::array<HMODULE, 3> handles_{
+        LoadLibraryA(ARCH_TEST_CUBLASLT_RUNTIME_LIBRARY),
+        LoadLibraryA(ARCH_TEST_CUBLAS_RUNTIME_LIBRARY),
+        LoadLibraryA(ARCH_TEST_CUDSS_RUNTIME_LIBRARY)};
+    void release() noexcept {
+        for (auto it = handles_.rbegin(); it != handles_.rend(); ++it)
+            if (*it) { FreeLibrary(*it); *it = nullptr; }
+    }
+public:
+    NativeSparseImports() {
+        for (const auto handle : handles_) {
+            if (!handle) {
+                release();
+                throw std::runtime_error("Cannot load the native probe test's configured sparse imports");
+            }
+        }
+    }
+    ~NativeSparseImports() { release(); }
+    NativeSparseImports(const NativeSparseImports&) = delete;
+    NativeSparseImports& operator=(const NativeSparseImports&) = delete;
+};
+#endif
 
 void expect(bool condition, const std::string& message)
 {
@@ -32,6 +67,7 @@ RuntimeProbeResult available(int major = 9, int minor = 0)
     RuntimeProbeResult result{};
     result.state = RuntimeProbeState::Available;
     result.failure = ProbeFailureCode::None;
+    result.cudss = ProviderProbeState::Available;
     result.device.ordinal = 0;
     result.device.compute_major = major;
     result.device.compute_minor = minor;
@@ -45,6 +81,9 @@ RuntimeProbeResult available(int major = 9, int minor = 0)
 struct CountingLoader final : RuntimeLoader
 {
     int calls = 0;
+    int provider_calls = 0;
+    bool provider_available = true;
+    bool cudss_available() noexcept override { ++provider_calls; return provider_available; }
     RuntimeProbeResult answer = available();
     RuntimeProbeResult query(int) noexcept override
     {
@@ -87,6 +126,33 @@ void expect_cpu_code(const ResolvedExecutionPlan& plan,
 {
     const CapabilityResult support = query_support(plan, requirements, probe);
     expect(!support.cpu_supported && support.cpu_code == code, label);
+}
+
+void test_provider_probe_is_on_demand()
+{
+    for (const ComputeBackend backend : {ComputeBackend::Cpu, ComputeBackend::Auto,
+                                         ComputeBackend::Cuda}) {
+        for (const bool build : {false, true}) {
+            for (const bool required : {false, true}) {
+                for (const bool provider : {false, true}) {
+                    CountingLoader loader;
+                    loader.provider_available = provider;
+                    const auto result = probe_runtime({backend, build, 0, required}, loader);
+                    const bool query_provider = backend != ComputeBackend::Cpu && build && required;
+                    expect(loader.provider_calls == static_cast<int>(query_provider),
+                           "only a built CUDA sparse candidate probes cuDSS");
+                    expect(result.cudss == (!query_provider ? ProviderProbeState::NotRequested
+                        : provider ? ProviderProbeState::Available : ProviderProbeState::Unavailable),
+                        "provider availability is separate from device availability");
+                }
+            }
+        }
+    }
+    CountingLoader loader;
+    loader.answer.state = RuntimeProbeState::Unavailable;
+    const auto result = probe_runtime({ComputeBackend::Auto, true, 0, true}, loader);
+    expect(loader.provider_calls == 0 && result.cudss == ProviderProbeState::NotRequested,
+           "an unavailable device does not load sparse vendor libraries");
 }
 
 void test_probe_matrix_and_failures()
@@ -387,6 +453,25 @@ void test_all_requirement_codes()
 #if ARCH_HAS_CUDSS_PROVIDER
     expect(support.cuda_supported,
            "committed cuDSS provider makes explicit CUDA+cuDSS available");
+    for (const auto state : {ProviderProbeState::Unavailable, ProviderProbeState::NotRequested}) {
+        auto missing = probe;
+        missing.cudss = state;
+        const auto unavailable = query_support(p, r, missing);
+        expect(!unavailable.cuda_supported
+            && unavailable.cuda_code == BackendCapabilityCode::CuDssRuntimeUnavailable,
+            "a compiled provider requires checked runtime dependencies");
+        for (const auto backend : {ComputeBackend::Cuda, ComputeBackend::Auto}) {
+            bool refused = false;
+            try { (void)resolve_backend(backend, unavailable, missing, StartupPhase::BeforeConstruction); }
+            catch (const std::runtime_error& error) {
+                const std::string message = error.what();
+                refused = message.find("Restore the configured cuDSS/CUDA") != std::string::npos
+                    && message.find("CUDSS_ROOT") != std::string::npos
+                    && message.find("ARCH_ENABLE_CUDSS=ON") != std::string::npos;
+            }
+            expect(refused, "explicit cuDSS must not switch solvers when runtime files are missing");
+        }
+    }
 #else
     expect(!support.cuda_supported
                && support.cuda_code
@@ -456,8 +541,10 @@ void test_all_requirement_codes()
             ComputeBackend::Auto, support, probe,
             StartupPhase::BeforeConstruction);
     } catch (const std::runtime_error& error) {
-        rejected = std::string(error.what())
-            == "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider";
+        const std::string message = error.what();
+        rejected = message.starts_with("cuDSS was selected, but this ARCH build has no CUDA cuDSS provider")
+            && message.find("ARCH_ENABLE_CUDSS=ON") != std::string::npos
+            && message.find("CUDSS_ROOT") != std::string::npos;
     }
     expect(rejected,
            "compute Auto plus explicit cuDSS fails when its provider is absent");
@@ -549,6 +636,18 @@ void test_all_requirement_codes()
     expect(large_resolution.resolved_backend == ComputeBackend::Cuda
                && large_resolution.fallback_reason.empty(),
            "explicit large sparse CUDA route never silently falls back to CPU");
+#if ARCH_HAS_KLU
+    auto missing = probe;
+    missing.cudss = ProviderProbeState::Unavailable;
+    const auto unavailable = query_support(
+        large_cpu.value, large_cuda.value, large_requirements, missing);
+    const auto automatic = resolve_backend(
+        ComputeBackend::Auto, unavailable, missing, StartupPhase::BeforeConstruction);
+    expect(automatic.resolved_backend == ComputeBackend::Cpu
+        && automatic.code == BackendCapabilityCode::CuDssRuntimeUnavailable
+        && !automatic.fallback_reason.empty(),
+        "automatic backend and solver retain CPU KLU with the provider failure reason");
+#endif
 #else
     expect(!support.cuda_supported
                && support.cuda_code
@@ -651,6 +750,61 @@ void test_native_probe()
     expect(native.device.primary_context_active_before
                == native.device.primary_context_active_after,
            "native probe must not activate primary context");
+#if ARCH_HAS_CUDSS_PROVIDER
+#ifdef _WIN32
+    NativeSparseImports sparse_imports;
+#endif
+    // The integration check may remove its own configured library copy. It
+    // never alters a system installation or changes production resolution.
+    const bool expect_missing = std::getenv("ARCH_TEST_EXPECT_MISSING_CUDSS") != nullptr;
+    const auto sparse_probe = probe_runtime_native({ComputeBackend::Cuda, true, 0, true});
+    expect(sparse_probe.cudss == (expect_missing
+        ? ProviderProbeState::Unavailable : ProviderProbeState::Available),
+        "native sparse probe must reflect the configured runtime library files");
+    const auto after_sparse = probe_runtime_native({ComputeBackend::Cuda, true, 0});
+    expect(after_sparse.device.primary_context_active_before
+        == native.device.primary_context_active_before,
+        "loading sparse vendor libraries must not activate the primary context");
+    // This is a capability fixture with a real device/provider probe, not a
+    // physical large-network simulation or a species-layout qualification.
+    auto cpu_plan = supported_plan();
+    cpu_plan.network = NetworkId::Iso7;
+    cpu_plan.ode_solver = OdeSolverId::BeNr;
+    cpu_plan.linear_solver = LinearSolverId::SparseKlu;
+    auto cuda_plan = cpu_plan;
+    cuda_plan.linear_solver = LinearSolverId::CuDss;
+    auto requirements = supported_requirements();
+    requirements.burn = true;
+    requirements.species_count = BurnLimits::MAX_SPECIES + 1;
+    requirements.state_layout |= StateLayoutRequirement::SpeciesMassFractions
+        | StateLayoutRequirement::EnucDiagnostic;
+    const auto support = query_support(cpu_plan, cuda_plan, requirements, sparse_probe);
+    expect(support.cuda_supported == !expect_missing,
+           "native library availability must reach the central support result");
+    if (expect_missing) {
+        expect(support.cuda_code == BackendCapabilityCode::CuDssRuntimeUnavailable,
+               "missing sparse libraries have an explicit runtime capability code");
+#if ARCH_HAS_KLU
+        const auto automatic = resolve_backend(
+            ComputeBackend::Auto, support, sparse_probe, StartupPhase::BeforeConstruction);
+        expect(automatic.resolved_backend == ComputeBackend::Cpu
+            && automatic.fallback_reason.find("CUDSS_ROOT") != std::string::npos,
+            "Auto keeps CPU KLU and explains the missing native sparse provider");
+#endif
+        bool refused = false;
+        try { (void)resolve_backend(ComputeBackend::Cuda, support, sparse_probe,
+                                    StartupPhase::BeforeConstruction); }
+        catch (const std::runtime_error&) { refused = true; }
+        expect(refused, "explicit CUDA refuses missing native sparse libraries");
+        const auto pinned = query_support(cuda_plan, cuda_plan, requirements, sparse_probe);
+        refused = false;
+        try { (void)resolve_backend(ComputeBackend::Auto, pinned, sparse_probe,
+                                    StartupPhase::BeforeConstruction); }
+        catch (const std::runtime_error&) { refused = true; }
+        expect(refused, "explicit cuDSS never switches to KLU when its files disappear");
+    }
+    std::cout << "native_cudss=" << (expect_missing ? "unavailable" : "available") << '\n';
+#endif
     std::cout << "native_device=" << native.device.device_name.data()
               << " cc=" << native.device.compute_major << '.' << native.device.compute_minor
               << " runtime=" << native.device.runtime_version
@@ -693,6 +847,7 @@ void test_curvilinear_large_passive_capabilities()
 int main()
 {
     test_probe_matrix_and_failures();
+    test_provider_probe_is_on_demand();
     test_code_image_contract();
     test_all_requirement_codes();
     test_curvilinear_large_passive_capabilities();

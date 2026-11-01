@@ -13,10 +13,12 @@ CPU 与 CUDA 共用一种检查点格式和读取器。只要目标构建支持�
 就可以从检查点切换后端继续运行。验证将续算与不间断运行进行比较，包含动态加密和
 燃烧。整体验收状态统一见[验证索引](../README.zh-CN.md)。
 
-[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
-补齐四组原256步RT GPU续算、五步四模块AMR续算及已重建的轴向模型。
-自身fresh保持严格控制器／场检查、全部CHK及Plot物理数据集逐位一致；独立CPU／GPU自然CFL终点不同者补实际同时间对照，
-不改时间或放宽fresh契约。私有Cellular ENUC跨后端门仍独立保持未通过。
+[CUDA 续算结果](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+包含四组 256 步 RT 续算、五步四模块 AMR 和原生轴向模型。同后端续算保持控制器
+状态与全部检查点／Plot 物理数据集；独立 CPU/CUDA 轨迹的自然 CFL 时刻不同时，
+采用共同物理时刻对照。24 步 Cellular 的全部 25 个检查点通过 ENUC 的 `5e-9`
+相对加 `5e-12` 绝对误差预算，从第 12 个检查点续算也与连续演化一致。源项能量
+定义见[燃烧验证](../burn/README.zh-CN.md)。
 
 ## 检查点保存什么
 
@@ -37,14 +39,13 @@ memcheck/racecheck 四组检查各完成十二次执行和九次严格比较；�
 实际 CUDA 进程，报告完整且无报错。各记录保留实际受测源码与程序的身份，详细入口
 集中在本页末尾。
 
-## 当前 CPU 续算
+## CPU 续算结果
 
-[当前 CPU 记录](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
-覆盖 RT、BurnGradient、CooperativeHotspots 和 Cartesian 四模块 SNIa，分别从
-重网格后及终态检查点启动新进程。采用的夹具通过原时间、控制器、拓扑、物理配置身份
-与实际输出历史门槛，全部原生物理数组逐位相同。SNIa 同时匹配 checkpoint 和 plot
-边界；此前边界不匹配的数值／存储位及输出历史结果原样保留，求解器历史策略和比较
-预算未改。这些短检查不重新授予历史长程、原 SNIa `1e-8 s` 资格或 CUDA 执行证据。
+[CPU 续算记录](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+检查 RT、BurnGradient、CooperativeHotspots 和 Cartesian 四模块 SNIa，从重网格后
+及终态检查点启动新进程。各案例通过时间、控制器、拓扑、物理身份和输出历史检查，
+原生物理数组逐位一致。SNIa 对齐检查点和 Plot 输出边界。这份记录覆盖这些短程 CPU
+轨迹；包括 `1e-8 s` SNIa 终点在内的更长运行另有记录。
 
 <a id="发布候选版本已完成的检查"></a>
 
@@ -136,15 +137,13 @@ python3 tools/validate_cuda_amr_restart.py \
 <details>
 <summary>展开源码身份、机器可读数据与执行日志</summary>
 
-下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
-
 - [光滑平流记录 (JSON)](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
 - [燃烧／ENUC 记录 (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
 - [memcheck 检查 (JSON)](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
 - [racecheck 检查 (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
 - [持续运行记录 (JSON)](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
 
-- [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [共用实现契约](../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 - [维护复验](../backend/results/maintenance-freeze-20260908/README.zh-CN.md)
 
 </details>

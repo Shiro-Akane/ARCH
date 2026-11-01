@@ -18,4 +18,4 @@ gravity constant; cases never include `physics/constant/PhysicalConstants.h`.
 Inputs and outputs use CGS, including IdealGas. Explicit heat capacities use
 `erg/(g K)`; ARCH does not implicitly convert user values. See the
 [case guide](../docs/guides/SimulationCase.md) and
-[header convention](../docs/development/layout/README.zh-CN.md).
+[header convention](../docs/development/ImplementationOwnership.md#source-layout-and-public-case-headers).

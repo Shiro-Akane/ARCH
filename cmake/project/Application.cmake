@@ -2,6 +2,7 @@
 # Target ownership stays in the project directory, including when tests are off.
 
 include(GNUInstallDirs)
+find_package(Threads REQUIRED)
 
 set(APP_SRC_DIRS
     "src/api"
@@ -92,6 +93,7 @@ set(DISPATCH_SRC_DIRS
 # Policy binding and its I/O/gravity adapters consume the shared Runtime owner.
 set(ARCH_DISPATCH_SOURCES
     src/driver/SolverDispatch.cpp
+    src/driver/dispatch/ExecutionPreflight.cpp
     src/driver/io/DriverIO.cpp
     src/driver/stages/GravityStage.cpp
     src/amr/elliptic/EllipticMeshAdapter.cpp)
@@ -264,6 +266,7 @@ if(ARCH_EMIT_LINK_DEPENDENCIES)
 endif()
 
 target_link_libraries(ARCH PRIVATE arch_solver_dispatch)
+target_link_libraries(ARCH PRIVATE Threads::Threads)
 if(CMAKE_DL_LIBS)
     target_link_libraries(arch_driver_runtime PRIVATE ${CMAKE_DL_LIBS})
     target_link_libraries(arch_solver_dispatch PRIVATE ${CMAKE_DL_LIBS})

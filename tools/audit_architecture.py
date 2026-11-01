@@ -822,6 +822,11 @@ def audit_tree(root: pathlib.Path):
             "src/driver/SolverDispatch.cpp",
         }:
             fallback_scan = re.sub(r"\bfallback_reason\b", "", fallback_scan)
+        if relative == "src/api/inspection/ExecutionPreflight.cpp":
+            # The Run query serializes the central resolver's existing reason.
+            # Do not exempt new fallback state or execution branches here.
+            fallback_scan = re.sub(
+                r"\bready\s*\.\s*backend\s*\.\s*fallback_reason\b", "", fallback_scan)
         cuda_production = lowered.startswith("src/cuda/")
         if (cuda_production
                 and not _is_pod_geometry_adapter(relative, content)

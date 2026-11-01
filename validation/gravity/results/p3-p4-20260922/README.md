@@ -1,11 +1,11 @@
-# P3/P4 composite CPU self-gravity acceptance
+# Composite CPU self-gravity acceptance
 
 Date: 2026-09-22 (JST). Branch: `physics/selfgravity`.
 Parent: `3c73cca2c5a4ab81d30ca2cc309db4d25a7a6feb` (pushed P2).
 The candidate source is the commit containing this record; executable identities
 are recorded separately because CPU Debug and CUDA Release are different builds.
 
-The [implementation contract](../../../../docs/development/P3P4CompositeGravity.zh-CN.md)
+The [implementation contract](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P3P4CompositeGravity.zh-CN.md)
 defines the algorithms, acceptance budgets, ownership and supported combinations.
 This record qualifies the basic periodic Cartesian CPU route, including composite
 AMR, stage coupling and restart. It does not qualify isolated boundaries, GPU

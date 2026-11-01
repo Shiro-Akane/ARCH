@@ -22,6 +22,7 @@
 
 #include "api/CaseInspection.h"
 #include "api/Configuration.h"
+#include "api/ExecutionPreflight.h"
 #include "api/Preview.h"
 #include "api/PreviewSession.h"
 #include "api/preview/ResourceEstimates.h"
@@ -33,6 +34,8 @@ namespace arch::api {
 /** Parse a one-shot inspection/preview CLI command and emit its response. */
 int RunPreviewCommand(int argc, char **argv) {
     PreviewResponse response;
+    PreviewRequest request;
+    if (argc > 2) request.case_id = argv[2];
     using contract::Command;
     const auto* definition = argc > 1 ? contract::find(argv[1]) : nullptr;
     const auto command = definition ? definition->command : Command::Fields;
@@ -52,8 +55,6 @@ int RunPreviewCommand(int argc, char **argv) {
         }
         if (argc < 4)
             throw std::invalid_argument("Usage: ARCH " + std::string(definition->flag) + " CASE --config-stdin [--request-id ID]");
-        PreviewRequest request;
-        request.case_id = argv[2];
         request.initial_mesh = mesh;
         std::set<std::string> seen;
         bool config_stdin = false;
@@ -112,13 +113,15 @@ int RunPreviewCommand(int argc, char **argv) {
         if (mesh || command == Command::InspectCase)
             ApplyInspectionProcessLimits(command == Command::InspectCase ? contract::case_cpu_seconds : contract::worker_cpu_seconds);
         switch (command) {
+            case Command::CheckRun: response = CheckExecutionPreflight(request); break;
             case Command::Resources: response = EstimateAmrResources(request); break;
             case Command::Configuration: response = InspectConfiguration(request); break;
             case Command::InspectCase: response = InspectCase(request); break;
             default: response = GeneratePreview(request); break;
         }
     } catch (const std::exception &error) {
-        if (!definition || command == Command::Fields) response = PreviewInputError(error.what());
+        if (command == Command::CheckRun) response = ExecutionPreflightInputError(request, error.what());
+        else if (!definition || command == Command::Fields) response = PreviewInputError(error.what());
         else response = {detail::Json::object({{"schemaVersion", contract::schema_version}, {"version", std::string(definition->version)},
             {"kind", std::string(definition->kind)}, {"status", "error"}, {"identity", detail::Json()},
             {"diagnostics", detail::Json::array({detail::Json::object({

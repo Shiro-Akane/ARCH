@@ -2,28 +2,27 @@
 
 [中文](README.zh-CN.md) · [Project homepage](../README.md)
 
-Linux/WSL2 is recommended. Native Windows11 x64 provides the complete CPU/CUDA CLI and Studio functionality within the existing scientific scope, with newer support that may still have instability or bugs. The shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides explain both systems, model/parameter navigation and `.par`/Plotfile paths. The [final correspondence record](histroy/build/WindowsNativeCudaQualification-20261027.md) maps the accepted functionality and platform limits.
+Start with the build guide and a small Sod calculation. ARCH uses CGS units for inputs, outputs and physical constants. Linux is recommended; Windows 11 supports the same CPU/CUDA and Studio workflows, with the tested configurations and limitations listed in [Platform support](releases/PlatformSupport.md).
 
-Begin with [build and first run](../README.md#build), then use the [case guide](guides/SimulationCase.md) to inspect output or write a problem. Inputs, outputs and physical constants use CGS.
+## Getting started
 
-Current version status starts in the [release index](releases/README.md): v1.4.0 adds native Windows support (2026-10-27), while published/frozen versions retain their original scope. Dated investigations remain in [history](histroy/README.md).
+| Task | Guide |
+| --- | --- |
+| Install dependencies and compile on Linux or Windows | [Build](guides/Build.md) |
+| Run Sod, inspect output and create a problem | [Simulation cases](guides/SimulationCase.md) |
+| Edit parameters, preview initial conditions and inspect output visually | [ARCH Studio](guides/Studio.md) |
+| Select a physical model or numerical method | [Features](Features.md) |
+| Look up a parameter, boundary or public interface | [Reference](Reference.md) |
 
-## Choose features and settings
+The [simulation catalogue](../simulation/README.md) contains runnable examples. The [CUDA guide](CudaBackendStatus.md) explains backend selection; the [boundary guide](guides/UserBoundaries.md) explains custom fluid and potential conditions.
 
-- [Feature list](Features.md): available modules, coordinates, boundaries and self-gravity domains.
-- [Parameter and API reference](Reference.md): settings, method combinations, case interfaces and restart rules.
-- [CUDA guide](CudaBackendStatus.md): backend choice and AMR execution.
-- [Build guide](guides/Build.md): dependencies, presets, EOS tables and compile resources.
-- [Simulation catalogue](../simulation/README.md): runnable problems and example inputs.
-- [ARCH Studio](guides/Studio.md): Linux/Windows desktop, parameter workspace, initial Preview/AMR and read-only Plotfile workflow.
+## Results and reproducibility
 
-## Interpret results
+- [Validation](../validation/README.md): reference problems, error budgets, convergence and backend comparisons.
+- [Physics notes](physics/README.md) and [EOS tables](../EOS_toolkit/README.md): scientific models and data sources.
+- [Release notes](releases/README.md): version changes and compatibility.
+- [Citation](zenodo/README.md) and [licenses](legal/README.md): attribution for software, code and data.
 
-- [Validation index](../validation/README.md): module errors, conservation, coupling and backend checks.
-- [Physics notes](physics/README.md) and [EOS tables](../EOS_toolkit/README.md): model and data provenance.
-- [Release notes](releases/README.md): changes in identified source versions.
-- [Legal and provenance index](legal/README.md): licenses for code, models and data.
+## Development and support
 
-## Develop and discuss
-
-The [contributor guide](development/README.md) covers implementation ownership, current verification workflow and historical records. Use the [test guide](../tests/README.md) and [tool index](../tools/README.md) when editing source. The [reporting guide](guides/Reporting.md) helps prepare a reproducible build, runtime or numerical question.
+Use the [contributor guide](development/README.md), [tests](../tests/README.md) and [tools](../tools/README.md) when changing the implementation. The [reporting guide](guides/Reporting.md) explains how to share a reproducible build, runtime or numerical problem.

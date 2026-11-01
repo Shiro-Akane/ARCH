@@ -95,7 +95,7 @@ larger systems use CPU KLU / CUDA cuDSS.
 
 The final focused memcheck
 and racecheck
-campaigns each pass all 23 routes, including generated-network mathematics,
+checks each pass all 23 routes, including generated-network mathematics,
 controlled weak trajectories, owner reuse and real audit31 sparse evolution.
 Memcheck has 23 complete reports with zero errors or leaks; racecheck has
 23 complete reports with zero hazards, errors or warnings.
@@ -254,16 +254,12 @@ default 2/3 cells, three ODE methods or numerical budgets. The parser checks
 requested controls against the transcript and records requested versus actual
 pool capacity. Production large-network results and separate experimental
 window-capacity checks are indexed in the
-[HPC-CUDA campaign summary](../backend/results/hpc-cuda-optimization/README.md).
+[GPU performance summary](../backend/results/hpc-cuda-optimization/README.md).
 The experimental provider is not registered in the production solver.
 
-Complete Release/Debug regressions and the
-cold and incremental core-build checks
-and the bounded capacity campaign
-have passed, as have both focused device-safety campaigns above. Final delivery
-review and the combined acceptance record are tracked in the
-[validation overview](../README.md). The four scientific/application records
-and the instrumentation records retain their distinct acceptance scopes.
+The scientific application results, device instrumentation and resource
+measurements each identify their tested sources and workloads. The
+[validation index](../README.md) links those records.
 
 Production 150/200-isotope Helmholtz comparisons and full-application timing
 were completed on the larger validation system. **In the tested
@@ -272,9 +268,8 @@ CPU8** (about 0.10–0.20× speedup), despite passing numerical comparisons.
 Use CPU for these workloads unless your representative timings favor CUDA;
 the approximately 5× coupled-AMR result uses aprox13 and does not apply to
 these sparse networks. See the [performance guide](../../docs/CudaBackendStatus.md#choosing-a-backend-for-performance).
-Further scaling
-and experimental-provider performance remain follow-up work; the original
-source-scoped reports are linked in the campaign summary above. For very
+The measurement summary links source-identified scaling and experimental-provider
+reports. For very
 large networks, scientific reliability depends on the isotope set, reaction data
 and model's range of applicability; solver/provider validation is recorded
 separately. Generated-network NSE support has the bounded contract and focused
@@ -289,8 +284,6 @@ For supported configurations and backend selection, see the
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
 
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
-
 - [Weak Urca, constant heat capacity (JSON)](results/weak-cv-native-20260907/release-898/evidence.json)
 - [Weak Urca, Helmholtz EOS (JSON)](results/weak-helm-native-20260907/release-899/evidence.json)
 - [Real audit31 sparse evolution (JSON)](results/sparse-native-20260907/release-900/evidence.json)
@@ -300,6 +293,6 @@ These data files support reproduction and independent review; they are not setup
 
 - [instrumentation guide](../backend/results/final-first-law-20260907/README.md)
 - [cold and incremental core-build checks](../backend/results/cold-core-first-law-20260907/release-909/README.md)
-- [bounded capacity campaign](../backend/results/device-memory-first-law-20260907/README.md)
+- [capacity measurements](../backend/results/device-memory-first-law-20260907/README.md)
 
 </details>

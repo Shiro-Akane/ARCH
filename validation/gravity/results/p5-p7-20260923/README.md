@@ -1,8 +1,8 @@
-# P5–P7 自引力基本验收封包
+# 自引力基本验证
 
 日期：2026-09-23；分支：`physics/selfgravity`；父提交：`253e1c51`。
 本记录所在提交即候选源码。程序摘要和设备信息见 [identity.json](identity.json)。
-实际支持与算法约束见 [实施记录](../../../../docs/development/P5P7GravityAcceptance.zh-CN.md)，
+实际支持与算法约束见 [实施记录](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)，
 用户案例见 [GravityBox](../../../../simulation/GravityBox/README.md)。
 
 ## 构建与验证身份
