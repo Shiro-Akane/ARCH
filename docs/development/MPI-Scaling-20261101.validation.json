@@ -1,0 +1,723 @@
+{
+  "candidate_commit": "b94b187ddf9ae8c9c5ab014b745647f2a07bb062",
+  "baseline_commit": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+  "candidate_binary_sha256": "4753d151ba64a7f36989b285647fa43447cf386430fb8fd9c8ac9e3c1e8e5f0b",
+  "performance_host": "gen-989544 / 150.65.181.189",
+  "protocol": {
+    "ranks": [
+      1,
+      2,
+      4
+    ],
+    "warmups_per_rank": 1,
+    "measured_repetitions": 5,
+    "primary_profiled": false,
+    "diagnostic_profiled_runs_per_rank": 1,
+    "timing": "max over ranks of driver_seconds minus output_seconds",
+    "stage_timing": "max over ranks of sum of recorded CPU stages",
+    "rss": "sum of individual rank peak RSS, not simultaneous aggregate peak",
+    "matrix": "fixed total grid and steps per case; one CPU core per MPI rank",
+    "baseline": "independent main 5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+    "output": "initial and final plot; serial and MPI1 additionally force a final checkpoint",
+    "budget_gib": 1.5,
+    "disk_floor_gib": 16
+  },
+  "cases": [
+    {
+      "case": "smooth2d",
+      "root_shape": [
+        16,
+        8,
+        0
+      ],
+      "steps": 112,
+      "cells": 32768,
+      "comparisons": 21,
+      "statistics": {
+        "1": {
+          "n": 5,
+          "median_seconds": 6.345531908,
+          "min_seconds": 6.327527716,
+          "max_seconds": 6.381800451,
+          "cv": 0.003381935851128161,
+          "stage_median_seconds": 6.330002738999999,
+          "median_sum_rank_peak_rss_mib": 52.8828125,
+          "speedup": 1.0,
+          "parallel_efficiency": 1.0
+        },
+        "2": {
+          "n": 5,
+          "median_seconds": 3.545486165,
+          "min_seconds": 3.180569584,
+          "max_seconds": 3.636329974,
+          "cv": 0.06637762743302672,
+          "stage_median_seconds": 3.513190303,
+          "median_sum_rank_peak_rss_mib": 87.9765625,
+          "speedup": 1.7897494483665544,
+          "parallel_efficiency": 0.8948747241832772
+        },
+        "4": {
+          "n": 5,
+          "median_seconds": 2.138291341,
+          "min_seconds": 1.9953082350000002,
+          "max_seconds": 2.170162446,
+          "cv": 0.0349670057147379,
+          "stage_median_seconds": 2.108668061,
+          "median_sum_rank_peak_rss_mib": 155.08984375,
+          "speedup": 2.967571250151735,
+          "parallel_efficiency": 0.7418928125379337
+        }
+      },
+      "diagnostic_profiles": [
+        {
+          "ranks": 1,
+          "rank_measurements": [
+            {
+              "rank": 0,
+              "mpi_seconds": 0,
+              "driver_nonoutput_seconds": 6.389593001,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                },
+                "Allgather": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                },
+                "Allreduce": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                },
+                "Bcast": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ranks": 2,
+          "rank_measurements": [
+            {
+              "rank": 0,
+              "mpi_seconds": 0.3652033694088459,
+              "driver_nonoutput_seconds": 3.502273197,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 678,
+                  "seconds": 0.2484339252114296,
+                  "sent_payload_bytes": 16662528
+                },
+                "Allgather": {
+                  "calls": 336,
+                  "seconds": 0.1164654940366745,
+                  "sent_payload_bytes": 10752
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.00029445718973875046,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 9.492971003055573e-06,
+                  "sent_payload_bytes": 64
+                }
+              }
+            },
+            {
+              "rank": 1,
+              "mpi_seconds": 0.007736239582300186,
+              "driver_nonoutput_seconds": 3.468519754,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 678,
+                  "seconds": 0.007200927473604679,
+                  "sent_payload_bytes": 16662528
+                },
+                "Allgather": {
+                  "calls": 336,
+                  "seconds": 0.0005024103447794914,
+                  "sent_payload_bytes": 10752
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 1.0731630027294159e-05,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 2.2170133888721466e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ranks": 4,
+          "rank_measurements": [
+            {
+              "rank": 0,
+              "mpi_seconds": 0.426280683837831,
+              "driver_nonoutput_seconds": 2.0149313749999997,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 678,
+                  "seconds": 0.28361461497843266,
+                  "sent_payload_bytes": 16662528
+                },
+                "Allgather": {
+                  "calls": 336,
+                  "seconds": 0.14234325103461742,
+                  "sent_payload_bytes": 10752
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.00031153205782175064,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 1.1285766959190369e-05,
+                  "sent_payload_bytes": 64
+                }
+              }
+            },
+            {
+              "rank": 1,
+              "mpi_seconds": 0.44598790258169174,
+              "driver_nonoutput_seconds": 2.0146191509999998,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 678,
+                  "seconds": 0.2973518604412675,
+                  "sent_payload_bytes": 16662528
+                },
+                "Allgather": {
+                  "calls": 336,
+                  "seconds": 0.14831136632710695,
+                  "sent_payload_bytes": 10752
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.0003063241019845009,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 1.8351711332798004e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            },
+            {
+              "rank": 2,
+              "mpi_seconds": 0.014887870289385319,
+              "driver_nonoutput_seconds": 1.9798348249999997,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 678,
+                  "seconds": 0.012802458368241787,
+                  "sent_payload_bytes": 16662528
+                },
+                "Allgather": {
+                  "calls": 336,
+                  "seconds": 0.002023567445576191,
+                  "sent_payload_bytes": 10752
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 3.4702010452747345e-05,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 2.7142465114593506e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            },
+            {
+              "rank": 3,
+              "mpi_seconds": 0.04369115177541971,
+              "driver_nonoutput_seconds": 1.986777984,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 678,
+                  "seconds": 0.031095837242901325,
+                  "sent_payload_bytes": 16662528
+                },
+                "Allgather": {
+                  "calls": 336,
+                  "seconds": 0.012535098008811474,
+                  "sent_payload_bytes": 10752
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 3.069639205932617e-05,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 2.9520131647586823e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "smooth3d",
+      "root_shape": [
+        8,
+        2,
+        2
+      ],
+      "steps": 32,
+      "cells": 131072,
+      "comparisons": 21,
+      "statistics": {
+        "1": {
+          "n": 5,
+          "median_seconds": 10.273188695,
+          "min_seconds": 10.238398164,
+          "max_seconds": 10.459841924000001,
+          "cv": 0.00873019204464726,
+          "stage_median_seconds": 10.182733175000005,
+          "median_sum_rank_peak_rss_mib": 140.49609375,
+          "speedup": 1.0,
+          "parallel_efficiency": 1.0
+        },
+        "2": {
+          "n": 5,
+          "median_seconds": 5.509800765,
+          "min_seconds": 5.153070327,
+          "max_seconds": 5.571406304,
+          "cv": 0.038983263226119245,
+          "stage_median_seconds": 5.432423116000001,
+          "median_sum_rank_peak_rss_mib": 176.65234375,
+          "speedup": 1.8645299772468271,
+          "parallel_efficiency": 0.9322649886234136
+        },
+        "4": {
+          "n": 5,
+          "median_seconds": 3.027661934,
+          "min_seconds": 2.979721802,
+          "max_seconds": 3.282384857,
+          "cv": 0.03882641123310659,
+          "stage_median_seconds": 2.97734612,
+          "median_sum_rank_peak_rss_mib": 250.5390625,
+          "speedup": 3.3931095739700243,
+          "parallel_efficiency": 0.8482773934925061
+        }
+      },
+      "diagnostic_profiles": [
+        {
+          "ranks": 1,
+          "rank_measurements": [
+            {
+              "rank": 0,
+              "mpi_seconds": 0,
+              "driver_nonoutput_seconds": 10.288920932,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                },
+                "Allgather": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                },
+                "Allreduce": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                },
+                "Bcast": {
+                  "calls": 0,
+                  "seconds": 0,
+                  "sent_payload_bytes": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ranks": 2,
+          "rank_measurements": [
+            {
+              "rank": 0,
+              "mpi_seconds": 0.39784578513354063,
+              "driver_nonoutput_seconds": 5.5195511889999995,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 198,
+                  "seconds": 0.2771629774942994,
+                  "sent_payload_bytes": 38928384
+                },
+                "Allgather": {
+                  "calls": 96,
+                  "seconds": 0.1205164473503828,
+                  "sent_payload_bytes": 3072
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.0001489473506808281,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 1.7412938177585602e-05,
+                  "sent_payload_bytes": 64
+                }
+              }
+            },
+            {
+              "rank": 1,
+              "mpi_seconds": 0.011219130828976631,
+              "driver_nonoutput_seconds": 5.464662741,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 198,
+                  "seconds": 0.01076146587729454,
+                  "sent_payload_bytes": 38928384
+                },
+                "Allgather": {
+                  "calls": 96,
+                  "seconds": 0.00042400695383548737,
+                  "sent_payload_bytes": 3072
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 9.715557098388672e-06,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 2.394244074821472e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ranks": 4,
+          "rank_measurements": [
+            {
+              "rank": 0,
+              "mpi_seconds": 0.3806063812226057,
+              "driver_nonoutput_seconds": 2.961494031,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 198,
+                  "seconds": 0.2704278063029051,
+                  "sent_payload_bytes": 38928384
+                },
+                "Allgather": {
+                  "calls": 96,
+                  "seconds": 0.10980779025703669,
+                  "sent_payload_bytes": 3072
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.0003593936562538147,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 1.1391006410121918e-05,
+                  "sent_payload_bytes": 64
+                }
+              }
+            },
+            {
+              "rank": 1,
+              "mpi_seconds": 0.3983782585710287,
+              "driver_nonoutput_seconds": 2.9612925860000003,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 198,
+                  "seconds": 0.28196505177766085,
+                  "sent_payload_bytes": 38928384
+                },
+                "Allgather": {
+                  "calls": 96,
+                  "seconds": 0.11604624520987272,
+                  "sent_payload_bytes": 3072
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.00034753233194351196,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 1.9429251551628113e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            },
+            {
+              "rank": 2,
+              "mpi_seconds": 0.027200213633477688,
+              "driver_nonoutput_seconds": 2.927928041,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 198,
+                  "seconds": 0.021527426317334175,
+                  "sent_payload_bytes": 38928384
+                },
+                "Allgather": {
+                  "calls": 96,
+                  "seconds": 0.00550706684589386,
+                  "sent_payload_bytes": 3072
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 0.00013641640543937683,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 2.930406481027603e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            },
+            {
+              "rank": 3,
+              "mpi_seconds": 0.10603716969490051,
+              "driver_nonoutput_seconds": 2.926464038,
+              "operations": {
+                "Sendrecv": {
+                  "calls": 198,
+                  "seconds": 0.07784178759902716,
+                  "sent_payload_bytes": 38928384
+                },
+                "Allgather": {
+                  "calls": 96,
+                  "seconds": 0.028170510195195675,
+                  "sent_payload_bytes": 3072
+                },
+                "Allreduce": {
+                  "calls": 1,
+                  "seconds": 6.34416937828064e-06,
+                  "sent_payload_bytes": 4
+                },
+                "Bcast": {
+                  "calls": 1,
+                  "seconds": 1.852773129940033e-05,
+                  "sent_payload_bytes": 0
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cpu_comparisons": 42,
+  "cross_comparisons": [
+    {
+      "name": "smooth2d",
+      "shape": [
+        5,
+        3,
+        0
+      ],
+      "steps": 8,
+      "ranks": 2,
+      "hosts": [
+        "gen-989544",
+        "gpu-273312"
+      ],
+      "comparison": {
+        "snapshots": 2,
+        "fields": [
+          "DENS",
+          "ENER",
+          "PRES",
+          "VELX",
+          "VELY",
+          "cell_measure",
+          "coordinate",
+          "coordinate_y",
+          "coordinate_z"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.004813355436781981,
+        "cells": 3840
+      }
+    },
+    {
+      "name": "smooth2d",
+      "shape": [
+        5,
+        3,
+        0
+      ],
+      "steps": 8,
+      "ranks": 4,
+      "hosts": [
+        "gen-989544",
+        "gpu-273312"
+      ],
+      "comparison": {
+        "snapshots": 2,
+        "fields": [
+          "DENS",
+          "ENER",
+          "PRES",
+          "VELX",
+          "VELY",
+          "cell_measure",
+          "coordinate",
+          "coordinate_y",
+          "coordinate_z"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.004813355436781981,
+        "cells": 3840
+      }
+    },
+    {
+      "name": "sedov3d",
+      "shape": [
+        5,
+        3,
+        2
+      ],
+      "steps": 8,
+      "ranks": 2,
+      "hosts": [
+        "gen-989544",
+        "gpu-273312"
+      ],
+      "comparison": {
+        "snapshots": 2,
+        "fields": [
+          "DENS",
+          "ENER",
+          "PRES",
+          "VELX",
+          "VELY",
+          "VELZ",
+          "cell_measure",
+          "coordinate",
+          "coordinate_y",
+          "coordinate_z"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.001074895626294667,
+        "cells": 122880
+      }
+    },
+    {
+      "name": "sedov3d",
+      "shape": [
+        5,
+        3,
+        2
+      ],
+      "steps": 8,
+      "ranks": 4,
+      "hosts": [
+        "gen-989544",
+        "gpu-273312"
+      ],
+      "comparison": {
+        "snapshots": 2,
+        "fields": [
+          "DENS",
+          "ENER",
+          "PRES",
+          "VELX",
+          "VELY",
+          "VELZ",
+          "cell_measure",
+          "coordinate",
+          "coordinate_y",
+          "coordinate_z"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.001074895626294667,
+        "cells": 122880
+      }
+    }
+  ],
+  "cross_host_tests": [
+    {
+      "ranks": 2,
+      "passed": true
+    },
+    {
+      "ranks": 4,
+      "passed": true
+    }
+  ],
+  "cpu_audit": {
+    "launch_count": 46,
+    "all_steps_match": true,
+    "all_ranks_unique_bound_core": true,
+    "observer_call_counts_match": true,
+    "sample_comparisons": 42,
+    "evolution": [
+      {
+        "case": "smooth2d",
+        "density_max_abs_change": 0.027611746652187907,
+        "final_time": 0.021990327940331355
+      },
+      {
+        "case": "smooth3d",
+        "density_max_abs_change": 0.015786838729399677,
+        "final_time": 0.012566187731183091
+      }
+    ]
+  },
+  "environment_comparison": {
+    "library_hashes_equal": {
+      "libmpi.so.40": true,
+      "libstdc++.so.6": true,
+      "libhdf5.so": true,
+      "libpmix.so.2": true,
+      "libprrte.so.3": true
+    },
+    "mpi_versions_equal": true
+  },
+  "evidence": {
+    "gpu": {
+      "manifest": "/home/ubuntu/preservation/arch-mpi-scaling-20261101/evidence-manifest.json",
+      "sha256": "14d8fde8cb29fc7a255afcb5b499f378ba514586b858270a11b83051dfba26a1",
+      "files": 228,
+      "bytes": 133995607
+    },
+    "cpu": {
+      "manifest": "/home/ubuntu/preservation/arch-mpi-scaling-20261101/evidence-manifest.json",
+      "sha256": "1d56f4708718d451ca3e8522c653fbe7f14142a00da7c47ad3079861409e661a",
+      "files": 1409,
+      "bytes": 1234984831
+    }
+  },
+  "production_code_changed_this_round": false,
+  "temporary_transport_authorization_revoked": true,
+  "limitations": [
+    "Only 4-vCPU single-host strong scaling; no 32-core scaling result.",
+    "Two-host jobs establish correctness, not network performance.",
+    "Saved initial/final outputs are bitwise checked; internal steps are not all serialized.",
+    "PMPI samples include waiting; logical payload bytes are not wire traffic.",
+    "Summed per-rank peak RSS is not simultaneous aggregate peak.",
+    "Existing AMR compatibility remains the last planned phase, not implemented here."
+  ]
+}
