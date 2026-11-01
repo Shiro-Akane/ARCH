@@ -796,11 +796,15 @@ private:
             copy(*boundary[face][0], false, true, send_lower + face * face_values);
             copy(*boundary[face][1], true, true, send_upper + face * face_values);
         }
-        MPI_Status status_lower{}, status_upper{};
-        MPI_Sendrecv(send_upper, count, MPI_DOUBLE, upper, 310, receive_lower, count, MPI_DOUBLE, lower,
-                     310, MPI_COMM_WORLD, &status_lower);
-        MPI_Sendrecv(send_lower, count, MPI_DOUBLE, lower, 311, receive_upper, count, MPI_DOUBLE, upper,
-                     311, MPI_COMM_WORLD, &status_upper);
+        // Submit both directions into the existing scratch before waiting.
+        // All receives finish before scattering or reusing any of these buffers.
+        std::array<MPI_Request, 4> requests{};
+        std::array<MPI_Status, 4> statuses{};
+        MPI_Irecv(receive_lower, count, MPI_DOUBLE, lower, 310, MPI_COMM_WORLD, &requests[0]);
+        MPI_Irecv(receive_upper, count, MPI_DOUBLE, upper, 311, MPI_COMM_WORLD, &requests[1]);
+        MPI_Isend(send_upper, count, MPI_DOUBLE, upper, 310, MPI_COMM_WORLD, &requests[2]);
+        MPI_Isend(send_lower, count, MPI_DOUBLE, lower, 311, MPI_COMM_WORLD, &requests[3]);
+        MPI_Waitall(static_cast<int>(requests.size()), requests.data(), statuses.data());
         const auto require_count = [&](int peer, MPI_Status &status) {
             int received = 0;
             if (peer != MPI_PROC_NULL) {
@@ -809,8 +813,8 @@ private:
                     throw std::runtime_error("MPI halo field count mismatch");
             }
         };
-        require_count(lower, status_lower);
-        require_count(upper, status_upper);
+        require_count(lower, statuses[0]);
+        require_count(upper, statuses[1]);
         for (std::size_t face = 0; face < boundary.size(); ++face) {
             if (lower != MPI_PROC_NULL)
                 copy(*boundary[face][0], false, false, receive_lower + face * face_values);
