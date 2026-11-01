@@ -60,7 +60,7 @@ cmake --build build-network-validation --parallel 1
 
 上述命令选择实际测试使用的 `p311` conda 环境；也可使用任何含对应 pynucastro 版本的 Python 3.11 环境。`--custom-root` 是审计选项，常规用户生成位置仍为 `src/physics/network/custom/`。
 
-一次性 RHS/KLU/refactor harness 与生成 package 不提交到仓库。上表和 [metrics.csv](metrics.csv) 保留本轮审计证据；这里的命令复现 package 生成、registry 自动发现和编译，不新增永久 test target。
+一次性 RHS/KLU/refactor harness 与生成 package 不提交到仓库。上表和 [metrics.csv](metrics.csv) 保留本记录的审计证据；这里的命令复现 package 生成、registry 自动发现和编译，不新增永久 test target。
 
 ## 范围标签
 

@@ -42,7 +42,7 @@ KLU、cuDSS 的查找流程和数值优化选项均未改变。
 燃烧、扩散和重力工厂使用共用解析器选出的策略 ID，重复的配置／字符串重载及
 未使用的求解器选择成员已移除。保留的工厂、物理和数学实现未变。参数别名、两种
 算例注册接口、EOS 初始化与数据表示、生成包的 CPU/CUDA 接入规则继续保留。
-[所有权索引](../../../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+[所有权索引](../../../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 直接记录这些边界，不另建一份并行审计文档。
 
 流体启动入口现在必须以引用接收已解析策略、运行要求、后端、启动状态和检查点身份。
@@ -131,16 +131,15 @@ python3 tools/run_memory_guarded.py --min-available-mib 1536 \
     --timeout 1200
 ```
 
-所有者接受如实披露这些性能结果，并按 CPU/CUDA 同功能版本合入。
-运行性能优化单独跟进；本次测量没有修改生产实现或科学预算。
+这些计时使用未改变的生产实现和科学预算。
 
 ## 验证证据如何衔接
 
 原完整科学验收属于源码
 `73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171`，
 其[验收索引](../final-acceptance-20260907/release-73a9cf50/index-final-930/README.md)
-记录 41 项必需检查通过、两项大网络工作由所有者批准后置。
-这些测量及原有预算仍是科学证据，本轮维护不会把它们改称当前源码的运行结果。
+记录 41 项必需检查通过、两项大网络工作延期。
+这些测量及原有预算仍是科学证据，本记录的维护不会把它们改称当前源码的运行结果。
 
 [源码基线](baseline.json)和[文档基线](document-baseline.json)记录整理前的文件身份
 及可恢复归档。精简用户导航不会改写数值测量及失败尝试的身份。
@@ -165,6 +164,3 @@ python3 tools/run_memory_guarded.py --min-available-mib 1536 \
 有效[构建记录](build-review.json)和[运行记录](runtime-review.json)
 记录当前执行及前后身份核对。引用的源码整理测量
 保留自己的受测身份，不作为上文接口修改的验证依据。
-
-用户指南、源码导览和验证摘要以当前维护的行为及有效验收数据为入口。
-发布操作和所有者尚待补充的第三方重新分发确认仍分别处理。

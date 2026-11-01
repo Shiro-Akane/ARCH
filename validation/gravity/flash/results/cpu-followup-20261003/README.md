@@ -4,8 +4,7 @@ This record identifies the execution changes tested after the user-boundary
 acceptance baseline `d45ea2956` on `codex/o8-boundaries`. It preserves the
 existing shared mathematics, strict FP64, CFL/AMR inputs, complete face EOS and
 both Strang burning half-steps. The [Chinese assessment](Report.zh-CN.md)
-explains retained changes, withdrawals, scientific coverage and remaining
-performance targets.
+explains the implementation changes, scientific coverage and measured costs.
 
 The [processed evidence](summary.json) contains all three alternating
 CPU/FLASH samples for each of seven matched physical endpoints, source/input
@@ -15,11 +14,6 @@ times. The fine Cellular case remains at 2.867 times, and Sod at 1.746 times.
 These are same-task measurements, rather than demonstrated equal-error costs
 or proof of an irreducible performance gap. The five-step 2D/3D four-module
 checks have a separate capability scope.
-
-[Delegation evidence](delegation.json) reports genuine DeepSeek jobs, repairs,
-independent review decisions, estimated token costs and known measurement
-limits. Original HDF5/plotfiles, checkpoints, executables and worker logs stay
-on the producing machine.
 
 ## Reproduction
 

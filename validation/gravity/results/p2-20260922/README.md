@@ -1,12 +1,12 @@
-# P2 standalone CPU Poisson / multigrid — 2026-09-22
+# Standalone CPU Poisson / multigrid — 2026-09-22
 
 Base: P1.5 `780794b69afb118249d9bed9de44c547fcedd222`, already pushed to
 `physics/selfgravity`. This record covers the single-domain mathematical
 prototype; it does **not** enable production `gravity_type=self`.
 
-The [decision record](../../../../docs/development/P2PoissonMultigrid.zh-CN.md)
+The [uniform-grid contract](../../../../docs/development/P2PoissonMultigrid.zh-CN.md)
 fixes the discretization, internal MG choices and numerical budgets. The
-[main plan](../../../../docs/development/SelfGravityImplementationPlan.zh-CN.md)
+[implementation map](../../../../docs/development/ImplementationOwnership.md#composite-self-gravity)
 retains P3 AMR, P4 hydro/energy coupling and P6 device execution as separate gates.
 
 ## Implemented and measured
@@ -99,4 +99,4 @@ python3 validation/gravity/p2_cpu_poisson.py \
 The evidence output directory must be empty. Full CPU regression additionally
 uses the existing CTest inventory/JUnit completion checker; it rejects skips or
 missing tests. No FFT, isolated-boundary model, AMR composite solve, production
-field publication, energy coupling or GPU gravity was added in this phase.
+field publication, energy coupling or GPU gravity was added in this standalone solver assessment.

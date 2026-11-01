@@ -68,20 +68,15 @@ incremental target build reported `ninja: no work to do`.
 - The changed production exchange/control objects and full-backend AMR test
   source are separately compiled using the generated CMake commands.
 
-## Limits and required follow-up
+## Coverage limits
 
-- Final complete ARCH Debug/Release builds, full CUDA CTest, production AMR
-  and both restart reruns must be recorded against the same final artifacts.
-  The three old H100 reports cannot satisfy this gate (different executable).
-  The focused GPU burn policy test was built/run in Debug only; its Release
-  rerun is also outstanding (the Release host burn-reference test did pass).
+- This record excludes complete ARCH Debug/Release builds, full CUDA CTest,
+  production AMR and restart reruns. The focused GPU burn policy test ran in
+  Debug only; the Release host burn-reference test passed separately.
 - The initial local Compute Sanitizer failure is retained in
   `debug-amr-memcheck-unavailable.log`. A read-only Windows registry query
-  found the NVIDIA `GPUDebugger/EnableInterface` value absent. The user then
-  explicitly enabled it as DWORD 1 from administrator PowerShell; the eight
-  focused Debug/Release sanitizer runs passed immediately without a reboot.
-  No driver installation, TDR change, or automatic administrator mutation was
-  performed by the agent. These focused results do not qualify the complete
+  found the NVIDIA `GPUDebugger/EnableInterface` value absent. With that value enabled as DWORD 1, the eight
+  focused Debug/Release sanitizer runs passed without a reboot. These focused results do not qualify the complete
   ARCH runtime, dynamic topology transactions, burn, or restart under sanitizer.
 - No claim is made about a sustained representative 16 GiB runtime workload,
   deeper AMR levels, performance, `--parallel 6`, or deferred CUDA providers.

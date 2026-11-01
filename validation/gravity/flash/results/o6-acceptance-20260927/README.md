@@ -1,4 +1,4 @@
-# O6/O6+ acceptance evidence, 2026-09-27
+# Shared execution optimization results, 2026-09-27
 
 This directory preserves the third optimization round on `compute/optim`.
 [The acceptance report](../../O6AcceptanceReport.zh-CN.md) separates physical

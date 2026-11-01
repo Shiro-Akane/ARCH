@@ -1,6 +1,8 @@
-# Candidate evidence index
+# Verification inventory snapshot
 
-This is a delivery audit of existing records, not a release certificate or a new scientific validation run.
+This snapshot records the reports available when [index.json](index.json) was generated.
+Statuses retain that capture scope. The [completed assessment](../README.md)
+links the final inventory and scientific results.
 
 | Gate | Status | Review |
 | --- | --- | --- |

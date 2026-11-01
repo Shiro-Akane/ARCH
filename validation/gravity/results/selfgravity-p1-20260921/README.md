@@ -47,7 +47,7 @@ request its CUDA-only build target in the CPU configuration produced no build
 or CUDA execution; the bounded build then selected only available CPU targets.
 
 GUI's previously reported 18/18 CPU checks were not repeated, per user request;
-see [GUI session handoff](../../../../src/api/docs/archive/PREVIEW_SESSION_HANDOFF.md).
+see [preview-session protocol](../../../../src/api/docs/PREVIEW_SESSION_API.md).
 CUDA compilation, runtime parity, sanitizer and performance gates are explicitly
 deferred by the user's current instruction. KLU was disabled for this P1 build;
 no new sparse provider was implemented or qualified.
@@ -104,5 +104,5 @@ python3 tools/audit_architecture.py .
 python3 -m unittest discover -s tests/tooling -p test_audit_architecture.py
 ```
 
-The implementation boundaries and next-stage obligations are recorded in the
-[P1 handoff](../../../../docs/development/SelfGravityP1Handoff.zh-CN.md).
+Implementation responsibilities are listed in the
+[ownership map](../../../../docs/development/ImplementationOwnership.md#composite-self-gravity).
