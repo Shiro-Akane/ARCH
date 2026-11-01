@@ -18,13 +18,13 @@ Windows CUDA 参考配置使用 NVCC 12.9.86、MSVC 19.44.35229（工具集 14.4
 
 ## 共用功能
 
-两平台均提供 CPU/OpenMP、`cpu`／`cuda`／`auto` 选择，以及相同的流体、几何、AMR、EOS、扩散、反应网络和引力实现，使用相同的 HDF5 输出与兼容重启格式。可组合的模型与方法见[功能清单](../Features.zh-CN.md)。
+两平台均提供 CPU/OpenMP、`cpu`／`cuda`／`auto` 选择，以及相同的流体、几何、AMR、EOS、扩散、反应网络和引力实现，使用相同的 HDF5 输出格式，各平台支持 CPU/CUDA 后端之间的重启。可组合的模型与方法见[功能清单](../Features.zh-CN.md)。
 
 Studio 包含模型发现、参数编辑、Configure/Build、初始场与初始 AMR 预览、Run/Restart，以及只读 Plotfile 元数据、原始采样、原生单元查询和显示总览。桌面包共用 renderer、Host 与打包流程。即使所选执行物支持 CUDA，初始预览仍通过 CPU Setup/Init 生成。
 
 ## 平台限制
 
-- MSVC/CUDA 的完整依赖与动态加载新鲜度仍显示 `unknown`；成功 Build 仍会生成可用执行物。Studio 单独记录可获得的输入证据。
+- MSVC/CUDA 的完整依赖与动态加载新鲜度仍显示 `unknown`；Build 可以生成执行物，同时保留依赖覆盖未知的状态。Studio 单独记录可获得的输入证据。
 - Windows Run/Restart 使用配置好的 Windows Terminal，独立控制台 fallback 不属于受支持的启动方式。
 - Windows Preview 使用提交内存和 Job 用户态 CPU 时间；Linux 使用地址空间和用户态加内核态 CPU 限额。请求限额遵循各平台的明确策略。
 - 原生 GNU LTO 的构建与保留目录需使用 ASCII 路径。运行时 UTF-8 和带空格路径已有测试；UNC／网络文件系统和任意长路径不在已测试范围内。
@@ -33,7 +33,7 @@ Studio 包含模型发现、参数编辑、Configure/Build、初始场与初始 
 
 MPI、AMD/HIP 和 Apple Metal 尚不是受支持后端。已实现物理不包含通用辐射输运。Jeans/JENS 的完整 GPU 演化、一般 EOS 适用性及耦合模型限制见[参考手册](../Reference.zh-CN.md)和[验证](../../validation/README.zh-CN.md)。
 
-## 验证依据
+## v1.4.0 验证依据
 
 v1.4.0 的平台对比包含 142 个原生科学 CTest、九组分辨率中的 37 个标准后端算例、八条 CPU/CUDA AMR 重启路线及九项比较，以及实际 Studio GPU Run/Restart/Plotfile 读回。Linux 覆盖 72 个 CPU CTest、12 个相关 CUDA／fixture 检查和 453 个 Studio 测试；Windows 覆盖 95 个 Studio 测试与七个链接证据测试。Linux 与 Windows 便携包使用 Electron 44.9.1。
 

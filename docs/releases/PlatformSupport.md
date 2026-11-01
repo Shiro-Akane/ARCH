@@ -18,13 +18,13 @@ The Windows CUDA reference uses NVCC 12.9.86, MSVC 19.44.35229 (toolset 14.44), 
 
 ## Shared functionality
 
-Both platforms provide CPU/OpenMP execution, `cpu`/`cuda`/`auto` selection, the same fluid methods, geometry, AMR, EOS, diffusion, reaction-network and gravity implementations, HDF5 output and compatible restart. The [feature list](../Features.md) specifies supported model and method combinations.
+Both platforms provide CPU/OpenMP execution, `cpu`/`cuda`/`auto` selection, the same fluid methods, geometry, AMR, EOS, diffusion, reaction-network and gravity implementations, HDF5 output and CPU/CUDA restart within each platform. The [feature list](../Features.md) specifies supported model and method combinations.
 
 Studio provides model discovery, parameter editing, Configure/Build, initial-field and initial-AMR Preview, Run/Restart, and read-only Plotfile metadata, raw samples, native-cell queries and display overviews. Native desktop packages share the renderer, Host and packaging flow. Initial Preview uses CPU Setup/Init even when the selected executable supports CUDA.
 
 ## Platform limits
 
-- Full MSVC/CUDA dependency and dynamic-loader freshness remains `unknown`; a successful Build still produces a usable executable. Studio records the available input evidence separately.
+- Full MSVC/CUDA dependency and dynamic-loader freshness remains `unknown`; Build can produce an executable while dependency coverage remains unknown. Studio records the available input evidence separately.
 - Windows Run/Restart uses configured Windows Terminal. The independent-console fallback is not a supported launch route.
 - Windows Preview limits use committed memory and Job user CPU time; Linux uses address-space and user-plus-system CPU limits. The numerical requests and their budgets retain their platform-specific policy.
 - Native GNU LTO requires an ASCII build/retention path. Runtime paths with UTF-8 and spaces are tested; UNC/network filesystems and arbitrary long paths are outside the tested filesystem scope.
@@ -33,7 +33,7 @@ Studio provides model discovery, parameter editing, Configure/Build, initial-fie
 
 MPI, AMD/HIP and Apple Metal are not supported backends. General radiation transport is outside the implemented physics. Jeans/JENS full GPU evolution, general-EOS applicability and coupled-model limits follow the [Reference](../Reference.md) and [Validation](../../validation/README.md).
 
-## Validation references
+## v1.4.0 validation references
 
 The v1.4.0 platform comparison includes 142 native scientific CTests, 37 canonical backend cases in nine resolution groups, eight CPU/CUDA AMR restart routes and nine comparisons, and actual Studio GPU Run/Restart/Plotfile readback. Linux coverage includes 72 CPU CTests, 12 affected CUDA/fixture checks and 453 Studio tests; Windows includes 95 Studio tests and seven link-evidence checks. The Linux and Windows portable packages use Electron 44.9.1.
 

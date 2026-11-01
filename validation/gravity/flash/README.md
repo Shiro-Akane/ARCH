@@ -9,7 +9,7 @@ ARCH builds, numerical tests and CI do not require it.
 
 ## Method and interpretation
 
-The comparison uses the same physical endpoint and records mesh histories,
+The comparison uses the same problem and physical end time and records mesh histories,
 active physics, field errors and state repairs. ARCH and FLASH differ in
 hydrodynamic timestep rules, face EOS evaluation and burning treatment.
 In these runs, ARCH uses two thermally coupled Strang burn half-steps and
@@ -48,7 +48,8 @@ Cellular case takes 3.49 times the reference cost. These two results remain
 above that target.
 
 Selecting the explicit Davis wave-speed option reduces the fine Cellular
-CPU8 median to **24.176 s**, or **2.61 times** the reference. Davis changes the
+CPU8 median to **24.176 s**, or **2.61 times** the reference, still above the
+two-times cost target. Davis changes the
 numerical method; its comparison against the default uses the following
 budgets: relative mass/total-energy integral difference at most `1e-3`,
 volume-weighted density/pressure/temperature L1 at most 1%, and major-isotope

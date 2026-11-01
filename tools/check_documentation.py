@@ -19,6 +19,8 @@ DEVELOPER_PAGES = frozenset({
 
 def maintained(path):
     """Select reader, contributor and result pages, excluding retired archives."""
+    if path in ("validation/archive/README.md", "validation/archive/README.zh-CN.md"):
+        return True
     parts = Path(path).parts
     if any(part in ("archive", "histroy") for part in parts):
         return False

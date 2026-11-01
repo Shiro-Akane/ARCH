@@ -20,7 +20,7 @@ records identify the source, binary, input and data used for each measurement.
 
 <a id="completed-results-on-the-release-candidate"></a>
 
-| Area | Recorded CPU/CUDA checks | Record |
+| Area | Recorded checks | Record |
 | --- | --- | --- |
 | Native cylindrical 2D | Real walls, three momenta, RK/RKL, AMR transactions, prescribed Poisson, seven CPU/GPU pairs, restart from a new process, memcheck and synccheck; bounded scope, original angular-momentum budget | [Device results](backend/results/release-readiness/Cyl5NativeDevice-20261019.json) |
 | Native cylindrical scientific cases | 15 original-time axial cases, 306 legal method/EOS pairs, strong/weak source admission, required coupled endpoints and multiphysics restart from a new process; documented table domains and error budgets | [Scientific results](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |

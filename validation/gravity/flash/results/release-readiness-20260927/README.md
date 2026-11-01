@@ -1,7 +1,7 @@
 # 三维 CPU 执行成本与检查点回归
 
-本记录接续 [冻结实现的完整验收](../../O6ControlsAcceptanceReport.zh-CN.md)。
-没有引入数值近似、修改物理误差门槛、改变 AMR/CFL 或减少任何 Strang 燃烧半步。
+相关成本与精度基线见[完整验证记录](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)。
+测量采用完整面 EOS、相同 AMR/CFL 配置和两个 Strang 燃烧半步。
 
 ## 受测检查点格式
 
@@ -128,7 +128,7 @@ CUDA 终点和全部场采用原有 `compare_pair` 预算逐次核对，没有�
 | 当前物理场补测 | 全部通过 | 12 个三维配对、6 个二维 CPU、6 个 CUDA 样本及单次细网格回归 |
 
 该测量没有设备内存／设备数学改动，未重复上一轮的设备 sanitizer；原记录仍在
-[冻结验收](../../O6ControlsAcceptanceReport.zh-CN.md)中。以上短程见证不能替代长时
+[冻结验收](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)中。以上短程见证不能替代长时
 演化或 FLASH 共同科学误差曲线。原统一两倍成本目标与 RTX 的负收益场景保留；
 本记录没有新增 FLASH 或 H100 测量。
 

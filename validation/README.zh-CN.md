@@ -16,7 +16,7 @@ Windows 的受测配置。
 
 <a id="发布候选版本已完成的结果"></a>
 
-| 区域 | 已记录的 CPU/CUDA 检查 | 记录 |
+| 区域 | 已记录的检查 | 记录 |
 | --- | --- | --- |
 | 原生二维柱坐标科学算例 | 15 个轴向案例、306 个方法／EOS 组合对、源项、耦合与新进程续算；按记录的表域和误差预算检查 | [科学结果](backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json) |
 | 光滑流体 | PCM/MUSCL/PPM 在 64/128/256 单元上的空间收敛；独立 Euler/RK2/RK3 时间精度；1,016 步周期平流 | [hydro](hydro/README.zh-CN.md) |

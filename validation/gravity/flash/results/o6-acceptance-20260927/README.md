@@ -1,8 +1,8 @@
 # Shared execution optimization results, 2026-09-27
 
-This directory preserves the third optimization round on `compute/optim`.
-[The acceptance report](../../O6AcceptanceReport.zh-CN.md) separates physical
-correctness, fixed-input task cost, backend speedup and unclosed release gates.
+This directory contains source-identified CPU/FLASH timings and CPU/CUDA field comparisons.
+[The acceptance report](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6AcceptanceReport.zh-CN.md) separates physical
+correctness, fixed-input task cost, backend speedup and unmet cost targets.
 No HDF5 outputs or build products are added here.
 
 - [Source and executable identity](verification.json) records the base commit,
