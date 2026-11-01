@@ -1,57 +1,45 @@
-# ARCH continuous integration
+# Continuous integration
 
-[Local tests](../../tests/README.md) · [中文](../../tests/README.zh-CN.md#github-持续集成)
+[Local tests](../../tests/README.md) · [中文测试指南](../../tests/README.zh-CN.md#github-持续集成)
 
-[ci.yml](ci.yml) runs on pull requests targeting `main` and pushes to `compute/optim` and merged `main`, using disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels an older run for the same event and branch/PR. Tests and scientific criteria remain in their existing owners. The branch trigger permits hosted acceptance through ordinary SSH pushes without adding account credentials or changing repository settings.
+[ci.yml](ci.yml) runs on pull requests targeting `main` and pushes to `main` or `compute/optim`. Jobs use disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels the older run for the same event and branch or pull request.
 
-## What runs
+## Jobs
 
-| Job | Responsibility |
+| Job | Coverage |
 | --- | --- |
-| Tooling | Workflow syntax, shared-implementation/header audit, current documentation links, and the complete `python3 -B tests/tooling` suite; empty/skipped suites fail |
-| CPU Release | Applicable changes build ARCH and all configured CPU tests with KLU, run the complete non-Tooling CTest inventory and the original low-density physical matrix |
-| Studio and Host | Applicable changes prepare the explicit Host fixture CMake/Ninja/C++/mold tools, install locked Node dependencies, run the complete `npm --silent test` once, lint and build production assets; the build includes TypeScript checking |
-| CI required | Requires all three jobs to succeed; failure, cancellation or a skipped job cannot pass |
+| Tooling | Workflow syntax, shared-implementation/header audit, maintained documentation links, and `python3 -B tests/tooling` |
+| CPU Release | ARCH and configured CPU tests with KLU, the complete non-Tooling CTest inventory, and the low-density physical matrix |
+| Studio and Host | Host fixture tools, locked Node dependencies, the complete `npm --silent test` suite, lint, and production assets with TypeScript checking |
+| CI required | Requires all three jobs to succeed; failed, cancelled or skipped jobs fail the aggregate |
 
-A failed CTest or npm command still invokes the existing report checker to publish bounded, escaped failure excerpts in check annotations. The original pipeline status is retained: a complete report cannot hide a nonzero command. CTest completes the configured inventory even after a failed case, keeping the existing per-case and job timeouts, so one obsolete assertion does not hide later failures behind another full rebuild. Raw JUnit/TAP remain authoritative; annotations only aid diagnosis when runner-log downloads need authentication.
+`tooling_contracts` is the Python suite's local CTest entry. The CPU lane excludes its `tooling` label because the Tooling job runs it separately. `npm test` owns the Node file selection, TAP reporter and single file worker; its Host tests are included. `npm run build` includes `tsc --noEmit`.
 
-The Python suite has one CTest entry, `tooling_contracts`, for local use. CPU discovery and execution both exclude `-LE '^tooling$'` because Tooling already owns those assertions. The sparse-transcript parser controls are in that same suite. Numerical/API CTests and independent scientific oracles retain their responsibilities; a smaller number of wrapper entries is not a smaller assertion set.
+The [result checker](../../tools/check_ci_results.py) requires a nonempty, unique CTest inventory and one passing JUnit result per selected test. Missing, extra, disabled, failed or skipped entries fail. The Node checker also rejects empty, incomplete, cancelled, skipped and TODO reports. Failed commands retain their failure status while the checker adds bounded excerpts to check annotations. Raw JUnit/TAP and runner logs provide the full diagnostics.
 
-Documentation checking includes the living [history index](../../docs/histroy/README.md) and its [fixed-evidence index](../../docs/development/archive/README.md). Archived bodies and immutable scientific receipts retain their original basis; they are not rewritten or counted as current instructions.
+## Change selection
 
-`npm test` owns the Node file selection, TAP reporter and one file worker. Host tests are included; `test:host` is a diagnostic subset and is not repeated in CI. `npm run build` already runs `tsc --noEmit`, so a second typecheck is unnecessary.
-
-## Applicability and completion
-
-The CPU and Studio jobs always start. Their early scope decisions use the existing [result checker](../../tools/check_ci_results.py):
+The CPU and Studio jobs always start. Each selects its work from the pull request's base SHA or the push event's `before` SHA:
 
 ```bash
 python3 tools/check_ci_results.py --scope native --base FULL_BASE_SHA --head HEAD
 python3 tools/check_ci_results.py --scope studio --base FULL_BASE_SHA --head HEAD
 ```
 
-Recognized documentation changes and flat JSON outcome receipts under `validation/backend/results/release-readiness/` can omit native work; Tooling still runs. These receipts are not application inputs. Flat `.ts` files in `studio/tests/` belong only to the complete Node test lane and can also omit native work. Native code/data, nested helpers, other file types and any mixed native change remain conservative; production Studio code is unchanged by this exception. Studio/API documentation can also omit Node work. Maintained README filenames are documentation even beside build tools. Other build/tool/config/workflow paths remain conservative. Scientific source, native/API tests, parameter inputs and unknown paths still require native work. Standalone numerical/Device/Validation changes can omit Studio; Core interfaces, data/grid/AMR/driver/IO, model and build changes require it.
+Documentation-only changes can omit native and Node work. Flat JSON outcome records under `validation/backend/results/release-readiness/` and flat TypeScript test files under `studio/tests/` can omit native work. Standalone numerical, Device and Validation changes can omit Studio work. Core interfaces, data/grid/AMR/driver/IO, models and build changes require the affected full suites.
 
-The comparison base is the PR base SHA or the push event's actual `before` SHA. Missing ancestors in a shallow checkout select complete work; they never certify a documentation-only change.
+Unknown paths, malformed references, failed diffs, missing ancestors, non-UTF-8 paths and empty change lists select complete work. Rename detection is disabled so deleted source paths remain visible to selection. Omitted work records `NOT_APPLICABLE`; the job must still complete successfully for the aggregate check.
 
-Malformed/missing refs, failed diffs, non-UTF-8 paths, empty change lists and escaping/unknown paths select the complete lane. Rename detection is disabled so a deleted source path cannot disappear behind a new documentation name. Omitted work records `NOT_APPLICABLE`; it creates no passing JUnit/TAP report. The required aggregate still requires each job's actual success.
+## Resources and artifacts
 
-For an applicable CPU lane, discovery and execution use the same selection. The checker requires nonempty unique inventory, the existing configuration/Preview/math/AMR/IO/KLU anchors and exactly one passing JUnit result per selected test. Missing, extra, failed, disabled or skipped entries fail. The Node checker likewise rejects empty, incomplete, failed, cancelled, skipped or TODO reports. These rules do not redefine numerical tolerances.
+The CPU lane uses GCC 12, the Release preset, strict floating point, KLU, two build jobs, serial CTest and two OpenMP threads per test. The low-density runner uses four threads. The memory guard keeps 1536 MiB available, limits extra swap to 512 MiB and stops sustained pressure. Guard stops and timeouts fail the job.
 
-## Resources and evidence
+Only the CPU Helmholtz table and the Studio 14 KiB Sod fixture are hydrated from LFS. Both use the [fixed-asset action](../actions/lfs-asset/action.yml), which derives its cache key from the tracked pointer and verifies actual size and SHA-256. Other table and HDF5 files remain pointers. Compiler caches are capped at 1 GiB and separated by target flags, compiler/build configuration and revision. Node installs from the lockfile without restoring `node_modules`; Electron binary download is disabled.
 
-CPU uses GCC 12, the existing Release preset, strict floating point, KLU, two build jobs, serial CTest and two OpenMP threads per test. The low-density runner retains its own four-thread setting. The memory guard keeps 1536 MiB available, limits extra swap to 512 MiB and watches sustained pressure. Timeouts/guard stops fail; they are not performance samples.
+Tooling and CPU diagnostic artifacts retain identity, logs, inventory and JUnit for 14 days. They exclude executables, objects, EOS tables and raw HDF5/checkpoints. Studio logs remain in the workflow log. Scientific results and their reproduction instructions live in [Validation](../../validation/README.md).
 
-The CPU lane hydrates only its required Helmholtz table; the Studio lane hydrates only its 14 KiB Sod reader fixture. Both use the same [fixed-asset action](../actions/lfs-asset/action.yml) and [identity check](../actions/lfs-asset/identity.py). Its cache key derives from the tracked LFS pointer; actual bytes and SHA-256 are checked. Other tables and historical HDF5 remain pointers. The original Helm cache key is unchanged. A standard [checkout defaults to no LFS download](https://github.com/actions/checkout/blob/3d3c42e5aac5ba805825da76410c181273ba90b1/action.yml#L86-L89), so a locally hydrated fixture cannot stand in for this hosted preparation. Compiler caching is limited to 1 GiB and separated by resolved native target flags, compiler/build configuration and revision. Cached objects do not replace configuration or tests. Node uses the lockfile without restoring `node_modules`; Electron download is disabled in this engineering lane.
+## Additional validation
 
-Tooling/CPU diagnostic artifacts retain identity, logs, inventory and JUnit for 14 days. Executables, objects, EOS tables and raw HDF/checkpoints are excluded. Studio logs remain on the disposable runner. Reviewed scientific evidence stays in [Validation](../../validation/README.md), separate from these temporary reports.
+Hosted CI does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, native Windows builds or desktop packaging/window tests. Use the applicable [validation guide](../../validation/README.md), [build guide](../../docs/guides/Build.md) and [platform coverage](../../docs/releases/PlatformSupport.md) for those checks.
 
-## Qualification and maintainer setup
-
-This workflow does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, packaging or native desktop acceptance. The [release qualification index](../../docs/releases/README.md) records their actual qualification. Local actionlint/tests do not establish a hosted passing result for an unpublished working tree.
-
-Use a normal PR targeting `main` for integration; engineering-branch pushes can execute the same checks before that PR exists. Actions are pinned to full commits; actionlint's release archive has a fixed checksum. After a real successful run, maintainers may require **CI required** in the main ruleset. Human approval and merge/publication remain separate decisions. Do not run public PR code on a persistent personal GPU runner; this workflow uses neither `pull_request_target` nor repository secrets.
-
-## Release preparation
-
-Current version status and publication exits are owned by the [release index](../../docs/releases/README.md). PR #21 integrated native Windows support for v1.4.0; the release index and actual GitHub release own publication status. This directory has no automatic merge/tag/publication workflow. The former v1.3.0 one-shot publisher and its explanation are preserved in [dated history](../../docs/histroy/release/ReleaseV1.3.0Workflow-20261027.md), outside the active workflow directory. A PR merge alone does not publish v1.4.0 or create a Zenodo record.
+Actions are pinned to full commits; the actionlint archive has a fixed checksum. This workflow uses neither `pull_request_target` nor repository secrets and does not publish releases. Public pull-request code should run on disposable workers rather than persistent personal GPU machines.

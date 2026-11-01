@@ -256,13 +256,15 @@ Accepted repairs accumulate changes to conserved quantities with physical cell v
 
 ### Build reproducibility and compile-time compromise
 
-Release compilation uses optimization and `-march=native`, but the shared
-build contract explicitly disables fast-math and contraction for supported
-GNU/Clang host compilers (`-fno-fast-math -fno-math-errno -ffp-contract=off`) and NVIDIA CUDA
-(`--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`). Host link options are also carefully configured to prevent `fast-math` from leaking into the startup state. These choices intentionally preserve exact compensated sums and strict floating-point evaluation order. However, they do not guarantee cross-machine bitwise reproducibility. For this reason, our [Validation](../validation/README.md) records meticulously document the compiler versions, flags, OpenMP thread counts, hardware, and accepted numerical tolerances used for each verified run.
-
-CPU dispatch translation units use the same Release `-O3` optimization as the
-application. Release LTO/IPO remains enabled when the toolchain supports it.
+Application and CPU dispatch targets share their Release optimization settings:
+`-O3 -march=native` for GNU/Clang, and CMake's Release settings for MSVC.
+The floating-point contract uses `-fno-fast-math -fno-math-errno -ffp-contract=off`
+on GNU/Clang, `/fp:strict` on MSVC, and
+`--fmad=false --ftz=false --prec-div=true --prec-sqrt=true` on NVIDIA CUDA.
+Compilation and linking preserve compensated sums and ordered evaluation.
+Cross-machine bitwise reproducibility is not assumed: [validation records](../validation/README.md)
+identify the compiler, flags, thread count, hardware and accepted numerical tolerances.
+Release LTO/IPO is enabled when supported by the toolchain.
 `-fno-math-errno` removes unused mathematical-library errno side effects;
 ARCH checks domains and finite results explicitly. It does not enable algebraic
 reassociation, finite-only assumptions or flushing subnormal values to zero.
@@ -291,7 +293,7 @@ user-local installation is supported. The ARCH adapter requires the reviewed 0.8
 API and a matching runtime version. A network/EOS combination becomes available
 after its registered execution code and library are linked. Missing cuDSS does
 not prevent a dense-only CUDA build, but sparse requests are rejected. See the
-[README build example](../README.md#build) for isolated executable output and
+[build guide](guides/Build.md#parallel-compilation-and-memory) for executable output and
 `tools/run_memory_guarded.py`. Start with `--parallel 1` when available memory
 is uncertain, then choose the heavy-pool and total-job limits from measurements.
 The guard allows bounded swap growth and stops sustained memory or I/O stalls.
@@ -393,7 +395,7 @@ Inspect configuration diagnostics before startup. Legal aliases and explicit aut
 
 Current inputs use `time_integrator` for hydro stepping. The former standard keys `timeintegrator`, `enforce_mass_conservation`, `burn_verbose_level`, `ode_use_numerical_jac` and `ode_freeze_jacobian` produce a `RETIRED_PARAMETER` diagnostic. Remove them from older case files and choose the intended physical and numerical settings from the current tables below.
 
-Normalized tabular EOS data require an explicit free-energy potential, physical component declarations and nuclear-equilibrium metadata. Native EOSDriver total tables and supported original baryon tables retain their own contracts. Earlier normalized direct tables should be prepared to the current [table data contract](../src/physics/eos/TabularEOS.md). Checkpoints resume only with matching scientific identity; use the originating executable for an earlier trajectory or initialize a new current case. The completed migration evidence remains in the [historical implementation record](histroy/low-density/ImplementationReport.zh-CN.md).
+Normalized tabular EOS data require an explicit free-energy potential, physical component declarations and nuclear-equilibrium metadata. Native EOSDriver total tables and supported original baryon tables retain their own contracts. Earlier normalized direct tables should be prepared to the current [table data contract](../src/physics/eos/TabularEOS.md). Checkpoints resume only with matching scientific identity; use the originating executable for an earlier trajectory or initialize a new current case.
 
 ## Parameter reference
 

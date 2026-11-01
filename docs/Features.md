@@ -4,7 +4,7 @@
 
 Use this page to choose the capabilities needed for a simulation. The reference defines configuration and combination rules; validation records identify the tested scientific scope. Inputs, outputs and physical constants use CGS units.
 
-Linux is recommended. Native Windows11 x64 provides corresponding CPU/CUDA and Studio functionality in the table below, with newer support that may still have instability or bugs. Existing model, geometry and method-combination conditions remain applicable. See the [final platform correspondence](histroy/build/WindowsNativeCudaQualification-20261027.md), shared [build](guides/Build.md) and [Studio](guides/Studio.md) guides. MPI, HIP/Metal and general radiation transport are not added by this work.
+Linux is recommended. Native Windows 11 x64 provides the CPU/CUDA and Studio functionality listed below, with possible platform-specific instability or bugs. See [Platform support](releases/PlatformSupport.md) for toolchains and limitations, and [Build](guides/Build.md) for installation.
 
 | Area | Available capability | Check when choosing a case |
 | --- | --- | --- |

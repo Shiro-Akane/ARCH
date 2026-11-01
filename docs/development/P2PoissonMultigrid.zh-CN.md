@@ -1,24 +1,22 @@
-# P2：单层 CPU Poisson / multigrid 原型
+# 均匀网格 Poisson 与 multigrid 契约
 
-状态：数值选择和预算在实现前冻结；P2 原型、解析验证与封包回归全部通过。
-日期：2026-09-22。基线为已验证并推送的 P1.5 `780794b6`。
-本文补充主计划 D-01、D-02、D-04 的单层部分；P3–P6 的决定不在此处提前落实。
+本文定义 `CartesianPoisson`、`HostMultigrid` 和 `UniformGravity` 的离散约定与验收预算。复合 AMR 自引力见[实现职责](ImplementationOwnership.md#composite-self-gravity)和[引力验证](../../validation/gravity/README.md)。
 
 ## 范围与归属
 
 - 单个完整 Cartesian 域，1D/2D/3D，cell-centered 势，均匀网格。
   各有效轴格数为不小于 2 的 2 次幂；各轴网格间距之比不超过 2。
   同时二分各轴，任一轴到 2 时停止，最粗层最多 64 个未知量。
-  这些是原型明确拒绝超出范围的条件，不承诺强各向异性或任意形状性能。
+  求解器检查这些网格条件；强各向异性和任意形状应使用适用的算子与求解方法。
 - 全周期，或六个有效域面全部为给定势的 Dirichlet；允许非齐次面值。
   不提供混合、Neumann、孤立边界或曲线坐标解释。
 - `numerics/elliptic/CartesianPoisson`：网格值类型、边界、统一算子/梯度、范数和数据检查。
   `numerics/multigrid/HostMultigrid`：辅助层所有权、循环、粗解；`MGTransfer`：带符号标量传递。
   `physics/gravity/UniformGravity`：CGS 密度源、周期均值及势到加速度的适配。
-- P1 的标量借用视图用于物理输入边界；内部使用连续标量数组，不读取 fluid packing、AMR 父块或 Driver。
-  此原型不发布生产字段，不改配置/schema，不启用 `gravity_type=self`。
+- 标量借用视图用于物理输入边界，内部使用连续标量数组。
+  该均匀网格求解器与 AMR 复合求解器的适用域分别定义。
 
-## D-01 / D-02：在数值结果产生前冻结的选择
+## 离散与求解
 
 采用 `A=-laplacian`，`b=-4*pi*G*rho_source`，`g=-grad(phi)`。
 周期物理源为 `rho-mean(rho)`，报告被移除的密度均值；势规范为零均值。
@@ -47,7 +45,7 @@ restriction 为 `2^dim` 个细格的体积平均；prolongation 为 cell-centere
 非齐次 Dirichlet 的 `b_effective` 包含边界项；不将内部平滑残差作为成功凭据。
 不收敛或非有限结果仅返回失败报告，不暴露可被当成成功的势数组。
 
-## D-04：预先固定的验收预算
+## 验收预算
 
 - 周期正弦/余弦、非齐次 Dirichlet 的多项式加正弦制造解：1D/2D/3D，
   每轴 16、32、64 三档。势、cell 力、包含域边界的面力的 RMS 观察阶均不低于 **1.8**。
@@ -67,33 +65,10 @@ restriction 为 `2^dim` 个细格的体积平均；prolongation 为 cell-centere
 - 零 RHS、非零初值/重复求解、非相容 RHS、坏网格/边界/输入视图、NaN/Inf、
   一次循环不足和计算溢出必须有明确行为；失败不返回势/引力字段。
 - 最终 residual 用独立测试实现再次计算；循环数、误差、阶数和构建身份归档。
-  不把本阶段结果称为 AMR 自引力、动力学能量守恒或 GPU 加速验收。
+  AMR、动力学能量耦合和设备执行使用对应的独立测试。
 
-## 后续接续
 
-通用 stencil 与 transfer 叶子可供后续设备执行器调用；本阶段只实现 Host 所有权和循环。
-P3 才接入 AMR 标量布局、粗细通量和 composite residual；P4 才接入字段发布及 hydro 能量耦合。
-P6 才验证设备驻留、跨层执行及端到端加速。当前不新增空 CUDA 执行器。
+## 验证入口
 
-参考：AMReX 的 [linear solvers](https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html)
-将物理边界与几何多重网格分开；PETSc 的 [KSP/PCMG 文档](https://petsc.org/main/manual/ksp/)
-说明粗层、transfer、平滑器和残差之间的职责。此处离散公式与验收由 ARCH 自身独立测试验证。
-
-## 实施记录与维护性
-
-代码落点与上述归属一致，共新增 7 个生产文件：算子头/实现、MG 头/实现与 transfer 叶子、
-引力适配头/实现。短头文件提供明确的模块边界，与实现成对，不为了达到行数阈值合并无关职责。
-新增代码未触及 Driver、GUI/schema、AMR、EOS、生产重力源或配置控制面；gravity 目录仍为 8 个直接文件。
-
-[验证封包](../../validation/gravity/results/p2-20260922/README.md)记录 18 个三档网格解、
-6 个 CGS 尺度解、常密度二次势、弱扰动及接口/失败检查。`poisson_multigrid_contract` 与
-`poisson_multigrid_analytic` 接入 CTest 和 CPU CI 必需覆盖项。
-验证脚本复用已有 provenance 与运行日志工具，不新增数学 oracle 的第二份生产实现。
-
-最终 Dirichlet 离散采用本文件冻结的二次边界梯度；欧氏非对称性不被掩盖。
-周期低对比度源项修正在引力组装端完成并记账，通用求解器的相容性检查未放宽。
-ASan/UBSan/泄漏检测使用同一测试程序；CUDA 只进行新增代码编译兼容检查。
-下一阶段是 P3 的多块/静态 AMR composite 接口与通量，不自动开放 `self`。
-
-验收完成：CPU CTest 57/57、Release 数学契约与解析矩阵、ASan/UBSan/泄漏检测两模式、
-架构/警告检查和 CUDA 编译兼容均通过；CI 结果检查工具 10/10。详见验证封包，不把编译检查计为 P6。
+`poisson_multigrid_contract` 与 `poisson_multigrid_analytic` 属于 CTest。
+[解析验证记录](../../validation/gravity/results/p2-20260922/README.md)保存网格序列、CGS 尺度、弱扰动与失败检查的输入和结果。

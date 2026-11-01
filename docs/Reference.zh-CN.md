@@ -201,9 +201,7 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 
 ### 构建复现性与编译期妥协
 
-Release 保留优化和 `-march=native`，但共用构建契约在支持的 GNU/Clang host 编译器上显式关闭 fast-math 与浮点收缩（`-fno-fast-math -fno-math-errno -ffp-contract=off`），NVIDIA CUDA 则使用 `--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`。Host 的链接选项也被精心配置，以防止 `fast-math` 的行为泄漏到启动状态中。这些设计选择刻意保留了精确的补偿求和与严格的浮点求值顺序。然而，它们并不能保证跨机器的逐位复现（bitwise reproducibility）。正因如此，我们的[验证](../validation/README.zh-CN.md)记录必须详尽登记每次验证运行所使用的编译器版本、编译参数、OpenMP 线程数、硬件配置以及所接受的数值容差。
-
-CPU dispatch 翻译单元与应用共用 Release 的 `-O3` 优化，工具链支持时启用 LTO／IPO。`-fno-math-errno` 仅移除未使用的数学库 errno 副作用；ARCH 显式检查定义域和有限结果，继续禁止重结合、有限数假设及非正规数清零。编译内存通过任务并发限制控制。燃烧策略在进入完整通量矩阵前通过 `BurnerHandle` 类型擦除，减少各流体路径重复实例化网络和 ODE 的开销。CUDA 按同样的功能职责拆分，并单独控制后端编译任务的并发数。
+应用和 CPU dispatch 翻译单元共用 Release 优化设置：GNU/Clang 使用 `-O3 -march=native`，MSVC 使用 CMake 的 Release 设置。浮点契约在 GNU/Clang 上使用 `-fno-fast-math -fno-math-errno -ffp-contract=off`，在 MSVC 上使用 `/fp:strict`，在 NVIDIA CUDA 上使用 `--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`。编译和链接共同保留补偿求和与求值顺序。跨机器结果不要求逐位相同；[验证记录](../validation/README.zh-CN.md)列出编译器、参数、线程数、硬件及数值容差。工具链支持时启用 Release LTO／IPO。`-fno-math-errno` 仅移除未使用的数学库 errno 副作用；ARCH 显式检查定义域和有限结果，继续禁止重结合、有限数假设及非正规数清零。编译内存通过任务并发限制控制。燃烧策略在进入完整通量矩阵前通过 `BurnerHandle` 类型擦除，减少各流体路径重复实例化网络和 ODE 的开销。CUDA 按同样的功能职责拆分，并单独控制后端编译任务的并发数。
 
 ## 构建、注册和命令行
 
@@ -216,7 +214,7 @@ cmake --build build --parallel 1
 
 CMake 在配置时获取 HighFive，并链接 HDF5 C++/HL 库。KLU 默认启用：CMake 先查找已安装的 KLU package；若不存在，则获取固定的 SuiteSparse v7.13.0，只构建 KLU、BTF、AMD、COLAMD 与 SuiteSparse_config。EOS `.dat`/`.h5` 资源可能需要 Git LFS。
 
-CUDA 稀疏燃烧额外通过默认开启的 `ARCH_ENABLE_CUDSS=ON` 可选发现 cuDSS，可用 `CUDSS_ROOT` 指向安装前缀，用户目录安装也受支持。ARCH 适配层要求已审查的 0.8 API 与匹配的运行库版本；某个网络/EOS 组合在其已注册执行代码与库实际链接后才可用。缺少 cuDSS 不妨碍只用稠密求解的 CUDA 构建，但会拒绝稀疏请求。[README 构建示例](../README.zh-CN.md#构建)展示了隔离可执行文件输出与 `tools/run_memory_guarded.py`。不确定可用内存时先使用 `--parallel 1`，再按测量结果调整重型任务与总任务的并发上限。保护工具允许有限的 swap 增长，在内存或 I/O 持续停顿时停止编译。模拟容量按具体工作负载另行测量。
+CUDA 稀疏燃烧额外通过默认开启的 `ARCH_ENABLE_CUDSS=ON` 可选发现 cuDSS，可用 `CUDSS_ROOT` 指向安装前缀，用户目录安装也受支持。ARCH 适配层要求已审查的 0.8 API 与匹配的运行库版本；某个网络/EOS 组合在其已注册执行代码与库实际链接后才可用。缺少 cuDSS 不妨碍只用稠密求解的 CUDA 构建，但会拒绝稀疏请求。[构建指南](guides/Build.zh-CN.md#parallel-compilation-and-memory)介绍可执行文件输出与 `tools/run_memory_guarded.py`。不确定可用内存时先使用 `--parallel 1`，再按测量结果调整重型任务与总任务的并发上限。保护工具允许有限的 swap 增长，在内存或 I/O 持续停顿时停止编译。模拟容量按具体工作负载另行测量。
 
 `ARCH_CUDSS_IR_STEPS` 是非负整数 CMake 选项（默认 `2`），控制 cuDSS 在设备端执行的线性解精化轮数；设为 `0` 可供诊断关闭。它只影响线性求解适配层，不修改 ODE 容差或 Auto 阈值：不超过 31 个总方程使用 DenseLU；30 个核素加温度和弱能量积分已经是 32 阶系统。适配层保持 cuDSS `IR_TOL=0`，求解后仍逐分量检查原矩阵残差；修正量必须通过 ARCH 的精度检查才会被接受，库返回成功本身不足以满足要求。该选项仅影响主机端适配层的编译，不重新实例化 CUDA 网络/EOS 计算核。参见 [cuDSS 精化契约](https://docs.nvidia.com/cuda/cudss/types.html#cudssconfigparam-t)。
 
@@ -280,7 +278,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 现行输入使用 `time_integrator` 选择流体时间推进。`timeintegrator`、`enforce_mass_conservation`、`burn_verbose_level`、`ode_use_numerical_jac` 和 `ode_freeze_jacobian` 是已退役的标准键；配置解析会报告 `RETIRED_PARAMETER`。修改旧算例时，应移除这些键，并按下文当前参数表重新选择所需的物理与数值设置。
 
-规范化表格 EOS 使用明确的自由能势、物理分量和核平衡声明；原生 EOSDriver 总表及受支持的原始重子表保留各自的数据契约。早期规范化 direct 表应根据[表格式契约](../src/physics/eos/TabularEOS.zh-CN.md)重新准备数据。检查点按保存的科学身份恢复；旧格式或不一致的控制身份须用生成它的程序续算，或从当前算例的新初态开始。完成这次迁移时的验证结果保存在[历史实施记录](histroy/low-density/ImplementationReport.zh-CN.md)。
+规范化表格 EOS 使用明确的自由能势、物理分量和核平衡声明；原生 EOSDriver 总表及受支持的原始重子表保留各自的数据契约。早期规范化 direct 表应根据[表格式契约](../src/physics/eos/TabularEOS.zh-CN.md)重新准备数据。检查点按保存的科学身份恢复；旧格式或不一致的控制身份须用生成它的程序续算，或从当前算例的新初态开始。
 
 ## 参数参考
 
@@ -835,7 +833,7 @@ CMake 通过生成注册表发现多个共存网络包，一次运行用 `networ
 弱中微子能量写入 ODE RHS，并隔离 SimpleCxx 头文件的命名空间。已识别的弱表
 包含 rho*Ye 的组分链式导数及有符号能量源梯度。生成器依据核数据、详细平衡反应对和
 强反应守恒约束的秩判定 NSE 资格。首轮支持无屏蔽、无弱反应的基态平衡模型；
-温度相关配分函数还需要本轮未提供的激发能闭合。缺少或不满足元数据条件时，
+温度相关配分函数还需要尚未实现的激发能闭合。缺少或不满足元数据条件时，
 `use_nse=auto` 或 `false` 保留普通 ODE 燃烧，具体见[网络包契约](../src/physics/network/custom/README.md)。
 完整 RHS 的温度 Jacobian 列使用共用四阶差分策略、
 精度导出的步长及边界模板。生成器只删除编译期字面零 Jacobian 调用；
