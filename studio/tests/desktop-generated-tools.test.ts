@@ -72,13 +72,21 @@ include([=[${forward(fileURLToPath(new URL('../../cmake/studio/WindowsTools.cmak
  await execute(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{windowsVerbatimArguments:true});
 });
 
-test('native Core-only configure writes its CLI environment without Node or objdump',
+test('manual native Core retains selected HDF5/OpenMP runtimes without preparation, Node or objdump',
  {skip:process.platform!=='win32'},async t=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch core runtime '));
  t.after(()=>rm(root,{recursive:true,force:true}));
  const forward=(value:string)=>value.replaceAll('\\','/');
  const binary=path.join(root,'bin','ARCH.exe'),compiler=path.join(root,'compiler','cc.exe');
  for(const file of [binary,compiler]){await mkdir(path.dirname(file),{recursive:true});await writeFile(file,'fixture executable');}
+ const hdfRoot=path.join(root,'hdf-root'),prefix=path.join(root,'prefix');
+ const selectedLibrary=path.join(root,'selected-hdf','lib','hdf5.lib');
+ const importedDll=path.join(root,'imported-hdf','runtime','hdf5_cpp.dll');
+ const redist=path.join(root,'redist'),openmp=path.join(redist,'debug_nonredist','x64','Microsoft.VC143.OpenMP.LLVM');
+ const runtimeDirs=[path.join(hdfRoot,'bin'),path.join(prefix,'bin'),path.join(root,'selected-hdf','bin'),path.dirname(importedDll),openmp];
+ for(const dir of runtimeDirs)await mkdir(dir,{recursive:true});
+ await mkdir(path.dirname(selectedLibrary),{recursive:true});
+ for(const file of [selectedLibrary,importedDll,path.join(openmp,'libomp140.x86_64.dll')])await writeFile(file,'fixture library');
  const build=path.join(root,'build');
  await writeFile(path.join(root,'CMakeLists.txt'),`cmake_minimum_required(VERSION 3.22)
 project(CoreRuntime NONE)
@@ -90,6 +98,15 @@ set(ARCH_RUNTIME_OUTPUT_DIRECTORY "\${CMAKE_BINARY_DIR}/bin")
 set(ARCH_BUILD_STUDIO OFF)
 set(ARCH_STUDIO_NODE "C:/unavailable-node/node.exe")
 set(ARCH_STUDIO_OBJDUMP "C:/unavailable-inspector/objdump.exe")
+set(HDF5_ROOT [=[${forward(hdfRoot)}]=])
+set(CMAKE_PREFIX_PATH [=[${forward(prefix)};${forward(path.join(root,'absent-prefix'))}]=])
+set(HDF5_LIBRARIES [=[${forward(selectedLibrary)}]=])
+add_library(selected_hdf_cpp SHARED IMPORTED)
+set_target_properties(selected_hdf_cpp PROPERTIES IMPORTED_LOCATION_RELEASE [=[${forward(importedDll)}]=])
+set(HDF5_CXX_LIBRARIES selected_hdf_cpp)
+set(CMAKE_BUILD_TYPE Release)
+set(MSVC TRUE)
+set(ARCH_ENABLE_OPENMP ON)
 include([=[${forward(fileURLToPath(new URL('../../cmake/project/WindowsRuntime.cmake',import.meta.url)))}]=])
 include([=[${forward(fileURLToPath(new URL('../../cmake/studio/Studio.cmake',import.meta.url)))}]=])
 `);
@@ -97,11 +114,12 @@ include([=[${forward(fileURLToPath(new URL('../../cmake/studio/Studio.cmake',imp
  const cmake=process.env.ARCH_TEST_CMAKE??(await execute('where.exe',['cmake'])).stdout.trim().split(/\r?\n/)[0];
  const ninja=process.env.ARCH_TEST_NINJA??(await execute('where.exe',['ninja'])).stdout.trim().split(/\r?\n/)[0];
  await execute(cmake,['-S',root,'-B',build,'-G','Ninja','-DCMAKE_MAKE_PROGRAM='+ninja],
-  {env:{...process.env,PATH:systemRoot+'/System32;'+systemRoot},timeout:30000});
+  {env:{...process.env,PATH:systemRoot+'/System32;'+systemRoot,VCToolsRedistDir:redist},timeout:30000});
  const script=await readFile(path.join(build,'bin','arch-env.cmd'),'utf8');
  assert.ok(script.includes(forward(path.dirname(compiler))));
  assert.ok(script.includes(forward(path.dirname(binary))));
- assert.doesNotMatch(script,/unavailable-node|unavailable-inspector/);
+ for(const dir of runtimeDirs)assert.ok(script.includes(forward(dir)),dir);
+ assert.doesNotMatch(script,/unavailable-node|unavailable-inspector|absent-prefix/);
  await assert.rejects(readFile(path.join(build,'studio','windows-tools.json')),/ENOENT/);
  const command=`call "${path.join(build,'bin','arch-env.cmd')}" && set PATH`;
  await execute(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{windowsVerbatimArguments:true});
