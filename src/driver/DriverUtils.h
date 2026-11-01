@@ -88,39 +88,48 @@ inline double reduce_block_minimum(double identity,
         MPI_Comm_size(MPI_COMM_WORLD, &size);
         if (size != rank_count)
             throw std::logic_error("MPI reduction communicator size mismatch");
-        // Typed wire fields avoid transmitting C++ padding or process-local IDs.
+        // Gather one fixed-width record instead of synchronizing three times.
+        // Encode each field explicitly: no C++ padding or process-local IDs.
+        // Integer transport preserves every binary64 bit, including signed zero.
+        const auto encode_signed = [](std::int64_t value) {
+            return std::bit_cast<std::uint64_t>(value);
+        };
+        const auto decode_signed = [](std::uint64_t value) {
+            return std::bit_cast<std::int64_t>(value);
+        };
         const auto &key = result.key;
-        const std::array<std::int64_t, 9> wire{
-            key.root.root_i,
-            key.root.root_j,
-            key.root.root_k,
-            key.level,
-            key.logical_i,
-            key.logical_j,
-            key.logical_k,
-            key.component,
-            static_cast<std::int64_t>(result.status == arch::reduction::ReductionStatus::Empty
-                                          ? arch::reduction::ReductionStatus::Ok
-                                          : result.status)};
-        const std::array<std::uint64_t, 2> counts{key.morton, result.accepted_count};
-        std::vector<double> values(rank_count);
-        std::vector<std::int64_t> keys(static_cast<std::size_t>(rank_count) * wire.size());
-        std::vector<std::uint64_t> totals(static_cast<std::size_t>(rank_count) * counts.size());
-        MPI_Allgather(&result.value, 1, MPI_DOUBLE, values.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
-        MPI_Allgather(wire.data(), 9, MPI_INT64_T, keys.data(), 9, MPI_INT64_T, MPI_COMM_WORLD);
-        MPI_Allgather(counts.data(), 2, MPI_UINT64_T, totals.data(), 2, MPI_UINT64_T,
+        const auto status = result.status == arch::reduction::ReductionStatus::Empty
+            ? arch::reduction::ReductionStatus::Ok : result.status;
+        const std::array<std::uint64_t, 12> wire{
+            std::bit_cast<std::uint64_t>(result.value),
+            encode_signed(key.root.root_i),
+            encode_signed(key.root.root_j),
+            encode_signed(key.root.root_k),
+            encode_signed(key.level),
+            encode_signed(key.logical_i),
+            encode_signed(key.logical_j),
+            encode_signed(key.logical_k),
+            encode_signed(key.component),
+            static_cast<std::uint64_t>(status),
+            key.morton,
+            result.accepted_count};
+        std::vector<std::uint64_t> gathered(static_cast<std::size_t>(rank_count) * wire.size());
+        const int count = static_cast<int>(wire.size());
+        MPI_Allgather(wire.data(), count, MPI_UINT64_T, gathered.data(), count, MPI_UINT64_T,
                       MPI_COMM_WORLD);
         const auto spec = arch::reduction::minimum_spec(identity);
         auto merged = arch::reduction::begin_reduction(spec);
         for (int r = 0; r < rank_count; ++r) {
-            const auto *k = keys.data() + 9 * r;
-            const amr::CellLogicalKey global{{k[0], k[1], k[2]},     static_cast<int>(k[3]),
-                                             totals[2 * r],          static_cast<int>(k[4]),
-                                             static_cast<int>(k[5]), static_cast<int>(k[6]),
-                                             static_cast<int>(k[7])};
-            arch::reduction::combine_state(spec, merged,
-                                           {values[r], global, totals[2 * r + 1],
-                                            static_cast<arch::reduction::ReductionStatus>(k[8])});
+            const auto *k = gathered.data() + wire.size() * r;
+            const amr::CellLogicalKey global{
+                {decode_signed(k[1]), decode_signed(k[2]), decode_signed(k[3])},
+                static_cast<int>(decode_signed(k[4])), k[10],
+                static_cast<int>(decode_signed(k[5])), static_cast<int>(decode_signed(k[6])),
+                static_cast<int>(decode_signed(k[7])), static_cast<int>(decode_signed(k[8]))};
+            arch::reduction::combine_state(
+                spec, merged,
+                {std::bit_cast<double>(k[0]), global, k[11],
+                 static_cast<arch::reduction::ReductionStatus>(k[9])});
         }
         const auto global = arch::reduction::finalize_reduction(spec, merged);
         if (global.status != arch::reduction::ReductionStatus::Ok)

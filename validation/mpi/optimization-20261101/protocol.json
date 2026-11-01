@@ -1,0 +1,91 @@
+{
+  "scope": "complete rank-wait diagnosis, expanded MPI scaling and validated communication optimization; AMR remains deferred",
+  "base_commit": "9d3914a68d6db72c06212f8c1a528d477087e97b",
+  "production_change": "one explicit 12-word MPI_UINT64_T Allgather replaces three typed Allgathers in DriverReduction::reduce_block_minimum",
+  "semantic_contract": "unchanged native combine_state/finalize_reduction and rank-order traversal; binary64 values preserved bitwise",
+  "allowed_files": [
+    "src/driver/DriverUtils.h",
+    "tests/host/amr/test_mpi_fixed_grid.cpp",
+    "validation/mpi",
+    "docs/development"
+  ],
+  "forbidden_changes": [
+    "numerics",
+    "physics",
+    "AMR transfer/refinement/storage",
+    "independent MPI runtime or pool"
+  ],
+  "candidate_regression": [
+    "Debug and Release 1/2/4/8/16 rank host transport and reduction tests",
+    "existing 1D and 2D/3D parity suites",
+    "candidate two-host 2/4 rank parity"
+  ],
+  "cpu_primary": {
+    "host": "gen-989544",
+    "paired_ranks": [
+      2,
+      4
+    ],
+    "warmups_per_version": 1,
+    "measured_pairs": 5,
+    "micro_iterations": 20000,
+    "disk_floor_gib": 16
+  },
+  "expanded": {
+    "host": "gpu-273312",
+    "shared_with_existing_jobs": true,
+    "cores": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      16,
+      17,
+      18,
+      20,
+      22,
+      23
+    ],
+    "ranks": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "warmups": 1,
+    "repetitions": 5,
+    "disk_floor_gib": 24,
+    "interpretation": "report core busy/steal samples; no claim of exclusive-host or 32-rank performance",
+    "grids": {
+      "2d": [
+        32,
+        8,
+        0
+      ],
+      "3d": [
+        32,
+        1,
+        1
+      ]
+    },
+    "reason": "Selected after other jobs changed CPU use; 3D evidence footprint reduced before any expanded run to retain 24 GiB disk floor during other project backup download.",
+    "output_medium": "server /dev/shm, CPU server verified lossless archives",
+    "archive_budget_mib": 200,
+    "ram_free_floor_gib": 24,
+    "cpu_archive_disk_floor_gib": 16
+  },
+  "acceptance": [
+    "all numerical and metadata edge-case regressions pass",
+    "collective invocation count drops exactly from 3 to 1 per CFL step; logical payload remains 96 bytes/rank",
+    "repeated microbenchmark confirms lower call latency",
+    "report application distributions and any regression; do not infer total speedup from microbenchmarks",
+    "all raw evidence retained on servers and temporary transport credentials revoked"
+  ]
+}

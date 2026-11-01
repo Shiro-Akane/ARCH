@@ -101,3 +101,6 @@ MPI 继续沿用现有内存池与 GhostExchange，不另建 MPI 资源管理层
 [后续计划](MPI-NextSteps-20261101.zh-CN.md)；
 [机器可读结果](MPI-Scaling-20261101.validation.json)；
 [复现协议](../../validation/mpi/scaling-20261101/README.md)。
+
+
+后续进展：已完成等待追踪、16 rank 扩展与 CFL 通信合并，见 [通信优化与扩展结果](MPI-Communication-20261101.zh-CN.md)。

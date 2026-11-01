@@ -137,6 +137,36 @@ void test_minimum(int rank, int size)
         require(DriverReduction::reduce_block_minimum(1e99, candidates, size) == 1.,
                 "NaN-only local partition was treated as a globally empty reduction");
     }
+    // Each logical key component must still break equal-value ties across ranks.
+    // Signed coordinates and high Morton bits exercise the wire representation.
+    for (int field = 0; field < 9; ++field) {
+        amr::CellLogicalKey tie{};
+        const int signed_order = -1 - rank;
+        switch (field) {
+        case 0: tie.root.root_i = std::numeric_limits<std::int64_t>::min() + size - rank; break;
+        case 1: tie.root.root_j = signed_order; break;
+        case 2: tie.root.root_k = signed_order; break;
+        case 3: tie.level = signed_order; break;
+        case 4: tie.morton = std::numeric_limits<std::uint64_t>::max() - rank; break;
+        case 5: tie.logical_i = signed_order; break;
+        case 6: tie.logical_j = signed_order; break;
+        case 7: tie.logical_k = signed_order; break;
+        case 8: tie.component = signed_order; break;
+        }
+        candidates = {{rank == size - 1 ? -0. : +0., tie, true}};
+        require(std::signbit(DriverReduction::reduce_block_minimum(1e99, candidates, size)),
+                "distributed tie key changed");
+    }
+    candidates = {{rank == size - 1 ? -std::numeric_limits<double>::infinity()
+                                    : std::numeric_limits<double>::infinity(), key, true}};
+    require(DriverReduction::reduce_block_minimum(1e99, candidates, size)
+                == -std::numeric_limits<double>::infinity(), "minimum infinity policy changed");
+    if (size > 1) {
+        candidates = {{double(rank), key, true}};
+        if (rank == 0) candidates.clear();
+        require(DriverReduction::reduce_block_minimum(1e99, candidates, size) == 1.,
+                "empty local partition was treated as a globally empty reduction");
+    }
     candidates.clear();
     bool rejected = false;
     try {

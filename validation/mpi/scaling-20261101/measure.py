@@ -31,10 +31,10 @@ def prepare(lane,shape,steps,problem="SmoothAdvection"):
     template=E/"inputs"/("smooth.par" if problem=="SmoothAdvection" else "sedov.par")
     par=lane/"input.par";par.write_text(comparison.parameters(template.read_text(),values))
     return par
-def launch(lane,shape,steps,ranks,profiled=False,baseline=False,common=None,problem="SmoothAdvection",prepared=False):
+def launch(lane,shape,steps,ranks,profiled=False,baseline=False,common=None,problem="SmoothAdvection",prepared=False,executable=None):
     par=lane/"input.par" if prepared else prepare(lane,shape,steps,problem)
     check=preflight(24 if socket.gethostname()=="gpu-273312" else 16)
-    binary=E/"bin"/("ARCH-baseline" if baseline else "ARCH")
+    binary=Path(executable) if executable else E/"bin"/("ARCH-baseline" if baseline else "ARCH")
     wrapped=[str(T/"bin/python"),"-B",str(E/"tools/rank_wrapper.py"),str(lane),str(int(profiled)),str(binary),problem,str(par)]
     if baseline:cmd=["taskset","-c","0",*wrapped]
     else:
