@@ -29,8 +29,8 @@ ARCH 统一使用 **CGS 单位**：长度 cm、时间 s、密度 g/cm³、压力
 
 | 要求 | Linux／WSL2 | 原生 Windows 11 x64 |
 | --- | --- | --- |
-| CPU | C++20 GCC、CMake 3.22+、Ninja 和 Git | PowerShell PATH 中的 GCC/UCRT64、原生 CMake/Ninja 和 Git |
-| CUDA | CMake 3.25.2+、CUDA Toolkit 12.0+、兼容 Host 编译器和 GPU 驱动 | NVCC、MSVC 14.44 x64 Developer 终端、Windows SDK 与兼容 GPU 驱动 |
+| CPU | C++20 GCC、CMake 3.22+、Ninja 和 Git | PowerShell PATH 中的 GCC/UCRT64、UCRT64 CMake/Ninja 和原生 Git |
+| CUDA | CMake 3.25.2+、CUDA Toolkit 12.0+、兼容 Host 编译器和 GPU 驱动 | NVCC、MSVC 14.44 x64 Developer 终端、Kitware Windows CMake、Windows SDK 与兼容 GPU 驱动 |
 | 可选 Studio | 原生 x64 Node 24+、npm 和图形会话／WSLg | 原生 x64 Node 24+、npm 和 GNU objdump |
 
 ### 获取源码

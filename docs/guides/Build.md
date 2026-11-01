@@ -51,10 +51,10 @@ Use the same profile name in the prepare, configure and build commands. Each wri
 | CPU Core + Studio | `linux-desktop` | `windows-desktop` |
 | CPU + CUDA Core + Studio | `linux-desktop-with-cuda` | `windows-desktop-with-cuda` |
 
-Core profiles require neither Node nor objdump. Desktop profiles add the window and its tools; `with-cuda` adds CUDA to a program that also retains CPU execution. The [README](../../README.md#build) gives Core-only commands. To add Studio to an existing Core tree, use [the desktop section](#build-and-launch-the-desktop).
+Core-only builds require neither Node nor objdump. Enabling Studio in the same build directory requires the desktop dependencies. Desktop profiles include the window and its tools by default; `with-cuda` adds CUDA to a program that also retains CPU execution. The [README](../../README.md#build) gives Core-only commands. To add Studio to an existing Core tree, use [the desktop section](#build-and-launch-the-desktop).
 
 <a id="presets-and-build-options"></a>
-All eight profiles use Release, Ninja, OpenMP and KLU; tests are off and the build uses one job by default. CUDA profiles target the GPU visible during configuration. GNU profiles retain build-input evidence for later use in Studio. `cmake --list-presets` lists these and the direct-configuration presets described under [advanced configuration](#advanced-configuration).
+All eight profiles use Release and Ninja. OpenMP and KLU are enabled, tests are off, and the build uses one job by default. CUDA profiles target the GPU visible during configuration. GNU profiles retain build-input evidence for later use in Studio. `cmake --list-presets` lists these and the direct-configuration presets described under [advanced configuration](#advanced-configuration).
 
 ## Tools and dependencies
 

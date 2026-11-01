@@ -29,8 +29,8 @@ Install the [platform tools](docs/guides/Build.md#tools-and-dependencies), then 
 
 | Requirement | Linux / WSL2 | Native Windows 11 x64 |
 | --- | --- | --- |
-| CPU | C++20 GCC, CMake 3.22+, Ninja and Git | GCC/UCRT64 on the PowerShell PATH, native CMake/Ninja and Git |
-| CUDA | CMake 3.25.2+, CUDA Toolkit 12.0+, compatible host compiler and GPU driver | NVCC, MSVC 14.44 x64 Developer terminal, Windows SDK and compatible GPU driver |
+| CPU | C++20 GCC, CMake 3.22+, Ninja and Git | GCC/UCRT64 and UCRT64 CMake/Ninja on the PowerShell PATH, native Git |
+| CUDA | CMake 3.25.2+, CUDA Toolkit 12.0+, compatible host compiler and GPU driver | NVCC, MSVC 14.44 x64 Developer terminal, Kitware Windows CMake, Windows SDK and compatible GPU driver |
 | Optional Studio | Native x64 Node 24+, npm and graphical session/WSLg | Native x64 Node 24+, npm and GNU objdump |
 
 ### Get the source

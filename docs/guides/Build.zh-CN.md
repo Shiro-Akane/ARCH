@@ -53,10 +53,10 @@ Studio 打开空白的项目选择页。选择项目、构建目录与执行物�
 | CPU Core + Studio | `linux-desktop` | `windows-desktop` |
 | CPU + CUDA Core + Studio | `linux-desktop-with-cuda` | `windows-desktop-with-cuda` |
 
-Core profile 不需要 Node 或 objdump。Desktop profile 增加窗口及相关工具；`with-cuda` 为同时保留 CPU 能力的执行物加入 CUDA。[README](../../README.zh-CN.md#构建)给出纯 Core 的命令；已有 Core 构建目录可按[桌面部分](#build-and-launch-the-desktop)直接加入 Studio。
+纯 Core 构建不需要 Node 或 objdump。在同一构建目录启用 Studio 后，需要安装桌面依赖。Desktop profile 默认包含窗口及相关工具；`with-cuda` 为同时保留 CPU 能力的执行物加入 CUDA。[README](../../README.zh-CN.md#构建)给出纯 Core 的命令；已有 Core 构建目录可按[桌面部分](#build-and-launch-the-desktop)直接加入 Studio。
 
 <a id="presets-and-build-options"></a>
-八种 profile 均使用 Release、Ninja、OpenMP 和 KLU，默认关闭测试、使用一个编译任务。CUDA profile 针对配置时可见的 GPU 生成代码。GNU profile 保留构建输入证据，便于之后在 Studio 中使用。`cmake --list-presets` 列出全部 preset；[高级配置](#advanced-configuration)说明手工准备环境所用的直接配置 preset。
+八种 profile 均使用 Release 和 Ninja，默认启用 OpenMP、KLU，关闭测试，并使用一个编译任务。CUDA profile 针对配置时可见的 GPU 生成代码。GNU profile 保留构建输入证据，便于之后在 Studio 中使用。`cmake --list-presets` 列出全部 preset；[高级配置](#advanced-configuration)说明手工准备环境所用的直接配置 preset。
 
 <a id="tools-and-dependencies"></a>
 ## 工具与依赖
