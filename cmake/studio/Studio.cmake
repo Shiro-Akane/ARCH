@@ -39,16 +39,25 @@ file(GLOB_RECURSE studio_inputs CONFIGURE_DEPENDS
     "${studio_source}/src/*" "${studio_source}/host/*" "${studio_source}/desktop/*")
 list(APPEND studio_inputs "${studio_source}/package.json" "${studio_source}/package-lock.json"
     "${studio_source}/index.html" "${studio_source}/tsconfig.json" "${studio_source}/vite.config.ts")
+# A shared install stamp avoids reinstalling packages after ordinary source edits.
+# The check also repairs a removed node_modules tree; the helper serializes npm ci.
+set(studio_dependency_stamp "${studio_source}/node_modules/.arch-dependencies")
+add_custom_target(arch-studio-dependencies
+    COMMAND "${CMAKE_COMMAND}" -E env "PATH=${studio_path}"
+        "${CMAKE_COMMAND}" "-DSTUDIO_ROOT=${studio_source}" "-DSTUDIO_NODE=${ARCH_STUDIO_NODE}"
+        "-DSTUDIO_NPM=${ARCH_STUDIO_NPM}" "-DSTUDIO_NPM_CLI=${ARCH_STUDIO_NPM_CLI}"
+        -P "${CMAKE_SOURCE_DIR}/cmake/studio/EnsureDependencies.cmake"
+    BYPRODUCTS "${studio_dependency_stamp}"
+    COMMENT "Check locked Studio dependencies"
+    VERBATIM)
 set(studio_stamp "${CMAKE_BINARY_DIR}/studio-assets.stamp")
 add_custom_command(OUTPUT "${studio_stamp}"
-    COMMAND "${CMAKE_COMMAND}" -E env --unset=ELECTRON_SKIP_BINARY_DOWNLOAD
-        "PATH=${studio_path}" ${studio_npm_command} ci --ignore-scripts --no-audit --no-fund
     COMMAND "${CMAKE_COMMAND}" -E env "PATH=${studio_path}"
         ${studio_npm_command} run build
     COMMAND "${CMAKE_COMMAND}" -E touch "${studio_stamp}"
-    DEPENDS ${studio_inputs}
+    DEPENDS ${studio_inputs} "${studio_dependency_stamp}" arch-studio-dependencies
     WORKING_DIRECTORY "${studio_source}"
-    COMMENT "Build Studio assets from the locked dependency list"
+    COMMENT "Build Studio assets"
     VERBATIM)
 add_custom_target(arch-studio-assets DEPENDS "${studio_stamp}")
 add_custom_target(arch-studio-runtime

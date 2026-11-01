@@ -6,7 +6,6 @@
  */
 import path from 'node:path';
 import {realpath,stat} from 'node:fs/promises';
-import {BUILD_PROFILES} from './buildProfile.ts';
 import {desktopRegistry,registeredSourceCase} from './desktopSource.ts';
 import {localCpuProfile} from './localBuildProfile.ts';
 import {checkedPath,fingerprint} from './files.ts';
@@ -41,10 +40,9 @@ export async function openDesktopProject(launch:DesktopProjectLaunch,context:{wi
   return rel.split(path.sep).join('/');
  }
  const binary=launch.binary?relative(launch.binary):undefined;
- const registered=process.platform==='win32'?undefined:BUILD_PROFILES.find(p=>p.managedSourceRoot===root&&(!binary||p.outputBinaryRelative===binary));
  const local=localCpuProfile(root,context.windowsTools);
  const existing=launch.buildDir?await existingBuildProfile(root,relative(launch.buildDir),binary,context.windowsTools):undefined;
- const profile=existing?.build??registered??(!binary||binary===local.build.outputBinaryRelative?local.build:undefined);
+ const profile=existing?.build??(!binary||binary===local.build.outputBinaryRelative?local.build:undefined);
  if(!profile)throw new Error('No approved Host-owned Build Profile matches this project/binary. Register a trusted profile; build trees are never rebound automatically.');
  const config=launch.config?relative(launch.config):'simulation/Sod/Sod.par';
  const selectedSource=launch.source?relative(launch.source):undefined;

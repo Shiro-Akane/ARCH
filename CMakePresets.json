@@ -21,7 +21,7 @@
     },
     {
       "name": "studio-cpu-release",
-      "displayName": "CPU application and Linux Studio desktop (Release)",
+      "displayName": "CPU application and native Studio desktop (Release)",
       "inherits": "cpu-release",
       "binaryDir": "${sourceDir}/build-studio-cpu",
       "cacheVariables": {

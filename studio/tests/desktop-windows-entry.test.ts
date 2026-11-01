@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {selectWindowsNode} from '../desktop/node-runtime.mjs';
 import {hostEnvironment,configurationRelativePath} from '../desktop/arguments.mjs';
 import {parseWindowsTools,loadWindowsTools,windowsHostEnvironment,compilerEnvironment} from '../host/windows-tools.mjs';
@@ -39,6 +41,13 @@ test('trusted tool configuration rejects unknown fields, relative executables an
  const env=windowsHostEnvironment(tools(),{SystemRoot:'C:/Windows',ComSpec:'C:/Windows/System32/cmd.exe',PATH:'untrusted',ARCH_STUDIO_WINDOWS_TOOLS:'not inherited',NODE_OPTIONS:'--require bad'});
  assert.deepEqual(env,{PATH:tools().path,PATHEXT:'.COM;.EXE;.BAT;.CMD',SystemRoot:'C:/Windows',ComSpec:'C:/Windows/System32/cmd.exe'});
 });
+test('process-only tool subsets share the same environment validation',()=>{
+ const minimal={supervisor:tools().supervisor,path:tools().path};
+ assert.deepEqual(windowsHostEnvironment(minimal,{}),{PATH:minimal.path,PATHEXT:'.COM;.EXE;.BAT;.CMD'});
+ for(const invalid of [{...minimal,path:'relative'},{...minimal,supervisor:'tool.exe'},
+  {...minimal,cmake:'bad.cmd'},{...minimal,compilerEnvironment:{LIB:'.'}},{...minimal,command:'anything'}])
+  assert.throws(()=>windowsHostEnvironment(invalid,{}));
+});
 test('compiler search directories are explicit private setup and never inherited',()=>{
  const compiler={INCLUDE:'C:/Visual Studio/include;C:/SDK/Include',LIB:'C:/Visual Studio/lib',LIBPATH:'C:/SDK/References'};
  const value={...tools(),compilerEnvironment:compiler};
@@ -59,4 +68,10 @@ if(process.platform==='win32') test('native trusted tools accept an optional Win
  const env=process.env;
  const value={cmake:env.ARCH_TEST_CMAKE,supervisor:env.ARCH_TEST_SUPERVISOR,ninja:env.ARCH_TEST_NINJA,objdump:env.ARCH_TEST_OBJDUMP,publisher:env.ARCH_TEST_PUBLISHER,rc:env.ARCH_TEST_RC,path:env.PATH,terminal:env.ARCH_TEST_TERMINAL};
  assert.deepEqual(await loadWindowsTools(JSON.stringify(value)),value);
+});
+
+if(process.platform!=='win32')test('Linux desktop bootstrap rejects a Windows private tool envelope',()=>{
+ const launch={cwd:process.cwd(),origin:'http://127.0.0.1:5173',token:'a'.repeat(64),windowsTools:tools()};
+ const result=spawnSync(process.execPath,[fileURLToPath(new URL('../host/desktop.ts',import.meta.url)),Buffer.from(JSON.stringify(launch)).toString('base64url')],{encoding:'utf8',timeout:10000});
+ assert.equal(result.status,1);assert.match(result.stderr,/Native Windows Host tools required/);
 });
