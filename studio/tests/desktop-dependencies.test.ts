@@ -10,7 +10,8 @@ const execute=promisify(execFile);
 const cmake=process.env.ARCH_TEST_CMAKE??'cmake';
 const repository=new URL('../../',import.meta.url);
 
-test('Studio installs once per locked runtime, rebuilds assets independently and repairs missing modules',async t=>{
+for(const generator of process.platform==='win32'?['Ninja']:['Ninja','Unix Makefiles'])
+test(`Studio ${generator} installs once per locked runtime, rebuilds assets independently and repairs a removed module tree`,async t=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch studio dependencies '));
  t.after(()=>rm(root,{recursive:true,force:true}));
  const studio=path.join(root,'studio');
@@ -38,9 +39,9 @@ if(command==='ci'){
 }else throw new Error('Unexpected npm command');
 `,{mode:0o755});
  await writeFile(path.join(root,'CMakeLists.txt'),'cmake_minimum_required(VERSION 3.22)\nproject(StudioDependencies NONE)\nadd_custom_target(ARCH)\nset(ARCH_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")\ninclude(cmake/studio/Studio.cmake)\n');
- const configure=async(build:string)=>execute(cmake,['-S',root,'-B',path.join(root,build),'-G','Ninja','-DARCH_BUILD_STUDIO=ON','-DARCH_STUDIO_NODE='+process.execPath,
+ const configure=async(build:string)=>execute(cmake,['-S',root,'-B',path.join(root,build),'-G',generator,'-DARCH_BUILD_STUDIO=ON','-DARCH_STUDIO_NODE='+process.execPath,
   ...(process.platform==='win32'?['-DARCH_STUDIO_NPM_CLI='+npm]:['-DARCH_STUDIO_NPM='+npm]),
-  ...(process.env.ARCH_TEST_NINJA?['-DCMAKE_MAKE_PROGRAM='+process.env.ARCH_TEST_NINJA]:[])],{timeout:30000});
+  ...(generator==='Ninja'&&process.env.ARCH_TEST_NINJA?['-DCMAKE_MAKE_PROGRAM='+process.env.ARCH_TEST_NINJA]:[])],{timeout:30000});
  const build=(directory='build-a')=>execute(cmake,['--build',path.join(root,directory),'--target','arch-studio-assets'],{timeout:30000});
  const calls=async()=>((await readFile(path.join(studio,'calls.log'),'utf8')).trim().split('\n'));
  await configure('build-a');await build();assert.deepEqual(await calls(),['ci','build']);

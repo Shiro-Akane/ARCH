@@ -2,9 +2,9 @@
 import {createHostServer,listenLocal} from './server.ts';
 import {openDesktopProject} from './desktopProject.ts';
 import {parseWindowsTools} from './windows-tools.mjs';
-import type {WindowsHostTools} from './hostProcess.ts';
+import type {NativeWindowsTools} from './windows-tools.mjs';
 async function main(){
-const launch=JSON.parse(Buffer.from(process.argv[2]??'', 'base64url').toString('utf8')) as {project?:string;cwd:string;source?:string;config?:string;binary?:string;caseId?:string;buildDir?:string;origin:string;token:string;windowsTools?:WindowsHostTools};
+const launch=JSON.parse(Buffer.from(process.argv[2]??'', 'base64url').toString('utf8')) as {project?:string;cwd:string;source?:string;config?:string;binary?:string;caseId?:string;buildDir?:string;origin:string;token:string;windowsTools?:NativeWindowsTools};
 if(!/^[a-f0-9]{64}$/.test(launch.token))throw new Error('Invalid desktop ownership token.');
 const windowsTools=launch.windowsTools===undefined?undefined:parseWindowsTools(JSON.stringify(launch.windowsTools));
 if(windowsTools&&process.platform!=='win32')throw new Error('Native Windows Host tools required.');
