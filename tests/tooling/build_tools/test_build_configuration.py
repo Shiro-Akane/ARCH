@@ -30,30 +30,38 @@ class BuildPresetTests(unittest.TestCase):
     def test_presets_have_portable_separate_application_outputs(self):
         data = json.loads((ROOT / "CMakePresets.json").read_text())
         presets = {item["name"]: item for item in data["configurePresets"]}
-        self.assertEqual(set(presets),
-                         {"cpu-release", "studio-cpu-release", "cuda-release", "cuda-debug"})
+        public = {name: item for name, item in presets.items() if not item.get("hidden")}
+        old = {"cpu-release", "studio-cpu-release", "cuda-release", "cuda-debug"}
+        prepared = {f"{host}-{component}{suffix}" for host in ("linux", "windows")
+                    for component in ("core", "desktop") for suffix in ("", "-with-cuda")}
+        self.assertEqual(set(public), old | prepared)
         directories = set()
         outputs = set()
-        for name, preset in presets.items():
+        for name, preset in public.items():
             with self.subTest(preset=name):
                 effective = self.effective_preset(presets, name)
                 self.assertEqual(effective["generator"], "Ninja")
-                binary = effective["binaryDir"]
+                binary = effective["binaryDir"].replace("${presetName}", name)
                 directories.add(binary)
                 options = effective["cacheVariables"]
-                outputs.add(options["ARCH_RUNTIME_OUTPUT_DIRECTORY"])
-                self.assertEqual(options["ARCH_RUNTIME_OUTPUT_DIRECTORY"], binary + "/bin")
+                output = options["ARCH_RUNTIME_OUTPUT_DIRECTORY"].replace("${presetName}", name)
+                outputs.add(output)
+                self.assertEqual(output, binary + "/bin")
                 self.assertEqual(options["CMAKE_BUILD_TYPE"],
                                  "Debug" if name.endswith("debug") else "Release")
                 self.assertEqual(options["BUILD_TESTING"],
                                  "ON" if name.endswith("debug") else "OFF")
-                self.assertEqual(options["ARCH_ENABLE_CUDA"],
-                                 "ON" if name.startswith("cuda") else "OFF")
-                if name.startswith("cuda"):
+                cuda = name.startswith("cuda") or name.endswith("-with-cuda")
+                self.assertEqual(options["ARCH_ENABLE_CUDA"], "ON" if cuda else "OFF")
+                if cuda:
                     self.assertEqual(options["CMAKE_CUDA_ARCHITECTURES"], "native")
                     self.assertEqual(options["ARCH_CUDA_HEAVY_COMPILE_JOBS"], "1")
-        self.assertEqual(len(directories), len(presets))
-        self.assertEqual(len(outputs), len(presets))
+                if name in prepared:
+                    self.assertEqual(binary, "${sourceDir}/build/" + name)
+                    self.assertEqual(options["ARCH_BUILD_STUDIO"], "ON" if "-desktop" in name else "OFF")
+        self.assertEqual(len(directories), len(public))
+        self.assertEqual(len(outputs), len(public))
+        self.assertEqual({item["name"] for item in data["buildPresets"]}, set(public))
         studio = presets["studio-cpu-release"]
         self.assertEqual(studio["inherits"], "cpu-release")
         studio_options = self.effective_preset(presets, "studio-cpu-release")["cacheVariables"]

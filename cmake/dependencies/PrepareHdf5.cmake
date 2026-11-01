@@ -1,0 +1,189 @@
+# HDF5 is the only required compiled dependency not prepared by the main
+# project's existing dependency owner. Reuse it only after a native link/run.
+function(arch_prepare_archive destination url sha256)
+    file(LOCK "${destination}.lock" GUARD FUNCTION TIMEOUT 60)
+    if(NOT EXISTS "${destination}")
+        if(ARCH_PREPARE_OFFLINE)
+            message(FATAL_ERROR "Offline archive missing: ${destination}. Supply ARCH_HDF5_SOURCE_DIR / ARCH_ZLIB_ARCHIVE or an existing HDF5_ROOT.")
+        endif()
+        message(STATUS "Download ${url}")
+        file(DOWNLOAD "${url}" "${destination}.tmp" EXPECTED_HASH "SHA256=${sha256}"
+            TLS_VERIFY ON STATUS download_status)
+        list(GET download_status 0 download_result)
+        if(NOT download_result EQUAL 0)
+            message(FATAL_ERROR "Dependency download failed: ${download_status}")
+        endif()
+        file(RENAME "${destination}.tmp" "${destination}")
+    endif()
+    file(SHA256 "${destination}" actual_hash)
+    if(NOT actual_hash STREQUAL sha256)
+        message(FATAL_ERROR "Dependency archive SHA-256 mismatch: ${destination}")
+    endif()
+endfunction()
+
+function(arch_probe_hdf5 root)
+    set(probe "${arch_profile_build}/prepare/hdf5-${arch_abi_short}")
+    file(MAKE_DIRECTORY "${probe}/source")
+    file(REMOVE "${probe}/build/klu-dir.txt")
+    file(WRITE "${probe}/source/CMakeLists.txt" [=[
+cmake_minimum_required(VERSION 3.22)
+project(ArchHdf5Probe LANGUAGES C CXX)
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR "ARCH desktop profiles require a native 64-bit compiler.")
+endif()
+find_package(HDF5 REQUIRED COMPONENTS CXX HL)
+find_package(KLU CONFIG QUIET)
+if(TARGET SuiteSparse::KLU OR TARGET KLU::KLU)
+    file(WRITE "${CMAKE_BINARY_DIR}/klu-dir.txt" "${KLU_DIR}")
+endif()
+add_executable(hdf5-probe main.cpp)
+target_include_directories(hdf5-probe PRIVATE ${HDF5_INCLUDE_DIRS})
+target_link_libraries(hdf5-probe PRIVATE ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+list(GET HDF5_INCLUDE_DIRS 0 include_dir)
+string(REGEX REPLACE "/include(/hdf5/serial)?/?$" "" resolved_root "${include_dir}")
+file(WRITE "${CMAKE_BINARY_DIR}/resolved-root.txt" "${resolved_root}")
+]=])
+    file(WRITE "${probe}/source/main.cpp" [=[
+#include <H5Cpp.h>
+#include <H5LTpublic.h>
+#if defined(__MINGW32__) && !defined(_UCRT)
+#error "Select the GCC/UCRT64 runtime, not an MSVCRT MinGW installation."
+#endif
+int main() {
+    H5::CompType type(sizeof(double));
+    type.insertMember("value", 0, H5::PredType::NATIVE_DOUBLE);
+    auto volatile high_level = &H5LTget_dataset_ndims;
+    return high_level && H5Zfilter_avail(H5Z_FILTER_DEFLATE) > 0 ? 0 : 1;
+}
+]=])
+    execute_process(COMMAND "${CMAKE_COMMAND}" -S "${probe}/source" -B "${probe}/build" -G Ninja
+        -C "${arch_compiler_cache}" -U "HDF5_*" -U "hdf5_*"
+        "-DHDF5_ROOT:PATH=${root}" "-DHDF5_DIR:PATH=${HDF5_DIR}" "-DKLU_DIR:PATH=${KLU_DIR}"
+        "-DCMAKE_PREFIX_PATH:STRING=${CMAKE_PREFIX_PATH}" -DCMAKE_BUILD_TYPE=Release
+        RESULT_VARIABLE result OUTPUT_FILE "${probe}/configure.log" ERROR_FILE "${probe}/configure.log")
+    if(result EQUAL 0)
+        execute_process(COMMAND "${CMAKE_COMMAND}" --build "${probe}/build" --parallel 1
+            RESULT_VARIABLE result OUTPUT_FILE "${probe}/build.log" ERROR_FILE "${probe}/build.log")
+    endif()
+    if(result EQUAL 0)
+        file(READ "${probe}/build/resolved-root.txt" resolved_root)
+        if(root)
+            # An explicit root must not silently resolve an unrelated system copy.
+            file(REAL_PATH "${root}" expected_root)
+            file(REAL_PATH "${resolved_root}" found_root)
+            if(CMAKE_HOST_WIN32)
+                string(TOLOWER "${expected_root}" expected_root)
+                string(TOLOWER "${found_root}" found_root)
+            endif()
+            if(NOT expected_root STREQUAL found_root)
+                set(result 1)
+                file(APPEND "${probe}/configure.log" "\nRequested ${expected_root}; found ${found_root}.\n")
+            endif()
+        endif()
+    endif()
+    if(result EQUAL 0)
+        if(CMAKE_HOST_WIN32)
+            set(ENV{PATH} "${resolved_root}/bin;$ENV{PATH}")
+            set(suffix .exe)
+        else()
+            set(ENV{LD_LIBRARY_PATH} "${resolved_root}/lib:${resolved_root}/lib64:$ENV{LD_LIBRARY_PATH}")
+        endif()
+        execute_process(COMMAND "${probe}/build/hdf5-probe${suffix}"
+            RESULT_VARIABLE result OUTPUT_FILE "${probe}/run.log" ERROR_FILE "${probe}/run.log")
+    endif()
+    set(arch_hdf5_ok FALSE PARENT_SCOPE)
+    if(result EQUAL 0)
+        set(arch_hdf5_ok TRUE PARENT_SCOPE)
+        set(arch_hdf5_root "${resolved_root}" PARENT_SCOPE)
+        if(EXISTS "${probe}/build/klu-dir.txt")
+            file(READ "${probe}/build/klu-dir.txt" klu_dir)
+            set(KLU_DIR "${klu_dir}" PARENT_SCOPE)
+        endif()
+    endif()
+    set(arch_hdf5_probe "${probe}" PARENT_SCOPE)
+endfunction()
+
+function(arch_prepare_hdf5)
+    arch_probe_hdf5("${HDF5_ROOT}")
+    if(NOT arch_hdf5_ok AND HDF5_ROOT)
+        message(FATAL_ERROR "HDF5_ROOT failed native C++/HL/zlib validation. Check the selected compiler ABI and runtime libraries: ${arch_hdf5_probe}")
+    endif()
+    if(NOT arch_hdf5_ok)
+        set(prefix "${arch_dependency_build}/hdf5")
+        if(EXISTS "${prefix}/include/H5Cpp.h")
+            arch_probe_hdf5("${prefix}")
+        endif()
+        if(NOT arch_hdf5_ok)
+            set(downloads "${ARCH_DEPENDENCY_ROOT}/downloads")
+            file(MAKE_DIRECTORY "${downloads}")
+            if(NOT ARCH_HDF5_SOURCE_DIR)
+                set(archive "${downloads}/hdf5-1.14.6.tar.gz")
+                arch_prepare_archive("${archive}"
+                    "https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz"
+                    e4defbac30f50d64e1556374aa49e574417c9e72c6b1de7a4ff88c4b1bea6e9b)
+                set(ARCH_HDF5_SOURCE_DIR "${ARCH_DEPENDENCY_ROOT}/sources/hdf5-1.14.6")
+                file(MAKE_DIRECTORY "${ARCH_DEPENDENCY_ROOT}/sources")
+                file(LOCK "${ARCH_HDF5_SOURCE_DIR}.lock" TIMEOUT 60)
+                if(NOT EXISTS "${ARCH_HDF5_SOURCE_DIR}/.arch-prepared-source")
+                    file(ARCHIVE_EXTRACT INPUT "${archive}" DESTINATION "${ARCH_DEPENDENCY_ROOT}/sources")
+                    file(WRITE "${ARCH_HDF5_SOURCE_DIR}/.arch-prepared-source" "hdf5-1.14.6\n")
+                endif()
+                file(LOCK "${ARCH_HDF5_SOURCE_DIR}.lock" RELEASE)
+            endif()
+            if(NOT EXISTS "${ARCH_HDF5_SOURCE_DIR}/src/H5public.h")
+                message(FATAL_ERROR "ARCH_HDF5_SOURCE_DIR must contain HDF5 1.14.6 source.")
+            endif()
+            foreach(part MAJOR MINOR RELEASE)
+                file(STRINGS "${ARCH_HDF5_SOURCE_DIR}/src/H5public.h" version_line REGEX "^#define H5_VERS_${part} +[0-9]+")
+                string(REGEX REPLACE "^#define H5_VERS_${part} +" "" hdf5_${part} "${version_line}")
+            endforeach()
+            if(NOT "${hdf5_MAJOR}.${hdf5_MINOR}.${hdf5_RELEASE}" STREQUAL "1.14.6")
+                message(FATAL_ERROR "The preparation recipe requires HDF5 1.14.6 source; installed compatible HDF5 may instead be selected with HDF5_ROOT.")
+            endif()
+            # HDF5 owns the zlib sub-build; a checked local archive avoids its
+            # unpinned upstream fallback and also supports offline preparation.
+            if(NOT ARCH_ZLIB_ARCHIVE)
+                set(ARCH_ZLIB_ARCHIVE "${downloads}/zlib-1.3.1.tar.gz")
+            endif()
+            arch_prepare_archive("${ARCH_ZLIB_ARCHIVE}" "https://zlib.net/fossils/zlib-1.3.1.tar.gz"
+                9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23)
+            get_filename_component(zlib_directory "${ARCH_ZLIB_ARCHIVE}" DIRECTORY)
+            get_filename_component(zlib_name "${ARCH_ZLIB_ARCHIVE}" NAME)
+            set(build "${arch_dependency_build}/build-hdf5")
+            message(STATUS "Build HDF5 1.14.6 for the selected native compiler: ${prefix}")
+            execute_process(COMMAND "${CMAKE_COMMAND}" -S "${ARCH_HDF5_SOURCE_DIR}" -B "${build}" -G Ninja
+                -C "${arch_compiler_cache}" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_INSTALL_PREFIX:PATH=${prefix}"
+                -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF -DBUILD_TESTING=OFF
+                -DHDF5_BUILD_CPP_LIB=ON -DHDF5_BUILD_HL_LIB=ON -DHDF5_BUILD_FORTRAN=OFF
+                -DHDF5_BUILD_TOOLS=OFF -DHDF5_BUILD_EXAMPLES=OFF -DHDF5_ENABLE_PARALLEL=OFF
+                -DHDF5_ENABLE_Z_LIB_SUPPORT=ON -DHDF5_ENABLE_SZIP_SUPPORT=OFF
+                -DHDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16=OFF -DHDF5_ALLOW_EXTERNAL_SUPPORT=TGZ
+                -DHDF_PACKAGE_NAMESPACE=hdf5::
+                -DZLIB_USE_LOCALCONTENT=ON "-DTGZPATH:PATH=${zlib_directory}" "-DZLIB_TGZ_NAME:STRING=${zlib_name}"
+                RESULT_VARIABLE result OUTPUT_FILE "${arch_dependency_build}/hdf5-configure.log" ERROR_FILE "${arch_dependency_build}/hdf5-configure.log")
+            if(result EQUAL 0)
+                execute_process(COMMAND "${CMAKE_COMMAND}" --build "${build}" --parallel "${ARCH_PREPARE_JOBS}"
+                    RESULT_VARIABLE result OUTPUT_FILE "${arch_dependency_build}/hdf5-build.log" ERROR_FILE "${arch_dependency_build}/hdf5-build.log")
+            endif()
+            if(result EQUAL 0)
+                execute_process(COMMAND "${CMAKE_COMMAND}" --install "${build}"
+                    RESULT_VARIABLE result OUTPUT_FILE "${arch_dependency_build}/hdf5-install.log" ERROR_FILE "${arch_dependency_build}/hdf5-install.log")
+            endif()
+            if(NOT result EQUAL 0)
+                message(FATAL_ERROR "HDF5 preparation failed. Logs: ${arch_dependency_build}/hdf5-*.log")
+            endif()
+            arch_probe_hdf5("${prefix}")
+            if(NOT arch_hdf5_ok)
+                message(FATAL_ERROR "Prepared HDF5 failed native C++/HL/zlib validation: ${arch_hdf5_probe}")
+            endif()
+        endif()
+    endif()
+    message(STATUS "Verified native HDF5 C++/HL with zlib: ${arch_hdf5_root}")
+    list(APPEND ARCH_PREPARED_RUNTIME_DIRS "${arch_hdf5_root}/bin")
+    list(REMOVE_DUPLICATES ARCH_PREPARED_RUNTIME_DIRS)
+    set(ARCH_PREPARED_RUNTIME_DIRS "${ARCH_PREPARED_RUNTIME_DIRS}" PARENT_SCOPE)
+    set(HDF5_ROOT "${arch_hdf5_root}" PARENT_SCOPE)
+    set(KLU_DIR "${KLU_DIR}" PARENT_SCOPE)
+    set(ARCH_HDF5_SOURCE_DIR "${ARCH_HDF5_SOURCE_DIR}" PARENT_SCOPE)
+    set(ARCH_ZLIB_ARCHIVE "${ARCH_ZLIB_ARCHIVE}" PARENT_SCOPE)
+endfunction()

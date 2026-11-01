@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 22,
@@ -60,6 +60,209 @@
         "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
         "ARCH_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build-cuda-debug/bin"
       }
+    },
+    {
+      "name": "prepared-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/build/${presetName}/prepared-toolchain.cmake",
+      "cacheVariables": {
+        "ARCH_PROFILE": "${presetName}",
+        "CMAKE_BUILD_TYPE": "Release",
+        "ARCH_BUILD_STUDIO": "OFF",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_ENABLE_KLU": "ON",
+        "BUILD_TESTING": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin",
+        "ARCH_EMIT_LINK_DEPENDENCIES": "ON",
+        "ARCH_RETAIN_LTO_LINK_INPUTS": "ON"
+      }
+    },
+    {
+      "name": "linux-core",
+      "displayName": "Linux: Core (CPU)",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {}
+    },
+    {
+      "name": "linux-core-with-cuda",
+      "displayName": "Linux: Core (CPU + CUDA)",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "ARCH_ENABLE_CUDA": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "native",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1"
+      }
+    },
+    {
+      "name": "linux-desktop",
+      "displayName": "Linux: Core (CPU) and Studio",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "ARCH_BUILD_STUDIO": "ON"
+      }
+    },
+    {
+      "name": "linux-desktop-with-cuda",
+      "displayName": "Linux: Core (CPU + CUDA) and Studio",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "ARCH_BUILD_STUDIO": "ON",
+        "ARCH_ENABLE_CUDA": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "native",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1"
+      }
+    },
+    {
+      "name": "windows-core",
+      "displayName": "Windows: Core (CPU)",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {}
+    },
+    {
+      "name": "windows-core-with-cuda",
+      "displayName": "Windows: Core (CPU + CUDA)",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "ARCH_ENABLE_CUDA": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "native",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_EMIT_LINK_DEPENDENCIES": "OFF",
+        "ARCH_RETAIN_LTO_LINK_INPUTS": "OFF"
+      }
+    },
+    {
+      "name": "windows-desktop",
+      "displayName": "Windows: Core (CPU) and Studio",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "ARCH_BUILD_STUDIO": "ON"
+      }
+    },
+    {
+      "name": "windows-desktop-with-cuda",
+      "displayName": "Windows: Core (CPU + CUDA) and Studio",
+      "description": "Choose the Core execution backend at runtime; Studio is an optional desktop component.",
+      "inherits": "prepared-base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "ARCH_BUILD_STUDIO": "ON",
+        "ARCH_EMIT_LINK_DEPENDENCIES": "OFF",
+        "ARCH_RETAIN_LTO_LINK_INPUTS": "OFF",
+        "ARCH_ENABLE_CUDA": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "native",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cpu-release",
+      "configurePreset": "cpu-release",
+      "jobs": 1
+    },
+    {
+      "name": "studio-cpu-release",
+      "configurePreset": "studio-cpu-release",
+      "jobs": 1
+    },
+    {
+      "name": "cuda-release",
+      "configurePreset": "cuda-release",
+      "jobs": 1
+    },
+    {
+      "name": "cuda-debug",
+      "configurePreset": "cuda-debug",
+      "jobs": 1
+    },
+    {
+      "name": "linux-core",
+      "configurePreset": "linux-core",
+      "jobs": 1
+    },
+    {
+      "name": "linux-core-with-cuda",
+      "configurePreset": "linux-core-with-cuda",
+      "jobs": 1
+    },
+    {
+      "name": "linux-desktop",
+      "configurePreset": "linux-desktop",
+      "jobs": 1
+    },
+    {
+      "name": "linux-desktop-with-cuda",
+      "configurePreset": "linux-desktop-with-cuda",
+      "jobs": 1
+    },
+    {
+      "name": "windows-core",
+      "configurePreset": "windows-core",
+      "jobs": 1
+    },
+    {
+      "name": "windows-core-with-cuda",
+      "configurePreset": "windows-core-with-cuda",
+      "jobs": 1
+    },
+    {
+      "name": "windows-desktop",
+      "configurePreset": "windows-desktop",
+      "jobs": 1
+    },
+    {
+      "name": "windows-desktop-with-cuda",
+      "configurePreset": "windows-desktop-with-cuda",
+      "jobs": 1
     }
   ]
 }
