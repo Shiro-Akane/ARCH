@@ -164,7 +164,7 @@ Linux / WSL2:
 
 ```bash
 cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
-cmake --build build/linux-core --target arch-studio
+cmake --build build/linux-core --target arch-studio --parallel 1
 build/linux-core/bin/arch-studio
 ```
 
@@ -172,7 +172,7 @@ Windows PowerShell, using the Core compiler environment:
 
 ```powershell
 cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
-cmake --build build/windows-core --target arch-studio
+cmake --build build/windows-core --target arch-studio --parallel 1
 & .\build\windows-core\bin\arch-studio.cmd
 ```
 
@@ -191,7 +191,7 @@ For a custom setup or portable package, set `ARCH_STUDIO_WINDOWS_TOOLS_FILE` to 
 Build a portable directory on its target OS, using the configured desktop tree:
 
 ```text
-cmake --build build/linux-desktop-with-cuda --target arch-studio-package
+cmake --build build/linux-desktop-with-cuda --target arch-studio-package --parallel 1
 ```
 
 On Windows, use `build/windows-desktop-with-cuda` from the matching compiler environment. Output is under `studio/.local/desktop-release/`:
@@ -248,7 +248,7 @@ For a distribution that promises cuDSS support, require it and run its four GPU 
 
 ```bash
 cmake --preset linux-core-with-cuda -DARCH_REQUIRE_CUDSS=ON -DBUILD_TESTING=ON
-cmake --build build/linux-core-with-cuda --target arch-check-cudss
+cmake --build build/linux-core-with-cuda --target arch-check-cudss --parallel 1
 ```
 
 Use the corresponding Windows profile and directory on Windows. `ARCH_REQUIRE_CUDSS=ON` makes a missing provider a configuration error. `arch-check-cudss` builds and runs the checks; an unavailable GPU is a failed verification.
@@ -270,7 +270,7 @@ To add Studio with build-input evidence to a manual GNU tree:
 
 ```text
 cmake -S . -B build/custom -DARCH_BUILD_STUDIO=ON -DARCH_EMIT_LINK_DEPENDENCIES=ON -DARCH_RETAIN_LTO_LINK_INPUTS=ON
-cmake --build build/custom --target arch-studio
+cmake --build build/custom --target arch-studio --parallel 1
 ```
 
 These options retain linker/LTO inputs for freshness checks without changing IPO or floating-point settings. MSVC builds use their existing evidence path and do not enable the GNU LTO option. Explicit user settings remain in the cache.

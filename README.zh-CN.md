@@ -182,7 +182,7 @@ cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
 **编译桌面**
 
 ```bash
-cmake --build build/linux-core --target arch-studio
+cmake --build build/linux-core --target arch-studio --parallel 1
 ```
 
 **打开空白启动页**
@@ -202,7 +202,7 @@ cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
 **编译桌面**
 
 ```powershell
-cmake --build build/windows-core --target arch-studio
+cmake --build build/windows-core --target arch-studio --parallel 1
 ```
 
 **打开空白启动页**

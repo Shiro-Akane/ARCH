@@ -173,7 +173,7 @@ Linux／WSL2：
 
 ```bash
 cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
-cmake --build build/linux-core --target arch-studio
+cmake --build build/linux-core --target arch-studio --parallel 1
 build/linux-core/bin/arch-studio
 ```
 
@@ -181,7 +181,7 @@ Windows PowerShell，使用 Core 的编译器环境：
 
 ```powershell
 cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
-cmake --build build/windows-core --target arch-studio
+cmake --build build/windows-core --target arch-studio --parallel 1
 & .\build\windows-core\bin\arch-studio.cmd
 ```
 
@@ -202,7 +202,7 @@ Core profile 已保留 GNU 构建输入证据。给任意手工 GNU 构建目录
 在目标操作系统中，使用已配置的桌面构建目录生成便携目录：
 
 ```text
-cmake --build build/linux-desktop-with-cuda --target arch-studio-package
+cmake --build build/linux-desktop-with-cuda --target arch-studio-package --parallel 1
 ```
 
 Windows 使用对应编译器环境和 `build/windows-desktop-with-cuda`。产物位于 `studio/.local/desktop-release/`：
@@ -261,7 +261,7 @@ Core 和 Studio 共用 Run 检查，显示实际后端和选择原因。CPU 稀�
 
 ```bash
 cmake --preset linux-core-with-cuda -DARCH_REQUIRE_CUDSS=ON -DBUILD_TESTING=ON
-cmake --build build/linux-core-with-cuda --target arch-check-cudss
+cmake --build build/linux-core-with-cuda --target arch-check-cudss --parallel 1
 ```
 
 Windows 换成对应 profile 和构建目录。`ARCH_REQUIRE_CUDSS=ON` 会让缺少该依赖成为配置错误；`arch-check-cudss` 构建并执行检查，GPU 不可用时判为验证失败。
@@ -284,7 +284,7 @@ cmake --build build/custom --target ARCH --parallel 1
 
 ```text
 cmake -S . -B build/custom -DARCH_BUILD_STUDIO=ON -DARCH_EMIT_LINK_DEPENDENCIES=ON -DARCH_RETAIN_LTO_LINK_INPUTS=ON
-cmake --build build/custom --target arch-studio
+cmake --build build/custom --target arch-studio --parallel 1
 ```
 
 这些选项保留 linker/LTO 输入供新鲜度检查使用，IPO 和浮点选项不变。MSVC 构建使用已有证据路径，不启用 GNU LTO 选项。用户显式选择的选项保留在缓存中。

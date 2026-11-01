@@ -182,7 +182,7 @@ cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
 **Build the desktop**
 
 ```bash
-cmake --build build/linux-core --target arch-studio
+cmake --build build/linux-core --target arch-studio --parallel 1
 ```
 
 **Open the empty start page**
@@ -202,7 +202,7 @@ cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
 **Build the desktop**
 
 ```powershell
-cmake --build build/windows-core --target arch-studio
+cmake --build build/windows-core --target arch-studio --parallel 1
 ```
 
 **Open the empty start page**
