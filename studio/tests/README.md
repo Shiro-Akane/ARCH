@@ -27,9 +27,11 @@ CUDA profile tests additionally use `ARCH_TEST_NVCC`, `ARCH_TEST_MSVC` and `ARCH
 
 ## Selection and coverage
 
-`run-platform.mjs` enumerates root `*.test.ts` files with TAP output and one file worker. On Linux, five declared Windows-only files are reported as `NOT_APPLICABLE` on stderr. Shared and mixed files, including `host-windows-run.test.ts`, still run. Unknown files are selected by default; an empty inventory or stale declared filename fails. Mixed files register platform-specific cases only on the applicable OS.
+`run-platform.mjs` enumerates root `*.test.ts` files with TAP output and one file worker. On Linux, six declared Windows-only files are reported as `NOT_APPLICABLE` on stderr, including generated native tool environments. Shared and mixed files, including `host-windows-run.test.ts`, still run. Unknown files are selected by default; an empty inventory or stale declared filename fails. Mixed files register platform-specific cases only on the applicable OS.
 
 The tests cover configuration/workspace state, Preview and cancellation, renderer behavior, Plotfile queries, controlled builds and Run/Restart lifecycle. Native Electron window, file-dialog and packaged-runtime checks supplement this suite; their coverage is listed in [platform support](../../docs/releases/PlatformSupport.md).
+
+Run preparation tests bind Core's `--check-run` response to saved bytes and the selected executable, reject unavailable providers and contradictory readiness, and recheck the backend and output targets at confirmation. Native integration also exercises the generated Windows environment against a real Core; POSIX executable fixtures do not substitute for that check.
 
 Hosted CI runs the complete applicable Linux suite, lint and typed production build. Its result checker requires a nonempty report with no failed or skipped tests. The [workflow guide](../../.github/workflows/README.md) describes change selection and diagnostic artifacts.
 

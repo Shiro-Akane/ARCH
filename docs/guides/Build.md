@@ -112,11 +112,11 @@ Open an x64 **Developer Command Prompt** initialized for 14.44. For a custom ins
 call "C:\Tools\VS2022\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -vcvars_ver=14.44
 ```
 
-Make CMake, Ninja, Git and NVCC available in that terminal, then run the Windows CUDA profile. Preparation builds or selects MSVC-ABI HDF5 and records the matching compiler, SDK and OpenMP runtime directories. GCC/UCRT64 libraries use a separate ABI and prefix.
+Make CMake, Ninja, Git and NVCC available in that terminal, then run the Windows CUDA profile. Preparation builds or selects MSVC-ABI HDF5. CMake configuration records the matching compiler, SDK and OpenMP runtime directories. GCC/UCRT64 libraries use a separate ABI and prefix.
 
 MSVC 14.38 fails an existing NaN contract check. NVIDIA's [CUDA 12.9 compiler table](https://docs.nvidia.com/cuda/archive/12.9.1/cuda-installation-guide-microsoft-windows/index.html) lists the 193x family; the 14.44 configuration above is ARCH's separately tested combination. Select another toolkit/toolset only after checking compatibility, without `--allow-unsupported-compiler`.
 
-ARCH uses `/openmp:llvm /openmp:experimental` on MSVC. Preparation locates `libomp140.x86_64.dll` under the selected toolset's `Microsoft.VC143.OpenMP.LLVM` directory. This [Microsoft runtime](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170) is nonredistributable and remains in the installed toolchain.
+ARCH uses `/openmp:llvm /openmp:experimental` on MSVC. CMake locates `libomp140.x86_64.dll` during configuration under the selected toolset's `Microsoft.VC143.OpenMP.LLVM` directory. This [Microsoft runtime](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170) is nonredistributable and remains in the installed toolchain.
 
 ## Run and select paths
 

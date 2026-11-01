@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 // These files contain native Windows cases only. Keep shared assertions in the
 // root shared/mixed files; new or unknown test files are selected by default.
 export const windowsOnlyFiles = Object.freeze([
+ 'desktop-generated-tools.test.ts',
  'host-desktop-native.test.ts',
  'host-windows-build.test.ts',
  'host-windows-config.test.ts',

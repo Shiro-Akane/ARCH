@@ -118,11 +118,11 @@ $env:Path = 'C:/msys64/ucrt64/bin;' + $env:Path
 call "C:\Tools\VS2022\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -vcvars_ver=14.44
 ```
 
-确保该终端可用 CMake、Ninja、Git 和 NVCC，再执行 Windows CUDA profile。准备脚本构建或选择 MSVC ABI 的 HDF5，并记录匹配的编译器、SDK 和 OpenMP 运行库目录。GCC/UCRT64 库使用独立 ABI 和安装目录。
+确保该终端可用 CMake、Ninja、Git 和 NVCC，再执行 Windows CUDA profile。准备脚本构建或选择 MSVC ABI 的 HDF5；CMake 配置阶段记录匹配的编译器、SDK 和 OpenMP 运行库目录。GCC/UCRT64 库使用独立 ABI 和安装目录。
 
 MSVC 14.38 无法通过已有的 NaN 契约检查。NVIDIA 的 [CUDA 12.9 编译器表](https://docs.nvidia.com/cuda/archive/12.9.1/cuda-installation-guide-microsoft-windows/index.html)列出 193x 系列；上述 14.44 是 ARCH 独立测试的组合。选择其他 Toolkit／toolset 时需确认兼容性，不使用 `--allow-unsupported-compiler` 绕过检查。
 
-ARCH 在 MSVC 上使用 `/openmp:llvm /openmp:experimental`。准备脚本从所选 toolset 的 `Microsoft.VC143.OpenMP.LLVM` 目录定位 `libomp140.x86_64.dll`。该 [Microsoft 运行库](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170)不可再分发，保留在本机工具链安装中。
+ARCH 在 MSVC 上使用 `/openmp:llvm /openmp:experimental`。CMake 配置阶段从所选 toolset 的 `Microsoft.VC143.OpenMP.LLVM` 目录定位 `libomp140.x86_64.dll`。该 [Microsoft 运行库](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170)不可再分发，保留在本机工具链安装中。
 
 <a id="run-and-select-paths"></a>
 ## 运行与路径
