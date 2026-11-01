@@ -235,9 +235,9 @@ cmake --build build/windows-core --target arch-studio --parallel 1
 
 ## 引用
 
-使用 v1.4.0 时，请引用 Haonan Ye、Enjie Jiang 和 Yu Ding，*ARCH: Adaptive Reactive CUDA Hydrodynamics*，版本 1.4.0，2026-10-27，[GitHub release](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.0)。
+使用 v1.4.1 时，请引用 Haonan Ye、Enjie Jiang 和 Yu Ding，*ARCH: Adaptive Reactive CUDA Hydrodynamics*，版本 1.4.1，2026-11-01，[GitHub release](https://github.com/Shiro-Akane/ARCH/releases/tag/v1.4.1)。
 
-[CITATION.cff](CITATION.cff) 提供机器可读元数据。系列 DOI 为 [10.5281/zenodo.23503924](https://doi.org/10.5281/zenodo.23503924)，v1.3.0 的版本 DOI 为 [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925)。v1.4.0 尚未发布对应的 Zenodo 版本。请引用实际计算所用版本，详见[引用指南](docs/zenodo/README.md)。
+[CITATION.cff](CITATION.cff) 提供机器可读元数据。系列 DOI 为 [10.5281/zenodo.23503924](https://doi.org/10.5281/zenodo.23503924)，v1.3.0 的版本 DOI 为 [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925)。v1.4.1 尚未发布对应的 Zenodo 版本。请引用实际计算所用版本，详见[引用指南](docs/zenodo/README.md)。
 
 ## 许可
 
