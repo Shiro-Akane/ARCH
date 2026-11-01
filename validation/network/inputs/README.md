@@ -7,9 +7,8 @@ These are generator inputs, not emitted network packages:
   auxiliary state.
 - [weak_urca.py](weak_urca.py): a compact Na23/Ne23 weak-table pair for interpolation,
   energy-loss and trajectory checks.
-- [audit150.py](audit150.py) and [audit200.py](audit200.py): retained larger-network
-  recipes for separate scaling and capacity qualification. Their presence does
-  not imply those workloads have completed validation.
+- [audit150.py](audit150.py) and [audit200.py](audit200.py): larger-network recipes used by the
+  scaling and capacity measurements linked from [network validation](../README.md).
 
 Follow the [tested environment and generation setup](../README.md#reproduce-the-records)
 before invoking [GenerateNetwork.py](../../../tools/network/GenerateNetwork.py).

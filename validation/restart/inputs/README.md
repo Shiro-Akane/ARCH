@@ -15,9 +15,7 @@ scientific endpoint comparisons assess later evolution. Keep those checks and
 their budgets distinct, and use the recorded recipe rather than assuming a
 checkpoint path in an example input already exists.
 
-The smooth source/resumed pair explicitly preserves the previous effective
-controls: hll_wave_speed=roe and min_eint=1e-10. Their source is release
-commit 25adec4224497981a0c124a3485f786194975be4,
-StandardParameters.h and GlobalDefs.h. This config-v3 migration does not
-change the physical inputs, endpoint, or comparison budgets. Static inspection
-does not validate checkpoint existence or continuation readiness.
+The smooth source/resumed pair explicitly sets `hll_wave_speed=roe` and
+`min_eint=1e-10`, matching the numerical controls of the reference problem.
+Set `restart_file` to a checkpoint produced by the source run before starting
+the continuation.

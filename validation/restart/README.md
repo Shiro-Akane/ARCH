@@ -16,13 +16,14 @@ on either backend when the destination build supports its physics and required
 data. The tests compare resumed runs with uninterrupted runs, including dynamic
 refinement and burning. Overall acceptance is tracked in the [validation index](../README.md).
 
-The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
-adds four original 256-step RT GPU continuations, a five-step four-module AMR
-continuation and the rebuilt native axial model. Own-backend fresh retains
-strict controller/field checks and all-checkpoint/physical-Plot dataset equality.
-Independent CPU/GPU endpoints with different natural CFL clocks use actual
-common-time supplements, not time relabelling or a relaxed fresh contract.
-The separate private Cellular ENUC parity failure remains open.
+The [CUDA continuation results](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+include four 256-step RT continuations, a five-step four-module AMR case and
+native axial models. Same-backend continuation preserves controller state and
+all checkpoint/physical-Plot datasets. Independent CPU/CUDA trajectories use
+common-time comparisons when natural CFL clocks differ. In the 24-step Cellular
+case, all 25 checkpoints pass the ENUC `5e-9` relative plus `5e-12` absolute
+budget, and continuation from checkpoint 12 matches continuous evolution. See
+[burn validation](../burn/README.md) for the source-energy definition.
 
 ## What a checkpoint preserves
 
@@ -51,18 +52,15 @@ comparisons, including six actual CUDA processes with complete clean reports
 per sanitizer. Each record keeps its tested source and binary identity; the
 details are grouped at the end of this page.
 
-## Current CPU continuations
+## CPU continuation results
 
-The [current CPU record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+The [CPU continuation record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
 checks RT, BurnGradient, CooperativeHotspots and Cartesian four-module SNIa
-from both post-regrid and terminal checkpoints in fresh processes. Accepted
-fixtures pass the original time, controller, topology, scientific-identity and
-actual output-history gates; all native physical arrays match bit for bit.
-SNIa matches both checkpoint and plot boundaries. Earlier unmatched-boundary
-numerical/bitwise and output-history results remain recorded without changing
-the solver-history policy or comparison budgets. These short checks do not
-renew historical long trajectories, the original SNIa `1e-8 s` qualification,
-or CUDA execution evidence.
+from post-regrid and terminal checkpoints in new processes. The cases pass
+time, controller, topology, scientific-identity and output-history checks;
+native physical arrays match bit for bit. SNIa comparisons align checkpoint
+and plot boundaries. The scope is these short CPU trajectories; longer runs,
+including the `1e-8 s` SNIa endpoint, have separate records.
 
 <a id="completed-checks-on-the-release-candidate"></a>
 
@@ -94,8 +92,8 @@ route. Intermediate resumes preserve output numbering; terminal resumes have
 exactly one additional checkpoint and plot, as derived from the actual stopped
 source's output history.
 
-The burn/AMR memcheck campaign
-and racecheck campaign
+The burn/AMR memcheck checks
+and racecheck checks
 each repeat the full twelve executions and nine strict comparisons on the same
 tested build. Each instruments six actual CUDA executions: the uninterrupted run,
 the source run and four CUDA-destination restores. All six memcheck reports
@@ -175,12 +173,10 @@ continuation tests.
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
 
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
-
 - [smooth-advection record (JSON)](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
 - [burn/ENUC record (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
-- [memcheck campaign (JSON)](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
-- [racecheck campaign (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
+- [memcheck checks (JSON)](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
+- [racecheck checks (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
 - [sustained-execution record (JSON)](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
 
 - [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)

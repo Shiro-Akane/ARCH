@@ -21,16 +21,15 @@ Normalized tables require schema 2, a free-energy potential and explicit
 physical declarations. The supported native EOSDriver and baryon formats retain
 their own data contracts. Current normalized fixtures and rejection checks live
 in `tests/host/eos` and `tests/cuda/microphysics/eos`; use the CTest targets below.
-The [data reference](../../src/physics/eos/TabularEOS.md) specifies inputs and
-the [migration record](../../docs/histroy/low-density/ImplementationReport.zh-CN.md)
-preserves implementation and acceptance history.
+The [data reference](../../src/physics/eos/TabularEOS.md) specifies input
+formats, physical declarations and validity domains.
 
 The application results and replay scripts below belong to the source identified
 by `2226456c1f87415a317dd6a2a96053a7e154b949` **plus the dirty source
 identity listed in their evidence**. The commit alone cannot reproduce them.
 Their direct-table inputs and pass counts describe that historical implementation.
 
-## Historical coupled application results
+## Coupled application benchmark
 
 The Release application record
 passes twelve cases and 96 CPU/CUDA executions. The
@@ -109,13 +108,13 @@ cmake --build build --target tabular_eos_regression
 ctest --test-dir build -R '^tabular_eos_ideal_gas$' --output-on-failure
 ```
 
-## Table formats and follow-up work
+## Table formats
 
 The current reader accepts normalized 3D/4D HDF5 and native EOSDriver total-EOS
 HDF5 under the [data contract](../../src/physics/eos/TabularEOS.md). The latter
 preserves native axes and log-field encodings, adopts the source's fixed energy
 shift and rejects invalid cells or ambiguous temperature inverses. It is a
-new interface, not part of the frozen application results above. Its focused
+separately tested interface. Its focused
 regression target is `arch_native_tabular`; an optional second argument after
 the output directory loads an actual EOSDriver file. The current source also
 reads the shared finite-temperature baryon ASCII format used by EOS2/EOS4,
@@ -144,13 +143,13 @@ states at the `2e-8` temperature budget. The
 retained diagnostic log
 records this earlier-source observation. This targeted
 interface/conditioning check is not a complete physical qualification of Shen
-matter and does not modify the frozen application records above.
+matter; its component and inversion checks are recorded separately.
 
 ### Component and raw-baryon extension checks
 
 The extension record keeps source,
 asset and build identities, regression reports, actual CUDA owner execution and
-bounded application checks separate from the historical release above.
+application checks identified separately from the benchmark above.
 Manufactured 3D/4D tables check every supported missing-component subset,
 already-total inputs, an independent non-default baryon-mass convention,
 source/dependency fingerprints and startup rejection. Independent component
@@ -185,8 +184,6 @@ separate qualification tasks.
 
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
-
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
 
 - [Release application record (JSON)](results/application-native-20260907/release-891/evidence.json)
 - [independent endpoint record (JSON)](results/application-native-20260907/endpoints-892/evidence.json)

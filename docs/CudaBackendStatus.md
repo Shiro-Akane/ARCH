@@ -3,24 +3,24 @@
 Chinese translation: [CudaBackendStatus.zh-CN.md](CudaBackendStatus.zh-CN.md).
 The English file is authoritative.
 
-A *backend* refers to the specific execution engine in ARCH responsible for performing calculations on your chosen hardware. CUDA serves as our GPU backend. Selecting it changes execution, memory management and solver-library access while reusing the common mathematical and physical implementations. Backend agreement is established for the configurations identified by validation. *Adaptive mesh refinement (AMR)* dynamically adjusts cell sizes during a simulation, ensuring that complex regions receive higher spatial resolution. This guide details the division of labor between processors and helps you select a compatible configuration.
+CUDA executes hydrodynamics and adaptive-mesh numerical work on the GPU.
+CPU and CUDA share mathematical and physical implementations; device memory,
+kernels, streams and linear-solver libraries are backend-specific. This guide
+explains the supported combinations, CPU/GPU responsibilities and measured
+performance. See the [feature list](Features.md) and [validation index](../validation/README.md)
+for individual numerical tests.
 
-The CUDA backend executes hydrodynamics and adaptive-mesh numerical work on the
-GPU. CPU and CUDA share the same mathematical and physical implementations;
-device memory, kernels, streams and linear-solver libraries are backend-specific.
-The components below follow the geometry and backend scope in the
-[feature list](Features.md). The
-[validation index](../validation/README.md) records the tested configurations,
-technical results and combined acceptance status.
-
-Linux/WSL2 remains recommended. Native Windows11 x64 CUDA and CPU share the scientific scope below and the Studio workflow, with newer support that may still have instability or bugs. Windows needs a separate MSVC/NVCC ABI dependency tree; see [build and launch](guides/WindowsNativeCuda.md) and the [one-to-one correspondence and acceptance](histroy/build/WindowsNativeCudaQualification-20261027.md). Platform compatibility does not expand existing geometry, EOS, network or coupled-method qualifications.
+Linux is the recommended system. Native Windows 11 provides the same CPU/CUDA
+features and Studio workflow, with newer support that may still have instability
+or bugs. Follow the adjacent platform instructions in [Build](guides/Build.md#cuda-build),
+and see [platform support](releases/PlatformSupport.md) for tested toolchains.
 
 ## Shared functional scope
 
 | Facility | Implementation scope |
 |---|---|
 | Hydrodynamics | Van Leer, Steger-Warming, Roe, HLL, HLLC; PCM/MUSCL/PPM; MinMod/MC/SuperBee/Van Leer limiters; Euler/SSPRK2/SSPRK3 |
-| Mesh and geometry | Established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical block meshes with common CPU conventions; native cylindrical 2D shares geometry/transport math and has scoped wall, indexing, residency, regrid and fresh checks |
+| Mesh and geometry | Established Cartesian, radial, spherical polar and three-dimensional cylindrical/spherical block meshes with common CPU conventions; native cylindrical 2D shares geometry/transport math, with wall, indexing, residency, regrid and restart checks |
 | Boundaries | Periodic, outflow, reflecting and user physical/potential conditions; Host callbacks exchange surface slices using shared EOS/face mathematics; see [user boundaries](guides/UserBoundaries.md) |
 | Dynamic AMR | Refinement indicators, conservative prolongation/restriction, mixed-level exchange, hydro/diffusion reflux and transactional state migration |
 | EOS | Ideal gas, Helmholtz, normalized Tabular3D and Tabular4D data layouts |
@@ -48,38 +48,45 @@ the isotope set of the selected supported network: a built-in network or an
 explicitly certified generated model.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
-Public cylindrical 2D uses axisymmetric `(r,z)`, expanded as `x=r`, `y=0`, `z=z` at `phi=0`, with three physical velocity components. Spherical 2D uses the equatorial `(r,phi)` plane; 3D cylindrical/spherical grids use `(r,z,phi)` / `(r,theta,phi)`. Native wall, RK/RKL, regrid, prescribed Poisson, isolated self-gravity and fresh checks are recorded in [validation](../validation/README.md). The [current device record](../validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json) adds rebuilt GravityBox/SNIaCoupled axial fields, explicit centre-input qualification and common physical-wall bindings across all nine legal chart combinations. It covers device contracts, original public endpoints, actual regridding and fresh. The shared NSE and Host AMR RKL repair has current numerical and integration acceptance: the original private Cellular ENUC gate of `5e-9` plus `5e-12` passes across all 25 checkpoints, with matching ENUC bytes and own-backend fresh. Unchanged geometry and resource owners retain scoped reuse; the declared single-GPU device phase is closed. Historical cylindrical 2D polar records retain their original chart and do not qualify the native chart.
+Cylindrical 2D uses axisymmetric `(r,z)`, expanded as `x=r`, `y=0`, `z=z` at
+`phi=0`, with three physical velocity components. Spherical 2D uses the
+equatorial `(r,phi)` plane; 3D cylindrical/spherical grids use `(r,z,phi)` /
+`(r,theta,phi)`. The [validation index](../validation/README.md) links native
+coordinate-wall, RK/RKL, regrid, Poisson, self-gravity and restart checks.
 
 ## Build and device requirements
 
-Use the [build guide](guides/Build.md) with a CUDA toolkit and supported Host compiler, explicit device code images, and matching numerical libraries. The current tested profile is Release, GCC 12, NVCC 12.3 and `sm86` on an RTX 3060 Ti with 8 GiB device memory. ARCH numerical translation units retain strict floating-point flags; linked vendor-library profiles are recorded separately. CPU GCC 13 and CUDA GCC 12 LTO archives must not be mixed.
+Use a CUDA toolkit, a supported host compiler, explicit GPU architectures and
+numerical libraries built for the same compiler ABI. Linux uses GCC/NVCC;
+native Windows uses MSVC/NVCC. CPU UCRT64 libraries cannot be linked into a
+Windows CUDA build. The [build guide](guides/Build.md#cuda-build) provides the
+commands, cuDSS setup and [compilation memory controls](guides/Build.md#parallel-compilation-and-memory).
 
-On this 7.7 GiB WSL instance, heavy builds use two jobs with a one-job CUDA heavy pool. The current incremental application/test builds and no-op checks passed; they do not establish a clean-build or other-platform qualification. Actual Ninja rules use ccache. Explicit CUDA or optional-solver requests are checked before execution and must reject unavailable routes. The shared-NSE-header incremental rebuild required 52 actions and 3040.45 seconds; its dependency/instantiation cost is recorded for later frozen build evaluation. The [release qualification index](releases/README.md) records measured costs, retained CPU limits and multi-GPU/platform qualification boundaries.
+ARCH numerical translation units use strict floating-point options. Dependency
+compiler and LTO identities must match the build; for example, GCC 13 CPU
+archives and GCC 12 CUDA archives are separate dependency sets. The tested
+hardware and versions are listed in [platform support](releases/PlatformSupport.md).
 
 ## GPU-AMR execution model
 
 Implementation entry points are indexed in [CUDA runtime](../src/cuda/runtime/README.md)
 and the [shared AMR module](../src/amr/README.md).
 
-The CPU owns the mesh topology, Morton ordering, and all refinement/coarsening decisions.
-
-- **Topology** describes the connectivity between mesh blocks.
-- **Morton ordering** assigns a spatially contiguous index to those blocks.
-- **Refinement** splits cells into smaller ones for higher resolution, while **coarsening** merges them when configured indicators indicate that high resolution is no longer needed.
-
-Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration and singular-coordinate ghost reconstruction operate directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
+The CPU owns mesh connectivity, spatial Morton ordering and decisions to
+refine or coarsen blocks. The GPU computes cell indicators and returns one
+summary per block. Conservative field migration and singular-coordinate ghost
+reconstruction operate on device buffers using the shared transfer mathematics.
+At checkpoint and plot-output boundaries, the required fields are copied to
+the common host writer.
 
 ## Choosing a backend for performance
 
-The server measurements below retain their original source identity and
-transport configuration; they precede the current self-gravity work and do not
-establish that every present Helmholtz transport channel is active. Earlier
-workstation measurements and the controlled FLASH comparison are recorded in the
-[optimization acceptance record](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md).
-Shared CPU optimizations change the comparison baseline. Those RTX
-measurements show an end-to-end gain for the tested 2D four-module AMR case;
-Cellular, Jeans and the 3D curved coupled case remain faster on CPU. Use the
-measured complete-task time for the actual input and scale.
+The measurements below identify their hardware, source and transport model.
+The server data use the recorded full-transport implementation; the current
+Helmholtz stellar closure supplies thermal conduction. The separate
+[workstation comparison](../validation/gravity/flash/README.md) measures
+representative RTX 3060 Ti workloads. Compare complete runs of your input and
+scale when choosing a backend.
 
 **Measured end-to-end acceleration reaches about 5× for coupled AMR workloads.**
 The highest result was 5.08× for hydrodynamics, BD burning, RKL2 full transport
@@ -116,7 +123,7 @@ hydrodynamics, burning, species/thermal/viscous diffusion and dynamic AMR.
 The separate two-dimensional Sedov test with dynamic AMR measured 1.588× and
 1.667× at initial block layouts of 4×4 and 8×8. Those are combined Hydro/AMR
 times, not isolated AMR speedups. The
-[campaign summary](../validation/backend/results/hpc-cuda-optimization/README.md)
+[measurement summary](../validation/backend/results/hpc-cuda-optimization/README.md)
 provides absolute times, acceptance counts and source-pinned reports.
 
 More mesh work allows CUDA to amortize kernel launches and synchronization.
@@ -124,7 +131,7 @@ Small diffusion cases still favor CPU; RKL1 at 128 blocks is effectively at
 parity. Increasing the isotope count is a different scaling problem and does
 not, by itself, improve GPU utilization.
 
-**Large-network performance warning:** the tested production 150/200-isotope
+**Large-network performance:** the tested production 150/200-isotope
 sparse applications still take approximately **5.0–10.3 times as long on CUDA
 as on CPU8** (speedup about 0.10–0.20×). Their numerical comparisons passed,
 but the current host-controlled cuDSS route remains a performance limitation
@@ -145,7 +152,7 @@ extra setup can make small grids slower than CPU. The local RTX 3060 Ti
 preserves its original chart and source identity, showing end-to-end coupled gains while separating the Poisson cost; it is not Native RZ evidence. Use the
 [gravity acceptance](../validation/gravity/README.md) for tested limits.
 
-### What the CUDA optimization changes
+### Runtime organization
 
 - Hydro, diffusion and small-network burning process multiple mesh blocks per
   launch where their workspace layout permits. They still call the common
@@ -159,12 +166,10 @@ preserves its original chart and source identity, showing end-to-end coupled gai
   publication of results. Reusing already completed boundaries avoids redundant
   refreshes before host consumers read the accepted state.
 - Sparse corrections use one shared original-system residual check. cuDSS
-  factor storage and its bounded cache remain backend-specific; further
-  large-network acceleration is a separate optimization task.
+  factor storage and its bounded cache remain backend-specific; its cost depends on the network and workload.
 
-Together these changes reduce launch, allocation and transfer overhead without
-changing the physical equations or acceptance tolerances. The measured speedups
-describe complete workloads; they do not assign a separate gain to each change.
+These mechanisms reduce launch, allocation and transfer overhead. The reported
+speedups measure their combined effect in complete workloads.
 
 ## Dense and sparse burning
 
@@ -214,13 +219,11 @@ requirements grow with the network and mesh workload.
   Native EOSDriver and the supported baryon ASCII source format reuse the
   existing table owners. Component completion happens on the host; strict
   interpolation, derivatives and all-root temperature inversion share one
-  CPU/CUDA implementation. Their focused extension checks are separate from
-  the full historical CUDA release profile.
-- The local release profile uses representative generated and weak networks.
-  Larger-model trajectories and resource measurements run on machines sized for
-  those workloads. ARCH currently runs on one CPU node or one CUDA GPU.
+  CPU/CUDA implementation. The [EOS validation guide](../validation/eos/README.md) identifies the
+  table formats and trajectories covered by each test.
+- Representative generated and weak networks have application tests. Larger
+  models require resources sized for their network and mesh. ARCH currently
+  runs on one CPU node or one CUDA GPU.
 
-The [validation index](../validation/README.md) distinguishes curated numerical
-results from implementation claims and links to reproducible inputs and metrics.
-Contributor experiment logs and machine-specific evidence are kept separately
-in [development records](development/README.md), not in this feature guide.
+The [validation index](../validation/README.md) links reproducible inputs,
+metrics and numerical acceptance limits.

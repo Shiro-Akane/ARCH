@@ -18,5 +18,5 @@ These parameter files are owned by [AMR validation](../README.md):
 
 [gpu_cases.json](../gpu_cases.json) and
 [gpu_curvilinear_cases.json](../gpu_curvilinear_cases.json) define their execution
-matrix and recorded overrides. Reproduce a campaign through its recipe so the
-input identity, actual overrides and original budgets stay together.
+matrix and recorded overrides. Use the corresponding recipe to retain the input identity, applied overrides
+and comparison budgets.

@@ -17,63 +17,50 @@ CPU 与 CUDA 均通过原定的跨求解器误差和组分闭合检查。
 
 `BurnOneZone` 实现仍位于 `simulation/BurnOneZone/`；本记录的参数入口位于 [`inputs/`](inputs)，它们使用生产 burn driver，在 $\rho=10^7\,\mathrm{g\,cm^{-3}}$、$T=3\times10^9\,\mathrm{K}$、初始 `C12=0.5`、`O16=0.5` 条件下推进至 $t=10^{-10}\,\mathrm{s}$。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
 
-## 当前输入与参考身份
+## 输入与源项能量检查
 
-BE_NR、BD 和 ROS4 参数文件显式声明当前配置契约所需的
-`min_eint=1e-10`、`hll_wave_speed=roe` 和 `eos_coulomb_mult=1.0`。
-[bd.par](inputs/bd.par) 同时供 controller 和配置检查夹具使用。
-密度、温度、初始组分、物理终点与 ODE 容差沿用上方的参考问题。
+BE_NR、BD 和 ROS4 输入显式声明 `min_eint=1e-10`、`hll_wave_speed=roe` 和
+`eos_coulomb_mult=1.0`。[bd.par](inputs/bd.par) 也供控制器和配置检查测试使用。
+复现采用参考问题所记录的数值／EOS 控制、表身份和物理终点。
 
-历史结果保留其记录的源码与输入身份。当前配置加载的通过仅说明输入契约一致，
-不代表新的科学轨迹或 CUDA 结果。回放应使用记录的数值／EOS 控制与表身份；
-更长物理终点需要单独的独立参考及误差预算。
+`ENUC`／`enuc_rate` 的单位为 `erg g^-1 s^-1`，表示最后接受的燃烧半步核能增量
+除以该半步时长。积分能量平衡使用独立的源项记账，ENUC 本身不是整宏步能量账本。
 
-[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
-已按声明的单GPU范围签收。当前原私有Cellular24步／全部25CHK通过原`5e-9`＋绝对项`5e-12`门，
-ENUC在CPU／Device间逐位一致；各后端CHK12→新进程24的21项CHK／43项物理Plot也与自身连续运行一致。
+[CPU/CUDA 源项能量结果](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+覆盖 24 步 Cellular 和全部 25 个检查点。ENUC 通过 `5e-9` 相对加 `5e-12` 绝对误差
+预算，两后端逐位一致。由第 12 个检查点续算至第 24 步，两后端分别与自身连续演化
+的 21 项检查点和 43 项 Plot 物理数据集一致。独立 NSE 精度检查包含 6,859 个状态，
+同时覆盖内置／生成 NSE、aprox19 策略、RKL 和旋转 AMR 测试。
 
-真实两次burn-half输入／接受能量捕获及同输入交叉回放定位到Saha舍入放大和Host AMR RKL预乘时间的顺序差。
-修复收敛在现有NSE与AMR RKL所有者；共享条件化数学，使用未缩放`L(U)`并应用真实步长一次。
-当前内建／生成NSE数学、A19策略、原RKL与旋转AMR消费者通过；6859点当前函数桥接复用独立高精度参照。
-方程、ODE控制、固定点零源、原守恒标准和源项定义保持：ENUC仍为最后接受的半步核能增量除以该半步时长。
-原第1步／终态`4.3878863852117646e-7`／`1.1197942950938268e-7`失败保留原身份。
-[发布资格索引](../../docs/releases/README.md)统一记录编译成本和仍需后续签收的CPU限定／平台／分发范围。
+## CPU 应用结果
 
-## CPU 科学依据
+[单区结果](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json)
+记录 BE_NR、BD 和 ROS4 到指定终点的轨迹，以及跨求解器和组分闭合检查。
 
-[单区 CPU 收据](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json)记录 BE_NR、BD、ROS4
-按原单区终点及 CPU 跨求解器／组分闭合预算完成的新运行。下方历史证据保留；
-该CPU记录不签收CUDA；当前设备结果见上方。
+[耦合与 NSE 结果](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+覆盖三种 ODE 与 RKL1/RKL2 组分扩散组成的六个 BurnGradient，终点均为 `t=1e-10 s`。
+核质量能量、质量和电荷满足 `1e-12` 预算，同时检查逐点状态和实际 AMR 变化。
+十六个 CPU 应用覆盖 aprox13、aprox19、aprox21 和 iso7，每个网络包含关闭 NSE 的
+BE_NR 对照，以及开启 NSE 的 BE_NR、BD、ROS4。能量／电荷通过 `1e-12` 检查，
+组分对照差大于 `1e-3`，满足活动检查。
 
-[CPU 耦合与 NSE 记录](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
-补充三种 ODE 与 RKL1／RKL2 组分扩散组成的六组 BurnGradient，均推进至原
-`t=1e-10 s`。原核质量能量、质量及电荷 `1e-12` 预算、逐点状态检查和实际 AMR
-变化通过。十六次应用运行覆盖 aprox13、aprox19、aprox21 和 iso7：每个网络
-包含关闭 NSE 的 BE_NR 对照及开启 NSE 的 BE_NR、BD、ROS4，保持原能量／电荷
-`1e-12` 与组分差大于 `1e-3` 的活动检查。这些只签 CPU 范围；独立时间参考与
-新的 CUDA 运行分别结算。
+设置 `use_nse=true` 的一维 Cellular 测试用 2.13 秒完成一步至 `t=1e-16 s`，
+修复事件为零。第二燃烧半步包含一次成功 NSE 尝试，零 NSE 失败和零 BD 子步。
+经共用 BD/NSE 实现回放后，其状态、报告和传递能量逐位一致。另在记录的密度、
+输入组分和接受温度下独立计算 Saha 与 Helmholtz EOS，60／80 位参考一致。
+组分 Linf 为 `8.54e-15`，热闭合相对残差为 `2.28e-14`，均满足 `1e-12` 限制。
+独立计算核对接受的输出状态，共享代码回放核对执行一致性。该输入与二维
+`CellularFlash2D.par` 示例不同。
 
-此前的一维 Cellular 诊断显式恢复十一项旧有效控制值，包括 `use_nse=true`，
-在应用墙钟 2.13 秒内完成一步至 `t=1e-16 s`，修正事件为零。它与二维
-`CellularFlash2D.par` 的 FLASH 对照输入不同。实际第二燃烧半步报告 `NseSuccess`：
-一次 NSE 尝试、零失败、零 BD 子步。捕获输入通过同一共享 BD／NSE 实现回放后，
-packed 状态、报告及能量交接逐位相同。这是共享实现回放，不是独立 NSE 参考。
-另以实际密度、输入组分和接受温度进行独立Saha与Helmholtz EOS审计，60／80位
-参考一致；组分Linf为`8.54e-15`，热闭合相对残差为`2.28e-14`，均满足原
-`1e-12`门槛。它核验已接受输出，不冒称观测了生产者内部Ye／旧EOS内能，
-也未另求唯一偏好的热根。纯ODE积分不代表此路线。
-[较早CPU收据](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
-将该一维输入推进到原终点：24步、4.01秒、25个CHK、零修复；首步保存状态
-与独立审计状态精确相同。六组全输运控制终点及四条活动ENUC续算也通过原标准，
-其中守恒观测器的精度丢失已修复，物理公式／门槛未改。当前CPU/CUDA `enuc_rate`
-及公开／二维资格由上方设备签收统一记录；该较早CPU收据保留原源码身份。
-`ENUC`／`enuc_rate` 的单位为 `erg g^-1 s^-1`，表示最后一个燃烧半步的已接受
-能量增量除以该半步时长，不能直接作为整宏步的能量收支账本。
+[完整 CPU 轨迹](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+包含 24 步、25 个检查点，用时 4.01 秒，修复事件为零；首个保存状态与独立检查的
+状态一致。同一记录还包含六个活动输运终点和四条活动 ENUC 续算，使用保留精度的
+守恒观测器和指定预算。
 
 ## Helmholtz 表身份
 
 本记录唯一使用的表来源是从 [Timmes EOS 网站](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。运行时路径为 `EOS_toolkit/tables/helmholtz/helm_table.dat`。
-按[离线表指南](../../docs/guides/Build.zh-CN.md#离线表与-lfs-流量)恢复已核验、
+按[离线表指南](../../docs/guides/Build.zh-CN.md#offline-tables-and-lfs-bandwidth)恢复已核验、
 身份匹配的本地普通文件副本，或展开已有本地 LFS 对象。经过核验的副本应保留在
 构建／输出目录及 LFS 对象库之外。对象缺失时应报告，不能自动下载；
 读取已实体化的表不消耗 LFS 流量。
@@ -149,8 +136,6 @@ CUDA 短步策略检查仍保留原严格后端一致性阈值，与上文的参
 
 <details>
 <summary>展开源码身份、机器可读数据与执行日志</summary>
-
-下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
 
 - [应用记录 (JSON)](results/application-first-law-20260907/release-878/evidence.json)
 - [原生燃烧恢复验证 (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)

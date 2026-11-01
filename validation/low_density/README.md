@@ -4,8 +4,7 @@ This suite tests finite, positive-density IdealGas states. Its scientific
 scope excludes exact vacuum, cancellation-dominated thermal energy and
 extrapolation beyond a table EOS domain. The current state and repair contract
 is in the [reference](../../docs/Reference.md#low-density-states-and-repair-accounting);
-the [migration record](../../docs/histroy/low-density/ImplementationReport.zh-CN.md)
-preserves implementation history.
+the numerical criteria are defined in [manifest.json](manifest.json).
 
 `manifest.json` fixes density scales and scientific budgets. `run.py` executes
 72 actual ARCH runs, reads their checkpoints and checks analytic entropy-wave
@@ -15,9 +14,9 @@ five flux schemes, three active-floor budgets with a fixed observation region, i
 References use analytic equations; CPU/CUDA agreement is supplementary.
 
 ```sh
-python3 validation/low_density/run.py --arch bin/ARCH \
+python3 validation/low_density/run.py --arch build-cpu/bin/ARCH \
   --backend cpu --output-root /tmp/arch-low-density-cpu
-python3 validation/low_density/run.py --arch build/cuda/bin/ARCH \
+python3 validation/low_density/run.py --arch build-cuda/bin/ARCH \
   --backend cuda --output-root /tmp/arch-low-density-cuda
 ```
 
@@ -30,7 +29,7 @@ retain case inputs/logs but cannot retain a stale success marker.
 Host/Device mathematical leaves through `rho=1e-100`, including independent
 Euler flux, gravity, CFL and linear-system answers. Table EOS tests separately
 check their declared thermodynamic domains, unique inverses and invalid queries.
-The full CTest suite remains part of acceptance.
+
 
 Per-case wall times include startup and I/O. The small cases are correctness
 witnesses, not a GPU throughput benchmark. New result packages retain compact
