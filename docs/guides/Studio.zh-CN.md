@@ -12,15 +12,31 @@ Linux／WSL2：
 
 ```bash
 build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod_beginner.par
+  --binary build-studio-cpu/bin/ARCH --case Sedov \
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
-Windows PowerShell：
+Windows PowerShell，先按[构建指南](Build.zh-CN.md#windows-工具配置)设置工具环境：
 
 ```powershell
 & .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sod --config simulation/Sod/Sod_beginner.par
+  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
+
+`--config` 把指定的 `.par` 载入 **Config** 工作区，供查看和编辑。上面命令中的选项含义如下：
+
+| 选项 | 作用 |
+| --- | --- |
+| `--project` | ARCH 项目根目录 |
+| `--build-dir` / `--binary` | 已有 CMake 构建目录及其中的 Core 可执行文件 |
+| `--case` | 程序中已注册的模型，此处为 `Sedov` |
+| `--source` | 绑定的模型源码，须与程序中的编译登记匹配 |
+| `--config` | 启动时打开的参数文件，此处为 `simulation/Sedov/Sedov.par` |
+
+文件与构建目录的相对路径以 `--project` 为基准，未指定时使用当前目录；参数文件须位于项目内。底部 **Configure** 执行 CMake 配置，**Build** 编译程序。
+
+启动后，Config 显示 Sedov 模型及其参数。输入与构建就绪时会生成初始预览，也可点击 **Preview** 手动更新；选择 **Field → Pressure** 即可看到下图中的中心压力沉积区域。保存参数并确认 **Run** 后开始时间推进，再加载生成的 Plotfile，可查看后文展示的扩展密度场。
 
 填写实际使用的构建目录与可执行文件；使用 CUDA 时选择对应的 CUDA 构建。便携桌面包在 Linux 下运行 `arch-studio`，在 Windows 下运行 `arch-studio-bin.exe`，启动页可填写相同的项目、构建、程序、模型和参数选项。保留整个包目录，科学计算 Core 及其运行库另行安装。
 

@@ -112,7 +112,25 @@ Studio 将参数编辑、Configure/Build、初始场与初始 AMR 预览、Run/R
 
 *查看演化后的密度场、显示自适应网格，并查询实际存储的单元值。[图解 Studio 指南](docs/guides/Studio.zh-CN.md)介绍配置、预览和结果查看。*
 
-按[构建指南](docs/guides/Build.zh-CN.md)开启 `ARCH_BUILD_STUDIO=ON`。桌面程序自动管理本地连接。选择已编译模型和参数文件，编辑 Working Copy，并在 Run 前保存；Plotfile 工作区可打开已有结果。
+在 CMake 配置时设置 `-DARCH_BUILD_STUDIO=ON`，按[构建指南](docs/guides/Build.zh-CN.md)编译桌面组件。随后从项目根目录打开 Sedov 示例：
+
+Linux／WSL2：
+
+```bash
+build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
+  --binary build-studio-cpu/bin/ARCH --case Sedov \
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+```
+
+Windows PowerShell，需已设置[原生工具环境](docs/guides/Build.zh-CN.md#windows-工具配置)：
+
+```powershell
+& .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
+  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+```
+
+`--config` 指定载入 **Config** 编辑工作区的参数文件；**Configure** 执行 CMake 配置，**Build** 编译程序。窗口打开后显示 Sedov 参数；Preview 就绪后选择 **Field → Pressure**，即可查看初始中心压力区域。保存并确认 Run 后进行时间推进，再在 Plotfile 中打开输出，可得到上图所示的密度视图。具体选项与初始界面见[启动说明](docs/guides/Studio.zh-CN.md#打开项目)。
 
 ## 扩展模型
 

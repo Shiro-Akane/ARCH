@@ -112,7 +112,25 @@ Studio brings parameter editing, Configure/Build, initial-field and initial-AMR 
 
 *Inspect an evolved density field, display the adaptive mesh and query stored cell values. The [illustrated Studio guide](docs/guides/Studio.md) walks through configuration, preview and output inspection.*
 
-Enable `ARCH_BUILD_STUDIO=ON` when following the [build guide](docs/guides/Build.md). The desktop manages its local connections automatically. Choose a compiled model and parameter file, edit the Working Copy, and save it before Run. The Plotfile workspace opens existing outputs for inspection.
+Set `-DARCH_BUILD_STUDIO=ON` during CMake configuration and build the desktop using the [build guide](docs/guides/Build.md). From the project root, open the Sedov example:
+
+Linux / WSL2:
+
+```bash
+build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
+  --binary build-studio-cpu/bin/ARCH --case Sedov \
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+```
+
+Windows PowerShell, with the [native tool environment](docs/guides/Build.md#windows-tool-configuration) set:
+
+```powershell
+& .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
+  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+```
+
+`--config` selects the parameter file loaded into **Config**, the editing workspace. **Configure** runs CMake configuration; **Build** compiles the program. The window opens with Sedov parameters; when Preview is ready, select **Field → Pressure** to inspect the initial central spot. Save and confirm Run to evolve the model, then open its output in Plotfile to obtain the density view illustrated above. See the [launch options and initial view](docs/guides/Studio.md#open-a-project).
 
 ## Extended models
 

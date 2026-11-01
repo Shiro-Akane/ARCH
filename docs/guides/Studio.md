@@ -12,15 +12,31 @@ Linux / WSL2:
 
 ```bash
 build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod_beginner.par
+  --binary build-studio-cpu/bin/ARCH --case Sedov \
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
-Windows PowerShell:
+Windows PowerShell, after setting the tool environment in the [build guide](Build.md#windows-tool-configuration):
 
 ```powershell
 & .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sod --config simulation/Sod/Sod_beginner.par
+  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
+  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
+
+`--config` loads the selected `.par` into the **Config** workspace for editing. The launch options above mean:
+
+| Option | Purpose |
+| --- | --- |
+| `--project` | ARCH project root |
+| `--build-dir` / `--binary` | Existing CMake build directory and its Core executable |
+| `--case` | Model registered in that executable, here `Sedov` |
+| `--source` | Model source to bind and check against the compiled registration |
+| `--config` | Parameter file to open, here `simulation/Sedov/Sedov.par` |
+
+Relative file and build paths resolve from `--project` (the current directory when omitted); the parameter file must be inside the project. The **Configure** button runs CMake configuration, and **Build** compiles the program.
+
+On launch, Config shows the Sedov model and its parameters. When the input and build are ready, Studio generates the initial preview; **Preview** also updates it manually. Select **Field → Pressure** for the initial central spot shown below. Save and confirm **Run** to evolve the model, then open a generated Plotfile for the expanded density field shown later.
 
 Use the build directory and executable you actually compiled. For CUDA, select that CUDA build instead. A portable desktop package starts with `arch-studio` on Linux or `arch-studio-bin.exe` on Windows; its project screen accepts the same project, build, binary, model and parameter selections. Keep the package directory intact. The scientific Core and its runtime libraries are installed separately.
 
