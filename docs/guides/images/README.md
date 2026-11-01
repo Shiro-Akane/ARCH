@@ -12,8 +12,8 @@ the enabled outline overlay shows its bounded subset of 128 blocks. Read raw
 samples or select a cell to inspect stored values.
 
 The parameter illustration selects `deposit_radius = 0.03 cm` and displays the
-initial pressure field. The Run illustration shows the saved-input confirmation
-before launch. The images show the shared Linux/Windows workspaces in a Linux
+initial pressure field. The Run illustration shows the saved input, requested
+and selected compute backends, and linear solver before launch confirmation. The images show the shared Linux/Windows workspaces in a Linux
 Electron window.
 
 | Image | View |
