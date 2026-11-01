@@ -5,6 +5,7 @@
  * replace the user's explicit confirmation of the compiled version.
  */
 import {canonicalOutputDirectory} from './runOutput.ts';
+import type {RunOutputDirectory} from './runOutput.ts';
 import {checkpointFilesystemIdentity} from './runCheckpoint.ts';
 import {execFile} from 'node:child_process';
 import {captureOwned} from './hostProcess.ts';
@@ -21,11 +22,16 @@ import type {ConfigReadResponse,FileFingerprint} from '../src/host/contracts.ts'
 import type {ConfigurationSchema} from '../src/host/configurationContracts.ts';
 import type {PrepareRunRequest,ConfirmRunRequest,RunPreparation,ExecutionPreflight} from '../src/host/runContracts.ts';
 export type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/host/runContracts.ts';
+async function resolveOutputs(plan:Pick<RunPreparation,'pathChecks'|'inspection'>):Promise<RunOutputDirectory[]>{
+ return Promise.all(plan.pathChecks.filter(check=>check.role==='output-directory'&&check.resolvedPath&&check.status==='ok'&&
+  plan.inspection.parameters.find(p=>p.key===check.key)?.applicability.state!=='not-applicable').map(async check=>
+   ({path:check.resolvedPath!,canonicalPath:await canonicalOutputDirectory(check.resolvedPath!)})));
+}
 /** Saved-input and backend preflight on the selected binary, independent of Preview freshness. */
 export class RunPreparationRunner {
  assertCase?:(caseId:string)=>Promise<void>;
  private active=false;
- private prepared?:{plan:RunPreparation;schema:ConfigurationSchema;checkpointIdentity?:string};
+ private prepared?:{plan:RunPreparation;schema:ConfigurationSchema;checkpointIdentity?:string;outputDirectories:RunOutputDirectory[]};
  readonly root:string;readonly projectId:string;readonly binaryRelativePath:string;
  private config:()=>Promise<ConfigReadResponse>;
  private windowsTools?:WindowsHostTools;
@@ -119,7 +125,8 @@ export class RunPreparationRunner {
     pendingChecks:['Core repeats Setup and backend checks at launch','Initial mesh and runtime allocation',
      ...(request.mode==='restart'?['Core checkpoint identity/layout and continuation compatibility']:[])]};
    const checkpointIdentity=checkpointPath&&plan.canConfirm?await checkpointFilesystemIdentity(checkpointPath):undefined;
-   this.prepared={plan:structuredClone(plan),schema,checkpointIdentity};
+   const outputDirectories=plan.canConfirm?await resolveOutputs(plan):[];
+   this.prepared={plan:structuredClone(plan),schema,checkpointIdentity,outputDirectories};
    return plan;
   }finally{this.active=false;}
  }
@@ -156,9 +163,9 @@ export class RunPreparationRunner {
     throw new BuildError('Execution backend availability changed; prepare Run again to review the selection.',409);
    if(!sameFingerprint((await this.config()).fingerprint,plan.config.fingerprint)||!sameFingerprint(await this.binary(),plan.binary.fingerprint))
     throw new BuildError('Saved input or binary changed during execution preflight; prepare again.',409);
-   const outputDirectories=await Promise.all(checks.filter(check=>check.role==='output-directory'&&check.resolvedPath&&check.status==='ok'&&
-    plan.inspection.parameters.find(p=>p.key===check.key)?.applicability.state!=='not-applicable').map(async check=>
-     ({path:check.resolvedPath!,canonicalPath:await canonicalOutputDirectory(check.resolvedPath!)})));
+   const outputDirectories=await resolveOutputs({...plan,pathChecks:checks});
+   if(JSON.stringify(outputDirectories)!==JSON.stringify(prepared.outputDirectories))
+    throw new BuildError('Output directory changed after preparation; prepare again.',409);
    return {plan:structuredClone(plan),configText:saved.text,outputDirectories,
     checkpoint:plan.checkpointPath?{path:plan.checkpointPath,filesystemIdentity:prepared.checkpointIdentity!}:undefined};
   }finally{this.active=false;}

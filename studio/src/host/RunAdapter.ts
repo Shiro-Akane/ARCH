@@ -52,6 +52,15 @@ export function validateRunPreparation(v:unknown,expected:PrepareRunRequest&{con
  for(const p of v.pathChecks)if(!record(p)||!text(p.key)||!text(p.cwd)||!(p.resolvedPath===null||text(p.resolvedPath))||
   !['input-file','output-directory'].includes(String(p.role))||!['ok','error','not-set','unable-to-check'].includes(String(p.status))||typeof p.message!=='string')
   throw new Error('Malformed Run resource check.');
+ if(v.canConfirm){
+  if(v.mode==='restart'&&!text(v.checkpointPath))throw new Error('Restart checkpoint missing from Run plan.');
+  for(const check of v.pathChecks){
+   const parameter=inspection.parameters.find(p=>p.key===check.key);
+   if(parameter?.applicability.state==='not-applicable')continue;
+   if(check.status==='error'||check.status==='unable-to-check'||(check.status==='not-set'&&parameter?.requirement.required===true))
+    throw new Error('Contradictory Run path readiness.');
+  }
+ }
  return v as unknown as RunPreparation;
 }
 export function validateRunState(v:unknown,runId:string):RunState{

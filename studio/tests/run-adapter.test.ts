@@ -27,6 +27,7 @@ test('client Run plan rejects stale input/project/binary and false readiness cla
   {...good,binary:{...good.binary,sourceClaim:'current'}},
   {...good,config:{...good.config,fingerprint:{...good.config.fingerprint,sha256:'b'.repeat(64)}}},
   {...good,issues:['error']},
+  {...good,pathChecks:[{key:'out_dir',role:'output-directory',cwd:'/project',resolvedPath:'/project/output',status:'error',message:'Not writable'}]},
   {...good,simulationReadiness:'ready'},
   {...good,backend:null},
   {...good,backend:{...good.backend,identity:{...good.backend.identity,configRevision:'b'.repeat(64)}}},
@@ -34,6 +35,7 @@ test('client Run plan rejects stale input/project/binary and false readiness cla
   {...good,backend:{...good.backend,data:{...good.backend.data,resolvedBackend:'cuda'}}},
   {...good,inspection:{...good.inspection,status:'error',completeness:{...good.inspection.completeness,state:'invalid'}}},
  ])assert.throws(()=>validateRunPreparation(bad,expected));
+ assert.throws(()=>validateRunPreparation({...good,mode:'restart'}, {...expected,mode:'restart'}),/checkpoint missing/);
 });
 test('client handoff/status keeps exact run ownership and verified completion semantics',()=>{
  const state={runId:id,state:'succeeded',workerPid:10,startedAt:'2026-10-02T00:00:00Z',finishedAt:'2026-10-02T00:00:01Z',exitCode:0};

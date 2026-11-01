@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,rm,readdir,mkdir} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,readdir,mkdir,symlink} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {RunPreparationRunner} from '../host/runPreparation.ts';
@@ -295,5 +295,26 @@ test('Run preparation preserves Core sparse rejection and CPU fallback; confirma
   await assert.rejects(f.runner.consume({projectId:'project',planId:saved.planId,confirmation:'run-saved-input-with-compiled-binary'}),/backend availability changed/);
   await rm(f.root+'/backend-changed');await writeFile(f.root+'/saved.par','contradict-exit\n');
   await assert.rejects(prepare(),/exit status contradicts/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+
+test('confirmation rejects output and checkpoint aliases retargeted after preparation',async()=>{
+ const f=await fixture();
+ try{
+  const saved=await f.config(),request={projectId:'project',caseId:'Sod',configRevision:saved.fingerprint.sha256,mode:'run' as const};
+  const initial=await f.runner.prepare(request);
+  const target=initial.pathChecks.find(p=>p.key==='out_dir')!.resolvedPath!;
+  await mkdir(path.dirname(target),{recursive:true});
+  await mkdir(f.root+'/out-a');await mkdir(f.root+'/out-b');
+  await symlink(f.root+'/out-a',target,'dir');
+  const plan=await f.runner.prepare(request);
+  await rm(target);await symlink(f.root+'/out-b',target,'dir');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/Output directory changed/);
+  await writeFile(f.root+'/cp-a','checkpoint A');await writeFile(f.root+'/cp-b','checkpoint B');
+  await symlink(f.root+'/cp-a',f.root+'/restart.h5');
+  await writeFile(f.root+'/saved.par','restart-fixture');
+  const restart=await f.runner.prepare({...request,mode:'restart',configRevision:(await f.config()).fingerprint.sha256});
+  await rm(f.root+'/restart.h5');await symlink(f.root+'/cp-b',f.root+'/restart.h5');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:restart.planId,confirmation:'run-saved-input-with-compiled-binary'}),/checkpoint changed/);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });
