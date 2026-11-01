@@ -1,4 +1,4 @@
-# Configuration v3 candidate fixtures
+# Configuration v3 protocol fixtures
 
 These hand-authored fixtures preserve the configuration v3 transport expectations.
 They are distinct from responses captured from a running ARCH binary. The current
@@ -7,7 +7,7 @@ They are distinct from responses captured from a running ARCH binary. The curren
 
 | Fixture | Scope |
 | --- | --- |
-| classification.json | All 95 old standard keys partitioned against the approved plan: 19 required, 50 conditional, 25 allowed-default, one retired. Test expectations, not another runtime registry. |
+| classification.json | All 95 old standard keys partitioned by required/default classification: 19 required, 50 conditional, 25 allowed-default, one retired. Test expectations, not another runtime registry. |
 | schema.json | Complete candidate standard catalogue after G retirement (94 keys), seven Sod declarations and shared log_dir. Other model declarations remain unclaimed. |
 | sod-valid.par / .json | Full selected-Sod configuration response; 94 standard + seven model + one auxiliary record. Explicit values, documented defaults, derived log_dir/dimension. Static inspection only, not simulation readiness. |
 | empty.par / .json | No invented raw/parsed values. All standard records, 19 definite missing inputs; downstream conditions remain unknown except restart=false from its declared default. Case/auxiliary coverage remains false. |
@@ -24,10 +24,6 @@ explicit; network_name=none explicitly selects the non-nuclear Sod setup.
 verify_candidates.py checks candidate consistency, input hashes, byte positions,
 declaration coverage and the missing-switch invariant. It does not run ARCH or
 prove that v3 is implemented. Actual Core/Host behavior is checked by the existing integration contract tests.
-These historical counts and declarations are not a runtime parameter registry.
+Query the selected Core for its runtime parameter catalogue.
 
-The fixture coverage should be distinguished from runtime acceptance of case-defined values, all other
-registered model declarations, inactive invalid tokens, retired/unknown keys,
-unknown methods, unchecked paths, overflow, whitespace-only revisions and stale
-Host identities. Those checks extend the shared corpus during implementation;
-they do not permit a partial rollout to masquerade as complete v3 support.
+Actual Core/Host tests additionally cover case-defined values, all registered model declarations, inactive invalid tokens, retired/unknown keys, unknown methods, unchecked paths, overflow, whitespace-only revisions and stale Host identity.

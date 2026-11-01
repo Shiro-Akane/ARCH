@@ -1,12 +1,10 @@
 # 本地预览会话接口 v1
 
-本增量接在 `97a2b50c440473dfe93ab82617c5631e8b9da24a` 后，交付分支为 `codex/studio-core-ui-contracts`。保留冻结 main 基线，不合入 Studio 分支历史。
-
-目标是首次载入完成资源准备，后续编辑复用已验证的表资源。所有请求仍执行真实、完整的初始化；没有增加低精度求解模式，没有缓存上一份场值，也没有修改模型的迭代次数、公式和收敛条件。
+会话在首次请求准备资源，后续编辑复用内容已验证的表。每份请求仍创建模型并执行完整 Setup/Init；场数据不跨请求缓存。
 
 ## 分工
 
-| 内容 | Core 本轮提供 | Host / Studio 接入工作 |
+| 内容 | Core | Host / Studio |
 |---|---|---|
 | 重复预览 | `--preview-session` 串行会话 | 为当前项目、工作目录和 binary 管理会话 |
 | 表资源复用 | 一份解析后的 EOS 表；使用独立拥有的组分数据，给每次请求重新绑定视图 | 保持进程存活，不在每次改参时重启 |
@@ -26,7 +24,7 @@ ARCH --preview-capabilities
 ARCH --preview-session
 ```
 
-读取 `extensions.session`。v1 仅 Linux/WSL CPU，`supported=true` 时使用。旧单次 CLI 继续接受 stdin 原始 `.par`，退出时返回一个 JSON；会话使用下面的 NDJSON 协议。没有此能力的 binary 继续走旧流程。
+读取 `extensions.session`，核对 `supported`、`workerPlatform` 和资源策略。Linux/WSL 与原生 Windows 均提供 CPU 会话。单次 CLI 接收原始 `.par` 并返回一个 JSON；会话使用下面的 NDJSON 协议。不支持会话的程序使用单次调用。
 
 Host 设置项目的运行工作目录，使用参数数组直接启动 binary，不通过 shell 拼接用户输入。该进程只用于预览。项目、工作目录、可执行文件或构建版本切换时结束旧会话并重新启动。源码改动仍按现有构建过期提示处理。
 
@@ -52,7 +50,7 @@ Host 设置项目的运行工作目录，使用参数数组直接启动 binary�
 
 范围、默认值、维数、采样排列和模型支持范围与相应旧命令相同。整数字段不接受 JSON 小数或指数形式。未知字段、重复字段、错误类型、未知命令被拒绝。传输对象只接受字符串和整数成员；不接受嵌套对象、数组、布尔值或 null。
 
-发现/schema 查询仍使用原有便宜的单次命令。当前 Core 通用初态扩展由 extensions.initialSampling.version="1" 协商；会话按实际配置维度接受 samples（1D）或全部 samplesX1/samplesX2[/samplesX3]（2D/3D），不能混用。模型域由当前 modelCapabilities 查询，不固定11或14个模型；SetupChecked仍检查具体配置。详见 README 的通用初态说明。旧会话传输版本和 Sod/Cellular 数据含义保持兼容。
+发现/schema 查询仍使用原有便宜的单次命令。当前 Core 通用初态扩展由 extensions.initialSampling.version="1" 协商；会话按实际配置维度接受 samples（1D）或全部 samplesX1/samplesX2[/samplesX3]（2D/3D），不能混用。模型域由 modelCapabilities 查询；SetupChecked 检查具体配置。维数、字段和采样规则见[初始场接口](PreviewApi.md#按配置维度生成通用初态)。
 
 需要主动释放资源时发送：
 
@@ -110,7 +108,7 @@ stdin 正常 EOF 返回 `preview-session-closed`，reason=stdin-eof。处理完 
 
 每次完整初始化请求第一次使用 EOS 来源时读取完整内容，结束前再读取完整内容核对；初次加载还保留加载前后校验。相同文件字节可复用已有 SHA-256，**不以路径、文件长度、mtime 或文件监视器作为内容一致性的证明**。同长度、同 mtime 的文件内容修改仍被识别。
 
-文件字节缓存总量最多 128 MiB、最多 8 个文件。超出预算的文件使用正常流式 SHA-256；空间不足时清理缓存，正确性不变。缓存没有命中或被清理只影响速度。所有资源都受会话进程 1 GiB 地址空间上限约束；该上限包含缓存、EOS 表、网格和临时内存，不等于可用物理内存承诺。
+文件字节缓存总量最多 128 MiB、最多 8 个文件。超出预算的文件使用正常流式 SHA-256；空间不足时清理缓存，正确性不变。缓存没有命中或被清理只影响速度。Linux/WSL 会话受 1 GiB 地址空间限制，Windows 会话受 1 GiB committed memory 限制；缓存、EOS 表、网格和临时分配均消耗相应预算。能力响应公布所用的[平台资源策略](INITIAL_AMR_API.md#预算和进程边界)。
 
 输入或初始化错误后清空缓存。取消、超时、进程退出、重编译也会失去资源，下次是首次准备。会话不缓存任意 C++ 外部副作用，不提供操作系统安全沙箱。用户新增模型仍需遵守每次 Setup/Init 独立初始化的约定；会话优化不推断 custom 参数依赖，不证明任意外部文件均被追踪。
 
@@ -122,7 +120,7 @@ EOS 文件变化发生在一次请求中时，原接口返回 EOS_SOURCE_CHANGED
 
 - 会话内一次只提交一份请求。编辑过程中由 Host 保留最新待处理版本，避免把每个按键都写入 stdin 排队。
 - 模型检查与场图请求：300 秒 CPU / 360 秒 Host 墙钟上限；AMR 网格请求：30 秒 CPU / 45 秒 Host 墙钟上限。配置检查和资源估算使用 30 秒 CPU，Host 可沿用 45 秒上限。预算不是预计耗时。
-- Linux CPU 计时累计整个进程；实现按已消耗 CPU 时间设置下一请求的截止值，且保留启动时继承的更严格生命周期限制，不让先前 AMR 请求永久降低后续检查预算。
+- Linux CPU 计时包含用户与系统时间；实现按已消耗时间设置下一请求截止值，并保留继承的更严格生命周期限制。Windows 使用资源 Job 的用户 CPU 时间，每次请求更新剩余额度；外层 Job 的限制继续生效。前一 AMR 请求不会永久降低后一模型检查的预算。
 - 取消或超时由 Host 终止、必要时强制杀死并回收会话。取消信号不通过 stdin 排队；下一请求启动新会话。丢弃被取消进程之后到达的所有结果。
 - 阶段消息不重置墙钟截止时间。没有完整最终事件、异常退出、身份不匹配时，不采用结果。
 - 正常连续编辑可等待当前任务完成后提交最新版本，保留资源。用户主动取消、切项目、切 binary 时立即停止。请求期间改参产生的新版本必须标记当前任务过期。
@@ -145,4 +143,4 @@ EOS 文件变化发生在一次请求中时，原接口返回 EOS_SOURCE_CHANGED
 - `InitialSampleCache.h`：仅在当前场采样中复用逐位相同输入的转换结果；数值转换仍使用原 Core 实现。
 - `Progress.h`：既有模型检查、场图与 AMR 阶段发布。
 
-验收覆盖冷/热请求与独立进程数值一致、连续修改几何和温度、错误恢复、表文件同长度同 mtime 修改、组分顺序变化、3D/4D 表切换、缓存预算、CPU 预算恢复、非法协议输入、取消重启与请求上限。实际响应及耗时记录放在 `examples/preview-session/`；测试结果与准确同步范围见 [PREVIEW_SESSION_HANDOFF.md](../../../docs/histroy/studio/core-api/PREVIEW_SESSION_HANDOFF.md)。
+验收覆盖冷/热请求与独立进程数值一致、连续修改几何和温度、错误恢复、表文件同长度同 mtime 修改、组分顺序变化、3D/4D 表切换、缓存预算、CPU 预算恢复、非法协议输入、取消重启与请求上限。接入脚本与响应样本见[会话示例](../examples/preview-session/README.md)。

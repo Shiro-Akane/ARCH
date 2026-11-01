@@ -118,25 +118,18 @@ raw invalid/incomplete text under the existing ownership and conflict checks.
 Save does not grant Run/Restart/Preview eligibility. Explicit forbidden keys
 remain visible with errors until an explicit Undo-able remove.
 
-## Shared candidate fixtures and implementation gates
+## Protocol fixtures and regression
 
-[configuration fixtures](../examples/configuration-v3-candidate/README.md) contain hand-authored protocol expectations,
-not captured ARCH outputs. Core and Host must consume the same files; no copied
-frontend expectation table. The initial syntax fixture deliberately reports
-partial coverage. It preserves valid explicit zero/false alongside malformed
-and duplicate inputs, proving error envelopes are still useful to an editor.
+[Protocol fixtures](../examples/configuration-v3-candidate/README.md) contain
+hand-authored transport expectations shared by Core and Host tests. The syntax
+fixture preserves explicit zero/false alongside malformed and duplicate inputs
+to exercise partial editor responses. [Captured responses](../examples/configuration-v3/README.md)
+record actual binary and input identities.
 
-Before releasing the integrated v3 workflow, complete actual-response regression for: valid declared case, empty input, missing switches, each required
-class, documented defaults, case-defined/derived values, inactive explicit bad
-tokens, retired/unknown keys, unknown methods, missing path vs unchecked path,
-raw whitespace identity, unknown case, response limit and stale Host identity.
-The candidate corpus is not implementation acceptance; these cases must pass
-against the migrated Core and Host before enabling v3.
-
-Then migrate Core construction/CLI/inspection/case declarations together,
-followed by Host runtime validators/types and Studio. Preserve shared scientific
-math, strict floating point and existing authoritative constants. Do not enable
-JENS/RZ or claim full model Preview from this configuration change.
+Actual-response tests cover declared cases, empty input, missing switches and
+required inputs, documented defaults, case-defined/derived values, inactive
+invalid tokens, retired/unknown keys, unknown methods, path presence, raw-text
+identity, unknown cases, response limits and stale Host identity.
 
 ## Declaration scope and derived summaries
 
@@ -144,9 +137,9 @@ The schema's parameters array is the standard catalogue. auxiliaryParameters
 declares shared nonstandard input such as log_dir; caseDeclarations contains
 (caseId, source, sourceSha256, parameters). caseDeclarationsComplete says whether
 all registered models are represented, not whether one selected case is complete.
-The hand-authored candidate includes Sod only; the current Core schema enumerates
-all registered declarations. Dynamic composition still requires selected input. All seven editable Sod primitive
-inputs are required; old Get fallback arguments are not published as defaults.
+The Core schema enumerates all registered declarations. Dynamic composition
+requires selected input. All seven editable Sod primitive inputs are required;
+Get fallback arguments are not published as defaults.
 
 Inspection parameters flatten the selected declarations with caseId retained.
 Auxiliary coverage is separate. log_dir may derive from resolved out_dir as in

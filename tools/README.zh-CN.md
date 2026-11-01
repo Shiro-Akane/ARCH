@@ -16,8 +16,8 @@ python3 tools/check_documentation.py .
 python3 -B tests/tooling
 ```
 
-架构审查检查共用实现与头文件边界，Python 测试使用受控输入验证工具行为。这些入口都
-不运行模拟，也不表示物理结果已经验收。完整资源保护测试需要 Linux `/proc`、pidfd、
+架构审查检查共用实现与头文件边界，Python 测试使用受控输入验证工具行为。
+完整资源保护测试需要 Linux `/proc`、pidfd、
 子进程管理支持，以及 Python 的 `os.pidfd_open` 接口。
 
 无需编译求解器，也可以检查清单与验证协议：
@@ -28,17 +28,17 @@ python3 tools/validate_backend_results.py \
 python3 tools/validate_cuda_amr_restart.py --unit-test
 ```
 
-这些模式只检查验证协议，不产生 CPU/CUDA 轨迹，不能替代实际场比较。
+这些模式用受控输入检查清单解析和比较规则。
 
-[check_documentation.py](check_documentation.py)核对当前 Markdown 路径及标题锚点，
-历史冻结证据保持其原始依据。完整 Tooling 入口拒绝空套件、失败及跳过。
+[check_documentation.py](check_documentation.py)核对维护中文档的路径及标题锚点。
+完整 Tooling 入口拒绝空套件、失败及跳过。
 
 ## 核对 CI 测试报告
 
 [check_ci_results.py](check_ci_results.py) 核对 CPU CI 配置的 CTest 清单，以及可选的
 JUnit 结果报告，拒绝关键测试缺失、重复或遗漏结果、失败和跳过。它读取 CTest 的
-通过／失败判定，不重新定义数值误差标准。接入方式见[工作流指南](../.github/workflows/README.md)；
-这项报告检查不生成科学 Validation 证据。同一所有者用 `--scope`、`--base`、
+通过／失败判定，不重新定义数值误差标准。接入方式见[工作流指南](../.github/workflows/README.md)。
+同一所有者用 `--scope`、`--base`、
 `--head` 判断原生／Studio 任务的保守适用范围；`NOT_APPLICABLE` 不代表测试通过。
 
 ## 完整程序与结果比较
@@ -58,12 +58,11 @@ CUDA 测试需要可用显卡；稀疏 CUDA 燃烧还需要 cuDSS，并编入所
   和最终产物检查已生成的验证记录。
 
 固定零层级网格会跳过空的 regrid 事务。Backend 运行器依据实际参数，将相应计时
-明确标为“不适用”，不会伪造耗时或零计数；动态 AMR 仍必须提供合法的事务观测。
+标为“不适用”；动态 AMR 需要有效的事务观测。
 两种情况均保留场值、守恒和独立科学参考检查。
 
 将输出放在本地 build 或临时目录中，目标目录必须不存在或为空。运行器保留日志，
-不自动删除前一次数据。工具中“发布证据”指写入本地 JSON，不会上传；维护者审阅
-实际结果后，再更新 Validation 中对应的有效记录。
+审阅生成的本地 JSON 和科学输出后，再向 Validation 添加结果。
 
 ## 构建与内存观测
 
@@ -73,12 +72,13 @@ GPU 指标仅在显式请求时采集，不会预留显存。
 
 [summarize_cuda_compile_memory.py](summarize_cuda_compile_memory.py)读取编译观测，
 [validation_device_memory.py](validation_device_memory.py)读取分析器中的进程分配事件。
-它们不执行编译或求解器，也不根据配置上限推测性能。
 
 ## 共用设施与可选依赖
 
 [validation_provenance.py](validation_provenance.py)统一管理源码／构建／输入身份和
-文件替换检查；后端运行器的 `run_arch_with_logs` 统一保存进程日志；
+文件替换检查；[windows_link_evidence.py](windows_link_evidence.py)为同一流程解析
+原生 Ninja/PE 输入，将已配置链接输入与完整运行时加载覆盖分别记录。
+后端运行器的 `run_arch_with_logs` 统一保存进程日志；
 [validation_sanitizer.py](validation_sanitizer.py)管理 Compute Sanitizer 及报告核查。
 扩展这些已有职责，不再复制运行器、进程管理或证据格式。
 
