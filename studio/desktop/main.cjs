@@ -59,8 +59,8 @@ async function launch(options){
  let runtime,windowsTools,environment;
  if(nativeWindows){
   const {selectWindowsNode}=await import('./node-runtime.mjs');
-  const {loadWindowsTools,windowsHostEnvironment}=await import(app.isPackaged?'./host/windows-tools.mjs':'../host/windows-tools.mjs');
-  windowsTools=await loadWindowsTools(process.env.ARCH_STUDIO_WINDOWS_TOOLS);
+  const {loadWindowsToolsFromEnvironment,windowsHostEnvironment}=await import(app.isPackaged?'./host/windows-tools.mjs':'../host/windows-tools.mjs');
+  windowsTools=await loadWindowsToolsFromEnvironment();
   runtime=await selectWindowsNode({explicit:process.env.ARCH_STUDIO_NODE,bundled:app.isPackaged?path.join(contentRoot,'runtime','node.exe'):undefined,searchPath:process.env.PATH,probe:candidate=>exec(candidate,['--print','JSON.stringify({node:process.versions.node,electron:process.versions.electron,platform:process.platform,arch:process.arch})'])});
   environment=windowsHostEnvironment(windowsTools);
  }else{

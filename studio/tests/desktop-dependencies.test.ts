@@ -17,7 +17,7 @@ test(`Studio ${generator} installs once per locked runtime, rebuilds assets inde
  const studio=path.join(root,'studio');
  await mkdir(path.join(studio,'src'),{recursive:true});
  await mkdir(path.join(root,'cmake','studio'),{recursive:true});
- for(const name of ['Studio.cmake','EnsureDependencies.cmake','arch-studio.in','arch-studio.cmd.in'])
+ for(const name of ['Studio.cmake','WindowsTools.cmake','EnsureDependencies.cmake','arch-studio.in','arch-studio.cmd.in'])
   await cp(new URL('cmake/studio/'+name,repository),path.join(root,'cmake','studio',name));
  for(const name of ['index.html','tsconfig.json','vite.config.ts'])await writeFile(path.join(studio,name),'');
  await writeFile(path.join(studio,'package.json'),'{}');
@@ -38,7 +38,21 @@ if(command==='ci'){
  appendFileSync('calls.log','build\\n');mkdirSync('dist',{recursive:true});writeFileSync('dist/index.html',readFileSync('src/example.ts'));
 }else throw new Error('Unexpected npm command');
 `,{mode:0o755});
- await writeFile(path.join(root,'CMakeLists.txt'),'cmake_minimum_required(VERSION 3.22)\nproject(StudioDependencies NONE)\nadd_custom_target(ARCH)\nset(ARCH_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")\ninclude(cmake/studio/Studio.cmake)\n');
+ await writeFile(path.join(root,'CMakeLists.txt'),`cmake_minimum_required(VERSION 3.22)
+project(StudioDependencies NONE)
+if(WIN32)
+ foreach(target ARCH arch_windows_process arch_windows_build_publish)
+  add_executable(\${target} IMPORTED)
+  set_target_properties(\${target} PROPERTIES IMPORTED_LOCATION "\${ARCH_STUDIO_NODE}")
+ endforeach()
+ set(CMAKE_RC_COMPILER "\${ARCH_STUDIO_NODE}")
+ set(ARCH_STUDIO_OBJDUMP "\${ARCH_STUDIO_NODE}")
+else()
+ add_custom_target(ARCH)
+endif()
+set(ARCH_RUNTIME_OUTPUT_DIRECTORY "\${CMAKE_BINARY_DIR}/bin")
+include(cmake/studio/Studio.cmake)
+`);
  const configure=async(build:string)=>execute(cmake,['-S',root,'-B',path.join(root,build),'-G',generator,'-DARCH_BUILD_STUDIO=ON','-DARCH_STUDIO_NODE='+process.execPath,
   ...(process.platform==='win32'?['-DARCH_STUDIO_NPM_CLI='+npm]:['-DARCH_STUDIO_NPM='+npm]),
   ...(generator==='Ninja'&&process.env.ARCH_TEST_NINJA?['-DCMAKE_MAKE_PROGRAM='+process.env.ARCH_TEST_NINJA]:[])],{timeout:30000});

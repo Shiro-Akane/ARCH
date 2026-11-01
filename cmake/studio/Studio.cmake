@@ -69,6 +69,9 @@ add_dependencies(arch-studio-runtime arch-studio-assets)
 add_custom_target(arch-studio ALL)
 add_dependencies(arch-studio arch-studio-runtime)
 add_dependencies(arch-studio ARCH)
+if(WIN32)
+    add_dependencies(arch-studio arch_windows_process arch_windows_build_publish)
+endif()
 add_custom_target(arch-studio-package
     COMMAND "${CMAKE_COMMAND}" -E env "PATH=${studio_path}"
         "${ARCH_STUDIO_NODE}" "${studio_source}/desktop/package.mjs"
@@ -82,9 +85,11 @@ endif()
 
 file(MAKE_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")
 if(WIN32)
+    include("${CMAKE_CURRENT_LIST_DIR}/WindowsTools.cmake")
     # Batch files need literal percent signs doubled; delayed expansion is off.
     string(REPLACE "%" "%%" ARCH_STUDIO_NODE_QUOTED "${ARCH_STUDIO_NODE}")
     string(REPLACE "%" "%%" ARCH_STUDIO_ENTRY_QUOTED "${studio_source}/desktop/arch-studio.cmd")
+    string(REPLACE "%" "%%" ARCH_STUDIO_WINDOWS_TOOLS_FILE_QUOTED "${ARCH_STUDIO_WINDOWS_TOOLS_FILE}")
     configure_file("${CMAKE_SOURCE_DIR}/cmake/studio/arch-studio.cmd.in"
         "${ARCH_RUNTIME_OUTPUT_DIRECTORY}/arch-studio.cmd" @ONLY NEWLINE_STYLE CRLF)
     message(STATUS "[STUDIO] Windows entry: ${ARCH_RUNTIME_OUTPUT_DIRECTORY}/arch-studio.cmd")
