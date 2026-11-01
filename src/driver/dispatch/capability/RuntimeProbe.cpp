@@ -118,13 +118,36 @@ Function load_symbol(LibraryHandle handle, const char* name) noexcept
 
 LibraryHandle open_bound_library(const char* path) noexcept
 {
-    // dlopen may return an already-loaded image after its file was deleted.
-    // A new Run must still require its configured dependency to be installed.
+    LibraryHandle library = nullptr;
     try {
         std::error_code error;
+#if defined(_WIN32)
+        // Windows imports the provider at startup. Validate the module actually
+        // loaded for that import, including a legitimate relocated deployment.
+        const std::string_view configured(path);
+        const auto separator = configured.find_last_of("/\\");
+        const std::string basename(configured.substr(separator == std::string_view::npos
+            ? 0 : separator + 1));
+        if (basename.empty() || !GetModuleHandleExA(0, basename.c_str(), &library))
+            return nullptr;
+        std::array<wchar_t, 32768> actual{};
+        const DWORD length = GetModuleFileNameW(library, actual.data(),
+                                               static_cast<DWORD>(actual.size()));
+        if (length == 0 || length >= actual.size()
+            || !std::filesystem::is_regular_file(
+                std::filesystem::path(std::wstring_view(actual.data(), length)), error) || error) {
+            close_library(library);
+            return nullptr;
+        }
+        return library;
+#else
+        // dlopen may return an already-loaded image after its file was deleted.
+        // Linux's provider loads this exact configured path on demand.
         if (!std::filesystem::is_regular_file(path, error) || error) return nullptr;
         return open_library(path);
+#endif
     } catch (...) {
+        close_library(library);
         return nullptr;
     }
 }

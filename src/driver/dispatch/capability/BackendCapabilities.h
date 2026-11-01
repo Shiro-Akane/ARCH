@@ -246,9 +246,9 @@ constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
     case BackendCapabilityCode::SparseKluBuildUnavailable:
         return "SparseKLU was selected, but this ARCH build has KLU disabled";
     case BackendCapabilityCode::CuDssProviderUnavailable:
-        return "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider. Install cuDSS and reconfigure with ARCH_ENABLE_CUDSS=ON, or select CPU KLU";
+        return "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider. Install cuDSS, set CUDSS_ROOT to its installation prefix and reconfigure with ARCH_ENABLE_CUDSS=ON, or select CPU KLU";
     case BackendCapabilityCode::CuDssRuntimeUnavailable:
-        return "cuDSS or its cuBLAS runtime libraries are unavailable. Restore the configured cuDSS/CUDA installation and rebuild if its paths changed, or select CPU KLU";
+        return "cuDSS or its cuBLAS runtime libraries are unavailable. Restore the configured cuDSS/CUDA installation; if paths changed, reconfigure with CUDSS_ROOT=<cuDSS-prefix> and ARCH_ENABLE_CUDSS=ON, or select CPU KLU";
     case BackendCapabilityCode::UnsupportedDimension: return "dimension unsupported";
     case BackendCapabilityCode::UnsupportedRootTopology: return "root topology unsupported";
     case BackendCapabilityCode::UnsupportedAmr: return "AMR unsupported";
