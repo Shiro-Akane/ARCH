@@ -1,61 +1,50 @@
-# ARCH Studio — Linux / WSL and Windows desktop
+# ARCH Studio
 
-ARCH Studio edits research configurations, builds selected cases and displays initial states and read-only Plotfiles. Linux/WSL2 is recommended; native Windows11 x64 provides the complete CPU CLI/Studio workflow with newer support that may still have instability or bugs. Native Windows CUDA/MPI are outside this qualification. Start with the shared [user guide](../docs/guides/Studio.zh-CN.md) ([English](../docs/guides/Studio.md)), including model selection, parameter Help/Inspector, Plotfile loading and host-specific paths. Implementation boundaries are in the [Core API](../src/api/README.md) and [Host Plotfile contract](docs/contracts/PLOTFILE_AUDIT_API.md).
+[User guide](../docs/guides/Studio.md) · [中文使用指南](../docs/guides/Studio.zh-CN.md) · [Build](../docs/guides/Build.md#studio-desktop) · [Tests](tests/README.md)
 
-## Build and launch
+Studio is the Linux/WSL2 and Windows desktop workbench for ARCH. It edits configurations, builds selected cases, previews initial fields and AMR, manages Run/Restart, and reads Plotfiles. This page describes the implementation; installation and everyday operation are covered by the linked guides.
 
-Core-only builds do not require Node or Electron. To build the desktop with the Core:
+## Source layout
 
-```bash
-cmake --preset studio-cpu-release -DARCH_STUDIO_NODE=/absolute/path/to/node
-cmake --build build-studio-cpu --parallel 2
-build-studio-cpu/bin/arch-studio --project "$PWD" --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod.par
-```
-
-This generates a source-checkout launcher. It requires this checkout; it is not a portable distribution. The opt-in Studio target installs locked npm dependencies and builds production assets, including the Linux Electron runtime. Linux Node 24+ is required; Run/Restart also need `xterm` and `/usr/bin/flock`. WSL needs working WSLg. See [desktop lifecycle and packaging](desktop/README.md).
-
-The development equivalent is `npm ci && npm run build` in this directory, then `desktop/arch-studio` with the same arguments. Put Node 24+ on PATH or set `ARCH_STUDIO_NODE` to its absolute executable. An explicit invalid Node path is an error. The desktop selects its internal loopback connections; users do not copy an IP/port or start Vite.
-
-Native Windows uses the same CMake targets with native x64 Node and GCC/UCRT64 Core dependencies. Follow the [Windows desktop setup](../docs/guides/WindowsStudioDesktop.md) for trusted tools/DLL context, then launch `build-studio-cpu/bin/arch-studio.cmd` with `--binary build-studio-cpu/bin/ARCH.exe`. Config/Plotfile actions are shared. Windows Terminal supports the qualified independent Run/Restart route; editing and Preview do not need it. Keep separate OS build trees.
-
-## Workflow and capability
-
-The selected binary supplies the configuration schema, registered cases and Preview capabilities. Parameter edits may be previewed without Save; Run/Restart require an associated saved input and explicit confirmation. Changing C++ requires Configure/Build before its code can affect Preview or Run. Incomplete build-dependency evidence stays unknown rather than being accepted as fresh.
-
-Initial fields use the case's real Setup/Init and shared EOS conversion. Initial AMR is a separate bounded request, overlaid on matching fields. Native-coordinate slices support the dimensions advertised by each case. Registration alone does not enable Preview: new cases need complete input declarations and reviewed sampling/AMR capabilities. Custom units are reviewed evidence tied to source identity; automatic inference of arbitrary C++ expressions is not implemented.
-
-The Plotfile workspace reads completed published files. Display overviews cover Cartesian 1D/2D active leaves. Stored-cell queries use recorded native coordinates for Cartesian, spherical and cylindrical 1D–3D charts, including axisymmetric cylindrical `(r,z)`. Native bounds, volume/torque measures, field units and typed provenance are retained. Curved/3D rendering remains a separate capability; query support does not imply a rendered view. XDMF, a reusable spatial index and a bounded cross-query cache are not claimed here.
-
-## Source and evidence layout
-
-| Location | Purpose |
+| Location | Responsibility |
 | --- | --- |
-| `src/components`, `src/data`, `src/state` | Renderer, display transformations and edit/request identity; no scientific solver |
-| `src/host` | Browser-side typed contracts, validation and Host clients; no Node process access |
-| `host/` | Shared local service: project files, Core requests, build evidence, owned runs and isolated HDF reads |
-| `desktop/` | Electron window, bootstrap and native Linux/Windows packaging; run supervision stays with Host |
-| [tests/](tests/README.md) | Engineering tests, fixtures and standalone test tools |
-| [docs/contracts/](docs/contracts/PLOTFILE_AUDIT_API.md) | Maintained Host interface documentation |
-| [docs/archive/](../docs/histroy/README.md#studio) | Historical Phase/QA/UAT records |
-| [validation/](../validation/README.md) | Scientific references and reproduction tools |
+| `src/components`, `src/data`, `src/state` | Renderer, display transforms, working-copy state and request identity |
+| `src/host` | Typed browser contracts, validation and Host clients |
+| `host/` | Project files, Core requests, build evidence, owned runs and isolated HDF5 reads |
+| `desktop/` | Electron window, bootstrap, native dialogs and portable packaging |
+| [tests/](tests/README.md) | Engineering tests and small fixtures |
+| [contracts](docs/contracts/PLOTFILE_AUDIT_API.md) | Host query and data semantics |
 
 ```mermaid
 flowchart LR
   Desktop[Electron main and preload] --> UI[React workbench]
-  Desktop --> Host[Local Host]
+  Desktop --> Host[Native local Host]
   UI <-->|Typed loopback requests| Host
   Host -->|Schema and Setup/Init| Core[ARCH Core]
-  Host -->|Confirmed Run/Restart| Supervisor[Independent terminal supervisor]
+  Host -->|Run/Restart| Supervisor[Independent terminal supervisor]
   Supervisor --> Core
   Host -->|Read-only queries| HDF[Isolated HDF reader]
 ```
 
-## Current qualification
+## Data and lifecycle
 
-The [release qualification index](../docs/releases/README.md) records frozen qualification and its evidence. Native cylindrical CPU/Device integration and the scoped CUDA source-energy correction have accepted evidence there. Original CPU qualification limits, final distribution checks and human WSLg foreground acceptance remain explicit; automated Node/HTTP tests do not establish those outcomes. Historical test counts describe their original source identity, not the current suite.
+The selected binary supplies model registration, parameter schema and Preview capabilities. Preview uses Core Setup/Init and the shared EOS conversion; Run/Restart launches the production program. Parameter edits remain in a Working Copy until saved. Executing a run requires its saved project input and a matching executable.
 
-For a source change, find its process owner in the table, follow the typed request to its validator and producer, then extend the corresponding [existing test](tests/README.md). Preview uses Core Setup/Init and shared EOS conversion; Run/Restart invoke the production program. Plotfile readers preserve stored values. Keep these responsibilities separate when adding a file, cache or numerical explanation.
+Configure and Build validate the selected source/build/output bindings. Build records the available compiler, input and runtime evidence. Partial coverage is shown as unknown. Windows tool settings are provided privately by Electron Main and checked at the Host boundary.
 
-The Windows W0–W3 record is archived with the [build investigations](../docs/histroy/build/WindowsNativeQualification-20261026.zh-CN.md); source/runtime evidence and human window checks are distinct. The [feature list](../docs/Features.md) records supported model/backend combinations; past GUI delivery branches are historical evidence.
+Plotfile queries retain stored FP64 values, native coordinates, units and provenance. Display overviews support Cartesian 1D/2D and cylindrical r-z; stored-cell queries support the recorded native 1D–3D charts. The Inspector reports native cells, while LOD provides a display overview.
 
-Environment prerequisites and installation: [Linux/WSL and Windows setup](../docs/guides/StudioEnvironment.md).
+Closing the desktop cancels Preview and Configure requests and drains the Host. An active Build can finish; confirmed Run/Restart jobs have independent terminal supervision and remain running. [Desktop implementation](desktop/README.md) describes the launch and package boundaries.
+
+## Development
+
+Use native Node 24+ and the locked dependencies:
+
+```bash
+npm ci
+npm test
+npm run lint
+npm run build
+```
+
+Run these commands in `studio/`. `npm run build` includes TypeScript checking. The [test guide](tests/README.md) covers required Host tools, native tests and desktop checks. Follow the typed request from its renderer client through its validator and producer when changing a workflow.

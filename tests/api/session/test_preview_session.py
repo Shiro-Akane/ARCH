@@ -234,7 +234,8 @@ class PreviewSession(unittest.TestCase):
             b'{"x":1.0}\n', b'{"x":true}\n', b'{"x":[]}\n', b'{"x":"\\ud800"}\n',
             b'{"x":"\\u0000"}\n', b'{"x":"\xff"}\n', b'{}x\n', b'{"x":1,}\n']
         invalid += [dict(valid, samples=2.5), dict(valid, samples=2**40), dict(valid, future=1),
-                    dict(valid, configText='x'*(1024*1024+1)),dict(valid,command='--list-cases')]
+                    dict(valid, configText='x'*(1024*1024+1)),dict(valid,command='--list-cases'),
+                    dict(valid,command='--check-run')]
         for bad in invalid:
             self.session.send(bad)
             error,_=self.session.result()

@@ -11,8 +11,7 @@ Status: the latest full runtime campaign's optimized CUDA build, all 289 Python 
 tests, ten development-smoke lanes and all four normal/instrumented restart
 suites pass. The matched local AMR timing also passes its consistency,
 conservation, dynamic-topology and identity checks; CPU is faster on both
-measured sizes. This is a functionally verified source selection for the
-owner-authorized integration, not a claim of GPU speedup. The
+measured sizes. These checks establish functional consistency; the timing results favor CPU. The
 existing [identity and verification record](freeze-review.json) is the single
 inventory for this maintenance work; it distinguishes new checks from the
 scientific and source-organization results cited below.
@@ -58,7 +57,7 @@ common resolver. Redundant config/string overloads and unused solver-selection
 members have been removed. The retained factories, physics and mathematics are
 unchanged. Parameter aliases, both case-registration interfaces, EOS setup/data
 representations and generated-package CPU/CUDA eligibility remain supported.
-The [ownership index](../../../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+The [ownership index](../../../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 records these boundaries without introducing another audit document.
 
 The hydro launcher now requires its resolved plan, requirements, backend,
@@ -171,17 +170,14 @@ python3 tools/run_memory_guarded.py --min-available-mib 1536 \
     --timeout 1200
 ```
 
-The owner accepts integration as a functionally equivalent CPU/CUDA version
-with these performance results disclosed. Runtime performance optimization is
-separate follow-up work; no production implementation or scientific budget was
-changed to obtain these measurements.
+These timings use unchanged production code and scientific budgets.
 
 ## Evidence continuity
 
 The original scientific acceptance belongs to source
 `73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171`.
 Its [acceptance index](../final-acceptance-20260907/release-73a9cf50/index-final-930/README.md)
-records 41 required passes and two owner-deferred large-network workloads.
+records 41 required passes and two deferred large-network workloads.
 Those measurements and their budgets remain the scientific evidence; this
 maintenance work does not relabel them as executions of the current source.
 
@@ -219,7 +215,3 @@ The effective [build record](build-review.json) and
 before/after identity checks. Referenced source-organization
 measurements keep their recorded identities; they are not the evidence for the
 interface changes described above.
-
-User guides, source navigation and validation summaries now lead with maintained
-behavior and the effective acceptance data. Publication actions and the owner's
-pending third-party redistribution confirmation remain separate decisions.

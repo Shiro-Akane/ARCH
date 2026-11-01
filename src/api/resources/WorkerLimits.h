@@ -11,11 +11,26 @@
 #pragma once
 
 #include <cstdint>
+#include <thread>
 
 #include "api/ApplicationContract.h"
 
 namespace arch::api {
 void ApplyInspectionProcessLimits(int cpu_seconds = contract::worker_cpu_seconds);
+// A Run check may map CUDA libraries, so only CPU and wall time are bounded.
+// Existing inherited memory limits remain in force.
+class ExecutionPreflightLimits {
+    std::jthread deadline_;
+#ifdef _WIN32
+    void* resource_job_ = nullptr;
+#endif
+public:
+    explicit ExecutionPreflightLimits(int cpu_seconds = contract::execution_cpu_seconds,
+                                     int wall_seconds = contract::execution_wall_seconds);
+    ~ExecutionPreflightLimits();
+    ExecutionPreflightLimits(const ExecutionPreflightLimits&) = delete;
+    ExecutionPreflightLimits& operator=(const ExecutionPreflightLimits&) = delete;
+};
 #ifdef _WIN32
 struct WindowsResourceSnapshot {
     std::uint64_t commit_limit_bytes = 0;

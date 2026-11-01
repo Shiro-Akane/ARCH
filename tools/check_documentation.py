@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Check maintained Markdown destinations without rewriting historical evidence.
-
-The repository's existing Tooling lane owns this inexpensive check. Historical
-reports, immutable results and source snapshots retain their original basis;
-current reader pages must point to existing files and Markdown heading anchors.
-No network access, rendering, HDF reads or scientific execution is performed.
-"""
+"""Check local file links and heading anchors in maintained Markdown pages."""
 
 import argparse
 from pathlib import Path
@@ -18,25 +12,23 @@ from urllib.parse import unquote, urlsplit
 DEVELOPER_PAGES = frozenset({
     "README.md", "ImplementationOwnership.md", "CommentAndDocumentationStyle.md",
     "ConfigurationContractPlan.zh-CN.md", "CudaReleaseStandard.md",
-    "MaterialInputProvenance.zh-CN.md", "PlotfileValidationContract.zh-CN.md",
+    "P2PoissonMultigrid.zh-CN.md",
     "RTAmrDataCorrectnessRepair.zh-CN.md",
 })
 
 
 def maintained(path):
-    """Separate current instructions from dated provenance, explicitly by owner."""
-    # The two living archive indexes are maintained readers. Historical bodies
-    # below them retain their original provenance and are not requalified here.
-    if path in ("docs/histroy/README.md", "docs/development/archive/README.md"):
+    """Select reader, contributor and result pages, excluding retired archives."""
+    if path in ("validation/archive/README.md", "validation/archive/README.zh-CN.md"):
         return True
     parts = Path(path).parts
-    if any(part in ("archive", "histroy", "results") for part in parts):
+    if any(part in ("archive", "histroy") for part in parts):
         return False
-    if path.startswith(("docs/releases/", "validation/legacy/")):
+    if path.startswith("validation/legacy/"):
         return False
     if path.startswith("docs/development/"):
         return Path(path).parent == Path("docs/development") and Path(path).name in DEVELOPER_PAGES
-    return path not in ("ARCH_MODERNIZATION_PLAN.md", "AGENTS.md") and not path.startswith(".agents/")
+    return path not in ("ARCH_MODERNIZATION_PLAN.md", "ARCH_RELEASE_PLAN.md", "AGENTS.md") and not path.startswith(".agents/")
 
 
 def prose(text):

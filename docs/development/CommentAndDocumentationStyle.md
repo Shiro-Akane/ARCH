@@ -1,148 +1,34 @@
 # Comments and documentation
 
-Write for the person who will use or change the code next. Explain the current
-responsibility, the reasoning that is not obvious from the statements, and the
-conditions that callers must preserve. Keep numerical behavior in its single
-maintained implementation and link that owner from other modules.
+Write for the person using or maintaining the software. Explain the behavior, the reason for a choice and the next practical step in plain language.
 
-## Choose the reader first
+## Choose the reader
 
-User guides should explain a task logically and sequentially: what it calculates, what inputs are required, how to run it, and finally how to interpret the resulting output. Be sure to define any unfamiliar terms the first time they become relevant. Always keep exact parameter names in code formatting so that the reader can easily spot them in a parameter file or look them up in the Reference.
+| Reader | Content |
+| --- | --- |
+| New user | A short path from installation to a useful result, with runnable examples |
+| Research user | Units, assumptions, compatible methods, diagnostic meaning and numerical limits |
+| Contributor | Implementation ownership, data flow, invariants and relevant tests |
+| Reader of validation results | Problem, reference, configuration, measured error and interpretation |
 
-Developer pages identify the owning files, their callers and resource lifetimes.
-Describe the normal modification and test workflow. A short directory README
-needs useful entry points and boundaries, not an inventory of every symbol.
+Keep build commands in the build guide and daily Studio operation in its illustrated guide. Other pages should link to these instructions instead of maintaining another copy.
 
-Validation summaries explain the question being tested, the reference used,
-the measured error and the acceptance limit before linking detailed evidence.
-Distinguish agreement between backends from agreement with an independent
-reference. An error budget is the accepted numerical limit for that check;
-it is not a general guarantee for every user problem.
+## Explain code where it is used
 
-## Explain responsibility and flow
+Comments should cover units, coordinate conventions, indexing, boundary conditions, non-obvious constants and resource lifetimes. Explain mathematical conventions beside their implementation and cite the relevant method or data source. A file introduction can describe its responsibility and the order of its main operations.
 
-[main.cpp](../../src/main.cpp) provides the pattern for an entry point: its file
-comment explains responsibility, orders the main steps, and states why numerical
-methods belong elsewhere. Comments within the function explain meaningful
-boundaries such as configuration loading and problem registration.
+Avoid comments that repeat an expression, narrate an editing session or list completed tasks. Use stable module names rather than temporary project phases or personal work directories. Choose file boundaries by responsibility and data lifetime.
 
-Use the same approach where a reader would otherwise have to reconstruct the
-flow across functions. Explain what enters a stage, what it produces, who owns
-the data and when it becomes safe to read. Avoid narrating obvious assignments
-or copying a function signature into prose.
+## Write current documentation
 
-## Explain mathematics beside its implementation
+Begin with what the reader can do. Put requirements before commands and explain important output after them. Show Linux and Windows instructions together when they perform the same task. Use ordinary example paths and state how relative paths are resolved.
 
-Use the symbols and conventions implemented by the routine. State units,
-coordinate conventions, valid inputs and sign conventions when they affect the
-result. For a non-obvious transformation, connect the expression to its defining
-equation or reference and explain the numerical reason for the chosen form.
+For UI instructions, pair actual screenshots with a few numbered controls or short captions. Keep field names, buttons, units and sample paths legible. Label an initial-state preview and an evolved result accurately. Supply meaningful alternative text.
 
-A CPU traversal and a CUDA kernel can call the same mathematical helper while
-loading data differently. Document that distinction; backend notes should explain
-storage, launches and synchronization rather than restating an independent
-version of the formula. Similar-looking helpers with different admissibility or
-conservation requirements need those differences stated explicitly.
+Describe limitations where they affect a choice. Prefer a concrete statement such as “Plotfile overviews support Cartesian 1D/2D and cylindrical r-z” to repeated general disclaimers. Keep approval numbers, intermediate plans, conversation transcripts and troubleshooting-session narratives out of published guidance.
 
-Classify a non-obvious literal before explaining it: physical datum or upstream
-fit, mathematical coefficient, accepted residual/admission threshold, work budget,
-protocol/index convention, or display geometry. State the implemented units and
-source beside the group or expression. A controller-history floor or initial
-seed clamp is not a new physical abundance floor; an interactive byte/time cap
-is not a scientific tolerance. Do not unify unrelated constants merely because
-their digits match. Retained numerical controls may have no evidence of optimal
-calibration: explain their actual role and keep that uncertainty explicit rather
-than inventing a derivation. Preserve upstream coefficient and license provenance.
+## Preserve technical meaning
 
-## Keep prose durable
+Documentation changes must preserve formulas, symbols, units, numerical thresholds and source attribution. A translation should carry the same commands, parameter meanings and scope. State which executable, inputs and environment produced a validation result; distinguish numerical errors from timing measurements.
 
-Prefer complete, direct sentences over noun lists and unexplained abbreviations.
-Lead with what works, then state the relevant condition or boundary. Explain why
-a restriction matters instead of repeating general warnings. Use the established
-function and module names; conversational labels such as “the previous fix” or
-“the new workaround” lose their meaning as the code evolves.
-
-Name work by its function, not by an internal milestone code. A reader should
-understand labels such as “coupled burning and diffusion measurements” or
-“workspace reuse” without consulting a project plan. Use these names in headings,
-tables and link text throughout maintained documentation. Keep immutable report
-paths, source hashes and actual parameter names intact for traceability; a
-historical filename need not become the title shown to readers. Numerical
-integration stages are algorithmic concepts, not project milestones.
-
-Keep intermediate reviews and superseded acceptance plans in the contributor
-archive. Public indexes should open readable summaries, not raw JSON or logs.
-Place machine-readable evidence behind a clearly labeled, expandable section
-for reproduction and review. Preserve data and original identities when
-reorganizing its presentation; do not hide a failed result or alter a measurement.
-
-Keep discussions, machine-specific observations and dated repair history in
-development records. Source comments describe the resulting behavior. A future
-task should name the unresolved condition and its owner, not imply that a planned
-feature already exists.
-
-Write user-facing pages for someone encountering ARCH for the first time.
-Describe what the interface accepts and how to use it, without assuming an
-earlier public release or a migration the reader must perform. Prefer “use `time_integrator` to select the integration method” to an
-ambiguous compatibility claim, and name the supported source/table representation
-rather than calling it “the old table path.”
-
-Separate data-format identifiers from software release versions. Document the
-accepted fields, defaults and validation rules when multiple formats can be
-read. Keep real backend, dependency and data-compatibility requirements explicit;
-they describe the current system. Wording cleanup does not justify deleting
-reader branches, renaming public keys or changing scientific behavior. Such
-changes need their own implementation review and tests.
-
-## Preserve evidence and translations
-
-### Comments in behavior-frozen source
-
-Behavior-frozen source keeps its formulas, operation order, acceptance gates,
-interfaces and ownership contracts. Within an authorized comment task, improve
-the explanation without changing those contracts. A useful file or module
-comment identifies the responsibility and real flow: inputs, owned work,
-published outputs, and the conditions under which consumers may read them.
-Declaration headers describe the contract they expose; they do not claim to
-execute the implementation's request handling or numerical work.
-
-At sensitive boundaries, explain the implemented units, sign and coordinate
-conventions, conserved measures, borrowed views, slot/ghost identity, resource
-lifetime, synchronization and failure propagation where relevant. Link the
-maintained mathematical owner rather than copying a formula into an adapter.
-Explain non-obvious choices beside their implementation. Skip obvious operations
-and repeated generic Workflow steps; no fixed comment length or paragraph count
-is a quality requirement. Apply the same responsibility and lifetime guidance
-to new or split Studio modules, using the appropriate TypeScript comment form.
-
-Comment-only changes still change source bytes and may invalidate source
-digests, build identities or evidence tied to an exact revision. Review the diff
-and affected identity rules; record any refreshed identity separately. Reuse
-existing risk-adaptive verification rather than running an expensive scientific
-campaign merely for prose. Do not relabel an old measurement as a result for
-the edited source.
-
-If a file is explicitly byte-frozen, an imported source requires its original
-annotations, or it is immutable historical evidence, retain the file and add
-the explanation in its maintained owner documentation or a new dated record.
-Changing behavior, protected interfaces or numerical criteria requires its
-own authorized work package. This guidance does not authorize a bulk comment
-rewrite or a redesign of frozen source.
-
-User-authorized historical documentation cleanup may correct obsolete planning
-prose, consolidate useful references or move completed records into the existing
-archive. Keep dated conclusions distinguishable from current status and repair
-both incoming and outgoing links. Do not remove a record merely because it is
-old; delete only material shown to have no remaining reference value.
-
-Frozen results, failed attempts and signed review records retain their original
-text, inputs and identities. Explain later work in a new record or a maintained
-summary; do not rewrite historical evidence to match a newer implementation.
-
-Use `$...$` for inline mathematics and standalone `$$` lines for display
-mathematics in Markdown. Preview both language pages after changing a formula.
-
-Update English and Chinese user pages together. Preserve commands, parameter
-spelling, units, numerical budgets, compatibility rules and linked heading
-anchors. Check local links after edits. Language-only changes do not establish
-new scientific results or third-party permissions.
+Use the [documentation checker](../../tools/check_documentation.py) to validate local destinations and heading anchors. Review examples and screenshots as well: a valid link alone does not establish that a command or explanation is correct.

@@ -2,18 +2,22 @@
 
 英文原文：[CudaBackendStatus.md](CudaBackendStatus.md)。英文版是规范文本。
 
-*后端*（backend）是指 ARCH 中负责在特定硬件上执行计算的引擎。CUDA 是我们的 GPU 后端：选择它会改变执行、内存管理和求解库接入方式，同时复用共用的数学与物理实现；后端一致性由具体受测配置的验证确认。*自适应网格细化*（AMR）会在模拟过程中动态调整单元尺寸，确保复杂的区域能获得更高的空间分辨率。本指南将详细说明这两种处理器之间的分工，并帮助你选择一个兼容的配置。
+CUDA 在 GPU 上执行流体和自适应网格的数值计算。CPU 与 CUDA 共用数学和物理实现；
+设备内存、计算核、执行流和线性求解库由各后端管理。本指南说明可用组合、CPU/GPU
+分工与性能测量。各项数值测试见[功能清单](Features.zh-CN.md)和
+[验证索引](../validation/README.zh-CN.md)。
 
-CUDA 后端会在 GPU 上执行流体动力学与自适应网格的数值计算。CPU 和 CUDA 路径共用同一套数学与物理实现；而设备内存、计算核（kernels）、执行流以及线性求解库则是后端专有的。下表组件的几何与后端适用范围见[功能清单](Features.zh-CN.md)。受测配置、技术结果和整体验收状态统一记录在[验证索引](../validation/README.zh-CN.md)中。
-
-Linux／WSL2 仍是推荐运行系统；Windows11 x64 原生 CUDA 与 CPU 共用本页的科学范围及 Studio 工作流，但适配较新，可能存在不稳定性与 bug。Windows 使用独立 MSVC／NVCC ABI 依赖树，见[构建与启动](guides/WindowsNativeCuda.zh-CN.md)及[两侧逐项对应与验收](histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)。此兼容工作不扩展既有几何、EOS、网络或耦合组合的科学资格。
+推荐使用 Linux。Windows 11 原生提供相同的 CPU/CUDA 功能和 Studio 工作流，
+但支持较新，仍可能存在不稳定性与 bug。两平台的构建步骤并列于
+[构建指南](guides/Build.zh-CN.md#cuda-build)，受测工具链见
+[平台支持](releases/PlatformSupport.zh-CN.md)。
 
 ## 共用功能范围
 
 | 模块 | 已有实现范围 |
 |---|---|
 | 流体 | Van Leer、Steger-Warming、Roe、HLL、HLLC；PCM/MUSCL/PPM；MinMod/MC/SuperBee/Van Leer 限制器；Euler/SSPRK2/SSPRK3 |
-| 网格与几何 | 既有笛卡尔、径向、球坐标极平面及三维柱／球坐标块网格采用共用坐标约定；原生二维柱坐标复用公共几何／输运数学，已有壁面、索引、驻留、重网格与 fresh 的定点设备证据 |
+| 网格与几何 | 既有笛卡尔、径向、球坐标极平面及三维柱／球坐标块网格采用共用坐标约定；原生二维柱坐标共用几何／输运数学，并检查壁面、索引、驻留、重网格与重启 |
 | 边界 | 周期、流出、反射及用户物理／势边界；Host 回调只交换所需边界片，共用 EOS 与面通量规则；成本见[用户边界](guides/UserBoundaries.zh-CN.md) |
 | 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
 | EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
@@ -35,34 +39,36 @@ HLLC/MUSCL/RK2、BD、RKL2 热扩散、自引力 MG 与 AMR 已有代表性 CPU/
 平衡组分；网络可以是内置网络或明确认证的生成模型。具体配置见
 [API 与参数参考](Reference.zh-CN.md)。
 
-公开二维柱坐标采用轴对称 `(r,z)`，在 `phi=0` 处展开为 `x=r`、`y=0`、`z=z`，保留三个物理速度分量。二维球坐标采用赤道极平面 `(r,phi)`；三维柱／球坐标为 `(r,z,phi)`／`(r,theta,phi)`。原生壁面、RK/RKL、重网格、规定边界Poisson、孤立自引力与fresh见[验证记录](../validation/README.zh-CN.md)。[当前设备记录](../validation/backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)补齐已重建的GravityBox／SNIa轴向场、显式中心输入与九种合法几何的公共真实壁面绑定；覆盖设备契约、原公共终点、真实重网格与fresh。当前NSE及Host AMR RKL修复已独立验收，原私有Cellular的25CHK均通过原`5e-9`＋`5e-12`源项门，ENUC逐位一致，并通过自身fresh；未变几何与资源owner按范围复用，本机单GPU设备阶段已闭合。历史二维柱坐标极平面记录保留原语义，不转签当前原生chart。
+二维柱坐标采用轴对称 `(r,z)`，在 `phi=0` 处展开为 `x=r`、`y=0`、`z=z`，
+保留三个物理速度分量。二维球坐标采用赤道极平面 `(r,phi)`；三维柱／球坐标采用
+`(r,z,phi)`／`(r,theta,phi)`。[验证索引](../validation/README.zh-CN.md)汇总原生
+坐标壁面、RK/RKL、重网格、Poisson、自引力和重启检查。
 
 ## 构建与设备要求
 
-按[构建指南](guides/Build.zh-CN.md)选择CUDA工具链及受支持的Host编译器、显式设备代码映像和匹配数值库。本机已测配置为Release、GCC12、NVCC12.3、`sm86`及RTX3060Ti 8GiB。ARCH数值单元保持严格浮点标志，链接的第三方库配置分别记录；CPU GCC13与CUDA GCC12的LTO归档不能混用。
+使用 CUDA 工具链、受支持的主机编译器、显式 GPU 架构，以及相同编译器 ABI 的
+数值依赖。Linux 使用 GCC/NVCC，Windows 原生使用 MSVC/NVCC；Windows CUDA
+构建不能链接 CPU UCRT64 库。[构建指南](guides/Build.zh-CN.md#cuda-build)提供
+完整命令、cuDSS 设置和[编译内存控制](guides/Build.zh-CN.md#parallel-compilation-and-memory)。
 
-本机WSL约7.7GiB，重构建采用j2与CUDA重型pool1。当前应用／测试增量构建及无动作检查通过，不代签干净构建或其他平台；实际Ninja规则使用ccache。显式CUDA或可选求解器请求须在执行前检查，不可用路径明确拒绝。本轮共享NSE头修改触发52动作、3040.45秒增量重建，其依赖／实例化成本留后续冻结评估。[发布资格索引](releases/README.md)记录实际成本、原CPU限定及多GPU／平台资格边界。
+ARCH 数值编译单元使用严格浮点选项。依赖的编译器和 LTO 身份须与构建匹配，
+例如 GCC 13 CPU 与 GCC 12 CUDA 使用独立的依赖归档。受测硬件与版本见
+[平台支持](releases/PlatformSupport.zh-CN.md)。
 
 ## GPU-AMR 执行方式
 
 实现入口见 [CUDA runtime](../src/cuda/runtime/README.md)和[共用 AMR 模块](../src/amr/README.md)。
 
-CPU 掌握网格拓扑、Morton 排序以及所有的细化/粗化决策。
-
-- **拓扑**描述了网格块之间的连接关系。
-- **Morton 排序**为这些网格块分配了一个空间上连续的索引。
-- **细化**会将单元分裂得更小以提高分辨率，而当配置的指标允许时，**粗化**则会将它们重新合并。
-
-相反，GPU 负责计算具体的单元指标，并只向主机回传每个网格块的一个汇总值，以辅助这些网格决策。场数据的守恒迁移与坐标奇点 ghost 重建直接在设备缓冲区上进行，精确复用 CPU 路径的传输数学公式。这种设计确保了宏观的网格决策仍由 CPU 控制，而繁重的体量级场计算则留在 GPU 上处理。在写出检查点或绘图数据时，只有必需的字段会被显式复制回共用的主机写入器。
+CPU 管理网格连接关系、Morton 空间排序和块细化／粗化决策。GPU 计算单元指标，
+每个网格块回传一个汇总值。场数据的守恒迁移与奇点 ghost 重建直接在设备缓冲区中
+执行，使用共用的迁移数学。在检查点和 Plotfile 输出边界，所需字段复制到共用的
+主机写入器。
 
 ## 按性能选择后端
 
-下方服务器数据保留原始源码身份和输运配置，早于当前自引力工作，不能证明当前
-Helmholtz 的每个输运通道均有效。此前工作站测量和 FLASH 受控对照另见
-[优化验收记录](../validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md)。
-共享 CPU 优化会改变比较基线。该记录中的 RTX 二维四模块 AMR 已有整程正收益；
-受测 Cellular、Jeans 和三维曲线耦合仍由 CPU 占优，不能外推为普遍 GPU 加速。
-选择后端应以相同输入和实际规模的完整任务用时为准。
+下方测量注明硬件、源码和输运模型。服务器数据使用记录中的全输运实现；当前
+Helmholtz 恒星模型提供热传导。独立的[工作站对照](../validation/gravity/flash/README.zh-CN.md)
+测量代表性 RTX 3060 Ti 工作负载。选择后端时，应比较自己输入与规模下的完整运行。
 
 **在已测的多物理 AMR 算例中，GPU 的端到端加速最高约为 5 倍。**
 最高结果来自 128 个初始网格块的流体、BD 燃烧、RKL2 全输运和动态 AMR 耦合算例：
@@ -100,7 +106,7 @@ CPU16 耗时 423.55 秒，CUDA 耗时 83.35 秒，加速比为 5.08 倍。这里
 更多网格计算有助于摊薄 CUDA 启动计算核和同步的开销。小规模扩散算例仍由 CPU 占优，
 128 块的 RKL1 也基本只是持平。增加核素数量是另一种规模变化，并不会自动提高 GPU 利用率。
 
-**大网络性能提醒：已测的生产路线 150/200 核素稀疏应用仍存在负加速，CUDA 耗时约为
+**大网络性能：已测的生产路线 150/200 核素稀疏应用仍存在负加速，CUDA 耗时约为
 CPU8 的 5.0–10.3 倍**，对应加速比约为 0.10–0.20。其数值对照已经通过，但当前由主机
 协调的 cuDSS 执行路径在这些小规模完整程序算例中仍有性能限制。此类工作负载建议优先
 使用 CPU，除非自己的代表性算例已测得 GPU 收益。更大的网格与网络组合需要单独测量，
@@ -115,7 +121,7 @@ CPU8 的 5.0–10.3 倍**，对应加速比约为 0.10–0.20。其数值对照�
 [曲线自引力记录](../validation/gravity/results/p13-20260924/README.md)保留原坐标与源码身份，分别报告整段耦合收益与泊松阶段耗时，不作为 Native RZ 证据；
 选择后端前可查阅[引力验收](../validation/gravity/README.zh-CN.md)。
 
-### CUDA 优化具体改变了什么
+### 运行组织方式
 
 - 流体、扩散和小网络燃烧在工作区布局允许时，一次启动处理多个网格块；内部仍调用
   共用的单元／面数学运算和已注册物理策略。
@@ -125,10 +131,10 @@ CPU8 的 5.0–10.3 倍**，对应加速比约为 0.10–0.20。其数值对照�
 - 执行完成状态和场版本检查协调边界更新、交换及结果发布。复用已经完成的边界数据，
   避免主机读取已接受状态前发生多余刷新。
 - 稀疏修正量统一采用针对原始方程组的残差检查。cuDSS 分解存储及有上限的缓存属于
-  后端实现；大网络的进一步加速作为后续独立优化任务。
+  后端实现，其成本取决于网络与工作负载。
 
-这些调整共同减少计算核启动、分配和传输开销，不改变物理方程或验收容差。
-加速比描述的是完整算例，不能把整体收益单独归于其中某一项改动。
+这些机制减少计算核启动、分配和传输开销。报告中的加速比衡量它们在完整算例中的
+综合效果。
 
 ## 稠密与稀疏燃烧求解
 
@@ -166,10 +172,8 @@ ARCH 支持 pynucastro 生成的反应网络，并通过 CPU KLU / GPU cuDSS 提
   零点必须满足[表格契约](../src/physics/eos/TabularEOS.zh-CN.md)。
   原生 EOSDriver 与受支持的重子 ASCII 源格式复用现有表所有者。分量在主机
   加载时补齐，严格插值、导数及全根温度反演共用同一 CPU/CUDA 数学实现；
-  其聚焦扩展检查与历史完整 CUDA 发布验收分开记录。
-- 本地发布验证使用有代表性的生成网络和弱反应网络。更大模型的轨迹和资源
-  测量安排在适合其规模的机器上。ARCH 当前采用单机 CPU 或单 GPU CUDA 执行。
+  各项测试覆盖的表格式与轨迹见[EOS 验证](../validation/eos/README.zh-CN.md)。
+- 代表性生成网络和弱反应网络已有应用测试。更大模型的资源需求取决于网络和
+  网格规模。ARCH 当前采用单机 CPU 或单 GPU CUDA 执行。
 
-[验证索引](../validation/README.zh-CN.md)区分数值结果与实现声明，并提供可复现的
-输入和指标。贡献者实验日志和机型相关证据单独保留在
-[开发记录](development/README.md)，不混入本功能指南。
+[验证索引](../validation/README.zh-CN.md)提供可复现输入、指标和数值验收限制。

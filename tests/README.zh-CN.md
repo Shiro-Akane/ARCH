@@ -30,7 +30,7 @@ python3 -B tests/tooling
 
 ## 编译并运行 CPU 回归
 
-先按[构建指南](../docs/guides/Build.zh-CN.md)准备依赖，必要表使用[离线身份核对](../docs/guides/Build.zh-CN.md#离线表与-lfs-流量)。默认预设关闭测试；`--target ARCH` 只构建应用及依赖。CTest 不编译缺失程序。
+先按[构建指南](../docs/guides/Build.zh-CN.md)准备依赖，必要表使用[离线身份核对](../docs/guides/Build.zh-CN.md#离线表格与-lfs-下载)。默认预设关闭测试；`--target ARCH` 只构建应用及依赖。CTest 不编译缺失程序。
 
 ```bash
 cmake -S . -B build-test-cpu -G Ninja \

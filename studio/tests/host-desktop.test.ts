@@ -48,7 +48,7 @@ test('desktop workbench opens an unconfigured project without fabricating binary
  assert.equal(opened.reader.snapshot().session.binaryState,'missing');assert.equal(opened.reader.build?.snapshot().configured,false);
  assert.ok(opened.reader.configure);assert.equal((await opened.reader.preview!.readiness()).ready,false);
  await assert.rejects(opened.reader.configuration!.discovery(),/missing|unavailable|ENOENT/i);
- await assert.rejects(openDesktopProject({project:root,cwd:root,binary:'unapproved/ARCH'}),/approved/);
+ await assert.rejects(openDesktopProject({project:root,cwd:root,binary:'unapproved/ARCH'}),/existing build directory.*--build-dir/);
  assert.equal((await readFile(root+'/CMakeLists.txt','utf8')),'project(ARCH)\n');
 });
 

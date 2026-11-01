@@ -1,10 +1,16 @@
 /** Main-owned native prerequisites; never read from renderer or project data. */
 import path from 'node:path';
 import process from 'node:process';
-import {stat} from 'node:fs/promises';
+import {readFile,stat} from 'node:fs/promises';
 
 const required=['cmake','supervisor','ninja','objdump','publisher','rc'];
+const executableKeys=[...required,'terminal'];
+const allowedKeys=[...executableKeys,'path','compilerEnvironment','runtimeLibraries'];
 const local=value=>typeof value==='string'&&/^[A-Za-z]:[\\/]/.test(value)&&!value.includes('\0')&&path.win32.isAbsolute(value);
+export function windowsExecutable(value){
+ if(!local(value)||!value.toLowerCase().endsWith('.exe'))throw new Error('Absolute local Windows .exe required.');
+ return value;
+}
 export function windowsSearchPath(value){
  if(typeof value!=='string'||!value||value.length>32767||!value.split(';').every(local))
   throw new Error('Windows search paths must contain only absolute local directories.');
@@ -21,14 +27,21 @@ export function compilerEnvironment(value){
  }
  return result;
 }
+function runtimeLibraries(value){
+ if(value===undefined)return [];
+ if(!Array.isArray(value)||value.some(file=>!local(file)||!file.toLowerCase().endsWith('.dll')))
+  throw new Error('Windows runtime libraries must be absolute local .dll paths.');
+ return value;
+}
 export function parseWindowsTools(text){
  let value;
  try{value=JSON.parse(text);}catch{throw new Error('Set ARCH_STUDIO_WINDOWS_TOOLS to the trusted Windows tool configuration.');}
- if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>![...required,'path','terminal','compilerEnvironment'].includes(key)))
+ if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!allowedKeys.includes(key)))
   throw new Error('Invalid Windows tool configuration fields.');
  for(const key of [...required,...(value.terminal===undefined?[]:['terminal'])])
-  if(!local(value[key])||!value[key].toLowerCase().endsWith('.exe'))throw new Error(`Windows ${key} must name an absolute local .exe.`);
+  windowsExecutable(value[key]);
  windowsSearchPath(value.path);
+ runtimeLibraries(value.runtimeLibraries);
  return {...value,...(value.compilerEnvironment===undefined?{}:{compilerEnvironment:compilerEnvironment(value.compilerEnvironment)})};
 }
 export async function loadWindowsTools(text){
@@ -41,10 +54,27 @@ export async function loadWindowsTools(text){
  for(const dir of tools.path.split(';'))if(!(await stat(dir)).isDirectory())throw new Error('Windows tool PATH directory is unavailable.');
  for(const text of Object.values(compilerEnvironment(tools.compilerEnvironment)))
   for(const dir of text.split(';'))if(!(await stat(dir)).isDirectory())throw new Error('Windows compiler search directory is unavailable.');
+ for(const file of runtimeLibraries(tools.runtimeLibraries)){
+  try{if(!(await stat(file)).isFile())throw new Error('not a file');}
+  catch(error){throw new Error(`Required Windows runtime DLL is unavailable: ${file}`,{cause:error});}
+ }
  return tools;
 }
+/** File fallback is Main-owned setup, never a renderer or project option. */
+export async function loadWindowsToolsFromEnvironment(environment=process.env){
+ if(environment.ARCH_STUDIO_WINDOWS_TOOLS!==undefined)
+  return loadWindowsTools(environment.ARCH_STUDIO_WINDOWS_TOOLS);
+ const file=environment.ARCH_STUDIO_WINDOWS_TOOLS_FILE;
+ if(!local(file))throw new Error('Set ARCH_STUDIO_WINDOWS_TOOLS or an absolute local ARCH_STUDIO_WINDOWS_TOOLS_FILE.');
+ return loadWindowsTools(await readFile(file,'utf8'));
+}
 export function windowsHostEnvironment(tools,environment=process.env){
- const env={PATH:tools.path,PATHEXT:'.COM;.EXE;.BAT;.CMD',...compilerEnvironment(tools.compilerEnvironment)};
+ if(!tools||typeof tools!=='object'||Array.isArray(tools)||Object.keys(tools).some(key=>!allowedKeys.includes(key)))
+  throw new Error('Invalid Windows tool configuration fields.');
+ windowsExecutable(tools.supervisor);
+ for(const key of executableKeys)if(tools[key]!==undefined)windowsExecutable(tools[key]);
+ runtimeLibraries(tools.runtimeLibraries);
+ const env={PATH:windowsSearchPath(tools.path),PATHEXT:'.COM;.EXE;.BAT;.CMD',...compilerEnvironment(tools.compilerEnvironment)};
  for(const key of ['SystemRoot','WINDIR','ComSpec','TEMP','TMP','USERPROFILE'])if(environment[key])env[key]=environment[key];
  return env;
 }

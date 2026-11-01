@@ -103,6 +103,8 @@ export function RunControls({copy,busy,children}:{copy:WorkingCopy|null;busy:boo
    <p>Model: <strong>{plan.caseId}</strong> · Config: <code>{plan.config.relativePath}</code></p>
    <p>Executable: <code>{plan.binary.relativePath}</code>. This runs the selected compiled version; current-source freshness is not claimed.</p>
    {plan.checkpointPath&&<p>Checkpoint: <code>{plan.checkpointPath}</code></p>}
+   {plan.backend?.data&&<p>Backend: <strong>{plan.backend.data.resolvedBackend.toUpperCase()}</strong> · Requested: {plan.backend.data.requestedBackend} · Linear solver: {plan.backend.data.linearSolver}</p>}
+   {plan.backend?.data?.fallbackReason&&<p role="alert">CPU selected before startup: {plan.backend.data.fallbackReason}</p>}
    {plan.pathChecks.filter(p=>p.role==='output-directory').map(p=><p key={p.key}>{p.key}: <code>{p.resolvedPath??'not resolved'}</code>{p.exists?' · existing directory; Core may write files here':''}</p>)}
    <p>Core startup still checks: {plan.pendingChecks.join('; ')}. No simulation has started.</p>
    {!!plan.issues.length&&<ul role="alert">{plan.issues.map((issue,i)=><li key={i}>{issue}</li>)}</ul>}

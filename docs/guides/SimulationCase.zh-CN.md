@@ -12,7 +12,7 @@
 
 ## 1. 运行小型激波管
 
-首先，请完成 [README 的方案 A：使用 CPU](../../README.zh-CN.md#方案-a使用-cpu)。这一步将为你编译出不含测试套件的 `build-cpu/bin/ARCH` 可执行程序。如果你需要了解依赖项或可选的 CUDA 构建方式，请参阅[构建指南](Build.zh-CN.md)。下方示例都使用这份 CPU 程序，并从仓库根目录执行。
+首先，请完成 [README 的方案 A：使用 CPU](../../README.zh-CN.md#方案-acpu)。这一步将为你编译出不含测试套件的 `build-cpu/bin/ARCH` 可执行程序。如果你需要了解依赖项或可选的 CUDA 构建方式，请参阅[构建指南](Build.zh-CN.md)。下方示例都使用这份 CPU 程序，并从仓库根目录执行。
 然后运行小型一维 Sod 输入：
 
 ```bash

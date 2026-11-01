@@ -28,6 +28,9 @@ message(STATUS "[CUDA] Compiled code images: ${CMAKE_CUDA_ARCHITECTURES}")
 if(ARCH_ENABLE_CUDSS)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies")
     find_package(CuDSS QUIET)
+    if(ARCH_REQUIRE_CUDSS AND NOT CuDSS_FOUND)
+        message(FATAL_ERROR "GPU sparse qualification requires cuDSS 0.8 for this CUDA major version. Set CUDSS_ROOT to its installation prefix.")
+    endif()
     if(CuDSS_FOUND)
         message(STATUS "[DEP] cuDSS found: ${CuDSS_LIBRARY}")
         if(WIN32)
@@ -38,7 +41,26 @@ if(ARCH_ENABLE_CUDSS)
                 NAMES "cublasLt64_${CUDAToolkit_VERSION_MAJOR}.dll"
                 HINTS "${CUDAToolkit_BIN_DIR}" NO_DEFAULT_PATH)
             mark_as_advanced(CUDA_cublas_RUNTIME_LIBRARY CUDA_cublasLt_RUNTIME_LIBRARY)
+            foreach(runtime CuDSS_RUNTIME_LIBRARY CUDA_cublas_RUNTIME_LIBRARY CUDA_cublasLt_RUNTIME_LIBRARY)
+                if(NOT ${runtime} OR NOT EXISTS "${${runtime}}")
+                    message(FATAL_ERROR "${runtime} is missing. This Windows build links cuDSS at process startup; install its DLL and matching CUDA cuBLAS/cuBLASLt runtime, or configure with ARCH_ENABLE_CUDSS=OFF.")
+                endif()
+            endforeach()
         endif()
+        if(WIN32)
+            set(arch_cudss_probe_library "${CuDSS_RUNTIME_LIBRARY}")
+            set(arch_cublas_probe_library "${CUDA_cublas_RUNTIME_LIBRARY}")
+            set(arch_cublaslt_probe_library "${CUDA_cublasLt_RUNTIME_LIBRARY}")
+        else()
+            set(arch_cudss_probe_library "${CuDSS_LIBRARY}")
+            set(arch_cublas_probe_library "$<TARGET_FILE:CUDA::cublas>")
+            set(arch_cublaslt_probe_library "$<TARGET_FILE:CUDA::cublasLt>")
+        endif()
+        set_property(SOURCE src/driver/dispatch/capability/RuntimeProbe.cpp APPEND PROPERTY
+            COMPILE_DEFINITIONS
+                ARCH_CUDSS_RUNTIME_LIBRARY="${arch_cudss_probe_library}"
+                ARCH_CUBLAS_RUNTIME_LIBRARY="${arch_cublas_probe_library}"
+                ARCH_CUBLASLT_RUNTIME_LIBRARY="${arch_cublaslt_probe_library}")
         # Backend numerical refinement, not an ODE tolerance or network-size
         # switch. Keep it private to the Host provider so tuning it does not
         # reinstantiate the CUDA network/EOS matrix.

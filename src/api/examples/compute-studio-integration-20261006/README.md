@@ -1,13 +1,13 @@
-# Current integration response examples
+# Configuration and registry response samples
 
-These are actual CPU responses from the working merge of `compute/optim` base `a566310e` and collaborator checkpoint `b7cb8b69`, including the reviewed compatibility repairs. They document an integration checkpoint, not a released binary. [provenance.json](provenance.json) records the binary and input identities.
+These CPU response samples illustrate configuration v3, registry discovery and UserGravity inspection. [provenance.json](provenance.json) records the producing binary and input identities. Query the selected executable for its current catalogue.
 
 | File | Command / purpose |
 | --- | --- |
 | [configuration-schema.json](configuration-schema.json) | `ARCH --config-schema`: configuration v3, 95 active standard parameters |
 | [registered-cases.json](registered-cases.json) | `ARCH --list-cases`: 16 registered models; registration does not imply all Preview/Plotfile capabilities |
-| [user-gravity.par](user-gravity.par) | Explicit O8 UserGravity input for inspection |
-| [user-gravity-inspection.json](user-gravity-inspection.json) | `ARCH --inspect-case UserGravity --config-stdin`; current O8 setup and input inspection |
+| [user-gravity.par](user-gravity.par) | Explicit UserGravity input for inspection |
+| [user-gravity-inspection.json](user-gravity-inspection.json) | `ARCH --inspect-case UserGravity --config-stdin`; Setup and input inspection |
 
 Reproduce from the repository root after building the current CPU Core:
 
@@ -18,4 +18,4 @@ build-studio-cpu/bin/ARCH --inspect-case UserGravity --config-stdin \
   < src/api/examples/compute-studio-integration-20261006/user-gravity.par
 ```
 
-Client behavior must follow the selected binary's response rather than hard-code these counts. The files contain metadata and a small configuration only; no raw field arrays, plotfiles or checkpoints. Historical examples keep their original contract version. See the [API](../../README.md), [configuration contract](../../docs/CONFIGURATION_API.md) and [integration report](../../../../docs/histroy/integration/ComputeStudioIntegrationReport-20261006.zh-CN.md).
+Client behavior must follow the selected binary's response rather than hard-code these counts. The files contain metadata and a small configuration only; no raw field arrays, plotfiles or checkpoints. Historical examples keep their original contract version. See the [API](../../README.md), [configuration contract](../../docs/CONFIGURATION_API.md).

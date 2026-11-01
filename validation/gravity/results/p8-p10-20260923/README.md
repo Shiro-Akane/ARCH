@@ -1,4 +1,4 @@
-# P8–P10 1D radial self-gravity acceptance (2026-09-23)
+# 1D radial self-gravity acceptance (2026-09-23)
 
 Scope: CPU, native 1D spherical/cylindrical symmetry, `gravity_type=self`, isolated gravity boundary, composite AMR. The test executable was a Release CPU build of the `physics/selfgravity` working tree based on `6c0cb929`. The full radial run used the existing `/home/shiroakane/yt_env/bin/python` with NumPy and h5py and `OMP_NUM_THREADS=1`. Outputs were produced under `/tmp/arch-p10-evidence-final`; this directory preserves the compact [27-case summary](radial-summary.json) and [12-case elliptic output](elliptic-radial.txt).
 

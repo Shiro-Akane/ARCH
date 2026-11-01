@@ -205,16 +205,13 @@ ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算�
 在 `ARCH_CUSTOM_NETWORKS` 选择这两个维护配方后，CTest 注册
 `generated_nse_nse_light` 与 `generated_nse_nse_alpha`。默认的 `generated_nse`
 和 CUDA `generated_nse_device` 共用独立解析秩一／秩二参考、能量零点与拒绝负控，
-两端均通过；CUDA 检查不是上表真实生成包的轨迹矩阵。内建 NSE 参考覆盖单独保留且
-未改动。这些新增检查不追溯修改此前弱反应、稀疏、完整程序或插桩验收记录。
+两端均通过。这组检查覆盖生成网络的 NSE 接口；真实生成包的轨迹、弱反应、稀疏
+求解和完整程序分别使用上表所列记录。内置 NSE 也有独立参考。
 
-## 适用范围与后续工作
+## 适用范围
 
-完整 Release／Debug 回归、核心全新与增量构建检查
-及声明规模的容量检查
-已通过，上述两组定向设备安全检查也已完成。最终交付审阅和汇总验收记录由
-[验证总览](../README.zh-CN.md)统一跟踪。四份科学／程序接入记录与插桩记录
-分别保留各自的验收范围。
+科学应用、设备插桩和资源测量各自注明受测源码及工作负载，相关记录汇总于
+[验证索引](../README.zh-CN.md)。
 
 生产路线的 150/200 核素 Helmholtz 数值对照和完整程序计时已在较大验证系统上完成，
 原始版本、数据及适用范围见 [CPU/CUDA 性能报告](../backend/results/hpc-cuda-optimization/README.md)。
@@ -233,8 +230,6 @@ ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算�
 
 <details>
 <summary>展开源码身份、机器可读数据与执行日志</summary>
-
-下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
 
 - [恒定比热弱 Urca (JSON)](results/weak-cv-native-20260907/release-898/evidence.json)
 - [Helmholtz 弱 Urca (JSON)](results/weak-helm-native-20260907/release-899/evidence.json)

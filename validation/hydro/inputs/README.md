@@ -8,7 +8,7 @@
 
 [Hydro validation](../README.md) owns scientific methods, convergence groupings
 and budgets. The [backend matrix](../../backend/cases.json) supplies execution
-checkpoints and comparisons; Sedov and temporal campaigns link their own
+checkpoints and comparisons; Sedov and temporal tests link their own
 recorded recipes from the module summary.
 
 Initializers live in [simulation/](../../../simulation/README.md). Preserve these

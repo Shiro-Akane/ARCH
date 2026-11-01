@@ -1,43 +1,19 @@
-# Repository maintenance files
+# Repository maintenance
 
-[CODEOWNERS](CODEOWNERS) identifies `@Shiro-Akane` as the default code owner for
-review requests. It covers this directory as well as the rest of the repository.
-Requiring owner approval is a separate GitHub branch-rule setting; this file
-does not enable that setting or grant repository access. See
-[GitHub's code-owner documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
+[CODEOWNERS](CODEOWNERS) assigns review ownership to `@Shiro-Akane`. Configure required reviews and the **CI required** status check in the `main` branch ruleset.
 
-The [documentation overview](../docs/README.md) is the reader's starting point.
-The research-computing and reporting guides live under task-oriented documentation:
-[Reporting.md](../docs/guides/Reporting.md) and
-[Reporting.zh-CN.md](../docs/guides/Reporting.zh-CN.md).
-They cover ordinary build and numerical feedback, research-data protection and
-private coordination for problems affecting files, credentials or shared systems.
-They are ordinary guides rather than an automatically discovered `SECURITY.md`
-policy, so GitHub does not generate a repository-file Security tab from them.
-The README links to the documentation overview; GitHub's file tabs cannot be
-renamed by changing a Markdown heading. Private reporting is a separate GitHub
-setting, as described in the [reporting documentation](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
-Moving the guide changes neither that setting nor branch rules or code scanning.
-The [contributor guide](../docs/development/README.md) explains implementation
-ownership and review expectations.
+Contributor responsibilities are described in the [development guide](../docs/development/README.md). Build and numerical feedback, data protection, and private coordination for security-sensitive problems are covered by the [reporting guide](../docs/guides/Reporting.md).
 
 ## Continuous integration
 
-[ARCH CI](workflows/ci.yml) runs the existing tooling suite and a CPU Release
-build with KLU on GitHub-hosted Ubuntu machines. It is triggered by pull requests
-targeting `main` and pushes to `compute/optim` or merged `main`; its applicability decisions keep required checks present
-while omitting explicitly unrelated work.
-The [workflow guide](workflows/README.md) describes coverage, resource limits,
-artifacts and the maintainer setup. CUDA execution remains a separate GPU
-validation activity; the CPU CI result is not a GPU validation badge.
+[ARCH CI](workflows/ci.yml) runs Tooling, the CPU Release suite with KLU, and Studio/Host checks on disposable GitHub-hosted Ubuntu machines. It runs for pull requests targeting `main` and pushes to `main` or `compute/optim`. The [workflow guide](workflows/README.md) explains coverage, change selection, resources and diagnostic artifacts.
 
-After the workflow has produced its first successful run, maintainers can add
-the `CI required` check from GitHub Actions to the `main` ruleset's required
-status checks. This is separate from the pull-request and reviewer settings.
-Workflow changes still follow the repository's normal pull-request process.
+CUDA execution, native Windows tests and desktop packaging require their own environments. Record those results with the tested source, toolchain and hardware when a change affects them.
 
-## Dependency maintenance
+## Dependency updates
 
-Review security updates against the locked `studio/package-lock.json`, then run a current audit and affected tests; no automatic merge is configured here. The v1.4.0 preparation updates the development-only transitive Zod security patch and its license inventory. Do not batch unrelated major upgrades merely to prepare a release.
+Review Dependabot changes against the manifest, lockfile and affected runtime. Run the relevant tests and a current dependency audit; update [Studio dependency notices](../studio/DEPENDENCIES.md) and the locked license inventory when necessary. Evaluate major upgrades separately from routine patches.
 
-For Electron changes, check manifest/lock/installed/runtime agreement and regenerate actual native packages. Hosted CI omits Electron downloads and native windows; its green status cannot prove a newly packaged runtime. The existing shared version validator remains authoritative. Publication and exact native evidence follow the [release index](../docs/releases/README.md).
+For Electron updates, keep the manifest, lockfile, installed runtime and packaged runtime in agreement. The shared version validator checks these inputs. Rebuild native desktop packages and test their windows: hosted CI skips Electron downloads and cannot exercise the packaged runtime.
+
+Keep release notes in the [release directory](../docs/releases/README.md), with the version's actual changes and validation scope. Remove merged dependency branches after integration.

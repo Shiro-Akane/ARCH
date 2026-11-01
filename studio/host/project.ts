@@ -13,13 +13,12 @@ import type {ConfigureProfile} from './configureRunner.ts';
 import {WorkflowRunner} from './workflow.ts';
 import {ConfigurationAdapter} from './configuration.ts';
 import {PreviewRunner} from './previewRunner.ts';
-import {SOD_PREVIEW_PROFILE,PREVIEW_PROFILES} from './previewProfile.ts';
+import {PREVIEW_PROFILES} from './previewProfile.ts';
 import {readSource} from './source.ts';
 import {BuildError,BuildRunner} from './buildRunner.ts';
 import {requireCompiledSourceCase} from './desktopSource.ts';
 import {validateExistingBuildProfile} from './existingBuildProfile.ts';
 import type {BuildProfile} from '../src/host/contracts.ts';
-import {BUILD_PROFILES} from './buildProfile.ts';
 import {atomicSave,publishConfig} from './atomicConfig.ts';
 import {ConfigError} from './config.ts';
 import type {OpenConfigRequest,SaveConfigRequest,SaveConfigAsRequest,ConfigReadResponse,ConfigWriteResponse} from '../src/host/contracts.ts';
@@ -33,7 +32,7 @@ export async function openProject(options:ProjectOptions) {
  const root=await projectRoot(options.project);
  const local=options.buildProfile===LOCAL_CPU_PROFILE_ID&&!options.trustedBuildProfile?localCpuProfile(root):undefined;
  if(local){if(options.configureProfile)throw new Error('Local CPU profile owns its Configure settings.');options.configureProfile=local.configure;}
- const selectedProfile=options.trustedBuildProfile??local?.build??BUILD_PROFILES.find(p=>p.id===options.buildProfile);
+ const selectedProfile=options.trustedBuildProfile??local?.build;
  if(options.trustedBuildProfile&&(selectedProfile?.id!==options.buildProfile||selectedProfile?.managedSourceRoot!==root))throw new Error('Trusted Host profile identity differs from the managed project.');
  if(options.configureProfile){
   if(options.configureProfile.sourceRoot!==root)throw new Error('Configure source root differs from managed project.');
@@ -52,8 +51,8 @@ export async function openProject(options:ProjectOptions) {
  let build:BuildRunner|undefined;
  if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!,{windowsTools:options.configureProfile?.windowsTools});result.host.capabilities.build=(await build.initialize()).configured;}
  const configure=options.configureProfile?new ConfigureRunner(options.configureProfile):undefined;
- const previewProfiles=local||options.trustedBuildProfile?PREVIEW_PROFILES.map(profile=>({...profile,buildProfileId:selectedProfile!.id})):PREVIEW_PROFILES;
- const preview=build&&(local||options.trustedBuildProfile||build.profile.id===SOD_PREVIEW_PROFILE.buildProfileId)?new PreviewRunner(build,previewProfiles[0],{windowsTools:options.configureProfile?.windowsTools},previewProfiles):undefined;
+ const previewProfiles=selectedProfile?PREVIEW_PROFILES.map(profile=>({...profile,buildProfileId:selectedProfile.id})):[];
+ const preview=build?new PreviewRunner(build,previewProfiles[0],{windowsTools:options.configureProfile?.windowsTools},previewProfiles):undefined;
  const workflow=preview?new WorkflowRunner(preview):undefined;
  if(preview)preview.externalBusy=()=>(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);
  if(preview&&build){build.executionBlocked=()=>preview.isActive()||(workflow?.isActive()??false)||(configure?.isActive()??false)||(runPreparation?.isActive()??false)||(runs?.isLaunching()??false);result.host.capabilities.preview=(await preview.readiness()).ready;}

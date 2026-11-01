@@ -4,7 +4,7 @@ This record covers compiled physical/potential callbacks, their shared boundary
 mathematics, AMR/stage ownership, portable restart, device safety and complete
 application cost. The user interface is described in the
 [boundary guide](../../../../docs/guides/UserBoundaries.md); implementation and
-review details are in the [development record](../../../../docs/development/UserBoundaryImplementation.zh-CN.md).
+the [boundary guide](../../../../docs/guides/UserBoundaries.md) describes the interface.
 
 ## Scope and scientific criteria
 

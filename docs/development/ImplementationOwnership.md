@@ -1,16 +1,13 @@
 # Implementation ownership
 
-Audience: contributors. This index describes maintained responsibilities,
-design constraints and verification; user-facing references describe the API.
-
-Use alongside the [acceptance checklist](CudaReleaseStandard.md).
-Paths are repository-relative. This is a navigation/ownership index,
-not another implementation or a declaration that validation passed.
+This index maps implementation responsibilities and design constraints to their
+source owners. Paths are repository-relative. Use it alongside the
+[acceptance checklist](CudaReleaseStandard.md) when changing shared code.
 
 ## Authority map
 
 For general directory navigation, please start with the [source guide](../../src/README.md).
-The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host control, hydrodynamics, burning, AMR, and diffusion, placing thin built-in bindings under `burn/routes`. The public backend and storage entry paths remain unchanged. Additionally, the [maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md) documents path mappings and measured build checks. Please note that EOS declarations remain strictly separated from complete selected implementations; therefore, changes to common policy headers may trigger rebuilds across several routes without implying a leaked EOS dependency.
+The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host control, hydrodynamics, burning, AMR, and diffusion, placing thin built-in bindings under `burn/routes`. The public backend and storage entry paths remain unchanged. EOS declarations are separate from complete selected implementations. Changes to common policy headers can still rebuild several routes that use them.
 
 Coordinate layout, measures, geometric sources and stress share the four
 headers in [curvilinear](../../src/numerics/curvilinear/README.md).
@@ -107,17 +104,17 @@ Current verification, source identities and costs are maintained in the
 | Fixed field CGS unit labels | `src/data/FieldUnits.h` | Configuration API and Plotfile producer share known labels. PlotFieldMetadata.h describes actual plot calculations; HDF serialization consumes producer declarations and never infers fields by name. Unknown ENTR/extra-field units retain reasons. |
 | Restart schema, native composition and scientific identity | `src/io/hdf5/HDF5Writer.{h,cpp}`, `src/io/chk/ChkIO.cpp`, `CheckpointCompatibility.cpp` | ARCH checkpoints require scientific identity, ENUC, controller state and native X for active species; X/rhoX consistency and physical compatibility are checked before restoring AMR state. No missing-field reconstruction or CUDA-specific checkpoint format. Common Driver/StateResidency controls materialization and output phase. |
 | OS run and executing-image identity | `src/core/files/RunIdentity.{h,cpp}`, `FileFingerprint.{h,cpp}` | One compiled UUID formatter with Linux/Windows entropy providers; one streaming SHA authority. Windows opens the mapped main image with read sharing only and rechecks its mapped name. HDF5 consumes the platform source label; no mathematical or format fork. |
-| Studio desktop startup and portable packaging | `studio/desktop/{main.cjs,arguments.mjs,node-runtime.mjs,windows-tools.mjs,package.mjs}`, `cmake/studio` | Main owns native/explicit WSL selection and private tool setup; existing Host owners consume one approved context. One native Linux/Windows packaging flow derives Electron from the locked dependency and bundles standalone Node with its license. No separate Windows reader/writer or scientific implementation. |
+| Studio desktop startup and portable packaging | `studio/desktop/{main.cjs,arguments.mjs,node-runtime.mjs,windows-tools.mjs,package.mjs}`, `cmake/studio` | Main owns native/explicit WSL selection and private tool setup; existing Host owners consume one private context. One native Linux/Windows packaging flow derives Electron from the locked dependency and bundles standalone Node with its license. No separate Windows reader/writer or scientific implementation. |
 | Studio process ownership | `studio/host/hostProcess.ts`, `src/api/resources/WindowsProcess.cpp` | Existing Host runners retain workflow states. Linux uses process groups, including cleanup after leader exit; Windows creates targets in a private Job before resume and waits on a verified parent handle. Run Stop requires controlled Job drain; `windowsRun.ts` supplies only Run-specific terminal/bootstrap and lease arguments. Preview resource policy belongs to WorkerLimits; this process primitive does not translate it. |
 | Studio Build provenance and OS publication | `studio/host/{cmakeEvidence,ninjaDependencies,linkDependencies,toolRuntimeEvidence,buildManifest}.ts`, `src/core/files/WindowsBuildPublish.cpp` | Shared BuildRunner and content owner; fixed native GNU/Ninja inputs, ELF v1 / explicit PE v2 evidence, and private pinned-directory publication by source handle. Unknown loader selection stays unknown; BuildRunner alone derives optional observed-input consistency and owns Preview admission. No scientific I/O or second Windows workflow. |
 | Preview platform resource policy | `src/api/resources/WorkerLimits.{h,cpp}`, `src/api/session/PreviewSession.cpp`, `studio/src/host/workflowValidation.ts` | Linux retains RLIMIT semantics; Windows owns a nested resource Job for process commit and renewable Job user CPU. One pure metadata predicate serves registry/session consumers. Capability producers share the existing session owner; no supervisor protocol or scientific algorithm is added. |
-| Studio config/source/Plotfile OS boundaries | Existing `source.ts`, `atomicConfig.ts`, `plotfileMetadata.ts` and isolated/project adapters | A3–A6 approved exceptions retain original parsers, fingerprints, source evidence and byte limits. `windowsFilePublish.ts` transports opaque native stages, config bytes and read leases; no second HDF/config owner or HTTP tool selection. Only exact Linux/Windows mapped-main-image source labels are accepted. |
+| Studio config/source/Plotfile OS boundaries | Existing `source.ts`, `atomicConfig.ts`, `plotfileMetadata.ts` and isolated/project adapters | Platform adapters preserve shared parsers, fingerprints, source evidence and byte limits. `windowsFilePublish.ts` transports opaque native stages, config bytes and read leases; no second HDF/config owner or HTTP tool selection. Only exact Linux/Windows mapped-main-image source labels are accepted. |
 | Shared Windows directory identity | `src/core/files/WindowsDirectoryPins.h` | File publication/read leases and Run output leases share root-to-leaf non-reparse pins. Process handles and Job ownership remain with the process owner; config permission preservation and content commits remain with the file/content owners. |
 | Validation provenance | `tools/validation_provenance.py` | Matrix, restart, smoke and release aggregators |
 | Focused test artifact identity | `validation_provenance.py::capture_focused` and the shared artifact observation helper | Weak / real sparse network runners, configured source/package/library hashes and edit/replace guards; not an ARCH release certificate |
 | Runtime checkpoint comparison | `tests/host/io/test_cuda_single_level_validation.cpp` | Same comparator for CPU/CUDA reports; explicit physical-time / step-diagnostic modes must preserve strict restart mode and never change checkpoint data. The manifest/qualifier must require fixed-time acceptance when step timing is diagnostic. |
 | Fixed-time and step-based restart execution | `tools/validate_cuda_amr_restart.py::run_lane` | One parameter renderer, subprocess boundary, actual checkpoint/phase selection and source-identity check. Invalid/past targets fail before execution; saved terminal time must equal the prescribed time. Exact native IO/device replay and same-backend continuation are distinct from forward-step diagnostics. |
-| Runtime CUDA sanitizer boundary | `tools/validation_sanitizer.py`, invoked by `validate_backend_results.py::run_arch_with_logs` | Matrix and restart validators instrument the actual CUDA application only; the ordinary CPU references, physics/checkpoint gates and provenance remain unchanged. One report parser requires unique process initialization and complete clean error/leak/race summaries. Archived historical recipes are immutable. |
+| Runtime CUDA sanitizer boundary | `tools/validation_sanitizer.py`, invoked by `validate_backend_results.py::run_arch_with_logs` | Matrix and restart validators instrument the actual CUDA application only; the ordinary CPU references, physics/checkpoint gates and provenance remain unchanged. One report parser requires unique process initialization and complete clean error/leak/race summaries. Result recipes retain their input and source identities. |
 | Sparse instrumentation observation (result policy only) | `validation/backend/results/final-first-law-20260907/run_sanitizers.py::{sparse_profile,sanitizer_commands}` | The explicit race-only interval leaves ordinary/memcheck science unchanged. Coverage delegates to `validation/network/run_sparse_validation.py::parse_transcript`; the final index reuses that profile/parser and requires a unique clean report in every actual execution lane. No second sparse solver, transcript parser or sanitizer boundary. |
 | Checkpoint metadata inspection | `tools/validate_backend_results.py::checkpoint_metadata` | Smoke alias, formal restart, evidence recheck; no second HDF reader |
 | Memory-protected subprocess ownership and resource observation | `tools/run_memory_guarded.py` | One owned-descendant cleanup path for memory/swap limits, optional sustained Linux PSI stalls and GPU counters. PSI measures system stalls, not Windows disk utilization; nvidia-smi is whole-device telemetry. |
@@ -129,7 +126,7 @@ Current verification, source identities and costs are maintained in the
 | Stationary slip-wall point flux and selected baseline | `src/numerics/flux/StationarySlipWallFlux.h` | Explicit gamma-law capability selects the original exact reflected-wave pressure; other EOS use actual point pressure as a numerical boundary law. Host and Device traversals share actual high/mean-low data, original two-bar admission and one factor. Required invalid baselines reject; this owner neither authenticates wall identity nor changes CFL, geometry measures or resource lifetimes. |
 | Header-layer audit | `tools/audit_architecture.py::audit_header_dependencies` | Reuses one source snapshot; local-cycle and indirect catalogue regression checks |
 | Complete Tooling execution and completion (tests only) | `tests/tooling/__main__.py`, `tools/check_ci_results.py::check_tooling_result` | One discovery/no-skip entry for local CTest and hosted Tooling. Sparse-transcript controls live in `tests/tooling/network`; numerical/API and scientific oracles retain their owners. |
-| Current documentation links | `tools/check_documentation.py` | Git-visible current Markdown destinations/anchors; dated development, archives and frozen results retain their basis. Unit counterexamples remain in the existing Tooling architecture area; no CTest per page. |
+| Current documentation links | `tools/check_documentation.py` | Git-visible maintained Markdown destinations and heading anchors. Unit counterexamples remain in the existing Tooling architecture area; no CTest per page. |
 | Required CI LFS assets | `.github/actions/lfs-asset/{action.yml,identity.py}` | One fixed-asset cache/identity flow for the CPU Helm table and Studio Sod reader fixture. The helper never downloads; the action narrows authenticated checkout on a miss, then verifies size/SHA on both paths. Preserve the existing Helm cache key and no local automatic fetch. |
 | Independent NSE/EOS acceptance data (tests only) | `validation/network/nse_reference.py`, `validation/eos/helm_reference.py` | Small immutable `tests/fixtures/{Nse,Helm}Reference.h` data; high-precision Saha roots / monomial endpoint fits do not call production math |
 | Built-in independent time-integration acceptance (tests only) | `tests/fixtures/burn/BurnTimeReference.h`, `validation/burn/time_reference.py` | Existing `test_burn_mainline_reference.cpp` serves the shared RHS read-only and tests current integrators. DOP853/Radau are independent in TIME, not reaction data. Historical `BurnMainlineReference.h` numbers/checker stay intact; CUDA short-step parity is separate |
@@ -150,8 +147,8 @@ Current verification, source identities and costs are maintained in the
    callers. Never copy a formula under another name.
 4. Keep truly independent test oracles independent. Do not make expected values
    call the implementation being tested merely to eliminate apparent duplication.
-5. Record moved symbols, remaining aliases, retired implementations and tests
-   below. A generated TU must only bind types and call shared bodies.
+5. Update the ownership map and affected tests. Generated translation units bind
+   types and call the shared bodies.
 
 The tabular split follows these rules: `TabularSource.h` is a lightweight
 inspection/interface boundary; `TabularBaryonSource` decodes a source family;
@@ -169,9 +166,7 @@ its direct callers, includes/imports and actual CMake or Studio build entry.
 Choose the existing owner with the same mathematics, data lifetime or control
 boundary. A new directory needs a coherent responsibility; file count, file
 length and visual symmetry are not sufficient reasons. Keep related work
-together. The user has authorized retiring old case/API/CLI paths and facilities
-without backward compatibility; update current consumers, builds, tests and
-documentation together. Unsupported inputs or restart artifacts must fail
+together. When replacing an interface, update its consumers, builds, tests and documentation together. Unsupported inputs or restart artifacts must fail
 explicitly. Physical definitions, numerical acceptance and historical evidence
 provenance remain required; the existing interface map describes the current
 implementation rather than a promise to retain legacy formats or entry points.
@@ -197,111 +192,12 @@ evidence. Use the [comment guidance](CommentAndDocumentationStyle.md) to explain
 the resulting responsibility and data flow. A path change alone does not justify
 a forwarding layer, a second process runner, or a new abstraction.
 
-The [P1 layout record](layout/README.zh-CN.md) and its `moves.json` retain their
-2026-09-22 identity. They are historical migration evidence, not a current file
-count or authorization gate. The [stage 1 inspection](archive/modernization/ModernizationR1-Stage1Completion-20261012.zh-CN.md)
-reconciles later multigrid work and the intentionally retired sparse BE-NR
-header without rewriting that record.
 
-## Current interface and compatibility review
 
-Updated 2026-09-08. These decisions define the maintained interfaces. Verification
-records identify the source and inputs they tested; this index is updated in
-place when responsibilities change.
-
-| Area | Maintained contract |
-| --- | --- |
-| Checkpoint input and restoration | One ARCH checkpoint reader and writer. Missing identity, ENUC, native composition or controller state is an error. Keep the existing payload, field-consistency checks and physical-identity checks; fresh simulations initialize their own `RunState`. |
-| Solver selection | Remove unused `NumericsConfig::riemann_solver` and `ProblemGenerator::GetSolverName`, whose adapters returned empty strings. Keep the active policy selection path. |
-| Factory entry points | Remove config/string overloads in `BurnDispatch`, `DiffDispatch` and `GravityDispatch`. Resolve names and backend eligibility once, then pass IDs to the concrete factories. Tests follow the same path. |
-| Hydro launch boundary | `launch_resolved_run` visits the registered route once; `launch_run` requires the plan, requirements, backend, startup state and checkpoint identity by reference. No config-only selector chain remains. |
-| Coordinate display | Two-dimensional curved-grid startup labels use the shared polar angle name `phi`. This changes presentation only; physical coordinates and metric operators remain unchanged. |
-
-The removed factory entry points duplicated configuration interpretation and
-construction selection, not reaction equations, ODE methods, diffusion operators
-or gravity source mathematics. Their resolved-ID implementations remain the
-single concrete factories.
-
-The following boundaries serve distinct inputs or execution responsibilities
-and remain supported:
-
-- Registered option names and free-function `REGISTER_PROBLEM` select the
-  maintained implementations. P1.5 retired the `timeintegrator` parameter key;
-  text inputs use `time_integrator`.
-- EOS initialization wrappers support case setup. Native EOSDriver and strict
-  free-energy tables retain their source representations. Normalized HDF5
-  requires explicit rank/model/component declarations; direct normalized tables
-  and metadata inference were retired in P1.5.
-- Generated packages with `generator_version=3` remain CPU-eligible. CUDA
-  requires `generator_version >= 4` and device-callable math; these are package
-  interface requirements, not separate physical models.
-- DenseLU/KLU/cuDSS selection retains the 31-total-equation dense boundary and
-  explicit rejection of incompatible backend/solver combinations.
-
-The full contracts are in the [Reference](../Reference.md),
-[EOS format guide](../../src/physics/eos/TabularEOS.md) and
-[generated-network guide](../../src/physics/network/custom/README.md).
-
-### Verification scope
-
-The active component/raw-source extension on `CUDA_complete_v1` requires its
-own final-source complete CPU Release inventory, full Python/tooling controls
-and focused CUDA strict-3D/4D mathematics and owner/lifetime checks. A full CUDA
-backend rebuild is not part of that bounded gate. The preceding extension's
-33 CPU, 307 Python and three focused CUDA passes are not final results for
-this later source. Current measurements belong to the existing module summaries
-and the [release checkpoint](CudaReleaseStandard.md#progressevidence-rules),
-not to a new evidence hierarchy. Passing format or owner tests does not certify
-the complete raw-table domain, nonuniform flow or restart continuation.
-
-The following recorded verification describes earlier identified sources:
-
-The [scientific acceptance index](../../validation/backend/results/final-acceptance-20260907/release-73a9cf50/index-final-930/README.md)
-records 41 required passes and two owner-deferred large-network workloads for
-its identified source. The
-[maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md)
-separates its interface checks from the referenced full scientific and
-source-organization runs. That optimized CUDA build, all 98 configured
-Release tests, ten development-smoke lanes and all four strict
-normal/instrumented restart suites pass, including final source and artifact
-identity checks. The [matched local AMR timing](../../validation/backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
-passes the existing field, conservation, workload and identity checks at both
-sizes. CUDA is slower on these measured Sedov workloads. This is an execution
-performance follow-up, not a reason to fork the shared mathematics or change
-the accepted scientific budgets; the owner accepts functional-parity integration.
-
-The configured 98-test Release inventory includes the interface controls
-`checkpoint_compatibility`, `resolved_execution_plan`,
-`shared_stage_scheduler`, `boundary_plan`, `amr_operation_plans` and
-`state_residency`. They check the changed input and dispatch contracts within
-the current CUDA-enabled build with KLU and cuDSS available.
-
-The checkpoint controls cover complete ARCH state restoration and rejection of
-unsupported formats, missing state, invalid shapes, inconsistent composition and
-incompatible physical identities before AMR restoration. The dispatch controls
-exercise the shared resolver and ID factories, including disabled modules and
-rejected backend/solver combinations. Fresh-start initialization, active parser
-aliases and the supported registration interfaces remain intact.
-
-Commands, observed identities and resource measurements belong to the existing
-[maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md).
-The 289 Python tooling and architecture controls pass with
-zero skips, including seven configure-helper controls. Fixed provenance
-protocol inputs now belong to the [test fixtures](../../tests/fixtures/validation_provenance/README.md),
-not the current scientific result set. These are actual separate checks, not
-results inferred from C++ regression.
-
-This review does not repeat the full independent scientific or complete device-safety
-profile. Publication actions and third-party redistribution permission remain separate.
-
-## Completed responsibilities and design constraints
+## Shared implementation constraints
 
 The authority map covers the implemented AMR, geometry, burn, EOS, generated
-network, sparse-solver, constant and IO responsibilities. Their accepted
-scientific, runtime, safety and resource measurements are indexed by the
-[Validation overview](../../validation/README.md), with explicit source
-identities. Current interface checks are recorded above. Git retains the change
-history; this document describes the implementation that contributors maintain.
+network, sparse-solver, constant and IO responsibilities. Scientific and execution checks are indexed by [Validation](../../validation/README.md), with their source and input identities.
 
 ### AMR, geometry and hydro
 
@@ -421,26 +317,6 @@ memory guard and provenance helpers own collection and execution; result
 recipes should not create another allocator, process supervisor or mathematical
 checker.
 
-## Remaining maintenance decisions
-
-- Small `minmod` and min/max families in `RegridTransferMath.h` and
-  `LimitedLinearProlongation.h` remain possible scalar consolidation work.
-  Both already serve CPU/CUDA. Review finite/NaN behavior and caller guarantees
-  before merging a primitive; conservative migration and coarse/fine ghost
-  reconstruction have different admissibility contracts.
-- The built-in `molar_rhs_jacobian_frozen_screening` functions and
-  `TimmesJacobian.inc` fragments are not consumed by production
-  `TimmesNetworkSupport::eval_jacobian`, which uses shared automatic
-  differentiation. Decide whether to remove these unused fragments or qualify
-  a replacement independently. They must not become a CUDA-only derivative path.
-- Production audit150/audit200 correctness and application timing are recorded
-  in the [HPC-CUDA summary](../../validation/backend/results/hpc-cuda-optimization/README.md).
-  Further scaling and experimental sparse-provider performance remain separate
-  larger-system work, not a repeated local build requirement. Native EOSDriver,
-  baryon-source/component completion and qualified generated-NSE extensions
-  have their own focused controls; those do not inherit historical release
-  qualification. Other native-table families and excitation/weak/screened NSE
-  remain separate extensions.
 
 ## Constants boundaries
 
@@ -463,25 +339,15 @@ units and cgs is implied. See the
 [EOS](../../validation/eos/README.md) / [NSE](../../validation/network/README.md)
 references when changing a value.
 
-## Resumption checklist
-
-Read the current [release standard](CudaReleaseStandard.md), this authority map
-and the [maintenance verification record](../../validation/backend/results/maintenance-freeze-20260908/README.md).
-Inspect the worktree and active build/resource state before starting another
-build. Change the existing owner, update its current documentation and run the
-affected checks. Keep one effective result per maintained validation entry;
-retain actual source/input identities and required scientific fixtures rather
-than relabeling measurements from another build.
 
 ## Source layout and public case headers
 
-The P1 [layout map and include convention](layout/README.zh-CN.md) records the
-functional subdirectories. Case sources consume `<UserInterface.h>` and
+The [source guide](../../src/README.md) describes the functional subdirectories. Case sources consume `<UserInterface.h>` and
 `<GlobalDefs.h>` through `include/`; internal definitions retain one owner.
 Internal includes are relative to `src/`, test helpers to `tests/`. All physics
 inputs and outputs follow the existing CGS contract, including IdealGas.
 
-## Composite self gravity (P3–P7)
+## Composite self gravity
 
 Geometry and gravity are separate physical responsibilities. `GridMetrics`,
 `GeometricSources` and `HydroGeometryBinding` own measures, chart selection and
@@ -494,7 +360,7 @@ leaves the geometric path operational, including EOS/boundary and conservation
 checks. Retired per-chart kernels, controllers and memoization remain absent.
 Axisymmetric isolated gravity extends the existing `GravityBoundary` tree with
 full-ring moments and shared Newton near-leaf math; neither Grid nor Hydro
-owns this physical boundary. Its CPU evidence is indexed by the release plan.
+owns this physical boundary. See [gravity validation](../../validation/gravity/README.md) for scientific comparisons.
 
 The common `TimeIntegratorHelper` deduces its caller-owned source adapter;
 `HydroSolverImpl` includes and constructs the concrete binding. Diffusion imports
@@ -509,7 +375,7 @@ gravity views/interfaces and the actual composition owners.
 | Owner | Consumers and boundary |
 | --- | --- |
 | `numerics/elliptic/CompositePoisson` | Dyadic leaf geometry, shared coarse/fine subfaces, quadratic interface gradients, volume norms; no fluid state or AMR tree. |
-| `numerics/multigrid/CompositeMultigrid` | Shared CPU/CUDA hierarchy and MG/FGMRES flow through `CompositeExecution`; P2 builds a cached coarse inverse. |
+| `numerics/multigrid/CompositeMultigrid` | Shared CPU/CUDA hierarchy and MG/FGMRES flow through `CompositeExecution`; The uniform-grid solver builds a cached coarse inverse. |
 | `physics/gravity/GravityBoundary`, `GravityExecution` | Shared isolated boundary moments, axisymmetric full-ring Newton quadrature and physical work descriptors; no CUDA kernel math copy. Native CPU/Device prescribed-field and isolated short checks share this owner; full algorithm/model scientific qualification remains separate. |
 | `cuda/runtime/gravity` | Backend allocation, stream/kernel/reduction adapters and generation-stamped patch publication. |
 | `amr/elliptic/EllipticMeshAdapter` | Native active-cell order, handles, grid metrics and padded scalar views; no numerical solve. |
@@ -539,7 +405,6 @@ CUDA runs keep iteration vectors resident and use the existing stream/allocation
 
 Regularity is identified geometrically, not by dropping small physical areas.
 Source registration, callback names and scientific inputs participate in format-7
-restart identity. The O7 configuration/API owner retains required-input semantics;
-O8 extends existing options/applicability without creating a parallel config model.
+restart identity. The shared configuration/API owner defines required inputs and option applicability.
 Legacy and mixed-flux gradient descriptors call the same `composite_face_gradient`;
 the once-per-level selector removes unused branches without changing its arithmetic.

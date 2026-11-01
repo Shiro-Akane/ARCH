@@ -13,11 +13,11 @@
 - `contended-gpu/`: timings taken while another heavy GPU workload was active,
   plus an unqualified diagnostic repeat; excluded from the final performance
   baseline. The accepted `final/*_idle*.json` groups were fully rerun after the
-  user confirmed the competing load had ended. All original samples are retained.
+  competing load had ended. All original samples are retained.
 - `checks/`: CPU/CUDA contracts and focused safety checks. The original screening
   body is retained only as a diagnostic oracle, not as a second production route.
 
-See [the acceptance report](../../O6ControlsAcceptanceReport.zh-CN.md). Raw HDF5
+See [the acceptance report](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6ControlsAcceptanceReport.zh-CN.md). Raw HDF5
 remains in each manifest's local output directory; no new output binaries are
 added to source control. CPU and FLASH end at the same recorded physical time;
 a wall-clock ratio is not proof of equal-error scientific equivalence.

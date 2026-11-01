@@ -87,11 +87,8 @@ according to their roles, rather than counted as maintained ARCH code.
 No clean-clone build, fresh generation, GPU test or full acceptance-index run
 was performed here.
 
-## Attribution and contact
+## Attribution
 
-The current third-party notices attribute the Timmes-derived networks, NSE,
-Helmholtz code and table and state that the author has not yet been contacted.
-Contact and redistribution confirmation remain pending. Attribution, correct
-LFS materialization and successful technical tests do not establish permission.
-This administrative item and final release qualification remain separate from
-the asset observations above.
+Source attribution, licensing and redistribution records are maintained in
+[third-party notices](../../../../../THIRD_PARTY_NOTICES.md). The asset inventory
+above records the files inspected for this source delivery.

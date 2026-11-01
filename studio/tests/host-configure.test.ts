@@ -1,5 +1,5 @@
 import {localCpuProfile,LOCAL_CPU_PROFILE_ID} from '../host/localBuildProfile.ts';
-import {BUILD_PROFILES} from '../host/buildProfile.ts';
+import {testBuildProfile} from './build-fixture.ts';
 import {openProject} from '../host/project.ts';
 import {createHostServer,listenLocal} from '../host/server.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
@@ -90,7 +90,8 @@ test('project assembly retains Configure ownership and rejects mismatched source
   assert.ok(reader.configure);
   assert.equal((await reader.configure.run(reader.snapshot().session.projectId,'project')).state,'succeeded');
   await assert.rejects(openProject({project:root,configureProfile:{...profile,sourceRoot:'/other'}}),/source root/);
-  await assert.rejects(openProject({project:root,configureProfile:profile,buildProfile:BUILD_PROFILES[0].id}),/same managed source/);
+  await assert.rejects(openProject({project:root,configureProfile:profile,buildProfile:'test-build',trustedBuildProfile:testBuildProfile('/other')}),/identity differs/);
+  await assert.rejects(openProject({project:root,configureProfile:profile,buildProfile:'arch-existing-cuda-release'}),/Unknown Host build profile/);
   await reader.configure.shutdown();
  }finally{await rm(root,{recursive:true,force:true});}
 });

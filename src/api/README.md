@@ -6,11 +6,12 @@
 
 - [配置检查](docs/CONFIGURATION_API.md)与[配置传输协议](docs/ConfigurationProtocol.md)：必填条件、缺失值、来源、诊断和输入身份。
 - [模型检查](docs/CASE_INSPECTION_API.md)：注册模型、Setup/Init 检查及其覆盖范围。
+- [运行准备](docs/EXECUTION_PREFLIGHT_API.md)：正式 Setup 后的后端、线性求解器和运行依赖检查。
 - [初始场预览](docs/PreviewApi.md)：单次 CLI、采样顺序、字段、单位、资源限制和错误响应。
 - [初始 AMR](docs/INITIAL_AMR_API.md)：原生初始单元布局、坐标和采样。
 - [预览会话](docs/PREVIEW_SESSION_API.md)：持续编辑中的资源复用、取消和响应身份。
 
-公开 C++ 入口位于本目录的 ApplicationContract.h、Configuration.h、CaseInspection.h、Preview.h 和 PreviewSession.h；实现按 configuration、inspection、preview、session、protocol 和 resources 分类。
+公开 C++ 入口位于本目录的 ApplicationContract.h、Configuration.h、CaseInspection.h、ExecutionPreflight.h、Preview.h 和 PreviewSession.h；实现按 configuration、inspection、preview、session、protocol 和 resources 分类。
 
 ## 构建与使用
 
@@ -23,6 +24,5 @@
 - [Studio 指南](../../docs/guides/Studio.zh-CN.md)：介绍用户工作流。
 - [工程测试](../../studio/tests/README.md)：说明 Host 与界面的检查边界。
 - [验证索引](../../validation/README.zh-CN.md)：提供数值验证入口。
-- [archive](../../docs/histroy/README.md#studio)：保存历史交接材料。
 
 示例按各目录标注的程序与输入身份使用。

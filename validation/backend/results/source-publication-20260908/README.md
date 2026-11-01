@@ -1,8 +1,7 @@
 # Source publication record
 
-This existing record identifies the maintained source delivery and its selected
-verification evidence. Update it in place when the delivered files change; it
-does not represent a new simulation or a precompiled binary release.
+This record identifies the 2026-09-08 source delivery and its selected
+verification evidence. The manifest and results retain their recorded identities.
 
 ## Contents
 
@@ -37,8 +36,7 @@ its final source, binary and test-artifact identity checks pass. Independent
 scientific measurements retain their original source identity. The
 [matched AMR timing](../maintenance-freeze-20260908/README.md#matched-local-amr-timing)
 also passes its field, conservation, workload and identity checks. CPU is faster
-at both measured sizes; the owner accepts integration as a functionally
-equivalent CPU/CUDA version with that result disclosed.
+at both measured sizes.
 
 The subsequent [CMake organization review](../maintenance-freeze-20260908/cmake-review.json)
 qualifies the build-file changes separately: the effective CUDA build graph,
@@ -70,11 +68,6 @@ It must include the intentional interface, fixture and documentation changes;
 the earlier path-only surviving-source comparison does not establish equivalence
 for this cleanup. Recorded scientific inputs, budgets and measurements are not
 renamed to match a later Git commit.
-
-The selected source and reviewed technical results are ready for the
-owner-authorized fast-forward integration. Final local-link and inventory
-checks guard the selected commit. Git refs and push receipts establish the
-actual integration state; this record does not claim that a push has occurred.
 
 ## Updating effective validation records
 

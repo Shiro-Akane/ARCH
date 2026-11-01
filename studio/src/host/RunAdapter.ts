@@ -7,11 +7,31 @@ import type {FileFingerprint} from './contracts.ts';
 import {PROTOCOL_VERSION} from './contracts.ts';
 import {record} from './previewValidation.ts';
 import {validateConfigurationInspection} from './configurationValidation.ts';
-import type {PrepareRunRequest,RunPreparation,RunState,RunAcceptance} from './runContracts.ts';
+import type {PrepareRunRequest,RunPreparation,RunState,RunAcceptance,ExecutionPreflight} from './runContracts.ts';
 const uuid=(v:unknown)=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9-]{27}$/.test(v);
 const text=(v:unknown)=>typeof v==='string'&&v.length>0;
 const fingerprint=(v:unknown):v is FileFingerprint=>record(v)&&typeof v.sha256==='string'&&/^[a-f0-9]{64}$/.test(v.sha256)&&Number.isSafeInteger(v.size)&&Number(v.size)>=0&&typeof v.modifiedTime==='string'&&Number.isFinite(Date.parse(v.modifiedTime));
 function scope(v:unknown,projectId:string){if(!record(v)||v.protocolVersion!==PROTOCOL_VERSION||v.projectId!==projectId)throw new Error('Stale or incompatible Run response.');}
+export function validateExecutionPreflight(v:unknown,expected:{caseId:string;configRevision:string;requestId:string}):ExecutionPreflight{
+ if(!record(v)||v.schemaVersion!=='1.0'||v.version!=='1'||v.kind!=='execution-preflight'||!['ok','error'].includes(String(v.status))||
+  !record(v.identity)||v.identity.caseId!==expected.caseId||v.identity.configRevision!==expected.configRevision||v.identity.requestId!==expected.requestId||
+  !record(v.execution)||v.execution.meshConstruction!=='not_executed'||v.execution.timeStepping!=='not_executed'||
+  !Array.isArray(v.diagnostics)||v.diagnostics.length>128||v.diagnostics.some(d=>!record(d)||!['info','warning','error'].includes(String(d.severity))||
+   !text(d.code)||String(d.code).length>256||typeof d.message!=='string'||d.message.length>65536))
+  throw new Error('Core execution preflight does not match the saved input.');
+ if(v.status==='error'){
+  if(v.data!==null||!v.diagnostics.some(d=>record(d)&&d.severity==='error'))throw new Error('Invalid execution preflight failure.');
+ }else{
+  const d=v.data;
+  if(!record(d)||!['cpu','cuda','auto'].includes(String(d.requestedBackend))||!['cpu','cuda'].includes(String(d.resolvedBackend))||
+   !['none','denselu','sparseklu','cudss'].includes(String(d.linearSolver))||typeof d.fallbackReason!=='string'||d.fallbackReason.length>65536||
+   v.diagnostics.some(x=>record(x)&&x.severity==='error')||
+   (d.requestedBackend!=='auto'&&(d.requestedBackend!==d.resolvedBackend||d.fallbackReason!==''))||
+   (d.requestedBackend==='auto'&&((d.resolvedBackend==='cpu')!==!!d.fallbackReason)))
+   throw new Error('Contradictory execution backend selection.');
+ }
+ return v as unknown as ExecutionPreflight;
+}
 export function validateRunPreparation(v:unknown,expected:PrepareRunRequest&{configPath:string;binaryPath:string}):RunPreparation{
  scope(v,expected.projectId);
  if(!record(v)||!uuid(v.planId)||v.caseId!==expected.caseId||v.mode!==expected.mode||!text(v.createdAt)||
@@ -23,11 +43,24 @@ export function validateRunPreparation(v:unknown,expected:PrepareRunRequest&{con
   throw new Error('Run plan does not match the selected saved input and binary.');
  if(!record(v.inspection)||!record(v.inspection.identity)||!uuid(v.inspection.identity.requestId))throw new Error('Run inspection identity missing.');
  const inspection=validateConfigurationInspection(v.inspection,{caseId:expected.caseId,configRevision:expected.configRevision,requestId:String(v.inspection.identity.requestId)});
- if(v.canConfirm&&(v.issues.length||inspection.status!=='ok'||inspection.completeness.state!=='complete'||inspection.diagnostics.some(d=>d.severity==='error')))
+ if(v.backend!==null){
+  if(!record(v.backend)||!record(v.backend.identity)||!uuid(v.backend.identity.requestId))throw new Error('Execution preflight identity missing.');
+  validateExecutionPreflight(v.backend,{caseId:expected.caseId,configRevision:expected.configRevision,requestId:String(v.backend.identity.requestId)});
+ }
+ if(v.canConfirm&&(v.issues.length||!record(v.backend)||v.backend.status!=='ok'||inspection.status!=='ok'||inspection.completeness.state!=='complete'||inspection.diagnostics.some(d=>d.severity==='error')))
   throw new Error('Contradictory Run readiness.');
  for(const p of v.pathChecks)if(!record(p)||!text(p.key)||!text(p.cwd)||!(p.resolvedPath===null||text(p.resolvedPath))||
   !['input-file','output-directory'].includes(String(p.role))||!['ok','error','not-set','unable-to-check'].includes(String(p.status))||typeof p.message!=='string')
   throw new Error('Malformed Run resource check.');
+ if(v.canConfirm){
+  if(v.mode==='restart'&&!text(v.checkpointPath))throw new Error('Restart checkpoint missing from Run plan.');
+  for(const check of v.pathChecks){
+   const parameter=inspection.parameters.find(p=>p.key===check.key);
+   if(parameter?.applicability.state==='not-applicable')continue;
+   if(check.status==='error'||check.status==='unable-to-check'||(check.status==='not-set'&&parameter?.requirement.required===true))
+    throw new Error('Contradictory Run path readiness.');
+  }
+ }
  return v as unknown as RunPreparation;
 }
 export function validateRunState(v:unknown,runId:string):RunState{

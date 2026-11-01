@@ -3,7 +3,9 @@
 Chinese translation: [CASE_TEMPLATE.zh-CN.md](CASE_TEMPLATE.zh-CN.md). The
 English file is the authoritative source text.
 
-> Status: planned / running / passed / failed / superseded
+Measurement date: `<date>`
+
+Result: passed / failed / incomplete
 
 ## Contract
 

@@ -1,137 +1,312 @@
 # 构建 ARCH
 
-[English](Build.md) · [快速开始](../../README.zh-CN.md#构建)
+[English](Build.md) · [快速开始](../../README.zh-CN.md#构建) · [Studio](Studio.zh-CN.md)
 
-第一次构建可以直接使用 README 中的 CPU 或 CUDA 命令。本指南解释这些命令的
-作用，以及如何根据机器调整编译。Bash 示例在 Linux／WSL2 终端中执行，原生 Windows 示例使用 PowerShell；两者均从仓库根目录开始。
+ARCH 在 Linux、WSL2 和原生 Windows 11 x64 上使用同一个 CMake 项目。**科学计算推荐使用 Linux。** Windows 在[功能清单](../Features.zh-CN.md)所列范围内提供相同的 CPU、CUDA 和 Studio 功能，但较新的平台支持可能仍有不稳定性和缺陷。
 
-**推荐 Linux。** 原生 Windows11 x64 在既有科学范围内提供完整的 CPU／CUDA CLI 与 Studio 工作流，但可能仍有不稳定性与 bug。两侧共用 CMake、科学实现、参数格式与 Studio 服务；[最终功能对照](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)记录实测配置与限制。
+<a id="from-source-to-cuda-and-studio"></a>
+## 从源码构建 CUDA 与 Studio
 
-| 任务 | Linux／WSL2 | 原生 Windows 11 x64 |
-| --- | --- | --- |
-| CPU 工具与依赖 | C++20、Ninja、HDF5／OpenMP；使用下方预设 | GCC/UCRT64 与同 ABI HDF5／HighFive／KLU；见[依赖准备](WindowsNativeW0.zh-CN.md)和[编译](WindowsNativeCpu.zh-CN.md) |
-| CUDA 工具与依赖 | NVCC 与兼容 GCC／Clang、匹配数值库 | 独立 MSVC／NVCC、Windows SDK、同 ABI HDF5／KLU 与可选 cuDSS；见[原生 CUDA](WindowsNativeCuda.zh-CN.md) |
-| 可执行文件 | `build-cpu/bin/ARCH` | `build-windows-cpu/bin/ARCH.exe` |
-| 可选 Studio | 原生 Node24+、Electron、图形库／WSLg | 原生 x64 Node24+、Electron、平台辅助程序与 DLL PATH；见[桌面构建](WindowsStudioDesktop.zh-CN.md) |
-| 运行终端 | `xterm` 与 `flock` | 已配置的 Windows Terminal 与原生进程辅助程序 |
+安装[对应平台的工具](#tools-and-dependencies)后，从仓库根目录执行四条命令。
 
-两侧分别使用构建与依赖目录。[Studio 路径说明](Studio.zh-CN.md#linux-与-windows-的路径)区分共用的项目相对路径和依赖宿主系统的 `.par` 路径。
-
-## 先配置，再编译
-
-`cmake --preset cpu-release` 执行**配置**步骤：它会定位编译器和依赖项，将选项保存至 `build-cpu/CMakeCache.txt`，并生成相应的 Ninja 构建规则。这个步骤尚未编译 ARCH 可执行文件。预设提供常用选项，也可以通过 `cmake -S . -B build-cpu -G Ninja ...` 逐项指定。
-
-`cmake --build build-cpu --target ARCH --parallel 1` 才会**编译并链接**应用及其依赖。CMake 会自动为你调用 Ninja，因此你不需要再执行独立的 `make` 步骤。当你修改源码后，只需重复这条构建命令即可，Ninja 会智能地仅重新编译受影响的对象和链接。若需要修改构建选项，请先重新执行配置步骤。当更换编译器或构建生成器时，请务必使用一个全新的构建目录。
-
-项目在 [CMakePresets.json](../../CMakePresets.json) 中提供以下预设，将产物分开放置：
-
-| 配置命令 | 构建目录 | 可执行文件 |
-| --- | --- | --- |
-| `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
-| `cmake --preset studio-cpu-release` | `build-studio-cpu` | `build-studio-cpu/bin/ARCH` + `arch-studio` |
-| `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
-| `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
-
-上述预设都使用 Ninja 与 OpenMP。Release 预设设置 `BUILD_TESTING=OFF`；
-`cuda-debug` 则启用测试，供开发使用。两个 CUDA 预设均通过
-`CMAKE_CUDA_ARCHITECTURES=native` 面向配置时可见的显卡，并设置
-`ARCH_CUDA_HEAVY_COMPILE_JOBS=1`。预设只负责配置，实际编译仍使用下方明确的
-构建与内存监控命令。运行 `cmake --list-presets` 可列出可用预设。
-
-第一次模拟建议从 `cpu-release` 开始，需要 GPU 执行时再使用 `cuda-release`。
-CUDA 预设启用 `ARCH_ENABLE_CUDA=ON`，相比纯 CPU 构建会显著增加编译时间：
-除了宿主应用，NVCC 还要实例化、编译设备执行路径并完成相应链接。
-这些编译工作消耗主机 CPU 和内存，更多空闲显存不能消除主机内存压力。
-较大的生成网络、更多目标 GPU 架构会进一步增加工作量；实际耗时取决于所选目标、
-编译缓存、并发和机器，并非固定需要某个时长。
-
-`.par` 中的 `compute_backend` 是运行时选项。这里选择 `cpu`，不会把
-`ARCH_ENABLE_CUDA=ON` 的构建变成纯 CPU，也不会跳过 CUDA 编译。
-希望省去这部分构建工作时，应使用 CPU 预设。
-
-产物分离通过 `ARCH_RUNTIME_OUTPUT_DIRECTORY` 实现，它指向各构建目录下 `bin/`
-的绝对路径。不设置该选项时，项目默认把可执行文件写入源码树的 `bin/`。
-需要覆盖预设中的编译器、CUDA 架构等选项时，在配置命令后追加 `-D名称=值` 即可。
-
-## 原生 Windows：CPU 与 CUDA
-
-CPU 使用 [GCC/UCRT64 指南](WindowsNativeCpu.zh-CN.md)及 [W0 同 ABI 依赖](WindowsNativeW0.zh-CN.md)。CUDA 使用独立的 [MSVC／NVCC 指南](WindowsNativeCuda.zh-CN.md)，配套 Windows SDK、HDF5／KLU 和可选 cuDSS；两个编译器 ABI 的对象、DLL 与缓存不可混用。两条路线都构建同一 ARCH 目标，共用求解器和 HDF5 实现。
-
-Studio 的 Host／进程与资源策略见 [W2](WindowsStudioPlatform.zh-CN.md)，窗口、可信工具上下文与便携包见[桌面指南](WindowsStudioDesktop.zh-CN.md)。CUDA 指南补充继承 Microsoft Developer 环境的启动方法；日常模型、参数、后端选择与看图见共用 [Studio 指南](Studio.zh-CN.md)。[最终功能对照与验收](../histroy/build/WindowsNativeCudaQualification-20261027.zh-CN.md)分别记录当前 CPU、CUDA 和 Studio 的证据。数学公式、拒绝检查、科学格式与既有误差预算保持。MPI、Zenodo 和 release 仍另行处理。
-
-## 构建输出
-
-默认配置输出会说明 ARCH 选择的后端、优化设置及依赖检测结果。如果 KLU 需要
-从 SuiteSparse 源码构建，各子库重复的状态报告会默认收起，但普通通知、警告与
-错误仍然可见。输出 KLU 的最终检测结果前，会恢复正常日志级别；已安装库的
-查找逻辑不变。
-
-Debug 决定程序如何编译，不决定配置日志的详细程度。需要查看完整依赖配置时，
-在配置命令后添加 `--log-level=VERBOSE`，也可以显式设置
-`CMAKE_MESSAGE_LOG_LEVEL`。`ARCH_VERBOSE_BUILD=ON` 会恢复依赖库的默认报告，
-并让 Makefile 构建打印完整命令。无论使用哪种构建工具，需要实际的编译器和
-链接器命令时，都可以使用 `cmake --build <构建目录> --verbose`。这些显示选项
-不会改变优化、浮点设置、链接库或编译并发数。
-
-## 工具与依赖
-
-本指南中的命令使用 Ninja，请先安装。CPU 构建需要 C++20 编译器、
-**CMake 3.22 或更高版本**，以及包含 C++ 和
-HL 组件的 HDF5 开发库。默认还需要 OpenMP，也可以用 `ARCH_ENABLE_OPENMP=OFF`
-关闭。仅构建 CPU 后端不需要 CUDA 工具链。
-
-CUDA 构建还需要 **CMake 3.25.2 或更高版本**、包含 **NVCC 12.0 或更高版本**的
-NVIDIA CUDA 工具链、该工具链支持的宿主编译器及兼容的 NVIDIA 驱动。本项目
-参考构建使用 CMake 3.28、CUDA 12.3 和 GCC 12。CUDA C++20 的 CMake 支持见
-[3.25.2 发布说明](https://cmake.org/cmake/help/latest/release/3.25.html)。
-
-首次配置会通过 Git 获取 HighFive 2.9.0，因此需要网络。KLU 默认启用：CMake
-优先使用已安装的 KLU，否则获取 SuiteSparse 7.13.0。已有本地依赖源码时，可以
-用 CMake 的 FetchContent 源码覆盖选项指定位置。OpenMP、HDF5、HighFive 和 KLU
-声明位于 [cmake/dependencies/Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake)；CUDA 专用
-求解库（包括 cuDSS）的发现仍由 [cmake/cuda/CudaBackend.cmake](../../cmake/cuda/CudaBackend.cmake)
-通过 [FindCuDSS.cmake](../../cmake/dependencies/FindCuDSS.cmake)等查找逻辑处理。
-通过 Git LFS 管理的 EOS 资源若已有本地对象，优先用离线 `git lfs checkout` 实体化；读取已下载表格不消耗 LFS 流量。
-
-构建监控和测试工具需要 **Python 3.10 或更高版本**，ARCH 可执行文件本身不依赖
-Python 运行。生成反应网络使用独立的 Python 环境，配置方法见
-[网络指南](../../validation/network/README.zh-CN.md)。
-
-使用 WSL2 时，NVIDIA 驱动安装在 Windows，Linux CUDA Toolkit 安装在 WSL 内，
-不要在 WSL 内安装 Linux 显示驱动。具体步骤见
-[NVIDIA 的 WSL 安装指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
-
-## 离线表与 LFS 流量
-
-必要表应在构建／输出目录和 Git LFS 对象库之外保留经过核验的普通文件副本，
-避免清理输出或 LFS prune 后丢失唯一的本机数据。恢复到新检出前，按该版本的
-`git show HEAD:EOS_toolkit/tables/helmholtz/helm_table.dat` 指针核对字节数和 SHA-256，
-并保留表的来源与许可。
-
-需要关闭本仓库自动下载时使用：
+Linux／WSL2：
 
 ```bash
-git config --local filter.lfs.smudge 'git-lfs smudge --skip -- %f'
-git config --local filter.lfs.process 'git-lfs filter-process --skip'
-git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+cmake -DARCH_PROFILE=linux-desktop-with-cuda -P cmake/dependencies/Prepare.cmake
+cmake --preset linux-desktop-with-cuda
+cmake --build --preset linux-desktop-with-cuda
+build/linux-desktop-with-cuda/bin/arch-studio
 ```
 
-本地配置覆盖本仓库关联的 worktree；`checkout`只展开已有对象，不下载缺失对象。
-对象缺失应明确报告，不能用 EOS 默认或自动网络重试掩盖。确需下载时限定路径：
-`git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""`。
-避免不带范围的全量 pull。CPU CI 按指针身份缓存所需表，缓存首次缺失或被驱逐时
-仍可能需要一次定点下载；本地读取已下载表不会消耗 LFS 流量。
+Windows，在可用原生 Node 24+ 和 GNU objdump 的 **MSVC 14.44 x64 Developer Command Prompt** 中执行：
 
-## 源码包与 EOS 表
+```bat
+cmake -DARCH_PROFILE=windows-desktop-with-cuda -P cmake/dependencies/Prepare.cmake
+cmake --preset windows-desktop-with-cuda
+cmake --build --preset windows-desktop-with-cuda
+build\windows-desktop-with-cuda\bin\arch-studio.cmd
+```
 
-不含 `.git` 的 ZIP／tar 源码目录可以正常构建，但不能直接用 `git lfs pull`
-补齐数据。首行是 `version https://git-lfs.github.com/spec/v1` 的文件是指针，
-不是 EOS 表。CPU 构建或 Sod 运行成功也不代表表数据已经可用。
+Studio 打开空白的项目选择页。选择项目、构建目录与执行物，再选择已注册模型和 `.par`；界面用法见[图解指南](Studio.zh-CN.md)。两种构建都具备 CPU 和 CUDA 执行能力，通过参数文件的 `compute_backend = cpu`、`cuda` 或 `auto` 在运行时选择后端。
 
-建议使用所选发行版本的 Git 检出并先复用已有本地 LFS 数据。若保留已经解压的源码包，
-先复制经过核验、与**同一标签或完整提交**匹配的本地表到包内对应位置。
-仅当本机没有该版本数据时，从解压后的 ARCH 根目录运行以下定点下载示例；
-把 `YOUR_RELEASE_TAG_OR_COMMIT` 替换为该源码包的版本身份：
+| 步骤 | 作用 | 何时重复 |
+| --- | --- | --- |
+| Prepare：准备 | 选择原生工具，验证现有 HDF5 C++/HL 或构建同 ABI 的 HDF5，记录本机配置 | 首次设置，或更换工具／依赖位置时 |
+| Configure：配置 | 读取 profile，通过已有依赖入口提供 HighFive/KLU，生成编译规则 | 修改 CMake 选项后 |
+| Build：编译 | 编译 Core；desktop profile 同时编译 Studio 和所需原生辅助程序 | 修改源码后 |
+| Launch：启动 | 打开 Studio；也可直接运行 `bin/ARCH` 或 `bin/ARCH.exe` | 每次使用时 |
+
+首次准备和配置会按需下载依赖，之后的构建会复用它们。各操作系统和编译器 ABI 使用独立的构建目录；源码目录内的 Studio 依赖也分别属于所在的操作系统。
+
+<a id="cpu-build"></a>
+<a id="cuda-build"></a>
+<a id="native-windows-cpu-and-cuda"></a>
+<a id="choose-a-profile"></a>
+## 选择构建 profile
+
+准备、配置和编译三步使用同一个 profile 名。构建目录统一为 `build/<profile>/`，执行物位于其 `bin/` 下。
+
+| 内容 | Linux／WSL2 | Windows 11 x64 |
+| --- | --- | --- |
+| CPU Core | `linux-core` | `windows-core` |
+| CPU + CUDA Core | `linux-core-with-cuda` | `windows-core-with-cuda` |
+| CPU Core + Studio | `linux-desktop` | `windows-desktop` |
+| CPU + CUDA Core + Studio | `linux-desktop-with-cuda` | `windows-desktop-with-cuda` |
+
+纯 Core 构建不需要 Node 或 objdump。在同一构建目录启用 Studio 后，需要安装桌面依赖。Desktop profile 默认包含窗口及相关工具；`with-cuda` 为同时保留 CPU 能力的执行物加入 CUDA。[README](../../README.zh-CN.md#构建)给出纯 Core 的命令；已有 Core 构建目录可按[桌面部分](#build-and-launch-the-desktop)直接加入 Studio。
+
+<a id="presets-and-build-options"></a>
+八种 profile 均使用 Release 和 Ninja，默认启用 OpenMP、KLU，关闭测试，并使用一个编译任务。CUDA profile 针对配置时可见的 GPU 生成代码。GNU profile 保留构建输入证据，便于之后在 Studio 中使用。`cmake --list-presets` 列出全部 preset；[高级配置](#advanced-configuration)说明手工准备环境所用的直接配置 preset。
+
+<a id="tools-and-dependencies"></a>
+## 工具与依赖
+
+| 组件 | Linux／WSL2 | 原生 Windows 11 x64 |
+| --- | --- | --- |
+| CPU 编译器 | C++20 GCC；手工构建也可选择 Clang | MSYS2 **UCRT64** GCC 及其 libgomp 运行库 |
+| CUDA 编译器 | NVCC 与兼容 GCC Host | NVCC、MSVC 14.44 x64、Visual Studio C++ common tools 和 Windows SDK |
+| 构建工具 | Git、Ninja；CPU 需 CMake 3.22+，CUDA 需 3.25.2+ | 原生 Git/Ninja；GCC 使用 UCRT64 CMake，MSVC 使用完整 Kitware Windows CMake |
+| 必需库 | 含 zlib 的 HDF5 C++/HL，以及 OpenMP | 使用所选编译器 ABI 构建的同类库 |
+| 共用头文件／CPU 稀疏求解器 | HighFive 2.9.0 与 KLU；源码后备使用 SuiteSparse 7.13.0 | 同样版本，GCC 和 MSVC 各自构建 |
+| CUDA 运行环境 | CUDA Toolkit 12.0+ 和兼容 NVIDIA 驱动 | Windows CUDA Toolkit 和兼容 NVIDIA 驱动 |
+| 稀疏 CUDA 燃烧 | 可选 cuDSS **0.8**，与 CUDA 主版本匹配 | cuDSS 0.8 导入库／DLL，以及匹配的 cuBLAS/cuBLASLt DLL |
+| 可选桌面 | 原生 x64 Node 24+、npm、图形会话和 Electron 系统库 | 原生 x64 Node 24+、npm 和 **GNU objdump** |
+| 测试 | Python 3.10+；科学检查需要 NumPy、h5py | 原生 Python 3.10+；科学检查需要 NumPy、h5py |
+
+准备步骤通过编译并运行 C++/HL/zlib 小程序验证 HDF5。没有可用安装时，会在与编译器对应的目录中构建 HDF5 1.14.6 和 zlib 1.3.1。HighFive 与 KLU 继续由共用的 [Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake) 管理。`ARCH_ENABLE_OPENMP=OFF` 关闭 CPU 多线程；`ARCH_ENABLE_KLU=OFF` 移除 CPU 稀疏求解器。
+
+已测试组合包括 Linux CUDA 12.3/GCC 12；Windows CPU GCC 16.2.0/CMake 4.4.4；以及 Windows CUDA 12.9.86、MSVC 19.44.35229（toolset 14.44）、SDK 10.0.26100 和 CMake 3.31.11。Windows 依赖使用 HDF5 1.14.6 与 SuiteSparse 7.13.0。MSYS2 是滚动发行版，当前软件包版本可能不同。
+
+<a id="linux--wsl2-installation"></a>
+### Linux／WSL2 安装
+
+Ubuntu 24.04：
+
+```bash
+sudo apt-get update
+sudo apt-get install --no-install-recommends build-essential cmake ninja-build git git-lfs libhdf5-dev
+```
+
+CUDA 构建另需 NVIDIA Linux CUDA Toolkit 和兼容 Host 编译器。准备脚本优先选择已安装的 GCC 12，也可用[自定义路径](#custom-tools-and-offline-preparation)选择其他受支持安装。WSL2 的 GPU 驱动安装在 Windows 侧，Linux Toolkit 按 [NVIDIA WSL 指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)安装。
+
+<a id="windows-cpu-installation"></a>
+### Windows CPU 安装
+
+将 [MSYS2](https://www.msys2.org/docs/installer/) 安装到 `C:/msys64` 等较短的本地路径，在其 **UCRT64** 终端运行：
+
+```bash
+pacman -Syu
+pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-libgomp mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
+```
+
+若更新要求关闭终端，重新打开 UCRT64 后继续。安装原生 Git，再用 **PowerShell** 执行 ARCH 命令。准备、配置和编译前，将 UCRT64 工具加入该终端的 PATH：
+
+```powershell
+$env:Path = 'C:/msys64/ucrt64/bin;' + $env:Path
+```
+
+准备脚本提供匹配的 HDF5，CMake 提供 HighFive/KLU。MSYS2 安装在其他位置时，向准备命令传入 `-DARCH_UCRT_ROOT=C:/your/msys64/ucrt64`，并将该位置的 `bin` 加入 PATH。此编译器环境中不要混入 MSYS `usr/bin`、Anaconda 库或其他 C++ 运行库。
+
+<a id="windows-cuda-installation"></a>
+### Windows CUDA 安装
+
+安装 Visual Studio 2022 Build Tools 的 C++ x64/x86 工具、**MSVC 14.44** 和 Windows SDK。保留含 `VC/Auxiliary/Build/vcvarsall.bat` 的 VC common tools，NVCC 会使用它。另需完整的 [Kitware Windows CMake](https://cmake.org/download/)、原生 Ninja 和 Windows CUDA Toolkit；MSVC 资源依赖跟踪需要 CMake 自带的 `cmcldeps.exe`。
+
+打开为 14.44 初始化的 x64 **Developer Command Prompt**。自定义安装位置例如：
+
+```bat
+call "C:\Tools\VS2022\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -vcvars_ver=14.44
+```
+
+确保该终端可用 CMake、Ninja、Git 和 NVCC，再执行 Windows CUDA profile。准备脚本构建或选择 MSVC ABI 的 HDF5；CMake 配置阶段记录匹配的编译器、SDK 和 OpenMP 运行库目录。GCC/UCRT64 库使用独立 ABI 和安装目录。
+
+MSVC 14.38 无法通过已有的 NaN 契约检查。NVIDIA 的 [CUDA 12.9 编译器表](https://docs.nvidia.com/cuda/archive/12.9.1/cuda-installation-guide-microsoft-windows/index.html)列出 193x 系列；上述 14.44 是 ARCH 独立测试的组合。选择其他 Toolkit／toolset 时需确认兼容性，不使用 `--allow-unsupported-compiler` 绕过检查。
+
+ARCH 在 MSVC 上使用 `/openmp:llvm /openmp:experimental`。CMake 配置阶段从所选 toolset 的 `Microsoft.VC143.OpenMP.LLVM` 目录定位 `libomp140.x86_64.dll`。该 [Microsoft 运行库](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170)不可再分发，保留在本机工具链安装中。
+
+<a id="run-and-select-paths"></a>
+## 运行与路径
+
+Linux／WSL2，以 CPU profile 为例：
+
+```bash
+export OMP_NUM_THREADS=4
+build/linux-core/bin/ARCH Sod simulation/Sod/Sod_beginner.par
+```
+
+Windows Command Prompt；CUDA 构建保留已初始化的 Developer 环境：
+
+```bat
+call build\windows-core\bin\arch-env.cmd
+set OMP_NUM_THREADS=4
+build\windows-core\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```
+
+使用 CUDA 时，将两处路径中的 profile 换成 `linux-core-with-cuda` 或 `windows-core-with-cuda`，并在输入副本中修改已有的 `compute_backend` 赋值。`cuda_device` 选择 GPU 序号。Core 的 `--check-run` 与 Studio 的 Run 准备显示实际后端和选择原因，Run 日志及 `*_backend_plan.txt` 记录执行信息。
+
+Windows 配置会根据所选依赖和编译器目录生成 `bin/arch-env.cmd`。调用它即可设置 CLI 运行环境；链接 cuDSS 时，还会检查所需 DLL。Studio 自动使用同一份运行环境数据。
+
+**`.par` 内相对路径以计算工作目录为基准，不以参数文件所在目录为基准。** Studio 使用项目根目录，CLI 使用终端当前目录。推荐 `out_dir = output/first_sod` 等相对值。`/mnt/c/src/ARCH` 是 WSL 路径，Windows 原生路径是 `C:/src/ARCH`，仅替换斜杠不能完成转换。
+
+`.par` 使用 UTF-8，接受 LF 和 CRLF。Windows 执行物带有进程级 UTF-8 manifest。GNU LTO 的源码／构建目录使用较短 ASCII 路径；普通本地输入输出路径支持空格和 Unicode。UNC／网络文件系统和任意长路径不在已测试配置内。Studio 的项目相对路径统一使用 `/`，详见 [Studio 路径说明](Studio.zh-CN.md#paths-on-linux-and-windows)。
+
+<a id="studio-desktop"></a>
+<a id="linux-studio-desktop"></a>
+## Studio 桌面
+
+安装原生 x64 Node **24+** 及 npm。Linux／WSL2 还需要图形会话（WSL 下为 WSLg）和 Electron 系统库。Ubuntu 24.04：
+
+```bash
+sudo apt-get install --no-install-recommends libgtk-3-0t64 libnss3 libgbm1 libasound2t64 libx11-xcb1 libxkbcommon0 xterm util-linux
+```
+
+Run/Restart 打开独立终端：Linux 使用 `/usr/bin/xterm` 和 `/usr/bin/flock`，Windows 使用原生终端。参数编辑和 Preview 可在没有独立 Run 终端时使用。
+
+Windows Studio 通过 GNU `objdump.exe` 检查构建输入。GCC/UCRT64 已包含它；MSVC/CUDA 桌面也可仅安装 MSYS2 的 `mingw-w64-ucrt-x86_64-binutils`，无需再构建一份 GCC Core。已验证的检查格式为 GNU objdump；LLVM objdump 和 MSVC dumpbin 使用不同接口。需要自定义位置时，用 `ARCH_STUDIO_OBJDUMP` 指定 GNU objdump 的绝对路径。
+
+<a id="build-and-launch-the-desktop"></a>
+### 构建并启动桌面
+
+给已有 Core profile 加入 Studio 时，在**同一个构建目录**中启用选项。
+
+Linux／WSL2：
+
+```bash
+cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
+cmake --build build/linux-core --target arch-studio --parallel 1
+build/linux-core/bin/arch-studio
+```
+
+Windows PowerShell，使用 Core 的编译器环境：
+
+```powershell
+cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
+cmake --build build/windows-core --target arch-studio --parallel 1
+& .\build\windows-core\bin\arch-studio.cmd
+```
+
+CUDA 构建使用已有的 `*-core-with-cuda` 目录；Windows CUDA 从初始化后的 Developer 终端启动 PowerShell。`arch-studio` 会构建 Core、界面资源、锁定版本的 Electron 及两个所需 Windows 辅助程序。普通源码修改后复用 npm 依赖；删除 `node_modules` 后会重新安装。Windows 经 Node 调用 npm，不受 PowerShell 的 `npm.ps1` 策略影响。
+
+Core profile 已保留 GNU 构建输入证据。给任意手工 GNU 构建目录加入 Studio 时，还需[两项证据选项](#advanced-configuration)。无参数启动打开空白页，也可用[模型／参数 CLI 选项](Studio.zh-CN.md#指定模型与参数启动)直接打开工作台。
+
+<a id="windows-tool-configuration"></a>
+### Windows 工具配置
+
+生成的源码启动器自动选择 `build/<profile>/studio/windows-tools.json`。这个本机文件记录 CMake/Ninja/资源编译器、GNU objdump、原生辅助程序、DLL 路径及 MSVC 的 `INCLUDE`／`LIB`／`LIBPATH`。打开项目时检查已链接 cuDSS 所需的 DLL；空白启动页尚不打开项目，也不检查 Core 运行库。
+
+使用自定义环境或便携包时，将 `ARCH_STUDIO_WINDOWS_TOOLS_FILE` 设置为该可信本机 JSON 文件的路径。显式设置的 `ARCH_STUDIO_WINDOWS_TOOLS` JSON 内容优先。这些设置属于启动环境，不写入 `.par` 或工作台字段；含本机绝对路径的配置不放入通用便携包。
+
+<a id="package-the-desktop"></a>
+### 打包桌面
+
+在目标操作系统中，使用已配置的桌面构建目录生成便携目录：
+
+```text
+cmake --build build/linux-desktop-with-cuda --target arch-studio-package --parallel 1
+```
+
+Windows 使用对应编译器环境和 `build/windows-desktop-with-cuda`。产物位于 `studio/.local/desktop-release/`：
+
+| 系统 | 目录 | 启动入口 |
+| --- | --- | --- |
+| Linux | `arch-studio-bin-linux-x64` | `arch-studio` |
+| Windows | `arch-studio-bin-win32-x64` | `arch-studio-bin.exe` |
+
+保留完整目录，其中包含 Electron、独立 Host Node、h5wasm 和许可证。Core、编译器／运行库依赖和独立 Run 终端另行安装。Windows 选择上一节的本机工具配置；构建目录 `bin/` 中的源码启动器则依赖其源码 checkout。
+
+打包脚本读取 `package.json` 中的 Electron 精确版本，并核对 lockfile 和已安装包。`electron_config_cache` 可指向已缓存且校验和匹配的官方归档。保留 Node、Electron/Chromium 和 h5wasm/HDF5 许可证。当前生成便携目录，尚未配置签名、安装器或自动更新。
+
+<a id="custom-tools-and-offline-preparation"></a>
+## 自定义工具与离线准备
+
+工具或依赖位置在准备时传入，放在 `-P` 之前，然后正常配置。例如：
+
+```bash
+cmake -DARCH_PROFILE=linux-core-with-cuda \
+  -DCMAKE_C_COMPILER=/usr/bin/gcc-12 -DCMAKE_CXX_COMPILER=/usr/bin/g++-12 \
+  -DHDF5_ROOT=/opt/arch-deps -P cmake/dependencies/Prepare.cmake
+cmake --preset linux-core-with-cuda
+```
+
+| 准备选项 | 用途 |
+| --- | --- |
+| `CMAKE_C_COMPILER`、`CMAKE_CXX_COMPILER`、`CMAKE_CUDA_COMPILER` | 选择匹配的原生工具链；Linux NVCC 使用所选 C++ Host |
+| `CMAKE_MAKE_PROGRAM`、`CMAKE_RC_COMPILER` | 选择 Ninja 与 Windows 资源编译器 |
+| `ARCH_UCRT_ROOT` | UCRT64 安装位置，默认 `C:/msys64/ucrt64` |
+| `ARCH_STUDIO_NODE`、`ARCH_STUDIO_OBJDUMP` | 桌面运行时与 Windows GNU PE 检查工具 |
+| `HDF5_ROOT`、`HDF5_DIR`、`KLU_DIR`、`CMAKE_PREFIX_PATH` | 复用兼容的已安装依赖 |
+| `CUDAToolkit_ROOT`、`CUDSS_ROOT` | 选择 CUDA 与可选 cuDSS 安装 |
+| `ARCH_DEPENDENCY_ROOT` | 下载、源码和 ABI 构建缓存，默认 `build/dependencies` |
+| `ARCH_PREPARE_JOBS` | HDF5 依赖构建并发数，默认 2 |
+| `ARCH_HDF5_SOURCE_DIR`、`ARCH_ZLIB_ARCHIVE` | 已有 HDF5 1.14.6 源码与锁定的 zlib 1.3.1 归档 |
+| `FETCHCONTENT_SOURCE_DIR_HIGHFIVE`、`FETCHCONTENT_SOURCE_DIR_SUITESPARSE` | 供正常 CMake 依赖入口使用的本地源码 |
+| `ARCH_PREPARE_OFFLINE=ON` | 使用已有依赖安装、源码和归档 |
+
+显式选择的 HDF5 目录必须通过原生 C++/HL/zlib 检查。准备结果写入 `build/<profile>/prepared-toolchain.cmake`，更换位置时重新生成；更换编译器／ABI 时使用新的 profile 构建目录。离线准备需要本地 HighFive，以及已安装 KLU 或本地 SuiteSparse。EOS 表按[独立说明](#offline-tables-and-lfs-bandwidth)准备。
+
+<a id="cudss-and-sparse-burning"></a>
+## cuDSS 与稀疏燃烧
+
+cuDSS **0.8** 是可选依赖，`ARCH_ENABLE_CUDSS=ON` 时进行查找。用 `CUDSS_ROOT` 选择包含 `include/cudss.h` 和匹配库的安装；Windows 还需导入库、`bin/cudss64_0.dll` 及 CUDA 的 cuBLAS/cuBLASLt DLL。配置会将这些 Windows DLL 记录到共用运行环境中。
+
+| 请求的路径 | cuDSS 不可用时 |
+| --- | --- |
+| 普通 CUDA 流体计算和小型 DenseLU 燃烧 | 仍可使用 |
+| 稀疏燃烧显式要求 CUDA 执行或 `cudss` 求解器 | 在 Run 准备时拒绝 |
+| 稀疏燃烧采用 `compute_backend = auto` 和自动求解器选择 | 对应编译路径可用时，可以选择 CPU KLU |
+
+Core 和 Studio 共用 Run 检查，显示实际后端和选择原因。CPU 稀疏燃烧需要保留 KLU，并编译相应 network/EOS 路径，见[生成网络](../../validation/network/README.md)。Linux 仅在所选路径需要时加载厂商库，无关 Preview 不预加载这些库。
+
+若发布包承诺 cuDSS 支持，可要求该依赖并按原数值阈值执行四项 GPU 检查：
+
+```bash
+cmake --preset linux-core-with-cuda -DARCH_REQUIRE_CUDSS=ON -DBUILD_TESTING=ON
+cmake --build build/linux-core-with-cuda --target arch-check-cudss --parallel 1
+```
+
+Windows 换成对应 profile 和构建目录。`ARCH_REQUIRE_CUDSS=ON` 会让缺少该依赖成为配置错误；`arch-check-cudss` 构建并执行检查，GPU 不可用时判为验证失败。
+
+<a id="advanced-configuration"></a>
+## 高级配置
+
+准备 profile 使用同一个 CMake 项目。已有手工管理环境时，可以直接配置，例如：
+
+```bash
+cmake -S . -B build/custom -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DARCH_ENABLE_CUDA=OFF -DCMAKE_PREFIX_PATH=/opt/arch-deps \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build/custom/bin"
+cmake --build build/custom --target ARCH --parallel 1
+```
+
+首次配置时选择匹配的 C/C++ 编译器。Windows CPU 的 `CMAKE_C_COMPILER`、`CMAKE_CXX_COMPILER`、`CMAKE_RC_COMPILER` 分别选择 UCRT64 的 `gcc.exe`、`g++.exe`、`windres.exe`。Windows CUDA 使用已初始化 MSVC 14.44 终端中的 `cl.exe`、SDK `rc.exe` 和 NVCC，启用 `ARCH_ENABLE_CUDA=ON` 并提供 MSVC ABI 的依赖。`ARCH_RUNTIME_OUTPUT_DIRECTORY` 指定执行物位置；直接 CMake 配置时默认写入源码树的 `bin/`。
+
+给手工 GNU 构建目录加入 Studio 和构建输入证据：
+
+```text
+cmake -S . -B build/custom -DARCH_BUILD_STUDIO=ON -DARCH_EMIT_LINK_DEPENDENCIES=ON -DARCH_RETAIN_LTO_LINK_INPUTS=ON
+cmake --build build/custom --target arch-studio --parallel 1
+```
+
+这些选项保留 linker/LTO 输入供新鲜度检查使用，IPO 和浮点选项不变。MSVC 构建使用已有证据路径，不启用 GNU LTO 选项。用户显式选择的选项保留在缓存中。
+
+手工准备环境仍可使用直接 preset：`cpu-release`、`cuda-release`、`studio-cpu-release`、`cuda-debug`，目录分别为 `build-cpu`、`build-cuda`、`build-studio-cpu`、`build-cuda-debug`。这些 preset 不执行依赖准备，`cuda-debug` 启用测试。调整准备 profile 时，可在配置命令后加入普通 CMake `-D` 选项，也可通过 `CMakeUserPresets.json` 保存本机选择。
+
+<a id="source-archives-and-eos-tables"></a>
+## 源码压缩包与 EOS 表
+
+Sod 使用 IdealGas，无需 EOS 表。Helmholtz 和表格 EOS 算例需要 `EOS_toolkit/tables/` 中的相应数据。以 `version https://git-lfs.github.com/spec/v1` 开头的文件是 Git LFS 指针，不是表格数据。
+
+Git checkout 只下载所需表格。完整 Runtime 安装包含以下三个文件：
+
+```bash
+git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat,EOS_toolkit/tables/baryon/eos2.tab,EOS_toolkit/tables/baryon/eos4.tab" --exclude=""
+```
+
+该 Git 命令同样适用于 PowerShell。根据所选版本的指针（例如 `git show HEAD:EOS_toolkit/tables/helmholtz/helm_table.dat`）核对大小及 SHA-256，并保留[数据归属信息](../../THIRD_PARTY_NOTICES.zh-CN.md)。
+
+源码 ZIP/tar 不含 Git 元数据。可从同一 tag／commit 的 checkout 复制已校验表格，或通过临时 checkout 获取。把 `YOUR_RELEASE_TAG_OR_COMMIT` 换成源码包对应版本。
+
+Linux／WSL2：
 
 ```bash
 git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
@@ -140,142 +315,123 @@ git -C ../ARCH-tables lfs pull --include="EOS_toolkit/tables/helmholtz/helm_tabl
 cp ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables/helmholtz/
 ```
 
-复制完成后可以移除临时检出。其他表使用各自的受控路径，并按
-[表格来源说明](../../THIRD_PARTY_NOTICES.zh-CN.md)或该版本的 LFS 指针核对大小与摘要。
-发布冒烟检查应从干净解压目录构建，运行 Sod，再用实际表运行已有 Helmholtz
-测试；只有后者会检查表格依赖。preset 的程序路径分别是 `build-cpu/bin/ARCH`
-和 `build-cuda/bin/ARCH`；自定义构建输出路径也须显式传给比较脚本。
+Windows PowerShell：
 
-## 安装运行包
+```powershell
+git clone --no-checkout https://github.com/Shiro-Akane/ARCH.git ../ARCH-tables
+$env:GIT_LFS_SKIP_SMUDGE = '1'
+git -C ../ARCH-tables checkout --detach YOUR_RELEASE_TAG_OR_COMMIT
+Remove-Item Env:GIT_LFS_SKIP_SMUDGE
+git -C ../ARCH-tables lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat" --exclude=""
+Copy-Item ../ARCH-tables/EOS_toolkit/tables/helmholtz/helm_table.dat EOS_toolkit/tables/helmholtz/
+```
 
-构建应用并按上文物化、核对三张表后，可安装 `Runtime` 组件。它包含程序、
-Sod 输入、EOS 表及其许可；系统 HDF5／OpenMP、CUDA 和可选 cuDSS 仍需由运行环境提供。
+需要 baryon 表时以相同方式选择其路径。复制完成后可删除临时 checkout。
+
+<a id="offline-tables-and-lfs-bandwidth"></a>
+## 离线表格与 LFS 下载
+
+将已验证表格保存在构建／输出目录和 Git LFS 缓存之外。所需 LFS 对象已在本机时，`git lfs checkout <path>` 可直接还原文件，无需下载。要关闭当前仓库及关联 worktree 的自动下载：
 
 ```bash
-cmake --install build-cpu --prefix "$PWD/arch-install" --component Runtime
+git config --local filter.lfs.smudge 'git-lfs smudge --skip -- %f'
+git config --local filter.lfs.process 'git-lfs filter-process --skip'
+git lfs checkout EOS_toolkit/tables/helmholtz/helm_table.dat
+```
+
+这些命令也适用于 PowerShell。缺少对象时，使用上面的 `git lfs pull --include=... --exclude=""` 只下载所需文件。
+
+<a id="install-a-runtime-package"></a>
+## 安装运行包
+
+编译所选 profile 并准备上述三份 EOS 表后，安装 Runtime 组件。
+
+Linux／WSL2：
+
+```bash
+cmake --install build/linux-core --prefix "$PWD/arch-install" --component Runtime
 cd arch-install/share/arch
 ../../bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
-CUDA 应用将构建目录换为 `build-cuda`。安装前缀可以移动，但输入中的相对表路径、
-输出与重启路径仍以启动时的工作目录为准；也可显式使用绝对路径。程序不会从安装
-前缀自动寻找缺失配置或表。Studio 是独立的可选桌面包，见下方构建说明。
+Windows Command Prompt：
 
-## cuDSS 与稀疏燃烧
-
-CUDA 构建中的 `ARCH_ENABLE_CUDSS=ON` 启用可选库发现。适配器使用 **cuDSS 0.8
-API**，并检查运行时加载的库与编译头文件的主、次版本一致。没有找到库时，构建
-不包含 CUDA 稀疏求解提供者，需要它的运行配置会明确报错。其他 CUDA 功能及
-小系统的 DenseLU 燃烧不需要 cuDSS。
-
-不要求以 root 身份安装。CMake 会搜索常规位置，并读取 `CUDSS_ROOT`、
-`CUDSS_DIR` 环境提示。用户目录下的安装前缀只要包含 `include/cudss.h` 及
-`lib/` 或 `lib64/`，就可以显式指定。例如，**确实已安装到以下位置后**：
-
-```bash
-cmake -S . -B build-cuda -DCUDSS_ROOT="$HOME/.local/cudss"
+```bat
+call build\windows-core\bin\arch-env.cmd
+cmake --install build/windows-core --prefix "%CD%/arch-install" --component Runtime
+cd arch-install\share\arch
+..\..\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
 
-pip 或项目内的安装不一定在系统搜索路径上。将 `CUDSS_ROOT` 指向同时包含
-`include/cudss.h` 和 `lib` 的前缀（`nvidia-cudss-cu12` 可以是包内的 `nvidia/cu12`
-目录）；新建构建目录或切换环境时重新显式传入。若 `PATH` 中没有 `nvcc`，可用
-`-DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc` 指定已有编译器，二者均无需重新安装。
+CUDA 使用对应构建目录。安装内容包括 ARCH、示例参数、EOS 表、许可证和 Windows 辅助程序。保持所选 HDF5、OpenMP 和 CUDA/cuDSS 运行库可用；相对输入路径仍以启动工作目录为基准。
 
-自动发现成功时无需设置此选项。配置输出会显示 `[DEP] cuDSS found:` 及选中的
-库路径，或说明稀疏求解提供者不可用。`ARCH_ENABLE_CUDSS=OFF` 可主动关闭发现。
-如果同一个可执行文件还要在 CPU 上运行稀疏燃烧，保留默认的
-`ARCH_ENABLE_KLU=ON`：KLU 只用于 CPU，cuDSS 只用于 CUDA。所选网络与 EOS 的
-执行组合也必须编入程序，找到库并不会自动添加自定义网络。
-
+<a id="parallel-compilation-and-memory"></a>
 ## 并行编译与内存
 
-我们建议先使用快速开始中的默认设置：Ninja、`ARCH_CUDA_HEAVY_COMPILE_JOBS=1` 以及 `--parallel 1`。第一个选项限制了重型 CUDA／分发编译任务的并发池，而第二个选项则严格限制了总的并发构建任务数。Ninja 会同时强制执行这两种限制。请注意，其他的 CMake 生成器不会遵守这个项目专用的任务池设定。
+从 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1` 和 `--parallel 1` 开始。Ninja 同时限制重型 CUDA／dispatch 编译池和总任务数；其他生成器不使用该任务池。CUDA 编译消耗宿主 CPU 和内存，空闲显存不能减少这些需求。更大的生成网络和更多 GPU 架构会增加编译工作。
 
-CUDA 构建可以放在内存监控下执行：
+Linux／WSL2 可使用内存保护器，在持续内存压力下停止本次构建：
 
 ```bash
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-cuda --target ARCH --parallel 1
+  cmake --build build/linux-core-with-cuda --target ARCH --parallel 1
 ```
 
-当 Linux 可用内存低于 1.5 GiB、观测到的 swap 相比启动时增长超过 256 MiB，
-或内存／I/O 持续停顿超过限值时，监控会停止它启动的构建。已有 swap 不必为零。
-默认压力限值是内存 full-stall 达到 20%，或 I/O full-stall 达到 50%，连续持续
-10 秒。这是 Linux PSI 的停顿观测，不是 Windows 磁盘占用百分比；采样监控也
-不等于预留内存。
+保护器检查可用 RAM、swap 增量及 Linux PSI full-stall。默认条件是可用 RAM 少于 1.5 GiB、swap 比启动时增加超过 256 MiB，或内存／I/O full-stall 分别超过 20%／50% 持续 10 秒。它需要 `/proc`、PSI、Python `os.pidfd_open`／`signal.pidfd_send_signal` 和 Linux child-subreaper。在 `--` 前添加 `--log <新文件>` 保存测量；`Ctrl+C` 会停止本次构建及其子进程。
 
-监控要求可读的 `/proc`、Linux 内存和 I/O PSI `full` 计数，以及可用的 Python
-pidfd 和 Linux 子进程收养（child-subreaper）支持。部分新版 Python 构建也不包含
-pidfd；此时可用具备该能力的系统 Python 运行保护器，科学工具仍使用其配置的
-环境。启动前会检查这些能力。
-如果 WSL／内核环境缺少支持，应先更新环境再使用这套监控流程。`Ctrl+C` 或
-`SIGTERM` 会停止所启动的构建及其编译子进程。在 `--` 前加入
-`--log build-cuda/build-memory.log` 可以保存输出与测量结果，日志路径须尚未存在。
+原生 Windows 使用保守任务数，并在任务管理器观察可用内存；Linux 保护器不在 Windows 上运行。有实际余量后再提高并行度。WSL 的 `free -h` 显示分配给 Linux 的内存，可能少于主机安装容量。
 
-中等硬件参考配置是 WSL2、i7-10700 级 CPU、**16 GB 系统内存**和 RTX 3060 Ti
-级 **8 GB 显卡**，已完成**重型任务 2、总并发 4**的核心构建。完成初始配置后，
-可以这样尝试：
+<a id="optimization-compilers-and-target-gpus"></a>
+## 优化、编译器与目标 GPU
 
-```bash
-cmake -S . -B build-cuda -DARCH_CUDA_HEAVY_COMPILE_JOBS=2
-python3 tools/run_memory_guarded.py --min-available-mib 1536 \
-  --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-cuda --target ARCH --parallel 4
-```
+Release 使用所选编译器的优化及其支持的 LTO/IPO。GNU 构建使用 `-O3 -march=native`；MSVC 使用 Release 优化和 `/fp:strict`。共用浮点设置保留有限值检查、显式运算顺序和 CUDA 次正规数处理，关闭 fast-math 与隐式乘加融合。调整构建并行度无需改动这些设置。
 
-这是一组实测参考，不是最低要求或所有机器的最优值。
-[核心构建记录](../../validation/backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
-列出了当时的网络和工作量。用 `free -h` 检查 WSL 自身分配到的内存，不要把
-Windows 的全部物理内存都算作 Linux 可用空间，并给 Windows 和其他程序留下
-余量。大内存机器可以提高任务上限，再比较监控结果。编译并发不改变模拟的
-数值参数，也不限制运行时可用显存。
+`CMAKE_CUDA_ARCHITECTURES=native` 选择配置时可见的 GPU。面向另一台机器时可指定工具包支持的代码映像列表，例如 `-DCMAKE_CUDA_ARCHITECTURES="80;86;90"`；ARCH 使用同一列表进行启动检查。映像越多，编译越慢。GNU CPU 代码也通过 `-march=native` 面向构建机器，换用其他 CPU 架构时应重新编译。
 
-## 优化、编译器与目标显卡
+CMake 找到 `ccache` 后会使用它。已有缓存可缩短重复构建；修改广泛引用的头文件仍会影响许多翻译单元。
 
-Release 应用及 dispatch 目标均使用 `-O3`，工具链支持时启用 LTO／IPO。`-fno-math-errno` 移除未使用的 libm 副作用，保留显式定义域／有限数检查、补偿算术与非正规数；它不是 `-ffast-math`。请确保为 `CMAKE_C_COMPILER` 与 `CMAKE_CXX_COMPILER` 选择相同主版本的 GCC，并将 `CMAKE_CUDA_HOST_COMPILER` 也指向那个相同的 C++ 编译器。你应该在一个全新构建目录进行首次配置时就设定好这些选项；任何本地编译的依赖也都必须使用兼容的 LTO 工具链。请注意，你不需要为了调整构建并发数而去关闭 LTO。最后，为了严格保持数值行为的一致性，我们共用的浮点契约会故意在所有受支持的工具链上关闭 fast-math 和浮点收缩。
+<a id="build-output"></a>
+## 构建输出
 
-CMake 找到 `ccache` 后会自动使用，包括 CUDA 编译。它有助于缩短重复构建；
-所引用的冷构建测量关闭了编译缓存。修改被广泛包含的头文件仍可能触发较多
-翻译单元重新编译。
+配置时显示所选后端、优化和依赖。需要依赖库的完整消息时添加 `--log-level=VERBOSE` 或设置 `ARCH_VERBOSE_BUILD=ON`；查看编译／链接命令则使用 `cmake --build <构建目录> --verbose`。Debug 控制编译设置，不控制日志详细程度。
 
-`CMAKE_CUDA_ARCHITECTURES=native` 面向配置时可见的 GPU。为另一台机器或多个
-GPU 架构编译时，可指定工具链支持的列表，例如
-`-DCMAKE_CUDA_ARCHITECTURES="80;86;90"`；生成更多设备代码会增加编译工作量。
-使用这个选项，不要另外注入 `-gencode`，因为 ARCH 启动检查使用同一份架构列表。
-Release 的 CPU 代码还使用 `-march=native`，迁移到不同 CPU 架构时应重新编译，
-不要直接假定本机优化的可执行文件通用。
-
+<a id="build-tests-only-when-you-need-them"></a>
 ## 按需构建测试
 
-两个 Release 预设均使用 `BUILD_TESTING=OFF`，不把回归测试放入首次运行流程，
-但不关闭模拟功能。`BUILD_TESTING=ON` 在配置阶段注册适用的测试目标，配置本身
-不会编译这些程序；随后默认的 `all` 构建会编译额外的独立测试可执行文件，增加
-耗时和主机内存压力。启用 CUDA 的测试构建，还会在 CUDA 应用之外增加 NVCC 工作。
-
-即使已启用测试，`--target ARCH` 也只构建应用及其依赖，不会构建独立测试。
-只需要定向检查时，可以直接选择对应测试目标。例如，在已有 CPU 构建中启用并
-运行一个小型宿主测试：
+`BUILD_TESTING=ON` 注册测试目标，编译完成后由 CTest 执行。两平台均可按以下方式运行一个小型测试：
 
 ```bash
-cmake -S . -B build-cpu -DBUILD_TESTING=ON
-cmake --build build-cpu --target arch_boundary_plan --parallel 1
-ctest --test-dir build-cpu -R '^boundary_plan$' --output-on-failure
+cmake -S . -B build/linux-core -DBUILD_TESTING=ON
+cmake --build build/linux-core --target arch_boundary_plan --parallel 1
+ctest --test-dir build/linux-core -R '^boundary_plan$' --output-on-failure
 ```
 
-CTest 负责运行测试，不会自动编译缺失的测试程序。不指定 `--target ARCH` 时，
-构建的是默认目标集合；启用测试后这个集合会更大。更多定向检查见
-[Tests](../../tests/README.md)，科学算例及验收使用
-[Validation](../../validation/README.zh-CN.md) 中各模块的流程。
+Windows 将 `build/linux-core` 换成对应构建目录，并保留其编译环境。需要指定 Python 时添加 `-DPython3_EXECUTABLE=<绝对路径>`；科学 Python 检查需要 NumPy、h5py。CUDA 测试构建增加 NVCC 工作量；`--target ARCH` 只构建程序及依赖，不构建独立测试。
 
-算例边界随应用编译：把 `physical_boundary.cpp`、`gravity_boundary.cpp` 放在注册算例源码
-同目录，新增文件后重新配置并构建，无需边界路径参数。见[用户边界](UserBoundaries.zh-CN.md)。
+Linux 工具测试另需 `mold`、`shellcheck` 和提供 pidfd 的 Python。Ubuntu 24.04：
 
-## Linux Studio 桌面
+```bash
+sudo apt-get install --no-install-recommends python3-numpy python3-h5py mold shellcheck
+python3 -m unittest discover -s tests/tooling -p 'test_*.py' -v
+```
 
-`studio-cpu-release` 同时构建 Core 与可选的 Electron 桌面；普通 Core 预设保持 Studio 关闭。
-GUI 预设使用 Host 管理的本地 CPU 构建目录和 GNU 构建身份设置。
-Node 24+、WSLg、图形库及独立终端的要求见 [Studio 使用指南](Studio.zh-CN.md)
-与[环境准备](StudioEnvironment.zh-CN.md)。
+目标名称与平台分组见[测试说明](../../tests/README.md)，科学复现见[验证指南](../../validation/README.md)。算例专属 `physical_boundary.cpp` 和 `gravity_boundary.cpp` 与注册算例一起编译，详见[用户边界](UserBoundaries.zh-CN.md)。
 
-[W3 原生桌面构建与打包](WindowsStudioDesktop.zh-CN.md)：W3 原生 CPU Studio 已在文档限定环境闭合，A11 与人工操作／文件校验证据分别记录。
+<a id="troubleshooting"></a>
+## 常见问题
+
+| 现象 | 检查内容 |
+| --- | --- |
+| CMake 选中其他编译器或库 | 新建构建目录，明确编译器路径和同 ABI HDF5/KLU 前缀 |
+| Windows 命令链或资源编译失败 | `ComSpec` 使用原生反斜杠，`PATHEXT` 包含 `.EXE`，PATH 包含所选 `rc.exe`／`windres.exe` |
+| MSVC 资源依赖错误 | 使用含 `cmcldeps.exe` 的完整 Kitware CMake |
+| Windows 缺少 DLL | CLI 先调用所选构建的 `arch-env.cmd`；移动依赖后重新生成 Studio 工具配置 |
+| Unicode 构建路径下 GNU LTO 失败 | 源码、构建和 LTO 临时目录改用短 ASCII 路径 |
+| Linux Electron 无法打开 | 检查图形会话／WSLg、`DISPLAY` 及 `ldd studio/node_modules/electron/dist/electron` 的缺库项 |
+| Windows Run 无法打开终端 | 检查原生终端；自定义 Windows Terminal 别名可通过可信工具配置指定 |
+| Studio 显示 build freshness unknown | MSVC/CUDA 等工具链的完整依赖覆盖不可用；保留明确的构建选择，并查看 Build 诊断 |
+| Preview 超过资源限额 | 减小采样或初始 AMR 规模；Windows 使用 1024 MiB committed-memory 与用户 CPU 时间，Linux 使用地址空间与进程 CPU 限额 |
+| EOS 表只有少量 Git LFS 指针文本 | 使用对应 EOS 前先还原匹配的 Git LFS 表格 |
+
+UCRT64/GCC 16.2.0 的 Plotfile 测试入口在 CMake 中具有特定 IPO 兼容设置，生产目标仍保留 IPO。EOS 文本解析遵循宿主库的可表示范围：MSVC 拒绝 `1e-500` 等低于 binary64 范围的已测字面值，Linux 提取器则接受带符号零。使用提供的规范表格及可表示数值。

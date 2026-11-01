@@ -449,6 +449,18 @@ add_test(NAME case_inspection_contract
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/inspection/test_case_inspection.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(case_inspection_contract PROPERTIES TIMEOUT 600)
+add_test(NAME execution_preflight_contract
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/inspection/test_execution_preflight.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(execution_preflight_contract PROPERTIES TIMEOUT 600)
+add_executable(arch_execution_preflight_limits tests/host/driver/test_execution_preflight_limits.cpp
+    src/api/resources/WorkerLimits.cpp)
+arch_configure_host_test(arch_execution_preflight_limits)
+target_link_libraries(arch_execution_preflight_limits PRIVATE Threads::Threads)
+add_test(NAME execution_preflight_limits
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/inspection/test_execution_preflight_limits.py
+        $<TARGET_FILE:arch_execution_preflight_limits>)
+set_tests_properties(execution_preflight_limits PROPERTIES TIMEOUT 30)
 add_test(NAME preview_session_contract
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/session/test_preview_session.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})

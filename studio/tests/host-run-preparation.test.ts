@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,rm,readdir,mkdir} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,readdir,mkdir,symlink} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {RunPreparationRunner} from '../host/runPreparation.ts';
@@ -24,6 +24,18 @@ if(input.includes('restart-fixture')){
 }
 if(input.includes('invalid-fixture')){result.status='error';result.completeness.state='invalid';process.exitCode=3;}
 setTimeout(()=>console.log(JSON.stringify(result)),input.includes('slow-fixture')?100:0);
+});
+}else if(process.argv[2]==='--check-run'){
+let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',b=>input+=b);process.stdin.on('end',()=>{
+if(process.env.CUDA_VISIBLE_DEVICES==='')process.exit(98);
+const missing=input.includes('missing-cudss'), changed=require('node:fs').existsSync('backend-changed');
+const fallback=input.includes('auto-backend')||changed;
+console.log(JSON.stringify({schemaVersion:'1.0',version:'1',kind:'execution-preflight',status:missing?'error':'ok',
+ identity:{caseId:process.argv[3],requestId:process.argv[6],configRevision:crypto.createHash('sha256').update(input).digest('hex')},
+ execution:{meshConstruction:'not_executed',timeStepping:'not_executed'},
+ data:missing?null:{requestedBackend:fallback?'auto':'cpu',resolvedBackend:'cpu',linearSolver:'denselu',fallbackReason:fallback?'cuDSS unavailable; CPU KLU selected':''},
+ diagnostics:missing?[{severity:'error',code:'CUDSS_UNAVAILABLE',message:'Install cuDSS and rebuild with CUDSS_ROOT.'}]:[]}));
+if(missing||input.includes('contradict-exit'))process.exitCode=3;
 });
 }else if(process.argv[2]==='Sod')setTimeout(()=>process.exit(0),20);else process.exit(99);
 `;
@@ -265,5 +277,44 @@ test('selected source is rechecked before preparation and before confirmed termi
   const plan=await f.runner.prepare(request);assert.equal(plan.canConfirm,true);assert.deepEqual(seen,['Sod']);
   f.runner.assertCase=async()=>{throw new Error('source changed after compilation');};
   await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/source changed after compilation/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+
+test('Run preparation preserves Core sparse rejection and CPU fallback; confirmation rechecks availability',async()=>{
+ const f=await fixture();
+ const prepare=async()=>f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run'});
+ try{
+  await writeFile(f.root+'/saved.par','missing-cudss\n');
+  const rejected=await prepare();assert.equal(rejected.canConfirm,false);assert.equal(rejected.backend?.status,'error');
+  assert.match(rejected.issues.join(' '),/Install cuDSS/);
+  await writeFile(f.root+'/saved.par','auto-backend\n');
+  const fallback=await prepare();assert.equal(fallback.canConfirm,true);assert.equal(fallback.backend?.data?.resolvedBackend,'cpu');
+  assert.match(fallback.backend!.data!.fallbackReason,/cuDSS/);
+  await writeFile(f.root+'/saved.par','saved fixture\n');
+  const saved=await prepare();await writeFile(f.root+'/backend-changed','changed');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:saved.planId,confirmation:'run-saved-input-with-compiled-binary'}),/backend availability changed/);
+  await rm(f.root+'/backend-changed');await writeFile(f.root+'/saved.par','contradict-exit\n');
+  await assert.rejects(prepare(),/exit status contradicts/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+
+test('confirmation rejects output and checkpoint aliases retargeted after preparation',async()=>{
+ const f=await fixture();
+ try{
+  const saved=await f.config(),request={projectId:'project',caseId:'Sod',configRevision:saved.fingerprint.sha256,mode:'run' as const};
+  const initial=await f.runner.prepare(request);
+  const target=initial.pathChecks.find(p=>p.key==='out_dir')!.resolvedPath!;
+  await mkdir(path.dirname(target),{recursive:true});
+  await mkdir(f.root+'/out-a');await mkdir(f.root+'/out-b');
+  await symlink(f.root+'/out-a',target,'dir');
+  const plan=await f.runner.prepare(request);
+  await rm(target);await symlink(f.root+'/out-b',target,'dir');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/Output directory changed/);
+  await writeFile(f.root+'/cp-a','checkpoint A');await writeFile(f.root+'/cp-b','checkpoint B');
+  await symlink(f.root+'/cp-a',f.root+'/restart.h5');
+  await writeFile(f.root+'/saved.par','restart-fixture');
+  const restart=await f.runner.prepare({...request,mode:'restart',configRevision:(await f.config()).fingerprint.sha256});
+  await rm(f.root+'/restart.h5');await symlink(f.root+'/cp-b',f.root+'/restart.h5');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:restart.planId,confirmation:'run-saved-input-with-compiled-binary'}),/checkpoint changed/);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });

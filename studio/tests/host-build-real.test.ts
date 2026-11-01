@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {ConfigureRunner} from '../host/configureRunner.ts';
 import {BuildRunner} from '../host/buildRunner.ts';
-import {ARCH_PROFILE} from '../host/buildProfile.ts';
+import {testBuildProfile} from './build-fixture.ts';
 
 test('real CMake build failure preserves the last successful binary and manifest, then recovers',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch build 中文 failure-'));
@@ -16,7 +16,7 @@ test('real CMake build failure preserves the last successful binary and manifest
   await writeFile(root+'/CMakeLists.txt','cmake_minimum_required(VERSION 3.20)\nproject(BuildFailure CXX)\nset(CMAKE_RUNTIME_OUTPUT_DIRECTORY "'+root+'/build space/bin")\nadd_executable(ARCH case.cpp)\n');
   const configured=await configure.run('project','real-build');
   assert.equal(configured.state,'succeeded',configured.error);
-  const profile={...ARCH_PROFILE,id:'real-build',managedSourceRoot:root,buildDirRelative:'build space',outputBinaryRelative:'build space/bin/ARCH',sourceRelativePath:'case.cpp',trackedInputs:['CMakeLists.txt','case.cpp','build space/CMakeCache.txt'],parallelism:1};
+  const profile={...testBuildProfile(root),id:'real-build',managedSourceRoot:root,buildDirRelative:'build space',outputBinaryRelative:'build space/bin/ARCH',sourceRelativePath:'case.cpp',trackedInputs:['CMakeLists.txt','case.cpp','build space/CMakeCache.txt'],parallelism:1};
   const build=new BuildRunner(root,'project',profile);
   async function complete(){
    const deadline=Date.now()+15000;

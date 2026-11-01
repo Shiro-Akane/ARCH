@@ -143,7 +143,7 @@ Git history or claim that existing repository/LFS download sizes have shrunk.
   checkpoint and backend validators.
 - [Coupled microphysics](../../verify_microphysics_coupling.py) checks shared
   field budgets, source-aware balance, transport schedules and restart.
-- [Integration record](../../../../docs/development/HpcCudaIntegration.md)
+- [Integration record](integration.json)
   records only checks performed on the curated tree.
 
 The benchmark vGPU could not run debugger-based sanitizer checks. That
@@ -187,6 +187,6 @@ extra final output. The maintained coupled-restart checks retain strict
 same-backend controller/output-history reproducibility and compare adaptive
 cross-backend trajectories at a common physical endpoint. Numerical budgets
 are unchanged. Detailed maintenance decisions belong to the
-[integration record](../../../../docs/development/HpcCudaIntegration.md).
+[integration record](integration.json).
 
 </details>

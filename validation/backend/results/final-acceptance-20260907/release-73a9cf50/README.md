@@ -2,17 +2,11 @@
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). English is authoritative.
 
-The owner-approved CPU/CUDA release profile has completed technical acceptance.
+The recorded CPU/CUDA profile completed technical acceptance.
 The [final index](index-final-930/README.md), produced on 2026-09-07 at
 19:49:58 UTC, closes all 41 required gates: 41 pass, zero pending and zero
-failed. The two deferred entries are the owner-approved audit150/audit200
-large-network qualification workloads, not local passes.
-
-This conclusion applies to the reviewed working tree. It is ready for source
-release preparation; no staging, commit, push or release tag was performed.
-Timmes free use and redistribution authorization remain the separately
-recorded administrative item in the [third-party notices](../../../../../THIRD_PARTY_NOTICES.md).
-Attribution and successful testing do not supply that confirmation.
+failed. The audit150/audit200 large-network workloads were deferred and are
+not counted as local passes.
 
 ## Completed scope
 
@@ -33,7 +27,7 @@ adapters remain separate. The [capability guide](../../../../../docs/CudaBackend
 describes the supported configuration and factory/duck-typed interfaces.
 
 The [focused instrumentation guide](../../final-first-law-20260907/README.md)
-records the approved time-window distinction. Ordinary audit31 science and
+records the instrumentation time windows. Ordinary audit31 science and
 memcheck retain the full `1e-10 s` interval. Racecheck alone uses `1e-12 s`,
 with all three ODEs, both storage sizes, four subdivisions, real cuDSS calls
 and unchanged field/limiter budgets. It does not replace scientific trajectories.
@@ -74,24 +68,14 @@ The index ran alone under the existing guard: 126.407 seconds, peak owned RSS
 Its retained local log is `build/index-final-930.log`, SHA-256
 `3f611cae5ce2119c058afacfd40a96e2bd59ab50d5a2b57ef14d7ecc88bece99`.
 
-## Source publication handoff
+## Reproduction
 
-- Include the 139 maintained additions and intended deletions identified in the
-  [source-asset review](delivery-assets-README.md), together with documentation
-  and notices. An archive of the current HEAD alone omits this work.
-- Keep the actual Helmholtz Git LFS object available. Generated networks are
-  rebuilt from maintained recipes; exact generated-package redistribution also
-  needs its upstream notices and rate-data provenance. cuDSS is separately installed.
-- Preserve the distinction between source delivery and a portable binary package.
-  The reviewed binaries contain local CPU optimization and configured CUDA images.
-  Large HDF5 outputs and local build artifacts are not automatically part of Git;
-  this recorded identity audit requires those original artifacts, while a new
-  machine reproduces the campaigns into new result directories.
-- Complete the recorded Timmes contact/redistribution confirmation (Now resolved and authorized) before treating
-  that administrative release item as closed. Further metadata caching and the
-  approved large-network measurements remain follow-up work, without changing
-  the completed profile's numerical acceptance.
+The [source-asset review](delivery-assets-README.md) identifies the inputs used
+in this record. Prepare tables and optional providers through the
+[build guide](../../../../../docs/guides/Build.md), then reproduce each campaign
+in a new output directory. The tested binaries used local CPU optimization and
+configured CUDA images; rebuild for the destination host.
 
-The sole continuing contributor plan is
-[CudaReleaseStandard.md](../../../../../docs/development/CudaReleaseStandard.md).
-This file records the final result and handoff, not a second implementation plan.
+Contributor acceptance criteria are in the
+[CUDA standard](../../../../../docs/development/CudaReleaseStandard.md), and
+source/data attribution is in [third-party notices](../../../../../THIRD_PARTY_NOTICES.md).

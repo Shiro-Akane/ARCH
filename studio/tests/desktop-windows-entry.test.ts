@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {mkdtemp,writeFile,mkdir,rm} from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 import {selectWindowsNode} from '../desktop/node-runtime.mjs';
 import {hostEnvironment,configurationRelativePath} from '../desktop/arguments.mjs';
-import {parseWindowsTools,loadWindowsTools,windowsHostEnvironment,compilerEnvironment} from '../host/windows-tools.mjs';
+import {parseWindowsTools,loadWindowsTools,loadWindowsToolsFromEnvironment,windowsHostEnvironment,compilerEnvironment} from '../host/windows-tools.mjs';
 
 const node=(extra={})=>JSON.stringify({node:'24.21.0',platform:'win32',arch:'x64',...extra});
 test('native Open/Save dialog paths retain containment and the existing Host slash protocol',()=>{
@@ -39,6 +44,13 @@ test('trusted tool configuration rejects unknown fields, relative executables an
  const env=windowsHostEnvironment(tools(),{SystemRoot:'C:/Windows',ComSpec:'C:/Windows/System32/cmd.exe',PATH:'untrusted',ARCH_STUDIO_WINDOWS_TOOLS:'not inherited',NODE_OPTIONS:'--require bad'});
  assert.deepEqual(env,{PATH:tools().path,PATHEXT:'.COM;.EXE;.BAT;.CMD',SystemRoot:'C:/Windows',ComSpec:'C:/Windows/System32/cmd.exe'});
 });
+test('process-only tool subsets share the same environment validation',()=>{
+ const minimal={supervisor:tools().supervisor,path:tools().path};
+ assert.deepEqual(windowsHostEnvironment(minimal,{}),{PATH:minimal.path,PATHEXT:'.COM;.EXE;.BAT;.CMD'});
+ for(const invalid of [{...minimal,path:'relative'},{...minimal,supervisor:'tool.exe'},
+  {...minimal,cmake:'bad.cmd'},{...minimal,compilerEnvironment:{LIB:'.'}},{...minimal,command:'anything'}])
+  assert.throws(()=>windowsHostEnvironment(invalid,{}));
+});
 test('compiler search directories are explicit private setup and never inherited',()=>{
  const compiler={INCLUDE:'C:/Visual Studio/include;C:/SDK/Include',LIB:'C:/Visual Studio/lib',LIBPATH:'C:/SDK/References'};
  const value={...tools(),compilerEnvironment:compiler};
@@ -55,8 +67,40 @@ test('compiler search directories are explicit private setup and never inherited
   assert.throws(()=>parseWindowsTools(JSON.stringify({...tools(),compilerEnvironment:invalid})));
  }
 });
+test('optional linked runtime DLLs require local absolute DLL paths and stay out of child environment',()=>{
+ const value={...tools(),runtimeLibraries:['C:/CUDA/bin/cudss64_0.dll']};
+ assert.deepEqual(parseWindowsTools(JSON.stringify(value)),value);
+ assert.equal(windowsHostEnvironment(value,{}).runtimeLibraries,undefined);
+ for(const runtimeLibraries of ['C:/CUDA/bin/cudss.dll',{},[null],['cudss.dll'],['C:relative.dll'],['//server/share/cudss.dll'],['C:/CUDA/cudss.exe'],['C:/bad\0.dll']]){
+  assert.throws(()=>parseWindowsTools(JSON.stringify({...tools(),runtimeLibraries})),/runtime libraries/);
+  assert.throws(()=>windowsHostEnvironment({...tools(),runtimeLibraries} as never),/runtime libraries/);
+ }
+});
+test('private tool file fallback rejects relative paths and never hides an explicit invalid JSON override',async()=>{
+ await assert.rejects(loadWindowsToolsFromEnvironment({ARCH_STUDIO_WINDOWS_TOOLS_FILE:'relative.json'}),/absolute local/);
+ await assert.rejects(loadWindowsToolsFromEnvironment({ARCH_STUDIO_WINDOWS_TOOLS:'invalid',ARCH_STUDIO_WINDOWS_TOOLS_FILE:'C:/unused.json'}),/Set ARCH_STUDIO_WINDOWS_TOOLS/);
+});
+if(process.platform==='win32')test('native private tool file and explicit override share runtime DLL existence checks',async t=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch private tools '));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const dll=path.join(root,'linked runtime.dll'),file=path.join(root,'windows-tools.json');
+ const value={...Object.fromEntries(['cmake','supervisor','ninja','objdump','publisher','rc'].map(key=>[key,process.execPath])),path:root,runtimeLibraries:[dll]};
+ await writeFile(file,JSON.stringify(value));
+ await assert.rejects(loadWindowsToolsFromEnvironment({ARCH_STUDIO_WINDOWS_TOOLS_FILE:file}),error=>error instanceof Error&&error.message.includes('Required Windows runtime DLL is unavailable: '+dll));
+ await mkdir(dll);
+ await assert.rejects(loadWindowsTools(JSON.stringify(value)),/Required Windows runtime DLL/);
+ await rm(dll,{recursive:true});await writeFile(dll,'fixture runtime');
+ assert.deepEqual(await loadWindowsToolsFromEnvironment({ARCH_STUDIO_WINDOWS_TOOLS_FILE:file}),value);
+ assert.deepEqual(await loadWindowsToolsFromEnvironment({ARCH_STUDIO_WINDOWS_TOOLS:JSON.stringify(value),ARCH_STUDIO_WINDOWS_TOOLS_FILE:'C:/missing.json'}),value);
+});
 if(process.platform==='win32') test('native trusted tools accept an optional Windows Terminal execution alias',{skip:process.platform!=='win32'||!process.env.ARCH_TEST_TERMINAL||!process.env.ARCH_TEST_PUBLISHER},async()=>{
  const env=process.env;
  const value={cmake:env.ARCH_TEST_CMAKE,supervisor:env.ARCH_TEST_SUPERVISOR,ninja:env.ARCH_TEST_NINJA,objdump:env.ARCH_TEST_OBJDUMP,publisher:env.ARCH_TEST_PUBLISHER,rc:env.ARCH_TEST_RC,path:env.PATH,terminal:env.ARCH_TEST_TERMINAL};
  assert.deepEqual(await loadWindowsTools(JSON.stringify(value)),value);
+});
+
+if(process.platform!=='win32')test('Linux desktop bootstrap rejects a Windows private tool envelope',()=>{
+ const launch={cwd:process.cwd(),origin:'http://127.0.0.1:5173',token:'a'.repeat(64),windowsTools:tools()};
+ const result=spawnSync(process.execPath,[fileURLToPath(new URL('../host/desktop.ts',import.meta.url)),Buffer.from(JSON.stringify(launch)).toString('base64url')],{encoding:'utf8',timeout:10000});
+ assert.equal(result.status,1);assert.match(result.stderr,/Native Windows Host tools required/);
 });

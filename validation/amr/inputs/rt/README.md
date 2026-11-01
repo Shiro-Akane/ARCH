@@ -1,7 +1,7 @@
 # Rayleigh–Taylor replay inputs
 
-These four two-dimensional Cartesian inputs reproduce the reported AMR state
-failure using ideal-gas hydrodynamics, PPM, HLLC, RK3 and external gravity:
+These four two-dimensional Cartesian inputs test ideal-gas hydrodynamics,
+PPM, HLLC, RK3 and external gravity on an evolving AMR mesh:
 
 | Input | Diffusion |
 | --- | --- |
@@ -10,19 +10,14 @@ failure using ideal-gas hydrodynamics, PPM, HLLC, RK3 and external gravity:
 | [thermal.par](thermal.par) | Thermal |
 | [coupled.par](coupled.par) | Thermal and species |
 
-The physics, boundary conditions and refinement criteria come from the four
-files supplied on `codex/rt-amr-validation-notes-20261003` at `2ee826655`.
-Output paths, the step limit and checkpoint cadence were adjusted for replay.
-The active inputs also spell out previously implicit standard controls. The old
-unregistered `limiter=none` selected MinMod through the former policy loader;
-`limiter=minmod` now records that effective method explicitly. It does not mean
-unlimited reconstruction. Historical receipts retain their original input hashes.
-The files explicitly disable burning, as in the reported experiment.
+All four inputs disable burning and explicitly select `limiter=minmod`.
+The physical initial state, boundaries and refinement criteria are recorded
+in the parameter files; the variants differ in diffusion channels.
 
 From the repository root, run a case with a locally built executable:
 
 ```bash
-build-modernization-cpu/bin/ARCH RT validation/amr/inputs/rt/plain.par
+build-cpu/bin/ARCH RT validation/amr/inputs/rt/plain.par
 ```
 
 Each input runs 256 steps and writes a checkpoint every 32 steps. Keep outputs
@@ -43,8 +38,6 @@ modes and the repository-owned validation tools are described in
 [tools/README.md](../../../../tools/README.md). Numerical receipts must be
 included when evaluating species mass changes.
 
-The current repair evidence and data-admission decision are in the
-[developer record](../../../../docs/development/RTAmrDataCorrectnessRepair.zh-CN.md).
-Successful execution alone does not qualify a dataset. CPU/CUDA scientific
-comparisons must use the same physical time; topology differences require an
-appropriate spatial comparison rather than comparing file indices blindly.
+The [CPU/CUDA continuation results](../../../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+include these RT cases. Compare physical fields at the same time and account
+for any different mesh topology through a common spatial representation.

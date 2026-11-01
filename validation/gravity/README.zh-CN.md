@@ -11,30 +11,22 @@
 
 ## 原生二维柱坐标
 
-二维柱坐标采用`cylindrical-rz-pwc` chart、`(r,z)`轴和三个物理动量分量。
-公共Grid只负责几何；可选引力负责场、全环质量、势边界与做功。
-[CPU引力](../backend/results/release-readiness/Cyl3OptionalGravity-20261018.json)、
-[设备owner](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)及
-[综合准入](../backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)
-按原数值门槛与身份解释；关闭引力时零求解／专属数值分配。
+二维柱坐标使用轴对称 `cylindrical-rz-pwc` 坐标图、`(r,z)` 轴和三个物理动量分量。
+网格提供几何，引力模块提供场、全环质量、势边界和做功。关闭引力时不执行求解，
+也不进行专属数值分配。
 
-[当前CPU签收](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)
-补齐GravityBox／SNIaCoupled轴向剖面、显式中心输入与短fresh。
-[当前设备记录](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
-已将两个Host修正纳入重建的CUDA应用，并验证受影响场与fresh。未变引力kernel、关闭分配与能量证据保留原身份范围；
-球坐标二维`(r,phi)`、一维径向及三维曲线坐标保留各自契约。独立的私有Cellular源项率门仍限制完整设备发布资格。
-
-[旧CPU科学](../backend/results/release-readiness/REL3CpuFinalAcceptance-20261015.json)与
-[旧实现退役](../backend/results/release-readiness/RzRetirementAcceptance-20261018.json)只保留历史身份，
-失败和中断不改签；旧runner／checkpoint不是当前执行入口。剩余发布工作见
-[发布资格索引](../../docs/releases/README.md)。
+[CPU 引力结果](../backend/results/release-readiness/Cyl3OptionalGravity-20261018.json)、
+[设备检查](../backend/results/release-readiness/Cyl5NativeDevice-20261019.json)和
+[科学算例](../backend/results/release-readiness/Cyl6ComprehensiveAdmission-20261019.json)
+保留数值预算和源码身份。GravityBox/SNIaCoupled 轴向剖面、显式中心输入和新进程
+续算由 [CPU](../backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)及
+[CUDA 集成结果](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+覆盖。二维球坐标 `(r,phi)`、一维径向和完整三维几何各有下文所述的计算域及边界条件。
 
 ## 常外部重力
 
-活动均匀输入已显式声明旧加载器控制值。耦合Gaussian使用真实的`p0`和四个
-显式为零的流体扰动幅值，删除失效的`pressure0`／`velocity_x0`覆盖；检查点参考
-明确拒绝混合或缺项契约。历史收据身份保持，当前CPU迁移核验见
-[发布资格索引](../../docs/releases/README.md)。
+耦合 Gaussian 输入显式给出 `p0` 和四个为零的流体扰动幅值。
+检查点参考核对完整的模型参数契约。
 
 下方外部源项测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期
 改变动量与能量，而不改变总质量。耦合案例进一步检查网格细化和组分扩散时
@@ -130,8 +122,6 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 <details>
 <summary>展开源码身份、机器可读数据与执行日志</summary>
 
-下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
-
 - [Release 应用记录 (JSON)](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
 - [端点检查 (JSON)](results/coupled-final-20260907/endpoints-894/evidence.json)
 - [应用记录 (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
@@ -149,8 +139,8 @@ CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 对照、双向跨后端续算与本机性能见 [曲线坐标 CUDA 记录](results/p13-20260924/README.md)。
 指定 Dirichlet／Neumann／线性 Robin 及用户势边界支持三类几何和有效扇区；孤立质量模型仍要求完整方位角。域外质量源和 Jeans 专用细化指标未纳入此范围。
 可从 [GravityBox](../../simulation/GravityBox/README.md)
-的示例输入开始。[笛卡尔自引力验收](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
-记录数值、耦合、重启与设备检查；早期 [周期场记录](../../docs/histroy/science/P3P4CompositeGravity.zh-CN.md)
+的示例输入开始。[笛卡尔自引力验收](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
+记录数值、耦合、重启与设备检查；早期 [周期场记录](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P3P4CompositeGravity.zh-CN.md)
 保留其 CPU 周期范围；[径向场与 AMR 记录](results/p8-p10-20260923/README.md)保存椭圆与 AMR 指标。
 
 `run_self_gravity.py --arch <ARCH> --output <新目录>` 检查 Jeans 波、能量、时间阶、
@@ -176,13 +166,12 @@ CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 自引力、燃烧与热扩散联动；原 [Cartesian CPU/CUDA 冒烟记录](results/snia2d-20260923/README.md)、
 [曲线坐标 CPU 记录](results/p11-p12-20260923/README.md)和
 [曲线坐标 CUDA 记录](results/p13-20260924/README.md)均不等于 SN Ia 解析精度验收。
-曲线坐标 CPU 记录也报告用户提供的 FLASH 4.8 归档中 Cellular 算例的二维/三维受控对照，
-归档包含本地初值扩展。[当前比较评估](flash/O5OptimizationReport.zh-CN.md)记录了
-固定温度燃烧、可选面 EOS 工作、计算量差异和未关闭项。代表性四模块路径为
+曲线坐标 CPU 记录也报告FLASH 4.8 参考程序中 Cellular 算例的二维/三维受控对照，
+归档包含本地初值扩展。[对照方法](flash/README.zh-CN.md)记录了
+固定温度燃烧、可选面 EOS 工作、计算量差异与成本结果。代表性四模块路径为
 HLLC/MUSCL/MC＋RK2＋RKL2 热扩散＋BD/DenseLU＋MG＋AMR，采用
 Helmholtz/aprox13 并关闭 NSE，不能据此宣称全部策略组合已验收。
 
-[执行成本复核](flash/results/cpu-followup-20261003/README.md)记录用户边界基线之后的
-同状态 EOS 复用、原始表读取和多重网格 Host 调度。相同物理终点的 CPU/FLASH
+[执行成本复核](flash/results/cpu-followup-20261003/README.md)记录同状态 EOS 复用、原始表读取和多重网格 Host 调度。相同物理终点的 CPU/FLASH
 整程成本、原预算下的字段对照及 2D/3D 四模块五步检查分别说明范围，并保留未达到
 的性能目标。FLASH 对比属于可选的维护者工作，ARCH 的构建、测试和 CI 独立运行。

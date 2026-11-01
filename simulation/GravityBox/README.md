@@ -144,10 +144,6 @@ Helmholtz 输运系数由状态决定，不应再填理想气体的常系数覆�
 `run_timings.tsv` 的输出耗时包含流体 Host materialization、输出验证和 HDF5 写入；
 调用输出函数之前的引力字段下载仍计入总时间，未计入该输出子项。
 
-Cartesian 使用边界与 CPU/GPU 记录见
-[笛卡尔自引力验收记录](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)；曲线坐标的受测范围与性能见
-[曲线重力验证](../../validation/gravity/README.zh-CN.md)。
-
-当前二维柱坐标初始化器、非零轴向中心、CPU短演化／fresh及显式输入迁移见
-[当前CPU签收](../../validation/backend/results/release-readiness/REL3CurrentCpuClosure-20261019.json)。CUDA共享owner证据仍按原范围复用；
-本轮Host初始化器修正须在下一阶段补建CUDA应用后做必要场对照。
+笛卡尔与曲线坐标的数值参考、CPU/CUDA 对照及重启检查见
+[重力验证](../../validation/gravity/README.zh-CN.md)。使用二维柱坐标输入时，
+检查径向和轴向的中心位置、边界条件与输出坐标是否符合所选模型。

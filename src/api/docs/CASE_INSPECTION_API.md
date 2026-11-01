@@ -1,6 +1,6 @@
 # Compiled case inspection
 
-`ARCH --inspect-case CASE --config-stdin [--request-id ID]` is the common CPU inspection entry for registered cases. It accepts unsaved `.par` text, calls the real `ProblemGenerator::Setup`, and probes the real `Init` output at a small number of points. It does not allocate a simulation grid, take time steps, or call the scientific output writer. Setup may load an EOS table. Run in a separate Linux/WSL worker, with a 1 GiB address-space / 300 CPU-second limit; Host must enforce a 360-second wall timeout and cancellation/reaping.
+`ARCH --inspect-case CASE --config-stdin [--request-id ID]` is the common CPU inspection entry for registered cases. It accepts unsaved `.par` text, calls the real `ProblemGenerator::Setup`, and probes the real `Init` output at a small number of points. It does not allocate a simulation grid, take time steps, or call the scientific output writer. Setup may load an EOS table. Run in a separate worker on Linux/WSL or native Windows, with a 300 CPU-second budget. Linux limits address space to 1 GiB and counts user plus system CPU time. Windows limits committed memory to 1 GiB and counts resource-Job user CPU time. The capability response identifies this [resource policy](INITIAL_AMR_API.md#预算和进程边界). Host enforces the 360-second wall timeout, cancellation and process reaping.
 
 Setup time depends on the model; the budget is a ceiling, not a predicted duration. In CPU inspection and initial-preview commands, repeated EOS queries reuse one verified source generation. Initial table loading keeps its full before/after content checks; before publishing success, every consulted source is verified by full content again. A changed source rejects the result (`EOS_SOURCE_CHANGED`). This avoids rehashing the entire table for every iteration of CooperativeHotspots' initialization solve. The optional [preview session](PREVIEW_SESSION_API.md) retains parsed tables and bounded source bytes across requests; exact full-byte comparisons can reuse SHA-256 digests. Setup and Init are still rerun. Ordinary simulation dispatch retains its per-query content checks. AMR workers retain their separate 30 CPU-second / 45 wall-second limits. Host should display Setup progress and keep cancellation available.
 
@@ -14,7 +14,7 @@ ARCH --inspect-case CellularDet --config-stdin < simulation/Cellular/CellularPre
 
 ## Response
 
-The envelope uses `schemaVersion: "1.0"`, `version: "1"`, `kind: "case-inspection"`. Identity contains request ID, registered case ID and SHA-256 of the exact input text. Host separately retains binary/build identity and paths. Limits remain 1 MiB input and 8 MiB response. Empty input checks Core defaults; defaults may not be appropriate for the selected case.
+The envelope uses `schemaVersion: "1.0"`, `version: "1"`, `kind: "case-inspection"`. Identity contains request ID, registered case ID and SHA-256 of the exact input text. Host separately retains binary/build identity and paths. Limits remain 1 MiB input and 8 MiB response. Empty or incomplete input reports the missing declared requirements before Setup.
 
 | Field | Meaning |
 |---|---|
@@ -42,7 +42,7 @@ Units have two concrete evidence sources:
 - **Core composition reader:** mass-fraction input is dimensionless, reported as `1`.
 - **Reviewed built-in case expressions:** centralized in `CaseUnitEvidence.cpp`, guarded by the exact compiled case `.cpp` SHA-256. CMake stamps the source at compilation; editing it invalidates the old unit conclusions. Core must review changed expressions before updating the expected hash. Header dependencies and build options remain part of Host's full build manifest; a case-source hash alone is not full build freshness.
 
-The 14 current built-in models have reviewed units for their numeric inputs: Sod, CellularDet, Gaussian, Sedov, RT, SmoothAdvection, GravityBox, JeansWave, ExternalGravity, DiffusionMode, BurnOneZone, BurnGradient, CooperativeHotspots, SNIaCoupled. Returned parameters are still only those actually read in the current configuration. Examples: `x_pos`/`radiusPerturb` use cm; CellularDet `noiseAmplitude` is dimensionless; RT `amplitude` uses cm/s; Sedov `explosion_energy` uses erg/cm², erg/cm or erg for 1D, 2D or 3D.
+Built-in model input units are checked against compiled source evidence. Returned parameters are only those actually read in the selected configuration; discover model coverage from the capability response. Examples: `x_pos`/`radiusPerturb` use cm; CellularDet `noiseAmplitude` is dimensionless; RT `amplitude` uses cm/s; Sedov `explosion_energy` uses erg/cm², erg/cm or erg for 1D, 2D or 3D.
 
 `unitEvidence.status`: `known`, `dimensionless`, `not-applicable`, `uncovered`, `conflict`. `unit=null` for uncovered/conflicting inputs. Strings and switches need no unit label. `automaticExpressionInference=false`: reviewed evidence must not be presented as automatic inference for arbitrary C++. A regression demonstrates identical read/sink observations from `rho=a` and `rho=a*b` with `b=1`; boundary observation cannot uniquely determine the two input units. New/changed cases remain inspectable and report evidence coverage; they do not require a frontend-specific adapter or a user declaration form.
 
@@ -61,7 +61,7 @@ Initial field responses add `fields[].logDomain` with `positiveCount`, `zeroCoun
 | ParameterMetadata.cpp | One serializer for observed input values and unit evidence |
 | CaseUnitEvidence.cpp | Source-guarded reviewed model units; no parser, copied defaults or numerical model |
 | ResourceEstimates.cpp / InitialMesh.h | Allocation-free level estimates / real bounded initial hierarchy |
-| WorkerLimits.cpp | Shared Linux worker resource guard |
+| WorkerLimits.cpp | Shared Linux/Windows worker resource guard |
 | ../core/files/InspectionSources.h / EOSDispatcher::InspectionScope | One verified EOS source generation per inspection request, with final content verification |
 | ValueDomain.h | Zero/negative/nonfinite separation for Log presentation |
 

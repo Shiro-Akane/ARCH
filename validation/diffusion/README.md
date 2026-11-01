@@ -82,8 +82,6 @@ on the same inputs.
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
 
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
-
 - [application evidence (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 - [metrics.csv (CSV)](metrics.csv)
 

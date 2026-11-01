@@ -1,46 +1,40 @@
 # Contributing to ARCH
 
-The [release qualification index](../releases/README.md) records the frozen distribution and qualification scope. Scoped CPU and CUDA qualification and the axisymmetric cylindrical implementation have accepted evidence; final distribution, hosted CI and human platform acceptance remain separate. Near-zero-momentum and SNIa qualification limits remain in the linked qualification records. A completed implementation or unit test does not establish an unrestricted scientific release.
+Start with the [implementation ownership map](ImplementationOwnership.md). CPU and CUDA use shared numerical and physical implementations; backend code manages execution and storage. Studio separates its Electron window, native Host service and browser interface.
 
-Start from the [implementation ownership map](ImplementationOwnership.md) when changing code. Grid and curvilinear numerics own coordinates, measures and geometric terms; optional gravity owns its field, solver and energy work. Shared numerical bodies serve Host and Device. CUDA owners manage launches, storage and synchronization. Studio separates Electron, the Linux Host service, browser contracts and rendering.
+## Find the implementation
 
-## Find the maintained owner
-
-| Task | Read or change here | Verification |
+| Area | Entry point | Relevant checks |
 | --- | --- | --- |
-| Build, dependencies and local resources | [Build guide](../guides/Build.md), [CMake](../../cmake/README.md) | Affected configure/target; record compiler, jobs, time and RAM |
-| Configuration and public API | [Strict input contract](ConfigurationContractPlan.zh-CN.md), [API](../../src/api/README.md), [Reference](../Reference.md) | Existing parser, missing/invalid-input and API contracts |
-| Mathematical or physical method | [Source map](../../src/README.md), [ownership](ImplementationOwnership.md), [physics](../physics/README.md) | Owning Host/Device leaf and independent scientific reference |
-| AMR, execution or resources | [AMR](../../src/amr/README.md), [driver](../../src/driver/README.md), [CUDA](../../src/cuda/README.md) | Existing schedule, transaction, failure and resource checks |
-| Files and continuation | [IO](../../src/io/README.md), [restart validation](../../validation/restart/README.md) | Publication failure, identity rejection and applicable fresh comparison |
-| Studio | [Studio source boundaries](../../studio/README.md#source-and-evidence-layout), [tests](../../studio/tests/README.md) | Typed request/response, owned lifecycle, lint and typed build |
-| Documentation and comments | [Writing guidance](CommentAndDocumentationStyle.md) | Current claims, local links and non-comment behavior equivalence |
+| Build and dependencies | [Build guide](../guides/Build.md), [CMake](../../cmake/README.md) | Configure, affected targets and incremental builds on the selected toolchain |
+| Configuration and API | [Input contract](ConfigurationContractPlan.zh-CN.md), [API](../../src/api/README.md), [Reference](../Reference.md) | Missing/invalid input, schema and request/response tests |
+| Physics and numerics | [Source map](../../src/README.md), [ownership](ImplementationOwnership.md), [physics](../physics/README.md) | Independent references, conservation, convergence and Host/Device checks |
+| AMR and execution | [AMR](../../src/amr/README.md), [driver](../../src/driver/README.md), [CUDA](../../src/cuda/README.md) | Schedule, state transactions, failure handling and resource limits |
+| Files and continuation | [I/O](../../src/io/README.md), [restart](../../validation/restart/README.md) | Atomic publication, identity rejection and continuation comparisons |
+| Studio | [Source boundaries](../../studio/README.md#source-layout), [tests](../../studio/tests/README.md) | Typed contracts, process lifecycle, file operations and desktop behavior |
+| Documentation | [Writing guide](CommentAndDocumentationStyle.md) | Accurate examples, translations, images and links |
 
-Choose the owner by responsibility, data lifetime, actual callers and build entry. Keep mathematical algorithms shared; add backend code only for execution or demonstrated resource requirements. A new file should serve a coherent responsibility, rather than a desired file length. Geometry must still work independently when optional gravity is disabled.
+## Verify a change
 
-## Check a change
+The [test guide](../../tests/README.md) lists engineering checks. [Validation](../../validation/README.md) provides scientific inputs, references, error budgets and results. Select checks that exercise the changed behavior and its failure paths. Mathematical changes require independent scientific references as well as backend comparisons; preserve the accepted tolerances and physical definitions.
 
-The [test guide](../../tests/README.md) explains how to run engineering checks; [Validation](../../validation/README.md) explains scientific references, measured errors, accepted budgets and limits. Extend the existing assertion owner and keep independent oracles independent. Tooling, CPU, Device and Studio have distinct responsibilities. A lane marked `NOT_APPLICABLE` has no test result; it is not evidence that tests ran.
+Measure build or runtime optimizations using the same source, configuration, input and hardware. Distinguish cold, incremental and no-op builds. Record runtime variability and peak memory alongside the numerical result. The [CUDA standard](CudaReleaseStandard.md) describes backend acceptance, and the [CI guide](../../.github/workflows/README.md) describes hosted coverage.
 
-Keep inputs, numerical standards, physical definitions and failure handling intact. Use focused verification for the affected path; reuse accepted evidence only within its original identity and scope. Do not rerun historical long campaigns for prose or infer device qualification from Host tests. Build measurements freeze source/configuration first and distinguish cold, no-op and incremental work.
+## Maintain documentation
 
-Comments explain workflow, units, mathematical conventions, non-obvious constants and resource lifetimes beside the implementation. They do not repeat repair history or invent physical reasons for work limits. Frozen scientific data and upstream fits retain their original attribution and coefficients. Pure comments still change source digests; old binary measurements retain their original identities.
+Usage belongs in [guides](../guides/README.md), public settings in the [Reference](../Reference.md), and implementation reasoning beside its owner. Keep reusable scientific results and their reproductions in [Validation](../../validation/README.md). Finished task plans, intermediate status reports and local debugging logs belong outside the distributed documentation.
 
-## Documentation and evidence
+Describe present behavior and explain the choices a reader needs to make. Update both languages when changing commands, supported configurations or parameter meanings.
 
-Current usage belongs in the [guides](../guides/README.md), configuration/API contracts in their maintained owners, and source reasoning beside the implementation. Current results belong in each [Validation summary](../../validation/README.md); detailed receipts stay under its `results/` directory. Raw HDF5, checkpoints and full logs remain local.
+## Review and reporting
 
-[Historical development records](../histroy/README.md) explain past decisions and qualification limits. Their pending items are dated observations, not a second current execution plan. Fixed-path receipts and original failures retain their bytes and provenance during documentation cleanup. The [modernization closeout](https://github.com/Shiro-Akane/ARCH/blob/fe8f1f708cec34e42fa436f8cd21cec9285407e1/ARCH_MODERNIZATION_PLAN.md) preserves the completed architecture scope.
+Use the [reporting guide](../guides/Reporting.md) for a small reproducer, source revision, command, expected result and relevant logs. [CODEOWNERS](../../.github/CODEOWNERS) identifies reviewers. Submit changes through a pull request.
 
-## Reporting and review
-
-Use the [reporting guide](../guides/Reporting.md) for a small reproducer, source identity, command, expected result and bounded logs. [CODEOWNERS](../../.github/CODEOWNERS) identifies the reviewer; implementation ownership is a separate map. [CI](../../.github/workflows/README.md) defines automated coverage, applicability and required-result handling.
-
-Before publishing source or history, use the maintained [.gitleaks.toml](../../.gitleaks.toml) rules with Gitleaks. From the repository root:
+Before publishing source or history, scan it using the repository's [.gitleaks.toml](../../.gitleaks.toml):
 
 ```bash
 gitleaks git --log-opts="--all --diff-merges=separate" --config .gitleaks.toml --redact .
 gitleaks git --pre-commit --staged --config .gitleaks.toml --redact .
 ```
 
-Inspect materialized assets and archives as well as Git differences; keep detailed scanner reports local. Hooks are local setup and supplement hosted checks. Source sharing and formal publication follow the current task authorization.
+Keep credentials, raw research output and full local diagnostic logs out of commits and distribution archives.

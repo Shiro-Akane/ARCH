@@ -2,7 +2,9 @@
 
 英文原文：[CASE_TEMPLATE.md](CASE_TEMPLATE.md)。英文版是唯一规范模板；若中英文内容不一致，以英文版为准。
 
-> 状态：planned / running / passed / failed / superseded
+测量日期：`<date>`
+
+结果：通过／失败／未完成
 
 ## 契约
 

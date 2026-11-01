@@ -1,6 +1,6 @@
-# Studio and Host verification
+# Studio and Host tests
 
-Run from `studio/` using Linux Node 24+:
+Use Node 24+ and install the native tools from the [build guide](../../docs/guides/Build.md). From `studio/`:
 
 ```bash
 npm ci
@@ -9,18 +9,36 @@ npm run build
 npm test
 ```
 
-`npm run build` includes TypeScript checking; use `npm run typecheck` alone when production assets are not needed.
+`npm run build` includes TypeScript checking. `npm run typecheck` checks types without producing assets. The complete test suite includes `host-*.test.ts`; `npm run test:host` selects a diagnostic subset.
 
-Host tests also perform small real builds and verify GNU subprocess/specs and the selected mold linker. Install the Linux CMake, Ninja, C++ and mold tools described in the [environment guide](../../docs/guides/StudioEnvironment.zh-CN.md); the fixtures deliberately use `/usr/bin/cmake`, `/usr/bin/ninja`, `/usr/bin/c++` and `ld.mold`. Missing tools are test prerequisites to fix, not reasons to skip identity assertions.
+## Platform prerequisites
 
-The complete `npm test` includes `host-*.test.ts`; `npm run test:host` is a scoped subset and must not be counted again. Tests cover configuration/workspace, Preview/cancellation, renderer, Plotfile queries, controlled build and owned run/restart lifecycle. Browser/HTTP tests do not prove native desktop interaction or physical accuracy.
+Linux Host fixtures perform real small builds using `/usr/bin/cmake`, `/usr/bin/ninja`, `/usr/bin/c++` and `ld.mold`. Install these tools before running the full suite. Windows native tests use the shared helpers and a private tool context:
 
-CI runs this complete suite, lint and the typed production build for changes affecting Studio, Core interfaces or build contracts. Independent numerical, scientific-validation and documentation changes can omit the Node lane after a conservative path check. Missing revision information, unknown paths or a failed diff select the complete lane. The existing Studio job records its scope; `NOT_APPLICABLE` reports a scope decision rather than a passing test run. See the [workflow guide](../../.github/workflows/README.md).
+| Environment variable | Native test input |
+| --- | --- |
+| `ARCH_TEST_CMAKE`, `ARCH_TEST_NINJA` | Absolute paths to native CMake and Ninja |
+| `ARCH_TEST_CXX`, `ARCH_TEST_RC`, `ARCH_TEST_OBJDUMP` | GCC/UCRT64 C++ compiler, resource compiler and objdump |
+| `ARCH_TEST_SUPERVISOR`, `ARCH_TEST_PUBLISHER` | Built `arch_windows_process.exe` and `arch_windows_build_publish.exe` |
+| `ARCH_TEST_TERMINAL` | Windows Terminal executable for terminal handoff tests |
+| `PATH` | Matching compiler/runtime DLL directories and required Windows tools |
 
-`npm test` uses `run-platform.mjs` to enumerate the same root `*.test.ts` inventory, with TAP output and file concurrency of one. On Linux it reports the five declared native-only files as `NOT_APPLICABLE` on stderr and runs every shared/mixed file, including `host-windows-run.test.ts`. Unknown/new files are selected by default; an empty inventory or stale declared filename fails. Keep native-only files free of shared assertions. Mixed files register their OS-specific cases only on the applicable OS; assertion bodies and missing-tool checks remain unchanged. An inapplicable case is never a passing test.
+CUDA profile tests additionally use `ARCH_TEST_NVCC`, `ARCH_TEST_MSVC` and `ARCH_TEST_CUDA_ROOT`. Prepare their MSVC environment as described in [Windows CUDA installation](../../docs/guides/Build.md#windows-cuda-installation). Native process, build, configuration, handoff, desktop and Plotfile groups require their corresponding real tools; use the installed program paths rather than WSL paths.
 
-CI still invokes `npm --silent test` and validates the complete selected TAP report with the unchanged strict zero-skip gate. Do not use name patterns, fabricated empty-file passes or an allowed-skip count to obtain acceptance. Native Windows process/helper tests require the trusted tools documented in the [platform guide](../../docs/guides/WindowsStudioPlatform.md); the Linux full-suite result does not qualify those cases. Native focused groups retain their separate W0–W3 evidence in the [archive](../../docs/histroy/build/WindowsNativeQualification-20261026.zh-CN.md).
+## Selection and coverage
 
-`fixtures/` holds bounded regression inputs, including a pinned 14 KiB historical CPU Sod plotfile used by reader tests. CI materializes only that required LFS fixture through the shared exact-pointer cache action, then verifies its actual size/SHA. A pointer left in place fails verification before Node execution. Workstation use reuses the matching local copy without automatic fetch. Its provenance is in [fixtures/README.md](fixtures/README.md); it is not a production sample or a new scientific run. `tools/compareRestartCheckpoints.mjs` compares explicitly selected checkpoint files; `tools/import_cellular.py` is a historical one-run sample importer, not a production reader. Newly generated raw scientific files remain in the operator's local output directory.
+`run-platform.mjs` enumerates root `*.test.ts` files with TAP output and one file worker. On Linux, six declared Windows-only files are reported as `NOT_APPLICABLE` on stderr, including generated native tool environments. Shared and mixed files, including `host-windows-run.test.ts`, still run. Unknown files are selected by default; an empty inventory or stale declared filename fails. Mixed files register platform-specific cases only on the applicable OS.
 
-Core tests live in [tests/](../../tests/README.md); scientific references and runner evidence in [validation/](../../validation/README.md). Production sources are `../src`, `../host`, and `../desktop`. Linux packages contain production assets, Host imports and required runtime source; they exclude this test tree, scientific validation and historical reports.
+The tests cover configuration/workspace state, Preview and cancellation, renderer behavior, Plotfile queries, controlled builds and Run/Restart lifecycle. Native Electron window, file-dialog and packaged-runtime checks supplement this suite; their coverage is listed in [platform support](../../docs/releases/PlatformSupport.md).
+
+Run preparation tests bind Core's `--check-run` response to saved bytes and the selected executable, reject unavailable providers and contradictory readiness, and recheck the backend and output targets at confirmation. Native integration also exercises the generated Windows environment against a real Core; POSIX executable fixtures do not substitute for that check.
+
+Hosted CI runs the complete applicable Linux suite, lint and typed production build. Its result checker requires a nonempty report with no failed or skipped tests. The [workflow guide](../../.github/workflows/README.md) describes change selection and diagnostic artifacts.
+
+## Fixtures and outputs
+
+[fixtures/](fixtures/README.md) contains bounded regression inputs, including a pinned 14 KiB CPU Sod Plotfile. CI hydrates that LFS fixture through the fixed-pointer cache action and verifies size and SHA-256 before Node execution. Local testing uses the matching hydrated file.
+
+`tools/compareRestartCheckpoints.mjs` compares selected checkpoint files. `tools/import_cellular.py` imports its recorded sample dataset for development. Generated scientific files belong in a local output directory.
+
+Core tests live in [tests/](../../tests/README.md), and independent scientific references and runners in [Validation](../../validation/README.md). Portable desktop packages include production assets, Host imports and required runtime source; they exclude this test tree.

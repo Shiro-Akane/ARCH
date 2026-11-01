@@ -28,80 +28,55 @@ $\rho=10^7\,\mathrm{g\,cm^{-3}}$, $T=3\times10^9\,\mathrm{K}$, initial
 ROS4 use `rtol=1e-6`, `atol=1e-10`. This is solver cross-verification, not an
 independent physical validation of aprox13 rates.
 
-## Current inputs and reference identity
+## Inputs and source-energy checks
 
-The BE_NR, BD and ROS4 input files explicitly declare `min_eint=1e-10`,
-`hll_wave_speed=roe` and `eos_coulomb_mult=1.0` for the current configuration
-contract. [bd.par](inputs/bd.par) is also the shared controller and inspection
-fixture. The density, temperature, initial composition, physical endpoint and
-ODE tolerances retain the reference problem specified above.
+The BE_NR, BD and ROS4 inputs declare `min_eint=1e-10`, `hll_wave_speed=roe`
+and `eos_coulomb_mult=1.0`. [bd.par](inputs/bd.par) also serves controller and
+configuration inspection tests. Reproduction uses the numerical/EOS controls,
+table identity and physical endpoint recorded for the reference problem.
 
-Historical results retain their recorded source and input identities. Current
-configuration loading alone does not establish a new scientific trajectory or CUDA
-result. Replays use the recorded numerical/EOS controls and table identity;
-longer physical endpoints need their own independent reference and budgets.
+`ENUC` / `enuc_rate`, in `erg g^-1 s^-1`, is the last accepted burn-half nuclear
+energy increment divided by that half-step interval. Integrated energy balance
+uses its own source accounting; ENUC alone is not a whole-macro-step ledger.
 
-The [current device record](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
-closes the declared single-GPU scope. The original private Cellular 24-step run
-and all 25 checkpoints now pass the unchanged ENUC `5e-9` relative plus `5e-12`
-absolute gate; ENUC is byte-identical between current CPU and Device runs.
-Both backends also pass their own CHK12-to24 fresh process, with 21 checkpoint
-and 43 physical Plot datasets identical to continuous evolution.
+The [CPU/CUDA source-energy results](../backend/results/release-readiness/REL4CudaDeviceAndIntegration-20261019.json)
+cover a 24-step Cellular run and all 25 checkpoints. ENUC passes the `5e-9`
+relative plus `5e-12` absolute budget and is byte-identical between backends.
+Continuation from checkpoint 12 to step 24 matches continuous evolution on
+each backend in 21 checkpoint and 43 physical Plot datasets. Independent NSE
+precision checks include 6,859 states, alongside built-in/generated NSE,
+aprox19 policy, RKL and rotating-AMR tests.
 
-Actual capture of both accepted burn halves and identical-input replay isolated
-roundoff amplification in Saha arithmetic and a different Host AMR RKL time
-multiplication order. The existing NSE owner now shares conditioned arithmetic;
-the Host AMR owner consumes unscaled `L(U)` and applies the real interval once.
-Current built-in/generated NSE authorities, A19 policy cases, original RKL entry
-and rotating AMR consumers pass. The 6859-point current-function bridge retains
-the independent precision reference. Equations, ODE controls, fixed-point zero
-energy, source definition and original conservation tolerances are unchanged.
-ENUC remains the last accepted burn-half nuclear-energy increment divided by its
-half interval. The earlier step-1/terminal failures (`4.3878863852117646e-7` /
-`1.1197942950938268e-7`) keep their original identity in the record.
-The [release qualification index](../../docs/releases/README.md) lists build costs and remaining
-CPU, platform and distribution qualification boundaries.
+## CPU application results
 
-## CPU science evidence
+The [one-zone results](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json)
+record BE_NR, BD and ROS4 trajectories through the stated endpoint, with
+cross-solver and composition-closure checks.
 
-The [one-zone CPU receipt](../backend/results/release-readiness/REL3CpuScienceAndReliability-20261014.json) records fresh
-BE_NR, BD and ROS4 runs through the original one-zone endpoint and CPU
-cross-solver/closure budgets. It preserves the historical records below and
-does not qualify a new CUDA run.
+The [coupling and NSE results](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
+cover six BurnGradient combinations of the three ODE methods and RKL1/RKL2
+species diffusion at `t=1e-10 s`. Nuclear-mass energy, mass and charge satisfy
+`1e-12` budgets; pointwise states and actual AMR changes are also checked.
+Sixteen CPU applications cover aprox13, aprox19, aprox21 and iso7, each with an
+NSE-disabled BE_NR control and enabled BE_NR, BD and ROS4. They pass `1e-12`
+energy/charge checks and the composition-contrast activity check above `1e-3`.
 
-The [CPU coupling and NSE record](../backend/results/release-readiness/REL3CpuScienceFollowup-20261014.json)
-adds six BurnGradient combinations of the three ODE methods with RKL1/RKL2
-species diffusion at the original `t=1e-10 s`. The original nuclear-mass energy,
-mass and charge budgets of `1e-12`, pointwise state checks and actual AMR changes
-pass. Sixteen application runs cover aprox13, aprox19, aprox21 and iso7, each
-with an NSE-disabled BE_NR control and enabled BE_NR, BD and ROS4. They retain
-the original `1e-12` energy/charge checks and composition contrast above `1e-3`.
-These are CPU scopes; independent time references and new CUDA runs remain separate.
+A one-dimensional Cellular test with `use_nse=true` completes one step to
+`t=1e-16 s` in 2.13 seconds with zero repairs. Its second burn half-step has
+one successful NSE attempt, no NSE failures and no BD substeps. A replay through
+the shared BD/NSE implementation reproduces its state, report and transferred
+energy bit for bit. Independently, Saha and Helmholtz-EOS calculations at the
+recorded density, input composition and accepted temperature agree at 60/80
+digits. Species Linf is `8.54e-15` and relative thermal-closure residual is
+`2.28e-14`, within `1e-12` limits. The independent calculation checks the
+accepted output state; the shared-code replay checks execution consistency.
+This input is distinct from the two-dimensional `CellularFlash2D.par` example.
 
-An earlier one-dimensional Cellular diagnostic explicitly restores eleven
-former effective controls, including `use_nse=true`, and completes one step to
-`t=1e-16 s` in 2.13 seconds of application wall time with zero repairs. This
-input differs from the two-dimensional `CellularFlash2D.par` FLASH comparison.
-The actual second burn half-step reports `NseSuccess`: one NSE attempt, no
-NSE failure and no BD substep. Replaying its captured inputs through the same
-shared BD/NSE implementation reproduces the packed state, report and energy
-handoff bit for bit. This is a shared-code replay, not an independent NSE
-reference. A separate independent Saha and Helmholtz-EOS audit at the actual
-density, input composition and accepted temperature agrees at 60/80 digits.
-Species Linf is `8.54e-15` and relative thermal-closure residual `2.28e-14`,
-within the original `1e-12` limits. This audits the accepted output; it does
-not measure the producer's internal Ye/old EOS energy or derive a unique
-preferred thermal root. Pure-ODE integration does not represent this route.
-The [earlier CPU receipt](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
-extends this one-dimensional input to its original endpoint in 24 steps
-(4.01 seconds, 25 checkpoints, zero repairs); its first saved state matches
-the independently audited state exactly. It also qualifies six enabled-transport
-endpoints and four active-ENUC continuations under the original budgets, after
-repairing precision loss in the conservation observer without changing physics.
-The current Device record above owns the completed CPU/CUDA rate screening and
-public/2D acceptance; this earlier CPU receipt retains its original source identity. `ENUC`/`enuc_rate` has units
-`erg g^-1 s^-1`: it is the last burn half-step's accepted energy increment
-divided by that half-step's duration, not a whole-macro-step energy ledger.
+The [complete CPU trajectory](../backend/results/release-readiness/REL3GeometryGravitySeparation-20261014.json)
+uses 24 steps, 25 checkpoints and 4.01 seconds, with zero repairs. Its first
+saved state matches the independently checked state. The same record includes
+six enabled-transport endpoints and four active-ENUC continuations, using the
+precision-preserving conservation observer and the stated budgets.
 
 ## Helmholtz table identity
 
@@ -210,8 +185,6 @@ checks above.
 
 <details>
 <summary>Expand source identities, machine-readable data and execution logs</summary>
-
-These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
 
 - [application record (JSON)](results/application-first-law-20260907/release-878/evidence.json)
 - [native burn restart (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
