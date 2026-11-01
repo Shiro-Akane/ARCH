@@ -175,7 +175,7 @@ rejection followed by acceptance while required failures remain fatal. This
 qualifies the recovery contract, not arbitrary table/network combinations.
 See the [table-EOS contract](../src/physics/eos/TabularEOS.md),
 [validation scope](../validation/README.md) and
-[current coupling audit](../validation/gravity/flash/O6AcceptanceReport.zh-CN.md).
+[table-EOS recovery checks](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6AcceptanceReport.zh-CN.md).
 
 ## Runtime architecture
 

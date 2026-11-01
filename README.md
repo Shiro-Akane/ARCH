@@ -44,25 +44,37 @@ An existing checkout can use `git pull --ff-only` after local changes are saved.
 
 ### Option A: CPU
 
-After setting up the compiler and dependency paths for your platform:
+Linux / WSL2, after installing the required tools and libraries:
 
 ```text
 cmake --preset cpu-release
 cmake --build build-cpu --target ARCH --parallel 1
 ```
 
-The executable is `build-cpu/bin/ARCH` on Linux or `build-cpu/bin/ARCH.exe` on Windows. Windows builds need the GCC/UCRT64 environment described in the build guide; Linux and Windows must use separate build directories.
+On Windows, configure GCC/UCRT64 and its matching libraries with the [CPU build instructions](docs/guides/Build.md#cpu-build), then compile:
+
+```powershell
+cmake --build build-windows-cpu --target ARCH --parallel 1
+```
+
+The executables are `build-cpu/bin/ARCH` and `build-windows-cpu/bin/ARCH.exe`. Each OS uses its own build directory.
 
 ### Option B: CPU and CUDA
 
-Configure on the machine with the GPU that will run the calculation, using the Linux NVCC or Windows MSVC/NVCC environment:
+Linux / WSL2, on the machine with the GPU that will run the calculation:
 
 ```text
 cmake --preset cuda-release
 cmake --build build-cuda --target ARCH --parallel 1
 ```
 
-This produces `build-cuda/bin/ARCH` or `ARCH.exe`, with CPU and CUDA execution available in the same program. Set `compute_backend = cpu`, `cuda` or `auto` in the parameter file. CUDA compilation can require substantial host memory; the build guide covers parallel limits and optional cuDSS for sparse burning.
+On Windows, configure the separate MSVC/NVCC toolchain using the [CUDA build instructions](docs/guides/Build.md#cuda-build), then compile:
+
+```powershell
+cmake --build build-cuda-win --target ARCH --parallel 1
+```
+
+This produces `build-cuda/bin/ARCH` or `build-cuda-win/bin/ARCH.exe`, with CPU and CUDA execution available in the same program. Set `compute_backend = cpu`, `cuda` or `auto` in the parameter file. CUDA compilation can require substantial host memory; the build guide covers parallel limits and optional cuDSS for sparse burning.
 
 The first Sod case needs no EOS table. Helmholtz cases need table data: use `git lfs pull` in a checkout, or follow the [source-archive instructions](docs/guides/Build.md#source-archives-and-eos-tables).
 
@@ -81,7 +93,7 @@ Windows PowerShell, with the native dependency paths set:
 
 ```powershell
 $env:OMP_NUM_THREADS = '4'
-& .\build-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
 
 `Sod` selects the compiled problem definition; the `.par` file supplies its parameters. `OMP_NUM_THREADS` controls CPU worker threads. To use a CUDA-enabled build, select its executable and change the existing `compute_backend` assignment in a copy of the input.

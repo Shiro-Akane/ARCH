@@ -23,16 +23,5 @@ This directory explains model origins and links the maintained model contracts.
 - [Gravity validation](../../validation/gravity/README.md) covers external sources
   and the supported self-gravity boundaries, coupling and device checks.
 
-Implementation ownership remains in the
-[shared-authority map](../development/ImplementationOwnership.md); these notes
-are not a second mathematical implementation or a separate release checklist.
-
-<details>
-<summary>Historical derivations and repair investigations — contributor reference</summary>
-
-Intermediate geometry, refinement-indicator and diffusion-coefficient reviews
-are preserved in the [development archive](../development/archive/README.md).
-Read their observations in the context of the identified source; use the
-validation summaries above for accepted results.
-
-</details>
+See the [implementation ownership map](../development/ImplementationOwnership.md)
+when extending a model or its numerical implementation.

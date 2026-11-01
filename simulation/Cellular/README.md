@@ -19,14 +19,14 @@ Cellular initial state used in the user-provided FLASH 4.8 archive comparison. I
 ARCH hydro, Helmholtz EOS, aprox19 burn and AMR paths. FLASH and ARCH use
 different burn temperature coupling and timestep rules, so compare at the
 same physical end time and report work and field error together. The measured
-setup and its limits are recorded in the [O5 report](../../validation/gravity/flash/O5OptimizationReport.zh-CN.md).
+setup and its limits are recorded in the [comparison methods](../../validation/gravity/flash/README.md).
 The FLASH comparison input explicitly records its former loader controls,
 including `enucDtFactor=1e30` (inactive energy-change timestep cap) and the
 original ODE tolerances. These differ from the separate `Cellular.par` family.
 Configuration or initial-state acceptance does not close the outstanding
 long-evolution energy-generation comparison.
 
-The [current burn checks](../../validation/burn/README.md#cpu-science-evidence)
+The [current burn checks](../../validation/burn/README.md#cpu-application-results)
 identify the separate one-dimensional diagnostic's actual second-half NSE
 projection, exact replay and original 24-step endpoint. They retain the original rate-comparison gate and
 do not qualify this two-dimensional FLASH trajectory.

@@ -68,4 +68,4 @@ See [user boundaries](../../../docs/guides/UserBoundaries.md).
 
 See [GravityBox](../../../simulation/GravityBox/README.md), the
 [Reference](../../../docs/Reference.md) and
-[P5–P7 acceptance](../../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md).
+[gravity validation](../../../validation/gravity/README.md).

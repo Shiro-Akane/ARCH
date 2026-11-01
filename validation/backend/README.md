@@ -77,7 +77,7 @@ library configurations are listed in [platform support](../../docs/releases/Plat
 FP64 field/block shapes and one native Cartesian 1D/2D cell by hyperslab.
 Its `candidate` result describes this local consistency check. Complete AMR
 coverage, provenance and physical accuracy have separate checks in the
-[Plotfile validation contract](../../docs/development/PlotfileValidationContract.zh-CN.md).
+[Plotfile query contract](../../studio/docs/contracts/PLOTFILE_AUDIT_API.md).
 [Examples and readback results](results/plotfile-contract/README.md) include
 small counterexamples and source-identified application outputs.
 

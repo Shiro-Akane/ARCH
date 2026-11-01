@@ -1,6 +1,6 @@
 # ARCH 1.3.0：Zenodo 已发表元数据
 
-核对日期：2026-10-21。以下内容与[已发表的 Zenodo 记录](https://zenodo.org/records/23503925)核对一致；记录中的软件发布日期为 2026-10-20。
+[Zenodo 记录 23503925](https://zenodo.org/records/23503925)对应 ARCH 1.3.0，软件发布日期为 2026-10-20。
 
 | 字段 | 填写内容 |
 | --- | --- |
@@ -18,9 +18,8 @@
 | 本版本 DOI | [10.5281/zenodo.23503925](https://doi.org/10.5281/zenodo.23503925)，用于引用 ARCH 1.3.0 |
 | 全版本 DOI | [10.5281/zenodo.23503924](https://doi.org/10.5281/zenodo.23503924)，用于指代版本系列 |
 | 记录 URL | [Zenodo 23503925](https://zenodo.org/records/23503925) |
-| Funding / Communities | 有真实适用信息才填；当前不虚构 |
 
-## Creators：按顺序添加
+## Creators
 
 | 顺序 | Family name | Given names | ORCID | Affiliation |
 | --- | --- | --- | --- | --- |
@@ -43,6 +42,6 @@ AI-assisted tools were used for bug tracking and fixes, review of tolerance sett
 ## 引用与验收依据
 
 - [v1.3.0 发布说明](../releases/V1.3.0.md)与[中文说明](../releases/V1.3.0.zh-CN.md)。
-- [REL-6 适用范围验收](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json)：使用已记录证据，本轮未重跑科学验证或全 CTest。
+- [v1.3.0 验证记录](../../validation/backend/results/release-readiness/REL6CandidateAcceptance-20261020.json)：各检查的输入、构建身份与结果。
 - [构建指南](../guides/Build.md)、[Studio 指南](../guides/Studio.md)、[法律索引](../legal/README.md)。
-- [AI 使用说明](AI_USAGE.md)；架构由人类搭建，AI 辅助范围已按维护者确认填写。
+- [AI 使用说明](AI_USAGE.md)。

@@ -284,7 +284,7 @@ $node = 'C:/tools/node/node.exe'
 & $cmake --build $build --target arch-studio arch_windows_process arch_windows_build_publish --parallel 1
 ```
 
-两平台使用相同目标：`arch-studio-assets` 安装锁定 npm 依赖并构建界面，`arch-studio-runtime` 准备 Electron。Windows 上 CMake 调用 `npm-cli.js`，因此无需调整 PowerShell 的 `npm.ps1` 执行策略。
+两平台使用相同目标：`arch-studio-dependencies` 根据包清单与 Node 检查共用的 npm 安装；这些输入变更或整个 `node_modules` 被删除时才安装依赖。`arch-studio-assets` 构建界面，普通源码修改会复用已有依赖。`arch-studio-runtime` 准备 Electron。Windows 上 CMake 调用 `npm-cli.js`，因此无需调整 PowerShell 的 `npm.ps1` 执行策略。
 
 <a id="windows-tool-configuration"></a>
 ### Windows 工具配置

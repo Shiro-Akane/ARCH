@@ -139,8 +139,8 @@ CPU 制造解、独立边界/Gauss、AMR 与重启证据见
 对照、双向跨后端续算与本机性能见 [曲线坐标 CUDA 记录](results/p13-20260924/README.md)。
 指定 Dirichlet／Neumann／线性 Robin 及用户势边界支持三类几何和有效扇区；孤立质量模型仍要求完整方位角。域外质量源和 Jeans 专用细化指标未纳入此范围。
 可从 [GravityBox](../../simulation/GravityBox/README.md)
-的示例输入开始。[笛卡尔自引力验收](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
-记录数值、耦合、重启与设备检查；早期 [周期场记录](../../docs/histroy/science/P3P4CompositeGravity.zh-CN.md)
+的示例输入开始。[笛卡尔自引力验收](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
+记录数值、耦合、重启与设备检查；早期 [周期场记录](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P3P4CompositeGravity.zh-CN.md)
 保留其 CPU 周期范围；[径向场与 AMR 记录](results/p8-p10-20260923/README.md)保存椭圆与 AMR 指标。
 
 `run_self_gravity.py --arch <ARCH> --output <新目录>` 检查 Jeans 波、能量、时间阶、

@@ -171,9 +171,9 @@ also cover Dirichlet, Neumann, linear Robin and user potential
 conditions in their stated geometries. Isolated mass sources require the full
 azimuth; external mass is outside those isolated-source records. Jeans
 refinement diagnostics have their own current checks. Start with
-[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](../../docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
+[GravityBox](../../simulation/GravityBox/README.md) for reusable inputs. The [Cartesian gravity acceptance](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P5P7GravityAcceptance.zh-CN.md)
 records numerical, coupling, restart and device checks. The [radial field and AMR record](results/p8-p10-20260923/README.md) preserves CPU elliptic and AMR evidence. The
-[earlier periodic solver record](../../docs/histroy/science/P3P4CompositeGravity.zh-CN.md) retains its CPU
+[earlier periodic solver record](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/docs/histroy/science/P3P4CompositeGravity.zh-CN.md) retains its CPU
 periodic scope.
 
 `run_self_gravity.py --arch <ARCH> --output <new directory>` checks Jeans waves,

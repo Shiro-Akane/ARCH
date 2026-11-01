@@ -108,7 +108,7 @@ and final queries retain strict host exceptions or the device failure latch;
 a later valid query cannot erase a required failure. Paired CPU/CUDA checks
 cover real 3D/4D table-domain failures for BE, BD, ROS4 and the NSE thermal
 corrector. They qualify this recovery contract, not arbitrary nuclear tables or
-weak networks. See the [acceptance record](../../../validation/gravity/flash/O6AcceptanceReport.zh-CN.md).
+weak networks. See the [acceptance record](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6AcceptanceReport.zh-CN.md).
 
 All free-energy tables use a strict finite-domain policy, whether completed automatically or supplied already total.
 Source/component invalidity is propagated through all derivative stencils;

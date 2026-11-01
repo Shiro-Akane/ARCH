@@ -44,27 +44,39 @@ cd ARCH
 
 ### 方案 A：CPU
 
-配置好所用平台的编译器和依赖路径后：
+Linux／WSL2 安装所需工具和库后：
 
 ```text
 cmake --preset cpu-release
 cmake --build build-cpu --target ARCH --parallel 1
 ```
 
-Linux 执行物为 `build-cpu/bin/ARCH`，Windows 为 `build-cpu/bin/ARCH.exe`。Windows 需要构建指南所述 GCC/UCRT64 环境；两平台应使用各自独立的构建目录。
+Windows 按 [CPU 构建说明](docs/guides/Build.zh-CN.md#cpu-构建)配置 GCC/UCRT64 和配套依赖，然后编译：
+
+```powershell
+cmake --build build-windows-cpu --target ARCH --parallel 1
+```
+
+执行物分别为 `build-cpu/bin/ARCH` 和 `build-windows-cpu/bin/ARCH.exe`。两平台使用各自独立的构建目录。
 
 ### 方案 B：CPU 与 CUDA
 
-在实际运行 GPU 的机器上，使用 Linux NVCC 或 Windows MSVC/NVCC 环境：
+Linux／WSL2 在实际运行 GPU 的机器上配置：
 
 ```text
 cmake --preset cuda-release
 cmake --build build-cuda --target ARCH --parallel 1
 ```
 
-生成的 `build-cuda/bin/ARCH` 或 `ARCH.exe` 同时提供 CPU 与 CUDA 执行能力。通过参数文件中的 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。CUDA 编译可能需要较多 Host 内存；构建指南说明并发限制和稀疏燃烧所用的可选 cuDSS。
+Windows 按 [CUDA 构建说明](docs/guides/Build.zh-CN.md#cuda-构建)配置独立的 MSVC/NVCC 工具链，然后编译：
 
-首次 Sod 算例不需要 EOS 表。Helmholtz 算例需要真实表数据：Git 仓库可执行 `git lfs pull`，源码压缩包请按[构建指南](docs/guides/Build.zh-CN.md)准备。
+```powershell
+cmake --build build-cuda-win --target ARCH --parallel 1
+```
+
+生成的 `build-cuda/bin/ARCH` 或 `build-cuda-win/bin/ARCH.exe` 同时提供 CPU 与 CUDA 执行能力。通过参数文件中的 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。CUDA 编译可能需要较多 Host 内存；构建指南说明并发限制和稀疏燃烧所用的可选 cuDSS。
+
+首次 Sod 算例不需要 EOS 表。Helmholtz 算例需要真实表数据：Git 仓库可执行 `git lfs pull`，源码压缩包请按 [EOS 表数据说明](docs/guides/Build.zh-CN.md#源码压缩包与-eos-表)准备。
 
 ## 首次运行
 
@@ -81,14 +93,14 @@ Windows PowerShell，需已设置原生依赖路径：
 
 ```powershell
 $env:OMP_NUM_THREADS = '4'
-& .\build-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
 
 `Sod` 选择已编译的问题定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU 工作线程数。使用 CUDA 构建时，选择相应执行物，并在输入副本中修改已有的 `compute_backend` 赋值。
 
 程序打印时间步诊断，在 `output/first_sod/` 写入日志、场输出 Plotfile（`*_plt_*.h5`）和重启检查点（`*_chk_*.h5`）。入门输入使用 64 个单元，`simulation/Sod/Sod.par` 提供 128 单元示例。
 
-**`.par` 内的相对路径以计算工作目录为基准，不以参数文件所在目录为基准。** `output/first_sod` 等相对路径可供两平台共用。将 Linux／WSL 参数文件用于 Windows 前，需修改其中的绝对路径；详见 [Studio 和参数文件路径](docs/guides/Studio.zh-CN.md)。
+**`.par` 内的相对路径以计算工作目录为基准，不以参数文件所在目录为基准。** `output/first_sod` 等相对路径可供两平台共用。将 Linux／WSL 参数文件用于 Windows 前，需修改其中的绝对路径；详见 [Studio 和参数文件路径](docs/guides/Studio.zh-CN.md#paths-on-linux-and-windows)。
 
 继续阅读[模拟算例指南](docs/guides/SimulationCase.zh-CN.md)，学习查看输出、调整参数和为新问题编写 `Setup`／`Init`。
 

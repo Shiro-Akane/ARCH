@@ -192,7 +192,7 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 - [几何记录 (JSON)](results/geometry-native-20260907/release-880/evidence.json)
 - [持续运行记录 (JSON)](results/sustained-first-law-20260907/release-901/evidence.json)
 
-- [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [共用实现契约](../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 
 </details>
 

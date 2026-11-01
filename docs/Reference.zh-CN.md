@@ -136,7 +136,7 @@ aprox13、DenseLU、热传导及关闭 NSE 的配置做了 CPU/CUDA 检查。Car
 能力查询成功或单策略设备测试通过，只说明路径已注册，不能证明耦合物理精度。
 Tabular3D/4D 的未提交 ODE/NSE 查询使用局部试探失败状态；CPU/CUDA 成对检查
 覆盖拒步后成功接受，必要查询的失败仍会阻止提交。这只验收恢复合同，不代表任意表／网络组合均已验证。详见[表 EOS 契约](../src/physics/eos/TabularEOS.zh-CN.md)、
-[验证范围](../validation/README.zh-CN.md)和[当前耦合审计](../validation/gravity/flash/O6AcceptanceReport.zh-CN.md)。
+[验证范围](../validation/README.zh-CN.md)和[表 EOS 恢复检查](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6AcceptanceReport.zh-CN.md)。
 
 ## 运行时架构
 

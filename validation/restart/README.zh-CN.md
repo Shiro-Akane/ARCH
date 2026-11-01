@@ -143,7 +143,7 @@ python3 tools/validate_cuda_amr_restart.py \
 - [racecheck 检查 (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
 - [持续运行记录 (JSON)](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
 
-- [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [共用实现契约](../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 - [维护复验](../backend/results/maintenance-freeze-20260908/README.zh-CN.md)
 
 </details>

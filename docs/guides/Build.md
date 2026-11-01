@@ -273,7 +273,7 @@ $node = 'C:/tools/node/node.exe'
 & $cmake --build $build --target arch-studio arch_windows_process arch_windows_build_publish --parallel 1
 ```
 
-The same targets build both desktops. `arch-studio-assets` installs locked npm dependencies and builds the UI; `arch-studio-runtime` prepares Electron. CMake invokes `npm-cli.js` on Windows, so PowerShell's `npm.ps1` execution policy does not affect these commands.
+The same targets build both desktops. `arch-studio-dependencies` checks the shared npm installation against the package files and Node runtime; it installs when these change or `node_modules` is removed. `arch-studio-assets` builds the UI, so ordinary source edits reuse installed dependencies. `arch-studio-runtime` prepares Electron. CMake invokes `npm-cli.js` on Windows, so PowerShell's `npm.ps1` execution policy does not affect these commands.
 
 ### Windows tool configuration
 
@@ -301,7 +301,7 @@ $env:ARCH_STUDIO_WINDOWS_TOOLS = $tools | ConvertTo-Json -Depth 4 -Compress
 
 Use the actual Windows Terminal alias location if different. These settings belong to the local launch environment, not to `.par` files. Source launchers select the configured Node; portable packages use their bundled Node unless `ARCH_STUDIO_NODE` explicitly selects another runtime.
 
-For **MSVC/CUDA**, start PowerShell from the initialized Developer Command Prompt and replace the tool configuration with the following. Adjust every installation path, especially the OpenMP redistributable directory and SDK `rc.exe`; the latter must match `CMAKE_RC_COMPILER` in the selected tree.
+For **MSVC/CUDA**, start PowerShell from the initialized Developer Command Prompt and replace the tool configuration with the following. Adjust every installation path, especially the OpenMP runtime directory and SDK `rc.exe`; the latter must match `CMAKE_RC_COMPILER` in the selected tree.
 
 ```powershell
 $repo = 'C:/src/ARCH'

@@ -268,7 +268,7 @@ results in the [validation index](../README.md).
 - [geometry record (JSON)](results/geometry-native-20260907/release-880/evidence.json)
 - [sustained-execution record (JSON)](results/sustained-first-law-20260907/release-901/evidence.json)
 
-- [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [shared implementation contracts](../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 
 </details>
 

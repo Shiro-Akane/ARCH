@@ -179,7 +179,7 @@ continuation tests.
 - [racecheck checks (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
 - [sustained-execution record (JSON)](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
 
-- [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [shared implementation contracts](../../docs/development/ImplementationOwnership.md#shared-implementation-constraints)
 - [maintenance recheck](../backend/results/maintenance-freeze-20260908/README.md)
 
 </details>

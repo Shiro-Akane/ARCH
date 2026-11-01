@@ -83,7 +83,7 @@ EOS 耦合校验时明确拒绝，不能把零诊断值送入其电子俘获项�
 阻尼。必要初态和最终查询仍保留 Host 异常／设备错误锁存，后续有效查询不能清除
 必要失败。CPU/CUDA 已配对检查真实 3D/4D 表域失败后的 BE、BD、ROS4 恢复与
 NSE 热修正；这验收的是恢复合同，不是任意核物质表或弱反应网络。见
-[验收记录](../../../validation/gravity/flash/O6AcceptanceReport.zh-CN.md)。
+[验收记录](https://github.com/Shiro-Akane/ARCH/blob/v1.4.0/validation/gravity/flash/O6AcceptanceReport.zh-CN.md)。
 
 有成分声明或标为核平衡的自由能表，无论自动补齐还是预先提供总表，都使用严格
 有限域。来源／组件无效性传播到全部导数模板；查询不能跨越屏蔽顶点，也不允许
