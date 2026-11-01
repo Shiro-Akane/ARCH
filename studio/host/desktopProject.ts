@@ -43,7 +43,7 @@ export async function openDesktopProject(launch:DesktopProjectLaunch,context:{wi
  const local=localCpuProfile(root,context.windowsTools);
  const existing=launch.buildDir?await existingBuildProfile(root,relative(launch.buildDir),binary,context.windowsTools):undefined;
  const profile=existing?.build??(!binary||binary===local.build.outputBinaryRelative?local.build:undefined);
- if(!profile)throw new Error('No approved Host-owned Build Profile matches this project/binary. Register a trusted profile; build trees are never rebound automatically.');
+ if(!profile)throw new Error('Select the existing build directory for this project and executable using --build-dir.');
  const config=launch.config?relative(launch.config):'simulation/Sod/Sod.par';
  const selectedSource=launch.source?relative(launch.source):undefined;
  if(selectedSource){
